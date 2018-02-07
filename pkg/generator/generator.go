@@ -59,7 +59,11 @@ func (g *Generator) Render() error {
 		return err
 	}
 
-	err = g.genWorkqueue(controllerDir)
+	err = g.genController(controllerDir, "controller.go", templates.ControllerTemplate)
+	if err != nil {
+		return err
+	}
+	err = g.genController(controllerDir, "workqueue.go", templates.WorkqueueTemplate)
 	if err != nil {
 		return err
 	}
@@ -67,14 +71,14 @@ func (g *Generator) Render() error {
 	return nil
 }
 
-func (g *Generator) genWorkqueue(controllerDir string) error {
-	f, err := os.OpenFile(filepath.Join(controllerDir, "controller.go"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, defaultFileMode)
+func (g *Generator) genController(controllerDir, filename, tmpl string) error {
+	f, err := os.OpenFile(filepath.Join(controllerDir, filename), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, defaultFileMode)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	t, err := template.New("controller").Parse(templates.ControllerTemplate)
+	t, err := template.New(filename).Parse(tmpl)
 	if err != nil {
 		return err
 	}
@@ -82,5 +86,6 @@ func (g *Generator) genWorkqueue(controllerDir string) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
