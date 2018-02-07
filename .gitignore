@@ -12,3 +12,12 @@
 
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
+
+# Folders
+vendor
+_obj
+_test
+_output
+.kube
+.vscode
+.idea
