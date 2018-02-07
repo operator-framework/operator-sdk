@@ -5,9 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"text/template"
-
-	"github.com/coreos/operator-sdk/pkg/templates"
 )
 
 const defaultFileMode = 0750
@@ -44,6 +41,7 @@ func (g *Generator) Render() error {
 		return err
 	}
 
+	// pkg/apis/
 	groupName, apiVersion := func() (string, string) {
 		splits := strings.Split(apiGroup, "/")
 		return strings.Split(splits[0], ".")[0], splits[1]
@@ -53,34 +51,11 @@ func (g *Generator) Render() error {
 		return err
 	}
 
-	controllerDir := filepath.Join(projDir, "pkg/controller")
-	err = os.MkdirAll(controllerDir, defaultFileMode)
+	// pkg/controller/
+	err = os.MkdirAll(filepath.Join(projDir, "pkg/controller"), defaultFileMode)
 	if err != nil {
 		return err
 	}
 
-	err = g.genWorkqueue(controllerDir)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (g *Generator) genWorkqueue(controllerDir string) error {
-	f, err := os.OpenFile(filepath.Join(controllerDir, "controller.go"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, defaultFileMode)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	t, err := template.New("controller").Parse(templates.ControllerTemplate)
-	if err != nil {
-		return err
-	}
-	err = t.Execute(f, nil)
-	if err != nil {
-		return err
-	}
 	return nil
 }
