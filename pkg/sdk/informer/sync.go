@@ -1,6 +1,7 @@
 package informer
 
 import (
+	sdkHandler "github.com/coreos/operator-sdk/pkg/sdk/handler"
 	sdkTypes "github.com/coreos/operator-sdk/pkg/sdk/types"
 
 	"github.com/sirupsen/logrus"
@@ -53,7 +54,8 @@ func (i *informer) sync(key string) error {
 		Deleted: !exists,
 	}
 
-	// TODO: call registered handler for the event
+	sdkCtx := sdkTypes.Context{Context: i.context}
+	actions := sdkHandler.RegisteredHandler.Handle(sdkCtx, event)
 	// TODO: Add option to prevent multiple informers from invoking Handle() concurrently?
 
 	// TODO: process all actions for this event

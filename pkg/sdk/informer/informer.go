@@ -1,10 +1,9 @@
 package informer
 
 import (
+	"context"
 	"errors"
 	"time"
-
-	sdkTypes "github.com/coreos/operator-sdk/pkg/sdk/types"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/fields"
@@ -17,7 +16,7 @@ import (
 )
 
 type Informer interface {
-	Run(ctx sdkTypes.Context) error
+	Run(ctx context.Context) error
 }
 
 type informer struct {
@@ -26,6 +25,7 @@ type informer struct {
 	queue               workqueue.RateLimitingInterface
 	kubeClient          kubernetes.Interface
 	namespace           string
+	context             context.Context
 }
 
 func New(resourcePluralName, namespace string, objType runtime.Object, resourceClient rest.Interface) Informer {
@@ -49,19 +49,20 @@ func New(resourcePluralName, namespace string, objType runtime.Object, resourceC
 	return i
 }
 
-func (i *informer) Run(ctx sdkTypes.Context) error {
+func (i *informer) Run(ctx context.Context) error {
+	i.context = ctx
 	defer i.queue.ShutDown()
 
 	logrus.Info("starting %s controller", i.resourcePluralName)
-	go i.sharedIndexInformer.Run(ctx.Context.Done())
+	go i.sharedIndexInformer.Run(ctx.Done())
 
-	if !cache.WaitForCacheSync(ctx.Context.Done(), i.sharedIndexInformer.HasSynced) {
+	if !cache.WaitForCacheSync(ctx.Done(), i.sharedIndexInformer.HasSynced) {
 		return errors.New("Timed out waiting for caches to sync")
 	}
 
 	const numWorkers = 1
 	for n := 0; n < numWorkers; n++ {
-		go wait.Until(i.runWorker, time.Second, ctx.Context.Done())
+		go wait.Until(i.runWorker, time.Second, ctx.Done())
 	}
 	return nil
 }
