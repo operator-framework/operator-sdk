@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
@@ -23,7 +22,6 @@ type informer struct {
 	resourcePluralName  string
 	sharedIndexInformer cache.SharedIndexInformer
 	queue               workqueue.RateLimitingInterface
-	kubeClient          kubernetes.Interface
 	namespace           string
 	context             context.Context
 }
@@ -32,9 +30,7 @@ func New(resourcePluralName, namespace string, objType runtime.Object, resourceC
 	i := &informer{
 		resourcePluralName: resourcePluralName,
 		queue:              workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), resourcePluralName),
-		// TODO: set the kube client
-		kubeClient: nil,
-		namespace:  namespace,
+		namespace:          namespace,
 	}
 
 	i.sharedIndexInformer = cache.NewSharedIndexInformer(
