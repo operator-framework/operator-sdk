@@ -3,8 +3,8 @@ package sdk
 import (
 	"context"
 
+	sdkHandler "github.com/coreos/operator-sdk/pkg/sdk/handler"
 	sdkInformer "github.com/coreos/operator-sdk/pkg/sdk/informer"
-	sdkTypes "github.com/coreos/operator-sdk/pkg/sdk/types"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,13 +27,16 @@ func Watch(resourcePluralName, namespace string, obj runtime.Object, resourceCli
 	informers = append(informers, informer)
 }
 
-// TODO: func Handle(handler sdkTypes.Handler)
+// Handle registers the handler for all events.
+// In the future, we would have a mux-pattern to dispatch events to matched handlers.
+func Handle(handler sdkHandler.Handler) {
+	sdkHandler.RegisteredHandler = handler
+}
 
 // Run starts the process of Watching resources, handling Events, and processing Actions
 func Run(ctx context.Context) {
-	sdkCtx := sdkTypes.Context{Context: ctx}
 	for _, informer := range informers {
-		err := informer.Run(sdkCtx)
+		err := informer.Run(ctx)
 		if err != nil {
 			logrus.Errorf("failed to run informer: %v", err)
 			return
