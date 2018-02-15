@@ -1,0 +1,24 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: playservices.play.example.com
+spec:
+  group: play.example.com
+  names:
+    kind: PlayService
+    listKind: PlayServiceList
+    plural: playservices
+    singular: playservice
+  scope: Namespaced
+  version: v1alpha1
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: play-operator
+spec:
+  replicas: 1
+    spec:
+      containers:
+      - name: play-operator
+        image: quay.io/coreos/play-operator:latest

@@ -1,0 +1,5 @@
+/*
+Copyright YEAR The play-operator Authors
+
+Commercial software license.
+*/
