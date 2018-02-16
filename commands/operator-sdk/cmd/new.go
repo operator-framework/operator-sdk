@@ -14,8 +14,8 @@ var newCmd = &cobra.Command{
 	generates a default directory layout based on the input <project-name>. 
 
 	If none of options are specified, the operator-sdk defaults 
-	Kubernetes api group to <project-name>.example.com/v1 
-	and Kubernetes resource kind to <project-name>Service.
+	the Kubernetes api group to play.example.com/v1 
+	and the Kubernetes resource kind to PlayService.
 
 	For example,
 	$ mkdir $GOPATH/src/github.com/example.com/play
