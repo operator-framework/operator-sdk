@@ -33,8 +33,8 @@ var (
 
 func init() {
 	RootCmd.AddCommand(newCmd)
-	newCmd.Flags().StringVar(&apiGroup, "api-group", "", "Kubernetes API Group. e.g play.example.com/v1")
-	newCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes Resource Kind. e.g PlayService")
+	newCmd.Flags().StringVar(&apiGroup, "api-group", "play.example.com/v1", "Kubernetes API Group. e.g play.example.com/v1")
+	newCmd.Flags().StringVar(&kind, "kind", "PlayService", "Kubernetes Resource Kind. e.g PlayService")
 }
 
 func newFunc(cmd *cobra.Command, args []string) {
@@ -46,5 +46,4 @@ func newFunc(cmd *cobra.Command, args []string) {
 }
 
 func parse(args []string) {
-	// TODO: parse args.
 }
