@@ -1,61 +1,106 @@
 package generator
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-const defaultFileMode = 0750
+const (
+	defaultFileMode = 0750
+	cmdDir          = "cmd"
+	deployDir       = "deploy"
+	configDir       = "config"
+	tmpDir          = "tmp"
+	buildDir        = tmpDir + "/build"
+	codegenDir      = tmpDir + "/codegen"
+	pkgDir          = "pkg"
+	apisDir         = pkgDir + "/apis"
+	clientDir       = pkgDir + "/client"
+	stubDir         = pkgDir + "/stub"
+)
 
 type Generator struct {
+	apiGroup    string
+	kind        string
+	projectName string
 }
 
+// NewGenerator creates a new scaffold Generator.
+func NewGenerator(apiGroup, kind, projectName string) *Generator {
+	return &Generator{apiGroup: apiGroup, kind: kind, projectName: projectName}
+}
+
+// Render generates the default project structure.
 func (g *Generator) Render() error {
-	gopath, ok := os.LookupEnv("GOPATH")
-	if !ok {
-		return errors.New("GOPATH must be set")
-	}
-	projDir, ok := os.LookupEnv("PROJECT") // github.com/coreos/play
-	if !ok {
-		return errors.New("PROJECT must be set")
-	}
-	apiGroup, ok := os.LookupEnv("APIGROUP") // play.coreos.com/v1alpha1
-	if !ok {
-		return errors.New("PROJECT must be set")
-	}
-
-	projDir = filepath.Join(gopath, "src", projDir)
-	err := os.MkdirAll(projDir, defaultFileMode)
-	if err != nil {
+	if err := g.renderCmd(); err != nil {
 		return err
 	}
-
-	programName := func() string {
-		splits := strings.Split(projDir, "/")
-		return splits[len(splits)-1]
-	}()
-	err = os.MkdirAll(filepath.Join(projDir, "cmd", programName), defaultFileMode)
-	if err != nil {
+	if err := g.renderConfig(); err != nil {
 		return err
 	}
-
-	// pkg/apis/
-	groupName, apiVersion := func() (string, string) {
-		splits := strings.Split(apiGroup, "/")
-		return strings.Split(splits[0], ".")[0], splits[1]
-	}()
-	err = os.MkdirAll(filepath.Join(projDir, "pkg/apis", groupName, apiVersion), defaultFileMode)
-	if err != nil {
+	if err := g.renderDeploy(); err != nil {
 		return err
 	}
-
-	// pkg/controller/
-	err = os.MkdirAll(filepath.Join(projDir, "pkg/controller"), defaultFileMode)
-	if err != nil {
+	if err := g.renderPkg(); err != nil {
 		return err
 	}
-
+	if err := g.renderTmp(); err != nil {
+		return err
+	}
 	return nil
+}
+
+func (g *Generator) renderCmd() error {
+	if err := os.MkdirAll(filepath.Join(cmdDir, g.projectName), defaultFileMode); err != nil {
+		return err
+	}
+	// TODO render files.
+	return nil
+}
+
+func (g *Generator) renderConfig() error {
+	if err := os.MkdirAll(configDir, defaultFileMode); err != nil {
+		return err
+	}
+	// TODO render files.
+	return nil
+}
+
+func (g *Generator) renderDeploy() error {
+	if err := os.MkdirAll(filepath.Join(deployDir, g.projectName), defaultFileMode); err != nil {
+		return err
+	}
+	// TODO render files.
+	return nil
+}
+
+func (g *Generator) renderTmp() error {
+	if err := os.MkdirAll(buildDir, defaultFileMode); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(codegenDir, defaultFileMode); err != nil {
+		return err
+	}
+	// TODO render files.
+	return nil
+}
+
+func (g *Generator) renderPkg() error {
+	if err := os.MkdirAll(filepath.Join(apisDir, g.projectName, apiVersion(g.apiGroup)), defaultFileMode); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(clientDir, defaultFileMode); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(stubDir, defaultFileMode); err != nil {
+		return err
+	}
+	// TODO render files.
+	return nil
+}
+
+// apiVersion extracts api version from the given apiGroup.
+func apiVersion(apiGroup string) string {
+	return strings.Split(apiGroup, "/")[1]
 }
