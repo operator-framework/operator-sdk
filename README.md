@@ -15,7 +15,7 @@ Navigate to `$GOPATH/src/github.com/example-inc/`.
 To start a project, we use the `new` generator to provide the foundation of a fresh operator project. Run the following command:
 
 ```
-operator-sdk new memcached-operator -apigroup=cache.example.com/v1alpha1 -kind=Memcached
+operator-sdk new memcached-operator --apigroup=cache.example.com/v1alpha1 --kind=Memcached
 ```
 
 This will generate a project repo `memcached-operator`, a custom resource with APIGroup `cache.example.com/v1apha1` and Kind `Memcached`, and an example operator that watches all deployments in the same namespace and logs deployment names.
@@ -32,14 +32,15 @@ More details about the structure of the project can be found in [this doc][scaff
 
 At this step we actually have a functional operator already. To see it, first build the binary and container:
 
-> Note: $image is the container image, e.g. quay.io/example/memcached-operator:0.0.1
-
 ```
-operator-sdk build $image
-docker push $image
+# operator-sdk build quay.io/example/memcached-operator:v0.0.1
+Building binaries...
+Building container image...
+Generating Kubernetes manifests under ./deploy/ ...
+# docker push quay.io/example/memcached-operator:v0.0.1
 ```
 
-Kubernetes deployment manifests will be generated in `deploy/memcached-operator.yaml`. The `$image` parameter value will be used and set in the manifest.
+Kubernetes deployment manifests will be generated in `deploy/memcached-operator.yaml`. The container image value will be used and set in the manifest.
 
 Deploy memcached-operator:
 
@@ -186,8 +187,8 @@ func (h *Handler) Handle(ctx Context, ev Event) []Action {
 Rebuild the container:
 
 ```
-operator-sdk build $image
-docker push $image
+operator-sdk build quay.io/example/memcached-operator:v0.0.2
+docker push quay.io/example/memcached-operator:v0.0.2
 ```
 
 Deploy operator:
