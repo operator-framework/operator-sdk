@@ -106,81 +106,81 @@ In `pkg/stub/handler.go`, change `Handle()` logic:
 
 ```Go
 import (
- appsv1beta1 "k8s.io/api/apps/v1beta1"
- "k8s.io/api/core/v1"
- metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+  appsv1beta1 "k8s.io/api/apps/v1beta1"
+  "k8s.io/api/core/v1"
+  metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func (h *Handler) Handle(ctx Context, ev Event) []Action {
- var actions []Action
- switch obj := ev.Object.(type) {
- case *Memcached:
-   ls := map[string]string{
-     "app":  "memcached",
-     "name": obj.Name,
-   }
+  var actions []Action
+  switch obj := ev.Object.(type) {
+  case *Memcached:
+    ls := map[string]string{
+      "app":  "memcached",
+      "name": obj.Name,
+    }
 
-   d := &appsv1beta1.Deployment{
-     TypeMeta: metav1.TypeMeta{
-       APIVersion: "apps/v1",
-       Kind:       "Deployment",
-     },
-     ObjectMeta: metav1.ObjectMeta{
-       Name: obj.Name,
-     },
-     Spec: appsv1beta1.DeploymentSpec{
-       Selector: &metav1.LabelSelector{
-         MatchLabels: ls,
-       },
-       Template: v1.PodTemplateSpec{
-         ObjectMeta: metav1.ObjectMeta{
-           Labels: ls,
-         },
-         Spec: v1.PodSpec{
-           Containers: []v1.Container{{
-             Image:   "memcached:1.4.36-alpine",
-             Name:    "memcached",
-             Command: []string{"memcached", "-m=64", "-o", "modern", "-v"},
-             Ports: []v1.ContainerPort{{
-               ContainerPort: 11211,
-               Name:          "memcached",
-             }},
-           }},
-         },
-       },
-     },
-   }
-   actions = append(actions, Action{
-     Object: d,
-     Func:   KubeApplyFunc,
-   })
+    d := &appsv1beta1.Deployment{
+      TypeMeta: metav1.TypeMeta{
+        APIVersion: "apps/v1",
+        Kind:       "Deployment",
+      },
+      ObjectMeta: metav1.ObjectMeta{
+        Name: obj.Name,
+      },
+      Spec: appsv1beta1.DeploymentSpec{
+        Selector: &metav1.LabelSelector{
+          MatchLabels: ls,
+        },
+        Template: v1.PodTemplateSpec{
+          ObjectMeta: metav1.ObjectMeta{
+            Labels: ls,
+          },
+          Spec: v1.PodSpec{
+            Containers: []v1.Container{{
+              Image:   "memcached:1.4.36-alpine",
+              Name:    "memcached",
+              Command: []string{"memcached", "-m=64", "-o", "modern", "-v"},
+              Ports: []v1.ContainerPort{{
+                ContainerPort: 11211,
+                Name:          "memcached",
+              }},
+            }},
+          },
+        },
+      },
+    }
+    actions = append(actions, Action{
+      Object: d,
+      Func:   KubeApplyFunc,
+    })
 
-   if !obj.Spec.WithService {
-     break
-   }
+    if !obj.Spec.WithService {
+      break
+    }
 
-   svc := &v1.Service{
-     TypeMeta: metav1.TypeMeta{
-       APIVersion: "v1",
-       Kind:       "Service",
-     },
-     ObjectMeta: metav1.ObjectMeta{
-       Name: obj.Name,
-     },
-     Spec: v1.ServiceSpec{
-       Selector: ls,
-       Ports: []v1.ServicePort{{
-         Port: 11211,
-         Name: "memcached",
-       }},
-     },
-   }
-   actions = append(actions, Action{
-     Object: svc,
-     Func:   KubeApplyFunc,
-   })
- }
- return actions
+    svc := &v1.Service{
+      TypeMeta: metav1.TypeMeta{
+        APIVersion: "v1",
+        Kind:       "Service",
+      },
+      ObjectMeta: metav1.ObjectMeta{
+        Name: obj.Name,
+      },
+      Spec: v1.ServiceSpec{
+        Selector: ls,
+        Ports: []v1.ServicePort{{
+          Port: 11211,
+          Name: "memcached",
+        }},
+      },
+    }
+    actions = append(actions, Action{
+      Object: svc,
+      Func:   KubeApplyFunc,
+    })
+  }
+  return actions
 }
 ```
 
@@ -198,13 +198,13 @@ kubectl create -f deploy/memcached-operator.yaml
 
 Create a `Memcached` CR with the following spec:
 
-```
+```yaml
 apiVersion: "cache.example.com/v1alpha1"
 kind: "Memcached"
 metadata:
- name: "example"
+  name: "example"
 spec:
- withService: true
+  withService: true
 ```
 
 There will be a new Memcached Deployment:
