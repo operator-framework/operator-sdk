@@ -46,6 +46,7 @@ func newFunc(cmd *cobra.Command, args []string) {
 		ExitWithError(ExitBadArgs, fmt.Errorf("new command needs 1 argument."))
 	}
 	parse(args)
+	verifyFlags()
 	g := generator.NewGenerator(apiGroup, kind, projectName)
 	err := g.Render()
 	if err != nil {
@@ -58,4 +59,8 @@ func parse(args []string) {
 	if len(projectName) == 0 {
 		ExitWithError(ExitBadArgs, fmt.Errorf("project-name must not be empty"))
 	}
+}
+
+func verifyFlags() {
+	// TODO: verify format of input flags.
 }

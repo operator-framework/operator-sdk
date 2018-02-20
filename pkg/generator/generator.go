@@ -16,13 +16,14 @@ const (
 	codegenDir      = tmpDir + "/codegen"
 	pkgDir          = "pkg"
 	apisDir         = pkgDir + "/apis"
-	clientDir       = pkgDir + "/client"
 	stubDir         = pkgDir + "/stub"
 )
 
 type Generator struct {
-	apiGroup    string
-	kind        string
+	apiGroup string
+	kind     string
+	// projectName is name of the new operator application
+	// and is also the name of the base directory.
 	projectName string
 }
 
@@ -45,14 +46,11 @@ func (g *Generator) Render() error {
 	if err := g.renderPkg(); err != nil {
 		return err
 	}
-	if err := g.renderTmp(); err != nil {
-		return err
-	}
-	return nil
+	return g.renderTmp()
 }
 
 func (g *Generator) renderCmd() error {
-	if err := os.MkdirAll(filepath.Join(cmdDir, g.projectName), defaultFileMode); err != nil {
+	if err := os.MkdirAll(filepath.Join(g.projectName, cmdDir, g.projectName), defaultFileMode); err != nil {
 		return err
 	}
 	// TODO render files.
@@ -60,7 +58,7 @@ func (g *Generator) renderCmd() error {
 }
 
 func (g *Generator) renderConfig() error {
-	if err := os.MkdirAll(configDir, defaultFileMode); err != nil {
+	if err := os.MkdirAll(filepath.Join(g.projectName, configDir), defaultFileMode); err != nil {
 		return err
 	}
 	// TODO render files.
@@ -68,7 +66,7 @@ func (g *Generator) renderConfig() error {
 }
 
 func (g *Generator) renderDeploy() error {
-	if err := os.MkdirAll(filepath.Join(deployDir, g.projectName), defaultFileMode); err != nil {
+	if err := os.MkdirAll(filepath.Join(g.projectName, deployDir), defaultFileMode); err != nil {
 		return err
 	}
 	// TODO render files.
@@ -76,10 +74,10 @@ func (g *Generator) renderDeploy() error {
 }
 
 func (g *Generator) renderTmp() error {
-	if err := os.MkdirAll(buildDir, defaultFileMode); err != nil {
+	if err := os.MkdirAll(filepath.Join(g.projectName, buildDir), defaultFileMode); err != nil {
 		return err
 	}
-	if err := os.MkdirAll(codegenDir, defaultFileMode); err != nil {
+	if err := os.MkdirAll(filepath.Join(g.projectName, codegenDir), defaultFileMode); err != nil {
 		return err
 	}
 	// TODO render files.
@@ -87,13 +85,10 @@ func (g *Generator) renderTmp() error {
 }
 
 func (g *Generator) renderPkg() error {
-	if err := os.MkdirAll(filepath.Join(apisDir, g.projectName, apiVersion(g.apiGroup)), defaultFileMode); err != nil {
+	if err := os.MkdirAll(filepath.Join(g.projectName, apisDir, apiDirName(g.apiGroup), apiVersion(g.apiGroup)), defaultFileMode); err != nil {
 		return err
 	}
-	if err := os.MkdirAll(clientDir, defaultFileMode); err != nil {
-		return err
-	}
-	if err := os.MkdirAll(stubDir, defaultFileMode); err != nil {
+	if err := os.MkdirAll(filepath.Join(g.projectName, stubDir), defaultFileMode); err != nil {
 		return err
 	}
 	// TODO render files.
@@ -103,4 +98,17 @@ func (g *Generator) renderPkg() error {
 // apiVersion extracts api version from the given apiGroup.
 func apiVersion(apiGroup string) string {
 	return strings.Split(apiGroup, "/")[1]
+}
+
+// groupName extracts the group name from the givem apiGroup.
+func groupName(apiGroup string) string {
+	return strings.Split(apiGroup, "/")[0]
+}
+
+// apiDirName extracts the name of api directory under ../apis/ from the apiGroup.
+// it uses the first word separated with "." of the groupName as the api directory name.
+// for example,
+//  apiDirName("app.example.com/v1alpha1") => "app".
+func apiDirName(apiGroup string) string {
+	return strings.Split(groupName(apiGroup), ".")[0]
 }
