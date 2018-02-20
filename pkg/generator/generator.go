@@ -32,7 +32,21 @@ func NewGenerator(apiGroup, kind, projectName string) *Generator {
 	return &Generator{apiGroup: apiGroup, kind: kind, projectName: projectName}
 }
 
-// Render generates the default project structure.
+// Render generates the default project structure:
+//
+// ├── <projectName>
+// │   ├── cmd
+// │   │   └── <projectName>
+// │   ├── config
+// │   ├── deploy
+// │   ├── pkg
+// │   │   ├── apis
+// │   │   │   └── <api-dir-name>  // computed from apiDirName(apiGroup).
+// │   │   │       └── <api-version> // computed from apiVersion(apiGroup).
+// │   │   └── stub
+// │   └── tmp
+// │       ├── build
+// │       └── codegen
 func (g *Generator) Render() error {
 	if err := g.renderCmd(); err != nil {
 		return err

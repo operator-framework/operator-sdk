@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/coreos/operator-sdk/pkg/generator"
+
 	"github.com/spf13/cobra"
 )
 
