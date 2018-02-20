@@ -7,8 +7,8 @@ import (
 	. "github.com/dave/jennifer/jen"
 )
 
-// sdkImport is the operator-sdk import path.
 const (
+	// sdkImport is the operator-sdk import path.
 	sdkImport = "github.com/coreos/operator-sdk/pkg/sdk"
 	main      = "main"
 )
