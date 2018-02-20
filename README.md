@@ -73,9 +73,9 @@ This is a basic test that verifies everything works correctly. Next we are going
 
 An operator is used to extend the kube-API and codify application domain knowledge. Operator SDK is designed to provide non-Kubernetes developers an easy way to write the business logic.
 
-In the following we are adding a custom resource `Memcached`, and customizing the operator logic that creating a new Memcached CR will create a Memcached Deployment and (optional) Service.
+In the following steps we are adding a custom resource `Memcached`, and customizing the operator logic that creating a new Memcached CR will create a Memcached Deployment and (optional) Service.
 
-In `pkg/apis/cache/v1alpha1/types.go`, Add to `MemcachedSpec` a new field `WithService`:
+In `pkg/apis/cache/v1alpha1/types.go`, add to `MemcachedSpec` a new field `WithService`:
 
 ```Go
 type MemcachedSpec struct {
@@ -237,7 +237,7 @@ We can test the Memcached service by opening a telnet session and running comman
    bar
    ```
 
-Now we have successfully to customize the event handling logic to deploy Memcached service for us.
+Now we have successfully customized the event handling logic to deploy Memcached service for us.
 
 Clean up resources:
 
