@@ -6,6 +6,9 @@ import (
 )
 
 const (
+	// http://tldp.org/LDP/abs/html/exitcodes.html
+	ExitSuccess = iota
+	ExitError
 	// ExitBadArgs is the exit error code for bad arguments.
 	ExitBadArgs = 128
 )

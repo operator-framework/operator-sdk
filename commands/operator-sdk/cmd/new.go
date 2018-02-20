@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/coreos/operator-sdk/pkg/generator"
+
 	"github.com/spf13/cobra"
 )
 
@@ -27,8 +29,9 @@ var newCmd = &cobra.Command{
 }
 
 var (
-	apiGroup string
-	kind     string
+	apiGroup    string
+	kind        string
+	projectName string
 )
 
 func init() {
@@ -44,8 +47,21 @@ func newFunc(cmd *cobra.Command, args []string) {
 		ExitWithError(ExitBadArgs, fmt.Errorf("new command needs 1 argument."))
 	}
 	parse(args)
-	// TODO: add generation logic.
+	verifyFlags()
+	g := generator.NewGenerator(apiGroup, kind, projectName)
+	err := g.Render()
+	if err != nil {
+		ExitWithError(ExitError, fmt.Errorf("failed to create project %v: %v", projectName, err))
+	}
 }
 
 func parse(args []string) {
+	projectName = args[0]
+	if len(projectName) == 0 {
+		ExitWithError(ExitBadArgs, fmt.Errorf("project-name must not be empty"))
+	}
+}
+
+func verifyFlags() {
+	// TODO: verify format of input flags.
 }
