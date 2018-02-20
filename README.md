@@ -96,7 +96,7 @@ In `main.go`, change to watch Memcached CR:
 
 ```Go
 func main() {
-  sdk.Watch(“memcacheds”, namespace, &api.Memcached{}, restcli)
+  sdk.Watch(“memcacheds”, namespace, &api.Memcached{})
   sdk.Handle(stub.NewHandler())
   sdk.Run(context.TODO())
 }
