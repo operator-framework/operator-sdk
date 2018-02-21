@@ -23,17 +23,9 @@ Before creating any project, this guide has the following prerequisites:
 
 Operator SDK CLI tool is used to manage development lifecycle.
 
-Get the code:
+Install the CLI tool:
 ```
-mkdir $GOPATH/src/github.com/coreos/
-cd $GOPATH/src/github.com/coreos/
-git clone https://github.com/coreos/operator-sdk.git
-```
-
-Install CLI tool:
-```
-cd $GOPATH/src/github.com/coreos/operator-sdk
-go install ./commands/operator-sdk/main.go
+go install -u github.com/coreos/operator-sdk/commands/operator-sdk
 ```
 
 ## Creating a new project
