@@ -4,7 +4,7 @@ This guide is designed for beginners who wants to start an operator project from
 
 ## What’s Operator SDK?
 
-## Guide assumptions
+## Guide prerequisites
 
 Before creating any project, this guide has the following prerequisites:
 
