@@ -22,7 +22,8 @@ const (
 	stubDir    = pkgDir + "/stub"
 
 	// files
-	main = "main.go"
+	main    = "main.go"
+	handler = "handler.go"
 )
 
 type Generator struct {
@@ -120,7 +121,15 @@ func (g *Generator) renderPkg() error {
 	if err := os.MkdirAll(filepath.Join(g.projectName, apisDir, apiDirName(g.apiVersion), version(g.apiVersion)), defaultFileMode); err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Join(g.projectName, stubDir), defaultFileMode); err != nil {
+	sDir := filepath.Join(g.projectName, stubDir)
+	if err := os.MkdirAll(sDir, defaultFileMode); err != nil {
+		return err
+	}
+	buf := &bytes.Buffer{}
+	if err := renderHandler(buf); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(filepath.Join(sDir, handler), buf.Bytes(), 0644); err != nil {
 		return err
 	}
 	// TODO render files.
