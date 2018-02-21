@@ -20,16 +20,17 @@ const (
 )
 
 type Generator struct {
-	apiGroup string
-	kind     string
+	// apiVersion is the kubernetes apiVersion that has the format of $GROUP_NAME/$VERSION.
+	apiVersion string
+	kind       string
 	// projectName is name of the new operator application
 	// and is also the name of the base directory.
 	projectName string
 }
 
 // NewGenerator creates a new scaffold Generator.
-func NewGenerator(apiGroup, kind, projectName string) *Generator {
-	return &Generator{apiGroup: apiGroup, kind: kind, projectName: projectName}
+func NewGenerator(apiVersion, kind, projectName string) *Generator {
+	return &Generator{apiVersion: apiVersion, kind: kind, projectName: projectName}
 }
 
 // Render generates the default project structure:
@@ -41,8 +42,8 @@ func NewGenerator(apiGroup, kind, projectName string) *Generator {
 // │   ├── deploy
 // │   ├── pkg
 // │   │   ├── apis
-// │   │   │   └── <api-dir-name>  // computed from apiDirName(apiGroup).
-// │   │   │       └── <api-version> // computed from apiVersion(apiGroup).
+// │   │   │   └── <api-dir-name>  // computed from apiDirName(apiVersion).
+// │   │   │       └── <version> // computed from version(apiVersion).
 // │   │   └── stub
 // │   └── tmp
 // │       ├── build
@@ -99,7 +100,7 @@ func (g *Generator) renderTmp() error {
 }
 
 func (g *Generator) renderPkg() error {
-	if err := os.MkdirAll(filepath.Join(g.projectName, apisDir, apiDirName(g.apiGroup), apiVersion(g.apiGroup)), defaultFileMode); err != nil {
+	if err := os.MkdirAll(filepath.Join(g.projectName, apisDir, apiDirName(g.apiVersion), version(g.apiVersion)), defaultFileMode); err != nil {
 		return err
 	}
 	if err := os.MkdirAll(filepath.Join(g.projectName, stubDir), defaultFileMode); err != nil {
@@ -109,18 +110,19 @@ func (g *Generator) renderPkg() error {
 	return nil
 }
 
-// apiVersion extracts api version from the given apiGroup.
-func apiVersion(apiGroup string) string {
-	return strings.Split(apiGroup, "/")[1]
+// version extracts the VERSION from the given apiVersion ($GROUP_NAME/$VERSION).
+func version(apiVersion string) string {
+	return strings.Split(apiVersion, "/")[1]
 }
 
-// groupName extracts the group name from the givem apiGroup.
-func groupName(apiGroup string) string {
-	return strings.Split(apiGroup, "/")[0]
+// groupName extracts the GROUP_NAME from the given apiVersion ($GROUP_NAME/$VERSION).
+func groupName(apiVersion string) string {
+	return strings.Split(apiVersion, "/")[0]
 }
 
-// apiDirName extracts the name of api directory under ../apis/ from the apiGroup.
-// it uses the first word separated with "." of the groupName as the api directory name.
+// apiDirName extracts the name of api directory under ../apis/ folder
+// from the given apiVersion ($GROUP_NAME/$VERSION).
+// the first word separated with "." of the GROUP_NAME is the api directory name.
 // for example,
 //  apiDirName("app.example.com/v1alpha1") => "app".
 func apiDirName(apiGroup string) string {

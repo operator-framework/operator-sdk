@@ -17,7 +17,7 @@ var newCmd = &cobra.Command{
 
 	<project-name> is the project name of the new operator. (e.g app-operator)
 
-	--api-group and --kind are required flags to generate the new operator application.
+	--api-version and --kind are required flags to generate the new operator application.
 
 	For example,
 	$ mkdir $GOPATH/src/github.com/example.com/
@@ -29,15 +29,15 @@ var newCmd = &cobra.Command{
 }
 
 var (
-	apiGroup    string
+	apiVersion  string
 	kind        string
 	projectName string
 )
 
 func init() {
 	RootCmd.AddCommand(newCmd)
-	newCmd.Flags().StringVar(&apiGroup, "api-group", "", "Kubernetes API Group and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
-	newCmd.MarkFlagRequired("api-group")
+	newCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
+	newCmd.MarkFlagRequired("api-version")
 	newCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. (e.g AppService)")
 	newCmd.MarkFlagRequired("kind")
 }
@@ -48,7 +48,7 @@ func newFunc(cmd *cobra.Command, args []string) {
 	}
 	parse(args)
 	verifyFlags()
-	g := generator.NewGenerator(apiGroup, kind, projectName)
+	g := generator.NewGenerator(apiVersion, kind, projectName)
 	err := g.Render()
 	if err != nil {
 		ExitWithError(ExitError, fmt.Errorf("failed to create project %v: %v", projectName, err))
