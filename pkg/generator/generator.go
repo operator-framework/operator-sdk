@@ -1,6 +1,8 @@
 package generator
 
 import (
+	"bytes"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,15 +10,19 @@ import (
 
 const (
 	defaultFileMode = 0750
-	cmdDir          = "cmd"
-	deployDir       = "deploy"
-	configDir       = "config"
-	tmpDir          = "tmp"
-	buildDir        = tmpDir + "/build"
-	codegenDir      = tmpDir + "/codegen"
-	pkgDir          = "pkg"
-	apisDir         = pkgDir + "/apis"
-	stubDir         = pkgDir + "/stub"
+	// dirs
+	cmdDir     = "cmd"
+	deployDir  = "deploy"
+	configDir  = "config"
+	tmpDir     = "tmp"
+	buildDir   = tmpDir + "/build"
+	codegenDir = tmpDir + "/codegen"
+	pkgDir     = "pkg"
+	apisDir    = pkgDir + "/apis"
+	stubDir    = pkgDir + "/stub"
+
+	// files
+	main = "main.go"
 )
 
 type Generator struct {
@@ -26,11 +32,13 @@ type Generator struct {
 	// projectName is name of the new operator application
 	// and is also the name of the base directory.
 	projectName string
+	// repoPath is the project's repository path rooted under $GOPATH.
+	repoPath string
 }
 
 // NewGenerator creates a new scaffold Generator.
-func NewGenerator(apiVersion, kind, projectName string) *Generator {
-	return &Generator{apiVersion: apiVersion, kind: kind, projectName: projectName}
+func NewGenerator(apiVersion, kind, projectName, repoPath string) *Generator {
+	return &Generator{apiVersion: apiVersion, kind: kind, projectName: projectName, repoPath: repoPath}
 }
 
 // Render generates the default project structure:
@@ -65,11 +73,20 @@ func (g *Generator) Render() error {
 }
 
 func (g *Generator) renderCmd() error {
-	if err := os.MkdirAll(filepath.Join(g.projectName, cmdDir, g.projectName), defaultFileMode); err != nil {
+	cpDir := filepath.Join(g.projectName, cmdDir, g.projectName)
+	if err := os.MkdirAll(cpDir, defaultFileMode); err != nil {
 		return err
 	}
-	// TODO render files.
-	return nil
+
+	buf := &bytes.Buffer{}
+	if err := renderMain(buf, g.repoPath, version(g.apiVersion), apiDirName(g.apiVersion), g.kind, toPlural(g.kind)); err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filepath.Join(cpDir, main), buf.Bytes(), 0644)
+}
+
+func toPlural(kind string) string {
+	return kind + "Plural"
 }
 
 func (g *Generator) renderConfig() error {

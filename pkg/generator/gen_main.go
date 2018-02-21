@@ -9,7 +9,6 @@ import (
 const (
 	// sdkImport is the operator-sdk import path.
 	sdkImport = "github.com/coreos/operator-sdk/pkg/sdk"
-	main      = "main"
 )
 
 // Main contains all the customized data needed to generate cmd/<projectName>/main.go for a new operator
@@ -26,7 +25,7 @@ type Main struct {
 }
 
 // renderMain generates the cmd/<projectName>/main.go file given a repo path ("github.com/coreos/play"), apiVersion ("v1alpha1"),
-// projectName ("play"), service ("PlayService"), and servicePlural ("PlayServicePlural").
+// api dir name ("play"), service ("PlayService"), and servicePlural ("PlayServicePlural").
 //
 // for example:
 // renderMain(w, "github.com/coreos/play", "v1alpha1", "play", "PlayService", "PlayServicePlural" )
@@ -49,7 +48,7 @@ type Main struct {
 //  	sdk.Run(context.TODO())
 // }
 //
-func renderMain(w io.Writer, repo, version, projectName, service, servicePlural string) error {
+func renderMain(w io.Writer, repo, version, apiDirName, service, servicePlural string) error {
 	t := template.New("cmd/<projectName>/main.go")
 	t, err := t.Parse(mainTmpl)
 	if err != nil {
@@ -58,7 +57,7 @@ func renderMain(w io.Writer, repo, version, projectName, service, servicePlural 
 
 	m := Main{
 		OperatorSDKImport: sdkImport,
-		APIImport:         filepath.Join(repo, apisDir, projectName, version),
+		APIImport:         filepath.Join(repo, apisDir, apiDirName, version),
 		StubImport:        filepath.Join(repo, stubDir),
 		ServicePlural:     servicePlural,
 		Service:           service,
