@@ -2,6 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/coreos/operator-sdk/pkg/generator"
 
@@ -34,6 +37,11 @@ var (
 	projectName string
 )
 
+const (
+	gopath = "GOPATH"
+	src    = "src"
+)
+
 func init() {
 	RootCmd.AddCommand(newCmd)
 	newCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
@@ -48,7 +56,7 @@ func newFunc(cmd *cobra.Command, args []string) {
 	}
 	parse(args)
 	verifyFlags()
-	g := generator.NewGenerator(apiVersion, kind, projectName)
+	g := generator.NewGenerator(apiVersion, kind, projectName, repoPath())
 	err := g.Render()
 	if err != nil {
 		ExitWithError(ExitError, fmt.Errorf("failed to create project %v: %v", projectName, err))
@@ -60,6 +68,26 @@ func parse(args []string) {
 	if len(projectName) == 0 {
 		ExitWithError(ExitBadArgs, fmt.Errorf("project-name must not be empty"))
 	}
+}
+
+// repoPath checks if this project's repository path is rooted under $GOPATH and returns project's repository path.
+func repoPath() string {
+	gp := os.Getenv(gopath)
+	if len(gp) == 0 {
+		ExitWithError(ExitError, fmt.Errorf("$GOPATH env not set"))
+	}
+	wd, err := os.Getwd()
+	if err != nil {
+		ExitWithError(ExitError, fmt.Errorf("failed to determine the full path of the current directory: %v", err))
+	}
+	// check if this project's repository path is rooted under $GOPATH
+	if !strings.HasPrefix(wd, gp) {
+		ExitWithError(ExitError, fmt.Errorf("project's repository path (%v) is not rooted under GOPATH (%v)", wd, gp))
+	}
+	// compute the repo path by stripping "$GOPATH/src/" from the path of the current directory.
+	rp := filepath.Join(string(wd[len(filepath.Join(gp, src)):]), projectName)
+	// strip any "/" prefix from the repo path.
+	return strings.TrimPrefix(rp, string(filepath.Separator))
 }
 
 func verifyFlags() {
