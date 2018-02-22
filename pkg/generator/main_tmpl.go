@@ -7,13 +7,12 @@ import (
 	"context"
 
 	sdk "{{.OperatorSDKImport}}"
-	api "{{.APIImport}}"
 	stub "{{.StubImport}}"
 )
 
 func main() {
 	namespace := "default"
-	sdk.Watch(api.{{.ServicePlural}}, namespace, api.{{.Service}})
+	sdk.Watch("apps/v1", "Deployment", namespace)
  	sdk.Handle(&stub.Handler{})
  	sdk.Run(context.TODO())
 }

@@ -90,19 +90,15 @@ func (g *Generator) renderCmd() error {
 	if err := os.MkdirAll(cpDir, defaultDirFileMode); err != nil {
 		return err
 	}
-	return renderCmdFiles(cpDir, g.repoPath, version(g.apiVersion), apiDirName(g.apiVersion), g.kind, toPlural(g.kind))
+	return renderCmdFiles(cpDir, g.repoPath)
 }
 
-func renderCmdFiles(cmdProjectDir, repoPath, version, apiDirName, kind, kindPlural string) error {
+func renderCmdFiles(cmdProjectDir, repoPath string) error {
 	buf := &bytes.Buffer{}
-	if err := renderMainFile(buf, repoPath, version, apiDirName, kind, kindPlural); err != nil {
+	if err := renderMainFile(buf, repoPath); err != nil {
 		return err
 	}
 	return ioutil.WriteFile(filepath.Join(cmdProjectDir, main), buf.Bytes(), defaultFileMode)
-}
-
-func toPlural(kind string) string {
-	return kind + "Plural"
 }
 
 func (g *Generator) renderConfig() error {
