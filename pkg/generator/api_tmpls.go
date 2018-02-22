@@ -1,13 +1,13 @@
 package generator
 
-// apisDocTmpl is the template for apis/../doc.go
-const apisDocTmpl = `// +k8s:deepcopy-gen=package
+// apiDocTmpl is the template for apis/../doc.go
+const apiDocTmpl = `// +k8s:deepcopy-gen=package
 // +groupName={{.GroupName}}
 package {{.Version}}
 `
 
-// apisRegisterTmpl is the template for apis/../register.go
-const apisRegisterTmpl = `package {{.Version}}
+// apiRegisterTmpl is the template for apis/../register.go
+const apiRegisterTmpl = `package {{.Version}}
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,7 +38,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 }
 `
 
-const apisTypesTmpl = `package {{.Version}}
+// apiTypesTmpl is the template for apis/../types.go
+const apiTypesTmpl = `package {{.Version}}
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

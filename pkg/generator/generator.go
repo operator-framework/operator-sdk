@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	defaultFileMode = 0750
+	defaultDirFileMode = 0750
+	defaultFileMode    = 0644
 	// dirs
 	cmdDir     = "cmd"
 	deployDir  = "deploy"
@@ -22,8 +23,11 @@ const (
 	stubDir    = pkgDir + "/stub"
 
 	// files
-	main    = "main.go"
-	handler = "handler.go"
+	main     = "main.go"
+	handler  = "handler.go"
+	doc      = "doc.go"
+	register = "register.go"
+	types    = "types.go"
 )
 
 type Generator struct {
@@ -83,7 +87,7 @@ func (g *Generator) pullDep() error {
 
 func (g *Generator) renderCmd() error {
 	cpDir := filepath.Join(g.projectName, cmdDir, g.projectName)
-	if err := os.MkdirAll(cpDir, defaultFileMode); err != nil {
+	if err := os.MkdirAll(cpDir, defaultDirFileMode); err != nil {
 		return err
 	}
 
@@ -91,7 +95,7 @@ func (g *Generator) renderCmd() error {
 	if err := renderMain(buf, g.repoPath, version(g.apiVersion), apiDirName(g.apiVersion), g.kind, toPlural(g.kind)); err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filepath.Join(cpDir, main), buf.Bytes(), 0644)
+	return ioutil.WriteFile(filepath.Join(cpDir, main), buf.Bytes(), defaultFileMode)
 }
 
 func toPlural(kind string) string {
@@ -99,7 +103,7 @@ func toPlural(kind string) string {
 }
 
 func (g *Generator) renderConfig() error {
-	if err := os.MkdirAll(filepath.Join(g.projectName, configDir), defaultFileMode); err != nil {
+	if err := os.MkdirAll(filepath.Join(g.projectName, configDir), defaultDirFileMode); err != nil {
 		return err
 	}
 	// TODO render files.
@@ -107,7 +111,7 @@ func (g *Generator) renderConfig() error {
 }
 
 func (g *Generator) renderDeploy() error {
-	if err := os.MkdirAll(filepath.Join(g.projectName, deployDir), defaultFileMode); err != nil {
+	if err := os.MkdirAll(filepath.Join(g.projectName, deployDir), defaultDirFileMode); err != nil {
 		return err
 	}
 	// TODO render files.
@@ -115,10 +119,10 @@ func (g *Generator) renderDeploy() error {
 }
 
 func (g *Generator) renderTmp() error {
-	if err := os.MkdirAll(filepath.Join(g.projectName, buildDir), defaultFileMode); err != nil {
+	if err := os.MkdirAll(filepath.Join(g.projectName, buildDir), defaultDirFileMode); err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Join(g.projectName, codegenDir), defaultFileMode); err != nil {
+	if err := os.MkdirAll(filepath.Join(g.projectName, codegenDir), defaultDirFileMode); err != nil {
 		return err
 	}
 	// TODO render files.
@@ -126,22 +130,52 @@ func (g *Generator) renderTmp() error {
 }
 
 func (g *Generator) renderPkg() error {
-	if err := os.MkdirAll(filepath.Join(g.projectName, apisDir, apiDirName(g.apiVersion), version(g.apiVersion)), defaultFileMode); err != nil {
+	v := version(g.apiVersion)
+	apiDir := filepath.Join(g.projectName, apisDir, apiDirName(g.apiVersion), v)
+	if err := os.MkdirAll(apiDir, defaultDirFileMode); err != nil {
 		return err
 	}
+	if err := renderAPIFiles(apiDir, groupName(g.apiVersion), v, g.kind); err != nil {
+		return err
+	}
+
 	sDir := filepath.Join(g.projectName, stubDir)
-	if err := os.MkdirAll(sDir, defaultFileMode); err != nil {
+	if err := os.MkdirAll(sDir, defaultDirFileMode); err != nil {
 		return err
 	}
+	return renderStubFiles(sDir)
+}
+
+func renderAPIFiles(apiDir, groupName, version, kind string) error {
+	buf := &bytes.Buffer{}
+	if err := renderAPIDocFile(buf, groupName, version); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(filepath.Join(apiDir, doc), buf.Bytes(), defaultFileMode); err != nil {
+		return err
+	}
+
+	buf = &bytes.Buffer{}
+	if err := renderAPIRegisterFile(buf, kind, groupName, version); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(filepath.Join(apiDir, register), buf.Bytes(), defaultFileMode); err != nil {
+		return err
+	}
+
+	buf = &bytes.Buffer{}
+	if err := renderAPITypesFile(buf, kind, version); err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filepath.Join(apiDir, types), buf.Bytes(), defaultFileMode)
+}
+
+func renderStubFiles(stubDir string) error {
 	buf := &bytes.Buffer{}
 	if err := renderHandler(buf); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(filepath.Join(sDir, handler), buf.Bytes(), 0644); err != nil {
-		return err
-	}
-	// TODO render files.
-	return nil
+	return ioutil.WriteFile(filepath.Join(stubDir, handler), buf.Bytes(), defaultFileMode)
 }
 
 // version extracts the VERSION from the given apiVersion ($GROUP_NAME/$VERSION).
