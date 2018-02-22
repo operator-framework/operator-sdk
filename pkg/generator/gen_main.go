@@ -24,7 +24,7 @@ type Main struct {
 	Service       string
 }
 
-// renderMain generates the cmd/<projectName>/main.go file given a repo path ("github.com/coreos/play"), apiVersion ("v1alpha1"),
+// renderMainFile generates the cmd/<projectName>/main.go file given a repo path ("github.com/coreos/play"), apiVersion ("v1alpha1"),
 // api dir name ("play"), service ("PlayService"), and servicePlural ("PlayServicePlural").
 //
 // for example:
@@ -48,7 +48,7 @@ type Main struct {
 //  	sdk.Run(context.TODO())
 // }
 //
-func renderMain(w io.Writer, repo, version, apiDirName, service, servicePlural string) error {
+func renderMainFile(w io.Writer, repo, version, apiDirName, service, servicePlural string) error {
 	t := template.New("cmd/<projectName>/main.go")
 	t, err := t.Parse(mainTmpl)
 	if err != nil {

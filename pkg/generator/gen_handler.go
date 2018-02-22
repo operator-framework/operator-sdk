@@ -12,8 +12,8 @@ type Handler struct {
 	OperatorSDKImport string
 }
 
-// renderHandler generates the stub/handler.go file.
-func renderHandler(w io.Writer) error {
+// renderHandlerFile generates the stub/handler.go file.
+func renderHandlerFile(w io.Writer) error {
 	t := template.New("stub/handler.go")
 	t, err := t.Parse(handlerTmpl)
 	if err != nil {
