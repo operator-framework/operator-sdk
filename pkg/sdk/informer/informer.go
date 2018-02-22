@@ -2,20 +2,21 @@ package informer
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/fields"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/rest"
+	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 )
 
 type Informer interface {
-	Run(ctx context.Context) error
+	Run(ctx context.Context)
 }
 
 type informer struct {
@@ -26,7 +27,7 @@ type informer struct {
 	context             context.Context
 }
 
-func New(resourcePluralName, namespace string, objType runtime.Object, resourceClient rest.Interface) Informer {
+func New(resourcePluralName, namespace string, resourceClient dynamic.ResourceInterface) Informer {
 	i := &informer{
 		resourcePluralName: resourcePluralName,
 		queue:              workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), resourcePluralName),
@@ -34,8 +35,7 @@ func New(resourcePluralName, namespace string, objType runtime.Object, resourceC
 	}
 
 	i.sharedIndexInformer = cache.NewSharedIndexInformer(
-		cache.NewListWatchFromClient(resourceClient, resourcePluralName, namespace, fields.Everything()),
-		objType, 0, cache.Indexers{},
+		newListWatcherFromResourceClient(resourceClient), &unstructured.Unstructured{}, 0, cache.Indexers{},
 	)
 	i.sharedIndexInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    i.handleAddResourceEvent,
@@ -45,22 +45,32 @@ func New(resourcePluralName, namespace string, objType runtime.Object, resourceC
 	return i
 }
 
-func (i *informer) Run(ctx context.Context) error {
+func newListWatcherFromResourceClient(resourceClient dynamic.ResourceInterface) *cache.ListWatch {
+	listFunc := func(options metav1.ListOptions) (runtime.Object, error) {
+		return resourceClient.List(options)
+	}
+	watchFunc := func(options metav1.ListOptions) (watch.Interface, error) {
+		return resourceClient.Watch(options)
+	}
+	return &cache.ListWatch{ListFunc: listFunc, WatchFunc: watchFunc}
+}
+
+func (i *informer) Run(ctx context.Context) {
 	i.context = ctx
 	defer i.queue.ShutDown()
 
-	logrus.Info("starting %s controller", i.resourcePluralName)
+	logrus.Infof("starting %s controller", i.resourcePluralName)
 	go i.sharedIndexInformer.Run(ctx.Done())
 
 	if !cache.WaitForCacheSync(ctx.Done(), i.sharedIndexInformer.HasSynced) {
-		return errors.New("Timed out waiting for caches to sync")
+		panic("Timed out waiting for caches to sync")
 	}
 
 	const numWorkers = 1
 	for n := 0; n < numWorkers; n++ {
 		go wait.Until(i.runWorker, time.Second, ctx.Done())
 	}
-	return nil
+	logrus.Infof("stopping %s controller", i.resourcePluralName)
 }
 
 func (i *informer) handleAddResourceEvent(obj interface{}) {
