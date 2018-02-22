@@ -37,3 +37,36 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	return nil
 }
 `
+
+const apisTypesTmpl = `package {{.Version}}
+
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+type {{.Kind}}List struct {
+	metav1.TypeMeta ` + "`" + `json:",inline"` + "`\n" +
+	`	metav1.ListMeta ` + "`" + `json:"metadata"` + "`\n" +
+	`	Items           []{{.Kind}} ` + "`" + `json:"items"` + "`\n" +
+	`}` + "\n" +
+	`
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+type {{.Kind}} struct {
+	metav1.TypeMeta   ` + "`" + `json:",inline"` + "`\n" +
+	`	metav1.ObjectMeta ` + "`" + `json:"metadata"` + "`\n" +
+	`	Spec              {{.Kind}}Spec   ` + "`" + `json:"spec"` + "`\n" +
+	`	Status            {{.Kind}}Status ` + "`" + `json:"status,omitempty"` + "`\n" +
+	`}` + "\n" +
+	`
+type {{.Kind}}Spec struct {
+	Replica int32 ` + "`" + `json:"replica,omitempty"` + "`\n" +
+	`	// Fills me ` + "\n" +
+	`}` + "\n" +
+	`
+type {{.Kind}}Status struct {
+	// Fills me
+}
+`
