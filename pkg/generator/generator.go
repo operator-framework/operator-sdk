@@ -70,7 +70,15 @@ func (g *Generator) Render() error {
 	if err := g.renderPkg(); err != nil {
 		return err
 	}
-	return g.renderTmp()
+	if err := g.renderTmp(); err != nil {
+		return err
+	}
+	return g.pullDep()
+}
+
+func (g *Generator) pullDep() error {
+	// TODO: After we have setup scalffolding, pull dependencies: render Gopkg.toml, then `dep ensure`
+	return nil
 }
 
 func (g *Generator) renderCmd() error {
