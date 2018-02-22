@@ -90,12 +90,15 @@ func (g *Generator) renderCmd() error {
 	if err := os.MkdirAll(cpDir, defaultDirFileMode); err != nil {
 		return err
 	}
+	return renderCmdFiles(cpDir, g.repoPath, version(g.apiVersion), apiDirName(g.apiVersion), g.kind, toPlural(g.kind))
+}
 
+func renderCmdFiles(cmdProjectDir, repoPath, version, apiDirName, kind, kindPlural string) error {
 	buf := &bytes.Buffer{}
-	if err := renderMain(buf, g.repoPath, version(g.apiVersion), apiDirName(g.apiVersion), g.kind, toPlural(g.kind)); err != nil {
+	if err := renderMainFile(buf, repoPath, version, apiDirName, kind, kindPlural); err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filepath.Join(cpDir, main), buf.Bytes(), defaultFileMode)
+	return ioutil.WriteFile(filepath.Join(cmdProjectDir, main), buf.Bytes(), defaultFileMode)
 }
 
 func toPlural(kind string) string {
@@ -172,7 +175,7 @@ func renderAPIFiles(apiDir, groupName, version, kind string) error {
 
 func renderStubFiles(stubDir string) error {
 	buf := &bytes.Buffer{}
-	if err := renderHandler(buf); err != nil {
+	if err := renderHandlerFile(buf); err != nil {
 		return err
 	}
 	return ioutil.WriteFile(filepath.Join(stubDir, handler), buf.Bytes(), defaultFileMode)
@@ -193,6 +196,6 @@ func groupName(apiVersion string) string {
 // the first word separated with "." of the GROUP_NAME is the api directory name.
 // for example,
 //  apiDirName("app.example.com/v1alpha1") => "app".
-func apiDirName(apiGroup string) string {
-	return strings.Split(groupName(apiGroup), ".")[0]
+func apiDirName(apiVersion string) string {
+	return strings.Split(groupName(apiVersion), ".")[0]
 }
