@@ -4,9 +4,9 @@ This guide is designed for beginners who want to start an operator project from 
 
 ## What is Operator SDK?
 
-Kubernetes is a wonderful platform and a lot of applications can be run on top of it smoothly. However, there are still some applications not so native to Kubernetes. In other words, it requires significant effort to write Kubernetes deploy code/scripts, besides that those applications are already hard to configure and manage correctly. [Operator][operator_link] is an approach to easily and natively manage applications on Kubernetes. Domain experts write down operational knowledge as code and extend kube-API to connect everything to the one platform.
+Kubernetes is a wonderful platform and a lot of applications can be run on top of it smoothly. However, there are still some applications not so native to Kubernetes. In other words, it requires significant effort to write Kubernetes deploy code/scripts, besides that those applications are already hard to configure and manage correctly. [Operator][operator_link] is an approach to easily and natively manage applications on Kubernetes. Domain experts write down operational knowledge as code and extend kube-API to connect everything to a single platform.
 
-Operator SDK is a Kubernetes operator framework written in Go language. It is designed to make writing an operator easier by having opinions about the programming model. It empowers developers to build powerful operators by providing high level API and reusing common modules to do more with less. It makes developing on Kubernetes more fun.
+Operator SDK is a Kubernetes operator framework written in Go language. It is designed to make writing an operator easier by having opinions about the programming model. It empowers developers to build powerful operators by providing a high level API and reusing common modules to do more with less. It makes developing on Kubernetes more fun.
 
 ## Guide prerequisites
 
