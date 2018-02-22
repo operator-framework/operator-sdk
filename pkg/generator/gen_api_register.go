@@ -8,7 +8,7 @@ import (
 
 const pluralSuffix = "s"
 
-// Register contains all the customized data needed to generate apis/../register.go
+// Register contains all the customized data needed to generate apis/<version>/register.go
 // for a new operator when pairing with apisDocTmpl template.
 type Register struct {
 	GroupName  string
@@ -17,10 +17,10 @@ type Register struct {
 	KindPlural string
 }
 
-// renderApisDoc generates the apis/../doc.go file.
-func renderApisRegister(w io.Writer, kind, groupName, version string) error {
-	t := template.New("apis/../register.go")
-	t, err := t.Parse(apisRegisterTmpl)
+// renderAPIRegisterFile generates the apis/<version>/register.go file.
+func renderAPIRegisterFile(w io.Writer, kind, groupName, version string) error {
+	t := template.New("apis/<version>/register.go")
+	t, err := t.Parse(apiRegisterTmpl)
 	if err != nil {
 		return err
 	}
