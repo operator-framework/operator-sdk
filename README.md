@@ -1,10 +1,33 @@
 # Getting Start with Operator SDK
 
+This guide is designed for beginners who want to start an operator project from scratch.
+
 ## What’s Operator SDK?
 
-## Guide assumptions
+## Guide prerequisites
 
-## Installation
+Before creating any project, this guide has the following prerequisites:
+
+- [dep][dep_tool] version v0.4.1+.
+- [go][go_tool] version v1.10+.
+- [docker][docker_tool] version 17.03+.
+  This guide uses image repository `quay.io/example/memcached-operator` as an example.
+- [kubectl][kubectl_tool] version v1.9.0+.
+- (optional) [minikube][minikube_tool] version v0.25.0+.
+  This guide uses minikube as a quickstart Kubernetes playground. Run the command:
+  ```
+  minikube start
+  ```
+  This will start minikube in the background and set up kubectl configuration accordingly.
+
+## Installing Operator SDK CLI
+
+Operator SDK CLI tool is used to manage development lifecycle.
+
+Install the CLI tool:
+```
+go install -u github.com/coreos/operator-sdk/commands/operator-sdk
+```
 
 ## Creating a new project
 
@@ -251,3 +274,8 @@ kubectl delete -f deploy/memcached-operator.yaml
 
 [scaffold_doc]:./doc/project_layout.md
 [mc_protocol]:https://github.com/memcached/memcached/blob/master/doc/protocol.txt
+[dep_tool]:https://golang.github.io/dep/docs/installation.html
+[go_tool]:https://golang.org/dl/
+[docker_tool]:https://docs.docker.com/install/
+[kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
+[minikube_tool]:https://github.com/kubernetes/minikube#installation
