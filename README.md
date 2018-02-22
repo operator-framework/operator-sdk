@@ -42,10 +42,10 @@ Navigate to `$GOPATH/src/github.com/example-inc/`.
 To start a project, we use the `new` generator to provide the foundation of a fresh operator project. Run the following command:
 
 ```
-operator-sdk new memcached-operator --api-group=cache.example.com/v1alpha1 --kind=Memcached
+operator-sdk new memcached-operator --api-version=cache.example.com/v1alpha1 --kind=Memcached
 ```
 
-This will generate a project repo `memcached-operator`, a custom resource with APIGroup `cache.example.com/v1apha1` and Kind `Memcached`, and an example operator that watches all deployments in the same namespace and logs deployment names.
+This will generate a project repo `memcached-operator`, a custom resource with APIVersion `cache.example.com/v1apha1` and Kind `Memcached`, and an example operator that watches all deployments in the same namespace and logs deployment names.
 
 Navigate to the project folder:
 
