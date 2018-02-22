@@ -1,6 +1,6 @@
 # Getting Start with Operator SDK
 
-This guide is designed for beginners who wants to start an operator project from scratch.
+This guide is designed for beginners who want to start an operator project from scratch.
 
 ## What’s Operator SDK?
 
