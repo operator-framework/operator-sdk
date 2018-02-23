@@ -50,23 +50,21 @@ import (
 type {{.Kind}}List struct {
 	metav1.TypeMeta ` + "`" + `json:",inline"` + "`\n" +
 	`	metav1.ListMeta ` + "`" + `json:"metadata"` + "`\n" +
-	`	Items           []{{.Kind}} ` + "`" + `json:"items"` + "`\n" +
-	`}` + "\n" +
-	`
+	`	Items           []{{.Kind}} ` + "`" + `json:"items"` + `
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 type {{.Kind}} struct {
 	metav1.TypeMeta   ` + "`" + `json:",inline"` + "`\n" +
 	`	metav1.ObjectMeta ` + "`" + `json:"metadata"` + "`\n" +
 	`	Spec              {{.Kind}}Spec   ` + "`" + `json:"spec"` + "`\n" +
-	`	Status            {{.Kind}}Status ` + "`" + `json:"status,omitempty"` + "`\n" +
-	`}` + "\n" +
-	`
+	`	Status            {{.Kind}}Status ` + "`" + `json:"status,omitempty"` + `
+}
+
 type {{.Kind}}Spec struct {
-	Replica int32 ` + "`" + `json:"replica,omitempty"` + "`\n" +
-	`	// Fills me ` + "\n" +
-	`}` + "\n" +
-	`
+	// Fills me
+}
 type {{.Kind}}Status struct {
 	// Fills me
 }
