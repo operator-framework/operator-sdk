@@ -34,13 +34,30 @@ func TestGenMain(t *testing.T) {
 	}
 }
 
+const handlerExp = `package stub
+
+import (
+	"github.com/coreos/operator-sdk/pkg/sdk/types"
+)
+
+type Handler struct {
+	// Fill me
+}
+
+func (h *Handler) Handle(ctx types.Context, event types.Event) {
+	// Fill me
+}
+`
+
 func TestGenHandler(t *testing.T) {
 	buf := &bytes.Buffer{}
 	if err := renderHandlerFile(buf); err != nil {
 		t.Error(err)
 		return
 	}
-	// TODO: add verification
+	if handlerExp != buf.String() {
+		t.Errorf("want %v, got %v", handlerExp, buf.String())
+	}
 }
 
 func TestGenRegister(t *testing.T) {
