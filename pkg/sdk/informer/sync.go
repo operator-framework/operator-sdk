@@ -59,6 +59,7 @@ func (i *informer) sync(key string) error {
 	// TODO: Add option to prevent multiple informers from invoking Handle() concurrently?
 
 	// TODO: process all actions for this event
+	actions = actions
 
 	return nil
 }
