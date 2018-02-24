@@ -1,10 +1,13 @@
 package informer
 
 import (
+	sdkAction "github.com/coreos/operator-sdk/pkg/sdk/action"
 	sdkHandler "github.com/coreos/operator-sdk/pkg/sdk/handler"
 	sdkTypes "github.com/coreos/operator-sdk/pkg/sdk/types"
+	"github.com/coreos/operator-sdk/pkg/util/k8sutil"
 
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 const (
@@ -47,7 +50,17 @@ func (i *informer) sync(key string) error {
 	if err != nil {
 		return err
 	}
-	object := obj.(sdkTypes.Object)
+	if !exists {
+		logrus.Infof("Object (%s) is deleted", key)
+		return nil
+	}
+
+	unstructObj := obj.(*unstructured.Unstructured).DeepCopy()
+	object, err := k8sutil.RuntimeObjectFromUnstructured(unstructObj)
+	if err != nil {
+		logrus.Errorf("failed to get runtime object from unstructured: %v", err)
+		panic(err)
+	}
 
 	event := sdkTypes.Event{
 		Object:  object,
@@ -58,9 +71,14 @@ func (i *informer) sync(key string) error {
 	actions := sdkHandler.RegisteredHandler.Handle(sdkCtx, event)
 	// TODO: Add option to prevent multiple informers from invoking Handle() concurrently?
 
-	// TODO: process all actions for this event
-	actions = actions
-
+	for _, action := range actions {
+		err := sdkAction.ProcessAction(action)
+		if err != nil {
+			logrus.Infof("Processing action (%s) for object(%s)", action.Func, key)
+			// TODO: how to handle action failure
+			return err
+		}
+	}
 	return nil
 }
 

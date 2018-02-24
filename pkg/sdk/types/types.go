@@ -24,12 +24,3 @@ type Event struct {
 type Context struct {
 	Context context.Context
 }
-
-// FuncType defines the type of the function of an Action.
-type FuncType string
-
-// Action defines what Func(tion) to apply on the given Object.
-type Action struct {
-	Object Object
-	Func   FuncType
-}
