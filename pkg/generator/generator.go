@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	defaultDirFileMode = 0750
-	defaultFileMode    = 0644
+	defaultDirFileMode  = 0750
+	defaultFileMode     = 0644
+	defaultExecFileMode = 0744
 	// dirs
 	cmdDir     = "cmd"
 	deployDir  = "deploy"
@@ -28,6 +29,7 @@ const (
 	doc      = "doc.go"
 	register = "register.go"
 	types    = "types.go"
+	build    = "build.sh"
 )
 
 type Generator struct {
@@ -118,14 +120,27 @@ func (g *Generator) renderDeploy() error {
 }
 
 func (g *Generator) renderTmp() error {
-	if err := os.MkdirAll(filepath.Join(g.projectName, buildDir), defaultDirFileMode); err != nil {
+	bDir := filepath.Join(g.projectName, buildDir)
+	if err := os.MkdirAll(bDir, defaultDirFileMode); err != nil {
 		return err
 	}
+	if err := renderBuildFiles(bDir, g.repoPath, g.projectName); err != nil {
+		return err
+	}
+
 	if err := os.MkdirAll(filepath.Join(g.projectName, codegenDir), defaultDirFileMode); err != nil {
 		return err
 	}
 	// TODO render files.
 	return nil
+}
+
+func renderBuildFiles(buildDir, repoPath, projectName string) error {
+	buf := &bytes.Buffer{}
+	if err := renderBuildFile(buf, repoPath, projectName); err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filepath.Join(buildDir, build), buf.Bytes(), defaultExecFileMode)
 }
 
 func (g *Generator) renderPkg() error {
