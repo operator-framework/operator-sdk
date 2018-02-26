@@ -26,9 +26,12 @@ type Context struct {
 }
 
 // FuncType defines the type of the function of an Action.
-type FuncType string
+type FuncType int
 
-// Action defines what Func(tion) to apply on the given Object.
+// KubeFunc is the function signature for supported kubernetes functions
+type KubeFunc func(Object) error
+
+// Action defines what Function to apply on a given Object.
 type Action struct {
 	Object Object
 	Func   FuncType
