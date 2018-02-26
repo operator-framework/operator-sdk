@@ -33,7 +33,7 @@ func renderBoilerplateFile(w io.Writer, projectName string) error {
 }
 
 func renderUpdateGeneratedFile(w io.Writer, repo, apiDirName, version string) error {
-	t := template.New("codegen/boilerplate.go.txt")
+	t := template.New("codegen/update-generated.sh")
 	t, err := t.Parse(updateGeneratedTmpl)
 	if err != nil {
 		return err
