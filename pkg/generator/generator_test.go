@@ -46,6 +46,7 @@ type Handler struct {
 
 func (h *Handler) Handle(ctx types.Context, event types.Event) []types.Action {
 	// Fill me
+	return nil
 }
 `
 
