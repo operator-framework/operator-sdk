@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	defaultDirFileMode = 0750
-	defaultFileMode    = 0644
+	defaultDirFileMode  = 0750
+	defaultFileMode     = 0644
+	defaultExecFileMode = 0744
 	// dirs
 	cmdDir     = "cmd"
 	deployDir  = "deploy"
@@ -23,11 +24,14 @@ const (
 	stubDir    = pkgDir + "/stub"
 
 	// files
-	main     = "main.go"
-	handler  = "handler.go"
-	doc      = "doc.go"
-	register = "register.go"
-	types    = "types.go"
+	main            = "main.go"
+	handler         = "handler.go"
+	doc             = "doc.go"
+	register        = "register.go"
+	types           = "types.go"
+	build           = "build.sh"
+	boilerplate     = "boilerplate.go.txt"
+	updateGenerated = "update-generated.sh"
 )
 
 type Generator struct {
@@ -118,14 +122,43 @@ func (g *Generator) renderDeploy() error {
 }
 
 func (g *Generator) renderTmp() error {
-	if err := os.MkdirAll(filepath.Join(g.projectName, buildDir), defaultDirFileMode); err != nil {
+	bDir := filepath.Join(g.projectName, buildDir)
+	if err := os.MkdirAll(bDir, defaultDirFileMode); err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Join(g.projectName, codegenDir), defaultDirFileMode); err != nil {
+	if err := renderBuildFiles(bDir, g.repoPath, g.projectName); err != nil {
 		return err
 	}
-	// TODO render files.
-	return nil
+
+	cDir := filepath.Join(g.projectName, codegenDir)
+	if err := os.MkdirAll(cDir, defaultDirFileMode); err != nil {
+		return err
+	}
+	return renderCodegenFiles(cDir, g.repoPath, apiDirName(g.apiVersion), version(g.apiVersion), g.projectName)
+}
+
+func renderBuildFiles(buildDir, repoPath, projectName string) error {
+	buf := &bytes.Buffer{}
+	if err := renderBuildFile(buf, repoPath, projectName); err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filepath.Join(buildDir, build), buf.Bytes(), defaultExecFileMode)
+}
+
+func renderCodegenFiles(codegenDir, repoPath, apiDirName, version, projectName string) error {
+	buf := &bytes.Buffer{}
+	if err := renderBoilerplateFile(buf, projectName); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(filepath.Join(codegenDir, boilerplate), buf.Bytes(), defaultFileMode); err != nil {
+		return err
+	}
+
+	buf = &bytes.Buffer{}
+	if err := renderUpdateGeneratedFile(buf, repoPath, apiDirName, version); err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filepath.Join(codegenDir, updateGenerated), buf.Bytes(), defaultExecFileMode)
 }
 
 func (g *Generator) renderPkg() error {
