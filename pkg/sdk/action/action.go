@@ -9,6 +9,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -81,9 +82,32 @@ func KubeApply(object sdkTypes.Object) (err error) {
 	return nil
 }
 
-// KubeDelete deletes an object
+// KubeDelete deletes an object if it still exists
 func KubeDelete(object sdkTypes.Object) (err error) {
-	panic("TODO")
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("kube-delete failed: %v", err)
+		}
+	}()
+
+	name, namespace, err := getNameAndNamespace(object)
+	if err != nil {
+		return err
+	}
+	gvk := object.GetObjectKind().GroupVersionKind()
+	apiVersion, kind := gvk.ToAPIVersionAndKind()
+	objectInfo := objectInfoString(kind, name, namespace)
+
+	resourceClient, _, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
+	if err != nil {
+		return fmt.Errorf("failed to get resource client for object: %v", err)
+	}
+
+	err = resourceClient.Delete(name, &metav1.DeleteOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("failed to delete object (%s): %v", objectInfo, err)
+	}
+	return nil
 }
 
 func getNameAndNamespace(object sdkTypes.Object) (string, string, error) {
