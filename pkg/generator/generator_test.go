@@ -115,7 +115,7 @@ import (
 type PlayServiceList struct {
 	metav1.TypeMeta ` + "`" + `json:",inline"` + "`\n" +
 	`	metav1.ListMeta ` + "`" + `json:"metadata"` + "`\n" +
-	`	Items           []PlayService ` + "`" + `json:"items"` + `
+	`	Items           []PlayService ` + "`" + `json:"items"` + "`" + `
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -124,7 +124,7 @@ type PlayService struct {
 	metav1.TypeMeta   ` + "`" + `json:",inline"` + "`\n" +
 	`	metav1.ObjectMeta ` + "`" + `json:"metadata"` + "`\n" +
 	`	Spec              PlayServiceSpec   ` + "`" + `json:"spec"` + "`\n" +
-	`	Status            PlayServiceStatus ` + "`" + `json:"status,omitempty"` + `
+	`	Status            PlayServiceStatus ` + "`" + `json:"status,omitempty"` + "`" + `
 }
 
 type PlayServiceSpec struct {

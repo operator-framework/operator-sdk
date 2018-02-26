@@ -50,7 +50,7 @@ import (
 type {{.Kind}}List struct {
 	metav1.TypeMeta ` + "`" + `json:",inline"` + "`\n" +
 	`	metav1.ListMeta ` + "`" + `json:"metadata"` + "`\n" +
-	`	Items           []{{.Kind}} ` + "`" + `json:"items"` + `
+	`	Items           []{{.Kind}} ` + "`" + `json:"items"` + "`" + `
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -59,7 +59,7 @@ type {{.Kind}} struct {
 	metav1.TypeMeta   ` + "`" + `json:",inline"` + "`\n" +
 	`	metav1.ObjectMeta ` + "`" + `json:"metadata"` + "`\n" +
 	`	Spec              {{.Kind}}Spec   ` + "`" + `json:"spec"` + "`\n" +
-	`	Status            {{.Kind}}Status ` + "`" + `json:"status,omitempty"` + `
+	`	Status            {{.Kind}}Status ` + "`" + `json:"status,omitempty"` + "`" + `
 }
 
 type {{.Kind}}Spec struct {
