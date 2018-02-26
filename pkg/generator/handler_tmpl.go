@@ -11,7 +11,7 @@ type Handler struct {
 	// Fill me
 }
 
-func (h *Handler) Handle(ctx types.Context, event types.Event) {
+func (h *Handler) Handle(ctx types.Context, event types.Event) []types.Action {
 	// Fill me
 }
 `
