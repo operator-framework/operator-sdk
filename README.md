@@ -30,7 +30,7 @@ Operator SDK CLI tool is used to manage development lifecycle.
 
 Install the CLI tool:
 ```
-go install -u github.com/coreos/operator-sdk/commands/operator-sdk
+go install github.com/coreos/operator-sdk/commands/operator-sdk
 ```
 
 ## Creating a new project
