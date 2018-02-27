@@ -226,3 +226,24 @@ func TestCodeGen(t *testing.T) {
 		t.Errorf("want %v, got %v", updateGeneratedExp, buf.String())
 	}
 }
+
+func TestGenGopkg(t *testing.T) {
+	buf := &bytes.Buffer{}
+	if err := renderGopkgTomlFile(buf); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if gopkgTomlTmpl != buf.String() {
+		t.Errorf("want %v, got %v", gopkgTomlTmpl, buf.String())
+	}
+
+	buf = &bytes.Buffer{}
+	if err := renderGopkgLockFile(buf); err != nil {
+		t.Error(err)
+		return
+	}
+	if gopkgLockTmpl != buf.String() {
+		t.Errorf("want %v, got %v", gopkgLockTmpl, buf.String())
+	}
+}
