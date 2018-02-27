@@ -166,14 +166,41 @@ echo "building "${PROJECT_NAME}"..."
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ${BIN_DIR}/${PROJECT_NAME} $BUILD_PATH
 `
 
+const dockerFileExp = `FROM alpine:3.6
+
+ADD tmp/_output/bin/play /usr/local/bin/play
+
+RUN adduser -D play
+USER play
+`
+
 func TestGenBuild(t *testing.T) {
 	buf := &bytes.Buffer{}
-	if err := renderBuildFile(buf, "github.com/coreos/play", "play"); err != nil {
+	projectName := "play"
+	if err := renderBuildFile(buf, "github.com/coreos/play", projectName); err != nil {
 		t.Error(err)
 		return
 	}
 	if buildExp != buf.String() {
 		t.Errorf("want %v, got %v", buildExp, buf.String())
+	}
+
+	buf = &bytes.Buffer{}
+	if err := renderDockerBuildFile(buf); err != nil {
+		t.Error(err)
+		return
+	}
+	if dockerBuildTmpl != buf.String() {
+		t.Errorf("want %v, got %v", dockerBuildTmpl, buf.String())
+	}
+
+	buf = &bytes.Buffer{}
+	if err := renderDockerFile(buf, projectName); err != nil {
+		t.Error(err)
+		return
+	}
+	if dockerFileExp != buf.String() {
+		t.Errorf("want %v, got %v", dockerFileExp, buf.String())
 	}
 }
 
