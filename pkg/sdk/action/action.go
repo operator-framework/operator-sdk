@@ -14,8 +14,8 @@ import (
 
 const (
 	// Supported function types
-	KubeApplyFunc sdkTypes.FuncType = iota
-	KubeDeleteFunc
+	KubeApplyFunc  sdkTypes.FuncType = "kube-apply"
+	KubeDeleteFunc sdkTypes.FuncType = "kube-delete"
 )
 
 var (
