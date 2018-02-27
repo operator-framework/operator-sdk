@@ -32,6 +32,8 @@ const (
 	build           = "build.sh"
 	boilerplate     = "boilerplate.go.txt"
 	updateGenerated = "update-generated.sh"
+	gopkgtoml       = "Gopkg.toml"
+	gopkglock       = "Gopkg.lock"
 )
 
 type Generator struct {
@@ -85,7 +87,22 @@ func (g *Generator) Render() error {
 }
 
 func (g *Generator) pullDep() error {
-	// TODO: After we have setup scalffolding, pull dependencies: render Gopkg.toml, then `dep ensure`
+	buf := &bytes.Buffer{}
+	if err := renderGopkgTomlFile(buf); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(filepath.Join(g.projectName, gopkgtoml), buf.Bytes(), defaultFileMode); err != nil {
+		return err
+	}
+
+	buf = &bytes.Buffer{}
+	if err := renderGopkgLockFile(buf); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(filepath.Join(g.projectName, gopkglock), buf.Bytes(), defaultFileMode); err != nil {
+		return err
+	}
+	// TODO: `dep ensure`
 	return nil
 }
 
