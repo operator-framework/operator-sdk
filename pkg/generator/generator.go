@@ -36,6 +36,7 @@ const (
 	updateGenerated = "update-generated.sh"
 	gopkgtoml       = "Gopkg.toml"
 	gopkglock       = "Gopkg.lock"
+	config          = "config.yaml"
 )
 
 type Generator struct {
@@ -125,11 +126,19 @@ func renderCmdFiles(cmdProjectDir, repoPath string) error {
 }
 
 func (g *Generator) renderConfig() error {
-	if err := os.MkdirAll(filepath.Join(g.projectName, configDir), defaultDirFileMode); err != nil {
+	cp := filepath.Join(g.projectName, configDir)
+	if err := os.MkdirAll(cp, defaultDirFileMode); err != nil {
 		return err
 	}
-	// TODO render files.
-	return nil
+	return renderConfigFiles(cp, g.apiVersion, g.kind, g.projectName)
+}
+
+func renderConfigFiles(configDir, apiVersion, kind, projectName string) error {
+	buf := &bytes.Buffer{}
+	if err := renderConfigFile(buf, apiVersion, kind, projectName); err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filepath.Join(configDir, config), buf.Bytes(), defaultFileMode)
 }
 
 func (g *Generator) renderDeploy() error {
