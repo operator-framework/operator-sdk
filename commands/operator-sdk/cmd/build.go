@@ -1,6 +1,12 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"fmt"
+	"os"
+	"os/exec"
+
+	"github.com/spf13/cobra"
+)
 
 func NewBuildCmd() *cobra.Command {
 	return &cobra.Command{
@@ -18,8 +24,34 @@ For example:
 	$ operator-sdk build quay.io/example/operator:v0.0.1
 	$ docker push quay.io/example/operator:v0.0.1
 `,
-		Run: func(cmd *cobra.Command, args []string) {
-			panic("UNIMPLEMENTED")
-		},
+		Run: buildFunc,
 	}
+}
+
+const (
+	build       = "./tmp/build/build.sh"
+	dockerBuild = "./tmp/build/docker_build.sh"
+)
+
+func buildFunc(cmd *cobra.Command, args []string) {
+	if len(args) != 1 {
+		ExitWithError(ExitBadArgs, fmt.Errorf("new command needs 1 argument."))
+	}
+
+	bcmd := exec.Command(build)
+	o, err := bcmd.CombinedOutput()
+	if err != nil {
+		ExitWithError(ExitError, fmt.Errorf("failed to build: (%v)", err))
+	}
+	fmt.Fprintln(os.Stdout, string(o))
+
+	image := args[0]
+	dbcmd := exec.Command(dockerBuild)
+	dbcmd.Env = append(os.Environ(), fmt.Sprintf("IMAGE=%v", image))
+	o, err = dbcmd.CombinedOutput()
+	if err != nil {
+		ExitWithError(ExitError, fmt.Errorf("failed to output build image %v: (%v)", image, err))
+	}
+	fmt.Fprintln(os.Stdout, string(o))
+	// TODO: generates Kubernetes manifests
 }
