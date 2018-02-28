@@ -274,3 +274,18 @@ func TestGenGopkg(t *testing.T) {
 		t.Errorf("want %v, got %v", gopkgLockTmpl, buf.String())
 	}
 }
+
+const configExp = `apiVersion: app.example.com/v1alpha1
+kind: AppService
+projectName: app-operator
+`
+
+func TestGenConfig(t *testing.T) {
+	buf := &bytes.Buffer{}
+	if err := renderConfigFile(buf, "app.example.com/v1alpha1", "AppService", "app-operator"); err != nil {
+		t.Error(err)
+	}
+	if configExp != buf.String() {
+		t.Errorf("want %v, got %v", configExp, buf.String())
+	}
+}
