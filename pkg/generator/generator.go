@@ -30,6 +30,8 @@ const (
 	register        = "register.go"
 	types           = "types.go"
 	build           = "build.sh"
+	dockerBuild     = "docker_build.sh"
+	dockerfile      = "Dockerfile"
 	boilerplate     = "boilerplate.go.txt"
 	updateGenerated = "update-generated.sh"
 	gopkgtoml       = "Gopkg.toml"
@@ -159,7 +161,23 @@ func renderBuildFiles(buildDir, repoPath, projectName string) error {
 	if err := renderBuildFile(buf, repoPath, projectName); err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filepath.Join(buildDir, build), buf.Bytes(), defaultExecFileMode)
+	if err := ioutil.WriteFile(filepath.Join(buildDir, build), buf.Bytes(), defaultExecFileMode); err != nil {
+		return err
+	}
+
+	buf = &bytes.Buffer{}
+	if err := renderDockerBuildFile(buf); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(filepath.Join(buildDir, dockerBuild), buf.Bytes(), defaultExecFileMode); err != nil {
+		return err
+	}
+
+	buf = &bytes.Buffer{}
+	if err := renderDockerFile(buf, projectName); err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filepath.Join(buildDir, dockerfile), buf.Bytes(), defaultFileMode)
 }
 
 func renderCodegenFiles(codegenDir, repoPath, apiDirName, version, projectName string) error {
