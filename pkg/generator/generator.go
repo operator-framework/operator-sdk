@@ -153,7 +153,7 @@ func (g *Generator) renderDeploy() error {
 // RenderDeployFiles generates "deploy/operator.yaml".
 func RenderDeployFiles(c *Config, image string) error {
 	buf := &bytes.Buffer{}
-	if err := renderOperatorYaml(buf, c.APIVersion, c.APIVersion, c.ProjectName, image); err != nil {
+	if err := renderOperatorYaml(buf, c.Kind, c.APIVersion, c.ProjectName, image); err != nil {
 		return err
 	}
 	return ioutil.WriteFile(operatorYaml, buf.Bytes(), defaultFileMode)

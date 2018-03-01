@@ -2,10 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 
+	"github.com/coreos/operator-sdk/pkg/generator"
+
 	"github.com/spf13/cobra"
+	yaml "gopkg.in/yaml.v2"
 )
 
 func NewBuildCmd() *cobra.Command {
@@ -31,6 +35,7 @@ For example:
 const (
 	build       = "./tmp/build/build.sh"
 	dockerBuild = "./tmp/build/docker_build.sh"
+	configYaml  = "./config/config.yaml"
 )
 
 func buildFunc(cmd *cobra.Command, args []string) {
@@ -53,5 +58,16 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		ExitWithError(ExitError, fmt.Errorf("failed to output build image %v: (%v)", image, err))
 	}
 	fmt.Fprintln(os.Stdout, string(o))
-	// TODO: generates Kubernetes manifests
+
+	c := &generator.Config{}
+	fp, err := ioutil.ReadFile(configYaml)
+	if err != nil {
+		ExitWithError(ExitError, fmt.Errorf("failed to read config file %v: (%v)", configYaml, err))
+	}
+	if err = yaml.Unmarshal(fp, c); err != nil {
+		ExitWithError(ExitError, fmt.Errorf("failed to unmarshal config file %v: (%v)", configYaml, err))
+	}
+	if err = generator.RenderDeployFiles(c, image); err != nil {
+		ExitWithError(ExitError, fmt.Errorf("failed to generate deploy/operator.yaml: (%v)", err))
+	}
 }
