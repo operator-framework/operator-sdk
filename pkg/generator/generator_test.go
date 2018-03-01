@@ -229,7 +229,7 @@ docker run --rm \
   "github.com/coreos/play/pkg/generated" \
   "github.com/coreos/play/pkg/apis" \
   "play:v1alpha1" \
-  --go-header-file "./hack/codegen/boilerplate.go.txt" \
+  --go-header-file "./tmp/codegen/boilerplate.go.txt" \
   $@
 .
 `

@@ -25,7 +25,7 @@ docker run --rm \
   "{{.RepoPath}}/pkg/generated" \
   "{{.RepoPath}}/pkg/apis" \
   "{{.APIDirName}}:{{.Version}}" \
-  --go-header-file "./hack/codegen/boilerplate.go.txt" \
+  --go-header-file "./tmp/codegen/boilerplate.go.txt" \
   $@
 .
 `
