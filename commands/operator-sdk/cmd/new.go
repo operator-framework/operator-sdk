@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	cmdError "github.com/coreos/operator-sdk/commands/operator-sdk/error"
 	"github.com/coreos/operator-sdk/pkg/generator"
 
 	"github.com/spf13/cobra"
@@ -52,21 +53,21 @@ const (
 
 func newFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		ExitWithError(ExitBadArgs, fmt.Errorf("new command needs 1 argument."))
+		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("new command needs 1 argument."))
 	}
 	parse(args)
 	verifyFlags()
 	g := generator.NewGenerator(apiVersion, kind, projectName, repoPath())
 	err := g.Render()
 	if err != nil {
-		ExitWithError(ExitError, fmt.Errorf("failed to create project %v: %v", projectName, err))
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to create project %v: %v", projectName, err))
 	}
 }
 
 func parse(args []string) {
 	projectName = args[0]
 	if len(projectName) == 0 {
-		ExitWithError(ExitBadArgs, fmt.Errorf("project-name must not be empty"))
+		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("project-name must not be empty"))
 	}
 }
 
@@ -74,15 +75,15 @@ func parse(args []string) {
 func repoPath() string {
 	gp := os.Getenv(gopath)
 	if len(gp) == 0 {
-		ExitWithError(ExitError, fmt.Errorf("$GOPATH env not set"))
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("$GOPATH env not set"))
 	}
 	wd, err := os.Getwd()
 	if err != nil {
-		ExitWithError(ExitError, fmt.Errorf("failed to determine the full path of the current directory: %v", err))
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to determine the full path of the current directory: %v", err))
 	}
 	// check if this project's repository path is rooted under $GOPATH
 	if !strings.HasPrefix(wd, gp) {
-		ExitWithError(ExitError, fmt.Errorf("project's repository path (%v) is not rooted under GOPATH (%v)", wd, gp))
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("project's repository path (%v) is not rooted under GOPATH (%v)", wd, gp))
 	}
 	// compute the repo path by stripping "$GOPATH/src/" from the path of the current directory.
 	rp := filepath.Join(string(wd[len(filepath.Join(gp, src)):]), projectName)
