@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -47,8 +48,10 @@ var (
 )
 
 const (
-	gopath = "GOPATH"
-	src    = "src"
+	gopath    = "GOPATH"
+	src       = "src"
+	dep       = "dep"
+	ensureCmd = "ensure"
 )
 
 func newFunc(cmd *cobra.Command, args []string) {
@@ -62,6 +65,7 @@ func newFunc(cmd *cobra.Command, args []string) {
 	if err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to create project %v: %v", projectName, err))
 	}
+	pullDep()
 }
 
 func parse(args []string) {
@@ -77,10 +81,7 @@ func repoPath() string {
 	if len(gp) == 0 {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("$GOPATH env not set"))
 	}
-	wd, err := os.Getwd()
-	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to determine the full path of the current directory: %v", err))
-	}
+	wd := mustGetwd()
 	// check if this project's repository path is rooted under $GOPATH
 	if !strings.HasPrefix(wd, gp) {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("project's repository path (%v) is not rooted under GOPATH (%v)", wd, gp))
@@ -93,4 +94,22 @@ func repoPath() string {
 
 func verifyFlags() {
 	// TODO: verify format of input flags.
+}
+
+func pullDep() {
+	dc := exec.Command(dep, ensureCmd)
+	dc.Dir = filepath.Join(mustGetwd(), projectName)
+	o, err := dc.CombinedOutput()
+	if err != nil {
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to ensure dependencies: (%v)", string(o)))
+	}
+	fmt.Fprintln(os.Stdout, string(o))
+}
+
+func mustGetwd() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to determine the full path of the current directory: %v", err))
+	}
+	return wd
 }
