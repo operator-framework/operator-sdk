@@ -27,5 +27,4 @@ docker run --rm \
   "{{.APIDirName}}:{{.Version}}" \
   --go-header-file "./tmp/codegen/boilerplate.go.txt" \
   $@
-.
 `
