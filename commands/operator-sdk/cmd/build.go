@@ -41,7 +41,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	bcmd := exec.Command(build)
 	o, err := bcmd.CombinedOutput()
 	if err != nil {
-		ExitWithError(ExitError, fmt.Errorf("failed to build: (%v)", err))
+		ExitWithError(ExitError, fmt.Errorf("failed to build: (%v)", string(o)))
 	}
 	fmt.Fprintln(os.Stdout, string(o))
 
@@ -50,7 +50,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	dbcmd.Env = append(os.Environ(), fmt.Sprintf("IMAGE=%v", image))
 	o, err = dbcmd.CombinedOutput()
 	if err != nil {
-		ExitWithError(ExitError, fmt.Errorf("failed to output build image %v: (%v)", image, err))
+		ExitWithError(ExitError, fmt.Errorf("failed to output build image %v: (%v)", image, string(o)))
 	}
 	fmt.Fprintln(os.Stdout, string(o))
 	// TODO: generates Kubernetes manifests
