@@ -37,6 +37,7 @@ const (
 	gopkgtoml       = "Gopkg.toml"
 	gopkglock       = "Gopkg.lock"
 	config          = "config.yaml"
+	operatorYaml    = deployDir + "/operator.yaml"
 )
 
 type Generator struct {
@@ -147,6 +148,15 @@ func (g *Generator) renderDeploy() error {
 	}
 	// TODO render files.
 	return nil
+}
+
+// RenderDeployFiles generates "deploy/operator.yaml".
+func RenderDeployFiles(c *Config, image string) error {
+	buf := &bytes.Buffer{}
+	if err := renderOperatorYaml(buf, c.Kind, c.APIVersion, c.ProjectName, image); err != nil {
+		return err
+	}
+	return ioutil.WriteFile(operatorYaml, buf.Bytes(), defaultFileMode)
 }
 
 func (g *Generator) renderTmp() error {

@@ -289,3 +289,45 @@ func TestGenConfig(t *testing.T) {
 		t.Errorf("want %v, got %v", configExp, buf.String())
 	}
 }
+
+const operatorYamlExp = `apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: appservices.app.example.com
+spec:
+  group: app.example.com
+  names:
+    kind: AppService
+    listKind: AppServiceList
+    plural: appservices
+    singular: appservice
+  scope: Namespaced
+  version: v1alpha1
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: app-operator
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: app-operator
+    spec:
+      containers:
+        - name: app-operator
+          image: quay.io/coreos/operator-sdk-dev:app-operator
+          command:
+          - app-operator
+`
+
+func TestGenDeploy(t *testing.T) {
+	buf := &bytes.Buffer{}
+	if err := renderOperatorYaml(buf, "AppService", "app.example.com/v1alpha1", "app-operator", "quay.io/coreos/operator-sdk-dev:app-operator"); err != nil {
+		t.Error(err)
+	}
+	if operatorYamlExp != buf.String() {
+		t.Errorf("want %v, got %v", operatorYamlExp, buf.String())
+	}
+}
