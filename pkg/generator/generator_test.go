@@ -231,7 +231,6 @@ docker run --rm \
   "play:v1alpha1" \
   --go-header-file "./tmp/codegen/boilerplate.go.txt" \
   $@
-.
 `
 
 func TestCodeGen(t *testing.T) {
