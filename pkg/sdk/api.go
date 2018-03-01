@@ -6,6 +6,8 @@ import (
 	"github.com/coreos/operator-sdk/pkg/k8sclient"
 	sdkHandler "github.com/coreos/operator-sdk/pkg/sdk/handler"
 	sdkInformer "github.com/coreos/operator-sdk/pkg/sdk/informer"
+
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -23,8 +25,12 @@ var (
 // namespace is the Namespace to watch for the resource
 // TODO: support opts for specifying label selector
 func Watch(apiVersion, kind, namespace string) {
-	// TODO: Error handling for watch failure
-	resourceClient, resourcePluralName, _ := k8sclient.GetResourceClient(apiVersion, kind, namespace)
+	resourceClient, resourcePluralName, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
+	// TODO: Better error handling, e.g retry
+	if err != nil {
+		logrus.Errorf("failed to get resource client for (apiVersion:%s, kind:%s, ns:%s): %v", apiVersion, kind, namespace, err)
+		panic(err)
+	}
 	informer := sdkInformer.New(resourcePluralName, namespace, resourceClient)
 	informers = append(informers, informer)
 }
