@@ -87,10 +87,10 @@ func (g *Generator) Render() error {
 	if err := g.renderTmp(); err != nil {
 		return err
 	}
-	return g.pullDep()
+	return g.renderGoDep()
 }
 
-func (g *Generator) pullDep() error {
+func (g *Generator) renderGoDep() error {
 	buf := &bytes.Buffer{}
 	if err := renderGopkgTomlFile(buf); err != nil {
 		return err
@@ -103,11 +103,7 @@ func (g *Generator) pullDep() error {
 	if err := renderGopkgLockFile(buf); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(filepath.Join(g.projectName, gopkglock), buf.Bytes(), defaultFileMode); err != nil {
-		return err
-	}
-	// TODO: `dep ensure`
-	return nil
+	return ioutil.WriteFile(filepath.Join(g.projectName, gopkglock), buf.Bytes(), defaultFileMode)
 }
 
 func (g *Generator) renderCmd() error {
