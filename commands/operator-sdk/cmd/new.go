@@ -59,6 +59,7 @@ func newFunc(cmd *cobra.Command, args []string) {
 		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("new command needs 1 argument."))
 	}
 	parse(args)
+	mustBeNewProject()
 	verifyFlags()
 	g := generator.NewGenerator(apiVersion, kind, projectName, repoPath())
 	err := g.Render()
@@ -72,6 +73,22 @@ func parse(args []string) {
 	projectName = args[0]
 	if len(projectName) == 0 {
 		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("project-name must not be empty"))
+	}
+}
+
+// mustBeNewProject checks if the given project exists under the current diretory.
+// it exits with error when the project exists.
+func mustBeNewProject() {
+	fp := filepath.Join(mustGetwd(), projectName)
+	stat, err := os.Stat(fp)
+	if err != nil && os.IsNotExist(err) {
+		return
+	}
+	if err != nil {
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to determine if project (%v) exists", projectName))
+	}
+	if stat.IsDir() {
+		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("project (%v) exists. please use a different project name or delete the existing one", projectName))
 	}
 }
 
