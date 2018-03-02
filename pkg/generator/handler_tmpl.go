@@ -4,8 +4,13 @@ package generator
 const handlerTmpl = `package stub
 
 import (
+	"{{.OperatorSDKImport}}/handler"
 	"{{.OperatorSDKImport}}/types"
 )
+
+func NewHandler() handler.Handler {
+	return &Handler{}
+}
 
 type Handler struct {
 	// Fill me

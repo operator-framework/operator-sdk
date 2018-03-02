@@ -10,14 +10,13 @@ const mainExp = `package main
 import (
 	"context"
 
-	sdk "github.com/coreos/operator-sdk/pkg/sdk"
 	stub "github.com/coreos/play/pkg/stub"
+	sdk "github.com/coreos/operator-sdk/pkg/sdk"
 )
 
 func main() {
-	namespace := "default"
-	sdk.Watch("apps/v1", "Deployment", namespace)
- 	sdk.Handle(&stub.Handler{})
+	sdk.Watch("apps/v1", "Deployment", "default")
+	sdk.Handle(stub.NewHandler())
  	sdk.Run(context.TODO())
 }
 `
@@ -37,8 +36,13 @@ func TestGenMain(t *testing.T) {
 const handlerExp = `package stub
 
 import (
+	"github.com/coreos/operator-sdk/pkg/sdk/handler"
 	"github.com/coreos/operator-sdk/pkg/sdk/types"
 )
+
+func NewHandler() handler.Handler {
+	return &Handler{}
+}
 
 type Handler struct {
 	// Fill me
