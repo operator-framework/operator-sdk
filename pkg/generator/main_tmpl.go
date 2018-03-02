@@ -6,14 +6,13 @@ const mainTmpl = `package main
 import (
 	"context"
 
-	sdk "{{.OperatorSDKImport}}"
 	stub "{{.StubImport}}"
+	sdk "{{.OperatorSDKImport}}"
 )
 
 func main() {
-	namespace := "default"
-	sdk.Watch("apps/v1", "Deployment", namespace)
- 	sdk.Handle(&stub.Handler{})
+	sdk.Watch("apps/v1", "Deployment", "default")
+	sdk.Handle(stub.NewHandler())
  	sdk.Run(context.TODO())
 }
 `
