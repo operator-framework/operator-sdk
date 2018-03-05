@@ -70,6 +70,7 @@ func (i *informer) Run(ctx context.Context) {
 	for n := 0; n < numWorkers; n++ {
 		go wait.Until(i.runWorker, time.Second, ctx.Done())
 	}
+	<-ctx.Done()
 	logrus.Infof("stopping %s controller", i.resourcePluralName)
 }
 
