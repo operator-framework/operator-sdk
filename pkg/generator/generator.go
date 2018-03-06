@@ -38,6 +38,7 @@ const (
 	gopkglock       = "Gopkg.lock"
 	config          = "config.yaml"
 	operatorYaml    = deployDir + "/operator.yaml"
+	rbacYaml        = "rbac.yaml"
 )
 
 type Generator struct {
@@ -139,14 +140,23 @@ func renderConfigFiles(configDir, apiVersion, kind, projectName string) error {
 }
 
 func (g *Generator) renderDeploy() error {
-	if err := os.MkdirAll(filepath.Join(g.projectName, deployDir), defaultDirFileMode); err != nil {
+	dp := filepath.Join(g.projectName, deployDir)
+	if err := os.MkdirAll(dp, defaultDirFileMode); err != nil {
 		return err
 	}
-	// TODO render files.
-	return nil
+	return renderRBAC(dp, g.projectName)
 }
 
-// RenderDeployFiles generates "deploy/operator.yaml".
+func renderRBAC(deployDir, projectName string) error {
+	buf := &bytes.Buffer{}
+	if err := renderRBACYaml(buf, projectName); err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filepath.Join(deployDir, rbacYaml), buf.Bytes(), defaultFileMode)
+}
+
+// RenderDeployFiles generates "deploy/operator.yaml"
+// TODO: rethink about when/what to generate when invoking build command.
 func RenderDeployFiles(c *Config, image string) error {
 	buf := &bytes.Buffer{}
 	if err := renderOperatorYaml(buf, c.Kind, c.APIVersion, c.ProjectName, image); err != nil {
