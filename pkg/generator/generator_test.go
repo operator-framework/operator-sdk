@@ -36,8 +36,12 @@ func TestGenMain(t *testing.T) {
 const handlerExp = `package stub
 
 import (
+	"fmt"
+
 	"github.com/coreos/operator-sdk/pkg/sdk/handler"
 	"github.com/coreos/operator-sdk/pkg/sdk/types"
+
+	apps_v1 "k8s.io/api/apps/v1"
 )
 
 func NewHandler() handler.Handler {
@@ -49,7 +53,11 @@ type Handler struct {
 }
 
 func (h *Handler) Handle(ctx types.Context, event types.Event) []types.Action {
-	// Fill me
+	// Change me
+	switch o := event.Object.(type) {
+	case *apps_v1.Deployment:
+		fmt.Printf("Received Deployment: %v", o.Name)
+	}
 	return nil
 }
 `

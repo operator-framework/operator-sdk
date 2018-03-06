@@ -87,7 +87,7 @@ Check memcached-operator pod’s log:
 
 ```
 # kubectl get pod | grep memcached-operator | cut -d' ' -f1 | xargs kubectl logs
-Found Deployment `memcached-operator`
+Received Deployment: memcached-operator
 ```
 
 Clean up resources:
