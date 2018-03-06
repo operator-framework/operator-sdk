@@ -14,7 +14,7 @@ set -o nounset
 set -o pipefail
 
 DOCKER_REPO_ROOT="/go/src/{{.RepoPath}}"
-IMAGE=${IMAGE:-"gcr.io/coreos-k8s-scale-testing/codegen"}
+IMAGE=${IMAGE:-"gcr.io/coreos-k8s-scale-testing/codegen:1.9.3"}
 
 docker run --rm \
   -v "$PWD":"$DOCKER_REPO_ROOT" \
