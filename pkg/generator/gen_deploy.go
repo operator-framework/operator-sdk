@@ -9,6 +9,7 @@ import (
 
 const (
 	operatorTmplName = "deploy/operator.yaml"
+	rbacTmplName     = "deploy/rbac.yaml"
 )
 
 // OperatorYaml contains all the customized data needed to generate deploy/operator.yaml for a new operator
@@ -44,4 +45,22 @@ func renderOperatorYaml(w io.Writer, kind, apiVersion, projectName, image string
 		Image:       image,
 	}
 	return t.Execute(w, o)
+}
+
+// RBACYaml contains all the customized data needed to generate deploy/rbac.yaml for a new operator
+// when pairing with rbacYamlTmpl template.
+type RBACYaml struct {
+	ProjectName string
+}
+
+// renderRBACYaml generates deploy/rbac.yaml.
+func renderRBACYaml(w io.Writer, projectName string) error {
+	t := template.New(rbacTmplName)
+	t, err := t.Parse(rbacYamlTmpl)
+	if err != nil {
+		return fmt.Errorf("failed to parse rbac yaml template: %v", err)
+	}
+
+	r := RBACYaml{ProjectName: projectName}
+	return t.Execute(w, r)
 }

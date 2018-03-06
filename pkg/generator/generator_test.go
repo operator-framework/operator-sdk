@@ -339,12 +339,49 @@ spec:
           - app-operator
 `
 
+const rbacYamlExp = `kind: Role
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: app-operator
+rules:
+- apiGroups:
+  - "*"
+  resources:
+  - "*"
+  verbs:
+  - "*"
+
+---
+
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: default-account-app-operator
+subjects:
+- kind: ServiceAccount
+  name: default
+roleRef:
+  kind: Role
+  name: app-operator
+  apiGroup: rbac.authorization.k8s.io
+`
+
 func TestGenDeploy(t *testing.T) {
 	buf := &bytes.Buffer{}
-	if err := renderOperatorYaml(buf, "AppService", "app.example.com/v1alpha1", "app-operator", "quay.io/coreos/operator-sdk-dev:app-operator"); err != nil {
+	projectName := "app-operator"
+	if err := renderOperatorYaml(buf, "AppService", "app.example.com/v1alpha1", projectName, "quay.io/coreos/operator-sdk-dev:app-operator"); err != nil {
 		t.Error(err)
 	}
 	if operatorYamlExp != buf.String() {
 		t.Errorf("want %v, got %v", operatorYamlExp, buf.String())
 	}
+
+	buf = &bytes.Buffer{}
+	if err := renderRBACYaml(buf, projectName); err != nil {
+		t.Error(err)
+	}
+	if rbacYamlExp != buf.String() {
+		t.Errorf("want %v, got %v", rbacYamlExp, buf.String())
+	}
+
 }
