@@ -31,3 +31,30 @@ spec:
           command:
           - {{.ProjectName}}
 `
+
+const rbacYamlTmpl = `kind: Role
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: {{.ProjectName}}
+rules:
+- apiGroups:
+  - "*"
+  resources:
+  - "*"
+  verbs:
+  - "*"
+
+---
+
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: default-account-{{.ProjectName}}
+subjects:
+- kind: ServiceAccount
+  name: default
+roleRef:
+  kind: Role
+  name: {{.ProjectName}}
+  apiGroup: rbac.authorization.k8s.io
+`
