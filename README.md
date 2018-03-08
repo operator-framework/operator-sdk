@@ -121,7 +121,7 @@ In `main.go`, modify `sdk.Watch` to watch on `Memcached` custom resource:
 
 ```Go
 func main() {
-  sdk.Watch("cache.example.com/v1apha1", "Memcached", "default")
+  sdk.Watch("cache.example.com/v1alpha1", "Memcached", "default")
   sdk.Handle(stub.NewHandler())
   sdk.Run(context.TODO())
 }
@@ -131,7 +131,7 @@ In `pkg/stub/handler.go`, modify `Handle()` to create a `Memcached` Deployment a
 
 ```Go
 import (
-	v1alpha1 "github.com/example-inc/memcached-operator/pkg/apis/app/v1alpha1"
+	v1alpha1 "github.com/example-inc/memcached-operator/pkg/apis/cache/v1alpha1"
 
 	"github.com/coreos/operator-sdk/pkg/sdk/action"
 	"github.com/coreos/operator-sdk/pkg/sdk/handler"
@@ -141,8 +141,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (h *Handler) Handle(ctx Context, ev Event) []Action {
-  var actions []types.Action
+func (h *Handler) Handle(ctx types.Context, event types.Event) []types.Action {
+	var actions []types.Action
 	switch obj := event.Object.(type) {
 	case *v1alpha1.Memcached:
 		ls := map[string]string{
@@ -225,7 +225,7 @@ docker push quay.io/example/memcached-operator:v0.0.2
 
 Deploy operator:
 ```
-kubectl create -f deploy/memcached-operator.yaml
+kubectl create -f deploy/operator.yaml
 ```
 
 Create a `Memcached` custom resource with the following spec:
