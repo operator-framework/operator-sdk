@@ -30,6 +30,7 @@ spec:
           image: {{.Image}}
           command:
           - {{.ProjectName}}
+          imagePullPolicy: Always
 `
 
 const rbacYamlTmpl = `kind: Role
