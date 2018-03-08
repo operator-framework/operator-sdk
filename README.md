@@ -253,13 +253,13 @@ example
 
 We can test the Memcached service by opening a telnet session and running commands via [Memcached protocols][mc_protocol]:
 
-1. Open a telnet session in another container in order to talk to the service:
+1. Open a telnet session in another pod in order to talk to the service:
    ```
    kubectl run -it --rm busybox --image=busybox --restart=Never -- telnet example 11211
    ```
-2. In the telnet prompt, enter the following command to set a key:
+2. In the telnet prompt, enter the following commands to set a key:
    ```
-   set foo 0 0 5
+   set foo 0 0 3
    bar
    ```
 3. Enter the following command to get the key:
@@ -268,17 +268,18 @@ We can test the Memcached service by opening a telnet session and running comman
    ```
    It should output:
    ```
-   VALUE foo 0 5
+   VALUE foo 0 0 3
    bar
    ```
 
-Now we have successfully customized the event handling logic to deploy Memcached service for us.
+Now we have successfully customized the event handling logic to deploy a Memcached service for us.
 
 Clean up the resources:
 
 ```
 kubectl delete memcached example
 kubectl delete -f deploy/operator.yaml
+kubectl delete deployment/example service/example
 ```
 
 [scaffold_doc]:./doc/project_layout.md
