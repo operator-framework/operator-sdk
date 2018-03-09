@@ -14,11 +14,7 @@
 
 package generator
 
-const boilerplateTmpl = `/*
-Copyright YEAR The {{.ProjectName}} Authors
-
-Commercial software license.
-*/
+const boilerplateTmpl = `
 `
 
 const updateGeneratedTmpl = `#!/usr/bin/env bash
