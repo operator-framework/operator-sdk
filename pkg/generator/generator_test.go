@@ -251,7 +251,7 @@ docker run --rm \
   -w "$DOCKER_REPO_ROOT" \
   "$IMAGE" \
   "/go/src/k8s.io/code-generator/generate-groups.sh"  \
-  "all" \
+  "deepcopy" \
   "github.com/coreos/play/pkg/generated" \
   "github.com/coreos/play/pkg/apis" \
   "play:v1alpha1" \
