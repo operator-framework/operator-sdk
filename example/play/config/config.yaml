@@ -1,0 +1,5 @@
+---
+project-path: $GOPTH/src/github.com/example.com/play
+api-group: play/example.com/v1
+kind: PlayService
+
