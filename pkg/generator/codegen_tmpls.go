@@ -31,7 +31,7 @@ docker run --rm \
   -w "$DOCKER_REPO_ROOT" \
   "$IMAGE" \
   "/go/src/k8s.io/code-generator/generate-groups.sh"  \
-  "all" \
+  "deepcopy" \
   "{{.RepoPath}}/pkg/generated" \
   "{{.RepoPath}}/pkg/apis" \
   "{{.APIDirName}}:{{.Version}}" \
