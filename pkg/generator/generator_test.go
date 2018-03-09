@@ -234,11 +234,7 @@ func TestGenBuild(t *testing.T) {
 	}
 }
 
-const boilerplateExp = `/*
-Copyright YEAR The play Authors
-
-Commercial software license.
-*/
+const boilerplateExp = `
 `
 
 const updateGeneratedExp = `#!/usr/bin/env bash
