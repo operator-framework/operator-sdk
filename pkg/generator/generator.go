@@ -16,6 +16,7 @@ package generator
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -110,7 +111,7 @@ func (g *Generator) renderGoDep() error {
 	if err := renderGopkgTomlFile(buf); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(filepath.Join(g.projectName, gopkgtoml), buf.Bytes(), defaultFileMode); err != nil {
+	if err := writeFileAndPrint(filepath.Join(g.projectName, gopkgtoml), buf.Bytes(), defaultFileMode); err != nil {
 		return err
 	}
 
@@ -118,7 +119,7 @@ func (g *Generator) renderGoDep() error {
 	if err := renderGopkgLockFile(buf); err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filepath.Join(g.projectName, gopkglock), buf.Bytes(), defaultFileMode)
+	return writeFileAndPrint(filepath.Join(g.projectName, gopkglock), buf.Bytes(), defaultFileMode)
 }
 
 func (g *Generator) renderCmd() error {
@@ -134,7 +135,7 @@ func renderCmdFiles(cmdProjectDir, repoPath string) error {
 	if err := renderMainFile(buf, repoPath); err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filepath.Join(cmdProjectDir, main), buf.Bytes(), defaultFileMode)
+	return writeFileAndPrint(filepath.Join(cmdProjectDir, main), buf.Bytes(), defaultFileMode)
 }
 
 func (g *Generator) renderConfig() error {
@@ -150,7 +151,7 @@ func renderConfigFiles(configDir, apiVersion, kind, projectName string) error {
 	if err := renderConfigFile(buf, apiVersion, kind, projectName); err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filepath.Join(configDir, config), buf.Bytes(), defaultFileMode)
+	return writeFileAndPrint(filepath.Join(configDir, config), buf.Bytes(), defaultFileMode)
 }
 
 func (g *Generator) renderDeploy() error {
@@ -166,7 +167,7 @@ func renderRBAC(deployDir, projectName string) error {
 	if err := renderRBACYaml(buf, projectName); err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filepath.Join(deployDir, rbacYaml), buf.Bytes(), defaultFileMode)
+	return writeFileAndPrint(filepath.Join(deployDir, rbacYaml), buf.Bytes(), defaultFileMode)
 }
 
 // RenderDeployFiles generates "deploy/operator.yaml"
@@ -200,7 +201,7 @@ func renderBuildFiles(buildDir, repoPath, projectName string) error {
 	if err := renderBuildFile(buf, repoPath, projectName); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(filepath.Join(buildDir, build), buf.Bytes(), defaultExecFileMode); err != nil {
+	if err := writeFileAndPrint(filepath.Join(buildDir, build), buf.Bytes(), defaultExecFileMode); err != nil {
 		return err
 	}
 
@@ -208,7 +209,7 @@ func renderBuildFiles(buildDir, repoPath, projectName string) error {
 	if err := renderDockerBuildFile(buf); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(filepath.Join(buildDir, dockerBuild), buf.Bytes(), defaultExecFileMode); err != nil {
+	if err := writeFileAndPrint(filepath.Join(buildDir, dockerBuild), buf.Bytes(), defaultExecFileMode); err != nil {
 		return err
 	}
 
@@ -216,7 +217,7 @@ func renderBuildFiles(buildDir, repoPath, projectName string) error {
 	if err := renderDockerFile(buf, projectName); err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filepath.Join(buildDir, dockerfile), buf.Bytes(), defaultFileMode)
+	return writeFileAndPrint(filepath.Join(buildDir, dockerfile), buf.Bytes(), defaultFileMode)
 }
 
 func renderCodegenFiles(codegenDir, repoPath, apiDirName, version, projectName string) error {
@@ -224,7 +225,7 @@ func renderCodegenFiles(codegenDir, repoPath, apiDirName, version, projectName s
 	if err := renderBoilerplateFile(buf, projectName); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(filepath.Join(codegenDir, boilerplate), buf.Bytes(), defaultFileMode); err != nil {
+	if err := writeFileAndPrint(filepath.Join(codegenDir, boilerplate), buf.Bytes(), defaultFileMode); err != nil {
 		return err
 	}
 
@@ -232,7 +233,7 @@ func renderCodegenFiles(codegenDir, repoPath, apiDirName, version, projectName s
 	if err := renderUpdateGeneratedFile(buf, repoPath, apiDirName, version); err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filepath.Join(codegenDir, updateGenerated), buf.Bytes(), defaultExecFileMode)
+	return writeFileAndPrint(filepath.Join(codegenDir, updateGenerated), buf.Bytes(), defaultExecFileMode)
 }
 
 func (g *Generator) renderPkg() error {
@@ -257,7 +258,7 @@ func renderAPIFiles(apiDir, groupName, version, kind string) error {
 	if err := renderAPIDocFile(buf, groupName, version); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(filepath.Join(apiDir, doc), buf.Bytes(), defaultFileMode); err != nil {
+	if err := writeFileAndPrint(filepath.Join(apiDir, doc), buf.Bytes(), defaultFileMode); err != nil {
 		return err
 	}
 
@@ -265,7 +266,7 @@ func renderAPIFiles(apiDir, groupName, version, kind string) error {
 	if err := renderAPIRegisterFile(buf, kind, groupName, version); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(filepath.Join(apiDir, register), buf.Bytes(), defaultFileMode); err != nil {
+	if err := writeFileAndPrint(filepath.Join(apiDir, register), buf.Bytes(), defaultFileMode); err != nil {
 		return err
 	}
 
@@ -273,7 +274,7 @@ func renderAPIFiles(apiDir, groupName, version, kind string) error {
 	if err := renderAPITypesFile(buf, kind, version); err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filepath.Join(apiDir, types), buf.Bytes(), defaultFileMode)
+	return writeFileAndPrint(filepath.Join(apiDir, types), buf.Bytes(), defaultFileMode)
 }
 
 func renderStubFiles(stubDir string) error {
@@ -281,7 +282,7 @@ func renderStubFiles(stubDir string) error {
 	if err := renderHandlerFile(buf); err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filepath.Join(stubDir, handler), buf.Bytes(), defaultFileMode)
+	return writeFileAndPrint(filepath.Join(stubDir, handler), buf.Bytes(), defaultFileMode)
 }
 
 // version extracts the VERSION from the given apiVersion ($GROUP_NAME/$VERSION).
@@ -301,4 +302,12 @@ func groupName(apiVersion string) string {
 //  apiDirName("app.example.com/v1alpha1") => "app".
 func apiDirName(apiVersion string) string {
 	return strings.Split(groupName(apiVersion), ".")[0]
+}
+
+func writeFileAndPrint(filePath string, data []byte, fileMode os.FileMode) error {
+	if err := ioutil.WriteFile(filePath, data, fileMode); err != nil {
+		return err
+	}
+	fmt.Printf("Create %v \n", filePath)
+	return nil
 }
