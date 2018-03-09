@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -41,7 +42,7 @@ generates a default directory layout based on the input <project-name>.
 For example:
 	$ mkdir $GOPATH/src/github.com/example.com/
 	$ cd $GOPATH/src/github.com/example.com/
-	$ operator-sdk new app-operator --api-group=app.example.com --kind=AppService
+	$ operator-sdk new app-operator --api-group=app.example.com/v1alpha1 --kind=AppService
 generates a skeletal app-operator application in $GOPATH/src/github.com/example.com/app-operator.
 `,
 		Run: newFunc,
@@ -124,7 +125,15 @@ func repoPath() string {
 }
 
 func verifyFlags() {
-	// TODO: verify format of input flags.
+	if len(apiVersion) == 0 {
+		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--api-version must not have empty value"))
+	}
+	if len(kind) == 0 {
+		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--kind must not have empty value"))
+	}
+	if strings.Count(apiVersion, "/") != 1 {
+		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion))
+	}
 }
 
 func pullDep() {
