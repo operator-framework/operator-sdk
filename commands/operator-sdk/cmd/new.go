@@ -137,13 +137,14 @@ func verifyFlags() {
 }
 
 func pullDep() {
+	fmt.Fprintln(os.Stdout, "Run dep ensure ...")
 	dc := exec.Command(dep, ensureCmd)
 	dc.Dir = filepath.Join(mustGetwd(), projectName)
 	o, err := dc.CombinedOutput()
 	if err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to ensure dependencies: (%v)", string(o)))
 	}
-	fmt.Fprintln(os.Stdout, string(o))
+	fmt.Fprintln(os.Stdout, "Run dep ensure done")
 }
 
 func mustGetwd() string {
