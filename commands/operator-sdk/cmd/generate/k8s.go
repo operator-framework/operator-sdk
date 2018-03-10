@@ -27,6 +27,8 @@ import (
 
 const (
 	k8sGenerated = "./tmp/codegen/update-generated.sh"
+	// dot represents current dir.
+	dot = "."
 )
 
 func NewGenerateK8SCmd() *cobra.Command {
@@ -44,8 +46,14 @@ func k8sFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 0 {
 		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("k8s command doesn't accept any arguments."))
 	}
+	K8sCodegen(dot)
+}
 
+// K8sCodegen performs code-generation for custom resources of this project given the projectDir.
+func K8sCodegen(projectDir string) {
+	fmt.Fprintln(os.Stdout, "Run code-generation for custom resources")
 	kcmd := exec.Command(k8sGenerated)
+	kcmd.Dir = projectDir
 	o, err := kcmd.CombinedOutput()
 	if err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to perform code-generation for CustomResources: (%v)", string(o)))

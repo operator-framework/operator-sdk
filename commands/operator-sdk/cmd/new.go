@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/coreos/operator-sdk/commands/operator-sdk/cmd/generate"
 	cmdError "github.com/coreos/operator-sdk/commands/operator-sdk/error"
 	"github.com/coreos/operator-sdk/pkg/generator"
 
@@ -82,6 +83,7 @@ func newFunc(cmd *cobra.Command, args []string) {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to create project %v: %v", projectName, err))
 	}
 	pullDep()
+	generate.K8sCodegen(projectName)
 }
 
 func parse(args []string) {
