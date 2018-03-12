@@ -28,8 +28,9 @@ Before creating any project, this guide has the following prerequisites:
 
 Operator SDK CLI tool is used to manage development lifecycle.
 
-Install the CLI tool:
+Checkout the desired release tag and install the SDK CLI tool:
 ```
+git checkout tags/v0.0.1
 go install github.com/coreos/operator-sdk/commands/operator-sdk
 ```
 
@@ -117,7 +118,7 @@ Re-render the generated code for custom resource:
 operator-sdk generate k8s
 ```
 
-In `main.go`, modify `sdk.Watch` to watch on `Memcached` custom resource:
+In `cmd/memcached-operator/main.go`, modify `sdk.Watch` to watch on `Memcached` custom resource:
 
 ```Go
 func main() {
@@ -136,6 +137,7 @@ import (
 	"github.com/coreos/operator-sdk/pkg/sdk/action"
 	"github.com/coreos/operator-sdk/pkg/sdk/handler"
 	"github.com/coreos/operator-sdk/pkg/sdk/types"
+	"github.com/sirupsen/logrus"
 	apps_v1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -145,6 +147,7 @@ func (h *Handler) Handle(ctx types.Context, event types.Event) []types.Action {
 	var actions []types.Action
 	switch obj := event.Object.(type) {
 	case *v1alpha1.Memcached:
+		logrus.Infof("Received Memcached: %v", obj.Name)
 		ls := map[string]string{
 			"app":  "memcached",
 			"name": obj.Name,
@@ -181,6 +184,7 @@ func (h *Handler) Handle(ctx types.Context, event types.Event) []types.Action {
 				},
 			},
 		}
+		logrus.Infof("Creating Deployment: %v", obj.Name)
 		actions = append(actions, types.Action{
 			Object: d,
 			Func:   action.KubeApplyFunc,
@@ -207,6 +211,7 @@ func (h *Handler) Handle(ctx types.Context, event types.Event) []types.Action {
 				}},
 			},
 		}
+		logrus.Infof("Creating Service: %v", obj.Name)
 		actions = append(actions, types.Action{
 			Object: svc,
 			Func:   action.KubeApplyFunc,
@@ -268,7 +273,7 @@ We can test the Memcached service by opening a telnet session and running comman
    ```
    It should output:
    ```
-   VALUE foo 0 0 3
+   VALUE foo 0 3
    bar
    ```
 
