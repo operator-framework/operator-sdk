@@ -22,7 +22,8 @@ import (
 
 const (
 	// sdkImport is the operator-sdk import path.
-	sdkImport = "github.com/coreos/operator-sdk/pkg/sdk"
+	sdkImport     = "github.com/coreos/operator-sdk/pkg/sdk"
+	versionImport = "github.com/coreos/operator-sdk/version"
 )
 
 // Main contains all the customized data needed to generate cmd/<projectName>/main.go for a new operator
@@ -31,6 +32,7 @@ type Main struct {
 	// imports
 	OperatorSDKImport string
 	StubImport        string
+	SDKVersionImport  string
 }
 
 // renderMainFile generates the cmd/<projectName>/main.go file given a repo path ("github.com/coreos/play")
@@ -44,6 +46,7 @@ func renderMainFile(w io.Writer, repo string) error {
 	m := Main{
 		OperatorSDKImport: sdkImport,
 		StubImport:        filepath.Join(repo, stubDir),
+		SDKVersionImport:  versionImport,
 	}
 	return t.Execute(w, m)
 }
