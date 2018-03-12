@@ -12,32 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package generator
+package version
 
-// mainTmpl is the template for cmd/main.go.
-const mainTmpl = `package main
-
-import (
-	"context"
-	"runtime"
-
-	stub "{{.StubImport}}"
-	sdk "{{.OperatorSDKImport}}"
-	sdkVersion "{{.SDKVersionImport}}"
-
-	"github.com/sirupsen/logrus"
+var (
+	Version = "v0.0.0+git"
 )
-
-func printVersion() {
-	logrus.Infof("Go Version: %s", runtime.Version())
-	logrus.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	logrus.Infof("operator-sdk Version: %v", sdkVersion.Version)
-}
-
-func main() {
-	printVersion()
-	sdk.Watch("apps/v1", "Deployment", "default")
-	sdk.Handle(stub.NewHandler())
- 	sdk.Run(context.TODO())
-}
-`
