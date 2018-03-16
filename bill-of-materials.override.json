@@ -1,0 +1,11 @@
+[
+	{
+		"project": "github.com/go-openapi/spec",
+		"licenses": [
+			{
+				"type": "Apache License 2.0",
+				"confidence": 1
+			}
+		]
+	}
+]
