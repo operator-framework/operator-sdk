@@ -22,7 +22,6 @@ import (
 	"github.com/coreos/operator-sdk/pkg/util/k8sutil"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -61,13 +60,13 @@ func KubeApply(object sdkTypes.Object) (err error) {
 		}
 	}()
 
-	name, namespace, err := getNameAndNamespace(object)
+	name, namespace, err := k8sutil.GetNameAndNamespace(object)
 	if err != nil {
 		return err
 	}
 	gvk := object.GetObjectKind().GroupVersionKind()
 	apiVersion, kind := gvk.ToAPIVersionAndKind()
-	objectInfo := objectInfoString(kind, name, namespace)
+	objectInfo := k8sutil.ObjectInfo(kind, name, namespace)
 
 	resourceClient, _, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
 	if err != nil {
@@ -104,13 +103,13 @@ func KubeDelete(object sdkTypes.Object) (err error) {
 		}
 	}()
 
-	name, namespace, err := getNameAndNamespace(object)
+	name, namespace, err := k8sutil.GetNameAndNamespace(object)
 	if err != nil {
 		return err
 	}
 	gvk := object.GetObjectKind().GroupVersionKind()
 	apiVersion, kind := gvk.ToAPIVersionAndKind()
-	objectInfo := objectInfoString(kind, name, namespace)
+	objectInfo := k8sutil.ObjectInfo(kind, name, namespace)
 
 	resourceClient, _, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
 	if err != nil {
@@ -122,21 +121,4 @@ func KubeDelete(object sdkTypes.Object) (err error) {
 		return fmt.Errorf("failed to delete object (%s): %v", objectInfo, err)
 	}
 	return nil
-}
-
-func getNameAndNamespace(object sdkTypes.Object) (string, string, error) {
-	accessor := meta.NewAccessor()
-	name, err := accessor.Name(object)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to get name for object: %v", err)
-	}
-	namespace, err := accessor.Namespace(object)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to get namespace for object: %v", err)
-	}
-	return name, namespace, nil
-}
-
-func objectInfoString(kind, name, namespace string) string {
-	return kind + ": " + namespace + "/" + name
 }
