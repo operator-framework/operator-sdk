@@ -1,12 +1,34 @@
-# Getting Start with Operator SDK
+# Operator SDK
+
+**Note:** The project is currently pre-alpha and it is expected that breaking changes to the API will be made in the upcoming releases.
+
+## Overview
+
+[Operators][operator_link] make it easy to manage complex stateful applications on top of Kuberentes. However writing an operator today can be a significant effort that involves challenges like using low level APIs, writing boilerplate, and a lack of modularity which leads to duplication.
+
+The Operator SDK is a framework designed to make write operators easier by providing:
+- High level APIs and abstractions to write the operational logic more intuitively
+- Tools for scaffolding and code generation to bootstrap a new project fast
+- Modular functionality to improve reusability
+
+## Workflow
+
+The SDK provides the following workflow to develop a new operator:
+1. Create a new operator project using the SDK Command Line Interface(CLI)
+2. Define new resource APIs by adding CRDs and specifying fields
+3. Specify resources to watch using the SDK API
+4. Define the operator reconciling logic in a designated handler using SDK API to interact with resources
+5. Use the SDK CLI to build and generate the operator deployment manifests
+
+At a high level the architecture of an operator using the SDK looks as shown below. The operator processes events for watched resources in a user defined handler and takes actions to reconcile the state of the application.
+
+<p align="center">
+	<img src="doc/images/architecture.png" width="400" height="400" />
+</p>
+
+# Getting Started
 
 This guide is designed for beginners who want to start an operator project from scratch.
-
-## What is Operator SDK?
-
-Kubernetes is a wonderful platform and a lot of applications can be run on top of it smoothly. However, there are still some applications not so native to Kubernetes. In other words, it requires significant effort to write Kubernetes deploy code/scripts, besides that those applications are already hard to configure and manage correctly. [Operator][operator_link] is an approach to easily and natively manage applications on Kubernetes. Domain experts write down operational knowledge as code and extend kube-API to connect everything to a single platform.
-
-Operator SDK is a Kubernetes operator framework written in Go language. It is designed to make writing an operator easier by having opinions about the programming model. It empowers developers to build powerful operators by providing a high level API and reusing common modules to do more with less. It makes developing on Kubernetes more fun.
 
 ## Guide prerequisites
 
@@ -58,7 +80,13 @@ More details about the structure of the project can be found in [this doc][scaff
 
 ## Up and running
 
-At this step we actually have a functional operator already. To see it, first build the memcached-operator container and then push it to a public registry:
+At this step we actually have a functional operator already.
+
+The default operator behaviour as seen in the entrypoint `cmd/memcached-operator/main.go` is to watch for Deployments in the default namespace and print out their names.
+
+> Note: This example watches Deployments for the APIVersion `apps/v1` which is only present in k8s versions 1.9+. So for k8s versions < 1.9 change the APIVersion to something that is supported e.g `apps/v1beta1`.
+
+To see it, first build the memcached-operator container and then push it to a public registry:
  
 ```
 operator-sdk build quay.io/example/memcached-operator:v0.0.1
