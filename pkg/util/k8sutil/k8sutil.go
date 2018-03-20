@@ -82,3 +82,19 @@ func UnstructuredFromRuntimeObject(ro runtime.Object) *unstructured.Unstructured
 	}
 	return &u
 }
+
+// UnstructuredIntoRuntimeObject unmarshalls an unstructured into a given runtime object
+func UnstructuredIntoRuntimeObject(u *unstructured.Unstructured, into runtime.Object) error {
+	gvk := u.GroupVersionKind()
+	decoder := decoder(gvk.GroupVersion())
+
+	b, err := u.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	_, _, err = decoder.Decode(b, &gvk, into)
+	if err != nil {
+		return fmt.Errorf("failed to decode json data with gvk(%v): %v", gvk.String(), err)
+	}
+	return nil
+}
