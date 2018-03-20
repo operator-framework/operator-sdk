@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -97,4 +98,23 @@ func UnstructuredIntoRuntimeObject(u *unstructured.Unstructured, into runtime.Ob
 		return fmt.Errorf("failed to decode json data with gvk(%v): %v", gvk.String(), err)
 	}
 	return nil
+}
+
+// GetNameAndNamespace extracts the name and namespace from the given runtime.Object
+// and returns a error if any of those is missing.
+func GetNameAndNamespace(object runtime.Object) (string, string, error) {
+	accessor := meta.NewAccessor()
+	name, err := accessor.Name(object)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get name for object: %v", err)
+	}
+	namespace, err := accessor.Namespace(object)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get namespace for object: %v", err)
+	}
+	return name, namespace, nil
+}
+
+func ObjectInfo(kind, name, namespace string) string {
+	return kind + ": " + namespace + "/" + name
 }
