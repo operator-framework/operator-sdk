@@ -23,6 +23,12 @@ type GetOp struct {
 	metaGetOptions *metav1.GetOptions
 }
 
+func NewGetOp() *GetOp {
+	op := &GetOp{}
+	op.setDefaults()
+	return op
+}
+
 func (op *GetOp) applyOpts(opts []GetOption) {
 	for _, opt := range opts {
 		opt(op)
