@@ -6,7 +6,7 @@
 
 [Operators][operator_link] make it easy to manage complex stateful applications on top of Kuberentes. However writing an operator today can be a significant effort that involves challenges like using low level APIs, writing boilerplate, and a lack of modularity which leads to duplication.
 
-The Operator SDK is a framework designed to make write operators easier by providing:
+The Operator SDK is a framework designed to make writing operators easier by providing:
 - High level APIs and abstractions to write the operational logic more intuitively
 - Tools for scaffolding and code generation to bootstrap a new project fast
 - Modular functionality to improve reusability
@@ -17,7 +17,7 @@ The SDK provides the following workflow to develop a new operator:
 1. Create a new operator project using the SDK Command Line Interface(CLI)
 2. Define new resource APIs by adding CRDs and specifying fields
 3. Specify resources to watch using the SDK API
-4. Define the operator reconciling logic in a designated handler using SDK API to interact with resources
+4. Define the operator reconciling logic in a designated handler and use the SDK API to interact with resources
 5. Use the SDK CLI to build and generate the operator deployment manifests
 
 At a high level the architecture of an operator using the SDK looks as shown below. The operator processes events for watched resources in a user defined handler and takes actions to reconcile the state of the application.
