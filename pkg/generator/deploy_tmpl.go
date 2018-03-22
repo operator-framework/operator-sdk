@@ -28,12 +28,15 @@ spec:
   scope: Namespaced
   version: {{.Version}}
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{.ProjectName}}
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      name: {{.ProjectName}}
   template:
     metadata:
       labels:

@@ -340,12 +340,15 @@ spec:
   scope: Namespaced
   version: v1alpha1
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: app-operator
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      name: app-operator
   template:
     metadata:
       labels:
