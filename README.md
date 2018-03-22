@@ -4,7 +4,9 @@
 
 The project is currently pre-alpha and it is expected that breaking changes to the API will be made in the upcoming releases.
 
-See the [design docs][design_docs] for planned work on upcoming milestones.
+See the [design docs][design_docs] for planned work on upcoming milestones:
+- [Query API](doc/design/milestone-0.0.2/query-api.md)
+- [Action API](doc/design/milestone-0.0.2/action-api.md)
 
 ## Overview
 
