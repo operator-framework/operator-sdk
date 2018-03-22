@@ -1,6 +1,10 @@
 # Operator SDK
 
-**Note:** The project is currently pre-alpha and it is expected that breaking changes to the API will be made in the upcoming releases.
+### Project Status: pre-alpha
+
+The project is currently pre-alpha and it is expected that breaking changes to the API will be made in the upcoming releases.
+
+See the [design docs][design_docs] for planned work on upcoming milestones.
 
 ## Overview
 
@@ -323,3 +327,4 @@ kubectl delete deployment/example service/example
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [minikube_tool]:https://github.com/kubernetes/minikube#installation
 [operator_link]:https://coreos.com/operators/
+[design_docs]:./doc/design
