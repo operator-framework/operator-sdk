@@ -77,10 +77,6 @@
 			{
 				"type": "Apache License 2.0",
 				"confidence": 1
-			},
-			{
-				"type": "The Unlicense",
-				"confidence": 0.3422459893048128
 			}
 		]
 	},
