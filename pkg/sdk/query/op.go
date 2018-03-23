@@ -18,7 +18,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// GetOp represents an operation that Get can execute.
+// GetOp wraps all the options for Get().
 type GetOp struct {
 	metaGetOptions *metav1.GetOptions
 }
@@ -35,12 +35,40 @@ func (op *GetOp) setDefaults() {
 	}
 }
 
-// GetOption configures Get operation.
+// GetOption configures GetOp.
 type GetOption func(*GetOp)
 
-// WithGetOptions specifies the kubernetes metav1.GetOptions for Get operation.
+// WithGetOptions sets the metav1.GetOptions for the Get() operation.
 func WithGetOptions(metaGetOptions *metav1.GetOptions) GetOption {
 	return func(op *GetOp) {
 		op.metaGetOptions = metaGetOptions
+	}
+}
+
+// ListOp wraps all the options for List.
+type ListOp struct {
+	metaListOptions *metav1.ListOptions
+}
+
+// ListOption configures ListOp.
+type ListOption func(*ListOp)
+
+func (op *ListOp) applyOpts(opts []ListOption) {
+	for _, opt := range opts {
+		opt(op)
+	}
+}
+
+func (op *ListOp) setDefaults() {
+	if op.metaListOptions == nil {
+		op.metaListOptions = &metav1.ListOptions{}
+	}
+}
+
+// WithListOptions sets the metav1.ListOptions for
+// the List() operation.
+func WithListOptions(metaListOptions *metav1.ListOptions) ListOption {
+	return func(op *ListOp) {
+		op.metaListOptions = metaListOptions
 	}
 }
