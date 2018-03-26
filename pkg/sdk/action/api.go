@@ -53,3 +53,35 @@ func Create(object sdkTypes.Object) (err error) {
 	}
 	return nil
 }
+
+// Update updates the provided object on the server and updates the arg
+// "object" with the result from the server(UID, resourceVersion, etc).
+// Returns an error if the object’s TypeMeta(Kind, APIVersion) or ObjectMeta(Name, Namespace) is missing or incorrect.
+// Can also return an api error from the server
+// e.g Conflict https://github.com/kubernetes/apimachinery/blob/master/pkg/api/errors/errors.go#L428
+func Update(object sdkTypes.Object) (err error) {
+	_, namespace, err := k8sutil.GetNameAndNamespace(object)
+	if err != nil {
+		return err
+	}
+	gvk := object.GetObjectKind().GroupVersionKind()
+	apiVersion, kind := gvk.ToAPIVersionAndKind()
+
+	resourceClient, _, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
+	if err != nil {
+		return fmt.Errorf("failed to get resource client: %v", err)
+	}
+
+	unstructObj := k8sutil.UnstructuredFromRuntimeObject(object)
+	unstructObj, err = resourceClient.Update(unstructObj)
+	if err != nil {
+		return err
+	}
+
+	// Update the arg object with the result
+	err = k8sutil.UnstructuredIntoRuntimeObject(unstructObj, object)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal the retrieved data: %v", err)
+	}
+	return nil
+}
