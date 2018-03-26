@@ -50,3 +50,28 @@ func Get(into sdkTypes.Object, opts ...GetOption) error {
 	}
 	return nil
 }
+
+// List retrieves the specified object list and unmarshals the retrieved data into the "into" object.
+// "namespace" indicates which kubernetes namespace to look for the list of kubernetes objects.
+// "into" is a sdkType.Object that must have
+// "Kind" and "APIVersion" specified in its "TypeMeta" field
+// Those are used to construct the underlying resource client.
+// "opts" configures the List operation.
+func List(namespace string, into sdkTypes.Object, opts ...ListOption) error {
+	gvk := into.GetObjectKind().GroupVersionKind()
+	apiVersion, kind := gvk.ToAPIVersionAndKind()
+	resourceClient, _, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
+	if err != nil {
+		return fmt.Errorf("failed to get resource client for (apiVersion:%s, kind:%s, ns:%s): %v", apiVersion, kind, namespace, err)
+	}
+	o := NewListOp()
+	o.applyOpts(opts)
+	l, err := resourceClient.List(*o.metaListOptions)
+	if err != nil {
+		return err
+	}
+	if err := k8sutil.RuntimeObjectIntoRuntimeObject(l, into); err != nil {
+		return fmt.Errorf("failed to unmarshal the retrieved data: %v", err)
+	}
+	return nil
+}
