@@ -85,3 +85,26 @@ func Update(object sdkTypes.Object) (err error) {
 	}
 	return nil
 }
+
+// Delete deletes the specified object
+// Returns an error if the object’s TypeMeta(Kind, APIVersion) or ObjectMeta(Name, Namespace) is missing or incorrect.
+// e.g NotFound https://github.com/kubernetes/apimachinery/blob/master/pkg/api/errors/errors.go#L418
+// “opts” configures the DeleteOptions
+// When passed WithDeleteOptions(o), the specified metav1.DeleteOptions are set.
+func Delete(object sdkTypes.Object, opts ...DeleteOption) (err error) {
+	name, namespace, err := k8sutil.GetNameAndNamespace(object)
+	if err != nil {
+		return err
+	}
+	gvk := object.GetObjectKind().GroupVersionKind()
+	apiVersion, kind := gvk.ToAPIVersionAndKind()
+
+	resourceClient, _, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
+	if err != nil {
+		return fmt.Errorf("failed to get resource client: %v", err)
+	}
+
+	o := NewDeleteOp()
+	o.applyOpts(opts)
+	return resourceClient.Delete(name, o.metaDeleteOptions)
+}
