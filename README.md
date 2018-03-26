@@ -10,7 +10,7 @@ See the [design docs][design_docs] for planned work on upcoming milestones:
 
 ## Overview
 
-[Operators][operator_link] make it easy to manage complex stateful applications on top of Kuberentes. However writing an operator today can be a significant effort that involves challenges like using low level APIs, writing boilerplate, and a lack of modularity which leads to duplication.
+[Operators][operator_link] make it easy to manage complex stateful applications on top of Kubernetes. However writing an operator today can be a significant effort that involves challenges like using low level APIs, writing boilerplate, and a lack of modularity which leads to duplication.
 
 The Operator SDK is a framework designed to make writing operators easier by providing:
 - High level APIs and abstractions to write the operational logic more intuitively
@@ -21,7 +21,7 @@ The Operator SDK is a framework designed to make writing operators easier by pro
 
 The SDK provides the following workflow to develop a new operator:
 1. Create a new operator project using the SDK Command Line Interface(CLI)
-2. Define new resource APIs by adding CRDs and specifying fields
+2. Define new resource APIs by adding Custom Resource Definitions(CRD)
 3. Specify resources to watch using the SDK API
 4. Define the operator reconciling logic in a designated handler and use the SDK API to interact with resources
 5. Use the SDK CLI to build and generate the operator deployment manifests
@@ -54,7 +54,7 @@ Before creating any project, this guide has the following prerequisites:
 
 ## Installing Operator SDK CLI
 
-Operator SDK CLI tool is used to manage development lifecycle.
+The Operator SDK comes with a CLI tool that manages the development lifecycle. It helps create the project scaffolding, preprocess custom resource API to generate Kubernetes related code, and generate deployment scripts.
 
 Checkout the desired release tag and install the SDK CLI tool:
 ```
@@ -62,19 +62,19 @@ git checkout tags/v0.0.1
 go install github.com/coreos/operator-sdk/commands/operator-sdk
 ```
 
-## Creating a new project
+This will install the CLI binary `operator-sdk` at `$GOPATH/bin`.
 
-Operator SDK comes with a number of code generators that are designed to facilitate development lifecycle. It helps create the project scaffolding, preprocess custom resource API to generate Kubernetes related code, generate deployment scripts -- just everything that is necessary to build an operator.
+## Creating a new project
 
 Navigate to `$GOPATH/src/github.com/example-inc/`.
 
-To start a project, we use the `new` generator to provide the foundation of a fresh operator project. Run the following command:
+Use the `new` command to create a new operator project:
 
 ```
 operator-sdk new memcached-operator --api-version=cache.example.com/v1alpha1 --kind=Memcached
 ```
 
-This generates a project repo `memcached-operator`, a custom resource with APIVersion `cache.example.com/v1apha1` and Kind `Memcached`, and an example operator that watches all deployments in the same namespace and logs deployment names.
+This creates the project directory `memcached-operator` and generates the API pkg tree for a custom resource with APIVersion `cache.example.com/v1apha1` and Kind `Memcached`.
 
 Navigate to the project folder:
 
@@ -82,13 +82,13 @@ Navigate to the project folder:
 cd memcached-operator
 ```
 
-More details about the structure of the project can be found in [this doc][scaffold_doc].
+More details about the project directory structure can be found in the [project layout][scaffold_doc] doc.
 
 ## Up and running
 
-At this step we actually have a functional operator already.
+At this point we are ready to build and run a functional operator.
 
-The default operator behaviour as seen in the entrypoint `cmd/memcached-operator/main.go` is to watch for Deployments in the default namespace and print out their names.
+The default operator behaviour defined in the entry point `cmd/memcached-operator/main.go` is to watch for Deployments in the default namespace and print out their names.
 
 > Note: This example watches Deployments for the APIVersion `apps/v1` which is only present in k8s versions 1.9+. So for k8s versions < 1.9 change the APIVersion to something that is supported e.g `apps/v1beta1`.
 
@@ -101,14 +101,14 @@ docker push quay.io/example/memcached-operator:v0.0.1
 
 Kubernetes deployment manifests are generated in `deploy/operator.yaml`. The deployment image is set to the container image specified above.
 
-Deploy memcached-operator:
+Deploy the memcached-operator:
 
 ```
 kubectl create -f deploy/rbac.yaml
 kubectl create -f deploy/operator.yaml
 ```
 
-The memcached-operator would be up and running:
+Verify that the memcached-operator is up and running:
 
 ```
 $ kubectl get deploy
@@ -116,7 +116,7 @@ NAME                     DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
 memcached-operator       1         1         1            1           1m
 ```
 
-Check memcached-operator pod’s log:
+Check the memcached-operator pod’s log:
 
 ```
 $ kubectl get pod | grep memcached-operator | cut -d' ' -f1 | xargs kubectl logs
