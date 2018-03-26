@@ -56,6 +56,12 @@ type ListOp struct {
 	metaListOptions *metav1.ListOptions
 }
 
+func NewListOp() *ListOp {
+	op := &ListOp{}
+	op.setDefaults()
+	return op
+}
+
 // ListOption configures ListOp.
 type ListOption func(*ListOp)
 

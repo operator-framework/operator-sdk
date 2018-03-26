@@ -101,6 +101,21 @@ func UnstructuredIntoRuntimeObject(u *unstructured.Unstructured, into runtime.Ob
 	return nil
 }
 
+// RuntimeObjectIntoRuntimeObject unmarshalls an runtime.Object into a given runtime object
+func RuntimeObjectIntoRuntimeObject(from runtime.Object, into runtime.Object) error {
+	b, err := json.Marshal(from)
+	if err != nil {
+		return err
+	}
+	gvk := from.GetObjectKind().GroupVersionKind()
+	decoder := decoder(gvk.GroupVersion())
+	_, _, err = decoder.Decode(b, &gvk, into)
+	if err != nil {
+		return fmt.Errorf("failed to decode json data with gvk(%v): %v", gvk.String(), err)
+	}
+	return nil
+}
+
 // GetNameAndNamespace extracts the name and namespace from the given runtime.Object
 // and returns a error if any of those is missing.
 func GetNameAndNamespace(object runtime.Object) (string, string, error) {
