@@ -42,7 +42,8 @@ This method also aligns with the original goal of ensuring that all actions of t
 ```Go
 // Handle contains the business logic for an handling an Event
 // It uses SDK Actions and Queries to reconcile the state
-func Handle(ctx context.Context, event sdkTypes.Event)
+// If an error is returned the Event would be requeued and sent to the Handler again
+func Handle(ctx context.Context, event sdkTypes.Event) error
 ```
 
 ### Create Update Delete:
