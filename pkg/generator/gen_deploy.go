@@ -24,6 +24,7 @@ import (
 const (
 	operatorTmplName = "deploy/operator.yaml"
 	rbacTmplName     = "deploy/rbac.yaml"
+	crTmplName       = "deploy/cr.yaml"
 )
 
 // OperatorYaml contains all the customized data needed to generate deploy/operator.yaml for a new operator
@@ -76,5 +77,26 @@ func renderRBACYaml(w io.Writer, projectName string) error {
 	}
 
 	r := RBACYaml{ProjectName: projectName}
+	return t.Execute(w, r)
+}
+
+// CRYaml contains all the customized data needed to generate deploy/cr.yaml.
+type CRYaml struct {
+	APIVersion string
+	Kind       string
+	Name       string
+}
+
+func renderCustomResourceYaml(w io.Writer, apiVersion, kind string) error {
+	t := template.New(crTmplName)
+	t, err := t.Parse(crYamlTmpl)
+	if err != nil {
+		return fmt.Errorf("failed to parse cr yaml template: %v", err)
+	}
+
+	r := CRYaml{
+		APIVersion: apiVersion,
+		Kind:       kind,
+	}
 	return t.Execute(w, r)
 }

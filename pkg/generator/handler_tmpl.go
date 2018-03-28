@@ -18,10 +18,16 @@ package generator
 const handlerTmpl = `package stub
 
 import (
+	"{{.RepoPath}}/pkg/apis/{{.APIDirName}}/{{.Version}}"
+
+	"{{.OperatorSDKImport}}/action"
 	"{{.OperatorSDKImport}}/handler"
 	"{{.OperatorSDKImport}}/types"
 	"github.com/sirupsen/logrus"
-	apps_v1 "k8s.io/api/apps/v1"
+	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func NewHandler() handler.Handler {
@@ -33,11 +39,48 @@ type Handler struct {
 }
 
 func (h *Handler) Handle(ctx types.Context, event types.Event) error {
-	// Change me
 	switch o := event.Object.(type) {
-	case *apps_v1.Deployment:
-		logrus.Printf("Received Deployment: %v", o.Name)
+	case *{{.Version}}.{{.Kind}}:
+		err := action.Create(newbusyBoxPod(o))
+		if err != nil && !errors.IsAlreadyExists(err) {
+			logrus.Errorf("Failed to create busybox pod : %v", err)
+			return err
+		}
 	}
 	return nil
+}
+
+// newbusyBoxPod demonstrates how to create a busybox pod
+func newbusyBoxPod(cr *{{.Version}}.{{.Kind}}) *v1.Pod {
+	labels := map[string]string{
+		"app": "busy-box",
+	}
+	return &v1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "busy-box",
+			Namespace:    "default",
+			OwnerReferences: []metav1.OwnerReference{
+				*metav1.NewControllerRef(cr, schema.GroupVersionKind{
+					Group:   {{.Version}}.SchemeGroupVersion.Group,
+					Version: {{.Version}}.SchemeGroupVersion.Version,
+					Kind:    "{{.Kind}}",
+				}),
+			},
+			Labels: labels,
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Name:    "busybox",
+					Image:   "busybox",
+					Command: []string{"sleep", "3600"},
+				},
+			},
+		},
+	}
 }
 `

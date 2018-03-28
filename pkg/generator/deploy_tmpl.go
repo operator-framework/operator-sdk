@@ -76,3 +76,9 @@ roleRef:
   name: {{.ProjectName}}
   apiGroup: rbac.authorization.k8s.io
 `
+
+const crYamlTmpl = `apiVersion: "{{.APIVersion}}"
+kind: "{{.Kind}}"
+metadata:
+  name: "example"
+`

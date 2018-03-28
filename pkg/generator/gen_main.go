@@ -33,10 +33,13 @@ type Main struct {
 	OperatorSDKImport string
 	StubImport        string
 	SDKVersionImport  string
+
+	APIVersion string
+	Kind       string
 }
 
-// renderMainFile generates the cmd/<projectName>/main.go file given a repo path ("github.com/coreos/play")
-func renderMainFile(w io.Writer, repo string) error {
+// renderMainFile generates the cmd/<projectName>/main.go file.
+func renderMainFile(w io.Writer, repo, apiVersion, kind string) error {
 	t := template.New("cmd/<projectName>/main.go")
 	t, err := t.Parse(mainTmpl)
 	if err != nil {
@@ -47,6 +50,8 @@ func renderMainFile(w io.Writer, repo string) error {
 		OperatorSDKImport: sdkImport,
 		StubImport:        filepath.Join(repo, stubDir),
 		SDKVersionImport:  versionImport,
+		APIVersion:        apiVersion,
+		Kind:              kind,
 	}
 	return t.Execute(w, m)
 }
