@@ -22,7 +22,7 @@ import (
 // If any intended action failed, the event would be re-triggered.
 // For actions done before the failed action, there is no rollback.
 type Handler interface {
-	Handle(sdkTypes.Context, sdkTypes.Event) []sdkTypes.Action
+	Handle(sdkTypes.Context, sdkTypes.Event) error
 }
 
 var (

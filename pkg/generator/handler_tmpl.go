@@ -32,7 +32,7 @@ type Handler struct {
 	// Fill me
 }
 
-func (h *Handler) Handle(ctx types.Context, event types.Event) []types.Action {
+func (h *Handler) Handle(ctx types.Context, event types.Event) error {
 	// Change me
 	switch o := event.Object.(type) {
 	case *apps_v1.Deployment:
