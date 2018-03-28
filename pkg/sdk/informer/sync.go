@@ -15,7 +15,6 @@
 package informer
 
 import (
-	sdkAction "github.com/coreos/operator-sdk/pkg/sdk/action"
 	sdkHandler "github.com/coreos/operator-sdk/pkg/sdk/handler"
 	sdkTypes "github.com/coreos/operator-sdk/pkg/sdk/types"
 	"github.com/coreos/operator-sdk/pkg/util/k8sutil"
@@ -78,16 +77,8 @@ func (i *informer) sync(key string) error {
 	}
 
 	sdkCtx := sdkTypes.Context{Context: i.context}
-	actions := sdkHandler.RegisteredHandler.Handle(sdkCtx, event)
 	// TODO: Add option to prevent multiple informers from invoking Handle() concurrently?
-
-	for _, action := range actions {
-		err := sdkAction.ProcessAction(action)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return sdkHandler.RegisteredHandler.Handle(sdkCtx, event)
 }
 
 // handleErr checks if an error happened and makes sure we will retry later.

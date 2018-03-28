@@ -20,105 +20,91 @@ import (
 	"github.com/coreos/operator-sdk/pkg/k8sclient"
 	sdkTypes "github.com/coreos/operator-sdk/pkg/sdk/types"
 	"github.com/coreos/operator-sdk/pkg/util/k8sutil"
-
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const (
-	// Supported function types
-	KubeApplyFunc  sdkTypes.FuncType = "kube-apply"
-	KubeDeleteFunc sdkTypes.FuncType = "kube-delete"
-)
-
-var (
-	// kubeFuncs is the mapping of the supported functions
-	kubeFuncs = map[sdkTypes.FuncType]sdkTypes.KubeFunc{
-		KubeApplyFunc:  KubeApply,
-		KubeDeleteFunc: KubeDelete,
-	}
-)
-
-// ProcessAction invokes the function specified by action.Func
-func ProcessAction(action sdkTypes.Action) error {
-	kubeFunc, ok := kubeFuncs[action.Func]
-	if !ok {
-		return fmt.Errorf("failed to process action: unsupported function (%v)", action.Func)
-	}
-	err := kubeFunc(action.Object)
-	if err != nil {
-		return fmt.Errorf("failed to process action: %v", err)
-	}
-	return nil
-}
-
-// KubeApply tries to create the specified object or update it if it already exists
-func KubeApply(object sdkTypes.Object) (err error) {
-	defer func() {
-		if err != nil {
-			err = fmt.Errorf("kube-apply failed: %v", err)
-		}
-	}()
-
-	name, namespace, err := k8sutil.GetNameAndNamespace(object)
+// Create creates the provided object on the server and updates the arg
+// "object" with the result from the server(UID, resourceVersion, etc).
+// Returns an error if the object’s TypeMeta(Kind, APIVersion) or ObjectMeta(Name/GenerateName, Namespace) is missing or incorrect.
+// Can also return an api error from the server
+// e.g AlreadyExists https://github.com/kubernetes/apimachinery/blob/master/pkg/api/errors/errors.go#L423
+func Create(object sdkTypes.Object) (err error) {
+	_, namespace, err := k8sutil.GetNameAndNamespace(object)
 	if err != nil {
 		return err
 	}
 	gvk := object.GetObjectKind().GroupVersionKind()
 	apiVersion, kind := gvk.ToAPIVersionAndKind()
-	objectInfo := k8sutil.ObjectInfo(kind, name, namespace)
 
 	resourceClient, _, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
 	if err != nil {
-		return fmt.Errorf("failed to get resource client for object: %v", err)
+		return fmt.Errorf("failed to get resource client: %v", err)
 	}
 
 	unstructObj := k8sutil.UnstructuredFromRuntimeObject(object)
-
-	// Create the resource if it doesn't exist
-	_, err = resourceClient.Create(unstructObj)
-	if err == nil {
-		return nil
-	}
-	if err != nil && !apierrors.IsAlreadyExists(err) {
-		return fmt.Errorf("failed to create object (%s): %v ", objectInfo, err)
-	}
-
-	// Update it if it already exists
-	// NOTE: The update could fail if there is a resourceVersion conflict.
-	// That means the object is stale, and the user needs to retry the Action with
-	// an updated object that has the latest resourceVersion
-	_, err = resourceClient.Update(unstructObj)
+	unstructObj, err = resourceClient.Create(unstructObj)
 	if err != nil {
-		return fmt.Errorf("failed to update object (%s): %v ", objectInfo, err)
+		return err
+	}
+
+	// Update the arg object with the result
+	err = k8sutil.UnstructuredIntoRuntimeObject(unstructObj, object)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal the retrieved data: %v", err)
 	}
 	return nil
 }
 
-// KubeDelete deletes an object if it still exists
-func KubeDelete(object sdkTypes.Object) (err error) {
-	defer func() {
-		if err != nil {
-			err = fmt.Errorf("kube-delete failed: %v", err)
-		}
-	}()
+// Update updates the provided object on the server and updates the arg
+// "object" with the result from the server(UID, resourceVersion, etc).
+// Returns an error if the object’s TypeMeta(Kind, APIVersion) or ObjectMeta(Name, Namespace) is missing or incorrect.
+// Can also return an api error from the server
+// e.g Conflict https://github.com/kubernetes/apimachinery/blob/master/pkg/api/errors/errors.go#L428
+func Update(object sdkTypes.Object) (err error) {
+	_, namespace, err := k8sutil.GetNameAndNamespace(object)
+	if err != nil {
+		return err
+	}
+	gvk := object.GetObjectKind().GroupVersionKind()
+	apiVersion, kind := gvk.ToAPIVersionAndKind()
 
+	resourceClient, _, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
+	if err != nil {
+		return fmt.Errorf("failed to get resource client: %v", err)
+	}
+
+	unstructObj := k8sutil.UnstructuredFromRuntimeObject(object)
+	unstructObj, err = resourceClient.Update(unstructObj)
+	if err != nil {
+		return err
+	}
+
+	// Update the arg object with the result
+	err = k8sutil.UnstructuredIntoRuntimeObject(unstructObj, object)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal the retrieved data: %v", err)
+	}
+	return nil
+}
+
+// Delete deletes the specified object
+// Returns an error if the object’s TypeMeta(Kind, APIVersion) or ObjectMeta(Name, Namespace) is missing or incorrect.
+// e.g NotFound https://github.com/kubernetes/apimachinery/blob/master/pkg/api/errors/errors.go#L418
+// “opts” configures the DeleteOptions
+// When passed WithDeleteOptions(o), the specified metav1.DeleteOptions are set.
+func Delete(object sdkTypes.Object, opts ...DeleteOption) (err error) {
 	name, namespace, err := k8sutil.GetNameAndNamespace(object)
 	if err != nil {
 		return err
 	}
 	gvk := object.GetObjectKind().GroupVersionKind()
 	apiVersion, kind := gvk.ToAPIVersionAndKind()
-	objectInfo := k8sutil.ObjectInfo(kind, name, namespace)
 
 	resourceClient, _, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
 	if err != nil {
-		return fmt.Errorf("failed to get resource client for object: %v", err)
+		return fmt.Errorf("failed to get resource client: %v", err)
 	}
 
-	err = resourceClient.Delete(name, &metav1.DeleteOptions{})
-	if err != nil && !apierrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete object (%s): %v", objectInfo, err)
-	}
-	return nil
+	o := NewDeleteOp()
+	o.applyOpts(opts)
+	return resourceClient.Delete(name, o.metaDeleteOptions)
 }
