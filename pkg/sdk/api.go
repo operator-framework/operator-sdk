@@ -35,17 +35,19 @@ var (
 //   - Pods have Group "Core" and Version "v1" giving the APIVersion "v1"
 //   - The custom resource Memcached might have Group "cache.example.com" and Version "v1alpha1" giving the APIVersion "cache.example.com/v1alpha1"
 // kind is the Kind of the resource, e.g "Pod" for pods
+// resyncPeriod is the time period in seconds for how often an event with the latest resource version will be sent to the handler, even if there is no change.
+//   - 0 means no periodic events will be sent
 // Consult the API reference for the Group, Version and Kind of a resource: https://kubernetes.io/docs/reference/
 // namespace is the Namespace to watch for the resource
 // TODO: support opts for specifying label selector
-func Watch(apiVersion, kind, namespace string) {
+func Watch(apiVersion, kind, namespace string, resyncPeriod int) {
 	resourceClient, resourcePluralName, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
 	// TODO: Better error handling, e.g retry
 	if err != nil {
 		logrus.Errorf("failed to get resource client for (apiVersion:%s, kind:%s, ns:%s): %v", apiVersion, kind, namespace, err)
 		panic(err)
 	}
-	informer := sdkInformer.New(resourcePluralName, namespace, resourceClient)
+	informer := sdkInformer.New(resourcePluralName, namespace, resourceClient, resyncPeriod)
 	informers = append(informers, informer)
 }
 
