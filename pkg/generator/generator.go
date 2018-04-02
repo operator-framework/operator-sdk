@@ -54,6 +54,7 @@ const (
 	config          = "config.yaml"
 	operatorYaml    = deployDir + "/operator.yaml"
 	rbacYaml        = "rbac.yaml"
+	crYaml          = "cr.yaml"
 )
 
 type Generator struct {
@@ -127,12 +128,12 @@ func (g *Generator) renderCmd() error {
 	if err := os.MkdirAll(cpDir, defaultDirFileMode); err != nil {
 		return err
 	}
-	return renderCmdFiles(cpDir, g.repoPath)
+	return renderCmdFiles(cpDir, g.repoPath, g.apiVersion, g.kind)
 }
 
-func renderCmdFiles(cmdProjectDir, repoPath string) error {
+func renderCmdFiles(cmdProjectDir, repoPath, apiVersion, kind string) error {
 	buf := &bytes.Buffer{}
-	if err := renderMainFile(buf, repoPath); err != nil {
+	if err := renderMainFile(buf, repoPath, apiVersion, kind); err != nil {
 		return err
 	}
 	return writeFileAndPrint(filepath.Join(cmdProjectDir, main), buf.Bytes(), defaultFileMode)
@@ -159,7 +160,7 @@ func (g *Generator) renderDeploy() error {
 	if err := os.MkdirAll(dp, defaultDirFileMode); err != nil {
 		return err
 	}
-	return renderRBAC(dp, g.projectName)
+	return renderDeployFiles(dp, g.projectName, g.apiVersion, g.kind)
 }
 
 func renderRBAC(deployDir, projectName string) error {
@@ -170,9 +171,24 @@ func renderRBAC(deployDir, projectName string) error {
 	return writeFileAndPrint(filepath.Join(deployDir, rbacYaml), buf.Bytes(), defaultFileMode)
 }
 
-// RenderDeployFiles generates "deploy/operator.yaml"
-// TODO: rethink about when/what to generate when invoking build command.
-func RenderDeployFiles(c *Config, image string) error {
+func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
+	buf := &bytes.Buffer{}
+	if err := renderRBACYaml(buf, projectName); err != nil {
+		return err
+	}
+	if err := writeFileAndPrint(filepath.Join(deployDir, rbacYaml), buf.Bytes(), defaultFileMode); err != nil {
+		return err
+	}
+
+	buf = &bytes.Buffer{}
+	if err := renderCustomResourceYaml(buf, apiVersion, kind); err != nil {
+		return err
+	}
+	return writeFileAndPrint(filepath.Join(deployDir, crYaml), buf.Bytes(), defaultFileMode)
+}
+
+// RenderOperatorYaml generates "deploy/operator.yaml"
+func RenderOperatorYaml(c *Config, image string) error {
 	buf := &bytes.Buffer{}
 	if err := renderOperatorYaml(buf, c.Kind, c.APIVersion, c.ProjectName, image); err != nil {
 		return err
@@ -238,7 +254,8 @@ func renderCodegenFiles(codegenDir, repoPath, apiDirName, version, projectName s
 
 func (g *Generator) renderPkg() error {
 	v := version(g.apiVersion)
-	apiDir := filepath.Join(g.projectName, apisDir, apiDirName(g.apiVersion), v)
+	adn := apiDirName(g.apiVersion)
+	apiDir := filepath.Join(g.projectName, apisDir, adn, v)
 	if err := os.MkdirAll(apiDir, defaultDirFileMode); err != nil {
 		return err
 	}
@@ -250,7 +267,7 @@ func (g *Generator) renderPkg() error {
 	if err := os.MkdirAll(sDir, defaultDirFileMode); err != nil {
 		return err
 	}
-	return renderStubFiles(sDir)
+	return renderStubFiles(sDir, g.repoPath, g.kind, adn, v)
 }
 
 func renderAPIFiles(apiDir, groupName, version, kind string) error {
@@ -277,9 +294,9 @@ func renderAPIFiles(apiDir, groupName, version, kind string) error {
 	return writeFileAndPrint(filepath.Join(apiDir, types), buf.Bytes(), defaultFileMode)
 }
 
-func renderStubFiles(stubDir string) error {
+func renderStubFiles(stubDir, repoPath, kind, apiDirName, version string) error {
 	buf := &bytes.Buffer{}
-	if err := renderHandlerFile(buf); err != nil {
+	if err := renderHandlerFile(buf, repoPath, kind, apiDirName, version); err != nil {
 		return err
 	}
 	return writeFileAndPrint(filepath.Join(stubDir, handler), buf.Bytes(), defaultFileMode)

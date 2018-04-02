@@ -36,8 +36,8 @@ func printVersion() {
 
 func main() {
 	printVersion()
-	sdk.Watch("apps/v1", "Deployment", "default")
+	sdk.Watch("{{.APIVersion}}", "{{.Kind}}", "default")
 	sdk.Handle(stub.NewHandler())
- 	sdk.Run(context.TODO())
+	sdk.Run(context.TODO())
 }
 `

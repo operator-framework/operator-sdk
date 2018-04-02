@@ -19,15 +19,25 @@ import (
 	"testing"
 )
 
+const (
+	// test constants for app-operator
+	appRepoPath   = "github.com/example-inc/app-operator"
+	appKind       = "App"
+	appApiDirName = "app"
+	appAPIVersion = appGroupName + "/" + appVersion
+	appVersion    = "v1alpha1"
+	appGroupName  = "app.example.com"
+)
+
 const mainExp = `package main
 
 import (
 	"context"
 	"runtime"
 
-	stub "github.com/coreos/play/pkg/stub"
+	stub "github.com/example-inc/app-operator/pkg/stub"
 	sdk "github.com/coreos/operator-sdk/pkg/sdk"
-	sdkVersion  "github.com/coreos/operator-sdk/version"
+	sdkVersion "github.com/coreos/operator-sdk/version"
 
 	"github.com/sirupsen/logrus"
 )
@@ -40,15 +50,15 @@ func printVersion() {
 
 func main() {
 	printVersion()
-	sdk.Watch("apps/v1", "Deployment", "default")
+	sdk.Watch("app.example.com/v1alpha1", "App", "default")
 	sdk.Handle(stub.NewHandler())
- 	sdk.Run(context.TODO())
+	sdk.Run(context.TODO())
 }
 `
 
 func TestGenMain(t *testing.T) {
 	buf := &bytes.Buffer{}
-	if err := renderMainFile(buf, "github.com/coreos/play"); err != nil {
+	if err := renderMainFile(buf, appRepoPath, appAPIVersion, appKind); err != nil {
 		t.Error(err)
 		return
 	}
@@ -61,10 +71,16 @@ func TestGenMain(t *testing.T) {
 const handlerExp = `package stub
 
 import (
+	"github.com/example-inc/app-operator/pkg/apis/app/v1alpha1"
+
+	"github.com/coreos/operator-sdk/pkg/sdk/action"
 	"github.com/coreos/operator-sdk/pkg/sdk/handler"
 	"github.com/coreos/operator-sdk/pkg/sdk/types"
 	"github.com/sirupsen/logrus"
-	apps_v1 "k8s.io/api/apps/v1"
+	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func NewHandler() handler.Handler {
@@ -76,18 +92,55 @@ type Handler struct {
 }
 
 func (h *Handler) Handle(ctx types.Context, event types.Event) error {
-	// Change me
 	switch o := event.Object.(type) {
-	case *apps_v1.Deployment:
-		logrus.Printf("Received Deployment: %v", o.Name)
+	case *v1alpha1.App:
+		err := action.Create(newbusyBoxPod(o))
+		if err != nil && !errors.IsAlreadyExists(err) {
+			logrus.Errorf("Failed to create busybox pod : %v", err)
+			return err
+		}
 	}
 	return nil
+}
+
+// newbusyBoxPod demonstrates how to create a busybox pod
+func newbusyBoxPod(cr *v1alpha1.App) *v1.Pod {
+	labels := map[string]string{
+		"app": "busy-box",
+	}
+	return &v1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "busy-box",
+			Namespace:    "default",
+			OwnerReferences: []metav1.OwnerReference{
+				*metav1.NewControllerRef(cr, schema.GroupVersionKind{
+					Group:   v1alpha1.SchemeGroupVersion.Group,
+					Version: v1alpha1.SchemeGroupVersion.Version,
+					Kind:    "App",
+				}),
+			},
+			Labels: labels,
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Name:    "busybox",
+					Image:   "busybox",
+					Command: []string{"sleep", "3600"},
+				},
+			},
+		},
+	}
 }
 `
 
 func TestGenHandler(t *testing.T) {
 	buf := &bytes.Buffer{}
-	if err := renderHandlerFile(buf); err != nil {
+	if err := renderHandlerFile(buf, appRepoPath, appKind, appApiDirName, appVersion); err != nil {
 		t.Error(err)
 		return
 	}

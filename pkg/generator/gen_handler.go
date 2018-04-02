@@ -24,10 +24,15 @@ import (
 type Handler struct {
 	// imports
 	OperatorSDKImport string
+
+	RepoPath   string
+	Kind       string
+	APIDirName string
+	Version    string
 }
 
 // renderHandlerFile generates the stub/handler.go file.
-func renderHandlerFile(w io.Writer) error {
+func renderHandlerFile(w io.Writer, repoPath, kind, apiDirName, version string) error {
 	t := template.New("stub/handler.go")
 	t, err := t.Parse(handlerTmpl)
 	if err != nil {
@@ -36,6 +41,10 @@ func renderHandlerFile(w io.Writer) error {
 
 	h := Handler{
 		OperatorSDKImport: sdkImport,
+		RepoPath:          repoPath,
+		Kind:              kind,
+		APIDirName:        apiDirName,
+		Version:           version,
 	}
 	return t.Execute(w, h)
 }

@@ -82,7 +82,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	if err = yaml.Unmarshal(fp, c); err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to unmarshal config file %v: (%v)", configYaml, err))
 	}
-	if err = generator.RenderDeployFiles(c, image); err != nil {
+	if err = generator.RenderOperatorYaml(c, image); err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/operator.yaml: (%v)", err))
 	}
 }
