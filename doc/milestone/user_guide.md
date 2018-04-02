@@ -113,17 +113,18 @@ memcached-operator       1         1         1            1           1m
 
 ### Create a Memcached CR
 
-Run the following command to create a `Memcached` custom resource:
+Modify `deploy/cr.yaml` as shown and create a `Memcached` custom resource:
 
 ```sh
-$ cat <<EOF | kubectl apply -f -
+$ cat deploy/cr.yaml
 apiVersion: "cache.example.com/v1alpha1"
 kind: "Memcached"
 metadata:
   name: "example-memcached"
 spec:
   size: 3
-EOF
+
+$ kubectl apply -f deploy/cr.yaml
 ```
 
 Ensure that the memcached-operator creates the deployment for the CR:
@@ -170,10 +171,18 @@ status:
 
 ### Update the size
 
-Change the `spec.size` field in the memcached CR from 3 to 4:
+Change the `spec.size` field in the memcached CR from 3 to 4 and apply the change:
 
 ```sh
-$ kubectl get memcached/example-memcached -o yaml | sed 's|size: 3|size: 4|g' | kubectl apply -f -
+$ cat deploy/cr.yaml
+apiVersion: "cache.example.com/v1alpha1"
+kind: "Memcached"
+metadata:
+  name: "example-memcached"
+spec:
+  size: 4
+
+$ kubectl apply -f deploy/cr.yaml
 ```
 
 Confirm that the operator changes the deployment size:
@@ -189,7 +198,7 @@ example-memcached    4         4         4            4           5m
 Clean up the resources:
 
 ```sh
-$ kubectl delete memcached example-memcached
+$ kubectl delete -f deploy/cr.yaml
 $ kubectl delete -f deploy/operator.yaml
 ```
 
