@@ -17,7 +17,8 @@ This guide walks through an example of building a simple memcached-operator usin
 The Operator SDK has a CLI tool that helps the developer to create, build, and deploy a new operator project.
 
 Checkout the desired release tag and install the SDK CLI tool:
-```
+
+```sh
 $ git checkout tags/v0.0.2
 $ go install github.com/coreos/operator-sdk/commands/operator-sdk
 ```
@@ -28,7 +29,7 @@ This installs the CLI binary `operator-sdk` at `$GOPATH/bin`.
 
 Use the CLI to create a new memcached-operator project:
 
-```
+```sh
 $ cd $GOPATH/src/github.com/example-inc/
 $ operator-sdk new memcached-operator --api-version=cache.example.com/v1alpha1 --kind=Memcached
 $ cd memcached-operator
@@ -73,7 +74,7 @@ type MemcachedStatus struct {
 ```
 Update the generated code for the CR:
 
-```
+```sh
 $ operator-sdk generate k8s
 ```
 
@@ -97,14 +98,14 @@ Kubernetes deployment manifests are generated in `deploy/operator.yaml`. The dep
 
 Deploy the memcached-operator:
 
-```
-kubectl create -f deploy/rbac.yaml
-kubectl create -f deploy/operator.yaml
+```sh
+$ kubectl create -f deploy/rbac.yaml
+$ kubectl create -f deploy/operator.yaml
 ```
 
 Verify that the memcached-operator is up and running:
 
-```
+```sh
 $ kubectl get deployment
 NAME                     DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
 memcached-operator       1         1         1            1           1m
@@ -127,7 +128,7 @@ EOF
 
 Ensure that the memcached-operator creates the deployment for the CR:
 
-```
+```sh
 $ kubectl get deployment
 NAME                     DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
 memcached-operator       1         1         1            1           2m
@@ -136,7 +137,7 @@ example-memcached        3         3         3            3           1m
 
 Check the pods and CR status to confirm the status is updated with the memcached pod names:
 
-```
+```sh
 $ kubectl get pods
 NAME                                  READY     STATUS    RESTARTS   AGE
 example-memcached-6fd7c98d8-7dqdr     1/1       Running   0          1m
@@ -145,7 +146,7 @@ example-memcached-6fd7c98d8-m7vn7     1/1       Running   0          1m
 memcached-operator-7cc7cfdf86-vvjqk   1/1       Running   0          2m
 ```
 
-```
+```sh
 $ kubectl get memcached/example-memcached -o yaml
 apiVersion: cache.example.com/v1alpha1
 kind: Memcached
@@ -170,12 +171,14 @@ status:
 ### Update the size
 
 Change the `spec.size` field in the memcached CR from 3 to 4:
-```
+
+```sh
 $ kubectl get memcached/example-memcached -o yaml | sed 's|size: 3|size: 4|g' | kubectl apply -f -
 ```
 
 Confirm that the operator changes the deployment size:
-```
+
+```sh
 $ kubectl get deployment
 NAME                 DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
 example-memcached    4         4         4            4           5m
@@ -185,9 +188,9 @@ example-memcached    4         4         4            4           5m
 
 Clean up the resources:
 
-```
-kubectl delete memcached example-memcached
-kubectl delete -f deploy/operator.yaml
+```sh
+$ kubectl delete memcached example-memcached
+$ kubectl delete -f deploy/operator.yaml
 ```
 
 [memcached_handler]: ../../example/memcached-operator/handler.go

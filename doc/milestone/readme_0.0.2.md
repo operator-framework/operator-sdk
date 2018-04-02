@@ -30,17 +30,18 @@ At a high level an operator using the SDK processes events for watched resources
 
 First, checkout and install the operator-sdk CLI:
 
-```
+```sh
 $ git checkout tags/v0.0.2
 $ go install github.com/coreos/operator-sdk/commands/operator-sdk
 ```
 
 Create and deploy an app-operator using the SDK CLI:
 
-```
+```sh
 # Create an app-operator project that defines the App CR.
 $ cd $GOPATH/src/github.com/example-inc/
 $ operator-sdk new app-operator --api-version=app.example.com/v1alpha1 --kind=App
+$ cd app-operator
 
 # Build and push the app-operator image to a public registry such as quay.io
 $ operator-sdk build quay.io/example/app-operator
