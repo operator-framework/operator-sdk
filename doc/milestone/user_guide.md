@@ -190,8 +190,8 @@ kubectl delete memcached example-memcached
 kubectl delete -f deploy/operator.yaml
 ```
 
-[memcached_handler]: example/memcached-operator/handler.go
-[layout_doc]:./doc/project_layout.md
+[memcached_handler]: ../../example/memcached-operator/handler.go
+[layout_doc]:../project_layout.md
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [go_tool]:https://golang.org/dl/
 [docker_tool]:https://docs.docker.com/install/
