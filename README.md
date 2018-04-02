@@ -172,7 +172,7 @@ import (
 	"github.com/coreos/operator-sdk/pkg/sdk/handler"
 	"github.com/coreos/operator-sdk/pkg/sdk/types"
 	"github.com/sirupsen/logrus"
-	apps_v1 "k8s.io/api/apps/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -187,7 +187,7 @@ func (h *Handler) Handle(ctx types.Context, event types.Event) []types.Action {
 			"name": obj.Name,
 		}
 		ns := "default"
-		d := &apps_v1.Deployment{
+		d := &appsv1.Deployment{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
@@ -196,7 +196,7 @@ func (h *Handler) Handle(ctx types.Context, event types.Event) []types.Action {
 				Name:      obj.Name,
 				Namespace: ns,
 			},
-			Spec: apps_v1.DeploymentSpec{
+			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{
 					MatchLabels: ls,
 				},

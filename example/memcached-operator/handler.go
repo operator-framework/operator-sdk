@@ -10,7 +10,7 @@ import (
 	"github.com/coreos/operator-sdk/pkg/sdk/handler"
 	"github.com/coreos/operator-sdk/pkg/sdk/query"
 	"github.com/coreos/operator-sdk/pkg/sdk/types"
-	apps_v1 "k8s.io/api/apps/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -71,11 +71,11 @@ func (h *Handler) Handle(ctx types.Context, event types.Event) error {
 }
 
 // deploymentForMemcached returns a memcached Deployment object
-func deploymentForMemcached(m *v1alpha1.Memcached) *apps_v1.Deployment {
+func deploymentForMemcached(m *v1alpha1.Memcached) *appsv1.Deployment {
 	ls := labelsForMemcached(m.Name)
 	replicas := m.Spec.Size
 
-	dep := &apps_v1.Deployment{
+	dep := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
 			Kind:       "Deployment",
@@ -84,7 +84,7 @@ func deploymentForMemcached(m *v1alpha1.Memcached) *apps_v1.Deployment {
 			Name:      m.Name,
 			Namespace: m.Namespace,
 		},
-		Spec: apps_v1.DeploymentSpec{
+		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: ls,
