@@ -41,15 +41,16 @@ type informer struct {
 	context             context.Context
 }
 
-func New(resourcePluralName, namespace string, resourceClient dynamic.ResourceInterface) Informer {
+func New(resourcePluralName, namespace string, resourceClient dynamic.ResourceInterface, resyncPeriod int) Informer {
 	i := &informer{
 		resourcePluralName: resourcePluralName,
 		queue:              workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), resourcePluralName),
 		namespace:          namespace,
 	}
 
+	resyncDuration := time.Duration(resyncPeriod) * time.Second
 	i.sharedIndexInformer = cache.NewSharedIndexInformer(
-		newListWatcherFromResourceClient(resourceClient), &unstructured.Unstructured{}, 0, cache.Indexers{},
+		newListWatcherFromResourceClient(resourceClient), &unstructured.Unstructured{}, resyncDuration, cache.Indexers{},
 	)
 	i.sharedIndexInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    i.handleAddResourceEvent,

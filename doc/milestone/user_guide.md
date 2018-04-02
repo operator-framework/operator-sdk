@@ -51,7 +51,7 @@ By default, the memcached-operator watches `Memcached` resource events as shown 
 
 ```Go
 func main() {
-  sdk.Watch("cache.example.com/v1alpha1", "Memcached", "default")
+  sdk.Watch("cache.example.com/v1alpha1", "Memcached", "default", 5)
   sdk.Handle(stub.NewHandler())
   sdk.Run(context.TODO())
 }
