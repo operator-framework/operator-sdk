@@ -22,12 +22,12 @@ import (
 	"github.com/coreos/operator-sdk/pkg/util/k8sutil"
 )
 
-// Get gets the kubernetes object and then unmarshals the retrieved data into the "into" object.
+// Get gets the specified object and unmarshals the retrieved data into the "into" object.
 // "into" is a sdkTypes.Object that must have
 // "Kind" and "APIVersion" specified in its "TypeMeta" field
 // and "Name" and "Namespace" specified in its "ObjectMeta" field.
-// Those fields are used to construct the underlying resource client.
 // "opts" configures the Get operation.
+//  When passed With WithGetOptions(o), the specified metav1.GetOptions is set.
 func Get(into sdkTypes.Object, opts ...GetOption) error {
 	name, namespace, err := k8sutil.GetNameAndNamespace(into)
 	if err != nil {
@@ -55,8 +55,8 @@ func Get(into sdkTypes.Object, opts ...GetOption) error {
 // "namespace" indicates which kubernetes namespace to look for the list of kubernetes objects.
 // "into" is a sdkType.Object that must have
 // "Kind" and "APIVersion" specified in its "TypeMeta" field
-// Those are used to construct the underlying resource client.
 // "opts" configures the List operation.
+//  When passed With WithListOptions(o), the specified metav1.ListOptions is set.
 func List(namespace string, into sdkTypes.Object, opts ...ListOption) error {
 	gvk := into.GetObjectKind().GroupVersionKind()
 	apiVersion, kind := gvk.ToAPIVersionAndKind()
