@@ -83,9 +83,9 @@ type {{.Kind}} struct {
 }
 
 type {{.Kind}}Spec struct {
-	// Fills me
+	// Fill me
 }
 type {{.Kind}}Status struct {
-	// Fills me
+	// Fill me
 }
 `
