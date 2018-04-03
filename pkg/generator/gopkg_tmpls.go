@@ -164,6 +164,6 @@ const gopkgTomlTmpl = `[[override]]
 [[constraint]]
   name = "github.com/coreos/operator-sdk"
   # The version rule is used for a specific release and the master branch for in between releases.
-  branch = "master"
-  # version = "=v0.0.2"
+  # branch = "master"
+  version = "=v0.0.3"
 `
