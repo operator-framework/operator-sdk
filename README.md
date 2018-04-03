@@ -31,7 +31,9 @@ At a high level an operator using the SDK processes events for watched resources
 First, checkout and install the operator-sdk CLI:
 
 ```sh
+$ cd $GOPATH/src/github.com/coreos/operator-sdk
 $ git checkout tags/v0.0.2
+$ dep ensure
 $ go install github.com/coreos/operator-sdk/commands/operator-sdk
 ```
 
