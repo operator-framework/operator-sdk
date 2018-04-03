@@ -19,7 +19,9 @@ The Operator SDK has a CLI tool that helps the developer to create, build, and d
 Checkout the desired release tag and install the SDK CLI tool:
 
 ```sh
+$ cd $GOPATH/src/github.com/coreos/operator-sdk
 $ git checkout tags/v0.0.2
+$ dep ensure
 $ go install github.com/coreos/operator-sdk/commands/operator-sdk
 ```
 
@@ -202,7 +204,7 @@ $ kubectl delete -f deploy/cr.yaml
 $ kubectl delete -f deploy/operator.yaml
 ```
 
-[memcached_handler]: ../example/memcached-operator/handler.go
+[memcached_handler]: ../example/memcached-operator/handler.go.tmpl
 [layout_doc]:./project_layout.md
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [go_tool]:https://golang.org/dl/
