@@ -20,7 +20,7 @@ Checkout the desired release tag and install the SDK CLI tool:
 
 ```sh
 $ cd $GOPATH/src/github.com/coreos/operator-sdk
-$ git checkout tags/v0.0.3
+$ git checkout tags/v0.0.4
 $ dep ensure
 $ go install github.com/coreos/operator-sdk/commands/operator-sdk
 ```
