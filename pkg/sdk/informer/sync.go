@@ -57,7 +57,7 @@ func (i *informer) processNextItem() bool {
 	return true
 }
 
-// sync creates the event for the object, sends it to the handler, and processes the resulting actions
+// sync creates the event for the object and sends it to the handler
 func (i *informer) sync(key string) error {
 	obj, exists, err := i.sharedIndexInformer.GetIndexer().GetByKey(key)
 	if err != nil {
@@ -65,7 +65,13 @@ func (i *informer) sync(key string) error {
 	}
 	if !exists {
 		logrus.Infof("Object (%s) is deleted", key)
-		return nil
+		// Lookup the last saved state for the deleted object
+		_, ok := i.deletedObjects[key]
+		if !ok {
+			logrus.Errorf("No last known state found for deleted object (%s)", key)
+			return nil
+		}
+		obj = i.deletedObjects[key]
 	}
 
 	unstructObj := obj.(*unstructured.Unstructured).DeepCopy()
@@ -78,7 +84,11 @@ func (i *informer) sync(key string) error {
 
 	sdkCtx := sdkTypes.Context{Context: i.context}
 	// TODO: Add option to prevent multiple informers from invoking Handle() concurrently?
-	return sdkHandler.RegisteredHandler.Handle(sdkCtx, event)
+	err = sdkHandler.RegisteredHandler.Handle(sdkCtx, event)
+	if !exists && err == nil {
+		delete(i.deletedObjects, key)
+	}
+	return err
 }
 
 // handleErr checks if an error happened and makes sure we will retry later.

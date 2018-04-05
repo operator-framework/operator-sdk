@@ -39,6 +39,7 @@ type informer struct {
 	queue               workqueue.RateLimitingInterface
 	namespace           string
 	context             context.Context
+	deletedObjects      map[string]interface{}
 }
 
 func New(resourcePluralName, namespace string, resourceClient dynamic.ResourceInterface, resyncPeriod int) Informer {
@@ -46,6 +47,7 @@ func New(resourcePluralName, namespace string, resourceClient dynamic.ResourceIn
 		resourcePluralName: resourcePluralName,
 		queue:              workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), resourcePluralName),
 		namespace:          namespace,
+		deletedObjects:     map[string]interface{}{},
 	}
 
 	resyncDuration := time.Duration(resyncPeriod) * time.Second
@@ -104,6 +106,11 @@ func (i *informer) handleDeleteResourceEvent(obj interface{}) {
 	if err != nil {
 		panic(err)
 	}
+
+	// TODO: Revisit the need for passing delete events to the handler
+	// Save the last known state for the deleted object
+	i.deletedObjects[key] = obj.(*unstructured.Unstructured).DeepCopy()
+
 	i.queue.Add(key)
 }
 
