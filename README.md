@@ -13,7 +13,7 @@ See the [design docs][design_docs] for planned work on upcoming milestones.
 The Operator SDK is a framework designed to make writing operators easier by providing:
 - High level APIs and abstractions to write the operational logic more intuitively
 - Tools for scaffolding and code generation to bootstrap a new project fast
-- Modular functionality to improve reusability
+- Extensions to cover common operator use cases
 
 ## Workflow
 
