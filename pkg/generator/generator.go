@@ -28,33 +28,37 @@ const (
 	defaultFileMode     = 0644
 	defaultExecFileMode = 0744
 	// dirs
-	cmdDir     = "cmd"
-	deployDir  = "deploy"
-	configDir  = "config"
-	tmpDir     = "tmp"
-	buildDir   = tmpDir + "/build"
-	codegenDir = tmpDir + "/codegen"
-	pkgDir     = "pkg"
-	apisDir    = pkgDir + "/apis"
-	stubDir    = pkgDir + "/stub"
+	cmdDir        = "cmd"
+	deployDir     = "deploy"
+	almCatalogDir = deployDir + "/alm-catalog"
+	configDir     = "config"
+	tmpDir        = "tmp"
+	buildDir      = tmpDir + "/build"
+	codegenDir    = tmpDir + "/codegen"
+	pkgDir        = "pkg"
+	apisDir       = pkgDir + "/apis"
+	stubDir       = pkgDir + "/stub"
 
 	// files
-	main            = "main.go"
-	handler         = "handler.go"
-	doc             = "doc.go"
-	register        = "register.go"
-	types           = "types.go"
-	build           = "build.sh"
-	dockerBuild     = "docker_build.sh"
-	dockerfile      = "Dockerfile"
-	boilerplate     = "boilerplate.go.txt"
-	updateGenerated = "update-generated.sh"
-	gopkgtoml       = "Gopkg.toml"
-	gopkglock       = "Gopkg.lock"
-	config          = "config.yaml"
-	operatorYaml    = deployDir + "/operator.yaml"
-	rbacYaml        = "rbac.yaml"
-	crYaml          = "cr.yaml"
+	main               = "main.go"
+	handler            = "handler.go"
+	doc                = "doc.go"
+	register           = "register.go"
+	types              = "types.go"
+	build              = "build.sh"
+	dockerBuild        = "docker_build.sh"
+	dockerfile         = "Dockerfile"
+	boilerplate        = "boilerplate.go.txt"
+	updateGenerated    = "update-generated.sh"
+	gopkgtoml          = "Gopkg.toml"
+	gopkglock          = "Gopkg.lock"
+	config             = "config.yaml"
+	operatorYaml       = deployDir + "/operator.yaml"
+	rbacYaml           = "rbac.yaml"
+	crYaml             = "cr.yaml"
+	catalogPackageYaml = "package.yaml"
+	catalogCSVYaml     = "csv.yaml"
+	catalogCRDYaml     = "crd.yaml"
 )
 
 type Generator struct {
@@ -194,6 +198,48 @@ func RenderOperatorYaml(c *Config, image string) error {
 		return err
 	}
 	return ioutil.WriteFile(operatorYaml, buf.Bytes(), defaultFileMode)
+}
+
+// RenderAlmCatalog generates catalog manifests "deploy/alm-catalog/*"
+// The current working directory must be the project repository root
+func RenderAlmCatalog(c *Config, image, version string) error {
+	// mkdir deploy/alm-catalog
+	repoPath, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	almDir := filepath.Join(repoPath, almCatalogDir)
+	if err := os.MkdirAll(almDir, defaultDirFileMode); err != nil {
+		return err
+	}
+
+	// deploy/alm-catalog/package.yaml
+	buf := &bytes.Buffer{}
+	if err := renderCatalogPackage(buf, c, version); err != nil {
+		return err
+	}
+	path := filepath.Join(almDir, catalogPackageYaml)
+	if err := ioutil.WriteFile(path, buf.Bytes(), defaultFileMode); err != nil {
+		return err
+	}
+
+	// deploy/alm-catalog/crd.yaml
+	buf = &bytes.Buffer{}
+	if err := renderCRD(buf, c); err != nil {
+		return err
+	}
+	path = filepath.Join(almDir, catalogCRDYaml)
+	if err := ioutil.WriteFile(path, buf.Bytes(), defaultFileMode); err != nil {
+		return err
+	}
+
+	// deploy/alm-catalog/csv.yaml
+	buf = &bytes.Buffer{}
+	if err := renderCatalogCSV(buf, c, image, version); err != nil {
+		return err
+	}
+	path = filepath.Join(almDir, catalogCSVYaml)
+	return ioutil.WriteFile(path, buf.Bytes(), defaultFileMode)
 }
 
 func (g *Generator) renderTmp() error {
