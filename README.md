@@ -69,7 +69,11 @@ $ kubectl delete -f deploy/rbac.yaml
 
 To learn more about the operator-sdk, see the [user guide][guide].
 
+## Samples
+
+To explore any operator samples built using the operator-sdk, see the [operator-sdk-samples][samples].
 
 [operator_link]: https://coreos.com/operators/
 [design_docs]: ./doc/design
 [guide]: ./doc/user-guide.md
+[samples]: https://github.com/operator-framework/operator-sdk-samples
