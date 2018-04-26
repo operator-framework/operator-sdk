@@ -66,17 +66,21 @@ func renderOperatorYaml(w io.Writer, kind, apiVersion, projectName, image string
 // when pairing with rbacYamlTmpl template.
 type RBACYaml struct {
 	ProjectName string
+	GroupName   string
 }
 
 // renderRBACYaml generates deploy/rbac.yaml.
-func renderRBACYaml(w io.Writer, projectName string) error {
+func renderRBACYaml(w io.Writer, projectName, groupName string) error {
 	t := template.New(rbacTmplName)
 	t, err := t.Parse(rbacYamlTmpl)
 	if err != nil {
 		return fmt.Errorf("failed to parse rbac yaml template: %v", err)
 	}
 
-	r := RBACYaml{ProjectName: projectName}
+	r := RBACYaml{
+		ProjectName: projectName,
+		GroupName:   groupName,
+	}
 	return t.Execute(w, r)
 }
 

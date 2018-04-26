@@ -21,12 +21,13 @@ import (
 
 const (
 	// test constants for app-operator
-	appRepoPath   = "github.com/example-inc/app-operator"
-	appKind       = "App"
-	appApiDirName = "app"
-	appAPIVersion = appGroupName + "/" + appVersion
-	appVersion    = "v1alpha1"
-	appGroupName  = "app.example.com"
+	appRepoPath    = "github.com/example-inc/app-operator"
+	appKind        = "AppService"
+	appApiDirName  = "app"
+	appAPIVersion  = appGroupName + "/" + appVersion
+	appVersion     = "v1alpha1"
+	appGroupName   = "app.example.com"
+	appProjectName = "app-operator"
 )
 
 const mainExp = `package main
@@ -50,7 +51,7 @@ func printVersion() {
 
 func main() {
 	printVersion()
-	sdk.Watch("app.example.com/v1alpha1", "App", "default", 5)
+	sdk.Watch("app.example.com/v1alpha1", "AppService", "default", 5)
 	sdk.Handle(stub.NewHandler())
 	sdk.Run(context.TODO())
 }
@@ -120,7 +121,7 @@ func newbusyBoxPod(cr *v1alpha1.App) *v1.Pod {
 				*metav1.NewControllerRef(cr, schema.GroupVersionKind{
 					Group:   v1alpha1.SchemeGroupVersion.Group,
 					Version: v1alpha1.SchemeGroupVersion.Version,
-					Kind:    "App",
+					Kind:    "AppService",
 				}),
 			},
 			Labels: labels,
@@ -421,9 +422,30 @@ metadata:
   name: app-operator
 rules:
 - apiGroups:
-  - "*"
+  - app.example.com
   resources:
   - "*"
+  verbs:
+  - "*"
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  - configmaps
+  - secrets
+  verbs:
+  - "*"
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
   verbs:
   - "*"
 
@@ -444,8 +466,7 @@ roleRef:
 
 func TestGenDeploy(t *testing.T) {
 	buf := &bytes.Buffer{}
-	projectName := "app-operator"
-	if err := renderOperatorYaml(buf, "AppService", "app.example.com/v1alpha1", projectName, "quay.io/coreos/operator-sdk-dev:app-operator"); err != nil {
+	if err := renderOperatorYaml(buf, appKind, appAPIVersion, appProjectName, "quay.io/coreos/operator-sdk-dev:app-operator"); err != nil {
 		t.Error(err)
 	}
 	if operatorYamlExp != buf.String() {
@@ -453,7 +474,7 @@ func TestGenDeploy(t *testing.T) {
 	}
 
 	buf = &bytes.Buffer{}
-	if err := renderRBACYaml(buf, projectName); err != nil {
+	if err := renderRBACYaml(buf, appProjectName, appGroupName); err != nil {
 		t.Error(err)
 	}
 	if rbacYamlExp != buf.String() {

@@ -56,9 +56,30 @@ metadata:
   name: {{.ProjectName}}
 rules:
 - apiGroups:
-  - "*"
+  - {{.GroupName}}
   resources:
   - "*"
+  verbs:
+  - "*"
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  - configmaps
+  - secrets
+  verbs:
+  - "*"
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
   verbs:
   - "*"
 
