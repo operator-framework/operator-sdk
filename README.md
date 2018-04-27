@@ -75,9 +75,24 @@ To learn more about the operator-sdk, see the [user guide][guide].
 
 To explore any operator samples built using the operator-sdk, see the [operator-sdk-samples][samples].
 
+## Contributing
+
+See [CONTRIBUTING][contrib] for details on submitting patches and the contribution workflow.
+
+## Reporting bugs
+
+See [reporting bugs][bug_guide] for details about reporting any issues.
+
+## License
+
+Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file for details.
+
 [operator_link]: https://coreos.com/operators/
 [design_docs]: ./doc/design
 [guide]: ./doc/user-guide.md
 [samples]: https://github.com/operator-framework/operator-sdk-samples
 [of-home]: https://github.com/operator-framework
 [of-blog]: https://coreos.com/blog/introducing-operator-framework
+[contrib]: ./CONTRIBUTING.MD
+[bug_guide]:./doc/dev/reporting_bugs.md
+[license_file]:./LICENSE
