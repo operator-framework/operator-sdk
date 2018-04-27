@@ -21,7 +21,7 @@ import (
 
 const (
 	// test constants for app-operator
-	appRepoPath    = "github.com/example-inc/app-operator"
+	appRepoPath    = "github.com/example-inc/" + appProjectName
 	appKind        = "AppService"
 	appApiDirName  = "app"
 	appAPIVersion  = appGroupName + "/" + appVersion
@@ -94,7 +94,7 @@ type Handler struct {
 
 func (h *Handler) Handle(ctx types.Context, event types.Event) error {
 	switch o := event.Object.(type) {
-	case *v1alpha1.App:
+	case *v1alpha1.AppService:
 		err := action.Create(newbusyBoxPod(o))
 		if err != nil && !errors.IsAlreadyExists(err) {
 			logrus.Errorf("Failed to create busybox pod : %v", err)
@@ -105,7 +105,7 @@ func (h *Handler) Handle(ctx types.Context, event types.Event) error {
 }
 
 // newbusyBoxPod demonstrates how to create a busybox pod
-func newbusyBoxPod(cr *v1alpha1.App) *v1.Pod {
+func newbusyBoxPod(cr *v1alpha1.AppService) *v1.Pod {
 	labels := map[string]string{
 		"app": "busy-box",
 	}
@@ -162,7 +162,7 @@ import (
 
 const (
 	version   = "v1alpha1"
-	groupName = "play.example.com"
+	groupName = "app.example.com"
 )
 
 var (
@@ -179,8 +179,8 @@ func init() {
 // addKnownTypes adds the set of types defined in this package to the supplied scheme.
 func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
-		&PlayService{},
-		&PlayServiceList{},
+		&AppService{},
+		&AppServiceList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
@@ -189,7 +189,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 
 func TestGenRegister(t *testing.T) {
 	buf := &bytes.Buffer{}
-	if err := renderAPIRegisterFile(buf, "PlayService", "play.example.com", "v1alpha1"); err != nil {
+	if err := renderAPIRegisterFile(buf, appKind, appGroupName, appVersion); err != nil {
 		t.Error(err)
 		return
 	}
@@ -254,8 +254,8 @@ fi
 
 BIN_DIR="$(pwd)/tmp/_output/bin"
 mkdir -p ${BIN_DIR}
-PROJECT_NAME="play"
-REPO_PATH="github.com/coreos/play"
+PROJECT_NAME="app-operator"
+REPO_PATH="github.com/example-inc/app-operator"
 BUILD_PATH="${REPO_PATH}/cmd/${PROJECT_NAME}"
 echo "building "${PROJECT_NAME}"..."
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ${BIN_DIR}/${PROJECT_NAME} $BUILD_PATH
@@ -263,16 +263,15 @@ GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ${BIN_DIR}/${PROJECT_NAME} $BU
 
 const dockerFileExp = `FROM alpine:3.6
 
-ADD tmp/_output/bin/play /usr/local/bin/play
+ADD tmp/_output/bin/app-operator /usr/local/bin/app-operator
 
-RUN adduser -D play
-USER play
+RUN adduser -D app-operator
+USER app-operator
 `
 
 func TestGenBuild(t *testing.T) {
 	buf := &bytes.Buffer{}
-	projectName := "play"
-	if err := renderBuildFile(buf, "github.com/coreos/play", projectName); err != nil {
+	if err := renderBuildFile(buf, appRepoPath, appProjectName); err != nil {
 		t.Error(err)
 		return
 	}
@@ -290,7 +289,7 @@ func TestGenBuild(t *testing.T) {
 	}
 
 	buf = &bytes.Buffer{}
-	if err := renderDockerFile(buf, projectName); err != nil {
+	if err := renderDockerFile(buf, appProjectName); err != nil {
 		t.Error(err)
 		return
 	}
@@ -308,7 +307,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-DOCKER_REPO_ROOT="/go/src/github.com/coreos/play"
+DOCKER_REPO_ROOT="/go/src/github.com/example-inc/app-operator"
 IMAGE=${IMAGE:-"gcr.io/coreos-k8s-scale-testing/codegen:1.9.3"}
 
 docker run --rm \
@@ -317,16 +316,16 @@ docker run --rm \
   "$IMAGE" \
   "/go/src/k8s.io/code-generator/generate-groups.sh"  \
   "deepcopy" \
-  "github.com/coreos/play/pkg/generated" \
-  "github.com/coreos/play/pkg/apis" \
-  "play:v1alpha1" \
+  "github.com/example-inc/app-operator/pkg/generated" \
+  "github.com/example-inc/app-operator/pkg/apis" \
+  "app:v1alpha1" \
   --go-header-file "./tmp/codegen/boilerplate.go.txt" \
   $@
 `
 
 func TestCodeGen(t *testing.T) {
 	buf := &bytes.Buffer{}
-	if err := renderBoilerplateFile(buf, "play"); err != nil {
+	if err := renderBoilerplateFile(buf, appProjectName); err != nil {
 		t.Error(err)
 		return
 	}
@@ -335,7 +334,7 @@ func TestCodeGen(t *testing.T) {
 	}
 
 	buf = &bytes.Buffer{}
-	if err := renderUpdateGeneratedFile(buf, "github.com/coreos/play", "play", "v1alpha1"); err != nil {
+	if err := renderUpdateGeneratedFile(buf, appRepoPath, appApiDirName, appVersion); err != nil {
 		t.Error(err)
 		return
 	}
@@ -372,7 +371,7 @@ projectName: app-operator
 
 func TestGenConfig(t *testing.T) {
 	buf := &bytes.Buffer{}
-	if err := renderConfigFile(buf, "app.example.com/v1alpha1", "AppService", "app-operator"); err != nil {
+	if err := renderConfigFile(buf, appAPIVersion, appKind, appProjectName); err != nil {
 		t.Error(err)
 	}
 	if configExp != buf.String() {
