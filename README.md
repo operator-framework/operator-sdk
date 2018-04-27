@@ -10,9 +10,6 @@ See the [design docs][design_docs] for planned work on upcoming milestones.
 
 This project is a component of the [Operator Framework][of-home], an open source toolkit to manage Kubernetes native applications, called Operators, in an effective, automated, and scalable way. Read more in the [introduction blog post][of-blog].
 
-[of-home]: https://github.com/operator-framework
-[of-blog]: https://coreos.com/blog/introducing-operator-framework
-
 [Operators][operator_link] make it easy to manage complex stateful applications on top of Kubernetes. However writing an operator today can be difficult because of challenges such as using low level APIs, writing boilerplate, and a lack of modularity which leads to duplication.
 
 The Operator SDK is a framework designed to make writing operators easier by providing:
@@ -82,3 +79,5 @@ To explore any operator samples built using the operator-sdk, see the [operator-
 [design_docs]: ./doc/design
 [guide]: ./doc/user-guide.md
 [samples]: https://github.com/operator-framework/operator-sdk-samples
+[of-home]: https://github.com/operator-framework
+[of-blog]: https://coreos.com/blog/introducing-operator-framework
