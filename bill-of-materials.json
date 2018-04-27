@@ -18,7 +18,7 @@
 		]
 	},
 	{
-		"project": "github.com/coreos/operator-sdk",
+		"project": "github.com/operator-framework/operator-sdk",
 		"licenses": [
 			{
 				"type": "Apache License 2.0",

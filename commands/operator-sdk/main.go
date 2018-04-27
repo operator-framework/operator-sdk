@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/coreos/operator-sdk/commands/operator-sdk/cmd"
+	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd"
 )
 
 func main() {

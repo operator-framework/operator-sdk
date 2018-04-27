@@ -19,10 +19,10 @@ The Operator SDK has a CLI tool that helps the developer to create, build, and d
 Checkout the desired release tag and install the SDK CLI tool:
 
 ```sh
-$ cd $GOPATH/src/github.com/coreos/operator-sdk
+$ cd $GOPATH/src/github.com/operator-framework/operator-sdk
 $ git checkout tags/v0.0.4
 $ dep ensure
-$ go install github.com/coreos/operator-sdk/commands/operator-sdk
+$ go install github.com/operator-framework/operator-sdk/commands/operator-sdk
 ```
 
 This installs the CLI binary `operator-sdk` at `$GOPATH/bin`.

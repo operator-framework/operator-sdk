@@ -15,7 +15,7 @@
 package handler
 
 import (
-	sdkTypes "github.com/coreos/operator-sdk/pkg/sdk/types"
+	sdkTypes "github.com/operator-framework/operator-sdk/pkg/sdk/types"
 )
 
 // Handler reacts to events and outputs actions.

@@ -37,8 +37,8 @@ import (
 	"runtime"
 
 	stub "github.com/example-inc/app-operator/pkg/stub"
-	sdk "github.com/coreos/operator-sdk/pkg/sdk"
-	sdkVersion "github.com/coreos/operator-sdk/version"
+	sdk "github.com/operator-framework/operator-sdk/pkg/sdk"
+	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
 	"github.com/sirupsen/logrus"
 )
@@ -74,9 +74,9 @@ const handlerExp = `package stub
 import (
 	"github.com/example-inc/app-operator/pkg/apis/app/v1alpha1"
 
-	"github.com/coreos/operator-sdk/pkg/sdk/action"
-	"github.com/coreos/operator-sdk/pkg/sdk/handler"
-	"github.com/coreos/operator-sdk/pkg/sdk/types"
+	"github.com/operator-framework/operator-sdk/pkg/sdk/action"
+	"github.com/operator-framework/operator-sdk/pkg/sdk/handler"
+	"github.com/operator-framework/operator-sdk/pkg/sdk/types"
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -153,7 +153,7 @@ func TestGenHandler(t *testing.T) {
 const registerExp = `package v1alpha1
 
 import (
-	sdkK8sutil "github.com/coreos/operator-sdk/pkg/util/k8sutil"
+	sdkK8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
