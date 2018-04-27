@@ -20,7 +20,7 @@ import (
 	"os"
 	"os/exec"
 
-	cmdError "github.com/coreos/operator-sdk/commands/operator-sdk/error"
+	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
 
 	"github.com/spf13/cobra"
 )

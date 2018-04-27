@@ -17,9 +17,9 @@ package query
 import (
 	"fmt"
 
-	"github.com/coreos/operator-sdk/pkg/k8sclient"
-	sdkTypes "github.com/coreos/operator-sdk/pkg/sdk/types"
-	"github.com/coreos/operator-sdk/pkg/util/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/k8sclient"
+	sdkTypes "github.com/operator-framework/operator-sdk/pkg/sdk/types"
+	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 )
 
 // Get gets the specified object and unmarshals the retrieved data into the "into" object.

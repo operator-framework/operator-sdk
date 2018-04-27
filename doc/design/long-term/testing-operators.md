@@ -13,7 +13,7 @@ Make functional tests easy to integrate into a big matrix (upstream, OpenShift, 
  - SDK provides a method to generate a functional testing container
  - Docs for using a test container and setting it up against a number of providers for use in a partners CI environment
  - Provide a way to run the Operator binary locally outside of a container
-    - Eg. https://github.com/coreos/operator-sdk/issues/142
+    - Eg. https://github.com/operator-framework/operator-sdk/issues/142
 
 **Open questions:**
   - none so far

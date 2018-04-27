@@ -22,9 +22,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/coreos/operator-sdk/commands/operator-sdk/cmd/generate"
-	cmdError "github.com/coreos/operator-sdk/commands/operator-sdk/error"
-	"github.com/coreos/operator-sdk/pkg/generator"
+	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/generate"
+	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
+	"github.com/operator-framework/operator-sdk/pkg/generator"
 
 	"github.com/spf13/cobra"
 )

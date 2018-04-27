@@ -15,9 +15,9 @@
 package informer
 
 import (
-	sdkHandler "github.com/coreos/operator-sdk/pkg/sdk/handler"
-	sdkTypes "github.com/coreos/operator-sdk/pkg/sdk/types"
-	"github.com/coreos/operator-sdk/pkg/util/k8sutil"
+	sdkHandler "github.com/operator-framework/operator-sdk/pkg/sdk/handler"
+	sdkTypes "github.com/operator-framework/operator-sdk/pkg/sdk/types"
+	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"

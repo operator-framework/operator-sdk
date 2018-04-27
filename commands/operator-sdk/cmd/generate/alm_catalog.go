@@ -20,8 +20,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	cmdError "github.com/coreos/operator-sdk/commands/operator-sdk/error"
-	"github.com/coreos/operator-sdk/pkg/generator"
+	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
+	"github.com/operator-framework/operator-sdk/pkg/generator"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/spf13/cobra"

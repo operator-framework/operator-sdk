@@ -24,7 +24,7 @@ package {{.Version}}
 const apiRegisterTmpl = `package {{.Version}}
 
 import (
-	sdkK8sutil "github.com/coreos/operator-sdk/pkg/util/k8sutil"
+	sdkK8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"

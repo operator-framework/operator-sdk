@@ -15,7 +15,7 @@
 package cmd
 
 import (
-	"github.com/coreos/operator-sdk/commands/operator-sdk/cmd/generate"
+	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/generate"
 
 	"github.com/spf13/cobra"
 )

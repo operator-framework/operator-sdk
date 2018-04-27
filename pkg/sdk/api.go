@@ -17,9 +17,9 @@ package sdk
 import (
 	"context"
 
-	"github.com/coreos/operator-sdk/pkg/k8sclient"
-	sdkHandler "github.com/coreos/operator-sdk/pkg/sdk/handler"
-	sdkInformer "github.com/coreos/operator-sdk/pkg/sdk/informer"
+	"github.com/operator-framework/operator-sdk/pkg/k8sclient"
+	sdkHandler "github.com/operator-framework/operator-sdk/pkg/sdk/handler"
+	sdkInformer "github.com/operator-framework/operator-sdk/pkg/sdk/informer"
 
 	"github.com/sirupsen/logrus"
 )

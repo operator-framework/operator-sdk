@@ -85,7 +85,7 @@ func UnstructuredFromRuntimeObject(ro runtime.Object) *unstructured.Unstructured
 }
 
 // UnstructuredIntoRuntimeObject unmarshalls an unstructured into a given runtime object
-// TODO: https://github.com/coreos/operator-sdk/issues/127
+// TODO: https://github.com/operator-framework/operator-sdk/issues/127
 func UnstructuredIntoRuntimeObject(u *unstructured.Unstructured, into runtime.Object) error {
 	gvk := u.GroupVersionKind()
 	decoder := decoder(gvk.GroupVersion())

@@ -22,8 +22,8 @@ import (
 
 const (
 	// sdkImport is the operator-sdk import path.
-	sdkImport     = "github.com/coreos/operator-sdk/pkg/sdk"
-	versionImport = "github.com/coreos/operator-sdk/version"
+	sdkImport     = "github.com/operator-framework/operator-sdk/pkg/sdk"
+	versionImport = "github.com/operator-framework/operator-sdk/version"
 )
 
 // Main contains all the customized data needed to generate cmd/<projectName>/main.go for a new operator
