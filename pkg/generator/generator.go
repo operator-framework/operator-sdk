@@ -167,9 +167,9 @@ func (g *Generator) renderDeploy() error {
 	return renderDeployFiles(dp, g.projectName, g.apiVersion, g.kind)
 }
 
-func renderRBAC(deployDir, projectName string) error {
+func renderRBAC(deployDir, projectName, groupName string) error {
 	buf := &bytes.Buffer{}
-	if err := renderRBACYaml(buf, projectName); err != nil {
+	if err := renderRBACYaml(buf, projectName, groupName); err != nil {
 		return err
 	}
 	return writeFileAndPrint(filepath.Join(deployDir, rbacYaml), buf.Bytes(), defaultFileMode)
@@ -177,7 +177,7 @@ func renderRBAC(deployDir, projectName string) error {
 
 func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
 	buf := &bytes.Buffer{}
-	if err := renderRBACYaml(buf, projectName); err != nil {
+	if err := renderRBACYaml(buf, projectName, groupName(apiVersion)); err != nil {
 		return err
 	}
 	if err := writeFileAndPrint(filepath.Join(deployDir, rbacYaml), buf.Bytes(), defaultFileMode); err != nil {
