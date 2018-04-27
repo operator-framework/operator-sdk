@@ -34,7 +34,7 @@ First, checkout and install the operator-sdk CLI:
 
 ```sh
 $ cd $GOPATH/src/github.com/operator-framework/operator-sdk
-$ git checkout tags/v0.0.4
+$ git checkout tags/v0.0.5
 $ dep ensure
 $ go install github.com/operator-framework/operator-sdk/commands/operator-sdk
 ```
