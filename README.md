@@ -1,4 +1,4 @@
-# Operator SDK
+![Operator SDK](doc/images/operator_logo_sdk_color.png)
 
 ### Project Status: pre-alpha
 
