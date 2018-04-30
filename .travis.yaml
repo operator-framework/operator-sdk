@@ -1,0 +1,7 @@
+language: go
+
+go:
+- 1.10.1
+
+script:
+- echo "Hello World!!"
