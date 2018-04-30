@@ -1,4 +1,4 @@
-![Operator SDK](doc/images/operator_logo_sdk_color.svg)
+<img src="doc/images/operator_logo_sdk_color.svg" height="125px"></img>
 
 ### Project Status: pre-alpha
 
