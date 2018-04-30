@@ -1,4 +1,4 @@
-![Operator SDK](doc/images/operator_logo_sdk_color.png)
+![Operator SDK](doc/images/operator_logo_sdk_color.svg)
 
 ### Project Status: pre-alpha
 
