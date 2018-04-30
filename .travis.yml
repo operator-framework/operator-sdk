@@ -1,0 +1,15 @@
+language: go
+go_import_path: github.com/operator-framework/operator-sdk
+
+go:
+- 1.10.1
+
+before_install:
+- go get -u github.com/golang/dep/cmd/dep
+- dep ensure
+
+install: 
+- go get -t -d ./...
+
+script:
+- go test ./...
