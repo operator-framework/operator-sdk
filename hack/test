@@ -4,4 +4,30 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-go test ./...
+if [ -z "${PASSES-}" ]; then
+     PASSES="fmt build unit"
+fi
+
+#run gofmt
+function fmt_pass {
+...
+}
+
+#run unit tests with go test
+function unit_pass {
+    go test./...
+}
+
+function build_pass {
+     echo "Checking build..."
+     operator_build
+}
+
+for pass in $PASSES; do
+     echo "Starting '$pass' pass at $(date)"
+     "$(pass)"_pass "@"
+     echo "Finished '$pass' pass at $(date)"
+
+done
+
+echo "Success"
