@@ -27,14 +27,14 @@ const (
 	packageChannel = "alpha"
 )
 
-// CatalogPackageConfig contains the data needed to generate deploy/alm-catalog/package.yaml
+// CatalogPackageConfig contains the data needed to generate deploy/olm-catalog/package.yaml
 type CatalogPackageConfig struct {
 	PackageName string
 	ChannelName string
 	CurrentCSV  string
 }
 
-// renderCatalogPackage generates deploy/alm-catalog/package.yaml
+// renderCatalogPackage generates deploy/olm-catalog/package.yaml
 func renderCatalogPackage(w io.Writer, config *Config, catalogVersion string) error {
 	t := template.New(catalogPackageYaml)
 	t, err := t.Parse(catalogPackageTmpl)
@@ -51,7 +51,7 @@ func renderCatalogPackage(w io.Writer, config *Config, catalogVersion string) er
 	return t.Execute(w, cpConfig)
 }
 
-// CRDConfig contains the data needed to generate deploy/alm-catalog/crd.yaml
+// CRDConfig contains the data needed to generate deploy/olm-catalog/crd.yaml
 type CRDConfig struct {
 	Kind         string
 	KindSingular string
@@ -60,7 +60,7 @@ type CRDConfig struct {
 	Version      string
 }
 
-// renderCRD generates deploy/alm-catalog/crd.yaml
+// renderCRD generates deploy/olm-catalog/crd.yaml
 func renderCRD(w io.Writer, config *Config) error {
 	t := template.New(catalogCRDYaml)
 	t, err := t.Parse(crdTmpl)
@@ -79,7 +79,7 @@ func renderCRD(w io.Writer, config *Config) error {
 	return t.Execute(w, crdConfig)
 }
 
-// CSVConfig contains the data needed to generate deploy/alm-catalog/csv.yaml
+// CSVConfig contains the data needed to generate deploy/olm-catalog/csv.yaml
 type CSVConfig struct {
 	Kind           string
 	KindSingular   string
@@ -92,7 +92,7 @@ type CSVConfig struct {
 	CatalogVersion string
 }
 
-// renderCatalogCSV generates deploy/alm-catalog/csv.yaml
+// renderCatalogCSV generates deploy/olm-catalog/csv.yaml
 func renderCatalogCSV(w io.Writer, config *Config, image, catalogVersion string) error {
 	t := template.New(catalogCSVYaml)
 	t, err := t.Parse(catalogCSVTmpl)

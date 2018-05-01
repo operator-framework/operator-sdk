@@ -30,7 +30,7 @@ const (
 	// dirs
 	cmdDir        = "cmd"
 	deployDir     = "deploy"
-	almCatalogDir = deployDir + "/alm-catalog"
+	olmCatalogDir = deployDir + "/olm-catalog"
 	configDir     = "config"
 	tmpDir        = "tmp"
 	buildDir      = tmpDir + "/build"
@@ -200,45 +200,45 @@ func RenderOperatorYaml(c *Config, image string) error {
 	return ioutil.WriteFile(operatorYaml, buf.Bytes(), defaultFileMode)
 }
 
-// RenderAlmCatalog generates catalog manifests "deploy/alm-catalog/*"
+// RenderOlmCatalog generates catalog manifests "deploy/olm-catalog/*"
 // The current working directory must be the project repository root
-func RenderAlmCatalog(c *Config, image, version string) error {
-	// mkdir deploy/alm-catalog
+func RenderOlmCatalog(c *Config, image, version string) error {
+	// mkdir deploy/olm-catalog
 	repoPath, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	almDir := filepath.Join(repoPath, almCatalogDir)
-	if err := os.MkdirAll(almDir, defaultDirFileMode); err != nil {
+	olmDir := filepath.Join(repoPath, olmCatalogDir)
+	if err := os.MkdirAll(olmDir, defaultDirFileMode); err != nil {
 		return err
 	}
 
-	// deploy/alm-catalog/package.yaml
+	// deploy/olm-catalog/package.yaml
 	buf := &bytes.Buffer{}
 	if err := renderCatalogPackage(buf, c, version); err != nil {
 		return err
 	}
-	path := filepath.Join(almDir, catalogPackageYaml)
+	path := filepath.Join(olmDir, catalogPackageYaml)
 	if err := ioutil.WriteFile(path, buf.Bytes(), defaultFileMode); err != nil {
 		return err
 	}
 
-	// deploy/alm-catalog/crd.yaml
+	// deploy/olm-catalog/crd.yaml
 	buf = &bytes.Buffer{}
 	if err := renderCRD(buf, c); err != nil {
 		return err
 	}
-	path = filepath.Join(almDir, catalogCRDYaml)
+	path = filepath.Join(olmDir, catalogCRDYaml)
 	if err := ioutil.WriteFile(path, buf.Bytes(), defaultFileMode); err != nil {
 		return err
 	}
 
-	// deploy/alm-catalog/csv.yaml
+	// deploy/olm-catalog/csv.yaml
 	buf = &bytes.Buffer{}
 	if err := renderCatalogCSV(buf, c, image, version); err != nil {
 		return err
 	}
-	path = filepath.Join(almDir, catalogCSVYaml)
+	path = filepath.Join(olmDir, catalogCSVYaml)
 	return ioutil.WriteFile(path, buf.Bytes(), defaultFileMode)
 }
 
