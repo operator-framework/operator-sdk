@@ -29,6 +29,7 @@ IMAGE=${IMAGE:-"gcr.io/coreos-k8s-scale-testing/codegen:1.9.3"}
 docker run --rm \
   -v "$PWD":"$DOCKER_REPO_ROOT" \
   -w "$DOCKER_REPO_ROOT" \
+  --privileged \
   "$IMAGE" \
   "/go/src/k8s.io/code-generator/generate-groups.sh"  \
   "deepcopy" \
