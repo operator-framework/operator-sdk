@@ -87,7 +87,7 @@ spec:
                 app: {{.ProjectName}}
             spec:
               containers:
-                - name: {{.ProjectName}}-alm-owned
+                - name: {{.ProjectName}}-olm-owned
                   image: {{.Image}}
                   command:
                   - {{.ProjectName}}
@@ -115,6 +115,6 @@ spec:
   version: {{.CatalogVersion}}
   displayName: {{.Kind}}
   labels:
-    alm-owner-enterprise-app: {{.ProjectName}}
-    alm-status-descriptors: {{.CSVName}}
+    olm-owner-enterprise-app: {{.ProjectName}}
+    olm-status-descriptors: {{.CSVName}}
 `

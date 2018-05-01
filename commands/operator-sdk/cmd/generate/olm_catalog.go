@@ -36,39 +36,39 @@ var (
 	version string
 )
 
-func NewGenerateAlmCatalogCmd() *cobra.Command {
-	almCatalogCmd := &cobra.Command{
-		Use:   "alm-catalog",
-		Short: "Generates ALM Catalog manifests",
-		Long: `alm-catalog generator generates the following ALM Catalog manifests needed to create a catalog entry in ALM:
-- Cluster Service Version: deploy/alm-catalog/csv.yaml
-- Package: deploy/alm-catalog/package.yaml
-- Custom Resource Definition: deploy/alm-catalog/crd.yaml
+func NewGenerateOlmCatalogCmd() *cobra.Command {
+	olmCatalogCmd := &cobra.Command{
+		Use:   "olm-catalog",
+		Short: "Generates OLM Catalog manifests",
+		Long: `olm-catalog generator generates the following OLM Catalog manifests needed to create a catalog entry in OLM:
+- Cluster Service Version: deploy/olm-catalog/csv.yaml
+- Package: deploy/olm-catalog/package.yaml
+- Custom Resource Definition: deploy/olm-catalog/crd.yaml
 
 The following flags are required:
 --image: The container image name to set in the CSV to deploy the operator
 --version: The version of the current CSV
 
 For example:
-	$ operator-sdk generate alm-catalog --image=quay.io/example/operator:v0.0.1 --version=0.0.1
+	$ operator-sdk generate olm-catalog --image=quay.io/example/operator:v0.0.1 --version=0.0.1
 `,
-		Run: almCatalogFunc,
+		Run: olmCatalogFunc,
 	}
-	almCatalogCmd.Flags().StringVar(&image, "image", "", "The container image name to set in the CSV to deploy the operator e.g: quay.io/example/operator:v0.0.1")
-	almCatalogCmd.MarkFlagRequired("image")
-	almCatalogCmd.Flags().StringVar(&version, "version", "", "The version of the current CSV e.g: 0.0.1")
-	almCatalogCmd.MarkFlagRequired("version")
+	olmCatalogCmd.Flags().StringVar(&image, "image", "", "The container image name to set in the CSV to deploy the operator e.g: quay.io/example/operator:v0.0.1")
+	olmCatalogCmd.MarkFlagRequired("image")
+	olmCatalogCmd.Flags().StringVar(&version, "version", "", "The version of the current CSV e.g: 0.0.1")
+	olmCatalogCmd.MarkFlagRequired("version")
 
-	return almCatalogCmd
+	return olmCatalogCmd
 }
 
-func almCatalogFunc(cmd *cobra.Command, args []string) {
+func olmCatalogFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 0 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("alm-catalog command doesn't accept any arguments."))
+		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("olm-catalog command doesn't accept any arguments."))
 	}
 	verifyFlags()
 
-	fmt.Fprintln(os.Stdout, "Generating ALM catalog manifests")
+	fmt.Fprintln(os.Stdout, "Generating OLM catalog manifests")
 
 	c := &generator.Config{}
 	fp, err := ioutil.ReadFile(configYaml)
@@ -79,9 +79,9 @@ func almCatalogFunc(cmd *cobra.Command, args []string) {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to unmarshal config file %v: (%v)", configYaml, err))
 	}
 
-	// Generate ALM catalog manifests
-	if err = generator.RenderAlmCatalog(c, image, version); err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/alm-catalog: (%v)", err))
+	// Generate OLM catalog manifests
+	if err = generator.RenderOlmCatalog(c, image, version); err != nil {
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/olm-catalog: (%v)", err))
 	}
 }
 
