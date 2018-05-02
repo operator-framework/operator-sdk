@@ -16,15 +16,14 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 
+	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
 	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
 	"github.com/operator-framework/operator-sdk/pkg/generator"
 
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
 )
 
 func NewBuildCmd() *cobra.Command {
@@ -74,14 +73,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	}
 	fmt.Fprintln(os.Stdout, string(o))
 
-	c := &generator.Config{}
-	fp, err := ioutil.ReadFile(configYaml)
-	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to read config file %v: (%v)", configYaml, err))
-	}
-	if err = yaml.Unmarshal(fp, c); err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to unmarshal config file %v: (%v)", configYaml, err))
-	}
+	c := cmdutil.GetConfig()
 	if err = generator.RenderOperatorYaml(c, image); err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/operator.yaml: (%v)", err))
 	}
