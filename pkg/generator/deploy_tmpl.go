@@ -14,7 +14,7 @@
 
 package generator
 
-const operatorYamlTmpl = `apiVersion: apiextensions.k8s.io/v1beta1
+const crdYamlTmpl = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   name: {{.KindPlural}}.{{.GroupName}}
@@ -27,8 +27,9 @@ spec:
     singular: {{.KindSingular}}
   scope: Namespaced
   version: {{.Version}}
----
-apiVersion: apps/v1
+`
+
+const operatorYamlTmpl = `apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{.ProjectName}}

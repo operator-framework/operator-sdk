@@ -58,7 +58,7 @@ const (
 	crYaml             = "cr.yaml"
 	catalogPackageYaml = "package.yaml"
 	catalogCSVYaml     = "csv.yaml"
-	catalogCRDYaml     = "crd.yaml"
+	crdYaml            = "crd.yaml"
 )
 
 type Generator struct {
@@ -185,6 +185,14 @@ func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
 	}
 
 	buf = &bytes.Buffer{}
+	if err := renderCRDYaml(buf, kind, apiVersion); err != nil {
+		return err
+	}
+	if err := writeFileAndPrint(filepath.Join(deployDir, crdYaml), buf.Bytes(), defaultFileMode); err != nil {
+		return err
+	}
+
+	buf = &bytes.Buffer{}
 	if err := renderCustomResourceYaml(buf, apiVersion, kind); err != nil {
 		return err
 	}
@@ -194,7 +202,7 @@ func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
 // RenderOperatorYaml generates "deploy/operator.yaml"
 func RenderOperatorYaml(c *Config, image string) error {
 	buf := &bytes.Buffer{}
-	if err := renderOperatorYaml(buf, c.Kind, c.APIVersion, c.ProjectName, image); err != nil {
+	if err := renderOperatorYaml(buf, c.ProjectName, image); err != nil {
 		return err
 	}
 	return ioutil.WriteFile(operatorYaml, buf.Bytes(), defaultFileMode)
@@ -225,10 +233,10 @@ func RenderOlmCatalog(c *Config, image, version string) error {
 
 	// deploy/olm-catalog/crd.yaml
 	buf = &bytes.Buffer{}
-	if err := renderCRD(buf, c); err != nil {
+	if err := renderCatalogCRD(buf, c); err != nil {
 		return err
 	}
-	path = filepath.Join(olmDir, catalogCRDYaml)
+	path = filepath.Join(olmDir, crdYaml)
 	if err := ioutil.WriteFile(path, buf.Bytes(), defaultFileMode); err != nil {
 		return err
 	}

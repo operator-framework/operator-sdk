@@ -22,40 +22,55 @@ import (
 )
 
 const (
+	crdTmplName      = "deploy/crd.yaml"
 	operatorTmplName = "deploy/operator.yaml"
 	rbacTmplName     = "deploy/rbac.yaml"
 	crTmplName       = "deploy/cr.yaml"
 )
 
-// OperatorYaml contains all the customized data needed to generate deploy/operator.yaml for a new operator
-// when pairing with operatorYamlTmpl template.
-type OperatorYaml struct {
+// CRDYaml contains data needed to generate deploy/crd.yaml
+type CRDYaml struct {
 	Kind         string
 	KindSingular string
 	KindPlural   string
 	GroupName    string
 	Version      string
-	ProjectName  string
-	Image        string
+}
+
+// renderCRDYaml generates deploy/crd.yaml
+func renderCRDYaml(w io.Writer, kind, apiVersion string) error {
+	t := template.New(crTmplName)
+	t, err := t.Parse(crdYamlTmpl)
+	if err != nil {
+		return fmt.Errorf("failed to parse crd yaml template: %v", err)
+	}
+
+	ks := strings.ToLower(kind)
+	o := CRDYaml{
+		Kind:         kind,
+		KindSingular: ks,
+		KindPlural:   toPlural(ks),
+		GroupName:    groupName(apiVersion),
+		Version:      version(apiVersion),
+	}
+	return t.Execute(w, o)
+}
+
+// OperatorYaml contains data needed to generate deploy/operator.yaml
+type OperatorYaml struct {
+	ProjectName string
+	Image       string
 }
 
 // renderOperatorYaml generates deploy/operator.yaml.
-func renderOperatorYaml(w io.Writer, kind, apiVersion, projectName, image string) error {
+func renderOperatorYaml(w io.Writer, projectName, image string) error {
 	t := template.New(operatorTmplName)
 	t, err := t.Parse(operatorYamlTmpl)
 	if err != nil {
 		return fmt.Errorf("failed to parse operator yaml template: %v", err)
 	}
 
-	ks := strings.ToLower(kind)
 	o := OperatorYaml{
-		Kind:         kind,
-		KindSingular: ks,
-		// suffix KindSingular with "s" to create KindPlural.
-		// TODO: make this more grammatically correct for special nouns.
-		KindPlural:  ks + "s",
-		GroupName:   groupName(apiVersion),
-		Version:     version(apiVersion),
 		ProjectName: projectName,
 		Image:       image,
 	}
