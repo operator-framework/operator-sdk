@@ -39,7 +39,7 @@ type CRDYaml struct {
 
 // renderCRDYaml generates deploy/crd.yaml
 func renderCRDYaml(w io.Writer, kind, apiVersion string) error {
-	t := template.New(crTmplName)
+	t := template.New(crdTmplName)
 	t, err := t.Parse(crdYamlTmpl)
 	if err != nil {
 		return fmt.Errorf("failed to parse crd yaml template: %v", err)
