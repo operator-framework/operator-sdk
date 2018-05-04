@@ -24,7 +24,8 @@ import (
 const (
 	// Sample catalog resource values
 	// TODO: Make this configurable
-	packageChannel = "alpha"
+	packageChannel     = "alpha"
+	catalogCRDTmplName = "deploy/olm-catalog/crd.yaml"
 )
 
 // CatalogPackageConfig contains the data needed to generate deploy/olm-catalog/package.yaml
@@ -60,9 +61,9 @@ type CRDConfig struct {
 	Version      string
 }
 
-// renderCRD generates deploy/olm-catalog/crd.yaml
-func renderCRD(w io.Writer, config *Config) error {
-	t := template.New(catalogCRDYaml)
+// renderCatalogCRD generates deploy/olm-catalog/crd.yaml
+func renderCatalogCRD(w io.Writer, config *Config) error {
+	t := template.New(catalogCRDTmplName)
 	t, err := t.Parse(crdTmpl)
 	if err != nil {
 		return fmt.Errorf("failed to parse catalog CRD template: %v", err)
@@ -72,7 +73,7 @@ func renderCRD(w io.Writer, config *Config) error {
 	crdConfig := CRDConfig{
 		Kind:         config.Kind,
 		KindSingular: kindSingular,
-		KindPlural:   kindSingular + "s",
+		KindPlural:   toPlural(kindSingular),
 		GroupName:    groupName(config.APIVersion),
 		Version:      version(config.APIVersion),
 	}
