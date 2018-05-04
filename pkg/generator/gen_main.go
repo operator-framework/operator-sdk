@@ -23,6 +23,7 @@ import (
 const (
 	// sdkImport is the operator-sdk import path.
 	sdkImport     = "github.com/operator-framework/operator-sdk/pkg/sdk"
+	k8sutilImport = "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	versionImport = "github.com/operator-framework/operator-sdk/version"
 )
 
@@ -32,6 +33,7 @@ type Main struct {
 	// imports
 	OperatorSDKImport string
 	StubImport        string
+	K8sutilImport     string
 	SDKVersionImport  string
 
 	APIVersion string
@@ -49,6 +51,7 @@ func renderMainFile(w io.Writer, repo, apiVersion, kind string) error {
 	m := Main{
 		OperatorSDKImport: sdkImport,
 		StubImport:        filepath.Join(repo, stubDir),
+		K8sutilImport:     k8sutilImport,
 		SDKVersionImport:  versionImport,
 		APIVersion:        apiVersion,
 		Kind:              kind,

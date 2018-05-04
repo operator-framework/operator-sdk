@@ -23,6 +23,7 @@ import (
 
 	stub "{{.StubImport}}"
 	sdk "{{.OperatorSDKImport}}"
+	k8sutil "{{.K8sutilImport}}"
 	sdkVersion "{{.SDKVersionImport}}"
 
 	"github.com/sirupsen/logrus"
@@ -36,7 +37,16 @@ func printVersion() {
 
 func main() {
 	printVersion()
-	sdk.Watch("{{.APIVersion}}", "{{.Kind}}", "default", 5)
+
+	resource := "{{.APIVersion}}"
+	kind := "{{.Kind}}"
+	namespace, err := k8sutil.GetWatchNamespace()
+	if err != nil {
+		logrus.Fatalf("Failed to get watch namespace: %v", err)
+	}
+	resyncPeriod := 5
+	logrus.Infof("Watching %s, %s, %s, %d", resource, kind, namespace, resyncPeriod)
+	sdk.Watch(resource, kind, namespace, resyncPeriod)
 	sdk.Handle(stub.NewHandler())
 	sdk.Run(context.TODO())
 }
