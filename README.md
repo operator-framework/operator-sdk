@@ -34,7 +34,7 @@ First, checkout and install the operator-sdk CLI:
 
 ```sh
 $ cd $GOPATH/src/github.com/operator-framework/operator-sdk
-$ git checkout tags/v0.0.5
+$ git checkout master
 $ dep ensure
 $ go install github.com/operator-framework/operator-sdk/commands/operator-sdk
 ```
@@ -53,6 +53,7 @@ $ docker push quay.io/example/app-operator
 
 # Deploy the app-operator
 $ kubectl create -f deploy/rbac.yaml
+$ kubectl create -f deploy/crd.yaml
 $ kubectl create -f deploy/operator.yaml
 
 # By default, creating a custom resource (App) triggers the app-operator to deploy a busybox pod
