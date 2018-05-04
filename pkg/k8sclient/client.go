@@ -19,6 +19,8 @@ import (
 	"net"
 	"os"
 
+	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
+
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -89,7 +91,7 @@ func apiResource(gvk schema.GroupVersionKind, restMapper *discovery.DeferredDisc
 func mustNewKubeClientAndConfig() (kubernetes.Interface, *rest.Config) {
 	var cfg *rest.Config
 	var err error
-	if os.Getenv("KUBERNETES_CONFIG") != "" {
+	if os.Getenv(k8sutil.KubeConfigEnvVar) != "" {
 		cfg, err = outOfClusterConfig()
 	} else {
 		cfg, err = inClusterConfig()
@@ -118,7 +120,7 @@ func inClusterConfig() (*rest.Config, error) {
 }
 
 func outOfClusterConfig() (*rest.Config, error) {
-	kubeconfig := os.Getenv("KUBERNETES_CONFIG")
+	kubeconfig := os.Getenv(k8sutil.KubeConfigEnvVar)
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	return config, err
 }
