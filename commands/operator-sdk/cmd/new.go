@@ -43,7 +43,7 @@ generates a default directory layout based on the input <project-name>.
 For example:
 	$ mkdir $GOPATH/src/github.com/example.com/
 	$ cd $GOPATH/src/github.com/example.com/
-	$ operator-sdk new app-operator --api-group=app.example.com/v1alpha1 --kind=AppService
+	$ operator-sdk new app-operator --api-version=app.example.com/v1alpha1 --kind=AppService
 generates a skeletal app-operator application in $GOPATH/src/github.com/example.com/app-operator.
 `,
 		Run: newFunc,
