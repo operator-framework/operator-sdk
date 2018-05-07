@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright © 2018 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,21 +17,15 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/operator-framework/operator-sdk/version"
+	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/completion"
 )
 
-func NewRootCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "operator-sdk",
-		Short:   "A sdk for building operator with ease",
-		Version: version.Version,
+func NewCompletionCmd() *cobra.Command {
+	completionCmd := &cobra.Command{
+		Use:   "completion",
+		Short: "Generators for shell completions",
 	}
-
-	cmd.AddCommand(NewNewCmd())
-	cmd.AddCommand(NewBuildCmd())
-	cmd.AddCommand(NewGenerateCmd())
-	cmd.AddCommand(NewUpCmd())
-	cmd.AddCommand(NewCompletionCmd())
-
-	return cmd
+	completionCmd.AddCommand(completion.NewZshCmd())
+	completionCmd.AddCommand(completion.NewBashCmd())
+	return completionCmd
 }
