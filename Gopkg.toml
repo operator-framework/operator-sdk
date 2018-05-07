@@ -4,7 +4,7 @@
 
 [[constraint]]
   name = "github.com/spf13/cobra"
-  version = "0.0.1"
+  version = "0.0.2"
 
 [[override]]
   name = "k8s.io/api"

@@ -14,12 +14,17 @@
 
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+
+	"github.com/operator-framework/operator-sdk/version"
+)
 
 func NewRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "operator-sdk",
-		Short: "A sdk for building operator with ease",
+		Use:     "operator-sdk",
+		Short:   "A sdk for building operator with ease",
+		Version: version.Version,
 	}
 
 	cmd.AddCommand(NewNewCmd())
