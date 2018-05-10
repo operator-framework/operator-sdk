@@ -59,6 +59,7 @@ const (
 	catalogPackageYaml = "package.yaml"
 	catalogCSVYaml     = "csv.yaml"
 	crdYaml            = "crd.yaml"
+	gitignore          = ".gitignore"
 )
 
 type Generator struct {
@@ -93,6 +94,10 @@ func NewGenerator(apiVersion, kind, projectName, repoPath string) *Generator {
 // │       ├── build
 // │       └── codegen
 func (g *Generator) Render() error {
+	if err := g.renderProject(); err != nil {
+		return err
+	}
+
 	if err := g.renderCmd(); err != nil {
 		return err
 	}
@@ -109,6 +114,23 @@ func (g *Generator) Render() error {
 		return err
 	}
 	return g.renderGoDep()
+}
+
+func (g *Generator) renderProject() error {
+	if err := os.MkdirAll(g.projectName, defaultDirFileMode); err != nil {
+		return err
+	}
+	return renderProjectGitignore(g.projectName)
+}
+
+func renderProjectGitignore(projectName string) error {
+	gitignoreFile := filepath.Join(projectName, gitignore)
+	buf := &bytes.Buffer{}
+	if _, err := buf.Write([]byte(projectGitignoreTmpl)); err != nil {
+		return err
+	}
+
+	return writeFileAndPrint(gitignoreFile, buf.Bytes(), defaultFileMode)
 }
 
 func (g *Generator) renderGoDep() error {
