@@ -17,6 +17,7 @@ package k8sutil
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -133,4 +134,16 @@ func GetNameAndNamespace(object runtime.Object) (string, string, error) {
 
 func ObjectInfo(kind, name, namespace string) string {
 	return kind + ": " + namespace + "/" + name
+}
+
+// GetWatchNamespace returns the namespace the operator should be watching for changes
+func GetWatchNamespace() (string, error) {
+	ns, found := os.LookupEnv(WatchNamespaceEnvVar)
+	if !found {
+		return "", fmt.Errorf("%s must be set", WatchNamespaceEnvVar)
+	}
+	if len(ns) == 0 {
+		return "", fmt.Errorf("%s must not be empty", WatchNamespaceEnvVar)
+	}
+	return ns, nil
 }

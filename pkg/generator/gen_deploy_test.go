@@ -40,6 +40,11 @@ spec:
           command:
           - app-operator
           imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
 `
 
 const rbacYamlExp = `kind: Role

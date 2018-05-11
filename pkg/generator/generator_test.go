@@ -27,6 +27,7 @@ import (
 
 	stub "github.com/example-inc/app-operator/pkg/stub"
 	sdk "github.com/operator-framework/operator-sdk/pkg/sdk"
+	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
 	"github.com/sirupsen/logrus"
@@ -40,7 +41,16 @@ func printVersion() {
 
 func main() {
 	printVersion()
-	sdk.Watch("app.example.com/v1alpha1", "AppService", "default", 5)
+
+	resource := "app.example.com/v1alpha1"
+	kind := "AppService"
+	namespace, err := k8sutil.GetWatchNamespace()
+	if err != nil {
+		logrus.Fatalf("Failed to get watch namespace: %v", err)
+	}
+	resyncPeriod := 5
+	logrus.Infof("Watching %s, %s, %s, %d", resource, kind, namespace, resyncPeriod)
+	sdk.Watch(resource, kind, namespace, resyncPeriod)
 	sdk.Handle(stub.NewHandler())
 	sdk.Run(context.TODO())
 }
@@ -54,7 +64,7 @@ func TestGenMain(t *testing.T) {
 	}
 
 	if mainExp != buf.String() {
-		t.Errorf("want %v, got %v", mainExp, buf.String())
+		t.Errorf("want %v\ngot %v", mainExp, buf.String())
 	}
 }
 
@@ -104,8 +114,8 @@ func newbusyBoxPod(cr *v1alpha1.AppService) *v1.Pod {
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "busy-box",
-			Namespace:    "default",
+			Name:      "busy-box",
+			Namespace: cr.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(cr, schema.GroupVersionKind{
 					Group:   v1alpha1.SchemeGroupVersion.Group,

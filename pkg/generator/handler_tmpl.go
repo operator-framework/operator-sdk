@@ -61,8 +61,8 @@ func newbusyBoxPod(cr *{{.Version}}.{{.Kind}}) *v1.Pod {
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "busy-box",
-			Namespace:    "default",
+			Name:      "busy-box",
+			Namespace: cr.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(cr, schema.GroupVersionKind{
 					Group:   {{.Version}}.SchemeGroupVersion.Group,

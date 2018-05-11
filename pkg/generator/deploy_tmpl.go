@@ -49,6 +49,11 @@ spec:
           command:
           - {{.ProjectName}}
           imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
 `
 
 const rbacYamlTmpl = `kind: Role
