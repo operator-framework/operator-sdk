@@ -41,7 +41,7 @@ metadata:
   name: {{.CSVName}}
   namespace: placeholder
 spec:
-  install: 
+  install:
     strategy: deployment
     spec:
       permissions:
@@ -74,7 +74,7 @@ spec:
           - statefulsets
           verbs:
           - "*"
-      deployments: 
+      deployments:
       - name: {{.ProjectName}}
         spec:
           replicas: 1
