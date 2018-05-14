@@ -49,8 +49,8 @@ docker build -t "${IMAGE}" -f tmp/build/Dockerfile .
 
 const dockerFileTmpl = `FROM alpine:3.6
 
-ADD tmp/_output/bin/{{.ProjectName}} /usr/local/bin/{{.ProjectName}}
-
 RUN adduser -D {{.ProjectName}}
 USER {{.ProjectName}}
+
+ADD tmp/_output/bin/{{.ProjectName}} /usr/local/bin/{{.ProjectName}}
 `
