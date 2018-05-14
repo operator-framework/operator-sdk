@@ -12,11 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package informer
+package sdk
 
 import (
-	sdkHandler "github.com/operator-framework/operator-sdk/pkg/sdk/handler"
-	sdkTypes "github.com/operator-framework/operator-sdk/pkg/sdk/types"
 	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 
 	"github.com/sirupsen/logrus"
@@ -77,14 +75,14 @@ func (i *informer) sync(key string) error {
 	unstructObj := obj.(*unstructured.Unstructured).DeepCopy()
 	object := k8sutil.RuntimeObjectFromUnstructured(unstructObj)
 
-	event := sdkTypes.Event{
+	event := Event{
 		Object:  object,
 		Deleted: !exists,
 	}
 
-	sdkCtx := sdkTypes.Context{Context: i.context}
+	sdkCtx := Context{Context: i.context}
 	// TODO: Add option to prevent multiple informers from invoking Handle() concurrently?
-	err = sdkHandler.RegisteredHandler.Handle(sdkCtx, event)
+	err = RegisteredHandler.Handle(sdkCtx, event)
 	if !exists && err == nil {
 		delete(i.deletedObjects, key)
 	}

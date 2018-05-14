@@ -6,10 +6,7 @@ import (
 
 	v1alpha1 "github.com/example-inc/memcached-operator/pkg/apis/cache/v1alpha1"
 
-	"github.com/operator-framework/operator-sdk/pkg/sdk/action"
-	"github.com/operator-framework/operator-sdk/pkg/sdk/handler"
-	"github.com/operator-framework/operator-sdk/pkg/sdk/query"
-	"github.com/operator-framework/operator-sdk/pkg/sdk/types"
+	"github.com/operator-framework/operator-sdk/pkg/sdk"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -17,14 +14,14 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-func NewHandler() handler.Handler {
+func NewHandler() sdk.Handler {
 	return &Handler{}
 }
 
 type Handler struct {
 }
 
-func (h *Handler) Handle(ctx types.Context, event types.Event) error {
+func (h *Handler) Handle(ctx sdk.Context, event sdk.Event) error {
 	switch o := event.Object.(type) {
 	case *v1alpha1.Memcached:
 		memcached := o
@@ -37,20 +34,20 @@ func (h *Handler) Handle(ctx types.Context, event types.Event) error {
 
 		// Create the deployment if it doesn't exist
 		dep := deploymentForMemcached(memcached)
-		err := action.Create(dep)
+		err := sdk.Create(dep)
 		if err != nil && !apierrors.IsAlreadyExists(err) {
 			return fmt.Errorf("failed to create deployment: %v", err)
 		}
 
 		// Ensure the deployment size is the same as the spec
-		err = query.Get(dep)
+		err = sdk.Get(dep)
 		if err != nil {
 			return fmt.Errorf("failed to get deployment: %v", err)
 		}
 		size := memcached.Spec.Size
 		if *dep.Spec.Replicas != size {
 			dep.Spec.Replicas = &size
-			err = action.Update(dep)
+			err = sdk.Update(dep)
 			if err != nil {
 				return fmt.Errorf("failed to update deployment: %v", err)
 			}
@@ -60,14 +57,14 @@ func (h *Handler) Handle(ctx types.Context, event types.Event) error {
 		podList := podList()
 		labelSelector := labels.SelectorFromSet(labelsForMemcached(memcached.Name)).String()
 		listOps := &metav1.ListOptions{LabelSelector: labelSelector}
-		err = query.List(memcached.Namespace, podList, query.WithListOptions(listOps))
+		err = sdk.List(memcached.Namespace, podList, sdk.WithListOptions(listOps))
 		if err != nil {
 			return fmt.Errorf("failed to list pods: %v", err)
 		}
 		podNames := getPodNames(podList.Items)
 		if !reflect.DeepEqual(podNames, memcached.Status.Nodes) {
 			memcached.Status.Nodes = podNames
-			err := action.Update(memcached)
+			err := sdk.Update(memcached)
 			if err != nil {
 				return fmt.Errorf("failed to update memcached status: %v", err)
 			}

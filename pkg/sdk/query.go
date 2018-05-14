@@ -12,23 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package query
+package sdk
 
 import (
 	"fmt"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sclient"
-	sdkTypes "github.com/operator-framework/operator-sdk/pkg/sdk/types"
 	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 )
 
 // Get gets the specified object and unmarshals the retrieved data into the "into" object.
-// "into" is a sdkTypes.Object that must have
+// "into" is a Object that must have
 // "Kind" and "APIVersion" specified in its "TypeMeta" field
 // and "Name" and "Namespace" specified in its "ObjectMeta" field.
 // "opts" configures the Get operation.
 //  When passed With WithGetOptions(o), the specified metav1.GetOptions is set.
-func Get(into sdkTypes.Object, opts ...GetOption) error {
+func Get(into Object, opts ...GetOption) error {
 	name, namespace, err := k8sutil.GetNameAndNamespace(into)
 	if err != nil {
 		return err
@@ -57,7 +56,7 @@ func Get(into sdkTypes.Object, opts ...GetOption) error {
 // "Kind" and "APIVersion" specified in its "TypeMeta" field
 // "opts" configures the List operation.
 //  When passed With WithListOptions(o), the specified metav1.ListOptions is set.
-func List(namespace string, into sdkTypes.Object, opts ...ListOption) error {
+func List(namespace string, into Object, opts ...ListOption) error {
 	gvk := into.GetObjectKind().GroupVersionKind()
 	apiVersion, kind := gvk.ToAPIVersionAndKind()
 	resourceClient, _, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)

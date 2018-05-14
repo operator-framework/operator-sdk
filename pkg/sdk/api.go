@@ -18,15 +18,13 @@ import (
 	"context"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sclient"
-	sdkHandler "github.com/operator-framework/operator-sdk/pkg/sdk/handler"
-	sdkInformer "github.com/operator-framework/operator-sdk/pkg/sdk/informer"
 
 	"github.com/sirupsen/logrus"
 )
 
 var (
 	// informers is the set of all informers for the resources watched by the user
-	informers []sdkInformer.Informer
+	informers []Informer
 )
 
 // Watch watches for changes on the given resource.
@@ -47,14 +45,14 @@ func Watch(apiVersion, kind, namespace string, resyncPeriod int) {
 		logrus.Errorf("failed to get resource client for (apiVersion:%s, kind:%s, ns:%s): %v", apiVersion, kind, namespace, err)
 		panic(err)
 	}
-	informer := sdkInformer.New(resourcePluralName, namespace, resourceClient, resyncPeriod)
+	informer := NewInformer(resourcePluralName, namespace, resourceClient, resyncPeriod)
 	informers = append(informers, informer)
 }
 
 // Handle registers the handler for all events.
 // In the future, we would have a mux-pattern to dispatch events to matched handlers.
-func Handle(handler sdkHandler.Handler) {
-	sdkHandler.RegisteredHandler = handler
+func Handle(handler Handler) {
+	RegisteredHandler = handler
 }
 
 // Run starts the process of Watching resources, handling Events, and processing Actions
