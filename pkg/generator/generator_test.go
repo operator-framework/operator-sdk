@@ -262,10 +262,10 @@ GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ${BIN_DIR}/${PROJECT_NAME} $BU
 
 const dockerFileExp = `FROM alpine:3.6
 
-ADD tmp/_output/bin/app-operator /usr/local/bin/app-operator
-
 RUN adduser -D app-operator
 USER app-operator
+
+ADD tmp/_output/bin/app-operator /usr/local/bin/app-operator
 `
 
 func TestGenBuild(t *testing.T) {
