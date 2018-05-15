@@ -20,9 +20,7 @@ const handlerTmpl = `package stub
 import (
 	"{{.RepoPath}}/pkg/apis/{{.APIDirName}}/{{.Version}}"
 
-	"{{.OperatorSDKImport}}/action"
-	"{{.OperatorSDKImport}}/handler"
-	"{{.OperatorSDKImport}}/types"
+	"{{.OperatorSDKImport}}"
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -30,7 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func NewHandler() handler.Handler {
+func NewHandler() sdk.Handler {
 	return &Handler{}
 }
 
@@ -38,10 +36,10 @@ type Handler struct {
 	// Fill me
 }
 
-func (h *Handler) Handle(ctx types.Context, event types.Event) error {
+func (h *Handler) Handle(ctx sdk.Context, event sdk.Event) error {
 	switch o := event.Object.(type) {
 	case *{{.Version}}.{{.Kind}}:
-		err := action.Create(newbusyBoxPod(o))
+		err := sdk.Create(newbusyBoxPod(o))
 		if err != nil && !errors.IsAlreadyExists(err) {
 			logrus.Errorf("Failed to create busybox pod : %v", err)
 			return err

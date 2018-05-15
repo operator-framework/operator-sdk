@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package informer
+package sdk
 
 import (
 	"context"
@@ -42,7 +42,7 @@ type informer struct {
 	deletedObjects      map[string]interface{}
 }
 
-func New(resourcePluralName, namespace string, resourceClient dynamic.ResourceInterface, resyncPeriod int) Informer {
+func NewInformer(resourcePluralName, namespace string, resourceClient dynamic.ResourceInterface, resyncPeriod int) Informer {
 	i := &informer{
 		resourcePluralName: resourcePluralName,
 		queue:              workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), resourcePluralName),

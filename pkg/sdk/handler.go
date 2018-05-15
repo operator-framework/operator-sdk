@@ -12,5 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package query contains a set of APIs for accessing kubernetes objects.
-package query
+package sdk
+
+// Handler reacts to events and outputs actions.
+// If any intended action failed, the event would be re-triggered.
+// For actions done before the failed action, there is no rollback.
+type Handler interface {
+	Handle(Context, Event) error
+}
+
+var (
+	// RegisteredHandler is the user registered handler set by sdk.Handle()
+	RegisteredHandler Handler
+)
