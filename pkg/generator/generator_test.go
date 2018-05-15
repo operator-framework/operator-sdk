@@ -23,6 +23,9 @@ const mainExp = `package main
 
 import (
 	"context"
+	goflag "flag"
+	"os"
+	"path/filepath"
 	"runtime"
 
 	stub "github.com/example-inc/app-operator/pkg/stub"
@@ -31,6 +34,7 @@ import (
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 func printVersion() {
@@ -39,7 +43,7 @@ func printVersion() {
 	logrus.Infof("operator-sdk Version: %v", sdkVersion.Version)
 }
 
-func main() {
+func execute(_ *cobra.Command, _ []string) error {
 	printVersion()
 
 	resource := "app.example.com/v1alpha1"
@@ -53,6 +57,16 @@ func main() {
 	sdk.Watch(resource, kind, namespace, resyncPeriod)
 	sdk.Handle(stub.NewHandler())
 	sdk.Run(context.TODO())
+	return nil
+}
+
+func main() {
+	rootCmd := &cobra.Command{
+		Use:  filepath.Base(os.Args[0]),
+		RunE: execute,
+	}
+	rootCmd.Flags().AddGoFlagSet(goflag.CommandLine)
+	rootCmd.Execute()
 }
 `
 
