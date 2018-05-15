@@ -53,6 +53,7 @@ generates a skeletal app-operator application in $GOPATH/src/github.com/example.
 	newCmd.MarkFlagRequired("api-version")
 	newCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. (e.g AppService)")
 	newCmd.MarkFlagRequired("kind")
+	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
 
 	return newCmd
 }
@@ -61,6 +62,7 @@ var (
 	apiVersion  string
 	kind        string
 	projectName string
+	skipGit     bool
 )
 
 const (
@@ -84,6 +86,7 @@ func newFunc(cmd *cobra.Command, args []string) {
 	}
 	pullDep()
 	generate.K8sCodegen(projectName)
+	initGit()
 }
 
 func parse(args []string) {
@@ -138,23 +141,38 @@ func verifyFlags() {
 	}
 }
 
-func pullDep() {
-	fmt.Fprintln(os.Stdout, "Run dep ensure ...")
-	dc := exec.Command(dep, ensureCmd, "-v")
-	dc.Dir = filepath.Join(mustGetwd(), projectName)
-	dc.Stdout = os.Stdout
-	dc.Stderr = os.Stderr
-	err := dc.Run()
-	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to ensure dependencies: %v", err))
-	}
-	fmt.Fprintln(os.Stdout, "Run dep ensure done")
-}
-
 func mustGetwd() string {
 	wd, err := os.Getwd()
 	if err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to determine the full path of the current directory: %v", err))
 	}
 	return wd
+}
+
+func execCmd(stdout *os.File, cmd string, args ...string) {
+	dc := exec.Command(cmd, args...)
+	dc.Dir = filepath.Join(mustGetwd(), projectName)
+	dc.Stdout = stdout
+	dc.Stderr = os.Stderr
+	err := dc.Run()
+	if err != nil {
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to exec %s %#v: %v", cmd, args, err))
+	}
+}
+
+func pullDep() {
+	fmt.Fprintln(os.Stdout, "Run dep ensure ...")
+	execCmd(os.Stdout, dep, ensureCmd, "-v")
+	fmt.Fprintln(os.Stdout, "Run dep ensure done")
+}
+
+func initGit() {
+	if skipGit {
+		return
+	}
+	fmt.Fprintln(os.Stdout, "Run git init ...")
+	execCmd(os.Stdout, "git", "init")
+	execCmd(os.Stdout, "git", "add", "--all")
+	execCmd(nil, "git", "commit", "-m", "INITIAL COMMIT")
+	fmt.Fprintln(os.Stdout, "Run git init done")
 }
