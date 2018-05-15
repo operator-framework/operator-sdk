@@ -16,10 +16,13 @@ package sdk
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sclient"
 	sdkHandler "github.com/operator-framework/operator-sdk/pkg/sdk/handler"
 	sdkInformer "github.com/operator-framework/operator-sdk/pkg/sdk/informer"
+	sdkMetrics "github.com/operator-framework/operator-sdk/pkg/sdk/metrics"
+	_ "github.com/operator-framework/operator-sdk/pkg/sdk/pprof"
 
 	"github.com/sirupsen/logrus"
 )
@@ -63,4 +66,17 @@ func Run(ctx context.Context) {
 		go informer.Run(ctx)
 	}
 	<-ctx.Done()
+}
+
+func RegisterMetrics() {
+	addr := ":8080"
+	if err := sdkMetrics.Register(); err != nil {
+		logrus.Errorf("failed to register metrics: %v", err)
+		panic(err)
+	}
+	// pprof was registered to http.DefaultServeMutex just by importing the package
+	go func() {
+		logrus.Println(http.ListenAndServe(addr, nil))
+	}()
+	logrus.Infof("Metrics and pprof registered on: %s", addr)
 }

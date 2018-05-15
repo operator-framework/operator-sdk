@@ -41,6 +41,7 @@ func printVersion() {
 
 func main() {
 	printVersion()
+	sdk.RegisterMetrics()
 
 	resource := "app.example.com/v1alpha1"
 	kind := "AppService"
