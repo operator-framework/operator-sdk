@@ -37,6 +37,7 @@ func printVersion() {
 
 func main() {
 	printVersion()
+	sdk.RegisterMetrics()
 
 	resource := "{{.APIVersion}}"
 	kind := "{{.Kind}}"

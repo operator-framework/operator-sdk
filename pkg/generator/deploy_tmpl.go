@@ -54,6 +54,9 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+          ports:
+            - containerPort: 8080
+              name: metrics
 `
 
 const rbacYamlTmpl = `kind: Role
