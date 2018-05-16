@@ -71,6 +71,8 @@ func TestGenMain(t *testing.T) {
 const handlerExp = `package stub
 
 import (
+	"context"
+
 	"github.com/example-inc/app-operator/pkg/apis/app/v1alpha1"
 
 	"github.com/operator-framework/operator-sdk/pkg/sdk"
@@ -89,7 +91,7 @@ type Handler struct {
 	// Fill me
 }
 
-func (h *Handler) Handle(ctx sdk.Context, event sdk.Event) error {
+func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 	switch o := event.Object.(type) {
 	case *v1alpha1.AppService:
 		err := sdk.Create(newbusyBoxPod(o))

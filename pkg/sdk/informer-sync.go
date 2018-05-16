@@ -80,9 +80,8 @@ func (i *informer) sync(key string) error {
 		Deleted: !exists,
 	}
 
-	sdkCtx := Context{Context: i.context}
 	// TODO: Add option to prevent multiple informers from invoking Handle() concurrently?
-	err = RegisteredHandler.Handle(sdkCtx, event)
+	err = RegisteredHandler.Handle(i.context, event)
 	if !exists && err == nil {
 		delete(i.deletedObjects, key)
 	}

@@ -14,11 +14,13 @@
 
 package sdk
 
+import "context"
+
 // Handler reacts to events and outputs actions.
 // If any intended action failed, the event would be re-triggered.
 // For actions done before the failed action, there is no rollback.
 type Handler interface {
-	Handle(Context, Event) error
+	Handle(context.Context, Event) error
 }
 
 var (
