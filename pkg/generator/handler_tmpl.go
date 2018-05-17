@@ -18,6 +18,8 @@ package generator
 const handlerTmpl = `package stub
 
 import (
+	"context"
+
 	"{{.RepoPath}}/pkg/apis/{{.APIDirName}}/{{.Version}}"
 
 	"{{.OperatorSDKImport}}"
@@ -36,7 +38,7 @@ type Handler struct {
 	// Fill me
 }
 
-func (h *Handler) Handle(ctx sdk.Context, event sdk.Event) error {
+func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 	switch o := event.Object.(type) {
 	case *{{.Version}}.{{.Kind}}:
 		err := sdk.Create(newbusyBoxPod(o))

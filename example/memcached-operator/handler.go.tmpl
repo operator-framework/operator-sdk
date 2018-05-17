@@ -3,6 +3,7 @@ package stub
 import (
 	"fmt"
 	"reflect"
+	"context"
 
 	v1alpha1 "github.com/example-inc/memcached-operator/pkg/apis/cache/v1alpha1"
 
@@ -21,7 +22,7 @@ func NewHandler() sdk.Handler {
 type Handler struct {
 }
 
-func (h *Handler) Handle(ctx sdk.Context, event sdk.Event) error {
+func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 	switch o := event.Object.(type) {
 	case *v1alpha1.Memcached:
 		memcached := o
