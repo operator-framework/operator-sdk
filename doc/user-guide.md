@@ -5,6 +5,7 @@ This guide walks through an example of building a simple memcached-operator usin
 ## Prerequisites
 
 - [dep][dep_tool] version v0.4.1+.
+- [git][git_tool]
 - [go][go_tool] version v1.10+.
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.9.0+.
@@ -208,6 +209,7 @@ $ kubectl delete -f deploy/operator.yaml
 [memcached_handler]: ../example/memcached-operator/handler.go.tmpl
 [layout_doc]:./project_layout.md
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
+[git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
 [docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
