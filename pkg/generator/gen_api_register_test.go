@@ -63,6 +63,6 @@ func TestGenRegister(t *testing.T) {
 		return
 	}
 	if registerExp != buf.String() {
-		t.Errorf("want %v, got %v", registerExp, buf.String())
+		t.Errorf(errorMessage, registerExp, buf.String())
 	}
 }

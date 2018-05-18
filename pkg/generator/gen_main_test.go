@@ -64,6 +64,6 @@ func TestGenMain(t *testing.T) {
 	}
 
 	if mainExp != buf.String() {
-		t.Errorf("want %v\ngot %v", mainExp, buf.String())
+		t.Errorf(errorMessage, mainExp, buf.String())
 	}
 }

@@ -30,6 +30,6 @@ func TestGenConfig(t *testing.T) {
 		t.Error(err)
 	}
 	if configExp != buf.String() {
-		t.Errorf("want %v, got %v", configExp, buf.String())
+		t.Errorf(errorMessage, configExp, buf.String())
 	}
 }

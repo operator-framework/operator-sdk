@@ -27,7 +27,7 @@ func TestGenGopkg(t *testing.T) {
 	}
 
 	if gopkgTomlTmpl != buf.String() {
-		t.Errorf("want %v, got %v", gopkgTomlTmpl, buf.String())
+		t.Errorf(errorMessage, gopkgTomlTmpl, buf.String())
 	}
 
 	buf = &bytes.Buffer{}
@@ -36,6 +36,6 @@ func TestGenGopkg(t *testing.T) {
 		return
 	}
 	if gopkgLockTmpl != buf.String() {
-		t.Errorf("want %v, got %v", gopkgLockTmpl, buf.String())
+		t.Errorf(errorMessage, gopkgLockTmpl, buf.String())
 	}
 }

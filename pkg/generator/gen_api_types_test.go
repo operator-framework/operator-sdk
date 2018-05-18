@@ -19,7 +19,7 @@ import (
 	"testing"
 )
 
-const typesExp = `package v1alpha1
+const typesExp = `package app.example.com/v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,36 +27,36 @@ import (
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-type PlayServiceList struct {
+type AppServiceList struct {
 	metav1.TypeMeta ` + "`" + `json:",inline"` + "`\n" +
 	`	metav1.ListMeta ` + "`" + `json:"metadata"` + "`\n" +
-	`	Items           []PlayService ` + "`" + `json:"items"` + "`" + `
+	`	Items           []AppService ` + "`" + `json:"items"` + "`" + `
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-type PlayService struct {
+type AppService struct {
 	metav1.TypeMeta   ` + "`" + `json:",inline"` + "`\n" +
 	`	metav1.ObjectMeta ` + "`" + `json:"metadata"` + "`\n" +
-	`	Spec              PlayServiceSpec   ` + "`" + `json:"spec"` + "`\n" +
-	`	Status            PlayServiceStatus ` + "`" + `json:"status,omitempty"` + "`" + `
+	`	Spec              AppServiceSpec   ` + "`" + `json:"spec"` + "`\n" +
+	`	Status            AppServiceStatus ` + "`" + `json:"status,omitempty"` + "`" + `
 }
 
-type PlayServiceSpec struct {
+type AppServiceSpec struct {
 	// Fill me
 }
-type PlayServiceStatus struct {
+type AppServiceStatus struct {
 	// Fill me
 }
 `
 
 func TestGenTypes(t *testing.T) {
 	buf := &bytes.Buffer{}
-	if err := renderAPITypesFile(buf, "PlayService", "v1alpha1"); err != nil {
+	if err := renderAPITypesFile(buf, appKind, appAPIVersion); err != nil {
 		t.Error(err)
 		return
 	}
 	if typesExp != buf.String() {
-		t.Errorf("want %v, got %v", typesExp, buf.String())
+		t.Errorf(errorMessage, typesExp, buf.String())
 	}
 }

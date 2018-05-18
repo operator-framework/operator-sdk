@@ -51,7 +51,7 @@ func TestCodeGen(t *testing.T) {
 		return
 	}
 	if boilerplateExp != buf.String() {
-		t.Errorf("want %v, got %v", boilerplateExp, buf.String())
+		t.Errorf(errorMessage, boilerplateExp, buf.String())
 	}
 
 	buf = &bytes.Buffer{}
@@ -60,6 +60,6 @@ func TestCodeGen(t *testing.T) {
 		return
 	}
 	if updateGeneratedExp != buf.String() {
-		t.Errorf("want %v, got %v", updateGeneratedExp, buf.String())
+		t.Errorf(errorMessage, updateGeneratedExp, buf.String())
 	}
 }

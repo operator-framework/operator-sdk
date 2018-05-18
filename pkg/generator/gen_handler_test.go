@@ -96,6 +96,6 @@ func TestGenHandler(t *testing.T) {
 		return
 	}
 	if handlerExp != buf.String() {
-		t.Errorf("want %v, got %v", handlerExp, buf.String())
+		t.Errorf(errorMessage, handlerExp, buf.String())
 	}
 }
