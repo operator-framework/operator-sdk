@@ -54,7 +54,7 @@ func TestGenBuild(t *testing.T) {
 		return
 	}
 	if buildExp != buf.String() {
-		t.Errorf("want %v, got %v", buildExp, buf.String())
+		t.Errorf(errorMessage, buildExp, buf.String())
 	}
 
 	buf = &bytes.Buffer{}
@@ -63,7 +63,7 @@ func TestGenBuild(t *testing.T) {
 		return
 	}
 	if dockerBuildTmpl != buf.String() {
-		t.Errorf("want %v, got %v", dockerBuildTmpl, buf.String())
+		t.Errorf(errorMessage, dockerBuildTmpl, buf.String())
 	}
 
 	buf = &bytes.Buffer{}
@@ -72,6 +72,6 @@ func TestGenBuild(t *testing.T) {
 		return
 	}
 	if dockerFileExp != buf.String() {
-		t.Errorf("want %v, got %v", dockerFileExp, buf.String())
+		t.Errorf(errorMessage, dockerFileExp, buf.String())
 	}
 }

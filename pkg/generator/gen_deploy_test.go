@@ -101,7 +101,7 @@ func TestGenDeploy(t *testing.T) {
 		t.Error(err)
 	}
 	if crdYamlExp != buf.String() {
-		t.Errorf("want %v, got %v", crdYamlExp, buf.String())
+		t.Errorf(errorMessage, crdYamlExp, buf.String())
 	}
 
 	buf = &bytes.Buffer{}
@@ -109,7 +109,7 @@ func TestGenDeploy(t *testing.T) {
 		t.Error(err)
 	}
 	if operatorYamlExp != buf.String() {
-		t.Errorf("want %v, got %v", operatorYamlExp, buf.String())
+		t.Errorf(errorMessage, operatorYamlExp, buf.String())
 	}
 
 	buf = &bytes.Buffer{}
@@ -117,6 +117,6 @@ func TestGenDeploy(t *testing.T) {
 		t.Error(err)
 	}
 	if rbacYamlExp != buf.String() {
-		t.Errorf("want %v, got %v", rbacYamlExp, buf.String())
+		t.Errorf(errorMessage, rbacYamlExp, buf.String())
 	}
 }

@@ -10,4 +10,5 @@ const (
 	appVersion     = "v1alpha1"
 	appGroupName   = "app.example.com"
 	appProjectName = "app-operator"
+	errorMessage   = "Want:\n%vGot:\n%v"
 )
