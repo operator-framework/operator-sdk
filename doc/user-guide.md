@@ -91,6 +91,15 @@ Replace the default handler with the reference [memcached handler][memcached_han
 
 ### Build and run the operator
 
+There is two ways to run the operator:
+
+- As pod inside Kubernetes cluster
+- As go program outside cluster
+
+#### 1. Run as pod inside a Kubernetes cluster
+
+Run as pod inside a Kubernetes cluster is prefered for production use.
+
 Build the memcached-operator image and push it to a registry:
 ```
 $ operator-sdk build quay.io/example/memcached-operator:v0.0.1
@@ -113,6 +122,30 @@ Verify that the memcached-operator is up and running:
 $ kubectl get deployment
 NAME                     DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
 memcached-operator       1         1         1            1           1m
+```
+
+#### 2. Run outside the cluster
+
+This method is prefered during development cycle to deploy and test faster.
+
+Set `WATCH_NAMESPACE` env var to specify which namespace will be watch by the operator.
+
+Run the operator localy with the default kubernetes config file present at `$HOME/.kube/config`:
+
+```sh
+$ WATCH_NAMESPACE="default" operator-sdk up local
+INFO[0000] Go Version: go1.10
+INFO[0000] Go OS/Arch: darwin/amd64
+INFO[0000] operator-sdk Version: 0.0.5+git
+```
+
+Run the operator localy with a provided kubernetes config file:
+
+```sh
+$ WATCH_NAMESPACE="default" operator-sdk up local --kubeconfig=config
+INFO[0000] Go Version: go1.10
+INFO[0000] Go OS/Arch: darwin/amd64
+INFO[0000] operator-sdk Version: 0.0.5+git
 ```
 
 ### Create a Memcached CR
