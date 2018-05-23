@@ -47,6 +47,11 @@ func init() {
 	clientPool = dynamic.NewClientPool(kubeConfig, restMapper, dynamic.LegacyAPIPathResolverFunc)
 }
 
+// ResetRestMapper Reset RestMapperCache
+func ResetRestMapper() {
+	restMapper.Reset()
+}
+
 // GetResourceClient returns the dynamic client and pluralName for the resource specified by the apiVersion and kind
 func GetResourceClient(apiVersion, kind, namespace string) (dynamic.ResourceInterface, string, error) {
 	gv, err := schema.ParseGroupVersion(apiVersion)
