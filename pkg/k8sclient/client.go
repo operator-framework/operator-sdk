@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 
@@ -45,6 +46,7 @@ func init() {
 	restMapper.Reset()
 	kubeConfig.ContentConfig = dynamic.ContentConfig()
 	clientPool = dynamic.NewClientPool(kubeConfig, restMapper, dynamic.LegacyAPIPathResolverFunc)
+	runBackgroundCacheReset(1 * time.Minute)
 }
 
 // GetResourceClient returns the dynamic client and pluralName for the resource specified by the apiVersion and kind
@@ -123,4 +125,15 @@ func outOfClusterConfig() (*rest.Config, error) {
 	kubeconfig := os.Getenv(k8sutil.KubeConfigEnvVar)
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	return config, err
+}
+
+// runBackgroundCacheReset - Starts the rest mapper cache reseting
+// at a duration given.
+func runBackgroundCacheReset(duration time.Duration) {
+	ticker := time.NewTicker(duration)
+	go func() {
+		for range ticker.C {
+			restMapper.Reset()
+		}
+	}()
 }
