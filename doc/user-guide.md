@@ -98,7 +98,7 @@ There is two ways to run the operator:
 
 #### 1. Run as pod inside a Kubernetes cluster
 
-Run as pod inside a Kubernetes cluster is prefered for production use.
+Run as pod inside a Kubernetes cluster is preferred for production use.
 
 Build the memcached-operator image and push it to a registry:
 ```
@@ -126,23 +126,21 @@ memcached-operator       1         1         1            1           1m
 
 #### 2. Run outside the cluster
 
-This method is prefered during development cycle to deploy and test faster.
+This method is preferred during development cycle to deploy and test faster.
 
-Set `WATCH_NAMESPACE` env var to specify which namespace will be watch by the operator.
-
-Run the operator localy with the default kubernetes config file present at `$HOME/.kube/config`:
+Run the operator locally with the default kubernetes config file present at `$HOME/.kube/config`:
 
 ```sh
-$ WATCH_NAMESPACE="default" operator-sdk up local
+$ operator-sdk up local
 INFO[0000] Go Version: go1.10
 INFO[0000] Go OS/Arch: darwin/amd64
 INFO[0000] operator-sdk Version: 0.0.5+git
 ```
 
-Run the operator localy with a provided kubernetes config file:
+Run the operator locally with a provided kubernetes config file:
 
 ```sh
-$ WATCH_NAMESPACE="default" operator-sdk up local --kubeconfig=config
+$ operator-sdk up local --kubeconfig=config
 INFO[0000] Go Version: go1.10
 INFO[0000] Go OS/Arch: darwin/amd64
 INFO[0000] operator-sdk Version: 0.0.5+git
