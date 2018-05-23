@@ -16,10 +16,11 @@ package sdk
 
 import (
 	"context"
+	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sclient"
-
 	"github.com/sirupsen/logrus"
+	"k8s.io/client-go/dynamic"
 )
 
 var (
@@ -39,10 +40,25 @@ var (
 // namespace is the Namespace to watch for the resource
 // TODO: support opts for specifying label selector
 func Watch(apiVersion, kind, namespace string, resyncPeriod int) {
-	resourceClient, resourcePluralName, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
-	// TODO: Better error handling, e.g retry
+
+	var resourceClient dynamic.ResourceInterface
+	var resourcePluralName string
+	var err error
+	attempts := 50
+	delay := 2 * time.Second
+
+	// Retry get ressourceClient
+	for i := 0; i < attempts; i++ {
+		resourceClient, resourcePluralName, err = k8sclient.GetResourceClient(apiVersion, kind, namespace)
+		if err != nil {
+			logrus.Errorf("retry (%d/%d): failed to get resource client for (apiVersion:%s, kind:%s, ns:%s): %v", i, attempts, apiVersion, kind, namespace, err)
+			k8sclient.ResetRestMapper()
+			time.Sleep(delay)
+		} else {
+			break
+		}
+	}
 	if err != nil {
-		logrus.Errorf("failed to get resource client for (apiVersion:%s, kind:%s, ns:%s): %v", apiVersion, kind, namespace, err)
 		panic(err)
 	}
 	informer := NewInformer(resourcePluralName, namespace, resourceClient, resyncPeriod)
