@@ -12,6 +12,8 @@
 
 ### Fixed
 
+- The cache of available clients is being reset every minute for discovery of newely added resources to a cluster. [#280](https://github.com/operator-framework/operator-sdk/pull/280)
+
 ### Deprecated
 
 ### Security
