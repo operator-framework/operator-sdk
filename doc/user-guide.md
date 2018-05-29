@@ -22,8 +22,8 @@ Checkout the desired release tag and install the SDK CLI tool:
 ```sh
 $ cd $GOPATH/src/github.com/operator-framework/operator-sdk
 $ git checkout master
-$ dep ensure
-$ go install github.com/operator-framework/operator-sdk/commands/operator-sdk
+$ make dep
+$ make install
 ```
 
 This installs the CLI binary `operator-sdk` at `$GOPATH/bin`.

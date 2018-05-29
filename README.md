@@ -35,8 +35,8 @@ First, checkout and install the operator-sdk CLI:
 ```sh
 $ cd $GOPATH/src/github.com/operator-framework/operator-sdk
 $ git checkout master
-$ dep ensure
-$ go install github.com/operator-framework/operator-sdk/commands/operator-sdk
+$ make dep
+$ make install
 ```
 
 Create and deploy an app-operator using the SDK CLI:

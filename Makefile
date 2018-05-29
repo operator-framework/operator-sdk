@@ -12,6 +12,6 @@ format:
 	go fmt $(pkgs)
 
 dep:
-	dep ensure
+	dep ensure -v
 
 .PHONY: all install test format dep
