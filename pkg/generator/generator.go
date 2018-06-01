@@ -57,8 +57,6 @@ const (
 	gopkglock          = "Gopkg.lock"
 	config             = "config.yaml"
 	operatorYaml       = deployDir + "/operator.yaml"
-	serviceYaml        = "service.yaml"
-	serviceMonitorYaml = "serviceMonitor.yaml"
 	rbacYaml           = "rbac.yaml"
 	crYaml             = "cr.yaml"
 	catalogPackageYaml = "package.yaml"
