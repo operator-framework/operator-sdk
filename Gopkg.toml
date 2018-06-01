@@ -7,6 +7,10 @@
   version = "0.0.2"
 
 [[override]]
+  name = "github.com/prometheus/client_golang"
+  version = "0.8.0"
+
+[[override]]
   name = "k8s.io/api"
   version = "kubernetes-1.9.3"
 

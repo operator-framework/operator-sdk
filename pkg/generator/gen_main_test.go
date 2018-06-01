@@ -24,23 +24,32 @@ const mainExp = `package main
 import (
 	"context"
 	"runtime"
+	"net/http"
 
 	stub "github.com/example-inc/app-operator/pkg/stub"
 	sdk "github.com/operator-framework/operator-sdk/pkg/sdk"
 	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
+
+// Prometheus metrics port
+const promPort = ":9090"
 
 func printVersion() {
 	logrus.Infof("Go Version: %s", runtime.Version())
 	logrus.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
 	logrus.Infof("operator-sdk Version: %v", sdkVersion.Version)
+	logrus.Infof("operator prometheus port :%s", promPort)
 }
 
 func main() {
 	printVersion()
+
+	http.Handle("/metrics", promhttp.Handler())
+	logrus.Fatalf("%s", http.ListenAndServe(promPort, nil))
 
 	resource := "app.example.com/v1alpha1"
 	kind := "AppService"
