@@ -18,13 +18,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	intstr "k8s.io/apimachinery/pkg/util/intstr"
 	cgoscheme "k8s.io/client-go/kubernetes/scheme"
 )
 
@@ -146,4 +149,59 @@ func GetWatchNamespace() (string, error) {
 		return "", fmt.Errorf("%s must not be empty", WatchNamespaceEnvVar)
 	}
 	return ns, nil
+}
+
+// GetOperatorName return the operator name
+func GetOperatorName() (string, error) {
+	operatorName, found := os.LookupEnv(OperatorNameEnvVar)
+	if !found {
+		return "", fmt.Errorf("%s must be set", OperatorNameEnvVar)
+	}
+	if len(operatorName) == 0 {
+		return "", fmt.Errorf("%s must not be empty", OperatorNameEnvVar)
+	}
+	return operatorName, nil
+}
+
+// InitOperatorService return the static service which expose operator metrics
+func InitOperatorService() (*v1.Service, error) {
+	operatorName, err := GetOperatorName()
+	if err != nil {
+		return nil, err
+	}
+	namespace, err := GetWatchNamespace()
+	if err != nil {
+		return nil, err
+	}
+	service := &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      operatorName,
+			Namespace: namespace,
+			Labels:    map[string]string{"name": operatorName},
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Service",
+			APIVersion: "v1",
+		},
+		Spec: v1.ServiceSpec{
+			Ports: []v1.ServicePort{
+				{
+					Port:     PrometheusMetricsPort,
+					Protocol: v1.ProtocolTCP,
+					TargetPort: intstr.IntOrString{
+						Type:   intstr.String,
+						StrVal: "metrics",
+					},
+					Name: "metrics",
+				},
+			},
+			Selector: map[string]string{"name": operatorName},
+		},
+	}
+	return service, nil
+}
+
+// GetPrometheusMetricsPort convert constant to string
+func GetPrometheusMetricsPort() string {
+	return ":" + strconv.Itoa(PrometheusMetricsPort)
 }

@@ -22,46 +22,57 @@ import (
 const mainExp = `package main
 
 import (
-	"context"
-	"runtime"
-	"net/http"
+  "context"
+  "runtime"
+  "net/http"
 
-	stub "github.com/example-inc/app-operator/pkg/stub"
-	sdk "github.com/operator-framework/operator-sdk/pkg/sdk"
-	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
-	sdkVersion "github.com/operator-framework/operator-sdk/version"
+  stub "github.com/example-inc/app-operator/pkg/stub"
+  sdk "github.com/operator-framework/operator-sdk/pkg/sdk"
+  k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
+  sdkVersion "github.com/operator-framework/operator-sdk/version"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/sirupsen/logrus"
+  "github.com/prometheus/client_golang/prometheus/promhttp"
+  "github.com/sirupsen/logrus"
 )
 
-// Prometheus metrics port
-const promPort = ":9090"
-
 func printVersion() {
-	logrus.Infof("Go Version: %s", runtime.Version())
-	logrus.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	logrus.Infof("operator-sdk Version: %v", sdkVersion.Version)
-	logrus.Infof("operator prometheus port :%s", promPort)
+  logrus.Infof("Go Version: %s", runtime.Version())
+  logrus.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
+  logrus.Infof("operator-sdk Version: %v", sdkVersion.Version)
+  logrus.Infof("operator prometheus port %s", ":60000")
+}
+
+func initOperatorService() {
+  service, err := k8sutil.InitOperatorService()
+  if err != nil {
+    logrus.Fatalf("Failed to init operator service: %v", err)
+  }
+  err = sdk.Create(service)
+  if err != nil {
+    logrus.Infof("Failed to create operator service: %v", err)
+    return
+  }
+  logrus.Infof("Service %s have been created", service.Name)
 }
 
 func main() {
-	printVersion()
+  printVersion()
+  initOperatorService()
 
-	http.Handle("/metrics", promhttp.Handler())
-	logrus.Fatalf("%s", http.ListenAndServe(promPort, nil))
+  http.Handle("/metrics", promhttp.Handler())
+  go http.ListenAndServe(":60000", nil)
 
-	resource := "app.example.com/v1alpha1"
-	kind := "AppService"
-	namespace, err := k8sutil.GetWatchNamespace()
-	if err != nil {
-		logrus.Fatalf("Failed to get watch namespace: %v", err)
-	}
-	resyncPeriod := 5
-	logrus.Infof("Watching %s, %s, %s, %d", resource, kind, namespace, resyncPeriod)
-	sdk.Watch(resource, kind, namespace, resyncPeriod)
-	sdk.Handle(stub.NewHandler())
-	sdk.Run(context.TODO())
+  resource := "app.example.com/v1alpha1"
+  kind := "AppService"
+  namespace, err := k8sutil.GetWatchNamespace()
+  if err != nil {
+    logrus.Fatalf("Failed to get watch namespace: %v", err)
+  }
+  resyncPeriod := 5
+  logrus.Infof("Watching %s, %s, %s, %d", resource, kind, namespace, resyncPeriod)
+  sdk.Watch(resource, kind, namespace, resyncPeriod)
+  sdk.Handle(stub.NewHandler())
+  sdk.Run(context.TODO())
 }
 `
 

@@ -19,6 +19,8 @@ import (
 	"io"
 	"strings"
 	"text/template"
+
+	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 )
 
 const (
@@ -58,8 +60,11 @@ func renderCRDYaml(w io.Writer, kind, apiVersion string) error {
 
 // OperatorYaml contains data needed to generate deploy/operator.yaml
 type OperatorYaml struct {
-	ProjectName string
-	Image       string
+	ProjectName  string
+	Image        string
+	NameEnv      string
+	NamespaceEnv string
+	MetricsPort  int
 }
 
 // renderOperatorYaml generates deploy/operator.yaml.
@@ -71,8 +76,11 @@ func renderOperatorYaml(w io.Writer, projectName, image string) error {
 	}
 
 	o := OperatorYaml{
-		ProjectName: projectName,
-		Image:       image,
+		ProjectName:  projectName,
+		Image:        image,
+		NameEnv:      k8sutil.OperatorNameEnvVar,
+		NamespaceEnv: k8sutil.WatchNamespaceEnvVar,
+		MetricsPort:  k8sutil.PrometheusMetricsPort,
 	}
 	return t.Execute(w, o)
 }

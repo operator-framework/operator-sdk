@@ -18,6 +18,8 @@ import (
 	"io"
 	"path/filepath"
 	"text/template"
+
+	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 )
 
 const (
@@ -36,8 +38,9 @@ type Main struct {
 	K8sutilImport     string
 	SDKVersionImport  string
 
-	APIVersion string
-	Kind       string
+	APIVersion  string
+	Kind        string
+	MetricsPort string
 }
 
 // renderMainFile generates the cmd/<projectName>/main.go file.
@@ -55,6 +58,7 @@ func renderMainFile(w io.Writer, repo, apiVersion, kind string) error {
 		SDKVersionImport:  versionImport,
 		APIVersion:        apiVersion,
 		Kind:              kind,
+		MetricsPort:       k8sutil.GetPrometheusMetricsPort(),
 	}
 	return t.Execute(w, m)
 }
