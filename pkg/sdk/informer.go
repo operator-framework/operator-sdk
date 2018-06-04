@@ -115,6 +115,11 @@ func (i *informer) handleDeleteResourceEvent(obj interface{}) {
 }
 
 func (i *informer) handleUpdateResourceEvent(oldObj, newObj interface{}) {
+	oldRes := oldObj.(*unstructured.Unstructured)
+	newRes := newObj.(*unstructured.Unstructured)
+	if newRes.GetResourceVersion() == oldRes.GetResourceVersion() {
+		return
+	}
 	key, err := cache.MetaNamespaceKeyFunc(newObj)
 	if err != nil {
 		panic(err)
