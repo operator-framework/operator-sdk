@@ -136,7 +136,7 @@ generates a default directory layout based on the input `project-name`.
 
 ### Args
 
-* `project-name` - the project name of the new 
+* `project-name` - the project name of the new
 
 ### Flags
 
@@ -186,6 +186,22 @@ operator-sdk up local --kubeconfig "mycluster.kubecfg" \
   --operator-flags "--flag1 value1 --flag2=value2"
 ```
 
+The below example will use the default kubeconfig, the default namespace environment var, and pass in flags for the operator.
+To use the operator flags, your operator must know how to handle the option. Below imagine an operator that understands the `resync-interval` flag.
+
+```bash
+operator-sdk up local --operator-flags "--resync-interval 10"
+```
+
+If you are planning on using a different namespace than the default, then you should use the `--namespace` flag to change where the operator is watching for custom resources to be created.
+For this to work your operator must handle the `WATCH_NAMESPACE` environment variable. To do that you can use the [utility function][utility_link] `k8sutil.GetWatchNamespace` in your operator.
+
+```bash
+operator-sdk up local --namespace "testing"
+```
+
 ### Flags
 
 * `-h, --help` - help for up
+
+[utility_link]: https://github.com/operator-framework/operator-sdk/blob/89bf021063d18b6769bdc551ed08fc37027939d5/pkg/util/k8sutil/k8sutil.go#L140
