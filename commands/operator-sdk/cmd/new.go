@@ -161,11 +161,10 @@ func execCmd(stdout *os.File, cmd string, args ...string) {
 }
 
 func pullDep() {
-	depPath, err := exec.LookPath(dep)
+	_, err := exec.LookPath(dep)
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, err)
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("Looking for dep in $PATH: %v", err))
 	}
-	fmt.Printf("dep is available at %s\n", depPath)
 	fmt.Fprintln(os.Stdout, "Run dep ensure ...")
 	execCmd(os.Stdout, dep, ensureCmd, "-v")
 	fmt.Fprintln(os.Stdout, "Run dep ensure done")
