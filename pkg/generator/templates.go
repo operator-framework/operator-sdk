@@ -19,7 +19,6 @@ const versionTmpl = `package version
 
 var (
 	Version = "{{.VersionNumber}}"
-	GitSHA  = "{{.GitSHA}}"
 )
 `
 const catalogPackageTmpl = `packageName: {{.PackageName}}
