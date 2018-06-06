@@ -36,11 +36,13 @@ import (
 var (
 	restMapper *discovery.DeferredDiscoveryRESTMapper
 	clientPool dynamic.ClientPool
+	kubeClient kubernetes.Interface
+	kubeConfig *rest.Config
 )
 
 // init initializes the restMapper and clientPool needed to create a resource client dynamically
 func init() {
-	kubeClient, kubeConfig := mustNewKubeClientAndConfig()
+	kubeClient, kubeConfig = mustNewKubeClientAndConfig()
 	cachedDiscoveryClient := cached.NewMemCacheClient(kubeClient.Discovery())
 	restMapper = discovery.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient, meta.InterfacesForUnstructured)
 	restMapper.Reset()
@@ -72,6 +74,11 @@ func GetResourceClient(apiVersion, kind, namespace string) (dynamic.ResourceInte
 	pluralName := resource.Name
 	resourceClient := client.Resource(resource, namespace)
 	return resourceClient, pluralName, nil
+}
+
+// GetKubeClient returns the kubernetes client used to create the dynamic client
+func GetKubeClient() kubernetes.Interface {
+	return kubeClient
 }
 
 // apiResource consults the REST mapper to translate an <apiVersion, kind, namespace> tuple to a metav1.APIResource struct.
