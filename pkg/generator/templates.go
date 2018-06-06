@@ -174,7 +174,7 @@ import (
 
 	"{{.OperatorSDKImport}}"
 	"github.com/sirupsen/logrus"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -201,11 +201,11 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 }
 
 // newbusyBoxPod demonstrates how to create a busybox pod
-func newbusyBoxPod(cr *{{.Version}}.{{.Kind}}) *v1.Pod {
+func newbusyBoxPod(cr *{{.Version}}.{{.Kind}}) *corev1.Pod {
 	labels := map[string]string{
 		"app": "busy-box",
 	}
-	return &v1.Pod{
+	return &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Pod",
 			APIVersion: "v1",
@@ -222,8 +222,8 @@ func newbusyBoxPod(cr *{{.Version}}.{{.Kind}}) *v1.Pod {
 			},
 			Labels: labels,
 		},
-		Spec: v1.PodSpec{
-			Containers: []v1.Container{
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
 				{
 					Name:    "busybox",
 					Image:   "busybox",
