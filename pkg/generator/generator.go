@@ -38,6 +38,7 @@ const (
 	pkgDir        = "pkg"
 	apisDir       = pkgDir + "/apis"
 	stubDir       = pkgDir + "/stub"
+	versionDir    = "version"
 
 	// files
 	main               = "main.go"
@@ -60,6 +61,7 @@ const (
 	catalogCSVYaml     = "csv.yaml"
 	crdYaml            = "crd.yaml"
 	gitignore          = ".gitignore"
+	versionfile        = "version.go"
 )
 
 type Generator struct {
@@ -90,9 +92,10 @@ func NewGenerator(apiVersion, kind, projectName, repoPath string) *Generator {
 // │   │   │   └── <api-dir-name>  // computed from apiDirName(apiVersion).
 // │   │   │       └── <version> // computed from version(apiVersion).
 // │   │   └── stub
-// │   └── tmp
-// │       ├── build
-// │       └── codegen
+// │   ├── tmp
+// │   |   ├── build
+// │   |   └── codegen
+// │   └── version
 func (g *Generator) Render() error {
 	if err := g.renderProject(); err != nil {
 		return err
@@ -111,6 +114,9 @@ func (g *Generator) Render() error {
 		return err
 	}
 	if err := g.renderTmp(); err != nil {
+		return err
+	}
+	if err := g.renderVersion(); err != nil {
 		return err
 	}
 	return g.renderGoDep()
@@ -286,6 +292,19 @@ func (g *Generator) renderTmp() error {
 		return err
 	}
 	return renderCodegenFiles(cDir, g.repoPath, apiDirName(g.apiVersion), version(g.apiVersion), g.projectName)
+}
+
+func (g *Generator) renderVersion() error {
+	buf := &bytes.Buffer{}
+
+	if err := os.MkdirAll(filepath.Join(g.projectName, versionDir), defaultDirFileMode); err != nil {
+		return err
+	}
+
+	if err := renderVersionFile(buf, "0.0.1", "Not provided (use ./build instead of go build)"); err != nil {
+		return err
+	}
+	return writeFileAndPrint(filepath.Join(g.projectName, versionDir, versionfile), buf.Bytes(), defaultFileMode)
 }
 
 func renderBuildFiles(buildDir, repoPath, projectName string) error {
