@@ -301,7 +301,7 @@ func (g *Generator) renderVersion() error {
 		return err
 	}
 
-	if err := renderVersionFile(buf, "0.0.1", "Not provided (use ./build instead of go build)"); err != nil {
+	if err := renderVersionFile(buf, "0.0.1"); err != nil {
 		return err
 	}
 	return writeFileAndPrint(filepath.Join(g.projectName, versionDir, versionfile), buf.Bytes(), defaultFileMode)

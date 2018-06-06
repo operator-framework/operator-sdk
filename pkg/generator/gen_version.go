@@ -23,11 +23,10 @@ import (
 type Version struct {
 	// imports
 	VersionNumber string
-	GitSHA        string
 }
 
 // renderVersionFile generates the version/version.go file.
-func renderVersionFile(w io.Writer, versionNumber string, gitSha string) error {
+func renderVersionFile(w io.Writer, versionNumber string) error {
 	t := template.New("version/version.go")
 	t, err := t.Parse(versionTmpl)
 	if err != nil {
@@ -36,7 +35,6 @@ func renderVersionFile(w io.Writer, versionNumber string, gitSha string) error {
 
 	v := Version{
 		VersionNumber: versionNumber,
-		GitSHA:        gitSha,
 	}
 	return t.Execute(w, v)
 }

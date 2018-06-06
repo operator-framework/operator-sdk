@@ -23,13 +23,12 @@ const versionExp = `package version
 
 var (
 	Version = "0.9.2+git"
-	GitSHA  = "Not provided (use ./build instead of go build)"
 )
 `
 
 func TestGenVersion(t *testing.T) {
 	buf := &bytes.Buffer{}
-	if err := renderVersionFile(buf, "0.9.2+git", "Not provided (use ./build instead of go build)"); err != nil {
+	if err := renderVersionFile(buf, "0.9.2+git"); err != nil {
 		t.Error(err)
 		return
 	}
