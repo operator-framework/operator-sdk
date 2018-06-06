@@ -296,10 +296,15 @@ func (g *Generator) renderTmp() error {
 
 func (g *Generator) renderVersion() error {
 	buf := &bytes.Buffer{}
+
+	if err := os.MkdirAll(filepath.Join(g.projectName, versionDir), defaultDirFileMode); err != nil {
+		return err
+	}
+
 	if err := renderVersionFile(buf, "0.0.1", "Not provided (use ./build instead of go build)"); err != nil {
 		return err
 	}
-	return writeFileAndPrint(filepath.Join(versionDir, versionfile), buf.Bytes(), defaultFileMode)
+	return writeFileAndPrint(filepath.Join(g.projectName, versionDir, versionfile), buf.Bytes(), defaultFileMode)
 }
 
 func renderBuildFiles(buildDir, repoPath, projectName string) error {
