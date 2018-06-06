@@ -34,6 +34,7 @@ func TestGenVersion(t *testing.T) {
 		return
 	}
 	if versionExp != buf.String() {
-		t.Errorf(errorMessage, versionExp, buf.String())
+		t.Errorf("Wants: %v", versionExp)
+		t.Errorf("  Got: %v", buf.String())
 	}
 }
