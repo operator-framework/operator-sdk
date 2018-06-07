@@ -17,10 +17,12 @@ package generator
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 )
 
 const (
@@ -395,6 +397,98 @@ func renderStubFiles(stubDir, repoPath, kind, apiDirName, version string) error 
 		return err
 	}
 	return writeFileAndPrint(filepath.Join(stubDir, handler), buf.Bytes(), defaultFileMode)
+}
+
+type tmplData struct {
+	VersoinNumber string
+
+	OperatorSDKImport string
+	StubImport        string
+	K8sutilImport     string
+	SDKVersionImport  string
+
+	APIVersion string
+	Kind       string
+
+	RepoPath   string
+	APIDirName string
+	Version    string
+
+	ProjectName string
+	GroupName   string
+
+	KindSingular string
+	KindPlural   string
+
+	Image string
+	Name  string
+}
+
+func (g *Generator) generateDirStructure() error {
+	if err := os.MkdirAll(g.projectName, defaultDirFileMode); err != nil {
+		return err
+	}
+
+	cpDir := filepath.Join(g.projectName, cmdDir, g.projectName)
+	if err := os.MkdirAll(cpDir, defaultDirFileMode); err != nil {
+		return err
+	}
+
+	cp := filepath.Join(g.projectName, configDir)
+	if err := os.MkdirAll(cp, defaultDirFileMode); err != nil {
+		return err
+	}
+
+	dp := filepath.Join(g.projectName, deployDir)
+	if err := os.MkdirAll(dp, defaultDirFileMode); err != nil {
+		return err
+	}
+
+	repoPath, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	olmDir := filepath.Join(repoPath, olmCatalogDir)
+	if err := os.MkdirAll(olmDir, defaultDirFileMode); err != nil {
+		return err
+	}
+
+	bDir := filepath.Join(g.projectName, buildDir)
+	if err := os.MkdirAll(bDir, defaultDirFileMode); err != nil {
+		return err
+	}
+	cDir := filepath.Join(g.projectName, codegenDir)
+	if err := os.MkdirAll(cDir, defaultDirFileMode); err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(filepath.Join(g.projectName, versionDir), defaultDirFileMode); err != nil {
+		return err
+	}
+
+	v := version(g.apiVersion)
+	adn := apiDirName(g.apiVersion)
+	apiDir := filepath.Join(g.projectName, apisDir, adn, v)
+	if err := os.MkdirAll(apiDir, defaultDirFileMode); err != nil {
+		return err
+	}
+	sDir := filepath.Join(g.projectName, stubDir)
+	if err := os.MkdirAll(sDir, defaultDirFileMode); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func renderGenericFile(w io.Writer, fileLoc string, fileTmpl string, info tmplData) error {
+	t := template.New(fileLoc)
+
+	t, err := t.Parse(fileTmpl)
+	if err != nil {
+		return err
+	}
+
+	return t.Execute(w, info)
 }
 
 // version extracts the VERSION from the given apiVersion ($GROUP_NAME/$VERSION).
