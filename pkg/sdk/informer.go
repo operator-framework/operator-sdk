@@ -76,7 +76,7 @@ func (i *informer) Run(ctx context.Context) {
 	i.context = ctx
 	defer i.queue.ShutDown()
 
-	logrus.Infof("starting %s controller", i.resourcePluralName)
+	logrus.Debugf("starting %s controller", i.resourcePluralName)
 	go i.sharedIndexInformer.Run(ctx.Done())
 
 	if !cache.WaitForCacheSync(ctx.Done(), i.sharedIndexInformer.HasSynced) {
@@ -88,7 +88,7 @@ func (i *informer) Run(ctx context.Context) {
 		go wait.Until(i.runWorker, time.Second, ctx.Done())
 	}
 	<-ctx.Done()
-	logrus.Infof("stopping %s controller", i.resourcePluralName)
+	logrus.Debugf("stopping %s controller", i.resourcePluralName)
 }
 
 func (i *informer) handleAddResourceEvent(obj interface{}) {

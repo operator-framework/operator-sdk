@@ -62,7 +62,7 @@ func (i *informer) sync(key string) error {
 		return err
 	}
 	if !exists {
-		logrus.Infof("Object (%s) is deleted", key)
+		logrus.Debugf("Object (%s) is deleted", key)
 		// Lookup the last saved state for the deleted object
 		_, ok := i.deletedObjects[key]
 		if !ok {
@@ -110,5 +110,5 @@ func (i *informer) handleErr(err error, key interface{}) {
 
 	i.queue.Forget(key)
 	// Report that, even after several retries, we could not successfully process this key
-	logrus.Infof("Dropping key (%v) out of the queue: %v", key, err)
+	logrus.Warnf("Dropping key (%v) out of the queue: %v", key, err)
 }
