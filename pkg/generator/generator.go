@@ -303,9 +303,10 @@ func (g *Generator) renderVersion() error {
 		return err
 	}
 
-	if err := renderVersionFile(buf, "0.0.1"); err != nil {
+	if err := renderGenericFile(buf, "version/version.go", versionTmpl, tmplData{VersionNumber: "0.0.1"}); err != nil {
 		return err
 	}
+
 	return writeFileAndPrint(filepath.Join(g.projectName, versionDir, versionfile), buf.Bytes(), defaultFileMode)
 }
 
@@ -400,7 +401,7 @@ func renderStubFiles(stubDir, repoPath, kind, apiDirName, version string) error 
 }
 
 type tmplData struct {
-	VersoinNumber string
+	VersionNumber string
 
 	OperatorSDKImport string
 	StubImport        string
