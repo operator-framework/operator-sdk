@@ -28,7 +28,7 @@ var (
 
 func TestGenVersion(t *testing.T) {
 	buf := &bytes.Buffer{}
-	if err := renderGenericFile(buf, "version/version.go", versionTmpl, tmplData{VersionNumber: "0.9.2+git"}); err != nil {
+	if err := renderFile(buf, "version/version.go", versionTmpl, tmplData{VersionNumber: "0.9.2+git"}); err != nil {
 		t.Error(err)
 		return
 	}

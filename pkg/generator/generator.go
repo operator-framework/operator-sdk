@@ -178,7 +178,7 @@ func (g *Generator) renderCmd() error {
 func renderCmdFiles(cmdProjectDir, repoPath, apiVersion, kind string) error {
 	buf := &bytes.Buffer{}
 
-	if err := renderGenericFile(buf, "cmd/<projectName>/main.go", mainTmpl, tmplData{
+	if err := renderFile(buf, "cmd/<projectName>/main.go", mainTmpl, tmplData{
 		OperatorSDKImport: sdkImport,
 		StubImport:        filepath.Join(repoPath, stubDir),
 		K8sutilImport:     k8sutilImport,
@@ -213,7 +213,7 @@ func (g *Generator) renderDeploy() error {
 func renderRBAC(deployDir, projectName, groupName string) error {
 	buf := &bytes.Buffer{}
 
-	if err := renderGenericFile(buf, rbacTmplName, rbacYamlTmpl, tmplData{
+	if err := renderFile(buf, rbacTmplName, rbacYamlTmpl, tmplData{
 		ProjectName: projectName,
 		GroupName:   groupName,
 	}); err != nil {
@@ -225,7 +225,7 @@ func renderRBAC(deployDir, projectName, groupName string) error {
 
 func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
 	buf := &bytes.Buffer{}
-	if err := renderGenericFile(buf, rbacTmplName, rbacYamlTmpl, tmplData{
+	if err := renderFile(buf, rbacTmplName, rbacYamlTmpl, tmplData{
 		ProjectName: projectName,
 		GroupName:   groupName(apiVersion),
 	}); err != nil {
@@ -236,7 +236,7 @@ func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
 	}
 
 	buf = &bytes.Buffer{}
-	if err := renderGenericFile(buf, crdTmplName, crdYamlTmpl, tmplData{
+	if err := renderFile(buf, crdTmplName, crdYamlTmpl, tmplData{
 		Kind:         kind,
 		KindSingular: strings.ToLower(kind),
 		KindPlural:   toPlural(strings.ToLower(kind)),
@@ -250,7 +250,7 @@ func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
 	}
 
 	buf = &bytes.Buffer{}
-	if err := renderGenericFile(buf, crTmplName, crYamlTmpl, tmplData{
+	if err := renderFile(buf, crTmplName, crYamlTmpl, tmplData{
 		APIVersion: apiVersion,
 		Kind:       kind,
 	}); err != nil {
@@ -262,7 +262,7 @@ func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
 // RenderOperatorYaml generates "deploy/operator.yaml"
 func RenderOperatorYaml(c *Config, image string) error {
 	buf := &bytes.Buffer{}
-	if err := renderGenericFile(buf, operatorTmplName, operatorYamlTmpl, tmplData{
+	if err := renderFile(buf, operatorTmplName, operatorYamlTmpl, tmplData{
 		ProjectName: c.ProjectName,
 		Image:       image,
 	}); err != nil {
@@ -283,7 +283,7 @@ func RenderOlmCatalog(c *Config, image, version string) error {
 
 	// deploy/olm-catalog/package.yaml
 	buf := &bytes.Buffer{}
-	if err := renderGenericFile(buf, catalogPackageYaml, catalogPackageTmpl, tmplData{
+	if err := renderFile(buf, catalogPackageYaml, catalogPackageTmpl, tmplData{
 		PackageName: strings.ToLower(c.Kind),
 		ChannelName: packageChannel,
 		CurrentCSV:  getCSVName(strings.ToLower(c.Kind), version),
@@ -297,7 +297,7 @@ func RenderOlmCatalog(c *Config, image, version string) error {
 
 	// deploy/olm-catalog/crd.yaml
 	buf = &bytes.Buffer{}
-	if err := renderGenericFile(buf, catalogCRDTmplName, crdTmpl, tmplData{
+	if err := renderFile(buf, catalogCRDTmplName, crdTmpl, tmplData{
 		Kind:         c.Kind,
 		KindSingular: strings.ToLower(c.Kind),
 		KindPlural:   toPlural(strings.ToLower(c.Kind)),
@@ -313,7 +313,7 @@ func RenderOlmCatalog(c *Config, image, version string) error {
 
 	// deploy/olm-catalog/csv.yaml
 	buf = &bytes.Buffer{}
-	if err := renderGenericFile(buf, catalogCSVYaml, catalogCSVTmpl, tmplData{
+	if err := renderFile(buf, catalogCSVYaml, catalogCSVTmpl, tmplData{
 		Kind:           c.Kind,
 		KindSingular:   strings.ToLower(c.Kind),
 		KindPlural:     toPlural(strings.ToLower(c.Kind)),
@@ -347,7 +347,7 @@ func (g *Generator) renderTmp() error {
 func (g *Generator) renderVersion() error {
 	buf := &bytes.Buffer{}
 
-	if err := renderGenericFile(buf, "version/version.go", versionTmpl, tmplData{VersionNumber: "0.0.1"}); err != nil {
+	if err := renderFile(buf, "version/version.go", versionTmpl, tmplData{VersionNumber: "0.0.1"}); err != nil {
 		return err
 	}
 
@@ -357,7 +357,7 @@ func (g *Generator) renderVersion() error {
 func renderBuildFiles(buildDir, repoPath, projectName string) error {
 	buf := &bytes.Buffer{}
 
-	if err := renderGenericFile(buf, "tmp/build/build.sh", buildTmpl, tmplData{
+	if err := renderFile(buf, "tmp/build/build.sh", buildTmpl, tmplData{
 		ProjectName: projectName,
 		RepoPath:    repoPath,
 	}); err != nil {
@@ -376,7 +376,7 @@ func renderBuildFiles(buildDir, repoPath, projectName string) error {
 	}
 
 	buf = &bytes.Buffer{}
-	if err := renderGenericFile(buf, "tmp/build/Dockerfile", dockerFileTmpl, tmplData{
+	if err := renderFile(buf, "tmp/build/Dockerfile", dockerFileTmpl, tmplData{
 		ProjectName: projectName,
 	}); err != nil {
 		return err
@@ -391,7 +391,7 @@ func renderDockerBuildFile(w io.Writer) error {
 
 func renderCodegenFiles(codegenDir, repoPath, apiDirName, version, projectName string) error {
 	buf := &bytes.Buffer{}
-	if err := renderGenericFile(buf, "codegen/boilerplate.go.txt", boilerplateTmpl, tmplData{
+	if err := renderFile(buf, "codegen/boilerplate.go.txt", boilerplateTmpl, tmplData{
 		ProjectName: projectName,
 	}); err != nil {
 		return err
@@ -401,7 +401,7 @@ func renderCodegenFiles(codegenDir, repoPath, apiDirName, version, projectName s
 	}
 
 	buf = &bytes.Buffer{}
-	if err := renderGenericFile(buf, "codegen/update-generated.sh", updateGeneratedTmpl, tmplData{
+	if err := renderFile(buf, "codegen/update-generated.sh", updateGeneratedTmpl, tmplData{
 		RepoPath:   repoPath,
 		APIDirName: apiDirName,
 		Version:    version,
@@ -425,7 +425,7 @@ func (g *Generator) renderPkg() error {
 
 func renderAPIFiles(apiDir, groupName, version, kind string) error {
 	buf := &bytes.Buffer{}
-	if err := renderGenericFile(buf, "apis/<apiDirName>/<version>/doc.go", apiDocTmpl, tmplData{
+	if err := renderFile(buf, "apis/<apiDirName>/<version>/doc.go", apiDocTmpl, tmplData{
 		GroupName: groupName,
 		Version:   version,
 	}); err != nil {
@@ -436,7 +436,7 @@ func renderAPIFiles(apiDir, groupName, version, kind string) error {
 	}
 
 	buf = &bytes.Buffer{}
-	if err := renderGenericFile(buf, "apis/<apiDirName>/<version>/register.go", apiRegisterTmpl, tmplData{
+	if err := renderFile(buf, "apis/<apiDirName>/<version>/register.go", apiRegisterTmpl, tmplData{
 		Kind:       kind,
 		KindPlural: toPlural(strings.ToLower(kind)),
 		GroupName:  groupName,
@@ -449,7 +449,7 @@ func renderAPIFiles(apiDir, groupName, version, kind string) error {
 	}
 
 	buf = &bytes.Buffer{}
-	if err := renderGenericFile(buf, "apis/<apiDirName>/<version>/types.go", apiTypesTmpl, tmplData{
+	if err := renderFile(buf, "apis/<apiDirName>/<version>/types.go", apiTypesTmpl, tmplData{
 		Kind:    kind,
 		Version: version,
 	}); err != nil {
@@ -460,7 +460,7 @@ func renderAPIFiles(apiDir, groupName, version, kind string) error {
 
 func renderStubFiles(stubDir, repoPath, kind, apiDirName, version string) error {
 	buf := &bytes.Buffer{}
-	if err := renderGenericFile(buf, "stub/handler.go", handlerTmpl, tmplData{
+	if err := renderFile(buf, "stub/handler.go", handlerTmpl, tmplData{
 		OperatorSDKImport: sdkImport,
 		RepoPath:          repoPath,
 		Kind:              kind,
@@ -505,6 +505,7 @@ type tmplData struct {
 	CatalogVersion string
 }
 
+//Creates all the necesary directories for the generated files
 func (g *Generator) generateDirStructure() error {
 	if err := os.MkdirAll(g.projectName, defaultDirFileMode); err != nil {
 		return err
@@ -557,7 +558,8 @@ func (g *Generator) generateDirStructure() error {
 	return nil
 }
 
-func renderGenericFile(w io.Writer, fileLoc string, fileTmpl string, info tmplData) error {
+//Renders a file given a template, and fills in template fields according to values passed in the tmplData struct
+func renderFile(w io.Writer, fileLoc string, fileTmpl string, info tmplData) error {
 	t := template.New(fileLoc)
 
 	t, err := t.Parse(fileTmpl)
