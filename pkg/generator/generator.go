@@ -525,12 +525,8 @@ func (g *Generator) generateDirStructure() error {
 		return err
 	}
 
-	repoPath, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	olmDir := filepath.Join(repoPath, olmCatalogDir)
-	if err := os.MkdirAll(olmDir, defaultDirFileMode); err != nil {
+	op := filepath.Join(g.projectName, olmCatalogDir)
+	if err := os.MkdirAll(op, defaultDirFileMode); err != nil {
 		return err
 	}
 
