@@ -75,7 +75,7 @@ const (
 	operatorTmplName   = "deploy/operator.yaml"
 	rbacTmplName       = "deploy/rbac.yaml"
 	crTmplName         = "deploy/cr.yaml"
-	// pluralSuffix       = "s"
+	pluralSuffix       = "s"
 )
 
 type Generator struct {
