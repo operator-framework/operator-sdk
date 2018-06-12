@@ -490,9 +490,9 @@ type tmplData struct {
 	ProjectName string
 	GroupName   string
 
-	// plural name to be used in the URL: /apis/<group>/<version>/<plural>
-	KindSingular string
 	// singular name to be used as an alias on the CLI and for display
+	KindSingular string
+	// plural name to be used in the URL: /apis/<group>/<version>/<plural>
 	KindPlural string
 
 	Image string
