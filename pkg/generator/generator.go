@@ -17,10 +17,12 @@ package generator
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 )
 
 const (
@@ -62,6 +64,18 @@ const (
 	crdYaml            = "crd.yaml"
 	gitignore          = ".gitignore"
 	versionfile        = "version.go"
+
+	// sdkImport is the operator-sdk import path.
+	sdkImport          = "github.com/operator-framework/operator-sdk/pkg/sdk"
+	k8sutilImport      = "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
+	versionImport      = "github.com/operator-framework/operator-sdk/version"
+	packageChannel     = "alpha"
+	catalogCRDTmplName = "deploy/olm-catalog/crd.yaml"
+	crdTmplName        = "deploy/crd.yaml"
+	operatorTmplName   = "deploy/operator.yaml"
+	rbacTmplName       = "deploy/rbac.yaml"
+	crTmplName         = "deploy/cr.yaml"
+	pluralSuffix       = "s"
 )
 
 type Generator struct {
@@ -97,6 +111,10 @@ func NewGenerator(apiVersion, kind, projectName, repoPath string) *Generator {
 // │   |   └── codegen
 // │   └── version
 func (g *Generator) Render() error {
+	if err := g.generateDirStructure(); err != nil {
+		return err
+	}
+
 	if err := g.renderProject(); err != nil {
 		return err
 	}
@@ -123,9 +141,6 @@ func (g *Generator) Render() error {
 }
 
 func (g *Generator) renderProject() error {
-	if err := os.MkdirAll(g.projectName, defaultDirFileMode); err != nil {
-		return err
-	}
 	return renderProjectGitignore(g.projectName)
 }
 
@@ -157,25 +172,30 @@ func (g *Generator) renderGoDep() error {
 
 func (g *Generator) renderCmd() error {
 	cpDir := filepath.Join(g.projectName, cmdDir, g.projectName)
-	if err := os.MkdirAll(cpDir, defaultDirFileMode); err != nil {
-		return err
-	}
 	return renderCmdFiles(cpDir, g.repoPath, g.apiVersion, g.kind)
 }
 
 func renderCmdFiles(cmdProjectDir, repoPath, apiVersion, kind string) error {
 	buf := &bytes.Buffer{}
-	if err := renderMainFile(buf, repoPath, apiVersion, kind); err != nil {
+
+	td := tmplData{
+		OperatorSDKImport: sdkImport,
+		StubImport:        filepath.Join(repoPath, stubDir),
+		K8sutilImport:     k8sutilImport,
+		SDKVersionImport:  versionImport,
+		APIVersion:        apiVersion,
+		Kind:              kind,
+	}
+
+	if err := renderFile(buf, "cmd/<projectName>/main.go", mainTmpl, td); err != nil {
 		return err
 	}
+
 	return writeFileAndPrint(filepath.Join(cmdProjectDir, main), buf.Bytes(), defaultFileMode)
 }
 
 func (g *Generator) renderConfig() error {
 	cp := filepath.Join(g.projectName, configDir)
-	if err := os.MkdirAll(cp, defaultDirFileMode); err != nil {
-		return err
-	}
 	return renderConfigFiles(cp, g.apiVersion, g.kind, g.projectName)
 }
 
@@ -189,23 +209,31 @@ func renderConfigFiles(configDir, apiVersion, kind, projectName string) error {
 
 func (g *Generator) renderDeploy() error {
 	dp := filepath.Join(g.projectName, deployDir)
-	if err := os.MkdirAll(dp, defaultDirFileMode); err != nil {
-		return err
-	}
 	return renderDeployFiles(dp, g.projectName, g.apiVersion, g.kind)
 }
 
 func renderRBAC(deployDir, projectName, groupName string) error {
 	buf := &bytes.Buffer{}
-	if err := renderRBACYaml(buf, projectName, groupName); err != nil {
+
+	td := tmplData{
+		ProjectName: projectName,
+		GroupName:   groupName,
+	}
+
+	if err := renderFile(buf, rbacTmplName, rbacYamlTmpl, td); err != nil {
 		return err
 	}
+
 	return writeFileAndPrint(filepath.Join(deployDir, rbacYaml), buf.Bytes(), defaultFileMode)
 }
 
 func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
 	buf := &bytes.Buffer{}
-	if err := renderRBACYaml(buf, projectName, groupName(apiVersion)); err != nil {
+	rbacTd := tmplData{
+		ProjectName: projectName,
+		GroupName:   groupName(apiVersion),
+	}
+	if err := renderFile(buf, rbacTmplName, rbacYamlTmpl, rbacTd); err != nil {
 		return err
 	}
 	if err := writeFileAndPrint(filepath.Join(deployDir, rbacYaml), buf.Bytes(), defaultFileMode); err != nil {
@@ -213,7 +241,14 @@ func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
 	}
 
 	buf = &bytes.Buffer{}
-	if err := renderCRDYaml(buf, kind, apiVersion); err != nil {
+	crdTd := tmplData{
+		Kind:         kind,
+		KindSingular: strings.ToLower(kind),
+		KindPlural:   toPlural(strings.ToLower(kind)),
+		GroupName:    groupName(apiVersion),
+		Version:      version(apiVersion),
+	}
+	if err := renderFile(buf, crdTmplName, crdYamlTmpl, crdTd); err != nil {
 		return err
 	}
 	if err := writeFileAndPrint(filepath.Join(deployDir, crdYaml), buf.Bytes(), defaultFileMode); err != nil {
@@ -221,7 +256,11 @@ func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
 	}
 
 	buf = &bytes.Buffer{}
-	if err := renderCustomResourceYaml(buf, apiVersion, kind); err != nil {
+	crTd := tmplData{
+		APIVersion: apiVersion,
+		Kind:       kind,
+	}
+	if err := renderFile(buf, crTmplName, crYamlTmpl, crTd); err != nil {
 		return err
 	}
 	return writeFileAndPrint(filepath.Join(deployDir, crYaml), buf.Bytes(), defaultFileMode)
@@ -230,7 +269,11 @@ func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
 // RenderOperatorYaml generates "deploy/operator.yaml"
 func RenderOperatorYaml(c *Config, image string) error {
 	buf := &bytes.Buffer{}
-	if err := renderOperatorYaml(buf, c.ProjectName, image); err != nil {
+	td := tmplData{
+		ProjectName: c.ProjectName,
+		Image:       image,
+	}
+	if err := renderFile(buf, operatorTmplName, operatorYamlTmpl, td); err != nil {
 		return err
 	}
 	return ioutil.WriteFile(operatorYaml, buf.Bytes(), defaultFileMode)
@@ -245,13 +288,15 @@ func RenderOlmCatalog(c *Config, image, version string) error {
 		return err
 	}
 	olmDir := filepath.Join(repoPath, olmCatalogDir)
-	if err := os.MkdirAll(olmDir, defaultDirFileMode); err != nil {
-		return err
-	}
 
 	// deploy/olm-catalog/package.yaml
 	buf := &bytes.Buffer{}
-	if err := renderCatalogPackage(buf, c, version); err != nil {
+	cpTd := tmplData{
+		PackageName: strings.ToLower(c.Kind),
+		ChannelName: packageChannel,
+		CurrentCSV:  getCSVName(strings.ToLower(c.Kind), version),
+	}
+	if err := renderFile(buf, catalogPackageYaml, catalogPackageTmpl, cpTd); err != nil {
 		return err
 	}
 	path := filepath.Join(olmDir, catalogPackageYaml)
@@ -261,7 +306,14 @@ func RenderOlmCatalog(c *Config, image, version string) error {
 
 	// deploy/olm-catalog/crd.yaml
 	buf = &bytes.Buffer{}
-	if err := renderCatalogCRD(buf, c); err != nil {
+	ccrdTd := tmplData{
+		Kind:         c.Kind,
+		KindSingular: strings.ToLower(c.Kind),
+		KindPlural:   toPlural(strings.ToLower(c.Kind)),
+		GroupName:    groupName(c.APIVersion),
+		Version:      version,
+	}
+	if err := renderFile(buf, catalogCRDTmplName, crdTmpl, ccrdTd); err != nil {
 		return err
 	}
 	path = filepath.Join(olmDir, crdYaml)
@@ -271,45 +323,61 @@ func RenderOlmCatalog(c *Config, image, version string) error {
 
 	// deploy/olm-catalog/csv.yaml
 	buf = &bytes.Buffer{}
-	if err := renderCatalogCSV(buf, c, image, version); err != nil {
+	ccsvTd := tmplData{
+		Kind:           c.Kind,
+		KindSingular:   strings.ToLower(c.Kind),
+		KindPlural:     toPlural(strings.ToLower(c.Kind)),
+		GroupName:      groupName(c.APIVersion),
+		CRDVersion:     version,
+		CSVName:        getCSVName(strings.ToLower(c.Kind), version),
+		Image:          image,
+		CatalogVersion: version,
+		ProjectName:    c.ProjectName,
+	}
+	if err := renderFile(buf, catalogCSVYaml, catalogCSVTmpl, ccsvTd); err != nil {
 		return err
 	}
 	path = filepath.Join(olmDir, catalogCSVYaml)
 	return ioutil.WriteFile(path, buf.Bytes(), defaultFileMode)
 }
 
+func getCSVName(name, version string) string {
+	return name + ".v" + version
+}
+
 func (g *Generator) renderTmp() error {
 	bDir := filepath.Join(g.projectName, buildDir)
-	if err := os.MkdirAll(bDir, defaultDirFileMode); err != nil {
-		return err
-	}
 	if err := renderBuildFiles(bDir, g.repoPath, g.projectName); err != nil {
 		return err
 	}
 
 	cDir := filepath.Join(g.projectName, codegenDir)
-	if err := os.MkdirAll(cDir, defaultDirFileMode); err != nil {
-		return err
-	}
 	return renderCodegenFiles(cDir, g.repoPath, apiDirName(g.apiVersion), version(g.apiVersion), g.projectName)
 }
 
 func (g *Generator) renderVersion() error {
 	buf := &bytes.Buffer{}
 
-	if err := os.MkdirAll(filepath.Join(g.projectName, versionDir), defaultDirFileMode); err != nil {
+	td := tmplData{
+		VersionNumber: "0.0.1",
+	}
+
+	if err := renderFile(buf, "version/version.go", versionTmpl, td); err != nil {
 		return err
 	}
 
-	if err := renderVersionFile(buf, "0.0.1"); err != nil {
-		return err
-	}
 	return writeFileAndPrint(filepath.Join(g.projectName, versionDir, versionfile), buf.Bytes(), defaultFileMode)
 }
 
 func renderBuildFiles(buildDir, repoPath, projectName string) error {
 	buf := &bytes.Buffer{}
-	if err := renderBuildFile(buf, repoPath, projectName); err != nil {
+
+	bTd := tmplData{
+		ProjectName: projectName,
+		RepoPath:    repoPath,
+	}
+
+	if err := renderFile(buf, "tmp/build/build.sh", buildTmpl, bTd); err != nil {
 		return err
 	}
 	if err := writeFileAndPrint(filepath.Join(buildDir, build), buf.Bytes(), defaultExecFileMode); err != nil {
@@ -325,15 +393,26 @@ func renderBuildFiles(buildDir, repoPath, projectName string) error {
 	}
 
 	buf = &bytes.Buffer{}
-	if err := renderDockerFile(buf, projectName); err != nil {
+	dTd := tmplData{
+		ProjectName: projectName,
+	}
+	if err := renderFile(buf, "tmp/build/Dockerfile", dockerFileTmpl, dTd); err != nil {
 		return err
 	}
 	return writeFileAndPrint(filepath.Join(buildDir, dockerfile), buf.Bytes(), defaultFileMode)
 }
 
+func renderDockerBuildFile(w io.Writer) error {
+	_, err := w.Write([]byte(dockerBuildTmpl))
+	return err
+}
+
 func renderCodegenFiles(codegenDir, repoPath, apiDirName, version, projectName string) error {
 	buf := &bytes.Buffer{}
-	if err := renderBoilerplateFile(buf, projectName); err != nil {
+	bTd := tmplData{
+		ProjectName: projectName,
+	}
+	if err := renderFile(buf, "codegen/boilerplate.go.txt", boilerplateTmpl, bTd); err != nil {
 		return err
 	}
 	if err := writeFileAndPrint(filepath.Join(codegenDir, boilerplate), buf.Bytes(), defaultFileMode); err != nil {
@@ -341,7 +420,12 @@ func renderCodegenFiles(codegenDir, repoPath, apiDirName, version, projectName s
 	}
 
 	buf = &bytes.Buffer{}
-	if err := renderUpdateGeneratedFile(buf, repoPath, apiDirName, version); err != nil {
+	ugTd := tmplData{
+		RepoPath:   repoPath,
+		APIDirName: apiDirName,
+		Version:    version,
+	}
+	if err := renderFile(buf, "codegen/update-generated.sh", updateGeneratedTmpl, ugTd); err != nil {
 		return err
 	}
 	return writeFileAndPrint(filepath.Join(codegenDir, updateGenerated), buf.Bytes(), defaultExecFileMode)
@@ -351,23 +435,21 @@ func (g *Generator) renderPkg() error {
 	v := version(g.apiVersion)
 	adn := apiDirName(g.apiVersion)
 	apiDir := filepath.Join(g.projectName, apisDir, adn, v)
-	if err := os.MkdirAll(apiDir, defaultDirFileMode); err != nil {
-		return err
-	}
 	if err := renderAPIFiles(apiDir, groupName(g.apiVersion), v, g.kind); err != nil {
 		return err
 	}
 
 	sDir := filepath.Join(g.projectName, stubDir)
-	if err := os.MkdirAll(sDir, defaultDirFileMode); err != nil {
-		return err
-	}
 	return renderStubFiles(sDir, g.repoPath, g.kind, adn, v)
 }
 
 func renderAPIFiles(apiDir, groupName, version, kind string) error {
 	buf := &bytes.Buffer{}
-	if err := renderAPIDocFile(buf, groupName, version); err != nil {
+	adTd := tmplData{
+		GroupName: groupName,
+		Version:   version,
+	}
+	if err := renderFile(buf, "apis/<apiDirName>/<version>/doc.go", apiDocTmpl, adTd); err != nil {
 		return err
 	}
 	if err := writeFileAndPrint(filepath.Join(apiDir, doc), buf.Bytes(), defaultFileMode); err != nil {
@@ -375,7 +457,13 @@ func renderAPIFiles(apiDir, groupName, version, kind string) error {
 	}
 
 	buf = &bytes.Buffer{}
-	if err := renderAPIRegisterFile(buf, kind, groupName, version); err != nil {
+	arTd := tmplData{
+		Kind:       kind,
+		KindPlural: toPlural(strings.ToLower(kind)),
+		GroupName:  groupName,
+		Version:    version,
+	}
+	if err := renderFile(buf, "apis/<apiDirName>/<version>/register.go", apiRegisterTmpl, arTd); err != nil {
 		return err
 	}
 	if err := writeFileAndPrint(filepath.Join(apiDir, register), buf.Bytes(), defaultFileMode); err != nil {
@@ -383,7 +471,11 @@ func renderAPIFiles(apiDir, groupName, version, kind string) error {
 	}
 
 	buf = &bytes.Buffer{}
-	if err := renderAPITypesFile(buf, kind, version); err != nil {
+	atTd := tmplData{
+		Kind:    kind,
+		Version: version,
+	}
+	if err := renderFile(buf, "apis/<apiDirName>/<version>/types.go", apiTypesTmpl, atTd); err != nil {
 		return err
 	}
 	return writeFileAndPrint(filepath.Join(apiDir, types), buf.Bytes(), defaultFileMode)
@@ -391,10 +483,117 @@ func renderAPIFiles(apiDir, groupName, version, kind string) error {
 
 func renderStubFiles(stubDir, repoPath, kind, apiDirName, version string) error {
 	buf := &bytes.Buffer{}
-	if err := renderHandlerFile(buf, repoPath, kind, apiDirName, version); err != nil {
+	td := tmplData{
+		OperatorSDKImport: sdkImport,
+		RepoPath:          repoPath,
+		Kind:              kind,
+		APIDirName:        apiDirName,
+		Version:           version,
+	}
+	if err := renderFile(buf, "stub/handler.go", handlerTmpl, td); err != nil {
 		return err
 	}
 	return writeFileAndPrint(filepath.Join(stubDir, handler), buf.Bytes(), defaultFileMode)
+}
+
+type tmplData struct {
+	VersionNumber string
+
+	OperatorSDKImport string
+	StubImport        string
+	K8sutilImport     string
+	SDKVersionImport  string
+
+	APIVersion string
+	Kind       string
+
+	RepoPath   string
+	APIDirName string
+	Version    string
+
+	ProjectName string
+	GroupName   string
+
+	// singular name to be used as an alias on the CLI and for display
+	KindSingular string
+	// plural name to be used in the URL: /apis/<group>/<version>/<plural>
+	KindPlural string
+
+	Image string
+	Name  string
+
+	PackageName string
+	ChannelName string
+	CurrentCSV  string
+
+	CRDVersion     string
+	CSVName        string
+	CatalogVersion string
+}
+
+// Creates all the necesary directories for the generated files
+func (g *Generator) generateDirStructure() error {
+	if err := os.MkdirAll(g.projectName, defaultDirFileMode); err != nil {
+		return err
+	}
+
+	cpDir := filepath.Join(g.projectName, cmdDir, g.projectName)
+	if err := os.MkdirAll(cpDir, defaultDirFileMode); err != nil {
+		return err
+	}
+
+	cp := filepath.Join(g.projectName, configDir)
+	if err := os.MkdirAll(cp, defaultDirFileMode); err != nil {
+		return err
+	}
+
+	dp := filepath.Join(g.projectName, deployDir)
+	if err := os.MkdirAll(dp, defaultDirFileMode); err != nil {
+		return err
+	}
+
+	op := filepath.Join(g.projectName, olmCatalogDir)
+	if err := os.MkdirAll(op, defaultDirFileMode); err != nil {
+		return err
+	}
+
+	bDir := filepath.Join(g.projectName, buildDir)
+	if err := os.MkdirAll(bDir, defaultDirFileMode); err != nil {
+		return err
+	}
+	cDir := filepath.Join(g.projectName, codegenDir)
+	if err := os.MkdirAll(cDir, defaultDirFileMode); err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(filepath.Join(g.projectName, versionDir), defaultDirFileMode); err != nil {
+		return err
+	}
+
+	v := version(g.apiVersion)
+	adn := apiDirName(g.apiVersion)
+	apiDir := filepath.Join(g.projectName, apisDir, adn, v)
+	if err := os.MkdirAll(apiDir, defaultDirFileMode); err != nil {
+		return err
+	}
+	sDir := filepath.Join(g.projectName, stubDir)
+	if err := os.MkdirAll(sDir, defaultDirFileMode); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Renders a file given a template, and fills in template fields according to values passed in the tmplData struct
+func renderFile(w io.Writer, fileLoc string, fileTmpl string, info tmplData) error {
+	t := template.New(fileLoc)
+
+	t, err := t.Parse(fileTmpl)
+	if err != nil {
+		return err
+	}
+
+	return t.Execute(w, info)
 }
 
 // version extracts the VERSION from the given apiVersion ($GROUP_NAME/$VERSION).
@@ -416,6 +615,7 @@ func apiDirName(apiVersion string) string {
 	return strings.Split(groupName(apiVersion), ".")[0]
 }
 
+// Writes file to a given path and data buffer, as well as prints out a message confirming creation of a file
 func writeFileAndPrint(filePath string, data []byte, fileMode os.FileMode) error {
 	if err := ioutil.WriteFile(filePath, data, fileMode); err != nil {
 		return err

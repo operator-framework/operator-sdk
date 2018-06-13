@@ -15,28 +15,25 @@
 package generator
 
 import (
-	"io"
-	"text/template"
+	"bytes"
+	"testing"
 )
 
-// Types contains all the customized data needed to generate apis/<apiDirName>/<version>/types.go
-// for a new operator when pairing with apisTypesTmpl template.
-type Types struct {
-	Version string
-	Kind    string
-}
+const versionExp = `package version
 
-// renderAPITypesFile generates the apis/<apiDirName>/<version>/types.go file.
-func renderAPITypesFile(w io.Writer, kind, version string) error {
-	t := template.New("apis/<apiDirName>/<version>/types.go")
-	t, err := t.Parse(apiTypesTmpl)
-	if err != nil {
-		return err
-	}
+var (
+	Version = "0.9.2+git"
+)
+`
 
-	types := Types{
-		Version: version,
-		Kind:    kind,
+func TestGenVersion(t *testing.T) {
+	buf := &bytes.Buffer{}
+	if err := renderFile(buf, "version/version.go", versionTmpl, tmplData{VersionNumber: "0.9.2+git"}); err != nil {
+		t.Error(err)
+		return
 	}
-	return t.Execute(w, types)
+	if versionExp != buf.String() {
+		t.Errorf("Wants: %v", versionExp)
+		t.Errorf("  Got: %v", buf.String())
+	}
 }
