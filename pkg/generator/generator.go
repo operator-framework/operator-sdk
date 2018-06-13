@@ -594,3 +594,18 @@ func writeFileAndPrint(filePath string, data []byte, fileMode os.FileMode) error
 	fmt.Printf("Create %v \n", filePath)
 	return nil
 }
+
+// Combines steps of creating buffer, writing to buffer, and writing buffer to file in one call
+func renderWriteFile(filePath string, fileLoc string, fileTmpl string, info tmplData) error {
+	buf := &bytes.Buffer{}
+
+	if err := renderFile(buf, fileLoc, fileTmpl, info); err != nil {
+		return err
+	}
+
+	if err := writeFileAndPrint(filePath, buf.Bytes(), defaultFileMode); err != nil {
+		return err
+	}
+
+	return nil
+}
