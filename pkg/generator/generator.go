@@ -531,7 +531,7 @@ type tmplData struct {
 	CatalogVersion string
 }
 
-//Creates all the necesary directories for the generated files
+// Creates all the necesary directories for the generated files
 func (g *Generator) generateDirStructure() error {
 	if err := os.MkdirAll(g.projectName, defaultDirFileMode); err != nil {
 		return err
@@ -584,7 +584,7 @@ func (g *Generator) generateDirStructure() error {
 	return nil
 }
 
-//Renders a file given a template, and fills in template fields according to values passed in the tmplData struct
+// Renders a file given a template, and fills in template fields according to values passed in the tmplData struct
 func renderFile(w io.Writer, fileLoc string, fileTmpl string, info tmplData) error {
 	t := template.New(fileLoc)
 
