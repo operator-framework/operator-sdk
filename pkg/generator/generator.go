@@ -176,8 +176,6 @@ func (g *Generator) renderCmd() error {
 }
 
 func renderCmdFiles(cmdProjectDir, repoPath, apiVersion, kind string) error {
-	buf := &bytes.Buffer{}
-
 	td := tmplData{
 		OperatorSDKImport: sdkImport,
 		StubImport:        filepath.Join(repoPath, stubDir),
@@ -187,11 +185,7 @@ func renderCmdFiles(cmdProjectDir, repoPath, apiVersion, kind string) error {
 		Kind:              kind,
 	}
 
-	if err := renderFile(buf, "cmd/<projectName>/main.go", mainTmpl, td); err != nil {
-		return err
-	}
-
-	return writeFileAndPrint(filepath.Join(cmdProjectDir, main), buf.Bytes(), defaultFileMode)
+	return renderWriteFile(filepath.Join(cmdProjectDir, main), "cmd/<projectName>/main.go", mainTmpl, td)
 }
 
 func (g *Generator) renderConfig() error {
@@ -213,34 +207,23 @@ func (g *Generator) renderDeploy() error {
 }
 
 func renderRBAC(deployDir, projectName, groupName string) error {
-	buf := &bytes.Buffer{}
-
 	td := tmplData{
 		ProjectName: projectName,
 		GroupName:   groupName,
 	}
 
-	if err := renderFile(buf, rbacTmplName, rbacYamlTmpl, td); err != nil {
-		return err
-	}
-
-	return writeFileAndPrint(filepath.Join(deployDir, rbacYaml), buf.Bytes(), defaultFileMode)
+	return renderWriteFile(filepath.Join(deployDir, rbacYaml), rbacTmplName, rbacYamlTmpl, td)
 }
 
 func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
-	buf := &bytes.Buffer{}
 	rbacTd := tmplData{
 		ProjectName: projectName,
 		GroupName:   groupName(apiVersion),
 	}
-	if err := renderFile(buf, rbacTmplName, rbacYamlTmpl, rbacTd); err != nil {
-		return err
-	}
-	if err := writeFileAndPrint(filepath.Join(deployDir, rbacYaml), buf.Bytes(), defaultFileMode); err != nil {
+	if err := renderWriteFile(filepath.Join(deployDir, rbacYaml), rbacTmplName, rbacYamlTmpl, rbacTd); err != nil {
 		return err
 	}
 
-	buf = &bytes.Buffer{}
 	crdTd := tmplData{
 		Kind:         kind,
 		KindSingular: strings.ToLower(kind),
@@ -248,35 +231,24 @@ func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
 		GroupName:    groupName(apiVersion),
 		Version:      version(apiVersion),
 	}
-	if err := renderFile(buf, crdTmplName, crdYamlTmpl, crdTd); err != nil {
-		return err
-	}
-	if err := writeFileAndPrint(filepath.Join(deployDir, crdYaml), buf.Bytes(), defaultFileMode); err != nil {
+	if err := renderWriteFile(filepath.Join(deployDir, crdYaml), crdTmplName, crdYamlTmpl, crdTd); err != nil {
 		return err
 	}
 
-	buf = &bytes.Buffer{}
 	crTd := tmplData{
 		APIVersion: apiVersion,
 		Kind:       kind,
 	}
-	if err := renderFile(buf, crTmplName, crYamlTmpl, crTd); err != nil {
-		return err
-	}
-	return writeFileAndPrint(filepath.Join(deployDir, crYaml), buf.Bytes(), defaultFileMode)
+	return renderWriteFile(filepath.Join(deployDir, crYaml), crTmplName, crYamlTmpl, crTd)
 }
 
 // RenderOperatorYaml generates "deploy/operator.yaml"
 func RenderOperatorYaml(c *Config, image string) error {
-	buf := &bytes.Buffer{}
 	td := tmplData{
 		ProjectName: c.ProjectName,
 		Image:       image,
 	}
-	if err := renderFile(buf, operatorTmplName, operatorYamlTmpl, td); err != nil {
-		return err
-	}
-	return ioutil.WriteFile(operatorYaml, buf.Bytes(), defaultFileMode)
+	return renderWriteFile(operatorYaml, operatorTmplName, operatorYamlTmpl, td)
 }
 
 // RenderOlmCatalog generates catalog manifests "deploy/olm-catalog/*"
@@ -290,22 +262,17 @@ func RenderOlmCatalog(c *Config, image, version string) error {
 	olmDir := filepath.Join(repoPath, olmCatalogDir)
 
 	// deploy/olm-catalog/package.yaml
-	buf := &bytes.Buffer{}
 	cpTd := tmplData{
 		PackageName: strings.ToLower(c.Kind),
 		ChannelName: packageChannel,
 		CurrentCSV:  getCSVName(strings.ToLower(c.Kind), version),
 	}
-	if err := renderFile(buf, catalogPackageYaml, catalogPackageTmpl, cpTd); err != nil {
-		return err
-	}
 	path := filepath.Join(olmDir, catalogPackageYaml)
-	if err := ioutil.WriteFile(path, buf.Bytes(), defaultFileMode); err != nil {
+	if err := renderWriteFile(path, catalogPackageYaml, catalogPackageTmpl, cpTd); err != nil {
 		return err
 	}
 
 	// deploy/olm-catalog/crd.yaml
-	buf = &bytes.Buffer{}
 	ccrdTd := tmplData{
 		Kind:         c.Kind,
 		KindSingular: strings.ToLower(c.Kind),
@@ -313,16 +280,12 @@ func RenderOlmCatalog(c *Config, image, version string) error {
 		GroupName:    groupName(c.APIVersion),
 		Version:      version,
 	}
-	if err := renderFile(buf, catalogCRDTmplName, crdTmpl, ccrdTd); err != nil {
-		return err
-	}
 	path = filepath.Join(olmDir, crdYaml)
-	if err := ioutil.WriteFile(path, buf.Bytes(), defaultFileMode); err != nil {
+	if err := renderWriteFile(path, catalogCRDTmplName, crdTmpl, ccrdTd); err != nil {
 		return err
 	}
 
 	// deploy/olm-catalog/csv.yaml
-	buf = &bytes.Buffer{}
 	ccsvTd := tmplData{
 		Kind:           c.Kind,
 		KindSingular:   strings.ToLower(c.Kind),
@@ -334,11 +297,8 @@ func RenderOlmCatalog(c *Config, image, version string) error {
 		CatalogVersion: version,
 		ProjectName:    c.ProjectName,
 	}
-	if err := renderFile(buf, catalogCSVYaml, catalogCSVTmpl, ccsvTd); err != nil {
-		return err
-	}
 	path = filepath.Join(olmDir, catalogCSVYaml)
-	return ioutil.WriteFile(path, buf.Bytes(), defaultFileMode)
+	return renderWriteFile(path, catalogCSVYaml, catalogCSVTmpl, ccsvTd)
 }
 
 func getCSVName(name, version string) string {
@@ -356,35 +316,24 @@ func (g *Generator) renderTmp() error {
 }
 
 func (g *Generator) renderVersion() error {
-	buf := &bytes.Buffer{}
-
 	td := tmplData{
 		VersionNumber: "0.0.1",
 	}
 
-	if err := renderFile(buf, "version/version.go", versionTmpl, td); err != nil {
-		return err
-	}
-
-	return writeFileAndPrint(filepath.Join(g.projectName, versionDir, versionfile), buf.Bytes(), defaultFileMode)
+	return renderWriteFile(filepath.Join(g.projectName, versionDir, versionfile), "version/version.go", versionTmpl, td)
 }
 
 func renderBuildFiles(buildDir, repoPath, projectName string) error {
-	buf := &bytes.Buffer{}
-
 	bTd := tmplData{
 		ProjectName: projectName,
 		RepoPath:    repoPath,
 	}
 
-	if err := renderFile(buf, "tmp/build/build.sh", buildTmpl, bTd); err != nil {
-		return err
-	}
-	if err := writeFileAndPrint(filepath.Join(buildDir, build), buf.Bytes(), defaultExecFileMode); err != nil {
+	if err := renderWriteFile(filepath.Join(buildDir, build), "tmp/build/build.sh", buildTmpl, bTd); err != nil {
 		return err
 	}
 
-	buf = &bytes.Buffer{}
+	buf := &bytes.Buffer{}
 	if err := renderDockerBuildFile(buf); err != nil {
 		return err
 	}
@@ -392,14 +341,13 @@ func renderBuildFiles(buildDir, repoPath, projectName string) error {
 		return err
 	}
 
-	buf = &bytes.Buffer{}
 	dTd := tmplData{
 		ProjectName: projectName,
 	}
 	if err := renderFile(buf, "tmp/build/Dockerfile", dockerFileTmpl, dTd); err != nil {
 		return err
 	}
-	return writeFileAndPrint(filepath.Join(buildDir, dockerfile), buf.Bytes(), defaultFileMode)
+	return renderWriteFile(filepath.Join(buildDir, dockerfile), "tmp/build/Dockerfile", dockerFileTmpl, dTd)
 }
 
 func renderDockerBuildFile(w io.Writer) error {
@@ -408,27 +356,19 @@ func renderDockerBuildFile(w io.Writer) error {
 }
 
 func renderCodegenFiles(codegenDir, repoPath, apiDirName, version, projectName string) error {
-	buf := &bytes.Buffer{}
 	bTd := tmplData{
 		ProjectName: projectName,
 	}
-	if err := renderFile(buf, "codegen/boilerplate.go.txt", boilerplateTmpl, bTd); err != nil {
-		return err
-	}
-	if err := writeFileAndPrint(filepath.Join(codegenDir, boilerplate), buf.Bytes(), defaultFileMode); err != nil {
+	if err := renderWriteFile(filepath.Join(codegenDir, boilerplate), "codegen/boilerplate.go.txt", boilerplateTmpl, bTd); err != nil {
 		return err
 	}
 
-	buf = &bytes.Buffer{}
 	ugTd := tmplData{
 		RepoPath:   repoPath,
 		APIDirName: apiDirName,
 		Version:    version,
 	}
-	if err := renderFile(buf, "codegen/update-generated.sh", updateGeneratedTmpl, ugTd); err != nil {
-		return err
-	}
-	return writeFileAndPrint(filepath.Join(codegenDir, updateGenerated), buf.Bytes(), defaultExecFileMode)
+	return renderWriteFile(filepath.Join(codegenDir, updateGenerated), "codegen/update-generated.sh", updateGeneratedTmpl, ugTd)
 }
 
 func (g *Generator) renderPkg() error {
@@ -444,45 +384,32 @@ func (g *Generator) renderPkg() error {
 }
 
 func renderAPIFiles(apiDir, groupName, version, kind string) error {
-	buf := &bytes.Buffer{}
 	adTd := tmplData{
 		GroupName: groupName,
 		Version:   version,
 	}
-	if err := renderFile(buf, "apis/<apiDirName>/<version>/doc.go", apiDocTmpl, adTd); err != nil {
-		return err
-	}
-	if err := writeFileAndPrint(filepath.Join(apiDir, doc), buf.Bytes(), defaultFileMode); err != nil {
+	if err := renderWriteFile(filepath.Join(apiDir, doc), "apis/<apiDirName>/<version>/doc.go", apiDocTmpl, adTd); err != nil {
 		return err
 	}
 
-	buf = &bytes.Buffer{}
 	arTd := tmplData{
 		Kind:       kind,
 		KindPlural: toPlural(strings.ToLower(kind)),
 		GroupName:  groupName,
 		Version:    version,
 	}
-	if err := renderFile(buf, "apis/<apiDirName>/<version>/register.go", apiRegisterTmpl, arTd); err != nil {
-		return err
-	}
-	if err := writeFileAndPrint(filepath.Join(apiDir, register), buf.Bytes(), defaultFileMode); err != nil {
+	if err := renderWriteFile(filepath.Join(apiDir, register), "apis/<apiDirName>/<version>/register.go", apiRegisterTmpl, arTd); err != nil {
 		return err
 	}
 
-	buf = &bytes.Buffer{}
 	atTd := tmplData{
 		Kind:    kind,
 		Version: version,
 	}
-	if err := renderFile(buf, "apis/<apiDirName>/<version>/types.go", apiTypesTmpl, atTd); err != nil {
-		return err
-	}
-	return writeFileAndPrint(filepath.Join(apiDir, types), buf.Bytes(), defaultFileMode)
+	return renderWriteFile(filepath.Join(apiDir, types), "apis/<apiDirName>/<version>/types.go", apiTypesTmpl, atTd)
 }
 
 func renderStubFiles(stubDir, repoPath, kind, apiDirName, version string) error {
-	buf := &bytes.Buffer{}
 	td := tmplData{
 		OperatorSDKImport: sdkImport,
 		RepoPath:          repoPath,
@@ -490,10 +417,7 @@ func renderStubFiles(stubDir, repoPath, kind, apiDirName, version string) error 
 		APIDirName:        apiDirName,
 		Version:           version,
 	}
-	if err := renderFile(buf, "stub/handler.go", handlerTmpl, td); err != nil {
-		return err
-	}
-	return writeFileAndPrint(filepath.Join(stubDir, handler), buf.Bytes(), defaultFileMode)
+	return renderWriteFile(filepath.Join(stubDir, handler), "stub/handler.go", handlerTmpl, td)
 }
 
 type tmplData struct {
