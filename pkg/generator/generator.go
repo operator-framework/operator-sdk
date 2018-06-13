@@ -533,52 +533,23 @@ type tmplData struct {
 
 // Creates all the necesary directories for the generated files
 func (g *Generator) generateDirStructure() error {
-	if err := os.MkdirAll(g.projectName, defaultDirFileMode); err != nil {
-		return err
+	dirsToCreate := []string{
+		g.projectName,
+		filepath.Join(g.projectName, cmdDir, g.projectName),
+		filepath.Join(g.projectName, configDir),
+		filepath.Join(g.projectName, deployDir),
+		filepath.Join(g.projectName, olmCatalogDir),
+		filepath.Join(g.projectName, buildDir),
+		filepath.Join(g.projectName, codegenDir),
+		filepath.Join(g.projectName, versionDir),
+		filepath.Join(g.projectName, apisDir, apiDirName(g.apiVersion), version(g.apiVersion)),
+		filepath.Join(g.projectName, stubDir),
 	}
 
-	cpDir := filepath.Join(g.projectName, cmdDir, g.projectName)
-	if err := os.MkdirAll(cpDir, defaultDirFileMode); err != nil {
-		return err
-	}
-
-	cp := filepath.Join(g.projectName, configDir)
-	if err := os.MkdirAll(cp, defaultDirFileMode); err != nil {
-		return err
-	}
-
-	dp := filepath.Join(g.projectName, deployDir)
-	if err := os.MkdirAll(dp, defaultDirFileMode); err != nil {
-		return err
-	}
-
-	op := filepath.Join(g.projectName, olmCatalogDir)
-	if err := os.MkdirAll(op, defaultDirFileMode); err != nil {
-		return err
-	}
-
-	bDir := filepath.Join(g.projectName, buildDir)
-	if err := os.MkdirAll(bDir, defaultDirFileMode); err != nil {
-		return err
-	}
-	cDir := filepath.Join(g.projectName, codegenDir)
-	if err := os.MkdirAll(cDir, defaultDirFileMode); err != nil {
-		return err
-	}
-
-	if err := os.MkdirAll(filepath.Join(g.projectName, versionDir), defaultDirFileMode); err != nil {
-		return err
-	}
-
-	v := version(g.apiVersion)
-	adn := apiDirName(g.apiVersion)
-	apiDir := filepath.Join(g.projectName, apisDir, adn, v)
-	if err := os.MkdirAll(apiDir, defaultDirFileMode); err != nil {
-		return err
-	}
-	sDir := filepath.Join(g.projectName, stubDir)
-	if err := os.MkdirAll(sDir, defaultDirFileMode); err != nil {
-		return err
+	for _, dir := range dirsToCreate {
+		if err := os.MkdirAll(dir, defaultDirFileMode); err != nil {
+			return err
+		}
 	}
 
 	return nil
