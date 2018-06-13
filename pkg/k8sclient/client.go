@@ -22,32 +22,29 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 
-	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
-	restMapper *discovery.DeferredDiscoveryRESTMapper
-	clientPool dynamic.ClientPool
-	kubeClient kubernetes.Interface
-	kubeConfig *rest.Config
+	restMapper    *restmapper.DeferredDiscoveryRESTMapper
+	dynamicClient dynamic.Interface
+	kubeClient    kubernetes.Interface
+	kubeConfig    *rest.Config
 )
 
 // init initializes the restMapper and clientPool needed to create a resource client dynamically
 func init() {
 	kubeClient, kubeConfig = mustNewKubeClientAndConfig()
 	cachedDiscoveryClient := cached.NewMemCacheClient(kubeClient.Discovery())
-	restMapper = discovery.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient, meta.InterfacesForUnstructured)
+	restMapper = restmapper.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient)
 	restMapper.Reset()
-	kubeConfig.ContentConfig = dynamic.ContentConfig()
-	clientPool = dynamic.NewClientPool(kubeConfig, restMapper, dynamic.LegacyAPIPathResolverFunc)
+	dynamicClient = mustGetDynamicClient(kubeConfig)
 	runBackgroundCacheReset(1 * time.Minute)
 }
 
@@ -62,17 +59,13 @@ func GetResourceClient(apiVersion, kind, namespace string) (dynamic.ResourceInte
 		Version: gv.Version,
 		Kind:    kind,
 	}
+	mapping, err := restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to get the resource REST mapping for GroupVersionKind(%s): %v", gvk.String(), err)
+	}
+	pluralName := mapping.Resource.Resource
+	resourceClient := dynamicClient.Resource(mapping.Resource).Namespace(namespace)
 
-	client, err := clientPool.ClientForGroupVersionKind(gvk)
-	if err != nil {
-		return nil, "", fmt.Errorf("failed to get client for GroupVersionKind(%s): %v", gvk.String(), err)
-	}
-	resource, err := apiResource(gvk, restMapper)
-	if err != nil {
-		return nil, "", fmt.Errorf("failed to get resource type: %v", err)
-	}
-	pluralName := resource.Name
-	resourceClient := client.Resource(resource, namespace)
 	return resourceClient, pluralName, nil
 }
 
@@ -81,18 +74,12 @@ func GetKubeClient() kubernetes.Interface {
 	return kubeClient
 }
 
-// apiResource consults the REST mapper to translate an <apiVersion, kind, namespace> tuple to a metav1.APIResource struct.
-func apiResource(gvk schema.GroupVersionKind, restMapper *discovery.DeferredDiscoveryRESTMapper) (*metav1.APIResource, error) {
-	mapping, err := restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+func mustGetDynamicClient(c *rest.Config) dynamic.Interface {
+	dynamicClient, err := dynamic.NewForConfig(kubeConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get the resource REST mapping for GroupVersionKind(%s): %v", gvk.String(), err)
+		panic(err)
 	}
-	resource := &metav1.APIResource{
-		Name:       mapping.Resource,
-		Namespaced: mapping.Scope == meta.RESTScopeNamespace,
-		Kind:       gvk.Kind,
-	}
-	return resource, nil
+	return dynamicClient
 }
 
 // mustNewKubeClientAndConfig returns the in-cluster config and kubernetes client

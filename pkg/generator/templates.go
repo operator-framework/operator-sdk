@@ -371,15 +371,15 @@ const gopkgLockTmpl = `[[projects]]
 
 const gopkgTomlTmpl = `[[override]]
   name = "k8s.io/api"
-  version = "kubernetes-1.9.3"
+  version = "kubernetes-1.11.0-beta.2"
 
 [[override]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.9.3"
+  version = "kubernetes-1.11.0-beta.2"
 
 [[override]]
   name = "k8s.io/client-go"
-  version = "kubernetes-1.9.3"
+  version = "kubernetes-1.11.0-beta.2"
 
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"
