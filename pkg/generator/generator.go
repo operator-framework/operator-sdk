@@ -324,16 +324,20 @@ func (g *Generator) renderVersion() error {
 }
 
 func renderBuildFiles(buildDir, repoPath, projectName string) error {
+	buf := &bytes.Buffer{}
 	bTd := tmplData{
 		ProjectName: projectName,
 		RepoPath:    repoPath,
 	}
 
-	if err := renderWriteFile(filepath.Join(buildDir, build), "tmp/build/build.sh", buildTmpl, bTd); err != nil {
+	if err := renderFile(buf, "tmp/build/build.sh", buildTmpl, bTd); err != nil {
+		return err
+	}
+	if err := writeFileAndPrint(filepath.Join(buildDir, build), buf.Bytes(), defaultExecFileMode); err != nil {
 		return err
 	}
 
-	buf := &bytes.Buffer{}
+	buf = &bytes.Buffer{}
 	if err := renderDockerBuildFile(buf); err != nil {
 		return err
 	}
@@ -363,12 +367,16 @@ func renderCodegenFiles(codegenDir, repoPath, apiDirName, version, projectName s
 		return err
 	}
 
+	buf := &bytes.Buffer{}
 	ugTd := tmplData{
 		RepoPath:   repoPath,
 		APIDirName: apiDirName,
 		Version:    version,
 	}
-	return renderWriteFile(filepath.Join(codegenDir, updateGenerated), "codegen/update-generated.sh", updateGeneratedTmpl, ugTd)
+	if err := renderFile(buf, "codegen/update-generated.sh", updateGeneratedTmpl, ugTd); err != nil {
+		return err
+	}
+	return writeFileAndPrint(filepath.Join(codegenDir, updateGenerated), buf.Bytes(), defaultExecFileMode)
 }
 
 func (g *Generator) renderPkg() error {
