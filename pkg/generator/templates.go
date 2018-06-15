@@ -130,37 +130,57 @@ spec:
 const mainTmpl = `package main
 
 import (
-	"context"
-	"runtime"
+  	"context"
+  	"runtime"
+  	"net/http"
 
-	stub "{{.StubImport}}"
-	sdk "{{.OperatorSDKImport}}"
-	k8sutil "{{.K8sutilImport}}"
-	sdkVersion "{{.SDKVersionImport}}"
+  	stub "{{.StubImport}}"
+  	sdk "{{.OperatorSDKImport}}"
+  	k8sutil "{{.K8sutilImport}}"
+  	sdkVersion "{{.SDKVersionImport}}"
 
-	"github.com/sirupsen/logrus"
+  	"github.com/prometheus/client_golang/prometheus/promhttp"
+  	"github.com/sirupsen/logrus"
 )
 
 func printVersion() {
-	logrus.Infof("Go Version: %s", runtime.Version())
-	logrus.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	logrus.Infof("operator-sdk Version: %v", sdkVersion.Version)
+  logrus.Infof("Go Version: %s", runtime.Version())
+  logrus.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
+  logrus.Infof("operator-sdk Version: %v", sdkVersion.Version)
+  logrus.Infof("operator prometheus port %d", {{.MetricsPort}})
+}
+
+func initOperatorService() {
+  service, err := k8sutil.InitOperatorService()
+  if err != nil {
+    logrus.Fatalf("Failed to init operator service: %v", err)
+  }
+  err = sdk.Create(service)
+  if err != nil && !errors.IsAlreadyExists(err) {
+    logrus.Infof("Failed to create operator service: %v", err)
+    return
+  }
+  logrus.Infof("Metrics service %s created", service.Name)
 }
 
 func main() {
-	printVersion()
+  printVersion()
+  initOperatorService()
 
-	resource := "{{.APIVersion}}"
-	kind := "{{.Kind}}"
-	namespace, err := k8sutil.GetWatchNamespace()
-	if err != nil {
-		logrus.Fatalf("Failed to get watch namespace: %v", err)
-	}
-	resyncPeriod := 5
-	logrus.Infof("Watching %s, %s, %s, %d", resource, kind, namespace, resyncPeriod)
-	sdk.Watch(resource, kind, namespace, resyncPeriod)
-	sdk.Handle(stub.NewHandler())
-	sdk.Run(context.TODO())
+  http.Handle("/metrics", promhttp.Handler())
+  go http.ListenAndServe(":{{.MetricsPort}}", nil)
+
+  resource := "{{.APIVersion}}"
+  kind := "{{.Kind}}"
+  namespace, err := k8sutil.GetWatchNamespace()
+  if err != nil {
+    logrus.Fatalf("Failed to get watch namespace: %v", err)
+  }
+  resyncPeriod := 5
+  logrus.Infof("Watching %s, %s, %s, %d", resource, kind, namespace, resyncPeriod)
+  sdk.Watch(resource, kind, namespace, resyncPeriod)
+  sdk.Handle(stub.NewHandler())
+  sdk.Run(context.TODO())
 }
 `
 
@@ -379,7 +399,11 @@ const gopkgTomlTmpl = `[[override]]
 
 [[override]]
   name = "k8s.io/client-go"
-  version = "kubernetes-1.9.3"
+	version = "kubernetes-1.9.3"
+
+[[override]]
+	name = "github.com/prometheus/client_golang"
+	version = "0.8.0"
 
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"
@@ -516,6 +540,8 @@ const operatorYamlTmpl = `apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{.ProjectName}}
+  labels:
+    name: {{.ProjectName}}
 spec:
   replicas: 1
   selector:
@@ -529,14 +555,19 @@ spec:
       containers:
         - name: {{.ProjectName}}
           image: {{.Image}}
+          ports:
+          - containerPort: {{.MetricsPort}}
+            name: {{.MetricsPortName}}
           command:
           - {{.ProjectName}}
           imagePullPolicy: Always
           env:
-            - name: WATCH_NAMESPACE
+            - name: {{.NamespaceEnv}}
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: {{.NameEnv}}
+              value: "{{.ProjectName}}"
 `
 
 const rbacYamlTmpl = `kind: Role

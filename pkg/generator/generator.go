@@ -23,6 +23,8 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 )
 
 const (
@@ -183,6 +185,7 @@ func renderCmdFiles(cmdProjectDir, repoPath, apiVersion, kind string) error {
 		SDKVersionImport:  versionImport,
 		APIVersion:        apiVersion,
 		Kind:              kind,
+		MetricsPort:       k8sutil.PrometheusMetricsPort,
 	}
 
 	return renderWriteFile(filepath.Join(cmdProjectDir, main), "cmd/<projectName>/main.go", mainTmpl, td)
@@ -245,8 +248,10 @@ func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
 // RenderOperatorYaml generates "deploy/operator.yaml"
 func RenderOperatorYaml(c *Config, image string) error {
 	td := tmplData{
-		ProjectName: c.ProjectName,
-		Image:       image,
+		ProjectName:     c.ProjectName,
+		Image:           image,
+		MetricsPort:     k8sutil.PrometheusMetricsPort,
+		MetricsPortName: k8sutil.PrometheusMetricsPortName,
 	}
 	return renderWriteFile(operatorYaml, operatorTmplName, operatorYamlTmpl, td)
 }
@@ -435,6 +440,9 @@ type tmplData struct {
 	StubImport        string
 	K8sutilImport     string
 	SDKVersionImport  string
+
+	MetricsPort     int
+	MetricsPortName string
 
 	APIVersion string
 	Kind       string
