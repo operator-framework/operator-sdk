@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -190,18 +189,13 @@ func InitOperatorService() (*v1.Service, error) {
 					Protocol: v1.ProtocolTCP,
 					TargetPort: intstr.IntOrString{
 						Type:   intstr.String,
-						StrVal: "metrics",
+						StrVal: PrometheusMetricsPortName,
 					},
-					Name: "metrics",
+					Name: PrometheusMetricsPortName,
 				},
 			},
 			Selector: map[string]string{"name": operatorName},
 		},
 	}
 	return service, nil
-}
-
-// GetPrometheusMetricsPort convert constant to string
-func GetPrometheusMetricsPort() string {
-	return ":" + strconv.Itoa(PrometheusMetricsPort)
 }

@@ -15,4 +15,7 @@ const (
 
 	// PrometheusMetricsPort defines the port which expose prometheus metrics
 	PrometheusMetricsPort = 60000
+
+	// PrometheusMetricsPortName define the port name used in kubernetes deployment and service
+	PrometheusMetricsPortName = "metrics"
 )

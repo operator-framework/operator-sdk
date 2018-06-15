@@ -130,24 +130,24 @@ spec:
 const mainTmpl = `package main
 
 import (
-  "context"
-  "runtime"
-  "net/http"
+  	"context"
+  	"runtime"
+  	"net/http"
 
-  stub "{{.StubImport}}"
-  sdk "{{.OperatorSDKImport}}"
-  k8sutil "{{.K8sutilImport}}"
-  sdkVersion "{{.SDKVersionImport}}"
+  	stub "{{.StubImport}}"
+  	sdk "{{.OperatorSDKImport}}"
+  	k8sutil "{{.K8sutilImport}}"
+  	sdkVersion "{{.SDKVersionImport}}"
 
-  "github.com/prometheus/client_golang/prometheus/promhttp"
-  "github.com/sirupsen/logrus"
+  	"github.com/prometheus/client_golang/prometheus/promhttp"
+  	"github.com/sirupsen/logrus"
 )
 
 func printVersion() {
   logrus.Infof("Go Version: %s", runtime.Version())
   logrus.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
   logrus.Infof("operator-sdk Version: %v", sdkVersion.Version)
-  logrus.Infof("operator prometheus port %s", "{{.MetricsPort}}")
+  logrus.Infof("operator prometheus port %d", {{.MetricsPort}})
 }
 
 func initOperatorService() {
@@ -156,11 +156,11 @@ func initOperatorService() {
     logrus.Fatalf("Failed to init operator service: %v", err)
   }
   err = sdk.Create(service)
-  if err != nil {
+  if err != nil && !errors.IsAlreadyExists(err) {
     logrus.Infof("Failed to create operator service: %v", err)
     return
   }
-  logrus.Infof("Service %s have been created", service.Name)
+  logrus.Infof("Metrics service %s created", service.Name)
 }
 
 func main() {
@@ -168,7 +168,7 @@ func main() {
   initOperatorService()
 
   http.Handle("/metrics", promhttp.Handler())
-  go http.ListenAndServe("{{.MetricsPort}}", nil)
+  go http.ListenAndServe(":{{.MetricsPort}}", nil)
 
   resource := "{{.APIVersion}}"
   kind := "{{.Kind}}"
@@ -399,7 +399,11 @@ const gopkgTomlTmpl = `[[override]]
 
 [[override]]
   name = "k8s.io/client-go"
-  version = "kubernetes-1.9.3"
+	version = "kubernetes-1.9.3"
+
+[[override]]
+	name = "github.com/prometheus/client_golang"
+	version = "0.8.0"
 
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"
@@ -553,7 +557,7 @@ spec:
           image: {{.Image}}
           ports:
           - containerPort: {{.MetricsPort}}
-            name: metrics
+            name: {{.MetricsPortName}}
           command:
           - {{.ProjectName}}
           imagePullPolicy: Always
