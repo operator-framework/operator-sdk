@@ -159,15 +159,7 @@ func (g *Generator) renderGoDep() error {
 	if err := renderGopkgTomlFile(buf); err != nil {
 		return err
 	}
-	if err := writeFileAndPrint(filepath.Join(g.projectName, gopkgtoml), buf.Bytes(), defaultFileMode); err != nil {
-		return err
-	}
-
-	buf = &bytes.Buffer{}
-	if err := renderGopkgLockFile(buf); err != nil {
-		return err
-	}
-	return writeFileAndPrint(filepath.Join(g.projectName, gopkglock), buf.Bytes(), defaultFileMode)
+	return writeFileAndPrint(filepath.Join(g.projectName, gopkgtoml), buf.Bytes(), defaultFileMode)
 }
 
 func (g *Generator) renderCmd() error {
