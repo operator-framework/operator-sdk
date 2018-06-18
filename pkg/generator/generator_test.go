@@ -41,7 +41,7 @@ func TestGenVersion(t *testing.T) {
 }
 
 const handlerExp = `package stub
-		
+
 import (
 	"context"
 
@@ -125,7 +125,7 @@ func TestGenHandler(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if versionExp != buf.String() {
+	if handlerExp != buf.String() {
 		t.Errorf("Wants: %v", handlerExp)
 		t.Errorf("  Got: %v", buf.String())
 	}
@@ -308,7 +308,7 @@ func TestGenRegister(t *testing.T) {
 	}
 }
 
-const typesExp = `package app.example.com/v1alpha1
+const typesExp = `package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
