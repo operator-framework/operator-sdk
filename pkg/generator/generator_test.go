@@ -19,6 +19,36 @@ import (
 	"testing"
 )
 
+const updateGeneratedExp = `#!/usr/bin/env bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+vendor/k8s.io/code-generator/generate-groups.sh \
+deepcopy \
+github.com/example-inc/app-operator/pkg/generated \
+github.com/example-inc/app-operator/pkg/apis \
+app:v1alpha1 \
+--go-header-file "./tmp/codegen/boilerplate.go.txt"
+`
+
+func TestCodeGen(t *testing.T) {
+	buf := &bytes.Buffer{}
+	td := tmplData{
+		RepoPath:   appRepoPath,
+		APIDirName: appApiDirName,
+		Version:    appVersion,
+	}
+	if err := renderFile(buf, "codegen/update-generated.sh", updateGeneratedTmpl, td); err != nil {
+		t.Error(err)
+		return
+	}
+	if updateGeneratedExp != buf.String() {
+		t.Errorf(errorMessage, updateGeneratedExp, buf.String())
+	}
+}
+
 const versionExp = `package version
 
 var (
