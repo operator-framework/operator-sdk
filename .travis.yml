@@ -20,10 +20,18 @@ before_script:
 - minikube update-context
 # Wait for Kubernetes to be up and ready.
 - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl get nodes -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1; done
-
+# Create example operator directory
+- mkdir -p $GOPATH/src/github.com/example-inc
 
 install: 
 - go get -t -d ./...
 
 script:
+# Unit test and verify formatting
 - go test ./...
+- go vet ./...
+- make install
+# Create example operator
+- cd $GOPATH/src/github.com/example-inc
+- operator-sdk new memcached-operator --api-version=cache.example.com/v1alpha1 --kind=Memcached
+- cd memcached-operator
