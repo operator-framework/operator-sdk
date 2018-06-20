@@ -410,3 +410,67 @@ func TestGenMain(t *testing.T) {
 		t.Errorf(errorMessage, mainExp, buf.String())
 	}
 }
+
+const buildExp = `#!/usr/bin/env bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+if ! which go > /dev/null; then
+	echo "golang needs to be installed"
+	exit 1
+fi
+
+BIN_DIR="$(pwd)/tmp/_output/bin"
+mkdir -p ${BIN_DIR}
+PROJECT_NAME="app-operator"
+REPO_PATH="github.com/example-inc/app-operator"
+BUILD_PATH="${REPO_PATH}/cmd/${PROJECT_NAME}"
+echo "building "${PROJECT_NAME}"..."
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ${BIN_DIR}/${PROJECT_NAME} $BUILD_PATH
+`
+
+const dockerFileExp = `FROM alpine:3.6
+
+RUN adduser -D app-operator
+USER app-operator
+
+ADD tmp/_output/bin/app-operator /usr/local/bin/app-operator
+`
+
+func TestGenBuild(t *testing.T) {
+	buf := &bytes.Buffer{}
+	bTd := tmplData{
+		ProjectName: appProjectName,
+		RepoPath:    appRepoPath,
+	}
+	if err := renderFile(buf, "tmp/build/build.sh", buildTmpl, bTd); err != nil {
+		t.Error(err)
+		return
+	}
+	if buildExp != buf.String() {
+		t.Errorf(errorMessage, buildExp, buf.String())
+	}
+
+	buf = &bytes.Buffer{}
+	if err := renderDockerBuildFile(buf); err != nil {
+		t.Error(err)
+		return
+	}
+	if dockerBuildTmpl != buf.String() {
+		t.Errorf(errorMessage, dockerBuildTmpl, buf.String())
+	}
+
+	buf = &bytes.Buffer{}
+	dTd := tmplData{
+		ProjectName: appProjectName,
+	}
+	if err := renderFile(buf, "tmp/build/Dockerfile", dockerFileTmpl, dTd); err != nil {
+		t.Error(err)
+		return
+	}
+	if dockerFileExp != buf.String() {
+		t.Errorf(errorMessage, dockerFileExp, buf.String())
+	}
+}
