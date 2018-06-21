@@ -35,3 +35,6 @@ script:
 - cd $GOPATH/src/github.com/example-inc
 - operator-sdk new memcached-operator --api-version=cache.example.com/v1alpha1 --kind=Memcached
 - cd memcached-operator
+- curl https://raw.githubusercontent.com/operator-framework/operator-sdk/master/example/memcached-operator/handler.go.tmpl -o pkg/stub/handler.go
+- head -n -6 pkg/apis/cache/v1alpha1/types.go
+- echo 'type MemcachedSpec struct {	Size int32 `json:"size"`} \ type MemcachedStatus struct {Nodes []string `json:"nodes"`}' >> pkg/apis/cache/v1alpha1/types.go
