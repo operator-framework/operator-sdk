@@ -37,4 +37,12 @@ script:
 - cd memcached-operator
 - curl https://raw.githubusercontent.com/operator-framework/operator-sdk/master/example/memcached-operator/handler.go.tmpl -o pkg/stub/handler.go
 - head -n -6 pkg/apis/cache/v1alpha1/types.go
-- echo -e 'type MemcachedSpec struct {	Size int32 `json:"size"`} \n type MemcachedStatus struct {Nodes []string `json:"nodes"`}' >> pkg/apis/cache/v1alpha1/types.go
+- echo 'type MemcachedSpec struct {	Size int32 `json:"size"`}' >> pkg/apis/cache/v1alpha1/types.go
+- echo 'type MemcachedStatus struct {Nodes []string `json:"nodes"`}' >> pkg/apis/cache/v1alpha1/types.go
+- operator-sdk generate k8s
+- operator-sdk build quay.io/example/memcached-operator:v0.0.1
+- docker push quay.io/example/memcached-operator:v0.0.1
+- kubectl create -f deploy/rbac.yaml
+- kubectl create -f deploy/crd.yaml
+- kubectl create -f deploy/operator.yaml
+- kubectl get deployment
