@@ -9,7 +9,7 @@
 1. Run unit tests
 2. Ensure proper formatting
 3. Install the sdk
-4. Create memcached operator
+4. Create memcached operator from [user-guide.md](https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#build-and-run-the-operator)
 5. Fill out handler.go and types.go
 6. Generate and build the operator for k8s
 7. Run the deployment
