@@ -178,6 +178,12 @@
   version = "v2.0.1"
 
 [[projects]]
+  name = "github.com/sergi/go-diff"
+  packages = ["diffmatchpatch"]
+  revision = "1744e2970ca51c86172c8190fadad617561ed6e7"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
@@ -404,6 +410,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d5cc928bcf8f796babddedb13b1516b8d6fbc2f48d68546b712af753671673e2"
+  inputs-digest = "d7e4cf2bf82190094599179d028dadf57d65b437bed4e73be65d1f823ee21e60"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -17,3 +17,7 @@
 [[override]]
   name = "k8s.io/client-go"
   version = "kubernetes-1.9.3"
+
+[[constraint]]
+  name = "github.com/sergi/go-diff"
+  version = "1.0.0"

@@ -19,6 +19,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 const updateGeneratedExp = `#!/usr/bin/env bash
@@ -47,7 +49,9 @@ func TestCodeGen(t *testing.T) {
 		return
 	}
 	if updateGeneratedExp != buf.String() {
-		t.Errorf(errorMessage, updateGeneratedExp, buf.String())
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(updateGeneratedExp, buf.String(), false)
+		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
 	}
 }
 
@@ -65,8 +69,9 @@ func TestGenVersion(t *testing.T) {
 		return
 	}
 	if versionExp != buf.String() {
-		t.Errorf("Wants: %v", versionExp)
-		t.Errorf("  Got: %v", buf.String())
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(versionExp, buf.String(), false)
+		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
 	}
 }
 
@@ -156,8 +161,9 @@ func TestGenHandler(t *testing.T) {
 		return
 	}
 	if handlerExp != buf.String() {
-		t.Errorf("Wants: %v", handlerExp)
-		t.Errorf("  Got: %v", buf.String())
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(handlerExp, buf.String(), false)
+		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
 	}
 }
 
@@ -264,7 +270,9 @@ func TestGenDeploy(t *testing.T) {
 		t.Error(err)
 	}
 	if crdYamlExp != buf.String() {
-		t.Errorf(errorMessage, crdYamlExp, buf.String())
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(crdYamlExp, buf.String(), false)
+		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
 	}
 
 	buf = &bytes.Buffer{}
@@ -272,7 +280,9 @@ func TestGenDeploy(t *testing.T) {
 		t.Error(err)
 	}
 	if operatorYamlExp != buf.String() {
-		t.Errorf(errorMessage, operatorYamlExp, buf.String())
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(operatorYamlExp, buf.String(), false)
+		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
 	}
 
 	buf = &bytes.Buffer{}
@@ -280,7 +290,9 @@ func TestGenDeploy(t *testing.T) {
 		t.Error(err)
 	}
 	if rbacYamlExp != buf.String() {
-		t.Errorf(errorMessage, rbacYamlExp, buf.String())
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(rbacYamlExp, buf.String(), false)
+		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
 	}
 }
 
@@ -334,7 +346,9 @@ func TestGenRegister(t *testing.T) {
 		return
 	}
 	if registerExp != buf.String() {
-		t.Errorf(errorMessage, registerExp, buf.String())
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(registerExp, buf.String(), false)
+		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
 	}
 }
 
@@ -380,7 +394,9 @@ func TestGenTypes(t *testing.T) {
 		return
 	}
 	if typesExp != buf.String() {
-		t.Errorf(errorMessage, typesExp, buf.String())
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(typesExp, buf.String(), false)
+		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
 	}
 }
 
@@ -437,7 +453,9 @@ func TestGenMain(t *testing.T) {
 	}
 
 	if mainExp != buf.String() {
-		t.Errorf(errorMessage, mainExp, buf.String())
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(mainExp, buf.String(), false)
+		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
 	}
 }
 
@@ -480,7 +498,9 @@ func TestGenBuild(t *testing.T) {
 		return
 	}
 	if buildExp != buf.String() {
-		t.Errorf(errorMessage, buildExp, buf.String())
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(buildExp, buf.String(), false)
+		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
 	}
 
 	buf = &bytes.Buffer{}
@@ -489,7 +509,9 @@ func TestGenBuild(t *testing.T) {
 		return
 	}
 	if dockerBuildTmpl != buf.String() {
-		t.Errorf(errorMessage, dockerBuildTmpl, buf.String())
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(dockerBuildTmpl, buf.String(), false)
+		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
 	}
 
 	buf = &bytes.Buffer{}
@@ -501,6 +523,8 @@ func TestGenBuild(t *testing.T) {
 		return
 	}
 	if dockerFileExp != buf.String() {
-		t.Errorf(errorMessage, dockerFileExp, buf.String())
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(dockerFileExp, buf.String(), false)
+		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
 	}
 }
