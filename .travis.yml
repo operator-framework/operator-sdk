@@ -44,10 +44,10 @@ script:
 - echo 'type MemcachedSpec struct {	Size int32 `json:"size"`}' >> pkg/apis/cache/v1alpha1/types.go
 - echo 'type MemcachedStatus struct {Nodes []string `json:"nodes"`}' >> pkg/apis/cache/v1alpha1/types.go
 - operator-sdk generate k8s
+- sed -e 's/imagePullPolicy. Always/imagePullPolicy. Never/g' deploy/operator.yaml
 - eval $(minikube docker-env)
 - operator-sdk build quay.io/example/memcached-operator:v0.0.1
 - kubectl create -f deploy/rbac.yaml
 - kubectl create -f deploy/crd.yaml
-- sed -e 's/imagePullPolicy. Always/imagePullPolicy. Never/g' deploy/operator.yaml
 - kubectl create -f deploy/operator.yaml
 - kubectl get deployment
