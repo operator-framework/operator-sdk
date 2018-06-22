@@ -1,5 +1,7 @@
 <img src="doc/images/operator_logo_sdk_color.svg" height="125px"></img>
 
+[![Build Status](https://travis-ci.org/operator-framework/operator-sdk.svg?branch=master)](https://travis-ci.org/operator-framework/operator-sdk)
+
 ### Project Status: pre-alpha
 
 The project is currently pre-alpha and it is expected that breaking changes to the API will be made in the upcoming releases.
