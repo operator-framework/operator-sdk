@@ -150,6 +150,8 @@ func printVersion() {
 func main() {
 	printVersion()
 
+	sdk.ExposeMetricsPort()
+
 	resource := "{{.APIVersion}}"
 	kind := "{{.Kind}}"
 	namespace, err := k8sutil.GetWatchNamespace()
@@ -275,6 +277,7 @@ required = [
   branch = "master"
   # version = "=v0.0.5"
 `
+
 const projectGitignoreTmpl = `
 # Temporary Build Files
 tmp/_output
@@ -417,6 +420,9 @@ spec:
       containers:
         - name: {{.ProjectName}}
           image: {{.Image}}
+          ports:
+          - containerPort: {{.MetricsPort}}
+            name: {{.MetricsPortName}}
           command:
           - {{.ProjectName}}
           imagePullPolicy: Always
@@ -425,6 +431,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: {{.OperatorNameEnv}}
+              value: "{{.ProjectName}}"
 `
 
 const rbacYamlTmpl = `kind: Role
