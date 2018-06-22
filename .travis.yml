@@ -51,8 +51,8 @@ script:
 - kubectl create -f deploy/operator.yaml
 - kubectl get deployment
 
-after-success:
+after_success:
 - echo 'Build succeeded, operator was generated, memcached operator is running on minikube, and unit/integration tests pass'
 
-after-failure:
+after_failure:
 - echo 'Build failed, operator failed to generate, memcached operator is not running on minikube, or unit/integration tests failed'
