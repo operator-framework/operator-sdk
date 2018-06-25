@@ -1,5 +1,7 @@
 # TravisCI Build Information
 
+Travis is set to run once every 24hrs against the master branch. The results of the builds can be found [here](https://travis-ci.org/operator-framework/operator-sdk/builds).
+
 ## Tool Versions
 * Kubernetes: 1.9.0
 * Minikube: 0.25.2
