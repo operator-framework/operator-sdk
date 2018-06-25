@@ -38,6 +38,7 @@ script:
 - cd $GOPATH/src/github.com/example-inc
 - operator-sdk new memcached-operator --api-version=cache.example.com/v1alpha1 --kind=Memcached
 - cd memcached-operator
+- rm -rf vendor/github.com/operator-framework/operator-sdk/pkg
 - ln -sf ${TRAVIS_BUILD_DIR}/pkg vendor/github.com/operator-framework/operator-sdk/pkg
 - curl https://raw.githubusercontent.com/operator-framework/operator-sdk/master/example/memcached-operator/handler.go.tmpl -o pkg/stub/handler.go
 - head -n -6 pkg/apis/cache/v1alpha1/types.go > tmp.txt
