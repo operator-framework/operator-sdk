@@ -60,5 +60,10 @@ The format can be described more formally as follows:
 
 The first line is the subject and should be no longer than 70 characters, the second line is always blank, and other lines should be wrapped at 80 characters. This allows the message to be easier to read on GitHub as well as in various git tools.
 
+## Documentation
+
+If the contribution changes the existing APIs or user interface it must include sufficient documentation to explain the use of the new or updated feature. Likewise the [CHANGELOG][changelog] should be updated with a summary of the change and link to the pull request.
+
 
 [operator_framework]: https://groups.google.com/forum/#!forum/operator-framework
+[changelog]: https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md
