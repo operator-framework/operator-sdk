@@ -54,24 +54,32 @@ script:
 - kubectl create -f deploy/operator.yaml
 - kubectl get deployment
 # Create memcached cr
-- |echo "apiVersion: \"cache.example.com/v1alpha1\"" > deploy/cr.yaml
-- |echo "kind: \"Memcached\"" >> deploy/cr.yaml
+- |
+  echo "apiVersion: \"cache.example.com/v1alpha1\"" > deploy/cr.yaml
+- |
+  echo "kind: \"Memcached\"" >> deploy/cr.yaml
 - echo "metadata:" >> deploy/cr.yaml
-- |echo "  name: \"example-memcached\"" >> deploy/cr.yaml
+- |
+  echo "  name: \"example-memcached\"" >> deploy/cr.yaml
 - echo "spec:" >> deploy/cr.yaml
-- |echo "  size: 3" >> deploy/cr.yaml
+- |
+  echo "  size: 3" >> deploy/cr.yaml
 - kubectl apply -f deploy/cr.yaml
 - sleep 30s
 - kubectl get deployment
 - kubectl get pods
 - kubectl get memcached/example-memcached -o yaml
 # Expand to size to 4
-- |echo "apiVersion: \"cache.example.com/v1alpha1\"" > deploy/cr.yaml
-- |echo "kind: \"Memcached"" >> deploy/cr.yaml
+- |
+  echo "apiVersion: \"cache.example.com/v1alpha1\"" > deploy/cr.yaml
+- |
+  echo "kind: \"Memcached"" >> deploy/cr.yaml
 - echo "metadata:" >> deploy/cr.yaml
-- |echo "  name: \"example-memcached\"" >> deploy/cr.yaml
+- |
+  echo "  name: \"example-memcached\"" >> deploy/cr.yaml
 - echo "spec:" >> deploy/cr.yaml
-- |echo "  size: 4" >> deploy/cr.yaml
+- |
+  echo "  size: 4" >> deploy/cr.yaml
 - kubectl apply -f deploy/cr.yaml
 - sleep 30s
 - kubectl get deployment
