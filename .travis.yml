@@ -73,7 +73,7 @@ script:
 - |
   echo "apiVersion: \"cache.example.com/v1alpha1\"" > deploy/cr.yaml
 - |
-  echo "kind: \"Memcached"" >> deploy/cr.yaml
+  echo "kind: \"Memcached\"" >> deploy/cr.yaml
 - echo "metadata:" >> deploy/cr.yaml
 - |
   echo "  name: \"example-memcached\"" >> deploy/cr.yaml
