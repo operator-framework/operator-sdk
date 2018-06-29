@@ -49,11 +49,11 @@ script:
 - operator-sdk build quay.io/example/memcached-operator:v0.0.1
 - sed -e 's/imagePullPolicy. Always/imagePullPolicy. Never/g' deploy/operator.yaml
 # Run the operator as a pod
-- eval $(minikube docker-env)
 - kubectl create -f deploy/rbac.yaml
 - kubectl create -f deploy/crd.yaml
 - kubectl create -f deploy/operator.yaml
 - kubectl get deployment
+- kubectl get pods
 # Create memcached cr
 - |
   echo "apiVersion: \"cache.example.com/v1alpha1\"" > deploy/cr.yaml
