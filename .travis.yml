@@ -49,6 +49,7 @@ script:
 - operator-sdk build quay.io/example/memcached-operator:v0.0.1
 - sed -e 's/imagePullPolicy. Always/imagePullPolicy. Never/g' deploy/operator.yaml
 # Run the operator as a pod
+- eval $(minikube docker-env)
 - kubectl create -f deploy/rbac.yaml
 - kubectl create -f deploy/crd.yaml
 - kubectl create -f deploy/operator.yaml
@@ -65,7 +66,7 @@ script:
 - |
   echo "  size: 3" >> deploy/cr.yaml
 - kubectl apply -f deploy/cr.yaml
-- sleep 30s
+- sleep 10s
 - kubectl get deployment
 - kubectl get pods
 - kubectl get memcached/example-memcached -o yaml
@@ -81,7 +82,7 @@ script:
 - |
   echo "  size: 4" >> deploy/cr.yaml
 - kubectl apply -f deploy/cr.yaml
-- sleep 30s
+- sleep 10s
 - kubectl get deployment
 # Cleanup
 - kubectl delete -f deploy/cr.yaml
