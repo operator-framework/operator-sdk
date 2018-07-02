@@ -76,15 +76,7 @@ script:
 - kubectl get memcached/example-memcached -o yaml
 # Expand to size to 4
 - |
-  echo "apiVersion: \"cache.example.com/v1alpha1\"" > deploy/cr.yaml
-- |
-  echo "kind: \"Memcached\"" >> deploy/cr.yaml
-- echo "metadata:" >> deploy/cr.yaml
-- |
-  echo "  name: \"example-memcached\"" >> deploy/cr.yaml
-- echo "spec:" >> deploy/cr.yaml
-- |
-  echo "  size: 4" >> deploy/cr.yaml
+  sed -ie 's/size: 3/size: 4/g' deploy/cr.yaml
 - kubectl apply -f deploy/cr.yaml
 # Sleep until 4 pods are up, TODO poll api in retry loop
 - sleep 10s
