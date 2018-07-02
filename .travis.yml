@@ -53,9 +53,10 @@ script:
 - kubectl create -f deploy/rbac.yaml
 - kubectl create -f deploy/crd.yaml
 - kubectl create -f deploy/operator.yaml
+# Sleep until operator is ready, TODO poll api in retry loop
+- sleep 10s
 - kubectl get deployment
 - kubectl get pods
-- kubectl describe pods
 # Create memcached cr
 - |
   echo "apiVersion: \"cache.example.com/v1alpha1\"" > deploy/cr.yaml
@@ -68,10 +69,10 @@ script:
 - |
   echo "  size: 3" >> deploy/cr.yaml
 - kubectl apply -f deploy/cr.yaml
+# Sleep until operator is ready, TODO poll api in retry loop
 - sleep 10s
 - kubectl get deployment
 - kubectl get pods
-- kubectl describe pods
 - kubectl get memcached/example-memcached -o yaml
 # Expand to size to 4
 - |
@@ -85,10 +86,10 @@ script:
 - |
   echo "  size: 4" >> deploy/cr.yaml
 - kubectl apply -f deploy/cr.yaml
+# Sleep until operator is ready, TODO poll api in retry loop
 - sleep 10s
 - kubectl get deployment
 - kubectl get pods
-- kubectl describe pods
 # Cleanup
 - kubectl delete -f deploy/cr.yaml
 - kubectl delete -f deploy/operator.yaml
@@ -98,3 +99,6 @@ after_success:
 
 after_failure:
 - echo 'Build failed, operator failed to generate, memcached operator is not running on minikube, or unit/integration tests failed'
+- kubectl get deployment
+- kubectl get pods
+- kubectl describe pods
