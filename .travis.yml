@@ -47,14 +47,51 @@ script:
 - echo 'type MemcachedStatus struct {Nodes []string `json:"nodes"`}' >> pkg/apis/cache/v1alpha1/types.go
 - operator-sdk generate k8s
 - operator-sdk build quay.io/example/memcached-operator:v0.0.1
-- sed -e 's/imagePullPolicy. Always/imagePullPolicy. Never/g' deploy/operator.yaml
+- |
+  sed -ie 's/imagePullPolicy: Always/imagePullPolicy: Never/g' deploy/operator.yaml
+# Run the operator as a pod
 - kubectl create -f deploy/rbac.yaml
 - kubectl create -f deploy/crd.yaml
 - kubectl create -f deploy/operator.yaml
+# Sleep until operator is ready, TODO poll api in retry loop
+- sleep 10s
 - kubectl get deployment
+- kubectl get pods
+# Create memcached cr
+- |
+  echo "apiVersion: \"cache.example.com/v1alpha1\"" > deploy/cr.yaml
+- |
+  echo "kind: \"Memcached\"" >> deploy/cr.yaml
+- echo "metadata:" >> deploy/cr.yaml
+- |
+  echo "  name: \"example-memcached\"" >> deploy/cr.yaml
+- echo "spec:" >> deploy/cr.yaml
+- |
+  echo "  size: 3" >> deploy/cr.yaml
+- kubectl apply -f deploy/cr.yaml
+# Sleep until 3 pods are up, TODO poll api in retry loop
+- sleep 10s
+- kubectl get deployment
+- kubectl get pods
+- kubectl get memcached/example-memcached -o yaml
+# Expand to size to 4
+- |
+  sed -ie 's/size: 3/size: 4/g' deploy/cr.yaml
+- kubectl apply -f deploy/cr.yaml
+# Sleep until 4 pods are up, TODO poll api in retry loop
+- sleep 10s
+- kubectl get deployment
+- kubectl get pods
+- kubectl get memcached/example-memcached -o yaml
+# Cleanup
+- kubectl delete -f deploy/cr.yaml
+- kubectl delete -f deploy/operator.yaml
 
 after_success:
 - echo 'Build succeeded, operator was generated, memcached operator is running on minikube, and unit/integration tests pass'
 
 after_failure:
 - echo 'Build failed, operator failed to generate, memcached operator is not running on minikube, or unit/integration tests failed'
+- kubectl get deployment
+- kubectl get pods
+- kubectl describe pods
