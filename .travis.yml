@@ -48,11 +48,11 @@ script:
 - operator-sdk generate k8s
 - operator-sdk build quay.io/example/memcached-operator:v0.0.1
 - |
-  sed -e 's/imagePullPolicy: Always/imagePullPolicy: Never/g' deploy/rbac.yaml
+  sed -ie 's/imagePullPolicy: Always/imagePullPolicy: Never/g' deploy/rbac.yaml
 - |
-  sed -e 's/imagePullPolicy: Always/imagePullPolicy: Never/g' deploy/crd.yaml
+  sed -ie 's/imagePullPolicy: Always/imagePullPolicy: Never/g' deploy/crd.yaml
 - |
-  sed -e 's/imagePullPolicy: Always/imagePullPolicy: Never/g' deploy/operator.yaml
+  sed -ie 's/imagePullPolicy: Always/imagePullPolicy: Never/g' deploy/operator.yaml
 # Run the operator as a pod
 - kubectl create -f deploy/rbac.yaml
 - kubectl create -f deploy/crd.yaml
@@ -72,7 +72,7 @@ script:
 - |
   echo "  size: 3" >> deploy/cr.yaml
 - |
-  sed -e 's/imagePullPolicy: Always/imagePullPolicy: Never/g' deploy/cr.yaml
+  sed -ie 's/imagePullPolicy: Always/imagePullPolicy: Never/g' deploy/cr.yaml
 - kubectl apply -f deploy/cr.yaml
 - sleep 10s
 - kubectl get deployment
@@ -91,7 +91,7 @@ script:
 - |
   echo "  size: 4" >> deploy/cr.yaml
 - |
-  sed -e 's/imagePullPolicy: Always/imagePullPolicy: Never/g' deploy/cr.yaml
+  sed -ie 's/imagePullPolicy: Always/imagePullPolicy: Never/g' deploy/cr.yaml
 - kubectl apply -f deploy/cr.yaml
 - sleep 10s
 - kubectl get deployment
