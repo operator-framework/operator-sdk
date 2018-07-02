@@ -90,6 +90,7 @@ script:
 - sleep 10s
 - kubectl get deployment
 - kubectl get pods
+- kubectl get memcached/example-memcached -o yaml
 # Cleanup
 - kubectl delete -f deploy/cr.yaml
 - kubectl delete -f deploy/operator.yaml
