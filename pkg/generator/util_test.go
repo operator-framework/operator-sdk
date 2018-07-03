@@ -14,28 +14,27 @@
 
 package generator
 
-// toPlural makes "input" word plural.
-// TODO: make this an input parameter as English grammar is highly variable
-func toPlural(input string) string {
-	lastchar := input[len(input)-1:]
+import (
+	"testing"
+)
 
-	if lastchar == "s" {
-		return input + "es"
-	} else if lastchar == "x" {
-		return input + "es"
-	} else if lastchar == "y" {
-		return input[0:len(input)-1] + "ies"
+func TestToPlural(t *testing.T) {
+	var pluralTestData = []struct {
+		input    string
+		expValue string
+	}{
+		{"value", "values"},
+		{"class", "classes"},
+		{"box", "boxes"},
+		{"brush", "brushes"},
+		{"watch", "watches"},
+		{"bunny", "bunnies"},
 	}
 
-	if len(input) >= 2 {
-		lasttwo := input[len(input)-2:]
-
-		if lasttwo == "ch" {
-			return input + "es"
-		} else if lasttwo == "sh" {
-			return input + "es"
+	for _, testData := range pluralTestData {
+		output := toPlural(testData.input)
+		if output != testData.expValue {
+			t.Errorf(errorMessage, testData.expValue, output)
 		}
 	}
-
-	return input + "s"
 }
