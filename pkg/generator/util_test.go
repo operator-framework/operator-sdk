@@ -24,11 +24,11 @@ func TestToPlural(t *testing.T) {
 		expValue string
 	}{
 		{"value", "values"},
-		{"values", "valueses"},
-		{"valuex", "valuexes"},
-		{"valuesh", "valueshes"},
-		{"valuech", "valueches"},
-		{"valuey", "valueies"},
+		{"class", "classes"},
+		{"box", "boxes"},
+		{"brush", "brushes"},
+		{"watch", "watches"},
+		{"bunny", "bunnies"},
 	}
 
 	for _, testData := range pluralTestData {
