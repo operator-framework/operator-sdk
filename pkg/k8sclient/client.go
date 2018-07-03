@@ -77,6 +77,12 @@ func GetKubeClient() kubernetes.Interface {
 	return singletonFactory.kubeClient
 }
 
+// GetKubeConfig returns the kubernetes rest configuration
+func GetKubeConfig() *rest.Config {
+	once.Do(newSingletonFactory)
+	return singletonFactory.kubeConfig
+}
+
 // GetResourceClient returns the dynamic client and pluralName for the resource specified by the apiVersion and kind
 func (c *resourceClientFactory) GetResourceClient(apiVersion, kind, namespace string) (dynamic.ResourceInterface, string, error) {
 	gv, err := schema.ParseGroupVersion(apiVersion)
