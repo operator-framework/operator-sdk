@@ -24,7 +24,7 @@ func toPlural(input string) string {
 	} else if lastchar == "x" {
 		return input + "es"
 	} else if lastchar == "y" {
-		return input[0:len(input)-2] + "ies"
+		return input[0:len(input)-1] + "ies"
 	}
 
 	if len(input) >= 2 {

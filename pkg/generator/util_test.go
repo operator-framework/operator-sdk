@@ -18,38 +18,23 @@ import (
 	"testing"
 )
 
-func TestToPluralY(t *testing.T) {
-	var endings = []string{"value"}
-
-	for _, input := range endings {
-		output := toPlural(input)
-		expValue := input + "s"
-		if output != expValue {
-			t.Errorf(errorMessage, expValue, output)
-		}
+func TestToPlural(t *testing.T) {
+	var pluralTestData = []struct {
+		input    string
+		expValue string
+	}{
+		{"value", "values"},
+		{"values", "valueses"},
+		{"valuex", "valuexes"},
+		{"valuesh", "valueshes"},
+		{"valuech", "valueches"},
+		{"valuey", "valueies"},
 	}
-}
 
-func TestPluralEs(t *testing.T) {
-	var endings = []string{"values", "valuex", "valuesh", "valuech"}
-
-	for _, input := range endings {
-		output := toPlural(input)
-		expValue := input + "es"
-		if output != expValue {
-			t.Errorf(errorMessage, expValue, output)
-		}
-	}
-}
-
-func TestPluralY(t *testing.T) {
-	var endings = []string{"valuey"}
-
-	for _, input := range endings {
-		output := toPlural(input)
-		expValue := input[0:len(input)-2] + "ies"
-		if output != expValue {
-			t.Errorf(errorMessage, expValue, output)
+	for _, testData := range pluralTestData {
+		output := toPlural(testData.input)
+		if output != testData.expValue {
+			t.Errorf(errorMessage, testData.expValue, output)
 		}
 	}
 }
