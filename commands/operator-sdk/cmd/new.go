@@ -136,6 +136,10 @@ func verifyFlags() {
 	if len(kind) == 0 {
 		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--kind must not have empty value"))
 	}
+	kindFirstLetter := string(kind[0])
+	if kindFirstLetter != strings.ToUpper(kindFirstLetter) {
+		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--kind must start with an uppercase letter"))
+	}
 	if strings.Count(apiVersion, "/") != 1 {
 		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion))
 	}
