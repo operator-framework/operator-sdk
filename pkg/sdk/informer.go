@@ -16,9 +16,11 @@ package sdk
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -115,6 +117,20 @@ func (i *informer) handleDeleteResourceEvent(obj interface{}) {
 }
 
 func (i *informer) handleUpdateResourceEvent(oldObj, newObj interface{}) {
+	oldMeta, err := meta.Accessor(oldObj)
+	if err != nil {
+		panic(fmt.Errorf("object has no meta: %v", err))
+	}
+
+	newMeta, err := meta.Accessor(newObj)
+	if err != nil {
+		panic(fmt.Errorf("object has no meta: %v", err))
+	}
+
+	if oldMeta.GetResourceVersion() == newMeta.GetResourceVersion() {
+		return
+	}
+
 	key, err := cache.MetaNamespaceKeyFunc(newObj)
 	if err != nil {
 		panic(err)
