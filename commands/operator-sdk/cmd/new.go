@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"unicode"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/generate"
 	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
@@ -135,6 +136,9 @@ func verifyFlags() {
 	}
 	if len(kind) == 0 {
 		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--kind must not have empty value"))
+	}
+	if kind[0] != byte(unicode.ToUpper(rune(kind[0]))) {
+		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--kind must start with an uppercase letter"))
 	}
 	if strings.Count(apiVersion, "/") != 1 {
 		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion))
