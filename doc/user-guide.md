@@ -91,7 +91,15 @@ Replace the default handler with the reference [memcached handler][memcached_han
 
 ### Build and run the operator
 
-There is two ways to run the operator:
+Before running the operator, Kubernetes needs to know about the new custom resource definition the operator will be watching.
+
+Deploy the CRD:
+
+```sh
+$ kubectl create -f deploy/crd.yaml
+```
+
+Once this is done, there are two ways to run the operator:
 
 - As pod inside Kubernetes cluster
 - As go program outside cluster
@@ -112,7 +120,6 @@ Deploy the memcached-operator:
 
 ```sh
 $ kubectl create -f deploy/rbac.yaml
-$ kubectl create -f deploy/crd.yaml
 $ kubectl create -f deploy/operator.yaml
 ```
 
