@@ -20,6 +20,7 @@ import (
 	"strings"
 	"testing"
 
+	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
@@ -199,6 +200,9 @@ spec:
       containers:
         - name: app-operator
           image: quay.io/example-inc/app-operator:0.0.1
+          ports:
+          - containerPort: 60000
+            name: metrics
           command:
           - app-operator
           imagePullPolicy: Always
@@ -207,6 +211,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: OPERATOR_NAME
+              value: "app-operator"
 `
 
 const rbacYamlExp = `kind: Role
@@ -276,7 +282,14 @@ func TestGenDeploy(t *testing.T) {
 	}
 
 	buf = &bytes.Buffer{}
-	if err := renderFile(buf, operatorTmplName, operatorYamlTmpl, tmplData{ProjectName: appProjectName, Image: appImage}); err != nil {
+	td := tmplData{
+		ProjectName:     appProjectName,
+		Image:           appImage,
+		MetricsPort:     k8sutil.PrometheusMetricsPort,
+		MetricsPortName: k8sutil.PrometheusMetricsPortName,
+		OperatorNameEnv: k8sutil.OperatorNameEnvVar,
+	}
+	if err := renderFile(buf, operatorTmplName, operatorYamlTmpl, td); err != nil {
 		t.Error(err)
 	}
 	if operatorYamlExp != buf.String() {
@@ -422,6 +435,8 @@ func printVersion() {
 
 func main() {
 	printVersion()
+
+	sdk.ExposeMetricsPort()
 
 	resource := "app.example.com/v1alpha1"
 	kind := "AppService"
