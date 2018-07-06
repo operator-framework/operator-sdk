@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
@@ -43,27 +44,30 @@ type resourceClientFactory struct {
 var (
 	// this stores the singleton in a package local
 	singletonFactory *resourceClientFactory
+	once             sync.Once
 )
+
+// Private constructor for once.Do
+func newSingletonFactory() {
+	kubeClient, kubeConfig := mustNewKubeClientAndConfig()
+	cachedDiscoveryClient := cached.NewMemCacheClient(kubeClient.Discovery())
+	restMapper := discovery.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient, meta.InterfacesForUnstructured)
+	restMapper.Reset()
+	kubeConfig.ContentConfig = dynamic.ContentConfig()
+	clientPool := dynamic.NewClientPool(kubeConfig, restMapper, dynamic.LegacyAPIPathResolverFunc)
+
+	singletonFactory = &resourceClientFactory{
+		kubeClient: kubeClient,
+		kubeConfig: kubeConfig,
+		restMapper: restMapper,
+		clientPool: clientPool,
+	}
+	singletonFactory.runBackgroundCacheReset(1 * time.Minute)
+}
 
 // GetResourceClient returns the resource client using a singleton factory
 func GetResourceClient(apiVersion, kind, namespace string) (dynamic.ResourceInterface, string, error) {
-	if singletonFactory == nil {
-		kubeClient, kubeConfig := mustNewKubeClientAndConfig()
-		cachedDiscoveryClient := cached.NewMemCacheClient(kubeClient.Discovery())
-		restMapper := discovery.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient, meta.InterfacesForUnstructured)
-		restMapper.Reset()
-		kubeConfig.ContentConfig = dynamic.ContentConfig()
-		clientPool := dynamic.NewClientPool(kubeConfig, restMapper, dynamic.LegacyAPIPathResolverFunc)
-
-		singletonFactory := &resourceClientFactory{
-			kubeClient: kubeClient,
-			kubeConfig: kubeConfig,
-			restMapper: restMapper,
-			clientPool: clientPool,
-		}
-		singletonFactory.runBackgroundCacheReset(1 * time.Minute)
-	}
-
+	once.Do(newSingletonFactory)
 	return singletonFactory.GetResourceClient(apiVersion, kind, namespace)
 }
 
