@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
@@ -33,26 +34,51 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-var (
+type resourceClientFactory struct {
 	restMapper *discovery.DeferredDiscoveryRESTMapper
 	clientPool dynamic.ClientPool
 	kubeClient kubernetes.Interface
 	kubeConfig *rest.Config
+}
+
+var (
+	// this stores the singleton in a package local
+	singletonFactory *resourceClientFactory
+	once             sync.Once
 )
 
-// init initializes the restMapper and clientPool needed to create a resource client dynamically
-func init() {
-	kubeClient, kubeConfig = mustNewKubeClientAndConfig()
+// Private constructor for once.Do
+func newSingletonFactory() {
+	kubeClient, kubeConfig := mustNewKubeClientAndConfig()
 	cachedDiscoveryClient := cached.NewMemCacheClient(kubeClient.Discovery())
-	restMapper = discovery.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient, meta.InterfacesForUnstructured)
+	restMapper := discovery.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient, meta.InterfacesForUnstructured)
 	restMapper.Reset()
 	kubeConfig.ContentConfig = dynamic.ContentConfig()
-	clientPool = dynamic.NewClientPool(kubeConfig, restMapper, dynamic.LegacyAPIPathResolverFunc)
-	runBackgroundCacheReset(1 * time.Minute)
+	clientPool := dynamic.NewClientPool(kubeConfig, restMapper, dynamic.LegacyAPIPathResolverFunc)
+
+	singletonFactory = &resourceClientFactory{
+		kubeClient: kubeClient,
+		kubeConfig: kubeConfig,
+		restMapper: restMapper,
+		clientPool: clientPool,
+	}
+	singletonFactory.runBackgroundCacheReset(1 * time.Minute)
+}
+
+// GetResourceClient returns the resource client using a singleton factory
+func GetResourceClient(apiVersion, kind, namespace string) (dynamic.ResourceInterface, string, error) {
+	once.Do(newSingletonFactory)
+	return singletonFactory.GetResourceClient(apiVersion, kind, namespace)
+}
+
+// GetKubeClient returns the kubernetes client used to create the dynamic client
+func GetKubeClient() kubernetes.Interface {
+	once.Do(newSingletonFactory)
+	return singletonFactory.kubeClient
 }
 
 // GetResourceClient returns the dynamic client and pluralName for the resource specified by the apiVersion and kind
-func GetResourceClient(apiVersion, kind, namespace string) (dynamic.ResourceInterface, string, error) {
+func (c *resourceClientFactory) GetResourceClient(apiVersion, kind, namespace string) (dynamic.ResourceInterface, string, error) {
 	gv, err := schema.ParseGroupVersion(apiVersion)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to parse apiVersion: %v", err)
@@ -63,22 +89,17 @@ func GetResourceClient(apiVersion, kind, namespace string) (dynamic.ResourceInte
 		Kind:    kind,
 	}
 
-	client, err := clientPool.ClientForGroupVersionKind(gvk)
+	client, err := c.clientPool.ClientForGroupVersionKind(gvk)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to get client for GroupVersionKind(%s): %v", gvk.String(), err)
 	}
-	resource, err := apiResource(gvk, restMapper)
+	resource, err := apiResource(gvk, c.restMapper)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to get resource type: %v", err)
 	}
 	pluralName := resource.Name
 	resourceClient := client.Resource(resource, namespace)
 	return resourceClient, pluralName, nil
-}
-
-// GetKubeClient returns the kubernetes client used to create the dynamic client
-func GetKubeClient() kubernetes.Interface {
-	return kubeClient
 }
 
 // apiResource consults the REST mapper to translate an <apiVersion, kind, namespace> tuple to a metav1.APIResource struct.
@@ -136,11 +157,11 @@ func outOfClusterConfig() (*rest.Config, error) {
 
 // runBackgroundCacheReset - Starts the rest mapper cache reseting
 // at a duration given.
-func runBackgroundCacheReset(duration time.Duration) {
+func (c *resourceClientFactory) runBackgroundCacheReset(duration time.Duration) {
 	ticker := time.NewTicker(duration)
 	go func() {
 		for range ticker.C {
-			restMapper.Reset()
+			c.restMapper.Reset()
 		}
 	}()
 }
