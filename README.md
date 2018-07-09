@@ -35,6 +35,7 @@ At a high level an operator using the SDK processes events for watched resources
 First, checkout and install the operator-sdk CLI:
 
 ```sh
+$ mkdir -p $GOPATH/src/github.com/operator-framework/operator-sdk
 $ cd $GOPATH/src/github.com/operator-framework/operator-sdk
 $ git checkout master
 $ make dep
