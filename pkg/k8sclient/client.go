@@ -71,6 +71,12 @@ func GetResourceClient(apiVersion, kind, namespace string) (dynamic.ResourceInte
 	return singletonFactory.GetResourceClient(apiVersion, kind, namespace)
 }
 
+// GetKubeClient returns the kubernetes client used to create the dynamic client
+func GetKubeClient() kubernetes.Interface {
+	once.Do(newSingletonFactory)
+	return singletonFactory.kubeClient
+}
+
 // GetResourceClient returns the dynamic client and pluralName for the resource specified by the apiVersion and kind
 func (c *resourceClientFactory) GetResourceClient(apiVersion, kind, namespace string) (dynamic.ResourceInterface, string, error) {
 	gv, err := schema.ParseGroupVersion(apiVersion)
@@ -94,11 +100,6 @@ func (c *resourceClientFactory) GetResourceClient(apiVersion, kind, namespace st
 	pluralName := resource.Name
 	resourceClient := client.Resource(resource, namespace)
 	return resourceClient, pluralName, nil
-}
-
-// GetKubeClient returns the kubernetes client used to create the dynamic client
-func (c *resourceClientFactory) GetKubeClient() kubernetes.Interface {
-	return c.kubeClient
 }
 
 // apiResource consults the REST mapper to translate an <apiVersion, kind, namespace> tuple to a metav1.APIResource struct.
