@@ -22,15 +22,14 @@ import (
 
 	extensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	extscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
-	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/kubernetes"
 	cgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd"
 	dynclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -47,7 +46,7 @@ type Framework struct {
 	KubeClient        kubernetes.Interface
 	ExtensionsClient  *extensions.Clientset
 	Scheme            *runtime.Scheme
-	RestMapper        *discovery.DeferredDiscoveryRESTMapper
+	RestMapper        *restmapper.DeferredDiscoveryRESTMapper
 	DynamicClient     dynclient.Client
 	DynamicDecoder    runtime.Decoder
 	NamespacedManPath *string
@@ -110,7 +109,7 @@ func AddToFrameworkScheme(addToScheme addToSchemeFunc, obj runtime.Object) error
 		return err
 	}
 	cachedDiscoveryClient := cached.NewMemCacheClient(Global.KubeClient.Discovery())
-	Global.RestMapper = discovery.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient, meta.InterfacesForUnstructured)
+	Global.RestMapper = restmapper.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient)
 	Global.RestMapper.Reset()
 	Global.DynamicClient, err = dynclient.New(Global.KubeConfig, dynclient.Options{Scheme: Global.Scheme, Mapper: Global.RestMapper})
 	err = wait.PollImmediate(time.Second, time.Second*10, func() (done bool, err error) {
