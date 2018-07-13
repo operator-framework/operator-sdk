@@ -4,9 +4,9 @@ mkdir -p $GOPATH/src/github.com/example-inc
 go test ./...
 go vet ./...
 make install
+echo "Building memcached-example tester"
 cd test
 go build
-dep ensure
 cp test $GOPATH/src/github.com/example-inc
 
 cd $GOPATH/src/github.com/example-inc
