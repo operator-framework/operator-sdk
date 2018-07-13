@@ -82,7 +82,7 @@ func main() {
 	}
 	defer file.Close()
 
-	_, err = file.WriteString(string(newCr))
+	_, err = file.Write(newCr)
 	if err != nil {
 		log.Fatal(err)
 	}
