@@ -73,8 +73,13 @@ func main() {
 	}
 	// printDeployments(deployments)
 
+	count := 0
 oploop:
 	for {
+		if count >= 60 {
+			break
+		}
+		count++
 		deployments, err = api.Deployments("").List(listOptions)
 		if err != nil {
 			log.Fatal(err)
@@ -115,9 +120,14 @@ oploop:
 		log.Fatalf("%s\n", err)
 	}
 
+	count = 0
 	// wait for 3 available replicas for example-memcached deployment
 sizeloop3:
 	for {
+		if count >= 60 {
+			break
+		}
+		count++
 		deployments, err = api.Deployments("").List(listOptions)
 		if err != nil {
 			log.Fatal(err)
@@ -167,9 +177,14 @@ sizeloop3:
 		log.Fatalf("%s\n", err)
 	}
 
+	count = 0
 	// wait for 4 available replicas for example-memcached deployment
 sizeloop4:
 	for {
+		if count >= 60 {
+			break
+		}
+		count++
 		deployments, err = api.Deployments("").List(listOptions)
 		if err != nil {
 			log.Fatal(err)
