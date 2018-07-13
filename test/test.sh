@@ -1,14 +1,6 @@
 #!/bin/bash
-
-dep ensure
-minikube start
-minikube update-context
-eval $(minikube docker-env)
-JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl get nodes -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1; done
-
 mkdir -p $GOPATH/src/github.com/example-inc
 
-go get -t -d ./...
 go test ./...
 go vet ./...
 make install
