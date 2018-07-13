@@ -130,7 +130,7 @@ outerloop:
 			if deployment.Name == name && int(deployment.Status.AvailableReplicas) == replicas {
 				break outerloop
 			} else if deployment.Name == name {
-				fmt.Printf("Waiting for full availability of memcached deployment (%d/%d)\n", deployment.Status.AvailableReplicas, replicas)
+				fmt.Printf("Waiting for full availability of %s deployment (%d/%d)\n", name, deployment.Status.AvailableReplicas, replicas)
 				// printDeployments(deployments)
 				time.Sleep(time.Second * 1)
 				continue
