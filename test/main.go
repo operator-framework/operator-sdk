@@ -14,6 +14,7 @@ import (
 	"k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -32,12 +33,6 @@ func main() {
 	// NOTE: Certain features are in different clientsets. For example,
 	// Pods would be in CoreV1, not AppsV1
 	api := clientset.AppsV1()
-
-	// setup list options
-	listOptions := metav1.ListOptions{
-		LabelSelector: "",
-		FieldSelector: "",
-	}
 
 	// create rbac
 	output, err := exec.Command("kubectl", "create", "-f", "deploy/rbac.yaml").Output()
@@ -66,37 +61,7 @@ func main() {
 	}
 	fmt.Println("Created operator")
 
-	// get deployments
-	deployments, err := api.Deployments("").List(listOptions)
-	if err != nil {
-		log.Fatal(err)
-	}
-	// printDeployments(deployments)
-
-	count := 0
-oploop:
-	for {
-		if count >= 60 {
-			break
-		}
-		count++
-		deployments, err = api.Deployments("").List(listOptions)
-		if err != nil {
-			log.Fatal(err)
-		}
-		for _, deployment := range deployments.Items {
-			if deployment.Name == "memcached-operator" && deployment.Status.AvailableReplicas == 1 {
-				break oploop
-			} else if deployment.Name == "memcached-operator" {
-				fmt.Printf("Waiting for full availability of operator deployment (%d/1)\n", deployment.Status.AvailableReplicas)
-				// printDeployments(deployments)
-				time.Sleep(time.Second * 1)
-				continue
-			}
-		}
-	}
-
-	fmt.Println("Deployment available (1/1)")
+	deploymentReplicaCheck(api, "memcached-operator", 1, 60)
 
 	// create example-memcached yaml file
 	file, err := os.OpenFile("deploy/cr.yaml", os.O_WRONLY|os.O_CREATE, 0644)
@@ -120,32 +85,7 @@ oploop:
 		log.Fatalf("%s\n", err)
 	}
 
-	count = 0
-	// wait for 3 available replicas for example-memcached deployment
-sizeloop3:
-	for {
-		if count >= 60 {
-			break
-		}
-		count++
-		deployments, err = api.Deployments("").List(listOptions)
-		if err != nil {
-			log.Fatal(err)
-		}
-		for _, deployment := range deployments.Items {
-			if deployment.Name == "example-memcached" && deployment.Status.AvailableReplicas == 3 {
-				break sizeloop3
-			} else if deployment.Name == "example-memcached" {
-				fmt.Printf("Waiting for full availability of memcached deployment (%d/3)\n", deployment.Status.AvailableReplicas)
-				// printDeployments(deployments)
-				time.Sleep(time.Second * 1)
-				continue
-			}
-		}
-	}
-
-	fmt.Println("Deployment available (3/3)")
-	//	printDeployments(deployments)
+	deploymentReplicaCheck(api, "example-memcached", 3, 60)
 
 	// update deployment to 4 replicas
 	cr, err := ioutil.ReadFile("deploy/cr.yaml")
@@ -177,31 +117,7 @@ sizeloop3:
 		log.Fatalf("%s\n", err)
 	}
 
-	count = 0
-	// wait for 4 available replicas for example-memcached deployment
-sizeloop4:
-	for {
-		if count >= 60 {
-			break
-		}
-		count++
-		deployments, err = api.Deployments("").List(listOptions)
-		if err != nil {
-			log.Fatal(err)
-		}
-		for _, deployment := range deployments.Items {
-			if deployment.Name == "example-memcached" && deployment.Status.AvailableReplicas == 4 {
-				break sizeloop4
-			} else if deployment.Name == "example-memcached" {
-				fmt.Printf("Waiting for full availability of memcached deployment (%d/4)\n", deployment.Status.AvailableReplicas)
-				// printDeployments(deployments)
-				time.Sleep(time.Second * 1)
-				continue
-			}
-		}
-	}
-	fmt.Println("Deployment available (4/4)")
-	// printDeployments(deployments)
+	deploymentReplicaCheck(api, "example-memcached", 4, 60)
 }
 
 func printDeployments(deployments *v1.DeploymentList) {
@@ -214,4 +130,37 @@ func printDeployments(deployments *v1.DeploymentList) {
 			strconv.Itoa(int(deployment.Status.AvailableReplicas)),
 		)
 	}
+}
+
+func deploymentReplicaCheck(api appsv1.AppsV1Interface, name string, replicas, timeout int) {
+	count := 0
+
+	// setup list options
+	listOptions := metav1.ListOptions{
+		LabelSelector: "",
+		FieldSelector: "",
+	}
+
+outerloop:
+	for {
+		if count >= timeout {
+			break
+		}
+		count++
+		deployments, err := api.Deployments("").List(listOptions)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, deployment := range deployments.Items {
+			if deployment.Name == name && int(deployment.Status.AvailableReplicas) == replicas {
+				break outerloop
+			} else if deployment.Name == name {
+				fmt.Printf("Waiting for full availability of memcached deployment (%d/%d)\n", deployment.Status.AvailableReplicas, replicas)
+				// printDeployments(deployments)
+				time.Sleep(time.Second * 1)
+				continue
+			}
+		}
+	}
+	fmt.Printf("Deployment available (%d/%d)\n", replicas, replicas)
 }
