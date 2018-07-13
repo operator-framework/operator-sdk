@@ -35,30 +35,15 @@ func main() {
 	api := clientset.AppsV1()
 
 	// create rbac
-	output, err := exec.Command("kubectl", "create", "-f", "deploy/rbac.yaml").Output()
-	if err != nil {
-		fmt.Println("An error occurred")
-		fmt.Printf("%s\n", output)
-		log.Fatalf("%s\n", err)
-	}
+	kubectlWrapper("create", "deploy/rbac.yaml")
 	fmt.Println("Created rbac")
 
 	// create crd
-	output, err = exec.Command("kubectl", "create", "-f", "deploy/crd.yaml").Output()
-	if err != nil {
-		fmt.Println("An error occurred")
-		fmt.Printf("%s\n", output)
-		log.Fatalf("%s\n", err)
-	}
+	kubectlWrapper("create", "deploy/crd.yaml")
 	fmt.Println("Created crd")
 
 	// create operator
-	output, err = exec.Command("kubectl", "create", "-f", "deploy/operator.yaml").Output()
-	if err != nil {
-		fmt.Println("An error occurred")
-		fmt.Printf("%s\n", output)
-		log.Fatalf("%s\n", err)
-	}
+	kubectlWrapper("create", "deploy/operator.yaml")
 	fmt.Println("Created operator")
 
 	deploymentReplicaCheck(api, "memcached-operator", 1, 60)
@@ -78,12 +63,7 @@ func main() {
 	file.Close()
 
 	// apply/create example-memcached deployment
-	output, err = exec.Command("kubectl", "apply", "-f", "deploy/cr.yaml").Output()
-	if err != nil {
-		fmt.Println("An error occurred")
-		fmt.Printf("%s\n", output)
-		log.Fatalf("%s\n", err)
-	}
+	kubectlWrapper("apply", "deploy/cr.yaml")
 
 	deploymentReplicaCheck(api, "example-memcached", 3, 60)
 
@@ -110,12 +90,7 @@ func main() {
 	file.Close()
 
 	// apply updated example-memcached deployment
-	output, err = exec.Command("kubectl", "apply", "-f", "deploy/cr.yaml").Output()
-	if err != nil {
-		fmt.Println("An error occurred")
-		fmt.Printf("%s\n", output)
-		log.Fatalf("%s\n", err)
-	}
+	kubectlWrapper("apply", "deploy/cr.yaml")
 
 	deploymentReplicaCheck(api, "example-memcached", 4, 60)
 }
@@ -163,4 +138,13 @@ outerloop:
 		}
 	}
 	fmt.Printf("Deployment available (%d/%d)\n", replicas, replicas)
+}
+
+func kubectlWrapper(action, file string) {
+	output, err := exec.Command("kubectl", action, "-f", file).Output()
+	if err != nil {
+		fmt.Println("An error occurred")
+		fmt.Printf("%s\n", output)
+		log.Fatalf("%s\n", err)
+	}
 }
