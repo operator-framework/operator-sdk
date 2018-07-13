@@ -70,8 +70,7 @@ func main() {
 	// update deployment to 4 replicas
 	cr, err := ioutil.ReadFile("deploy/cr.yaml")
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
 	newCr := bytes.Replace(cr, []byte("size: 3"), []byte("size: 4"), -1)
