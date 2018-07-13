@@ -119,7 +119,7 @@ func deploymentReplicaCheck(api appsv1.AppsV1Interface, name string, replicas, t
 outerloop:
 	for {
 		if count >= timeout {
-			break
+			log.Fatalf("Deployment %s did not produce %d available replicas.\n", name, replicas)
 		}
 		count++
 		deployments, err := api.Deployments("").List(listOptions)
