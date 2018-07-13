@@ -30,7 +30,7 @@ install:
 - go get -t -d ./...
 
 script:
-- ./test.sh
+- test/test.sh
 
 after_success:
 - echo 'Build succeeded, operator was generated, memcached operator is running on minikube, and unit/integration tests pass'
