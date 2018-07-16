@@ -12,7 +12,8 @@ import (
 	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/util/retryutil"
-	"k8s.io/api/apps/v1"
+	apps "k8s.io/api/apps/v1"
+	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -35,11 +36,10 @@ func main() {
 	}
 
 	// create namespace
-	output, err := exec.Command("kubectl", "create", "namespace", namespace).Output()
+	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace}}
+	_, err = kubeclient.CoreV1().Namespaces().Create(namespaceObj)
 	if err != nil {
-		fmt.Println("An error occurred")
-		fmt.Printf("%s\n", output)
-		log.Fatalf("%s\n", err)
+		log.Fatal(err)
 	}
 
 	// create rbac
@@ -112,7 +112,7 @@ func main() {
 	kubectlWrapper("delete", namespace, "deploy/operator.yaml")
 }
 
-func printDeployments(deployments *v1.DeploymentList) {
+func printDeployments(deployments *apps.DeploymentList) {
 	template := "%-40s%-10s\n"
 	fmt.Printf(template, "NAME", "NUM_REPLICAS")
 	for _, deployment := range deployments.Items {
