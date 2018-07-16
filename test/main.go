@@ -18,6 +18,7 @@ import (
 )
 
 func main() {
+	namespace := "memcached"
 	kubeconfig := filepath.Join(
 		os.Getenv("HOME"), ".kube", "config",
 	)
@@ -31,18 +32,18 @@ func main() {
 	}
 
 	// create rbac
-	kubectlWrapper("create", "deploy/rbac.yaml")
+	kubectlWrapper("create", namespace, "deploy/rbac.yaml")
 	fmt.Println("Created rbac")
 
 	// create crd
-	kubectlWrapper("create", "deploy/crd.yaml")
+	kubectlWrapper("create", namespace, "deploy/crd.yaml")
 	fmt.Println("Created crd")
 
 	// create operator
-	kubectlWrapper("create", "deploy/operator.yaml")
+	kubectlWrapper("create", namespace, "deploy/operator.yaml")
 	fmt.Println("Created operator")
 
-	deploymentReplicaCheck(kubeclient, "memcached-operator", 1, 60)
+	deploymentReplicaCheck(kubeclient, namespace, "memcached-operator", 1, 60)
 
 	// create example-memcached yaml file
 	file, err := os.OpenFile("deploy/cr.yaml", os.O_WRONLY|os.O_CREATE, 0644)
@@ -58,9 +59,9 @@ func main() {
 
 	file.Close()
 
-	kubectlWrapper("apply", "deploy/cr.yaml")
+	kubectlWrapper("apply", namespace, "deploy/cr.yaml")
 
-	deploymentReplicaCheck(kubeclient, "example-memcached", 3, 60)
+	deploymentReplicaCheck(kubeclient, namespace, "example-memcached", 3, 60)
 
 	// update CR size to 4
 	cr, err := ioutil.ReadFile("deploy/cr.yaml")
@@ -83,9 +84,9 @@ func main() {
 
 	file.Close()
 
-	kubectlWrapper("apply", "deploy/cr.yaml")
+	kubectlWrapper("apply", namespace, "deploy/cr.yaml")
 
-	deploymentReplicaCheck(kubeclient, "example-memcached", 4, 60)
+	deploymentReplicaCheck(kubeclient, namespace, "example-memcached", 4, 60)
 }
 
 func printDeployments(deployments *v1.DeploymentList) {
@@ -100,7 +101,7 @@ func printDeployments(deployments *v1.DeploymentList) {
 	}
 }
 
-func deploymentReplicaCheck(kubeclient *kubernetes.Clientset, name string, replicas, timeout int) {
+func deploymentReplicaCheck(kubeclient *kubernetes.Clientset, namespace, name string, replicas, timeout int) {
 	sleepTime := 5
 	maxRetries := timeout / sleepTime
 	count := 0
@@ -110,7 +111,7 @@ func deploymentReplicaCheck(kubeclient *kubernetes.Clientset, name string, repli
 			log.Fatalf("Deployment %s did not produce %d available replicas.\n", name, replicas)
 		}
 		count++
-		deployment, err := kubeclient.AppsV1().Deployments("").Get(name, metav1.GetOptions{})
+		deployment, err := kubeclient.AppsV1().Deployments(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -127,8 +128,8 @@ func deploymentReplicaCheck(kubeclient *kubernetes.Clientset, name string, repli
 	fmt.Printf("Deployment available (%d/%d)\n", replicas, replicas)
 }
 
-func kubectlWrapper(action, file string) {
-	output, err := exec.Command("kubectl", action, "-f", file).Output()
+func kubectlWrapper(action, namespace, file string) {
+	output, err := exec.Command("kubectl", action, "-n", namespace, "-f", file).Output()
 	if err != nil {
 		fmt.Println("An error occurred")
 		fmt.Printf("%s\n", output)
