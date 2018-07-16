@@ -31,6 +31,14 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// create namespace
+	output, err := exec.Command("kubectl", "create", "namespace", namespace).Output()
+	if err != nil {
+		fmt.Println("An error occurred")
+		fmt.Printf("%s\n", output)
+		log.Fatalf("%s\n", err)
+	}
+
 	// create rbac
 	kubectlWrapper("create", namespace, "deploy/rbac.yaml")
 	fmt.Println("Created rbac")
