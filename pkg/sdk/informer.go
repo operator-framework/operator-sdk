@@ -18,6 +18,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/pkg/sdk/internal/metrics"
+
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -40,14 +42,16 @@ type informer struct {
 	namespace           string
 	context             context.Context
 	deletedObjects      map[string]interface{}
+	collector           *metrics.Collector
 }
 
-func NewInformer(resourcePluralName, namespace string, resourceClient dynamic.ResourceInterface, resyncPeriod int) Informer {
+func NewInformer(resourcePluralName, namespace string, resourceClient dynamic.ResourceInterface, resyncPeriod int, c *metrics.Collector) Informer {
 	i := &informer{
 		resourcePluralName: resourcePluralName,
 		queue:              workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), resourcePluralName),
 		namespace:          namespace,
 		deletedObjects:     map[string]interface{}{},
+		collector:          c,
 	}
 
 	resyncDuration := time.Duration(resyncPeriod) * time.Second
@@ -96,6 +100,7 @@ func (i *informer) handleAddResourceEvent(obj interface{}) {
 	if err != nil {
 		panic(err)
 	}
+	i.collector.EventType.WithLabelValues(metrics.EventTypeAdd).Inc()
 	i.queue.Add(key)
 }
 
@@ -110,6 +115,7 @@ func (i *informer) handleDeleteResourceEvent(obj interface{}) {
 	// TODO: Revisit the need for passing delete events to the handler
 	// Save the last known state for the deleted object
 	i.deletedObjects[key] = obj.(*unstructured.Unstructured).DeepCopy()
+	i.collector.EventType.WithLabelValues(metrics.EventTypeDelete).Inc()
 
 	i.queue.Add(key)
 }
@@ -119,5 +125,6 @@ func (i *informer) handleUpdateResourceEvent(oldObj, newObj interface{}) {
 	if err != nil {
 		panic(err)
 	}
+	i.collector.EventType.WithLabelValues(metrics.EventTypeUpdate).Inc()
 	i.queue.Add(key)
 }
