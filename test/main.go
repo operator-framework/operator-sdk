@@ -129,7 +129,7 @@ func deploymentReplicaCheck(kubeclient *kubernetes.Clientset, namespace, name st
 }
 
 func kubectlWrapper(action, namespace, file string) {
-	output, err := exec.Command("kubectl", action, "-n", namespace, "-f", file).Output()
+	output, err := exec.Command("kubectl", action, "--namespace="+namespace, "-f", file).Output()
 	if err != nil {
 		fmt.Println("An error occurred")
 		fmt.Printf("%s\n", output)
