@@ -6,7 +6,6 @@ go vet ./...
 make install
 echo "Building memcached-example tester"
 cd test
-ln -s ../vendor vender
 go build
 cp test $GOPATH/src/github.com/example-inc
 
