@@ -107,33 +107,27 @@ func printDeployments(deployments *v1.DeploymentList) {
 }
 
 func deploymentReplicaCheck(api appsv1.AppsV1Interface, name string, replicas, timeout int) {
+	sleepTime := 5
+	maxRetries := timeout / sleepTime
 	count := 0
 
-	// setup list options
-	listOptions := metav1.ListOptions{
-		LabelSelector: "",
-		FieldSelector: "",
-	}
-
-outerloop:
 	for {
-		if count >= timeout {
+		if count >= maxRetries {
 			log.Fatalf("Deployment %s did not produce %d available replicas.\n", name, replicas)
 		}
 		count++
-		deployments, err := api.Deployments("").List(listOptions)
+		deployment, err := api.Deployments("").Get(name, metav1.GetOptions{})
 		if err != nil {
 			log.Fatal(err)
 		}
-		for _, deployment := range deployments.Items {
-			if deployment.Name == name && int(deployment.Status.AvailableReplicas) == replicas {
-				break outerloop
-			} else if deployment.Name == name {
-				fmt.Printf("Waiting for full availability of %s deployment (%d/%d)\n", name, deployment.Status.AvailableReplicas, replicas)
-				// printDeployments(deployments)
-				time.Sleep(time.Second * 1)
-				continue
-			}
+
+		if int(deployment.Status.AvailableReplicas) == replicas {
+			break
+		} else {
+			fmt.Printf("Waiting for full availability of %s deployment (%d/%d)\n", name, deployment.Status.AvailableReplicas, replicas)
+			// printDeployments(deployments)
+			time.Sleep(time.Second * time.Duration(sleepTime))
+			continue
 		}
 	}
 	fmt.Printf("Deployment available (%d/%d)\n", replicas, replicas)
