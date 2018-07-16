@@ -23,7 +23,3 @@ operator-sdk generate k8s
 operator-sdk build quay.io/example/memcached-operator:v0.0.1
 sed -ie 's/imagePullPolicy: Always/imagePullPolicy: Never/g' deploy/operator.yaml
 ../test
-
-# Cleanup
-kubectl delete -f deploy/cr.yaml
-kubectl delete -f deploy/operator.yaml

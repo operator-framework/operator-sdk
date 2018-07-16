@@ -95,6 +95,9 @@ func main() {
 	kubectlWrapper("apply", namespace, "deploy/cr.yaml")
 
 	deploymentReplicaCheck(kubeclient, namespace, "example-memcached", 4, 60)
+
+	kubectlWrapper("delete", namespace, "deploy/cr.yaml")
+	kubectlWrapper("delete", namespace, "deploy/operator.yaml")
 }
 
 func printDeployments(deployments *v1.DeploymentList) {
