@@ -14,7 +14,6 @@ import (
 	"k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -26,13 +25,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	clientset, err := kubernetes.NewForConfig(config)
+	kubeclient, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// NOTE: Certain features are in different clientsets. For example,
-	// Pods would be in CoreV1, not AppsV1
-	api := clientset.AppsV1()
 
 	// create rbac
 	kubectlWrapper("create", "deploy/rbac.yaml")
@@ -46,7 +42,7 @@ func main() {
 	kubectlWrapper("create", "deploy/operator.yaml")
 	fmt.Println("Created operator")
 
-	deploymentReplicaCheck(api, "memcached-operator", 1, 60)
+	deploymentReplicaCheck(kubeclient, "memcached-operator", 1, 60)
 
 	// create example-memcached yaml file
 	file, err := os.OpenFile("deploy/cr.yaml", os.O_WRONLY|os.O_CREATE, 0644)
@@ -64,7 +60,7 @@ func main() {
 
 	kubectlWrapper("apply", "deploy/cr.yaml")
 
-	deploymentReplicaCheck(api, "example-memcached", 3, 60)
+	deploymentReplicaCheck(kubeclient, "example-memcached", 3, 60)
 
 	// update CR size to 4
 	cr, err := ioutil.ReadFile("deploy/cr.yaml")
@@ -89,7 +85,7 @@ func main() {
 
 	kubectlWrapper("apply", "deploy/cr.yaml")
 
-	deploymentReplicaCheck(api, "example-memcached", 4, 60)
+	deploymentReplicaCheck(kubeclient, "example-memcached", 4, 60)
 }
 
 func printDeployments(deployments *v1.DeploymentList) {
@@ -104,7 +100,7 @@ func printDeployments(deployments *v1.DeploymentList) {
 	}
 }
 
-func deploymentReplicaCheck(api appsv1.AppsV1Interface, name string, replicas, timeout int) {
+func deploymentReplicaCheck(kubeclient *kubernetes.Clientset, name string, replicas, timeout int) {
 	sleepTime := 5
 	maxRetries := timeout / sleepTime
 	count := 0
@@ -114,7 +110,7 @@ func deploymentReplicaCheck(api appsv1.AppsV1Interface, name string, replicas, t
 			log.Fatalf("Deployment %s did not produce %d available replicas.\n", name, replicas)
 		}
 		count++
-		deployment, err := api.Deployments("").Get(name, metav1.GetOptions{})
+		deployment, err := kubeclient.AppsV1().Deployments("").Get(name, metav1.GetOptions{})
 		if err != nil {
 			log.Fatal(err)
 		}
