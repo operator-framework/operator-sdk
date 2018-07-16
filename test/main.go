@@ -11,11 +11,14 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/pkg/util/retryutil"
 	"k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
+
+var retryInterval = time.Second * 5
 
 func main() {
 	namespace := "memcached"
@@ -51,7 +54,10 @@ func main() {
 	kubectlWrapper("create", namespace, "deploy/operator.yaml")
 	fmt.Println("Created operator")
 
-	deploymentReplicaCheck(kubeclient, namespace, "memcached-operator", 1, 60)
+	err = deploymentReplicaCheck(kubeclient, namespace, "memcached-operator", 1, 6)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// create example-memcached yaml file
 	file, err := os.OpenFile("deploy/cr.yaml", os.O_WRONLY|os.O_CREATE, 0644)
@@ -69,7 +75,10 @@ func main() {
 
 	kubectlWrapper("apply", namespace, "deploy/cr.yaml")
 
-	deploymentReplicaCheck(kubeclient, namespace, "example-memcached", 3, 60)
+	err = deploymentReplicaCheck(kubeclient, namespace, "example-memcached", 3, 6)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// update CR size to 4
 	cr, err := ioutil.ReadFile("deploy/cr.yaml")
@@ -94,7 +103,10 @@ func main() {
 
 	kubectlWrapper("apply", namespace, "deploy/cr.yaml")
 
-	deploymentReplicaCheck(kubeclient, namespace, "example-memcached", 4, 60)
+	err = deploymentReplicaCheck(kubeclient, namespace, "example-memcached", 4, 6)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	kubectlWrapper("delete", namespace, "deploy/cr.yaml")
 	kubectlWrapper("delete", namespace, "deploy/operator.yaml")
@@ -112,31 +124,24 @@ func printDeployments(deployments *v1.DeploymentList) {
 	}
 }
 
-func deploymentReplicaCheck(kubeclient *kubernetes.Clientset, namespace, name string, replicas, timeout int) {
-	sleepTime := 5
-	maxRetries := timeout / sleepTime
-	count := 0
-
-	for {
-		if count >= maxRetries {
-			log.Fatalf("Deployment %s did not produce %d available replicas.\n", name, replicas)
-		}
-		count++
+func deploymentReplicaCheck(kubeclient *kubernetes.Clientset, namespace, name string, replicas, retries int) error {
+	err := retryutil.Retry(retryInterval, retries, func() (done bool, err error) {
 		deployment, err := kubeclient.AppsV1().Deployments(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
-			log.Fatal(err)
+			return false, err
 		}
 
 		if int(deployment.Status.AvailableReplicas) == replicas {
-			break
-		} else {
-			fmt.Printf("Waiting for full availability of %s deployment (%d/%d)\n", name, deployment.Status.AvailableReplicas, replicas)
-			// printDeployments(deployments)
-			time.Sleep(time.Second * time.Duration(sleepTime))
-			continue
+			return true, nil
 		}
+		fmt.Printf("Waiting for full availability of %s deployment (%d/%d)\n", name, deployment.Status.AvailableReplicas, replicas)
+		return false, nil
+	})
+	if err != nil {
+		return err
 	}
 	fmt.Printf("Deployment available (%d/%d)\n", replicas, replicas)
+	return nil
 }
 
 func kubectlWrapper(action, namespace, file string) {
