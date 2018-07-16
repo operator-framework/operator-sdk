@@ -62,12 +62,11 @@ func main() {
 
 	file.Close()
 
-	// apply/create example-memcached deployment
 	kubectlWrapper("apply", "deploy/cr.yaml")
 
 	deploymentReplicaCheck(api, "example-memcached", 3, 60)
 
-	// update deployment to 4 replicas
+	// update CR size to 4
 	cr, err := ioutil.ReadFile("deploy/cr.yaml")
 	if err != nil {
 		log.Fatal(err)
@@ -88,7 +87,6 @@ func main() {
 
 	file.Close()
 
-	// apply updated example-memcached deployment
 	kubectlWrapper("apply", "deploy/cr.yaml")
 
 	deploymentReplicaCheck(api, "example-memcached", 4, 60)
