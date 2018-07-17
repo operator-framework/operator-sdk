@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -15,7 +13,12 @@ import (
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -80,28 +83,28 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// get new RESTClient for memcached resources
+	var SchemeGroupVersion = schema.GroupVersion{Group: "cache.example.com", Version: "v1alpha1"}
+	config.GroupVersion = &SchemeGroupVersion
+	config.APIPath = "/apis"
+	config.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: scheme.Codecs}
+
+	if config.UserAgent == "" {
+		config.UserAgent = rest.DefaultKubernetesUserAgent()
+	}
+	restClient, err := rest.RESTClientFor(config)
+
 	// update CR size to 4
-	cr, err := ioutil.ReadFile("deploy/cr.yaml")
+	err = restClient.Patch(types.JSONPatchType).
+		Namespace(namespace).
+		Resource("memcacheds").
+		Name("example-memcached").
+		Body([]byte("[{\"op\": \"replace\", \"path\": \"/spec/size\", \"value\": 4}]")).
+		Do().
+		Error()
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	newCr := bytes.Replace(cr, []byte("size: 3"), []byte("size: 4"), -1)
-
-	file, err = os.OpenFile("deploy/cr.yaml", os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-
-	_, err = file.Write(newCr)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	file.Close()
-
-	kubectlWrapper("apply", namespace, "deploy/cr.yaml")
 
 	err = deploymentReplicaCheck(kubeclient, namespace, "example-memcached", 4, 6)
 	if err != nil {
@@ -128,7 +131,9 @@ func deploymentReplicaCheck(kubeclient *kubernetes.Clientset, namespace, name st
 	err := retryutil.Retry(retryInterval, retries, func() (done bool, err error) {
 		deployment, err := kubeclient.AppsV1().Deployments(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
 		if err != nil {
-			return false, err
+			// sometimes, a deployment has not been created by the time we call this; we
+			// assume that is what happened instead of immediately failing
+			return false, nil
 		}
 
 		if int(deployment.Status.AvailableReplicas) == replicas {
