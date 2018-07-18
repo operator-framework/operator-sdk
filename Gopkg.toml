@@ -15,6 +15,10 @@
   version = "kubernetes-1.9.3"
 
 [[override]]
+  name = "k8s.io/apiextensions-apiserver"
+  version = "kubernetes-1.9.3"
+
+[[override]]
   name = "k8s.io/client-go"
   version = "kubernetes-1.9.3"
 
