@@ -35,6 +35,7 @@ import (
 )
 
 var retryInterval = time.Second * 5
+var kubeconfig *rest.Config
 
 func main() {
 	os.Chdir(os.Getenv("GOPATH") + "/src/github.com/example-inc")
@@ -105,18 +106,14 @@ func main() {
 	}
 
 	namespace := "memcached"
-	kubeconfig := filepath.Join(
+	kubeconfigPath := filepath.Join(
 		os.Getenv("HOME"), ".kube", "config",
 	)
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	kubeconfig, err = clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	if err != nil {
 		log.Fatal(err)
 	}
-	kubeclient, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		log.Fatal(err)
-	}
-	extensionclient, err := extensions.NewForConfig(config)
+	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -143,7 +140,7 @@ func main() {
 	// create crd
 	yamlCRD, err := ioutil.ReadFile("deploy/crd.yaml")
 	//	kubectlWrapper("create", namespace, "deploy/crd.yaml")
-	err = createCRDFromYAML(yamlCRD, extensionclient)
+	err = createFromYAML(yamlCRD, kubeclient, namespace)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -178,8 +175,8 @@ func main() {
 	file.Close()
 
 	yamlCR, err := ioutil.ReadFile("deploy/cr.yaml")
-	memcachedClient := getCRClient(config, yamlCR)
-	createCRFromYAML(yamlCR, memcachedClient, namespace, "memcacheds")
+	memcachedClient := getCRClient(kubeconfig, yamlCR)
+	createFromYAML(yamlCR, kubeclient, namespace)
 
 	//kubectlWrapper("apply", namespace, "deploy/cr.yaml")
 
@@ -246,7 +243,8 @@ func getCRClient(config *rest.Config, yamlCR []byte) *rest.RESTClient {
 }
 
 // create a custom resource from a yaml file; not fully automated (still needs more work)
-func createCRFromYAML(yamlFile []byte, client *rest.RESTClient, namespace, resourceName string) error {
+func createCRFromYAML(yamlFile []byte, namespace, resourceName string) error {
+	client := getCRClient(kubeconfig, yamlFile)
 	jsonDat, err := y2j.YAMLToJSON(yamlFile)
 	err = client.Post().
 		Namespace(namespace).
@@ -274,6 +272,24 @@ func createCRDFromYAML(yamlFile []byte, extensionsClient *extensions.Clientset) 
 }
 
 func createFromYAML(yamlFile []byte, kubeclient *kubernetes.Clientset, namespace string) error {
+	m := make(map[interface{}]interface{})
+	err := yaml.Unmarshal(yamlFile, &m)
+	kind := m["kind"].(string)
+	switch kind {
+	case "Role":
+		fallthrough
+	case "RoleBinding":
+		fallthrough
+	case "Deployment":
+	case "CustomResourceDefinition":
+		extensionclient, err := extensions.NewForConfig(kubeconfig)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return createCRDFromYAML(yamlFile, extensionclient)
+	case "Memcached":
+		return createCRFromYAML(yamlFile, namespace, "memcacheds")
+	}
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	obj, _, err := decode(yamlFile, nil, nil)
 
