@@ -277,9 +277,7 @@ func createFromYAML(yamlFile []byte, kubeclient *kubernetes.Clientset, namespace
 	kind := m["kind"].(string)
 	switch kind {
 	case "Role":
-		fallthrough
 	case "RoleBinding":
-		fallthrough
 	case "Deployment":
 	case "CustomResourceDefinition":
 		extensionclient, err := extensions.NewForConfig(kubeconfig)
@@ -287,8 +285,10 @@ func createFromYAML(yamlFile []byte, kubeclient *kubernetes.Clientset, namespace
 			log.Fatal(err)
 		}
 		return createCRDFromYAML(yamlFile, extensionclient)
-	case "Memcached":
-		return createCRFromYAML(yamlFile, namespace, "memcacheds")
+	// we assume that all custom resources are from operator-sdk and thus follow
+	// a common naming convention
+	default:
+		return createCRFromYAML(yamlFile, namespace, strings.ToLower(kind)+"s")
 	}
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	obj, _, err := decode(yamlFile, nil, nil)
