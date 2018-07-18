@@ -134,12 +134,10 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-	//	kubectlWrapper("create", namespace, "deploy/rbac.yaml")
 	fmt.Println("Created rbac")
 
 	// create crd
 	yamlCRD, err := ioutil.ReadFile("deploy/crd.yaml")
-	//	kubectlWrapper("create", namespace, "deploy/crd.yaml")
 	err = createFromYAML(yamlCRD, kubeclient, namespace)
 	if err != nil {
 		log.Fatal(err)
@@ -148,7 +146,6 @@ func main() {
 
 	// create operator
 	dat, err = ioutil.ReadFile("deploy/operator.yaml")
-	//kubectlWrapper("create", namespace, "deploy/operator.yaml")
 	err = createFromYAML(dat, kubeclient, namespace)
 	if err != nil {
 		log.Fatal(err)
@@ -177,8 +174,6 @@ func main() {
 	yamlCR, err := ioutil.ReadFile("deploy/cr.yaml")
 	memcachedClient := getCRClient(kubeconfig, yamlCR)
 	createFromYAML(yamlCR, kubeclient, namespace)
-
-	//kubectlWrapper("apply", namespace, "deploy/cr.yaml")
 
 	err = deploymentReplicaCheck(kubeclient, namespace, "example-memcached", 3, 6)
 	if err != nil {
@@ -346,13 +341,4 @@ func deploymentReplicaCheck(kubeclient *kubernetes.Clientset, namespace, name st
 	}
 	fmt.Printf("Deployment available (%d/%d)\n", replicas, replicas)
 	return nil
-}
-
-func kubectlWrapper(action, namespace, file string) {
-	output, err := exec.Command("kubectl", action, "--namespace="+namespace, "-f", file).CombinedOutput()
-	if err != nil {
-		fmt.Println("An error occurred")
-		fmt.Printf("%s\n", output)
-		log.Fatalf("%s\n", err)
-	}
 }
