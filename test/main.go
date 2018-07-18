@@ -327,6 +327,7 @@ func deploymentReplicaCheck(kubeclient *kubernetes.Clientset, namespace, name st
 		if err != nil {
 			// sometimes, a deployment has not been created by the time we call this; we
 			// assume that is what happened instead of immediately failing
+			fmt.Printf("Waiting for availability of %s deployment\n", name)
 			return false, nil
 		}
 
