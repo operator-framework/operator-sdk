@@ -124,8 +124,23 @@ func main() {
 		log.Fatal(err)
 	}
 
-	kubectlWrapper("delete", namespace, "deploy/cr.yaml")
-	kubectlWrapper("delete", namespace, "deploy/operator.yaml")
+	err = memcachedClient.Delete().
+		Namespace(namespace).
+		Resource("memcacheds").
+		Name("example-memcached").
+		Body([]byte("{\"propagationPolicy\":\"Foreground\"}")).
+		Do().
+		Error()
+	if err != nil {
+		fmt.Println("Failed to delete example-memcached CR")
+		log.Fatal(err)
+	}
+	err = kubeclient.AppsV1().Deployments(namespace).
+		Delete("memcached-operator", nil)
+	if err != nil {
+		fmt.Println("Failed to delete memcached-operator deployment")
+		log.Fatal(err)
+	}
 }
 
 func getCRClient(config *rest.Config, group, version string) *rest.RESTClient {
