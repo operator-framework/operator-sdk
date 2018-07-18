@@ -3,8 +3,10 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -32,6 +34,73 @@ import (
 var retryInterval = time.Second * 5
 
 func main() {
+	os.Chdir(os.Getenv("GOPATH") + "/src/github.com/example-inc")
+	fmt.Println("Creating new operator project")
+	cmdOut, err := exec.Command("operator-sdk",
+		"new",
+		"memcached-operator",
+		"--api-version=cache.example.com/v1alpha1",
+		"--kind=Memcached").CombinedOutput()
+	if err != nil {
+		log.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+	}
+	os.Chdir("memcached-operator")
+	os.RemoveAll("vendor/github.com/operator-framework/operator-sdk/pkg")
+	os.Symlink(os.Getenv("TRAVIS_BUILD_DIR")+"/pkg", "vendor/github.com/operator-framework/operator-sdk/pkg")
+	handler, err := os.Create("pkg/stub/handler.go")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer handler.Close()
+	resp, err := http.Get("https://raw.githubusercontent.com/operator-framework/operator-sdk/master/example/memcached-operator/handler.go.tmpl")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+	_, err = io.Copy(handler, resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	gotypes, err := ioutil.ReadFile("pkg/apis/cache/v1alpha1/types.go")
+	if err != nil {
+		log.Fatal(err)
+	}
+	lines := bytes.Split(gotypes, []byte("\n"))
+	lines = lines[:len(lines)-7]
+	lines = append(lines, []byte("type MemcachedSpec struct {	Size int32 `json:\"size\"`}"))
+	lines = append(lines, []byte("type MemcachedStatus struct {Nodes []string `json:\"nodes\"`}\n"))
+	os.Remove("pkg/apis/cache/v1alpha1/types.go")
+	err = ioutil.WriteFile("pkg/apis/cache/v1alpha1/types.go", bytes.Join(lines, []byte("\n")), os.FileMode(int(0664)))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Generating k8s")
+	cmdOut, err = exec.Command("operator-sdk",
+		"generate",
+		"k8s").CombinedOutput()
+	if err != nil {
+		log.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+	}
+
+	fmt.Println("Building operator docker image")
+	cmdOut, err = exec.Command("operator-sdk",
+		"build",
+		"quay.io/example/memcached-operator:v0.0.1").CombinedOutput()
+	if err != nil {
+		log.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+	}
+
+	opYAML, err := ioutil.ReadFile("deploy/operator.yaml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	opYAML = bytes.Replace(opYAML, []byte("imagePullPolicy: Always"), []byte("imagePullPolicy: Never"), 1)
+	err = ioutil.WriteFile("deploy/operator.yaml", opYAML, os.FileMode(int(0664)))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	namespace := "memcached"
 	kubeconfig := filepath.Join(
 		os.Getenv("HOME"), ".kube", "config",
@@ -60,7 +129,10 @@ func main() {
 	dat, err := ioutil.ReadFile("deploy/rbac.yaml")
 	splitDat := bytes.Split(dat, []byte("\n---\n"))
 	for _, thing := range splitDat {
-		createFromYAML(thing, kubeclient, namespace)
+		err = createFromYAML(thing, kubeclient, namespace)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	//	kubectlWrapper("create", namespace, "deploy/rbac.yaml")
 	fmt.Println("Created rbac")
@@ -68,13 +140,19 @@ func main() {
 	// create crd
 	dat, err = ioutil.ReadFile("deploy/crd.yaml")
 	//	kubectlWrapper("create", namespace, "deploy/crd.yaml")
-	createCRDFromYAML(dat, extensionclient)
+	err = createCRDFromYAML(dat, extensionclient)
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Println("Created crd")
 
 	// create operator
 	dat, err = ioutil.ReadFile("deploy/operator.yaml")
 	//kubectlWrapper("create", namespace, "deploy/operator.yaml")
-	createFromYAML(dat, kubeclient, namespace)
+	err = createFromYAML(dat, kubeclient, namespace)
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Println("Created operator")
 
 	err = deploymentReplicaCheck(kubeclient, namespace, "memcached-operator", 1, 6)
@@ -162,7 +240,7 @@ func getCRClient(config *rest.Config, group, version string) *rest.RESTClient {
 }
 
 // create a custom resource from a yaml file; not fully automated (still needs more work)
-func createCRFromYAML(yaml []byte, client *rest.RESTClient, namespace, resourceName string) {
+func createCRFromYAML(yaml []byte, client *rest.RESTClient, namespace, resourceName string) error {
 	jsonDat, err := y2j.YAMLToJSON(yaml)
 	err = client.Post().
 		Namespace(namespace).
@@ -170,12 +248,10 @@ func createCRFromYAML(yaml []byte, client *rest.RESTClient, namespace, resourceN
 		Body(jsonDat).
 		Do().
 		Error()
-	if err != nil {
-		log.Fatal(err)
-	}
+	return err
 }
 
-func createCRDFromYAML(yaml []byte, extensionsClient *extensions.Clientset) {
+func createCRDFromYAML(yaml []byte, extensionsClient *extensions.Clientset) error {
 	decode := extensions_scheme.Codecs.UniversalDeserializer().Decode
 	obj, _, err := decode(yaml, nil, nil)
 
@@ -185,11 +261,13 @@ func createCRDFromYAML(yaml []byte, extensionsClient *extensions.Clientset) {
 	}
 	switch o := obj.(type) {
 	case *crd.CustomResourceDefinition:
-		extensionsClient.ApiextensionsV1beta1().CustomResourceDefinitions().Create(o)
+		_, err = extensionsClient.ApiextensionsV1beta1().CustomResourceDefinitions().Create(o)
+		return err
 	}
+	return nil
 }
 
-func createFromYAML(yaml []byte, kubeclient *kubernetes.Clientset, namespace string) {
+func createFromYAML(yaml []byte, kubeclient *kubernetes.Clientset, namespace string) error {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	obj, _, err := decode(yaml, nil, nil)
 
@@ -200,14 +278,18 @@ func createFromYAML(yaml []byte, kubeclient *kubernetes.Clientset, namespace str
 
 	switch o := obj.(type) {
 	case *v1beta1.Role:
-		kubeclient.RbacV1beta1().Roles(namespace).Create(o)
+		_, err = kubeclient.RbacV1beta1().Roles(namespace).Create(o)
+		return err
 	case *v1beta1.RoleBinding:
-		kubeclient.RbacV1beta1().RoleBindings(namespace).Create(o)
+		_, err = kubeclient.RbacV1beta1().RoleBindings(namespace).Create(o)
+		return err
 	case *apps.Deployment:
-		kubeclient.AppsV1().Deployments(namespace).Create(o)
+		_, err = kubeclient.AppsV1().Deployments(namespace).Create(o)
+		return err
 	default:
 		log.Fatalf("unknown type: %s", o)
 	}
+	return nil
 }
 
 func printDeployments(deployments *apps.DeploymentList) {
@@ -245,7 +327,7 @@ func deploymentReplicaCheck(kubeclient *kubernetes.Clientset, namespace, name st
 }
 
 func kubectlWrapper(action, namespace, file string) {
-	output, err := exec.Command("kubectl", action, "--namespace="+namespace, "-f", file).Output()
+	output, err := exec.Command("kubectl", action, "--namespace="+namespace, "-f", file).CombinedOutput()
 	if err != nil {
 		fmt.Println("An error occurred")
 		fmt.Printf("%s\n", output)
