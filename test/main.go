@@ -177,9 +177,9 @@ func main() {
 
 	file.Close()
 
-	dat, err = ioutil.ReadFile("deploy/cr.yaml")
-	memcachedClient := getCRClient(config, yamlCRD)
-	createCRFromYAML(dat, memcachedClient, namespace, "memcacheds")
+	yamlCR, err := ioutil.ReadFile("deploy/cr.yaml")
+	memcachedClient := getCRClient(config, yamlCR)
+	createCRFromYAML(yamlCR, memcachedClient, namespace, "memcacheds")
 
 	//kubectlWrapper("apply", namespace, "deploy/cr.yaml")
 
@@ -224,11 +224,11 @@ func main() {
 	}
 }
 
-func getCRClient(config *rest.Config, yamlCRD []byte) *rest.RESTClient {
+func getCRClient(config *rest.Config, yamlCR []byte) *rest.RESTClient {
 	// get new RESTClient for custom resources
 	crConfig := config
 	m := make(map[interface{}]interface{})
-	err := yaml.Unmarshal(yamlCRD, &m)
+	err := yaml.Unmarshal(yamlCR, &m)
 	groupVersion := strings.Split(m["apiVersion"].(string), "/")
 	crGV := schema.GroupVersion{Group: groupVersion[0], Version: groupVersion[1]}
 	crConfig.GroupVersion = &crGV
