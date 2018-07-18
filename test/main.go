@@ -11,7 +11,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
+
+	"gopkg.in/yaml.v2"
 
 	y2j "github.com/ghodss/yaml"
 	"github.com/operator-framework/operator-sdk/pkg/util/retryutil"
@@ -138,9 +141,9 @@ func main() {
 	fmt.Println("Created rbac")
 
 	// create crd
-	dat, err = ioutil.ReadFile("deploy/crd.yaml")
+	yamlCRD, err := ioutil.ReadFile("deploy/crd.yaml")
 	//	kubectlWrapper("create", namespace, "deploy/crd.yaml")
-	err = createCRDFromYAML(dat, extensionclient)
+	err = createCRDFromYAML(yamlCRD, extensionclient)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -175,7 +178,7 @@ func main() {
 	file.Close()
 
 	dat, err = ioutil.ReadFile("deploy/cr.yaml")
-	memcachedClient := getCRClient(config, "cache.example.com", "v1alpha1")
+	memcachedClient := getCRClient(config, yamlCRD)
 	createCRFromYAML(dat, memcachedClient, namespace, "memcacheds")
 
 	//kubectlWrapper("apply", namespace, "deploy/cr.yaml")
@@ -221,10 +224,13 @@ func main() {
 	}
 }
 
-func getCRClient(config *rest.Config, group, version string) *rest.RESTClient {
+func getCRClient(config *rest.Config, yamlCRD []byte) *rest.RESTClient {
 	// get new RESTClient for custom resources
 	crConfig := config
-	crGV := schema.GroupVersion{Group: group, Version: version}
+	m := make(map[interface{}]interface{})
+	err := yaml.Unmarshal(yamlCRD, &m)
+	groupVersion := strings.Split(m["apiVersion"].(string), "/")
+	crGV := schema.GroupVersion{Group: groupVersion[0], Version: groupVersion[1]}
 	crConfig.GroupVersion = &crGV
 	crConfig.APIPath = "/apis"
 	crConfig.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: scheme.Codecs}
@@ -240,8 +246,8 @@ func getCRClient(config *rest.Config, group, version string) *rest.RESTClient {
 }
 
 // create a custom resource from a yaml file; not fully automated (still needs more work)
-func createCRFromYAML(yaml []byte, client *rest.RESTClient, namespace, resourceName string) error {
-	jsonDat, err := y2j.YAMLToJSON(yaml)
+func createCRFromYAML(yamlFile []byte, client *rest.RESTClient, namespace, resourceName string) error {
+	jsonDat, err := y2j.YAMLToJSON(yamlFile)
 	err = client.Post().
 		Namespace(namespace).
 		Resource(resourceName).
@@ -251,9 +257,9 @@ func createCRFromYAML(yaml []byte, client *rest.RESTClient, namespace, resourceN
 	return err
 }
 
-func createCRDFromYAML(yaml []byte, extensionsClient *extensions.Clientset) error {
+func createCRDFromYAML(yamlFile []byte, extensionsClient *extensions.Clientset) error {
 	decode := extensions_scheme.Codecs.UniversalDeserializer().Decode
-	obj, _, err := decode(yaml, nil, nil)
+	obj, _, err := decode(yamlFile, nil, nil)
 
 	if err != nil {
 		fmt.Println("Failed to deserialize CustomResourceDefinition")
@@ -267,9 +273,9 @@ func createCRDFromYAML(yaml []byte, extensionsClient *extensions.Clientset) erro
 	return nil
 }
 
-func createFromYAML(yaml []byte, kubeclient *kubernetes.Clientset, namespace string) error {
+func createFromYAML(yamlFile []byte, kubeclient *kubernetes.Clientset, namespace string) error {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
-	obj, _, err := decode(yaml, nil, nil)
+	obj, _, err := decode(yamlFile, nil, nil)
 
 	if err != nil {
 		fmt.Println("Unable to deserialize resource; is it a custom resource?")
