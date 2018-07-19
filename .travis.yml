@@ -30,13 +30,9 @@ install:
 - go get -t -d ./...
 
 script:
+- make install
 - go test ./...
 - go vet ./...
-- make install
-- echo "Building memcached-example tester"
-- cd test
-- go build
-- ./test
 
 after_success:
 - echo 'Build succeeded, operator was generated, memcached operator is running on minikube, and unit/integration tests pass'
