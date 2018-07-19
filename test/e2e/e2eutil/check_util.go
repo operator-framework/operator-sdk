@@ -2,20 +2,24 @@ package e2eutil
 
 import (
 	"testing"
+	"time"
 
-	"github.com/operator-framework/operator-sdk/pkg/util/retryutil"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
+var retryInterval = time.Second * 5
+
 func DeploymentReplicaCheck(t *testing.T, kubeclient *kubernetes.Clientset, namespace, name string, replicas, retries int) error {
-	err := retryutil.Retry(retryInterval, retries, func() (done bool, err error) {
+	err := Retry(retryInterval, retries, func() (done bool, err error) {
 		deployment, err := kubeclient.AppsV1().Deployments(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
 		if err != nil {
-			// sometimes, a deployment has not been created by the time we call this; we
-			// assume that is what happened instead of immediately failing
-			t.Logf("Waiting for availability of %s deployment\n", name)
-			return false, nil
+			if apierrors.IsNotFound(err) {
+				t.Logf("Waiting for availability of %s deployment\n", name)
+				return false, nil
+			}
+			return false, err
 		}
 
 		if int(deployment.Status.AvailableReplicas) == replicas {

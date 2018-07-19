@@ -3,7 +3,6 @@ package e2eutil
 import (
 	"strings"
 	"testing"
-	"time"
 
 	y2j "github.com/ghodss/yaml"
 	yaml "gopkg.in/yaml.v2"
@@ -18,8 +17,6 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 )
-
-var retryInterval = time.Second * 5
 
 func GetCRClient(t *testing.T, config *rest.Config, yamlCR []byte) *rest.RESTClient {
 	// get new RESTClient for custom resources
