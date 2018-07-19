@@ -31,10 +31,8 @@ func TestMemcached(t *testing.T) {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 	os.Chdir("memcached-operator")
-	/*
-		os.RemoveAll("vendor/github.com/operator-framework/operator-sdk/pkg")
-		os.Symlink(os.Getenv("TRAVIS_BUILD_DIR")+"/pkg", "vendor/github.com/operator-framework/operator-sdk/pkg")
-	*/
+	os.RemoveAll("vendor/github.com/operator-framework/operator-sdk/pkg")
+	os.Symlink(os.Getenv("TRAVIS_BUILD_DIR")+"/pkg", "vendor/github.com/operator-framework/operator-sdk/pkg")
 	handler, err := os.Create("pkg/stub/handler.go")
 	if err != nil {
 		t.Fatal(err)
