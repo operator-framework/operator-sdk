@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
+	"github.com/sirupsen/logrus"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -133,7 +134,10 @@ func mustNewKubeClientAndConfig() (kubernetes.Interface, *rest.Config) {
 		cfg, err = inClusterConfig()
 	}
 	if err != nil {
-		panic(err)
+		logrus.Fatalf("failed to get a valid kubeconfig for the provided parameters, %v", err)
+	}
+	if cfg != nil {
+		logrus.Infof("API server URL: %v", cfg.Host)
 	}
 	return kubernetes.NewForConfigOrDie(cfg), cfg
 }
@@ -157,8 +161,16 @@ func inClusterConfig() (*rest.Config, error) {
 
 func outOfClusterConfig() (*rest.Config, error) {
 	kubeconfig := os.Getenv(k8sutil.KubeConfigEnvVar)
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	kubecontext := os.Getenv(k8sutil.KubeContextEnvVar)
+	config, err := buildConfigWithContext(kubeconfig, kubecontext)
 	return config, err
+}
+
+// see clientcmd.BuildConfigFromFlags()
+func buildConfigWithContext(kubeconfigPath string, context string) (*rest.Config, error) {
+	configRules := clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfigPath}
+	overrides := clientcmd.ConfigOverrides{CurrentContext: context}
+	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(&configRules, &overrides).ClientConfig()
 }
 
 // runBackgroundCacheReset - Starts the rest mapper cache reseting

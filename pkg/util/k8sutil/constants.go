@@ -5,6 +5,10 @@ const (
 	// contains the kubeconfig file path.
 	KubeConfigEnvVar = "KUBERNETES_CONFIG"
 
+	// KubeContextEnvVar defines the env variable KUBERNETES_CONTEXT which
+	// contains the kubeconfig context.
+	KubeContextEnvVar = "KUBERNETES_CONTEXT"
+
 	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
 	// which is the namespace that the pod is currently running in.
 	WatchNamespaceEnvVar = "WATCH_NAMESPACE"

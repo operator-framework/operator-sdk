@@ -26,7 +26,8 @@ kubernetes cluster using a kubeconfig file.
 		Run: upLocalFunc,
 	}
 
-	upLocalCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "The file path to kubernetes configuration file; defaults to $HOME/.kube/config")
+	upLocalCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "The file path to Kubernetes configuration file; defaults to $HOME/.kube/config")
+	upLocalCmd.Flags().StringVar(&kubeContext, "context", "", "The kubeconfig context to use")
 	upLocalCmd.Flags().StringVar(&operatorFlags, "operator-flags", "", "The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
 	upLocalCmd.Flags().StringVar(&namespace, "namespace", "default", "The namespace where the operator watches for changes.")
 
@@ -35,6 +36,7 @@ kubernetes cluster using a kubeconfig file.
 
 var (
 	kubeConfig    string
+	kubeContext   string
 	operatorFlags string
 	namespace     string
 )
@@ -80,7 +82,10 @@ func upLocal(projectName string) {
 	dc := exec.Command(gocmd, args...)
 	dc.Stdout = os.Stdout
 	dc.Stderr = os.Stderr
-	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, kubeConfig), fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, namespace))
+	dc.Env = append(os.Environ(),
+		fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, kubeConfig),
+		fmt.Sprintf("%v=%v", k8sutil.KubeContextEnvVar, kubeContext),
+		fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, namespace))
 	err := dc.Run()
 	if err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to run operator locally: %v", err))
