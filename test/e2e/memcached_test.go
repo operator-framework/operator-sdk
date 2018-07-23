@@ -26,7 +26,11 @@ const (
 )
 
 func TestMemcached(t *testing.T) {
-	os.Chdir(os.Getenv("GOPATH") + "/src/github.com/example-inc")
+	gopath, ok := os.LookupEnv("GOPATH")
+	if !ok {
+		t.Fatalf("GOPATH not set")
+	}
+	os.Chdir(gopath + "/src/github.com/example-inc")
 	t.Log("Creating new operator project")
 	cmdOut, err := exec.Command("operator-sdk",
 		"new",
@@ -36,7 +40,7 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
-	defer os.RemoveAll(os.Getenv("GOPATH") + "/src/github.com/example-inc/memcached-operator")
+	defer os.RemoveAll(gopath + "/src/github.com/example-inc/memcached-operator")
 
 	os.Chdir("memcached-operator")
 	os.RemoveAll("vendor/github.com/operator-framework/operator-sdk/pkg")
