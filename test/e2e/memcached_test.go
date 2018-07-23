@@ -125,18 +125,6 @@ func TestMemcached(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	defer func() {
-		err = kubeclient.RbacV1beta1().Roles(namespace).Delete("memcached-operator", metav1.NewDeleteOptions(0))
-		if err != nil {
-			t.Log("Failed to delete memcached-operator Role")
-			t.Fatal(err)
-		}
-		err = kubeclient.RbacV1beta1().RoleBindings(namespace).Delete("default-account-memcached-operator", metav1.NewDeleteOptions(0))
-		if err != nil {
-			t.Log("Failed to delete memcached-operator RoleBinding")
-			t.Fatal(err)
-		}
-	}()
 	t.Log("Created rbac")
 
 	// create crd
@@ -164,14 +152,6 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer func() {
-		err = kubeclient.AppsV1().Deployments(namespace).
-			Delete("memcached-operator", metav1.NewDeleteOptions(0))
-		if err != nil {
-			t.Log("Failed to delete memcached-operator deployment")
-			t.Fatal(err)
-		}
-	}()
 	t.Log("Created operator")
 
 	// wait for memcached-operator to be ready
@@ -191,20 +171,6 @@ func TestMemcached(t *testing.T) {
 	// create memcached custom resource
 	crYAML, err := ioutil.ReadFile("deploy/cr.yaml")
 	e2eutil.CreateFromYAML(t, crYAML, f.KubeClient, f.KubeConfig, namespace)
-	memcachedClient := e2eutil.GetCRClient(t, f.KubeConfig, crYAML)
-	defer func() {
-		err = memcachedClient.Delete().
-			Namespace(namespace).
-			Resource("memcacheds").
-			Name("example-memcached").
-			Body([]byte("{\"gracePeriodSeconds\":0}")).
-			Do().
-			Error()
-		if err != nil {
-			t.Log("Failed to delete example-memcached CR")
-			t.Fatal(err)
-		}
-	}()
 
 	// wait for example-memcached to reach 3 replicas
 	err = e2eutil.DeploymentReplicaCheck(t, f.KubeClient, namespace, "example-memcached", 3, 6)
@@ -213,6 +179,7 @@ func TestMemcached(t *testing.T) {
 	}
 
 	// update memcached CR size to 4
+	memcachedClient := e2eutil.GetCRClient(t, kubeconfig, crYAML)
 	err = memcachedClient.Patch(types.JSONPatchType).
 		Namespace(namespace).
 		Resource("memcacheds").
