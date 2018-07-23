@@ -18,13 +18,12 @@ type Framework struct {
 }
 
 func setup() error {
+	defaultKubeConfig := ""
 	homedir, ok := os.LookupEnv("HOME")
-	var config *string
-	if !ok {
-		config = flag.String("kubeconfig", "", "kube config path, e.g. $HOME/.kube/config")
-	} else {
-		config = flag.String("kubeconfig", homedir+"/.kube/config", "kube config path, e.g. $HOME/.kube/config")
+	if ok {
+		defaultKubeConfig = homedir + "/.kube/config"
 	}
+	config := flag.String("kubeconfig", defaultKubeConfig, "kube config path, e.g. $HOME/.kube/config")
 	flag.Parse()
 	if *config == "" {
 		log.Fatalf("Cannot find kubeconfig, exiting\n")
