@@ -15,6 +15,7 @@
 package sdk
 
 import (
+	"github.com/operator-framework/operator-sdk/pkg/sdk/internal/metrics"
 	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 
 	"github.com/sirupsen/logrus"
@@ -84,6 +85,12 @@ func (i *informer) sync(key string) error {
 	err = RegisteredHandler.Handle(i.context, event)
 	if !exists && err == nil {
 		delete(i.deletedObjects, key)
+	}
+	switch {
+	case err == nil:
+		i.collector.ReconcileResult.WithLabelValues(metrics.ReconcileResultSuccess).Inc()
+	case err != nil:
+		i.collector.ReconcileResult.WithLabelValues(metrics.ReconcileResultFailure).Inc()
 	}
 	return err
 }
