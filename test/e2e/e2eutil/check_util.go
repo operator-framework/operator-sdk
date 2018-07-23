@@ -11,7 +11,7 @@ import (
 
 var retryInterval = time.Second * 5
 
-func DeploymentReplicaCheck(t *testing.T, kubeclient *kubernetes.Clientset, namespace, name string, replicas, retries int) error {
+func DeploymentReplicaCheck(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas, retries int) error {
 	err := Retry(retryInterval, retries, func() (done bool, err error) {
 		deployment, err := kubeclient.AppsV1().Deployments(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
 		if err != nil {

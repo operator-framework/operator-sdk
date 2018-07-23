@@ -21,9 +21,9 @@ import (
 func GetCRClient(t *testing.T, config *rest.Config, yamlCR []byte) *rest.RESTClient {
 	// get new RESTClient for custom resources
 	crConfig := config
-	m := make(map[interface{}]interface{})
-	err := yaml.Unmarshal(yamlCR, &m)
-	groupVersion := strings.Split(m["apiVersion"].(string), "/")
+	yamlMap := make(map[interface{}]interface{})
+	err := yaml.Unmarshal(yamlCR, &yamlMap)
+	groupVersion := strings.Split(yamlMap["apiVersion"].(string), "/")
 	crGV := schema.GroupVersion{Group: groupVersion[0], Version: groupVersion[1]}
 	crConfig.GroupVersion = &crGV
 	crConfig.APIPath = "/apis"
@@ -67,10 +67,10 @@ func createCRDFromYAML(t *testing.T, yamlFile []byte, extensionsClient *extensio
 	return nil
 }
 
-func CreateFromYAML(t *testing.T, yamlFile []byte, kubeclient *kubernetes.Clientset, kubeconfig *rest.Config, namespace string) error {
-	m := make(map[interface{}]interface{})
-	err := yaml.Unmarshal(yamlFile, &m)
-	kind := m["kind"].(string)
+func CreateFromYAML(t *testing.T, yamlFile []byte, kubeclient kubernetes.Interface, kubeconfig *rest.Config, namespace string) error {
+	yamlMap := make(map[interface{}]interface{})
+	err := yaml.Unmarshal(yamlFile, &yamlMap)
+	kind := yamlMap["kind"].(string)
 	switch kind {
 	case "Role":
 	case "RoleBinding":
