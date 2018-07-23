@@ -100,6 +100,7 @@ func TestMemcached(t *testing.T) {
 
 	// get global framework variables
 	f := framework.Global
+	// TODO: make namespace unique to avoid namespace collision
 	namespace := "memcached"
 	// create namespace
 	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace}}
