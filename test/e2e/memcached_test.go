@@ -19,6 +19,13 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+const (
+	filemode = int(0664)
+	// amount of lines to remove from end of types file to allow us to fill in the
+	// blank structs
+	typesFileTrimAmount = 7
+)
+
 func TestMemcached(t *testing.T) {
 	os.Chdir(os.Getenv("GOPATH") + "/src/github.com/example-inc")
 	t.Log("Creating new operator project")
@@ -30,33 +37,34 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
+
 	os.Chdir("memcached-operator")
 	os.RemoveAll("vendor/github.com/operator-framework/operator-sdk/pkg")
 	os.Symlink(os.Getenv("TRAVIS_BUILD_DIR")+"/pkg", "vendor/github.com/operator-framework/operator-sdk/pkg")
-	handler, err := os.Create("pkg/stub/handler.go")
+	handlerFile, err := os.Create("pkg/stub/handler.go")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer handler.Close()
-	resp, err := http.Get("https://raw.githubusercontent.com/operator-framework/operator-sdk/master/example/memcached-operator/handler.go.tmpl")
+	defer handlerFile.Close()
+	handlerTemplate, err := http.Get("https://raw.githubusercontent.com/operator-framework/operator-sdk/master/example/memcached-operator/handler.go.tmpl")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
-	_, err = io.Copy(handler, resp.Body)
+	defer handlerTemplate.Body.Close()
+	_, err = io.Copy(handlerFile, handlerTemplate.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
-	gotypes, err := ioutil.ReadFile("pkg/apis/cache/v1alpha1/types.go")
+	memcachedTypesFile, err := ioutil.ReadFile("pkg/apis/cache/v1alpha1/types.go")
 	if err != nil {
 		t.Fatal(err)
 	}
-	lines := bytes.Split(gotypes, []byte("\n"))
-	lines = lines[:len(lines)-7]
-	lines = append(lines, []byte("type MemcachedSpec struct {	Size int32 `json:\"size\"`}"))
-	lines = append(lines, []byte("type MemcachedStatus struct {Nodes []string `json:\"nodes\"`}\n"))
+	memcachedTypesFileLines := bytes.Split(memcachedTypesFile, []byte("\n"))
+	memcachedTypesFileLines = memcachedTypesFileLines[:len(memcachedTypesFileLines)-typesFileTrimAmount]
+	memcachedTypesFileLines = append(memcachedTypesFileLines, []byte("type MemcachedSpec struct {	Size int32 `json:\"size\"`}"))
+	memcachedTypesFileLines = append(memcachedTypesFileLines, []byte("type MemcachedStatus struct {Nodes []string `json:\"nodes\"`}\n"))
 	os.Remove("pkg/apis/cache/v1alpha1/types.go")
-	err = ioutil.WriteFile("pkg/apis/cache/v1alpha1/types.go", bytes.Join(lines, []byte("\n")), os.FileMode(int(0664)))
+	err = ioutil.WriteFile("pkg/apis/cache/v1alpha1/types.go", bytes.Join(memcachedTypesFileLines, []byte("\n")), os.FileMode(filemode))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,13 +84,12 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
-
-	opYAML, err := ioutil.ReadFile("deploy/operator.yaml")
+	operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
-	opYAML = bytes.Replace(opYAML, []byte("imagePullPolicy: Always"), []byte("imagePullPolicy: Never"), 1)
-	err = ioutil.WriteFile("deploy/operator.yaml", opYAML, os.FileMode(int(0664)))
+	operatorYAML = bytes.Replace(operatorYAML, []byte("imagePullPolicy: Always"), []byte("imagePullPolicy: Never"), 1)
+	err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, os.FileMode(filemode))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,12 +113,13 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Log("Created namespace")
 
 	// create rbac
-	dat, err := ioutil.ReadFile("deploy/rbac.yaml")
-	splitDat := bytes.Split(dat, []byte("\n---\n"))
-	for _, thing := range splitDat {
-		err = e2eutil.CreateFromYAML(t, thing, kubeclient, kubeconfig, namespace)
+	rbacYAML, err := ioutil.ReadFile("deploy/rbac.yaml")
+	rbacYAMLSplit := bytes.Split(rbacYAML, []byte("\n---\n"))
+	for _, rbacSpec := range rbacYAMLSplit {
+		err = e2eutil.CreateFromYAML(t, rbacSpec, kubeclient, kubeconfig, namespace)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -119,50 +127,47 @@ func TestMemcached(t *testing.T) {
 	t.Log("Created rbac")
 
 	// create crd
-	yamlCRD, err := ioutil.ReadFile("deploy/crd.yaml")
-	err = e2eutil.CreateFromYAML(t, yamlCRD, kubeclient, kubeconfig, namespace)
+	crdYAML, err := ioutil.ReadFile("deploy/crd.yaml")
+	err = e2eutil.CreateFromYAML(t, crdYAML, kubeclient, kubeconfig, namespace)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("Created crd")
 
 	// create operator
-	dat, err = ioutil.ReadFile("deploy/operator.yaml")
-	err = e2eutil.CreateFromYAML(t, dat, kubeclient, kubeconfig, namespace)
+	operatorYAML, err = ioutil.ReadFile("deploy/operator.yaml")
+	err = e2eutil.CreateFromYAML(t, operatorYAML, kubeclient, kubeconfig, namespace)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("Created operator")
 
+	// wait for memcached-operator to be ready
 	err = e2eutil.DeploymentReplicaCheck(t, kubeclient, namespace, "memcached-operator", 1, 6)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// create example-memcached yaml file
-	file, err := os.OpenFile("deploy/cr.yaml", os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer file.Close()
-
-	_, err = file.WriteString("apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: 3")
+	err = ioutil.WriteFile("deploy/cr.yaml",
+		[]byte("apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: 3"),
+		os.FileMode(filemode))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	file.Close()
+	// create memcached custom resource
+	crYAML, err := ioutil.ReadFile("deploy/cr.yaml")
+	e2eutil.CreateFromYAML(t, crYAML, kubeclient, kubeconfig, namespace)
+	memcachedClient := e2eutil.GetCRClient(t, kubeconfig, crYAML)
 
-	yamlCR, err := ioutil.ReadFile("deploy/cr.yaml")
-	memcachedClient := e2eutil.GetCRClient(t, kubeconfig, yamlCR)
-	e2eutil.CreateFromYAML(t, yamlCR, kubeclient, kubeconfig, namespace)
-
+	// wait for example-memcached to reach 3 replicas
 	err = e2eutil.DeploymentReplicaCheck(t, kubeclient, namespace, "example-memcached", 3, 6)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// update CR size to 4
+	// update memcached CR size to 4
 	err = memcachedClient.Patch(types.JSONPatchType).
 		Namespace(namespace).
 		Resource("memcacheds").
@@ -174,6 +179,7 @@ func TestMemcached(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// wait for example-memcached to reach 4 replicas
 	err = e2eutil.DeploymentReplicaCheck(t, kubeclient, namespace, "example-memcached", 4, 6)
 	if err != nil {
 		t.Fatal(err)
@@ -184,7 +190,7 @@ func TestMemcached(t *testing.T) {
 		Namespace(namespace).
 		Resource("memcacheds").
 		Name("example-memcached").
-		Body([]byte("{\"propagationPolicy\":\"Foreground\"}")).
+		Body([]byte("{\"gracePeriodSeconds\":0}")).
 		Do().
 		Error()
 	if err != nil {
