@@ -23,7 +23,7 @@ func setup() error {
 	if ok {
 		defaultKubeConfig = homedir + "/.kube/config"
 	}
-	config := flag.String("kubeconfig", defaultKubeConfig, "kube config path, e.g. $HOME/.kube/config")
+	config := flag.String("kubeconfig", defaultKubeConfig, "kubeconfig path, defaults to $HOME/.kube/config")
 	flag.Parse()
 	if *config == "" {
 		log.Fatalf("Cannot find kubeconfig, exiting\n")
