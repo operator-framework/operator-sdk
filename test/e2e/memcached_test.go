@@ -45,7 +45,8 @@ func TestMemcached(t *testing.T) {
 
 	os.Chdir("memcached-operator")
 	os.RemoveAll("vendor/github.com/operator-framework/operator-sdk/pkg")
-	os.Symlink(path.Join(os.Getenv("TRAVIS_BUILD_DIR"), "/pkg"), "vendor/github.com/operator-framework/operator-sdk/pkg")
+	os.Symlink(path.Join(gopath, "/src/github.com/operator-framework/operator-sdk/pkg"),
+		"vendor/github.com/operator-framework/operator-sdk/pkg")
 	handlerFile, err := os.Create("pkg/stub/handler.go")
 	if err != nil {
 		t.Fatal(err)
