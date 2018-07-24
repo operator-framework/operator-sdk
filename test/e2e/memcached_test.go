@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/test/e2e/e2eutil"
@@ -30,7 +31,7 @@ func TestMemcached(t *testing.T) {
 	if !ok {
 		t.Fatalf("GOPATH not set")
 	}
-	os.Chdir(gopath + "/src/github.com/example-inc")
+	os.Chdir(path.Join(gopath, "/src/github.com/example-inc"))
 	t.Log("Creating new operator project")
 	cmdOut, err := exec.Command("operator-sdk",
 		"new",
@@ -40,11 +41,11 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
-	defer os.RemoveAll(gopath + "/src/github.com/example-inc/memcached-operator")
+	defer os.RemoveAll(path.Join(gopath, "/src/github.com/example-inc/memcached-operator"))
 
 	os.Chdir("memcached-operator")
 	os.RemoveAll("vendor/github.com/operator-framework/operator-sdk/pkg")
-	os.Symlink(os.Getenv("TRAVIS_BUILD_DIR")+"/pkg", "vendor/github.com/operator-framework/operator-sdk/pkg")
+	os.Symlink(path.Join(os.Getenv("TRAVIS_BUILD_DIR"), "/pkg"), "vendor/github.com/operator-framework/operator-sdk/pkg")
 	handlerFile, err := os.Create("pkg/stub/handler.go")
 	if err != nil {
 		t.Fatal(err)
@@ -135,7 +136,7 @@ func TestMemcached(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() {
-		extensionclient, err := extensions.NewForConfig(kubeconfig)
+		extensionclient, err := extensions.NewForConfig(f.KubeConfig)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -180,7 +181,7 @@ func TestMemcached(t *testing.T) {
 	}
 
 	// update memcached CR size to 4
-	memcachedClient := e2eutil.GetCRClient(t, kubeconfig, crYAML)
+	memcachedClient := e2eutil.GetCRClient(t, f.KubeConfig, crYAML)
 	err = memcachedClient.Patch(types.JSONPatchType).
 		Namespace(namespace).
 		Resource("memcacheds").
