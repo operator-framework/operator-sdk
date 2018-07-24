@@ -112,8 +112,7 @@ func TestMemcached(t *testing.T) {
 	defer func() {
 		err = f.KubeClient.CoreV1().Namespaces().Delete(namespace, metav1.NewDeleteOptions(0))
 		if err != nil {
-			t.Log("Failed to delete memcached namespace")
-			t.Fatal(err)
+			t.Fatalf("Failed to delete memcached namespace(%s): %v", namespace, err)
 		}
 	}()
 	t.Log("Created namespace")
@@ -142,8 +141,7 @@ func TestMemcached(t *testing.T) {
 		}
 		err = extensionclient.ApiextensionsV1beta1().CustomResourceDefinitions().Delete("memcacheds.cache.example.com", metav1.NewDeleteOptions(0))
 		if err != nil {
-			t.Log("Failed to delete memcached CRD")
-			t.Fatal(err)
+			t.Fatalf("Failed to delete memcached CRD: %v", err)
 		}
 	}()
 	t.Log("Created crd")
