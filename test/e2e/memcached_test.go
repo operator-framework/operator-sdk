@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/test/e2e/e2eutil"
@@ -26,7 +27,11 @@ const (
 )
 
 func TestMemcached(t *testing.T) {
-	os.Chdir(os.Getenv("GOPATH") + "/src/github.com/example-inc")
+	gopath, ok := os.LookupEnv("GOPATH")
+	if !ok {
+		t.Fatalf("GOPATH not set")
+	}
+	os.Chdir(path.Join(gopath, "/src/github.com/example-inc"))
 	t.Log("Creating new operator project")
 	cmdOut, err := exec.Command("operator-sdk",
 		"new",
@@ -36,10 +41,11 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
+	defer os.RemoveAll(path.Join(gopath, "/src/github.com/example-inc/memcached-operator"))
 
 	os.Chdir("memcached-operator")
 	os.RemoveAll("vendor/github.com/operator-framework/operator-sdk/pkg")
-	os.Symlink(os.Getenv("TRAVIS_BUILD_DIR")+"/pkg", "vendor/github.com/operator-framework/operator-sdk/pkg")
+	os.Symlink(path.Join(os.Getenv("TRAVIS_BUILD_DIR"), "/pkg"), "vendor/github.com/operator-framework/operator-sdk/pkg")
 	handlerFile, err := os.Create("pkg/stub/handler.go")
 	if err != nil {
 		t.Fatal(err)
@@ -95,6 +101,7 @@ func TestMemcached(t *testing.T) {
 
 	// get global framework variables
 	f := framework.Global
+	// TODO: make namespace unique to avoid namespace collision
 	namespace := "memcached"
 	// create namespace
 	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace}}
@@ -102,6 +109,12 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer func() {
+		err = f.KubeClient.CoreV1().Namespaces().Delete(namespace, metav1.NewDeleteOptions(0))
+		if err != nil {
+			t.Fatalf("Failed to delete memcached namespace(%s): %v", namespace, err)
+		}
+	}()
 	t.Log("Created namespace")
 
 	// create rbac
@@ -121,6 +134,16 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer func() {
+		extensionclient, err := extensions.NewForConfig(f.KubeConfig)
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = extensionclient.ApiextensionsV1beta1().CustomResourceDefinitions().Delete("memcacheds.cache.example.com", metav1.NewDeleteOptions(0))
+		if err != nil {
+			t.Fatalf("Failed to delete memcached CRD: %v", err)
+		}
+	}()
 	t.Log("Created crd")
 
 	// create operator
@@ -148,7 +171,6 @@ func TestMemcached(t *testing.T) {
 	// create memcached custom resource
 	crYAML, err := ioutil.ReadFile("deploy/cr.yaml")
 	e2eutil.CreateFromYAML(t, crYAML, f.KubeClient, f.KubeConfig, namespace)
-	memcachedClient := e2eutil.GetCRClient(t, f.KubeConfig, crYAML)
 
 	// wait for example-memcached to reach 3 replicas
 	err = e2eutil.DeploymentReplicaCheck(t, f.KubeClient, namespace, "example-memcached", 3, 6)
@@ -157,6 +179,7 @@ func TestMemcached(t *testing.T) {
 	}
 
 	// update memcached CR size to 4
+	memcachedClient := e2eutil.GetCRClient(t, f.KubeConfig, crYAML)
 	err = memcachedClient.Patch(types.JSONPatchType).
 		Namespace(namespace).
 		Resource("memcacheds").
@@ -173,49 +196,4 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	// clean everything up
-	err = memcachedClient.Delete().
-		Namespace(namespace).
-		Resource("memcacheds").
-		Name("example-memcached").
-		Body([]byte("{\"gracePeriodSeconds\":0}")).
-		Do().
-		Error()
-	if err != nil {
-		t.Log("Failed to delete example-memcached CR")
-		t.Fatal(err)
-	}
-	err = f.KubeClient.AppsV1().Deployments(namespace).
-		Delete("memcached-operator", metav1.NewDeleteOptions(0))
-	if err != nil {
-		t.Log("Failed to delete memcached-operator deployment")
-		t.Fatal(err)
-	}
-	err = f.KubeClient.RbacV1beta1().Roles(namespace).Delete("memcached-operator", metav1.NewDeleteOptions(0))
-	if err != nil {
-		t.Log("Failed to delete memcached-operator Role")
-		t.Fatal(err)
-	}
-	err = f.KubeClient.RbacV1beta1().RoleBindings(namespace).Delete("default-account-memcached-operator", metav1.NewDeleteOptions(0))
-	if err != nil {
-		t.Log("Failed to delete memcached-operator RoleBinding")
-		t.Fatal(err)
-	}
-	extensionclient, err := extensions.NewForConfig(f.KubeConfig)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = extensionclient.ApiextensionsV1beta1().CustomResourceDefinitions().Delete("memcacheds.cache.example.com", metav1.NewDeleteOptions(0))
-	if err != nil {
-		t.Log("Failed to delete memcached CRD")
-		t.Fatal(err)
-	}
-	err = f.KubeClient.CoreV1().Namespaces().Delete(namespace, metav1.NewDeleteOptions(0))
-	if err != nil {
-		t.Log("Failed to delete memcached namespace")
-		t.Fatal(err)
-	}
-
-	os.RemoveAll(os.Getenv("GOPATH") + "/src/github.com/example-inc/memcached-operator")
 }
