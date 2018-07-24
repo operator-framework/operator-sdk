@@ -13,8 +13,9 @@ import (
 var Global *Framework
 
 type Framework struct {
-	KubeConfig *rest.Config
-	KubeClient kubernetes.Interface
+	KubeConfig   *rest.Config
+	KubeClient   kubernetes.Interface
+	ExternalRepo *string
 }
 
 func setup() error {
@@ -24,6 +25,7 @@ func setup() error {
 		defaultKubeConfig = homedir + "/.kube/config"
 	}
 	config := flag.String("kubeconfig", defaultKubeConfig, "kubeconfig path, defaults to $HOME/.kube/config")
+	extRepo := flag.String("external_repo", "", "external repo to push to, defaults to none (builds image to local docker repo)")
 	flag.Parse()
 	if *config == "" {
 		log.Fatalf("Cannot find kubeconfig, exiting\n")
@@ -37,8 +39,9 @@ func setup() error {
 		return err
 	}
 	Global = &Framework{
-		KubeConfig: kubeconfig,
-		KubeClient: kubeclient,
+		KubeConfig:   kubeconfig,
+		KubeClient:   kubeclient,
+		ExternalRepo: extRepo,
 	}
 	return nil
 }

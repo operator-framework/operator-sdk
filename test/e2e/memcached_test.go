@@ -82,25 +82,43 @@ func TestMemcached(t *testing.T) {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
-	t.Log("Building operator docker image")
-	cmdOut, err = exec.Command("operator-sdk",
-		"build",
-		"quay.io/example/memcached-operator:v0.0.1").CombinedOutput()
-	if err != nil {
-		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
-	}
-	operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
-	operatorYAML = bytes.Replace(operatorYAML, []byte("imagePullPolicy: Always"), []byte("imagePullPolicy: Never"), 1)
-	err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, os.FileMode(filemode))
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	// get global framework variables
 	f := framework.Global
+
+	t.Log("Building operator docker image")
+	if *f.ExternalRepo == "" {
+		cmdOut, err = exec.Command("operator-sdk",
+			"build",
+			"quay.io/example/memcached-operator:v0.0.1").CombinedOutput()
+		if err != nil {
+			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		}
+		operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+		operatorYAML = bytes.Replace(operatorYAML, []byte("imagePullPolicy: Always"), []byte("imagePullPolicy: Never"), 1)
+		err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, os.FileMode(filemode))
+		if err != nil {
+			t.Fatal(err)
+		}
+	} else {
+		cmdOut, err = exec.Command("operator-sdk",
+			"build",
+			*f.ExternalRepo+":v0.0.1").CombinedOutput()
+		if err != nil {
+			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		}
+		t.Log("Pushing docker image to repo")
+		cmdOut, err = exec.Command("docker",
+			"push",
+			*f.ExternalRepo+":v0.0.1").CombinedOutput()
+		if err != nil {
+			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		}
+
+	}
+
 	// TODO: make namespace unique to avoid namespace collision
 	namespace := "memcached"
 	// create namespace
@@ -147,7 +165,7 @@ func TestMemcached(t *testing.T) {
 	t.Log("Created crd")
 
 	// create operator
-	operatorYAML, err = ioutil.ReadFile("deploy/operator.yaml")
+	operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
 	err = e2eutil.CreateFromYAML(t, operatorYAML, f.KubeClient, f.KubeConfig, namespace)
 	if err != nil {
 		t.Fatal(err)
