@@ -85,9 +85,8 @@ func TestMemcached(t *testing.T) {
 
 	// get global framework variables
 	f := framework.Global
-
 	t.Log("Building operator docker image")
-	if *f.ExternalRepo == "" {
+	if *f.ImageName == "" {
 		cmdOut, err = exec.Command("operator-sdk",
 			"build",
 			"quay.io/example/memcached-operator:v0.0.1").CombinedOutput()
@@ -106,14 +105,14 @@ func TestMemcached(t *testing.T) {
 	} else {
 		cmdOut, err = exec.Command("operator-sdk",
 			"build",
-			*f.ExternalRepo+":v0.0.1").CombinedOutput()
+			*f.ImageName).CombinedOutput()
 		if err != nil {
 			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 		}
 		t.Log("Pushing docker image to repo")
 		cmdOut, err = exec.Command("docker",
 			"push",
-			*f.ExternalRepo+":v0.0.1").CombinedOutput()
+			*f.ImageName).CombinedOutput()
 		if err != nil {
 			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 		}
@@ -167,6 +166,9 @@ func TestMemcached(t *testing.T) {
 
 	// create operator
 	operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
 	err = e2eutil.CreateFromYAML(t, operatorYAML, f.KubeClient, f.KubeConfig, namespace)
 	if err != nil {
 		t.Fatal(err)
