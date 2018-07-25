@@ -56,7 +56,7 @@ const (
 )
 
 func buildFunc(cmd *cobra.Command, args []string) {
-	if len(args) != 1 || len(args) != 2 {
+	if len(args) < 1 || len(args) > 2 {
 		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("build command needs at least 1 argument."))
 	}
 
