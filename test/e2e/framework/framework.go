@@ -13,9 +13,9 @@ import (
 var Global *Framework
 
 type Framework struct {
-	KubeConfig   *rest.Config
-	KubeClient   kubernetes.Interface
-	ImageName *string
+	KubeConfig *rest.Config
+	KubeClient kubernetes.Interface
+	ImageName  *string
 }
 
 func setup() error {
@@ -39,9 +39,9 @@ func setup() error {
 		return err
 	}
 	Global = &Framework{
-		KubeConfig:   kubeconfig,
-		KubeClient:   kubeclient,
-		ImageName: imageName,
+		KubeConfig: kubeconfig,
+		KubeClient: kubeclient,
+		ImageName:  imageName,
 	}
 	return nil
 }
