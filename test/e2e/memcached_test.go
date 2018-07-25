@@ -108,9 +108,7 @@ func TestMemcached(t *testing.T) {
 		}
 	} else {
 		t.Log("Pushing docker image to repo")
-		cmdOut, err = exec.Command("docker",
-			"push",
-			*f.ImageName).CombinedOutput()
+		cmdOut, err = exec.Command("docker", "push", *f.ImageName).CombinedOutput()
 		if err != nil {
 			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 		}
