@@ -73,8 +73,11 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	}
 	fmt.Fprintln(os.Stdout, string(o))
 
+	//If the operator.yaml doesn't exist, write a new file
 	c := cmdutil.GetConfig()
-	if err = generator.RenderOperatorYaml(c, image); err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/operator.yaml: (%v)", err))
+	if _, err = os.Stat("deploy/operator.yaml"); os.IsNotExist(err) {
+		if rednerErr := generator.RenderOperatorYaml(c, image); rednerErr != nil {
+			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/operator.yaml: (%v)", rednerErr))
+		}
 	}
 }
