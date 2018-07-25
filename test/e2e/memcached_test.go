@@ -85,14 +85,18 @@ func TestMemcached(t *testing.T) {
 
 	// get global framework variables
 	f := framework.Global
+	local := *f.ImageName == ""
+	if local {
+		*f.ImageName = "quay.io/example/memcached-operator:v0.0.1"
+	}
 	t.Log("Building operator docker image")
-	if *f.ImageName == "" {
-		cmdOut, err = exec.Command("operator-sdk",
-			"build",
-			"quay.io/example/memcached-operator:v0.0.1").CombinedOutput()
-		if err != nil {
-			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
-		}
+	cmdOut, err = exec.Command("operator-sdk",
+		"build",
+		*f.ImageName).CombinedOutput()
+	if err != nil {
+		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+	}
+	if local {
 		operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
 		if err != nil {
 			t.Fatal(err)
@@ -103,12 +107,6 @@ func TestMemcached(t *testing.T) {
 			t.Fatal(err)
 		}
 	} else {
-		cmdOut, err = exec.Command("operator-sdk",
-			"build",
-			*f.ImageName).CombinedOutput()
-		if err != nil {
-			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
-		}
 		t.Log("Pushing docker image to repo")
 		cmdOut, err = exec.Command("docker",
 			"push",
@@ -116,7 +114,6 @@ func TestMemcached(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 		}
-
 	}
 
 	// TODO: make namespace unique to avoid namespace collision
