@@ -248,6 +248,18 @@ func RenderOperatorYaml(c *Config, image string) error {
 	return renderWriteFile(operatorYaml, operatorTmplName, operatorYamlTmpl, td)
 }
 
+// RenderOperatorYaml generates "deploy/operator.yaml"
+func RenderCustomOperatorYaml(c *Config, image string, fileTempl string) error {
+	td := tmplData{
+		ProjectName:     c.ProjectName,
+		Image:           image,
+		MetricsPort:     k8sutil.PrometheusMetricsPort,
+		MetricsPortName: k8sutil.PrometheusMetricsPortName,
+		OperatorNameEnv: k8sutil.OperatorNameEnvVar,
+	}
+	return renderWriteFile(operatorYaml, operatorTmplName, fileTempl, td)
+}
+
 // RenderOlmCatalog generates catalog manifests "deploy/olm-catalog/*"
 // The current working directory must be the project repository root
 func RenderOlmCatalog(c *Config, image, version string) error {
