@@ -85,14 +85,14 @@ func newFunc(cmd *cobra.Command, args []string) {
 	if err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to create project %v: %v", projectName, err))
 	}
+	pullDep()
+	generate.K8sCodegen(projectName)
 	c := cmdutil.GetConfig()
 	if _, fileErr := os.Stat("deploy/operator.yaml"); os.IsNotExist(fileErr) {
 		if renderErr := generator.RenderOperatorYaml(c, "REPLACE_IMAGE"); renderErr != nil {
 			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/operator.yaml: (%v)", renderErr))
 		}
 	}
-	pullDep()
-	generate.K8sCodegen(projectName)
 	initGit()
 }
 
