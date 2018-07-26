@@ -96,9 +96,9 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
-  
-  operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
-  operatorYAML = bytes.Replace(operatorYAML, []byte("REPLACE_IMAGE"), []byte(*f.ImageName), 1)
+
+	operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
+	operatorYAML = bytes.Replace(operatorYAML, []byte("REPLACE_IMAGE"), []byte(*f.ImageName), 1)
 
 	if local {
 		if err != nil {
@@ -163,7 +163,7 @@ func TestMemcached(t *testing.T) {
 	t.Log("Created crd")
 
 	// create operator
-	operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
+	operatorYAML, err = ioutil.ReadFile("deploy/operator.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
