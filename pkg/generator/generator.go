@@ -245,7 +245,7 @@ func RenderOperatorYaml(c *Config, image string) error {
 		MetricsPortName: k8sutil.PrometheusMetricsPortName,
 		OperatorNameEnv: k8sutil.OperatorNameEnvVar,
 	}
-	return renderWriteFile(operatorYaml, operatorTmplName, operatorYamlTmpl, td)
+	return renderWriteFile(operatorYaml, c.ProjectName+"/"+operatorTmplName, operatorYamlTmpl, td)
 }
 
 // RenderOlmCatalog generates catalog manifests "deploy/olm-catalog/*"
