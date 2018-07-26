@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 
@@ -29,15 +28,13 @@ import (
 
 func NewBuildCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "build <image> <path to template>",
+		Use:   "build <image>",
 		Short: "Compiles code and builds artifacts",
 		Long: `The operator-sdk build command compiles the code, builds the executables,
 and generates Kubernetes manifests.
 
 <image> is the container image to be built, e.g. "quay.io/example/operator:v0.0.1".
 This image will be automatically set in the deployment manifests.
-
-<path to template> is the path to a an (optional) custom template for the deploy/operator.yaml file
 
 After build completes, the image would be built locally in docker. Then it needs to
 be pushed to remote registry.
@@ -56,8 +53,8 @@ const (
 )
 
 func buildFunc(cmd *cobra.Command, args []string) {
-	if len(args) < 1 || len(args) > 2 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("build command needs at least 1 argument."))
+	if len(args) != 1 {
+		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("build command needs exactly 1 argument"))
 	}
 
 	bcmd := exec.Command(build)
@@ -77,17 +74,8 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	fmt.Fprintln(os.Stdout, string(o))
 
 	c := cmdutil.GetConfig()
-	if len(args) == 1 {
+	if _, fileErr := os.Stat("deploy/operator.yaml"); os.IsNotExist(fileErr) {
 		if renderErr := generator.RenderOperatorYaml(c, image); renderErr != nil {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/operator.yaml: (%v)", renderErr))
-		}
-	} else if len(args) == 2 {
-		templFile, fileErr := ioutil.ReadFile(args[2])
-		if fileErr != nil {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to read template file: (%v)", fileErr))
-		}
-
-		if renderErr := generator.RenderCustomOperatorYaml(c, image, string(templFile)); renderErr != nil {
 			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/operator.yaml: (%v)", renderErr))
 		}
 	}
