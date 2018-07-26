@@ -45,7 +45,8 @@ func TestMemcached(t *testing.T) {
 
 	os.Chdir("memcached-operator")
 	os.RemoveAll("vendor/github.com/operator-framework/operator-sdk/pkg")
-	os.Symlink(path.Join(os.Getenv("TRAVIS_BUILD_DIR"), "/pkg"), "vendor/github.com/operator-framework/operator-sdk/pkg")
+	os.Symlink(path.Join(gopath, "/src/github.com/operator-framework/operator-sdk/pkg"),
+		"vendor/github.com/operator-framework/operator-sdk/pkg")
 	handlerFile, err := os.Create("pkg/stub/handler.go")
 	if err != nil {
 		t.Fatal(err)
@@ -82,26 +83,40 @@ func TestMemcached(t *testing.T) {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
+	// get global framework variables
+	f := framework.Global
+	local := *f.ImageName == ""
+	if local {
+		*f.ImageName = "quay.io/example/memcached-operator:v0.0.1"
+	}
 	t.Log("Building operator docker image")
 	cmdOut, err = exec.Command("operator-sdk",
 		"build",
-		"quay.io/example/memcached-operator:v0.0.1").CombinedOutput()
+		*f.ImageName).CombinedOutput()
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
-	operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
-	operatorYAML = bytes.Replace(operatorYAML, []byte("imagePullPolicy: Always"), []byte("imagePullPolicy: Never"), 1)
-	operatorYAML = bytes.Replace(operatorYAML, []byte("REPLACE_IMAGE"), []byte("quay.io/example/memcached-operator:v0.0.1"), 1)
-	err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, os.FileMode(filemode))
-	if err != nil {
-		t.Fatal(err)
+  
+  operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
+  operatorYAML = bytes.Replace(operatorYAML, []byte("REPLACE_IMAGE"), []byte(*f.ImageName), 1)
+
+	if local {
+		if err != nil {
+			t.Fatal(err)
+		}
+		operatorYAML = bytes.Replace(operatorYAML, []byte("imagePullPolicy: Always"), []byte("imagePullPolicy: Never"), 1)
+		err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, os.FileMode(filemode))
+		if err != nil {
+			t.Fatal(err)
+		}
+	} else {
+		t.Log("Pushing docker image to repo")
+		cmdOut, err = exec.Command("docker", "push", *f.ImageName).CombinedOutput()
+		if err != nil {
+			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		}
 	}
 
-	// get global framework variables
-	f := framework.Global
 	// TODO: make namespace unique to avoid namespace collision
 	namespace := "memcached"
 	// create namespace
@@ -148,7 +163,10 @@ func TestMemcached(t *testing.T) {
 	t.Log("Created crd")
 
 	// create operator
-	operatorYAML, err = ioutil.ReadFile("deploy/operator.yaml")
+	operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
 	err = e2eutil.CreateFromYAML(t, operatorYAML, f.KubeClient, f.KubeConfig, namespace)
 	if err != nil {
 		t.Fatal(err)
