@@ -94,6 +94,7 @@ func TestMemcached(t *testing.T) {
 		t.Fatal(err)
 	}
 	operatorYAML = bytes.Replace(operatorYAML, []byte("imagePullPolicy: Always"), []byte("imagePullPolicy: Never"), 1)
+	operatorYAML = bytes.Replace(operatorYAML, []byte("REPLACE_IMAGE"), []byte("quay.io/example/memcached-operator:v0.0.1"), 1)
 	err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, os.FileMode(filemode))
 	if err != nil {
 		t.Fatal(err)

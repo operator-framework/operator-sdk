@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/generate"
 	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
 	"github.com/operator-framework/operator-sdk/pkg/generator"
@@ -83,6 +84,12 @@ func newFunc(cmd *cobra.Command, args []string) {
 	err := g.Render()
 	if err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to create project %v: %v", projectName, err))
+	}
+	c := cmdutil.GetConfig()
+	if _, fileErr := os.Stat("deploy/operator.yaml"); os.IsNotExist(fileErr) {
+		if renderErr := generator.RenderOperatorYaml(c, "REPLACE_IMAGE"); renderErr != nil {
+			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/operator.yaml: (%v)", renderErr))
+		}
 	}
 	pullDep()
 	generate.K8sCodegen(projectName)

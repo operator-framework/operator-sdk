@@ -19,9 +19,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
 	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
-	"github.com/operator-framework/operator-sdk/pkg/generator"
 
 	"github.com/spf13/cobra"
 )
@@ -72,11 +70,4 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to output build image %v: (%v)", image, string(o)))
 	}
 	fmt.Fprintln(os.Stdout, string(o))
-
-	c := cmdutil.GetConfig()
-	if _, fileErr := os.Stat("deploy/operator.yaml"); os.IsNotExist(fileErr) {
-		if renderErr := generator.RenderOperatorYaml(c, image); renderErr != nil {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/operator.yaml: (%v)", renderErr))
-		}
-	}
 }
