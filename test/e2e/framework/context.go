@@ -1,12 +1,11 @@
 package framework
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
-
-	"golang.org/x/sync/errgroup"
 )
 
 type TestCtx struct {
@@ -43,14 +42,17 @@ func (ctx *TestCtx) GetObjID() string {
 }
 
 func (ctx *TestCtx) Cleanup(t *testing.T) {
-	var eg errgroup.Group
-
+	cleanupErr := false
 	for i := len(ctx.cleanUpFns) - 1; i >= 0; i-- {
-		eg.Go(ctx.cleanUpFns[i])
+		err := ctx.cleanUpFns[i]()
+		if err != nil {
+			cleanupErr = true
+			t.Logf("A cleanup function failed with error: %v\n", err)
+		}
 	}
 
-	if err := eg.Wait(); err != nil {
-		t.Fatal(err)
+	if cleanupErr {
+		t.Fatal(errors.New("Fail due to cleanup function error(s)"))
 	}
 }
 
