@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	extensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -13,9 +14,10 @@ import (
 var Global *Framework
 
 type Framework struct {
-	KubeConfig *rest.Config
-	KubeClient kubernetes.Interface
-	ImageName  *string
+	KubeConfig       *rest.Config
+	KubeClient       kubernetes.Interface
+	ExtensionsClient *extensions.Clientset
+	ImageName        *string
 }
 
 func setup() error {
@@ -38,10 +40,15 @@ func setup() error {
 	if err != nil {
 		return err
 	}
+	extensionsClient, err := extensions.NewForConfig(kubeconfig)
+	if err != nil {
+		return err
+	}
 	Global = &Framework{
-		KubeConfig: kubeconfig,
-		KubeClient: kubeclient,
-		ImageName:  imageName,
+		KubeConfig:       kubeconfig,
+		KubeClient:       kubeclient,
+		ExtensionsClient: extensionsClient,
+		ImageName:        imageName,
 	}
 	return nil
 }

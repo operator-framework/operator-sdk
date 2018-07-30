@@ -5,11 +5,15 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"k8s.io/client-go/rest"
 )
 
 type TestCtx struct {
 	ID         string
-	cleanUpFns []finalizerFn
+	CleanUpFns []finalizerFn
+	Namespace  string
+	CRClient   *rest.RESTClient
 }
 
 type finalizerFn func() error
@@ -32,17 +36,20 @@ func (f *Framework) NewTestCtx(t *testing.T) TestCtx {
 	}
 }
 
+func (ctx *TestCtx) GetID() string {
+	return ctx.ID
+}
+
 // GetObjID returns an ascending ID based on the length of cleanUpFns. It is
 // based on the premise that every new object also appends a new finalizerFn on
-// cleanUpFns. This can e.g. be used to create multiple namespaces in the same
-// test context.
+// cleanUpFns.
 func (ctx *TestCtx) GetObjID() string {
-	return ctx.ID + "-" + strconv.Itoa(len(ctx.cleanUpFns))
+	return ctx.ID + "-" + strconv.Itoa(len(ctx.CleanUpFns))
 }
 
 func (ctx *TestCtx) Cleanup(t *testing.T) {
-	for i := len(ctx.cleanUpFns) - 1; i >= 0; i-- {
-		err := ctx.cleanUpFns[i]()
+	for i := len(ctx.CleanUpFns) - 1; i >= 0; i-- {
+		err := ctx.CleanUpFns[i]()
 		if err != nil {
 			t.Errorf("A cleanup function failed with error: %v\n", err)
 		}
@@ -50,5 +57,5 @@ func (ctx *TestCtx) Cleanup(t *testing.T) {
 }
 
 func (ctx *TestCtx) AddFinalizerFn(fn finalizerFn) {
-	ctx.cleanUpFns = append(ctx.cleanUpFns, fn)
+	ctx.CleanUpFns = append(ctx.CleanUpFns, fn)
 }
