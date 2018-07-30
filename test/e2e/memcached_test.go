@@ -123,7 +123,13 @@ func memcachedScaleTest(namespace string, f *framework.Framework, t *testing.T) 
 
 	// create memcached custom resource
 	crYAML, err := ioutil.ReadFile("deploy/cr.yaml")
-	e2eutil.CreateFromYAML(t, crYAML, f.KubeClient, f.KubeConfig, namespace)
+	if err != nil {
+		return err
+	}
+	err = e2eutil.CreateFromYAML(t, crYAML, f.KubeClient, f.KubeConfig, namespace)
+	if err != nil {
+		return err
+	}
 
 	// wait for example-memcached to reach 3 replicas
 	err = e2eutil.DeploymentReplicaCheck(t, f.KubeClient, namespace, "example-memcached", 3, 6)
@@ -145,8 +151,7 @@ func memcachedScaleTest(namespace string, f *framework.Framework, t *testing.T) 
 	}
 
 	// wait for example-memcached to reach 4 replicas
-	err = e2eutil.DeploymentReplicaCheck(t, f.KubeClient, namespace, "example-memcached", 4, 6)
-	return err
+	return e2eutil.DeploymentReplicaCheck(t, f.KubeClient, namespace, "example-memcached", 4, 6)
 }
 
 func MemcachedLocal(t *testing.T) {
@@ -160,7 +165,10 @@ func MemcachedLocal(t *testing.T) {
 		t.Fatal(err)
 	}
 	cmd := exec.Command("operator-sdk", "up", "local", "--namespace="+namespace)
-	stderr, _ := os.Create("stderr.txt")
+	stderr, err := os.Create("stderr.txt")
+	if err != nil {
+		t.Fatalf("failed to create stderr.txt: %v", err)
+	}
 	cmd.Stderr = stderr
 	defer stderr.Close()
 
@@ -256,5 +264,7 @@ func MemcachedCluster(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	memcachedScaleTest(namespace, f, t)
+	if err = memcachedScaleTest(namespace, f, t); err != nil {
+		t.Fatal(err)
+	}
 }
