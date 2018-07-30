@@ -34,8 +34,9 @@ var (
 	// scheme tracks the type registry for the sdk
 	// This scheme is used to decode json data into the correct Go type based on the object's GVK
 	// All types that the operator watches must be added to this scheme
-	scheme = runtime.NewScheme()
-	codecs = serializer.NewCodecFactory(scheme)
+	scheme      = runtime.NewScheme()
+	codecs      = serializer.NewCodecFactory(scheme)
+	decoderFunc = decoder
 )
 
 func init() {
@@ -45,7 +46,17 @@ func init() {
 	cgoscheme.AddToScheme(scheme)
 }
 
-func decoder(gv schema.GroupVersion) runtime.Decoder {
+// UtilDecoderFunc retrieve the correct decoder from a GroupVersion
+// and the schemes codec factory.
+type UtilDecoderFunc func(schema.GroupVersion, serializer.CodecFactory) runtime.Decoder
+
+// SetDecoderFunc sets a non default decoder function
+// This is used as a work around to add support for unstructured objects
+func SetDecoderFunc(u UtilDecoderFunc) {
+	decoderFunc = u
+}
+
+func decoder(gv schema.GroupVersion, codecs serializer.CodecFactory) runtime.Decoder {
 	codec := codecs.UniversalDecoder(gv)
 	return codec
 }
@@ -60,7 +71,7 @@ func AddToSDKScheme(addToScheme addToSchemeFunc) {
 // RuntimeObjectFromUnstructured converts an unstructured to a runtime object
 func RuntimeObjectFromUnstructured(u *unstructured.Unstructured) runtime.Object {
 	gvk := u.GroupVersionKind()
-	decoder := decoder(gvk.GroupVersion())
+	decoder := decoderFunc(gvk.GroupVersion(), codecs)
 
 	b, err := u.MarshalJSON()
 	if err != nil {
@@ -91,7 +102,7 @@ func UnstructuredFromRuntimeObject(ro runtime.Object) *unstructured.Unstructured
 // TODO: https://github.com/operator-framework/operator-sdk/issues/127
 func UnstructuredIntoRuntimeObject(u *unstructured.Unstructured, into runtime.Object) error {
 	gvk := u.GroupVersionKind()
-	decoder := decoder(gvk.GroupVersion())
+	decoder := decoderFunc(gvk.GroupVersion(), codecs)
 
 	b, err := u.MarshalJSON()
 	if err != nil {
@@ -111,7 +122,7 @@ func RuntimeObjectIntoRuntimeObject(from runtime.Object, into runtime.Object) er
 		return err
 	}
 	gvk := from.GetObjectKind().GroupVersionKind()
-	decoder := decoder(gvk.GroupVersion())
+	decoder := decoderFunc(gvk.GroupVersion(), codecs)
 	_, _, err = decoder.Decode(b, &gvk, into)
 	if err != nil {
 		return fmt.Errorf("failed to decode json data with gvk(%v): %v", gvk.String(), err)
