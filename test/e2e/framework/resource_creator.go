@@ -106,6 +106,9 @@ func (ctx *TestCtx) createCRDFromYAML(yamlFile []byte) error {
 			}
 			return nil
 		})
+		if apierrors.IsAlreadyExists(err) {
+			return nil
+		}
 		return err
 	default:
 		return errors.New("Non-CRD resource in createCRDFromYAML function")
