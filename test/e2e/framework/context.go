@@ -1,7 +1,6 @@
 package framework
 
 import (
-	"errors"
 	"strconv"
 	"strings"
 	"testing"
@@ -42,17 +41,11 @@ func (ctx *TestCtx) GetObjID() string {
 }
 
 func (ctx *TestCtx) Cleanup(t *testing.T) {
-	cleanupErr := false
 	for i := len(ctx.cleanUpFns) - 1; i >= 0; i-- {
 		err := ctx.cleanUpFns[i]()
 		if err != nil {
-			cleanupErr = true
-			t.Logf("A cleanup function failed with error: %v\n", err)
+			t.Errorf("A cleanup function failed with error: %v\n", err)
 		}
-	}
-
-	if cleanupErr {
-		t.Fatal(errors.New("Fail due to cleanup function error(s)"))
 	}
 }
 
