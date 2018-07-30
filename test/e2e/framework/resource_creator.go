@@ -15,7 +15,7 @@ func (ctx *TestCtx) CreateNamespace(f *Framework, t *testing.T) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	t.Log("Created namespace")
+	t.Logf("Created namespace: %s", namespace)
 	ctx.AddFinalizerFn(func() error { return f.KubeClient.CoreV1().Namespaces().Delete(namespace, metav1.NewDeleteOptions(0)) })
 	return namespace, nil
 }
