@@ -14,9 +14,6 @@ import (
 	"github.com/operator-framework/operator-sdk/test/e2e/e2eutil"
 	framework "github.com/operator-framework/operator-sdk/test/e2e/framework"
 
-	extensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -88,21 +85,10 @@ func TestMemcached(t *testing.T) {
 
 	// create crd
 	crdYAML, err := ioutil.ReadFile("deploy/crd.yaml")
-	err = e2eutil.CreateFromYAML(t, crdYAML, f.KubeClient, f.KubeConfig, "")
+	err = ctx.CreateFromYAML(crdYAML)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx.AddFinalizerFn(func() error {
-		extensionclient, err := extensions.NewForConfig(f.KubeConfig)
-		if err != nil {
-			return err
-		}
-		err = extensionclient.ApiextensionsV1beta1().CustomResourceDefinitions().Delete("memcacheds.cache.example.com", metav1.NewDeleteOptions(0))
-		if err != nil && !apierrors.IsNotFound(err) {
-			return err
-		}
-		return nil
-	})
 	t.Log("Created crd")
 
 	// run both subtests
@@ -112,7 +98,7 @@ func TestMemcached(t *testing.T) {
 	})
 }
 
-func memcachedScaleTest(namespace string, f *framework.Framework, t *testing.T) error {
+func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) error {
 	// create example-memcached yaml file
 	err := ioutil.WriteFile("deploy/cr.yaml",
 		[]byte("apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: 3"),
@@ -126,11 +112,14 @@ func memcachedScaleTest(namespace string, f *framework.Framework, t *testing.T) 
 	if err != nil {
 		return err
 	}
-	err = e2eutil.CreateFromYAML(t, crYAML, f.KubeClient, f.KubeConfig, namespace)
+	err = ctx.CreateFromYAML(crYAML)
 	if err != nil {
 		return err
 	}
-
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		return err
+	}
 	// wait for example-memcached to reach 3 replicas
 	err = e2eutil.DeploymentReplicaCheck(t, f.KubeClient, namespace, "example-memcached", 3, 6)
 	if err != nil {
@@ -138,7 +127,10 @@ func memcachedScaleTest(namespace string, f *framework.Framework, t *testing.T) 
 	}
 
 	// update memcached CR size to 4
-	memcachedClient := e2eutil.GetCRClient(t, f.KubeConfig, crYAML)
+	memcachedClient, err := ctx.GetCRClient(crYAML)
+	if err != nil {
+		return err
+	}
 	err = memcachedClient.Patch(types.JSONPatchType).
 		Namespace(namespace).
 		Resource("memcacheds").
@@ -160,7 +152,7 @@ func MemcachedLocal(t *testing.T) {
 	f := framework.Global
 	ctx := f.NewTestCtx(t)
 	defer ctx.Cleanup(t)
-	namespace, err := ctx.CreateNamespace(f, t)
+	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -193,7 +185,7 @@ func MemcachedLocal(t *testing.T) {
 		t.Fatalf("Local operator not ready after 60 seconds: %v\n", err)
 	}
 
-	if err = memcachedScaleTest(namespace, f, t); err != nil {
+	if err = memcachedScaleTest(t, f, ctx); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -231,16 +223,11 @@ func MemcachedCluster(t *testing.T) {
 		}
 	}
 
-	namespace, err := ctx.CreateNamespace(f, t)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	// create rbac
 	rbacYAML, err := ioutil.ReadFile("deploy/rbac.yaml")
 	rbacYAMLSplit := bytes.Split(rbacYAML, []byte("\n---\n"))
 	for _, rbacSpec := range rbacYAMLSplit {
-		err = e2eutil.CreateFromYAML(t, rbacSpec, f.KubeClient, f.KubeConfig, namespace)
+		err = ctx.CreateFromYAML(rbacSpec)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -252,19 +239,23 @@ func MemcachedCluster(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = e2eutil.CreateFromYAML(t, operatorYAML, f.KubeClient, f.KubeConfig, namespace)
+	err = ctx.CreateFromYAML(operatorYAML)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("Created operator")
 
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		t.Fatal(err)
+	}
 	// wait for memcached-operator to be ready
 	err = e2eutil.DeploymentReplicaCheck(t, f.KubeClient, namespace, "memcached-operator", 1, 6)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err = memcachedScaleTest(namespace, f, t); err != nil {
+	if err = memcachedScaleTest(t, f, ctx); err != nil {
 		t.Fatal(err)
 	}
 }
