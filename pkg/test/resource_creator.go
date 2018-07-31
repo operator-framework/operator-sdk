@@ -1,7 +1,11 @@
 package test
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"strings"
 
 	y2j "github.com/ghodss/yaml"
@@ -17,6 +21,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+)
+
+var (
+	filemode = int(0664)
 )
 
 func (ctx *TestCtx) GetNamespace() (string, error) {
@@ -166,4 +174,50 @@ func (ctx *TestCtx) CreateFromYAML(yamlFile []byte) error {
 	default:
 		return errors.New("Unhandled resource type")
 	}
+}
+
+func (ctx *TestCtx) InitializeClusterResources() error {
+	// update operator image with correct image
+	operatorYAML, err := ioutil.ReadFile("../../deploy/operator.yaml")
+	if err != nil {
+		return err
+	}
+	// substitute existing image name in operatorYAML with provided image name
+	yamlMap := make(map[interface{}]interface{})
+	err = yaml.Unmarshal(operatorYAML, &yamlMap)
+	if err != nil {
+		return fmt.Errorf("Could not decode operator yaml: %v", err)
+	}
+	spec := yamlMap["spec"].(map[interface{}]interface{})
+	template := spec["template"].(map[interface{}]interface{})
+	spec2 := template["spec"].(map[interface{}]interface{})
+	containers := spec2["containers"].([]interface{})
+	container := containers[0].(map[interface{}]interface{})
+	container["image"] = Global.ImageName
+	operatorYAML, err = yaml.Marshal(yamlMap)
+	err = ioutil.WriteFile("../../deploy/operator_test.yaml", operatorYAML, os.FileMode(filemode))
+	if err != nil {
+		return err
+	}
+
+	crdYAML, err := ioutil.ReadFile("../../deploy/crd.yaml")
+	if err != nil {
+		return err
+	}
+	err = ctx.CreateFromYAML(crdYAML)
+	if err != nil {
+		return err
+	}
+
+	// create rbac
+	rbacYAML, err := ioutil.ReadFile("../../deploy/rbac.yaml")
+	rbacYAMLSplit := bytes.Split(rbacYAML, []byte("\n---\n"))
+	for _, rbacSpec := range rbacYAMLSplit {
+		err = ctx.CreateFromYAML(rbacSpec)
+		if err != nil {
+			return err
+		}
+	}
+	operatorYAML, err = ioutil.ReadFile("../../deploy/operator_test.yaml")
+	return ctx.CreateFromYAML(operatorYAML)
 }
