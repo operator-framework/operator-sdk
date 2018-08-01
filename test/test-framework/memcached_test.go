@@ -1,0 +1,71 @@
+package e2e
+
+import (
+	"testing"
+
+	framework "github.com/operator-framework/operator-sdk/pkg/test"
+	"github.com/operator-framework/operator-sdk/pkg/util/e2eutil"
+)
+
+func TestMemcached(t *testing.T) {
+	f := framework.Global
+	ctx := f.NewTestCtx(t)
+	defer ctx.Cleanup(t)
+	err := ctx.InitializeClusterResources()
+	if err != nil {
+		t.Fatalf("Failed to initialize clister resources: %v", err)
+	}
+	t.Log("Initialized cluster resources")
+
+	// run subtests
+	t.Run("memcached-group", func(t *testing.T) {
+		t.Run("Cluster", MemcachedCluster)
+	})
+}
+
+func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) error {
+	// create memcached custom resource
+	crYAML := []byte("apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: 3")
+	err := ctx.CreateFromYAML(crYAML)
+	if err != nil {
+		return err
+	}
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		return err
+	}
+	// wait for example-memcached to reach 3 replicas
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 3, 6)
+	if err != nil {
+		return err
+	}
+
+	err = ctx.UpdateCR("example-memcached", "memcacheds", "/spec/size", "4")
+	if err != nil {
+		return err
+	}
+
+	// wait for example-memcached to reach 4 replicas
+	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 4, 6)
+}
+
+func MemcachedCluster(t *testing.T) {
+	t.Parallel()
+	// get global framework variables
+	f := framework.Global
+	ctx := f.NewTestCtx(t)
+	defer ctx.Cleanup(t)
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// wait for memcached-operator to be ready
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, 6)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = memcachedScaleTest(t, f, ctx); err != nil {
+		t.Fatal(err)
+	}
+}
