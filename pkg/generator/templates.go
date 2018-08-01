@@ -139,6 +139,7 @@ import (
 	sdkVersion "{{.SDKVersionImport}}"
 
 	"github.com/sirupsen/logrus"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 func printVersion() {
