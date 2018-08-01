@@ -214,6 +214,9 @@ func (ctx *TestCtx) InitializeClusterResources() error {
 	container := containers[0].(map[interface{}]interface{})
 	container["image"] = Global.ImageName
 	operatorYAML, err = yaml.Marshal(yamlMap)
+	if err != nil {
+		return err
+	}
 	err = ioutil.WriteFile("../../deploy/operator_test.yaml", operatorYAML, os.FileMode(filemode))
 	if err != nil {
 		return err
