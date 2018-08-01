@@ -31,6 +31,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 )
@@ -65,6 +66,10 @@ func (ctx *TestCtx) GetCRClient(yamlCR []byte) (*rest.RESTClient, error) {
 	if ctx.CRClient != nil {
 		return ctx.CRClient, nil
 	}
+	// a user may pass nil if they expect the CRClient to already exist
+	if yamlCR == nil {
+		return nil, errors.New("CRClient does not exist; yamlCR cannot be nil")
+	}
 	// get new RESTClient for custom resources
 	crConfig := Global.KubeConfig
 	yamlMap := make(map[interface{}]interface{})
@@ -81,11 +86,29 @@ func (ctx *TestCtx) GetCRClient(yamlCR []byte) (*rest.RESTClient, error) {
 	if crConfig.UserAgent == "" {
 		crConfig.UserAgent = rest.DefaultKubernetesUserAgent()
 	}
-	ctx.CRClient, err = rest.RESTClientFor(crConfig)
+	return rest.RESTClientFor(crConfig)
+}
+
+// UpdateCR takes the name of a resource, the resource plural name,
+// the path of the field that need to be updated (e.g. /spec/size),
+// and the new value to that field and patches the resource with
+// that change
+func (ctx *TestCtx) UpdateCR(name, resourceName, path, value string) error {
+	crClient, err := ctx.GetCRClient(nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return ctx.CRClient, nil
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		return err
+	}
+	return crClient.Patch(types.JSONPatchType).
+		Namespace(namespace).
+		Resource(resourceName).
+		Name(name).
+		Body([]byte("[{\"op\": \"replace\", \"path\": \"" + path + "\", \"value\": " + value + "}]")).
+		Do().
+		Error()
 }
 
 func (ctx *TestCtx) createCRFromYAML(yamlFile []byte, resourceName string) error {
