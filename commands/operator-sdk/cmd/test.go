@@ -24,10 +24,12 @@ import (
 )
 
 var (
-	kubeconfig string
-	imageName  string
-	verbose    bool
-	namespace  string
+	kubeconfig       string
+	namespace        string
+	crdManifestPath  string
+	opManifestPath   string
+	rbacManifestPath string
+	verbose          bool
 )
 
 func NewTestCmd() *cobra.Command {
@@ -42,8 +44,9 @@ func NewTestCmd() *cobra.Command {
 		defaultKubeConfig = homedir + "/.kube/config"
 	}
 	testCmd.Flags().StringVarP(&kubeconfig, "kubeconfig", "k", defaultKubeConfig, "Kubeconfig path (e.g. $HOME/.kube/config)")
-	testCmd.Flags().StringVarP(&imageName, "image", "i", "", "Name of image (e.g. quay.io/example-inc/test-operator:v0.0.1)")
-	testCmd.MarkFlagRequired("image")
+	testCmd.Flags().StringVarP(&crdManifestPath, "crd", "c", "deploy/crd.yaml", "Path to CRD manifest (default: deploy/crd.yaml")
+	testCmd.Flags().StringVarP(&opManifestPath, "operator", "o", "deploy/operator.yaml", "Path to operator manifest (default: deploy/operator.yaml")
+	testCmd.Flags().StringVarP(&rbacManifestPath, "rbac", "r", "deploy/rbac.yaml", "Path to RBAC manifest (default: deploy/rbac.yaml")
 	testCmd.Flags().StringVarP(&namespace, "namespace", "n", "", "Namespace for test to run in")
 	testCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose go test")
 
@@ -60,7 +63,9 @@ func testFunc(cmd *cobra.Command, args []string) {
 	dc.Stderr = os.Stderr
 	dc.Env = append(os.Environ(),
 		fmt.Sprintf("%v=%v", "TEST_KUBECONFIG", kubeconfig),
-		fmt.Sprintf("%v=%v", "TEST_IMAGE", imageName),
+		fmt.Sprintf("%v=%v", "TEST_CRDMAN", crdManifestPath),
+		fmt.Sprintf("%v=%v", "TEST_OPMAN", opManifestPath),
+		fmt.Sprintf("%v=%v", "TEST_RBACMAN", rbacManifestPath),
 		fmt.Sprintf("%v=%v", "TEST_NAMESPACE", namespace))
 	err := dc.Run()
 	if err != nil {
