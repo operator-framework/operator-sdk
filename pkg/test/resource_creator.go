@@ -86,7 +86,8 @@ func (ctx *TestCtx) GetCRClient(yamlCR []byte) (*rest.RESTClient, error) {
 	if crConfig.UserAgent == "" {
 		crConfig.UserAgent = rest.DefaultKubernetesUserAgent()
 	}
-	return rest.RESTClientFor(crConfig)
+	ctx.CRClient, err = rest.RESTClientFor(crConfig)
+	return ctx.CRClient, err
 }
 
 // UpdateCR takes the name of a resource, the resource plural name,
