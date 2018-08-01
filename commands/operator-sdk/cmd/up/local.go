@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/signal"
 	"os/user"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
 	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
@@ -78,6 +80,16 @@ func upLocal(projectName string) {
 		args = append(args, extraArgs...)
 	}
 	dc := exec.Command(gocmd, args...)
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		err := dc.Process.Kill()
+		if err != nil {
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}()
 	dc.Stdout = os.Stdout
 	dc.Stderr = os.Stderr
 	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, kubeConfig), fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, namespace))
