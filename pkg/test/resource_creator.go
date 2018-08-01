@@ -32,7 +32,12 @@ func (ctx *TestCtx) GetNamespace() (string, error) {
 		return ctx.Namespace, nil
 	}
 	// create namespace
-	ctx.Namespace = ctx.GetID()
+	if *Global.Namespace != "" {
+		ctx.Namespace = *Global.Namespace
+	} else {
+		ctx.Namespace = ctx.GetID()
+		Global.Namespace = &ctx.Namespace
+	}
 	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ctx.Namespace}}
 	_, err := Global.KubeClient.CoreV1().Namespaces().Create(namespaceObj)
 	if err != nil {

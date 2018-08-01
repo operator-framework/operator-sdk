@@ -17,6 +17,7 @@ type Framework struct {
 	KubeClient       kubernetes.Interface
 	ExtensionsClient *extensions.Clientset
 	ImageName        *string
+	Namespace        *string
 }
 
 func setup() error {
@@ -40,11 +41,16 @@ func setup() error {
 	if ok != true {
 		return errors.New("Missing test environment variable; please run with `operator-sdk` test command")
 	}
+	namespace, ok := os.LookupEnv("TEST_NAMESPACE")
+	if ok != true {
+		return errors.New("Missing test environment variable; please run with `operator-sdk` test command")
+	}
 	Global = &Framework{
 		KubeConfig:       kubeconfig,
 		KubeClient:       kubeclient,
 		ExtensionsClient: extensionsClient,
 		ImageName:        &imageName,
+		Namespace:        &namespace,
 	}
 	return nil
 }

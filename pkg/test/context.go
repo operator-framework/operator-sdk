@@ -32,7 +32,8 @@ func (f *Framework) NewTestCtx(t *testing.T) TestCtx {
 
 	id := prefix + "-" + strconv.FormatInt(time.Now().Unix(), 10)
 	return TestCtx{
-		ID: id,
+		ID:        id,
+		Namespace: *f.Namespace,
 	}
 }
 

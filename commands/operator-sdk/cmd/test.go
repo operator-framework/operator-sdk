@@ -27,6 +27,7 @@ var (
 	kubeconfig string
 	imageName  string
 	verbose    bool
+	namespace  string
 )
 
 func NewTestCmd() *cobra.Command {
@@ -42,6 +43,8 @@ func NewTestCmd() *cobra.Command {
 	}
 	testCmd.Flags().StringVarP(&kubeconfig, "kubeconfig", "k", defaultKubeConfig, "Kubeconfig path (e.g. $HOME/.kube/config)")
 	testCmd.Flags().StringVarP(&imageName, "image", "i", "", "Name of image (e.g. quay.io/example-inc/test-operator:v0.0.1)")
+	testCmd.MarkFlagRequired("image")
+	testCmd.Flags().StringVarP(&namespace, "namespace", "n", "", "Namespace for test to run in")
 	testCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose go test")
 
 	return testCmd
@@ -55,7 +58,10 @@ func testFunc(cmd *cobra.Command, args []string) {
 	dc := exec.Command("go", testArgs...)
 	dc.Stdout = os.Stdout
 	dc.Stderr = os.Stderr
-	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", "TEST_KUBECONFIG", kubeconfig), fmt.Sprintf("%v=%v", "TEST_IMAGE", imageName))
+	dc.Env = append(os.Environ(),
+		fmt.Sprintf("%v=%v", "TEST_KUBECONFIG", kubeconfig),
+		fmt.Sprintf("%v=%v", "TEST_IMAGE", imageName),
+		fmt.Sprintf("%v=%v", "TEST_NAMESPACE", namespace))
 	err := dc.Run()
 	if err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("test failed: %v", err))
