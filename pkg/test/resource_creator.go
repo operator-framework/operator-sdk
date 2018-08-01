@@ -17,9 +17,7 @@ package test
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io/ioutil"
-	"os"
 	"strings"
 
 	y2j "github.com/ghodss/yaml"
@@ -196,33 +194,8 @@ func (ctx *TestCtx) CreateFromYAML(yamlFile []byte) error {
 }
 
 func (ctx *TestCtx) InitializeClusterResources() error {
-	// update operator image with correct image
-	operatorYAML, err := ioutil.ReadFile("../../deploy/operator.yaml")
-	if err != nil {
-		return err
-	}
-	// substitute existing image name in operatorYAML with provided image name
-	yamlMap := make(map[interface{}]interface{})
-	err = yaml.Unmarshal(operatorYAML, &yamlMap)
-	if err != nil {
-		return fmt.Errorf("Could not decode operator yaml: %v", err)
-	}
-	spec := yamlMap["spec"].(map[interface{}]interface{})
-	template := spec["template"].(map[interface{}]interface{})
-	spec2 := template["spec"].(map[interface{}]interface{})
-	containers := spec2["containers"].([]interface{})
-	container := containers[0].(map[interface{}]interface{})
-	container["image"] = Global.ImageName
-	operatorYAML, err = yaml.Marshal(yamlMap)
-	if err != nil {
-		return err
-	}
-	err = ioutil.WriteFile("../../deploy/operator_test.yaml", operatorYAML, os.FileMode(filemode))
-	if err != nil {
-		return err
-	}
-
-	crdYAML, err := ioutil.ReadFile("../../deploy/crd.yaml")
+	// create crd
+	crdYAML, err := ioutil.ReadFile(*Global.CrdManPath)
 	if err != nil {
 		return err
 	}
@@ -230,9 +203,8 @@ func (ctx *TestCtx) InitializeClusterResources() error {
 	if err != nil {
 		return err
 	}
-
 	// create rbac
-	rbacYAML, err := ioutil.ReadFile("../../deploy/rbac.yaml")
+	rbacYAML, err := ioutil.ReadFile(*Global.RbacManPath)
 	rbacYAMLSplit := bytes.Split(rbacYAML, []byte("\n---\n"))
 	for _, rbacSpec := range rbacYAMLSplit {
 		err = ctx.CreateFromYAML(rbacSpec)
@@ -240,6 +212,7 @@ func (ctx *TestCtx) InitializeClusterResources() error {
 			return err
 		}
 	}
-	operatorYAML, err = ioutil.ReadFile("../../deploy/operator_test.yaml")
+	// create operator deployment
+	operatorYAML, err := ioutil.ReadFile(*Global.OpManPath)
 	return ctx.CreateFromYAML(operatorYAML)
 }

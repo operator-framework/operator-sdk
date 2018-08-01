@@ -30,8 +30,10 @@ type Framework struct {
 	KubeConfig       *rest.Config
 	KubeClient       kubernetes.Interface
 	ExtensionsClient *extensions.Clientset
-	ImageName        *string
 	Namespace        *string
+	CrdManPath       *string
+	OpManPath        *string
+	RbacManPath      *string
 }
 
 func setup() error {
@@ -51,11 +53,19 @@ func setup() error {
 	if err != nil {
 		return err
 	}
-	imageName, ok := os.LookupEnv("TEST_IMAGE")
+	namespace, ok := os.LookupEnv("TEST_NAMESPACE")
 	if ok != true {
 		return errors.New("Missing test environment variable; please run with `operator-sdk` test command")
 	}
-	namespace, ok := os.LookupEnv("TEST_NAMESPACE")
+	crdManPath, ok := os.LookupEnv("TEST_CRDMAN")
+	if ok != true {
+		return errors.New("Missing test environment variable; please run with `operator-sdk` test command")
+	}
+	opManPath, ok := os.LookupEnv("TEST_OPMAN")
+	if ok != true {
+		return errors.New("Missing test environment variable; please run with `operator-sdk` test command")
+	}
+	rbacManPath, ok := os.LookupEnv("TEST_RBACMAN")
 	if ok != true {
 		return errors.New("Missing test environment variable; please run with `operator-sdk` test command")
 	}
@@ -63,8 +73,10 @@ func setup() error {
 		KubeConfig:       kubeconfig,
 		KubeClient:       kubeclient,
 		ExtensionsClient: extensionsClient,
-		ImageName:        &imageName,
 		Namespace:        &namespace,
+		CrdManPath:       &crdManPath,
+		OpManPath:        &opManPath,
+		RbacManPath:      &rbacManPath,
 	}
 	return nil
 }

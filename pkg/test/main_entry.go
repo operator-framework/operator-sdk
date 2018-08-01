@@ -21,6 +21,8 @@ import (
 )
 
 func MainEntry(m *testing.M) {
+	// go test always runs from the test directory; change to project root
+	os.Chdir("../..")
 	if err := setup(); err != nil {
 		log.Fatalf("Failed to set up framework: %v", err)
 	}
