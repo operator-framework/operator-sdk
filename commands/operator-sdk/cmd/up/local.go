@@ -86,7 +86,7 @@ func upLocal(projectName string) {
 		<-c
 		err := dc.Process.Kill()
 		if err != nil {
-			os.Exit(1)
+			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to terminate the operator: %v", err))
 		}
 		os.Exit(0)
 	}()
