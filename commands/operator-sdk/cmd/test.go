@@ -24,6 +24,7 @@ import (
 )
 
 var (
+	testLocation     string
 	kubeconfig       string
 	namespace        string
 	crdManifestPath  string
@@ -43,7 +44,9 @@ func NewTestCmd() *cobra.Command {
 	if ok {
 		defaultKubeConfig = homedir + "/.kube/config"
 	}
-	testCmd.Flags().StringVarP(&kubeconfig, "kubeconfig", "k", defaultKubeConfig, "Kubeconfig path (e.g. $HOME/.kube/config)")
+	testCmd.Flags().StringVarP(&testLocation, "test-location", "t", "", "Location of test files (e.g. ./test/e2e/)")
+	testCmd.MarkFlagRequired("test-location")
+	testCmd.Flags().StringVarP(&kubeconfig, "kubeconfig", "k", defaultKubeConfig, "Kubeconfig path (default: $HOME/.kube/config)")
 	testCmd.Flags().StringVarP(&crdManifestPath, "crd", "c", "deploy/crd.yaml", "Path to CRD manifest (default: deploy/crd.yaml")
 	testCmd.Flags().StringVarP(&opManifestPath, "operator", "o", "deploy/operator.yaml", "Path to operator manifest (default: deploy/operator.yaml")
 	testCmd.Flags().StringVarP(&rbacManifestPath, "rbac", "r", "deploy/rbac.yaml", "Path to RBAC manifest (default: deploy/rbac.yaml")
@@ -54,20 +57,25 @@ func NewTestCmd() *cobra.Command {
 }
 
 func testFunc(cmd *cobra.Command, args []string) {
-	testArgs := []string{"test", "./test/e2e/..."}
+	testArgs := []string{"test", testLocation + "/..."}
 	if verbose {
 		testArgs = append(testArgs, "-v")
 	}
 	dc := exec.Command("go", testArgs...)
 	dc.Stdout = os.Stdout
 	dc.Stderr = os.Stderr
+	wd, err := os.Getwd()
+	if err != nil {
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("Could not determine working directory"))
+	}
 	dc.Env = append(os.Environ(),
 		fmt.Sprintf("%v=%v", "TEST_KUBECONFIG", kubeconfig),
 		fmt.Sprintf("%v=%v", "TEST_CRDMAN", crdManifestPath),
 		fmt.Sprintf("%v=%v", "TEST_OPMAN", opManifestPath),
 		fmt.Sprintf("%v=%v", "TEST_RBACMAN", rbacManifestPath),
-		fmt.Sprintf("%v=%v", "TEST_NAMESPACE", namespace))
-	err := dc.Run()
+		fmt.Sprintf("%v=%v", "TEST_NAMESPACE", namespace),
+		fmt.Sprintf("%v=%v", "TEST_PROJROOT", wd))
+	err = dc.Run()
 	if err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("test failed: %v", err))
 	}

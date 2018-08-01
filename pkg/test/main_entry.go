@@ -22,7 +22,11 @@ import (
 
 func MainEntry(m *testing.M) {
 	// go test always runs from the test directory; change to project root
-	os.Chdir("../..")
+	root, ok := os.LookupEnv("TEST_PROJROOT")
+	if !ok {
+		log.Fatalf("Failed to get project root dir environment variable")
+	}
+	os.Chdir(root)
 	if err := setup(); err != nil {
 		log.Fatalf("Failed to set up framework: %v", err)
 	}

@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: memcached-operator
-          image: quay.io/apavel/testing:v0.0.1
+          image: quay.io/coreos/operator-sdk-dev:test-framework-operator
           ports:
           - containerPort: 60000
             name: metrics
