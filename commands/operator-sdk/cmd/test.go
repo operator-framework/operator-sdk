@@ -46,10 +46,10 @@ func NewTestCmd() *cobra.Command {
 	}
 	testCmd.Flags().StringVarP(&testLocation, "test-location", "t", "", "Location of test files (e.g. ./test/e2e/)")
 	testCmd.MarkFlagRequired("test-location")
-	testCmd.Flags().StringVarP(&kubeconfig, "kubeconfig", "k", defaultKubeConfig, "Kubeconfig path (default: $HOME/.kube/config)")
-	testCmd.Flags().StringVarP(&crdManifestPath, "crd", "c", "deploy/crd.yaml", "Path to CRD manifest (default: deploy/crd.yaml")
-	testCmd.Flags().StringVarP(&opManifestPath, "operator", "o", "deploy/operator.yaml", "Path to operator manifest (default: deploy/operator.yaml")
-	testCmd.Flags().StringVarP(&rbacManifestPath, "rbac", "r", "deploy/rbac.yaml", "Path to RBAC manifest (default: deploy/rbac.yaml")
+	testCmd.Flags().StringVarP(&kubeconfig, "kubeconfig", "k", defaultKubeConfig, "Kubeconfig path")
+	testCmd.Flags().StringVarP(&crdManifestPath, "crd", "c", "deploy/crd.yaml", "Path to CRD manifest")
+	testCmd.Flags().StringVarP(&opManifestPath, "operator", "o", "deploy/operator.yaml", "Path to operator manifest")
+	testCmd.Flags().StringVarP(&rbacManifestPath, "rbac", "r", "deploy/rbac.yaml", "Path to RBAC manifest")
 	testCmd.Flags().StringVarP(&namespace, "namespace", "n", "", "Namespace for test to run in")
 	testCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose go test")
 
