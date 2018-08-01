@@ -38,7 +38,7 @@ type Framework struct {
 
 func setup() error {
 	kubeconfigEnv, ok := os.LookupEnv("TEST_KUBECONFIG")
-	if ok != true {
+	if !ok {
 		return errors.New("Missing test environment variable; please run with `operator-sdk` test command")
 	}
 	kubeconfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigEnv)
@@ -54,19 +54,19 @@ func setup() error {
 		return err
 	}
 	namespace, ok := os.LookupEnv("TEST_NAMESPACE")
-	if ok != true {
+	if !ok {
 		return errors.New("Missing test environment variable; please run with `operator-sdk` test command")
 	}
 	crdManPath, ok := os.LookupEnv("TEST_CRDMAN")
-	if ok != true {
+	if !ok {
 		return errors.New("Missing test environment variable; please run with `operator-sdk` test command")
 	}
 	opManPath, ok := os.LookupEnv("TEST_OPMAN")
-	if ok != true {
+	if !ok {
 		return errors.New("Missing test environment variable; please run with `operator-sdk` test command")
 	}
 	rbacManPath, ok := os.LookupEnv("TEST_RBACMAN")
-	if ok != true {
+	if !ok {
 		return errors.New("Missing test environment variable; please run with `operator-sdk` test command")
 	}
 	Global = &Framework{
