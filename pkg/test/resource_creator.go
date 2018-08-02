@@ -19,9 +19,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"strings"
-	"testing"
-
-	"github.com/operator-framework/operator-sdk/pkg/util/e2eutil"
 
 	y2j "github.com/ghodss/yaml"
 	yaml "gopkg.in/yaml.v2"
@@ -228,7 +225,7 @@ func (ctx *TestCtx) CreateFromYAML(yamlFile []byte) error {
 	}
 }
 
-func (ctx *TestCtx) InitializeClusterResources(t *testing.T) error {
+func (ctx *TestCtx) InitializeClusterResources() error {
 	// create crd
 	crdYAML, err := ioutil.ReadFile(*Global.CrdManPath)
 	if err != nil {
@@ -240,9 +237,6 @@ func (ctx *TestCtx) InitializeClusterResources(t *testing.T) error {
 	}
 	// create rbac
 	rbacYAML, err := ioutil.ReadFile(*Global.RbacManPath)
-	if err != nil {
-		return err
-	}
 	rbacYAMLSplit := bytes.Split(rbacYAML, []byte("\n---\n"))
 	for _, rbacSpec := range rbacYAMLSplit {
 		err = ctx.CreateFromYAML(rbacSpec)
@@ -252,24 +246,5 @@ func (ctx *TestCtx) InitializeClusterResources(t *testing.T) error {
 	}
 	// create operator deployment
 	operatorYAML, err := ioutil.ReadFile(*Global.OpManPath)
-	if err != nil {
-		return err
-	}
-	err = ctx.CreateFromYAML(operatorYAML)
-	if err != nil {
-		return err
-	}
-	namespace, err := ctx.GetNamespace()
-	if err != nil {
-		return err
-	}
-	opManMap := make(map[interface{}]interface{})
-	err = yaml.Unmarshal(operatorYAML, &opManMap)
-	if err != nil {
-		return err
-	}
-	// TODO: handle failure of these lines without segfault (give nice error message or error handling instead)
-	opName := opManMap["metadata"].(map[interface{}]interface{})["name"].(string)
-	replicas := opManMap["spec"].(map[interface{}]interface{})["replicas"].(int)
-	return e2eutil.WaitForDeployment(t, Global.KubeClient, namespace, opName, replicas, 6)
+	return ctx.CreateFromYAML(operatorYAML)
 }
