@@ -66,7 +66,7 @@ func testFunc(cmd *cobra.Command, args []string) {
 	dc.Stderr = os.Stderr
 	wd, err := os.Getwd()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("Could not determine working directory"))
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("could not determine working directory: %v", err))
 	}
 	dc.Env = append(os.Environ(),
 		fmt.Sprintf("%v=%v", "TEST_KUBECONFIG", kubeconfig),

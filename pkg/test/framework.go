@@ -16,6 +16,7 @@ package test
 
 import (
 	"errors"
+	"fmt"
 	"os"
 
 	extensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -43,15 +44,15 @@ func setup() error {
 	}
 	kubeconfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigEnv)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to build the kubeconfig: %v", err)
 	}
 	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to build the kubeclient: %v", err)
 	}
 	extensionsClient, err := extensions.NewForConfig(kubeconfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to build the extensionsClient: %v", err)
 	}
 	namespace, ok := os.LookupEnv("TEST_NAMESPACE")
 	if !ok {
