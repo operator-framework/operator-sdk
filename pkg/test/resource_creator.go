@@ -121,6 +121,13 @@ func (ctx *TestCtx) createCRFromYAML(yamlFile []byte, resourceName string) error
 	if err != nil {
 		return err
 	}
+	yamlMap := make(map[interface{}]interface{})
+	err = yaml.Unmarshal(yamlFile, &yamlMap)
+	if err != nil {
+		return err
+	}
+	// TODO: handle failure of this line without segfault
+	name := yamlMap["metadata"].(map[interface{}]interface{})["name"].(string)
 	jsonDat, err := y2j.YAMLToJSON(yamlFile)
 	err = client.Post().
 		Namespace(namespace).
@@ -132,6 +139,7 @@ func (ctx *TestCtx) createCRFromYAML(yamlFile []byte, resourceName string) error
 		return client.Delete().
 			Namespace(namespace).
 			Resource(resourceName).
+			Name(name).
 			Body(metav1.NewDeleteOptions(0)).
 			Do().
 			Error()
