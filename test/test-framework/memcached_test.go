@@ -11,7 +11,7 @@ func TestMemcached(t *testing.T) {
 	f := framework.Global
 	ctx := f.NewTestCtx(t)
 	defer ctx.Cleanup(t)
-	err := ctx.InitializeClusterResources()
+	err := ctx.InitializeClusterResources(t)
 	if err != nil {
 		t.Fatalf("Failed to initialize clister resources: %v", err)
 	}
@@ -19,53 +19,73 @@ func TestMemcached(t *testing.T) {
 
 	// run subtests
 	t.Run("memcached-group", func(t *testing.T) {
-		t.Run("Cluster", MemcachedCluster)
+		t.Run("Scale", MemcachedScale)
+		t.Run("PodFail", MemcachedPodFail)
 	})
 }
 
-func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) error {
-	// create memcached custom resource
-	crYAML := []byte("apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: 3")
-	err := ctx.CreateFromYAML(crYAML)
-	if err != nil {
-		return err
-	}
-	namespace, err := ctx.GetNamespace()
-	if err != nil {
-		return err
-	}
-	// wait for example-memcached to reach 3 replicas
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 3, 6)
-	if err != nil {
-		return err
-	}
-
-	err = ctx.UpdateCR("example-memcached", "memcacheds", "/spec/size", "4")
-	if err != nil {
-		return err
-	}
-
-	// wait for example-memcached to reach 4 replicas
-	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 4, 6)
-}
-
-func MemcachedCluster(t *testing.T) {
+func MemcachedScale(t *testing.T) {
 	t.Parallel()
-	// get global framework variables
 	f := framework.Global
 	ctx := f.NewTestCtx(t)
 	defer ctx.Cleanup(t)
+
+	// create memcached custom resource
+	crYAML := []byte("apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached-scale\"\nspec:\n  size: 3")
+	err := ctx.CreateFromYAML(crYAML)
+	if err != nil {
+		t.Fatal(err)
+	}
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
-	// wait for memcached-operator to be ready
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, 6)
+	// wait for example-memcached-scale to reach 3 replicas
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached-scale", 3, 6)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err = memcachedScaleTest(t, f, ctx); err != nil {
+	err = ctx.UpdateCR("example-memcached-scale", "memcacheds", "/spec/size", "4")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// wait for example-memcached-scale to reach 4 replicas
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached-scale", 4, 6)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func MemcachedPodFail(t *testing.T) {
+	t.Parallel()
+	f := framework.Global
+	ctx := f.NewTestCtx(t)
+	defer ctx.Cleanup(t)
+
+	// create memcached custom resource
+	crYAML := []byte("apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached-podfail\"\nspec:\n  size: 3")
+	err := ctx.CreateFromYAML(crYAML)
+	if err != nil {
+		t.Fatal(err)
+	}
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// wait for example-memcached-podfail to reach 3 replicas
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached-podfail", 3, 6)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = ctx.SimulatePodFailure("example-memcached-podfail")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached-podfail", 3, 6)
+	if err != nil {
 		t.Fatal(err)
 	}
 }
