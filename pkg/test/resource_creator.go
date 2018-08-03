@@ -181,6 +181,10 @@ func (ctx *TestCtx) CreateFromYAML(yamlFile []byte) error {
 		return err
 	}
 	kind := yamlMap["kind"].(string)
+	// TODO: use a dynamic client for standard and extensions kubernetes resources.
+	// We should consider both the SDK's wrapper for the kubernetes dynamic client
+	// (which at time of typing needs updating) or using the controller-runtime
+	// dynamic client in the test framework (and the SDK as well).
 	switch kind {
 	case "Role":
 	case "RoleBinding":
