@@ -53,7 +53,9 @@ func (ctx *TestCtx) GetNamespace() (string, error) {
 	}
 	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ctx.Namespace}}
 	_, err := Global.KubeClient.CoreV1().Namespaces().Create(namespaceObj)
-	if err != nil {
+	if apierrors.IsAlreadyExists(err) {
+		return ctx.Namespace, nil
+	} else if err != nil {
 		return "", err
 	}
 	ctx.AddFinalizerFn(func() error {
