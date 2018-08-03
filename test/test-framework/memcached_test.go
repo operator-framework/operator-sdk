@@ -27,7 +27,7 @@ func TestMemcached(t *testing.T) {
 	defer ctx.Cleanup(t)
 	err := ctx.InitializeClusterResources()
 	if err != nil {
-		t.Fatalf("Failed to initialize clister resources: %v", err)
+		t.Fatalf("failed to initialize cluster resources: %v", err)
 	}
 	t.Log("Initialized cluster resources")
 
