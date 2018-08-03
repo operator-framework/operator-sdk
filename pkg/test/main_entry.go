@@ -15,19 +15,23 @@
 package test
 
 import (
+	"flag"
 	"log"
 	"os"
 	"testing"
 )
 
 func MainEntry(m *testing.M) {
+	projRoot := flag.String("root", "", "path to project root")
+	kubeconfigPath := flag.String("kubeconfig", "", "path to kubeconfig")
+	namespace := flag.String("namespace", "", "namespace to tests to run in")
+	crdManPath := flag.String("crd", "", "path to crd manifest")
+	opManPath := flag.String("op", "", "path to operator manifest")
+	rbacManPath := flag.String("rbac", "", "path to rbac manifest")
+	flag.Parse()
 	// go test always runs from the test directory; change to project root
-	root, ok := os.LookupEnv("TEST_PROJROOT")
-	if !ok {
-		log.Fatal("failed to get project root dir environment variable")
-	}
-	os.Chdir(root)
-	if err := setup(); err != nil {
+	os.Chdir(*projRoot)
+	if err := setup(kubeconfigPath, namespace, crdManPath, opManPath, rbacManPath); err != nil {
 		log.Fatalf("failed to set up framework: %v", err)
 	}
 

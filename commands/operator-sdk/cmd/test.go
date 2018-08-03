@@ -57,24 +57,23 @@ func NewTestCmd() *cobra.Command {
 }
 
 func testFunc(cmd *cobra.Command, args []string) {
-	testArgs := []string{"test", testLocation + "/..."}
-	if verbose {
-		testArgs = append(testArgs, "-v")
-	}
-	dc := exec.Command("go", testArgs...)
-	dc.Stdout = os.Stdout
-	dc.Stderr = os.Stderr
 	wd, err := os.Getwd()
 	if err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("could not determine working directory: %v", err))
 	}
-	dc.Env = append(os.Environ(),
-		fmt.Sprintf("%v=%v", "TEST_KUBECONFIG", kubeconfig),
-		fmt.Sprintf("%v=%v", "TEST_CRDMAN", crdManifestPath),
-		fmt.Sprintf("%v=%v", "TEST_OPMAN", opManifestPath),
-		fmt.Sprintf("%v=%v", "TEST_RBACMAN", rbacManifestPath),
-		fmt.Sprintf("%v=%v", "TEST_NAMESPACE", namespace),
-		fmt.Sprintf("%v=%v", "TEST_PROJROOT", wd))
+	testArgs := []string{"test", testLocation + "/..."}
+	if verbose {
+		testArgs = append(testArgs, "-v")
+	}
+	testArgs = append(testArgs, "-kubeconfig", kubeconfig)
+	testArgs = append(testArgs, "-crd", crdManifestPath)
+	testArgs = append(testArgs, "-op", opManifestPath)
+	testArgs = append(testArgs, "-rbac", rbacManifestPath)
+	testArgs = append(testArgs, "-namespace", namespace)
+	testArgs = append(testArgs, "-root", wd)
+	dc := exec.Command("go", testArgs...)
+	dc.Stdout = os.Stdout
+	dc.Stderr = os.Stderr
 	err = dc.Run()
 	if err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("test failed: %v", err))

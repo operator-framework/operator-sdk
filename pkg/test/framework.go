@@ -15,9 +15,7 @@
 package test
 
 import (
-	"errors"
 	"fmt"
-	"os"
 
 	extensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/kubernetes"
@@ -37,12 +35,8 @@ type Framework struct {
 	RbacManPath      *string
 }
 
-func setup() error {
-	kubeconfigEnv, ok := os.LookupEnv("TEST_KUBECONFIG")
-	if !ok {
-		return errors.New("Missing test environment variable; please run with `operator-sdk` test command")
-	}
-	kubeconfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigEnv)
+func setup(kubeconfigPath, namespace, crdManPath, opManPath, rbacManPath *string) error {
+	kubeconfig, err := clientcmd.BuildConfigFromFlags("", *kubeconfigPath)
 	if err != nil {
 		return fmt.Errorf("failed to build the kubeconfig: %v", err)
 	}
@@ -54,30 +48,14 @@ func setup() error {
 	if err != nil {
 		return fmt.Errorf("failed to build the extensionsClient: %v", err)
 	}
-	namespace, ok := os.LookupEnv("TEST_NAMESPACE")
-	if !ok {
-		return errors.New("Missing test environment variable; please run with `operator-sdk` test command")
-	}
-	crdManPath, ok := os.LookupEnv("TEST_CRDMAN")
-	if !ok {
-		return errors.New("Missing test environment variable; please run with `operator-sdk` test command")
-	}
-	opManPath, ok := os.LookupEnv("TEST_OPMAN")
-	if !ok {
-		return errors.New("Missing test environment variable; please run with `operator-sdk` test command")
-	}
-	rbacManPath, ok := os.LookupEnv("TEST_RBACMAN")
-	if !ok {
-		return errors.New("Missing test environment variable; please run with `operator-sdk` test command")
-	}
 	Global = &Framework{
 		KubeConfig:       kubeconfig,
 		KubeClient:       kubeclient,
 		ExtensionsClient: extensionsClient,
-		Namespace:        &namespace,
-		CrdManPath:       &crdManPath,
-		OpManPath:        &opManPath,
-		RbacManPath:      &rbacManPath,
+		Namespace:        namespace,
+		CrdManPath:       crdManPath,
+		OpManPath:        opManPath,
+		RbacManPath:      rbacManPath,
 	}
 	return nil
 }
