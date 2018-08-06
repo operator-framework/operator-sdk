@@ -16,6 +16,7 @@ package test
 
 import (
 	"flag"
+	"io/ioutil"
 	"log"
 	"os"
 	"testing"
@@ -45,6 +46,19 @@ func MainEntry(m *testing.M) {
 	}
 	if err := setup(kubeconfigPath, namespace, crdManPath, opManPath, rbacManPath); err != nil {
 		log.Fatalf("failed to set up framework: %v", err)
+	}
+	// setup context to use when setting up crd
+	ctx := Global.NewTestCtx(nil)
+	// use out-of-test cleanup function
+	defer ctx.CleanupNoT()
+	// create crd
+	crdYAML, err := ioutil.ReadFile(*Global.CrdManPath)
+	if err != nil {
+		log.Fatalf("failed to read crd file: %v", err)
+	}
+	err = ctx.CreateFromYAML(crdYAML)
+	if err != nil {
+		log.Fatalf("failed to create crd resource: %v", err)
 	}
 
 	os.Exit(m.Run())

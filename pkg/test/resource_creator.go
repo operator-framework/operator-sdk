@@ -41,12 +41,7 @@ func (ctx *TestCtx) GetNamespace() (string, error) {
 		return ctx.Namespace, nil
 	}
 	// create namespace
-	if *Global.Namespace != "" {
-		ctx.Namespace = *Global.Namespace
-	} else {
-		ctx.Namespace = ctx.GetID()
-		Global.Namespace = &ctx.Namespace
-	}
+	ctx.Namespace = ctx.GetID()
 	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ctx.Namespace}}
 	_, err := Global.KubeClient.CoreV1().Namespaces().Create(namespaceObj)
 	if apierrors.IsAlreadyExists(err) {
@@ -228,15 +223,6 @@ func (ctx *TestCtx) CreateFromYAML(yamlFile []byte) error {
 }
 
 func (ctx *TestCtx) InitializeClusterResources() error {
-	// create crd
-	crdYAML, err := ioutil.ReadFile(*Global.CrdManPath)
-	if err != nil {
-		return err
-	}
-	err = ctx.CreateFromYAML(crdYAML)
-	if err != nil {
-		return err
-	}
 	// create rbac
 	rbacYAML, err := ioutil.ReadFile(*Global.RbacManPath)
 	rbacYAMLSplit := bytes.Split(rbacYAML, []byte("\n---\n"))

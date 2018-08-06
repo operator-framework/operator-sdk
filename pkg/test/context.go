@@ -15,6 +15,7 @@
 package test
 
 import (
+	"log"
 	"strconv"
 	"strings"
 	"testing"
@@ -33,16 +34,21 @@ type TestCtx struct {
 type finalizerFn func() error
 
 func (f *Framework) NewTestCtx(t *testing.T) TestCtx {
-	// TestCtx is used among others for namespace names where '/' is forbidden
-	prefix := strings.TrimPrefix(
-		strings.Replace(
-			strings.ToLower(t.Name()),
-			"/",
-			"-",
-			-1,
-		),
-		"test",
-	)
+	var prefix string
+	if t != nil {
+		// TestCtx is used among others for namespace names where '/' is forbidden
+		prefix = strings.TrimPrefix(
+			strings.Replace(
+				strings.ToLower(t.Name()),
+				"/",
+				"-",
+				-1,
+			),
+			"test",
+		)
+	} else {
+		prefix = "main"
+	}
 
 	id := prefix + "-" + strconv.FormatInt(time.Now().Unix(), 10)
 	return TestCtx{
@@ -65,8 +71,24 @@ func (ctx *TestCtx) Cleanup(t *testing.T) {
 	for i := len(ctx.CleanUpFns) - 1; i >= 0; i-- {
 		err := ctx.CleanUpFns[i]()
 		if err != nil {
-			t.Errorf("A cleanup function failed with error: %v\n", err)
+			t.Errorf("a cleanup function failed with error: %v\n", err)
 		}
+	}
+}
+
+// CleanupNoT is a modified version of Cleanup; does not use t for logging, instead uses log
+// intended for use by MainEntry, which does not have a testing.T
+func (ctx *TestCtx) CleanupNoT() {
+	failed := false
+	for i := len(ctx.CleanUpFns) - 1; i >= 0; i-- {
+		err := ctx.CleanUpFns[i]()
+		if err != nil {
+			failed = true
+			log.Printf("a cleanup function failed with error: %v\n", err)
+		}
+	}
+	if failed {
+		log.Fatal("a cleanup function failed")
 	}
 }
 

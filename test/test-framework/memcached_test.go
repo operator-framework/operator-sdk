@@ -22,18 +22,10 @@ import (
 )
 
 func TestMemcached(t *testing.T) {
-	f := framework.Global
-	ctx := f.NewTestCtx(t)
-	defer ctx.Cleanup(t)
-	err := ctx.InitializeClusterResources()
-	if err != nil {
-		t.Fatalf("failed to initialize cluster resources: %v", err)
-	}
-	t.Log("Initialized cluster resources")
-
 	// run subtests
 	t.Run("memcached-group", func(t *testing.T) {
 		t.Run("Cluster", MemcachedCluster)
+		t.Run("Cluster2", MemcachedCluster)
 	})
 }
 
@@ -69,6 +61,11 @@ func MemcachedCluster(t *testing.T) {
 	f := framework.Global
 	ctx := f.NewTestCtx(t)
 	defer ctx.Cleanup(t)
+	err := ctx.InitializeClusterResources()
+	if err != nil {
+		t.Fatalf("failed to initialize cluster resources: %v", err)
+	}
+	t.Log("Initialized cluster resources")
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		t.Fatal(err)

@@ -29,7 +29,6 @@ type Framework struct {
 	KubeConfig       *rest.Config
 	KubeClient       kubernetes.Interface
 	ExtensionsClient *extensions.Clientset
-	Namespace        *string
 	CrdManPath       *string
 	OpManPath        *string
 	RbacManPath      *string
@@ -52,7 +51,6 @@ func setup(kubeconfigPath, namespace, crdManPath, opManPath, rbacManPath *string
 		KubeConfig:       kubeconfig,
 		KubeClient:       kubeclient,
 		ExtensionsClient: extensionsClient,
-		Namespace:        namespace,
 		CrdManPath:       crdManPath,
 		OpManPath:        opManPath,
 		RbacManPath:      rbacManPath,
