@@ -254,23 +254,23 @@ required = [
 
 [[override]]
   name = "k8s.io/code-generator"
-  # revision for tag "kubernetes-1.9.3"
-  revision = "91d3f6a57905178524105a085085901bb73bd3dc"
+  # revision for tag "kubernetes-1.10.1"
+  revision = "7ead8f38b01cf8653249f5af80ce7b2c8aba12e2"
 
 [[override]]
   name = "k8s.io/api"
-  # revision for tag "kubernetes-1.9.3"
-  revision = "acf347b865f29325eb61f4cd2df11e86e073a5ee"
+  # revision for tag "kubernetes-1.10.1"
+  revision = "73d903622b7391f3312dcbac6483fed484e185f8"
 
 [[override]]
   name = "k8s.io/apimachinery"
-  # revision for tag "kubernetes-1.9.3"
-  revision = "19e3f5aa3adca672c153d324e6b7d82ff8935f03"
+  # revision for tag "kubernetes-1.10.1"
+  revision = "302974c03f7e50f16561ba237db776ab93594ef6"
 
 [[override]]
   name = "k8s.io/client-go"
-  # revision for tag "kubernetes-1.9.3"
-  revision = "9389c055a838d4f208b699b3c7c51b70f2368861"
+  # revision for tag "kubernetes-1.10.1"
+  revision = "989be4278f353e42f26c416c53757d16fcff77db"
 
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"
