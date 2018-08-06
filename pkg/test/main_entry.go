@@ -25,7 +25,6 @@ import (
 const (
 	ProjRootFlag    = "root"
 	KubeConfigFlag  = "kubeconfig"
-	NamespaceFlag   = "namespace"
 	CrdManPathFlag  = "crd"
 	OpManPathFlag   = "op"
 	RbacManPathFlag = "rbac"
@@ -34,7 +33,6 @@ const (
 func MainEntry(m *testing.M) {
 	projRoot := flag.String("root", "", "path to project root")
 	kubeconfigPath := flag.String("kubeconfig", "", "path to kubeconfig")
-	namespace := flag.String("namespace", "", "namespace where the tests to run")
 	crdManPath := flag.String("crd", "", "path to crd manifest")
 	opManPath := flag.String("op", "", "path to operator manifest")
 	rbacManPath := flag.String("rbac", "", "path to rbac manifest")
@@ -44,7 +42,7 @@ func MainEntry(m *testing.M) {
 	if err != nil {
 		log.Fatalf("failed to change directory to project root: %v", err)
 	}
-	if err := setup(kubeconfigPath, namespace, crdManPath, opManPath, rbacManPath); err != nil {
+	if err := setup(kubeconfigPath, crdManPath, opManPath, rbacManPath); err != nil {
 		log.Fatalf("failed to set up framework: %v", err)
 	}
 	// setup context to use when setting up crd

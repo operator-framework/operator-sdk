@@ -52,7 +52,6 @@ func NewTestCmd() *cobra.Command {
 	testCmd.Flags().StringVarP(&crdManifestPath, "crd", "c", "deploy/crd.yaml", "Path to CRD manifest")
 	testCmd.Flags().StringVarP(&opManifestPath, "operator", "o", "deploy/operator.yaml", "Path to operator manifest")
 	testCmd.Flags().StringVarP(&rbacManifestPath, "rbac", "r", "deploy/rbac.yaml", "Path to RBAC manifest")
-	testCmd.Flags().StringVarP(&namespace, "namespace", "n", "", "Namespace for test to run in")
 	testCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose go test")
 
 	return testCmd
@@ -71,7 +70,6 @@ func testFunc(cmd *cobra.Command, args []string) {
 	testArgs = append(testArgs, "-"+test.CrdManPathFlag, crdManifestPath)
 	testArgs = append(testArgs, "-"+test.OpManPathFlag, opManifestPath)
 	testArgs = append(testArgs, "-"+test.RbacManPathFlag, rbacManifestPath)
-	testArgs = append(testArgs, "-"+test.NamespaceFlag, namespace)
 	testArgs = append(testArgs, "-"+test.ProjRootFlag, wd)
 	dc := exec.Command("go", testArgs...)
 	dc.Stdout = os.Stdout

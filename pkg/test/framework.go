@@ -34,7 +34,7 @@ type Framework struct {
 	RbacManPath      *string
 }
 
-func setup(kubeconfigPath, namespace, crdManPath, opManPath, rbacManPath *string) error {
+func setup(kubeconfigPath, crdManPath, opManPath, rbacManPath *string) error {
 	kubeconfig, err := clientcmd.BuildConfigFromFlags("", *kubeconfigPath)
 	if err != nil {
 		return fmt.Errorf("failed to build the kubeconfig: %v", err)
