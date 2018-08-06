@@ -18,9 +18,14 @@ import (
 	"fmt"
 
 	extensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	extscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes"
+	cgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	dynclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var Global *Framework
@@ -29,6 +34,8 @@ type Framework struct {
 	KubeConfig       *rest.Config
 	KubeClient       kubernetes.Interface
 	ExtensionsClient *extensions.Clientset
+	DynamicClient    dynclient.Client
+	DynamicDecoder   runtime.Decoder
 	CrdManPath       *string
 	OpManPath        *string
 	RbacManPath      *string
@@ -47,10 +54,20 @@ func setup(kubeconfigPath, crdManPath, opManPath, rbacManPath *string) error {
 	if err != nil {
 		return fmt.Errorf("failed to build the extensionsClient: %v", err)
 	}
+	scheme := runtime.NewScheme()
+	cgoscheme.AddToScheme(scheme)
+	extscheme.AddToScheme(scheme)
+	dynClient, err := dynclient.New(kubeconfig, dynclient.Options{Scheme: scheme})
+	if err != nil {
+		return fmt.Errorf("failed to build the dynamic client: %v", err)
+	}
+	dynDec := serializer.NewCodecFactory(scheme).UniversalDeserializer()
 	Global = &Framework{
 		KubeConfig:       kubeconfig,
 		KubeClient:       kubeclient,
 		ExtensionsClient: extensionsClient,
+		DynamicClient:    dynClient,
+		DynamicDecoder:   dynDec,
 		CrdManPath:       crdManPath,
 		OpManPath:        opManPath,
 		RbacManPath:      rbacManPath,
