@@ -35,7 +35,7 @@ var (
 
 func NewTestCmd() *cobra.Command {
 	testCmd := &cobra.Command{
-		Use:   "test --kubeconfig <path to kubeconfig> --image <name of operator image>",
+		Use:   "test --test-location <path to tests directory> [flags]",
 		Short: "Run End-To-End tests",
 		Run:   testFunc,
 	}
