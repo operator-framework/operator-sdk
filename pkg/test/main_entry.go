@@ -39,7 +39,10 @@ func MainEntry(m *testing.M) {
 	rbacManPath := flag.String("rbac", "", "path to rbac manifest")
 	flag.Parse()
 	// go test always runs from the test directory; change to project root
-	os.Chdir(*projRoot)
+	err := os.Chdir(*projRoot)
+	if err != nil {
+		log.Fatalf("failed to change directory to project root: %v", err)
+	}
 	if err := setup(kubeconfigPath, namespace, crdManPath, opManPath, rbacManPath); err != nil {
 		log.Fatalf("failed to set up framework: %v", err)
 	}
