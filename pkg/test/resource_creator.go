@@ -36,10 +36,6 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-var (
-	filemode = int(0664)
-)
-
 func (ctx *TestCtx) GetNamespace() (string, error) {
 	if ctx.Namespace != "" {
 		return ctx.Namespace, nil
