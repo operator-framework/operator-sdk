@@ -33,7 +33,7 @@ const (
 func MainEntry(m *testing.M) {
 	projRoot := flag.String("root", "", "path to project root")
 	kubeconfigPath := flag.String("kubeconfig", "", "path to kubeconfig")
-	namespace := flag.String("namespace", "", "namespace to tests to run in")
+	namespace := flag.String("namespace", "", "namespace where the tests to run")
 	crdManPath := flag.String("crd", "", "path to crd manifest")
 	opManPath := flag.String("op", "", "path to operator manifest")
 	rbacManPath := flag.String("rbac", "", "path to rbac manifest")
