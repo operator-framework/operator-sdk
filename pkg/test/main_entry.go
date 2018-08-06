@@ -21,6 +21,15 @@ import (
 	"testing"
 )
 
+const (
+	ProjRootFlag    = "root"
+	KubeConfigFlag  = "kubeconfig"
+	NamespaceFlag   = "namespace"
+	CrdManPathFlag  = "crd"
+	OpManPathFlag   = "op"
+	RbacManPathFlag = "rbac"
+)
+
 func MainEntry(m *testing.M) {
 	projRoot := flag.String("root", "", "path to project root")
 	kubeconfigPath := flag.String("kubeconfig", "", "path to kubeconfig")

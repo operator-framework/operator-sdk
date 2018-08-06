@@ -20,6 +20,8 @@ import (
 	"os/exec"
 
 	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
+	"github.com/operator-framework/operator-sdk/pkg/test"
+
 	"github.com/spf13/cobra"
 )
 
@@ -65,12 +67,12 @@ func testFunc(cmd *cobra.Command, args []string) {
 	if verbose {
 		testArgs = append(testArgs, "-v")
 	}
-	testArgs = append(testArgs, "-kubeconfig", kubeconfig)
-	testArgs = append(testArgs, "-crd", crdManifestPath)
-	testArgs = append(testArgs, "-op", opManifestPath)
-	testArgs = append(testArgs, "-rbac", rbacManifestPath)
-	testArgs = append(testArgs, "-namespace", namespace)
-	testArgs = append(testArgs, "-root", wd)
+	testArgs = append(testArgs, "-"+test.KubeConfigFlag, kubeconfig)
+	testArgs = append(testArgs, "-"+test.CrdManPathFlag, crdManifestPath)
+	testArgs = append(testArgs, "-"+test.OpManPathFlag, opManifestPath)
+	testArgs = append(testArgs, "-"+test.RbacManPathFlag, rbacManifestPath)
+	testArgs = append(testArgs, "-"+test.NamespaceFlag, namespace)
+	testArgs = append(testArgs, "-"+test.ProjRootFlag, wd)
 	dc := exec.Command("go", testArgs...)
 	dc.Stdout = os.Stdout
 	dc.Stderr = os.Stderr
