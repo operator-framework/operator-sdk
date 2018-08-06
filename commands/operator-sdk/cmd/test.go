@@ -28,7 +28,6 @@ import (
 var (
 	testLocation     string
 	kubeconfig       string
-	namespace        string
 	crdManifestPath  string
 	opManifestPath   string
 	rbacManifestPath string
