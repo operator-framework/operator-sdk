@@ -47,8 +47,13 @@ func MainEntry(m *testing.M) {
 	}
 	// setup context to use when setting up crd
 	ctx := Global.NewTestCtx(nil)
-	// use out-of-test cleanup function
-	defer ctx.CleanupNoT()
+	// os.Exit stops the program before the deferred functions run
+	// to fix this, we put the exit in the defer as well
+	defer func() {
+		exitCode := m.Run()
+		ctx.CleanupNoT()
+		os.Exit(exitCode)
+	}()
 	// create crd
 	crdYAML, err := ioutil.ReadFile(*Global.CrdManPath)
 	if err != nil {
@@ -58,6 +63,4 @@ func MainEntry(m *testing.M) {
 	if err != nil {
 		log.Fatalf("failed to create crd resource: %v", err)
 	}
-
-	os.Exit(m.Run())
 }

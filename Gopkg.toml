@@ -25,3 +25,7 @@
 [[constraint]]
   name = "github.com/sergi/go-diff"
   version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/kubernetes-sigs/controller-runtime"
+  revision = "60bb251ad86f9b313653618aad0c2c53f41a6625"

@@ -16,6 +16,7 @@ package test
 
 import (
 	"bytes"
+	goctx "context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -23,9 +24,7 @@ import (
 
 	y2j "github.com/ghodss/yaml"
 	yaml "gopkg.in/yaml.v2"
-	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
-	"k8s.io/api/rbac/v1beta1"
 	crd "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	extensions_scheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -166,61 +165,38 @@ func (ctx *TestCtx) createCRDFromYAML(yamlFile []byte) error {
 	}
 }
 
-func (ctx *TestCtx) CreateFromYAML(yamlFile []byte) error {
+func setNamespaceYAML(yamlFile []byte, namespace string) ([]byte, error) {
 	yamlMap := make(map[interface{}]interface{})
 	err := yaml.Unmarshal(yamlFile, &yamlMap)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	kind := yamlMap["kind"].(string)
-	// TODO: use a dynamic client for standard and extensions kubernetes resources.
-	// We should consider both the SDK's wrapper for the kubernetes dynamic client
-	// (which at time of typing needs updating) or using the controller-runtime
-	// dynamic client in the test framework (and the SDK as well).
-	switch kind {
-	case "Role":
-	case "RoleBinding":
-	case "Deployment":
-	case "CustomResourceDefinition":
-		return ctx.createCRDFromYAML(yamlFile)
-	// we assume that all custom resources are from operator-sdk and thus follow
-	// a common naming convention
-	default:
-		return ctx.createCRFromYAML(yamlFile, strings.ToLower(kind)+"s")
-	}
+	yamlMap["metadata"].(map[interface{}]interface{})["namespace"] = namespace
+	return yaml.Marshal(yamlMap)
+}
 
-	decode := scheme.Codecs.UniversalDeserializer().Decode
-	obj, _, err := decode(yamlFile, nil, nil)
-	if err != nil {
-		return err
-	}
-
+func (ctx *TestCtx) CreateFromYAML(yamlFile []byte) error {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return err
 	}
-	switch o := obj.(type) {
-	case *v1beta1.Role:
-		_, err = Global.KubeClient.RbacV1beta1().Roles(namespace).Create(o)
-		ctx.AddFinalizerFn(func() error {
-			return Global.KubeClient.RbacV1beta1().Roles(namespace).Delete(o.Name, metav1.NewDeleteOptions(0))
-		})
+	yamlFile, err = setNamespaceYAML(yamlFile, namespace)
+	if err != nil {
 		return err
-	case *v1beta1.RoleBinding:
-		_, err = Global.KubeClient.RbacV1beta1().RoleBindings(namespace).Create(o)
-		ctx.AddFinalizerFn(func() error {
-			return Global.KubeClient.RbacV1beta1().RoleBindings(namespace).Delete(o.Name, metav1.NewDeleteOptions(0))
-		})
-		return err
-	case *apps.Deployment:
-		_, err = Global.KubeClient.AppsV1().Deployments(namespace).Create(o)
-		ctx.AddFinalizerFn(func() error {
-			return Global.KubeClient.AppsV1().Deployments(namespace).Delete(o.Name, metav1.NewDeleteOptions(0))
-		})
-		return err
-	default:
-		return errors.New("Unhandled resource type")
 	}
+
+	obj, _, err := Global.DynamicDecoder.Decode(yamlFile, nil, nil)
+	if err != nil {
+		yamlMap := make(map[interface{}]interface{})
+		err = yaml.Unmarshal(yamlFile, &yamlMap)
+		if err != nil {
+			return err
+		}
+		kind := yamlMap["kind"].(string)
+		return ctx.createCRFromYAML(yamlFile, strings.ToLower(kind)+"s")
+	}
+
+	return Global.DynamicClient.Create(goctx.TODO(), obj)
 }
 
 func (ctx *TestCtx) InitializeClusterResources() error {
