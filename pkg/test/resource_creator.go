@@ -180,36 +180,50 @@ func (ctx *TestCtx) CreateFromYAML(yamlFile []byte) error {
 	if err != nil {
 		return err
 	}
-	yamlFile, err = setNamespaceYAML(yamlFile, namespace)
-	if err != nil {
-		return err
-	}
-
-	obj, _, err := Global.DynamicDecoder.Decode(yamlFile, nil, nil)
-	if err != nil {
-		yamlMap := make(map[interface{}]interface{})
-		err = yaml.Unmarshal(yamlFile, &yamlMap)
+	yamlSplit := bytes.Split(yamlFile, []byte("\n---\n"))
+	for _, yamlSpec := range yamlSplit {
+		yamlSpec, err = setNamespaceYAML(yamlSpec, namespace)
 		if err != nil {
 			return err
 		}
-		kind := yamlMap["kind"].(string)
-		return ctx.createCRFromYAML(yamlFile, strings.ToLower(kind)+"s")
-	}
 
-	return Global.DynamicClient.Create(goctx.TODO(), obj)
+		obj, _, err := Global.DynamicDecoder.Decode(yamlSpec, nil, nil)
+		if err != nil {
+			yamlMap := make(map[interface{}]interface{})
+			err = yaml.Unmarshal(yamlSpec, &yamlMap)
+			if err != nil {
+				return err
+			}
+			kind := yamlMap["kind"].(string)
+			err = ctx.createCRFromYAML(yamlSpec, strings.ToLower(kind)+"s")
+			if err != nil {
+				return err
+			}
+			continue
+		}
+
+		err = Global.DynamicClient.Create(goctx.TODO(), obj)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (ctx *TestCtx) InitializeClusterResources() error {
 	// create rbac
 	rbacYAML, err := ioutil.ReadFile(*Global.RbacManPath)
-	rbacYAMLSplit := bytes.Split(rbacYAML, []byte("\n---\n"))
-	for _, rbacSpec := range rbacYAMLSplit {
-		err = ctx.CreateFromYAML(rbacSpec)
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return fmt.Errorf("failed to read rbac manifest: %v", err)
+	}
+	err = ctx.CreateFromYAML(rbacYAML)
+	if err != nil {
+		return err
 	}
 	// create operator deployment
 	operatorYAML, err := ioutil.ReadFile(*Global.OpManPath)
+	if err != nil {
+		return fmt.Errorf("failed to read operator manifest: %v", err)
+	}
 	return ctx.CreateFromYAML(operatorYAML)
 }
