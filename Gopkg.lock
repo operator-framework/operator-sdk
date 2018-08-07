@@ -401,7 +401,7 @@
     "pkg/client",
     "pkg/client/apiutil"
   ]
-  revision = "471f9cde2471949c85c01c3baba2947d9929c908"
+  revision = "60bb251ad86f9b313653618aad0c2c53f41a6625"
 
 [solve-meta]
   analyzer-name = "dep"
