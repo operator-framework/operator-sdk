@@ -60,13 +60,6 @@ func (ctx *TestCtx) GetID() string {
 	return ctx.ID
 }
 
-// GetObjID returns an ascending ID based on the length of cleanUpFns. It is
-// based on the premise that every new object also appends a new finalizerFn on
-// cleanUpFns.
-func (ctx *TestCtx) GetObjID() string {
-	return ctx.ID + "-" + strconv.Itoa(len(ctx.CleanUpFns))
-}
-
 func (ctx *TestCtx) Cleanup(t *testing.T) {
 	for i := len(ctx.CleanUpFns) - 1; i >= 0; i-- {
 		err := ctx.CleanUpFns[i]()
