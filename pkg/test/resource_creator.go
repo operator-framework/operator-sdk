@@ -83,6 +83,9 @@ func (ctx *TestCtx) GetCRClient(yamlCR []byte) (*rest.RESTClient, error) {
 	return ctx.CRClient, err
 }
 
+// TODO: Implement a way for a user to add their own scheme to us the dynamic
+// client to eliminate the need for the UpdateCR function
+
 // UpdateCR takes the name of a resource, the resource plural name,
 // the path of the field that need to be updated (e.g. /spec/size),
 // and the new value to that field and patches the resource with
