@@ -395,7 +395,6 @@
   version = "kubernetes-1.10.1"
 
 [[projects]]
-  branch = "master"
   name = "sigs.k8s.io/controller-runtime"
   packages = [
     "pkg/client",
@@ -406,6 +405,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8c88022f9e42194d8ee0eb710bf4c13850ed39b6c0ddf04ac43136273ad5605b"
+  inputs-digest = "79baa7ce50a884e2bc3fdd362f4cf4253cef7f83e0f2c9c08e077125c2b49a35"
   solver-name = "gps-cdcl"
   solver-version = 1
