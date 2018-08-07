@@ -33,7 +33,7 @@ type TestCtx struct {
 
 type finalizerFn func() error
 
-func (f *Framework) NewTestCtx(t *testing.T) TestCtx {
+func NewTestCtx(t *testing.T) TestCtx {
 	var prefix string
 	if t != nil {
 		// TestCtx is used among others for namespace names where '/' is forbidden

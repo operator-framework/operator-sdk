@@ -46,7 +46,7 @@ func MainEntry(m *testing.M) {
 		log.Fatalf("failed to set up framework: %v", err)
 	}
 	// setup context to use when setting up crd
-	ctx := Global.NewTestCtx(nil)
+	ctx := NewTestCtx(nil)
 	// os.Exit stops the program before the deferred functions run
 	// to fix this, we put the exit in the defer as well
 	defer func() {

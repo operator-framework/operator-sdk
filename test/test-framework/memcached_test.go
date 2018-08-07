@@ -57,9 +57,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx framework.Test
 
 func MemcachedCluster(t *testing.T) {
 	t.Parallel()
-	// get global framework variables
-	f := framework.Global
-	ctx := f.NewTestCtx(t)
+	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup(t)
 	err := ctx.InitializeClusterResources()
 	if err != nil {
@@ -70,6 +68,8 @@ func MemcachedCluster(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// get global framework variables
+	f := framework.Global
 	// wait for memcached-operator to be ready
 	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, 6)
 	if err != nil {
