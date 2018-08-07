@@ -82,7 +82,12 @@ func (i *informer) sync(key string) error {
 	}
 
 	// TODO: Add option to prevent multiple informers from invoking Handle() concurrently?
-	err = RegisteredHandler.Handle(i.context, event)
+	if i.handler == nil {
+		err = RegisteredHandler.Handle(i.context, event)
+	} else {
+		err = i.handler.Handle(i.context, event)
+	}
+
 	if !exists && err == nil {
 		delete(i.deletedObjects, key)
 	}
