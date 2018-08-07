@@ -206,6 +206,7 @@ func (ctx *TestCtx) CreateFromYAML(yamlFile []byte) error {
 		if err != nil {
 			return err
 		}
+		ctx.AddFinalizerFn(func() error { return Global.DynamicClient.Delete(goctx.TODO(), obj) })
 	}
 	return nil
 }
