@@ -43,15 +43,23 @@ type informer struct {
 	context             context.Context
 	deletedObjects      map[string]interface{}
 	collector           *metrics.Collector
+	handler             Handler
 }
 
 func NewInformer(resourcePluralName, namespace string, resourceClient dynamic.ResourceInterface, resyncPeriod int, c *metrics.Collector) Informer {
+	return NewInformerWithHandler(resourcePluralName, namespace, resourceClient, resyncPeriod, c, nil)
+}
+
+func NewInformerWithHandler(
+	resourcePluralName, namespace string, resourceClient dynamic.ResourceInterface, resyncPeriod int, c *metrics.Collector, h Handler) Informer {
+
 	i := &informer{
 		resourcePluralName: resourcePluralName,
 		queue:              workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), resourcePluralName),
 		namespace:          namespace,
 		deletedObjects:     map[string]interface{}{},
 		collector:          c,
+		handler:            h,
 	}
 
 	resyncDuration := time.Duration(resyncPeriod) * time.Second

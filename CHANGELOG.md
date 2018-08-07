@@ -11,6 +11,7 @@
 - The SDK exposes the Kubernetes clientset via `k8sclient.GetKubeClient()` #295
 - The SDK now vendors the k8s code-generators for an operator instead of using the prebuilt image `gcr.io/coreos-k8s-scale-testing/codegen:1.9.3` [#319](https://github.com/operator-framework/operator-sdk/pull/242)
 - The SDK exposes the Kubernetes rest config via `k8sclient.GetKubeConfig()` #338
+- The SDK now supports setting a `Handler` per `Informer` and `Watch` via `sdk.NewInformerWithHandler` and `sdk.WatchWith` [#388](https://github.com/operator-framework/operator-sdk/pull/388)
 
 ### Removed
 

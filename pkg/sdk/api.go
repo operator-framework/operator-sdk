@@ -29,7 +29,7 @@ var (
 	collector *metrics.Collector
 )
 
-// Watch watches for changes on the given resource.
+// WatchWith watches for changes on the given resource, handling them with the provided Handler instance.
 // apiVersion for a resource is of the format "Group/Version" except for the "Core" group whose APIVersion is just "v1". For e.g:
 //   - Deployments have Group "apps" and Version "v1beta2" giving the APIVersion "apps/v1beta2"
 //   - Pods have Group "Core" and Version "v1" giving the APIVersion "v1"
@@ -40,7 +40,7 @@ var (
 // Consult the API reference for the Group, Version and Kind of a resource: https://kubernetes.io/docs/reference/
 // namespace is the Namespace to watch for the resource
 // TODO: support opts for specifying label selector
-func Watch(apiVersion, kind, namespace string, resyncPeriod int) {
+func WatchWith(apiVersion, kind, namespace string, resyncPeriod int, handler Handler) {
 	resourceClient, resourcePluralName, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
 	// TODO: Better error handling, e.g retry
 	if err != nil {
@@ -51,8 +51,13 @@ func Watch(apiVersion, kind, namespace string, resyncPeriod int) {
 		collector = metrics.New()
 		metrics.RegisterCollector(collector)
 	}
-	informer := NewInformer(resourcePluralName, namespace, resourceClient, resyncPeriod, collector)
+	informer := NewInformerWithHandler(resourcePluralName, namespace, resourceClient, resyncPeriod, collector, handler)
 	informers = append(informers, informer)
+}
+
+// Watch is like WatchWith, but uses the global Handler configured by Handle.
+func Watch(apiVersion, kind, namespace string, resyncPeriod int) {
+	WatchWith(apiVersion, kind, namespace, resyncPeriod, nil)
 }
 
 // Handle registers the handler for all events.
