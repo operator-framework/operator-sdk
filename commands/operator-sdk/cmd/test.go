@@ -15,11 +15,8 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
-	"os/exec"
 
-	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
 	"github.com/spf13/cobra"
@@ -57,10 +54,6 @@ func NewTestCmd() *cobra.Command {
 }
 
 func testFunc(cmd *cobra.Command, args []string) {
-	wd, err := os.Getwd()
-	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("could not determine working directory: %v", err))
-	}
 	testArgs := []string{"test", testLocation + "/..."}
 	if verbose {
 		testArgs = append(testArgs, "-v")
@@ -69,12 +62,6 @@ func testFunc(cmd *cobra.Command, args []string) {
 	testArgs = append(testArgs, "-"+test.CrdManPathFlag, crdManifestPath)
 	testArgs = append(testArgs, "-"+test.OpManPathFlag, opManifestPath)
 	testArgs = append(testArgs, "-"+test.RbacManPathFlag, rbacManifestPath)
-	testArgs = append(testArgs, "-"+test.ProjRootFlag, wd)
-	dc := exec.Command("go", testArgs...)
-	dc.Stdout = os.Stdout
-	dc.Stderr = os.Stderr
-	err = dc.Run()
-	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("test failed: %v", err))
-	}
+	testArgs = append(testArgs, "-"+test.ProjRootFlag, mustGetwd())
+	execCmd(os.Stdout, "go", testArgs...)
 }
