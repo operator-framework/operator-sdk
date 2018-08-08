@@ -31,6 +31,7 @@ var (
 	verbose          bool
 )
 
+// TODO: allow users to pass flags through to `go test`
 func NewTestCmd() *cobra.Command {
 	testCmd := &cobra.Command{
 		Use:   "test --test-location <path to tests directory> [flags]",
