@@ -24,17 +24,12 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-var (
-	retryInterval = time.Second * 5
-	retries       = 6
-)
-
 // WaitForDeployment checks to see if a given deployment has a certain number of available replicas after a specified amount of time
 // If the deployment does not have the required number of replicas after 5 * retries seconds, the function returns an error
 // This can be used in multiple ways, like verifying that a required resource is ready before trying to use it, or to test
 // failure handling, like simulated in SimulatePodFail.
-func WaitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas, retries int) error {
-	err := wait.Poll(retryInterval, time.Duration(retries)*retryInterval, func() (done bool, err error) {
+func WaitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int, retryInterval, timeout time.Duration) error {
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		deployment, err := kubeclient.AppsV1().Deployments(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
 		if err != nil {
 			if apierrors.IsNotFound(err) {

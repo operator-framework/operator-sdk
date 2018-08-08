@@ -16,9 +16,15 @@ package e2e
 
 import (
 	"testing"
+	"time"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/util/e2eutil"
+)
+
+var (
+	retryInterval = time.Second * 5
+	timeout       = time.Second * 30
 )
 
 func TestMemcached(t *testing.T) {
@@ -41,7 +47,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx framework.Test
 		return err
 	}
 	// wait for example-memcached to reach 3 replicas
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 3, 6)
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 3, retryInterval, timeout)
 	if err != nil {
 		return err
 	}
@@ -52,7 +58,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx framework.Test
 	}
 
 	// wait for example-memcached to reach 4 replicas
-	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 4, 6)
+	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 4, retryInterval, timeout)
 }
 
 func MemcachedCluster(t *testing.T) {
@@ -71,7 +77,7 @@ func MemcachedCluster(t *testing.T) {
 	// get global framework variables
 	f := framework.Global
 	// wait for memcached-operator to be ready
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, 6)
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, retryInterval, timeout)
 	if err != nil {
 		t.Fatal(err)
 	}
