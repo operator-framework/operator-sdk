@@ -112,7 +112,6 @@ func AddToFrameworkScheme(addToScheme addToSchemeFunc, obj runtime.Object) error
 	err = wait.PollImmediate(time.Second, time.Second*10, func() (done bool, err error) {
 		err = Global.DynamicClient.List(goctx.TODO(), &dynclient.ListOptions{Namespace: "default"}, obj)
 		if err != nil {
-			fmt.Println("Not available yet")
 			Global.RestMapper.Reset()
 			return false, nil
 		}
