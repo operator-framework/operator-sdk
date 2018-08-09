@@ -16,10 +16,11 @@ package e2e
 
 import (
 	goctx "context"
+	"fmt"
 	"testing"
 	"time"
 
-	operator "github.com/example-inc-2/memcached-operator/pkg/apis/cache/v1alpha1"
+	operator "github.com/operator-framework/operator-sdk/test/test-framework/pkg/apis/cache/v1alpha1"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/util/e2eutil"
@@ -53,7 +54,7 @@ func TestMemcached(t *testing.T) {
 func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) error {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
-		return t.Errorf("could not get namespace: %v", err)
+		return fmt.Errorf("could not get namespace: %v", err)
 	}
 	// create memcached custom resource
 	exampleMemcached := &operator.Memcached{
