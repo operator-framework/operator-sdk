@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memcached-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: memcached-operator
+  template:
+    metadata:
+      labels:
+        name: memcached-operator
+    spec:
+      containers:
+        - name: memcached-operator
+          image: quay.io/coreos/operator-sdk-dev:test-framework-operator
+          ports:
+          - containerPort: 60000
+            name: metrics
+          command:
+          - memcached-operator
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: OPERATOR_NAME
+              value: "memcached-operator"

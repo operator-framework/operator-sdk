@@ -12,27 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package e2e
 
 import (
-	"github.com/spf13/cobra"
+	"testing"
 
-	"github.com/operator-framework/operator-sdk/version"
+	f "github.com/operator-framework/operator-sdk/pkg/test"
 )
 
-func NewRootCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "operator-sdk",
-		Short:   "A sdk for building operator with ease",
-		Version: version.Version,
-	}
-
-	cmd.AddCommand(NewNewCmd())
-	cmd.AddCommand(NewBuildCmd())
-	cmd.AddCommand(NewGenerateCmd())
-	cmd.AddCommand(NewUpCmd())
-	cmd.AddCommand(NewCompletionCmd())
-	cmd.AddCommand(NewTestCmd())
-
-	return cmd
+func TestMain(m *testing.M) {
+	f.MainEntry(m)
 }

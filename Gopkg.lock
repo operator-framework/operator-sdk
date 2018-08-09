@@ -394,9 +394,17 @@
   revision = "989be4278f353e42f26c416c53757d16fcff77db"
   version = "kubernetes-1.10.1"
 
+[[projects]]
+  name = "sigs.k8s.io/controller-runtime"
+  packages = [
+    "pkg/client",
+    "pkg/client/apiutil"
+  ]
+  revision = "60bb251ad86f9b313653618aad0c2c53f41a6625"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0510dee2916fed3d8a9e65d1da0a1005b1faa9a26ec1e4e370e1fb99cb610a75"
+  inputs-digest = "79baa7ce50a884e2bc3fdd362f4cf4253cef7f83e0f2c9c08e077125c2b49a35"
   solver-name = "gps-cdcl"
   solver-version = 1
