@@ -34,7 +34,7 @@ var (
 
 func NewTestCmd() *cobra.Command {
 	testCmd := &cobra.Command{
-		Use:   "test --test-location <path to tests directory> [flags] args [go test flags]",
+		Use:   "test --test-location <path to tests directory> [flags]",
 		Short: "Run End-To-End tests",
 		Run:   testFunc,
 	}
