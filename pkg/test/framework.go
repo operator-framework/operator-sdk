@@ -34,6 +34,7 @@ type Framework struct {
 	KubeConfig       *rest.Config
 	KubeClient       kubernetes.Interface
 	ExtensionsClient *extensions.Clientset
+	Scheme           *runtime.Scheme
 	DynamicClient    dynclient.Client
 	DynamicDecoder   runtime.Decoder
 	CrdManPath       *string
@@ -66,11 +67,27 @@ func setup(kubeconfigPath, crdManPath, opManPath, rbacManPath *string) error {
 		KubeConfig:       kubeconfig,
 		KubeClient:       kubeclient,
 		ExtensionsClient: extensionsClient,
+		Scheme:           scheme,
 		DynamicClient:    dynClient,
 		DynamicDecoder:   dynDec,
 		CrdManPath:       crdManPath,
 		OpManPath:        opManPath,
 		RbacManPath:      rbacManPath,
 	}
+	return nil
+}
+
+type addToSchemeFunc func(*runtime.Scheme) error
+
+func AddToFrameworkScheme(addToScheme addToSchemeFunc) error {
+	err := addToScheme(Global.Scheme)
+	if err != nil {
+		return err
+	}
+	Global.DynamicClient, err = dynclient.New(Global.KubeConfig, dynclient.Options{Scheme: Global.Scheme})
+	if err != nil {
+		return fmt.Errorf("failed to build the dynamic client: %v", err)
+	}
+	Global.DynamicDecoder = serializer.NewCodecFactory(Global.Scheme).UniversalDeserializer()
 	return nil
 }
