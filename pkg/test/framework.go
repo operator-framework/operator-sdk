@@ -15,13 +15,16 @@
 package test
 
 import (
+	goctx "context"
 	"fmt"
+	"time"
 
 	extensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	extscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/kubernetes"
@@ -83,7 +86,21 @@ func setup(kubeconfigPath, crdManPath, opManPath, rbacManPath *string) error {
 
 type addToSchemeFunc func(*runtime.Scheme) error
 
-func AddToFrameworkScheme(addToScheme addToSchemeFunc) error {
+// AddToFramework scheme allows users to add the scheme for their custom resources
+// to the framework's scheme for use with the dynamic client. The user provides
+// the addToScheme function (located in the register.go file of their operator
+// project) and the List struct for their custom resource. For example, for a
+// memcached operator, that may look like:
+// &MemcachedList{
+//	TypeMeta: metav1.TypeMeta{
+//		Kind: "Memcached",
+//		APIVersion: "cache.example.com/v1alpha1",
+//		},
+//	}
+// The List object is needed because the CRD has not always been fully registered
+// by the time this function is called. If the CRD takes more than 5 seconds to
+// become ready, this function throws an error
+func AddToFrameworkScheme(addToScheme addToSchemeFunc, obj runtime.Object) error {
 	err := addToScheme(Global.Scheme)
 	if err != nil {
 		return err
@@ -92,6 +109,15 @@ func AddToFrameworkScheme(addToScheme addToSchemeFunc) error {
 	Global.RestMapper = discovery.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient, meta.InterfacesForUnstructured)
 	Global.RestMapper.Reset()
 	Global.DynamicClient, err = dynclient.New(Global.KubeConfig, dynclient.Options{Scheme: Global.Scheme, Mapper: Global.RestMapper})
+	err = wait.PollImmediate(time.Second, time.Second*10, func() (done bool, err error) {
+		err = Global.DynamicClient.List(goctx.TODO(), &dynclient.ListOptions{Namespace: "default"}, obj)
+		if err != nil {
+			fmt.Println("Not available yet")
+			Global.RestMapper.Reset()
+			return false, nil
+		}
+		return true, nil
+	})
 	if err != nil {
 		return fmt.Errorf("failed to build the dynamic client: %v", err)
 	}
