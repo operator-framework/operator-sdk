@@ -20,6 +20,8 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/k8sclient"
 	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"encoding/json"
 )
 
 // Create creates the provided object on the server and updates the arg
@@ -42,6 +44,43 @@ func Create(object Object) (err error) {
 
 	unstructObj := k8sutil.UnstructuredFromRuntimeObject(object)
 	unstructObj, err = resourceClient.Create(unstructObj)
+	if err != nil {
+		return err
+	}
+
+	// Update the arg object with the result
+	err = k8sutil.UnstructuredIntoRuntimeObject(unstructObj, object)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal the retrieved data: %v", err)
+	}
+	return nil
+}
+
+// Patches provided object on the server with given patch and updates the arg
+// "object" with the result from the server(UID, resourceVersion, etc).
+// Returns an error if the object’s TypeMeta(Kind, APIVersion) or ObjectMeta(Name, Namespace) is missing or incorrect.
+// Returns an error if patch couldn't be json serialized into bytes.
+// Can also return an api error from the server
+// e.g Conflict https://github.com/kubernetes/apimachinery/blob/master/pkg/api/errors/errors.go#L428
+func Patch(patch interface{}, object Object, pt types.PatchType) (err error) {
+	name, namespace, err := k8sutil.GetNameAndNamespace(object)
+	if err != nil {
+		return err
+	}
+	gvk := object.GetObjectKind().GroupVersionKind()
+	apiVersion, kind := gvk.ToAPIVersionAndKind()
+
+	resourceClient, _, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
+	if err != nil {
+		return fmt.Errorf("failed to get resource client: %v", err)
+	}
+
+	bytes, err := json.Marshal(patch)
+	if err != nil {
+		return fmt.Errorf("failed to serialize patch to bytes: %v", err)
+	}
+
+	unstructObj, err := resourceClient.Patch(name, pt, bytes)
 	if err != nil {
 		return err
 	}
