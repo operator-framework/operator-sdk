@@ -86,11 +86,11 @@ func setup(kubeconfigPath, crdManPath, opManPath, rbacManPath *string) error {
 
 type addToSchemeFunc func(*runtime.Scheme) error
 
-// AddToFramework scheme allows users to add the scheme for their custom resources
+// AddToFrameworkScheme allows users to add the scheme for their custom resources
 // to the framework's scheme for use with the dynamic client. The user provides
 // the addToScheme function (located in the register.go file of their operator
 // project) and the List struct for their custom resource. For example, for a
-// memcached operator, that may look like:
+// memcached operator, the list stuct may look like:
 // &MemcachedList{
 //	TypeMeta: metav1.TypeMeta{
 //		Kind: "Memcached",
