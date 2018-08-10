@@ -31,12 +31,12 @@ func ExposeMetricsPort() {
 
 	service, err := k8sutil.InitOperatorService()
 	if err != nil {
-		logrus.Errorf("Failed to initialize service object for operator metrics: %v", err)
+		logrus.Errorf("failed to initialize service object for operator metrics: %v", err)
 		return
 	}
 	err = Create(service)
 	if err != nil && !errors.IsAlreadyExists(err) {
-		logrus.Errorf("Failed to create service for operator metrics: %v", err)
+		logrus.Errorf("failed to create service for operator metrics: %v", err)
 		return
 	}
 	logrus.Infof("Metrics service %s created", service.Name)

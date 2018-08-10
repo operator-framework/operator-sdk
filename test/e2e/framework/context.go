@@ -65,7 +65,7 @@ func (ctx *TestCtx) Cleanup(t *testing.T) {
 	for i := len(ctx.CleanUpFns) - 1; i >= 0; i-- {
 		err := ctx.CleanUpFns[i]()
 		if err != nil {
-			t.Errorf("A cleanup function failed with error: %v\n", err)
+			t.Errorf("a cleanup function failed with error: %v\n", err)
 		}
 	}
 }

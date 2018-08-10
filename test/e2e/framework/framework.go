@@ -44,7 +44,7 @@ func setup() error {
 	imageName := flag.String("image", "", "operator image name <repository>:<tag> used to push the image, defaults to none (builds image to local docker repo)")
 	flag.Parse()
 	if *config == "" {
-		log.Fatalf("Cannot find kubeconfig, exiting\n")
+		log.Fatalf("cannot find kubeconfig, exiting\n")
 	}
 	kubeconfig, err := clientcmd.BuildConfigFromFlags("", *config)
 	if err != nil {

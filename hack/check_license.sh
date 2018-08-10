@@ -1,6 +1,13 @@
 #!/bin/bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+source "hack/lib/test_lib.sh"
+
 echo "Checking for license header..."
-allfiles=$(go list ./commands/... ./pkg/... ./test/... | grep -v generated | xargs -I {} find "${GOPATH}/src/{}" -name '*.go' | grep -v generated)
+allfiles=$(listFiles)
 licRes=""
 for file in $allfiles; do
   if ! head -n3 "${file}" | grep -Eq "(Copyright|generated|GENERATED)" ; then

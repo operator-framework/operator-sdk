@@ -125,7 +125,7 @@ func (ctx *TestCtx) createCRDFromYAML(yamlFile []byte) error {
 		}
 		return err
 	default:
-		return errors.New("Non-CRD resource in createCRDFromYAML function")
+		return errors.New("non-CRD resource in createCRDFromYAML function")
 	}
 }
 
@@ -178,6 +178,6 @@ func (ctx *TestCtx) CreateFromYAML(yamlFile []byte) error {
 		})
 		return err
 	default:
-		return errors.New("Unhandled resource type")
+		return errors.New("unhandled resource type")
 	}
 }

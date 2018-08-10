@@ -37,6 +37,7 @@ script:
 - go test ./test/e2e/...
 - go vet ./...
 - ./hack/check_license.sh
+- ./hack/check_error_case.sh
 
 after_success:
 - echo 'Build succeeded, operator was generated, memcached operator is running on minikube, and unit/integration tests pass'
