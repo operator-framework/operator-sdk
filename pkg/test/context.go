@@ -20,15 +20,12 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"k8s.io/client-go/rest"
 )
 
 type TestCtx struct {
 	ID         string
 	CleanUpFns []finalizerFn
 	Namespace  string
-	CRClient   *rest.RESTClient
 }
 
 type finalizerFn func() error
