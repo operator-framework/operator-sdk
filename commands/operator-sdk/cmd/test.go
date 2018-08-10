@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"os"
+	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
@@ -28,10 +29,9 @@ var (
 	crdManifestPath  string
 	opManifestPath   string
 	rbacManifestPath string
-	verbose          bool
+	goTestFlags      string
 )
 
-// TODO: allow users to pass flags through to `go test`
 func NewTestCmd() *cobra.Command {
 	testCmd := &cobra.Command{
 		Use:   "test --test-location <path to tests directory> [flags]",
@@ -49,20 +49,18 @@ func NewTestCmd() *cobra.Command {
 	testCmd.Flags().StringVarP(&crdManifestPath, "crd", "c", "deploy/crd.yaml", "Path to CRD manifest")
 	testCmd.Flags().StringVarP(&opManifestPath, "operator", "o", "deploy/operator.yaml", "Path to operator manifest")
 	testCmd.Flags().StringVarP(&rbacManifestPath, "rbac", "r", "deploy/rbac.yaml", "Path to RBAC manifest")
-	testCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose go test")
+	testCmd.Flags().StringVarP(&goTestFlags, "go-test-flags", "g", "", "Additional flags to pass to go test")
 
 	return testCmd
 }
 
 func testFunc(cmd *cobra.Command, args []string) {
 	testArgs := []string{"test", testLocation + "/..."}
-	if verbose {
-		testArgs = append(testArgs, "-v")
-	}
 	testArgs = append(testArgs, "-"+test.KubeConfigFlag, kubeconfig)
 	testArgs = append(testArgs, "-"+test.CrdManPathFlag, crdManifestPath)
 	testArgs = append(testArgs, "-"+test.OpManPathFlag, opManifestPath)
 	testArgs = append(testArgs, "-"+test.RbacManPathFlag, rbacManifestPath)
 	testArgs = append(testArgs, "-"+test.ProjRootFlag, mustGetwd())
+	testArgs = append(testArgs, strings.Split(goTestFlags, " ")...)
 	execCmd(os.Stdout, "go", testArgs...)
 }
