@@ -45,7 +45,7 @@ func (ctx *TestCtx) GetNamespace() (string, error) {
 	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ctx.Namespace}}
 	_, err := Global.KubeClient.CoreV1().Namespaces().Create(namespaceObj)
 	if apierrors.IsAlreadyExists(err) {
-		return "", fmt.Errorf("Namespace %s already exists: %v", ctx.Namespace, err)
+		return "", fmt.Errorf("namespace %s already exists: %v", ctx.Namespace, err)
 	} else if err != nil {
 		return "", err
 	}
@@ -61,7 +61,7 @@ func (ctx *TestCtx) GetCRClient(yamlCR []byte) (*rest.RESTClient, error) {
 	}
 	// a user may pass nil if they expect the CRClient to already exist
 	if yamlCR == nil {
-		return nil, errors.New("CRClient does not exist; yamlCR cannot be nil")
+		return nil, errors.New("ctx.CRClient does not exist; yamlCR cannot be nil")
 	}
 	// get new RESTClient for custom resources
 	crConfig := Global.KubeConfig
@@ -164,7 +164,7 @@ func (ctx *TestCtx) createCRDFromYAML(yamlFile []byte) error {
 		}
 		return err
 	default:
-		return errors.New("Non-CRD resource in createCRDFromYAML function")
+		return errors.New("non-CRD resource in createCRDFromYAML function")
 	}
 }
 

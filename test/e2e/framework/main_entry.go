@@ -22,7 +22,7 @@ import (
 
 func MainEntry(m *testing.M) {
 	if err := setup(); err != nil {
-		log.Fatalf("Failed to set up framework: %v", err)
+		log.Fatalf("failed to set up framework: %v", err)
 	}
 
 	os.Exit(m.Run())

@@ -67,7 +67,7 @@ func (i *informer) sync(key string) error {
 		// Lookup the last saved state for the deleted object
 		_, ok := i.deletedObjects[key]
 		if !ok {
-			logrus.Errorf("No last known state found for deleted object (%s)", key)
+			logrus.Errorf("no last known state found for deleted object (%s)", key)
 			return nil
 		}
 		obj = i.deletedObjects[key]

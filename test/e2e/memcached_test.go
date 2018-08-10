@@ -45,7 +45,7 @@ func TestMemcached(t *testing.T) {
 	defer ctx.Cleanup(t)
 	gopath, ok := os.LookupEnv("GOPATH")
 	if !ok {
-		t.Fatalf("GOPATH not set")
+		t.Fatalf("$GOPATH not set")
 	}
 	os.Chdir(path.Join(gopath, "/src/github.com/example-inc"))
 	t.Log("Creating new operator project")
@@ -55,7 +55,7 @@ func TestMemcached(t *testing.T) {
 		"--api-version=cache.example.com/v1alpha1",
 		"--kind=Memcached").CombinedOutput()
 	if err != nil {
-		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 	ctx.AddFinalizerFn(func() error { return os.RemoveAll(path.Join(gopath, "/src/github.com/example-inc/memcached-operator")) })
 
@@ -94,7 +94,7 @@ func TestMemcached(t *testing.T) {
 	t.Log("Generating k8s")
 	cmdOut, err = exec.Command("operator-sdk", "generate", "k8s").CombinedOutput()
 	if err != nil {
-		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
 	// create crd
@@ -180,7 +180,7 @@ func MemcachedLocal(t *testing.T) {
 
 	err = cmd.Start()
 	if err != nil {
-		t.Fatalf("Error: %v", err)
+		t.Fatalf("error: %v", err)
 	}
 	ctx.AddFinalizerFn(func() error { return cmd.Process.Signal(os.Interrupt) })
 
@@ -196,7 +196,7 @@ func MemcachedLocal(t *testing.T) {
 		return true, nil
 	})
 	if err != nil {
-		t.Fatalf("Local operator not ready after 60 seconds: %v\n", err)
+		t.Fatalf("local operator not ready after 60 seconds: %v\n", err)
 	}
 
 	if err = memcachedScaleTest(t, f, ctx); err != nil {
@@ -217,7 +217,7 @@ func MemcachedCluster(t *testing.T) {
 	t.Log("Building operator docker image")
 	cmdOut, err := exec.Command("operator-sdk", "build", *f.ImageName).CombinedOutput()
 	if err != nil {
-		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 	if local {
 		operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
@@ -233,7 +233,7 @@ func MemcachedCluster(t *testing.T) {
 		t.Log("Pushing docker image to repo")
 		cmdOut, err = exec.Command("docker", "push", *f.ImageName).CombinedOutput()
 		if err != nil {
-			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+			t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
 		}
 	}
 
