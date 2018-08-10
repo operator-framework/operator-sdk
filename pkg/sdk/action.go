@@ -34,8 +34,8 @@ func Create(object Object) (err error) {
 		return err
 	}
 	gvk := object.GetObjectKind().GroupVersionKind()
-	apiVersion, kind := gvk.ToAPIVersionAndKind()
 
+	apiVersion, kind := gvk.ToAPIVersionAndKind()
 	resourceClient, _, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
 	if err != nil {
 		return fmt.Errorf("failed to get resource client: %v", err)
@@ -67,8 +67,8 @@ func Patch(object Object, pt types.PatchType, patch []byte) (err error) {
 		return err
 	}
 	gvk := object.GetObjectKind().GroupVersionKind()
-	apiVersion, kind := gvk.ToAPIVersionAndKind()
 
+	apiVersion, kind := gvk.ToAPIVersionAndKind()
 	resourceClient, _, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
 	if err != nil {
 		return fmt.Errorf("failed to get resource client: %v", err)
@@ -98,8 +98,8 @@ func Update(object Object) (err error) {
 		return err
 	}
 	gvk := object.GetObjectKind().GroupVersionKind()
-	apiVersion, kind := gvk.ToAPIVersionAndKind()
 
+	apiVersion, kind := gvk.ToAPIVersionAndKind()
 	resourceClient, _, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
 	if err != nil {
 		return fmt.Errorf("failed to get resource client: %v", err)
@@ -163,8 +163,8 @@ func Delete(object Object, opts ...DeleteOption) (err error) {
 		return err
 	}
 	gvk := object.GetObjectKind().GroupVersionKind()
-	apiVersion, kind := gvk.ToAPIVersionAndKind()
 
+	apiVersion, kind := gvk.ToAPIVersionAndKind()
 	resourceClient, _, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
 	if err != nil {
 		return fmt.Errorf("failed to get resource client: %v", err)
