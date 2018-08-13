@@ -15,11 +15,17 @@
 package e2e
 
 import (
+	goctx "context"
+	"fmt"
 	"testing"
 	"time"
 
+	operator "github.com/operator-framework/operator-sdk/test/test-framework/pkg/apis/cache/v1alpha1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/util/e2eutil"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 var (
@@ -28,6 +34,16 @@ var (
 )
 
 func TestMemcached(t *testing.T) {
+	memcachedList := &operator.MemcachedList{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Memcached",
+			APIVersion: "cache.example.com/v1alpha1",
+		},
+	}
+	err := framework.AddToFrameworkScheme(operator.AddToScheme, memcachedList)
+	if err != nil {
+		t.Fatalf("failed to add custom resource scheme to framework: %v", err)
+	}
 	// run subtests
 	t.Run("memcached-group", func(t *testing.T) {
 		t.Run("Cluster", MemcachedCluster)
@@ -36,13 +52,25 @@ func TestMemcached(t *testing.T) {
 }
 
 func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) error {
-	// create memcached custom resource
-	crYAML := []byte("apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: 3")
-	err := ctx.CreateFromYAML(crYAML)
-	if err != nil {
-		return err
-	}
 	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		return fmt.Errorf("could not get namespace: %v", err)
+	}
+	// create memcached custom resource
+	exampleMemcached := &operator.Memcached{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Memcached",
+			APIVersion: "cache.example.com/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "example-memcached",
+			Namespace: namespace,
+		},
+		Spec: operator.MemcachedSpec{
+			Size: 3,
+		},
+	}
+	err = f.DynamicClient.Create(goctx.TODO(), exampleMemcached)
 	if err != nil {
 		return err
 	}
@@ -52,7 +80,12 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx framework.Test
 		return err
 	}
 
-	err = ctx.UpdateCR("example-memcached", "memcacheds", "/spec/size", "4")
+	err = f.DynamicClient.Get(goctx.TODO(), types.NamespacedName{Name: "example-memcached", Namespace: namespace}, exampleMemcached)
+	if err != nil {
+		return err
+	}
+	exampleMemcached.Spec.Size = 4
+	err = f.DynamicClient.Update(goctx.TODO(), exampleMemcached)
 	if err != nil {
 		return err
 	}
