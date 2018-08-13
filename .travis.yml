@@ -12,7 +12,7 @@ env:
 - CHANGE_MINIKUBE_NONE_USER=true
 
 before_script:
-- go get -u github.com/golang/dep/cmd/dep
+- curl -Lo dep https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64 && chmod +x dep && sudo mv dep /usr/local/bin/
 - dep ensure
 # Download kubectl, which is a requirement for using minikube.
 - curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.10.1/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
