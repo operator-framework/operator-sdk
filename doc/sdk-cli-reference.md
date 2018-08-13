@@ -160,7 +160,7 @@ Create app-operator/.gitignore
 
 ### Flags
 
-* `-t, --test-location` **(required)** string - location of test
+* `-t, --test-location` **(required)** string - location of e2e test files
 * `-k, --kubeconfig` string - location of kubeconfig for kubernetes cluster
 * `-c, --crd` string - location of CRD manifest yaml file
 * `-r, --rbac` string - location of RBAC manifest yaml file
