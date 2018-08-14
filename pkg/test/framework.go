@@ -17,6 +17,7 @@ package test
 import (
 	goctx "context"
 	"fmt"
+	"sync"
 	"time"
 
 	extensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -34,7 +35,12 @@ import (
 	dynclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var Global *Framework
+var (
+	// mutex for AddToFrameworkScheme
+	mutex = sync.Mutex{}
+	// Global framework struct
+	Global *Framework
+)
 
 type Framework struct {
 	KubeConfig       *rest.Config
@@ -101,6 +107,8 @@ type addToSchemeFunc func(*runtime.Scheme) error
 // by the time this function is called. If the CRD takes more than 5 seconds to
 // become ready, this function throws an error
 func AddToFrameworkScheme(addToScheme addToSchemeFunc, obj runtime.Object) error {
+	mutex.Lock()
+	defer mutex.Unlock()
 	err := addToScheme(Global.Scheme)
 	if err != nil {
 		return err
