@@ -18,7 +18,7 @@ $ go test ./test/e2e/... -kubeconfig "path-to-config" -image "<repository>:<tag>
 ```
 
 This will run the tests on the cluster specified by the provided kubeconfig and the
-memcached-operator image that it build will be pushed to `<repository>:<tag>`.
+memcached-operator image that is built will be pushed to `<repository>:<tag>`.
 
 ### Local Minikube Instance
 To run the end-to-end tests on a local minikube cluster, the minikube instance must be
