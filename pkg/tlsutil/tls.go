@@ -23,12 +23,12 @@ import (
 type CertType int
 
 const (
-	// ClientCert defines a client cert.
-	ClientCert CertType = iota
+	// ClientAndServingCert defines both client and serving cert.
+	ClientAndServingCert CertType = iota
 	// ServingCert defines a serving cert.
 	ServingCert
-	// ClientAndServingCert defines both client and serving cert.
-	ClientAndServingCert
+	// ClientCert defines a client cert.
+	ClientCert
 )
 
 // CertConfig configures how to generate the Cert.
