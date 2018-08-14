@@ -25,7 +25,7 @@ To run the end-to-end tests on a local minikube cluster, the minikube instance m
 started and its local docker repo must be linked to the host's docker repo. To do this,
 run these commands:
 ```
-$ minikube start --kubernetes-version 1.10.0
+$ minikube start --kubernetes-version v1.10.0
 $ eval $(minikube docker-env)
 ```
 
