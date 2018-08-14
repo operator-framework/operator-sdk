@@ -35,8 +35,7 @@ import (
 	dynclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var mutex sync.Mutex
-
+var mutex = sync.Mutex{}
 var Global *Framework
 
 type Framework struct {
@@ -73,7 +72,6 @@ func setup(kubeconfigPath, crdManPath, opManPath, rbacManPath *string) error {
 		return fmt.Errorf("failed to build the dynamic client: %v", err)
 	}
 	dynDec := serializer.NewCodecFactory(scheme).UniversalDeserializer()
-	mutex = sync.Mutex{}
 	Global = &Framework{
 		KubeConfig:       kubeconfig,
 		KubeClient:       kubeclient,
