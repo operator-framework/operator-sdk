@@ -35,8 +35,12 @@ import (
 	dynclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var mutex = sync.Mutex{}
-var Global *Framework
+var (
+	// mutex for AddToFrameworkScheme
+	mutex = sync.Mutex{}
+	// Global framework struct
+	Global *Framework
+)
 
 type Framework struct {
 	KubeConfig       *rest.Config
@@ -104,7 +108,7 @@ type addToSchemeFunc func(*runtime.Scheme) error
 // become ready, this function throws an error
 func AddToFrameworkScheme(addToScheme addToSchemeFunc, obj runtime.Object) error {
 	mutex.Lock()
-	defer func() { mutex.Unlock() }()
+	defer mutex.Unlock()
 	err := addToScheme(Global.Scheme)
 	if err != nil {
 		return err
