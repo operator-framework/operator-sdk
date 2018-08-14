@@ -32,7 +32,7 @@ At a high level an operator using the SDK processes events for watched resources
 
 ## Prerequisites
 
-- [dep][dep_tool] version v0.4.1+.
+- [dep][dep_tool] version v0.5.0+.
 - [git][git_tool]
 - [go][go_tool] version v1.10+.
 - [docker][docker_tool] version 17.03+.
