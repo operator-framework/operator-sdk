@@ -17,6 +17,7 @@ package test
 import (
 	goctx "context"
 	"fmt"
+	"sync"
 	"time"
 
 	extensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -33,6 +34,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	dynclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+var mutex sync.Mutex
 
 var Global *Framework
 
@@ -70,6 +73,7 @@ func setup(kubeconfigPath, crdManPath, opManPath, rbacManPath *string) error {
 		return fmt.Errorf("failed to build the dynamic client: %v", err)
 	}
 	dynDec := serializer.NewCodecFactory(scheme).UniversalDeserializer()
+	mutex = sync.Mutex{}
 	Global = &Framework{
 		KubeConfig:       kubeconfig,
 		KubeClient:       kubeclient,
@@ -101,6 +105,8 @@ type addToSchemeFunc func(*runtime.Scheme) error
 // by the time this function is called. If the CRD takes more than 5 seconds to
 // become ready, this function throws an error
 func AddToFrameworkScheme(addToScheme addToSchemeFunc, obj runtime.Object) error {
+	mutex.Lock()
+	defer func() { mutex.Unlock() }()
 	err := addToScheme(Global.Scheme)
 	if err != nil {
 		return err
