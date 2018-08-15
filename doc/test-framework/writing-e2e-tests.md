@@ -64,7 +64,7 @@ import (
 #### 2. Register types with framework scheme
 The next step is to register your operator's scheme with the framework's dynamic client.
 To do this, you need to create a list struct for your custom resource and pass the list
-object and the object's addToScheme function to the framework's AddToFrameworkScheme
+object and the object's addToScheme function to the framework's [AddToFrameworkScheme][scheme-link]
 function. For our example memcached-operator, it looks like this:
 ```
 memcachedList := &cachev1alpha1.MemcachedList{
@@ -79,14 +79,10 @@ if err != nil {
 }
 ```
 
-The reason that the list struct is necessary for this function is because the dynamic client's RESTMapper
-needs to have the custom resource's mappings to work. These mappings are created by the kubernetes
-cluster. Since the CRD is created as the last step of the framework setup process, it is likely that the
-resource will not be ready by the time the first test starts. By providing the custom resource's list
-struct, the AddToFrameworkScheme function can verify that the dynamic client has the REST mappings for
-your custom resource. If the mappings are not yet available, the framework simply waits and attempts again
-1 second later. If the mappings are still not available after 5 seconds, the framework assumes something
-went wrong and returns an error.
+We pass in the CR List object `memcachedList` as an argument to `AddToFrameworkScheme()` because
+the framework needs to ensure that the dynamic client has the REST mappings to query the API
+server for the CR type. The framework will keep polling the API server for the mappings and
+timeout after 5 seconds, returning an error if the mappings were not discovered in that time.
 
 #### 3. Setup the test context and resources
 The next step is to create a TestCtx for the current test and defer its cleanup function:
@@ -213,3 +209,4 @@ $ kubectl delete -f deploy/crd.yaml
 [testctx-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/context.go
 [e2eutil-link]:https://github.com/operator-framework/operator-sdk/tree/master/pkg/test/e2eutil
 [memcached-test-link]:https://github.com/operator-framework/operator-sdk-samples/blob/master/memcached-operator/test/e2e/memcached_test.go
+[scheme-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/framework.go#L109
