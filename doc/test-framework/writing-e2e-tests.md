@@ -11,12 +11,12 @@ resources. The Operator SDK includes the test framework as a library under
 The test framework includes a few components. The most important to talk
 about are Framework and TestCtx.
 
-### Framework
+### [Framework][framework-link]
 Framework contains all global variables, such as the kubeconfig, kubeclient,
 scheme, and dynamic client (provided via the controller-runtime project).
 It is initialized by MainEntry and can be used anywhere in the tests.
 
-### TestCtx
+### [TestCtx][testctx-link]
 TestCtx is a local context that stores important information for each test, such
 as the namespace for that test and the finalizer (cleanup) functions. By handling
 namespace and resource initialization through TestCtx, we can make sure that all
@@ -46,6 +46,8 @@ func TestMain(m *testing.M) {
 ```
 
 ### Individual Tests
+In this section, we will be designing a test based on the [memcached_test.go][memcached-test-link] file 
+from the [memcached-operator][memcached-sample] sample.
 #### 1. Import the framework
 Once MainEntry sets up the framework, it runs the remainder of the tests. First, make
 sure to import `testing`, the operator-sdk test framework (`pkg/test`) as well as your operator's libraries:
@@ -103,7 +105,7 @@ if err != nil {
 ```
 
 If you want to make sure the operator's deployment is fully ready before moving onto the next part of the
-test, the `WaitForDeployment` function from e2eutil (in the sdk under `pkg/test/e2eutil`) can be used:
+test, the `WaitForDeployment` function from [e2eutil][e2eutil-link] (in the sdk under `pkg/test/e2eutil`) can be used:
 ```
 // get namespace
 namespace, err := ctx.GetNamespace()
@@ -207,3 +209,7 @@ $ kubectl delete -f deploy/crd.yaml
 ```
 
 [memcached-sample]:https://github.com/operator-framework/operator-sdk-samples/tree/master/memcached-operator
+[framework-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/framework.go#L45
+[testctx-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/context.go
+[e2eutil-link]:https://github.com/operator-framework/operator-sdk/tree/master/pkg/test/e2eutil
+[memcached-test-link]:https://github.com/operator-framework/operator-sdk-samples/blob/master/memcached-operator/test/e2e/memcached_test.go
