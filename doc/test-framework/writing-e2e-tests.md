@@ -1,4 +1,5 @@
 # Using the Operator SDK's Test Framework to Write E2E Tests
+
 End-to-end tests are an essential tool to ensure that an operator works
 as intended in real-world scenarios. The Operator SDK includes a testing
 framework to make writing tests simpler and quicker by removing boilerplate
@@ -8,30 +9,36 @@ resources. The Operator SDK includes the test framework as a library under
 `pkg/test` and the e2e tests are written as standard go tests.
 
 ## Components
+
 The test framework includes a few components. The most important to talk
 about are Framework and TestCtx.
 
 ### Framework
+
 [Framework][framework-link] contains all global variables, such as the kubeconfig, kubeclient,
 scheme, and dynamic client (provided via the controller-runtime project).
 It is initialized by MainEntry and can be used anywhere in the tests.
 
 ### TestCtx
+
 [TestCtx][testctx-link] is a local context that stores important information for each test, such
 as the namespace for that test and the finalizer (cleanup) functions. By handling
 namespace and resource initialization through TestCtx, we can make sure that all
 resources are properly handled and removed after the test finishes.
 
 ## Walkthrough: Writing Tests
+
 In this section, we will be walking through writing the e2e tests of the sample
 [memcached-operator][memcached-sample].
 
 ### Main Test
+
 The first step to writing a test is to create the `main_test.go` file. The `main_test.go`
 file simply calls the test framework's main entry that sets up the framework and then
 starts the tests. It should be pretty much identical for all operators. This is what it
 looks like for the memcached-operator:
-```
+
+```go
 package e2e
 
 import (
@@ -46,12 +53,16 @@ func TestMain(m *testing.M) {
 ```
 
 ### Individual Tests
-In this section, we will be designing a test based on the [memcached_test.go][memcached-test-link] file 
+
+In this section, we will be designing a test based on the [memcached_test.go][memcached-test-link] file
 from the [memcached-operator][memcached-sample] sample.
+
 #### 1. Import the framework
+
 Once MainEntry sets up the framework, it runs the remainder of the tests. First, make
 sure to import `testing`, the operator-sdk test framework (`pkg/test`) as well as your operator's libraries:
-```
+
+```go
 import (
     "testing"
 
@@ -62,11 +73,13 @@ import (
 ```
 
 #### 2. Register types with framework scheme
+
 The next step is to register your operator's scheme with the framework's dynamic client.
 To do this, you need to create a list struct for your custom resource and pass the list
 object and the object's addToScheme function to the framework's [AddToFrameworkScheme][scheme-link]
 function. For our example memcached-operator, it looks like this:
-```
+
+```go
 memcachedList := &cachev1alpha1.MemcachedList{
     TypeMeta: metav1.TypeMeta{
         Kind:       "Memcached",
@@ -85,15 +98,18 @@ server for the CR type. The framework will keep polling the API server for the m
 timeout after 5 seconds, returning an error if the mappings were not discovered in that time.
 
 #### 3. Setup the test context and resources
+
 The next step is to create a TestCtx for the current test and defer its cleanup function:
-```
+
+```go
 ctx := framework.NewTestCtx(t)
 defer ctx.Cleanup(t)
 ```
 
 Now that there is a TestCtx, the test's kubernetes resources (specifically the RBAC and Operator deployment)
 can be initialized:
-```
+
+```go
 err := ctx.InitializeClusterResources()
 if err != nil {
     t.Fatalf("failed to initialize cluster resources: %v", err)
@@ -102,7 +118,8 @@ if err != nil {
 
 If you want to make sure the operator's deployment is fully ready before moving onto the next part of the
 test, the `WaitForDeployment` function from [e2eutil][e2eutil-link] (in the sdk under `pkg/test/e2eutil`) can be used:
-```
+
+```go
 // get namespace
 namespace, err := ctx.GetNamespace()
 if err != nil {
@@ -118,9 +135,11 @@ if err != nil {
 ```
 
 #### 4. Write the test specific code
+
 Now that the operator is ready, we can create a custom resource. Since the controller-runtime's dynamic client uses
 go contexts, make sure to import the go context library. In this example, we imported it as `goctx`:
-```
+
+```go
 // create memcached custom resource
 exampleMemcached := &cachev1alpha1.Memcached{
     TypeMeta: metav1.TypeMeta{
@@ -143,16 +162,18 @@ if err != nil {
 
 Now we can check if the operator successfully worked. In the case of the memcached operator, it should have
 created a deployment called "example-memcached" with 3 replicas:
-```
+
+```go
 // wait for example-memcached to reach 3 replicas
 err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 3, time.Second*5, time.Second*30)
 if err != nil {
     return err
 }
 ```
- 
+
 We can also test that the deployment scales correctly when the CR is updated:
-```
+
+```go
 err = f.DynamicClient.Get(goctx.TODO(), types.NamespacedName{Name: "example-memcached", Namespace: namespace}, exampleMemcached)
 if err != nil {
     return err
@@ -174,11 +195,13 @@ Now that the test is complete, we are done with the function. Once the end of th
 functions will automatically be run since they were deferred when the TestCtx was created.
 
 ## Manual Cleanup
+
 While the test framework provides utilities that allow the test to automatically be cleaned up when done,
 it is possible that an error in the test code could cause a panic, which would stop the test
 without running the deferred cleanup. To clean up manually, you should check what namespaces currently exist
 in your cluster. You can do this with `kubectl`:
-```
+
+```shell
 $ kubectl get namespaces
 
 Example Output:
@@ -194,13 +217,15 @@ memcached-memcached-group-cluster2-1534287037   Active    22s
 The names of the namespaces will be either start with `main` or with the name of the tests and the suffix will
 be a Unix timestamp (number of seconds since January 1, 1970 00:00 UTC). Kubectl can be used to delete these
 namespaces and the resources in those namespaces:
-```
+
+```shell
 $ kubectl delete namespace main-153428703
 ```
 
 The tests also create a CRD. The CRD can be removed quite easily. The simplest way is to use `kubectl` and
 the file that was used to create the crd (by default `deploy/crd.yaml`):
-```
+
+```shell
 $ kubectl delete -f deploy/crd.yaml
 ```
 
