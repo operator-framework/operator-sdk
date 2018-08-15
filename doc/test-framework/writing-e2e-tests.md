@@ -23,7 +23,7 @@ namespace and resource initialization through TestCtx, we can make sure that all
 resources are properly handled and removed after the test finishes.
 
 ## Walkthrough: Writing Tests
-In this section, we will be walking through writing the end-to-end tests of the sample
+In this section, we will be walking through writing the e2e tests of the sample
 [memcached-operator][memcached-sample].
 
 ### Main Test
@@ -46,18 +46,20 @@ func TestMain(m *testing.M) {
 ```
 
 ### Individual Tests
+#### 1. Import the framework
 Once MainEntry sets up the framework, it runs the remainder of the tests. First, make
 sure to import `testing`, the operator-sdk test framework (`pkg/test`) as well as your operator's libraries:
 ```
 import (
     "testing"
 
-    cachev1alpha1 "github.com/operator-framework/operator-sdk/test/test-framework/pkg/apis/cache/v1alpha1"
+    cachev1alpha1 "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1"
 
     framework "github.com/operator-framework/operator-sdk/pkg/test"
 )
 ```
 
+#### 2. Register types with framework scheme
 The next step is to register your operator's scheme with the framework's dynamic client.
 To do this, you need to create a list struct for your custom resource and pass the list
 object and the object's addToScheme function to the framework's AddToFrameworkScheme
@@ -84,6 +86,7 @@ your custom resource. If the mappings are not yet available, the framework simpl
 1 second later. If the mappings are still not available after 5 seconds, the framework assumes something
 went wrong and returns an error.
 
+#### 3. Setup the test context and resources
 The next step is to create a TestCtx for the current test and defer its cleanup function:
 ```
 ctx := framework.NewTestCtx(t)
@@ -100,8 +103,7 @@ if err != nil {
 ```
 
 If you want to make sure the operator's deployment is fully ready before moving onto the next part of the
-test, the `WaitForDeployment` function from e2eutil can be used. First, import `"github.com/operator-framework/operator-sdk/pkg/util/e2eutil"`
-	and retrieve the required arguments to pass to the `WaitForDeployment` function. Then, call the function:
+test, the `WaitForDeployment` function from e2eutil (in the sdk under `pkg/test/e2eutil`) can be used:
 ```
 // get namespace
 namespace, err := ctx.GetNamespace()
@@ -117,6 +119,7 @@ if err != nil {
 }
 ```
 
+#### 4. Write the test specific code
 Now that the operator is ready, we can create a custom resource. Since the controller-runtime's dynamic client uses
 go contexts, make sure to import the go context library. In this example, we imported it as `goctx`:
 ```
