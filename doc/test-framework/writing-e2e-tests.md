@@ -74,9 +74,8 @@ import (
 #### 2. Register types with framework scheme
 
 The next step is to register your operator's scheme with the framework's dynamic client.
-To do this, you need to create a list struct for your custom resource and pass the list
-object and the object's addToScheme function to the framework's [AddToFrameworkScheme][scheme-link]
-function. For our example memcached-operator, it looks like this:
+To do this, pass the CRD's `AddToScheme` function and its List type object to the framework's
+[AddToFrameworkScheme][scheme-link] function. For our example memcached-operator, it looks like this:
 
 ```go
 memcachedList := &cachev1alpha1.MemcachedList{
@@ -105,8 +104,8 @@ ctx := framework.NewTestCtx(t)
 defer ctx.Cleanup(t)
 ```
 
-Now that there is a TestCtx, the test's kubernetes resources (specifically the RBAC and Operator deployment)
-can be initialized:
+Now that there is a TestCtx, the test's kubernetes resources (specifically the test namespace,
+RBAC, and Operator deployment) can be initialized:
 
 ```go
 err := ctx.InitializeClusterResources()
@@ -190,8 +189,12 @@ if err != nil {
 }
 ```
 
-Now that the test is complete, we are done with the function. Once the end of the function is reached, the TestCtx's cleanup
+Once the end of the function is reached, the TestCtx's cleanup
 functions will automatically be run since they were deferred when the TestCtx was created.
+
+## Running the Tests
+
+TODO
 
 ## Manual Cleanup
 
@@ -221,8 +224,7 @@ namespaces and the resources in those namespaces:
 $ kubectl delete namespace main-153428703
 ```
 
-The tests also create a CRD. The CRD can be removed quite easily. The simplest way is to use `kubectl` and
-the file that was used to create the crd (by default `deploy/crd.yaml`):
+Since the CRD is not namespaced, it must be deleted separately. Clean up the CRD created by the tests using the CRD manifest `deploy/crd.yaml`:
 
 ```shell
 $ kubectl delete -f deploy/crd.yaml
