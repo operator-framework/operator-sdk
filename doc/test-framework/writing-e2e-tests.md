@@ -3,10 +3,9 @@
 End-to-end tests are an essential tool to ensure that an operator works
 as intended in real-world scenarios. The Operator SDK includes a testing
 framework to make writing tests simpler and quicker by removing boilerplate
-code and providing useful tools testing, such as a dynamic client that can
-handle any registered kubernetes resource, including an operator's custom
-resources. The Operator SDK includes the test framework as a library under
-`pkg/test` and the e2e tests are written as standard go tests.
+code and providing common test utilities. The Operator SDK includes the
+test framework as a library under `pkg/test` and the e2e tests are written
+as standard go tests.
 
 ## Components
 
