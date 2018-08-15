@@ -11,13 +11,13 @@ resources. The Operator SDK includes the test framework as a library under
 The test framework includes a few components. The most important to talk
 about are Framework and TestCtx.
 
-### [Framework][framework-link]
-Framework contains all global variables, such as the kubeconfig, kubeclient,
+### Framework
+[Framework][framework-link] contains all global variables, such as the kubeconfig, kubeclient,
 scheme, and dynamic client (provided via the controller-runtime project).
 It is initialized by MainEntry and can be used anywhere in the tests.
 
-### [TestCtx][testctx-link]
-TestCtx is a local context that stores important information for each test, such
+### TestCtx
+[TestCtx][testctx-link] is a local context that stores important information for each test, such
 as the namespace for that test and the finalizer (cleanup) functions. By handling
 namespace and resource initialization through TestCtx, we can make sure that all
 resources are properly handled and removed after the test finishes.
