@@ -194,7 +194,17 @@ functions will automatically be run since they were deferred when the TestCtx wa
 
 ## Running the Tests
 
-TODO
+To make running the tests simpler, the `operator-sdk` CLI tool has a `test` subcommand that configures some
+default test settings, such as locations of the manifest files for the CRD, RBAC, and Operator, and allows the user to configure these runtime options. To use it, run the
+`operator-sdk test` command in your project root and pass the location of the tests using the
+`--test-location` flag. You can use `--help` to view the other configuration options and use
+`--go-test-flags` to pass in arguments to `go test`. Here is an example command:
+
+```shell
+$ operator-sdk test --test-location ./test/e2e --go-test-flags "-v -parallel=2"
+```
+
+For more documentation on the `operator-sdk test` command, see the [SDK CLI Reference][sdk-cli-ref] doc.
 
 ## Manual Cleanup
 
@@ -236,3 +246,4 @@ $ kubectl delete -f deploy/crd.yaml
 [e2eutil-link]:https://github.com/operator-framework/operator-sdk/tree/master/pkg/test/e2eutil
 [memcached-test-link]:https://github.com/operator-framework/operator-sdk-samples/blob/master/memcached-operator/test/e2e/memcached_test.go
 [scheme-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/framework.go#L109
+[sdk-cli-ref]:https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#test
