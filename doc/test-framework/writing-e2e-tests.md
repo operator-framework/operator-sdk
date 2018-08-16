@@ -208,7 +208,11 @@ For more documentation on the `operator-sdk test` command, see the [SDK CLI Refe
 
 For advanced use cases, it is possible to run the tests via `go test` directly. As long as all flags defined
 in [MainEntry][main-entry-link] are declared, the tests will run correctly. Running the tests directly with missing flags
-will result in undefined behavior.
+will result in undefined behavior. This is an example `go test` equivalent to the `operator-sdk test` example above:
+
+```shell
+$ go test ./test/e2e/... -root=$(pwd) -kubeconfig=$HOME/.kube/config -crd deploy/crd.yaml -op deploy/operator.yaml -rbac deploy/rbac.yaml -v -parallel=2
+```
 
 ## Manual Cleanup
 
