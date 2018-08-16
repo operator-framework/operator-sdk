@@ -206,6 +206,10 @@ $ operator-sdk test --test-location ./test/e2e --go-test-flags "-v -parallel=2"
 
 For more documentation on the `operator-sdk test` command, see the [SDK CLI Reference][sdk-cli-ref] doc.
 
+For advanced use cases, it is possible to run the tests via `go test` directly. As long as all flags defined
+in [MainEntry][main-entry-link] are declared, the tests will run correctly. Running the tests directly with missing flags
+will result in undefined behavior.
+
 ## Manual Cleanup
 
 While the test framework provides utilities that allow the test to automatically be cleaned up when done,
@@ -247,3 +251,4 @@ $ kubectl delete -f deploy/crd.yaml
 [memcached-test-link]:https://github.com/operator-framework/operator-sdk-samples/blob/master/memcached-operator/test/e2e/memcached_test.go
 [scheme-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/framework.go#L109
 [sdk-cli-ref]:https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#test
+[main-entry-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/main_entry.go#L25
