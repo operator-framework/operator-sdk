@@ -51,7 +51,7 @@ func Watch(apiVersion, kind, namespace string, resyncPeriod int) {
 		collector = metrics.New()
 		metrics.RegisterCollector(collector)
 	}
-	informer := NewInformer(resourcePluralName, namespace, resourceClient, resyncPeriod, collector)
+	informer := NewInformer(resourcePluralName, namespace, resourceClient, resyncPeriod, collector, 1)
 	informers = append(informers, informer)
 }
 
