@@ -419,10 +419,10 @@ import (
 	"context"
 	"runtime"
 
-	stub "{{.StubImport}}"
-	sdk "{{.OperatorSDKImport}}"
-	k8sutil "{{.K8sutilImport}}"
-	sdkVersion "{{.SDKVersionImport}}"
+	stub "github.com/example-inc/app-operator/pkg/stub"
+	sdk "github.com/operator-framework/operator-sdk/pkg/sdk"
+	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
+	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
 	"github.com/sirupsen/logrus"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -439,8 +439,8 @@ func main() {
 
 	sdk.ExposeMetricsPort()
 
-	resource := "{{.APIVersion}}"
-	kind := "{{.Kind}}"
+	resource := "app.example.com/v1alpha1"
+	kind := "AppService"
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
 		logrus.Fatalf("failed to get watch namespace: %v", err)
