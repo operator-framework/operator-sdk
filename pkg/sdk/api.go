@@ -31,7 +31,7 @@ var (
 
 // WatchOpts allows for future extensions to Watch without damaging interface compatibility in the future
 type WatchOpts struct {
-	numWorkers int
+	NumWorkers int
 }
 
 // Watch watches for changes on the given resource.
@@ -56,7 +56,7 @@ func Watch(apiVersion, kind, namespace string, resyncPeriod int, opts WatchOpts)
 		collector = metrics.New()
 		metrics.RegisterCollector(collector)
 	}
-	informer := NewInformer(resourcePluralName, namespace, resourceClient, resyncPeriod, collector, opts.numWorkers)
+	informer := NewInformer(resourcePluralName, namespace, resourceClient, resyncPeriod, collector, opts.NumWorkers)
 	informers = append(informers, informer)
 }
 
