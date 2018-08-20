@@ -447,7 +447,7 @@ func main() {
 	}
 	resyncPeriod := 5
 	opts := sdk.WatchOpts {
-		numWorkers: 1,
+		sdk.numWorkers: 1,
 	}
 	logrus.Infof("Watching %s, %s, %s, %d", resource, kind, namespace, resyncPeriod)
 	sdk.Watch(resource, kind, namespace, resyncPeriod, opts)
