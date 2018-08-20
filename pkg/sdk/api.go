@@ -29,7 +29,8 @@ var (
 	collector *metrics.Collector
 )
 
-type watchOpts struct {
+// WatchOpts allows for future extensions to Watch without damaging interface compatibility in the future
+type WatchOpts struct {
 	numWorkers int
 }
 
@@ -44,7 +45,7 @@ type watchOpts struct {
 // Consult the API reference for the Group, Version and Kind of a resource: https://kubernetes.io/docs/reference/
 // namespace is the Namespace to watch for the resource
 // TODO: support opts for specifying label selector
-func Watch(apiVersion, kind, namespace string, resyncPeriod int, opts watchOpts) {
+func Watch(apiVersion, kind, namespace string, resyncPeriod int, opts WatchOpts) {
 	resourceClient, resourcePluralName, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
 	// TODO: Better error handling, e.g retry
 	if err != nil {
