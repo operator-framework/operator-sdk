@@ -20,6 +20,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"math"
 	"math/big"
@@ -52,6 +53,24 @@ func encodeCertificatePEM(cert *x509.Certificate) []byte {
 		Type:  "CERTIFICATE",
 		Bytes: cert.Raw,
 	})
+}
+
+// parsePEMEncodedCert parses a certificate from the given pemdata
+func parsePEMEncodedCert(pemdata []byte) (*x509.Certificate, error) {
+	decoded, _ := pem.Decode(pemdata)
+	if decoded == nil {
+		return nil, errors.New("no PEM data found")
+	}
+	return x509.ParseCertificate(decoded.Bytes)
+}
+
+// parsePEMEncodedPrivateKey parses a private key from given pemdata
+func parsePEMEncodedPrivateKey(pemdata []byte) (*rsa.PrivateKey, error) {
+	decoded, _ := pem.Decode(pemdata)
+	if decoded == nil {
+		return nil, errors.New("no PEM data found")
+	}
+	return x509.ParsePKCS1PrivateKey(decoded.Bytes)
 }
 
 // newSelfSignedCACertificate returns a self-signed CA certificate based on given configuration and private key.
