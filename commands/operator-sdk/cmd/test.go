@@ -15,6 +15,8 @@
 package cmd
 
 import (
+	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 
@@ -24,12 +26,11 @@ import (
 )
 
 var (
-	testLocation     string
-	kubeconfig       string
-	crdManifestPath  string
-	opManifestPath   string
-	rbacManifestPath string
-	goTestFlags      string
+	testLocation           string
+	kubeconfig             string
+	globalManifestPath     string
+	namespacedManifestPath string
+	goTestFlags            string
 )
 
 func NewTestCmd() *cobra.Command {
@@ -46,20 +47,36 @@ func NewTestCmd() *cobra.Command {
 	testCmd.Flags().StringVarP(&testLocation, "test-location", "t", "", "Location of test files (e.g. ./test/e2e/)")
 	testCmd.MarkFlagRequired("test-location")
 	testCmd.Flags().StringVarP(&kubeconfig, "kubeconfig", "k", defaultKubeConfig, "Kubeconfig path")
-	testCmd.Flags().StringVarP(&crdManifestPath, "crd", "c", "deploy/crd.yaml", "Path to CRD manifest")
-	testCmd.Flags().StringVarP(&opManifestPath, "operator", "o", "deploy/operator.yaml", "Path to operator manifest")
-	testCmd.Flags().StringVarP(&rbacManifestPath, "rbac", "r", "deploy/rbac.yaml", "Path to RBAC manifest")
-	testCmd.Flags().StringVarP(&goTestFlags, "go-test-flags", "g", "", "Additional flags to pass to go test")
+	testCmd.Flags().StringVarP(&globalManifestPath, "global-init", "g", "deploy/crd.yaml", "Path to manifest for Global resources (e.g. CRD manifest)")
+	testCmd.Flags().StringVarP(&namespacedManifestPath, "namespaced-init", "n", "", "Path to manifest for per-test, namespaced resources (e.g. RBAC and Operator manifest)")
+	testCmd.Flags().StringVarP(&goTestFlags, "go-test-flags", "f", "", "Additional flags to pass to go test")
 
 	return testCmd
 }
 
 func testFunc(cmd *cobra.Command, args []string) {
+	// if no namespaced manifest path is given, combine deploy/rbac.yaml and deploy/operator.yaml
+	if namespacedManifestPath == "" {
+		namespacedManifestPath = "deploy/test-init-tmp.yaml"
+		rbac, err := ioutil.ReadFile("deploy/rbac.yaml")
+		if err != nil {
+			log.Fatalf("could not find rbac manifest: %v", err)
+		}
+		operator, err := ioutil.ReadFile("deploy/operator.yaml")
+		if err != nil {
+			log.Fatalf("could not find operator manifest: %v", err)
+		}
+		combined := append(rbac, []byte("\n---\n")...)
+		combined = append(combined, operator...)
+		err = ioutil.WriteFile(namespacedManifestPath, combined, os.FileMode(int(0664)))
+		if err != nil {
+			log.Fatalf("could not create temporary namespaced manifest file: %v", err)
+		}
+	}
 	testArgs := []string{"test", testLocation + "/..."}
 	testArgs = append(testArgs, "-"+test.KubeConfigFlag, kubeconfig)
-	testArgs = append(testArgs, "-"+test.CrdManPathFlag, crdManifestPath)
-	testArgs = append(testArgs, "-"+test.OpManPathFlag, opManifestPath)
-	testArgs = append(testArgs, "-"+test.RbacManPathFlag, rbacManifestPath)
+	testArgs = append(testArgs, "-"+test.NamespacedManPathFlag, namespacedManifestPath)
+	testArgs = append(testArgs, "-"+test.GlobalManPathFlag, globalManifestPath)
 	testArgs = append(testArgs, "-"+test.ProjRootFlag, mustGetwd())
 	testArgs = append(testArgs, strings.Split(goTestFlags, " ")...)
 	execCmd(os.Stdout, "go", testArgs...)

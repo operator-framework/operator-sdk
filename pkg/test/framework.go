@@ -43,19 +43,17 @@ var (
 )
 
 type Framework struct {
-	KubeConfig       *rest.Config
-	KubeClient       kubernetes.Interface
-	ExtensionsClient *extensions.Clientset
-	Scheme           *runtime.Scheme
-	RestMapper       *discovery.DeferredDiscoveryRESTMapper
-	DynamicClient    dynclient.Client
-	DynamicDecoder   runtime.Decoder
-	CrdManPath       *string
-	OpManPath        *string
-	RbacManPath      *string
+	KubeConfig        *rest.Config
+	KubeClient        kubernetes.Interface
+	ExtensionsClient  *extensions.Clientset
+	Scheme            *runtime.Scheme
+	RestMapper        *discovery.DeferredDiscoveryRESTMapper
+	DynamicClient     dynclient.Client
+	DynamicDecoder    runtime.Decoder
+	NamespacedManPath *string
 }
 
-func setup(kubeconfigPath, crdManPath, opManPath, rbacManPath *string) error {
+func setup(kubeconfigPath, namespacedManPath *string) error {
 	kubeconfig, err := clientcmd.BuildConfigFromFlags("", *kubeconfigPath)
 	if err != nil {
 		return fmt.Errorf("failed to build the kubeconfig: %v", err)
@@ -77,15 +75,13 @@ func setup(kubeconfigPath, crdManPath, opManPath, rbacManPath *string) error {
 	}
 	dynDec := serializer.NewCodecFactory(scheme).UniversalDeserializer()
 	Global = &Framework{
-		KubeConfig:       kubeconfig,
-		KubeClient:       kubeclient,
-		ExtensionsClient: extensionsClient,
-		Scheme:           scheme,
-		DynamicClient:    dynClient,
-		DynamicDecoder:   dynDec,
-		CrdManPath:       crdManPath,
-		OpManPath:        opManPath,
-		RbacManPath:      rbacManPath,
+		KubeConfig:        kubeconfig,
+		KubeClient:        kubeclient,
+		ExtensionsClient:  extensionsClient,
+		Scheme:            scheme,
+		DynamicClient:     dynClient,
+		DynamicDecoder:    dynDec,
+		NamespacedManPath: namespacedManPath,
 	}
 	return nil
 }

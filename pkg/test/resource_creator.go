@@ -82,19 +82,10 @@ func (ctx *TestCtx) CreateFromYAML(yamlFile []byte) error {
 }
 
 func (ctx *TestCtx) InitializeClusterResources() error {
-	// create rbac
-	rbacYAML, err := ioutil.ReadFile(*Global.RbacManPath)
+	// create namespaced resources
+	namespacedYAML, err := ioutil.ReadFile(*Global.NamespacedManPath)
 	if err != nil {
-		return fmt.Errorf("failed to read rbac manifest: %v", err)
+		return fmt.Errorf("failed to read namespaced manifest: %v", err)
 	}
-	err = ctx.CreateFromYAML(rbacYAML)
-	if err != nil {
-		return err
-	}
-	// create operator deployment
-	operatorYAML, err := ioutil.ReadFile(*Global.OpManPath)
-	if err != nil {
-		return fmt.Errorf("failed to read operator manifest: %v", err)
-	}
-	return ctx.CreateFromYAML(operatorYAML)
+	return ctx.CreateFromYAML(namespacedYAML)
 }
