@@ -15,7 +15,18 @@
 package tlsutil
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
+	"errors"
+	"fmt"
+	"strings"
+
+	"github.com/operator-framework/operator-sdk/pkg/sdk"
+
 	"k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -110,4 +121,208 @@ type CertGenerator interface {
 	//  data:
 	//   ca.key: ..
 	GenerateCert(cr runtime.Object, service *v1.Service, config *CertConfig) (*v1.Secret, *v1.ConfigMap, *v1.Secret, error)
+}
+
+const (
+	// TLSPrivateCAKeyKey is the key for the private CA key field.
+	TLSPrivateCAKeyKey = "ca.key"
+	// TLSCertKey is the key for tls CA certificates.
+	TLSCACertKey = "ca.crt"
+)
+
+type SDKCertGenerator struct {
+}
+
+type keyAndCert struct {
+	key  *rsa.PrivateKey
+	cert *x509.Certificate
+}
+
+func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service, config *CertConfig) (*v1.Secret, *v1.ConfigMap, *v1.Secret, error) {
+	if err := verifyConfig(config); err != nil {
+		return nil, nil, nil, err
+	}
+
+	k, n, ns, err := toKindNameNamespace(cr)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	appSecret, err := getAppSecretInCluster(toAppSecretName(k, n, config.CertName), ns)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	caSecret, caConfigMap, err := getCASecretAndConfigMapInCluster(toCASecretAndConfigMapName(k, n), ns)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	hasAppSecret := appSecret != nil
+	hasCASecretAndConfigMap := caSecret != nil && caConfigMap != nil
+	// TODO: handle passed in CA
+	if hasAppSecret && hasCASecretAndConfigMap {
+		return appSecret, caConfigMap, caSecret, nil
+	} else if hasAppSecret && !hasCASecretAndConfigMap {
+		// TODO
+	} else if !hasAppSecret && hasCASecretAndConfigMap {
+		// TODO
+	} else {
+		// TODO
+	}
+	return nil, nil, nil, nil
+}
+
+func verifyConfig(config *CertConfig) error {
+	if config == nil {
+		return errors.New("nil CertConfig not allowed")
+	}
+	if config.CertName == "" {
+		return errors.New("empty CertConfig.CertName not allowed")
+	}
+	return nil
+}
+
+func toAppSecretName(kind, name, certName string) string {
+	return strings.ToLower(kind) + "-" + name + "-" + certName
+}
+
+func toCASecretAndConfigMapName(kind, name string) string {
+	return strings.ToLower(kind) + "-" + name + "-ca"
+}
+
+func getAppSecretInCluster(name, namespace string) (*v1.Secret, error) {
+	se := &v1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+	err := sdk.Get(se)
+	if apiErrors.IsNotFound(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return se, nil
+}
+
+// getCASecretAndConfigMapInCluster gets CA secret and configmap of the given name and namespace.
+// it only returns both if they are found and nil if both are not found. In the case if only one of them is found, then we error out because we expect either both CA secret and configmap exit or not.
+func getCASecretAndConfigMapInCluster(name, namespace string) (*v1.Secret, *v1.ConfigMap, error) {
+	cm := &v1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+	hasConfigMap := true
+	err := sdk.Get(cm)
+	if apiErrors.IsNotFound(err) {
+		hasConfigMap = false
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+
+	se := &v1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+	hasSecret := true
+	err = sdk.Get(se)
+	if apiErrors.IsNotFound(err) {
+		hasSecret = false
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if hasConfigMap != hasSecret {
+		// TODO: this case can happen if creating CA configmap succeeds and creating CA secret failed. We need to handle this case properly.
+		return nil, nil, fmt.Errorf("expect either both ca configmap and secret both exist or not exist, but got hasCAConfigmap==%v and hasCASecret==%v", hasConfigMap, hasSecret)
+	}
+	if hasConfigMap == false {
+		return nil, nil, nil
+	}
+	return se, cm, nil
+}
+
+func toKindNameNamespace(cr runtime.Object) (string, string, string, error) {
+	a := meta.NewAccessor()
+	k, err := a.Kind(cr)
+	if err != nil {
+		return "", "", "", err
+	}
+	n, err := a.Name(cr)
+	if err != nil {
+		return "", "", "", err
+	}
+	ns, err := a.Namespace(cr)
+	if err != nil {
+		return "", "", "", err
+	}
+	return k, n, ns, nil
+}
+
+// toTLSSecret returns a client/server "kubernetes.io/tls" secret.
+// TODO: add owner ref.
+func toTLSSecret(key *rsa.PrivateKey, cert *x509.Certificate, name, namespace string) *v1.Secret {
+	return &v1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Data: map[string][]byte{
+			v1.TLSPrivateKeyKey: encodePrivateKeyPEM(key),
+			v1.TLSCertKey:       encodeCertificatePEM(cert),
+		},
+		Type: v1.SecretTypeTLS,
+	}
+}
+
+// TODO: add owner ref.
+func toCASecretAndConfigmap(key *rsa.PrivateKey, cert *x509.Certificate, name, namespace string) (*v1.ConfigMap, *v1.Secret) {
+	return &v1.ConfigMap{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "ConfigMap",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: namespace,
+			},
+			Data: map[string]string{
+				TLSCACertKey: string(encodeCertificatePEM(cert)),
+			},
+		}, &v1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Secret",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: namespace,
+			},
+			Data: map[string][]byte{
+				TLSPrivateCAKeyKey: encodePrivateKeyPEM(key),
+			},
+		}
 }
