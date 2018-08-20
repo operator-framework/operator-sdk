@@ -160,9 +160,11 @@ func main() {
 		logrus.Fatalf("failed to get watch namespace: %v", err)
 	}
 	resyncPeriod := 5
-	numWorkers := 1
+	opts = sdk.watchOpts {
+    1
+  }
 	logrus.Infof("Watching %s, %s, %s, %d", resource, kind, namespace, resyncPeriod)
-	sdk.Watch(resource, kind, namespace, resyncPeriod, numWorkers)
+	sdk.Watch(resource, kind, namespace, resyncPeriod, opts)
 	sdk.Handle(stub.NewHandler())
 	sdk.Run(context.TODO())
 }
