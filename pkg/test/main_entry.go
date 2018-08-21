@@ -23,26 +23,24 @@ import (
 )
 
 const (
-	ProjRootFlag    = "root"
-	KubeConfigFlag  = "kubeconfig"
-	CrdManPathFlag  = "crd"
-	OpManPathFlag   = "op"
-	RbacManPathFlag = "rbac"
+	ProjRootFlag          = "root"
+	KubeConfigFlag        = "kubeconfig"
+	NamespacedManPathFlag = "namespacedMan"
+	GlobalManPathFlag     = "globalMan"
 )
 
 func MainEntry(m *testing.M) {
-	projRoot := flag.String("root", "", "path to project root")
-	kubeconfigPath := flag.String("kubeconfig", "", "path to kubeconfig")
-	crdManPath := flag.String("crd", "", "path to crd manifest")
-	opManPath := flag.String("op", "", "path to operator manifest")
-	rbacManPath := flag.String("rbac", "", "path to rbac manifest")
+	projRoot := flag.String(ProjRootFlag, "", "path to project root")
+	kubeconfigPath := flag.String(KubeConfigFlag, "", "path to kubeconfig")
+	globalManPath := flag.String(GlobalManPathFlag, "", "path to operator manifest")
+	namespacedManPath := flag.String(NamespacedManPathFlag, "", "path to rbac manifest")
 	flag.Parse()
 	// go test always runs from the test directory; change to project root
 	err := os.Chdir(*projRoot)
 	if err != nil {
 		log.Fatalf("failed to change directory to project root: %v", err)
 	}
-	if err := setup(kubeconfigPath, crdManPath, opManPath, rbacManPath); err != nil {
+	if err := setup(kubeconfigPath, namespacedManPath); err != nil {
 		log.Fatalf("failed to set up framework: %v", err)
 	}
 	// setup context to use when setting up crd
@@ -55,12 +53,12 @@ func MainEntry(m *testing.M) {
 		os.Exit(exitCode)
 	}()
 	// create crd
-	crdYAML, err := ioutil.ReadFile(*Global.CrdManPath)
+	globalYAML, err := ioutil.ReadFile(*globalManPath)
 	if err != nil {
-		log.Fatalf("failed to read crd file: %v", err)
+		log.Fatalf("failed to read global resource manifest: %v", err)
 	}
-	err = ctx.CreateFromYAML(crdYAML)
+	err = ctx.createFromYAML(globalYAML, true)
 	if err != nil {
-		log.Fatalf("failed to create crd resource: %v", err)
+		log.Fatalf("failed to create resource(s) in global resource manifest: %v", err)
 	}
 }

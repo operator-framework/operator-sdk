@@ -195,7 +195,7 @@ functions will automatically be run since they were deferred when the TestCtx wa
 ## Running the Tests
 
 To make running the tests simpler, the `operator-sdk` CLI tool has a `test` subcommand that configures some
-default test settings, such as locations of the manifest files for the CRD, RBAC, and Operator, and allows the user to configure these runtime options. To use it, run the
+default test settings, such as locations of the manifest files for your global resource manifest file (by default `deploy/crd.yaml`) and your namespaced manifest file (by defualt `deploy/rbac.yaml` concatenated with `deploy/operator.yaml`), and allows the user to configure these runtime options. To use it, run the
 `operator-sdk test` command in your project root and pass the location of the tests using the
 `--test-location` flag. You can use `--help` to view the other configuration options and use
 `--go-test-flags` to pass in arguments to `go test`. Here is an example command:
@@ -211,7 +211,12 @@ in [MainEntry][main-entry-link] are declared, the tests will run correctly. Runn
 will result in undefined behavior. This is an example `go test` equivalent to the `operator-sdk test` example above:
 
 ```shell
-$ go test ./test/e2e/... -root=$(pwd) -kubeconfig=$HOME/.kube/config -crd deploy/crd.yaml -op deploy/operator.yaml -rbac deploy/rbac.yaml -v -parallel=2
+# Combine rbac and operator manifest into namespaced manifest
+$ cp deploy/rbac.yaml deploy/namespace-init.yaml
+$ echo -e "\n---\n" >> deploy/namespace-init.yaml
+$ cat deploy/operator.yaml >> deploy/namespace-init.yaml
+# Run tests
+$ go test ./test/e2e/... -root=$(pwd) -kubeconfig=$HOME/.kube/config -globalMan deploy/crd.yaml -namespacedMan deploy/namespace-init.yaml -v -parallel=2
 ```
 
 ## Manual Cleanup

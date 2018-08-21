@@ -162,10 +162,9 @@ Create app-operator/.gitignore
 
 * `-t, --test-location` **(required)** string - location of e2e test files
 * `-k, --kubeconfig` string - location of kubeconfig for kubernetes cluster
-* `-c, --crd` string - location of CRD manifest yaml file
-* `-r, --rbac` string - location of RBAC manifest yaml file
-* `-o, --operator` string - location of Operator manifest yaml file
-* `-g, --go-test-flags` string - extra arguments to pass to `go test` (e.g. -g "-v -parallel=2")
+* `-g, --global-init` string - location of global resource manifest yaml file
+* `-n, --namespaced-init` string - location of namespaced resource manifest yaml file
+* `-f, --go-test-flags` string - extra arguments to pass to `go test` (e.g. -f "-v -parallel=2")
 * `-h, --help` - help for test
 
 ### Use
