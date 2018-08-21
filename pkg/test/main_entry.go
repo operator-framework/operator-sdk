@@ -57,7 +57,7 @@ func MainEntry(m *testing.M) {
 	if err != nil {
 		log.Fatalf("failed to read global resource manifest: %v", err)
 	}
-	err = ctx.CreateFromYAML(globalYAML)
+	err = ctx.createFromYAML(globalYAML, true)
 	if err != nil {
 		log.Fatalf("failed to create resource(s) in global resource manifest: %v", err)
 	}
