@@ -57,7 +57,8 @@ func NewTestCmd() *cobra.Command {
 func testFunc(cmd *cobra.Command, args []string) {
 	// if no namespaced manifest path is given, combine deploy/rbac.yaml and deploy/operator.yaml
 	if namespacedManifestPath == "" {
-		namespacedManifestPath = "deploy/test-init-tmp.yaml"
+		os.Mkdir("deploy/test", os.FileMode(int(0775)))
+		namespacedManifestPath = "deploy/test/namespace-manifests.yaml"
 		rbac, err := ioutil.ReadFile("deploy/rbac.yaml")
 		if err != nil {
 			log.Fatalf("could not find rbac manifest: %v", err)
@@ -72,6 +73,12 @@ func testFunc(cmd *cobra.Command, args []string) {
 		if err != nil {
 			log.Fatalf("could not create temporary namespaced manifest file: %v", err)
 		}
+		defer func() {
+			err := os.Remove(namespacedManifestPath)
+			if err != nil {
+				log.Fatalf("could not delete temporary namespace manifest file")
+			}
+		}()
 	}
 	testArgs := []string{"test", testLocation + "/..."}
 	testArgs = append(testArgs, "-"+test.KubeConfigFlag, kubeconfig)
