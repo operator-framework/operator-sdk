@@ -41,8 +41,8 @@ func (op *WatchOp) setDefaults() {
 // WatchOption configures WatchOp.
 type WatchOption func(*WatchOp)
 
-// WithWatchOptions sets the number of workers for the Watch() operation.
-func WithWatchOptions(numWorkers int) WatchOption {
+// WithNumWorkers sets the number of workers for the Watch() operation.
+func WithNumWorkers(numWorkers int) WatchOption {
 	return func(op *WatchOp) {
 		op.NumWorkers = numWorkers
 	}
