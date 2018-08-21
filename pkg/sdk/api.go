@@ -29,11 +29,6 @@ var (
 	collector *metrics.Collector
 )
 
-// WatchOpts allows for future extensions to Watch without damaging interface compatibility in the future
-type WatchOpts struct {
-	NumWorkers int
-}
-
 // Watch watches for changes on the given resource.
 // apiVersion for a resource is of the format "Group/Version" except for the "Core" group whose APIVersion is just "v1". For e.g:
 //   - Deployments have Group "apps" and Version "v1beta2" giving the APIVersion "apps/v1beta2"
@@ -45,7 +40,7 @@ type WatchOpts struct {
 // Consult the API reference for the Group, Version and Kind of a resource: https://kubernetes.io/docs/reference/
 // namespace is the Namespace to watch for the resource
 // TODO: support opts for specifying label selector
-func Watch(apiVersion, kind, namespace string, resyncPeriod int, opts WatchOpts) {
+func Watch(apiVersion, kind, namespace string, resyncPeriod int, opts ...WatchOption) {
 	resourceClient, resourcePluralName, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
 	// TODO: Better error handling, e.g retry
 	if err != nil {
@@ -56,7 +51,9 @@ func Watch(apiVersion, kind, namespace string, resyncPeriod int, opts WatchOpts)
 		collector = metrics.New()
 		metrics.RegisterCollector(collector)
 	}
-	informer := NewInformer(resourcePluralName, namespace, resourceClient, resyncPeriod, collector, opts.NumWorkers)
+	o := NewWatchOp()
+	o.applyOpts(opts)
+	informer := NewInformer(resourcePluralName, namespace, resourceClient, resyncPeriod, collector, o.NumWorkers)
 	informers = append(informers, informer)
 }
 
