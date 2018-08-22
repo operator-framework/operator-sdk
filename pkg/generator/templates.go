@@ -281,6 +281,16 @@ required = [
   name = "sigs.k8s.io/controller-runtime"
   revision = "60bb251ad86f9b313653618aad0c2c53f41a6625"
 
+[prune]
+  go-tests = true
+  non-go = true
+  unused-packages = true
+
+  [[prune.project]]
+    name = "k8s.io/code-generator"
+    non-go = false
+    unused-packages = false
+
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"
   # The version rule is used for a specific release and the master branch for in between releases.
