@@ -67,7 +67,7 @@ func main() {
 ```Go
 func main() {
   // Allow for flexible number of workers (N) >= 1
-  sdk.Watch("cache.example.com/v1alpha1", "Memcached", "default", 5, N)
+  sdk.Watch("cache.example.com/v1alpha1", "Memcached", "default", 5, sdk.WithNumWorkers(N))
   sdk.Handle(stub.NewHandler())
   sdk.Run(context.TODO())
 }
