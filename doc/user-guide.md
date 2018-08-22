@@ -58,19 +58,15 @@ By default, the memcached-operator watches `Memcached` resource events as shown 
 
 ```Go
 func main() {
-  // Default number of worker to 1
   sdk.Watch("cache.example.com/v1alpha1", "Memcached", "default", 5)
   sdk.Handle(stub.NewHandler())
   sdk.Run(context.TODO())
 }
 ```
+
+**Note:** The number of concurrent informer workers can be configured with an additional Watch option. The default value is 1 if an argument is not given.
 ```Go
-func main() {
-  // Allow for flexible number of workers (N) >= 1
-  sdk.Watch("cache.example.com/v1alpha1", "Memcached", "default", 5, sdk.WithNumWorkers(N))
-  sdk.Handle(stub.NewHandler())
-  sdk.Run(context.TODO())
-}
+sdk.Watch("cache.example.com/v1alpha1", "Memcached", "default", 5, sdk.WithNumWorkers(n))
 ```
 
 ### Define the Memcached spec and status
