@@ -65,6 +65,11 @@ func main() {
 }
 ```
 
+**Note:** The number of concurrent informer workers can be configured with an additional Watch option. The default value is 1 if an argument is not given.
+```Go
+sdk.Watch("cache.example.com/v1alpha1", "Memcached", "default", 5, sdk.WithNumWorkers(n))
+```
+
 ### Define the Memcached spec and status
 
 Modify the spec and status of the `Memcached` CR at `pkg/apis/cache/v1alpha1/types.go`:

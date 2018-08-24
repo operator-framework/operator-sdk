@@ -43,15 +43,17 @@ type informer struct {
 	context             context.Context
 	deletedObjects      map[string]interface{}
 	collector           *metrics.Collector
+	numWorkers          int
 }
 
-func NewInformer(resourcePluralName, namespace string, resourceClient dynamic.ResourceInterface, resyncPeriod int, c *metrics.Collector) Informer {
+func NewInformer(resourcePluralName, namespace string, resourceClient dynamic.ResourceInterface, resyncPeriod int, c *metrics.Collector, n int) Informer {
 	i := &informer{
 		resourcePluralName: resourcePluralName,
 		queue:              workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), resourcePluralName),
 		namespace:          namespace,
 		deletedObjects:     map[string]interface{}{},
 		collector:          c,
+		numWorkers:         n,
 	}
 
 	resyncDuration := time.Duration(resyncPeriod) * time.Second
@@ -87,8 +89,7 @@ func (i *informer) Run(ctx context.Context) {
 		panic("Timed out waiting for caches to sync")
 	}
 
-	const numWorkers = 1
-	for n := 0; n < numWorkers; n++ {
+	for n := 0; n < i.numWorkers; n++ {
 		go wait.Until(i.runWorker, time.Second, ctx.Done())
 	}
 	<-ctx.Done()
