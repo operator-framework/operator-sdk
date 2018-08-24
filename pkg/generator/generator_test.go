@@ -417,8 +417,8 @@ const mainExp = `package main
 
 import (
 	"context"
-	"time"
 	"runtime"
+	"time"
 
 	stub "github.com/example-inc/app-operator/pkg/stub"
 	sdk "github.com/operator-framework/operator-sdk/pkg/sdk"
