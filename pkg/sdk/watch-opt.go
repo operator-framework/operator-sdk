@@ -15,35 +15,35 @@
 package sdk
 
 // WatchOp wraps all the options for Watch().
-type WatchOp struct {
-	NumWorkers int
+type watchOp struct {
+	numWorkers int
 }
 
 // NewWatchOp create a new deafult WatchOp
-func NewWatchOp() *WatchOp {
-	op := &WatchOp{}
+func newWatchOp() *watchOp {
+	op := &watchOp{}
 	op.setDefaults()
 	return op
 }
 
-func (op *WatchOp) applyOpts(opts []WatchOption) {
+func (op *watchOp) applyOpts(opts []watchOption) {
 	for _, opt := range opts {
 		opt(op)
 	}
 }
 
-func (op *WatchOp) setDefaults() {
-	if op.NumWorkers == 0 {
-		op.NumWorkers = 1
+func (op *watchOp) setDefaults() {
+	if op.numWorkers == 0 {
+		op.numWorkers = 1
 	}
 }
 
 // WatchOption configures WatchOp.
-type WatchOption func(*WatchOp)
+type watchOption func(*watchOp)
 
 // WithNumWorkers sets the number of workers for the Watch() operation.
-func WithNumWorkers(numWorkers int) WatchOption {
-	return func(op *WatchOp) {
-		op.NumWorkers = numWorkers
+func WithNumWorkers(numWorkers int) watchOption {
+	return func(op *watchOp) {
+		op.numWorkers = numWorkers
 	}
 }
