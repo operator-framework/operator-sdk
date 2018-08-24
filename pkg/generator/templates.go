@@ -131,7 +131,8 @@ const mainTmpl = `package main
 
 import (
 	"context"
-	"runtime"
+  "runtime"
+  "time"
 
 	stub "{{.StubImport}}"
 	sdk "{{.OperatorSDKImport}}"
@@ -159,7 +160,7 @@ func main() {
 	if err != nil {
 		logrus.Fatalf("failed to get watch namespace: %v", err)
 	}
-	resyncPeriod := 5
+	resyncPeriod := time.Duration(5)
 	logrus.Infof("Watching %s, %s, %s, %d", resource, kind, namespace, resyncPeriod)
 	sdk.Watch(resource, kind, namespace, resyncPeriod)
 	sdk.Handle(stub.NewHandler())
