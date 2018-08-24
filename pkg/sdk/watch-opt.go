@@ -16,7 +16,8 @@ package sdk
 
 // WatchOp wraps all the options for Watch().
 type watchOp struct {
-	numWorkers int
+	numWorkers    int
+	labelSelector string
 }
 
 // NewWatchOp create a new deafult WatchOp
@@ -45,5 +46,11 @@ type watchOption func(*watchOp)
 func WithNumWorkers(numWorkers int) watchOption {
 	return func(op *watchOp) {
 		op.numWorkers = numWorkers
+	}
+}
+
+func WithLabelSelector(labelSelector string) watchOption {
+	return func(op *watchOp) {
+		op.labelSelector = labelSelector
 	}
 }
