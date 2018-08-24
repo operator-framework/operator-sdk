@@ -131,8 +131,8 @@ const mainTmpl = `package main
 
 import (
 	"context"
-  "runtime"
-  "time"
+	"runtime"
+	"time"
 
 	stub "{{.StubImport}}"
 	sdk "{{.OperatorSDKImport}}"
