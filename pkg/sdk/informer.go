@@ -56,9 +56,8 @@ func NewInformer(resourcePluralName, namespace string, resourceClient dynamic.Re
 		numWorkers:         n,
 	}
 
-	resyncDuration := resyncPeriod * time.Second
 	i.sharedIndexInformer = cache.NewSharedIndexInformer(
-		newListWatcherFromResourceClient(resourceClient), &unstructured.Unstructured{}, resyncDuration, cache.Indexers{},
+		newListWatcherFromResourceClient(resourceClient), &unstructured.Unstructured{}, resyncPeriod, cache.Indexers{},
 	)
 	i.sharedIndexInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    i.handleAddResourceEvent,
