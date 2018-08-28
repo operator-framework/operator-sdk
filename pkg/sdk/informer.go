@@ -46,7 +46,7 @@ type informer struct {
 	numWorkers          int
 }
 
-func NewInformer(resourcePluralName, namespace string, resourceClient dynamic.ResourceInterface, resyncPeriod int, c *metrics.Collector, n int, labelSelector string) Informer {
+func NewInformer(resourcePluralName, namespace string, resourceClient dynamic.ResourceInterface, resyncPeriod time.Duration, c *metrics.Collector, n int, labelSelector string) Informer {
 	i := &informer{
 		resourcePluralName: resourcePluralName,
 		queue:              workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), resourcePluralName),
@@ -56,9 +56,8 @@ func NewInformer(resourcePluralName, namespace string, resourceClient dynamic.Re
 		numWorkers:         n,
 	}
 
-	resyncDuration := time.Duration(resyncPeriod) * time.Second
 	i.sharedIndexInformer = cache.NewSharedIndexInformer(
-		newListWatcherFromResourceClient(resourceClient, labelSelector), &unstructured.Unstructured{}, resyncDuration, cache.Indexers{},
+		newListWatcherFromResourceClient(resourceClient, labelSelector), &unstructured.Unstructured{}, resyncPeriod, cache.Indexers{},
 	)
 	i.sharedIndexInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    i.handleAddResourceEvent,
