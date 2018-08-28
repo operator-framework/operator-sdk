@@ -54,7 +54,7 @@ func Watch(apiVersion, kind, namespace string, resyncPeriod time.Duration, opts 
 	}
 	o := newWatchOp()
 	o.applyOpts(opts)
-	informer := NewInformer(resourcePluralName, namespace, resourceClient, resyncPeriod, collector, o.numWorkers)
+	informer := NewInformer(resourcePluralName, namespace, resourceClient, resyncPeriod, collector, o.numWorkers, o.labelSelector)
 	informers = append(informers, informer)
 }
 
