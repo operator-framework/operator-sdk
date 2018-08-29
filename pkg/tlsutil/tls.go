@@ -21,13 +21,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/pkg/sdk"
-
 	"k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
 )
 
 // CertType defines the type of the cert.
@@ -130,7 +129,13 @@ const (
 	TLSCACertKey = "ca.crt"
 )
 
+// NewSDKCertGenerator constructs a new CertGenerator given the kubeClient.
+func NewSDKCertGenerator(kubeClient kubernetes.Interface) CertGenerator {
+	return &SDKCertGenerator{KubeClient: kubeClient}
+}
+
 type SDKCertGenerator struct {
+	KubeClient kubernetes.Interface
 }
 
 type keyAndCert struct {
@@ -147,11 +152,11 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	appSecret, err := getAppSecretInCluster(toAppSecretName(k, n, config.CertName), ns)
+	appSecret, err := getAppSecretInCluster(scg.KubeClient, ToAppSecretName(k, n, config.CertName), ns)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	caSecret, caConfigMap, err := getCASecretAndConfigMapInCluster(toCASecretAndConfigMapName(k, n), ns)
+	caSecret, caConfigMap, err := getCASecretAndConfigMapInCluster(scg.KubeClient, ToCASecretAndConfigMapName(k, n), ns)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -181,26 +186,16 @@ func verifyConfig(config *CertConfig) error {
 	return nil
 }
 
-func toAppSecretName(kind, name, certName string) string {
+func ToAppSecretName(kind, name, certName string) string {
 	return strings.ToLower(kind) + "-" + name + "-" + certName
 }
 
-func toCASecretAndConfigMapName(kind, name string) string {
+func ToCASecretAndConfigMapName(kind, name string) string {
 	return strings.ToLower(kind) + "-" + name + "-ca"
 }
 
-func getAppSecretInCluster(name, namespace string) (*v1.Secret, error) {
-	se := &v1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-	}
-	err := sdk.Get(se)
+func getAppSecretInCluster(kubeClient kubernetes.Interface, name, namespace string) (*v1.Secret, error) {
+	se, err := kubeClient.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
 	if apiErrors.IsNotFound(err) {
 		return nil, nil
 	}
@@ -212,19 +207,9 @@ func getAppSecretInCluster(name, namespace string) (*v1.Secret, error) {
 
 // getCASecretAndConfigMapInCluster gets CA secret and configmap of the given name and namespace.
 // it only returns both if they are found and nil if both are not found. In the case if only one of them is found, then we error out because we expect either both CA secret and configmap exit or not.
-func getCASecretAndConfigMapInCluster(name, namespace string) (*v1.Secret, *v1.ConfigMap, error) {
-	cm := &v1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ConfigMap",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-	}
+func getCASecretAndConfigMapInCluster(kubeClient kubernetes.Interface, name, namespace string) (*v1.Secret, *v1.ConfigMap, error) {
 	hasConfigMap := true
-	err := sdk.Get(cm)
+	cm, err := kubeClient.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
 	if apiErrors.IsNotFound(err) {
 		hasConfigMap = false
 	}
@@ -232,18 +217,8 @@ func getCASecretAndConfigMapInCluster(name, namespace string) (*v1.Secret, *v1.C
 		return nil, nil, err
 	}
 
-	se := &v1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-	}
 	hasSecret := true
-	err = sdk.Get(se)
+	se, err := kubeClient.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
 	if apiErrors.IsNotFound(err) {
 		hasSecret = false
 	}
