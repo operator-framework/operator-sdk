@@ -131,6 +131,9 @@ func (ctx *TestCtx) CreateFromYAML(yamlFile []byte) error {
 
 		obj, _, err := Global.DynamicDecoder.Decode(yamlSpec, nil, nil)
 		if err != nil {
+			// DynamicClient/DynamicDecoder can only handle standard and extensions kubernetes resources.
+			// If a resource is not recognized by the decoder, assume it's a custom resource and fall back
+			// to createCRFromYAML.
 			return ctx.createCRFromYAML(yamlFile)
 		}
 
