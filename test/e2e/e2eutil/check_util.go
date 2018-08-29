@@ -20,13 +20,14 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 )
 
 var retryInterval = time.Second * 5
 
 func DeploymentReplicaCheck(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas, retries int) error {
-	err := Retry(retryInterval, retries, func() (done bool, err error) {
+	err := wait.Poll(retryInterval, time.Duration(retries)*retryInterval, func() (done bool, err error) {
 		deployment, err := kubeclient.AppsV1().Deployments(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
