@@ -16,7 +16,6 @@ package e2e
 
 import (
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/pkg/tlsutil"
@@ -38,7 +37,7 @@ func TestBothAppAndCATLSAssetsExist(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// treat the Pod manifest as the input CRfor the GenerateCert().
+	// Use Pod as a dummy runtime object for the CR input of GenerateCert().
 	crKind := "Pod"
 	crName := "example-pod"
 	mCR := &v1.Pod{
@@ -52,10 +51,9 @@ func TestBothAppAndCATLSAssetsExist(t *testing.T) {
 	}
 
 	certName := "app-cert"
-	appSecretName := strings.ToLower(crKind) + "-" + crName + "-" + certName
 	appSecret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: appSecretName,
+			Name: tlsutil.ToAppSecretName(crKind, crName, certName),
 		},
 	}
 	appSecret, err = f.KubeClient.CoreV1().Secrets(namespace).Create(appSecret)
@@ -63,7 +61,7 @@ func TestBothAppAndCATLSAssetsExist(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	caConfigMapAndSecretName := strings.ToLower(crKind) + "-" + crName + "-ca"
+	caConfigMapAndSecretName := tlsutil.ToCASecretAndConfigMapName(crKind, crName)
 	caConfigMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: caConfigMapAndSecretName,
@@ -94,12 +92,12 @@ func TestBothAppAndCATLSAssetsExist(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(appSecret, actualAppSecret) {
-		t.Fatalf("expect %v, got %v", appSecret, actualAppSecret)
+		t.Fatalf("expect %+v, got %+v", appSecret, actualAppSecret)
 	}
 	if !reflect.DeepEqual(caConfigMap, actualCaConfigMap) {
-		t.Fatalf("expect %v, got %v", caConfigMap, actualCaConfigMap)
+		t.Fatalf("expect %+v, got %+v", caConfigMap, actualCaConfigMap)
 	}
 	if !reflect.DeepEqual(caSecret, actualCaSecret) {
-		t.Fatalf("expect %v, got %v", caSecret, actualCaSecret)
+		t.Fatalf("expect %+v, got %+v", caSecret, actualCaSecret)
 	}
 }

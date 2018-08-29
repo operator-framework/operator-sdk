@@ -152,11 +152,11 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	appSecret, err := getAppSecretInCluster(scg.KubeClient, toAppSecretName(k, n, config.CertName), ns)
+	appSecret, err := getAppSecretInCluster(scg.KubeClient, ToAppSecretName(k, n, config.CertName), ns)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	caSecret, caConfigMap, err := getCASecretAndConfigMapInCluster(scg.KubeClient, toCASecretAndConfigMapName(k, n), ns)
+	caSecret, caConfigMap, err := getCASecretAndConfigMapInCluster(scg.KubeClient, ToCASecretAndConfigMapName(k, n), ns)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -186,11 +186,11 @@ func verifyConfig(config *CertConfig) error {
 	return nil
 }
 
-func toAppSecretName(kind, name, certName string) string {
+func ToAppSecretName(kind, name, certName string) string {
 	return strings.ToLower(kind) + "-" + name + "-" + certName
 }
 
-func toCASecretAndConfigMapName(kind, name string) string {
+func ToCASecretAndConfigMapName(kind, name string) string {
 	return strings.ToLower(kind) + "-" + name + "-ca"
 }
 
