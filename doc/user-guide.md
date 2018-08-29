@@ -59,7 +59,7 @@ By default, the memcached-operator watches `Memcached` resource events as shown 
 
 ```Go
 func main() {
-  sdk.Watch("cache.example.com/v1alpha1", "Memcached", "default", 5)
+  sdk.Watch("cache.example.com/v1alpha1", "Memcached", "default", time.Duration(5)*time.Second)
   sdk.Handle(stub.NewHandler())
   sdk.Run(context.TODO())
 }
@@ -69,7 +69,7 @@ func main() {
 **Worker Count**
 The number of concurrent informer workers can be configured with an additional Watch option. The default value is 1 if an argument is not given.
 ```Go
-sdk.Watch("cache.example.com/v1alpha1", "Memcached", "default", 5, sdk.WithNumWorkers(n))
+sdk.Watch("cache.example.com/v1alpha1", "Memcached", "default", time.Duration(5)*time.Second, sdk.WithNumWorkers(n))
 ```
 
 **Label Selector**
@@ -78,7 +78,7 @@ Label selectors allow the watch to filter resources by kubernetes labels. It can
 https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors
 
 ```Go
-sdk.Watch("cache.example.com/v1alpha1", "Memcached", "default", 5, sdk.WithLabelSelector("app=myapp"))
+sdk.Watch("cache.example.com/v1alpha1", "Memcached", "default", time.Duration(5)*time.Second, sdk.WithLabelSelector("app=myapp"))
 ```
 
 ### Define the Memcached spec and status
