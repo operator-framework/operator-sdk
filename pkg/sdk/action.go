@@ -41,7 +41,10 @@ func Create(object Object) (err error) {
 		return fmt.Errorf("failed to get resource client: %v", err)
 	}
 
-	unstructObj := k8sutil.UnstructuredFromRuntimeObject(object)
+	unstructObj, err := k8sutil.UnstructuredFromRuntimeObject(object)
+	if err != nil {
+		return err
+	}
 	unstructObj, err = resourceClient.Create(unstructObj)
 	if err != nil {
 		return err
@@ -105,7 +108,10 @@ func Update(object Object) (err error) {
 		return fmt.Errorf("failed to get resource client: %v", err)
 	}
 
-	unstructObj := k8sutil.UnstructuredFromRuntimeObject(object)
+	unstructObj, err := k8sutil.UnstructuredFromRuntimeObject(object)
+	if err != nil {
+		return err
+	}
 	unstructObj, err = resourceClient.Update(unstructObj)
 	if err != nil {
 		return err

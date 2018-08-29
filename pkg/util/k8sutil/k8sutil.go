@@ -69,33 +69,32 @@ func AddToSDKScheme(addToScheme addToSchemeFunc) {
 }
 
 // RuntimeObjectFromUnstructured converts an unstructured to a runtime object
-func RuntimeObjectFromUnstructured(u *unstructured.Unstructured) runtime.Object {
+func RuntimeObjectFromUnstructured(u *unstructured.Unstructured) (runtime.Object, error) {
 	gvk := u.GroupVersionKind()
 	decoder := decoderFunc(gvk.GroupVersion(), codecs)
 
 	b, err := u.MarshalJSON()
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("error running MarshalJSON on unstructured object: %v", err)
 	}
 	ro, _, err := decoder.Decode(b, &gvk, nil)
 	if err != nil {
-		err = fmt.Errorf("failed to decode json data with gvk(%v): %v", gvk.String(), err)
-		panic(err)
+		return nil, fmt.Errorf("failed to decode json data with gvk(%v): %v", gvk.String(), err)
 	}
-	return ro
+	return ro, nil
 }
 
 // UnstructuredFromRuntimeObject converts a runtime object to an unstructured
-func UnstructuredFromRuntimeObject(ro runtime.Object) *unstructured.Unstructured {
+func UnstructuredFromRuntimeObject(ro runtime.Object) (*unstructured.Unstructured, error) {
 	b, err := json.Marshal(ro)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("error running MarshalJSON on runtime object: %v", err)
 	}
 	var u unstructured.Unstructured
 	if err := json.Unmarshal(b, &u.Object); err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to unmarshal json into unstructured object: %v", err)
 	}
-	return &u
+	return &u, nil
 }
 
 // UnstructuredIntoRuntimeObject unmarshalls an unstructured into a given runtime object

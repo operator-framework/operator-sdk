@@ -74,7 +74,10 @@ func (i *informer) sync(key string) error {
 	}
 
 	unstructObj := obj.(*unstructured.Unstructured).DeepCopy()
-	object := k8sutil.RuntimeObjectFromUnstructured(unstructObj)
+	object, err := k8sutil.RuntimeObjectFromUnstructured(unstructObj)
+	if err != nil {
+		return err
+	}
 
 	event := Event{
 		Object:  object,
