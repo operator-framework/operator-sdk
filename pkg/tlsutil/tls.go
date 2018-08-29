@@ -130,6 +130,11 @@ const (
 	TLSCACertKey = "ca.crt"
 )
 
+// NewSDKCertGenerator returns a new CertGenerator.
+func NewSDKCertGenerator() CertGenerator {
+	return &SDKCertGenerator{}
+}
+
 type SDKCertGenerator struct {
 }
 
