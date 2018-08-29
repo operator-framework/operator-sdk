@@ -84,7 +84,7 @@ func TestBothAppAndCATLSAssetsExist(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cg := tlsutil.NewSDKCertGenerator()
+	cg := tlsutil.NewSDKCertGenerator(f.KubeClient)
 	ccfg := &tlsutil.CertConfig{
 		CertName: certName,
 	}
