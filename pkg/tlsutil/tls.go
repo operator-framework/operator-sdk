@@ -170,7 +170,7 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 	} else if hasAppSecret && !hasCASecretAndConfigMap {
 		return nil, nil, nil, ErrCANotFound
 	} else if !hasAppSecret && hasCASecretAndConfigMap {
-		caKey, err := parsePEMEncodedPrivateKey(caSecret.Data[TLSCACertKey])
+		caKey, err := parsePEMEncodedPrivateKey(caSecret.Data[TLSPrivateCAKeyKey])
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -192,7 +192,7 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 		}
 		return appSecret, caConfigMap, caSecret, nil
 	} else {
-		// TODO
+
 	}
 	return nil, nil, nil, nil
 }
