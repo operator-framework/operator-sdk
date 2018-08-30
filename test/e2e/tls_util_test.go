@@ -138,8 +138,7 @@ func TestOnlyAppSecretExist(t *testing.T) {
 	if err == nil {
 		t.Fatal("expect error, but got none")
 	}
-	expErrMsg := "ca secret and configMap are not found"
-	if err.Error() != expErrMsg {
-		t.Fatalf("expect %v, but got %v", expErrMsg, err.Error())
+	if err != tlsutil.ErrCANotFound {
+		t.Fatalf("expect %v, but got %v", tlsutil.ErrCANotFound.Error(), err.Error())
 	}
 }
