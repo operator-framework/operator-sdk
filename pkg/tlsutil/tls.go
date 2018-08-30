@@ -167,7 +167,7 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 	if hasAppSecret && hasCASecretAndConfigMap {
 		return appSecret, caConfigMap, caSecret, nil
 	} else if hasAppSecret && !hasCASecretAndConfigMap {
-		// TODO
+		return nil, nil, nil, ErrCANotFound
 	} else if !hasAppSecret && hasCASecretAndConfigMap {
 		// TODO
 	} else {
@@ -196,11 +196,11 @@ func ToCASecretAndConfigMapName(kind, name string) string {
 
 func getAppSecretInCluster(kubeClient kubernetes.Interface, name, namespace string) (*v1.Secret, error) {
 	se, err := kubeClient.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
+	if err != nil && !apiErrors.IsNotFound(err) {
+		return nil, err
+	}
 	if apiErrors.IsNotFound(err) {
 		return nil, nil
-	}
-	if err != nil {
-		return nil, err
 	}
 	return se, nil
 }
@@ -210,20 +210,20 @@ func getAppSecretInCluster(kubeClient kubernetes.Interface, name, namespace stri
 func getCASecretAndConfigMapInCluster(kubeClient kubernetes.Interface, name, namespace string) (*v1.Secret, *v1.ConfigMap, error) {
 	hasConfigMap := true
 	cm, err := kubeClient.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
+	if err != nil && !apiErrors.IsNotFound(err) {
+		return nil, nil, err
+	}
 	if apiErrors.IsNotFound(err) {
 		hasConfigMap = false
-	}
-	if err != nil {
-		return nil, nil, err
 	}
 
 	hasSecret := true
 	se, err := kubeClient.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
+	if err != nil && !apiErrors.IsNotFound(err) {
+		return nil, nil, err
+	}
 	if apiErrors.IsNotFound(err) {
 		hasSecret = false
-	}
-	if err != nil {
-		return nil, nil, err
 	}
 
 	if hasConfigMap != hasSecret {
