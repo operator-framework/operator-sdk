@@ -15,23 +15,42 @@
 package framework
 
 import (
+	goctx "context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
+	"sync"
+	"time"
 
-	extensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	extscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/kubernetes"
+	cgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	dynclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var Global *Framework
+var (
+	// mutex for AddToFrameworkScheme
+	mutex = sync.Mutex{}
+	// Global framework struct
+	Global *Framework
+)
 
 type Framework struct {
-	KubeConfig       *rest.Config
-	KubeClient       kubernetes.Interface
-	ExtensionsClient *extensions.Clientset
-	ImageName        *string
+	KubeConfig     *rest.Config
+	KubeClient     kubernetes.Interface
+	Scheme         *runtime.Scheme
+	DynamicClient  dynclient.Client
+	DynamicDecoder runtime.Decoder
+	ImageName      *string
 }
 
 func setup() error {
@@ -54,15 +73,49 @@ func setup() error {
 	if err != nil {
 		return err
 	}
-	extensionsClient, err := extensions.NewForConfig(kubeconfig)
+	scheme := runtime.NewScheme()
+	cgoscheme.AddToScheme(scheme)
+	extscheme.AddToScheme(scheme)
+	dynClient, err := dynclient.New(kubeconfig, dynclient.Options{Scheme: scheme})
+	if err != nil {
+		return fmt.Errorf("failed to build the dynamic client: %v", err)
+	}
+	dynDec := serializer.NewCodecFactory(scheme).UniversalDeserializer()
+	Global = &Framework{
+		KubeConfig:     kubeconfig,
+		KubeClient:     kubeclient,
+		Scheme:         scheme,
+		DynamicClient:  dynClient,
+		DynamicDecoder: dynDec,
+		ImageName:      imageName,
+	}
+	return nil
+}
+
+type addToSchemeFunc func(*runtime.Scheme) error
+
+func AddToFrameworkScheme(addToScheme addToSchemeFunc, obj runtime.Object) error {
+	mutex.Lock()
+	defer mutex.Unlock()
+	err := addToScheme(Global.Scheme)
 	if err != nil {
 		return err
 	}
-	Global = &Framework{
-		KubeConfig:       kubeconfig,
-		KubeClient:       kubeclient,
-		ExtensionsClient: extensionsClient,
-		ImageName:        imageName,
+	cachedDiscoveryClient := cached.NewMemCacheClient(Global.KubeClient.Discovery())
+	restMapper := discovery.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient, meta.InterfacesForUnstructured)
+	restMapper.Reset()
+	Global.DynamicClient, err = dynclient.New(Global.KubeConfig, dynclient.Options{Scheme: Global.Scheme, Mapper: restMapper})
+	err = wait.PollImmediate(time.Second, time.Second*10, func() (done bool, err error) {
+		err = Global.DynamicClient.List(goctx.TODO(), &dynclient.ListOptions{Namespace: "default"}, obj)
+		if err != nil {
+			restMapper.Reset()
+			return false, nil
+		}
+		return true, nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to build the dynamic client: %v", err)
 	}
+	Global.DynamicDecoder = serializer.NewCodecFactory(Global.Scheme).UniversalDeserializer()
 	return nil
 }

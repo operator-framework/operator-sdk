@@ -29,6 +29,7 @@ import (
 	framework "github.com/operator-framework/operator-sdk/test/e2e/framework"
 
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const (
@@ -185,7 +186,7 @@ func MemcachedLocal(t *testing.T) {
 	ctx.AddFinalizerFn(func() error { return cmd.Process.Signal(os.Interrupt) })
 
 	// wait for operator to start (may take a minute to compile the command...)
-	err = e2eutil.Retry(time.Second*5, 16, func() (done bool, err error) {
+	err = wait.Poll(time.Second*5, time.Second*80, func() (done bool, err error) {
 		file, err := ioutil.ReadFile("stderr.txt")
 		if err != nil {
 			return false, err
