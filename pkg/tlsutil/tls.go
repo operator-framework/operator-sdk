@@ -167,7 +167,7 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 	if hasAppSecret && hasCASecretAndConfigMap {
 		return appSecret, caConfigMap, caSecret, nil
 	} else if hasAppSecret && !hasCASecretAndConfigMap {
-		// TODO
+		return nil, nil, nil, errors.New("ca secret and configMap are not found")
 	} else if !hasAppSecret && hasCASecretAndConfigMap {
 		// TODO
 	} else {

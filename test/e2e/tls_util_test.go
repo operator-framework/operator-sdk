@@ -25,6 +25,35 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+var (
+	// TLS test variables.
+	crKind   = "Pod"
+	crName   = "example-pod"
+	certName = "app-cert"
+
+	caConfigMapAndSecretName = tlsutil.ToCASecretAndConfigMapName(crKind, crName)
+	caConfigMap              = &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: caConfigMapAndSecretName,
+		},
+	}
+	caSecret = &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: caConfigMapAndSecretName,
+		},
+	}
+
+	appSecret = &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tlsutil.ToAppSecretName(crKind, crName, certName),
+		},
+	}
+
+	ccfg = &tlsutil.CertConfig{
+		CertName: certName,
+	}
+)
+
 // TestBothAppAndCATLSAssetsExist ensures that when both application
 // and CA TLS assets exist in the k8s cluster for a given cr,
 // the GenerateCert() simply returns those to the caller.
@@ -37,9 +66,23 @@ func TestBothAppAndCATLSAssetsExist(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	appSecret, err := f.KubeClient.CoreV1().Secrets(namespace).Create(appSecret)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	caConfigMap, err := f.KubeClient.CoreV1().ConfigMaps(namespace).Create(caConfigMap)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	caSecret, err := f.KubeClient.CoreV1().Secrets(namespace).Create(caSecret)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cg := tlsutil.NewSDKCertGenerator(f.KubeClient)
 	// Use Pod as a dummy runtime object for the CR input of GenerateCert().
-	crKind := "Pod"
-	crName := "example-pod"
 	mCR := &v1.Pod{
 		TypeMeta: metav1.TypeMeta{
 			Kind: crKind,
@@ -49,55 +92,54 @@ func TestBothAppAndCATLSAssetsExist(t *testing.T) {
 			Namespace: namespace,
 		},
 	}
-
-	certName := "app-cert"
-	appSecret := &v1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: tlsutil.ToAppSecretName(crKind, crName, certName),
-		},
-	}
-	appSecret, err = f.KubeClient.CoreV1().Secrets(namespace).Create(appSecret)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	caConfigMapAndSecretName := tlsutil.ToCASecretAndConfigMapName(crKind, crName)
-	caConfigMap := &v1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: caConfigMapAndSecretName,
-		},
-	}
-	caConfigMap, err = f.KubeClient.CoreV1().ConfigMaps(namespace).Create(caConfigMap)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	caSecret := &v1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: caConfigMapAndSecretName,
-		},
-	}
-	caSecret, err = f.KubeClient.CoreV1().Secrets(namespace).Create(caSecret)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	cg := tlsutil.NewSDKCertGenerator(f.KubeClient)
-	ccfg := &tlsutil.CertConfig{
-		CertName: certName,
-	}
 	actualAppSecret, actualCaConfigMap, actualCaSecret, err := cg.GenerateCert(mCR, nil, ccfg)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if !reflect.DeepEqual(appSecret, actualAppSecret) {
-		t.Fatalf("expect %+v, got %+v", appSecret, actualAppSecret)
+		t.Fatalf("expect %+v, but got %+v", appSecret, actualAppSecret)
 	}
 	if !reflect.DeepEqual(caConfigMap, actualCaConfigMap) {
-		t.Fatalf("expect %+v, got %+v", caConfigMap, actualCaConfigMap)
+		t.Fatalf("expect %+v, but got %+v", caConfigMap, actualCaConfigMap)
 	}
 	if !reflect.DeepEqual(caSecret, actualCaSecret) {
-		t.Fatalf("expect %+v, got %+v", caSecret, actualCaSecret)
+		t.Fatalf("expect %+v, but got %+v", caSecret, actualCaSecret)
+	}
+}
+
+// TestOnlyAppSecretExist tests a case where the application TLS asset exists but its correspoding CA asset doesn't. In this case, CertGenerator can't genereate a new CA because it won't verify the existing application TLS cert. Therefore, CertGenerator can't proceed and returns an error to the caller.
+func TestOnlyAppSecretExist(t *testing.T) {
+	f := framework.Global
+	ctx := f.NewTestCtx(t)
+	defer ctx.Cleanup(t)
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = f.KubeClient.CoreV1().Secrets(namespace).Create(appSecret)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cg := tlsutil.NewSDKCertGenerator(f.KubeClient)
+	// Use Pod as a dummy runtime object for the CR input of GenerateCert().
+	mCR := &v1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			Kind: crKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      crName,
+			Namespace: namespace,
+		},
+	}
+	_, _, _, err = cg.GenerateCert(mCR, nil, ccfg)
+	if err == nil {
+		t.Fatal("expect error, but got none")
+	}
+	expErrMsg := "ca secret and configMap are not found"
+	if err.Error() != expErrMsg {
+		t.Fatalf("expect %v, but got %v", expErrMsg, err.Error())
 	}
 }
