@@ -424,6 +424,54 @@ spec:
   version: {{.Version}}
 `
 
+const testYamlTmpl = `{{.GlobalManifest}}
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: {{.ProjectName}}-test
+rules:
+- apiGroups:
+  - "rbac.authorization.k8s.io"
+  resources:
+  - "*"
+  verbs:
+  - "*"
+{{.ExtraRoles}}
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: default-account-{{.ProjectName}}-test
+subjects:
+- kind: ServiceAccount
+  name: default
+roleRef:
+  kind: Role
+  name: {{.ProjectName}}-test
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{.ProjectName}}-test
+spec:
+  restartPolicy: Never
+  containers:
+  - name: {{.ProjectName}}-test
+    image: {{.Image}}
+    imagePullPolicy: Always
+    command: ["/go-test.sh"]
+    resources:
+      requests:
+        cpu: 1
+    env:
+      - name: TEST_NAMESPACE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.namespace
+`
+
 const operatorYamlTmpl = `apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -541,8 +589,13 @@ mkdir -p ${BIN_DIR}
 PROJECT_NAME="{{.ProjectName}}"
 REPO_PATH="{{.RepoPath}}"
 BUILD_PATH="${REPO_PATH}/cmd/${PROJECT_NAME}"
+TEST_PATH="${REPO_PATH}/${TEST_LOCATION}"
 echo "building "${PROJECT_NAME}"..."
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ${BIN_DIR}/${PROJECT_NAME} $BUILD_PATH
+if $ENABLE_TESTS ; then
+	echo "building "${PROJECT_NAME}-test"..."
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go test -c -o ${BIN_DIR}/${PROJECT_NAME}-test $TEST_PATH
+fi
 `
 
 const dockerBuildTmpl = `#!/usr/bin/env bash
@@ -555,15 +608,38 @@ fi
 : ${IMAGE:?"Need to set IMAGE, e.g. gcr.io/<repo>/<your>-operator"}
 
 echo "building container ${IMAGE}..."
-docker build -t "${IMAGE}" -f tmp/build/Dockerfile .
+docker build -t "${IMAGE}" -f tmp/build/Dockerfile . --build-arg NAMESPACEDMAN=$NAMESPACEDMAN
 `
 
-const dockerFileTmpl = `FROM alpine:3.6
+const goTestScript = `#!/bin/sh
+
+memcached-operator-test -test.parallel=1 -test.failfast -root=/ -kubeconfig=incluster -namespacedMan=namespaced.yaml -test.v
+`
+
+const standardDockerFileTmpl = `FROM alpine:3.6
 
 RUN adduser -D {{.ProjectName}}
 USER {{.ProjectName}}
 
 ADD tmp/_output/bin/{{.ProjectName}} /usr/local/bin/{{.ProjectName}}
+
+# just keep this to ignore warnings
+ARG NAMESPACEDMAN
+`
+
+const testingDockerFileTmpl = `FROM alpine:3.6
+
+RUN adduser -D {{.ProjectName}}
+USER {{.ProjectName}}
+
+ADD tmp/_output/bin/{{.ProjectName}} /usr/local/bin/{{.ProjectName}}
+
+# just keep this to ignore warnings
+ARG NAMESPACEDMAN
+
+ADD tmp/_output/bin/{{.ProjectName}}-test /usr/local/bin/{{.ProjectName}}-test
+ADD $NAMESPACEDMAN /namespaced.yaml
+ADD tmp/build/go-test.sh /go-test.sh
 `
 
 // apiDocTmpl is the template for apis/../doc.go

@@ -53,12 +53,14 @@ func MainEntry(m *testing.M) {
 		os.Exit(exitCode)
 	}()
 	// create crd
-	globalYAML, err := ioutil.ReadFile(*globalManPath)
-	if err != nil {
-		log.Fatalf("failed to read global resource manifest: %v", err)
-	}
-	err = ctx.createFromYAML(globalYAML, true)
-	if err != nil {
-		log.Fatalf("failed to create resource(s) in global resource manifest: %v", err)
+	if !Global.InCluster {
+		globalYAML, err := ioutil.ReadFile(*globalManPath)
+		if err != nil {
+			log.Fatalf("failed to read global resource manifest: %v", err)
+		}
+		err = ctx.createFromYAML(globalYAML, true)
+		if err != nil {
+			log.Fatalf("failed to create resource(s) in global resource manifest: %v", err)
+		}
 	}
 }

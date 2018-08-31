@@ -39,6 +39,7 @@ const (
 	tmpDir        = "tmp"
 	buildDir      = tmpDir + "/build"
 	codegenDir    = tmpDir + "/codegen"
+	dockerDir     = buildDir + "/dockerfiles"
 	pkgDir        = "pkg"
 	apisDir       = pkgDir + "/apis"
 	stubDir       = pkgDir + "/stub"
@@ -52,7 +53,9 @@ const (
 	types              = "types.go"
 	build              = "build.sh"
 	dockerBuild        = "docker_build.sh"
-	dockerfile         = "Dockerfile"
+	standardDockerfile = "Dockerfile_Standard"
+	testingDockerfile  = "Dockerfile_Testing"
+	goTest             = "go-test.sh"
 	boilerplate        = "boilerplate.go.txt"
 	updateGenerated    = "update-generated.sh"
 	gopkgtoml          = "Gopkg.toml"
@@ -76,6 +79,7 @@ const (
 	operatorTmplName   = "deploy/operator.yaml"
 	rbacTmplName       = "deploy/rbac.yaml"
 	crTmplName         = "deploy/cr.yaml"
+	testYamlName       = "deploy/test-gen.yaml"
 	pluralSuffix       = "s"
 )
 
@@ -246,6 +250,16 @@ func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
 	return renderWriteFile(filepath.Join(deployDir, "operator.yaml"), operatorTmplName, operatorYamlTmpl, opTd)
 }
 
+func RenderTestYaml(c *Config, globalManifest, extraRoles, image string) error {
+	opTd := tmplData{
+		GlobalManifest: globalManifest,
+		ExtraRoles:     extraRoles,
+		ProjectName:    c.ProjectName,
+		Image:          image,
+	}
+	return renderWriteFile(filepath.Join(deployDir, "test-gen.yaml"), testYamlName, testYamlTmpl, opTd)
+}
+
 // RenderOlmCatalog generates catalog manifests "deploy/olm-catalog/*"
 // The current working directory must be the project repository root
 func RenderOlmCatalog(c *Config, image, version string) error {
@@ -343,10 +357,16 @@ func renderBuildFiles(buildDir, repoPath, projectName string) error {
 	dTd := tmplData{
 		ProjectName: projectName,
 	}
-	if err := renderFile(buf, "tmp/build/Dockerfile", dockerFileTmpl, dTd); err != nil {
+
+	if err := renderWriteFile(filepath.Join(buildDir, "dockerfiles", standardDockerfile), "tmp/build/dockerfiles/Dockerfile_Standard", standardDockerFileTmpl, dTd); err != nil {
 		return err
 	}
-	return renderWriteFile(filepath.Join(buildDir, dockerfile), "tmp/build/Dockerfile", dockerFileTmpl, dTd)
+
+	if err := renderWriteFile(filepath.Join(buildDir, "dockerfiles", testingDockerfile), "tmp/build/dockerfiles/Dockerfile_Testing", testingDockerFileTmpl, dTd); err != nil {
+		return err
+	}
+
+	return renderWriteFile(filepath.Join(buildDir, goTest), "tmp/build/go-test.sh", goTestScript, tmplData{})
 }
 
 func renderDockerBuildFile(w io.Writer) error {
@@ -459,6 +479,10 @@ type tmplData struct {
 	CRDVersion     string
 	CSVName        string
 	CatalogVersion string
+
+	// global manifest used for testing
+	GlobalManifest string
+	ExtraRoles     string
 }
 
 // Creates all the necesary directories for the generated files
@@ -471,6 +495,7 @@ func (g *Generator) generateDirStructure() error {
 		filepath.Join(g.projectName, olmCatalogDir),
 		filepath.Join(g.projectName, buildDir),
 		filepath.Join(g.projectName, codegenDir),
+		filepath.Join(g.projectName, dockerDir),
 		filepath.Join(g.projectName, versionDir),
 		filepath.Join(g.projectName, apisDir, apiDirName(g.apiVersion), version(g.apiVersion)),
 		filepath.Join(g.projectName, stubDir),
