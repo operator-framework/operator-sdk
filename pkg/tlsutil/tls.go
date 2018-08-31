@@ -152,7 +152,8 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	appSecret, err := getAppSecretInCluster(scg.KubeClient, ToAppSecretName(k, n, config.CertName), ns)
+	appSecretName := ToAppSecretName(k, n, config.CertName)
+	appSecret, err := getAppSecretInCluster(scg.KubeClient, appSecretName, ns)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -169,9 +170,29 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 	} else if hasAppSecret && !hasCASecretAndConfigMap {
 		return nil, nil, nil, ErrCANotFound
 	} else if !hasAppSecret && hasCASecretAndConfigMap {
-		// TODO
+		caKey, err := parsePEMEncodedPrivateKey(caSecret.Data[TLSPrivateCAKeyKey])
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		caCert, err := parsePEMEncodedCert([]byte(caConfigMap.Data[TLSCACertKey]))
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		key, err := newPrivateKey()
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		cert, err := newSignedCertificate(config, service, key, caCert, caKey)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		appSecret, err := scg.KubeClient.CoreV1().Secrets(ns).Create(toTLSSecret(key, cert, appSecretName, ns))
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		return appSecret, caConfigMap, caSecret, nil
 	} else {
-		// TODO
+		// TODO: handle the case where both CA and Application TLS assets don't exist.
 	}
 	return nil, nil, nil, nil
 }
