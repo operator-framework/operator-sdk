@@ -24,6 +24,7 @@ import (
 
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var (
@@ -104,17 +105,7 @@ func TestBothAppAndCATLSAssetsExist(t *testing.T) {
 	}
 
 	cg := tlsutil.NewSDKCertGenerator(f.KubeClient)
-	// Use Pod as a dummy runtime object for the CR input of GenerateCert().
-	mCR := &v1.Pod{
-		TypeMeta: metav1.TypeMeta{
-			Kind: crKind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      crName,
-			Namespace: namespace,
-		},
-	}
-	actualAppSecret, actualCaConfigMap, actualCaSecret, err := cg.GenerateCert(mCR, nil, ccfg)
+	actualAppSecret, actualCaConfigMap, actualCaSecret, err := cg.GenerateCert(newDummyCR(namespace), nil, ccfg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,17 +137,7 @@ func TestOnlyAppSecretExist(t *testing.T) {
 	}
 
 	cg := tlsutil.NewSDKCertGenerator(f.KubeClient)
-	// Use Pod as a dummy runtime object for the CR input of GenerateCert().
-	mCR := &v1.Pod{
-		TypeMeta: metav1.TypeMeta{
-			Kind: crKind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      crName,
-			Namespace: namespace,
-		},
-	}
-	_, _, _, err = cg.GenerateCert(mCR, nil, ccfg)
+	_, _, _, err = cg.GenerateCert(newDummyCR(namespace), nil, ccfg)
 	if err == nil {
 		t.Fatal("expect error, but got none")
 	}
@@ -186,27 +167,83 @@ func TestOnlyCAExist(t *testing.T) {
 	}
 
 	cg := tlsutil.NewSDKCertGenerator(f.KubeClient)
-	// Use Pod as a dummy runtime object for the CR input of GenerateCert().
-	mCR := &v1.Pod{
-		TypeMeta: metav1.TypeMeta{
-			Kind: crKind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      crName,
-			Namespace: namespace,
-		},
-	}
-	appSvc := &v1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "app-service",
-			Namespace: namespace,
-		},
-	}
-	appSecret, _, _, err := cg.GenerateCert(mCR, appSvc, ccfg)
+	appSecret, _, _, err := cg.GenerateCert(newDummyCR(namespace), newAppSvc(namespace), ccfg)
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	verifyAppSecret(t, appSecret, namespace)
+}
+
+// TestNoneOfCaAndAppSecretExist ensures that when none of the CA and Application TLS assets
+// exist, GenerateCert() creates both and put them into the k8s cluster.
+func TestNoneOfCaAndAppSecretExist(t *testing.T) {
+	f := framework.Global
+	ctx := f.NewTestCtx(t)
+	defer ctx.Cleanup(t)
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cg := tlsutil.NewSDKCertGenerator(f.KubeClient)
+	appSecret, caConfigMap, caSecret, err := cg.GenerateCert(newDummyCR(namespace), newAppSvc(namespace), ccfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	verifyAppSecret(t, appSecret, namespace)
+	verifyCaConfigMap(t, caConfigMap, namespace)
+	verifyCASecret(t, caSecret, namespace)
+}
+
+func verifyCASecret(t *testing.T, caSecret *v1.Secret, namespace string) {
+	// check if caConfigMap has the correct fields.
+	if caConfigMapAndSecretName != caSecret.Name {
+		t.Fatalf("expect the ca config name %v, but got %v", caConfigMapAndSecretName, caConfigMap.Name)
+	}
+	if namespace != caSecret.Namespace {
+		t.Fatalf("expect the ca config namespace %v, but got %v", namespace, appSecret.Namespace)
+	}
+	if _, ok := caSecret.Data[tlsutil.TLSPrivateCAKeyKey]; !ok {
+		t.Fatalf("expect the ca config to have the data field %v, but got none", tlsutil.TLSPrivateCAKeyKey)
+	}
+
+	// check if caConfigMap exists in k8s cluster.
+	caSecretFromCluster, err := framework.Global.KubeClient.CoreV1().Secrets(namespace).Get(caConfigMapAndSecretName, metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// check if caSecret returned from GenerateCert is the same as the one that exists in the k8s.
+	if !reflect.DeepEqual(caSecret, caSecretFromCluster) {
+		t.Fatalf("expect %+v, but got %+v", caSecret, caSecretFromCluster)
+	}
+}
+
+func verifyCaConfigMap(t *testing.T, caConfigMap *v1.ConfigMap, namespace string) {
+	// check if caConfigMap has the correct fields.
+	if caConfigMapAndSecretName != caConfigMap.Name {
+		t.Fatalf("expect the ca config name %v, but got %v", caConfigMapAndSecretName, caConfigMap.Name)
+	}
+	if namespace != caConfigMap.Namespace {
+		t.Fatalf("expect the ca config namespace %v, but got %v", namespace, appSecret.Namespace)
+	}
+	if _, ok := caConfigMap.Data[tlsutil.TLSCACertKey]; !ok {
+		t.Fatalf("expect the ca config to have the data field %v, but got none", tlsutil.TLSCACertKey)
+	}
+
+	// check if caConfigMap exists in k8s cluster.
+	caConfigMapFromCluster, err := framework.Global.KubeClient.CoreV1().ConfigMaps(namespace).Get(caConfigMapAndSecretName, metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// check if caConfigMap returned from GenerateCert is the same as the one that exists in the k8s.
+	if !reflect.DeepEqual(caConfigMap, caConfigMapFromCluster) {
+		t.Fatalf("expect %+v, but got %+v", caConfigMap, caConfigMapFromCluster)
+	}
+}
+
+func verifyAppSecret(t *testing.T, appSecret *v1.Secret, namespace string) {
 	// check if appSecret has the correct fields.
 	if appSecretName != appSecret.Name {
 		t.Fatalf("expect the secret name %v, but got %v", appSecretName, appSecret.Name)
@@ -225,12 +262,34 @@ func TestOnlyCAExist(t *testing.T) {
 	}
 
 	// check if appSecret exists in k8s cluster.
-	appSecretFromCluster, err := f.KubeClient.CoreV1().Secrets(namespace).Get(appSecretName, metav1.GetOptions{})
+	appSecretFromCluster, err := framework.Global.KubeClient.CoreV1().Secrets(namespace).Get(appSecretName, metav1.GetOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	// check if appSecret returned from GenerateCert is the same as the one that exists in the k8s.
 	if !reflect.DeepEqual(appSecret, appSecretFromCluster) {
 		t.Fatalf("expect %+v, but got %+v", appSecret, appSecretFromCluster)
+	}
+}
+
+// newDummyCR returns a dummy runtime object for the CR input of GenerateCert().
+func newDummyCR(namespace string) runtime.Object {
+	return &v1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			Kind: crKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      crName,
+			Namespace: namespace,
+		},
+	}
+}
+
+func newAppSvc(namespace string) *v1.Service {
+	return &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "app-service",
+			Namespace: namespace,
+		},
 	}
 }
