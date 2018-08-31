@@ -157,7 +157,8 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	caSecret, caConfigMap, err := getCASecretAndConfigMapInCluster(scg.KubeClient, ToCASecretAndConfigMapName(k, n), ns)
+	caSecretAndConfigMapName := ToCASecretAndConfigMapName(k, n)
+	caSecret, caConfigMap, err := getCASecretAndConfigMapInCluster(scg.KubeClient, caSecretAndConfigMapName, ns)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -186,15 +187,44 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		appSecret, err := scg.KubeClient.CoreV1().Secrets(ns).Create(toTLSSecret(key, cert, appSecretName, ns))
+		appSecret, err := scg.KubeClient.CoreV1().Secrets(ns).Create(toTLSSecret(key, cert, appSecretName))
 		if err != nil {
 			return nil, nil, nil, err
 		}
 		return appSecret, caConfigMap, caSecret, nil
 	} else {
-		// TODO: handle the case where both CA and Application TLS assets don't exist.
+		// case: both CA and Application TLS assets don't exist.
+		caKey, err := newPrivateKey()
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		caCert, err := newSelfSignedCACertificate(caKey)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		caSecret, caConfigMap := toCASecretAndConfigmap(caKey, caCert, caSecretAndConfigMapName)
+		caSecret, err = scg.KubeClient.CoreV1().Secrets(ns).Create(caSecret)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		caConfigMap, err = scg.KubeClient.CoreV1().ConfigMaps(ns).Create(caConfigMap)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		key, err := newPrivateKey()
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		cert, err := newSignedCertificate(config, service, key, caCert, caKey)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		appSecret, err := scg.KubeClient.CoreV1().Secrets(ns).Create(toTLSSecret(key, cert, appSecretName))
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		return appSecret, caConfigMap, caSecret, nil
 	}
-	return nil, nil, nil, nil
 }
 
 func verifyConfig(config *CertConfig) error {
@@ -276,15 +306,10 @@ func toKindNameNamespace(cr runtime.Object) (string, string, string, error) {
 
 // toTLSSecret returns a client/server "kubernetes.io/tls" secret.
 // TODO: add owner ref.
-func toTLSSecret(key *rsa.PrivateKey, cert *x509.Certificate, name, namespace string) *v1.Secret {
+func toTLSSecret(key *rsa.PrivateKey, cert *x509.Certificate, name string) *v1.Secret {
 	return &v1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name: name,
 		},
 		Data: map[string][]byte{
 			v1.TLSPrivateKeyKey: encodePrivateKeyPEM(key),
@@ -295,30 +320,20 @@ func toTLSSecret(key *rsa.PrivateKey, cert *x509.Certificate, name, namespace st
 }
 
 // TODO: add owner ref.
-func toCASecretAndConfigmap(key *rsa.PrivateKey, cert *x509.Certificate, name, namespace string) (*v1.ConfigMap, *v1.Secret) {
-	return &v1.ConfigMap{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "ConfigMap",
-				APIVersion: "v1",
-			},
+func toCASecretAndConfigmap(key *rsa.PrivateKey, cert *x509.Certificate, name string) (*v1.Secret, *v1.ConfigMap) {
+	return &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: namespace,
-			},
-			Data: map[string]string{
-				TLSCACertKey: string(encodeCertificatePEM(cert)),
-			},
-		}, &v1.Secret{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Secret",
-				APIVersion: "v1",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: namespace,
+				Name: name,
 			},
 			Data: map[string][]byte{
 				TLSPrivateCAKeyKey: encodePrivateKeyPEM(key),
+			},
+		}, &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: name,
+			},
+			Data: map[string]string{
+				TLSCACertKey: string(encodeCertificatePEM(cert)),
 			},
 		}
 }
