@@ -24,6 +24,7 @@ import (
 
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var (
@@ -104,17 +105,8 @@ func TestBothAppAndCATLSAssetsExist(t *testing.T) {
 	}
 
 	cg := tlsutil.NewSDKCertGenerator(f.KubeClient)
-	// Use Pod as a dummy runtime object for the CR input of GenerateCert().
-	mCR := &v1.Pod{
-		TypeMeta: metav1.TypeMeta{
-			Kind: crKind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      crName,
-			Namespace: namespace,
-		},
-	}
-	actualAppSecret, actualCaConfigMap, actualCaSecret, err := cg.GenerateCert(mCR, nil, ccfg)
+	appCR := toDummyCR(namespace)
+	actualAppSecret, actualCaConfigMap, actualCaSecret, err := cg.GenerateCert(appCR, nil, ccfg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,17 +138,8 @@ func TestOnlyAppSecretExist(t *testing.T) {
 	}
 
 	cg := tlsutil.NewSDKCertGenerator(f.KubeClient)
-	// Use Pod as a dummy runtime object for the CR input of GenerateCert().
-	mCR := &v1.Pod{
-		TypeMeta: metav1.TypeMeta{
-			Kind: crKind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      crName,
-			Namespace: namespace,
-		},
-	}
-	_, _, _, err = cg.GenerateCert(mCR, nil, ccfg)
+	appCR := toDummyCR(namespace)
+	_, _, _, err = cg.GenerateCert(appCR, nil, ccfg)
 	if err == nil {
 		t.Fatal("expect error, but got none")
 	}
@@ -186,23 +169,14 @@ func TestOnlyCAExist(t *testing.T) {
 	}
 
 	cg := tlsutil.NewSDKCertGenerator(f.KubeClient)
-	// Use Pod as a dummy runtime object for the CR input of GenerateCert().
-	mCR := &v1.Pod{
-		TypeMeta: metav1.TypeMeta{
-			Kind: crKind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      crName,
-			Namespace: namespace,
-		},
-	}
+	appCR := toDummyCR(namespace)
 	appSvc := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "app-service",
 			Namespace: namespace,
 		},
 	}
-	appSecret, _, _, err := cg.GenerateCert(mCR, appSvc, ccfg)
+	appSecret, _, _, err := cg.GenerateCert(appCR, appSvc, ccfg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -232,5 +206,18 @@ func TestOnlyCAExist(t *testing.T) {
 	// check if appSecret returned from GenerateCert is the same as the one that exists in the k8s.
 	if !reflect.DeepEqual(appSecret, appSecretFromCluster) {
 		t.Fatalf("expect %+v, but got %+v", appSecret, appSecretFromCluster)
+	}
+}
+
+// use Pod as a dummy runtime object for the CR input of GenerateCert().
+func toDummyCR(namespace string) runtime.Object {
+	return &v1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			Kind: crKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      crName,
+			Namespace: namespace,
+		},
 	}
 }
