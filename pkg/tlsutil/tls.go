@@ -192,7 +192,7 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 		}
 		return appSecret, caConfigMap, caSecret, nil
 	} else {
-
+		// TODO: handle the case where both CA and Application TLS assets don't exist.
 	}
 	return nil, nil, nil, nil
 }
