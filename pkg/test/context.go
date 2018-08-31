@@ -30,7 +30,7 @@ type TestCtx struct {
 
 type finalizerFn func() error
 
-func NewTestCtx(t *testing.T) TestCtx {
+func NewTestCtx(t *testing.T) *TestCtx {
 	var prefix string
 	if t != nil {
 		// TestCtx is used among others for namespace names where '/' is forbidden
@@ -48,7 +48,7 @@ func NewTestCtx(t *testing.T) TestCtx {
 	}
 
 	id := prefix + "-" + strconv.FormatInt(time.Now().Unix(), 10)
-	return TestCtx{
+	return &TestCtx{
 		ID: id,
 	}
 }
