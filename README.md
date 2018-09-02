@@ -69,6 +69,7 @@ $ docker push quay.io/example/app-operator
 $ sed -i 's|REPLACE_IMAGE|quay.io/example/app-operator|g' deploy/operator.yaml
 
 # Deploy the app-operator
+$ kubectl create -f deploy/sa.yaml
 $ kubectl create -f deploy/rbac.yaml
 $ kubectl create -f deploy/crd.yaml
 $ kubectl create -f deploy/operator.yaml
@@ -86,6 +87,7 @@ $ kubectl delete -f deploy/cr.yaml
 $ kubectl delete -f deploy/crd.yaml
 $ kubectl delete -f deploy/operator.yaml
 $ kubectl delete -f deploy/rbac.yaml
+$ kubectl delete -f deploy/sa.yaml
 ```
 
 ## User Guide

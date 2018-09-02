@@ -140,6 +140,7 @@ Kubernetes deployment manifests are generated in `deploy/operator.yaml`. The dep
 Deploy the memcached-operator:
 
 ```sh
+$ kubectl create -f deploy/sa.yaml
 $ kubectl create -f deploy/rbac.yaml
 $ kubectl create -f deploy/operator.yaml
 ```
