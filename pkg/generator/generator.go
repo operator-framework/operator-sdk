@@ -554,20 +554,7 @@ func renderCodegenFiles(codegenDir, repoPath, apiDirName, version, projectName s
 	bTd := tmplData{
 		ProjectName: projectName,
 	}
-	if err := renderWriteFile(filepath.Join(codegenDir, boilerplate), "codegen/boilerplate.go.txt", boilerplateTmpl, bTd); err != nil {
-		return err
-	}
-
-	buf := &bytes.Buffer{}
-	ugTd := tmplData{
-		RepoPath:   repoPath,
-		APIDirName: apiDirName,
-		Version:    version,
-	}
-	if err := renderFile(buf, "codegen/update-generated.sh", updateGeneratedTmpl, ugTd); err != nil {
-		return err
-	}
-	return writeFileAndPrint(filepath.Join(codegenDir, updateGenerated), buf.Bytes(), defaultExecFileMode)
+	return renderWriteFile(filepath.Join(codegenDir, boilerplate), "codegen/boilerplate.go.txt", boilerplateTmpl, bTd)
 }
 
 func (g *Generator) renderPkg() error {

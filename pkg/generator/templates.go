@@ -580,7 +580,7 @@ metadata:
 const boilerplateTmpl = `
 `
 
-const updateGeneratedTmpl = `#!/usr/bin/env bash
+const buildTmpl = `#!/usr/bin/env bash
 
 set -o errexit
 set -o nounset
