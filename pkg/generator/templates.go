@@ -512,19 +512,6 @@ metadata:
 const boilerplateTmpl = `
 `
 
-const updateGeneratedTmpl = `#!/usr/bin/env bash
-
-set -o errexit
-set -o nounset
-set -o pipefail
-
-vendor/k8s.io/code-generator/generate-groups.sh \
-deepcopy \
-{{.RepoPath}}/pkg/generated \
-{{.RepoPath}}/pkg/apis \
-{{.APIDirName}}:{{.Version}} \
---go-header-file "./tmp/codegen/boilerplate.go.txt"
-`
 const buildTmpl = `#!/usr/bin/env bash
 
 set -o errexit
