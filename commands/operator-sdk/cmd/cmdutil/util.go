@@ -15,9 +15,13 @@
 package cmdutil
 
 import (
+	"errors"
 	"fmt"
+	gobuild "go/build"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 
 	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
 	"github.com/operator-framework/operator-sdk/pkg/generator"
@@ -48,4 +52,25 @@ func GetConfig() *generator.Config {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to unmarshal config file %v: (%v)", configYaml, err))
 	}
 	return c
+}
+
+// GetRepoPkg returns the current repo's import path
+// e.g: "github.com/example-inc/app-operator"
+// TODO: Refactor with getRepoPath and save repo path somewhere
+func GetRepoPkg() string {
+	gopath := os.Getenv("GOPATH")
+	if len(gopath) == 0 {
+		gopath = gobuild.Default.GOPATH
+	}
+	goSrc := filepath.Join(gopath, "src")
+
+	wd, err := os.Getwd()
+	if err != nil {
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to get working directory: (%v)", err))
+	}
+	if !strings.HasPrefix(filepath.Dir(wd), goSrc) {
+		cmdError.ExitWithError(cmdError.ExitError, errors.New("must run from project root"))
+	}
+	repoPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
+	return repoPkg
 }
