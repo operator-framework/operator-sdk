@@ -29,6 +29,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// OperatorType - the type of operator
 type OperatorType int
 
 const (
@@ -37,7 +38,9 @@ const (
 	tmpDockerfile = "./tmp/build/Dockerfile"
 )
 const (
+	// OperatorTypeGo - golang type of operator.
 	OperatorTypeGo OperatorType = iota
+	// OperatorTypeAnsible - ansible type of operator.
 	OperatorTypeAnsible
 )
 
@@ -64,9 +67,10 @@ func GetConfig() *generator.Config {
 	return c
 }
 
-// GetCurrPkg returns the current directory's import path
+// GetRepoPkg returns the current repo's import path
 // e.g: "github.com/example-inc/app-operator"
-func GetCurrPkg() string {
+// TODO: Refactor with getRepoPath and save repo path somewhere
+func GetRepoPkg() string {
 	gopath := os.Getenv("GOPATH")
 	if len(gopath) == 0 {
 		gopath = gobuild.Default.GOPATH
@@ -78,10 +82,10 @@ func GetCurrPkg() string {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to get working directory: (%v)", err))
 	}
 	if !strings.HasPrefix(filepath.Dir(wd), goSrc) {
-		cmdError.ExitWithError(cmdError.ExitError, errors.New("must run from gopath"))
+		cmdError.ExitWithError(cmdError.ExitError, errors.New("must run from project root"))
 	}
-	currPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
-	return currPkg
+	repoPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
+	return repoPkg
 }
 
 // GetOperatorType returns type of operator is in cwd

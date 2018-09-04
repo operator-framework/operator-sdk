@@ -26,38 +26,6 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-const updateGeneratedExp = `#!/usr/bin/env bash
-
-set -o errexit
-set -o nounset
-set -o pipefail
-
-vendor/k8s.io/code-generator/generate-groups.sh \
-deepcopy \
-github.com/example-inc/app-operator/pkg/generated \
-github.com/example-inc/app-operator/pkg/apis \
-app:v1alpha1 \
---go-header-file "./tmp/codegen/boilerplate.go.txt"
-`
-
-func TestCodeGen(t *testing.T) {
-	buf := &bytes.Buffer{}
-	td := tmplData{
-		RepoPath:   appRepoPath,
-		APIDirName: appApiDirName,
-		Version:    appVersion,
-	}
-	if err := renderFile(buf, "codegen/update-generated.sh", updateGeneratedTmpl, td); err != nil {
-		t.Error(err)
-		return
-	}
-	if updateGeneratedExp != buf.String() {
-		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(updateGeneratedExp, buf.String(), false)
-		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
-	}
-}
-
 const versionExp = `package version
 
 var (
