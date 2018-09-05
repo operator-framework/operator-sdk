@@ -138,11 +138,6 @@ type SDKCertGenerator struct {
 	KubeClient kubernetes.Interface
 }
 
-type keyAndCert struct {
-	key  *rsa.PrivateKey
-	cert *x509.Certificate
-}
-
 func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service, config *CertConfig) (*v1.Secret, *v1.ConfigMap, *v1.Secret, error) {
 	if err := verifyConfig(config); err != nil {
 		return nil, nil, nil, err
