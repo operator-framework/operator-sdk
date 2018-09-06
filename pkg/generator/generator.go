@@ -233,7 +233,18 @@ func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
 		APIVersion: apiVersion,
 		Kind:       kind,
 	}
-	return renderWriteFile(filepath.Join(deployDir, crYaml), crTmplName, crYamlTmpl, crTd)
+	if err := renderWriteFile(filepath.Join(deployDir, crYaml), crTmplName, crYamlTmpl, crTd); err != nil {
+		return err
+	}
+
+	opTd := tmplData{
+		ProjectName:     projectName,
+		Image:           "REPLACE_IMAGE",
+		MetricsPort:     k8sutil.PrometheusMetricsPort,
+		MetricsPortName: k8sutil.PrometheusMetricsPortName,
+		OperatorNameEnv: k8sutil.OperatorNameEnvVar,
+	}
+	return renderWriteFile(filepath.Join(deployDir, "operator.yaml"), operatorTmplName, operatorYamlTmpl, opTd)
 }
 
 // RenderOperatorYaml generates "deploy/operator.yaml"
@@ -245,7 +256,7 @@ func RenderOperatorYaml(c *Config, image string) error {
 		MetricsPortName: k8sutil.PrometheusMetricsPortName,
 		OperatorNameEnv: k8sutil.OperatorNameEnvVar,
 	}
-	return renderWriteFile(operatorYaml, c.ProjectName+"/"+operatorTmplName, operatorYamlTmpl, td)
+	return renderWriteFile(operatorYaml, operatorTmplName, operatorYamlTmpl, td)
 }
 
 // RenderOlmCatalog generates catalog manifests "deploy/olm-catalog/*"
