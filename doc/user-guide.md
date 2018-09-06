@@ -131,6 +131,7 @@ Run as pod inside a Kubernetes cluster is preferred for production use.
 Build the memcached-operator image and push it to a registry:
 ```
 $ operator-sdk build quay.io/example/memcached-operator:v0.0.1
+$ sed -i 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
 $ docker push quay.io/example/memcached-operator:v0.0.1
 ```
 

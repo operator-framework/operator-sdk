@@ -65,6 +65,9 @@ $ cd app-operator
 $ operator-sdk build quay.io/example/app-operator
 $ docker push quay.io/example/app-operator
 
+# Update the operator manifest to use the built image name
+$ sed -i 's|REPLACE_IMAGE|quay.io/example/app-operator|g' deploy/operator.yaml
+
 # Deploy the app-operator
 $ kubectl create -f deploy/rbac.yaml
 $ kubectl create -f deploy/crd.yaml

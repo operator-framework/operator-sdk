@@ -220,8 +220,11 @@ func MemcachedCluster(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
+
+	operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
+	operatorYAML = bytes.Replace(operatorYAML, []byte("REPLACE_IMAGE"), []byte(*f.ImageName), 1)
+
 	if local {
-		operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -250,7 +253,7 @@ func MemcachedCluster(t *testing.T) {
 	t.Log("Created rbac")
 
 	// create operator
-	operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
+	operatorYAML, err = ioutil.ReadFile("deploy/operator.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}

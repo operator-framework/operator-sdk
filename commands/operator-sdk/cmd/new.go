@@ -74,7 +74,7 @@ const (
 
 func newFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("new command needs 1 argument."))
+		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("new command needs 1 argument"))
 	}
 	parse(args)
 	mustBeNewProject()
