@@ -8,20 +8,24 @@
 
 [[override]]
   name = "k8s.io/api"
-  version = "kubernetes-1.9.3"
+  version = "kubernetes-1.10.1"
 
 [[override]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.9.3"
+  version = "kubernetes-1.10.1"
 
 [[override]]
   name = "k8s.io/apiextensions-apiserver"
-  version = "kubernetes-1.9.3"
+  version = "kubernetes-1.10.1"
 
 [[override]]
   name = "k8s.io/client-go"
-  version = "kubernetes-1.9.3"
+  version = "kubernetes-1.10.1"
 
 [[constraint]]
   name = "github.com/sergi/go-diff"
   version = "1.0.0"
+
+[[constraint]]
+  name = "sigs.k8s.io/controller-runtime"
+  revision = "60bb251ad86f9b313653618aad0c2c53f41a6625"

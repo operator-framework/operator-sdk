@@ -156,6 +156,32 @@ Create app-operator/.gitignore
 ...
 ```
 
+## test
+
+### Flags
+
+* `-t, --test-location` **(required)** string - location of e2e test files
+* `-k, --kubeconfig` string - location of kubeconfig for kubernetes cluster
+* `-g, --global-init` string - location of global resource manifest yaml file
+* `-n, --namespaced-init` string - location of namespaced resource manifest yaml file
+* `-f, --go-test-flags` string - extra arguments to pass to `go test` (e.g. -f "-v -parallel=2")
+* `-h, --help` - help for test
+
+### Use
+
+The operator-sdk test command runs go tests built using the Operator SDK's test framework.
+
+### Example:
+
+#### Test
+
+```bash
+operator-sdk test --test-location ./test/e2e/
+
+# Output:
+ok  	github.com/operator-framework/operator-sdk-samples/memcached-operator/test/e2e	20.410s
+```
+
 ## up
 
 ### Available Commands

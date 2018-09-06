@@ -5,9 +5,6 @@ all: format test install
 install:
 	go install github.com/operator-framework/operator-sdk/commands/operator-sdk
 
-test:
-	./hack/test
-
 format:
 	go fmt $(pkgs)
 

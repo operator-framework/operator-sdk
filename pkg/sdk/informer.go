@@ -43,20 +43,21 @@ type informer struct {
 	context             context.Context
 	deletedObjects      map[string]interface{}
 	collector           *metrics.Collector
+	numWorkers          int
 }
 
-func NewInformer(resourcePluralName, namespace string, resourceClient dynamic.ResourceInterface, resyncPeriod int, c *metrics.Collector) Informer {
+func NewInformer(resourcePluralName, namespace string, resourceClient dynamic.ResourceInterface, resyncPeriod time.Duration, c *metrics.Collector, n int, labelSelector string) Informer {
 	i := &informer{
 		resourcePluralName: resourcePluralName,
 		queue:              workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), resourcePluralName),
 		namespace:          namespace,
 		deletedObjects:     map[string]interface{}{},
 		collector:          c,
+		numWorkers:         n,
 	}
 
-	resyncDuration := time.Duration(resyncPeriod) * time.Second
 	i.sharedIndexInformer = cache.NewSharedIndexInformer(
-		newListWatcherFromResourceClient(resourceClient), &unstructured.Unstructured{}, resyncDuration, cache.Indexers{},
+		newListWatcherFromResourceClient(resourceClient, labelSelector), &unstructured.Unstructured{}, resyncPeriod, cache.Indexers{},
 	)
 	i.sharedIndexInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    i.handleAddResourceEvent,
@@ -66,11 +67,17 @@ func NewInformer(resourcePluralName, namespace string, resourceClient dynamic.Re
 	return i
 }
 
-func newListWatcherFromResourceClient(resourceClient dynamic.ResourceInterface) *cache.ListWatch {
+func newListWatcherFromResourceClient(resourceClient dynamic.ResourceInterface, labelSelector string) *cache.ListWatch {
 	listFunc := func(options metav1.ListOptions) (runtime.Object, error) {
+		if labelSelector != "" {
+			options.LabelSelector = labelSelector
+		}
 		return resourceClient.List(options)
 	}
 	watchFunc := func(options metav1.ListOptions) (watch.Interface, error) {
+		if labelSelector != "" {
+			options.LabelSelector = labelSelector
+		}
 		return resourceClient.Watch(options)
 	}
 	return &cache.ListWatch{ListFunc: listFunc, WatchFunc: watchFunc}
@@ -87,8 +94,7 @@ func (i *informer) Run(ctx context.Context) {
 		panic("Timed out waiting for caches to sync")
 	}
 
-	const numWorkers = 1
-	for n := 0; n < numWorkers; n++ {
+	for n := 0; n < i.numWorkers; n++ {
 		go wait.Until(i.runWorker, time.Second, ctx.Done())
 	}
 	<-ctx.Done()

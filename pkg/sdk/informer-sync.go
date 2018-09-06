@@ -67,14 +67,17 @@ func (i *informer) sync(key string) error {
 		// Lookup the last saved state for the deleted object
 		_, ok := i.deletedObjects[key]
 		if !ok {
-			logrus.Errorf("No last known state found for deleted object (%s)", key)
+			logrus.Errorf("no last known state found for deleted object (%s)", key)
 			return nil
 		}
 		obj = i.deletedObjects[key]
 	}
 
 	unstructObj := obj.(*unstructured.Unstructured).DeepCopy()
-	object := k8sutil.RuntimeObjectFromUnstructured(unstructObj)
+	object, err := k8sutil.RuntimeObjectFromUnstructured(unstructObj)
+	if err != nil {
+		return err
+	}
 
 	event := Event{
 		Object:  object,
