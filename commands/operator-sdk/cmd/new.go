@@ -17,7 +17,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -26,7 +25,6 @@ import (
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/generate"
 	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
 	"github.com/operator-framework/operator-sdk/pkg/generator"
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/spf13/cobra"
 )
@@ -88,14 +86,14 @@ func newFunc(cmd *cobra.Command, args []string) {
 	}
 	pullDep()
 	generate.K8sCodegen(projectName)
-	c := &generator.Config{}
-	fp, err := ioutil.ReadFile("./" + projectName + "/config/config.yaml")
-	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to read config file %v: (%v)", configYaml, err))
-	}
-	if err = yaml.Unmarshal(fp, c); err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to unmarshal config file %v: (%v)", configYaml, err))
-	}
+	// c := &generator.Config{}
+	// fp, err := ioutil.ReadFile("./" + projectName + "/config/config.yaml")
+	// if err != nil {
+	// 	cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to read config file %v: (%v)", configYaml, err))
+	// }
+	// if err = yaml.Unmarshal(fp, c); err != nil {
+	// 	cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to unmarshal config file %v: (%v)", configYaml, err))
+	// }
 	//	if _, fileErr := os.Stat(c.ProjectName + "/deploy/operator.yaml"); os.IsNotExist(fileErr) {
 	//if renderErr := generator.RenderOperatorYaml(c, "REPLACE_IMAGE"); renderErr != nil {
 	//	cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/operator.yaml: (%v)", renderErr))
