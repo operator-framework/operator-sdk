@@ -54,6 +54,7 @@ $ cd app-operator
 
 # Build and push the app-operator image to a public registry such as quay.io
 $ operator-sdk build quay.io/example/app-operator
+$ sed -i 's/REPLACE_IMAGE/quay.io\/example\/app-operator/g' deploy/operator.yaml
 $ docker push quay.io/example/app-operator
 
 # Deploy the app-operator
