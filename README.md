@@ -65,7 +65,7 @@ $ cd app-operator
 # We use sed to replace the placeholder image name that is generated the creation point of the operator
 # The sed operation only needs to be down once during the first build
 $ operator-sdk build quay.io/example/app-operator
-$ sed -i 's/REPLACE_IMAGE/quay.io\/example\/app-operator/g' deploy/operator.yaml
+$ sed -i 's|REPLACE_IMAGE|quay.io/example/app-operator|g' deploy/operator.yaml
 $ docker push quay.io/example/app-operator
 
 # Deploy the app-operator
