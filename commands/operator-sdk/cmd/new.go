@@ -96,11 +96,11 @@ func newFunc(cmd *cobra.Command, args []string) {
 	if err = yaml.Unmarshal(fp, c); err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to unmarshal config file %v: (%v)", configYaml, err))
 	}
-	if _, fileErr := os.Stat(c.ProjectName + "/deploy/operator.yaml"); os.IsNotExist(fileErr) {
-		if renderErr := generator.RenderOperatorYaml(c, "REPLACE_IMAGE"); renderErr != nil {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/operator.yaml: (%v)", renderErr))
-		}
+	//	if _, fileErr := os.Stat(c.ProjectName + "/deploy/operator.yaml"); os.IsNotExist(fileErr) {
+	if renderErr := generator.RenderOperatorYaml(c, "REPLACE_IMAGE"); renderErr != nil {
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/operator.yaml: (%v)", renderErr))
 	}
+	//	}
 	initGit()
 }
 
