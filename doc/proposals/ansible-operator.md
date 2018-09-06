@@ -72,9 +72,9 @@ Optional: --defaults-file - A path to the defaults file to use to generate a new
 
 `operator-sdk build --type=ansible <image-name>` - This builds the operator image. The command calls ansible-galaxy install for the role dependencies and creates the image from the Dockerfile.
 
-`operator-sdk new --type ansible --source`  - This converts an ansible operator to a ansible operator. A user can now change the base ansible operator. This will also allow users to continue using their ansible code while also using the operator-sdk. This is intended for advanced users to allow developers full customization of their operator. The generated operator should now function the same as standard operator-sdk operators.
-* Creates the roles directory
-* Creates the watchers file.
+`operator-sdk new --type ansible --source`  - This converts an ansible operator to a golang operator. A user can now change the base ansible operator. This will also allow users to continue using their ansible code while also using the operator-sdk. This is intended for advanced users to allow developers full customization of their operator. The generated operator should now function the same as standard operator-sdk operators. This should be used by both new users without and existing ansible operator and users who want to manipulate the ansible operator golang source.
+* Creates the roles directory if one does not exist
+* Creates the watchers file if one does not exist.
 * Generate the same structure of a normal Operator-SDK
 * Generate the main file, that will run the same as the ansible-operator.
 * Generate a dockerfile that uses the watchers file and the ansible role as well as the built operator. The command uses all of the default values and does not attempt to reconcile the already created and used dockerfile. The command warns that the old dockerfile is not used.
