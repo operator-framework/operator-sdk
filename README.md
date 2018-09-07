@@ -83,6 +83,7 @@ busy-box   1/1       Running   0          50s
 
 # Cleanup
 $ kubectl delete -f deploy/cr.yaml
+$ kubectl delete -f deploy/crd.yaml
 $ kubectl delete -f deploy/operator.yaml
 $ kubectl delete -f deploy/rbac.yaml
 ```
