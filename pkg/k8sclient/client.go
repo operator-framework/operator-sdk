@@ -41,6 +41,9 @@ type resourceClientFactory struct {
 	kubeConfig *rest.Config
 }
 
+// Can be overridden at application startup to provide a custom rest configuration
+var CustomConfig *rest.Config
+
 var (
 	// this stores the singleton in a package local
 	singletonFactory *resourceClientFactory
@@ -124,16 +127,19 @@ func apiResource(gvk schema.GroupVersionKind, restMapper *discovery.DeferredDisc
 
 // mustNewKubeClientAndConfig returns the in-cluster config and kubernetes client
 // or if KUBERNETES_CONFIG is given an out of cluster config and client
+// or a custom client if a user defined config is provided
 func mustNewKubeClientAndConfig() (kubernetes.Interface, *rest.Config) {
-	var cfg *rest.Config
-	var err error
-	if os.Getenv(k8sutil.KubeConfigEnvVar) != "" {
-		cfg, err = outOfClusterConfig()
-	} else {
-		cfg, err = inClusterConfig()
-	}
-	if err != nil {
-		panic(err)
+	var cfg = CustomConfig
+	if cfg == nil {
+		var err error
+		if os.Getenv(k8sutil.KubeConfigEnvVar) != "" {
+			cfg, err = outOfClusterConfig()
+		} else {
+			cfg, err = inClusterConfig()
+		}
+		if err != nil {
+			panic(err)
+		}
 	}
 	return kubernetes.NewForConfigOrDie(cfg), cfg
 }
