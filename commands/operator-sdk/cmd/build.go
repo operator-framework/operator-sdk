@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 
 	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
 
@@ -56,18 +57,24 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	}
 
 	bcmd := exec.Command(build)
+	if runtime.GOOS == "windows" {
+		bcmd = exec.Command("bash", build)
+	}
 	o, err := bcmd.CombinedOutput()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to build: (%v)", string(o)))
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to build: (%v)", err))
 	}
 	fmt.Fprintln(os.Stdout, string(o))
 
 	image := args[0]
 	dbcmd := exec.Command(dockerBuild)
+	if runtime.GOOS == "windows" {
+		dbcmd = exec.Command("bash", dockerBuild)
+	}
 	dbcmd.Env = append(os.Environ(), fmt.Sprintf("IMAGE=%v", image))
 	o, err = dbcmd.CombinedOutput()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to output build image %v: (%v)", image, string(o)))
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to output build image %v: (%v)", image, err))
 	}
 	fmt.Fprintln(os.Stdout, string(o))
 }
