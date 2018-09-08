@@ -126,7 +126,8 @@ func repoPath() string {
 	// compute the repo path by stripping "$GOPATH/src/" from the path of the current directory.
 	rp := filepath.Join(string(wd[len(filepath.Join(gp, src)):]), projectName)
 	// strip any "/" prefix from the repo path.
-	return strings.TrimPrefix(rp, string(filepath.Separator))
+	wpath := strings.TrimPrefix(rp, string(filepath.Separator))
+	return strings.Replace(wpath, "\\", "/", -1)
 }
 
 func verifyFlags() {
