@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 
 	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
 
@@ -53,10 +54,13 @@ func k8sFunc(cmd *cobra.Command, args []string) {
 func K8sCodegen(projectDir string) {
 	fmt.Fprintln(os.Stdout, "Run code-generation for custom resources")
 	kcmd := exec.Command(k8sGenerated)
+	if runtime.GOOS == "windows" {
+		kcmd = exec.Command("bash", k8sGenerated)
+	}
 	kcmd.Dir = projectDir
 	o, err := kcmd.CombinedOutput()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to perform code-generation for CustomResources: (%v)", string(o)))
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to perform code-generation for CustomResources: (%s)", err))
 	}
 	fmt.Fprintln(os.Stdout, string(o))
 }
