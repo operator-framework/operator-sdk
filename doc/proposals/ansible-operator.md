@@ -41,7 +41,7 @@ Packages will be added to the operator-sdk. These packages are designed to be us
 ### Commands
 We are adding and updating existing commands to accommodate the ansible operator.  Changes to the `cmd` package as well as changes to the generator are needed.
 
-`operator-sdk new --type ansible --kind <kind> --api-version <group/version>`  This will be a new generation command under the hood. We will:
+`operator-sdk new <project-name> --type ansible --kind <kind> --api-version <group/version>`  This will be a new generation command under the hood. We will:
 * Create a new ansible role in the roles directory
 * Create a new watchers file. The role and GVK are defaulted based on input to the command.
 * A CRD is generated. This CRD does not have any validations defined.
