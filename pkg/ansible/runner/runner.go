@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com//operator-framework/operator-sdk/pkg/ansible/runner/internal/inputdir"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/internal/paramconv"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/eventapi"
+	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/internal/inputdir"
 	"github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
