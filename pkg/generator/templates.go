@@ -616,28 +616,20 @@ const goTestScript = `#!/bin/sh
 memcached-operator-test -test.parallel=1 -test.failfast -root=/ -kubeconfig=incluster -namespacedMan=namespaced.yaml -test.v
 `
 
-const standardDockerFileTmpl = `FROM alpine:3.6
+const dockerFileTmpl = `FROM alpine:3.6
 
 RUN adduser -D {{.ProjectName}}
 USER {{.ProjectName}}
 
 ADD tmp/_output/bin/{{.ProjectName}} /usr/local/bin/{{.ProjectName}}
-
-# just keep this to ignore warnings
-ARG NAMESPACEDMAN
 `
 
-const testingDockerFileTmpl = `FROM alpine:3.6
+const testingDockerFileTmpl = `ARG BASEIMAGE
 
-RUN adduser -D {{.ProjectName}}
-USER {{.ProjectName}}
+FROM ${BASEIMAGE}
 
-ADD tmp/_output/bin/{{.ProjectName}} /usr/local/bin/{{.ProjectName}}
-
-# just keep this to ignore warnings
+ADD tmp/_output/bin/memcached-operator-test /usr/local/bin/memcached-operator-test
 ARG NAMESPACEDMAN
-
-ADD tmp/_output/bin/{{.ProjectName}}-test /usr/local/bin/{{.ProjectName}}-test
 ADD $NAMESPACEDMAN /namespaced.yaml
 ADD tmp/build/go-test.sh /go-test.sh
 `

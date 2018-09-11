@@ -39,7 +39,7 @@ const (
 	tmpDir        = "tmp"
 	buildDir      = tmpDir + "/build"
 	codegenDir    = tmpDir + "/codegen"
-	dockerDir     = buildDir + "/dockerfiles"
+	dockerTestDir = buildDir + "/test-framework"
 	pkgDir        = "pkg"
 	apisDir       = pkgDir + "/apis"
 	stubDir       = pkgDir + "/stub"
@@ -53,7 +53,7 @@ const (
 	types              = "types.go"
 	build              = "build.sh"
 	dockerBuild        = "docker_build.sh"
-	standardDockerfile = "Dockerfile_Standard"
+	dockerfile         = "Dockerfile"
 	testingDockerfile  = "Dockerfile_Testing"
 	goTest             = "go-test.sh"
 	boilerplate        = "boilerplate.go.txt"
@@ -358,11 +358,11 @@ func renderBuildFiles(buildDir, repoPath, projectName string) error {
 		ProjectName: projectName,
 	}
 
-	if err := renderWriteFile(filepath.Join(buildDir, "dockerfiles", standardDockerfile), "tmp/build/dockerfiles/Dockerfile_Standard", standardDockerFileTmpl, dTd); err != nil {
+	if err := renderWriteFile(filepath.Join(buildDir, dockerfile), "tmp/build/Dockerfile", dockerFileTmpl, dTd); err != nil {
 		return err
 	}
 
-	if err := renderWriteFile(filepath.Join(buildDir, "dockerfiles", testingDockerfile), "tmp/build/dockerfiles/Dockerfile_Testing", testingDockerFileTmpl, dTd); err != nil {
+	if err := renderWriteFile(filepath.Join(buildDir, "test-framework", testingDockerfile), "tmp/build/test-framework/Dockerfile", testingDockerFileTmpl, dTd); err != nil {
 		return err
 	}
 
@@ -495,7 +495,7 @@ func (g *Generator) generateDirStructure() error {
 		filepath.Join(g.projectName, olmCatalogDir),
 		filepath.Join(g.projectName, buildDir),
 		filepath.Join(g.projectName, codegenDir),
-		filepath.Join(g.projectName, dockerDir),
+		filepath.Join(g.projectName, dockerTestDir),
 		filepath.Join(g.projectName, versionDir),
 		filepath.Join(g.projectName, apisDir, apiDirName(g.apiVersion), version(g.apiVersion)),
 		filepath.Join(g.projectName, stubDir),

@@ -127,9 +127,8 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) string {
 }
 
 const (
-	build       = "./tmp/build/build.sh"
-	dockerBuild = "./tmp/build/docker_build.sh"
-	configYaml  = "./config/config.yaml"
+	build      = "./tmp/build/build.sh"
+	configYaml = "./config/config.yaml"
 )
 
 func buildFunc(cmd *cobra.Command, args []string) {
@@ -149,6 +148,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	namespacedRolesBytes := make([]byte, 0)
 	genWarning := ""
 	image := args[0]
+	intermediateImageName := image
 	if enableTests {
 		if namespacedManBuild == "" {
 			os.Mkdir("deploy/test", os.FileMode(int(0775)))
@@ -191,20 +191,24 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		if err = generator.RenderTestYaml(c, string(global), string(namespacedRolesBytes), image); err != nil {
 			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/test-gen.yaml: (%v)", err))
 		}
-		os.Link("tmp/build/dockerfiles/Dockerfile_Tests", "tmp/build/Dockerfile")
-	} else {
-		os.Link("tmp/build/dockerfiles/Dockerfile_Standard", "tmp/build/Dockerfile")
+		intermediateImageName += "-intermediate"
 	}
-	defer os.Remove("tmp/build/Dockerfile")
-	dbcmd := exec.Command(dockerBuild)
-	dbcmd.Env = append(os.Environ(), fmt.Sprintf("IMAGE=%v", image))
-	dbcmd.Env = append(dbcmd.Env, fmt.Sprintf("NAMESPACEDMAN=%v", namespacedManBuild))
+	dbcmd := exec.Command("docker", "build", ".", "-f", "tmp/build/Dockerfile", "-t", intermediateImageName)
 	o, err = dbcmd.CombinedOutput()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to output build image %v: (%v)", image, string(o)))
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to output build image %v: (%v)", intermediateImageName, string(o)))
 	}
 	fmt.Fprintln(os.Stdout, string(o))
-	if genWarning != "" {
-		fmt.Printf("%s\n", genWarning)
+
+	if enableTests {
+		testDbcmd := exec.Command("docker", "build", ".", "-f", "tmp/build/test-framework/Dockerfile", "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+intermediateImageName)
+		o, err = testDbcmd.CombinedOutput()
+		if err != nil {
+			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to output build image %v: (%v)", image, string(o)))
+		}
+		fmt.Fprintln(os.Stdout, string(o))
+		if genWarning != "" {
+			fmt.Printf("%s\n", genWarning)
+		}
 	}
 }
