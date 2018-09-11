@@ -22,6 +22,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
 	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
@@ -135,6 +136,7 @@ func renderTestManifest(image string) {
 const (
 	build      = "./tmp/build/build.sh"
 	configYaml = "./config/config.yaml"
+	mainGo     = "./cmd/%s/main.go"
 )
 
 func buildFunc(cmd *cobra.Command, args []string) {
@@ -142,14 +144,15 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("build command needs exactly 1 argument"))
 	}
 
-	bcmd := exec.Command(build)
-	bcmd.Env = append(os.Environ(), fmt.Sprintf("TEST_LOCATION=%v", testLocationBuild))
-	bcmd.Env = append(bcmd.Env, fmt.Sprintf("ENABLE_TESTS=%v", enableTests))
-	o, err := bcmd.CombinedOutput()
-	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to build: (%v)", string(o)))
+	// Don't need to buld go code if Ansible Operator
+	if buildCmd() {
+		bcmd := exec.Command(build)
+		o, err := bcmd.CombinedOutput()
+		if err != nil {
+			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to build: (%v)", string(o)))
+		}
+		fmt.Fprintln(os.Stdout, string(o))
 	}
-	fmt.Fprintln(os.Stdout, string(o))
 
 	image := args[0]
 	baseImageName := image
@@ -157,7 +160,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		baseImageName += "-intermediate"
 	}
 	dbcmd := exec.Command("docker", "build", ".", "-f", "tmp/build/Dockerfile", "-t", baseImageName)
-	o, err = dbcmd.CombinedOutput()
+	o, err := dbcmd.CombinedOutput()
 	if err != nil {
 		if enableTests {
 			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to build intermediate image for %s image: (%s)", image, string(o)))
@@ -177,4 +180,17 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		// create test-pod.yaml as well as check image name of deployments in namespaced manifest
 		renderTestManifest(image)
 	}
+}
+
+func buildCmd() bool {
+	dir, err := os.Getwd()
+	if err != nil {
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to get current working dir: %v", err))
+	}
+	dirSplit := strings.Split(dir, "/")
+	projectName := dirSplit[len(dirSplit)-1]
+	if _, err = os.Stat(fmt.Sprintf(mainGo, projectName)); err == nil {
+		return true
+	}
+	return false
 }
