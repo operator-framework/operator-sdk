@@ -35,6 +35,13 @@ script:
 - make install
 - go test ./pkg/...
 - go test ./test/e2e/...
+- cd test/test-framework
+# test framework with defaults
+- operator-sdk test -t .
+# test operator-sdk test flags
+- operator-sdk test -t . -g deploy/crd.yaml -n deploy/namespace-init.yaml -f "-parallel 1" -k $HOME/.kube/config
+# go back to project root
+- cd ../..
 - go vet ./...
 - ./hack/check_license.sh
 - ./hack/check_error_case.sh
