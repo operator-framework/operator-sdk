@@ -8,28 +8,18 @@ services:
 go:
 - 1.10.1
 
-before_script:
-- curl -Lo dep https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64 && chmod +x dep && sudo mv dep /usr/local/bin/
-- dep ensure
-# Download kubectl, which is a requirement for using minikube.
-- curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.10.1/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
-# Configure insecure docker registry for openshift
-- sudo service docker stop
-- sudo sed -i 's/DOCKER_OPTS=\"/DOCKER_OPTS=\"--insecure-registry 172.30.0.0\/16 /' /etc/default/docker
-- sudo service docker start
-# Download oc to spin up openshift on local docker instance
-- curl -Lo oc.tar.gz https://github.com/openshift/origin/releases/download/v3.10.0/openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit.tar.gz
-# Put oc binary in path
-- tar xvzOf oc.tar.gz openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit/oc > oc && chmod +x oc && sudo mv oc /usr/local/bin/
-# Start oc cluster
-- oc cluster up
-# Become cluster admin
-- oc login -u system:admin
-# Create example operator directory
-- mkdir -p $GOPATH/src/github.com/example-inc
+jobs:
+  include:
+    - before_script: hack/ci/setup-minikube.sh
+      env: CLUSTER=minikube
+    - before_script: hack/ci/setup-openshift.sh
+      env: CLUSTER=openshift
 
 install: 
-- go get -t -d ./...
+- curl -Lo dep https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64 && chmod +x dep && sudo mv dep /usr/local/bin/
+- dep ensure
+# Create example operator directory
+- mkdir -p $GOPATH/src/github.com/example-inc
 
 script:
 - make install
@@ -47,10 +37,7 @@ script:
 - ./hack/check_error_case.sh
 
 after_success:
-- echo 'Build succeeded, operator was generated, memcached operator is running on minikube, and unit/integration tests pass'
+- echo 'Build succeeded, operator was generated, memcached operator is running on $CLUSTER, and unit/integration tests pass'
 
 after_failure:
-- echo 'Build failed, operator failed to generate, memcached operator is not running on minikube, or unit/integration tests failed'
-- kubectl get deployment
-- kubectl get pods
-- kubectl describe pods
+- echo 'Build failed, operator failed to generate, memcached operator is not running on $CLUSTER, or unit/integration tests failed'
