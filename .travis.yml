@@ -11,7 +11,9 @@ go:
 jobs:
   include:
     - before_script: hack/ci/setup-minikube.sh
-      env: CLUSTER=minikube
+      env:
+        - CLUSTER=minikube
+        - CHANGE_MINIKUBE_NONE_USER=true
     - before_script: hack/ci/setup-openshift.sh
       env: CLUSTER=openshift
 
