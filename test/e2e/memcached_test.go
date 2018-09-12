@@ -162,7 +162,6 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx framework.Test
 }
 
 func MemcachedLocal(t *testing.T) {
-	t.Parallel()
 	// get global framework variables
 	f := framework.Global
 	ctx := f.NewTestCtx(t)
@@ -186,7 +185,7 @@ func MemcachedLocal(t *testing.T) {
 	ctx.AddFinalizerFn(func() error { return cmd.Process.Signal(os.Interrupt) })
 
 	// wait for operator to start (may take a minute to compile the command...)
-	err = wait.Poll(time.Second*5, time.Second*80, func() (done bool, err error) {
+	err = wait.Poll(time.Second*5, time.Second*100, func() (done bool, err error) {
 		file, err := ioutil.ReadFile("stderr.txt")
 		if err != nil {
 			return false, err
@@ -197,7 +196,7 @@ func MemcachedLocal(t *testing.T) {
 		return true, nil
 	})
 	if err != nil {
-		t.Fatalf("local operator not ready after 60 seconds: %v\n", err)
+		t.Fatalf("local operator not ready after 100 seconds: %v\n", err)
 	}
 
 	if err = memcachedScaleTest(t, f, ctx); err != nil {
@@ -206,7 +205,6 @@ func MemcachedLocal(t *testing.T) {
 }
 
 func MemcachedCluster(t *testing.T) {
-	t.Parallel()
 	// get global framework variables
 	f := framework.Global
 	ctx := f.NewTestCtx(t)
