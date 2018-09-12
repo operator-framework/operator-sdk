@@ -79,7 +79,7 @@ const (
 	operatorTmplName   = "deploy/operator.yaml"
 	rbacTmplName       = "deploy/rbac.yaml"
 	crTmplName         = "deploy/cr.yaml"
-	testYamlName       = "deploy/test-gen.yaml"
+	testYamlName       = "deploy/test-pod.yaml"
 	pluralSuffix       = "s"
 )
 
@@ -250,14 +250,12 @@ func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
 	return renderWriteFile(filepath.Join(deployDir, "operator.yaml"), operatorTmplName, operatorYamlTmpl, opTd)
 }
 
-func RenderTestYaml(c *Config, globalManifest, extraRoles, image string) error {
+func RenderTestYaml(c *Config, image string) error {
 	opTd := tmplData{
-		GlobalManifest: globalManifest,
-		ExtraRoles:     extraRoles,
-		ProjectName:    c.ProjectName,
-		Image:          image,
+		ProjectName: c.ProjectName,
+		Image:       image,
 	}
-	return renderWriteFile(filepath.Join(deployDir, "test-gen.yaml"), testYamlName, testYamlTmpl, opTd)
+	return renderWriteFile(filepath.Join(deployDir, "test-pod.yaml"), testYamlName, testYamlTmpl, opTd)
 }
 
 // RenderOlmCatalog generates catalog manifests "deploy/olm-catalog/*"
@@ -479,10 +477,6 @@ type tmplData struct {
 	CRDVersion     string
 	CSVName        string
 	CatalogVersion string
-
-	// global manifest used for testing
-	GlobalManifest string
-	ExtraRoles     string
 }
 
 // Creates all the necesary directories for the generated files

@@ -424,34 +424,7 @@ spec:
   version: {{.Version}}
 `
 
-const testYamlTmpl = `{{.GlobalManifest}}
----
-kind: Role
-apiVersion: rbac.authorization.k8s.io/v1beta1
-metadata:
-  name: {{.ProjectName}}-test
-rules:
-- apiGroups:
-  - "rbac.authorization.k8s.io"
-  resources:
-  - "*"
-  verbs:
-  - "*"
-{{.ExtraRoles}}
----
-kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
-metadata:
-  name: default-account-{{.ProjectName}}-test
-subjects:
-- kind: ServiceAccount
-  name: default
-roleRef:
-  kind: Role
-  name: {{.ProjectName}}-test
-  apiGroup: rbac.authorization.k8s.io
----
-apiVersion: v1
+const testYamlTmpl = `apiVersion: v1
 kind: Pod
 metadata:
   name: {{.ProjectName}}-test

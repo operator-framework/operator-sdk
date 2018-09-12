@@ -32,7 +32,6 @@ import (
 
 var (
 	namespacedManBuild string
-	globalManBuild     string
 	testLocationBuild  string
 	enableTests        bool
 )
@@ -58,28 +57,7 @@ For example:
 	buildCmd.Flags().BoolVarP(&enableTests, "enable-tests", "e", false, "Enable in-cluster testing by adding test binary to the image")
 	buildCmd.Flags().StringVarP(&testLocationBuild, "test-location", "t", "./test/e2e", "Location of tests")
 	buildCmd.Flags().StringVarP(&namespacedManBuild, "namespaced", "n", "", "Path of namespaced resources for tests")
-	buildCmd.Flags().StringVarP(&globalManBuild, "global", "g", "deploy/crd.yaml", "Path of global resources for tests")
 	return buildCmd
-}
-
-func parseRoles(yamlFile []byte) ([]byte, error) {
-	res := make([]byte, 0)
-	yamlSplit := bytes.Split(yamlFile, []byte("\n---\n"))
-	for _, yamlSpec := range yamlSplit {
-		yamlMap := make(map[string]interface{})
-		err := yaml.Unmarshal(yamlSpec, &yamlMap)
-		if err != nil {
-			return nil, err
-		}
-		if yamlMap["kind"].(string) == "Role" {
-			ruleBytes, err := yaml.Marshal(yamlMap["rules"])
-			if err != nil {
-				return nil, err
-			}
-			res = append(res, ruleBytes...)
-		}
-	}
-	return res, nil
 }
 
 func verifyDeploymentImage(yamlFile []byte, imageName string) string {
@@ -124,48 +102,18 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) string {
 	return warningMessages
 }
 
-func renderTestManifests(image string) string {
-	namespacedRolesBytes := make([]byte, 0)
+func renderTestManifest(image string) string {
 	if namespacedManBuild == "" {
-		os.Mkdir("deploy/test", os.FileMode(int(0775)))
-		namespacedManBuild = "deploy/test/namespace-manifests.yaml"
-		rbac, err := ioutil.ReadFile("deploy/rbac.yaml")
-		if err != nil {
-			log.Fatalf("could not find rbac manifest: %v", err)
-		}
-		operator, err := ioutil.ReadFile("deploy/operator.yaml")
-		if err != nil {
-			log.Fatalf("could not find operator manifest: %v", err)
-		}
-		combined := append(rbac, []byte("\n---\n")...)
-		combined = append(combined, operator...)
-		err = ioutil.WriteFile(namespacedManBuild, combined, os.FileMode(int(0664)))
-		if err != nil {
-			log.Fatalf("could not create temporary namespaced manifest file: %v", err)
-		}
-		defer func() {
-			err := os.Remove(namespacedManBuild)
-			if err != nil {
-				log.Fatalf("could not delete temporary namespace manifest file")
-			}
-		}()
+		namespacedManBuild = "deploy/operator.yaml"
 	}
 	namespacedBytes, err := ioutil.ReadFile(namespacedManBuild)
 	if err != nil {
 		log.Fatalf("could not read rbac manifest: %v", err)
 	}
-	namespacedRolesBytes, err = parseRoles(namespacedBytes)
-	if err != nil {
-		log.Fatalf("could not parse namespaced manifest file for rbac roles: %v", err)
-	}
 	genWarning := verifyDeploymentImage(namespacedBytes, image)
-	global, err := ioutil.ReadFile(globalManBuild)
-	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to read global manifest: (%v)", err))
-	}
 	c := cmdutil.GetConfig()
-	if err = generator.RenderTestYaml(c, string(global), string(namespacedRolesBytes), image); err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/test-gen.yaml: (%v)", err))
+	if err = generator.RenderTestYaml(c, image); err != nil {
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/test-pod.yaml: (%v)", err))
 	}
 	return genWarning
 }
@@ -193,7 +141,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	image := args[0]
 	intermediateImageName := image
 	if enableTests {
-		genWarning = renderTestManifests(image)
+		genWarning = renderTestManifest(image)
 		intermediateImageName += "-intermediate"
 	}
 	dbcmd := exec.Command("docker", "build", ".", "-f", "tmp/build/Dockerfile", "-t", intermediateImageName)
