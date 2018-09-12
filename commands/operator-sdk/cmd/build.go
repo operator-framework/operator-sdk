@@ -33,7 +33,6 @@ import (
 var (
 	namespacedManBuild string
 	globalManBuild     string
-	rbacManBuild       string
 	testLocationBuild  string
 	enableTests        bool
 )
@@ -60,7 +59,6 @@ For example:
 	buildCmd.Flags().StringVarP(&testLocationBuild, "test-location", "t", "./test/e2e", "Location of tests")
 	buildCmd.Flags().StringVarP(&namespacedManBuild, "namespaced", "n", "", "Path of namespaced resources for tests")
 	buildCmd.Flags().StringVarP(&globalManBuild, "global", "g", "deploy/crd.yaml", "Path of global resources for tests")
-	buildCmd.Flags().StringVarP(&rbacManBuild, "rbac", "r", "deploy/rbac.yaml", "Path of global resources for tests")
 	return buildCmd
 }
 
