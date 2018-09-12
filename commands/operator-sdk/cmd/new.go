@@ -15,51 +15,40 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-
-	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
-	"github.com/operator-framework/operator-sdk/pkg/generator"
 
 	"github.com/spf13/cobra"
 )
 
 func NewNewCmd() *cobra.Command {
 	newCmd := &cobra.Command{
-		Use:   "new <project-name> [required-flags]",
+		Use:   "new <project-name>",
 		Short: "Creates a new operator application",
 		Long: `The operator-sdk new command creates a new operator application and 
 generates a default directory layout based on the input <project-name>. 
 
 <project-name> is the project name of the new operator. (e.g app-operator)
 
-	--api-version and --kind are required flags to generate the new operator application.
-
 For example:
 	$ mkdir $GOPATH/src/github.com/example.com/
 	$ cd $GOPATH/src/github.com/example.com/
-	$ operator-sdk new app-operator --api-version=app.example.com/v1alpha1 --kind=AppService
+	$ operator-sdk new app-operator
 generates a skeletal app-operator application in $GOPATH/src/github.com/example.com/app-operator.
 `,
 		Run: newFunc,
 	}
 
-	newCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
-	newCmd.MarkFlagRequired("api-version")
-	newCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. (e.g AppService)")
-	newCmd.MarkFlagRequired("kind")
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
 
 	return newCmd
 }
 
 var (
-	apiVersion  string
-	kind        string
 	projectName string
 	skipGit     bool
 )
@@ -72,25 +61,20 @@ const (
 )
 
 func newFunc(cmd *cobra.Command, args []string) {
-	if len(args) != 1 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("new command needs 1 argument."))
-	}
 	parse(args)
 	mustBeNewProject()
-	verifyFlags()
-	g := generator.NewGenerator(apiVersion, kind, projectName, repoPath())
-	err := g.Render()
-	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to create project %v: %v", projectName, err))
-	}
+	// TODO: codegen
 	pullDep()
 	initGit()
 }
 
 func parse(args []string) {
+	if len(args) != 1 {
+		log.Fatal("new command needs 1 argument")
+	}
 	projectName = args[0]
 	if len(projectName) == 0 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("project-name must not be empty"))
+		log.Fatal("project-name must not be empty")
 	}
 }
 
@@ -103,10 +87,10 @@ func mustBeNewProject() {
 		return
 	}
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to determine if project (%v) exists", projectName))
+		log.Fatalf("failed to determine if project (%v) exists", projectName)
 	}
 	if stat.IsDir() {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("project (%v) exists. please use a different project name or delete the existing one", projectName))
+		log.Fatalf("project (%v) exists. please use a different project name or delete the existing one", projectName)
 	}
 }
 
@@ -114,12 +98,12 @@ func mustBeNewProject() {
 func repoPath() string {
 	gp := os.Getenv(gopath)
 	if len(gp) == 0 {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("$GOPATH env not set"))
+		log.Fatal("$GOPATH env not set")
 	}
 	wd := mustGetwd()
 	// check if this project's repository path is rooted under $GOPATH
 	if !strings.HasPrefix(wd, gp) {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("project's repository path (%v) is not rooted under GOPATH (%v)", wd, gp))
+		log.Fatalf("project's repository path (%v) is not rooted under GOPATH (%v)", wd, gp)
 	}
 	// compute the repo path by stripping "$GOPATH/src/" from the path of the current directory.
 	rp := filepath.Join(string(wd[len(filepath.Join(gp, src)):]), projectName)
@@ -127,26 +111,10 @@ func repoPath() string {
 	return strings.TrimPrefix(rp, string(filepath.Separator))
 }
 
-func verifyFlags() {
-	if len(apiVersion) == 0 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--api-version must not have empty value"))
-	}
-	if len(kind) == 0 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--kind must not have empty value"))
-	}
-	kindFirstLetter := string(kind[0])
-	if kindFirstLetter != strings.ToUpper(kindFirstLetter) {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--kind must start with an uppercase letter"))
-	}
-	if strings.Count(apiVersion, "/") != 1 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion))
-	}
-}
-
 func mustGetwd() string {
 	wd, err := os.Getwd()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to determine the full path of the current directory: %v", err))
+		log.Fatalf("failed to determine the full path of the current directory: %v", err)
 	}
 	return wd
 }
@@ -158,14 +126,14 @@ func execCmd(stdout *os.File, cmd string, args ...string) {
 	dc.Stderr = os.Stderr
 	err := dc.Run()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to exec %s %#v: %v", cmd, args, err))
+		log.Fatalf("failed to exec %s %#v: %v", cmd, args, err)
 	}
 }
 
 func pullDep() {
 	_, err := exec.LookPath(dep)
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("looking for dep in $PATH: %v", err))
+		log.Fatalf("looking for dep in $PATH: %v", err)
 	}
 	fmt.Fprintln(os.Stdout, "Run dep ensure ...")
 	execCmd(os.Stdout, dep, ensureCmd, "-v")
