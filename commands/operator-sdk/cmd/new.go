@@ -17,6 +17,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -31,28 +32,24 @@ import (
 
 func NewNewCmd() *cobra.Command {
 	newCmd := &cobra.Command{
-		Use:   "new <project-name> [required-flags]",
+		Use:   "new <project-name>",
 		Short: "Creates a new operator application",
 		Long: `The operator-sdk new command creates a new operator application and 
 generates a default directory layout based on the input <project-name>. 
 
 <project-name> is the project name of the new operator. (e.g app-operator)
 
-	--api-version and --kind are required flags to generate the new operator application.
-
 For example:
 	$ mkdir $GOPATH/src/github.com/example.com/
 	$ cd $GOPATH/src/github.com/example.com/
-	$ operator-sdk new app-operator --api-version=app.example.com/v1alpha1 --kind=AppService
+	$ operator-sdk new app-operator
 generates a skeletal app-operator application in $GOPATH/src/github.com/example.com/app-operator.
 `,
 		Run: newFunc,
 	}
 
 	newCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
-	newCmd.MarkFlagRequired("api-version")
 	newCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. (e.g AppService)")
-	newCmd.MarkFlagRequired("kind")
 	newCmd.Flags().StringVar(&operatorType, "type", "go", "Type of operator to initialize (e.g \"ansible\")")
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
 	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false, "Generate a playbook skeleton. (Only used for --type ansible)")
@@ -92,15 +89,18 @@ func newFunc(cmd *cobra.Command, args []string) {
 	}
 	if operatorType == goOperatorType {
 		pullDep()
-		generate.K8sCodegen(projectName)
+		generate.K8sCodegen()
 	}
 	initGit()
 }
 
 func parse(args []string) {
+	if len(args) != 1 {
+		log.Fatal("new command needs 1 argument")
+	}
 	projectName = args[0]
 	if len(projectName) == 0 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("project-name must not be empty"))
+		log.Fatal("project-name must not be empty")
 	}
 }
 
@@ -113,10 +113,10 @@ func mustBeNewProject() {
 		return
 	}
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to determine if project (%v) exists", projectName))
+		log.Fatalf("failed to determine if project (%v) exists", projectName)
 	}
 	if stat.IsDir() {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("project (%v) exists. please use a different project name or delete the existing one", projectName))
+		log.Fatalf("project (%v) exists. please use a different project name or delete the existing one", projectName)
 	}
 }
 
@@ -143,31 +143,33 @@ func repoPath() string {
 }
 
 func verifyFlags() {
-	if len(apiVersion) == 0 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--api-version must not have empty value"))
-	}
-	if len(kind) == 0 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--kind must not have empty value"))
-	}
 	if operatorType != goOperatorType && operatorType != ansibleOperatorType {
 		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--type can only be `go` or `ansible`"))
 	}
 	if operatorType != ansibleOperatorType && generatePlaybook {
 		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--generate-playbook can only be used with --type `ansible`"))
 	}
-	kindFirstLetter := string(kind[0])
-	if kindFirstLetter != strings.ToUpper(kindFirstLetter) {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--kind must start with an uppercase letter"))
-	}
-	if strings.Count(apiVersion, "/") != 1 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion))
+	if operatorType != goOperatorType {
+		if len(apiVersion) == 0 {
+			cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--api-version must not have empty value"))
+		}
+		if len(kind) == 0 {
+			cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--kind must not have empty value"))
+		}
+		kindFirstLetter := string(kind[0])
+		if kindFirstLetter != strings.ToUpper(kindFirstLetter) {
+			cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--kind must start with an uppercase letter"))
+		}
+		if strings.Count(apiVersion, "/") != 1 {
+			cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion))
+		}
 	}
 }
 
 func mustGetwd() string {
 	wd, err := os.Getwd()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to determine the full path of the current directory: %v", err))
+		log.Fatalf("failed to determine the full path of the current directory: %v", err)
 	}
 	return wd
 }
@@ -179,14 +181,14 @@ func execCmd(stdout *os.File, cmd string, args ...string) {
 	dc.Stderr = os.Stderr
 	err := dc.Run()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to exec %s %#v: %v", cmd, args, err))
+		log.Fatalf("failed to exec %s %#v: %v", cmd, args, err)
 	}
 }
 
 func pullDep() {
 	_, err := exec.LookPath(dep)
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("looking for dep in $PATH: %v", err))
+		log.Fatalf("looking for dep in $PATH: %v", err)
 	}
 	fmt.Fprintln(os.Stdout, "Run dep ensure ...")
 	execCmd(os.Stdout, dep, ensureCmd, "-v")
