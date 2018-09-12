@@ -124,6 +124,52 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) string {
 	return warningMessages
 }
 
+func renderTestManifests(image string) string {
+	namespacedRolesBytes := make([]byte, 0)
+	if namespacedManBuild == "" {
+		os.Mkdir("deploy/test", os.FileMode(int(0775)))
+		namespacedManBuild = "deploy/test/namespace-manifests.yaml"
+		rbac, err := ioutil.ReadFile("deploy/rbac.yaml")
+		if err != nil {
+			log.Fatalf("could not find rbac manifest: %v", err)
+		}
+		operator, err := ioutil.ReadFile("deploy/operator.yaml")
+		if err != nil {
+			log.Fatalf("could not find operator manifest: %v", err)
+		}
+		combined := append(rbac, []byte("\n---\n")...)
+		combined = append(combined, operator...)
+		err = ioutil.WriteFile(namespacedManBuild, combined, os.FileMode(int(0664)))
+		if err != nil {
+			log.Fatalf("could not create temporary namespaced manifest file: %v", err)
+		}
+		defer func() {
+			err := os.Remove(namespacedManBuild)
+			if err != nil {
+				log.Fatalf("could not delete temporary namespace manifest file")
+			}
+		}()
+	}
+	namespacedBytes, err := ioutil.ReadFile(namespacedManBuild)
+	if err != nil {
+		log.Fatalf("could not read rbac manifest: %v", err)
+	}
+	namespacedRolesBytes, err = parseRoles(namespacedBytes)
+	if err != nil {
+		log.Fatalf("could not parse namespaced manifest file for rbac roles: %v", err)
+	}
+	genWarning := verifyDeploymentImage(namespacedBytes, image)
+	global, err := ioutil.ReadFile(globalManBuild)
+	if err != nil {
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to read global manifest: (%v)", err))
+	}
+	c := cmdutil.GetConfig()
+	if err = generator.RenderTestYaml(c, string(global), string(namespacedRolesBytes), image); err != nil {
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/test-gen.yaml: (%v)", err))
+	}
+	return genWarning
+}
+
 const (
 	build      = "./tmp/build/build.sh"
 	configYaml = "./config/config.yaml"
@@ -143,52 +189,11 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	}
 	fmt.Fprintln(os.Stdout, string(o))
 
-	namespacedRolesBytes := make([]byte, 0)
 	genWarning := ""
 	image := args[0]
 	intermediateImageName := image
 	if enableTests {
-		if namespacedManBuild == "" {
-			os.Mkdir("deploy/test", os.FileMode(int(0775)))
-			namespacedManBuild = "deploy/test/namespace-manifests.yaml"
-			rbac, err := ioutil.ReadFile("deploy/rbac.yaml")
-			if err != nil {
-				log.Fatalf("could not find rbac manifest: %v", err)
-			}
-			operator, err := ioutil.ReadFile("deploy/operator.yaml")
-			if err != nil {
-				log.Fatalf("could not find operator manifest: %v", err)
-			}
-			combined := append(rbac, []byte("\n---\n")...)
-			combined = append(combined, operator...)
-			err = ioutil.WriteFile(namespacedManBuild, combined, os.FileMode(int(0664)))
-			if err != nil {
-				log.Fatalf("could not create temporary namespaced manifest file: %v", err)
-			}
-			defer func() {
-				err := os.Remove(namespacedManBuild)
-				if err != nil {
-					log.Fatalf("could not delete temporary namespace manifest file")
-				}
-			}()
-		}
-		namespacedBytes, err := ioutil.ReadFile(namespacedManBuild)
-		if err != nil {
-			log.Fatalf("could not read rbac manifest: %v", err)
-		}
-		namespacedRolesBytes, err = parseRoles(namespacedBytes)
-		if err != nil {
-			log.Fatalf("could not parse namespaced manifest file for rbac roles: %v", err)
-		}
-		genWarning = verifyDeploymentImage(namespacedBytes, image)
-		global, err := ioutil.ReadFile(globalManBuild)
-		if err != nil {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to read global manifest: (%v)", err))
-		}
-		c := cmdutil.GetConfig()
-		if err = generator.RenderTestYaml(c, string(global), string(namespacedRolesBytes), image); err != nil {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/test-gen.yaml: (%v)", err))
-		}
+		genWarning = renderTestManifests(image)
 		intermediateImageName += "-intermediate"
 	}
 	dbcmd := exec.Command("docker", "build", ".", "-f", "tmp/build/Dockerfile", "-t", intermediateImageName)
