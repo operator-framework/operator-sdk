@@ -17,7 +17,7 @@ package scaffold
 import (
 	"io"
 
-	yaml "gopkg.in/yaml.v2"
+	"text/template"
 )
 
 type cmd struct {
@@ -34,16 +34,16 @@ type CmdInput struct {
 }
 
 func (c *cmd) Render(w io.Writer) error {
-	o, err := yaml.Marshal(c.cmdInput)
+	t := template.New("main.go")
+	t, err := t.Parse(mainTmpl)
 	if err != nil {
 		return err
 	}
 
-	_, err = w.Write(o)
-	return err
+	return t.Execute(w, c.cmdInput)
 }
 
-const main_tml = `package main
+const mainTmpl = `package main
 
 import (
 	"flag"
