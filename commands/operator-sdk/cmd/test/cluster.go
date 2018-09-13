@@ -18,10 +18,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"os/exec"
 	"time"
-
-	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
 
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
@@ -31,16 +28,15 @@ import (
 )
 
 var (
-	testNamespace             string
-	kubeconfigCluster         string
-	globalManifestPathCluster string
+	testNamespace     string
+	kubeconfigCluster string
 )
 
 func NewTestClusterCmd() *cobra.Command {
 	testCmd := &cobra.Command{
 		Use:   "cluster <image name> [flags]",
 		Short: "Run End-To-End tests using image with embedded test binary",
-		Run:   testClusterFunc,
+		RunE:  testClusterFunc,
 	}
 	defaultKubeConfig := ""
 	homedir, ok := os.LookupEnv("HOME")
@@ -49,28 +45,13 @@ func NewTestClusterCmd() *cobra.Command {
 	}
 	testCmd.Flags().StringVarP(&testNamespace, "namespace", "n", "default", "Namespace to run tests in")
 	testCmd.Flags().StringVarP(&kubeconfigCluster, "kubeconfig", "k", defaultKubeConfig, "Kubeconfig path")
-	testCmd.Flags().StringVarP(&globalManifestPathCluster, "global-init", "g", "", "Path to manifest for Global resources (e.g. CRD manifest)")
 
 	return testCmd
 }
 
-func testClusterFunc(cmd *cobra.Command, args []string) {
+func testClusterFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("operator-sdk test cluster requires exactly 1 argument"))
-	}
-	if globalManifestPathCluster != "" {
-		globalCmd := exec.Command("kubectl", "create", "-f", globalManifestPathCluster)
-		cmdOut, err := globalCmd.CombinedOutput()
-		if err != nil {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("could not create global resources: %v\nKubectl Output: %v", err, string(cmdOut)))
-		}
-		defer func() {
-			globalCmd := exec.Command("kubectl", "delete", "-f", globalManifestPathCluster)
-			cmdOut, err := globalCmd.CombinedOutput()
-			if err != nil {
-				cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("could not delete global resources: %v\nKubectl Output: %v", err, string(cmdOut)))
-			}
-		}()
+		return fmt.Errorf("operator-sdk test cluster requires exactly 1 argument")
 	}
 	testPod := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -92,43 +73,43 @@ func testClusterFunc(cmd *cobra.Command, args []string) {
 	}
 	kubeconfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigCluster)
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to get kubeconfig: %v", err))
+		return fmt.Errorf("failed to get kubeconfig: %v", err)
 	}
 	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to create kubeclient: %v", err))
+		return fmt.Errorf("failed to create kubeclient: %v", err)
 	}
 	testPod, err = kubeclient.CoreV1().Pods(testNamespace).Create(testPod)
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to create test pod: %v", err))
+		return fmt.Errorf("failed to create test pod: %v", err)
 	}
 	defer func() {
 		err = kubeclient.CoreV1().Pods(testNamespace).Delete(testPod.Name, &metav1.DeleteOptions{})
 		if err != nil {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to delete test pod"))
+			fmt.Printf("Warning: failed to delete test pod")
 		}
 	}()
 	for {
 		testPod, err = kubeclient.CoreV1().Pods(testNamespace).Get(testPod.Name, metav1.GetOptions{})
 		if err != nil {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to get test pod: %v", err))
+			return fmt.Errorf("failed to get test pod: %v", err)
 		}
 		if testPod.Status.Phase != v1.PodSucceeded && testPod.Status.Phase != v1.PodFailed {
 			time.Sleep(time.Second * 5)
 			continue
 		} else if testPod.Status.Phase == v1.PodSucceeded {
 			fmt.Printf("Test Successfully Completed\n")
-			return
+			return nil
 		} else if testPod.Status.Phase == v1.PodFailed {
 			req := kubeclient.CoreV1().Pods(testNamespace).GetLogs(testPod.Name, &v1.PodLogOptions{})
 			readCloser, err := req.Stream()
 			if err != nil {
-				cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("test failed and failed to get error logs"))
+				return fmt.Errorf("test failed and failed to get error logs")
 			}
 			defer readCloser.Close()
 			buf := new(bytes.Buffer)
 			buf.ReadFrom(readCloser)
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("test failed:\n%+v", buf.String()))
+			return fmt.Errorf("test failed:\n%+v", buf.String())
 		}
 	}
 }
