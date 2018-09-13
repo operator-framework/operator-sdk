@@ -15,17 +15,19 @@
 package cmd
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/generate"
 	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
 	"github.com/operator-framework/operator-sdk/pkg/generator"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
 	"github.com/spf13/cobra"
 )
@@ -73,6 +75,9 @@ const (
 	ensureCmd           = "ensure"
 	goOperatorType      = "go"
 	ansibleOperatorType = "ansible"
+
+	defaultDirFileMode = 0750
+	defaultFileMode    = 0644
 )
 
 func newFunc(cmd *cobra.Command, args []string) {
@@ -88,8 +93,8 @@ func newFunc(cmd *cobra.Command, args []string) {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to create project %v: %v", projectName, err))
 	}
 	if operatorType == goOperatorType {
+		doScaffold()
 		pullDep()
-		generate.K8sCodegen()
 	}
 	initGit()
 }
@@ -118,6 +123,38 @@ func mustBeNewProject() {
 	if stat.IsDir() {
 		log.Fatalf("project (%v) exists. please use a different project name or delete the existing one", projectName)
 	}
+}
+
+func doScaffold() {
+	// create cmd/manager dir
+	fullProjectPath := filepath.Join(mustGetwd(), projectName)
+	cmdDir := filepath.Join(fullProjectPath, "cmd", "manager")
+	if err := os.MkdirAll(cmdDir, defaultDirFileMode); err != nil {
+		log.Fatalf("failed to create %v: %v", cmdDir, err)
+	}
+
+	// generate cmd/manager/main.go
+	cmdFilePath := filepath.Join(cmdDir, "main.go")
+	cmdgen := scaffold.NewCmdCodegen(&scaffold.CmdInput{ProjectPath: repoPath()})
+	buf := &bytes.Buffer{}
+	err := cmdgen.Render(buf)
+	if err != nil {
+		log.Fatalf("failed to render the template for (%v): %v", cmdFilePath, err)
+	}
+	err = writeFileAndPrint(cmdFilePath, buf.Bytes(), defaultFileMode)
+	if err != nil {
+		log.Fatalf("failed to create %v: %v", cmdFilePath, err)
+	}
+	// TODO: generate rest of the scaffold.
+}
+
+// Writes file to a given path and data buffer, as well as prints out a message confirming creation of a file
+func writeFileAndPrint(filePath string, data []byte, fileMode os.FileMode) error {
+	if err := ioutil.WriteFile(filePath, data, fileMode); err != nil {
+		return err
+	}
+	fmt.Printf("Create %v \n", filePath)
+	return nil
 }
 
 // repoPath checks if this project's repository path is rooted under $GOPATH and returns project's repository path.
