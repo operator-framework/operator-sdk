@@ -37,8 +37,8 @@ var (
 
 func NewTestClusterCmd() *cobra.Command {
 	testCmd := &cobra.Command{
-		Use:   "test --test-location <path to tests directory> [flags]",
-		Short: "Run End-To-End tests",
+		Use:   "cluster <image name> [flags]",
+		Short: "Run End-To-End tests using image with embedded test binary",
 		Run:   testClusterFunc,
 	}
 	defaultKubeConfig := ""

@@ -37,8 +37,8 @@ var (
 
 func NewTestLocalCmd() *cobra.Command {
 	testCmd := &cobra.Command{
-		Use:   "test <path to tests directory> [flags]",
-		Short: "Run End-To-End tests",
+		Use:   "local <path to tests directory> [flags]",
+		Short: "Run End-To-End tests locally",
 		Run:   testLocalFunc,
 	}
 	defaultKubeConfig := ""
