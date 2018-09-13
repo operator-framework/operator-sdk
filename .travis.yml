@@ -29,9 +29,9 @@ script:
 - go test ./test/e2e/...
 - cd test/test-framework
 # test framework with defaults
-- operator-sdk test -t .
+- operator-sdk test local .
 # test operator-sdk test flags
-- operator-sdk test -t . -g deploy/crd.yaml -n deploy/namespace-init.yaml -f "-parallel 1" -k $HOME/.kube/config
+- operator-sdk test local . -g deploy/crd.yaml -n deploy/namespace-init.yaml -f "-parallel 1" -k $HOME/.kube/config
 # go back to project root
 - cd ../..
 - go vet ./...
