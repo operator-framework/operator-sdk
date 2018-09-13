@@ -58,7 +58,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) {
 		globalCmd := exec.Command("kubectl", "create", "-f", globalManifestPathCluster)
 		cmdOut, err := globalCmd.CombinedOutput()
 		if err != nil {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("Could not create global resources: %v\nKubectl Output: %v", err, cmdOut))
+			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("could not create global resources: %v\nKubectl Output: %v", err, cmdOut))
 		}
 	}
 	testPod := &v1.Pod{
@@ -103,7 +103,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) {
 			fmt.Printf("Test Successfully Completed")
 			return
 		} else if testPod.Status.Phase == v1.PodFailed {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("Test Failed: %+v", kubeclient.CoreV1().Pods(testNamespace).GetLogs("operator-test", &v1.PodLogOptions{})))
+			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("test Failed: %+v", kubeclient.CoreV1().Pods(testNamespace).GetLogs("operator-test", &v1.PodLogOptions{})))
 		}
 	}
 }
