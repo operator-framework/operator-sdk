@@ -55,6 +55,9 @@ func NewTestLocalCmd() *cobra.Command {
 }
 
 func testLocalFunc(cmd *cobra.Command, args []string) {
+	if len(args) != 1 {
+		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("operator-sdk test local requires exactly 1 argument"))
+	}
 	// if no namespaced manifest path is given, combine deploy/rbac.yaml and deploy/operator.yaml
 	if namespacedManifestPath == "" {
 		os.Mkdir("deploy/test", os.FileMode(int(0775)))
