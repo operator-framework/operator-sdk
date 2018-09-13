@@ -54,7 +54,7 @@ const (
 	build              = "build.sh"
 	dockerBuild        = "docker_build.sh"
 	dockerfile         = "Dockerfile"
-	testingDockerfile  = "Dockerfile_Testing"
+	testingDockerfile  = "Dockerfile"
 	goTest             = "go-test.sh"
 	boilerplate        = "boilerplate.go.txt"
 	updateGenerated    = "update-generated.sh"
@@ -364,7 +364,11 @@ func renderBuildFiles(buildDir, repoPath, projectName string) error {
 		return err
 	}
 
-	return renderWriteFile(filepath.Join(buildDir, goTest), "tmp/build/go-test.sh", goTestScript, tmplData{})
+	buf = &bytes.Buffer{}
+	if err := renderFile(buf, filepath.Join(buildDir, goTest), goTestScript, tmplData{}); err != nil {
+		return err
+	}
+	return writeFileAndPrint(filepath.Join(buildDir, goTest), buf.Bytes(), os.FileMode(int(0755)))
 }
 
 func renderDockerBuildFile(w io.Writer) error {

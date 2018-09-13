@@ -30,6 +30,7 @@ import (
 var (
 	testNamespace     string
 	kubeconfigCluster string
+	imagePullPolicy   bool
 )
 
 func NewTestClusterCmd() *cobra.Command {
@@ -45,6 +46,7 @@ func NewTestClusterCmd() *cobra.Command {
 	}
 	testCmd.Flags().StringVarP(&testNamespace, "namespace", "n", "default", "Namespace to run tests in")
 	testCmd.Flags().StringVarP(&kubeconfigCluster, "kubeconfig", "k", defaultKubeConfig, "Kubeconfig path")
+	testCmd.Flags().BoolVarP(&imagePullPolicy, "imagePullPolicy", "i", false, "Set test pod image pull policy to 'Never'")
 
 	return testCmd
 }
@@ -52,6 +54,12 @@ func NewTestClusterCmd() *cobra.Command {
 func testClusterFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("operator-sdk test cluster requires exactly 1 argument")
+	}
+	var pullPolicy v1.PullPolicy
+	if imagePullPolicy {
+		pullPolicy = v1.PullNever
+	} else {
+		pullPolicy = v1.PullAlways
 	}
 	testPod := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -62,7 +70,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 			Containers: []v1.Container{{
 				Name:            "operator-test",
 				Image:           args[0],
-				ImagePullPolicy: v1.PullAlways,
+				ImagePullPolicy: pullPolicy,
 				Command:         []string{"/go-test.sh"},
 				Env: []v1.EnvVar{{
 					Name:      "TEST_NAMESPACE",
@@ -83,12 +91,14 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create test pod: %v", err)
 	}
-	defer func() {
-		err = kubeclient.CoreV1().Pods(testNamespace).Delete(testPod.Name, &metav1.DeleteOptions{})
-		if err != nil {
-			fmt.Printf("Warning: failed to delete test pod")
-		}
-	}()
+	/*
+		defer func() {
+			err = kubeclient.CoreV1().Pods(testNamespace).Delete(testPod.Name, &metav1.DeleteOptions{})
+			if err != nil {
+				fmt.Printf("Warning: failed to delete test pod")
+			}
+		}()
+	*/
 	for {
 		testPod, err = kubeclient.CoreV1().Pods(testNamespace).Get(testPod.Name, metav1.GetOptions{})
 		if err != nil {
