@@ -48,6 +48,13 @@ func TestMemcached(t *testing.T) {
 	if !ok {
 		t.Fatalf("$GOPATH not set")
 	}
+	cd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		os.Chdir(cd)
+	}()
 	os.Chdir(path.Join(gopath, "/src/github.com/example-inc"))
 	t.Log("Creating new operator project")
 	cmdOut, err := exec.Command("operator-sdk",
