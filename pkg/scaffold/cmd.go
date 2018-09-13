@@ -50,8 +50,8 @@ import (
 	"log"
 	"runtime"
 
-	"{{projectPath}}/pkg/apis"
-	"{{projectPath}}/pkg/controller"
+	"{{.ProjectPath}}/pkg/apis"
+	"{{.ProjectPath}}/pkg/controller"
 
 	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
