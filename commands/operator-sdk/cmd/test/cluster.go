@@ -52,9 +52,14 @@ func NewTestClusterCmd() *cobra.Command {
 }
 
 func testClusterFunc(cmd *cobra.Command, args []string) error {
+	// in main.go, we catch and print errors, so we don't want cobra to print the error itself
+	cmd.SilenceErrors = true
 	if len(args) != 1 {
 		return fmt.Errorf("operator-sdk test cluster requires exactly 1 argument")
 	}
+	// cobra prints its help message on error; we silence that here because any errors below
+	// are due to the test failing, not incorrect user input
+	cmd.SilenceUsage = true
 	var pullPolicy v1.PullPolicy
 	if imagePullPolicy {
 		pullPolicy = v1.PullNever
