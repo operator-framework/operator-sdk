@@ -134,20 +134,20 @@ func buildFunc(cmd *cobra.Command, args []string) {
 
 	genWarning := ""
 	image := args[0]
-	intermediateImageName := image
+	baseImageName := image
 	if enableTests {
 		genWarning = renderTestManifest(image)
-		intermediateImageName += "-intermediate"
+		baseImageName += "-intermediate"
 	}
-	dbcmd := exec.Command("docker", "build", ".", "-f", "tmp/build/Dockerfile", "-t", intermediateImageName)
+	dbcmd := exec.Command("docker", "build", ".", "-f", "tmp/build/Dockerfile", "-t", baseImageName)
 	o, err = dbcmd.CombinedOutput()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to output build image %v: (%v)", intermediateImageName, string(o)))
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to output build image %v: (%v)", baseImageName, string(o)))
 	}
 	fmt.Fprintln(os.Stdout, string(o))
 
 	if enableTests {
-		testDbcmd := exec.Command("docker", "build", ".", "-f", "tmp/build/test-framework/Dockerfile", "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+intermediateImageName)
+		testDbcmd := exec.Command("docker", "build", ".", "-f", "tmp/build/test-framework/Dockerfile", "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+baseImageName)
 		o, err = testDbcmd.CombinedOutput()
 		if err != nil {
 			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to output build image %v: (%v)", image, string(o)))
