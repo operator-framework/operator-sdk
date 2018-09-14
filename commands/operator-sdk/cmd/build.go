@@ -56,7 +56,7 @@ For example:
 	}
 	buildCmd.Flags().BoolVarP(&enableTests, "enable-tests", "e", false, "Enable in-cluster testing by adding test binary to the image")
 	buildCmd.Flags().StringVarP(&testLocationBuild, "test-location", "t", "./test/e2e", "Location of tests")
-	buildCmd.Flags().StringVarP(&namespacedManBuild, "namespaced", "n", "", "Path of namespaced resources for tests")
+	buildCmd.Flags().StringVarP(&namespacedManBuild, "namespaced", "n", "deploy/operator.yaml", "Path of namespaced resources for tests")
 	return buildCmd
 }
 
@@ -103,9 +103,6 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) string {
 }
 
 func renderTestManifest(image string) string {
-	if namespacedManBuild == "" {
-		namespacedManBuild = "deploy/operator.yaml"
-	}
 	namespacedBytes, err := ioutil.ReadFile(namespacedManBuild)
 	if err != nil {
 		log.Fatalf("could not read rbac manifest: %v", err)
