@@ -63,8 +63,9 @@ const (
 	dep       = "dep"
 	ensureCmd = "ensure"
 
-	defaultDirFileMode = 0750
-	defaultFileMode    = 0644
+	defaultDirFileMode  = 0750
+	defaultFileMode     = 0644
+	defaultExecFileMode = 0744
 )
 
 func newFunc(cmd *cobra.Command, args []string) {
@@ -111,7 +112,8 @@ func doScaffold() {
 
 	// generate cmd/manager/main.go
 	cmdFilePath := filepath.Join(cmdDir, "main.go")
-	cmdgen := scaffold.NewCmdCodegen(&scaffold.CmdInput{ProjectPath: repoPath()})
+	projectPath := repoPath()
+	cmdgen := scaffold.NewCmdCodegen(&scaffold.CmdInput{ProjectPath: projectPath})
 	buf := &bytes.Buffer{}
 	err := cmdgen.Render(buf)
 	if err != nil {
@@ -177,6 +179,23 @@ func doScaffold() {
 	err = writeFileAndPrint(dockerfilePath, buf.Bytes(), defaultFileMode)
 	if err != nil {
 		log.Fatalf("failed to create %v: %v", dockerfilePath, err)
+	}
+
+	// generate pkg/build/build.sh
+	buildScriptPath := filepath.Join(buildDir, "build.sh")
+	buildScriptGen := scaffold.NewbuildCodegen(
+		&scaffold.BuildInput{
+			ProjectName: projectName,
+			ProjectPath: projectPath,
+		})
+	buf = &bytes.Buffer{}
+	err = buildScriptGen.Render(buf)
+	if err != nil {
+		log.Fatalf("failed to render the template for (%v): %v", buildScriptPath, err)
+	}
+	err = writeFileAndPrint(buildScriptPath, buf.Bytes(), defaultExecFileMode)
+	if err != nil {
+		log.Fatalf("failed to create %v: %v", buildScriptPath, err)
 	}
 
 	// TODO: generate rest of the scaffold.
