@@ -91,14 +91,12 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create test pod: %v", err)
 	}
-	/*
-		defer func() {
-			err = kubeclient.CoreV1().Pods(testNamespace).Delete(testPod.Name, &metav1.DeleteOptions{})
-			if err != nil {
-				fmt.Printf("Warning: failed to delete test pod")
-			}
-		}()
-	*/
+	defer func() {
+		err = kubeclient.CoreV1().Pods(testNamespace).Delete(testPod.Name, &metav1.DeleteOptions{})
+		if err != nil {
+			fmt.Printf("Warning: failed to delete test pod")
+		}
+	}()
 	for {
 		testPod, err = kubeclient.CoreV1().Pods(testNamespace).Get(testPod.Name, metav1.GetOptions{})
 		if err != nil {
