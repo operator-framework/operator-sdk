@@ -121,6 +121,26 @@ func doScaffold() {
 	if err != nil {
 		log.Fatalf("failed to create %v: %v", cmdFilePath, err)
 	}
+
+	// create pkg/apis dir
+	apisDir := filepath.Join(fullProjectPath, "pkg", "apis")
+	if err := os.MkdirAll(apisDir, defaultDirFileMode); err != nil {
+		log.Fatalf("failed to create %v: %v", cmdDir, err)
+	}
+
+	// generate pkg/apis/apis.go
+	apisFilePath := filepath.Join(apisDir, "apis.go")
+	apisgen := scaffold.NewAPIsCodegen()
+	buf = &bytes.Buffer{}
+	err = apisgen.Render(buf)
+	if err != nil {
+		log.Fatalf("failed to render the template for (%v): %v", apisFilePath, err)
+	}
+	err = writeFileAndPrint(apisFilePath, buf.Bytes(), defaultFileMode)
+	if err != nil {
+		log.Fatalf("failed to create %v: %v", apisFilePath, err)
+	}
+
 	// TODO: generate rest of the scaffold.
 }
 
