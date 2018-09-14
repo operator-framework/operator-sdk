@@ -168,7 +168,7 @@ func doScaffold() {
 	// create pkg/controller dir
 	controllerDir := filepath.Join(fullProjectPath, "pkg", "controller")
 	if err := os.MkdirAll(controllerDir, defaultDirFileMode); err != nil {
-		log.Fatalf("failed to create %v: %v", cmdDir, err)
+		log.Fatalf("failed to create %v: %v", controllerDir, err)
 	}
 
 	// generate pkg/controller/controller.go
@@ -182,6 +182,25 @@ func doScaffold() {
 	err = writeFileAndPrint(controllerFilePath, buf.Bytes(), defaultFileMode)
 	if err != nil {
 		log.Fatalf("failed to create %v: %v", controllerFilePath, err)
+	}
+
+	// create pkg/build dir
+	buildDir := filepath.Join(fullProjectPath, "pkg", "build")
+	if err := os.MkdirAll(buildDir, defaultDirFileMode); err != nil {
+		log.Fatalf("failed to create %v: %v", buildDir, err)
+	}
+
+	// generate pkg/build/Dockerfile
+	dockerfilePath := filepath.Join(buildDir, "Dockerfile")
+	dockerfilegen := scaffold.NewDockerfileCodegen(&scaffold.DockerfileInput{ProjectName: projectName})
+	buf = &bytes.Buffer{}
+	err = dockerfilegen.Render(buf)
+	if err != nil {
+		log.Fatalf("failed to render the template for (%v): %v", dockerfilePath, err)
+	}
+	err = writeFileAndPrint(dockerfilePath, buf.Bytes(), defaultFileMode)
+	if err != nil {
+		log.Fatalf("failed to create %v: %v", dockerfilePath, err)
 	}
 
 	// TODO: generate rest of the scaffold.
