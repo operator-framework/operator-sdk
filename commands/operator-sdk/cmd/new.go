@@ -165,6 +165,25 @@ func doScaffold() {
 		log.Fatalf("failed to create %v: %v", apisFilePath, err)
 	}
 
+	// create pkg/controller dir
+	controllerDir := filepath.Join(fullProjectPath, "pkg", "controller")
+	if err := os.MkdirAll(controllerDir, defaultDirFileMode); err != nil {
+		log.Fatalf("failed to create %v: %v", cmdDir, err)
+	}
+
+	// generate pkg/controller/controller.go
+	controllerFilePath := filepath.Join(controllerDir, "controller.go")
+	controllergen := scaffold.NewControllerCodegen()
+	buf = &bytes.Buffer{}
+	err = controllergen.Render(buf)
+	if err != nil {
+		log.Fatalf("failed to render the template for (%v): %v", controllerFilePath, err)
+	}
+	err = writeFileAndPrint(controllerFilePath, buf.Bytes(), defaultFileMode)
+	if err != nil {
+		log.Fatalf("failed to create %v: %v", controllerFilePath, err)
+	}
+
 	// TODO: generate rest of the scaffold.
 }
 
