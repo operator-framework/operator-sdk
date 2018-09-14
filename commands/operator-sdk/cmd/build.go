@@ -107,12 +107,10 @@ func renderTestManifest(image string) string {
 	if err != nil {
 		log.Fatalf("could not read rbac manifest: %v", err)
 	}
-	genWarning := verifyDeploymentImage(namespacedBytes, image)
-	c := cmdutil.GetConfig()
-	if err = generator.RenderTestYaml(c, image); err != nil {
+	if err = generator.RenderTestYaml(cmdutil.GetConfig(), image); err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/test-pod.yaml: (%v)", err))
 	}
-	return genWarning
+	return verifyDeploymentImage(namespacedBytes, image)
 }
 
 const (
