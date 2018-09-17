@@ -122,7 +122,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 			defer readCloser.Close()
 			buf := new(bytes.Buffer)
 			buf.ReadFrom(readCloser)
-			return fmt.Errorf("test failed:\n%+v", buf.String())
+			return fmt.Errorf("test failed:\n%s", buf.String())
 		}
 	}
 }

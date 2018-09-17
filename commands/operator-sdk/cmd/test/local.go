@@ -95,7 +95,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	dc.Stderr = os.Stderr
 	err := dc.Run()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to exec %v %#v: %v", cmd, args, err))
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to exec `go %s`: %v", strings.Join(testArgs, " "), err))
 	}
 }
 
