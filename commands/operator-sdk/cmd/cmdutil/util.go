@@ -19,6 +19,7 @@ import (
 	"fmt"
 	gobuild "go/build"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -44,14 +45,21 @@ const (
 	OperatorTypeAnsible
 )
 
-// MustInProjectRoot checks if the current dir is the project root.
-func MustInProjectRoot() {
-	// if the current directory has the "./tmp/build/Dockerfile" file, then it is safe to say
+const (
+	DefaultDirFileMode = 0750
+	DefaultFileMode    = 0644
+)
+
+// MustInProjectRoot checks if the current dir is the project root and returns the current repo's import path
+// e.g github.com/example-inc/app-operator
+func MustInProjectRoot() string {
+	// if the current directory has the "./cmd/manager/main.go" file, then it is safe to say
 	// we are at the project root.
 	_, err := os.Stat(tmpDockerfile)
 	if err != nil && os.IsNotExist(err) {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("must in project root dir: %v", err))
+		log.Fatalf("must run command in project root dir: %v", err)
 	}
+	return GetCurrPkg()
 }
 
 // GetConfig gets the values from ./config/config.yaml and parses them into a Config struct.
@@ -67,10 +75,9 @@ func GetConfig() *generator.Config {
 	return c
 }
 
-// GetRepoPkg returns the current repo's import path
+// GetCurrPkg returns the current directory's import path
 // e.g: "github.com/example-inc/app-operator"
-// TODO: Refactor with getRepoPath and save repo path somewhere
-func GetRepoPkg() string {
+func GetCurrPkg() string {
 	gopath := os.Getenv("GOPATH")
 	if len(gopath) == 0 {
 		gopath = gobuild.Default.GOPATH
@@ -82,10 +89,10 @@ func GetRepoPkg() string {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to get working directory: (%v)", err))
 	}
 	if !strings.HasPrefix(filepath.Dir(wd), goSrc) {
-		cmdError.ExitWithError(cmdError.ExitError, errors.New("must run from project root"))
+		cmdError.ExitWithError(cmdError.ExitError, errors.New("must run from gopath"))
 	}
-	repoPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
-	return repoPkg
+	currPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
+	return currPkg
 }
 
 // GetOperatorType returns type of operator is in cwd
