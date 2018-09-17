@@ -52,7 +52,7 @@ func k8sFunc(cmd *cobra.Command, args []string) {
 
 // K8sCodegen performs deepcopy code-generation for all custom resources under pkg/apis
 func K8sCodegen() {
-	repoPkg := cmdutil.GetRepoPkg()
+	repoPkg := cmdutil.MustInProjectRoot()
 	outputPkg := filepath.Join(repoPkg, "pkg/generated")
 	apisPkg := filepath.Join(repoPkg, "pkg/apis")
 	groupVersions, err := parseGroupVersions()
@@ -88,6 +88,7 @@ func parseGroupVersions() (string, error) {
 		return "", fmt.Errorf("could not read pkg/apis directory to find api Versions: %v", err)
 	}
 	for _, g := range groups {
+		// TODO: Ignore other files besides pkg/apis/group/version
 		groupVersion := g.Name() + ":"
 		if g.IsDir() {
 			versions, err := ioutil.ReadDir(filepath.Join("pkg", "apis", g.Name()))
