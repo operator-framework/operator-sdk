@@ -15,25 +15,18 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
+	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/add"
 
-	"github.com/operator-framework/operator-sdk/version"
+	"github.com/spf13/cobra"
 )
 
-func NewRootCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "operator-sdk",
-		Short:   "A sdk for building operator with ease",
-		Version: version.Version,
+func NewAddCmd() *cobra.Command {
+	upCmd := &cobra.Command{
+		Use:   "add",
+		Short: "Adds a controller or resource to the project",
+		Long:  "",
 	}
 
-	cmd.AddCommand(NewNewCmd())
-	cmd.AddCommand(NewAddCmd())
-	cmd.AddCommand(NewBuildCmd())
-	cmd.AddCommand(NewGenerateCmd())
-	cmd.AddCommand(NewUpCmd())
-	cmd.AddCommand(NewCompletionCmd())
-	cmd.AddCommand(NewTestCmd())
-
-	return cmd
+	upCmd.AddCommand(add.NewApiCmd())
+	return upCmd
 }
