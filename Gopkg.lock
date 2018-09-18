@@ -146,6 +146,14 @@
   version = "1.0.1"
 
 [[projects]]
+  branch = "master"
+  digest = "1:d33ce379780d7c43405b9251289493cabada82f6bf9ab35eea6915d04f6ac8e0"
+  name = "github.com/mxk/go-flowrate"
+  packages = ["flowrate"]
+  pruneopts = ""
+  revision = "cca7078d478f8520f85629ad7c68962d31ed7682"
+
+[[projects]]
   digest = "1:4142d94383572e74b42352273652c62afec5b23f325222ed09198f46009022d1"
   name = "github.com/prometheus/client_golang"
   packages = [
@@ -235,6 +243,8 @@
   name = "golang.org/x/net"
   packages = [
     "context",
+    "html",
+    "html/atom",
     "http/httpguts",
     "http2",
     "http2/hpack",
@@ -382,9 +392,11 @@
     "pkg/util/diff",
     "pkg/util/errors",
     "pkg/util/framer",
+    "pkg/util/httpstream",
     "pkg/util/intstr",
     "pkg/util/json",
     "pkg/util/net",
+    "pkg/util/proxy",
     "pkg/util/runtime",
     "pkg/util/sets",
     "pkg/util/validation",
@@ -393,6 +405,7 @@
     "pkg/util/yaml",
     "pkg/version",
     "pkg/watch",
+    "third_party/forked/golang/netutil",
     "third_party/forked/golang/reflect",
   ]
   pruneopts = ""
@@ -497,6 +510,8 @@
     "k8s.io/apimachinery/pkg/runtime/serializer",
     "k8s.io/apimachinery/pkg/types",
     "k8s.io/apimachinery/pkg/util/intstr",
+    "k8s.io/apimachinery/pkg/util/net",
+    "k8s.io/apimachinery/pkg/util/proxy",
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/discovery",
@@ -507,6 +522,7 @@
     "k8s.io/client-go/rest",
     "k8s.io/client-go/tools/cache",
     "k8s.io/client-go/tools/clientcmd",
+    "k8s.io/client-go/transport",
     "k8s.io/client-go/util/workqueue",
     "sigs.k8s.io/controller-runtime/pkg/client",
   ]
