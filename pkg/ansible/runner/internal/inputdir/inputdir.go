@@ -1,0 +1,123 @@
+// Copyright 2018 The Operator-SDK Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package inputdir
+
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+
+	"github.com/sirupsen/logrus"
+)
+
+// InputDir represents an input directory for ansible-runner.
+type InputDir struct {
+	Path         string
+	PlaybookPath string
+	Parameters   map[string]interface{}
+	EnvVars      map[string]string
+	Settings     map[string]string
+}
+
+// makeDirs creates the required directory structure.
+func (i *InputDir) makeDirs() error {
+	for _, path := range []string{"env", "project", "inventory"} {
+		fullPath := filepath.Join(i.Path, path)
+		err := os.MkdirAll(fullPath, os.ModePerm)
+		if err != nil {
+			logrus.Errorf("unable to create directory %v", fullPath)
+			return err
+		}
+	}
+	return nil
+}
+
+// addFile adds a file to the given relative path within the input directory.
+func (i *InputDir) addFile(path string, content []byte) error {
+	fullPath := filepath.Join(i.Path, path)
+	err := ioutil.WriteFile(fullPath, content, 0644)
+	if err != nil {
+		logrus.Errorf("unable to write file %v", fullPath)
+	}
+	return err
+}
+
+// Write commits the object's state to the filesystem at i.Path.
+func (i *InputDir) Write() error {
+	paramBytes, err := json.Marshal(i.Parameters)
+	if err != nil {
+		return err
+	}
+	envVarBytes, err := json.Marshal(i.EnvVars)
+	if err != nil {
+		return err
+	}
+	settingsBytes, err := json.Marshal(i.Settings)
+	if err != nil {
+		return err
+	}
+
+	err = i.makeDirs()
+	if err != nil {
+		return err
+	}
+
+	err = i.addFile("env/envvars", envVarBytes)
+	if err != nil {
+		return err
+	}
+	err = i.addFile("env/extravars", paramBytes)
+	if err != nil {
+		return err
+	}
+	err = i.addFile("env/settings", settingsBytes)
+	if err != nil {
+		return err
+	}
+
+	// If ansible-runner is running in a python virtual environment, propagate
+	// that to ansible.
+	venv := os.Getenv("VIRTUAL_ENV")
+	hosts := "localhost ansible_connection=local"
+	if venv != "" {
+		hosts = fmt.Sprintf("%s ansible_python_interpreter=%s", hosts, filepath.Join(venv, "bin/python"))
+	}
+	err = i.addFile("inventory/hosts", []byte(hosts))
+	if err != nil {
+		return err
+	}
+
+	if i.PlaybookPath != "" {
+		f, err := os.Open(i.PlaybookPath)
+		if err != nil {
+			logrus.Errorf("failed to open playbook file %v", i.PlaybookPath)
+			return err
+		}
+		defer f.Close()
+
+		playbookBytes, err := ioutil.ReadAll(f)
+		if err != nil {
+			return err
+		}
+
+		err = i.addFile("project/playbook.yaml", playbookBytes)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

@@ -37,6 +37,8 @@ script:
 - go vet ./...
 - ./hack/check_license.sh
 - ./hack/check_error_case.sh
+# Make sure repo is in clean state
+- git diff --exit-code
 
 after_success:
 - echo 'Build succeeded, operator was generated, memcached operator is running on $CLUSTER, and unit/integration tests pass'

@@ -16,6 +16,8 @@ package generator
 
 import (
 	"bytes"
+	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -548,5 +550,22 @@ func TestGenBuild(t *testing.T) {
 		dmp := diffmatchpatch.New()
 		diffs := dmp.DiffMain(dockerFileExp, buf.String(), false)
 		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
+	}
+}
+
+func TestWriteFileAndPrint(t *testing.T) {
+	deployDir, err := ioutil.TempDir("", "test-write-file-and-print")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer os.RemoveAll(deployDir)
+
+	olmCatalogPackagePath := filepath.Join(deployDir, olmCatalogDir, catalogPackageYaml)
+	if err = writeFileAndPrint(olmCatalogPackagePath, []byte("sometext"), defaultFileMode); err != nil {
+		t.Fatalf("\nTest failed. Failed to write file and print: %v", err)
+	}
+	if _, err := os.Stat(olmCatalogPackagePath); os.IsNotExist(err) {
+		t.Errorf("\nTest failed. Failed to create %s", olmCatalogPackagePath)
 	}
 }

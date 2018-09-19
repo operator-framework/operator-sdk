@@ -42,8 +42,8 @@ spec:
   version: {{.Version}}
 `
 
-const catalogCSVTmpl = `apiVersion: app.coreos.com/v1alpha1
-kind: ClusterServiceVersion-v1
+const catalogCSVTmpl = `apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
 metadata:
   name: {{.CSVName}}
   namespace: placeholder
