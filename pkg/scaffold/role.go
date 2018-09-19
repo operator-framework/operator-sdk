@@ -19,23 +19,23 @@ import (
 	"text/template"
 )
 
-type roleBinding struct {
-	in *RoleBindingInput
+type role struct {
+	in *RoleInput
 }
 
-// RoleBindingInput is the input needed to generate a pkg/deploy/role_binding.yaml.
-type RoleBindingInput struct {
+// roleInput is the input needed to generate a pkg/deploy/role.yaml.
+type RoleInput struct {
 	// ProjectName is the name of the operator project.
 	ProjectName string
 }
 
-func NewRoleBindingCodegen(in *RoleBindingInput) Codegen {
-	return &roleBinding{in: in}
+func NewRoleCodegen(in *RoleInput) Codegen {
+	return &role{in: in}
 }
 
-func (r *roleBinding) Render(w io.Writer) error {
-	t := template.New("rolebinding.go")
-	t, err := t.Parse(roleBindingTemplate)
+func (r *role) Render(w io.Writer) error {
+	t := template.New("roles.go")
+	t, err := t.Parse(roleTemplate)
 	if err != nil {
 		return err
 	}
@@ -43,18 +43,31 @@ func (r *roleBinding) Render(w io.Writer) error {
 	return t.Execute(w, r.in)
 }
 
-// TODO: change ClusterRoleBinding to a RoleBinding once
-// controller-runtime manager can be namespaced.
-const roleBindingTemplate = `kind: ClusterRoleBinding
+// TODO: Change ClusterRole to Role once controller.runtime can be namespaced.
+const roleTemplate = `kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
-  name: default-account-{{.ProjectName}}
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: default
-roleRef:
-  kind: ClusterRole
   name: {{.ProjectName}}
-  apiGroup: rbac.authorization.k8s.io
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  - configmaps
+  - secrets
+  verbs:
+  - "*"
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
+  verbs:
+  - "*"
 `
