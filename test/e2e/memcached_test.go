@@ -328,7 +328,7 @@ func MemcachedClusterTest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not get namespace: %v", err)
 	}
-	cmdOut, err := exec.Command("operator-sdk", "test", "cluster", *f.ImageName, "-n", namespace, "-i").CombinedOutput()
+	cmdOut, err := exec.Command("operator-sdk", "test", "cluster", *f.ImageName, "-n", namespace, "-i", "Never").CombinedOutput()
 	if err != nil {
 		t.Fatalf("in-cluster test failed: %v\nCommand Output:\n%s", err, string(cmdOut))
 	}
