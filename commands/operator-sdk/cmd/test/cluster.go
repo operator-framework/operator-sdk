@@ -20,6 +20,8 @@ import (
 	"os"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/wait"
+
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,6 +33,7 @@ var (
 	testNamespace     string
 	kubeconfigCluster string
 	imagePullPolicy   string
+	pendingTimeout    int
 )
 
 func NewTestClusterCmd() *cobra.Command {
@@ -47,6 +50,7 @@ func NewTestClusterCmd() *cobra.Command {
 	testCmd.Flags().StringVarP(&testNamespace, "namespace", "n", "default", "Namespace to run tests in")
 	testCmd.Flags().StringVarP(&kubeconfigCluster, "kubeconfig", "k", defaultKubeConfig, "Kubeconfig path")
 	testCmd.Flags().StringVarP(&imagePullPolicy, "imagePullPolicy", "i", "Always", "Set test pod image pull policy. Allowed values: Always, Never")
+	testCmd.Flags().IntVarP(&pendingTimeout, "pendingTimout", "p", 60, "Timeout for testing pod in pending state")
 
 	return testCmd
 }
@@ -63,7 +67,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 	} else if imagePullPolicy == "Never" {
 		pullPolicy = v1.PullNever
 	} else {
-		return fmt.Errorf("Invalid imagePullPolicy '%v'", imagePullPolicy)
+		return fmt.Errorf("invalid imagePullPolicy '%v'", imagePullPolicy)
 	}
 	// cobra prints its help message on error; we silence that here because any errors below
 	// are due to the test failing, not incorrect user input
@@ -104,6 +108,24 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 			fmt.Printf("Warning: failed to delete test pod")
 		}
 	}()
+	err = wait.Poll(time.Second*5, time.Second*time.Duration(pendingTimeout), func() (bool, error) {
+		testPod, err = kubeclient.CoreV1().Pods(testNamespace).Get(testPod.Name, metav1.GetOptions{})
+		if err != nil {
+			return false, fmt.Errorf("failed to get test pod: %v", err)
+		}
+		if testPod.Status.Phase == v1.PodPending {
+			return false, nil
+		}
+		return true, nil
+	})
+	if err != nil {
+		testPod, err = kubeclient.CoreV1().Pods(testNamespace).Get(testPod.Name, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to get test pod: %v", err)
+		}
+		waitingState := testPod.Status.ContainerStatuses[0].State.Waiting
+		return fmt.Errorf("test pod stuck in 'Pending' phase for longer than %d seconds.\nMessage: %s\nReason: %s", pendingTimeout, waitingState.Message, waitingState.Reason)
+	}
 	for {
 		testPod, err = kubeclient.CoreV1().Pods(testNamespace).Get(testPod.Name, metav1.GetOptions{})
 		if err != nil {
