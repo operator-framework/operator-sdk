@@ -60,11 +60,9 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 	// cobra prints its help message on error; we silence that here because any errors below
 	// are due to the test failing, not incorrect user input
 	cmd.SilenceUsage = true
-	var pullPolicy v1.PullPolicy
+	pullPolicy := v1.PullAlways
 	if imagePullPolicy {
 		pullPolicy = v1.PullNever
-	} else {
-		pullPolicy = v1.PullAlways
 	}
 	testPod := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{

@@ -70,7 +70,11 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) string {
 			fmt.Printf("WARNING: Could not unmarshal yaml namespaced spec")
 			return ""
 		}
-		if yamlMap["kind"].(string) == "Deployment" {
+		kind, ok := yamlMap["kind"].(string)
+		if !ok {
+			log.Fatal("Yaml manifest file contains a 'kind' field that is not a string")
+		}
+		if kind == "Deployment" {
 			// this is ugly and hacky; we should probably make this cleaner
 			nestedMap, ok := yamlMap["spec"].(map[string]interface{})
 			if !ok {
@@ -142,7 +146,11 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	dbcmd := exec.Command("docker", "build", ".", "-f", "tmp/build/Dockerfile", "-t", baseImageName)
 	o, err = dbcmd.CombinedOutput()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to output build image %v: (%v)", baseImageName, string(o)))
+		if enableTests {
+			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to build intermediate image for %s image: (%s)", image, string(o)))
+		} else {
+			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to output build image %s: (%s)", image, string(o)))
+		}
 	}
 	fmt.Fprintln(os.Stdout, string(o))
 
