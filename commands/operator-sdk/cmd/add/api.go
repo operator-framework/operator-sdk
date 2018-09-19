@@ -75,37 +75,37 @@ func apiRun(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	// TODO: Allow adding a new kind to an existing apiversion by changing types.go to <kind>_types.go
-
-	// pkg/apis/<group>/<version> directory must not exist
+	// Must be new Kind: pkg/apis/<group>/<version>/<kind>_types.go shouldn't exist
+	typesFileName := r.LowerKind + "_types.go"
 	pkgApisDir := filepath.Join(fullProjectPath, "pkg", "apis", r.Group, r.Version)
-	mustNotExist(pkgApisDir)
+	mustNotExist(filepath.Join(pkgApisDir, typesFileName))
+
+	// TODO: Don't rewrite existing boilerplate files(register.go, doc.go) for new Kind
 	// scaffold pkg/apis/<group>/<version> directory
 	if err := os.MkdirAll(pkgApisDir, cmdutil.DefaultDirFileMode); err != nil {
 		log.Fatalf("failed to create %v: %v", pkgApisDir, err)
 	}
 
-	// scaffold pkg/apis/addtoscheme_<group>_<kind>.go
-	fileName := "addtoscheme_" + r.Group + "_" + r.Resource + ".go"
+	// scaffold pkg/apis/addtoscheme_<group>_<version>.go
+	fileName := "addtoscheme_" + r.Group + "_" + r.Version + ".go"
 	filePath := filepath.Join(fullProjectPath, "pkg", "apis", fileName)
 	codeGen := scaffold.NewAddToSchemeCodegen(&scaffold.AddToSchemeInput{ProjectPath: projectPath, Resource: r})
 	buf := &bytes.Buffer{}
-	if err = codeGen.Render(buf); err != nil {
+	if err := codeGen.Render(buf); err != nil {
 		log.Fatalf("failed to render the template for (%v): %v", filePath, err)
 	}
-	if writeFileAndPrint(filePath, buf.Bytes(), cmdutil.DefaultFileMode); err != nil {
+	if err := writeFileAndPrint(filePath, buf.Bytes(), cmdutil.DefaultFileMode); err != nil {
 		log.Fatalf("failed to create %v: %v", filePath, err)
 	}
 
-	// scaffold pkg/apis/<group>/<version>/types.go
-	filePath = filepath.Join(pkgApisDir, "types.go")
+	// scaffold pkg/apis/<group>/<version>/<kind>_types.go
+	filePath = filepath.Join(pkgApisDir, typesFileName)
 	codeGen = scaffold.NewTypesCodegen(&scaffold.TypesInput{ProjectPath: projectPath, Resource: r})
 	buf = &bytes.Buffer{}
-	err = codeGen.Render(buf)
-	if err != nil {
+	if err := codeGen.Render(buf); err != nil {
 		log.Fatalf("failed to render the template for (%v): %v", filePath, err)
 	}
-	if writeFileAndPrint(filePath, buf.Bytes(), cmdutil.DefaultFileMode); err != nil {
+	if err := writeFileAndPrint(filePath, buf.Bytes(), cmdutil.DefaultFileMode); err != nil {
 		log.Fatalf("failed to create %v: %v", filePath, err)
 	}
 
@@ -113,11 +113,10 @@ func apiRun(cmd *cobra.Command, args []string) {
 	filePath = filepath.Join(pkgApisDir, "register.go")
 	codeGen = scaffold.NewRegisterCodegen(&scaffold.RegisterInput{ProjectPath: projectPath, Resource: r})
 	buf = &bytes.Buffer{}
-	err = codeGen.Render(buf)
-	if err != nil {
+	if err := codeGen.Render(buf); err != nil {
 		log.Fatalf("failed to render the template for (%v): %v", filePath, err)
 	}
-	if writeFileAndPrint(filePath, buf.Bytes(), cmdutil.DefaultFileMode); err != nil {
+	if err := writeFileAndPrint(filePath, buf.Bytes(), cmdutil.DefaultFileMode); err != nil {
 		log.Fatalf("failed to create %v: %v", filePath, err)
 	}
 
@@ -125,17 +124,43 @@ func apiRun(cmd *cobra.Command, args []string) {
 	filePath = filepath.Join(pkgApisDir, "doc.go")
 	codeGen = scaffold.NewDocCodegen(&scaffold.DocInput{ProjectPath: projectPath, Resource: r})
 	buf = &bytes.Buffer{}
-	err = codeGen.Render(buf)
-	if err != nil {
+	if err := codeGen.Render(buf); err != nil {
 		log.Fatalf("failed to render the template for (%v): %v", filePath, err)
 	}
-	if writeFileAndPrint(filePath, buf.Bytes(), cmdutil.DefaultFileMode); err != nil {
+	if err := writeFileAndPrint(filePath, buf.Bytes(), cmdutil.DefaultFileMode); err != nil {
 		log.Fatalf("failed to create %v: %v", filePath, err)
 	}
 
-	// TODO: scaffold deploy/<group>-<version>-<kind>-crd.yaml
+	// Scaffold crd.yaml and cr.yaml
+	// mkdir deploy/crds
+	crdsDir := filepath.Join(fullProjectPath, "deploy", "crds")
+	if err := os.MkdirAll(crdsDir, cmdutil.DefaultDirFileMode); err != nil {
+		log.Fatalf("failed to create %v: %v", crdsDir, err)
+	}
 
-	// TODO: scaffold deploy/<group>-<version>-<kind>-cr.yaml
+	// scaffold deploy/crds/<group>_<version>_<kind>_crd.yaml
+	crdFileName := r.Group + "_" + r.Version + "_" + r.LowerKind + "_crd.yaml"
+	filePath = filepath.Join(crdsDir, crdFileName)
+	codeGen = scaffold.NewCrdCodegen(&scaffold.CrdInput{Resource: r})
+	buf = &bytes.Buffer{}
+	if err := codeGen.Render(buf); err != nil {
+		log.Fatalf("failed to render the template for (%v): %v", filePath, err)
+	}
+	if err := writeFileAndPrint(filePath, buf.Bytes(), cmdutil.DefaultFileMode); err != nil {
+		log.Fatalf("failed to create %v: %v", filePath, err)
+	}
+
+	// scaffold deploy/crds/<group>-<version>-<kind>_cr.yaml
+	crFileName := r.Group + "_" + r.Version + "_" + r.LowerKind + "_cr.yaml"
+	filePath = filepath.Join(crdsDir, crFileName)
+	codeGen = scaffold.NewCrCodegen(&scaffold.CrInput{Resource: r})
+	buf = &bytes.Buffer{}
+	if err := codeGen.Render(buf); err != nil {
+		log.Fatalf("failed to render the template for (%v): %v", filePath, err)
+	}
+	if err := writeFileAndPrint(filePath, buf.Bytes(), cmdutil.DefaultFileMode); err != nil {
+		log.Fatalf("failed to create %v: %v", filePath, err)
+	}
 
 	// TODO: append rbac rule to deploy/rbac/role.yaml
 
