@@ -47,6 +47,9 @@ type Resource struct {
 	// Resource is the API Resource i.e plural(lowercased(Kind)) e.g appservices
 	Resource string
 
+	// LowerKind is lowercased(Kind) e.g appservice
+	LowerKind string
+
 	// TODO: allow user to specify list of short names for Resource e.g app, myapp
 }
 
@@ -80,6 +83,8 @@ func (r *Resource) Validate() error {
 	if len(r.Kind) == 0 {
 		return errors.New("kind cannot be empty")
 	}
+
+	r.LowerKind = strings.ToLower(r.Kind)
 
 	// TODO: regex match kind to only be [aA-zZ]]
 	if strings.Title(r.Kind) != r.Kind {
