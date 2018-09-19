@@ -30,7 +30,7 @@ import (
 var (
 	testNamespace     string
 	kubeconfigCluster string
-	imagePullPolicy   bool
+	imagePullPolicy   string
 )
 
 func NewTestClusterCmd() *cobra.Command {
@@ -46,7 +46,7 @@ func NewTestClusterCmd() *cobra.Command {
 	}
 	testCmd.Flags().StringVarP(&testNamespace, "namespace", "n", "default", "Namespace to run tests in")
 	testCmd.Flags().StringVarP(&kubeconfigCluster, "kubeconfig", "k", defaultKubeConfig, "Kubeconfig path")
-	testCmd.Flags().BoolVarP(&imagePullPolicy, "imagePullPolicy", "i", false, "Set test pod image pull policy to 'Never'")
+	testCmd.Flags().StringVarP(&imagePullPolicy, "imagePullPolicy", "i", "Always", "Set test pod image pull policy. Allowed values: Always, Never")
 
 	return testCmd
 }
@@ -57,13 +57,17 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("operator-sdk test cluster requires exactly 1 argument")
 	}
+	var pullPolicy v1.PullPolicy
+	if imagePullPolicy == "Always" {
+		pullPolicy = v1.PullAlways
+	} else if imagePullPolicy == "Never" {
+		pullPolicy = v1.PullNever
+	} else {
+		return fmt.Errorf("Invalid imagePullPolicy '%v'", imagePullPolicy)
+	}
 	// cobra prints its help message on error; we silence that here because any errors below
 	// are due to the test failing, not incorrect user input
 	cmd.SilenceUsage = true
-	pullPolicy := v1.PullAlways
-	if imagePullPolicy {
-		pullPolicy = v1.PullNever
-	}
 	testPod := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "operator-test",
