@@ -228,6 +228,22 @@ func doScaffold() {
 		log.Fatalf("failed to create %v: %v", deployDir, err)
 	}
 
+	// generate pkg/deploy/role.yaml
+	rolePath := filepath.Join(deployDir, "role.yaml")
+	roleGen := scaffold.NewRoleCodegen(
+		&scaffold.RoleInput{
+			ProjectName: projectName,
+		})
+	buf = &bytes.Buffer{}
+	err = roleGen.Render(buf)
+	if err != nil {
+		log.Fatalf("failed to render the template for (%v): %v", rolePath, err)
+	}
+	err = writeFileAndPrint(rolePath, buf.Bytes(), defaultFileMode)
+	if err != nil {
+		log.Fatalf("failed to create %v: %v", rolePath, err)
+	}
+
 	// generate pkg/deploy/role_binding.yaml
 	roleBindingPath := filepath.Join(deployDir, "role_binding.yaml")
 	roleBindingGen := scaffold.NewRoleBindingCodegen(
