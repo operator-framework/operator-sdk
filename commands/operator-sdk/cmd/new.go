@@ -236,6 +236,22 @@ func doScaffold() {
 		log.Fatalf("failed to create %v: %v", roleBindingPath, err)
 	}
 
+	// generate pkg/deploy/operator.yaml
+	operatorPath := filepath.Join(deployDir, "operator.yaml")
+	operatorGen := scaffold.NewOperatorCodegen(
+		&scaffold.OperatorInput{
+			ProjectName: projectName,
+		})
+	buf = &bytes.Buffer{}
+	err = operatorGen.Render(buf)
+	if err != nil {
+		log.Fatalf("failed to render the template for (%v): %v", operatorPath, err)
+	}
+	err = writeFileAndPrint(operatorPath, buf.Bytes(), defaultFileMode)
+	if err != nil {
+		log.Fatalf("failed to create %v: %v", operatorPath, err)
+	}
+
 	// TODO: generate rest of the scaffold.
 }
 
