@@ -162,13 +162,13 @@ func doScaffold() {
 		log.Fatalf("failed to create %v: %v", controllerFilePath, err)
 	}
 
-	// create pkg/build dir
+	// create build dir
 	buildDir := filepath.Join(fullProjectPath, "pkg", "build")
 	if err := os.MkdirAll(buildDir, defaultDirFileMode); err != nil {
 		log.Fatalf("failed to create %v: %v", buildDir, err)
 	}
 
-	// generate pkg/build/Dockerfile
+	// generate build/Dockerfile
 	dockerfilePath := filepath.Join(buildDir, "Dockerfile")
 	dockerfilegen := scaffold.NewDockerfileCodegen(&scaffold.DockerfileInput{ProjectName: projectName})
 	buf = &bytes.Buffer{}
@@ -181,7 +181,7 @@ func doScaffold() {
 		log.Fatalf("failed to create %v: %v", dockerfilePath, err)
 	}
 
-	// generate pkg/build/build.sh
+	// generate build/build.sh
 	buildScriptPath := filepath.Join(buildDir, "build.sh")
 	buildScriptGen := scaffold.NewbuildCodegen(
 		&scaffold.BuildInput{
@@ -198,13 +198,13 @@ func doScaffold() {
 		log.Fatalf("failed to create %v: %v", buildScriptPath, err)
 	}
 
-	// create pkg/deploy dir
+	// create deploy dir
 	deployDir := filepath.Join(fullProjectPath, "deploy")
 	if err := os.MkdirAll(deployDir, defaultDirFileMode); err != nil {
 		log.Fatalf("failed to create %v: %v", deployDir, err)
 	}
 
-	// generate pkg/deploy/role.yaml
+	// generate deploy/role.yaml
 	rolePath := filepath.Join(deployDir, "role.yaml")
 	roleGen := scaffold.NewRoleCodegen(
 		&scaffold.RoleInput{
@@ -220,7 +220,7 @@ func doScaffold() {
 		log.Fatalf("failed to create %v: %v", rolePath, err)
 	}
 
-	// generate pkg/deploy/role_binding.yaml
+	// generate deploy/role_binding.yaml
 	roleBindingPath := filepath.Join(deployDir, "role_binding.yaml")
 	roleBindingGen := scaffold.NewRoleBindingCodegen(
 		&scaffold.RoleBindingInput{
@@ -236,7 +236,7 @@ func doScaffold() {
 		log.Fatalf("failed to create %v: %v", roleBindingPath, err)
 	}
 
-	// generate pkg/deploy/operator.yaml
+	// generate deploy/operator.yaml
 	operatorPath := filepath.Join(deployDir, "operator.yaml")
 	operatorGen := scaffold.NewOperatorCodegen(
 		&scaffold.OperatorInput{
@@ -250,6 +250,19 @@ func doScaffold() {
 	err = writeFileAndPrint(operatorPath, buf.Bytes(), defaultFileMode)
 	if err != nil {
 		log.Fatalf("failed to create %v: %v", operatorPath, err)
+	}
+
+	// create scripts/codgen dir
+	codegenDir := filepath.Join(fullProjectPath, "scripts", "codegen")
+	if err := os.MkdirAll(codegenDir, defaultDirFileMode); err != nil {
+		log.Fatalf("failed to create %v: %v", codegenDir, err)
+	}
+
+	// generate scripts/codegen/Boilerplate.go.txt
+	boilerplatePath := filepath.Join(codegenDir, "Boilerplate.go.txt")
+	err = writeFileAndPrint(boilerplatePath, []byte{}, defaultFileMode)
+	if err != nil {
+		log.Fatalf("failed to create %v: %v", boilerplatePath, err)
 	}
 
 	// TODO: generate rest of the scaffold.
