@@ -265,6 +265,22 @@ func doScaffold() {
 		log.Fatalf("failed to create %v: %v", boilerplatePath, err)
 	}
 
+	// create version dir
+	versionDir := filepath.Join(fullProjectPath, "version")
+	if err := os.MkdirAll(versionDir, defaultDirFileMode); err != nil {
+		log.Fatalf("failed to create %v: %v", versionDir, err)
+	}
+
+	// generate version/version.go
+	buf = &bytes.Buffer{}
+	versionGen := scaffold.NewVersionCoden()
+	versionGen.Render(buf)
+	versionPath := filepath.Join(versionDir, "version.go")
+	err = writeFileAndPrint(versionPath, buf.Bytes(), defaultFileMode)
+	if err != nil {
+		log.Fatalf("failed to create %v: %v", versionPath, err)
+	}
+
 	// TODO: generate rest of the scaffold.
 }
 
