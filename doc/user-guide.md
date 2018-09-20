@@ -265,6 +265,44 @@ $ kubectl delete -f deploy/cr.yaml
 $ kubectl delete -f deploy/operator.yaml
 ```
 
+
+## Advanced Topics
+### Adding 3rd Party Resources To Your Operator
+To add a resource to an operator, you must add it to a scheme. By creating an `AddToScheme` method or reusing one you can easily add a resource to your scheme. An [example][deployments_register] shows that you define a function and then use the [runtime][runtime_package] package to create a `SchemeBuilder`
+
+#### Current Operator-SDK
+You then need to tell the operators to use these functions to add the resources to its scheme. In operator-sdk you use [AddToSDKScheme][osdk_add_to_scheme] to add this.
+Example of you main.go:
+```go
+import (
+    ....
+    appsv1 "k8s.io/api/apps/v1"
+)
+
+func main() {
+    k8sutil.AddToSDKScheme(appsv1.AddToScheme)`
+    sdk.Watch(appsv1.SchemeGroupVersion.String(), "Deployments", <namespace>, <resyncPeriod>)
+}
+```
+
+#### Future with Controller Runtime
+When using controller runtime, you will also need to tell its scheme about your resourece. In controller runtime to add to the scheme, you can get the managers [scheme][manager_scheme].  If you would like to see what kubebuilder generates to add the resoureces to the [scheme][simple_resource].
+Example:
+```go
+import (
+    ....
+    appsv1 "k8s.io/api/apps/v1"
+)
+
+func main() {
+    ....
+    if err := appsv1.AddToScheme(mgr.GetScheme()); err != nil {
+        log.Fatal(err)
+    }
+    ....
+}
+```
+
 [memcached_handler]: ../example/memcached-operator/handler.go.tmpl
 [layout_doc]:./project_layout.md
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
@@ -273,3 +311,8 @@ $ kubectl delete -f deploy/operator.yaml
 [docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [minikube_tool]:https://github.com/kubernetes/minikube#installation
+[manager_scheme]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/manager/manager.go#L61
+[simple_resource]: https://book.kubebuilder.io/basics/simple_resource.html
+[deployments_register]: https://github.com/kubernetes/api/blob/master/apps/v1/register.go#L41
+[runtime_package]: https://godoc.org/k8s.io/apimachinery/pkg/runtime
+[osdk_add_to_scheme]: https://github.com/operator-framework/operator-sdk/blob/4179b6ac459b2b0cb04ab3a1b438c280bd28d1a5/pkg/util/k8sutil/k8sutil.go#L67
