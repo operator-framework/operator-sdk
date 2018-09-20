@@ -67,8 +67,7 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) string {
 		yamlMap := make(map[string]interface{})
 		err := yaml.Unmarshal(yamlSpec, &yamlMap)
 		if err != nil {
-			fmt.Printf("WARNING: Could not unmarshal yaml namespaced spec")
-			return ""
+			return fmt.Sprintf("WARNING: Could not unmarshal yaml namespaced spec")
 		}
 		kind, ok := yamlMap["kind"].(string)
 		if !ok {
@@ -136,11 +135,9 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	}
 	fmt.Fprintln(os.Stdout, string(o))
 
-	genWarning := ""
 	image := args[0]
 	baseImageName := image
 	if enableTests {
-		genWarning = renderTestManifest(image)
 		baseImageName += "-intermediate"
 	}
 	dbcmd := exec.Command("docker", "build", ".", "-f", "tmp/build/Dockerfile", "-t", baseImageName)
@@ -161,6 +158,8 @@ func buildFunc(cmd *cobra.Command, args []string) {
 			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to output build image %v: (%v)", image, string(o)))
 		}
 		fmt.Fprintln(os.Stdout, string(o))
+		// create test-pod.yaml as well as check image name of deployments in namespaced manifest
+		genWarning := renderTestManifest(image)
 		if genWarning != "" {
 			fmt.Printf("%s\n", genWarning)
 		}
