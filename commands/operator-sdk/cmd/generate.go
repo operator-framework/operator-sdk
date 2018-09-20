@@ -29,5 +29,6 @@ func NewGenerateCmd() *cobra.Command {
 	}
 	cmd.AddCommand(generate.NewGenerateK8SCmd())
 	cmd.AddCommand(generate.NewGenerateOlmCatalogCmd())
+	cmd.AddCommand(generate.NewGenerateCrdCmd())
 	return cmd
 }

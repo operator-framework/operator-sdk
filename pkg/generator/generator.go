@@ -341,6 +341,18 @@ func renderRBAC(deployDir, projectName, groupName string) error {
 	return renderWriteFile(filepath.Join(deployDir, rbacYaml), rbacTmplName, rbacYamlTmpl, td)
 }
 
+func RenderDeployCrdFile(apiVersion, kind string) error {
+	crdTd := tmplData{
+		Kind:         kind,
+		KindSingular: strings.ToLower(kind),
+		KindPlural:   toPlural(strings.ToLower(kind)),
+		GroupName:    groupName(apiVersion),
+		Version:      version(apiVersion),
+	}
+	crdFilePath := filepath.Join(deployDir, strings.ToLower(kind) + "_crd.yaml")
+	return renderWriteFile(crdFilePath, crdFilePath, crdYamlTmpl, crdTd)
+}
+
 func renderDeployFiles(deployDir, projectName, apiVersion, kind, operatorType string) error {
 	rbacTd := tmplData{
 		ProjectName: projectName,
