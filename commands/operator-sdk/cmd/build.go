@@ -60,6 +60,14 @@ For example:
 	return buildCmd
 }
 
+/*
+ * verifyDeploymentImages checks image names of pod 0 in deployments found in the provided yaml file.
+ * This is done because e2e tests require a namespaced manifest file to configure a namespace with
+ * required resources. This function is intended to identify if a user used a different image name
+ * for their operator in the provided yaml, which would result in the testing of the wrong operator
+ * image. As it is possible for a namespaced yaml to have multiple deployments (such as the vault
+ * operator, which depends on the etcd-operator), this is just a warning, not a fatal error.
+ */
 func verifyDeploymentImage(yamlFile []byte, imageName string) string {
 	warningMessages := ""
 	yamlSplit := bytes.Split(yamlFile, []byte("\n---\n"))
