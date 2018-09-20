@@ -1,13 +1,14 @@
 # This is the official list of operator-sdk maintainers.
 #
 # Names should be added to this file like so:
-#     Individual's name <submission email address> (@GITHUB_HANDLE) pkg:*
-#     Individual's name <submission email address> <email2> <emailN> (@GITHUB_HANDLE) pkg:*
-#
-# Please keep the list sorted.
+#     Individual's name <submission email address> (@GITHUB_HANDLE)
+#     Individual's name <submission email address> <email2> <emailN> (@GITHUB_HANDLE)
 
-Fanmin Shi <fashi@redhat.com> <fanmin.shi@coreos.com> (@fanminshi) pkg:*
-Haseeb Tariq <htariq@redhat.com> <haseeb.tariq@coreos.com> (@hasbro17) pkg:*
-Sebastien Pahl <spahl@redhat.com> (@spahl) pkg:*
-Verónica López <vlopezgo@redhat.com> (@Verolop) pkg:*
-Rithu Leena John <rjohn@redhat.com> (@rithujohn191) pkg:*
+Fanmin Shi <fashi@redhat.com> (@fanminshi)
+Haseeb Tariq <htariq@redhat.com> (@hasbro17)
+Sebastien Pahl <spahl@redhat.com> (@spahl)
+Rithu Leena John <rjohn@redhat.com> (@rithujohn191)
+Alexander Pavel <apavel@redhat.com> (@AlexNPavel)
+Eric Stroczynski <estroczy@redhat.com> (@estroz)
+Shawn Hurley <shurley@redhat.com> (@shawn-hurley)
+Lili Cosic <lcosic@redhat.com> (@LiliC)
