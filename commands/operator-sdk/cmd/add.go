@@ -28,5 +28,6 @@ func NewAddCmd() *cobra.Command {
 	}
 
 	upCmd.AddCommand(add.NewApiCmd())
+	upCmd.AddCommand(add.NewControllerCmd())
 	return upCmd
 }
