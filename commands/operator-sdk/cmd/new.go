@@ -55,7 +55,7 @@ generates a skeletal app-operator application in $GOPATH/src/github.com/example.
 	newCmd.MarkFlagRequired("kind")
 	newCmd.Flags().StringVar(&operatorType, "type", "go", "Type of operator to initialize (e.g \"ansible\")")
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
-	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false, "Generate a playbook skeleton in watches.yaml. (Only used for --type ansible)")
+	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false, "Generate a playbook skeleton. (Only used for --type ansible)")
 
 	return newCmd
 }
@@ -146,6 +146,9 @@ func verifyFlags() {
 	}
 	if operatorType != goOperatorType && operatorType != ansibleOperatorType {
 		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--type can only be `go` or `ansible`"))
+	}
+	if operatorType != ansibleOperatorType && generatePlaybook {
+		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--generate-playbook can only be used with --type `ansible`"))
 	}
 	kindFirstLetter := string(kind[0])
 	if kindFirstLetter != strings.ToUpper(kindFirstLetter) {

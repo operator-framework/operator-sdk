@@ -16,7 +16,6 @@ package generator
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -168,7 +167,7 @@ func (g *Generator) Render() error {
 			return err
 		}
 	default:
-		return errors.New(fmt.Sprintf("unexpected operator type [%v]", g.operatorType))
+		return fmt.Errorf("unexpected operator type [%v]", g.operatorType)
 	}
 	return nil
 }
@@ -349,7 +348,7 @@ func RenderDeployCrdFile(apiVersion, kind string) error {
 		GroupName:    groupName(apiVersion),
 		Version:      version(apiVersion),
 	}
-	crdFilePath := filepath.Join(deployDir, strings.ToLower(kind) + "_crd.yaml")
+	crdFilePath := filepath.Join(deployDir, strings.ToLower(kind)+"_crd.yaml")
 	return renderWriteFile(crdFilePath, crdFilePath, crdYamlTmpl, crdTd)
 }
 
