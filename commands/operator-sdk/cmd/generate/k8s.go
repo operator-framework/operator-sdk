@@ -63,13 +63,14 @@ func K8sCodegen() {
 	fmt.Fprintf(os.Stdout, "Running code-generation for custom resource group versions: [%s]\n", groupVersions)
 	// TODO: Replace generate-groups.sh by building the vendored generators(deepcopy, lister etc)
 	// and running them directly
+	// TODO: remove dependency on boilerplate.go.txt
 	genGroupsCmd := "vendor/k8s.io/code-generator/generate-groups.sh"
 	args := []string{
 		"deepcopy",
 		outputPkg,
 		apisPkg,
 		groupVersions,
-		"--go-header-file", "./tmp/codegen/boilerplate.go.txt",
+		"--go-header-file", "./scripts/codegen/boilerplate.go.txt",
 	}
 	out, err := exec.Command(genGroupsCmd, args...).CombinedOutput()
 	if err != nil {

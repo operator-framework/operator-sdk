@@ -258,8 +258,8 @@ func doScaffold() {
 		log.Fatalf("failed to create %v: %v", codegenDir, err)
 	}
 
-	// generate scripts/codegen/Boilerplate.go.txt
-	boilerplatePath := filepath.Join(codegenDir, "Boilerplate.go.txt")
+	// generate scripts/codegen/boilerplate.go.txt
+	boilerplatePath := filepath.Join(codegenDir, "boilerplate.go.txt")
 	err = writeFileAndPrint(boilerplatePath, []byte{}, defaultFileMode)
 	if err != nil {
 		log.Fatalf("failed to create %v: %v", boilerplatePath, err)

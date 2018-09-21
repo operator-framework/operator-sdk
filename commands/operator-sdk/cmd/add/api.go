@@ -42,7 +42,7 @@ api definition for a new custom resource under pkg/apis. This command must be ru
 If the api already exists at pkg/apis/<group>/<version> then the command will not overwrite and return an error.
 
 Example:
-	$ operator-sdk add --api-version=app.example.com/v1alpha1 --kind=AppService
+	$ operator-sdk add api --api-version=app.example.com/v1alpha1 --kind=AppService
 	$ tree pkg/apis
 	pkg/apis/
 	├── addtoscheme_app_appservice.go
@@ -184,6 +184,7 @@ func mustGetwd() string {
 	return wd
 }
 
+// TODO: combine with writeFileAndPrint to return error if file already exists
 func mustNotExist(path string) {
 	_, err := os.Stat(path)
 	if err == nil {
