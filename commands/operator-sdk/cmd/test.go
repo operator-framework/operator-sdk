@@ -55,10 +55,14 @@ func NewTestCmd() *cobra.Command {
 }
 
 func testFunc(cmd *cobra.Command, args []string) {
-	// if no namespaced manifest path is given, combine deploy/rbac.yaml and deploy/operator.yaml
+	// if no namespaced manifest path is given, combine deploy/sa.yaml, deploy/rbac.yaml and deploy/operator.yaml
 	if namespacedManifestPath == "" {
 		os.Mkdir("deploy/test", os.FileMode(int(0775)))
 		namespacedManifestPath = "deploy/test/namespace-manifests.yaml"
+		sa, err := ioutil.ReadFile("deploy/sa.yaml")
+		if err != nil {
+			log.Fatalf("could not find sa manifest: %v", err)
+		}
 		rbac, err := ioutil.ReadFile("deploy/rbac.yaml")
 		if err != nil {
 			log.Fatalf("could not find rbac manifest: %v", err)
@@ -67,7 +71,9 @@ func testFunc(cmd *cobra.Command, args []string) {
 		if err != nil {
 			log.Fatalf("could not find operator manifest: %v", err)
 		}
-		combined := append(rbac, []byte("\n---\n")...)
+		combined := append(sa, []byte("\n---\n")...)
+		combined = append(combined, rbac...)
+		combined = append(combined, []byte("\n---\n")...)
 		combined = append(combined, operator...)
 		err = ioutil.WriteFile(namespacedManifestPath, combined, os.FileMode(int(0664)))
 		if err != nil {

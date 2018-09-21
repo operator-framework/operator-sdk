@@ -12,6 +12,7 @@ spec:
       labels:
         name: memcached-operator
     spec:
+      serviceAccountName: memcached-operator
       containers:
         - name: memcached-operator
           image: quay.io/coreos/operator-sdk-dev:test-framework-operator

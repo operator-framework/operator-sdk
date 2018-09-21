@@ -438,6 +438,7 @@ spec:
       labels:
         name: {{.ProjectName}}
     spec:
+      serviceAccountName: {{.ProjectName}}
       containers:
         - name: {{.ProjectName}}
           image: {{.Image}}
@@ -494,14 +495,20 @@ rules:
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
-  name: default-account-{{.ProjectName}}
+  name: {{.ProjectName}}
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: {{.ProjectName}}
 roleRef:
   kind: Role
   name: {{.ProjectName}}
   apiGroup: rbac.authorization.k8s.io
+`
+
+const saYamlTmpl = `apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{.ProjectName}}
 `
 
 const crYamlTmpl = `apiVersion: "{{.APIVersion}}"

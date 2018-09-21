@@ -246,6 +246,17 @@ func MemcachedCluster(t *testing.T) {
 		}
 	}
 
+	// create sa
+	saYAML, err := ioutil.ReadFile("deploy/sa.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = ctx.CreateFromYAML(saYAML)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Created sa")
+
 	// create rbac
 	rbacYAML, err := ioutil.ReadFile("deploy/rbac.yaml")
 	rbacYAMLSplit := bytes.Split(rbacYAML, []byte("\n---\n"))
