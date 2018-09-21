@@ -232,6 +232,7 @@ spec:
       labels:
         name: app-operator
     spec:
+      serviceAccountName: app-operator
       containers:
         - name: app-operator
           image: quay.io/example-inc/app-operator:0.0.1

@@ -340,7 +340,16 @@ func renderRBAC(deployDir, projectName, groupName string) error {
 	return renderWriteFile(filepath.Join(deployDir, rbacYaml), rbacTmplName, rbacYamlTmpl, td)
 }
 
-func RenderDeployCrdFile(apiVersion, kind string) error {
+func RenderDeployCrdFiles(deployPath, apiVersion, kind string) error {
+	crTd := tmplData{
+		APIVersion: apiVersion,
+		Kind:       kind,
+	}
+	crFilePath := filepath.Join(deployPath, strings.ToLower(kind)+"_cr.yaml")
+	if err := renderWriteFile(crFilePath, crFilePath, crYamlTmpl, crTd); err != nil {
+		return err
+	}
+
 	crdTd := tmplData{
 		Kind:         kind,
 		KindSingular: strings.ToLower(kind),
@@ -348,7 +357,7 @@ func RenderDeployCrdFile(apiVersion, kind string) error {
 		GroupName:    groupName(apiVersion),
 		Version:      version(apiVersion),
 	}
-	crdFilePath := filepath.Join(deployDir, strings.ToLower(kind)+"_crd.yaml")
+	crdFilePath := filepath.Join(deployPath, strings.ToLower(kind)+"_crd.yaml")
 	return renderWriteFile(crdFilePath, crdFilePath, crdYamlTmpl, crdTd)
 }
 
