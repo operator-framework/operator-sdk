@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -68,14 +69,14 @@ For example:
  * image. As it is possible for a namespaced yaml to have multiple deployments (such as the vault
  * operator, which depends on the etcd-operator), this is just a warning, not a fatal error.
  */
-func verifyDeploymentImage(yamlFile []byte, imageName string) string {
+func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 	warningMessages := ""
 	yamlSplit := bytes.Split(yamlFile, []byte("\n---\n"))
 	for _, yamlSpec := range yamlSplit {
 		yamlMap := make(map[string]interface{})
 		err := yaml.Unmarshal(yamlSpec, &yamlMap)
 		if err != nil {
-			return fmt.Sprintf("WARNING: Could not unmarshal yaml namespaced spec")
+			return fmt.Errorf("WARNING: Could not unmarshal yaml namespaced spec")
 		}
 		kind, ok := yamlMap["kind"].(string)
 		if !ok {
@@ -110,10 +111,13 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) string {
 			}
 		}
 	}
-	return warningMessages
+	if warningMessages == "" {
+		return nil
+	}
+	return errors.New(warningMessages)
 }
 
-func renderTestManifest(image string) string {
+func renderTestManifest(image string) error {
 	namespacedBytes, err := ioutil.ReadFile(namespacedManBuild)
 	if err != nil {
 		log.Fatalf("could not read rbac manifest: %v", err)
@@ -168,7 +172,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stdout, string(o))
 		// create test-pod.yaml as well as check image name of deployments in namespaced manifest
 		genWarning := renderTestManifest(image)
-		if genWarning != "" {
+		if genWarning != nil {
 			fmt.Printf("%s\n", genWarning)
 		}
 	}
