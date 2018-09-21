@@ -327,6 +327,17 @@ func MemcachedClusterTest(t *testing.T) {
 	ctx := f.NewTestCtx(t)
 	defer ctx.Cleanup(t)
 
+	// create sa
+	saYAML, err := ioutil.ReadFile("deploy/sa.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = ctx.CreateFromYAML(saYAML)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Created sa")
+
 	// create rbac
 	rbacYAML, err := ioutil.ReadFile("deploy/rbac.yaml")
 	err = ctx.CreateFromYAML(rbacYAML)
@@ -339,7 +350,7 @@ func MemcachedClusterTest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not get namespace: %v", err)
 	}
-	cmdOut, err := exec.Command("operator-sdk", "test", "cluster", *f.ImageName, "-n", namespace, "-i", "Never").CombinedOutput()
+	cmdOut, err := exec.Command("operator-sdk", "test", "cluster", *f.ImageName, "-n", namespace, "-i", "Never", "-s", "memcached-operator").CombinedOutput()
 	if err != nil {
 		t.Fatalf("in-cluster test failed: %v\nCommand Output:\n%s", err, string(cmdOut))
 	}

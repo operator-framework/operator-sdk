@@ -33,6 +33,7 @@ var (
 	testNamespace     string
 	kubeconfigCluster string
 	imagePullPolicy   string
+	serviceAccount    string
 	pendingTimeout    int
 )
 
@@ -50,7 +51,8 @@ func NewTestClusterCmd() *cobra.Command {
 	testCmd.Flags().StringVarP(&testNamespace, "namespace", "n", "default", "Namespace to run tests in")
 	testCmd.Flags().StringVarP(&kubeconfigCluster, "kubeconfig", "k", defaultKubeConfig, "Kubeconfig path")
 	testCmd.Flags().StringVarP(&imagePullPolicy, "imagePullPolicy", "i", "Always", "Set test pod image pull policy. Allowed values: Always, Never")
-	testCmd.Flags().IntVarP(&pendingTimeout, "pendingTimout", "p", 60, "Timeout for testing pod in pending state")
+	testCmd.Flags().StringVarP(&serviceAccount, "serviceAccount", "s", "default", "Service account to run tests on")
+	testCmd.Flags().IntVarP(&pendingTimeout, "pendingTimeout", "p", 60, "Timeout for testing pod in pending state")
 
 	return testCmd
 }
@@ -77,7 +79,8 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 			Name: "operator-test",
 		},
 		Spec: v1.PodSpec{
-			RestartPolicy: v1.RestartPolicyNever,
+			ServiceAccountName: serviceAccount,
+			RestartPolicy:      v1.RestartPolicyNever,
 			Containers: []v1.Container{{
 				Name:            "operator-test",
 				Image:           args[0],
