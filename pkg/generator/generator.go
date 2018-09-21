@@ -63,6 +63,7 @@ const (
 	config             = "config.yaml"
 	rbacYaml           = "rbac.yaml"
 	crYaml             = "cr.yaml"
+	saYaml             = "sa.yaml"
 	catalogPackageYaml = "package.yaml"
 	catalogCSVYaml     = "csv.yaml"
 	crdYaml            = "crd.yaml"
@@ -80,6 +81,7 @@ const (
 	rbacTmplName       = "deploy/rbac.yaml"
 	crTmplName         = "deploy/cr.yaml"
 	testYamlName       = "deploy/test-pod.yaml"
+	saTmplName         = "deploy/sa.yaml"
 	pluralSuffix       = "s"
 )
 
@@ -237,6 +239,13 @@ func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
 		Kind:       kind,
 	}
 	if err := renderWriteFile(filepath.Join(deployDir, crYaml), crTmplName, crYamlTmpl, crTd); err != nil {
+		return err
+	}
+
+	saTd := tmplData{
+		ProjectName: projectName,
+	}
+	if err := renderWriteFile(filepath.Join(deployDir, saYaml), saTmplName, saYamlTmpl, saTd); err != nil {
 		return err
 	}
 
