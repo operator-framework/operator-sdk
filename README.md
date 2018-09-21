@@ -57,6 +57,7 @@ Create and deploy an app-operator using the SDK CLI:
 
 ```sh
 # Create an app-operator project that defines the App CR.
+$ mkdir -p $GOPATH/src/github.com/example-inc/
 $ cd $GOPATH/src/github.com/example-inc/
 $ operator-sdk new app-operator --api-version=app.example.com/v1alpha1 --kind=App
 $ cd app-operator
