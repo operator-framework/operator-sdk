@@ -20,6 +20,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -173,7 +174,7 @@ func (g *Generator) renderCmd() error {
 func renderCmdFiles(cmdProjectDir, repoPath, apiVersion, kind string) error {
 	td := tmplData{
 		OperatorSDKImport: sdkImport,
-		StubImport:        filepath.Join(repoPath, stubDir),
+		StubImport:        path.Join(repoPath, stubDir),
 		K8sutilImport:     k8sutilImport,
 		SDKVersionImport:  versionImport,
 		APIVersion:        apiVersion,
