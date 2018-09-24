@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/test"
@@ -65,9 +66,9 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("operator-sdk test cluster requires exactly 1 argument")
 	}
 	var pullPolicy v1.PullPolicy
-	if imagePullPolicy == "Always" {
+	if strings.ToLower(imagePullPolicy) == "always" {
 		pullPolicy = v1.PullAlways
-	} else if imagePullPolicy == "Never" {
+	} else if strings.ToLower(imagePullPolicy) == "never" {
 		pullPolicy = v1.PullNever
 	} else {
 		return fmt.Errorf("invalid imagePullPolicy '%v'", imagePullPolicy)
