@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 	"testing"
 	"time"
 
@@ -68,9 +69,30 @@ func TestMemcached(t *testing.T) {
 	ctx.AddFinalizerFn(func() error { return os.RemoveAll(path.Join(gopath, "/src/github.com/example-inc/memcached-operator")) })
 
 	os.Chdir("memcached-operator")
-	os.RemoveAll("vendor/github.com/operator-framework/operator-sdk/pkg")
-	os.Symlink(path.Join(gopath, "/src/github.com/operator-framework/operator-sdk/pkg"),
-		"vendor/github.com/operator-framework/operator-sdk/pkg")
+
+	prSlug, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
+	if ok {
+		prSha, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SHA")
+		if ok {
+			gopkg, err := ioutil.ReadFile("Gopkg.toml")
+			if err != nil {
+				t.Fatal(err)
+			}
+			// TODO: make this match more complete in case we add another repo tracking master
+			gopkg = bytes.Replace(gopkg, []byte("branch = \"master\""), []byte("# branch = \"master\""), -1)
+			gopkgString := string(gopkg)
+			gopkgLoc := strings.LastIndex(gopkgString, "\n  name = \"github.com/operator-framework/operator-sdk\"\n")
+			gopkgString = gopkgString[:gopkgLoc] + "\n  source = \"https://github.com/" + prSlug + "\"\n  revision = \"" + prSha + "\"\n" + gopkgString[gopkgLoc+1:]
+			err = ioutil.WriteFile("Gopkg.toml", []byte(gopkgString), os.FileMode(filemode))
+			cmdOut, err = exec.Command("dep", "ensure").CombinedOutput()
+			if err != nil {
+				t.Fatalf("dep ensure after gopkg replace failed: %v\nCommand Output: %s\nGopkg Contents: %s", err, cmdOut, gopkgString)
+			}
+		} else {
+			t.Fatal("could not find sha of PR")
+		}
+	}
+
 	handlerFile, err := os.Create("pkg/stub/handler.go")
 	if err != nil {
 		t.Fatal(err)
