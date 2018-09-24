@@ -82,7 +82,7 @@ func TestMemcached(t *testing.T) {
 			gopkg = bytes.Replace(gopkg, []byte("branch = \"master\""), []byte("# branch = \"master\""), -1)
 			gopkgString := string(gopkg)
 			gopkgLoc := strings.LastIndex(gopkgString, "\n  name = \"github.com/operator-framework/operator-sdk\"\n")
-			gopkgString = gopkgString[:gopkgLoc] + "\n  source = \"" + prSlug + "\"\n  revision = \"" + prSha + "\"\n" + gopkgString[gopkgLoc+1:]
+			gopkgString = gopkgString[:gopkgLoc] + "\n  source = \"https://github.com/" + prSlug + "\"\n  revision = \"" + prSha + "\"\n" + gopkgString[gopkgLoc+1:]
 			err = ioutil.WriteFile("Gopkg.toml", []byte(gopkgString), os.FileMode(filemode))
 			cmdOut, err = exec.Command("dep", "ensure").CombinedOutput()
 			if err != nil {
