@@ -139,7 +139,7 @@ func newbusyBoxPod(cr *v1alpha1.AppService) *corev1.Pod {
 			Containers: []corev1.Container{
 				{
 					Name:    "busybox",
-					Image:   "busybox",
+					Image:   "docker.io/busybox",
 					Command: []string{"sleep", "3600"},
 				},
 			},
