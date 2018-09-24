@@ -32,7 +32,7 @@ func (ctx *TestCtx) GetNamespace() (string, error) {
 		return ctx.Namespace, nil
 	}
 	if Global.InCluster {
-		ctx.Namespace = os.Getenv("TEST_NAMESPACE")
+		ctx.Namespace = os.Getenv(TestNamespaceEnv)
 		return ctx.Namespace, nil
 	}
 	// create namespace

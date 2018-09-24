@@ -27,6 +27,7 @@ const (
 	KubeConfigFlag        = "kubeconfig"
 	NamespacedManPathFlag = "namespacedMan"
 	GlobalManPathFlag     = "globalMan"
+	TestNamespaceEnv      = "TEST_NAMESPACE"
 )
 
 func MainEntry(m *testing.M) {

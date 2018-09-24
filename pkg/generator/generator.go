@@ -24,6 +24,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/operator-framework/operator-sdk/pkg/test"
+
 	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 )
 
@@ -261,8 +263,9 @@ func renderDeployFiles(deployDir, projectName, apiVersion, kind string) error {
 
 func RenderTestYaml(c *Config, image string) error {
 	opTd := tmplData{
-		ProjectName: c.ProjectName,
-		Image:       image,
+		ProjectName:      c.ProjectName,
+		Image:            image,
+		TestNamespaceEnv: test.TestNamespaceEnv,
 	}
 	return renderWriteFile(filepath.Join(deployDir, "test-pod.yaml"), testYamlName, testYamlTmpl, opTd)
 }
@@ -490,6 +493,9 @@ type tmplData struct {
 	CRDVersion     string
 	CSVName        string
 	CatalogVersion string
+
+	// for test framework
+	TestNamespaceEnv string
 }
 
 // Creates all the necesary directories for the generated files

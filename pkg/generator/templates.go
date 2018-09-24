@@ -435,11 +435,8 @@ spec:
     image: {{.Image}}
     imagePullPolicy: Always
     command: ["/go-test.sh"]
-    resources:
-      requests:
-        cpu: 1
     env:
-      - name: TEST_NAMESPACE
+      - name: {{.TestNamespaceEnv}}
         valueFrom:
           fieldRef:
             fieldPath: metadata.namespace

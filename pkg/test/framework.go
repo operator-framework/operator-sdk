@@ -62,7 +62,6 @@ func setup(kubeconfigPath, namespacedManPath *string) error {
 	inCluster := false
 	if *kubeconfigPath == "incluster" {
 		// Work around https://github.com/kubernetes/kubernetes/issues/40973
-		// See https://github.com/coreos/etcd-operator/issues/731#issuecomment-283804819
 		if len(os.Getenv("KUBERNETES_SERVICE_HOST")) == 0 {
 			addrs, err := net.LookupHost("kubernetes.default.svc")
 			if err != nil {
@@ -139,7 +138,7 @@ func AddToFrameworkScheme(addToScheme addToSchemeFunc, obj runtime.Object) error
 	Global.DynamicClient, err = dynclient.New(Global.KubeConfig, dynclient.Options{Scheme: Global.Scheme, Mapper: Global.RestMapper})
 	err = wait.PollImmediate(time.Second, time.Second*10, func() (done bool, err error) {
 		if Global.InCluster {
-			err = Global.DynamicClient.List(goctx.TODO(), &dynclient.ListOptions{Namespace: os.Getenv("TEST_NAMESPACE")}, obj)
+			err = Global.DynamicClient.List(goctx.TODO(), &dynclient.ListOptions{Namespace: os.Getenv(TestNamespaceEnv)}, obj)
 		} else {
 			err = Global.DynamicClient.List(goctx.TODO(), &dynclient.ListOptions{Namespace: "default"}, obj)
 		}

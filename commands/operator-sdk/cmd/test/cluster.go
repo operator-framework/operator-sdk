@@ -20,11 +20,12 @@ import (
 	"os"
 	"time"
 
-	"k8s.io/apimachinery/pkg/util/wait"
+	"github.com/operator-framework/operator-sdk/pkg/test"
 
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -87,7 +88,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 				ImagePullPolicy: pullPolicy,
 				Command:         []string{"/go-test.sh"},
 				Env: []v1.EnvVar{{
-					Name:      "TEST_NAMESPACE",
+					Name:      test.TestNamespaceEnv,
 					ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.namespace"}},
 				}},
 			}},

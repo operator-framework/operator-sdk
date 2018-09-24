@@ -117,15 +117,16 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 	return errors.New(warningMessages)
 }
 
-func renderTestManifest(image string) error {
+func renderTestManifest(image string) {
 	namespacedBytes, err := ioutil.ReadFile(namespacedManBuild)
 	if err != nil {
-		log.Fatalf("could not read rbac manifest: %v", err)
+		log.Fatalf("could not read namespaced manifest: %v", err)
 	}
 	if err = generator.RenderTestYaml(cmdutil.GetConfig(), image); err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/test-pod.yaml: (%v)", err))
+		log.Fatalf("failed to generate deploy/test-pod.yaml: (%v)", err)
 	}
-	return verifyDeploymentImage(namespacedBytes, image)
+	// the error from verifyDeploymentImage is just a warning, not fatal error
+	fmt.Printf("%v", verifyDeploymentImage(namespacedBytes, image))
 }
 
 const (
@@ -171,9 +172,6 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		}
 		fmt.Fprintln(os.Stdout, string(o))
 		// create test-pod.yaml as well as check image name of deployments in namespaced manifest
-		genWarning := renderTestManifest(image)
-		if genWarning != nil {
-			fmt.Printf("%s\n", genWarning)
-		}
+		renderTestManifest(image)
 	}
 }
