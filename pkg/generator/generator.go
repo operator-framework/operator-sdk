@@ -32,7 +32,7 @@ import (
 const (
 	defaultDirFileMode  = 0750
 	defaultFileMode     = 0644
-	defaultExecFileMode = 0744
+	defaultExecFileMode = 0755
 	// dirs
 	cmdDir        = "cmd"
 	deployDir     = "deploy"
@@ -371,7 +371,7 @@ func renderBuildFiles(buildDir, repoPath, projectName string) error {
 	if err := renderFile(buf, filepath.Join(buildDir, goTest), goTestScript, tmplData{}); err != nil {
 		return err
 	}
-	return writeFileAndPrint(filepath.Join(buildDir, goTest), buf.Bytes(), os.FileMode(int(0755)))
+	return writeFileAndPrint(filepath.Join(buildDir, goTest), buf.Bytes(), defaultExecFileMode)
 }
 
 func renderCodegenFiles(codegenDir, repoPath, apiDirName, version, projectName string) error {
