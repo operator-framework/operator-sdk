@@ -31,13 +31,15 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-var (
-	testNamespace     string
-	kubeconfigCluster string
-	imagePullPolicy   string
-	serviceAccount    string
-	pendingTimeout    int
-)
+type testClusterConfig struct {
+	namespace       string
+	kubeconfig      string
+	imagePullPolicy string
+	serviceAccount  string
+	pendingTimeout  int
+}
+
+var tcConfig testClusterConfig
 
 func NewTestClusterCmd() *cobra.Command {
 	testCmd := &cobra.Command{
@@ -50,11 +52,11 @@ func NewTestClusterCmd() *cobra.Command {
 	if ok {
 		defaultKubeConfig = homedir + "/.kube/config"
 	}
-	testCmd.Flags().StringVarP(&testNamespace, "namespace", "n", "default", "Namespace to run tests in")
-	testCmd.Flags().StringVarP(&kubeconfigCluster, "kubeconfig", "k", defaultKubeConfig, "Kubeconfig path")
-	testCmd.Flags().StringVarP(&imagePullPolicy, "imagePullPolicy", "i", "Always", "Set test pod image pull policy. Allowed values: Always, Never")
-	testCmd.Flags().StringVarP(&serviceAccount, "serviceAccount", "s", "default", "Service account to run tests on")
-	testCmd.Flags().IntVarP(&pendingTimeout, "pendingTimeout", "p", 60, "Timeout for testing pod in pending state")
+	testCmd.Flags().StringVarP(&tcConfig.namespace, "namespace", "n", "default", "Namespace to run tests in")
+	testCmd.Flags().StringVarP(&tcConfig.kubeconfig, "kubeconfig", "k", defaultKubeConfig, "Kubeconfig path")
+	testCmd.Flags().StringVarP(&tcConfig.imagePullPolicy, "imagePullPolicy", "i", "Always", "Set test pod image pull policy. Allowed values: Always, Never")
+	testCmd.Flags().StringVarP(&tcConfig.serviceAccount, "serviceAccount", "s", "default", "Service account to run tests on")
+	testCmd.Flags().IntVarP(&tcConfig.pendingTimeout, "pendingTimeout", "p", 60, "Timeout for testing pod in pending state")
 
 	return testCmd
 }
@@ -66,12 +68,12 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("operator-sdk test cluster requires exactly 1 argument")
 	}
 	var pullPolicy v1.PullPolicy
-	if strings.ToLower(imagePullPolicy) == "always" {
+	if strings.ToLower(tcConfig.imagePullPolicy) == "always" {
 		pullPolicy = v1.PullAlways
-	} else if strings.ToLower(imagePullPolicy) == "never" {
+	} else if strings.ToLower(tcConfig.imagePullPolicy) == "never" {
 		pullPolicy = v1.PullNever
 	} else {
-		return fmt.Errorf("invalid imagePullPolicy '%v'", imagePullPolicy)
+		return fmt.Errorf("invalid imagePullPolicy '%v'", tcConfig.imagePullPolicy)
 	}
 	// cobra prints its help message on error; we silence that here because any errors below
 	// are due to the test failing, not incorrect user input
@@ -81,7 +83,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 			Name: "operator-test",
 		},
 		Spec: v1.PodSpec{
-			ServiceAccountName: serviceAccount,
+			ServiceAccountName: tcConfig.serviceAccount,
 			RestartPolicy:      v1.RestartPolicyNever,
 			Containers: []v1.Container{{
 				Name:            "operator-test",
@@ -95,7 +97,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 			}},
 		},
 	}
-	kubeconfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigCluster)
+	kubeconfig, err := clientcmd.BuildConfigFromFlags("", tcConfig.kubeconfig)
 	if err != nil {
 		return fmt.Errorf("failed to get kubeconfig: %v", err)
 	}
@@ -103,18 +105,18 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create kubeclient: %v", err)
 	}
-	testPod, err = kubeclient.CoreV1().Pods(testNamespace).Create(testPod)
+	testPod, err = kubeclient.CoreV1().Pods(tcConfig.namespace).Create(testPod)
 	if err != nil {
 		return fmt.Errorf("failed to create test pod: %v", err)
 	}
 	defer func() {
-		err = kubeclient.CoreV1().Pods(testNamespace).Delete(testPod.Name, &metav1.DeleteOptions{})
+		err = kubeclient.CoreV1().Pods(tcConfig.namespace).Delete(testPod.Name, &metav1.DeleteOptions{})
 		if err != nil {
 			fmt.Printf("Warning: failed to delete test pod")
 		}
 	}()
-	err = wait.Poll(time.Second*5, time.Second*time.Duration(pendingTimeout), func() (bool, error) {
-		testPod, err = kubeclient.CoreV1().Pods(testNamespace).Get(testPod.Name, metav1.GetOptions{})
+	err = wait.Poll(time.Second*5, time.Second*time.Duration(tcConfig.pendingTimeout), func() (bool, error) {
+		testPod, err = kubeclient.CoreV1().Pods(tcConfig.namespace).Get(testPod.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, fmt.Errorf("failed to get test pod: %v", err)
 		}
@@ -124,15 +126,15 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 		return true, nil
 	})
 	if err != nil {
-		testPod, err = kubeclient.CoreV1().Pods(testNamespace).Get(testPod.Name, metav1.GetOptions{})
+		testPod, err = kubeclient.CoreV1().Pods(tcConfig.namespace).Get(testPod.Name, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("failed to get test pod: %v", err)
 		}
 		waitingState := testPod.Status.ContainerStatuses[0].State.Waiting
-		return fmt.Errorf("test pod stuck in 'Pending' phase for longer than %d seconds.\nMessage: %s\nReason: %s", pendingTimeout, waitingState.Message, waitingState.Reason)
+		return fmt.Errorf("test pod stuck in 'Pending' phase for longer than %d seconds.\nMessage: %s\nReason: %s", tcConfig.pendingTimeout, waitingState.Message, waitingState.Reason)
 	}
 	for {
-		testPod, err = kubeclient.CoreV1().Pods(testNamespace).Get(testPod.Name, metav1.GetOptions{})
+		testPod, err = kubeclient.CoreV1().Pods(tcConfig.namespace).Get(testPod.Name, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("failed to get test pod: %v", err)
 		}
@@ -143,7 +145,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 			fmt.Printf("Test Successfully Completed\n")
 			return nil
 		} else if testPod.Status.Phase == v1.PodFailed {
-			req := kubeclient.CoreV1().Pods(testNamespace).GetLogs(testPod.Name, &v1.PodLogOptions{})
+			req := kubeclient.CoreV1().Pods(tcConfig.namespace).GetLogs(testPod.Name, &v1.PodLogOptions{})
 			readCloser, err := req.Stream()
 			if err != nil {
 				return fmt.Errorf("test failed and failed to get error logs")

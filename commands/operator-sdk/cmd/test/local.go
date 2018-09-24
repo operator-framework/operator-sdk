@@ -28,12 +28,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	kubeconfig             string
-	globalManifestPath     string
-	namespacedManifestPath string
-	goTestFlags            string
-)
+type testLocalConfig struct {
+	kubeconfig        string
+	globalManPath     string
+	namespacedManPath string
+	goTestFlags       string
+}
+
+var tlConfig testLocalConfig
 
 func NewTestLocalCmd() *cobra.Command {
 	testCmd := &cobra.Command{
@@ -46,10 +48,10 @@ func NewTestLocalCmd() *cobra.Command {
 	if ok {
 		defaultKubeConfig = homedir + "/.kube/config"
 	}
-	testCmd.Flags().StringVarP(&kubeconfig, "kubeconfig", "k", defaultKubeConfig, "Kubeconfig path")
-	testCmd.Flags().StringVarP(&globalManifestPath, "global-init", "g", "deploy/crd.yaml", "Path to manifest for Global resources (e.g. CRD manifest)")
-	testCmd.Flags().StringVarP(&namespacedManifestPath, "namespaced-init", "n", "", "Path to manifest for per-test, namespaced resources (e.g. RBAC and Operator manifest)")
-	testCmd.Flags().StringVarP(&goTestFlags, "go-test-flags", "f", "", "Additional flags to pass to go test")
+	testCmd.Flags().StringVarP(&tlConfig.kubeconfig, "kubeconfig", "k", defaultKubeConfig, "Kubeconfig path")
+	testCmd.Flags().StringVarP(&tlConfig.globalManPath, "global-init", "g", "deploy/crd.yaml", "Path to manifest for Global resources (e.g. CRD manifest)")
+	testCmd.Flags().StringVarP(&tlConfig.namespacedManPath, "namespaced-init", "n", "", "Path to manifest for per-test, namespaced resources (e.g. RBAC and Operator manifest)")
+	testCmd.Flags().StringVarP(&tlConfig.goTestFlags, "go-test-flags", "f", "", "Additional flags to pass to go test")
 
 	return testCmd
 }
@@ -59,9 +61,9 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("operator-sdk test local requires exactly 1 argument"))
 	}
 	// if no namespaced manifest path is given, combine deploy/sa.yaml, deploy/rbac.yaml and deploy/operator.yaml
-	if namespacedManifestPath == "" {
+	if tlConfig.namespacedManPath == "" {
 		os.Mkdir("deploy/test", os.FileMode(int(0775)))
-		namespacedManifestPath = "deploy/test/namespace-manifests.yaml"
+		tlConfig.namespacedManPath = "deploy/test/namespace-manifests.yaml"
 		sa, err := ioutil.ReadFile("deploy/sa.yaml")
 		if err != nil {
 			log.Fatalf("could not find sa manifest: %v", err)
@@ -78,23 +80,23 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 		combined = append(combined, rbac...)
 		combined = append(combined, []byte("\n---\n")...)
 		combined = append(combined, operator...)
-		err = ioutil.WriteFile(namespacedManifestPath, combined, os.FileMode(int(0664)))
+		err = ioutil.WriteFile(tlConfig.namespacedManPath, combined, os.FileMode(int(0664)))
 		if err != nil {
 			log.Fatalf("could not create temporary namespaced manifest file: %v", err)
 		}
 		defer func() {
-			err := os.Remove(namespacedManifestPath)
+			err := os.Remove(tlConfig.namespacedManPath)
 			if err != nil {
 				log.Fatalf("could not delete temporary namespace manifest file")
 			}
 		}()
 	}
 	testArgs := []string{"test", args[0] + "/..."}
-	testArgs = append(testArgs, "-"+test.KubeConfigFlag, kubeconfig)
-	testArgs = append(testArgs, "-"+test.NamespacedManPathFlag, namespacedManifestPath)
-	testArgs = append(testArgs, "-"+test.GlobalManPathFlag, globalManifestPath)
+	testArgs = append(testArgs, "-"+test.KubeConfigFlag, tlConfig.kubeconfig)
+	testArgs = append(testArgs, "-"+test.NamespacedManPathFlag, tlConfig.namespacedManPath)
+	testArgs = append(testArgs, "-"+test.GlobalManPathFlag, tlConfig.globalManPath)
 	testArgs = append(testArgs, "-"+test.ProjRootFlag, mustGetwd())
-	testArgs = append(testArgs, strings.Split(goTestFlags, " ")...)
+	testArgs = append(testArgs, strings.Split(tlConfig.goTestFlags, " ")...)
 	dc := exec.Command("go", testArgs...)
 	dc.Dir = mustGetwd()
 	dc.Stdout = os.Stdout
