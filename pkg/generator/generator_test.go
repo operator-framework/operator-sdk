@@ -545,17 +545,6 @@ func TestGenBuild(t *testing.T) {
 	}
 
 	buf = &bytes.Buffer{}
-	if err := renderDockerBuildFile(buf); err != nil {
-		t.Error(err)
-		return
-	}
-	if dockerBuildTmpl != buf.String() {
-		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(dockerBuildTmpl, buf.String(), false)
-		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
-	}
-
-	buf = &bytes.Buffer{}
 	dTd := tmplData{
 		ProjectName: appProjectName,
 	}

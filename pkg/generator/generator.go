@@ -54,7 +54,6 @@ const (
 	register           = "register.go"
 	types              = "types.go"
 	build              = "build.sh"
-	dockerBuild        = "docker_build.sh"
 	dockerfile         = "Dockerfile"
 	testingDockerfile  = "Dockerfile"
 	goTest             = "go-test.sh"
@@ -356,14 +355,6 @@ func renderBuildFiles(buildDir, repoPath, projectName string) error {
 		return err
 	}
 
-	buf = &bytes.Buffer{}
-	if err := renderDockerBuildFile(buf); err != nil {
-		return err
-	}
-	if err := writeFileAndPrint(filepath.Join(buildDir, dockerBuild), buf.Bytes(), defaultExecFileMode); err != nil {
-		return err
-	}
-
 	dTd := tmplData{
 		ProjectName: projectName,
 	}
@@ -381,11 +372,6 @@ func renderBuildFiles(buildDir, repoPath, projectName string) error {
 		return err
 	}
 	return writeFileAndPrint(filepath.Join(buildDir, goTest), buf.Bytes(), os.FileMode(int(0755)))
-}
-
-func renderDockerBuildFile(w io.Writer) error {
-	_, err := w.Write([]byte(dockerBuildTmpl))
-	return err
 }
 
 func renderCodegenFiles(codegenDir, repoPath, apiDirName, version, projectName string) error {
