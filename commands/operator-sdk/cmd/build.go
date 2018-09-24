@@ -125,8 +125,11 @@ func renderTestManifest(image string) {
 	if err = generator.RenderTestYaml(cmdutil.GetConfig(), image); err != nil {
 		log.Fatalf("failed to generate deploy/test-pod.yaml: (%v)", err)
 	}
+	err = verifyDeploymentImage(namespacedBytes, image)
 	// the error from verifyDeploymentImage is just a warning, not fatal error
-	fmt.Printf("%v", verifyDeploymentImage(namespacedBytes, image))
+	if err != nil {
+		fmt.Printf("%v\n", err)
+	}
 }
 
 const (
