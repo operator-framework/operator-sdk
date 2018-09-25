@@ -69,30 +69,6 @@ func TestMemcached(t *testing.T) {
 	ctx.AddFinalizerFn(func() error { return os.RemoveAll(path.Join(gopath, "/src/github.com/example-inc/memcached-operator")) })
 
 	os.Chdir("memcached-operator")
-
-	prSlug, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
-	if ok {
-		prSha, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SHA")
-		if ok {
-			gopkg, err := ioutil.ReadFile("Gopkg.toml")
-			if err != nil {
-				t.Fatal(err)
-			}
-			// TODO: make this match more complete in case we add another repo tracking master
-			gopkg = bytes.Replace(gopkg, []byte("branch = \"master\""), []byte("# branch = \"master\""), -1)
-			gopkgString := string(gopkg)
-			gopkgLoc := strings.LastIndex(gopkgString, "\n  name = \"github.com/operator-framework/operator-sdk\"\n")
-			gopkgString = gopkgString[:gopkgLoc] + "\n  source = \"https://github.com/" + prSlug + "\"\n  revision = \"" + prSha + "\"\n" + gopkgString[gopkgLoc+1:]
-			err = ioutil.WriteFile("Gopkg.toml", []byte(gopkgString), os.FileMode(filemode))
-			cmdOut, err = exec.Command("dep", "ensure").CombinedOutput()
-			if err != nil {
-				t.Fatalf("dep ensure after gopkg replace failed: %v\nCommand Output: %s\nGopkg Contents: %s", err, cmdOut, gopkgString)
-			}
-		} else {
-			t.Fatal("could not find sha of PR")
-		}
-	}
-
 	handlerFile, err := os.Create("pkg/stub/handler.go")
 	if err != nil {
 		t.Fatal(err)
@@ -145,6 +121,28 @@ func TestMemcached(t *testing.T) {
 		t.Fatalf("could not rename test/e2e/memcached_test.go.tmpl: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 	t.Log("Pulling new dependencies with dep ensure")
+	prSlug, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
+	if ok && prSlug != "" {
+		prSha, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SHA")
+		if ok && prSha != "" {
+			gopkg, err := ioutil.ReadFile("Gopkg.toml")
+			if err != nil {
+				t.Fatal(err)
+			}
+			// TODO: make this match more complete in case we add another repo tracking master
+			gopkg = bytes.Replace(gopkg, []byte("branch = \"master\""), []byte("# branch = \"master\""), -1)
+			gopkgString := string(gopkg)
+			gopkgLoc := strings.LastIndex(gopkgString, "\n  name = \"github.com/operator-framework/operator-sdk\"\n")
+			gopkgString = gopkgString[:gopkgLoc] + "\n  source = \"https://github.com/" + prSlug + "\"\n  revision = \"" + prSha + "\"\n" + gopkgString[gopkgLoc+1:]
+			err = ioutil.WriteFile("Gopkg.toml", []byte(gopkgString), os.FileMode(filemode))
+			if err != nil {
+				t.Fatalf("failed to write updated Gopkg.toml: %v", err)
+			}
+			t.Logf("Gopkg.toml: %v", gopkgString)
+		} else {
+			t.Fatal("could not find sha of PR")
+		}
+	}
 	cmdOut, err = exec.Command("dep", "ensure").CombinedOutput()
 	if err != nil {
 		t.Fatalf("dep ensure failed: %v\nCommand Output:\n%v", err, string(cmdOut))
