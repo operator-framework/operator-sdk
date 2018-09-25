@@ -274,11 +274,27 @@ func doScaffold() {
 	// generate version/version.go
 	buf = &bytes.Buffer{}
 	versionGen := scaffold.NewVersionCoden()
-	versionGen.Render(buf)
 	versionPath := filepath.Join(versionDir, "version.go")
+	err = versionGen.Render(buf)
+	if err != nil {
+		log.Fatalf("failed to render the template for (%v): %v", versionPath, err)
+	}
 	err = writeFileAndPrint(versionPath, buf.Bytes(), defaultFileMode)
 	if err != nil {
 		log.Fatalf("failed to create %v: %v", versionPath, err)
+	}
+
+	// generate .gitignore
+	buf = &bytes.Buffer{}
+	gitignoreGen := scaffold.NewGitignoreCodegen()
+	gitignorePath := filepath.Join(fullProjectPath, ".gitignore")
+	err = gitignoreGen.Render(buf)
+	if err != nil {
+		log.Fatalf("failed to render the template for (%v): %v", gitignorePath, err)
+	}
+	err = writeFileAndPrint(gitignorePath, buf.Bytes(), defaultFileMode)
+	if err != nil {
+		log.Fatalf("failed to create %v: %v", gitignorePath, err)
 	}
 
 	// TODO: generate rest of the scaffold.
