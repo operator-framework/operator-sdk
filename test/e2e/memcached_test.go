@@ -267,6 +267,9 @@ func MemcachedCluster(t *testing.T) {
 	ctx := f.NewTestCtx(t)
 	defer ctx.Cleanup(t)
 	operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
+	if err != nil {
+		t.Fatalf("could not read deploy/operator.yaml: %v", err)
+	}
 	local := *f.ImageName == ""
 	if local {
 		*f.ImageName = "quay.io/example/memcached-operator:v0.0.1"
