@@ -297,7 +297,18 @@ func doScaffold() {
 		log.Fatalf("failed to create %v: %v", gitignorePath, err)
 	}
 
-	// TODO: generate rest of the scaffold.
+	// generate Gopkg.toml
+	buf = &bytes.Buffer{}
+	gopkgGen := scaffold.NewGopkgCodegen()
+	gopkPath := filepath.Join(fullProjectPath, "Gopkg.toml")
+	err = gopkgGen.Render(buf)
+	if err != nil {
+		log.Fatalf("failed to render the template for (%v): %v", gopkPath, err)
+	}
+	err = writeFileAndPrint(gopkPath, buf.Bytes(), defaultFileMode)
+	if err != nil {
+		log.Fatalf("failed to create %v: %v", gopkPath, err)
+	}
 }
 
 // Writes file to a given path and data buffer, as well as prints out a message confirming creation of a file
