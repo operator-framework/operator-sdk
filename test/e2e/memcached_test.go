@@ -149,10 +149,6 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dep ensure failed: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
-	// use current operator-sdk code
-	os.RemoveAll("vendor/github.com/operator-framework/operator-sdk/pkg")
-	os.Symlink(path.Join(gopath, "/src/github.com/operator-framework/operator-sdk/pkg"),
-		"vendor/github.com/operator-framework/operator-sdk/pkg")
 
 	// create crd
 	crdYAML, err := ioutil.ReadFile("deploy/crd.yaml")
@@ -288,7 +284,10 @@ func MemcachedCluster(t *testing.T) {
 		t.Fatalf("failed to write deploy/operator.yaml: %v", err)
 	}
 	t.Log("Building operator docker image")
-	cmdOut, err := exec.Command("operator-sdk", "build", *f.ImageName, "-e", "-t", "./test/e2e", "-n", "deploy/operator.yaml").CombinedOutput()
+	cmdOut, err := exec.Command("operator-sdk", "build", *f.ImageName,
+		"--enable-tests",
+		"--test-location", "./test/e2e",
+		"--namespaced-manifest", "deploy/operator.yaml").CombinedOutput()
 	if err != nil {
 		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
@@ -378,7 +377,10 @@ func MemcachedClusterTest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not get namespace: %v", err)
 	}
-	cmdOut, err := exec.Command("operator-sdk", "test", "cluster", *f.ImageName, "-n", namespace, "-i", "Never", "-s", "memcached-operator").CombinedOutput()
+	cmdOut, err := exec.Command("operator-sdk", "test", "cluster", *f.ImageName,
+		"--namespace", namespace,
+		"--image-pull-policy", "Never",
+		"--service-account", "memcached-operator").CombinedOutput()
 	if err != nil {
 		t.Fatalf("in-cluster test failed: %v\nCommand Output:\n%s", err, string(cmdOut))
 	}

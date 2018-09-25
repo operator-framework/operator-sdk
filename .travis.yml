@@ -32,7 +32,7 @@ script:
 # test framework with defaults
 - operator-sdk test local .
 # test operator-sdk test flags
-- operator-sdk test local . -g deploy/crd.yaml -n deploy/namespace-init.yaml -f "-parallel 1" -k $HOME/.kube/config
+- operator-sdk test local . --global-manifest deploy/crd.yaml --namespaced-manifest deploy/namespace-init.yaml --go-test-flags "-parallel 1" --kubeconfig $HOME/.kube/config
 # go back to project root
 - cd ../..
 - go vet ./...

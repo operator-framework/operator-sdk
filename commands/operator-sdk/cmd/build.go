@@ -55,9 +55,9 @@ For example:
 `,
 		Run: buildFunc,
 	}
-	buildCmd.Flags().BoolVarP(&enableTests, "enable-tests", "e", false, "Enable in-cluster testing by adding test binary to the image")
-	buildCmd.Flags().StringVarP(&testLocationBuild, "test-location", "t", "./test/e2e", "Location of tests")
-	buildCmd.Flags().StringVarP(&namespacedManBuild, "namespaced", "n", "deploy/operator.yaml", "Path of namespaced resources for tests")
+	buildCmd.Flags().BoolVar(&enableTests, "enable-tests", false, "Enable in-cluster testing by adding test binary to the image")
+	buildCmd.Flags().StringVar(&testLocationBuild, "test-location", "./test/e2e", "Location of tests")
+	buildCmd.Flags().StringVar(&namespacedManBuild, "namespaced-manifest", "deploy/operator.yaml", "Path of namespaced resources manifest for tests")
 	return buildCmd
 }
 
