@@ -23,22 +23,20 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 
-	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
 type resourceClientFactory struct {
-	restMapper *discovery.DeferredDiscoveryRESTMapper
-	clientPool dynamic.ClientPool
-	kubeClient kubernetes.Interface
-	kubeConfig *rest.Config
+	dynamicClient dynamic.Interface
+	restMapper    *restmapper.DeferredDiscoveryRESTMapper
+	kubeClient    kubernetes.Interface
+	kubeConfig    *rest.Config
 }
 
 var (
@@ -51,16 +49,19 @@ var (
 func newSingletonFactory() {
 	kubeClient, kubeConfig := mustNewKubeClientAndConfig()
 	cachedDiscoveryClient := cached.NewMemCacheClient(kubeClient.Discovery())
-	restMapper := discovery.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient, meta.InterfacesForUnstructured)
+	restMapper := restmapper.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient)
 	restMapper.Reset()
-	kubeConfig.ContentConfig = dynamic.ContentConfig()
-	clientPool := dynamic.NewClientPool(kubeConfig, restMapper, dynamic.LegacyAPIPathResolverFunc)
+
+	dynamicClient, err := dynamic.NewForConfig(kubeConfig)
+	if err != nil {
+		panic(err)
+	}
 
 	singletonFactory = &resourceClientFactory{
-		kubeClient: kubeClient,
-		kubeConfig: kubeConfig,
-		restMapper: restMapper,
-		clientPool: clientPool,
+		kubeClient:    kubeClient,
+		kubeConfig:    kubeConfig,
+		dynamicClient: dynamicClient,
+		restMapper:    restMapper,
 	}
 	singletonFactory.runBackgroundCacheReset(1 * time.Minute)
 }
@@ -95,31 +96,23 @@ func (c *resourceClientFactory) GetResourceClient(apiVersion, kind, namespace st
 		Kind:    kind,
 	}
 
-	client, err := c.clientPool.ClientForGroupVersionKind(gvk)
-	if err != nil {
-		return nil, "", fmt.Errorf("failed to get client for GroupVersionKind(%s): %v", gvk.String(), err)
-	}
-	resource, err := apiResource(gvk, c.restMapper)
+	gvr, err := gvkToGVR(gvk, c.restMapper)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to get resource type: %v", err)
 	}
-	pluralName := resource.Name
-	resourceClient := client.Resource(resource, namespace)
+	pluralName := gvr.Resource
+
+	resourceClient := c.dynamicClient.Resource(*gvr).Namespace(namespace)
 	return resourceClient, pluralName, nil
 }
 
-// apiResource consults the REST mapper to translate an <apiVersion, kind, namespace> tuple to a metav1.APIResource struct.
-func apiResource(gvk schema.GroupVersionKind, restMapper *discovery.DeferredDiscoveryRESTMapper) (*metav1.APIResource, error) {
+// apiResource consults the REST mapper to translate an <apiVersion, kind, namespace> tuple to a GroupVersionResource
+func gvkToGVR(gvk schema.GroupVersionKind, restMapper *restmapper.DeferredDiscoveryRESTMapper) (*schema.GroupVersionResource, error) {
 	mapping, err := restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the resource REST mapping for GroupVersionKind(%s): %v", gvk.String(), err)
 	}
-	resource := &metav1.APIResource{
-		Name:       mapping.Resource,
-		Namespaced: mapping.Scope == meta.RESTScopeNamespace,
-		Kind:       gvk.Kind,
-	}
-	return resource, nil
+	return &mapping.Resource, nil
 }
 
 // mustNewKubeClientAndConfig returns the in-cluster config and kubernetes client
