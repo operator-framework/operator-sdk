@@ -12,9 +12,9 @@ Usage:
 * image - is the container image to be built, e.g. "quay.io/example/operator:v0.0.1".
 
 ### Flags
-* `-e, --enable-tests` bool - enable in-cluster testing by adding test binary to the image
-* `-n, --namespaced` string - path of namespaced resources for tests (default "deploy/operator.yaml")
-* `-t, --test-location` string - location of tests (default "./test/e2e")
+* `--enable-tests` bool - enable in-cluster testing by adding test binary to the image
+* `--namespaced-manifest` string - path of namespaced resources manifest for tests (default "deploy/operator.yaml")
+* `--test-location` string - location of tests (default "./test/e2e")
 * `-h, --help` - help for build
 
 
@@ -167,10 +167,10 @@ Create app-operator/.gitignore
 #### local - Runs the tests locally
 
 ##### Flags
-* `-k, --kubeconfig` string - location of kubeconfig for kubernetes cluster
-* `-g, --global-init` string - location of global resource manifest yaml file
-* `-n, --namespaced-init` string - location of namespaced resource manifest yaml file
-* `-f, --go-test-flags` string - extra arguments to pass to `go test` (e.g. -f "-v -parallel=2")
+* `--kubeconfig` string - location of kubeconfig for kubernetes cluster
+* `--global-manifest` string - location of global resource manifest yaml file
+* `--namespaced-manifest` string - location of namespaced resource manifest yaml file
+* `--go-test-flags` string - extra arguments to pass to `go test` (e.g. -f "-v -parallel=2")
 * `-h, --help` - help for local
 
 ##### Use
@@ -189,12 +189,12 @@ ok  	github.com/operator-framework/operator-sdk-samples/memcached-operator/test/
 #### cluster - Runs the tests within a cluster
 
 ##### Flags
-* `-k, --kubeconfig` string - location of kubeconfig for kubernetes cluster
-* `-i, --imagePullPolicy` string - set test pod image pull policy. Allowed values: Always, Never (default "Always")
-* `-n, --namespace` string - namespace to run tests in (default "default")
-* `-p, --pendingTimeout` int - timeout for testing pod in pending state (default 60)
-* `-s, --serviceAccount` string - service account to run tests on (default "default")
-* `-h, --help` - help for cluster
+* `--kubeconfig` string - location of kubeconfig for kubernetes cluster
+* `--image-pull-policy` string - set test pod image pull policy. Allowed values: Always, Never (default "Always")
+* `--namespace` string - namespace to run tests in (default "default")
+* `--pending-timeout` int - timeout for testing pod in pending state (default 60)
+* `--service-account` string - service account to run tests on (default "default")
+* `--help` - help for cluster
 
 ##### Use
 
