@@ -9,16 +9,20 @@ Usage:
 
 ### Args
 
-* image - is the container image to be built, e.g. "quay.io/example/operator:v0.0.1". This image will be automatically set in the deployment manifests.
+* image - is the container image to be built, e.g. "quay.io/example/operator:v0.0.1".
 
 ### Flags
-
+* `-e, --enable-tests` bool - enable in-cluster testing by adding test binary to the image
+* `-n, --namespaced` string - path of namespaced resources for tests (default "deploy/operator.yaml")
+* `-t, --test-location` string - location of tests (default "./test/e2e")
 * `-h, --help` - help for build
+
 
 ### Use
 
-The operator-sdk build command compiles the code, builds the executables,
-and generates Kubernetes manifests. After build completes, the image would be built locally in docker. Then it needs to be pushed to remote registry.
+The operator-sdk build command compiles the code and builds the executables. After build completes, the image is built locally in docker. Then it needs to be pushed to remote registry.
+
+If `--enable-tests` is set, the buld command will also build the testing binary and add it to the docker image.
 
 ### Example:
 
@@ -158,28 +162,51 @@ Create app-operator/.gitignore
 
 ## test
 
-### Flags
+### Available Commands
 
-* `-t, --test-location` **(required)** string - location of e2e test files
+#### local - Runs the tests locally
+
+##### Flags
 * `-k, --kubeconfig` string - location of kubeconfig for kubernetes cluster
 * `-g, --global-init` string - location of global resource manifest yaml file
 * `-n, --namespaced-init` string - location of namespaced resource manifest yaml file
 * `-f, --go-test-flags` string - extra arguments to pass to `go test` (e.g. -f "-v -parallel=2")
-* `-h, --help` - help for test
+* `-h, --help` - help for local
 
-### Use
+##### Use
 
 The operator-sdk test command runs go tests built using the Operator SDK's test framework.
 
-### Example:
-
-#### Test
+##### Example:
 
 ```bash
-operator-sdk test --test-location ./test/e2e/
+$ operator-sdk test local ./test/e2e/
 
 # Output:
 ok  	github.com/operator-framework/operator-sdk-samples/memcached-operator/test/e2e	20.410s
+```
+
+#### cluster - Runs the tests within a cluster
+
+##### Flags
+* `-k, --kubeconfig` string - location of kubeconfig for kubernetes cluster
+* `-i, --imagePullPolicy` string - set test pod image pull policy. Allowed values: Always, Never (default "Always")
+* `-n, --namespace` string - namespace to run tests in (default "default")
+* `-p, --pendingTimeout` int - timeout for testing pod in pending state (default 60)
+* `-s, --serviceAccount` string - service account to run tests on (default "default")
+* `-h, --help` - help for cluster
+
+##### Use
+
+The operator-sdk test command runs go tests embedded in an operator image built using the Operator SDK.
+
+##### Example:
+
+```bash
+$ operator-sdk test cluster quay.io/example/memcached-operator:v0.0.1
+
+# Output:
+Test Successfully Completed
 ```
 
 ## up
