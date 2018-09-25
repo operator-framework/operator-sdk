@@ -17,6 +17,8 @@ package test
 import (
 	goctx "context"
 	"fmt"
+	"net"
+	"os"
 	"sync"
 	"time"
 
@@ -50,10 +52,30 @@ type Framework struct {
 	DynamicClient     dynclient.Client
 	DynamicDecoder    runtime.Decoder
 	NamespacedManPath *string
+	InCluster         bool
 }
 
 func setup(kubeconfigPath, namespacedManPath *string) error {
-	kubeconfig, err := clientcmd.BuildConfigFromFlags("", *kubeconfigPath)
+	var err error
+	var kubeconfig *rest.Config
+	inCluster := false
+	if *kubeconfigPath == "incluster" {
+		// Work around https://github.com/kubernetes/kubernetes/issues/40973
+		if len(os.Getenv("KUBERNETES_SERVICE_HOST")) == 0 {
+			addrs, err := net.LookupHost("kubernetes.default.svc")
+			if err != nil {
+				return fmt.Errorf("failed to get service host: %v", err)
+			}
+			os.Setenv("KUBERNETES_SERVICE_HOST", addrs[0])
+		}
+		if len(os.Getenv("KUBERNETES_SERVICE_PORT")) == 0 {
+			os.Setenv("KUBERNETES_SERVICE_PORT", "443")
+		}
+		kubeconfig, err = rest.InClusterConfig()
+		inCluster = true
+	} else {
+		kubeconfig, err = clientcmd.BuildConfigFromFlags("", *kubeconfigPath)
+	}
 	if err != nil {
 		return fmt.Errorf("failed to build the kubeconfig: %v", err)
 	}
@@ -81,6 +103,7 @@ func setup(kubeconfigPath, namespacedManPath *string) error {
 		DynamicClient:     dynClient,
 		DynamicDecoder:    dynDec,
 		NamespacedManPath: namespacedManPath,
+		InCluster:         inCluster,
 	}
 	return nil
 }
@@ -113,7 +136,11 @@ func AddToFrameworkScheme(addToScheme addToSchemeFunc, obj runtime.Object) error
 	Global.RestMapper.Reset()
 	Global.DynamicClient, err = dynclient.New(Global.KubeConfig, dynclient.Options{Scheme: Global.Scheme, Mapper: Global.RestMapper})
 	err = wait.PollImmediate(time.Second, time.Second*10, func() (done bool, err error) {
-		err = Global.DynamicClient.List(goctx.TODO(), &dynclient.ListOptions{Namespace: "default"}, obj)
+		if Global.InCluster {
+			err = Global.DynamicClient.List(goctx.TODO(), &dynclient.ListOptions{Namespace: os.Getenv(TestNamespaceEnv)}, obj)
+		} else {
+			err = Global.DynamicClient.List(goctx.TODO(), &dynclient.ListOptions{Namespace: "default"}, obj)
+		}
 		if err != nil {
 			Global.RestMapper.Reset()
 			return false, nil

@@ -12,23 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package e2e
 
 import (
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/test"
+	"testing"
 
-	"github.com/spf13/cobra"
+	f "github.com/operator-framework/operator-sdk/pkg/test"
 )
 
-func NewTestCmd() *cobra.Command {
-	testCmd := &cobra.Command{
-		Use:   "test",
-		Short: "Tests the operator",
-		Long: `The test command has subcommands that can test the operator locally or from within a cluster.
-`,
-	}
-
-	testCmd.AddCommand(cmdtest.NewTestLocalCmd())
-	testCmd.AddCommand(cmdtest.NewTestClusterCmd())
-	return testCmd
+func TestMain(m *testing.M) {
+	f.MainEntry(m)
 }

@@ -511,8 +511,13 @@ mkdir -p ${BIN_DIR}
 PROJECT_NAME="app-operator"
 REPO_PATH="github.com/example-inc/app-operator"
 BUILD_PATH="${REPO_PATH}/cmd/${PROJECT_NAME}"
+TEST_PATH="${REPO_PATH}/${TEST_LOCATION}"
 echo "building "${PROJECT_NAME}"..."
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ${BIN_DIR}/${PROJECT_NAME} $BUILD_PATH
+if $ENABLE_TESTS ; then
+	echo "building "${PROJECT_NAME}-test"..."
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go test -c -o ${BIN_DIR}/${PROJECT_NAME}-test $TEST_PATH
+fi
 `
 
 const dockerFileExp = `FROM alpine:3.6
@@ -536,17 +541,6 @@ func TestGenBuild(t *testing.T) {
 	if buildExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := dmp.DiffMain(buildExp, buf.String(), false)
-		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
-	}
-
-	buf = &bytes.Buffer{}
-	if err := renderDockerBuildFile(buf); err != nil {
-		t.Error(err)
-		return
-	}
-	if dockerBuildTmpl != buf.String() {
-		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(dockerBuildTmpl, buf.String(), false)
 		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
 	}
 

@@ -424,6 +424,24 @@ spec:
   version: {{.Version}}
 `
 
+const testYamlTmpl = `apiVersion: v1
+kind: Pod
+metadata:
+  name: {{.ProjectName}}-test
+spec:
+  restartPolicy: Never
+  containers:
+  - name: {{.ProjectName}}-test
+    image: {{.Image}}
+    imagePullPolicy: Always
+    command: ["/go-test.sh"]
+    env:
+      - name: {{.TestNamespaceEnv}}
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.namespace
+`
+
 const operatorYamlTmpl = `apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -548,21 +566,18 @@ mkdir -p ${BIN_DIR}
 PROJECT_NAME="{{.ProjectName}}"
 REPO_PATH="{{.RepoPath}}"
 BUILD_PATH="${REPO_PATH}/cmd/${PROJECT_NAME}"
+TEST_PATH="${REPO_PATH}/${TEST_LOCATION}"
 echo "building "${PROJECT_NAME}"..."
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ${BIN_DIR}/${PROJECT_NAME} $BUILD_PATH
+if $ENABLE_TESTS ; then
+	echo "building "${PROJECT_NAME}-test"..."
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go test -c -o ${BIN_DIR}/${PROJECT_NAME}-test $TEST_PATH
+fi
 `
 
-const dockerBuildTmpl = `#!/usr/bin/env bash
+const goTestScript = `#!/bin/sh
 
-if ! which docker > /dev/null; then
-	echo "docker needs to be installed"
-	exit 1
-fi
-
-: ${IMAGE:?"Need to set IMAGE, e.g. gcr.io/<repo>/<your>-operator"}
-
-echo "building container ${IMAGE}..."
-docker build -t "${IMAGE}" -f tmp/build/Dockerfile .
+memcached-operator-test -test.parallel=1 -test.failfast -root=/ -kubeconfig=incluster -namespacedMan=namespaced.yaml -test.v
 `
 
 const dockerFileTmpl = `FROM alpine:3.6
@@ -571,6 +586,16 @@ RUN adduser -D {{.ProjectName}}
 USER {{.ProjectName}}
 
 ADD tmp/_output/bin/{{.ProjectName}} /usr/local/bin/{{.ProjectName}}
+`
+
+const testingDockerFileTmpl = `ARG BASEIMAGE
+
+FROM ${BASEIMAGE}
+
+ADD tmp/_output/bin/memcached-operator-test /usr/local/bin/memcached-operator-test
+ARG NAMESPACEDMAN
+ADD $NAMESPACEDMAN /namespaced.yaml
+ADD tmp/build/go-test.sh /go-test.sh
 `
 
 // apiDocTmpl is the template for apis/../doc.go

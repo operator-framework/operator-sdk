@@ -19,6 +19,7 @@ import (
 	goctx "context"
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	yaml "gopkg.in/yaml.v2"
 	core "k8s.io/api/core/v1"
@@ -28,6 +29,10 @@ import (
 
 func (ctx *TestCtx) GetNamespace() (string, error) {
 	if ctx.Namespace != "" {
+		return ctx.Namespace, nil
+	}
+	if Global.InCluster {
+		ctx.Namespace = os.Getenv(TestNamespaceEnv)
 		return ctx.Namespace, nil
 	}
 	// create namespace
