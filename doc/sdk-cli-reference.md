@@ -20,9 +20,9 @@ Usage:
 
 ### Use
 
-The operator-sdk build command compiles the code and builds the executables. After build completes, the image is built locally in docker. Then it needs to be pushed to remote registry.
+The operator-sdk build command compiles the code and builds the executables. After build completes, the image is built locally in docker. Then it needs to be pushed to a remote registry.
 
-If `--enable-tests` is set, the buld command will also build the testing binary and add it to the docker image.
+If `--enable-tests` is set, the build command will also build the testing binary and add it to the docker image.
 
 ### Example:
 
