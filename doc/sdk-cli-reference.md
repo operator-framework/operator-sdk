@@ -164,7 +164,11 @@ Create app-operator/.gitignore
 
 ### Available Commands
 
-#### local - Runs the tests locally
+#### local
+Runs the tests locally
+
+##### Args
+* <test-location> string - location of e2e test files (e.g. "./test/e2e/")
 
 ##### Flags
 * `--kubeconfig` string - location of kubeconfig for kubernetes cluster
@@ -186,13 +190,17 @@ $ operator-sdk test local ./test/e2e/
 ok  	github.com/operator-framework/operator-sdk-samples/memcached-operator/test/e2e	20.410s
 ```
 
-#### cluster - Runs the tests within a cluster
+#### cluster
+Runs the e2e tests packaged in an operator image as a pod in the cluster
+
+##### Args
+* <image-name> string - the operator image that is used to run the tests in a pod (e.g. "quay.io/example/memcached-operator:v0.0.1")
 
 ##### Flags
 * `--kubeconfig` string - location of kubeconfig for kubernetes cluster
 * `--image-pull-policy` string - set test pod image pull policy. Allowed values: Always, Never (default "Always")
 * `--namespace` string - namespace to run tests in (default "default")
-* `--pending-timeout` int - timeout for testing pod in pending state (default 60)
+* `--pending-timeout` int - timeout in seconds for testing pod to stay in pending state (default 60s)
 * `--service-account` string - service account to run tests on (default "default")
 * `--help` - help for cluster
 
