@@ -171,9 +171,9 @@ Runs the tests locally
 * <test-location> string - location of e2e test files (e.g. "./test/e2e/")
 
 ##### Flags
-* `--kubeconfig` string - location of kubeconfig for kubernetes cluster
-* `--global-manifest` string - location of global resource manifest yaml file
-* `--namespaced-manifest` string - location of namespaced resource manifest yaml file
+* `--kubeconfig` string - location of kubeconfig for kubernetes cluster (default "~/.kube/config")
+* `--global-manifest` string - path to manifest for global resources (default "deploy/crd.yaml)
+* `--namespaced-manifest` string - path to manifest for per-test, namespaced resources (default: combines deploy/sa.yaml, deploy/rbac.yaml, and deploy/operator.yaml)
 * `--go-test-flags` string - extra arguments to pass to `go test` (e.g. -f "-v -parallel=2")
 * `-h, --help` - help for local
 
@@ -197,7 +197,7 @@ Runs the e2e tests packaged in an operator image as a pod in the cluster
 * <image-name> string - the operator image that is used to run the tests in a pod (e.g. "quay.io/example/memcached-operator:v0.0.1")
 
 ##### Flags
-* `--kubeconfig` string - location of kubeconfig for kubernetes cluster
+* `--kubeconfig` string - location of kubeconfig for kubernetes cluster (default "~/.kube/config")
 * `--image-pull-policy` string - set test pod image pull policy. Allowed values: Always, Never (default "Always")
 * `--namespace` string - namespace to run tests in (default "default")
 * `--pending-timeout` int - timeout in seconds for testing pod to stay in pending state (default 60s)
