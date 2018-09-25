@@ -194,9 +194,9 @@ functions will automatically be run since they were deferred when the TestCtx wa
 
 ## Running the Tests
 
-To make running the tests simpler, the `operator-sdk` CLI tool has a `test` subcommand that can configure some
+To make running the tests simpler, the `operator-sdk` CLI tool has a `test` subcommand that can configure
 default test settings, such as locations of your global resource manifest file (by default
-`deploy/crd.yaml`) and your namespaced manifest file (by default `deploy/sa.yaml` concatenated with
+`deploy/crd.yaml`) and your namespaced resource manifest file (by default `deploy/sa.yaml` concatenated with
 `deploy/rbac.yaml` and `deploy/operator.yaml`), and allows the user to configure runtime options. There are 2 ways to use the
 subcommand: local and cluster.
 ### Local
@@ -257,7 +257,7 @@ Example Output:
 Test Successfully Completed
 ```
 
-If the tests fail, the command will output the errors in the standard way that `go test` prints errors and logs.
+If the tests fail, the command will output the errors in the standard `go test` loggin/error format.
 
 ## Manual Cleanup
 
