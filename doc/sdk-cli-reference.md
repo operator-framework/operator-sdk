@@ -22,7 +22,8 @@ Usage:
 
 The operator-sdk build command compiles the code and builds the executables. After build completes, the image is built locally in docker. Then it needs to be pushed to a remote registry.
 
-If `--enable-tests` is set, the build command will also build the testing binary and add it to the docker image.
+If `--enable-tests` is set, the build command will also build the testing binary, add it to the docker image, and generate
+a `deploy/test-pod.yaml` file that allows a user to run the tests as a pod on a cluster.
 
 ### Example:
 
