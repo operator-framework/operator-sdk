@@ -16,6 +16,7 @@ package up
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -25,7 +26,6 @@ import (
 	"syscall"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
-	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
 	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 
 	"github.com/spf13/cobra"
@@ -56,18 +56,13 @@ var (
 )
 
 const (
-	gocmd             = "go"
-	run               = "run"
-	cmd               = "cmd"
-	main              = "main.go"
 	defaultConfigPath = ".kube/config"
 )
 
 func upLocalFunc(cmd *cobra.Command, args []string) {
 	mustKubeConfig()
 	cmdutil.MustInProjectRoot()
-	c := cmdutil.GetConfig()
-	upLocal(c.ProjectName)
+	upLocal()
 }
 
 // mustKubeConfig checks if the kubeconfig file exists.
@@ -76,31 +71,31 @@ func mustKubeConfig() {
 	if len(kubeConfig) == 0 {
 		usr, err := user.Current()
 		if err != nil {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to determine user's home dir: %v", err))
+			log.Fatalf("failed to determine user's home dir: %v", err)
 		}
 		kubeConfig = filepath.Join(usr.HomeDir, defaultConfigPath)
 	}
 
 	_, err := os.Stat(kubeConfig)
 	if err != nil && os.IsNotExist(err) {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to find the kubeconfig file (%v): %v", kubeConfig, err))
+		log.Fatalf("failed to find the kubeconfig file (%v): %v", kubeConfig, err)
 	}
 }
 
-func upLocal(projectName string) {
-	args := []string{run, filepath.Join(cmd, projectName, main)}
+func upLocal() {
+	args := []string{"run", filepath.Join("cmd", "manager", "main.go")}
 	if operatorFlags != "" {
 		extraArgs := strings.Split(operatorFlags, " ")
 		args = append(args, extraArgs...)
 	}
-	dc := exec.Command(gocmd, args...)
+	dc := exec.Command("go", args...)
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
 		err := dc.Process.Kill()
 		if err != nil {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to terminate the operator: %v", err))
+			log.Fatalf("failed to terminate the operator: %v", err)
 		}
 		os.Exit(0)
 	}()
@@ -109,6 +104,6 @@ func upLocal(projectName string) {
 	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, kubeConfig), fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, namespace))
 	err := dc.Run()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to run operator locally: %v", err))
+		log.Fatalf("failed to run operator locally: %v", err)
 	}
 }
