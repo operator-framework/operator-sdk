@@ -52,11 +52,11 @@ func NewTestClusterCmd() *cobra.Command {
 	if ok {
 		defaultKubeConfig = homedir + "/.kube/config"
 	}
-	testCmd.Flags().StringVarP(&tcConfig.namespace, "namespace", "n", "default", "Namespace to run tests in")
-	testCmd.Flags().StringVarP(&tcConfig.kubeconfig, "kubeconfig", "k", defaultKubeConfig, "Kubeconfig path")
-	testCmd.Flags().StringVarP(&tcConfig.imagePullPolicy, "imagePullPolicy", "i", "Always", "Set test pod image pull policy. Allowed values: Always, Never")
-	testCmd.Flags().StringVarP(&tcConfig.serviceAccount, "serviceAccount", "s", "default", "Service account to run tests on")
-	testCmd.Flags().IntVarP(&tcConfig.pendingTimeout, "pendingTimeout", "p", 60, "Timeout for testing pod in pending state")
+	testCmd.Flags().StringVar(&tcConfig.namespace, "namespace", "default", "Namespace to run tests in")
+	testCmd.Flags().StringVar(&tcConfig.kubeconfig, "kubeconfig", defaultKubeConfig, "Kubeconfig path")
+	testCmd.Flags().StringVar(&tcConfig.imagePullPolicy, "image-pull-policy", "Always", "Set test pod image pull policy. Allowed values: Always, Never")
+	testCmd.Flags().StringVar(&tcConfig.serviceAccount, "service-account", "default", "Service account to run tests on")
+	testCmd.Flags().IntVar(&tcConfig.pendingTimeout, "pending-timeout", 60, "Timeout for testing pod in pending state")
 
 	return testCmd
 }
