@@ -611,7 +611,7 @@ const watchesTmpl = `---
 - version: {{.Version}}
   group: {{.GroupName}}
   kind: {{.Kind}}
-{{ if .GeneratePlaybook }}  playbook: /opt/ansible/playbook.yaml{{ else }}  role: {{.Kind}}{{ end }}
+{{ if .GeneratePlaybook }}  playbook: /opt/ansible/playbook.yaml{{ else }}  role: /opt/ansible/roles/{{.Kind}}{{ end }}
 `
 
 const playbookTmpl = `- hosts: localhost
