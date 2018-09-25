@@ -194,30 +194,70 @@ functions will automatically be run since they were deferred when the TestCtx wa
 
 ## Running the Tests
 
-To make running the tests simpler, the `operator-sdk` CLI tool has a `test` subcommand that configures some
-default test settings, such as locations of the manifest files for your global resource manifest file (by default `deploy/crd.yaml`) and your namespaced manifest file (by defualt `deploy/rbac.yaml` concatenated with `deploy/operator.yaml`), and allows the user to configure these runtime options. To use it, run the
-`operator-sdk test` command in your project root and pass the location of the tests using the
-`--test-location` flag. You can use `--help` to view the other configuration options and use
-`--go-test-flags` to pass in arguments to `go test`. Here is an example command:
+To make running the tests simpler, the `operator-sdk` CLI tool has a `test` subcommand that can configure some
+default test settings, such as locations of your global resource manifest file (by default
+`deploy/crd.yaml`) and your namespaced manifest file (by default `deploy/sa.yaml` concatenated with
+`deploy/rbac.yaml` and `deploy/operator.yaml`), and allows the user to configure runtime options. There are 2 ways to use the
+subcommand: local and cluster.
+### Local
+To run the tests locally, run the `operator-sdk test local` command in your project root and pass the location of the tests
+as an argument. You can use `--help` to view the other configuration options and use `--go-test-flags` to pass in arguments to `go test`. Here is an example command:
 
 ```shell
-$ operator-sdk test --test-location ./test/e2e --go-test-flags "-v -parallel=2"
+$ operator-sdk test local ./test/e2e --go-test-flags "-v -parallel=2"
 ```
 
-For more documentation on the `operator-sdk test` command, see the [SDK CLI Reference][sdk-cli-ref] doc.
+For more documentation on the `operator-sdk test local` command, see the [SDK CLI Reference][sdk-cli-ref] doc.
 
 For advanced use cases, it is possible to run the tests via `go test` directly. As long as all flags defined
 in [MainEntry][main-entry-link] are declared, the tests will run correctly. Running the tests directly with missing flags
-will result in undefined behavior. This is an example `go test` equivalent to the `operator-sdk test` example above:
+will result in undefined behavior. This is an example `go test` equivalent to the `operator-sdk test local` example above:
 
 ```shell
-# Combine rbac and operator manifest into namespaced manifest
-$ cp deploy/rbac.yaml deploy/namespace-init.yaml
+# Combine sa, rbac, operator manifest into namespaced manifest
+$ cp deploy/sa.yaml deploy/namespace-init.yaml
+$ echo -e "\n---\n" >> deploy/namespace-init.yaml
+$ cat deploy/rbac.yaml >> deploy/namespace-init.yaml
 $ echo -e "\n---\n" >> deploy/namespace-init.yaml
 $ cat deploy/operator.yaml >> deploy/namespace-init.yaml
 # Run tests
 $ go test ./test/e2e/... -root=$(pwd) -kubeconfig=$HOME/.kube/config -globalMan deploy/crd.yaml -namespacedMan deploy/namespace-init.yaml -v -parallel=2
 ```
+
+### Cluster
+
+Another way to run the tests is from within a kubernetes cluster. To do this, you first need to build an image with
+the testing binary embedded by using the `operator-sdk build` command and using the `--enable-tests` flag to enable tests:
+
+```shell
+$ operator-sdk build quay.io/example/memcached-operator:v0.0.1 --enable-tests
+```
+
+Note that the namespaced yaml must be up to date before running this command. The `build` subcommand will warn you
+if it finds a deployment in the namespaced manifest with an image that doesn't match the argument you provided. The
+`operator-sdk build` command has other flags for configuring the tests that can be viewed with the `--help` flag
+or at the [SDK CLI Reference][sdk-cli-ref].
+
+Once the image is ready, the tests are ready to be run. To run the tests, make sure you have all global resources
+and a namespace with proper rbac configured:
+
+```shell
+$ kubectl create -f deploy/crd.yaml
+$ kubectl create namespace memcached-test
+$ kubectl create -f deploy/sa.yaml -n memcached-test
+$ kubectl create -f deploy/rbac.yaml -n memcached-test
+```
+
+Once you have your environment properly configured, you can start the tests using the `operator-sdk test cluster` command:
+
+```shell
+$ operator-sdk test cluster quay.io/example/memcached-operator:v0.0.1 --namespace memcached-test
+
+Example Output:
+Test Successfully Completed
+```
+
+If the tests fail, the command will output the errors in the standard way that `go test` prints errors and logs.
 
 ## Manual Cleanup
 
