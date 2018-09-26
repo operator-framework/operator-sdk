@@ -257,7 +257,9 @@ Example Output:
 Test Successfully Completed
 ```
 
-If the tests fail, the command will output the errors in the standard `go test` loggin/error format.
+The `test cluster` command will deploy a test pod in the given namespace that will run the e2e tests packaged in the image.
+The command will wait until the tests succeed (pod phase=`Succeeded`) or fail (pod phase=`Failed`).
+If the tests fail, the command will output the test pod logs which should be the standard go test error logs.
 
 ## Manual Cleanup
 
