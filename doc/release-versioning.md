@@ -54,35 +54,13 @@ Making an Operator SDK release involves:
 
 Releases can only be performed by [maintainers][doc-maintainers].
 
-## Binaries
+## Binaries and signatures
 
-Release binaries will be built for the `x86_64` architecture. Binaries will be signed using a maintainers' [PGP key][doc-maintainer-pgp-keys], and signatures will be uploaded to the release along with its accompanying tarball-ed binary. Ensure you import maintainer keys to verify release binaries. Note: `gpg` and `gpg2` can be used interchangeably to sign and verify binaries; substitute `gpg2` for `gpg` below.
+Release binaries will be built for the `x86_64` architecture for both GNU Linux and MacOS Darwin platforms. Binaries will be signed using a maintainers' [PGP key][doc-maintainer-pgp-keys], and signatures will be uploaded to the release along with its accompanying binary. Ensure you import maintainer keys to verify release binaries.
 
-Creating a release binary tarball:
+Creating release binaries and signatures:
 ```bash
-$ make build
-```
-
-Creating a release tarball:
-```bash
-$ tar \
-  -zcvf "operator-sdk.${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}.${TARGET_ARCH}.tar.gz" \
-  -C ./build \
-  .
-```
-
-Release signing:
-```bash
-$ gpg \
-  --output "operator-sdk.${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}.${ARCHITECTURE}.asc" \
-  --detach-sig "$OPERATOR_SDK_BINARY"
-```
-
-Release verification:
-```bash
-$ gpg \
-  --verify "operator-sdk.${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}.${ARCHITECTURE}.asc" \
-  "$OPERATOR_SDK_BINARY"
+$ ./release.sh "v${VERSION}"
 ```
 
 ## Release tags
@@ -96,20 +74,7 @@ $ git config [--global] user.signingkey "$GPG_KEY_ID"
 $ git config [--global] user.email "$GPG_EMAIL"
 ```
 
-Create a signed tag for the commit you wish to release. If prompted to enter a tag message, enter the release version.
-
-```bash
-$ git tag \
-    -s "v${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}" \
-    "$GIT_COMMIT_HASH"
-```
-
-Push that tag to the SDK repository.
-
-```bash
-$ git push git@github.com:operator-framework/operator-sdk.git \
-    "v${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
-```
+Tagging will be handled by `release.sh`.
 
 ## Release Notes
 
