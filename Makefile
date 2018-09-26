@@ -21,10 +21,10 @@ export CGO_ENABLED:=0
 all: format test build/operator-sdk
 
 format:
-	go fmt $(PKGS)
+	$(Q)go fmt $(PKGS)
 
 dep:
-	dep ensure -v
+	$(Q)dep ensure -v
 
 # gopath:
 # 	$(Q)mkdir -p gopath/src/github.com/operator-framework
@@ -36,18 +36,22 @@ clean:
 .PHONY: all test format dep clean
 
 install:
-	go install $(BUILD_PATH)
+	$(Q)go install $(BUILD_PATH)
 
 release_x86_64 := \
 	build/operator-sdk-$(VERSION)-x86_64-linux-gnu \
 	build/operator-sdk-$(VERSION)-x86_64-apple-darwin
 
-release: $(release_x86_64)
+release: clean $(release_x86_64) $(release_x86_64:=.asc)
 
 build/operator-sdk-%-x86_64-linux-gnu: GOARGS = GOOS=linux GOARCH=amd64
 build/operator-sdk-%-x86_64-apple-darwin: GOARGS = GOOS=darwin GOARCH=amd64
 
-build/%: clean
+build/%:
 	$(Q)$(GOARGS) go build -o $@ -ldflags $(LD_FLAGS) $(BUILD_PATH)
+	
+build/%.asc:
+	$(Q)gpg --output $@ --detach-sig build/$*
+	$(Q)gpg --verify $@ build/$*
 
 .PHONY: install release_x86_64 release
