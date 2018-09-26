@@ -43,18 +43,15 @@ func (r *roleBinding) Render(w io.Writer) error {
 	return t.Execute(w, r.in)
 }
 
-// TODO: change ClusterRoleBinding to a RoleBinding once
-// controller-runtime manager can be namespaced.
-const roleBindingTemplate = `kind: ClusterRoleBinding
+const roleBindingTemplate = `kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: default-account-{{.ProjectName}}
 subjects:
 - kind: ServiceAccount
   name: default
-  namespace: default
 roleRef:
-  kind: ClusterRole
+  kind: Role
   name: {{.ProjectName}}
   apiGroup: rbac.authorization.k8s.io
 `

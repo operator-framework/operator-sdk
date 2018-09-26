@@ -43,8 +43,7 @@ func (r *role) Render(w io.Writer) error {
 	return t.Execute(w, r.in)
 }
 
-// TODO: Change ClusterRole to Role once controller.runtime can be namespaced.
-const roleTemplate = `kind: ClusterRole
+const roleTemplate = `kind: Role
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: {{.ProjectName}}
