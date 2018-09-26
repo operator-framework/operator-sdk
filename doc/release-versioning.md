@@ -24,11 +24,9 @@ Minor version changes will not break compatibility between the previous minor ve
 We expect to release patches for minor releases, so we create a patch trunk to branch from. The naming convention follows "v2.1.x", where the major version is 2, minor is 1, and "x" is a patch version placeholder.
 
 ```bash
-$ git checkout \
-    -b "v${MAJOR_VERSION}.${NEW_MINOR_VERSION}.x" \
-    tags/"v${MAJOR_VERSION}.${NEW_MINOR_VERSION}.0"
-$ git push git@github.com:operator-framework/operator-sdk.git \
-    "v${MAJOR_VERSION}.${NEW_MINOR_VERSION}.x"
+$ MAV_MIN_VER="v${MAJOR_VERSION}.${NEW_MINOR_VERSION}"
+$ git checkout -b "${MAJ_MIN_VER}.x" tags/"v${MAJ_MIN_VER}.0"
+$ git push git@github.com:operator-framework/operator-sdk.git "v${MAJ_MIN_VER}.x"
 ```
 
 ## Patch versions
