@@ -15,7 +15,6 @@ BUILD_PATH = $(REPO)/commands/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
 LD_FLAGS = "-w -X $(REPO)/version.Version=$(VERSION)"
 
-# export GOPATH=$(shell pwd)/gopath
 export CGO_ENABLED:=0
 
 all: format test build/operator-sdk
@@ -25,10 +24,6 @@ format:
 
 dep:
 	$(Q)dep ensure -v
-
-# gopath:
-# 	$(Q)mkdir -p gopath/src/github.com/operator-framework
-# 	$(Q)ln -s ../../../.. gopath/src/$(REPO)
 
 clean:
 	$(Q)rm -rf build
