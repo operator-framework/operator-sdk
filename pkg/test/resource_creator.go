@@ -76,14 +76,13 @@ func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool) error {
 			return err
 		}
 
-		err = Global.DynamicClient.Create(goctx.TODO(), obj)
+		err = ctx.CreateWithFinalizer(goctx.TODO(), obj)
 		if skipIfExists && apierrors.IsAlreadyExists(err) {
 			continue
 		}
 		if err != nil {
 			return err
 		}
-		ctx.AddFinalizerFn(func() error { return Global.DynamicClient.Delete(goctx.TODO(), obj) })
 	}
 	return nil
 }
