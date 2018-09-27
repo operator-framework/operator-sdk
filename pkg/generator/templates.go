@@ -630,7 +630,6 @@ fi
 
 echo "Initializing role skeleton..."
 ansible-galaxy init --init-path={{.Name}}/roles/ {{.Kind}}
->>>>>>> Add --type flag to new command
 `
 
 // apiDocTmpl is the template for apis/../doc.go
