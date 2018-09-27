@@ -101,18 +101,25 @@ The next step is to create a TestCtx for the current test and defer its cleanup 
 
 ```go
 ctx := framework.NewTestCtx(t)
-defer ctx.Cleanup(t)
+defer ctx.Cleanup()
 ```
 
-Now that there is a TestCtx, the test's kubernetes resources (specifically the test namespace,
-RBAC, and Operator deployment) can be initialized:
+Now that there is a `TestCtx`, the test's kubernetes resources (specifically the test namespace,
+Service Account, RBAC, and Operator deployment in `local` testing; just the Operator deployment
+in `cluster` testing) can be initialized:
 
 ```go
-err := ctx.InitializeClusterResources()
+err := ctx.InitializeClusterResources(&framework.CleanupOptions{Timeout: time.Duration * 5, RetryInterval: time.Duration * 1})
 if err != nil {
     t.Fatalf("failed to initialize cluster resources: %v", err)
 }
 ```
+
+The `InitializeClusterResources` function uses the `CreateWithFinalizer` function to creates the resources provided
+in your namespaced manifest. `CreateWithFinalizer` use the controller-runtime's client to create resources and then
+creates a finalizer that is called by `ctx.Cleanup` which deletes the resource and then waits for the resource to be
+fully deleted before returning. This is configurable with `CleanupOptions`. If the `CleanupOptions` argument is set
+to `nil`, the finalizer simply calls the delete function and returns without waiting.
 
 If you want to make sure the operator's deployment is fully ready before moving onto the next part of the
 test, the `WaitForDeployment` function from [e2eutil][e2eutil-link] (in the sdk under `pkg/test/e2eutil`) can be used:
@@ -134,8 +141,12 @@ if err != nil {
 
 #### 4. Write the test specific code
 
-Now that the operator is ready, we can create a custom resource. Since the controller-runtime's dynamic client uses
-go contexts, make sure to import the go context library. In this example, we imported it as `goctx`:
+Now that the operator is ready, we can create a custom resource. As mentioned when speaking about the
+`InitializeClusterResources` function, the test framework provides a `CreateWithFinalizer` function that
+creates the resource with the controller-runtime's dynamic client and then adds a finalizer function
+to the context. This function should be used to create all resources. Since the controller-runtime's
+dynamic client uses go contexts, make sure to import the go context library. In this example, we imported
+it as `goctx`:
 
 ```go
 // create memcached custom resource
@@ -152,7 +163,8 @@ exampleMemcached := &cachev1alpha1.Memcached{
         Size: 3,
     },
 }
-err = f.DynamicClient.Create(goctx.TODO(), exampleMemcached)
+// use TestCtx's create helper to create the object and add a finalizer for the new object
+err = ctx.CreateWithFinalizer(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{Timeout: time.Duration * 5, RetryInterval: time.Duration * 1})
 if err != nil {
     return err
 }
