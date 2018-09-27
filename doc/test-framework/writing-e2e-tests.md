@@ -21,7 +21,7 @@ It is initialized by MainEntry and can be used anywhere in the tests.
 ### TestCtx
 
 [TestCtx][testctx-link] is a local context that stores important information for each test, such
-as the namespace for that test and the finalizer (cleanup) functions. By handling
+as the namespace for that test and the cleanup functions. By handling
 namespace and resource initialization through TestCtx, we can make sure that all
 resources are properly handled and removed after the test finishes.
 
@@ -101,18 +101,25 @@ The next step is to create a TestCtx for the current test and defer its cleanup 
 
 ```go
 ctx := framework.NewTestCtx(t)
-defer ctx.Cleanup(t)
+defer ctx.Cleanup()
 ```
 
-Now that there is a TestCtx, the test's kubernetes resources (specifically the test namespace,
-RBAC, and Operator deployment) can be initialized:
+Now that there is a `TestCtx`, the test's kubernetes resources (specifically the test namespace,
+Service Account, RBAC, and Operator deployment in `local` testing; just the Operator deployment
+in `cluster` testing) can be initialized:
 
 ```go
-err := ctx.InitializeClusterResources()
+err := ctx.InitializeClusterResources(&framework.CleanupOptions{Timeout: time.Duration * 5, RetryInterval: time.Duration * 1})
 if err != nil {
     t.Fatalf("failed to initialize cluster resources: %v", err)
 }
 ```
+
+The `InitializeClusterResources` function uses the custom `Create` function in the framework client to create the resources provided
+in your namespaced manifest. The custom `Create` function use the controller-runtime's client to create resources and then
+creates a cleanup function that is called by `ctx.Cleanup` which deletes the resource and then waits for the resource to be
+fully deleted before returning. This is configurable with `CleanupOptions`. If the `CleanupOptions` argument is set
+to `nil`, the cleanup function simply calls the delete function and returns without waiting.
 
 If you want to make sure the operator's deployment is fully ready before moving onto the next part of the
 test, the `WaitForDeployment` function from [e2eutil][e2eutil-link] (in the sdk under `pkg/test/e2eutil`) can be used:
@@ -134,8 +141,12 @@ if err != nil {
 
 #### 4. Write the test specific code
 
-Now that the operator is ready, we can create a custom resource. Since the controller-runtime's dynamic client uses
-go contexts, make sure to import the go context library. In this example, we imported it as `goctx`:
+Now that the operator is ready, we can create a custom resource. As mentioned when speaking about the
+`InitializeClusterResources` function, the test framework provides a modified `Create` function that
+creates the resource with the controller-runtime's dynamic client and then adds a cleanup function
+to the context. This function should be used to create all resources. Since the controller-runtime's
+dynamic client uses go contexts, make sure to import the go context library. In this example, we imported
+it as `goctx`:
 
 ```go
 // create memcached custom resource
@@ -152,7 +163,7 @@ exampleMemcached := &cachev1alpha1.Memcached{
         Size: 3,
     },
 }
-err = f.DynamicClient.Create(goctx.TODO(), exampleMemcached)
+err = f.Client.Create(goctx.TODO(), exampleMemcached, ctx, &framework.CleanupOptions{Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 if err != nil {
     return err
 }
@@ -172,12 +183,12 @@ if err != nil {
 We can also test that the deployment scales correctly when the CR is updated:
 
 ```go
-err = f.DynamicClient.Get(goctx.TODO(), types.NamespacedName{Name: "example-memcached", Namespace: namespace}, exampleMemcached)
+err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: "example-memcached", Namespace: namespace}, exampleMemcached)
 if err != nil {
     return err
 }
 exampleMemcached.Spec.Size = 4
-err = f.DynamicClient.Update(goctx.TODO(), exampleMemcached)
+err = f.Client.Update(goctx.TODO(), exampleMemcached)
 if err != nil {
     return err
 }
