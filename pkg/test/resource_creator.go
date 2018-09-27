@@ -31,7 +31,7 @@ func (ctx *TestCtx) GetNamespace() (string, error) {
 	if ctx.Namespace != "" {
 		return ctx.Namespace, nil
 	}
-	if Global.InCluster {
+	if *Global.SingleNamespace {
 		ctx.Namespace = os.Getenv(TestNamespaceEnv)
 		return ctx.Namespace, nil
 	}
