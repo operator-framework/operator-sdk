@@ -71,6 +71,7 @@ func setup(kubeconfigPath, namespacedManPath *string, singleNamespace *bool) err
 			os.Setenv("KUBERNETES_SERVICE_PORT", "443")
 		}
 		kubeconfig, err = rest.InClusterConfig()
+		*singleNamespace = true
 	} else {
 		kubeconfig, err = clientcmd.BuildConfigFromFlags("", *kubeconfigPath)
 	}
