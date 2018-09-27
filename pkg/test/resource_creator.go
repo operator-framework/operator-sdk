@@ -59,7 +59,7 @@ func setNamespaceYAML(yamlFile []byte, namespace string) ([]byte, error) {
 	return yaml.Marshal(yamlMap)
 }
 
-func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool) error {
+func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOptions *CleanupOptions) error {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return err
@@ -76,7 +76,7 @@ func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool) error {
 			return err
 		}
 
-		err = ctx.CreateWithFinalizer(goctx.TODO(), obj)
+		err = ctx.CreateWithFinalizer(goctx.TODO(), obj, cleanupOptions)
 		if skipIfExists && apierrors.IsAlreadyExists(err) {
 			continue
 		}
@@ -87,11 +87,11 @@ func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool) error {
 	return nil
 }
 
-func (ctx *TestCtx) InitializeClusterResources() error {
+func (ctx *TestCtx) InitializeClusterResources(cleanupOptions *CleanupOptions) error {
 	// create namespaced resources
 	namespacedYAML, err := ioutil.ReadFile(*Global.NamespacedManPath)
 	if err != nil {
 		return fmt.Errorf("failed to read namespaced manifest: %v", err)
 	}
-	return ctx.createFromYAML(namespacedYAML, false)
+	return ctx.createFromYAML(namespacedYAML, false, cleanupOptions)
 }

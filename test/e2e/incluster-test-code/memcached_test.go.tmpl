@@ -29,8 +29,10 @@ import (
 )
 
 var (
-	retryInterval = time.Second * 5
-	timeout       = time.Second * 30
+	retryInterval          = time.Second * 5
+	timeout                = time.Second * 30
+	finalizerRetryInterval = time.Second * 1
+	finalizerTimeout       = time.Second * 5
 )
 
 func TestMemcached(t *testing.T) {
@@ -71,7 +73,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		},
 	}
 	// use TestCtx's create helper to create the object and add a finalizer for the new object
-	err = ctx.CreateWithFinalizer(goctx.TODO(), exampleMemcached)
+	err = ctx.CreateWithFinalizer(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{Timeout: finalizerTimeout, RetryInterval: finalizerRetryInterval})
 	if err != nil {
 		return err
 	}
@@ -99,7 +101,7 @@ func MemcachedCluster(t *testing.T) {
 	t.Parallel()
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
-	err := ctx.InitializeClusterResources()
+	err := ctx.InitializeClusterResources(&framework.CleanupOptions{Timeout: finalizerTimeout, RetryInterval: finalizerRetryInterval})
 	if err != nil {
 		t.Fatalf("failed to initialize cluster resources: %v", err)
 	}

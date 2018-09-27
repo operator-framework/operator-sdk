@@ -36,6 +36,12 @@ type TestCtx struct {
 	t          *testing.T
 }
 
+type CleanupOptions struct {
+	Timeout       time.Duration
+	RetryInterval time.Duration
+	SkipPolling   bool
+}
+
 type finalizerFn func() error
 
 func NewTestCtx(t *testing.T) *TestCtx {
@@ -101,7 +107,7 @@ func (ctx *TestCtx) AddFinalizerFn(fn finalizerFn) {
 // CreateWithFinalizer uses the dynamic client to create an object and then adds a
 // finalizer function to delete it when Cleanup is called. In addition to the standard
 // controller-runtime client options
-func (ctx *TestCtx) CreateWithFinalizer(gCtx goctx.Context, obj runtime.Object) error {
+func (ctx *TestCtx) CreateWithFinalizer(gCtx goctx.Context, obj runtime.Object, cleanupOptions *CleanupOptions) error {
 	err := Global.DynamicClient.Create(gCtx, obj)
 	if err != nil {
 		return err
@@ -113,18 +119,21 @@ func (ctx *TestCtx) CreateWithFinalizer(gCtx goctx.Context, obj runtime.Object) 
 		if err != nil {
 			return err
 		}
-		return wait.PollImmediate(time.Second*1, time.Second*5, func() (bool, error) {
-			err = Global.DynamicClient.Get(gCtx, key, obj)
-			if err != nil {
-				if apierrors.IsNotFound(err) {
-					//ctx.t.Logf("resource type %+v with namespace/name \"%+v\" successfully deleted\n", obj.GetObjectKind(), key)
-					return true, nil
+		if cleanupOptions != nil && !cleanupOptions.SkipPolling {
+			return wait.PollImmediate(time.Second*1, time.Second*5, func() (bool, error) {
+				err = Global.DynamicClient.Get(gCtx, key, obj)
+				if err != nil {
+					if apierrors.IsNotFound(err) {
+						//ctx.t.Logf("resource type %+v with namespace/name \"%+v\" successfully deleted\n", obj.GetObjectKind(), key)
+						return true, nil
+					}
+					return false, fmt.Errorf("error encountered during deletion of resource type %v with namespace/name \"%+v\": %v", obj.GetObjectKind(), key, err)
 				}
-				return false, fmt.Errorf("error encountered during deletion of resource type %v with namespace/name \"%+v\": %v", obj.GetObjectKind(), key, err)
-			}
-			//ctx.t.Logf("waiting for deletion of resource type %+v with namespace/name \"%+v\"\n", obj.GetObjectKind(), key)
-			return false, nil
-		})
+				//ctx.t.Logf("waiting for deletion of resource type %+v with namespace/name \"%+v\"\n", obj.GetObjectKind(), key)
+				return false, nil
+			})
+		}
+		return nil
 	})
 	return nil
 }
