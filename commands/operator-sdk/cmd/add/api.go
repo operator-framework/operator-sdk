@@ -16,6 +16,7 @@ package add
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -25,7 +26,10 @@ import (
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
+	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
+	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
+	cgoscheme "k8s.io/client-go/kubernetes/scheme"
 )
 
 var (
@@ -162,8 +166,64 @@ func apiRun(cmd *cobra.Command, args []string) {
 		log.Fatalf("failed to create %v: %v", filePath, err)
 	}
 
-	// TODO: append rbac rule to deploy/rbac/role.yaml
+	// update deploy/role.yaml for the given resource r.
+	if err := updateRoleForResource(r, fullProjectPath); err != nil {
+		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): %v", r.APIVersion, r.Kind, err)
+	}
+}
 
+func updateRoleForResource(r *scaffold.Resource, fullProjectPath string) error {
+	// append rbac rule to deploy/role.yaml
+	roleFilePath := filepath.Join(fullProjectPath, "deploy", "role.yaml")
+	roleYAML, err := ioutil.ReadFile(roleFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read role manifest %v: %v", roleFilePath, err)
+	}
+	obj, _, err := cgoscheme.Codecs.UniversalDeserializer().Decode(roleYAML, nil, nil)
+	if err != nil {
+		return fmt.Errorf("failed to decode role manifest %v: %v", roleFilePath, err)
+	}
+	switch role := obj.(type) {
+	// TODO: use rbac/v1.
+	case *rbacv1beta1.Role:
+		pr := &rbacv1beta1.PolicyRule{}
+		apiGroupFound := false
+		for i := range role.Rules {
+			if role.Rules[i].APIGroups[0] == r.FullGroup {
+				apiGroupFound = true
+				pr = &role.Rules[i]
+				break
+			}
+		}
+		// check if the resource already exists
+		for _, resource := range pr.Resources {
+			if resource == r.Resource {
+				log.Printf("deploy/role.yaml RBAC rules already up to date for the resource (%v, %v)", r.APIVersion, r.Kind)
+				return nil
+			}
+		}
+
+		pr.Resources = append(pr.Resources, r.Resource)
+		// create a new apiGroup if not found.
+		if !apiGroupFound {
+			pr.APIGroups = []string{r.FullGroup}
+			pr.Resources = []string{r.Resource}
+			pr.Verbs = []string{"*"}
+			role.Rules = append(role.Rules, *pr)
+		}
+		// update role.yaml
+		data, err := yaml.Marshal(&role)
+		if err != nil {
+			return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
+		}
+		if err := ioutil.WriteFile(roleFilePath, data, cmdutil.DefaultFileMode); err != nil {
+			return fmt.Errorf("failed to update %v: %v", roleFilePath, err)
+		}
+	default:
+		return errors.New("failed to parse role.yaml as a role")
+	}
+	// not reachable
+	return nil
 }
 
 // TODO: Make the utils below common in pkg/cmd/util
