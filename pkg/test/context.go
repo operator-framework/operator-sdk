@@ -107,7 +107,7 @@ func (ctx *TestCtx) CreateWithFinalizer(gCtx goctx.Context, obj runtime.Object) 
 		return err
 	}
 	key, err := dynclient.ObjectKeyFromObject(obj)
-	//ctx.t.Logf("Resource type %+v with namespace/name \"%+v\" created\n", obj.GetObjectKind(), key)
+	//ctx.t.Logf("resource type %+v with namespace/name \"%+v\" created\n", obj.GetObjectKind(), key)
 	ctx.AddFinalizerFn(func() error {
 		err = Global.DynamicClient.Delete(gCtx, obj)
 		if err != nil {
@@ -117,12 +117,12 @@ func (ctx *TestCtx) CreateWithFinalizer(gCtx goctx.Context, obj runtime.Object) 
 			err = Global.DynamicClient.Get(gCtx, key, obj)
 			if err != nil {
 				if apierrors.IsNotFound(err) {
-					//ctx.t.Logf("Resource type %+v with namespace/name \"%+v\" successfully deleted\n", obj.GetObjectKind(), key)
+					//ctx.t.Logf("resource type %+v with namespace/name \"%+v\" successfully deleted\n", obj.GetObjectKind(), key)
 					return true, nil
 				}
-				return false, fmt.Errorf("Error encountered during deletion of resource type %v with namespace/name \"%+v\": %v", obj.GetObjectKind(), key, err)
+				return false, fmt.Errorf("error encountered during deletion of resource type %v with namespace/name \"%+v\": %v", obj.GetObjectKind(), key, err)
 			}
-			//ctx.t.Logf("Waiting for deletion of resource type %+v with namespace/name \"%+v\"\n", obj.GetObjectKind(), key)
+			//ctx.t.Logf("waiting for deletion of resource type %+v with namespace/name \"%+v\"\n", obj.GetObjectKind(), key)
 			return false, nil
 		})
 	})
