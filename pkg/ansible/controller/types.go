@@ -19,7 +19,10 @@ import (
 )
 
 const (
-	host = "localhost"
+	host                = "localhost"
+	StatusPhaseCreating = "Creating"
+	StatusPhaseRunning  = "Running"
+	StatusPhaseFailed   = "Failed"
 )
 
 type Status struct {
@@ -51,9 +54,9 @@ func NewStatusFromStatusJobEvent(je eventapi.StatusJobEvent) Status {
 		failures = v
 	}
 	if failures > 0 {
-		phase = "Failed"
+		phase = StatusPhaseFailed
 	} else {
-		phase = "Running"
+		phase = StatusPhaseRunning
 	}
 	return Status{
 		Ok:               o,
@@ -95,9 +98,9 @@ func NewStatusFromMap(sm map[string]interface{}) Status {
 		e.UnmarshalJSON([]byte(s))
 	}
 	if failures > 0 {
-		phase = "Failed"
+		phase = StatusPhaseFailed
 	} else {
-		phase = "Running"
+		phase = StatusPhaseRunning
 	}
 	return Status{
 		Ok:               o,

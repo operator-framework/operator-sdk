@@ -73,7 +73,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	spec := u.Object["spec"]
 	_, ok := spec.(map[string]interface{})
 	if !ok {
-		logrus.Warnf("spec was not found")
+		logrus.Debugf("spec was not found")
 		u.Object["spec"] = map[string]interface{}{}
 		r.Client.Update(context.TODO(), u)
 		return reconcile.Result{Requeue: true}, nil
@@ -81,7 +81,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	status := u.Object["status"]
 	_, ok = status.(map[string]interface{})
 	if !ok {
-		logrus.Warnf("status was not found")
+		logrus.Debugf("status was not found")
 		u.Object["status"] = map[string]interface{}{}
 		r.Client.Update(context.TODO(), u)
 		return reconcile.Result{Requeue: true}, nil
@@ -89,13 +89,14 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 
 	// If status is an empty map we can assume CR was just created
 	if len(u.Object["status"].(map[string]interface{})) == 0 {
-		logrus.Debugf("Setting phase status to Creating")
+		logrus.Debugf("Setting phase status to %v", StatusPhaseCreating)
 		u.Object["status"] = ResourceStatus{
 			Status: Status{
-				Phase: "Creating",
+				Phase: StatusPhaseCreating,
 			},
 		}
 		r.Client.Update(context.TODO(), u)
+		return reconcile.Result{Requeue: true}, nil
 	}
 
 	ownerRef := metav1.OwnerReference{
