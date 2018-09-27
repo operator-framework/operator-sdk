@@ -27,6 +27,7 @@ type Status struct {
 	Changed          int                `json:"changed"`
 	Skipped          int                `json:"skipped"`
 	Failures         int                `json:"failures"`
+	Phase            string             `json:"phase"`
 	TimeOfCompletion eventapi.EventTime `json:"completion"`
 }
 
@@ -36,6 +37,7 @@ func NewStatusFromStatusJobEvent(je eventapi.StatusJobEvent) Status {
 	changed := 0
 	skipped := 0
 	failures := 0
+	phase := ""
 	if v, ok := je.EventData.Changed[host]; ok {
 		changed = v
 	}
@@ -48,17 +50,23 @@ func NewStatusFromStatusJobEvent(je eventapi.StatusJobEvent) Status {
 	if v, ok := je.EventData.Failures[host]; ok {
 		failures = v
 	}
+	if failures > 0 {
+		phase = "Failed"
+	} else {
+		phase = "Running"
+	}
 	return Status{
 		Ok:               o,
 		Changed:          changed,
 		Skipped:          skipped,
 		Failures:         failures,
+		Phase:            phase,
 		TimeOfCompletion: je.Created,
 	}
 }
 
 func IsStatusEqual(s1, s2 Status) bool {
-	return (s1.Ok == s2.Ok && s1.Changed == s2.Changed && s1.Skipped == s2.Skipped && s1.Failures == s2.Failures)
+	return (s1.Ok == s2.Ok && s1.Changed == s2.Changed && s1.Skipped == s2.Skipped && s1.Failures == s2.Failures && s1.Phase == s2.Phase)
 }
 
 func NewStatusFromMap(sm map[string]interface{}) Status {
@@ -68,6 +76,7 @@ func NewStatusFromMap(sm map[string]interface{}) Status {
 	changed := 0
 	skipped := 0
 	failures := 0
+	phase := ""
 	e := eventapi.EventTime{}
 	if v, ok := sm["changed"]; ok {
 		changed = int(v.(int64))
@@ -85,11 +94,17 @@ func NewStatusFromMap(sm map[string]interface{}) Status {
 		s := v.(string)
 		e.UnmarshalJSON([]byte(s))
 	}
+	if failures > 0 {
+		phase = "Failed"
+	} else {
+		phase = "Running"
+	}
 	return Status{
 		Ok:               o,
 		Changed:          changed,
 		Skipped:          skipped,
 		Failures:         failures,
+		Phase:            phase,
 		TimeOfCompletion: e,
 	}
 }
