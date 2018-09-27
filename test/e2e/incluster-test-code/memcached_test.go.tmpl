@@ -70,13 +70,11 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 			Size: 3,
 		},
 	}
-	err = f.DynamicClient.Create(goctx.TODO(), exampleMemcached)
+	// use TestCtx's create helper to create the object and add a finalizer for the new object
+	err = ctx.CreateWithFinalizer(goctx.TODO(), exampleMemcached)
 	if err != nil {
 		return err
 	}
-	ctx.AddFinalizerFn(func() error {
-		return f.DynamicClient.Delete(goctx.TODO(), exampleMemcached)
-	})
 	// wait for example-memcached to reach 3 replicas
 	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 3, retryInterval, timeout)
 	if err != nil {
@@ -100,7 +98,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 func MemcachedCluster(t *testing.T) {
 	t.Parallel()
 	ctx := framework.NewTestCtx(t)
-	defer ctx.Cleanup(t)
+	defer ctx.Cleanup()
 	err := ctx.InitializeClusterResources()
 	if err != nil {
 		t.Fatalf("failed to initialize cluster resources: %v", err)

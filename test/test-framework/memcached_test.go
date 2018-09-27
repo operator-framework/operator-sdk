@@ -98,7 +98,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 func MemcachedCluster(t *testing.T) {
 	t.Parallel()
 	ctx := framework.NewTestCtx(t)
-	defer ctx.Cleanup(t)
+	defer ctx.Cleanup()
 	err := ctx.InitializeClusterResources()
 	if err != nil {
 		t.Fatalf("failed to initialize cluster resources: %v", err)
