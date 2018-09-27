@@ -147,6 +147,8 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	// Don't need to buld go code if Ansible Operator
 	if buildCmd() {
 		bcmd := exec.Command(build)
+		bcmd.Env = append(os.Environ(), fmt.Sprintf("TEST_LOCATION=%v", testLocationBuild))
+		bcmd.Env = append(bcmd.Env, fmt.Sprintf("ENABLE_TESTS=%v", enableTests))
 		o, err := bcmd.CombinedOutput()
 		if err != nil {
 			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to build: (%v)", string(o)))
