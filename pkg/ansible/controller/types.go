@@ -61,7 +61,7 @@ func NewStatusFromStatusJobEvent(je eventapi.StatusJobEvent) Status {
 }
 
 func IsStatusEqual(s1, s2 Status) bool {
-	return (s1.Ok == s2.Ok && s1.Changed == s2.Changed && s1.Skipped == s2.Skipped && s1.Failures == s2.Failures && s1.Phase == s2.Phase)
+	return (s1.Ok == s2.Ok && s1.Changed == s2.Changed && s1.Skipped == s2.Skipped && s1.Failures == s2.Failures)
 }
 
 func NewStatusFromMap(sm map[string]interface{}) Status {
@@ -123,7 +123,7 @@ func UpdateResourceStatus(sm map[string]interface{}, je eventapi.StatusJobEvent)
 		}
 	}
 
-	if newStatus["failures"] > 0 {
+	if newStatus.Failures > 0 {
 		phase = StatusPhaseFailed
 	} else {
 		phase = StatusPhaseRunning
