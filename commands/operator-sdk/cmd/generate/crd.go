@@ -23,6 +23,7 @@ import (
 
 	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
 	"github.com/operator-framework/operator-sdk/pkg/generator"
+
 	"github.com/spf13/cobra"
 )
 
