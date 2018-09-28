@@ -120,7 +120,7 @@ func (ctx *TestCtx) CreateWithFinalizer(gCtx goctx.Context, obj runtime.Object, 
 			return err
 		}
 		if cleanupOptions != nil && !cleanupOptions.SkipPolling {
-			return wait.PollImmediate(time.Second*1, time.Second*5, func() (bool, error) {
+			return wait.PollImmediate(cleanupOptions.RetryInterval, cleanupOptions.Timeout, func() (bool, error) {
 				err = Global.DynamicClient.Get(gCtx, key, obj)
 				if err != nil {
 					if apierrors.IsNotFound(err) {
