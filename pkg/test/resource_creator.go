@@ -30,15 +30,9 @@ func (ctx *TestCtx) GetNamespace() (string, error) {
 	if ctx.namespace != "" {
 		return ctx.namespace, nil
 	}
-<<<<<<< HEAD
 	if Global.SingleNamespace {
-		ctx.Namespace = Global.Namespace
-		return ctx.Namespace, nil
-=======
-	if Global.InCluster {
-		ctx.namespace = os.Getenv(TestNamespaceEnv)
+		ctx.namespace = Global.Namespace
 		return ctx.namespace, nil
->>>>>>> pkg/test,doc: change finalizer to cleanup and make TestCtx fields unexported
 	}
 	// create namespace
 	ctx.namespace = ctx.GetID()
