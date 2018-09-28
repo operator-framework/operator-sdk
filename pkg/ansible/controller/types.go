@@ -30,7 +30,6 @@ type Status struct {
 	Changed          int                `json:"changed"`
 	Skipped          int                `json:"skipped"`
 	Failures         int                `json:"failures"`
-	Phase            string             `json:"phase"`
 	TimeOfCompletion eventapi.EventTime `json:"completion"`
 }
 
@@ -40,7 +39,6 @@ func NewStatusFromStatusJobEvent(je eventapi.StatusJobEvent) Status {
 	changed := 0
 	skipped := 0
 	failures := 0
-	phase := ""
 	if v, ok := je.EventData.Changed[host]; ok {
 		changed = v
 	}
@@ -53,17 +51,11 @@ func NewStatusFromStatusJobEvent(je eventapi.StatusJobEvent) Status {
 	if v, ok := je.EventData.Failures[host]; ok {
 		failures = v
 	}
-	if failures > 0 {
-		phase = StatusPhaseFailed
-	} else {
-		phase = StatusPhaseRunning
-	}
 	return Status{
 		Ok:               o,
 		Changed:          changed,
 		Skipped:          skipped,
 		Failures:         failures,
-		Phase:            phase,
 		TimeOfCompletion: je.Created,
 	}
 }
@@ -79,7 +71,6 @@ func NewStatusFromMap(sm map[string]interface{}) Status {
 	changed := 0
 	skipped := 0
 	failures := 0
-	phase := ""
 	e := eventapi.EventTime{}
 	if v, ok := sm["changed"]; ok {
 		changed = int(v.(int64))
@@ -97,23 +88,18 @@ func NewStatusFromMap(sm map[string]interface{}) Status {
 		s := v.(string)
 		e.UnmarshalJSON([]byte(s))
 	}
-	if failures > 0 {
-		phase = StatusPhaseFailed
-	} else {
-		phase = StatusPhaseRunning
-	}
 	return Status{
 		Ok:               o,
 		Changed:          changed,
 		Skipped:          skipped,
 		Failures:         failures,
-		Phase:            phase,
 		TimeOfCompletion: e,
 	}
 }
 
 type ResourceStatus struct {
 	Status         `json:",inline"`
+	Phase          string   `json:"phase"`
 	FailureMessage string   `json:"reason,omitempty"`
 	History        []Status `json:"history,omitempty"`
 }
@@ -121,6 +107,7 @@ type ResourceStatus struct {
 func UpdateResourceStatus(sm map[string]interface{}, je eventapi.StatusJobEvent) (bool, ResourceStatus) {
 	newStatus := NewStatusFromStatusJobEvent(je)
 	oldStatus := NewStatusFromMap(sm)
+	phase := ""
 	// Don't update the status if new status and old status are equal.
 	if IsStatusEqual(newStatus, oldStatus) {
 		return false, ResourceStatus{}
@@ -135,9 +122,17 @@ func UpdateResourceStatus(sm map[string]interface{}, je eventapi.StatusJobEvent)
 			history = append(history, NewStatusFromMap(ma))
 		}
 	}
+
+	if newStatus["failures"] > 0 {
+		phase = StatusPhaseFailed
+	} else {
+		phase = StatusPhaseRunning
+	}
+
 	history = append(history, oldStatus)
 	return true, ResourceStatus{
 		Status:  newStatus,
+		Phase:   phase,
 		History: history,
 	}
 }

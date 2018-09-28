@@ -94,9 +94,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	if len(u.Object["status"].(map[string]interface{})) == 0 {
 		logrus.Debugf("Setting phase status to %v", StatusPhaseCreating)
 		u.Object["status"] = ResourceStatus{
-			Status: Status{
-				Phase: StatusPhaseCreating,
-			},
+			Phase: StatusPhaseCreating,
 		}
 		err = r.Client.Update(context.TODO(), u)
 		if err != nil {
