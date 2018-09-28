@@ -147,6 +147,12 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dep ensure failed: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
+	// link local sdk to vendor if not in travis
+	if prSlug == "" {
+		os.RemoveAll("vendor/github.com/operator-framework/operator-sdk/pkg")
+		os.Symlink(path.Join(gopath, "/src/github.com/operator-framework/operator-sdk/pkg"),
+			"vendor/github.com/operator-framework/operator-sdk/pkg")
+	}
 
 	// create crd
 	crdYAML, err := ioutil.ReadFile("deploy/crd.yaml")
