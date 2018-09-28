@@ -111,7 +111,7 @@ func (ctx *TestCtx) CreateWithFinalizer(gCtx goctx.Context, obj runtime.Object, 
 		return err
 	}
 	key, err := dynclient.ObjectKeyFromObject(objCopy)
-	ctx.t.Logf("resource type %+v with namespace/name \"%+v\" created\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
+	ctx.t.Logf("resource type %+v with namespace/name (%+v) created\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
 	ctx.AddFinalizerFn(func() error {
 		err = Global.DynamicClient.Delete(gCtx, objCopy)
 		if err != nil {
@@ -122,12 +122,12 @@ func (ctx *TestCtx) CreateWithFinalizer(gCtx goctx.Context, obj runtime.Object, 
 				err = Global.DynamicClient.Get(gCtx, key, objCopy)
 				if err != nil {
 					if apierrors.IsNotFound(err) {
-						ctx.t.Logf("resource type %+v with namespace/name \"%+v\" successfully deleted\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
+						ctx.t.Logf("resource type %+v with namespace/name (%+v) successfully deleted\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
 						return true, nil
 					}
-					return false, fmt.Errorf("error encountered during deletion of resource type %v with namespace/name \"%+v\": %v", objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
+					return false, fmt.Errorf("error encountered during deletion of resource type %v with namespace/name (%+v): %v", objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
 				}
-				ctx.t.Logf("waiting for deletion of resource type %+v with namespace/name \"%+v\"\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
+				ctx.t.Logf("waiting for deletion of resource type %+v with namespace/name (%+v)\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
 				return false, nil
 			})
 		}
