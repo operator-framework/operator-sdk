@@ -19,7 +19,6 @@ import (
 	goctx "context"
 	"fmt"
 	"io/ioutil"
-	"os"
 
 	yaml "gopkg.in/yaml.v2"
 	core "k8s.io/api/core/v1"
@@ -31,11 +30,8 @@ func (ctx *TestCtx) GetNamespace() (string, error) {
 	if ctx.Namespace != "" {
 		return ctx.Namespace, nil
 	}
-	if *Global.SingleNamespace {
-		ctx.Namespace = os.Getenv(TestNamespaceEnv)
-		if len(ctx.Namespace) == 0 {
-			return "", fmt.Errorf("namespace set in %s cannot be empty", TestNamespaceEnv)
-		}
+	if Global.SingleNamespace {
+		ctx.Namespace = Global.Namespace
 		return ctx.Namespace, nil
 	}
 	// create namespace
