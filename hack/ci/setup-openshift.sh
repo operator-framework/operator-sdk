@@ -10,3 +10,6 @@ tar xvzOf oc.tar.gz openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit/oc
 oc cluster up
 # Become cluster admin
 oc login -u system:admin
+
+# kubectl is needed for the single namespace local test
+curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.10.1/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/

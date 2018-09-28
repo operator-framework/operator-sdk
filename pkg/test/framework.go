@@ -52,13 +52,13 @@ type Framework struct {
 	DynamicClient     dynclient.Client
 	DynamicDecoder    runtime.Decoder
 	NamespacedManPath *string
-	InCluster         bool
+	SingleNamespace   bool
+	Namespace         string
 }
 
-func setup(kubeconfigPath, namespacedManPath *string) error {
+func setup(kubeconfigPath, namespacedManPath *string, singleNamespace *bool) error {
 	var err error
 	var kubeconfig *rest.Config
-	inCluster := false
 	if *kubeconfigPath == "incluster" {
 		// Work around https://github.com/kubernetes/kubernetes/issues/40973
 		if len(os.Getenv("KUBERNETES_SERVICE_HOST")) == 0 {
@@ -72,7 +72,7 @@ func setup(kubeconfigPath, namespacedManPath *string) error {
 			os.Setenv("KUBERNETES_SERVICE_PORT", "443")
 		}
 		kubeconfig, err = rest.InClusterConfig()
-		inCluster = true
+		*singleNamespace = true
 	} else {
 		kubeconfig, err = clientcmd.BuildConfigFromFlags("", *kubeconfigPath)
 	}
@@ -95,6 +95,13 @@ func setup(kubeconfigPath, namespacedManPath *string) error {
 		return fmt.Errorf("failed to build the dynamic client: %v", err)
 	}
 	dynDec := serializer.NewCodecFactory(scheme).UniversalDeserializer()
+	namespace := ""
+	if *singleNamespace {
+		namespace = os.Getenv(TestNamespaceEnv)
+		if len(namespace) == 0 {
+			return fmt.Errorf("namespace set in %s cannot be empty", TestNamespaceEnv)
+		}
+	}
 	Global = &Framework{
 		KubeConfig:        kubeconfig,
 		KubeClient:        kubeclient,
@@ -103,7 +110,8 @@ func setup(kubeconfigPath, namespacedManPath *string) error {
 		DynamicClient:     dynClient,
 		DynamicDecoder:    dynDec,
 		NamespacedManPath: namespacedManPath,
-		InCluster:         inCluster,
+		SingleNamespace:   *singleNamespace,
+		Namespace:         namespace,
 	}
 	return nil
 }
@@ -136,8 +144,8 @@ func AddToFrameworkScheme(addToScheme addToSchemeFunc, obj runtime.Object) error
 	Global.RestMapper.Reset()
 	Global.DynamicClient, err = dynclient.New(Global.KubeConfig, dynclient.Options{Scheme: Global.Scheme, Mapper: Global.RestMapper})
 	err = wait.PollImmediate(time.Second, time.Second*10, func() (done bool, err error) {
-		if Global.InCluster {
-			err = Global.DynamicClient.List(goctx.TODO(), &dynclient.ListOptions{Namespace: os.Getenv(TestNamespaceEnv)}, obj)
+		if Global.SingleNamespace {
+			err = Global.DynamicClient.List(goctx.TODO(), &dynclient.ListOptions{Namespace: Global.Namespace}, obj)
 		} else {
 			err = Global.DynamicClient.List(goctx.TODO(), &dynclient.ListOptions{Namespace: "default"}, obj)
 		}

@@ -27,6 +27,7 @@ const (
 	KubeConfigFlag        = "kubeconfig"
 	NamespacedManPathFlag = "namespacedMan"
 	GlobalManPathFlag     = "globalMan"
+	SingleNamespaceFlag   = "singleNamespace"
 	TestNamespaceEnv      = "TEST_NAMESPACE"
 )
 
@@ -35,13 +36,14 @@ func MainEntry(m *testing.M) {
 	kubeconfigPath := flag.String(KubeConfigFlag, "", "path to kubeconfig")
 	globalManPath := flag.String(GlobalManPathFlag, "", "path to operator manifest")
 	namespacedManPath := flag.String(NamespacedManPathFlag, "", "path to rbac manifest")
+	singleNamespace := flag.Bool(SingleNamespaceFlag, false, "enable single namespace mode")
 	flag.Parse()
 	// go test always runs from the test directory; change to project root
 	err := os.Chdir(*projRoot)
 	if err != nil {
 		log.Fatalf("failed to change directory to project root: %v", err)
 	}
-	if err := setup(kubeconfigPath, namespacedManPath); err != nil {
+	if err := setup(kubeconfigPath, namespacedManPath, singleNamespace); err != nil {
 		log.Fatalf("failed to set up framework: %v", err)
 	}
 	// setup context to use when setting up crd
@@ -54,7 +56,7 @@ func MainEntry(m *testing.M) {
 		os.Exit(exitCode)
 	}()
 	// create crd
-	if !Global.InCluster {
+	if *kubeconfigPath != "incluster" {
 		globalYAML, err := ioutil.ReadFile(*globalManPath)
 		if err != nil {
 			log.Fatalf("failed to read global resource manifest: %v", err)

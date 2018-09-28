@@ -33,6 +33,7 @@ type testLocalConfig struct {
 	globalManPath     string
 	namespacedManPath string
 	goTestFlags       string
+	namespace         string
 }
 
 var tlConfig testLocalConfig
@@ -52,6 +53,7 @@ func NewTestLocalCmd() *cobra.Command {
 	testCmd.Flags().StringVar(&tlConfig.globalManPath, "global-manifest", "deploy/crd.yaml", "Path to manifest for Global resources (e.g. CRD manifest)")
 	testCmd.Flags().StringVar(&tlConfig.namespacedManPath, "namespaced-manifest", "", "Path to manifest for per-test, namespaced resources (e.g. RBAC and Operator manifest)")
 	testCmd.Flags().StringVar(&tlConfig.goTestFlags, "go-test-flags", "", "Additional flags to pass to go test")
+	testCmd.Flags().StringVar(&tlConfig.namespace, "namespace", "", "If non-empty, single namespace to run tests in")
 
 	return testCmd
 }
@@ -96,8 +98,16 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	testArgs = append(testArgs, "-"+test.NamespacedManPathFlag, tlConfig.namespacedManPath)
 	testArgs = append(testArgs, "-"+test.GlobalManPathFlag, tlConfig.globalManPath)
 	testArgs = append(testArgs, "-"+test.ProjRootFlag, mustGetwd())
-	testArgs = append(testArgs, strings.Split(tlConfig.goTestFlags, " ")...)
+	// if we do the append using an empty go flags, it inserts an empty arg, which causes
+	// any later flags to be ignored
+	if tlConfig.goTestFlags != "" {
+		testArgs = append(testArgs, strings.Split(tlConfig.goTestFlags, " ")...)
+	}
+	if tlConfig.namespace != "" {
+		testArgs = append(testArgs, "-"+test.SingleNamespaceFlag, "-parallel=1")
+	}
 	dc := exec.Command("go", testArgs...)
+	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
 	dc.Dir = mustGetwd()
 	dc.Stdout = os.Stdout
 	dc.Stderr = os.Stderr
