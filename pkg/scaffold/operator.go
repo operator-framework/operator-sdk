@@ -60,7 +60,8 @@ spec:
     spec:
       containers:
         - name: {{.ProjectName}}
-          image: REPLACE_IMAGE // replace this with the built image.
+          # Replace this with the built image name
+          image: REPLACE_IMAGE
           ports:
           - containerPort: 60000
             name: metrics

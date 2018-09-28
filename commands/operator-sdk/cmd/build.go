@@ -135,14 +135,14 @@ func renderTestManifest(image string) {
 }
 
 const (
-	build      = "./tmp/build/build.sh"
+	build      = "./build/build.sh"
 	configYaml = "./config/config.yaml"
 	mainGo     = "./cmd/%s/main.go"
 )
 
 func buildFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("build command needs exactly 1 argument"))
+		log.Fatalf("build command needs 1 argument.")
 	}
 
 	cmdutil.MustInProjectRoot()
@@ -158,7 +158,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		buildCmd.Env = goBuildEnv
 		o, err := buildCmd.CombinedOutput()
 		if err != nil {
-			log.Fatalf("failed to build operator binary: %v (%v)", err, string(o))
+			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to build operator binary: %v (%v)", err, string(o)))
 		}
 		fmt.Fprintln(os.Stdout, string(o))
 	}
@@ -201,6 +201,12 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		// create test-pod.yaml as well as check image name of deployments in namespaced manifest
 		renderTestManifest(image)
 	}
+	dbcmd := exec.Command("docker", "build", ".", "-f", "build/Dockerfile", "-t", image)
+	o, err = dbcmd.CombinedOutput()
+	if err != nil {
+		log.Fatalf("failed to output build image %v: %v (%v)", image, string(o), err)
+	}
+	fmt.Fprintln(os.Stdout, string(o))
 }
 
 func mainExists() bool {

@@ -55,7 +55,6 @@ import (
 
 	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
-	"github.com/sirupsen/logrus"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -63,9 +62,9 @@ import (
 )
 
 func printVersion() {
-	logrus.Infof("Go Version: %s", runtime.Version())
-	logrus.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	logrus.Infof("operator-sdk Version: %v", sdkVersion.Version)
+	log.Printf("Go Version: %s", runtime.Version())
+	log.Printf("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
+	log.Printf("operator-sdk Version: %v", sdkVersion.Version)
 }
 
 func main() {
@@ -74,10 +73,10 @@ func main() {
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
-		log.Fatal("Failed to get watch namespace: %v", err)
+		log.Fatalf("Failed to get watch namespace: %v", err)
 	}
 
-	// Expose metrics port after SDK uses controller-runtime's dynamic client
+	// TODO: Expose metrics port after SDK uses controller-runtime's dynamic client
 	// sdk.ExposeMetricsPort()
 
 	// Get a config to talk to the apiserver
@@ -87,14 +86,12 @@ func main() {
 	}
 
 	// Create a new Cmd to provide shared dependencies and start components
-	// TODO: Need to support namespacing the manager upstream to avoid cluster wide permissions
-	// https://github.com/kubernetes-sigs/controller-runtime/issues/124
 	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Printf("Registering Components.")
+	log.Print("Registering Components.")
 
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
@@ -106,7 +103,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Printf("Starting the Cmd.")
+	log.Print("Starting the Cmd.")
 
 	// Start the Cmd
 	log.Fatal(mgr.Start(signals.SetupSignalHandler()))

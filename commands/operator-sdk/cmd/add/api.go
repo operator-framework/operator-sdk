@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
+	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/generate"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
 	"github.com/ghodss/yaml"
@@ -170,6 +171,9 @@ func apiRun(cmd *cobra.Command, args []string) {
 	if err := updateRoleForResource(r, fullProjectPath); err != nil {
 		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): %v", r.APIVersion, r.Kind, err)
 	}
+
+	// Run k8s codegen for deepcopy
+	generate.K8sCodegen()
 }
 
 func updateRoleForResource(r *scaffold.Resource, fullProjectPath string) error {
