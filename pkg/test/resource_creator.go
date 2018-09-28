@@ -33,6 +33,9 @@ func (ctx *TestCtx) GetNamespace() (string, error) {
 	}
 	if *Global.SingleNamespace {
 		ctx.Namespace = os.Getenv(TestNamespaceEnv)
+		if len(ctx.Namespace) == 0 {
+			return "", fmt.Errorf("namepspace set in %s cannot be empty", TestNamespaceEnv)
+		}
 		return ctx.Namespace, nil
 	}
 	// create namespace
