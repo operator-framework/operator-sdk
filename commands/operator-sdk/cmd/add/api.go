@@ -29,7 +29,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
-	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	cgoscheme "k8s.io/client-go/kubernetes/scheme"
 )
 
@@ -189,8 +189,8 @@ func updateRoleForResource(r *scaffold.Resource, fullProjectPath string) error {
 	}
 	switch role := obj.(type) {
 	// TODO: use rbac/v1.
-	case *rbacv1beta1.Role:
-		pr := &rbacv1beta1.PolicyRule{}
+	case *rbacv1.Role:
+		pr := &rbacv1.PolicyRule{}
 		apiGroupFound := false
 		for i := range role.Rules {
 			if role.Rules[i].APIGroups[0] == r.FullGroup {
