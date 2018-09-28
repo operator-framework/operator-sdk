@@ -83,7 +83,10 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	if !ok {
 		logrus.Debugf("status was not found")
 		u.Object["status"] = map[string]interface{}{}
-		r.Client.Update(context.TODO(), u)
+		err = r.Client.Update(context.TODO(), u)
+		if err != nil {
+			return reconcile.Result{}, nil
+		}
 		return reconcile.Result{Requeue: true}, nil
 	}
 
@@ -95,7 +98,10 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 				Phase: StatusPhaseCreating,
 			},
 		}
-		r.Client.Update(context.TODO(), u)
+		err = r.Client.Update(context.TODO(), u)
+		if err != nil {
+			return reconcile.Result{}, nil
+		}
 		return reconcile.Result{Requeue: true}, nil
 	}
 
