@@ -163,7 +163,7 @@ func doScaffold() {
 	}
 
 	// create build dir
-	buildDir := filepath.Join(fullProjectPath, "pkg", "build")
+	buildDir := filepath.Join(fullProjectPath, "build")
 	if err := os.MkdirAll(buildDir, defaultDirFileMode); err != nil {
 		log.Fatalf("failed to create %v: %v", buildDir, err)
 	}
