@@ -31,7 +31,7 @@ clean:
 .PHONY: all test format dep clean
 
 install:
-	$(Q)go install $(BUILD_PATH)
+	$(Q)go install -ldflags $(LD_FLAGS) $(BUILD_PATH)
 
 release_x86_64 := \
 	build/operator-sdk-$(VERSION)-x86_64-linux-gnu \
