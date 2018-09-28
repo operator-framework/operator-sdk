@@ -27,26 +27,32 @@ import (
 )
 
 func (ctx *TestCtx) GetNamespace() (string, error) {
-	if ctx.Namespace != "" {
-		return ctx.Namespace, nil
+	if ctx.namespace != "" {
+		return ctx.namespace, nil
 	}
+<<<<<<< HEAD
 	if Global.SingleNamespace {
 		ctx.Namespace = Global.Namespace
 		return ctx.Namespace, nil
+=======
+	if Global.InCluster {
+		ctx.namespace = os.Getenv(TestNamespaceEnv)
+		return ctx.namespace, nil
+>>>>>>> pkg/test,doc: change finalizer to cleanup and make TestCtx fields unexported
 	}
 	// create namespace
-	ctx.Namespace = ctx.GetID()
-	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ctx.Namespace}}
+	ctx.namespace = ctx.GetID()
+	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ctx.namespace}}
 	_, err := Global.KubeClient.CoreV1().Namespaces().Create(namespaceObj)
 	if apierrors.IsAlreadyExists(err) {
-		return "", fmt.Errorf("namespace %s already exists: %v", ctx.Namespace, err)
+		return "", fmt.Errorf("namespace %s already exists: %v", ctx.namespace, err)
 	} else if err != nil {
 		return "", err
 	}
-	ctx.AddFinalizerFn(func() error {
-		return Global.KubeClient.CoreV1().Namespaces().Delete(ctx.Namespace, metav1.NewDeleteOptions(0))
+	ctx.AddCleanupFn(func() error {
+		return Global.KubeClient.CoreV1().Namespaces().Delete(ctx.namespace, metav1.NewDeleteOptions(0))
 	})
-	return ctx.Namespace, nil
+	return ctx.namespace, nil
 }
 
 func setNamespaceYAML(yamlFile []byte, namespace string) ([]byte, error) {
@@ -76,7 +82,7 @@ func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOp
 			return err
 		}
 
-		err = ctx.CreateWithFinalizer(goctx.TODO(), obj, cleanupOptions)
+		err = ctx.CreateWithCleanup(goctx.TODO(), obj, cleanupOptions)
 		if skipIfExists && apierrors.IsAlreadyExists(err) {
 			continue
 		}

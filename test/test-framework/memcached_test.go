@@ -73,7 +73,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		},
 	}
 	// use TestCtx's create helper to create the object and add a finalizer for the new object
-	err = ctx.CreateWithFinalizer(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{Timeout: finalizerTimeout, RetryInterval: finalizerRetryInterval})
+	err = ctx.CreateWithCleanup(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{Timeout: finalizerTimeout, RetryInterval: finalizerRetryInterval})
 	if err != nil {
 		return err
 	}

@@ -30,9 +30,9 @@ import (
 )
 
 type TestCtx struct {
-	ID         string
-	CleanUpFns []finalizerFn
-	Namespace  string
+	id         string
+	cleanupFns []cleanupFn
+	namespace  string
 	t          *testing.T
 }
 
@@ -42,7 +42,7 @@ type CleanupOptions struct {
 	SkipPolling   bool
 }
 
-type finalizerFn func() error
+type cleanupFn func() error
 
 func NewTestCtx(t *testing.T) *TestCtx {
 	var prefix string
@@ -63,18 +63,18 @@ func NewTestCtx(t *testing.T) *TestCtx {
 
 	id := prefix + "-" + strconv.FormatInt(time.Now().Unix(), 10)
 	return &TestCtx{
-		ID: id,
+		id: id,
 		t:  t,
 	}
 }
 
 func (ctx *TestCtx) GetID() string {
-	return ctx.ID
+	return ctx.id
 }
 
 func (ctx *TestCtx) Cleanup() {
-	for i := len(ctx.CleanUpFns) - 1; i >= 0; i-- {
-		err := ctx.CleanUpFns[i]()
+	for i := len(ctx.cleanupFns) - 1; i >= 0; i-- {
+		err := ctx.cleanupFns[i]()
 		if err != nil {
 			ctx.t.Errorf("a cleanup function failed with error: %v\n", err)
 		}
@@ -85,8 +85,8 @@ func (ctx *TestCtx) Cleanup() {
 // intended for use by MainEntry, which does not have a testing.T
 func (ctx *TestCtx) CleanupNoT() {
 	failed := false
-	for i := len(ctx.CleanUpFns) - 1; i >= 0; i-- {
-		err := ctx.CleanUpFns[i]()
+	for i := len(ctx.cleanupFns) - 1; i >= 0; i-- {
+		err := ctx.cleanupFns[i]()
 		if err != nil {
 			failed = true
 			log.Printf("a cleanup function failed with error: %v\n", err)
@@ -97,14 +97,14 @@ func (ctx *TestCtx) CleanupNoT() {
 	}
 }
 
-func (ctx *TestCtx) AddFinalizerFn(fn finalizerFn) {
-	ctx.CleanUpFns = append(ctx.CleanUpFns, fn)
+func (ctx *TestCtx) AddCleanupFn(fn cleanupFn) {
+	ctx.cleanupFns = append(ctx.cleanupFns, fn)
 }
 
-// CreateWithFinalizer uses the dynamic client to create an object and then adds a
-// finalizer function to delete it when Cleanup is called. In addition to the standard
+// CreateWithCleanup uses the dynamic client to create an object and then adds a
+// cleanup function to delete it when Cleanup is called. In addition to the standard
 // controller-runtime client options
-func (ctx *TestCtx) CreateWithFinalizer(gCtx goctx.Context, obj runtime.Object, cleanupOptions *CleanupOptions) error {
+func (ctx *TestCtx) CreateWithCleanup(gCtx goctx.Context, obj runtime.Object, cleanupOptions *CleanupOptions) error {
 	objCopy := obj.DeepCopyObject()
 	err := Global.DynamicClient.Create(gCtx, obj)
 	if err != nil {
@@ -112,7 +112,7 @@ func (ctx *TestCtx) CreateWithFinalizer(gCtx goctx.Context, obj runtime.Object, 
 	}
 	key, err := dynclient.ObjectKeyFromObject(objCopy)
 	ctx.t.Logf("resource type %+v with namespace/name (%+v) created\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
-	ctx.AddFinalizerFn(func() error {
+	ctx.AddCleanupFn(func() error {
 		err = Global.DynamicClient.Delete(gCtx, objCopy)
 		if err != nil {
 			return err

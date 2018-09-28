@@ -115,11 +115,11 @@ if err != nil {
 }
 ```
 
-The `InitializeClusterResources` function uses the `CreateWithFinalizer` function to creates the resources provided
-in your namespaced manifest. `CreateWithFinalizer` use the controller-runtime's client to create resources and then
-creates a finalizer that is called by `ctx.Cleanup` which deletes the resource and then waits for the resource to be
+The `InitializeClusterResources` function uses the `CreateWithCleanup` function to creates the resources provided
+in your namespaced manifest. `CreateWithCleanup` use the controller-runtime's client to create resources and then
+creates a cleanup function that is called by `ctx.Cleanup` which deletes the resource and then waits for the resource to be
 fully deleted before returning. This is configurable with `CleanupOptions`. If the `CleanupOptions` argument is set
-to `nil`, the finalizer simply calls the delete function and returns without waiting.
+to `nil`, the cleanup function simply calls the delete function and returns without waiting.
 
 If you want to make sure the operator's deployment is fully ready before moving onto the next part of the
 test, the `WaitForDeployment` function from [e2eutil][e2eutil-link] (in the sdk under `pkg/test/e2eutil`) can be used:
@@ -142,8 +142,8 @@ if err != nil {
 #### 4. Write the test specific code
 
 Now that the operator is ready, we can create a custom resource. As mentioned when speaking about the
-`InitializeClusterResources` function, the test framework provides a `CreateWithFinalizer` function that
-creates the resource with the controller-runtime's dynamic client and then adds a finalizer function
+`InitializeClusterResources` function, the test framework provides a `CreateWithCleanup` function that
+creates the resource with the controller-runtime's dynamic client and then adds a cleanup function
 to the context. This function should be used to create all resources. Since the controller-runtime's
 dynamic client uses go contexts, make sure to import the go context library. In this example, we imported
 it as `goctx`:
