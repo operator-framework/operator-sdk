@@ -101,35 +101,33 @@ func (ctx *TestCtx) AddFinalizerFn(fn finalizerFn) {
 	ctx.CleanUpFns = append(ctx.CleanUpFns, fn)
 }
 
-// TODO: figure out how to properly retrieve object kind info from object and enable
-// commented out logging
-
 // CreateWithFinalizer uses the dynamic client to create an object and then adds a
 // finalizer function to delete it when Cleanup is called. In addition to the standard
 // controller-runtime client options
 func (ctx *TestCtx) CreateWithFinalizer(gCtx goctx.Context, obj runtime.Object, cleanupOptions *CleanupOptions) error {
+	objCopy := obj.DeepCopyObject()
 	err := Global.DynamicClient.Create(gCtx, obj)
 	if err != nil {
 		return err
 	}
-	key, err := dynclient.ObjectKeyFromObject(obj)
-	//ctx.t.Logf("resource type %+v with namespace/name \"%+v\" created\n", obj.GetObjectKind(), key)
+	key, err := dynclient.ObjectKeyFromObject(objCopy)
+	ctx.t.Logf("resource type %+v with namespace/name \"%+v\" created\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
 	ctx.AddFinalizerFn(func() error {
-		err = Global.DynamicClient.Delete(gCtx, obj)
+		err = Global.DynamicClient.Delete(gCtx, objCopy)
 		if err != nil {
 			return err
 		}
 		if cleanupOptions != nil && !cleanupOptions.SkipPolling {
 			return wait.PollImmediate(cleanupOptions.RetryInterval, cleanupOptions.Timeout, func() (bool, error) {
-				err = Global.DynamicClient.Get(gCtx, key, obj)
+				err = Global.DynamicClient.Get(gCtx, key, objCopy)
 				if err != nil {
 					if apierrors.IsNotFound(err) {
-						//ctx.t.Logf("resource type %+v with namespace/name \"%+v\" successfully deleted\n", obj.GetObjectKind(), key)
+						ctx.t.Logf("resource type %+v with namespace/name \"%+v\" successfully deleted\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
 						return true, nil
 					}
-					return false, fmt.Errorf("error encountered during deletion of resource type %v with namespace/name \"%+v\": %v", obj.GetObjectKind(), key, err)
+					return false, fmt.Errorf("error encountered during deletion of resource type %v with namespace/name \"%+v\": %v", objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
 				}
-				//ctx.t.Logf("waiting for deletion of resource type %+v with namespace/name \"%+v\"\n", obj.GetObjectKind(), key)
+				ctx.t.Logf("waiting for deletion of resource type %+v with namespace/name \"%+v\"\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
 				return false, nil
 			})
 		}
