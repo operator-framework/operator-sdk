@@ -4,23 +4,23 @@
 
 [[constraint]]
   name = "github.com/spf13/cobra"
-  version = "0.0.2"
+  version = "0.0.3"
 
 [[override]]
   name = "k8s.io/api"
-  version = "kubernetes-1.10.1"
+  version = "kubernetes-1.11.2"
 
 [[override]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.10.1"
+  version = "kubernetes-1.11.2"
 
 [[override]]
   name = "k8s.io/apiextensions-apiserver"
-  version = "kubernetes-1.10.1"
+  version = "kubernetes-1.11.2"
 
 [[override]]
   name = "k8s.io/client-go"
-  version = "kubernetes-1.10.1"
+  version = "kubernetes-1.11.2"
 
 [[constraint]]
   name = "github.com/sergi/go-diff"
@@ -28,4 +28,4 @@
 
 [[constraint]]
   name = "sigs.k8s.io/controller-runtime"
-  revision = "60bb251ad86f9b313653618aad0c2c53f41a6625"
+  version = "v0.1.4"

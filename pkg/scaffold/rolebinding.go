@@ -44,7 +44,7 @@ func (r *roleBinding) Render(w io.Writer) error {
 }
 
 const roleBindingTemplate = `kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: default-account-{{.ProjectName}}
 subjects:
