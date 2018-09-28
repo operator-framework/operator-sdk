@@ -207,6 +207,13 @@ as an argument. You can use `--help` to view the other configuration options and
 $ operator-sdk test local ./test/e2e --go-test-flags "-v -parallel=2"
 ```
 
+If you wish to run all the tests in 1 namespace (which also forces `-parallel=1`), you can use the `--namespace` flag:
+
+```shell
+$ kubectl create namespace operator-test
+$ operator-sdk test local ./test/e2e --namespace operator-test
+```
+
 For more documentation on the `operator-sdk test local` command, see the [SDK CLI Reference][sdk-cli-ref] doc.
 
 For advanced use cases, it is possible to run the tests via `go test` directly. As long as all flags defined
@@ -258,6 +265,7 @@ Test Successfully Completed
 ```
 
 The `test cluster` command will deploy a test pod in the given namespace that will run the e2e tests packaged in the image.
+The tests run sequentially in the namespace (`-parallel=1`), the same as running `operator-sdk test local --namespace <namespace>`.
 The command will wait until the tests succeed (pod phase=`Succeeded`) or fail (pod phase=`Failed`).
 If the tests fail, the command will output the test pod logs which should be the standard go test error logs.
 
