@@ -106,9 +106,14 @@ Patch releases should have the following format:
 ...
 ```
 
+## Supported Kubernetes versions
+
+As the Operator SDK interacts directly with the Kubernetes API, certain API features are assumed to exist in the target cluster. The currently supported Kubernetes version will always be listed in the SDK [prerequisites section].
+
 [link-semver]:https://semver.org/
 [link-github-milestones]: https://help.github.com/articles/about-milestones/
 [doc-maintainers]:../MAINTAINERS
 [doc-maintainer-pgp-keys]:TODO
 [link-github-gpg-key-upload]:https://github.com/settings/keys
 [link-git-config-gpg-key]:https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work
+[doc-kube-version]:https://github.com/operator-framework/operator-sdk#prerequisites
