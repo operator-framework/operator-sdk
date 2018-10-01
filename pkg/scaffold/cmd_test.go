@@ -1,57 +1,34 @@
-// Copyright 2018 The Operator-SDK Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package scaffold
 
 import (
-	"io"
+	"bytes"
+	"testing"
 
-	"text/template"
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-type cmd struct {
-	cmdInput *CmdInput
-}
-
-func NewCmdCodegen(in *CmdInput) Codegen {
-	return &cmd{cmdInput: in}
-}
-
-type CmdInput struct {
-	// ProjectPath is the project path rooted at GOPATH.
-	ProjectPath string
-}
-
-func (c *cmd) Render(w io.Writer) error {
-	t := template.New("main.go")
-	t, err := t.Parse(mainTmpl)
-	if err != nil {
-		return err
+func TestCmd(t *testing.T) {
+	codegen := NewCmdCodegen(&CmdInput{ProjectPath: appProjectPath})
+	buf := &bytes.Buffer{}
+	if err := codegen.Render(buf); err != nil {
+		t.Fatal(err)
 	}
-
-	return t.Execute(w, c.cmdInput)
+	if cmdExp != buf.String() {
+		dmp := diffmatchpatch.New()
+		diffs := diffmatchpatch.New().DiffMain(cmdExp, buf.String(), false)
+		t.Fatalf("expected vs actual differs. Red text is missing and green text is extra.\n%v", dmp.DiffPrettyText(diffs))
+	}
 }
 
-const mainTmpl = `package main
+const cmdExp = `package main
 
 import (
 	"flag"
 	"log"
 	"runtime"
 
-	"{{.ProjectPath}}/pkg/apis"
-	"{{.ProjectPath}}/pkg/controller"
+	"github.com/example-inc/app-operator/pkg/apis"
+	"github.com/example-inc/app-operator/pkg/controller"
 
 	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
