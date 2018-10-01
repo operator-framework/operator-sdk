@@ -28,10 +28,12 @@ type frameworkClient struct {
 	dynclient.Client
 }
 
+var _ FrameworkClient = &frameworkClient{}
+
 type FrameworkClient interface {
 	Get(gCtx goctx.Context, key dynclient.ObjectKey, obj runtime.Object) error
 	List(gCtx goctx.Context, opts *dynclient.ListOptions, list runtime.Object) error
-	Create(gCtx goctx.Context, obj runtime.Object) error
+	Create(gCtx goctx.Context, obj runtime.Object, tCtx *TestCtx, cleanupOptions *CleanupOptions) error
 	Delete(gCtx goctx.Context, obj runtime.Object, opts ...dynclient.DeleteOptionFunc) error
 	Update(gCtx goctx.Context, obj runtime.Object) error
 }
