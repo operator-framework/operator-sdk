@@ -33,7 +33,7 @@ var _ FrameworkClient = &frameworkClient{}
 type FrameworkClient interface {
 	Get(gCtx goctx.Context, key dynclient.ObjectKey, obj runtime.Object) error
 	List(gCtx goctx.Context, opts *dynclient.ListOptions, list runtime.Object) error
-	Create(gCtx goctx.Context, obj runtime.Object, tCtx *TestCtx, cleanupOptions *CleanupOptions) error
+	Create(gCtx goctx.Context, obj runtime.Object, cleanupOptions *CleanupOptions) error
 	Delete(gCtx goctx.Context, obj runtime.Object, opts ...dynclient.DeleteOptionFunc) error
 	Update(gCtx goctx.Context, obj runtime.Object) error
 }
@@ -41,7 +41,7 @@ type FrameworkClient interface {
 // Create uses the dynamic client to create an object and then adds a
 // cleanup function to delete it when Cleanup is called. In addition to
 // the standard controller-runtime client options
-func (f *frameworkClient) Create(gCtx goctx.Context, obj runtime.Object, tCtx *TestCtx, cleanupOptions *CleanupOptions) error {
+func (f *frameworkClient) Create(gCtx goctx.Context, obj runtime.Object, cleanupOptions *CleanupOptions) error {
 	objCopy := obj.DeepCopyObject()
 	err := f.Client.Create(gCtx, obj)
 	if err != nil {
@@ -49,10 +49,10 @@ func (f *frameworkClient) Create(gCtx goctx.Context, obj runtime.Object, tCtx *T
 	}
 	key, err := dynclient.ObjectKeyFromObject(objCopy)
 	// this function fails silently if t is nil
-	if tCtx.t != nil {
-		tCtx.t.Logf("resource type %+v with namespace/name (%+v) created\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
+	if cleanupOptions.TestContext.t != nil {
+		cleanupOptions.TestContext.t.Logf("resource type %+v with namespace/name (%+v) created\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
 	}
-	tCtx.AddCleanupFn(func() error {
+	cleanupOptions.TestContext.AddCleanupFn(func() error {
 		err = f.Client.Delete(gCtx, objCopy)
 		if err != nil {
 			return err
@@ -62,15 +62,15 @@ func (f *frameworkClient) Create(gCtx goctx.Context, obj runtime.Object, tCtx *T
 				err = f.Client.Get(gCtx, key, objCopy)
 				if err != nil {
 					if apierrors.IsNotFound(err) {
-						if tCtx.t != nil {
-							tCtx.t.Logf("resource type %+v with namespace/name (%+v) successfully deleted\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
+						if cleanupOptions.TestContext.t != nil {
+							cleanupOptions.TestContext.t.Logf("resource type %+v with namespace/name (%+v) successfully deleted\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
 						}
 						return true, nil
 					}
 					return false, fmt.Errorf("error encountered during deletion of resource type %v with namespace/name (%+v): %v", objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
 				}
-				if tCtx.t != nil {
-					tCtx.t.Logf("waiting for deletion of resource type %+v with namespace/name (%+v)\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
+				if cleanupOptions.TestContext.t != nil {
+					cleanupOptions.TestContext.t.Logf("waiting for deletion of resource type %+v with namespace/name (%+v)\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
 				}
 				return false, nil
 			})

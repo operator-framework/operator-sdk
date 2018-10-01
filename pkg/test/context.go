@@ -30,6 +30,7 @@ type TestCtx struct {
 }
 
 type CleanupOptions struct {
+	TestContext   *TestCtx
 	Timeout       time.Duration
 	RetryInterval time.Duration
 	SkipPolling   bool

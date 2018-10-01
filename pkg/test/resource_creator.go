@@ -76,7 +76,7 @@ func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOp
 			return err
 		}
 
-		err = Global.Client.Create(goctx.TODO(), obj, ctx, cleanupOptions)
+		err = Global.Client.Create(goctx.TODO(), obj, cleanupOptions)
 		if skipIfExists && apierrors.IsAlreadyExists(err) {
 			continue
 		}

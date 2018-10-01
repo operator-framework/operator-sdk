@@ -109,7 +109,7 @@ Service Account, RBAC, and Operator deployment in `local` testing; just the Oper
 in `cluster` testing) can be initialized:
 
 ```go
-err := ctx.InitializeClusterResources(&framework.CleanupOptions{Timeout: time.Duration * 5, RetryInterval: time.Duration * 1})
+err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 if err != nil {
     t.Fatalf("failed to initialize cluster resources: %v", err)
 }
@@ -163,7 +163,7 @@ exampleMemcached := &cachev1alpha1.Memcached{
         Size: 3,
     },
 }
-err = f.Client.Create(goctx.TODO(), exampleMemcached, ctx, &framework.CleanupOptions{Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
+err = f.Client.Create(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 if err != nil {
     return err
 }
