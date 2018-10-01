@@ -98,7 +98,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		}
 		err = r.Client.Update(context.TODO(), u)
 		if err != nil {
-			return reconcile.Result{}, nil
+			return reconcile.Result{}, err
 		}
 		return reconcile.Result{Requeue: true}, nil
 	}
