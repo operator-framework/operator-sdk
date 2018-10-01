@@ -107,7 +107,7 @@ type ResourceStatus struct {
 func UpdateResourceStatus(sm map[string]interface{}, je eventapi.StatusJobEvent) (bool, ResourceStatus) {
 	newStatus := NewStatusFromStatusJobEvent(je)
 	oldStatus := NewStatusFromMap(sm)
-	phase := ""
+	phase := StatusPhaseRunning
 	// Don't update the status if new status and old status are equal.
 	if IsStatusEqual(newStatus, oldStatus) {
 		return false, ResourceStatus{}
@@ -125,8 +125,6 @@ func UpdateResourceStatus(sm map[string]interface{}, je eventapi.StatusJobEvent)
 
 	if newStatus.Failures > 0 {
 		phase = StatusPhaseFailed
-	} else {
-		phase = StatusPhaseRunning
 	}
 
 	history = append(history, oldStatus)
