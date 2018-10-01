@@ -36,8 +36,8 @@ At a high level an operator using the SDK processes events for watched resources
 - [git][git_tool]
 - [go][go_tool] version v1.10+.
 - [docker][docker_tool] version 17.03+.
-- [kubectl][kubectl_tool] version v1.9.0+.
-- Access to a kubernetes v.1.9.0+ cluster.
+- [kubectl][kubectl_tool] version v1.10.0+.
+- Access to a kubernetes v.1.10.0+ cluster.
 
 ## Quick Start
 
