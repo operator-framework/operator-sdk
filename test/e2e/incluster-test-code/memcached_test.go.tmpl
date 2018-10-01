@@ -29,8 +29,10 @@ import (
 )
 
 var (
-	retryInterval = time.Second * 5
-	timeout       = time.Second * 30
+	retryInterval          = time.Second * 5
+	timeout                = time.Second * 30
+	cleanupRetryInterval = time.Second * 1
+	cleanupTimeout       = time.Second * 5
 )
 
 func TestMemcached(t *testing.T) {
@@ -70,13 +72,11 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 			Size: 3,
 		},
 	}
-	err = f.DynamicClient.Create(goctx.TODO(), exampleMemcached)
+	// use TestCtx's create helper to create the object and add a cleanup for the new object
+	err = ctx.CreateWithCleanup(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		return err
 	}
-	ctx.AddFinalizerFn(func() error {
-		return f.DynamicClient.Delete(goctx.TODO(), exampleMemcached)
-	})
 	// wait for example-memcached to reach 3 replicas
 	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 3, retryInterval, timeout)
 	if err != nil {
@@ -100,8 +100,8 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 func MemcachedCluster(t *testing.T) {
 	t.Parallel()
 	ctx := framework.NewTestCtx(t)
-	defer ctx.Cleanup(t)
-	err := ctx.InitializeClusterResources()
+	defer ctx.Cleanup()
+	err := ctx.InitializeClusterResources(&framework.CleanupOptions{Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		t.Fatalf("failed to initialize cluster resources: %v", err)
 	}

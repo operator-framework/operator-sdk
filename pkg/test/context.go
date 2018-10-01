@@ -15,20 +15,34 @@
 package test
 
 import (
+	goctx "context"
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
+	dynclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type TestCtx struct {
-	ID         string
-	CleanUpFns []finalizerFn
-	Namespace  string
+	id         string
+	cleanupFns []cleanupFn
+	namespace  string
+	t          *testing.T
 }
 
-type finalizerFn func() error
+type CleanupOptions struct {
+	Timeout       time.Duration
+	RetryInterval time.Duration
+	SkipPolling   bool
+}
+
+type cleanupFn func() error
 
 func NewTestCtx(t *testing.T) *TestCtx {
 	var prefix string
@@ -49,19 +63,20 @@ func NewTestCtx(t *testing.T) *TestCtx {
 
 	id := prefix + "-" + strconv.FormatInt(time.Now().Unix(), 10)
 	return &TestCtx{
-		ID: id,
+		id: id,
+		t:  t,
 	}
 }
 
 func (ctx *TestCtx) GetID() string {
-	return ctx.ID
+	return ctx.id
 }
 
-func (ctx *TestCtx) Cleanup(t *testing.T) {
-	for i := len(ctx.CleanUpFns) - 1; i >= 0; i-- {
-		err := ctx.CleanUpFns[i]()
+func (ctx *TestCtx) Cleanup() {
+	for i := len(ctx.cleanupFns) - 1; i >= 0; i-- {
+		err := ctx.cleanupFns[i]()
 		if err != nil {
-			t.Errorf("a cleanup function failed with error: %v\n", err)
+			ctx.t.Errorf("a cleanup function failed with error: %v\n", err)
 		}
 	}
 }
@@ -70,8 +85,8 @@ func (ctx *TestCtx) Cleanup(t *testing.T) {
 // intended for use by MainEntry, which does not have a testing.T
 func (ctx *TestCtx) CleanupNoT() {
 	failed := false
-	for i := len(ctx.CleanUpFns) - 1; i >= 0; i-- {
-		err := ctx.CleanUpFns[i]()
+	for i := len(ctx.cleanupFns) - 1; i >= 0; i-- {
+		err := ctx.cleanupFns[i]()
 		if err != nil {
 			failed = true
 			log.Printf("a cleanup function failed with error: %v\n", err)
@@ -82,6 +97,41 @@ func (ctx *TestCtx) CleanupNoT() {
 	}
 }
 
-func (ctx *TestCtx) AddFinalizerFn(fn finalizerFn) {
-	ctx.CleanUpFns = append(ctx.CleanUpFns, fn)
+func (ctx *TestCtx) AddCleanupFn(fn cleanupFn) {
+	ctx.cleanupFns = append(ctx.cleanupFns, fn)
+}
+
+// CreateWithCleanup uses the dynamic client to create an object and then adds a
+// cleanup function to delete it when Cleanup is called. In addition to the standard
+// controller-runtime client options
+func (ctx *TestCtx) CreateWithCleanup(gCtx goctx.Context, obj runtime.Object, cleanupOptions *CleanupOptions) error {
+	objCopy := obj.DeepCopyObject()
+	err := Global.DynamicClient.Create(gCtx, obj)
+	if err != nil {
+		return err
+	}
+	key, err := dynclient.ObjectKeyFromObject(objCopy)
+	ctx.t.Logf("resource type %+v with namespace/name (%+v) created\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
+	ctx.AddCleanupFn(func() error {
+		err = Global.DynamicClient.Delete(gCtx, objCopy)
+		if err != nil {
+			return err
+		}
+		if cleanupOptions != nil && !cleanupOptions.SkipPolling {
+			return wait.PollImmediate(cleanupOptions.RetryInterval, cleanupOptions.Timeout, func() (bool, error) {
+				err = Global.DynamicClient.Get(gCtx, key, objCopy)
+				if err != nil {
+					if apierrors.IsNotFound(err) {
+						ctx.t.Logf("resource type %+v with namespace/name (%+v) successfully deleted\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
+						return true, nil
+					}
+					return false, fmt.Errorf("error encountered during deletion of resource type %v with namespace/name (%+v): %v", objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
+				}
+				ctx.t.Logf("waiting for deletion of resource type %+v with namespace/name (%+v)\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
+				return false, nil
+			})
+		}
+		return nil
+	})
+	return nil
 }
