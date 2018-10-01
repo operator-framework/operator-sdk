@@ -52,9 +52,21 @@ Making an Operator SDK release involves:
 
 Releases can only be performed by [maintainers][doc-maintainers].
 
+## Dependency and platform support
+
+### Kubernetes versions
+
+As the Operator SDK interacts directly with the Kubernetes API, certain API features are assumed to exist in the target cluster. The currently supported Kubernetes version will always be listed in the SDK [prerequisites section][doc-kube-version].
+
+### Operating systems and architectures
+
+Release binaries will be built for the `x86_64` architecture for both GNU Linux and MacOS Darwin platforms.
+
+Support for the Windows platform or any architecture other than `x86_64` is not on the roadmap at this time.
+
 ## Binaries and signatures
 
-Release binaries will be built for the `x86_64` architecture for both GNU Linux and MacOS Darwin platforms. Binaries will be signed using a maintainers' [PGP key][doc-maintainer-pgp-keys], and signatures will be uploaded to the release along with its accompanying binary. Ensure you import maintainer keys to verify release binaries.
+Binaries will be signed using a maintainers' [PGP key][doc-maintainer-pgp-keys], and signatures will be uploaded to the release along with its accompanying binary. Ensure you import maintainer keys to verify release binaries.
 
 Creating release binaries and signatures:
 ```bash
@@ -105,10 +117,6 @@ Patch releases should have the following format:
 - [Short description of fix] (#issue1, #issue2, ..., @maintainer_handle)
 ...
 ```
-
-## Supported Kubernetes versions
-
-As the Operator SDK interacts directly with the Kubernetes API, certain API features are assumed to exist in the target cluster. The currently supported Kubernetes version will always be listed in the SDK [prerequisites section].
 
 [link-semver]:https://semver.org/
 [link-github-milestones]: https://help.github.com/articles/about-milestones/
