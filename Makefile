@@ -45,8 +45,15 @@ build/operator-sdk-%-x86_64-apple-darwin: GOARGS = GOOS=darwin GOARCH=amd64
 build/%:
 	$(Q)$(GOARGS) go build -o $@ -ldflags $(LD_FLAGS) $(BUILD_PATH)
 	
+DEFAULT_KEY = $(shell gpgconf --list-options gpg \
+								| awk -F: '$$1 == "default-key" { gsub(/"/,""); print $$10}')
 build/%.asc:
+ifeq ("$(DEFAULT_KEY)","$(shell git config --get user.signingkey)")
 	$(Q)gpg --output $@ --detach-sig build/$*
 	$(Q)gpg --verify $@ build/$*
+else
+	@echo "git and/or gpg are not configured to have default signing key ${DEFAULT_KEY}"
+	@exit 1
+endif
 
 .PHONY: install release_x86_64 release
