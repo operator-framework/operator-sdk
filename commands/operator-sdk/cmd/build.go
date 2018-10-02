@@ -158,7 +158,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		buildCmd.Env = goBuildEnv
 		o, err := buildCmd.CombinedOutput()
 		if err != nil {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to build: (%v)", string(o)))
+			log.Fatalf("failed to build operator binary: %v (%v)", err, string(o))
 		}
 		fmt.Fprintln(os.Stdout, string(o))
 	}
@@ -184,7 +184,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		buildTestCmd.Env = goBuildEnv
 		o, err := buildTestCmd.CombinedOutput()
 		if err != nil {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to build: (%v)", string(o)))
+			log.Fatalf("failed to build test binary: %v (%v)", err, string(o))
 		}
 		fmt.Fprintln(os.Stdout, string(o))
 		// if a user is using an older sdk repo as their library, make sure they have required build files
