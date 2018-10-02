@@ -503,22 +503,10 @@ func (g *Generator) renderVersion() error {
 }
 
 func renderBuildFiles(buildDir, repoPath, projectName, operatorType string, generatePlaybook bool) error {
-	buf := &bytes.Buffer{}
-	bTd := tmplData{
-		ProjectName: projectName,
-		RepoPath:    repoPath,
-	}
-
 	var dockerFileTmplName string
 	switch operatorType {
 	case goOperatorType:
 		dockerFileTmplName = dockerFileTmpl
-		if err := renderFile(buf, "tmp/build/build.sh", buildTmpl, bTd); err != nil {
-			return err
-		}
-		if err := writeFileAndPrint(filepath.Join(buildDir, build), buf.Bytes(), defaultExecFileMode); err != nil {
-			return err
-		}
 	case ansibleOperatorType:
 		dockerFileTmplName = dockerFileAnsibleTmpl
 	}
@@ -532,11 +520,17 @@ func renderBuildFiles(buildDir, repoPath, projectName, operatorType string, gene
 		return err
 	}
 
+	return RenderTestingContainerFiles(buildDir, projectName)
+}
+
+func RenderTestingContainerFiles(buildDir, projectName string) error {
+	dTd := tmplData{
+		ProjectName: projectName,
+	}
 	if err := renderWriteFile(filepath.Join(buildDir, "test-framework", testingDockerfile), "tmp/build/test-framework/Dockerfile", testingDockerFileTmpl, dTd); err != nil {
 		return err
 	}
-
-	buf = &bytes.Buffer{}
+	buf := &bytes.Buffer{}
 	if err := renderFile(buf, filepath.Join(buildDir, goTest), goTestScript, tmplData{}); err != nil {
 		return err
 	}
