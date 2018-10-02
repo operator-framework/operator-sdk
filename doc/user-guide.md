@@ -1,7 +1,6 @@
 # User Guide
 
 This guide walks through an example of building a simple memcached-operator using the operator-sdk CLI tool and controller-runtime library API.
-
 To learn how to use Ansible to create a Memcached operator, see [Ansible
 Operator User Guide][ansible_user_guide]. The rest of this document will show
 how to program an operator in Go.
@@ -73,9 +72,7 @@ $ operator-sdk add api --api-version=cache.example.com/v1alpha1 --kind=Memcached
 ```
 
 This will scaffold the Memcached resource API under `pkg/apis/cache/v1alpha1/...`.
-
 ### Define the spec and status
-
 Modify the spec and status of the `Memcached` Custom Resource(CR) at `pkg/apis/cache/v1alpha1/memcached_types.go`:
 
 ```Go
@@ -316,8 +313,6 @@ $ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
 $ kubectl delete -f deploy/operator.yaml
 ```
 
-<<<<<<< HEAD
-
 ## Advanced Topics
 ### Adding 3rd Party Resources To Your Operator
 To add a resource to an operator, you must add it to a scheme. By creating an `AddToScheme` method or reusing one you can easily add a resource to your scheme. An [example][deployments_register] shows that you define a function and then use the [runtime][runtime_package] package to create a `SchemeBuilder`
@@ -356,9 +351,7 @@ func main() {
 ```
 
 [memcached_handler]: ../example/memcached-operator/handler.go.tmpl
-=======
 [memcached_controller]: ../example/memcached-operator/memcached_controller.go.tmpl
->>>>>>> *: update user-guide and memcached-operator example (#551)
 [layout_doc]:./project_layout.md
 [ansible_user_guide]:./ansible/user-guide.md
 [dep_tool]:https://golang.github.io/dep/docs/installation.html

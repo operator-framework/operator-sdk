@@ -281,7 +281,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f477ef7b65d94fb17574fc6548cef0c99a69c1634ea3b6da248b63a61ebe0498"
+  digest = "1:d1b5970f2a453e7c4be08117fb683b5d096bad9d17f119a6e58d4c561ca205dd"
   name = "github.com/prometheus/common"
   packages = [
     "expfmt",
@@ -289,7 +289,7 @@
     "model",
   ]
   pruneopts = ""
-  revision = "c7de2306084e37d54b8be01f3541a8464345e9a5"
+  revision = "bcb74de08d37a417cb6789eec1d6c810040f0470"
 
 [[projects]]
   branch = "master"
@@ -380,11 +380,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:6a29a2cd3888fd1aeba990cfffebe3524b79d717a0abe52ee7d695c51ff75154"
+  digest = "1:78f41d38365ccef743e54ed854a2faf73313ba0750c621116a8eeb0395590bd0"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = ""
-  revision = "a92615f3c49003920a58dedcf32cf55022cefb8d"
+  revision = "0c41d7ab0a0ee717d4590a44bcb987dfd9e183eb"
 
 [[projects]]
   branch = "master"
@@ -446,7 +446,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:4e6c1bdaf0b67e43450fd0c0f29ee3807f8f6d385e555c7e769e5dda95238b10"
+  digest = "1:19e6467b9934614872b092d019b757fbc89de35cf473d71828d604dbd9f9c172"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -455,7 +455,7 @@
     "internal/gopathwalk",
   ]
   pruneopts = ""
-  revision = "19e2aca3fdf9724feacb8701307db6fb35055030"
+  revision = "5e66757b835f155f7e50931f54c9f6af8af86f75"
 
 [[projects]]
   digest = "1:75fb3fcfc73a8c723efde7777b40e8e8ff9babf30d8c56160d01beffea8a95a6"
