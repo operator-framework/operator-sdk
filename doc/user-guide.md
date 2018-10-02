@@ -2,7 +2,7 @@
 
 This guide walks through an example of building a simple memcached-operator using tools and libraries provided by the Operator SDK.
 
-This guide covers the workflow of creating and deploying an operator written in Go. See the [Ansible User Guide](ansible_user_guide). 
+This guide covers the workflow of creating and deploying an operator written in Go. To read about the Ansible Operator, see the [Ansible Operator User Guide][ansible_user_guide]. 
 
 ## Prerequisites
 
