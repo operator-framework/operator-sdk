@@ -4,12 +4,12 @@ This guide walks through an example of building a simple memcached-operator powe
 
 ## Prerequisites
 
-- [dep][dep_tool] version v0.5.0+.
 - [git][git_tool]
-- [go][go_tool] version v1.10+.
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.9.0+.
 - [ansible][ansible_tool] version v2.6.0+
+- [dep][dep_tool] version v0.5.0+. (Optional if you aren't installing from source)
+- [go][go_tool] version v1.10+. (Optional if you aren't installing from source)
 - Access to a kubernetes v.1.9.0+ cluster.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the local kubernetes cluster and quay.io for the public registry.
@@ -49,9 +49,9 @@ To learn more about the project directory structure, see [project layout][layout
 
 ## Customize the operator logic
 
-For this example the memcached-operator will execute the following reconciliation logic for each `Memcached` CR:
+For this example the memcached-operator will execute the following reconciliation logic for each `Memcached` Custom Resource (CR):
 - Create a memcached Deployment if it doesn't exist
-- Ensure that the Deployment size is the same as specified by the `Memcached` CR spec
+- Ensure that the Deployment size is the same as specified by the `Memcached` CR
 
 ### Watch the Memcached CR
 
@@ -86,6 +86,9 @@ Specifying a `playbook` option in `watches.yaml` will configure the operator to 
 ```
 
 ## Building the Memcached Ansible Role
+
+The first thing to do is to modify the generated Ansible role under `roles/Memcached`. This Ansible Role controls the logic that is executed when a resource is modified.
+
 ### Define the Memcached spec
 
 Defining the spec for an Ansible Operator can be done entirely in Ansible. The Ansible Operator will simply pass all key value pairs listed in the Custom Resource spec field along to Ansible as [variables](https://docs.ansible.com/ansible/2.5/user_guide/playbooks_variables.html#passing-variables-on-the-command-line). It is recommended that you perform some type validation in Ansible on the variables to ensure that your application is receiving expected input.
@@ -148,12 +151,12 @@ $ kubectl create -f deploy/crd.yaml
 
 Once this is done, there are two ways to run the operator:
 
-- As pod inside Kubernetes cluster
-- As go program outside cluster using `operator-sdk`
+- As a pod inside a Kubernetes cluster
+- As a go program outside cluster using `operator-sdk`
 
-#### 1. Run as pod inside a Kubernetes cluster
+#### 1. Run as a pod inside a Kubernetes cluster
 
-Run as pod inside a Kubernetes cluster is preferred for production use.
+Running as a pod inside a Kubernetes cluster is preferred for production use.
 
 Build the memcached-operator image and push it to a registry:
 ```
@@ -181,7 +184,7 @@ memcached-operator       1         1         1            1           1m
 
 #### 2. Run outside the cluster
 
-This method is preferred during development cycle to deploy and test faster.
+This method is preferred during the development cycle to speed up deployment and testing.
 
 Run the operator locally with the default kubernetes config file present at `$HOME/.kube/config`:
 
@@ -277,3 +280,4 @@ $ kubectl delete -f deploy/operator.yaml
 [docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [minikube_tool]:https://github.com/kubernetes/minikube#installation
+[ansible_tool]:https://docs.ansible.com/ansible/latest/index.html
