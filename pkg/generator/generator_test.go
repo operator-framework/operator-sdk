@@ -593,21 +593,6 @@ COPY watches.yaml ${HOME}/watches.yaml
 
 func TestGenBuild(t *testing.T) {
 	buf := &bytes.Buffer{}
-	bTd := tmplData{
-		ProjectName: appProjectName,
-		RepoPath:    appRepoPath,
-	}
-	if err := renderFile(buf, "tmp/build/build.sh", buildTmpl, bTd); err != nil {
-		t.Error(err)
-		return
-	}
-	if buildExp != buf.String() {
-		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(buildExp, buf.String(), false)
-		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
-	}
-
-	buf = &bytes.Buffer{}
 	dTd := tmplData{
 		ProjectName: appProjectName,
 	}
