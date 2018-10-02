@@ -68,7 +68,10 @@ func crdFunc(cmd *cobra.Command, args []string) {
 	fmt.Fprintln(os.Stdout, "Generating custom resource definition (CRD) file")
 
 	// generate CRD file
-	wd, _ := os.Getwd()
+	wd, err := os.Getwd()
+	if err != nil {
+		cmdError.ExitWithError(cmdError.ExitError, err)
+	}
 	if err := generator.RenderDeployCrdFiles(filepath.Join(wd, deployCrdDir), apiVersion, kind); err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate CRD and CR files: (%v)", err))
 	}

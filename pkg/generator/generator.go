@@ -194,8 +194,9 @@ func (g *Generator) renderAnsibleOperator() error {
 func (g *Generator) renderRole() error {
 	fmt.Printf("Rendering Ansible Galaxy role [%v/%v/%v]...\n", g.projectName, rolesDir, g.kind)
 	agcmd := exec.Command(filepath.Join(g.projectName, galaxyInitCmd))
-	_, err := agcmd.CombinedOutput()
+	output, err := agcmd.CombinedOutput()
 	if err != nil {
+		fmt.Printf("Rendering Ansible Galaxy role failed: [%v], Output: %s", err.Error(), string(output))
 		return err
 	}
 	// Clean up tmp/init
