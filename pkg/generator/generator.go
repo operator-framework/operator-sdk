@@ -392,11 +392,14 @@ func renderDeployFiles(deployDir, projectName, apiVersion, kind, operatorType st
 		return err
 	}
 
-	saTd := tmplData{
-		ProjectName: projectName,
-	}
-	if err := renderWriteFile(filepath.Join(deployDir, saYaml), saTmplName, saYamlTmpl, saTd); err != nil {
-		return err
+	// Service account file is only needed for Go operator
+	if operatorType == goOperatorType {
+		saTd := tmplData{
+			ProjectName: projectName,
+		}
+		if err := renderWriteFile(filepath.Join(deployDir, saYaml), saTmplName, saYamlTmpl, saTd); err != nil {
+			return err
+		}
 	}
 
 	opTd := tmplData{

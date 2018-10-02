@@ -456,7 +456,8 @@ spec:
       labels:
         name: {{.ProjectName}}
     spec:
-      serviceAccountName: {{.ProjectName}}
+{{- if .IsGoOperator }}
+      serviceAccountName: {{.ProjectName}}{{ end }}
       containers:
         - name: {{.ProjectName}}
           image: {{.Image}}
