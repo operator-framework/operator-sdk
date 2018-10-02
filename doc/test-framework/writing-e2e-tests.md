@@ -141,14 +141,28 @@ if err != nil {
 
 #### 4. Write the test specific code
 
-Now that the operator is ready, we can create a custom resource. As mentioned when speaking about the
-`InitializeClusterResources` function, the test framework provides a modified `Create` function that
-creates the resource with the controller-runtime's dynamic client and then adds a cleanup function
-to the context. This function should be used to create all resources. To ignore the wait polling that
-verifies a resource is fully deleted on cleanup before moving on, set `Timeout` and `RetryInterval` to `0`.
-To skip creation of a cleanup function, `cleanupOptions` can be set to `nil`. Since the controller-runtime's
-dynamic client uses go contexts, make sure to import the go context library. In this example, we imported
-it as `goctx`:
+Now that the operator is ready, we can create a custom resource.
+
+##### How to use the Framework Client `Create`'s `CleanupOptions`
+
+The test framework provides `Client`, which exposes most of the controller-runtime's client unmodified, but the `Create`
+function has added functionality to create cleanup functions for these resources as well. To manage how cleanup
+is handled, we use a `CleanupOptions` struct. Here are some examples of how to use it:
+
+```go
+// Create with no cleanup
+Create(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{})
+Create(goctx.TODO(), exampleMemcached, nil)
+
+// Create with cleanup but no polling for resources to be deleted
+Create(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{TestContext: ctx})
+
+// Create with cleanup and polling wait for resources to be deleted
+Create(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+```
+
+Since the controller-runtime's dynamic client uses go contexts, make sure to import the go context library.
+In this example, we imported it as `goctx`:
 
 ```go
 // create memcached custom resource
