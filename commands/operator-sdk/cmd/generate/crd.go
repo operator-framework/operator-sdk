@@ -43,8 +43,8 @@ func NewGenerateCrdCmd() *cobra.Command {
 		Short: "Generates a custom resource definition (CRD) and the custom resource (CR) files",
 		Long: `The operator-sdk generate command will create a custom resource definition (CRD) and the custom resource (CR) files for the specified api-version and kind.
 
-Generated CRD filename: <project-name>/deploy/<kind>_crd.yaml
-Generated CR  filename: <project-name>/deploy/<kind>_cr.yaml
+Generated CRD filename: <project-name>/deploy/<group>_<version>_<kind>_crd.yaml
+Generated CR  filename: <project-name>/deploy/<group>_<version>_<kind>_cr.yaml
 
 	<project-name>/deploy path must already exist
 	--api-version and --kind are required flags to generate the new operator application.
@@ -67,7 +67,7 @@ func crdFunc(cmd *cobra.Command, args []string) {
 
 	fmt.Fprintln(os.Stdout, "Generating custom resource definition (CRD) file")
 
-	// generate CRD file
+	// generate CR/CRD file
 	wd, err := os.Getwd()
 	if err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, err)
@@ -95,18 +95,9 @@ func verifyCrdFlags() {
 
 // verifyCrdDeployPath checks if the path <project-name>/deploy sub-directory is exists, and that is rooted under $GOPATH
 func verifyCrdDeployPath() {
-	// check if $GOPATH env exists
-	gp := os.Getenv(goDir)
-	if len(gp) == 0 {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("$GOPATH env not set"))
-	}
 	wd, err := os.Getwd()
 	if err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to determine the full path of the current directory: %v", err))
-	}
-	// check if this project's repository path is rooted under $GOPATH
-	if !strings.HasPrefix(wd, gp) {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("project's repository path (%v) is not rooted under GOPATH (%v)", wd, gp))
 	}
 	// check if the deploy sub-directory exist
 	_, err = os.Stat(filepath.Join(wd, deployCrdDir))

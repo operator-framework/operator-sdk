@@ -346,7 +346,8 @@ func RenderDeployCrdFiles(deployPath, apiVersion, kind string) error {
 		APIVersion: apiVersion,
 		Kind:       kind,
 	}
-	crFilePath := filepath.Join(deployPath, strings.ToLower(kind)+"_cr.yaml")
+	crFilePath := filepath.Join(deployPath,
+		groupName(apiVersion)+"_"+version(apiVersion)+"_"+strings.ToLower(kind)+"_cr.yaml")
 	if err := renderWriteFile(crFilePath, crFilePath, crYamlTmpl, crTd); err != nil {
 		return err
 	}
@@ -358,7 +359,8 @@ func RenderDeployCrdFiles(deployPath, apiVersion, kind string) error {
 		GroupName:    groupName(apiVersion),
 		Version:      version(apiVersion),
 	}
-	crdFilePath := filepath.Join(deployPath, strings.ToLower(kind)+"_crd.yaml")
+	crdFilePath := filepath.Join(deployPath,
+		groupName(apiVersion)+"_"+version(apiVersion)+"_"+strings.ToLower(kind)+"_crd.yaml")
 	return renderWriteFile(crdFilePath, crdFilePath, crdYamlTmpl, crdTd)
 }
 
