@@ -144,7 +144,9 @@ if err != nil {
 Now that the operator is ready, we can create a custom resource. As mentioned when speaking about the
 `InitializeClusterResources` function, the test framework provides a modified `Create` function that
 creates the resource with the controller-runtime's dynamic client and then adds a cleanup function
-to the context. This function should be used to create all resources. Since the controller-runtime's
+to the context. This function should be used to create all resources. To ignore the wait polling that
+verifies a resource is fully deleted on cleanup before moving on, set `Timeout` and `RetryInterval` to `0`.
+To skip creation of a cleanup function, `cleanupOptions` can be set to `nil`. Since the controller-runtime's
 dynamic client uses go contexts, make sure to import the go context library. In this example, we imported
 it as `goctx`:
 

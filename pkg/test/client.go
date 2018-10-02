@@ -47,6 +47,10 @@ func (f *frameworkClient) Create(gCtx goctx.Context, obj runtime.Object, cleanup
 	if err != nil {
 		return err
 	}
+	// if no test context exists, cannot add finalizer function or print to testing log
+	if cleanupOptions == nil || cleanupOptions.TestContext == nil {
+		return nil
+	}
 	key, err := dynclient.ObjectKeyFromObject(objCopy)
 	// this function fails silently if t is nil
 	if cleanupOptions.TestContext.t != nil {
@@ -57,7 +61,12 @@ func (f *frameworkClient) Create(gCtx goctx.Context, obj runtime.Object, cleanup
 		if err != nil {
 			return err
 		}
-		if cleanupOptions != nil && !cleanupOptions.SkipPolling {
+		if cleanupOptions.Timeout == 0 && cleanupOptions.RetryInterval != 0 {
+			return fmt.Errorf("retry interval is set but timeout is not; cannot poll for cleanup")
+		} else if cleanupOptions.Timeout != 0 && cleanupOptions.RetryInterval == 0 {
+			return fmt.Errorf("timeout is set but retry interval is not; cannot poll for cleanup")
+		}
+		if cleanupOptions.Timeout != 0 && cleanupOptions.RetryInterval != 0 {
 			return wait.PollImmediate(cleanupOptions.RetryInterval, cleanupOptions.Timeout, func() (bool, error) {
 				err = f.Client.Get(gCtx, key, objCopy)
 				if err != nil {

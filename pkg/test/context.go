@@ -33,7 +33,6 @@ type CleanupOptions struct {
 	TestContext   *TestCtx
 	Timeout       time.Duration
 	RetryInterval time.Duration
-	SkipPolling   bool
 }
 
 type cleanupFn func() error
