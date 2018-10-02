@@ -22,6 +22,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
@@ -144,12 +145,18 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("build command needs exactly 1 argument"))
 	}
 
+	cmdutil.MustInProjectRoot()
+	goBuildEnv := append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
+	wd, err := os.Getwd()
+	if err != nil {
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("could not identify current working directory: %v", err))
+	}
+
 	// Don't need to buld go code if Ansible Operator
 	if mainExists() {
-		bcmd := exec.Command(build)
-		bcmd.Env = append(os.Environ(), fmt.Sprintf("TEST_LOCATION=%v", testLocationBuild))
-		bcmd.Env = append(bcmd.Env, fmt.Sprintf("ENABLE_TESTS=%v", enableTests))
-		o, err := bcmd.CombinedOutput()
+		buildCmd := exec.Command("go", "build", "-o", filepath.Join(wd, "tmp/_output/bin", filepath.Base(wd)), filepath.Join(cmdutil.GetCurrPkg(), "cmd", filepath.Base(wd)))
+		buildCmd.Env = goBuildEnv
+		o, err := buildCmd.CombinedOutput()
 		if err != nil {
 			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to build: (%v)", string(o)))
 		}
@@ -173,6 +180,18 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	fmt.Fprintln(os.Stdout, string(o))
 
 	if enableTests {
+		buildTestCmd := exec.Command("go", "test", "-c", "-o", filepath.Join(wd, "tmp/_output/bin", filepath.Base(wd)+"-test"), testLocationBuild+"/...")
+		buildTestCmd.Env = goBuildEnv
+		o, err := buildTestCmd.CombinedOutput()
+		if err != nil {
+			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to build: (%v)", string(o)))
+		}
+		fmt.Fprintln(os.Stdout, string(o))
+		// if a user is using an older sdk repo as their library, make sure they have required build files
+		_, err = os.Stat("tmp/build/test-framework/Dockerfile")
+		if err != nil {
+			generator.RenderTestingContainerFiles(filepath.Join(wd, "tmp/build"), filepath.Base(wd))
+		}
 		testDbcmd := exec.Command("docker", "build", ".", "-f", "tmp/build/test-framework/Dockerfile", "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+baseImageName)
 		o, err = testDbcmd.CombinedOutput()
 		if err != nil {

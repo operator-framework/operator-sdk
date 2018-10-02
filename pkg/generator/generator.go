@@ -532,11 +532,17 @@ func renderBuildFiles(buildDir, repoPath, projectName, operatorType string, gene
 		return err
 	}
 
+	return RenderTestingContainerFiles(buildDir, projectName)
+}
+
+func RenderTestingContainerFiles(buildDir, projectName string) error {
+	dTd := tmplData{
+		ProjectName: projectName,
+	}
 	if err := renderWriteFile(filepath.Join(buildDir, "test-framework", testingDockerfile), "tmp/build/test-framework/Dockerfile", testingDockerFileTmpl, dTd); err != nil {
 		return err
 	}
-
-	buf = &bytes.Buffer{}
+	buf := &bytes.Buffer{}
 	if err := renderFile(buf, filepath.Join(buildDir, goTest), goTestScript, tmplData{}); err != nil {
 		return err
 	}
