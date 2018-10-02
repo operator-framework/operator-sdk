@@ -53,23 +53,29 @@ generates a skeletal app-operator application in $GOPATH/src/github.com/example.
 	newCmd.MarkFlagRequired("api-version")
 	newCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. (e.g AppService)")
 	newCmd.MarkFlagRequired("kind")
+	newCmd.Flags().StringVar(&operatorType, "type", "go", "Type of operator to initialize (e.g \"ansible\")")
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
+	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false, "Generate a playbook skeleton. (Only used for --type ansible)")
 
 	return newCmd
 }
 
 var (
-	apiVersion  string
-	kind        string
-	projectName string
-	skipGit     bool
+	apiVersion       string
+	kind             string
+	operatorType     string
+	projectName      string
+	skipGit          bool
+	generatePlaybook bool
 )
 
 const (
-	gopath    = "GOPATH"
-	src       = "src"
-	dep       = "dep"
-	ensureCmd = "ensure"
+	gopath              = "GOPATH"
+	src                 = "src"
+	dep                 = "dep"
+	ensureCmd           = "ensure"
+	goOperatorType      = "go"
+	ansibleOperatorType = "ansible"
 )
 
 func newFunc(cmd *cobra.Command, args []string) {
@@ -79,13 +85,15 @@ func newFunc(cmd *cobra.Command, args []string) {
 	parse(args)
 	mustBeNewProject()
 	verifyFlags()
-	g := generator.NewGenerator(apiVersion, kind, projectName, repoPath())
+	g := generator.NewGenerator(apiVersion, kind, operatorType, projectName, repoPath(), generatePlaybook)
 	err := g.Render()
 	if err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to create project %v: %v", projectName, err))
 	}
-	pullDep()
-	generate.K8sCodegen(projectName)
+	if operatorType == goOperatorType {
+		pullDep()
+		generate.K8sCodegen(projectName)
+	}
 	initGit()
 }
 
@@ -135,6 +143,12 @@ func verifyFlags() {
 	}
 	if len(kind) == 0 {
 		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--kind must not have empty value"))
+	}
+	if operatorType != goOperatorType && operatorType != ansibleOperatorType {
+		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--type can only be `go` or `ansible`"))
+	}
+	if operatorType != ansibleOperatorType && generatePlaybook {
+		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--generate-playbook can only be used with --type `ansible`"))
 	}
 	kindFirstLetter := string(kind[0])
 	if kindFirstLetter != strings.ToUpper(kindFirstLetter) {

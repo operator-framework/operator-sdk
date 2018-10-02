@@ -218,6 +218,36 @@ spec:
               value: "app-operator"
 `
 
+const ansibleOperatorYamlExp = `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: app-operator
+  template:
+    metadata:
+      labels:
+        name: app-operator
+    spec:
+      containers:
+        - name: app-operator
+          image: quay.io/example-inc/app-operator:0.0.1
+          ports:
+          - containerPort: 60000
+            name: metrics
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: OPERATOR_NAME
+              value: "app-operator"
+`
+
 const rbacYamlExp = `kind: Role
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
@@ -297,6 +327,7 @@ func TestGenDeploy(t *testing.T) {
 		MetricsPort:     k8sutil.PrometheusMetricsPort,
 		MetricsPortName: k8sutil.PrometheusMetricsPortName,
 		OperatorNameEnv: k8sutil.OperatorNameEnvVar,
+		IsGoOperator:    true,
 	}
 	if err := renderFile(buf, operatorTmplName, operatorYamlTmpl, td); err != nil {
 		t.Error(err)
@@ -304,6 +335,25 @@ func TestGenDeploy(t *testing.T) {
 	if operatorYamlExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := dmp.DiffMain(operatorYamlExp, buf.String(), false)
+		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
+	}
+
+	// Test Ansible Operator
+	buf = &bytes.Buffer{}
+	td = tmplData{
+		ProjectName:     appProjectName,
+		Image:           appImage,
+		MetricsPort:     k8sutil.PrometheusMetricsPort,
+		MetricsPortName: k8sutil.PrometheusMetricsPortName,
+		OperatorNameEnv: k8sutil.OperatorNameEnvVar,
+		IsGoOperator:    false,
+	}
+	if err := renderFile(buf, operatorTmplName, operatorYamlTmpl, td); err != nil {
+		t.Error(err)
+	}
+	if ansibleOperatorYamlExp != buf.String() {
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(ansibleOperatorYamlExp, buf.String(), false)
 		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
 	}
 
@@ -528,6 +578,19 @@ USER app-operator
 ADD tmp/_output/bin/app-operator /usr/local/bin/app-operator
 `
 
+const dockerFileAnsibleNoPlaybookExp = `FROM quay.io/water-hole/ansible-operator
+
+COPY roles/ ${HOME}/roles/
+COPY watches.yaml ${HOME}/watches.yaml
+`
+
+const dockerFileAnsiblePlaybookExp = `FROM quay.io/water-hole/ansible-operator
+
+COPY roles/ ${HOME}/roles/
+COPY playbook.yaml ${HOME}/playbook.yaml
+COPY watches.yaml ${HOME}/watches.yaml
+`
+
 func TestGenBuild(t *testing.T) {
 	buf := &bytes.Buffer{}
 	bTd := tmplData{
@@ -555,6 +618,38 @@ func TestGenBuild(t *testing.T) {
 	if dockerFileExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := dmp.DiffMain(dockerFileExp, buf.String(), false)
+		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
+	}
+
+	// Test Ansible Operator Dockerfile with no playbook
+	buf = &bytes.Buffer{}
+	dTd = tmplData{
+		ProjectName:      appProjectName,
+		GeneratePlaybook: false,
+	}
+	if err := renderFile(buf, "tmp/build/Dockerfile", dockerFileAnsibleTmpl, dTd); err != nil {
+		t.Error(err)
+		return
+	}
+	if dockerFileAnsibleNoPlaybookExp != buf.String() {
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(dockerFileAnsibleNoPlaybookExp, buf.String(), false)
+		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
+	}
+
+	// Test Ansible Operator Dockerfile with playbook generation
+	buf = &bytes.Buffer{}
+	dTd = tmplData{
+		ProjectName:      appProjectName,
+		GeneratePlaybook: true,
+	}
+	if err := renderFile(buf, "tmp/build/Dockerfile", dockerFileAnsibleTmpl, dTd); err != nil {
+		t.Error(err)
+		return
+	}
+	if dockerFileAnsiblePlaybookExp != buf.String() {
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(dockerFileAnsiblePlaybookExp, buf.String(), false)
 		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
 	}
 }

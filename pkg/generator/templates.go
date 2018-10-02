@@ -456,16 +456,17 @@ spec:
       labels:
         name: {{.ProjectName}}
     spec:
-      serviceAccountName: {{.ProjectName}}
+{{- if .IsGoOperator }}
+      serviceAccountName: {{.ProjectName}}{{ end }}
       containers:
         - name: {{.ProjectName}}
           image: {{.Image}}
           ports:
           - containerPort: {{.MetricsPort}}
             name: {{.MetricsPortName}}
-          command:
+{{ if .IsGoOperator }}          command:
           - {{.ProjectName}}
-          imagePullPolicy: Always
+{{ end }}          imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
               valueFrom:
@@ -596,6 +597,40 @@ ADD tmp/_output/bin/memcached-operator-test /usr/local/bin/memcached-operator-te
 ARG NAMESPACEDMAN
 ADD $NAMESPACEDMAN /namespaced.yaml
 ADD tmp/build/go-test.sh /go-test.sh
+`
+
+// Ansible Operator files
+const dockerFileAnsibleTmpl = `FROM quay.io/water-hole/ansible-operator
+
+COPY roles/ ${HOME}/roles/
+{{- if .GeneratePlaybook }}
+COPY playbook.yaml ${HOME}/playbook.yaml{{ end }}
+COPY watches.yaml ${HOME}/watches.yaml
+`
+
+const watchesTmpl = `---
+- version: {{.Version}}
+  group: {{.GroupName}}
+  kind: {{.Kind}}
+{{ if .GeneratePlaybook }}  playbook: /opt/ansible/playbook.yaml{{ else }}  role: /opt/ansible/roles/{{.Kind}}{{ end }}
+`
+
+const playbookTmpl = `- hosts: localhost
+  gather_facts: no
+  tasks:
+  - import_role:
+      name: "{{.Kind}}"
+`
+
+const galaxyInitTmpl = `#!/usr/bin/env bash
+
+if ! which ansible-galaxy > /dev/null; then
+	echo "ansible needs to be installed"
+	exit 1
+fi
+
+echo "Initializing role skeleton..."
+ansible-galaxy init --init-path={{.Name}}/roles/ {{.Kind}}
 `
 
 // apiDocTmpl is the template for apis/../doc.go
