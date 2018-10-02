@@ -9,7 +9,4 @@ After creating a new operator project using
 | deploy | Contains a generic set of kubernetes manifests for deploying this operator on a kubernetes cluster. |
 | roles/<kind> | Contains an Ansible Role initialized using [Ansible Galaxy](https://docs.ansible.com/ansible/latest/reference_appendices/galaxy.html) |
 | tmp | Contains scripts that the operator-sdk uses for build and initialization. |
-| watches.yaml | 
-
-[Vendor]: https://golang.org/cmd/go/#hdr-Vendor_Directories
-[dep]: https://github.com/golang/dep
+| watches.yaml | Contains Group, Version, Kind, and Ansible invocation method. |
