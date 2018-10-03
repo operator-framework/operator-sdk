@@ -529,7 +529,10 @@ subjects:
   name: default
   namespace: default{{ end }}
 roleRef:
+{{- if .IsGoOperator }}
   kind: Role
+{{- else }}
+  kind: ClusterRole{{ end }}
   name: {{.ProjectName}}
   apiGroup: rbac.authorization.k8s.io
 `
