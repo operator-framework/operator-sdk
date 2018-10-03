@@ -476,7 +476,11 @@ spec:
               value: "{{.ProjectName}}"
 `
 
-const rbacYamlTmpl = `kind: Role
+// For Ansible Operator we are assuming namespace: default on ClusterRoleBinding
+// Documentation will tell user to update
+const rbacYamlTmpl = `{{ if .IsGoOperator }}kind: Role
+{{- else }}
+kind: ClusterRole{{ end }}
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: {{.ProjectName}}
@@ -510,14 +514,20 @@ rules:
   - "*"
 
 ---
-
+{{- if .IsGoOperator }}
 kind: RoleBinding
+{{- else }}
+kind: ClusterRoleBinding{{ end }}
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: {{.ProjectName}}
 subjects:
 - kind: ServiceAccount
+{{- if .IsGoOperator }}
   name: {{.ProjectName}}
+{{- else }}
+  name: default
+  namespace: default{{ end }}
 roleRef:
   kind: Role
   name: {{.ProjectName}}

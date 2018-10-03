@@ -366,8 +366,9 @@ func RenderDeployCrdFiles(deployPath, apiVersion, kind string) error {
 
 func renderDeployFiles(deployDir, projectName, apiVersion, kind, operatorType string) error {
 	rbacTd := tmplData{
-		ProjectName: projectName,
-		GroupName:   groupName(apiVersion),
+		ProjectName:  projectName,
+		GroupName:    groupName(apiVersion),
+		IsGoOperator: isGoOperator(operatorType),
 	}
 	if err := renderWriteFile(filepath.Join(deployDir, rbacYaml), rbacTmplName, rbacYamlTmpl, rbacTd); err != nil {
 		return err
