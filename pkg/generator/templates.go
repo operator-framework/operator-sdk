@@ -478,8 +478,8 @@ spec:
 
 // For Ansible Operator we are assuming namespace: default on ClusterRoleBinding
 // Documentation will tell user to update
-const rbacYamlTmpl = `{{ if .IsGoOperator }}kind: Role
-{{- else }}
+const rbacYamlTmpl = `{{- if .IsGoOperator }}kind: Role
+{{- else -}}
 kind: ClusterRole{{ end }}
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
