@@ -22,6 +22,7 @@ import (
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	apis "github.com/operator-framework/operator-sdk/test/test-framework/pkg/apis"
 	operator "github.com/operator-framework/operator-sdk/test/test-framework/pkg/apis/cache/v1alpha1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,8 +30,10 @@ import (
 )
 
 var (
-	retryInterval = time.Second * 5
-	timeout       = time.Second * 30
+	retryInterval        = time.Second * 5
+	timeout              = time.Second * 30
+	cleanupRetryInterval = time.Second * 1
+	cleanupTimeout       = time.Second * 5
 )
 
 func TestMemcached(t *testing.T) {
@@ -40,7 +43,7 @@ func TestMemcached(t *testing.T) {
 			APIVersion: "cache.example.com/v1alpha1",
 		},
 	}
-	err := framework.AddToFrameworkScheme(operator.AddToScheme, memcachedList)
+	err := framework.AddToFrameworkScheme(apis.AddToScheme, memcachedList)
 	if err != nil {
 		t.Fatalf("failed to add custom resource scheme to framework: %v", err)
 	}
@@ -70,7 +73,8 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 			Size: 3,
 		},
 	}
-	err = f.DynamicClient.Create(goctx.TODO(), exampleMemcached)
+	// use TestCtx's create helper to create the object and add a cleanup function for the new object
+	err = f.Client.Create(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		return err
 	}
@@ -80,12 +84,12 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		return err
 	}
 
-	err = f.DynamicClient.Get(goctx.TODO(), types.NamespacedName{Name: "example-memcached", Namespace: namespace}, exampleMemcached)
+	err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: "example-memcached", Namespace: namespace}, exampleMemcached)
 	if err != nil {
 		return err
 	}
 	exampleMemcached.Spec.Size = 4
-	err = f.DynamicClient.Update(goctx.TODO(), exampleMemcached)
+	err = f.Client.Update(goctx.TODO(), exampleMemcached)
 	if err != nil {
 		return err
 	}
@@ -97,8 +101,8 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 func MemcachedCluster(t *testing.T) {
 	t.Parallel()
 	ctx := framework.NewTestCtx(t)
-	defer ctx.Cleanup(t)
-	err := ctx.InitializeClusterResources()
+	defer ctx.Cleanup()
+	err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		t.Fatalf("failed to initialize cluster resources: %v", err)
 	}

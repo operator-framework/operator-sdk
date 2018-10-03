@@ -65,7 +65,7 @@ const (
 
 	defaultDirFileMode  = 0750
 	defaultFileMode     = 0644
-	defaultExecFileMode = 0744
+	defaultExecFileMode = 0755
 )
 
 func newFunc(cmd *cobra.Command, args []string) {
@@ -181,21 +181,36 @@ func doScaffold() {
 		log.Fatalf("failed to create %v: %v", dockerfilePath, err)
 	}
 
-	// generate build/build.sh
-	buildScriptPath := filepath.Join(buildDir, "build.sh")
-	buildScriptGen := scaffold.NewbuildCodegen(
-		&scaffold.BuildInput{
-			ProjectName: projectName,
-			ProjectPath: projectPath,
-		})
-	buf = &bytes.Buffer{}
-	err = buildScriptGen.Render(buf)
-	if err != nil {
-		log.Fatalf("failed to render the template for (%v): %v", buildScriptPath, err)
+	// create build/test-framework directory
+	buildTestDir := filepath.Join(buildDir, "test-framework")
+	if err := os.MkdirAll(buildTestDir, defaultDirFileMode); err != nil {
+		log.Fatalf("failed to create %v: %v", buildTestDir, err)
 	}
-	err = writeFileAndPrint(buildScriptPath, buf.Bytes(), defaultExecFileMode)
+
+	// generate build/test-framework/Dockerfile
+	testFrameworkDockerfilePath := filepath.Join(buildTestDir, "Dockerfile")
+	testFrameworkDockerfilegen := scaffold.NewTestFrameworkDockerfileCodegen(&scaffold.TestFrameworkDockerfileInput{})
+	buf = &bytes.Buffer{}
+	err = testFrameworkDockerfilegen.Render(buf)
 	if err != nil {
-		log.Fatalf("failed to create %v: %v", buildScriptPath, err)
+		log.Fatalf("failed to render the template for (%v): %v", testFrameworkDockerfilePath, err)
+	}
+	err = writeFileAndPrint(testFrameworkDockerfilePath, buf.Bytes(), defaultFileMode)
+	if err != nil {
+		log.Fatalf("failed to create %v: %v", testFrameworkDockerfilePath, err)
+	}
+
+	// generate build/test-framework/go-test.sh
+	goTestScriptPath := filepath.Join(buildTestDir, "go-test.sh")
+	goTestScriptfilegen := scaffold.NewGoTestScriptCodegen(&scaffold.GoTestScriptInput{})
+	buf = &bytes.Buffer{}
+	err = goTestScriptfilegen.Render(buf)
+	if err != nil {
+		log.Fatalf("failed to render the template for (%v): %v", goTestScriptPath, err)
+	}
+	err = writeFileAndPrint(goTestScriptPath, buf.Bytes(), defaultExecFileMode)
+	if err != nil {
+		log.Fatalf("failed to create %v: %v", goTestScriptPath, err)
 	}
 
 	// create deploy dir
@@ -218,6 +233,19 @@ func doScaffold() {
 	err = writeFileAndPrint(rolePath, buf.Bytes(), defaultFileMode)
 	if err != nil {
 		log.Fatalf("failed to create %v: %v", rolePath, err)
+	}
+
+	// generate deploy/test-pod.yaml
+	testPodPath := filepath.Join(deployDir, "test-pod.yaml")
+	testPodfilegen := scaffold.NewTestPodCodegen(&scaffold.TestPodInput{})
+	buf = &bytes.Buffer{}
+	err = testPodfilegen.Render(buf)
+	if err != nil {
+		log.Fatalf("failed to render the template for (%v): %v", testPodPath, err)
+	}
+	err = writeFileAndPrint(testPodPath, buf.Bytes(), defaultFileMode)
+	if err != nil {
+		log.Fatalf("failed to create %v: %v", testPodPath, err)
 	}
 
 	// generate deploy/role_binding.yaml

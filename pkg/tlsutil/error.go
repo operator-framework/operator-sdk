@@ -17,6 +17,8 @@ package tlsutil
 import "errors"
 
 var (
-	ErrCANotFound = errors.New("ca secret and configMap are not found")
+	ErrCANotFound        = errors.New("ca secret and configMap are not found")
+	ErrCAKeyAndCACertReq = errors.New("ca key and ca cert need to be provided when requesting a custom CA.")
+	ErrInternal          = errors.New("internal error while generating TLS assets.")
 	// TODO: add other tls util errors.
 )

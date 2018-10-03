@@ -211,7 +211,7 @@ func updateRoleForResource(r *scaffold.Resource, fullProjectPath string) error {
 		// create a new apiGroup if not found.
 		if !apiGroupFound {
 			pr.APIGroups = []string{r.FullGroup}
-			pr.Resources = []string{r.Resource}
+			pr.Resources = []string{"*"}
 			pr.Verbs = []string{"*"}
 			role.Rules = append(role.Rules, *pr)
 		}

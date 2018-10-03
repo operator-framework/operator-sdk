@@ -21,7 +21,7 @@ It is initialized by MainEntry and can be used anywhere in the tests.
 ### TestCtx
 
 [TestCtx][testctx-link] is a local context that stores important information for each test, such
-as the namespace for that test and the finalizer (cleanup) functions. By handling
+as the namespace for that test and the cleanup functions. By handling
 namespace and resource initialization through TestCtx, we can make sure that all
 resources are properly handled and removed after the test finishes.
 
@@ -101,18 +101,26 @@ The next step is to create a TestCtx for the current test and defer its cleanup 
 
 ```go
 ctx := framework.NewTestCtx(t)
-defer ctx.Cleanup(t)
+defer ctx.Cleanup()
 ```
 
-Now that there is a TestCtx, the test's kubernetes resources (specifically the test namespace,
-RBAC, and Operator deployment) can be initialized:
+Now that there is a `TestCtx`, the test's kubernetes resources (specifically the test namespace,
+Service Account, RBAC, and Operator deployment in `local` testing; just the Operator deployment
+in `cluster` testing) can be initialized:
 
 ```go
-err := ctx.InitializeClusterResources()
+err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 if err != nil {
     t.Fatalf("failed to initialize cluster resources: %v", err)
 }
 ```
+
+The `InitializeClusterResources` function uses the custom `Create` function in the framework client to create the resources provided
+in your namespaced manifest. The custom `Create` function use the controller-runtime's client to create resources and then
+creates a cleanup function that is called by `ctx.Cleanup` which deletes the resource and then waits for the resource to be
+fully deleted before returning. This is configurable with `CleanupOptions`. For info on how to use `CleanupOptions` see
+[this section](#how-to-use-cleanup).
+ 
 
 If you want to make sure the operator's deployment is fully ready before moving onto the next part of the
 test, the `WaitForDeployment` function from [e2eutil][e2eutil-link] (in the sdk under `pkg/test/e2eutil`) can be used:
@@ -134,8 +142,28 @@ if err != nil {
 
 #### 4. Write the test specific code
 
-Now that the operator is ready, we can create a custom resource. Since the controller-runtime's dynamic client uses
-go contexts, make sure to import the go context library. In this example, we imported it as `goctx`:
+Since the controller-runtime's dynamic client uses go contexts, make sure to import the go context library.
+In this example, we imported it as `goctx`:
+
+##### <a id="how-to-use-cleanup"></a>How to use the Framework Client `Create`'s `CleanupOptions`
+
+The test framework provides `Client`, which exposes most of the controller-runtime's client unmodified, but the `Create`
+function has added functionality to create cleanup functions for these resources as well. To manage how cleanup
+is handled, we use a `CleanupOptions` struct. Here are some examples of how to use it:
+
+```go
+// Create with no cleanup
+Create(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{})
+Create(goctx.TODO(), exampleMemcached, nil)
+
+// Create with cleanup but no polling for resources to be deleted
+Create(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{TestContext: ctx})
+
+// Create with cleanup and polling wait for resources to be deleted
+Create(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
+```
+
+This is how we can create a custom memcached custom resource with a size of 3:
 
 ```go
 // create memcached custom resource
@@ -152,7 +180,7 @@ exampleMemcached := &cachev1alpha1.Memcached{
         Size: 3,
     },
 }
-err = f.DynamicClient.Create(goctx.TODO(), exampleMemcached)
+err = f.Client.Create(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{TestContext: ctx, Timeout: time.Second * 5, RetryInterval: time.Second * 1})
 if err != nil {
     return err
 }
@@ -172,12 +200,12 @@ if err != nil {
 We can also test that the deployment scales correctly when the CR is updated:
 
 ```go
-err = f.DynamicClient.Get(goctx.TODO(), types.NamespacedName{Name: "example-memcached", Namespace: namespace}, exampleMemcached)
+err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: "example-memcached", Namespace: namespace}, exampleMemcached)
 if err != nil {
     return err
 }
 exampleMemcached.Spec.Size = 4
-err = f.DynamicClient.Update(goctx.TODO(), exampleMemcached)
+err = f.Client.Update(goctx.TODO(), exampleMemcached)
 if err != nil {
     return err
 }
@@ -194,30 +222,80 @@ functions will automatically be run since they were deferred when the TestCtx wa
 
 ## Running the Tests
 
-To make running the tests simpler, the `operator-sdk` CLI tool has a `test` subcommand that configures some
-default test settings, such as locations of the manifest files for your global resource manifest file (by default `deploy/crd.yaml`) and your namespaced manifest file (by defualt `deploy/rbac.yaml` concatenated with `deploy/operator.yaml`), and allows the user to configure these runtime options. To use it, run the
-`operator-sdk test` command in your project root and pass the location of the tests using the
-`--test-location` flag. You can use `--help` to view the other configuration options and use
-`--go-test-flags` to pass in arguments to `go test`. Here is an example command:
+To make running the tests simpler, the `operator-sdk` CLI tool has a `test` subcommand that can configure
+default test settings, such as locations of your global resource manifest file (by default
+`deploy/crd.yaml`) and your namespaced resource manifest file (by default `deploy/sa.yaml` concatenated with
+`deploy/rbac.yaml` and `deploy/operator.yaml`), and allows the user to configure runtime options. There are 2 ways to use the
+subcommand: local and cluster.
+### Local
+To run the tests locally, run the `operator-sdk test local` command in your project root and pass the location of the tests
+as an argument. You can use `--help` to view the other configuration options and use `--go-test-flags` to pass in arguments to `go test`. Here is an example command:
 
 ```shell
-$ operator-sdk test --test-location ./test/e2e --go-test-flags "-v -parallel=2"
+$ operator-sdk test local ./test/e2e --go-test-flags "-v -parallel=2"
 ```
 
-For more documentation on the `operator-sdk test` command, see the [SDK CLI Reference][sdk-cli-ref] doc.
+If you wish to run all the tests in 1 namespace (which also forces `-parallel=1`), you can use the `--namespace` flag:
+
+```shell
+$ kubectl create namespace operator-test
+$ operator-sdk test local ./test/e2e --namespace operator-test
+```
+
+For more documentation on the `operator-sdk test local` command, see the [SDK CLI Reference][sdk-cli-ref] doc.
 
 For advanced use cases, it is possible to run the tests via `go test` directly. As long as all flags defined
 in [MainEntry][main-entry-link] are declared, the tests will run correctly. Running the tests directly with missing flags
-will result in undefined behavior. This is an example `go test` equivalent to the `operator-sdk test` example above:
+will result in undefined behavior. This is an example `go test` equivalent to the `operator-sdk test local` example above:
 
 ```shell
-# Combine rbac and operator manifest into namespaced manifest
-$ cp deploy/rbac.yaml deploy/namespace-init.yaml
+# Combine sa, rbac, operator manifest into namespaced manifest
+$ cp deploy/sa.yaml deploy/namespace-init.yaml
+$ echo -e "\n---\n" >> deploy/namespace-init.yaml
+$ cat deploy/rbac.yaml >> deploy/namespace-init.yaml
 $ echo -e "\n---\n" >> deploy/namespace-init.yaml
 $ cat deploy/operator.yaml >> deploy/namespace-init.yaml
 # Run tests
 $ go test ./test/e2e/... -root=$(pwd) -kubeconfig=$HOME/.kube/config -globalMan deploy/crd.yaml -namespacedMan deploy/namespace-init.yaml -v -parallel=2
 ```
+
+### Cluster
+
+Another way to run the tests is from within a kubernetes cluster. To do this, you first need to build an image with
+the testing binary embedded by using the `operator-sdk build` command and using the `--enable-tests` flag to enable tests:
+
+```shell
+$ operator-sdk build quay.io/example/memcached-operator:v0.0.1 --enable-tests
+```
+
+Note that the namespaced yaml must be up to date before running this command. The `build` subcommand will warn you
+if it finds a deployment in the namespaced manifest with an image that doesn't match the argument you provided. The
+`operator-sdk build` command has other flags for configuring the tests that can be viewed with the `--help` flag
+or at the [SDK CLI Reference][sdk-cli-ref].
+
+Once the image is ready, the tests are ready to be run. To run the tests, make sure you have all global resources
+and a namespace with proper rbac configured:
+
+```shell
+$ kubectl create -f deploy/crd.yaml
+$ kubectl create namespace memcached-test
+$ kubectl create -f deploy/sa.yaml -n memcached-test
+$ kubectl create -f deploy/rbac.yaml -n memcached-test
+```
+
+Once you have your environment properly configured, you can start the tests using the `operator-sdk test cluster` command:
+
+```shell
+$ operator-sdk test cluster quay.io/example/memcached-operator:v0.0.1 --namespace memcached-test
+
+Example Output:
+Test Successfully Completed
+```
+
+The `test cluster` command will deploy a test pod in the given namespace that will run the e2e tests packaged in the image.
+The tests run sequentially in the namespace (`-parallel=1`), the same as running `operator-sdk test local --namespace <namespace>`.
+The command will wait until the tests succeed (pod phase=`Succeeded`) or fail (pod phase=`Failed`).
+If the tests fail, the command will output the test pod logs which should be the standard go test error logs.
 
 ## Manual Cleanup
 

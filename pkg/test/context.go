@@ -23,12 +23,19 @@ import (
 )
 
 type TestCtx struct {
-	ID         string
-	CleanUpFns []finalizerFn
-	Namespace  string
+	id         string
+	cleanupFns []cleanupFn
+	namespace  string
+	t          *testing.T
 }
 
-type finalizerFn func() error
+type CleanupOptions struct {
+	TestContext   *TestCtx
+	Timeout       time.Duration
+	RetryInterval time.Duration
+}
+
+type cleanupFn func() error
 
 func NewTestCtx(t *testing.T) *TestCtx {
 	var prefix string
@@ -49,19 +56,20 @@ func NewTestCtx(t *testing.T) *TestCtx {
 
 	id := prefix + "-" + strconv.FormatInt(time.Now().Unix(), 10)
 	return &TestCtx{
-		ID: id,
+		id: id,
+		t:  t,
 	}
 }
 
 func (ctx *TestCtx) GetID() string {
-	return ctx.ID
+	return ctx.id
 }
 
-func (ctx *TestCtx) Cleanup(t *testing.T) {
-	for i := len(ctx.CleanUpFns) - 1; i >= 0; i-- {
-		err := ctx.CleanUpFns[i]()
+func (ctx *TestCtx) Cleanup() {
+	for i := len(ctx.cleanupFns) - 1; i >= 0; i-- {
+		err := ctx.cleanupFns[i]()
 		if err != nil {
-			t.Errorf("a cleanup function failed with error: %v\n", err)
+			ctx.t.Errorf("a cleanup function failed with error: %v\n", err)
 		}
 	}
 }
@@ -70,8 +78,8 @@ func (ctx *TestCtx) Cleanup(t *testing.T) {
 // intended for use by MainEntry, which does not have a testing.T
 func (ctx *TestCtx) CleanupNoT() {
 	failed := false
-	for i := len(ctx.CleanUpFns) - 1; i >= 0; i-- {
-		err := ctx.CleanUpFns[i]()
+	for i := len(ctx.cleanupFns) - 1; i >= 0; i-- {
+		err := ctx.cleanupFns[i]()
 		if err != nil {
 			failed = true
 			log.Printf("a cleanup function failed with error: %v\n", err)
@@ -82,6 +90,6 @@ func (ctx *TestCtx) CleanupNoT() {
 	}
 }
 
-func (ctx *TestCtx) AddFinalizerFn(fn finalizerFn) {
-	ctx.CleanUpFns = append(ctx.CleanUpFns, fn)
+func (ctx *TestCtx) AddCleanupFn(fn cleanupFn) {
+	ctx.cleanupFns = append(ctx.cleanupFns, fn)
 }
