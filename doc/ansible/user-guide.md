@@ -114,7 +114,7 @@ Modify `roles/Memcached/tasks/main.yml` to look like the following:
         name: '{{ meta.name }}-memcached'
         namespace: '{{ meta.namespace }}'
       spec:
-        replicas: {{size}}
+        replicas: "{{size}}"
         selector:
           matchLabels:
             app: memcached
