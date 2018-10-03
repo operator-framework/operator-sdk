@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"sort"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/events"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
@@ -81,31 +82,19 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		}
 		return reconcile.Result{Requeue: true}, nil
 	}
-	status := u.Object["status"]
-	_, ok = status.(map[string]interface{})
-	if !ok {
-		logrus.Debugf("status was not found")
-		u.Object["status"] = map[string]interface{}{}
-		err = r.Client.Update(context.TODO(), u)
+
+	// get the status and determine if we need the first update
+	status, ok := getStatus(u)
+	if ok {
+		u.Object["status"] = status
+		err = r.Client.Update(context.Background(), u)
 		if err != nil {
 			return reconcile.Result{}, err
 		}
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	// If status is an empty map we can assume CR was just created
-	if len(u.Object["status"].(map[string]interface{})) == 0 {
-		logrus.Debugf("Setting phase status to %v", StatusPhaseCreating)
-		u.Object["status"] = ResourceStatus{
-			Phase: StatusPhaseCreating,
-		}
-		err = r.Client.Update(context.TODO(), u)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-		return reconcile.Result{Requeue: true}, nil
-	}
-
+	// Set up kubeconfig for proxy.
 	ownerRef := metav1.OwnerReference{
 		APIVersion: u.GetAPIVersion(),
 		Kind:       u.GetKind(),
@@ -125,9 +114,30 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 
 	// iterate events from ansible, looking for the final one
 	statusEvent := eventapi.StatusJobEvent{}
+	messages := []FailureMessage{}
 	for event := range eventChan {
 		for _, eHandler := range r.EventHandlers {
 			go eHandler.Handle(u, event)
+		}
+		if event.Event == "runner_on_failed" {
+			// Need to pull out the res.msg from event data.
+			result, ok := event.EventData["res"].(map[string]interface{})
+			if !ok {
+				logrus.Warningf("unable to find result for failure event")
+				continue
+			}
+			t, _ := event.EventData["task"].(string)
+			f := FailureMessage{
+				TaskName:  t,
+				Timestamp: metav1.Now(),
+			}
+			msg, ok := result["msg"].(string)
+			f.Message = msg
+			if !ok {
+				logrus.Warningf("unable to find result for failure event")
+				f.Message = "unknown error occured"
+			}
+			messages = append(messages, f)
 		}
 		if event.Event == "playbook_on_stats" {
 			// convert to StatusJobEvent; would love a better way to do this
@@ -147,8 +157,6 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		return reconcile.Result{}, err
 	}
 
-	// We only want to update the CustomResource once, so we'll track changes and do it at the end
-	var needsUpdate bool
 	runSuccessful := true
 	for _, count := range statusEvent.EventData.Failures {
 		if count > 0 {
@@ -156,6 +164,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 			break
 		}
 	}
+
 	// The finalizer has run successfully, time to remove it
 	if deleted && finalizerExists && runSuccessful {
 		finalizers := []string{}
@@ -165,29 +174,42 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 			}
 		}
 		u.SetFinalizers(finalizers)
-		needsUpdate = true
+		// Set status to deleting condition as well.
+		status.Conditions = append(status.Conditions, Condition{
+			LastTransitionTime: metav1.Now(),
+			AnsibleStatus:      NewStatusFromStatusJobEvent(statusEvent),
+			Phase:              DeletingPhase,
+		})
+		u.Object["status"] = status
+		r.Client.Update(context.Background(), u)
+		return reconcile.Result{}, nil
 	}
 
-	statusMap, ok := u.Object["status"].(map[string]interface{})
-	if !ok {
-		u.Object["status"] = ResourceStatus{
-			Status: NewStatusFromStatusJobEvent(statusEvent),
-		}
-		logrus.Infof("adding status for the first time")
-		needsUpdate = true
-	} else {
-		// Need to conver the map[string]interface into a resource status.
-		if update, status := UpdateResourceStatus(statusMap, statusEvent); update {
-			u.Object["status"] = status
-			needsUpdate = true
-		}
+	// If run was successful and the current condition is not successful then need to update condition.
+	if runSuccessful && status.Conditions[len(status.Conditions)-1].Phase != RunningPhase {
+		status.Conditions = append(status.Conditions, Condition{
+			LastTransitionTime: metav1.Now(),
+			AnsibleStatus:      NewStatusFromStatusJobEvent(statusEvent),
+			Phase:              RunningPhase,
+		})
+		u.Object["status"] = status
+		r.Client.Update(context.Background(), u)
+		return reconcile.Result{}, err
 	}
-	if needsUpdate {
-		err = r.Client.Update(context.TODO(), u)
+
+	// If run was not successful and current condition is not failed then need to update condition.
+	if !runSuccessful && status.Conditions[len(status.Conditions)-1].Phase != FailingPhase {
+		status.Conditions = append(status.Conditions, Condition{
+			LastTransitionTime: metav1.Now(),
+			AnsibleStatus:      NewStatusFromStatusJobEvent(statusEvent),
+			Phase:              FailingPhase,
+			Messages:           messages,
+		})
+		u.Object["status"] = status
+		r.Client.Update(context.Background(), u)
+		return reconcile.Result{}, err
 	}
-	if !runSuccessful {
-		return reconcile.Result{Requeue: true}, err
-	}
+
 	return reconcile.Result{}, err
 }
 
@@ -198,4 +220,45 @@ func contains(l []string, s string) bool {
 		}
 	}
 	return false
+}
+
+// getStatus - Retrieve the status object form the unstructured object
+// Returns the status and if we need to update the status object for the first time.
+func getStatus(u *unstructured.Unstructured) (ResourceStatus, bool) {
+	// Add Status if not defined
+	r := ResourceStatus{}
+	s := u.Object["status"]
+	sm, ok := s.(map[string]interface{})
+	if !ok {
+		logrus.Debugf("status was not found. Adding creating status.")
+		r.Conditions = []Condition{
+			Condition{
+				Phase:              CreatingPhase,
+				LastTransitionTime: metav1.Now(),
+			},
+		}
+		return r, true
+	}
+	// Get the object out of the map.
+	cms, ok := sm["conditions"].([]interface{})
+	if !ok || len(cms) == 0 {
+		logrus.Debugf("status was found. but did not have conditions..")
+		r.Conditions = []Condition{
+			Condition{
+				Phase:              CreatingPhase,
+				LastTransitionTime: metav1.Now(),
+			},
+		}
+		return r, true
+	}
+	cs := []Condition{}
+	for _, c := range cms {
+		cm, _ := c.(map[string]interface{})
+		c := newConditionFromMap(cm)
+		cs = append(cs, c)
+	}
+	// Sort the slice
+	sort.Slice(cs, func(i, j int) bool { return cs[i].LastTransitionTime.Before(&cs[j].LastTransitionTime) })
+	r.Conditions = cs
+	return r, false
 }

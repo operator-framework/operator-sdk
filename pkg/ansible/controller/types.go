@@ -15,17 +15,35 @@
 package controller
 
 import (
+	"time"
+
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/eventapi"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
-	host                = "localhost"
-	StatusPhaseCreating = "Creating"
-	StatusPhaseRunning  = "Running"
-	StatusPhaseFailed   = "Failed"
+	host = "localhost"
 )
 
-type Status struct {
+// Phase - Phase for the CR managed by ansible operator.
+type Phase string
+
+const (
+	// CreatingPhase - phase for ansible operator is creating the application.
+	CreatingPhase Phase = "Creating"
+
+	//FailingPhase -  phase for ansible operator has failed.
+	FailingPhase Phase = "Failing"
+
+	//DeletingPhase - phase for ansible operator status is deleting.
+	DeletingPhase Phase = "Deleting"
+
+	//RunningPhase - phase for ansible operator created the application and it is running.
+	RunningPhase Phase = "Running"
+)
+
+// AnsibleStatus - ansible status
+type AnsibleStatus struct {
 	Ok               int                `json:"ok"`
 	Changed          int                `json:"changed"`
 	Skipped          int                `json:"skipped"`
@@ -33,7 +51,8 @@ type Status struct {
 	TimeOfCompletion eventapi.EventTime `json:"completion"`
 }
 
-func NewStatusFromStatusJobEvent(je eventapi.StatusJobEvent) Status {
+// NewStatusFromStatusJobEvent - create new status from job event
+func NewStatusFromStatusJobEvent(je eventapi.StatusJobEvent) *AnsibleStatus {
 	// ok events.
 	o := 0
 	changed := 0
@@ -51,7 +70,7 @@ func NewStatusFromStatusJobEvent(je eventapi.StatusJobEvent) Status {
 	if v, ok := je.EventData.Failures[host]; ok {
 		failures = v
 	}
-	return Status{
+	return &AnsibleStatus{
 		Ok:               o,
 		Changed:          changed,
 		Skipped:          skipped,
@@ -60,11 +79,8 @@ func NewStatusFromStatusJobEvent(je eventapi.StatusJobEvent) Status {
 	}
 }
 
-func IsStatusEqual(s1, s2 Status) bool {
-	return (s1.Ok == s2.Ok && s1.Changed == s2.Changed && s1.Skipped == s2.Skipped && s1.Failures == s2.Failures)
-}
-
-func NewStatusFromMap(sm map[string]interface{}) Status {
+// newStatusFromMap - Create new status form map
+func newStatusFromMap(sm map[string]interface{}) *AnsibleStatus {
 	//Create Old top level status
 	// ok events.
 	o := 0
@@ -88,7 +104,7 @@ func NewStatusFromMap(sm map[string]interface{}) Status {
 		s := v.(string)
 		e.UnmarshalJSON([]byte(s))
 	}
-	return Status{
+	return &AnsibleStatus{
 		Ok:               o,
 		Changed:          changed,
 		Skipped:          skipped,
@@ -97,40 +113,62 @@ func NewStatusFromMap(sm map[string]interface{}) Status {
 	}
 }
 
-type ResourceStatus struct {
-	Status         `json:",inline"`
-	Phase          string   `json:"phase"`
-	FailureMessage string   `json:"reason,omitempty"`
-	History        []Status `json:"history,omitempty"`
+// Condition - Condition for the running application.
+type Condition struct {
+	AnsibleStatus      *AnsibleStatus   `json:"ansibleStatus,omitempty"`
+	Phase              Phase            `json:"phase"`
+	Messages           []FailureMessage `json:"messages,omitempty"`
+	LastTransitionTime metav1.Time      `json:"lastTransitionTime"`
 }
 
-func UpdateResourceStatus(sm map[string]interface{}, je eventapi.StatusJobEvent) (bool, ResourceStatus) {
-	newStatus := NewStatusFromStatusJobEvent(je)
-	oldStatus := NewStatusFromMap(sm)
-	phase := StatusPhaseRunning
-	// Don't update the status if new status and old status are equal.
-	if IsStatusEqual(newStatus, oldStatus) {
-		return false, ResourceStatus{}
-	}
-
-	history := []Status{}
-	h, ok := sm["history"]
+func newConditionFromMap(cm map[string]interface{}) Condition {
+	asm, ok := cm["ansibleStatus"].(map[string]interface{})
+	var as *AnsibleStatus
 	if ok {
-		hi := h.([]interface{})
-		for _, m := range hi {
-			ma := m.(map[string]interface{})
-			history = append(history, NewStatusFromMap(ma))
+		as = newStatusFromMap(asm)
+	}
+	p := cm["phase"].(string)
+	fmms, ok := cm["msgs"].([]interface{})
+	var fms []FailureMessage
+	if ok {
+		for _, f := range fmms {
+			fmm, _ := f.(map[string]interface{})
+			fm := newFailureMessageFromMap(fmm)
+			fms = append(fms, fm)
 		}
 	}
-
-	if newStatus.Failures > 0 {
-		phase = StatusPhaseFailed
+	ts := cm["lastTransitionTime"].(string)
+	t := time.Time{}
+	t.UnmarshalText([]byte(ts))
+	return Condition{
+		AnsibleStatus:      as,
+		Phase:              Phase(p),
+		Messages:           fms,
+		LastTransitionTime: metav1.Time{Time: t},
 	}
+}
 
-	history = append(history, oldStatus)
-	return true, ResourceStatus{
-		Status:  newStatus,
-		Phase:   phase,
-		History: history,
+// ResourceStatus - Stautus for the CR managed by the operator.
+type ResourceStatus struct {
+	Conditions []Condition `json:"conditions"`
+}
+
+// FailureMessage - message for the failures that have occured.
+type FailureMessage struct {
+	TaskName  string      `json:"taskName"`
+	Message   string      `json:"message"`
+	Timestamp metav1.Time `json:"timestamp"`
+}
+
+func newFailureMessageFromMap(fm map[string]interface{}) FailureMessage {
+	tn := fm["taskName"].(string)
+	msg := fm["msg"].(string)
+	ts := fm["timestamp"].(string)
+	t := time.Time{}
+	t.UnmarshalText([]byte(ts))
+	return FailureMessage{
+		TaskName:  tn,
+		Message:   msg,
+		Timestamp: metav1.Time{Time: t},
 	}
 }
