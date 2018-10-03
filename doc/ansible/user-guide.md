@@ -174,6 +174,8 @@ $ kubectl create -f deploy/rbac.yaml
 $ kubectl create -f deploy/operator.yaml
 ```
 
+**NOTE**: `deploy/rbac.yaml` creates a `ClusterRoleBinding` and assumes we are working in namespace `default`. If you are working in a different namespace you must modify this file before creating it.
+
 Verify that the memcached-operator is up and running:
 
 ```sh
