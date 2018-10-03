@@ -118,8 +118,9 @@ if err != nil {
 The `InitializeClusterResources` function uses the custom `Create` function in the framework client to create the resources provided
 in your namespaced manifest. The custom `Create` function use the controller-runtime's client to create resources and then
 creates a cleanup function that is called by `ctx.Cleanup` which deletes the resource and then waits for the resource to be
-fully deleted before returning. This is configurable with `CleanupOptions`. If the `CleanupOptions` argument is set
-to `nil`, the cleanup function simply calls the delete function and returns without waiting.
+fully deleted before returning. This is configurable with `CleanupOptions`. For info on how to use `CleanupOptions` see
+[this section](#how-to-use-cleanup).
+ 
 
 If you want to make sure the operator's deployment is fully ready before moving onto the next part of the
 test, the `WaitForDeployment` function from [e2eutil][e2eutil-link] (in the sdk under `pkg/test/e2eutil`) can be used:
@@ -141,9 +142,10 @@ if err != nil {
 
 #### 4. Write the test specific code
 
-Now that the operator is ready, we can create a custom resource.
+Since the controller-runtime's dynamic client uses go contexts, make sure to import the go context library.
+In this example, we imported it as `goctx`:
 
-##### How to use the Framework Client `Create`'s `CleanupOptions`
+##### <a id="how-to-use-cleanup"></a>How to use the Framework Client `Create`'s `CleanupOptions`
 
 The test framework provides `Client`, which exposes most of the controller-runtime's client unmodified, but the `Create`
 function has added functionality to create cleanup functions for these resources as well. To manage how cleanup
@@ -161,8 +163,7 @@ Create(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{TestContext: ct
 Create(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{TestContext: ctx, Timeout: timeout, RetryInterval: retryInterval})
 ```
 
-Since the controller-runtime's dynamic client uses go contexts, make sure to import the go context library.
-In this example, we imported it as `goctx`:
+This is how we can create a custom memcached custom resource with a size of 3:
 
 ```go
 // create memcached custom resource
@@ -179,7 +180,7 @@ exampleMemcached := &cachev1alpha1.Memcached{
         Size: 3,
     },
 }
-err = f.Client.Create(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
+err = f.Client.Create(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{TestContext: ctx, Timeout: time.Second * 5, RetryInterval: time.Second * 1})
 if err != nil {
     return err
 }
