@@ -153,6 +153,11 @@ func main() {
 	printVersion()
 
 	sdk.ExposeMetricsPort()
+	metrics, err := stub.RegisterOperatorMetrics()
+	if err != nil {
+		logrus.Errorf("failed to register operator specific metrics: %v", err)
+	}
+	h := stub.NewHandler(metrics)
 
 	resource := "{{.APIVersion}}"
 	kind := "{{.Kind}}"
@@ -163,7 +168,7 @@ func main() {
 	resyncPeriod := time.Duration(5) * time.Second
 	logrus.Infof("Watching %s, %s, %s, %d", resource, kind, namespace, resyncPeriod)
 	sdk.Watch(resource, kind, namespace, resyncPeriod)
-	sdk.Handle(stub.NewHandler())
+	sdk.Handle(h)
 	sdk.Run(context.TODO())
 }
 `
@@ -182,13 +187,23 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
-func NewHandler() sdk.Handler {
-	return &Handler{}
+func NewHandler(m *Metrics) sdk.Handler {
+	return &Handler{
+		metrics: m,
+	}
+}
+
+type Metrics struct {
+	operatorErrors prometheus.Counter
 }
 
 type Handler struct {
+	// Metrics example
+	metrics *Metrics
+
 	// Fill me
 }
 
@@ -198,6 +213,8 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 		err := sdk.Create(newbusyBoxPod(o))
 		if err != nil && !errors.IsAlreadyExists(err) {
 			logrus.Errorf("failed to create busybox pod : %v", err)
+			// increment error metric
+			h.metrics.operatorErrors.Inc()
 			return err
 		}
 	}
@@ -236,6 +253,18 @@ func newbusyBoxPod(cr *{{.Version}}.{{.Kind}}) *corev1.Pod {
 			},
 		},
 	}
+}
+
+func RegisterOperatorMetrics() (*Metrics, error) {
+	operatorErrors := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "memcached_operator_reconcile_errors_total",
+		Help: "Number of errors that occurred while reconciling the memcached deployment",
+	})
+	err := prometheus.Register(operatorErrors)
+	if err != nil {
+		return &Metrics{}, err
+	}
+	return &Metrics{operatorErrors: operatorErrors}, nil
 }
 `
 
