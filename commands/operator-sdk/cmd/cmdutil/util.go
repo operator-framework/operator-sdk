@@ -30,12 +30,13 @@ import (
 )
 
 const configYaml = "./config/config.yaml"
+const tmpDockerfile = "./tmp/build/Dockerfile"
 
 // MustInProjectRoot checks if the current dir is the project root.
 func MustInProjectRoot() {
-	// if the current directory has the "./config/config.yaml" file, then it is safe to say
+	// if the current directory has the "./tmp/build/Dockerfile" file, then it is safe to say
 	// we are at the project root.
-	_, err := os.Stat(configYaml)
+	_, err := os.Stat(tmpDockerfile)
 	if err != nil && os.IsNotExist(err) {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("must in project root dir: %v", err))
 	}

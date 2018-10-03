@@ -296,6 +296,55 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 `
 
+const rbacYamlAnsibleExp = `kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: app-operator
+rules:
+- apiGroups:
+  - app.example.com
+  resources:
+  - "*"
+  verbs:
+  - "*"
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  - configmaps
+  - secrets
+  verbs:
+  - "*"
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
+  verbs:
+  - "*"
+
+---
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: app-operator
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: app-operator
+  apiGroup: rbac.authorization.k8s.io
+`
+
 const saYamlExp = `apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -338,7 +387,7 @@ func TestGenDeploy(t *testing.T) {
 		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
 	}
 
-	// Test Ansible Operator
+	// Test Ansible Operator operator.yaml
 	buf = &bytes.Buffer{}
 	td = tmplData{
 		ProjectName:     appProjectName,
@@ -358,7 +407,7 @@ func TestGenDeploy(t *testing.T) {
 	}
 
 	buf = &bytes.Buffer{}
-	if err := renderFile(buf, rbacTmplName, rbacYamlTmpl, tmplData{ProjectName: appProjectName, GroupName: appGroupName}); err != nil {
+	if err := renderFile(buf, rbacTmplName, rbacYamlTmpl, tmplData{ProjectName: appProjectName, GroupName: appGroupName, IsGoOperator: true}); err != nil {
 		t.Error(err)
 	}
 	if rbacYamlExp != buf.String() {
@@ -367,6 +416,16 @@ func TestGenDeploy(t *testing.T) {
 		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
 	}
 
+	// Test Ansible Operator rbac.yaml
+	buf = &bytes.Buffer{}
+	if err := renderFile(buf, rbacTmplName, rbacYamlTmpl, tmplData{ProjectName: appProjectName, GroupName: appGroupName, IsGoOperator: false}); err != nil {
+		t.Error(err)
+	}
+	if rbacYamlAnsibleExp != buf.String() {
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(rbacYamlAnsibleExp, buf.String(), false)
+		t.Errorf("\nTest failed. Below is the diff of the expected vs actual results.\nRed text is missing and green text is extra.\n\n" + dmp.DiffPrettyText(diffs))
+	}
 	buf = &bytes.Buffer{}
 	if err := renderFile(buf, saTmplName, saYamlTmpl, tmplData{ProjectName: appProjectName}); err != nil {
 		t.Error(err)
