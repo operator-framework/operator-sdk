@@ -514,7 +514,7 @@ rules:
   - "*"
 
 ---
-{{- if .IsGoOperator }}
+{{ if .IsGoOperator }}
 kind: RoleBinding
 {{- else }}
 kind: ClusterRoleBinding{{ end }}
