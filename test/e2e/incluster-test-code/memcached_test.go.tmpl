@@ -29,8 +29,8 @@ import (
 )
 
 var (
-	retryInterval          = time.Second * 5
-	timeout                = time.Second * 30
+	retryInterval        = time.Second * 5
+	timeout              = time.Second * 30
 	cleanupRetryInterval = time.Second * 1
 	cleanupTimeout       = time.Second * 5
 )
@@ -72,7 +72,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 			Size: 3,
 		},
 	}
-	// use TestCtx's create helper to create the object and add a finalizer for the new object
+	// use TestCtx's create helper to create the object and add a cleanup function for the new object
 	err = f.Client.Create(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		return err
