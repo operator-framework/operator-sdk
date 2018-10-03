@@ -75,7 +75,10 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	if !ok {
 		logrus.Debugf("spec was not found")
 		u.Object["spec"] = map[string]interface{}{}
-		r.Client.Update(context.TODO(), u)
+		err = r.Client.Update(context.TODO(), u)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
 		return reconcile.Result{Requeue: true}, nil
 	}
 	status := u.Object["status"]
@@ -85,7 +88,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		u.Object["status"] = map[string]interface{}{}
 		err = r.Client.Update(context.TODO(), u)
 		if err != nil {
-			return reconcile.Result{}, nil
+			return reconcile.Result{}, err
 		}
 		return reconcile.Result{Requeue: true}, nil
 	}
