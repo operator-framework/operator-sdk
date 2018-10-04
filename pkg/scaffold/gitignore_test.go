@@ -1,0 +1,104 @@
+package scaffold
+
+import (
+	"bytes"
+	"testing"
+
+	"github.com/sergi/go-diff/diffmatchpatch"
+)
+
+func TestGitignore(t *testing.T) {
+	codegen := NewGitignoreCodegen()
+	buf := &bytes.Buffer{}
+	if err := codegen.Render(buf); err != nil {
+		t.Fatal(err)
+	}
+	if gitignoreExp != buf.String() {
+		dmp := diffmatchpatch.New()
+		diffs := diffmatchpatch.New().DiffMain(gitignoreExp, buf.String(), false)
+		t.Fatalf("expected vs actual differs. Red text is missing and green text is extra.\n%v", dmp.DiffPrettyText(diffs))
+	}
+}
+
+const gitignoreExp = `# Temporary Build Files
+build/_output
+build/_test
+# Created by https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
+### Emacs ###
+# -*- mode: gitignore; -*-
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+# Org-mode
+.org-id-locations
+*_archive
+# flymake-mode
+*_flymake.*
+# eshell files
+/eshell/history
+/eshell/lastdir
+# elpa packages
+/elpa/
+# reftex files
+*.rel
+# AUCTeX auto folder
+/auto/
+# cask packages
+.cask/
+dist/
+# Flycheck
+flycheck_*.el
+# server auth directory
+/server/
+# projectiles files
+.projectile
+projectile-bookmarks.eld
+# directory configuration
+.dir-locals.el
+# saveplace
+places
+# url cache
+url/cache/
+# cedet
+ede-projects.el
+# smex
+smex-items
+# company-statistics
+company-statistics-cache.el
+# anaconda-mode
+anaconda-mode/
+### Go ###
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+# Test binary, build with 'go test -c'
+*.test
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+### Vim ###
+# swap
+.sw[a-p]
+.*.sw[a-p]
+# session
+Session.vim
+# temporary
+.netrwhist
+# auto-generated tag files
+tags
+### VisualStudioCode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history
+# End of https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
+`
