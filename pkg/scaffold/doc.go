@@ -25,8 +25,6 @@ type doc struct {
 
 // DocInput is the input needed to generate a pkg/apis/<group>/<version>/doc.go file
 type DocInput struct {
-	// ProjectPath is the project path rooted at GOPATH.
-	ProjectPath string
 	// Resource defines the inputs for the new api
 	Resource *Resource
 }
