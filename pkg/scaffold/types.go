@@ -15,37 +15,34 @@
 package scaffold
 
 import (
-	"io"
-	"text/template"
+	"path/filepath"
+	"strings"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type types struct {
-	typesInput *TypesInput
-}
+// Types is the input needed to generate a pkg/apis/<group>/<version>/types.go file
+type Types struct {
+	input.Input
 
-// TypesInput is the input needed to generate a pkg/apis/<group>/<version>/types.go file
-type TypesInput struct {
-	// ProjectPath is the project path rooted at GOPATH.
-	ProjectPath string
-	// Resource defines the inputs for the new api
+	// Resource defines the inputs for the new types file
 	Resource *Resource
 }
 
-func NewTypesCodegen(input *TypesInput) Codegen {
-	return &types{typesInput: input}
-}
-
-func (c *types) Render(w io.Writer) error {
-	t := template.New("types.go")
-	t, err := t.Parse(typesTemplate)
-	if err != nil {
-		return err
+func (s *Types) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = filepath.Join(apisDir,
+			strings.ToLower(s.Resource.Group),
+			strings.ToLower(s.Resource.Version),
+			typesFile)
 	}
-
-	return t.Execute(w, c.typesInput)
+	// Error if this file exists.
+	s.IfExistsAction = input.Error
+	s.TemplateBody = typesTmpl
+	return s.Input, nil
 }
 
-const typesTemplate = `package {{ .Resource.Version }}
+const typesTmpl = `package {{ .Resource.Version }}
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

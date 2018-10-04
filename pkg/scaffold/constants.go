@@ -1,0 +1,90 @@
+// Copyright 2018 The Operator-SDK Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package scaffold
+
+import (
+	"path/filepath"
+)
+
+const (
+	// file modes
+	defaultDirFileMode  = 0750
+	defaultFileMode     = 0644
+	defaultExecFileMode = 0744
+
+	noOverwriteTrue  = true
+	noOverwriteFalse = false
+
+	mustNotExistTrue  = true
+	mustNotExistFalse = false
+
+	// Separator to statically create directories.
+	filePathSep = string(filepath.Separator)
+
+	// Generated project structure:
+	//
+	// ├── <projectName>
+	// │   ├── build
+	// │   ├── cmd
+	// │   │   └── manager
+	// │   ├── deploy
+	// │   |   ├── olm-catalog
+	// │   ├── pkg
+	// │   │   ├── apis
+	// │   │   │   └── <api-dir-name>  // computed from apiDirName(apiVersion).
+	// │   │   │       └── <version> // computed from version(apiVersion).
+	// │   │   └── controller
+	// │   ├── scripts
+	// │   |   ├── codegen
+	// │   └── version
+
+	// dirs
+	cmdDir        = "cmd"
+	managerDir    = cmdDir + filePathSep + "manager"
+	pkgDir        = "pkg"
+	apisDir       = pkgDir + filePathSep + "apis"
+	controllerDir = pkgDir + filePathSep + "controller"
+	buildDir      = "build"
+	deployDir     = "deploy"
+	olmCatalogDir = deployDir + filePathSep + "olm-catalog"
+	crdsDir       = deployDir + filePathSep + "crds"
+	scriptsDir    = "scripts"
+	codegenDir    = scriptsDir + filePathSep + "codegen"
+	versionDir    = "version"
+
+	// files
+	cmdFile                = "main.go"
+	apisFile               = "apis.go"
+	controllerFile         = "controller.go"
+	dockerfileFile         = "Dockerfile"
+	buildFile              = "build.sh"
+	boilerplateFile        = "boilerplate.go.txt"
+	versionFile            = "version.go"
+	docFile                = "doc.go"
+	registerFile           = "register.go"
+	typesFile              = "types.go"
+	updateGeneratedFile    = "update-generated.sh"
+	configFile             = "config.yaml"
+	roleYamlFile           = "role.yaml"
+	roleBindingYamlFile    = "role_binding.yaml"
+	operatorYamlFile       = "operator.yaml"
+	crYamlFile             = "cr.yaml"
+	crdYamlFile            = "crd.yaml"
+	catalogPackageYamlFile = "package.yaml"
+	catalogCSVYamlFile     = "csv.yaml"
+	gitignoreFile          = ".gitignore"
+	gopkgtomlFile          = "Gopkg.toml"
+	gopkglockFile          = "Gopkg.lock"
+)

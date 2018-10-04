@@ -15,19 +15,19 @@
 package scaffold
 
 import (
-	"io"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type gitignore struct {
+type Gitignore struct {
+	input.Input
 }
 
-func NewGitignoreCodegen() Codegen {
-	return &gitignore{}
-}
-
-func (c *gitignore) Render(w io.Writer) error {
-	_, err := w.Write([]byte(gitignoreTmpl))
-	return err
+func (s *Gitignore) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = gitignoreFile
+	}
+	s.TemplateBody = gitignoreTmpl
+	return s.Input, nil
 }
 
 const gitignoreTmpl = `# Temporary Build Files

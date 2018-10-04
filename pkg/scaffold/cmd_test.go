@@ -22,9 +22,9 @@ import (
 )
 
 func TestCmd(t *testing.T) {
-	codegen := NewCmdCodegen(&CmdInput{ProjectPath: appProjectPath})
+	codegen := NewCmdCodegen()
 	buf := &bytes.Buffer{}
-	if err := codegen.Render(buf); err != nil {
+	if err := codegen.Render(appConfig, buf); err != nil {
 		t.Fatal(err)
 	}
 	if cmdExp != buf.String() {

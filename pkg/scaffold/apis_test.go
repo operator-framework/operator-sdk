@@ -24,7 +24,7 @@ import (
 func TestApis(t *testing.T) {
 	codegen := NewAPIsCodegen()
 	buf := &bytes.Buffer{}
-	if err := codegen.Render(buf); err != nil {
+	if err := codegen.Render(appConfig, buf); err != nil {
 		t.Fatal(err)
 	}
 	if apisExp != buf.String() {

@@ -15,35 +15,34 @@
 package scaffold
 
 import (
-	"io"
-	"text/template"
+	"fmt"
+	"path/filepath"
+	"strings"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type cr struct {
-	crInput *CrInput
-}
+// Cr is the input needed to generate a deploy/crds/<group>_<version>_<kind>_cr.yaml file
+type Cr struct {
+	input.Input
 
-// CrInput is the input needed to generate a deploy/crds/<group>_<version>_<kind>_cr.yaml file
-type CrInput struct {
-	// Resource defines the inputs for the new api
+	// Resource defines the inputs for the new custom resource
 	Resource *Resource
 }
 
-func NewCrCodegen(input *CrInput) Codegen {
-	return &cr{crInput: input}
-}
-
-func (c *cr) Render(w io.Writer) error {
-	t := template.New("<group>_<version>_<kind>_cr.yaml")
-	t, err := t.Parse(crTemplate)
-	if err != nil {
-		return err
+func (s *Cr) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		fileName := fmt.Sprintf("%s_%s_%s_cr.yaml",
+			strings.ToLower(s.Resource.Group),
+			strings.ToLower(s.Resource.Version),
+			s.Resource.LowerKind)
+		s.Path = filepath.Join(deployDir, crdsDir, fileName)
 	}
-
-	return t.Execute(w, c.crInput)
+	s.TemplateBody = crTmpl
+	return s.Input, nil
 }
 
-const crTemplate = `apiVersion: {{ .Resource.APIVersion }}
+const crTmpl = `apiVersion: {{ .Resource.APIVersion }}
 kind: {{ .Resource.Kind }}
 metadata:
   name: example-{{ .Resource.LowerKind }}

@@ -15,37 +15,35 @@
 package scaffold
 
 import (
-	"io"
-	"text/template"
+	"path/filepath"
+	"strings"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type register struct {
-	registerInput *RegisterInput
-}
+// Register is the input needed to generate a pkg/apis/<group>/<version>/register.go file
+type Register struct {
+	input.Input
 
-// RegisterInput is the input needed to generate a pkg/apis/<group>/<version>/register.go file
-type RegisterInput struct {
-	// ProjectPath is the project path rooted at GOPATH.
-	ProjectPath string
-	// Resource defines the inputs for the new api
+	// Resource defines the inputs for the new custom resource definition
 	Resource *Resource
 }
 
-func NewRegisterCodegen(input *RegisterInput) Codegen {
-	return &register{registerInput: input}
-}
-
-func (c *register) Render(w io.Writer) error {
-	t := template.New("register.go")
-	t, err := t.Parse(registerTemplate)
-	if err != nil {
-		return err
+func (s *Register) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = filepath.Join(apisDir,
+			strings.ToLower(s.Resource.Group),
+			strings.ToLower(s.Resource.Version),
+			registerFile)
 	}
-
-	return t.Execute(w, c.registerInput)
+	// Do not overwrite this file if it exists.
+	s.IfExistsAction = input.Skip
+	s.TemplateBody = registerTmpl
+	return s.Input, nil
 }
 
-const registerTemplate = `// NOTE: Boilerplate only.  Ignore this file.
+const registerTmpl = `
+// NOTE: Boilerplate only.  Ignore this file.
 
 // Package {{.Resource.Version}} contains API Schema definitions for the {{ .Resource.Group }} {{.Resource.Version}} API group
 // +k8s:deepcopy-gen=package,register

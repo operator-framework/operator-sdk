@@ -15,34 +15,21 @@
 package scaffold
 
 import (
-	"io"
+	"path/filepath"
 
-	"text/template"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type build struct {
-	in *BuildInput
+type Build struct {
+	input.Input
 }
 
-func NewbuildCodegen(in *BuildInput) Codegen {
-	return &build{in: in}
-}
-
-type BuildInput struct {
-	// ProjectName is the name of the operator project.
-	ProjectName string
-	// ProjectPath is the project path rooted at GOPATH. e.g "github.com/example/app-operator".
-	ProjectPath string
-}
-
-func (d *build) Render(w io.Writer) error {
-	t := template.New("build.go")
-	t, err := t.Parse(buildTmpl)
-	if err != nil {
-		return err
+func (s *Build) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = filepath.Join(buildDir, buildFile)
 	}
-
-	return t.Execute(w, d.in)
+	s.TemplateBody = buildTmpl
+	return s.Input, nil
 }
 
 const buildTmpl = `#!/usr/bin/env bash
@@ -59,7 +46,7 @@ fi
 BIN_DIR="$(pwd)/build/_output/bin"
 mkdir -p ${BIN_DIR}
 PROJECT_NAME={{.ProjectName}}
-REPO_PATH={{.ProjectPath}}
+REPO_PATH={{ .Repo }}
 BUILD_PATH="${REPO_PATH}/cmd/manager"
 echo "building "${PROJECT_NAME}"..."
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ${BIN_DIR}/${PROJECT_NAME} $BUILD_PATH

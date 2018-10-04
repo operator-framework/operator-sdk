@@ -15,43 +15,37 @@
 package scaffold
 
 import (
-	"io"
-	"text/template"
+	"path/filepath"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type controllerKind struct {
-	controllerKindInput *ControllerKindInput
-}
+// ControllerKind is the input needed to generate a pkg/controller/<kind>/<kind>_controller.go file
+type ControllerKind struct {
+	input.Input
 
-// ControllerKindInput is the input needed to generate a pkg/controller/<kind>/<kind>_controller.go file
-type ControllerKindInput struct {
-	// ProjectPath is the project path rooted at GOPATH.
-	ProjectPath string
 	// Resource defines the inputs for the controller's primary resource
 	Resource *Resource
 }
 
-func NewControllerKindCodegen(input *ControllerKindInput) Codegen {
-	return &controllerKind{controllerKindInput: input}
-}
-
-func (c *controllerKind) Render(w io.Writer) error {
-	t := template.New("<kind>_controller.go")
-	t, err := t.Parse(controllerKindTemplate)
-	if err != nil {
-		return err
+func (s *ControllerKind) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		fileName := s.Resource.LowerKind + "_controller.go"
+		s.Path = filepath.Join(controllerDir, s.Resource.LowerKind, fileName)
 	}
-
-	return t.Execute(w, c.controllerKindInput)
+	// Error if this file exists.
+	s.IfExistsAction = input.Error
+	s.TemplateBody = controllerKindTmpl
+	return s.Input, nil
 }
 
-const controllerKindTemplate = `package {{ .Resource.LowerKind }}
+const controllerKindTmpl = `package {{ .Resource.LowerKind }}
 
 import (
 	"context"
 	"log"
 
-	{{ .Resource.Group}}{{ .Resource.Version }} "{{ .ProjectPath }}/pkg/apis/{{ .Resource.Group}}/{{ .Resource.Version }}"
+	{{ .Resource.Group}}{{ .Resource.Version }} "{{ .Repo }}/pkg/apis/{{ .Resource.Group}}/{{ .Resource.Version }}"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"

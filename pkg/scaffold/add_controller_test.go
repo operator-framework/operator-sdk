@@ -26,9 +26,9 @@ func TestAddController(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	codegen := NewAddControllerCodegen(&AddControllerInput{ProjectPath: appProjectPath, Resource: r})
+	codegen := NewAddControllerCodegen(&AddControllerInput{Resource: r})
 	buf := &bytes.Buffer{}
-	if err = codegen.Render(buf); err != nil {
+	if err = codegen.Render(appConfig, buf); err != nil {
 		t.Fatal(err)
 	}
 	if addControllerExp != buf.String() {

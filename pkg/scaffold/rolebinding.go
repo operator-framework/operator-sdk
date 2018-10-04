@@ -15,35 +15,24 @@
 package scaffold
 
 import (
-	"io"
-	"text/template"
+	"path/filepath"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type roleBinding struct {
-	in *RoleBindingInput
+type RoleBinding struct {
+	input.Input
 }
 
-// RoleBindingInput is the input needed to generate a pkg/deploy/role_binding.yaml.
-type RoleBindingInput struct {
-	// ProjectName is the name of the operator project.
-	ProjectName string
-}
-
-func NewRoleBindingCodegen(in *RoleBindingInput) Codegen {
-	return &roleBinding{in: in}
-}
-
-func (r *roleBinding) Render(w io.Writer) error {
-	t := template.New("rolebinding.go")
-	t, err := t.Parse(roleBindingTemplate)
-	if err != nil {
-		return err
+func (s *RoleBinding) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = filepath.Join(deployDir, roleBindingYamlFile)
 	}
-
-	return t.Execute(w, r.in)
+	s.TemplateBody = roleBindingTmpl
+	return s.Input, nil
 }
 
-const roleBindingTemplate = `kind: RoleBinding
+const roleBindingTmpl = `kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: default-account-{{.ProjectName}}

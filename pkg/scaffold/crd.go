@@ -15,36 +15,35 @@
 package scaffold
 
 import (
-	"io"
-	"text/template"
+	"fmt"
+	"path/filepath"
+	"strings"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type crd struct {
-	crdInput *CrdInput
-}
+// Crd is the input needed to generate a deploy/crds/<group>_<version>_<kind>_crd.yaml file
+type Crd struct {
+	input.Input
 
-// CrdInput is the input needed to generate a deploy/crds/<group>_<version>_<kind>_crd.yaml file
-type CrdInput struct {
-	// Resource defines the inputs for the new api
+	// Resource defines the inputs for the new custom resource definition
 	Resource *Resource
 }
 
-func NewCrdCodegen(input *CrdInput) Codegen {
-	return &crd{crdInput: input}
-}
-
-func (c *crd) Render(w io.Writer) error {
-	t := template.New("<group>_<version>_<kind>_crd.yaml")
-	t, err := t.Parse(crdTemplate)
-	if err != nil {
-		return err
+func (s *Crd) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		fileName := fmt.Sprintf("%s_%s_%s_crd.yaml",
+			strings.ToLower(s.Resource.Group),
+			strings.ToLower(s.Resource.Version),
+			s.Resource.LowerKind)
+		s.Path = filepath.Join(deployDir, crdsDir, fileName)
 	}
-
-	return t.Execute(w, c.crdInput)
+	s.TemplateBody = crdTmpl
+	return s.Input, nil
 }
 
 // TODO: Parse pkg/apis to generate CRD with open-api validation instead of using a static template
-const crdTemplate = `apiVersion: apiextensions.k8s.io/v1beta1
+const crdTmpl = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   name: {{ .Resource.Resource }}.{{ .Resource.FullGroup }}

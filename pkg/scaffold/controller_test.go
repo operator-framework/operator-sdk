@@ -24,7 +24,7 @@ import (
 func TestController(t *testing.T) {
 	codegen := NewControllerCodegen()
 	buf := &bytes.Buffer{}
-	if err := codegen.Render(buf); err != nil {
+	if err := codegen.Render(appConfig, buf); err != nil {
 		t.Fatal(err)
 	}
 	if controllerExp != buf.String() {

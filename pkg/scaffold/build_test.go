@@ -22,9 +22,9 @@ import (
 )
 
 func TestBuild(t *testing.T) {
-	codegen := NewbuildCodegen(&BuildInput{ProjectName: appProjectName, ProjectPath: appProjectPath})
+	codegen := NewbuildCodegen()
 	buf := &bytes.Buffer{}
-	if err := codegen.Render(buf); err != nil {
+	if err := codegen.Render(appConfig, buf); err != nil {
 		t.Fatal(err)
 	}
 	if buildExp != buf.String() {

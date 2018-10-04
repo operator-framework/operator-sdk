@@ -15,43 +15,32 @@
 package scaffold
 
 import (
-	"io"
+	"path/filepath"
 
-	"text/template"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type cmd struct {
-	cmdInput *CmdInput
+type Cmd struct {
+	input.Input
 }
 
-func NewCmdCodegen(in *CmdInput) Codegen {
-	return &cmd{cmdInput: in}
-}
-
-type CmdInput struct {
-	// ProjectPath is the project path rooted at GOPATH.
-	ProjectPath string
-}
-
-func (c *cmd) Render(w io.Writer) error {
-	t := template.New("main.go")
-	t, err := t.Parse(mainTmpl)
-	if err != nil {
-		return err
+func (s *Cmd) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = filepath.Join(managerDir, cmdFile)
 	}
-
-	return t.Execute(w, c.cmdInput)
+	s.TemplateBody = cmdTmpl
+	return s.Input, nil
 }
 
-const mainTmpl = `package main
+const cmdTmpl = `package main
 
 import (
 	"flag"
 	"log"
 	"runtime"
 
-	"{{.ProjectPath}}/pkg/apis"
-	"{{.ProjectPath}}/pkg/controller"
+	"{{ .Repo }}/pkg/apis"
+	"{{ .Repo }}/pkg/controller"
 
 	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"

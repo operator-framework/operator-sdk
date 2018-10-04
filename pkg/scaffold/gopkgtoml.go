@@ -14,21 +14,23 @@
 
 package scaffold
 
-import "io"
+import (
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+)
 
-type gopkg struct {
+type GopkgToml struct {
+	input.Input
 }
 
-func NewGopkgCodegen() Codegen {
-	return &gopkg{}
+func (s *GopkgToml) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = gopkgtomlFile
+	}
+	s.TemplateBody = gopkgTomlTmpl
+	return s.Input, nil
 }
 
-func (g *gopkg) Render(w io.Writer) error {
-	_, err := w.Write([]byte(gopkgTomlTemplate))
-	return err
-}
-
-const gopkgTomlTemplate = `# Force dep to vendor the code generators, which aren't imported just used at dev time.
+const gopkgTomlTmpl = `# Force dep to vendor the code generators, which aren't imported just used at dev time.
 required = [
   "k8s.io/code-generator/cmd/defaulter-gen",
   "k8s.io/code-generator/cmd/deepcopy-gen",

@@ -20,29 +20,16 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type Apis struct {
+type Boilerplate struct {
 	input.Input
 }
 
-func (s *Apis) GetInput() (input.Input, error) {
+func (s *Boilerplate) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(apisDir, apisFile)
+		s.Path = filepath.Join(codegenDir, boilerplateFile)
 	}
-	s.TemplateBody = apisTmpl
+	s.TemplateBody = bpTmpl
 	return s.Input, nil
 }
 
-const apisTmpl = `package apis
-
-import (
-	"k8s.io/apimachinery/pkg/runtime"
-)
-
-// AddToSchemes may be used to add all resources defined in the project to a Scheme
-var AddToSchemes runtime.SchemeBuilder
-
-// AddToScheme adds all Resources to the Scheme
-func AddToScheme(s *runtime.Scheme) error {
-	return AddToSchemes.AddToScheme(s)
-}
-`
+const bpTmpl = ``

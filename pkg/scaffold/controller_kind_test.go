@@ -26,9 +26,9 @@ func TestControllerKind(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	codegen := NewControllerKindCodegen(&ControllerKindInput{ProjectPath: appProjectPath, Resource: r})
+	codegen := NewControllerKindCodegen(&ControllerKindInput{Resource: r})
 	buf := &bytes.Buffer{}
-	if err := codegen.Render(buf); err != nil {
+	if err = codegen.Render(appConfig, buf); err != nil {
 		t.Fatal(err)
 	}
 	if controllerKindExp != buf.String() {

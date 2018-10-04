@@ -15,40 +15,36 @@
 package scaffold
 
 import (
-	"io"
-	"text/template"
+	"fmt"
+	"path/filepath"
+	"strings"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type addToScheme struct {
-	addToSchemeInput *AddToSchemeInput
-}
+// AddToScheme is the input needed to generate an addtoscheme_<group>_<kind>.go file
+type AddToScheme struct {
+	input.Input
 
-// AddToSchemeInput is the input needed to generate an addtoscheme_<group>_<kind>.go file
-type AddToSchemeInput struct {
-	// ProjectPath is the project path rooted at GOPATH.
-	ProjectPath string
 	// Resource defines the inputs for the new api
 	Resource *Resource
 }
 
-func NewAddToSchemeCodegen(input *AddToSchemeInput) Codegen {
-	return &addToScheme{addToSchemeInput: input}
-}
-
-func (c *addToScheme) Render(w io.Writer) error {
-	t := template.New("addToScheme.go")
-	t, err := t.Parse(addToSchemeTemplate)
-	if err != nil {
-		return err
+func (s *AddToScheme) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		fileName := fmt.Sprintf("addtoscheme_%s_%s.go",
+			strings.ToLower(s.Resource.Group),
+			s.Resource.LowerKind)
+		s.Path = filepath.Join(apisDir, fileName)
 	}
-
-	return t.Execute(w, c.addToSchemeInput)
+	s.TemplateBody = addToSchemeTemplate
+	return s.Input, nil
 }
 
 const addToSchemeTemplate = `package apis
 
 import (
-	"{{ .ProjectPath }}/pkg/apis/{{ .Resource.Group }}/{{ .Resource.Version }}"
+	"{{ .Repo }}/pkg/apis/{{ .Resource.Group }}/{{ .Resource.Version }}"
 )
 
 func init() {

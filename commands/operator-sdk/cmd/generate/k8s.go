@@ -56,7 +56,7 @@ func K8sCodegen() {
 	apisPkg := filepath.Join(repoPkg, "pkg/apis")
 	groupVersions, err := parseGroupVersions()
 	if err != nil {
-		log.Fatalf("failed to perform code-generation: %v", err)
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to parse group versions: (%v)", err))
 	}
 
 	fmt.Fprintf(os.Stdout, "Running code-generation for custom resource group versions: [%s]\n", groupVersions)
