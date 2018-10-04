@@ -1,5 +1,5 @@
 # Download kubectl, which is a requirement for using minikube.
-curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.10.1/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.11.3/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
 # Download minikube.
 # We need to pin to an old version due to minikube requiring systemd starting with v0.26.0 and travis not providing it
 # - https://github.com/kubernetes/minikube/issues/2704

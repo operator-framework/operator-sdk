@@ -14,36 +14,30 @@ jobs:
       env:
         - CLUSTER=minikube
         - CHANGE_MINIKUBE_NONE_USER=true
+      script: test/test-go.sh
+      name: Go on minikube
+    - before_script: hack/ci/setup-minikube.sh
+      env:
+        - CLUSTER=minikube
+        - CHANGE_MINIKUBE_NONE_USER=true
+      script: test/test-ansible.sh
+      name: Ansible on minikube
     - before_script: hack/ci/setup-openshift.sh
       env: CLUSTER=openshift
+      script: test/test-go.sh
+      name: Go on OpenShift
+    - before_script: hack/ci/setup-openshift.sh
+      env: CLUSTER=openshift
+      script: test/test-ansible.sh
+      name: Ansible on OpenShift
 
 install: 
 - curl -Lo dep https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64 && chmod +x dep && sudo mv dep /usr/local/bin/
 - dep ensure
+- make install
 # Create example operator directory
 - mkdir -p $GOPATH/src/github.com/example-inc
-
-script:
-- make install
-- go test ./commands/...
-- go test ./pkg/...
-- go test ./test/e2e/...
-- cd test/test-framework
-# test framework with defaults
-- operator-sdk test local .
-# test operator-sdk test flags
-- operator-sdk test local . --global-manifest deploy/crd.yaml --namespaced-manifest deploy/namespace-init.yaml --go-test-flags "-parallel 1" --kubeconfig $HOME/.kube/config
-# test operator-sdk test local single namespace mode
-- kubectl create namespace test-memcached
-- operator-sdk test local . --namespace=test-memcached
-- kubectl delete namespace test-memcached
-# go back to project root
-- cd ../..
-- go vet ./...
-- ./hack/check_license.sh
-- ./hack/check_error_case.sh
-# Make sure repo is in clean state
-- git diff --exit-code
+- sudo pip install ansible
 
 after_success:
 - echo 'Build succeeded, operator was generated, memcached operator is running on $CLUSTER, and unit/integration tests pass'
