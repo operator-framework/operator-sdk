@@ -32,12 +32,10 @@ import (
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
-
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 func NewLocalCmd() *cobra.Command {
@@ -65,21 +63,23 @@ var (
 )
 
 const (
-	gocmd             = "go"
-	run               = "run"
-	cmd               = "cmd"
-	main              = "main.go"
-	defaultConfigPath = ".kube/config"
+	gocmd               = "go"
+	run                 = "run"
+	cmd                 = "cmd"
+	main                = "main.go"
+	defaultConfigPath   = ".kube/config"
+	goOperatorType      = "go"
+	ansibleOperatorType = "ansible"
 )
 
 func upLocalFunc(cmd *cobra.Command, args []string) {
 	mustKubeConfig()
 	cmdutil.MustInProjectRoot()
 	switch cmdutil.GetOperatorType() {
-	case "go":
+	case goOperatorType:
 		c := cmdutil.GetConfig()
 		upLocal(c.ProjectName)
-	case "ansible":
+	case ansibleOperatorType:
 		upLocalAnsible()
 	default:
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to determine operator type"))

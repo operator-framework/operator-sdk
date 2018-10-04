@@ -29,8 +29,12 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-const configYaml = "./config/config.yaml"
-const tmpDockerfile = "./tmp/build/Dockerfile"
+const (
+	configYaml          = "./config/config.yaml"
+	tmpDockerfile       = "./tmp/build/Dockerfile"
+	goOperatorType      = "go"
+	ansibleOperatorType = "ansible"
+)
 
 // MustInProjectRoot checks if the current dir is the project root.
 func MustInProjectRoot() {
@@ -82,7 +86,7 @@ func GetOperatorType() string {
 	// Assuming that if config/config.yaml exists then this is a Go operator
 	_, err := os.Stat(configYaml)
 	if err != nil && os.IsNotExist(err) {
-		return "ansible"
+		return ansibleOperatorType
 	}
-	return "go"
+	return goOperatorType
 }
