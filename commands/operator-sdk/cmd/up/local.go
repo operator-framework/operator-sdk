@@ -16,18 +16,27 @@ package up
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"os/signal"
 	"os/user"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
 	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
+	ansibleOperator "github.com/operator-framework/operator-sdk/pkg/ansible/operator"
+	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
+	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -66,8 +75,9 @@ const (
 func upLocalFunc(cmd *cobra.Command, args []string) {
 	mustKubeConfig()
 	cmdutil.MustInProjectRoot()
-	c := cmdutil.GetConfig()
-	upLocal(c.ProjectName)
+	//c := cmdutil.GetConfig()
+	//upLocal(c.ProjectName)
+	upLocalAnsible()
 }
 
 // mustKubeConfig checks if the kubeconfig file exists.
@@ -111,4 +121,38 @@ func upLocal(projectName string) {
 	if err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to run operator locally: %v", err))
 	}
+}
+
+func upLocalAnsible() {
+	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	printVersion()
+	done := make(chan error)
+
+	// start the proxy
+	proxy.RunProxy(done, proxy.Options{
+		Address:    "localhost",
+		Port:       8888,
+		KubeConfig: mgr.GetConfig(),
+	})
+
+	// start the operator
+	go ansibleOperator.RunSDK(done, mgr)
+
+	// wait for either to finish
+	err = <-done
+	if err == nil {
+		logrus.Info("Exiting")
+	} else {
+		logrus.Fatal(err.Error())
+	}
+}
+
+func printVersion() {
+	logrus.Infof("Go Version: %s", runtime.Version())
+	logrus.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
+	logrus.Infof("operator-sdk Version: %v", sdkVersion.Version)
 }
