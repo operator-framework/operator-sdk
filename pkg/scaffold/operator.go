@@ -43,8 +43,7 @@ func (r *operator) Render(w io.Writer) error {
 	return t.Execute(w, r.in)
 }
 
-const operatorTemplate = `
-apiVersion: apps/v1
+const operatorTemplate = `apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{.ProjectName}}
