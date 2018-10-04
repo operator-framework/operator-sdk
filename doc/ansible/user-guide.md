@@ -163,11 +163,13 @@ Running as a pod inside a Kubernetes cluster is preferred for production use.
 Build the memcached-operator image and push it to a registry:
 ```
 $ operator-sdk build quay.io/example/memcached-operator:v0.0.1
-$ sed -i 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
 $ docker push quay.io/example/memcached-operator:v0.0.1
 ```
 
-Kubernetes deployment manifests are generated in `deploy/operator.yaml`. The deployment image is set to the container image specified above.
+Kubernetes deployment manifests are generated in `deploy/operator.yaml`. The deployment image in this file needs to be modified from the placeholder `REPLACE_IMAGE` to the previous built image. To do this run:
+```
+$ sed -i 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
+```
 
 Deploy the memcached-operator:
 
@@ -192,7 +194,8 @@ This method is preferred during the development cycle to speed up deployment and
 
 **Note**: Ensure that [Ansible Runner][ansible_runner_tool] and [Ansible Runner HTTP Plugin][ansible_runner_http_plugin] is installed or else you will see unexpected errors from Ansible Runner when a Custom Resource is created.
 
-It is also important that the `role` path referenced in `watches.yaml` exists on your machine. Since we are normally used to using a container where the Role is put on disk for us, we need to manually copy our role to a path expected by Ansible.
+It is also important that the `role` path referenced in `watches.yaml` exists on your machine. Since we are normally used to using a container where the Role is put on disk for us, we need to manually copy our role to the configured Ansible Roles path (e.g `/etc/ansible/roles`.
+
 Run the operator locally with the default kubernetes config file present at `$HOME/.kube/config`:
 
 ```sh
