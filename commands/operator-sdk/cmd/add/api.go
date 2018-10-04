@@ -127,7 +127,7 @@ func apiRun(cmd *cobra.Command, args []string) {
 
 	// scaffold pkg/apis/<group>/<version>/doc.go
 	filePath = filepath.Join(pkgApisDir, "doc.go")
-	codeGen = scaffold.NewDocCodegen(&scaffold.DocInput{ProjectPath: projectPath, Resource: r})
+	codeGen = scaffold.NewDocCodegen(&scaffold.DocInput{Resource: r})
 	buf = &bytes.Buffer{}
 	if err := codeGen.Render(buf); err != nil {
 		log.Fatalf("failed to render the template for (%v): %v", filePath, err)
