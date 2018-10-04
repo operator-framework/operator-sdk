@@ -85,7 +85,7 @@ func newFunc(cmd *cobra.Command, args []string) {
 	parse(args)
 	mustBeNewProject()
 	verifyFlags()
-	g := generator.NewGenerator(apiVersion, kind, operatorType, projectName, repoPath(operatorType), generatePlaybook)
+	g := generator.NewGenerator(apiVersion, kind, operatorType, projectName, repoPath(), generatePlaybook)
 	err := g.Render()
 	if err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to create project %v: %v", projectName, err))
@@ -122,10 +122,10 @@ func mustBeNewProject() {
 
 // repoPath checks if this project's repository path is rooted under $GOPATH and returns project's repository path.
 // repoPath field on generator is used primarily in generation of Go operator. For Ansible we will set it to cwd
-func repoPath(operatorType string) string {
+func repoPath() string {
 	// We only care about GOPATH constraint checks if we are a Go operator
 	wd := mustGetwd()
-	if isGoOperator(operatorType) {
+	if operatorType == goOperatorType {
 		gp := os.Getenv(gopath)
 		if len(gp) == 0 {
 			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("$GOPATH env not set"))
@@ -202,11 +202,4 @@ func initGit() {
 	execCmd(os.Stdout, "git", "add", "--all")
 	execCmd(os.Stdout, "git", "commit", "-q", "-m", "INITIAL COMMIT")
 	fmt.Fprintln(os.Stdout, "Run git init done")
-}
-
-func isGoOperator(operatorType string) bool {
-	if operatorType == "go" {
-		return true
-	}
-	return false
 }
