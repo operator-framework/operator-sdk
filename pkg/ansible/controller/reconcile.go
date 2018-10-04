@@ -70,14 +70,42 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		return reconcile.Result{}, nil
 	}
 
-	s := u.Object["spec"]
-	_, ok := s.(map[string]interface{})
+	spec := u.Object["spec"]
+	_, ok := spec.(map[string]interface{})
 	if !ok {
-		logrus.Warnf("spec was not found")
+		logrus.Debugf("spec was not found")
 		u.Object["spec"] = map[string]interface{}{}
-		r.Client.Update(context.TODO(), u)
+		err = r.Client.Update(context.TODO(), u)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
 		return reconcile.Result{Requeue: true}, nil
 	}
+	status := u.Object["status"]
+	_, ok = status.(map[string]interface{})
+	if !ok {
+		logrus.Debugf("status was not found")
+		u.Object["status"] = map[string]interface{}{}
+		err = r.Client.Update(context.TODO(), u)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+		return reconcile.Result{Requeue: true}, nil
+	}
+
+	// If status is an empty map we can assume CR was just created
+	if len(u.Object["status"].(map[string]interface{})) == 0 {
+		logrus.Debugf("Setting phase status to %v", StatusPhaseCreating)
+		u.Object["status"] = ResourceStatus{
+			Phase: StatusPhaseCreating,
+		}
+		err = r.Client.Update(context.TODO(), u)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+		return reconcile.Result{Requeue: true}, nil
+	}
+
 	ownerRef := metav1.OwnerReference{
 		APIVersion: u.GetAPIVersion(),
 		Kind:       u.GetKind(),

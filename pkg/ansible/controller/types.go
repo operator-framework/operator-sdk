@@ -19,7 +19,10 @@ import (
 )
 
 const (
-	host = "localhost"
+	host                = "localhost"
+	StatusPhaseCreating = "Creating"
+	StatusPhaseRunning  = "Running"
+	StatusPhaseFailed   = "Failed"
 )
 
 type Status struct {
@@ -96,6 +99,7 @@ func NewStatusFromMap(sm map[string]interface{}) Status {
 
 type ResourceStatus struct {
 	Status         `json:",inline"`
+	Phase          string   `json:"phase"`
 	FailureMessage string   `json:"reason,omitempty"`
 	History        []Status `json:"history,omitempty"`
 }
@@ -103,6 +107,7 @@ type ResourceStatus struct {
 func UpdateResourceStatus(sm map[string]interface{}, je eventapi.StatusJobEvent) (bool, ResourceStatus) {
 	newStatus := NewStatusFromStatusJobEvent(je)
 	oldStatus := NewStatusFromMap(sm)
+	phase := StatusPhaseRunning
 	// Don't update the status if new status and old status are equal.
 	if IsStatusEqual(newStatus, oldStatus) {
 		return false, ResourceStatus{}
@@ -117,9 +122,15 @@ func UpdateResourceStatus(sm map[string]interface{}, je eventapi.StatusJobEvent)
 			history = append(history, NewStatusFromMap(ma))
 		}
 	}
+
+	if newStatus.Failures > 0 {
+		phase = StatusPhaseFailed
+	}
+
 	history = append(history, oldStatus)
 	return true, ResourceStatus{
 		Status:  newStatus,
+		Phase:   phase,
 		History: history,
 	}
 }
