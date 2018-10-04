@@ -121,20 +121,25 @@ func mustBeNewProject() {
 }
 
 // repoPath checks if this project's repository path is rooted under $GOPATH and returns project's repository path.
+// repoPath field on generator is used primarily in generation of Go operator. For Ansible we will set it to cwd
 func repoPath() string {
-	gp := os.Getenv(gopath)
-	if len(gp) == 0 {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("$GOPATH env not set"))
-	}
+	// We only care about GOPATH constraint checks if we are a Go operator
 	wd := mustGetwd()
-	// check if this project's repository path is rooted under $GOPATH
-	if !strings.HasPrefix(wd, gp) {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("project's repository path (%v) is not rooted under GOPATH (%v)", wd, gp))
+	if operatorType == goOperatorType {
+		gp := os.Getenv(gopath)
+		if len(gp) == 0 {
+			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("$GOPATH env not set"))
+		}
+		// check if this project's repository path is rooted under $GOPATH
+		if !strings.HasPrefix(wd, gp) {
+			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("project's repository path (%v) is not rooted under GOPATH (%v)", wd, gp))
+		}
+		// compute the repo path by stripping "$GOPATH/src/" from the path of the current directory.
+		rp := filepath.Join(string(wd[len(filepath.Join(gp, src)):]), projectName)
+		// strip any "/" prefix from the repo path.
+		return strings.TrimPrefix(rp, string(filepath.Separator))
 	}
-	// compute the repo path by stripping "$GOPATH/src/" from the path of the current directory.
-	rp := filepath.Join(string(wd[len(filepath.Join(gp, src)):]), projectName)
-	// strip any "/" prefix from the repo path.
-	return strings.TrimPrefix(rp, string(filepath.Separator))
+	return wd
 }
 
 func verifyFlags() {
