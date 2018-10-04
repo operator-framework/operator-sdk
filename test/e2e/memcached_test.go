@@ -16,9 +16,7 @@ package e2e
 
 import (
 	"bytes"
-	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -69,19 +67,9 @@ func TestMemcached(t *testing.T) {
 	ctx.AddFinalizerFn(func() error { return os.RemoveAll(path.Join(gopath, "/src/github.com/example-inc/memcached-operator")) })
 
 	os.Chdir("memcached-operator")
-	handlerFile, err := os.Create("pkg/stub/handler.go")
+	cmdOut, err = exec.Command("cp", "-a", path.Join(gopath, "/src/github.com/operator-framework/operator-sdk/example/memcached-operator/handler.go.tmpl"), "pkg/stub/handler.go").CombinedOutput()
 	if err != nil {
-		t.Fatal(err)
-	}
-	ctx.AddFinalizerFn(func() error { return handlerFile.Close() })
-	handlerTemplate, err := http.Get("https://raw.githubusercontent.com/operator-framework/operator-sdk/master/example/memcached-operator/handler.go.tmpl")
-	if err != nil {
-		t.Fatal(err)
-	}
-	ctx.AddFinalizerFn(func() error { return handlerTemplate.Body.Close() })
-	_, err = io.Copy(handlerFile, handlerTemplate.Body)
-	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("could not copy memcached example to to pkg/stub/handler.go: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 	memcachedTypesFile, err := ioutil.ReadFile("pkg/apis/cache/v1alpha1/types.go")
 	if err != nil {
