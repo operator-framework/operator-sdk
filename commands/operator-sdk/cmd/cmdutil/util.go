@@ -74,3 +74,15 @@ func GetCurrPkg() string {
 	currPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
 	return currPkg
 }
+
+// GetOperatorType returns type of operator is in cwd
+// This function should be called after verifying the user is in project root
+// e.g: "go", "ansible"
+func GetOperatorType() string {
+	// Assuming that if config/config.yaml exists then this is a Go operator
+	_, err := os.Stat(configYaml)
+	if err != nil && os.IsNotExist(err) {
+		return "ansible"
+	}
+	return "go"
+}

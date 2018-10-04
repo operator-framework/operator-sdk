@@ -75,9 +75,15 @@ const (
 func upLocalFunc(cmd *cobra.Command, args []string) {
 	mustKubeConfig()
 	cmdutil.MustInProjectRoot()
-	//c := cmdutil.GetConfig()
-	//upLocal(c.ProjectName)
-	upLocalAnsible()
+	switch cmdutil.GetOperatorType() {
+	case "go":
+		c := cmdutil.GetConfig()
+		upLocal(c.ProjectName)
+	case "ansible":
+		upLocalAnsible()
+	default:
+		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to determine operator type"))
+	}
 }
 
 // mustKubeConfig checks if the kubeconfig file exists.
