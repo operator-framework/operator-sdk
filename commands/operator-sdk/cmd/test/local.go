@@ -68,7 +68,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	}
 	// if no namespaced manifest path is given, combine deploy/sa.yaml, deploy/rbac.yaml and deploy/operator.yaml
 	if tlConfig.namespacedManPath == "" {
-		err := os.Mkdir("deploy/test", os.FileMode(defaultDirFileMode))
+		err := os.MkdirAll("deploy/test", os.FileMode(defaultDirFileMode))
 		if err != nil {
 			log.Fatalf("could not create deploy/test: %v", err)
 		}
@@ -114,7 +114,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 		}()
 	}
 	if tlConfig.globalManPath == "" {
-		err := os.Mkdir("deploy/test", os.FileMode(defaultDirFileMode))
+		err := os.MkdirAll("deploy/test", os.FileMode(defaultDirFileMode))
 		if err != nil {
 			log.Fatalf("could not create deploy/test: %v", err)
 		}
