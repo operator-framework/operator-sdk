@@ -15,15 +15,14 @@
 package generate
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
-	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
 
 	"github.com/spf13/cobra"
 )
@@ -45,7 +44,7 @@ to comply with kube-API requirements.
 
 func k8sFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 0 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("k8s command doesn't accept any arguments."))
+		log.Fatalf("k8s command doesn't accept any arguments.")
 	}
 	K8sCodegen()
 }
@@ -57,7 +56,7 @@ func K8sCodegen() {
 	apisPkg := filepath.Join(repoPkg, "pkg/apis")
 	groupVersions, err := parseGroupVersions()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to perform code-generation: %v", err))
+		log.Fatalf("failed to perform code-generation: %v", err)
 	}
 
 	fmt.Fprintf(os.Stdout, "Running code-generation for custom resource group versions: [%s]\n", groupVersions)
@@ -74,7 +73,7 @@ func K8sCodegen() {
 	}
 	out, err := exec.Command(genGroupsCmd, args...).CombinedOutput()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to perform code-generation: (%v)", string(out)))
+		log.Fatalf("failed to perform code-generation: (%v)", string(out))
 	}
 	fmt.Fprintln(os.Stdout, string(out))
 }
