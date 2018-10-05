@@ -32,8 +32,7 @@ func (s *Operator) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
-const operatorTmpl = `
-apiVersion: apps/v1
+const operatorTmpl = `apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{.ProjectName}}

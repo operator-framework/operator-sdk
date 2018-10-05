@@ -151,6 +151,6 @@ func initGit() {
 	fmt.Fprintln(os.Stdout, "Run git init ...")
 	execCmd(os.Stdout, "git", "init")
 	execCmd(os.Stdout, "git", "add", "--all")
-	execCmd(nil, "git", "commit", "-m", "INITIAL COMMIT")
+	execCmd(os.Stdout, "git", "commit", "-q", "-m", "INITIAL COMMIT")
 	fmt.Fprintln(os.Stdout, "Run git init done")
 }
