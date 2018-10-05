@@ -178,9 +178,9 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	o, err := dbcmd.CombinedOutput()
 	if err != nil {
 		if enableTests {
-			log.Fatalf("failed to build intermediate image for %s image: (%s)", image, string(o))
+			log.Fatalf("failed to build intermediate image for %s image: %v (%s)", image, err, string(o))
 		} else {
-			log.Fatalf("failed to output build image %s: (%s)", image, string(o))
+			log.Fatalf("failed to output build image %s: %v (%s)", image, err, string(o))
 		}
 	}
 	fmt.Fprintln(os.Stdout, string(o))

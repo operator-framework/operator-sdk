@@ -211,6 +211,8 @@ func updateRoleForResource(r *scaffold.Resource, fullProjectPath string) error {
 		// create a new apiGroup if not found.
 		if !apiGroupFound {
 			pr.APIGroups = []string{r.FullGroup}
+			// Using "*" to allow access to the resource and all its subresources e.g "memcacheds" and "memcacheds/finalizers"
+			// https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
 			pr.Resources = []string{"*"}
 			pr.Verbs = []string{"*"}
 			role.Rules = append(role.Rules, *pr)

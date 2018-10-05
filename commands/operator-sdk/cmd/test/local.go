@@ -23,7 +23,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
 	"github.com/spf13/cobra"
@@ -65,11 +64,14 @@ func NewTestLocalCmd() *cobra.Command {
 
 func testLocalFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("operator-sdk test local requires exactly 1 argument"))
+		log.Fatalf("operator-sdk test local requires exactly 1 argument")
 	}
 	// if no namespaced manifest path is given, combine deploy/sa.yaml, deploy/rbac.yaml and deploy/operator.yaml
 	if tlConfig.namespacedManPath == "" {
-		os.Mkdir("deploy/test", os.FileMode(defaultDirFileMode))
+		err := os.Mkdir("deploy/test", os.FileMode(defaultDirFileMode))
+		if err != nil {
+			log.Fatalf("could not create deploy/test: %v", err)
+		}
 		tlConfig.namespacedManPath = "deploy/test/namespace-manifests.yaml"
 
 		// TODO: re-enable sa creation once that's added to the refactor branch
@@ -112,7 +114,10 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 		}()
 	}
 	if tlConfig.globalManPath == "" {
-		os.Mkdir("deploy/test", os.FileMode(defaultDirFileMode))
+		err := os.Mkdir("deploy/test", os.FileMode(defaultDirFileMode))
+		if err != nil {
+			log.Fatalf("could not create deploy/test: %v", err)
+		}
 		tlConfig.globalManPath = "deploy/test/global-manifests.yaml"
 		files, err := ioutil.ReadDir("deploy/crds")
 		if err != nil {
@@ -164,14 +169,14 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	dc.Stderr = os.Stderr
 	err := dc.Run()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to exec `go %s`: %v", strings.Join(testArgs, " "), err))
+		log.Fatalf("failed to exec `go %s`: %v", strings.Join(testArgs, " "), err)
 	}
 }
 
 func mustGetwd() string {
 	wd, err := os.Getwd()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to determine the full path of the current directory: %v", err))
+		log.Fatalf("failed to determine the full path of the current directory: %v", err)
 	}
 	return wd
 }
