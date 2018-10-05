@@ -29,3 +29,7 @@
 [[constraint]]
   name = "sigs.k8s.io/controller-runtime"
   version = "v0.1.4"
+
+[[override]]
+  name = "gopkg.in/fsnotify.v1"
+  source = "gopkg.in/fsnotify/fsnotify.v1"
