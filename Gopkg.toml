@@ -30,6 +30,8 @@
   name = "sigs.k8s.io/controller-runtime"
   version = "v0.1.4"
 
+# See issue https://github.com/golang/dep/issues/1799 for why this workaround
+# is needed.
 [[override]]
   name = "gopkg.in/fsnotify.v1"
   source = "gopkg.in/fsnotify/fsnotify.v1"
