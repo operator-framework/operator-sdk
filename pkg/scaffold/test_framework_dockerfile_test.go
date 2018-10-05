@@ -21,22 +21,23 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-func TestVersion(t *testing.T) {
-	codegen := NewVersionCoden()
+func TestTestFrameworkDockerfile(t *testing.T) {
+	codegen := NewTestFrameworkDockerfileCodegen(&TestFrameworkDockerfileInput{ProjectName: appProjectName})
 	buf := &bytes.Buffer{}
 	if err := codegen.Render(buf); err != nil {
 		t.Fatal(err)
 	}
-	if versionExp != buf.String() {
+	if testFrameworkDockerfileExp != buf.String() {
 		dmp := diffmatchpatch.New()
-		diffs := diffmatchpatch.New().DiffMain(versionExp, buf.String(), false)
+		diffs := diffmatchpatch.New().DiffMain(testFrameworkDockerfileExp, buf.String(), false)
 		t.Fatalf("expected vs actual differs. Red text is missing and green text is extra.\n%v", dmp.DiffPrettyText(diffs))
 	}
 }
 
-const versionExp = `package version
-
-var (
-	Version = "0.0.1"
-)
+const testFrameworkDockerfileExp = `ARG BASEIMAGE
+FROM ${BASEIMAGE}
+ADD build/_output/bin/app-operator-test /usr/local/bin/app-operator-test
+ARG NAMESPACEDMAN
+ADD $NAMESPACEDMAN /namespaced.yaml
+ADD build/test-framework/go-test.sh /go-test.sh
 `

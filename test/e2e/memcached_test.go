@@ -33,9 +33,6 @@ import (
 
 const (
 	filemode = int(0664)
-	// amount of lines to remove from end of types file to allow us to fill in the
-	// blank structs
-	typesFileTrimAmount = 7
 )
 
 func TestMemcached(t *testing.T) {
@@ -58,29 +55,56 @@ func TestMemcached(t *testing.T) {
 	t.Log("Creating new operator project")
 	cmdOut, err := exec.Command("operator-sdk",
 		"new",
-		"memcached-operator",
-		"--api-version=cache.example.com/v1alpha1",
-		"--kind=Memcached").CombinedOutput()
+		"memcached-operator").CombinedOutput()
 	if err != nil {
 		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 	ctx.AddFinalizerFn(func() error { return os.RemoveAll(path.Join(gopath, "/src/github.com/example-inc/memcached-operator")) })
 
 	os.Chdir("memcached-operator")
-	cmdOut, err = exec.Command("cp", "-a", path.Join(gopath, "/src/github.com/operator-framework/operator-sdk/example/memcached-operator/handler.go.tmpl"), "pkg/stub/handler.go").CombinedOutput()
+	cmdOut, err = exec.Command("operator-sdk",
+		"add",
+		"api",
+		"--api-version=cache.example.com/v1alpha1",
+		"--kind=Memcached").CombinedOutput()
 	if err != nil {
-		t.Fatalf("could not copy memcached example to to pkg/stub/handler.go: %v\nCommand Output:\n%v", err, string(cmdOut))
+		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
-	memcachedTypesFile, err := ioutil.ReadFile("pkg/apis/cache/v1alpha1/types.go")
+	cmdOut, err = exec.Command("operator-sdk",
+		"add",
+		"controller",
+		"--api-version=cache.example.com/v1alpha1",
+		"--kind=Memcached").CombinedOutput()
+	if err != nil {
+		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+	}
+
+	cmdOut, err = exec.Command("cp", "-a", path.Join(gopath, "/src/github.com/operator-framework/operator-sdk/example/memcached-operator/memcached_controller.go.tmpl"),
+		"pkg/controller/memcached/memcached_controller.go").CombinedOutput()
+	if err != nil {
+		t.Fatalf("could not copy memcached example to to pkg/controller/memcached/memcached_controller.go: %v\nCommand Output:\n%v", err, string(cmdOut))
+	}
+	memcachedTypesFile, err := ioutil.ReadFile("pkg/apis/cache/v1alpha1/memcached_types.go")
 	if err != nil {
 		t.Fatal(err)
 	}
 	memcachedTypesFileLines := bytes.Split(memcachedTypesFile, []byte("\n"))
-	memcachedTypesFileLines = memcachedTypesFileLines[:len(memcachedTypesFileLines)-typesFileTrimAmount]
-	memcachedTypesFileLines = append(memcachedTypesFileLines, []byte("type MemcachedSpec struct {	Size int32 `json:\"size\"`}"))
-	memcachedTypesFileLines = append(memcachedTypesFileLines, []byte("type MemcachedStatus struct {Nodes []string `json:\"nodes\"`}\n"))
-	os.Remove("pkg/apis/cache/v1alpha1/types.go")
-	err = ioutil.WriteFile("pkg/apis/cache/v1alpha1/types.go", bytes.Join(memcachedTypesFileLines, []byte("\n")), os.FileMode(filemode))
+	for lineNum, line := range memcachedTypesFileLines {
+		if strings.Contains(string(line), "type MemcachedSpec struct {") {
+			memcachedTypesFileLinesIntermediate := append(memcachedTypesFileLines[:lineNum+1], []byte("\tSize int32 `json:\"size\"`"))
+			memcachedTypesFileLines = append(memcachedTypesFileLinesIntermediate, memcachedTypesFileLines[lineNum+3:]...)
+			break
+		}
+	}
+	for lineNum, line := range memcachedTypesFileLines {
+		if strings.Contains(string(line), "type MemcachedStatus struct {") {
+			memcachedTypesFileLinesIntermediate := append(memcachedTypesFileLines[:lineNum+1], []byte("\tNodes []string `json:\"nodes\"`"))
+			memcachedTypesFileLines = append(memcachedTypesFileLinesIntermediate, memcachedTypesFileLines[lineNum+3:]...)
+			break
+		}
+	}
+	os.Remove("pkg/apis/cache/v1alpha1/memcached_types.go")
+	err = ioutil.WriteFile("pkg/apis/cache/v1alpha1/memcached_types.go", bytes.Join(memcachedTypesFileLines, []byte("\n")), os.FileMode(filemode))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +167,7 @@ func TestMemcached(t *testing.T) {
 	}
 
 	// create crd
-	crdYAML, err := ioutil.ReadFile("deploy/crd.yaml")
+	crdYAML, err := ioutil.ReadFile("deploy/crds/cache_v1alpha1_memcached_crd.yaml")
 	err = ctx.CreateFromYAML(crdYAML)
 	if err != nil {
 		t.Fatal(err)
@@ -292,27 +316,33 @@ func MemcachedCluster(t *testing.T) {
 		}
 	}
 
-	// create sa
-	saYAML, err := ioutil.ReadFile("deploy/sa.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = ctx.CreateFromYAML(saYAML)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("Created sa")
-
-	// create rbac
-	rbacYAML, err := ioutil.ReadFile("deploy/rbac.yaml")
-	rbacYAMLSplit := bytes.Split(rbacYAML, []byte("\n---\n"))
-	for _, rbacSpec := range rbacYAMLSplit {
-		err = ctx.CreateFromYAML(rbacSpec)
+	// TODO: re-enable sa creation once that's added to the refactor branch
+	/*
+		// create sa
+		saYAML, err := ioutil.ReadFile("deploy/sa.yaml")
 		if err != nil {
 			t.Fatal(err)
 		}
+		err = ctx.CreateFromYAML(saYAML)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log("Created sa")
+	*/
+
+	// create rbac
+	roleYAML, err := ioutil.ReadFile("deploy/role.yaml")
+	err = ctx.CreateFromYAML(roleYAML)
+	if err != nil {
+		t.Fatal(err)
 	}
-	t.Log("Created rbac")
+	t.Log("Created role")
+	roleBindingYAML, err := ioutil.ReadFile("deploy/role_binding.yaml")
+	err = ctx.CreateFromYAML(roleBindingYAML)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Created role_binding")
 
 	// create operator
 	operatorYAML, err = ioutil.ReadFile("deploy/operator.yaml")
@@ -346,24 +376,33 @@ func MemcachedClusterTest(t *testing.T) {
 	ctx := f.NewTestCtx(t)
 	defer ctx.Cleanup(t)
 
-	// create sa
-	saYAML, err := ioutil.ReadFile("deploy/sa.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = ctx.CreateFromYAML(saYAML)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("Created sa")
+	// TODO: re-enable sa creation once that's added to the refactor branch
+	/*
+		// create sa
+		saYAML, err := ioutil.ReadFile("deploy/sa.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = ctx.CreateFromYAML(saYAML)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log("Created sa")
+	*/
 
 	// create rbac
-	rbacYAML, err := ioutil.ReadFile("deploy/rbac.yaml")
-	err = ctx.CreateFromYAML(rbacYAML)
+	roleYAML, err := ioutil.ReadFile("deploy/role.yaml")
+	err = ctx.CreateFromYAML(roleYAML)
 	if err != nil {
-		t.Fatalf("failed to create rbac: %v", err)
+		t.Fatal(err)
 	}
-	t.Log("Created rbac")
+	t.Log("Created role")
+	roleBindingYAML, err := ioutil.ReadFile("deploy/role_binding.yaml")
+	err = ctx.CreateFromYAML(roleBindingYAML)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Created role_binding")
 
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
@@ -372,7 +411,9 @@ func MemcachedClusterTest(t *testing.T) {
 	cmdOut, err := exec.Command("operator-sdk", "test", "cluster", *f.ImageName,
 		"--namespace", namespace,
 		"--image-pull-policy", "Never",
-		"--service-account", "memcached-operator").CombinedOutput()
+	// TODO: re-enable service account
+	//"--service-account", "memcached-operator"
+	).CombinedOutput()
 	if err != nil {
 		t.Fatalf("in-cluster test failed: %v\nCommand Output:\n%s", err, string(cmdOut))
 	}

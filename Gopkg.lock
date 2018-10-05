@@ -688,9 +688,13 @@
     "pkg/runtime/inject",
     "pkg/runtime/log",
 <<<<<<< HEAD
+<<<<<<< HEAD
     "pkg/runtime/signals",
 =======
 >>>>>>> pkg/ansible: cherry pick ansible pkgs from master into refactor branch (#566)
+=======
+    "pkg/runtime/scheme",
+>>>>>>> *: update test framework and related changes from master (#579)
     "pkg/source",
     "pkg/source/internal",
     "pkg/webhook/admission",
@@ -754,7 +758,11 @@
     "sigs.k8s.io/controller-runtime/pkg/handler",
     "sigs.k8s.io/controller-runtime/pkg/manager",
     "sigs.k8s.io/controller-runtime/pkg/reconcile",
+<<<<<<< HEAD
 >>>>>>> pkg/ansible: cherry pick ansible pkgs from master into refactor branch (#566)
+=======
+    "sigs.k8s.io/controller-runtime/pkg/runtime/scheme",
+>>>>>>> *: update test framework and related changes from master (#579)
     "sigs.k8s.io/controller-runtime/pkg/source",
   ]
   solver-name = "gps-cdcl"

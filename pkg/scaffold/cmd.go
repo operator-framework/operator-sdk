@@ -73,7 +73,7 @@ func main() {
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
-		log.Fatalf("Failed to get watch namespace: %v", err)
+		log.Fatalf("failed to get watch namespace: %v", err)
 	}
 
 	// TODO: Expose metrics port after SDK uses controller-runtime's dynamic client

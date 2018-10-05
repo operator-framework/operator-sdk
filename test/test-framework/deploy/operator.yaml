@@ -15,7 +15,8 @@ spec:
       serviceAccountName: memcached-operator
       containers:
         - name: memcached-operator
-          image: quay.io/coreos/operator-sdk-dev:test-framework-operator
+          # Replace this with the built image name
+          image: quay.io/coreos/operator-sdk-dev:test-framework-operator-runtime
           ports:
           - containerPort: 60000
             name: metrics

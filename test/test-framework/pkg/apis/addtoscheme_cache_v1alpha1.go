@@ -12,23 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package error
+package apis
 
 import (
-	"fmt"
-	"os"
+	"github.com/operator-framework/operator-sdk/test/test-framework/pkg/apis/cache/v1alpha1"
 )
 
-const (
-	// http://tldp.org/LDP/abs/html/exitcodes.html
-	ExitSuccess = iota
-	ExitError
-	// ExitBadArgs is the exit error code for bad arguments.
-	ExitBadArgs = 128
-)
-
-// ExitWithError prints out an error code and an error string to stderr.
-func ExitWithError(code int, err error) {
-	fmt.Fprintln(os.Stderr, "Error:", err)
-	os.Exit(code)
+func init() {
+	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
+	AddToSchemes = append(AddToSchemes, v1alpha1.SchemeBuilder.AddToScheme)
 }
