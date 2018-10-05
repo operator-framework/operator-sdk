@@ -21,22 +21,20 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-func TestVersion(t *testing.T) {
-	codegen := NewVersionCoden()
+func TestGoTestScript(t *testing.T) {
+	codegen := NewGoTestScriptCodegen(&GoTestScriptInput{ProjectName: appProjectName})
 	buf := &bytes.Buffer{}
 	if err := codegen.Render(buf); err != nil {
 		t.Fatal(err)
 	}
-	if versionExp != buf.String() {
+	if goTestScriptExp != buf.String() {
 		dmp := diffmatchpatch.New()
-		diffs := diffmatchpatch.New().DiffMain(versionExp, buf.String(), false)
+		diffs := diffmatchpatch.New().DiffMain(goTestScriptExp, buf.String(), false)
 		t.Fatalf("expected vs actual differs. Red text is missing and green text is extra.\n%v", dmp.DiffPrettyText(diffs))
 	}
 }
 
-const versionExp = `package version
+const goTestScriptExp = `#!/bin/sh
 
-var (
-	Version = "0.0.1"
-)
+app-operator-test -test.parallel=1 -test.failfast -root=/ -kubeconfig=incluster -namespacedMan=namespaced.yaml -test.v
 `

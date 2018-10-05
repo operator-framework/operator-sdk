@@ -67,7 +67,7 @@ func NewResource(apiVersion, kind string) (*Resource, error) {
 // Validate defaults and checks the Resource values to make sure they are valid.
 func (r *Resource) Validate() error {
 	if len(r.APIVersion) == 0 {
-		return errors.New("APIVersion cannot be empty")
+		return errors.New("api-version cannot be empty")
 	}
 
 	r.FullGroup = strings.Split(r.APIVersion, "/")[0]

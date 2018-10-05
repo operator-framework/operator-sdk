@@ -15,28 +15,35 @@
 package scaffold
 
 import (
-	"bytes"
-	"testing"
+	"io"
 
-	"github.com/sergi/go-diff/diffmatchpatch"
+	"text/template"
 )
 
-func TestVersion(t *testing.T) {
-	codegen := NewVersionCoden()
-	buf := &bytes.Buffer{}
-	if err := codegen.Render(buf); err != nil {
-		t.Fatal(err)
-	}
-	if versionExp != buf.String() {
-		dmp := diffmatchpatch.New()
-		diffs := diffmatchpatch.New().DiffMain(versionExp, buf.String(), false)
-		t.Fatalf("expected vs actual differs. Red text is missing and green text is extra.\n%v", dmp.DiffPrettyText(diffs))
-	}
+type goTestScript struct {
+	in *GoTestScriptInput
 }
 
-const versionExp = `package version
+func NewGoTestScriptCodegen(in *GoTestScriptInput) Codegen {
+	return &goTestScript{in: in}
+}
 
-var (
-	Version = "0.0.1"
-)
+type GoTestScriptInput struct {
+	// ProjectName is the name of the operator project.
+	ProjectName string
+}
+
+func (d *goTestScript) Render(w io.Writer) error {
+	t := template.New("go_test_script.go")
+	t, err := t.Parse(goTestScriptTmpl)
+	if err != nil {
+		return err
+	}
+
+	return t.Execute(w, d.in)
+}
+
+const goTestScriptTmpl = `#!/bin/sh
+
+{{.ProjectName}}-test -test.parallel=1 -test.failfast -root=/ -kubeconfig=incluster -namespacedMan=namespaced.yaml -test.v
 `

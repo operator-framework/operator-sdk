@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 set -e
 
 go test ./commands/...
@@ -11,7 +10,7 @@ cd test/test-framework
 operator-sdk test local .
 
 # test operator-sdk test flags
-operator-sdk test local . --global-manifest deploy/crd.yaml --namespaced-manifest deploy/namespace-init.yaml --go-test-flags "-parallel 1" --kubeconfig $HOME/.kube/config
+operator-sdk test local . --global-manifest deploy/crds/cache_v1alpha1_memcached_crd.yaml --namespaced-manifest deploy/namespace-init.yaml --go-test-flags "-parallel 1" --kubeconfig $HOME/.kube/config
 
 # test operator-sdk test local single namespace mode
 kubectl create namespace test-memcached
