@@ -69,22 +69,17 @@ const (
 	main              = "main.go"
 	defaultConfigPath = ".kube/config"
 )
-const (
-	goOperatorType cmdutil.OperatorType = iota
-	ansibleOperatorType
-)
 
 func upLocalFunc(cmd *cobra.Command, args []string) {
 	mustKubeConfig()
 	cmdutil.MustInProjectRoot()
 	switch cmdutil.GetOperatorType() {
-	case goOperatorType:
+	case cmdutil.OperatorTypeGo:
 		c := cmdutil.GetConfig()
 		upLocal(c.ProjectName)
-	case ansibleOperatorType:
+	case cmdutil.OperatorTypeAnsible:
 		upLocalAnsible()
 	default:
-		fmt.Printf("IOTA: %v\n\n", cmdutil.GetOperatorType())
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to determine operator type"))
 	}
 }

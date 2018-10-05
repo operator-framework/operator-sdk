@@ -37,8 +37,8 @@ const (
 	tmpDockerfile = "./tmp/build/Dockerfile"
 )
 const (
-	goOperatorType OperatorType = iota
-	ansibleOperatorType
+	OperatorTypeGo OperatorType = iota
+	OperatorTypeAnsible
 )
 
 // MustInProjectRoot checks if the current dir is the project root.
@@ -91,7 +91,7 @@ func GetOperatorType() OperatorType {
 	// Assuming that if Gopkg.toml exists then this is a Go operator
 	_, err := os.Stat(gopkgToml)
 	if err != nil && os.IsNotExist(err) {
-		return ansibleOperatorType
+		return OperatorTypeAnsible
 	}
-	return goOperatorType
+	return OperatorTypeGo
 }
