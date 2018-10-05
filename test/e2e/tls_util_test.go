@@ -23,6 +23,7 @@ import (
 	framework "github.com/operator-framework/operator-sdk/test/e2e/framework"
 
 	"k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -121,7 +122,10 @@ func TestBothAppAndCATLSAssetsExist(t *testing.T) {
 	}
 }
 
-// TestOnlyAppSecretExist tests a case where the application TLS asset exists but its correspoding CA asset doesn't. In this case, CertGenerator can't genereate a new CA because it won't verify the existing application TLS cert. Therefore, CertGenerator can't proceed and returns an error to the caller.
+// TestOnlyAppSecretExist tests a case where the application TLS asset exists but its
+// correspoding CA asset doesn't. In this case, CertGenerator can't genereate a new CA because
+// it won't verify the existing application TLS cert. Therefore, CertGenerator can't proceed
+// and returns an error to the caller.
 func TestOnlyAppSecretExist(t *testing.T) {
 	f := framework.Global
 	ctx := f.NewTestCtx(t)
@@ -146,7 +150,7 @@ func TestOnlyAppSecretExist(t *testing.T) {
 	}
 }
 
-// TestOnlyCAExist ensures that at the case where only the CA exists in the cluster;
+// TestOnlyCAExist tests the case where only the CA exists in the cluster;
 // GenerateCert can retrieve the CA and uses it to create a new application secret.
 func TestOnlyCAExist(t *testing.T) {
 	f := framework.Global
@@ -195,6 +199,44 @@ func TestNoneOfCaAndAppSecretExist(t *testing.T) {
 	verifyAppSecret(t, appSecret, namespace)
 	verifyCaConfigMap(t, caConfigMap, namespace)
 	verifyCASecret(t, caSecret, namespace)
+}
+
+// TestCustomCA ensures that if a user provides a custom Key and Cert and the CA and Application TLS assets
+// do not exist, the GenerateCert method can use the custom CA to generate the TLS assest.
+func TestCustomCA(t *testing.T) {
+	f := framework.Global
+	ctx := f.NewTestCtx(t)
+	defer ctx.Cleanup(t)
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cg := tlsutil.NewSDKCertGenerator(f.KubeClient)
+
+	customConfig := &tlsutil.CertConfig{
+		CertName: certName,
+		CAKey:    "testdata/ca.key",
+		CACert:   "testdata/ca.crt",
+	}
+	appSecret, _, _, err := cg.GenerateCert(newDummyCR(namespace), newAppSvc(namespace), customConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	verifyAppSecret(t, appSecret, namespace)
+
+	// ensure caConfigMap does not exist in k8s cluster.
+	_, err = framework.Global.KubeClient.CoreV1().Secrets(namespace).Get(caConfigMapAndSecretName, metav1.GetOptions{})
+	if !apiErrors.IsNotFound(err) {
+		t.Fatal(err)
+	}
+
+	// ensure caConfigMap does not exist in k8s cluster.
+	_, err = framework.Global.KubeClient.CoreV1().Secrets(namespace).Get(caConfigMapAndSecretName, metav1.GetOptions{})
+	if !apiErrors.IsNotFound(err) {
+		t.Fatal(err)
+	}
 }
 
 func verifyCASecret(t *testing.T, caSecret *v1.Secret, namespace string) {

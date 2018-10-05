@@ -15,12 +15,11 @@
 package generate
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 
-	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
 	"github.com/operator-framework/operator-sdk/pkg/generator"
 	yaml "gopkg.in/yaml.v2"
 
@@ -64,7 +63,7 @@ For example:
 
 func olmCatalogFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 0 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("olm-catalog command doesn't accept any arguments."))
+		log.Fatalf("olm-catalog command doesn't accept any arguments.")
 	}
 	verifyFlags()
 
@@ -73,23 +72,23 @@ func olmCatalogFunc(cmd *cobra.Command, args []string) {
 	c := &generator.Config{}
 	fp, err := ioutil.ReadFile(configYaml)
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to read config file %v: (%v)", configYaml, err))
+		log.Fatalf("failed to read config file %v: (%v)", configYaml, err)
 	}
 	if err = yaml.Unmarshal(fp, c); err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to unmarshal config file %v: (%v)", configYaml, err))
+		log.Fatalf("failed to unmarshal config file %v: (%v)", configYaml, err)
 	}
 
 	// Generate OLM catalog manifests
 	if err = generator.RenderOlmCatalog(c, image, version); err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to generate deploy/olm-catalog: (%v)", err))
+		log.Fatalf("failed to generate deploy/olm-catalog: (%v)", err)
 	}
 }
 
 func verifyFlags() {
 	if len(image) == 0 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--image must not have empty value"))
+		log.Fatalf("--image must not have empty value")
 	}
 	if len(version) == 0 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--version must not have empty value"))
+		log.Fatalf("--version must not have empty value")
 	}
 }

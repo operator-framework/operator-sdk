@@ -42,4 +42,5 @@ var AddToSchemes runtime.SchemeBuilder
 // AddToScheme adds all Resources to the Scheme
 func AddToScheme(s *runtime.Scheme) error {
 	return AddToSchemes.AddToScheme(s)
-}`
+}
+`

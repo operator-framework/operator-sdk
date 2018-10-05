@@ -15,8 +15,6 @@
 package cmdutil
 
 import (
-	"errors"
-	"fmt"
 	gobuild "go/build"
 	"io/ioutil"
 	"log"
@@ -24,7 +22,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
 	"github.com/operator-framework/operator-sdk/pkg/generator"
 
 	yaml "gopkg.in/yaml.v2"
@@ -54,10 +51,10 @@ func GetConfig() *generator.Config {
 	c := &generator.Config{}
 	fp, err := ioutil.ReadFile(configYaml)
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to read config file %v: (%v)", configYaml, err))
+		log.Fatalf("failed to read config file %v: (%v)", configYaml, err)
 	}
 	if err = yaml.Unmarshal(fp, c); err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to unmarshal config file %v: (%v)", configYaml, err))
+		log.Fatalf("failed to unmarshal config file %v: (%v)", configYaml, err)
 	}
 	return c
 }
@@ -73,10 +70,10 @@ func GetCurrPkg() string {
 
 	wd, err := os.Getwd()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to get working directory: (%v)", err))
+		log.Fatalf("failed to get working directory: (%v)", err)
 	}
 	if !strings.HasPrefix(filepath.Dir(wd), goSrc) {
-		cmdError.ExitWithError(cmdError.ExitError, errors.New("must run from gopath"))
+		log.Fatalf("must run from gopath")
 	}
 	currPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
 	return currPkg

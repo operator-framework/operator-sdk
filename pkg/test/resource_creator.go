@@ -27,22 +27,26 @@ import (
 )
 
 func (ctx *TestCtx) GetNamespace() (string, error) {
-	if ctx.Namespace != "" {
-		return ctx.Namespace, nil
+	if ctx.namespace != "" {
+		return ctx.namespace, nil
+	}
+	if *singleNamespace {
+		ctx.namespace = Global.Namespace
+		return ctx.namespace, nil
 	}
 	// create namespace
-	ctx.Namespace = ctx.GetID()
-	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ctx.Namespace}}
+	ctx.namespace = ctx.GetID()
+	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ctx.namespace}}
 	_, err := Global.KubeClient.CoreV1().Namespaces().Create(namespaceObj)
 	if apierrors.IsAlreadyExists(err) {
-		return "", fmt.Errorf("namespace %s already exists: %v", ctx.Namespace, err)
+		return "", fmt.Errorf("namespace %s already exists: %v", ctx.namespace, err)
 	} else if err != nil {
 		return "", err
 	}
-	ctx.AddFinalizerFn(func() error {
-		return Global.KubeClient.CoreV1().Namespaces().Delete(ctx.Namespace, metav1.NewDeleteOptions(0))
+	ctx.AddCleanupFn(func() error {
+		return Global.KubeClient.CoreV1().Namespaces().Delete(ctx.namespace, metav1.NewDeleteOptions(0))
 	})
-	return ctx.Namespace, nil
+	return ctx.namespace, nil
 }
 
 func setNamespaceYAML(yamlFile []byte, namespace string) ([]byte, error) {
@@ -55,7 +59,7 @@ func setNamespaceYAML(yamlFile []byte, namespace string) ([]byte, error) {
 	return yaml.Marshal(yamlMap)
 }
 
-func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool) error {
+func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOptions *CleanupOptions) error {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return err
@@ -67,28 +71,27 @@ func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool) error {
 			return err
 		}
 
-		obj, _, err := Global.DynamicDecoder.Decode(yamlSpec, nil, nil)
+		obj, _, err := dynamicDecoder.Decode(yamlSpec, nil, nil)
 		if err != nil {
 			return err
 		}
 
-		err = Global.DynamicClient.Create(goctx.TODO(), obj)
+		err = Global.Client.Create(goctx.TODO(), obj, cleanupOptions)
 		if skipIfExists && apierrors.IsAlreadyExists(err) {
 			continue
 		}
 		if err != nil {
 			return err
 		}
-		ctx.AddFinalizerFn(func() error { return Global.DynamicClient.Delete(goctx.TODO(), obj) })
 	}
 	return nil
 }
 
-func (ctx *TestCtx) InitializeClusterResources() error {
+func (ctx *TestCtx) InitializeClusterResources(cleanupOptions *CleanupOptions) error {
 	// create namespaced resources
 	namespacedYAML, err := ioutil.ReadFile(*Global.NamespacedManPath)
 	if err != nil {
 		return fmt.Errorf("failed to read namespaced manifest: %v", err)
 	}
-	return ctx.createFromYAML(namespacedYAML, false)
+	return ctx.createFromYAML(namespacedYAML, false, cleanupOptions)
 }
