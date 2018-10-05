@@ -15,7 +15,6 @@
 package scaffold
 
 import (
-	
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -31,7 +30,7 @@ func TestAddToScheme(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected nil error, got: (%v)", err)
 	}
-	
+
 	if addtoschemeExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := diffmatchpatch.New().DiffMain(addtoschemeExp, buf.String(), false)

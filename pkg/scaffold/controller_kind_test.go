@@ -15,7 +15,6 @@
 package scaffold
 
 import (
-	
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -31,7 +30,7 @@ func TestControllerKind(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected nil error, got: (%v)", err)
 	}
-	
+
 	if controllerKindExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := diffmatchpatch.New().DiffMain(controllerKindExp, buf.String(), false)

@@ -15,7 +15,6 @@
 package scaffold
 
 import (
-	
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -31,7 +30,7 @@ func TestCr(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected nil error, got: (%v)", err)
 	}
-	
+
 	if crExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := diffmatchpatch.New().DiffMain(crExp, buf.String(), false)

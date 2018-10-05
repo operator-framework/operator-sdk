@@ -15,7 +15,6 @@
 package scaffold
 
 import (
-	
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -27,7 +26,7 @@ func TestRole(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected nil error, got: (%v)", err)
 	}
-	
+
 	if roleExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := diffmatchpatch.New().DiffMain(roleExp, buf.String(), false)

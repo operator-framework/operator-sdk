@@ -1,10 +1,10 @@
 package scaffold
 
 import (
+	"bytes"
+	"io"
 	"log"
 	"os"
-	"io"
-	"bytes"
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"

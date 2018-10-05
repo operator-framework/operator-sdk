@@ -103,7 +103,7 @@ func (s *Scaffold) doFile(e input.File) error {
 	if err != nil {
 		return err
 	}
-	
+
 	// Ensure path is set correctly.
 	i.Path = filepath.Join(s.ProjectPath, i.Path)
 
