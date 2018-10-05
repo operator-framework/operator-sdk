@@ -69,13 +69,11 @@ required = [
 
 [[override]]
   name = "sigs.k8s.io/controller-runtime"
-  revision = "v0.1.4"
+  version = "v0.1.4"
 
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"
-  # The version rule is used for a specific release and the master branch for in between releases.
-  branch = "master"
-  # version = "=v0.0.6"
+  version = "v0.0.6"
 
 [prune]
   go-tests = true
