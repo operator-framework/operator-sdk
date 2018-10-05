@@ -15,18 +15,19 @@
 package scaffold
 
 import (
-	"bytes"
+	
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestRoleBinding(t *testing.T) {
-	codegen := NewRoleBindingCodegen(&RoleBindingInput{ProjectName: appProjectName})
-	buf := &bytes.Buffer{}
-	if err := codegen.Render(buf); err != nil {
-		t.Fatal(err)
+	s, buf := setupScaffoldAndWriter()
+	err := s.Execute(appConfig, &RoleBinding{})
+	if err != nil {
+		t.Fatalf("expected nil error, got: (%v)", err)
 	}
+	
 	if rolebindingExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := diffmatchpatch.New().DiffMain(rolebindingExp, buf.String(), false)

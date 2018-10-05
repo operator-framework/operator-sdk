@@ -15,18 +15,19 @@
 package scaffold
 
 import (
-	"bytes"
+	
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestRole(t *testing.T) {
-	codegen := NewRoleCodegen(&RoleInput{ProjectName: appProjectName})
-	buf := &bytes.Buffer{}
-	if err := codegen.Render(buf); err != nil {
-		t.Fatal(err)
+	s, buf := setupScaffoldAndWriter()
+	err := s.Execute(appConfig, &Role{})
+	if err != nil {
+		t.Fatalf("expected nil error, got: (%v)", err)
 	}
+	
 	if roleExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := diffmatchpatch.New().DiffMain(roleExp, buf.String(), false)

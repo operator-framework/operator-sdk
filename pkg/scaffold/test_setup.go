@@ -3,6 +3,8 @@ package scaffold
 import (
 	"log"
 	"os"
+	"io"
+	"bytes"
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
@@ -16,6 +18,14 @@ const (
 	appKind        = "AppService"
 )
 
+var (
+	appConfig = &input.Config{
+		Repo:        appRepo,
+		ProjectPath: mustGetImportPath(),
+		ProjectName: appProjectName,
+	}
+)
+
 func mustGetImportPath() string {
 	wd, err := os.Getwd()
 	if err != nil {
@@ -24,10 +34,11 @@ func mustGetImportPath() string {
 	return filepath.Join(wd, appRepo)
 }
 
-var (
-	appConfig = &input.Config{
-		Repo:        appRepo,
-		ProjectPath: mustGetImportPath(),
-		ProjectName: appProjectName,
-	}
-)
+func setupScaffoldAndWriter() (*Scaffold, *bytes.Buffer) {
+	buf := &bytes.Buffer{}
+	return &Scaffold{
+		GetWriter: func(_ string) (io.Writer, error) {
+			return buf, nil
+		},
+	}, buf
+}

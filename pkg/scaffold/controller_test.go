@@ -15,18 +15,19 @@
 package scaffold
 
 import (
-	"bytes"
+	
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestController(t *testing.T) {
-	codegen := NewControllerCodegen()
-	buf := &bytes.Buffer{}
-	if err := codegen.Render(appConfig, buf); err != nil {
-		t.Fatal(err)
+	s, buf := setupScaffoldAndWriter()
+	err := s.Execute(appConfig, &Controller{})
+	if err != nil {
+		t.Fatalf("expected nil error, got: (%v)", err)
 	}
+
 	if controllerExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := diffmatchpatch.New().DiffMain(controllerKindExp, buf.String(), false)

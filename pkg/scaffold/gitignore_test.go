@@ -15,18 +15,19 @@
 package scaffold
 
 import (
-	"bytes"
+	
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestGitignore(t *testing.T) {
-	codegen := NewGitignoreCodegen()
-	buf := &bytes.Buffer{}
-	if err := codegen.Render(buf); err != nil {
-		t.Fatal(err)
+	s, buf := setupScaffoldAndWriter()
+	err := s.Execute(appConfig, &Gitignore{})
+	if err != nil {
+		t.Fatalf("expected nil error, got: (%v)", err)
 	}
+	
 	if gitignoreExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := diffmatchpatch.New().DiffMain(gitignoreExp, buf.String(), false)

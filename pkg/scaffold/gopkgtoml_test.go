@@ -15,18 +15,19 @@
 package scaffold
 
 import (
-	"bytes"
+	
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestGopkgtoml(t *testing.T) {
-	codegen := NewGopkgCodegen()
-	buf := &bytes.Buffer{}
-	if err := codegen.Render(buf); err != nil {
-		t.Fatal(err)
+	s, buf := setupScaffoldAndWriter()
+	err := s.Execute(appConfig, &GopkgToml{})
+	if err != nil {
+		t.Fatalf("expected nil error, got: (%v)", err)
 	}
+	
 	if gopkgtomlExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := diffmatchpatch.New().DiffMain(gopkgtomlExp, buf.String(), false)
@@ -73,13 +74,11 @@ required = [
 
 [[override]]
   name = "sigs.k8s.io/controller-runtime"
-  revision = "v0.1.4"
+  version = "v0.1.4"
 
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"
-  # The version rule is used for a specific release and the master branch for in between releases.
-  branch = "master"
-  # version = "=v0.0.6"
+  version = "v0.0.6"
 
 [prune]
   go-tests = true

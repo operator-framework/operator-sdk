@@ -15,7 +15,7 @@
 package scaffold
 
 import (
-	"bytes"
+	
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -26,11 +26,12 @@ func TestControllerKind(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	codegen := NewControllerKindCodegen(&ControllerKindInput{Resource: r})
-	buf := &bytes.Buffer{}
-	if err = codegen.Render(appConfig, buf); err != nil {
-		t.Fatal(err)
+	s, buf := setupScaffoldAndWriter()
+	err = s.Execute(appConfig, &ControllerKind{Resource: r})
+	if err != nil {
+		t.Fatalf("expected nil error, got: (%v)", err)
 	}
+	
 	if controllerKindExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := diffmatchpatch.New().DiffMain(controllerKindExp, buf.String(), false)
@@ -167,7 +168,7 @@ func (r *ReconcileAppService) Reconcile(request reconcile.Request) (reconcile.Re
 	return reconcile.Result{}, nil
 }
 
-// newPodForCR returns a busybox pod with the same name/namespace as the cr 
+// newPodForCR returns a busybox pod with the same name/namespace as the cr
 func newPodForCR(cr *appv1alpha1.AppService) *corev1.Pod {
 	labels := map[string]string{
 		"app": cr.Name,

@@ -15,7 +15,7 @@
 package scaffold
 
 import (
-	"bytes"
+	
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -26,11 +26,12 @@ func TestCr(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	codegen := NewCrCodegen(&CrInput{Resource: r})
-	buf := &bytes.Buffer{}
-	if err := codegen.Render(buf); err != nil {
-		t.Fatal(err)
+	s, buf := setupScaffoldAndWriter()
+	err = s.Execute(appConfig, &Cr{Resource: r})
+	if err != nil {
+		t.Fatalf("expected nil error, got: (%v)", err)
 	}
+	
 	if crExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := diffmatchpatch.New().DiffMain(crExp, buf.String(), false)
