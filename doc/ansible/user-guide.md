@@ -161,7 +161,7 @@ Modify `roles/Memcached/tasks/main.yml` to look like the following:
               - -o
               - modern
               - -v
-              image: "memcached:1.4.36-alpine"
+              image: "docker.io/memcached:1.4.36-alpine"
               ports:
                 - containerPort: 11211
 
