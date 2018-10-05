@@ -26,6 +26,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/pkg/test"
 
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
@@ -125,7 +126,8 @@ func renderTestManifest(image string) {
 	// generate deploy/test-pod.yaml
 	deployDir := filepath.Join(mustGetwd(), "deploy")
 	testPodPath := filepath.Join(deployDir, "test-pod.yaml")
-	testPodfilegen := scaffold.NewTestPodCodegen(&scaffold.TestPodInput{})
+	wd := mustGetwd()
+	testPodfilegen := scaffold.NewTestPodCodegen(&scaffold.TestPodInput{ProjectName: filepath.Base(wd), Image: image, TestNamespaceEnv: test.TestNamespaceEnv})
 	buf := &bytes.Buffer{}
 	err = testPodfilegen.Render(buf)
 	if err != nil {

@@ -235,19 +235,6 @@ func doScaffold() {
 		log.Fatalf("failed to create %v: %v", rolePath, err)
 	}
 
-	// generate deploy/test-pod.yaml
-	testPodPath := filepath.Join(deployDir, "test-pod.yaml")
-	testPodfilegen := scaffold.NewTestPodCodegen(&scaffold.TestPodInput{})
-	buf = &bytes.Buffer{}
-	err = testPodfilegen.Render(buf)
-	if err != nil {
-		log.Fatalf("failed to render the template for (%v): %v", testPodPath, err)
-	}
-	err = writeFileAndPrint(testPodPath, buf.Bytes(), defaultFileMode)
-	if err != nil {
-		log.Fatalf("failed to create %v: %v", testPodPath, err)
-	}
-
 	// generate deploy/role_binding.yaml
 	roleBindingPath := filepath.Join(deployDir, "role_binding.yaml")
 	roleBindingGen := scaffold.NewRoleBindingCodegen(
