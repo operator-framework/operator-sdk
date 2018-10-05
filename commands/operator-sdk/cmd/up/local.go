@@ -63,13 +63,15 @@ var (
 )
 
 const (
-	gocmd               = "go"
-	run                 = "run"
-	cmd                 = "cmd"
-	main                = "main.go"
-	defaultConfigPath   = ".kube/config"
-	goOperatorType      = "go"
-	ansibleOperatorType = "ansible"
+	gocmd             = "go"
+	run               = "run"
+	cmd               = "cmd"
+	main              = "main.go"
+	defaultConfigPath = ".kube/config"
+)
+const (
+	goOperatorType cmdutil.OperatorType = iota
+	ansibleOperatorType
 )
 
 func upLocalFunc(cmd *cobra.Command, args []string) {
@@ -82,6 +84,7 @@ func upLocalFunc(cmd *cobra.Command, args []string) {
 	case ansibleOperatorType:
 		upLocalAnsible()
 	default:
+		fmt.Printf("IOTA: %v\n\n", cmdutil.GetOperatorType())
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to determine operator type"))
 	}
 }
