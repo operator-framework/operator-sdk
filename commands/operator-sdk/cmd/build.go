@@ -232,7 +232,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		testDbcmd := exec.Command("docker", "build", ".", "-f", "build/test-framework/Dockerfile", "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+baseImageName)
 		o, err = testDbcmd.CombinedOutput()
 		if err != nil {
-			log.Fatalf("failed to output build image %v: (%v)", image, string(o))
+			log.Fatalf("failed to output build image %s: %v (%s)", image, err, string(o))
 		}
 		fmt.Fprintln(os.Stdout, string(o))
 		// create test-pod.yaml as well as check image name of deployments in namespaced manifest

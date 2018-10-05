@@ -73,7 +73,7 @@ func K8sCodegen() {
 	}
 	out, err := exec.Command(genGroupsCmd, args...).CombinedOutput()
 	if err != nil {
-		log.Fatalf("failed to perform code-generation: (%v)", string(out))
+		log.Fatalf("failed to perform code-generation: %v (%s)", err, string(out))
 	}
 	fmt.Fprintln(os.Stdout, string(out))
 }
