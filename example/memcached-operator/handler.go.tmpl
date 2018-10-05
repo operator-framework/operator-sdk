@@ -8,6 +8,7 @@ import (
 	v1alpha1 "github.com/example-inc/memcached-operator/pkg/apis/cache/v1alpha1"
 
 	"github.com/operator-framework/operator-sdk/pkg/sdk"
+	"github.com/prometheus/client_golang/prometheus"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -15,11 +16,21 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-func NewHandler() sdk.Handler {
-	return &Handler{}
+func NewHandler(m *Metrics) sdk.Handler {
+	return &Handler{
+    metrics: m,
+  }
+}
+
+type Metrics struct {
+	operatorErrors prometheus.Counter
 }
 
 type Handler struct {
+	// Metrics example
+	metrics *Metrics
+
+	// Fill me
 }
 
 func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
@@ -156,3 +167,16 @@ func getPodNames(pods []v1.Pod) []string {
 	}
 	return podNames
 }
+
+func RegisterOperatorMetrics() (*Metrics, error) {
+	operatorErrors := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "memcached_operator_reconcile_errors_total",
+		Help: "Number of errors that occurred while reconciling the memcached deployment",
+	})
+	err := prometheus.Register(operatorErrors)
+	if err != nil {
+		return &Metrics{}, err
+	}
+	return &Metrics{operatorErrors: operatorErrors}, nil
+}
+
