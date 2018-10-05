@@ -28,7 +28,10 @@ func NewGoTestScriptCodegen(in *GoTestScriptInput) Codegen {
 	return &goTestScript{in: in}
 }
 
-type GoTestScriptInput struct{}
+type GoTestScriptInput struct {
+	// ProjectName is the name of the operator project.
+	ProjectName string
+}
 
 func (d *goTestScript) Render(w io.Writer) error {
 	t := template.New("go_test_script.go")
@@ -42,5 +45,5 @@ func (d *goTestScript) Render(w io.Writer) error {
 
 const goTestScriptTmpl = `#!/bin/sh
 
-memcached-operator-test -test.parallel=1 -test.failfast -root=/ -kubeconfig=incluster -namespacedMan=namespaced.yaml -test.v
+{{.ProjectName}}-test -test.parallel=1 -test.failfast -root=/ -kubeconfig=incluster -namespacedMan=namespaced.yaml -test.v
 `

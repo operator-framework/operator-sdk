@@ -205,7 +205,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 			}
 			// generate build/test-framework/Dockerfile
 			testFrameworkDockerfilePath := filepath.Join(buildTestDir, "Dockerfile")
-			testFrameworkDockerfilegen := scaffold.NewTestFrameworkDockerfileCodegen(&scaffold.TestFrameworkDockerfileInput{})
+			testFrameworkDockerfilegen := scaffold.NewTestFrameworkDockerfileCodegen(&scaffold.TestFrameworkDockerfileInput{ProjectName: filepath.Base(wd)})
 			buf := &bytes.Buffer{}
 			err = testFrameworkDockerfilegen.Render(buf)
 			if err != nil {
@@ -218,7 +218,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 
 			// generate build/test-framework/go-test.sh
 			goTestScriptPath := filepath.Join(buildTestDir, "go-test.sh")
-			goTestScriptfilegen := scaffold.NewGoTestScriptCodegen(&scaffold.GoTestScriptInput{})
+			goTestScriptfilegen := scaffold.NewGoTestScriptCodegen(&scaffold.GoTestScriptInput{ProjectName: filepath.Base(wd)})
 			buf = &bytes.Buffer{}
 			err = goTestScriptfilegen.Render(buf)
 			if err != nil {

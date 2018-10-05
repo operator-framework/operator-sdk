@@ -15,37 +15,28 @@
 package scaffold
 
 import (
-	"io"
+	"bytes"
+	"testing"
 
-	"text/template"
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-type testFrameworkDockerfile struct {
-	in *TestFrameworkDockerfileInput
-}
-
-func NewTestFrameworkDockerfileCodegen(in *TestFrameworkDockerfileInput) Codegen {
-	return &testFrameworkDockerfile{in: in}
-}
-
-type TestFrameworkDockerfileInput struct {
-	// ProjectName is the name of the operator project.
-	ProjectName string
-}
-
-func (d *testFrameworkDockerfile) Render(w io.Writer) error {
-	t := template.New("test_framework_dockerfile.go")
-	t, err := t.Parse(testFrameworkDockerfileTmpl)
-	if err != nil {
-		return err
+func TestTestFrameworkDockerfile(t *testing.T) {
+	codegen := NewTestFrameworkDockerfileCodegen(&TestFrameworkDockerfileInput{ProjectName: appProjectName})
+	buf := &bytes.Buffer{}
+	if err := codegen.Render(buf); err != nil {
+		t.Fatal(err)
 	}
-
-	return t.Execute(w, d.in)
+	if testFrameworkDockerfileExp != buf.String() {
+		dmp := diffmatchpatch.New()
+		diffs := diffmatchpatch.New().DiffMain(testFrameworkDockerfileExp, buf.String(), false)
+		t.Fatalf("expected vs actual differs. Red text is missing and green text is extra.\n%v", dmp.DiffPrettyText(diffs))
+	}
 }
 
-const testFrameworkDockerfileTmpl = `ARG BASEIMAGE
+const testFrameworkDockerfileExp = `ARG BASEIMAGE
 FROM ${BASEIMAGE}
-ADD build/_output/bin/{{.ProjectName}}-test /usr/local/bin/{{.ProjectName}}-test
+ADD build/_output/bin/app-operator-test /usr/local/bin/app-operator-test
 ARG NAMESPACEDMAN
 ADD $NAMESPACEDMAN /namespaced.yaml
 ADD build/test-framework/go-test.sh /go-test.sh
