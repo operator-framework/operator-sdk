@@ -78,9 +78,18 @@ required = [
 [prune]
   go-tests = true
   non-go = true
-  
+  unused-packages = true
+
   [[prune.project]]
     name = "k8s.io/code-generator"
     non-go = false
+    unused-packages = false
+
+  [[prune.project]]
+    name = "github.com/operator-framework/operator-sdk"
+    unused-packages = false
+    
+  [[prune.project]]
+    name = "sigs.k8s.io/controller-runtime"
     unused-packages = false
 `
