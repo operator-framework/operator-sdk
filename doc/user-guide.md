@@ -2,6 +2,10 @@
 
 This guide walks through an example of building a simple memcached-operator using tools and libraries provided by the Operator SDK.
 
+To learn how to use Ansible to create a Memcached operator, see [Ansible
+Operator User Guide][ansible_user_guide]. The rest of this document will show
+how to program an operator in Go.
+
 ## Prerequisites
 
 - [dep][dep_tool] version v0.5.0+.
@@ -306,6 +310,7 @@ func main() {
 
 [memcached_handler]: ../example/memcached-operator/handler.go.tmpl
 [layout_doc]:./project_layout.md
+[ansible_user_guide]:./ansible/user-guide.md
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/

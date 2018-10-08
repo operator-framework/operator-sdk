@@ -113,6 +113,29 @@ Run code-generation for custom resources
 Generating deepcopy funcs
 ```
 
+#### crd - Generates a custom resource definition (CRD) and the custom resource (CR) files
+
+##### Use
+
+crd generator generates custom resource definition and custom resource
+files for the specified api-version and kind.
+
+##### Flags
+
+* `--api-version` **(required)** string - Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)
+* `-h, --help` - help for k8s
+* `--kind` **(required)** string - Kubernetes CustomResourceDefinition kind. (e.g AppService)
+
+##### Example
+
+```bash
+operator-sdk generate crd --api-version app.example.com/v1alpha1 --kind AppService
+
+# Output:
+Generating custom resource definition (CRD) file
+Create <path_to_project>/deploy/appservice_cr.yaml
+Create <path_to_project>/deploy/appservice_crd.yaml
+```
 #### olm-catalog - Generates OLM Catalog manifests
 
 ##### Flags
@@ -147,6 +170,8 @@ generates a default directory layout based on the input `project-name`.
 
 * `--api-version` **(required)** string - Kubernetes apiVersion and has a format of `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
 * `--kind` **(required)** string - Kubernetes CustomResourceDefintion kind. (e.g AppService)
+* `--skip-git-init` Do not init the directory as a git repository
+* `--type` Type of operator to initialize (e.g "ansible") (default "go")
 * `-h, --help` - help for new
 
 ### Example
