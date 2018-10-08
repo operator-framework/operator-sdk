@@ -620,7 +620,6 @@ func TestGenMain(t *testing.T) {
 		SDKVersionImport:  versionImport,
 		APIVersion:        appAPIVersion,
 		Kind:              appKind,
-		ProjectName:       appProjectName,
 	}
 	if err := renderFile(buf, "cmd/<projectName>/main.go", mainTmpl, td); err != nil {
 		t.Error(err)
