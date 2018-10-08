@@ -27,23 +27,25 @@ import (
 
 // ReconcileLoop - new loop
 type ReconcileLoop struct {
-	Source   chan event.GenericEvent
-	Stop     <-chan struct{}
-	GVK      schema.GroupVersionKind
-	Interval time.Duration
-	Client   client.Client
+	Source    chan event.GenericEvent
+	Stop      <-chan struct{}
+	GVK       schema.GroupVersionKind
+	Interval  time.Duration
+	Client    client.Client
+	Namespace string
 }
 
 // NewReconcileLoop - loop for a GVK.
 // The reconcilation loop is needed because the resync period
 // for the informer is not suitable for this use case.
-func NewReconcileLoop(interval time.Duration, gvk schema.GroupVersionKind, c client.Client) ReconcileLoop {
+func NewReconcileLoop(interval time.Duration, gvk schema.GroupVersionKind, c client.Client, namespace string) ReconcileLoop {
 	s := make(chan event.GenericEvent, 1025)
 	return ReconcileLoop{
-		Source:   s,
-		GVK:      gvk,
-		Interval: interval,
-		Client:   c,
+		Source:    s,
+		GVK:       gvk,
+		Interval:  interval,
+		Client:    c,
+		Namespace: namespace,
 	}
 }
 
@@ -57,7 +59,9 @@ func (r *ReconcileLoop) Start() {
 			case <-ticker.C:
 				// List all object for the GVK
 				ul := &unstructured.UnstructuredList{}
+				lo := client.ListOptions{}
 				ul.SetGroupVersionKind(r.GVK)
+				lo.InNamespace(r.Namespace)
 				err := r.Client.List(context.Background(), nil, ul)
 				if err != nil {
 					logrus.Warningf("unable to list resources for GV: %v during reconcilation", r.GVK)

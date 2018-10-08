@@ -27,8 +27,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func RunSDK(done chan error, mgr manager.Manager) {
-	namespace := "default"
+func RunSDK(done chan error, mgr manager.Manager, namespace string) {
+	if namespace == "" {
+		namespace = "default"
+	}
 	watches, err := runner.NewFromWatches("./watches.yaml")
 	if err != nil {
 		logrus.Error("Failed to get watches")
