@@ -144,7 +144,7 @@ func upLocalAnsible() {
 	})
 
 	// start the operator
-	go ansibleOperator.RunSDK(done, mgr, namespace)
+	go ansibleOperator.RunAnsibleOperator(done, mgr, namespace)
 
 	// wait for either to finish
 	err = <-done
