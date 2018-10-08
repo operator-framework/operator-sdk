@@ -88,7 +88,7 @@ required = [
   [[prune.project]]
     name = "github.com/operator-framework/operator-sdk"
     unused-packages = false
-    
+
   [[prune.project]]
     name = "sigs.k8s.io/controller-runtime"
     unused-packages = false
