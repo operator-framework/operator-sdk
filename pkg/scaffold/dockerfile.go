@@ -15,6 +15,8 @@
 package scaffold
 
 import (
+	"path/filepath"
+	
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
@@ -24,7 +26,7 @@ type Dockerfile struct {
 
 func (s *Dockerfile) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = dockerfileFile
+		s.Path = filepath.Join(buildDir, dockerfileFile)
 	}
 	s.TemplateBody = dockerfileTmpl
 	return s.Input, nil
