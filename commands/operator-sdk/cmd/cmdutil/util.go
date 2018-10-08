@@ -15,8 +15,6 @@
 package cmdutil
 
 import (
-	"errors"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -54,7 +52,7 @@ func MustInProjectRoot() string {
 func MustGetwd() string {
 	wd, err := os.Getwd()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to get working directory: (%v)", err))
+		log.Fatalf("failed to get working directory: (%v)", err)
 	}
 	return wd
 }
@@ -77,7 +75,7 @@ func GetConfig() *generator.Config {
 func CheckAndGetCurrPkg() string {
 	gopath := os.Getenv(GopathEnv)
 	if len(gopath) == 0 {
-		cmdError.ExitWithError(cmdError.ExitError, errors.New("GOPATH env not set"))
+		log.Fatalf("GOPATH env not set")
 	}
 	goSrc := filepath.Join(gopath, SrcDir)
 

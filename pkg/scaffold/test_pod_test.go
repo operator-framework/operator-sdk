@@ -17,27 +17,43 @@ package scaffold
 import (
 	"testing"
 
+	"github.com/operator-framework/operator-sdk/pkg/test"
+
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-func TestTestFrameworkDockerfile(t *testing.T) {
+func TestPodTest(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(appConfig, &TestFrameworkDockerfile{})
+	err := s.Execute(appConfig,
+		&TestPod{
+			Image:            "quay.io/app/operator:v1.0.0",
+			TestNamespaceEnv: test.TestNamespaceEnv,
+		})
 	if err != nil {
 		t.Fatalf("expected nil error, got: (%v)", err)
 	}
 
-	if testFrameworkDockerfileExp != buf.String() {
+	if testPodExp != buf.String() {
 		dmp := diffmatchpatch.New()
-		diffs := diffmatchpatch.New().DiffMain(testFrameworkDockerfileExp, buf.String(), false)
+		diffs := diffmatchpatch.New().DiffMain(testPodExp, buf.String(), false)
 		t.Fatalf("expected vs actual differs. Red text is missing and green text is extra.\n%v", dmp.DiffPrettyText(diffs))
 	}
 }
 
-const testFrameworkDockerfileExp = `ARG BASEIMAGE
-FROM ${BASEIMAGE}
-ADD build/_output/bin/app-operator-test /usr/local/bin/app-operator-test
-ARG NAMESPACEDMAN
-ADD $NAMESPACEDMAN /namespaced.yaml
-ADD build/test-framework/go-test.sh /go-test.sh
+const testPodExp = `apiVersion: v1
+kind: Pod
+metadata:
+  name: app-operator-test
+spec:
+  restartPolicy: Never
+  containers:
+  - name: app-operator-test
+    image: quay.io/app/operator:v1.0.0
+    imagePullPolicy: Always
+    command: ["/go-test.sh"]
+    env:
+      - name: TEST_NAMESPACE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.namespace
 `

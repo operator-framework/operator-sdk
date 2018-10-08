@@ -15,18 +15,18 @@
 package scaffold
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestGoTestScript(t *testing.T) {
-	codegen := NewGoTestScriptCodegen(&GoTestScriptInput{ProjectName: appProjectName})
-	buf := &bytes.Buffer{}
-	if err := codegen.Render(buf); err != nil {
-		t.Fatal(err)
+	s, buf := setupScaffoldAndWriter()
+	err := s.Execute(appConfig, &GoTestScript{})
+	if err != nil {
+		t.Fatalf("expected nil error, got: (%v)", err)
 	}
+
 	if goTestScriptExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := diffmatchpatch.New().DiffMain(goTestScriptExp, buf.String(), false)

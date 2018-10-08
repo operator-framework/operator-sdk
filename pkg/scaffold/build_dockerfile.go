@@ -16,7 +16,7 @@ package scaffold
 
 import (
 	"path/filepath"
-	
+
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 

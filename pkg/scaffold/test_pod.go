@@ -15,33 +15,27 @@
 package scaffold
 
 import (
-	"io"
+	"path/filepath"
 
-	"text/template"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type testPod struct {
-	in *TestPodInput
-}
+type TestPod struct {
+	input.Input
 
-func NewTestPodCodegen(in *TestPodInput) Codegen {
-	return &testPod{in: in}
-}
+	// Image is the image name used for testing, ex. quay.io/repo/operator-image
+	Image string
 
-type TestPodInput struct {
-	ProjectName      string
-	Image            string
+	// TestNamespaceEnv is an env variable specifying the test namespace
 	TestNamespaceEnv string
 }
 
-func (d *testPod) Render(w io.Writer) error {
-	t := template.New("test_pod.go")
-	t, err := t.Parse(testPodTmpl)
-	if err != nil {
-		return err
+func (s *TestPod) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = filepath.Join(deployDir, testPodYamlFile)
 	}
-
-	return t.Execute(w, d.in)
+	s.TemplateBody = testPodTmpl
+	return s.Input, nil
 }
 
 const testPodTmpl = `apiVersion: v1

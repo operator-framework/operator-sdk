@@ -98,7 +98,8 @@ type File interface {
 
 // Validate validates input
 type Validate interface {
-	// Validate returns true if the template has valid values
+	// Validate returns nil if the inputs' validation logic approves of
+	// field values, the template, etc.
 	Validate() error
 }
 
