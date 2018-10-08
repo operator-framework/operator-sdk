@@ -128,7 +128,7 @@ func upLocal(projectName string) {
 }
 
 func upLocalAnsible() {
-	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{})
+	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{Namespace: namespace})
 	if err != nil {
 		log.Fatal(err)
 	}
