@@ -590,16 +590,12 @@ func printVersion() {
 func main() {
 	printVersion()
 
+	sdk.ExposeMetricsPort()
 	metrics, err := stub.RegisterOperatorMetrics()
 	if err != nil {
 		logrus.Errorf("failed to register operator specific metrics: %v", err)
 	}
 	h := stub.NewHandler(metrics)
-	projectName, err := k8sutil.GetOperatorName("app-operator")
-	if err != nil {
-		logrus.Errorf("failed to get project name: %v", err)
-	}
-	sdk.ExposeMetricsPort(projectName)
 
 	resource := "app.example.com/v1alpha1"
 	kind := "AppService"
