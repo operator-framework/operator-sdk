@@ -166,7 +166,7 @@ func RegisterOperatorMetrics() (*Metrics, error) {
 	})
 	err := prometheus.Register(operatorErrors)
 	if err != nil {
-		return &Metrics{}, err
+		return nil, err
 	}
 	return &Metrics{operatorErrors: operatorErrors}, nil
 }
