@@ -1,9 +1,9 @@
 package stub
 
 import (
+	"context"
 	"fmt"
 	"reflect"
-	"context"
 
 	v1alpha1 "github.com/example-inc/memcached-operator/pkg/apis/cache/v1alpha1"
 
@@ -18,8 +18,8 @@ import (
 
 func NewHandler(m *Metrics) sdk.Handler {
 	return &Handler{
-    metrics: m,
-  }
+		metrics: m,
+	}
 }
 
 type Metrics struct {
@@ -179,4 +179,3 @@ func RegisterOperatorMetrics() (*Metrics, error) {
 	}
 	return &Metrics{operatorErrors: operatorErrors}, nil
 }
-
