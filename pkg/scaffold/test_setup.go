@@ -51,7 +51,7 @@ func mustGetImportPath() string {
 func setupScaffoldAndWriter() (*Scaffold, *bytes.Buffer) {
 	buf := &bytes.Buffer{}
 	return &Scaffold{
-		GetWriter: func(_ string) (io.Writer, error) {
+		GetWriter: func(_ string, _ os.FileMode) (io.Writer, error) {
 			return buf, nil
 		},
 	}, buf

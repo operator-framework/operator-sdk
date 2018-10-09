@@ -28,6 +28,7 @@ func (s *GoTestScript) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = filepath.Join(buildTestDir, goTestScriptFile)
 	}
+	s.IsExec = isExecTrue
 	s.TemplateBody = goTestScriptTmpl
 	return s.Input, nil
 }

@@ -37,6 +37,11 @@ type Input struct {
 
 	// IfExistsAction determines what to do if the file exists
 	IfExistsAction IfExistsAction
+	
+	// IsExec indicates whether the file should be written with executable
+	// permissions.
+	// Defaults to false
+	IsExec bool
 
 	// TemplateBody is the template body to execute
 	TemplateBody string

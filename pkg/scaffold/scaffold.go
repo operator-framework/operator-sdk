@@ -42,7 +42,7 @@ type Scaffold struct {
 	// ProjectName is the operator's name, ex. app-operator
 	ProjectName string
 
-	GetWriter func(path string) (io.Writer, error)
+	GetWriter func(path string, mode os.FileMode) (io.Writer, error)
 }
 
 func (s *Scaffold) setFieldsAndValidate(t input.File) error {
@@ -132,7 +132,12 @@ func (s *Scaffold) doTemplate(i input.Input, e input.File) error {
 	if err != nil {
 		return err
 	}
-	f, err := s.GetWriter(i.Path)
+	
+	var mode os.FileMode = util.DefaultFileMode
+	if i.IsExec {
+		mode = util.DefaultExecFileMode
+	}
+	f, err := s.GetWriter(i.Path, mode)
 	if err != nil {
 		return err
 	}

@@ -23,6 +23,10 @@ const (
 	defaultDirFileMode  = 0750
 	defaultFileMode     = 0644
 	defaultExecFileMode = 0744
+	
+	// Boolean values for Input.IsExec
+	isExecTrue = true
+	isExecFalse = false
 
 	// Separator to statically create directories.
 	filePathSep = string(filepath.Separator)
