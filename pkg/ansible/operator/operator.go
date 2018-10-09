@@ -27,10 +27,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// RunAnsibleOperator - A blocking function which starts a controller-runtime manager
+// Run - A blocking function which starts a controller-runtime manager
 // It starts an Operator by reading in the values in `./watches.yaml`, adds a controller
 // to the manager, and finally running the manager.
-func RunAnsibleOperator(done chan error, mgr manager.Manager, namespace string) {
+func Run(done chan error, mgr manager.Manager, namespace string) {
 	if namespace == "" {
 		namespace = "default"
 	}
