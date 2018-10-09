@@ -53,7 +53,6 @@ const (
 	versionFile            = "version.go"
 	docFile                = "doc.go"
 	registerFile           = "register.go"
-	typesFile              = "types.go"
 	updateGeneratedFile    = "update-generated.sh"
 	configFile             = "config.yaml"
 	roleYamlFile           = "role.yaml"

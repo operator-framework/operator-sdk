@@ -21,7 +21,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-// Types is the input needed to generate a pkg/apis/<group>/<version>/types.go file
+// Types is the input needed to generate a pkg/apis/<group>/<version>/<kind>_types.go file
 type Types struct {
 	input.Input
 
@@ -34,7 +34,7 @@ func (s *Types) GetInput() (input.Input, error) {
 		s.Path = filepath.Join(apisDir,
 			strings.ToLower(s.Resource.Group),
 			strings.ToLower(s.Resource.Version),
-			typesFile)
+			s.Resource.LowerKind + "_types.go")
 	}
 	// Error if this file exists.
 	s.IfExistsAction = input.Error
