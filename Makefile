@@ -13,7 +13,6 @@ VERSION = $(shell git describe --dirty --tags)
 REPO = github.com/operator-framework/operator-sdk
 BUILD_PATH = $(REPO)/commands/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
-LD_FLAGS = "-w -X $(REPO)/version.Version=$(VERSION)"
 
 export CGO_ENABLED:=0
 
@@ -31,7 +30,7 @@ clean:
 .PHONY: all test format dep clean
 
 install:
-	$(Q)go install -ldflags $(LD_FLAGS) $(BUILD_PATH)
+	$(Q)go install $(BUILD_PATH)
 
 release_x86_64 := \
 	build/operator-sdk-$(VERSION)-x86_64-linux-gnu \
@@ -43,7 +42,7 @@ build/operator-sdk-%-x86_64-linux-gnu: GOARGS = GOOS=linux GOARCH=amd64
 build/operator-sdk-%-x86_64-apple-darwin: GOARGS = GOOS=darwin GOARCH=amd64
 
 build/%:
-	$(Q)$(GOARGS) go build -o $@ -ldflags $(LD_FLAGS) $(BUILD_PATH)
+	$(Q)$(GOARGS) go build -o $@ $(BUILD_PATH)
 	
 DEFAULT_KEY = $(shell gpgconf --list-options gpg \
 								| awk -F: '$$1 == "default-key" { gsub(/"/,""); print $$10}')
