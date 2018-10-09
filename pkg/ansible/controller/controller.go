@@ -80,7 +80,7 @@ func Add(mgr manager.Manager, options Options) {
 		log.Fatal(err)
 	}
 
-	r := NewReconcileLoop(time.Minute*1, options.GVK, mgr.GetClient())
+	r := NewReconcileLoop(time.Minute*1, options.GVK, mgr.GetClient(), options.Namespace)
 	r.Stop = options.StopChannel
 	cs := &source.Channel{Source: r.Source}
 	cs.InjectStopChannel(options.StopChannel)

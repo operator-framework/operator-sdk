@@ -29,8 +29,17 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-const configYaml = "./config/config.yaml"
-const tmpDockerfile = "./tmp/build/Dockerfile"
+type OperatorType int
+
+const (
+	configYaml    = "./config/config.yaml"
+	gopkgToml     = "./Gopkg.toml"
+	tmpDockerfile = "./tmp/build/Dockerfile"
+)
+const (
+	OperatorTypeGo OperatorType = iota
+	OperatorTypeAnsible
+)
 
 // MustInProjectRoot checks if the current dir is the project root.
 func MustInProjectRoot() {
@@ -73,4 +82,16 @@ func GetCurrPkg() string {
 	}
 	currPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
 	return currPkg
+}
+
+// GetOperatorType returns type of operator is in cwd
+// This function should be called after verifying the user is in project root
+// e.g: "go", "ansible"
+func GetOperatorType() OperatorType {
+	// Assuming that if Gopkg.toml exists then this is a Go operator
+	_, err := os.Stat(gopkgToml)
+	if err != nil && os.IsNotExist(err) {
+		return OperatorTypeAnsible
+	}
+	return OperatorTypeGo
 }
