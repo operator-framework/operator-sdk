@@ -22,7 +22,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-// AddToScheme is the input needed to generate an addtoscheme_<group>_<kind>.go file
+// AddToScheme is the input needed to generate an addtoscheme_<group>_<version>.go file
 type AddToScheme struct {
 	input.Input
 
@@ -34,7 +34,7 @@ func (s *AddToScheme) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		fileName := fmt.Sprintf("addtoscheme_%s_%s.go",
 			strings.ToLower(s.Resource.Group),
-			s.Resource.LowerKind)
+			strings.ToLower(s.Resource.Version))
 		s.Path = filepath.Join(apisDir, fileName)
 	}
 	s.TemplateBody = addToSchemeTemplate

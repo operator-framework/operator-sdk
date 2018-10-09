@@ -36,7 +36,7 @@ func (s *Cr) GetInput() (input.Input, error) {
 			strings.ToLower(s.Resource.Group),
 			strings.ToLower(s.Resource.Version),
 			s.Resource.LowerKind)
-		s.Path = filepath.Join(deployDir, crdsDir, fileName)
+		s.Path = filepath.Join(crdsDir, fileName)
 	}
 	s.TemplateBody = crTemplate
 	return s.Input, nil
