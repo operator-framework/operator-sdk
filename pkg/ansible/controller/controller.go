@@ -35,14 +35,12 @@ import (
 
 // Options - options for your controller
 type Options struct {
-	EventHandlers []events.EventHandler
-	LoggingLevel  events.LogLevel
-	Runner        runner.Runner
-	Namespace     string
-	GVK           schema.GroupVersionKind
-	// StopChannel is used to deal with the bug:
-	// https://github.com/kubernetes-sigs/controller-runtime/issues/103
-	StopChannel <-chan struct{}
+	EventHandlers     []events.EventHandler
+	LoggingLevel      events.LogLevel
+	Runner            runner.Runner
+	Namespace         string
+	GVK               schema.GroupVersionKind
+	ReconcileDuration time.Duration
 }
 
 // Add - Creates a new ansible operator controller and adds it to the manager
@@ -52,12 +50,16 @@ func Add(mgr manager.Manager, options Options) {
 		options.EventHandlers = []events.EventHandler{}
 	}
 	eventHandlers := append(options.EventHandlers, events.NewLoggingEventHandler(options.LoggingLevel))
+	if options.ReconcileDuration == time.Duration(0) {
+		options.ReconcileDuration = time.Minute
+	}
 
 	aor := &AnsibleOperatorReconciler{
-		Client:        mgr.GetClient(),
-		GVK:           options.GVK,
-		Runner:        options.Runner,
-		EventHandlers: eventHandlers,
+		Client:            mgr.GetClient(),
+		GVK:               options.GVK,
+		Runner:            options.Runner,
+		EventHandlers:     eventHandlers,
+		ReconcileDuration: options.ReconcileDuration,
 	}
 
 	// Register the GVK with the schema
@@ -79,13 +81,4 @@ func Add(mgr manager.Manager, options Options) {
 	if err := c.Watch(&source.Kind{Type: u}, &crthandler.EnqueueRequestForObject{}); err != nil {
 		log.Fatal(err)
 	}
-
-	r := NewReconcileLoop(time.Minute*1, options.GVK, mgr.GetClient(), options.Namespace)
-	r.Stop = options.StopChannel
-	cs := &source.Channel{Source: r.Source}
-	cs.InjectStopChannel(options.StopChannel)
-	if err := c.Watch(cs, &crthandler.EnqueueRequestForObject{}); err != nil {
-		log.Fatal(err)
-	}
-	r.Start()
 }

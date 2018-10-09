@@ -45,10 +45,9 @@ func Run(done chan error, mgr manager.Manager, namespace string) {
 
 	for gvk, runner := range watches {
 		controller.Add(mgr, controller.Options{
-			GVK:         gvk,
-			Namespace:   namespace,
-			Runner:      runner,
-			StopChannel: c,
+			GVK:       gvk,
+			Namespace: namespace,
+			Runner:    runner,
 		})
 	}
 	log.Fatal(mgr.Start(c))
