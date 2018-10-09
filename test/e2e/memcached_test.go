@@ -168,6 +168,9 @@ func TestMemcached(t *testing.T) {
 
 	// create crd
 	crdYAML, err := ioutil.ReadFile("deploy/crds/cache_v1alpha1_memcached_crd.yaml")
+	if err != nil {
+		t.Fatalf("could not read crd file: %v", err)
+	}
 	err = ctx.CreateFromYAML(crdYAML)
 	if err != nil {
 		t.Fatal(err)
@@ -332,12 +335,18 @@ func MemcachedCluster(t *testing.T) {
 
 	// create rbac
 	roleYAML, err := ioutil.ReadFile("deploy/role.yaml")
+	if err != nil {
+		t.Fatalf("could not read role file: %v", err)
+	}
 	err = ctx.CreateFromYAML(roleYAML)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("Created role")
 	roleBindingYAML, err := ioutil.ReadFile("deploy/role_binding.yaml")
+	if err != nil {
+		t.Fatalf("could not read role_binding file: %v", err)
+	}
 	err = ctx.CreateFromYAML(roleBindingYAML)
 	if err != nil {
 		t.Fatal(err)
@@ -392,12 +401,18 @@ func MemcachedClusterTest(t *testing.T) {
 
 	// create rbac
 	roleYAML, err := ioutil.ReadFile("deploy/role.yaml")
+	if err != nil {
+		t.Fatalf("could not read role file: %v", err)
+	}
 	err = ctx.CreateFromYAML(roleYAML)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("Created role")
 	roleBindingYAML, err := ioutil.ReadFile("deploy/role_binding.yaml")
+	if err != nil {
+		t.Fatalf("could not read role_binding file: %v", err)
+	}
 	err = ctx.CreateFromYAML(roleBindingYAML)
 	if err != nil {
 		t.Fatal(err)
