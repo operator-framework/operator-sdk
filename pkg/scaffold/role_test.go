@@ -24,7 +24,7 @@ func TestRole(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err := s.Execute(appConfig, &Role{})
 	if err != nil {
-		t.Fatalf("expected nil error, got: (%v)", err)
+		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
 
 	if roleExp != buf.String() {

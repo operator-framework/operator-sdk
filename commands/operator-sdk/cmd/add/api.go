@@ -76,10 +76,10 @@ func apiRun(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	projectPath := cmdutil.MustGetwd()
+	absProjectPath := cmdutil.MustGetwd()
 	cfg := &input.Config{
 		Repo:        cmdutil.MustInProjectRoot(),
-		ProjectPath: projectPath,
+		ProjectPath: absProjectPath,
 	}
 
 	s := &scaffold.Scaffold{}
@@ -96,7 +96,7 @@ func apiRun(cmd *cobra.Command, args []string) {
 	}
 
 	// update deploy/role.yaml for the given resource r.
-	if err := updateRoleForResource(r, projectPath); err != nil {
+	if err := updateRoleForResource(r, absProjectPath); err != nil {
 		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): %v", r.APIVersion, r.Kind, err)
 	}
 
@@ -104,9 +104,9 @@ func apiRun(cmd *cobra.Command, args []string) {
 	generate.K8sCodegen()
 }
 
-func updateRoleForResource(r *scaffold.Resource, projectPath string) error {
+func updateRoleForResource(r *scaffold.Resource, absProjectPath string) error {
 	// append rbac rule to deploy/role.yaml
-	roleFilePath := filepath.Join(projectPath, "deploy", "role.yaml")
+	roleFilePath := filepath.Join(absProjectPath, "deploy", "role.yaml")
 	roleYAML, err := ioutil.ReadFile(roleFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to read role manifest %v: %v", roleFilePath, err)

@@ -37,11 +37,11 @@ func (s *Doc) GetInput() (input.Input, error) {
 			docFile)
 	}
 	s.IfExistsAction = input.Skip
-	s.TemplateBody = docTmpl
+	s.TemplateBody = docTemplate
 	return s.Input, nil
 }
 
-const docTmpl = `// Package {{.Resource.Version}} contains API Schema definitions for the {{ .Resource.Group }} {{.Resource.Version}} API group
+const docTemplate = `// Package {{.Resource.Version}} contains API Schema definitions for the {{ .Resource.Group }} {{.Resource.Version}} API group
 // +k8s:deepcopy-gen=package,register
 // +groupName={{ .Resource.FullGroup }}
 package {{.Resource.Version}}

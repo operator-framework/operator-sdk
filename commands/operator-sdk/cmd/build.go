@@ -189,10 +189,10 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		_, err = os.Stat("build/test-framework/Dockerfile")
 		if err != nil && os.IsNotExist(err) {
 
-			projectPath := cmdutil.MustGetwd()
+			absProjectPath := cmdutil.MustGetwd()
 			cfg := &input.Config{
 				Repo:        cmdutil.MustInProjectRoot(),
-				ProjectPath: projectPath,
+				ProjectPath: absProjectPath,
 				ProjectName: filepath.Base(wd),
 			}
 

@@ -24,7 +24,7 @@ func TestOperator(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err := s.Execute(appConfig, &Operator{})
 	if err != nil {
-		t.Fatalf("expected nil error, got: (%v)", err)
+		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
 
 	if operatorExp != buf.String() {

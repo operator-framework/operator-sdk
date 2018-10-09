@@ -27,7 +27,7 @@ import (
 	"text/template"
 
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/util"
+	"github.com/operator-framework/operator-sdk/pkg/util"
 	"golang.org/x/tools/imports"
 )
 

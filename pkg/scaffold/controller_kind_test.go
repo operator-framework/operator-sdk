@@ -28,7 +28,7 @@ func TestControllerKind(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err = s.Execute(appConfig, &ControllerKind{Resource: r})
 	if err != nil {
-		t.Fatalf("expected nil error, got: (%v)", err)
+		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
 
 	if controllerKindExp != buf.String() {

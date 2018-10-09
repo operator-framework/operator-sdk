@@ -30,7 +30,7 @@ func TestPodTest(t *testing.T) {
 			TestNamespaceEnv: test.TestNamespaceEnv,
 		})
 	if err != nil {
-		t.Fatalf("expected nil error, got: (%v)", err)
+		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
 
 	if testPodExp != buf.String() {

@@ -38,11 +38,11 @@ func (s *Cr) GetInput() (input.Input, error) {
 			s.Resource.LowerKind)
 		s.Path = filepath.Join(deployDir, crdsDir, fileName)
 	}
-	s.TemplateBody = crTmpl
+	s.TemplateBody = crTemplate
 	return s.Input, nil
 }
 
-const crTmpl = `apiVersion: {{ .Resource.APIVersion }}
+const crTemplate = `apiVersion: {{ .Resource.APIVersion }}
 kind: {{ .Resource.Kind }}
 metadata:
   name: example-{{ .Resource.LowerKind }}

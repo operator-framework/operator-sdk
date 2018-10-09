@@ -28,11 +28,11 @@ func (s *Operator) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = filepath.Join(deployDir, operatorYamlFile)
 	}
-	s.TemplateBody = operatorTmpl
+	s.TemplateBody = operatorTemplate
 	return s.Input, nil
 }
 
-const operatorTmpl = `apiVersion: apps/v1
+const operatorTemplate = `apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{.ProjectName}}

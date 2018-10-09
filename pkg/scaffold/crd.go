@@ -38,12 +38,12 @@ func (s *Crd) GetInput() (input.Input, error) {
 			s.Resource.LowerKind)
 		s.Path = filepath.Join(deployDir, crdsDir, fileName)
 	}
-	s.TemplateBody = crdTmpl
+	s.TemplateBody = crdTemplate
 	return s.Input, nil
 }
 
 // TODO: Parse pkg/apis to generate CRD with open-api validation instead of using a static template
-const crdTmpl = `apiVersion: apiextensions.k8s.io/v1beta1
+const crdTemplate = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   name: {{ .Resource.Resource }}.{{ .Resource.FullGroup }}

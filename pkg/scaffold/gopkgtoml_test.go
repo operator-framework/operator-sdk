@@ -24,7 +24,7 @@ func TestGopkgtoml(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err := s.Execute(appConfig, &GopkgToml{})
 	if err != nil {
-		t.Fatalf("expected nil error, got: (%v)", err)
+		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
 
 	if gopkgtomlExp != buf.String() {
@@ -77,7 +77,9 @@ required = [
 
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"
-  version = "v0.0.6"
+  # The version rule is used for a specific release and the master branch for in between releases.
+  branch = "refactor/controller-runtime"
+  # version = "=v0.0.6"
 
 [prune]
   go-tests = true

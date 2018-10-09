@@ -38,11 +38,11 @@ func (s *Register) GetInput() (input.Input, error) {
 	}
 	// Do not overwrite this file if it exists.
 	s.IfExistsAction = input.Skip
-	s.TemplateBody = registerTmpl
+	s.TemplateBody = registerTemplate
 	return s.Input, nil
 }
 
-const registerTmpl = `// NOTE: Boilerplate only.  Ignore this file.
+const registerTemplate = `// NOTE: Boilerplate only.  Ignore this file.
 
 // Package {{.Resource.Version}} contains API Schema definitions for the {{ .Resource.Group }} {{.Resource.Version}} API group
 // +k8s:deepcopy-gen=package,register

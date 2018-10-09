@@ -24,31 +24,8 @@ const (
 	defaultFileMode     = 0644
 	defaultExecFileMode = 0744
 
-	noOverwriteTrue  = true
-	noOverwriteFalse = false
-
-	mustNotExistTrue  = true
-	mustNotExistFalse = false
-
 	// Separator to statically create directories.
 	filePathSep = string(filepath.Separator)
-
-	// Generated project structure:
-	//
-	// ├── <projectName>
-	// │   ├── build
-	// │   ├── cmd
-	// │   │   └── manager
-	// │   ├── deploy
-	// │   |   ├── olm-catalog
-	// │   ├── pkg
-	// │   │   ├── apis
-	// │   │   │   └── <api-dir-name>  // computed from apiDirName(apiVersion).
-	// │   │   │       └── <version> // computed from version(apiVersion).
-	// │   │   └── controller
-	// │   ├── scripts
-	// │   |   ├── codegen
-	// │   └── version
 
 	// dirs
 	cmdDir        = "cmd"

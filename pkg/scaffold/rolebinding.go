@@ -28,11 +28,11 @@ func (s *RoleBinding) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = filepath.Join(deployDir, roleBindingYamlFile)
 	}
-	s.TemplateBody = roleBindingTmpl
+	s.TemplateBody = roleBindingTemplate
 	return s.Input, nil
 }
 
-const roleBindingTmpl = `kind: RoleBinding
+const roleBindingTemplate = `kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: default-account-{{.ProjectName}}

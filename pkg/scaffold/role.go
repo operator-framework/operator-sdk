@@ -28,11 +28,11 @@ func (s *Role) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = filepath.Join(deployDir, roleYamlFile)
 	}
-	s.TemplateBody = roleTmpl
+	s.TemplateBody = roleTemplate
 	return s.Input, nil
 }
 
-const roleTmpl = `kind: Role
+const roleTemplate = `kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: {{.ProjectName}}

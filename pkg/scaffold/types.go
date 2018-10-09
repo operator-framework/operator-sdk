@@ -38,11 +38,11 @@ func (s *Types) GetInput() (input.Input, error) {
 	}
 	// Error if this file exists.
 	s.IfExistsAction = input.Error
-	s.TemplateBody = typesTmpl
+	s.TemplateBody = typesTemplate
 	return s.Input, nil
 }
 
-const typesTmpl = `package {{ .Resource.Version }}
+const typesTemplate = `package {{ .Resource.Version }}
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

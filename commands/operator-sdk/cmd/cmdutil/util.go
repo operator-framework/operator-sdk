@@ -75,13 +75,13 @@ func GetConfig() *generator.Config {
 func CheckAndGetCurrPkg() string {
 	gopath := os.Getenv(GopathEnv)
 	if len(gopath) == 0 {
-		log.Fatalf("GOPATH env not set")
+		log.Fatalf("get current pkg failed: GOPATH env not set")
 	}
 	goSrc := filepath.Join(gopath, SrcDir)
 
 	wd := MustGetwd()
 	if !strings.HasPrefix(filepath.Dir(wd), goSrc) {
-		log.Fatalf("must run from gopath")
+		log.Fatalf("check current pkg failed: must run from gopath")
 	}
 	currPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
 	// strip any "/" prefix from the repo path.

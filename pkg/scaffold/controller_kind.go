@@ -35,11 +35,11 @@ func (s *ControllerKind) GetInput() (input.Input, error) {
 	}
 	// Error if this file exists.
 	s.IfExistsAction = input.Error
-	s.TemplateBody = controllerKindTmpl
+	s.TemplateBody = controllerKindTemplate
 	return s.Input, nil
 }
 
-const controllerKindTmpl = `package {{ .Resource.LowerKind }}
+const controllerKindTemplate = `package {{ .Resource.LowerKind }}
 
 import (
 	"context"

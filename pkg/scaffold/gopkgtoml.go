@@ -73,7 +73,9 @@ required = [
 
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"
-  version = "v0.0.6"
+  # The version rule is used for a specific release and the master branch for in between releases.
+  branch = "refactor/controller-runtime"
+  # version = "=v0.0.6"
 
 [prune]
   go-tests = true

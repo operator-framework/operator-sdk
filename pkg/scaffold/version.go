@@ -28,11 +28,11 @@ func (s *Version) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = filepath.Join(versionDir, versionFile)
 	}
-	s.TemplateBody = versionTmpl
+	s.TemplateBody = versionTemplate
 	return s.Input, nil
 }
 
-const versionTmpl = `package version
+const versionTemplate = `package version
 
 var (
 	Version = "0.0.1"
