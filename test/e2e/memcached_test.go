@@ -142,7 +142,7 @@ func TestMemcached(t *testing.T) {
 				t.Fatal(err)
 			}
 			// TODO: make this match more complete in case we add another repo tracking master
-			gopkg = bytes.Replace(gopkg, []byte("branch = \"master\""), []byte("# branch = \"master\""), -1)
+			gopkg = bytes.Replace(gopkg, []byte("branch = \"refactor/controller-runtime\""), []byte("# branch = \"refactor/controller-runtime\""), -1)
 			gopkgString := string(gopkg)
 			gopkgLoc := strings.LastIndex(gopkgString, "\n  name = \"github.com/operator-framework/operator-sdk\"\n")
 			gopkgString = gopkgString[:gopkgLoc] + "\n  source = \"https://github.com/" + prSlug + "\"\n  revision = \"" + prSha + "\"\n" + gopkgString[gopkgLoc+1:]
