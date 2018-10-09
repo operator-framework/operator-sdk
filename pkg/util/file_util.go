@@ -29,11 +29,11 @@ import (
 
 const (
 	// file modes
-	defaultDirFileMode  = 0750
-	defaultFileMode     = 0644
-	defaultExecFileMode = 0744
+	DefaultDirFileMode  = 0750
+	DefaultFileMode     = 0644
+	DefaultExecFileMode = 0744
 
-	defaultFileFlags = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
+	DefaultFileFlags = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
 )
 
 // FileWriter is a io wrapper to write files
@@ -44,18 +44,18 @@ type FileWriter struct {
 }
 
 // WriteCloser returns a WriteCloser to write to given path
-func (fw *FileWriter) WriteCloser(path string) (io.Writer, error) {
+func (fw *FileWriter) WriteCloser(path string, mode os.FileMode) (io.Writer, error) {
 	fw.once.Do(func() {
 		fw.Fs = afero.NewOsFs()
 	})
 
 	dir := filepath.Dir(path)
-	err := fw.Fs.MkdirAll(dir, defaultDirFileMode)
+	err := fw.Fs.MkdirAll(dir, DefaultDirFileMode)
 	if err != nil {
 		return nil, err
 	}
 
-	fi, err := fw.Fs.OpenFile(path, defaultFileFlags, defaultFileMode)
+	fi, err := fw.Fs.OpenFile(path, DefaultFileFlags, mode)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (fw *FileWriter) WriteFile(filePath string, content []byte) error {
 		fw.Fs = afero.NewOsFs()
 	})
 
-	f, err := fw.WriteCloser(filePath)
+	f, err := fw.WriteCloser(filePath, DefaultFileMode)
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %v", filePath, err)
 	}
