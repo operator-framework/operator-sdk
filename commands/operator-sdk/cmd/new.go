@@ -107,7 +107,6 @@ func doScaffold() {
 	err := s.Execute(cfg,
 		&scaffold.Cmd{},
 		&scaffold.Dockerfile{},
-		&scaffold.Build{},
 		&scaffold.Role{},
 		&scaffold.RoleBinding{},
 		&scaffold.Operator{},
