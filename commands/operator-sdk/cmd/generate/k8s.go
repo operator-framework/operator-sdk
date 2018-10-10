@@ -69,7 +69,6 @@ func K8sCodegen() {
 		outputPkg,
 		apisPkg,
 		groupVersions,
-		"--go-header-file", "./scripts/codegen/boilerplate.go.txt",
 	}
 	out, err := exec.Command(genGroupsCmd, args...).CombinedOutput()
 	if err != nil {
