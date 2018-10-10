@@ -15,18 +15,18 @@
 package scaffold
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestTestFrameworkDockerfile(t *testing.T) {
-	codegen := NewTestFrameworkDockerfileCodegen(&TestFrameworkDockerfileInput{ProjectName: appProjectName})
-	buf := &bytes.Buffer{}
-	if err := codegen.Render(buf); err != nil {
-		t.Fatal(err)
+	s, buf := setupScaffoldAndWriter()
+	err := s.Execute(appConfig, &TestFrameworkDockerfile{})
+	if err != nil {
+		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
+
 	if testFrameworkDockerfileExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := diffmatchpatch.New().DiffMain(testFrameworkDockerfileExp, buf.String(), false)

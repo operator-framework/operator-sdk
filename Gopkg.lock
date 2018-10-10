@@ -42,11 +42,7 @@
   revision = "7536572e8d55209135cd5e7ccf7fce43dca217ab"
 
 [[projects]]
-<<<<<<< HEAD
   digest = "1:a51f75337287a485731485c646d701e237246f7c5d0e221dee18ca37b672538e"
-=======
-  digest = "1:6d49a51383769ec8b1835bd0bea6c446057b109d2676bb28a20264577a1bb74b"
->>>>>>> pkg/ansible: cherry pick ansible pkgs from master into refactor branch (#566)
   name = "github.com/gobuffalo/envy"
   packages = ["."]
   pruneopts = ""
@@ -325,6 +321,17 @@
   version = "v1.1.1"
 
 [[projects]]
+  digest = "1:d0431c2fd72e39ee43ea7742322abbc200c3e704c9102c5c3c2e2e667095b0ca"
+  name = "github.com/spf13/afero"
+  packages = [
+    ".",
+    "mem",
+  ]
+  pruneopts = ""
+  revision = "d40851caa0d747393da1ffb28f7f9d8b4eeffebd"
+  version = "v1.1.2"
+
+[[projects]]
   digest = "1:a1403cc8a94b8d7956ee5e9694badef0e7b051af289caad1cf668331e3ffa4f6"
   name = "github.com/spf13/cobra"
   packages = ["."]
@@ -373,7 +380,6 @@
 
 [[projects]]
   branch = "master"
-<<<<<<< HEAD
   digest = "1:6a29a2cd3888fd1aeba990cfffebe3524b79d717a0abe52ee7d695c51ff75154"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
@@ -383,17 +389,6 @@
 [[projects]]
   branch = "master"
   digest = "1:547dcb6aebfb7fb17947660ebb034470c13f4d63d893def190a2f7ba3d09bc38"
-=======
-  digest = "1:6914c49eed986dfb8dffb33516fa129c49929d4d873f41e073c83c11c372b870"
-  name = "golang.org/x/crypto"
-  packages = ["ssh/terminal"]
-  pruneopts = ""
-  revision = "e3636079e1a4c1f337f212cc5cd2aca108f6c900"
-
-[[projects]]
-  branch = "master"
-  digest = "1:db4fdf03f745823eff6c2f06cd50eb447a7b77f307079cf5220e1621a1d63593"
->>>>>>> pkg/ansible: cherry pick ansible pkgs from master into refactor branch (#566)
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -405,30 +400,18 @@
     "idna",
   ]
   pruneopts = ""
-<<<<<<< HEAD
   revision = "49bb7cea24b1df9410e1712aa6433dae904ff66a"
 
 [[projects]]
   branch = "master"
   digest = "1:2ed0bf267e44950120acd95570227e28184573ffb099bd85b529ee148e004ddb"
-=======
-  revision = "f5e5bdd778241bfefa8627f7124c39cd6ad8d74f"
-
-[[projects]]
-  branch = "master"
-  digest = "1:69e22fc503ccbebfa61f4eb1799d905b7100f86458a62589103541f3dd15dd36"
->>>>>>> pkg/ansible: cherry pick ansible pkgs from master into refactor branch (#566)
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = ""
-<<<<<<< HEAD
   revision = "fa43e7bc11baaae89f3f902b2b4d832b68234844"
-=======
-  revision = "af653ce8b74f808d092db8ca9741fbb63d2a469d"
->>>>>>> pkg/ansible: cherry pick ansible pkgs from master into refactor branch (#566)
 
 [[projects]]
   digest = "1:5acd3512b047305d49e8763eef7ba423901e85d5dd2fd1e71778a0ea8de10bd4"
@@ -460,6 +443,19 @@
   packages = ["rate"]
   pruneopts = ""
   revision = "fbb02b2291d28baffd63558aa44b4b56f178d650"
+
+[[projects]]
+  branch = "master"
+  digest = "1:4e6c1bdaf0b67e43450fd0c0f29ee3807f8f6d385e555c7e769e5dda95238b10"
+  name = "golang.org/x/tools"
+  packages = [
+    "go/ast/astutil",
+    "imports",
+    "internal/fastwalk",
+    "internal/gopathwalk",
+  ]
+  pruneopts = ""
+  revision = "19e2aca3fdf9724feacb8701307db6fb35055030"
 
 [[projects]]
   digest = "1:75fb3fcfc73a8c723efde7777b40e8e8ff9babf30d8c56160d01beffea8a95a6"
@@ -670,10 +666,7 @@
     "pkg/cache/internal",
     "pkg/client",
     "pkg/client/apiutil",
-<<<<<<< HEAD
     "pkg/client/config",
-=======
->>>>>>> pkg/ansible: cherry pick ansible pkgs from master into refactor branch (#566)
     "pkg/controller",
     "pkg/event",
     "pkg/handler",
@@ -687,14 +680,8 @@
     "pkg/recorder",
     "pkg/runtime/inject",
     "pkg/runtime/log",
-<<<<<<< HEAD
-<<<<<<< HEAD
-    "pkg/runtime/signals",
-=======
->>>>>>> pkg/ansible: cherry pick ansible pkgs from master into refactor branch (#566)
-=======
     "pkg/runtime/scheme",
->>>>>>> *: update test framework and related changes from master (#579)
+    "pkg/runtime/signals",
     "pkg/source",
     "pkg/source/internal",
     "pkg/webhook/admission",
@@ -715,7 +702,9 @@
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/sergi/go-diff/diffmatchpatch",
     "github.com/sirupsen/logrus",
+    "github.com/spf13/afero",
     "github.com/spf13/cobra",
+    "golang.org/x/tools/imports",
     "gopkg.in/yaml.v2",
     "k8s.io/api/core/v1",
     "k8s.io/api/rbac/v1",
@@ -744,25 +733,14 @@
     "k8s.io/client-go/transport",
     "k8s.io/client-go/util/workqueue",
     "sigs.k8s.io/controller-runtime/pkg/client",
-<<<<<<< HEAD
     "sigs.k8s.io/controller-runtime/pkg/client/config",
     "sigs.k8s.io/controller-runtime/pkg/controller",
     "sigs.k8s.io/controller-runtime/pkg/handler",
     "sigs.k8s.io/controller-runtime/pkg/manager",
     "sigs.k8s.io/controller-runtime/pkg/reconcile",
     "sigs.k8s.io/controller-runtime/pkg/runtime/log",
-    "sigs.k8s.io/controller-runtime/pkg/runtime/signals",
-=======
-    "sigs.k8s.io/controller-runtime/pkg/controller",
-    "sigs.k8s.io/controller-runtime/pkg/event",
-    "sigs.k8s.io/controller-runtime/pkg/handler",
-    "sigs.k8s.io/controller-runtime/pkg/manager",
-    "sigs.k8s.io/controller-runtime/pkg/reconcile",
-<<<<<<< HEAD
->>>>>>> pkg/ansible: cherry pick ansible pkgs from master into refactor branch (#566)
-=======
     "sigs.k8s.io/controller-runtime/pkg/runtime/scheme",
->>>>>>> *: update test framework and related changes from master (#579)
+    "sigs.k8s.io/controller-runtime/pkg/runtime/signals",
     "sigs.k8s.io/controller-runtime/pkg/source",
   ]
   solver-name = "gps-cdcl"

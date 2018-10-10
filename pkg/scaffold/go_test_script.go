@@ -15,32 +15,22 @@
 package scaffold
 
 import (
-	"io"
+	"path/filepath"
 
-	"text/template"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type goTestScript struct {
-	in *GoTestScriptInput
+type GoTestScript struct {
+	input.Input
 }
 
-func NewGoTestScriptCodegen(in *GoTestScriptInput) Codegen {
-	return &goTestScript{in: in}
-}
-
-type GoTestScriptInput struct {
-	// ProjectName is the name of the operator project.
-	ProjectName string
-}
-
-func (d *goTestScript) Render(w io.Writer) error {
-	t := template.New("go_test_script.go")
-	t, err := t.Parse(goTestScriptTmpl)
-	if err != nil {
-		return err
+func (s *GoTestScript) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = filepath.Join(buildTestDir, goTestScriptFile)
 	}
-
-	return t.Execute(w, d.in)
+	s.IsExec = isExecTrue
+	s.TemplateBody = goTestScriptTmpl
+	return s.Input, nil
 }
 
 const goTestScriptTmpl = `#!/bin/sh

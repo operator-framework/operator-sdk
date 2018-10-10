@@ -15,19 +15,21 @@
 package scaffold
 
 import (
-	"io"
+	"path/filepath"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type controller struct {
+type Controller struct {
+	input.Input
 }
 
-func NewControllerCodegen() Codegen {
-	return &controller{}
-}
-
-func (c *controller) Render(w io.Writer) error {
-	_, err := w.Write([]byte(controllerTmpl))
-	return err
+func (s *Controller) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = filepath.Join(controllerDir, controllerFile)
+	}
+	s.TemplateBody = controllerTmpl
+	return s.Input, nil
 }
 
 const controllerTmpl = `package controller

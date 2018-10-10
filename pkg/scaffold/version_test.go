@@ -15,18 +15,18 @@
 package scaffold
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestVersion(t *testing.T) {
-	codegen := NewVersionCoden()
-	buf := &bytes.Buffer{}
-	if err := codegen.Render(buf); err != nil {
-		t.Fatal(err)
+	s, buf := setupScaffoldAndWriter()
+	err := s.Execute(appConfig, &Version{})
+	if err != nil {
+		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
+
 	if versionExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := diffmatchpatch.New().DiffMain(versionExp, buf.String(), false)

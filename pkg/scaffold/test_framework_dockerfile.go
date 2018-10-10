@@ -15,32 +15,21 @@
 package scaffold
 
 import (
-	"io"
+	"path/filepath"
 
-	"text/template"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type testFrameworkDockerfile struct {
-	in *TestFrameworkDockerfileInput
+type TestFrameworkDockerfile struct {
+	input.Input
 }
 
-func NewTestFrameworkDockerfileCodegen(in *TestFrameworkDockerfileInput) Codegen {
-	return &testFrameworkDockerfile{in: in}
-}
-
-type TestFrameworkDockerfileInput struct {
-	// ProjectName is the name of the operator project.
-	ProjectName string
-}
-
-func (d *testFrameworkDockerfile) Render(w io.Writer) error {
-	t := template.New("test_framework_dockerfile.go")
-	t, err := t.Parse(testFrameworkDockerfileTmpl)
-	if err != nil {
-		return err
+func (s *TestFrameworkDockerfile) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = filepath.Join(buildTestDir, dockerfileFile)
 	}
-
-	return t.Execute(w, d.in)
+	s.TemplateBody = testFrameworkDockerfileTmpl
+	return s.Input, nil
 }
 
 const testFrameworkDockerfileTmpl = `ARG BASEIMAGE

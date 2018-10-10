@@ -15,7 +15,6 @@
 package scaffold
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -26,11 +25,12 @@ func TestAddController(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	codegen := NewAddControllerCodegen(&AddControllerInput{ProjectPath: appProjectPath, Resource: r})
-	buf := &bytes.Buffer{}
-	if err = codegen.Render(buf); err != nil {
-		t.Fatal(err)
+	s, buf := setupScaffoldAndWriter()
+	err = s.Execute(appConfig, &AddController{Resource: r})
+	if err != nil {
+		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
+
 	if addControllerExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := diffmatchpatch.New().DiffMain(addControllerExp, buf.String(), false)

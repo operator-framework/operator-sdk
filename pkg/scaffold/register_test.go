@@ -15,7 +15,6 @@
 package scaffold
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -26,11 +25,12 @@ func TestRegister(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	codegen := NewRegisterCodegen(&RegisterInput{ProjectPath: appProjectPath, Resource: r})
-	buf := &bytes.Buffer{}
-	if err := codegen.Render(buf); err != nil {
-		t.Fatal(err)
+	s, buf := setupScaffoldAndWriter()
+	err = s.Execute(appConfig, &Register{Resource: r})
+	if err != nil {
+		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
+
 	if registerExp != buf.String() {
 		dmp := diffmatchpatch.New()
 		diffs := diffmatchpatch.New().DiffMain(registerExp, buf.String(), false)

@@ -67,7 +67,7 @@ func (l loggingEventHandler) Handle(u *unstructured.Unstructured, e eventapi.Job
 	t, ok := e.EventData["task"]
 	if ok {
 		setFactAction := e.EventData["task_action"] == TaskActionSetFact
-		debugAction   := e.EventData["task_action"] == TaskActionDebug
+		debugAction := e.EventData["task_action"] == TaskActionDebug
 
 		if e.Event == EventPlaybookOnTaskStart && !setFactAction && !debugAction {
 			log.Infof("[playbook task]: %s", e.EventData["name"])

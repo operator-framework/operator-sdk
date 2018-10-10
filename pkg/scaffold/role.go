@@ -15,32 +15,21 @@
 package scaffold
 
 import (
-	"io"
-	"text/template"
+	"path/filepath"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type role struct {
-	in *RoleInput
+type Role struct {
+	input.Input
 }
 
-// roleInput is the input needed to generate a pkg/deploy/role.yaml.
-type RoleInput struct {
-	// ProjectName is the name of the operator project.
-	ProjectName string
-}
-
-func NewRoleCodegen(in *RoleInput) Codegen {
-	return &role{in: in}
-}
-
-func (r *role) Render(w io.Writer) error {
-	t := template.New("roles.go")
-	t, err := t.Parse(roleTemplate)
-	if err != nil {
-		return err
+func (s *Role) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = filepath.Join(deployDir, roleYamlFile)
 	}
-
-	return t.Execute(w, r.in)
+	s.TemplateBody = roleTemplate
+	return s.Input, nil
 }
 
 const roleTemplate = `kind: Role
