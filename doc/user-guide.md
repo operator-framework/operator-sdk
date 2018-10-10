@@ -161,6 +161,12 @@ memcached-operator       1         1         1            1           1m
 
 This method is preferred during development cycle to deploy and test faster.
 
+Set the name of the operator in an environment variable:
+
+```sh
+export OPERATOR_NAME=memcached-operator
+```
+
 Run the operator locally with the default kubernetes config file present at `$HOME/.kube/config`:
 
 ```sh
