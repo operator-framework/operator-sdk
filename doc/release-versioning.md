@@ -48,7 +48,7 @@ $ git push origin "cherry-picked-change"
 
 Making an Operator SDK release involves:
 - Tagging and signing a git commit and pushing the tag to GitHub.
-- Building a release binary, signing the binary, and uploading both binary and signature to GitHub.
+- Building a release binary and uploading the binary to GitHub.
 
 Releases can only be performed by [maintainers][doc-maintainers].
 
@@ -64,11 +64,9 @@ Release binaries will be built for the `x86_64` architecture for both GNU Linux 
 
 Support for the Windows platform or any architecture other than `x86_64` is not on the roadmap at this time.
 
-## Binaries and signatures
+## Binaries
 
-Binaries will be signed using a maintainers' [PGP key][doc-maintainer-pgp-keys], and signatures will be uploaded to the release along with its accompanying binary. Ensure you import maintainer keys to verify release binaries.
-
-Creating release binaries and signatures:
+Creating release binaries:
 ```bash
 $ ./release.sh "v${VERSION}"
 ```
@@ -121,7 +119,6 @@ Patch releases should have the following format:
 [link-semver]:https://semver.org/
 [link-github-milestones]: https://help.github.com/articles/about-milestones/
 [doc-maintainers]:../MAINTAINERS
-[doc-maintainer-pgp-keys]:TODO
 [link-github-gpg-key-upload]:https://github.com/settings/keys
 [link-git-config-gpg-key]:https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work
 [doc-kube-version]:https://github.com/operator-framework/operator-sdk#prerequisites
