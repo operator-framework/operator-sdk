@@ -11,5 +11,5 @@ oc cluster up
 # Become cluster admin
 oc login -u system:admin
 
-# kubectl is needed for the single namespace local test
-curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.10.1/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+# kubectl is needed for the single namespace local test and the ansible tests
+curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.11.3/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
