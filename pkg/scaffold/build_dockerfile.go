@@ -20,19 +20,19 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type Dockerfile struct {
+type BuildDockerfile struct {
 	input.Input
 }
 
-func (s *Dockerfile) GetInput() (input.Input, error) {
+func (s *BuildDockerfile) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = filepath.Join(buildDir, dockerfileFile)
 	}
-	s.TemplateBody = dockerfileTmpl
+	s.TemplateBody = buildDockerfileTmpl
 	return s.Input, nil
 }
 
-const dockerfileTmpl = `FROM alpine:3.6
+const buildDockerfileTmpl = `FROM alpine:3.6
 
 USER nobody
 
