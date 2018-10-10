@@ -37,8 +37,6 @@ const (
 	deployDir     = "deploy"
 	olmCatalogDir = deployDir + filePathSep + "olm-catalog"
 	crdsDir       = deployDir + filePathSep + "crds"
-	scriptsDir    = "scripts"
-	codegenDir    = scriptsDir + filePathSep + "codegen"
 	versionDir    = "version"
 
 	// files
@@ -47,7 +45,6 @@ const (
 	controllerFile         = "controller.go"
 	dockerfileFile         = "Dockerfile"
 	goTestScriptFile       = "go-test.sh"
-	boilerplateFile        = "boilerplate.go.txt"
 	versionFile            = "version.go"
 	docFile                = "doc.go"
 	registerFile           = "register.go"
