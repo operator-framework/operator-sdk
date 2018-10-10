@@ -15,38 +15,21 @@
 package scaffold
 
 import (
-	"io"
+	"path/filepath"
 
-	"text/template"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type dockerfile struct {
-	in *DockerfileInput
+type Boilerplate struct {
+	input.Input
 }
 
-func NewDockerfileCodegen(in *DockerfileInput) Codegen {
-	return &dockerfile{in: in}
-}
-
-type DockerfileInput struct {
-	// ProjectName is the name of the operator project.
-	ProjectName string
-}
-
-func (d *dockerfile) Render(w io.Writer) error {
-	t := template.New("dockerfile.go")
-	t, err := t.Parse(dockerfileTmpl)
-	if err != nil {
-		return err
+func (s *Boilerplate) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = filepath.Join(codegenDir, boilerplateFile)
 	}
-
-	return t.Execute(w, d.in)
+	s.TemplateBody = bpTmpl
+	return s.Input, nil
 }
 
-const dockerfileTmpl = `FROM alpine:3.6
-
-RUN adduser -D {{.ProjectName}}
-USER {{.ProjectName}}
-
-ADD build/_output/bin/{{.ProjectName}} /usr/local/bin/{{.ProjectName}}
-`
+const bpTmpl = ``

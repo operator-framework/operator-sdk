@@ -14,10 +14,45 @@
 
 package scaffold
 
+import (
+	"bytes"
+	"io"
+	"log"
+	"os"
+	"path/filepath"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+)
+
 const (
 	// test constants describing an app operator project
 	appProjectName = "app-operator"
-	appProjectPath = "github.com/example-inc/" + appProjectName
+	appRepo        = "github.com" + filePathSep + "example-inc" + filePathSep + appProjectName
 	appApiVersion  = "app.example.com/v1alpha1"
 	appKind        = "AppService"
 )
+
+var (
+	appConfig = &input.Config{
+		Repo:           appRepo,
+		AbsProjectPath: mustGetImportPath(),
+		ProjectName:    appProjectName,
+	}
+)
+
+func mustGetImportPath() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatal("mustGetImportPath: ", err)
+	}
+	return filepath.Join(wd, appRepo)
+}
+
+func setupScaffoldAndWriter() (*Scaffold, *bytes.Buffer) {
+	buf := &bytes.Buffer{}
+	return &Scaffold{
+		GetWriter: func(_ string, _ os.FileMode) (io.Writer, error) {
+			return buf, nil
+		},
+	}, buf
+}

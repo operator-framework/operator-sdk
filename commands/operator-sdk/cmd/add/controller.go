@@ -15,13 +15,11 @@
 package add
 
 import (
-	"bytes"
 	"log"
-	"os"
-	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
 	"github.com/spf13/cobra"
 )
@@ -59,45 +57,23 @@ Example:
 }
 
 func controllerRun(cmd *cobra.Command, args []string) {
-	projectPath := cmdutil.MustInProjectRoot()
-	fullProjectPath := mustGetwd()
-
 	// Create and validate new resource
 	r, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Must be controller for a new kind: pkg/controller/<kind>/<kind>_controller.go shouldn't exist
-	kindControllerFileName := r.LowerKind + "_controller.go"
-	pkgControllerDir := filepath.Join(fullProjectPath, "pkg", "controller", r.LowerKind)
-	mustNotExist(filepath.Join(pkgControllerDir, kindControllerFileName))
-
-	// Scaffold pkg/controller/add_<kind>.go
-	filePath := filepath.Join(fullProjectPath, "pkg", "controller", "add_"+r.LowerKind+".go")
-	codeGen := scaffold.NewAddControllerCodegen(&scaffold.AddControllerInput{ProjectPath: projectPath, Resource: r})
-	buf := &bytes.Buffer{}
-	if err := codeGen.Render(buf); err != nil {
-		log.Fatalf("failed to render the template for (%v): %v", filePath, err)
-	}
-	if err := writeFileAndPrint(filePath, buf.Bytes(), cmdutil.DefaultFileMode); err != nil {
-		log.Fatalf("failed to create %v: %v", filePath, err)
+	cfg := &input.Config{
+		Repo:           cmdutil.MustInProjectRoot(),
+		AbsProjectPath: cmdutil.MustGetwd(),
 	}
 
-	// Scaffold pkg/controller/<kind> directory
-	if err := os.MkdirAll(pkgControllerDir, cmdutil.DefaultDirFileMode); err != nil {
-		log.Fatalf("failed to create %v: %v", pkgControllerDir, err)
+	s := &scaffold.Scaffold{}
+	err = s.Execute(cfg,
+		&scaffold.ControllerKind{Resource: r},
+		&scaffold.AddController{Resource: r},
+	)
+	if err != nil {
+		log.Fatalf("add scaffold failed: (%v)", err)
 	}
-
-	// Scaffold pkg/controller/<kind>/<kind>_controller.go
-	filePath = filepath.Join(pkgControllerDir, kindControllerFileName)
-	codeGen = scaffold.NewControllerKindCodegen(&scaffold.ControllerKindInput{ProjectPath: projectPath, Resource: r})
-	buf = &bytes.Buffer{}
-	if err := codeGen.Render(buf); err != nil {
-		log.Fatalf("failed to render the template for (%v): %v", filePath, err)
-	}
-	if err := writeFileAndPrint(filePath, buf.Bytes(), cmdutil.DefaultFileMode); err != nil {
-		log.Fatalf("failed to create %v: %v", filePath, err)
-	}
-
 }

@@ -14,21 +14,23 @@
 
 package scaffold
 
-import "io"
+import (
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+)
 
-type gopkg struct {
+type GopkgToml struct {
+	input.Input
 }
 
-func NewGopkgCodegen() Codegen {
-	return &gopkg{}
+func (s *GopkgToml) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = gopkgtomlFile
+	}
+	s.TemplateBody = gopkgTomlTmpl
+	return s.Input, nil
 }
 
-func (g *gopkg) Render(w io.Writer) error {
-	_, err := w.Write([]byte(gopkgTomlTemplate))
-	return err
-}
-
-const gopkgTomlTemplate = `# Force dep to vendor the code generators, which aren't imported just used at dev time.
+const gopkgTomlTmpl = `# Force dep to vendor the code generators, which aren't imported just used at dev time.
 required = [
   "k8s.io/code-generator/cmd/defaulter-gen",
   "k8s.io/code-generator/cmd/deepcopy-gen",
@@ -67,12 +69,12 @@ required = [
 
 [[override]]
   name = "sigs.k8s.io/controller-runtime"
-  revision = "v0.1.4"
+  version = "v0.1.4"
 
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"
   # The version rule is used for a specific release and the master branch for in between releases.
-  branch = "master"
+  branch = "refactor/controller-runtime"
   # version = "=v0.0.6"
 
 [prune]

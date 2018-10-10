@@ -15,19 +15,21 @@
 package scaffold
 
 import (
-	"io"
+	"path/filepath"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type apis struct {
+type Apis struct {
+	input.Input
 }
 
-func NewAPIsCodegen() Codegen {
-	return &apis{}
-}
-
-func (c *apis) Render(w io.Writer) error {
-	_, err := w.Write([]byte(apisTmpl))
-	return err
+func (s *Apis) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = filepath.Join(apisDir, apisFile)
+	}
+	s.TemplateBody = apisTmpl
+	return s.Input, nil
 }
 
 const apisTmpl = `package apis
