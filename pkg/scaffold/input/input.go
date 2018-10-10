@@ -49,8 +49,8 @@ type Input struct {
 	// Repo is the go project package
 	Repo string
 
-	// ProjectPath is the relative path to the project root
-	ProjectPath string
+	// AbsProjectPath is the absolute path to the project root, including the project directory.
+	AbsProjectPath string
 
 	// ProjectName is the operator's name, ex. app-operator
 	ProjectName string
@@ -69,16 +69,16 @@ func (i *Input) SetRepo(r string) {
 	}
 }
 
-// ProjectPath allows the project path to be set on an object
-type ProjectPath interface {
-	// SetProjectPath sets the project file location
-	SetProjectPath(string)
+// AbsProjectPath allows the absolute project path to be set on an object
+type AbsProjectPath interface {
+	// SetAbsProjectPath sets the project file location
+	SetAbsProjectPath(string)
 }
 
-// SetProjectPath sets the project path
-func (i *Input) SetProjectPath(p string) {
-	if i.ProjectPath == "" {
-		i.ProjectPath = p
+// SetAbsProjectPath sets the absolute project path
+func (i *Input) SetAbsProjectPath(p string) {
+	if i.AbsProjectPath == "" {
+		i.AbsProjectPath = p
 	}
 }
 
@@ -113,8 +113,8 @@ type Config struct {
 	// Repo is the go project package
 	Repo string
 
-	// ProjectPath is the relative path to the project root
-	ProjectPath string
+	// AbsProjectPath is the absolute path to the project root, including the project directory.
+	AbsProjectPath string
 
 	// ProjectName is the operator's name, ex. app-operator
 	ProjectName string

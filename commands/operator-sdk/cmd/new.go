@@ -99,7 +99,7 @@ func doScaffold() {
 
 	cfg := &input.Config{
 		Repo:        filepath.Join(cmdutil.CheckAndGetCurrPkg(), projectName),
-		ProjectPath: filepath.Join(cmdutil.MustGetwd(), projectName),
+		AbsProjectPath: filepath.Join(cmdutil.MustGetwd(), projectName),
 		ProjectName: projectName,
 	}
 

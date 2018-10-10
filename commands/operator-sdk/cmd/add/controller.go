@@ -65,7 +65,7 @@ func controllerRun(cmd *cobra.Command, args []string) {
 
 	cfg := &input.Config{
 		Repo:        cmdutil.MustInProjectRoot(),
-		ProjectPath: cmdutil.MustGetwd(),
+		AbsProjectPath: cmdutil.MustGetwd(),
 	}
 
 	s := &scaffold.Scaffold{}

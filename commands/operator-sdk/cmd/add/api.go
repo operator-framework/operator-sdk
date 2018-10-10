@@ -79,7 +79,7 @@ func apiRun(cmd *cobra.Command, args []string) {
 	absProjectPath := cmdutil.MustGetwd()
 	cfg := &input.Config{
 		Repo:        cmdutil.MustInProjectRoot(),
-		ProjectPath: absProjectPath,
+		AbsProjectPath: absProjectPath,
 	}
 
 	s := &scaffold.Scaffold{}

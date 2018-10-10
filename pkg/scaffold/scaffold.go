@@ -36,8 +36,8 @@ type Scaffold struct {
 	// Repo is the go project package
 	Repo string
 
-	// ProjectPath is the relative path to the project root
-	ProjectPath string
+	// AbsProjectPath is the absolute path to the project root, including the project directory.
+	AbsProjectPath string
 
 	// ProjectName is the operator's name, ex. app-operator
 	ProjectName string
@@ -49,8 +49,8 @@ func (s *Scaffold) setFieldsAndValidate(t input.File) error {
 	if b, ok := t.(input.Repo); ok {
 		b.SetRepo(s.Repo)
 	}
-	if b, ok := t.(input.ProjectPath); ok {
-		b.SetProjectPath(s.ProjectPath)
+	if b, ok := t.(input.AbsProjectPath); ok {
+		b.SetAbsProjectPath(s.AbsProjectPath)
 	}
 	if b, ok := t.(input.ProjectName); ok {
 		b.SetProjectName(s.ProjectName)
@@ -65,11 +65,10 @@ func (s *Scaffold) setFieldsAndValidate(t input.File) error {
 	return nil
 }
 
-func (s *Scaffold) configure(cfg *input.Config) error {
+func (s *Scaffold) configure(cfg *input.Config) {
 	s.Repo = cfg.Repo
-	s.ProjectPath = cfg.ProjectPath
+	s.AbsProjectPath = cfg.AbsProjectPath
 	s.ProjectName = cfg.ProjectName
-	return nil
 }
 
 // Execute executes scaffolding the Files
@@ -78,9 +77,8 @@ func (s *Scaffold) Execute(cfg *input.Config, files ...input.File) error {
 		s.GetWriter = (&util.FileWriter{}).WriteCloser
 	}
 
-	if err := s.configure(cfg); err != nil {
-		return err
-	}
+	// Configure s using common fields from cfg.
+	s.configure(cfg)
 
 	for _, f := range files {
 		if err := s.doFile(f); err != nil {
@@ -104,30 +102,27 @@ func (s *Scaffold) doFile(e input.File) error {
 		return err
 	}
 
-	// Ensure path is set correctly.
-	i.Path = filepath.Join(s.ProjectPath, i.Path)
+	// Ensure we use the absolute file path; i.Path is relative to the project root.
+	absFilePath := filepath.Join(s.AbsProjectPath, i.Path)
 
 	// Check if the file to write already exists
-	if _, err := os.Stat(i.Path); err == nil || os.IsExist(err) {
+	if _, err := os.Stat(absFilePath); err == nil || os.IsExist(err) {
 		switch i.IfExistsAction {
 		case input.Overwrite:
 		case input.Skip:
 			return nil
 		case input.Error:
-			return fmt.Errorf("%s already exists", i.Path)
+			return fmt.Errorf("%s already exists", absFilePath)
 		}
 	}
 
-	if err := s.doTemplate(i, e); err != nil {
-		return err
-	}
-	return nil
+	return s.doTemplate(i, e, absFilePath)
 }
 
 const goFileExt = ".go"
 
-// doTemplate executes the template for a file using the input
-func (s *Scaffold) doTemplate(i input.Input, e input.File) error {
+// doTemplate executes the template at absPath for a file using the input
+func (s *Scaffold) doTemplate(i input.Input, e input.File, absPath string) error {
 	temp, err := newTemplate(e).Parse(i.TemplateBody)
 	if err != nil {
 		return err
@@ -137,7 +132,7 @@ func (s *Scaffold) doTemplate(i input.Input, e input.File) error {
 	if i.IsExec {
 		mode = util.DefaultExecFileMode
 	}
-	f, err := s.GetWriter(i.Path, mode)
+	f, err := s.GetWriter(absPath, mode)
 	if err != nil {
 		return err
 	}
@@ -157,8 +152,8 @@ func (s *Scaffold) doTemplate(i input.Input, e input.File) error {
 	b := out.Bytes()
 
 	// gofmt the imports
-	if filepath.Ext(i.Path) == goFileExt {
-		b, err = imports.Process(i.Path, b, nil)
+	if filepath.Ext(absPath) == goFileExt {
+		b, err = imports.Process(absPath, b, nil)
 		if err != nil {
 			fmt.Printf("%s\n", out.Bytes())
 			return err

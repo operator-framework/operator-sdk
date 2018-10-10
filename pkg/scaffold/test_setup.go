@@ -35,7 +35,7 @@ const (
 var (
 	appConfig = &input.Config{
 		Repo:        appRepo,
-		ProjectPath: mustGetImportPath(),
+		AbsProjectPath: mustGetImportPath(),
 		ProjectName: appProjectName,
 	}
 )
