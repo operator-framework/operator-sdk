@@ -98,9 +98,9 @@ func mustBeNewProject() {
 func doScaffold() {
 
 	cfg := &input.Config{
-		Repo:        filepath.Join(cmdutil.CheckAndGetCurrPkg(), projectName),
+		Repo:           filepath.Join(cmdutil.CheckAndGetCurrPkg(), projectName),
 		AbsProjectPath: filepath.Join(cmdutil.MustGetwd(), projectName),
-		ProjectName: projectName,
+		ProjectName:    projectName,
 	}
 
 	s := &scaffold.Scaffold{}

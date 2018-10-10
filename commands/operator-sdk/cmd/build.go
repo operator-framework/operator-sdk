@@ -191,9 +191,9 @@ func buildFunc(cmd *cobra.Command, args []string) {
 
 			absProjectPath := cmdutil.MustGetwd()
 			cfg := &input.Config{
-				Repo:        cmdutil.MustInProjectRoot(),
+				Repo:           cmdutil.MustInProjectRoot(),
 				AbsProjectPath: absProjectPath,
-				ProjectName: filepath.Base(wd),
+				ProjectName:    filepath.Base(wd),
 			}
 
 			s := &scaffold.Scaffold{}

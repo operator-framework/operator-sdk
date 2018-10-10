@@ -127,7 +127,7 @@ func (s *Scaffold) doTemplate(i input.Input, e input.File, absPath string) error
 	if err != nil {
 		return err
 	}
-	
+
 	var mode os.FileMode = util.DefaultFileMode
 	if i.IsExec {
 		mode = util.DefaultExecFileMode

@@ -34,7 +34,7 @@ func (s *Types) GetInput() (input.Input, error) {
 		s.Path = filepath.Join(apisDir,
 			strings.ToLower(s.Resource.Group),
 			strings.ToLower(s.Resource.Version),
-			s.Resource.LowerKind + "_types.go")
+			s.Resource.LowerKind+"_types.go")
 	}
 	// Error if this file exists.
 	s.IfExistsAction = input.Error

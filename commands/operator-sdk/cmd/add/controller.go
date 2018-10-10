@@ -64,7 +64,7 @@ func controllerRun(cmd *cobra.Command, args []string) {
 	}
 
 	cfg := &input.Config{
-		Repo:        cmdutil.MustInProjectRoot(),
+		Repo:           cmdutil.MustInProjectRoot(),
 		AbsProjectPath: cmdutil.MustGetwd(),
 	}
 

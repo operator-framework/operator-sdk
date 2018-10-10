@@ -18,9 +18,9 @@ import (
 	"path/filepath"
 )
 
-const (	
+const (
 	// Boolean values for Input.IsExec
-	isExecTrue = true
+	isExecTrue  = true
 	isExecFalse = false
 
 	// Separator to statically create directories.
