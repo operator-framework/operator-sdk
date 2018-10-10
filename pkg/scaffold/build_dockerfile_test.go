@@ -36,8 +36,7 @@ func TestDockerfile(t *testing.T) {
 
 const dockerfileExp = `FROM alpine:3.6
 
-RUN adduser -D app-operator
-USER app-operator
+USER nobody
 
 ADD build/_output/bin/app-operator /usr/local/bin/app-operator
 `

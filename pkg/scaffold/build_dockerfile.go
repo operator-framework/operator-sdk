@@ -34,8 +34,7 @@ func (s *Dockerfile) GetInput() (input.Input, error) {
 
 const dockerfileTmpl = `FROM alpine:3.6
 
-RUN adduser -D {{.ProjectName}}
-USER {{.ProjectName}}
+USER nobody
 
 ADD build/_output/bin/{{.ProjectName}} /usr/local/bin/{{.ProjectName}}
 `

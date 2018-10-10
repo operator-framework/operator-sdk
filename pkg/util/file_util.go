@@ -31,7 +31,7 @@ const (
 	// file modes
 	DefaultDirFileMode  = 0750
 	DefaultFileMode     = 0644
-	DefaultExecFileMode = 0744
+	DefaultExecFileMode = 0755
 
 	DefaultFileFlags = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
 )
