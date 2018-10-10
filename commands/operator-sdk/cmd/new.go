@@ -145,7 +145,6 @@ func doScaffold() {
 		&scaffold.Version{},
 		&scaffold.Gitignore{},
 		&scaffold.GopkgToml{},
-		&scaffold.Boilerplate{},
 	)
 	if err != nil {
 		log.Fatalf("new scaffold failed: (%v)", err)
