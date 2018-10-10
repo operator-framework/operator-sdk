@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
 	"github.com/spf13/cobra"
@@ -37,10 +38,6 @@ type testLocalConfig struct {
 }
 
 var tlConfig testLocalConfig
-var (
-	defaultDirFileMode = 0750
-	defaultFileMode    = 0644
-)
 
 func NewTestLocalCmd() *cobra.Command {
 	testCmd := &cobra.Command{
@@ -68,7 +65,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	}
 	// if no namespaced manifest path is given, combine deploy/sa.yaml, deploy/rbac.yaml and deploy/operator.yaml
 	if tlConfig.namespacedManPath == "" {
-		err := os.MkdirAll("deploy/test", os.FileMode(defaultDirFileMode))
+		err := os.MkdirAll("deploy/test", os.FileMode(cmdutil.DefaultDirFileMode))
 		if err != nil {
 			log.Fatalf("could not create deploy/test: %v", err)
 		}
@@ -102,7 +99,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 		combined = append(combined, roleBinding...)
 		combined = append(combined, []byte("\n---\n")...)
 		combined = append(combined, operator...)
-		err = ioutil.WriteFile(tlConfig.namespacedManPath, combined, os.FileMode(defaultFileMode))
+		err = ioutil.WriteFile(tlConfig.namespacedManPath, combined, os.FileMode(cmdutil.DefaultFileMode))
 		if err != nil {
 			log.Fatalf("could not create temporary namespaced manifest file: %v", err)
 		}
@@ -114,7 +111,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 		}()
 	}
 	if tlConfig.globalManPath == "" {
-		err := os.MkdirAll("deploy/test", os.FileMode(defaultDirFileMode))
+		err := os.MkdirAll("deploy/test", os.FileMode(cmdutil.DefaultDirFileMode))
 		if err != nil {
 			log.Fatalf("could not create deploy/test: %v", err)
 		}
@@ -138,7 +135,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 				combined = append(combined, fileBytes...)
 			}
 		}
-		err = ioutil.WriteFile(tlConfig.globalManPath, combined, os.FileMode(defaultFileMode))
+		err = ioutil.WriteFile(tlConfig.globalManPath, combined, os.FileMode(cmdutil.DefaultFileMode))
 		if err != nil {
 			log.Fatalf("could not create temporary global manifest file: %v", err)
 		}
@@ -153,7 +150,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	testArgs = append(testArgs, "-"+test.KubeConfigFlag, tlConfig.kubeconfig)
 	testArgs = append(testArgs, "-"+test.NamespacedManPathFlag, tlConfig.namespacedManPath)
 	testArgs = append(testArgs, "-"+test.GlobalManPathFlag, tlConfig.globalManPath)
-	testArgs = append(testArgs, "-"+test.ProjRootFlag, mustGetwd())
+	testArgs = append(testArgs, "-"+test.ProjRootFlag, cmdutil.MustGetwd())
 	// if we do the append using an empty go flags, it inserts an empty arg, which causes
 	// any later flags to be ignored
 	if tlConfig.goTestFlags != "" {
@@ -164,19 +161,11 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	}
 	dc := exec.Command("go", testArgs...)
 	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
-	dc.Dir = mustGetwd()
+	dc.Dir = cmdutil.MustGetwd()
 	dc.Stdout = os.Stdout
 	dc.Stderr = os.Stderr
 	err := dc.Run()
 	if err != nil {
 		log.Fatalf("failed to exec `go %s`: %v", strings.Join(testArgs, " "), err)
 	}
-}
-
-func mustGetwd() string {
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("failed to determine the full path of the current directory: %v", err)
-	}
-	return wd
 }

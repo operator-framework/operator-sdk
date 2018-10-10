@@ -15,40 +15,32 @@
 package scaffold
 
 import (
-	"io"
-	"text/template"
+	"path/filepath"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type addController struct {
-	addControllerInput *AddControllerInput
-}
+// AddController is the input needed to generate a pkg/controller/add_<kind>.go file
+type AddController struct {
+	input.Input
 
-// AddControllerInput is the input needed to generate a pkg/controller/add_<kind>.go file
-type AddControllerInput struct {
-	// ProjectPath is the project path rooted at GOPATH.
-	ProjectPath string
 	// Resource defines the inputs for the controller's primary resource
 	Resource *Resource
 }
 
-func NewAddControllerCodegen(input *AddControllerInput) Codegen {
-	return &addController{addControllerInput: input}
-}
-
-func (c *addController) Render(w io.Writer) error {
-	t := template.New("add_<kind>.go")
-	t, err := t.Parse(addControllerTemplate)
-	if err != nil {
-		return err
+func (s *AddController) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		fileName := "add_" + s.Resource.LowerKind + ".go"
+		s.Path = filepath.Join(controllerDir, fileName)
 	}
-
-	return t.Execute(w, c.addControllerInput)
+	s.TemplateBody = addControllerTemplate
+	return s.Input, nil
 }
 
 const addControllerTemplate = `package controller
 
 import (
-	"{{ .ProjectPath }}/pkg/controller/{{ .Resource.LowerKind }}"
+	"{{ .Repo }}/pkg/controller/{{ .Resource.LowerKind }}"
 )
 
 func init() {

@@ -15,32 +15,21 @@
 package scaffold
 
 import (
-	"io"
-	"text/template"
+	"path/filepath"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type operator struct {
-	in *OperatorInput
+type Operator struct {
+	input.Input
 }
 
-// OperatorInput is the input needed to generate a pkg/deploy/operator.yaml.
-type OperatorInput struct {
-	// ProjectName is the name of the operator project.
-	ProjectName string
-}
-
-func NewOperatorCodegen(in *OperatorInput) Codegen {
-	return &operator{in: in}
-}
-
-func (r *operator) Render(w io.Writer) error {
-	t := template.New("operator.go")
-	t, err := t.Parse(operatorTemplate)
-	if err != nil {
-		return err
+func (s *Operator) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = filepath.Join(deployDir, operatorYamlFile)
 	}
-
-	return t.Execute(w, r.in)
+	s.TemplateBody = operatorTemplate
+	return s.Input, nil
 }
 
 const operatorTemplate = `apiVersion: apps/v1

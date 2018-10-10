@@ -15,7 +15,6 @@
 package cmdutil
 
 import (
-	gobuild "go/build"
 	"io/ioutil"
 	"log"
 	"os"
@@ -30,8 +29,12 @@ import (
 const configYaml = "./config/config.yaml"
 
 const (
-	DefaultDirFileMode = 0750
-	DefaultFileMode    = 0644
+	GopathEnv = "GOPATH"
+	SrcDir    = "src"
+
+	DefaultDirFileMode  = 0750
+	DefaultFileMode     = 0644
+	DefaultExecFileMode = 0744
 )
 
 // MustInProjectRoot checks if the current dir is the project root and returns the current repo's import path
@@ -43,7 +46,15 @@ func MustInProjectRoot() string {
 	if err != nil && os.IsNotExist(err) {
 		log.Fatalf("must run command in project root dir: %v", err)
 	}
-	return GetCurrPkg()
+	return CheckAndGetCurrPkg()
+}
+
+func MustGetwd() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("failed to get working directory: (%v)", err)
+	}
+	return wd
 }
 
 // GetConfig gets the values from ./config/config.yaml and parses them into a Config struct.
@@ -59,22 +70,20 @@ func GetConfig() *generator.Config {
 	return c
 }
 
-// GetCurrPkg returns the current directory's import path
+// CheckAndGetCurrPkg checks if this project's repository path is rooted under $GOPATH and returns the current directory's import path
 // e.g: "github.com/example-inc/app-operator"
-func GetCurrPkg() string {
-	gopath := os.Getenv("GOPATH")
+func CheckAndGetCurrPkg() string {
+	gopath := os.Getenv(GopathEnv)
 	if len(gopath) == 0 {
-		gopath = gobuild.Default.GOPATH
+		log.Fatalf("get current pkg failed: GOPATH env not set")
 	}
-	goSrc := filepath.Join(gopath, "src")
+	goSrc := filepath.Join(gopath, SrcDir)
 
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("failed to get working directory: (%v)", err)
-	}
+	wd := MustGetwd()
 	if !strings.HasPrefix(filepath.Dir(wd), goSrc) {
-		log.Fatalf("must run from gopath")
+		log.Fatalf("check current pkg failed: must run from gopath")
 	}
 	currPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
-	return currPkg
+	// strip any "/" prefix from the repo path.
+	return strings.TrimPrefix(currPkg, string(filepath.Separator))
 }

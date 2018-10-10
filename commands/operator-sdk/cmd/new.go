@@ -15,16 +15,15 @@
 package cmd
 
 import (
-	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
+	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
 	"github.com/spf13/cobra"
 )
@@ -58,14 +57,8 @@ var (
 )
 
 const (
-	gopath    = "GOPATH"
-	src       = "src"
 	dep       = "dep"
 	ensureCmd = "ensure"
-
-	defaultDirFileMode  = 0750
-	defaultFileMode     = 0644
-	defaultExecFileMode = 0755
 )
 
 func newFunc(cmd *cobra.Command, args []string) {
@@ -89,7 +82,7 @@ func parse(args []string) {
 // mustBeNewProject checks if the given project exists under the current diretory.
 // it exits with error when the project exists.
 func mustBeNewProject() {
-	fp := filepath.Join(mustGetwd(), projectName)
+	fp := filepath.Join(cmdutil.MustGetwd(), projectName)
 	stat, err := os.Stat(fp)
 	if err != nil && os.IsNotExist(err) {
 		return
@@ -103,266 +96,35 @@ func mustBeNewProject() {
 }
 
 func doScaffold() {
-	// create cmd/manager dir
-	fullProjectPath := filepath.Join(mustGetwd(), projectName)
-	cmdDir := filepath.Join(fullProjectPath, "cmd", "manager")
-	if err := os.MkdirAll(cmdDir, defaultDirFileMode); err != nil {
-		log.Fatalf("failed to create %v: %v", cmdDir, err)
+
+	cfg := &input.Config{
+		Repo:           filepath.Join(cmdutil.CheckAndGetCurrPkg(), projectName),
+		AbsProjectPath: filepath.Join(cmdutil.MustGetwd(), projectName),
+		ProjectName:    projectName,
 	}
 
-	// generate cmd/manager/main.go
-	cmdFilePath := filepath.Join(cmdDir, "main.go")
-	projectPath := repoPath()
-	cmdgen := scaffold.NewCmdCodegen(&scaffold.CmdInput{ProjectPath: projectPath})
-	buf := &bytes.Buffer{}
-	err := cmdgen.Render(buf)
+	s := &scaffold.Scaffold{}
+	err := s.Execute(cfg,
+		&scaffold.Cmd{},
+		&scaffold.Dockerfile{},
+		&scaffold.Role{},
+		&scaffold.RoleBinding{},
+		&scaffold.Operator{},
+		&scaffold.Apis{},
+		&scaffold.Controller{},
+		&scaffold.Version{},
+		&scaffold.Gitignore{},
+		&scaffold.GopkgToml{},
+		&scaffold.Boilerplate{},
+	)
 	if err != nil {
-		log.Fatalf("failed to render the template for (%v): %v", cmdFilePath, err)
+		log.Fatalf("new scaffold failed: (%v)", err)
 	}
-	err = writeFileAndPrint(cmdFilePath, buf.Bytes(), defaultFileMode)
-	if err != nil {
-		log.Fatalf("failed to create %v: %v", cmdFilePath, err)
-	}
-
-	// create pkg/apis dir
-	apisDir := filepath.Join(fullProjectPath, "pkg", "apis")
-	if err := os.MkdirAll(apisDir, defaultDirFileMode); err != nil {
-		log.Fatalf("failed to create %v: %v", cmdDir, err)
-	}
-
-	// generate pkg/apis/apis.go
-	apisFilePath := filepath.Join(apisDir, "apis.go")
-	apisgen := scaffold.NewAPIsCodegen()
-	buf = &bytes.Buffer{}
-	err = apisgen.Render(buf)
-	if err != nil {
-		log.Fatalf("failed to render the template for (%v): %v", apisFilePath, err)
-	}
-	err = writeFileAndPrint(apisFilePath, buf.Bytes(), defaultFileMode)
-	if err != nil {
-		log.Fatalf("failed to create %v: %v", apisFilePath, err)
-	}
-
-	// create pkg/controller dir
-	controllerDir := filepath.Join(fullProjectPath, "pkg", "controller")
-	if err := os.MkdirAll(controllerDir, defaultDirFileMode); err != nil {
-		log.Fatalf("failed to create %v: %v", controllerDir, err)
-	}
-
-	// generate pkg/controller/controller.go
-	controllerFilePath := filepath.Join(controllerDir, "controller.go")
-	controllergen := scaffold.NewControllerCodegen()
-	buf = &bytes.Buffer{}
-	err = controllergen.Render(buf)
-	if err != nil {
-		log.Fatalf("failed to render the template for (%v): %v", controllerFilePath, err)
-	}
-	err = writeFileAndPrint(controllerFilePath, buf.Bytes(), defaultFileMode)
-	if err != nil {
-		log.Fatalf("failed to create %v: %v", controllerFilePath, err)
-	}
-
-	// create build dir
-	buildDir := filepath.Join(fullProjectPath, "build")
-	if err := os.MkdirAll(buildDir, defaultDirFileMode); err != nil {
-		log.Fatalf("failed to create %v: %v", buildDir, err)
-	}
-
-	// generate build/Dockerfile
-	dockerfilePath := filepath.Join(buildDir, "Dockerfile")
-	dockerfilegen := scaffold.NewDockerfileCodegen(&scaffold.DockerfileInput{ProjectName: projectName})
-	buf = &bytes.Buffer{}
-	err = dockerfilegen.Render(buf)
-	if err != nil {
-		log.Fatalf("failed to render the template for (%v): %v", dockerfilePath, err)
-	}
-	err = writeFileAndPrint(dockerfilePath, buf.Bytes(), defaultFileMode)
-	if err != nil {
-		log.Fatalf("failed to create %v: %v", dockerfilePath, err)
-	}
-
-	// create build/test-framework directory
-	buildTestDir := filepath.Join(buildDir, "test-framework")
-	if err := os.MkdirAll(buildTestDir, defaultDirFileMode); err != nil {
-		log.Fatalf("failed to create %v: %v", buildTestDir, err)
-	}
-
-	// generate build/test-framework/Dockerfile
-	testFrameworkDockerfilePath := filepath.Join(buildTestDir, "Dockerfile")
-	testFrameworkDockerfilegen := scaffold.NewTestFrameworkDockerfileCodegen(&scaffold.TestFrameworkDockerfileInput{ProjectName: projectName})
-	buf = &bytes.Buffer{}
-	err = testFrameworkDockerfilegen.Render(buf)
-	if err != nil {
-		log.Fatalf("failed to render the template for (%v): %v", testFrameworkDockerfilePath, err)
-	}
-	err = writeFileAndPrint(testFrameworkDockerfilePath, buf.Bytes(), defaultFileMode)
-	if err != nil {
-		log.Fatalf("failed to create %v: %v", testFrameworkDockerfilePath, err)
-	}
-
-	// generate build/test-framework/go-test.sh
-	goTestScriptPath := filepath.Join(buildTestDir, "go-test.sh")
-	goTestScriptfilegen := scaffold.NewGoTestScriptCodegen(&scaffold.GoTestScriptInput{ProjectName: projectName})
-	buf = &bytes.Buffer{}
-	err = goTestScriptfilegen.Render(buf)
-	if err != nil {
-		log.Fatalf("failed to render the template for (%v): %v", goTestScriptPath, err)
-	}
-	err = writeFileAndPrint(goTestScriptPath, buf.Bytes(), defaultExecFileMode)
-	if err != nil {
-		log.Fatalf("failed to create %v: %v", goTestScriptPath, err)
-	}
-
-	// create deploy dir
-	deployDir := filepath.Join(fullProjectPath, "deploy")
-	if err := os.MkdirAll(deployDir, defaultDirFileMode); err != nil {
-		log.Fatalf("failed to create %v: %v", deployDir, err)
-	}
-
-	// generate deploy/role.yaml
-	rolePath := filepath.Join(deployDir, "role.yaml")
-	roleGen := scaffold.NewRoleCodegen(
-		&scaffold.RoleInput{
-			ProjectName: projectName,
-		})
-	buf = &bytes.Buffer{}
-	err = roleGen.Render(buf)
-	if err != nil {
-		log.Fatalf("failed to render the template for (%v): %v", rolePath, err)
-	}
-	err = writeFileAndPrint(rolePath, buf.Bytes(), defaultFileMode)
-	if err != nil {
-		log.Fatalf("failed to create %v: %v", rolePath, err)
-	}
-
-	// generate deploy/role_binding.yaml
-	roleBindingPath := filepath.Join(deployDir, "role_binding.yaml")
-	roleBindingGen := scaffold.NewRoleBindingCodegen(
-		&scaffold.RoleBindingInput{
-			ProjectName: projectName,
-		})
-	buf = &bytes.Buffer{}
-	err = roleBindingGen.Render(buf)
-	if err != nil {
-		log.Fatalf("failed to render the template for (%v): %v", roleBindingPath, err)
-	}
-	err = writeFileAndPrint(roleBindingPath, buf.Bytes(), defaultFileMode)
-	if err != nil {
-		log.Fatalf("failed to create %v: %v", roleBindingPath, err)
-	}
-
-	// generate deploy/operator.yaml
-	operatorPath := filepath.Join(deployDir, "operator.yaml")
-	operatorGen := scaffold.NewOperatorCodegen(
-		&scaffold.OperatorInput{
-			ProjectName: projectName,
-		})
-	buf = &bytes.Buffer{}
-	err = operatorGen.Render(buf)
-	if err != nil {
-		log.Fatalf("failed to render the template for (%v): %v", operatorPath, err)
-	}
-	err = writeFileAndPrint(operatorPath, buf.Bytes(), defaultFileMode)
-	if err != nil {
-		log.Fatalf("failed to create %v: %v", operatorPath, err)
-	}
-
-	// create scripts/codgen dir
-	codegenDir := filepath.Join(fullProjectPath, "scripts", "codegen")
-	if err := os.MkdirAll(codegenDir, defaultDirFileMode); err != nil {
-		log.Fatalf("failed to create %v: %v", codegenDir, err)
-	}
-
-	// generate scripts/codegen/boilerplate.go.txt
-	boilerplatePath := filepath.Join(codegenDir, "boilerplate.go.txt")
-	err = writeFileAndPrint(boilerplatePath, []byte{}, defaultFileMode)
-	if err != nil {
-		log.Fatalf("failed to create %v: %v", boilerplatePath, err)
-	}
-
-	// create version dir
-	versionDir := filepath.Join(fullProjectPath, "version")
-	if err := os.MkdirAll(versionDir, defaultDirFileMode); err != nil {
-		log.Fatalf("failed to create %v: %v", versionDir, err)
-	}
-
-	// generate version/version.go
-	buf = &bytes.Buffer{}
-	versionGen := scaffold.NewVersionCoden()
-	versionPath := filepath.Join(versionDir, "version.go")
-	err = versionGen.Render(buf)
-	if err != nil {
-		log.Fatalf("failed to render the template for (%v): %v", versionPath, err)
-	}
-	err = writeFileAndPrint(versionPath, buf.Bytes(), defaultFileMode)
-	if err != nil {
-		log.Fatalf("failed to create %v: %v", versionPath, err)
-	}
-
-	// generate .gitignore
-	buf = &bytes.Buffer{}
-	gitignoreGen := scaffold.NewGitignoreCodegen()
-	gitignorePath := filepath.Join(fullProjectPath, ".gitignore")
-	err = gitignoreGen.Render(buf)
-	if err != nil {
-		log.Fatalf("failed to render the template for (%v): %v", gitignorePath, err)
-	}
-	err = writeFileAndPrint(gitignorePath, buf.Bytes(), defaultFileMode)
-	if err != nil {
-		log.Fatalf("failed to create %v: %v", gitignorePath, err)
-	}
-
-	// generate Gopkg.toml
-	buf = &bytes.Buffer{}
-	gopkgGen := scaffold.NewGopkgCodegen()
-	gopkPath := filepath.Join(fullProjectPath, "Gopkg.toml")
-	err = gopkgGen.Render(buf)
-	if err != nil {
-		log.Fatalf("failed to render the template for (%v): %v", gopkPath, err)
-	}
-	err = writeFileAndPrint(gopkPath, buf.Bytes(), defaultFileMode)
-	if err != nil {
-		log.Fatalf("failed to create %v: %v", gopkPath, err)
-	}
-}
-
-// Writes file to a given path and data buffer, as well as prints out a message confirming creation of a file
-func writeFileAndPrint(filePath string, data []byte, fileMode os.FileMode) error {
-	if err := ioutil.WriteFile(filePath, data, fileMode); err != nil {
-		return err
-	}
-	fmt.Printf("Create %v \n", filePath)
-	return nil
-}
-
-// repoPath checks if this project's repository path is rooted under $GOPATH and returns project's repository path.
-func repoPath() string {
-	gp := os.Getenv(gopath)
-	if len(gp) == 0 {
-		log.Fatal("$GOPATH env not set")
-	}
-	wd := mustGetwd()
-	// check if this project's repository path is rooted under $GOPATH
-	if !strings.HasPrefix(wd, gp) {
-		log.Fatalf("project's repository path (%v) is not rooted under GOPATH (%v)", wd, gp)
-	}
-	// compute the repo path by stripping "$GOPATH/src/" from the path of the current directory.
-	rp := filepath.Join(string(wd[len(filepath.Join(gp, src)):]), projectName)
-	// strip any "/" prefix from the repo path.
-	return strings.TrimPrefix(rp, string(filepath.Separator))
-}
-
-func mustGetwd() string {
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("failed to determine the full path of the current directory: %v", err)
-	}
-	return wd
 }
 
 func execCmd(stdout *os.File, cmd string, args ...string) {
 	dc := exec.Command(cmd, args...)
-	dc.Dir = filepath.Join(mustGetwd(), projectName)
+	dc.Dir = filepath.Join(cmdutil.MustGetwd(), projectName)
 	dc.Stdout = stdout
 	dc.Stderr = os.Stderr
 	err := dc.Run()

@@ -14,11 +14,28 @@
 
 package scaffold
 
-import "io"
+import (
+	"path/filepath"
 
-// Codegen is the interface for code generation.
-// Each to be generated file should have an implementation that implements this interface.
-type Codegen interface {
-	// Render renders the generated file into the io.Writer.
-	Render(w io.Writer) error
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+)
+
+type Dockerfile struct {
+	input.Input
 }
+
+func (s *Dockerfile) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = filepath.Join(buildDir, dockerfileFile)
+	}
+	s.TemplateBody = dockerfileTmpl
+	return s.Input, nil
+}
+
+const dockerfileTmpl = `FROM alpine:3.6
+
+RUN adduser -D {{.ProjectName}}
+USER {{.ProjectName}}
+
+ADD build/_output/bin/{{.ProjectName}} /usr/local/bin/{{.ProjectName}}
+`

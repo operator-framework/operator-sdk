@@ -14,18 +14,22 @@
 
 package scaffold
 
-import "io"
+import (
+	"path/filepath"
 
-type version struct {
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+)
+
+type Version struct {
+	input.Input
 }
 
-func NewVersionCoden() Codegen {
-	return &version{}
-}
-
-func (v *version) Render(w io.Writer) error {
-	_, err := w.Write([]byte(versionTemplate))
-	return err
+func (s *Version) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = filepath.Join(versionDir, versionFile)
+	}
+	s.TemplateBody = versionTemplate
+	return s.Input, nil
 }
 
 const versionTemplate = `package version

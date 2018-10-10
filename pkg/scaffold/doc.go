@@ -15,32 +15,30 @@
 package scaffold
 
 import (
-	"io"
-	"text/template"
+	"path/filepath"
+	"strings"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type doc struct {
-	docInput *DocInput
-}
+// Doc is the input needed to generate a pkg/apis/<group>/<version>/doc.go file
+type Doc struct {
+	input.Input
 
-// DocInput is the input needed to generate a pkg/apis/<group>/<version>/doc.go file
-type DocInput struct {
-	// Resource defines the inputs for the new api
+	// Resource defines the inputs for the new doc file
 	Resource *Resource
 }
 
-func NewDocCodegen(input *DocInput) Codegen {
-	return &doc{docInput: input}
-}
-
-func (c *doc) Render(w io.Writer) error {
-	t := template.New("doc.go")
-	t, err := t.Parse(docTemplate)
-	if err != nil {
-		return err
+func (s *Doc) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = filepath.Join(apisDir,
+			strings.ToLower(s.Resource.Group),
+			strings.ToLower(s.Resource.Version),
+			docFile)
 	}
-
-	return t.Execute(w, c.docInput)
+	s.IfExistsAction = input.Skip
+	s.TemplateBody = docTemplate
+	return s.Input, nil
 }
 
 const docTemplate = `// Package {{.Resource.Version}} contains API Schema definitions for the {{ .Resource.Group }} {{.Resource.Version}} API group
