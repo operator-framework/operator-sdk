@@ -186,7 +186,7 @@ Example specifying a role:
   role: /opt/ansible/roles/Foo
 ```
 
-### Using playbooks in watches.yaml
+#### Using playbooks in watches.yaml
 
 By default, `operator-sdk new --type ansible` sets `watches.yaml` to execute a
 role directly on a resource event. This works well for new projects, but with a
@@ -220,7 +220,29 @@ developer can also do:
 $ operator-sdk new --type ansible --kind Foo --api-version foo.example.com/v1alpha1 foo-operator --generate-playbook
 ```
 
-## Testing an Ansible operator locally
+### Custom Resource file
+
+The Custom Resource file format is Kubernetes resource file. The object has
+mandatory fields:
+
+**apiVersion**:  The version of the Custom Resource that will be created.
+
+**kind**:  The kind of the Custom Resource that will be created
+
+**metadata**:  Kubernetes specific metadata to be created
+
+**spec**:  This is the key-value list of variables which are passed to Ansible.
+This field is optional and will be empty by default.
+
+**annotations**: Kubernetes specific annotations to be appened to the CR. See
+the below section for Ansible Operator specifc annotations.
+
+#### Ansible Operator annotations
+This is the list of CR annotations which will modify the behavior of the operator:
+
+**ansible.operator-sdk/reconcile-period**: Used to specify the reconciliation interval for the CR.
+
+### Testing an Ansible operator locally
 
 Once a developer is comfortable working with the above workflow, it will be
 beneficial to test the logic inside of an operator. To accomplish this, we can
@@ -245,9 +267,12 @@ directory and simply comment out the existing line:
   role: /home/user/foo-operator/Foo
 ```
 
-Create a CRD for resource Foo:
+Create a Custom Resource Definiton (CRD) and proper Role-Based Access Control
+(RBAC) defitinions for resource Foo. `operator-sdk` autogenerates these files
+inside of the `deploy` folder:
 ```bash
 $ kubectl create -f deploy/crd.yaml
+$ kubectl create -f deploy/rbac.yaml
 ```
 
 Run the `up local` command:
@@ -309,6 +334,44 @@ NAME          STATUS    AGE
 default       Active    28d
 kube-public   Active    28d
 kube-system   Active    28d
+```
+
+### Testing an Ansible operator on a cluster
+
+Now that a developer is confident in the operator logic, testing the operator
+inside of a pod on a Kubernetes cluster is desired. Running as a pod inside a
+Kubernetes cluster is preferred for production use.
+
+To build the `foo-operator` image and push it to a registry:
+```
+$ operator-sdk build quay.io/example/foo-operator:v0.0.1
+$ docker push quay.io/example/foo-operator:v0.0.1
+```
+
+Kubernetes deployment manifests are generated in `deploy/operator.yaml`. The
+deployment image in this file needs to be modified from the placeholder
+`REPLACE_IMAGE` to the previous built image. To do this run:
+```
+$ sed -i 's|REPLACE_IMAGE|quay.io/example/foo-operator:v0.0.1|g' deploy/operator.yaml
+```
+
+Deploy the foo-operator:
+
+```sh
+$ kubectl create -f deploy/rbac.yaml
+$ kubectl create -f deploy/operator.yaml
+```
+
+**NOTE**: `deploy/rbac.yaml` creates a `ClusterRoleBinding` and assumes we are
+working in namespace `default`. If you are working in a different namespace you
+must modify this file before creating it.
+
+Verify that the foo-operator is up and running:
+
+```sh
+$ kubectl get deployment
+NAME                     DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+foo-operator       1         1         1            1           1m
 ```
 
 ## Extra vars sent to Ansible
