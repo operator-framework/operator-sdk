@@ -240,7 +240,10 @@ the below section for Ansible Operator specifc annotations.
 #### Ansible Operator annotations
 This is the list of CR annotations which will modify the behavior of the operator:
 
-**ansible.operator-sdk/reconcile-period**: Used to specify the reconciliation interval for the CR.
+**ansible.operator-sdk/reconcile-period**: Used to specify the reconciliation
+interval for the CR. This value is parsed using the standard Golang package
+[time][time_pkg]. Specifically [ParseDuration][time_parse_duration] is used
+which will use the default of `s` suffix giving the value in seconds.
 
 Example:
 ```
@@ -249,7 +252,7 @@ kind: "Foo"
 metadata:
   name: "example"
 annotations:
-  ansible.operator-sdk/reconcile-period: 30s
+  ansible.operator-sdk/reconcile-period: "30s"
 ```
 
 ### Testing an Ansible operator locally
@@ -423,3 +426,5 @@ The structure is:
 [k8s_ansible_module]:https://docs.ansible.com/ansible/2.6/modules/k8s_module.html
 [openshift_restclient_python]:https://github.com/openshift/openshift-restclient-python
 [ansible_operator_user_guide]:../user-guide.md
+[time_pkg]:https://golang.org/pkg/time/
+[time_parse_duration]:https://golang.org/pkg/time/#ParseDuration
