@@ -242,6 +242,16 @@ This is the list of CR annotations which will modify the behavior of the operato
 
 **ansible.operator-sdk/reconcile-period**: Used to specify the reconciliation interval for the CR.
 
+Example:
+```
+apiVersion: "foo.example.com/v1alpha1"
+kind: "Foo"
+metadata:
+  name: "example"
+annotations:
+  ansible.operator-sdk/reconcile-period: 30s
+```
+
 ### Testing an Ansible operator locally
 
 Once a developer is comfortable working with the above workflow, it will be
