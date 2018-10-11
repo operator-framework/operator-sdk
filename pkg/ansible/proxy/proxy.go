@@ -108,13 +108,13 @@ type Options struct {
 	KubeConfig       *rest.Config
 }
 
-// RunProxy will start a proxy server in a go routine and return on the error
-// channel if something is not correct on startup.
-func RunProxy(done chan error, o Options) {
+// Run will start a proxy server in a go routine that returns on the error
+// channel if something is not correct on startup. Run will not return until
+// the network socket is listening.
+func Run(done chan error, o Options) error {
 	server, err := newServer("/", o.KubeConfig)
 	if err != nil {
-		done <- err
-		return
+		return err
 	}
 	if o.Handler != nil {
 		server.Handler = o.Handler(server.Handler)
@@ -125,11 +125,11 @@ func RunProxy(done chan error, o Options) {
 	}
 	l, err := server.Listen(o.Address, o.Port)
 	if err != nil {
-		done <- err
-		return
+		return err
 	}
 	go func() {
 		logrus.Infof("Starting to serve on %s\n", l.Addr().String())
 		done <- server.ServeOnListener(l)
 	}()
+	return nil
 }

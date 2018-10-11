@@ -15,7 +15,6 @@
 package operator
 
 import (
-	"log"
 	"math/rand"
 	"time"
 
@@ -30,8 +29,8 @@ import (
 // Run - A blocking function which starts a controller-runtime manager
 // It starts an Operator by reading in the values in `./watches.yaml`, adds a controller
 // to the manager, and finally running the manager.
-func Run(done chan error, mgr manager.Manager) {
-	watches, err := runner.NewFromWatches("./watches.yaml")
+func Run(done chan error, mgr manager.Manager, watchesPath string) {
+	watches, err := runner.NewFromWatches(watchesPath)
 	if err != nil {
 		logrus.Error("Failed to get watches")
 		done <- err
@@ -46,6 +45,5 @@ func Run(done chan error, mgr manager.Manager) {
 			Runner: runner,
 		})
 	}
-	log.Fatal(mgr.Start(c))
-	done <- nil
+	done <- mgr.Start(c)
 }
