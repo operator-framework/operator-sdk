@@ -15,15 +15,10 @@
 package cmdutil
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/operator-framework/operator-sdk/pkg/generator"
-
-	yaml "gopkg.in/yaml.v2"
 )
 
 // OperatorType - the type of operator
@@ -68,19 +63,6 @@ func MustGetwd() string {
 		log.Fatalf("failed to get working directory: (%v)", err)
 	}
 	return wd
-}
-
-// GetConfig gets the values from ./config/config.yaml and parses them into a Config struct.
-func GetConfig() *generator.Config {
-	c := &generator.Config{}
-	fp, err := ioutil.ReadFile(configYaml)
-	if err != nil {
-		log.Fatalf("failed to read config file %v: (%v)", configYaml, err)
-	}
-	if err = yaml.Unmarshal(fp, c); err != nil {
-		log.Fatalf("failed to unmarshal config file %v: (%v)", configYaml, err)
-	}
-	return c
 }
 
 // CheckAndGetCurrPkg checks if this project's repository path is rooted under $GOPATH and returns the current directory's import path

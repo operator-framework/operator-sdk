@@ -28,7 +28,10 @@ func NewGenerateCmd() *cobra.Command {
 `,
 	}
 	cmd.AddCommand(generate.NewGenerateK8SCmd())
+<<<<<<< HEAD
 	cmd.AddCommand(generate.NewGenerateOlmCatalogCmd())
 	cmd.AddCommand(generate.NewGenerateCrdCmd())
+=======
+>>>>>>> pkg/generator: remove generator
 	return cmd
 }
