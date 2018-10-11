@@ -20,8 +20,11 @@ import (
 	"os"
 	"strings"
 	"time"
+	"path/filepath"
 
+	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
 	"github.com/operator-framework/operator-sdk/pkg/test"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
@@ -50,7 +53,7 @@ func NewTestClusterCmd() *cobra.Command {
 	defaultKubeConfig := ""
 	homedir, ok := os.LookupEnv("HOME")
 	if ok {
-		defaultKubeConfig = homedir + "/.kube/config"
+		defaultKubeConfig = filepath.Join(homedir, cmdutil.KubeConfigDir)
 	}
 	testCmd.Flags().StringVar(&tcConfig.namespace, "namespace", "default", "Namespace to run tests in")
 	testCmd.Flags().StringVar(&tcConfig.kubeconfig, "kubeconfig", defaultKubeConfig, "Kubeconfig path")
@@ -89,7 +92,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 				Name:            "operator-test",
 				Image:           args[0],
 				ImagePullPolicy: pullPolicy,
-				Command:         []string{"/go-test.sh"},
+				Command:         []string{scaffold.GoTestScriptFile},
 				Env: []v1.EnvVar{{
 					Name:      test.TestNamespaceEnv,
 					ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.namespace"}},

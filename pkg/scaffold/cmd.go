@@ -32,10 +32,10 @@ type Cmd struct {
 
 func (s *Cmd) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(managerDir, cmdFile)
+		s.Path = filepath.Join(ManagerDir, CmdFile)
 	}
-	s.ApisDir = apisDir
-	s.ControllerDir = controllerDir
+	s.ApisDir = ApisDir
+	s.ControllerDir = ControllerDir
 	s.TemplateBody = cmdTmpl
 	return s.Input, nil
 }

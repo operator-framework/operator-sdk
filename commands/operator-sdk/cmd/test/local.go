@@ -25,6 +25,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
 	"github.com/operator-framework/operator-sdk/pkg/test"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
 	"github.com/spf13/cobra"
 )
@@ -48,7 +49,7 @@ func NewTestLocalCmd() *cobra.Command {
 	defaultKubeConfig := ""
 	homedir, ok := os.LookupEnv("HOME")
 	if ok {
-		defaultKubeConfig = homedir + "/.kube/config"
+		defaultKubeConfig = filepath.Join(homedir, cmdutil.KubeConfigDir)
 	}
 	testCmd.Flags().StringVar(&tlConfig.kubeconfig, "kubeconfig", defaultKubeConfig, "Kubeconfig path")
 	testCmd.Flags().StringVar(&tlConfig.globalManPath, "global-manifest", "", "Path to manifest for Global resources (e.g. CRD manifests)")
@@ -59,34 +60,42 @@ func NewTestLocalCmd() *cobra.Command {
 	return testCmd
 }
 
+const (
+	testDir = "test"
+	nsManifestYamlFile = "namespace-manifests.yaml"
+	gbManifestYamlFile = "global-manifests.yaml"
+	crdFilePrefix = "crd.yaml"
+)
+
 func testLocalFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
 		log.Fatalf("operator-sdk test local requires exactly 1 argument")
 	}
 	// if no namespaced manifest path is given, combine deploy/sa.yaml, deploy/rbac.yaml and deploy/operator.yaml
+	deployTestDir := filepath.Join(scaffold.DeployDir, testDir)
 	if tlConfig.namespacedManPath == "" {
-		err := os.MkdirAll("deploy/test", os.FileMode(cmdutil.DefaultDirFileMode))
+		err := os.MkdirAll(deployTestDir, os.FileMode(cmdutil.DefaultDirFileMode))
 		if err != nil {
-			log.Fatalf("could not create deploy/test: %v", err)
+			log.Fatalf("could not create %s: %v", deployTestDir, err)
 		}
-		tlConfig.namespacedManPath = "deploy/test/namespace-manifests.yaml"
+		tlConfig.namespacedManPath = filepath.Join(deployTestDir, nsManifestYamlFile)
 
 		// TODO: re-enable sa creation once that's added to the refactor branch
 		/*
-			sa, err := ioutil.ReadFile("deploy/sa.yaml")
+			sa, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, "sa.yaml")
 			if err != nil {
 				log.Fatalf("could not find sa manifest: %v", err)
 			}
 		*/
-		role, err := ioutil.ReadFile("deploy/role.yaml")
+		role, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleYamlFile))
 		if err != nil {
 			log.Fatalf("could not find role manifest: %v", err)
 		}
-		roleBinding, err := ioutil.ReadFile("deploy/role_binding.yaml")
+		roleBinding, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleBindingYamlFile))
 		if err != nil {
 			log.Fatalf("could not find role_binding manifest: %v", err)
 		}
-		operator, err := ioutil.ReadFile("deploy/operator.yaml")
+		operator, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.OperatorYamlFile))
 		if err != nil {
 			log.Fatalf("could not find operator manifest: %v", err)
 		}
@@ -111,21 +120,22 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 		}()
 	}
 	if tlConfig.globalManPath == "" {
-		err := os.MkdirAll("deploy/test", os.FileMode(cmdutil.DefaultDirFileMode))
+		err := os.MkdirAll(deployTestDir, os.FileMode(cmdutil.DefaultDirFileMode))
 		if err != nil {
-			log.Fatalf("could not create deploy/test: %v", err)
+			log.Fatalf("could not create %s: %v", deployTestDir, err)
 		}
-		tlConfig.globalManPath = "deploy/test/global-manifests.yaml"
-		files, err := ioutil.ReadDir("deploy/crds")
+		tlConfig.globalManPath = filepath.Join(deployTestDir, gbManifestYamlFile)
+		files, err := ioutil.ReadDir(scaffold.CrdsDir)
 		if err != nil {
 			log.Fatalf("could not read deploy directory: %v", err)
 		}
 		var combined []byte
 		for _, file := range files {
-			if strings.HasSuffix(file.Name(), "crd.yaml") {
-				fileBytes, err := ioutil.ReadFile(filepath.Join("deploy/crds", file.Name()))
+			if strings.HasSuffix(file.Name(), crdFilePrefix) {
+				crdsFile := filepath.Join(scaffold.CrdsDir, file.Name())
+				fileBytes, err := ioutil.ReadFile(crdsFile)
 				if err != nil {
-					log.Fatalf("could not read file deploy/crds/%s: %v", file.Name(), err)
+					log.Fatalf("could not read file %s: %v", crdsFile, err)
 				}
 				if combined == nil {
 					combined = []byte{}

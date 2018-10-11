@@ -19,6 +19,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 )
 
 const configYaml = "./config/config.yaml"
@@ -26,6 +28,7 @@ const configYaml = "./config/config.yaml"
 const (
 	GopathEnv = "GOPATH"
 	SrcDir    = "src"
+	KubeConfigDir = ".kube/config"
 
 	DefaultDirFileMode  = 0750
 	DefaultFileMode     = 0644
@@ -37,7 +40,7 @@ const (
 func MustInProjectRoot() string {
 	// if the current directory has the "./cmd/manager/main.go" file, then it is safe to say
 	// we are at the project root.
-	_, err := os.Stat("./cmd/manager/main.go")
+	_, err := os.Stat(filepath.Join(scaffold.ManagerDir, scaffold.CmdFile))
 	if err != nil && os.IsNotExist(err) {
 		log.Fatalf("must run command in project root dir: %v", err)
 	}

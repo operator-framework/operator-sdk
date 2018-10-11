@@ -28,11 +28,14 @@ type TestFrameworkDockerfile struct {
 
 	// GoTestScriptFile is the test framework run script file name
 	GoTestScriptFile string
+
+	// BuildOutputBinDir is the 'operator-sdk build' command binary output dir.
+	BuildOutputBinDir string
 }
 
 func (s *TestFrameworkDockerfile) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(buildTestDir, dockerfileFile)
+		s.Path = filepath.Join(BuildTestDir, DockerfileFile)
 	}
 
 	goScriptInput, err := (&GoTestScript{}).GetInput()
@@ -40,8 +43,9 @@ func (s *TestFrameworkDockerfile) GetInput() (input.Input, error) {
 		return input.Input{}, err
 	}
 	s.GoTestScriptPath = goScriptInput.Path
-	s.GoTestScriptFile = goTestScriptFile
+	s.GoTestScriptFile = GoTestScriptFile
 
+	s.BuildOutputBinDir = BuildBinDir
 	s.TemplateBody = testFrameworkDockerfileTmpl
 	return s.Input, nil
 }
@@ -49,7 +53,7 @@ func (s *TestFrameworkDockerfile) GetInput() (input.Input, error) {
 const testFrameworkDockerfileTmpl = `ARG BASEIMAGE
 FROM ${BASEIMAGE}
 
-ADD build/_output/bin/{{.ProjectName}}-test /usr/local/bin/{{.ProjectName}}-test
+ADD {{ .BuildOutputBinDir }}/{{.ProjectName}}-test /usr/local/bin/{{.ProjectName}}-test
 ARG NAMESPACEDMAN
 ADD $NAMESPACEDMAN /namespaced.yaml
 ADD {{ .GoTestScriptPath }} /{{ .GoTestScriptFile }}

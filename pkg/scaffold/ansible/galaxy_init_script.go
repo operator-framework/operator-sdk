@@ -32,10 +32,10 @@ type GalaxyInitScript struct {
 
 func (s *GalaxyInitScript) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(buildTestDir, goTestScriptFile)
+		s.Path = filepath.Join(BuildTestDir, GoTestScriptFile)
 	}
 	s.IsExec = isExecTrue
-	s.RolesDir = rolesDir
+	s.RolesDir = RolesDir
 	s.TemplateBody = galaxyInitTmpl
 	return s.Input, nil
 }

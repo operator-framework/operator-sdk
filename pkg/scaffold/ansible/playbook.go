@@ -32,7 +32,7 @@ type Playbook struct {
 
 func (s *Playbook) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = playbookYamlFile
+		s.Path = PlaybookYamlFile
 	}
 	s.TemplateBody = playbookTmpl
 	return s.Input, nil

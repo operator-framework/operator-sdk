@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
 	"github.com/spf13/cobra"
 )
@@ -53,7 +54,7 @@ func k8sFunc(cmd *cobra.Command, args []string) {
 func K8sCodegen() {
 	repoPkg := cmdutil.MustInProjectRoot()
 	outputPkg := filepath.Join(repoPkg, "pkg/generated")
-	apisPkg := filepath.Join(repoPkg, "pkg/apis")
+	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	groupVersions, err := parseGroupVersions()
 	if err != nil {
 		log.Fatalf("failed to parse group versions: (%v)", err)
@@ -82,7 +83,7 @@ func K8sCodegen() {
 // as required by the generate-groups.sh script
 func parseGroupVersions() (string, error) {
 	var groupVersions string
-	groups, err := ioutil.ReadDir(filepath.Join("pkg", "apis"))
+	groups, err := ioutil.ReadDir(scaffold.ApisDir)
 	if err != nil {
 		return "", fmt.Errorf("could not read pkg/apis directory to find api Versions: %v", err)
 	}
@@ -90,9 +91,10 @@ func parseGroupVersions() (string, error) {
 		// TODO: Ignore other files besides pkg/apis/group/version
 		groupVersion := g.Name() + ":"
 		if g.IsDir() {
-			versions, err := ioutil.ReadDir(filepath.Join("pkg", "apis", g.Name()))
+			groupApiDir := filepath.Join(scaffold.ApisDir, g.Name())
+			versions, err := ioutil.ReadDir(groupApiDir)
 			if err != nil {
-				return "", fmt.Errorf("could not read pkg/apis/%s directory to find api Versions: %v", g.Name(), err)
+				return "", fmt.Errorf("could not read %s directory to find api Versions: %v", groupApiDir, err)
 			}
 			// TODO: regex check to ensure only dirs with acceptable version names are picked
 			// e.g v1,v1alpha1,v1beta1 etc

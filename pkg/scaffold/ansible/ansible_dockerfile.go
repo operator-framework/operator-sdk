@@ -40,9 +40,9 @@ type AnsibleDockerfile struct {
 
 func (s *AnsibleDockerfile) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(buildDir, dockerfileFile)
+		s.Path = filepath.Join(BuildDir, DockerfileFile)
 	}
-	s.RolesDir = rolesDir
+	s.RolesDir = RolesDir
 
 	playbookInput, err := (&Playbook{}).GetInput()
 	if err != nil {

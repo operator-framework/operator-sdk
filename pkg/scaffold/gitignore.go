@@ -24,7 +24,7 @@ type Gitignore struct {
 
 func (s *Gitignore) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = gitignoreFile
+		s.Path = GitignoreFile
 	}
 	s.TemplateBody = gitignoreTmpl
 	return s.Input, nil

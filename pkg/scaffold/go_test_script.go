@@ -26,7 +26,7 @@ type GoTestScript struct {
 
 func (s *GoTestScript) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(buildTestDir, goTestScriptFile)
+		s.Path = filepath.Join(BuildTestDir, GoTestScriptFile)
 	}
 	s.IsExec = isExecTrue
 	s.TemplateBody = goTestScriptTmpl

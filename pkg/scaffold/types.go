@@ -31,7 +31,7 @@ type Types struct {
 
 func (s *Types) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(apisDir,
+		s.Path = filepath.Join(ApisDir,
 			strings.ToLower(s.Resource.Group),
 			strings.ToLower(s.Resource.Version),
 			s.Resource.LowerKind+"_types.go")

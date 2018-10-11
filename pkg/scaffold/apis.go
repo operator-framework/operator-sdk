@@ -26,7 +26,7 @@ type Apis struct {
 
 func (s *Apis) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(apisDir, apisFile)
+		s.Path = filepath.Join(ApisDir, ApisFile)
 	}
 	s.TemplateBody = apisTmpl
 	return s.Input, nil

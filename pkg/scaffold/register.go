@@ -31,10 +31,10 @@ type Register struct {
 
 func (s *Register) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(apisDir,
+		s.Path = filepath.Join(ApisDir,
 			strings.ToLower(s.Resource.Group),
 			strings.ToLower(s.Resource.Version),
-			registerFile)
+			RegisterFile)
 	}
 	// Do not overwrite this file if it exists.
 	s.IfExistsAction = input.Skip

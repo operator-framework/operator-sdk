@@ -33,7 +33,7 @@ type Watches struct {
 
 func (s *Watches) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = watchesYamlFile
+		s.Path = WatchesYamlFile
 	}
 	s.PlaybookFile = playbookYamlFile
 	s.TemplateBody = watchesTmpl

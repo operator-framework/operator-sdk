@@ -34,11 +34,11 @@ type ControllerKind struct {
 func (s *ControllerKind) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		fileName := s.Resource.LowerKind + "_controller.go"
-		s.Path = filepath.Join(controllerDir, s.Resource.LowerKind, fileName)
+		s.Path = filepath.Join(ControllerDir, s.Resource.LowerKind, fileName)
 	}
 	// Error if this file exists.
 	s.IfExistsAction = input.Error
-	s.ApisDir = apisDir
+	s.ApisDir = ApisDir
 	s.TemplateBody = controllerKindTemplate
 	return s.Input, nil
 }
