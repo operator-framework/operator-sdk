@@ -148,7 +148,14 @@ $ operator-sdk new --type ansible --kind Foo --api-version foo.example.com/v1alp
 
 Once a developer is comfortable working with the above workflow, it will be beneficial to test the logic inside of an operator. To accomplish this, we can use `operator-sdk up local` from the top-level directory of our project. The `up local` command reads from `./watches.yaml` and uses `~/.kube/config` to communicate with a kubernetes cluster just as the `k8s` modules do. This section assumes the developer has read the [Ansible Operator user guide][ansible_operator_user_guide] and has the proper dependencies installed.
 
-Since `up local` reads from `./watches.yaml`, there are a couple options available to the developer. 
+Since `up local` reads from `./watches.yaml`, there are a couple options available to the developer. If `role` is left alone (by default `/opt/ansible/roles/<name>`) the developer must copy the role over to `/opt/ansible/roles` from the operator directly. This is cumbersome because changes will not be reflected from the current directory. It is recommended that the developer instead change the `role` field to point to the current directory and simply comment out the existing line:
+```yaml
+- version: v1alpha1
+  group: foo.example.com
+  kind: Foo
+  #  role: /opt/ansible/roles/Foo
+  role: /home/user/foo-operator/Foo
+```
 
 [k8s_ansible_module]:https://docs.ansible.com/ansible/2.6/modules/k8s_module.html
 [ansible_operator_user_guide]:../user-guide.md
