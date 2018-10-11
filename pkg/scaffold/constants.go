@@ -37,6 +37,8 @@ const (
 	deployDir     = "deploy"
 	olmCatalogDir = deployDir + filePathSep + "olm-catalog"
 	crdsDir       = deployDir + filePathSep + "crds"
+	rolesDir      = deployDir + filePathSep + "roles"
+	initDir       = "init"
 	versionDir    = "version"
 
 	// files
@@ -45,6 +47,7 @@ const (
 	controllerFile         = "controller.go"
 	dockerfileFile         = "Dockerfile"
 	goTestScriptFile       = "go-test.sh"
+	galaxyInitScriptFile   = "galaxy-init.sh"
 	versionFile            = "version.go"
 	docFile                = "doc.go"
 	registerFile           = "register.go"
@@ -54,6 +57,8 @@ const (
 	catalogPackageYamlFile = "package.yaml"
 	catalogCSVYamlFile     = "csv.yaml"
 	testPodYamlFile        = "test-pod.yaml"
+	watchesYamlFile        = "watches.yaml"
+	playbookYamlFile       = "playbook.yaml"
 	gitignoreFile          = ".gitignore"
 	gopkgtomlFile          = "Gopkg.toml"
 	gopkglockFile          = "Gopkg.lock"

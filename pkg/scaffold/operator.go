@@ -32,6 +32,7 @@ func (s *Operator) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
+// QUESTION: serviceAccountName should be "default" or ProjectName?
 const operatorTemplate = `apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -46,6 +47,8 @@ spec:
       labels:
         name: {{.ProjectName}}
     spec:
+{{- if .IsGoOperator }}
+      serviceAccountName: {{.ProjectName}}{{ end }}
       containers:
         - name: {{.ProjectName}}
           # Replace this with the built image name
@@ -53,9 +56,9 @@ spec:
           ports:
           - containerPort: 60000
             name: metrics
-          command:
+{{ if .IsGoOperator }}          command:
           - {{.ProjectName}}
-          imagePullPolicy: Always
+{{ end }}          imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
               valueFrom:

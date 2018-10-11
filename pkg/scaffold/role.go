@@ -32,7 +32,11 @@ func (s *Role) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
-const roleTemplate = `kind: Role
+// For Ansible Operator we are assuming namespace: default on ClusterRoleBinding
+// Documentation will tell user to update
+const roleTemplate = `{{- if .IsGoOperator }}kind: Role
+{{- else -}}
+kind: ClusterRole{{ end }}
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: {{.ProjectName}}

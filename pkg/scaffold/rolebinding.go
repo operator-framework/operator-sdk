@@ -32,15 +32,25 @@ func (s *RoleBinding) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
-const roleBindingTemplate = `kind: RoleBinding
+// QUESTION: should we adopt change of subject.kind.name == ProjectName over "default"?
+const roleBindingTemplate = `{{- if .IsGoOperator }}kind: RoleBinding
+{{- else -}}
+kind: ClusterRoleBinding{{ end }}
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: default-account-{{.ProjectName}}
 subjects:
 - kind: ServiceAccount
-  name: default
+{{- if .IsGoOperator }}
+  name: {{ .ProjectName }}
+{{- else }}
+	name: default
+	namespace: default{{ end }}
 roleRef:
+{{- if .IsGoOperator }}
   kind: Role
-  name: {{.ProjectName}}
+{{- else }}
+  kind: ClusterRole{{ end }}
+	name: {{.ProjectName}}
   apiGroup: rbac.authorization.k8s.io
 `
