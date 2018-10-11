@@ -22,20 +22,35 @@ import (
 
 type TestFrameworkDockerfile struct {
 	input.Input
+
+	// GoTestScriptPath is the test framework run script path pre-defined in go_test_script.go
+	GoTestScriptPath string
+
+	// GoTestScriptFile is the test framework run script file name
+	GoTestScriptFile string
 }
 
 func (s *TestFrameworkDockerfile) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = filepath.Join(buildTestDir, dockerfileFile)
 	}
+
+	goScriptInput, err := (&GoTestScript{}).GetInput()
+	if err != nil {
+		return input.Input{}, err
+	}
+	s.GoTestScriptPath = goScriptInput.Path
+	s.GoTestScriptFile = goTestScriptFile
+
 	s.TemplateBody = testFrameworkDockerfileTmpl
 	return s.Input, nil
 }
 
 const testFrameworkDockerfileTmpl = `ARG BASEIMAGE
 FROM ${BASEIMAGE}
+
 ADD build/_output/bin/{{.ProjectName}}-test /usr/local/bin/{{.ProjectName}}-test
 ARG NAMESPACEDMAN
 ADD $NAMESPACEDMAN /namespaced.yaml
-ADD build/test-framework/go-test.sh /go-test.sh
+ADD {{ .GoTestScriptPath }} /{{ .GoTestScriptFile }}
 `

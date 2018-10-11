@@ -24,6 +24,9 @@ import (
 type ControllerKind struct {
 	input.Input
 
+	// ApisDir is the api directory for project apis
+	ApisDir string
+
 	// Resource defines the inputs for the controller's primary resource
 	Resource *Resource
 }
@@ -35,6 +38,7 @@ func (s *ControllerKind) GetInput() (input.Input, error) {
 	}
 	// Error if this file exists.
 	s.IfExistsAction = input.Error
+	s.ApisDir = apisDir
 	s.TemplateBody = controllerKindTemplate
 	return s.Input, nil
 }
@@ -45,7 +49,7 @@ import (
 	"context"
 	"log"
 
-	{{ .Resource.Group}}{{ .Resource.Version }} "{{ .Repo }}/pkg/apis/{{ .Resource.Group}}/{{ .Resource.Version }}"
+	{{ .Resource.Group}}{{ .Resource.Version }} "{{ .Repo }}/{{ .ApisDir }}/{{ .Resource.Group}}/{{ .Resource.Version }}"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"

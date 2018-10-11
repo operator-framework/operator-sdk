@@ -28,6 +28,9 @@ type AddToScheme struct {
 
 	// Resource defines the inputs for the new api
 	Resource *Resource
+
+	// ApisDir is the api directory for project apis
+	ApisDir string
 }
 
 func (s *AddToScheme) GetInput() (input.Input, error) {
@@ -37,6 +40,7 @@ func (s *AddToScheme) GetInput() (input.Input, error) {
 			strings.ToLower(s.Resource.Version))
 		s.Path = filepath.Join(apisDir, fileName)
 	}
+	s.ApisDir = apisDir
 	s.TemplateBody = addToSchemeTemplate
 	return s.Input, nil
 }
@@ -44,7 +48,7 @@ func (s *AddToScheme) GetInput() (input.Input, error) {
 const addToSchemeTemplate = `package apis
 
 import (
-	"{{ .Repo }}/pkg/apis/{{ .Resource.Group }}/{{ .Resource.Version }}"
+	"{{ .Repo }}/{{ .ApisDir }}/{{ .Resource.Group }}/{{ .Resource.Version }}"
 )
 
 func init() {
