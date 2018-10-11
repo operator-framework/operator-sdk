@@ -35,12 +35,12 @@ import (
 
 // Options - options for your controller
 type Options struct {
-	EventHandlers     []events.EventHandler
-	LoggingLevel      events.LogLevel
-	Runner            runner.Runner
-	Namespace         string
-	GVK               schema.GroupVersionKind
-	ReconcileDuration time.Duration
+	EventHandlers   []events.EventHandler
+	LoggingLevel    events.LogLevel
+	Runner          runner.Runner
+	Namespace       string
+	GVK             schema.GroupVersionKind
+	ReconcilePeriod time.Duration
 }
 
 // Add - Creates a new ansible operator controller and adds it to the manager
@@ -50,16 +50,16 @@ func Add(mgr manager.Manager, options Options) {
 		options.EventHandlers = []events.EventHandler{}
 	}
 	eventHandlers := append(options.EventHandlers, events.NewLoggingEventHandler(options.LoggingLevel))
-	if options.ReconcileDuration == time.Duration(0) {
-		options.ReconcileDuration = time.Minute
+	if options.ReconcilePeriod == time.Duration(0) {
+		options.ReconcilePeriod = time.Minute
 	}
 
 	aor := &AnsibleOperatorReconciler{
-		Client:            mgr.GetClient(),
-		GVK:               options.GVK,
-		Runner:            options.Runner,
-		EventHandlers:     eventHandlers,
-		ReconcileDuration: options.ReconcileDuration,
+		Client:          mgr.GetClient(),
+		GVK:             options.GVK,
+		Runner:          options.Runner,
+		EventHandlers:   eventHandlers,
+		ReconcilePeriod: options.ReconcilePeriod,
 	}
 
 	// Register the GVK with the schema

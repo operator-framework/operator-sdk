@@ -36,17 +36,19 @@ import (
 )
 
 const (
-	// ReconcileDurationAnnotation - annotation used by a user to specify the reconcilation interval for the CR.
-	ReconcileDurationAnnotation = "ansible.operator-sdk/reconcile"
+	// ReconcilePeriodAnnotation - annotation used by a user to specify the reconcilation interval for the CR.
+	// To use create a CR with an annotation "ansible.operator-sdk/reconcile-period: 30s" or some other valid
+	// Duration. This will override the operators/or controllers reconcile period for that particular CR.
+	ReconcilePeriodAnnotation = "ansible.operator-sdk/reconcile-period"
 )
 
 // AnsibleOperatorReconciler - object to reconcile runner requests
 type AnsibleOperatorReconciler struct {
-	GVK               schema.GroupVersionKind
-	Runner            runner.Runner
-	Client            client.Client
-	EventHandlers     []events.EventHandler
-	ReconcileDuration time.Duration
+	GVK             schema.GroupVersionKind
+	Runner          runner.Runner
+	Client          client.Client
+	EventHandlers   []events.EventHandler
+	ReconcilePeriod time.Duration
 }
 
 // Reconcile - handle the event.
@@ -60,8 +62,8 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	reconcileResult := reconcile.Result{RequeueAfter: r.ReconcileDuration}
-	if ds, ok := u.GetAnnotations()[ReconcileDurationAnnotation]; ok {
+	reconcileResult := reconcile.Result{RequeueAfter: r.ReconcilePeriod}
+	if ds, ok := u.GetAnnotations()[ReconcilePeriodAnnotation]; ok {
 		duration, err := time.ParseDuration(ds)
 		if err != nil {
 			return reconcileResult, err
