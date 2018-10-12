@@ -22,7 +22,7 @@ import (
 
 func TestDockerfile(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(appConfig, &Dockerfile{})
+	err := s.Execute(appConfig, &BuildDockerfile{})
 	if err != nil {
 		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}

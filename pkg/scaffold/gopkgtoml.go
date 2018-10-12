@@ -24,7 +24,7 @@ type GopkgToml struct {
 
 func (s *GopkgToml) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = gopkgtomlFile
+		s.Path = GopkgtomlFile
 	}
 	s.TemplateBody = gopkgTomlTmpl
 	return s.Input, nil

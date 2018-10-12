@@ -31,7 +31,7 @@ type AddController struct {
 func (s *AddController) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		fileName := "add_" + s.Resource.LowerKind + ".go"
-		s.Path = filepath.Join(controllerDir, fileName)
+		s.Path = filepath.Join(ControllerDir, fileName)
 	}
 	s.TemplateBody = addControllerTemplate
 	return s.Input, nil

@@ -106,7 +106,7 @@ func apiRun(cmd *cobra.Command, args []string) {
 
 func updateRoleForResource(r *scaffold.Resource, absProjectPath string) error {
 	// append rbac rule to deploy/role.yaml
-	roleFilePath := filepath.Join(absProjectPath, "deploy", "role.yaml")
+	roleFilePath := filepath.Join(absProjectPath, scaffold.DeployDir, scaffold.RoleYamlFile)
 	roleYAML, err := ioutil.ReadFile(roleFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to read role manifest %v: %v", roleFilePath, err)

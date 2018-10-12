@@ -26,7 +26,7 @@ type Role struct {
 
 func (s *Role) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(deployDir, roleYamlFile)
+		s.Path = filepath.Join(DeployDir, RoleYamlFile)
 	}
 	s.TemplateBody = roleTemplate
 	return s.Input, nil

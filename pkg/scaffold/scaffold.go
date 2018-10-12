@@ -33,14 +33,7 @@ import (
 
 // Scaffold writes Templates to scaffold new files
 type Scaffold struct {
-	// Repo is the go project package
-	Repo string
-
-	// AbsProjectPath is the absolute path to the project root, including the project directory.
-	AbsProjectPath string
-
-	// ProjectName is the operator's name, ex. app-operator
-	ProjectName string
+	input.Config
 
 	GetWriter func(path string, mode os.FileMode) (io.Writer, error)
 }
@@ -66,9 +59,7 @@ func (s *Scaffold) setFieldsAndValidate(t input.File) error {
 }
 
 func (s *Scaffold) configure(cfg *input.Config) {
-	s.Repo = cfg.Repo
-	s.AbsProjectPath = cfg.AbsProjectPath
-	s.ProjectName = cfg.ProjectName
+	s.Config = *cfg
 }
 
 // Execute executes scaffolding the Files

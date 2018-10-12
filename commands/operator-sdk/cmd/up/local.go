@@ -26,6 +26,7 @@ import (
 	"syscall"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 
 	"github.com/spf13/cobra"
@@ -83,7 +84,7 @@ func mustKubeConfig() {
 }
 
 func upLocal() {
-	args := []string{"run", filepath.Join("cmd", "manager", "main.go")}
+	args := []string{"run", filepath.Join(scaffold.ManagerDir, scaffold.CmdFile)}
 	if operatorFlags != "" {
 		extraArgs := strings.Split(operatorFlags, " ")
 		args = append(args, extraArgs...)

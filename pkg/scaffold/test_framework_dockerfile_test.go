@@ -36,6 +36,7 @@ func TestTestFrameworkDockerfile(t *testing.T) {
 
 const testFrameworkDockerfileExp = `ARG BASEIMAGE
 FROM ${BASEIMAGE}
+
 ADD build/_output/bin/app-operator-test /usr/local/bin/app-operator-test
 ARG NAMESPACEDMAN
 ADD $NAMESPACEDMAN /namespaced.yaml

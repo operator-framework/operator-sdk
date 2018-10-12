@@ -31,10 +31,10 @@ type Doc struct {
 
 func (s *Doc) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(apisDir,
+		s.Path = filepath.Join(ApisDir,
 			strings.ToLower(s.Resource.Group),
 			strings.ToLower(s.Resource.Version),
-			docFile)
+			DocFile)
 	}
 	s.IfExistsAction = input.Skip
 	s.TemplateBody = docTemplate

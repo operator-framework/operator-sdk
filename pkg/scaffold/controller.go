@@ -26,7 +26,7 @@ type Controller struct {
 
 func (s *Controller) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(controllerDir, controllerFile)
+		s.Path = filepath.Join(ControllerDir, ControllerFile)
 	}
 	s.TemplateBody = controllerTmpl
 	return s.Input, nil

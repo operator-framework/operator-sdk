@@ -32,7 +32,7 @@ type TestPod struct {
 
 func (s *TestPod) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(deployDir, testPodYamlFile)
+		s.Path = filepath.Join(DeployDir, TestPodYamlFile)
 	}
 	s.TemplateBody = testPodTmpl
 	return s.Input, nil

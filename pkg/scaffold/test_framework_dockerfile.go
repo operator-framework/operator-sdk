@@ -26,7 +26,7 @@ type TestFrameworkDockerfile struct {
 
 func (s *TestFrameworkDockerfile) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(buildTestDir, dockerfileFile)
+		s.Path = filepath.Join(BuildTestDir, DockerfileFile)
 	}
 	s.TemplateBody = testFrameworkDockerfileTmpl
 	return s.Input, nil
@@ -34,6 +34,7 @@ func (s *TestFrameworkDockerfile) GetInput() (input.Input, error) {
 
 const testFrameworkDockerfileTmpl = `ARG BASEIMAGE
 FROM ${BASEIMAGE}
+
 ADD build/_output/bin/{{.ProjectName}}-test /usr/local/bin/{{.ProjectName}}-test
 ARG NAMESPACEDMAN
 ADD $NAMESPACEDMAN /namespaced.yaml

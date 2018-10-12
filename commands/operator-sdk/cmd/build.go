@@ -132,10 +132,6 @@ func verifyTestManifest(image string) {
 	}
 }
 
-const (
-	mainGo = "./cmd/manager/main.go"
-)
-
 func buildFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
 		log.Fatalf("build command needs exactly 1 argument")
@@ -149,9 +145,9 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	}
 
 	// Don't need to buld go code if Ansible Operator
-	if mainExists() {
-		managerDir := filepath.Join(cmdutil.CheckAndGetCurrPkg(), "cmd/manager")
-		outputBinName := filepath.Join(wd, "build/_output/bin", filepath.Base(wd))
+	if cmdutil.MainExists() {
+		managerDir := filepath.Join(cmdutil.CheckAndGetCurrPkg(), scaffold.ManagerDir)
+		outputBinName := filepath.Join(wd, scaffold.BuildBinDir, filepath.Base(wd))
 		buildCmd := exec.Command("go", "build", "-o", outputBinName, managerDir)
 		buildCmd.Env = goBuildEnv
 		o, err := buildCmd.CombinedOutput()
@@ -166,7 +162,9 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	if enableTests {
 		baseImageName += "-intermediate"
 	}
-	dbcmd := exec.Command("docker", "build", ".", "-f", "build/Dockerfile", "-t", baseImageName)
+	dbcmd := exec.Command("docker", "build", ".",
+		"-f", filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile),
+		"-t", baseImageName)
 	o, err := dbcmd.CombinedOutput()
 	if err != nil {
 		if enableTests {
@@ -178,7 +176,9 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	fmt.Fprintln(os.Stdout, string(o))
 
 	if enableTests {
-		buildTestCmd := exec.Command("go", "test", "-c", "-o", filepath.Join(wd, "build/_output/bin", filepath.Base(wd)+"-test"), testLocationBuild+"/...")
+		buildTestCmd := exec.Command("go", "test", "-c",
+			"-o", filepath.Join(wd, scaffold.BuildBinDir, filepath.Base(wd)+"-test"),
+			testLocationBuild+"/...")
 		buildTestCmd.Env = goBuildEnv
 		o, err := buildTestCmd.CombinedOutput()
 		if err != nil {
@@ -186,7 +186,8 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		}
 		fmt.Fprintln(os.Stdout, string(o))
 		// if a user is using an older sdk repo as their library, make sure they have required build files
-		_, err = os.Stat("build/test-framework/Dockerfile")
+		testFrameworkDockerfile := filepath.Join(scaffold.BuildTestDir, scaffold.DockerfileFile)
+		_, err = os.Stat(testFrameworkDockerfile)
 		if err != nil && os.IsNotExist(err) {
 
 			absProjectPath := cmdutil.MustGetwd()
@@ -207,7 +208,11 @@ func buildFunc(cmd *cobra.Command, args []string) {
 			}
 		}
 
-		testDbcmd := exec.Command("docker", "build", ".", "-f", "build/test-framework/Dockerfile", "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+baseImageName)
+		testDbcmd := exec.Command("docker", "build", ".",
+			"-f", testFrameworkDockerfile,
+			"-t", image,
+			"--build-arg", "NAMESPACEDMAN="+namespacedManBuild,
+			"--build-arg", "BASEIMAGE="+baseImageName)
 		o, err = testDbcmd.CombinedOutput()
 		if err != nil {
 			log.Fatalf("failed to output build image %s: %v (%s)", image, err, string(o))
@@ -216,11 +221,4 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		// Check image name of deployments in namespaced manifest
 		verifyTestManifest(image)
 	}
-}
-
-func mainExists() bool {
-	if _, err := os.Stat(mainGo); err == nil {
-		return true
-	}
-	return false
 }

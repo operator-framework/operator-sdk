@@ -32,6 +32,8 @@ const (
 
 // Input is the input for scaffoldig a file
 type Input struct {
+	Config
+
 	// Path is the file to write
 	Path string
 
@@ -45,15 +47,6 @@ type Input struct {
 
 	// TemplateBody is the template body to execute
 	TemplateBody string
-
-	// Repo is the go project package
-	Repo string
-
-	// AbsProjectPath is the absolute path to the project root, including the project directory.
-	AbsProjectPath string
-
-	// ProjectName is the operator's name, ex. app-operator
-	ProjectName string
 }
 
 // Repo allows a repo to be set on an object
