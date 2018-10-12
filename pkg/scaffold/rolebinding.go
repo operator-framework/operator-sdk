@@ -51,6 +51,6 @@ roleRef:
   kind: Role
 {{- else }}
   kind: ClusterRole{{ end }}
-	name: {{.ProjectName}}
+  name: {{.ProjectName}}
   apiGroup: rbac.authorization.k8s.io
 `

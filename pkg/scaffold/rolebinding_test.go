@@ -40,7 +40,7 @@ metadata:
   name: default-account-app-operator
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: app-operator
 roleRef:
   kind: Role
   name: app-operator

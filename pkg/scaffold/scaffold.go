@@ -63,7 +63,6 @@ func (s *Scaffold) setFieldsAndValidate(t input.File) error {
 
 func (s *Scaffold) configure(cfg *input.Config) {
 	s.Config = *cfg
-	log.Print(s.Config)
 }
 
 // Execute executes scaffolding the Files
