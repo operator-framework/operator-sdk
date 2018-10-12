@@ -22,20 +22,12 @@ import (
 
 type Cmd struct {
 	input.Input
-
-	// ApisDir is the api directory for project apis
-	ApisDir string
-
-	// ControllerDir is the controller directory for project controllers
-	ControllerDir string
 }
 
 func (s *Cmd) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = filepath.Join(ManagerDir, CmdFile)
 	}
-	s.ApisDir = ApisDir
-	s.ControllerDir = ControllerDir
 	s.TemplateBody = cmdTmpl
 	return s.Input, nil
 }
@@ -47,8 +39,8 @@ import (
 	"log"
 	"runtime"
 
-	"{{ .Repo }}/{{ .ApisDir }}"
-	"{{ .Repo }}/{{ .ControllerDir }}"
+	"{{ .Repo }}/pkg/apis"
+	"{{ .Repo }}/pkg/controller"
 
 	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"

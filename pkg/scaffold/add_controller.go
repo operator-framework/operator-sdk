@@ -26,9 +26,6 @@ type AddController struct {
 
 	// Resource defines the inputs for the controller's primary resource
 	Resource *Resource
-
-	// ControllerDir is the controller directory for project controllers
-	ControllerDir string
 }
 
 func (s *AddController) GetInput() (input.Input, error) {
@@ -36,7 +33,6 @@ func (s *AddController) GetInput() (input.Input, error) {
 		fileName := "add_" + s.Resource.LowerKind + ".go"
 		s.Path = filepath.Join(ControllerDir, fileName)
 	}
-	s.ControllerDir = ControllerDir
 	s.TemplateBody = addControllerTemplate
 	return s.Input, nil
 }
@@ -44,7 +40,7 @@ func (s *AddController) GetInput() (input.Input, error) {
 const addControllerTemplate = `package controller
 
 import (
-	"{{ .Repo }}/{{ .ControllerDir }}/{{ .Resource.LowerKind }}"
+	"{{ .Repo }}/pkg/controller/{{ .Resource.LowerKind }}"
 )
 
 func init() {

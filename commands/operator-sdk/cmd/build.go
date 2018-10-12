@@ -195,7 +195,6 @@ func buildFunc(cmd *cobra.Command, args []string) {
 				Repo:           cmdutil.MustInProjectRoot(),
 				AbsProjectPath: absProjectPath,
 				ProjectName:    filepath.Base(wd),
-				IsGoOperator:   cmdutil.MainExists(),
 			}
 
 			s := &scaffold.Scaffold{}

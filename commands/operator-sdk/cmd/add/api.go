@@ -80,7 +80,6 @@ func apiRun(cmd *cobra.Command, args []string) {
 	cfg := &input.Config{
 		Repo:           cmdutil.MustInProjectRoot(),
 		AbsProjectPath: absProjectPath,
-		IsGoOperator:   cmdutil.MainExists(),
 	}
 
 	s := &scaffold.Scaffold{}

@@ -46,8 +46,6 @@ spec:
       labels:
         name: {{.ProjectName}}
     spec:
-{{- if .IsGoOperator }}
-      serviceAccountName: {{.ProjectName}}{{ end }}
       containers:
         - name: {{.ProjectName}}
           # Replace this with the built image name
@@ -55,9 +53,9 @@ spec:
           ports:
           - containerPort: 60000
             name: metrics
-{{ if .IsGoOperator }}          command:
+          command:
           - {{.ProjectName}}
-{{ end }}          imagePullPolicy: Always
+          imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
               valueFrom:

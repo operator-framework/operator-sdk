@@ -88,17 +88,6 @@ func (i *Input) SetProjectName(n string) {
 	}
 }
 
-// IsGoOperator allows the IsGoOperator field to be set on an object
-type IsGoOperator interface {
-	// SetIsGoOperator sets the IsGoOperator field
-	SetIsGoOperator(bool)
-}
-
-// SetIsGoOperator sets the IsGoOperator field
-func (i *Input) SetIsGoOperator(b bool) {
-	i.IsGoOperator = b
-}
-
 // File is a scaffoldable file
 type File interface {
 	// GetInput returns the Input for creating a scaffold file
@@ -122,8 +111,4 @@ type Config struct {
 
 	// ProjectName is the operator's name, ex. app-operator
 	ProjectName string
-
-	// IsGoOperator indicates that a template should use Golang-specific fields
-	// if true. This would be set false if building an Ansible-based operator.
-	IsGoOperator bool
 }

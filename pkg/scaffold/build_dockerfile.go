@@ -22,16 +22,12 @@ import (
 
 type BuildDockerfile struct {
 	input.Input
-
-	// BuildOutputBinDir is the 'operator-sdk build' command binary output dir.
-	BuildOutputBinDir string
 }
 
 func (s *BuildDockerfile) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = filepath.Join(BuildDir, DockerfileFile)
 	}
-	s.BuildOutputBinDir = BuildBinDir
 	s.TemplateBody = buildDockerfileTmpl
 	return s.Input, nil
 }
@@ -40,5 +36,5 @@ const buildDockerfileTmpl = `FROM alpine:3.6
 
 USER nobody
 
-ADD {{ .BuildOutputBinDir }}/{{.ProjectName}} /usr/local/bin/{{.ProjectName}}
+ADD build/_output/bin/{{.ProjectName}} /usr/local/bin/{{.ProjectName}}
 `

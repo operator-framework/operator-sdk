@@ -28,10 +28,6 @@ const (
 )
 
 const (
-	// Operator types
-	GoOperatorType      = "go"
-	AnsibleOperatorType = "ansible"
-
 	// dirs
 	CmdDir        = "cmd"
 	ManagerDir    = CmdDir + filePathSep + "manager"
@@ -44,8 +40,6 @@ const (
 	DeployDir     = "deploy"
 	OlmCatalogDir = DeployDir + filePathSep + "olm-catalog"
 	CrdsDir       = DeployDir + filePathSep + "crds"
-	RolesDir      = DeployDir + filePathSep + "roles"
-	InitDir       = "init"
 	VersionDir    = "version"
 
 	// files
@@ -54,7 +48,6 @@ const (
 	ControllerFile         = "controller.go"
 	DockerfileFile         = "Dockerfile"
 	GoTestScriptFile       = "go-test.sh"
-	GalaxyInitScriptFile   = "galaxy-init.sh"
 	VersionFile            = "version.go"
 	DocFile                = "doc.go"
 	RegisterFile           = "register.go"
@@ -64,8 +57,6 @@ const (
 	CatalogPackageYamlFile = "package.yaml"
 	CatalogCSVYamlFile     = "csv.yaml"
 	TestPodYamlFile        = "test-pod.yaml"
-	WatchesYamlFile        = "watches.yaml"
-	PlaybookYamlFile       = "playbook.yaml"
 	GitignoreFile          = ".gitignore"
 	GopkgtomlFile          = "Gopkg.toml"
 	GopkglockFile          = "Gopkg.lock"

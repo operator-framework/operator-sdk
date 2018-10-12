@@ -80,9 +80,3 @@ func MainExists() bool {
 	_, err := os.Stat(mainGo)
 	return err == nil || os.IsExist(err)
 }
-
-// IsGoOperatorType returns true if operatorType is for a Go project,
-// false elsewise.
-func IsGoOperatorType(opType string) bool {
-	return opType == scaffold.GoOperatorType
-}

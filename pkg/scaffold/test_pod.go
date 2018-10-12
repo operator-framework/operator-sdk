@@ -28,16 +28,12 @@ type TestPod struct {
 
 	// TestNamespaceEnv is an env variable specifying the test namespace
 	TestNamespaceEnv string
-
-	// GoTestScriptFile is the test framework run script file name
-	GoTestScriptFile string
 }
 
 func (s *TestPod) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = filepath.Join(DeployDir, TestPodYamlFile)
 	}
-	s.GoTestScriptFile = GoTestScriptFile
 	s.TemplateBody = testPodTmpl
 	return s.Input, nil
 }
@@ -52,7 +48,7 @@ spec:
   - name: {{.ProjectName}}-test
     image: {{.Image}}
     imagePullPolicy: Always
-    command: ["/{{ .GoTestScriptFile }}"]
+    command: ["/go-test.sh"]
     env:
       - name: {{.TestNamespaceEnv}}
         valueFrom:

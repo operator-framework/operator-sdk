@@ -46,16 +46,14 @@ generates a skeletal app-operator application in $GOPATH/src/github.com/example.
 		Run: newFunc,
 	}
 
-	newCmd.Flags().StringVar(&operatorType, "type", "go", "Type of operator to initialize (e.g \"ansible\")")
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
 
 	return newCmd
 }
 
 var (
-	operatorType string
-	projectName  string
-	skipGit      bool
+	projectName string
+	skipGit     bool
 )
 
 const (
@@ -103,7 +101,6 @@ func doScaffold() {
 		Repo:           filepath.Join(cmdutil.CheckAndGetCurrPkg(), projectName),
 		AbsProjectPath: filepath.Join(cmdutil.MustGetwd(), projectName),
 		ProjectName:    projectName,
-		IsGoOperator:   cmdutil.IsGoOperatorType(operatorType),
 	}
 
 	s := &scaffold.Scaffold{}

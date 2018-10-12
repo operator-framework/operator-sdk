@@ -48,7 +48,6 @@ spec:
       labels:
         name: app-operator
     spec:
-      serviceAccountName: app-operator
       containers:
         - name: app-operator
           # Replace this with the built image name

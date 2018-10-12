@@ -32,24 +32,15 @@ func (s *RoleBinding) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
-const roleBindingTemplate = `{{- if .IsGoOperator }}kind: RoleBinding
-{{- else -}}
-kind: ClusterRoleBinding{{ end }}
+const roleBindingTemplate = `kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: default-account-{{.ProjectName}}
 subjects:
 - kind: ServiceAccount
-{{- if .IsGoOperator }}
-  name: {{ .ProjectName }}
-{{- else }}
-	name: default
-	namespace: default{{ end }}
+  name: default
 roleRef:
-{{- if .IsGoOperator }}
   kind: Role
-{{- else }}
-  kind: ClusterRole{{ end }}
   name: {{.ProjectName}}
   apiGroup: rbac.authorization.k8s.io
 `

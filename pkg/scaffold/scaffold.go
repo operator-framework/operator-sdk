@@ -48,9 +48,6 @@ func (s *Scaffold) setFieldsAndValidate(t input.File) error {
 	if b, ok := t.(input.ProjectName); ok {
 		b.SetProjectName(s.ProjectName)
 	}
-	if b, ok := t.(input.IsGoOperator); ok {
-		b.SetIsGoOperator(s.IsGoOperator)
-	}
 
 	// Validate the template is ok
 	if v, ok := t.(input.Validate); ok {

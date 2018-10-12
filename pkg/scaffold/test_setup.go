@@ -37,7 +37,6 @@ var (
 		Repo:           appRepo,
 		AbsProjectPath: mustGetImportPath(),
 		ProjectName:    appProjectName,
-		IsGoOperator:   true,
 	}
 )
 
