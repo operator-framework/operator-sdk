@@ -134,6 +134,7 @@ func upLocalAnsible() {
 	}
 
 	printVersion()
+	logrus.Infof("watching namespace: %s", namespace)
 	done := make(chan error)
 
 	// start the proxy
@@ -144,7 +145,7 @@ func upLocalAnsible() {
 	})
 
 	// start the operator
-	go ansibleOperator.Run(done, mgr, namespace)
+	go ansibleOperator.Run(done, mgr)
 
 	// wait for either to finish
 	err = <-done

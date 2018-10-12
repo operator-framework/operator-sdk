@@ -38,14 +38,13 @@ type Options struct {
 	EventHandlers   []events.EventHandler
 	LoggingLevel    events.LogLevel
 	Runner          runner.Runner
-	Namespace       string
 	GVK             schema.GroupVersionKind
 	ReconcilePeriod time.Duration
 }
 
 // Add - Creates a new ansible operator controller and adds it to the manager
 func Add(mgr manager.Manager, options Options) {
-	logrus.Infof("Watching %s/%v, %s, %s", options.GVK.Group, options.GVK.Version, options.GVK.Kind, options.Namespace)
+	logrus.Infof("Watching %s/%v, %s", options.GVK.Group, options.GVK.Version, options.GVK.Kind)
 	if options.EventHandlers == nil {
 		options.EventHandlers = []events.EventHandler{}
 	}
