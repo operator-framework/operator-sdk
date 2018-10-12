@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/events"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
@@ -34,12 +35,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+const (
+	// ReconcilePeriodAnnotation - annotation used by a user to specify the reconcilation interval for the CR.
+	// To use create a CR with an annotation "ansible.operator-sdk/reconcile-period: 30s" or some other valid
+	// Duration. This will override the operators/or controllers reconcile period for that particular CR.
+	ReconcilePeriodAnnotation = "ansible.operator-sdk/reconcile-period"
+)
+
 // AnsibleOperatorReconciler - object to reconcile runner requests
 type AnsibleOperatorReconciler struct {
-	GVK           schema.GroupVersionKind
-	Runner        runner.Runner
-	Client        client.Client
-	EventHandlers []events.EventHandler
+	GVK             schema.GroupVersionKind
+	Runner          runner.Runner
+	Client          client.Client
+	EventHandlers   []events.EventHandler
+	ReconcilePeriod time.Duration
 }
 
 // Reconcile - handle the event.
@@ -53,6 +62,14 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	if err != nil {
 		return reconcile.Result{}, err
 	}
+	reconcileResult := reconcile.Result{RequeueAfter: r.ReconcilePeriod}
+	if ds, ok := u.GetAnnotations()[ReconcilePeriodAnnotation]; ok {
+		duration, err := time.ParseDuration(ds)
+		if err != nil {
+			return reconcileResult, err
+		}
+		reconcileResult.RequeueAfter = duration
+	}
 
 	deleted := u.GetDeletionTimestamp() != nil
 	finalizer, finalizerExists := r.Runner.GetFinalizer()
@@ -63,11 +80,11 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		finalizers := append(pendingFinalizers, finalizer)
 		u.SetFinalizers(finalizers)
 		err := r.Client.Update(context.TODO(), u)
-		return reconcile.Result{}, err
+		return reconcileResult, err
 	}
 	if !contains(pendingFinalizers, finalizer) && deleted {
 		logrus.Info("Resource is terminated, skipping reconcilation")
-		return reconcile.Result{}, nil
+		return reconcileResult, nil
 	}
 
 	spec := u.Object["spec"]
@@ -77,9 +94,10 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		u.Object["spec"] = map[string]interface{}{}
 		err = r.Client.Update(context.TODO(), u)
 		if err != nil {
-			return reconcile.Result{}, err
+			return reconcileResult, err
 		}
-		return reconcile.Result{Requeue: true}, nil
+		reconcileResult.Requeue = true
+		return reconcileResult, nil
 	}
 	status := u.Object["status"]
 	_, ok = status.(map[string]interface{})
@@ -88,9 +106,10 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		u.Object["status"] = map[string]interface{}{}
 		err = r.Client.Update(context.TODO(), u)
 		if err != nil {
-			return reconcile.Result{}, err
+			return reconcileResult, err
 		}
-		return reconcile.Result{Requeue: true}, nil
+		reconcileResult.Requeue = true
+		return reconcileResult, nil
 	}
 
 	// If status is an empty map we can assume CR was just created
@@ -101,9 +120,10 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		}
 		err = r.Client.Update(context.TODO(), u)
 		if err != nil {
-			return reconcile.Result{}, err
+			return reconcileResult, err
 		}
-		return reconcile.Result{Requeue: true}, nil
+		reconcileResult.Requeue = true
+		return reconcileResult, nil
 	}
 
 	ownerRef := metav1.OwnerReference{
@@ -115,12 +135,12 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 
 	kc, err := kubeconfig.Create(ownerRef, "http://localhost:8888", u.GetNamespace())
 	if err != nil {
-		return reconcile.Result{}, err
+		return reconcileResult, err
 	}
 	defer os.Remove(kc.Name())
 	eventChan, err := r.Runner.Run(u, kc.Name())
 	if err != nil {
-		return reconcile.Result{}, err
+		return reconcileResult, err
 	}
 
 	// iterate events from ansible, looking for the final one
@@ -144,7 +164,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	if statusEvent.Event == "" {
 		err := errors.New("did not receive playbook_on_stats event")
 		logrus.Error(err.Error())
-		return reconcile.Result{}, err
+		return reconcileResult, err
 	}
 
 	// We only want to update the CustomResource once, so we'll track changes and do it at the end
@@ -186,9 +206,10 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		err = r.Client.Update(context.TODO(), u)
 	}
 	if !runSuccessful {
-		return reconcile.Result{Requeue: true}, err
+		reconcileResult.Requeue = true
+		return reconcileResult, err
 	}
-	return reconcile.Result{}, err
+	return reconcileResult, err
 }
 
 func contains(l []string, s string) bool {

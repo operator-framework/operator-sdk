@@ -35,29 +35,30 @@ import (
 
 // Options - options for your controller
 type Options struct {
-	EventHandlers []events.EventHandler
-	LoggingLevel  events.LogLevel
-	Runner        runner.Runner
-	Namespace     string
-	GVK           schema.GroupVersionKind
-	// StopChannel is used to deal with the bug:
-	// https://github.com/kubernetes-sigs/controller-runtime/issues/103
-	StopChannel <-chan struct{}
+	EventHandlers   []events.EventHandler
+	LoggingLevel    events.LogLevel
+	Runner          runner.Runner
+	GVK             schema.GroupVersionKind
+	ReconcilePeriod time.Duration
 }
 
 // Add - Creates a new ansible operator controller and adds it to the manager
 func Add(mgr manager.Manager, options Options) {
-	logrus.Infof("Watching %s/%v, %s, %s", options.GVK.Group, options.GVK.Version, options.GVK.Kind, options.Namespace)
+	logrus.Infof("Watching %s/%v, %s", options.GVK.Group, options.GVK.Version, options.GVK.Kind)
 	if options.EventHandlers == nil {
 		options.EventHandlers = []events.EventHandler{}
 	}
 	eventHandlers := append(options.EventHandlers, events.NewLoggingEventHandler(options.LoggingLevel))
+	if options.ReconcilePeriod == time.Duration(0) {
+		options.ReconcilePeriod = time.Minute
+	}
 
 	aor := &AnsibleOperatorReconciler{
-		Client:        mgr.GetClient(),
-		GVK:           options.GVK,
-		Runner:        options.Runner,
-		EventHandlers: eventHandlers,
+		Client:          mgr.GetClient(),
+		GVK:             options.GVK,
+		Runner:          options.Runner,
+		EventHandlers:   eventHandlers,
+		ReconcilePeriod: options.ReconcilePeriod,
 	}
 
 	// Register the GVK with the schema
@@ -79,13 +80,4 @@ func Add(mgr manager.Manager, options Options) {
 	if err := c.Watch(&source.Kind{Type: u}, &crthandler.EnqueueRequestForObject{}); err != nil {
 		log.Fatal(err)
 	}
-
-	r := NewReconcileLoop(time.Minute*1, options.GVK, mgr.GetClient(), options.Namespace)
-	r.Stop = options.StopChannel
-	cs := &source.Channel{Source: r.Source}
-	cs.InjectStopChannel(options.StopChannel)
-	if err := c.Watch(cs, &crthandler.EnqueueRequestForObject{}); err != nil {
-		log.Fatal(err)
-	}
-	r.Start()
 }

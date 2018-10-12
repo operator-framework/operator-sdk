@@ -30,10 +30,7 @@ import (
 // Run - A blocking function which starts a controller-runtime manager
 // It starts an Operator by reading in the values in `./watches.yaml`, adds a controller
 // to the manager, and finally running the manager.
-func Run(done chan error, mgr manager.Manager, namespace string) {
-	if namespace == "" {
-		namespace = "default"
-	}
+func Run(done chan error, mgr manager.Manager) {
 	watches, err := runner.NewFromWatches("./watches.yaml")
 	if err != nil {
 		logrus.Error("Failed to get watches")
@@ -45,10 +42,8 @@ func Run(done chan error, mgr manager.Manager, namespace string) {
 
 	for gvk, runner := range watches {
 		controller.Add(mgr, controller.Options{
-			GVK:         gvk,
-			Namespace:   namespace,
-			Runner:      runner,
-			StopChannel: c,
+			GVK:    gvk,
+			Runner: runner,
 		})
 	}
 	log.Fatal(mgr.Start(c))

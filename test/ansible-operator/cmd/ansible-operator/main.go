@@ -71,7 +71,6 @@ func main() {
 }
 
 func runSDK(done chan error, mgr manager.Manager) {
-	namespace := "default"
 	watches, err := runner.NewFromWatches("/opt/ansible/watches.yaml")
 	if err != nil {
 		logrus.Error("Failed to get watches")
@@ -83,10 +82,8 @@ func runSDK(done chan error, mgr manager.Manager) {
 
 	for gvk, runner := range watches {
 		controller.Add(mgr, controller.Options{
-			GVK:         gvk,
-			Namespace:   namespace,
-			Runner:      runner,
-			StopChannel: c,
+			GVK:    gvk,
+			Runner: runner,
 		})
 	}
 	log.Fatal(mgr.Start(c))
