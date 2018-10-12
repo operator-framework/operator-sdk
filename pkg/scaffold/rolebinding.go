@@ -32,7 +32,6 @@ func (s *RoleBinding) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
-// QUESTION: should we adopt change of subject.kind.name == ProjectName over "default"?
 const roleBindingTemplate = `{{- if .IsGoOperator }}kind: RoleBinding
 {{- else -}}
 kind: ClusterRoleBinding{{ end }}

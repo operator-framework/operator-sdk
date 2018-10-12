@@ -32,7 +32,6 @@ func (s *Operator) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
-// QUESTION: serviceAccountName should be "default" or ProjectName?
 const operatorTemplate = `apiVersion: apps/v1
 kind: Deployment
 metadata:

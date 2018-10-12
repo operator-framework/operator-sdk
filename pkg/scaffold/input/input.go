@@ -127,10 +127,3 @@ type Config struct {
 	// if true. This would be set false if building an Ansible-based operator.
 	IsGoOperator bool
 }
-
-// NewConfig returns a *Config object with defaults set.
-func NewConfig() *Config {
-	return &Config{
-		IsGoOperator: true,
-	}
-}
