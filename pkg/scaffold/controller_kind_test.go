@@ -31,9 +31,11 @@ func TestControllerKind(t *testing.T) {
 		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
 
-	if controllerKindExp != buf.String() {
+	tmplOUt := buf.String()
+
+	if controllerKindExp != tmplOUt {
 		dmp := diffmatchpatch.New()
-		diffs := diffmatchpatch.New().DiffMain(controllerKindExp, buf.String(), false)
+		diffs := diffmatchpatch.New().DiffMain(controllerKindExp, tmplOUt, true)
 		t.Fatalf("expected vs actual differs. Red text is missing and green text is extra.\n%v", dmp.DiffPrettyText(diffs))
 	}
 }
@@ -45,7 +47,6 @@ import (
 	"log"
 
 	appv1alpha1 "github.com/example-inc/app-operator/pkg/apis/app/v1alpha1"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

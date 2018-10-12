@@ -25,9 +25,8 @@ import (
 type OperatorType int
 
 const (
-	configYaml    = "./config/config.yaml"
-	gopkgToml     = "./Gopkg.toml"
-	tmpDockerfile = "./tmp/build/Dockerfile"
+	gopkgToml       = "./Gopkg.toml"
+	buildDockerfile = "./build/Dockerfile"
 )
 const (
 	// OperatorTypeGo - golang type of operator.
@@ -47,14 +46,13 @@ const (
 
 // MustInProjectRoot checks if the current dir is the project root and returns the current repo's import path
 // e.g github.com/example-inc/app-operator
-func MustInProjectRoot() string {
-	// if the current directory has the "./cmd/manager/main.go" file, then it is safe to say
+func MustInProjectRoot() {
+	// if the current directory has the "./build/dockerfile" file, then it is safe to say
 	// we are at the project root.
-	_, err := os.Stat(tmpDockerfile)
+	_, err := os.Stat(buildDockerfile)
 	if err != nil && os.IsNotExist(err) {
 		log.Fatalf("must run command in project root dir: %v", err)
 	}
-	return CheckAndGetCurrPkg()
 }
 
 func MustGetwd() string {

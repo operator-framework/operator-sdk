@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -ev
 
 go test ./commands/...
 go test ./pkg/...

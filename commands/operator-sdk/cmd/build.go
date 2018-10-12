@@ -23,10 +23,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
-
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
-	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
@@ -137,9 +133,7 @@ func verifyTestManifest(image string) {
 }
 
 const (
-	build      = "./build/build.sh"
-	configYaml = "./config/config.yaml"
-	mainGo     = "./cmd/manager/main.go"
+	mainGo = "./cmd/manager/main.go"
 )
 
 func buildFunc(cmd *cobra.Command, args []string) {
@@ -197,7 +191,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 
 			absProjectPath := cmdutil.MustGetwd()
 			cfg := &input.Config{
-				Repo:           cmdutil.MustInProjectRoot(),
+				Repo:           cmdutil.CheckAndGetCurrPkg(),
 				AbsProjectPath: absProjectPath,
 				ProjectName:    filepath.Base(wd),
 			}
@@ -226,19 +220,6 @@ func buildFunc(cmd *cobra.Command, args []string) {
 
 func mainExists() bool {
 	if _, err := os.Stat(mainGo); err == nil {
-		return true
-	}
-	return false
-}
-
-func mainExists() bool {
-	dir, err := os.Getwd()
-	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to get current working dir: %v", err))
-	}
-	dirSplit := strings.Split(dir, "/")
-	projectName := dirSplit[len(dirSplit)-1]
-	if _, err = os.Stat(fmt.Sprintf(mainGo, projectName)); err == nil {
 		return true
 	}
 	return false

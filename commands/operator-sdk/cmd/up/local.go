@@ -27,7 +27,6 @@ import (
 	"syscall"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
-	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
 	ansibleOperator "github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
@@ -75,7 +74,7 @@ func upLocalFunc(cmd *cobra.Command, args []string) {
 	case cmdutil.OperatorTypeAnsible:
 		upLocalAnsible()
 	default:
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to determine operator type"))
+		log.Fatal("failed to determine operator type")
 	}
 }
 

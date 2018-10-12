@@ -57,6 +57,7 @@ Example:
 }
 
 func controllerRun(cmd *cobra.Command, args []string) {
+	cmdutil.MustInProjectRoot()
 	// Create and validate new resource
 	r, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
@@ -64,7 +65,7 @@ func controllerRun(cmd *cobra.Command, args []string) {
 	}
 
 	cfg := &input.Config{
-		Repo:           cmdutil.MustInProjectRoot(),
+		Repo:           cmdutil.CheckAndGetCurrPkg(),
 		AbsProjectPath: cmdutil.MustGetwd(),
 	}
 

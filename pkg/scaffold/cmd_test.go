@@ -27,9 +27,11 @@ func TestCmd(t *testing.T) {
 		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
 
-	if cmdExp != buf.String() {
+	tmpl := buf.String()
+
+	if cmdExp != tmpl {
 		dmp := diffmatchpatch.New()
-		diffs := diffmatchpatch.New().DiffMain(cmdExp, buf.String(), false)
+		diffs := diffmatchpatch.New().DiffMain(cmdExp, tmpl, false)
 		t.Fatalf("expected vs actual differs. Red text is missing and green text is extra.\n%v", dmp.DiffPrettyText(diffs))
 	}
 }
@@ -43,7 +45,6 @@ import (
 
 	"github.com/example-inc/app-operator/pkg/apis"
 	"github.com/example-inc/app-operator/pkg/controller"
-
 	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"

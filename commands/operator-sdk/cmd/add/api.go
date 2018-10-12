@@ -15,6 +15,7 @@
 package add
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -71,14 +72,16 @@ Example:
 
 func apiRun(cmd *cobra.Command, args []string) {
 	// Create and validate new resource
+	cmdutil.MustInProjectRoot()
 	r, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	absProjectPath := cmdutil.MustGetwd()
+
 	cfg := &input.Config{
-		Repo:           cmdutil.MustInProjectRoot(),
+		Repo:           cmdutil.CheckAndGetCurrPkg(),
 		AbsProjectPath: absProjectPath,
 	}
 
@@ -146,7 +149,13 @@ func updateRoleForResource(r *scaffold.Resource, absProjectPath string) error {
 			role.Rules = append(role.Rules, *pr)
 		}
 		// update role.yaml
-		data, err := yaml.Marshal(&role)
+		d, err := json.Marshal(&role)
+		if err != nil {
+			return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
+		}
+		m := &map[string]interface{}{}
+		err = yaml.Unmarshal(d, m)
+		data, err := yaml.Marshal(m)
 		if err != nil {
 			return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
 		}

@@ -109,10 +109,6 @@ Session.vim
 tags
 ### VisualStudioCode ###
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
 .history
 # End of https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
 `
