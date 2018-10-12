@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -24,9 +23,8 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
-	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
-	"github.com/operator-framework/operator-sdk/pkg/generator"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
 	"github.com/spf13/cobra"
@@ -83,19 +81,17 @@ const (
 
 func newFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("new command needs 1 argument"))
+		log.Fatal("new command needs 1 argument")
 	}
 	parse(args)
 	mustBeNewProject()
 	verifyFlags()
-	g := generator.NewGenerator(apiVersion, kind, operatorType, projectName, repoPath(), generatePlaybook)
-	err := g.Render()
-	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to create project %v: %v", projectName, err))
-	}
-	if operatorType == goOperatorType {
+	switch operatorType {
+	case goOperatorType:
 		doScaffold()
 		pullDep()
+	case ansibleOperatorType:
+		doAnsibleScaffold()
 	}
 	initGit()
 }
@@ -151,6 +147,67 @@ func doScaffold() {
 	}
 }
 
+func doAnsibleScaffold() {
+	cfg := &input.Config{
+		Repo:           filepath.Join(cmdutil.MustGetwd(), projectName),
+		AbsProjectPath: filepath.Join(cmdutil.MustGetwd(), projectName),
+		ProjectName:    projectName,
+	}
+
+	resource, err := scaffold.NewResource(apiVersion, kind)
+	if err != nil {
+		log.Fatal("Invalid apiVersion and kind.")
+	}
+
+	s := &scaffold.Scaffold{}
+	galaxyInit := &ansible.GalaxyInit{
+		Kind: resource.Kind,
+	}
+
+	err = s.Execute(cfg,
+		&ansible.Dockerfile{
+			GeneratePlaybook: generatePlaybook,
+		},
+		&ansible.WatchesYAML{
+			Resource:         *resource,
+			GeneratePlaybook: generatePlaybook,
+		},
+		galaxyInit,
+		&scaffold.Role{},
+		&scaffold.RoleBinding{},
+		&scaffold.Operator{},
+		&scaffold.Crd{
+			Resource: resource,
+		},
+		&scaffold.Cr{
+			Resource: resource,
+		},
+	)
+	if err != nil {
+		log.Fatalf("new scaffold failed: (%v)", err)
+	}
+
+	// Decide on playbook.
+	if generatePlaybook {
+		err := s.Execute(cfg,
+			&ansible.Playbook{
+				Kind: resource.Kind,
+			},
+		)
+		if err != nil {
+			log.Fatalf("new scaffold failed: (%v)", err)
+		}
+	}
+
+	// Run galaxy init.
+	cmd := exec.Command(filepath.Join(galaxyInit.AbsProjectPath, galaxyInit.Path))
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Run()
+	// Delete Galxy INIT
+	err = os.RemoveAll(filepath.Join(galaxyInit.AbsProjectPath, "var"))
+}
+
 // repoPath checks if this project's repository path is rooted under $GOPATH and returns project's repository path.
 // repoPath field on generator is used primarily in generation of Go operator. For Ansible we will set it to cwd
 func repoPath() string {
@@ -159,11 +216,11 @@ func repoPath() string {
 	if operatorType == goOperatorType {
 		gp := os.Getenv(gopath)
 		if len(gp) == 0 {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("$GOPATH env not set"))
+			log.Fatal("$GOPATH env not set")
 		}
 		// check if this project's repository path is rooted under $GOPATH
 		if !strings.HasPrefix(wd, gp) {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("project's repository path (%v) is not rooted under GOPATH (%v)", wd, gp))
+			log.Fatalf("project's repository path (%v) is not rooted under GOPATH (%v)", wd, gp)
 		}
 		// compute the repo path by stripping "$GOPATH/src/" from the path of the current directory.
 		rp := filepath.Join(string(wd[len(filepath.Join(gp, src)):]), projectName)
@@ -175,24 +232,28 @@ func repoPath() string {
 
 func verifyFlags() {
 	if operatorType != goOperatorType && operatorType != ansibleOperatorType {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--type can only be `go` or `ansible`"))
+		log.Fatal("--type can only be `go` or `ansible`")
 	}
 	if operatorType != ansibleOperatorType && generatePlaybook {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--generate-playbook can only be used with --type `ansible`"))
+		log.Fatal("--generate-playbook can only be used with --type `ansible`")
 	}
+	if operatorType == goOperatorType && (len(apiVersion) != 0 || len(kind) != 0) {
+		log.Fatal("go type operator does not use --api-version or --kind. Please see generate command after running new.")
+	}
+
 	if operatorType != goOperatorType {
 		if len(apiVersion) == 0 {
-			cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--api-version must not have empty value"))
+			log.Fatal("--api-version must not have empty value")
 		}
 		if len(kind) == 0 {
-			cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--kind must not have empty value"))
+			log.Fatal("--kind must not have empty value")
 		}
 		kindFirstLetter := string(kind[0])
 		if kindFirstLetter != strings.ToUpper(kindFirstLetter) {
-			cmdError.ExitWithError(cmdError.ExitBadArgs, errors.New("--kind must start with an uppercase letter"))
+			log.Fatal("--kind must start with an uppercase letter")
 		}
 		if strings.Count(apiVersion, "/") != 1 {
-			cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion))
+			log.Fatalf("api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion)
 		}
 	}
 }
@@ -202,6 +263,7 @@ func mustGetwd() string {
 	if err != nil {
 		log.Fatalf("failed to determine the full path of the current directory: %v", err)
 	}
+	return wd
 }
 
 func execCmd(stdout *os.File, cmd string, args ...string) {

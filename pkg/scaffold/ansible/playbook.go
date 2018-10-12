@@ -5,6 +5,8 @@ import "github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 // Playbook - the playbook tmpl wrapper
 type Playbook struct {
 	input.Input
+
+	Kind string
 }
 
 // GetInput - gets the input

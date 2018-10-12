@@ -10,6 +10,9 @@ import (
 // GalaxyInit - wrapper
 type GalaxyInit struct {
 	input.Input
+
+	Kind string
+	Dir  string
 }
 
 // GetInput - get input
@@ -20,6 +23,7 @@ func (g *GalaxyInit) GetInput() (input.Input, error) {
 			return g.Input, err
 		}
 		g.Path = filepath.Join(dir, "galaxy_init.sh")
+		g.Dir = dir
 	}
 	g.TemplateBody = galaxyInitTmpl
 	g.IsExec = true
@@ -34,5 +38,5 @@ if ! which ansible-galaxy > /dev/null; then
 fi
 
 echo "Initializing role skeleton..."
-ansible-galaxy init --init-path={{.Name}}/roles/ {{.Kind}}
+ansible-galaxy init --init-path={{.Input.AbsProjectPath}}/roles/ {{.Kind}}
 `

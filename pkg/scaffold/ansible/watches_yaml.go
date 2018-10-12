@@ -1,6 +1,9 @@
 package ansible
 
-import "github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+import (
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+)
 
 const (
 	watchesFile = "watches.yaml"
@@ -9,6 +12,9 @@ const (
 // WatchesYAML - watches yaml input wrapper
 type WatchesYAML struct {
 	input.Input
+
+	Resource         scaffold.Resource
+	GeneratePlaybook bool
 }
 
 // GetInput - gets the input
@@ -21,8 +27,8 @@ func (s *WatchesYAML) GetInput() (input.Input, error) {
 }
 
 const watchesYAMLTmpl = `---
-- version: {{.Version}}
-  group: {{.GroupName}}
-  kind: {{.Kind}}
-{{ if .GeneratePlaybook }}  playbook: /opt/ansible/playbook.yaml{{ else }}  role: /opt/ansible/roles/{{.Kind}}{{ end }}
+- version: {{.Resource.Version}}
+  group: {{.Resource.FullGroup}}
+  kind: {{.Resource.Kind}}
+{{ if .GeneratePlaybook }}  playbook: /opt/ansible/playbook.yaml{{ else }}  role: /opt/ansible/roles/{{.Resource.Kind}}{{ end }}
 `

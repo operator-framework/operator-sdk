@@ -9,6 +9,8 @@ import (
 //Dockerfile - docker file for creating image
 type Dockerfile struct {
 	input.Input
+
+	GeneratePlaybook bool
 }
 
 // GetInput - gets the input
