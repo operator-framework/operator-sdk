@@ -26,8 +26,8 @@ import (
 const configYaml = "./config/config.yaml"
 
 const (
-	GopathEnv = "GOPATH"
-	SrcDir    = "src"
+	GopathEnv     = "GOPATH"
+	SrcDir        = "src"
 	KubeConfigDir = ".kube/config"
 
 	DefaultDirFileMode  = 0750
@@ -71,4 +71,18 @@ func CheckAndGetCurrPkg() string {
 	currPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
 	// strip any "/" prefix from the repo path.
 	return strings.TrimPrefix(currPkg, string(filepath.Separator))
+}
+
+// MainExists checks whether "main.go" exists.
+// Used to determine whether this operator is written in Go or not.
+func MainExists() bool {
+	mainGo := filepath.Join(scaffold.ManagerDir, scaffold.CmdFile)
+	_, err := os.Stat(mainGo)
+	return err == nil || os.IsExist(err)
+}
+
+// IsGoOperatorType returns true if operatorType is for a Go project,
+// false elsewise.
+func IsGoOperatorType(opType string) bool {
+	return opType == scaffold.GoOperatorType
 }

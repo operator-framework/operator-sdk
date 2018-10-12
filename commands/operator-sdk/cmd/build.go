@@ -145,7 +145,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	}
 
 	// Don't need to buld go code if Ansible Operator
-	if mainExists() {
+	if cmdutil.MainExists() {
 		managerDir := filepath.Join(cmdutil.CheckAndGetCurrPkg(), scaffold.ManagerDir)
 		outputBinName := filepath.Join(wd, scaffold.BuildBinDir, filepath.Base(wd))
 		buildCmd := exec.Command("go", "build", "-o", outputBinName, managerDir)
@@ -195,6 +195,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 				Repo:           cmdutil.MustInProjectRoot(),
 				AbsProjectPath: absProjectPath,
 				ProjectName:    filepath.Base(wd),
+				IsGoOperator:   cmdutil.MainExists(),
 			}
 
 			s := &scaffold.Scaffold{}
@@ -221,12 +222,4 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		// Check image name of deployments in namespaced manifest
 		verifyTestManifest(image)
 	}
-}
-
-func mainExists() bool {
-	mainGo := filepath.Join(scaffold.ManagerDir, scaffold.CmdFile)
-	if _, err := os.Stat(mainGo); err == nil {
-		return true
-	}
-	return false
 }

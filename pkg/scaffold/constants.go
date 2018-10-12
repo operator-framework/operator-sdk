@@ -25,6 +25,12 @@ const (
 
 	// Separator to statically create directories.
 	filePathSep = string(filepath.Separator)
+)
+
+const (
+	// Operator types
+	GoOperatorType      = "go"
+	AnsibleOperatorType = "ansible"
 
 	// dirs
 	CmdDir        = "cmd"

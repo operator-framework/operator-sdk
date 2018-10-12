@@ -24,8 +24,8 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
-	"github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/pkg/test"
 
 	"github.com/spf13/cobra"
 )
@@ -61,10 +61,10 @@ func NewTestLocalCmd() *cobra.Command {
 }
 
 const (
-	testDir = "test"
+	testDir            = "test"
 	nsManifestYamlFile = "namespace-manifests.yaml"
 	gbManifestYamlFile = "global-manifests.yaml"
-	crdFilePrefix = "crd.yaml"
+	crdFilePrefix      = "crd.yaml"
 )
 
 func testLocalFunc(cmd *cobra.Command, args []string) {

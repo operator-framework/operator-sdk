@@ -26,8 +26,8 @@ import (
 	"syscall"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
-	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 
 	"github.com/spf13/cobra"
 )
