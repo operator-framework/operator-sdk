@@ -24,6 +24,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/ansible/controller"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
+	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -43,7 +44,14 @@ func main() {
 	flag.Parse()
 	logf.SetLogger(logf.ZapLogger(false))
 
-	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{})
+	namespace, err := k8sutil.GetWatchNamespace()
+	if err != nil {
+		log.Fatalf("failed to get watch namespace: %v", err)
+	}
+
+	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{
+		Namespace: namespace,
+	})
 	if err != nil {
 		log.Fatal(err)
 	}

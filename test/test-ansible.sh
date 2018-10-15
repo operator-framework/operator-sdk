@@ -25,8 +25,9 @@ sed -i 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.2|g' deploy/oper
 sed -i 's|Always|Never|g' deploy/operator.yaml
 
 # deploy the operator
-kubectl create -f deploy/rbac.yaml
-kubectl create -f deploy/crd.yaml
+kubectl create -f deploy/role.yaml
+kubectl create -f deploy/role_binding.yaml
+kubectl create -f deploy/crds/ansible_v1alpha1_memcached_crd.yaml
 kubectl create -f deploy/operator.yaml
 
 # wait for operator pod to run
