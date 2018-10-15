@@ -122,7 +122,7 @@ func (e *EventReceiver) handleEvents(w http.ResponseWriter, r *http.Request) {
 	if strings.Split(ct, ";")[0] != "application/json" {
 		e.logger.WithFields(logrus.Fields{
 			"code": "415",
-		}).Info("wrong content type: %s", ct)
+		}).Infof("wrong content type: %s", ct)
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 		w.Write([]byte("The content-type must be \"application/json\""))
 		return

@@ -51,7 +51,7 @@ func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
 			authString, err := base64.StdEncoding.DecodeString(user)
 			if err != nil {
 				m := "could not base64 decode username"
-				logrus.Errorf("%s: %s", err.Error())
+				logrus.Errorf("%s", err.Error())
 				http.Error(w, m, http.StatusBadRequest)
 				return
 			}
@@ -63,7 +63,7 @@ func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
 			body, err := ioutil.ReadAll(req.Body)
 			if err != nil {
 				m := "could not read request body"
-				logrus.Errorf("%s: %s", err.Error())
+				logrus.Errorf("%s", err.Error())
 				http.Error(w, m, http.StatusInternalServerError)
 				return
 			}
@@ -71,7 +71,7 @@ func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
 			err = json.Unmarshal(body, data)
 			if err != nil {
 				m := "could not deserialize request body"
-				logrus.Errorf("%s: %s", err.Error())
+				logrus.Errorf("%s", err.Error())
 				http.Error(w, m, http.StatusBadRequest)
 				return
 			}
@@ -79,7 +79,7 @@ func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
 			newBody, err := json.Marshal(data.Object)
 			if err != nil {
 				m := "could not serialize body"
-				logrus.Errorf("%s: %s", err.Error())
+				logrus.Errorf("%s", err.Error())
 				http.Error(w, m, http.StatusInternalServerError)
 				return
 			}
