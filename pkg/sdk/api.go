@@ -16,6 +16,7 @@ package sdk
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sclient"
@@ -46,7 +47,7 @@ func Watch(apiVersion, kind, namespace string, resyncPeriod time.Duration, opts 
 	// TODO: Better error handling, e.g retry
 	if err != nil {
 		logrus.Errorf("failed to get resource client for (apiVersion:%s, kind:%s, ns:%s): %v", apiVersion, kind, namespace, err)
-		panic(err)
+		os.Exit(1)
 	}
 	if collector == nil {
 		collector = metrics.New()
