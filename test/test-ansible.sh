@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ev
+set -evx
 
 # switch to the "default" namespace if on openshift, to match the minikube test
 if which oc 2>/dev/null; then oc project default; fi
