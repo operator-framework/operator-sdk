@@ -22,11 +22,16 @@ import (
 
 type Operator struct {
 	input.Input
+
+	Command string
 }
 
 func (s *Operator) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = filepath.Join(deployDir, operatorYamlFile)
+	}
+	if s.Command == "" {
+		s.Command = s.Input.ProjectName
 	}
 	s.TemplateBody = operatorTemplate
 	return s.Input, nil
@@ -54,7 +59,7 @@ spec:
           - containerPort: 60000
             name: metrics
           command:
-          - {{.ProjectName}}
+          - {{.Command}}
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE

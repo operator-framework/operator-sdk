@@ -175,7 +175,9 @@ func doAnsibleScaffold() {
 		galaxyInit,
 		&scaffold.Role{},
 		&scaffold.RoleBinding{},
-		&scaffold.Operator{},
+		&scaffold.Operator{
+			Command: "ansible-operator",
+		},
 		&scaffold.Crd{
 			Resource: resource,
 		},
