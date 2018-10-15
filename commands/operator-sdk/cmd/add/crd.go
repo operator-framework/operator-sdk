@@ -56,7 +56,6 @@ Generated CR  filename: <project-name>/deploy/<group>_<version>_<kind>_cr.yaml
 }
 
 func crdFunc(cmd *cobra.Command, args []string) {
-
 	cfg := &input.Config{
 		Repo:           cmdutil.MustGetwd(),
 		AbsProjectPath: cmdutil.MustGetwd(),
@@ -83,6 +82,15 @@ func crdFunc(cmd *cobra.Command, args []string) {
 			Resource: resource,
 		},
 	)
+
+	if err != nil {
+		log.Fatalf("add scaffold failed: (%v)", err)
+	}
+
+	// update deploy/role.yaml for the given resource r.
+	if err := updateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
+		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): %v", resource.APIVersion, resource.Kind, err)
+	}
 }
 
 func verifyCrdFlags() {
