@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scaffold
+package ansible
 
 import (
 	"path/filepath"
@@ -26,7 +26,7 @@ type Operator struct {
 
 func (s *Operator) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(deployDir, operatorYamlFile)
+		s.Path = filepath.Join("deploy", "operator.yaml")
 	}
 	s.TemplateBody = operatorTemplate
 	return s.Input, nil
@@ -53,8 +53,6 @@ spec:
           ports:
           - containerPort: 60000
             name: metrics
-          command:
-          - {{.ProjectName}}
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
