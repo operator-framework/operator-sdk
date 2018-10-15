@@ -193,7 +193,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 
 			absProjectPath := cmdutil.MustGetwd()
 			cfg := &input.Config{
-				Repo:           cmdutil.MustInProjectRoot(),
+				Repo:           cmdutil.CheckAndGetCurrPkg(),
 				AbsProjectPath: absProjectPath,
 				ProjectName:    filepath.Base(wd),
 			}

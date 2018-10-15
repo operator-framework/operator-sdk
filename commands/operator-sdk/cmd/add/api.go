@@ -71,14 +71,16 @@ Example:
 
 func apiRun(cmd *cobra.Command, args []string) {
 	// Create and validate new resource
+	cmdutil.MustInProjectRoot()
 	r, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	absProjectPath := cmdutil.MustGetwd()
+
 	cfg := &input.Config{
-		Repo:           cmdutil.MustInProjectRoot(),
+		Repo:           cmdutil.CheckAndGetCurrPkg(),
 		AbsProjectPath: absProjectPath,
 	}
 

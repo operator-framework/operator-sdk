@@ -51,7 +51,8 @@ func k8sFunc(cmd *cobra.Command, args []string) {
 
 // K8sCodegen performs deepcopy code-generation for all custom resources under pkg/apis
 func K8sCodegen() {
-	repoPkg := cmdutil.MustInProjectRoot()
+	cmdutil.MustInProjectRoot()
+	repoPkg := cmdutil.CheckAndGetCurrPkg()
 	outputPkg := filepath.Join(repoPkg, "pkg/generated")
 	apisPkg := filepath.Join(repoPkg, "pkg/apis")
 	groupVersions, err := parseGroupVersions()
