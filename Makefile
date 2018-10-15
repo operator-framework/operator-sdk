@@ -45,9 +45,10 @@ build/%:
 	$(Q)$(GOARGS) go build -o $@ $(BUILD_PATH)
 	
 DEFAULT_KEY = $(shell gpgconf --list-options gpg \
-								| awk -F: '$$1 == "default-key" { gsub(/"/,""); print $$10}')
+								| awk -F: '$$1 == "default-key" { gsub(/"/,""); print toupper($$10)}')
+GIT_KEY = $(shell git config --get user.signingkey | awk '{ print toupper($$0) }')
 build/%.asc:
-ifeq ("$(DEFAULT_KEY)","$(shell git config --get user.signingkey)")
+ifeq ("$(DEFAULT_KEY)","$(GIT_KEY)")
 	$(Q)gpg --output $@ --detach-sig build/$*
 	$(Q)gpg --verify $@ build/$*
 else
