@@ -39,7 +39,11 @@ fi
 
 # create CR
 kubectl create -f deploy/crds/ansible_v1alpha1_memcached_cr.yaml
-until kubectl get deployment -l app=memcached | grep memcached; do sleep 1; done
+if ! timeout 20s bash -c -- 'until kubectl get deployment -l app=memcached | grep memcached; do sleep 1; done';
+then
+    kubectl logs deployment/memcached-operator
+    exit 1
+fi
 memcached_deployment=$(kubectl get deployment -l app=memcached -o jsonpath="{..metadata.name}")
 if ! timeout 1m kubectl rollout status deployment/${memcached_deployment};
 then
