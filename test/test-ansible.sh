@@ -31,15 +31,21 @@ kubectl create -f deploy/crds/ansible_v1alpha1_memcached_crd.yaml
 kubectl create -f deploy/operator.yaml
 
 # wait for operator pod to run
-kubectl rollout status deployment/memcached-operator
-kubectl logs deployment/memcached-operator
+if ! timeout 1m kubectl rollout status deployment/memcached-operator;
+then
+    kubectl logs deployment/memcached-operator
+    exit 1
+fi
 
 # create CR
 kubectl create -f deploy/cr.yaml
 until kubectl get deployment -l app=memcached | grep memcached; do sleep 1; done
 memcached_deployment=$(kubectl get deployment -l app=memcached -o jsonpath="{..metadata.name}")
-kubectl rollout status deployment/${memcached_deployment}
-kubectl logs deployment/${memcached_deployment}
+if ! timeout 1m kubectl rollout status deployment/${memcached_deployment};
+then
+    kubectl logs deployment/${memcached_deployment}
+    exit 1
+fi
 
 # Test finalizer
 kubectl delete -f deploy/cr.yaml --wait=true
