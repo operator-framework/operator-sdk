@@ -15,25 +15,18 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
+	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/generate"
 
-	"github.com/operator-framework/operator-sdk/version"
+	"github.com/spf13/cobra"
 )
 
-func NewRootCmd() *cobra.Command {
+func NewGenerateCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "operator-sdk",
-		Short:   "A sdk for building operator with ease",
-		Version: version.Version,
+		Use:   "generate <generator>",
+		Short: "Invokes specific generator",
+		Long: `The operator-sdk generate command invokes specific generator to generate code as needed.
+                                            `,
 	}
-
-	cmd.AddCommand(NewNewCmd())
-	cmd.AddCommand(NewAddCmd())
-	cmd.AddCommand(NewBuildCmd())
-	cmd.AddCommand(NewGenerateCmd())
-	cmd.AddCommand(NewUpCmd())
-	cmd.AddCommand(NewCompletionCmd())
-	cmd.AddCommand(NewTestCmd())
-
+	cmd.AddCommand(generate.NewGenerateK8SCmd())
 	return cmd
 }
