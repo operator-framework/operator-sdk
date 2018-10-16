@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+function cleanup-dir() {
+    rm -rf $1
+}
+
 DEST_IMAGE="quay.io/example/memcached-operator:v0.0.2"
 
 set -evx
@@ -14,6 +18,9 @@ pushd ansible-operator
 docker build -t quay.io/water-hole/ansible-operator .
 popd
 
+# get current directory so we can delete project on exit
+CURR_DIR=$(pwd)
+trap 'cleanup-dir ${CURR_DIR}/memcached-operator' EXIT
 # create and build the operator
 operator-sdk new memcached-operator --api-version=ansible.example.com/v1alpha1 --kind=Memcached --type=ansible
 cp ansible-memcached/tasks.yml memcached-operator/roles/Memcached/tasks/main.yml
