@@ -10,18 +10,6 @@ go:
 
 jobs:
   include:
-    - before_script: hack/ci/setup-minikube.sh
-      env:
-        - CLUSTER=minikube
-        - CHANGE_MINIKUBE_NONE_USER=true
-      script: test/test-go.sh
-      name: Go on minikube
-    - before_script: hack/ci/setup-minikube.sh
-      env:
-        - CLUSTER=minikube
-        - CHANGE_MINIKUBE_NONE_USER=true
-      script: test/test-ansible.sh
-      name: Ansible on minikube
     - before_script: hack/ci/setup-openshift.sh
       env: CLUSTER=openshift
       script: test/test-go.sh
@@ -31,7 +19,7 @@ jobs:
       script: test/test-ansible.sh
       name: Ansible on OpenShift
 
-install: 
+install:
 - curl -Lo dep https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64 && chmod +x dep && sudo mv dep /usr/local/bin/
 - dep ensure
 - make install

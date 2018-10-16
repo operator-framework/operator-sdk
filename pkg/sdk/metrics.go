@@ -15,6 +15,7 @@
 package sdk
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
@@ -22,6 +23,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 // ExposeMetricsPort generate a Kubernetes Service to expose metrics port
@@ -34,7 +37,15 @@ func ExposeMetricsPort() {
 		logrus.Errorf("failed to initialize service object for operator metrics: %v", err)
 		return
 	}
-	err = Create(service)
+	kubeconfig, err := config.GetConfig()
+	if err != nil {
+		panic(err)
+	}
+	runtimeClient, err := client.New(kubeconfig, client.Options{})
+	if err != nil {
+		panic(err)
+	}
+	err = runtimeClient.Create(context.TODO(), service)
 	if err != nil && !errors.IsAlreadyExists(err) {
 		logrus.Errorf("failed to create service for operator metrics: %v", err)
 		return

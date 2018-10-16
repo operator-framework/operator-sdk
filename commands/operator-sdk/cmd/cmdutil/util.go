@@ -15,73 +15,70 @@
 package cmdutil
 
 import (
-	"errors"
-	"fmt"
-	gobuild "go/build"
-	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
-
-	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
-	"github.com/operator-framework/operator-sdk/pkg/generator"
-
-	yaml "gopkg.in/yaml.v2"
 )
 
+// OperatorType - the type of operator
 type OperatorType int
 
 const (
-	configYaml    = "./config/config.yaml"
-	gopkgToml     = "./Gopkg.toml"
-	tmpDockerfile = "./tmp/build/Dockerfile"
+	gopkgToml       = "./Gopkg.toml"
+	buildDockerfile = "./build/Dockerfile"
 )
 const (
+	// OperatorTypeGo - golang type of operator.
 	OperatorTypeGo OperatorType = iota
+	// OperatorTypeAnsible - ansible type of operator.
 	OperatorTypeAnsible
 )
 
-// MustInProjectRoot checks if the current dir is the project root.
+const (
+	GopathEnv = "GOPATH"
+	SrcDir    = "src"
+
+	DefaultDirFileMode  = 0750
+	DefaultFileMode     = 0644
+	DefaultExecFileMode = 0744
+)
+
+// MustInProjectRoot checks if the current dir is the project root and returns the current repo's import path
+// e.g github.com/example-inc/app-operator
 func MustInProjectRoot() {
-	// if the current directory has the "./tmp/build/Dockerfile" file, then it is safe to say
+	// if the current directory has the "./build/dockerfile" file, then it is safe to say
 	// we are at the project root.
-	_, err := os.Stat(tmpDockerfile)
+	_, err := os.Stat(buildDockerfile)
 	if err != nil && os.IsNotExist(err) {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("must in project root dir: %v", err))
+		log.Fatalf("must run command in project root dir: %v", err)
 	}
 }
 
-// GetConfig gets the values from ./config/config.yaml and parses them into a Config struct.
-func GetConfig() *generator.Config {
-	c := &generator.Config{}
-	fp, err := ioutil.ReadFile(configYaml)
-	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to read config file %v: (%v)", configYaml, err))
-	}
-	if err = yaml.Unmarshal(fp, c); err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to unmarshal config file %v: (%v)", configYaml, err))
-	}
-	return c
-}
-
-// GetCurrPkg returns the current directory's import path
-// e.g: "github.com/example-inc/app-operator"
-func GetCurrPkg() string {
-	gopath := os.Getenv("GOPATH")
-	if len(gopath) == 0 {
-		gopath = gobuild.Default.GOPATH
-	}
-	goSrc := filepath.Join(gopath, "src")
-
+func MustGetwd() string {
 	wd, err := os.Getwd()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to get working directory: (%v)", err))
+		log.Fatalf("failed to get working directory: (%v)", err)
 	}
+	return wd
+}
+
+// CheckAndGetCurrPkg checks if this project's repository path is rooted under $GOPATH and returns the current directory's import path
+// e.g: "github.com/example-inc/app-operator"
+func CheckAndGetCurrPkg() string {
+	gopath := os.Getenv(GopathEnv)
+	if len(gopath) == 0 {
+		log.Fatalf("get current pkg failed: GOPATH env not set")
+	}
+	goSrc := filepath.Join(gopath, SrcDir)
+
+	wd := MustGetwd()
 	if !strings.HasPrefix(filepath.Dir(wd), goSrc) {
-		cmdError.ExitWithError(cmdError.ExitError, errors.New("must run from gopath"))
+		log.Fatalf("check current pkg failed: must run from gopath")
 	}
 	currPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
-	return currPkg
+	// strip any "/" prefix from the repo path.
+	return strings.TrimPrefix(currPkg, string(filepath.Separator))
 }
 
 // GetOperatorType returns type of operator is in cwd

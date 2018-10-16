@@ -23,11 +23,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
-	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
-	"github.com/operator-framework/operator-sdk/pkg/generator"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/pkg/test"
 
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
@@ -119,14 +119,12 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 	return errors.New(warningMessages)
 }
 
-func renderTestManifest(image string) {
+func verifyTestManifest(image string) {
 	namespacedBytes, err := ioutil.ReadFile(namespacedManBuild)
 	if err != nil {
 		log.Fatalf("could not read namespaced manifest: %v", err)
 	}
-	if err = generator.RenderTestYaml(cmdutil.GetConfig(), image); err != nil {
-		log.Fatalf("failed to generate deploy/test-pod.yaml: (%v)", err)
-	}
+
 	err = verifyDeploymentImage(namespacedBytes, image)
 	// the error from verifyDeploymentImage is just a warning, not fatal error
 	if err != nil {
@@ -135,26 +133,26 @@ func renderTestManifest(image string) {
 }
 
 const (
-	build      = "./tmp/build/build.sh"
-	configYaml = "./config/config.yaml"
-	mainGo     = "./cmd/%s/main.go"
+	mainGo = "./cmd/manager/main.go"
 )
 
 func buildFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("build command needs exactly 1 argument"))
+		log.Fatalf("build command needs exactly 1 argument")
 	}
 
 	cmdutil.MustInProjectRoot()
 	goBuildEnv := append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
 	wd, err := os.Getwd()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("could not identify current working directory: %v", err))
+		log.Fatalf("could not identify current working directory: %v", err)
 	}
 
 	// Don't need to buld go code if Ansible Operator
 	if mainExists() {
-		buildCmd := exec.Command("go", "build", "-o", filepath.Join(wd, "tmp/_output/bin", filepath.Base(wd)), filepath.Join(cmdutil.GetCurrPkg(), "cmd", filepath.Base(wd)))
+		managerDir := filepath.Join(cmdutil.CheckAndGetCurrPkg(), "cmd/manager")
+		outputBinName := filepath.Join(wd, "build/_output/bin", filepath.Base(wd))
+		buildCmd := exec.Command("go", "build", "-o", outputBinName, managerDir)
 		buildCmd.Env = goBuildEnv
 		o, err := buildCmd.CombinedOutput()
 		if err != nil {
@@ -168,19 +166,19 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	if enableTests {
 		baseImageName += "-intermediate"
 	}
-	dbcmd := exec.Command("docker", "build", ".", "-f", "tmp/build/Dockerfile", "-t", baseImageName)
+	dbcmd := exec.Command("docker", "build", ".", "-f", "build/Dockerfile", "-t", baseImageName)
 	o, err := dbcmd.CombinedOutput()
 	if err != nil {
 		if enableTests {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to build intermediate image for %s image: (%s)", image, string(o)))
+			log.Fatalf("failed to build intermediate image for %s image: %v (%s)", image, err, string(o))
 		} else {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to output build image %s: (%s)", image, string(o)))
+			log.Fatalf("failed to output build image %s: %v (%s)", image, err, string(o))
 		}
 	}
 	fmt.Fprintln(os.Stdout, string(o))
 
 	if enableTests {
-		buildTestCmd := exec.Command("go", "test", "-c", "-o", filepath.Join(wd, "tmp/_output/bin", filepath.Base(wd)+"-test"), testLocationBuild+"/...")
+		buildTestCmd := exec.Command("go", "test", "-c", "-o", filepath.Join(wd, "build/_output/bin", filepath.Base(wd)+"-test"), testLocationBuild+"/...")
 		buildTestCmd.Env = goBuildEnv
 		o, err := buildTestCmd.CombinedOutput()
 		if err != nil {
@@ -188,29 +186,40 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		}
 		fmt.Fprintln(os.Stdout, string(o))
 		// if a user is using an older sdk repo as their library, make sure they have required build files
-		_, err = os.Stat("tmp/build/test-framework/Dockerfile")
-		if err != nil {
-			generator.RenderTestingContainerFiles(filepath.Join(wd, "tmp/build"), filepath.Base(wd))
+		_, err = os.Stat("build/test-framework/Dockerfile")
+		if err != nil && os.IsNotExist(err) {
+
+			absProjectPath := cmdutil.MustGetwd()
+			cfg := &input.Config{
+				Repo:           cmdutil.CheckAndGetCurrPkg(),
+				AbsProjectPath: absProjectPath,
+				ProjectName:    filepath.Base(wd),
+			}
+
+			s := &scaffold.Scaffold{}
+			err = s.Execute(cfg,
+				&scaffold.TestFrameworkDockerfile{},
+				&scaffold.GoTestScript{},
+				&scaffold.TestPod{Image: image, TestNamespaceEnv: test.TestNamespaceEnv},
+			)
+			if err != nil {
+				log.Fatalf("build scaffold failed: (%v)", err)
+			}
 		}
-		testDbcmd := exec.Command("docker", "build", ".", "-f", "tmp/build/test-framework/Dockerfile", "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+baseImageName)
+
+		testDbcmd := exec.Command("docker", "build", ".", "-f", "build/test-framework/Dockerfile", "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+baseImageName)
 		o, err = testDbcmd.CombinedOutput()
 		if err != nil {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to output build image %v: (%v)", image, string(o)))
+			log.Fatalf("failed to output build image %s: %v (%s)", image, err, string(o))
 		}
 		fmt.Fprintln(os.Stdout, string(o))
-		// create test-pod.yaml as well as check image name of deployments in namespaced manifest
-		renderTestManifest(image)
+		// Check image name of deployments in namespaced manifest
+		verifyTestManifest(image)
 	}
 }
 
 func mainExists() bool {
-	dir, err := os.Getwd()
-	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to get current working dir: %v", err))
-	}
-	dirSplit := strings.Split(dir, "/")
-	projectName := dirSplit[len(dirSplit)-1]
-	if _, err = os.Stat(fmt.Sprintf(mainGo, projectName)); err == nil {
+	if _, err := os.Stat(mainGo); err == nil {
 		return true
 	}
 	return false
