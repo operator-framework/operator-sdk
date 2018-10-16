@@ -27,7 +27,7 @@ sed -i "s|REPLACE_IMAGE|$DEST_IMAGE|g" deploy/operator.yaml
 sed -i 's|Always|Never|g' deploy/operator.yaml
 
 # deploy the operator
-kubectl create -f deploy/sa.yaml
+kubectl create -f deploy/service_account.yaml
 kubectl create -f deploy/role.yaml
 kubectl create -f deploy/role_binding.yaml
 kubectl create -f deploy/crds/ansible_v1alpha1_memcached_crd.yaml

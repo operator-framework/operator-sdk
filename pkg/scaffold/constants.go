@@ -48,7 +48,7 @@ const (
 	versionFile            = "version.go"
 	docFile                = "doc.go"
 	registerFile           = "register.go"
-	serviceAccountYamlFile = "sa.yaml"
+	serviceAccountYamlFile = "service_account.yaml"
 	roleYamlFile           = "role.yaml"
 	roleBindingYamlFile    = "role_binding.yaml"
 	operatorYamlFile       = "operator.yaml"

@@ -63,7 +63,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
 		log.Fatalf("operator-sdk test local requires exactly 1 argument")
 	}
-	// if no namespaced manifest path is given, combine deploy/sa.yaml, deploy/role.yaml, deploy/role_binding.yaml and deploy/operator.yaml
+	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml, deploy/role_binding.yaml and deploy/operator.yaml
 	if tlConfig.namespacedManPath == "" {
 		err := os.MkdirAll("deploy/test", os.FileMode(cmdutil.DefaultDirFileMode))
 		if err != nil {
@@ -71,7 +71,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 		}
 		tlConfig.namespacedManPath = "deploy/test/namespace-manifests.yaml"
 
-		sa, err := ioutil.ReadFile("deploy/sa.yaml")
+		sa, err := ioutil.ReadFile("deploy/service_account.yaml")
 		if err != nil {
 			log.Fatalf("could not find sa manifest: %v", err)
 		}

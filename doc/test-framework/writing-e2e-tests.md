@@ -224,7 +224,7 @@ functions will automatically be run since they were deferred when the TestCtx wa
 
 To make running the tests simpler, the `operator-sdk` CLI tool has a `test` subcommand that can configure
 default test settings, such as locations of your global resource manifest file (by default
-`deploy/crd.yaml`) and your namespaced resource manifest file (by default `deploy/sa.yaml` concatenated with
+`deploy/crd.yaml`) and your namespaced resource manifest file (by default `deploy/service_account.yaml` concatenated with
 `deploy/rbac.yaml` and `deploy/operator.yaml`), and allows the user to configure runtime options. There are 2 ways to use the
 subcommand: local and cluster.
 ### Local
@@ -249,8 +249,8 @@ in [MainEntry][main-entry-link] are declared, the tests will run correctly. Runn
 will result in undefined behavior. This is an example `go test` equivalent to the `operator-sdk test local` example above:
 
 ```shell
-# Combine sa, rbac, operator manifest into namespaced manifest
-$ cp deploy/sa.yaml deploy/namespace-init.yaml
+# Combine service_account, rbac, operator manifest into namespaced manifest
+$ cp deploy/service_account.yaml deploy/namespace-init.yaml
 $ echo -e "\n---\n" >> deploy/namespace-init.yaml
 $ cat deploy/rbac.yaml >> deploy/namespace-init.yaml
 $ echo -e "\n---\n" >> deploy/namespace-init.yaml
@@ -279,7 +279,7 @@ and a namespace with proper rbac configured:
 ```shell
 $ kubectl create -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
 $ kubectl create namespace memcached-test
-$ kubectl create -f deploy/sa.yaml -n memcached-test
+$ kubectl create -f deploy/service_account.yaml -n memcached-test
 $ kubectl create -f deploy/role.yaml -n memcached-test
 $ kubectl create -f deploy/role_binding.yaml -n memcached-test
 ```

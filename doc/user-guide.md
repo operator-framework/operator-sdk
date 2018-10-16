@@ -185,7 +185,7 @@ The Deployment manifest is generated at `deploy/operator.yaml`. Be sure to updat
 Setup RBAC and deploy the memcached-operator:
 
 ```sh
-$ kubectl create -f deploy/sa.yaml
+$ kubectl create -f deploy/service_account.yaml
 $ kubectl create -f deploy/role.yaml
 $ kubectl create -f deploy/role_binding.yaml
 $ kubectl create -f deploy/operator.yaml
@@ -313,7 +313,7 @@ $ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
 $ kubectl delete -f deploy/operator.yaml
 $ kubectl delete -f deploy/role_binding.yaml
 $ kubectl delete -f deploy/role.yaml
-$ kubectl delete -f deploy/sa.yaml
+$ kubectl delete -f deploy/service_account.yaml
 ```
 
 ## Advanced Topics

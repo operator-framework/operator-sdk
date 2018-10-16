@@ -207,7 +207,7 @@ $ sed -i 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/op
 Deploy the memcached-operator:
 
 ```sh
-$ kubectl create -f deploy/sa.yaml
+$ kubectl create -f deploy/service_account.yaml
 $ kubectl create -f deploy/role.yaml
 $ kubectl create -f deploy/role_binding.yaml
 $ kubectl create -f deploy/operator.yaml
@@ -327,7 +327,7 @@ $ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
 $ kubectl delete -f deploy/operator.yaml
 $ kubectl delete -f deploy/role_binding.yaml
 $ kubectl delete -f deploy/role.yaml
-$ kubectl delete -f deploy/sa.yaml
+$ kubectl delete -f deploy/service_account.yaml
 $ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
 ```
 

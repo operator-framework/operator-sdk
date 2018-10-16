@@ -320,7 +320,7 @@ func MemcachedCluster(t *testing.T) {
 	}
 
 	// create sa
-	saYAML, err := ioutil.ReadFile("deploy/sa.yaml")
+	saYAML, err := ioutil.ReadFile("deploy/service_account.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -383,7 +383,7 @@ func MemcachedClusterTest(t *testing.T) {
 	defer ctx.Cleanup(t)
 
 	// create sa
-	saYAML, err := ioutil.ReadFile("deploy/sa.yaml")
+	saYAML, err := ioutil.ReadFile("deploy/service_account.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}

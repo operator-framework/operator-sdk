@@ -77,7 +77,7 @@ $ docker push quay.io/example/app-operator
 $ sed -i 's|REPLACE_IMAGE|quay.io/example/app-operator|g' deploy/operator.yaml
 
 # Setup Service Account
-$ kubectl create -f deploy/sa.yaml
+$ kubectl create -f deploy/service_account.yaml
 # Setup RBAC
 $ kubectl create -f deploy/role.yaml
 $ kubectl create -f deploy/role_binding.yaml
@@ -100,7 +100,7 @@ $ kubectl delete -f deploy/app_v1alpha1_appservice_cr.yaml
 $ kubectl delete -f deploy/operator.yaml
 $ kubectl delete -f deploy/role.yaml
 $ kubectl delete -f deploy/role_binding.yaml
-$ kubectl delete -f deploy/sa.yaml
+$ kubectl delete -f deploy/service_account.yaml
 $ kubectl delete -f deploy/crds/app_v1alpha1_appservice_crd.yaml
 ```
 
