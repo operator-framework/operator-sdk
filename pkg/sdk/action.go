@@ -16,6 +16,8 @@ package sdk
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sclient"
 	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
@@ -29,33 +31,10 @@ import (
 // Can also return an api error from the server
 // e.g AlreadyExists https://github.com/kubernetes/apimachinery/blob/master/pkg/api/errors/errors.go#L423
 func Create(object Object) (err error) {
-	_, namespace, err := k8sutil.GetNameAndNamespace(object)
-	if err != nil {
-		return err
-	}
-	gvk := object.GetObjectKind().GroupVersionKind()
-
-	apiVersion, kind := gvk.ToAPIVersionAndKind()
-	resourceClient, _, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
-	if err != nil {
-		return fmt.Errorf("failed to get resource client: %v", err)
-	}
-
-	unstructObj, err := k8sutil.UnstructuredFromRuntimeObject(object)
-	if err != nil {
-		return err
-	}
-	unstructObj, err = resourceClient.Create(unstructObj)
-	if err != nil {
-		return err
-	}
-
-	// Update the arg object with the result
-	err = k8sutil.UnstructuredIntoRuntimeObject(unstructObj, object)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal the retrieved data: %v", err)
-	}
-	return nil
+	return transform(object,
+		func(in *unstructured.Unstructured, resourceClient dynamic.ResourceInterface) (*unstructured.Unstructured, error) {
+			return resourceClient.Create(in)
+		})
 }
 
 // Patch patches provided "object" on the server with given "patch" and updates the arg
@@ -96,6 +75,28 @@ func Patch(object Object, pt types.PatchType, patch []byte) (err error) {
 // Can also return an api error from the server
 // e.g Conflict https://github.com/kubernetes/apimachinery/blob/master/pkg/api/errors/errors.go#L428
 func Update(object Object) (err error) {
+	return transform(object,
+		func(in *unstructured.Unstructured, resourceClient dynamic.ResourceInterface) (*unstructured.Unstructured, error) {
+			return resourceClient.Update(in)
+		})
+}
+
+// UpdateStatus updates only the status subresource of the provided object on the server and updates the arg
+// "object" with the result from the server(UID, resourceVersion, etc).
+// Returns an error if the object’s TypeMeta(Kind, APIVersion) or ObjectMeta(Name, Namespace) is missing or incorrect.
+// Can also return an api error from the server
+// e.g Conflict https://github.com/kubernetes/apimachinery/blob/master/pkg/api/errors/errors.go#L428
+// ref: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#status-subresource
+func UpdateStatus(object Object) (err error) {
+	return transform(object,
+		func(in *unstructured.Unstructured, resourceClient dynamic.ResourceInterface) (*unstructured.Unstructured, error) {
+			return resourceClient.UpdateStatus(in)
+		})
+}
+
+type transformFn func(in *unstructured.Unstructured, resourceClient dynamic.ResourceInterface) (out *unstructured.Unstructured, err error)
+
+func transform(object Object, fn transformFn) error {
 	_, namespace, err := k8sutil.GetNameAndNamespace(object)
 	if err != nil {
 		return err
@@ -112,7 +113,7 @@ func Update(object Object) (err error) {
 	if err != nil {
 		return err
 	}
-	unstructObj, err = resourceClient.Update(unstructObj)
+	unstructObj, err = fn(unstructObj, resourceClient)
 	if err != nil {
 		return err
 	}

@@ -66,6 +66,16 @@ func Update(object sdkTypes.Object) error
 ```
 
 ```Go
+// UpdateStatus updates only the status subresource of the provided object on the server and updates the arg
+// "object" with the result from the server(UID, resourceVersion, etc).
+// Returns an error if the object’s TypeMeta(Kind, APIVersion) or ObjectMeta(Name, Namespace) is missing or incorrect.
+// Can also return an api error from the server
+// e.g Conflict https://github.com/kubernetes/apimachinery/blob/master/pkg/api/errors/errors.go#L428
+// ref: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#status-subresource
+func UpdateStatus(object Object) (err error)
+```
+
+```Go
 // Delete deletes the specified object.
 // Returns an error if the object’s TypeMeta(Kind, APIVersion) or ObjectMeta(Name, Namespace) is missing or incorrect.
 // Can also return an api error from the server
