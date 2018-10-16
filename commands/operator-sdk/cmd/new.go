@@ -181,6 +181,7 @@ func doAnsibleScaffold() {
 			GeneratePlaybook: generatePlaybook,
 		},
 		galaxyInit,
+		&scaffold.ServiceAccount{},
 		&scaffold.Role{},
 		&scaffold.RoleBinding{},
 		&ansible.Operator{},
