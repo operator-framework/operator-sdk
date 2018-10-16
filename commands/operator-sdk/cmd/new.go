@@ -211,7 +211,7 @@ func doAnsibleScaffold() {
 	cmd.Stderr = os.Stderr
 	cmd.Run()
 	// Delete Galxy INIT
-	if err = os.RemoveAll(filepath.Join(galaxyInit.AbsProjectPath, "var")); err != nil {
+	if err = os.RemoveAll(filepath.Join(galaxyInit.AbsProjectPath, os.tempDir())); err != nil {
 		log.Fatalf("failed to remove the galaxy init script")
 	}
 
