@@ -60,6 +60,10 @@ endif
 
 test: dep test/sanity test/unit install test/subcommand test/e2e
 
+test/ci-go: test/sanity test/unit test/subcommand test/e2e/go
+
+test/ci-ansible: test/e2e/ansible
+
 test/sanity:
 	./hack/tests/sanity-check.sh
 
@@ -77,4 +81,4 @@ test/e2e/go:
 test/e2e/ansible:
 	./hack/tests/e2e-ansible.sh
 
-.PHONY: test test/sanity test/unit test/subcommand test/e2e test/e2e/go test/e2e/ansible
+.PHONY: test test/sanity test/unit test/subcommand test/e2e test/e2e/go test/e2e/ansible test/ci-go test/ci-ansible
