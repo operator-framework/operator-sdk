@@ -12,6 +12,7 @@ spec:
       labels:
         name: memcached-operator
     spec:
+      serviceAccountName: memcached-operator
       containers:
         - name: memcached-operator
           # Replace this with the built image name

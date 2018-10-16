@@ -135,6 +135,7 @@ func doScaffold() {
 	err := s.Execute(cfg,
 		&scaffold.Cmd{},
 		&scaffold.Dockerfile{},
+		&scaffold.ServiceAccount{},
 		&scaffold.Role{},
 		&scaffold.RoleBinding{},
 		&scaffold.Operator{},

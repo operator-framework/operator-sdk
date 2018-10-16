@@ -179,7 +179,7 @@ resource definition the operator will be watching.
 Deploy the CRD:
 
 ```sh
-$ kubectl create -f deploy/crd.yaml
+$ kubectl create -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
 ```
 
 Once this is done, there are two ways to run the operator:
@@ -207,7 +207,9 @@ $ sed -i 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/op
 Deploy the memcached-operator:
 
 ```sh
-$ kubectl create -f deploy/rbac.yaml
+$ kubectl create -f deploy/sa.yaml
+$ kubectl create -f deploy/role.yaml
+$ kubectl create -f deploy/role_binding.yaml
 $ kubectl create -f deploy/operator.yaml
 ```
 
@@ -268,7 +270,7 @@ metadata:
 spec:
   size: 3
 
-$ kubectl apply -f deploy/cr.yaml
+$ kubectl apply -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
 ```
 
 Ensure that the memcached-operator creates the deployment for the CR:
@@ -305,7 +307,7 @@ metadata:
 spec:
   size: 4
 
-$ kubectl apply -f deploy/cr.yaml
+$ kubectl apply -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
 ```
 
 Confirm that the operator changes the deployment size:
@@ -321,8 +323,12 @@ example-memcached    4         4         4            4           5m
 Clean up the resources:
 
 ```sh
-$ kubectl delete -f deploy/cr.yaml
+$ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
 $ kubectl delete -f deploy/operator.yaml
+$ kubectl delete -f deploy/role_binding.yaml
+$ kubectl delete -f deploy/role.yaml
+$ kubectl delete -f deploy/sa.yaml
+$ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
 ```
 
 [layout_doc]:./project_layout.md

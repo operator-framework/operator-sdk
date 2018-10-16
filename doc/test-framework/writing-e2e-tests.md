@@ -277,10 +277,11 @@ Once the image is ready, the tests are ready to be run. To run the tests, make s
 and a namespace with proper rbac configured:
 
 ```shell
-$ kubectl create -f deploy/crd.yaml
+$ kubectl create -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
 $ kubectl create namespace memcached-test
 $ kubectl create -f deploy/sa.yaml -n memcached-test
-$ kubectl create -f deploy/rbac.yaml -n memcached-test
+$ kubectl create -f deploy/role.yaml -n memcached-test
+$ kubectl create -f deploy/role_binding.yaml -n memcached-test
 ```
 
 Once you have your environment properly configured, you can start the tests using the `operator-sdk test cluster` command:
@@ -328,7 +329,7 @@ $ kubectl delete namespace main-153428703
 Since the CRD is not namespaced, it must be deleted separately. Clean up the CRD created by the tests using the CRD manifest `deploy/crd.yaml`:
 
 ```shell
-$ kubectl delete -f deploy/crd.yaml
+$ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
 ```
 
 [memcached-sample]:https://github.com/operator-framework/operator-sdk-samples/tree/master/memcached-operator

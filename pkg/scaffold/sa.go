@@ -20,27 +20,20 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type RoleBinding struct {
+type ServiceAccount struct {
 	input.Input
 }
 
-func (s *RoleBinding) GetInput() (input.Input, error) {
+func (s *ServiceAccount) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(deployDir, roleBindingYamlFile)
+		s.Path = filepath.Join(deployDir, serviceAccountYamlFile)
 	}
-	s.TemplateBody = roleBindingTemplate
+	s.TemplateBody = serviceAccountTemplate
 	return s.Input, nil
 }
 
-const roleBindingTemplate = `kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
+const serviceAccountTemplate = `apiVersion: v1
+kind: ServiceAccount
 metadata:
   name: {{.ProjectName}}
-subjects:
-- kind: ServiceAccount
-  name: {{.ProjectName}}
-roleRef:
-  kind: Role
-  name: {{.ProjectName}}
-  apiGroup: rbac.authorization.k8s.io
 `

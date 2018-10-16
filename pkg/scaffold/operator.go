@@ -46,6 +46,7 @@ spec:
       labels:
         name: {{.ProjectName}}
     spec:
+      serviceAccountName: {{.ProjectName}}
       containers:
         - name: {{.ProjectName}}
           # Replace this with the built image name

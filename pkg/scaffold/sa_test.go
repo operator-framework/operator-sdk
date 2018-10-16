@@ -20,50 +20,22 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-func TestOperator(t *testing.T) {
+func TestServiceAccount(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(appConfig, &Operator{})
+	err := s.Execute(appConfig, &ServiceAccount{})
 	if err != nil {
 		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
 
-	if operatorExp != buf.String() {
+	if serviceAccountExp != buf.String() {
 		dmp := diffmatchpatch.New()
-		diffs := diffmatchpatch.New().DiffMain(operatorExp, buf.String(), false)
+		diffs := diffmatchpatch.New().DiffMain(serviceAccountExp, buf.String(), false)
 		t.Fatalf("expected vs actual differs. Red text is missing and green text is extra.\n%v", dmp.DiffPrettyText(diffs))
 	}
 }
 
-const operatorExp = `apiVersion: apps/v1
-kind: Deployment
+const serviceAccountExp = `apiVersion: v1
+kind: ServiceAccount
 metadata:
   name: app-operator
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      name: app-operator
-  template:
-    metadata:
-      labels:
-        name: app-operator
-    spec:
-      serviceAccountName: app-operator
-      containers:
-        - name: app-operator
-          # Replace this with the built image name
-          image: REPLACE_IMAGE
-          ports:
-          - containerPort: 60000
-            name: metrics
-          command:
-          - app-operator
-          imagePullPolicy: Always
-          env:
-            - name: WATCH_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: OPERATOR_NAME
-              value: "app-operator"
 `
