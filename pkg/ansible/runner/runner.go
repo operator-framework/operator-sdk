@@ -173,11 +173,14 @@ func (r *runner) Run(u *unstructured.Unstructured, kubeconfig string) (chan even
 	if err != nil {
 		return nil, err
 	}
+	path := strings.TrimRight(r.Path, "/")
+	rolePath, _ := filepath.Split(path)
 	inputDir := inputdir.InputDir{
 		Path:       filepath.Join("/tmp/ansible-operator/runner/", r.GVK.Group, r.GVK.Version, r.GVK.Kind, u.GetNamespace(), u.GetName()),
 		Parameters: r.makeParameters(u),
 		EnvVars: map[string]string{
 			"K8S_AUTH_KUBECONFIG": kubeconfig,
+			"ANSIBLE_ROLES_PATH":  rolePath,
 		},
 		Settings: map[string]string{
 			"runner_http_url":  receiver.SocketPath,
