@@ -20,6 +20,29 @@ import (
 	"time"
 )
 
+const (
+	// Ansible Events
+
+	// EventPlaybookOnTaskStart - playbook is starting to run a task.
+	EventPlaybookOnTaskStart = "playbook_on_task_start"
+	// EventRunnerOnOk - task finished with ok status.
+	EventRunnerOnOk = "runner_on_ok"
+	// EventRunnerOnFailed - task finished with failed status.
+	EventRunnerOnFailed = "runner_on_failed"
+	// EventPlaybookOnStats - playbook has finished running.
+	EventPlaybookOnStats = "playbook_on_stats"
+
+	// Ansible Task Actions
+
+	// TaskActionSetFact - task action of setting a fact.
+	TaskActionSetFact = "set_fact"
+	// TaskActionDebug - task action of printing a debug message.
+	TaskActionDebug = "debug"
+
+	// defaultFailedMessage - Default failed playbook message
+	defaultFailedMessage = "unknown playbook failure"
+)
+
 // EventTime - time to unmarshal nano time.
 type EventTime struct {
 	time.Time
@@ -73,4 +96,20 @@ type StatsEventData struct {
 	Ok           map[string]int `json:"ok"`
 	Failures     map[string]int `json:"failures"`
 	Skipped      map[string]int `json:"skipped"`
+}
+
+// FailureMessages - failure messages from the event api
+type FailureMessages []string
+
+// GetFailedPlaybookMessage - get the failure message from res.msg
+func (je JobEvent) GetFailedPlaybookMessage() string {
+	message := defaultFailedMessage
+	result, ok := je.EventData["res"].(map[string]interface{})
+	if !ok {
+		return message
+	}
+	if m, ok := result["msg"].(string); ok {
+		message = m
+	}
+	return message
 }
