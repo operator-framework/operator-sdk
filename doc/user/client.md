@@ -2,7 +2,7 @@
 
 ## Overview
 
-The [kubernetes-sigs][org-kubernetes-sigs] organization builds tools to call the [Kubernetes][site-kubernetes] API in a clean, abstracted manner, much like the Operator SDK. The [controller-runtime][repo-controller-runtime] project is meant to help users build [controllers][site-kubernetes-controllers] easily by generating a controller project that interacts with a k8s cluster via CRUD operations. A user-defined controller can perform a specific functions in a cluster; [operators][site-operators] can use multiple controllers to perform a variety of tasks. As operators use at least one controller, the SDK can rely on controller-runtime's k8s API code rather than develop a parallel set of API calls to execute the same cluster operations, namely CRUD operations.
+The [kubernetes-sigs][org-kubernetes-sigs] organization builds tools to call the [Kubernetes][site-kubernetes] API in a clean, abstracted manner, much like the Operator SDK. The [controller-runtime][repo-controller-runtime] project is meant to help users build [controllers][site-kubernetes-controllers] easily by generating a controller project that interacts with a k8s cluster via CRUD operations. User-defined controller can perform specific tasks in a cluster; [operators][site-operators] can use multiple controllers to perform a variety of tasks. As operators use at least one controller, the SDK can rely on controller-runtime's k8s API code rather than develop a parallel set of API calls to execute the same cluster operations, namely CRUD operations.
 
 controller-runtime defines several interfaces used for cluster interaction:
 - `client.Client`: implementers perform CRUD operations on a k8s cluster.
