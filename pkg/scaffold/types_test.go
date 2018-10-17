@@ -17,7 +17,7 @@ package scaffold
 import (
 	"testing"
 
-	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/operator-framework/operator-sdk/pkg/util"
 )
 
 func TestTypes(t *testing.T) {
@@ -32,9 +32,8 @@ func TestTypes(t *testing.T) {
 	}
 
 	if typesExp != buf.String() {
-		dmp := diffmatchpatch.New()
-		diffs := diffmatchpatch.New().DiffMain(typesExp, buf.String(), false)
-		t.Fatalf("expected vs actual differs. Red text is missing and green text is extra.\n%v", dmp.DiffPrettyText(diffs))
+		diffs := util.Diff(typesExp, buf.String())
+		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
 

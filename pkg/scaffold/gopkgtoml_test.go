@@ -17,7 +17,7 @@ package scaffold
 import (
 	"testing"
 
-	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/operator-framework/operator-sdk/pkg/util"
 )
 
 func TestGopkgtoml(t *testing.T) {
@@ -28,9 +28,8 @@ func TestGopkgtoml(t *testing.T) {
 	}
 
 	if gopkgtomlExp != buf.String() {
-		dmp := diffmatchpatch.New()
-		diffs := diffmatchpatch.New().DiffMain(gopkgtomlExp, buf.String(), false)
-		t.Fatalf("expected vs actual differs. Red text is missing and green text is extra.\n%v", dmp.DiffPrettyText(diffs))
+		diffs := util.Diff(gopkgtomlExp, buf.String())
+		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
 

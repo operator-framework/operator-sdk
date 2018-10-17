@@ -17,7 +17,7 @@ package scaffold
 import (
 	"testing"
 
-	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/operator-framework/operator-sdk/pkg/util"
 )
 
 func TestCmd(t *testing.T) {
@@ -27,12 +27,9 @@ func TestCmd(t *testing.T) {
 		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
 
-	tmpl := buf.String()
-
-	if cmdExp != tmpl {
-		dmp := diffmatchpatch.New()
-		diffs := diffmatchpatch.New().DiffMain(cmdExp, tmpl, false)
-		t.Fatalf("expected vs actual differs. Red text is missing and green text is extra.\n%v", dmp.DiffPrettyText(diffs))
+	if cmdExp != buf.String() {
+		diffs := util.Diff(cmdExp, buf.String())
+		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
 

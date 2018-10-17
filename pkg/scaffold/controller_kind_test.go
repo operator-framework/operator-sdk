@@ -17,7 +17,7 @@ package scaffold
 import (
 	"testing"
 
-	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/operator-framework/operator-sdk/pkg/util"
 )
 
 func TestControllerKind(t *testing.T) {
@@ -31,12 +31,9 @@ func TestControllerKind(t *testing.T) {
 		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
 
-	tmplOUt := buf.String()
-
-	if controllerKindExp != tmplOUt {
-		dmp := diffmatchpatch.New()
-		diffs := diffmatchpatch.New().DiffMain(controllerKindExp, tmplOUt, true)
-		t.Fatalf("expected vs actual differs. Red text is missing and green text is extra.\n%v", dmp.DiffPrettyText(diffs))
+	if controllerKindExp != buf.String() {
+		diffs := util.Diff(controllerKindExp, buf.String())
+		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
 
