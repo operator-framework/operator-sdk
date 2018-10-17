@@ -73,7 +73,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 
 		sa, err := ioutil.ReadFile("deploy/service_account.yaml")
 		if err != nil {
-			log.Fatalf("could not find sa manifest: %v", err)
+			log.Fatalf("could not find the manifest deploy/service_account.yaml: %v", err)
 		}
 		role, err := ioutil.ReadFile("deploy/role.yaml")
 		if err != nil {
