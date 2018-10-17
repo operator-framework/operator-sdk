@@ -11,7 +11,9 @@ controller-runtime defines several interfaces used for cluster interaction:
 
 The SDK relies on a `manager.Manager` to create a split `client.Client` interface that performs Create, Update, Delete, Get, and List operations within a `reconcile.Reconciler`'s Reconcile function.
 
-## The default Client
+## Client Usage
+
+### Default Client
 
 The SDK will generate code creating a Manager. Managers hold a Cache and a Client that are used in CRUD operations and interface with the API server. The particular Client the SDK uses by default is referred to as a [split client][doc-split-client], created when instantiating a Manager. A split client reads (Get and List) from the Cache and writes (Create, Update, Delete) to the API server. Reading from the Cache significantly reduces request load on the API server; as long as the Cache is updated by the API server, read operations are eventually consistent. 
 
@@ -49,7 +51,7 @@ func main() {
 }
 ```
 
-## Reconcile and Client API
+### Reconcile and the Client API
 
 A Reconciler implements the [`reconcile.Reconciler`][doc-reconcile-reconciler] interface, which exposes the Reconcile method. Reconcilers are added to a corresponding Controller for a Kind; Reconcile is called in response to cluster or external Events, with a `reconcile.Request` object argument, to read and write cluster state by the Controller, and returns a `reconcile.Result`. SDK Reconcilers have access to a Client in order to make k8s API calls.
 
