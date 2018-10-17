@@ -1,10 +1,6 @@
 # Operator-SDK: Controller Runtime Client API
 
-## Goal
-
-Elaborate on how the Operator SDK uses the [controller-runtime][repo-controller-runtime] controller API to build operators. Specifically, this doc addresses how to interface with a client object and use CRUD operations (Create, Update, Delete, Get, List) to produce the same results as the pre-v0.1.0 SDK would have.
-
-## Background
+## Overview
 
 The [kubernetes-sigs][org-kubernetes-sigs] organization builds tools to call the [Kubernetes][site-kubernetes] API in a clean, abstracted manner, much like the Operator SDK. The [controller-runtime][repo-controller-runtime] project is meant to help users build [controllers][site-kubernetes-controllers] easily by generating a controller project that interacts with a k8s cluster via CRUD operations. A user-defined controller can perform a specific functions in a cluster; [operators][site-operators] can use multiple controllers to perform a variety of tasks. As operators use at least one controller, the SDK can rely on controller-runtime's k8s API code rather than develop a parallel set of API calls to execute the same cluster operations, namely CRUD operations.
 
@@ -13,42 +9,15 @@ controller-runtime defines several interfaces used for cluster interaction:
 - `manager.Manager`: manages shared dependencies, such as Caches and Clients.
 - `reconcile.Reconciler`: compares provided state with actual cluster state and updates the cluster on finding state differences using a Client.
 
-## Proposed Solution
+The SDK relies on a `manager.Manager` to create a split `client.Client` interface that performs Create, Update, Delete, Get, and List operations within a `reconcile.Reconciler`'s Reconcile function.
 
-The SDK will implement controller-runtime's `client.Client` interface to Create, Update, Delete, Get, and List cluster objects within a `reconcile.Reconciler`'s Reconcile function. The particular Client the SDK will use is referred to as a [split client][doc-split-client], created when instantiating a `manager.Manager`. A split client reads (Get and List) from the Cache and writes (Create, Update, Delete) to the API server. Reading from the Cache only significantly reduces request load on the API server; as long as the Cache is updated by the API server, read operations are eventually consistent. 
+## The default Client
 
-## Creating a Manager and default Client
-
-### Manager
-
-The SDK will generate a `cmd/manager/main.go` file with an operator entrypoint that creates a Manager. Managers hold a Cache and a Client that are used in CRUD operations and interface with the API server. A cluster namespace, created on cluster creation, and a [`*rest.Config`][doc-rest-config] object retrieved from the cluster configure the Managers' Cache and Client to point at the clusters' API server.
-
-```Go
-import (
-	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-	
-	...
-)
-
-func main() {
-	// Get the namespace being watched in the k8s cluster.
-	namespace, _ := k8sutil.GetWatchNamespace()
-
-	// Get a config to talk to the apiserver
-	cfg, _ := config.GetConfig()
-
-	// Create a new manager to provide shared dependencies and start components.
-	mgr, _ := manager.New(cfg, manager.Options{Namespace: namespace})
-	
-	...
-}
-```
+The SDK will generate code creating a Manager. Managers hold a Cache and a Client that are used in CRUD operations and interface with the API server. The particular Client the SDK uses by default is referred to as a [split client][doc-split-client], created when instantiating a Manager. A split client reads (Get and List) from the Cache and writes (Create, Update, Delete) to the API server. Reading from the Cache significantly reduces request load on the API server; as long as the Cache is updated by the API server, read operations are eventually consistent. 
 
 ### Non-default Client
 
-An operator developer may wish to create their own Client with different read/write optimzations, for example. controller-runtime provides a [constructor][doc-client-constr] for Clients, requiring a `*rest.Config` object, like that above, and a [`client.Options`][doc-client-options], which can be empty.
+An operator developer may wish to create their own Client with different read/write optimzations, for example. controller-runtime provides a [constructor][doc-client-constr] for Clients:
 
 ```Go
 // New returns a new Client using the provided config and Options.
