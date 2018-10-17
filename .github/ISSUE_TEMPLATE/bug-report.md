@@ -1,5 +1,5 @@
 ---
-me: Bug Report
+name: Bug Report
 about: If things aren't working as expected.
 
 ---

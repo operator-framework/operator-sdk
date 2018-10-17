@@ -1,8 +1,9 @@
 ---
-me: Question 
+name: Support Question
 about: Any support questions you might have.
 
 ---
+
 <!-- 
 Thanks for filing an issue! Before hitting the button, please answer these questions.
 
@@ -41,4 +42,3 @@ A clear and concise description of what you expected to happen (or insert a code
 
 **Additional context**
 Add any other context about the question here.
-
