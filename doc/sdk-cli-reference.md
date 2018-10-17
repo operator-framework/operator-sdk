@@ -199,7 +199,7 @@ Runs the tests locally
 ##### Flags
 * `--kubeconfig` string - location of kubeconfig for kubernetes cluster (default "~/.kube/config")
 * `--global-manifest` string - path to manifest for global resources (default "deploy/crd.yaml)
-* `--namespaced-manifest` string - path to manifest for per-test, namespaced resources (default: combines deploy/sa.yaml, deploy/rbac.yaml, and deploy/operator.yaml)
+* `--namespaced-manifest` string - path to manifest for per-test, namespaced resources (default: combines deploy/service_account.yaml, deploy/rbac.yaml, and deploy/operator.yaml)
 *  `--namespace` string - if non-empty, single namespace to run tests in (e.g. "operator-test") (default: "")
 * `--go-test-flags` string - extra arguments to pass to `go test` (e.g. -f "-v -parallel=2")
 * `-h, --help` - help for local
