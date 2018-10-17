@@ -9,13 +9,26 @@ controller-runtime defines several interfaces used for cluster interaction:
 - `manager.Manager`: manages shared dependencies, such as Caches and Clients.
 - `reconcile.Reconciler`: compares provided state with actual cluster state and updates the cluster on finding state differences using a Client.
 
-The SDK relies on a `manager.Manager` to create a split `client.Client` interface that performs Create, Update, Delete, Get, and List operations within a `reconcile.Reconciler`'s Reconcile function.
-
 ## Client Usage
 
 ### Default Client
 
-The SDK will generate code creating a Manager. Managers hold a Cache and a Client that are used in CRUD operations and interface with the API server. The particular Client the SDK uses by default is referred to as a [split client][doc-split-client], created when instantiating a Manager. A split client reads (Get and List) from the Cache and writes (Create, Update, Delete) to the API server. Reading from the Cache significantly reduces request load on the API server; as long as the Cache is updated by the API server, read operations are eventually consistent. 
+The SDK relies on a `manager.Manager` to create a `client.Client` interface that performs Create, Update, Delete, Get, and List operations within a `reconcile.Reconciler`'s Reconcile function. The SDK will generate code to create a Manager, which holds a Cache and a Client to be used in CRUD operations and communicate with the API server. By default a Controller's Reconciler will be populated with the Manager's Client which is a [split-client][doc-split-client].
+
+`pkg/controller/<kind>/<kind>_controller.go`:
+```Go
+func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+	return &ReconcileKind{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+}
+
+type ReconcileKind struct {
+	// Populated above from a manager.Manager.
+	client client.Client
+	scheme *runtime.Scheme
+}
+```
+
+A split client reads (Get and List) from the Cache and writes (Create, Update, Delete) to the API server. Reading from the Cache significantly reduces request load on the API server; as long as the Cache is updated by the API server, read operations are eventually consistent. 
 
 ### Non-default Client
 
@@ -26,30 +39,7 @@ An operator developer may wish to create their own Client with different read/wr
 func New(config *rest.Config, options client.Options) (client.Client, error)
 ```
 
-The Manager's client field must be set with the new Client:
-
-```Go
-import (
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-	
-	...
-)
-
-func main() {
-	...
-
-	cfg, _ := config.GetConfig()
-	mgr, _ := manager.New(cfg, manager.Options{Namespace: namespace})
-	
-	// Create a new Client with cfg and set the Manager's corresponding field.
-	newClient := client.New(cfg, client.Options{})
-	mgr.SetFields(newClient)
-	
-	...
-}
-```
+Creating a new Client is not usually necessary nor advised, as the default Client is sufficient for most use cases. One reason to create a custom Client is for writing tests, a situation that might require a mock Client. controller-runtime provides a [fake Client][doc-client-fake] package for this purpose.
 
 ### Reconcile and the Client API
 
@@ -256,6 +246,7 @@ func labelsForApp(name string) map[string]string {
 [doc-split-client]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/split.go#L26-L28
 [doc-rest-config]:https://godoc.org/k8s.io/client-go/rest#Config
 [doc-client-constr]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/client.go#L44
+[doc-client-fake]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/fake/client.go
 [doc-client-options]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/client.go#L35
 [doc-reconcile-reconciler]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/reconcile/reconcile.go#L35
 [doc-osdk-handle]:https://github.com/operator-framework/operator-sdk/blob/master/doc/design/milestone-0.0.2/action-api.md#handler
