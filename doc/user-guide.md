@@ -156,7 +156,15 @@ return reconcile.Result{}, err
 return reconcile.Result{Requeue: true}, nil
 ```
 
-**// TODO:** Doc on controller-runtime client and examples on how to use it.
+You can set the `Resulte.RequeueAfter` to requeue the `Request` after a grace period as well:
+```Go
+import "time"
+
+// Reconcile for any reason than error after 5 seconds
+return reconcile.Result{RequeueAfter: time.Duration(5)}, nil
+```
+
+For a guide on Reconcilers, Clients, and interacting with resource Events, see the [Client API doc][doc_client_api].
 
 ## Build and run the operator
 
@@ -363,5 +371,6 @@ func main() {
 [manager_scheme]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/manager/manager.go#L61
 [simple_resource]: https://book.kubebuilder.io/basics/simple_resource.html
 [deployments_register]: https://github.com/kubernetes/api/blob/master/apps/v1/register.go#L41
+[doc_client_api]:./user/client.md
 [runtime_package]: https://godoc.org/k8s.io/apimachinery/pkg/runtime
 [osdk_add_to_scheme]: https://github.com/operator-framework/operator-sdk/blob/4179b6ac459b2b0cb04ab3a1b438c280bd28d1a5/pkg/util/k8sutil/k8sutil.go#L67
