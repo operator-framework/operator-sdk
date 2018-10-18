@@ -19,7 +19,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -33,7 +33,8 @@ import (
 )
 
 const (
-	filemode = int(0664)
+	filemode os.FileMode = 0664
+	dirmode  os.FileMode = 0750
 )
 
 func TestMemcached(t *testing.T) {
@@ -52,7 +53,16 @@ func TestMemcached(t *testing.T) {
 	defer func() {
 		os.Chdir(cd)
 	}()
-	os.Chdir(path.Join(gopath, "/src/github.com/example-inc"))
+
+	// Setup
+	absProjectPath := filepath.Join(gopath, "src/github.com/example-inc")
+	if err := os.MkdirAll(absProjectPath, dirmode); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(absProjectPath); err != nil {
+		t.Fatal(err)
+	}
+
 	t.Log("Creating new operator project")
 	cmdOut, err := exec.Command("operator-sdk",
 		"new",
@@ -60,7 +70,7 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
-	ctx.AddFinalizerFn(func() error { return os.RemoveAll(path.Join(gopath, "/src/github.com/example-inc/memcached-operator")) })
+	ctx.AddFinalizerFn(func() error { return os.RemoveAll(absProjectPath) })
 
 	os.Chdir("memcached-operator")
 	cmdOut, err = exec.Command("operator-sdk",
@@ -80,7 +90,7 @@ func TestMemcached(t *testing.T) {
 		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
-	cmdOut, err = exec.Command("cp", "-a", path.Join(gopath, "/src/github.com/operator-framework/operator-sdk/example/memcached-operator/memcached_controller.go.tmpl"),
+	cmdOut, err = exec.Command("cp", "-a", filepath.Join(gopath, "src/github.com/operator-framework/operator-sdk/example/memcached-operator/memcached_controller.go.tmpl"),
 		"pkg/controller/memcached/memcached_controller.go").CombinedOutput()
 	if err != nil {
 		t.Fatalf("could not copy memcached example to to pkg/controller/memcached/memcached_controller.go: %v\nCommand Output:\n%v", err, string(cmdOut))
@@ -105,7 +115,7 @@ func TestMemcached(t *testing.T) {
 		}
 	}
 	os.Remove("pkg/apis/cache/v1alpha1/memcached_types.go")
-	err = ioutil.WriteFile("pkg/apis/cache/v1alpha1/memcached_types.go", bytes.Join(memcachedTypesFileLines, []byte("\n")), os.FileMode(filemode))
+	err = ioutil.WriteFile("pkg/apis/cache/v1alpha1/memcached_types.go", bytes.Join(memcachedTypesFileLines, []byte("\n")), filemode)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,10 +127,10 @@ func TestMemcached(t *testing.T) {
 	}
 
 	t.Log("Copying test files to ./test")
-	if err = os.MkdirAll("./test", os.FileMode(int(0755))); err != nil {
+	if err = os.MkdirAll("./test", dirmode); err != nil {
 		t.Fatalf("could not create test/e2e dir: %v", err)
 	}
-	cmdOut, err = exec.Command("cp", "-a", path.Join(gopath, "/src/github.com/operator-framework/operator-sdk/test/e2e/incluster-test-code"), "./test/e2e").CombinedOutput()
+	cmdOut, err = exec.Command("cp", "-a", filepath.Join(gopath, "src/github.com/operator-framework/operator-sdk/test/e2e/incluster-test-code"), "./test/e2e").CombinedOutput()
 	if err != nil {
 		t.Fatalf("could not copy tests to test/e2e: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
@@ -151,7 +161,7 @@ func TestMemcached(t *testing.T) {
 			gopkgString := string(gopkg)
 			gopkgLoc := strings.LastIndex(gopkgString, "\n  name = \"github.com/operator-framework/operator-sdk\"\n")
 			gopkgString = gopkgString[:gopkgLoc] + "\n  source = \"https://github.com/" + prSlug + "\"\n  revision = \"" + prSha + "\"\n" + gopkgString[gopkgLoc+1:]
-			err = ioutil.WriteFile("Gopkg.toml", []byte(gopkgString), os.FileMode(filemode))
+			err = ioutil.WriteFile("Gopkg.toml", []byte(gopkgString), filemode)
 			if err != nil {
 				t.Fatalf("failed to write updated Gopkg.toml: %v", err)
 			}
@@ -167,7 +177,7 @@ func TestMemcached(t *testing.T) {
 	// link local sdk to vendor if not in travis
 	if prSlug == "" {
 		os.RemoveAll("vendor/github.com/operator-framework/operator-sdk/pkg")
-		os.Symlink(path.Join(gopath, "/src/github.com/operator-framework/operator-sdk/pkg"),
+		os.Symlink(filepath.Join(gopath, "src/github.com/operator-framework/operator-sdk/pkg"),
 			"vendor/github.com/operator-framework/operator-sdk/pkg")
 	}
 
@@ -194,7 +204,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx framework.Test
 	// create example-memcached yaml file
 	err := ioutil.WriteFile("deploy/cr.yaml",
 		[]byte("apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: 3"),
-		os.FileMode(filemode))
+		filemode)
 	if err != nil {
 		return err
 	}
@@ -297,7 +307,7 @@ func MemcachedCluster(t *testing.T) {
 			t.Fatal(err)
 		}
 		operatorYAML = bytes.Replace(operatorYAML, []byte("imagePullPolicy: Always"), []byte("imagePullPolicy: Never"), 1)
-		err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, os.FileMode(filemode))
+		err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, filemode)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -324,19 +334,16 @@ func MemcachedCluster(t *testing.T) {
 		}
 	}
 
-	// TODO: re-enable sa creation once that's added to the refactor branch
-	/*
-		// create sa
-		saYAML, err := ioutil.ReadFile("deploy/sa.yaml")
-		if err != nil {
-			t.Fatal(err)
-		}
-		err = ctx.CreateFromYAML(saYAML)
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Log("Created sa")
-	*/
+	// create sa
+	saYAML, err := ioutil.ReadFile("deploy/service_account.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = ctx.CreateFromYAML(saYAML)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Created sa")
 
 	// create rbac
 	roleYAML, err := ioutil.ReadFile("deploy/role.yaml")
@@ -390,19 +397,16 @@ func MemcachedClusterTest(t *testing.T) {
 	ctx := f.NewTestCtx(t)
 	defer ctx.Cleanup(t)
 
-	// TODO: re-enable sa creation once that's added to the refactor branch
-	/*
-		// create sa
-		saYAML, err := ioutil.ReadFile("deploy/sa.yaml")
-		if err != nil {
-			t.Fatal(err)
-		}
-		err = ctx.CreateFromYAML(saYAML)
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Log("Created sa")
-	*/
+	// create sa
+	saYAML, err := ioutil.ReadFile("deploy/service_account.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = ctx.CreateFromYAML(saYAML)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Created sa")
 
 	// create rbac
 	roleYAML, err := ioutil.ReadFile("deploy/role.yaml")
@@ -431,9 +435,7 @@ func MemcachedClusterTest(t *testing.T) {
 	cmdOut, err := exec.Command("operator-sdk", "test", "cluster", *f.ImageName,
 		"--namespace", namespace,
 		"--image-pull-policy", "Never",
-	// TODO: re-enable service account
-	//"--service-account", "memcached-operator"
-	).CombinedOutput()
+		"--service-account", "memcached-operator").CombinedOutput()
 	if err != nil {
 		t.Fatalf("in-cluster test failed: %v\nCommand Output:\n%s", err, string(cmdOut))
 	}

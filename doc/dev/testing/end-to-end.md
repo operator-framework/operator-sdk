@@ -47,4 +47,4 @@ testing process, the cleanup functions will not run. To manually clean up a test
 1. Delete the created project in $GOPATH/src/github.com/example-inc/memcached-operator
 2. Delete the namespaces that the tests run in, which also deletes any resources created
 within the namespaces. The namespaces start with `memcached-memcached-group`.
-3. Delete the CRD (`kubectl delete -f deploy/crd.yaml`).
+3. Delete the CRD (`kubectl delete -f deploy/crds/cache_v1alpha1_memcached_crd.yaml`).

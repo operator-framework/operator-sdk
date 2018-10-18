@@ -15,31 +15,25 @@
 package scaffold
 
 import (
-	"testing"
+	"path/filepath"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-func TestRoleBinding(t *testing.T) {
-	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(appConfig, &RoleBinding{})
-	if err != nil {
-		t.Fatalf("failed to execute the scaffold: (%v)", err)
-	}
-
-	if rolebindingExp != buf.String() {
-		diffs := diff(rolebindingExp, buf.String())
-		t.Fatalf("expected vs actual differs.\n%v", diffs)
-	}
+type ServiceAccount struct {
+	input.Input
 }
 
-const rolebindingExp = `kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
+func (s *ServiceAccount) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = filepath.Join(deployDir, serviceAccountYamlFile)
+	}
+	s.TemplateBody = serviceAccountTemplate
+	return s.Input, nil
+}
+
+const serviceAccountTemplate = `apiVersion: v1
+kind: ServiceAccount
 metadata:
-  name: app-operator
-subjects:
-- kind: ServiceAccount
-  name: app-operator
-roleRef:
-  kind: Role
-  name: app-operator
-  apiGroup: rbac.authorization.k8s.io
+  name: {{.ProjectName}}
 `
