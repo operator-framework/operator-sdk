@@ -25,6 +25,7 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
 	ansibleOperator "github.com/operator-framework/operator-sdk/pkg/ansible/operator"
@@ -142,7 +143,7 @@ func upLocalAnsible() {
 	}
 
 	// start the operator
-	go ansibleOperator.Run(done, mgr, "./watches.yaml")
+	go ansibleOperator.Run(done, mgr, "./watches.yaml", time.Minute)
 
 	// wait for either to finish
 	err = <-done
