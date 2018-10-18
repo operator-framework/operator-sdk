@@ -233,8 +233,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 	
 	app := &v1alpha1.App{}
 	ctx := context.TODO()
-	name := request.NamespacedName
-	err := r.client.Get(ctx, name, app)
+	err := r.client.Get(ctx, request.NamespacedName, app)
 
 	...
 }
