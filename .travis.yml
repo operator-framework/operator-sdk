@@ -12,11 +12,11 @@ jobs:
   include:
     - before_script: hack/ci/setup-openshift.sh
       env: CLUSTER=openshift
-      script: test/test-go.sh
+      script: make test/ci-go
       name: Go on OpenShift
     - before_script: hack/ci/setup-openshift.sh
       env: CLUSTER=openshift
-      script: test/test-ansible.sh
+      script: make test/ci-ansible
       name: Ansible on OpenShift
 
 install:

@@ -57,3 +57,28 @@ else
 endif
 
 .PHONY: install release_x86_64 release
+
+test: dep test/sanity test/unit install test/subcommand test/e2e
+
+test/ci-go: test/sanity test/unit test/subcommand test/e2e/go
+
+test/ci-ansible: test/e2e/ansible
+
+test/sanity:
+	./hack/tests/sanity-check.sh
+
+test/unit:
+	./hack/tests/unit.sh
+
+test/subcommand:
+	./hack/tests/test-subcommand.sh
+
+test/e2e: test/e2e/go test/e2e/ansible
+
+test/e2e/go:
+	./hack/tests/e2e-go.sh
+
+test/e2e/ansible:
+	./hack/tests/e2e-ansible.sh
+
+.PHONY: test test/sanity test/unit test/subcommand test/e2e test/e2e/go test/e2e/ansible test/ci-go test/ci-ansible
