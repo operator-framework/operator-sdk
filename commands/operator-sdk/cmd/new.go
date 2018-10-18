@@ -73,12 +73,10 @@ var (
 )
 
 const (
-	gopath              = "GOPATH"
-	src                 = "src"
-	dep                 = "dep"
-	ensureCmd           = "ensure"
-	goOperatorType      = "go"
-	ansibleOperatorType = "ansible"
+	gopath    = "GOPATH"
+	src       = "src"
+	dep       = "dep"
+	ensureCmd = "ensure"
 )
 
 func newFunc(cmd *cobra.Command, args []string) {
@@ -88,11 +86,12 @@ func newFunc(cmd *cobra.Command, args []string) {
 	parse(args)
 	mustBeNewProject()
 	verifyFlags()
+
 	switch operatorType {
-	case goOperatorType:
+	case cmdutil.OperatorTypeGo:
 		doScaffold()
 		pullDep()
-	case ansibleOperatorType:
+	case cmdutil.OperatorTypeAnsible:
 		doAnsibleScaffold()
 	}
 	initGit()
@@ -232,7 +231,7 @@ func doAnsibleScaffold() {
 func repoPath() string {
 	// We only care about GOPATH constraint checks if we are a Go operator
 	wd := cmdutil.MustGetwd()
-	if operatorType == goOperatorType {
+	if operatorType == cmdutil.OperatorTypeGo {
 		gp := os.Getenv(gopath)
 		if len(gp) == 0 {
 			log.Fatal("$GOPATH env not set")
@@ -250,17 +249,17 @@ func repoPath() string {
 }
 
 func verifyFlags() {
-	if operatorType != goOperatorType && operatorType != ansibleOperatorType {
+	if operatorType != cmdutil.OperatorTypeGo && operatorType != cmdutil.OperatorTypeAnsible {
 		log.Fatal("--type can only be `go` or `ansible`")
 	}
-	if operatorType != ansibleOperatorType && generatePlaybook {
+	if operatorType != cmdutil.OperatorTypeAnsible && generatePlaybook {
 		log.Fatal("--generate-playbook can only be used with --type `ansible`")
 	}
-	if operatorType == goOperatorType && (len(apiVersion) != 0 || len(kind) != 0) {
+	if operatorType == cmdutil.OperatorTypeGo && (len(apiVersion) != 0 || len(kind) != 0) {
 		log.Fatal(`go type operator does not use --api-version or --kind. Please see "operator-sdk add" command after running new.`)
 	}
 
-	if operatorType != goOperatorType {
+	if operatorType != cmdutil.OperatorTypeGo {
 		if len(apiVersion) == 0 {
 			log.Fatal("--api-version must not have empty value")
 		}
