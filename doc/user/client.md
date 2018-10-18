@@ -155,7 +155,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 // Delete deletes the given obj from k8s cluster.
 func (c Client) Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOptionFunc) error
 ```
-A `client.DeleteOptionFunc` sets fields of `client.DeleteOptions` to configurate a `Delete` call:
+A `client.DeleteOptionFunc` sets fields of `client.DeleteOptions` to configure a `Delete` call:
 ```Go
 // DeleteOptionFunc is a function that mutates a DeleteOptions struct.
 type DeleteOptionFunc func(*DeleteOptions)
