@@ -42,8 +42,6 @@ This installs the CLI binary `operator-sdk` at `$GOPATH/bin`.
 Use the CLI to create a new Ansible-based memcached-operator project:
 
 ```sh
-$ mkdir -p $GOPATH/src/github.com/example-inc/
-$ cd $GOPATH/src/github.com/example-inc/
 $ operator-sdk new memcached-operator --api-version=cache.example.com/v1alpha1 --kind=Memcached --type=ansible
 $ cd memcached-operator
 ```
