@@ -132,14 +132,17 @@ func upLocalAnsible() {
 	done := make(chan error)
 
 	// start the proxy
-	proxy.RunProxy(done, proxy.Options{
+	err = proxy.Run(done, proxy.Options{
 		Address:    "localhost",
 		Port:       8888,
 		KubeConfig: mgr.GetConfig(),
 	})
+	if err != nil {
+		logrus.Fatalf("error starting proxy: %v", err)
+	}
 
 	// start the operator
-	go ansibleOperator.Run(done, mgr)
+	go ansibleOperator.Run(done, mgr, "./watches.yaml")
 
 	// wait for either to finish
 	err = <-done

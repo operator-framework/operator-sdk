@@ -12,28 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package scaffold
 
 import (
-	"github.com/spf13/cobra"
+	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/version"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-func NewRootCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "operator-sdk",
-		Short:   "An SDK for building operators with ease",
-		Version: version.Version,
-	}
-
-	cmd.AddCommand(NewNewCmd())
-	cmd.AddCommand(NewAddCmd())
-	cmd.AddCommand(NewBuildCmd())
-	cmd.AddCommand(NewGenerateCmd())
-	cmd.AddCommand(NewUpCmd())
-	cmd.AddCommand(NewCompletionCmd())
-	cmd.AddCommand(NewTestCmd())
-
-	return cmd
+type ServiceAccount struct {
+	input.Input
 }
+
+func (s *ServiceAccount) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = filepath.Join(deployDir, serviceAccountYamlFile)
+	}
+	s.TemplateBody = serviceAccountTemplate
+	return s.Input, nil
+}
+
+const serviceAccountTemplate = `apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{.ProjectName}}
+`

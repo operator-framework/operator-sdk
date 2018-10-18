@@ -101,3 +101,4 @@ tags
 
 # Build artifacts
 build/*
+test/ansible-operator/ansible-operator

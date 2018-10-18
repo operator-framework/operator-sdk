@@ -37,10 +37,10 @@ func TestRoleBinding(t *testing.T) {
 const rolebindingExp = `kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: default-account-app-operator
+  name: app-operator
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: app-operator
 roleRef:
   kind: Role
   name: app-operator

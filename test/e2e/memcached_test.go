@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -141,8 +142,12 @@ func TestMemcached(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			// TODO: make this match more complete in case we add another repo tracking master
-			gopkg = bytes.Replace(gopkg, []byte("branch = \"refactor/controller-runtime\""), []byte("# branch = \"refactor/controller-runtime\""), -1)
+			// Match against the '#osdk_branch_annotation' used for version substitution
+			// and comment out the current branch.
+			branchRe := regexp.MustCompile("([ ]+)(.+#osdk_branch_annotation)")
+			gopkg = branchRe.ReplaceAll(gopkg, []byte("$1# $2"))
+			// Plug in the fork to test against so `dep ensure` can resolve dependencies
+			// correctly.
 			gopkgString := string(gopkg)
 			gopkgLoc := strings.LastIndex(gopkgString, "\n  name = \"github.com/operator-framework/operator-sdk\"\n")
 			gopkgString = gopkgString[:gopkgLoc] + "\n  source = \"https://github.com/" + prSlug + "\"\n  revision = \"" + prSha + "\"\n" + gopkgString[gopkgLoc+1:]
@@ -319,19 +324,16 @@ func MemcachedCluster(t *testing.T) {
 		}
 	}
 
-	// TODO: re-enable sa creation once that's added to the refactor branch
-	/*
-		// create sa
-		saYAML, err := ioutil.ReadFile("deploy/sa.yaml")
-		if err != nil {
-			t.Fatal(err)
-		}
-		err = ctx.CreateFromYAML(saYAML)
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Log("Created sa")
-	*/
+	// create sa
+	saYAML, err := ioutil.ReadFile("deploy/service_account.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = ctx.CreateFromYAML(saYAML)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Created sa")
 
 	// create rbac
 	roleYAML, err := ioutil.ReadFile("deploy/role.yaml")
@@ -385,19 +387,16 @@ func MemcachedClusterTest(t *testing.T) {
 	ctx := f.NewTestCtx(t)
 	defer ctx.Cleanup(t)
 
-	// TODO: re-enable sa creation once that's added to the refactor branch
-	/*
-		// create sa
-		saYAML, err := ioutil.ReadFile("deploy/sa.yaml")
-		if err != nil {
-			t.Fatal(err)
-		}
-		err = ctx.CreateFromYAML(saYAML)
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Log("Created sa")
-	*/
+	// create sa
+	saYAML, err := ioutil.ReadFile("deploy/service_account.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = ctx.CreateFromYAML(saYAML)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Created sa")
 
 	// create rbac
 	roleYAML, err := ioutil.ReadFile("deploy/role.yaml")
@@ -426,9 +425,7 @@ func MemcachedClusterTest(t *testing.T) {
 	cmdOut, err := exec.Command("operator-sdk", "test", "cluster", *f.ImageName,
 		"--namespace", namespace,
 		"--image-pull-policy", "Never",
-	// TODO: re-enable service account
-	//"--service-account", "memcached-operator"
-	).CombinedOutput()
+		"--service-account", "memcached-operator").CombinedOutput()
 	if err != nil {
 		t.Fatalf("in-cluster test failed: %v\nCommand Output:\n%s", err, string(cmdOut))
 	}

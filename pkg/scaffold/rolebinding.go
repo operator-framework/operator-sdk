@@ -35,10 +35,10 @@ func (s *RoleBinding) GetInput() (input.Input, error) {
 const roleBindingTemplate = `kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: default-account-{{.ProjectName}}
+  name: {{.ProjectName}}
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: {{.ProjectName}}
 roleRef:
   kind: Role
   name: {{.ProjectName}}

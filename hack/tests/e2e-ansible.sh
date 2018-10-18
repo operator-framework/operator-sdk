@@ -62,6 +62,7 @@ sed -i 's|Always|Never|g' deploy/operator.yaml
 
 DIR2=$(pwd)
 # deploy the operator
+kubectl create -f deploy/service_account.yaml
 kubectl create -f deploy/role.yaml
 trap_add 'kubectl delete -f ${DIR2}/deploy/role.yaml' EXIT
 kubectl create -f deploy/role_binding.yaml

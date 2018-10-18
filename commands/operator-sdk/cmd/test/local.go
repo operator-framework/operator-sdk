@@ -63,7 +63,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
 		log.Fatalf("operator-sdk test local requires exactly 1 argument")
 	}
-	// if no namespaced manifest path is given, combine deploy/sa.yaml, deploy/rbac.yaml and deploy/operator.yaml
+	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml, deploy/role_binding.yaml and deploy/operator.yaml
 	if tlConfig.namespacedManPath == "" {
 		err := os.MkdirAll("deploy/test", os.FileMode(cmdutil.DefaultDirFileMode))
 		if err != nil {
@@ -71,13 +71,10 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 		}
 		tlConfig.namespacedManPath = "deploy/test/namespace-manifests.yaml"
 
-		// TODO: re-enable sa creation once that's added to the refactor branch
-		/*
-			sa, err := ioutil.ReadFile("deploy/sa.yaml")
-			if err != nil {
-				log.Fatalf("could not find sa manifest: %v", err)
-			}
-		*/
+		sa, err := ioutil.ReadFile("deploy/service_account.yaml")
+		if err != nil {
+			log.Fatalf("could not find the manifest deploy/service_account.yaml: %v", err)
+		}
 		role, err := ioutil.ReadFile("deploy/role.yaml")
 		if err != nil {
 			log.Fatalf("could not find role manifest: %v", err)
@@ -90,12 +87,9 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 		if err != nil {
 			log.Fatalf("could not find operator manifest: %v", err)
 		}
-		/*
-			combined := append(sa, []byte("\n---\n")...)
-			combined = append(combined, rbac...)
-			combined = append(combined, []byte("\n---\n")...)
-		*/
-		combined := append(role, []byte("\n---\n")...)
+		combined := append(sa, []byte("\n---\n")...)
+		combined = append(combined, role...)
+		combined = append(combined, []byte("\n---\n")...)
 		combined = append(combined, roleBinding...)
 		combined = append(combined, []byte("\n---\n")...)
 		combined = append(combined, operator...)
