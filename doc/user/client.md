@@ -2,7 +2,7 @@
 
 ## Overview
 
-The [`controller-runtime`][repo-controller-runtime] library provides various abstractions to watch and reconcile resources in a k8s cluster via CRUD (Create, Update, Delete, as well as Get and List in this case) operations. Operators use at least one controller to perform a coherent set of tasks within a cluster, usually through a combination of CRUD operations. The Operator SDK uses controller-runtime's [Client][doc-client-client] interface, which defines a Reader and Writer to perform these operations.
+The [`controller-runtime`][repo-controller-runtime] library provides various abstractions to watch and reconcile resources in a k8s cluster via CRUD (Create, Update, Delete, as well as Get and List in this case) operations. Operators use at least one controller to perform a coherent set of tasks within a cluster, usually through a combination of CRUD operations. The Operator SDK uses controller-runtime's [Client][doc-client-client] interface, which provides the interface for these operations.
 
 controller-runtime defines several interfaces used for cluster interaction:
 - `client.Client`: implementers perform CRUD operations on a k8s cluster.
@@ -98,10 +98,16 @@ func (c Client) Create(ctx context.Context, obj runtime.Object) error
 ```
 
 ```Go
+import (
+	"context"
+	"k8s.io/api/apps/v1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
 func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	...
 	
-	app := &v1alpha1.Deployment{ // Any cluster object you want to create.
+	app := &v1.Deployment{ // Any cluster object you want to create.
 		...
 	}
 	ctx := context.TODO()
@@ -121,6 +127,12 @@ func (c Client) Update(ctx context.Context, obj runtime.Object) error
 ```
 
 ```Go
+import (
+	"context"
+	"k8s.io/api/apps/v1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
 func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	...
 	
@@ -175,6 +187,13 @@ type DeleteOptions struct {
 ```
 
 ```Go
+import (
+	"context"
+	"k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
 func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	...
 	
@@ -185,12 +204,8 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 
 	ctx := context.TODO()
 	if pod.Status.Phase == v1.PodUnknown {
-		df := func(opts *client.DeleteOptions) {
-			s := 5
-			opts.GracePeriodSeconds = &s // Delete the pod after 5 seconds.
-		}
-		err := r.client.Delete(ctx, pod, df)
-
+		// Delete the pod after 5 seconds.
+		err := r.client.Delete(ctx, pod, client.GracePeriodSeconds(5))
 		...
 	}
 
@@ -207,6 +222,12 @@ func (c Client) Get(ctx context.Context, key ObjectKey, obj runtime.Object) erro
 ```
 
 ```Go
+import (
+	"context"
+	"github.com/example-org/app-operator/pkg/apis/cache/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
 func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	...
 	
@@ -250,16 +271,25 @@ type ListOptions struct {
 ```
 
 ```Go
+import (
+	"context"
+	"fmt"
+	"k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
 func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	...
 	
-	// Return all pods with a label of request.NamespacedName
+	// Return all pods in the request namespace with a label of `app=<name>`
 	opts := &client.ListOptions{}
-	opts.SetLabelSelector(request.NamespacedName)
+	opts.SetLabelSelector(fmt.Sprintf("app=%s", request.NamespacedName.Name))
+	opts.InNamespace(request.NamespacedName.Namespace)
 
-	pod := &v1.Pod{}
+	podList := &v1.PodList{}
 	ctx := context.TODO()
-	err := r.client.Get(ctx, opts, pod)
+	err := r.client.List(ctx, opts, podList)
 
 	...
 }
