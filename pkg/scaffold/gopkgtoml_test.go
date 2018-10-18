@@ -16,8 +16,6 @@ package scaffold
 
 import (
 	"testing"
-
-	"github.com/operator-framework/operator-sdk/pkg/util"
 )
 
 func TestGopkgtoml(t *testing.T) {
@@ -28,7 +26,7 @@ func TestGopkgtoml(t *testing.T) {
 	}
 
 	if gopkgtomlExp != buf.String() {
-		diffs := util.Diff(gopkgtomlExp, buf.String())
+		diffs := diff(gopkgtomlExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }

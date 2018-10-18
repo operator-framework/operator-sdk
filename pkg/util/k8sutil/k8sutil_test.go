@@ -35,7 +35,7 @@ func TestGetOperatorName(t *testing.T) {
 	}
 
 	tests := []Scenario{
-		Scenario{
+		{
 			name:        "Simple case",
 			envVarKey:   OperatorNameEnvVar,
 			envVarValue: "myoperator",
@@ -44,7 +44,7 @@ func TestGetOperatorName(t *testing.T) {
 				err:          nil,
 			},
 		},
-		Scenario{
+		{
 			name:        "Unset env var",
 			envVarKey:   "",
 			envVarValue: "",
@@ -53,7 +53,7 @@ func TestGetOperatorName(t *testing.T) {
 				err:          fmt.Errorf("%s must be set", OperatorNameEnvVar),
 			},
 		},
-		Scenario{
+		{
 			name:        "Empty env var",
 			envVarKey:   OperatorNameEnvVar,
 			envVarValue: "",

@@ -16,8 +16,6 @@ package scaffold
 
 import (
 	"testing"
-
-	"github.com/operator-framework/operator-sdk/pkg/util"
 )
 
 func TestRole(t *testing.T) {
@@ -28,7 +26,7 @@ func TestRole(t *testing.T) {
 	}
 
 	if roleExp != buf.String() {
-		diffs := util.Diff(roleExp, buf.String())
+		diffs := diff(roleExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }

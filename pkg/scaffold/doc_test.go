@@ -16,8 +16,6 @@ package scaffold
 
 import (
 	"testing"
-
-	"github.com/operator-framework/operator-sdk/pkg/util"
 )
 
 func TestDoc(t *testing.T) {
@@ -32,7 +30,7 @@ func TestDoc(t *testing.T) {
 	}
 
 	if docExp != buf.String() {
-		diffs := util.Diff(docExp, buf.String())
+		diffs := diff(docExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }

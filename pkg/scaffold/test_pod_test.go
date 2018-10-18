@@ -18,7 +18,6 @@ import (
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/pkg/test"
-	"github.com/operator-framework/operator-sdk/pkg/util"
 )
 
 func TestPodTest(t *testing.T) {
@@ -33,7 +32,7 @@ func TestPodTest(t *testing.T) {
 	}
 
 	if testPodExp != buf.String() {
-		diffs := util.Diff(testPodExp, buf.String())
+		diffs := diff(testPodExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }

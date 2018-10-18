@@ -16,8 +16,6 @@ package scaffold
 
 import (
 	"testing"
-
-	"github.com/operator-framework/operator-sdk/pkg/util"
 )
 
 func TestRoleBinding(t *testing.T) {
@@ -28,7 +26,7 @@ func TestRoleBinding(t *testing.T) {
 	}
 
 	if rolebindingExp != buf.String() {
-		diffs := util.Diff(rolebindingExp, buf.String())
+		diffs := diff(rolebindingExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }

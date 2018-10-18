@@ -16,8 +16,6 @@ package scaffold
 
 import (
 	"testing"
-
-	"github.com/operator-framework/operator-sdk/pkg/util"
 )
 
 func TestGoTestScript(t *testing.T) {
@@ -28,7 +26,7 @@ func TestGoTestScript(t *testing.T) {
 	}
 
 	if goTestScriptExp != buf.String() {
-		diffs := util.Diff(goTestScriptExp, buf.String())
+		diffs := diff(goTestScriptExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
