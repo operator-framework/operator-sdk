@@ -15,7 +15,7 @@ Clients are the focus of this document. A separate document will discuss Manager
 
 ### Default Client
 
-The SDK relies on a `manager.Manager` to create a `client.Client` interface that performs Create, Update, Delete, Get, and List operations within a `reconcile.Reconciler`'s Reconcile function. The SDK will generate code to create a Manager, which holds a Cache and a Client to be used in CRUD operations and communicate with the API server. By default a Controller's Reconciler will be populated with the Manager's Client which is a [split-client][code-split-client].
+The SDK relies on a `manager.Manager` to create a `client.Client` interface that performs Create, Update, Delete, Get, and List operations within a `reconcile.Reconciler`'s Reconcile function. The SDK will generate code to create a Manager, which holds a Cache and a Client to be used in CRUD operations and communicate with the API server. By default a Controller's Reconciler will be populated with the Manager's Client which is a [split-client][doc-split-client].
 
 `pkg/controller/<kind>/<kind>_controller.go`:
 ```Go
@@ -34,7 +34,7 @@ A split client reads (Get and List) from the Cache and writes (Create, Update, D
 
 ### Non-default Client
 
-An operator developer may wish to create their own Client that serves read requests(Get List) from the API server instead of the cache, for example. controller-runtime provides a [constructor][code-client-constr] for Clients:
+An operator developer may wish to create their own Client that serves read requests(Get List) from the API server instead of the cache, for example. controller-runtime provides a [constructor][doc-client-constr] for Clients:
 
 ```Go
 // New returns a new Client using the provided config and Options.
@@ -60,7 +60,7 @@ Creating a new Client is not usually necessary nor advised, as the default Clien
 
 ### Reconcile and the Client API
 
-A Reconciler implements the [`reconcile.Reconciler`][code-reconcile-reconciler] interface, which exposes the Reconcile method. Reconcilers are added to a corresponding Controller for a Kind; Reconcile is called in response to cluster or external Events, with a `reconcile.Request` object argument, to read and write cluster state by the Controller, and returns a `reconcile.Result`. SDK Reconcilers have access to a Client in order to make k8s API calls.
+A Reconciler implements the [`reconcile.Reconciler`][doc-reconcile-reconciler] interface, which exposes the Reconcile method. Reconcilers are added to a corresponding Controller for a Kind; Reconcile is called in response to cluster or external Events, with a `reconcile.Request` object argument, to read and write cluster state by the Controller, and returns a `reconcile.Result`. SDK Reconcilers have access to a Client in order to make k8s API calls.
 
 **Note**: For those familiar with the SDK's old project semantics, [Handle][doc-osdk-handle] received resource events and reconciled state for multiple resource types, whereas Reconcile receives resource events and reconciles state for a single resource type.
 
@@ -403,9 +403,9 @@ func labelsForApp(name string) map[string]string {
 
 [repo-controller-runtime]:https://github.com/kubernetes-sigs/controller-runtime
 [doc-client-client]:https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client#Client
-[code-split-client]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/split.go#L26-L28
-[code-client-constr]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/client.go#L44
+[doc-split-client]:https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client#DelegatingClient
+[doc-client-constr]:https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client#New
 [code-scheme-default]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/client.go#L51
 [doc-k8s-core]:https://godoc.org/k8s.io/api/core/v1
-[code-reconcile-reconciler]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/reconcile/reconcile.go#L35
+[doc-reconcile-reconciler]:https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Reconciler
 [doc-osdk-handle]:https://github.com/operator-framework/operator-sdk/blob/master/doc/design/milestone-0.0.2/action-api.md#handler
