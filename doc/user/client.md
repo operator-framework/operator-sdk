@@ -62,7 +62,7 @@ Creating a new Client is not usually necessary nor advised, as the default Clien
 
 A Reconciler implements the [`reconcile.Reconciler`][code-reconcile-reconciler] interface, which exposes the Reconcile method. Reconcilers are added to a corresponding Controller for a Kind; Reconcile is called in response to cluster or external Events, with a `reconcile.Request` object argument, to read and write cluster state by the Controller, and returns a `reconcile.Result`. SDK Reconcilers have access to a Client in order to make k8s API calls.
 
-**Note**: For those familiar with the SDK's old project structure, Reconcile replaces [Handle][doc-osdk-handle].
+**Note**: For those familiar with the SDK's old project semantics, [Handle][doc-osdk-handle] received resource events and reconciled state for multiple resource types, whereas Reconcile receives resource events and reconciles state for a single resource type.
 
 ```Go
 // ReconcileMemcached reconciles a Kind object
