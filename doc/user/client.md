@@ -41,6 +41,21 @@ An operator developer may wish to create their own Client that serves read reque
 func New(config *rest.Config, options client.Options) (client.Client, error)
 ```
 
+`client.Options` allow the caller to specify how the new Client should communicate with the API server.
+
+```Go
+// Options are creation options for a Client
+type Options struct {
+	// Scheme, if provided, will be used to map go structs to GroupVersionKinds
+	Scheme *runtime.Scheme
+
+	// Mapper, if provided, will be used to map GroupVersionKinds to Resources
+	Mapper meta.RESTMapper
+}
+```
+
+**Note**: defaults are set by `client.New` when Options are empty. The default [scheme][code-scheme-default] will have the [core][doc-k8s-core] k8s resource types registered. The caller *must* set a scheme that has custom operator types registered for the new Client to recognize these types.
+
 Creating a new Client is not usually necessary nor advised, as the default Client is sufficient for most use cases.
 
 ### Reconcile and the Client API
@@ -390,5 +405,7 @@ func labelsForApp(name string) map[string]string {
 [doc-client-client]:https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client#Client
 [code-split-client]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/split.go#L26-L28
 [code-client-constr]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/client.go#L44
+[code-scheme-default]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/client.go#L51
+[doc-k8s-core]:https://godoc.org/k8s.io/api/core/v1
 [code-reconcile-reconciler]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/reconcile/reconcile.go#L35
 [doc-osdk-handle]:https://github.com/operator-framework/operator-sdk/blob/master/doc/design/milestone-0.0.2/action-api.md#handler
