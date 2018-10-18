@@ -96,7 +96,7 @@ Reconcile is where Controller business logic lives, i.e. where Client API calls 
 // Returns an error 
 func (c Client) Create(ctx context.Context, obj runtime.Object) error
 ```
-
+Example:
 ```Go
 import (
 	"context"
@@ -125,7 +125,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 // by the API server.
 func (c Client) Update(ctx context.Context, obj runtime.Object) error
 ```
-
+Example:
 ```Go
 import (
 	"context"
@@ -155,7 +155,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 // Delete deletes the given obj from k8s cluster.
 func (c Client) Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOptionFunc) error
 ```
-
+A `client.DeleteOptionFunc` sets fields of `client.DeleteOptions` to configurate a `Delete` call:
 ```Go
 // DeleteOptionFunc is a function that mutates a DeleteOptions struct.
 type DeleteOptionFunc func(*DeleteOptions)
@@ -185,7 +185,7 @@ type DeleteOptions struct {
     Raw *metav1.DeleteOptions
 }
 ```
-
+Example:
 ```Go
 import (
 	"context"
@@ -220,7 +220,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 // and stores it in obj.
 func (c Client) Get(ctx context.Context, key ObjectKey, obj runtime.Object) error
 ```
-
+Example:
 ```Go
 import (
 	"context"
@@ -246,7 +246,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 // and stores the list in obj.
 func (c Client) List(ctx context.Context, opts *ListOptions, obj runtime.Object) error
 ```
-
+A `client.ListOptions` sets filters and options for a `List` call:
 ```Go
 type ListOptions struct {
     // LabelSelector filters results by label.  Use SetLabelSelector to
@@ -268,7 +268,7 @@ type ListOptions struct {
     Raw *metav1.ListOptions
 }
 ```
-
+Example:
 ```Go
 import (
 	"context"
