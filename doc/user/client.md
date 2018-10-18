@@ -220,6 +220,8 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 // and stores it in obj.
 func (c Client) Get(ctx context.Context, key ObjectKey, obj runtime.Object) error
 ```
+**Note**: An `ObjectKey` is simply a `client` package alias for [`types.NamespacedName`][doc-types-nsname].
+
 Example:
 ```Go
 import (
@@ -438,3 +440,4 @@ func labelsForApp(name string) map[string]string {
 [doc-k8s-core]:https://godoc.org/k8s.io/api/core/v1
 [doc-reconcile-reconciler]:https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Reconciler
 [doc-osdk-handle]:https://github.com/operator-framework/operator-sdk/blob/master/doc/design/milestone-0.0.2/action-api.md#handler
+[doc-types-nsname]:https://godoc.org/k8s.io/apimachinery/pkg/types#NamespacedName
