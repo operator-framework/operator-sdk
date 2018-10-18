@@ -2,18 +2,20 @@
 
 ## Overview
 
-The [kubernetes-sigs][org-kubernetes-sigs] organization builds tools to call the [Kubernetes][site-kubernetes] API in a clean, abstracted manner, much like the Operator SDK. The [controller-runtime][repo-controller-runtime] project is meant to help users build [controllers][site-kubernetes-controllers] easily by generating a controller project that interacts with a k8s cluster via CRUD operations. User-defined controller can perform specific tasks in a cluster; [operators][site-operators] can use multiple controllers to perform a variety of tasks. As operators use at least one controller, the SDK can rely on controller-runtime's k8s API code rather than develop a parallel set of API calls to execute the same cluster operations, namely CRUD operations.
+The [`controller-runtime`][repo-controller-runtime] library provides various abstractions to watch and reconcile resources in a k8s cluster via CRUD (Create, Update, Delete, as well as Get and List in this case) operations. Operators use at least one controller to perform a coherent set of tasks within a cluster, usually through a combination of CRUD operations. The Operator SDK uses controller-runtime's [Client][doc-client-client] interface, which defines a Reader and Writer to perform these operations.
 
 controller-runtime defines several interfaces used for cluster interaction:
 - `client.Client`: implementers perform CRUD operations on a k8s cluster.
 - `manager.Manager`: manages shared dependencies, such as Caches and Clients.
 - `reconcile.Reconciler`: compares provided state with actual cluster state and updates the cluster on finding state differences using a Client.
 
+Clients are the focus of this document. A separate document will discuss Managers.
+
 ## Client Usage
 
 ### Default Client
 
-The SDK relies on a `manager.Manager` to create a `client.Client` interface that performs Create, Update, Delete, Get, and List operations within a `reconcile.Reconciler`'s Reconcile function. The SDK will generate code to create a Manager, which holds a Cache and a Client to be used in CRUD operations and communicate with the API server. By default a Controller's Reconciler will be populated with the Manager's Client which is a [split-client][doc-split-client].
+The SDK relies on a `manager.Manager` to create a `client.Client` interface that performs Create, Update, Delete, Get, and List operations within a `reconcile.Reconciler`'s Reconcile function. The SDK will generate code to create a Manager, which holds a Cache and a Client to be used in CRUD operations and communicate with the API server. By default a Controller's Reconciler will be populated with the Manager's Client which is a [split-client][code-split-client].
 
 `pkg/controller/<kind>/<kind>_controller.go`:
 ```Go
@@ -32,18 +34,18 @@ A split client reads (Get and List) from the Cache and writes (Create, Update, D
 
 ### Non-default Client
 
-An operator developer may wish to create their own Client with different read/write optimzations, for example. controller-runtime provides a [constructor][doc-client-constr] for Clients:
+An operator developer may wish to create their own Client that serves read requests(Get List) from the API server instead of the cache, for example. controller-runtime provides a [constructor][code-client-constr] for Clients:
 
 ```Go
 // New returns a new Client using the provided config and Options.
 func New(config *rest.Config, options client.Options) (client.Client, error)
 ```
 
-Creating a new Client is not usually necessary nor advised, as the default Client is sufficient for most use cases. One reason to create a custom Client is for writing tests, a situation that might require a mock Client. controller-runtime provides a [fake Client][doc-client-fake] package for this purpose.
+Creating a new Client is not usually necessary nor advised, as the default Client is sufficient for most use cases.
 
 ### Reconcile and the Client API
 
-A Reconciler implements the [`reconcile.Reconciler`][doc-reconcile-reconciler] interface, which exposes the Reconcile method. Reconcilers are added to a corresponding Controller for a Kind; Reconcile is called in response to cluster or external Events, with a `reconcile.Request` object argument, to read and write cluster state by the Controller, and returns a `reconcile.Result`. SDK Reconcilers have access to a Client in order to make k8s API calls.
+A Reconciler implements the [`reconcile.Reconciler`][code-reconcile-reconciler] interface, which exposes the Reconcile method. Reconcilers are added to a corresponding Controller for a Kind; Reconcile is called in response to cluster or external Events, with a `reconcile.Request` object argument, to read and write cluster state by the Controller, and returns a `reconcile.Result`. SDK Reconcilers have access to a Client in order to make k8s API calls.
 
 **Note**: For those familiar with the SDK's old project structure, Reconcile replaces [Handle][doc-osdk-handle].
 
@@ -72,34 +74,180 @@ func (r *ReconcileKind) Reconcile(request reconcile.Request) (reconcile.Result, 
 
 Reconcile is where Controller business logic lives, i.e. where Client API calls are made via `ReconcileKind.client`. A `client.Client` implementer performs the following operations:
 
+#### Create
+
 ```Go
 // Create saves the object obj in the k8s cluster.
 // Returns an error 
-func (c *ClientImpl) Create(ctx context.Context, obj runtime.Object) error
+func (c Client) Create(ctx context.Context, obj runtime.Object) error
 ```
+
+```Go
+func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	...
+	
+	app := &v1alpha1.Deployment{ // Any cluster object you want to create.
+		...
+	}
+	ctx := context.TODO()
+	err := r.client.Create(ctx, app)
+
+	...
+}
+```
+
+#### Update
 
 ```Go
 // Update updates the given obj in the k8s cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned
 // by the API server.
-func (c *ClientImpl) Update(ctx context.Context, obj runtime.Object) error
+func (c Client) Update(ctx context.Context, obj runtime.Object) error
 ```
 
 ```Go
-// Delete deletes the given obj from k8s cluster.
-func (c *ClientImpl) Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOptionFunc) error
+func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	...
+	
+	dep := &v1.Deployment{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, dep)
+
+	...
+
+	ctx := context.TODO()
+	dep.Spec.Selector.MatchLabels["is_running"] = "true"
+	err := r.client.Update(ctx, dep)
+
+	...
+}
 ```
+
+#### Delete
+
+```Go
+// Delete deletes the given obj from k8s cluster.
+func (c Client) Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOptionFunc) error
+```
+
+```Go
+// DeleteOptionFunc is a function that mutates a DeleteOptions struct.
+type DeleteOptionFunc func(*DeleteOptions)
+
+type DeleteOptions struct {
+    // GracePeriodSeconds is the duration in seconds before the object should be
+    // deleted. Value must be non-negative integer. The value zero indicates
+    // delete immediately. If this value is nil, the default grace period for the
+    // specified type will be used.
+    GracePeriodSeconds *int64
+
+    // Preconditions must be fulfilled before a deletion is carried out. If not
+    // possible, a 409 Conflict status will be returned.
+    Preconditions *metav1.Preconditions
+
+    // PropagationPolicy determined whether and how garbage collection will be
+    // performed. Either this field or OrphanDependents may be set, but not both.
+    // The default policy is decided by the existing finalizer set in the
+    // metadata.finalizers and the resource-specific default policy.
+    // Acceptable values are: 'Orphan' - orphan the dependents; 'Background' -
+    // allow the garbage collector to delete the dependents in the background;
+    // 'Foreground' - a cascading policy that deletes all dependents in the
+    // foreground.
+    PropagationPolicy *metav1.DeletionPropagation
+
+    // Raw represents raw DeleteOptions, as passed to the API server.
+    Raw *metav1.DeleteOptions
+}
+```
+
+```Go
+func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	...
+	
+	pod := &v1.Pod{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, pod)
+
+	...
+
+	ctx := context.TODO()
+	if pod.Status.Phase == v1.PodUnknown {
+		df := func(opts *client.DeleteOptions) {
+			s := 5
+			opts.GracePeriodSeconds = &s // Delete the pod after 5 seconds.
+		}
+		err := r.client.Delete(ctx, pod, df)
+
+		...
+	}
+
+	...
+}
+```
+
+#### Get
 
 ```Go
 // Get retrieves an API object for a given object key from the k8s cluster
 // and stores it in obj.
-func (c *ClientImpl) Get(ctx context.Context, key ObjectKey, obj runtime.Object) error
+func (c Client) Get(ctx context.Context, key ObjectKey, obj runtime.Object) error
 ```
+
+```Go
+func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	...
+	
+	app := &v1alpha1.App{}
+	ctx := context.TODO()
+	name := request.NamespacedName
+	err := r.client.Get(ctx, name, app)
+
+	...
+}
+```
+
+#### List
 
 ```Go
 // List retrieves a list of objects for a given namespace and list options
 // and stores the list in obj.
-func (c *ClientImpl) List(ctx context.Context, opts *ListOptions, obj runtime.Object) error
+func (c Client) List(ctx context.Context, opts *ListOptions, obj runtime.Object) error
+```
+
+```Go
+type ListOptions struct {
+    // LabelSelector filters results by label.  Use SetLabelSelector to
+    // set from raw string form.
+    LabelSelector labels.Selector
+
+    // FieldSelector filters results by a particular field.  In order
+    // to use this with cache-based implementations, restrict usage to
+    // a single field-value pair that's been added to the indexers.
+    FieldSelector fields.Selector
+
+    // Namespace represents the namespace to list for, or empty for
+    // non-namespaced objects, or to list across all namespaces.
+    Namespace string
+
+    // Raw represents raw ListOptions, as passed to the API server.  Note
+    // that these may not be respected by all implementations of interface,
+    // and the LabelSelector and FieldSelector fields are ignored.
+    Raw *metav1.ListOptions
+}
+```
+
+```Go
+func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	...
+	
+	// Return all pods with a label of request.NamespacedName
+	opts := &client.ListOptions{}
+	opts.SetLabelSelector(request.NamespacedName)
+
+	pod := &v1.Pod{}
+	ctx := context.TODO()
+	err := r.client.Get(ctx, opts, pod)
+
+	...
+}
 ```
 
 ### Example usage
@@ -239,14 +387,8 @@ func labelsForApp(name string) map[string]string {
 ```
 
 [repo-controller-runtime]:https://github.com/kubernetes-sigs/controller-runtime
-[org-kubernetes-sigs]:https://github.com/kubernetes-sigs
-[site-kubernetes]:https://kubernetes.io/
-[site-kubernetes-controllers]:https://kubernetes.io/docs/concepts/workloads/controllers/
-[site-operators]:https://coreos.com/blog/introducing-operator-framework
-[doc-split-client]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/split.go#L26-L28
-[doc-rest-config]:https://godoc.org/k8s.io/client-go/rest#Config
-[doc-client-constr]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/client.go#L44
-[doc-client-fake]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/fake/client.go
-[doc-client-options]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/client.go#L35
-[doc-reconcile-reconciler]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/reconcile/reconcile.go#L35
+[doc-client-client]:https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client#Client
+[code-split-client]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/split.go#L26-L28
+[code-client-constr]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/client.go#L44
+[code-reconcile-reconciler]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/reconcile/reconcile.go#L35
 [doc-osdk-handle]:https://github.com/operator-framework/operator-sdk/blob/master/doc/design/milestone-0.0.2/action-api.md#handler
