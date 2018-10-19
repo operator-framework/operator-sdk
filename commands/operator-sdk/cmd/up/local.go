@@ -29,8 +29,11 @@ import (
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
 	ansibleOperator "github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	ansibleScaffold "github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -96,7 +99,7 @@ func mustKubeConfig() {
 }
 
 func upLocal() {
-	args := []string{"run", filepath.Join("cmd", "manager", "main.go")}
+	args := []string{"run", filepath.Join(scaffold.ManagerDir, scaffold.CmdFile)}
 	if operatorFlags != "" {
 		extraArgs := strings.Split(operatorFlags, " ")
 		args = append(args, extraArgs...)
@@ -142,7 +145,7 @@ func upLocalAnsible() {
 	}
 
 	// start the operator
-	go ansibleOperator.Run(done, mgr, "./watches.yaml")
+	go ansibleOperator.Run(done, mgr, "./"+ansibleScaffold.WatchesYamlFile)
 
 	// wait for either to finish
 	err = <-done

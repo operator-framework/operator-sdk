@@ -30,6 +30,7 @@ const (
 	ControllerDir = PkgDir + filePathSep + "controller"
 	BuildDir      = "build"
 	BuildTestDir  = BuildDir + filePathSep + "test-framework"
+	BuildBinDir   = BuildDir + filePathSep + "_output" + filePathSep + "bin"
 	DeployDir     = "deploy"
 	OlmCatalogDir = DeployDir + filePathSep + "olm-catalog"
 	CrdsDir       = DeployDir + filePathSep + "crds"

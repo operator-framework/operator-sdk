@@ -28,11 +28,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	goDir        = "GOPATH"
-	deployCrdDir = "deploy"
-)
-
 // NewAddCrdCmd - add crd command
 func NewAddCrdCmd() *cobra.Command {
 	crdCmd := &cobra.Command{
@@ -111,8 +106,8 @@ func verifyCrdDeployPath() {
 		log.Fatalf("failed to determine the full path of the current directory: %v", err)
 	}
 	// check if the deploy sub-directory exist
-	_, err = os.Stat(filepath.Join(wd, deployCrdDir))
+	_, err = os.Stat(filepath.Join(wd, scaffold.DeployDir))
 	if err != nil {
-		log.Fatalf("the path (./%v) does not exist. run this command in your project directory", deployCrdDir)
+		log.Fatalf("the path (./%v) does not exist. run this command in your project directory", scaffold.DeployDir)
 	}
 }
