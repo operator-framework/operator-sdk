@@ -161,7 +161,7 @@ You can set the `Result.RequeueAfter` to requeue the `Request` after a grace per
 import "time"
 
 // Reconcile for any reason than error after 5 seconds
-return reconcile.Result{RequeueAfter: time.Duration(5)}, nil
+return reconcile.Result{RequeueAfter: time.Second*5}, nil
 ```
 
 For a guide on Reconcilers, Clients, and interacting with resource Events, see the [Client API doc][doc_client_api].
