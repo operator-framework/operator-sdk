@@ -19,9 +19,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-const (
-	watchesFile = "watches.yaml"
-)
+const WatchesYamlFile = "watches.yaml"
 
 // WatchesYAML - watches yaml input wrapper
 type WatchesYAML struct {
@@ -34,7 +32,7 @@ type WatchesYAML struct {
 // GetInput - gets the input
 func (s *WatchesYAML) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = watchesFile
+		s.Path = WatchesYamlFile
 	}
 	s.TemplateBody = watchesYAMLTmpl
 	return s.Input, nil
