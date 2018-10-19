@@ -75,8 +75,6 @@ func K8sCodegen() {
 	fmt.Fprintln(os.Stdout, string(out))
 }
 
-const goExt = ".go"
-
 // getGroupVersions parses the layout of pkg/apis to return the API groups and versions
 // in the format "groupA:v1,v2 groupB:v1 groupC:v2",
 // as required by the generate-groups.sh script
