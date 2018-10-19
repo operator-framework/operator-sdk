@@ -18,8 +18,6 @@ import (
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/pkg/test"
-
-	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestPodTest(t *testing.T) {
@@ -34,9 +32,8 @@ func TestPodTest(t *testing.T) {
 	}
 
 	if testPodExp != buf.String() {
-		dmp := diffmatchpatch.New()
-		diffs := diffmatchpatch.New().DiffMain(testPodExp, buf.String(), false)
-		t.Fatalf("expected vs actual differs. Red text is missing and green text is extra.\n%v", dmp.DiffPrettyText(diffs))
+		diffs := diff(testPodExp, buf.String())
+		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
 

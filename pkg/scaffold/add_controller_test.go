@@ -16,8 +16,6 @@ package scaffold
 
 import (
 	"testing"
-
-	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestAddController(t *testing.T) {
@@ -32,9 +30,8 @@ func TestAddController(t *testing.T) {
 	}
 
 	if addControllerExp != buf.String() {
-		dmp := diffmatchpatch.New()
-		diffs := diffmatchpatch.New().DiffMain(addControllerExp, buf.String(), false)
-		t.Fatalf("expected vs actual differs. Red text is missing and green text is extra.\n%v", dmp.DiffPrettyText(diffs))
+		diffs := diff(addControllerExp, buf.String())
+		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
 

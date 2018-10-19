@@ -16,8 +16,6 @@ package scaffold
 
 import (
 	"testing"
-
-	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestApis(t *testing.T) {
@@ -28,9 +26,8 @@ func TestApis(t *testing.T) {
 	}
 
 	if apisExp != buf.String() {
-		dmp := diffmatchpatch.New()
-		diffs := diffmatchpatch.New().DiffMain(apisExp, buf.String(), false)
-		t.Fatalf("expected vs actual differs. Red text is missing and green text is extra.\n%v", dmp.DiffPrettyText(diffs))
+		diffs := diff(apisExp, buf.String())
+		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
 

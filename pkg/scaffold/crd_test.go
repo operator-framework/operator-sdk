@@ -16,8 +16,6 @@ package scaffold
 
 import (
 	"testing"
-
-	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestCRD(t *testing.T) {
@@ -32,9 +30,8 @@ func TestCRD(t *testing.T) {
 	}
 
 	if crdExp != buf.String() {
-		dmp := diffmatchpatch.New()
-		diffs := diffmatchpatch.New().DiffMain(crdExp, buf.String(), false)
-		t.Fatalf("expected vs actual differs. Red text is missing and green text is extra.\n%v", dmp.DiffPrettyText(diffs))
+		diffs := diff(crdExp, buf.String())
+		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
 
