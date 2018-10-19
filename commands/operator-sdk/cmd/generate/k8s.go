@@ -22,7 +22,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
 	"github.com/spf13/cobra"
@@ -48,8 +48,8 @@ func k8sFunc(cmd *cobra.Command, args []string) {
 
 // K8sCodegen performs deepcopy code-generation for all custom resources under pkg/apis
 func K8sCodegen() {
-	cmdutil.MustInProjectRoot()
-	repoPkg := cmdutil.CheckAndGetCurrPkg()
+	projutil.MustInProjectRoot()
+	repoPkg := projutil.CheckAndGetCurrPkg()
 	outputPkg := filepath.Join(repoPkg, "pkg/generated")
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	groupVersions, err := parseGroupVersions()

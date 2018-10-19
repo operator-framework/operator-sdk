@@ -24,7 +24,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/pkg/test"
@@ -137,7 +137,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		log.Fatalf("build command needs exactly 1 argument")
 	}
 
-	cmdutil.MustInProjectRoot()
+	projutil.MustInProjectRoot()
 	goBuildEnv := append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
 	wd, err := os.Getwd()
 	if err != nil {
@@ -187,9 +187,9 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		_, err = os.Stat(testDockerfile)
 		if err != nil && os.IsNotExist(err) {
 
-			absProjectPath := cmdutil.MustGetwd()
+			absProjectPath := projutil.MustGetwd()
 			cfg := &input.Config{
-				Repo:           cmdutil.CheckAndGetCurrPkg(),
+				Repo:           projutil.CheckAndGetCurrPkg(),
 				AbsProjectPath: absProjectPath,
 				ProjectName:    filepath.Base(wd),
 			}

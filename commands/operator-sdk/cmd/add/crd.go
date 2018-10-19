@@ -21,7 +21,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
@@ -52,7 +52,7 @@ Generated CR  filename: <project-name>/deploy/crds/<group>_<version>_<kind>_cr.y
 
 func crdFunc(cmd *cobra.Command, args []string) {
 	cfg := &input.Config{
-		AbsProjectPath: cmdutil.MustGetwd(),
+		AbsProjectPath: projutil.MustGetwd(),
 	}
 	if len(args) != 0 {
 		log.Fatal("crd command doesn't accept any arguments")

@@ -26,8 +26,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
-	"github.com/operator-framework/operator-sdk/pkg/util"
 	"golang.org/x/tools/imports"
 )
 
@@ -74,7 +74,7 @@ func (s *Scaffold) configure(cfg *input.Config) {
 // Execute executes scaffolding the Files
 func (s *Scaffold) Execute(cfg *input.Config, files ...input.File) error {
 	if s.GetWriter == nil {
-		s.GetWriter = (&util.FileWriter{}).WriteCloser
+		s.GetWriter = (&fileutil.FileWriter{}).WriteCloser
 	}
 
 	// Configure s using common fields from cfg.
@@ -128,9 +128,9 @@ func (s *Scaffold) doTemplate(i input.Input, e input.File, absPath string) error
 		return err
 	}
 
-	var mode os.FileMode = util.DefaultFileMode
+	var mode os.FileMode = fileutil.DefaultFileMode
 	if i.IsExec {
-		mode = util.DefaultExecFileMode
+		mode = fileutil.DefaultExecFileMode
 	}
 	f, err := s.GetWriter(absPath, mode)
 	if err != nil {

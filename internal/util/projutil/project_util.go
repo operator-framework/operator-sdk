@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmdutil
+package projutil
 
 import (
 	"encoding/json"
@@ -32,8 +32,13 @@ import (
 )
 
 const (
+	SrcDir          = "src"
 	gopkgToml       = "./Gopkg.toml"
 	buildDockerfile = "./build/Dockerfile"
+)
+
+const (
+	GopathEnv = "GOPATH"
 )
 
 // OperatorType - the type of operator
@@ -44,15 +49,6 @@ const (
 	OperatorTypeGo OperatorType = "go"
 	// OperatorTypeAnsible - ansible type of operator.
 	OperatorTypeAnsible OperatorType = "ansible"
-)
-
-const (
-	GopathEnv = "GOPATH"
-	SrcDir    = "src"
-
-	DefaultDirFileMode  = 0750
-	DefaultFileMode     = 0644
-	DefaultExecFileMode = 0744
 )
 
 // MustInProjectRoot checks if the current dir is the project root and returns the current repo's import path

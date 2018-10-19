@@ -27,7 +27,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	ansibleOperator "github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
@@ -71,11 +71,11 @@ const (
 
 func upLocalFunc(cmd *cobra.Command, args []string) {
 	mustKubeConfig()
-	switch cmdutil.GetOperatorType() {
-	case cmdutil.OperatorTypeGo:
-		cmdutil.MustInProjectRoot()
+	switch projutil.GetOperatorType() {
+	case projutil.OperatorTypeGo:
+		projutil.MustInProjectRoot()
 		upLocal()
-	case cmdutil.OperatorTypeAnsible:
+	case projutil.OperatorTypeAnsible:
 		upLocalAnsible()
 	default:
 		log.Fatal("failed to determine operator type")
