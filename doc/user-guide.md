@@ -156,7 +156,7 @@ return reconcile.Result{}, err
 return reconcile.Result{Requeue: true}, nil
 ```
 
-You can set the `Resulte.RequeueAfter` to requeue the `Request` after a grace period as well:
+You can set the `Result.RequeueAfter` to requeue the `Request` after a grace period as well:
 ```Go
 import "time"
 
