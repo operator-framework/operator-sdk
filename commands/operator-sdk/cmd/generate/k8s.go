@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
 
@@ -74,32 +75,41 @@ func K8sCodegen() {
 	fmt.Fprintln(os.Stdout, string(out))
 }
 
+const goExt = ".go"
+
 // getGroupVersions parses the layout of pkg/apis to return the API groups and versions
 // in the format "groupA:v1,v2 groupB:v1 groupC:v2",
 // as required by the generate-groups.sh script
 func parseGroupVersions() (string, error) {
-	var groupVersions string
-	groups, err := ioutil.ReadDir(filepath.Join("pkg", "apis"))
+	groupVersions := make(map[string]string)
+	apisRoot := filepath.Join("pkg", "apis")
+	groups, err := ioutil.ReadDir(apisRoot)
 	if err != nil {
 		return "", fmt.Errorf("could not read pkg/apis directory to find api Versions: %v", err)
 	}
 	for _, g := range groups {
-		// TODO: Ignore other files besides pkg/apis/group/version
-		groupVersion := g.Name() + ":"
 		if g.IsDir() {
-			versions, err := ioutil.ReadDir(filepath.Join("pkg", "apis", g.Name()))
+			groupDir := filepath.Join(apisRoot, g.Name())
+			versions, err := ioutil.ReadDir(groupDir)
 			if err != nil {
-				return "", fmt.Errorf("could not read pkg/apis/%s directory to find api Versions: %v", g.Name(), err)
+				return "", fmt.Errorf("could not read %s directory to find api Versions: %v", groupDir, err)
 			}
-			// TODO: regex check to ensure only dirs with acceptable version names are picked
-			// e.g v1,v1alpha1,v1beta1 etc
+
+			versionRe := regexp.MustCompile("^v[1-9][0-9]*((alpha|beta)[1-9][0-9]*)?$")
+			groupVersion := ""
 			for _, v := range versions {
-				if v.IsDir() {
+				if v.IsDir() && versionRe.MatchString(v.Name()) {
 					groupVersion = groupVersion + v.Name() + ","
 				}
 			}
+
+			groupVersions[g.Name()] = groupVersion
 		}
-		groupVersions = groupVersions + groupVersion + " "
 	}
-	return groupVersions, nil
+
+	mapStr := ""
+	for k, v := range groupVersions {
+		mapStr += fmt.Sprintf("%s:%s ", k, v)
+	}
+	return mapStr, nil
 }
