@@ -2,10 +2,10 @@
 
 ## Overview
 
-The [`controller-runtime`][repo-controller-runtime] library provides various abstractions to watch and reconcile resources in a k8s cluster via CRUD (Create, Update, Delete, as well as Get and List in this case) operations. Operators use at least one controller to perform a coherent set of tasks within a cluster, usually through a combination of CRUD operations. The Operator SDK uses controller-runtime's [Client][doc-client-client] interface, which provides the interface for these operations.
+The [`controller-runtime`][repo-controller-runtime] library provides various abstractions to watch and reconcile resources in a Kubernetes cluster via CRUD (Create, Update, Delete, as well as Get and List in this case) operations. Operators use at least one controller to perform a coherent set of tasks within a cluster, usually through a combination of CRUD operations. The Operator SDK uses controller-runtime's [Client][doc-client-client] interface, which provides the interface for these operations.
 
 controller-runtime defines several interfaces used for cluster interaction:
-- `client.Client`: implementers perform CRUD operations on a k8s cluster.
+- `client.Client`: implementers perform CRUD operations on a Kubernetes cluster.
 - `manager.Manager`: manages shared dependencies, such as Caches and Clients.
 - `reconcile.Reconciler`: compares provided state with actual cluster state and updates the cluster on finding state differences using a Client.
 
@@ -54,18 +54,18 @@ type Options struct {
 }
 ```
 
-**Note**: defaults are set by `client.New` when Options are empty. The default [scheme][code-scheme-default] will have the [core][doc-k8s-core] k8s resource types registered. The caller *must* set a scheme that has custom operator types registered for the new Client to recognize these types.
+**Note**: defaults are set by `client.New` when Options are empty. The default [scheme][code-scheme-default] will have the [core][doc-k8s-core] Kubernetes resource types registered. The caller *must* set a scheme that has custom operator types registered for the new Client to recognize these types.
 
 Creating a new Client is not usually necessary nor advised, as the default Client is sufficient for most use cases.
 
 ### Reconcile and the Client API
 
-A Reconciler implements the [`reconcile.Reconciler`][doc-reconcile-reconciler] interface, which exposes the Reconcile method. Reconcilers are added to a corresponding Controller for a Kind; Reconcile is called in response to cluster or external Events, with a `reconcile.Request` object argument, to read and write cluster state by the Controller, and returns a `reconcile.Result`. SDK Reconcilers have access to a Client in order to make k8s API calls.
+A Reconciler implements the [`reconcile.Reconciler`][doc-reconcile-reconciler] interface, which exposes the Reconcile method. Reconcilers are added to a corresponding Controller for a Kind; Reconcile is called in response to cluster or external Events, with a `reconcile.Request` object argument, to read and write cluster state by the Controller, and returns a `reconcile.Result`. SDK Reconcilers have access to a Client in order to make Kubernetes API calls.
 
 **Note**: For those familiar with the SDK's old project semantics, [Handle][doc-osdk-handle] received resource events and reconciled state for multiple resource types, whereas Reconcile receives resource events and reconciles state for a single resource type.
 
 ```Go
-// ReconcileMemcached reconciles a Kind object
+// ReconcileKind reconciles a Kind object
 type ReconcileKind struct {
 	// client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
@@ -92,7 +92,7 @@ Reconcile is where Controller business logic lives, i.e. where Client API calls 
 #### Create
 
 ```Go
-// Create saves the object obj in the k8s cluster.
+// Create saves the object obj in the Kubernetes cluster.
 // Returns an error 
 func (c Client) Create(ctx context.Context, obj runtime.Object) error
 ```
@@ -120,7 +120,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 #### Update
 
 ```Go
-// Update updates the given obj in the k8s cluster. obj must be a
+// Update updates the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned
 // by the API server.
 func (c Client) Update(ctx context.Context, obj runtime.Object) error
@@ -152,7 +152,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 #### Delete
 
 ```Go
-// Delete deletes the given obj from k8s cluster.
+// Delete deletes the given obj from Kubernetes cluster.
 func (c Client) Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOptionFunc) error
 ```
 A `client.DeleteOptionFunc` sets fields of `client.DeleteOptions` to configure a `Delete` call:
@@ -216,7 +216,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 #### Get
 
 ```Go
-// Get retrieves an API object for a given object key from the k8s cluster
+// Get retrieves an API object for a given object key from the Kubernetes cluster
 // and stores it in obj.
 func (c Client) Get(ctx context.Context, key ObjectKey, obj runtime.Object) error
 ```
@@ -340,7 +340,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 	if err != nil {
 	 	if errors.IsNotFound(err) {
 			// Define and create a new deployment.
-			dep := r.deploymentForMemcached(app)
+			dep := r.deploymentForApp(app)
 			if err = r.client.Create(context.TODO(), dep); err != nil {
 				return reconcile.Result{}, err
 			}
@@ -382,7 +382,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 }
 
 // deploymentForApp returns a app Deployment object.
-func (r *ReconcileMemcached) deploymentForApp(m *appv1alpha1.App) *appsv1.Deployment {
+func (r *ReconcileKind) deploymentForApp(m *appv1alpha1.App) *appsv1.Deployment {
 	lbls := labelsForApp(m.Name)
 	replicas := m.Spec.Size
 
