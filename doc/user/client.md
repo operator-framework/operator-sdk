@@ -53,6 +53,19 @@ type Options struct {
 	Mapper meta.RESTMapper
 }
 ```
+Example:
+```Go
+import (
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
+    "sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+	cfg, err := config.GetConfig()
+	...
+	c, err := client.New(cfg, client.Options{})
+
+	...
+```
 
 **Note**: defaults are set by `client.New` when Options are empty. The default [scheme][code-scheme-default] will have the [core][doc-k8s-core] Kubernetes resource types registered. The caller *must* set a scheme that has custom operator types registered for the new Client to recognize these types.
 
