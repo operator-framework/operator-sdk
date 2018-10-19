@@ -19,6 +19,8 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const PlaybookYamlFile = "playbook.yaml"
+
 // Playbook - the playbook tmpl wrapper
 type Playbook struct {
 	input.Input
@@ -28,7 +30,7 @@ type Playbook struct {
 // GetInput - gets the input
 func (p *Playbook) GetInput() (input.Input, error) {
 	if p.Path == "" {
-		p.Path = "playbook.yaml"
+		p.Path = PlaybookYamlFile
 	}
 	p.TemplateBody = playbookTmpl
 	return p.Input, nil

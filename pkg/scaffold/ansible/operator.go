@@ -17,6 +17,7 @@ package ansible
 import (
 	"path/filepath"
 
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
@@ -26,7 +27,7 @@ type Operator struct {
 
 func (s *Operator) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join("deploy", "operator.yaml")
+		s.Path = filepath.Join(scaffold.DeployDir, scaffold.OperatorYamlFile)
 	}
 	s.TemplateBody = operatorTemplate
 	return s.Input, nil

@@ -17,6 +17,7 @@ package ansible
 import (
 	"path/filepath"
 
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
@@ -30,7 +31,7 @@ type Dockerfile struct {
 // GetInput - gets the input
 func (d *Dockerfile) GetInput() (input.Input, error) {
 	if d.Path == "" {
-		d.Path = filepath.Join("build", "Dockerfile")
+		d.Path = filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
 	}
 	d.TemplateBody = dockerFileAnsibleTmpl
 	return d.Input, nil
