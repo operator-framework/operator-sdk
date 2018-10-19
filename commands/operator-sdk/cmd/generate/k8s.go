@@ -81,15 +81,16 @@ const goExt = ".go"
 // in the format "groupA:v1,v2 groupB:v1 groupC:v2",
 // as required by the generate-groups.sh script
 func parseGroupVersions() (string, error) {
-	groupVersions := make(map[string]string)
-	apisRoot := filepath.Join("pkg", "apis")
-	groups, err := ioutil.ReadDir(apisRoot)
+	groupVersions := ""
+	apisDir := filepath.Join("pkg", "apis")
+	groups, err := ioutil.ReadDir(apisDir)
 	if err != nil {
 		return "", fmt.Errorf("could not read pkg/apis directory to find api Versions: %v", err)
 	}
+
 	for _, g := range groups {
 		if g.IsDir() {
-			groupDir := filepath.Join(apisRoot, g.Name())
+			groupDir := filepath.Join(apisDir, g.Name())
 			versions, err := ioutil.ReadDir(groupDir)
 			if err != nil {
 				return "", fmt.Errorf("could not read %s directory to find api Versions: %v", groupDir, err)
@@ -102,14 +103,9 @@ func parseGroupVersions() (string, error) {
 					groupVersion = groupVersion + v.Name() + ","
 				}
 			}
-
-			groupVersions[g.Name()] = groupVersion
+			groupVersions += fmt.Sprintf("%s:%s ", g.Name(), groupVersion)
 		}
 	}
 
-	mapStr := ""
-	for k, v := range groupVersions {
-		mapStr += fmt.Sprintf("%s:%s ", k, v)
-	}
-	return mapStr, nil
+	return groupVersions, nil
 }
