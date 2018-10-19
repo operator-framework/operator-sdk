@@ -21,6 +21,8 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const DocFile = "doc.go"
+
 // Doc is the input needed to generate a pkg/apis/<group>/<version>/doc.go file
 type Doc struct {
 	input.Input
@@ -34,7 +36,7 @@ func (s *Doc) GetInput() (input.Input, error) {
 		s.Path = filepath.Join(apisDir,
 			strings.ToLower(s.Resource.Group),
 			strings.ToLower(s.Resource.Version),
-			docFile)
+			DocFile)
 	}
 	s.IfExistsAction = input.Skip
 	s.TemplateBody = docTemplate

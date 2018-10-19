@@ -19,10 +19,6 @@ import (
 )
 
 const (
-	// Boolean values for Input.IsExec
-	isExecTrue  = true
-	isExecFalse = false
-
 	// Separator to statically create directories.
 	filePathSep = string(filepath.Separator)
 
@@ -38,24 +34,4 @@ const (
 	olmCatalogDir = deployDir + filePathSep + "olm-catalog"
 	crdsDir       = deployDir + filePathSep + "crds"
 	versionDir    = "version"
-
-	// files
-	cmdFile                = "main.go"
-	apisFile               = "apis.go"
-	controllerFile         = "controller.go"
-	dockerfileFile         = "Dockerfile"
-	goTestScriptFile       = "go-test.sh"
-	versionFile            = "version.go"
-	docFile                = "doc.go"
-	registerFile           = "register.go"
-	serviceAccountYamlFile = "service_account.yaml"
-	roleYamlFile           = "role.yaml"
-	roleBindingYamlFile    = "role_binding.yaml"
-	operatorYamlFile       = "operator.yaml"
-	catalogPackageYamlFile = "package.yaml"
-	catalogCSVYamlFile     = "csv.yaml"
-	testPodYamlFile        = "test-pod.yaml"
-	gitignoreFile          = ".gitignore"
-	gopkgtomlFile          = "Gopkg.toml"
-	gopkglockFile          = "Gopkg.lock"
 )

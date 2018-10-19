@@ -20,13 +20,15 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const CmdFile = "main.go"
+
 type Cmd struct {
 	input.Input
 }
 
 func (s *Cmd) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(managerDir, cmdFile)
+		s.Path = filepath.Join(managerDir, CmdFile)
 	}
 	s.TemplateBody = cmdTmpl
 	return s.Input, nil
