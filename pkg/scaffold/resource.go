@@ -135,7 +135,7 @@ func (r *Resource) checkAndSetVersion() error {
 		return errors.New("version cannot be empty")
 	}
 	if !ResourceVersionRegexp.MatchString(r.Version) {
-		return errors.New("version is not in the correct Kubernetes version format")
+		return errors.New("version is not in the correct Kubernetes version format, ex. v1alpha1")
 	}
 	return nil
 }
