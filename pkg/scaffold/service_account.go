@@ -28,7 +28,7 @@ type ServiceAccount struct {
 
 func (s *ServiceAccount) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(deployDir, ServiceAccountYamlFile)
+		s.Path = filepath.Join(DeployDir, ServiceAccountYamlFile)
 	}
 	s.TemplateBody = serviceAccountTemplate
 	return s.Input, nil

@@ -28,7 +28,7 @@ type RoleBinding struct {
 
 func (s *RoleBinding) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(deployDir, RoleBindingYamlFile)
+		s.Path = filepath.Join(DeployDir, RoleBindingYamlFile)
 	}
 	s.TemplateBody = roleBindingTemplate
 	return s.Input, nil

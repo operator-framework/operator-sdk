@@ -23,15 +23,15 @@ const (
 	filePathSep = string(filepath.Separator)
 
 	// dirs
-	cmdDir        = "cmd"
-	managerDir    = cmdDir + filePathSep + "manager"
-	pkgDir        = "pkg"
-	apisDir       = pkgDir + filePathSep + "apis"
-	controllerDir = pkgDir + filePathSep + "controller"
-	buildDir      = "build"
-	buildTestDir  = buildDir + filePathSep + "test-framework"
-	deployDir     = "deploy"
-	olmCatalogDir = deployDir + filePathSep + "olm-catalog"
-	crdsDir       = deployDir + filePathSep + "crds"
-	versionDir    = "version"
+	CmdDir        = "cmd"
+	ManagerDir    = CmdDir + filePathSep + "manager"
+	PkgDir        = "pkg"
+	ApisDir       = PkgDir + filePathSep + "apis"
+	ControllerDir = PkgDir + filePathSep + "controller"
+	BuildDir      = "build"
+	BuildTestDir  = BuildDir + filePathSep + "test-framework"
+	DeployDir     = "deploy"
+	OlmCatalogDir = DeployDir + filePathSep + "olm-catalog"
+	CrdsDir       = DeployDir + filePathSep + "crds"
+	VersionDir    = "version"
 )
