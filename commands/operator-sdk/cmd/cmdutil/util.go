@@ -15,10 +15,20 @@
 package cmdutil
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+
+	yaml "gopkg.in/yaml.v2"
+	rbacv1 "k8s.io/api/rbac/v1"
+	cgoscheme "k8s.io/client-go/kubernetes/scheme"
 )
 
 // OperatorType - the type of operator
@@ -91,4 +101,108 @@ func GetOperatorType() OperatorType {
 		return OperatorTypeAnsible
 	}
 	return OperatorTypeGo
+}
+
+func UpdateRoleForResource(r *scaffold.Resource, absProjectPath string) error {
+	// append rbac rule to deploy/role.yaml
+	roleFilePath := filepath.Join(absProjectPath, "deploy", "role.yaml")
+	roleYAML, err := ioutil.ReadFile(roleFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read role manifest %v: %v", roleFilePath, err)
+	}
+	obj, _, err := cgoscheme.Codecs.UniversalDeserializer().Decode(roleYAML, nil, nil)
+	if err != nil {
+		return fmt.Errorf("failed to decode role manifest %v: %v", roleFilePath, err)
+	}
+	switch role := obj.(type) {
+	// TODO: use rbac/v1.
+	case *rbacv1.Role:
+		pr := &rbacv1.PolicyRule{}
+		apiGroupFound := false
+		for i := range role.Rules {
+			if role.Rules[i].APIGroups[0] == r.FullGroup {
+				apiGroupFound = true
+				pr = &role.Rules[i]
+				break
+			}
+		}
+		// check if the resource already exists
+		for _, resource := range pr.Resources {
+			if resource == r.Resource {
+				log.Printf("deploy/role.yaml RBAC rules already up to date for the resource (%v, %v)", r.APIVersion, r.Kind)
+				return nil
+			}
+		}
+
+		pr.Resources = append(pr.Resources, r.Resource)
+		// create a new apiGroup if not found.
+		if !apiGroupFound {
+			pr.APIGroups = []string{r.FullGroup}
+			// Using "*" to allow access to the resource and all its subresources e.g "memcacheds" and "memcacheds/finalizers"
+			// https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
+			pr.Resources = []string{"*"}
+			pr.Verbs = []string{"*"}
+			role.Rules = append(role.Rules, *pr)
+		}
+		// update role.yaml
+		d, err := json.Marshal(&role)
+		if err != nil {
+			return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
+		}
+		m := &map[string]interface{}{}
+		err = yaml.Unmarshal(d, m)
+		data, err := yaml.Marshal(m)
+		if err != nil {
+			return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
+		}
+		if err := ioutil.WriteFile(roleFilePath, data, DefaultFileMode); err != nil {
+			return fmt.Errorf("failed to update %v: %v", roleFilePath, err)
+		}
+	case *rbacv1.ClusterRole:
+		pr := &rbacv1.PolicyRule{}
+		apiGroupFound := false
+		for i := range role.Rules {
+			if role.Rules[i].APIGroups[0] == r.FullGroup {
+				apiGroupFound = true
+				pr = &role.Rules[i]
+				break
+			}
+		}
+		// check if the resource already exists
+		for _, resource := range pr.Resources {
+			if resource == r.Resource {
+				log.Printf("deploy/role.yaml RBAC rules already up to date for the resource (%v, %v)", r.APIVersion, r.Kind)
+				return nil
+			}
+		}
+
+		pr.Resources = append(pr.Resources, r.Resource)
+		// create a new apiGroup if not found.
+		if !apiGroupFound {
+			pr.APIGroups = []string{r.FullGroup}
+			// Using "*" to allow access to the resource and all its subresources e.g "memcacheds" and "memcacheds/finalizers"
+			// https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
+			pr.Resources = []string{"*"}
+			pr.Verbs = []string{"*"}
+			role.Rules = append(role.Rules, *pr)
+		}
+		// update role.yaml
+		d, err := json.Marshal(&role)
+		if err != nil {
+			return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
+		}
+		m := &map[string]interface{}{}
+		err = yaml.Unmarshal(d, m)
+		data, err := yaml.Marshal(m)
+		if err != nil {
+			return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
+		}
+		if err := ioutil.WriteFile(roleFilePath, data, DefaultFileMode); err != nil {
+			return fmt.Errorf("failed to update %v: %v", roleFilePath, err)
+		}
+	default:
+		return errors.New("failed to parse role.yaml as a role")
+	}
+	// not reachable
+	return nil
 }

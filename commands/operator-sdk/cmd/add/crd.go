@@ -83,7 +83,7 @@ func crdFunc(cmd *cobra.Command, args []string) {
 	}
 
 	// update deploy/role.yaml for the given resource r.
-	if err := updateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
+	if err := cmdutil.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
 		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): %v", resource.APIVersion, resource.Kind, err)
 	}
 }
