@@ -56,15 +56,14 @@ type Options struct {
 Example:
 ```Go
 import (
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
+    "sigs.k8s.io/controller-runtime/pkg/client/config"
     "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-	cfg, err := config.GetConfig()
-	...
-	c, err := client.New(cfg, client.Options{})
-
-	...
+cfg, err := config.GetConfig()
+...
+c, err := client.New(cfg, client.Options{})
+...
 ```
 
 **Note**: defaults are set by `client.New` when Options are empty. The default [scheme][code-scheme-default] will have the [core][doc-k8s-core] Kubernetes resource types registered. The caller *must* set a scheme that has custom operator types registered for the new Client to recognize these types.
@@ -101,6 +100,89 @@ func (r *ReconcileKind) Reconcile(request reconcile.Request) (reconcile.Result, 
 ```
 
 Reconcile is where Controller business logic lives, i.e. where Client API calls are made via `ReconcileKind.client`. A `client.Client` implementer performs the following operations:
+
+#### Get
+
+```Go
+// Get retrieves an API object for a given object key from the Kubernetes cluster
+// and stores it in obj.
+func (c Client) Get(ctx context.Context, key ObjectKey, obj runtime.Object) error
+```
+**Note**: An `ObjectKey` is simply a `client` package alias for [`types.NamespacedName`][doc-types-nsname].
+
+Example:
+```Go
+import (
+	"context"
+	"github.com/example-org/app-operator/pkg/apis/cache/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
+func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	...
+	
+	app := &v1alpha1.App{}
+	ctx := context.TODO()
+	err := r.client.Get(ctx, request.NamespacedName, app)
+
+	...
+}
+```
+
+#### List
+
+```Go
+// List retrieves a list of objects for a given namespace and list options
+// and stores the list in obj.
+func (c Client) List(ctx context.Context, opts *ListOptions, obj runtime.Object) error
+```
+A `client.ListOptions` sets filters and options for a `List` call:
+```Go
+type ListOptions struct {
+    // LabelSelector filters results by label.  Use SetLabelSelector to
+    // set from raw string form.
+    LabelSelector labels.Selector
+
+    // FieldSelector filters results by a particular field.  In order
+    // to use this with cache-based implementations, restrict usage to
+    // a single field-value pair that's been added to the indexers.
+    FieldSelector fields.Selector
+
+    // Namespace represents the namespace to list for, or empty for
+    // non-namespaced objects, or to list across all namespaces.
+    Namespace string
+
+    // Raw represents raw ListOptions, as passed to the API server.  Note
+    // that these may not be respected by all implementations of interface,
+    // and the LabelSelector and FieldSelector fields are ignored.
+    Raw *metav1.ListOptions
+}
+```
+Example:
+```Go
+import (
+	"context"
+	"fmt"
+	"k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
+func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	...
+	
+	// Return all pods in the request namespace with a label of `app=<name>`
+	opts := &client.ListOptions{}
+	opts.SetLabelSelector(fmt.Sprintf("app=%s", request.NamespacedName.Name))
+	opts.InNamespace(request.NamespacedName.Namespace)
+
+	podList := &v1.PodList{}
+	ctx := context.TODO()
+	err := r.client.List(ctx, opts, podList)
+
+	...
+}
+```
 
 #### Create
 
@@ -221,89 +303,6 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 		err := r.client.Delete(ctx, pod, client.GracePeriodSeconds(5))
 		...
 	}
-
-	...
-}
-```
-
-#### Get
-
-```Go
-// Get retrieves an API object for a given object key from the Kubernetes cluster
-// and stores it in obj.
-func (c Client) Get(ctx context.Context, key ObjectKey, obj runtime.Object) error
-```
-**Note**: An `ObjectKey` is simply a `client` package alias for [`types.NamespacedName`][doc-types-nsname].
-
-Example:
-```Go
-import (
-	"context"
-	"github.com/example-org/app-operator/pkg/apis/cache/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-)
-
-func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	...
-	
-	app := &v1alpha1.App{}
-	ctx := context.TODO()
-	err := r.client.Get(ctx, request.NamespacedName, app)
-
-	...
-}
-```
-
-#### List
-
-```Go
-// List retrieves a list of objects for a given namespace and list options
-// and stores the list in obj.
-func (c Client) List(ctx context.Context, opts *ListOptions, obj runtime.Object) error
-```
-A `client.ListOptions` sets filters and options for a `List` call:
-```Go
-type ListOptions struct {
-    // LabelSelector filters results by label.  Use SetLabelSelector to
-    // set from raw string form.
-    LabelSelector labels.Selector
-
-    // FieldSelector filters results by a particular field.  In order
-    // to use this with cache-based implementations, restrict usage to
-    // a single field-value pair that's been added to the indexers.
-    FieldSelector fields.Selector
-
-    // Namespace represents the namespace to list for, or empty for
-    // non-namespaced objects, or to list across all namespaces.
-    Namespace string
-
-    // Raw represents raw ListOptions, as passed to the API server.  Note
-    // that these may not be respected by all implementations of interface,
-    // and the LabelSelector and FieldSelector fields are ignored.
-    Raw *metav1.ListOptions
-}
-```
-Example:
-```Go
-import (
-	"context"
-	"fmt"
-	"k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-)
-
-func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	...
-	
-	// Return all pods in the request namespace with a label of `app=<name>`
-	opts := &client.ListOptions{}
-	opts.SetLabelSelector(fmt.Sprintf("app=%s", request.NamespacedName.Name))
-	opts.InNamespace(request.NamespacedName.Namespace)
-
-	podList := &v1.PodList{}
-	ctx := context.TODO()
-	err := r.client.List(ctx, opts, podList)
 
 	...
 }
