@@ -21,6 +21,8 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const RegisterFile = "register.go"
+
 // Register is the input needed to generate a pkg/apis/<group>/<version>/register.go file
 type Register struct {
 	input.Input
@@ -34,7 +36,7 @@ func (s *Register) GetInput() (input.Input, error) {
 		s.Path = filepath.Join(apisDir,
 			strings.ToLower(s.Resource.Group),
 			strings.ToLower(s.Resource.Version),
-			registerFile)
+			RegisterFile)
 	}
 	// Do not overwrite this file if it exists.
 	s.IfExistsAction = input.Skip

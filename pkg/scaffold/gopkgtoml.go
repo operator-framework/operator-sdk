@@ -18,13 +18,15 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const GopkgTomlFile = "Gopkg.toml"
+
 type GopkgToml struct {
 	input.Input
 }
 
 func (s *GopkgToml) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = gopkgtomlFile
+		s.Path = GopkgTomlFile
 	}
 	s.TemplateBody = gopkgTomlTmpl
 	return s.Input, nil

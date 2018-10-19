@@ -20,13 +20,15 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const RoleYamlFile = "role.yaml"
+
 type Role struct {
 	input.Input
 }
 
 func (s *Role) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(deployDir, roleYamlFile)
+		s.Path = filepath.Join(deployDir, RoleYamlFile)
 	}
 	s.TemplateBody = roleTemplate
 	return s.Input, nil
