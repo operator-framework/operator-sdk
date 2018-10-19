@@ -28,7 +28,7 @@ type Cmd struct {
 
 func (s *Cmd) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(managerDir, CmdFile)
+		s.Path = filepath.Join(ManagerDir, CmdFile)
 	}
 	s.TemplateBody = cmdTmpl
 	return s.Input, nil

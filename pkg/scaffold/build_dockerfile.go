@@ -28,7 +28,7 @@ type Dockerfile struct {
 
 func (s *Dockerfile) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(buildDir, DockerfileFile)
+		s.Path = filepath.Join(BuildDir, DockerfileFile)
 	}
 	s.TemplateBody = dockerfileTmpl
 	return s.Input, nil

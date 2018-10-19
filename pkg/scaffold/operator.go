@@ -28,7 +28,7 @@ type Operator struct {
 
 func (s *Operator) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(deployDir, OperatorYamlFile)
+		s.Path = filepath.Join(DeployDir, OperatorYamlFile)
 	}
 	s.TemplateBody = operatorTemplate
 	return s.Input, nil

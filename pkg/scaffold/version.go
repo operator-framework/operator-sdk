@@ -28,7 +28,7 @@ type Version struct {
 
 func (s *Version) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(versionDir, VersionFile)
+		s.Path = filepath.Join(VersionDir, VersionFile)
 	}
 	s.TemplateBody = versionTemplate
 	return s.Input, nil
