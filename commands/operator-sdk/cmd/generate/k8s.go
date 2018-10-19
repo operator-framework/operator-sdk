@@ -21,9 +21,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
 	"github.com/spf13/cobra"
 )
@@ -94,10 +94,9 @@ func parseGroupVersions() (string, error) {
 				return "", fmt.Errorf("could not read %s directory to find api Versions: %v", groupDir, err)
 			}
 
-			versionRe := regexp.MustCompile("^v[1-9][0-9]*((alpha|beta)[1-9][0-9]*)?$")
 			groupVersion := ""
 			for _, v := range versions {
-				if v.IsDir() && versionRe.MatchString(v.Name()) {
+				if v.IsDir() && scaffold.ResourceVersionRegexp.MatchString(v.Name()) {
 					groupVersion = groupVersion + v.Name() + ","
 				}
 			}

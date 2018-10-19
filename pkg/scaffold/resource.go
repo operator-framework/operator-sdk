@@ -19,10 +19,15 @@ package scaffold
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/markbates/inflect"
 )
+
+// ResourceVersionRegexp matches Kubernetes API versions.
+// See https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-versioning
+var ResourceVersionRegexp = regexp.MustCompile("^v[1-9][0-9]*((alpha|beta)[1-9][0-9]*)?$")
 
 // Resource contains the information required to scaffold files for a resource.
 type Resource struct {
@@ -98,7 +103,9 @@ func (r *Resource) Validate() error {
 
 	// TODO: regex match group (without subdomain) must be lowercased [a-z]
 
-	// TODO: regex match version to be v1, v1alpha1, v1beta1 etc
+	if !ResourceVersionRegexp.MatchString(r.Version) {
+		return errors.New("version is not of correct format")
+	}
 
 	return nil
 }
