@@ -19,9 +19,20 @@ package scaffold
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/markbates/inflect"
+)
+
+var (
+	// ResourceVersionRegexp matches Kubernetes API versions.
+	// See https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-versioning
+	ResourceVersionRegexp = regexp.MustCompile("^v[1-9][0-9]*((alpha|beta)[1-9][0-9]*)?$")
+	// ResourceKindRegexp matches Kubernetes API Kind's.
+	ResourceKindRegexp = regexp.MustCompile("^[a-zA-Z]+$")
+	// ResourceGroupRegexp matches Kubernetes API Group's.
+	ResourceGroupRegexp = regexp.MustCompile("^[a-z]+$")
 )
 
 // Resource contains the information required to scaffold files for a resource.
@@ -70,25 +81,14 @@ func (r *Resource) Validate() error {
 		return errors.New("api-version cannot be empty")
 	}
 
-	r.FullGroup = strings.Split(r.APIVersion, "/")[0]
-	r.Version = strings.Split(r.APIVersion, "/")[1]
-	r.Group = strings.Split(r.FullGroup, ".")[0]
-
-	if len(r.Group) == 0 {
-		return errors.New("group cannot be empty")
+	if err := r.checkAndSetKinds(); err != nil {
+		return err
 	}
-	if len(r.Version) == 0 {
-		return errors.New("version cannot be empty")
+	if err := r.checkAndSetGroups(); err != nil {
+		return err
 	}
-	if len(r.Kind) == 0 {
-		return errors.New("kind cannot be empty")
-	}
-
-	r.LowerKind = strings.ToLower(r.Kind)
-
-	// TODO: regex match kind to only be [aA-zZ]]
-	if strings.Title(r.Kind) != r.Kind {
-		return fmt.Errorf("kind must begin with uppercase (was %v)", r.Kind)
+	if err := r.checkAndSetVersion(); err != nil {
+		return err
 	}
 
 	rs := inflect.NewDefaultRuleset()
@@ -96,9 +96,46 @@ func (r *Resource) Validate() error {
 		r.Resource = rs.Pluralize(strings.ToLower(r.Kind))
 	}
 
-	// TODO: regex match group (without subdomain) must be lowercased [a-z]
+	return nil
+}
 
-	// TODO: regex match version to be v1, v1alpha1, v1beta1 etc
+func (r *Resource) checkAndSetKinds() error {
+	if len(r.Kind) == 0 {
+		return errors.New("kind cannot be empty")
+	}
 
+	r.LowerKind = strings.ToLower(r.Kind)
+
+	if strings.Title(r.Kind) != r.Kind {
+		return fmt.Errorf("kind must begin with uppercase (was %v)", r.Kind)
+	}
+	if !ResourceKindRegexp.MatchString(r.Kind) {
+		return errors.New("kind should consist of lower and uppercase alphabetical characters")
+	}
+	return nil
+}
+
+func (r *Resource) checkAndSetGroups() error {
+	r.FullGroup = strings.Split(r.APIVersion, "/")[0]
+	r.Group = strings.Split(r.FullGroup, ".")[0]
+
+	if len(r.Group) == 0 {
+		return errors.New("group cannot be empty")
+	}
+	if !ResourceGroupRegexp.MatchString(r.Group) {
+		return errors.New("group should consist of lowercase alphabetical characters")
+	}
+	return nil
+}
+
+func (r *Resource) checkAndSetVersion() error {
+	r.Version = strings.Split(r.APIVersion, "/")[1]
+
+	if len(r.Version) == 0 {
+		return errors.New("version cannot be empty")
+	}
+	if !ResourceVersionRegexp.MatchString(r.Version) {
+		return errors.New("version is not in the correct Kubernetes version format, ex. v1alpha1")
+	}
 	return nil
 }

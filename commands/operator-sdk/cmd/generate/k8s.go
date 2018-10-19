@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
 	"github.com/spf13/cobra"
 )
@@ -78,28 +79,30 @@ func K8sCodegen() {
 // in the format "groupA:v1,v2 groupB:v1 groupC:v2",
 // as required by the generate-groups.sh script
 func parseGroupVersions() (string, error) {
-	var groupVersions string
-	groups, err := ioutil.ReadDir(filepath.Join("pkg", "apis"))
+	groupVersions := ""
+	apisDir := filepath.Join("pkg", "apis")
+	groups, err := ioutil.ReadDir(apisDir)
 	if err != nil {
 		return "", fmt.Errorf("could not read pkg/apis directory to find api Versions: %v", err)
 	}
+
 	for _, g := range groups {
-		// TODO: Ignore other files besides pkg/apis/group/version
-		groupVersion := g.Name() + ":"
 		if g.IsDir() {
-			versions, err := ioutil.ReadDir(filepath.Join("pkg", "apis", g.Name()))
+			groupDir := filepath.Join(apisDir, g.Name())
+			versions, err := ioutil.ReadDir(groupDir)
 			if err != nil {
-				return "", fmt.Errorf("could not read pkg/apis/%s directory to find api Versions: %v", g.Name(), err)
+				return "", fmt.Errorf("could not read %s directory to find api Versions: %v", groupDir, err)
 			}
-			// TODO: regex check to ensure only dirs with acceptable version names are picked
-			// e.g v1,v1alpha1,v1beta1 etc
+
+			groupVersion := ""
 			for _, v := range versions {
-				if v.IsDir() {
+				if v.IsDir() && scaffold.ResourceVersionRegexp.MatchString(v.Name()) {
 					groupVersion = groupVersion + v.Name() + ","
 				}
 			}
+			groupVersions += fmt.Sprintf("%s:%s ", g.Name(), groupVersion)
 		}
-		groupVersions = groupVersions + groupVersion + " "
 	}
+
 	return groupVersions, nil
 }
