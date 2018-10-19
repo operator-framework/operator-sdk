@@ -21,18 +21,19 @@ import (
 	"strings"
 )
 
-// OperatorType - the type of operator
-type OperatorType int
-
 const (
 	gopkgToml       = "./Gopkg.toml"
 	buildDockerfile = "./build/Dockerfile"
 )
+
+// OperatorType - the type of operator
+type OperatorType = string
+
 const (
 	// OperatorTypeGo - golang type of operator.
-	OperatorTypeGo OperatorType = iota
+	OperatorTypeGo OperatorType = "go"
 	// OperatorTypeAnsible - ansible type of operator.
-	OperatorTypeAnsible
+	OperatorTypeAnsible OperatorType = "ansible"
 )
 
 const (
