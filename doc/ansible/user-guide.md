@@ -111,6 +111,9 @@ Defining the spec for an Ansible Operator can be done entirely in Ansible. The
 Ansible Operator will simply pass all key value pairs listed in the Custom
 Resource spec field along to Ansible as
 [variables](https://docs.ansible.com/ansible/2.5/user_guide/playbooks_variables.html#passing-variables-on-the-command-line).
+The names of all variables in the spec field are converted to snake_case
+by the operator before running ansible. For example, `serviceAccount` in 
+the spec becomes `service_account` in ansible.
 It is recommended that you perform some type validation in Ansible on the
 variables to ensure that your application is receiving expected input.
 
