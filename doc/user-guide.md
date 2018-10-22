@@ -48,7 +48,7 @@ $ cd memcached-operator
 To learn about the project directory structure, see [project layout][layout_doc] doc.
 
 ### Manager
-The main program for the operator is the manager `cmd/manager/main.go`.
+The main program for the operator is the Manager `cmd/manager/main.go`.
 
 The manager will automatically register the scheme for all custom resources defined under `pkg/apis/...` and run all controllers under `pkg/controller/...`.
 
@@ -326,7 +326,7 @@ $ kubectl delete -f deploy/service_account.yaml
 
 ## Advanced Topics
 ### Adding 3rd Party Resources To Your Operator
-By default the operator's manager will register all custom resource types defined in your project under `pkg/apis` with its scheme.
+By default the operator's Manager will register all custom resource types defined in your project under `pkg/apis` with its scheme.
 ```Go
 import (
   "github.com/example-inc/memcached-operator/pkg/apis"
@@ -338,10 +338,10 @@ if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
 }
 ```
 
-To add a 3rd party resource to an operator, you must add it to the manager's scheme. By creating an `AddToScheme` method or reusing one you can easily add a resource to your scheme. An [example][deployments_register] shows that you define a function and then use the [runtime][runtime_package] package to create a `SchemeBuilder`.
+To add a 3rd party resource to an operator, you must add it to the Manager's scheme. By creating an `AddToScheme` method or reusing one you can easily add a resource to your scheme. An [example][deployments_register] shows that you define a function and then use the [runtime][runtime_package] package to create a `SchemeBuilder`.
 
 #### Register with the manager's scheme
-Call the `AddToScheme()` function for your 3rd party resource and pass it the manager's scheme via `mgr.GetScheme()`.
+Call the `AddToScheme()` function for your 3rd party resource and pass it the Manager's scheme via `mgr.GetScheme()`.
 
 Example:
 ```go
