@@ -18,7 +18,6 @@ import (
 	"log"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/generate"
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
@@ -92,7 +91,7 @@ func apiRun(cmd *cobra.Command, args []string) {
 	}
 
 	// update deploy/role.yaml for the given resource r.
-	if err := cmdutil.UpdateRoleForResource(r, absProjectPath); err != nil {
+	if err := scaffold.UpdateRoleForResource(r, absProjectPath); err != nil {
 		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): %v", r.APIVersion, r.Kind, err)
 	}
 

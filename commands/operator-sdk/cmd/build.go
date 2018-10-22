@@ -146,7 +146,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 
 	// Don't need to buld go code if Ansible Operator
 	if mainExists() {
-		managerDir := filepath.Join(cmdutil.CheckAndGetCurrPkg(), scaffold.ManagerDir)
+		managerDir := filepath.Join(projutil.CheckAndGetCurrPkg(), scaffold.ManagerDir)
 		outputBinName := filepath.Join(wd, scaffold.BuildBinDir, filepath.Base(wd))
 		buildCmd := exec.Command("go", "build", "-o", outputBinName, managerDir)
 		buildCmd.Env = goBuildEnv

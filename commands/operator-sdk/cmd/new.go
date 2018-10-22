@@ -23,7 +23,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
@@ -217,7 +216,7 @@ func doAnsibleScaffold() {
 	}
 
 	// update deploy/role.yaml for the given resource r.
-	if err := cmdutil.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
+	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
 		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): %v", resource.APIVersion, resource.Kind, err)
 	}
 }
