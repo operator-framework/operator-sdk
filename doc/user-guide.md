@@ -326,25 +326,23 @@ $ kubectl delete -f deploy/service_account.yaml
 
 ## Advanced Topics
 ### Adding 3rd Party Resources To Your Operator
-To add a resource to an operator, you must add it to a scheme. By creating an `AddToScheme` method or reusing one you can easily add a resource to your scheme. An [example][deployments_register] shows that you define a function and then use the [runtime][runtime_package] package to create a `SchemeBuilder`
-
-#### Current Operator-SDK
-You then need to tell the operators to use these functions to add the resources to its scheme. In operator-sdk you use [AddToSDKScheme][osdk_add_to_scheme] to add this.
-Example of you main.go:
-```go
+By default the operator's manager will register all custom resource types defined in your project under `pkg/apis` with its scheme.
+```Go
 import (
-    ....
-    appsv1 "k8s.io/api/apps/v1"
+  "github.com/example-inc/memcached-operator/pkg/apis"
+  ...
 )
-
-func main() {
-    k8sutil.AddToSDKScheme(appsv1.AddToScheme)`
-    sdk.Watch(appsv1.SchemeGroupVersion.String(), "Deployments", <namespace>, <resyncPeriod>)
+// Setup Scheme for all resources
+if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
+  log.Fatal(err)
 }
 ```
 
-#### Future with Controller Runtime
-When using controller runtime, you will also need to tell its scheme about your resourece. In controller runtime to add to the scheme, you can get the managers [scheme][manager_scheme].  If you would like to see what kubebuilder generates to add the resoureces to the [scheme][simple_resource].
+To add a 3rd party resource to an operator, you must add it to the manager's scheme. By creating an `AddToScheme` method or reusing one you can easily add a resource to your scheme. An [example][deployments_register] shows that you define a function and then use the [runtime][runtime_package] package to create a `SchemeBuilder`.
+
+#### Register with the manager's scheme
+Call the `AddToScheme()` function for your 3rd party resource and pass it the manager's scheme via `mgr.GetScheme()`.
+
 Example:
 ```go
 import (
@@ -371,8 +369,6 @@ func main() {
 [docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [minikube_tool]:https://github.com/kubernetes/minikube#installation
-[manager_scheme]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/manager/manager.go#L61
-[simple_resource]: https://book.kubebuilder.io/basics/simple_resource.html
 [deployments_register]: https://github.com/kubernetes/api/blob/master/apps/v1/register.go#L41
 [doc_client_api]:./user/client.md
 [runtime_package]: https://godoc.org/k8s.io/apimachinery/pkg/runtime
