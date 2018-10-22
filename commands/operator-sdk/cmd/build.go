@@ -22,10 +22,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
+	"github.com/coreos/go-semver/semver"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+	catalog "github.com/operator-framework/operator-sdk/pkg/scaffold/olm-catalog"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
 	"github.com/ghodss/yaml"
@@ -37,6 +40,7 @@ var (
 	namespacedManBuild string
 	testLocationBuild  string
 	enableTests        bool
+	genCSV             bool
 )
 
 func NewBuildCmd() *cobra.Command {
@@ -54,9 +58,13 @@ be pushed to remote registry.
 For example:
 	$ operator-sdk build quay.io/example/operator:v0.0.1
 	$ docker push quay.io/example/operator:v0.0.1
+
+Supplying an argument to '--gen-csv' directs the SDK to create a
+ClusterServiceVersion manifest.
 `,
 		Run: buildFunc,
 	}
+	buildCmd.Flags().BoolVar(&genCSV, "gen-csv", false, "Directs the SDK to compose a CSV.\t\nConfigure this process by writing a config file 'deploy/olm-catalog/csv-config.yaml'")
 	buildCmd.Flags().BoolVar(&enableTests, "enable-tests", false, "Enable in-cluster testing by adding test binary to the image")
 	buildCmd.Flags().StringVar(&testLocationBuild, "test-location", "./test/e2e", "Location of tests")
 	buildCmd.Flags().StringVar(&namespacedManBuild, "namespaced-manifest", "deploy/operator.yaml", "Path of namespaced resources manifest for tests")
@@ -132,10 +140,28 @@ func verifyTestManifest(image string) {
 	}
 }
 
+func checkImageFormatAndGetVersion(image string) string {
+	splitImage := strings.Split(image, ":")
+	if len(splitImage) == 1 {
+		log.Fatal("no operator version supplied in image name")
+	}
+	opVer := splitImage[1]
+	if len(opVer) > 0 && opVer[0] == 'v' {
+		opVer = opVer[1:len(opVer)]
+	}
+	if _, err := semver.NewVersion(opVer); err != nil {
+		// TODO: is this functionality ok, or should we allow users to version their operators with 'latest'?
+		log.Fatalf("operator version '%s' is not a semantic version", opVer)
+	}
+	return opVer
+}
+
 func buildFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
 		log.Fatalf("build command needs exactly 1 argument")
 	}
+	image := args[0]
+	opVer := checkImageFormatAndGetVersion(image)
 
 	projutil.MustInProjectRoot()
 	goBuildEnv := append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
@@ -158,7 +184,23 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	image := args[0]
+	absProjectPath := projutil.MustGetwd()
+	cfg := &input.Config{
+		AbsProjectPath: absProjectPath,
+		ProjectName:    filepath.Base(wd),
+	}
+
+	// Create a CSV if the user calls build with `--gen-csv`.
+	if genCSV {
+		s := &scaffold.Scaffold{}
+		err = s.Execute(cfg,
+			&catalog.Csv{OperatorVersion: opVer},
+		)
+		if err != nil {
+			log.Fatalf("build catalog scaffold failed: (%v)", err)
+		}
+	}
+
 	baseImageName := image
 	if enableTests {
 		baseImageName += "-intermediate"
@@ -179,6 +221,8 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	}
 
 	if enableTests {
+		cfg.Repo = projutil.CheckAndGetProjectGoPkg()
+
 		testBinary := filepath.Join(wd, scaffold.BuildBinDir, filepath.Base(wd)+"-test")
 		buildTestCmd := exec.Command("go", "test", "-c", "-o", testBinary, testLocationBuild+"/...")
 		buildTestCmd.Env = goBuildEnv
@@ -188,19 +232,13 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		if err != nil {
 			log.Fatalf("failed to build test binary: (%v)", err)
 		}
+
 		// if a user is using an older sdk repo as their library, make sure they have required build files
 		testDockerfile := filepath.Join(scaffold.BuildTestDir, scaffold.DockerfileFile)
 		_, err = os.Stat(testDockerfile)
 		if err != nil && os.IsNotExist(err) {
 
 			log.Info("Generating build manifests for test-framework.")
-
-			absProjectPath := projutil.MustGetwd()
-			cfg := &input.Config{
-				Repo:           projutil.CheckAndGetProjectGoPkg(),
-				AbsProjectPath: absProjectPath,
-				ProjectName:    filepath.Base(wd),
-			}
 
 			s := &scaffold.Scaffold{}
 			err = s.Execute(cfg,

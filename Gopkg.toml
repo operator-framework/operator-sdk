@@ -35,6 +35,10 @@
   version = "v0.1.4"
 
 [[constraint]]
+  name = "github.com/operator-framework/operator-lifecycle-manager"
+  revision = "7790503542c3ae82d2daf1a0b05f720dd21568ad"
+
+[[constraint]]
   name = "k8s.io/helm"
   version = "2.11.0"
 
@@ -56,4 +60,3 @@
 [[override]]
   name = "github.com/docker/docker"
   revision = "4f3616fb1c112e206b88cb7a9922bf49067a7756"
-
