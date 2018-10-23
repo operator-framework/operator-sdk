@@ -142,10 +142,10 @@ kube-public   Active    28d
 kube-system   Active    28d
 ```
 ## Using Ansible inside of an Operator
-Now that we have demonstrated using the k8s modules inside of Ansible, we want
-to trigger this Ansible logic when a custom resource changes. In the above
+Now that we have demonstrated using the Ansible Kubernetes modules, we want to
+trigger this Ansible logic when a custom resource changes. In the above
 example, we want to map a role to a specific Kubernetes resource that the
-operator will watch. This is called the Watches file.
+operator will watch. This mapping is done in a file called `watches.yaml`.
 
 ### Watches file
 
@@ -243,7 +243,7 @@ This is the list of CR annotations which will modify the behavior of the operato
 **ansible.operator-sdk/reconcile-period**: Used to specify the reconciliation
 interval for the CR. This value is parsed using the standard Golang package
 [time][time_pkg]. Specifically [ParseDuration][time_parse_duration] is used
-which will use the default of `s` suffix giving the value in seconds.
+which will apply the default suffix of `s` giving the value in seconds.
 
 Example:
 ```
@@ -281,11 +281,13 @@ directory and simply comment out the existing line:
 ```
 
 Create a Custom Resource Definiton (CRD) and proper Role-Based Access Control
-(RBAC) defitinions for resource Foo. `operator-sdk` autogenerates these files
+(RBAC) definitions for resource Foo. `operator-sdk` autogenerates these files
 inside of the `deploy` folder:
 ```bash
-$ kubectl create -f deploy/crd.yaml
-$ kubectl create -f deploy/rbac.yaml
+$ kubectl create -f deploy/crds/foo_v1alpha1_foo_crd.yaml
+$ kubectl create -f deploy/service_account.yaml
+$ kubectl create -f deploy/role.yaml
+$ kubectl create -f deploy/role_binding.yaml
 ```
 
 Run the `up local` command:
@@ -371,13 +373,12 @@ $ sed -i 's|REPLACE_IMAGE|quay.io/example/foo-operator:v0.0.1|g' deploy/operator
 Deploy the foo-operator:
 
 ```sh
-$ kubectl create -f deploy/rbac.yaml
+$ kubectl create -f deploy/crds/foo_v1alpha1_foo_crd.yaml # if CRD doesn't exist already
+$ kubectl create -f deploy/service_account.yaml
+$ kubectl create -f deploy/role.yaml
+$ kubectl create -f deploy/role_binding.yaml
 $ kubectl create -f deploy/operator.yaml
 ```
-
-**NOTE**: `deploy/rbac.yaml` creates a `ClusterRoleBinding` and assumes we are
-working in namespace `default`. If you are working in a different namespace you
-must modify this file before creating it.
 
 Verify that the foo-operator is up and running:
 
@@ -388,7 +389,11 @@ foo-operator       1         1         1            1           1m
 ```
 
 ## Extra vars sent to Ansible
-The extravars that are sent to Ansible are predefined and managed by the operator. The `spec` section will pass along the key-value pairs as extra vars. This is equivalent to how above extra vars are passed in to `ansible-playbook`.
+The extra vars that are sent to Ansible are managed by the operator. The `spec`
+section will pass along the key-value pairs as extra vars.  This is equivalent
+to how above extra vars are passed in to `ansible-playbook`. The operator also
+passes along additional variables under the `meta` field for the name of the CR
+and the namespace of the CR.
 
 For the CR example:
 ```yaml
@@ -401,7 +406,7 @@ spec:
   newParameter: "newParam"
 ```
 
-The structure is:
+The structure passed to Ansible as extra vars is:
 
 
 ```json
@@ -416,7 +421,9 @@ The structure is:
    },
 }
 ```
-`message` and `newParameter` are set in the top level as extra variables and `meta` provides the relevant metadata for the Custom Resource as defined in the operator. The `meta` fields can be access via dot notation in Ansible as so:
+`message` and `newParameter` are set in the top level as extra variables, and
+`meta` provides the relevant metadata for the Custom Resource as defined in the
+operator. The `meta` fields can be accesses via dot notation in Ansible as so:
 ```yaml
 ---
 - debug:
