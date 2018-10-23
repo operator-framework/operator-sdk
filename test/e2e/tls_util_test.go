@@ -19,7 +19,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/pkg/tlsutil"
+	tlsutil "github.com/operator-framework/operator-sdk/pkg/tls"
 	framework "github.com/operator-framework/operator-sdk/test/e2e/framework"
 
 	"k8s.io/api/core/v1"
