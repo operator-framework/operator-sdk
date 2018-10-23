@@ -41,6 +41,14 @@ The lock record in this case is a ConfigMap whose OwnerReference is set to the
 Pod that is the leader. When the leader is destroyed, the ConfigMap gets
 garbage-collected, enabling a different candidate Pod to become the leader.
 
-Leader for Life requires that all candidate Pods be in the same Namespace.
+Leader for Life requires that all candidate Pods be in the same Namespace. It
+uses the downwards API to determine the pod name, as hostname is not reliable.
+You should run it configured with:
+
+env:
+  - name: POD_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
 */
 package leader
