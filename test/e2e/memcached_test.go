@@ -68,11 +68,51 @@ func TestMemcached(t *testing.T) {
 		"new",
 		"memcached-operator").CombinedOutput()
 	if err != nil {
-		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		// HACK: dep cannot resolve non-master branches as the base branch for PR's,
+		// so running `dep ensure` will fail when first running
+		// `operator-sdk new ...`. For now we can ignore the first solve failure.
+		// A permanent solution can be implemented once the following is merged:
+		// https://github.com/golang/dep/pull/1658
+		solveFailRe := regexp.MustCompile(`(?m)^[ \t]*Solving failure:.+github\.com/operator-framework/operator-sdk.+:$`)
+		if !solveFailRe.Match(cmdOut) {
+			t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		}
 	}
 	ctx.AddFinalizerFn(func() error { return os.RemoveAll(absProjectPath) })
 
 	os.Chdir("memcached-operator")
+	prSlug, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
+	if ok && prSlug != "" {
+		prSha, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SHA")
+		if ok && prSha != "" {
+			gopkg, err := ioutil.ReadFile("Gopkg.toml")
+			if err != nil {
+				t.Fatal(err)
+			}
+			// Match against the '#osdk_branch_annotation' used for version substitution
+			// and comment out the current branch.
+			branchRe := regexp.MustCompile("([ ]+)(.+#osdk_branch_annotation)")
+			gopkg = branchRe.ReplaceAll(gopkg, []byte("$1# $2"))
+			// Plug in the fork to test against so `dep ensure` can resolve dependencies
+			// correctly.
+			gopkgString := string(gopkg)
+			gopkgLoc := strings.LastIndex(gopkgString, "\n  name = \"github.com/operator-framework/operator-sdk\"\n")
+			gopkgString = gopkgString[:gopkgLoc] + "\n  source = \"https://github.com/" + prSlug + "\"\n  revision = \"" + prSha + "\"\n" + gopkgString[gopkgLoc+1:]
+			err = ioutil.WriteFile("Gopkg.toml", []byte(gopkgString), filemode)
+			if err != nil {
+				t.Fatalf("failed to write updated Gopkg.toml: %v", err)
+			}
+
+			t.Logf("Gopkg.toml: %v", gopkgString)
+		} else {
+			t.Fatal("could not find sha of PR")
+		}
+	}
+	cmdOut, err = exec.Command("dep", "ensure").CombinedOutput()
+	if err != nil {
+		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+	}
+
 	cmdOut, err = exec.Command("operator-sdk",
 		"add",
 		"api",
@@ -143,33 +183,8 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not rename test/e2e/memcached_test.go.tmpl: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
+
 	t.Log("Pulling new dependencies with dep ensure")
-	prSlug, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
-	if ok && prSlug != "" {
-		prSha, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SHA")
-		if ok && prSha != "" {
-			gopkg, err := ioutil.ReadFile("Gopkg.toml")
-			if err != nil {
-				t.Fatal(err)
-			}
-			// Match against the '#osdk_branch_annotation' used for version substitution
-			// and comment out the current branch.
-			branchRe := regexp.MustCompile("([ ]+)(.+#osdk_branch_annotation)")
-			gopkg = branchRe.ReplaceAll(gopkg, []byte("$1# $2"))
-			// Plug in the fork to test against so `dep ensure` can resolve dependencies
-			// correctly.
-			gopkgString := string(gopkg)
-			gopkgLoc := strings.LastIndex(gopkgString, "\n  name = \"github.com/operator-framework/operator-sdk\"\n")
-			gopkgString = gopkgString[:gopkgLoc] + "\n  source = \"https://github.com/" + prSlug + "\"\n  revision = \"" + prSha + "\"\n" + gopkgString[gopkgLoc+1:]
-			err = ioutil.WriteFile("Gopkg.toml", []byte(gopkgString), filemode)
-			if err != nil {
-				t.Fatalf("failed to write updated Gopkg.toml: %v", err)
-			}
-			t.Logf("Gopkg.toml: %v", gopkgString)
-		} else {
-			t.Fatal("could not find sha of PR")
-		}
-	}
 	cmdOut, err = exec.Command("dep", "ensure").CombinedOutput()
 	if err != nil {
 		t.Fatalf("dep ensure failed: %v\nCommand Output:\n%v", err, string(cmdOut))
