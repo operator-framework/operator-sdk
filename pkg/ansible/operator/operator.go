@@ -29,7 +29,7 @@ import (
 // Run - A blocking function which starts a controller-runtime manager
 // It starts an Operator by reading in the values in `./watches.yaml`, adds a controller
 // to the manager, and finally running the manager.
-func Run(done chan error, mgr manager.Manager, watchesPath string) {
+func Run(done chan error, mgr manager.Manager, watchesPath string, reconcilePeriod time.Duration) {
 	watches, err := runner.NewFromWatches(watchesPath)
 	if err != nil {
 		logrus.Error("Failed to get watches")
@@ -40,10 +40,16 @@ func Run(done chan error, mgr manager.Manager, watchesPath string) {
 	c := signals.SetupSignalHandler()
 
 	for gvk, runner := range watches {
-		controller.Add(mgr, controller.Options{
-			GVK:    gvk,
-			Runner: runner,
-		})
+		o := controller.Options{
+			GVK:             gvk,
+			Runner:          runner,
+			ReconcilePeriod: reconcilePeriod,
+		}
+		d, ok := runner.GetReconcilePeriod()
+		if ok {
+			o.ReconcilePeriod = d
+		}
+		controller.Add(mgr, o)
 	}
 	done <- mgr.Start(c)
 }
