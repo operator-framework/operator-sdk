@@ -17,7 +17,7 @@ package add
 import (
 	"log"
 
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
@@ -57,7 +57,7 @@ Example:
 }
 
 func controllerRun(cmd *cobra.Command, args []string) {
-	cmdutil.MustInProjectRoot()
+	projutil.MustInProjectRoot()
 	// Create and validate new resource
 	r, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
@@ -65,8 +65,8 @@ func controllerRun(cmd *cobra.Command, args []string) {
 	}
 
 	cfg := &input.Config{
-		Repo:           cmdutil.CheckAndGetCurrPkg(),
-		AbsProjectPath: cmdutil.MustGetwd(),
+		Repo:           projutil.CheckAndGetCurrPkg(),
+		AbsProjectPath: projutil.MustGetwd(),
 	}
 
 	s := &scaffold.Scaffold{}

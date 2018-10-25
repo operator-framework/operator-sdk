@@ -20,13 +20,15 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const RoleBindingYamlFile = "role_binding.yaml"
+
 type RoleBinding struct {
 	input.Input
 }
 
 func (s *RoleBinding) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(deployDir, roleBindingYamlFile)
+		s.Path = filepath.Join(DeployDir, RoleBindingYamlFile)
 	}
 	s.TemplateBody = roleBindingTemplate
 	return s.Input, nil

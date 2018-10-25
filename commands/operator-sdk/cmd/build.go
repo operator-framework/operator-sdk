@@ -24,7 +24,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/pkg/test"
@@ -132,16 +132,12 @@ func verifyTestManifest(image string) {
 	}
 }
 
-const (
-	mainGo = "./cmd/manager/main.go"
-)
-
 func buildFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
 		log.Fatalf("build command needs exactly 1 argument")
 	}
 
-	cmdutil.MustInProjectRoot()
+	projutil.MustInProjectRoot()
 	goBuildEnv := append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
 	wd, err := os.Getwd()
 	if err != nil {
@@ -150,8 +146,8 @@ func buildFunc(cmd *cobra.Command, args []string) {
 
 	// Don't need to buld go code if Ansible Operator
 	if mainExists() {
-		managerDir := filepath.Join(cmdutil.CheckAndGetCurrPkg(), "cmd/manager")
-		outputBinName := filepath.Join(wd, "build/_output/bin", filepath.Base(wd))
+		managerDir := filepath.Join(projutil.CheckAndGetCurrPkg(), scaffold.ManagerDir)
+		outputBinName := filepath.Join(wd, scaffold.BuildBinDir, filepath.Base(wd))
 		buildCmd := exec.Command("go", "build", "-o", outputBinName, managerDir)
 		buildCmd.Env = goBuildEnv
 		o, err := buildCmd.CombinedOutput()
@@ -178,7 +174,8 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	fmt.Fprintln(os.Stdout, string(o))
 
 	if enableTests {
-		buildTestCmd := exec.Command("go", "test", "-c", "-o", filepath.Join(wd, "build/_output/bin", filepath.Base(wd)+"-test"), testLocationBuild+"/...")
+		testBinary := filepath.Join(wd, scaffold.BuildBinDir, filepath.Base(wd)+"-test")
+		buildTestCmd := exec.Command("go", "test", "-c", "-o", testBinary, testLocationBuild+"/...")
 		buildTestCmd.Env = goBuildEnv
 		o, err := buildTestCmd.CombinedOutput()
 		if err != nil {
@@ -186,12 +183,13 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		}
 		fmt.Fprintln(os.Stdout, string(o))
 		// if a user is using an older sdk repo as their library, make sure they have required build files
-		_, err = os.Stat("build/test-framework/Dockerfile")
+		testDockerfile := filepath.Join(scaffold.BuildTestDir, scaffold.DockerfileFile)
+		_, err = os.Stat(testDockerfile)
 		if err != nil && os.IsNotExist(err) {
 
-			absProjectPath := cmdutil.MustGetwd()
+			absProjectPath := projutil.MustGetwd()
 			cfg := &input.Config{
-				Repo:           cmdutil.CheckAndGetCurrPkg(),
+				Repo:           projutil.CheckAndGetCurrPkg(),
 				AbsProjectPath: absProjectPath,
 				ProjectName:    filepath.Base(wd),
 			}
@@ -207,7 +205,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 			}
 		}
 
-		testDbcmd := exec.Command("docker", "build", ".", "-f", "build/test-framework/Dockerfile", "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+baseImageName)
+		testDbcmd := exec.Command("docker", "build", ".", "-f", testDockerfile, "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+baseImageName)
 		o, err = testDbcmd.CombinedOutput()
 		if err != nil {
 			log.Fatalf("failed to output build image %s: %v (%s)", image, err, string(o))
@@ -219,8 +217,6 @@ func buildFunc(cmd *cobra.Command, args []string) {
 }
 
 func mainExists() bool {
-	if _, err := os.Stat(mainGo); err == nil {
-		return true
-	}
-	return false
+	_, err := os.Stat(filepath.Join(scaffold.ManagerDir, scaffold.CmdFile))
+	return err == nil
 }

@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
@@ -83,10 +83,10 @@ func newFunc(cmd *cobra.Command, args []string) {
 	verifyFlags()
 
 	switch operatorType {
-	case cmdutil.OperatorTypeGo:
+	case projutil.OperatorTypeGo:
 		doScaffold()
 		pullDep()
-	case cmdutil.OperatorTypeAnsible:
+	case projutil.OperatorTypeAnsible:
 		doAnsibleScaffold()
 	}
 	initGit()
@@ -105,7 +105,7 @@ func parse(args []string) {
 // mustBeNewProject checks if the given project exists under the current diretory.
 // it exits with error when the project exists.
 func mustBeNewProject() {
-	fp := filepath.Join(cmdutil.MustGetwd(), projectName)
+	fp := filepath.Join(projutil.MustGetwd(), projectName)
 	stat, err := os.Stat(fp)
 	if err != nil && os.IsNotExist(err) {
 		return
@@ -120,8 +120,8 @@ func mustBeNewProject() {
 
 func doScaffold() {
 	cfg := &input.Config{
-		Repo:           filepath.Join(cmdutil.CheckAndGetCurrPkg(), projectName),
-		AbsProjectPath: filepath.Join(cmdutil.MustGetwd(), projectName),
+		Repo:           filepath.Join(projutil.CheckAndGetCurrPkg(), projectName),
+		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
 		ProjectName:    projectName,
 	}
 
@@ -146,7 +146,7 @@ func doScaffold() {
 
 func doAnsibleScaffold() {
 	cfg := &input.Config{
-		AbsProjectPath: filepath.Join(cmdutil.MustGetwd(), projectName),
+		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
 		ProjectName:    projectName,
 	}
 
@@ -216,7 +216,7 @@ func doAnsibleScaffold() {
 	}
 
 	// update deploy/role.yaml for the given resource r.
-	if err := cmdutil.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
+	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
 		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): %v", resource.APIVersion, resource.Kind, err)
 	}
 }
@@ -225,8 +225,8 @@ func doAnsibleScaffold() {
 // repoPath field on generator is used primarily in generation of Go operator. For Ansible we will set it to cwd
 func repoPath() string {
 	// We only care about GOPATH constraint checks if we are a Go operator
-	wd := cmdutil.MustGetwd()
-	if operatorType == cmdutil.OperatorTypeGo {
+	wd := projutil.MustGetwd()
+	if operatorType == projutil.OperatorTypeGo {
 		gp := os.Getenv(gopath)
 		if len(gp) == 0 {
 			log.Fatal("$GOPATH env not set")
@@ -244,17 +244,17 @@ func repoPath() string {
 }
 
 func verifyFlags() {
-	if operatorType != cmdutil.OperatorTypeGo && operatorType != cmdutil.OperatorTypeAnsible {
+	if operatorType != projutil.OperatorTypeGo && operatorType != projutil.OperatorTypeAnsible {
 		log.Fatal("--type can only be `go` or `ansible`")
 	}
-	if operatorType != cmdutil.OperatorTypeAnsible && generatePlaybook {
+	if operatorType != projutil.OperatorTypeAnsible && generatePlaybook {
 		log.Fatal("--generate-playbook can only be used with --type `ansible`")
 	}
-	if operatorType == cmdutil.OperatorTypeGo && (len(apiVersion) != 0 || len(kind) != 0) {
+	if operatorType == projutil.OperatorTypeGo && (len(apiVersion) != 0 || len(kind) != 0) {
 		log.Fatal(`go type operator does not use --api-version or --kind. Please see "operator-sdk add" command after running new.`)
 	}
 
-	if operatorType != cmdutil.OperatorTypeGo {
+	if operatorType != projutil.OperatorTypeGo {
 		if len(apiVersion) == 0 {
 			log.Fatal("--api-version must not have empty value")
 		}
@@ -273,7 +273,7 @@ func verifyFlags() {
 
 func execCmd(stdout *os.File, cmd string, args ...string) {
 	dc := exec.Command(cmd, args...)
-	dc.Dir = filepath.Join(cmdutil.MustGetwd(), projectName)
+	dc.Dir = filepath.Join(projutil.MustGetwd(), projectName)
 	dc.Stdout = stdout
 	dc.Stderr = os.Stderr
 	err := dc.Run()

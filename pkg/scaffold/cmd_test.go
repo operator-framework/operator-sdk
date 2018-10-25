@@ -40,7 +40,7 @@ import (
 
 	"github.com/example-inc/app-operator/pkg/apis"
 	"github.com/example-inc/app-operator/pkg/controller"
-	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"

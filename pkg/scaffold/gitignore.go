@@ -18,13 +18,15 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const GitignoreFile = ".gitignore"
+
 type Gitignore struct {
 	input.Input
 }
 
 func (s *Gitignore) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = gitignoreFile
+		s.Path = GitignoreFile
 	}
 	s.TemplateBody = gitignoreTmpl
 	return s.Input, nil

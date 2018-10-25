@@ -21,16 +21,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
 	"github.com/spf13/cobra"
-)
-
-const (
-	goDir        = "GOPATH"
-	deployCrdDir = "deploy"
 )
 
 // NewAddCrdCmd - add crd command
@@ -57,7 +52,7 @@ Generated CR  filename: <project-name>/deploy/crds/<group>_<version>_<kind>_cr.y
 
 func crdFunc(cmd *cobra.Command, args []string) {
 	cfg := &input.Config{
-		AbsProjectPath: cmdutil.MustGetwd(),
+		AbsProjectPath: projutil.MustGetwd(),
 	}
 	if len(args) != 0 {
 		log.Fatal("crd command doesn't accept any arguments")
@@ -83,7 +78,7 @@ func crdFunc(cmd *cobra.Command, args []string) {
 	}
 
 	// update deploy/role.yaml for the given resource r.
-	if err := cmdutil.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
+	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
 		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): %v", resource.APIVersion, resource.Kind, err)
 	}
 }
@@ -111,8 +106,8 @@ func verifyCrdDeployPath() {
 		log.Fatalf("failed to determine the full path of the current directory: %v", err)
 	}
 	// check if the deploy sub-directory exist
-	_, err = os.Stat(filepath.Join(wd, deployCrdDir))
+	_, err = os.Stat(filepath.Join(wd, scaffold.DeployDir))
 	if err != nil {
-		log.Fatalf("the path (./%v) does not exist. run this command in your project directory", deployCrdDir)
+		log.Fatalf("the path (./%v) does not exist. run this command in your project directory", scaffold.DeployDir)
 	}
 }

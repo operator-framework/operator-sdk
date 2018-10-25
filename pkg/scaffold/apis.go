@@ -20,13 +20,15 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const ApisFile = "apis.go"
+
 type Apis struct {
 	input.Input
 }
 
 func (s *Apis) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(apisDir, apisFile)
+		s.Path = filepath.Join(ApisDir, ApisFile)
 	}
 	s.TemplateBody = apisTmpl
 	return s.Input, nil

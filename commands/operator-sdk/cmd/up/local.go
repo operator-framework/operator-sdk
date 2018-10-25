@@ -27,11 +27,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	ansibleOperator "github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
-	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	ansibleScaffold "github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -68,11 +71,11 @@ const (
 
 func upLocalFunc(cmd *cobra.Command, args []string) {
 	mustKubeConfig()
-	switch cmdutil.GetOperatorType() {
-	case cmdutil.OperatorTypeGo:
-		cmdutil.MustInProjectRoot()
+	switch projutil.GetOperatorType() {
+	case projutil.OperatorTypeGo:
+		projutil.MustInProjectRoot()
 		upLocal()
-	case cmdutil.OperatorTypeAnsible:
+	case projutil.OperatorTypeAnsible:
 		upLocalAnsible()
 	default:
 		log.Fatal("failed to determine operator type")
@@ -97,7 +100,7 @@ func mustKubeConfig() {
 }
 
 func upLocal() {
-	args := []string{"run", filepath.Join("cmd", "manager", "main.go")}
+	args := []string{"run", filepath.Join(scaffold.ManagerDir, scaffold.CmdFile)}
 	if operatorFlags != "" {
 		extraArgs := strings.Split(operatorFlags, " ")
 		args = append(args, extraArgs...)
@@ -143,7 +146,7 @@ func upLocalAnsible() {
 	}
 
 	// start the operator
-	go ansibleOperator.Run(done, mgr, "./watches.yaml", time.Minute)
+	go ansibleOperator.Run(done, mgr, "./"+ansibleScaffold.WatchesYamlFile, time.Minute)
 
 	// wait for either to finish
 	err = <-done

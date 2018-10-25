@@ -20,15 +20,17 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const GoTestScriptFile = "go-test.sh"
+
 type GoTestScript struct {
 	input.Input
 }
 
 func (s *GoTestScript) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(buildTestDir, goTestScriptFile)
+		s.Path = filepath.Join(BuildTestDir, GoTestScriptFile)
 	}
-	s.IsExec = isExecTrue
+	s.IsExec = true
 	s.TemplateBody = goTestScriptTmpl
 	return s.Input, nil
 }

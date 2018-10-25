@@ -26,7 +26,7 @@ type TestFrameworkDockerfile struct {
 
 func (s *TestFrameworkDockerfile) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(buildTestDir, dockerfileFile)
+		s.Path = filepath.Join(BuildTestDir, DockerfileFile)
 	}
 	s.TemplateBody = testFrameworkDockerfileTmpl
 	return s.Input, nil

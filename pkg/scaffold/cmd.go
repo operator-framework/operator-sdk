@@ -20,13 +20,15 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const CmdFile = "main.go"
+
 type Cmd struct {
 	input.Input
 }
 
 func (s *Cmd) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(managerDir, cmdFile)
+		s.Path = filepath.Join(ManagerDir, CmdFile)
 	}
 	s.TemplateBody = cmdTmpl
 	return s.Input, nil
@@ -42,7 +44,7 @@ import (
 	"{{ .Repo }}/pkg/apis"
 	"{{ .Repo }}/pkg/controller"
 
-	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"

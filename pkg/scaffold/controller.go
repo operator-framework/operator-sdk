@@ -20,13 +20,15 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const ControllerFile = "controller.go"
+
 type Controller struct {
 	input.Input
 }
 
 func (s *Controller) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(controllerDir, controllerFile)
+		s.Path = filepath.Join(ControllerDir, ControllerFile)
 	}
 	s.TemplateBody = controllerTmpl
 	return s.Input, nil

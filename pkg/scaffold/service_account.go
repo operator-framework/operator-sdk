@@ -20,13 +20,15 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const ServiceAccountYamlFile = "service_account.yaml"
+
 type ServiceAccount struct {
 	input.Input
 }
 
 func (s *ServiceAccount) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(deployDir, serviceAccountYamlFile)
+		s.Path = filepath.Join(DeployDir, ServiceAccountYamlFile)
 	}
 	s.TemplateBody = serviceAccountTemplate
 	return s.Input, nil

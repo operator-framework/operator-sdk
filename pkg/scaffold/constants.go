@@ -19,43 +19,20 @@ import (
 )
 
 const (
-	// Boolean values for Input.IsExec
-	isExecTrue  = true
-	isExecFalse = false
-
 	// Separator to statically create directories.
 	filePathSep = string(filepath.Separator)
 
 	// dirs
-	cmdDir        = "cmd"
-	managerDir    = cmdDir + filePathSep + "manager"
-	pkgDir        = "pkg"
-	apisDir       = pkgDir + filePathSep + "apis"
-	controllerDir = pkgDir + filePathSep + "controller"
-	buildDir      = "build"
-	buildTestDir  = buildDir + filePathSep + "test-framework"
-	deployDir     = "deploy"
-	olmCatalogDir = deployDir + filePathSep + "olm-catalog"
-	crdsDir       = deployDir + filePathSep + "crds"
-	versionDir    = "version"
-
-	// files
-	cmdFile                = "main.go"
-	apisFile               = "apis.go"
-	controllerFile         = "controller.go"
-	dockerfileFile         = "Dockerfile"
-	goTestScriptFile       = "go-test.sh"
-	versionFile            = "version.go"
-	docFile                = "doc.go"
-	registerFile           = "register.go"
-	serviceAccountYamlFile = "service_account.yaml"
-	roleYamlFile           = "role.yaml"
-	roleBindingYamlFile    = "role_binding.yaml"
-	operatorYamlFile       = "operator.yaml"
-	catalogPackageYamlFile = "package.yaml"
-	catalogCSVYamlFile     = "csv.yaml"
-	testPodYamlFile        = "test-pod.yaml"
-	gitignoreFile          = ".gitignore"
-	gopkgtomlFile          = "Gopkg.toml"
-	gopkglockFile          = "Gopkg.lock"
+	CmdDir        = "cmd"
+	ManagerDir    = CmdDir + filePathSep + "manager"
+	PkgDir        = "pkg"
+	ApisDir       = PkgDir + filePathSep + "apis"
+	ControllerDir = PkgDir + filePathSep + "controller"
+	BuildDir      = "build"
+	BuildTestDir  = BuildDir + filePathSep + "test-framework"
+	BuildBinDir   = BuildDir + filePathSep + "_output" + filePathSep + "bin"
+	DeployDir     = "deploy"
+	OlmCatalogDir = DeployDir + filePathSep + "olm-catalog"
+	CrdsDir       = DeployDir + filePathSep + "crds"
+	VersionDir    = "version"
 )

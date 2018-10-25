@@ -20,6 +20,8 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const TestPodYamlFile = "test-pod.yaml"
+
 type TestPod struct {
 	input.Input
 
@@ -32,7 +34,7 @@ type TestPod struct {
 
 func (s *TestPod) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(deployDir, testPodYamlFile)
+		s.Path = filepath.Join(DeployDir, TestPodYamlFile)
 	}
 	s.TemplateBody = testPodTmpl
 	return s.Input, nil

@@ -20,13 +20,15 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const VersionFile = "version.go"
+
 type Version struct {
 	input.Input
 }
 
 func (s *Version) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(versionDir, versionFile)
+		s.Path = filepath.Join(VersionDir, VersionFile)
 	}
 	s.TemplateBody = versionTemplate
 	return s.Input, nil
