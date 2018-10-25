@@ -287,7 +287,7 @@ $ kubectl create -f deploy/role_binding.yaml -n memcached-test
 Once you have your environment properly configured, you can start the tests using the `operator-sdk test cluster` command:
 
 ```shell
-$ operator-sdk test cluster quay.io/example/memcached-operator:v0.0.1 --namespace memcached-test
+$ operator-sdk test cluster quay.io/example/memcached-operator:v0.0.1 --namespace memcached-test --service-account memcached-operator
 
 Example Output:
 Test Successfully Completed
