@@ -94,6 +94,22 @@ func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
 	})
 }
 
+func RequestLogHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		// read body
+		body, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			log.Error(err, "could not read request body")
+		}
+		// fix body
+		req.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+		log.Info("Request Info", "method", req.Method, "uri", req.RequestURI, "body", string(body))
+		// Removing the authorization so that the proxy can set the correct authorization.
+		req.Header.Del("Authorization")
+		h.ServeHTTP(w, req)
+	})
+}
+
 // HandlerChain will be used for users to pass defined handlers to the proxy.
 // The hander chain will be run after InjectingOwnerReference if it is added
 // and before the proxy handler.
@@ -106,6 +122,7 @@ type Options struct {
 	Port             int
 	Handler          HandlerChain
 	NoOwnerInjection bool
+	LogRequests      bool
 	KubeConfig       *rest.Config
 }
 
@@ -124,6 +141,11 @@ func Run(done chan error, o Options) error {
 	if !o.NoOwnerInjection {
 		server.Handler = InjectOwnerReferenceHandler(server.Handler)
 	}
+
+	if o.LogRequests {
+		server.Handler = RequestLogHandler(server.Handler)
+	}
+
 	l, err := server.Listen(o.Address, o.Port)
 	if err != nil {
 		return err

@@ -105,3 +105,4 @@ test/ansible-operator/ansible-operator
 
 # Test artifacts
 pkg/ansible/runner/testdata/valid.yaml
+test/scorecard-proxy/scorecard-proxy
