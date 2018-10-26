@@ -11,8 +11,8 @@ how to program an operator in Go.
 - [git][git_tool]
 - [go][go_tool] version v1.10+.
 - [docker][docker_tool] version 17.03+.
-- [kubectl][kubectl_tool] version v1.10.0+.
-- Access to a kubernetes v.1.10.0+ cluster.
+- [kubectl][kubectl_tool] version v1.11.0+.
+- Access to a kubernetes v.1.11.0+ cluster.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the local kubernetes cluster and quay.io for the public registry.
 
@@ -48,11 +48,11 @@ $ cd memcached-operator
 To learn about the project directory structure, see [project layout][layout_doc] doc.
 
 ### Manager
-The main program for the operator is the Manager `cmd/manager/main.go`.
+The main program for the operator `cmd/manager/main.go` initializes and runs the [Manager][manager_go_doc].
 
-The manager will automatically register the scheme for all custom resources defined under `pkg/apis/...` and run all controllers under `pkg/controller/...`.
+The Manager will automatically register the scheme for all custom resources defined under `pkg/apis/...` and run all controllers under `pkg/controller/...`.
 
-The manager can restrict the namespace that all controllers will watch for resources:
+The Manager can restrict the namespace that all controllers will watch for resources:
 ```Go
 mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
 ```
@@ -61,7 +61,7 @@ By default this will be the namespace that the operator is running in. To watch 
 mgr, err := manager.New(cfg, manager.Options{Namespace: ""})
 ```
 
-**// TODO:** Doc on manager options(Sync period, leader election, registering 3rd party types)
+**// TODO:** Doc on leader election
 
 ## Add a new Custom Resource Definition
 
@@ -72,7 +72,9 @@ $ operator-sdk add api --api-version=cache.example.com/v1alpha1 --kind=Memcached
 ```
 
 This will scaffold the Memcached resource API under `pkg/apis/cache/v1alpha1/...`.
+
 ### Define the spec and status
+
 Modify the spec and status of the `Memcached` Custom Resource(CR) at `pkg/apis/cache/v1alpha1/memcached_types.go`:
 
 ```Go
@@ -94,24 +96,26 @@ $ operator-sdk generate k8s
 
 ## Add a new Controller
 
-Add a new Controller to the project that will watch and reconcile the Memcached resource:
-```
+Add a new [Controller][controller-go-doc] to the project that will watch and reconcile the Memcached resource:
+
+```sh
 $ operator-sdk add controller --api-version=cache.example.com/v1alpha1 --kind=Memcached
 ```
-This will scaffold a new Controller implementation under `pkg/controller/memcached/...`
 
-For this example replace the generated controller file `pkg/controller/memcached/memcached_controller.go` with the example [memcached_controller.go][memcached_controller] implementation.
+This will scaffold a new Controller implementation under `pkg/controller/memcached/...`.
 
-The example controller executes the following reconciliation logic for each `Memcached` CR:
+For this example replace the generated Controller file `pkg/controller/memcached/memcached_controller.go` with the example [memcached_controller.go][memcached_controller] implementation.
+
+The example Controller executes the following reconciliation logic for each `Memcached` CR:
 - Create a memcached Deployment if it doesn't exist
 - Ensure that the Deployment size is the same as specified by the `Memcached` CR spec
 - Update the `Memcached` CR status with the names of the memcached pods
 
-The next two subsections explain how the controller watches resources and how the reconcile loop is triggered. Skip to the [Build](#build-and-run-the-operator) section to see how to build and run the operator.
+The next two subsections explain how the Controller watches resources and how the reconcile loop is triggered. Skip to the [Build](#build-and-run-the-operator) section to see how to build and run the operator.
 
 ### Resources watched by the Controller
 
-Inspect the controller implementation at `pkg/controller/memcached/memcached_controller.go` to see how the controller watches resources.
+Inspect the Controller implementation at `pkg/controller/memcached/memcached_controller.go` to see how the Controller watches resources.
 
 The first watch is for the Memcached type as the primary resource. For each Add/Update/Delete event the reconcile loop will be sent a reconcile `Request` (a namespace/name key) for that Memcached object:
 
@@ -135,7 +139,7 @@ err := c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequest
 
 ### Reconcile loop
 
-Every controller has a Reconciler object with a `Reconcile()` method that implements the reconcile loop. The reconcile loop is passed the `Request` argument which is a Namespace/Name key used to lookup the primary resource object, Memcached, from the cache:
+Every Controller has a Reconciler object with a `Reconcile()` method that implements the reconcile loop. The reconcile loop is passed the [Request][request-go-doc] argument which is a Namespace/Name key used to lookup the primary resource object, Memcached, from the cache:
 
 ```Go
 func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Result, error) {
@@ -146,7 +150,8 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 }  
 ```
 
-Based on the return value of `Reconcile()` the reconcile `Request` may be requeued and the loop may be triggered again:
+Based on the return values, [Result][result_go_doc] and error, the `Request` may be requeued and the reconcile loop may be triggered again:
+
 ```Go
 // Reconcile successful - don't requeue
 return reconcile.Result{}, nil
@@ -163,6 +168,8 @@ import "time"
 // Reconcile for any reason than error after 5 seconds
 return reconcile.Result{RequeueAfter: time.Second*5}, nil
 ```
+
+**Note:** Returning `Result` with `RequeueAfter` set is how you can periodically reconcile a CR.
 
 For a guide on Reconcilers, Clients, and interacting with resource Events, see the [Client API doc][doc_client_api].
 
@@ -325,7 +332,9 @@ $ kubectl delete -f deploy/service_account.yaml
 ```
 
 ## Advanced Topics
+
 ### Adding 3rd Party Resources To Your Operator
+
 By default the operator's Manager will register all custom resource types defined in your project under `pkg/apis` with its scheme.
 ```Go
 import (
@@ -340,7 +349,8 @@ if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
 
 To add a 3rd party resource to an operator, you must add it to the Manager's scheme. By creating an `AddToScheme` method or reusing one you can easily add a resource to your scheme. An [example][deployments_register] shows that you define a function and then use the [runtime][runtime_package] package to create a `SchemeBuilder`.
 
-#### Register with the manager's scheme
+#### Register with the Manager's scheme
+
 Call the `AddToScheme()` function for your 3rd party resource and pass it the Manager's scheme via `mgr.GetScheme()`.
 
 Example:
@@ -372,4 +382,7 @@ func main() {
 [deployments_register]: https://github.com/kubernetes/api/blob/master/apps/v1/register.go#L41
 [doc_client_api]:./user/client.md
 [runtime_package]: https://godoc.org/k8s.io/apimachinery/pkg/runtime
-[osdk_add_to_scheme]: https://github.com/operator-framework/operator-sdk/blob/4179b6ac459b2b0cb04ab3a1b438c280bd28d1a5/pkg/util/k8sutil/k8sutil.go#L67
+[manager_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Manager
+[controller-go-doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg#hdr-Controller
+[request-go-doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Request
+[result_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Result
