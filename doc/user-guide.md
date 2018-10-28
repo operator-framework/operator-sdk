@@ -61,11 +61,9 @@ By default this will be the namespace that the operator is running in. To watch 
 mgr, err := manager.New(cfg, manager.Options{Namespace: ""})
 ```
 
-**// TODO:** Doc on leader election
-
 ## Add a new Custom Resource Definition
 
-Add a new Custom Resource Defintion(CRD) API called Memcached, with APIVersion `cache.example.com/v1apha1` and Kind `Memcached`.
+Add a new Custom Resource Definition(CRD) API called Memcached, with APIVersion `cache.example.com/v1apha1` and Kind `Memcached`.
 
 ```sh
 $ operator-sdk add api --api-version=cache.example.com/v1alpha1 --kind=Memcached
@@ -104,7 +102,7 @@ $ operator-sdk add controller --api-version=cache.example.com/v1alpha1 --kind=Me
 
 This will scaffold a new Controller implementation under `pkg/controller/memcached/...`.
 
-For this example replace the generated Controller file `pkg/controller/memcached/memcached_controller.go` with the example [memcached_controller.go][memcached_controller] implementation.
+For this example replace the generated Controller file `pkg/controller/memcached/memcached_controller.go` with the example [`memcached_controller.go`][memcached_controller] implementation.
 
 The example Controller executes the following reconciliation logic for each `Memcached` CR:
 - Create a memcached Deployment if it doesn't exist
@@ -139,7 +137,7 @@ err := c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequest
 
 ### Reconcile loop
 
-Every Controller has a Reconciler object with a `Reconcile()` method that implements the reconcile loop. The reconcile loop is passed the [Request][request-go-doc] argument which is a Namespace/Name key used to lookup the primary resource object, Memcached, from the cache:
+Every Controller has a Reconciler object with a `Reconcile()` method that implements the reconcile loop. The reconcile loop is passed the [`Request`][request-go-doc] argument which is a Namespace/Name key used to lookup the primary resource object, Memcached, from the cache:
 
 ```Go
 func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Result, error) {
@@ -150,7 +148,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 }  
 ```
 
-Based on the return values, [Result][result_go_doc] and error, the `Request` may be requeued and the reconcile loop may be triggered again:
+Based on the return values, [`Result`][result_go_doc] and error, the `Request` may be requeued and the reconcile loop may be triggered again:
 
 ```Go
 // Reconcile successful - don't requeue

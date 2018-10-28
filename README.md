@@ -4,7 +4,9 @@
 
 ### Project Status: alpha
 
-The project is currently alpha. The core APIs provided by the controller-runtime will most likely be unchanged. New features and APIs may still be added in the future.
+The project is currently alpha which means that there are still new features and APIs planned that will be added in the future. Due to this breaking changes may still happen.
+
+**Note:** The core APIs provided by the [controller-runtime][controller_runtime] will most likely stay unchanged however the expectation is that any breaking changes should be relatively minor and easier to handle than the changes from SDK `v0.0.7` to `v0.1.0`.
 
 See the [proposal docs][proposals_docs] and issues for ongoing or planned work.
 
@@ -21,7 +23,9 @@ The Operator SDK is a framework that uses the [controller-runtime][controller_ru
 
 ## Workflow
 
-The SDK provides the following workflow to develop a new operator in Go:
+The SDK provides workflows to develop operators in Go or Ansible.
+
+The following workflow is for a new Go operator:
 1. Create a new operator project using the SDK Command Line Interface(CLI)
 2. Define new resource APIs by adding Custom Resource Definitions(CRD)
 3. Define Controllers to watch and reconcile resources
