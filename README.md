@@ -25,12 +25,18 @@ The Operator SDK is a framework that uses the [controller-runtime][controller_ru
 
 The SDK provides workflows to develop operators in Go or Ansible.
 
-The following workflow is for a new Go operator:
+The following workflow is for a new **Go** operator:
 1. Create a new operator project using the SDK Command Line Interface(CLI)
 2. Define new resource APIs by adding Custom Resource Definitions(CRD)
 3. Define Controllers to watch and reconcile resources
 4. Write the reconciling logic for your Controller using the SDK and controller-runtime APIs
 5. Use the SDK CLI to build and generate the operator deployment manifests
+
+The following workflow is for a new **Ansible** operator:
+1. Create a new operator project using the SDK Command Line Interface(CLI)
+2. Write the reconciling logic for your object using ansible playbooks and roles
+3. Use the SDK CLI to build and generate the operator deployment manifests
+4. Optionally add additional CRD's using the SDK CLI and repeat steps 2 and 3
 
 ## Prerequisites
 
