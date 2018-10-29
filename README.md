@@ -2,11 +2,13 @@
 
 [![Build Status](https://travis-ci.org/operator-framework/operator-sdk.svg?branch=master)](https://travis-ci.org/operator-framework/operator-sdk)
 
-### Project Status: pre-alpha
+### Project Status: alpha
 
-The project is currently pre-alpha and it is expected that breaking changes to the API will be made in the upcoming releases.
+The project is currently alpha which means that there are still new features and APIs planned that will be added in the future. Due to this breaking changes may still happen.
 
-See the [design docs][design_docs] for planned work on upcoming milestones.
+**Note:** The core APIs provided by the [controller-runtime][controller_runtime] will most likely stay unchanged however the expectation is that any breaking changes should be relatively minor and easier to handle than the changes from SDK `v0.0.7` to `v0.1.0`.
+
+See the [proposal docs][proposals_docs] and issues for ongoing or planned work.
 
 ## Overview
 
@@ -14,21 +16,21 @@ This project is a component of the [Operator Framework][of-home], an open source
 
 [Operators][operator_link] make it easy to manage complex stateful applications on top of Kubernetes. However writing an operator today can be difficult because of challenges such as using low level APIs, writing boilerplate, and a lack of modularity which leads to duplication.
 
-The Operator SDK is a framework designed to make writing operators easier by providing:
+The Operator SDK is a framework that uses the [controller-runtime][controller_runtime] library to make writing operators easier by providing:
 - High level APIs and abstractions to write the operational logic more intuitively
 - Tools for scaffolding and code generation to bootstrap a new project fast
 - Extensions to cover common operator use cases
 
 ## Workflow
 
-The SDK provides the following workflow to develop a new operator:
+The SDK provides workflows to develop operators in Go or Ansible.
+
+The following workflow is for a new Go operator:
 1. Create a new operator project using the SDK Command Line Interface(CLI)
 2. Define new resource APIs by adding Custom Resource Definitions(CRD)
-3. Specify resources to watch using the SDK API
-4. Define the operator reconciling logic in a designated handler and use the SDK API to interact with resources
+3. Define Controllers to watch and reconcile resources
+4. Write the reconciling logic for your Controller using the SDK and controller-runtime APIs
 5. Use the SDK CLI to build and generate the operator deployment manifests
-
-At a high level an operator using the SDK processes events for watched resources in a user defined handler and takes actions to reconcile the state of the application.
 
 ## Prerequisites
 
@@ -36,8 +38,8 @@ At a high level an operator using the SDK processes events for watched resources
 - [git][git_tool]
 - [go][go_tool] version v1.10+.
 - [docker][docker_tool] version 17.03+.
-- [kubectl][kubectl_tool] version v1.10.0+.
-- Access to a kubernetes v.1.10.0+ cluster.
+- [kubectl][kubectl_tool] version v1.11.0+.
+- Access to a kubernetes v.1.11.0+ cluster.
 
 ## Quick Start
 
@@ -104,9 +106,11 @@ $ kubectl delete -f deploy/service_account.yaml
 $ kubectl delete -f deploy/crds/app_v1alpha1_appservice_crd.yaml
 ```
 
-## User Guide
+## User Guides
 
-To learn more about the operator-sdk, see the [user guide][guide].
+To learn more about the writing an operator in Go, see the [user guide][guide].
+
+The SDK also supports developing an operator using Ansible. See the [Ansible operator user guide][ansible_user_guide].
 
 ## Samples
 
@@ -125,7 +129,7 @@ See [reporting bugs][bug_guide] for details about reporting any issues.
 Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file for details.
 
 [operator_link]: https://coreos.com/operators/
-[design_docs]: ./doc/design
+[proposals_docs]: ./doc/proposals
 [guide]: ./doc/user-guide.md
 [samples]: https://github.com/operator-framework/operator-sdk-samples
 [of-home]: https://github.com/operator-framework
@@ -138,3 +142,5 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [go_tool]:https://golang.org/dl/
 [docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
+[controller_runtime]: https://github.com/kubernetes-sigs/controller-runtime
+[ansible_user_guide]:./ansible/user-guide.md
