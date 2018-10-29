@@ -99,7 +99,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	}
 	if !contains(pendingFinalizers, finalizer) && deleted {
 		logger.Info("Resource is terminated, skipping reconcilation")
-		return reconcileResult, nil
+		return reconcile.Result{}, nil
 	}
 
 	spec := u.Object["spec"]
@@ -132,7 +132,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 			ansiblestatus.RunningMessage,
 		)
 		ansiblestatus.SetCondition(&crStatus, *c)
-		u.Object["status"] = crStatus
+		u.Object["status"] = crStatus.GetJSONMap()
 		err = r.Client.Update(context.TODO(), u)
 		if err != nil {
 			return reconcileResult, err
@@ -159,7 +159,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	// iterate events from ansible, looking for the final one
 	statusEvent := eventapi.StatusJobEvent{}
 	failureMessages := eventapi.FailureMessages{}
-	for event := range result.Events {
+	for event := range result.Events() {
 		for _, eHandler := range r.EventHandlers {
 			go eHandler.Handle(ident, u, event)
 		}
@@ -232,7 +232,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		ansiblestatus.SetCondition(&crStatus, *c)
 	}
 	// This needs the status subresource to be enabled by default.
-	u.Object["status"] = crStatus
+	u.Object["status"] = crStatus.GetJSONMap()
 	err = r.Client.Update(context.TODO(), u)
 	return reconcileResult, err
 
