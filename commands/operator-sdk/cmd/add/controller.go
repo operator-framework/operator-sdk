@@ -57,6 +57,9 @@ Example:
 }
 
 func controllerRun(cmd *cobra.Command, args []string) {
+	// Only Go projects can add controllers.
+	projutil.MustGoProjectCmd(cmd)
+
 	projutil.MustInProjectRoot()
 	// Create and validate new resource
 	r, err := scaffold.NewResource(apiVersion, kind)
