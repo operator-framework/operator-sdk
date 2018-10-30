@@ -143,4 +143,4 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [controller_runtime]: https://github.com/kubernetes-sigs/controller-runtime
-[ansible_user_guide]:./ansible/user-guide.md
+[ansible_user_guide]:./doc/ansible/user-guide.md
