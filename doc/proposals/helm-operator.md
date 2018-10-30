@@ -55,8 +55,8 @@ operator-sdk new <project-name> --type=helm --kind=<kind> --api-version=<group/v
 
 This will be new scaffolding for the above command under the hood. We will:
 * Create a `./<project-name>` directory.
-* Create a `./<project-name>/charts` directory.
-* Generate a simple default chart at `./<project-name>/charts/<kind>`.
+* Create a `./<project-name>/helm-charts` directory.
+* Generate a simple default chart at `./<project-name>/helm-charts/<kind>`.
 * Create a new watches file at `./<project-name>/watches.yaml`. The chart and GVK will be defaulted based on input to the `new` command.
 * Create a `./<project-name>/deploy` with the Kubernetes resource files necessary to run the operator.
 * Create a `./build/Dockerfile` that uses the watches file and the helm chart. It will use the Helm operator as its base image.
@@ -70,7 +70,7 @@ The resulting structure will be:
 |-- build
 |   |   Dockerfile
 |
-|-- charts
+|-- helm-charts
 |   |-- <kind>
 |       |   Chart.yaml
 |       |   ...
