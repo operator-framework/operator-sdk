@@ -16,6 +16,8 @@ package scaffold
 
 import (
 	"testing"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/internal/testutil"
 )
 
 func TestVersion(t *testing.T) {
@@ -26,7 +28,7 @@ func TestVersion(t *testing.T) {
 	}
 
 	if versionExp != buf.String() {
-		diffs := diff(versionExp, buf.String())
+		diffs := testutil.Diff(versionExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }

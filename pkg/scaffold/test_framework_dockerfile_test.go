@@ -16,6 +16,8 @@ package scaffold
 
 import (
 	"testing"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/internal/testutil"
 )
 
 func TestTestFrameworkDockerfile(t *testing.T) {
@@ -26,7 +28,7 @@ func TestTestFrameworkDockerfile(t *testing.T) {
 	}
 
 	if testFrameworkDockerfileExp != buf.String() {
-		diffs := diff(testFrameworkDockerfileExp, buf.String())
+		diffs := testutil.Diff(testFrameworkDockerfileExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
