@@ -90,100 +90,125 @@ operator-sdk completion bash
 
 ## generate
 
-### Available Commands
+### k8s 
 
-#### k8s - Generates Kubernetes code for custom resource
+Runs the Kubernetes [code-generators][k8s-code-generator] for all Custom Resource Definitions (CRD) apis under `pkg/apis/...`.
+Currently only runs `deepcopy-gen` to generate the required `DeepCopy()` functions for all custom resource types.
 
-##### Use
+**Note**: This command must be run every time the api (spec and status) for a custom resource type is updated.
 
-k8s generator generates code for custom resource given the API spec
-to comply with kube-API requirements.
-
-##### Flags
-
-* `-h, --help` - help for k8s
-
-##### Example
+#### Example
 
 ```bash
-operator-sdk generate k8s
+$ tree pkg/apis/app/v1alpha1/
+pkg/apis/app/v1alpha1/
+├── appservice_types.go
+├── doc.go
+├── register.go
 
-# Output:
-Run code-generation for custom resources
+$ operator-sdk generate k8s
+Running code-generation for custom resource group versions: [app:v1alpha1]
 Generating deepcopy funcs
+
+$ tree pkg/apis/app/v1alpha1/
+pkg/apis/app/v1alpha1/
+├── appservice_types.go
+├── doc.go
+├── register.go
+└── zz_generated.deepcopy.go
 ```
-
-#### crd - Generates a custom resource definition (CRD) and the custom resource (CR) files
-
-##### Use
-
-crd generator generates custom resource definition and custom resource
-files for the specified api-version and kind.
-
-##### Flags
-
-* `--api-version` **(required)** string - Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)
-* `-h, --help` - help for k8s
-* `--kind` **(required)** string - Kubernetes CustomResourceDefinition kind. (e.g AppService)
-
-##### Example
-
-```bash
-operator-sdk generate crd --api-version app.example.com/v1alpha1 --kind AppService
-
-# Output:
-Generating custom resource definition (CRD) file
-Create <path_to_project>/deploy/appservice_cr.yaml
-Create <path_to_project>/deploy/appservice_crd.yaml
-```
-#### olm-catalog - Generates OLM Catalog manifests
-
-##### Flags
-
-* `--image` **(required)** string - The container image name to set in the CSV to deploy the operator e.g: quay.io/example/operator:v0.0.1
-* `--version` **(required)** string - The version of the current CSV e.g: 0.0.1
-* `-h, --help` - help for olm-catalog
-
-##### Example
-
-```bash
-operator-sdk generate olm-catalog --image=quay.io/example/operator:v0.0.1 --version=0.0.1
-
-# Output:
-Generating OLM catalog manifests
-```
-
-### Flags
-
-* `-h, --help` - help for generate
 
 ## new
 
-The operator-sdk new command creates a new operator application and
-generates a default directory layout based on the input `project-name`.
+Scaffolds a new operator project.
 
 ### Args
 
-* `project-name` - the project name of the new
+* `project-name` - name of the new project
 
 ### Flags
 
-* `--api-version` **(required)** string - Kubernetes apiVersion and has a format of `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
-* `--kind` **(required)** string - Kubernetes CustomResourceDefintion kind. (e.g AppService)
+
 * `--skip-git-init` Do not init the directory as a git repository
-* `--type` Type of operator to initialize (e.g "ansible") (default "go")
+* `--type` Type of operator to initialize: "ansible" or "go" (default "go"). Also requires the following flags if `--type=ansible`
+  * `--api-version` CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
+  * `--kind` CRD Kind. (e.g AppService)
 * `-h, --help` - help for new
 
 ### Example
 
+Go project:
 ```bash
 mkdir $GOPATH/src/github.com/example.com/
 cd $GOPATH/src/github.com/example.com/
-operator-sdk new app-operator --api-version=app.example.com/v1alpha1 --kind=AppService
+operator-sdk new app-operator
+```
 
-# Output:
-Create app-operator/.gitignore
-...
+Ansible project:
+```bash
+operator-sdk new app-operator --type=ansible --api-version=app.example.com/v1alpha1 --kind=AppService
+```
+
+## add
+
+### api
+
+Adds the
+api definition for a new custom resource under `pkg/apis` and generates the CRD and CR files under `depoy/crds/...`.
+
+#### Flags
+
+* `--api-version` CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
+* `--kind` CRD Kind. (e.g AppService)
+
+#### Example
+
+```bash
+$ operator-sdk add api --api-version app.example.com/v1alpha1 --kind AppService
+Create pkg/apis/app/v1alpha1/appservice_types.go
+Create pkg/apis/addtoscheme_app_v1alpha1.go
+Create pkg/apis/app/v1alpha1/register.go
+Create pkg/apis/app/v1alpha1/doc.go
+Create deploy/crds/app_v1alpha1_appservice_cr.yaml
+Create deploy/crds/app_v1alpha1_appservice_crd.yaml
+Running code-generation for custom resource group versions: [app:v1alpha1]
+Generating deepcopy funcs
+```
+
+### controller
+
+Adds a new
+controller under `pkg/controller/<kind>/...` that, by default, reconciles a custom resource for the specified apiversion and kind.
+
+#### Flags
+
+* `--api-version` CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
+* `--kind` CRD Kind. (e.g AppService)
+
+#### Example
+
+```bash
+$ operator-sdk add controller --api-version app.example.com/v1alpha1 --kind AppService
+Create pkg/controller/appservice/appservice_controller.go
+Create pkg/controller/add_appservice.go
+```
+
+### crd
+
+Generates the CRD and the CR files for the specified api-version and kind.
+
+#### Flags
+
+* `--api-version` CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
+* `--kind` CRD Kind. (e.g AppService)
+
+#### Example
+
+```bash
+$ operator-sdk add crd --api-version app.example.com/v1alpha1 --kind AppService
+Generating custom resource definition (CRD) files
+Create deploy/crds/app_v1alpha1_appservice_crd.yaml
+Create deploy/crds/app_v1alpha1_appservice_cr.yaml
 ```
 
 ## test
@@ -293,3 +318,4 @@ operator-sdk up local --namespace "testing"
 * `-h, --help` - help for up
 
 [utility_link]: https://github.com/operator-framework/operator-sdk/blob/89bf021063d18b6769bdc551ed08fc37027939d5/pkg/util/k8sutil/k8sutil.go#L140
+[k8s-code-generator]: https://github.com/kubernetes/code-generator
