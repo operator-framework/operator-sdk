@@ -67,9 +67,6 @@ func main() {
 		log.Fatalf("failed to get watch namespace: %v", err)
 	}
 
-	// TODO: Expose metrics port after SDK uses controller-runtime's dynamic client
-	// sdk.ExposeMetricsPort()
-
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
 	if err != nil {
