@@ -1,14 +1,22 @@
-## Unreleased
+## v0.1.0
+
+### Changed
+
+- Use [controller runtime](https://github.com/kubernetes-sigs/controller-runtime) library for controller and client APIs
+- See [migration guide](https://github.com/operator-framework/operator-sdk/blob/master/doc/migration/v0.1.0-migration-guide.md) to migrate your project to `v0.1.0`
+
+## v0.0.7
 
 ### Added
-### Removed
+
+- Service account generation ([#454](https://github.com/operator-framework/operator-sdk/pull/454))
+- Leader election ([#530](https://github.com/operator-framework/operator-sdk/pull/530))
+- Incluster test support for test framework ([#469](https://github.com/operator-framework/operator-sdk/pull/469))
+- Ansible type operator generation support ([#486](https://github.com/operator-framework/operator-sdk/pull/486), [#559](https://github.com/operator-framework/operator-sdk/pull/559))
+
 ### Changed
 
 - Moved the rendering of `deploy/operator.yaml` to the `operator-sdk new` command instead of `operator-sdk build`
-
-### Fixed
-### Deprecated
-### Security
 
 ## v0.0.6
 
