@@ -102,3 +102,6 @@ tags
 # Build artifacts
 build/*
 test/ansible-operator/ansible-operator
+
+# Test artifacts
+pkg/ansible/runner/testdata/valid.yaml

@@ -123,6 +123,9 @@ func NewForPlaybook(path string, gvk schema.GroupVersionKind, finalizer *Finaliz
 	if !filepath.IsAbs(path) {
 		return nil, fmt.Errorf("playbook path must be absolute for %v", gvk)
 	}
+	if _, err := os.Stat(path); err != nil {
+		return nil, fmt.Errorf("playbook: %v was not found for %v", path, gvk)
+	}
 	r := &runner{
 		Path: path,
 		GVK:  gvk,
@@ -142,6 +145,9 @@ func NewForPlaybook(path string, gvk schema.GroupVersionKind, finalizer *Finaliz
 func NewForRole(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, reconcilePeriod time.Duration) (Runner, error) {
 	if !filepath.IsAbs(path) {
 		return nil, fmt.Errorf("role path must be absolute for %v", gvk)
+	}
+	if _, err := os.Stat(path); err != nil {
+		return nil, fmt.Errorf("role path: %v was not found for %v", path, gvk)
 	}
 	path = strings.TrimRight(path, "/")
 	r := &runner{
