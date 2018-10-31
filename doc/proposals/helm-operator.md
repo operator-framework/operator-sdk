@@ -2,7 +2,7 @@
 
 ### Background
 
-As was mentioned in the [Ansible Operator Proposal](./ansible-operator.md), not everyone is a golang developer, so the SDK needs to support other types of operators to gain adoption across a wider community of users.  
+As was mentioned in the [Ansible Operator Proposal](./ansible-operator.md), not everyone is a golang developer, so the SDK needs to support other types of operators to gain adoption across a wider community of users.
 
 [Helm](https://helm.sh/) is one of the most widely-used tools for Kubernetes application management, and it bills itself as the "package manager for Kubernetes." Operators serve a nearly identical function, but they improve on Helm's concepts by incorporating an always-on reconciliation loop rather than relying on an imperative user-driven command line tool. By integrating Helm's templating engine and release management into an operator, the SDK will further increase the number of potential users by adding the ability to deploy Charts (e.g. from Helm's [large catalog of existing Charts](https://github.com/helm/charts)) as operators with very little extra effort.
 
@@ -86,19 +86,21 @@ The resulting structure will be:
 |       |   <gvk>_cr.yaml
 ```
 
+The SDK CLI will use the presence of the `helm-charts` directory to detect a `helm` type project.
+
 #### Add
 
 Add functionality will be updated to allow Helm operator developers to add new CRDs/CRs and to update the watches.yaml file for additional Helm charts. The command helps when a user wants to watch more than one CRD for their operator.
 
 ```
-operator-sdk add api --api-version=<group>/<version> --kind=<kind>
+operator-sdk add crd --api-version=<group>/<version> --kind=<kind>
 ```
 
 Flags:
 * **Required:** --kind - the kind for the CRD.
 * **Required:** --api-version - the group/version for the CRD.
 
-**NOTE:** `operator-sdk add controller` will not be supported, since it doesn't make sense for a Helm operator.
+**NOTE:** `operator-sdk add` subcommands `api` and `controller` will not be supported, since they are only valid for Go operators.
 
 #### Up
 
@@ -118,10 +120,18 @@ Build functionality will be updated to support building a docker image from the 
 operator-sdk build <image-name>
 ```
 
+### Base Image
+
+The SDK team will maintain a build job for the `helm-operator` base image with the following tagging methodology:
+* Builds on the master branch that pass nightly CI tests will be tagged with `:master`
+* Builds for tags that pass CI will be tagged with `:<tag>`. If the tag is also the greatest semantic version for the repository, the image will also be tagged with `:latest`.
+
+The go binary included in the base image will be built with `GOOS=linux` and `GOARCH=amd64`.
+
+The base image repository will be `quay.io/water-hole/helm-operator`.
+
 ### Observations and open questions
 
 * There will be a large amount of overlap in the `operator-sdk` commands for the Ansible and Helm operators. We should take care to extract the resusable features of the Ansible operator commands into a shared library, usable by both Helm and Ansible commands.
-
-* This proposal assumes that a Helm Operator base image will be available for building Helm operator projects. What generates the Helm operator base image and what is the registry, image name, versioning, etc.?
 
 * There is a moderate amount of complexity already related to how operator types are handled between the `go` and `ansible` types. With the addition of a third type, there may need to be a larger design proposal for operator types. For example, do we need to define an `Operator` interface that each of the operator types can implement for flag verification, scaffolding, project detection, etc.?
