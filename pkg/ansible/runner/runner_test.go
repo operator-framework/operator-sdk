@@ -15,6 +15,9 @@
 package runner
 
 import (
+	"html/template"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 	"time"
@@ -23,6 +26,33 @@ import (
 )
 
 func TestNewFromWatches(t *testing.T) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("unable to get working director: %v", err)
+	}
+
+	validTemplate := struct {
+		ValidPlaybook string
+		ValidRole     string
+	}{
+
+		ValidPlaybook: filepath.Join(cwd, "testdata", "playbook.yml"),
+		ValidRole:     filepath.Join(cwd, "testdata", "roles", "role"),
+	}
+
+	tmpl, err := template.ParseFiles("testdata/valid.yaml.tmpl")
+	if err != nil {
+	}
+	f, err := os.Create("testdata/valid.yaml")
+	if err != nil {
+		t.Fatalf("unable to create valid.yaml: %v", err)
+	}
+	err = tmpl.Execute(f, validTemplate)
+	if err != nil {
+		t.Fatalf("unable to create valid.yaml: %v", err)
+		return
+	}
+
 	testCases := []struct {
 		name        string
 		path        string
@@ -83,7 +113,7 @@ func TestNewFromWatches(t *testing.T) {
 						Group:   "app.example.com",
 						Kind:    "NoFinalizer",
 					},
-					Path:            "/opt/ansible/playbook.yaml",
+					Path:            validTemplate.ValidPlaybook,
 					reconcilePeriod: time.Second * 2,
 				},
 				schema.GroupVersionKind{
@@ -96,10 +126,10 @@ func TestNewFromWatches(t *testing.T) {
 						Group:   "app.example.com",
 						Kind:    "Playbook",
 					},
-					Path: "/opt/ansible/playbook.yaml",
+					Path: validTemplate.ValidPlaybook,
 					Finalizer: &Finalizer{
 						Name: "finalizer.app.example.com",
-						Role: "/opt/ansible/role",
+						Role: validTemplate.ValidRole,
 						Vars: map[string]interface{}{"sentinel": "finalizer_running"},
 					},
 				},
@@ -113,10 +143,10 @@ func TestNewFromWatches(t *testing.T) {
 						Group:   "app.example.com",
 						Kind:    "Role",
 					},
-					Path: "/opt/ansible/role",
+					Path: validTemplate.ValidRole,
 					Finalizer: &Finalizer{
 						Name:     "finalizer.app.example.com",
-						Playbook: "/opt/ansible/playbook.yaml",
+						Playbook: validTemplate.ValidPlaybook,
 						Vars:     map[string]interface{}{"sentinel": "finalizer_running"},
 					},
 				},
