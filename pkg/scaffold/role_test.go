@@ -43,11 +43,18 @@ rules:
   - services
   - endpoints
   - persistentvolumeclaims
-  - events
+  # Add this back if you cluster admin has granted access to create events
+  # - events
   - configmaps
   - secrets
   verbs:
-  - "*"
+  - "create"
+  - "update"
+  - "delete"
+  - "get"
+  - "list"
+  - "watch"
+  - "patch"
 - apiGroups:
   - apps
   resources:
@@ -56,12 +63,19 @@ rules:
   - replicasets
   - statefulsets
   verbs:
-  - "*"
-- apiGroups:
-  - monitoring.coreos.com
-  resources:
-  - servicemonitors
-  verbs:
-  - "get"
   - "create"
+  - "update"
+  - "delete"
+  - "get"
+  - "list"
+  - "watch"
+  - "patch"
+  # Enable this if operator-metering is installed in your cluster.
+  #- apiGroups:
+  #- monitoring.coreos.com
+  #resources:
+  #- servicemonitors
+  #verbs:
+  #- "get"
+  #- "create"
 `

@@ -82,7 +82,7 @@ func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 			// Using "*" to allow access to the resource and all its subresources e.g "memcacheds" and "memcacheds/finalizers"
 			// https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
 			pr.Resources = []string{"*"}
-			pr.Verbs = []string{"*"}
+			pr.Verbs = []string{"create", "update", "delete", "get", "list", "watch", "patch"}
 			role.Rules = append(role.Rules, *pr)
 		}
 		// update role.yaml
@@ -160,11 +160,18 @@ rules:
   - services
   - endpoints
   - persistentvolumeclaims
-  - events
+  # Add this back if you cluster admin has granted access to create events
+  # - events
   - configmaps
   - secrets
   verbs:
-  - "*"
+  - "create"
+  - "update"
+  - "delete"
+  - "get"
+  - "list"
+  - "watch"
+  - "patch"
 - apiGroups:
   - apps
   resources:
@@ -173,12 +180,19 @@ rules:
   - replicasets
   - statefulsets
   verbs:
-  - "*"
-- apiGroups:
-  - monitoring.coreos.com
-  resources:
-  - servicemonitors
-  verbs:
-  - "get"
   - "create"
+  - "update"
+  - "delete"
+  - "get"
+  - "list"
+  - "watch"
+  - "patch"
+  # Enable this if operator-metering is installed in your cluster.
+  #- apiGroups:
+  #- monitoring.coreos.com
+  #resources:
+  #- servicemonitors
+  #verbs:
+  #- "get"
+  #- "create"
 `
