@@ -24,8 +24,8 @@ Minor version changes will not break compatibility between the previous minor ve
 We expect to release patches for minor releases, so we create a patch trunk to branch from. The naming convention follows "v2.1.x", where the major version is 2, minor is 1, and "x" is a patch version placeholder.
 
 ```bash
-$ MAV_MIN_VER="v${MAJOR_VERSION}.${NEW_MINOR_VERSION}"
-$ git checkout -b "${MAJ_MIN_VER}.x" tags/"v${MAJ_MIN_VER}.0"
+$ export MAJ_MIN_VER="${MAJOR_VERSION}.${NEW_MINOR_VERSION}"
+$ git checkout -b "v${MAJ_MIN_VER}.x" tags/"v${MAJ_MIN_VER}.0"
 $ git push git@github.com:operator-framework/operator-sdk.git "v${MAJ_MIN_VER}.x"
 ```
 
@@ -116,9 +116,64 @@ Patch releases should have the following format:
 ...
 ```
 
+# Release Signing
+
+When a new release is created, the tag for the commit it signed with a maintainer's gpg key and
+the binaries for the release are also signed by the same key. All keys used by maintainers will
+be available via public gpg keyservers such as [pgp.mit.edu][mit-keyserver]. To verify a git
+tag signature, use this command:
+
+```sh
+$ git verify-tag --verbose ${TAG_NAME}
+```
+
+To verify a release binary using the provided asc files, place the binary and corresponding asc
+file into the same directory and use the corresponding command:
+
+```sh
+# macOS
+$ gpg --verify operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin.asc
+# GNU/Linux
+$ gpg --verify operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu.asc
+```
+
+If you do not have the maintainers public key on your machine, you will get an error message similar
+to this:
+
+```sh
+$ git verify-tag ${TAG_NAME}
+gpg: Signature made Wed 31 Oct 2018 02:57:31 PM PDT
+gpg:                using RSA key 4AEE18F83AFDEB23
+gpg: Can't check signature: public key not found
+```
+
+To download the key, use this command, replacing `${KEY_ID}` with the RSA key string provided in the output
+of the previous command:
+
+```sh
+$ gpg --recv-key ${KEY_ID}
+```
+
+Now you should be able to verify the tags and/or binaries
+
+## For maintainers
+For new maintainers who have not done a release and do not have their gpg key on a public
+keyserver, you must add your public key to a keyserver. To do this, output your armored
+public key using this command:
+
+```sh
+$ gpg --armor --export ${GPG_EMAIL} > mykey.asc
+```
+
+Then, copy and paste the content of the outputted file into the `Submit a key` section on
+the [MIT PGP Public Key Server][mit-keyserver] or any other public keyserver that forwards
+the key to other public keyservers. Once that is done, other people can download your public
+key and you are ready to sign releases.
+
 [link-semver]:https://semver.org/
 [link-github-milestones]: https://help.github.com/articles/about-milestones/
 [doc-maintainers]:../MAINTAINERS
 [link-github-gpg-key-upload]:https://github.com/settings/keys
 [link-git-config-gpg-key]:https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work
 [doc-kube-version]:https://github.com/operator-framework/operator-sdk#prerequisites
+[mit-keyserver]:https://pgp.mit.edu
