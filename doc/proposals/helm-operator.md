@@ -23,7 +23,7 @@ Packages will be added to the operator-sdk. These packages are designed to be us
 
 * /operator-sdk/pkg/helm/controller
   * Will contain the Helm controller.
-  * Will contain an exposed reconciler. The default `Add` method will use this reconciler.
+  * Will contain an exposed reconciler. The default `Add` function will use this reconciler.
 
 * /operator-sdk/pkg/helm/engine
   * Will contain a Helm Engine implementation that adds owner references to generated Kubernetes resource assets, which is necessary for garbage collection of Helm chart resources.
@@ -32,14 +32,14 @@ Packages will be added to the operator-sdk. These packages are designed to be us
   * Will contain types and utilities used by other Helm packages in the SDK.
 
 * /operator-sdk/pkg/helm/release
-  * Will contain the Manager types and interfaces. A Manager is responsible for:
+  * Will contain the ReleaseManager types and interfaces. A ReleaseManager is responsible for:
     * Implementing Helm's Tiller functions that are necessary to install, update, and uninstall releases.
     * Reconciling an existing release's resources.
-  * A default Manager implementation is provided in this package but is not exported.
+  * A default ReleaseManager implementation is provided in this package but is not exported.
   * Package functions:
-    * NewManager - method that returns a new Manager for a provided helm chart.
-    * NewManagersFromEnv - method that returns a map of GVK to Manager types based on environment variables.
-    * NewManagersFromFile - method that returns a map of GVK to Manager types based on a provided config file.
+    * NewReleaseManager - function that returns a new ReleaseManager for a provided helm chart.
+    * NewReleaseManagersFromEnv - function that returns a map of GVK to ReleaseManager types based on environment variables.
+    * NewReleaseManagersFromFile - function that returns a map of GVK to ReleaseManager types based on a provided config file.
 
 ### Commands
 
