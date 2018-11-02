@@ -18,7 +18,7 @@ import (
 	"sync"
 
 	prom "github.com/prometheus/client_golang/prometheus"
-	"github.com/sirupsen/logrus"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 const (
@@ -42,6 +42,7 @@ const (
 
 var (
 	once sync.Once
+	log  = logf.Log.WithName("metrics")
 )
 
 // Collector - metric collector for all the metrics the sdk will watch
@@ -69,7 +70,7 @@ func RegisterCollector(c *Collector) {
 	once.Do(func() {
 		err := prom.Register(c)
 		if err != nil {
-			logrus.Errorf("unable to register collector with prometheus: %v", err)
+			log.Error(err, "unable to register collector with prometheus")
 		}
 	})
 }

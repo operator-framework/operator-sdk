@@ -30,7 +30,6 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/eventapi"
 
-	"github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,6 +37,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 const (
@@ -69,12 +69,11 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	}
 
 	ident := strconv.Itoa(rand.Int())
-	logger := logrus.WithFields(logrus.Fields{
-		"component": "reconciler",
-		"job":       ident,
-		"name":      u.GetName(),
-		"namespace": u.GetNamespace(),
-	})
+	logger := logf.Log.WithName("reconciler").WithValues(
+		"job", ident,
+		"name", u.GetName(),
+		"namespace", u.GetNamespace(),
+	)
 
 	reconcileResult := reconcile.Result{RequeueAfter: r.ReconcilePeriod}
 	if ds, ok := u.GetAnnotations()[ReconcilePeriodAnnotation]; ok {
@@ -90,7 +89,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	pendingFinalizers := u.GetFinalizers()
 	// If the resource is being deleted we don't want to add the finalizer again
 	if finalizerExists && !deleted && !contains(pendingFinalizers, finalizer) {
-		logger.Debugf("Adding finalizer %s to resource", finalizer)
+		logger.V(1).Info("Adding finalizer to resource", "Finalizer", finalizer)
 		finalizers := append(pendingFinalizers, finalizer)
 		u.SetFinalizers(finalizers)
 		err := r.Client.Update(context.TODO(), u)
@@ -106,7 +105,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	spec := u.Object["spec"]
 	_, ok := spec.(map[string]interface{})
 	if !ok {
-		logger.Debugf("spec was not found")
+		logger.V(1).Info("spec was not found")
 		u.Object["spec"] = map[string]interface{}{}
 		err = r.Client.Update(context.TODO(), u)
 		if err != nil {
@@ -180,15 +179,14 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		}
 	}
 	if statusEvent.Event == "" {
-		msg := "did not receive playbook_on_stats event"
-		logger.Error(msg)
+		eventErr := errors.New("did not receive playbook_on_stats event")
 		stdout, err := result.Stdout()
 		if err != nil {
-			logger.Infof("failed to get ansible-runner stdout: %s\n", err.Error())
-		} else {
-			logger.Error(stdout)
+			logger.Error(err, "failed to get ansible-runner stdout")
+			return reconcileResult, err
 		}
-		return reconcileResult, errors.New(msg)
+		logger.Error(eventErr, stdout)
+		return reconcileResult, eventErr
 	}
 
 	// We only want to update the CustomResource once, so we'll track changes and do it at the end

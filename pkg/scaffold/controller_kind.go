@@ -43,7 +43,6 @@ const controllerKindTemplate = `package {{ .Resource.LowerKind }}
 
 import (
 	"context"
-	"log"
 
 	{{ .Resource.Group}}{{ .Resource.Version }} "{{ .Repo }}/pkg/apis/{{ .Resource.Group}}/{{ .Resource.Version }}"
 
@@ -58,8 +57,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+  logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
+
+var log = logf.Log.WithName("controller_{{ .Resource.LowerKind }}")
 
 /**
 * USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
@@ -122,7 +124,8 @@ type Reconcile{{ .Resource.Kind }} struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *Reconcile{{ .Resource.Kind }}) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	log.Printf("Reconciling {{ .Resource.Kind }} %s/%s\n", request.Namespace, request.Name)
+	reqLogger := reqLogger.WithValues("Request.Namespace", request.Namespace, "Requst.Name", request.Name)
+	reqLogger.Info("Reconciling {{ .Resource.Kind }}")
 
 	// Fetch the {{ .Resource.Kind }} instance
 	instance := &{{ .Resource.Group}}{{ .Resource.Version }}.{{ .Resource.Kind }}{}
@@ -150,7 +153,7 @@ func (r *Reconcile{{ .Resource.Kind }}) Reconcile(request reconcile.Request) (re
 	found := &corev1.Pod{}
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, found)
 	if err != nil && errors.IsNotFound(err) {
-		log.Printf("Creating a new Pod %s/%s\n", pod.Namespace, pod.Name)
+		reqLogger.Info("Creating a new Pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
 		err = r.client.Create(context.TODO(), pod)
 		if err != nil {
 			return reconcile.Result{}, err
@@ -163,11 +166,11 @@ func (r *Reconcile{{ .Resource.Kind }}) Reconcile(request reconcile.Request) (re
 	}
 
 	// Pod already exists - don't requeue
-	log.Printf("Skip reconcile: Pod %s/%s already exists", found.Namespace, found.Name)
+	reqLogger.Info("Skip reconcile: Pod already exists", "Pod.Namespace", found.Namespace, "Pod.Name", found.Name)
 	return reconcile.Result{}, nil
 }
 
-// newPodForCR returns a busybox pod with the same name/namespace as the cr 
+// newPodForCR returns a busybox pod with the same name/namespace as the cr
 func newPodForCR(cr *{{ .Resource.Group}}{{ .Resource.Version }}.{{ .Resource.Kind }}) *corev1.Pod {
 	labels := map[string]string{
 		"app": cr.Name,

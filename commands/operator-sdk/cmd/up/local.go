@@ -39,6 +39,7 @@ import (
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 func NewLocalCmd() *cobra.Command {
@@ -134,6 +135,9 @@ func upLocal() {
 func upLocalAnsible() {
 	// Set the kubeconfig that the manager will be able to grab
 	os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig)
+
+	logf.SetLogger(logf.ZapLogger(false))
+
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{Namespace: namespace})
 	if err != nil {
 		log.Fatal(err)

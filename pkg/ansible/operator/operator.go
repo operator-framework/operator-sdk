@@ -20,10 +20,10 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/controller"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
-	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
 
 // Run - A blocking function which starts a controller-runtime manager
@@ -32,7 +32,7 @@ import (
 func Run(done chan error, mgr manager.Manager, watchesPath string, reconcilePeriod time.Duration) {
 	watches, err := runner.NewFromWatches(watchesPath)
 	if err != nil {
-		logrus.Error("Failed to get watches")
+		logf.Log.WithName("manager").Error(err, "failed to get watches")
 		done <- err
 		return
 	}

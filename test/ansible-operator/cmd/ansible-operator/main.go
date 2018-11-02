@@ -16,7 +16,6 @@ package main
 
 import (
 	"flag"
-	"log"
 	"runtime"
 	"time"
 
@@ -24,26 +23,27 @@ import (
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+
+	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-
-	"github.com/sirupsen/logrus"
 )
 
 func printVersion() {
-	logrus.Infof("Go Version: %s", runtime.Version())
-	logrus.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	logrus.Infof("operator-sdk Version: %v", sdkVersion.Version)
+	log.Infof("Go Version: %s", runtime.Version())
+	log.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
+	log.Infof("operator-sdk Version: %v", sdkVersion.Version)
 }
 
 func main() {
 	flag.Parse()
-	logf.SetLogger(logf.ZapLogger(false))
+
+	logf.SetLogger(logf.ZapLogger(true))
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
-		log.Fatalf("failed to get watch namespace: %v", err)
+		log.Fatalf("failed to get watch namespace: (%v)", err)
 	}
 
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{
@@ -63,7 +63,7 @@ func main() {
 		KubeConfig: mgr.GetConfig(),
 	})
 	if err != nil {
-		logrus.Fatalf("error starting proxy: %v", err)
+		log.Fatalf("error starting proxy: (%v)", err)
 	}
 
 	// start the operator
@@ -71,9 +71,8 @@ func main() {
 
 	// wait for either to finish
 	err = <-done
-	if err == nil {
-		logrus.Info("Exiting")
-	} else {
-		logrus.Fatal(err.Error())
+	if err != nil {
+		log.Fatal(err)
 	}
+	log.Info("Exiting.")
 }
