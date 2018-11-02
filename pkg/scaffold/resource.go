@@ -30,9 +30,9 @@ var (
 	// See https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-versioning
 	ResourceVersionRegexp = regexp.MustCompile("^v[1-9][0-9]*((alpha|beta)[1-9][0-9]*)?$")
 	// ResourceKindRegexp matches Kubernetes API Kind's.
-	ResourceKindRegexp = regexp.MustCompile("^[a-zA-Z]+$")
+	ResourceKindRegexp = regexp.MustCompile("^[A-Z]{1}[a-zA-Z0-9]+$")
 	// ResourceGroupRegexp matches Kubernetes API Group's.
-	ResourceGroupRegexp = regexp.MustCompile("^[a-z]+$")
+	ResourceGroupRegexp = regexp.MustCompile("^[a-z0-9]+$")
 )
 
 // Resource contains the information required to scaffold files for a resource.
