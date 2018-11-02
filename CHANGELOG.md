@@ -1,3 +1,8 @@
+## v0.1.1
+
+### Bug fixes
+- Fix hardcoded CRD version in crd scaffold ([#690](https://github.com/operator-framework/operator-sdk/pull/690))
+
 ## v0.1.0
 
 ### Changed
