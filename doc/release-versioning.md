@@ -11,6 +11,7 @@ Milestone labels have the form: `milestone-x.y.0`, where `x` and `y` are major a
 ## Major versions
 
 Major version changes can break compatibility between the previous major versions; they are not necessarily backwards or forwards compatible. SDK change targets include but are not limited to:
+
 - `operator-sdk` command and sub-commands
 - Golang API
 - Formats of various yaml manifest files
@@ -47,8 +48,9 @@ $ git push origin "cherry-picked-change"
 # Releases
 
 Making an Operator SDK release involves:
+
 - Tagging and signing a git commit and pushing the tag to GitHub.
-- Building a release binary and uploading the binary to GitHub.
+- Building a release binary, signing the binary, and uploading both binary and signature to GitHub.
 
 Releases can only be performed by [maintainers][doc-maintainers].
 
@@ -64,25 +66,30 @@ Release binaries will be built for the `x86_64` architecture for both GNU Linux 
 
 Support for the Windows platform or any architecture other than `x86_64` is not on the roadmap at this time.
 
-## Binaries
+## Binaries and signatures
 
-Creating release binaries:
+Binaries will be signed using a maintainers' verified GitHub PGP key. Both binary and signature will be uploaded to the release. Ensure you import maintainer keys to verify release binaries.
+
+Creating release binaries and signatures:
+
 ```bash
 $ ./release.sh "v${VERSION}"
 ```
+
+**Note**: you must have both [`git`][doc-git-default-key] and [`gpg`][doc-gpg-default-key] default PGP keys set locally for `release.sh` to run without error.
 
 ## Release tags
 
 Every release will have a corresponding git tag.
 
-Make sure you've [uploaded your GPG key][link-github-gpg-key-upload] and configured git to [use that signing key][link-git-config-gpg-key] either globally or for the Operator SDK repository. Note: the email the key is issued for must be the email you use for git.
+Make sure you've [uploaded your GPG key][link-github-gpg-key-upload] and configured git to [use that signing key][link-git-config-gpg-key] either globally or for the Operator SDK repository. Tagging will be handled by `release.sh`.
+
+**Note**: the email the key is issued for must be the email you use for git.
 
 ```bash
 $ git config [--global] user.signingkey "$GPG_KEY_ID"
 $ git config [--global] user.email "$GPG_EMAIL"
 ```
-
-Tagging will be handled by `release.sh`.
 
 ## Release Notes
 
@@ -157,6 +164,7 @@ $ gpg --recv-key ${KEY_ID}
 Now you should be able to verify the tags and/or binaries
 
 ## For maintainers
+
 For new maintainers who have not done a release and do not have their gpg key on a public
 keyserver, you must add your public key to a keyserver. To do this, output your armored
 public key using this command:
@@ -173,6 +181,8 @@ key and you are ready to sign releases.
 [link-semver]:https://semver.org/
 [link-github-milestones]: https://help.github.com/articles/about-milestones/
 [doc-maintainers]:../MAINTAINERS
+[doc-git-default-key]:https://help.github.com/articles/telling-git-about-your-signing-key/
+[doc-gpg-default-key]:https://lists.gnupg.org/pipermail/gnupg-users/2001-September/010163.html
 [link-github-gpg-key-upload]:https://github.com/settings/keys
 [link-git-config-gpg-key]:https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work
 [doc-kube-version]:https://github.com/operator-framework/operator-sdk#prerequisites
