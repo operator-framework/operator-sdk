@@ -22,8 +22,8 @@ Packages will be added to the operator-sdk. These packages are designed to be us
   * Will contain a helper function to create a Helm client from `controller-runtime` manager.
 
 * /operator-sdk/pkg/helm/controller
-  * Will contain the Helm controller.
-  * Will contain an exposed reconciler. The default `Add` function will use this reconciler.
+  * Will contain an exported `HelmOperatorReconciler` that implements the `controller-runtime` `reconcile.Reconciler` interface.
+  * Will contain an exported `Add` function that creates a controller using the `HelmOperatorReconciler` and adds watches based on a set of watch options passed to the `Add` function.
 
 * /operator-sdk/pkg/helm/engine
   * Will contain a Helm Engine implementation that adds owner references to generated Kubernetes resource assets, which is necessary for garbage collection of Helm chart resources.
@@ -32,18 +32,18 @@ Packages will be added to the operator-sdk. These packages are designed to be us
   * Will contain types and utilities used by other Helm packages in the SDK.
 
 * /operator-sdk/pkg/helm/release
-  * Will contain the ReleaseManager types and interfaces. A ReleaseManager is responsible for:
+  * Will contain the `Manager` types and interfaces. A `Manager` is responsible for:
     * Implementing Helm's Tiller functions that are necessary to install, update, and uninstall releases.
     * Reconciling an existing release's resources.
-  * A default ReleaseManager implementation is provided in this package but is not exported.
+  * A default `Manager` implementation is provided in this package but is not exported.
   * Package functions:
-    * NewReleaseManager - function that returns a new ReleaseManager for a provided helm chart.
-    * NewReleaseManagersFromEnv - function that returns a map of GVK to ReleaseManager types based on environment variables.
-    * NewReleaseManagersFromFile - function that returns a map of GVK to ReleaseManager types based on a provided config file.
+    * `NewManager` - function that returns a new Manager for a provided helm chart.
+    * `NewManagersFromEnv` - function that returns a map of GVK to Manager types based on environment variables.
+    * `NewManagersFromFile` - function that returns a map of GVK to Manager types based on a provided config file.
 
 ### Commands
 
-We are adding and updating existing commands to accommodate the helm operator.  Changes to the `cmd` package as well as changes to the generator are needed.
+We are adding and updating existing commands to accommodate the Helm operator.  Changes to the `cmd` package as well as changes to the generator are needed.
 
 #### New
 
@@ -52,6 +52,11 @@ New functionality will be updates to allow Helm operator developers to create a 
 ```
 operator-sdk new <project-name> --type=helm --kind=<kind> --api-version=<group/version>
 ```
+
+Flags:
+* `--type=helm` is required to create Helm operator project.
+* **Required:** --kind - the kind for the CRD.
+* **Required:** --api-version - the group/version for the CRD.
 
 This will be new scaffolding for the above command under the hood. We will:
 * Create a `./<project-name>` directory.
@@ -93,14 +98,15 @@ The SDK CLI will use the presence of the `helm-charts` directory to detect a `he
 Add functionality will be updated to allow Helm operator developers to add new CRDs/CRs and to update the watches.yaml file for additional Helm charts. The command helps when a user wants to watch more than one CRD for their operator.
 
 ```
-operator-sdk add crd --api-version=<group>/<version> --kind=<kind>
+operator-sdk add crd --api-version=<group>/<version> --kind=<kind> --update-watches=<true|false>
 ```
 
 Flags:
 * **Required:** --kind - the kind for the CRD.
 * **Required:** --api-version - the group/version for the CRD.
+* **Optional:** --update-watches - whether or not to update watches.yaml file (default: false).
 
-**NOTE:** `operator-sdk add` subcommands `api` and `controller` will not be supported, since they are only valid for Go operators.
+**NOTE:** `operator-sdk add` subcommands `api` and `controller` will not be supported, since they are only valid for Go operators. Running these subcommands in a Helm operator project will result in an error.
 
 #### Up
 
@@ -119,6 +125,10 @@ Build functionality will be updated to support building a docker image from the 
 ```
 operator-sdk build <image-name>
 ```
+
+#### Test
+
+The SDK `test` command currently only supports Go projects, so there will be no support for the `operator-sdk test` subcommand in the initial integration of the Helm operator.
 
 ### Base Image
 
