@@ -98,7 +98,7 @@ NAME                     READY     STATUS    RESTARTS   AGE
 example-appservice-pod   1/1       Running   0          1m
 
 # Cleanup
-$ kubectl delete -f deploy/app_v1alpha1_appservice_cr.yaml
+$ kubectl delete -f deploy/crds/app_v1alpha1_appservice_cr.yaml
 $ kubectl delete -f deploy/operator.yaml
 $ kubectl delete -f deploy/role.yaml
 $ kubectl delete -f deploy/role_binding.yaml
