@@ -55,5 +55,5 @@ spec:
     plural: {{ .Resource.Resource }}
     singular: {{ .Resource.LowerKind }}
   scope: Namespaced
-  version: v1alpha1
+  version: {{ .Resource.Version }}
 `
