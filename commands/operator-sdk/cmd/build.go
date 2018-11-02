@@ -144,17 +144,18 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		log.Fatalf("could not identify current working directory: %v", err)
 	}
 
-	// Don't need to buld go code if Ansible Operator
+	// Don't need to build go code if Ansible Operator
 	if mainExists() {
 		managerDir := filepath.Join(projutil.CheckAndGetCurrPkg(), scaffold.ManagerDir)
 		outputBinName := filepath.Join(wd, scaffold.BuildBinDir, filepath.Base(wd))
 		buildCmd := exec.Command("go", "build", "-o", outputBinName, managerDir)
 		buildCmd.Env = goBuildEnv
-		o, err := buildCmd.CombinedOutput()
+		buildCmd.Stdout = os.Stdout
+		buildCmd.Stderr = os.Stderr
+		err = buildCmd.Run()
 		if err != nil {
-			log.Fatalf("failed to build operator binary: %v (%v)", err, string(o))
+			log.Fatalf("failed to build operator binary: %v", err)
 		}
-		fmt.Fprintln(os.Stdout, string(o))
 	}
 
 	image := args[0]
@@ -163,25 +164,27 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		baseImageName += "-intermediate"
 	}
 	dbcmd := exec.Command("docker", "build", ".", "-f", "build/Dockerfile", "-t", baseImageName)
-	o, err := dbcmd.CombinedOutput()
+	dbcmd.Stdout = os.Stdout
+	dbcmd.Stderr = os.Stderr
+	err = dbcmd.Run()
 	if err != nil {
 		if enableTests {
-			log.Fatalf("failed to build intermediate image for %s image: %v (%s)", image, err, string(o))
+			log.Fatalf("failed to build intermediate image for %s image: %v", image, err)
 		} else {
-			log.Fatalf("failed to output build image %s: %v (%s)", image, err, string(o))
+			log.Fatalf("failed to output build image %s: %v", image, err)
 		}
 	}
-	fmt.Fprintln(os.Stdout, string(o))
 
 	if enableTests {
 		testBinary := filepath.Join(wd, scaffold.BuildBinDir, filepath.Base(wd)+"-test")
 		buildTestCmd := exec.Command("go", "test", "-c", "-o", testBinary, testLocationBuild+"/...")
 		buildTestCmd.Env = goBuildEnv
-		o, err := buildTestCmd.CombinedOutput()
+		buildTestCmd.Stdout = os.Stdout
+		buildTestCmd.Stderr = os.Stderr
+		err = buildTestCmd.Run()
 		if err != nil {
-			log.Fatalf("failed to build test binary: %v (%v)", err, string(o))
+			log.Fatalf("failed to build test binary: %v", err)
 		}
-		fmt.Fprintln(os.Stdout, string(o))
 		// if a user is using an older sdk repo as their library, make sure they have required build files
 		testDockerfile := filepath.Join(scaffold.BuildTestDir, scaffold.DockerfileFile)
 		_, err = os.Stat(testDockerfile)
@@ -206,11 +209,12 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		}
 
 		testDbcmd := exec.Command("docker", "build", ".", "-f", testDockerfile, "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+baseImageName)
-		o, err = testDbcmd.CombinedOutput()
+		testDbcmd.Stdout = os.Stdout
+		testDbcmd.Stderr = os.Stderr
+		err = testDbcmd.Run()
 		if err != nil {
-			log.Fatalf("failed to output build image %s: %v (%s)", image, err, string(o))
+			log.Fatalf("failed to output build image %s: %v", image, err)
 		}
-		fmt.Fprintln(os.Stdout, string(o))
 		// Check image name of deployments in namespaced manifest
 		verifyTestManifest(image)
 	}
