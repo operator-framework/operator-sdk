@@ -78,25 +78,24 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 		saFile := filepath.Join(scaffold.DeployDir, scaffold.ServiceAccountYamlFile)
 		sa, err := ioutil.ReadFile(saFile)
 		if err != nil {
-			log.Fatalf("could not find the manifest %s: %v", saFile, err)
+			log.Printf("WARN: could not find the manifest %s: %v", saFile, err)
 		}
 		role, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleYamlFile))
 		if err != nil {
-			log.Fatalf("could not find role manifest: %v", err)
+			log.Printf("WARN: could not find role manifest: %v", err)
 		}
 		roleBinding, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleBindingYamlFile))
 		if err != nil {
-			log.Fatalf("could not find role_binding manifest: %v", err)
+			log.Printf("WARN: could not find role_binding manifest: %v", err)
 		}
 		operator, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.OperatorYamlFile))
 		if err != nil {
 			log.Fatalf("could not find operator manifest: %v", err)
 		}
-		combined := append(sa, []byte("\n---\n")...)
-		combined = append(combined, role...)
-		combined = append(combined, []byte("\n---\n")...)
-		combined = append(combined, roleBinding...)
-		combined = append(combined, []byte("\n---\n")...)
+		combined := []byte{}
+		combined = combineManifests(combined, sa)
+		combined = combineManifests(combined, role)
+		combined = combineManifests(combined, roleBinding)
 		combined = append(combined, operator...)
 		err = ioutil.WriteFile(tlConfig.namespacedManPath, combined, os.FileMode(fileutil.DefaultFileMode))
 		if err != nil {
@@ -167,4 +166,14 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatalf("failed to exec `go %s`: %v", strings.Join(testArgs, " "), err)
 	}
+}
+
+// combineManifests combines a given manifest with a base manifest and adds yaml
+// style separation. Nothing is appended if the manifest is empty.
+func combineManifests(base, manifest []byte) []byte {
+	if len(manifest) > 0 {
+		base = append(base, manifest...)
+		return append(base, []byte("\n---\n")...)
+	}
+	return base
 }
