@@ -193,6 +193,12 @@ $ sed -i 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/op
 $ docker push quay.io/example/memcached-operator:v0.0.1
 ```
 
+**Note**  
+If you run sed on OSX, use syntax instead:
+```
+$ sed -i "" 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
+```
+
 The Deployment manifest is generated at `deploy/operator.yaml`. Be sure to update the deployment image as shown above since the default is just a placeholder.
 
 Setup RBAC and deploy the memcached-operator:
