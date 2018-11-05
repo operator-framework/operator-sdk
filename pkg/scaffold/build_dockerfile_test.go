@@ -31,7 +31,9 @@ func TestDockerfile(t *testing.T) {
 	}
 }
 
-const dockerfileExp = `FROM alpine:3.6
+const dockerfileExp = `FROM alpine:3.8
+
+RUN apk upgrade --update --no-cache
 
 USER nobody
 
