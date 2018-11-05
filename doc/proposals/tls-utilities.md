@@ -62,7 +62,7 @@ We will break down the TLS workflow into the following steps:
 
 	Options:
 
-	* Key usage: [Server, Client or Both] If Server, needs svc obj (cluster.local can be different). If client, needs CN and possible org.
+	* Key usage: (Server, Client or Both) If Server, needs svc obj (cluster.local can be different). If client, needs CN and possible org.
 	* Option to specify signature configuration policy i.e Signing Profile for the certificate.
 
         Outputs:
