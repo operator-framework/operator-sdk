@@ -2,9 +2,6 @@ language: go
 go_import_path: github.com/operator-framework/operator-sdk
 sudo: required
 
-services:
-- docker
-
 go:
 - 1.10.3
 
@@ -21,11 +18,16 @@ jobs:
       env: CLUSTER=openshift
       script: make test/ci-go
       name: Go on OpenShift
+      services:
+      - docker
     - before_script: hack/ci/setup-openshift.sh
       env: CLUSTER=openshift
       script: make test/ci-ansible
       name: Ansible on OpenShift
+      services:
+      - docker
     - name: Markdown Link Checker
+      language: bash
       before_install: true
       install: true
       after_success: echo 'Markdown links are correct'
