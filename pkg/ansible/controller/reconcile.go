@@ -18,7 +18,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"math/rand"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -65,6 +67,15 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	if err != nil {
 		return reconcile.Result{}, err
 	}
+
+	ident := strconv.Itoa(rand.Int())
+	logger := logrus.WithFields(logrus.Fields{
+		"component": "reconciler",
+		"job":       ident,
+		"name":      u.GetName(),
+		"namespace": u.GetNamespace(),
+	})
+
 	reconcileResult := reconcile.Result{RequeueAfter: r.ReconcilePeriod}
 	if ds, ok := u.GetAnnotations()[ReconcilePeriodAnnotation]; ok {
 		duration, err := time.ParseDuration(ds)
@@ -79,7 +90,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	pendingFinalizers := u.GetFinalizers()
 	// If the resource is being deleted we don't want to add the finalizer again
 	if finalizerExists && !deleted && !contains(pendingFinalizers, finalizer) {
-		logrus.Debugf("Adding finalizer %s to resource", finalizer)
+		logger.Debugf("Adding finalizer %s to resource", finalizer)
 		finalizers := append(pendingFinalizers, finalizer)
 		u.SetFinalizers(finalizers)
 		err := r.Client.Update(context.TODO(), u)
@@ -88,14 +99,14 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		}
 	}
 	if !contains(pendingFinalizers, finalizer) && deleted {
-		logrus.Info("Resource is terminated, skipping reconcilation")
+		logger.Info("Resource is terminated, skipping reconcilation")
 		return reconcileResult, nil
 	}
 
 	spec := u.Object["spec"]
 	_, ok := spec.(map[string]interface{})
 	if !ok {
-		logrus.Debugf("spec was not found")
+		logger.Debugf("spec was not found")
 		u.Object["spec"] = map[string]interface{}{}
 		err = r.Client.Update(context.TODO(), u)
 		if err != nil {
@@ -141,7 +152,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		return reconcileResult, err
 	}
 	defer os.Remove(kc.Name())
-	eventChan, err := r.Runner.Run(u, kc.Name())
+	result, err := r.Runner.Run(ident, u, kc.Name())
 	if err != nil {
 		return reconcileResult, err
 	}
@@ -149,9 +160,9 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	// iterate events from ansible, looking for the final one
 	statusEvent := eventapi.StatusJobEvent{}
 	failureMessages := eventapi.FailureMessages{}
-	for event := range eventChan {
+	for event := range result.Events {
 		for _, eHandler := range r.EventHandlers {
-			go eHandler.Handle(u, event)
+			go eHandler.Handle(ident, u, event)
 		}
 		if event.Event == eventapi.EventPlaybookOnStats {
 			// convert to StatusJobEvent; would love a better way to do this
@@ -169,9 +180,15 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		}
 	}
 	if statusEvent.Event == "" {
-		err := errors.New("did not receive playbook_on_stats event")
-		logrus.Error(err.Error())
-		return reconcileResult, err
+		msg := "did not receive playbook_on_stats event"
+		logger.Error(msg)
+		stdout, err := result.Stdout()
+		if err != nil {
+			logger.Infof("failed to get ansible-runner stdout: %s\n", err.Error())
+		} else {
+			logger.Error(stdout)
+		}
+		return reconcileResult, errors.New(msg)
 	}
 
 	// We only want to update the CustomResource once, so we'll track changes and do it at the end

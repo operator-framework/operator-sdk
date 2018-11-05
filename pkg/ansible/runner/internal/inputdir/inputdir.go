@@ -56,6 +56,14 @@ func (i *InputDir) addFile(path string, content []byte) error {
 	return err
 }
 
+// Stdout reads the stdout from the ansible artifact that corresponds to the
+// given ident and returns it as a string.
+func (i *InputDir) Stdout(ident string) (string, error) {
+	errorPath := filepath.Join(i.Path, "artifacts", ident, "stdout")
+	errorText, err := ioutil.ReadFile(errorPath)
+	return string(errorText), err
+}
+
 // Write commits the object's state to the filesystem at i.Path.
 func (i *InputDir) Write() error {
 	paramBytes, err := json.Marshal(i.Parameters)

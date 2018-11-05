@@ -18,12 +18,10 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -39,7 +37,7 @@ import (
 // Runner - a runnable that should take the parameters and name and namespace
 // and run the correct code.
 type Runner interface {
-	Run(*unstructured.Unstructured, string) (chan eventapi.JobEvent, error)
+	Run(string, *unstructured.Unstructured, string) (*RunResult, error)
 	GetFinalizer() (string, bool)
 	GetReconcilePeriod() (time.Duration, bool)
 }
@@ -176,11 +174,10 @@ type runner struct {
 	reconcilePeriod  time.Duration
 }
 
-func (r *runner) Run(u *unstructured.Unstructured, kubeconfig string) (chan eventapi.JobEvent, error) {
+func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig string) (*RunResult, error) {
 	if u.GetDeletionTimestamp() != nil && !r.isFinalizerRun(u) {
 		return nil, errors.New("resource has been deleted, but no finalizer was matched, skipping reconciliation")
 	}
-	ident := strconv.Itoa(rand.Int())
 	logger := logrus.WithFields(logrus.Fields{
 		"component": "runner",
 		"job":       ident,
@@ -242,7 +239,11 @@ func (r *runner) Run(u *unstructured.Unstructured, kubeconfig string) (chan even
 			logger.Errorf("error from event api: %s", err.Error())
 		}
 	}()
-	return receiver.Events, nil
+	return &RunResult{
+		Events:   receiver.Events,
+		inputDir: &inputDir,
+		ident:    ident,
+	}, nil
 }
 
 // GetReconcilePeriod - new reconcile period.
@@ -329,4 +330,19 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 		}
 	}
 	return parameters
+}
+
+// RunResult facilitates access to information about a run of ansible.
+type RunResult struct {
+	// Events is a channel of events from ansible that contain state related
+	// to a run of ansible.
+	Events <-chan eventapi.JobEvent
+
+	ident    string
+	inputDir *inputdir.InputDir
+}
+
+// Stdout returns the stdout from ansible-runner if it is available, else an error.
+func (r *RunResult) Stdout() (string, error) {
+	return r.inputDir.Stdout(r.ident)
 }
