@@ -4,7 +4,7 @@ Before making a PR, please read our contributing guidelines https://github.com/o
 
 Note: Make sure your branch is rebased to the latest upstream master.
 
---!>
+-->
 
 **Description of the change:**
 
@@ -16,4 +16,4 @@ Note: Make sure your branch is rebased to the latest upstream master.
 Note: If this PR is fixing an issue make sure to add a note saying:
 Closes #<ISSUE_NUMBER>
 
---!>
+-->
