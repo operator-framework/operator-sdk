@@ -10,7 +10,7 @@ multiple active operators of the same type.
 High availability is not a goal of leader election for operators.
 
 Controller-runtime is adding leader election based on functionality present [in
-client-go](git@github.com:operator-framework/operator-sdk.git). However that
+client-go](https://github.com/kubernetes/client-go/blob/master/tools/leaderelection/leaderelection.go). However that
 implementation allows for the possibility of brief periods during which
 multiple leaders are active.
 
