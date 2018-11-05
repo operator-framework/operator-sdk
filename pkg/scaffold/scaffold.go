@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,6 +27,8 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/tools/imports"
 )
 
@@ -161,7 +162,7 @@ func (s *Scaffold) doTemplate(i input.Input, e input.File, absPath string) error
 	}
 
 	_, err = f.Write(b)
-	fmt.Printf("Create %s\n", i.Path)
+	log.Infoln("Create", i.Path)
 	return err
 }
 

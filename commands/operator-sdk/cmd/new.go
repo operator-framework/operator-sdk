@@ -17,7 +17,6 @@ package cmd
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -28,6 +27,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -150,13 +150,13 @@ func doAnsibleScaffold() {
 
 	resource, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
-		log.Fatal("Invalid apiVersion and kind.")
+		log.Fatalf("invalid apiVersion and kind: (%v)", err)
 	}
 
 	s := &scaffold.Scaffold{}
 	tmpdir, err := ioutil.TempDir("", "osdk")
 	if err != nil {
-		log.Fatal("unable to get temp directory")
+		log.Fatalf("unable to get temp directory: (%v)", err)
 	}
 
 	galaxyInit := &ansible.GalaxyInit{
@@ -196,7 +196,7 @@ func doAnsibleScaffold() {
 			},
 		)
 		if err != nil {
-			log.Fatalf("new scaffold failed: (%v)", err)
+			log.Fatalf("new playbook scaffold failed: (%v)", err)
 		}
 	}
 
@@ -210,12 +210,12 @@ func doAnsibleScaffold() {
 	// everything.
 	tmpDirectorySlice := strings.Split(os.TempDir(), "/")
 	if err = os.RemoveAll(filepath.Join(galaxyInit.AbsProjectPath, tmpDirectorySlice[1])); err != nil {
-		log.Fatalf("failed to remove the galaxy init script")
+		log.Fatalf("failed to remove the galaxy init script: (%v)", err)
 	}
 
 	// update deploy/role.yaml for the given resource r.
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): %v", resource.APIVersion, resource.Kind, err)
+		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
 	}
 }
 
@@ -254,14 +254,14 @@ func execCmd(stdout *os.File, cmd string, args ...string) {
 	dc.Stderr = os.Stderr
 	err := dc.Run()
 	if err != nil {
-		log.Fatalf("failed to exec %s %#v: %v", cmd, args, err)
+		log.Fatalf("failed to exec %s %#v: (%v)", cmd, args, err)
 	}
 }
 
 func pullDep() {
 	_, err := exec.LookPath(dep)
 	if err != nil {
-		log.Fatalf("looking for dep in $PATH: %v", err)
+		log.Fatalf("looking for dep in $PATH: (%v)", err)
 	}
 	fmt.Fprintln(os.Stdout, "Run dep ensure ...")
 	execCmd(os.Stdout, dep, ensureCmd, "-v")

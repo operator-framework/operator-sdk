@@ -17,7 +17,6 @@ package cmdtest
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -28,6 +27,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -60,32 +60,31 @@ func NewTestLocalCmd() *cobra.Command {
 
 func testLocalFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		log.Fatalf("operator-sdk test local requires exactly 1 argument")
+		log.Fatal("operator-sdk test local requires exactly 1 argument")
 	}
 	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml, deploy/role_binding.yaml and deploy/operator.yaml
 	if tlConfig.namespacedManPath == "" {
 		err := os.MkdirAll(deployTestDir, os.FileMode(fileutil.DefaultDirFileMode))
 		if err != nil {
-			log.Fatalf("could not create %s: %v", deployTestDir, err)
+			log.Fatalf("could not create %s: (%v)", deployTestDir, err)
 		}
 		tlConfig.namespacedManPath = filepath.Join(deployTestDir, "namespace-manifests.yaml")
 
-		saFile := filepath.Join(scaffold.DeployDir, scaffold.ServiceAccountYamlFile)
-		sa, err := ioutil.ReadFile(saFile)
+		sa, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.ServiceAccountYamlFile))
 		if err != nil {
-			log.Printf("WARN: could not find the manifest %s: %v", saFile, err)
+			log.Warnf("could not find the serviceaccount manifest: (%v)", err)
 		}
 		role, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleYamlFile))
 		if err != nil {
-			log.Printf("WARN: could not find role manifest: %v", err)
+			log.Warnf("could not find role manifest: (%v)", err)
 		}
 		roleBinding, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleBindingYamlFile))
 		if err != nil {
-			log.Printf("WARN: could not find role_binding manifest: %v", err)
+			log.Warnf("could not find role_binding manifest: (%v)", err)
 		}
 		operator, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.OperatorYamlFile))
 		if err != nil {
-			log.Fatalf("could not find operator manifest: %v", err)
+			log.Fatalf("could not find operator manifest: (%v)", err)
 		}
 		combined := []byte{}
 		combined = combineManifests(combined, sa)
@@ -94,31 +93,31 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 		combined = append(combined, operator...)
 		err = ioutil.WriteFile(tlConfig.namespacedManPath, combined, os.FileMode(fileutil.DefaultFileMode))
 		if err != nil {
-			log.Fatalf("could not create temporary namespaced manifest file: %v", err)
+			log.Fatalf("could not create temporary namespaced manifest file: (%v)", err)
 		}
 		defer func() {
 			err := os.Remove(tlConfig.namespacedManPath)
 			if err != nil {
-				log.Fatalf("could not delete temporary namespace manifest file")
+				log.Fatalf("could not delete temporary namespace manifest file: (%v)", err)
 			}
 		}()
 	}
 	if tlConfig.globalManPath == "" {
 		err := os.MkdirAll(deployTestDir, os.FileMode(fileutil.DefaultDirFileMode))
 		if err != nil {
-			log.Fatalf("could not create %s: %v", deployTestDir, err)
+			log.Fatalf("could not create %s: (%v)", deployTestDir, err)
 		}
 		tlConfig.globalManPath = filepath.Join(deployTestDir, "global-manifests.yaml")
 		files, err := ioutil.ReadDir(scaffold.CrdsDir)
 		if err != nil {
-			log.Fatalf("could not read deploy directory: %v", err)
+			log.Fatalf("could not read deploy directory: (%v)", err)
 		}
 		var combined []byte
 		for _, file := range files {
 			if strings.HasSuffix(file.Name(), "crd.yaml") {
 				fileBytes, err := ioutil.ReadFile(filepath.Join(scaffold.CrdsDir, file.Name()))
 				if err != nil {
-					log.Fatalf("could not read file %s: %v", filepath.Join(scaffold.CrdsDir, file.Name()), err)
+					log.Fatalf("could not read file %s: (%v)", filepath.Join(scaffold.CrdsDir, file.Name()), err)
 				}
 				if combined == nil {
 					combined = []byte{}
@@ -130,12 +129,12 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 		}
 		err = ioutil.WriteFile(tlConfig.globalManPath, combined, os.FileMode(fileutil.DefaultFileMode))
 		if err != nil {
-			log.Fatalf("could not create temporary global manifest file: %v", err)
+			log.Fatalf("could not create temporary global manifest file: (%v)", err)
 		}
 		defer func() {
 			err := os.Remove(tlConfig.globalManPath)
 			if err != nil {
-				log.Fatalf("could not delete global namespace manifest file")
+				log.Fatalf("could not delete global namespace manifest file: (%v)", err)
 			}
 		}()
 	}
@@ -159,7 +158,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	dc.Stderr = os.Stderr
 	err := dc.Run()
 	if err != nil {
-		log.Fatalf("failed to exec `go %s`: %v", strings.Join(testArgs, " "), err)
+		log.Fatalf("failed to exec `go %s`: (%v)", strings.Join(testArgs, " "), err)
 	}
 }
 

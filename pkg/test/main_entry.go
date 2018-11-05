@@ -17,9 +17,10 @@ package test
 import (
 	"flag"
 	"io/ioutil"
-	"log"
 	"os"
 	"testing"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (

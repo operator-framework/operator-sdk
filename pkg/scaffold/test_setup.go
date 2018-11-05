@@ -17,11 +17,12 @@ package scaffold
 import (
 	"bytes"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -43,7 +44,7 @@ var (
 func mustGetImportPath() string {
 	wd, err := os.Getwd()
 	if err != nil {
-		log.Fatal("mustGetImportPath: ", err)
+		log.Fatalf("mustGetImportPath: (%v)", err)
 	}
 	return filepath.Join(wd, appRepo)
 }
