@@ -126,6 +126,8 @@ func upLocal() {
 }
 
 func upLocalAnsible() {
+	// Set the kubeconfig that the manager will be able to grab
+	os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig)
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{Namespace: namespace})
 	if err != nil {
 		log.Fatal(err)

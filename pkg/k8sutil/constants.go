@@ -15,9 +15,9 @@
 package k8sutil
 
 const (
-	// KubeConfigEnvVar defines the env variable KUBERNETES_CONFIG which
+	// KubeConfigEnvVar defines the env variable KUBECONFIG which
 	// contains the kubeconfig file path.
-	KubeConfigEnvVar = "KUBERNETES_CONFIG"
+	KubeConfigEnvVar = "KUBECONFIG"
 
 	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
 	// which is the namespace that the pod is currently running in.
