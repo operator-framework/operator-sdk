@@ -25,6 +25,14 @@ jobs:
       env: CLUSTER=openshift
       script: make test/ci-ansible
       name: Ansible on OpenShift
+    - name: Markdown Link Checker
+      before_install: true
+      install: true
+      after_success: echo 'Markdown links are correct'
+      after_failure: echo 'Incorrect markdown link detected'
+      language: rust
+      # build a debug binary since it builds faster and the outputted binary is fast enough (99% of the time is checking if links are broken)
+      script: cargo install marker --debug && marker
 
 install:
 - curl -Lo dep https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64 && chmod +x dep && sudo mv dep /usr/local/bin/
