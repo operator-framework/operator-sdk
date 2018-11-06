@@ -60,6 +60,9 @@ func controllerRun(cmd *cobra.Command, args []string) {
 	projutil.MustGoProjectCmd(cmd)
 
 	projutil.MustInProjectRoot()
+
+	log.Infof("Generating controller version %s for kind %s.", apiVersion, kind)
+
 	// Create and validate new resource
 	r, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
@@ -79,4 +82,6 @@ func controllerRun(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatalf("add scaffold failed: (%v)", err)
 	}
+
+	log.Info("Controller generation complete.")
 }

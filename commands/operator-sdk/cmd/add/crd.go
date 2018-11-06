@@ -15,7 +15,6 @@
 package add
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -60,7 +59,7 @@ func crdFunc(cmd *cobra.Command, args []string) {
 	verifyCrdFlags()
 	verifyCrdDeployPath()
 
-	fmt.Println("Generating custom resource definition (CRD) file")
+	log.Infof("Generating Custom Resource Definition (CRD) version %s for kind %s.", apiVersion, kind)
 
 	// generate CR/CRD file
 	resource, err := scaffold.NewResource(apiVersion, kind)
@@ -81,6 +80,8 @@ func crdFunc(cmd *cobra.Command, args []string) {
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
 		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
 	}
+
+	log.Info("CRD generation complete.")
 }
 
 func verifyCrdFlags() {

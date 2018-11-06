@@ -67,6 +67,9 @@ func apiRun(cmd *cobra.Command, args []string) {
 
 	// Create and validate new resource
 	projutil.MustInProjectRoot()
+
+	log.Infof("Generating api version %s for kind %s.", apiVersion, kind)
+
 	r, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
 		log.Fatal(err)
@@ -99,4 +102,6 @@ func apiRun(cmd *cobra.Command, args []string) {
 
 	// Run k8s codegen for deepcopy
 	generate.K8sCodegen()
+
+	log.Info("Api generation complete.")
 }

@@ -73,6 +73,9 @@ const (
 
 func upLocalFunc(cmd *cobra.Command, args []string) {
 	mustKubeConfig()
+
+	log.Info("Running the operator locally.")
+
 	switch projutil.GetOperatorType() {
 	case projutil.OperatorTypeGo:
 		projutil.MustInProjectRoot()
@@ -165,7 +168,7 @@ func upLocalAnsible() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Info("Ansible operator started succesfully. Exiting.")
+	log.Info("Exiting.")
 }
 
 func printVersion() {

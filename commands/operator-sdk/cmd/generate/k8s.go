@@ -62,10 +62,10 @@ func K8sCodegen() {
 		log.Fatalf("failed to parse group versions: (%v)", err)
 	}
 
-	log.Printf("Running code-generation for custom resource group versions: [%s]\n", groupVersions)
+	log.Infof("Running code-generation for Custom Resource group versions: [%s]\n", groupVersions)
+
 	// TODO: Replace generate-groups.sh by building the vendored generators(deepcopy, lister etc)
 	// and running them directly
-	// TODO: remove dependency on boilerplate.go.txt
 	genGroupsCmd := "vendor/k8s.io/code-generator/generate-groups.sh"
 	args := []string{
 		"deepcopy",
@@ -80,6 +80,8 @@ func K8sCodegen() {
 	if err != nil {
 		log.Fatalf("failed to perform code-generation: (%v)", err)
 	}
+
+	log.Info("Code-generation complete.")
 }
 
 // getGroupVersions parses the layout of pkg/apis to return the API groups and versions

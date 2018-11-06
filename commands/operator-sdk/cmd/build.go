@@ -163,6 +163,9 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	if enableTests {
 		baseImageName += "-intermediate"
 	}
+
+	log.Infof("Building Docker image %s", baseImageName)
+
 	dbcmd := exec.Command("docker", "build", ".", "-f", "build/Dockerfile", "-t", baseImageName)
 	dbcmd.Stdout = os.Stdout
 	dbcmd.Stderr = os.Stderr
@@ -190,6 +193,8 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		_, err = os.Stat(testDockerfile)
 		if err != nil && os.IsNotExist(err) {
 
+			log.Info("Generating build manifests for test-framework.")
+
 			absProjectPath := projutil.MustGetwd()
 			cfg := &input.Config{
 				Repo:           projutil.CheckAndGetProjectGoPkg(),
@@ -204,9 +209,11 @@ func buildFunc(cmd *cobra.Command, args []string) {
 				&scaffold.TestPod{Image: image, TestNamespaceEnv: test.TestNamespaceEnv},
 			)
 			if err != nil {
-				log.Fatalf("test scaffold failed: (%v)", err)
+				log.Fatalf("test-framework manifest scaffold failed: (%v)", err)
 			}
 		}
+
+		log.Infof("Building test Docker image %s", image)
 
 		testDbcmd := exec.Command("docker", "build", ".", "-f", testDockerfile, "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+baseImageName)
 		testDbcmd.Stdout = os.Stdout
@@ -218,6 +225,8 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		// Check image name of deployments in namespaced manifest
 		verifyTestManifest(image)
 	}
+
+	log.Info("Operator build complete.")
 }
 
 func mainExists() bool {

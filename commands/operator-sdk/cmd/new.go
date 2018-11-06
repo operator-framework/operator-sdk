@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -80,6 +79,8 @@ func newFunc(cmd *cobra.Command, args []string) {
 	mustBeNewProject()
 	verifyFlags()
 
+	log.Infof("Creating new %s operator '%s'.", strings.Title(operatorType), projectName)
+
 	switch operatorType {
 	case projutil.OperatorTypeGo:
 		doScaffold()
@@ -88,6 +89,8 @@ func newFunc(cmd *cobra.Command, args []string) {
 		doAnsibleScaffold()
 	}
 	initGit()
+
+	log.Info("Project creation complete.")
 }
 
 func parse(args []string) {
@@ -190,6 +193,8 @@ func doAnsibleScaffold() {
 
 	// Decide on playbook.
 	if generatePlaybook {
+		log.Infof("Generating %s playbook.", strings.Title(operatorType))
+
 		err := s.Execute(cfg,
 			&ansible.Playbook{
 				Resource: *resource,
@@ -200,11 +205,14 @@ func doAnsibleScaffold() {
 		}
 	}
 
+	log.Info("Running galaxy-init.")
+
 	// Run galaxy init.
 	cmd := exec.Command(filepath.Join(galaxyInit.AbsProjectPath, galaxyInit.Path))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Run()
+
 	// Delete Galxy INIT
 	// Mac OS tmp directory is /var/folders/_c/..... this means we have to make sure that we get the top level directory to remove
 	// everything.
@@ -263,18 +271,18 @@ func pullDep() {
 	if err != nil {
 		log.Fatalf("looking for dep in $PATH: (%v)", err)
 	}
-	fmt.Fprintln(os.Stdout, "Run dep ensure ...")
+	log.Info("Run dep ensure ...")
 	execCmd(os.Stdout, dep, ensureCmd, "-v")
-	fmt.Fprintln(os.Stdout, "Run dep ensure done")
+	log.Info("Run dep ensure done")
 }
 
 func initGit() {
 	if skipGit {
 		return
 	}
-	fmt.Fprintln(os.Stdout, "Run git init ...")
+	log.Info("Run git init ...")
 	execCmd(os.Stdout, "git", "init")
 	execCmd(os.Stdout, "git", "add", "--all")
 	execCmd(os.Stdout, "git", "commit", "-q", "-m", "INITIAL COMMIT")
-	fmt.Fprintln(os.Stdout, "Run git init done")
+	log.Info("Run git init done")
 }

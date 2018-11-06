@@ -62,6 +62,9 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
 		log.Fatal("operator-sdk test local requires exactly 1 argument")
 	}
+
+	log.Info("Testing operator locally.")
+
 	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml, deploy/role_binding.yaml and deploy/operator.yaml
 	if tlConfig.namespacedManPath == "" {
 		err := os.MkdirAll(deployTestDir, os.FileMode(fileutil.DefaultDirFileMode))
@@ -134,7 +137,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 		defer func() {
 			err := os.Remove(tlConfig.globalManPath)
 			if err != nil {
-				log.Fatalf("could not delete global namespace manifest file: (%v)", err)
+				log.Fatalf("could not delete global manifest file: (%v)", err)
 			}
 		}()
 	}
@@ -160,6 +163,8 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatalf("failed to exec `go %s`: (%v)", strings.Join(testArgs, " "), err)
 	}
+
+	log.Info("Local operator test successfully completed.")
 }
 
 // combineManifests combines a given manifest with a base manifest and adds yaml
