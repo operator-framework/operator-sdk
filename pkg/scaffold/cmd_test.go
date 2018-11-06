@@ -34,13 +34,16 @@ func TestCmd(t *testing.T) {
 const cmdExp = `package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"runtime"
 
 	"github.com/example-inc/app-operator/pkg/apis"
 	"github.com/example-inc/app-operator/pkg/controller"
+
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -86,6 +89,14 @@ func main() {
 	if err := controller.AddToManager(mgr); err != nil {
 		log.Fatal(err)
 	}
+
+	// Create metric service and start the metrics registry
+	s, err := metrics.ExposeMetricsPort()
+	if err != nil {
+		log.Println(err)
+	}
+	client := mgr.GetClient()
+	client.Create(context.TODO(), s)
 
 	log.Print("Starting the Cmd.")
 

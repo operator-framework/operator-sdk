@@ -37,6 +37,7 @@ func (s *Cmd) GetInput() (input.Input, error) {
 const cmdTmpl = `package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"runtime"
@@ -91,6 +92,14 @@ func main() {
 	if err := controller.AddToManager(mgr); err != nil {
 		log.Fatal(err)
 	}
+
+	// Create metric service and start the metrics registry
+	s, err := metrics.ExposeMetricsPort()
+	if err != nil {
+		log.Println(err)
+	}
+	client := mgr.GetClient()
+	client.Create(context.TODO(), s)
 
 	log.Print("Starting the Cmd.")
 
