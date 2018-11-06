@@ -67,18 +67,9 @@ func CheckAndGetCurrPkg() string {
 	if len(gopath) == 0 {
 		log.Fatalf("get current pkg failed: GOPATH env not set")
 	}
-	var goSrc string
-	cwdInGopath := false
+	goSrc := filepath.Join(gopath, SrcDir)
 	wd := MustGetwd()
-	for _, path := range strings.Split(gopath, ":") {
-		goSrc = filepath.Join(path, SrcDir)
-
-		if strings.HasPrefix(filepath.Dir(wd), goSrc) {
-			cwdInGopath = true
-			break
-		}
-	}
-	if !cwdInGopath {
+	if !strings.HasPrefix(filepath.Dir(wd), goSrc) {
 		log.Fatalf("check current pkg failed: must run from gopath")
 	}
 	currPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
@@ -96,4 +87,28 @@ func GetOperatorType() OperatorType {
 		return OperatorTypeAnsible
 	}
 	return OperatorTypeGo
+}
+
+func SaveGopath() string {
+	return os.Getenv(GopathEnv)
+}
+
+func SetGopath(currentGopath string) {
+	var newGopath string
+	cwdInGopath := false
+	wd := MustGetwd()
+	for _, newGopath = range strings.Split(currentGopath, ":") {
+		if strings.HasPrefix(filepath.Dir(wd), newGopath) {
+			cwdInGopath = true
+			break
+		}
+	}
+	if !cwdInGopath {
+		log.Fatalf("check current pkg failed: must run from gopath")
+	}
+	os.Setenv(GopathEnv, newGopath)
+}
+
+func RestoreGopath(oldGopath string) {
+	os.Setenv(GopathEnv, oldGopath)
 }

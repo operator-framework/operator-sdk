@@ -19,11 +19,16 @@ import (
 	"os"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
 func main() {
+	gopath := projutil.SaveGopath()
+	projutil.SetGopath(gopath)
+
 	if err := cmd.NewRootCmd().Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(-1)
 	}
+	projutil.RestoreGopath(gopath)
 }
