@@ -54,7 +54,7 @@ spec:
           image: REPLACE_IMAGE
           ports:
           - containerPort: 60000
-            name: metrics
+            name: sdk-metrics
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE

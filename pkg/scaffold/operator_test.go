@@ -52,7 +52,7 @@ spec:
           image: REPLACE_IMAGE
           ports:
           - containerPort: 60000
-            name: metrics
+            name: sdk-metrics
           command:
           - app-operator
           imagePullPolicy: Always
