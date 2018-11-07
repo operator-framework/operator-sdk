@@ -36,20 +36,21 @@ const (
 
 // EventHandler - knows how to handle job events.
 type EventHandler interface {
-	Handle(*unstructured.Unstructured, eventapi.JobEvent)
+	Handle(string, *unstructured.Unstructured, eventapi.JobEvent)
 }
 
 type loggingEventHandler struct {
 	LogLevel LogLevel
 }
 
-func (l loggingEventHandler) Handle(u *unstructured.Unstructured, e eventapi.JobEvent) {
+func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, e eventapi.JobEvent) {
 	log := logrus.WithFields(logrus.Fields{
 		"component":  "logging_event_handler",
 		"name":       u.GetName(),
 		"namespace":  u.GetNamespace(),
 		"gvk":        u.GroupVersionKind().String(),
 		"event_type": e.Event,
+		"job":        ident,
 	})
 	if l.LogLevel == Nothing {
 		return
@@ -71,6 +72,10 @@ func (l loggingEventHandler) Handle(u *unstructured.Unstructured, e eventapi.Job
 		if e.Event == eventapi.EventRunnerOnFailed {
 			log.Errorf("[failed]: [playbook task] '%s' failed with task_args - %v",
 				t, e.EventData["task_args"])
+			taskPath, ok := e.EventData["task_path"]
+			if ok {
+				log.Errorf("failed task: %s\n", taskPath)
+			}
 			return
 		}
 	}

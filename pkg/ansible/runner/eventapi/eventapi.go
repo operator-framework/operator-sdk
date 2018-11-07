@@ -165,7 +165,7 @@ func (e *EventReceiver) handleEvents(w http.ResponseWriter, r *http.Request) {
 	// we're not currently interested in.
 	// https://ansible-runner.readthedocs.io/en/latest/external_interface.html#event-structure
 	if event.UUID == "" {
-		e.logger.Info("dropping event that is not a JobEvent")
+		e.logger.Debug("dropping event that is not a JobEvent")
 	} else {
 		// timeout if the channel blocks for too long
 		timeout := time.NewTimer(10 * time.Second)
