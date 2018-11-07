@@ -43,11 +43,16 @@ func k8sFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 0 {
 		log.Fatalf("k8s command doesn't accept any arguments.")
 	}
+
+	// Only Go projects can generate k8s deepcopy code.
+	projutil.MustGoProjectCmd(cmd)
+
 	K8sCodegen()
 }
 
 // K8sCodegen performs deepcopy code-generation for all custom resources under pkg/apis
 func K8sCodegen() {
+
 	projutil.MustInProjectRoot()
 	repoPkg := projutil.CheckAndGetCurrPkg()
 	outputPkg := filepath.Join(repoPkg, "pkg/generated")

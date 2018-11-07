@@ -19,11 +19,13 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/spf13/cobra"
 )
 
 const (
 	SrcDir          = "src"
-	gopkgToml       = "./Gopkg.toml"
+	mainFile        = "./cmd/manager/main.go"
 	buildDockerfile = "./build/Dockerfile"
 )
 
@@ -49,6 +51,15 @@ func MustInProjectRoot() {
 	_, err := os.Stat(buildDockerfile)
 	if err != nil && os.IsNotExist(err) {
 		log.Fatalf("must run command in project root dir: %v", err)
+	}
+}
+
+func MustGoProjectCmd(cmd *cobra.Command) {
+	t := GetOperatorType()
+	switch t {
+	case OperatorTypeGo:
+	default:
+		log.Fatalf("'%s' can only be run for Go operators.", cmd.CommandPath())
 	}
 }
 
@@ -90,8 +101,8 @@ func CheckAndGetCurrPkg() string {
 // This function should be called after verifying the user is in project root
 // e.g: "go", "ansible"
 func GetOperatorType() OperatorType {
-	// Assuming that if Gopkg.toml exists then this is a Go operator
-	_, err := os.Stat(gopkgToml)
+	// Assuming that if main.go exists then this is a Go operator
+	_, err := os.Stat(mainFile)
 	if err != nil && os.IsNotExist(err) {
 		return OperatorTypeAnsible
 	}
