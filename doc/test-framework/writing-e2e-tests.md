@@ -66,6 +66,7 @@ import (
     "testing"
 
     cachev1alpha1 "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1"
+    "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis"
 
     framework "github.com/operator-framework/operator-sdk/pkg/test"
 )
@@ -84,7 +85,7 @@ memcachedList := &cachev1alpha1.MemcachedList{
         APIVersion: "cache.example.com/v1alpha1",
     },
 }
-err := framework.AddToFrameworkScheme(cachev1alpha1.AddToScheme, memcachedList)
+err := framework.AddToFrameworkScheme(apis.AddToScheme, memcachedList)
 if err != nil {
     t.Fatalf("failed to add custom resource scheme to framework: %v", err)
 }
