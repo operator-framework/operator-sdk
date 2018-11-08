@@ -17,10 +17,10 @@ package cmdtest
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
+	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
@@ -29,7 +29,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 type testClusterConfig struct {
@@ -48,13 +47,8 @@ func NewTestClusterCmd() *cobra.Command {
 		Short: "Run End-To-End tests using image with embedded test binary",
 		RunE:  testClusterFunc,
 	}
-	defaultKubeConfig := ""
-	homedir, ok := os.LookupEnv("HOME")
-	if ok {
-		defaultKubeConfig = homedir + "/.kube/config"
-	}
-	testCmd.Flags().StringVar(&tcConfig.namespace, "namespace", "default", "Namespace to run tests in")
-	testCmd.Flags().StringVar(&tcConfig.kubeconfig, "kubeconfig", defaultKubeConfig, "Kubeconfig path")
+	testCmd.Flags().StringVar(&tcConfig.namespace, "namespace", "", "Namespace to run tests in")
+	testCmd.Flags().StringVar(&tcConfig.kubeconfig, "kubeconfig", "", "Kubeconfig path")
 	testCmd.Flags().StringVar(&tcConfig.imagePullPolicy, "image-pull-policy", "Always", "Set test pod image pull policy. Allowed values: Always, Never")
 	testCmd.Flags().StringVar(&tcConfig.serviceAccount, "service-account", "default", "Service account to run tests on")
 	testCmd.Flags().IntVar(&tcConfig.pendingTimeout, "pending-timeout", 60, "Timeout in seconds for testing pod to stay in pending state (default 60s)")
@@ -98,9 +92,12 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 			}},
 		},
 	}
-	kubeconfig, err := clientcmd.BuildConfigFromFlags("", tcConfig.kubeconfig)
+	kubeconfig, defaultNamespace, err := k8sInternal.GetKubeconfigAndNamespace(tcConfig.kubeconfig)
 	if err != nil {
 		return fmt.Errorf("failed to get kubeconfig: %v", err)
+	}
+	if tcConfig.namespace == "" {
+		tcConfig.namespace = defaultNamespace
 	}
 	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
 	if err != nil {
