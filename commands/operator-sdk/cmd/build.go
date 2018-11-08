@@ -146,7 +146,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 
 	// Don't need to build go code if Ansible Operator
 	if mainExists() {
-		managerDir := filepath.Join(projutil.CheckAndGetCurrPkg(), scaffold.ManagerDir)
+		managerDir := filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir)
 		outputBinName := filepath.Join(wd, scaffold.BuildBinDir, filepath.Base(wd))
 		buildCmd := exec.Command("go", "build", "-o", outputBinName, managerDir)
 		buildCmd.Env = goBuildEnv
@@ -192,7 +192,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 
 			absProjectPath := projutil.MustGetwd()
 			cfg := &input.Config{
-				Repo:           projutil.CheckAndGetCurrPkg(),
+				Repo:           projutil.CheckAndGetProjectGoPkg(),
 				AbsProjectPath: absProjectPath,
 				ProjectName:    filepath.Base(wd),
 			}

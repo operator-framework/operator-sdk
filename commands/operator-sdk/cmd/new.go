@@ -68,8 +68,6 @@ var (
 )
 
 const (
-	gopath    = "GOPATH"
-	src       = "src"
 	dep       = "dep"
 	ensureCmd = "ensure"
 )
@@ -120,7 +118,7 @@ func mustBeNewProject() {
 
 func doScaffold() {
 	cfg := &input.Config{
-		Repo:           filepath.Join(projutil.CheckAndGetCurrPkg(), projectName),
+		Repo:           filepath.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
 		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
 		ProjectName:    projectName,
 	}
@@ -227,7 +225,7 @@ func repoPath() string {
 	// We only care about GOPATH constraint checks if we are a Go operator
 	wd := projutil.MustGetwd()
 	if operatorType == projutil.OperatorTypeGo {
-		gp := os.Getenv(gopath)
+		gp := os.Getenv(projutil.GopathEnv)
 		if len(gp) == 0 {
 			log.Fatal("$GOPATH env not set")
 		}
@@ -236,7 +234,7 @@ func repoPath() string {
 			log.Fatalf("project's repository path (%v) is not rooted under GOPATH (%v)", wd, gp)
 		}
 		// compute the repo path by stripping "$GOPATH/src/" from the path of the current directory.
-		rp := filepath.Join(string(wd[len(filepath.Join(gp, src)):]), projectName)
+		rp := filepath.Join(string(wd[len(filepath.Join(gp, projutil.SrcDir)):]), projectName)
 		// strip any "/" prefix from the repo path.
 		return strings.TrimPrefix(rp, string(filepath.Separator))
 	}
