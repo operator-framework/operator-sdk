@@ -98,7 +98,7 @@ func GetOperatorType() OperatorType {
 func GetGopath() string {
 	gopath, ok := os.LookupEnv(GopathEnv)
 	if !ok || len(gopath) == 0 {
-		log.Fatal("get current pkg failed: GOPATH env not set")
+		log.Fatal("GOPATH env not set")
 	}
 	return gopath
 }
@@ -114,7 +114,7 @@ func SetGopath(currentGopath string) {
 		}
 	}
 	if !cwdInGopath {
-		log.Fatalf("check current pkg failed: must run from gopath")
+		log.Fatalf("project not in $GOPATH")
 	}
 	if err := os.Setenv(GopathEnv, newGopath); err != nil {
 		log.Fatal(err)

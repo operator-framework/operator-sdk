@@ -219,28 +219,6 @@ func doAnsibleScaffold() {
 	}
 }
 
-// repoPath checks if this project's repository path is rooted under $GOPATH and returns project's repository path.
-// repoPath field on generator is used primarily in generation of Go operator. For Ansible we will set it to cwd
-func repoPath() string {
-	// We only care about GOPATH constraint checks if we are a Go operator
-	wd := projutil.MustGetwd()
-	if operatorType == projutil.OperatorTypeGo {
-		gp := os.Getenv(projutil.GopathEnv)
-		if len(gp) == 0 {
-			log.Fatal("$GOPATH env not set")
-		}
-		// check if this project's repository path is rooted under $GOPATH
-		if !strings.HasPrefix(wd, gp) {
-			log.Fatalf("project's repository path (%v) is not rooted under GOPATH (%v)", wd, gp)
-		}
-		// compute the repo path by stripping "$GOPATH/src/" from the path of the current directory.
-		rp := filepath.Join(string(wd[len(filepath.Join(gp, projutil.SrcDir)):]), projectName)
-		// strip any "/" prefix from the repo path.
-		return strings.TrimPrefix(rp, string(filepath.Separator))
-	}
-	return wd
-}
-
 func verifyFlags() {
 	if operatorType != projutil.OperatorTypeGo && operatorType != projutil.OperatorTypeAnsible {
 		log.Fatal("--type can only be `go` or `ansible`")
