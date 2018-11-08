@@ -205,6 +205,12 @@ deployment image in this file needs to be modified from the placeholder
 $ sed -i 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
 ```
 
+**Note**  
+If you are performing these steps on OSX, use the following command:
+```
+$ sed -i "" 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
+```
+
 Deploy the memcached-operator:
 
 ```sh
