@@ -28,10 +28,10 @@ func GetKubeconfigAndNamespace(configPath string) (*rest.Config, string, error) 
 	var clientConfig clientcmd.ClientConfig
 	if configPath != "" {
 		apiConfig, err := clientcmd.LoadFromFile(configPath)
-		clientConfig = clientcmd.NewDefaultClientConfig(*apiConfig, &clientcmd.ConfigOverrides{})
 		if err != nil {
 			return nil, "", fmt.Errorf("failed to load user provided kubeconfig: %v", err)
 		}
+		clientConfig = clientcmd.NewDefaultClientConfig(*apiConfig, &clientcmd.ConfigOverrides{})
 	} else {
 		apiConfig, err := clientcmd.NewDefaultClientConfigLoadingRules().Load()
 		if err != nil {
