@@ -40,14 +40,20 @@ if which oc 2>/dev/null; then oc project default; fi
 
 # build operator binary and base image
 go build -o test/ansible-operator/ansible-operator test/ansible-operator/cmd/ansible-operator/main.go
-pushd test
-pushd ansible-operator
+pushd test/ansible-operator
 docker build -t quay.io/water-hole/ansible-operator .
 popd
 
-# get current directory so we can delete project on exit
-DIR1=$(pwd)
-trap_add 'rm -rf ${DIR1}/memcached-operator' EXIT
+# Make a test directory for Ansible tests so we avoid using default GOPATH.
+# Save test directory so we can delete it on exit.
+ANSIBLE_TEST_DIR="$(mktemp -d)"
+trap_add 'rm -rf $ANSIBLE_TEST_DIR' EXIT
+cp -a test/ansible-* "$ANSIBLE_TEST_DIR"
+pushd "$ANSIBLE_TEST_DIR"
+
+# Ansible tests should not run in a Golang environment.
+unset GOPATH GOROOT
+
 # create and build the operator
 operator-sdk new memcached-operator --api-version=ansible.example.com/v1alpha1 --kind=Memcached --type=ansible
 cp ansible-memcached/tasks.yml memcached-operator/roles/Memcached/tasks/main.yml
@@ -56,11 +62,11 @@ cp -a ansible-memcached/memfin memcached-operator/roles/
 cat ansible-memcached/watches-finalizer.yaml >> memcached-operator/watches.yaml
 
 pushd memcached-operator
-operator-sdk build $DEST_IMAGE
+operator-sdk build "$DEST_IMAGE"
 sed -i "s|REPLACE_IMAGE|$DEST_IMAGE|g" deploy/operator.yaml
 sed -i 's|Always|Never|g' deploy/operator.yaml
 
-DIR2=$(pwd)
+DIR2="$(pwd)"
 # deploy the operator
 kubectl create -f deploy/service_account.yaml
 trap_add 'kubectl delete -f ${DIR2}/deploy/service_account.yaml' EXIT
