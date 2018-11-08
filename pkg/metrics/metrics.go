@@ -32,7 +32,12 @@ func ExposeMetricsPort() (*v1.Service, error) {
 	reg := NewOperatoSDKPrometheusRegistery()
 	mux := http.NewServeMux()
 	HandlerFuncs(mux, reg)
-	go http.ListenAndServe(":"+strconv.Itoa(OperatorSDKPrometheusMetricsPort), mux)
+	go func() {
+		err := http.ListenAndServe(":"+strconv.Itoa(OperatorSDKPrometheusMetricsPort), mux)
+		if err != nil {
+			fmt.Printf("Serving metrics failed: %v", err)
+		}
+	}()
 
 	service, err := k8sutil.InitOperatorService(int32(OperatorSDKPrometheusMetricsPort), OperatorSDKPrometheusMetricsPortName)
 	if err != nil {
