@@ -371,7 +371,7 @@ $ sed -i 's|REPLACE_IMAGE|quay.io/example/foo-operator:v0.0.1|g' deploy/operator
 ```
 
 **Note**  
-If you run sed on OSX, use syntax instead:
+If you are performing these steps on OSX, use the following command:
 ```
 $ sed -i "" 's|REPLACE_IMAGE|quay.io/example/foo-operator:v0.0.1|g' deploy/operator.yaml
 ```
