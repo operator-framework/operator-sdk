@@ -73,6 +73,10 @@ required = [
   name = "sigs.k8s.io/controller-runtime"
   version = "v0.1.4"
 
+[[override]]
+  name = "github.com/coreos/prometheus-operator"
+  version = "0.24.0"
+
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"
   # The version rule is used for a specific release and the master branch for in between releases.
