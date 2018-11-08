@@ -16,6 +16,8 @@ package e2e
 
 import (
 	"bytes"
+	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -29,8 +31,10 @@ import (
 	"github.com/operator-framework/operator-sdk/test/e2e/e2eutil"
 	framework "github.com/operator-framework/operator-sdk/test/e2e/framework"
 
+	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -112,6 +116,19 @@ func TestMemcached(t *testing.T) {
 	cmdOut, err = exec.Command("dep", "ensure").CombinedOutput()
 	if err != nil {
 		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+	}
+
+	// Set replicas to 2 to test leader election. In production, this should
+	// almost always be set to 1, because there isn't generally value in having
+	// a hot spare operator process.
+	opYaml, err := ioutil.ReadFile("deploy/operator.yaml")
+	if err != nil {
+		t.Fatalf("could not read deploy/operator.yaml: %v", err)
+	}
+	newOpYaml := bytes.Replace(opYaml, []byte("replicas: 1"), []byte("replicas: 2"), 1)
+	err = ioutil.WriteFile("deploy/operator.yaml", newOpYaml, 0644)
+	if err != nil {
+		t.Fatalf("could not write deploy/operator.yaml: %v", err)
 	}
 
 	cmdOut, err = exec.Command("operator-sdk",
@@ -214,6 +231,80 @@ func TestMemcached(t *testing.T) {
 		t.Run("ClusterTest", MemcachedClusterTest)
 		t.Run("Local", MemcachedLocal)
 	})
+}
+
+func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) error {
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		return err
+	}
+
+	err = e2eutil.DeploymentReplicaCheck(t, f.KubeClient, namespace, "memcached-operator", 1, 6)
+	if err != nil {
+		return err
+	}
+
+	leader, err := verifyLeader(namespace, f)
+	if err != nil {
+		return err
+	}
+
+	// delete the leader's pod so a new leader will get elected
+	err = f.DynamicClient.Delete(context.TODO(), leader)
+	if err != nil {
+		return err
+	}
+
+	err = e2eutil.DeploymentReplicaCheck(t, f.KubeClient, namespace, "memcached-operator", 1, 6)
+	if err != nil {
+		return err
+	}
+
+	newLeader, err := verifyLeader(namespace, f)
+	if err != nil {
+		return err
+	}
+	if newLeader.Name == leader.Name {
+		return fmt.Errorf("leader pod name did not change across pod delete")
+	}
+
+	return nil
+}
+
+func verifyLeader(namespace string, f *framework.Framework) (*v1.Pod, error) {
+	// get configmap, which is the lock
+	lock := v1.ConfigMap{}
+	err := f.DynamicClient.Get(context.TODO(), types.NamespacedName{Name: "memcached-operator-lock", Namespace: namespace}, &lock)
+	if err != nil {
+		return nil, err
+	}
+
+	owners := lock.GetOwnerReferences()
+	if len(owners) != 1 {
+		return nil, fmt.Errorf("leader lock has %d owner refs, expected 1", len(owners))
+	}
+	owner := owners[0]
+
+	// get operator pods
+	pods := v1.PodList{}
+	opts := client.ListOptions{Namespace: namespace}
+	opts.SetLabelSelector("name=memcached-operator")
+	opts.SetFieldSelector("status.phase=Running")
+	err = f.DynamicClient.List(context.TODO(), &opts, &pods)
+	if err != nil {
+		return nil, err
+	}
+	if len(pods.Items) != 2 {
+		return nil, fmt.Errorf("expected 2 pods, found %d", len(pods.Items))
+	}
+
+	// find and return the leader
+	for _, pod := range pods.Items {
+		if pod.Name == owner.Name {
+			return &pod, nil
+		}
+	}
+	return nil, fmt.Errorf("did not find operator pod that was referenced by configmap")
 }
 
 func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) error {
@@ -399,6 +490,10 @@ func MemcachedCluster(t *testing.T) {
 	// wait for memcached-operator to be ready
 	err = e2eutil.DeploymentReplicaCheck(t, f.KubeClient, namespace, "memcached-operator", 1, 6)
 	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = memcachedLeaderTest(t, f, ctx); err != nil {
 		t.Fatal(err)
 	}
 
