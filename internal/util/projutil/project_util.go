@@ -64,14 +64,8 @@ func MustGetwd() string {
 // e.g: "github.com/example-inc/app-operator"
 func CheckAndGetCurrPkg() string {
 	gopath := os.Getenv(GopathEnv)
-	if len(gopath) == 0 {
-		log.Fatalf("get current pkg failed: GOPATH env not set")
-	}
 	goSrc := filepath.Join(gopath, SrcDir)
 	wd := MustGetwd()
-	if !strings.HasPrefix(filepath.Dir(wd), goSrc) {
-		log.Fatalf("check current pkg failed: must run from gopath")
-	}
 	currPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
 	// strip any "/" prefix from the repo path.
 	return strings.TrimPrefix(currPkg, string(filepath.Separator))
@@ -89,8 +83,12 @@ func GetOperatorType() OperatorType {
 	return OperatorTypeGo
 }
 
-func SaveGopath() string {
-	return os.Getenv(GopathEnv)
+func GetGopath() string {
+	gopath, ok := os.LookupEnv(GopathEnv)
+	if !ok || len(gopath) == 0 {
+		log.Fatal("get current pkg failed: GOPATH env not set")
+	}
+	return gopath
 }
 
 func SetGopath(currentGopath string) {
@@ -107,8 +105,4 @@ func SetGopath(currentGopath string) {
 		log.Fatalf("check current pkg failed: must run from gopath")
 	}
 	os.Setenv(GopathEnv, newGopath)
-}
-
-func RestoreGopath(oldGopath string) {
-	os.Setenv(GopathEnv, oldGopath)
 }

@@ -23,12 +23,11 @@ import (
 )
 
 func main() {
-	gopath := projutil.SaveGopath()
+	gopath := projutil.GetGopath()
 	projutil.SetGopath(gopath)
 
 	if err := cmd.NewRootCmd().Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(-1)
 	}
-	projutil.RestoreGopath(gopath)
 }
