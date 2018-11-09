@@ -22,7 +22,7 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
-// GetKubeconfigAndNamespace returns the *rest.Config and defualt namespace defined in the
+// GetKubeconfigAndNamespace returns the *rest.Config and default namespace defined in the
 // kubeconfig at the specified path. If no path is provided, returns the default *rest.Config
 // and namespace
 func GetKubeconfigAndNamespace(configPath string) (*rest.Config, string, error) {
