@@ -19,6 +19,7 @@ import (
 
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 // GetKubeconfigAndNamespace returns the *rest.Config and defualt namespace defined in the
@@ -26,19 +27,20 @@ import (
 // and namespace
 func GetKubeconfigAndNamespace(configPath string) (*rest.Config, string, error) {
 	var clientConfig clientcmd.ClientConfig
+	var apiConfig *clientcmdapi.Config
+	var err error
 	if configPath != "" {
-		apiConfig, err := clientcmd.LoadFromFile(configPath)
+		apiConfig, err = clientcmd.LoadFromFile(configPath)
 		if err != nil {
 			return nil, "", fmt.Errorf("failed to load user provided kubeconfig: %v", err)
 		}
-		clientConfig = clientcmd.NewDefaultClientConfig(*apiConfig, &clientcmd.ConfigOverrides{})
 	} else {
-		apiConfig, err := clientcmd.NewDefaultClientConfigLoadingRules().Load()
+		apiConfig, err = clientcmd.NewDefaultClientConfigLoadingRules().Load()
 		if err != nil {
 			return nil, "", fmt.Errorf("failed to get kubeconfig: %v", err)
 		}
-		clientConfig = clientcmd.NewDefaultClientConfig(*apiConfig, &clientcmd.ConfigOverrides{})
 	}
+	clientConfig = clientcmd.NewDefaultClientConfig(*apiConfig, &clientcmd.ConfigOverrides{})
 	kubeconfig, err := clientConfig.ClientConfig()
 	if err != nil {
 		return nil, "", err
