@@ -29,7 +29,7 @@ import (
 
 // ExposeMetricsPort generate a Kubernetes Service to expose metrics port
 func ExposeMetricsPort() (*v1.Service, error) {
-	reg := NewOperatoSDKPrometheusRegistery()
+	reg := NewPrometheusRegistery()
 	mux := http.NewServeMux()
 	HandlerFuncs(mux, reg)
 	go func() {
@@ -46,9 +46,9 @@ func ExposeMetricsPort() (*v1.Service, error) {
 	return service, nil
 }
 
-// NewOperatoSDKPrometheusRegistery returns a newly created prometheus registry.
+// NewPrometheusRegistery returns a newly created prometheus registry.
 // It also registers go collector and process collector metrics.
-func NewOperatoSDKPrometheusRegistery() *prometheus.Registry {
+func NewPrometheusRegistery() *prometheus.Registry {
 	r := prometheus.NewRegistry()
 	r.MustRegister(
 		prometheus.NewGoCollector(),
