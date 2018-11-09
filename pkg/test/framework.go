@@ -22,6 +22,8 @@ import (
 	"sync"
 	"time"
 
+	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+
 	extscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -31,7 +33,6 @@ import (
 	cgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
-	"k8s.io/client-go/tools/clientcmd"
 	dynclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -73,7 +74,7 @@ func setup(kubeconfigPath, namespacedManPath *string) error {
 		kubeconfig, err = rest.InClusterConfig()
 		*singleNamespace = true
 	} else {
-		kubeconfig, err = clientcmd.BuildConfigFromFlags("", *kubeconfigPath)
+		kubeconfig, _, err = k8sInternal.GetKubeconfigAndNamespace(*kubeconfigPath)
 	}
 	if err != nil {
 		return fmt.Errorf("failed to build the kubeconfig: %v", err)

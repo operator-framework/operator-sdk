@@ -49,12 +49,7 @@ func NewTestLocalCmd() *cobra.Command {
 		Short: "Run End-To-End tests locally",
 		Run:   testLocalFunc,
 	}
-	defaultKubeConfig := ""
-	homedir, ok := os.LookupEnv("HOME")
-	if ok {
-		defaultKubeConfig = homedir + "/.kube/config"
-	}
-	testCmd.Flags().StringVar(&tlConfig.kubeconfig, "kubeconfig", defaultKubeConfig, "Kubeconfig path")
+	testCmd.Flags().StringVar(&tlConfig.kubeconfig, "kubeconfig", "", "Kubeconfig path")
 	testCmd.Flags().StringVar(&tlConfig.globalManPath, "global-manifest", "", "Path to manifest for Global resources (e.g. CRD manifests)")
 	testCmd.Flags().StringVar(&tlConfig.namespacedManPath, "namespaced-manifest", "", "Path to manifest for per-test, namespaced resources (e.g. RBAC and Operator manifest)")
 	testCmd.Flags().StringVar(&tlConfig.goTestFlags, "go-test-flags", "", "Additional flags to pass to go test")
