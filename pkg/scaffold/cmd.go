@@ -94,7 +94,7 @@ func main() {
 	}
 
 	// Create metric service and start the metrics registry
-	s, err := metrics.ExposeMetricsPort()
+	s, err := metrics.Setup()
 	if err != nil {
 		log.Println(err)
 	}

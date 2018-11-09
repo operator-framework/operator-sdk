@@ -27,8 +27,9 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-// ExposeMetricsPort generate a Kubernetes Service to expose metrics port
-func ExposeMetricsPort() (*v1.Service, error) {
+// Setup function registers go and process metrics, serves metrics and exposes Prometheus metrics port.
+// It also generates and returns a Kubernetes Service to expose the metrics port.
+func Setup() (*v1.Service, error) {
 	reg := NewPrometheusRegistery()
 	mux := http.NewServeMux()
 	HandlerFuncs(mux, reg)
