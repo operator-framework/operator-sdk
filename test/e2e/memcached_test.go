@@ -25,6 +25,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/test/e2e/e2eutil"
 	framework "github.com/operator-framework/operator-sdk/test/e2e/framework"
 
@@ -42,7 +43,7 @@ func TestMemcached(t *testing.T) {
 	f := framework.Global
 	ctx := f.NewTestCtx(t)
 	defer ctx.Cleanup(t)
-	gopath, ok := os.LookupEnv("GOPATH")
+	gopath, ok := os.LookupEnv(projutil.GopathEnv)
 	if !ok {
 		t.Fatalf("$GOPATH not set")
 	}

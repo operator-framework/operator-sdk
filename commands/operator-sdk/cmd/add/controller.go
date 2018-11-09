@@ -68,7 +68,7 @@ func controllerRun(cmd *cobra.Command, args []string) {
 	}
 
 	cfg := &input.Config{
-		Repo:           projutil.CheckAndGetCurrPkg(),
+		Repo:           projutil.CheckAndGetProjectGoPkg(),
 		AbsProjectPath: projutil.MustGetwd(),
 	}
 

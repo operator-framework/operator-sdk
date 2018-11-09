@@ -54,7 +54,7 @@ func k8sFunc(cmd *cobra.Command, args []string) {
 func K8sCodegen() {
 
 	projutil.MustInProjectRoot()
-	repoPkg := projutil.CheckAndGetCurrPkg()
+	repoPkg := projutil.CheckAndGetProjectGoPkg()
 	outputPkg := filepath.Join(repoPkg, "pkg/generated")
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	groupVersions, err := parseGroupVersions()

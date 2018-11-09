@@ -71,27 +71,12 @@ func MustGetwd() string {
 	return wd
 }
 
-// CheckAndGetCurrPkg checks if this project's repository path is rooted under $GOPATH and returns the current directory's import path
+// CheckAndGetProjectGoPkg checks if this project's repository path is rooted under $GOPATH and returns the current directory's import path
 // e.g: "github.com/example-inc/app-operator"
-func CheckAndGetCurrPkg() string {
-	gopath := os.Getenv(GopathEnv)
-	if len(gopath) == 0 {
-		log.Fatalf("get current pkg failed: GOPATH env not set")
-	}
-	var goSrc string
-	cwdInGopath := false
+func CheckAndGetProjectGoPkg() string {
+	gopath := SetGopath(GetGopath())
+	goSrc := filepath.Join(gopath, SrcDir)
 	wd := MustGetwd()
-	for _, path := range strings.Split(gopath, ":") {
-		goSrc = filepath.Join(path, SrcDir)
-
-		if strings.HasPrefix(filepath.Dir(wd), goSrc) {
-			cwdInGopath = true
-			break
-		}
-	}
-	if !cwdInGopath {
-		log.Fatalf("check current pkg failed: must run from gopath")
-	}
 	currPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
 	// strip any "/" prefix from the repo path.
 	return strings.TrimPrefix(currPkg, string(filepath.Separator))
@@ -107,4 +92,36 @@ func GetOperatorType() OperatorType {
 		return OperatorTypeAnsible
 	}
 	return OperatorTypeGo
+}
+
+// GetGopath gets GOPATH and makes sure it is set and non-empty.
+func GetGopath() string {
+	gopath, ok := os.LookupEnv(GopathEnv)
+	if !ok || len(gopath) == 0 {
+		log.Fatal("GOPATH env not set")
+	}
+	return gopath
+}
+
+// SetGopath sets GOPATH=currentGopath after processing a path list,
+// if any, then returns the set path.
+func SetGopath(currentGopath string) string {
+	var newGopath string
+	cwdInGopath := false
+	wd := MustGetwd()
+	for _, newGopath = range strings.Split(currentGopath, ":") {
+		if strings.HasPrefix(filepath.Dir(wd), newGopath) {
+			cwdInGopath = true
+			break
+		}
+	}
+	if !cwdInGopath {
+		log.Fatalf("project not in $GOPATH")
+		return ""
+	}
+	if err := os.Setenv(GopathEnv, newGopath); err != nil {
+		log.Fatal(err)
+		return ""
+	}
+	return newGopath
 }
