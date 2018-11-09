@@ -74,8 +74,7 @@ func MustGetwd() string {
 // CheckAndGetProjectGoPkg checks if this project's repository path is rooted under $GOPATH and returns the current directory's import path
 // e.g: "github.com/example-inc/app-operator"
 func CheckAndGetProjectGoPkg() string {
-	gopath := GetGopath()
-	SetGopath(gopath)
+	gopath := SetGopath(GetGopath())
 	goSrc := filepath.Join(gopath, SrcDir)
 	wd := MustGetwd()
 	currPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
@@ -95,6 +94,7 @@ func GetOperatorType() OperatorType {
 	return OperatorTypeGo
 }
 
+// GetGopath gets GOPATH and makes sure it is set and non-empty.
 func GetGopath() string {
 	gopath, ok := os.LookupEnv(GopathEnv)
 	if !ok || len(gopath) == 0 {
@@ -103,7 +103,9 @@ func GetGopath() string {
 	return gopath
 }
 
-func SetGopath(currentGopath string) {
+// SetGopath sets GOPATH=currentGopath after processing a path list,
+// if any, then returns the set path.
+func SetGopath(currentGopath string) string {
 	var newGopath string
 	cwdInGopath := false
 	wd := MustGetwd()
@@ -115,8 +117,11 @@ func SetGopath(currentGopath string) {
 	}
 	if !cwdInGopath {
 		log.Fatalf("project not in $GOPATH")
+		return ""
 	}
 	if err := os.Setenv(GopathEnv, newGopath); err != nil {
 		log.Fatal(err)
+		return ""
 	}
+	return newGopath
 }
