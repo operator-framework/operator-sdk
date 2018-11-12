@@ -59,7 +59,7 @@ func MustGoProjectCmd(cmd *cobra.Command) {
 	switch t {
 	case OperatorTypeGo:
 	default:
-		log.Fatalf("'%s' can only be run for Go operators.", cmd.CommandPath())
+		log.Fatalf("'%s' can only be run for Go operators; %s does not exist.", cmd.CommandPath(), mainFile)
 	}
 }
 
