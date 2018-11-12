@@ -16,6 +16,8 @@ package scaffold
 
 import (
 	"testing"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/internal/testutil"
 )
 
 func TestControllerKind(t *testing.T) {
@@ -30,7 +32,7 @@ func TestControllerKind(t *testing.T) {
 	}
 
 	if controllerKindExp != buf.String() {
-		diffs := diff(controllerKindExp, buf.String())
+		diffs := testutil.Diff(controllerKindExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }

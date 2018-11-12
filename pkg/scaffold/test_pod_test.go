@@ -17,6 +17,7 @@ package scaffold
 import (
 	"testing"
 
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/internal/testutil"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 )
 
@@ -32,7 +33,7 @@ func TestPodTest(t *testing.T) {
 	}
 
 	if testPodExp != buf.String() {
-		diffs := diff(testPodExp, buf.String())
+		diffs := testutil.Diff(testPodExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }

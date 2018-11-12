@@ -14,7 +14,7 @@
 
 // Modified from github.com/kubernetes-sigs/controller-tools/pkg/util/util.go
 
-package scaffold
+package testutil
 
 import (
 	"bytes"
@@ -24,7 +24,7 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-func diff(a, b string) string {
+func Diff(a, b string) string {
 	dmp := diffmatchpatch.New()
 
 	wSrc, wDst, warray := dmp.DiffLinesToRunes(a, b)
