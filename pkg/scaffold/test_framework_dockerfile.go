@@ -32,10 +32,29 @@ func (s *TestFrameworkDockerfile) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
-const testFrameworkDockerfileTmpl = `ARG BASEIMAGE
+const testFrameworkDockerfileTmpl = `# ARG before FROM must always be before the first FROM
+ARG BASEIMAGE
+# Test binary builder image
+FROM golang:1.10.3 AS builder
+
+ENV GOPATH /go
+ENV CGO_ENABLED 0
+ENV GOOS linux
+ENV GOARCH amd64
+
+WORKDIR /go/src/{{ .Repo }}
+COPY . /go/src/{{ .Repo }}
+
+ARG TESTDIR
+RUN go test -c -o /go/bin/{{ .ProjectName }}-test ${TESTDIR}/...
+
+# Base image containing "{{ .ProjectName }}" binary
 FROM ${BASEIMAGE}
-ADD build/_output/bin/{{.ProjectName}}-test /usr/local/bin/{{.ProjectName}}-test
+
+COPY --from=builder /go/bin/{{ .ProjectName }}-test /usr/local/bin/{{ .ProjectName }}-test
+
 ARG NAMESPACEDMAN
 ADD $NAMESPACEDMAN /namespaced.yaml
+
 ADD build/test-framework/go-test.sh /go-test.sh
 `
