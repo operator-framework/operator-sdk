@@ -55,6 +55,7 @@ kubernetes cluster using a kubeconfig file.
 	upLocalCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "The file path to kubernetes configuration file; defaults to $HOME/.kube/config")
 	upLocalCmd.Flags().StringVar(&operatorFlags, "operator-flags", "", "The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
 	upLocalCmd.Flags().StringVar(&namespace, "namespace", "default", "The namespace where the operator watches for changes.")
+	upLocalCmd.Flags().StringVar(&ldFlags, "go-ldflags", "", "Set Go linker options")
 
 	return upLocalCmd
 }
@@ -63,6 +64,7 @@ var (
 	kubeConfig    string
 	operatorFlags string
 	namespace     string
+	ldFlags       string
 )
 
 const (
@@ -100,7 +102,11 @@ func mustKubeConfig() {
 }
 
 func upLocal() {
-	args := []string{"run", filepath.Join(scaffold.ManagerDir, scaffold.CmdFile)}
+	args := []string{"run"}
+	if ldFlags != "" {
+		args = append(args, []string{"-ldflags", ldFlags}...)
+	}
+	args = append(args, filepath.Join(scaffold.ManagerDir, scaffold.CmdFile))
 	if operatorFlags != "" {
 		extraArgs := strings.Split(operatorFlags, " ")
 		args = append(args, extraArgs...)
