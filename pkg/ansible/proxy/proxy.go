@@ -19,6 +19,7 @@ package proxy
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -26,18 +27,26 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
+	"strings"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
+	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // InjectOwnerReferenceHandler will handle proxied requests and inject the
 // owner refernece found in the authorization header. The Authorization is
 // then deleted so that the proxy can re-set with the correct authorization.
-func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
+func InjectOwnerReferenceHandler(h http.Handler, informerCache cache.Cache, restMapper meta.RESTMapper) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.Method == http.MethodPost {
+		switch req.Method {
+		case http.MethodPost:
 			log.Info("injecting owner reference")
 			dump, _ := httputil.DumpRequest(req, false)
 			log.V(1).Info("dumping request", "RequestDump", string(dump))
@@ -87,6 +96,65 @@ func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
 			log.V(1).Info("serialized body", "Body", string(newBody))
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(newBody))
 			req.ContentLength = int64(len(newBody))
+		case http.MethodGet:
+			// GET request means we need to check the cache
+			rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.NewString("api", "apis"), GrouplessAPIPrefixes: sets.NewString("api")}
+			r, err := rf.NewRequestInfo(req)
+			if err != nil {
+				log.Error("Failed to convert request: %v", err)
+				return
+			}
+			if strings.HasPrefix(r.Path, "/version") {
+				// Temporarily pass along to API server
+				// Ideally we cache this response as well
+				break
+			}
+
+			gv := make([]schema.GroupVersion, 1)
+			gv = append(gv, schema.GroupVersion{
+				Group:   r.APIGroup,
+				Version: r.APIVersion,
+			})
+			gvr := schema.GroupVersionResource{
+				Group:    r.APIGroup,
+				Version:  r.APIVersion,
+				Resource: r.Resource,
+			}
+			k, err := restMapper.KindFor(gvr)
+			if err != nil {
+				// break here in case resource doesn't exist in cache
+				log.Error("Didn't find kind", err)
+				break
+			}
+
+			un := unstructured.Unstructured{}
+			un.SetKind(k.Kind)
+			un.SetAPIVersion(k.Version)
+			obj := client.ObjectKey{Namespace: r.Namespace, Name: r.Name}
+			err = informerCache.Get(context.Background(), obj, &un)
+			if err != nil {
+				// break here in case resource doesn't exist in cache but exists on APIserver
+				// This is very unlikely but provides user with expected 404
+				log.Error("Didn't find object in cache", err)
+				break
+			}
+
+			i := bytes.Buffer{}
+			resp, err := json.Marshal(un.Object)
+			if err != nil {
+				// return will give a 500
+				log.Error("Failed to marshal data", err)
+				return
+			}
+			json.Indent(&i, resp, "", "  ")
+			_, err = w.Write(i.Bytes())
+			if err != nil {
+				log.Error("Failed to write response", err)
+				return
+			}
+
+			// Return so that request isn't passed along to APIserver
+			return
 		}
 		// Removing the authorization so that the proxy can set the correct authorization.
 		req.Header.Del("Authorization")
@@ -107,6 +175,8 @@ type Options struct {
 	Handler          HandlerChain
 	NoOwnerInjection bool
 	KubeConfig       *rest.Config
+	Cache            cache.Cache
+	RESTMapper       meta.RESTMapper
 }
 
 // Run will start a proxy server in a go routine that returns on the error
@@ -121,9 +191,30 @@ func Run(done chan error, o Options) error {
 		server.Handler = o.Handler(server.Handler)
 	}
 
-	if !o.NoOwnerInjection {
-		server.Handler = InjectOwnerReferenceHandler(server.Handler)
+	if o.Cache == nil {
+		// Need to initialize cache since we don't have one
+		log.Info("Initializing and starting informer cache...")
+		informerCache, err := cache.New(o.KubeConfig, cache.Options{})
+		if err != nil {
+			return err
+		}
+		stop := make(chan struct{})
+		go func() {
+			informerCache.Start(stop)
+			defer close(stop)
+		}()
+		log.Infof("Waiting for cache to sync...")
+		synced := informerCache.WaitForCacheSync(stop)
+		if !synced {
+			return fmt.Errorf("Failed to sync cache")
+		}
+		o.Cache = informerCache
 	}
+
+	if !o.NoOwnerInjection {
+		server.Handler = InjectOwnerReferenceHandler(server.Handler, o.Cache, o.RESTMapper)
+	}
+
 	l, err := server.Listen(o.Address, o.Port)
 	if err != nil {
 		return err
