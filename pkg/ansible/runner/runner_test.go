@@ -198,8 +198,10 @@ func TestNewFromWatches(t *testing.T) {
 						t.Fatalf("the GVK: %v\nunexpected finalizer: %#v\nexpected finalizer: %#v", k, run.Finalizer, expectedR.Finalizer)
 					}
 				}
-				if run.reconcilePeriod != expectedR.reconcilePeriod {
-					t.Fatalf("the GVK: %v unexpected reconcile period: %v expected reconcile period: %v", k, run.reconcilePeriod, expectedR.reconcilePeriod)
+				if expectedR.reconcilePeriod != nil {
+					if *run.reconcilePeriod != *expectedR.reconcilePeriod {
+						t.Fatalf("the GVK: %v unexpected reconcile period: %v expected reconcile period: %v", k, run.reconcilePeriod, expectedR.reconcilePeriod)
+					}
 				}
 			}
 		})
