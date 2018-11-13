@@ -53,6 +53,8 @@ func TestNewFromWatches(t *testing.T) {
 		return
 	}
 
+	zeroSeconds := time.Duration(0)
+	twoSeconds := time.Second * 2
 	testCases := []struct {
 		name        string
 		path        string
@@ -114,7 +116,7 @@ func TestNewFromWatches(t *testing.T) {
 						Kind:    "NoFinalizer",
 					},
 					Path:            validTemplate.ValidPlaybook,
-					reconcilePeriod: time.Second * 2,
+					reconcilePeriod: &twoSeconds,
 				},
 				schema.GroupVersionKind{
 					Version: "v1alpha1",
@@ -132,6 +134,19 @@ func TestNewFromWatches(t *testing.T) {
 						Role: validTemplate.ValidRole,
 						Vars: map[string]interface{}{"sentinel": "finalizer_running"},
 					},
+				},
+				schema.GroupVersionKind{
+					Version: "v1alpha1",
+					Group:   "app.example.com",
+					Kind:    "NoReconcile",
+				}: runner{
+					GVK: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "NoReconcile",
+					},
+					Path:            validTemplate.ValidPlaybook,
+					reconcilePeriod: &zeroSeconds,
 				},
 				schema.GroupVersionKind{
 					Version: "v1alpha1",
