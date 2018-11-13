@@ -49,9 +49,6 @@ func Add(mgr manager.Manager, options Options) {
 		options.EventHandlers = []events.EventHandler{}
 	}
 	eventHandlers := append(options.EventHandlers, events.NewLoggingEventHandler(options.LoggingLevel))
-	if options.ReconcilePeriod == time.Duration(0) {
-		options.ReconcilePeriod = time.Minute
-	}
 
 	aor := &AnsibleOperatorReconciler{
 		Client:          mgr.GetClient(),
