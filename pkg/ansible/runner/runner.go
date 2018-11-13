@@ -249,7 +249,7 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 // GetReconcilePeriod - new reconcile period.
 func (r *runner) GetReconcilePeriod() (time.Duration, bool) {
 	if r.reconcilePeriod == nil {
-		return *r.reconcilePeriod, false
+		return time.Duration(0), false
 	}
 	return *r.reconcilePeriod, true
 }
