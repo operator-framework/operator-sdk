@@ -29,7 +29,7 @@ import (
 // Run - A blocking function which starts a controller-runtime manager
 // It starts an Operator by reading in the values in `./watches.yaml`, adds a controller
 // to the manager, and finally running the manager.
-func Run(done chan error, mgr manager.Manager, watchesPath string, reconcilePeriod time.Duration) {
+func Run(done chan error, mgr manager.Manager, watchesPath string, reconcilePeriod time.Duration, managedStatus bool) {
 	watches, err := runner.NewFromWatches(watchesPath)
 	if err != nil {
 		logf.Log.WithName("manager").Error(err, "failed to get watches")
@@ -48,6 +48,10 @@ func Run(done chan error, mgr manager.Manager, watchesPath string, reconcilePeri
 		d, ok := runner.GetReconcilePeriod()
 		if ok {
 			o.ReconcilePeriod = d
+		}
+		s, ok := runner.GetManagedStatus()
+		if ok {
+			o.ManagedStatus = s
 		}
 		controller.Add(mgr, o)
 	}

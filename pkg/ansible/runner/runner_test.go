@@ -55,6 +55,7 @@ func TestNewFromWatches(t *testing.T) {
 
 	zeroSeconds := time.Duration(0)
 	twoSeconds := time.Second * 2
+	noManagedStatus := false
 	testCases := []struct {
 		name        string
 		path        string
@@ -99,6 +100,11 @@ func TestNewFromWatches(t *testing.T) {
 		{
 			name:        "error invalid duration",
 			path:        "testdata/invalid_duration.yaml",
+			shouldError: true,
+		},
+		{
+			name:        "error invalid status",
+			path:        "testdata/invalid_status.yaml",
 			shouldError: true,
 		},
 		{
@@ -147,6 +153,19 @@ func TestNewFromWatches(t *testing.T) {
 					},
 					Path:            validTemplate.ValidPlaybook,
 					reconcilePeriod: &zeroSeconds,
+				},
+				schema.GroupVersionKind{
+					Version: "v1alpha1",
+					Group:   "app.example.com",
+					Kind:    "DisableStatus",
+				}: runner{
+					GVK: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "DisableStatus",
+					},
+					Path:          validTemplate.ValidPlaybook,
+					managedStatus: &noManagedStatus,
 				},
 				schema.GroupVersionKind{
 					Version: "v1alpha1",

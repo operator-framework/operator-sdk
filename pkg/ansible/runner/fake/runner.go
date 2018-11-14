@@ -27,6 +27,7 @@ import (
 type Runner struct {
 	Finalizer       string
 	ReconcilePeriod time.Duration
+	ManagedStatus   bool
 	// Used to send error if Run should fail.
 	Error error
 	// Job Events that will be sent back from the runs channel
@@ -69,6 +70,11 @@ func (r *Runner) Run(_ string, u *unstructured.Unstructured, _ string) (runner.R
 // GetReconcilePeriod - new reconcile period.
 func (r *Runner) GetReconcilePeriod() (time.Duration, bool) {
 	return r.ReconcilePeriod, r.ReconcilePeriod != time.Duration(0)
+}
+
+// GetManagedStatus - return fake status
+func (r *Runner) GetManagedStatus() (bool, bool) {
+	return r.ManagedStatus, true
 }
 
 // GetFinalizer - gets the fake finalizer.

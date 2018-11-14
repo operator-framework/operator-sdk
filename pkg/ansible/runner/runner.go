@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -43,6 +44,7 @@ type Runner interface {
 	Run(string, *unstructured.Unstructured, string) (RunResult, error)
 	GetFinalizer() (string, bool)
 	GetReconcilePeriod() (time.Duration, bool)
+	GetManagedStatus() (bool, bool)
 }
 
 // watch holds data used to create a mapping of GVK to ansible playbook or role.
@@ -54,6 +56,7 @@ type watch struct {
 	Playbook        string     `yaml:"playbook"`
 	Role            string     `yaml:"role"`
 	ReconcilePeriod string     `yaml:"reconcilePeriod"`
+	ManagedStatus   string     `yaml:"managedStatus"`
 	Finalizer       *Finalizer `yaml:"finalizer"`
 }
 
@@ -94,6 +97,14 @@ func NewFromWatches(path string) (map[schema.GroupVersionKind]Runner, error) {
 			}
 			reconcilePeriod = &d
 		}
+		var managedStatus *bool
+		if w.ManagedStatus != "" {
+			stat, err := strconv.ParseBool(w.ManagedStatus)
+			if err != nil {
+				return nil, fmt.Errorf("unable to parse managedStatus: %v - %v, setting to default", w.ManagedStatus, err)
+			}
+			managedStatus = &stat
+		}
 
 		// Check if schema is a duplicate
 		if _, ok := m[s]; ok {
@@ -101,13 +112,13 @@ func NewFromWatches(path string) (map[schema.GroupVersionKind]Runner, error) {
 		}
 		switch {
 		case w.Playbook != "":
-			r, err := NewForPlaybook(w.Playbook, s, w.Finalizer, reconcilePeriod)
+			r, err := NewForPlaybook(w.Playbook, s, w.Finalizer, reconcilePeriod, managedStatus)
 			if err != nil {
 				return nil, err
 			}
 			m[s] = r
 		case w.Role != "":
-			r, err := NewForRole(w.Role, s, w.Finalizer, reconcilePeriod)
+			r, err := NewForRole(w.Role, s, w.Finalizer, reconcilePeriod, managedStatus)
 			if err != nil {
 				return nil, err
 			}
@@ -120,7 +131,7 @@ func NewFromWatches(path string) (map[schema.GroupVersionKind]Runner, error) {
 }
 
 // NewForPlaybook returns a new Runner based on the path to an ansible playbook.
-func NewForPlaybook(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, reconcilePeriod *time.Duration) (Runner, error) {
+func NewForPlaybook(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, reconcilePeriod *time.Duration, managedStatus *bool) (Runner, error) {
 	if !filepath.IsAbs(path) {
 		return nil, fmt.Errorf("playbook path must be absolute for %v", gvk)
 	}
@@ -134,6 +145,7 @@ func NewForPlaybook(path string, gvk schema.GroupVersionKind, finalizer *Finaliz
 			return exec.Command("ansible-runner", "-vv", "-p", path, "-i", ident, "run", inputDirPath)
 		},
 		reconcilePeriod: reconcilePeriod,
+		managedStatus:   managedStatus,
 	}
 	err := r.addFinalizer(finalizer)
 	if err != nil {
@@ -143,7 +155,7 @@ func NewForPlaybook(path string, gvk schema.GroupVersionKind, finalizer *Finaliz
 }
 
 // NewForRole returns a new Runner based on the path to an ansible role.
-func NewForRole(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, reconcilePeriod *time.Duration) (Runner, error) {
+func NewForRole(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, reconcilePeriod *time.Duration, managedStatus *bool) (Runner, error) {
 	if !filepath.IsAbs(path) {
 		return nil, fmt.Errorf("role path must be absolute for %v", gvk)
 	}
@@ -159,6 +171,7 @@ func NewForRole(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, 
 			return exec.Command("ansible-runner", "-vv", "--role", roleName, "--roles-path", rolePath, "--hosts", "localhost", "-i", ident, "run", inputDirPath)
 		},
 		reconcilePeriod: reconcilePeriod,
+		managedStatus:   managedStatus,
 	}
 	err := r.addFinalizer(finalizer)
 	if err != nil {
@@ -175,6 +188,7 @@ type runner struct {
 	cmdFunc          func(ident, inputDirPath string) *exec.Cmd // returns a Cmd that runs ansible-runner
 	finalizerCmdFunc func(ident, inputDirPath string) *exec.Cmd
 	reconcilePeriod  *time.Duration
+	managedStatus    *bool
 }
 
 func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig string) (RunResult, error) {
@@ -255,6 +269,14 @@ func (r *runner) GetReconcilePeriod() (time.Duration, bool) {
 		return time.Duration(0), false
 	}
 	return *r.reconcilePeriod, true
+}
+
+// GetManagedStatus - return runner's managedStatus if defined
+func (r *runner) GetManagedStatus() (bool, bool) {
+	if r.managedStatus == nil {
+		return false, false
+	}
+	return *r.managedStatus, true
 }
 
 func (r *runner) GetFinalizer() (string, bool) {

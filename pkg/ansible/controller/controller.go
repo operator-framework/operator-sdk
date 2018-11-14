@@ -42,6 +42,7 @@ type Options struct {
 	Runner          runner.Runner
 	GVK             schema.GroupVersionKind
 	ReconcilePeriod time.Duration
+	ManagedStatus   bool
 }
 
 // Add - Creates a new ansible operator controller and adds it to the manager
@@ -58,6 +59,7 @@ func Add(mgr manager.Manager, options Options) {
 		Runner:          options.Runner,
 		EventHandlers:   eventHandlers,
 		ReconcilePeriod: options.ReconcilePeriod,
+		ManagedStatus:   options.ManagedStatus,
 	}
 
 	// Register the GVK with the schema

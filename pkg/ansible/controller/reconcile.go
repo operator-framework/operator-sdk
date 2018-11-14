@@ -54,6 +54,7 @@ type AnsibleOperatorReconciler struct {
 	Client          client.Client
 	EventHandlers   []events.EventHandler
 	ReconcilePeriod time.Duration
+	ManagedStatus   bool
 }
 
 // Reconcile - handle the event.
@@ -112,28 +113,9 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 			return reconcileResult, err
 		}
 	}
-	statusInterface := u.Object["status"]
-	statusMap, _ := statusInterface.(map[string]interface{})
-	crStatus := ansiblestatus.CreateFromMap(statusMap)
 
-	// If there is no current status add that we are working on this resource.
-	errCond := ansiblestatus.GetCondition(crStatus, ansiblestatus.FailureConditionType)
-	succCond := ansiblestatus.GetCondition(crStatus, ansiblestatus.RunningConditionType)
-
-	// If the condition is currently running, making sure that the values are correct.
-	// If they are the same a no-op, if they are different then it is a good thing we
-	// are updating it.
-	if (errCond == nil && succCond == nil) || (succCond != nil && succCond.Reason != ansiblestatus.SuccessfulReason) {
-		c := ansiblestatus.NewCondition(
-			ansiblestatus.RunningConditionType,
-			v1.ConditionTrue,
-			nil,
-			ansiblestatus.RunningReason,
-			ansiblestatus.RunningMessage,
-		)
-		ansiblestatus.SetCondition(&crStatus, *c)
-		u.Object["status"] = crStatus.GetJSONMap()
-		err = r.Client.Update(context.TODO(), u)
+	if r.ManagedStatus {
+		err = r.markRunning(u)
 		if err != nil {
 			return reconcileResult, err
 		}
@@ -205,6 +187,48 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 			return reconcileResult, err
 		}
 	}
+	if r.ManagedStatus {
+		err = r.markDone(u, statusEvent, failureMessages)
+	}
+	return reconcileResult, err
+}
+
+func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured) error {
+	statusInterface := u.Object["status"]
+	statusMap, _ := statusInterface.(map[string]interface{})
+	crStatus := ansiblestatus.CreateFromMap(statusMap)
+
+	// If there is no current status add that we are working on this resource.
+	errCond := ansiblestatus.GetCondition(crStatus, ansiblestatus.FailureConditionType)
+	succCond := ansiblestatus.GetCondition(crStatus, ansiblestatus.RunningConditionType)
+
+	// If the condition is currently running, making sure that the values are correct.
+	// If they are the same a no-op, if they are different then it is a good thing we
+	// are updating it.
+	if (errCond == nil && succCond == nil) || (succCond != nil && succCond.Reason != ansiblestatus.SuccessfulReason) {
+		c := ansiblestatus.NewCondition(
+			ansiblestatus.RunningConditionType,
+			v1.ConditionTrue,
+			nil,
+			ansiblestatus.RunningReason,
+			ansiblestatus.RunningMessage,
+		)
+		ansiblestatus.SetCondition(&crStatus, *c)
+		u.Object["status"] = crStatus.GetJSONMap()
+		err := r.Client.Update(context.TODO(), u)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) error {
+	statusInterface := u.Object["status"]
+	statusMap, _ := statusInterface.(map[string]interface{})
+	crStatus := ansiblestatus.CreateFromMap(statusMap)
+
+	runSuccessful := len(failureMessages) == 0
 	ansibleStatus := ansiblestatus.NewAnsibleResultFromStatusJobEvent(statusEvent)
 
 	if !runSuccessful {
@@ -233,9 +257,8 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	}
 	// This needs the status subresource to be enabled by default.
 	u.Object["status"] = crStatus.GetJSONMap()
-	err = r.Client.Update(context.TODO(), u)
-	return reconcileResult, err
 
+	return r.Client.Update(context.TODO(), u)
 }
 
 func contains(l []string, s string) bool {

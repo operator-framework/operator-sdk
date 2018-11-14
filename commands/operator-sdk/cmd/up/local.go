@@ -161,7 +161,7 @@ func upLocalAnsible() {
 	}
 
 	// start the operator
-	go ansibleOperator.Run(done, mgr, "./"+ansibleScaffold.WatchesYamlFile, time.Minute)
+	go ansibleOperator.Run(done, mgr, "./"+ansibleScaffold.WatchesYamlFile, time.Minute, true)
 
 	// wait for either to finish
 	err = <-done
