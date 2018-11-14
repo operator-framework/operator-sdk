@@ -21,11 +21,12 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 
-	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/rest"
@@ -37,13 +38,13 @@ import (
 func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.Method == http.MethodPost {
-			logrus.Info("injecting owner reference")
+			log.Info("injecting owner reference")
 			dump, _ := httputil.DumpRequest(req, false)
-			logrus.Debugf(string(dump))
+			log.V(1).Info("dumping request", "RequestDump", string(dump))
 
 			user, _, ok := req.BasicAuth()
 			if !ok {
-				logrus.Error("basic auth header not found")
+				log.Error(errors.New("basic auth header not found"), "")
 				w.Header().Set("WWW-Authenticate", "Basic realm=\"Operator Proxy\"")
 				http.Error(w, "", http.StatusUnauthorized)
 				return
@@ -51,19 +52,19 @@ func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
 			authString, err := base64.StdEncoding.DecodeString(user)
 			if err != nil {
 				m := "could not base64 decode username"
-				logrus.Errorf("%s", err.Error())
+				log.Error(err, m)
 				http.Error(w, m, http.StatusBadRequest)
 				return
 			}
 			owner := metav1.OwnerReference{}
 			json.Unmarshal(authString, &owner)
 
-			logrus.Debugf("%#+v", owner)
+			log.V(1).Info(fmt.Sprintf("%#+v", owner))
 
 			body, err := ioutil.ReadAll(req.Body)
 			if err != nil {
 				m := "could not read request body"
-				logrus.Errorf("%s", err.Error())
+				log.Error(err, m)
 				http.Error(w, m, http.StatusInternalServerError)
 				return
 			}
@@ -71,7 +72,7 @@ func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
 			err = json.Unmarshal(body, data)
 			if err != nil {
 				m := "could not deserialize request body"
-				logrus.Errorf("%s", err.Error())
+				log.Error(err, m)
 				http.Error(w, m, http.StatusBadRequest)
 				return
 			}
@@ -79,11 +80,11 @@ func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
 			newBody, err := json.Marshal(data.Object)
 			if err != nil {
 				m := "could not serialize body"
-				logrus.Errorf("%s", err.Error())
+				log.Error(err, m)
 				http.Error(w, m, http.StatusInternalServerError)
 				return
 			}
-			logrus.Debugf(string(newBody))
+			log.V(1).Info("serialized body", "Body", string(newBody))
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(newBody))
 			req.ContentLength = int64(len(newBody))
 		}
@@ -128,7 +129,7 @@ func Run(done chan error, o Options) error {
 		return err
 	}
 	go func() {
-		logrus.Infof("Starting to serve on %s\n", l.Addr().String())
+		log.Info("Starting to serve", "Address", l.Addr().String())
 		done <- server.ServeOnListener(l)
 	}()
 	return nil

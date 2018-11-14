@@ -15,11 +15,12 @@
 package test
 
 import (
-	"log"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type TestCtx struct {
@@ -69,7 +70,7 @@ func (ctx *TestCtx) Cleanup() {
 	for i := len(ctx.cleanupFns) - 1; i >= 0; i-- {
 		err := ctx.cleanupFns[i]()
 		if err != nil {
-			ctx.t.Errorf("a cleanup function failed with error: %v\n", err)
+			ctx.t.Errorf("a cleanup function failed with error: (%v)\n", err)
 		}
 	}
 }
@@ -82,7 +83,7 @@ func (ctx *TestCtx) CleanupNoT() {
 		err := ctx.cleanupFns[i]()
 		if err != nil {
 			failed = true
-			log.Printf("a cleanup function failed with error: %v\n", err)
+			log.Errorf("a cleanup function failed with error: (%v)", err)
 		}
 	}
 	if failed {

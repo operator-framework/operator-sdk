@@ -23,14 +23,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
+
+var log = logf.Log.WithName("leader")
 
 // errNoNS indicates that a namespace could not be found for the current
 // environment
@@ -50,12 +52,12 @@ const PodNameEnv = "POD_NAME"
 // leader. Upon termination of that pod, the garbage collector will delete the
 // ConfigMap, enabling a different pod to become the leader.
 func Become(ctx context.Context, lockName string) error {
-	logrus.Info("trying to become the leader")
+	log.Info("Trying to become the leader.")
 
 	ns, err := myNS()
 	if err != nil {
 		if err == errNoNS {
-			logrus.Info("Skipping leader election; not running in a cluster")
+			log.Info("Skipping leader election; not running in a cluster.")
 			return nil
 		}
 		return err
@@ -90,17 +92,17 @@ func Become(ctx context.Context, lockName string) error {
 	case err == nil:
 		for _, existingOwner := range existing.GetOwnerReferences() {
 			if existingOwner.Name == owner.Name {
-				logrus.Info("Found existing lock with my name. I was likely restarted.")
-				logrus.Info("Continuing as the leader.")
+				log.Info("Found existing lock with my name. I was likely restarted.")
+				log.Info("Continuing as the leader.")
 				return nil
 			} else {
-				logrus.Infof("Found existing lock from %s", existingOwner.Name)
+				log.Info("Found existing lock", "LockOwner", existingOwner.Name)
 			}
 		}
 	case apierrors.IsNotFound(err):
-		logrus.Info("No pre-existing lock was found.")
+		log.Info("No pre-existing lock was found.")
 	default:
-		logrus.Error("unknown error trying to get ConfigMap")
+		log.Error(err, "unknown error trying to get ConfigMap")
 		return err
 	}
 
@@ -122,10 +124,10 @@ func Become(ctx context.Context, lockName string) error {
 		err := client.Create(ctx, cm)
 		switch {
 		case err == nil:
-			logrus.Info("Became the leader.")
+			log.Info("Became the leader.")
 			return nil
 		case apierrors.IsAlreadyExists(err):
-			logrus.Info("Not the leader. Waiting.")
+			log.Info("Not the leader. Waiting.")
 			select {
 			case <-time.After(wait.Jitter(backoff, .2)):
 				if backoff < maxBackoffInterval {
@@ -136,7 +138,7 @@ func Become(ctx context.Context, lockName string) error {
 				return ctx.Err()
 			}
 		default:
-			logrus.Errorf("unknown error creating configmap: %v", err)
+			log.Error(err, "unknown error creating configmap")
 			return err
 		}
 	}
@@ -147,13 +149,13 @@ func myNS() (string, error) {
 	nsBytes, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
 	if err != nil {
 		if os.IsNotExist(err) {
-			logrus.Debug("current namespace not found")
+			log.V(1).Info("current namespace not found")
 			return "", errNoNS
 		}
 		return "", err
 	}
 	ns := strings.TrimSpace(string(nsBytes))
-	logrus.Debugf("found namespace: %s", ns)
+	log.V(1).Info("found namespace", "Namespace", ns)
 	return ns, nil
 }
 
@@ -166,7 +168,7 @@ func myOwnerRef(ctx context.Context, client crclient.Client, ns string) (*metav1
 		return nil, fmt.Errorf("required env %s not set, please configure downward API", PodNameEnv)
 	}
 
-	logrus.Debugf("found podname: %s", podName)
+	log.V(1).Info("found podname", "Pod.Name", podName)
 
 	myPod := &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
@@ -178,7 +180,7 @@ func myOwnerRef(ctx context.Context, client crclient.Client, ns string) (*metav1
 	key := crclient.ObjectKey{Namespace: ns, Name: podName}
 	err := client.Get(ctx, key, myPod)
 	if err != nil {
-		logrus.Errorf("failed to get pod: %v", err)
+		log.Error(err, "failed to get pod", "Pod.Namespace", ns, "Pod.Name", podName)
 		return nil, err
 	}
 

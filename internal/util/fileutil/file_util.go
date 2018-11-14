@@ -19,11 +19,11 @@ package fileutil
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"sync"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
 

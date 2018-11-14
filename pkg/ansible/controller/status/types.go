@@ -18,10 +18,13 @@ import (
 	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/eventapi"
-	"github.com/sirupsen/logrus"
+
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
+
+var log = logf.Log.WithName("controller.status")
 
 const (
 	host = "localhost"
@@ -128,7 +131,7 @@ func createConditionFromMap(cm map[string]interface{}) Condition {
 	if ok {
 		t, err := time.Parse("2006-01-02T15:04:05Z", ltts)
 		if err != nil {
-			logrus.Warningf("unable to parse time for status condition: %v", ltts)
+			log.Info("unable to parse time for status condition", "Time", ltts)
 		} else {
 			ltt = metav1.NewTime(t)
 		}
@@ -158,7 +161,7 @@ func CreateFromMap(statusMap map[string]interface{}) Status {
 	for _, ci := range conditionsInterface {
 		cm, ok := ci.(map[string]interface{})
 		if !ok {
-			logrus.Warningf("unknown condition, removing condition: %v", ci)
+			log.Info("unknown condition, removing condition", "ConditionInterface", ci)
 			continue
 		}
 		conditions = append(conditions, createConditionFromMap(cm))

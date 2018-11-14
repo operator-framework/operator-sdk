@@ -16,7 +16,6 @@ package up
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -35,10 +34,11 @@ import (
 	ansibleScaffold "github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 func NewLocalCmd() *cobra.Command {
@@ -73,6 +73,9 @@ const (
 
 func upLocalFunc(cmd *cobra.Command, args []string) {
 	mustKubeConfig()
+
+	log.Info("Running the operator locally.")
+
 	switch projutil.GetOperatorType() {
 	case projutil.OperatorTypeGo:
 		projutil.MustInProjectRoot()
@@ -90,14 +93,14 @@ func mustKubeConfig() {
 	if len(kubeConfig) == 0 {
 		usr, err := user.Current()
 		if err != nil {
-			log.Fatalf("failed to determine user's home dir: %v", err)
+			log.Fatalf("failed to determine user's home dir: (%v)", err)
 		}
 		kubeConfig = filepath.Join(usr.HomeDir, defaultConfigPath)
 	}
 
 	_, err := os.Stat(kubeConfig)
 	if err != nil && os.IsNotExist(err) {
-		log.Fatalf("failed to find the kubeconfig file (%v): %v", kubeConfig, err)
+		log.Fatalf("failed to find the kubeconfig file (%v): (%v)", kubeConfig, err)
 	}
 }
 
@@ -118,29 +121,33 @@ func upLocal() {
 		<-c
 		err := dc.Process.Kill()
 		if err != nil {
-			log.Fatalf("failed to terminate the operator: %v", err)
+			log.Fatalf("failed to terminate the operator: (%v)", err)
 		}
 		os.Exit(0)
 	}()
 	dc.Stdout = os.Stdout
 	dc.Stderr = os.Stderr
-	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, kubeConfig), fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, namespace))
+	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, kubeConfig))
+	dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, namespace))
 	err := dc.Run()
 	if err != nil {
-		log.Fatalf("failed to run operator locally: %v", err)
+		log.Fatalf("failed to run operator locally: (%v)", err)
 	}
 }
 
 func upLocalAnsible() {
 	// Set the kubeconfig that the manager will be able to grab
 	os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig)
+
+	logf.SetLogger(logf.ZapLogger(false))
+
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{Namespace: namespace})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	printVersion()
-	logrus.Infof("watching namespace: %s", namespace)
+	log.Infof("watching namespace: %s", namespace)
 	done := make(chan error)
 
 	// start the proxy
@@ -150,7 +157,7 @@ func upLocalAnsible() {
 		KubeConfig: mgr.GetConfig(),
 	})
 	if err != nil {
-		logrus.Fatalf("error starting proxy: %v", err)
+		log.Fatalf("error starting proxy: (%v)", err)
 	}
 
 	// start the operator
@@ -158,15 +165,14 @@ func upLocalAnsible() {
 
 	// wait for either to finish
 	err = <-done
-	if err == nil {
-		logrus.Info("Exiting")
-	} else {
-		logrus.Fatal(err.Error())
+	if err != nil {
+		log.Fatal(err)
 	}
+	log.Info("Exiting.")
 }
 
 func printVersion() {
-	logrus.Infof("Go Version: %s", runtime.Version())
-	logrus.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	logrus.Infof("operator-sdk Version: %v", sdkVersion.Version)
+	log.Infof("Go Version: %s", runtime.Version())
+	log.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
+	log.Infof("operator-sdk Version: %v", sdkVersion.Version)
 }

@@ -17,7 +17,6 @@ package generate
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,6 +24,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -41,7 +41,7 @@ to comply with kube-API requirements.
 
 func k8sFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 0 {
-		log.Fatalf("k8s command doesn't accept any arguments.")
+		log.Fatal("k8s command doesn't accept any arguments")
 	}
 
 	// Only Go projects can generate k8s deepcopy code.
@@ -62,10 +62,10 @@ func K8sCodegen() {
 		log.Fatalf("failed to parse group versions: (%v)", err)
 	}
 
-	fmt.Fprintf(os.Stdout, "Running code-generation for custom resource group versions: [%s]\n", groupVersions)
+	log.Infof("Running code-generation for Custom Resource group versions: [%s]\n", groupVersions)
+
 	// TODO: Replace generate-groups.sh by building the vendored generators(deepcopy, lister etc)
 	// and running them directly
-	// TODO: remove dependency on boilerplate.go.txt
 	genGroupsCmd := "vendor/k8s.io/code-generator/generate-groups.sh"
 	args := []string{
 		"deepcopy",
@@ -73,11 +73,15 @@ func K8sCodegen() {
 		apisPkg,
 		groupVersions,
 	}
-	out, err := exec.Command(genGroupsCmd, args...).CombinedOutput()
+	cgCmd := exec.Command(genGroupsCmd, args...)
+	cgCmd.Stdout = os.Stdout
+	cgCmd.Stderr = os.Stderr
+	err = cgCmd.Run()
 	if err != nil {
 		log.Fatalf("failed to perform code-generation: (%v)", err)
 	}
-	fmt.Fprintln(os.Stdout, string(out))
+
+	log.Info("Code-generation complete.")
 }
 
 // getGroupVersions parses the layout of pkg/apis to return the API groups and versions
@@ -106,6 +110,10 @@ func parseGroupVersions() (string, error) {
 			}
 			groupVersions += fmt.Sprintf("%s:%s ", g.Name(), groupVersion)
 		}
+	}
+
+	if groupVersions == "" {
+		return "", fmt.Errorf("no groups or versions found in %s", scaffold.ApisDir)
 	}
 
 	return groupVersions, nil

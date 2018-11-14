@@ -24,6 +24,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -62,6 +63,9 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("operator-sdk test cluster requires exactly 1 argument")
 	}
+
+	log.Info("Testing operator in cluster.")
+
 	var pullPolicy v1.PullPolicy
 	if strings.ToLower(tcConfig.imagePullPolicy) == "always" {
 		pullPolicy = v1.PullAlways
@@ -110,7 +114,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 	defer func() {
 		err = kubeclient.CoreV1().Pods(tcConfig.namespace).Delete(testPod.Name, &metav1.DeleteOptions{})
 		if err != nil {
-			fmt.Printf("Warning: failed to delete test pod")
+			log.Warn("failed to delete test pod")
 		}
 	}()
 	err = wait.Poll(time.Second*5, time.Second*time.Duration(tcConfig.pendingTimeout), func() (bool, error) {
@@ -140,7 +144,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 			time.Sleep(time.Second * 5)
 			continue
 		} else if testPod.Status.Phase == v1.PodSucceeded {
-			fmt.Printf("Test Successfully Completed\n")
+			log.Info("Cluster test successfully completed.")
 			return nil
 		} else if testPod.Status.Phase == v1.PodFailed {
 			req := kubeclient.CoreV1().Pods(tcConfig.namespace).GetLogs(testPod.Name, &v1.PodLogOptions{})

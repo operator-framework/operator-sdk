@@ -19,12 +19,12 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
+	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 	rbacv1 "k8s.io/api/rbac/v1"
 	cgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -70,7 +70,7 @@ func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 		// check if the resource already exists
 		for _, resource := range pr.Resources {
 			if resource == r.Resource {
-				log.Printf("deploy/role.yaml RBAC rules already up to date for the resource (%v, %v)", r.APIVersion, r.Kind)
+				log.Infof("deploy/role.yaml RBAC rules already up to date for the resource (%v, %v)", r.APIVersion, r.Kind)
 				return nil
 			}
 		}
@@ -112,7 +112,7 @@ func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 		// check if the resource already exists
 		for _, resource := range pr.Resources {
 			if resource == r.Resource {
-				log.Printf("deploy/role.yaml RBAC rules already up to date for the resource (%v, %v)", r.APIVersion, r.Kind)
+				log.Infof("deploy/role.yaml RBAC rules already up to date for the resource (%v, %v)", r.APIVersion, r.Kind)
 				return nil
 			}
 		}

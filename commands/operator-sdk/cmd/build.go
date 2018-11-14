@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -30,6 +29,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
 	"github.com/ghodss/yaml"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -78,11 +78,11 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 		yamlMap := make(map[string]interface{})
 		err := yaml.Unmarshal(yamlSpec, &yamlMap)
 		if err != nil {
-			log.Fatal("Could not unmarshal yaml namespaced spec")
+			log.Fatalf("could not unmarshal yaml namespaced spec: (%v)", err)
 		}
 		kind, ok := yamlMap["kind"].(string)
 		if !ok {
-			log.Fatal("Yaml manifest file contains a 'kind' field that is not a string")
+			log.Fatal("yaml manifest file contains a 'kind' field that is not a string")
 		}
 		if kind == "Deployment" {
 			// this is ugly and hacky; we should probably make this cleaner
@@ -122,13 +122,13 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 func verifyTestManifest(image string) {
 	namespacedBytes, err := ioutil.ReadFile(namespacedManBuild)
 	if err != nil {
-		log.Fatalf("could not read namespaced manifest: %v", err)
+		log.Fatalf("could not read namespaced manifest: (%v)", err)
 	}
 
 	err = verifyDeploymentImage(namespacedBytes, image)
 	// the error from verifyDeploymentImage is just a warning, not fatal error
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		log.Warn(err)
 	}
 }
 
@@ -141,7 +141,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	goBuildEnv := append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
 	wd, err := os.Getwd()
 	if err != nil {
-		log.Fatalf("could not identify current working directory: %v", err)
+		log.Fatalf("could not identify current working directory: (%v)", err)
 	}
 
 	// Don't need to build go code if Ansible Operator
@@ -154,7 +154,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		buildCmd.Stderr = os.Stderr
 		err = buildCmd.Run()
 		if err != nil {
-			log.Fatalf("failed to build operator binary: %v", err)
+			log.Fatalf("failed to build operator binary: (%v)", err)
 		}
 	}
 
@@ -163,15 +163,18 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	if enableTests {
 		baseImageName += "-intermediate"
 	}
+
+	log.Infof("Building Docker image %s", baseImageName)
+
 	dbcmd := exec.Command("docker", "build", ".", "-f", "build/Dockerfile", "-t", baseImageName)
 	dbcmd.Stdout = os.Stdout
 	dbcmd.Stderr = os.Stderr
 	err = dbcmd.Run()
 	if err != nil {
 		if enableTests {
-			log.Fatalf("failed to build intermediate image for %s image: %v", image, err)
+			log.Fatalf("failed to output intermediate image %s: (%v)", image, err)
 		} else {
-			log.Fatalf("failed to output build image %s: %v", image, err)
+			log.Fatalf("failed to output build image %s: (%v)", image, err)
 		}
 	}
 
@@ -183,12 +186,14 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		buildTestCmd.Stderr = os.Stderr
 		err = buildTestCmd.Run()
 		if err != nil {
-			log.Fatalf("failed to build test binary: %v", err)
+			log.Fatalf("failed to build test binary: (%v)", err)
 		}
 		// if a user is using an older sdk repo as their library, make sure they have required build files
 		testDockerfile := filepath.Join(scaffold.BuildTestDir, scaffold.DockerfileFile)
 		_, err = os.Stat(testDockerfile)
 		if err != nil && os.IsNotExist(err) {
+
+			log.Info("Generating build manifests for test-framework.")
 
 			absProjectPath := projutil.MustGetwd()
 			cfg := &input.Config{
@@ -204,20 +209,24 @@ func buildFunc(cmd *cobra.Command, args []string) {
 				&scaffold.TestPod{Image: image, TestNamespaceEnv: test.TestNamespaceEnv},
 			)
 			if err != nil {
-				log.Fatalf("build scaffold failed: (%v)", err)
+				log.Fatalf("test-framework manifest scaffold failed: (%v)", err)
 			}
 		}
+
+		log.Infof("Building test Docker image %s", image)
 
 		testDbcmd := exec.Command("docker", "build", ".", "-f", testDockerfile, "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+baseImageName)
 		testDbcmd.Stdout = os.Stdout
 		testDbcmd.Stderr = os.Stderr
 		err = testDbcmd.Run()
 		if err != nil {
-			log.Fatalf("failed to output build image %s: %v", image, err)
+			log.Fatalf("failed to output test image %s: (%v)", image, err)
 		}
 		// Check image name of deployments in namespaced manifest
 		verifyTestManifest(image)
 	}
+
+	log.Info("Operator build complete.")
 }
 
 func mainExists() bool {

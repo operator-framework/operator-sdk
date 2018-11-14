@@ -15,8 +15,6 @@
 package add
 
 import (
-	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,6 +23,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -60,27 +59,29 @@ func crdFunc(cmd *cobra.Command, args []string) {
 	verifyCrdFlags()
 	verifyCrdDeployPath()
 
-	fmt.Fprintln(os.Stdout, "Generating custom resource definition (CRD) file")
+	log.Infof("Generating Custom Resource Definition (CRD) version %s for kind %s.", apiVersion, kind)
 
 	// generate CR/CRD file
 	resource, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
-		log.Fatalf("%v", err)
+		log.Fatal(err)
 	}
+
 	s := scaffold.Scaffold{}
 	err = s.Execute(cfg,
 		&scaffold.Crd{Resource: resource},
 		&scaffold.Cr{Resource: resource},
 	)
-
 	if err != nil {
 		log.Fatalf("add scaffold failed: (%v)", err)
 	}
 
 	// update deploy/role.yaml for the given resource r.
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): %v", resource.APIVersion, resource.Kind, err)
+		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
 	}
+
+	log.Info("CRD generation complete.")
 }
 
 func verifyCrdFlags() {
@@ -103,7 +104,7 @@ func verifyCrdFlags() {
 func verifyCrdDeployPath() {
 	wd, err := os.Getwd()
 	if err != nil {
-		log.Fatalf("failed to determine the full path of the current directory: %v", err)
+		log.Fatalf("failed to determine the full path of the current directory: (%v)", err)
 	}
 	// check if the deploy sub-directory exist
 	_, err = os.Stat(filepath.Join(wd, scaffold.DeployDir))

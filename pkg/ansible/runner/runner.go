@@ -28,11 +28,14 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/ansible/paramconv"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/eventapi"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/internal/inputdir"
-	"github.com/sirupsen/logrus"
+
 	yaml "gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
+
+var log = logf.Log.WithName("runner")
 
 // Runner - a runnable that should take the parameters and name and namespace
 // and run the correct code.
@@ -66,13 +69,13 @@ type Finalizer struct {
 func NewFromWatches(path string) (map[schema.GroupVersionKind]Runner, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		logrus.Errorf("failed to get config file %v", err)
+		log.Error(err, "failed to get config file")
 		return nil, err
 	}
 	watches := []watch{}
 	err = yaml.Unmarshal(b, &watches)
 	if err != nil {
-		logrus.Errorf("failed to unmarshal config %v", err)
+		log.Error(err, "failed to unmarshal config")
 		return nil, err
 	}
 
@@ -178,12 +181,12 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 	if u.GetDeletionTimestamp() != nil && !r.isFinalizerRun(u) {
 		return nil, errors.New("resource has been deleted, but no finalizer was matched, skipping reconciliation")
 	}
-	logger := logrus.WithFields(logrus.Fields{
-		"component": "runner",
-		"job":       ident,
-		"name":      u.GetName(),
-		"namespace": u.GetNamespace(),
-	})
+	logger := log.WithValues(
+		"job", ident,
+		"name", u.GetName(),
+		"namespace", u.GetNamespace(),
+	)
+
 	// start the event receiver. We'll check errChan for an error after
 	// ansible-runner exits.
 	errChan := make(chan error, 1)
@@ -219,7 +222,7 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 	go func() {
 		var dc *exec.Cmd
 		if r.isFinalizerRun(u) {
-			logger.Debugf("Resource is marked for deletion, running finalizer %s", r.Finalizer.Name)
+			logger.V(1).Info("Resource is marked for deletion, running finalizer", "Finalizer", r.Finalizer.Name)
 			dc = r.finalizerCmdFunc(ident, inputDir.Path)
 		} else {
 			dc = r.cmdFunc(ident, inputDir.Path)
@@ -227,7 +230,7 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 
 		err := dc.Run()
 		if err != nil {
-			logger.Errorf("error from ansible-runner: %s", err.Error())
+			logger.Error(err, "error from ansible-runner")
 		} else {
 			logger.Info("ansible-runner exited successfully")
 		}
@@ -236,7 +239,7 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 		err = <-errChan
 		// http.Server returns this in the case of being closed cleanly
 		if err != nil && err != http.ErrServerClosed {
-			logger.Errorf("error from event api: %s", err.Error())
+			logger.Error(err, "error from event api")
 		}
 	}()
 	return &RunResult{
@@ -317,7 +320,7 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 	s := u.Object["spec"]
 	spec, ok := s.(map[string]interface{})
 	if !ok {
-		logrus.Warnf("spec was not found for CR:%v - %v in %v", u.GroupVersionKind(), u.GetNamespace(), u.GetName())
+		log.Info("spec was not found for CR", "GroupVersionKind", u.GroupVersionKind(), "Namespace", u.GetNamespace(), "Name", u.GetName())
 		spec = map[string]interface{}{}
 	}
 	parameters := paramconv.MapToSnake(spec)

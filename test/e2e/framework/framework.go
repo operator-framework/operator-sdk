@@ -18,11 +18,11 @@ import (
 	goctx "context"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"sync"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	extscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"

@@ -25,7 +25,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/go-logr/logr"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 // EventReceiver serves the event API
@@ -58,7 +59,7 @@ type EventReceiver struct {
 	ident string
 
 	// logger holds a logger that has some fields already set
-	logger logrus.FieldLogger
+	logger logr.Logger
 }
 
 func New(ident string, errChan chan<- error) (*EventReceiver, error) {
@@ -73,10 +74,7 @@ func New(ident string, errChan chan<- error) (*EventReceiver, error) {
 		SocketPath: sockPath,
 		URLPath:    "/events/",
 		ident:      ident,
-		logger: logrus.WithFields(logrus.Fields{
-			"component": "eventapi",
-			"job":       ident,
-		}),
+		logger:     logf.Log.WithName("eventapi").WithValues("job", ident),
 	}
 
 	mux := http.NewServeMux()
@@ -96,7 +94,7 @@ func (e *EventReceiver) Close() {
 	e.mutex.Lock()
 	e.stopped = true
 	e.mutex.Unlock()
-	e.logger.Debug("event API stopped")
+	e.logger.V(1).Info("event API stopped")
 	e.server.Close()
 	close(e.Events)
 }
@@ -104,25 +102,19 @@ func (e *EventReceiver) Close() {
 func (e *EventReceiver) handleEvents(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != e.URLPath {
 		http.NotFound(w, r)
-		e.logger.WithFields(logrus.Fields{
-			"code": "404",
-		}).Infof("path not found: %s\n", r.URL.Path)
+		e.logger.Info("path not found", "code", "404", "Request.Path", r.URL.Path)
 		return
 	}
 
 	if r.Method != http.MethodPost {
-		e.logger.WithFields(logrus.Fields{
-			"code": "405",
-		}).Infof("method %s not allowed", r.Method)
+		e.logger.Info("method not allowed", "code", "405", "Request.Method", r.Method)
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 
 	ct := r.Header.Get("content-type")
 	if strings.Split(ct, ";")[0] != "application/json" {
-		e.logger.WithFields(logrus.Fields{
-			"code": "415",
-		}).Infof("wrong content type: %s", ct)
+		e.logger.Info("wrong content type", "code", "415", "Request.Content-Type", ct)
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 		w.Write([]byte("The content-type must be \"application/json\""))
 		return
@@ -130,9 +122,7 @@ func (e *EventReceiver) handleEvents(w http.ResponseWriter, r *http.Request) {
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		e.logger.WithFields(logrus.Fields{
-			"code": "500",
-		}).Errorf("%s", err.Error())
+		e.logger.Error(err, "could not read request body", "code", "500")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -140,9 +130,7 @@ func (e *EventReceiver) handleEvents(w http.ResponseWriter, r *http.Request) {
 	event := JobEvent{}
 	err = json.Unmarshal(body, &event)
 	if err != nil {
-		e.logger.WithFields(logrus.Fields{
-			"code": "400",
-		}).Infof("could not deserialize body: %s", err.Error())
+		e.logger.Info("could not deserialize body.", "code", "400", "Error", err)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Could not deserialize body as JSON"))
 		return
@@ -155,9 +143,7 @@ func (e *EventReceiver) handleEvents(w http.ResponseWriter, r *http.Request) {
 	if e.stopped {
 		e.mutex.RUnlock()
 		w.WriteHeader(http.StatusGone)
-		e.logger.WithFields(logrus.Fields{
-			"code": "410",
-		}).Info("stopped and not accepting additional events for this job")
+		e.logger.Info("stopped and not accepting additional events for this job", "code", "410")
 		return
 	}
 	// ansible-runner sends "status events" and "ansible events". The "status
@@ -165,16 +151,14 @@ func (e *EventReceiver) handleEvents(w http.ResponseWriter, r *http.Request) {
 	// we're not currently interested in.
 	// https://ansible-runner.readthedocs.io/en/latest/external_interface.html#event-structure
 	if event.UUID == "" {
-		e.logger.Debug("dropping event that is not a JobEvent")
+		e.logger.V(1).Info("dropping event that is not a JobEvent")
 	} else {
 		// timeout if the channel blocks for too long
 		timeout := time.NewTimer(10 * time.Second)
 		select {
 		case e.Events <- event:
 		case <-timeout.C:
-			e.logger.WithFields(logrus.Fields{
-				"code": "500",
-			}).Warn("timed out writing event to channel")
+			e.logger.Info("timed out writing event to channel", "code", "500")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}

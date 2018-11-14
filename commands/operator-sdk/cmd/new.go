@@ -15,9 +15,7 @@
 package cmd
 
 import (
-	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -28,6 +26,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -80,6 +79,8 @@ func newFunc(cmd *cobra.Command, args []string) {
 	mustBeNewProject()
 	verifyFlags()
 
+	log.Infof("Creating new %s operator '%s'.", strings.Title(operatorType), projectName)
+
 	switch operatorType {
 	case projutil.OperatorTypeGo:
 		doScaffold()
@@ -88,6 +89,8 @@ func newFunc(cmd *cobra.Command, args []string) {
 		doAnsibleScaffold()
 	}
 	initGit()
+
+	log.Info("Project creation complete.")
 }
 
 func parse(args []string) {
@@ -150,13 +153,13 @@ func doAnsibleScaffold() {
 
 	resource, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
-		log.Fatal("Invalid apiVersion and kind.")
+		log.Fatalf("invalid apiVersion and kind: (%v)", err)
 	}
 
 	s := &scaffold.Scaffold{}
 	tmpdir, err := ioutil.TempDir("", "osdk")
 	if err != nil {
-		log.Fatal("unable to get temp directory")
+		log.Fatalf("unable to get temp directory: (%v)", err)
 	}
 
 	galaxyInit := &ansible.GalaxyInit{
@@ -190,32 +193,37 @@ func doAnsibleScaffold() {
 
 	// Decide on playbook.
 	if generatePlaybook {
+		log.Infof("Generating %s playbook.", strings.Title(operatorType))
+
 		err := s.Execute(cfg,
 			&ansible.Playbook{
 				Resource: *resource,
 			},
 		)
 		if err != nil {
-			log.Fatalf("new scaffold failed: (%v)", err)
+			log.Fatalf("new playbook scaffold failed: (%v)", err)
 		}
 	}
+
+	log.Info("Running galaxy-init.")
 
 	// Run galaxy init.
 	cmd := exec.Command(filepath.Join(galaxyInit.AbsProjectPath, galaxyInit.Path))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Run()
+
 	// Delete Galxy INIT
 	// Mac OS tmp directory is /var/folders/_c/..... this means we have to make sure that we get the top level directory to remove
 	// everything.
 	tmpDirectorySlice := strings.Split(os.TempDir(), "/")
 	if err = os.RemoveAll(filepath.Join(galaxyInit.AbsProjectPath, tmpDirectorySlice[1])); err != nil {
-		log.Fatalf("failed to remove the galaxy init script")
+		log.Fatalf("failed to remove the galaxy init script: (%v)", err)
 	}
 
 	// update deploy/role.yaml for the given resource r.
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): %v", resource.APIVersion, resource.Kind, err)
+		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
 	}
 }
 
@@ -254,27 +262,27 @@ func execCmd(stdout *os.File, cmd string, args ...string) {
 	dc.Stderr = os.Stderr
 	err := dc.Run()
 	if err != nil {
-		log.Fatalf("failed to exec %s %#v: %v", cmd, args, err)
+		log.Fatalf("failed to exec %s %#v: (%v)", cmd, args, err)
 	}
 }
 
 func pullDep() {
 	_, err := exec.LookPath(dep)
 	if err != nil {
-		log.Fatalf("looking for dep in $PATH: %v", err)
+		log.Fatalf("looking for dep in $PATH: (%v)", err)
 	}
-	fmt.Fprintln(os.Stdout, "Run dep ensure ...")
+	log.Info("Run dep ensure ...")
 	execCmd(os.Stdout, dep, ensureCmd, "-v")
-	fmt.Fprintln(os.Stdout, "Run dep ensure done")
+	log.Info("Run dep ensure done")
 }
 
 func initGit() {
 	if skipGit {
 		return
 	}
-	fmt.Fprintln(os.Stdout, "Run git init ...")
+	log.Info("Run git init ...")
 	execCmd(os.Stdout, "git", "init")
 	execCmd(os.Stdout, "git", "add", "--all")
 	execCmd(os.Stdout, "git", "commit", "-q", "-m", "INITIAL COMMIT")
-	fmt.Fprintln(os.Stdout, "Run git init done")
+	log.Info("Run git init done")
 }

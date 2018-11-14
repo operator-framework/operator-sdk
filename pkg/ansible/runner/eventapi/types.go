@@ -51,10 +51,7 @@ type EventTime struct {
 // UnmarshalJSON - override unmarshal json.
 func (e *EventTime) UnmarshalJSON(b []byte) (err error) {
 	e.Time, err = time.Parse("2006-01-02T15:04:05.999999999", strings.Trim(string(b[:]), "\"\\"))
-	if err != nil {
-		return err
-	}
-	return nil
+	return
 }
 
 // MarshalJSON - override the marshal json.

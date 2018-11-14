@@ -15,14 +15,15 @@
 package framework
 
 import (
-	"log"
 	"os"
 	"testing"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func MainEntry(m *testing.M) {
 	if err := setup(); err != nil {
-		log.Fatalf("failed to set up framework: %v", err)
+		log.Fatalf("failed to set up framework: (%v)", err)
 	}
 
 	os.Exit(m.Run())
