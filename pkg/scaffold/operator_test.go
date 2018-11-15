@@ -33,6 +33,19 @@ func TestOperator(t *testing.T) {
 	}
 }
 
+func TestOperatorClusterScoped(t *testing.T) {
+	s, buf := setupScaffoldAndWriter()
+	err := s.Execute(appConfig, &Operator{IsClusterScoped: true})
+	if err != nil {
+		t.Fatalf("failed to execute the scaffold: (%v)", err)
+	}
+
+	if operatorClusterScopedExp != buf.String() {
+		diffs := testutil.Diff(operatorClusterScopedExp, buf.String())
+		t.Fatalf("expected vs actual differs.\n%v", diffs)
+	}
+}
+
 const operatorExp = `apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -63,6 +76,42 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "app-operator"
+`
+
+const operatorClusterScopedExp = `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: app-operator
+  template:
+    metadata:
+      labels:
+        name: app-operator
+    spec:
+      serviceAccountName: app-operator
+      containers:
+        - name: app-operator
+          # Replace this with the built image name
+          image: REPLACE_IMAGE
+          ports:
+          - containerPort: 60000
+            name: metrics
+          command:
+          - app-operator
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              value: ""
             - name: POD_NAME
               valueFrom:
                 fieldRef:

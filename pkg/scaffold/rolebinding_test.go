@@ -66,7 +66,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: app-operator
-  # Replace this with the operator namespace
+  # Replace this with the namespace the operator is deployed in.
   namespace: REPLACE_NAMESPACE
 roleRef:
   kind: ClusterRole

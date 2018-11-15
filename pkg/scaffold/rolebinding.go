@@ -43,10 +43,10 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: {{.ProjectName}}
-{{- if .IsClusterScoped }}
-  # Replace this with the operator namespace
+  {{- if .IsClusterScoped }}
+  # Replace this with the namespace the operator is deployed in.
   namespace: REPLACE_NAMESPACE
-{{- end }}
+  {{- end }}
 roleRef:
   kind: {{if .IsClusterScoped}}Cluster{{end}}Role
   name: {{.ProjectName}}
