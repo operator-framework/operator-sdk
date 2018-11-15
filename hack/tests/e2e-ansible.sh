@@ -59,7 +59,6 @@ fi
 
 # create CR
 kubectl create -f deploy/crds/ansible_v1alpha1_memcached_cr.yaml
-trap_add 'kubectl delete --ignore-not-found -f ${DIR2}/deploy/crds/ansible_v1alpha1_memcached_cr.yaml' EXIT
 if ! timeout 20s bash -c -- 'until kubectl get deployment -l app=memcached | grep memcached; do sleep 1; done';
 then
     kubectl logs deployment/memcached-operator
