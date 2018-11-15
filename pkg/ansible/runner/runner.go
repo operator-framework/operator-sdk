@@ -22,7 +22,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -56,7 +55,7 @@ type watch struct {
 	Playbook        string     `yaml:"playbook"`
 	Role            string     `yaml:"role"`
 	ReconcilePeriod string     `yaml:"reconcilePeriod"`
-	ManagedStatus   string     `yaml:"managedStatus"`
+	ManagedStatus   *bool      `yaml:"manageStatus"`
 	Finalizer       *Finalizer `yaml:"finalizer"`
 }
 
@@ -98,12 +97,8 @@ func NewFromWatches(path string) (map[schema.GroupVersionKind]Runner, error) {
 			reconcilePeriod = &d
 		}
 		var managedStatus *bool
-		if w.ManagedStatus != "" {
-			stat, err := strconv.ParseBool(w.ManagedStatus)
-			if err != nil {
-				return nil, fmt.Errorf("unable to parse managedStatus: %v - %v, setting to default", w.ManagedStatus, err)
-			}
-			managedStatus = &stat
+		if w.ManagedStatus != nil {
+			managedStatus = w.ManagedStatus
 		}
 
 		// Check if schema is a duplicate
