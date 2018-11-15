@@ -47,6 +47,15 @@ $ cd memcached-operator
 
 To learn about the project directory structure, see [project layout][layout_doc] doc.
 
+#### Operator scope
+
+A namespace-scoped operator (the default) watches and manages resources in a single namespace, whereas a cluster-scoped operator watches and manages resource cluster-wide. Namespace-scoped operators are prefered because of their flexibility. They enable decoupled upgrades, namespace isolation for failures and monitoring, and differing API definitions. However, there are use cases where a cluster-scoped operator may make sense. For example, the [cert-manager](https://github.com/jetstack/cert-manager) operator is often deployed with cluster-scoped permissions and watches so that it can manage issuing certificates for an entire cluster.
+
+If you'd like to your memcached-operator project to be cluster-scoped use the following `operator-sdk new` command instead:
+```
+$ operator-sdk new memcached-operator --cluster-scoped
+```
+
 ### Manager
 The main program for the operator `cmd/manager/main.go` initializes and runs the [Manager][manager_go_doc].
 
