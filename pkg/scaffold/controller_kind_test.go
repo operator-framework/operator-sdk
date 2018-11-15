@@ -121,7 +121,7 @@ type ReconcileAppService struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileAppService) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	reqLogger := reqLogger.WithValues("Request.Namespace", request.Namespace, "Requst.Name", request.Name)
+	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Requst.Name", request.Name)
 	reqLogger.Info("Reconciling AppService")
 
 	// Fetch the AppService instance
