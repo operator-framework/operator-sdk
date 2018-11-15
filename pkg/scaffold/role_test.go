@@ -35,7 +35,7 @@ func TestRole(t *testing.T) {
 
 func TestRoleClusterScoped(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(clusterScopedAppConfig, &Role{})
+	err := s.Execute(appConfig, &Role{IsClusterScoped: true})
 	if err != nil {
 		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}

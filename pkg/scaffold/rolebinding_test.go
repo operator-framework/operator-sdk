@@ -35,7 +35,7 @@ func TestRoleBinding(t *testing.T) {
 
 func TestRoleBindingClusterScoped(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(clusterScopedAppConfig, &RoleBinding{})
+	err := s.Execute(appConfig, &RoleBinding{IsClusterScoped: true})
 	if err != nil {
 		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}

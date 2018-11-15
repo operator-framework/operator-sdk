@@ -123,10 +123,9 @@ func mustBeNewProject() {
 
 func doScaffold() {
 	cfg := &input.Config{
-		Repo:            filepath.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
-		AbsProjectPath:  filepath.Join(projutil.MustGetwd(), projectName),
-		ProjectName:     projectName,
-		IsClusterScoped: isClusterScoped,
+		Repo:           filepath.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
+		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
+		ProjectName:    projectName,
 	}
 
 	s := &scaffold.Scaffold{}
@@ -134,8 +133,12 @@ func doScaffold() {
 		&scaffold.Cmd{},
 		&scaffold.Dockerfile{},
 		&scaffold.ServiceAccount{},
-		&scaffold.Role{},
-		&scaffold.RoleBinding{},
+		&scaffold.Role{
+			IsClusterScoped: isClusterScoped,
+		},
+		&scaffold.RoleBinding{
+			IsClusterScoped: isClusterScoped,
+		},
 		&scaffold.Operator{},
 		&scaffold.Apis{},
 		&scaffold.Controller{},
@@ -150,9 +153,8 @@ func doScaffold() {
 
 func doAnsibleScaffold() {
 	cfg := &input.Config{
-		AbsProjectPath:  filepath.Join(projutil.MustGetwd(), projectName),
-		ProjectName:     projectName,
-		IsClusterScoped: isClusterScoped,
+		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
+		ProjectName:    projectName,
 	}
 
 	resource, err := scaffold.NewResource(apiVersion, kind)
@@ -181,8 +183,12 @@ func doAnsibleScaffold() {
 		},
 		galaxyInit,
 		&scaffold.ServiceAccount{},
-		&scaffold.Role{},
-		&scaffold.RoleBinding{},
+		&scaffold.Role{
+			IsClusterScoped: isClusterScoped,
+		},
+		&scaffold.RoleBinding{
+			IsClusterScoped: isClusterScoped,
+		},
 		&ansible.Operator{},
 		&scaffold.Crd{
 			Resource: resource,

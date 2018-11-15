@@ -24,6 +24,8 @@ const RoleBindingYamlFile = "role_binding.yaml"
 
 type RoleBinding struct {
 	input.Input
+
+	IsClusterScoped bool
 }
 
 func (s *RoleBinding) GetInput() (input.Input, error) {

@@ -34,6 +34,8 @@ const RoleYamlFile = "role.yaml"
 
 type Role struct {
 	input.Input
+
+	IsClusterScoped bool
 }
 
 func (s *Role) GetInput() (input.Input, error) {
