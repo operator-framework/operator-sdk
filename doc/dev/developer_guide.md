@@ -2,7 +2,7 @@
 
 This document explains how to setup your dev environment.
 
-Requirement:
+## Prerequisites
 - [dep][dep_tool] version v0.5.0+
 - [git][git_tool]
 - [go][go_tool] version v1.10+
