@@ -148,7 +148,7 @@ func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 	return nil
 }
 
-const roleTemplate = `kind: Role
+const roleTemplate = `kind: {{if .IsClusterScoped}}Cluster{{end}}Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: {{.ProjectName}}

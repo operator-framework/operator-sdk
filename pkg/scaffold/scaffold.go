@@ -43,6 +43,9 @@ type Scaffold struct {
 	// ProjectName is the operator's name, ex. app-operator
 	ProjectName string
 
+	// IsClusterScoped is whether the operator should be cluster-scoped.
+	IsClusterScoped bool
+
 	GetWriter func(path string, mode os.FileMode) (io.Writer, error)
 }
 
@@ -55,6 +58,9 @@ func (s *Scaffold) setFieldsAndValidate(t input.File) error {
 	}
 	if b, ok := t.(input.ProjectName); ok {
 		b.SetProjectName(s.ProjectName)
+	}
+	if b, ok := t.(input.IsClusterScoped); ok {
+		b.SetIsClusterScoped(s.IsClusterScoped)
 	}
 
 	// Validate the template is ok
@@ -70,6 +76,7 @@ func (s *Scaffold) configure(cfg *input.Config) {
 	s.Repo = cfg.Repo
 	s.AbsProjectPath = cfg.AbsProjectPath
 	s.ProjectName = cfg.ProjectName
+	s.IsClusterScoped = cfg.IsClusterScoped
 }
 
 // Execute executes scaffolding the Files

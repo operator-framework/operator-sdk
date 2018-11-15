@@ -33,6 +33,19 @@ func TestRoleBinding(t *testing.T) {
 	}
 }
 
+func TestRoleBindingClusterScoped(t *testing.T) {
+	s, buf := setupScaffoldAndWriter()
+	err := s.Execute(clusterScopedAppConfig, &RoleBinding{})
+	if err != nil {
+		t.Fatalf("failed to execute the scaffold: (%v)", err)
+	}
+
+	if clusterrolebindingExp != buf.String() {
+		diffs := testutil.Diff(clusterrolebindingExp, buf.String())
+		t.Fatalf("expected vs actual differs.\n%v", diffs)
+	}
+}
+
 const rolebindingExp = `kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -42,6 +55,21 @@ subjects:
   name: app-operator
 roleRef:
   kind: Role
+  name: app-operator
+  apiGroup: rbac.authorization.k8s.io
+`
+
+const clusterrolebindingExp = `kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: app-operator
+subjects:
+- kind: ServiceAccount
+  name: app-operator
+  # Replace this with the operator namespace
+  namespace: REPLACE_NAMESPACE
+roleRef:
+  kind: ClusterRole
   name: app-operator
   apiGroup: rbac.authorization.k8s.io
 `

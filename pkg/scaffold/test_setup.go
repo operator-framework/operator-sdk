@@ -39,6 +39,13 @@ var (
 		AbsProjectPath: mustGetImportPath(),
 		ProjectName:    appProjectName,
 	}
+
+	clusterScopedAppConfig = &input.Config{
+		Repo:            appRepo,
+		AbsProjectPath:  mustGetImportPath(),
+		ProjectName:     appProjectName,
+		IsClusterScoped: true,
+	}
 )
 
 func mustGetImportPath() string {

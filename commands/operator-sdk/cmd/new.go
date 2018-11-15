@@ -53,6 +53,7 @@ generates a skeletal app-operator application in $GOPATH/src/github.com/example.
 	newCmd.Flags().StringVar(&operatorType, "type", "go", "Type of operator to initialize (e.g \"ansible\")")
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
 	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false, "Generate a playbook skeleton. (Only used for --type ansible)")
+	newCmd.Flags().BoolVar(&isClusterScoped, "cluster-scoped", false, "Generate cluster-scoped resources instead of namespace-scoped")
 
 	return newCmd
 }
@@ -64,6 +65,7 @@ var (
 	projectName      string
 	skipGit          bool
 	generatePlaybook bool
+	isClusterScoped  bool
 )
 
 const (
@@ -121,9 +123,10 @@ func mustBeNewProject() {
 
 func doScaffold() {
 	cfg := &input.Config{
-		Repo:           filepath.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
-		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
-		ProjectName:    projectName,
+		Repo:            filepath.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
+		AbsProjectPath:  filepath.Join(projutil.MustGetwd(), projectName),
+		ProjectName:     projectName,
+		IsClusterScoped: isClusterScoped,
 	}
 
 	s := &scaffold.Scaffold{}
@@ -147,8 +150,9 @@ func doScaffold() {
 
 func doAnsibleScaffold() {
 	cfg := &input.Config{
-		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
-		ProjectName:    projectName,
+		AbsProjectPath:  filepath.Join(projutil.MustGetwd(), projectName),
+		ProjectName:     projectName,
+		IsClusterScoped: isClusterScoped,
 	}
 
 	resource, err := scaffold.NewResource(apiVersion, kind)

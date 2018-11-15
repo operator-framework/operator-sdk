@@ -34,15 +34,19 @@ func (s *RoleBinding) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
-const roleBindingTemplate = `kind: RoleBinding
+const roleBindingTemplate = `kind: {{if .IsClusterScoped}}Cluster{{end}}RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: {{.ProjectName}}
 subjects:
 - kind: ServiceAccount
   name: {{.ProjectName}}
+{{- if .IsClusterScoped }}
+  # Replace this with the operator namespace
+  namespace: REPLACE_NAMESPACE
+{{- end }}
 roleRef:
-  kind: Role
+  kind: {{if .IsClusterScoped}}Cluster{{end}}Role
   name: {{.ProjectName}}
   apiGroup: rbac.authorization.k8s.io
 `

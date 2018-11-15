@@ -54,6 +54,10 @@ type Input struct {
 
 	// ProjectName is the operator's name, ex. app-operator
 	ProjectName string
+
+	// IsClusterScoped is whether the operator should be cluster-scoped.
+	// Defaults to false
+	IsClusterScoped bool
 }
 
 // Repo allows a repo to be set on an object
@@ -95,6 +99,17 @@ func (i *Input) SetProjectName(n string) {
 	}
 }
 
+// IsClusterScoped allows the cluster-scoped flag to be set on an object
+type IsClusterScoped interface {
+	//SetIsClusterScoped sets the cluster-scoped flag
+	SetIsClusterScoped(bool)
+}
+
+// SetIsClusterScoped sets the cluster-scoped flag
+func (i *Input) SetIsClusterScoped(c bool) {
+	i.IsClusterScoped = c
+}
+
 // File is a scaffoldable file
 type File interface {
 	// GetInput returns the Input for creating a scaffold file
@@ -118,4 +133,7 @@ type Config struct {
 
 	// ProjectName is the operator's name, ex. app-operator
 	ProjectName string
+
+	// IsClusterScoped is whether the operator should be cluster-scoped.
+	IsClusterScoped bool
 }

@@ -33,7 +33,55 @@ func TestRole(t *testing.T) {
 	}
 }
 
+func TestRoleClusterScoped(t *testing.T) {
+	s, buf := setupScaffoldAndWriter()
+	err := s.Execute(clusterScopedAppConfig, &Role{})
+	if err != nil {
+		t.Fatalf("failed to execute the scaffold: (%v)", err)
+	}
+
+	if clusterroleExp != buf.String() {
+		diffs := testutil.Diff(clusterroleExp, buf.String())
+		t.Fatalf("expected vs actual differs.\n%v", diffs)
+	}
+}
+
 const roleExp = `kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: app-operator
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  - configmaps
+  - secrets
+  verbs:
+  - "*"
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
+  verbs:
+  - "*"
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - servicemonitors
+  verbs:
+  - "get"
+  - "create"
+`
+
+const clusterroleExp = `kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: app-operator
