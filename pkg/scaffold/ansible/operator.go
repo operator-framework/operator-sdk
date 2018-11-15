@@ -23,6 +23,8 @@ import (
 
 type Operator struct {
 	input.Input
+
+	IsClusterScoped bool
 }
 
 func (s *Operator) GetInput() (input.Input, error) {
@@ -58,9 +60,13 @@ spec:
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
+              {{- if .IsClusterScoped }}
+              value: ""
+              {{- else }}
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+              {{- end}}
             - name: OPERATOR_NAME
               value: "{{.ProjectName}}"
 `

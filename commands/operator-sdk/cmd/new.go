@@ -139,7 +139,9 @@ func doScaffold() {
 		&scaffold.RoleBinding{
 			IsClusterScoped: isClusterScoped,
 		},
-		&scaffold.Operator{},
+		&scaffold.Operator{
+			IsClusterScoped: isClusterScoped,
+		},
 		&scaffold.Apis{},
 		&scaffold.Controller{},
 		&scaffold.Version{},
@@ -189,7 +191,9 @@ func doAnsibleScaffold() {
 		&scaffold.RoleBinding{
 			IsClusterScoped: isClusterScoped,
 		},
-		&ansible.Operator{},
+		&ansible.Operator{
+			IsClusterScoped: isClusterScoped,
+		},
 		&scaffold.Crd{
 			Resource: resource,
 		},
