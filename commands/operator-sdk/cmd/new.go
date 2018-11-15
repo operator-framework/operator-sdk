@@ -53,6 +53,7 @@ generates a skeletal app-operator application in $GOPATH/src/github.com/example.
 	newCmd.Flags().StringVar(&operatorType, "type", "go", "Type of operator to initialize (e.g \"ansible\")")
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
 	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false, "Generate a playbook skeleton. (Only used for --type ansible)")
+	newCmd.Flags().BoolVar(&isClusterScoped, "cluster-scoped", false, "Generate cluster-scoped resources instead of namespace-scoped")
 
 	return newCmd
 }
@@ -64,6 +65,7 @@ var (
 	projectName      string
 	skipGit          bool
 	generatePlaybook bool
+	isClusterScoped  bool
 )
 
 const (
@@ -131,9 +133,15 @@ func doScaffold() {
 		&scaffold.Cmd{},
 		&scaffold.Dockerfile{},
 		&scaffold.ServiceAccount{},
-		&scaffold.Role{},
-		&scaffold.RoleBinding{},
-		&scaffold.Operator{},
+		&scaffold.Role{
+			IsClusterScoped: isClusterScoped,
+		},
+		&scaffold.RoleBinding{
+			IsClusterScoped: isClusterScoped,
+		},
+		&scaffold.Operator{
+			IsClusterScoped: isClusterScoped,
+		},
 		&scaffold.Apis{},
 		&scaffold.Controller{},
 		&scaffold.Version{},
@@ -177,9 +185,15 @@ func doAnsibleScaffold() {
 		},
 		galaxyInit,
 		&scaffold.ServiceAccount{},
-		&scaffold.Role{},
-		&scaffold.RoleBinding{},
-		&ansible.Operator{},
+		&scaffold.Role{
+			IsClusterScoped: isClusterScoped,
+		},
+		&scaffold.RoleBinding{
+			IsClusterScoped: isClusterScoped,
+		},
+		&ansible.Operator{
+			IsClusterScoped: isClusterScoped,
+		},
 		&scaffold.Crd{
 			Resource: resource,
 		},

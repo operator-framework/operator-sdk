@@ -34,6 +34,8 @@ const RoleYamlFile = "role.yaml"
 
 type Role struct {
 	input.Input
+
+	IsClusterScoped bool
 }
 
 func (s *Role) GetInput() (input.Input, error) {
@@ -148,7 +150,7 @@ func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 	return nil
 }
 
-const roleTemplate = `kind: Role
+const roleTemplate = `kind: {{if .IsClusterScoped}}Cluster{{end}}Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: {{.ProjectName}}

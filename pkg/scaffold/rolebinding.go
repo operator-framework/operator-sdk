@@ -24,6 +24,8 @@ const RoleBindingYamlFile = "role_binding.yaml"
 
 type RoleBinding struct {
 	input.Input
+
+	IsClusterScoped bool
 }
 
 func (s *RoleBinding) GetInput() (input.Input, error) {
@@ -34,15 +36,19 @@ func (s *RoleBinding) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
-const roleBindingTemplate = `kind: RoleBinding
+const roleBindingTemplate = `kind: {{if .IsClusterScoped}}Cluster{{end}}RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: {{.ProjectName}}
 subjects:
 - kind: ServiceAccount
   name: {{.ProjectName}}
+  {{- if .IsClusterScoped }}
+  # Replace this with the namespace the operator is deployed in.
+  namespace: REPLACE_NAMESPACE
+  {{- end }}
 roleRef:
-  kind: Role
+  kind: {{if .IsClusterScoped}}Cluster{{end}}Role
   name: {{.ProjectName}}
   apiGroup: rbac.authorization.k8s.io
 `

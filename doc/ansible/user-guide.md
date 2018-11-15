@@ -53,6 +53,15 @@ Memcached resource with APIVersion `cache.example.com/v1apha1` and Kind
 To learn more about the project directory structure, see [project
 layout][layout_doc] doc.
 
+#### Operator scope
+
+A namespace-scoped operator (the default) watches and manages resources in a single namespace, whereas a cluster-scoped operator watches and manages resources cluster-wide. Namespace-scoped operators are preferred because of their flexibility. They enable decoupled upgrades, namespace isolation for failures and monitoring, and differing API definitions. However, there are use cases where a cluster-scoped operator may make sense. For example, the [cert-manager](https://github.com/jetstack/cert-manager) operator is often deployed with cluster-scoped permissions and watches so that it can manage issuing certificates for an entire cluster.
+
+If you'd like to create your memcached-operator project to be cluster-scoped use the following `operator-sdk new` command instead:
+```
+$ operator-sdk new memcached-operator --cluster-scoped --api-version=cache.example.com/v1alpha1 --kind=Memcached --type=ansible
+```
+
 ## Customize the operator logic
 
 For this example the memcached-operator will execute the following
@@ -205,10 +214,17 @@ deployment image in this file needs to be modified from the placeholder
 $ sed -i 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
 ```
 
+If you created your operator using `--cluster-scoped=true`, update the service account namespace in the generated `ClusterRoleBinding` to match where you are deploying your operator.
+```
+$ export OPERATOR_NAMESPACE=$(kubectl config view --minify -o jsonpath='{.contexts[0].context.namespace}')
+$ sed -i "s|REPLACE_NAMESPACE|$OPERATOR_NAMESPACE|g" deploy/role_binding.yaml
+```
+
 **Note**  
-If you are performing these steps on OSX, use the following command:
+If you are performing these steps on OSX, use the following commands instead:
 ```
 $ sed -i "" 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
+$ sed -i "" "s|REPLACE_NAMESPACE|$OPERATOR_NAMESPACE|g" deploy/role_binding.yaml
 ```
 
 Deploy the memcached-operator:
@@ -219,10 +235,6 @@ $ kubectl create -f deploy/role.yaml
 $ kubectl create -f deploy/role_binding.yaml
 $ kubectl create -f deploy/operator.yaml
 ```
-
-**NOTE**: `deploy/rbac.yaml` creates a `ClusterRoleBinding` and assumes we are
-working in namespace `default`. If you are working in a different namespace you
-must modify this file before creating it.
 
 Verify that the memcached-operator is up and running:
 

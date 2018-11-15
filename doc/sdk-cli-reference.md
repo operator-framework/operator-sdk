@@ -133,6 +133,7 @@ Scaffolds a new operator project.
 * `--type` Type of operator to initialize: "ansible" or "go" (default "go"). Also requires the following flags if `--type=ansible`
   * `--api-version` CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
   * `--kind` CRD Kind. (e.g AppService)
+* `--cluster-scoped` Initialize the operator to be cluster-scoped instead of namespace-scoped
 * `-h, --help` - help for new
 
 ### Example
