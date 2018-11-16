@@ -54,14 +54,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
 
+var log = logf.Log.WithName("cmd")
+
 func printVersion() {
-	logf.Log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
-	logf.Log.Info(fmt.Sprintf("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH))
-	logf.Log.Info(fmt.Sprintf("operator-sdk Version: %v", sdkVersion.Version))
+	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
+	log.Info(fmt.Sprintf("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH))
+	log.Info(fmt.Sprintf("operator-sdk Version: %v", sdkVersion.Version))
 }
 
 func main() {
-	printVersion()
 	flag.Parse()
 
 	// The logger instantiated here can be changed to any logger
@@ -69,7 +70,8 @@ func main() {
 	// be propagated through the whole operator, generating
 	// uniform and structured logs.
 	logf.SetLogger(logf.ZapLogger(false))
-	log := logf.Log.WithName("cmd")
+
+	printVersion()
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
