@@ -206,7 +206,7 @@ func Run(done chan error, o Options) error {
 		log.Info("Waiting for cache to sync...")
 		synced := informerCache.WaitForCacheSync(stop)
 		if !synced {
-			return fmt.Errorf("Failed to sync cache")
+			return fmt.Errorf("failed to sync cache")
 		}
 		o.Cache = informerCache
 	}

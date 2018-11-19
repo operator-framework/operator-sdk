@@ -206,7 +206,7 @@ func (r *RequestInfoFactory) NewRequestInfo(req *http.Request) (*RequestInfo, er
 		opts := metainternalversion.ListOptions{}
 		if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion, &opts); err != nil {
 			// An error in parsing request will result in default to "list" and not setting "name" field.
-			klog.Errorf("Couldn't parse request %#v: %v", req.URL.Query(), err)
+			klog.Errorf("couldn't parse request %#v: %v", req.URL.Query(), err)
 			// Reset opts to not rely on partial results from parsing.
 			// However, if watch is set, let's report it.
 			opts = metainternalversion.ListOptions{}
