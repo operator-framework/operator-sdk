@@ -146,16 +146,18 @@ func addMountKubeconfigSecret(dep *appsv1.Deployment) {
 		},
 		},
 	})
-	// mount the volume
-	dep.Spec.Template.Spec.Containers[0].VolumeMounts = append(dep.Spec.Template.Spec.Containers[0].VolumeMounts, v1.VolumeMount{
-		Name:      "scorecard-kubeconfig",
-		MountPath: "/scorecard-secret",
-	})
-	// specify the path via KUBECONFIG env var
-	dep.Spec.Template.Spec.Containers[0].Env = append(dep.Spec.Template.Spec.Containers[0].Env, v1.EnvVar{
-		Name:  "KUBECONFIG",
-		Value: "/scorecard-secret/config",
-	})
+	for index := range dep.Spec.Template.Spec.Containers {
+		// mount the volume
+		dep.Spec.Template.Spec.Containers[index].VolumeMounts = append(dep.Spec.Template.Spec.Containers[index].VolumeMounts, v1.VolumeMount{
+			Name:      "scorecard-kubeconfig",
+			MountPath: "/scorecard-secret",
+		})
+		// specify the path via KUBECONFIG env var
+		dep.Spec.Template.Spec.Containers[index].Env = append(dep.Spec.Template.Spec.Containers[index].Env, v1.EnvVar{
+			Name:  "KUBECONFIG",
+			Value: "/scorecard-secret/config",
+		})
+	}
 }
 
 func addProxyContainer(dep *appsv1.Deployment) {
