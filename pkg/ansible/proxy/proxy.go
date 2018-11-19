@@ -29,12 +29,12 @@ import (
 	"net/http/httputil"
 	"strings"
 
+	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
-	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -101,7 +101,7 @@ func InjectOwnerReferenceHandler(h http.Handler, informerCache cache.Cache, rest
 			rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.NewString("api", "apis"), GrouplessAPIPrefixes: sets.NewString("api")}
 			r, err := rf.NewRequestInfo(req)
 			if err != nil {
-				log.Error("Failed to convert request: %v", err)
+				log.Error(err, "failed to convert request")
 				return
 			}
 			if strings.HasPrefix(r.Path, "/version") {
@@ -123,7 +123,7 @@ func InjectOwnerReferenceHandler(h http.Handler, informerCache cache.Cache, rest
 			k, err := restMapper.KindFor(gvr)
 			if err != nil {
 				// break here in case resource doesn't exist in cache
-				log.Error("Didn't find kind", err)
+				log.Error(err, "didn't find kind")
 				break
 			}
 
@@ -135,7 +135,7 @@ func InjectOwnerReferenceHandler(h http.Handler, informerCache cache.Cache, rest
 			if err != nil {
 				// break here in case resource doesn't exist in cache but exists on APIserver
 				// This is very unlikely but provides user with expected 404
-				log.Error("Didn't find object in cache", err)
+				log.Error(err, "didn't find object in cache")
 				break
 			}
 
@@ -143,13 +143,13 @@ func InjectOwnerReferenceHandler(h http.Handler, informerCache cache.Cache, rest
 			resp, err := json.Marshal(un.Object)
 			if err != nil {
 				// return will give a 500
-				log.Error("Failed to marshal data", err)
+				log.Error(err, "failed to marshal data")
 				return
 			}
 			json.Indent(&i, resp, "", "  ")
 			_, err = w.Write(i.Bytes())
 			if err != nil {
-				log.Error("Failed to write response", err)
+				log.Error(err, "failed to write response")
 				return
 			}
 
@@ -203,7 +203,7 @@ func Run(done chan error, o Options) error {
 			informerCache.Start(stop)
 			defer close(stop)
 		}()
-		log.Infof("Waiting for cache to sync...")
+		log.Info("Waiting for cache to sync...")
 		synced := informerCache.WaitForCacheSync(stop)
 		if !synced {
 			return fmt.Errorf("Failed to sync cache")
