@@ -69,10 +69,6 @@ func createFromYAMLFile(yamlPath string, storeKindVersionName bool) error {
 				return fmt.Errorf("failed to convert object to deployment: %v", err)
 			}
 			deploymentName = dep.GetName()
-			// TODO: support multiple containers per deployment
-			if len(dep.Spec.Template.Spec.Containers) != 1 {
-				return fmt.Errorf("scorecard does not currently support deployments with multiple containers")
-			}
 			createKubeconfigSecret()
 			addMountKubeconfigSecret(dep)
 			addProxyContainer(dep)
