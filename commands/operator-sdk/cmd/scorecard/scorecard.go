@@ -36,6 +36,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// TODO: use a config file to reduce number of flags users
+// have to provide for the config
+
 // Config stores all scorecard config passed as flags
 type Config struct {
 	Namespace      string
