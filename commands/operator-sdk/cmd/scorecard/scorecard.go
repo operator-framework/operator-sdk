@@ -17,11 +17,11 @@ package scorecard
 import (
 	"fmt"
 	"io/ioutil"
-	"strings"
 
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
 	olmApi "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	extscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
@@ -47,6 +47,7 @@ type Config struct {
 	NamespacedMan  string
 	GlobalMan      string
 	CrMan          string
+	Verbose        bool
 }
 
 var SCConf Config
@@ -87,6 +88,9 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	// in main.go, we catch and print errors, so we don't want cobra to print the error itself
 	cmd.SilenceErrors = true
 	cmd.SilenceUsage = true
+	if SCConf.Verbose {
+		log.SetLevel(log.DebugLevel)
+	}
 	defer cleanupScorecard()
 	var err error
 	kubeconfig, SCConf.Namespace, err = k8sInternal.GetKubeconfigAndNamespace(SCConf.KubeconfigPath)
@@ -141,12 +145,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-
-		/* this print out a lot of ugly logs and should only be used for debugging
-		fmt.Printf("Scorecard Proxy Logs: %v\n", logs)
-		*/
-		// this is just to prevent a "declared but not used" error
-		strings.Contains(logs, "test")
+		log.Debugf("Scorecard Proxy Logs: %v\n", logs)
 	}
 	if SCConf.OlmTests {
 		yamlSpec, err := ioutil.ReadFile(SCConf.CSVPath)

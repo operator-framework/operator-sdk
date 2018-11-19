@@ -38,6 +38,7 @@ func NewScorecardCmd() *cobra.Command {
 	scorecardCmd.Flags().StringVar(&scorecard.SCConf.NamespacedMan, "namespaced-manifest", "", "Path to manifest for namespaced resources (e.g. RBAC and Operator manifest)")
 	scorecardCmd.Flags().StringVar(&scorecard.SCConf.GlobalMan, "global-manifest", "", "Path to manifest for Global resources (e.g. CRD manifests)")
 	scorecardCmd.Flags().StringVar(&scorecard.SCConf.CrMan, "cr-manifest", "", "Path to manifest for Custom Resource")
+	scorecardCmd.Flags().BoolVar(&scorecard.SCConf.Verbose, "verbose", false, "Enable verbose logging")
 	// Since it's difficult to handle multiple CRs, we will require users to specify what CR they want to test; we can handle this better in the future
 	scorecardCmd.MarkFlagRequired("cr-manifest")
 
