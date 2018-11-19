@@ -355,7 +355,7 @@ $ kubectl delete -f deploy/service_account.yaml
 
 ### Adding 3rd Party Resources To Your Operator
 
-By default the operator's Manager will register all custom resource types defined in your project under `pkg/apis` with its scheme.
+The operator's Manager supports the Core Kubernetes resource types as found in the client-go [scheme][scheme_package] package and will also register the schemes of all custom resource types defined in your project under `pkg/apis`.
 ```Go
 import (
   "github.com/example-inc/memcached-operator/pkg/apis"
@@ -377,17 +377,19 @@ Example:
 ```go
 import (
     ....
-    appsv1 "k8s.io/api/apps/v1"
+    routev1 "github.com/openshift/api/route/v1"
 )
 
 func main() {
     ....
-    if err := appsv1.AddToScheme(mgr.GetScheme()); err != nil {
+    if err := routev1.AddToScheme(mgr.GetScheme()); err != nil {
         log.Fatal(err)
     }
     ....
 }
 ```
+
+After adding new import paths to your operator project, run `dep ensure` in the root of your project directory to fulfill these dependencies.
 
 [memcached_handler]: ../example/memcached-operator/handler.go.tmpl
 [memcached_controller]: ../example/memcached-operator/memcached_controller.go.tmpl
@@ -399,6 +401,7 @@ func main() {
 [docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [minikube_tool]:https://github.com/kubernetes/minikube#installation
+[scheme_package]:https://github.com/kubernetes/client-go/blob/master/kubernetes/scheme/register.go
 [deployments_register]: https://github.com/kubernetes/api/blob/master/apps/v1/register.go#L41
 [doc_client_api]:./user/client.md
 [runtime_package]: https://godoc.org/k8s.io/apimachinery/pkg/runtime
