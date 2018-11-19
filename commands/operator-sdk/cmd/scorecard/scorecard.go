@@ -184,12 +184,12 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		fmt.Printf("%s:\n", testType)
 		for _, test := range scTests {
 			if test.testType == testType {
-				fmt.Printf("\t%s: %d/%d\n", test.name, test.earnedPoints, test.maximumPoints)
+				fmt.Printf("\t%s: %d/%d points\n", test.name, test.earnedPoints, test.maximumPoints)
 				totalEarned += test.earnedPoints
 				totalMax += test.maximumPoints
 			}
 		}
 	}
-	fmt.Printf("\nTotal Score: %d/%d\n", totalEarned, totalMax)
+	fmt.Printf("\nTotal Score: %d/%d points\n", totalEarned, totalMax)
 	return nil
 }
