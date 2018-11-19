@@ -14,7 +14,9 @@ The `operator-sdk generate olm-catalog` command currently produces a generic CSV
 
 ## Proposed Solution
 
-Functionality of `operator-sdk generate olm-catalog` is now a branch in `operator-sdk build`, specifically when called with the `--gen-csv` flag; the former command no longer exists. `operator-sdk build quay.io/example/operator:v0.0.1 --gen-csv"` writes a CSV yaml file using the operators' current version to the `deploy/olm-catalog` directory by default. `deploy` is the standard location for all manifests and scripts required to deploy an operator. The SDK can use data from manifests in `deploy` to write a CSV. Users may have different requirements for what should (not) be included in a CSV, and can configure CSV composition via `deploy/olm-catalog/csv-config.yaml`, described below.
+Functionality of `operator-sdk generate olm-catalog` is now in `operator-sdk build --gen-csv`; the former command no longer exists. `operator-sdk build quay.io/example/operator:v0.0.1 --gen-csv` writes a CSV yaml file using the operators' current version to the `deploy/olm-catalog` directory by default. Version is parsed from the image name argument, ex. `0.0.1` from `quay.io/example/operator:v0.0.1`.
+
+`deploy` is the standard location for all manifests required to deploy an operator. The SDK can use data from manifests in `deploy` to write a CSV. Exactly three types of manifests are required to generate a CSV: `operator.yaml`, `*_{crd,cr}.yaml`, and RBAC role files, ex. `role.yaml`. Users may have different versioning requirements for these files and can configure CSV which specific files are included in `deploy/olm-catalog/csv-config.yaml`, described below.
 
 Assuming all configuration defaults are used, `operator-sdk build` will call `scaffold.Execute()`, which will either:
 
@@ -28,15 +30,17 @@ Assuming all configuration defaults are used, `operator-sdk build` will call `sc
 1. Update an existing CSV at the currently pre-defined location, using available data in yaml manifests and source files.
 
     1. The update mechanism will check for an existing CSV in `deploy`. Upon finding one, the CSV yaml file contents will be marshalled into a `ClusterServiceVersion` cache.
-    1. Same as above.
-    1. Same as above.
+    1. The update mechanism will search `deploy` for manifests that contain data a CSV uses, such as a `Deployment` Kubernetes API resource, and set the appropriate CSV fields in the cache with this data.
+    1. Once the search completes, every cache field populated will be written back to a CSV yaml file.
+        - **Note:** individual yaml fields are overwritten and not the entire file, as descriptions and other non-generated parts of a CSV should be preserved.
 
 ### Configuration
 
 Users can configure CSV composition by populating several fields in the file `deploy/olm-catalog/csv-config.yaml`:
 
-- `search-directory`: (string) the directory to search for yaml manifest files. Defaults to `deploy`.
-- `exclude-files`: ([string[, string]*]) files that match any string in the list are not included in the CSV search; glob matching allowed. Defaults to empty.
+- `operator-path`: (string) the operator resource manifest file path. Defaults to `deploy/operator.yaml`.
+- `crd-cr-path-list`: (string(, string)\*) a list of CRD and CR manifest file paths. Defaults to `[deploy/crds/*_{crd,cr}.yaml]`.
+- `rbac-path-list`: (string(, string)\*) a list of RBAC role manifest file paths. Defaults to `[deploy/role.yaml]`.
 
 ### Extensible `CSVUpdater` CSV update mechanism
 
@@ -46,7 +50,7 @@ The CSV spec will likely change over time as new Kubernetes and OLM features are
 import "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 
 type CSVUpdater interface {
-    Apply(*v1alpha1.ClusterServiceVersion) error
+  Apply(*v1alpha1.ClusterServiceVersion) error
 }
 ```
 
@@ -58,7 +62,6 @@ The following is an example implementation of an [install strategy][olm_csv_inst
 
 ```Go
 import (
-  ...
   appsv1 "k8s.io/api/apps/v1"
   rbacv1beta1 "k8s.io/api/rbac/v1beta1"
   "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -67,65 +70,65 @@ import (
 
 // CSVInstallStrategyUpdate embeds the OLM's install strategy spec.
 type CSVInstallStrategyUpdate struct {
-    *install.StrategyDetailsDeployment
-  
-    // Future utility fields go here.
+  *install.StrategyDetailsDeployment
+
+  // Future fields go here.
 }
 
 // getLocalInstallStrategyCache retrieves the local cache singleton and returns the install strategy cache.
 func getLocalInstallStrategyCache() *CSVInstallStrategyUpdate {
-    factory := getLocalCacheFactory()
-    return factory.InstallStrategyCache
+  factory := getLocalCacheFactory()
+  return factory.InstallStrategyCache
 }
 
 // AddDeploymentSpecToCSVInstallStrategyUpdate adds an RBAC Role to the local cache singletons' permissions.
 func AddRoleToCSVInstallStrategyUpdate(yamlDoc []byte) error {
-    localInstallStrategyUpdate := getLocalInstallStrategyCache()
+  localInstallStrategyUpdate := getLocalInstallStrategyCache()
 
-    newRBACRole := new(rbacv1beta1.Role)
-    _ = yaml.Unmarshal(yamlDoc, newRBACRole)
+  newRBACRole := new(rbacv1beta1.Role)
+  _ = yaml.Unmarshal(yamlDoc, newRBACRole)
 
-    newPermissions := install.StrategyDeploymentPermissions{
-        ServiceAccountName: newRole.ObjectMeta.Name,
-        Rules:              newRole.Rules,
-    }
-    localInstallStrategyUpdate.Permissions = append(localInstallStrategyUpdate.Permissions, newPermissions)
+  newPermissions := install.StrategyDeploymentPermissions{
+    ServiceAccountName: newRole.ObjectMeta.Name,
+    Rules:              newRole.Rules,
+  }
+  localInstallStrategyUpdate.Permissions = append(localInstallStrategyUpdate.Permissions, newPermissions)
 
-    return nil
+  return nil
 }
 
 // AddDeploymentSpecToCSVInstallStrategyUpdate adds a Deployment to the local cache singletons' install strategy.
 func AddDeploymentSpecToCSVInstallStrategyUpdate(yamlDoc []byte) error {
-    localInstallStrategyUpdate := getLocalInstallStrategyCache()
+  localInstallStrategyUpdate := getLocalInstallStrategyCache()
 
-    newDeployment := new(appsv1.Deployment)
-    _ = yaml.Unmarshal(yamlDoc, newDeployment)
-  
-    newDeploymentSpec := install.StrategyDeploymentSpec{
-        Name: newDeployment.ObjectMeta.Name,
-        Spec: newDeployment.Spec,
-    }
-    localInstallStrategyUpdate.DeploymentSpecs = append(localInstallStrategyUpdate.DeploymentSpecs, newDeploymentSpec)
+  newDeployment := new(appsv1.Deployment)
+  _ = yaml.Unmarshal(yamlDoc, newDeployment)
 
-    return nil
+  newDeploymentSpec := install.StrategyDeploymentSpec{
+    Name: newDeployment.ObjectMeta.Name,
+    Spec: newDeployment.Spec,
+  }
+  localInstallStrategyUpdate.DeploymentSpecs = append(localInstallStrategyUpdate.DeploymentSpecs, newDeploymentSpec)
+
+  return nil
 }
 
 // Apply applies cached updates in CSVInstallStrategyUpdate to the appropriate csv fields.
 func (us *CSVInstallStrategyUpdate) Apply(csv *v1alpha1.ClusterServiceVersion) error {
-    // Get install strategy from csv.
-    var resolver *install.StrategyResolver
-    strat, _ := resolver.UnmarshalStrategy(csv.Spec.InstallStrategy)
-    installStrat, _ := strat.(*install.StrategyDetailsDeployment)
+  // Get install strategy from csv.
+  var resolver *install.StrategyResolver
+  strat, _ := resolver.UnmarshalStrategy(csv.Spec.InstallStrategy)
+  installStrat, _ := strat.(*install.StrategyDetailsDeployment)
 
-    // Update permissions and deployments with custom field update methods.
-    us.updatePermissions(installStrat)
-    us.updateDeploymentSpecs(installStrat)
+  // Update permissions and deployments with custom field update methods.
+  us.updatePermissions(installStrat)
+  us.updateDeploymentSpecs(installStrat)
 
-    // Re-serialize permissions into csv install strategy.
-    updatedStrat, _ := json.Marshal(installStrat)
-    csv.Spec.InstallStrategy.StrategySpecRaw = updatedStrat
+  // Re-serialize permissions into csv install strategy.
+  updatedStrat, _ := json.Marshal(installStrat)
+  csv.Spec.InstallStrategy.StrategySpecRaw = updatedStrat
 
-    return nil
+  return nil
 }
 ```
 
@@ -143,7 +146,7 @@ Required:
 - `spec.provider`: the operators' provider, with a `name`; usually an organization.
 - `spec.labels`: 1..N `key`:`value` pairs to be used by operator internals.
 - `spec.version`: semantic version of the operator, ex. `0.1.1`.
-- `spec.customresourcedefinitions`: any CRD's the operator uses. This field will be populated automatically by the SDK if any CRD yaml files are present in `deploy`; however, several fields require user input (more details in the [CSV CRD spec section][olm_csv_crd_doc]):
+- `spec.customresourcedefinitions`: any CRD's the operator uses. This field will be populated automatically by the SDK if any CRD yaml files are present in `deploy`; however, several fields not in the CRD manifest spec that require user input (more details in the [CSV CRD spec section][olm_csv_crd_doc]):
         - `description`: description of the CRD.
         - `resources`: any Kubernetes resources leveraged by the CRD, ex. `Pod`'s, `StatefulSet`'s.
         - `specDescriptors`: UI hints for inputs and outputs of the operator.
