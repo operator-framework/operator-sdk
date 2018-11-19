@@ -104,17 +104,18 @@ func InjectOwnerReferenceHandler(h http.Handler, informerCache cache.Cache, rest
 				log.Error(err, "failed to convert request")
 				return
 			}
+
+			// check if resource is present on request
+			if !r.IsResourceRequest {
+				break
+			}
+
 			if strings.HasPrefix(r.Path, "/version") {
 				// Temporarily pass along to API server
 				// Ideally we cache this response as well
 				break
 			}
 
-			gv := make([]schema.GroupVersion, 1)
-			gv = append(gv, schema.GroupVersion{
-				Group:   r.APIGroup,
-				Version: r.APIVersion,
-			})
 			gvr := schema.GroupVersionResource{
 				Group:    r.APIGroup,
 				Version:  r.APIVersion,
@@ -128,8 +129,7 @@ func InjectOwnerReferenceHandler(h http.Handler, informerCache cache.Cache, rest
 			}
 
 			un := unstructured.Unstructured{}
-			un.SetKind(k.Kind)
-			un.SetAPIVersion(k.Version)
+			un.SetGroupVersionKind(k)
 			obj := client.ObjectKey{Namespace: r.Namespace, Name: r.Name}
 			err = informerCache.Get(context.Background(), obj, &un)
 			if err != nil {
@@ -146,6 +146,7 @@ func InjectOwnerReferenceHandler(h http.Handler, informerCache cache.Cache, rest
 				log.Error(err, "failed to marshal data")
 				return
 			}
+			// Pretty printing when hitting apiserver from CLI
 			json.Indent(&i, resp, "", "  ")
 			_, err = w.Write(i.Bytes())
 			if err != nil {
