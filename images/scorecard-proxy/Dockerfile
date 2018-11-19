@@ -9,7 +9,7 @@ ENV GOARCH amd64
 WORKDIR /go/src/github.com/operator-framework/operator-sdk
 COPY . /go/src/github.com/operator-framework/operator-sdk
 
-RUN go build -o /go/bin/scorecard-proxy github.com/operator-framework/operator-sdk/test/scorecard-proxy/cmd/proxy
+RUN go build -o /go/bin/scorecard-proxy github.com/operator-framework/operator-sdk/images/scorecard-proxy/cmd/proxy
 
 # Base image
 FROM alpine:3.8
