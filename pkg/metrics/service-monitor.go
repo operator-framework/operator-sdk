@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package sdk
+package metrics
 
 import (
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
