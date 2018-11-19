@@ -40,7 +40,7 @@ var log = logf.Log.WithName("runner")
 // Runner - a runnable that should take the parameters and name and namespace
 // and run the correct code.
 type Runner interface {
-	Run(string, *unstructured.Unstructured, string) (*RunResult, error)
+	Run(string, *unstructured.Unstructured, string) (RunResult, error)
 	GetFinalizer() (string, bool)
 	GetReconcilePeriod() (time.Duration, bool)
 }
@@ -177,7 +177,7 @@ type runner struct {
 	reconcilePeriod  *time.Duration
 }
 
-func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig string) (*RunResult, error) {
+func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig string) (RunResult, error) {
 	if u.GetDeletionTimestamp() != nil && !r.isFinalizerRun(u) {
 		return nil, errors.New("resource has been deleted, but no finalizer was matched, skipping reconciliation")
 	}
@@ -242,8 +242,8 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 			logger.Error(err, "error from event api")
 		}
 	}()
-	return &RunResult{
-		Events:   receiver.Events,
+	return &runResult{
+		events:   receiver.Events,
 		inputDir: &inputDir,
 		ident:    ident,
 	}, nil
@@ -335,17 +335,30 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 	return parameters
 }
 
+// RunResult - result of a ansible run
+type RunResult interface {
+	// Stdout returns the stdout from ansible-runner if it is available, else an error.
+	Stdout() (string, error)
+	// Events returns the events from ansible-runner if it is available, else an error.
+	Events() <-chan eventapi.JobEvent
+}
+
 // RunResult facilitates access to information about a run of ansible.
-type RunResult struct {
+type runResult struct {
 	// Events is a channel of events from ansible that contain state related
 	// to a run of ansible.
-	Events <-chan eventapi.JobEvent
+	events <-chan eventapi.JobEvent
 
 	ident    string
 	inputDir *inputdir.InputDir
 }
 
 // Stdout returns the stdout from ansible-runner if it is available, else an error.
-func (r *RunResult) Stdout() (string, error) {
+func (r *runResult) Stdout() (string, error) {
 	return r.inputDir.Stdout(r.ident)
+}
+
+// Events returns the events from ansible-runner if it is available, else an error.
+func (r *runResult) Events() <-chan eventapi.JobEvent {
+	return r.events
 }
