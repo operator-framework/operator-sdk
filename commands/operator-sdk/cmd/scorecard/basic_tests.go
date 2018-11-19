@@ -17,9 +17,11 @@ package scorecard
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"reflect"
+	"strings"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -131,10 +133,9 @@ func checkStatusUpdate(runtimeClient client.Client, obj unstructured.Unstructure
 	return nil
 }
 
-// TODO: add actual checks for PUT and POST calls in `writingIntoCRsHasEffect`
-
 // At the moment, this will just read the logs and print them if enabled. We will add more complex functionality later
 func writingIntoCRsHasEffect(obj unstructured.Unstructured) (string, error) {
+	test := scorecardTest{testType: basicOperator, name: "Writing into CRs has an effect", maximumPoints: 1}
 	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
 	if err != nil {
 		return "", fmt.Errorf("failed to create kubeclient: %v", err)
@@ -162,5 +163,21 @@ func writingIntoCRsHasEffect(obj unstructured.Unstructured) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("test failed and failed to read pod logs: %v", err)
 	}
+	logs := buf.String()
+	msgMap := make(map[string]interface{})
+	for _, msg := range strings.Split(logs, "\n") {
+		if err := json.Unmarshal([]byte(msg), &msgMap); err != nil {
+			continue
+		}
+		method, ok := msgMap["method"].(string)
+		if !ok {
+			continue
+		}
+		if method == "PUT" || method == "POST" {
+			test.earnedPoints = 1
+			break
+		}
+	}
+	scTests = append(scTests, test)
 	return buf.String(), nil
 }
