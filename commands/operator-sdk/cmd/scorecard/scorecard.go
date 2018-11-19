@@ -58,6 +58,7 @@ const (
 	goodTenant     = "Good Tentant"
 )
 
+// TODO: add point weights to tests
 type scorecardTest struct {
 	testType      string
 	name          string

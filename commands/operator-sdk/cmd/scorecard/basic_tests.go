@@ -66,6 +66,12 @@ func checkSpecAndStat(runtimeClient client.Client, obj unstructured.Unstructured
 	return nil
 }
 
+// TODO: user specified tests for operators
+
+// checkStatusUpdate looks at all fields in the spec section of a custom resource and attempts to modify them and
+// see if the status changes as a result. This is a bit prone to breakage as this is a black box test and we don't
+// know much about how the operators we are testing actually work and may pass an invalid value. In the future, we
+// should use user-specified tests
 func checkStatusUpdate(runtimeClient client.Client, obj unstructured.Unstructured) error {
 	test := scorecardTest{testType: basicOperator, name: "Operator actions are reflected in status", maximumPoints: 1}
 	err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: SCConf.Namespace, Name: name}, &obj)
@@ -97,10 +103,9 @@ func checkStatusUpdate(runtimeClient client.Client, obj unstructured.Unstructure
 			} else {
 				obj.Object["spec"].(map[string]interface{})[k] = true
 			}
-		case []interface{}:
-			fmt.Printf("This is unhandled at the moment\n")
+		case []interface{}: // TODO: Decide how this should be handled
 		default:
-			fmt.Printf("Unknown type for key %s: %v\n", k, reflect.TypeOf(t))
+			fmt.Printf("Unknown type for key (%s) in status: (%v)\n", k, reflect.TypeOf(t))
 		}
 		runtimeClient.Update(context.TODO(), &obj)
 		err := wait.Poll(time.Second*1, time.Second*15, func() (done bool, err error) {
@@ -126,7 +131,9 @@ func checkStatusUpdate(runtimeClient client.Client, obj unstructured.Unstructure
 	return nil
 }
 
-// At the moment, this will just read the logs and print them if enabled. We will add more complex functionality
+// TODO: add actual checks for PUT and POST calls in `writingIntoCRsHasEffect`
+
+// At the moment, this will just read the logs and print them if enabled. We will add more complex functionality later
 func writingIntoCRsHasEffect(obj unstructured.Unstructured) (string, error) {
 	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
 	if err != nil {
