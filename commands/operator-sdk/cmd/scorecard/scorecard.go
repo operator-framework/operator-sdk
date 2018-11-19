@@ -164,16 +164,17 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	obj.SetAPIVersion(apiversion)
 	obj.SetKind(kind)
 	if SCConf.BasicTests {
-		fmt.Printf("Checking spec and stat\n")
+		fmt.Printf("Checking for existance of spec and status blocks in CR\n")
 		err = checkSpecAndStat(runtimeClient, obj)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Checking status update\n")
+		fmt.Printf("Checking that operator actions are reflected in status\n")
 		err = checkStatusUpdate(runtimeClient, obj)
 		if err != nil {
 			return err
 		}
+		fmt.Printf("Checking that writingg into CRs has an effect")
 		logs, err := writingIntoCRsHasEffect(obj)
 		if err != nil {
 			return err
