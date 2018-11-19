@@ -16,13 +16,11 @@ package cmdtest
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/test"
@@ -67,37 +65,11 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 
 	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml, deploy/role_binding.yaml and deploy/operator.yaml
 	if tlConfig.namespacedManPath == "" {
-		err := os.MkdirAll(deployTestDir, os.FileMode(fileutil.DefaultDirFileMode))
+		file, err := projutil.GenerateCombinedNamespacedManifest()
 		if err != nil {
-			log.Fatalf("could not create %s: (%v)", deployTestDir, err)
+			log.Fatal(err)
 		}
-		tlConfig.namespacedManPath = filepath.Join(deployTestDir, "namespace-manifests.yaml")
-
-		sa, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.ServiceAccountYamlFile))
-		if err != nil {
-			log.Warnf("could not find the serviceaccount manifest: (%v)", err)
-		}
-		role, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleYamlFile))
-		if err != nil {
-			log.Warnf("could not find role manifest: (%v)", err)
-		}
-		roleBinding, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleBindingYamlFile))
-		if err != nil {
-			log.Warnf("could not find role_binding manifest: (%v)", err)
-		}
-		operator, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.OperatorYamlFile))
-		if err != nil {
-			log.Fatalf("could not find operator manifest: (%v)", err)
-		}
-		combined := []byte{}
-		combined = combineManifests(combined, sa)
-		combined = combineManifests(combined, role)
-		combined = combineManifests(combined, roleBinding)
-		combined = append(combined, operator...)
-		err = ioutil.WriteFile(tlConfig.namespacedManPath, combined, os.FileMode(fileutil.DefaultFileMode))
-		if err != nil {
-			log.Fatalf("could not create temporary namespaced manifest file: (%v)", err)
-		}
+		tlConfig.namespacedManPath = file.Name()
 		defer func() {
 			err := os.Remove(tlConfig.namespacedManPath)
 			if err != nil {
@@ -106,34 +78,11 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 		}()
 	}
 	if tlConfig.globalManPath == "" {
-		err := os.MkdirAll(deployTestDir, os.FileMode(fileutil.DefaultDirFileMode))
+		file, err := projutil.GenerateCombinedGlobalManifest()
 		if err != nil {
-			log.Fatalf("could not create %s: (%v)", deployTestDir, err)
+			log.Fatal(err)
 		}
-		tlConfig.globalManPath = filepath.Join(deployTestDir, "global-manifests.yaml")
-		files, err := ioutil.ReadDir(scaffold.CrdsDir)
-		if err != nil {
-			log.Fatalf("could not read deploy directory: (%v)", err)
-		}
-		var combined []byte
-		for _, file := range files {
-			if strings.HasSuffix(file.Name(), "crd.yaml") {
-				fileBytes, err := ioutil.ReadFile(filepath.Join(scaffold.CrdsDir, file.Name()))
-				if err != nil {
-					log.Fatalf("could not read file %s: (%v)", filepath.Join(scaffold.CrdsDir, file.Name()), err)
-				}
-				if combined == nil {
-					combined = []byte{}
-				} else {
-					combined = append(combined, []byte("\n---\n")...)
-				}
-				combined = append(combined, fileBytes...)
-			}
-		}
-		err = ioutil.WriteFile(tlConfig.globalManPath, combined, os.FileMode(fileutil.DefaultFileMode))
-		if err != nil {
-			log.Fatalf("could not create temporary global manifest file: (%v)", err)
-		}
+		tlConfig.globalManPath = file.Name()
 		defer func() {
 			err := os.Remove(tlConfig.globalManPath)
 			if err != nil {
@@ -165,14 +114,4 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	}
 
 	log.Info("Local operator test successfully completed.")
-}
-
-// combineManifests combines a given manifest with a base manifest and adds yaml
-// style separation. Nothing is appended if the manifest is empty.
-func combineManifests(base, manifest []byte) []byte {
-	if len(manifest) > 0 {
-		base = append(base, manifest...)
-		return append(base, []byte("\n---\n")...)
-	}
-	return base
 }

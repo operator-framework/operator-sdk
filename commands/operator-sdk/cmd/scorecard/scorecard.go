@@ -17,8 +17,10 @@ package scorecard
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	olmApi "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
@@ -94,6 +96,33 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	if SCConf.Verbose {
 		log.SetLevel(log.DebugLevel)
+	}
+	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml, deploy/role_binding.yaml and deploy/operator.yaml
+	if SCConf.NamespacedMan == "" {
+		file, err := projutil.GenerateCombinedNamespacedManifest()
+		if err != nil {
+			log.Fatal(err)
+		}
+		SCConf.NamespacedMan = file.Name()
+		defer func() {
+			err := os.Remove(SCConf.NamespacedMan)
+			if err != nil {
+				log.Fatalf("could not delete temporary namespace manifest file: (%v)", err)
+			}
+		}()
+	}
+	if SCConf.GlobalMan == "" {
+		file, err := projutil.GenerateCombinedGlobalManifest()
+		if err != nil {
+			log.Fatal(err)
+		}
+		SCConf.GlobalMan = file.Name()
+		defer func() {
+			err := os.Remove(SCConf.GlobalMan)
+			if err != nil {
+				log.Fatalf("could not delete global manifest file: (%v)", err)
+			}
+		}()
 	}
 	defer cleanupScorecard()
 	var err error
