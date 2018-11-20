@@ -49,8 +49,11 @@ func MustInProjectRoot() {
 	// if the current directory has the "./build/dockerfile" file, then it is safe to say
 	// we are at the project root.
 	_, err := os.Stat(buildDockerfile)
-	if err != nil && os.IsNotExist(err) {
-		log.Fatalf("must run command in project root dir: (%v)", err)
+	if err != nil {
+		if os.IsNotExist(err) {
+			log.Fatal("must run command in project root dir: project structure requires ./build/Dockerfile")
+		}
+		log.Fatalf("error: (%v) while checking if current directory is the project root", err)
 	}
 }
 
