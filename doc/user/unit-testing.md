@@ -125,8 +125,11 @@ The above tests if:
 - The request is requeued in the expected manner.
 - The number of replicas in the created Deployment's spec is as expected.
 
+A unit test checking more cases can be found in our [`samples repo`][code_test_example].
+
 [doc_e2e_test]:https://github.com/operator-framework/operator-sdk/blob/2f772d1dc2340dd19bdc3ec8c2dc9f0f77cc8297/doc/test-framework/writing-e2e-tests.md
 [doc_client]:https://github.com/operator-framework/operator-sdk/blob/5c50126e7a112d67826894997eca143e12dc165f/doc/user/client.md
 [doc_cr_fake_client]:https://github.com/operator-framework/operator-sdk/blob/6df28578eca080492c552efd607b47625bfe3b8b/example/memcached-operator/memcached_controller.go.tmpl
 [repo_memcached_reconcile]:https://github.com/operator-framework/operator-sdk-samples/blob/4c6934448684a6953ece4d3d9f3f77494b1c125e/memcached-operator/pkg/controller/memcached/memcached_controller.go#L82
 [doc_reconcile]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/reconcile#Reconciler
+[code_test_example]: https://github.com/operator-framework/operator-sdk-samples/blob/master/memcached-operator/pkg/controller/memcached/memcached_controller_test.go#L25
