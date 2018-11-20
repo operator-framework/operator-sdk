@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
@@ -29,6 +30,8 @@ import (
 	olmApi "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olmInstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 )
+
+var testDataDir = "testdata"
 
 func TestCsv(t *testing.T) {
 	buf := &bytes.Buffer{}
@@ -43,12 +46,12 @@ func TestCsv(t *testing.T) {
 		ProjectName:    "app-operator",
 	}
 	opVer := "1.0.1"
-	testDataDir := "./testdata/deploy"
 
 	err := s.Execute(cfg,
 		&Csv{
 			OperatorVersion: opVer,
-			DeployDir:       testDataDir,
+			DeployDir:       filepath.Join(testDataDir, scaffold.DeployDir),
+			ConfigFilePath:  filepath.Join(testDataDir, scaffold.OlmCatalogDir, CsvConfigYamlFile),
 		},
 	)
 	if err != nil {

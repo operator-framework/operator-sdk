@@ -21,7 +21,6 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,6 +32,7 @@ import (
 	"github.com/coreos/go-semver/semver"
 	"github.com/ghodss/yaml"
 	olmApi "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	log "github.com/sirupsen/logrus"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -46,6 +46,9 @@ type Csv struct {
 
 	// DeployDir is the dir the SDK should search for deploy files, ex. *crd.yaml.
 	DeployDir string
+	// ConfigFilePath is the location of a configuration file path for this
+	// projects' CSV file.
+	ConfigFilePath string
 	// OperatorVersion is the operators' current version.
 	OperatorVersion string
 }
@@ -54,6 +57,9 @@ func (s *Csv) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		fileName := strings.ToLower(s.ProjectName) + CsvYamlFilePrefix
 		s.Path = filepath.Join(scaffold.OlmCatalogDir, fileName)
+	}
+	if s.ConfigFilePath == "" {
+		s.ConfigFilePath = filepath.Join(scaffold.OlmCatalogDir, CsvConfigYamlFile)
 	}
 	if s.DeployDir == "" {
 		s.DeployDir = scaffold.DeployDir
@@ -76,11 +82,7 @@ func (s *Csv) CustomRender() ([]byte, error) {
 		}
 	}
 
-	// TODO: provide option for custom patterns to be supplied; use "*.yaml" as default.
-	patterns := []string{
-		"*.yaml",
-	}
-	manifestFiles, err := matchManifestFilesInPath(patterns, s.DeployDir)
+	csvConfig, err := getCSVConfig(s.ConfigFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -88,14 +90,14 @@ func (s *Csv) CustomRender() ([]byte, error) {
 	if err = s.updateCSVVersions(currCSV); err != nil {
 		return nil, err
 	}
-	if err = s.updateCSVFromManifestFiles(currCSV, manifestFiles); err != nil {
+	if err = s.updateCSVFromManifestFiles(currCSV, csvConfig); err != nil {
 		return nil, err
 	}
 
 	// A new csv won't have several required fields populated.
 	if exists {
 		if err = checkRequiredCSVFields(currCSV); err != nil {
-			log.Printf("Warning: %s\nFill in these fields in file %s\n", err, s.Path)
+			log.Warnf("%s\nFill in these fields in file %s\n", err, s.Path)
 		}
 	}
 
@@ -109,7 +111,7 @@ func getCurrentCSVIfExists(csvPath string) (*olmApi.ClusterServiceVersion, bool,
 
 	csvBytes, err := ioutil.ReadFile(csvPath)
 	if err != nil {
-		log.Printf("getCurrentCSVIfExists ReadFile: (%v)", err)
+		log.Infof("getCurrentCSVIfExists ReadFile: (%v)", err)
 		return nil, false, err
 	}
 	if len(csvBytes) == 0 {
@@ -118,7 +120,7 @@ func getCurrentCSVIfExists(csvPath string) (*olmApi.ClusterServiceVersion, bool,
 
 	csv := new(olmApi.ClusterServiceVersion)
 	if err := yaml.Unmarshal(csvBytes, csv); err != nil {
-		log.Printf("getCurrentCSVIfExists Unmarshal: (%v)", err)
+		log.Infof("getCurrentCSVIfExists Unmarshal: (%v)", err)
 		return nil, false, err
 	}
 
@@ -232,33 +234,6 @@ func checkRequiredCSVFields(csv *olmApi.ClusterServiceVersion) error {
 	return errors.New(errStr)
 }
 
-func matchManifestFilesInPath(patterns []string, searchPath string) ([]string, error) {
-	manifestFiles := make([]string, 0)
-	f := func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() {
-			return nil
-		}
-
-		for _, pattern := range patterns {
-			matches, merr := filepath.Glob(filepath.Join(path, pattern))
-			if merr != nil {
-				return merr
-			}
-			manifestFiles = append(manifestFiles, matches...)
-		}
-
-		return nil
-	}
-
-	if err := filepath.Walk(searchPath, f); err != nil {
-		return nil, err
-	}
-	return manifestFiles, nil
-}
-
 // updateCSVVersions updates csv's version and data involving the version,
 // ex. ObjectMeta.Name, and place the old version in the `replaces` object,
 // if there is an old version to replace.
@@ -305,12 +280,12 @@ func (s *Csv) updateCSVVersions(csv *olmApi.ClusterServiceVersion) error {
 func replaceAllBytes(src, dst interface{}, old, new []byte) error {
 	b, err := json.Marshal(src)
 	if err != nil {
-		log.Printf("replaceAllBytes: (%v)", err)
+		log.Infof("replaceAllBytes: (%v)", err)
 		return err
 	}
 	b = bytes.Replace(b, old, new, -1)
 	if err = json.Unmarshal(b, dst); err != nil {
-		log.Printf("replaceAllBytes: (%v)", err)
+		log.Infof("replaceAllBytes: (%v)", err)
 		return err
 	}
 	return nil
@@ -318,11 +293,11 @@ func replaceAllBytes(src, dst interface{}, old, new []byte) error {
 
 // updateCSVFromManifestFiles gathers relevant data from generated and user-defined manifests
 // and updates csv.
-func (s *Csv) updateCSVFromManifestFiles(csv *olmApi.ClusterServiceVersion, manifestFiles []string) error {
-	for _, f := range manifestFiles {
+func (s *Csv) updateCSVFromManifestFiles(csv *olmApi.ClusterServiceVersion, csvConfig *CsvConfig) error {
+	for _, f := range append(csvConfig.CrdCrPaths, csvConfig.OperatorPath, csvConfig.RolePath) {
 		yamlData, err := ioutil.ReadFile(f)
 		if err != nil {
-			log.Printf("updateCSVFromManifestFiles ReadFile %v: (%v)", f, err)
+			log.Infof("updateCSVFromManifestFiles ReadFile %v: (%v)", f, err)
 			return err
 		}
 
@@ -334,7 +309,7 @@ func (s *Csv) updateCSVFromManifestFiles(csv *olmApi.ClusterServiceVersion, mani
 		for {
 			yamlDoc, rerr := reader.Read()
 			if rerr != nil && rerr != io.EOF {
-				log.Printf("updateCSVFromManifestFiles Read: (%v)", rerr)
+				log.Infof("updateCSVFromManifestFiles Read: (%v)", rerr)
 				return rerr
 			}
 			// No more separator-delimited YAML documents within yamlData.
@@ -365,7 +340,7 @@ func getKindfromYAML(yamlData []byte) (string, error) {
 		Kind string
 	}
 	if err := yaml.Unmarshal(yamlData, &temp); err != nil {
-		log.Printf("getKindfromYAML Unmarshal: (%v)", err)
+		log.Infof("getKindfromYAML Unmarshal: (%v)", err)
 		return "", err
 	}
 	return temp.Kind, nil

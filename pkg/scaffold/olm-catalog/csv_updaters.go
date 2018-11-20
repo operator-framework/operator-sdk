@@ -60,6 +60,7 @@ var updateDispTable = map[string]func([]byte) error{
 	"Deployment": AddDeploymentSpecToCSVInstallStrategyUpdate,
 	// TODO: determine whether 'owned' or 'required'
 	"CustomResourceDefinition": AddOwnedCRDToCSVCustomResourceDefinitionsUpdate,
+	// "CustomResource": AddCRToCSVCustomResourceDefinitionsUpdate,
 }
 
 type localUpdaterFactory struct {
