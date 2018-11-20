@@ -54,13 +54,13 @@ func TestHandler(t *testing.T) {
 		t.Fatalf("error getting pod from proxy: %v", err)
 	}
 	defer resp.Body.Close()
-	// Should only be one string from 'X-Cache' header (explicitly set to HIT in proxy)
-	if resp.Header["X-Cache"][0] != "HIT" {
-		t.Fatalf("object was not retrieved from cache")
-	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatalf("error reading response body: %v", err)
+	}
+	// Should only be one string from 'X-Cache' header (explicitly set to HIT in proxy)
+	if resp.Header["X-Cache"] == nil {
+		t.Fatalf("object was not retrieved from cache")
 	}
 	data := kcorev1.Pod{}
 	err = json.Unmarshal(body, &data)
