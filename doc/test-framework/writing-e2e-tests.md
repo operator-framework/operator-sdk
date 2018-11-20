@@ -121,10 +121,9 @@ in your namespaced manifest. The custom `Create` function use the controller-run
 creates a cleanup function that is called by `ctx.Cleanup` which deletes the resource and then waits for the resource to be
 fully deleted before returning. This is configurable with `CleanupOptions`. For info on how to use `CleanupOptions` see
 [this section](#how-to-use-cleanup).
- 
 
 If you want to make sure the operator's deployment is fully ready before moving onto the next part of the
-test, the `WaitForDeployment` function from [e2eutil][e2eutil-link] (in the sdk under `pkg/test/e2eutil`) can be used:
+test, the `WaitForOperatorDeployment` function from [e2eutil][e2eutil-link] (in the sdk under `pkg/test/e2eutil`) can be used:
 
 ```go
 // get namespace
@@ -135,7 +134,7 @@ if err != nil {
 // get global framework variables
 f := framework.Global
 // wait for memcached-operator to be ready
-err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, time.Second*5, time.Second*30)
+err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, time.Second*5, time.Second*30)
 if err != nil {
     t.Fatal(err)
 }
@@ -188,7 +187,10 @@ if err != nil {
 ```
 
 Now we can check if the operator successfully worked. In the case of the memcached operator, it should have
-created a deployment called "example-memcached" with 3 replicas:
+created a deployment called "example-memcached" with 3 replicas. To check, we use the `WaitForDeployment` function, which
+is the same as `WaitForOperatorDeployment` with the exception that `WaitForOperatorDeployment` will skip waiting
+for the deployment if the test is run locally and the `--up-local` flag is set; the `WaitForDeployment` function always
+waits for the deployment:
 
 ```go
 // wait for example-memcached to reach 3 replicas
@@ -241,6 +243,16 @@ If you wish to run all the tests in 1 namespace (which also forces `-parallel=1`
 ```shell
 $ kubectl create namespace operator-test
 $ operator-sdk test local ./test/e2e --namespace operator-test
+```
+
+To run the operator itself locally during the tests instead of starting a deployment in the cluster, you can use the
+`--up-local` flag. This mode will still create global resources, but by default will not create any in-cluster namespaced
+resources unless the user specifies one through the `--namespaced-manifest` flag. (Note: the `--up-local` flag requires
+the `--namespace` flag):
+
+```shell
+$ kubectl create namespace operator-test
+$ operator-sdk test local ./test/e2e --namespace operator-test --up-local
 ```
 
 For more documentation on the `operator-sdk test local` command, see the [SDK CLI Reference][sdk-cli-ref] doc.

@@ -54,9 +54,10 @@ type Framework struct {
 	Scheme            *runtime.Scheme
 	NamespacedManPath *string
 	Namespace         string
+	LocalOperator     bool
 }
 
-func setup(kubeconfigPath, namespacedManPath *string) error {
+func setup(kubeconfigPath, namespacedManPath *string, localOperator bool) error {
 	var err error
 	var kubeconfig *rest.Config
 	if *kubeconfigPath == "incluster" {
@@ -105,6 +106,7 @@ func setup(kubeconfigPath, namespacedManPath *string) error {
 		Scheme:            scheme,
 		NamespacedManPath: namespacedManPath,
 		Namespace:         namespace,
+		LocalOperator:     localOperator,
 	}
 	return nil
 }

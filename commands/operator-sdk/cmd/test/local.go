@@ -39,6 +39,7 @@ type testLocalConfig struct {
 	namespacedManPath string
 	goTestFlags       string
 	namespace         string
+	upLocal           bool
 }
 
 var tlConfig testLocalConfig
@@ -54,6 +55,7 @@ func NewTestLocalCmd() *cobra.Command {
 	testCmd.Flags().StringVar(&tlConfig.namespacedManPath, "namespaced-manifest", "", "Path to manifest for per-test, namespaced resources (e.g. RBAC and Operator manifest)")
 	testCmd.Flags().StringVar(&tlConfig.goTestFlags, "go-test-flags", "", "Additional flags to pass to go test")
 	testCmd.Flags().StringVar(&tlConfig.namespace, "namespace", "", "If non-empty, single namespace to run tests in")
+	testCmd.Flags().BoolVar(&tlConfig.upLocal, "up-local", false, "Enable running operator locally with go run instead of as an image in the cluster")
 
 	return testCmd
 }
@@ -61,6 +63,10 @@ func NewTestLocalCmd() *cobra.Command {
 func testLocalFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
 		log.Fatal("operator-sdk test local requires exactly 1 argument")
+	}
+
+	if tlConfig.upLocal && tlConfig.namespace == "" {
+		log.Fatal("must specify a namespace to run in when -up-local flag is set")
 	}
 
 	log.Info("Testing operator locally.")
@@ -72,28 +78,29 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 			log.Fatalf("could not create %s: (%v)", deployTestDir, err)
 		}
 		tlConfig.namespacedManPath = filepath.Join(deployTestDir, "namespace-manifests.yaml")
-
-		sa, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.ServiceAccountYamlFile))
-		if err != nil {
-			log.Warnf("could not find the serviceaccount manifest: (%v)", err)
-		}
-		role, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleYamlFile))
-		if err != nil {
-			log.Warnf("could not find role manifest: (%v)", err)
-		}
-		roleBinding, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleBindingYamlFile))
-		if err != nil {
-			log.Warnf("could not find role_binding manifest: (%v)", err)
-		}
-		operator, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.OperatorYamlFile))
-		if err != nil {
-			log.Fatalf("could not find operator manifest: (%v)", err)
-		}
 		combined := []byte{}
-		combined = combineManifests(combined, sa)
-		combined = combineManifests(combined, role)
-		combined = combineManifests(combined, roleBinding)
-		combined = append(combined, operator...)
+		if !tlConfig.upLocal {
+			sa, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.ServiceAccountYamlFile))
+			if err != nil {
+				log.Warnf("could not find the serviceaccount manifest: (%v)", err)
+			}
+			role, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleYamlFile))
+			if err != nil {
+				log.Warnf("could not find role manifest: (%v)", err)
+			}
+			roleBinding, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleBindingYamlFile))
+			if err != nil {
+				log.Warnf("could not find role_binding manifest: (%v)", err)
+			}
+			operator, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.OperatorYamlFile))
+			if err != nil {
+				log.Fatalf("could not find operator manifest: (%v)", err)
+			}
+			combined = combineManifests(combined, sa)
+			combined = combineManifests(combined, role)
+			combined = combineManifests(combined, roleBinding)
+			combined = append(combined, operator...)
+		}
 		err = ioutil.WriteFile(tlConfig.namespacedManPath, combined, os.FileMode(fileutil.DefaultFileMode))
 		if err != nil {
 			log.Fatalf("could not create temporary namespaced manifest file: (%v)", err)
@@ -153,6 +160,9 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	}
 	if tlConfig.namespace != "" {
 		testArgs = append(testArgs, "-"+test.SingleNamespaceFlag, "-parallel=1")
+	}
+	if tlConfig.upLocal {
+		testArgs = append(testArgs, "-"+test.LocalOperatorFlag)
 	}
 	dc := exec.Command("go", testArgs...)
 	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))

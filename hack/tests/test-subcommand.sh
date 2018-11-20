@@ -10,3 +10,7 @@ operator-sdk test local . --global-manifest deploy/crds/cache_v1alpha1_memcached
 kubectl create namespace test-memcached
 operator-sdk test local . --namespace=test-memcached
 kubectl delete namespace test-memcached
+# test operator in up local mode
+kubectl create namespace test-memcached
+operator-sdk test local . --up-local --namespace=test-memcached
+kubectl delete namespace test-memcached
