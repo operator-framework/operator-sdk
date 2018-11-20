@@ -146,6 +146,9 @@ func InjectOwnerReferenceHandler(h http.Handler, informerCache cache.Cache, rest
 				log.Error(err, "failed to marshal data")
 				return
 			}
+
+			// Set X-Cache header to signal that response is served from Cache
+			w.Header().Set("X-Cache", "HIT")
 			// Pretty printing when hitting apiserver from CLI
 			json.Indent(&i, resp, "", "  ")
 			_, err = w.Write(i.Bytes())
