@@ -215,11 +215,7 @@ func replaceImage(manifestPath, image string) error {
 			return err
 		}
 		kind, ok := decoded["kind"].(string)
-		if !ok {
-			newManifest = combineManifests(newManifest, yamlSpec)
-			continue
-		}
-		if kind != "Deployment" {
+		if !ok || kind != "Deployment" {
 			newManifest = combineManifests(newManifest, yamlSpec)
 			continue
 		}
