@@ -21,7 +21,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var toml bool
+var asFile bool
 
 func NewPrintDepsCmd() *cobra.Command {
 	printDepsCmd := &cobra.Command{
@@ -29,11 +29,15 @@ func NewPrintDepsCmd() *cobra.Command {
 		Short: "Print dependencies expected by the Operator SDK",
 		Long: `The operator-sdk print-deps command prints all dependencies expected by this
 version of the Operator SDK. Versions for these dependencies should match those
-in an operators' Gopkg.toml file.`,
+in an operators' Gopkg.toml file.
+
+print-deps prints in columnar format by default. Use the --as-file flag to
+print in Gopkg.toml file format.
+`,
 		Run: printDepsFunc,
 	}
 
-	printDepsCmd.Flags().BoolVar(&toml, "toml", false, "Print dependencies in Gopkg.toml format.")
+	printDepsCmd.Flags().BoolVar(&asFile, "as-file", false, "Print dependencies in Gopkg.toml file format.")
 
 	return printDepsCmd
 }
@@ -42,10 +46,10 @@ func printDepsFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 0 {
 		log.Fatal("print-deps command does not take any arguments")
 	}
-	if toml {
-		scaffold.PrintGopkgToml()
+	if asFile {
+		scaffold.PrintDepsAsFile()
 	} else {
-		if err := scaffold.PrintGopkgDeps(); err != nil {
+		if err := scaffold.PrintDeps(); err != nil {
 			log.Fatalf("print deps: (%v)", err)
 		}
 	}
