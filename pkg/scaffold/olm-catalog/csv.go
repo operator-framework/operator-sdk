@@ -49,8 +49,8 @@ type Csv struct {
 	// ConfigFilePath is the location of a configuration file path for this
 	// projects' CSV file.
 	ConfigFilePath string
-	// OperatorVersion is the operators' current version.
-	OperatorVersion string
+	// CsvVersion is the CSV (and operators') current version.
+	CsvVersion string
 }
 
 func (s *Csv) GetInput() (input.Input, error) {
@@ -167,11 +167,11 @@ func (s *Csv) initCSVFields(csv *olmApi.ClusterServiceVersion) error {
 	// Metadata
 	csv.TypeMeta.APIVersion = olmApi.ClusterServiceVersionAPIVersion
 	csv.TypeMeta.Kind = olmApi.ClusterServiceVersionKind
-	csv.ObjectMeta.Name = getCSVName(strings.ToLower(s.ProjectName), s.OperatorVersion)
+	csv.ObjectMeta.Name = getCSVName(strings.ToLower(s.ProjectName), s.CsvVersion)
 	csv.ObjectMeta.Namespace = "placeholder"
 
 	// Spec fields
-	csv.Spec.Version = *semver.New(s.OperatorVersion)
+	csv.Spec.Version = *semver.New(s.CsvVersion)
 	csv.Spec.DisplayName = getDisplayName(s.ProjectName)
 	csv.Spec.Description = "Placeholder description"
 	csv.Spec.Maturity = "alpha"
@@ -240,7 +240,7 @@ func checkRequiredCSVFields(csv *olmApi.ClusterServiceVersion) error {
 func (s *Csv) updateCSVVersions(csv *olmApi.ClusterServiceVersion) error {
 
 	// Old csv version to replace, and updated csv version.
-	oldVer, newVer := csv.Spec.Version.String(), s.OperatorVersion
+	oldVer, newVer := csv.Spec.Version.String(), s.CsvVersion
 	if oldVer == newVer {
 		return nil
 	}

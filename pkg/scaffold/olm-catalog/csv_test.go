@@ -49,9 +49,9 @@ func TestCsv(t *testing.T) {
 
 	err := s.Execute(cfg,
 		&Csv{
-			OperatorVersion: opVer,
-			DeployDir:       filepath.Join(testDataDir, scaffold.DeployDir),
-			ConfigFilePath:  filepath.Join(testDataDir, scaffold.OlmCatalogDir, CsvConfigYamlFile),
+			CsvVersion:     opVer,
+			DeployDir:      filepath.Join(testDataDir, scaffold.DeployDir),
+			ConfigFilePath: filepath.Join(testDataDir, scaffold.OlmCatalogDir, CsvConfigYamlFile),
 		},
 	)
 	if err != nil {
@@ -165,7 +165,7 @@ func TestUpdateVersion(t *testing.T) {
 		Input: input.Input{
 			ProjectName: "app-operator",
 		},
-		OperatorVersion: newOpVer,
+		CsvVersion: newOpVer,
 	}
 	if err := c.updateCSVVersions(csv); err != nil {
 		t.Fatalf("update csv with ver %s: (%v)", newOpVer, err)

@@ -22,9 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
-	"github.com/coreos/go-semver/semver"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
@@ -37,10 +35,10 @@ import (
 )
 
 var (
+	csvVersion         string
 	namespacedManBuild string
 	testLocationBuild  string
 	enableTests        bool
-	genCSV             bool
 )
 
 func NewBuildCmd() *cobra.Command {
@@ -59,13 +57,13 @@ For example:
 	$ operator-sdk build quay.io/example/operator:v0.0.1
 	$ docker push quay.io/example/operator:v0.0.1
 
-Supplying an argument to '--gen-csv' directs the SDK to create a
+Supplying an argument to '--csv-version' directs the SDK to create a
 ClusterServiceVersion manifest.
 `,
 		Run: buildFunc,
 	}
-	buildCmd.Flags().BoolVar(&genCSV, "gen-csv", false, "Directs the SDK to compose a CSV.\t\nConfigure this process by writing a config file 'deploy/olm-catalog/csv-config.yaml'")
 	buildCmd.Flags().BoolVar(&enableTests, "enable-tests", false, "Enable in-cluster testing by adding test binary to the image")
+	buildCmd.Flags().StringVar(&csvVersion, "csv-version", "", "Semantic version of the operator and CSV. Setting this flag directs the SDK to compose a CSV.\t\nConfigure this process by writing a config file 'deploy/olm-catalog/csv-config.yaml'")
 	buildCmd.Flags().StringVar(&testLocationBuild, "test-location", "./test/e2e", "Location of tests")
 	buildCmd.Flags().StringVar(&namespacedManBuild, "namespaced-manifest", "deploy/operator.yaml", "Path of namespaced resources manifest for tests")
 	return buildCmd
@@ -140,28 +138,10 @@ func verifyTestManifest(image string) {
 	}
 }
 
-func checkImageFormatAndGetVersion(image string) string {
-	splitImage := strings.Split(image, ":")
-	if len(splitImage) == 1 {
-		log.Fatal("no operator version supplied in image name")
-	}
-	opVer := splitImage[1]
-	if len(opVer) > 0 && opVer[0] == 'v' {
-		opVer = opVer[1:len(opVer)]
-	}
-	if _, err := semver.NewVersion(opVer); err != nil {
-		// TODO: is this functionality ok, or should we allow users to version their operators with 'latest'?
-		log.Fatalf("operator version '%s' is not a semantic version", opVer)
-	}
-	return opVer
-}
-
 func buildFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
 		log.Fatalf("build command needs exactly 1 argument")
 	}
-	image := args[0]
-	opVer := checkImageFormatAndGetVersion(image)
 
 	projutil.MustInProjectRoot()
 	goBuildEnv := append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
@@ -191,16 +171,17 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	}
 
 	// Create a CSV if the user calls build with `--gen-csv`.
-	if genCSV {
+	if csvVersion != "" {
 		s := &scaffold.Scaffold{}
 		err = s.Execute(cfg,
-			&catalog.Csv{OperatorVersion: opVer},
+			&catalog.Csv{CsvVersion: csvVersion},
 		)
 		if err != nil {
 			log.Fatalf("build catalog scaffold failed: (%v)", err)
 		}
 	}
 
+	image := args[0]
 	baseImageName := image
 	if enableTests {
 		baseImageName += "-intermediate"
