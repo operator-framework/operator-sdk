@@ -21,6 +21,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var toml bool
+
 func NewPrintDepsCmd() *cobra.Command {
 	printDepsCmd := &cobra.Command{
 		Use:   "print-deps",
@@ -31,6 +33,8 @@ in an operators' Gopkg.toml file.`,
 		Run: printDepsFunc,
 	}
 
+	printDepsCmd.Flags().BoolVar(&toml, "toml", false, "Print dependencies in Gopkg.toml format.")
+
 	return printDepsCmd
 }
 
@@ -38,7 +42,11 @@ func printDepsFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 0 {
 		log.Fatal("print-deps command does not take any arguments")
 	}
-	if err := scaffold.PrintGopkgDeps(); err != nil {
-		log.Fatalf("print deps: (%v)", err)
+	if toml {
+		scaffold.PrintGopkgToml()
+	} else {
+		if err := scaffold.PrintGopkgDeps(); err != nil {
+			log.Fatalf("print deps: (%v)", err)
+		}
 	}
 }

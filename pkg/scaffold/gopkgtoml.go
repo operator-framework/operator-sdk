@@ -97,6 +97,10 @@ required = [
     non-go = false
 `
 
+func PrintGopkgToml() {
+	fmt.Println(gopkgTomlTmpl)
+}
+
 func PrintGopkgDeps() error {
 	gopkgData := make(map[string]interface{})
 	_, err := toml.Decode(gopkgTomlTmpl, &gopkgData)
