@@ -15,7 +15,16 @@
 package scaffold
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"strings"
+	"text/tabwriter"
+
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+
+	"github.com/BurntSushi/toml"
 )
 
 const GopkgTomlFile = "Gopkg.toml"
@@ -82,8 +91,81 @@ required = [
 [prune]
   go-tests = true
   non-go = true
-  
+
   [[prune.project]]
     name = "k8s.io/code-generator"
     non-go = false
 `
+
+func PrintGopkgDeps() error {
+	gopkgData := make(map[string]interface{})
+	_, err := toml.Decode(gopkgTomlTmpl, &gopkgData)
+	if err != nil {
+		return err
+	}
+
+	buf := &bytes.Buffer{}
+	w := tabwriter.NewWriter(buf, 16, 8, 0, '\t', 0)
+	_, err = w.Write([]byte("NAME\tVERSION\tBRANCH\tREVISION\n"))
+	if err != nil {
+		return err
+	}
+
+	constraintList, ok := gopkgData["constraint"]
+	if !ok {
+		return errors.New("constraints not found")
+	}
+	for _, dep := range constraintList.([]map[string]interface{}) {
+		err = writeDepRow(w, dep)
+		if err != nil {
+			return err
+		}
+	}
+	overrideList, ok := gopkgData["override"]
+	if !ok {
+		return errors.New("overrides not found")
+	}
+	for _, dep := range overrideList.([]map[string]interface{}) {
+		err = writeDepRow(w, dep)
+		if err != nil {
+			return err
+		}
+	}
+	if err := w.Flush(); err != nil {
+		return err
+	}
+
+	requiredList, ok := gopkgData["required"]
+	if !ok {
+		return errors.New("required list not found")
+	}
+	pl, err := json.MarshalIndent(requiredList, "", " ")
+	if err != nil {
+		return err
+	}
+	_, err = buf.Write([]byte(fmt.Sprintf("\nrequired = %v", string(pl))))
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(buf.String())
+
+	return nil
+}
+
+func writeDepRow(w *tabwriter.Writer, dep map[string]interface{}) error {
+	name := dep["name"].(string)
+	pkg, col := "", 0
+	if v, ok := dep["version"]; ok {
+		pkg, col = v.(string), 1
+	} else if v, ok = dep["branch"]; ok {
+		pkg, col = v.(string), 2
+	} else if v, ok = dep["revision"]; ok {
+		pkg, col = v.(string), 3
+	} else {
+		return fmt.Errorf("no version, revision, or branch found for %s", name)
+	}
+
+	_, err := w.Write([]byte(name + strings.Repeat("\t", col) + pkg + "\n"))
+	return err
+}
