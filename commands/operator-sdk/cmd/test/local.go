@@ -39,6 +39,7 @@ type testLocalConfig struct {
 	namespacedManPath string
 	goTestFlags       string
 	namespace         string
+	noSetup           bool
 }
 
 var tlConfig testLocalConfig
@@ -54,6 +55,7 @@ func NewTestLocalCmd() *cobra.Command {
 	testCmd.Flags().StringVar(&tlConfig.namespacedManPath, "namespaced-manifest", "", "Path to manifest for per-test, namespaced resources (e.g. RBAC and Operator manifest)")
 	testCmd.Flags().StringVar(&tlConfig.goTestFlags, "go-test-flags", "", "Additional flags to pass to go test")
 	testCmd.Flags().StringVar(&tlConfig.namespace, "namespace", "", "If non-empty, single namespace to run tests in")
+	testCmd.Flags().BoolVar(&tlConfig.noSetup, "no-setup", false, "Disable test resource creation")
 
 	return testCmd
 }
@@ -62,11 +64,14 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
 		log.Fatal("operator-sdk test local requires exactly 1 argument")
 	}
+	if (tlConfig.noSetup && tlConfig.globalManPath != "") || (tlConfig.noSetup && tlConfig.namespacedManPath != "") {
+		log.Fatal("the global-manifest and namespaced-manifest flags cannot be enabled at the same time as the no-setup flag")
+	}
 
 	log.Info("Testing operator locally.")
 
 	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml, deploy/role_binding.yaml and deploy/operator.yaml
-	if tlConfig.namespacedManPath == "" {
+	if tlConfig.namespacedManPath == "" && !tlConfig.noSetup {
 		err := os.MkdirAll(deployTestDir, os.FileMode(fileutil.DefaultDirFileMode))
 		if err != nil {
 			log.Fatalf("could not create %s: (%v)", deployTestDir, err)
@@ -105,7 +110,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 			}
 		}()
 	}
-	if tlConfig.globalManPath == "" {
+	if tlConfig.globalManPath == "" && !tlConfig.noSetup {
 		err := os.MkdirAll(deployTestDir, os.FileMode(fileutil.DefaultDirFileMode))
 		if err != nil {
 			log.Fatalf("could not create %s: (%v)", deployTestDir, err)
@@ -141,6 +146,25 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 			}
 		}()
 	}
+	if tlConfig.noSetup {
+		err := os.MkdirAll(deployTestDir, os.FileMode(fileutil.DefaultDirFileMode))
+		if err != nil {
+			log.Fatalf("could not create %s: (%v)", deployTestDir, err)
+		}
+		tlConfig.namespacedManPath = filepath.Join(deployTestDir, "empty.yaml")
+		tlConfig.globalManPath = filepath.Join(deployTestDir, "empty.yaml")
+		emptyBytes := []byte{}
+		err = ioutil.WriteFile(tlConfig.globalManPath, emptyBytes, os.FileMode(fileutil.DefaultFileMode))
+		if err != nil {
+			log.Fatalf("could not create empty manifest file: (%v)", err)
+		}
+		defer func() {
+			err := os.Remove(tlConfig.globalManPath)
+			if err != nil {
+				log.Fatalf("could not delete empty manifest file: (%v)", err)
+			}
+		}()
+	}
 	testArgs := []string{"test", args[0] + "/..."}
 	testArgs = append(testArgs, "-"+test.KubeConfigFlag, tlConfig.kubeconfig)
 	testArgs = append(testArgs, "-"+test.NamespacedManPathFlag, tlConfig.namespacedManPath)
@@ -151,7 +175,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	if tlConfig.goTestFlags != "" {
 		testArgs = append(testArgs, strings.Split(tlConfig.goTestFlags, " ")...)
 	}
-	if tlConfig.namespace != "" {
+	if tlConfig.namespace != "" || tlConfig.noSetup {
 		testArgs = append(testArgs, "-"+test.SingleNamespaceFlag, "-parallel=1")
 	}
 	dc := exec.Command("go", testArgs...)
