@@ -110,7 +110,7 @@ func PrintDeps() error {
 
 	buf := &bytes.Buffer{}
 	w := tabwriter.NewWriter(buf, 16, 8, 0, '\t', 0)
-	_, err = w.Write([]byte("NAME\tVERSION\tBRANCH\tREVISION\n"))
+	_, err = w.Write([]byte("NAME\tVERSION\tBRANCH\tREVISION\t\n"))
 	if err != nil {
 		return err
 	}
@@ -159,17 +159,17 @@ func PrintDeps() error {
 
 func writeDepRow(w *tabwriter.Writer, dep map[string]interface{}) error {
 	name := dep["name"].(string)
-	pkg, col := "", 0
+	ver, col := "", 0
 	if v, ok := dep["version"]; ok {
-		pkg, col = v.(string), 1
+		ver, col = v.(string), 1
 	} else if v, ok = dep["branch"]; ok {
-		pkg, col = v.(string), 2
+		ver, col = v.(string), 2
 	} else if v, ok = dep["revision"]; ok {
-		pkg, col = v.(string), 3
+		ver, col = v.(string), 3
 	} else {
 		return fmt.Errorf("no version, revision, or branch found for %s", name)
 	}
 
-	_, err := w.Write([]byte(name + strings.Repeat("\t", col) + pkg + "\n"))
+	_, err := w.Write([]byte(name + strings.Repeat("\t", col) + ver + "\t\n"))
 	return err
 }
