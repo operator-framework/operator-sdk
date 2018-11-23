@@ -55,8 +55,6 @@ func TestNewFromWatches(t *testing.T) {
 
 	zeroSeconds := time.Duration(0)
 	twoSeconds := time.Second * 2
-	noManagedStatus := false
-	managedStatus := true
 	testCases := []struct {
 		name        string
 		path        string
@@ -165,8 +163,8 @@ func TestNewFromWatches(t *testing.T) {
 						Group:   "app.example.com",
 						Kind:    "DisableStatus",
 					},
-					Path:          validTemplate.ValidPlaybook,
-					managedStatus: &noManagedStatus,
+					Path:         validTemplate.ValidPlaybook,
+					manageStatus: false,
 				},
 				schema.GroupVersionKind{
 					Version: "v1alpha1",
@@ -178,8 +176,8 @@ func TestNewFromWatches(t *testing.T) {
 						Group:   "app.example.com",
 						Kind:    "EnableStatus",
 					},
-					Path:          validTemplate.ValidPlaybook,
-					managedStatus: &managedStatus,
+					Path:         validTemplate.ValidPlaybook,
+					manageStatus: true,
 				},
 				schema.GroupVersionKind{
 					Version: "v1alpha1",

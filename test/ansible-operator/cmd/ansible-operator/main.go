@@ -67,7 +67,7 @@ func main() {
 	}
 
 	// start the operator
-	go operator.Run(done, mgr, "/opt/ansible/watches.yaml", time.Minute, true)
+	go operator.Run(done, mgr, "/opt/ansible/watches.yaml", time.Minute)
 
 	// wait for either to finish
 	err = <-done

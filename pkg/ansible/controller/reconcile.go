@@ -54,7 +54,7 @@ type AnsibleOperatorReconciler struct {
 	Client          client.Client
 	EventHandlers   []events.EventHandler
 	ReconcilePeriod time.Duration
-	ManagedStatus   bool
+	ManageStatus   bool
 }
 
 // Reconcile - handle the event.
@@ -114,7 +114,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		}
 	}
 
-	if r.ManagedStatus {
+	if r.ManageStatus {
 		err = r.markRunning(u)
 		if err != nil {
 			return reconcileResult, err
@@ -187,7 +187,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 			return reconcileResult, err
 		}
 	}
-	if r.ManagedStatus {
+	if r.ManageStatus {
 		err = r.markDone(u, statusEvent, failureMessages)
 	}
 	return reconcileResult, err

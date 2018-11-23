@@ -46,7 +46,7 @@ func TestReconcile(t *testing.T) {
 		Name            string
 		GVK             schema.GroupVersionKind
 		ReconcilePeriod time.Duration
-		ManagedStatus   bool
+		ManageStatus   bool
 		Runner          runner.Runner
 		EventHandlers   []events.EventHandler
 		Client          client.Client
@@ -75,7 +75,7 @@ func TestReconcile(t *testing.T) {
 			Name:            "completed reconcile",
 			GVK:             gvk,
 			ReconcilePeriod: 5 * time.Second,
-			ManagedStatus:   true,
+			ManageStatus:   true,
 			Runner: &fake.Runner{
 				JobEvents: []eventapi.JobEvent{
 					eventapi.JobEvent{
@@ -136,7 +136,7 @@ func TestReconcile(t *testing.T) {
 			Name:            "Failure message reconcile",
 			GVK:             gvk,
 			ReconcilePeriod: 5 * time.Second,
-			ManagedStatus:   true,
+			ManageStatus:   true,
 			Runner: &fake.Runner{
 				JobEvents: []eventapi.JobEvent{
 					eventapi.JobEvent{
@@ -213,7 +213,7 @@ func TestReconcile(t *testing.T) {
 			Name:            "Finalizer successful reconcile",
 			GVK:             gvk,
 			ReconcilePeriod: 5 * time.Second,
-			ManagedStatus:   true,
+			ManageStatus:   true,
 			Runner: &fake.Runner{
 				JobEvents: []eventapi.JobEvent{
 					eventapi.JobEvent{
@@ -321,7 +321,7 @@ func TestReconcile(t *testing.T) {
 			Name:            "Finalizer successful reconcile",
 			GVK:             gvk,
 			ReconcilePeriod: 5 * time.Second,
-			ManagedStatus:   true,
+			ManageStatus:   true,
 			Runner: &fake.Runner{
 				JobEvents: []eventapi.JobEvent{
 					eventapi.JobEvent{
@@ -421,7 +421,7 @@ func TestReconcile(t *testing.T) {
 			Name:            "no manage status",
 			GVK:             gvk,
 			ReconcilePeriod: 5 * time.Second,
-			ManagedStatus:   false,
+			ManageStatus:   false,
 			Runner: &fake.Runner{
 				JobEvents: []eventapi.JobEvent{
 					eventapi.JobEvent{
@@ -472,7 +472,7 @@ func TestReconcile(t *testing.T) {
 				Client:          tc.Client,
 				EventHandlers:   tc.EventHandlers,
 				ReconcilePeriod: tc.ReconcilePeriod,
-				ManagedStatus:   tc.ManagedStatus,
+				ManageStatus:   tc.ManageStatus,
 			}
 			result, err := aor.Reconcile(tc.Request)
 			if err != nil && !tc.ShouldError {
