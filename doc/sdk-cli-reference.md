@@ -96,6 +96,27 @@ Prints the most recent Golang packages and versions required by operators. Print
 
 * `--as-file` Print packages and versions in Gopkg.toml format.
 
+### Example
+
+```bash
+$ operator-sdk print-deps --as-file
+required = [
+  "k8s.io/code-generator/cmd/defaulter-gen",
+  "k8s.io/code-generator/cmd/deepcopy-gen",
+  "k8s.io/code-generator/cmd/conversion-gen",
+  "k8s.io/code-generator/cmd/client-gen",
+  "k8s.io/code-generator/cmd/lister-gen",
+  "k8s.io/code-generator/cmd/informer-gen",
+  "k8s.io/code-generator/cmd/openapi-gen",
+  "k8s.io/gengo/args",
+]
+
+[[override]]
+  name = "k8s.io/code-generator"
+  revision = "6702109cc68eb6fe6350b83e14407c8d7309fd1a"
+...
+```
+
 ## generate
 
 ### k8s
