@@ -87,11 +87,9 @@ func createFromYAMLFile(yamlPath string, storeKindVersionName bool) error {
 		}
 		err = runtimeClient.Create(context.TODO(), obj)
 		if err != nil {
-			// not sure if := will copy just a pointer or do a full copy, so for now just use fmt.Errorf
-			oldErr := fmt.Errorf("%v", err)
-			_, err := restMapper.RESTMappings(obj.GetObjectKind().GroupVersionKind().GroupKind())
-			if err == nil {
-				return oldErr
+			_, restErr := restMapper.RESTMappings(obj.GetObjectKind().GroupVersionKind().GroupKind())
+			if restErr == nil {
+				return err
 			}
 			// don't store error, as only error will be timeout. Error from runtime client will be easier for
 			// the user to understand than the timeout error, so just use that if we fail
