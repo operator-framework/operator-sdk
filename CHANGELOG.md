@@ -47,7 +47,7 @@
 
 ### Changed
 
-- All the modules in [`pkg/sdk`](https://github.com/operator-framework/operator-sdk/tree/master/pkg/sdk) have been combined into a single package. `action`, `handler`, `informer` `types` and `query` pkgs have been consolidated into `pkg/sdk`. [#242](https://github.com/operator-framework/operator-sdk/pull/242)
+- All the modules in [`pkg/sdk`](https://github.com/operator-framework/operator-sdk/tree/4a9d5a5b0901b24679d36dced0a186c525e1bffd/pkg/sdk) have been combined into a single package. `action`, `handler`, `informer` `types` and `query` pkgs have been consolidated into `pkg/sdk`. [#242](https://github.com/operator-framework/operator-sdk/pull/242)
 - The SDK exposes the Kubernetes clientset via `k8sclient.GetKubeClient()` #295
 - The SDK now vendors the k8s code-generators for an operator instead of using the prebuilt image `gcr.io/coreos-k8s-scale-testing/codegen:1.9.3` [#319](https://github.com/operator-framework/operator-sdk/pull/242)
 - The SDK exposes the Kubernetes rest config via `k8sclient.GetKubeConfig()` #338
