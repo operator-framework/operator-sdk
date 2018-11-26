@@ -88,9 +88,17 @@ operator-sdk completion bash
 # ex: ts=4 sw=4 et filetype=sh
 ```
 
+## print-deps
+
+Prints the most recent Golang packages and versions required by operators. Prints in columnar format by default.
+
+### Flags
+
+* `--as-file` Print packages and versions in Gopkg.toml format.
+
 ## generate
 
-### k8s 
+### k8s
 
 Runs the Kubernetes [code-generators][k8s-code-generator] for all Custom Resource Definitions (CRD) apis under `pkg/apis/...`.
 Currently only runs `deepcopy-gen` to generate the required `DeepCopy()` functions for all custom resource types.
