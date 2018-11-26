@@ -16,12 +16,11 @@ package main
 
 import (
 	"flag"
-	"log"
 
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -54,14 +53,14 @@ func main() {
 		LogRequests:      true,
 	})
 	if err != nil {
-		logrus.Fatalf("error starting proxy: %v", err)
+		log.Fatalf("error starting proxy: %v", err)
 	}
 
 	// wait forever or exit on proxy crash/finish
 	err = <-done
 	if err == nil {
-		logrus.Info("Exiting")
+		log.Info("Exiting")
 	} else {
-		logrus.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 }
