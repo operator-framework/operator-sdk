@@ -24,6 +24,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
 	log "github.com/sirupsen/logrus"
@@ -89,6 +90,8 @@ func newFunc(cmd *cobra.Command, args []string) {
 		pullDep()
 	case projutil.OperatorTypeAnsible:
 		doAnsibleScaffold()
+	case projutil.OperatorTypeHelm:
+		doHelmScaffold()
 	}
 	initGit()
 
@@ -241,9 +244,56 @@ func doAnsibleScaffold() {
 	}
 }
 
+func doHelmScaffold() {
+	cfg := &input.Config{
+		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
+		ProjectName:    projectName,
+	}
+
+	resource, err := scaffold.NewResource(apiVersion, kind)
+	if err != nil {
+		log.Fatalf("invalid apiVersion and kind: (%v)", err)
+	}
+
+	s := &scaffold.Scaffold{}
+	err = s.Execute(cfg,
+		&helm.Dockerfile{},
+		&helm.WatchesYAML{
+			Resource: resource,
+		},
+		&scaffold.ServiceAccount{},
+		&scaffold.Role{
+			IsClusterScoped: isClusterScoped,
+		},
+		&scaffold.RoleBinding{
+			IsClusterScoped: isClusterScoped,
+		},
+		&helm.Operator{
+			IsClusterScoped: isClusterScoped,
+		},
+		&scaffold.Crd{
+			Resource: resource,
+		},
+		&scaffold.Cr{
+			Resource: resource,
+		},
+	)
+	if err != nil {
+		log.Fatalf("new scaffold failed: (%v)", err)
+	}
+
+	if err := helm.CreateChartForResource(resource, cfg.AbsProjectPath); err != nil {
+		log.Fatalf("failed to create initial chart for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
+	}
+
+	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
+		log.Fatalf("failed to update the RBAC manifest for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
+	}
+}
+
 func verifyFlags() {
-	if operatorType != projutil.OperatorTypeGo && operatorType != projutil.OperatorTypeAnsible {
-		log.Fatal("--type can only be `go` or `ansible`")
+	if operatorType != projutil.OperatorTypeGo && operatorType != projutil.OperatorTypeAnsible && operatorType != projutil.OperatorTypeHelm {
+		log.Fatal("--type can only be `go`, `ansible`, or `helm`")
 	}
 	if operatorType != projutil.OperatorTypeAnsible && generatePlaybook {
 		log.Fatal("--generate-playbook can only be used with --type `ansible`")

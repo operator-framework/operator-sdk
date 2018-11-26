@@ -26,13 +26,21 @@ import (
 	"syscall"
 	"time"
 
+	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	ansibleOperator "github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
+	"github.com/operator-framework/operator-sdk/pkg/helm/client"
+	"github.com/operator-framework/operator-sdk/pkg/helm/controller"
+	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	ansibleScaffold "github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
+	helmScaffold "github.com/operator-framework/operator-sdk/pkg/scaffold/helm"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+	"k8s.io/helm/pkg/storage"
+	"k8s.io/helm/pkg/storage/driver"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -82,6 +90,8 @@ func upLocalFunc(cmd *cobra.Command, args []string) {
 		upLocal()
 	case projutil.OperatorTypeAnsible:
 		upLocalAnsible()
+	case projutil.OperatorTypeHelm:
+		upLocalHelm()
 	default:
 		log.Fatal("failed to determine operator type")
 	}
@@ -169,6 +179,55 @@ func upLocalAnsible() {
 		log.Fatal(err)
 	}
 	log.Info("Exiting.")
+}
+
+func upLocalHelm() {
+	// Set the kubeconfig that the manager will be able to grab
+	os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig)
+
+	logf.SetLogger(logf.ZapLogger(false))
+
+	printVersion()
+
+	cfg, err := config.GetConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Create Tiller's storage backend and kubernetes client
+	storageBackend := storage.Init(driver.NewMemory())
+	tillerKubeClient, err := client.NewFromManager(mgr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	factories, err := release.NewManagerFactoriesFromFile(storageBackend, tillerKubeClient, helmScaffold.WatchesYamlFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for gvk, factory := range factories {
+		// Register the controller with the factory.
+		err := controller.Add(mgr, controller.WatchOptions{
+			Namespace:      namespace,
+			GVK:            gvk,
+			ManagerFactory: factory,
+			ResyncPeriod:   time.Second * 5,
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	// Start the Cmd
+	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func printVersion() {

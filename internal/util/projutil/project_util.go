@@ -19,6 +19,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/helm"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -41,6 +43,10 @@ const (
 	OperatorTypeGo OperatorType = "go"
 	// OperatorTypeAnsible - ansible type of operator.
 	OperatorTypeAnsible OperatorType = "ansible"
+	// OperatorTypeHelm - helm type of operator.
+	OperatorTypeHelm OperatorType = "helm"
+	// OperatorTypeUnknown - unknown type of operator.
+	OperatorTypeUnknown OperatorType = "unknown"
 )
 
 // MustInProjectRoot checks if the current dir is the project root and returns the current repo's import path
@@ -90,11 +96,16 @@ func CheckAndGetProjectGoPkg() string {
 // e.g: "go", "ansible"
 func GetOperatorType() OperatorType {
 	// Assuming that if main.go exists then this is a Go operator
-	_, err := os.Stat(mainFile)
-	if err != nil && os.IsNotExist(err) {
+	if _, err := os.Stat(mainFile); err == nil {
+		return OperatorTypeGo
+	}
+	if stat, err := os.Stat(ansible.RolesDir); err == nil && stat.IsDir() {
 		return OperatorTypeAnsible
 	}
-	return OperatorTypeGo
+	if stat, err := os.Stat(helm.HelmChartsDir); err == nil && stat.IsDir() {
+		return OperatorTypeHelm
+	}
+	return OperatorTypeUnknown
 }
 
 // GetGopath gets GOPATH and makes sure it is set and non-empty.
