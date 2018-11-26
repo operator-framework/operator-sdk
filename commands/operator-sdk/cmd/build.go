@@ -26,7 +26,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
-	catalog "github.com/operator-framework/operator-sdk/pkg/scaffold/olm-catalog"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
 	"github.com/ghodss/yaml"
@@ -35,7 +34,6 @@ import (
 )
 
 var (
-	csvVersion         string
 	namespacedManBuild string
 	testLocationBuild  string
 	enableTests        bool
@@ -56,14 +54,10 @@ be pushed to remote registry.
 For example:
 	$ operator-sdk build quay.io/example/operator:v0.0.1
 	$ docker push quay.io/example/operator:v0.0.1
-
-Supplying an argument to '--csv-version' directs the SDK to create a
-ClusterServiceVersion manifest.
 `,
 		Run: buildFunc,
 	}
 	buildCmd.Flags().BoolVar(&enableTests, "enable-tests", false, "Enable in-cluster testing by adding test binary to the image")
-	buildCmd.Flags().StringVar(&csvVersion, "csv-version", "", "Semantic version of the operator and CSV. Setting this flag directs the SDK to compose a CSV.\t\nConfigure this process by writing a config file 'deploy/olm-catalog/csv-config.yaml'")
 	buildCmd.Flags().StringVar(&testLocationBuild, "test-location", "./test/e2e", "Location of tests")
 	buildCmd.Flags().StringVar(&namespacedManBuild, "namespaced-manifest", "deploy/operator.yaml", "Path of namespaced resources manifest for tests")
 	return buildCmd
@@ -145,39 +139,20 @@ func buildFunc(cmd *cobra.Command, args []string) {
 
 	projutil.MustInProjectRoot()
 	goBuildEnv := append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("could not identify current working directory: (%v)", err)
-	}
+	absProjectPath := projutil.MustGetwd()
+	projectName := filepath.Base(absProjectPath)
 
 	// Don't need to build go code if Ansible Operator
 	if mainExists() {
 		managerDir := filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir)
-		outputBinName := filepath.Join(wd, scaffold.BuildBinDir, filepath.Base(wd))
+		outputBinName := filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName)
 		buildCmd := exec.Command("go", "build", "-o", outputBinName, managerDir)
 		buildCmd.Env = goBuildEnv
 		buildCmd.Stdout = os.Stdout
 		buildCmd.Stderr = os.Stderr
-		err = buildCmd.Run()
+		err := buildCmd.Run()
 		if err != nil {
 			log.Fatalf("failed to build operator binary: (%v)", err)
-		}
-	}
-
-	absProjectPath := projutil.MustGetwd()
-	cfg := &input.Config{
-		AbsProjectPath: absProjectPath,
-		ProjectName:    filepath.Base(wd),
-	}
-
-	// Create a CSV if the user calls build with `--gen-csv`.
-	if csvVersion != "" {
-		s := &scaffold.Scaffold{}
-		err = s.Execute(cfg,
-			&catalog.Csv{CsvVersion: csvVersion},
-		)
-		if err != nil {
-			log.Fatalf("build catalog scaffold failed: (%v)", err)
 		}
 	}
 
@@ -192,7 +167,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	dbcmd := exec.Command("docker", "build", ".", "-f", "build/Dockerfile", "-t", baseImageName)
 	dbcmd.Stdout = os.Stdout
 	dbcmd.Stderr = os.Stderr
-	err = dbcmd.Run()
+	err := dbcmd.Run()
 	if err != nil {
 		if enableTests {
 			log.Fatalf("failed to output intermediate image %s: (%v)", image, err)
@@ -202,9 +177,8 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	}
 
 	if enableTests {
-		cfg.Repo = projutil.CheckAndGetProjectGoPkg()
 
-		testBinary := filepath.Join(wd, scaffold.BuildBinDir, filepath.Base(wd)+"-test")
+		testBinary := filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName+"-test")
 		buildTestCmd := exec.Command("go", "test", "-c", "-o", testBinary, testLocationBuild+"/...")
 		buildTestCmd.Env = goBuildEnv
 		buildTestCmd.Stdout = os.Stdout
@@ -220,6 +194,12 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		if err != nil && os.IsNotExist(err) {
 
 			log.Info("Generating build manifests for test-framework.")
+
+			cfg := &input.Config{
+				AbsProjectPath: absProjectPath,
+				ProjectName:    projectName,
+				Repo:           projutil.CheckAndGetProjectGoPkg(),
+			}
 
 			s := &scaffold.Scaffold{}
 			err = s.Execute(cfg,
