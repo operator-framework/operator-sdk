@@ -2,7 +2,7 @@
 
 ## Goal
 
-The `operator-sdk build` sub-command should generate a [**Cluster Service Version (CSV)**][olm_csv_definition] customized using information contained in user-defined yaml manifests and operator source files. Operator developers, *users*, should be able to run `operator-sdk build` with the `--gen-csv` flag to have their operators' state encapsulated in a CSV; this command should be idempotent and only update the CSV when a yaml manifest or source file is changed. Users should not have to directly interact with a CSV, and should not be required to have in-depth CSV knowledge in order for their operator to interact with [**Operator Lifecycle Manager (OLM)**][olm_description] or publish metadata to the [**Catalog**][catalog_description].
+The `operator-sdk olm-catalog gen-csv` sub-command will generate a [**Cluster Service Version (CSV)**][olm_csv_definition] customized using information contained in user-defined yaml manifests and operator source files. Operator developers, *users*, will run `operator-sdk olm-catalog gen-csv` with the `--csv-version $version` flag to have their operators' state encapsulated in a CSV with the supplied version; this action should be idempotent and only update the CSV file when a new version is supplied, or a yaml manifest or source file is changed. Users should not have to directly modify most fields in a CSV manifest. Those that require modification are defined [below](#user-defined-yaml-fields). A CSV-generating command removes the responsibility from users of having in-depth [**Operator Lifecycle Manager (OLM)**][olm_description] knowledge in order for their operator to interact with OLM or publish metadata to the [**Catalog**][catalog_description].
 
 ## Background
 
@@ -14,11 +14,11 @@ The `operator-sdk generate olm-catalog` command currently produces a generic CSV
 
 ## Proposed Solution
 
-Functionality of `operator-sdk generate olm-catalog` is now in `operator-sdk build --gen-csv`; the former command no longer exists. `operator-sdk build quay.io/example/operator:v0.0.1 --gen-csv` writes a CSV yaml file using the operators' current version to the `deploy/olm-catalog` directory by default. Version is parsed from the image name argument, ex. `0.0.1` from `quay.io/example/operator:v0.0.1`.
+Functionality of `operator-sdk generate olm-catalog` is now in `operator-sdk olm-catalog gen-csv`; the former command no longer exists. `operator-sdk olm-catalog gen-csv --csv-version 0.0.1` writes a CSV yaml file to the `deploy/olm-catalog` directory by default.
 
-`deploy` is the standard location for all manifests required to deploy an operator. The SDK can use data from manifests in `deploy` to write a CSV. Exactly three types of manifests are required to generate a CSV: `operator.yaml`, `*_{crd,cr}.yaml`, and RBAC role files, ex. `role.yaml`. Users may have different versioning requirements for these files and can configure CSV which specific files are included in `deploy/olm-catalog/csv-config.yaml`, described below.
+`deploy` is the standard location for all manifests required to deploy an operator. The SDK can use data from manifests in `deploy` to write a CSV. Exactly three types of manifests are required to generate a CSV: `operator.yaml`, `*_{crd,cr}.yaml`, and RBAC role files, ex. `role.yaml`. Users may have different versioning requirements for these files and can configure CSV which specific files are included in `deploy/olm-catalog/csv-config.yaml`, described [below](#configuration).
 
-Assuming all configuration defaults are used, `operator-sdk build` will call `scaffold.Execute()`, which will either:
+Assuming all configuration defaults are used, `operator-sdk olm-catalog gen-csv` will call `scaffold.Execute()`, which will either:
 
 1. Create a new CSV, with the same location and naming convention as exists currently, using available data in yaml manifests and source files.
 
@@ -134,7 +134,7 @@ func (us *CSVInstallStrategyUpdate) Apply(csv *v1alpha1.ClusterServiceVersion) e
 
 ### User-defined yaml fields
 
-Many CSV fields cannot be populated using generated, non-SDK-specific manifests. These fields are mostly human-written, English metadata about the operator and various CRD's. Users must directly modify their CSV yaml file, adding personalized data to the following required fields. Users will receive a warning on `operator-sdk build` when a lack of data in any of the required fields is detected.
+Many CSV fields cannot be populated using generated, non-SDK-specific manifests. These fields are mostly human-written, English metadata about the operator and various CRD's. Users must directly modify their CSV yaml file, adding personalized data to the following required fields. Users will receive a warning from `operator-sdk olm-catalog gen-csv` when a lack of data in any of the required fields is detected.
 
 Required:
 
