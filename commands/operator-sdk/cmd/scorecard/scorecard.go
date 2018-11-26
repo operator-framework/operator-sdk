@@ -169,7 +169,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Checking that operator actions are reflected in status\n")
+		fmt.Println("Checking that operator actions are reflected in status")
 		err = checkStatusUpdate(runtimeClient, obj)
 		if err != nil {
 			return err
@@ -202,16 +202,16 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		default:
 			return fmt.Errorf("provided yaml file not of ClusterServiceVersion type")
 		}
-		fmt.Printf("Checking for CRD resources\n")
+		fmt.Println("Checking for CRD resources")
 		crdsHaveResources(csv)
-		fmt.Printf("Checking for existence CR example\n")
+		fmt.Println("Checking for existence CR example")
 		annotationsContainExamples(csv)
-		fmt.Printf("Checking spec descriptors\n")
+		fmt.Println("Checking spec descriptors")
 		err = specDescriptors(csv, runtimeClient, obj)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Checking status descriptors\n")
+		fmt.Println("Checking status descriptors")
 		err = statusDescriptors(csv, runtimeClient, obj)
 		if err != nil {
 			return err
