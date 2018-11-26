@@ -81,9 +81,9 @@ expects this mapping file in a predefined location: `/opt/ansible/watches.yaml`
   field is mutually exclusive with the "role" field.
 * **reconcilePeriod** (optional): The reconciliation interval, how often the
   role/playbook is run, for a given CR.
-* **manageStatus** (optional): Specifies who is managing the status for the CR.
-  Set to `false` when you want the role/playbook to be solely responsible for
-  the CR's status.
+* **manageStatus** (optional): When true (default), the operator will manage
+  the status of the CR generically. Set to false, the status of the CR is
+  managed elsewhere, the specified role/playbook or in a separate controller.
 
 An example Watches file:
 

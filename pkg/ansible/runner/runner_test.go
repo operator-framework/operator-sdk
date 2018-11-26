@@ -156,6 +156,19 @@ func TestNewFromWatches(t *testing.T) {
 				schema.GroupVersionKind{
 					Version: "v1alpha1",
 					Group:   "app.example.com",
+					Kind:    "DefaultStatus",
+				}: runner{
+					GVK: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "DefaultStatus",
+					},
+					Path:         validTemplate.ValidPlaybook,
+					manageStatus: true,
+				},
+				schema.GroupVersionKind{
+					Version: "v1alpha1",
+					Group:   "app.example.com",
 					Kind:    "DisableStatus",
 				}: runner{
 					GVK: schema.GroupVersionKind{
