@@ -73,7 +73,10 @@ func createFromYAMLFile(yamlPath string, storeKindVersionName bool) error {
 				return fmt.Errorf("failed to convert object to deployment: %v", err)
 			}
 			deploymentName = dep.GetName()
-			createKubeconfigSecret()
+			err = createKubeconfigSecret()
+			if err != nil {
+				return fmt.Errorf("failed to create kubeconfig secret for scorecard-proxy: %v", err)
+			}
 			addMountKubeconfigSecret(dep)
 			addProxyContainer(dep)
 			// go back to unstructured to create
@@ -110,17 +113,20 @@ func createFromYAMLFile(yamlPath string, storeKindVersionName bool) error {
 	return nil
 }
 
-func createKubeconfigSecret() {
+func createKubeconfigSecret() error {
 	kubeconfigMap := make(map[string][]byte)
 	kc, err := proxyConf.Create(metav1.OwnerReference{Name: "scorecard"}, "http://localhost:8888", SCConf.Namespace)
+	if err != nil {
+		return err
+	}
 	defer os.Remove(kc.Name())
 	kc, err = os.Open(kc.Name())
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	kcBytes, err := ioutil.ReadAll(kc)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	kubeconfigMap["kubeconfig"] = kcBytes
 	kubeconfigSecret := &v1.Secret{
@@ -130,7 +136,7 @@ func createKubeconfigSecret() {
 		},
 		Data: kubeconfigMap,
 	}
-	runtimeClient.Create(context.TODO(), kubeconfigSecret)
+	return runtimeClient.Create(context.TODO(), kubeconfigSecret)
 }
 
 func addMountKubeconfigSecret(dep *appsv1.Deployment) {
