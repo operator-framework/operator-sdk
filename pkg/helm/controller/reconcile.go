@@ -25,9 +25,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/operator-framework/helm-app-operator-kit/helm-app-operator/pkg/helm/internal/types"
-	"github.com/operator-framework/helm-app-operator-kit/helm-app-operator/pkg/helm/internal/util"
-	"github.com/operator-framework/helm-app-operator-kit/helm-app-operator/pkg/helm/release"
+	"github.com/operator-framework/operator-sdk/pkg/helm/internal/types"
+	"github.com/operator-framework/operator-sdk/pkg/helm/internal/util"
+	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 )
 
 var _ reconcile.Reconciler = &HelmOperatorReconciler{}

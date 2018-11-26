@@ -28,7 +28,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	"github.com/operator-framework/helm-app-operator-kit/helm-app-operator/pkg/helm/release"
+	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 )
 
 var log = logf.Log.WithName("helm.controller")

@@ -35,7 +35,7 @@ import (
 	"k8s.io/helm/pkg/tiller"
 	"k8s.io/kubernetes/pkg/kubectl/genericclioptions/resource"
 
-	"github.com/operator-framework/helm-app-operator-kit/helm-app-operator/pkg/helm/internal/types"
+	"github.com/operator-framework/operator-sdk/pkg/helm/internal/types"
 )
 
 var (

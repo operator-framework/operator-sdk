@@ -31,8 +31,8 @@ import (
 	"k8s.io/helm/pkg/tiller/environment"
 	"k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset"
 
-	"github.com/operator-framework/helm-app-operator-kit/helm-app-operator/pkg/helm/engine"
-	"github.com/operator-framework/helm-app-operator-kit/helm-app-operator/pkg/helm/internal/types"
+	"github.com/operator-framework/operator-sdk/pkg/helm/engine"
+	"github.com/operator-framework/operator-sdk/pkg/helm/internal/types"
 )
 
 // ManagerFactory creates Managers that are specific to custom resources. It is
