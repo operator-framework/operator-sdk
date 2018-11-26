@@ -31,5 +31,5 @@
   version = "v0.1.4"
 
 [[constraint]]
-	name = "github.com/operator-framework/operator-lifecycle-manager"
+  name = "github.com/operator-framework/operator-lifecycle-manager"
   revision = "7790503542c3ae82d2daf1a0b05f720dd21568ad"

@@ -89,26 +89,24 @@ func checkStatusUpdate(runtimeClient client.Client, obj unstructured.Unstructure
 		statCopy[k] = v
 	}
 	pass := true
-	for k, v := range obj.Object["spec"].(map[string]interface{}) {
+	specMap := obj.Object["spec"].(map[string]interface{})
+	for k, v := range specMap {
 		switch t := v.(type) {
 		case int64:
-			obj.Object["spec"].(map[string]interface{})[k] = obj.Object["spec"].(map[string]interface{})[k].(int64) + 1
+			specMap[k] = specMap[k].(int64) + 1
 		case float64:
-			obj.Object["spec"].(map[string]interface{})[k] = obj.Object["spec"].(map[string]interface{})[k].(float64) + 1
+			specMap[k] = specMap[k].(float64) + 1
 		case string:
 			// TODO: try and find out how to make this better
 			// Since strings may be very operator specific, this test may not work correctly in many cases
-			obj.Object["spec"].(map[string]interface{})[k] = fmt.Sprintf("operator sdk test value %f", rand.Float64())
+			specMap[k] = fmt.Sprintf("operator sdk test value %f", rand.Float64())
 		case bool:
-			if obj.Object["spec"].(map[string]interface{})[k].(bool) {
-				obj.Object["spec"].(map[string]interface{})[k] = false
-			} else {
-				obj.Object["spec"].(map[string]interface{})[k] = true
-			}
+			specMap[k] = !specMap[k].(bool)
 		case []interface{}: // TODO: Decide how this should be handled
 		default:
 			fmt.Printf("Unknown type for key (%s) in status: (%v)\n", k, reflect.TypeOf(t))
 		}
+		obj.Object["spec"] = specMap
 		runtimeClient.Update(context.TODO(), &obj)
 		err := wait.Poll(time.Second*1, time.Second*15, func() (done bool, err error) {
 			runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: SCConf.Namespace, Name: name}, &obj)
