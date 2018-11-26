@@ -66,6 +66,18 @@ type Finalizer struct {
 	Vars     map[string]interface{} `yaml:"vars"`
 }
 
+// hide watch data in plain struct to prevent unmarshal from calling
+// UnmarshalYAML again
+type plain watch
+
+// UnmarshalYaml - implements the yaml.Unmarshaler interface
+func (w *watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	// by default, the operator will manage status
+	w.ManageStatus = true
+
+	return unmarshal((*plain)(w))
+}
+
 // NewFromWatches reads the operator's config file at the provided path.
 func NewFromWatches(path string) (map[schema.GroupVersionKind]Runner, error) {
 	b, err := ioutil.ReadFile(path)
@@ -73,7 +85,7 @@ func NewFromWatches(path string) (map[schema.GroupVersionKind]Runner, error) {
 		log.Error(err, "failed to get config file")
 		return nil, err
 	}
-	watches := []watch{watch{ManageStatus: true}}
+	watches := []watch{}
 	err = yaml.Unmarshal(b, &watches)
 	if err != nil {
 		log.Error(err, "failed to unmarshal config")
@@ -102,13 +114,13 @@ func NewFromWatches(path string) (map[schema.GroupVersionKind]Runner, error) {
 		}
 		switch {
 		case w.Playbook != "":
-			r, err := NewForPlaybook(w.Playbook, s, w.Finalizer, reconcilePeriod)
+			r, err := NewForPlaybook(w.Playbook, s, w.Finalizer, reconcilePeriod, w.ManageStatus)
 			if err != nil {
 				return nil, err
 			}
 			m[s] = r
 		case w.Role != "":
-			r, err := NewForRole(w.Role, s, w.Finalizer, reconcilePeriod)
+			r, err := NewForRole(w.Role, s, w.Finalizer, reconcilePeriod, w.ManageStatus)
 			if err != nil {
 				return nil, err
 			}
@@ -121,7 +133,7 @@ func NewFromWatches(path string) (map[schema.GroupVersionKind]Runner, error) {
 }
 
 // NewForPlaybook returns a new Runner based on the path to an ansible playbook.
-func NewForPlaybook(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, reconcilePeriod *time.Duration) (Runner, error) {
+func NewForPlaybook(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, reconcilePeriod *time.Duration, manageStatus bool) (Runner, error) {
 	if !filepath.IsAbs(path) {
 		return nil, fmt.Errorf("playbook path must be absolute for %v", gvk)
 	}
@@ -135,6 +147,7 @@ func NewForPlaybook(path string, gvk schema.GroupVersionKind, finalizer *Finaliz
 			return exec.Command("ansible-runner", "-vv", "-p", path, "-i", ident, "run", inputDirPath)
 		},
 		reconcilePeriod: reconcilePeriod,
+		manageStatus:    manageStatus,
 	}
 	err := r.addFinalizer(finalizer)
 	if err != nil {
@@ -144,7 +157,7 @@ func NewForPlaybook(path string, gvk schema.GroupVersionKind, finalizer *Finaliz
 }
 
 // NewForRole returns a new Runner based on the path to an ansible role.
-func NewForRole(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, reconcilePeriod *time.Duration) (Runner, error) {
+func NewForRole(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, reconcilePeriod *time.Duration, manageStatus bool) (Runner, error) {
 	if !filepath.IsAbs(path) {
 		return nil, fmt.Errorf("role path must be absolute for %v", gvk)
 	}
@@ -160,6 +173,7 @@ func NewForRole(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, 
 			return exec.Command("ansible-runner", "-vv", "--role", roleName, "--roles-path", rolePath, "--hosts", "localhost", "-i", ident, "run", inputDirPath)
 		},
 		reconcilePeriod: reconcilePeriod,
+		manageStatus:    manageStatus,
 	}
 	err := r.addFinalizer(finalizer)
 	if err != nil {
