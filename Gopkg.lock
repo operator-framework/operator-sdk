@@ -98,6 +98,14 @@
   revision = "bf70f2a70fb1b1f36d90d671a72795984eab0fcb"
 
 [[projects]]
+  digest = "1:3c3f68ebab415344aef64363d23471e953a4715645115604aaf57923ae904f5e"
+  name = "github.com/coreos/go-semver"
+  packages = ["semver"]
+  pruneopts = ""
+  revision = "8ab6407b697782a06568d4b7f1db25550ec2e4c6"
+  version = "v0.2.0"
+
+[[projects]]
   digest = "1:83222dd265299f065a2ae969c7780b6c6a225c770975051955320a95b0526239"
   name = "github.com/coreos/prometheus-operator"
   packages = ["pkg/client/monitoring/v1"]
@@ -313,6 +321,14 @@
   packages = ["lru"]
   pruneopts = ""
   revision = "6f2cf27854a4a29e3811b0371547be335d411b8b"
+
+[[projects]]
+  digest = "1:73a7106c799f98af4f3da7552906efc6a2570329f4cd2d2f5fb8f9d6c053ff2f"
+  name = "github.com/golang/mock"
+  packages = ["gomock"]
+  pruneopts = ""
+  revision = "c34cdb4725f4c3844d095133c6e40e448b86589b"
+  version = "v1.1.1"
 
 [[projects]]
   digest = "1:3dd078fda7500c341bc26cfbc6c6a34614f295a2457149fc1045cab767cbcf18"
@@ -536,6 +552,20 @@
   pruneopts = ""
   revision = "d60099175f88c47cd379c4738d158884749ed235"
   version = "v1.0.1"
+
+[[projects]]
+  digest = "1:3a2f336735fd2ea097e8f65cd5a54b36cc559e373ebd5294050e1ac69db1977b"
+  name = "github.com/operator-framework/operator-lifecycle-manager"
+  packages = [
+    "pkg/api/apis/operators",
+    "pkg/api/apis/operators/v1alpha1",
+    "pkg/api/wrappers",
+    "pkg/controller/install",
+    "pkg/lib/operatorclient",
+    "pkg/lib/ownerutil",
+  ]
+  pruneopts = ""
+  revision = "7790503542c3ae82d2daf1a0b05f720dd21568ad"
 
 [[projects]]
   digest = "1:a5484d4fa43127138ae6e7b2299a6a52ae006c7f803d98d717f60abf3e97192e"
@@ -976,7 +1006,9 @@
   packages = [
     "pkg/apis/apiextensions",
     "pkg/apis/apiextensions/v1beta1",
+    "pkg/client/clientset/clientset",
     "pkg/client/clientset/clientset/scheme",
+    "pkg/client/clientset/clientset/typed/apiextensions/v1beta1",
     "pkg/features",
   ]
   pruneopts = ""
@@ -1054,6 +1086,7 @@
     "pkg/authentication/authenticator",
     "pkg/authentication/serviceaccount",
     "pkg/authentication/user",
+    "pkg/authorization/authorizer",
     "pkg/endpoints/request",
     "pkg/features",
     "pkg/util/feature",
@@ -1103,6 +1136,7 @@
     "kubernetes/typed/storage/v1beta1",
     "listers/apps/v1",
     "listers/core/v1",
+    "listers/rbac/v1",
     "pkg/apis/clientauthentication",
     "pkg/apis/clientauthentication/v1alpha1",
     "pkg/apis/clientauthentication/v1beta1",
@@ -1183,6 +1217,22 @@
   pruneopts = ""
   revision = "2e55dbe1fdb5fdb96b75ff144a339489417b146b"
   version = "v2.11.0"
+
+[[projects]]
+  branch = "release-1.11"
+  digest = "1:ced35c4bf23d16ae012975c756347bde0c481decd29b353b1f20de3507ce5cfe"
+  name = "k8s.io/kube-aggregator"
+  packages = [
+    "pkg/apis/apiregistration",
+    "pkg/apis/apiregistration/v1",
+    "pkg/apis/apiregistration/v1beta1",
+    "pkg/client/clientset_generated/clientset",
+    "pkg/client/clientset_generated/clientset/scheme",
+    "pkg/client/clientset_generated/clientset/typed/apiregistration/v1",
+    "pkg/client/clientset_generated/clientset/typed/apiregistration/v1beta1",
+  ]
+  pruneopts = ""
+  revision = "efa32eb095fe7c84e4b6b8b46c57d59679caf207"
 
 [[projects]]
   branch = "master"
@@ -1343,6 +1393,7 @@
     "pkg/util/slice",
     "pkg/util/taints",
     "pkg/version",
+    "plugin/pkg/auth/authorizer/rbac",
   ]
   pruneopts = ""
   revision = "bb9ffb1654d4a729bb4cec18ff088eacc153c239"
@@ -1405,11 +1456,14 @@
   analyzer-version = 1
   input-imports = [
     "github.com/BurntSushi/toml",
+    "github.com/coreos/go-semver/semver",
     "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1",
     "github.com/ghodss/yaml",
     "github.com/go-logr/logr",
     "github.com/markbates/inflect",
     "github.com/martinlindhe/base36",
+    "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1",
+    "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install",
     "github.com/pborman/uuid",
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/sergi/go-diff/diffmatchpatch",
@@ -1423,6 +1477,7 @@
     "k8s.io/api/apps/v1",
     "k8s.io/api/core/v1",
     "k8s.io/api/rbac/v1",
+    "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",
     "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/api/meta",
@@ -1437,6 +1492,7 @@
     "k8s.io/apimachinery/pkg/util/net",
     "k8s.io/apimachinery/pkg/util/proxy",
     "k8s.io/apimachinery/pkg/util/wait",
+    "k8s.io/apimachinery/pkg/util/yaml",
     "k8s.io/client-go/discovery",
     "k8s.io/client-go/discovery/cached",
     "k8s.io/client-go/kubernetes",
