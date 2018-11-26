@@ -51,14 +51,22 @@ func statusDescriptors(csv *olmApi.ClusterServiceVersion, runtimeClient client.C
 	}
 	if obj.Object["status"] == nil {
 		// what should we do if there is no status block? Maybe some kind of N/A type output?
-		test.earnedPoints = 0
-		test.maximumPoints = 0
 		scTests = append(scTests, test)
 		return nil
 	}
 	statusBlock := obj.Object["status"].(map[string]interface{})
-	crd := csv.Spec.CustomResourceDefinitions.Owned[0]
 	test.maximumPoints = len(statusBlock)
+	var crd *olmApi.CRDDescription
+	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
+		if owned.Kind == kind {
+			crd = &owned
+			break
+		}
+	}
+	if crd == nil {
+		scTests = append(scTests, test)
+		return nil
+	}
 	for key := range statusBlock {
 		for _, statDesc := range crd.StatusDescriptors {
 			if statDesc.Path == key {
@@ -79,14 +87,22 @@ func specDescriptors(csv *olmApi.ClusterServiceVersion, runtimeClient client.Cli
 	}
 	if obj.Object["spec"] == nil {
 		// what should we do if there is no spec block? Maybe some kind of N/A type output?
-		test.earnedPoints = 0
-		test.maximumPoints = 0
 		scTests = append(scTests, test)
 		return nil
 	}
 	specBlock := obj.Object["spec"].(map[string]interface{})
-	crd := csv.Spec.CustomResourceDefinitions.Owned[0]
 	test.maximumPoints = len(specBlock)
+	var crd *olmApi.CRDDescription
+	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
+		if owned.Kind == kind {
+			crd = &owned
+			break
+		}
+	}
+	if crd == nil {
+		scTests = append(scTests, test)
+		return nil
+	}
 	for key := range specBlock {
 		for _, specDesc := range crd.SpecDescriptors {
 			if specDesc.Path == key {

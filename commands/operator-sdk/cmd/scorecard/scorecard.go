@@ -165,7 +165,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	obj.SetKind(kind)
 	if SCConf.BasicTests {
 		fmt.Println("Checking for existence of spec and status blocks in CR")
-		err = checkSpecAndStat(runtimeClient, obj)
+		err = checkSpecAndStat(runtimeClient, obj, false)
 		if err != nil {
 			return err
 		}
@@ -180,6 +180,11 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		log.Debugf("Scorecard Proxy Logs: %v\n", logs)
+	} else {
+		err = checkSpecAndStat(runtimeClient, obj, true)
+		if err != nil {
+			return err
+		}
 	}
 	if SCConf.OlmTests {
 		yamlSpec, err := ioutil.ReadFile(SCConf.CSVPath)
@@ -217,7 +222,11 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		fmt.Printf("%s:\n", testType)
 		for _, test := range scTests {
 			if test.testType == testType {
-				fmt.Printf("\t%s: %d/%d points\n", test.name, test.earnedPoints, test.maximumPoints)
+				if !(test.earnedPoints == 0 && test.maximumPoints == 0) {
+					fmt.Printf("\t%s: %d/%d points\n", test.name, test.earnedPoints, test.maximumPoints)
+				} else {
+					fmt.Printf("\t%s: N/A (depends on an earlier test that failed)\n", test.name)
+				}
 				totalEarned += test.earnedPoints
 				totalMax += test.maximumPoints
 			}

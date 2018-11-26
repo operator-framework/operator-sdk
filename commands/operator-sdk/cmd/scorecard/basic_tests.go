@@ -34,7 +34,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func checkSpecAndStat(runtimeClient client.Client, obj unstructured.Unstructured) error {
+// checkSpecAndStat checks that the spec and status blocks exist. If noStore is set to true, this function
+// will not store the result of the test in sCTests and will instead just wait wait until the spec and
+// status blocks exist or return an error after the timeout.
+func checkSpecAndStat(runtimeClient client.Client, obj unstructured.Unstructured, noStore bool) error {
 	testSpec := scorecardTest{testType: basicOperator, name: "Spec Block Exists", maximumPoints: 1}
 	testStat := scorecardTest{testType: basicOperator, name: "Status Block Exist", maximumPoints: 1}
 	var specPoints, statusPoints int
@@ -58,10 +61,12 @@ func checkSpecAndStat(runtimeClient client.Client, obj unstructured.Unstructured
 		}
 		return pass, nil
 	})
-	testSpec.earnedPoints = specPoints
-	testStat.earnedPoints = statusPoints
-	scTests = append(scTests, testSpec)
-	scTests = append(scTests, testStat)
+	if !noStore {
+		testSpec.earnedPoints = specPoints
+		testStat.earnedPoints = statusPoints
+		scTests = append(scTests, testSpec)
+		scTests = append(scTests, testStat)
+	}
 	if err != nil && !reflect.DeepEqual(err, wait.ErrWaitTimeout) {
 		return err
 	}
