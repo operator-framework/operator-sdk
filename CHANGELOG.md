@@ -1,3 +1,13 @@
+## Unreleased
+
+### Changed
+
+- The SDK now uses logr as the default logger to unify the logging output with the controller-runtime logs. Users can still use a logger of their own choice. See https://github.com/operator-framework/operator-sdk/blob/master/doc/user/logging.md
+
+### Bug fixes
+
+- Make operator-sdk command work with composed GOPATH ([#676](https://github.com/operator-framework/operator-sdk/pull/676))
+
 ## v0.1.1
 
 ### Bug fixes
