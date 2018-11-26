@@ -24,6 +24,8 @@ import (
 // Dockerfile specifies the Helm Dockerfile scaffold
 type Dockerfile struct {
 	input.Input
+
+	HelmChartsDir string
 }
 
 // GetInput gets the scaffold execution input
@@ -31,12 +33,13 @@ func (d *Dockerfile) GetInput() (input.Input, error) {
 	if d.Path == "" {
 		d.Path = filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
 	}
+	d.HelmChartsDir = HelmChartsDir
 	d.TemplateBody = dockerFileHelmTmpl
 	return d.Input, nil
 }
 
 const dockerFileHelmTmpl = `FROM quay.io/water-hole/helm-operator
 
-COPY helm-charts/ ${HOME}/helm-charts/
+COPY {{.HelmChartsDir}}/ ${HOME}/{{.HelmChartsDir}}/
 COPY watches.yaml ${HOME}/watches.yaml
 `

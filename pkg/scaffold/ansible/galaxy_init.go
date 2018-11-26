@@ -15,7 +15,6 @@
 package ansible
 
 import (
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
@@ -32,6 +31,7 @@ type GalaxyInit struct {
 	input.Input
 	Resource scaffold.Resource
 	Dir      string
+	RolesDir string
 }
 
 // GetInput - get input
@@ -46,7 +46,8 @@ func (g *GalaxyInit) GetInput() (input.Input, error) {
 	if g.Path == "" {
 		g.Path = filepath.Join(g.Dir, "galaxy_init.sh")
 	}
-	g.TemplateBody = fmt.Sprintf(galaxyInitTmpl, RolesDir)
+	g.RolesDir = RolesDir
+	g.TemplateBody = galaxyInitTmpl
 	g.IsExec = true
 	return g.Input, nil
 }
@@ -59,5 +60,5 @@ if ! which ansible-galaxy > /dev/null; then
 fi
 
 echo "Initializing role skeleton..."
-ansible-galaxy init --init-path={{.Input.AbsProjectPath}}/%s/ {{.Resource.Kind}}
+ansible-galaxy init --init-path={{.Input.AbsProjectPath}}/{{.RolesDir}}/ {{.Resource.Kind}}
 `

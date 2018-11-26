@@ -26,6 +26,7 @@ type Dockerfile struct {
 	input.Input
 
 	GeneratePlaybook bool
+	RolesDir         string
 }
 
 // GetInput - gets the input
@@ -33,13 +34,14 @@ func (d *Dockerfile) GetInput() (input.Input, error) {
 	if d.Path == "" {
 		d.Path = filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
 	}
+	d.RolesDir = RolesDir
 	d.TemplateBody = dockerFileAnsibleTmpl
 	return d.Input, nil
 }
 
 const dockerFileAnsibleTmpl = `FROM quay.io/water-hole/ansible-operator
 
-COPY roles/ ${HOME}/roles/
+COPY {{.RolesDir}}/ ${HOME}/{{.RolesDir}}/
 {{- if .GeneratePlaybook }}
 COPY playbook.yaml ${HOME}/playbook.yaml{{ end }}
 COPY watches.yaml ${HOME}/watches.yaml
