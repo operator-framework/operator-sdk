@@ -90,7 +90,7 @@ operator-sdk completion bash
 
 ## generate
 
-### k8s 
+### k8s
 
 Runs the Kubernetes [code-generators][k8s-code-generator] for all Custom Resource Definitions (CRD) apis under `pkg/apis/...`.
 Currently only runs `deepcopy-gen` to generate the required `DeepCopy()` functions for all custom resource types.
@@ -116,6 +116,25 @@ pkg/apis/app/v1alpha1/
 ├── doc.go
 ├── register.go
 └── zz_generated.deepcopy.go
+```
+
+## olm-catalog
+
+Parent command for all OLM Catalog-related commands.
+
+### gen-csv
+
+Generates a Cluster Service Version manifest file in `deploy/olm-catalog`.
+
+#### Flags
+
+* `--csv-version` (required) operator semantic version with which to create the CSV file.
+
+#### Example
+
+```bash
+$ operator-sdk olm-catalog gen-csv --csv-version 0.1.1
+Generating CSV manifest version 0.1.1
 ```
 
 ## new
