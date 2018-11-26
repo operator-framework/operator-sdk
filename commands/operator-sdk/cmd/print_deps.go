@@ -26,10 +26,10 @@ var asFile bool
 func NewPrintDepsCmd() *cobra.Command {
 	printDepsCmd := &cobra.Command{
 		Use:   "print-deps",
-		Short: "Print dependencies expected by the Operator SDK",
-		Long: `The operator-sdk print-deps command prints all dependencies expected by this
-version of the Operator SDK. Versions for these dependencies should match those
-in an operators' Gopkg.toml file.
+		Short: "Print Golang packages and versions required to run the operator",
+		Long: `The operator-sdk print-deps command prints all Golang packages and versions expected
+by this version of the Operator SDK. Versions for these packages should match
+those in an operators' Gopkg.toml file.
 
 print-deps prints in columnar format by default. Use the --as-file flag to
 print in Gopkg.toml file format.

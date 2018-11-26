@@ -90,11 +90,11 @@ operator-sdk completion bash
 
 ## print-deps
 
-Prints the most recent dependencies and their versions known by the `operator-sdk` binary. Prints in columnar format by default.
+Prints the most recent Golang packages and versions required by operators. Prints in columnar format by default.
 
 ### Flags
 
-* `--as-file` Print dependencies and versions in Gopkg.toml format.
+* `--as-file` Print packages and versions in Gopkg.toml format.
 
 ## generate
 
