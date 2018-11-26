@@ -164,7 +164,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	obj.SetAPIVersion(apiversion)
 	obj.SetKind(kind)
 	if SCConf.BasicTests {
-		fmt.Printf("Checking for existance of spec and status blocks in CR\n")
+		fmt.Println("Checking for existence of spec and status blocks in CR")
 		err = checkSpecAndStat(runtimeClient, obj)
 		if err != nil {
 			return err
@@ -174,7 +174,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Checking that writingg into CRs has an effect")
+		fmt.Println("Checking that writing into CRs has an effect")
 		logs, err := writingIntoCRsHasEffect(obj)
 		if err != nil {
 			return err
@@ -188,7 +188,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 		rawCSV, _, err := dynamicDecoder.Decode(yamlSpec, nil, nil)
 		if err != nil {
-			return fmt.Errorf("%v", err)
+			return err
 		}
 		csv := &olmApi.ClusterServiceVersion{}
 		switch o := rawCSV.(type) {
