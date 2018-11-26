@@ -151,7 +151,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	}
 	if tlConfig.image != "" {
 		if err := replaceImage(tlConfig.namespacedManPath, tlConfig.image); err != nil {
-			log.Fatalf("replaceImage function failed: %v", err)
+			log.Fatalf("failed to overwrite operator image in the namespaced manifest: %v", err)
 		}
 	}
 	testArgs := []string{"test", args[0] + "/..."}
