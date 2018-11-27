@@ -336,7 +336,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx framework.Test
 		return err
 	}
 	// wait for example-memcached to reach 3 replicas
-	err = e2eutil.DeploymentReplicaCheck(t, f.KubeClient, namespace, "example-memcached", 3, 6)
+	err = e2eutil.DeploymentReplicaCheck(t, f.KubeClient, namespace, "example-memcached", 3, 12)
 	if err != nil {
 		return err
 	}
