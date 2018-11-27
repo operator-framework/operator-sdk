@@ -40,69 +40,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// InjectOwnerReferenceHandler will handle proxied requests and inject the
-// owner refernece found in the authorization header. The Authorization is
-// then deleted so that the proxy can re-set with the correct authorization.
-func InjectOwnerReferenceHandler(h http.Handler, informerCache cache.Cache, restMapper meta.RESTMapper) http.Handler {
+// CacheResponseHandler will handle proxied requests and check if the requested
+// resource exists in our cache. If it does then there is no need to bombard
+// the APIserver with our request and we should write the response from the
+// proxy.
+func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper meta.RESTMapper) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		switch req.Method {
-		case http.MethodPost:
-			log.Info("injecting owner reference")
-			dump, _ := httputil.DumpRequest(req, false)
-			log.V(1).Info("dumping request", "RequestDump", string(dump))
-
-			user, _, ok := req.BasicAuth()
-			if !ok {
-				log.Error(errors.New("basic auth header not found"), "")
-				w.Header().Set("WWW-Authenticate", "Basic realm=\"Operator Proxy\"")
-				http.Error(w, "", http.StatusUnauthorized)
-				return
-			}
-			authString, err := base64.StdEncoding.DecodeString(user)
-			if err != nil {
-				m := "could not base64 decode username"
-				log.Error(err, m)
-				http.Error(w, m, http.StatusBadRequest)
-				return
-			}
-			owner := metav1.OwnerReference{}
-			json.Unmarshal(authString, &owner)
-
-			log.V(1).Info(fmt.Sprintf("%#+v", owner))
-
-			body, err := ioutil.ReadAll(req.Body)
-			if err != nil {
-				m := "could not read request body"
-				log.Error(err, m)
-				http.Error(w, m, http.StatusInternalServerError)
-				return
-			}
-			data := &unstructured.Unstructured{}
-			err = json.Unmarshal(body, data)
-			if err != nil {
-				m := "could not deserialize request body"
-				log.Error(err, m)
-				http.Error(w, m, http.StatusBadRequest)
-				return
-			}
-			data.SetOwnerReferences(append(data.GetOwnerReferences(), owner))
-			newBody, err := json.Marshal(data.Object)
-			if err != nil {
-				m := "could not serialize body"
-				log.Error(err, m)
-				http.Error(w, m, http.StatusInternalServerError)
-				return
-			}
-			log.V(1).Info("serialized body", "Body", string(newBody))
-			req.Body = ioutil.NopCloser(bytes.NewBuffer(newBody))
-			req.ContentLength = int64(len(newBody))
 		case http.MethodGet:
 			// GET request means we need to check the cache
 			rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.NewString("api", "apis"), GrouplessAPIPrefixes: sets.NewString("api")}
 			r, err := rf.NewRequestInfo(req)
 			if err != nil {
 				log.Error(err, "failed to convert request")
-				return
+				break
 			}
 
 			// check if resource is present on request
@@ -159,6 +110,66 @@ func InjectOwnerReferenceHandler(h http.Handler, informerCache cache.Cache, rest
 
 			// Return so that request isn't passed along to APIserver
 			return
+		}
+		h.ServeHTTP(w, req)
+	})
+}
+
+// InjectOwnerReferenceHandler will handle proxied requests and inject the
+// owner refernece found in the authorization header. The Authorization is
+// then deleted so that the proxy can re-set with the correct authorization.
+func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if req.Method == http.MethodPost {
+			log.Info("injecting owner reference")
+			dump, _ := httputil.DumpRequest(req, false)
+			log.V(1).Info("dumping request", "RequestDump", string(dump))
+
+			user, _, ok := req.BasicAuth()
+			if !ok {
+				log.Error(errors.New("basic auth header not found"), "")
+				w.Header().Set("WWW-Authenticate", "Basic realm=\"Operator Proxy\"")
+				http.Error(w, "", http.StatusUnauthorized)
+				return
+			}
+			authString, err := base64.StdEncoding.DecodeString(user)
+			if err != nil {
+				m := "could not base64 decode username"
+				log.Error(err, m)
+				http.Error(w, m, http.StatusBadRequest)
+				return
+			}
+			owner := metav1.OwnerReference{}
+			json.Unmarshal(authString, &owner)
+
+			log.V(1).Info(fmt.Sprintf("%#+v", owner))
+
+			body, err := ioutil.ReadAll(req.Body)
+			if err != nil {
+				m := "could not read request body"
+				log.Error(err, m)
+				http.Error(w, m, http.StatusInternalServerError)
+				return
+			}
+			data := &unstructured.Unstructured{}
+			err = json.Unmarshal(body, data)
+			if err != nil {
+				m := "could not deserialize request body"
+				log.Error(err, m)
+				http.Error(w, m, http.StatusBadRequest)
+				return
+			}
+			data.SetOwnerReferences(append(data.GetOwnerReferences(), owner))
+			newBody, err := json.Marshal(data.Object)
+			if err != nil {
+				m := "could not serialize body"
+				log.Error(err, m)
+				http.Error(w, m, http.StatusInternalServerError)
+				return
+			}
+			log.V(1).Info("serialized body", "Body", string(newBody))
+			req.Body = ioutil.NopCloser(bytes.NewBuffer(newBody))
+			req.ContentLength = int64(len(newBody))
 		}
 		// Removing the authorization so that the proxy can set the correct authorization.
 		req.Header.Del("Authorization")
@@ -217,8 +228,10 @@ func Run(done chan error, o Options) error {
 	}
 
 	if !o.NoOwnerInjection {
-		server.Handler = InjectOwnerReferenceHandler(server.Handler, o.Cache, o.RESTMapper)
+		server.Handler = InjectOwnerReferenceHandler(server.Handler)
 	}
+	// Always add cache handler
+	server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper)
 
 	l, err := server.Listen(o.Address, o.Port)
 	if err != nil {
