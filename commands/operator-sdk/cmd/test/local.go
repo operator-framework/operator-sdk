@@ -15,6 +15,7 @@
 package cmdtest
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -27,8 +28,13 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
+	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	cgoscheme "k8s.io/client-go/kubernetes/scheme"
 )
 
 var deployTestDir = filepath.Join(scaffold.DeployDir, "test")
@@ -40,6 +46,7 @@ type testLocalConfig struct {
 	goTestFlags       string
 	namespace         string
 	noSetup           bool
+	image             string
 }
 
 var tlConfig testLocalConfig
@@ -56,6 +63,7 @@ func NewTestLocalCmd() *cobra.Command {
 	testCmd.Flags().StringVar(&tlConfig.goTestFlags, "go-test-flags", "", "Additional flags to pass to go test")
 	testCmd.Flags().StringVar(&tlConfig.namespace, "namespace", "", "If non-empty, single namespace to run tests in")
 	testCmd.Flags().BoolVar(&tlConfig.noSetup, "no-setup", false, "Disable test resource creation (requires namespace flag)")
+	testCmd.Flags().StringVar(&tlConfig.image, "image", "", "Use a different operator image from the one specified in the namespaced manifest")
 
 	return testCmd
 }
@@ -165,6 +173,11 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 			}
 		}()
 	}
+	if tlConfig.image != "" {
+		if err := replaceImage(tlConfig.namespacedManPath, tlConfig.image); err != nil {
+			log.Fatalf("failed to overwrite operator image in the namespaced manifest: %v", err)
+		}
+	}
 	testArgs := []string{"test", args[0] + "/..."}
 	testArgs = append(testArgs, "-"+test.KubeConfigFlag, tlConfig.kubeconfig)
 	testArgs = append(testArgs, "-"+test.NamespacedManPathFlag, tlConfig.namespacedManPath)
@@ -199,4 +212,66 @@ func combineManifests(base, manifest []byte) []byte {
 		return append(base, []byte("\n---\n")...)
 	}
 	return base
+}
+
+// TODO: add support for multiple deployments and containers (user would have to
+// provide extra information in that case)
+
+// replaceImage searches for a deployment and replaces the image in the container
+// to the one specified in the function call. The function will fail if the
+// number of deployments is not equal to one or if the deployment has multiple
+// containers
+func replaceImage(manifestPath, image string) error {
+	yamlFile, err := ioutil.ReadFile(manifestPath)
+	if err != nil {
+		return err
+	}
+	foundDeployment := false
+	newManifest := []byte{}
+	yamlSplit := bytes.Split(yamlFile, []byte("\n---\n"))
+	for _, yamlSpec := range yamlSplit {
+		if string(yamlSpec) == "" {
+			continue
+		}
+		decoded := make(map[string]interface{})
+		err = yaml.Unmarshal(yamlSpec, &decoded)
+		if err != nil {
+			return err
+		}
+		kind, ok := decoded["kind"].(string)
+		if !ok || kind != "Deployment" {
+			newManifest = combineManifests(newManifest, yamlSpec)
+			continue
+		}
+		if foundDeployment {
+			return fmt.Errorf("cannot use `image` flag on namespaced manifest with more than 1 deployment")
+		}
+		foundDeployment = true
+		scheme := runtime.NewScheme()
+		// scheme for client go
+		cgoscheme.AddToScheme(scheme)
+		dynamicDecoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
+
+		obj, _, err := dynamicDecoder.Decode(yamlSpec, nil, nil)
+		if err != nil {
+			return err
+		}
+		dep := &appsv1.Deployment{}
+		switch o := obj.(type) {
+		case *appsv1.Deployment:
+			dep = o
+		default:
+			return fmt.Errorf("error in replaceImage switch case; could not convert runtime.Object to deployment")
+		}
+		if len(dep.Spec.Template.Spec.Containers) != 1 {
+			return fmt.Errorf("cannot use `image` flag on namespaced manifest containing more than 1 container in the operator deployment")
+		}
+		dep.Spec.Template.Spec.Containers[0].Image = image
+		updatedYamlSpec, err := yaml.Marshal(dep)
+		if err != nil {
+			return fmt.Errorf("failed to convert deployment object back to yaml: %v", err)
+		}
+		newManifest = combineManifests(newManifest, updatedYamlSpec)
+	}
+	return ioutil.WriteFile(manifestPath, newManifest, fileutil.DefaultFileMode)
 }
