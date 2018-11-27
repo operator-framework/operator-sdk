@@ -295,8 +295,8 @@
     "sortkeys",
   ]
   pruneopts = ""
-  revision = "636bf0302bc95575d69441b25a2603156ffdddf1"
-  version = "v1.1.1"
+  revision = "100ba4e885062801d56799d78530b73b178a78f3"
+  version = "v0.4"
 
 [[projects]]
   branch = "master"
@@ -1404,7 +1404,9 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "docker.io/go-docker",
     "github.com/BurntSushi/toml",
+    "github.com/coreos/go-semver/semver",
     "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1",
     "github.com/ghodss/yaml",
     "github.com/go-logr/logr",
