@@ -1,3 +1,17 @@
+// Copyright 2018 The Operator-SDK Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package memcached
 
 import (
@@ -97,7 +111,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		reqLogger.Error(err, "Failed to get Memcached.")
+		reqLogger.Error(err, "failed to get Memcached.")
 		return reconcile.Result{}, err
 	}
 
@@ -110,13 +124,13 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 		reqLogger.Info("Creating a new Deployment.", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 		err = r.client.Create(context.TODO(), dep)
 		if err != nil {
-			reqLogger.Error(err, "Failed to create new Deployment.", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+			reqLogger.Error(err, "failed to create new Deployment.", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 			return reconcile.Result{}, err
 		}
 		// Deployment created successfully - return and requeue
 		return reconcile.Result{Requeue: true}, nil
 	} else if err != nil {
-		reqLogger.Error(err, "Failed to get Deployment.")
+		reqLogger.Error(err, "failed to get Deployment.")
 		return reconcile.Result{}, err
 	}
 
@@ -126,7 +140,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 		found.Spec.Replicas = &size
 		err = r.client.Update(context.TODO(), found)
 		if err != nil {
-			reqLogger.Error(err, "Failed to update Deployment.", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+			reqLogger.Error(err, "failed to update Deployment.", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
 			return reconcile.Result{}, err
 		}
 		// Spec updated - return and requeue
@@ -153,7 +167,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 	}
 	err = r.client.List(context.TODO(), listOps, podList)
 	if err != nil {
-		reqLogger.Error(err, "Failed to list pods.", "Memcached.Namespace", memcached.Namespace, "Memcached.Name", memcached.Name)
+		reqLogger.Error(err, "failed to list pods.", "Memcached.Namespace", memcached.Namespace, "Memcached.Name", memcached.Name)
 		return reconcile.Result{}, err
 	}
 	podNames := getPodNames(podList.Items)
@@ -163,7 +177,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 		memcached.Status.Nodes = podNames
 		err := r.client.Update(context.TODO(), memcached)
 		if err != nil {
-			reqLogger.Error(err, "Failed to update Memcached status.")
+			reqLogger.Error(err, "failed to update Memcached status.")
 			return reconcile.Result{}, err
 		}
 	}
