@@ -11,7 +11,7 @@ operator-sdk test local . --global-manifest deploy/crds/cache_v1alpha1_memcached
 # test operator-sdk test local single namespace mode
 kubectl create namespace test-memcached
 # we use the test-memcached namespace for all future tests, so we only need to set this trap once
-trap_add 'kubectl delete namespace test-memcached' EXIT
+trap_add 'kubectl delete namespace test-memcached || true' EXIT
 operator-sdk test local . --namespace=test-memcached
 kubectl delete namespace test-memcached
 # test operator in no-setup mode
