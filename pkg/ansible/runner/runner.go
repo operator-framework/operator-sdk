@@ -66,14 +66,14 @@ type Finalizer struct {
 	Vars     map[string]interface{} `yaml:"vars"`
 }
 
-// hide watch data in plain struct to prevent unmarshal from calling
-// UnmarshalYAML again
-type plain watch
-
 // UnmarshalYaml - implements the yaml.Unmarshaler interface
 func (w *watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// by default, the operator will manage status
 	w.ManageStatus = true
+
+	// hide watch data in plain struct to prevent unmarshal from calling
+	// UnmarshalYAML again
+	type plain watch
 
 	return unmarshal((*plain)(w))
 }
