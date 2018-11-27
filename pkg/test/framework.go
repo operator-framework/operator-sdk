@@ -78,6 +78,9 @@ func setup(kubeconfigPath, namespacedManPath *string) error {
 		kubeconfig, err = rest.InClusterConfig()
 		*singleNamespace = true
 		namespace = os.Getenv(TestNamespaceEnv)
+		if len(namespace) == 0 {
+			return fmt.Errorf("test namespace env not set")
+		}
 	} else {
 		var kcNamespace string
 		kubeconfig, kcNamespace, err = k8sInternal.GetKubeconfigAndNamespace(*kubeconfigPath)
