@@ -31,11 +31,11 @@ trap_add() {
     done
 }
 
-DEST_IMAGE="quay.io/example/memcached-operator:v0.0.2"
+DEST_IMAGE="quay.io/example/nginx-operator:v0.0.2"
 
 set -ex
 
-# switch to the "default" namespace if on openshift, to match the minikube test
+# switch to the "default" namespace if on openshift
 if which oc 2>/dev/null; then oc project default; fi
 
 # build operator binary and base image
@@ -55,23 +55,13 @@ pushd "$HELM_TEST_DIR"
 unset GOPATH GOROOT
 
 # create and build the operator
-operator-sdk new memcached-operator --api-version=helm.example.com/v1alpha1 --kind=Memcached --type=helm
-pushd memcached-operator
-rm -rf helm-charts/memcached
-wget -qO- https://storage.googleapis.com/kubernetes-charts/memcached-2.3.1.tgz | tar -xzv -C helm-charts
+operator-sdk new nginx-operator --api-version=helm.example.com/v1alpha1 --kind=Nginx --type=helm
+pushd nginx-operator
 
 operator-sdk build "$DEST_IMAGE"
 sed -i "s|REPLACE_IMAGE|$DEST_IMAGE|g" deploy/operator.yaml
 sed -i 's|Always|Never|g' deploy/operator.yaml
-sed -i 's|size: 3|replicaCount: 1|g' deploy/crds/helm_v1alpha1_memcached_cr.yaml
-cat << EOF >> deploy/role.yaml
-- apiGroups:
-  - policy
-  resources:
-  - poddisruptionbudgets
-  verbs:
-  - "*"
-EOF
+sed -i 's|size: 3|replicaCount: 1|g' deploy/crds/helm_v1alpha1_nginx_cr.yaml
 
 DIR2="$(pwd)"
 # deploy the operator
@@ -81,40 +71,43 @@ kubectl create -f deploy/role.yaml
 trap_add 'kubectl delete -f ${DIR2}/deploy/role.yaml' EXIT
 kubectl create -f deploy/role_binding.yaml
 trap_add 'kubectl delete -f ${DIR2}/deploy/role_binding.yaml' EXIT
-kubectl create -f deploy/crds/helm_v1alpha1_memcached_crd.yaml
-trap_add 'kubectl delete -f ${DIR2}/deploy/crds/helm_v1alpha1_memcached_crd.yaml' EXIT
+kubectl create -f deploy/crds/helm_v1alpha1_nginx_crd.yaml
+trap_add 'kubectl delete -f ${DIR2}/deploy/crds/helm_v1alpha1_nginx_crd.yaml' EXIT
 kubectl create -f deploy/operator.yaml
 trap_add 'kubectl delete -f ${DIR2}/deploy/operator.yaml' EXIT
 
 # wait for operator pod to run
-if ! timeout 1m kubectl rollout status deployment/memcached-operator;
+if ! timeout 1m kubectl rollout status deployment/nginx-operator;
 then
-    kubectl logs deployment/memcached-operator
+    kubectl logs deployment/nginx-operator
     exit 1
 fi
 
 # create CR
-kubectl create -f deploy/crds/helm_v1alpha1_memcached_cr.yaml
-trap_add 'kubectl delete --ignore-not-found -f ${DIR2}/deploy/crds/helm_v1alpha1_memcached_cr.yaml' EXIT
-if ! timeout 1m bash -c -- 'until kubectl get memcacheds.helm.example.com example-memcached -o jsonpath="{..status.release.info.status.code}" | grep 1; do sleep 1; done';
+kubectl create -f deploy/crds/helm_v1alpha1_nginx_cr.yaml
+trap_add 'kubectl delete --ignore-not-found -f ${DIR2}/deploy/crds/helm_v1alpha1_nginx_cr.yaml' EXIT
+if ! timeout 1m bash -c -- 'until kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.release.info.status.code}" | grep 1; do sleep 1; done';
 then
-    kubectl logs deployment/memcached-operator
+    kubectl logs deployment/nginx-operator
     exit 1
 fi
 
-release_name=$(kubectl get memcacheds.helm.example.com example-memcached -o jsonpath="{..status.release.name}")
-memcached_statefulset=$(kubectl get statefulset -l release=${release_name} -o jsonpath="{..metadata.name}")
-kubectl patch statefulset ${memcached_statefulset} -p '{"spec":{"updateStrategy":{"type":"RollingUpdate"}}}'
-if ! timeout 1m kubectl rollout status statefulset/${memcached_statefulset};
+release_name=$(kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.release.name}")
+nginx_deployment=$(kubectl get deployment -l "app.kubernetes.io/instance=${release_name}" -o jsonpath="{..metadata.name}")
+
+if ! timeout 1m kubectl rollout status deployment/${nginx_deployment};
 then
-    kubectl describe pods -l release=${release_name}
-    kubectl describe statefulsets ${memcached_statefulset}
-    kubectl logs statefulset/${memcached_statefulset}
+    kubectl describe pods -l "app.kubernetes.io/instance=${release_name}"
+    kubectl describe deployments ${nginx_deployment}
+    kubectl logs deployment/${nginx_deployment}
     exit 1
 fi
 
-kubectl delete -f deploy/crds/helm_v1alpha1_memcached_cr.yaml --wait=true
-kubectl logs deployment/memcached-operator | grep "Uninstalled release" | grep "${release_name}"
+nginx_service=$(kubectl get service -l "app.kubernetes.io/instance=${release_name}" -o jsonpath="{..metadata.name}")
+kubectl get service ${nginx_service}
+
+kubectl delete -f deploy/crds/helm_v1alpha1_nginx_cr.yaml --wait=true
+kubectl logs deployment/nginx-operator | grep "Uninstalled release" | grep "${release_name}"
 
 popd
 popd
