@@ -250,8 +250,7 @@ $ kubectl create namespace operator-test
 $ operator-sdk test local ./test/e2e --namespace operator-test
 ```
 
-If you would prefer to create the resources yourself and skip resource creation, you can use the `--no-setup` flag
-(note: requires `--namespace` flag)
+If you would prefer to create the resources yourself and skip resource creation, you can use the `--no-setup` flag:
 ```shell
 $ kubectl create namespace operator-test
 $ kubectl create -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
