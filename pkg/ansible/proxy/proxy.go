@@ -212,6 +212,7 @@ func Run(done chan error, o Options) error {
 		if !synced {
 			return fmt.Errorf("failed to sync cache")
 		}
+		log.Info("Cache sync was successful")
 		o.Cache = informerCache
 	}
 
