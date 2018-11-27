@@ -56,7 +56,7 @@ COPY . /go/src/{{ .Repo }}
 RUN go build -o /go/bin/{{ .ProjectName }} {{ .Repo }}/cmd/manager
 
 # Base image containing "{{ .ProjectName }}" binary
-FROM alpine:3.6
+FROM alpine:3.8
 RUN apk upgrade --update --no-cache
 USER nobody
 COPY --from=builder /go/bin/{{ .ProjectName }} /usr/local/bin/{{ .ProjectName }}

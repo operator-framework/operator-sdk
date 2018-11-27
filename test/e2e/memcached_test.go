@@ -212,8 +212,12 @@ func TestMemcached(t *testing.T) {
 	// link local sdk to vendor if not in travis
 	if prSlug == "" {
 		os.RemoveAll("vendor/github.com/operator-framework/operator-sdk/pkg")
-		os.Symlink(filepath.Join(gopath, "src/github.com/operator-framework/operator-sdk/pkg"),
-			"vendor/github.com/operator-framework/operator-sdk/pkg")
+		cmdOut, err = exec.Command("cp", "-a",
+			filepath.Join(gopath, "src/github.com/operator-framework/operator-sdk/pkg"),
+			"vendor/github.com/operator-framework/operator-sdk").CombinedOutput()
+		if err != nil {
+			t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		}
 	}
 
 	// create crd

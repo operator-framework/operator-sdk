@@ -47,7 +47,7 @@ COPY . /go/src/github.com/example-inc/app-operator
 RUN go build -o /go/bin/app-operator github.com/example-inc/app-operator/cmd/manager
 
 # Base image containing "app-operator" binary
-FROM alpine:3.6
+FROM alpine:3.8
 RUN apk upgrade --update --no-cache
 USER nobody
 COPY --from=builder /go/bin/app-operator /usr/local/bin/app-operator
