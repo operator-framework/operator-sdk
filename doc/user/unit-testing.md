@@ -1,10 +1,10 @@
 # Unit testing
 
-Testing your operator should involve both unit and [end-to-end][doc_e2e_test] tests. Unit tests assess the expected outcomes of individual operator components without requiring coordination between components. Operator unit tests should test multiple scenarios likely to be encountered by your custom operator logic at runtime. Much of your custom logic will involve API server calls via a [client][doc_client]; `Reconcile()` in particular will be making API calls on each reconciliation loop. These API calls can be mocked by using a [fake client][doc_cr_fake_client], perfect for unit testing. This document steps through writing a unit test for the [memcached-operator][repo_memcached_reconcile]'s `Reconcile()` method using a fake client.
+Testing your operator should involve both unit and [end-to-end][doc_e2e_test] tests. Unit tests assess the expected outcomes of individual operator components without requiring coordination between components. Operator unit tests should test multiple scenarios likely to be encountered by your custom operator logic at runtime. Much of your custom logic will involve API server calls via a [client][doc_client]; `Reconcile()` in particular will be making API calls on each reconciliation loop. These API calls can be mocked by using `controller-runtime`'s [fake client][doc_cr_fake_client], perfect for unit testing. This document steps through writing a unit test for the [memcached-operator][repo_memcached_reconcile]'s `Reconcile()` method using a fake client.
 
 ## Fake client
 
-`controller-runtime`'s fake Kubernetes API server client exposes the same set of operations as a typical client, but simply tracks objects rather than sending requests over a network. You can create a new fake client that tracks an initial set of objects with the following code:
+`controller-runtime`'s fake client exposes the same set of operations as a typical client, but simply tracks objects rather than sending requests over a network. You can create a new fake client that tracks an initial set of objects with the following code:
 
 ```Go
 import (
@@ -57,9 +57,6 @@ import (
 )
 
 func TestMemcachedControllerDeploymentCreate(t *testing.T) {
-  // Set the logger to development mode for verbose logs.
-  logf.SetLogger(logf.ZapLogger(true))
-
   var (
     name            = "memcached-operator"
     namespace       = "memcached"
@@ -129,7 +126,7 @@ A unit test checking more cases can be found in our [`samples repo`][code_test_e
 
 [doc_e2e_test]:https://github.com/operator-framework/operator-sdk/blob/2f772d1dc2340dd19bdc3ec8c2dc9f0f77cc8297/doc/test-framework/writing-e2e-tests.md
 [doc_client]:https://github.com/operator-framework/operator-sdk/blob/5c50126e7a112d67826894997eca143e12dc165f/doc/user/client.md
-[doc_cr_fake_client]:https://github.com/operator-framework/operator-sdk/blob/6df28578eca080492c552efd607b47625bfe3b8b/example/memcached-operator/memcached_controller.go.tmpl
+[doc_cr_fake_client]:https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/fake
 [repo_memcached_reconcile]:https://github.com/operator-framework/operator-sdk-samples/blob/4c6934448684a6953ece4d3d9f3f77494b1c125e/memcached-operator/pkg/controller/memcached/memcached_controller.go#L82
 [doc_reconcile]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/reconcile#Reconciler
 [code_test_example]: https://github.com/operator-framework/operator-sdk-samples/blob/master/memcached-operator/pkg/controller/memcached/memcached_controller_test.go#L25
