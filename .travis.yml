@@ -5,6 +5,11 @@ sudo: required
 go:
 - 1.10.3
 
+addons:
+  apt:
+    packages:
+      - docker-ce
+
 before_install:
   - |
       if [ "$TRAVIS_COMMIT_RANGE" != "" ] && ! git diff --name-only $TRAVIS_COMMIT_RANGE | grep -qvE '(\.md)|(\.MD)|(\.png)|(\.pdf)|^(doc/)|^(MAINTAINERS)|^(LICENSE)'; then
