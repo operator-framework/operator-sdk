@@ -236,6 +236,13 @@ as an argument. You can use `--help` to view the other configuration options and
 $ operator-sdk test local ./test/e2e --go-test-flags "-v -parallel=2"
 ```
 
+If you wish to specify a different operator image than specified in your `operator.yaml` file (or a user-specified
+namespaced manifest file), you can use the `--image` flag:
+
+```shell
+$ operator-sdk test local ./test/e2e --image quay.io/example/my-operator:v0.0.2
+```
+
 If you wish to run all the tests in 1 namespace (which also forces `-parallel=1`), you can use the `--namespace` flag:
 
 ```shell
