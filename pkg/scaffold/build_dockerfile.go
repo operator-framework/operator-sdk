@@ -24,21 +24,46 @@ const DockerfileFile = "Dockerfile"
 
 type Dockerfile struct {
 	input.Input
+
+	// Multistage determines if a multistage Dockerfile template is used.
+	Multistage bool
 }
 
 func (s *Dockerfile) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = filepath.Join(BuildDir, DockerfileFile)
 	}
-	s.TemplateBody = dockerfileTmpl
+	if s.Multistage {
+		s.TemplateBody = dockerfileMultiTmpl
+	} else {
+		s.TemplateBody = dockerfileNonMultiTmpl
+	}
+	s.IfExistsAction = input.Error
 	return s.Input, nil
 }
 
-const dockerfileTmpl = `FROM alpine:3.8
+const dockerfileMultiTmpl = `# Binary builder image
+FROM golang:1.10.3 AS builder
 
+ENV GOPATH /go
+ENV CGO_ENABLED 0
+ENV GOOS linux
+ENV GOARCH amd64
+
+WORKDIR /go/src/{{ .Repo }}
+COPY . /go/src/{{ .Repo }}
+
+RUN go build -o /go/bin/{{ .ProjectName }} {{ .Repo }}/cmd/manager
+
+# Base image containing "{{ .ProjectName }}" binary
+FROM alpine:3.6
 RUN apk upgrade --update --no-cache
-
 USER nobody
+COPY --from=builder /go/bin/{{ .ProjectName }} /usr/local/bin/{{ .ProjectName }}
+`
 
-ADD build/_output/bin/{{.ProjectName}} /usr/local/bin/{{.ProjectName}}
+const dockerfileNonMultiTmpl = `FROM alpine:3.8
+RUN apk upgrade --update --no-cache
+USER nobody
+COPY build/_output/bin/{{.ProjectName}} /usr/local/bin/{{.ProjectName}}
 `

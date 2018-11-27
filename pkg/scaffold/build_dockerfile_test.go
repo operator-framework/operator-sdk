@@ -20,24 +20,54 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/internal/testutil"
 )
 
-func TestDockerfile(t *testing.T) {
+func TestDockerfileMultistage(t *testing.T) {
+	s, buf := setupScaffoldAndWriter()
+	err := s.Execute(appConfig, &Dockerfile{Multistage: true})
+	if err != nil {
+		t.Fatalf("failed to execute the scaffold: (%v)", err)
+	}
+
+	if dockerfileMultiExp != buf.String() {
+		diffs := testutil.Diff(dockerfileMultiExp, buf.String())
+		t.Fatalf("expected vs actual differs.\n%v", diffs)
+	}
+}
+
+const dockerfileMultiExp = `# Binary builder image
+FROM golang:1.10.3 AS builder
+
+ENV GOPATH /go
+ENV CGO_ENABLED 0
+ENV GOOS linux
+ENV GOARCH amd64
+
+WORKDIR /go/src/github.com/example-inc/app-operator
+COPY . /go/src/github.com/example-inc/app-operator
+
+RUN go build -o /go/bin/app-operator github.com/example-inc/app-operator/cmd/manager
+
+# Base image containing "app-operator" binary
+FROM alpine:3.6
+RUN apk upgrade --update --no-cache
+USER nobody
+COPY --from=builder /go/bin/app-operator /usr/local/bin/app-operator
+`
+
+func TestDockerfileNonMultistage(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err := s.Execute(appConfig, &Dockerfile{})
 	if err != nil {
 		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
 
-	if dockerfileExp != buf.String() {
-		diffs := testutil.Diff(dockerfileExp, buf.String())
+	if dockerfileNonMultiExp != buf.String() {
+		diffs := testutil.Diff(dockerfileNonMultiExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
 
-const dockerfileExp = `FROM alpine:3.8
-
+const dockerfileNonMultiExp = `FROM alpine:3.8
 RUN apk upgrade --update --no-cache
-
 USER nobody
-
-ADD build/_output/bin/app-operator /usr/local/bin/app-operator
+COPY build/_output/bin/app-operator /usr/local/bin/app-operator
 `

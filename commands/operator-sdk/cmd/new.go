@@ -35,8 +35,8 @@ func NewNewCmd() *cobra.Command {
 	newCmd := &cobra.Command{
 		Use:   "new <project-name>",
 		Short: "Creates a new operator application",
-		Long: `The operator-sdk new command creates a new operator application and 
-generates a default directory layout based on the input <project-name>. 
+		Long: `The operator-sdk new command creates a new operator application and
+generates a default directory layout based on the input <project-name>.
 
 <project-name> is the project name of the new operator. (e.g app-operator)
 
@@ -134,7 +134,9 @@ func doScaffold() {
 	s := &scaffold.Scaffold{}
 	err := s.Execute(cfg,
 		&scaffold.Cmd{},
-		&scaffold.Dockerfile{},
+		&scaffold.Dockerfile{
+			Multistage: projutil.IsDockerMultistage(),
+		},
 		&scaffold.ServiceAccount{},
 		&scaffold.Role{
 			IsClusterScoped: isClusterScoped,

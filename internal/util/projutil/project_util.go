@@ -15,12 +15,18 @@
 package projutil
 
 import (
+	"bytes"
+	"context"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/helm"
+
+	docker "docker.io/go-docker"
+	"github.com/coreos/go-semver/semver"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -108,6 +114,10 @@ func GetOperatorType() OperatorType {
 	return OperatorTypeUnknown
 }
 
+func IsGoOperator() bool {
+	return GetOperatorType() == OperatorTypeGo
+}
+
 // GetGopath gets GOPATH and makes sure it is set and non-empty.
 func GetGopath() string {
 	gopath, ok := os.LookupEnv(GopathEnv)
@@ -138,4 +148,29 @@ func SetGopath(currentGopath string) string {
 		return ""
 	}
 	return newGopath
+}
+
+// IsDockerMultistage checks whether the docker daemon is version >= 17.05.0.
+// Both ARG before FROM and multistage builds exist in docker version >= 17.05.0.
+func IsDockerMultistage() bool {
+	client, err := docker.NewEnvClient()
+	if err != nil {
+		log.Fatalf("get docker client: (%v)", err)
+	}
+	ver, err := client.ServerVersion(context.TODO())
+	if err != nil {
+		log.Fatalf("get docker version: (%v)", err)
+	}
+	dockerVer := semver.New(ver.Version)
+	reqVer := semver.New("17.05.0")
+	return !dockerVer.LessThan(*reqVer)
+}
+
+// IsDockerfileMultistage checks if dockerfile uses a multistage pipeline.
+func IsDockerfileMultistage(dockerfile string) bool {
+	df, err := ioutil.ReadFile(dockerfile)
+	if err != nil {
+		log.Fatal("Dockerfile not found")
+	}
+	return bytes.Count(df, []byte("FROM")) > 1
 }

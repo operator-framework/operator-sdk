@@ -20,23 +20,61 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/internal/testutil"
 )
 
-func TestTestFrameworkDockerfile(t *testing.T) {
+func TestTestFrameworkDockerfileMultistage(t *testing.T) {
+	s, buf := setupScaffoldAndWriter()
+	err := s.Execute(appConfig, &TestFrameworkDockerfile{Multistage: true})
+	if err != nil {
+		t.Fatalf("failed to execute the scaffold: (%v)", err)
+	}
+
+	if testDockerfileMultiExp != buf.String() {
+		diffs := testutil.Diff(testDockerfileMultiExp, buf.String())
+		t.Fatalf("expected vs actual differs.\n%v", diffs)
+	}
+}
+
+const testDockerfileMultiExp = `# ARG before FROM must always be before the first FROM
+ARG BASEIMAGE
+# Test binary builder image
+FROM golang:1.10.3 AS builder
+
+ENV GOPATH /go
+ENV CGO_ENABLED 0
+ENV GOOS linux
+ENV GOARCH amd64
+
+WORKDIR /go/src/github.com/example-inc/app-operator
+COPY . /go/src/github.com/example-inc/app-operator
+
+ARG TESTDIR
+RUN go test -c -o /go/bin/app-operator-test ${TESTDIR}/...
+
+# Base image containing "app-operator-test" binary
+FROM ${BASEIMAGE}
+COPY --from=builder /go/bin/app-operator-test /usr/local/bin/app-operator-test
+
+ARG NAMESPACEDMAN
+COPY $NAMESPACEDMAN /namespaced.yaml
+COPY build/test-framework/go-test.sh /go-test.sh
+`
+
+func TestTestFrameworkDockerfileNonMultistage(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err := s.Execute(appConfig, &TestFrameworkDockerfile{})
 	if err != nil {
 		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
 
-	if testFrameworkDockerfileExp != buf.String() {
-		diffs := testutil.Diff(testFrameworkDockerfileExp, buf.String())
+	if testDockerfileNonMultExp != buf.String() {
+		diffs := testutil.Diff(testDockerfileNonMultExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
 
-const testFrameworkDockerfileExp = `ARG BASEIMAGE
+const testDockerfileNonMultExp = `ARG BASEIMAGE
 FROM ${BASEIMAGE}
-ADD build/_output/bin/app-operator-test /usr/local/bin/app-operator-test
+COPY build/_output/bin/app-operator-test /usr/local/bin/app-operator-test
 ARG NAMESPACEDMAN
-ADD $NAMESPACEDMAN /namespaced.yaml
-ADD build/test-framework/go-test.sh /go-test.sh
+COPY $NAMESPACEDMAN /namespaced.yaml
+COPY build/test-framework/go-test.sh /go-test.sh
 `

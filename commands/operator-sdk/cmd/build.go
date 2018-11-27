@@ -37,6 +37,7 @@ var (
 	namespacedManBuild string
 	testLocationBuild  string
 	enableTests        bool
+	genMultistage      bool
 )
 
 func NewBuildCmd() *cobra.Command {
@@ -58,6 +59,7 @@ For example:
 		Run: buildFunc,
 	}
 	buildCmd.Flags().BoolVar(&enableTests, "enable-tests", false, "Enable in-cluster testing by adding test binary to the image")
+	buildCmd.Flags().BoolVar(&genMultistage, "gen-multistage", false, "Generate a multistage build Dockerfile at 'deploy/multistage.Dockerfile'.")
 	buildCmd.Flags().StringVar(&testLocationBuild, "test-location", "./test/e2e", "Location of tests")
 	buildCmd.Flags().StringVar(&namespacedManBuild, "namespaced-manifest", "deploy/operator.yaml", "Path of namespaced resources manifest for tests")
 	return buildCmd
@@ -136,27 +138,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
 		log.Fatalf("build command needs exactly 1 argument")
 	}
-
 	projutil.MustInProjectRoot()
-	goBuildEnv := append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("could not identify current working directory: (%v)", err)
-	}
-
-	// Don't need to build go code if Ansible Operator
-	if mainExists() {
-		managerDir := filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir)
-		outputBinName := filepath.Join(wd, scaffold.BuildBinDir, filepath.Base(wd))
-		buildCmd := exec.Command("go", "build", "-o", outputBinName, managerDir)
-		buildCmd.Env = goBuildEnv
-		buildCmd.Stdout = os.Stdout
-		buildCmd.Stderr = os.Stderr
-		err = buildCmd.Run()
-		if err != nil {
-			log.Fatalf("failed to build operator binary: (%v)", err)
-		}
-	}
 
 	image := args[0]
 	baseImageName := image
@@ -166,10 +148,19 @@ func buildFunc(cmd *cobra.Command, args []string) {
 
 	log.Infof("Building Docker image %s", baseImageName)
 
-	dbcmd := exec.Command("docker", "build", ".", "-f", "build/Dockerfile", "-t", baseImageName)
-	dbcmd.Stdout = os.Stdout
-	dbcmd.Stderr = os.Stderr
-	err = dbcmd.Run()
+	buildDockerfile := filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
+	buildDockerfile = setDockerfileIfMultistage(buildDockerfile)
+	if projutil.IsGoOperator() && !projutil.IsDockerfileMultistage(buildDockerfile) {
+		if err := buildOperatorBinary(); err != nil {
+			log.Fatalf("failed to build operator binary: (%v)", err)
+		}
+	}
+	buildCmd := exec.Command("docker", "build", ".",
+		"-f", buildDockerfile,
+		"-t", baseImageName)
+	buildCmd.Stdout = os.Stdout
+	buildCmd.Stderr = os.Stderr
+	err := buildCmd.Run()
 	if err != nil {
 		if enableTests {
 			log.Fatalf("failed to output intermediate image %s: (%v)", image, err)
@@ -179,15 +170,6 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	}
 
 	if enableTests {
-		testBinary := filepath.Join(wd, scaffold.BuildBinDir, filepath.Base(wd)+"-test")
-		buildTestCmd := exec.Command("go", "test", "-c", "-o", testBinary, testLocationBuild+"/...")
-		buildTestCmd.Env = goBuildEnv
-		buildTestCmd.Stdout = os.Stdout
-		buildTestCmd.Stderr = os.Stderr
-		err = buildTestCmd.Run()
-		if err != nil {
-			log.Fatalf("failed to build test binary: (%v)", err)
-		}
 		// if a user is using an older sdk repo as their library, make sure they have required build files
 		testDockerfile := filepath.Join(scaffold.BuildTestDir, scaffold.DockerfileFile)
 		_, err = os.Stat(testDockerfile)
@@ -199,14 +181,19 @@ func buildFunc(cmd *cobra.Command, args []string) {
 			cfg := &input.Config{
 				Repo:           projutil.CheckAndGetProjectGoPkg(),
 				AbsProjectPath: absProjectPath,
-				ProjectName:    filepath.Base(wd),
+				ProjectName:    filepath.Base(absProjectPath),
 			}
 
 			s := &scaffold.Scaffold{}
 			err = s.Execute(cfg,
-				&scaffold.TestFrameworkDockerfile{},
+				&scaffold.TestFrameworkDockerfile{
+					Multistage: projutil.IsDockerMultistage(),
+				},
 				&scaffold.GoTestScript{},
-				&scaffold.TestPod{Image: image, TestNamespaceEnv: test.TestNamespaceEnv},
+				&scaffold.TestPod{
+					Image:            image,
+					TestNamespaceEnv: test.TestNamespaceEnv,
+				},
 			)
 			if err != nil {
 				log.Fatalf("test-framework manifest scaffold failed: (%v)", err)
@@ -215,10 +202,20 @@ func buildFunc(cmd *cobra.Command, args []string) {
 
 		log.Infof("Building test Docker image %s", image)
 
-		testDbcmd := exec.Command("docker", "build", ".", "-f", testDockerfile, "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+baseImageName)
-		testDbcmd.Stdout = os.Stdout
-		testDbcmd.Stderr = os.Stderr
-		err = testDbcmd.Run()
+		if !projutil.IsDockerfileMultistage(testDockerfile) {
+			if err := buildTestBinary(); err != nil {
+				log.Fatalf("failed to build operator binary: (%v)", err)
+			}
+		}
+		testBuildCmd := exec.Command("docker", "build", ".",
+			"-f", testDockerfile,
+			"-t", image,
+			"--build-arg", "TESTDIR="+testLocationBuild,
+			"--build-arg", "BASEIMAGE="+baseImageName,
+			"--build-arg", "NAMESPACEDMAN="+namespacedManBuild)
+		testBuildCmd.Stdout = os.Stdout
+		testBuildCmd.Stderr = os.Stderr
+		err = testBuildCmd.Run()
 		if err != nil {
 			log.Fatalf("failed to output test image %s: (%v)", image, err)
 		}
@@ -229,7 +226,61 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	log.Info("Operator build complete.")
 }
 
-func mainExists() bool {
-	_, err := os.Stat(filepath.Join(scaffold.ManagerDir, scaffold.CmdFile))
-	return err == nil
+func setDockerfileIfMultistage(dockerfile string) string {
+	if !projutil.IsGoOperator() || !projutil.IsDockerMultistage() {
+		return dockerfile
+	}
+	if !projutil.IsDockerfileMultistage(dockerfile) {
+		if !genMultistage {
+			log.Warn(`Project uses a non-multistage Dockerfile but the present docker version
+supports multistage builds. Run operator-sdk build with --gen-multistage to write
+a multistage Dockerfile to 'build/multistage.Dockerfile' and build it. Rename this
+file to 'build/Dockerfile' to avoid this warning.`)
+		} else {
+			dfScaffold := &scaffold.Dockerfile{Multistage: true}
+			dfInput, _ := dfScaffold.GetInput()
+			p, df := filepath.Split(dfInput.Path)
+			dockerfile = filepath.Join(p, "mulitstage."+df)
+			dfScaffold.Path = dockerfile
+
+			absProjectPath := projutil.MustGetwd()
+			cfg := &input.Config{
+				AbsProjectPath: absProjectPath,
+				ProjectName:    filepath.Base(absProjectPath),
+				Repo:           projutil.CheckAndGetProjectGoPkg(),
+			}
+			err := (&scaffold.Scaffold{}).Execute(cfg, dfScaffold)
+			if err != nil {
+				log.Fatalf("failed to write multistage Dockerfile: (%v)", err)
+			}
+		}
+	}
+
+	return dockerfile
+}
+
+func buildOperatorBinary() error {
+	absProjectPath := projutil.MustGetwd()
+	binName := filepath.Base(absProjectPath)
+	managerDir := filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir)
+	outputBinName := filepath.Join(absProjectPath, scaffold.BuildBinDir, binName)
+
+	cmd := exec.Command("go", "build", "-o", outputBinName, managerDir)
+	return execGoCmd(cmd)
+}
+
+func buildTestBinary() error {
+	absProjectPath := projutil.MustGetwd()
+	binName := filepath.Base(absProjectPath)
+	outputBinName := filepath.Join(absProjectPath, scaffold.BuildBinDir, binName+"-test")
+
+	cmd := exec.Command("go", "test", "-c", "-o", outputBinName, testLocationBuild+"/...")
+	return execGoCmd(cmd)
+}
+
+func execGoCmd(cmd *exec.Cmd) error {
+	cmd.Env = append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
