@@ -59,7 +59,7 @@ For example:
 		Run: buildFunc,
 	}
 	buildCmd.Flags().BoolVar(&enableTests, "enable-tests", false, "Enable in-cluster testing by adding test binary to the image")
-	buildCmd.Flags().BoolVar(&genMultistage, "gen-multistage", false, "Generate a multistage build Dockerfile at 'deploy/multistage.Dockerfile'.")
+	buildCmd.Flags().BoolVar(&genMultistage, "gen-multistage", false, "Generate multistage build and test Dockerfiles")
 	buildCmd.Flags().StringVar(&testLocationBuild, "test-location", "./test/e2e", "Location of tests")
 	buildCmd.Flags().StringVar(&namespacedManBuild, "namespaced-manifest", "deploy/operator.yaml", "Path of namespaced resources manifest for tests")
 	return buildCmd
@@ -149,7 +149,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	log.Infof("Building Docker image %s", baseImageName)
 
 	buildDockerfile := filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
-	buildDockerfile = setDockerfileIfMultistage(buildDockerfile)
+	buildDockerfile = makeDockerfileIfMultistage(buildDockerfile, false)
 	if projutil.IsGoOperator() && !projutil.IsDockerfileMultistage(buildDockerfile) {
 		if err := buildOperatorBinary(); err != nil {
 			log.Fatalf("failed to build operator binary: (%v)", err)
@@ -198,6 +198,8 @@ func buildFunc(cmd *cobra.Command, args []string) {
 			if err != nil {
 				log.Fatalf("test-framework manifest scaffold failed: (%v)", err)
 			}
+		} else if err == nil {
+			testDockerfile = makeDockerfileIfMultistage(testDockerfile, true)
 		}
 
 		log.Infof("Building test Docker image %s", image)
@@ -226,30 +228,51 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	log.Info("Operator build complete.")
 }
 
-func setDockerfileIfMultistage(dockerfile string) string {
+func makeDockerfileIfMultistage(dockerfile string, isTest bool) string {
 	if !projutil.IsGoOperator() || !projutil.IsDockerMultistage() {
 		return dockerfile
 	}
 	if !projutil.IsDockerfileMultistage(dockerfile) {
 		if !genMultistage {
-			log.Warn(`Project uses a non-multistage Dockerfile but the present docker version
+			warnStr := `Project uses a non-multistage %sDockerfile but the present docker version
 supports multistage builds. Run operator-sdk build with --gen-multistage to write
-a multistage Dockerfile to 'build/multistage.Dockerfile' and build it. Rename this
-file to 'build/Dockerfile' to avoid this warning.`)
+a multistage Dockerfile to '%s' and build it. Rename this
+file to '%s' to avoid this warning.`
+			if isTest {
+				warnStr = fmt.Sprintf(warnStr,
+					"test ",
+					filepath.Join(scaffold.BuildTestDir, "multistage.Dockerfile"),
+					dockerfile)
+			} else {
+				warnStr = fmt.Sprintf(warnStr,
+					"",
+					filepath.Join(scaffold.BuildDir, "multistage.Dockerfile"),
+					dockerfile)
+			}
+			log.Warn(warnStr)
 		} else {
-			dfScaffold := &scaffold.Dockerfile{Multistage: true}
-			dfInput, _ := dfScaffold.GetInput()
-			p, df := filepath.Split(dfInput.Path)
-			dockerfile = filepath.Join(p, "mulitstage."+df)
-			dfScaffold.Path = dockerfile
-
 			absProjectPath := projutil.MustGetwd()
 			cfg := &input.Config{
 				AbsProjectPath: absProjectPath,
 				ProjectName:    filepath.Base(absProjectPath),
 				Repo:           projutil.CheckAndGetProjectGoPkg(),
 			}
-			err := (&scaffold.Scaffold{}).Execute(cfg, dfScaffold)
+
+			var f input.File
+			if isTest {
+				dockerfile = filepath.Join(scaffold.BuildTestDir, "multistage."+scaffold.DockerfileFile)
+				f = &scaffold.TestFrameworkDockerfile{
+					Multistage: true,
+					Input:      input.Input{Path: dockerfile},
+				}
+			} else {
+				dockerfile = filepath.Join(scaffold.BuildDir, "multistage."+scaffold.DockerfileFile)
+				f = &scaffold.Dockerfile{
+					Multistage: true,
+					Input:      input.Input{Path: dockerfile},
+				}
+			}
+			err := (&scaffold.Scaffold{}).Execute(cfg, f)
 			if err != nil {
 				log.Fatalf("failed to write multistage Dockerfile: (%v)", err)
 			}
