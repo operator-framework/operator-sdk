@@ -35,8 +35,14 @@ DEST_IMAGE="quay.io/example/nginx-operator:v0.0.2"
 
 set -ex
 
-# switch to the "default" namespace if on openshift
-if which oc 2>/dev/null; then oc project default; fi
+# if on openshift switch to the "default" namespace
+# and allow containers to run as root (necessary for
+# default nginx image)
+if which oc 2>/dev/null;
+then
+    oc project default
+    oc adm policy add-scc-to-user anyuid -z default
+fi
 
 # build operator binary and base image
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o test/helm-operator/helm-operator test/helm-operator/cmd/helm-operator/main.go
