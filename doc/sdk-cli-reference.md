@@ -258,6 +258,7 @@ Runs the tests locally
 *  `--namespace` string - if non-empty, single namespace to run tests in (e.g. "operator-test") (default: "")
 * `--go-test-flags` string - extra arguments to pass to `go test` (e.g. -f "-v -parallel=2")
 * `--up-local` - Enable running operator locally with go run instead of as an image in the cluster
+* `--image` string - use a different operator image from the one specified in the namespaced manifest
 * `-h, --help` - help for local
 
 ##### Use
