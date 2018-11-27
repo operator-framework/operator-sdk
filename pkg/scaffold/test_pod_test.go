@@ -18,7 +18,6 @@ import (
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/internal/testutil"
-	"github.com/operator-framework/operator-sdk/pkg/test"
 )
 
 func TestPodTest(t *testing.T) {
@@ -26,7 +25,7 @@ func TestPodTest(t *testing.T) {
 	err := s.Execute(appConfig,
 		&TestPod{
 			Image:            "quay.io/app/operator:v1.0.0",
-			TestNamespaceEnv: test.TestNamespaceEnv,
+			TestNamespaceEnv: "TEST_NAMESPACE",
 		})
 	if err != nil {
 		t.Fatalf("failed to execute the scaffold: (%v)", err)
