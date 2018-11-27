@@ -152,7 +152,7 @@ func doScaffold() {
 		&scaffold.GopkgToml{},
 	)
 	if err != nil {
-		log.Fatalf("new scaffold failed: (%v)", err)
+		log.Fatalf("new go scaffold failed: (%v)", err)
 	}
 }
 
@@ -205,7 +205,7 @@ func doAnsibleScaffold() {
 		},
 	)
 	if err != nil {
-		log.Fatalf("new scaffold failed: (%v)", err)
+		log.Fatalf("new ansible scaffold failed: (%v)", err)
 	}
 
 	// Decide on playbook.
@@ -218,7 +218,7 @@ func doAnsibleScaffold() {
 			},
 		)
 		if err != nil {
-			log.Fatalf("new playbook scaffold failed: (%v)", err)
+			log.Fatalf("new ansible playbook scaffold failed: (%v)", err)
 		}
 	}
 
@@ -279,11 +279,11 @@ func doHelmScaffold() {
 		},
 	)
 	if err != nil {
-		log.Fatalf("new scaffold failed: (%v)", err)
+		log.Fatalf("new helm scaffold failed: (%v)", err)
 	}
 
 	if err := helm.CreateChartForResource(resource, cfg.AbsProjectPath); err != nil {
-		log.Fatalf("failed to create initial chart for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
+		log.Fatalf("failed to create initial helm chart for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
 	}
 
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
