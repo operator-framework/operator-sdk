@@ -106,19 +106,17 @@
   version = "v1.1.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:7942de144228c1b62eaba44ec5153a29d25cd016e8fb23cb9533c77f6111b397"
+  digest = "1:522eff2a1f014a64fb403db60fc0110653e4dc5b59779894d208e697b0708ddc"
   name = "github.com/docker/distribution"
   packages = [
     "digestset",
     "reference",
   ]
   pruneopts = ""
-  revision = "aa985ba8897a426e5db31b36cd8cca83cf85cead"
+  revision = "edc3ab29cdff8694dd6feb85cfeb4b5f1b38ed9c"
 
 [[projects]]
-  branch = "master"
-  digest = "1:c1c4dbf9ef82408677dc73925b395f6494d0d25815c064582f3a0ac4838b75a9"
+  digest = "1:6bbfd267f02fc9371e3df1f249dc69e0ff71e91f28e9dfe8b96376c4abe28bed"
   name = "github.com/docker/docker"
   packages = [
     "api/types",
@@ -132,12 +130,11 @@
     "api/types/swarm",
     "api/types/swarm/runtime",
     "api/types/versions",
-    "errdefs",
     "pkg/term",
     "pkg/term/windows",
   ]
   pruneopts = ""
-  revision = "852542b3976754f62232f1fafca7fd35deeb1da3"
+  revision = "4f3616fb1c112e206b88cb7a9922bf49067a7756"
 
 [[projects]]
   digest = "1:ebe593d8b65a2947b78b6e164a2dac1a230b977a700b694da3a398b03b7afb04"
@@ -618,12 +615,11 @@
   revision = "185b4288413d2a0dd0806f78c90dde719829e5ae"
 
 [[projects]]
-  digest = "1:2761e287c811d0948d47d0252b82281eca3801eb3c9d5f9530956643d5b9f430"
+  digest = "1:67d5130351f71fe24139c6168dd2f8ab5fde543a1230754403d84173bb25a097"
   name = "github.com/russross/blackfriday"
   packages = ["."]
   pruneopts = ""
-  revision = "05f3235734ad95d0016f6a23902f06461fcf567a"
-  version = "v1.5.2"
+  revision = "300106c228d52c8941d4b3de6054a6062a86dda3"
 
 [[projects]]
   digest = "1:3962f553b77bf6c03fc07cd687a22dd3b00fe11aa14d31194f5505f5bb65cdc8"
@@ -632,6 +628,14 @@
   pruneopts = ""
   revision = "1744e2970ca51c86172c8190fadad617561ed6e7"
   version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:606fa779c7a80ab6a9ec5836cd12759f86cd6e1d82d5d60cf7ec5133e78c6cf8"
+  name = "github.com/shurcooL/sanitized_anchor_name"
+  packages = ["."]
+  pruneopts = ""
+  revision = "86672fcb3f950f35f2e675df2240550f2a50762f"
 
 [[projects]]
   digest = "1:5f48b818f16848d05cf74f4cbdd0cbe9e0dcddb3c459b4c510c6e2c8e1b4dff1"
