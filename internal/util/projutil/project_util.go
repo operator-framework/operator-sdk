@@ -186,3 +186,16 @@ func ExecCmd(cmd *exec.Cmd) error {
 	}
 	return nil
 }
+
+func DockerBuild(dockerfile, image string, buildArgs ...string) error {
+	args := []string{"build", ".", "-f", dockerfile, "-t", image}
+	for _, arg := range buildArgs {
+		args = append(args, "--build-arg", arg)
+	}
+	bcmd := exec.Command("docker", args...)
+	err := ExecCmd(bcmd)
+	if err != nil {
+		return fmt.Errorf("error building docker image %s: %v", image, err)
+	}
+	return nil
+}

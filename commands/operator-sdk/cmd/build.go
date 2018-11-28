@@ -155,10 +155,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 			log.Fatalf("failed to build operator binary: (%v)", err)
 		}
 	}
-	buildCmd := exec.Command("docker", "build", ".",
-		"-f", buildDockerfile,
-		"-t", baseImageName)
-	err := projutil.ExecCmd(buildCmd)
+	err := projutil.DockerBuild(buildDockerfile, baseImageName)
 	if err != nil {
 		if enableTests {
 			log.Fatalf("failed to output intermediate image %s: (%v)", image, err)
@@ -207,13 +204,10 @@ func buildFunc(cmd *cobra.Command, args []string) {
 				log.Fatalf("failed to build operator binary: (%v)", err)
 			}
 		}
-		testBuildCmd := exec.Command("docker", "build", ".",
-			"-f", testDockerfile,
-			"-t", image,
-			"--build-arg", "TESTDIR="+testLocationBuild,
-			"--build-arg", "BASEIMAGE="+baseImageName,
-			"--build-arg", "NAMESPACEDMAN="+namespacedManBuild)
-		err = projutil.ExecCmd(testBuildCmd)
+		err = projutil.DockerBuild(testDockerfile, image,
+			"TESTDIR="+testLocationBuild,
+			"BASEIMAGE="+baseImageName,
+			"NAMESPACEDMAN="+namespacedManBuild)
 		if err != nil {
 			log.Fatalf("failed to output test image %s: (%v)", image, err)
 		}
