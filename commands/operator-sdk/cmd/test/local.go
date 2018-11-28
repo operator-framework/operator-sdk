@@ -204,11 +204,9 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	dc := exec.Command("go", testArgs...)
 	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
 	dc.Dir = projutil.MustGetwd()
-	dc.Stdout = os.Stdout
-	dc.Stderr = os.Stderr
-	err := dc.Run()
+	err := projutil.ExecCmd(dc)
 	if err != nil {
-		log.Fatalf("failed to exec `go %s`: (%v)", strings.Join(testArgs, " "), err)
+		log.Fatal(err)
 	}
 
 	log.Info("Local operator test successfully completed.")

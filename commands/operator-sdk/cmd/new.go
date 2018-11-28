@@ -228,9 +228,10 @@ func doAnsibleScaffold() {
 
 	// Run galaxy init.
 	cmd := exec.Command(filepath.Join(galaxyInit.AbsProjectPath, galaxyInit.Path))
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
+	err = projutil.ExecCmd(cmd)
+	if err != nil {
+		log.Fatalf("failed to run galaxy-init: (%v)", err)
+	}
 
 	// Delete Galxy INIT
 	// Mac OS tmp directory is /var/folders/_c/..... this means we have to make sure that we get the top level directory to remove
@@ -321,14 +322,12 @@ func verifyFlags() {
 	}
 }
 
-func execCmd(stdout *os.File, cmd string, args ...string) {
+func execProjectCmd(cmd string, args ...string) {
 	dc := exec.Command(cmd, args...)
 	dc.Dir = filepath.Join(projutil.MustGetwd(), projectName)
-	dc.Stdout = stdout
-	dc.Stderr = os.Stderr
-	err := dc.Run()
+	err := projutil.ExecCmd(dc)
 	if err != nil {
-		log.Fatalf("failed to exec %s %#v: (%v)", cmd, args, err)
+		log.Fatal(err)
 	}
 }
 
@@ -338,7 +337,7 @@ func pullDep() {
 		log.Fatalf("looking for dep in $PATH: (%v)", err)
 	}
 	log.Info("Run dep ensure ...")
-	execCmd(os.Stdout, dep, ensureCmd, "-v")
+	execProjectCmd(dep, ensureCmd, "-v")
 	log.Info("Run dep ensure done")
 }
 
@@ -347,8 +346,8 @@ func initGit() {
 		return
 	}
 	log.Info("Run git init ...")
-	execCmd(os.Stdout, "git", "init")
-	execCmd(os.Stdout, "git", "add", "--all")
-	execCmd(os.Stdout, "git", "commit", "-q", "-m", "INITIAL COMMIT")
+	execProjectCmd("git", "init")
+	execProjectCmd("git", "add", "--all")
+	execProjectCmd("git", "commit", "-q", "-m", "INITIAL COMMIT")
 	log.Info("Run git init done")
 }

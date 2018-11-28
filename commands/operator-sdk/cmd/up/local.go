@@ -135,11 +135,9 @@ func upLocal() {
 		}
 		os.Exit(0)
 	}()
-	dc.Stdout = os.Stdout
-	dc.Stderr = os.Stderr
 	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, kubeConfig))
 	dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, namespace))
-	err := dc.Run()
+	err := projutil.ExecCmd(dc)
 	if err != nil {
 		log.Fatalf("failed to run operator locally: (%v)", err)
 	}

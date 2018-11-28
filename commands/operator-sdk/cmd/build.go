@@ -158,9 +158,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	buildCmd := exec.Command("docker", "build", ".",
 		"-f", buildDockerfile,
 		"-t", baseImageName)
-	buildCmd.Stdout = os.Stdout
-	buildCmd.Stderr = os.Stderr
-	err := buildCmd.Run()
+	err := projutil.ExecCmd(buildCmd)
 	if err != nil {
 		if enableTests {
 			log.Fatalf("failed to output intermediate image %s: (%v)", image, err)
@@ -215,9 +213,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 			"--build-arg", "TESTDIR="+testLocationBuild,
 			"--build-arg", "BASEIMAGE="+baseImageName,
 			"--build-arg", "NAMESPACEDMAN="+namespacedManBuild)
-		testBuildCmd.Stdout = os.Stdout
-		testBuildCmd.Stderr = os.Stderr
-		err = testBuildCmd.Run()
+		err = projutil.ExecCmd(testBuildCmd)
 		if err != nil {
 			log.Fatalf("failed to output test image %s: (%v)", image, err)
 		}
@@ -289,7 +285,8 @@ func buildOperatorBinary() error {
 	outputBinName := filepath.Join(absProjectPath, scaffold.BuildBinDir, binName)
 
 	cmd := exec.Command("go", "build", "-o", outputBinName, managerDir)
-	return execGoCmd(cmd)
+	cmd.Env = append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
+	return projutil.ExecCmd(cmd)
 }
 
 func buildTestBinary() error {
@@ -298,12 +295,6 @@ func buildTestBinary() error {
 	outputBinName := filepath.Join(absProjectPath, scaffold.BuildBinDir, binName+"-test")
 
 	cmd := exec.Command("go", "test", "-c", "-o", outputBinName, testLocationBuild+"/...")
-	return execGoCmd(cmd)
-}
-
-func execGoCmd(cmd *exec.Cmd) error {
 	cmd.Env = append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	return projutil.ExecCmd(cmd)
 }

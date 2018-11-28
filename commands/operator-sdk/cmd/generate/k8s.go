@@ -17,7 +17,6 @@ package generate
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -74,9 +73,7 @@ func K8sCodegen() {
 		groupVersions,
 	}
 	cgCmd := exec.Command(genGroupsCmd, args...)
-	cgCmd.Stdout = os.Stdout
-	cgCmd.Stderr = os.Stderr
-	err = cgCmd.Run()
+	err = projutil.ExecCmd(cgCmd)
 	if err != nil {
 		log.Fatalf("failed to perform code-generation: (%v)", err)
 	}
