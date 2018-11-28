@@ -35,6 +35,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -115,7 +116,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	}
 
 	if r.ManageStatus {
-		err = r.markRunning(u)
+		err = r.markRunning(u, request.NamespacedName)
 		if err != nil {
 			return reconcileResult, err
 		}
@@ -197,7 +198,15 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	return reconcileResult, err
 }
 
-func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured) error {
+func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, namespacedName types.NamespacedName) error {
+	// Get the latest resource to prevent updating a stale status
+	err := r.Client.Get(context.TODO(), namespacedName, u)
+	if apierrors.IsNotFound(err) {
+		return err
+	}
+	if err != nil {
+		return err
+	}
 	statusInterface := u.Object["status"]
 	statusMap, _ := statusInterface.(map[string]interface{})
 	crStatus := ansiblestatus.CreateFromMap(statusMap)
@@ -219,7 +228,7 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured) er
 		)
 		ansiblestatus.SetCondition(&crStatus, *c)
 		u.Object["status"] = crStatus.GetJSONMap()
-		err := r.Client.Update(context.TODO(), u)
+		err := r.Client.Status().Update(context.TODO(), u)
 		if err != nil {
 			return err
 		}
@@ -227,7 +236,15 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured) er
 	return nil
 }
 
-func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) error {
+func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, namespacedName types.NamespacedName, statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) error {
+	// Get the latest resource to prevent updating a stale status
+	err := r.Client.Get(context.TODO(), namespacedName, u)
+	if apierrors.IsNotFound(err) {
+		return err
+	}
+	if err != nil {
+		return err
+	}
 	statusInterface := u.Object["status"]
 	statusMap, _ := statusInterface.(map[string]interface{})
 	crStatus := ansiblestatus.CreateFromMap(statusMap)
