@@ -82,10 +82,14 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
     OwnerType:    &cachev1alpha1.Memcached{},
   }
   pred := predicate.Funcs{
+    UpdateFunc: func(e event.UpdateEvent) bool {
+      // Ignore updates to CR status in which case metadata.Generation does not change
+      return e.MetaOld.GetGeneration() != e.MetaNew.GetGeneration()
+    },
     DeleteFunc: func(e event.DeleteEvent) bool {
       // Evaluates to false if the object has been confirmed deleted.
       return !e.DeleteStateUnknown
-    }
+    },
   }
   // Watch for Pod events.
   err = c.Watch(src, h, pred)
