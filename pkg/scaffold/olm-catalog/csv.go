@@ -77,9 +77,7 @@ func (s *Csv) CustomRender() ([]byte, error) {
 	}
 	if !exists {
 		currCSV = new(olmApi.ClusterServiceVersion)
-		if err = s.initCSVFields(currCSV); err != nil {
-			return nil, err
-		}
+		s.initCSVFields(currCSV)
 	}
 
 	csvConfig, err := getCSVConfig(s.ConfigFilePath)
@@ -163,12 +161,12 @@ func getDisplayName(name string) string {
 
 // initCSVFields initializes all csv fields that should be populated by a user
 // with sane defaults. initCSVFields should only be called for new csv's.
-func (s *Csv) initCSVFields(csv *olmApi.ClusterServiceVersion) error {
+func (s *Csv) initCSVFields(csv *olmApi.ClusterServiceVersion) {
 	// Metadata
 	csv.TypeMeta.APIVersion = olmApi.ClusterServiceVersionAPIVersion
 	csv.TypeMeta.Kind = olmApi.ClusterServiceVersionKind
-	csv.ObjectMeta.Name = getCSVName(strings.ToLower(s.ProjectName), s.CsvVersion)
-	csv.ObjectMeta.Namespace = "placeholder"
+	csv.SetName(getCSVName(strings.ToLower(s.ProjectName), s.CsvVersion))
+	csv.SetNamespace("placeholder")
 
 	// Spec fields
 	csv.Spec.Version = *semver.New(s.CsvVersion)
@@ -178,9 +176,7 @@ func (s *Csv) initCSVFields(csv *olmApi.ClusterServiceVersion) error {
 	csv.Spec.Provider = olmApi.AppLink{}
 	csv.Spec.Maintainers = make([]olmApi.Maintainer, 0)
 	csv.Spec.Links = make([]olmApi.AppLink, 0)
-	csv.Spec.Labels = make(map[string]string)
-
-	return nil
+	csv.SetLabels(make(map[string]string))
 }
 
 // TODO: validate that all fields from files are populated as expected
