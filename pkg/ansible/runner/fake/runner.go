@@ -72,6 +72,11 @@ func (r *Runner) GetReconcilePeriod() (time.Duration, bool) {
 	return r.ReconcilePeriod, r.ReconcilePeriod != time.Duration(0)
 }
 
+// GetManageStatus - get managestatus.
+func (r *Runner) GetManageStatus() bool {
+	return r.ManageStatus
+}
+
 // GetFinalizer - gets the fake finalizer.
 func (r *Runner) GetFinalizer() (string, bool) {
 	return r.Finalizer, r.Finalizer != ""
