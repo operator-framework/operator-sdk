@@ -39,8 +39,8 @@ type CSVUpdateSet struct {
 
 func (s *CSVUpdateSet) Populate() {
 	if localUpdater != nil {
-		s.Updaters = append(s.Updaters, localUpdater.InstallStrategy)
-		s.Updaters = append(s.Updaters, localUpdater.CustomResourceDefinitions)
+		s.Updaters = append(s.Updaters, localUpdater.installStrategy)
+		s.Updaters = append(s.Updaters, localUpdater.crdUpdate)
 	}
 }
 
@@ -64,8 +64,8 @@ var updateDispTable = map[string]func([]byte) error{
 }
 
 type localUpdaterFactory struct {
-	InstallStrategy           *CSVInstallStrategyUpdate
-	CustomResourceDefinitions *CSVCustomResourceDefinitionsUpdate
+	installStrategy *CSVInstallStrategyUpdate
+	crdUpdate       *CSVCustomResourceDefinitionsUpdate
 }
 
 var once sync.Once
@@ -81,14 +81,14 @@ func getLocalUpdaterFactory() *localUpdaterFactory {
 		localInstallStrategyUpdate.DeploymentSpecs = make([]olmInstall.StrategyDeploymentSpec, 0)
 		localInstallStrategyUpdate.Permissions = make([]olmInstall.StrategyDeploymentPermissions, 0)
 		localInstallStrategyUpdate.ClusterPermissions = make([]olmInstall.StrategyDeploymentPermissions, 0)
-		localUpdater.InstallStrategy = localInstallStrategyUpdate
+		localUpdater.installStrategy = localInstallStrategyUpdate
 
 		localCustomResourceDefinitionsUpdate := &CSVCustomResourceDefinitionsUpdate{
 			&olmApi.CustomResourceDefinitions{},
 		}
 		localCustomResourceDefinitionsUpdate.Owned = make([]olmApi.CRDDescription, 0)
 		localCustomResourceDefinitionsUpdate.Required = make([]olmApi.CRDDescription, 0)
-		localUpdater.CustomResourceDefinitions = localCustomResourceDefinitionsUpdate
+		localUpdater.crdUpdate = localCustomResourceDefinitionsUpdate
 	})
 	return localUpdater
 }
@@ -99,7 +99,7 @@ type CSVInstallStrategyUpdate struct {
 
 func getLocalInstallStrategyUpdate() *CSVInstallStrategyUpdate {
 	factory := getLocalUpdaterFactory()
-	return factory.InstallStrategy
+	return factory.installStrategy
 }
 
 func AddRoleToCSVInstallStrategyUpdate(yamlDoc []byte) error {
@@ -197,7 +197,7 @@ type CSVCustomResourceDefinitionsUpdate struct {
 
 func getLocalCustomResourceDefinitionsUpdate() *CSVCustomResourceDefinitionsUpdate {
 	factory := getLocalUpdaterFactory()
-	return factory.CustomResourceDefinitions
+	return factory.crdUpdate
 }
 
 func AddOwnedCRDToCSVCustomResourceDefinitionsUpdate(yamlDoc []byte) error {
@@ -229,10 +229,6 @@ func parseCRDDescriptionFromYAML(yamlDoc []byte) (*olmApi.CRDDescription, error)
 		Name:    newCRD.ObjectMeta.Name,
 		Version: newCRD.Spec.Version,
 		Kind:    newCRD.Spec.Names.Kind,
-		// Resources         []olmApi.CRDResourceReference	// Not sure where this is can be found
-		// StatusDescriptors []olmApi.StatusDescriptor    	// Not sure where this is can be found
-		// SpecDescriptors   []olmApi.SpecDescriptor      	// Not sure where this is can be found
-		// ActionDescriptor  []olmApi.ActionDescriptor			// Not sure where this is can be found
 	}
 	setCRDDisplayNameIfExist(crdDesc, newCRD)
 	setCRDDescriptionIfExist(crdDesc, newCRD)
@@ -269,7 +265,23 @@ func setCRDDescriptionIfExist(dstCRDDesc *olmApi.CRDDescription, srcCRD *apiextv
 }
 
 func (us *CSVCustomResourceDefinitionsUpdate) Apply(csv *olmApi.ClusterServiceVersion) error {
-	// Update all CRD's.
+	// Update all CRD descriptions, and include any user-written information in
+	// the new CRD descriptions.
+	crdDescSet := make(map[string]*olmApi.CRDDescription)
+	for _, desc := range us.Owned {
+		crdDescSet[desc.Name] = &desc
+	}
+	for _, desc := range us.Required {
+		crdDescSet[desc.Name] = &desc
+	}
+	for _, crd := range csv.GetAllCRDDescriptions() {
+		if desc, ok := crdDescSet[crd.Name]; ok {
+			desc.ActionDescriptor = crd.ActionDescriptor
+			desc.SpecDescriptors = crd.SpecDescriptors
+			desc.StatusDescriptors = crd.StatusDescriptors
+			desc.Resources = crd.Resources
+		}
+	}
 	csv.Spec.CustomResourceDefinitions = *us.CustomResourceDefinitions
 	return nil
 }
