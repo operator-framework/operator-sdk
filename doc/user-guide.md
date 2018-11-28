@@ -1,9 +1,9 @@
 # User Guide
 
-This guide walks through an example of building a simple memcached-operator using the operator-sdk CLI tool and controller-runtime library API.
-To learn how to use Ansible to create a Memcached operator, see [Ansible
-Operator User Guide][ansible_user_guide]. The rest of this document will show
-how to program an operator in Go.
+This guide walks through an example of building a simple memcached-operator using the operator-sdk
+CLI tool and controller-runtime library API. To learn how to use Ansible or Helm to create an
+operator, see the [Ansible Operator User Guide][ansible_user_guide] or the [Helm Operator User
+Guide][helm_user_guide]. The rest of this document will show how to program an operator in Go.
 
 ## Prerequisites
 
@@ -395,6 +395,7 @@ After adding new import paths to your operator project, run `dep ensure` in the 
 [memcached_controller]: ../example/memcached-operator/memcached_controller.go.tmpl
 [layout_doc]:./project_layout.md
 [ansible_user_guide]:./ansible/user-guide.md
+[helm_user_guide]:./helm/user-guide.md
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
