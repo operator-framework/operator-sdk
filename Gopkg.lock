@@ -107,18 +107,18 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a0937269866f68424e50a4d44e7dbaa0237891864c489ec2d44815786e810aa6"
+  digest = "1:7942de144228c1b62eaba44ec5153a29d25cd016e8fb23cb9533c77f6111b397"
   name = "github.com/docker/distribution"
   packages = [
     "digestset",
     "reference",
   ]
   pruneopts = ""
-  revision = "93e082742a009850ac46962150b2f652a822c5ff"
+  revision = "aa985ba8897a426e5db31b36cd8cca83cf85cead"
 
 [[projects]]
   branch = "master"
-  digest = "1:be1362b6824834f01e7b338e3e40d0ed0eb494d2e21f6270e406c2df9c1157d4"
+  digest = "1:c1c4dbf9ef82408677dc73925b395f6494d0d25815c064582f3a0ac4838b75a9"
   name = "github.com/docker/docker"
   packages = [
     "api/types",
@@ -137,7 +137,7 @@
     "pkg/term/windows",
   ]
   pruneopts = ""
-  revision = "0b7cb16dde4a20d024c7be59801d63bcfd18611b"
+  revision = "852542b3976754f62232f1fafca7fd35deeb1da3"
 
 [[projects]]
   digest = "1:ebe593d8b65a2947b78b6e164a2dac1a230b977a700b694da3a398b03b7afb04"
@@ -618,12 +618,12 @@
   revision = "185b4288413d2a0dd0806f78c90dde719829e5ae"
 
 [[projects]]
-  branch = "master"
-  digest = "1:7e0b48d8bdbf9278ce4a68510c5bf3d074e4d7f8ba6d18512b7c6eb50cc5c6e6"
+  digest = "1:2761e287c811d0948d47d0252b82281eca3801eb3c9d5f9530956643d5b9f430"
   name = "github.com/russross/blackfriday"
   packages = ["."]
   pruneopts = ""
-  revision = "abafa45cd843f4f4935c29a2e8f3d73a01820fc3"
+  revision = "05f3235734ad95d0016f6a23902f06461fcf567a"
+  version = "v1.5.2"
 
 [[projects]]
   digest = "1:3962f553b77bf6c03fc07cd687a22dd3b00fe11aa14d31194f5505f5bb65cdc8"
@@ -818,7 +818,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = ""
-  revision = "b5d43981345bdb2c233eb4bf3277847b48c6fdc6"
+  revision = "31ac5d88444a9e7ad18077db9a165d793ad06a2e"
 
 [[projects]]
   digest = "1:1293087271e314cfa2b3decededba2ecba0ff327e7b7809e00f73f616449191c"
@@ -1150,7 +1150,7 @@
   revision = "e494cc58111187acad93e64529228a2fc0153e39"
 
 [[projects]]
-  digest = "1:89eef4670d767c8f3e520d71509f40e77698b4bc898305b6ee0220300840b788"
+  digest = "1:13614139aef760b502fe057a8d34e9c4257d1581fb85498b0053267596e0514c"
   name = "k8s.io/kubernetes"
   packages = [
     "pkg/api/events",
@@ -1298,8 +1298,8 @@
     "pkg/version",
   ]
   pruneopts = ""
-  revision = "bf9a868e8ea3d3a8fa53cbb22f566771b3f8068b"
-  version = "v1.11.4"
+  revision = "bb9ffb1654d4a729bb4cec18ff088eacc153c239"
+  version = "v1.11.2"
 
 [[projects]]
   branch = "master"

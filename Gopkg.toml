@@ -28,7 +28,7 @@
 
 [[override]]
   name = "k8s.io/kubernetes"
-  version = "1.11.2"
+  version = "=1.11.2"
 
 [[constraint]]
   name = "k8s.io/helm"
@@ -36,7 +36,7 @@
 
 [[override]]
   name = "github.com/russross/blackfriday"
-  branch = "master"
+  version = "1.5.2"
 
 [[override]]
   name = "github.com/docker/distribution"
@@ -53,4 +53,3 @@
 [[constraint]]
   name = "sigs.k8s.io/controller-runtime"
   version = "v0.1.4"
-
