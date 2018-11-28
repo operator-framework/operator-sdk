@@ -54,7 +54,7 @@ type AnsibleOperatorReconciler struct {
 	Client          client.Client
 	EventHandlers   []events.EventHandler
 	ReconcilePeriod time.Duration
-	ManageStatus   bool
+	ManageStatus    bool
 }
 
 // Reconcile - handle the event.

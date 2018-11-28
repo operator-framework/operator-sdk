@@ -83,7 +83,7 @@ expects this mapping file in a predefined location: `/opt/ansible/watches.yaml`
   role/playbook is run, for a given CR.
 * **manageStatus** (optional): When true (default), the operator will manage
   the status of the CR generically. Set to false, the status of the CR is
-  managed elsewhere, the specified role/playbook or in a separate controller.
+  managed elsewhere, by the specified role/playbook or in a separate controller.
 
 An example Watches file:
 
