@@ -43,6 +43,7 @@ type Runner interface {
 	Run(string, *unstructured.Unstructured, string) (RunResult, error)
 	GetFinalizer() (string, bool)
 	GetReconcilePeriod() (time.Duration, bool)
+	GetManageStatus() bool
 }
 
 // watch holds data used to create a mapping of GVK to ansible playbook or role.
@@ -271,6 +272,11 @@ func (r *runner) GetReconcilePeriod() (time.Duration, bool) {
 		return time.Duration(0), false
 	}
 	return *r.reconcilePeriod, true
+}
+
+// GetManageStatus - get the manage status
+func (r *runner) GetManageStatus() bool {
+	return r.manageStatus
 }
 
 func (r *runner) GetFinalizer() (string, bool) {
