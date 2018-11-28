@@ -1,0 +1,6 @@
+---
+- version: v1alpha1
+  group: app.example.com
+  kind: Database
+  playbook: /opt/ansible/playbook.yaml
+  watches: invalid
