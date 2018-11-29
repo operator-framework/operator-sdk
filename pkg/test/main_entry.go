@@ -63,6 +63,7 @@ func MainEntry(m *testing.M) {
 	var localCmd *exec.Cmd
 	var localCmdOutBuf, localCmdErrBuf bytes.Buffer
 	if *localOperator {
+		// TODO: make a generic 'up-local' function to deduplicate shared code between this and cmd/up/local
 		// taken from commands/operator-sdk/cmd/up/local.go
 		runArgs := append([]string{"run"}, []string{filepath.Join(scaffold.ManagerDir, scaffold.CmdFile)}...)
 		localCmd = exec.Command("go", runArgs...)
