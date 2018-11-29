@@ -15,46 +15,34 @@
 package metrics
 
 import (
-	"context"
-	"net/http"
+	"fmt"
+	"net"
 	"strconv"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 var log = logf.Log.WithName("metrics")
 
-// ExposeMetricsPort generate a Kubernetes Service to expose metrics port
-func ExposeMetricsPort() *v1.Service {
-	http.Handle("/"+k8sutil.PrometheusMetricsPortName, promhttp.Handler())
-	go http.ListenAndServe(":"+strconv.Itoa(k8sutil.PrometheusMetricsPort), nil)
-
-	service, err := k8sutil.InitOperatorService()
+// ExposeMetricsPort generates a Kubernetes Service to expose the metrics port
+func ExposeMetricsPort(address string) (*v1.Service, error) {
+	// Split out port from address, to pass to Service object.
+	// We do not need to check the validity of the port, as controller-runtime
+	// would error out and we would never get to this stage.
+	_, port, err := net.SplitHostPort(address)
 	if err != nil {
-		log.Error(err, "Failed to initialize service object for operator metrics")
-		return nil
+		return nil, fmt.Errorf("failed to split metrics address %s: %v", address, err)
 	}
-	kubeconfig, err := config.GetConfig()
+	port64, err := strconv.ParseInt(port, 0, 32)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to split metrics address %s: %v", address, err)
 	}
-	runtimeClient, err := client.New(kubeconfig, client.Options{})
+	service, err := k8sutil.InitOperatorService(int32(port64), PrometheusPortName)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to initialize service object for metrics: %v", err)
 	}
-	err = runtimeClient.Create(context.TODO(), service)
-	if err != nil && !errors.IsAlreadyExists(err) {
-		log.Error(err, "Failed to create service for operator metrics")
-		return nil
-	}
-
-	log.Info("Metrics service created.", "ServiceName", service.Name)
-	return service
+	return service, nil
 }
