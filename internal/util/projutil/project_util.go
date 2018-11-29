@@ -136,9 +136,9 @@ func SetGopath(currentGopath string) string {
 	return newGopath
 }
 
-// combineManifests combines a given manifest with a base manifest and adds yaml
+// CombineManifests combines a given manifest with a base manifest and adds yaml
 // style separation. Nothing is appended if the manifest is empty.
-func combineManifests(base, manifest []byte) []byte {
+func CombineManifests(base, manifest []byte) []byte {
 	if len(manifest) > 0 {
 		base = append(base, manifest...)
 		return append(base, []byte("\n---\n")...)
@@ -172,9 +172,9 @@ func GenerateCombinedNamespacedManifest() (*os.File, error) {
 		return nil, fmt.Errorf("could not find operator manifest: (%v)", err)
 	}
 	combined := []byte{}
-	combined = combineManifests(combined, sa)
-	combined = combineManifests(combined, role)
-	combined = combineManifests(combined, roleBinding)
+	combined = CombineManifests(combined, sa)
+	combined = CombineManifests(combined, role)
+	combined = CombineManifests(combined, roleBinding)
 	combined = append(combined, operator...)
 
 	if err := file.Chmod(os.FileMode(fileutil.DefaultFileMode)); err != nil {
@@ -209,7 +209,7 @@ func GenerateCombinedGlobalManifest() (*os.File, error) {
 			if err != nil {
 				return nil, fmt.Errorf("could not read file %s: (%v)", filepath.Join(scaffold.CrdsDir, file.Name()), err)
 			}
-			combined = combineManifests(combined, fileBytes)
+			combined = CombineManifests(combined, fileBytes)
 		}
 	}
 

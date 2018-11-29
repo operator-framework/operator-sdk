@@ -20,6 +20,20 @@
   reconcilePeriod: 0s
 - version: v1alpha1
   group: app.example.com
+  kind: DefaultStatus
+  playbook: {{ .ValidPlaybook }}
+- version: v1alpha1
+  group: app.example.com
+  kind: DisableStatus
+  playbook: {{ .ValidPlaybook }}
+  manageStatus: False
+- version: v1alpha1
+  group: app.example.com
+  kind: EnableStatus
+  playbook: {{ .ValidPlaybook }}
+  manageStatus: True
+- version: v1alpha1
+  group: app.example.com
   kind: Role
   role: {{ .ValidRole }}
   finalizer:
