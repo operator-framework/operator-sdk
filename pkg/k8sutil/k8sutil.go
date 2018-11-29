@@ -68,8 +68,8 @@ func GetOperatorName() (string, error) {
 	return operatorName, nil
 }
 
-// InitOperatorService return the static service which expose operator metrics
-func InitOperatorService() (*v1.Service, error) {
+// InitOperatorService returns the static service which exposes specifed port.
+func InitOperatorService(port int32, portName string) (*v1.Service, error) {
 	operatorName, err := GetOperatorName()
 	if err != nil {
 		return nil, err
@@ -91,13 +91,13 @@ func InitOperatorService() (*v1.Service, error) {
 		Spec: v1.ServiceSpec{
 			Ports: []v1.ServicePort{
 				{
-					Port:     PrometheusMetricsPort,
+					Port:     port,
 					Protocol: v1.ProtocolTCP,
 					TargetPort: intstr.IntOrString{
 						Type:   intstr.String,
-						StrVal: PrometheusMetricsPortName,
+						StrVal: portName,
 					},
-					Name: PrometheusMetricsPortName,
+					Name: portName,
 				},
 			},
 			Selector: map[string]string{"name": operatorName},
