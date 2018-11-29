@@ -102,7 +102,10 @@ func MainEntry(m *testing.M) {
 		}
 		exitCode := m.Run()
 		if *localOperator {
-			localCmd.Process.Kill()
+			err := localCmd.Process.Kill()
+			if err != nil {
+				log.Warn("failed to stop local operator process")
+			}
 			log.Infof("local operator stdout: %s", string(localCmdOutBuf.Bytes()))
 			log.Infof("local operator stderr: %s", string(localCmdErrBuf.Bytes()))
 		}
