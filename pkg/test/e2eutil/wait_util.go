@@ -42,7 +42,7 @@ func WaitForOperatorDeployment(t *testing.T, kubeclient kubernetes.Interface, na
 
 func waitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int, retryInterval, timeout time.Duration, isOperator bool) error {
 	if isOperator && test.Global.LocalOperator {
-		t.Logf("Operator is running locally; skip waitForDeployment\n")
+		t.Log("Operator is running locally; skip waitForDeployment")
 		return nil
 	}
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
