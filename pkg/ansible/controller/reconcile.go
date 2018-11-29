@@ -279,7 +279,7 @@ func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, names
 	// This needs the status subresource to be enabled by default.
 	u.Object["status"] = crStatus.GetJSONMap()
 
-	return r.Client.Update(context.TODO(), u)
+	return r.Client.Status().Update(context.TODO(), u)
 }
 
 func contains(l []string, s string) bool {
