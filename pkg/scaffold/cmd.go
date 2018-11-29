@@ -48,6 +48,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
+	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	"github.com/operator-framework/operator-sdk/pkg/ready"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -58,6 +59,8 @@ import (
 )
 
 var log = logf.Log.WithName("cmd")
+// Change metricsAddress to serve metrics on different host and port.
+var metricsAddress string = ":8080"
 
 func printVersion() {
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
@@ -101,7 +104,7 @@ func main() {
 	defer r.Unset()
 
 	// Create a new Cmd to provide shared dependencies and start components
-	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
+	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace, MetricsBindAddress: metricsAddress})
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
@@ -120,6 +123,15 @@ func main() {
 		log.Error(err, "")
 		os.Exit(1)
 	}
+
+	// Expose metrics by creating a Service object
+	s, err := metrics.ExposeMetricsPort(metricsAddress)
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+	client := mgr.GetClient()
+	client.Create(context.TODO(), s)
 
 	log.Info("Starting the Cmd.")
 
