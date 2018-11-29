@@ -1,10 +1,13 @@
 FROM ansible/ansible-runner
 
-RUN pip install --upgrade setuptools
-RUN pip install urllib3==1.23
-RUN pip install openshift ansible-runner-http
+RUN yum remove -y ansible python-idna
+RUN pip uninstall ansible-runner -y
 
-RUN echo "localhost ansible_connection=local" > /etc/ansible/hosts \
+RUN pip install --upgrade setuptools
+RUN pip install ansible ansible-runner openshift kubernetes ansible-runner-http
+
+RUN mkdir -p /etc/ansible \
+    && echo "localhost ansible_connection=local" > /etc/ansible/hosts \
     && echo '[defaults]' > /etc/ansible/ansible.cfg \
     && echo 'roles_path = /opt/ansible/roles' >> /etc/ansible/ansible.cfg \
     && echo 'library = /usr/share/ansible/openshift' >> /etc/ansible/ansible.cfg
