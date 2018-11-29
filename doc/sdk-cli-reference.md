@@ -147,6 +147,25 @@ pkg/apis/app/v1alpha1/
 └── zz_generated.deepcopy.go
 ```
 
+## olm-catalog
+
+Parent command for all OLM Catalog-related commands.
+
+### gen-csv
+
+Generates a Cluster Service Version manifest file in `deploy/olm-catalog`.
+
+#### Flags
+
+* `--csv-version` (required) operator semantic version with which to create the CSV file.
+
+#### Example
+
+```bash
+$ operator-sdk olm-catalog gen-csv --csv-version 0.1.1
+Generating CSV manifest version 0.1.1
+```
+
 ## new
 
 Scaffolds a new operator project.
