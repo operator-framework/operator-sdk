@@ -230,13 +230,17 @@ default test settings, such as locations of your global resource manifest file (
 `deploy/crd.yaml`) and your namespaced resource manifest file (by default `deploy/service_account.yaml` concatenated with
 `deploy/rbac.yaml` and `deploy/operator.yaml`), and allows the user to configure runtime options. There are 2 ways to use the
 subcommand: local and cluster.
+
 ### Local
+
 To run the tests locally, run the `operator-sdk test local` command in your project root and pass the location of the tests
 as an argument. You can use `--help` to view the other configuration options and use `--go-test-flags` to pass in arguments to `go test`. Here is an example command:
 
 ```shell
 $ operator-sdk test local ./test/e2e --go-test-flags "-v -parallel=2"
 ```
+
+#### Image Flag
 
 If you wish to specify a different operator image than specified in your `operator.yaml` file (or a user-specified
 namespaced manifest file), you can use the `--image` flag:
@@ -245,12 +249,16 @@ namespaced manifest file), you can use the `--image` flag:
 $ operator-sdk test local ./test/e2e --image quay.io/example/my-operator:v0.0.2
 ```
 
+#### Namespace Flag
+
 If you wish to run all the tests in 1 namespace (which also forces `-parallel=1`), you can use the `--namespace` flag:
 
 ```shell
 $ kubectl create namespace operator-test
 $ operator-sdk test local ./test/e2e --namespace operator-test
 ```
+
+#### Up-Local Flag
 
 To run the operator itself locally during the tests instead of starting a deployment in the cluster, you can use the
 `--up-local` flag. This mode will still create global resources, but by default will not create any in-cluster namespaced
@@ -261,6 +269,8 @@ the `--namespace` flag):
 $ kubectl create namespace operator-test
 $ operator-sdk test local ./test/e2e --namespace operator-test --up-local
 ```
+
+#### No-Setup Flag
 
 If you would prefer to create the resources yourself and skip resource creation, you can use the `--no-setup` flag:
 ```shell
@@ -274,6 +284,8 @@ $ operator-sdk test local ./test/e2e --namespace operator-test --no-setup
 ```
 
 For more documentation on the `operator-sdk test local` command, see the [SDK CLI Reference][sdk-cli-ref] doc.
+
+#### Running Go Test Directly (Not Recommended)
 
 For advanced use cases, it is possible to run the tests via `go test` directly. As long as all flags defined
 in [MainEntry][main-entry-link] are declared, the tests will run correctly. Running the tests directly with missing flags
