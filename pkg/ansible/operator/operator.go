@@ -44,6 +44,7 @@ func Run(done chan error, mgr manager.Manager, watchesPath string, reconcilePeri
 			GVK:             gvk,
 			Runner:          runner,
 			ReconcilePeriod: reconcilePeriod,
+			ManageStatus:    runner.GetManageStatus(),
 		}
 		d, ok := runner.GetReconcilePeriod()
 		if ok {

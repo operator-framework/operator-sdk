@@ -46,6 +46,7 @@ func TestReconcile(t *testing.T) {
 		Name            string
 		GVK             schema.GroupVersionKind
 		ReconcilePeriod time.Duration
+		ManageStatus    bool
 		Runner          runner.Runner
 		EventHandlers   []events.EventHandler
 		Client          client.Client
@@ -74,6 +75,7 @@ func TestReconcile(t *testing.T) {
 			Name:            "completed reconcile",
 			GVK:             gvk,
 			ReconcilePeriod: 5 * time.Second,
+			ManageStatus:    true,
 			Runner: &fake.Runner{
 				JobEvents: []eventapi.JobEvent{
 					eventapi.JobEvent{
@@ -134,6 +136,7 @@ func TestReconcile(t *testing.T) {
 			Name:            "Failure message reconcile",
 			GVK:             gvk,
 			ReconcilePeriod: 5 * time.Second,
+			ManageStatus:    true,
 			Runner: &fake.Runner{
 				JobEvents: []eventapi.JobEvent{
 					eventapi.JobEvent{
@@ -210,6 +213,7 @@ func TestReconcile(t *testing.T) {
 			Name:            "Finalizer successful reconcile",
 			GVK:             gvk,
 			ReconcilePeriod: 5 * time.Second,
+			ManageStatus:    true,
 			Runner: &fake.Runner{
 				JobEvents: []eventapi.JobEvent{
 					eventapi.JobEvent{
@@ -317,6 +321,7 @@ func TestReconcile(t *testing.T) {
 			Name:            "Finalizer successful reconcile",
 			GVK:             gvk,
 			ReconcilePeriod: 5 * time.Second,
+			ManageStatus:    true,
 			Runner: &fake.Runner{
 				JobEvents: []eventapi.JobEvent{
 					eventapi.JobEvent{
@@ -412,6 +417,51 @@ func TestReconcile(t *testing.T) {
 			},
 			ShouldError: true,
 		},
+		{
+			Name:            "no manage status",
+			GVK:             gvk,
+			ReconcilePeriod: 5 * time.Second,
+			ManageStatus:    false,
+			Runner: &fake.Runner{
+				JobEvents: []eventapi.JobEvent{
+					eventapi.JobEvent{
+						Event:   eventapi.EventPlaybookOnStats,
+						Created: eventapi.EventTime{Time: eventTime},
+					},
+				},
+			},
+			Client: fakeclient.NewFakeClient(&unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name":      "reconcile",
+						"namespace": "default",
+					},
+					"apiVersion": "operator-sdk/v1beta1",
+					"kind":       "Testing",
+				},
+			}),
+			Result: reconcile.Result{
+				RequeueAfter: 5 * time.Second,
+			},
+			Request: reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      "reconcile",
+					Namespace: "default",
+				},
+			},
+			ExpectedObject: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name":      "reconcile",
+						"namespace": "default",
+					},
+					"apiVersion": "operator-sdk/v1beta1",
+					"kind":       "Testing",
+					"spec":       map[string]interface{}{},
+					"status":     map[string]interface{}{},
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -422,6 +472,7 @@ func TestReconcile(t *testing.T) {
 				Client:          tc.Client,
 				EventHandlers:   tc.EventHandlers,
 				ReconcilePeriod: tc.ReconcilePeriod,
+				ManageStatus:    tc.ManageStatus,
 			}
 			result, err := aor.Reconcile(tc.Request)
 			if err != nil && !tc.ShouldError {

@@ -58,6 +58,10 @@ type Framework struct {
 }
 
 func setup(kubeconfigPath, namespacedManPath *string, localOperator bool) error {
+	namespace := ""
+	if *singleNamespace {
+		namespace = os.Getenv(TestNamespaceEnv)
+	}
 	var err error
 	var kubeconfig *rest.Config
 	if *kubeconfigPath == "incluster" {
@@ -74,8 +78,16 @@ func setup(kubeconfigPath, namespacedManPath *string, localOperator bool) error 
 		}
 		kubeconfig, err = rest.InClusterConfig()
 		*singleNamespace = true
+		namespace = os.Getenv(TestNamespaceEnv)
+		if len(namespace) == 0 {
+			return fmt.Errorf("test namespace env not set")
+		}
 	} else {
-		kubeconfig, _, err = k8sInternal.GetKubeconfigAndNamespace(*kubeconfigPath)
+		var kcNamespace string
+		kubeconfig, kcNamespace, err = k8sInternal.GetKubeconfigAndNamespace(*kubeconfigPath)
+		if *singleNamespace && namespace == "" {
+			namespace = kcNamespace
+		}
 	}
 	if err != nil {
 		return fmt.Errorf("failed to build the kubeconfig: %v", err)
@@ -92,13 +104,6 @@ func setup(kubeconfigPath, namespacedManPath *string, localOperator bool) error 
 		return fmt.Errorf("failed to build the dynamic client: %v", err)
 	}
 	dynamicDecoder = serializer.NewCodecFactory(scheme).UniversalDeserializer()
-	namespace := ""
-	if *singleNamespace {
-		namespace = os.Getenv(TestNamespaceEnv)
-		if len(namespace) == 0 {
-			return fmt.Errorf("namespace set in %s cannot be empty", TestNamespaceEnv)
-		}
-	}
 	Global = &Framework{
 		Client:            &frameworkClient{Client: dynClient},
 		KubeConfig:        kubeconfig,

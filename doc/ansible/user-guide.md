@@ -62,6 +62,55 @@ If you'd like to create your memcached-operator project to be cluster-scoped use
 $ operator-sdk new memcached-operator --cluster-scoped --api-version=cache.example.com/v1alpha1 --kind=Memcached --type=ansible
 ```
 
+### Watches file
+
+The Watches file contains a list of mappings from custom resources, identified
+by it's Group, Version, and Kind, to an Ansible Role or Playbook. The Operator
+expects this mapping file in a predefined location: `/opt/ansible/watches.yaml`
+
+* **group**:  The group of the Custom Resource that you will be watching.
+* **version**:  The version of the Custom Resource that you will be watching.
+* **kind**:  The kind of the Custom Resource that you will be watching.
+* **role** (default):  This is the path to the role that you have added to the
+  container.  For example if your roles directory is at `/opt/ansible/roles/`
+  and your role is named `busybox`, this value will be
+  `/opt/ansible/roles/busybox`. This field is mutually exclusive with the
+  "playbook" field.
+* **playbook**:  This is the path to the playbook that you have added to the
+  container. This playbook is expected to be simply a way to call roles. This
+  field is mutually exclusive with the "role" field.
+* **reconcilePeriod** (optional): The reconciliation interval, how often the
+  role/playbook is run, for a given CR.
+* **manageStatus** (optional): When true (default), the operator will manage
+  the status of the CR generically. Set to false, the status of the CR is
+  managed elsewhere, by the specified role/playbook or in a separate controller.
+
+An example Watches file:
+
+```yaml
+---
+# Simple example mapping Foo to the Foo role
+- version: v1alpha1
+  group: foo.example.com
+  kind: Foo
+  role: /opt/ansible/roles/Foo
+
+# Simple example mapping Bar to a playbook
+- version: v1alpha1
+  group: bar.example.com
+  kind: Bar
+  playbook: /opt/ansible/playbook.yaml
+
+# More complex example for our Baz kind
+# Here we will disable requeuing and be managing the CR status in the playbook
+- version: v1alpha1
+  group: baz.example.com
+  kind: Baz
+  playbook: /opt/ansible/baz.yaml
+  reconcilePeriod: 0
+  manageStatus: false
+```
+
 ## Customize the operator logic
 
 For this example the memcached-operator will execute the following

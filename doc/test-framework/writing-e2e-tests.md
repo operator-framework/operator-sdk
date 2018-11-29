@@ -262,6 +262,17 @@ $ kubectl create namespace operator-test
 $ operator-sdk test local ./test/e2e --namespace operator-test --up-local
 ```
 
+If you would prefer to create the resources yourself and skip resource creation, you can use the `--no-setup` flag:
+```shell
+$ kubectl create namespace operator-test
+$ kubectl create -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
+$ kubectl create -f deploy/service_account.yaml --namespace operator-test
+$ kubectl create -f deploy/role.yaml --namespace operator-test
+$ kubectl create -f deploy/role_binding.yaml --namespace operator-test
+$ kubectl create -f deploy/operator.yaml --namespace operator-test
+$ operator-sdk test local ./test/e2e --namespace operator-test --no-setup
+```
+
 For more documentation on the `operator-sdk test local` command, see the [SDK CLI Reference][sdk-cli-ref] doc.
 
 For advanced use cases, it is possible to run the tests via `go test` directly. As long as all flags defined
