@@ -102,7 +102,7 @@ func main() {
 	defer r.Unset()
 
 	// Create a new Cmd to provide shared dependencies and start components
-	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
+	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace, MetricsBindAddress: metricsAddress})
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
