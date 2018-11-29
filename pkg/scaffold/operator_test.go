@@ -65,9 +65,6 @@ spec:
         - name: app-operator
           # Replace this with the built image name
           image: REPLACE_IMAGE
-          ports:
-          - containerPort: 60000
-            name: metrics
           command:
           - app-operator
           imagePullPolicy: Always
