@@ -12,19 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package k8sutil
+package metrics
 
 const (
-	// KubeConfigEnvVar defines the env variable KUBECONFIG which
-	// contains the kubeconfig file path.
-	KubeConfigEnvVar = "KUBECONFIG"
-
-	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
-	// which is the namespace where the watch activity happens.
-	// this value is empty if the operator is running with clusterScope.
-	WatchNamespaceEnvVar = "WATCH_NAMESPACE"
-
-	// OperatorNameEnvVar is the constant for env variable OPERATOR_NAME
-	// wich is the name of the current operator
-	OperatorNameEnvVar = "OPERATOR_NAME"
+	// PrometheusPortName defines the port name used in kubernetes deployment and service resources
+	PrometheusPortName = "metrics"
 )
