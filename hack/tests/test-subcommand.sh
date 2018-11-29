@@ -30,6 +30,6 @@ kubectl create -f deploy/service_account.yaml --namespace test-memcached
 kubectl create -f deploy/role.yaml --namespace test-memcached
 kubectl create -f deploy/role_binding.yaml --namespace test-memcached
 kubectl create -f deploy/operator.yaml --namespace test-memcached
-operator-sdk test local . --namespace=test-memcached --no-setup
+operator-sdk test local ./test/e2e --namespace=test-memcached --no-setup
 kubectl delete namespace test-memcached
 popd
