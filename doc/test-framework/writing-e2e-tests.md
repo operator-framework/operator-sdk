@@ -121,10 +121,9 @@ in your namespaced manifest. The custom `Create` function use the controller-run
 creates a cleanup function that is called by `ctx.Cleanup` which deletes the resource and then waits for the resource to be
 fully deleted before returning. This is configurable with `CleanupOptions`. For info on how to use `CleanupOptions` see
 [this section](#how-to-use-cleanup).
- 
 
 If you want to make sure the operator's deployment is fully ready before moving onto the next part of the
-test, the `WaitForDeployment` function from [e2eutil][e2eutil-link] (in the sdk under `pkg/test/e2eutil`) can be used:
+test, the `WaitForOperatorDeployment` function from [e2eutil][e2eutil-link] (in the sdk under `pkg/test/e2eutil`) can be used:
 
 ```go
 // get namespace
@@ -135,7 +134,7 @@ if err != nil {
 // get global framework variables
 f := framework.Global
 // wait for memcached-operator to be ready
-err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, time.Second*5, time.Second*30)
+err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, time.Second*5, time.Second*30)
 if err != nil {
     t.Fatal(err)
 }
@@ -188,7 +187,10 @@ if err != nil {
 ```
 
 Now we can check if the operator successfully worked. In the case of the memcached operator, it should have
-created a deployment called "example-memcached" with 3 replicas:
+created a deployment called "example-memcached" with 3 replicas. To check, we use the `WaitForDeployment` function, which
+is the same as `WaitForOperatorDeployment` with the exception that `WaitForOperatorDeployment` will skip waiting
+for the deployment if the test is run locally and the `--up-local` flag is set; the `WaitForDeployment` function always
+waits for the deployment:
 
 ```go
 // wait for example-memcached to reach 3 replicas
@@ -228,13 +230,26 @@ default test settings, such as locations of your global resource manifest file (
 `deploy/crd.yaml`) and your namespaced resource manifest file (by default `deploy/service_account.yaml` concatenated with
 `deploy/rbac.yaml` and `deploy/operator.yaml`), and allows the user to configure runtime options. There are 2 ways to use the
 subcommand: local and cluster.
+
 ### Local
+
 To run the tests locally, run the `operator-sdk test local` command in your project root and pass the location of the tests
 as an argument. You can use `--help` to view the other configuration options and use `--go-test-flags` to pass in arguments to `go test`. Here is an example command:
 
 ```shell
 $ operator-sdk test local ./test/e2e --go-test-flags "-v -parallel=2"
 ```
+
+#### Image Flag
+
+If you wish to specify a different operator image than specified in your `operator.yaml` file (or a user-specified
+namespaced manifest file), you can use the `--image` flag:
+
+```shell
+$ operator-sdk test local ./test/e2e --image quay.io/example/my-operator:v0.0.2
+```
+
+#### Namespace Flag
 
 If you wish to run all the tests in 1 namespace (which also forces `-parallel=1`), you can use the `--namespace` flag:
 
@@ -243,7 +258,34 @@ $ kubectl create namespace operator-test
 $ operator-sdk test local ./test/e2e --namespace operator-test
 ```
 
+#### Up-Local Flag
+
+To run the operator itself locally during the tests instead of starting a deployment in the cluster, you can use the
+`--up-local` flag. This mode will still create global resources, but by default will not create any in-cluster namespaced
+resources unless the user specifies one through the `--namespaced-manifest` flag. (Note: the `--up-local` flag requires
+the `--namespace` flag):
+
+```shell
+$ kubectl create namespace operator-test
+$ operator-sdk test local ./test/e2e --namespace operator-test --up-local
+```
+
+#### No-Setup Flag
+
+If you would prefer to create the resources yourself and skip resource creation, you can use the `--no-setup` flag:
+```shell
+$ kubectl create namespace operator-test
+$ kubectl create -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
+$ kubectl create -f deploy/service_account.yaml --namespace operator-test
+$ kubectl create -f deploy/role.yaml --namespace operator-test
+$ kubectl create -f deploy/role_binding.yaml --namespace operator-test
+$ kubectl create -f deploy/operator.yaml --namespace operator-test
+$ operator-sdk test local ./test/e2e --namespace operator-test --no-setup
+```
+
 For more documentation on the `operator-sdk test local` command, see the [SDK CLI Reference][sdk-cli-ref] doc.
+
+#### Running Go Test Directly (Not Recommended)
 
 For advanced use cases, it is possible to run the tests via `go test` directly. As long as all flags defined
 in [MainEntry][main-entry-link] are declared, the tests will run correctly. Running the tests directly with missing flags

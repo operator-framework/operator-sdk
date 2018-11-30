@@ -147,6 +147,25 @@ pkg/apis/app/v1alpha1/
 └── zz_generated.deepcopy.go
 ```
 
+## olm-catalog
+
+Parent command for all OLM Catalog-related commands.
+
+### gen-csv
+
+Generates a Cluster Service Version manifest file in `deploy/olm-catalog`.
+
+#### Flags
+
+* `--csv-version` (required) operator semantic version with which to create the CSV file.
+
+#### Example
+
+```bash
+$ operator-sdk olm-catalog gen-csv --csv-version 0.1.1
+Generating CSV manifest version 0.1.1
+```
+
 ## new
 
 Scaffolds a new operator project.
@@ -257,6 +276,9 @@ Runs the tests locally
 * `--namespaced-manifest` string - path to manifest for per-test, namespaced resources (default: combines deploy/service_account.yaml, deploy/rbac.yaml, and deploy/operator.yaml)
 *  `--namespace` string - if non-empty, single namespace to run tests in (e.g. "operator-test") (default: "")
 * `--go-test-flags` string - extra arguments to pass to `go test` (e.g. -f "-v -parallel=2")
+* `--up-local` - enable running operator locally with go run instead of as an image in the cluster
+* `--no-setup` - disable test resource creation
+* `--image` string - use a different operator image from the one specified in the namespaced manifest
 * `-h, --help` - help for local
 
 ##### Use

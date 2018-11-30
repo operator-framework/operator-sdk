@@ -102,6 +102,11 @@ func TestNewFromWatches(t *testing.T) {
 			shouldError: true,
 		},
 		{
+			name:        "error invalid status",
+			path:        "testdata/invalid_status.yaml",
+			shouldError: true,
+		},
+		{
 			name: "valid watches file",
 			path: "testdata/valid.yaml",
 			expectedMap: map[schema.GroupVersionKind]runner{
@@ -116,6 +121,7 @@ func TestNewFromWatches(t *testing.T) {
 						Kind:    "NoFinalizer",
 					},
 					Path:            validTemplate.ValidPlaybook,
+					manageStatus:    true,
 					reconcilePeriod: &twoSeconds,
 				},
 				schema.GroupVersionKind{
@@ -128,7 +134,8 @@ func TestNewFromWatches(t *testing.T) {
 						Group:   "app.example.com",
 						Kind:    "Playbook",
 					},
-					Path: validTemplate.ValidPlaybook,
+					Path:         validTemplate.ValidPlaybook,
+					manageStatus: true,
 					Finalizer: &Finalizer{
 						Name: "finalizer.app.example.com",
 						Role: validTemplate.ValidRole,
@@ -147,6 +154,46 @@ func TestNewFromWatches(t *testing.T) {
 					},
 					Path:            validTemplate.ValidPlaybook,
 					reconcilePeriod: &zeroSeconds,
+					manageStatus:    true,
+				},
+				schema.GroupVersionKind{
+					Version: "v1alpha1",
+					Group:   "app.example.com",
+					Kind:    "DefaultStatus",
+				}: runner{
+					GVK: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "DefaultStatus",
+					},
+					Path:         validTemplate.ValidPlaybook,
+					manageStatus: true,
+				},
+				schema.GroupVersionKind{
+					Version: "v1alpha1",
+					Group:   "app.example.com",
+					Kind:    "DisableStatus",
+				}: runner{
+					GVK: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "DisableStatus",
+					},
+					Path:         validTemplate.ValidPlaybook,
+					manageStatus: false,
+				},
+				schema.GroupVersionKind{
+					Version: "v1alpha1",
+					Group:   "app.example.com",
+					Kind:    "EnableStatus",
+				}: runner{
+					GVK: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "EnableStatus",
+					},
+					Path:         validTemplate.ValidPlaybook,
+					manageStatus: true,
 				},
 				schema.GroupVersionKind{
 					Version: "v1alpha1",
@@ -158,7 +205,8 @@ func TestNewFromWatches(t *testing.T) {
 						Group:   "app.example.com",
 						Kind:    "Role",
 					},
-					Path: validTemplate.ValidRole,
+					Path:         validTemplate.ValidRole,
+					manageStatus: true,
 					Finalizer: &Finalizer{
 						Name:     "finalizer.app.example.com",
 						Playbook: validTemplate.ValidPlaybook,
@@ -192,6 +240,9 @@ func TestNewFromWatches(t *testing.T) {
 				}
 				if run.GVK != expectedR.GVK {
 					t.Fatalf("the GVK: %v\nunexpected GVK: %#v\nexpected GVK: %#v", k, run.GVK, expectedR.GVK)
+				}
+				if run.manageStatus != expectedR.manageStatus {
+					t.Fatalf("the GVK: %v\nunexpected manageStatus:%#v\nexpected manageStatus: %#v", k, run.manageStatus, expectedR.manageStatus)
 				}
 				if run.Finalizer != expectedR.Finalizer {
 					if run.Finalizer.Name != expectedR.Finalizer.Name || run.Finalizer.Playbook != expectedR.Finalizer.Playbook || run.Finalizer.Role != expectedR.Finalizer.Role || reflect.DeepEqual(run.Finalizer.Vars["sentinel"], expectedR.Finalizer.Vars["sentininel"]) {
