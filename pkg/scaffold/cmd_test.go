@@ -56,9 +56,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
 
-var log = logf.Log.WithName("cmd")
 // Change metricsAddress to serve metrics on different host and port.
 var metricsAddress string = ":8080"
+var log = logf.Log.WithName("cmd")
 
 func printVersion() {
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
@@ -121,7 +121,7 @@ func main() {
 		log.Error(err, "")
 		os.Exit(1)
 	}
-	
+
 	// Expose metrics by creating a Service object
 	s, err := metrics.ExposeMetricsPort(metricsAddress)
 	if err != nil {
