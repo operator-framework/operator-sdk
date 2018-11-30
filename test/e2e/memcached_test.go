@@ -98,6 +98,8 @@ func TestMemcached(t *testing.T) {
 			// and comment out the current branch.
 			branchRe := regexp.MustCompile("([ ]+)(.+#osdk_branch_annotation)")
 			gopkg = branchRe.ReplaceAll(gopkg, []byte("$1# $2"))
+			versionRe := regexp.MustCompile("([ ]+)(.+#osdk_version_annotation)")
+			gopkg = versionRe.ReplaceAll(gopkg, []byte("$1# $2"))
 			// Plug in the fork to test against so `dep ensure` can resolve dependencies
 			// correctly.
 			gopkgString := string(gopkg)
