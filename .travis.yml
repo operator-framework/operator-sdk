@@ -41,9 +41,9 @@ install:
 - sudo pip install ansible
 
 after_success:
-- echo 'Build succeeded, operator was generated, memcached operator is running on $CLUSTER, and unit/integration tests pass'
+- echo "Build succeeded, operator was generated, memcached operator is running on $CLUSTER, and unit/integration tests pass"
 
 after_failure:
-- echo 'Build failed, operator failed to generate, memcached operator is not running on $CLUSTER, or unit/integration tests failed'
+- echo "Build failed, operator failed to generate, memcached operator is not running on $CLUSTER, or unit/integration tests failed"
 - kubectl get all --all-namespaces
 - kubectl get events --all-namespaces --field-selector=type=Warning
