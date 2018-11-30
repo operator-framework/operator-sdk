@@ -15,5 +15,5 @@
 package version
 
 var (
-	Version = "v0.2.0"
+	Version = "v0.2.0+git"
 )
