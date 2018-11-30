@@ -54,9 +54,10 @@ type Framework struct {
 	Scheme            *runtime.Scheme
 	NamespacedManPath *string
 	Namespace         string
+	LocalOperator     bool
 }
 
-func setup(kubeconfigPath, namespacedManPath *string) error {
+func setup(kubeconfigPath, namespacedManPath *string, localOperator bool) error {
 	namespace := ""
 	if *singleNamespace {
 		namespace = os.Getenv(TestNamespaceEnv)
@@ -110,6 +111,7 @@ func setup(kubeconfigPath, namespacedManPath *string) error {
 		Scheme:            scheme,
 		NamespacedManPath: namespacedManPath,
 		Namespace:         namespace,
+		LocalOperator:     localOperator,
 	}
 	return nil
 }
