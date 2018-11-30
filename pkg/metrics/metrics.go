@@ -38,7 +38,7 @@ func ExposeMetricsPort(address string) (*v1.Service, error) {
 	}
 	port64, err := strconv.ParseInt(port, 0, 32)
 	if err != nil {
-		return nil, fmt.Errorf("failed to split metrics address %s: %v", address, err)
+		return nil, fmt.Errorf("failed to parse metrics address %s: %v", address, err)
 	}
 	service, err := k8sutil.InitOperatorService(int32(port64), PrometheusPortName)
 	if err != nil {
