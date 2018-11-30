@@ -73,7 +73,18 @@ then
 fi
 
 kubectl delete -f ${DIR2}/deploy/crds/ansible_v1alpha1_memcached_cr.yaml --wait=true
-kubectl logs deployment/memcached-operator | grep "this is a finalizer"
+if ! kubectl logs deployment/memcached-operator | grep "this is a finalizer";
+then
+    kubectl logs deployment/memcached-operator
+    exit 1
+fi
+
+# The deployment should get garbage collected, so we expect to fail getting the deployment.
+if ! timeout 20s bash -c -- "while kubectl get deployment ${memcached_deployment}; do sleep 1; done";
+then
+    kubectl logs deployment/memcached-operator
+    exit 1
+fi
 
 popd
 popd
