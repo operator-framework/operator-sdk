@@ -278,6 +278,21 @@ kube-public   Active    28d
 kube-system   Active    28d
 ```
 
+#### Using k8s_status Ansible module with `up local`
+This section covers the required steps to using the `k8s_status` Ansible module with `operator-sdk up local`. If you are unfamiliar with managing status from the Ansible Operator, see the [proposal for user-driven status management][manage_status_proposal].
+
+If your operator takes advantage of the `k8s_status` Ansible module and you are interested in testing the operator with `operator-sdk up local`, then it is imperative that the module is installed in a location that Ansible expects. This is done with the `library` configuration option for Ansible. For our example, we will assume the user is placing third-party Ansible modules in `/usr/share/ansible/library`.
+
+To install the `k8s_status` module, first set `ansible.cfg` to search in `/usr/share/ansible/library` for installed Ansible modules:
+```bash
+$ echo "library=/usr/share/ansible/library/" >> /etc/ansible/ansible.cfg
+```
+
+Add `k8s_status.py` to `/usr/share/ansible/library/`:
+```bash
+$ wget https://raw.githubusercontent.com/fabianvf/ansible-k8s-status-module/master/k8s_status.py -O /usr/share/ansible/library/k8s_status.py
+```
+
 ### Testing an Ansible operator on a cluster
 
 Now that a developer is confident in the operator logic, testing the operator
@@ -366,5 +381,6 @@ operator. The `meta` fields can be accesses via dot notation in Ansible as so:
 [k8s_ansible_module]:https://docs.ansible.com/ansible/2.6/modules/k8s_module.html
 [openshift_restclient_python]:https://github.com/openshift/openshift-restclient-python
 [ansible_operator_user_guide]:../user-guide.md
+[manage_status_proposal]:../../proposals/ansible-operator-status.md
 [time_pkg]:https://golang.org/pkg/time/
 [time_parse_duration]:https://golang.org/pkg/time/#ParseDuration
