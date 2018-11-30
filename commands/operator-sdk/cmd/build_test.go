@@ -90,9 +90,6 @@ spec:
       containers:
         - name: memcached-operator
           image: quay.io/coreos/operator-sdk-dev:test-framework-operator
-          ports:
-          - containerPort: 60000
-            name: metrics
           command:
           - memcached-operator
           imagePullPolicy: Always
