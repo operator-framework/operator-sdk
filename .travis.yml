@@ -45,3 +45,5 @@ after_success:
 
 after_failure:
 - echo 'Build failed, operator failed to generate, memcached operator is not running on $CLUSTER, or unit/integration tests failed'
+- kubectl get all --all-namespaces
+- kubectl get events --all-namespaces --field-selector=type=Warning
