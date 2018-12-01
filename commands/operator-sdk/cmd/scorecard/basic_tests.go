@@ -86,7 +86,6 @@ func checkStatusUpdate(runtimeClient client.Client, obj unstructured.Unstructure
 	for k, v := range obj.Object["status"].(map[string]interface{}) {
 		statCopy[k] = v
 	}
-	pass := true
 	specMap := obj.Object["spec"].(map[string]interface{})
 	for k, v := range specMap {
 		switch t := v.(type) {
@@ -114,7 +113,9 @@ func checkStatusUpdate(runtimeClient client.Client, obj unstructured.Unstructure
 			return !reflect.DeepEqual(statCopy, obj.Object["status"]), nil
 		})
 		if err != nil {
-			pass = false
+			test.earnedPoints = 0
+			scTests = append(scTests, test)
+			return nil
 		}
 		//reset stat copy to match
 		statCopy = make(map[string]interface{})
@@ -122,9 +123,7 @@ func checkStatusUpdate(runtimeClient client.Client, obj unstructured.Unstructure
 			statCopy[k] = v
 		}
 	}
-	if pass {
-		test.earnedPoints = 1
-	}
+	test.earnedPoints = 1
 	scTests = append(scTests, test)
 	return nil
 }
