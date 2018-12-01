@@ -21,6 +21,11 @@ kubectl create namespace test-memcached
 operator-sdk test local ./test/e2e --up-local --namespace=test-memcached
 kubectl delete namespace test-memcached
 
+# test operator in up local mode with kubeconfig
+kubectl create namespace test-memcached
+operator-sdk test local ./test/e2e --up-local --namespace=test-memcached --kubeconfig $HOME/.kube/config
+kubectl delete namespace test-memcached
+
 # test operator in no-setup mode
 kubectl create namespace test-memcached
 kubectl create -f deploy/crds/cache_v1alpha1_memcached_crd.yaml

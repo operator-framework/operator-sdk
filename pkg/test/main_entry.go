@@ -80,7 +80,7 @@ func MainEntry(m *testing.M) {
 			os.Exit(0)
 		}()
 		if *kubeconfigPath != "" {
-			localCmd.Env = append(os.Environ(), fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, kubeconfigPath))
+			localCmd.Env = append(os.Environ(), fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, *kubeconfigPath))
 		} else {
 			// we can hardcode index 0 as that is the highest priority kubeconfig to be loaded and will always
 			// be populated by NewDefaultClientConfigLoadingRules()
