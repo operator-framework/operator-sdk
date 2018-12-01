@@ -134,7 +134,12 @@ func createKubeconfigSecret() error {
 		},
 		Data: kubeconfigMap,
 	}
-	return runtimeClient.Create(context.TODO(), kubeconfigSecret)
+	err = runtimeClient.Create(context.TODO(), kubeconfigSecret)
+	if err != nil {
+		return err
+	}
+	addResourceCleanup(kubeconfigSecret, types.NamespacedName{Namespace: kubeconfigSecret.GetNamespace(), Name: kubeconfigSecret.GetName()})
+	return nil
 }
 
 func addMountKubeconfigSecret(dep *appsv1.Deployment) {
