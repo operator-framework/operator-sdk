@@ -40,32 +40,25 @@ import (
 func checkSpecAndStat(runtimeClient client.Client, obj unstructured.Unstructured, noStore bool) error {
 	testSpec := scorecardTest{testType: basicOperator, name: "Spec Block Exists", maximumPoints: 1}
 	testStat := scorecardTest{testType: basicOperator, name: "Status Block Exist", maximumPoints: 1}
-	var specPoints, statusPoints int
 	err := wait.Poll(time.Second*1, time.Second*time.Duration(SCConf.InitTimeout), func() (bool, error) {
 		err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: SCConf.Namespace, Name: name}, &obj)
 		if err != nil {
 			return false, fmt.Errorf("error getting custom resource: %v", err)
 		}
-		pass := true
-		if obj.Object["spec"] == nil {
-			pass = false
-			specPoints = 0
-		} else {
-			specPoints = 1
+		var specPass, statusPass bool
+		if obj.Object["spec"] != nil {
+			testSpec.earnedPoints = 1
+			specPass = true
 		}
-		if obj.Object["status"] == nil {
-			pass = false
-			statusPoints = 0
-		} else {
-			statusPoints = 1
+
+		if obj.Object["status"] != nil {
+			testStat.earnedPoints = 1
+			statusPass = true
 		}
-		return pass, nil
+		return statusPass && specPass, nil
 	})
 	if !noStore {
-		testSpec.earnedPoints = specPoints
-		testStat.earnedPoints = statusPoints
-		scTests = append(scTests, testSpec)
-		scTests = append(scTests, testStat)
+		scTests = append(scTests, testSpec, testStat)
 	}
 	if err != nil && !reflect.DeepEqual(err, wait.ErrWaitTimeout) {
 		return err
