@@ -95,6 +95,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			if err != nil {
 				// return will give a 500
 				log.Error(err, "failed to marshal data")
+				http.Error(w, "", http.StatusInternalServerError)
 				return
 			}
 
@@ -105,6 +106,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			_, err = w.Write(i.Bytes())
 			if err != nil {
 				log.Error(err, "failed to write response")
+				http.Error(w, "", http.StatusInternalServerError)
 				return
 			}
 
