@@ -101,7 +101,6 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 
 			// Set X-Cache header to signal that response is served from Cache
 			w.Header().Set("X-Cache", "HIT")
-			// Pretty printing when hitting apiserver from CLI
 			json.Indent(&i, resp, "", "  ")
 			_, err = w.Write(i.Bytes())
 			if err != nil {
