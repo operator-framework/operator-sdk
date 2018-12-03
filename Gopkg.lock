@@ -288,7 +288,7 @@
   version = "v0.2.3"
 
 [[projects]]
-  digest = "1:6e73003ecd35f4487a5e88270d3ca0a81bc80dc88053ac7e4dcfec5fba30d918"
+  digest = "1:be341383a4a9e1635573a4b84dbd9ef5d613f20e8283fc3f01f7de20c930d3cd"
   name = "github.com/gogo/protobuf"
   packages = [
     "proto",
