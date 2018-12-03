@@ -34,17 +34,20 @@ func NewManager(mgr k8smanager.Manager, namespaces []string) (k8smanager.Manager
 }
 
 func (m *manager) SetFields(i interface{}) error {
-	if err := m.Manager.SetFields(i); err != nil {
-		return err
-	}
 
+	/*if err := m.Manager.SetFields(i); err != nil {
+		return err
+	}*/
 	if _, err := inject.ClientInto(m.client, i); err != nil {
 		return err
 	}
-
 	if _, err := inject.CacheInto(m.cache, i); err != nil {
 		return err
 	}
+	if _, err := inject.InjectorInto(m.SetFields, i); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -54,4 +57,14 @@ func (m *manager) GetCache() cache.Cache {
 
 func (m *manager) GetClient() client.Client {
 	return m.client
+}
+
+func (m *manager) Add(r k8smanager.Runnable) error {
+	if err := m.Manager.Add(r); err != nil {
+		return err
+	}
+	if err := m.SetFields(r); err != nil {
+		return err
+	}
+	return nil
 }
