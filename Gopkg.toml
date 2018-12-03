@@ -1,38 +1,38 @@
 [[override]]
   name = "k8s.io/kubernetes"
-  version = "=1.12.2"
+  version = "=1.12.3"
 
 [[override]]
   name = "k8s.io/api"
-  version = "kubernetes-1.12.2"
+  version = "kubernetes-1.12.3"
 
 [[override]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.12.2"
+  version = "kubernetes-1.12.3"
 
 [[override]]
   name = "k8s.io/apiextensions-apiserver"
-  version = "kubernetes-1.12.2"
+  version = "kubernetes-1.12.3"
 
 [[override]]
   name = "k8s.io/apiserver"
-  version = "kubernetes-1.12.2"
+  version = "kubernetes-1.12.3"
 
 [[override]]
   name = "k8s.io/client-go"
-  version = "kubernetes-1.12.2"
+  version = "kubernetes-1.12.3"
 
 [[override]]
   name = "k8s.io/cli-runtime"
-  version = "kubernetes-1.12.2"
+  version = "kubernetes-1.12.3"
+
+[[constraint]]
+  name = "sigs.k8s.io/controller-runtime"
+  revision = "8f98fb7def7f056ba7d6aa15134d82cd2dae50fe"
 
 [[constraint]]
   name = "github.com/sergi/go-diff"
   version = "1.0.0"
-
-[[constraint]]
-  name = "sigs.k8s.io/controller-runtime"
-  revision = "a4051585e748b437e799d597f9adba1d777cb12a"
 
 [[constraint]]
   name = "k8s.io/helm"
