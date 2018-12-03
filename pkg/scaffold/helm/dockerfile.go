@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ansible
+package helm
 
 import (
 	"path/filepath"
@@ -21,28 +21,25 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-//Dockerfile - docker file for creating image
+// Dockerfile specifies the Helm Dockerfile scaffold
 type Dockerfile struct {
 	input.Input
 
-	GeneratePlaybook bool
-	RolesDir         string
+	HelmChartsDir string
 }
 
-// GetInput - gets the input
+// GetInput gets the scaffold execution input
 func (d *Dockerfile) GetInput() (input.Input, error) {
 	if d.Path == "" {
 		d.Path = filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
 	}
-	d.RolesDir = RolesDir
-	d.TemplateBody = dockerFileAnsibleTmpl
+	d.HelmChartsDir = HelmChartsDir
+	d.TemplateBody = dockerFileHelmTmpl
 	return d.Input, nil
 }
 
-const dockerFileAnsibleTmpl = `FROM quay.io/water-hole/ansible-operator
+const dockerFileHelmTmpl = `FROM quay.io/water-hole/helm-operator
 
-COPY {{.RolesDir}}/ ${HOME}/{{.RolesDir}}/
-{{- if .GeneratePlaybook }}
-COPY playbook.yaml ${HOME}/playbook.yaml{{ end }}
+COPY {{.HelmChartsDir}}/ ${HOME}/{{.HelmChartsDir}}/
 COPY watches.yaml ${HOME}/watches.yaml
 `

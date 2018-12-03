@@ -26,6 +26,12 @@ jobs:
       name: Ansible on OpenShift
       services:
       - docker
+    - before_script: hack/ci/setup-openshift.sh
+      env: CLUSTER=openshift
+      script: make test/ci-helm
+      name: Helm on OpenShift
+      services:
+      - docker
     - name: Markdown Link Checker
       language: bash
       before_install: true
