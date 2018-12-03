@@ -25,8 +25,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 	"github.com/operator-framework/operator-sdk/pkg/helm/internal/types"
-	"github.com/operator-framework/operator-sdk/pkg/helm/internal/util"
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 )
 
@@ -105,7 +105,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		} else {
 			log.Info("Uninstalled release")
 			if log.Enabled() {
-				fmt.Println(util.Diff(uninstalledRelease.GetManifest(), ""))
+				fmt.Println(diffutil.Diff(uninstalledRelease.GetManifest(), ""))
 			}
 		}
 		finalizers := []string{}
@@ -128,7 +128,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 
 		log.Info("Installed release")
 		if log.Enabled() {
-			fmt.Println(util.Diff("", installedRelease.GetManifest()))
+			fmt.Println(diffutil.Diff("", installedRelease.GetManifest()))
 		}
 		log.V(1).Info("Config values", "values", installedRelease.GetConfig())
 		status.SetRelease(installedRelease)
@@ -145,7 +145,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		}
 		log.Info("Updated release")
 		if log.Enabled() {
-			fmt.Println(util.Diff(previousRelease.GetManifest(), updatedRelease.GetManifest()))
+			fmt.Println(diffutil.Diff(previousRelease.GetManifest(), updatedRelease.GetManifest()))
 		}
 		log.V(1).Info("Config values", "values", updatedRelease.GetConfig())
 		status.SetRelease(updatedRelease)

@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package util
+// Modified from github.com/kubernetes-sigs/controller-tools/pkg/util/util.go
+
+package diffutil
 
 import (
 	"bytes"
@@ -24,12 +26,14 @@ import (
 
 func Diff(a, b string) string {
 	dmp := diffmatchpatch.New()
+
 	wSrc, wDst, warray := dmp.DiffLinesToRunes(a, b)
 	diffs := dmp.DiffMainRunes(wSrc, wDst, false)
 	diffs = dmp.DiffCharsToLines(diffs, warray)
 	var buff bytes.Buffer
 	for _, diff := range diffs {
 		text := diff.Text
+
 		switch diff.Type {
 		case diffmatchpatch.DiffInsert:
 			_, _ = buff.WriteString("\x1b[32m")

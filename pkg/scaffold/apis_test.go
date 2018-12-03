@@ -17,7 +17,7 @@ package scaffold
 import (
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/internal/testutil"
+	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 )
 
 func TestApis(t *testing.T) {
@@ -28,7 +28,7 @@ func TestApis(t *testing.T) {
 	}
 
 	if apisExp != buf.String() {
-		diffs := testutil.Diff(apisExp, buf.String())
+		diffs := diffutil.Diff(apisExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
