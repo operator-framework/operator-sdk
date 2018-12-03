@@ -12,37 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ansible
+package helm
 
 import (
-	"path/filepath"
-
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-//Dockerfile - docker file for creating image
-type Dockerfile struct {
+const WatchesYamlFile = "watches.yaml"
+
+// WatchesYAML specifies the Helm watches.yaml manifest scaffold
+type WatchesYAML struct {
 	input.Input
 
-	GeneratePlaybook bool
-	RolesDir         string
+	Resource      *scaffold.Resource
+	HelmChartsDir string
 }
 
-// GetInput - gets the input
-func (d *Dockerfile) GetInput() (input.Input, error) {
-	if d.Path == "" {
-		d.Path = filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
+// GetInput gets the scaffold execution input
+func (s *WatchesYAML) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = WatchesYamlFile
 	}
-	d.RolesDir = RolesDir
-	d.TemplateBody = dockerFileAnsibleTmpl
-	return d.Input, nil
+	s.HelmChartsDir = HelmChartsDir
+	s.TemplateBody = watchesYAMLTmpl
+	return s.Input, nil
 }
 
-const dockerFileAnsibleTmpl = `FROM quay.io/water-hole/ansible-operator
-
-COPY {{.RolesDir}}/ ${HOME}/{{.RolesDir}}/
-{{- if .GeneratePlaybook }}
-COPY playbook.yaml ${HOME}/playbook.yaml{{ end }}
-COPY watches.yaml ${HOME}/watches.yaml
+const watchesYAMLTmpl = `---
+- version: {{.Resource.Version}}
+  group: {{.Resource.FullGroup}}
+  kind: {{.Resource.Kind}}
+  chart: /opt/helm/{{.HelmChartsDir}}/{{.Resource.LowerKind}}
 `

@@ -19,6 +19,10 @@
   version = "kubernetes-1.11.2"
 
 [[override]]
+  name = "k8s.io/apiserver"
+  version = "kubernetes-1.11.2"
+
+[[override]]
   name = "k8s.io/client-go"
   version = "kubernetes-1.11.2"
 
@@ -33,3 +37,27 @@
 [[constraint]]
   name = "github.com/operator-framework/operator-lifecycle-manager"
   revision = "7790503542c3ae82d2daf1a0b05f720dd21568ad"
+
+[[constraint]]
+  name = "k8s.io/helm"
+  version = "2.11.0"
+
+[[override]]
+  name = "k8s.io/kubernetes"
+  version = "=1.11.2"
+
+# We need overrides for the following imports because dep can't resolve them
+# correctly. The easiest way to get this right is to use the versions that
+# k8s.io/helm uses. See https://github.com/helm/helm/blob/v2.11.0/glide.lock
+[[override]]
+  name = "github.com/russross/blackfriday"
+  revision = "300106c228d52c8941d4b3de6054a6062a86dda3"
+
+[[override]]
+  name = "github.com/docker/distribution"
+  revision = "edc3ab29cdff8694dd6feb85cfeb4b5f1b38ed9c"
+
+[[override]]
+  name = "github.com/docker/docker"
+  revision = "4f3616fb1c112e206b88cb7a9922bf49067a7756"
+

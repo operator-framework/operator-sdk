@@ -22,11 +22,16 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+// RolesDir is the relative directory within an SDK project where Ansible roles
+// are stored.
+const RolesDir string = "roles"
+
 // GalaxyInit - wrapper
 type GalaxyInit struct {
 	input.Input
 	Resource scaffold.Resource
 	Dir      string
+	RolesDir string
 }
 
 // GetInput - get input
@@ -41,6 +46,7 @@ func (g *GalaxyInit) GetInput() (input.Input, error) {
 	if g.Path == "" {
 		g.Path = filepath.Join(g.Dir, "galaxy_init.sh")
 	}
+	g.RolesDir = RolesDir
 	g.TemplateBody = galaxyInitTmpl
 	g.IsExec = true
 	return g.Input, nil
@@ -54,5 +60,5 @@ if ! which ansible-galaxy > /dev/null; then
 fi
 
 echo "Initializing role skeleton..."
-ansible-galaxy init --init-path={{.Input.AbsProjectPath}}/roles/ {{.Resource.Kind}}
+ansible-galaxy init --init-path={{.Input.AbsProjectPath}}/{{.RolesDir}}/ {{.Resource.Kind}}
 `

@@ -168,6 +168,12 @@ rules:
   verbs:
   - "*"
 - apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+- apiGroups:
   - apps
   resources:
   - deployments

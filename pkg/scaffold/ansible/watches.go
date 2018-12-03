@@ -27,6 +27,7 @@ type WatchesYAML struct {
 
 	Resource         scaffold.Resource
 	GeneratePlaybook bool
+	RolesDir         string
 }
 
 // GetInput - gets the input
@@ -34,6 +35,7 @@ func (s *WatchesYAML) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = WatchesYamlFile
 	}
+	s.RolesDir = RolesDir
 	s.TemplateBody = watchesYAMLTmpl
 	return s.Input, nil
 }
@@ -42,5 +44,5 @@ const watchesYAMLTmpl = `---
 - version: {{.Resource.Version}}
   group: {{.Resource.FullGroup}}
   kind: {{.Resource.Kind}}
-{{ if .GeneratePlaybook }}  playbook: /opt/ansible/playbook.yaml{{ else }}  role: /opt/ansible/roles/{{.Resource.Kind}}{{ end }}
+{{ if .GeneratePlaybook }}  playbook: /opt/ansible/playbook.yaml{{ else }}  role: /opt/ansible/{{.RolesDir}}/{{.Resource.Kind}}{{ end }}
 `
