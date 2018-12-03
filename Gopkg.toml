@@ -56,4 +56,3 @@
 [[override]]
   name = "github.com/docker/docker"
   revision = "4f3616fb1c112e206b88cb7a9922bf49067a7756"
-
