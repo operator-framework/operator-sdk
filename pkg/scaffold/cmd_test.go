@@ -57,7 +57,7 @@ import (
 )
 
 // Change metricsAddress to serve metrics on different host and port.
-var metricsAddress string = ":8080"
+var metricsAddress string = ":8383"
 var log = logf.Log.WithName("cmd")
 
 func printVersion() {
