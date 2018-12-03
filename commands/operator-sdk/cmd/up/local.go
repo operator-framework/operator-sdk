@@ -147,7 +147,9 @@ func upLocal() {
 
 func upLocalAnsible() {
 	// Set the kubeconfig that the manager will be able to grab
-	os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig)
+	if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
+		log.Fatalf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+	}
 
 	logf.SetLogger(logf.ZapLogger(false))
 
@@ -183,7 +185,9 @@ func upLocalAnsible() {
 
 func upLocalHelm() {
 	// Set the kubeconfig that the manager will be able to grab
-	os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig)
+	if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
+		log.Fatalf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+	}
 
 	logf.SetLogger(logf.ZapLogger(false))
 
