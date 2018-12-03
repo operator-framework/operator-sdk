@@ -68,3 +68,13 @@ func (m *manager) Add(r k8smanager.Runnable) error {
 	}
 	return nil
 }
+
+func (m *manager) Start(stop <-chan struct{}) error {
+	go func() {
+		m.cache.Start(stop)
+	}()
+
+	m.cache.WaitForCacheSync(stop)
+
+	return m.Manager.Start(stop)
+}

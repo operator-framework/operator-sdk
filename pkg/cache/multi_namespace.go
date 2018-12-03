@@ -63,19 +63,43 @@ func (m *multiNamespaceCache) List(ctx context.Context, opts *client.ListOptions
 func (m *multiNamespaceCache) GetInformer(obj runtime.Object) (toolscache.SharedIndexInformer, error) {
 	// TODO: we need to create a way to return a shared index informer that deals with multiple namespaces.
 	// TODO: This could just create a new index informer but use a multiNamespaced list watcher.
-	return nil, nil
+	nsToInformer := map[string]toolscache.SharedIndexInformer{}
+	for ns, c := range m.caches {
+		var err error
+		nsToInformer[ns], err = c.GetInformer(obj)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &multiNamesapceIndexInformer{
+		indexInformers: nsToInformer,
+	}, nil
 }
 
 // GetInformerForKind - get an informer for an kind
 func (m *multiNamespaceCache) GetInformerForKind(gvk schema.GroupVersionKind) (toolscache.SharedIndexInformer, error) {
 	// TODO: we need to create a way to return a shared index informer that deals with multiple namespaces.
 	// TODO: This could just create a new index informer but use a multiNamespaced list watcher.
-	return nil, nil
+	nsToInformer := map[string]toolscache.SharedIndexInformer{}
+	for ns, c := range m.caches {
+		var err error
+		nsToInformer[ns], err = c.GetInformerForKind(gvk)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &multiNamesapceIndexInformer{
+		indexInformers: nsToInformer,
+	}, nil
 }
 
 // Start - starts all the underlying caches
 func (m *multiNamespaceCache) Start(stopCh <-chan struct{}) error {
-	for _, c := range m.caches {
+	fmt.Printf("\nstarting caches")
+	for namespace, c := range m.caches {
+		fmt.Printf("\tstarting cache: %v\n", namespace)
 		go c.Start(stopCh)
 	}
 	<-stopCh
@@ -84,12 +108,15 @@ func (m *multiNamespaceCache) Start(stopCh <-chan struct{}) error {
 
 // WaitForCacheSync - waits for all the underlying caches to sync
 func (m *multiNamespaceCache) WaitForCacheSync(stop <-chan struct{}) bool {
+	fmt.Printf("wait for cache to sync")
 	for _, c := range m.caches {
 		ok := c.WaitForCacheSync(stop)
 		if !ok {
+			fmt.Printf("wait for cache to sync - %v", ok)
 			return ok
 		}
 	}
+	fmt.Printf("wait for cache to sync - %v", true)
 	return true
 }
 
