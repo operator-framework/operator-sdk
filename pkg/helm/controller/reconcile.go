@@ -80,14 +80,29 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		log.V(1).Info("Adding finalizer", "finalizer", finalizer)
 		finalizers := append(pendingFinalizers, finalizer)
 		o.SetFinalizers(finalizers)
-		err := r.Client.Update(context.TODO(), o)
+		if len(status.Conditions) == 0 {
+			status.SetCondition(types.HelmAppCondition{
+				Type:   types.ConditionInitializing,
+				Status: types.StatusTrue,
+			})
+		}
+		err := r.updateResourceStatus(o, status)
 		return reconcile.Result{}, err
 	}
+	status.RemoveCondition(types.ConditionInitializing)
 
 	if err := manager.Sync(context.TODO()); err != nil {
 		log.Error(err, "failed to sync release")
+		status.SetCondition(types.HelmAppCondition{
+			Type:    types.ConditionIrreconcilable,
+			Status:  types.StatusTrue,
+			Reason:  types.ReasonReconcileError,
+			Message: err.Error(),
+		})
+		_ = r.updateResourceStatus(o, status)
 		return reconcile.Result{}, err
 	}
+	status.RemoveCondition(types.ConditionIrreconcilable)
 
 	if deleted {
 		if !contains(pendingFinalizers, finalizer) {
@@ -98,8 +113,17 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		uninstalledRelease, err := manager.UninstallRelease(context.TODO())
 		if err != nil && err != release.ErrNotFound {
 			log.Error(err, "failed to uninstall release")
+			status.SetCondition(types.HelmAppCondition{
+				Type:    types.ConditionReleaseFailed,
+				Status:  types.StatusTrue,
+				Reason:  types.ReasonUninstallError,
+				Message: err.Error(),
+			})
+			_ = r.updateResourceStatus(o, status)
 			return reconcile.Result{}, err
 		}
+		status.RemoveCondition(types.ConditionReleaseFailed)
+
 		if err == release.ErrNotFound {
 			log.Info("Release not found, removing finalizer")
 		} else {
@@ -107,6 +131,11 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 			if log.Enabled() {
 				fmt.Println(diffutil.Diff(uninstalledRelease.GetManifest(), ""))
 			}
+			status.SetCondition(types.HelmAppCondition{
+				Type:   types.ConditionDeployed,
+				Status: types.StatusFalse,
+				Reason: types.ReasonUninstallSuccessful,
+			})
 		}
 		finalizers := []string{}
 		for _, pendingFinalizer := range pendingFinalizers {
@@ -115,7 +144,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 			}
 		}
 		o.SetFinalizers(finalizers)
-		err = r.Client.Update(context.TODO(), o)
+		err = r.updateResourceStatus(o, status)
 		return reconcile.Result{}, err
 	}
 
@@ -123,16 +152,30 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		installedRelease, err := manager.InstallRelease(context.TODO())
 		if err != nil {
 			log.Error(err, "failed to install release")
+			status.SetCondition(types.HelmAppCondition{
+				Type:    types.ConditionReleaseFailed,
+				Status:  types.StatusTrue,
+				Reason:  types.ReasonInstallError,
+				Message: err.Error(),
+				Release: installedRelease,
+			})
+			_ = r.updateResourceStatus(o, status)
 			return reconcile.Result{}, err
 		}
+		status.RemoveCondition(types.ConditionReleaseFailed)
 
 		log.Info("Installed release")
 		if log.Enabled() {
 			fmt.Println(diffutil.Diff("", installedRelease.GetManifest()))
 		}
 		log.V(1).Info("Config values", "values", installedRelease.GetConfig())
-		status.SetRelease(installedRelease)
-		status.SetPhase(types.PhaseApplied, types.ReasonApplySuccessful, installedRelease.GetInfo().GetStatus().GetNotes())
+		status.SetCondition(types.HelmAppCondition{
+			Type:    types.ConditionDeployed,
+			Status:  types.StatusTrue,
+			Reason:  types.ReasonInstallSuccessful,
+			Message: installedRelease.GetInfo().GetStatus().GetNotes(),
+			Release: installedRelease,
+		})
 		err = r.updateResourceStatus(o, status)
 		return reconcile.Result{RequeueAfter: r.ResyncPeriod}, err
 	}
@@ -141,15 +184,30 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		previousRelease, updatedRelease, err := manager.UpdateRelease(context.TODO())
 		if err != nil {
 			log.Error(err, "failed to update release")
+			status.SetCondition(types.HelmAppCondition{
+				Type:    types.ConditionReleaseFailed,
+				Status:  types.StatusTrue,
+				Reason:  types.ReasonUpdateError,
+				Message: err.Error(),
+				Release: updatedRelease,
+			})
+			_ = r.updateResourceStatus(o, status)
 			return reconcile.Result{}, err
 		}
+		status.RemoveCondition(types.ConditionReleaseFailed)
+
 		log.Info("Updated release")
 		if log.Enabled() {
 			fmt.Println(diffutil.Diff(previousRelease.GetManifest(), updatedRelease.GetManifest()))
 		}
 		log.V(1).Info("Config values", "values", updatedRelease.GetConfig())
-		status.SetRelease(updatedRelease)
-		status.SetPhase(types.PhaseApplied, types.ReasonApplySuccessful, updatedRelease.GetInfo().GetStatus().GetNotes())
+		status.SetCondition(types.HelmAppCondition{
+			Type:    types.ConditionDeployed,
+			Status:  types.StatusTrue,
+			Reason:  types.ReasonUpdateSuccessful,
+			Message: updatedRelease.GetInfo().GetStatus().GetNotes(),
+			Release: updatedRelease,
+		})
 		err = r.updateResourceStatus(o, status)
 		return reconcile.Result{RequeueAfter: r.ResyncPeriod}, err
 	}
@@ -157,11 +215,20 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 	_, err = manager.ReconcileRelease(context.TODO())
 	if err != nil {
 		log.Error(err, "failed to reconcile release")
+		status.SetCondition(types.HelmAppCondition{
+			Type:    types.ConditionIrreconcilable,
+			Status:  types.StatusTrue,
+			Reason:  types.ReasonReconcileError,
+			Message: err.Error(),
+		})
+		_ = r.updateResourceStatus(o, status)
 		return reconcile.Result{}, err
 	}
+	status.RemoveCondition(types.ConditionIrreconcilable)
 
 	log.Info("Reconciled release")
-	return reconcile.Result{RequeueAfter: r.ResyncPeriod}, nil
+	err = r.updateResourceStatus(o, status)
+	return reconcile.Result{RequeueAfter: r.ResyncPeriod}, err
 }
 
 func (r HelmOperatorReconciler) updateResourceStatus(o *unstructured.Unstructured, status *types.HelmAppStatus) error {

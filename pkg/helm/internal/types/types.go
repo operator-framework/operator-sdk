@@ -38,32 +38,41 @@ type HelmApp struct {
 
 type HelmAppSpec map[string]interface{}
 
-type ResourcePhase string
+type HelmAppConditionType string
+type ConditionStatus string
+type HelmAppConditionReason string
+
+type HelmAppCondition struct {
+	Type    HelmAppConditionType   `json:"type"`
+	Status  ConditionStatus        `json:"status"`
+	Reason  HelmAppConditionReason `json:"reason,omitempty"`
+	Message string                 `json:"message,omitempty"`
+	Release *release.Release       `json:"release,omitempty"`
+
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
+}
 
 const (
-	PhaseNone     ResourcePhase = ""
-	PhaseApplying ResourcePhase = "Applying"
-	PhaseApplied  ResourcePhase = "Applied"
-	PhaseFailed   ResourcePhase = "Failed"
-)
+	ConditionInitializing   HelmAppConditionType = "Initializing"
+	ConditionDeployed       HelmAppConditionType = "Deployed"
+	ConditionReleaseFailed  HelmAppConditionType = "ReleaseFailed"
+	ConditionIrreconcilable HelmAppConditionType = "Irreconcilable"
 
-type ConditionReason string
+	StatusTrue    ConditionStatus = "True"
+	StatusFalse   ConditionStatus = "False"
+	StatusUnknown ConditionStatus = "Unknown"
 
-const (
-	ReasonUnknown               ConditionReason = "Unknown"
-	ReasonCustomResourceAdded   ConditionReason = "CustomResourceAdded"
-	ReasonCustomResourceUpdated ConditionReason = "CustomResourceUpdated"
-	ReasonApplySuccessful       ConditionReason = "ApplySuccessful"
-	ReasonApplyFailed           ConditionReason = "ApplyFailed"
+	ReasonInstallSuccessful   HelmAppConditionReason = "InstallSuccessful"
+	ReasonUpdateSuccessful    HelmAppConditionReason = "UpdateSuccessful"
+	ReasonUninstallSuccessful HelmAppConditionReason = "UninstallSuccessful"
+	ReasonInstallError        HelmAppConditionReason = "InstallError"
+	ReasonUpdateError         HelmAppConditionReason = "UpdateError"
+	ReasonReconcileError      HelmAppConditionReason = "ReconcileError"
+	ReasonUninstallError      HelmAppConditionReason = "UninstallError"
 )
 
 type HelmAppStatus struct {
-	Release            *release.Release `json:"release"`
-	Phase              ResourcePhase    `json:"phase"`
-	Reason             ConditionReason  `json:"reason,omitempty"`
-	Message            string           `json:"message,omitempty"`
-	LastUpdateTime     metav1.Time      `json:"lastUpdateTime,omitempty"`
-	LastTransitionTime metav1.Time      `json:"lastTransitionTime,omitempty"`
+	Conditions []HelmAppCondition `json:"conditions"`
 }
 
 func (s *HelmAppStatus) ToMap() (map[string]interface{}, error) {
@@ -76,37 +85,53 @@ func (s *HelmAppStatus) ToMap() (map[string]interface{}, error) {
 	return out, nil
 }
 
-// SetPhase takes a custom resource status and returns the updated status, without updating the resource in the cluster.
-func (s *HelmAppStatus) SetPhase(phase ResourcePhase, reason ConditionReason, message string) *HelmAppStatus {
-	s.LastUpdateTime = metav1.Now()
-	if s.Phase != phase {
-		s.Phase = phase
-		s.LastTransitionTime = metav1.Now()
+// SetCondition sets a condition on the status object. If the condition already
+// exists, it will be replaced. SetCondition does not update the resource in
+// the cluster.
+func (s *HelmAppStatus) SetCondition(condition HelmAppCondition) *HelmAppStatus {
+	now := metav1.Now()
+	for i := range s.Conditions {
+		if s.Conditions[i].Type == condition.Type {
+			if s.Conditions[i].Status != condition.Status {
+				condition.LastTransitionTime = now
+			} else {
+				condition.LastTransitionTime = s.Conditions[i].LastTransitionTime
+			}
+			s.Conditions[i] = condition
+			return s
+		}
 	}
-	s.Message = message
-	s.Reason = reason
+
+	// If the condition does not exist,
+	// initialize the lastTransitionTime
+	condition.LastTransitionTime = now
+	s.Conditions = append(s.Conditions, condition)
 	return s
 }
 
-// SetRelease takes a release object and adds or updates the release on the status object
-func (s *HelmAppStatus) SetRelease(release *release.Release) *HelmAppStatus {
-	s.Release = release
+// RemoveCondition removes the condition with the passed condition type from
+// the status object. If the condition is not already present, the returned
+// status object is returned unchanged. RemoveCondition does not update the
+// resource in the cluster.
+func (s *HelmAppStatus) RemoveCondition(conditionType HelmAppConditionType) *HelmAppStatus {
+	for i := range s.Conditions {
+		if s.Conditions[i].Type == conditionType {
+			s.Conditions = append(s.Conditions[:i], s.Conditions[i+1:]...)
+			return s
+		}
+	}
 	return s
 }
 
 // StatusFor safely returns a typed status block from a custom resource.
 func StatusFor(cr *unstructured.Unstructured) *HelmAppStatus {
-	switch cr.Object["status"].(type) {
+	switch s := cr.Object["status"].(type) {
 	case *HelmAppStatus:
-		return cr.Object["status"].(*HelmAppStatus)
+		return s
 	case map[string]interface{}:
 		var status *HelmAppStatus
-		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(cr.Object["status"].(map[string]interface{}), &status); err != nil {
-			return &HelmAppStatus{
-				Phase:   PhaseFailed,
-				Reason:  ReasonApplyFailed,
-				Message: err.Error(),
-			}
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(s, &status); err != nil {
+			return &HelmAppStatus{}
 		}
 		return status
 	default:
