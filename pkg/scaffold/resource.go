@@ -129,11 +129,12 @@ func (r *Resource) checkAndSetGroups() error {
 }
 
 func (r *Resource) checkAndSetVersion() error {
-	r.Version = strings.Split(r.APIVersion, "/")[1]
-
-	if len(r.Version) == 0 {
+	api := strings.Split(r.APIVersion, "/")
+	if len(api) < 2 {
 		return errors.New("version cannot be empty")
 	}
+	r.Version = api[1]
+
 	if !ResourceVersionRegexp.MatchString(r.Version) {
 		return errors.New("version is not in the correct Kubernetes version format, ex. v1alpha1")
 	}

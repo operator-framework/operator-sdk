@@ -17,7 +17,7 @@ package scaffold
 import (
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/internal/testutil"
+	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 )
 
 func TestServiceAccount(t *testing.T) {
@@ -28,7 +28,7 @@ func TestServiceAccount(t *testing.T) {
 	}
 
 	if serviceAccountExp != buf.String() {
-		diffs := testutil.Diff(serviceAccountExp, buf.String())
+		diffs := diffutil.Diff(serviceAccountExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
