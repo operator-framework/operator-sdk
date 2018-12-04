@@ -17,7 +17,7 @@ package scaffold
 import (
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/internal/testutil"
+	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 )
 
 func TestOperator(t *testing.T) {
@@ -28,7 +28,7 @@ func TestOperator(t *testing.T) {
 	}
 
 	if operatorExp != buf.String() {
-		diffs := testutil.Diff(operatorExp, buf.String())
+		diffs := diffutil.Diff(operatorExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
@@ -41,7 +41,7 @@ func TestOperatorClusterScoped(t *testing.T) {
 	}
 
 	if operatorClusterScopedExp != buf.String() {
-		diffs := testutil.Diff(operatorClusterScopedExp, buf.String())
+		diffs := diffutil.Diff(operatorClusterScopedExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }

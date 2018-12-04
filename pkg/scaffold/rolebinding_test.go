@@ -17,7 +17,7 @@ package scaffold
 import (
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/internal/testutil"
+	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 )
 
 func TestRoleBinding(t *testing.T) {
@@ -28,7 +28,7 @@ func TestRoleBinding(t *testing.T) {
 	}
 
 	if rolebindingExp != buf.String() {
-		diffs := testutil.Diff(rolebindingExp, buf.String())
+		diffs := diffutil.Diff(rolebindingExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
@@ -41,7 +41,7 @@ func TestRoleBindingClusterScoped(t *testing.T) {
 	}
 
 	if clusterrolebindingExp != buf.String() {
-		diffs := testutil.Diff(clusterrolebindingExp, buf.String())
+		diffs := diffutil.Diff(clusterrolebindingExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
