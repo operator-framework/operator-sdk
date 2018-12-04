@@ -72,6 +72,13 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 				Version:  r.APIVersion,
 				Resource: r.Resource,
 			}
+			if restMapper == nil {
+				restMapper = meta.NewDefaultRESTMapper([]schema.GroupVersion{schema.GroupVersion{
+					Group:   r.APIGroup,
+					Version: r.APIVersion,
+				}})
+			}
+
 			k, err := restMapper.KindFor(gvr)
 			if err != nil {
 				// break here in case resource doesn't exist in cache
