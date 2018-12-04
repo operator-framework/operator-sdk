@@ -296,7 +296,7 @@ $ operator-sdk up local
 INFO[0000] Running the operator locally.
 INFO[0000] Go Version: go1.10.3
 INFO[0000] Go OS/Arch: linux/amd64
-INFO[0000] operator-sdk Version: v0.1.1+git
+INFO[0000] operator-sdk Version: v0.2.0+git
 {"level":"info","ts":1543357618.0081263,"logger":"kubebuilder.controller","caller":"controller/controller.go:120","msg":"Starting EventSource","Controller":"foo-controller","Source":{"Type":{"apiVersion":"foo.example.com/v1alpha1","kind":"Foo"}}}
 {"level":"info","ts":1543357618.008322,"logger":"helm.controller","caller":"controller/controller.go:73","msg":"Watching resource","apiVersion":"foo.example.com/v1alpha1","kind":"Foo","namespace":"default","resyncPeriod":"5s"}
 ```

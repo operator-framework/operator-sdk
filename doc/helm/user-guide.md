@@ -202,7 +202,7 @@ Verify that the nginx-operator is up and running:
 
 ```sh
 $ kubectl get deployment
-NAME                     DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+NAME                 DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
 nginx-operator       1         1         1            1           1m
 ```
 
@@ -238,7 +238,7 @@ Run the operator locally with a provided kubernetes config file:
 $ operator-sdk up local --kubeconfig=config
 INFO[0000] Go Version: go1.10.3
 INFO[0000] Go OS/Arch: linux/amd64
-INFO[0000] operator-sdk Version: v0.1.1+git
+INFO[0000] operator-sdk Version: v0.2.0+git
 ```
 
 ## Deploy the Nginx custom resource
