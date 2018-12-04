@@ -12,7 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package ansible
+
+import (
+	"path/filepath"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+)
+
+// Main - main source file for ansible operator
+type Main struct {
+	input.Input
+}
+
+func (m *Main) GetInput() (input.Input, error) {
+	if m.Path == "" {
+		m.Path = filepath.Join("cmd", "manager", "main.go")
+	}
+	m.TemplateBody = mainTmpl
+	return m.Input, nil
+}
+
+const mainTmpl = `package main
 
 import (
 	"os"
@@ -72,7 +93,7 @@ func main() {
 		ControllerMap: cMap,
 	})
 	if err != nil {
-		log.Fatalf("error starting proxy: (%v)", err)
+		log.Fatalf("error starting proxy: %v", err)
 	}
 
 	// start the operator
@@ -80,8 +101,10 @@ func main() {
 
 	// wait for either to finish
 	err = <-done
-	if err != nil {
-		log.Fatal(err)
+	if err == nil {
+		log.Info("Exiting")
+	} else {
+		log.Fatal(err.Error())
 	}
-	log.Info("Exiting.")
 }
+`

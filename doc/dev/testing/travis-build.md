@@ -69,13 +69,14 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 ### Ansible tests
 
 1. Run [ansible e2e tests][ansible-e2e].
-    1. Build base ansible operator image from [`test/ansible-operator`][ansible-base].
-    2. Create and configure a new ansible type memcached-operator.
-    3. Create cluster resources.
-    4. Wait for operator to be ready.
-    5. Create a memcached CR and wait for it to be ready.
-    6. Create a configmap that the memcached-operator is configured to delete using a finalizer.
-    7. Delete memcached CR and verify that the finalizer deleted the configmap.
+    1. Create base ansible operator source by running [`commands/ansible-operator-base/main.go`][ansible-base].
+    2. Build base ansible operator binary and image from source.
+    3. Create and configure a new ansible type memcached-operator.
+    4. Create cluster resources.
+    5. Wait for operator to be ready.
+    6. Create a memcached CR and wait for it to be ready.
+    7. Create a configmap that the memcached-operator is configured to delete using a finalizer.
+    8. Delete memcached CR and verify that the finalizer deleted the configmap.
 
 **NOTE**: All created resources, including the namespace, are deleted using a bash trap when the test finishes
 
@@ -106,7 +107,7 @@ The markdown test does not create a new cluster and runs in a barebones travis V
 [go-e2e]: ../../../hack/tests/e2e-go.sh
 [tls-tests]: ../../../test/e2e/tls_util_test.go
 [ansible-e2e]: ../../../hack/tests/e2e-ansible.sh
-[ansible-base]: ../../../test/ansible-operator
+[ansible-base]: ../../../commands/ansible-operator-base/main.go
 [helm-e2e]: ../../../hack/tests/e2e-helm.sh
 [helm-base]: ../../../test/helm-operator
 [marker-github]: https://github.com/crawford/marker
