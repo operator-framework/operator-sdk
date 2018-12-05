@@ -103,7 +103,6 @@ func checkStatusUpdate(runtimeClient client.Client, obj unstructured.Unstructure
 		default:
 			fmt.Printf("Unknown type for key (%s) in status: (%v)\n", k, reflect.TypeOf(t))
 		}
-		obj.Object["spec"] = specMap
 		runtimeClient.Update(context.TODO(), &obj)
 		err := wait.Poll(time.Second*1, time.Second*15, func() (done bool, err error) {
 			runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: SCConf.Namespace, Name: name}, &obj)
