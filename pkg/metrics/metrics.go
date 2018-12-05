@@ -27,6 +27,9 @@ import (
 
 var log = logf.Log.WithName("metrics")
 
+// PrometheusPortName defines the port name used in kubernetes deployment and service resources
+const PrometheusPortName = "metrics"
+
 // ExposeMetricsPort generates a Kubernetes Service to expose the metrics port
 func ExposeMetricsPort(address string) (*v1.Service, error) {
 	// Split out port from address, to pass to Service object.
