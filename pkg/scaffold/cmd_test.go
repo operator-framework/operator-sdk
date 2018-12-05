@@ -129,7 +129,10 @@ func main() {
 		os.Exit(1)
 	}
 	client := mgr.GetClient()
-	client.Create(context.TODO(), s)
+	if err := client.Create(context.TODO(), s); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
 
 	log.Info("Starting the Cmd.")
 
