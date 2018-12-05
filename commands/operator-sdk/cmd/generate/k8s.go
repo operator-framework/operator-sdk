@@ -23,6 +23,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -52,8 +53,9 @@ func k8sFunc(cmd *cobra.Command, args []string) {
 
 // K8sCodegen performs deepcopy code-generation for all custom resources under pkg/apis
 func K8sCodegen() {
-
 	projutil.MustInProjectRoot()
+
+	absProjectPath := projutil.MustGetwd()
 	repoPkg := projutil.CheckAndGetProjectGoPkg()
 	outputPkg := filepath.Join(repoPkg, "pkg/generated")
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
@@ -62,18 +64,29 @@ func K8sCodegen() {
 		log.Fatalf("failed to parse group versions: (%v)", err)
 	}
 
+	cfg := &input.Config{
+		Repo:           repoPkg,
+		AbsProjectPath: absProjectPath,
+		ProjectName:    filepath.Base(absProjectPath),
+	}
+
+	s := &scaffold.Scaffold{}
+	gg := &scaffold.GenerateGroupsScript{}
+	err = s.Execute(cfg, gg)
+	if err != nil {
+		log.Fatalf("failed to scaffold codegen script: (%v)", err)
+	}
+
 	log.Infof("Running code-generation for Custom Resource group versions: [%s]\n", groupVersions)
 
-	// TODO: Replace generate-groups.sh by building the vendored generators(deepcopy, lister etc)
-	// and running them directly
-	genGroupsCmd := "vendor/k8s.io/code-generator/generate-groups.sh"
+	ggi, _ := gg.GetInput()
 	args := []string{
 		"deepcopy",
 		outputPkg,
 		apisPkg,
 		groupVersions,
 	}
-	cgCmd := exec.Command(genGroupsCmd, args...)
+	cgCmd := exec.Command(ggi.Path, args...)
 	cgCmd.Stdout = os.Stdout
 	cgCmd.Stderr = os.Stderr
 	err = cgCmd.Run()
