@@ -17,6 +17,7 @@ package e2e
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -27,11 +28,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ghodss/yaml"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	"github.com/operator-framework/operator-sdk/test/e2e/e2eutil"
-	framework "github.com/operator-framework/operator-sdk/test/e2e/framework"
+	framework "github.com/operator-framework/operator-sdk/pkg/test"
+	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 
 	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -40,13 +43,13 @@ import (
 const (
 	filemode os.FileMode = 0664
 	dirmode  os.FileMode = 0750
+	crYAML   string      = "apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: 3"
 )
 
 func TestMemcached(t *testing.T) {
 	// get global framework variables
-	f := framework.Global
-	ctx := f.NewTestCtx(t)
-	defer ctx.Cleanup(t)
+	ctx := framework.NewTestCtx(t)
+	defer ctx.Cleanup()
 	gopath, ok := os.LookupEnv(projutil.GopathEnv)
 	if !ok {
 		t.Fatalf("$GOPATH not set")
@@ -83,7 +86,7 @@ func TestMemcached(t *testing.T) {
 			t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
 		}
 	}
-	ctx.AddFinalizerFn(func() error { return os.RemoveAll(absProjectPath) })
+	ctx.AddCleanupFn(func() error { return os.RemoveAll(absProjectPath) })
 
 	os.Chdir("memcached-operator")
 	prSlug, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
@@ -216,16 +219,19 @@ func TestMemcached(t *testing.T) {
 			"vendor/github.com/operator-framework/operator-sdk/pkg")
 	}
 
-	// create crd
-	crdYAML, err := ioutil.ReadFile("deploy/crds/cache_v1alpha1_memcached_crd.yaml")
-	if err != nil {
-		t.Fatalf("could not read crd file: %v", err)
-	}
-	err = ctx.CreateFromYAML(crdYAML)
+	file, err := projutil.GenerateCombinedGlobalManifest()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("Created crd")
+	// hacky way to use createFromYAML without exposing the method
+	// create crd
+	filename := file.Name()
+	framework.Global.NamespacedManPath = &filename
+	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: time.Second * 10, RetryInterval: time.Second * 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Created global resources")
 
 	// run subtests
 	t.Run("memcached-group", func(t *testing.T) {
@@ -235,13 +241,13 @@ func TestMemcached(t *testing.T) {
 	})
 }
 
-func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) error {
+func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return err
 	}
 
-	err = e2eutil.DeploymentReplicaCheck(t, f.KubeClient, namespace, "memcached-operator", 1, 6)
+	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, time.Second*5, time.Second*30)
 	if err != nil {
 		return err
 	}
@@ -252,12 +258,12 @@ func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx framework.Tes
 	}
 
 	// delete the leader's pod so a new leader will get elected
-	err = f.DynamicClient.Delete(context.TODO(), leader)
+	err = f.Client.Delete(context.TODO(), leader)
 	if err != nil {
 		return err
 	}
 
-	err = e2eutil.DeploymentReplicaCheck(t, f.KubeClient, namespace, "memcached-operator", 1, 6)
+	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, time.Second*5, time.Second*30)
 	if err != nil {
 		return err
 	}
@@ -276,7 +282,7 @@ func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx framework.Tes
 func verifyLeader(namespace string, f *framework.Framework) (*v1.Pod, error) {
 	// get configmap, which is the lock
 	lock := v1.ConfigMap{}
-	err := f.DynamicClient.Get(context.TODO(), types.NamespacedName{Name: "memcached-operator-lock", Namespace: namespace}, &lock)
+	err := f.Client.Get(context.TODO(), types.NamespacedName{Name: "memcached-operator-lock", Namespace: namespace}, &lock)
 	if err != nil {
 		return nil, err
 	}
@@ -292,7 +298,7 @@ func verifyLeader(namespace string, f *framework.Framework) (*v1.Pod, error) {
 	opts := client.ListOptions{Namespace: namespace}
 	opts.SetLabelSelector("name=memcached-operator")
 	opts.SetFieldSelector("status.phase=Running")
-	err = f.DynamicClient.List(context.TODO(), &opts, &pods)
+	err = f.Client.List(context.TODO(), &opts, &pods)
 	if err != nil {
 		return nil, err
 	}
@@ -309,59 +315,65 @@ func verifyLeader(namespace string, f *framework.Framework) (*v1.Pod, error) {
 	return nil, fmt.Errorf("did not find operator pod that was referenced by configmap")
 }
 
-func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) error {
+func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
 	// create example-memcached yaml file
-	err := ioutil.WriteFile("deploy/cr.yaml",
-		[]byte("apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: 3"),
+	filename := "deploy/cr.yaml"
+	err := ioutil.WriteFile(filename,
+		[]byte(crYAML),
 		filemode)
 	if err != nil {
 		return err
 	}
 
 	// create memcached custom resource
-	crYAML, err := ioutil.ReadFile("deploy/cr.yaml")
+	framework.Global.NamespacedManPath = &filename
+	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: time.Second * 10, RetryInterval: time.Second * 1})
 	if err != nil {
 		return err
 	}
-	err = ctx.CreateFromYAML(crYAML)
-	if err != nil {
-		return err
-	}
+	t.Log("Created cr")
+
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return err
 	}
 	// wait for example-memcached to reach 3 replicas
-	err = e2eutil.DeploymentReplicaCheck(t, f.KubeClient, namespace, "example-memcached", 3, 6)
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 3, time.Second*5, time.Second*30)
 	if err != nil {
 		return err
 	}
 
-	// update memcached CR size to 4
-	memcachedClient, err := ctx.GetCRClient(crYAML)
+	// get fresh copy of memcached object as unstructured
+	obj := unstructured.Unstructured{}
+	jsonSpec, err := yaml.YAMLToJSON([]byte(crYAML))
 	if err != nil {
-		return err
+		return fmt.Errorf("could not convert yaml file to json: %v", err)
 	}
-	err = memcachedClient.Patch(types.JSONPatchType).
-		Namespace(namespace).
-		Resource("memcacheds").
-		Name("example-memcached").
-		Body([]byte("[{\"op\": \"replace\", \"path\": \"/spec/size\", \"value\": 4}]")).
-		Do().
-		Error()
+	obj.UnmarshalJSON(jsonSpec)
+	obj.SetNamespace(namespace)
+	err = f.Client.Get(context.TODO(), types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}, &obj)
+	if err != nil {
+		return fmt.Errorf("failed to get memcached object: %s", err)
+	}
+	// update memcached CR size to 4
+	spec, ok := obj.Object["spec"].(map[string]interface{})
+	if !ok {
+		return errors.New("memcached object missing spec field")
+	}
+	spec["size"] = 4
+	err = f.Client.Update(context.TODO(), &obj)
 	if err != nil {
 		return err
 	}
 
 	// wait for example-memcached to reach 4 replicas
-	return e2eutil.DeploymentReplicaCheck(t, f.KubeClient, namespace, "example-memcached", 4, 6)
+	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 4, time.Second*5, time.Second*30)
 }
 
 func MemcachedLocal(t *testing.T) {
 	// get global framework variables
-	f := framework.Global
-	ctx := f.NewTestCtx(t)
-	defer ctx.Cleanup(t)
+	ctx := framework.NewTestCtx(t)
+	defer ctx.Cleanup()
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		t.Fatal(err)
@@ -378,7 +390,7 @@ func MemcachedLocal(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error: %v", err)
 	}
-	ctx.AddFinalizerFn(func() error { return cmd.Process.Signal(os.Interrupt) })
+	ctx.AddCleanupFn(func() error { return cmd.Process.Signal(os.Interrupt) })
 
 	// wait for operator to start (may take a minute to compile the command...)
 	err = wait.Poll(time.Second*5, time.Second*100, func() (done bool, err error) {
@@ -395,23 +407,22 @@ func MemcachedLocal(t *testing.T) {
 		t.Fatalf("local operator not ready after 100 seconds: %v\n", err)
 	}
 
-	if err = memcachedScaleTest(t, f, ctx); err != nil {
+	if err = memcachedScaleTest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func MemcachedCluster(t *testing.T) {
 	// get global framework variables
-	f := framework.Global
-	ctx := f.NewTestCtx(t)
-	defer ctx.Cleanup(t)
+	ctx := framework.NewTestCtx(t)
+	defer ctx.Cleanup()
 	operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
 	if err != nil {
 		t.Fatalf("could not read deploy/operator.yaml: %v", err)
 	}
-	local := *f.ImageName == ""
+	local := *e2eImageName == ""
 	if local {
-		*f.ImageName = "quay.io/example/memcached-operator:v0.0.1"
+		*e2eImageName = "quay.io/example/memcached-operator:v0.0.1"
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -421,13 +432,13 @@ func MemcachedCluster(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	operatorYAML = bytes.Replace(operatorYAML, []byte("REPLACE_IMAGE"), []byte(*f.ImageName), 1)
+	operatorYAML = bytes.Replace(operatorYAML, []byte("REPLACE_IMAGE"), []byte(*e2eImageName), 1)
 	err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, os.FileMode(0644))
 	if err != nil {
 		t.Fatalf("failed to write deploy/operator.yaml: %v", err)
 	}
 	t.Log("Building operator docker image")
-	cmdOut, err := exec.Command("operator-sdk", "build", *f.ImageName,
+	cmdOut, err := exec.Command("operator-sdk", "build", *e2eImageName,
 		"--enable-tests",
 		"--test-location", "./test/e2e",
 		"--namespaced-manifest", "deploy/operator.yaml").CombinedOutput()
@@ -437,105 +448,70 @@ func MemcachedCluster(t *testing.T) {
 
 	if !local {
 		t.Log("Pushing docker image to repo")
-		cmdOut, err = exec.Command("docker", "push", *f.ImageName).CombinedOutput()
+		cmdOut, err = exec.Command("docker", "push", *e2eImageName).CombinedOutput()
 		if err != nil {
 			t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
 		}
 	}
 
-	// create sa
-	saYAML, err := ioutil.ReadFile("deploy/service_account.yaml")
+	file, err := projutil.GenerateCombinedNamespacedManifest()
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = ctx.CreateFromYAML(saYAML)
+	// create namespaced resources
+	filename := file.Name()
+	framework.Global.NamespacedManPath = &filename
+	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: time.Second * 10, RetryInterval: time.Second * 1})
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("Created sa")
-
-	// create rbac
-	roleYAML, err := ioutil.ReadFile("deploy/role.yaml")
-	if err != nil {
-		t.Fatalf("could not read role file: %v", err)
-	}
-	err = ctx.CreateFromYAML(roleYAML)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("Created role")
-	roleBindingYAML, err := ioutil.ReadFile("deploy/role_binding.yaml")
-	if err != nil {
-		t.Fatalf("could not read role_binding file: %v", err)
-	}
-	err = ctx.CreateFromYAML(roleBindingYAML)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("Created role_binding")
-
-	// create operator
-	operatorYAML, err = ioutil.ReadFile("deploy/operator.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = ctx.CreateFromYAML(operatorYAML)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("Created operator")
+	t.Log("Created namespaced resources")
 
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		t.Fatal(err)
 	}
 	// wait for memcached-operator to be ready
-	err = e2eutil.DeploymentReplicaCheck(t, f.KubeClient, namespace, "memcached-operator", 1, 6)
+	err = e2eutil.WaitForOperatorDeployment(t, framework.Global.KubeClient, namespace, "memcached-operator", 1, time.Second*5, time.Second*30)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err = memcachedLeaderTest(t, f, ctx); err != nil {
+	if err = memcachedLeaderTest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
 	}
 
-	if err = memcachedScaleTest(t, f, ctx); err != nil {
+	if err = memcachedScaleTest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func MemcachedClusterTest(t *testing.T) {
 	// get global framework variables
-	f := framework.Global
-	ctx := f.NewTestCtx(t)
-	defer ctx.Cleanup(t)
+	ctx := framework.NewTestCtx(t)
+	defer ctx.Cleanup()
 
 	// create sa
-	saYAML, err := ioutil.ReadFile("deploy/service_account.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = ctx.CreateFromYAML(saYAML)
+	filename := "deploy/service_account.yaml"
+	framework.Global.NamespacedManPath = &filename
+	err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: time.Second * 10, RetryInterval: time.Second * 1})
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("Created sa")
 
 	// create rbac
-	roleYAML, err := ioutil.ReadFile("deploy/role.yaml")
-	if err != nil {
-		t.Fatalf("could not read role file: %v", err)
-	}
-	err = ctx.CreateFromYAML(roleYAML)
+	filename = "deploy/role.yaml"
+	framework.Global.NamespacedManPath = &filename
+	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: time.Second * 10, RetryInterval: time.Second * 1})
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("Created role")
-	roleBindingYAML, err := ioutil.ReadFile("deploy/role_binding.yaml")
-	if err != nil {
-		t.Fatalf("could not read role_binding file: %v", err)
-	}
-	err = ctx.CreateFromYAML(roleBindingYAML)
+
+	filename = "deploy/role_binding.yaml"
+	framework.Global.NamespacedManPath = &filename
+	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: time.Second * 10, RetryInterval: time.Second * 1})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -545,12 +521,11 @@ func MemcachedClusterTest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not get namespace: %v", err)
 	}
-	cmdOut, err := exec.Command("operator-sdk", "test", "cluster", *f.ImageName,
+	cmdOut, err := exec.Command("operator-sdk", "test", "cluster", *e2eImageName,
 		"--namespace", namespace,
 		"--image-pull-policy", "Never",
 		"--service-account", "memcached-operator").CombinedOutput()
 	if err != nil {
 		t.Fatalf("in-cluster test failed: %v\nCommand Output:\n%s", err, string(cmdOut))
 	}
-
 }
