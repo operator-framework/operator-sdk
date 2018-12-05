@@ -116,7 +116,7 @@ For this example replace the generated Controller file `pkg/controller/memcached
 The example Controller executes the following reconciliation logic for each `Memcached` CR:
 - Create a memcached Deployment if it doesn't exist
 - Ensure that the Deployment size is the same as specified by the `Memcached` CR spec
-- Update the `Memcached` CR status with the names of the memcached pods
+- Update the `Memcached` CR status using the status writer with the names of the memcached pods
 
 The next two subsections explain how the Controller watches resources and how the reconcile loop is triggered. Skip to the [Build](#build-and-run-the-operator) section to see how to build and run the operator.
 

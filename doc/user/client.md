@@ -244,6 +244,41 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 }
 ```
 
+##### Updating Status Subresource
+When updating the status subresource from the client, the StatusWriter must be
+used which can be gotten with `Status()`
+##### Status
+```Go
+// Status() returns a StatusWriter object that can be used to update the
+// object's status subresource
+func (c Client) Status() (client.StatusWriter, error)
+```
+
+Example:
+```Go
+import (
+	"context"
+	cachev1alpha1 "github.com/example-inc/memcached-operator/pkg/apis/cache/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
+func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	...
+	
+	mem := &cachev1alpha.Memcached{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, mem)
+
+	...
+
+	ctx := context.TODO()
+	mem.Status.Nodes = []string{"pod1", "pod2"}
+	err := r.client.Status().Update(ctx, mem)
+
+	...
+}
+```
+
+
 #### Delete
 
 ```Go
@@ -385,7 +420,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 	podNames := getPodNames(podList.Items)
 	if !reflect.DeepEqual(podNames, app.Status.Nodes) {
 		app.Status.Nodes = podNames
-		if err := r.client.Update(context.TODO(), app); err != nil {
+		if err := r.client.Status().Update(context.TODO(), app); err != nil {
 			return reconcile.Result{}, err
 		}
 	}
