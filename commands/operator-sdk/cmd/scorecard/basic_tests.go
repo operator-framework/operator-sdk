@@ -87,7 +87,26 @@ func checkStatusUpdate(runtimeClient client.Client, obj unstructured.Unstructure
 		statCopy[k] = v
 	}
 	specMap := obj.Object["spec"].(map[string]interface{})
+	err = modifySpecAndCheck(specMap, obj)
+	if err != nil {
+		test.earnedPoints = 0
+		scTests = append(scTests, test)
+		return nil
+	}
+	test.earnedPoints = 1
+	scTests = append(scTests, test)
+	return nil
+}
+
+// modifySpecAndCheck is a helper function for checkStatusUpdate
+func modifySpecAndCheck(specMap map[string]interface{}, obj unstructured.Unstructured) error {
+	statCopy := make(map[string]interface{})
+	for k, v := range obj.Object["status"].(map[string]interface{}) {
+		statCopy[k] = v
+	}
+	var err error
 	for k, v := range specMap {
+		mapType := false
 		switch t := v.(type) {
 		case int64:
 			specMap[k] = specMap[k].(int64) + 1
@@ -99,22 +118,34 @@ func checkStatusUpdate(runtimeClient client.Client, obj unstructured.Unstructure
 			specMap[k] = fmt.Sprintf("operator sdk test value %f", rand.Float64())
 		case bool:
 			specMap[k] = !specMap[k].(bool)
+		case map[string]interface{}:
+			mapType = true
+			err = modifySpecAndCheck(specMap[k].(map[string]interface{}), obj)
+		case []map[string]interface{}:
+			mapType = true
+			for _, item := range specMap[k].([]map[string]interface{}) {
+				err = modifySpecAndCheck(item, obj)
+				if err != nil {
+					break
+				}
+			}
 		case []interface{}: // TODO: Decide how this should be handled
+		case interface{}: // same as above
 		default:
 			fmt.Printf("Unknown type for key (%s) in status: (%v)\n", k, reflect.TypeOf(t))
 		}
-		runtimeClient.Update(context.TODO(), &obj)
-		err := wait.Poll(time.Second*1, time.Second*15, func() (done bool, err error) {
-			runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: SCConf.Namespace, Name: name}, &obj)
-			if err != nil {
-				return false, err
-			}
-			return !reflect.DeepEqual(statCopy, obj.Object["status"]), nil
-		})
+		if !mapType {
+			runtimeClient.Update(context.TODO(), &obj)
+			err = wait.Poll(time.Second*1, time.Second*15, func() (done bool, err error) {
+				runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: SCConf.Namespace, Name: name}, &obj)
+				if err != nil {
+					return false, err
+				}
+				return !reflect.DeepEqual(statCopy, obj.Object["status"]), nil
+			})
+		}
 		if err != nil {
-			test.earnedPoints = 0
-			scTests = append(scTests, test)
-			return nil
+			return err
 		}
 		//reset stat copy to match
 		statCopy = make(map[string]interface{})
@@ -122,8 +153,6 @@ func checkStatusUpdate(runtimeClient client.Client, obj unstructured.Unstructure
 			statCopy[k] = v
 		}
 	}
-	test.earnedPoints = 1
-	scTests = append(scTests, test)
 	return nil
 }
 
