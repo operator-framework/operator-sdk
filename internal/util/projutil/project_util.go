@@ -23,9 +23,9 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
-
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/helm"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

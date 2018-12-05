@@ -45,6 +45,8 @@ var (
 	singleNamespace *bool
 	// decoder used by createFromYaml
 	dynamicDecoder runtime.Decoder
+	// restMapper for the dynamic client
+	restMapper *restmapper.DeferredDiscoveryRESTMapper
 )
 
 type Framework struct {
@@ -99,7 +101,10 @@ func setup(kubeconfigPath, namespacedManPath *string, localOperator bool) error 
 	scheme := runtime.NewScheme()
 	cgoscheme.AddToScheme(scheme)
 	extscheme.AddToScheme(scheme)
-	dynClient, err := dynclient.New(kubeconfig, dynclient.Options{Scheme: scheme})
+	cachedDiscoveryClient := cached.NewMemCacheClient(kubeclient.Discovery())
+	restMapper = restmapper.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient)
+	restMapper.Reset()
+	dynClient, err := dynclient.New(kubeconfig, dynclient.Options{Scheme: scheme, Mapper: restMapper})
 	if err != nil {
 		return fmt.Errorf("failed to build the dynamic client: %v", err)
 	}
@@ -139,10 +144,8 @@ func AddToFrameworkScheme(addToScheme addToSchemeFunc, obj runtime.Object) error
 	if err != nil {
 		return err
 	}
-	cachedDiscoveryClient := cached.NewMemCacheClient(Global.KubeClient.Discovery())
-	restMapper := restmapper.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient)
-	restMapper.Reset()
 	dynClient, err := dynclient.New(Global.KubeConfig, dynclient.Options{Scheme: Global.Scheme, Mapper: restMapper})
+	restMapper.Reset()
 	err = wait.PollImmediate(time.Second, time.Second*10, func() (done bool, err error) {
 		if *singleNamespace {
 			err = dynClient.List(goctx.TODO(), &dynclient.ListOptions{Namespace: Global.Namespace}, obj)

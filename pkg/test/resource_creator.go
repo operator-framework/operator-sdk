@@ -19,11 +19,14 @@ import (
 	goctx "context"
 	"fmt"
 	"io/ioutil"
+	"time"
 
-	yaml "gopkg.in/yaml.v2"
+	"github.com/ghodss/yaml"
 	core "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 func (ctx *TestCtx) GetNamespace() (string, error) {
@@ -49,16 +52,6 @@ func (ctx *TestCtx) GetNamespace() (string, error) {
 	return ctx.namespace, nil
 }
 
-func setNamespaceYAML(yamlFile []byte, namespace string) ([]byte, error) {
-	yamlMap := make(map[interface{}]interface{})
-	err := yaml.Unmarshal(yamlFile, &yamlMap)
-	if err != nil {
-		return nil, err
-	}
-	yamlMap["metadata"].(map[interface{}]interface{})["namespace"] = namespace
-	return yaml.Marshal(yamlMap)
-}
-
 func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOptions *CleanupOptions) error {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
@@ -70,22 +63,39 @@ func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOp
 		if string(yamlSpec) == "" {
 			continue
 		}
-		yamlSpec, err = setNamespaceYAML(yamlSpec, namespace)
+		obj := &unstructured.Unstructured{}
+		jsonSpec, err := yaml.YAMLToJSON(yamlSpec)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not convert yaml file to json: %v", err)
 		}
-
-		obj, _, err := dynamicDecoder.Decode(yamlSpec, nil, nil)
-		if err != nil {
-			return err
-		}
-
+		obj.UnmarshalJSON(jsonSpec)
+		obj.SetNamespace(namespace)
 		err = Global.Client.Create(goctx.TODO(), obj, cleanupOptions)
 		if skipIfExists && apierrors.IsAlreadyExists(err) {
 			continue
 		}
 		if err != nil {
-			return err
+			_, restErr := restMapper.RESTMappings(obj.GetObjectKind().GroupVersionKind().GroupKind())
+			if restErr == nil {
+				return err
+			}
+			// don't store error, as only error will be timeout. Error from runtime client will be easier for
+			// the user to understand than the timeout error, so just use that if we fail
+			wait.PollImmediate(time.Second*1, time.Second*10, func() (bool, error) {
+				restMapper.Reset()
+				_, err := restMapper.RESTMappings(obj.GetObjectKind().GroupVersionKind().GroupKind())
+				if err != nil {
+					return false, nil
+				}
+				return true, nil
+			})
+			err = Global.Client.Create(goctx.TODO(), obj, cleanupOptions)
+			if skipIfExists && apierrors.IsAlreadyExists(err) {
+				continue
+			}
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil

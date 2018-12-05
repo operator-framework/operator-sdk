@@ -15,11 +15,15 @@
 package e2e
 
 import (
+	"flag"
 	"testing"
 
-	f "github.com/operator-framework/operator-sdk/test/e2e/framework"
+	f "github.com/operator-framework/operator-sdk/pkg/test"
 )
 
+var e2eImageName *string
+
 func TestMain(m *testing.M) {
+	e2eImageName = flag.String("image", "", "operator image name <repository>:<tag> used to push the image, defaults to none (builds image to local docker repo)")
 	f.MainEntry(m)
 }

@@ -4,7 +4,7 @@ RUN yum remove -y ansible python-idna
 RUN pip uninstall ansible-runner -y
 
 RUN pip install --upgrade setuptools
-RUN pip install ansible ansible-runner openshift kubernetes ansible-runner-http
+RUN pip install ansible ansible-runner openshift kubernetes ansible-runner-http idna==2.7
 
 RUN mkdir -p /etc/ansible \
     && echo "localhost ansible_connection=local" > /etc/ansible/hosts \
