@@ -80,16 +80,13 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		log.V(1).Info("Adding finalizer", "finalizer", finalizer)
 		finalizers := append(pendingFinalizers, finalizer)
 		o.SetFinalizers(finalizers)
-		if len(status.Conditions) == 0 {
-			status.SetCondition(types.HelmAppCondition{
-				Type:   types.ConditionInitializing,
-				Status: types.StatusTrue,
-			})
-		}
+		status.SetCondition(types.HelmAppCondition{
+			Type:   types.ConditionInitialized,
+			Status: types.StatusTrue,
+		})
 		err := r.updateResourceStatus(o, status)
 		return reconcile.Result{}, err
 	}
-	status.RemoveCondition(types.ConditionInitializing)
 
 	if err := manager.Sync(context.TODO()); err != nil {
 		log.Error(err, "failed to sync release")

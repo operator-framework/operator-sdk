@@ -53,7 +53,7 @@ type HelmAppCondition struct {
 }
 
 const (
-	ConditionInitializing   HelmAppConditionType = "Initializing"
+	ConditionInitialized    HelmAppConditionType = "Initialized"
 	ConditionDeployed       HelmAppConditionType = "Deployed"
 	ConditionReleaseFailed  HelmAppConditionType = "ReleaseFailed"
 	ConditionIrreconcilable HelmAppConditionType = "Irreconcilable"
