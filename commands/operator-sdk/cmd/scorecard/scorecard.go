@@ -49,6 +49,7 @@ type Config struct {
 	CSVPath        string
 	BasicTests     bool
 	OlmTests       bool
+	TenantTests    bool
 	NamespacedMan  string
 	GlobalMan      string
 	CrMan          string
@@ -218,7 +219,17 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 	}
 	var totalEarned, totalMax int
-	for _, testType := range []string{basicOperator, olmIntegration, goodTenant} {
+	var enabledTestTypes []string
+	if SCConf.BasicTests {
+		enabledTestTypes = append(enabledTestTypes, basicOperator)
+	}
+	if SCConf.OlmTests {
+		enabledTestTypes = append(enabledTestTypes, olmIntegration)
+	}
+	if SCConf.TenantTests {
+		enabledTestTypes = append(enabledTestTypes, goodTenant)
+	}
+	for _, testType := range enabledTestTypes {
 		fmt.Printf("%s:\n", testType)
 		for _, test := range scTests {
 			if test.testType == testType {
