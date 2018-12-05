@@ -60,7 +60,7 @@ var SCConf Config
 const (
 	basicOperator  = "Basic Operator"
 	olmIntegration = "OLM Integration"
-	goodTenant     = "Good Tentant"
+	goodTenant     = "Good Tenant"
 )
 
 // TODO: add point weights to tests
