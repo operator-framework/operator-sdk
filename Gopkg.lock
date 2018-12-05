@@ -85,14 +85,6 @@
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
-  digest = "1:3c3f68ebab415344aef64363d23471e953a4715645115604aaf57923ae904f5e"
-  name = "github.com/coreos/go-semver"
-  packages = ["semver"]
-  pruneopts = ""
-  revision = "8ab6407b697782a06568d4b7f1db25550ec2e4c6"
-  version = "v0.2.0"
-
-[[projects]]
   branch = "master"
   digest = "1:9c19f8c33e635e0439c8afc167d6d02e3aa6eea5b69d64880244fd354a99edc4"
   name = "github.com/chai2010/gettext-go"
@@ -104,6 +96,14 @@
   ]
   pruneopts = ""
   revision = "bf70f2a70fb1b1f36d90d671a72795984eab0fcb"
+
+[[projects]]
+  digest = "1:3c3f68ebab415344aef64363d23471e953a4715645115604aaf57923ae904f5e"
+  name = "github.com/coreos/go-semver"
+  packages = ["semver"]
+  pruneopts = ""
+  revision = "8ab6407b697782a06568d4b7f1db25550ec2e4c6"
+  version = "v0.2.0"
 
 [[projects]]
   digest = "1:83222dd265299f065a2ae969c7780b6c6a225c770975051955320a95b0526239"
@@ -527,16 +527,6 @@
   revision = "cca7078d478f8520f85629ad7c68962d31ed7682"
 
 [[projects]]
-  digest = "1:3a2f336735fd2ea097e8f65cd5a54b36cc559e373ebd5294050e1ac69db1977b"
-  name = "github.com/operator-framework/operator-lifecycle-manager"
-  packages = [
-    "pkg/api/apis/operators",
-    "pkg/api/apis/operators/v1alpha1",
-  ]
-  pruneopts = ""
-  revision = "7790503542c3ae82d2daf1a0b05f720dd21568ad"
-  
-[[projects]]
   digest = "1:5d9b668b0b4581a978f07e7d2e3314af18eb27b3fb5d19b70185b7c575723d11"
   name = "github.com/opencontainers/go-digest"
   packages = ["."]
@@ -554,6 +544,16 @@
   pruneopts = ""
   revision = "d60099175f88c47cd379c4738d158884749ed235"
   version = "v1.0.1"
+
+[[projects]]
+  digest = "1:3a2f336735fd2ea097e8f65cd5a54b36cc559e373ebd5294050e1ac69db1977b"
+  name = "github.com/operator-framework/operator-lifecycle-manager"
+  packages = [
+    "pkg/api/apis/operators",
+    "pkg/api/apis/operators/v1alpha1",
+  ]
+  pruneopts = ""
+  revision = "7790503542c3ae82d2daf1a0b05f720dd21568ad"
 
 [[projects]]
   digest = "1:a5484d4fa43127138ae6e7b2299a6a52ae006c7f803d98d717f60abf3e97192e"
@@ -1427,8 +1427,8 @@
     "github.com/ghodss/yaml",
     "github.com/go-logr/logr",
     "github.com/markbates/inflect",
-    "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1",
     "github.com/martinlindhe/base36",
+    "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1",
     "github.com/pborman/uuid",
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/sergi/go-diff/diffmatchpatch",
