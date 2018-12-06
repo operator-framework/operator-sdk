@@ -1,2 +1,7 @@
-- debug:
-    msg: "this is a finalizer"
+- name: delete configmap for test
+  k8s:
+    kind: ConfigMap
+    api_version: v1
+    name: deleteme
+    namespace: default
+    state: absent
