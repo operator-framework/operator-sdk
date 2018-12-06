@@ -72,9 +72,15 @@ then
     exit 1
 fi
 
+# make a configmap that the finalizer should remove
+kubectl create configmap deleteme
+trap_add 'kubectl delete --ignore-not-found configmap deleteme' EXIT
+
 kubectl delete -f ${DIR2}/deploy/crds/ansible_v1alpha1_memcached_cr.yaml --wait=true
-if ! kubectl logs deployment/memcached-operator | grep "this is a finalizer";
+# if the finalizer did not delete the configmap...
+if kubectl get configmap deleteme;
 then
+    echo FAIL: the finalizer did not delete the configmap
     kubectl logs deployment/memcached-operator
     exit 1
 fi
@@ -85,6 +91,15 @@ then
     kubectl logs deployment/memcached-operator
     exit 1
 fi
+
+
+## TODO enable when this is fixed: https://github.com/operator-framework/operator-sdk/issues/818
+# if kubectl logs deployment/memcached-operator | grep -i error;
+# then
+    # echo FAIL: the operator log includes errors
+    # kubectl logs deployment/memcached-operator
+    # exit 1
+# fi
 
 popd
 popd

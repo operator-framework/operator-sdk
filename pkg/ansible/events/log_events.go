@@ -70,7 +70,7 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 			return
 		}
 		if e.Event == eventapi.EventRunnerOnOk && debugAction {
-			logger.V(1).Info("[playbook debug]", "EventData.TaskArgs", e.EventData["task_args"])
+			logger.Info("[playbook debug]", "EventData.TaskArgs", e.EventData["task_args"])
 			return
 		}
 		if e.Event == eventapi.EventRunnerOnFailed {

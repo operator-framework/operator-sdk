@@ -39,7 +39,7 @@ func printVersion() {
 func main() {
 	flag.Parse()
 
-	logf.SetLogger(logf.ZapLogger(true))
+	logf.SetLogger(logf.ZapLogger(false))
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
