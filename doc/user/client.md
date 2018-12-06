@@ -245,9 +245,12 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 ```
 
 ##### Updating Status Subresource
+
 When updating the status subresource from the client, the StatusWriter must be
 used which can be gotten with `Status()`
+
 ##### Status
+
 ```Go
 // Status() returns a StatusWriter object that can be used to update the
 // object's status subresource
