@@ -54,21 +54,23 @@ func k8sFunc(cmd *cobra.Command, args []string) {
 const (
 	// k8sVerTag is the k8s.io/code-generator tag used to build codegen binaries.
 	k8sVerTag = "kubernetes-1.11.2"
-	// codegenRepo is the git repo path for k8s.io/code-generator.
-	codegenRepo = "https://github.com/kubernetes/code-generator.git"
+	// codegenGitRepo is the git repo path for k8s.io/code-generator.
+	codegenGitRepo = "https://github.com/kubernetes/code-generator.git"
 )
 
 // K8sCodegen performs deepcopy code-generation for all custom resources under pkg/apis
 func K8sCodegen() {
 	projutil.MustInProjectRoot()
 
+	wd := projutil.MustGetwd()
 	repoPkg := projutil.CheckAndGetProjectGoPkg()
-	codegenVendor := filepath.Join("vendor", "k8s.io", "code-generator")
+	cloneDir := filepath.Join(wd, "vendor", "k8s.io", "code-generator")
+	binDir := filepath.Join(wd, scaffold.BuildBinDir)
 
-	if _, err := os.Stat(codegenVendor); err != nil {
-		cloneCodegenRepo(codegenVendor, codegenRepo, k8sVerTag)
+	if _, err := os.Stat(cloneDir); err != nil {
+		cloneCodegenRepo(cloneDir, codegenGitRepo, k8sVerTag)
 	}
-	installCodegenBinaries(codegenVendor)
+	buildCodegenBinaries(binDir, cloneDir)
 
 	gvMap, err := parseGroupVersions()
 	if err != nil {
@@ -81,37 +83,46 @@ func K8sCodegen() {
 
 	log.Infof("Running code-generation for Custom Resource group versions: [%v]\n", gvStr)
 
-	deepcopyGen(repoPkg, gvMap)
+	deepcopyGen(binDir, repoPkg, gvMap)
 
 	log.Info("Code-generation complete.")
 }
 
-func cloneCodegenRepo(installPath, repo, tag string) {
-	if err := os.RemoveAll(installPath); err != nil {
+func cloneCodegenRepo(cloneDir, gitRepoURL, verTag string) {
+	if err := os.RemoveAll(cloneDir); err != nil {
 		log.Fatal(err)
 	}
-	cloneCmd := exec.Command("git", "clone", "-q", repo, installPath)
+	cloneCmd := exec.Command("git", "clone", "-q", gitRepoURL, cloneDir)
 	if err := projutil.ExecCmd(cloneCmd); err != nil {
 		log.Fatal(err)
 	}
-	checkoutCmd := exec.Command("git", "checkout", "-q", tag)
-	checkoutCmd.Dir = installPath
+	checkoutCmd := exec.Command("git", "checkout", "-q", verTag)
+	checkoutCmd.Dir = cloneDir
 	if err := projutil.ExecCmd(checkoutCmd); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func installCodegenBinaries(installPath string) {
-	args := []string{
-		"install",
+func buildCodegenBinaries(binDir, codegenRepoDir string) {
+	genDirs := []string{
 		"./cmd/defaulter-gen",
 		"./cmd/client-gen",
 		"./cmd/lister-gen",
 		"./cmd/informer-gen",
 		"./cmd/deepcopy-gen",
 	}
-	installCmd := exec.Command("go", args...)
-	installCmd.Dir = installPath
+	for _, gd := range genDirs {
+		err := runGoBuildCodegen(binDir, codegenRepoDir, gd)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func runGoBuildCodegen(binDir, repoDir, genDir string) error {
+	binPath := filepath.Join(binDir, filepath.Base(genDir))
+	installCmd := exec.Command("go", "build", "-o", binPath, genDir)
+	installCmd.Dir = repoDir
 	isVerbose := false
 	if gf, ok := os.LookupEnv("GOFLAGS"); ok && len(gf) != 0 {
 		installCmd.Env = append(os.Environ(), "GOFLAGS="+gf)
@@ -126,9 +137,7 @@ func installCodegenBinaries(installPath string) {
 		installCmd.Stdout = ioutil.Discard
 		installCmd.Stderr = ioutil.Discard
 	}
-	if err := installCmd.Run(); err != nil {
-		log.Fatal(err)
-	}
+	return installCmd.Run()
 }
 
 // parseGroupVersions parses the layout of pkg/apis to return a map of
@@ -163,14 +172,14 @@ func parseGroupVersions() (map[string][]string, error) {
 	return gvs, nil
 }
 
-func deepcopyGen(repoPkg string, gvMap map[string][]string) {
+func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) {
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	args := []string{
 		"--input-dirs", createFQApis(apisPkg, gvMap),
 		"-O", "zz_generated.deepcopy",
 		"--bounding-dirs", apisPkg,
 	}
-	cgPath := filepath.Join(projutil.GetGopath(), "bin", "deepcopy-gen")
+	cgPath := filepath.Join(binDir, "deepcopy-gen")
 	err := projutil.ExecCmd(exec.Command(cgPath, args...))
 	if err != nil {
 		log.Fatalf("failed to perform code-generation: %v", err)
