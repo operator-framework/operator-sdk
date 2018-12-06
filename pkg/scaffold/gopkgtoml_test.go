@@ -71,6 +71,10 @@ required = [
   revision = "d082d5923d3cc0bfbb066ee5fbdea3d0ca79acf8"
 
 [[override]]
+  name = "github.com/coreos/prometheus-operator"
+  version = "=v0.26.0"
+
+[[override]]
   name = "sigs.k8s.io/controller-runtime"
   version = "=v0.1.8"
 
