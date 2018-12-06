@@ -63,10 +63,12 @@ func K8sCodegen() {
 	projutil.MustInProjectRoot()
 
 	repoPkg := projutil.CheckAndGetProjectGoPkg()
-	codegenPkg := filepath.Join("k8s.io", "code-generator")
+	codegenVendor := filepath.Join("vendor", "k8s.io", "code-generator")
 
-	codegenAbs := getCodegenRepo(codegenPkg, codegenRepo, k8sVerTag)
-	installCodegenBinaries(codegenAbs)
+	if _, err := os.Stat(codegenVendor); err != nil {
+		cloneCodegenRepo(codegenVendor, codegenRepo, k8sVerTag)
+	}
+	installCodegenBinaries(codegenVendor)
 
 	gvMap, err := parseGroupVersions()
 	if err != nil {
@@ -84,30 +86,22 @@ func K8sCodegen() {
 	log.Info("Code-generation complete.")
 }
 
-func getCodegenRepo(pkg, repo, tag string) string {
-	// Using vendored codegen source files is preferred over cloning.
-	codegenVendor := filepath.Join("vendor", pkg)
-	if _, err := os.Stat(codegenVendor); err == nil || os.IsExist(err) {
-		return codegenVendor
-	}
-
-	codegenAbs := filepath.Join(projutil.GetGopath(), "src", pkg)
-	if err := os.RemoveAll(codegenAbs); err != nil {
+func cloneCodegenRepo(installPath, repo, tag string) {
+	if err := os.RemoveAll(installPath); err != nil {
 		log.Fatal(err)
 	}
-	cloneCmd := exec.Command("git", "clone", "-q", repo, codegenAbs)
+	cloneCmd := exec.Command("git", "clone", "-q", repo, installPath)
 	if err := projutil.ExecCmd(cloneCmd); err != nil {
 		log.Fatal(err)
 	}
 	checkoutCmd := exec.Command("git", "checkout", "-q", tag)
-	checkoutCmd.Dir = codegenAbs
+	checkoutCmd.Dir = installPath
 	if err := projutil.ExecCmd(checkoutCmd); err != nil {
 		log.Fatal(err)
 	}
-	return codegenAbs
 }
 
-func installCodegenBinaries(abs string) {
+func installCodegenBinaries(installPath string) {
 	args := []string{
 		"install",
 		"./cmd/defaulter-gen",
@@ -116,13 +110,23 @@ func installCodegenBinaries(abs string) {
 		"./cmd/informer-gen",
 		"./cmd/deepcopy-gen",
 	}
-	if gf, ok := os.LookupEnv("GOFLAGS"); ok && len(gf) != 0 {
-		sf := strings.Split(gf, " ")
-		args = append(append(args[:1], sf...), args[len(sf)+1:]...)
-	}
 	installCmd := exec.Command("go", args...)
-	installCmd.Dir = abs
-	if err := projutil.ExecCmd(installCmd); err != nil {
+	installCmd.Dir = installPath
+	isVerbose := false
+	if gf, ok := os.LookupEnv("GOFLAGS"); ok && len(gf) != 0 {
+		installCmd.Env = append(os.Environ(), "GOFLAGS="+gf)
+		if strings.Contains(gf, "-v") {
+			isVerbose = true
+		}
+	}
+	if isVerbose {
+		installCmd.Stdout = os.Stdout
+		installCmd.Stderr = os.Stderr
+	} else {
+		installCmd.Stdout = ioutil.Discard
+		installCmd.Stderr = ioutil.Discard
+	}
+	if err := installCmd.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
