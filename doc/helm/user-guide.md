@@ -235,7 +235,7 @@ INFO[0000] operator-sdk Version: v0.1.1+git
 Run the operator locally with a provided kubernetes config file:
 
 ```sh
-$ operator-sdk up local --kubeconfig=config
+$ operator-sdk up local --kubeconfig=<path_to_config>
 INFO[0000] Go Version: go1.10.3
 INFO[0000] Go OS/Arch: linux/amd64
 INFO[0000] operator-sdk Version: v0.2.0+git
@@ -246,7 +246,7 @@ INFO[0000] operator-sdk Version: v0.2.0+git
 Apply the nginx CR that we modified earlier:
 
 ```sh
-kubectl apply -f deploy/crds/cache_v1alpha1_nginx_cr.yaml
+kubectl apply -f deploy/crds/example_v1alpha1_nginx_cr.yaml
 ```
 
 Ensure that the nginx-operator creates the deployment for the CR:
