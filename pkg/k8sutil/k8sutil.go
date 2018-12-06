@@ -94,8 +94,8 @@ func InitOperatorService(port int32, portName string) (*v1.Service, error) {
 					Port:     port,
 					Protocol: v1.ProtocolTCP,
 					TargetPort: intstr.IntOrString{
-						Type:   intstr.String,
-						StrVal: portName,
+						Type:   intstr.Int,
+						IntVal: port,
 					},
 					Name: portName,
 				},
