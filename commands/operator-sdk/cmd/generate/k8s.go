@@ -108,7 +108,7 @@ func getCodegenRepo(pkg, repo, tag string) string {
 }
 
 func installCodegenBinaries(abs string) {
-	iArgs := []string{
+	args := []string{
 		"install",
 		"./cmd/defaulter-gen",
 		"./cmd/client-gen",
@@ -116,18 +116,19 @@ func installCodegenBinaries(abs string) {
 		"./cmd/informer-gen",
 		"./cmd/deepcopy-gen",
 	}
-	if goFlags, ok := os.LookupEnv("GOFLAGS"); ok && len(goFlags) != 0 {
-		splitFlags := strings.Split(goFlags, " ")
-		iArgs = append(append(iArgs[:1], splitFlags...), iArgs[len(splitFlags)+1:]...)
+	if gf, ok := os.LookupEnv("GOFLAGS"); ok && len(gf) != 0 {
+		sf := strings.Split(gf, " ")
+		args = append(append(args[:1], sf...), args[len(sf)+1:]...)
 	}
-	installCmd := exec.Command("go", iArgs...)
+	installCmd := exec.Command("go", args...)
 	installCmd.Dir = abs
 	if err := projutil.ExecCmd(installCmd); err != nil {
 		log.Fatal(err)
 	}
 }
 
-// getGroupVersions parses the layout of pkg/apis to return the API groups and versions
+// parseGroupVersions parses the layout of pkg/apis to return a map of
+// API groups to versions.
 func parseGroupVersions() (map[string][]string, error) {
 	gvs := make(map[string][]string)
 	groups, err := ioutil.ReadDir(scaffold.ApisDir)
@@ -160,19 +161,19 @@ func parseGroupVersions() (map[string][]string, error) {
 
 func deepcopyGen(repoPkg string, gvMap map[string][]string) {
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
-	cgArgs := []string{
+	args := []string{
 		"--input-dirs", createFQApis(apisPkg, gvMap),
 		"-O", "zz_generated.deepcopy",
 		"--bounding-dirs", apisPkg,
 	}
 	cgPath := filepath.Join(projutil.GetGopath(), "bin", "deepcopy-gen")
-	err := projutil.ExecCmd(exec.Command(cgPath, cgArgs...))
+	err := projutil.ExecCmd(exec.Command(cgPath, args...))
 	if err != nil {
 		log.Fatalf("failed to perform code-generation: %v", err)
 	}
 }
 
-// createFQApis return a string of the fully qualified pkg + groups + versions
+// createFQApis return a string of all fully qualified pkg + groups + versions
 // of pkg and gvs in the format:
 // "pkg/groupA/v1,pkg/groupA/v2,pkg/groupB:v1"
 func createFQApis(pkg string, gvs map[string][]string) (fqStr string) {
