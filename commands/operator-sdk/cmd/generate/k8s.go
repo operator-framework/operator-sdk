@@ -51,16 +51,21 @@ func k8sFunc(cmd *cobra.Command, args []string) {
 	K8sCodegen()
 }
 
+const (
+	// k8sVerTag is the k8s.io/code-generator tag used to build codegen binaries.
+	k8sVerTag = "kubernetes-1.11.2"
+	// codegenRepo is the git repo path for k8s.io/code-generator.
+	codegenRepo = "https://github.com/kubernetes/code-generator.git"
+)
+
 // K8sCodegen performs deepcopy code-generation for all custom resources under pkg/apis
 func K8sCodegen() {
 	projutil.MustInProjectRoot()
 
 	repoPkg := projutil.CheckAndGetProjectGoPkg()
-	k8sVerTag := "kubernetes-1.11.2"
-	codegenRepo := "https://github.com/kubernetes/code-generator.git"
-	codegenAbs := filepath.Join(projutil.GetGopath(), "src", "k8s.io", "code-generator")
+	codegenPkg := filepath.Join("k8s.io", "code-generator")
 
-	getCodegenRepo(codegenAbs, codegenRepo, k8sVerTag)
+	codegenAbs := getCodegenRepo(codegenPkg, codegenRepo, k8sVerTag)
 	installCodegenBinaries(codegenAbs)
 
 	gvMap, err := parseGroupVersions()
@@ -79,19 +84,27 @@ func K8sCodegen() {
 	log.Info("Code-generation complete.")
 }
 
-func getCodegenRepo(abs, repo, tag string) {
-	if err := os.RemoveAll(abs); err != nil {
+func getCodegenRepo(pkg, repo, tag string) string {
+	// Using vendored codegen source files is preferred over cloning.
+	codegenVendor := filepath.Join("vendor", pkg)
+	if _, err := os.Stat(codegenVendor); err == nil || os.IsExist(err) {
+		return codegenVendor
+	}
+
+	codegenAbs := filepath.Join(projutil.GetGopath(), "src", pkg)
+	if err := os.RemoveAll(codegenAbs); err != nil {
 		log.Fatal(err)
 	}
-	cloneCmd := exec.Command("git", "clone", "-q", repo, abs)
+	cloneCmd := exec.Command("git", "clone", "-q", repo, codegenAbs)
 	if err := projutil.ExecCmd(cloneCmd); err != nil {
 		log.Fatal(err)
 	}
 	checkoutCmd := exec.Command("git", "checkout", "-q", tag)
-	checkoutCmd.Dir = abs
+	checkoutCmd.Dir = codegenAbs
 	if err := projutil.ExecCmd(checkoutCmd); err != nil {
 		log.Fatal(err)
 	}
+	return codegenAbs
 }
 
 func installCodegenBinaries(abs string) {
