@@ -20,10 +20,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -55,56 +55,71 @@ func k8sFunc(cmd *cobra.Command, args []string) {
 func K8sCodegen() {
 	projutil.MustInProjectRoot()
 
-	absProjectPath := projutil.MustGetwd()
 	repoPkg := projutil.CheckAndGetProjectGoPkg()
-	outputPkg := filepath.Join(repoPkg, "pkg/generated")
-	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
-	groupVersions, err := parseGroupVersions()
+	k8sVerTag := "kubernetes-1.11.2"
+	codegenRepo := "https://github.com/kubernetes/code-generator.git"
+	codegenAbs := filepath.Join(projutil.GetGopath(), "src", "k8s.io", "code-generator")
+
+	getCodegenRepo(codegenAbs, codegenRepo, k8sVerTag)
+	installCodegenBinaries(codegenAbs)
+
+	gvMap, err := parseGroupVersions()
 	if err != nil {
 		log.Fatalf("failed to parse group versions: (%v)", err)
 	}
-
-	cfg := &input.Config{
-		Repo:           repoPkg,
-		AbsProjectPath: absProjectPath,
-		ProjectName:    filepath.Base(absProjectPath),
+	gvStr := ""
+	for g, vs := range gvMap {
+		gvStr += fmt.Sprintf("%s:%v, ", g, vs)
 	}
 
-	s := &scaffold.Scaffold{}
-	gg := &scaffold.GenerateGroupsScript{}
-	err = s.Execute(cfg, gg)
-	if err != nil {
-		log.Fatalf("failed to scaffold codegen script: (%v)", err)
-	}
+	log.Infof("Running code-generation for Custom Resource group versions: [%v]\n", gvStr)
 
-	log.Infof("Running code-generation for Custom Resource group versions: [%s]\n", groupVersions)
-
-	ggi, _ := gg.GetInput()
-	args := []string{
-		"deepcopy",
-		outputPkg,
-		apisPkg,
-		groupVersions,
-	}
-	cgCmd := exec.Command(ggi.Path, args...)
-	cgCmd.Stdout = os.Stdout
-	cgCmd.Stderr = os.Stderr
-	err = cgCmd.Run()
-	if err != nil {
-		log.Fatalf("failed to perform code-generation: (%v)", err)
-	}
+	deepcopyGen(repoPkg, gvMap)
 
 	log.Info("Code-generation complete.")
 }
 
+func getCodegenRepo(abs, repo, tag string) {
+	if err := os.RemoveAll(abs); err != nil {
+		log.Fatal(err)
+	}
+	cloneCmd := exec.Command("git", "clone", "-q", repo, abs)
+	if err := projutil.ExecCmd(cloneCmd); err != nil {
+		log.Fatal(err)
+	}
+	checkoutCmd := exec.Command("git", "checkout", "-q", tag)
+	checkoutCmd.Dir = abs
+	if err := projutil.ExecCmd(checkoutCmd); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func installCodegenBinaries(abs string) {
+	iArgs := []string{
+		"install",
+		"./cmd/defaulter-gen",
+		"./cmd/client-gen",
+		"./cmd/lister-gen",
+		"./cmd/informer-gen",
+		"./cmd/deepcopy-gen",
+	}
+	if goFlags, ok := os.LookupEnv("GOFLAGS"); ok && len(goFlags) != 0 {
+		splitFlags := strings.Split(goFlags, " ")
+		iArgs = append(append(iArgs[:1], splitFlags...), iArgs[len(splitFlags)+1:]...)
+	}
+	installCmd := exec.Command("go", iArgs...)
+	installCmd.Dir = abs
+	if err := projutil.ExecCmd(installCmd); err != nil {
+		log.Fatal(err)
+	}
+}
+
 // getGroupVersions parses the layout of pkg/apis to return the API groups and versions
-// in the format "groupA:v1,v2 groupB:v1 groupC:v2",
-// as required by the generate-groups.sh script
-func parseGroupVersions() (string, error) {
-	var groupVersions string
+func parseGroupVersions() (map[string][]string, error) {
+	gvs := make(map[string][]string)
 	groups, err := ioutil.ReadDir(scaffold.ApisDir)
 	if err != nil {
-		return "", fmt.Errorf("could not read pkg/apis directory to find api Versions: %v", err)
+		return nil, fmt.Errorf("could not read pkg/apis directory to find api Versions: %v", err)
 	}
 
 	for _, g := range groups {
@@ -112,22 +127,54 @@ func parseGroupVersions() (string, error) {
 			groupDir := filepath.Join(scaffold.ApisDir, g.Name())
 			versions, err := ioutil.ReadDir(groupDir)
 			if err != nil {
-				return "", fmt.Errorf("could not read %s directory to find api Versions: %v", groupDir, err)
+				return nil, fmt.Errorf("could not read %s directory to find api Versions: %v", groupDir, err)
 			}
 
-			groupVersion := ""
+			gvs[g.Name()] = make([]string, 0)
 			for _, v := range versions {
 				if v.IsDir() && scaffold.ResourceVersionRegexp.MatchString(v.Name()) {
-					groupVersion = groupVersion + v.Name() + ","
+					gvs[g.Name()] = append(gvs[g.Name()], v.Name())
 				}
 			}
-			groupVersions += fmt.Sprintf("%s:%s ", g.Name(), groupVersion)
 		}
 	}
 
-	if groupVersions == "" {
-		return "", fmt.Errorf("no groups or versions found in %s", scaffold.ApisDir)
+	if len(gvs) == 0 {
+		return nil, fmt.Errorf("no groups or versions found in %s", scaffold.ApisDir)
 	}
+	return gvs, nil
+}
 
-	return groupVersions, nil
+func deepcopyGen(repoPkg string, gvMap map[string][]string) {
+	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
+	cgArgs := []string{
+		"--input-dirs", createFQApis(apisPkg, gvMap),
+		"-O", "zz_generated.deepcopy",
+		"--bounding-dirs", apisPkg,
+	}
+	cgPath := filepath.Join(projutil.GetGopath(), "bin", "deepcopy-gen")
+	err := projutil.ExecCmd(exec.Command(cgPath, cgArgs...))
+	if err != nil {
+		log.Fatalf("failed to perform code-generation: %v", err)
+	}
+}
+
+// createFQApis return a string of the fully qualified pkg + groups + versions
+// of pkg and gvs in the format:
+// "pkg/groupA/v1,pkg/groupA/v2,pkg/groupB:v1"
+func createFQApis(pkg string, gvs map[string][]string) (fqStr string) {
+	gn := 0
+	for g, vs := range gvs {
+		for vn, v := range vs {
+			fqStr += filepath.Join(pkg, g, v)
+			if vn < len(vs)-1 {
+				fqStr += ","
+			}
+		}
+		if gn < len(gvs)-1 {
+			fqStr += ","
+		}
+		gn++
+	}
+	return fqStr
 }

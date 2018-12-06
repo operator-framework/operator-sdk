@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -232,4 +233,14 @@ func GenerateCombinedGlobalManifest() (*os.File, error) {
 		return nil, err
 	}
 	return file, nil
+}
+
+func ExecCmd(cmd *exec.Cmd) error {
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to exec %#v: %v", cmd.Args, err)
+	}
+	return nil
 }
