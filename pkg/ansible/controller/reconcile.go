@@ -190,7 +190,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		return reconcileResult, nil
 	}
 	if r.ManageStatus {
-		err = r.markDone(u, statusEvent, failureMessages)
+		err = r.markDone(u, request.NamespacedName, statusEvent, failureMessages)
 		if err != nil {
 			logger.Error(err, "failed to mark status done")
 		}
