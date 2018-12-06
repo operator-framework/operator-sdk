@@ -118,7 +118,7 @@ $ kubectl delete -f deploy/crds/app_v1alpha1_appservice_crd.yaml
 
 To learn more about the writing an operator in Go, see the [user guide][guide].
 
-The SDK also supports developing an operator using Ansible. See the [Ansible operator user guide][ansible_user_guide].
+The SDK also supports developing an operator using Ansible or Helm. See the [Ansible][ansible_user_guide] and [Helm][helm_user_guide] operator user guides.
 
 ## Samples
 
@@ -152,3 +152,4 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [controller_runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [ansible_user_guide]:./doc/ansible/user-guide.md
+[helm_user_guide]:./doc/helm/user-guide.md

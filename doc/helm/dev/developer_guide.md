@@ -19,7 +19,8 @@ If you are unfamiliar with Helm, the easiest way to get started is to
 [install Helm][helm_install] and test your charts using the `helm` command line
 tool.
 
-**NOTE:** Installing Helm's Tiller component in your cluster is not required.
+**NOTE:** Installing Helm's Tiller component in your cluster is not required,
+because the Helm operator runs a Tiller component internally.
 
 ### Testing a Helm chart locally
 
@@ -206,7 +207,7 @@ mapping is done in a file called `watches.yaml`.
 ### Watches file
 
 The Operator expects a mapping file, which lists each GVK to watch and the
-corresponding path to an Helm chart, to be copied into the
+corresponding path to a Helm chart, to be copied into the
 container at a predefined location: `/opt/helm/watches.yaml`
 
 Dockerfile example:
@@ -225,7 +226,7 @@ mandatory fields:
 **kind**:  The kind of the Custom Resource that you will be watching.
 
 **chart**:  This is the path to the Helm chart that you have added to the
-container. For example if your Helm charts directory is at
+container. For example, if your Helm charts directory is at
 `/opt/helm/helm-charts/` and your Helm chart is named `busybox`, this value
 will be `/opt/helm/helm-charts/busybox`.
 
@@ -255,7 +256,7 @@ defaults. This corresponds to the `overrides.yaml` file we created above. This
 field is optional and can be empty, which results in the default Helm chart
 being released by the operator.
 
-### Testing an Helm operator locally
+### Testing a Helm operator locally
 
 Once a developer is comfortable working with the above workflow, it will be
 beneficial to test the logic inside of an operator. To accomplish this, we can
@@ -278,7 +279,7 @@ sudo mkdir -p /opt/helm/helm-charts
 sudo ln -s $PWD/helm-charts/<name> /opt/helm/helm-charts/<name>
 ```
 
-Create a Custom Resource Definiton (CRD) and proper Role-Based Access Control
+Create a Custom Resource Definition (CRD) and proper Role-Based Access Control
 (RBAC) definitions for resource Foo. `operator-sdk` autogenerates these files
 inside of the `deploy` folder:
 

@@ -136,7 +136,7 @@ spec:
 ```
 
 As you may have noticed, the Helm operator simply applies the entire spec as if
-it were the contents of values file, just like `helm install -f ./overrides.yaml`
+it was the contents of a values file, just like `helm install -f ./overrides.yaml`
 works.
 
 ## Build and run the operator
