@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
@@ -41,13 +42,11 @@ import (
 )
 
 const (
-	filemode             os.FileMode = 0664
-	dirmode              os.FileMode = 0750
-	crYAML               string      = "apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: 3"
-	retryInterval                    = time.Second * 5
-	timeout                          = time.Second * 60
-	cleanupRetryInterval             = time.Second * 1
-	cleanupTimeout                   = time.Second * 5
+	crYAML               string = "apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: 3"
+	retryInterval               = time.Second * 5
+	timeout                     = time.Second * 60
+	cleanupRetryInterval        = time.Second * 1
+	cleanupTimeout              = time.Second * 5
 )
 
 func TestMemcached(t *testing.T) {
@@ -68,7 +67,7 @@ func TestMemcached(t *testing.T) {
 
 	// Setup
 	absProjectPath := filepath.Join(gopath, "src/github.com/example-inc")
-	if err := os.MkdirAll(absProjectPath, dirmode); err != nil {
+	if err := os.MkdirAll(absProjectPath, fileutil.DefaultDirFileMode); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Chdir(absProjectPath); err != nil {
@@ -112,7 +111,7 @@ func TestMemcached(t *testing.T) {
 			gopkgString := string(gopkg)
 			gopkgLoc := strings.LastIndex(gopkgString, "\n  name = \"github.com/operator-framework/operator-sdk\"\n")
 			gopkgString = gopkgString[:gopkgLoc] + "\n  source = \"https://github.com/" + prSlug + "\"\n  revision = \"" + prSha + "\"\n" + gopkgString[gopkgLoc+1:]
-			err = ioutil.WriteFile("Gopkg.toml", []byte(gopkgString), filemode)
+			err = ioutil.WriteFile("Gopkg.toml", []byte(gopkgString), fileutil.DefaultFileMode)
 			if err != nil {
 				t.Fatalf("failed to write updated Gopkg.toml: %v", err)
 			}
@@ -182,7 +181,7 @@ func TestMemcached(t *testing.T) {
 		}
 	}
 	os.Remove("pkg/apis/cache/v1alpha1/memcached_types.go")
-	err = ioutil.WriteFile("pkg/apis/cache/v1alpha1/memcached_types.go", bytes.Join(memcachedTypesFileLines, []byte("\n")), filemode)
+	err = ioutil.WriteFile("pkg/apis/cache/v1alpha1/memcached_types.go", bytes.Join(memcachedTypesFileLines, []byte("\n")), fileutil.DefaultFileMode)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,7 +193,7 @@ func TestMemcached(t *testing.T) {
 	}
 
 	t.Log("Copying test files to ./test")
-	if err = os.MkdirAll("./test", dirmode); err != nil {
+	if err = os.MkdirAll("./test", fileutil.DefaultDirFileMode); err != nil {
 		t.Fatalf("could not create test/e2e dir: %v", err)
 	}
 	cmdOut, err = exec.Command("cp", "-a", filepath.Join(gopath, "src/github.com/operator-framework/operator-sdk/test/e2e/incluster-test-code"), "./test/e2e").CombinedOutput()
@@ -324,7 +323,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 	filename := "deploy/cr.yaml"
 	err := ioutil.WriteFile(filename,
 		[]byte(crYAML),
-		filemode)
+		fileutil.DefaultFileMode)
 	if err != nil {
 		return err
 	}
@@ -431,7 +430,7 @@ func MemcachedCluster(t *testing.T) {
 			t.Fatal(err)
 		}
 		operatorYAML = bytes.Replace(operatorYAML, []byte("imagePullPolicy: Always"), []byte("imagePullPolicy: Never"), 1)
-		err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, filemode)
+		err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, fileutil.DefaultFileMode)
 		if err != nil {
 			t.Fatal(err)
 		}
