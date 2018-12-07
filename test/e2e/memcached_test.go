@@ -46,7 +46,7 @@ const (
 	retryInterval               = time.Second * 5
 	timeout                     = time.Second * 60
 	cleanupRetryInterval        = time.Second * 1
-	cleanupTimeout              = time.Second * 5
+	cleanupTimeout              = time.Second * 10
 )
 
 func TestMemcached(t *testing.T) {
