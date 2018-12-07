@@ -43,10 +43,6 @@
   revision = "7790503542c3ae82d2daf1a0b05f720dd21568ad"
 
 [[constraint]]
-  name = "k8s.io/helm"
-  version = "2.11.0"
-
-[[constraint]]
   name = "github.com/sirupsen/logrus"
   version = "1.0.4"
 
