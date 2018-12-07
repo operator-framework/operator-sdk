@@ -237,10 +237,12 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, na
 }
 
 func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, namespacedName types.NamespacedName, statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) error {
+	logger := logf.Log.WithName("markDone")
 	// Get the latest resource to prevent updating a stale status
 	err := r.Client.Get(context.TODO(), namespacedName, u)
 	if apierrors.IsNotFound(err) {
-		return err
+		logger.Info("resource not found, assuming it was deleted", err)
+		return nil
 	}
 	if err != nil {
 		return err

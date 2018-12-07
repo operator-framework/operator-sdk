@@ -217,7 +217,8 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 ```Go
 // Update updates the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned
-// by the API server.
+// by the API server. Update does *not* update the resource's status
+// subresource
 func (c Client) Update(ctx context.Context, obj runtime.Object) error
 ```
 Example:
@@ -246,8 +247,8 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 
 ##### Updating Status Subresource
 
-When updating the status subresource from the client, the StatusWriter must be
-used which can be gotten with `Status()`
+When updating the [status subresource][cr-status-subresource] from the client,
+the StatusWriter must be used which can be gotten with `Status()`
 
 ##### Status
 
@@ -491,3 +492,4 @@ func labelsForApp(name string) map[string]string {
 [doc-reconcile-reconciler]:https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Reconciler
 [doc-osdk-handle]:https://github.com/operator-framework/operator-sdk/blob/master/doc/design/milestone-0.0.2/action-api.md#handler
 [doc-types-nsname]:https://godoc.org/k8s.io/apimachinery/pkg/types#NamespacedName
+[cr-status-subresource]:https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#status-subresource
