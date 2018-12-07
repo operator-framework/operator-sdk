@@ -53,7 +53,7 @@ func k8sFunc(cmd *cobra.Command, args []string) {
 
 const (
 	// k8sVerTag is the k8s.io/code-generator tag used to build codegen binaries.
-	k8sVerTag = "kubernetes-1.11.2"
+	k8sVerTag = "kubernetes-1.12.3"
 	// codegenGitRepo is the git repo path for k8s.io/code-generator.
 	codegenGitRepo = "https://github.com/kubernetes/code-generator.git"
 )
