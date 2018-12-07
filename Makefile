@@ -14,8 +14,8 @@ REPO = github.com/operator-framework/operator-sdk
 BUILD_PATH = $(REPO)/commands/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
 
-SOURCE_ANSIBLE_IMAGE = quay.io/water-hole/ansible-operator
-SOURCE_HELM_IMAGE = quay.io/water-hole/helm-operator
+SOURCE_ANSIBLE_IMAGE = quay.io/operator-framework/ansible-operator
+SOURCE_HELM_IMAGE = quay.io/operator-framework/helm-operator
 
 ANSIBLE_IMAGE ?= $(SOURCE_ANSIBLE_IMAGE)
 HELM_IMAGE ?= $(SOURCE_HELM_IMAGE)

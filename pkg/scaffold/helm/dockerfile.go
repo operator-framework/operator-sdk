@@ -38,7 +38,7 @@ func (d *Dockerfile) GetInput() (input.Input, error) {
 	return d.Input, nil
 }
 
-const dockerFileHelmTmpl = `FROM quay.io/water-hole/helm-operator
+const dockerFileHelmTmpl = `FROM quay.io/operator-framework/helm-operator
 
 COPY {{.HelmChartsDir}}/ ${HOME}/{{.HelmChartsDir}}/
 COPY watches.yaml ${HOME}/watches.yaml

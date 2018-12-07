@@ -39,7 +39,7 @@ func (d *Dockerfile) GetInput() (input.Input, error) {
 	return d.Input, nil
 }
 
-const dockerFileAnsibleTmpl = `FROM quay.io/water-hole/ansible-operator
+const dockerFileAnsibleTmpl = `FROM quay.io/operator-framework/ansible-operator
 
 COPY {{.RolesDir}}/ ${HOME}/{{.RolesDir}}/
 {{- if .GeneratePlaybook }}
