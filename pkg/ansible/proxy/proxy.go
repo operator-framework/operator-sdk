@@ -82,7 +82,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			k, err := restMapper.KindFor(gvr)
 			if err != nil {
 				// break here in case resource doesn't exist in cache
-				log.Info(fmt.Sprintf("cache miss for GVR %v", gvr))
+				log.Info("cache miss", "GVR", gvr)
 				break
 			}
 
