@@ -9,12 +9,6 @@ set -ex
 # switch to the "default" namespace if on openshift, to match the minikube test
 if which oc 2>/dev/null; then oc project default; fi
 
-# build operator binary and base image
-go build -o test/ansible-operator/ansible-operator test/ansible-operator/cmd/ansible-operator/main.go
-pushd test/ansible-operator
-docker build -t quay.io/water-hole/ansible-operator .
-popd
-
 # Make a test directory for Ansible tests so we avoid using default GOPATH.
 # Save test directory so we can delete it on exit.
 ANSIBLE_TEST_DIR="$(mktemp -d)"

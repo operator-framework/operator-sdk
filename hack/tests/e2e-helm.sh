@@ -15,12 +15,6 @@ then
     oc adm policy add-scc-to-user anyuid -z default
 fi
 
-# build operator binary and base image
-GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o test/helm-operator/helm-operator test/helm-operator/cmd/helm-operator/main.go
-pushd test/helm-operator
-docker build -t quay.io/water-hole/helm-operator .
-popd
-
 # Make a test directory for Helm tests so we avoid using default GOPATH.
 # Save test directory so we can delete it on exit.
 HELM_TEST_DIR="$(mktemp -d)"
