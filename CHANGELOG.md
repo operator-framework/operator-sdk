@@ -4,6 +4,8 @@
 
 ### Changed
 
+- The SDK's Kubernetes Golang dependency versions/revisions have been updated from v1.11.2 to v1.12.3. ([#807](https://github.com/operator-framework/operator-sdk/pull/807))
+
 ### Deprecated
 
 ### Removed
