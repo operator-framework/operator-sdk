@@ -1170,7 +1170,7 @@
   version = "kubernetes-1.12.3"
 
 [[projects]]
-  digest = "1:846b250edbb7d91f6ccf8d93a5b8e4c57a4b7cd98cd11bcbd9b5113dfe209006"
+  digest = "1:f44f005adb4b22d8e110e125718014c7c3c650d93b9b62d30be1a5eba8267609"
   name = "k8s.io/helm"
   packages = [
     "pkg/chartutil",
@@ -1197,8 +1197,8 @@
     "pkg/version",
   ]
   pruneopts = ""
-  revision = "b760ca0add6b7a863f2d28b4e39a5fad16d8253f"
-  version = "v2.12.0-rc.1"
+  revision = "d325d2a9c179b33af1a024cdb5a4472b6288016a"
+  version = "v2.12.0"
 
 [[projects]]
   branch = "master"
