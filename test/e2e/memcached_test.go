@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
@@ -41,9 +42,11 @@ import (
 )
 
 const (
-	filemode os.FileMode = 0664
-	dirmode  os.FileMode = 0750
-	crYAML   string      = "apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: 3"
+	crYAML               string = "apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: 3"
+	retryInterval               = time.Second * 5
+	timeout                     = time.Second * 60
+	cleanupRetryInterval        = time.Second * 1
+	cleanupTimeout              = time.Second * 10
 )
 
 func TestMemcached(t *testing.T) {
@@ -64,7 +67,7 @@ func TestMemcached(t *testing.T) {
 
 	// Setup
 	absProjectPath := filepath.Join(gopath, "src/github.com/example-inc")
-	if err := os.MkdirAll(absProjectPath, dirmode); err != nil {
+	if err := os.MkdirAll(absProjectPath, fileutil.DefaultDirFileMode); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Chdir(absProjectPath); err != nil {
@@ -108,7 +111,7 @@ func TestMemcached(t *testing.T) {
 			gopkgString := string(gopkg)
 			gopkgLoc := strings.LastIndex(gopkgString, "\n  name = \"github.com/operator-framework/operator-sdk\"\n")
 			gopkgString = gopkgString[:gopkgLoc] + "\n  source = \"https://github.com/" + prSlug + "\"\n  revision = \"" + prSha + "\"\n" + gopkgString[gopkgLoc+1:]
-			err = ioutil.WriteFile("Gopkg.toml", []byte(gopkgString), filemode)
+			err = ioutil.WriteFile("Gopkg.toml", []byte(gopkgString), fileutil.DefaultFileMode)
 			if err != nil {
 				t.Fatalf("failed to write updated Gopkg.toml: %v", err)
 			}
@@ -178,7 +181,7 @@ func TestMemcached(t *testing.T) {
 		}
 	}
 	os.Remove("pkg/apis/cache/v1alpha1/memcached_types.go")
-	err = ioutil.WriteFile("pkg/apis/cache/v1alpha1/memcached_types.go", bytes.Join(memcachedTypesFileLines, []byte("\n")), filemode)
+	err = ioutil.WriteFile("pkg/apis/cache/v1alpha1/memcached_types.go", bytes.Join(memcachedTypesFileLines, []byte("\n")), fileutil.DefaultFileMode)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -190,7 +193,7 @@ func TestMemcached(t *testing.T) {
 	}
 
 	t.Log("Copying test files to ./test")
-	if err = os.MkdirAll("./test", dirmode); err != nil {
+	if err = os.MkdirAll("./test", fileutil.DefaultDirFileMode); err != nil {
 		t.Fatalf("could not create test/e2e dir: %v", err)
 	}
 	cmdOut, err = exec.Command("cp", "-a", filepath.Join(gopath, "src/github.com/operator-framework/operator-sdk/test/e2e/incluster-test-code"), "./test/e2e").CombinedOutput()
@@ -227,7 +230,7 @@ func TestMemcached(t *testing.T) {
 	// create crd
 	filename := file.Name()
 	framework.Global.NamespacedManPath = &filename
-	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: time.Second * 10, RetryInterval: time.Second * 1})
+	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -247,7 +250,7 @@ func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.Te
 		return err
 	}
 
-	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, time.Second*5, time.Second*30)
+	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, retryInterval, timeout)
 	if err != nil {
 		return err
 	}
@@ -263,7 +266,7 @@ func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.Te
 		return err
 	}
 
-	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, time.Second*5, time.Second*30)
+	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, retryInterval, timeout)
 	if err != nil {
 		return err
 	}
@@ -320,14 +323,14 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 	filename := "deploy/cr.yaml"
 	err := ioutil.WriteFile(filename,
 		[]byte(crYAML),
-		filemode)
+		fileutil.DefaultFileMode)
 	if err != nil {
 		return err
 	}
 
 	// create memcached custom resource
 	framework.Global.NamespacedManPath = &filename
-	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: time.Second * 10, RetryInterval: time.Second * 1})
+	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		return err
 	}
@@ -338,7 +341,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		return err
 	}
 	// wait for example-memcached to reach 3 replicas
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 3, time.Second*5, time.Second*30)
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 3, retryInterval, timeout)
 	if err != nil {
 		return err
 	}
@@ -367,7 +370,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 	}
 
 	// wait for example-memcached to reach 4 replicas
-	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 4, time.Second*5, time.Second*30)
+	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 4, retryInterval, timeout)
 }
 
 func MemcachedLocal(t *testing.T) {
@@ -427,7 +430,7 @@ func MemcachedCluster(t *testing.T) {
 			t.Fatal(err)
 		}
 		operatorYAML = bytes.Replace(operatorYAML, []byte("imagePullPolicy: Always"), []byte("imagePullPolicy: Never"), 1)
-		err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, filemode)
+		err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, fileutil.DefaultFileMode)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -461,7 +464,7 @@ func MemcachedCluster(t *testing.T) {
 	// create namespaced resources
 	filename := file.Name()
 	framework.Global.NamespacedManPath = &filename
-	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: time.Second * 10, RetryInterval: time.Second * 1})
+	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -472,7 +475,7 @@ func MemcachedCluster(t *testing.T) {
 		t.Fatal(err)
 	}
 	// wait for memcached-operator to be ready
-	err = e2eutil.WaitForOperatorDeployment(t, framework.Global.KubeClient, namespace, "memcached-operator", 1, time.Second*5, time.Second*30)
+	err = e2eutil.WaitForOperatorDeployment(t, framework.Global.KubeClient, namespace, "memcached-operator", 1, retryInterval, timeout)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -494,7 +497,7 @@ func MemcachedClusterTest(t *testing.T) {
 	// create sa
 	filename := "deploy/service_account.yaml"
 	framework.Global.NamespacedManPath = &filename
-	err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: time.Second * 10, RetryInterval: time.Second * 1})
+	err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -503,7 +506,7 @@ func MemcachedClusterTest(t *testing.T) {
 	// create rbac
 	filename = "deploy/role.yaml"
 	framework.Global.NamespacedManPath = &filename
-	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: time.Second * 10, RetryInterval: time.Second * 1})
+	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -511,7 +514,7 @@ func MemcachedClusterTest(t *testing.T) {
 
 	filename = "deploy/role_binding.yaml"
 	framework.Global.NamespacedManPath = &filename
-	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: time.Second * 10, RetryInterval: time.Second * 1})
+	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		t.Fatal(err)
 	}

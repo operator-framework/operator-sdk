@@ -24,7 +24,9 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apitypes "k8s.io/apimachinery/pkg/types"
+	"k8s.io/cli-runtime/pkg/genericclioptions/resource"
 	"k8s.io/client-go/rest"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/kube"
@@ -33,7 +35,6 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/services"
 	"k8s.io/helm/pkg/storage"
 	"k8s.io/helm/pkg/tiller"
-	"k8s.io/kubernetes/pkg/kubectl/genericclioptions/resource"
 
 	"github.com/operator-framework/operator-sdk/pkg/helm/internal/types"
 )
@@ -310,7 +311,7 @@ func reconcileRelease(ctx context.Context, tillerKubeClient *kube.Client, namesp
 			*r = *r.Context(ctx)
 		})
 		helper := resource.NewHelper(expectedClient, expected.Mapping)
-		_, err = helper.Create(expected.Namespace, true, expected.Object)
+		_, err = helper.Create(expected.Namespace, true, expected.Object, &metav1.CreateOptions{})
 		if err == nil {
 			return nil
 		}
@@ -323,7 +324,7 @@ func reconcileRelease(ctx context.Context, tillerKubeClient *kube.Client, namesp
 			return fmt.Errorf("failed to marshal JSON patch: %s", err)
 		}
 
-		_, err = helper.Patch(expected.Namespace, expected.Name, apitypes.MergePatchType, patch)
+		_, err = helper.Patch(expected.Namespace, expected.Name, apitypes.MergePatchType, patch, &metav1.UpdateOptions{})
 		if err != nil {
 			return fmt.Errorf("patch error: %s", err)
 		}
