@@ -19,6 +19,7 @@ package proxy
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -26,11 +27,101 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
+	"strings"
 
+	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+// CacheResponseHandler will handle proxied requests and check if the requested
+// resource exists in our cache. If it does then there is no need to bombard
+// the APIserver with our request and we should write the response from the
+// proxy.
+func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper meta.RESTMapper) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		switch req.Method {
+		case http.MethodGet:
+			// GET request means we need to check the cache
+			rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.NewString("api", "apis"), GrouplessAPIPrefixes: sets.NewString("api")}
+			r, err := rf.NewRequestInfo(req)
+			if err != nil {
+				log.Error(err, "failed to convert request")
+				break
+			}
+
+			// check if resource is present on request
+			if !r.IsResourceRequest {
+				break
+			}
+
+			if strings.HasPrefix(r.Path, "/version") {
+				// Temporarily pass along to API server
+				// Ideally we cache this response as well
+				break
+			}
+
+			gvr := schema.GroupVersionResource{
+				Group:    r.APIGroup,
+				Version:  r.APIVersion,
+				Resource: r.Resource,
+			}
+			if restMapper == nil {
+				restMapper = meta.NewDefaultRESTMapper([]schema.GroupVersion{schema.GroupVersion{
+					Group:   r.APIGroup,
+					Version: r.APIVersion,
+				}})
+			}
+
+			k, err := restMapper.KindFor(gvr)
+			if err != nil {
+				// break here in case resource doesn't exist in cache
+				log.Info("cache miss", "GVR", gvr)
+				break
+			}
+
+			un := unstructured.Unstructured{}
+			un.SetGroupVersionKind(k)
+			obj := client.ObjectKey{Namespace: r.Namespace, Name: r.Name}
+			err = informerCache.Get(context.Background(), obj, &un)
+			if err != nil {
+				// break here in case resource doesn't exist in cache but exists on APIserver
+				// This is very unlikely but provides user with expected 404
+				log.Info(fmt.Sprintf("cache miss: %v, %v", k, obj))
+				break
+			}
+
+			i := bytes.Buffer{}
+			resp, err := json.Marshal(un.Object)
+			if err != nil {
+				// return will give a 500
+				log.Error(err, "failed to marshal data")
+				http.Error(w, "", http.StatusInternalServerError)
+				return
+			}
+
+			// Set X-Cache header to signal that response is served from Cache
+			w.Header().Set("X-Cache", "HIT")
+			json.Indent(&i, resp, "", "  ")
+			_, err = w.Write(i.Bytes())
+			if err != nil {
+				log.Error(err, "failed to write response")
+				http.Error(w, "", http.StatusInternalServerError)
+				return
+			}
+
+			// Return so that request isn't passed along to APIserver
+			return
+		}
+		h.ServeHTTP(w, req)
+	})
+}
 
 // InjectOwnerReferenceHandler will handle proxied requests and inject the
 // owner refernece found in the authorization header. The Authorization is
@@ -107,6 +198,8 @@ type Options struct {
 	Handler          HandlerChain
 	NoOwnerInjection bool
 	KubeConfig       *rest.Config
+	Cache            cache.Cache
+	RESTMapper       meta.RESTMapper
 }
 
 // Run will start a proxy server in a go routine that returns on the error
@@ -121,9 +214,33 @@ func Run(done chan error, o Options) error {
 		server.Handler = o.Handler(server.Handler)
 	}
 
+	if o.Cache == nil {
+		// Need to initialize cache since we don't have one
+		log.Info("Initializing and starting informer cache...")
+		informerCache, err := cache.New(o.KubeConfig, cache.Options{})
+		if err != nil {
+			return err
+		}
+		stop := make(chan struct{})
+		go func() {
+			informerCache.Start(stop)
+			defer close(stop)
+		}()
+		log.Info("Waiting for cache to sync...")
+		synced := informerCache.WaitForCacheSync(stop)
+		if !synced {
+			return fmt.Errorf("failed to sync cache")
+		}
+		log.Info("Cache sync was successful")
+		o.Cache = informerCache
+	}
+
 	if !o.NoOwnerInjection {
 		server.Handler = InjectOwnerReferenceHandler(server.Handler)
 	}
+	// Always add cache handler
+	server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper)
+
 	l, err := server.Listen(o.Address, o.Port)
 	if err != nil {
 		return err

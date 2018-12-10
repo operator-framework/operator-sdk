@@ -186,7 +186,9 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 		}
 	}
 	testArgs := []string{"test", args[0] + "/..."}
-	testArgs = append(testArgs, "-"+test.KubeConfigFlag, tlConfig.kubeconfig)
+	if tlConfig.kubeconfig != "" {
+		testArgs = append(testArgs, "-"+test.KubeConfigFlag, tlConfig.kubeconfig)
+	}
 	testArgs = append(testArgs, "-"+test.NamespacedManPathFlag, tlConfig.namespacedManPath)
 	testArgs = append(testArgs, "-"+test.GlobalManPathFlag, tlConfig.globalManPath)
 	testArgs = append(testArgs, "-"+test.ProjRootFlag, projutil.MustGetwd())

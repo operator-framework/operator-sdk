@@ -116,12 +116,17 @@ func (r *Resource) checkAndSetKinds() error {
 }
 
 func (r *Resource) checkAndSetGroups() error {
-	r.FullGroup = strings.Split(r.APIVersion, "/")[0]
-	r.Group = strings.Split(r.FullGroup, ".")[0]
-
-	if len(r.Group) == 0 {
+	fg := strings.Split(r.APIVersion, "/")
+	if len(fg) < 2 || len(fg[0]) == 0 {
+		return errors.New("full group cannot be empty")
+	}
+	g := strings.Split(fg[0], ".")
+	if len(g) < 2 || len(g[0]) == 0 {
 		return errors.New("group cannot be empty")
 	}
+	r.FullGroup = fg[0]
+	r.Group = g[0]
+
 	if !ResourceGroupRegexp.MatchString(r.Group) {
 		return errors.New("group should consist of lowercase alphabetical characters")
 	}
@@ -129,11 +134,12 @@ func (r *Resource) checkAndSetGroups() error {
 }
 
 func (r *Resource) checkAndSetVersion() error {
-	r.Version = strings.Split(r.APIVersion, "/")[1]
-
-	if len(r.Version) == 0 {
+	api := strings.Split(r.APIVersion, "/")
+	if len(api) < 2 || len(api[1]) == 0 {
 		return errors.New("version cannot be empty")
 	}
+	r.Version = api[1]
+
 	if !ResourceVersionRegexp.MatchString(r.Version) {
 		return errors.New("version is not in the correct Kubernetes version format, ex. v1alpha1")
 	}

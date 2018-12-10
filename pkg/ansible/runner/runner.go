@@ -245,9 +245,9 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 			dc = r.cmdFunc(ident, inputDir.Path)
 		}
 
-		err := dc.Run()
+		output, err := dc.CombinedOutput()
 		if err != nil {
-			logger.Error(err, "error from ansible-runner")
+			logger.Error(err, string(output))
 		} else {
 			logger.Info("ansible-runner exited successfully")
 		}

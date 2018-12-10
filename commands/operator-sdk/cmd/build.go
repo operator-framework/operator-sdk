@@ -150,7 +150,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 
 	buildDockerfile := filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
 	buildDockerfile = makeDockerfileIfMultistage(buildDockerfile, false)
-	if projutil.IsGoOperator() && !projutil.IsDockerfileMultistage(buildDockerfile) {
+	if projutil.IsOperatorGo() && !projutil.IsDockerfileMultistage(buildDockerfile) {
 		if err := buildOperatorBinary(); err != nil {
 			log.Fatalf("failed to build operator binary: (%v)", err)
 		}
@@ -219,7 +219,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 }
 
 func makeDockerfileIfMultistage(dockerfile string, isTest bool) string {
-	if !projutil.IsGoOperator() || !projutil.IsDockerMultistage() {
+	if !projutil.IsOperatorGo() || !projutil.IsDockerMultistage() {
 		return dockerfile
 	}
 	if !projutil.IsDockerfileMultistage(dockerfile) {

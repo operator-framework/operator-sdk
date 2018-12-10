@@ -24,12 +24,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apitypes "k8s.io/apimachinery/pkg/types"
+	clientset "k8s.io/client-go/kubernetes"
 	helmengine "k8s.io/helm/pkg/engine"
 	"k8s.io/helm/pkg/kube"
 	"k8s.io/helm/pkg/storage"
 	"k8s.io/helm/pkg/tiller"
 	"k8s.io/helm/pkg/tiller/environment"
-	"k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset"
 
 	"github.com/operator-framework/operator-sdk/pkg/helm/engine"
 	"github.com/operator-framework/operator-sdk/pkg/helm/internal/types"
@@ -86,9 +86,9 @@ func (f managerFactory) tillerRendererForCR(r *unstructured.Unstructured) *tille
 		KubeClient: f.tillerKubeClient,
 	}
 	kubeconfig, _ := f.tillerKubeClient.ToRESTConfig()
-	internalClientSet, _ := internalclientset.NewForConfig(kubeconfig)
+	cs := clientset.NewForConfigOrDie(kubeconfig)
 
-	return tiller.NewReleaseServer(env, internalClientSet, false)
+	return tiller.NewReleaseServer(env, cs, false)
 }
 
 func getReleaseName(r *unstructured.Unstructured) string {

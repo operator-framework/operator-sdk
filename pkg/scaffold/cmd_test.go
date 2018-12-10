@@ -17,7 +17,7 @@ package scaffold
 import (
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/internal/testutil"
+	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 )
 
 func TestCmd(t *testing.T) {
@@ -28,7 +28,7 @@ func TestCmd(t *testing.T) {
 	}
 
 	if cmdExp != buf.String() {
-		diffs := testutil.Diff(cmdExp, buf.String())
+		diffs := diffutil.Diff(cmdExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }

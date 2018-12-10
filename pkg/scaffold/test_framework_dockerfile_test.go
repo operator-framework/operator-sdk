@@ -17,7 +17,7 @@ package scaffold
 import (
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/internal/testutil"
+	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 )
 
 func TestTestFrameworkDockerfileMultistage(t *testing.T) {
@@ -28,7 +28,7 @@ func TestTestFrameworkDockerfileMultistage(t *testing.T) {
 	}
 
 	if testDockerfileMultiExp != buf.String() {
-		diffs := testutil.Diff(testDockerfileMultiExp, buf.String())
+		diffs := diffutil.Diff(testDockerfileMultiExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
@@ -66,7 +66,7 @@ func TestTestFrameworkDockerfileNonMultistage(t *testing.T) {
 	}
 
 	if testDockerfileNonMultExp != buf.String() {
-		diffs := testutil.Diff(testDockerfileNonMultExp, buf.String())
+		diffs := diffutil.Diff(testDockerfileNonMultExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
