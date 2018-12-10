@@ -13,6 +13,12 @@
 
 ### Bug Fixes
 
+## v0.2.1
+
+### Bug Fixes
+
+- Pin controller-runtime version to v0.1.4 to fix dependency issues and pin ansible idna package to version 2.7 ([#831](https://github.com/operator-framework/operator-sdk/pull/831))
+
 ## v0.2.0
 
 ### Changed
