@@ -201,9 +201,6 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, namespacedName types.NamespacedName) error {
 	// Get the latest resource to prevent updating a stale status
 	err := r.Client.Get(context.TODO(), namespacedName, u)
-	if apierrors.IsNotFound(err) {
-		return err
-	}
 	if err != nil {
 		return err
 	}
