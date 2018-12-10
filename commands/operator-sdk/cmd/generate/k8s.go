@@ -51,13 +51,6 @@ func k8sFunc(cmd *cobra.Command, args []string) {
 	K8sCodegen()
 }
 
-const (
-	// k8sVerTag is the k8s.io/code-generator tag used to build codegen binaries.
-	k8sVerTag = "kubernetes-1.12.3"
-	// codegenGitRepo is the git repo path for k8s.io/code-generator.
-	codegenGitRepo = "https://github.com/kubernetes/code-generator.git"
-)
-
 // K8sCodegen performs deepcopy code-generation for all custom resources under pkg/apis
 func K8sCodegen() {
 	projutil.MustInProjectRoot()
