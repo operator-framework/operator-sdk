@@ -87,30 +87,30 @@ test/e2e: test/e2e/go test/e2e/ansible test/e2e/helm
 test/e2e/go:
 	./hack/tests/e2e-go.sh $(ARGS)
 
-test/e2e/ansible: docker/build/ansible
+test/e2e/ansible: image/build/ansible
 	./hack/tests/e2e-ansible.sh
 
-test/e2e/helm: docker/build/helm
+test/e2e/helm: image/build/helm
 	./hack/tests/e2e-helm.sh
 
 .PHONY: test test/sanity test/unit test/subcommand test/e2e test/e2e/go test/e2e/ansible test/e2e/helm test/ci-go test/ci-ansible
 
-docker: docker/build docker/push
+image: image/build image/push
 
-docker/build: docker/build/ansible docker/build/helm
+image/build: image/build/ansible image/build/helm
 
-docker/build/ansible:
-	./hack/docker/build-ansible-image.sh $(SOURCE_ANSIBLE_IMAGE)
+image/build/ansible:
+	./hack/image/build-ansible-image.sh $(SOURCE_ANSIBLE_IMAGE)
 
-docker/build/helm:
-	./hack/docker/build-helm-image.sh $(SOURCE_HELM_IMAGE)
+image/build/helm:
+	./hack/image/build-helm-image.sh $(SOURCE_HELM_IMAGE)
 
-docker/push: docker/push/ansible docker/push/helm
+image/push: image/push/ansible image/push/helm
 
-docker/push/ansible:
-	./hack/docker/push-image-tags.sh $(SOURCE_ANSIBLE_IMAGE) $(ANSIBLE_IMAGE)
+image/push/ansible:
+	./hack/image/push-image-tags.sh $(SOURCE_ANSIBLE_IMAGE) $(ANSIBLE_IMAGE)
 
-docker/push/helm:
-	./hack/docker/push-image-tags.sh $(SOURCE_HELM_IMAGE) $(HELM_IMAGE)
+image/push/helm:
+	./hack/image/push-image-tags.sh $(SOURCE_HELM_IMAGE) $(HELM_IMAGE)
 
-.PHONY: docker docker/build docker/build/ansible docker/build/helm docker/push docker/push/ansible docker/push/helm
+.PHONY: image image/build image/build/ansible image/build/helm image/push image/push/ansible image/push/helm
