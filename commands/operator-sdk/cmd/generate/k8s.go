@@ -64,13 +64,10 @@ func K8sCodegen() {
 
 	wd := projutil.MustGetwd()
 	repoPkg := projutil.CheckAndGetProjectGoPkg()
-	cloneDir := filepath.Join(wd, "vendor", "k8s.io", "code-generator")
+	srcDir := filepath.Join(wd, "vendor", "k8s.io", "code-generator")
 	binDir := filepath.Join(wd, scaffold.BuildBinDir)
 
-	if _, err := os.Stat(cloneDir); err != nil {
-		cloneCodegenRepo(cloneDir, codegenGitRepo, k8sVerTag)
-	}
-	buildCodegenBinaries(binDir, cloneDir)
+	buildCodegenBinaries(binDir, srcDir)
 
 	gvMap, err := parseGroupVersions()
 	if err != nil {
@@ -88,22 +85,7 @@ func K8sCodegen() {
 	log.Info("Code-generation complete.")
 }
 
-func cloneCodegenRepo(cloneDir, gitRepoURL, verTag string) {
-	if err := os.RemoveAll(cloneDir); err != nil {
-		log.Fatal(err)
-	}
-	cloneCmd := exec.Command("git", "clone", "-q", gitRepoURL, cloneDir)
-	if err := projutil.ExecCmd(cloneCmd); err != nil {
-		log.Fatal(err)
-	}
-	checkoutCmd := exec.Command("git", "checkout", "-q", verTag)
-	checkoutCmd.Dir = cloneDir
-	if err := projutil.ExecCmd(checkoutCmd); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func buildCodegenBinaries(binDir, codegenRepoDir string) {
+func buildCodegenBinaries(binDir, codegenSrcDir string) {
 	genDirs := []string{
 		"./cmd/defaulter-gen",
 		"./cmd/client-gen",
@@ -112,7 +94,7 @@ func buildCodegenBinaries(binDir, codegenRepoDir string) {
 		"./cmd/deepcopy-gen",
 	}
 	for _, gd := range genDirs {
-		err := runGoBuildCodegen(binDir, codegenRepoDir, gd)
+		err := runGoBuildCodegen(binDir, codegenSrcDir, gd)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -172,20 +154,6 @@ func parseGroupVersions() (map[string][]string, error) {
 	return gvs, nil
 }
 
-func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) {
-	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
-	args := []string{
-		"--input-dirs", createFQApis(apisPkg, gvMap),
-		"-O", "zz_generated.deepcopy",
-		"--bounding-dirs", apisPkg,
-	}
-	cgPath := filepath.Join(binDir, "deepcopy-gen")
-	err := projutil.ExecCmd(exec.Command(cgPath, args...))
-	if err != nil {
-		log.Fatalf("failed to perform code-generation: %v", err)
-	}
-}
-
 // createFQApis return a string of all fully qualified pkg + groups + versions
 // of pkg and gvs in the format:
 // "pkg/groupA/v1,pkg/groupA/v2,pkg/groupB:v1"
@@ -204,4 +172,18 @@ func createFQApis(pkg string, gvs map[string][]string) (fqStr string) {
 		gn++
 	}
 	return fqStr
+}
+
+func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) {
+	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
+	args := []string{
+		"--input-dirs", createFQApis(apisPkg, gvMap),
+		"-O", "zz_generated.deepcopy",
+		"--bounding-dirs", apisPkg,
+	}
+	cgPath := filepath.Join(binDir, "deepcopy-gen")
+	err := projutil.ExecCmd(exec.Command(cgPath, args...))
+	if err != nil {
+		log.Fatalf("failed to perform code-generation: %v", err)
+	}
 }
