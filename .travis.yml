@@ -81,12 +81,12 @@ jobs:
     - <<: *deploy
       name: Docker image for ansible-operator
       script:
-        - make docker/build/ansible
-        - make docker/push/ansible
+        - make image/build/ansible
+        - make image/push/ansible
 
     # Build and deploy helm-operator docker image
     - <<: *deploy
       name: Docker image for helm-operator
       script:
-        - make docker/build/helm
-        - make docker/push/helm
+        - make image/build/helm
+        - make image/push/helm
