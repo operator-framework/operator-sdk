@@ -49,6 +49,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	"github.com/operator-framework/operator-sdk/pkg/ready"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -129,7 +130,7 @@ func main() {
 		os.Exit(1)
 	}
 	client := mgr.GetClient()
-	if err := client.Create(context.TODO(), s); err != nil {
+	if err := client.Create(context.TODO(), s); err != nil && !apierrors.IsAlreadyExists(err) {
 		log.Error(err, "")
 		os.Exit(1)
 	}
