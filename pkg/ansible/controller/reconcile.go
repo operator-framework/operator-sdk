@@ -35,6 +35,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -115,7 +116,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	}
 
 	if r.ManageStatus {
-		err = r.markRunning(u)
+		err = r.markRunning(u, request.NamespacedName)
 		if err != nil {
 			return reconcileResult, err
 		}
@@ -186,14 +187,23 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		if err != nil {
 			return reconcileResult, err
 		}
+		return reconcileResult, nil
 	}
 	if r.ManageStatus {
-		err = r.markDone(u, statusEvent, failureMessages)
+		err = r.markDone(u, request.NamespacedName, statusEvent, failureMessages)
+		if err != nil {
+			logger.Error(err, "failed to mark status done")
+		}
 	}
 	return reconcileResult, err
 }
 
-func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured) error {
+func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, namespacedName types.NamespacedName) error {
+	// Get the latest resource to prevent updating a stale status
+	err := r.Client.Get(context.TODO(), namespacedName, u)
+	if err != nil {
+		return err
+	}
 	statusInterface := u.Object["status"]
 	statusMap, _ := statusInterface.(map[string]interface{})
 	crStatus := ansiblestatus.CreateFromMap(statusMap)
@@ -215,7 +225,7 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured) er
 		)
 		ansiblestatus.SetCondition(&crStatus, *c)
 		u.Object["status"] = crStatus.GetJSONMap()
-		err := r.Client.Update(context.TODO(), u)
+		err := r.Client.Status().Update(context.TODO(), u)
 		if err != nil {
 			return err
 		}
@@ -223,7 +233,17 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured) er
 	return nil
 }
 
-func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) error {
+func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, namespacedName types.NamespacedName, statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) error {
+	logger := logf.Log.WithName("markDone")
+	// Get the latest resource to prevent updating a stale status
+	err := r.Client.Get(context.TODO(), namespacedName, u)
+	if apierrors.IsNotFound(err) {
+		logger.Info("resource not found, assuming it was deleted", err)
+		return nil
+	}
+	if err != nil {
+		return err
+	}
 	statusInterface := u.Object["status"]
 	statusMap, _ := statusInterface.(map[string]interface{})
 	crStatus := ansiblestatus.CreateFromMap(statusMap)
@@ -258,7 +278,7 @@ func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, statu
 	// This needs the status subresource to be enabled by default.
 	u.Object["status"] = crStatus.GetJSONMap()
 
-	return r.Client.Update(context.TODO(), u)
+	return r.Client.Status().Update(context.TODO(), u)
 }
 
 func contains(l []string, s string) bool {

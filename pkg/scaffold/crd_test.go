@@ -50,4 +50,6 @@ spec:
     singular: appservice
   scope: Namespaced
   version: v1alpha1
+  subresources:
+    status: {}
 `

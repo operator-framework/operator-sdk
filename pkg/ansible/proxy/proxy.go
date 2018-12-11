@@ -82,7 +82,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			k, err := restMapper.KindFor(gvr)
 			if err != nil {
 				// break here in case resource doesn't exist in cache
-				log.Error(err, "didn't find kind")
+				log.Info("cache miss", "GVR", gvr)
 				break
 			}
 
@@ -93,7 +93,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			if err != nil {
 				// break here in case resource doesn't exist in cache but exists on APIserver
 				// This is very unlikely but provides user with expected 404
-				log.Error(err, "didn't find object in cache")
+				log.Info(fmt.Sprintf("cache miss: %v, %v", k, obj))
 				break
 			}
 

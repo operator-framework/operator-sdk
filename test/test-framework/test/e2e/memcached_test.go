@@ -29,7 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-var (
+const (
 	retryInterval        = time.Second * 5
 	timeout              = time.Second * 60
 	cleanupRetryInterval = time.Second * 1
