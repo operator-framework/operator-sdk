@@ -80,13 +80,16 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		log.V(1).Info("Adding finalizer", "finalizer", finalizer)
 		finalizers := append(pendingFinalizers, finalizer)
 		o.SetFinalizers(finalizers)
-		status.SetCondition(types.HelmAppCondition{
-			Type:   types.ConditionInitialized,
-			Status: types.StatusTrue,
-		})
-		err := r.updateResourceStatus(o, status)
-		return reconcile.Result{}, err
+		err = r.updateResource(o)
+
+		// Need to requeue because finalizer update does not change metadata.generation
+		return reconcile.Result{Requeue: true}, err
 	}
+
+	status.SetCondition(types.HelmAppCondition{
+		Type:   types.ConditionInitialized,
+		Status: types.StatusTrue,
+	})
 
 	if err := manager.Sync(context.TODO()); err != nil {
 		log.Error(err, "failed to sync release")
@@ -134,6 +137,10 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 				Reason: types.ReasonUninstallSuccessful,
 			})
 		}
+		if err := r.updateResourceStatus(o, status); err != nil {
+			return reconcile.Result{}, err
+		}
+
 		finalizers := []string{}
 		for _, pendingFinalizer := range pendingFinalizers {
 			if pendingFinalizer != finalizer {
@@ -141,8 +148,10 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 			}
 		}
 		o.SetFinalizers(finalizers)
-		err = r.updateResourceStatus(o, status)
-		return reconcile.Result{}, err
+		err = r.updateResource(o)
+
+		// Need to requeue because finalizer update does not change metadata.generation
+		return reconcile.Result{Requeue: true}, err
 	}
 
 	if !manager.IsInstalled() {
@@ -226,6 +235,10 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 	log.Info("Reconciled release")
 	err = r.updateResourceStatus(o, status)
 	return reconcile.Result{RequeueAfter: r.ResyncPeriod}, err
+}
+
+func (r HelmOperatorReconciler) updateResource(o *unstructured.Unstructured) error {
+	return r.Client.Update(context.TODO(), o)
 }
 
 func (r HelmOperatorReconciler) updateResourceStatus(o *unstructured.Unstructured, status *types.HelmAppStatus) error {
