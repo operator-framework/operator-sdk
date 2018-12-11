@@ -166,7 +166,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 
 func (r HelmOperatorReconciler) updateResourceStatus(o *unstructured.Unstructured, status *types.HelmAppStatus) error {
 	o.Object["status"] = status
-	return r.Client.Update(context.TODO(), o)
+	return r.Client.Status().Update(context.TODO(), o)
 }
 
 func contains(l []string, s string) bool {
