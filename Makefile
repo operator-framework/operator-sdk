@@ -24,6 +24,9 @@ format:
 dep:
 	$(Q)dep ensure -v
 
+dep-update:
+	$(Q)dep ensure -update -v
+
 clean:
 	$(Q)rm -rf build
 
