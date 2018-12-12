@@ -60,6 +60,13 @@ If you'd like to create your nginx-operator project to be cluster-scoped use the
 operator-sdk new nginx-operator --cluster-scoped --api-version=example.com/v1alpha1 --kind=Nginx --type=helm
 ```
 
+Using `--cluster-scoped` will scaffold the new operator with the following modifications:
+* `deploy/operator.yaml` - Set `WATCH_NAMESPACE=""` instead of setting it to the pod's namespace
+* `deploy/role.yaml` - Use `ClusterRole` instead of `Role`
+* `deploy/role_binding.yaml`:
+  * Use `ClusterRoleBinding` instead of `RoleBinding`
+  * Set the subject namespace to `REPLACE_NAMESPACE`. This must be changed to the namespace in which the operator is deployed.
+
 ## Customize the operator logic
 
 For this example the nginx-operator will execute the following

@@ -56,6 +56,13 @@ If you'd like to create your memcached-operator project to be cluster-scoped use
 $ operator-sdk new memcached-operator --cluster-scoped
 ```
 
+Using `--cluster-scoped` will scaffold the new operator with the following modifications:
+* `deploy/operator.yaml` - Set `WATCH_NAMESPACE=""` instead of setting it to the pod's namespace
+* `deploy/role.yaml` - Use `ClusterRole` instead of `Role`
+* `deploy/role_binding.yaml`:
+  * Use `ClusterRoleBinding` instead of `RoleBinding`
+  * Set the subject namespace to `REPLACE_NAMESPACE`. This must be changed to the namespace in which the operator is deployed.
+
 ### Manager
 The main program for the operator `cmd/manager/main.go` initializes and runs the [Manager][manager_go_doc].
 
