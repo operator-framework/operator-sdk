@@ -14,11 +14,11 @@ REPO = github.com/operator-framework/operator-sdk
 BUILD_PATH = $(REPO)/commands/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
 
-SOURCE_ANSIBLE_IMAGE = quay.io/operator-framework/ansible-operator
-SOURCE_HELM_IMAGE = quay.io/operator-framework/helm-operator
+ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
+HELM_BASE_IMAGE = quay.io/operator-framework/helm-operator
 
-ANSIBLE_IMAGE ?= $(SOURCE_ANSIBLE_IMAGE)
-HELM_IMAGE ?= $(SOURCE_HELM_IMAGE)
+ANSIBLE_IMAGE ?= $(ANSIBLE_BASE_IMAGE)
+HELM_IMAGE ?= $(HELM_BASE_IMAGE)
 
 export CGO_ENABLED:=0
 
@@ -100,17 +100,17 @@ image: image/build image/push
 image/build: image/build/ansible image/build/helm
 
 image/build/ansible:
-	./hack/image/build-ansible-image.sh $(SOURCE_ANSIBLE_IMAGE)
+	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE)
 
 image/build/helm:
-	./hack/image/build-helm-image.sh $(SOURCE_HELM_IMAGE)
+	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE)
 
 image/push: image/push/ansible image/push/helm
 
 image/push/ansible:
-	./hack/image/push-image-tags.sh $(SOURCE_ANSIBLE_IMAGE) $(ANSIBLE_IMAGE)
+	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE) $(ANSIBLE_IMAGE)
 
 image/push/helm:
-	./hack/image/push-image-tags.sh $(SOURCE_HELM_IMAGE) $(HELM_IMAGE)
+	./hack/image/push-image-tags.sh $(HELM_BASE_IMAGE) $(HELM_IMAGE)
 
 .PHONY: image image/build image/build/ansible image/build/helm image/push image/push/ansible image/push/helm

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ex
+set -eux
 
 # build operator binary and base image
 go build -o test/ansible-operator/ansible-operator test/ansible-operator/cmd/ansible-operator/main.go
