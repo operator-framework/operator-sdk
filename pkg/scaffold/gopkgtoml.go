@@ -85,8 +85,8 @@ required = [
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"
   # The version rule is used for a specific release and the master branch for in between releases.
-  branch = "master" #osdk_branch_annotation
-  # version = "=v0.2.1" #osdk_version_annotation
+  # branch = "master" #osdk_branch_annotation
+  version = "=v0.3.0" #osdk_version_annotation
 
 [prune]
   go-tests = true
