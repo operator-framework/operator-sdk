@@ -29,6 +29,7 @@ import (
 	"net/http/httputil"
 	"strings"
 
+	aoController "github.com/operator-framework/operator-sdk/pkg/ansible/controller"
 	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,7 +39,13 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
+
+var proxyControllerMap *aoController.ControllerMap
+var proxyManager manager.Manager
 
 // CacheResponseHandler will handle proxied requests and check if the requested
 // resource exists in our cache. If it does then there is no need to bombard
@@ -178,6 +185,38 @@ func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
 			log.V(1).Info("serialized body", "Body", string(newBody))
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(newBody))
 			req.ContentLength = int64(len(newBody))
+			// add to controller map
+			cMap := *proxyControllerMap
+			gv, err := schema.ParseGroupVersion(owner.APIVersion)
+			if err != nil {
+				m := "could not parse Group Version"
+				log.Error(err, m)
+				http.Error(w, m, http.StatusInternalServerError)
+				return
+			}
+			gvk := schema.GroupVersionKind{
+				Group:   gv.Group,
+				Version: gv.Version,
+				Kind:    owner.Kind,
+			}
+			if cMap[gvk] == nil {
+				log.Info("Creating a controller for the owner")
+				aoController.Add(proxyManager, aoController.Options{
+					GVK:           data.GroupVersionKind(),
+					ControllerMap: proxyControllerMap,
+				})
+			} else {
+				log.Info("Adding a watch to controller")
+				// Add a watch to controller
+				c := cMap[gvk]
+				err = c.Watch(&source.Kind{Type: data}, &handler.EnqueueRequestForObject{})
+				if err != nil {
+					m := "could not add watch to controller"
+					log.Error(err, m)
+					http.Error(w, m, http.StatusInternalServerError)
+					return
+				}
+			}
 		}
 		// Removing the authorization so that the proxy can set the correct authorization.
 		req.Header.Del("Authorization")
@@ -200,6 +239,8 @@ type Options struct {
 	KubeConfig       *rest.Config
 	Cache            cache.Cache
 	RESTMapper       meta.RESTMapper
+	ControllerMap    *aoController.ControllerMap
+	Manager          manager.Manager
 }
 
 // Run will start a proxy server in a go routine that returns on the error
@@ -234,6 +275,12 @@ func Run(done chan error, o Options) error {
 		log.Info("Cache sync was successful")
 		o.Cache = informerCache
 	}
+
+	if o.ControllerMap == nil {
+		o.ControllerMap = &aoController.ControllerMap{}
+	}
+	proxyControllerMap = o.ControllerMap
+	proxyManager = o.Manager
 
 	if !o.NoOwnerInjection {
 		server.Handler = InjectOwnerReferenceHandler(server.Handler)

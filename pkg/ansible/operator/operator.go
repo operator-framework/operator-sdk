@@ -30,7 +30,7 @@ import (
 // Run - A blocking function which starts a controller-runtime manager
 // It starts an Operator by reading in the values in `./watches.yaml`, adds a controller
 // to the manager, and finally running the manager.
-func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags) {
+func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags, cMap controller.ControllerMap) {
 	watches, err := runner.NewFromWatches(f.WatchesFile)
 	if err != nil {
 		logf.Log.WithName("manager").Error(err, "failed to get watches")
@@ -42,9 +42,10 @@ func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags) {
 
 	for gvk, runner := range watches {
 		o := controller.Options{
-			GVK:          gvk,
-			Runner:       runner,
-			ManageStatus: runner.GetManageStatus(),
+			GVK:           gvk,
+			Runner:        runner,
+			ManageStatus:  runner.GetManageStatus(),
+			ControllerMap: &cMap,
 		}
 		applyFlagsToControllerOptions(f, &o)
 		controller.Add(mgr, o)

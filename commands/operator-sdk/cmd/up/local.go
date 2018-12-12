@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	aoController "github.com/operator-framework/operator-sdk/pkg/ansible/controller"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	ansibleOperator "github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
@@ -165,21 +166,24 @@ func upLocalAnsible() {
 	printVersion()
 	log.Infof("watching namespace: %s", namespace)
 	done := make(chan error)
+	cMap := aoController.ControllerMap{}
 
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{
-		Address:    "localhost",
-		Port:       8888,
-		KubeConfig: mgr.GetConfig(),
-		Cache:      mgr.GetCache(),
-		RESTMapper: mgr.GetRESTMapper(),
+		Address:       "localhost",
+		Port:          8888,
+		KubeConfig:    mgr.GetConfig(),
+		Cache:         mgr.GetCache(),
+		RESTMapper:    mgr.GetRESTMapper(),
+		ControllerMap: &cMap,
+		Manager:       mgr,
 	})
 	if err != nil {
 		log.Fatalf("error starting proxy: (%v)", err)
 	}
 
 	// start the operator
-	go ansibleOperator.Run(done, mgr, ansibleOperatorFlags)
+	go ansibleOperator.Run(done, mgr, ansibleOperatorFlags, cMap)
 
 	// wait for either to finish
 	err = <-done

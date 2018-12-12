@@ -34,6 +34,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
+type ControllerMap map[schema.GroupVersionKind]controller.Controller
+
 var log = logf.Log.WithName("ansible-controller")
 
 // Options - options for your controller
@@ -44,6 +46,7 @@ type Options struct {
 	GVK             schema.GroupVersionKind
 	ReconcilePeriod time.Duration
 	ManageStatus    bool
+	ControllerMap   *ControllerMap
 }
 
 // Add - Creates a new ansible operator controller and adds it to the manager
@@ -63,6 +66,13 @@ func Add(mgr manager.Manager, options Options) {
 		ManageStatus:    options.ManageStatus,
 	}
 
+	if mgr.GetScheme().IsVersionRegistered(schema.GroupVersion{
+		Group:   options.GVK.Group,
+		Version: options.GVK.Version,
+	}) {
+		log.Info("Version already registered... skipping")
+		return
+	}
 	// Register the GVK with the schema
 	mgr.GetScheme().AddKnownTypeWithName(options.GVK, &unstructured.Unstructured{})
 	metav1.AddToGroupVersion(mgr.GetScheme(), schema.GroupVersion{
@@ -78,6 +88,9 @@ func Add(mgr manager.Manager, options Options) {
 		log.Error(err, "")
 		os.Exit(1)
 	}
+	// Update controllermap
+	cMap := *options.ControllerMap
+	cMap[options.GVK] = c
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(options.GVK)
 	if err := c.Watch(&source.Kind{Type: u}, &crthandler.EnqueueRequestForObject{}, predicate.GenerationChangedPredicate{}); err != nil {
