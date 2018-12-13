@@ -15,17 +15,16 @@
 package catalog
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
-	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"unicode"
 
+	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
@@ -33,7 +32,6 @@ import (
 	"github.com/ghodss/yaml"
 	olmApi "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
-	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
 const (
@@ -297,30 +295,18 @@ func (s *Csv) updateCSVFromManifestFiles(csv *olmApi.ClusterServiceVersion, csvC
 			return err
 		}
 
-		// Individual k8s YAML documents can contain delimited YAML manifests
-		// that should be processed inidividually. We parse each file assuming
-		// there are multiple manifests in one document.
-		readBuf := bytes.NewBuffer(yamlData)
-		reader := k8syaml.NewYAMLReader(bufio.NewReader(readBuf))
-		for {
-			yamlDoc, rerr := reader.Read()
-			if rerr != nil && rerr != io.EOF {
-				log.Infof("updateCSVFromManifestFiles Read: (%v)", rerr)
-				return rerr
-			}
-			// No more separator-delimited YAML documents within yamlData.
-			if rerr == io.EOF {
-				break
-			}
+		scanner := yamlutil.NewYAMLScanner(yamlData)
+		for scanner.Scan() {
+			yamlSpec := scanner.Bytes()
 
-			k, err := getKindfromYAML(yamlDoc)
+			k, err := getKindfromYAML(yamlSpec)
 			if err != nil {
 				return err
 			}
 
 			updateFunc, ok := updateDispTable[k]
 			if ok {
-				updateFunc(yamlDoc)
+				updateFunc(yamlSpec)
 			}
 		}
 	}
