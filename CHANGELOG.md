@@ -10,6 +10,30 @@
 
 ### Bug Fixes
 
+## v0.3.0
+
+### Added
+
+- Helm type operator generation support ([#776](https://github.com/operator-framework/operator-sdk/pull/776))
+
+### Changed
+
+- The SDK's Kubernetes Golang dependency versions/revisions have been updated from `v1.11.2` to `v1.12.3`. ([#807](https://github.com/operator-framework/operator-sdk/pull/807))
+- The controller-runtime version has been updated from `v0.1.4` to `v0.1.8`. See the `v0.1.8` [release notes](https://github.com/kubernetes-sigs/controller-runtime/releases/tag/v0.1.8) for details.
+- The SDK now generates the CRD with the status subresource enabled by default. See the [client doc](https://github.com/operator-framework/operator-sdk/blob/master/doc/user/client.md#updating-status-subresource) on how to update the status ssubresource. ([#787](https://github.com/operator-framework/operator-sdk/pull/787))
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
+## v0.2.1
+
+### Bug Fixes
+
+- Pin controller-runtime version to v0.1.4 to fix dependency issues and pin ansible idna package to version 2.7 ([#831](https://github.com/operator-framework/operator-sdk/pull/831))
+
 ## v0.2.0
 
 ### Changed
@@ -20,6 +44,7 @@
 ### Added
 
 - A new command [`operator-sdk print-deps`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#print-deps) which prints Golang packages and versions expected by the current Operator SDK version. Supplying `--as-file` prints packages and versions in Gopkg.toml format. ([#772](https://github.com/operator-framework/operator-sdk/pull/772))
+- Add [`cluster-scoped`](https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#operator-scope) flag to `operator-sdk new` command ([#747](https://github.com/operator-framework/operator-sdk/pull/747))
 - Add [`up-local`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#flags-9) flag to `test local` subcommand ([#781](https://github.com/operator-framework/operator-sdk/pull/781))
 - Add [`no-setup`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#flags-9) flag to `test local` subcommand ([#770](https://github.com/operator-framework/operator-sdk/pull/770))
 - Add [`image`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#flags-9) flag to `test local` subcommand ([#768](https://github.com/operator-framework/operator-sdk/pull/768))

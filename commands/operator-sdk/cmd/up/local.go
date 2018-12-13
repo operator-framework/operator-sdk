@@ -167,6 +167,8 @@ func upLocalAnsible() {
 		Address:    "localhost",
 		Port:       8888,
 		KubeConfig: mgr.GetConfig(),
+		Cache:      mgr.GetCache(),
+		RESTMapper: mgr.GetRESTMapper(),
 	})
 	if err != nil {
 		log.Fatalf("error starting proxy: (%v)", err)

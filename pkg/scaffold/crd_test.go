@@ -17,7 +17,7 @@ package scaffold
 import (
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/internal/testutil"
+	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 )
 
 func TestCRD(t *testing.T) {
@@ -32,7 +32,7 @@ func TestCRD(t *testing.T) {
 	}
 
 	if crdExp != buf.String() {
-		diffs := testutil.Diff(crdExp, buf.String())
+		diffs := diffutil.Diff(crdExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
@@ -50,4 +50,6 @@ spec:
     singular: appservice
   scope: Namespaced
   version: v1alpha1
+  subresources:
+    status: {}
 `

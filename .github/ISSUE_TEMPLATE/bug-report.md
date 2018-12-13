@@ -33,7 +33,7 @@ A clear and concise description of what you expected to happen (or insert a code
 
 * Kubernetes cluster kind: 
 
-* Are you writing your operator in ansible or go?
+* Are you writing your operator in ansible, helm, or go?
 
 **Possible Solution**
 <!--- Only if you have suggestions on a fix for the bug -->

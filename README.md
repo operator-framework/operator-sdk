@@ -23,7 +23,7 @@ The Operator SDK is a framework that uses the [controller-runtime][controller_ru
 
 ## Workflow
 
-The SDK provides workflows to develop operators in Go or Ansible.
+The SDK provides workflows to develop operators in Go, Ansible, or Helm.
 
 The following workflow is for a new **Go** operator:
 1. Create a new operator project using the SDK Command Line Interface(CLI)
@@ -35,6 +35,12 @@ The following workflow is for a new **Go** operator:
 The following workflow is for a new **Ansible** operator:
 1. Create a new operator project using the SDK Command Line Interface(CLI)
 2. Write the reconciling logic for your object using ansible playbooks and roles
+3. Use the SDK CLI to build and generate the operator deployment manifests
+4. Optionally add additional CRD's using the SDK CLI and repeat steps 2 and 3
+
+The following workflow is for a new **Helm** operator:
+1. Create a new operator project using the SDK Command Line Interface(CLI)
+2. Create a new (or add your existing) Helm chart for use by the operator's reconciling logic
 3. Use the SDK CLI to build and generate the operator deployment manifests
 4. Optionally add additional CRD's using the SDK CLI and repeat steps 2 and 3
 
@@ -118,7 +124,7 @@ $ kubectl delete -f deploy/crds/app_v1alpha1_appservice_crd.yaml
 
 To learn more about the writing an operator in Go, see the [user guide][guide].
 
-The SDK also supports developing an operator using Ansible. See the [Ansible operator user guide][ansible_user_guide].
+The SDK also supports developing an operator using Ansible or Helm. See the [Ansible][ansible_user_guide] and [Helm][helm_user_guide] operator user guides.
 
 ## Samples
 
@@ -152,3 +158,4 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [controller_runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [ansible_user_guide]:./doc/ansible/user-guide.md
+[helm_user_guide]:./doc/helm/user-guide.md

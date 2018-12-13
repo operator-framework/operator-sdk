@@ -39,7 +39,7 @@ func printVersion() {
 func main() {
 	flag.Parse()
 
-	logf.SetLogger(logf.ZapLogger(true))
+	logf.SetLogger(logf.ZapLogger(false))
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
@@ -61,6 +61,8 @@ func main() {
 		Address:    "localhost",
 		Port:       8888,
 		KubeConfig: mgr.GetConfig(),
+		Cache:      mgr.GetCache(),
+		RESTMapper: mgr.GetRESTMapper(),
 	})
 	if err != nil {
 		log.Fatalf("error starting proxy: (%v)", err)
