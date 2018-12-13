@@ -126,13 +126,13 @@ $ gpg --recv-key "$KEY_ID"
 
 Now you should be able to verify the tags and/or binaries.
 
-# Release steps
+## Release steps
 
 These steps describe how to conduct a release of the SDK, upgrading from `v1.2.0` to `v1.3.0`. Replace these versions with the current and new version you are releasing, respectively.
 
 **Note:** `master` should be frozen between steps 1 and 3 so that all commits will be either in the new release or have a pre-release version, ex. `v1.2.0+git`. Otherwise commits might be built into a release that shouldn't or have an incorrect version, which makes debugging user issues difficult.
 
-## (Path release only) Cherry-picking to a release branch
+### (Patch release only) Cherry-picking to a release branch
 
 As more than one patch may be created per minor release, branch names of the form `v1.3.x` are created after a minor version is released. Bug fixes will be merged into the release branch only after testing.
 
@@ -171,13 +171,16 @@ $ git checkout -b release-v1.3.0
 
 Commit changes to the following four files:
 * `version/version.go`: update `Version` to `v1.3.0`.
-* `pkg/scaffold/gopkgtoml.go`: under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`, comment out `branch = "master"`, uncomment `version = "v1.2.0"`, and change `v1.2.0` to `v1.3.0`.
+* `pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
+  * Comment out `branch = "master"`
+  * Un-comment `version = "v1.2.0"`
+  * Change `v1.2.0` to `v1.3.0`
 * `pkg/scaffold/gopkgtoml_test.go`: same as for `pkg/scaffold/gopkgtoml.go`.
 * `CHANGELOG.md`: update the `## Unreleased` header to `## v1.3.0`.
 
 Create a new PR for `release-v1.3.0`.
 
-**Note:** CI will not pass for this commit because the new `version` does not exist yet in Git history.
+**Note:** CI will not pass for this commit because the new version `v1.3.0` does not exist yet in GitHub.
 
 ### 2. Create a release tag, binaries, and signatures
 
@@ -207,7 +210,9 @@ Once this tag passes CI, go to step 3. For more info on tagging, see the [releas
 
 Check out a new branch from master (or use your `release-v1.3.0`) and commit the following changes:
 * `version/version.go`: update `Version` to `v1.3.0+git`.
-* `pkg/scaffold/gopkgtoml.go`: under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`, comment out `version = "v1.3.0"` and uncomment `branch = "master"`.
+* `pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
+  * Comment out `version = "v1.3.0"`
+  * Un-comment `branch = "master"`
 * `pkg/scaffold/gopkgtoml_test.go`: same as for `pkg/scaffold/gopkgtoml.go`.
 * `CHANGELOG.md`: add the following as a new set of headers above `## v1.3.0`:
     ```
