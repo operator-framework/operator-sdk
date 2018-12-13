@@ -15,35 +15,46 @@
 package main
 
 import (
-	"flag"
+	"log"
+	"os"
 	"runtime"
 	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	k8sutil "github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
-
-	log "github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+
+	"github.com/sirupsen/logrus"
 )
 
+var defaultReconcilePeriod = pflag.String("reconcile-period", "1m", "default reconcile period for controllers")
+
 func printVersion() {
-	log.Infof("Go Version: %s", runtime.Version())
-	log.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	log.Infof("operator-sdk Version: %v", sdkVersion.Version)
+	logrus.Infof("Go Version: %s", runtime.Version())
+	logrus.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
+	logrus.Infof("operator-sdk Version: %v", sdkVersion.Version)
 }
 
 func main() {
-	flag.Parse()
-
+	pflag.Parse()
 	logf.SetLogger(logf.ZapLogger(false))
 
-	namespace, err := k8sutil.GetWatchNamespace()
+	d, err := time.ParseDuration(*defaultReconcilePeriod)
 	if err != nil {
-		log.Fatalf("failed to get watch namespace: (%v)", err)
+		logrus.Fatalf("failed to parse reconcile-period: %v", err)
+	}
+
+	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
+	if found {
+		logrus.Infof("Watching %v namespace.", namespace)
+	} else {
+		logrus.Infof("%v environment variable not set. This operator is watching all namespaces.",
+			k8sutil.WatchNamespaceEnvVar)
 	}
 
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{
@@ -61,20 +72,21 @@ func main() {
 		Address:    "localhost",
 		Port:       8888,
 		KubeConfig: mgr.GetConfig(),
-		Cache:      mgr.GetCache(),
 		RESTMapper: mgr.GetRESTMapper(),
+		Cache:      mgr.GetCache(),
 	})
 	if err != nil {
-		log.Fatalf("error starting proxy: (%v)", err)
+		logrus.Fatalf("error starting proxy: %v", err)
 	}
 
 	// start the operator
-	go operator.Run(done, mgr, "/opt/ansible/watches.yaml", time.Minute)
+	go operator.Run(done, mgr, "/opt/ansible/watches.yaml", d)
 
 	// wait for either to finish
 	err = <-done
-	if err != nil {
-		log.Fatal(err)
+	if err == nil {
+		logrus.Info("Exiting")
+	} else {
+		logrus.Fatal(err.Error())
 	}
-	log.Info("Exiting.")
 }
