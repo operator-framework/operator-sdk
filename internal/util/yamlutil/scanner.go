@@ -14,7 +14,7 @@
 
 // Modified from github.com/kubernetes-sigs/controller-tools/pkg/util/util.go
 
-package fileutil
+package yamlutil
 
 import (
 	"bufio"
