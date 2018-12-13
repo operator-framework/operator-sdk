@@ -21,9 +21,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/internal/testutil"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/ghodss/yaml"
@@ -59,7 +59,7 @@ func TestCsv(t *testing.T) {
 	}
 
 	if csvExp != buf.String() {
-		diffs := testutil.Diff(csvExp, buf.String())
+		diffs := diffutil.Diff(csvExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
