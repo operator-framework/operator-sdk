@@ -65,7 +65,9 @@ func InitOperatorService() (*v1.Service, error) {
 		return nil, err
 	}
 	if namespace == "" { // This will happen for clusterScoped operators
-		namespace, _ = GetNamespace()
+		if namespace, err = GetNamespace(); err != nil || namespace == "" {
+			return nil, fmt.Errorf("one of the env var %s or %s must not be empty", WatchNamespaceEnvVar, NamespaceEnvVar)
+		}
 	}
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
