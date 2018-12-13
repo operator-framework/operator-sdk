@@ -19,10 +19,6 @@ import (
 	"os"
 	"reflect"
 	"testing"
-
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func TestGetOperatorName(t *testing.T) {
@@ -75,103 +71,5 @@ func TestGetOperatorName(t *testing.T) {
 			t.Errorf("test %s failed, expected ouput: %s,%v; got: %s,%v", test.name, test.expectedOutput.operatorName, test.expectedOutput.err, operatorName, err)
 		}
 		_ = os.Unsetenv(test.envVarKey)
-	}
-}
-
-func TestInitOperatorService(t *testing.T) {
-	operatorName := "myTestOperator"
-	namespace := "myTestNamespace"
-
-	serviceExp := &v1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      operatorName,
-			Namespace: namespace,
-			Labels:    map[string]string{"name": operatorName},
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Service",
-			APIVersion: "v1",
-		},
-		Spec: v1.ServiceSpec{
-			Ports: []v1.ServicePort{
-				{
-					Port:     PrometheusMetricsPort,
-					Protocol: v1.ProtocolTCP,
-					TargetPort: intstr.IntOrString{
-						Type:   intstr.String,
-						StrVal: PrometheusMetricsPortName,
-					},
-					Name: PrometheusMetricsPortName,
-				},
-			},
-			Selector: map[string]string{"name": operatorName},
-		},
-	}
-
-	type Output struct {
-		service *v1.Service
-		err     error
-	}
-
-	type Scenario struct {
-		name           string
-		envVars        map[string]string
-		expectedOutput Output
-	}
-	tests := []Scenario{
-		{
-			name:    "WatchNamespace Case",
-			envVars: map[string]string{OperatorNameEnvVar: operatorName, WatchNamespaceEnvVar: namespace},
-			expectedOutput: Output{
-				service: serviceExp,
-				err:     nil,
-			},
-		},
-		{
-			name:    "ClusterScope Case",
-			envVars: map[string]string{OperatorNameEnvVar: operatorName, OperatorNamespaceEnvVar: namespace, WatchNamespaceEnvVar: ""},
-			expectedOutput: Output{
-				service: serviceExp,
-				err:     nil,
-			},
-		},
-		{
-			name:    "Error no namespace and empty watchnamespace",
-			envVars: map[string]string{OperatorNameEnvVar: operatorName, WatchNamespaceEnvVar: ""},
-			expectedOutput: Output{
-				service: nil,
-				err:     fmt.Errorf("one of the env var %s or %s must not be empty", WatchNamespaceEnvVar, OperatorNamespaceEnvVar),
-			},
-		},
-		{
-			name:    "Error no namespace no watchnamespace",
-			envVars: map[string]string{OperatorNameEnvVar: operatorName},
-			expectedOutput: Output{
-				service: nil,
-				err:     fmt.Errorf("%s must be set", WatchNamespaceEnvVar),
-			},
-		},
-		{
-			name:    "Error no namespace and watchnamespace are empty",
-			envVars: map[string]string{OperatorNameEnvVar: operatorName, OperatorNamespaceEnvVar: "", WatchNamespaceEnvVar: ""},
-			expectedOutput: Output{
-				service: nil,
-				err:     fmt.Errorf("one of the env var %s or %s must not be empty", WatchNamespaceEnvVar, OperatorNamespaceEnvVar),
-			},
-		},
-	}
-
-	for _, test := range tests {
-		for k, v := range test.envVars {
-			_ = os.Setenv(k, v)
-		}
-		service, err := InitOperatorService()
-		if !(reflect.DeepEqual(err, test.expectedOutput.err) && reflect.DeepEqual(service, test.expectedOutput.service)) {
-			t.Errorf("test %s failed, expected ouput: %s,%v; got: %s,%v", test.name, test.expectedOutput.service, test.expectedOutput.err, service, err)
-		}
-
-		for k := range test.envVars {
-			_ = os.Unsetenv(k)
-		}
 	}
 }

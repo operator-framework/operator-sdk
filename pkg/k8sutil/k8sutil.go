@@ -16,7 +16,9 @@ package k8sutil
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"strings"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,10 +37,14 @@ func GetWatchNamespace() (string, error) {
 
 // getOperatorNamespace returns the namespace the operator should be running in.
 func getOperatorNamespace() (string, error) {
-	ns, found := os.LookupEnv(OperatorNamespaceEnvVar)
-	if !found {
-		return "", fmt.Errorf("%s must be set", OperatorNamespaceEnvVar)
+	nsBytes, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", fmt.Errorf("namespace not found for current environment")
+		}
+		return "", err
 	}
+	ns := strings.TrimSpace(string(nsBytes))
 	return ns, nil
 }
 
@@ -60,14 +66,9 @@ func InitOperatorService() (*v1.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	namespace, err := GetWatchNamespace()
+	namespace, err := getOperatorNamespace()
 	if err != nil {
 		return nil, err
-	}
-	if namespace == "" { // This will happen for clusterScoped operators
-		if namespace, err = getOperatorNamespace(); err != nil || namespace == "" {
-			return nil, fmt.Errorf("one of the env var %s or %s must not be empty", WatchNamespaceEnvVar, OperatorNamespaceEnvVar)
-		}
 	}
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{

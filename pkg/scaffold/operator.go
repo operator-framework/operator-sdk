@@ -70,12 +70,6 @@ spec:
             periodSeconds: 10
             failureThreshold: 1
           env:
-            {{- if .IsClusterScoped }}
-            - name: NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            {{- end}}
             - name: WATCH_NAMESPACE
               {{- if .IsClusterScoped }}
               value: ""

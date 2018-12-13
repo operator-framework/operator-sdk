@@ -126,10 +126,6 @@ spec:
             periodSeconds: 10
             failureThreshold: 1
           env:
-            - name: NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
             - name: WATCH_NAMESPACE
               value: ""
             - name: POD_NAME
