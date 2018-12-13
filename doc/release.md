@@ -14,7 +14,7 @@ Releases can only be performed by [maintainers][doc-maintainers].
 
 ### Go version
 
-Release binaries will be built with the Go compiler version specified in the Operator SDK's [`README.md`](doc-readme).
+Release binaries will be built with the Go compiler version specified in the Operator SDK's [`README.md`][doc-readme].
 
 ### Kubernetes versions
 
