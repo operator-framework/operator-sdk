@@ -23,6 +23,12 @@ if ! $(git diff-index --quiet HEAD --); then
 	exit 1
 fi
 
+GO_VER="1.10"
+if ! go version | cut -d" " -f3 | grep -q "$GO_VER"; then
+	printf "must compile binaries with Go compiler version v%b+\n" "$GO_VER"
+	exit 1
+fi
+
 # Detect whether versions in code were updated.
 VER_FILE="version/version.go"
 TOML_TMPL_FILE="pkg/scaffold/gopkgtoml.go"

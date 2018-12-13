@@ -12,6 +12,10 @@ Releases can only be performed by [maintainers][doc-maintainers].
 
 ## Dependency and platform support
 
+### Go version
+
+Release binaries will be built with the Go compiler version specified in the Operator SDK's [`README.md`](doc-readme).
+
 ### Kubernetes versions
 
 As the Operator SDK interacts directly with the Kubernetes API, certain API features are assumed to exist in the target cluster. The currently supported Kubernetes version will always be listed in the SDK [prerequisites section][doc-kube-version].
@@ -246,6 +250,7 @@ The final step is to upload binaries, their signature files, and release notes f
 You've now fully released a new version of the Operator SDK. Good work!
 
 [doc-maintainers]:../MAINTAINERS
+[doc-readme]:https://github.com/operator-framework/operator-sdk#prerequisites
 [doc-git-default-key]:https://help.github.com/articles/telling-git-about-your-signing-key/
 [doc-gpg-default-key]:https://lists.gnupg.org/pipermail/gnupg-users/2001-September/010163.html
 [link-github-gpg-key-upload]:https://github.com/settings/keys
