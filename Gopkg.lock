@@ -1459,6 +1459,7 @@
     "k8s.io/apimachinery/pkg/util/proxy",
     "k8s.io/apimachinery/pkg/util/sets",
     "k8s.io/apimachinery/pkg/util/wait",
+    "k8s.io/apimachinery/pkg/util/yaml",
     "k8s.io/cli-runtime/pkg/genericclioptions/resource",
     "k8s.io/client-go/discovery",
     "k8s.io/client-go/discovery/cached",
