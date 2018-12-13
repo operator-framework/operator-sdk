@@ -15,7 +15,6 @@
 package cmdtest
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -25,6 +24,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
@@ -240,11 +240,10 @@ func replaceImage(manifestPath, image string) error {
 	}
 	foundDeployment := false
 	newManifest := []byte{}
-	yamlSplit := bytes.Split(yamlFile, []byte("\n---\n"))
-	for _, yamlSpec := range yamlSplit {
-		if string(yamlSpec) == "" {
-			continue
-		}
+	scanner := yamlutil.NewYAMLScanner(yamlFile)
+	for scanner.Scan() {
+		yamlSpec := scanner.Bytes()
+
 		decoded := make(map[string]interface{})
 		err = yaml.Unmarshal(yamlSpec, &decoded)
 		if err != nil {
@@ -285,5 +284,9 @@ func replaceImage(manifestPath, image string) error {
 		}
 		newManifest = combineManifests(newManifest, updatedYamlSpec)
 	}
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("failed to scan %s: (%v)", manifestPath, err)
+	}
+
 	return ioutil.WriteFile(manifestPath, newManifest, fileutil.DefaultFileMode)
 }
