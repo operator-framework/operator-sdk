@@ -59,6 +59,12 @@ spec:
             name: metrics
           imagePullPolicy: Always
           env:
+            {{- if .IsClusterScoped }}
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            {{- end}}          
             - name: WATCH_NAMESPACE
               {{- if .IsClusterScoped }}
               value: ""

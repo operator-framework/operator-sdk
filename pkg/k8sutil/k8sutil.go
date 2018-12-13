@@ -33,11 +33,11 @@ func GetWatchNamespace() (string, error) {
 	return ns, nil
 }
 
-// GetNamespace returns the namespace the operator should be running in.
-func GetNamespace() (string, error) {
-	ns, found := os.LookupEnv(NamespaceEnvVar)
+// getOperatorNamespace returns the namespace the operator should be running in.
+func getOperatorNamespace() (string, error) {
+	ns, found := os.LookupEnv(OperatorNamespaceEnvVar)
 	if !found {
-		return "", fmt.Errorf("%s must be set", NamespaceEnvVar)
+		return "", fmt.Errorf("%s must be set", OperatorNamespaceEnvVar)
 	}
 	return ns, nil
 }
@@ -65,8 +65,8 @@ func InitOperatorService() (*v1.Service, error) {
 		return nil, err
 	}
 	if namespace == "" { // This will happen for clusterScoped operators
-		if namespace, err = GetNamespace(); err != nil || namespace == "" {
-			return nil, fmt.Errorf("one of the env var %s or %s must not be empty", WatchNamespaceEnvVar, NamespaceEnvVar)
+		if namespace, err = getOperatorNamespace(); err != nil || namespace == "" {
+			return nil, fmt.Errorf("one of the env var %s or %s must not be empty", WatchNamespaceEnvVar, OperatorNamespaceEnvVar)
 		}
 	}
 	service := &v1.Service{

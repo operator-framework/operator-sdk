@@ -129,7 +129,7 @@ func TestInitOperatorService(t *testing.T) {
 		},
 		{
 			name:    "ClusterScope Case",
-			envVars: map[string]string{OperatorNameEnvVar: operatorName, NamespaceEnvVar: namespace, WatchNamespaceEnvVar: ""},
+			envVars: map[string]string{OperatorNameEnvVar: operatorName, OperatorNamespaceEnvVar: namespace, WatchNamespaceEnvVar: ""},
 			expectedOutput: Output{
 				service: serviceExp,
 				err:     nil,
@@ -140,7 +140,7 @@ func TestInitOperatorService(t *testing.T) {
 			envVars: map[string]string{OperatorNameEnvVar: operatorName, WatchNamespaceEnvVar: ""},
 			expectedOutput: Output{
 				service: nil,
-				err:     fmt.Errorf("one of the env var %s or %s must not be empty", WatchNamespaceEnvVar, NamespaceEnvVar),
+				err:     fmt.Errorf("one of the env var %s or %s must not be empty", WatchNamespaceEnvVar, OperatorNamespaceEnvVar),
 			},
 		},
 		{
@@ -153,10 +153,10 @@ func TestInitOperatorService(t *testing.T) {
 		},
 		{
 			name:    "Error no namespace and watchnamespace are empty",
-			envVars: map[string]string{OperatorNameEnvVar: operatorName, NamespaceEnvVar: "", WatchNamespaceEnvVar: ""},
+			envVars: map[string]string{OperatorNameEnvVar: operatorName, OperatorNamespaceEnvVar: "", WatchNamespaceEnvVar: ""},
 			expectedOutput: Output{
 				service: nil,
-				err:     fmt.Errorf("one of the env var %s or %s must not be empty", WatchNamespaceEnvVar, NamespaceEnvVar),
+				err:     fmt.Errorf("one of the env var %s or %s must not be empty", WatchNamespaceEnvVar, OperatorNamespaceEnvVar),
 			},
 		},
 	}
