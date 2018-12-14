@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -24,6 +23,7 @@ import (
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/pkg/test"
@@ -73,8 +73,10 @@ For example:
  */
 func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 	warningMessages := ""
-	yamlSplit := bytes.Split(yamlFile, []byte("\n---\n"))
-	for _, yamlSpec := range yamlSplit {
+	scanner := yamlutil.NewYAMLScanner(yamlFile)
+	for scanner.Scan() {
+		yamlSpec := scanner.Bytes()
+
 		yamlMap := make(map[string]interface{})
 		err := yaml.Unmarshal(yamlSpec, &yamlMap)
 		if err != nil {
@@ -112,6 +114,9 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 				}
 			}
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		log.Fatalf("failed to verify deployment image: (%v)", err)
 	}
 	if warningMessages == "" {
 		return nil

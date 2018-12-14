@@ -15,6 +15,7 @@
 package yamlutil
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -27,12 +28,25 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// CombineManifests combines a given manifest with a base manifest and adds yaml
-// style separation. Nothing is appended if the manifest is empty.
-func CombineManifests(base, manifest []byte) []byte {
-	if len(manifest) > 0 {
+var yamlSep = []byte("\n---\n")
+
+// CombineManifests combines given manifests with a base manifest and adds yaml
+// style separation. Nothing is appended if the manifest is empty or base
+// already contains a trailing separator.
+func CombineManifests(base []byte, manifests ...[]byte) []byte {
+	// Base already has manifests we're appending to.
+	if len(base) > 0 {
+		tbase := bytes.Trim(base, " \n")
+		if i := bytes.LastIndex(tbase, []byte("---")); i != len(tbase)-3 {
+			base = append(base, yamlSep...)
+		}
+	}
+	for j, manifest := range manifests {
 		base = append(base, manifest...)
-		return append(base, []byte("\n---\n")...)
+		// Don't append sep if mmanifest is the last element in mmanifests.
+		if len(manifest) > 0 && j < len(manifests)-1 {
+			base = append(base, yamlSep...)
+		}
 	}
 	return base
 }
@@ -63,10 +77,7 @@ func GenerateCombinedNamespacedManifest() (*os.File, error) {
 		return nil, fmt.Errorf("could not find operator manifest: (%v)", err)
 	}
 	combined := []byte{}
-	combined = CombineManifests(combined, sa)
-	combined = CombineManifests(combined, role)
-	combined = CombineManifests(combined, roleBinding)
-	combined = append(combined, operator...)
+	combined = CombineManifests(combined, sa, role, roleBinding, operator)
 
 	if err := file.Chmod(os.FileMode(fileutil.DefaultFileMode)); err != nil {
 		return nil, fmt.Errorf("could not chown temporary namespaced manifest file: (%v)", err)
