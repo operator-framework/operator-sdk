@@ -46,7 +46,7 @@ func printVersion() {
 func main() {
 	flag.Parse()
 
-	logf.SetLogger(logf.ZapLogger(true))
+	logf.SetLogger(logf.ZapLogger(false))
 
 	printVersion()
 
