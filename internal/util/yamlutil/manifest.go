@@ -36,8 +36,8 @@ var yamlSep = []byte("\n---\n")
 func CombineManifests(base []byte, manifests ...[]byte) []byte {
 	// Base already has manifests we're appending to.
 	if len(base) > 0 {
-		i := bytes.Index([]byte(strings.TrimSpace(string(base))), yamlSep)
-		if i != 0 {
+		tbase := bytes.Trim(base, " \n")
+		if i := bytes.LastIndex(tbase, []byte("---")); i != len(tbase)-3 {
 			base = append(base, yamlSep...)
 		}
 	}
