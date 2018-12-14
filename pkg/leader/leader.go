@@ -23,6 +23,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,7 +56,7 @@ const PodNameEnv = "POD_NAME"
 func Become(ctx context.Context, lockName string) error {
 	log.Info("Trying to become the leader.")
 
-	ns, err := myNS()
+	ns, err := k8sutil.GetOperatorNamespace()
 	if err != nil {
 		if err == errNoNS {
 			log.Info("Skipping leader election; not running in a cluster.")
