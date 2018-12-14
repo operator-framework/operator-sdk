@@ -74,21 +74,12 @@ var localUpdater *localUpdaterFactory
 func getLocalUpdaterFactory() *localUpdaterFactory {
 	once.Do(func() {
 		localUpdater = &localUpdaterFactory{}
-
-		localInstallStrategyUpdate := &CSVInstallStrategyUpdate{
+		localUpdater.installStrategy = &CSVInstallStrategyUpdate{
 			&olmInstall.StrategyDetailsDeployment{},
 		}
-		localInstallStrategyUpdate.DeploymentSpecs = make([]olmInstall.StrategyDeploymentSpec, 0)
-		localInstallStrategyUpdate.Permissions = make([]olmInstall.StrategyDeploymentPermissions, 0)
-		localInstallStrategyUpdate.ClusterPermissions = make([]olmInstall.StrategyDeploymentPermissions, 0)
-		localUpdater.installStrategy = localInstallStrategyUpdate
-
-		localCustomResourceDefinitionsUpdate := &CSVCustomResourceDefinitionsUpdate{
+		localUpdater.crdUpdate = &CSVCustomResourceDefinitionsUpdate{
 			&olmApi.CustomResourceDefinitions{},
 		}
-		localCustomResourceDefinitionsUpdate.Owned = make([]olmApi.CRDDescription, 0)
-		localCustomResourceDefinitionsUpdate.Required = make([]olmApi.CRDDescription, 0)
-		localUpdater.crdUpdate = localCustomResourceDefinitionsUpdate
 	})
 	return localUpdater
 }
