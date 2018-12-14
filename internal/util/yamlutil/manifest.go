@@ -35,9 +35,11 @@ var yamlSep = []byte("\n---\n")
 // already contains a trailing separator.
 func CombineManifests(base []byte, manifests ...[]byte) []byte {
 	// Base already has manifests we're appending to.
-	i := bytes.Index([]byte(strings.TrimSpace(string(base))), yamlSep)
-	if i != 0 && len(base) > 0 {
-		base = append(base, yamlSep...)
+	if len(base) > 0 {
+		i := bytes.Index([]byte(strings.TrimSpace(string(base))), yamlSep)
+		if i != 0 {
+			base = append(base, yamlSep...)
+		}
 	}
 	for j, manifest := range manifests {
 		base = append(base, manifest...)
