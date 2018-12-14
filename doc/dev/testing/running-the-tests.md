@@ -38,7 +38,7 @@ Refer to the [official docs][oc-docs] for more information.
 After the initial configuration, you can use this command to start the cluster and login as admin:
 
 ```sh
-$ oc cluster up --basedir=$HOME/oscluster
+$ oc cluster up --base-dir=$HOME/oscluster
 $ oc login -u system:admin
 ```
 
