@@ -112,7 +112,7 @@ All other tests will run correctly on a remote cluster if `$HOME/.kube/config` p
 
 The E2E tests create a new project using the operator-sdk to run in the provided
 cluster. The tests are designed to cleanup everything that gets created, but some errors
-during the go testscan cause these cleanups to fail (the ansible and helm E2E tests should
+during the go tests can cause these cleanups to fail (the ansible and helm E2E tests should
 always clean up correctly). For example, if a segfault occurs or a user kills the
 testing process, the cleanup functions for the go tests will not run. To manually clean up a test:
 
