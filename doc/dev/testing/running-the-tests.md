@@ -15,7 +15,7 @@ local kubernetes instance running on the machine.
 ### Remote Kubernetes Instance
 
 To run the tests on a remote cluster, the tests need access to a remote kubernetes cluster
-running kubernetes 1.11 or higher as well as docker image repo to push the operator image to,
+running kubernetes 1.11 or higher as well as a docker image repo to push the operator image to,
 such as [`quay.io`][quay]. Your kubeconfig must be located at `$HOME/.kube/config` and certain
 tests will not run on remote clusters. See [Running the Tests](#running-the-tests) for more details.
 
@@ -118,7 +118,7 @@ testing process, the cleanup functions for the go tests will not run. To manuall
 
 1. Delete the CRD (`kubectl delete -f $GOPATH/src/github.com/example-inc/memcached-operator/deploy/crds/cache_v1alpha1_memcached_crd.yaml`).
 2. Delete the created project in `$GOPATH/src/github.com/example-inc/memcached-operator`
-3. Delete the namespaces that the tests run in, which also deletes any resources created within the namespaces. The namespaces start with `memcached-memcached-group` or `main` and are appended with a unix timestamp (seconds since Jan 1 1970).
+3. Delete the namespaces that the tests run in, which also deletes any resources created within the namespaces. The namespaces start with `memcached-memcached-group` or `main` and are appended with a unix timestamp (seconds since Jan 1 1970). The kubectl command can be used to delete namespaces: `kubectl delete namespace $NAMESPACE`.
 
 
 [travis]: ./travis-build.md
