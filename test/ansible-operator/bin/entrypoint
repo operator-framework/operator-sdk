@@ -9,4 +9,5 @@ if ! whoami &>/dev/null; then
   fi
 fi
 
-exec "${OPERATOR:-/usr/local/bin/ansible-operator}"
+#Watches file will be overridden if the flag is provided again.
+exec ${OPERATOR} --watches-file=/opt/ansible/watches.yaml $@

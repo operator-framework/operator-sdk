@@ -63,13 +63,13 @@ fi
 # create CR
 kubectl create -f deploy/crds/helm_v1alpha1_nginx_cr.yaml
 trap_add 'kubectl delete --ignore-not-found -f ${DIR2}/deploy/crds/helm_v1alpha1_nginx_cr.yaml' EXIT
-if ! timeout 1m bash -c -- 'until kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.release.info.status.code}" | grep 1; do sleep 1; done';
+if ! timeout 1m bash -c -- 'until kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.conditions[1].release.info.status.code}" | grep 1; do sleep 1; done';
 then
     kubectl logs deployment/nginx-operator
     exit 1
 fi
 
-release_name=$(kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.release.name}")
+release_name=$(kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.conditions[1].release.name}")
 nginx_deployment=$(kubectl get deployment -l "app.kubernetes.io/instance=${release_name}" -o jsonpath="{..metadata.name}")
 
 if ! timeout 1m kubectl rollout status deployment/${nginx_deployment};

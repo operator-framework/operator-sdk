@@ -14,7 +14,7 @@ local minikube instance running on the machine.
 ### Remote Kubernetes Instance
 
 To run the tests on a remote cluster, the tests need access to a remote kubernetes cluster
-running kubernetes 1.10 as well as a docker image repo to push the operator image to,
+running kubernetes 1.11 as well as a docker image repo to push the operator image to,
 such as quay.io. To run the test, use this command:
 
 ```sh

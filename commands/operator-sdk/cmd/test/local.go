@@ -15,7 +15,6 @@
 package cmdtest
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -25,6 +24,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
@@ -86,23 +86,34 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 
 	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml, deploy/role_binding.yaml and deploy/operator.yaml
 	if tlConfig.namespacedManPath == "" && !tlConfig.noSetup {
+		err := os.MkdirAll(deployTestDir, os.FileMode(fileutil.DefaultDirFileMode))
+		if err != nil {
+			log.Fatalf("could not create %s: (%v)", deployTestDir, err)
+		}
+		tlConfig.namespacedManPath = filepath.Join(deployTestDir, "namespace-manifests.yaml")
+		combined := []byte{}
 		if !tlConfig.upLocal {
-			file, err := projutil.GenerateCombinedNamespacedManifest()
+			sa, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.ServiceAccountYamlFile))
 			if err != nil {
-				log.Fatal(err)
+				log.Warnf("could not find the serviceaccount manifest: (%v)", err)
 			}
-			tlConfig.namespacedManPath = file.Name()
-		} else {
-			err := os.MkdirAll(deployTestDir, os.FileMode(fileutil.DefaultDirFileMode))
+			role, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleYamlFile))
 			if err != nil {
-				log.Fatalf("could not create %s: (%v)", deployTestDir, err)
+				log.Warnf("could not find role manifest: (%v)", err)
 			}
-			tlConfig.namespacedManPath = filepath.Join(deployTestDir, "empty.yaml")
-			emptyBytes := []byte{}
-			err = ioutil.WriteFile(tlConfig.namespacedManPath, emptyBytes, os.FileMode(fileutil.DefaultFileMode))
+			roleBinding, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleBindingYamlFile))
 			if err != nil {
-				log.Fatalf("could not create empty manifest file: (%v)", err)
+				log.Warnf("could not find role_binding manifest: (%v)", err)
 			}
+			operator, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.OperatorYamlFile))
+			if err != nil {
+				log.Fatalf("could not find operator manifest: (%v)", err)
+			}
+			combined = yamlutil.CombineManifests(combined, sa, role, roleBinding, operator)
+		}
+		err = ioutil.WriteFile(tlConfig.namespacedManPath, combined, os.FileMode(fileutil.DefaultFileMode))
+		if err != nil {
+			log.Fatalf("could not create temporary namespaced manifest file: (%v)", err)
 		}
 		defer func() {
 			err := os.Remove(tlConfig.namespacedManPath)
@@ -193,11 +204,10 @@ func replaceImage(manifestPath, image string) error {
 	}
 	foundDeployment := false
 	newManifest := []byte{}
-	yamlSplit := bytes.Split(yamlFile, []byte("\n---\n"))
-	for _, yamlSpec := range yamlSplit {
-		if string(yamlSpec) == "" {
-			continue
-		}
+	scanner := yamlutil.NewYAMLScanner(yamlFile)
+	for scanner.Scan() {
+		yamlSpec := scanner.Bytes()
+
 		decoded := make(map[string]interface{})
 		err = yaml.Unmarshal(yamlSpec, &decoded)
 		if err != nil {
@@ -205,7 +215,7 @@ func replaceImage(manifestPath, image string) error {
 		}
 		kind, ok := decoded["kind"].(string)
 		if !ok || kind != "Deployment" {
-			newManifest = projutil.CombineManifests(newManifest, yamlSpec)
+			newManifest = yamlutil.CombineManifests(newManifest, yamlSpec)
 			continue
 		}
 		if foundDeployment {
@@ -236,7 +246,11 @@ func replaceImage(manifestPath, image string) error {
 		if err != nil {
 			return fmt.Errorf("failed to convert deployment object back to yaml: %v", err)
 		}
-		newManifest = projutil.CombineManifests(newManifest, updatedYamlSpec)
+		newManifest = yamlutil.CombineManifests(newManifest, updatedYamlSpec)
 	}
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("failed to scan %s: (%v)", manifestPath, err)
+	}
+
 	return ioutil.WriteFile(manifestPath, newManifest, fileutil.DefaultFileMode)
 }

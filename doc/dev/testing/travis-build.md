@@ -1,11 +1,10 @@
 # TravisCI Build Information
 
-Travis is set to run once every 24hrs against the master branch. The results of the builds can be found [here](https://travis-ci.org/operator-framework/operator-sdk/builds).
+Travis is set to run once every 24hrs against the master branch. The results of the builds can be found [here][builds].
 
-## Tool Versions
-* Kubernetes: 1.10.0
-* Minikube: 0.25.2
-* Go: 1.10.1
+## Test setup
+
+For Travis test setup see the [following CI script][script].
 
 ## Test Workflow
 1. Build the operator-sdk binary
@@ -18,3 +17,6 @@ Travis is set to run once every 24hrs against the master branch. The results of 
 4. Ensure proper formatting
 5. Ensure all go files contain a license header
 6. Ensure all error messages have consistent capitalization
+
+[builds]: https://travis-ci.org/operator-framework/operator-sdk/builds
+[script]: ../../../hack/ci/setup-openshift.sh 

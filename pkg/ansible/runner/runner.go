@@ -216,6 +216,7 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 		Parameters: r.makeParameters(u),
 		EnvVars: map[string]string{
 			"K8S_AUTH_KUBECONFIG": kubeconfig,
+			"KUBECONFIG":          kubeconfig,
 		},
 		Settings: map[string]string{
 			"runner_http_url":  receiver.SocketPath,
@@ -244,6 +245,7 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 		} else {
 			dc = r.cmdFunc(ident, inputDir.Path)
 		}
+		dc.Env = append(dc.Env, fmt.Sprintf("K8S_AUTH_KUBECONFIG=%s", kubeconfig), fmt.Sprintf("KUBECONFIG=%s", kubeconfig))
 
 		output, err := dc.CombinedOutput()
 		if err != nil {
