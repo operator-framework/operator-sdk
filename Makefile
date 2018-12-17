@@ -103,17 +103,17 @@ image: image/build image/push
 image/build: image/build/ansible image/build/helm
 
 image/build/ansible:
-	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE)
+	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
 
 image/build/helm:
-	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE)
+	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE):dev
 
 image/push: image/push/ansible image/push/helm
 
 image/push/ansible:
-	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE) $(ANSIBLE_IMAGE)
+	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE):dev $(ANSIBLE_IMAGE)
 
 image/push/helm:
-	./hack/image/push-image-tags.sh $(HELM_BASE_IMAGE) $(HELM_IMAGE)
+	./hack/image/push-image-tags.sh $(HELM_BASE_IMAGE):dev $(HELM_IMAGE)
 
 .PHONY: image image/build image/build/ansible image/build/helm image/push image/push/ansible image/push/helm

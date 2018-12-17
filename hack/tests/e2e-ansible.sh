@@ -27,6 +27,7 @@ cp -a ansible-memcached/memfin memcached-operator/roles/
 cat ansible-memcached/watches-finalizer.yaml >> memcached-operator/watches.yaml
 
 pushd memcached-operator
+sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
 operator-sdk build "$DEST_IMAGE"
 sed -i "s|REPLACE_IMAGE|$DEST_IMAGE|g" deploy/operator.yaml
 sed -i 's|Always|Never|g' deploy/operator.yaml
