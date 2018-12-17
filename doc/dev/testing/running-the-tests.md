@@ -68,7 +68,8 @@ openshift and uses less RAM though. To start the minikube cluster, download and 
 for your system and run these commands.
 
 ```sh
-$ minikube start
+# The latest version of minikube at the time of writing (v0.31.0) defaults to k8s v1.10.0, so we must explicitly specify the latest k8s v1.11
+$ minikube start --kubernetes-version v1.11.6
 $ eval $(minikube docker-env)
 ```
 
