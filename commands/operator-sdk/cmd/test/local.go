@@ -123,7 +123,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 		}()
 	}
 	if tlConfig.globalManPath == "" && !tlConfig.noSetup {
-		file, err := projutil.GenerateCombinedGlobalManifest()
+		file, err := yamlutil.GenerateCombinedGlobalManifest()
 		if err != nil {
 			log.Fatal(err)
 		}

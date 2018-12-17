@@ -21,7 +21,7 @@ import (
 	"os"
 
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
 	olmApi "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
@@ -104,7 +104,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	}
 	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml, deploy/role_binding.yaml and deploy/operator.yaml
 	if SCConf.NamespacedMan == "" {
-		file, err := projutil.GenerateCombinedNamespacedManifest()
+		file, err := yamlutil.GenerateCombinedNamespacedManifest()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -117,7 +117,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}()
 	}
 	if SCConf.GlobalMan == "" {
-		file, err := projutil.GenerateCombinedGlobalManifest()
+		file, err := yamlutil.GenerateCombinedGlobalManifest()
 		if err != nil {
 			log.Fatal(err)
 		}

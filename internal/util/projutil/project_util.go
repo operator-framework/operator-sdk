@@ -32,8 +32,6 @@ const (
 	buildDockerfile = "./build/Dockerfile"
 )
 
-var deployTestDir = filepath.Join(scaffold.DeployDir, "test")
-
 const (
 	GopathEnv = "GOPATH"
 )
