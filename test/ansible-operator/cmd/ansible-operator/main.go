@@ -15,16 +15,16 @@
 package main
 
 import (
-	"flag"
 	"runtime"
-	"time"
 
+	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -37,7 +37,8 @@ func printVersion() {
 }
 
 func main() {
-	flag.Parse()
+	aflags := aoflags.AddTo(pflag.CommandLine)
+	pflag.Parse()
 
 	logf.SetLogger(logf.ZapLogger(false))
 
@@ -69,7 +70,7 @@ func main() {
 	}
 
 	// start the operator
-	go operator.Run(done, mgr, "/opt/ansible/watches.yaml", time.Minute)
+	go operator.Run(done, mgr, aflags)
 
 	// wait for either to finish
 	err = <-done
