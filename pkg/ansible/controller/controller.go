@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/events"
@@ -34,8 +35,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-type ControllerMap map[schema.GroupVersionKind]controller.Controller
-
 var log = logf.Log.WithName("ansible-controller")
 
 // Options - options for your controller
@@ -46,17 +45,23 @@ type Options struct {
 	GVK             schema.GroupVersionKind
 	ReconcilePeriod time.Duration
 	ManageStatus    bool
-	ControllerMap   ControllerMap
+	ControllerMap   *ControllerMap
+}
+
+// ControllerMap - map of GVK to controller
+type ControllerMap struct {
+	sync.RWMutex
+	internal map[schema.GroupVersionKind]controller.Controller
 }
 
 // Add - Creates a new ansible operator controller and adds it to the manager
-func Add(mgr manager.Manager, options Options) {
+func Add(mgr manager.Manager, options Options) *controller.Controller {
 	log.Info("Watching resource", "Options.Group", options.GVK.Group, "Options.Version", options.GVK.Version, "Options.Kind", options.GVK.Kind)
 	if options.EventHandlers == nil {
 		options.EventHandlers = []events.EventHandler{}
 	}
 	if options.ControllerMap == nil {
-		options.ControllerMap = ControllerMap{}
+		options.ControllerMap = NewControllerMap()
 	}
 	eventHandlers := append(options.EventHandlers, events.NewLoggingEventHandler(options.LoggingLevel))
 
@@ -74,7 +79,7 @@ func Add(mgr manager.Manager, options Options) {
 		Version: options.GVK.Version,
 	}) {
 		log.Info("Version already registered... skipping")
-		return
+		return nil
 	}
 	// Register the GVK with the schema
 	mgr.GetScheme().AddKnownTypeWithName(options.GVK, &unstructured.Unstructured{})
@@ -91,13 +96,36 @@ func Add(mgr manager.Manager, options Options) {
 		log.Error(err, "")
 		os.Exit(1)
 	}
-	// Update controllermap
-	cMap := options.ControllerMap
-	cMap[options.GVK] = c
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(options.GVK)
 	if err := c.Watch(&source.Kind{Type: u}, &crthandler.EnqueueRequestForObject{}, predicate.GenerationChangedPredicate{}); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
+	return &c
+}
+
+func NewControllerMap() *ControllerMap {
+	return &ControllerMap{
+		internal: make(map[schema.GroupVersionKind]controller.Controller),
+	}
+}
+
+func (cm *ControllerMap) Get(key schema.GroupVersionKind) (controller controller.Controller, ok bool) {
+	cm.RLock()
+	result, ok := cm.internal[key]
+	cm.RUnlock()
+	return result, ok
+}
+
+func (cm *ControllerMap) Delete(key schema.GroupVersionKind) {
+	cm.Lock()
+	delete(cm.internal, key)
+	cm.Unlock()
+}
+
+func (cm *ControllerMap) Store(key schema.GroupVersionKind, value controller.Controller) {
+	cm.Lock()
+	cm.internal[key] = value
+	cm.Unlock()
 }

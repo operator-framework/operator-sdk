@@ -130,7 +130,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 // InjectOwnerReferenceHandler will handle proxied requests and inject the
 // owner refernece found in the authorization header. The Authorization is
 // then deleted so that the proxy can re-set with the correct authorization.
-func InjectOwnerReferenceHandler(h http.Handler, mgr manager.Manager, cMap aoController.ControllerMap) http.Handler {
+func InjectOwnerReferenceHandler(h http.Handler, mgr manager.Manager, cMap *aoController.ControllerMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.Method == http.MethodPost {
 			log.Info("injecting owner reference")
@@ -195,16 +195,16 @@ func InjectOwnerReferenceHandler(h http.Handler, mgr manager.Manager, cMap aoCon
 				Version: gv.Version,
 				Kind:    owner.Kind,
 			}
-			if cMap[gvk] == nil {
+			c, ok := cMap.Get(gvk)
+			if !ok {
 				log.Info("Creating a controller for the owner")
-				aoController.Add(mgr, aoController.Options{
-					GVK:           data.GroupVersionKind(),
-					ControllerMap: cMap,
+				ct := aoController.Add(mgr, aoController.Options{
+					GVK: data.GroupVersionKind(),
 				})
+				cMap.Store(data.GroupVersionKind(), *ct)
 			} else {
 				log.Info("Adding a watch to controller")
 				// Add a watch to controller
-				c := cMap[gvk]
 				err = c.Watch(&source.Kind{Type: data}, &handler.EnqueueRequestForObject{})
 				if err != nil {
 					m := "could not add watch to controller"
@@ -235,7 +235,7 @@ type Options struct {
 	KubeConfig       *rest.Config
 	Cache            cache.Cache
 	RESTMapper       meta.RESTMapper
-	ControllerMap    aoController.ControllerMap
+	ControllerMap    *aoController.ControllerMap
 	Manager          manager.Manager
 }
 
@@ -273,7 +273,7 @@ func Run(done chan error, o Options) error {
 	}
 
 	if o.ControllerMap == nil {
-		o.ControllerMap = aoController.ControllerMap{}
+		o.ControllerMap = aoController.NewControllerMap()
 	}
 
 	if !o.NoOwnerInjection {

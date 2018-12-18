@@ -57,7 +57,7 @@ func main() {
 
 	printVersion()
 	done := make(chan error)
-	cMap := controller.ControllerMap{}
+	cMap := controller.NewControllerMap()
 
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{

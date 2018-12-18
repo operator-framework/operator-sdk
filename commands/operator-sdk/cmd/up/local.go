@@ -166,7 +166,7 @@ func upLocalAnsible() {
 	printVersion()
 	log.Infof("watching namespace: %s", namespace)
 	done := make(chan error)
-	cMap := ansibleController.ControllerMap{}
+	cMap := ansibleController.NewControllerMap()
 
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{
