@@ -14,6 +14,12 @@ REPO = github.com/operator-framework/operator-sdk
 BUILD_PATH = $(REPO)/commands/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
 
+ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
+HELM_BASE_IMAGE = quay.io/operator-framework/helm-operator
+
+ANSIBLE_IMAGE ?= $(ANSIBLE_BASE_IMAGE)
+HELM_IMAGE ?= $(HELM_BASE_IMAGE)
+
 export CGO_ENABLED:=0
 
 all: format test build/operator-sdk
@@ -84,13 +90,33 @@ test/e2e: test/e2e/go test/e2e/ansible test/e2e/helm
 test/e2e/go:
 	./hack/tests/e2e-go.sh $(ARGS)
 
-test/e2e/ansible:
+test/e2e/ansible: image/build/ansible
 	./hack/tests/e2e-ansible.sh
 
-test/e2e/helm:
+test/e2e/helm: image/build/helm
 	./hack/tests/e2e-helm.sh
 
 test/markdown:
 	./hack/ci/marker --root=doc
 
-.PHONY: test test/sanity test/unit test/subcommand test/e2e test/e2e/go test/e2e/ansible test/e2e/helm test/ci-go test/ci-ansible test/markdown
+.PHONY: test test/sanity test/unit test/subcommand test/e2e test/e2e/go test/e2e/ansible test/e2e/helm test/ci-go test/ci-ansible test/ci-helm test/markdown
+
+image: image/build image/push
+
+image/build: image/build/ansible image/build/helm
+
+image/build/ansible:
+	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
+
+image/build/helm:
+	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE):dev
+
+image/push: image/push/ansible image/push/helm
+
+image/push/ansible:
+	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE):dev $(ANSIBLE_IMAGE)
+
+image/push/helm:
+	./hack/image/push-image-tags.sh $(HELM_BASE_IMAGE):dev $(HELM_IMAGE)
+
+.PHONY: image image/build image/build/ansible image/build/helm image/push image/push/ansible image/push/helm
