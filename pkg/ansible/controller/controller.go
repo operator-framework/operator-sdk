@@ -61,7 +61,7 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 		options.EventHandlers = []events.EventHandler{}
 	}
 	if options.ControllerMap == nil {
-		options.ControllerMap = NewControllerMap()
+		log.Error(fmt.Errorf("failed adding controller"), "controller map not found in options")
 	}
 	eventHandlers := append(options.EventHandlers, events.NewLoggingEventHandler(options.LoggingLevel))
 

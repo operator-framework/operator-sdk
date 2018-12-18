@@ -226,6 +226,9 @@ func Run(done chan error, o Options) error {
 	if o.Handler != nil {
 		server.Handler = o.Handler(server.Handler)
 	}
+	if o.ControllerMap == nil {
+		return fmt.Errorf("failed to get controller map from options")
+	}
 
 	if o.Cache == nil {
 		// Need to initialize cache since we don't have one
@@ -246,10 +249,6 @@ func Run(done chan error, o Options) error {
 		}
 		log.Info("Cache sync was successful")
 		o.Cache = informerCache
-	}
-
-	if o.ControllerMap == nil {
-		o.ControllerMap = aoController.NewControllerMap()
 	}
 
 	if !o.NoOwnerInjection {
