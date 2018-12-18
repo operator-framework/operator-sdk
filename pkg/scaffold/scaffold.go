@@ -147,7 +147,7 @@ func (s *Scaffold) doRender(i input.Input, e input.File, absPath string) error {
 		}
 	} else {
 		// All other files are rendered via their templates.
-		temp, err := newTemplate(e).Parse(i.TemplateBody)
+		temp, err := newTemplate(i)
 		if err != nil {
 			return err
 		}
@@ -172,10 +172,15 @@ func (s *Scaffold) doRender(i input.Input, e input.File, absPath string) error {
 	return err
 }
 
-// newTemplate a new template with common functions
-func newTemplate(t input.File) *template.Template {
-	return template.New(fmt.Sprintf("%T", t)).Funcs(template.FuncMap{
+// newTemplate returns a new template named by i.Path with common functions and
+// the input's TemplateFuncs.
+func newTemplate(i input.Input) (*template.Template, error) {
+	t := template.New(i.Path).Funcs(template.FuncMap{
 		"title": strings.Title,
 		"lower": strings.ToLower,
 	})
+	if len(i.TemplateFuncs) > 0 {
+		t.Funcs(i.TemplateFuncs)
+	}
+	return t.Parse(i.TemplateBody)
 }
