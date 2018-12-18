@@ -15,6 +15,7 @@
 package main
 
 import (
+	"os"
 	"runtime"
 
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
@@ -44,9 +45,9 @@ func main() {
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
 	if found {
-		logrus.Infof("Watching %v namespace.", namespace)
+		log.Infof("Watching %v namespace.", namespace)
 	} else {
-		logrus.Infof("%v environment variable not set. This operator is watching all namespaces.",
+		log.Infof("%v environment variable not set. This operator is watching all namespaces.",
 			k8sutil.WatchNamespaceEnvVar)
 	}
 
