@@ -7,7 +7,7 @@ curl -Lo oc.tar.gz https://github.com/openshift/origin/releases/download/v3.11.0
 # Put oc binary in path
 tar xvzOf oc.tar.gz openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit/oc > oc && chmod +x oc && sudo mv oc /usr/local/bin/
 # Start oc cluster
-oc cluster up
+oc cluster up --base-dir=$HOME/oscluster
 # Become cluster admin
 oc login -u system:admin
 
