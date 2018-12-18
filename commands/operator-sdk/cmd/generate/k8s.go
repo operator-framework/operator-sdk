@@ -66,12 +66,12 @@ func K8sCodegen() {
 	if err != nil {
 		log.Fatalf("failed to parse group versions: (%v)", err)
 	}
-	gvStr := ""
+	gvb := &strings.Builder{}
 	for g, vs := range gvMap {
-		gvStr += fmt.Sprintf("%s:%v, ", g, vs)
+		gvb.WriteString(fmt.Sprintf("%s:%v, ", g, vs))
 	}
 
-	log.Infof("Running code-generation for Custom Resource group versions: [%v]\n", gvStr)
+	log.Infof("Running code-generation for Custom Resource group versions: [%v]\n", gvb.String())
 
 	deepcopyGen(binDir, repoPkg, gvMap)
 
