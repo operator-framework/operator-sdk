@@ -56,7 +56,7 @@ $ sudo umount $(grep $HOME/oscluster /proc/mounts | cut -f2 -d" " | sort -r)
 $ sudo rm -rf $HOME/oscluster
 ```
 
-**NOTE**: Starting with openshift 4.0, the `oc cluster up` command will not be availble. This document
+**NOTE**: Starting with openshift 4.0, the `oc cluster up` command will not be available. This document
 and the tests will be updated in the future to support openshift 4.0.
 
 
