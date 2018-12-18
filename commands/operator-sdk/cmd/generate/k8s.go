@@ -150,21 +150,22 @@ func parseGroupVersions() (map[string][]string, error) {
 // createFQApis return a string of all fully qualified pkg + groups + versions
 // of pkg and gvs in the format:
 // "pkg/groupA/v1,pkg/groupA/v2,pkg/groupB:v1"
-func createFQApis(pkg string, gvs map[string][]string) (fqStr string) {
+func createFQApis(pkg string, gvs map[string][]string) string {
 	gn := 0
+	sb := &strings.Builder{}
 	for g, vs := range gvs {
 		for vn, v := range vs {
-			fqStr += filepath.Join(pkg, g, v)
+			sb.WriteString(filepath.Join(pkg, g, v))
 			if vn < len(vs)-1 {
-				fqStr += ","
+				sb.WriteString(",")
 			}
 		}
 		if gn < len(gvs)-1 {
-			fqStr += ","
+			sb.WriteString(",")
 		}
 		gn++
 	}
-	return fqStr
+	return sb.String()
 }
 
 func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) {
