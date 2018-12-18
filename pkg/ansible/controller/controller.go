@@ -55,6 +55,9 @@ func Add(mgr manager.Manager, options Options) {
 	if options.EventHandlers == nil {
 		options.EventHandlers = []events.EventHandler{}
 	}
+	if options.ControllerMap == nil {
+		options.ControllerMap = &ControllerMap{}
+	}
 	eventHandlers := append(options.EventHandlers, events.NewLoggingEventHandler(options.LoggingLevel))
 
 	aor := &AnsibleOperatorReconciler{
