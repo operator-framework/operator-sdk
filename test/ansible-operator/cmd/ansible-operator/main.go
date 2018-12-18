@@ -17,6 +17,7 @@ package main
 import (
 	"runtime"
 
+	"github.com/operator-framework/operator-sdk/pkg/ansible/controller"
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
@@ -56,21 +57,23 @@ func main() {
 
 	printVersion()
 	done := make(chan error)
+	cMap := controller.ControllerMap{}
 
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{
-		Address:    "localhost",
-		Port:       8888,
-		KubeConfig: mgr.GetConfig(),
-		Cache:      mgr.GetCache(),
-		RESTMapper: mgr.GetRESTMapper(),
+		Address:       "localhost",
+		Port:          8888,
+		KubeConfig:    mgr.GetConfig(),
+		Cache:         mgr.GetCache(),
+		RESTMapper:    mgr.GetRESTMapper(),
+		ControllerMap: cMap,
 	})
 	if err != nil {
 		log.Fatalf("error starting proxy: (%v)", err)
 	}
 
 	// start the operator
-	go operator.Run(done, mgr, aflags)
+	go operator.Run(done, mgr, aflags, cMap)
 
 	// wait for either to finish
 	err = <-done

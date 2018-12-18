@@ -44,9 +44,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var proxyControllerMap *aoController.ControllerMap
-var proxyManager manager.Manager
-
 // CacheResponseHandler will handle proxied requests and check if the requested
 // resource exists in our cache. If it does then there is no need to bombard
 // the APIserver with our request and we should write the response from the
@@ -133,7 +130,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 // InjectOwnerReferenceHandler will handle proxied requests and inject the
 // owner refernece found in the authorization header. The Authorization is
 // then deleted so that the proxy can re-set with the correct authorization.
-func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
+func InjectOwnerReferenceHandler(h http.Handler, mgr manager.Manager, cMap aoController.ControllerMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.Method == http.MethodPost {
 			log.Info("injecting owner reference")
@@ -186,7 +183,6 @@ func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(newBody))
 			req.ContentLength = int64(len(newBody))
 			// add to controller map
-			cMap := *proxyControllerMap
 			gv, err := schema.ParseGroupVersion(owner.APIVersion)
 			if err != nil {
 				m := "could not parse Group Version"
@@ -201,9 +197,9 @@ func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
 			}
 			if cMap[gvk] == nil {
 				log.Info("Creating a controller for the owner")
-				aoController.Add(proxyManager, aoController.Options{
+				aoController.Add(mgr, aoController.Options{
 					GVK:           data.GroupVersionKind(),
-					ControllerMap: proxyControllerMap,
+					ControllerMap: cMap,
 				})
 			} else {
 				log.Info("Adding a watch to controller")
@@ -239,7 +235,7 @@ type Options struct {
 	KubeConfig       *rest.Config
 	Cache            cache.Cache
 	RESTMapper       meta.RESTMapper
-	ControllerMap    *aoController.ControllerMap
+	ControllerMap    aoController.ControllerMap
 	Manager          manager.Manager
 }
 
@@ -277,13 +273,11 @@ func Run(done chan error, o Options) error {
 	}
 
 	if o.ControllerMap == nil {
-		o.ControllerMap = &aoController.ControllerMap{}
+		o.ControllerMap = aoController.ControllerMap{}
 	}
-	proxyControllerMap = o.ControllerMap
-	proxyManager = o.Manager
 
 	if !o.NoOwnerInjection {
-		server.Handler = InjectOwnerReferenceHandler(server.Handler)
+		server.Handler = InjectOwnerReferenceHandler(server.Handler, o.Manager, o.ControllerMap)
 	}
 	// Always add cache handler
 	server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper)

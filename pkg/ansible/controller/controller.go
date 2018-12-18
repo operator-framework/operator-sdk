@@ -46,7 +46,7 @@ type Options struct {
 	GVK             schema.GroupVersionKind
 	ReconcilePeriod time.Duration
 	ManageStatus    bool
-	ControllerMap   *ControllerMap
+	ControllerMap   ControllerMap
 }
 
 // Add - Creates a new ansible operator controller and adds it to the manager
@@ -56,7 +56,7 @@ func Add(mgr manager.Manager, options Options) {
 		options.EventHandlers = []events.EventHandler{}
 	}
 	if options.ControllerMap == nil {
-		options.ControllerMap = &ControllerMap{}
+		options.ControllerMap = ControllerMap{}
 	}
 	eventHandlers := append(options.EventHandlers, events.NewLoggingEventHandler(options.LoggingLevel))
 
@@ -92,7 +92,7 @@ func Add(mgr manager.Manager, options Options) {
 		os.Exit(1)
 	}
 	// Update controllermap
-	cMap := *options.ControllerMap
+	cMap := options.ControllerMap
 	cMap[options.GVK] = c
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(options.GVK)
