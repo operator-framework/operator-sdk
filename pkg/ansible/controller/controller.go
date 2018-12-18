@@ -45,7 +45,6 @@ type Options struct {
 	GVK             schema.GroupVersionKind
 	ReconcilePeriod time.Duration
 	ManageStatus    bool
-	ControllerMap   *ControllerMap
 }
 
 // ControllerMap - map of GVK to controller
@@ -59,9 +58,6 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 	log.Info("Watching resource", "Options.Group", options.GVK.Group, "Options.Version", options.GVK.Version, "Options.Kind", options.GVK.Kind)
 	if options.EventHandlers == nil {
 		options.EventHandlers = []events.EventHandler{}
-	}
-	if options.ControllerMap == nil {
-		log.Error(fmt.Errorf("failed adding controller"), "controller map not found in options")
 	}
 	eventHandlers := append(options.EventHandlers, events.NewLoggingEventHandler(options.LoggingLevel))
 

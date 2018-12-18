@@ -42,10 +42,9 @@ func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags, cM
 
 	for gvk, runner := range watches {
 		o := controller.Options{
-			GVK:           gvk,
-			Runner:        runner,
-			ManageStatus:  runner.GetManageStatus(),
-			ControllerMap: cMap,
+			GVK:          gvk,
+			Runner:       runner,
+			ManageStatus: runner.GetManageStatus(),
 		}
 		applyFlagsToControllerOptions(f, &o)
 		ctr := controller.Add(mgr, o)
