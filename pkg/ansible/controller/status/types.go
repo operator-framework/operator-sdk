@@ -149,14 +149,21 @@ func createConditionFromMap(cm map[string]interface{}) Condition {
 
 // Status - The status for custom resources managed by the operator-sdk.
 type Status struct {
-	Conditions []Condition `json:"conditions"`
+	Conditions   []Condition            `json:"conditions"`
+	CustomStatus map[string]interface{} `json:"-"`
 }
 
 // CreateFromMap - create a status from the map
 func CreateFromMap(statusMap map[string]interface{}) Status {
+	customStatus := make(map[string]interface{})
+	for key, value := range statusMap {
+		if key != "conditions" {
+			customStatus[key] = value
+		}
+	}
 	conditionsInterface, ok := statusMap["conditions"].([]interface{})
 	if !ok {
-		return Status{Conditions: []Condition{}}
+		return Status{Conditions: []Condition{}, CustomStatus: customStatus}
 	}
 	conditions := []Condition{}
 	for _, ci := range conditionsInterface {
@@ -167,7 +174,7 @@ func CreateFromMap(statusMap map[string]interface{}) Status {
 		}
 		conditions = append(conditions, createConditionFromMap(cm))
 	}
-	return Status{Conditions: conditions}
+	return Status{Conditions: conditions, CustomStatus: customStatus}
 }
 
 // GetJSONMap - gets the map value for the status object.
@@ -177,12 +184,11 @@ func CreateFromMap(statusMap map[string]interface{}) Status {
 // unstructured will fail and throw runtime exceptions.
 // Please note that this will return an empty map on error.
 func (status *Status) GetJSONMap() map[string]interface{} {
-	m := map[string]interface{}{}
 	b, err := json.Marshal(status)
 	if err != nil {
 		log.Error(err, "unable to marshal json")
-		return m
+		return status.CustomStatus
 	}
-	json.Unmarshal(b, &m)
-	return m
+	json.Unmarshal(b, &status.CustomStatus)
+	return status.CustomStatus
 }

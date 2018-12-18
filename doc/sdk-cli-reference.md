@@ -178,7 +178,7 @@ Scaffolds a new operator project.
 
 
 * `--skip-git-init` Do not init the directory as a git repository
-* `--type` Type of operator to initialize: "ansible" or "go" (default "go"). Also requires the following flags if `--type=ansible`
+* `--type` Type of operator to initialize: "ansible", "helm", or "go" (default "go"). Also requires the following flags if `--type=ansible` or `--type=helm`
   * `--api-version` CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
   * `--kind` CRD Kind. (e.g AppService)
 * `--cluster-scoped` Initialize the operator to be cluster-scoped instead of namespace-scoped
@@ -196,6 +196,11 @@ operator-sdk new app-operator
 Ansible project:
 ```bash
 operator-sdk new app-operator --type=ansible --api-version=app.example.com/v1alpha1 --kind=AppService
+```
+
+Helm project:
+```bash
+operator-sdk new app-operator --type=helm --api-version=app.example.com/v1alpha1 --kind=AppService
 ```
 
 ## add

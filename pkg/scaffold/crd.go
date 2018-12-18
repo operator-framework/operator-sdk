@@ -56,4 +56,6 @@ spec:
     singular: {{ .Resource.LowerKind }}
   scope: Namespaced
   version: {{ .Resource.Version }}
+  subresources:
+    status: {}
 `
