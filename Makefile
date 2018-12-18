@@ -68,7 +68,7 @@ build/%.asc:
 
 .PHONY: install release_x86_64 release
 
-test: dep test/sanity test/unit install test/subcommand test/e2e
+test: dep test/markdown test/sanity test/unit install test/subcommand test/e2e
 
 test/ci-go: test/sanity test/unit test/subcommand test/e2e/go
 
@@ -96,7 +96,10 @@ test/e2e/ansible: image/build/ansible
 test/e2e/helm: image/build/helm
 	./hack/tests/e2e-helm.sh
 
-.PHONY: test test/sanity test/unit test/subcommand test/e2e test/e2e/go test/e2e/ansible test/e2e/helm test/ci-go test/ci-ansible test/ci-helm
+test/markdown:
+	./hack/ci/marker --root=doc
+
+.PHONY: test test/sanity test/unit test/subcommand test/e2e test/e2e/go test/e2e/ansible test/e2e/helm test/ci-go test/ci-ansible test/ci-helm test/markdown
 
 image: image/build image/push
 

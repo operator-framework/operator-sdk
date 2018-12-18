@@ -73,7 +73,7 @@ jobs:
     - stage: test
       name: Markdown Link Checker
       language: bash
-      script: ./hack/ci/marker --root=./doc
+      script: make test/markdown
       after_success: echo 'Markdown links are correct'
       after_failure: echo 'Incorrect markdown link detected'
 
