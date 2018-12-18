@@ -96,11 +96,11 @@ Some of the tests will run using the kube config in `$HOME/.kube/config` (others
 and the operator images will be built and stored in you local docker registry.
 
 **NOTE**: Some of these tests, specifically the ansible (`test/e2e/ansible` and `test/ci-ansible`), helm
-(`test/e2e/helm` and `test/ci-helm`), and CI Go (`test/e2e/ci`) tests, only work when the cluster shares the local docker
+(`test/e2e/helm` and `test/ci-helm`), and CI Go (`test/e2e/ci-go`) tests, only work when the cluster shares the local docker
 registry, as is the case with `oc cluster up` and `minikube` after running `eval $(minikube docker-env)`.
 
 The E2E go test (`test/e2e/go`) can be run on a remote cluster by specifying an image name using a repo that you are logged into and
-permission to push to as such:
+have permission to push to as such:
 
 ```sh
 $ make test/e2e/go ARGS="-image=quay.io/example/memcached:e2e-test"
@@ -120,7 +120,6 @@ testing process, the cleanup functions for the go tests will not run. To manuall
 1. Delete the CRD (`kubectl delete -f $GOPATH/src/github.com/example-inc/memcached-operator/deploy/crds/cache_v1alpha1_memcached_crd.yaml`).
 2. Delete the created project in `$GOPATH/src/github.com/example-inc/memcached-operator`
 3. Delete the namespaces that the tests run in, which also deletes any resources created within the namespaces. The namespaces start with `memcached-memcached-group` or `main` and are appended with a unix timestamp (seconds since Jan 1 1970). The kubectl command can be used to delete namespaces: `kubectl delete namespace $NAMESPACE`.
-
 
 [travis]: ./travis-build.md
 [quay]: https://quay.io

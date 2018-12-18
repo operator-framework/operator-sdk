@@ -1,6 +1,7 @@
 # TravisCI Build Information
 
-Travis is set to run once every 24hrs against the master branch. The results of the builds can be found [here][builds].
+Travis is set to run one every push to a branch or PR.
+The results of the builds can be found [here][branches] for branches and [here][pr-builds] for PRs.
 
 ## Test Workflow
 
@@ -96,7 +97,8 @@ The markdown test does not create a new cluster and runs in a barebones travis V
 
 **NOTE**: There is currently a bug in marker that causes link with underscores (`_`) to not be checked correctly.
 
-[builds]: https://travis-ci.org/operator-framework/operator-sdk/builds
+[branches]: https://travis-ci.org/operator-framework/operator-sdk/branches
+[pr-builds]: https://travis-ci.org/operator-framework/operator-sdk/pull_requests
 [script]: ../../../hack/ci/setup-openshift.sh
 [sanity]: ../../../hack/tests/sanity-check.sh
 [unit]: ../../../hack/tests/unit.sh
