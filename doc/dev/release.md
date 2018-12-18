@@ -45,33 +45,31 @@ $ git config [--global] user.email "$GPG_EMAIL"
 
 ## Release Notes
 
-Release notes should be a thorough description of changes made to code, documentation, and design. Individual changes, such as bug fixes, should be given their own bullet point with a short description of what was changed. Issue links and handle of the developer who worked on the change should be included whenever possible.
+Release notes should thoroughly describe changes made to code, documentation, and design of the SDK. PR links should be included wherever possible.
 
-The following is the format for major and minor releases:
-
-```Markdown
-[Short description of release (ex. reason, theme)]
-
-### Features
-- [Short description of feature] (#issue1, #issue2, ..., @maintainer_handle)
-...
-
-### Bug fixes
-- [Short description of fix] (#issue1, #issue2, ..., @maintainer_handle)
-...
-
-### Miscellaneous
-- [Short description of change] (#issue1, #issue2, ..., @maintainer_handle)
-...
-```
-
-Patch releases should have the following format:
+The following sections, often directly copied from our [changelog][doc-changelog], are used as release notes:
 
 ```Markdown
-[Medium-length description of release (if not complex, short is fine); explanation required]
+[Version as title, ex. v1.2.3]
 
-### Bug fixes
-- [Short description of fix] (#issue1, #issue2, ..., @maintainer_handle)
+### Added
+- [Short description of feature added] (#PR)
+...
+
+### Changed
+- [Short description of change made] (#PR)
+...
+
+### Deprecated
+- [Short description of feature deprecated] (#PR)
+...
+
+### Removed
+- [Short description of feature removed] (#PR)
+...
+
+### Bug Fixes
+- [Short description of bug and fix] (#PR)
 ...
 ```
 
@@ -255,5 +253,6 @@ You've now fully released a new version of the Operator SDK. Good work!
 [doc-gpg-default-key]:https://lists.gnupg.org/pipermail/gnupg-users/2001-September/010163.html
 [link-github-gpg-key-upload]:https://github.com/settings/keys
 [link-git-config-gpg-key]:https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work
+[doc-changelog]:../../CHANGELOG.md
 [mit-keyserver]:https://pgp.mit.edu
 [release-page]:https://github.com/operator-framework/operator-sdk/releases
