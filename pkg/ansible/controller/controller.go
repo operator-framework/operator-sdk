@@ -113,19 +113,19 @@ func NewControllerMap() *ControllerMap {
 
 func (cm *ControllerMap) Get(key schema.GroupVersionKind) (controller controller.Controller, ok bool) {
 	cm.RLock()
+	defer cm.RUnlock()
 	result, ok := cm.internal[key]
-	cm.RUnlock()
 	return result, ok
 }
 
 func (cm *ControllerMap) Delete(key schema.GroupVersionKind) {
 	cm.Lock()
+	defer cm.Unlock()
 	delete(cm.internal, key)
-	cm.Unlock()
 }
 
 func (cm *ControllerMap) Store(key schema.GroupVersionKind, value controller.Controller) {
 	cm.Lock()
+	defer cm.Unlock()
 	cm.internal[key] = value
-	cm.Unlock()
 }

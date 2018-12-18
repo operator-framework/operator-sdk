@@ -182,36 +182,12 @@ func InjectOwnerReferenceHandler(h http.Handler, mgr manager.Manager, cMap *aoCo
 			log.V(1).Info("serialized body", "Body", string(newBody))
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(newBody))
 			req.ContentLength = int64(len(newBody))
-			// add to controller map
-			gv, err := schema.ParseGroupVersion(owner.APIVersion)
+			// add watch for resource
+			err = addWatchToController(owner, cMap, data)
 			if err != nil {
-				m := "could not parse Group Version"
+				m := "could not add watch to controller"
 				log.Error(err, m)
 				http.Error(w, m, http.StatusInternalServerError)
-				return
-			}
-			gvk := schema.GroupVersionKind{
-				Group:   gv.Group,
-				Version: gv.Version,
-				Kind:    owner.Kind,
-			}
-			c, ok := cMap.Get(gvk)
-			if !ok {
-				log.Info("Creating a controller for the owner")
-				ct := aoController.Add(mgr, aoController.Options{
-					GVK: data.GroupVersionKind(),
-				})
-				cMap.Store(data.GroupVersionKind(), *ct)
-			} else {
-				log.Info("Adding a watch to controller")
-				// Add a watch to controller
-				err = c.Watch(&source.Kind{Type: data}, &handler.EnqueueRequestForObject{})
-				if err != nil {
-					m := "could not add watch to controller"
-					log.Error(err, m)
-					http.Error(w, m, http.StatusInternalServerError)
-					return
-				}
 			}
 		}
 		// Removing the authorization so that the proxy can set the correct authorization.
@@ -290,5 +266,27 @@ func Run(done chan error, o Options) error {
 		log.Info("Starting to serve", "Address", l.Addr().String())
 		done <- server.ServeOnListener(l)
 	}()
+	return nil
+}
+
+func addWatchToController(owner metav1.OwnerReference, cMap *aoController.ControllerMap, resource *unstructured.Unstructured) error {
+	gv, err := schema.ParseGroupVersion(owner.APIVersion)
+	if err != nil {
+		return err
+	}
+	gvk := schema.GroupVersionKind{
+		Group:   gv.Group,
+		Version: gv.Version,
+		Kind:    owner.Kind,
+	}
+	c, ok := cMap.Get(gvk)
+	if !ok {
+		return errors.New("failed to find controller in map")
+	}
+	// Add a watch to controller
+	err = c.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{})
+	if err != nil {
+		return err
+	}
 	return nil
 }
