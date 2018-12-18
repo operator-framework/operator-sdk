@@ -1,9 +1,9 @@
 # User Guide
 
-This guide walks through an example of building a simple memcached-operator using the operator-sdk CLI tool and controller-runtime library API.
-To learn how to use Ansible to create a Memcached operator, see [Ansible
-Operator User Guide][ansible_user_guide]. The rest of this document will show
-how to program an operator in Go.
+This guide walks through an example of building a simple memcached-operator using the operator-sdk
+CLI tool and controller-runtime library API. To learn how to use Ansible or Helm to create an
+operator, see the [Ansible Operator User Guide][ansible_user_guide] or the [Helm Operator User
+Guide][helm_user_guide]. The rest of this document will show how to program an operator in Go.
 
 ## Prerequisites
 
@@ -55,6 +55,13 @@ If you'd like to create your memcached-operator project to be cluster-scoped use
 ```
 $ operator-sdk new memcached-operator --cluster-scoped
 ```
+
+Using `--cluster-scoped` will scaffold the new operator with the following modifications:
+* `deploy/operator.yaml` - Set `WATCH_NAMESPACE=""` instead of setting it to the pod's namespace
+* `deploy/role.yaml` - Use `ClusterRole` instead of `Role`
+* `deploy/role_binding.yaml`:
+  * Use `ClusterRoleBinding` instead of `RoleBinding`
+  * Set the subject namespace to `REPLACE_NAMESPACE`. This must be changed to the namespace in which the operator is deployed.
 
 ### Manager
 The main program for the operator `cmd/manager/main.go` initializes and runs the [Manager][manager_go_doc].
@@ -116,7 +123,7 @@ For this example replace the generated Controller file `pkg/controller/memcached
 The example Controller executes the following reconciliation logic for each `Memcached` CR:
 - Create a memcached Deployment if it doesn't exist
 - Ensure that the Deployment size is the same as specified by the `Memcached` CR spec
-- Update the `Memcached` CR status with the names of the memcached pods
+- Update the `Memcached` CR status using the status writer with the names of the memcached pods
 
 The next two subsections explain how the Controller watches resources and how the reconcile loop is triggered. Skip to the [Build](#build-and-run-the-operator) section to see how to build and run the operator.
 
@@ -395,6 +402,7 @@ After adding new import paths to your operator project, run `dep ensure` in the 
 [memcached_controller]: ../example/memcached-operator/memcached_controller.go.tmpl
 [layout_doc]:./project_layout.md
 [ansible_user_guide]:./ansible/user-guide.md
+[helm_user_guide]:./helm/user-guide.md
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/

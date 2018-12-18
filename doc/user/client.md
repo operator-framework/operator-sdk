@@ -217,7 +217,8 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 ```Go
 // Update updates the given obj in the Kubernetes cluster. obj must be a
 // struct pointer so that obj can be updated with the content returned
-// by the API server.
+// by the API server. Update does *not* update the resource's status
+// subresource
 func (c Client) Update(ctx context.Context, obj runtime.Object) error
 ```
 Example:
@@ -243,6 +244,44 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 	...
 }
 ```
+
+##### Updating Status Subresource
+
+When updating the [status subresource][cr-status-subresource] from the client,
+the StatusWriter must be used which can be gotten with `Status()`
+
+##### Status
+
+```Go
+// Status() returns a StatusWriter object that can be used to update the
+// object's status subresource
+func (c Client) Status() (client.StatusWriter, error)
+```
+
+Example:
+```Go
+import (
+	"context"
+	cachev1alpha1 "github.com/example-inc/memcached-operator/pkg/apis/cache/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
+func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	...
+	
+	mem := &cachev1alpha.Memcached{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, mem)
+
+	...
+
+	ctx := context.TODO()
+	mem.Status.Nodes = []string{"pod1", "pod2"}
+	err := r.client.Status().Update(ctx, mem)
+
+	...
+}
+```
+
 
 #### Delete
 
@@ -385,7 +424,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 	podNames := getPodNames(podList.Items)
 	if !reflect.DeepEqual(podNames, app.Status.Nodes) {
 		app.Status.Nodes = podNames
-		if err := r.client.Update(context.TODO(), app); err != nil {
+		if err := r.client.Status().Update(context.TODO(), app); err != nil {
 			return reconcile.Result{}, err
 		}
 	}
@@ -453,3 +492,4 @@ func labelsForApp(name string) map[string]string {
 [doc-reconcile-reconciler]:https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Reconciler
 [doc-osdk-handle]:https://github.com/operator-framework/operator-sdk/blob/master/doc/design/milestone-0.0.2/action-api.md#handler
 [doc-types-nsname]:https://godoc.org/k8s.io/apimachinery/pkg/types#NamespacedName
+[cr-status-subresource]:https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#status-subresource

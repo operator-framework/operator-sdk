@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	ansibleOperator "github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/helm/client"
@@ -36,7 +37,6 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
-	ansibleScaffold "github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
 	helmScaffold "github.com/operator-framework/operator-sdk/pkg/scaffold/helm"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"k8s.io/helm/pkg/storage"
@@ -49,6 +49,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
+// NewLocalCmd - up local command to run an operator loccally
 func NewLocalCmd() *cobra.Command {
 	upLocalCmd := &cobra.Command{
 		Use:   "local",
@@ -64,15 +65,18 @@ kubernetes cluster using a kubeconfig file.
 	upLocalCmd.Flags().StringVar(&operatorFlags, "operator-flags", "", "The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
 	upLocalCmd.Flags().StringVar(&namespace, "namespace", "default", "The namespace where the operator watches for changes.")
 	upLocalCmd.Flags().StringVar(&ldFlags, "go-ldflags", "", "Set Go linker options")
-
+	if projutil.GetOperatorType() == projutil.OperatorTypeAnsible {
+		ansibleOperatorFlags = flags.AddTo(upLocalCmd.Flags(), "(ansible operator)")
+	}
 	return upLocalCmd
 }
 
 var (
-	kubeConfig    string
-	operatorFlags string
-	namespace     string
-	ldFlags       string
+	kubeConfig           string
+	operatorFlags        string
+	namespace            string
+	ldFlags              string
+	ansibleOperatorFlags *flags.AnsibleOperatorFlags
 )
 
 const (
@@ -175,7 +179,7 @@ func upLocalAnsible() {
 	}
 
 	// start the operator
-	go ansibleOperator.Run(done, mgr, "./"+ansibleScaffold.WatchesYamlFile, time.Minute)
+	go ansibleOperator.Run(done, mgr, ansibleOperatorFlags)
 
 	// wait for either to finish
 	err = <-done

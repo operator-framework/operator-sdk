@@ -175,7 +175,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 	// Update status.Nodes if needed
 	if !reflect.DeepEqual(podNames, memcached.Status.Nodes) {
 		memcached.Status.Nodes = podNames
-		err := r.client.Update(context.TODO(), memcached)
+		err := r.client.Status().Update(context.TODO(), memcached)
 		if err != nil {
 			reqLogger.Error(err, "failed to update Memcached status.")
 			return reconcile.Result{}, err
