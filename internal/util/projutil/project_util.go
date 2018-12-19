@@ -152,6 +152,16 @@ func SetGopath(currentGopath string) string {
 	return newGopath
 }
 
+func ExecCmd(cmd *exec.Cmd) error {
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to exec %s %#v: %v", cmd.Path, cmd.Args, err)
+	}
+	return nil
+}
+
 // IsDockerMultistage checks whether the docker daemon is version >= 17.05.0.
 // Both ARG before FROM and multistage builds exist in docker version >= 17.05.0.
 func IsDockerMultistage() bool {
@@ -175,16 +185,6 @@ func IsDockerfileMultistage(dockerfile string) bool {
 		log.Fatal("Dockerfile not found")
 	}
 	return bytes.Count(df, []byte("FROM")) > 1
-}
-
-func ExecCmd(cmd *exec.Cmd) error {
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		return fmt.Errorf("failed to exec %s %#v: %v", cmd.Path, cmd.Args, err)
-	}
-	return nil
 }
 
 func DockerBuild(dockerfile, image string, buildArgs ...string) error {
