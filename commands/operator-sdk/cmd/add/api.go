@@ -103,5 +103,8 @@ func apiRun(cmd *cobra.Command, args []string) {
 	// Run k8s codegen for deepcopy
 	generate.K8sCodegen()
 
+	// Generate a validation spec for the new CRD.
+	generate.OpenAPIGen()
+
 	log.Info("Api generation complete.")
 }

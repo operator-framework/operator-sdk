@@ -41,7 +41,7 @@ required = [
   "k8s.io/code-generator/cmd/client-gen",
   "k8s.io/code-generator/cmd/lister-gen",
   "k8s.io/code-generator/cmd/informer-gen",
-  "k8s.io/code-generator/cmd/openapi-gen",
+  "k8s.io/kube-openapi/cmd/openapi-gen",
   "k8s.io/gengo/args",
 ]
 
@@ -49,6 +49,10 @@ required = [
   name = "k8s.io/code-generator"
   # revision for tag "kubernetes-1.12.3"
   revision = "3dcf91f64f638563e5106f21f50c31fa361c918d"
+
+[[override]]
+  name = "k8s.io/kube-openapi"
+  branch = "master"
 
 [[override]]
   name = "k8s.io/api"
@@ -90,5 +94,9 @@ required = [
 
   [[prune.project]]
     name = "k8s.io/code-generator"
+    non-go = false
+
+  [[prune.project]]
+    name = "k8s.io/gengo"
     non-go = false
 `
