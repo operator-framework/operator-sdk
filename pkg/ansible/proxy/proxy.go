@@ -300,6 +300,8 @@ func addWatchToController(owner metav1.OwnerReference, cMap *ControllerMap, reso
 	return nil
 }
 
+// NewControllerMap returns a new object that contains a mapping between GVK
+// and controller
 func NewControllerMap() *ControllerMap {
 	return &ControllerMap{
 		internal: make(map[schema.GroupVersionKind]controller.Controller),
@@ -307,23 +309,31 @@ func NewControllerMap() *ControllerMap {
 	}
 }
 
+// Get - Returns a controller given a GVK as the key. `watch` in the return
+// specifies whether or not the operator will watch dependent resources for
+// this controller. `ok` returns whether the query was successful. `controller`
+// is the associated controller-runtime controller object.
 func (cm *ControllerMap) Get(key schema.GroupVersionKind) (controller controller.Controller, watch, ok bool) {
 	cm.RLock()
 	defer cm.RUnlock()
 	result, ok := cm.internal[key]
 	if !ok {
-		return result, ok, false
+		return result, false, ok
 	}
 	watch, ok = cm.watch[key]
 	return result, watch, ok
 }
 
+// Delete - Deletes associated GVK to controller mapping from the ControllerMap
 func (cm *ControllerMap) Delete(key schema.GroupVersionKind) {
 	cm.Lock()
 	defer cm.Unlock()
 	delete(cm.internal, key)
 }
 
+// Store - Adds a new GVK to controller mapping. Also creates a mapping between
+// GVK and a boolean `watch` that specifies whether this controller is watching
+// dependent resources.
 func (cm *ControllerMap) Store(key schema.GroupVersionKind, value controller.Controller, watch bool) {
 	cm.Lock()
 	defer cm.Unlock()
