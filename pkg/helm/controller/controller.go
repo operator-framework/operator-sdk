@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
+	"github.com/operator-framework/operator-sdk/pkg/predicate"
 )
 
 var log = logf.Log.WithName("helm.controller")
@@ -66,7 +67,7 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 
 	o := &unstructured.Unstructured{}
 	o.SetGroupVersionKind(options.GVK)
-	if err := c.Watch(&source.Kind{Type: o}, &crthandler.EnqueueRequestForObject{}); err != nil {
+	if err := c.Watch(&source.Kind{Type: o}, &crthandler.EnqueueRequestForObject{}, predicate.GenerationChangedPredicate{}); err != nil {
 		return err
 	}
 

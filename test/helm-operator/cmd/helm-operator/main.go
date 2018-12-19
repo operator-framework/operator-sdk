@@ -46,7 +46,7 @@ func printVersion() {
 func main() {
 	flag.Parse()
 
-	logf.SetLogger(logf.ZapLogger(true))
+	logf.SetLogger(logf.ZapLogger(false))
 
 	printVersion()
 
@@ -78,7 +78,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	factories, err := release.NewManagerFactoriesFromFile(storageBackend, tillerKubeClient, "/opt/helm/watches.yaml")
+	factories, err := release.NewManagerFactoriesFromEnv(storageBackend, tillerKubeClient)
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)

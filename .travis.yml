@@ -5,56 +5,88 @@ sudo: required
 go:
 - 1.10.3
 
-addons:
-  apt:
-    packages:
-      - docker-ce
+# The `x_base_steps` top-level key is unknown to travis,
+# so we can use it to create a bunch of common build step
+# YAML anchors which we use in our build jobs.
+x_base_steps:
+  # before_install for jobs that require go builds
+  - &go_before_install
+    before_install:
+      # hack/ci/check-doc-only-update.sh needs to be sourced so
+      # that it can properly exit the test early with success
+      - source hack/ci/check-doc-only-update.sh
+      - curl -Lo dep https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64 && chmod +x dep && sudo mv dep /usr/local/bin/
+      - travis_retry dep ensure
 
-before_install:
-  - |
-      if [ "$TRAVIS_COMMIT_RANGE" != "" ] && ! git diff --name-only $TRAVIS_COMMIT_RANGE | grep -qvE '(\.md)|(\.MD)|(\.png)|(\.pdf)|^(doc/)|^(MAINTAINERS)|^(LICENSE)'; then
-        echo "Only doc files were updated, not running the CI."
-        exit
-      fi
+  # Base go, ansbile, and helm job
+  - &test
+    stage: test
+    env: CLUSTER=openshift
+    <<: *go_before_install
+    install:
+      - make install
+      - hack/ci/setup-openshift.sh
+    after_success:
+      - echo "Build succeeded, operator was generated, memcached operator is running on $CLUSTER, and unit/integration tests pass"
+    after_failure:
+      - echo "Build failed, operator failed to generate, memcached operator is not running on $CLUSTER, or unit/integration tests failed"
+      - kubectl get all --all-namespaces
+      - kubectl get events --all-namespaces --field-selector=type=Warning
+    services:
+      - docker
+
+  # Base deploy job
+  - &deploy
+    stage: deploy
+    if: type != pull_request AND ( tag IS present OR branch = master OR commit_message =~ /\[travis deploy\]/ )
+    <<: *go_before_install
+    install: skip
+    before_script:
+      - git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
+      - git fetch --unshallow --tags
+    after_success:
+      - echo "Image build succeeded, and docker image tagged and pushed to repository"
+    after_failure:
+      - echo "Image build, docker image tagging, or docker image pushing to repository failed"
+    services:
+      - docker
 
 jobs:
   include:
-    - before_script: hack/ci/setup-openshift.sh
-      env: CLUSTER=openshift
-      script: make test/ci-go
+    # Build and test go
+    - <<: *test
       name: Go on OpenShift
-      services:
-      - docker
-    - before_script: hack/ci/setup-openshift.sh
-      env: CLUSTER=openshift
-      script: make test/ci-ansible
+      script: make test/ci-go
+
+    # Build and test ansible
+    - <<: *test
       name: Ansible on OpenShift
-      services:
-      - docker
-    - before_script: hack/ci/setup-openshift.sh
-      env: CLUSTER=openshift
-      script: make test/ci-helm
+      before_script: sudo pip install ansible
+      script: make test/ci-ansible
+
+    # Build and test helm
+    - <<: *test
       name: Helm on OpenShift
-      services:
-      - docker
-    - name: Markdown Link Checker
+      script: make test/ci-helm
+
+    # Test markdown
+    - stage: test
+      name: Markdown Link Checker
       language: bash
-      before_install: true
-      install: true
+      script: make test/markdown
       after_success: echo 'Markdown links are correct'
       after_failure: echo 'Incorrect markdown link detected'
-      script: ./hack/ci/marker --root=./doc
 
-install:
-- curl -Lo dep https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64 && chmod +x dep && sudo mv dep /usr/local/bin/
-- dep ensure
-- make install
-- sudo pip install ansible
+    # Build and deploy ansible-operator docker image
+    - <<: *deploy
+      name: Docker image for ansible-operator
+      script:
+        - make image/build/ansible
+        - make image/push/ansible
 
-after_success:
-- echo "Build succeeded, operator was generated, memcached operator is running on $CLUSTER, and unit/integration tests pass"
-
-after_failure:
-- echo "Build failed, operator failed to generate, memcached operator is not running on $CLUSTER, or unit/integration tests failed"
-- kubectl get all --all-namespaces
-- kubectl get events --all-namespaces --field-selector=type=Warning
+    # Build and deploy helm-operator docker image
+    - <<: *deploy
+      name: Docker image for helm-operator
+      script:
+        - make image/build/helm
+        - make image/push/helm

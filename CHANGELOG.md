@@ -4,14 +4,39 @@
 
 ### Changed
 
-- The SDK's Kubernetes Golang dependency versions/revisions have been updated from `v1.11.2` to `v1.12.3`. ([#807](https://github.com/operator-framework/operator-sdk/pull/807))
-- The controller-runtime version has been updated from `v0.1.4` to `v0.1.8`. See the `v0.1.8` [release notes](https://github.com/kubernetes-sigs/controller-runtime/releases/tag/v0.1.8) for details.
+- The official images for the Ansible and Helm operators have moved! Travis now builds, tags, and pushes operator base images during CI ([#832](https://github.com/operator-framework/operator-sdk/pull/832)).
+  - [quay.io/operator-framework/ansible-operator](https://quay.io/repository/operator-framework/ansible-operator)
+  - [quay.io/operator-framework/helm-operator](https://quay.io/repository/operator-framework/helm-operator)
 
 ### Deprecated
 
 ### Removed
 
 ### Bug Fixes
+
+## v0.3.0
+
+### Added
+
+- Helm type operator generation support ([#776](https://github.com/operator-framework/operator-sdk/pull/776))
+
+### Changed
+
+- The SDK's Kubernetes Golang dependency versions/revisions have been updated from `v1.11.2` to `v1.12.3`. ([#807](https://github.com/operator-framework/operator-sdk/pull/807))
+- The controller-runtime version has been updated from `v0.1.4` to `v0.1.8`. See the `v0.1.8` [release notes](https://github.com/kubernetes-sigs/controller-runtime/releases/tag/v0.1.8) for details.
+- The SDK now generates the CRD with the status subresource enabled by default. See the [client doc](https://github.com/operator-framework/operator-sdk/blob/master/doc/user/client.md#updating-status-subresource) on how to update the status ssubresource. ([#787](https://github.com/operator-framework/operator-sdk/pull/787))
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
+## v0.2.1
+
+### Bug Fixes
+
+- Pin controller-runtime version to v0.1.4 to fix dependency issues and pin ansible idna package to version 2.7 ([#831](https://github.com/operator-framework/operator-sdk/pull/831))
 
 ## v0.2.0
 

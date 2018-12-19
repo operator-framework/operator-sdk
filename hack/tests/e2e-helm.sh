@@ -15,12 +15,6 @@ then
     oc adm policy add-scc-to-user anyuid -z default
 fi
 
-# build operator binary and base image
-GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o test/helm-operator/helm-operator test/helm-operator/cmd/helm-operator/main.go
-pushd test/helm-operator
-docker build -t quay.io/water-hole/helm-operator .
-popd
-
 # Make a test directory for Helm tests so we avoid using default GOPATH.
 # Save test directory so we can delete it on exit.
 HELM_TEST_DIR="$(mktemp -d)"
@@ -34,6 +28,7 @@ unset GOPATH GOROOT
 # create and build the operator
 operator-sdk new nginx-operator --api-version=helm.example.com/v1alpha1 --kind=Nginx --type=helm
 pushd nginx-operator
+sed -i 's|\(FROM quay.io/operator-framework/helm-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
 
 operator-sdk build "$DEST_IMAGE"
 sed -i "s|REPLACE_IMAGE|$DEST_IMAGE|g" deploy/operator.yaml
@@ -63,13 +58,13 @@ fi
 # create CR
 kubectl create -f deploy/crds/helm_v1alpha1_nginx_cr.yaml
 trap_add 'kubectl delete --ignore-not-found -f ${DIR2}/deploy/crds/helm_v1alpha1_nginx_cr.yaml' EXIT
-if ! timeout 1m bash -c -- 'until kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.release.info.status.code}" | grep 1; do sleep 1; done';
+if ! timeout 1m bash -c -- 'until kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.conditions[1].release.info.status.code}" | grep 1; do sleep 1; done';
 then
     kubectl logs deployment/nginx-operator
     exit 1
 fi
 
-release_name=$(kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.release.name}")
+release_name=$(kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.conditions[1].release.name}")
 nginx_deployment=$(kubectl get deployment -l "app.kubernetes.io/instance=${release_name}" -o jsonpath="{..metadata.name}")
 
 if ! timeout 1m kubectl rollout status deployment/${nginx_deployment};

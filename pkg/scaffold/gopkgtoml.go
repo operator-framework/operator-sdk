@@ -79,6 +79,10 @@ required = [
   revision = "d082d5923d3cc0bfbb066ee5fbdea3d0ca79acf8"
 
 [[override]]
+  name = "github.com/coreos/prometheus-operator"
+  version = "=v0.26.0"
+
+[[override]]
   name = "sigs.k8s.io/controller-runtime"
   version = "=v0.1.8"
 
@@ -86,7 +90,7 @@ required = [
   name = "github.com/operator-framework/operator-sdk"
   # The version rule is used for a specific release and the master branch for in between releases.
   branch = "master" #osdk_branch_annotation
-  # version = "=v0.2.0" #osdk_version_annotation
+  # version = "=v0.3.0" #osdk_version_annotation
 
 [prune]
   go-tests = true

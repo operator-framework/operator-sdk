@@ -15,7 +15,6 @@
 package cmdtest
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -25,6 +24,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
@@ -109,10 +109,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 			if err != nil {
 				log.Fatalf("could not find operator manifest: (%v)", err)
 			}
-			combined = combineManifests(combined, sa)
-			combined = combineManifests(combined, role)
-			combined = combineManifests(combined, roleBinding)
-			combined = append(combined, operator...)
+			combined = yamlutil.CombineManifests(combined, sa, role, roleBinding, operator)
 		}
 		err = ioutil.WriteFile(tlConfig.namespacedManPath, combined, os.FileMode(fileutil.DefaultFileMode))
 		if err != nil {
@@ -214,16 +211,6 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	log.Info("Local operator test successfully completed.")
 }
 
-// combineManifests combines a given manifest with a base manifest and adds yaml
-// style separation. Nothing is appended if the manifest is empty.
-func combineManifests(base, manifest []byte) []byte {
-	if len(manifest) > 0 {
-		base = append(base, manifest...)
-		return append(base, []byte("\n---\n")...)
-	}
-	return base
-}
-
 // TODO: add support for multiple deployments and containers (user would have to
 // provide extra information in that case)
 
@@ -238,11 +225,10 @@ func replaceImage(manifestPath, image string) error {
 	}
 	foundDeployment := false
 	newManifest := []byte{}
-	yamlSplit := bytes.Split(yamlFile, []byte("\n---\n"))
-	for _, yamlSpec := range yamlSplit {
-		if string(yamlSpec) == "" {
-			continue
-		}
+	scanner := yamlutil.NewYAMLScanner(yamlFile)
+	for scanner.Scan() {
+		yamlSpec := scanner.Bytes()
+
 		decoded := make(map[string]interface{})
 		err = yaml.Unmarshal(yamlSpec, &decoded)
 		if err != nil {
@@ -250,7 +236,7 @@ func replaceImage(manifestPath, image string) error {
 		}
 		kind, ok := decoded["kind"].(string)
 		if !ok || kind != "Deployment" {
-			newManifest = combineManifests(newManifest, yamlSpec)
+			newManifest = yamlutil.CombineManifests(newManifest, yamlSpec)
 			continue
 		}
 		if foundDeployment {
@@ -281,7 +267,11 @@ func replaceImage(manifestPath, image string) error {
 		if err != nil {
 			return fmt.Errorf("failed to convert deployment object back to yaml: %v", err)
 		}
-		newManifest = combineManifests(newManifest, updatedYamlSpec)
+		newManifest = yamlutil.CombineManifests(newManifest, updatedYamlSpec)
 	}
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("failed to scan %s: (%v)", manifestPath, err)
+	}
+
 	return ioutil.WriteFile(manifestPath, newManifest, fileutil.DefaultFileMode)
 }

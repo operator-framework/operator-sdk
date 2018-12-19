@@ -9,12 +9,6 @@ set -ex
 # switch to the "default" namespace if on openshift, to match the minikube test
 if which oc 2>/dev/null; then oc project default; fi
 
-# build operator binary and base image
-go build -o test/ansible-operator/ansible-operator test/ansible-operator/cmd/ansible-operator/main.go
-pushd test/ansible-operator
-docker build -t quay.io/water-hole/ansible-operator .
-popd
-
 # Make a test directory for Ansible tests so we avoid using default GOPATH.
 # Save test directory so we can delete it on exit.
 ANSIBLE_TEST_DIR="$(mktemp -d)"
@@ -33,6 +27,7 @@ cp -a ansible-memcached/memfin memcached-operator/roles/
 cat ansible-memcached/watches-finalizer.yaml >> memcached-operator/watches.yaml
 
 pushd memcached-operator
+sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
 operator-sdk build "$DEST_IMAGE"
 sed -i "s|REPLACE_IMAGE|$DEST_IMAGE|g" deploy/operator.yaml
 sed -i 's|Always|Never|g' deploy/operator.yaml
@@ -59,7 +54,6 @@ fi
 
 # create CR
 kubectl create -f deploy/crds/ansible_v1alpha1_memcached_cr.yaml
-trap_add 'kubectl delete --ignore-not-found -f ${DIR2}/deploy/crds/ansible_v1alpha1_memcached_cr.yaml' EXIT
 if ! timeout 20s bash -c -- 'until kubectl get deployment -l app=memcached | grep memcached; do sleep 1; done';
 then
     kubectl logs deployment/memcached-operator
