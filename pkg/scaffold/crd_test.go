@@ -41,6 +41,9 @@ func TestCRD(t *testing.T) {
 		AbsProjectPath: filepath.Join(filepath.Dir(filepath.Dir(absPath)), tfDir),
 		ProjectName:    filepath.Base(tfDir),
 	}
+	if err := os.Chdir(cfg.AbsProjectPath); err != nil {
+		t.Fatal(err)
+	}
 	err = s.Execute(cfg, &Crd{Resource: r})
 	if err != nil {
 		t.Fatalf("failed to execute the scaffold: (%v)", err)
