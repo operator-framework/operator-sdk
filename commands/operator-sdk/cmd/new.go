@@ -120,7 +120,7 @@ func mustBeNewProject() {
 		log.Fatalf("failed to determine if project (%v) exists", projectName)
 	}
 	if stat.IsDir() {
-		log.Fatalf("project (%v) exists. please use a different project name or delete the existing one", projectName)
+		log.Fatalf("project (%v) in (%v) path already exists, please use a different project name or delete the existing one", projectName, fp)
 	}
 }
 
