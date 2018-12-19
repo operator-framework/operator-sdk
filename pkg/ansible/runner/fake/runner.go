@@ -25,9 +25,10 @@ import (
 
 // Runner - implements the Runner interface for a GVK that's being watched.
 type Runner struct {
-	Finalizer       string
-	ReconcilePeriod time.Duration
-	ManageStatus    bool
+	Finalizer               string
+	ReconcilePeriod         time.Duration
+	ManageStatus            bool
+	WatchDependentResources bool
 	// Used to send error if Run should fail.
 	Error error
 	// Job Events that will be sent back from the runs channel
@@ -75,6 +76,11 @@ func (r *Runner) GetReconcilePeriod() (time.Duration, bool) {
 // GetManageStatus - get managestatus.
 func (r *Runner) GetManageStatus() bool {
 	return r.ManageStatus
+}
+
+// GetWatchDependentResources - get watchDependentResources.
+func (r *Runner) GetWatchDependentResources() bool {
+	return r.WatchDependentResources
 }
 
 // GetFinalizer - gets the fake finalizer.
