@@ -49,7 +49,7 @@ func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags, cM
 		applyFlagsToControllerOptions(f, &o)
 		ctr := controller.Add(mgr, o)
 		if ctr != nil {
-			cMap.Store(o.GVK, *ctr)
+			cMap.Store(o.GVK, *ctr, runner.GetWatchDependentResources())
 		}
 	}
 	done <- mgr.Start(c)

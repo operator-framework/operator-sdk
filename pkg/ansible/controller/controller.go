@@ -39,18 +39,20 @@ var log = logf.Log.WithName("ansible-controller")
 
 // Options - options for your controller
 type Options struct {
-	EventHandlers   []events.EventHandler
-	LoggingLevel    events.LogLevel
-	Runner          runner.Runner
-	GVK             schema.GroupVersionKind
-	ReconcilePeriod time.Duration
-	ManageStatus    bool
+	EventHandlers           []events.EventHandler
+	LoggingLevel            events.LogLevel
+	Runner                  runner.Runner
+	GVK                     schema.GroupVersionKind
+	ReconcilePeriod         time.Duration
+	ManageStatus            bool
+	WatchDependentResources bool
 }
 
 // ControllerMap - map of GVK to controller
 type ControllerMap struct {
 	sync.RWMutex
 	internal map[schema.GroupVersionKind]controller.Controller
+	watch    map[schema.GroupVersionKind]bool
 }
 
 // Add - Creates a new ansible operator controller and adds it to the manager
@@ -104,14 +106,19 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 func NewControllerMap() *ControllerMap {
 	return &ControllerMap{
 		internal: make(map[schema.GroupVersionKind]controller.Controller),
+		watch:    make(map[schema.GroupVersionKind]bool),
 	}
 }
 
-func (cm *ControllerMap) Get(key schema.GroupVersionKind) (controller controller.Controller, ok bool) {
+func (cm *ControllerMap) Get(key schema.GroupVersionKind) (controller controller.Controller, watch, ok bool) {
 	cm.RLock()
 	defer cm.RUnlock()
 	result, ok := cm.internal[key]
-	return result, ok
+	if !ok {
+		return result, ok, false
+	}
+	watch, ok = cm.watch[key]
+	return result, watch, ok
 }
 
 func (cm *ControllerMap) Delete(key schema.GroupVersionKind) {
@@ -120,8 +127,9 @@ func (cm *ControllerMap) Delete(key schema.GroupVersionKind) {
 	delete(cm.internal, key)
 }
 
-func (cm *ControllerMap) Store(key schema.GroupVersionKind, value controller.Controller) {
+func (cm *ControllerMap) Store(key schema.GroupVersionKind, value controller.Controller, watch bool) {
 	cm.Lock()
 	defer cm.Unlock()
 	cm.internal[key] = value
+	cm.watch[key] = watch
 }

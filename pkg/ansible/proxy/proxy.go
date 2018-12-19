@@ -204,15 +204,16 @@ type HandlerChain func(http.Handler) http.Handler
 // Options will be used by the user to specify the desired details
 // for the proxy.
 type Options struct {
-	Address          string
-	Port             int
-	Handler          HandlerChain
-	NoOwnerInjection bool
-	KubeConfig       *rest.Config
-	Cache            cache.Cache
-	RESTMapper       meta.RESTMapper
-	ControllerMap    *aoController.ControllerMap
-	Manager          manager.Manager
+	Address                 string
+	Port                    int
+	Handler                 HandlerChain
+	NoOwnerInjection        bool
+	KubeConfig              *rest.Config
+	Cache                   cache.Cache
+	RESTMapper              meta.RESTMapper
+	ControllerMap           *aoController.ControllerMap
+	Manager                 manager.Manager
+	WatchDependentResources bool
 }
 
 // Run will start a proxy server in a go routine that returns on the error
@@ -226,7 +227,7 @@ func Run(done chan error, o Options) error {
 	if o.Handler != nil {
 		server.Handler = o.Handler(server.Handler)
 	}
-	if o.ControllerMap == nil {
+	if o.ControllerMap == nil && o.WatchDependentResources {
 		return fmt.Errorf("failed to get controller map from options")
 	}
 
@@ -278,14 +279,16 @@ func addWatchToController(owner metav1.OwnerReference, cMap *aoController.Contro
 		Version: gv.Version,
 		Kind:    owner.Kind,
 	}
-	c, ok := cMap.Get(gvk)
+	c, watch, ok := cMap.Get(gvk)
 	if !ok {
 		return errors.New("failed to find controller in map")
 	}
 	// Add a watch to controller
-	err = c.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{})
-	if err != nil {
-		return err
+	if watch {
+		err = c.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{})
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
