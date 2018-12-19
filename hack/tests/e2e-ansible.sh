@@ -3,6 +3,7 @@
 source hack/lib/test_lib.sh
 
 DEST_IMAGE="quay.io/example/memcached-operator:v0.0.2"
+IMAGE_BUILDER="$(builderFromArgs $@)"
 
 set -ex
 
@@ -28,7 +29,10 @@ cat ansible-memcached/watches-finalizer.yaml >> memcached-operator/watches.yaml
 
 pushd memcached-operator
 sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
-operator-sdk build "$DEST_IMAGE"
+operator-sdk build "$DEST_IMAGE" --image-builder="$IMAGE_BUILDER"
+if [[ "$IMAGE_BUILDER" == "buildah" ]] && command -v buildah; then
+    buildah push "$DEST_IMAGE" docker-daemon:"$DEST_IMAGE"
+fi
 sed -i "s|REPLACE_IMAGE|$DEST_IMAGE|g" deploy/operator.yaml
 sed -i 's|Always|Never|g' deploy/operator.yaml
 

@@ -71,7 +71,7 @@ func TestMemcached(t *testing.T) {
 	if err := os.MkdirAll(absProjectPath, fileutil.DefaultDirFileMode); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Chdir(absProjectPath); err != nil {
+	if err = os.Chdir(absProjectPath); err != nil {
 		t.Fatal(err)
 	}
 
@@ -219,8 +219,12 @@ func TestMemcached(t *testing.T) {
 	// link local sdk to vendor if not in travis
 	if prSlug == "" {
 		os.RemoveAll("vendor/github.com/operator-framework/operator-sdk/pkg")
-		os.Symlink(filepath.Join(gopath, "src/github.com/operator-framework/operator-sdk/pkg"),
-			"vendor/github.com/operator-framework/operator-sdk/pkg")
+		cmdOut, err = exec.Command("cp", "-a",
+			filepath.Join(gopath, "src/github.com/operator-framework/operator-sdk/pkg"),
+			"vendor/github.com/operator-framework/operator-sdk").CombinedOutput()
+		if err != nil {
+			t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		}
 	}
 
 	file, err := yamlutil.GenerateCombinedGlobalManifest()
@@ -441,13 +445,25 @@ func MemcachedCluster(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to write deploy/operator.yaml: %v", err)
 	}
-	t.Log("Building operator docker image")
+
+	t.Logf("Building operator image with %s", *imageBuilder)
 	cmdOut, err := exec.Command("operator-sdk", "build", *e2eImageName,
+		"--image-builder", *imageBuilder,
 		"--enable-tests",
 		"--test-location", "./test/e2e",
 		"--namespaced-manifest", "deploy/operator.yaml").CombinedOutput()
 	if err != nil {
 		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+	}
+	// Images built with buildah will not be in the docker-daemon's local image store,
+	// so copy them over.
+	if *imageBuilder == "buildah" {
+		cmdOut, err = exec.Command("buildah", "push",
+			*e2eImageName, "docker-daemon:"+*e2eImageName,
+		).CombinedOutput()
+		if err != nil {
+			t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		}
 	}
 
 	if !local {

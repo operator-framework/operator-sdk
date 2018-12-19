@@ -52,7 +52,7 @@ build/operator-sdk-%-x86_64-apple-darwin: GOARGS = GOOS=darwin GOARCH=amd64
 
 build/%:
 	$(Q)$(GOARGS) go build -o $@ $(BUILD_PATH)
-	
+
 build/%.asc:
 	$(Q){ \
 	default_key=$$(gpgconf --list-options gpg | awk -F: '$$1 == "default-key" { gsub(/"/,""); print toupper($$10)}'); \
@@ -70,11 +70,15 @@ build/%.asc:
 
 test: dep test/markdown test/sanity test/unit install test/subcommand test/e2e
 
-test/ci-go: test/sanity test/unit test/subcommand test/e2e/go
+.PHONY: test
 
-test/ci-ansible: test/e2e/ansible
+test/ci-go: test/sanity test/unit test/subcommand test/e2e/go/buildah
 
-test/ci-helm: test/e2e/helm
+test/ci-ansible: test/e2e/ansible/buildah
+
+test/ci-helm: test/e2e/helm/buildah
+
+.PHONY: test/ci-go test/ci-ansible test/ci-helm
 
 test/sanity:
 	./hack/tests/sanity-check.sh
@@ -85,21 +89,31 @@ test/unit:
 test/subcommand:
 	./hack/tests/test-subcommand.sh
 
-test/e2e: test/e2e/go test/e2e/ansible test/e2e/helm
-
-test/e2e/go:
-	./hack/tests/e2e-go.sh $(ARGS)
-
-test/e2e/ansible: image/build/ansible
-	./hack/tests/e2e-ansible.sh
-
-test/e2e/helm: image/build/helm
-	./hack/tests/e2e-helm.sh
-
 test/markdown:
 	./hack/ci/marker --root=doc
 
-.PHONY: test test/sanity test/unit test/subcommand test/e2e test/e2e/go test/e2e/ansible test/e2e/helm test/ci-go test/ci-ansible test/ci-helm test/markdown
+.PHONY: test/sanity test/unit test/subcommand test/markdown
+
+test/e2e: test/e2e/go test/e2e/ansible test/e2e/helm
+
+test/e2e/buildah: test/e2e/go/buildah test/e2e/ansible/buildah test/e2e/helm/buildah
+
+test/e2e/go: test/e2e/go/docker
+
+test/e2e/go/%:
+	./hack/tests/e2e-go.sh --image-builder=$* $(ARGS)
+
+test/e2e/ansible: test/e2e/ansible/docker
+
+test/e2e/ansible/%: image/build/ansible
+	./hack/tests/e2e-ansible.sh --image-builder=$*
+
+test/e2e/helm: test/e2e/helm/docker
+
+test/e2e/helm/%: image/build/helm
+	./hack/tests/e2e-helm.sh --image-builder=$*
+
+.PHONY: test/e2e test/e2e/buildah test/e2e/go test/e2e/ansible test/e2e/helm
 
 image: image/build image/push
 

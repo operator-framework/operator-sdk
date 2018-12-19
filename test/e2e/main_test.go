@@ -21,9 +21,13 @@ import (
 	f "github.com/operator-framework/operator-sdk/pkg/test"
 )
 
-var e2eImageName *string
+var (
+	e2eImageName *string
+	imageBuilder *string
+)
 
 func TestMain(m *testing.M) {
 	e2eImageName = flag.String("image", "", "operator image name <repository>:<tag> used to push the image, defaults to none (builds image to local docker repo)")
+	imageBuilder = flag.String("image-builder", "docker", "OCI image builder. Must be one of: [docker, buildah].")
 	f.MainEntry(m)
 }

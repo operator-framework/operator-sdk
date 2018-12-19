@@ -1,7 +1,16 @@
 # Configure insecure docker registry for openshift
-sudo service docker stop
-sudo sed -i 's/DOCKER_OPTS=\"/DOCKER_OPTS=\"--insecure-registry 172.30.0.0\/16 /' /etc/default/docker
-sudo service docker start
+if [ ! -e /etc/docker/daemon.json ]; then
+    cat <<EOF > daemon.json
+{
+  "insecure-registries" : ["172.30.0.0/16"]
+}
+EOF
+    sudo mv daemon.json /etc/docker/
+else
+    sudo sed -i -E -e ':a;N;$!ba;s/(\{.+)\n\}/\1,\n  "insecure-registries" : \["172\.30\.0\.0\/16"\]\n\}/' /etc/docker/daemon.json
+fi
+sudo systemctl restart docker
+
 # Download oc to spin up openshift on local docker instance
 curl -Lo oc.tar.gz https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz
 # Put oc binary in path

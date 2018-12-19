@@ -33,10 +33,29 @@ func TestTestFrameworkDockerfile(t *testing.T) {
 	}
 }
 
-const testFrameworkDockerfileExp = `ARG BASEIMAGE
+const testFrameworkDockerfileExp = `# ARG before FROM must always be before the first FROM
+ARG BASEIMAGE
+# Test binary builder image
+FROM golang:1.10.3 AS builder
+
+ENV GOPATH /go
+ENV CGO_ENABLED 0
+ENV GOOS linux
+ENV GOARCH amd64
+
+WORKDIR /go/src/github.com/example-inc/app-operator
+COPY . /go/src/github.com/example-inc/app-operator
+
+ARG TESTDIR
+RUN go test -c -o /go/bin/app-operator-test ${TESTDIR}/...
+
+# Base image containing "app-operator" binary
 FROM ${BASEIMAGE}
-ADD build/_output/bin/app-operator-test /usr/local/bin/app-operator-test
+
+COPY --from=builder /go/bin/app-operator-test /usr/local/bin/app-operator-test
+
 ARG NAMESPACEDMAN
 ADD $NAMESPACEDMAN /namespaced.yaml
+
 ADD build/test-framework/go-test.sh /go-test.sh
 `

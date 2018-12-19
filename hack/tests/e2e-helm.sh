@@ -3,6 +3,7 @@
 source hack/lib/test_lib.sh
 
 DEST_IMAGE="quay.io/example/nginx-operator:v0.0.2"
+IMAGE_BUILDER="$(builderFromArgs $@)"
 
 set -ex
 
@@ -29,8 +30,10 @@ unset GOPATH GOROOT
 operator-sdk new nginx-operator --api-version=helm.example.com/v1alpha1 --kind=Nginx --type=helm
 pushd nginx-operator
 sed -i 's|\(FROM quay.io/operator-framework/helm-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
-
-operator-sdk build "$DEST_IMAGE"
+operator-sdk build "$DEST_IMAGE" --image-builder="$IMAGE_BUILDER"
+if [[ "$IMAGE_BUILDER" == "buildah" ]] && command -v buildah; then
+    buildah push "$DEST_IMAGE" docker-daemon:"$DEST_IMAGE"
+fi
 sed -i "s|REPLACE_IMAGE|$DEST_IMAGE|g" deploy/operator.yaml
 sed -i 's|Always|Never|g' deploy/operator.yaml
 sed -i 's|size: 3|replicaCount: 1|g' deploy/crds/helm_v1alpha1_nginx_cr.yaml

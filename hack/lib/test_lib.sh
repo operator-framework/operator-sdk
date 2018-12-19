@@ -48,3 +48,29 @@ function trap_add() {
                 fatal "unable to add to trap ${trap_add_name}"
     done
 }
+
+function parseFlag() {
+	echo "$(echo "$1" | grep -oE -e "--[^ =]*")"
+}
+
+function parseArg() {
+	echo "$(echo "$1" | awk '{ print gensub(/=/, " ", 1) }' | cut -d" " -f2)"
+}
+
+function builderFromArgs() {
+	IMAGE_BUILDER="docker"
+	while [[ $# -gt 0 ]]; do
+	  flag="$(parseFlag "$1")"
+	  arg="$2"
+	  if echo "$1" | grep -qoE -e "--[^ =]*="; then arg="$(parseArg "$1")"; fi
+	  case $flag in
+	    --image-builder)
+	      IMAGE_BUILDER="$arg"
+	      shift
+	      ;;
+	  esac
+	  shift
+	done
+
+	echo "$IMAGE_BUILDER"
+}

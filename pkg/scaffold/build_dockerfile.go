@@ -34,11 +34,24 @@ func (s *Dockerfile) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
-const dockerfileTmpl = `FROM alpine:3.8
+const dockerfileTmpl = `# Binary builder image
+FROM golang:1.10.3 AS builder
+
+ENV GOPATH /go
+ENV CGO_ENABLED 0
+ENV GOOS linux
+ENV GOARCH amd64
+
+WORKDIR /go/src/{{ .Repo }}
+COPY . /go/src/{{ .Repo }}
+
+RUN go build -o /go/bin/{{ .ProjectName }} {{ .Repo }}/cmd/manager
+
+# Base image
+FROM alpine:3.6
 
 RUN apk upgrade --update --no-cache
-
 USER nobody
 
-ADD build/_output/bin/{{.ProjectName}} /usr/local/bin/{{.ProjectName}}
+COPY --from=builder /go/bin/{{ .ProjectName }} /usr/local/bin/{{ .ProjectName }}
 `

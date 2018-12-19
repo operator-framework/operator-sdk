@@ -33,11 +33,24 @@ func TestDockerfile(t *testing.T) {
 	}
 }
 
-const dockerfileExp = `FROM alpine:3.8
+const dockerfileExp = `# Binary builder image
+FROM golang:1.10.3 AS builder
+
+ENV GOPATH /go
+ENV CGO_ENABLED 0
+ENV GOOS linux
+ENV GOARCH amd64
+
+WORKDIR /go/src/github.com/example-inc/app-operator
+COPY . /go/src/github.com/example-inc/app-operator
+
+RUN go build -o /go/bin/app-operator github.com/example-inc/app-operator/cmd/manager
+
+# Base image
+FROM alpine:3.6
 
 RUN apk upgrade --update --no-cache
-
 USER nobody
 
-ADD build/_output/bin/app-operator /usr/local/bin/app-operator
+COPY --from=builder /go/bin/app-operator /usr/local/bin/app-operator
 `
