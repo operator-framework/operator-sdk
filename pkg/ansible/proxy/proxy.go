@@ -204,16 +204,15 @@ type HandlerChain func(http.Handler) http.Handler
 // Options will be used by the user to specify the desired details
 // for the proxy.
 type Options struct {
-	Address                 string
-	Port                    int
-	Handler                 HandlerChain
-	NoOwnerInjection        bool
-	KubeConfig              *rest.Config
-	Cache                   cache.Cache
-	RESTMapper              meta.RESTMapper
-	ControllerMap           *aoController.ControllerMap
-	Manager                 manager.Manager
-	WatchDependentResources bool
+	Address          string
+	Port             int
+	Handler          HandlerChain
+	NoOwnerInjection bool
+	KubeConfig       *rest.Config
+	Cache            cache.Cache
+	RESTMapper       meta.RESTMapper
+	ControllerMap    *aoController.ControllerMap
+	Manager          manager.Manager
 }
 
 // Run will start a proxy server in a go routine that returns on the error
@@ -227,7 +226,7 @@ func Run(done chan error, o Options) error {
 	if o.Handler != nil {
 		server.Handler = o.Handler(server.Handler)
 	}
-	if o.ControllerMap == nil && o.WatchDependentResources {
+	if o.ControllerMap == nil {
 		return fmt.Errorf("failed to get controller map from options")
 	}
 
