@@ -149,7 +149,7 @@ func parseGroupVersions() (map[string][]string, error) {
 
 // createFQApis return a string of all fully qualified pkg + groups + versions
 // of pkg and gvs in the format:
-// "pkg/groupA/v1,pkg/groupA/v2,pkg/groupB:v1"
+// "pkg/groupA/v1,pkg/groupA/v2,pkg/groupB/v1"
 func createFQApis(pkg string, gvs map[string][]string) string {
 	gn := 0
 	sb := &strings.Builder{}
