@@ -22,6 +22,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
 	"github.com/ghodss/yaml"
@@ -82,8 +83,8 @@ func (s *Crd) CustomRender() ([]byte, error) {
 	// so generate crds in a cached, in-memory fs to extract the data we need.
 	// Note that controller-tools' generator makes different assumptions about
 	// how crd field values are structured, so we don't want to use the generated
-	// files directly.
-	if !cache.fileExists(path) {
+	// files directly. This generator will fail if not in a Go project.
+	if !cache.fileExists(path) && projutil.IsOperatorGo() {
 		g := &crdgenerator.Generator{
 			RootPath:          s.AbsProjectPath,
 			Domain:            "placeholder", // Our crds don't use this value.
