@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/events"
@@ -46,13 +45,6 @@ type Options struct {
 	ReconcilePeriod         time.Duration
 	ManageStatus            bool
 	WatchDependentResources bool
-}
-
-// ControllerMap - map of GVK to controller
-type ControllerMap struct {
-	sync.RWMutex
-	internal map[schema.GroupVersionKind]controller.Controller
-	watch    map[schema.GroupVersionKind]bool
 }
 
 // Add - Creates a new ansible operator controller and adds it to the manager
@@ -101,35 +93,4 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 		os.Exit(1)
 	}
 	return &c
-}
-
-func NewControllerMap() *ControllerMap {
-	return &ControllerMap{
-		internal: make(map[schema.GroupVersionKind]controller.Controller),
-		watch:    make(map[schema.GroupVersionKind]bool),
-	}
-}
-
-func (cm *ControllerMap) Get(key schema.GroupVersionKind) (controller controller.Controller, watch, ok bool) {
-	cm.RLock()
-	defer cm.RUnlock()
-	result, ok := cm.internal[key]
-	if !ok {
-		return result, ok, false
-	}
-	watch, ok = cm.watch[key]
-	return result, watch, ok
-}
-
-func (cm *ControllerMap) Delete(key schema.GroupVersionKind) {
-	cm.Lock()
-	defer cm.Unlock()
-	delete(cm.internal, key)
-}
-
-func (cm *ControllerMap) Store(key schema.GroupVersionKind, value controller.Controller, watch bool) {
-	cm.Lock()
-	defer cm.Unlock()
-	cm.internal[key] = value
-	cm.watch[key] = watch
 }

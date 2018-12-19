@@ -28,8 +28,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"strings"
+	"sync"
 
-	aoController "github.com/operator-framework/operator-sdk/pkg/ansible/controller"
 	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,10 +39,18 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
+
+// ControllerMap - map of GVK to controller
+type ControllerMap struct {
+	sync.RWMutex
+	internal map[schema.GroupVersionKind]controller.Controller
+	watch    map[schema.GroupVersionKind]bool
+}
 
 // CacheResponseHandler will handle proxied requests and check if the requested
 // resource exists in our cache. If it does then there is no need to bombard
@@ -130,7 +138,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 // InjectOwnerReferenceHandler will handle proxied requests and inject the
 // owner refernece found in the authorization header. The Authorization is
 // then deleted so that the proxy can re-set with the correct authorization.
-func InjectOwnerReferenceHandler(h http.Handler, mgr manager.Manager, cMap *aoController.ControllerMap) http.Handler {
+func InjectOwnerReferenceHandler(h http.Handler, mgr manager.Manager, cMap *ControllerMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.Method == http.MethodPost {
 			log.Info("injecting owner reference")
@@ -211,7 +219,7 @@ type Options struct {
 	KubeConfig       *rest.Config
 	Cache            cache.Cache
 	RESTMapper       meta.RESTMapper
-	ControllerMap    *aoController.ControllerMap
+	ControllerMap    *ControllerMap
 	Manager          manager.Manager
 }
 
@@ -268,7 +276,7 @@ func Run(done chan error, o Options) error {
 	return nil
 }
 
-func addWatchToController(owner metav1.OwnerReference, cMap *aoController.ControllerMap, resource *unstructured.Unstructured) error {
+func addWatchToController(owner metav1.OwnerReference, cMap *ControllerMap, resource *unstructured.Unstructured) error {
 	gv, err := schema.ParseGroupVersion(owner.APIVersion)
 	if err != nil {
 		return err
@@ -284,10 +292,41 @@ func addWatchToController(owner metav1.OwnerReference, cMap *aoController.Contro
 	}
 	// Add a watch to controller
 	if watch {
-		err = c.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{})
+		err = c.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{OwnerType: resource})
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func NewControllerMap() *ControllerMap {
+	return &ControllerMap{
+		internal: make(map[schema.GroupVersionKind]controller.Controller),
+		watch:    make(map[schema.GroupVersionKind]bool),
+	}
+}
+
+func (cm *ControllerMap) Get(key schema.GroupVersionKind) (controller controller.Controller, watch, ok bool) {
+	cm.RLock()
+	defer cm.RUnlock()
+	result, ok := cm.internal[key]
+	if !ok {
+		return result, ok, false
+	}
+	watch, ok = cm.watch[key]
+	return result, watch, ok
+}
+
+func (cm *ControllerMap) Delete(key schema.GroupVersionKind) {
+	cm.Lock()
+	defer cm.Unlock()
+	delete(cm.internal, key)
+}
+
+func (cm *ControllerMap) Store(key schema.GroupVersionKind, value controller.Controller, watch bool) {
+	cm.Lock()
+	defer cm.Unlock()
+	cm.internal[key] = value
+	cm.watch[key] = watch
 }

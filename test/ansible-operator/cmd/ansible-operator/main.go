@@ -17,7 +17,6 @@ package main
 import (
 	"runtime"
 
-	"github.com/operator-framework/operator-sdk/pkg/ansible/controller"
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
@@ -57,7 +56,7 @@ func main() {
 
 	printVersion()
 	done := make(chan error)
-	cMap := controller.NewControllerMap()
+	cMap := proxy.NewControllerMap()
 
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{

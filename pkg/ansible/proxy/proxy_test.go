@@ -21,7 +21,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/pkg/ansible/controller"
 	kcorev1 "k8s.io/api/core/v1"
 	kmetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -37,7 +36,7 @@ func TestHandler(t *testing.T) {
 		t.Fatalf("failed to instantiate manager: %v", err)
 	}
 	done := make(chan error)
-	cMap := controller.NewControllerMap()
+	cMap := NewControllerMap()
 	err = Run(done, Options{
 		Address:       "localhost",
 		Port:          8888,

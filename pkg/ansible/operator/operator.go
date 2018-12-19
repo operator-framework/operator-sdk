@@ -15,11 +15,13 @@
 package operator
 
 import (
+	"errors"
 	"math/rand"
 	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/controller"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/flags"
+	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
 
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -30,7 +32,7 @@ import (
 // Run - A blocking function which starts a controller-runtime manager
 // It starts an Operator by reading in the values in `./watches.yaml`, adds a controller
 // to the manager, and finally running the manager.
-func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags, cMap *controller.ControllerMap) {
+func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags, cMap *proxy.ControllerMap) {
 	watches, err := runner.NewFromWatches(f.WatchesFile)
 	if err != nil {
 		logf.Log.WithName("manager").Error(err, "failed to get watches")
@@ -48,9 +50,11 @@ func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags, cM
 		}
 		applyFlagsToControllerOptions(f, &o)
 		ctr := controller.Add(mgr, o)
-		if ctr != nil {
-			cMap.Store(o.GVK, *ctr, runner.GetWatchDependentResources())
+		if ctr == nil {
+			done <- errors.New("failed to add controller")
+			return
 		}
+		cMap.Store(o.GVK, *ctr, runner.GetWatchDependentResources())
 	}
 	done <- mgr.Start(c)
 }

@@ -29,7 +29,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	ansibleController "github.com/operator-framework/operator-sdk/pkg/ansible/controller"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	ansibleOperator "github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
@@ -166,7 +165,7 @@ func upLocalAnsible() {
 	printVersion()
 	log.Infof("watching namespace: %s", namespace)
 	done := make(chan error)
-	cMap := ansibleController.NewControllerMap()
+	cMap := proxy.NewControllerMap()
 
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{
