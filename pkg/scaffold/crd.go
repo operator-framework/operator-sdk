@@ -79,7 +79,7 @@ func (s *Crd) CustomRender() ([]byte, error) {
 	path := strings.Replace(filepath.Base(i.Path), "_crd.yaml", ".yaml", 1)
 
 	// controller-tools' generators read and make crds for all apis in pkg/apis,
-	// so enerate crds in a cached, in-memory fs to extract the data we need.
+	// so generate crds in a cached, in-memory fs to extract the data we need.
 	// Note that controller-tools' generator makes different assumptions about
 	// how crd field values are structured, so we don't want to use the generated
 	// files directly.
