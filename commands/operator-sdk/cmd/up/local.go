@@ -174,7 +174,6 @@ func upLocalAnsible() {
 		KubeConfig:    mgr.GetConfig(),
 		Cache:         mgr.GetCache(),
 		RESTMapper:    mgr.GetRESTMapper(),
-		Manager:       mgr,
 		ControllerMap: cMap,
 	})
 	if err != nil {

@@ -41,7 +41,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
@@ -138,7 +137,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 // InjectOwnerReferenceHandler will handle proxied requests and inject the
 // owner refernece found in the authorization header. The Authorization is
 // then deleted so that the proxy can re-set with the correct authorization.
-func InjectOwnerReferenceHandler(h http.Handler, mgr manager.Manager, cMap *ControllerMap) http.Handler {
+func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.Method == http.MethodPost {
 			log.Info("injecting owner reference")
@@ -220,7 +219,6 @@ type Options struct {
 	Cache            cache.Cache
 	RESTMapper       meta.RESTMapper
 	ControllerMap    *ControllerMap
-	Manager          manager.Manager
 }
 
 // Run will start a proxy server in a go routine that returns on the error
@@ -260,7 +258,7 @@ func Run(done chan error, o Options) error {
 	}
 
 	if !o.NoOwnerInjection {
-		server.Handler = InjectOwnerReferenceHandler(server.Handler, o.Manager, o.ControllerMap)
+		server.Handler = InjectOwnerReferenceHandler(server.Handler, o.ControllerMap)
 	}
 	// Always add cache handler
 	server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper)
