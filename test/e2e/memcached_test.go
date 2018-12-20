@@ -224,9 +224,12 @@ func TestMemcached(t *testing.T) {
 	}
 	// link local sdk to vendor if not in travis
 	if repo == "" {
-		os.RemoveAll("vendor/github.com/operator-framework/operator-sdk/pkg")
-		os.Symlink(filepath.Join(gopath, "src/github.com/operator-framework/operator-sdk/pkg"),
-			"vendor/github.com/operator-framework/operator-sdk/pkg")
+		for _, dir := range []string{"pkg", "internal"} {
+			repoDir := filepath.Join("github.com/operator-framework/operator-sdk", dir)
+			vendorDir := filepath.Join("vendor", repoDir)
+			os.RemoveAll(vendorDir)
+			os.Symlink(filepath.Join(gopath, "src", repoDir), vendorDir)
+		}
 	}
 
 	file, err := yamlutil.GenerateCombinedGlobalManifest()
