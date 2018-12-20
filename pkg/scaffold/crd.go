@@ -110,10 +110,11 @@ func (s *Crd) CustomRender() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		crd := new(apiextv1beta1.CustomResourceDefinition)
-		if err = yaml.Unmarshal(b, crd); err != nil {
+		dstCrd = new(apiextv1beta1.CustomResourceDefinition)
+		if err = yaml.Unmarshal(b, dstCrd); err != nil {
 			return nil, err
 		}
+		val := dstCrd.Spec.Validation.DeepCopy()
 
 		// If the crd exists at i.Path, append the validation spec to its crd spec.
 		if _, err := os.Stat(i.Path); err == nil {
@@ -126,28 +127,16 @@ func (s *Crd) CustomRender() ([]byte, error) {
 				if err = yaml.Unmarshal(cb, dstCrd); err != nil {
 					return nil, err
 				}
+				dstCrd.Spec.Validation = val
 			}
 		}
-		dstCrd.Spec.Validation = crd.Spec.Validation.DeepCopy()
 		// controller-tools does not set ListKind or Singular names.
 		dstCrd.Spec.Names = getCrdNamesForResource(s.Resource)
-		dstCrd.Spec.Subresources = &apiextv1beta1.CustomResourceSubresources{
-			Status: &apiextv1beta1.CustomResourceSubresourceStatus{},
-		}
+		// Remove controller-tools default label.
+		delete(dstCrd.Labels, "controller-tools.k8s.io")
 	}
-
-	b, err := yaml.Marshal(dstCrd)
-	if err != nil {
-		return nil, err
-	}
-	// Remove the "status" field from yaml data, which causes a
-	// resource creation error.
-	crdMap := make(map[string]interface{})
-	if err = yaml.Unmarshal(b, &crdMap); err != nil {
-		return nil, err
-	}
-	delete(crdMap, "status")
-	return yaml.Marshal(&crdMap)
+	addCrdStatus(dstCrd)
+	return getCrdBytes(dstCrd)
 }
 
 func newCrdForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {
@@ -178,4 +167,28 @@ func getCrdNamesForResource(r *Resource) apiextv1beta1.CustomResourceDefinitionN
 		Plural:   r.Resource,
 		Singular: r.LowerKind,
 	}
+}
+
+func addCrdStatus(crd *apiextv1beta1.CustomResourceDefinition) {
+	if crd.Spec.Subresources == nil {
+		crd.Spec.Subresources = &apiextv1beta1.CustomResourceSubresources{}
+	}
+	if crd.Spec.Subresources.Status == nil {
+		crd.Spec.Subresources.Status = &apiextv1beta1.CustomResourceSubresourceStatus{}
+	}
+}
+
+func getCrdBytes(crd *apiextv1beta1.CustomResourceDefinition) ([]byte, error) {
+	b, err := yaml.Marshal(crd)
+	if err != nil {
+		return nil, err
+	}
+	// Remove the "status" field from yaml data, which causes a
+	// resource creation error.
+	crdMap := make(map[string]interface{})
+	if err = yaml.Unmarshal(b, &crdMap); err != nil {
+		return nil, err
+	}
+	delete(crdMap, "status")
+	return yaml.Marshal(&crdMap)
 }
