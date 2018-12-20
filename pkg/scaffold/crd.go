@@ -81,13 +81,10 @@ func (s *Crd) CustomRender() ([]byte, error) {
 
 	// controller-tools' generators read and make crds for all apis in pkg/apis,
 	// so generate crds in a cached, in-memory fs to extract the data we need.
-	// Note that controller-tools' generator makes different assumptions about
-	// how crd field values are structured, so we don't want to use the generated
-	// files directly. This generator will fail if not in a Go project.
 	if !cache.fileExists(path) && projutil.IsOperatorGo() {
 		g := &crdgenerator.Generator{
 			RootPath:          s.AbsProjectPath,
-			Domain:            "placeholder", // Our crds don't use this value.
+			Domain:            strings.SplitN(s.Resource.FullGroup, ".", 2)[1],
 			OutputDir:         ".",
 			SkipMapValidation: false,
 			OutFs:             cache,
@@ -101,19 +98,18 @@ func (s *Crd) CustomRender() ([]byte, error) {
 	}
 
 	dstCrd := newCrdForResource(s.Resource)
-	var (
-		b   []byte
-		err error
-	)
 	// Get our generated crd's from the in-memory fs. If it doesn't exist in the
 	// fs, the corresponding API does not exist yet, so scaffold a fresh crd
 	// without a validation spec.
-	// If it does, and a local crd exists, append the validation spec. Otherwise,
-	// generate a fresh crd with the generated validation spec.
-	b, err = afero.ReadFile(cache, path)
-	if err != nil && !os.IsNotExist(err) {
+	// If the crd exists in the fs, and a local crd exists, append the validation
+	// spec. If a local crd does not exist, use the generated crd.
+	if _, err := cache.Stat(path); err != nil && !os.IsNotExist(err) {
 		return nil, err
-	} else {
+	} else if err == nil {
+		b, err := afero.ReadFile(cache, path)
+		if err != nil {
+			return nil, err
+		}
 		crd := new(apiextv1beta1.CustomResourceDefinition)
 		if err = yaml.Unmarshal(b, crd); err != nil {
 			return nil, err
@@ -133,9 +129,25 @@ func (s *Crd) CustomRender() ([]byte, error) {
 			}
 		}
 		dstCrd.Spec.Validation = crd.Spec.Validation.DeepCopy()
+		// controller-tools does not set ListKind or Singular names.
+		dstCrd.Spec.Names = getCrdNamesForResource(s.Resource)
+		dstCrd.Spec.Subresources = &apiextv1beta1.CustomResourceSubresources{
+			Status: &apiextv1beta1.CustomResourceSubresourceStatus{},
+		}
 	}
 
-	return yaml.Marshal(dstCrd)
+	b, err := yaml.Marshal(dstCrd)
+	if err != nil {
+		return nil, err
+	}
+	// Remove the "status" field from yaml data, which causes a
+	// resource creation error.
+	crdMap := make(map[string]interface{})
+	if err = yaml.Unmarshal(b, &crdMap); err != nil {
+		return nil, err
+	}
+	delete(crdMap, "status")
+	return yaml.Marshal(&crdMap)
 }
 
 func newCrdForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {
@@ -148,15 +160,22 @@ func newCrdForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {
 			Name: r.Resource + "." + r.FullGroup,
 		},
 		Spec: apiextv1beta1.CustomResourceDefinitionSpec{
-			Group: r.FullGroup,
-			Names: apiextv1beta1.CustomResourceDefinitionNames{
-				Kind:     r.Kind,
-				ListKind: r.Kind + "List",
-				Plural:   r.Resource,
-				Singular: r.LowerKind,
-			},
+			Group:   r.FullGroup,
+			Names:   getCrdNamesForResource(r),
 			Scope:   apiextv1beta1.NamespaceScoped,
 			Version: r.Version,
+			Subresources: &apiextv1beta1.CustomResourceSubresources{
+				Status: &apiextv1beta1.CustomResourceSubresourceStatus{},
+			},
 		},
+	}
+}
+
+func getCrdNamesForResource(r *Resource) apiextv1beta1.CustomResourceDefinitionNames {
+	return apiextv1beta1.CustomResourceDefinitionNames{
+		Kind:     r.Kind,
+		ListKind: r.Kind + "List",
+		Plural:   r.Resource,
+		Singular: r.LowerKind,
 	}
 }

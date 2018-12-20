@@ -68,6 +68,8 @@ spec:
     plural: memcacheds
     singular: memcached
   scope: Namespaced
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       properties:
@@ -95,10 +97,4 @@ spec:
           - nodes
           type: object
   version: v1alpha1
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 `
