@@ -22,6 +22,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
 	log "github.com/sirupsen/logrus"
@@ -39,9 +40,10 @@ func printVersion() {
 
 func main() {
 	aflags := aoflags.AddTo(pflag.CommandLine)
+	zf := zap.FactoryForFlags(pflag.CommandLine)
 	pflag.Parse()
 
-	logf.SetLogger(logf.ZapLogger(false))
+	logf.SetLogger(zf.Logger())
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
 	if found {

@@ -15,7 +15,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"runtime"
@@ -25,7 +24,9 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/controller"
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+	"github.com/spf13/pflag"
 
 	"k8s.io/helm/pkg/storage"
 	"k8s.io/helm/pkg/storage/driver"
@@ -44,9 +45,10 @@ func printVersion() {
 }
 
 func main() {
-	flag.Parse()
+	zf := zap.FactoryForFlags(pflag.CommandLine)
+	pflag.Parse()
 
-	logf.SetLogger(logf.ZapLogger(false))
+	logf.SetLogger(zf.Logger())
 
 	printVersion()
 

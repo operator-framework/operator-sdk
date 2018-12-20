@@ -36,6 +36,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/controller"
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	helmScaffold "github.com/operator-framework/operator-sdk/pkg/scaffold/helm"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
@@ -65,8 +66,12 @@ kubernetes cluster using a kubeconfig file.
 	upLocalCmd.Flags().StringVar(&operatorFlags, "operator-flags", "", "The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
 	upLocalCmd.Flags().StringVar(&namespace, "namespace", "default", "The namespace where the operator watches for changes.")
 	upLocalCmd.Flags().StringVar(&ldFlags, "go-ldflags", "", "Set Go linker options")
-	if projutil.GetOperatorType() == projutil.OperatorTypeAnsible {
+	switch projutil.GetOperatorType() {
+	case projutil.OperatorTypeAnsible:
 		ansibleOperatorFlags = flags.AddTo(upLocalCmd.Flags(), "(ansible operator)")
+		zapFactory = zap.FactoryForFlags(upLocalCmd.Flags())
+	case projutil.OperatorTypeHelm:
+		zapFactory = zap.FactoryForFlags(upLocalCmd.Flags())
 	}
 	return upLocalCmd
 }
@@ -76,6 +81,7 @@ var (
 	operatorFlags        string
 	namespace            string
 	ldFlags              string
+	zapFactory           *zap.Factory
 	ansibleOperatorFlags *flags.AnsibleOperatorFlags
 )
 
@@ -155,7 +161,7 @@ func upLocalAnsible() {
 		log.Fatalf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
 	}
 
-	logf.SetLogger(logf.ZapLogger(false))
+	logf.SetLogger(zapFactory.Logger())
 
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{Namespace: namespace})
 	if err != nil {
@@ -195,7 +201,7 @@ func upLocalHelm() {
 		log.Fatalf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
 	}
 
-	logf.SetLogger(logf.ZapLogger(false))
+	logf.SetLogger(zapFactory.Logger())
 
 	printVersion()
 
