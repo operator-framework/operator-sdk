@@ -35,7 +35,7 @@ import (
 )
 
 // checkSpecAndStat checks that the spec and status blocks exist. If noStore is set to true, this function
-// will not store the result of the test in sCTests and will instead just wait wait until the spec and
+// will not store the result of the test in scTests and will instead just wait until the spec and
 // status blocks exist or return an error after the timeout.
 func checkSpecAndStat(runtimeClient client.Client, obj unstructured.Unstructured, noStore bool) error {
 	testSpec := scorecardTest{testType: basicOperator, name: "Spec Block Exists", maximumPoints: 1}
