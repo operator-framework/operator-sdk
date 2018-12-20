@@ -31,26 +31,50 @@ a `deploy/test-pod.yaml` file that allows a user to run the tests as a pod on a 
 
 ```bash
 operator-sdk build quay.io/example/operator:v0.0.1
-
 # Output:
-building example-operator...
-
-building container quay.io/example/operator:v0.0.1...
-Sending build context to Docker daemon  163.9MB
-Step 1/4 : FROM alpine:3.6
- ---> 77144d8c6bdc
-Step 2/4 : ADD tmp/_output/bin/example-operator /usr/local/bin/example-operator
- ---> 2ada0d6ca93c
-Step 3/4 : RUN adduser -D example-operator
- ---> Running in 34b4bb507c14
-Removing intermediate container 34b4bb507c14
- ---> c671ec1cff03
-Step 4/4 : USER example-operator
- ---> Running in bd336926317c
-Removing intermediate container bd336926317c
- ---> d6b58a0fcb8c
-Successfully built d6b58a0fcb8c
+INFO[0000] Building Docker image quay.io/example/operator:v0.0.1
+Sending build context to Docker daemon  95.91MB
+Step 1/12 : FROM golang:1.10-alpine3.8 AS builder
+ ---> d89ca17afce3
+Step 2/12 : ENV GOPATH /go
+ ---> Running in 0f7a82becaba
+Removing intermediate container 0f7a82becaba
+ ---> 9a2e4638aae4
+Step 3/12 : ENV CGO_ENABLED 0
+ ---> Running in 7140b9ed72d5
+Removing intermediate container 7140b9ed72d5
+ ---> 6af8f74e4308
+Step 4/12 : ENV GOOS linux
+ ---> Running in 86c47e37b764
+Removing intermediate container 86c47e37b764
+ ---> 4296ffc4f36a
+Step 5/12 : ENV GOARCH amd64
+ ---> Running in f1e9339d770a
+Removing intermediate container f1e9339d770a
+ ---> 5320718b12f3
+Step 6/12 : WORKDIR /go/src/github.com/example-operator
+ ---> Running in 6a27aea0dd3d
+Removing intermediate container 6a27aea0dd3d
+ ---> de323b7a04ea
+Step 7/12 : COPY . /go/src/github.com/example-operator
+ ---> e72e7c21c249
+Step 8/12 : RUN go build -o /go/bin/example-operator github.com/example-operator/cmd/manager
+ ---> Running in ee71a050234e
+Removing intermediate container ee71a050234e
+ ---> 5850d6563778
+Step 9/12 : FROM alpine:3.8
+ ---> 196d12cf6ab1
+Step 10/12 : RUN apk upgrade --update --no-cache
+ ---> Using cache
+ ---> bf5988af5ee7
+Step 11/12 : USER nobody
+ ---> Using cache
+ ---> 8245f46747c1
+Step 12/12 : COPY --from=builder /go/bin/example-operator /usr/local/bin/example-operator
+ ---> a5b9eeaabf4f
+Successfully built a5b9eeaabf4f
 Successfully tagged quay.io/example/operator:v0.0.1
+INFO[0039] Operator build complete.
 ```
 
 ## completion
