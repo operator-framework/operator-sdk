@@ -119,6 +119,9 @@ $ kubectl delete -f deploy/role_binding.yaml
 $ kubectl delete -f deploy/service_account.yaml
 $ kubectl delete -f deploy/crds/app_v1alpha1_appservice_crd.yaml
 ```
+## Command Line Interface
+
+To learn more about the SDK CLI, see the [SDK CLI Reference][sdk_cli_ref], or run `operator-sdk [command] -h`.
 
 ## User Guides
 
@@ -144,6 +147,7 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 
 [operator_link]: https://coreos.com/operators/
 [proposals_docs]: ./doc/proposals
+[sdk_cli_ref]: ./doc/sdk-cli-reference.md
 [guide]: ./doc/user-guide.md
 [samples]: https://github.com/operator-framework/operator-sdk-samples
 [of-home]: https://github.com/operator-framework

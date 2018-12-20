@@ -106,12 +106,17 @@
   version = "v0.2.0"
 
 [[projects]]
-  digest = "1:83222dd265299f065a2ae969c7780b6c6a225c770975051955320a95b0526239"
+  digest = "1:8c0d543ff6b636f293a99ae8479fbdb4b3adc89dc4cedf5af9f29bf06ef61d90"
   name = "github.com/coreos/prometheus-operator"
-  packages = ["pkg/client/monitoring/v1"]
+  packages = [
+    "pkg/apis/monitoring",
+    "pkg/apis/monitoring/v1",
+    "pkg/client/versioned/scheme",
+    "pkg/client/versioned/typed/monitoring/v1",
+  ]
   pruneopts = ""
-  revision = "4a7fea51ab3f10329472c07028354617fb6635fe"
-  version = "v0.24.0"
+  revision = "72ec4b9b16ef11700724dc71fec77112536eed40"
+  version = "v0.26.0"
 
 [[projects]]
   digest = "1:0deddd908b6b4b768cfc272c16ee61e7088a60f7fe2f06c547bd3d8e1f8b8e77"
@@ -1119,7 +1124,6 @@
   digest = "1:7c2cc0050e1fb85b8f900d1f8debb02bd4b3985b6dc18d0137ed8db8cca84dd7"
   name = "k8s.io/client-go"
   packages = [
-    "deprecated-dynamic",
     "discovery",
     "discovery/cached",
     "dynamic",
@@ -1259,8 +1263,7 @@
   version = "kubernetes-1.12.3"
 
 [[projects]]
-  branch = "master"
-  digest = "1:27b5d6ad25d086dda2c482099d4b918a2c3e947f80e0671fa366732daf59afed"
+  digest = "1:a2f78b8fd86be41f2aa77404245aed4f4f410ac3aabc5f3bd9bd1fcc09076c53"
   name = "k8s.io/kube-openapi"
   packages = [
     "pkg/common",
@@ -1268,7 +1271,7 @@
     "pkg/util/proto/validation",
   ]
   pruneopts = ""
-  revision = "e494cc58111187acad93e64529228a2fc0153e39"
+  revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
 
 [[projects]]
   digest = "1:49553260d1b581e741aac6f8ba6a898921538cf40d3809bdf938692d3fa6dd6a"
@@ -1484,7 +1487,8 @@
   input-imports = [
     "github.com/BurntSushi/toml",
     "github.com/coreos/go-semver/semver",
-    "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1",
+    "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1",
+    "github.com/coreos/prometheus-operator/pkg/client/versioned/typed/monitoring/v1",
     "github.com/ghodss/yaml",
     "github.com/go-logr/logr",
     "github.com/markbates/inflect",
@@ -1497,6 +1501,7 @@
     "github.com/sirupsen/logrus",
     "github.com/spf13/afero",
     "github.com/spf13/cobra",
+    "github.com/spf13/pflag",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
     "golang.org/x/tools/imports",
@@ -1551,8 +1556,10 @@
     "sigs.k8s.io/controller-runtime/pkg/client/fake",
     "sigs.k8s.io/controller-runtime/pkg/controller",
     "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil",
+    "sigs.k8s.io/controller-runtime/pkg/event",
     "sigs.k8s.io/controller-runtime/pkg/handler",
     "sigs.k8s.io/controller-runtime/pkg/manager",
+    "sigs.k8s.io/controller-runtime/pkg/predicate",
     "sigs.k8s.io/controller-runtime/pkg/reconcile",
     "sigs.k8s.io/controller-runtime/pkg/runtime/log",
     "sigs.k8s.io/controller-runtime/pkg/runtime/scheme",

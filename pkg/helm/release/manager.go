@@ -146,12 +146,19 @@ func (m *manager) Sync(ctx context.Context) error {
 }
 
 func (m manager) syncReleaseStatus(status types.HelmAppStatus) error {
-	if status.Release == nil {
+	var release *rpb.Release
+	for _, condition := range status.Conditions {
+		if condition.Type == types.ConditionDeployed && condition.Status == types.StatusTrue {
+			release = condition.Release
+			break
+		}
+	}
+	if release == nil {
 		return nil
 	}
 
-	name := status.Release.GetName()
-	version := status.Release.GetVersion()
+	name := release.GetName()
+	version := release.GetVersion()
 	_, err := m.storageBackend.Get(name, version)
 	if err == nil {
 		return nil
@@ -160,7 +167,7 @@ func (m manager) syncReleaseStatus(status types.HelmAppStatus) error {
 	if !notFoundErr(err) {
 		return err
 	}
-	return m.storageBackend.Create(status.Release)
+	return m.storageBackend.Create(release)
 }
 
 func notFoundErr(err error) bool {

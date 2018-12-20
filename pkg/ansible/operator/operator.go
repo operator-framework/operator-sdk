@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/controller"
+	"github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
 
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -29,8 +30,8 @@ import (
 // Run - A blocking function which starts a controller-runtime manager
 // It starts an Operator by reading in the values in `./watches.yaml`, adds a controller
 // to the manager, and finally running the manager.
-func Run(done chan error, mgr manager.Manager, watchesPath string, reconcilePeriod time.Duration) {
-	watches, err := runner.NewFromWatches(watchesPath)
+func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags) {
+	watches, err := runner.NewFromWatches(f.WatchesFile)
 	if err != nil {
 		logf.Log.WithName("manager").Error(err, "failed to get watches")
 		done <- err
@@ -41,16 +42,16 @@ func Run(done chan error, mgr manager.Manager, watchesPath string, reconcilePeri
 
 	for gvk, runner := range watches {
 		o := controller.Options{
-			GVK:             gvk,
-			Runner:          runner,
-			ReconcilePeriod: reconcilePeriod,
-			ManageStatus:    runner.GetManageStatus(),
+			GVK:          gvk,
+			Runner:       runner,
+			ManageStatus: runner.GetManageStatus(),
 		}
-		d, ok := runner.GetReconcilePeriod()
-		if ok {
-			o.ReconcilePeriod = d
-		}
+		applyFlagsToControllerOptions(f, &o)
 		controller.Add(mgr, o)
 	}
 	done <- mgr.Start(c)
+}
+
+func applyFlagsToControllerOptions(f *flags.AnsibleOperatorFlags, o *controller.Options) {
+	o.ReconcilePeriod = f.ReconcilePeriod
 }

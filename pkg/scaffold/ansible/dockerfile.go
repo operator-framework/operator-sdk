@@ -16,9 +16,11 @@ package ansible
 
 import (
 	"path/filepath"
+	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/version"
 )
 
 //Dockerfile - docker file for creating image
@@ -27,6 +29,7 @@ type Dockerfile struct {
 
 	GeneratePlaybook bool
 	RolesDir         string
+	ImageTag         string
 }
 
 // GetInput - gets the input
@@ -35,11 +38,12 @@ func (d *Dockerfile) GetInput() (input.Input, error) {
 		d.Path = filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
 	}
 	d.RolesDir = RolesDir
+	d.ImageTag = strings.TrimSuffix(version.Version, "+git")
 	d.TemplateBody = dockerFileAnsibleTmpl
 	return d.Input, nil
 }
 
-const dockerFileAnsibleTmpl = `FROM quay.io/water-hole/ansible-operator
+const dockerFileAnsibleTmpl = `FROM quay.io/operator-framework/ansible-operator:{{.ImageTag}}
 
 COPY {{.RolesDir}}/ ${HOME}/{{.RolesDir}}/
 {{- if .GeneratePlaybook }}

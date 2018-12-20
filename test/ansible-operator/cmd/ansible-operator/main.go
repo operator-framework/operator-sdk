@@ -15,16 +15,17 @@
 package main
 
 import (
-	"flag"
+	"os"
 	"runtime"
-	"time"
 
+	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -37,13 +38,17 @@ func printVersion() {
 }
 
 func main() {
-	flag.Parse()
+	aflags := aoflags.AddTo(pflag.CommandLine)
+	pflag.Parse()
 
 	logf.SetLogger(logf.ZapLogger(false))
 
-	namespace, err := k8sutil.GetWatchNamespace()
-	if err != nil {
-		log.Fatalf("failed to get watch namespace: (%v)", err)
+	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
+	if found {
+		log.Infof("Watching %v namespace.", namespace)
+	} else {
+		log.Infof("%v environment variable not set. This operator is watching all namespaces.",
+			k8sutil.WatchNamespaceEnvVar)
 	}
 
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{
@@ -69,7 +74,7 @@ func main() {
 	}
 
 	// start the operator
-	go operator.Run(done, mgr, "/opt/ansible/watches.yaml", time.Minute)
+	go operator.Run(done, mgr, aflags)
 
 	// wait for either to finish
 	err = <-done
