@@ -34,9 +34,9 @@ func TestCRDGoProject(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Set the project and repo paths to {abs}/testData, which contains pkg/apis
+	// Set the project and repo paths to {abs}/_testdata, which contains pkg/apis
 	// for the memcached-operator.
-	td := "testData"
+	td := "_testdata"
 	repo := absPath[strings.Index(absPath, "github.com"):]
 	cfg := &input.Config{
 		Repo:           filepath.Join(repo, td),
