@@ -23,7 +23,6 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -51,6 +50,8 @@ func CombineManifests(base []byte, manifests ...[]byte) []byte {
 	return base
 }
 
+const deployDir = "deploy"
+
 // GenerateCombinedNamespacedManifest creates a temporary manifest yaml
 // containing all standard namespaced resource manifests combined into 1 file
 func GenerateCombinedNamespacedManifest() (*os.File, error) {
@@ -60,19 +61,19 @@ func GenerateCombinedNamespacedManifest() (*os.File, error) {
 	}
 	defer file.Close()
 
-	sa, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.ServiceAccountYamlFile))
+	sa, err := ioutil.ReadFile(filepath.Join(deployDir, "service_account.yaml"))
 	if err != nil {
 		log.Warnf("could not find the serviceaccount manifest: (%v)", err)
 	}
-	role, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleYamlFile))
+	role, err := ioutil.ReadFile(filepath.Join(deployDir, "role.yaml"))
 	if err != nil {
 		log.Warnf("could not find role manifest: (%v)", err)
 	}
-	roleBinding, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleBindingYamlFile))
+	roleBinding, err := ioutil.ReadFile(filepath.Join(deployDir, "role_binding.yaml"))
 	if err != nil {
 		log.Warnf("could not find role_binding manifest: (%v)", err)
 	}
-	operator, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.OperatorYamlFile))
+	operator, err := ioutil.ReadFile(filepath.Join(deployDir, "operator.yaml"))
 	if err != nil {
 		return nil, fmt.Errorf("could not find operator manifest: (%v)", err)
 	}
@@ -100,16 +101,17 @@ func GenerateCombinedGlobalManifest() (*os.File, error) {
 	}
 	defer file.Close()
 
-	files, err := ioutil.ReadDir(scaffold.CrdsDir)
+	crdsDir := filepath.Join(deployDir, "crds")
+	files, err := ioutil.ReadDir(crdsDir)
 	if err != nil {
 		return nil, fmt.Errorf("could not read deploy directory: (%v)", err)
 	}
 	combined := []byte{}
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), "crd.yaml") {
-			fileBytes, err := ioutil.ReadFile(filepath.Join(scaffold.CrdsDir, file.Name()))
+			fileBytes, err := ioutil.ReadFile(filepath.Join(crdsDir, file.Name()))
 			if err != nil {
-				return nil, fmt.Errorf("could not read file %s: (%v)", filepath.Join(scaffold.CrdsDir, file.Name()), err)
+				return nil, fmt.Errorf("could not read file %s: (%v)", filepath.Join(crdsDir, file.Name()), err)
 			}
 			combined = CombineManifests(combined, fileBytes)
 		}
