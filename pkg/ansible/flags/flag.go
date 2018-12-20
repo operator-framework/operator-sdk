@@ -15,31 +15,21 @@
 package flags
 
 import (
-	"strings"
-	"time"
-
+	"github.com/operator-framework/operator-sdk/pkg/flags"
 	"github.com/spf13/pflag"
 )
 
 // AnsibleOperatorFlags - Options to be used by an ansible operator
 type AnsibleOperatorFlags struct {
-	ReconcilePeriod time.Duration
-	WatchesFile     string
+	flags.ReconcilePeriodFlag
+	flags.WatchesFileFlag
 }
 
 // AddTo - Add the ansible operator flags to the the flagset
 // helpTextPrefix will allow you add a prefix to default help text. Joined by a space.
 func AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) *AnsibleOperatorFlags {
 	aof := &AnsibleOperatorFlags{}
-	flagSet.DurationVar(&aof.ReconcilePeriod,
-		"reconcile-period",
-		time.Minute,
-		strings.Join(append(helpTextPrefix, "Default reconcile period for controllers"), " "),
-	)
-	flagSet.StringVar(&aof.WatchesFile,
-		"watches-file",
-		"./watches.yaml",
-		strings.Join(append(helpTextPrefix, "Path to the watches file to use"), " "),
-	)
+	aof.ReconcilePeriodFlag.AddTo(flagSet, helpTextPrefix...)
+	aof.WatchesFileFlag.AddTo(flagSet, helpTextPrefix...)
 	return aof
 }
