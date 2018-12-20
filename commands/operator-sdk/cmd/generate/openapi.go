@@ -98,7 +98,10 @@ func OpenAPIGen() {
 				if err != nil {
 					log.Fatal(err)
 				}
-				if err = s.Execute(cfg, &scaffold.Crd{Resource: r}); err != nil {
+				err = s.Execute(cfg,
+					&scaffold.Crd{Resource: r, IsOperatorGo: projutil.IsOperatorGo()},
+				)
+				if err != nil {
 					log.Fatal(err)
 				}
 			}

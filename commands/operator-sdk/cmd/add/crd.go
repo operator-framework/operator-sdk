@@ -69,7 +69,7 @@ func crdFunc(cmd *cobra.Command, args []string) {
 
 	s := scaffold.Scaffold{}
 	err = s.Execute(cfg,
-		&scaffold.Crd{Resource: resource},
+		&scaffold.Crd{Resource: resource, IsOperatorGo: projutil.IsOperatorGo()},
 		&scaffold.Cr{Resource: resource},
 	)
 	if err != nil {

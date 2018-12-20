@@ -89,7 +89,7 @@ func apiRun(cmd *cobra.Command, args []string) {
 		&scaffold.Register{Resource: r},
 		&scaffold.Doc{Resource: r},
 		&scaffold.Cr{Resource: r},
-		&scaffold.Crd{Resource: r},
+		&scaffold.Crd{Resource: r, IsOperatorGo: projutil.IsOperatorGo()},
 	)
 	if err != nil {
 		log.Fatalf("add scaffold failed: (%v)", err)

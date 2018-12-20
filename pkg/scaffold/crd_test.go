@@ -47,7 +47,7 @@ func TestCRDGoProject(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() { os.Chdir(absPath) }()
-	err = s.Execute(cfg, &Crd{Resource: r})
+	err = s.Execute(cfg, &Crd{Resource: r, IsOperatorGo: true})
 	if err != nil {
 		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}

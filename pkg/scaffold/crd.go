@@ -22,7 +22,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
 	"github.com/ghodss/yaml"
@@ -38,6 +37,9 @@ type Crd struct {
 
 	// Resource defines the inputs for the new custom resource definition
 	Resource *Resource
+
+	// IsOperatorGo is true when the operator is written in Go.
+	IsOperatorGo bool
 }
 
 func (s *Crd) GetInput() (input.Input, error) {
@@ -81,7 +83,7 @@ func (s *Crd) CustomRender() ([]byte, error) {
 
 	// controller-tools' generators read and make crds for all apis in pkg/apis,
 	// so generate crds in a cached, in-memory fs to extract the data we need.
-	if !cache.fileExists(path) && projutil.IsOperatorGo() {
+	if !cache.fileExists(path) && s.IsOperatorGo {
 		g := &crdgenerator.Generator{
 			RootPath:          s.AbsProjectPath,
 			Domain:            strings.SplitN(s.Resource.FullGroup, ".", 2)[1],
