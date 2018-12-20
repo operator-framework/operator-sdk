@@ -35,7 +35,7 @@ func (s *Dockerfile) GetInput() (input.Input, error) {
 }
 
 const dockerfileTmpl = `# Binary builder image
-FROM golang:1.10.3-alpine3.8 AS builder
+FROM golang:1.10-alpine3.8 AS builder
 
 ENV GOPATH /go
 ENV CGO_ENABLED 0

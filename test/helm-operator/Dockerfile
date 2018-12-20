@@ -1,4 +1,4 @@
-FROM alpine:3.6
+FROM alpine:3.8
 
 ENV OPERATOR=/usr/local/bin/helm-operator \
     USER_UID=1001 \

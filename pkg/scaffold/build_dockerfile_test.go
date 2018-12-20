@@ -34,7 +34,7 @@ func TestDockerfile(t *testing.T) {
 }
 
 const dockerfileExp = `# Binary builder image
-FROM golang:1.10.3 AS builder
+FROM golang:1.10-alpine3.8 AS builder
 
 ENV GOPATH /go
 ENV CGO_ENABLED 0
@@ -47,7 +47,7 @@ COPY . /go/src/github.com/example-inc/app-operator
 RUN go build -o /go/bin/app-operator github.com/example-inc/app-operator/cmd/manager
 
 # Base image
-FROM alpine:3.6
+FROM alpine:3.8
 
 RUN apk upgrade --update --no-cache
 USER nobody
