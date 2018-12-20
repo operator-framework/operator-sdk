@@ -23,7 +23,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-func TestCRD(t *testing.T) {
+func TestCRDGoProject(t *testing.T) {
 	r, err := NewResource("cache.example.com/v1alpha1", "Memcached")
 	if err != nil {
 		t.Fatal(err)
@@ -44,18 +44,19 @@ func TestCRD(t *testing.T) {
 	if err := os.Chdir(cfg.AbsProjectPath); err != nil {
 		t.Fatal(err)
 	}
+	defer func() { os.Chdir(absPath) }()
 	err = s.Execute(cfg, &Crd{Resource: r})
 	if err != nil {
 		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
 
-	if crdExp != buf.String() {
-		diffs := diffutil.Diff(crdExp, buf.String())
+	if crdGoExp != buf.String() {
+		diffs := diffutil.Diff(crdGoExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
 
-const crdExp = `apiVersion: apiextensions.k8s.io/v1beta1
+const crdGoExp = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   creationTimestamp: null
@@ -96,5 +97,40 @@ spec:
           required:
           - nodes
           type: object
+  version: v1alpha1
+`
+
+func TestCrdNonGoProject(t *testing.T) {
+	r, err := NewResource(appApiVersion, appKind)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, buf := setupScaffoldAndWriter()
+	err = s.Execute(appConfig, &Crd{Resource: r})
+	if err != nil {
+		t.Fatalf("failed to execute the scaffold: (%v)", err)
+	}
+
+	if crdNonGoExp != buf.String() {
+		diffs := diffutil.Diff(crdNonGoExp, buf.String())
+		t.Fatalf("expected vs actual differs.\n%v", diffs)
+	}
+}
+
+const crdNonGoExp = `apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  name: appservices.app.example.com
+spec:
+  group: app.example.com
+  names:
+    kind: AppService
+    listKind: AppServiceList
+    plural: appservices
+    singular: appservice
+  scope: Namespaced
+  subresources:
+    status: {}
   version: v1alpha1
 `
