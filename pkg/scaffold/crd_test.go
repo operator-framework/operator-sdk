@@ -17,6 +17,7 @@ package scaffold
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
@@ -33,13 +34,14 @@ func TestCRDGoProject(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Set the project and repo paths to {abs}/test/test-framework, which
-	// contains pkg/apis for the memcached-operator.
-	tfDir := filepath.Join("test", "test-framework")
+	// Set the project and repo paths to {abs}/testData, which contains pkg/apis
+	// for the memcached-operator.
+	td := "testData"
+	repo := absPath[strings.Index(absPath, "github.com"):]
 	cfg := &input.Config{
-		Repo:           filepath.Join("github.com", "operator-framework", "operator-sdk", tfDir),
-		AbsProjectPath: filepath.Join(filepath.Dir(filepath.Dir(absPath)), tfDir),
-		ProjectName:    filepath.Base(tfDir),
+		Repo:           filepath.Join(repo, td),
+		AbsProjectPath: filepath.Join(absPath, td),
+		ProjectName:    td,
 	}
 	if err := os.Chdir(cfg.AbsProjectPath); err != nil {
 		t.Fatal(err)
