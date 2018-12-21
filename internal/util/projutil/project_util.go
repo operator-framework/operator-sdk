@@ -21,6 +21,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/helm"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -28,8 +31,6 @@ import (
 const (
 	srcDir          = "src"
 	mainFile        = "./cmd/manager/main.go"
-	rolesDir        = "./roles"
-	helmChartsDir   = "./helm-charts"
 	buildDockerfile = "./build/Dockerfile"
 )
 
@@ -101,10 +102,10 @@ func GetOperatorType() OperatorType {
 	if _, err := os.Stat(mainFile); err == nil {
 		return OperatorTypeGo
 	}
-	if stat, err := os.Stat(rolesDir); err == nil && stat.IsDir() {
+	if stat, err := os.Stat(ansible.RolesDir); err == nil && stat.IsDir() {
 		return OperatorTypeAnsible
 	}
-	if stat, err := os.Stat(helmChartsDir); err == nil && stat.IsDir() {
+	if stat, err := os.Stat(helm.HelmChartsDir); err == nil && stat.IsDir() {
 		return OperatorTypeHelm
 	}
 	return OperatorTypeUnknown
