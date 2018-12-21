@@ -83,7 +83,7 @@ func (s *Crd) CustomRender() ([]byte, error) {
 
 	// controller-tools' generators read and make crds for all apis in pkg/apis,
 	// so generate crds in a cached, in-memory fs to extract the data we need.
-	if !cache.fileExists(path) && s.IsOperatorGo {
+	if s.IsOperatorGo && !cache.fileExists(path) {
 		g := &crdgenerator.Generator{
 			RootPath:          s.AbsProjectPath,
 			Domain:            strings.SplitN(s.Resource.FullGroup, ".", 2)[1],

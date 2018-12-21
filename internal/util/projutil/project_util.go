@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	srcDir          = "src"
+	SrcDir          = "src"
 	mainFile        = "./cmd/manager/main.go"
 	buildDockerfile = "./build/Dockerfile"
 )
@@ -87,7 +87,7 @@ func MustGetwd() string {
 // e.g: "github.com/example-inc/app-operator"
 func CheckAndGetProjectGoPkg() string {
 	gopath := SetGopath(GetGopath())
-	goSrc := filepath.Join(gopath, srcDir)
+	goSrc := filepath.Join(gopath, SrcDir)
 	wd := MustGetwd()
 	currPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
 	// strip any "/" prefix from the repo path.
