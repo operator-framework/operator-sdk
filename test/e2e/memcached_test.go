@@ -228,7 +228,7 @@ func TestMemcached(t *testing.T) {
 			repoDir := filepath.Join("github.com/operator-framework/operator-sdk", dir)
 			vendorDir := filepath.Join("vendor", repoDir)
 			os.RemoveAll(vendorDir)
-			os.Symlink(filepath.Join(gopath, "src", repoDir), vendorDir)
+			os.Symlink(filepath.Join(gopath, projutil.SrcDir, repoDir), vendorDir)
 		}
 	}
 
