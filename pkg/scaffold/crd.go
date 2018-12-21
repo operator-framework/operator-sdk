@@ -137,7 +137,7 @@ func (s *Crd) CustomRender() ([]byte, error) {
 		// Remove controller-tools default label.
 		delete(dstCrd.Labels, "controller-tools.k8s.io")
 	}
-	addCrdStatus(dstCrd)
+	addCrdSubresource(dstCrd)
 	return getCrdBytes(dstCrd)
 }
 
@@ -171,7 +171,7 @@ func getCrdNamesForResource(r *Resource) apiextv1beta1.CustomResourceDefinitionN
 	}
 }
 
-func addCrdStatus(crd *apiextv1beta1.CustomResourceDefinition) {
+func addCrdSubresource(crd *apiextv1beta1.CustomResourceDefinition) {
 	if crd.Spec.Subresources == nil {
 		crd.Spec.Subresources = &apiextv1beta1.CustomResourceSubresources{}
 	}
