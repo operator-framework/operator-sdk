@@ -36,12 +36,14 @@ func TestHandler(t *testing.T) {
 		t.Fatalf("failed to instantiate manager: %v", err)
 	}
 	done := make(chan error)
+	cMap := NewControllerMap()
 	err = Run(done, Options{
-		Address:    "localhost",
-		Port:       8888,
-		KubeConfig: mgr.GetConfig(),
-		Cache:      nil,
-		RESTMapper: mgr.GetRESTMapper(),
+		Address:       "localhost",
+		Port:          8888,
+		KubeConfig:    mgr.GetConfig(),
+		Cache:         nil,
+		RESTMapper:    mgr.GetRESTMapper(),
+		ControllerMap: cMap,
 	})
 	if err != nil {
 		t.Fatalf("error starting proxy: %v", err)
