@@ -93,10 +93,16 @@ func TestMemcached(t *testing.T) {
 	ctx.AddCleanupFn(func() error { return os.RemoveAll(absProjectPath) })
 
 	os.Chdir("memcached-operator")
-	prSlug, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
-	if ok && prSlug != "" {
-		prSha, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SHA")
-		if ok && prSha != "" {
+	repo, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
+	if repo == "" {
+		repo, ok = os.LookupEnv("TRAVIS_REPO_SLUG")
+	}
+	if ok && repo != "" && repo != "operator-framework/operator-sdk" {
+		commitSha, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SHA")
+		if commitSha == "" {
+			commitSha, ok = os.LookupEnv("TRAVIS_COMMIT")
+		}
+		if ok && commitSha != "" {
 			gopkg, err := ioutil.ReadFile("Gopkg.toml")
 			if err != nil {
 				t.Fatal(err)
@@ -111,7 +117,7 @@ func TestMemcached(t *testing.T) {
 			// correctly.
 			gopkgString := string(gopkg)
 			gopkgLoc := strings.LastIndex(gopkgString, "\n  name = \"github.com/operator-framework/operator-sdk\"\n")
-			gopkgString = gopkgString[:gopkgLoc] + "\n  source = \"https://github.com/" + prSlug + "\"\n  revision = \"" + prSha + "\"\n" + gopkgString[gopkgLoc+1:]
+			gopkgString = gopkgString[:gopkgLoc] + "\n  source = \"https://github.com/" + repo + "\"\n  revision = \"" + commitSha + "\"\n" + gopkgString[gopkgLoc+1:]
 			err = ioutil.WriteFile("Gopkg.toml", []byte(gopkgString), fileutil.DefaultFileMode)
 			if err != nil {
 				t.Fatalf("failed to write updated Gopkg.toml: %v", err)
@@ -124,7 +130,7 @@ func TestMemcached(t *testing.T) {
 	}
 	cmdOut, err = exec.Command("dep", "ensure").CombinedOutput()
 	if err != nil {
-		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		t.Fatalf("error after modifying Gopkg.toml: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
 	// Set replicas to 2 to test leader election. In production, this should
@@ -216,14 +222,17 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dep ensure failed: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
-	// link local sdk to vendor if not in travis
-	if prSlug == "" {
-		os.RemoveAll("vendor/github.com/operator-framework/operator-sdk/pkg")
-		cmdOut, err = exec.Command("cp", "-a",
-			filepath.Join(gopath, "src/github.com/operator-framework/operator-sdk/pkg"),
-			"vendor/github.com/operator-framework/operator-sdk").CombinedOutput()
-		if err != nil {
-			t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+	// Copy local sdk to vendor if not in CI.
+	if repo == "" {
+		for _, dir := range []string{"pkg", "internal"} {
+			repoDir := filepath.Join("github.com/operator-framework/operator-sdk", dir)
+			vendorDir := filepath.Join("vendor", repoDir)
+			os.RemoveAll(vendorDir)
+			fromPath := filepath.Join(gopath, projutil.SrcDir, repoDir)
+			cmdOut, err = exec.Command("cp", "-a", fromPath, vendorDir).CombinedOutput()
+			if err != nil {
+				t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+			}
 		}
 	}
 

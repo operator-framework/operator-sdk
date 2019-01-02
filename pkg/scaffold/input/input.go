@@ -16,6 +16,8 @@
 
 package input
 
+import "text/template"
+
 // IfExistsAction determines what to do if the scaffold file already exists
 type IfExistsAction int
 
@@ -45,6 +47,10 @@ type Input struct {
 
 	// TemplateBody is the template body to execute
 	TemplateBody string
+
+	// TemplateFuncs are any funcs used in the template. These funcs must be
+	// registered before execution.
+	TemplateFuncs template.FuncMap
 
 	// Repo is the go project package
 	Repo string

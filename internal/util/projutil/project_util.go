@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/helm"
 
@@ -34,14 +35,11 @@ import (
 )
 
 const (
-	SrcDir          = "src"
-	mainFile        = "./cmd/manager/main.go"
-	buildDockerfile = "./build/Dockerfile"
+	GopathEnv = "GOPATH"
+	SrcDir    = "src"
 )
 
-const (
-	GopathEnv = "GOPATH"
-)
+var mainFile = filepath.Join(scaffold.ManagerDir, scaffold.CmdFile)
 
 // OperatorType - the type of operator
 type OperatorType = string
@@ -62,7 +60,7 @@ const (
 func MustInProjectRoot() {
 	// if the current directory has the "./build/dockerfile" file, then it is safe to say
 	// we are at the project root.
-	_, err := os.Stat(buildDockerfile)
+	_, err := os.Stat(filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile))
 	if err != nil {
 		if os.IsNotExist(err) {
 			log.Fatal("must run command in project root dir: project structure requires ./build/Dockerfile")
