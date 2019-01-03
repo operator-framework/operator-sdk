@@ -49,6 +49,8 @@ func main() {
 		Address:          "localhost",
 		Port:             8888,
 		KubeConfig:       mgr.GetConfig(),
+		Cache:            mgr.GetCache(),
+		RESTMapper:       mgr.GetRESTMapper(),
 		NoOwnerInjection: true,
 		LogRequests:      true,
 	})
