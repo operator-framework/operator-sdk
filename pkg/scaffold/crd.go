@@ -28,6 +28,7 @@ import (
 	"github.com/spf13/afero"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	crdgenerator "sigs.k8s.io/controller-tools/pkg/crd/generator"
 )
 
@@ -181,14 +182,10 @@ func addCrdSubresource(crd *apiextv1beta1.CustomResourceDefinition) {
 }
 
 func getCrdBytes(crd *apiextv1beta1.CustomResourceDefinition) ([]byte, error) {
-	b, err := yaml.Marshal(crd)
-	if err != nil {
-		return nil, err
-	}
 	// Remove the "status" field from yaml data, which causes a
 	// resource creation error.
-	crdMap := make(map[string]interface{})
-	if err = yaml.Unmarshal(b, &crdMap); err != nil {
+	crdMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(crd)
+	if err != nil {
 		return nil, err
 	}
 	delete(crdMap, "status")
