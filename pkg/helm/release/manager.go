@@ -25,6 +25,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/cli-runtime/pkg/genericclioptions/resource"
 	"k8s.io/client-go/rest"
@@ -36,6 +37,7 @@ import (
 	"k8s.io/helm/pkg/storage"
 	"k8s.io/helm/pkg/tiller"
 
+	"github.com/mattbaird/jsonpatch"
 	"github.com/operator-framework/operator-sdk/pkg/helm/internal/types"
 )
 
@@ -318,25 +320,68 @@ func reconcileRelease(ctx context.Context, tillerKubeClient *kube.Client, namesp
 			*r = *r.Context(ctx)
 		})
 		helper := resource.NewHelper(expectedClient, expected.Mapping)
-		_, err = helper.Create(expected.Namespace, true, expected.Object, &metav1.CreateOptions{})
-		if err == nil {
+
+		existing, err := helper.Get(expected.Namespace, expected.Name, false)
+		if apierrors.IsNotFound(err) {
+			if _, err := helper.Create(expected.Namespace, true, expected.Object, &metav1.CreateOptions{}); err != nil {
+				return fmt.Errorf("create error: %s", err)
+			}
 			return nil
-		}
-		if !apierrors.IsAlreadyExists(err) {
-			return fmt.Errorf("create error: %s", err)
+		} else if err != nil {
+			return err
 		}
 
-		patch, err := json.Marshal(expected.Object)
+		patch, err := generatePatch(existing, expected.Object)
 		if err != nil {
 			return fmt.Errorf("failed to marshal JSON patch: %s", err)
 		}
 
-		_, err = helper.Patch(expected.Namespace, expected.Name, apitypes.MergePatchType, patch, &metav1.UpdateOptions{})
+		if patch == nil {
+			return nil
+		}
+
+		_, err = helper.Patch(expected.Namespace, expected.Name, apitypes.JSONPatchType, patch, &metav1.UpdateOptions{})
 		if err != nil {
 			return fmt.Errorf("patch error: %s", err)
 		}
 		return nil
 	})
+}
+
+func generatePatch(orig, new runtime.Object) ([]byte, error) {
+	origJSON, err := json.Marshal(orig)
+	if err != nil {
+		return nil, err
+	}
+	newJSON, err := json.Marshal(new)
+	if err != nil {
+		return nil, err
+	}
+
+	ops, err := jsonpatch.CreatePatch(origJSON, newJSON)
+	if err != nil {
+		return nil, err
+	}
+
+	// We ignore the "remove" operations from the full patch because they are
+	// fields added by Kubernetes or by the user after the original release
+	// resource has been applied. The goal for this patch is to make sure that
+	// the fields managed by the Helm chart are applied.
+	patchOps := make([]jsonpatch.JsonPatchOperation, 0)
+	for _, op := range ops {
+		if op.Operation != "remove" {
+			patchOps = append(patchOps, op)
+		}
+	}
+
+	// If there are no patch operations, return nil. Callers are expected
+	// to check for a nil response and skip the patch operation to avoid
+	// unnecessary chatter with the API server.
+	if len(patchOps) == 0 {
+		return nil, nil
+	}
+
+	return json.Marshal(patchOps)
 }
 
 // UninstallRelease performs a Helm release uninstall.
