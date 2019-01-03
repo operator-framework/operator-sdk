@@ -27,7 +27,7 @@ import (
 
 func (f *Factory) FlagSet() *pflag.FlagSet {
 	flagSet := pflag.NewFlagSet("zap", pflag.ExitOnError)
-	flagSet.BoolVar(&f.development, "zap-devel", false, "Enable zap development mode")
+	flagSet.BoolVar(&f.development, "zap-devel", false, "Enable zap development mode (changes defaults to console encoder, debug log level, and disables sampling)")
 	flagSet.Var(&f.encoderValue, "zap-encoder", "Zap log encoding ('json' or 'console')")
 	flagSet.Var(&f.levelValue, "zap-level", "Zap log level (one of 'debug', 'info', 'warn', 'error', 'dpanic', 'panic', 'fatal')")
 	flagSet.Var(&f.sampleValue, "zap-sample", "Enable zap log sampling")
@@ -86,13 +86,6 @@ func (v levelValue) String() string {
 	return v.level.String()
 }
 
-func (v *sampleValue) Set(s string) error {
-	var err error
-	v.set = true
-	v.sample, err = strconv.ParseBool(s)
-	return err
-}
-
 func (v levelValue) Type() string {
 	return "level"
 }
@@ -100,6 +93,13 @@ func (v levelValue) Type() string {
 type sampleValue struct {
 	set    bool
 	sample bool
+}
+
+func (v *sampleValue) Set(s string) error {
+	var err error
+	v.set = true
+	v.sample, err = strconv.ParseBool(s)
+	return err
 }
 
 func (v sampleValue) String() string {
