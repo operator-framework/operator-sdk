@@ -15,21 +15,19 @@
 package flags
 
 import (
-	"github.com/operator-framework/operator-sdk/pkg/flags"
+	"github.com/operator-framework/operator-sdk/pkg/internal/flags"
 	"github.com/spf13/pflag"
 )
 
 // AnsibleOperatorFlags - Options to be used by an ansible operator
 type AnsibleOperatorFlags struct {
-	flags.ReconcilePeriodFlag
-	flags.WatchesFileFlag
+	flags.WatchFlags
 }
 
 // AddTo - Add the ansible operator flags to the the flagset
 // helpTextPrefix will allow you add a prefix to default help text. Joined by a space.
 func AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) *AnsibleOperatorFlags {
 	aof := &AnsibleOperatorFlags{}
-	aof.ReconcilePeriodFlag.AddTo(flagSet, helpTextPrefix...)
-	aof.WatchesFileFlag.AddTo(flagSet, helpTextPrefix...)
+	aof.WatchFlags.AddTo(flagSet, helpTextPrefix...)
 	return aof
 }

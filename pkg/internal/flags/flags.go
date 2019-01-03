@@ -21,30 +21,21 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// ReconcilePeriodFlag provides a flag for configuration of a controller's reconcile period.
-type ReconcilePeriodFlag struct {
+// WatchFlags provides flag for configuration of a controller's reconcile period and for a
+// watches.yaml file, which is used to configure dynamic operators (e.g. Ansible and Helm).
+type WatchFlags struct {
 	ReconcilePeriod time.Duration
+	WatchesFile     string
 }
 
 // AddTo - Add the reconcile period flag to the the flagset
 // helpTextPrefix will allow you add a prefix to default help text. Joined by a space.
-func (f *ReconcilePeriodFlag) AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) {
+func (f *WatchFlags) AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) {
 	flagSet.DurationVar(&f.ReconcilePeriod,
 		"reconcile-period",
 		time.Minute,
 		strings.Join(append(helpTextPrefix, "Default reconcile period for controllers"), " "),
 	)
-}
-
-// WatchesFileFlag provides a flag for configuration of a watches.yaml file, which is used
-// to configure dynamic operators (e.g. Ansible and Helm).
-type WatchesFileFlag struct {
-	WatchesFile string
-}
-
-// AddTo - Add the watches file flag to the the flagset
-// helpTextPrefix will allow you add a prefix to default help text. Joined by a space.
-func (f *WatchesFileFlag) AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) {
 	flagSet.StringVar(&f.WatchesFile,
 		"watches-file",
 		"./watches.yaml",
