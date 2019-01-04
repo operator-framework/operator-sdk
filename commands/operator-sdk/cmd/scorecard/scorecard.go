@@ -44,17 +44,17 @@ import (
 
 // Config stores all scorecard config passed as flags
 type Config struct {
-	Namespace      string
-	KubeconfigPath string
-	InitTimeout    int
-	CSVPath        string
-	BasicTests     bool
-	OlmTests       bool
-	TenantTests    bool
-	NamespacedMan  string
-	GlobalMan      string
-	CrMan          string
-	Verbose        bool
+	Namespace          string
+	KubeconfigPath     string
+	InitTimeout        int
+	CSVPath            string
+	BasicTests         bool
+	OLMTests           bool
+	TenantTests        bool
+	NamespacedManifest string
+	GlobalManifest     string
+	CRManifest         string
+	Verbose            bool
 }
 
 var SCConf Config
@@ -95,7 +95,7 @@ const scorecardPodName = "operator-scorecard-test"
 func ScorecardTests(cmd *cobra.Command, args []string) error {
 	// in main.go, we catch and print errors, so we don't want cobra to print the error itself
 	cmd.SilenceErrors = true
-	if !SCConf.BasicTests && !SCConf.OlmTests {
+	if !SCConf.BasicTests && !SCConf.OLMTests {
 		return errors.New("at least one test type is required")
 	}
 	cmd.SilenceUsage = true
@@ -103,27 +103,27 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		log.SetLevel(log.DebugLevel)
 	}
 	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml, deploy/role_binding.yaml and deploy/operator.yaml
-	if SCConf.NamespacedMan == "" {
+	if SCConf.NamespacedManifest == "" {
 		file, err := yamlutil.GenerateCombinedNamespacedManifest()
 		if err != nil {
 			log.Fatal(err)
 		}
-		SCConf.NamespacedMan = file.Name()
+		SCConf.NamespacedManifest = file.Name()
 		defer func() {
-			err := os.Remove(SCConf.NamespacedMan)
+			err := os.Remove(SCConf.NamespacedManifest)
 			if err != nil {
 				log.Fatalf("could not delete temporary namespace manifest file: (%v)", err)
 			}
 		}()
 	}
-	if SCConf.GlobalMan == "" {
+	if SCConf.GlobalManifest == "" {
 		file, err := yamlutil.GenerateCombinedGlobalManifest()
 		if err != nil {
 			log.Fatal(err)
 		}
-		SCConf.GlobalMan = file.Name()
+		SCConf.GlobalManifest = file.Name()
 		defer func() {
-			err := os.Remove(SCConf.GlobalMan)
+			err := os.Remove(SCConf.GlobalManifest)
 			if err != nil {
 				log.Fatalf("could not delete global manifest file: (%v)", err)
 			}
@@ -153,15 +153,15 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	restMapper = restmapper.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient)
 	restMapper.Reset()
 	runtimeClient, _ = client.New(kubeconfig, client.Options{Scheme: scheme, Mapper: restMapper})
-	err = createFromYAMLFile(SCConf.GlobalMan, false)
+	err = createFromYAMLFile(SCConf.GlobalManifest, false)
 	if err != nil {
 		return fmt.Errorf("failed to create global resources: %v", err)
 	}
-	err = createFromYAMLFile(SCConf.NamespacedMan, false)
+	err = createFromYAMLFile(SCConf.NamespacedManifest, false)
 	if err != nil {
 		return fmt.Errorf("failed to create namespaced resources: %v", err)
 	}
-	err = createFromYAMLFile(SCConf.CrMan, true)
+	err = createFromYAMLFile(SCConf.CRManifest, true)
 	if err != nil {
 		return fmt.Errorf("failed to create cr resource: %v", err)
 	}
@@ -191,7 +191,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	if SCConf.OlmTests {
+	if SCConf.OLMTests {
 		yamlSpec, err := ioutil.ReadFile(SCConf.CSVPath)
 		if err != nil {
 			return fmt.Errorf("failed to read csv: %v", err)
@@ -227,7 +227,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if SCConf.BasicTests {
 		enabledTestTypes = append(enabledTestTypes, basicOperator)
 	}
-	if SCConf.OlmTests {
+	if SCConf.OLMTests {
 		enabledTestTypes = append(enabledTestTypes, olmIntegration)
 	}
 	if SCConf.TenantTests {
