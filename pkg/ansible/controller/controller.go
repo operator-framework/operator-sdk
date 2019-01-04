@@ -38,16 +38,17 @@ var log = logf.Log.WithName("ansible-controller")
 
 // Options - options for your controller
 type Options struct {
-	EventHandlers   []events.EventHandler
-	LoggingLevel    events.LogLevel
-	Runner          runner.Runner
-	GVK             schema.GroupVersionKind
-	ReconcilePeriod time.Duration
-	ManageStatus    bool
+	EventHandlers           []events.EventHandler
+	LoggingLevel            events.LogLevel
+	Runner                  runner.Runner
+	GVK                     schema.GroupVersionKind
+	ReconcilePeriod         time.Duration
+	ManageStatus            bool
+	WatchDependentResources bool
 }
 
 // Add - Creates a new ansible operator controller and adds it to the manager
-func Add(mgr manager.Manager, options Options) {
+func Add(mgr manager.Manager, options Options) *controller.Controller {
 	log.Info("Watching resource", "Options.Group", options.GVK.Group, "Options.Version", options.GVK.Version, "Options.Kind", options.GVK.Kind)
 	if options.EventHandlers == nil {
 		options.EventHandlers = []events.EventHandler{}
@@ -63,6 +64,13 @@ func Add(mgr manager.Manager, options Options) {
 		ManageStatus:    options.ManageStatus,
 	}
 
+	if mgr.GetScheme().IsVersionRegistered(schema.GroupVersion{
+		Group:   options.GVK.Group,
+		Version: options.GVK.Version,
+	}) {
+		log.Info("Version already registered... skipping")
+		return nil
+	}
 	// Register the GVK with the schema
 	mgr.GetScheme().AddKnownTypeWithName(options.GVK, &unstructured.Unstructured{})
 	metav1.AddToGroupVersion(mgr.GetScheme(), schema.GroupVersion{
@@ -84,4 +92,5 @@ func Add(mgr manager.Manager, options Options) {
 		log.Error(err, "")
 		os.Exit(1)
 	}
+	return &c
 }

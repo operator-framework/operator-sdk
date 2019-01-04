@@ -15,6 +15,7 @@
 package main
 
 import (
+	"os"
 	"runtime"
 
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
@@ -42,9 +43,12 @@ func main() {
 
 	logf.SetLogger(logf.ZapLogger(false))
 
-	namespace, err := k8sutil.GetWatchNamespace()
-	if err != nil {
-		log.Fatalf("failed to get watch namespace: (%v)", err)
+	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
+	if found {
+		log.Infof("Watching %v namespace.", namespace)
+	} else {
+		log.Infof("%v environment variable not set. This operator is watching all namespaces.",
+			k8sutil.WatchNamespaceEnvVar)
 	}
 
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{
@@ -56,21 +60,23 @@ func main() {
 
 	printVersion()
 	done := make(chan error)
+	cMap := proxy.NewControllerMap()
 
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{
-		Address:    "localhost",
-		Port:       8888,
-		KubeConfig: mgr.GetConfig(),
-		Cache:      mgr.GetCache(),
-		RESTMapper: mgr.GetRESTMapper(),
+		Address:       "localhost",
+		Port:          8888,
+		KubeConfig:    mgr.GetConfig(),
+		Cache:         mgr.GetCache(),
+		RESTMapper:    mgr.GetRESTMapper(),
+		ControllerMap: cMap,
 	})
 	if err != nil {
 		log.Fatalf("error starting proxy: (%v)", err)
 	}
 
 	// start the operator
-	go operator.Run(done, mgr, aflags)
+	go operator.Run(done, mgr, aflags, cMap)
 
 	// wait for either to finish
 	err = <-done

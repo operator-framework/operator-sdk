@@ -16,9 +16,11 @@ package helm
 
 import (
 	"path/filepath"
+	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/version"
 )
 
 // Dockerfile specifies the Helm Dockerfile scaffold
@@ -26,6 +28,7 @@ type Dockerfile struct {
 	input.Input
 
 	HelmChartsDir string
+	ImageTag      string
 }
 
 // GetInput gets the scaffold execution input
@@ -34,11 +37,12 @@ func (d *Dockerfile) GetInput() (input.Input, error) {
 		d.Path = filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
 	}
 	d.HelmChartsDir = HelmChartsDir
+	d.ImageTag = strings.TrimSuffix(version.Version, "+git")
 	d.TemplateBody = dockerFileHelmTmpl
 	return d.Input, nil
 }
 
-const dockerFileHelmTmpl = `FROM quay.io/water-hole/helm-operator
+const dockerFileHelmTmpl = `FROM quay.io/operator-framework/helm-operator:{{.ImageTag}}
 
 COPY {{.HelmChartsDir}}/ ${HOME}/{{.HelmChartsDir}}/
 COPY watches.yaml ${HOME}/watches.yaml

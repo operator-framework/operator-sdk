@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+source hack/lib/common.sh
+
 function listPkgs() {
 	go list ./commands/... ./pkg/... ./test/... | grep -v generated
 }

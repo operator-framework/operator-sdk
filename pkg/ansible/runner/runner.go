@@ -44,19 +44,21 @@ type Runner interface {
 	GetFinalizer() (string, bool)
 	GetReconcilePeriod() (time.Duration, bool)
 	GetManageStatus() bool
+	GetWatchDependentResources() bool
 }
 
 // watch holds data used to create a mapping of GVK to ansible playbook or role.
 // The mapping is used to compose an ansible operator.
 type watch struct {
-	Version         string     `yaml:"version"`
-	Group           string     `yaml:"group"`
-	Kind            string     `yaml:"kind"`
-	Playbook        string     `yaml:"playbook"`
-	Role            string     `yaml:"role"`
-	ReconcilePeriod string     `yaml:"reconcilePeriod"`
-	ManageStatus    bool       `yaml:"manageStatus"`
-	Finalizer       *Finalizer `yaml:"finalizer"`
+	Version                 string     `yaml:"version"`
+	Group                   string     `yaml:"group"`
+	Kind                    string     `yaml:"kind"`
+	Playbook                string     `yaml:"playbook"`
+	Role                    string     `yaml:"role"`
+	ReconcilePeriod         string     `yaml:"reconcilePeriod"`
+	ManageStatus            bool       `yaml:"manageStatus"`
+	WatchDependentResources bool       `yaml:"watchDependentResources"`
+	Finalizer               *Finalizer `yaml:"finalizer"`
 }
 
 // Finalizer - Expose finalizer to be used by a user.
@@ -69,8 +71,9 @@ type Finalizer struct {
 
 // UnmarshalYaml - implements the yaml.Unmarshaler interface
 func (w *watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	// by default, the operator will manage status
+	// by default, the operator will manage status and watch dependent resources
 	w.ManageStatus = true
+	w.WatchDependentResources = true
 
 	// hide watch data in plain struct to prevent unmarshal from calling
 	// UnmarshalYAML again
@@ -185,13 +188,14 @@ func NewForRole(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, 
 
 // runner - implements the Runner interface for a GVK that's being watched.
 type runner struct {
-	Path             string                  // path on disk to a playbook or role depending on what cmdFunc expects
-	GVK              schema.GroupVersionKind // GVK being watched that corresponds to the Path
-	Finalizer        *Finalizer
-	cmdFunc          func(ident, inputDirPath string) *exec.Cmd // returns a Cmd that runs ansible-runner
-	finalizerCmdFunc func(ident, inputDirPath string) *exec.Cmd
-	reconcilePeriod  *time.Duration
-	manageStatus     bool
+	Path                    string                  // path on disk to a playbook or role depending on what cmdFunc expects
+	GVK                     schema.GroupVersionKind // GVK being watched that corresponds to the Path
+	Finalizer               *Finalizer
+	cmdFunc                 func(ident, inputDirPath string) *exec.Cmd // returns a Cmd that runs ansible-runner
+	finalizerCmdFunc        func(ident, inputDirPath string) *exec.Cmd
+	reconcilePeriod         *time.Duration
+	manageStatus            bool
+	watchDependentResources bool
 }
 
 func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig string) (RunResult, error) {
@@ -279,6 +283,11 @@ func (r *runner) GetReconcilePeriod() (time.Duration, bool) {
 // GetManageStatus - get the manage status
 func (r *runner) GetManageStatus() bool {
 	return r.manageStatus
+}
+
+// GetWatchDependentResources - get the watch dependent resources value
+func (r *runner) GetWatchDependentResources() bool {
+	return r.watchDependentResources
 }
 
 func (r *runner) GetFinalizer() (string, bool) {

@@ -117,18 +117,12 @@ func (s *Scaffold) doFile(e input.File) error {
 		}
 	}
 
-	return s.doTemplate(i, e, absFilePath)
+	return s.doRender(i, e, absFilePath)
 }
 
 const goFileExt = ".go"
 
-// doTemplate executes the template at absPath for a file using the input
-func (s *Scaffold) doTemplate(i input.Input, e input.File, absPath string) error {
-	temp, err := newTemplate(e).Parse(i.TemplateBody)
-	if err != nil {
-		return err
-	}
-
+func (s *Scaffold) doRender(i input.Input, e input.File, absPath string) error {
 	var mode os.FileMode = fileutil.DefaultFileMode
 	if i.IsExec {
 		mode = fileutil.DefaultExecFileMode
@@ -145,18 +139,30 @@ func (s *Scaffold) doTemplate(i input.Input, e input.File, absPath string) error
 		}()
 	}
 
-	out := &bytes.Buffer{}
-	err = temp.Execute(out, e)
-	if err != nil {
-		return err
+	var b []byte
+	if c, ok := e.(CustomRenderer); ok {
+		// CustomRenderers have a non-template method of file rendering.
+		if b, err = c.CustomRender(); err != nil {
+			return err
+		}
+	} else {
+		// All other files are rendered via their templates.
+		temp, err := newTemplate(i)
+		if err != nil {
+			return err
+		}
+
+		out := &bytes.Buffer{}
+		if err = temp.Execute(out, e); err != nil {
+			return err
+		}
+		b = out.Bytes()
 	}
-	b := out.Bytes()
 
 	// gofmt the imports
 	if filepath.Ext(absPath) == goFileExt {
 		b, err = imports.Process(absPath, b, nil)
 		if err != nil {
-			fmt.Printf("%s\n", out.Bytes())
 			return err
 		}
 	}
@@ -166,10 +172,15 @@ func (s *Scaffold) doTemplate(i input.Input, e input.File, absPath string) error
 	return err
 }
 
-// newTemplate a new template with common functions
-func newTemplate(t input.File) *template.Template {
-	return template.New(fmt.Sprintf("%T", t)).Funcs(template.FuncMap{
+// newTemplate returns a new template named by i.Path with common functions and
+// the input's TemplateFuncs.
+func newTemplate(i input.Input) (*template.Template, error) {
+	t := template.New(i.Path).Funcs(template.FuncMap{
 		"title": strings.Title,
 		"lower": strings.ToLower,
 	})
+	if len(i.TemplateFuncs) > 0 {
+		t.Funcs(i.TemplateFuncs)
+	}
+	return t.Parse(i.TemplateBody)
 }

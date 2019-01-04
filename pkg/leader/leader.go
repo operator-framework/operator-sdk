@@ -18,10 +18,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"strings"
 	"time"
+
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -54,7 +54,7 @@ const PodNameEnv = "POD_NAME"
 func Become(ctx context.Context, lockName string) error {
 	log.Info("Trying to become the leader.")
 
-	ns, err := myNS()
+	ns, err := k8sutil.GetOperatorNamespace()
 	if err != nil {
 		if err == errNoNS {
 			log.Info("Skipping leader election; not running in a cluster.")
@@ -142,21 +142,6 @@ func Become(ctx context.Context, lockName string) error {
 			return err
 		}
 	}
-}
-
-// myNS returns the name of the namespace in which this code is currently running.
-func myNS() (string, error) {
-	nsBytes, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
-	if err != nil {
-		if os.IsNotExist(err) {
-			log.V(1).Info("current namespace not found")
-			return "", errNoNS
-		}
-		return "", err
-	}
-	ns := strings.TrimSpace(string(nsBytes))
-	log.V(1).Info("found namespace", "Namespace", ns)
-	return ns, nil
 }
 
 // myOwnerRef returns an OwnerReference that corresponds to the pod in which

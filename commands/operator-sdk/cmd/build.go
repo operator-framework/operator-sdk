@@ -144,20 +144,17 @@ func buildFunc(cmd *cobra.Command, args []string) {
 
 	projutil.MustInProjectRoot()
 	goBuildEnv := append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("could not identify current working directory: (%v)", err)
-	}
+	absProjectPath := projutil.MustGetwd()
 
 	// Don't need to build go code if Ansible Operator
 	if mainExists() {
 		managerDir := filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir)
-		outputBinName := filepath.Join(wd, scaffold.BuildBinDir, filepath.Base(wd))
+		outputBinName := filepath.Join(absProjectPath, scaffold.BuildBinDir, filepath.Base(absProjectPath))
 		buildCmd := exec.Command("go", "build", "-o", outputBinName, managerDir)
 		buildCmd.Env = goBuildEnv
 		buildCmd.Stdout = os.Stdout
 		buildCmd.Stderr = os.Stderr
-		err = buildCmd.Run()
+		err := buildCmd.Run()
 		if err != nil {
 			log.Fatalf("failed to build operator binary: (%v)", err)
 		}
@@ -174,7 +171,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	dbcmd := exec.Command("docker", "build", ".", "-f", "build/Dockerfile", "-t", baseImageName)
 	dbcmd.Stdout = os.Stdout
 	dbcmd.Stderr = os.Stderr
-	err = dbcmd.Run()
+	err := dbcmd.Run()
 	if err != nil {
 		if enableTests {
 			log.Fatalf("failed to output intermediate image %s: (%v)", image, err)
@@ -184,7 +181,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	}
 
 	if enableTests {
-		testBinary := filepath.Join(wd, scaffold.BuildBinDir, filepath.Base(wd)+"-test")
+		testBinary := filepath.Join(absProjectPath, scaffold.BuildBinDir, filepath.Base(absProjectPath)+"-test")
 		buildTestCmd := exec.Command("go", "test", "-c", "-o", testBinary, testLocationBuild+"/...")
 		buildTestCmd.Env = goBuildEnv
 		buildTestCmd.Stdout = os.Stdout
@@ -204,7 +201,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 			cfg := &input.Config{
 				Repo:           projutil.CheckAndGetProjectGoPkg(),
 				AbsProjectPath: absProjectPath,
-				ProjectName:    filepath.Base(wd),
+				ProjectName:    filepath.Base(absProjectPath),
 			}
 
 			s := &scaffold.Scaffold{}
