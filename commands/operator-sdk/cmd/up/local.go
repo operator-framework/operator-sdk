@@ -24,7 +24,6 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
-	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
@@ -226,10 +225,10 @@ func upLocalHelm() {
 	for gvk, factory := range factories {
 		// Register the controller with the factory.
 		err := controller.Add(mgr, controller.WatchOptions{
-			Namespace:      namespace,
-			GVK:            gvk,
-			ManagerFactory: factory,
-			ResyncPeriod:   time.Second * 5,
+			Namespace:               namespace,
+			GVK:                     gvk,
+			ManagerFactory:          factory,
+			WatchDependentResources: true,
 		})
 		if err != nil {
 			log.Fatal(err)
