@@ -60,7 +60,7 @@ func checkSpecAndStat(runtimeClient client.Client, obj unstructured.Unstructured
 	if !noStore {
 		scTests = append(scTests, testSpec, testStat)
 	}
-	if err != nil && !reflect.DeepEqual(err, wait.ErrWaitTimeout) {
+	if err != nil && err != wait.ErrWaitTimeout {
 		return err
 	}
 	return nil
