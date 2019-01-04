@@ -156,7 +156,8 @@ func modifySpecAndCheck(specMap map[string]interface{}, obj unstructured.Unstruc
 	return nil
 }
 
-// At the moment, this will just read the logs and print them if enabled. We will add more complex functionality later
+// wiritingIntoCRsHasEffect simply looks at the proxy logs and verifies that the operator is sending PUT
+// and/or POST requests to the API server, which should mean that it is creating or modifying resources.
 func writingIntoCRsHasEffect(obj unstructured.Unstructured) (string, error) {
 	test := scorecardTest{testType: basicOperator, name: "Writing into CRs has an effect", maximumPoints: 1}
 	kubeclient, err := kubernetes.NewForConfig(kubeconfig)

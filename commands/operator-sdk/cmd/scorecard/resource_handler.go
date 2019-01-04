@@ -38,6 +38,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
+// createFromYAMLFile will take a path to a YAML file and create the resource. If it finds a
+// deployment, it will add the scorecard proxy as a container in the deployments podspec. If
+// storeKindVersionName is set to true, it will save the kind version and name of the resource
+// in the manifest to the matching global variables (kind, apiversion, and name)
 func createFromYAMLFile(yamlPath string, storeKindVersionName bool) error {
 	yamlFile, err := ioutil.ReadFile(yamlPath)
 	if err != nil {
@@ -111,6 +115,8 @@ func createFromYAMLFile(yamlPath string, storeKindVersionName bool) error {
 	return nil
 }
 
+// createKubeconfigSecret creates the secret that will be mounted in the operator's container and contains
+// the kubeconfig for communicating with the proxy
 func createKubeconfigSecret() error {
 	kubeconfigMap := make(map[string][]byte)
 	kc, err := proxyConf.Create(metav1.OwnerReference{Name: "scorecard"}, "http://localhost:8888", SCConf.Namespace)
@@ -142,6 +148,7 @@ func createKubeconfigSecret() error {
 	return nil
 }
 
+// addMountKubeconfigSecret creates the volume mount for the kubeconfig secret
 func addMountKubeconfigSecret(dep *appsv1.Deployment) {
 	// create mount for secret
 	dep.Spec.Template.Spec.Volumes = append(dep.Spec.Template.Spec.Volumes, v1.Volume{
@@ -169,6 +176,7 @@ func addMountKubeconfigSecret(dep *appsv1.Deployment) {
 	}
 }
 
+// addProxyContainer adds the container spec for the scorecard-proxy to the deployment's podspec
 func addProxyContainer(dep *appsv1.Deployment) {
 	dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, v1.Container{
 		Name:            "scorecard-proxy",
@@ -182,6 +190,7 @@ func addProxyContainer(dep *appsv1.Deployment) {
 	})
 }
 
+// unstructuredToDeployment converts an unstructured object to a deployment
 func unstructuredToDeployment(obj *unstructured.Unstructured) (*appsv1.Deployment, error) {
 	jsonByte, err := obj.MarshalJSON()
 	if err != nil {
@@ -199,6 +208,7 @@ func unstructuredToDeployment(obj *unstructured.Unstructured) (*appsv1.Deploymen
 	}
 }
 
+// deploymentToUnstructured converts a deployment to an unstructured object
 func deploymentToUnstructured(dep *appsv1.Deployment) (*unstructured.Unstructured, error) {
 	jsonByte, err := json.Marshal(dep)
 	if err != nil {
@@ -212,6 +222,7 @@ func deploymentToUnstructured(dep *appsv1.Deployment) (*unstructured.Unstructure
 	return obj, nil
 }
 
+// cleanupScorecard runs all cleanup functions in reverse order
 func cleanupScorecard() error {
 	failed := false
 	for i := len(cleanupFns) - 1; i >= 0; i-- {
@@ -227,6 +238,7 @@ func cleanupScorecard() error {
 	return nil
 }
 
+// addResourceCleanup adds a cleanup function for the specified runtime object
 func addResourceCleanup(obj runtime.Object, key types.NamespacedName) {
 	cleanupFns = append(cleanupFns, func() error {
 		// make a copy of the object because the client changes it

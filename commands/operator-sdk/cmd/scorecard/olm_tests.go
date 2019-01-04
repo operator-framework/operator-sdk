@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// crdsHaveResources returns earned points and max points
+// crdsHaveResources checks to make sure that all owned CRDs have resources lister
 func crdsHaveResources(csv *olmApi.ClusterServiceVersion) {
 	test := scorecardTest{testType: olmIntegration, name: "Owned CRDs have resources listed"}
 	for _, crd := range csv.Spec.CustomResourceDefinitions.Owned {
@@ -35,6 +35,7 @@ func crdsHaveResources(csv *olmApi.ClusterServiceVersion) {
 	scTests = append(scTests, test)
 }
 
+// annotationsContainExamples makes sure that the CSVs list at least 1 example for the CR
 func annotationsContainExamples(csv *olmApi.ClusterServiceVersion) {
 	test := scorecardTest{testType: olmIntegration, name: "CRs have at least 1 example", maximumPoints: 1}
 	if csv.Annotations != nil && csv.Annotations["alm-examples"] != "" {
@@ -43,6 +44,7 @@ func annotationsContainExamples(csv *olmApi.ClusterServiceVersion) {
 	scTests = append(scTests, test)
 }
 
+// statusDescriptors makes sure that all status fields found in the created CR has a matching descriptor in the CSV
 func statusDescriptors(csv *olmApi.ClusterServiceVersion, runtimeClient client.Client, obj unstructured.Unstructured) error {
 	test := scorecardTest{testType: olmIntegration, name: "Status fields with descriptors"}
 	err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: SCConf.Namespace, Name: name}, &obj)
@@ -79,6 +81,7 @@ func statusDescriptors(csv *olmApi.ClusterServiceVersion, runtimeClient client.C
 	return nil
 }
 
+// specDescriptors makes sure that all spec fields found in the created CR has a matching descriptor in the CSV
 func specDescriptors(csv *olmApi.ClusterServiceVersion, runtimeClient client.Client, obj unstructured.Unstructured) error {
 	test := scorecardTest{testType: olmIntegration, name: "Spec fields with descriptors"}
 	err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: SCConf.Namespace, Name: name}, &obj)
