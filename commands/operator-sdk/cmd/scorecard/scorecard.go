@@ -186,6 +186,8 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 		log.Debugf("Scorecard Proxy Logs: %v\n", logs)
 	} else {
+		// checkSpecAndStat is used to make sure the operator is ready in this case
+		// the boolean argument set at the end tells the function not to add the result to scTests
 		err = checkSpecAndStat(runtimeClient, obj, true)
 		if err != nil {
 			return err
