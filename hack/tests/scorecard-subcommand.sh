@@ -11,5 +11,5 @@ docker build -t scorecard-proxy -f images/scorecard-proxy/Dockerfile .
 pushd test/test-framework
 commandoutput="$(operator-sdk scorecard --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml --basic-tests --init-timeout 60 --olm-tests --csv-path deploy/memcachedoperator.0.0.2.csv.yaml --verbose 2>&1)"
 echo $commandoutput
-echo $commandsoutput | grep "Total Score: 6/8 points"
+echo $commandoutput | grep "Total Score: 6/8 points"
 popd
