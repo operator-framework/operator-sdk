@@ -38,6 +38,8 @@ func NewScorecardCmd() *cobra.Command {
 	scorecardCmd.Flags().StringVar(&scorecard.SCConf.NamespacedManifest, "namespaced-manifest", "", "Path to manifest for namespaced resources (e.g. RBAC and Operator manifest)")
 	scorecardCmd.Flags().StringVar(&scorecard.SCConf.GlobalManifest, "global-manifest", "", "Path to manifest for Global resources (e.g. CRD manifests)")
 	scorecardCmd.Flags().StringVar(&scorecard.SCConf.CRManifest, "cr-manifest", "", "Path to manifest for Custom Resource")
+	scorecardCmd.Flags().StringVar(&scorecard.SCConf.ProxyImage, "proxy-image", "quay.io/operator-framework/scorecard-proxy", "Image name for scorecard proxy")
+	scorecardCmd.Flags().StringVar(&scorecard.SCConf.ProxyPullPolicy, "proxy-pull-policy", "Always", "Pull policy for scorecard proxy image")
 	scorecardCmd.Flags().BoolVar(&scorecard.SCConf.Verbose, "verbose", false, "Enable verbose logging")
 	// Since it's difficult to handle multiple CRs, we will require users to specify what CR they want to test; we can handle this better in the future
 	scorecardCmd.MarkFlagRequired("cr-manifest")

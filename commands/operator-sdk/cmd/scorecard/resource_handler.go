@@ -178,10 +178,18 @@ func addMountKubeconfigSecret(dep *appsv1.Deployment) {
 
 // addProxyContainer adds the container spec for the scorecard-proxy to the deployment's podspec
 func addProxyContainer(dep *appsv1.Deployment) {
+	var pullPolicy v1.PullPolicy
+	if SCConf.ProxyPullPolicy == "Always" {
+		pullPolicy = v1.PullAlways
+	} else if SCConf.ProxyPullPolicy == "Never" {
+		pullPolicy = v1.PullNever
+	} else if SCConf.ProxyPullPolicy == "PullIfNotPresent" {
+		pullPolicy = v1.PullIfNotPresent
+	}
 	dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, v1.Container{
 		Name:            "scorecard-proxy",
-		Image:           "scorecard-proxy",
-		ImagePullPolicy: "Never",
+		Image:           SCConf.ProxyImage,
+		ImagePullPolicy: pullPolicy,
 		Command:         []string{"scorecard-proxy"},
 		Env: []v1.EnvVar{{
 			Name:      k8sutil.WatchNamespaceEnvVar,

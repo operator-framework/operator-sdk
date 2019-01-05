@@ -9,7 +9,7 @@ docker build -t scorecard-proxy -f images/scorecard-proxy/Dockerfile .
 
 # the test framework directory has all the manifests needed to run the cluster
 pushd test/test-framework
-commandoutput="$(operator-sdk scorecard --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml --basic-tests --init-timeout 60 --olm-tests --csv-path deploy/memcachedoperator.0.0.2.csv.yaml --verbose 2>&1)"
+commandoutput="$(operator-sdk scorecard --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml --init-timeout 60 --csv-path deploy/memcachedoperator.0.0.2.csv.yaml --verbose --proxy-image scorecard-proxy --proxy-pull-policy Never 2>&1)"
 echo $commandoutput
 echo $commandoutput | grep "Total Score: 6/8 points"
 popd

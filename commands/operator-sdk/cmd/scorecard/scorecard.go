@@ -54,6 +54,8 @@ type Config struct {
 	NamespacedManifest string
 	GlobalManifest     string
 	CRManifest         string
+	ProxyImage         string
+	ProxyPullPolicy    string
 	Verbose            bool
 }
 
@@ -97,6 +99,9 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	cmd.SilenceErrors = true
 	if !SCConf.BasicTests && !SCConf.OLMTests {
 		return errors.New("at least one test type is required")
+	}
+	if SCConf.ProxyPullPolicy != "Always" && SCConf.ProxyPullPolicy != "Never" && SCConf.ProxyPullPolicy != "PullIfNotPresent" {
+		return fmt.Errorf("invalid proxy pull policy: (%s); valid values: Always, Never", SCConf.ProxyPullPolicy)
 	}
 	cmd.SilenceUsage = true
 	if SCConf.Verbose {
