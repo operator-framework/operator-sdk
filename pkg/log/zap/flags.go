@@ -19,10 +19,8 @@ import (
 	"strconv"
 
 	"github.com/spf13/pflag"
-
-	"go.uber.org/zap/zapcore"
-
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func (f *Factory) FlagSet() *pflag.FlagSet {
