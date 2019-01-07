@@ -114,7 +114,7 @@ operator-sdk migrate
 
 if [[ ! -e build/Dockerfile.sdkold ]];
 then
-    echo FAIL the old Dockerful should have been renamed to Dockerfile.sdkold
+    echo FAIL the old Dockerfile should have been renamed to Dockerfile.sdkold
     exit 1
 fi
 
