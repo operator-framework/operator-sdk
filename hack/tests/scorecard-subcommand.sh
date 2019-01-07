@@ -5,7 +5,7 @@ DEST_IMAGE="quay.io/example/scorecard-proxy"
 set -ex
 
 # build scorecard-proxy image (and delete intermediate builder image)
-docker build -t scorecard-proxy -f images/scorecard-proxy/Dockerfile .
+./hack/image/build-scorecard-proxy-image.sh scorecard-proxy
 
 # the test framework directory has all the manifests needed to run the cluster
 pushd test/test-framework
