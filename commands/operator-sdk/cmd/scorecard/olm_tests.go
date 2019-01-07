@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// crdsHaveResources checks to make sure that all owned CRDs have resources lister
+// crdsHaveResources checks to make sure that all owned CRDs have resources listed
 func crdsHaveResources(csv *olmApi.ClusterServiceVersion) {
 	test := scorecardTest{testType: olmIntegration, name: "Owned CRDs have resources listed"}
 	for _, crd := range csv.Spec.CustomResourceDefinitions.Owned {
