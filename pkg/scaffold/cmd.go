@@ -129,14 +129,13 @@ func main() {
 	s, err := metrics.ExposeMetricsPort(metricsAddress)
 	if err != nil {
 		log.Error(err, "")
-		os.Exit(1)
 	}
-	client := mgr.GetClient()
-	if err := client.Create(context.TODO(), s); err != nil && !apierrors.IsAlreadyExists(err) {
-		log.Error(err, "")
-		os.Exit(1)
+	if err == nil {
+		client := mgr.GetClient()
+		if err := client.Create(context.TODO(), s); err != nil && !apierrors.IsAlreadyExists(err) {
+			log.Error(err, "")
+		}
 	}
-
 	log.Info("Starting the Cmd.")
 
 	// Start the Cmd
