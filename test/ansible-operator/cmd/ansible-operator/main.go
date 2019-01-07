@@ -15,6 +15,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"runtime"
 
@@ -41,6 +42,7 @@ func printVersion() {
 func main() {
 	aflags := aoflags.AddTo(pflag.CommandLine)
 	pflag.CommandLine.AddFlagSet(zap.FlagSet())
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
 
 	logf.SetLogger(zap.Logger())
