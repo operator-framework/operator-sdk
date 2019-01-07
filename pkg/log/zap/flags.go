@@ -23,13 +23,25 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func (f *Factory) FlagSet() *pflag.FlagSet {
-	flagSet := pflag.NewFlagSet("zap", pflag.ExitOnError)
-	flagSet.BoolVar(&f.development, "zap-devel", false, "Enable zap development mode (changes defaults to console encoder, debug log level, and disables sampling)")
-	flagSet.Var(&f.encoderValue, "zap-encoder", "Zap log encoding ('json' or 'console')")
-	flagSet.Var(&f.levelValue, "zap-level", "Zap log level (one of 'debug', 'info', 'warn', 'error', 'dpanic', 'panic', 'fatal')")
-	flagSet.Var(&f.sampleValue, "zap-sample", "Enable zap log sampling")
-	return flagSet
+var (
+	zapFlagSet *pflag.FlagSet
+
+	development bool
+	encoderVal  encoderValue
+	levelVal    levelValue
+	sampleVal   sampleValue
+)
+
+func init() {
+	zapFlagSet = pflag.NewFlagSet("zap", pflag.ExitOnError)
+	zapFlagSet.BoolVar(&development, "zap-devel", false, "Enable zap development mode (changes defaults to console encoder, debug log level, and disables sampling)")
+	zapFlagSet.Var(&encoderVal, "zap-encoder", "Zap log encoding ('json' or 'console')")
+	zapFlagSet.Var(&levelVal, "zap-level", "Zap log level (one of 'debug', 'info', 'warn', 'error', 'dpanic', 'panic', 'fatal')")
+	zapFlagSet.Var(&sampleVal, "zap-sample", "Enable zap log sampling")
+}
+
+func FlagSet() *pflag.FlagSet {
+	return zapFlagSet
 }
 
 type encoderValue struct {

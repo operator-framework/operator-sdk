@@ -40,10 +40,10 @@ func printVersion() {
 
 func main() {
 	aflags := aoflags.AddTo(pflag.CommandLine)
-	zf := zap.FactoryForFlags(pflag.CommandLine)
+	pflag.CommandLine.AddFlagSet(zap.FlagSet())
 	pflag.Parse()
 
-	logf.SetLogger(zf.Logger())
+	logf.SetLogger(zap.Logger())
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
 	if found {

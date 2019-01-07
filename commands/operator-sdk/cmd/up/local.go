@@ -69,9 +69,9 @@ kubernetes cluster using a kubeconfig file.
 	switch projutil.GetOperatorType() {
 	case projutil.OperatorTypeAnsible:
 		ansibleOperatorFlags = flags.AddTo(upLocalCmd.Flags(), "(ansible operator)")
-		zapFactory = zap.FactoryForFlags(upLocalCmd.Flags())
+		upLocalCmd.Flags().AddFlagSet(zap.FlagSet())
 	case projutil.OperatorTypeHelm:
-		zapFactory = zap.FactoryForFlags(upLocalCmd.Flags())
+		upLocalCmd.Flags().AddFlagSet(zap.FlagSet())
 	}
 	return upLocalCmd
 }
@@ -81,7 +81,6 @@ var (
 	operatorFlags        string
 	namespace            string
 	ldFlags              string
-	zapFactory           *zap.Factory
 	ansibleOperatorFlags *flags.AnsibleOperatorFlags
 )
 
@@ -161,7 +160,7 @@ func upLocalAnsible() {
 		log.Fatalf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
 	}
 
-	logf.SetLogger(zapFactory.Logger())
+	logf.SetLogger(zap.Logger())
 
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{Namespace: namespace})
 	if err != nil {
@@ -201,7 +200,7 @@ func upLocalHelm() {
 		log.Fatalf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
 	}
 
-	logf.SetLogger(zapFactory.Logger())
+	logf.SetLogger(zap.Logger())
 
 	printVersion()
 

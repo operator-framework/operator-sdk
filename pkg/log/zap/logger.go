@@ -19,30 +19,20 @@ import (
 	"os"
 	"time"
 
-	"github.com/go-logr/zapr"
-	"github.com/spf13/pflag"
-
 	"github.com/go-logr/logr"
+	"github.com/go-logr/zapr"
+	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-
-	"go.uber.org/zap"
 )
 
-type Factory struct {
-	development  bool
-	encoderValue encoderValue
-	levelValue   levelValue
-	sampleValue  sampleValue
+func Logger() logr.Logger {
+	return LoggerTo(os.Stderr)
 }
 
-func (f Factory) Logger() logr.Logger {
-	return f.LoggerTo(os.Stderr)
-}
-
-func (f Factory) LoggerTo(destWriter io.Writer) logr.Logger {
-	sink := zapcore.AddSync(destWriter)
-	conf := f.getConfig(destWriter)
+func LoggerTo(destWriter io.Writer) logr.Logger {
+	syncer := zapcore.AddSync(destWriter)
+	conf := getConfig(destWriter)
 
 	conf.encoder = &logf.KubeAwareEncoder{Encoder: conf.encoder, Verbose: conf.level.Level() < 0}
 	if conf.sample {
@@ -50,8 +40,8 @@ func (f Factory) LoggerTo(destWriter io.Writer) logr.Logger {
 			return zapcore.NewSampler(core, time.Second, 100, 100)
 		}))
 	}
-	conf.opts = append(conf.opts, zap.AddCallerSkip(1), zap.ErrorOutput(sink))
-	log := zap.New(zapcore.NewCore(conf.encoder, sink, conf.level))
+	conf.opts = append(conf.opts, zap.AddCallerSkip(1), zap.ErrorOutput(syncer))
+	log := zap.New(zapcore.NewCore(conf.encoder, syncer, conf.level))
 	log = log.WithOptions(conf.opts...)
 	return zapr.NewLogger(log)
 }
@@ -63,11 +53,11 @@ type config struct {
 	opts    []zap.Option
 }
 
-func (f *Factory) getConfig(destWriter io.Writer) config {
+func getConfig(destWriter io.Writer) config {
 	var c config
 
 	// Set the defaults depending on the log mode (development vs. production)
-	if f.development {
+	if development {
 		c.encoder = consoleEncoder()
 		c.level = zap.NewAtomicLevelAt(zap.DebugLevel)
 		c.opts = append(c.opts, zap.Development(), zap.AddStacktrace(zap.ErrorLevel))
@@ -80,21 +70,15 @@ func (f *Factory) getConfig(destWriter io.Writer) config {
 	}
 
 	// Override the defaults if the flags were set explicitly on the command line
-	if f.encoderValue.set {
-		c.encoder = f.encoderValue.encoder
+	if encoderVal.set {
+		c.encoder = encoderVal.encoder
 	}
-	if f.levelValue.set {
-		c.level = zap.NewAtomicLevelAt(f.levelValue.level)
+	if levelVal.set {
+		c.level = zap.NewAtomicLevelAt(levelVal.level)
 	}
-	if f.sampleValue.set {
-		c.sample = f.sampleValue.sample
+	if sampleVal.set {
+		c.sample = sampleVal.sample
 	}
 
 	return c
-}
-
-func FactoryForFlags(flagSet *pflag.FlagSet) *Factory {
-	f := &Factory{}
-	flagSet.AddFlagSet(f.FlagSet())
-	return f
 }

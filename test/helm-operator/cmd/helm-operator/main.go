@@ -45,10 +45,10 @@ func printVersion() {
 }
 
 func main() {
-	zf := zap.FactoryForFlags(pflag.CommandLine)
+	pflag.CommandLine.AddFlagSet(zap.FlagSet())
 	pflag.Parse()
 
-	logf.SetLogger(zf.Logger())
+	logf.SetLogger(zap.Logger())
 
 	printVersion()
 
