@@ -42,7 +42,7 @@ Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config
 		Run: csvFunc,
 	}
 
-	csvCmd.Flags().StringVar(&csvVersion, "csv-version", "", "Semantic version of the CSV.'")
+	csvCmd.Flags().StringVar(&csvVersion, "csv-version", "", "Semantic version of the CSV")
 	csvCmd.MarkFlagRequired("csv-version")
 
 	return csvCmd
