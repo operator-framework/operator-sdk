@@ -130,7 +130,6 @@ func modifySpecAndCheck(specMap map[string]interface{}, obj unstructured.Unstruc
 				}
 			}
 		case []interface{}: // TODO: Decide how this should be handled
-		case interface{}: // same as above
 		default:
 			fmt.Printf("Unknown type for key (%s) in spec: (%v)\n", k, reflect.TypeOf(t))
 		}
