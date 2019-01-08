@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"strings"
+	"sync"
 
 	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -38,7 +39,17 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
+
+// ControllerMap - map of GVK to controller
+type ControllerMap struct {
+	sync.RWMutex
+	internal map[schema.GroupVersionKind]controller.Controller
+	watch    map[schema.GroupVersionKind]bool
+}
 
 // CacheResponseHandler will handle proxied requests and check if the requested
 // resource exists in our cache. If it does then there is no need to bombard
@@ -126,7 +137,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 // InjectOwnerReferenceHandler will handle proxied requests and inject the
 // owner refernece found in the authorization header. The Authorization is
 // then deleted so that the proxy can re-set with the correct authorization.
-func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
+func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.Method == http.MethodPost {
 			log.Info("injecting owner reference")
@@ -178,6 +189,13 @@ func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
 			log.V(1).Info("serialized body", "Body", string(newBody))
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(newBody))
 			req.ContentLength = int64(len(newBody))
+			// add watch for resource
+			err = addWatchToController(owner, cMap, data)
+			if err != nil {
+				m := "could not add watch to controller"
+				log.Error(err, m)
+				http.Error(w, m, http.StatusInternalServerError)
+			}
 		}
 		// Removing the authorization so that the proxy can set the correct authorization.
 		req.Header.Del("Authorization")
@@ -200,6 +218,7 @@ type Options struct {
 	KubeConfig       *rest.Config
 	Cache            cache.Cache
 	RESTMapper       meta.RESTMapper
+	ControllerMap    *ControllerMap
 }
 
 // Run will start a proxy server in a go routine that returns on the error
@@ -212,6 +231,9 @@ func Run(done chan error, o Options) error {
 	}
 	if o.Handler != nil {
 		server.Handler = o.Handler(server.Handler)
+	}
+	if o.ControllerMap == nil {
+		return fmt.Errorf("failed to get controller map from options")
 	}
 
 	if o.Cache == nil {
@@ -236,7 +258,7 @@ func Run(done chan error, o Options) error {
 	}
 
 	if !o.NoOwnerInjection {
-		server.Handler = InjectOwnerReferenceHandler(server.Handler)
+		server.Handler = InjectOwnerReferenceHandler(server.Handler, o.ControllerMap)
 	}
 	// Always add cache handler
 	server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper)
@@ -250,4 +272,69 @@ func Run(done chan error, o Options) error {
 		done <- server.ServeOnListener(l)
 	}()
 	return nil
+}
+
+func addWatchToController(owner metav1.OwnerReference, cMap *ControllerMap, resource *unstructured.Unstructured) error {
+	gv, err := schema.ParseGroupVersion(owner.APIVersion)
+	if err != nil {
+		return err
+	}
+	gvk := schema.GroupVersionKind{
+		Group:   gv.Group,
+		Version: gv.Version,
+		Kind:    owner.Kind,
+	}
+	c, watch, ok := cMap.Get(gvk)
+	if !ok {
+		return errors.New("failed to find controller in map")
+	}
+	// Add a watch to controller
+	if watch {
+		err = c.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{OwnerType: resource})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// NewControllerMap returns a new object that contains a mapping between GVK
+// and controller
+func NewControllerMap() *ControllerMap {
+	return &ControllerMap{
+		internal: make(map[schema.GroupVersionKind]controller.Controller),
+		watch:    make(map[schema.GroupVersionKind]bool),
+	}
+}
+
+// Get - Returns a controller given a GVK as the key. `watch` in the return
+// specifies whether or not the operator will watch dependent resources for
+// this controller. `ok` returns whether the query was successful. `controller`
+// is the associated controller-runtime controller object.
+func (cm *ControllerMap) Get(key schema.GroupVersionKind) (controller controller.Controller, watch, ok bool) {
+	cm.RLock()
+	defer cm.RUnlock()
+	result, ok := cm.internal[key]
+	if !ok {
+		return result, false, ok
+	}
+	watch, ok = cm.watch[key]
+	return result, watch, ok
+}
+
+// Delete - Deletes associated GVK to controller mapping from the ControllerMap
+func (cm *ControllerMap) Delete(key schema.GroupVersionKind) {
+	cm.Lock()
+	defer cm.Unlock()
+	delete(cm.internal, key)
+}
+
+// Store - Adds a new GVK to controller mapping. Also creates a mapping between
+// GVK and a boolean `watch` that specifies whether this controller is watching
+// dependent resources.
+func (cm *ControllerMap) Store(key schema.GroupVersionKind, value controller.Controller, watch bool) {
+	cm.Lock()
+	defer cm.Unlock()
+	cm.internal[key] = value
+	cm.watch[key] = watch
 }
