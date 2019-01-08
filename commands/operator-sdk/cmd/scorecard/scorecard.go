@@ -158,20 +158,16 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	restMapper = restmapper.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient)
 	restMapper.Reset()
 	runtimeClient, _ = client.New(kubeconfig, client.Options{Scheme: scheme, Mapper: restMapper})
-	err = createFromYAMLFile(SCConf.GlobalManifest)
-	if err != nil {
+	if err := createFromYAMLFile(SCConf.GlobalManifest); err != nil {
 		return fmt.Errorf("failed to create global resources: %v", err)
 	}
-	err = createFromYAMLFile(SCConf.NamespacedManifest)
-	if err != nil {
+	if err := createFromYAMLFile(SCConf.NamespacedManifest); err != nil {
 		return fmt.Errorf("failed to create namespaced resources: %v", err)
 	}
-	err = createFromYAMLFile(SCConf.CRManifest)
-	if err != nil {
+	if err := createFromYAMLFile(SCConf.CRManifest); err != nil {
 		return fmt.Errorf("failed to create cr resource: %v", err)
 	}
-	err = extractKindVersionName(SCConf.CRManifest)
-	if err != nil {
+	if err := extractKindVersionName(SCConf.CRManifest); err != nil {
 		return fmt.Errorf("failed to extract kind, version, and name from custom resource manifest: %s", err)
 	}
 	obj := unstructured.Unstructured{}
