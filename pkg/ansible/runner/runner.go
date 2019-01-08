@@ -249,6 +249,8 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 		} else {
 			dc = r.cmdFunc(ident, inputDir.Path)
 		}
+		// Append current environment since setting dc.Env to anything other than nil overwrites current env
+		dc.Env = append(dc.Env, os.Environ()...)
 		dc.Env = append(dc.Env, fmt.Sprintf("K8S_AUTH_KUBECONFIG=%s", kubeconfig), fmt.Sprintf("KUBECONFIG=%s", kubeconfig))
 
 		output, err := dc.CombinedOutput()
