@@ -64,8 +64,9 @@ func (s *CSVUpdateSet) Apply(csv *olmApi.ClusterServiceVersion) error {
 // TODO: allow custom Kinds that should be interpreted as standard
 // k8s Kinds required in CSV's
 var updateDispTable = map[string]func([]byte) error{
-	"Role":       AddRoleToCSVInstallStrategyUpdate,
-	"Deployment": AddDeploymentSpecToCSVInstallStrategyUpdate,
+	"Role":        AddRoleToCSVInstallStrategyUpdate,
+	"ClusterRole": AddClusterRoleToCSVInstallStrategyUpdate,
+	"Deployment":  AddDeploymentSpecToCSVInstallStrategyUpdate,
 	// TODO: determine whether 'owned' or 'required'
 	"CustomResourceDefinition": AddOwnedCRDToCSVCustomResourceDefinitionsUpdate,
 	// "CustomResource": AddCRToCSVCustomResourceDefinitionsUpdate,
@@ -114,6 +115,23 @@ func AddRoleToCSVInstallStrategyUpdate(yamlDoc []byte) error {
 		Rules:              newRole.Rules,
 	}
 	localISUpdate.Permissions = append(localISUpdate.Permissions, newPerm)
+
+	return nil
+}
+
+func AddClusterRoleToCSVInstallStrategyUpdate(yamlDoc []byte) error {
+	localISUpdate := getLocalInstallStrategyUpdate()
+
+	newCRole := new(rbacv1.ClusterRole)
+	if err := yaml.Unmarshal(yamlDoc, newCRole); err != nil {
+		log.Printf("AddClusterRoleToCSVInstallStrategyUpdate Unmarshal: (%v)", err)
+		return err
+	}
+	newPerm := olmInstall.StrategyDeploymentPermissions{
+		ServiceAccountName: newCRole.ObjectMeta.Name,
+		Rules:              newCRole.Rules,
+	}
+	localISUpdate.ClusterPermissions = append(localISUpdate.ClusterPermissions, newPerm)
 
 	return nil
 }
