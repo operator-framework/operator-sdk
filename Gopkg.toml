@@ -60,3 +60,7 @@
 [[override]]
   name = "github.com/docker/docker"
   revision = "a9fbbdc8dd8794b20af358382ab780559bca589d"
+
+[[override]]
+   name = "k8s.io/kube-openapi"
+  revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
