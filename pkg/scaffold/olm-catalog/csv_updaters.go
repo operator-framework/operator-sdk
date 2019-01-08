@@ -29,14 +29,21 @@ import (
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 )
 
+// CSVUpdater is an interface for any data that can be in a CSV, which will be
+// set to the corresponding field on Apply().
 type CSVUpdater interface {
+	// Apply applies a data update to a CSV argument.
 	Apply(*olmApi.ClusterServiceVersion) error
 }
 
+// CSVUpdateSet is a set of CSVUpdater's.
 type CSVUpdateSet struct {
 	Updaters []CSVUpdater
 }
 
+// Populate adds a pre-defined set of CSVUpdater's to s. Even though Populate
+// will duplicate CSVUpdater's in s' internal slice, their application to a
+// CSV is idempotent so Populate maintains set semantics.
 func (s *CSVUpdateSet) Populate() {
 	if localUpdater != nil {
 		s.Updaters = append(s.Updaters, localUpdater.installStrategy)
@@ -44,7 +51,8 @@ func (s *CSVUpdateSet) Populate() {
 	}
 }
 
-func (s *CSVUpdateSet) ApplyAll(csv *olmApi.ClusterServiceVersion) error {
+// Apply iteratively calls each CSVUpdater in s' Apply() method.
+func (s *CSVUpdateSet) Apply(csv *olmApi.ClusterServiceVersion) error {
 	for _, updater := range s.Updaters {
 		if err := updater.Apply(csv); err != nil {
 			return err

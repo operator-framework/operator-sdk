@@ -91,9 +91,12 @@ func (s *Csv) CustomRender() ([]byte, error) {
 	}
 
 	// A new csv won't have several required fields populated.
-	if exists {
-		if err = checkRequiredCSVFields(currCSV); err != nil {
-			log.Warnf("%s\nFill in these fields in file %s\n", err, s.Path)
+	if err = checkRequiredCSVFields(currCSV); err != nil {
+		if exists {
+			log.Warnf("required csv fields not filled in file %s:%s\n", s.Path, err)
+		} else {
+			// Report required fields to user informationally.
+			log.Infof("fill in the following required fields in file %s:%s\n", s.Path, err)
 		}
 	}
 
@@ -181,51 +184,45 @@ func (s *Csv) initCSVFields(csv *olmApi.ClusterServiceVersion) {
 // ex. add `resources` to a CRD
 
 func checkRequiredCSVFields(csv *olmApi.ClusterServiceVersion) error {
-	incorrectFields := make([]string, 0)
+	errsb := &strings.Builder{}
 
 	// Metadata
 	if csv.TypeMeta.APIVersion != olmApi.ClusterServiceVersionAPIVersion {
-		incorrectFields = append(incorrectFields, "apiVersion")
+		errsb.WriteString("\n\tapiVersion")
 	}
 	if csv.TypeMeta.Kind != olmApi.ClusterServiceVersionKind {
-		incorrectFields = append(incorrectFields, "kind")
+		errsb.WriteString("\n\tkind")
 	}
 	if csv.ObjectMeta.Name == "" {
-		incorrectFields = append(incorrectFields, "metadata.name")
+		errsb.WriteString("\n\tmetadata.name")
 	}
-
 	// Spec fields
 	if csv.Spec.Version.String() == "" {
-		incorrectFields = append(incorrectFields, "spec.version")
+		errsb.WriteString("\n\tspec.version")
 	}
 	if csv.Spec.DisplayName == "" {
-		incorrectFields = append(incorrectFields, "spec.displayName")
+		errsb.WriteString("\n\tspec.displayName")
 	}
 	if csv.Spec.Description == "" {
-		incorrectFields = append(incorrectFields, "spec.description")
+		errsb.WriteString("\n\tspec.description")
 	}
 	if len(csv.Spec.Keywords) == 0 {
-		incorrectFields = append(incorrectFields, "spec.keywords")
+		errsb.WriteString("\n\tspec.keywords")
 	}
 	if len(csv.Spec.Maintainers) == 0 {
-		incorrectFields = append(incorrectFields, "spec.maintainers")
+		errsb.WriteString("\n\tspec.maintainers")
 	}
 	if csv.Spec.Provider == (olmApi.AppLink{}) {
-		incorrectFields = append(incorrectFields, "spec.provider")
+		errsb.WriteString("\n\tspec.provider")
 	}
 	if len(csv.Spec.Labels) == 0 {
-		incorrectFields = append(incorrectFields, "spec.labels")
+		errsb.WriteString("\n\tspec.labels")
 	}
 
-	if len(incorrectFields) == 0 {
+	if len(errsb.String()) == 0 {
 		return nil
 	}
-	errStr := "required csv fields not filled:"
-	for _, field := range incorrectFields {
-		errStr += "\n\t" + field
-	}
-
-	return errors.New(errStr)
+	return errors.New(errsb.String())
 }
 
 // updateCSVVersions updates csv's version and data involving the version,
@@ -247,7 +244,7 @@ func (s *Csv) updateCSVVersions(csv *olmApi.ClusterServiceVersion) error {
 		&csv.Spec.Selector,
 	}
 	for _, v := range fieldsToUpdate {
-		err := replaceAllBytes(v, v, []byte(oldVer), []byte(newVer))
+		err := replaceAllBytes(v, []byte(oldVer), []byte(newVer))
 		if err != nil {
 			return err
 		}
@@ -257,7 +254,7 @@ func (s *Csv) updateCSVVersions(csv *olmApi.ClusterServiceVersion) error {
 	lowerProjName := strings.ToLower(s.ProjectName)
 	oldCSVName := getCSVName(lowerProjName, oldVer)
 	newCSVName := getCSVName(lowerProjName, newVer)
-	err := replaceAllBytes(csv, csv, []byte(oldCSVName), []byte(newCSVName))
+	err := replaceAllBytes(csv, []byte(oldCSVName), []byte(newCSVName))
 	if err != nil {
 		return err
 	}
@@ -271,14 +268,14 @@ func (s *Csv) updateCSVVersions(csv *olmApi.ClusterServiceVersion) error {
 	return nil
 }
 
-func replaceAllBytes(src, dst interface{}, old, new []byte) error {
-	b, err := json.Marshal(src)
+func replaceAllBytes(v interface{}, old, new []byte) error {
+	b, err := json.Marshal(v)
 	if err != nil {
 		log.Infof("replaceAllBytes: (%v)", err)
 		return err
 	}
 	b = bytes.Replace(b, old, new, -1)
-	if err = json.Unmarshal(b, dst); err != nil {
+	if err = json.Unmarshal(b, v); err != nil {
 		log.Infof("replaceAllBytes: (%v)", err)
 		return err
 	}
@@ -313,7 +310,7 @@ func (s *Csv) updateCSVFromManifestFiles(csv *olmApi.ClusterServiceVersion, csvC
 
 	updaters := &CSVUpdateSet{}
 	updaters.Populate()
-	return updaters.ApplyAll(csv)
+	return updaters.Apply(csv)
 }
 
 func getKindfromYAML(yamlData []byte) (string, error) {

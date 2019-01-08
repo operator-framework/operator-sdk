@@ -29,7 +29,7 @@ import (
 
 var csvVersion string
 
-func NewCsvCmd() *cobra.Command {
+func NewGenCsvCmd() *cobra.Command {
 	csvCmd := &cobra.Command{
 		Use:   "gen-csv",
 		Short: "Generates a Cluster Service Version yaml file for the operator",
@@ -74,8 +74,11 @@ func csvFunc(cmd *cobra.Command, args []string) {
 }
 
 func verifyOLMCatalogFlags() {
-	_, err := semver.NewVersion(csvVersion)
+	v, err := semver.NewVersion(csvVersion)
 	if err != nil {
 		log.Fatalf("%s is not a valid semantic version: (%v)", csvVersion, err)
+	}
+	if v.String() != csvVersion {
+		log.Fatalf("provided CSV version %s contains bad values (parses to %s)", csvVersion, v)
 	}
 }
