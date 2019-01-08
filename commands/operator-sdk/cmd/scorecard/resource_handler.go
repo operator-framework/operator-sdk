@@ -38,11 +38,34 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
+// extractKindVersionName decodes a yaml file into an object and store the kind, version,
+// and name of the object to the global variables
+func extractKindVersionName(yamlPath string) error {
+	yamlFile, err := ioutil.ReadFile(yamlPath)
+	if err != nil {
+		return fmt.Errorf("failed to read file %s: %v", yamlPath, err)
+	}
+	if bytes.Contains(yamlFile, []byte("\n---\n")) {
+		return fmt.Errorf("custom resource manifest cannot have more than 1 resource")
+	}
+	// use an unstructured object to more cleanly decode manifest
+	obj := &unstructured.Unstructured{}
+	jsonSpec, err := yaml.YAMLToJSON(yamlFile)
+	if err != nil {
+		return fmt.Errorf("could not convert yaml file to json: %v", err)
+	}
+	if err := obj.UnmarshalJSON(jsonSpec); err != nil {
+		return fmt.Errorf("failed to unmarshal custom resource manifest to unstructured: %s", err)
+	}
+	apiversion = obj.GetAPIVersion()
+	kind = obj.GetKind()
+	name = obj.GetName()
+	return nil
+}
+
 // createFromYAMLFile will take a path to a YAML file and create the resource. If it finds a
-// deployment, it will add the scorecard proxy as a container in the deployments podspec. If
-// storeKindVersionName is set to true, it will save the kind version and name of the resource
-// in the manifest to the matching global variables (kind, apiversion, and name)
-func createFromYAMLFile(yamlPath string, storeKindVersionName bool) error {
+// deployment, it will add the scorecard proxy as a container in the deployments podspec.
+func createFromYAMLFile(yamlPath string) error {
 	yamlFile, err := ioutil.ReadFile(yamlPath)
 	if err != nil {
 		return fmt.Errorf("failed to read file %s: %v", yamlPath, err)
@@ -60,11 +83,6 @@ func createFromYAMLFile(yamlPath string, storeKindVersionName bool) error {
 		}
 		obj.UnmarshalJSON(jsonSpec)
 		obj.SetNamespace(SCConf.Namespace)
-		if storeKindVersionName {
-			apiversion = obj.GetAPIVersion()
-			kind = obj.GetKind()
-			name = obj.GetName()
-		}
 
 		// dirty hack to merge scorecard proxy into operator deployment; lots of serialization and deserialization
 		if obj.GetKind() == "Deployment" {
