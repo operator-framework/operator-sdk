@@ -34,11 +34,10 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/controller"
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
+	"github.com/operator-framework/operator-sdk/pkg/helm/storage"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
-	"k8s.io/helm/pkg/storage"
-	"k8s.io/helm/pkg/storage/driver"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -186,8 +185,13 @@ func upLocalHelm() {
 		log.Fatal(err)
 	}
 
-	// Create Tiller's storage backend and kubernetes client
-	storageBackend := storage.Init(driver.NewMemory())
+	// Since we're running locally, we don't have an operator namespace,
+	// so use the watch namespace to store release information.
+	storageBackend, err := storage.NewFromFlag(cfg, namespace, helmOperatorFlags.StorageBackend)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	tillerKubeClient, err := client.NewFromManager(mgr)
 	if err != nil {
 		log.Fatal(err)

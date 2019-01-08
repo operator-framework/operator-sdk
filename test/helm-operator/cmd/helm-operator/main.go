@@ -23,12 +23,11 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/controller"
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
+	"github.com/operator-framework/operator-sdk/pkg/helm/storage"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/spf13/pflag"
 
-	"k8s.io/helm/pkg/storage"
-	"k8s.io/helm/pkg/storage/driver"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -51,9 +50,15 @@ func main() {
 
 	printVersion()
 
-	namespace, err := k8sutil.GetWatchNamespace()
+	watchNamespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
 		log.Error(err, "Failed to get watch namespace")
+		os.Exit(1)
+	}
+
+	operatorNamespace, err := k8sutil.GetOperatorNamespace()
+	if err != nil {
+		log.Error(err, "failed to get operator namespace")
 		os.Exit(1)
 	}
 
@@ -63,7 +68,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
+	mgr, err := manager.New(cfg, manager.Options{Namespace: watchNamespace})
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
@@ -71,8 +76,12 @@ func main() {
 
 	log.Info("Registering Components.")
 
-	// Create Tiller's storage backend and kubernetes client
-	storageBackend := storage.Init(driver.NewMemory())
+	storageBackend, err := storage.NewFromFlag(cfg, operatorNamespace, hflags.StorageBackend)
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
 	tillerKubeClient, err := client.NewFromManager(mgr)
 	if err != nil {
 		log.Error(err, "")
@@ -88,7 +97,7 @@ func main() {
 	for gvk, factory := range factories {
 		// Register the controller with the factory.
 		err := controller.Add(mgr, controller.WatchOptions{
-			Namespace:               namespace,
+			Namespace:               watchNamespace,
 			GVK:                     gvk,
 			ManagerFactory:          factory,
 			ReconcilePeriod:         hflags.ReconcilePeriod,

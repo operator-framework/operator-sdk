@@ -15,6 +15,8 @@
 package flags
 
 import (
+	"strings"
+
 	"github.com/operator-framework/operator-sdk/pkg/internal/flags"
 	"github.com/spf13/pflag"
 )
@@ -22,6 +24,7 @@ import (
 // HelmOperatorFlags - Options to be used by a helm operator
 type HelmOperatorFlags struct {
 	flags.WatchFlags
+	StorageBackend string
 }
 
 // AddTo - Add the helm operator flags to the the flagset
@@ -29,5 +32,10 @@ type HelmOperatorFlags struct {
 func AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) *HelmOperatorFlags {
 	hof := &HelmOperatorFlags{}
 	hof.WatchFlags.AddTo(flagSet, helpTextPrefix...)
+	flagSet.StringVar(&hof.StorageBackend,
+		"storage",
+		"configmap",
+		strings.Join(append(helpTextPrefix, "Storage driver to use. One of 'configmap', 'secret', or 'memory'"), " "),
+	)
 	return hof
 }
