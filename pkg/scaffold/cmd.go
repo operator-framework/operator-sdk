@@ -38,6 +38,7 @@ const cmdTmpl = `package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"runtime"
@@ -71,6 +72,10 @@ func main() {
 	// be added before calling pflag.Parse().
 	pflag.CommandLine.AddFlagSet(zap.FlagSet())
 
+	// Add flags registered by imported packages (e.g. glog and
+	// controller-runtime)
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	
 	pflag.Parse()
 
 	// Use a zap logr.Logger implementation. If none of the zap
