@@ -134,9 +134,11 @@ func modifySpecAndCheck(specMap map[string]interface{}, obj unstructured.Unstruc
 			fmt.Printf("Unknown type for key (%s) in spec: (%v)\n", k, reflect.TypeOf(t))
 		}
 		if !mapType {
-			runtimeClient.Update(context.TODO(), &obj)
+			if err := runtimeClient.Update(context.TODO(), &obj); err != nil {
+				return fmt.Errorf("failed to update object: %v", err)
+			}
 			err = wait.Poll(time.Second*1, time.Second*15, func() (done bool, err error) {
-				runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: SCConf.Namespace, Name: name}, &obj)
+				err = runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: SCConf.Namespace, Name: name}, &obj)
 				if err != nil {
 					return false, err
 				}
