@@ -185,6 +185,8 @@ func IsDockerfileMultistage(dockerfile string) bool {
 	return bytes.Count(df, []byte("FROM")) > 1
 }
 
+// DockerBuild runs 'docker build .' using the Dockerfile at relative path
+// dockerfile and image as tag.
 func DockerBuild(dockerfile, image string, buildArgs ...string) error {
 	args := []string{"build", ".", "-f", dockerfile, "-t", image}
 	for _, arg := range buildArgs {

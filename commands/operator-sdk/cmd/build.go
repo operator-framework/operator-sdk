@@ -153,6 +153,10 @@ func buildFunc(cmd *cobra.Command, args []string) {
 
 	log.Infof("Building Docker image %s", baseImageName)
 
+	// The runtime environment may have docker v17.05+, in which case the SDK
+	// can build the binary within a container in a multistage pipeline.
+	// Otherwise the binary will be built on the host and COPY'd into the
+	// resulting image.
 	buildDockerfile := filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
 	buildDockerfile = makeDockerfileIfMultistage(buildDockerfile, false)
 	if projutil.IsOperatorGo() && !projutil.IsDockerfileMultistage(buildDockerfile) {
@@ -204,6 +208,8 @@ func buildFunc(cmd *cobra.Command, args []string) {
 
 		log.Infof("Building test Docker image %s", image)
 
+		// Similarly to the operator binary build, hosts that have docker < v17.05
+		// will build test binaries locally.
 		if !projutil.IsDockerfileMultistage(testDockerfile) {
 			if err := buildTestBinary(); err != nil {
 				log.Fatalf("failed to build operator binary: (%v)", err)
@@ -223,11 +229,21 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	log.Info("Operator build complete.")
 }
 
+// makeDockerfileIfMultistage is effectively a function for migrating
+// single-stage to multistage Dockerfiles. makeDockerfileIfMultistage scaffolds
+// a multistage Dockerfile for Go operators on hosts with docker v17.05+ if a
+// multistage Dockerfile is not already present at path dockerfile; if isTest
+// is true, makeDockerfileIfMultistage will scaffold a test framework
+// Dockerfile. The newly scaffolded file is named 'multistage.Dockerfile',
+// which users are expected to rename to 'Dockerfile'. Users will see a warning
+// if docker v17.05+ is present but they haven't set the --gen-multistage flag
+// in `operator-sdk build...`
 func makeDockerfileIfMultistage(dockerfile string, isTest bool) string {
 	if !projutil.IsOperatorGo() || !projutil.IsDockerMultistage() {
 		return dockerfile
 	}
 	if !projutil.IsDockerfileMultistage(dockerfile) {
+		msDockerfile := "multistage." + scaffold.DockerfileFile
 		if !genMultistage {
 			warnStr := `Project uses a non-multistage %sDockerfile but the present docker version
 supports multistage builds. Run operator-sdk build with --gen-multistage to write
@@ -236,12 +252,12 @@ file to '%s' to avoid this warning.`
 			if isTest {
 				warnStr = fmt.Sprintf(warnStr,
 					"test ",
-					filepath.Join(scaffold.BuildTestDir, "multistage.Dockerfile"),
+					filepath.Join(scaffold.BuildTestDir, msDockerfile),
 					dockerfile)
 			} else {
 				warnStr = fmt.Sprintf(warnStr,
 					"",
-					filepath.Join(scaffold.BuildDir, "multistage.Dockerfile"),
+					filepath.Join(scaffold.BuildDir, msDockerfile),
 					dockerfile)
 			}
 			log.Warn(warnStr)
@@ -255,13 +271,13 @@ file to '%s' to avoid this warning.`
 
 			var f input.File
 			if isTest {
-				dockerfile = filepath.Join(scaffold.BuildTestDir, "multistage."+scaffold.DockerfileFile)
+				dockerfile = filepath.Join(scaffold.BuildTestDir, msDockerfile)
 				f = &scaffold.TestFrameworkDockerfile{
 					Multistage: true,
 					Input:      input.Input{Path: dockerfile},
 				}
 			} else {
-				dockerfile = filepath.Join(scaffold.BuildDir, "multistage."+scaffold.DockerfileFile)
+				dockerfile = filepath.Join(scaffold.BuildDir, msDockerfile)
 				f = &scaffold.Dockerfile{
 					Multistage: true,
 					Input:      input.Input{Path: dockerfile},
@@ -269,7 +285,7 @@ file to '%s' to avoid this warning.`
 			}
 			err := (&scaffold.Scaffold{}).Execute(cfg, f)
 			if err != nil {
-				log.Fatalf("failed to write multistage Dockerfile: (%v)", err)
+				log.Fatalf("failed to write %s: (%v)", msDockerfile, err)
 			}
 		}
 	}
@@ -277,6 +293,7 @@ file to '%s' to avoid this warning.`
 	return dockerfile
 }
 
+// buildOperatorBinary builds the operator binary locally.
 func buildOperatorBinary() error {
 	absProjectPath := projutil.MustGetwd()
 	binName := filepath.Base(absProjectPath)
@@ -288,6 +305,7 @@ func buildOperatorBinary() error {
 	return projutil.ExecCmd(cmd)
 }
 
+// buildTestBinary builds the test framework binary locally.
 func buildTestBinary() error {
 	absProjectPath := projutil.MustGetwd()
 	binName := filepath.Base(absProjectPath)

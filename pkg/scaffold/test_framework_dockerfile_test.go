@@ -36,7 +36,7 @@ func TestTestFrameworkDockerfileMultistage(t *testing.T) {
 const testDockerfileMultiExp = `# ARG before FROM must always be before the first FROM
 ARG BASEIMAGE
 # Test binary builder image
-FROM golang:1.10.3 AS builder
+FROM golang:1.10-alpine3.8 AS builder
 
 ENV GOPATH /go
 ENV CGO_ENABLED 0
