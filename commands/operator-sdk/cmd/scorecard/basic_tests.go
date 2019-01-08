@@ -167,7 +167,7 @@ func writingIntoCRsHasEffect(obj unstructured.Unstructured) (string, error) {
 	dep := &appsv1.Deployment{}
 	err = runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: SCConf.Namespace, Name: deploymentName}, dep)
 	if err != nil {
-		return "", fmt.Errorf("failed to get newly created deployment: %v", err)
+		return "", fmt.Errorf("failed to get newly created operator deployment: %v", err)
 	}
 	set := labels.Set(dep.Spec.Selector.MatchLabels)
 	pods := &v1.PodList{}
