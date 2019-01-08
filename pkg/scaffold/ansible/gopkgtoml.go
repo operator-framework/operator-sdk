@@ -35,8 +35,8 @@ func (s *GopkgToml) GetInput() (input.Input, error) {
 const gopkgTomlTmpl = `[[constraint]]
   name = "github.com/operator-framework/operator-sdk"
   # The version rule is used for a specific release and the master branch for in between releases.
-  branch = "master"
-  # version = "=v0.0.7"
+  branch = "master" #osdk_branch_annotation
+  # version = "=v0.3.0" #osdk_version_annotation
 
 [prune]
   go-tests = true

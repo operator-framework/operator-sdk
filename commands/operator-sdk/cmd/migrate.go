@@ -55,13 +55,10 @@ func migrateRun(cmd *cobra.Command, args []string) {
 
 // migrateAnsible runs the migration process for an ansible-based operator
 func migrateAnsible() {
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("could not identify current working directory: (%v)", err)
-	}
+	wd := projutil.MustGetwd()
 
 	cfg := &input.Config{
-		AbsProjectPath: projutil.MustGetwd(),
+		AbsProjectPath: wd,
 		ProjectName:    filepath.Base(wd),
 	}
 
@@ -69,7 +66,7 @@ func migrateAnsible() {
 		Watches: true,
 		Roles:   true,
 	}
-	_, err = os.Stat("playbook.yaml")
+	_, err := os.Stat("playbook.yaml")
 	switch {
 	case err == nil:
 		dockerfile.Playbook = true

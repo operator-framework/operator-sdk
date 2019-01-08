@@ -122,11 +122,11 @@ fi
 # operator-sdk itself, and those changes are not merged upstream, we hit this
 # bug: https://github.com/golang/dep/issues/1747
 # Instead, this re-uses operator-sdk's own vendor directory.
-cp -a $ROOTDIR/vendor ./
+cp -a "$ROOTDIR"/vendor ./
 mkdir -p vendor/github.com/operator-framework/operator-sdk/
 # We cannot just use operator-sdk from $GOPATH because compilation tries to use
 # its vendor directory, which can conflict with the local one.
-cp -a "$ROOTDIR"/{pkg,version,LICENSE} vendor/github.com/operator-framework/operator-sdk/
+cp -a "$ROOTDIR"/{internal,pkg,version,LICENSE} vendor/github.com/operator-framework/operator-sdk/
 
 operator-sdk build "$DEST_IMAGE"
 
