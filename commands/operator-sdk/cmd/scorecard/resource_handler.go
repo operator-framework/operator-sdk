@@ -81,7 +81,9 @@ func createFromYAMLFile(yamlPath string) error {
 		if err != nil {
 			return fmt.Errorf("could not convert yaml file to json: %v", err)
 		}
-		obj.UnmarshalJSON(jsonSpec)
+		if err := obj.UnmarshalJSON(jsonSpec); err != nil {
+			return fmt.Errorf("could not unmarshal resource spec: %v", err)
+		}
 		obj.SetNamespace(SCConf.Namespace)
 
 		// dirty hack to merge scorecard proxy into operator deployment; lots of serialization and deserialization
