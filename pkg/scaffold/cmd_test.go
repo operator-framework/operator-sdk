@@ -123,23 +123,28 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Expose metrics by creating a Service object
-	s, err := metrics.ExposeMetricsPort(metricsAddress)
-	if err != nil {
-		log.Error(err, "")
-	}
-	if err == nil {
-		client := mgr.GetClient()
-		if err := client.Create(context.TODO(), s); err != nil && !apierrors.IsAlreadyExists(err) {
-			log.Error(err, "")
-		}
-	}
+	setupMetrics(mgr)
+
 	log.Info("Starting the Cmd.")
 
 	// Start the Cmd
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
 		log.Error(err, "Manager exited non-zero")
 		os.Exit(1)
+	}
+}
+
+func setupMetrics(mgr manager.Manager) {
+	// Expose metrics by creating a Service object
+	s, err := metrics.ExposeMetricsPort(metricsAddress)
+	if err != nil {
+		log.Info(err.Error())
+		return
+	}
+	client := mgr.GetClient()
+	if err := client.Create(context.TODO(), s); err != nil && !apierrors.IsAlreadyExists(err) {
+		log.Info(err.Error())
+		return
 	}
 }
 `
