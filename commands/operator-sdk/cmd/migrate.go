@@ -70,15 +70,20 @@ func migrateAnsible() {
 	switch {
 	case err == nil:
 		dockerfile.Playbook = true
-	case !os.IsNotExist(err):
+	case os.IsNotExist(err):
+		log.Print("No playbook was found, so not including it in the new Dockerfile")
+	default:
 		log.Fatalf("error trying to stat playbook.yaml: (%v)", err)
 	}
 
 	dockerfilePath := filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
-	err = os.Rename(dockerfilePath, dockerfilePath+".sdkold")
+	newDockerfilePath := dockerfilePath + ".sdkold"
+	err = os.Rename(dockerfilePath, newDockerfilePath)
 	if err != nil {
 		log.Fatalf("failed to rename Dockerfile: (%v)", err)
 	}
+	log.Printf("renamed Dockerfile to %s and replaced with newer version", newDockerfilePath)
+	log.Print("Compare the new Dockerfile to your old one and manually migrate any customizations")
 
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
