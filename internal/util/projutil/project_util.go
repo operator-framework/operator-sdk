@@ -60,7 +60,7 @@ func MustInProjectRoot() {
 		if os.IsNotExist(err) {
 			log.Fatal("Must run command in project root dir: project structure requires ./build/Dockerfile")
 		}
-		log.Fatalf("Error: (%v) while checking if current directory is the project root", err)
+		log.Fatalf("Error while checking if current directory is the project root: (%v)", err)
 	}
 }
 

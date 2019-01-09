@@ -264,7 +264,7 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 		err = <-errChan
 		// http.Server returns this in the case of being closed cleanly
 		if err != nil && err != http.ErrServerClosed {
-			logger.Error(err, "Error from event api")
+			logger.Error(err, "Error from event API")
 		}
 	}()
 	return &runResult{

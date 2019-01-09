@@ -138,7 +138,7 @@ func Become(ctx context.Context, lockName string) error {
 				return ctx.Err()
 			}
 		default:
-			log.Error(err, "Unknown error creating configmap")
+			log.Error(err, "Unknown error creating ConfigMap")
 			return err
 		}
 	}
