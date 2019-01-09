@@ -40,8 +40,8 @@ if [[ "$VER" != "$CURR_VER_VER_FILE" || "$VER" != "$CURR_VER_TMPL_FILE" ]]; then
 	exit 1
 fi
 CURR_VER_ANS_TMPL_FILE="$(sed -nr 's/.*".*v(.+)".*#osdk_version_annotation/v\1/p' "$ANS_TOML_TMPL_FILE" | tr -d ' \t\n')"
-if [[ "$VER" != "$CURR_VER_ANS_VER_FILE" || "$VER" != "$CURR_VER_ANS_TMPL_FILE" ]]; then
-	echo "versions are not set correctly in $VER_FILE or $ANS_TOML_TMPL_FILE"
+if [[ "$VER" != "$CURR_VER_ANS_TMPL_FILE" ]]; then
+	echo "versions are not set correctly in $ANS_TOML_TMPL_FILE"
 	exit 1
 fi
 
