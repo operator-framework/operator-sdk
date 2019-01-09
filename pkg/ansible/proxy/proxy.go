@@ -187,7 +187,6 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap, restMapper
 			log.V(1).Info("serialized body", "Body", string(newBody))
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(newBody))
 			req.ContentLength = int64(len(newBody))
-			// add watch for resource
 			dataMapping, err := restMapper.RESTMapping(data.GroupVersionKind().GroupKind(), data.GroupVersionKind().Version)
 			if err != nil {
 				m := fmt.Sprintf("could not get rest mapping for: %v", data.GroupVersionKind())
@@ -195,6 +194,9 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap, restMapper
 				http.Error(w, m, http.StatusInternalServerError)
 				return
 			}
+			// We need to determine whether or not the owner is a cluster-scoped
+			// resource because enqueue based on an owner reference does not work if
+			// a namespaced resource owns a cluster-scoped resource
 			ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
 			ownerMapping, err := restMapper.RESTMapping(schema.GroupKind{Kind: owner.Kind, Group: ownerGV.Group}, ownerGV.Version)
 			if err != nil {
@@ -207,6 +209,7 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap, restMapper
 			dataClusterScoped := dataMapping.Scope.Name() != meta.RESTScopeNameRoot
 			ownerClusterScoped := ownerMapping.Scope.Name() != meta.RESTScopeNameRoot
 			if !ownerClusterScoped || dataClusterScoped {
+				// add watch for resource
 				err = addWatchToController(owner, cMap, data)
 				if err != nil {
 					m := "could not add watch to controller"
