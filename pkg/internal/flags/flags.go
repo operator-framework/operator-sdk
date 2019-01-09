@@ -28,7 +28,7 @@ type WatchFlags struct {
 	WatchesFile     string
 }
 
-// AddTo - Add the reconcile period flag to the the flagset
+// AddTo - Add the reconcile period and watches file flags to the the flagset
 // helpTextPrefix will allow you add a prefix to default help text. Joined by a space.
 func (f *WatchFlags) AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) {
 	flagSet.DurationVar(&f.ReconcilePeriod,
