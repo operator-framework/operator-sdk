@@ -75,10 +75,7 @@ const (
 )
 
 func newFunc(cmd *cobra.Command, args []string) {
-	if len(args) != 1 {
-		log.Fatal("New command needs 1 argument")
-	}
-	parse(args)
+	parse(cmd, args)
 	mustBeNewProject()
 	verifyFlags()
 
@@ -98,13 +95,13 @@ func newFunc(cmd *cobra.Command, args []string) {
 	log.Info("Project creation complete.")
 }
 
-func parse(args []string) {
+func parse(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		log.Fatal("New command needs 1 argument")
+		log.Fatalf("Command %s requires exactly one argument", cmd.CommandPath())
 	}
 	projectName = args[0]
 	if len(projectName) == 0 {
-		log.Fatal("Project-name must not be empty")
+		log.Fatal("Project name must not be empty")
 	}
 }
 

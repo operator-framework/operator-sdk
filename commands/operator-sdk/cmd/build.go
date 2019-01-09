@@ -139,7 +139,7 @@ func verifyTestManifest(image string) {
 
 func buildFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		log.Fatalf("Build command needs exactly 1 argument")
+		log.Fatalf("Command %s requires exactly one argument", cmd.CommandPath())
 	}
 
 	projutil.MustInProjectRoot()
