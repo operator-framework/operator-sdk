@@ -54,8 +54,11 @@ func getCSVConfig(configFile string) (*CsvConfig, error) {
 
 func (c *CsvConfig) setFields() error {
 	if c.OperatorPath == "" {
-		sinfo, _ := (&scaffold.Operator{}).GetInput()
-		c.OperatorPath = sinfo.Path
+		info, err := (&scaffold.Operator{}).GetInput()
+		if err != nil {
+			return err
+		}
+		c.OperatorPath = info.Path
 	}
 
 	if len(c.CrdCrPaths) == 0 {
