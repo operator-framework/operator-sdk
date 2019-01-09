@@ -104,7 +104,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			if err != nil {
 				// break here in case resource doesn't exist in cache but exists on APIserver
 				// This is very unlikely but provides user with expected 404
-				log.Info(fmt.Sprintf("cache miss: %v, %v", k, obj))
+				log.Info(fmt.Sprintf("Cache miss: %v, %v", k, obj))
 				break
 			}
 
@@ -153,7 +153,7 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap) http.Handl
 			}
 			authString, err := base64.StdEncoding.DecodeString(user)
 			if err != nil {
-				m := "could not base64 decode username"
+				m := "Could not base64 decode username"
 				log.Error(err, m)
 				http.Error(w, m, http.StatusBadRequest)
 				return
@@ -165,7 +165,7 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap) http.Handl
 
 			body, err := ioutil.ReadAll(req.Body)
 			if err != nil {
-				m := "could not read request body"
+				m := "Could not read request body"
 				log.Error(err, m)
 				http.Error(w, m, http.StatusInternalServerError)
 				return
@@ -173,7 +173,7 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap) http.Handl
 			data := &unstructured.Unstructured{}
 			err = json.Unmarshal(body, data)
 			if err != nil {
-				m := "could not deserialize request body"
+				m := "Could not deserialize request body"
 				log.Error(err, m)
 				http.Error(w, m, http.StatusBadRequest)
 				return
@@ -181,7 +181,7 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap) http.Handl
 			data.SetOwnerReferences(append(data.GetOwnerReferences(), owner))
 			newBody, err := json.Marshal(data.Object)
 			if err != nil {
-				m := "could not serialize body"
+				m := "Could not serialize body"
 				log.Error(err, m)
 				http.Error(w, m, http.StatusInternalServerError)
 				return
@@ -192,7 +192,7 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap) http.Handl
 			// add watch for resource
 			err = addWatchToController(owner, cMap, data)
 			if err != nil {
-				m := "could not add watch to controller"
+				m := "Could not add watch to controller"
 				log.Error(err, m)
 				http.Error(w, m, http.StatusInternalServerError)
 			}
