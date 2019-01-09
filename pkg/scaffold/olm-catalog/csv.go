@@ -110,7 +110,6 @@ func getCurrentCSVIfExists(csvPath string) (*olmApi.ClusterServiceVersion, bool,
 
 	csvBytes, err := ioutil.ReadFile(csvPath)
 	if err != nil {
-		log.Infof("getCurrentCSVIfExists ReadFile: (%v)", err)
 		return nil, false, err
 	}
 	if len(csvBytes) == 0 {
@@ -119,7 +118,7 @@ func getCurrentCSVIfExists(csvPath string) (*olmApi.ClusterServiceVersion, bool,
 
 	csv := new(olmApi.ClusterServiceVersion)
 	if err := yaml.Unmarshal(csvBytes, csv); err != nil {
-		log.Infof("getCurrentCSVIfExists Unmarshal: (%v)", err)
+
 		return nil, false, err
 	}
 
@@ -276,12 +275,10 @@ func (s *CSV) updateCSVVersions(csv *olmApi.ClusterServiceVersion) error {
 func replaceAllBytes(v interface{}, old, new []byte) error {
 	b, err := json.Marshal(v)
 	if err != nil {
-		log.Infof("replaceAllBytes: (%v)", err)
 		return err
 	}
 	b = bytes.Replace(b, old, new, -1)
 	if err = json.Unmarshal(b, v); err != nil {
-		log.Infof("replaceAllBytes: (%v)", err)
 		return err
 	}
 	return nil
@@ -293,7 +290,6 @@ func (s *CSV) updateCSVFromManifestFiles(csv *olmApi.ClusterServiceVersion, csvC
 	for _, f := range append(csvConfig.CrdCrPaths, csvConfig.OperatorPath, csvConfig.RolePath) {
 		yamlData, err := ioutil.ReadFile(f)
 		if err != nil {
-			log.Infof("updateCSVFromManifestFiles ReadFile %v: (%v)", f, err)
 			return err
 		}
 
@@ -324,7 +320,6 @@ func getKindfromYAML(yamlData []byte) (string, error) {
 		Kind string
 	}
 	if err := yaml.Unmarshal(yamlData, &temp); err != nil {
-		log.Infof("getKindfromYAML Unmarshal: (%v)", err)
 		return "", err
 	}
 	return temp.Kind, nil

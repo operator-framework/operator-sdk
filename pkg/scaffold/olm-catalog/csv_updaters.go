@@ -17,7 +17,6 @@ package catalog
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"regexp"
 	"sync"
 
@@ -107,7 +106,6 @@ func AddRoleToCSVInstallStrategyUpdate(yamlDoc []byte) error {
 
 	newRole := new(rbacv1.Role)
 	if err := yaml.Unmarshal(yamlDoc, newRole); err != nil {
-		log.Printf("AddRoleToCSVInstallStrategyUpdate Unmarshal: (%v)", err)
 		return err
 	}
 	newPerm := olmInstall.StrategyDeploymentPermissions{
@@ -124,7 +122,6 @@ func AddClusterRoleToCSVInstallStrategyUpdate(yamlDoc []byte) error {
 
 	newCRole := new(rbacv1.ClusterRole)
 	if err := yaml.Unmarshal(yamlDoc, newCRole); err != nil {
-		log.Printf("AddClusterRoleToCSVInstallStrategyUpdate Unmarshal: (%v)", err)
 		return err
 	}
 	newPerm := olmInstall.StrategyDeploymentPermissions{
@@ -141,7 +138,6 @@ func AddDeploymentSpecToCSVInstallStrategyUpdate(yamlDoc []byte) error {
 
 	newDep := new(appsv1.Deployment)
 	if err := yaml.Unmarshal(yamlDoc, newDep); err != nil {
-		log.Printf("AddDeploymentSpecToCSVInstallStrategyUpdate Unmarshal: (%v)", err)
 		return err
 	}
 	newDepSpec := olmInstall.StrategyDeploymentSpec{
@@ -163,7 +159,6 @@ func (us *CSVInstallStrategyUpdate) Apply(csv *olmApi.ClusterServiceVersion) (er
 		var resolver *olmInstall.StrategyResolver
 		strat, err = resolver.UnmarshalStrategy(csv.Spec.InstallStrategy)
 		if err != nil {
-			log.Printf("[%T] UnmarshalStrategy: (%v)", *us, err)
 			return err
 		}
 	}
@@ -175,14 +170,12 @@ func (us *CSVInstallStrategyUpdate) Apply(csv *olmApi.ClusterServiceVersion) (er
 		us.updateClusterPermissions(s)
 		us.updateDeploymentSpecs(s)
 	default:
-		log.Printf("[%T] install strategy (%v) uf unknown type", *us, strat)
 		return fmt.Errorf("install strategy (%v) of unknown type", strat)
 	}
 
 	// Re-serialize permissions into csv strategy.
 	updatedStrat, err := json.Marshal(strat)
 	if err != nil {
-		log.Printf("[%T] Marshal: (%v)", *us, err)
 		return err
 	}
 	csv.Spec.InstallStrategy.StrategySpecRaw = updatedStrat
@@ -238,7 +231,6 @@ func AddRequiredCRDToCSVCustomResourceDefinitionsUpdate(yamlDoc []byte) error {
 func parseCRDDescriptionFromYAML(yamlDoc []byte) (*olmApi.CRDDescription, error) {
 	newCRD := new(apiextv1beta1.CustomResourceDefinition)
 	if err := yaml.Unmarshal(yamlDoc, newCRD); err != nil {
-		log.Printf("parseCRDDescriptionFromYAML Unmarshal: (%v)", err)
 		return nil, err
 	}
 
