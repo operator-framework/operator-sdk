@@ -38,7 +38,7 @@ func ExposeMetricsPort() *v1.Service {
 
 	service, err := k8sutil.InitOperatorService()
 	if err != nil {
-		log.Error(err, "failed to initialize service object for operator metrics")
+		log.Error(err, "Failed to initialize service object for operator metrics")
 		return nil
 	}
 	kubeconfig, err := config.GetConfig()
@@ -51,7 +51,7 @@ func ExposeMetricsPort() *v1.Service {
 	}
 	err = runtimeClient.Create(context.TODO(), service)
 	if err != nil && !errors.IsAlreadyExists(err) {
-		log.Error(err, "failed to create service for operator metrics")
+		log.Error(err, "Failed to create service for operator metrics")
 		return nil
 	}
 

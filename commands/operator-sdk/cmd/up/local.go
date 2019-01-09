@@ -97,7 +97,7 @@ func upLocalFunc(cmd *cobra.Command, args []string) {
 	case projutil.OperatorTypeHelm:
 		upLocalHelm()
 	default:
-		log.Fatal("failed to determine operator type")
+		log.Fatal("Failed to determine operator type")
 	}
 }
 
@@ -107,14 +107,14 @@ func mustKubeConfig() {
 	if len(kubeConfig) == 0 {
 		usr, err := user.Current()
 		if err != nil {
-			log.Fatalf("failed to determine user's home dir: (%v)", err)
+			log.Fatalf("Failed to determine user's home dir: (%v)", err)
 		}
 		kubeConfig = filepath.Join(usr.HomeDir, defaultConfigPath)
 	}
 
 	_, err := os.Stat(kubeConfig)
 	if err != nil && os.IsNotExist(err) {
-		log.Fatalf("failed to find the kubeconfig file (%v): (%v)", kubeConfig, err)
+		log.Fatalf("Failed to find the kubeconfig file (%v): (%v)", kubeConfig, err)
 	}
 }
 
@@ -135,7 +135,7 @@ func upLocal() {
 		<-c
 		err := dc.Process.Kill()
 		if err != nil {
-			log.Fatalf("failed to terminate the operator: (%v)", err)
+			log.Fatalf("Failed to terminate the operator: (%v)", err)
 		}
 		os.Exit(0)
 	}()
@@ -145,14 +145,14 @@ func upLocal() {
 	dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, namespace))
 	err := dc.Run()
 	if err != nil {
-		log.Fatalf("failed to run operator locally: (%v)", err)
+		log.Fatalf("Failed to run operator locally: (%v)", err)
 	}
 }
 
 func upLocalAnsible() {
 	// Set the kubeconfig that the manager will be able to grab
 	if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
-		log.Fatalf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+		log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
 	}
 
 	logf.SetLogger(logf.ZapLogger(false))
@@ -163,7 +163,7 @@ func upLocalAnsible() {
 	}
 
 	printVersion()
-	log.Infof("watching namespace: %s", namespace)
+	log.Infof("Watching namespace: %s", namespace)
 	done := make(chan error)
 	cMap := proxy.NewControllerMap()
 
@@ -177,7 +177,7 @@ func upLocalAnsible() {
 		ControllerMap: cMap,
 	})
 	if err != nil {
-		log.Fatalf("error starting proxy: (%v)", err)
+		log.Fatalf("Error starting proxy: (%v)", err)
 	}
 
 	// start the operator
@@ -194,7 +194,7 @@ func upLocalAnsible() {
 func upLocalHelm() {
 	// Set the kubeconfig that the manager will be able to grab
 	if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
-		log.Fatalf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+		log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
 	}
 
 	logf.SetLogger(logf.ZapLogger(false))
@@ -245,5 +245,5 @@ func upLocalHelm() {
 func printVersion() {
 	log.Infof("Go Version: %s", runtime.Version())
 	log.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	log.Infof("operator-sdk Version: %v", sdkVersion.Version)
+	log.Infof("Operator SDK Version: %v", sdkVersion.Version)
 }

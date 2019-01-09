@@ -102,7 +102,7 @@ func Become(ctx context.Context, lockName string) error {
 	case apierrors.IsNotFound(err):
 		log.Info("No pre-existing lock was found.")
 	default:
-		log.Error(err, "unknown error trying to get ConfigMap")
+		log.Error(err, "Unknown error trying to get ConfigMap")
 		return err
 	}
 
@@ -138,7 +138,7 @@ func Become(ctx context.Context, lockName string) error {
 				return ctx.Err()
 			}
 		default:
-			log.Error(err, "unknown error creating configmap")
+			log.Error(err, "Unknown error creating configmap")
 			return err
 		}
 	}
@@ -153,7 +153,7 @@ func myOwnerRef(ctx context.Context, client crclient.Client, ns string) (*metav1
 		return nil, fmt.Errorf("required env %s not set, please configure downward API", PodNameEnv)
 	}
 
-	log.V(1).Info("found podname", "Pod.Name", podName)
+	log.V(1).Info("Found podname", "Pod.Name", podName)
 
 	myPod := &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
@@ -165,7 +165,7 @@ func myOwnerRef(ctx context.Context, client crclient.Client, ns string) (*metav1
 	key := crclient.ObjectKey{Namespace: ns, Name: podName}
 	err := client.Get(ctx, key, myPod)
 	if err != nil {
-		log.Error(err, "failed to get pod", "Pod.Namespace", ns, "Pod.Name", podName)
+		log.Error(err, "Failed to get pod", "Pod.Namespace", ns, "Pod.Name", podName)
 		return nil, err
 	}
 

@@ -35,8 +35,8 @@ func NewNewCmd() *cobra.Command {
 	newCmd := &cobra.Command{
 		Use:   "new <project-name>",
 		Short: "Creates a new operator application",
-		Long: `The operator-sdk new command creates a new operator application and 
-generates a default directory layout based on the input <project-name>. 
+		Long: `The operator-sdk new command creates a new operator application and
+generates a default directory layout based on the input <project-name>.
 
 <project-name> is the project name of the new operator. (e.g app-operator)
 
@@ -76,7 +76,7 @@ const (
 
 func newFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		log.Fatal("new command needs 1 argument")
+		log.Fatal("New command needs 1 argument")
 	}
 	parse(args)
 	mustBeNewProject()
@@ -100,11 +100,11 @@ func newFunc(cmd *cobra.Command, args []string) {
 
 func parse(args []string) {
 	if len(args) != 1 {
-		log.Fatal("new command needs 1 argument")
+		log.Fatal("New command needs 1 argument")
 	}
 	projectName = args[0]
 	if len(projectName) == 0 {
-		log.Fatal("project-name must not be empty")
+		log.Fatal("Project-name must not be empty")
 	}
 }
 
@@ -117,10 +117,10 @@ func mustBeNewProject() {
 		return
 	}
 	if err != nil {
-		log.Fatalf("failed to determine if project (%v) exists", projectName)
+		log.Fatalf("Failed to determine if project (%v) exists", projectName)
 	}
 	if stat.IsDir() {
-		log.Fatalf("project (%v) in (%v) path already exists, please use a different project name or delete the existing one", projectName, fp)
+		log.Fatalf("Project (%v) in (%v) path already exists, please use a different project name or delete the existing one", projectName, fp)
 	}
 }
 
@@ -152,7 +152,7 @@ func doScaffold() {
 		&scaffold.GopkgToml{},
 	)
 	if err != nil {
-		log.Fatalf("new go scaffold failed: (%v)", err)
+		log.Fatalf("New go scaffold failed: (%v)", err)
 	}
 }
 
@@ -164,13 +164,13 @@ func doAnsibleScaffold() {
 
 	resource, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
-		log.Fatalf("invalid apiVersion and kind: (%v)", err)
+		log.Fatalf("Invalid apiVersion and kind: (%v)", err)
 	}
 
 	s := &scaffold.Scaffold{}
 	tmpdir, err := ioutil.TempDir("", "osdk")
 	if err != nil {
-		log.Fatalf("unable to get temp directory: (%v)", err)
+		log.Fatalf("Unable to get temp directory: (%v)", err)
 	}
 
 	galaxyInit := &ansible.GalaxyInit{
@@ -205,7 +205,7 @@ func doAnsibleScaffold() {
 		},
 	)
 	if err != nil {
-		log.Fatalf("new ansible scaffold failed: (%v)", err)
+		log.Fatalf("New ansible scaffold failed: (%v)", err)
 	}
 
 	// Decide on playbook.
@@ -218,7 +218,7 @@ func doAnsibleScaffold() {
 			},
 		)
 		if err != nil {
-			log.Fatalf("new ansible playbook scaffold failed: (%v)", err)
+			log.Fatalf("New ansible playbook scaffold failed: (%v)", err)
 		}
 	}
 
@@ -235,12 +235,12 @@ func doAnsibleScaffold() {
 	// everything.
 	tmpDirectorySlice := strings.Split(os.TempDir(), "/")
 	if err = os.RemoveAll(filepath.Join(galaxyInit.AbsProjectPath, tmpDirectorySlice[1])); err != nil {
-		log.Fatalf("failed to remove the galaxy init script: (%v)", err)
+		log.Fatalf("Failed to remove the galaxy init script: (%v)", err)
 	}
 
 	// update deploy/role.yaml for the given resource r.
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
+		log.Fatalf("Failed to update the RBAC manifest for the resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
 	}
 }
 
@@ -252,7 +252,7 @@ func doHelmScaffold() {
 
 	resource, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
-		log.Fatalf("invalid apiVersion and kind: (%v)", err)
+		log.Fatalf("Invalid apiVersion and kind: (%v)", err)
 	}
 
 	s := &scaffold.Scaffold{}
@@ -279,42 +279,42 @@ func doHelmScaffold() {
 		},
 	)
 	if err != nil {
-		log.Fatalf("new helm scaffold failed: (%v)", err)
+		log.Fatalf("New helm scaffold failed: (%v)", err)
 	}
 
 	if err := helm.CreateChartForResource(resource, cfg.AbsProjectPath); err != nil {
-		log.Fatalf("failed to create initial helm chart for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
+		log.Fatalf("Failed to create initial helm chart for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
 	}
 
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-		log.Fatalf("failed to update the RBAC manifest for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
+		log.Fatalf("Failed to update the RBAC manifest for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
 	}
 }
 
 func verifyFlags() {
 	if operatorType != projutil.OperatorTypeGo && operatorType != projutil.OperatorTypeAnsible && operatorType != projutil.OperatorTypeHelm {
-		log.Fatal("--type can only be `go`, `ansible`, or `helm`")
+		log.Fatal("Value of --type can only be `go`, `ansible`, or `helm`")
 	}
 	if operatorType != projutil.OperatorTypeAnsible && generatePlaybook {
-		log.Fatal("--generate-playbook can only be used with --type `ansible`")
+		log.Fatal("Value of --generate-playbook can only be used with --type `ansible`")
 	}
 	if operatorType == projutil.OperatorTypeGo && (len(apiVersion) != 0 || len(kind) != 0) {
-		log.Fatal(`go type operator does not use --api-version or --kind. Please see "operator-sdk add" command after running new.`)
+		log.Fatal(`Go type operators do not use --api-version or --kind. Please see "operator-sdk add" command after running new.`)
 	}
 
 	if operatorType != projutil.OperatorTypeGo {
 		if len(apiVersion) == 0 {
-			log.Fatal("--api-version must not have empty value")
+			log.Fatal("Value of --api-version must not have empty value")
 		}
 		if len(kind) == 0 {
-			log.Fatal("--kind must not have empty value")
+			log.Fatal("Value of --kind must not have empty value")
 		}
 		kindFirstLetter := string(kind[0])
 		if kindFirstLetter != strings.ToUpper(kindFirstLetter) {
-			log.Fatal("--kind must start with an uppercase letter")
+			log.Fatal("Value of --kind must start with an uppercase letter")
 		}
 		if strings.Count(apiVersion, "/") != 1 {
-			log.Fatalf("api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion)
+			log.Fatalf("Value of --api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion)
 		}
 	}
 }
@@ -326,14 +326,14 @@ func execCmd(stdout *os.File, cmd string, args ...string) {
 	dc.Stderr = os.Stderr
 	err := dc.Run()
 	if err != nil {
-		log.Fatalf("failed to exec %s %#v: (%v)", cmd, args, err)
+		log.Fatalf("Failed to exec %s %#v: (%v)", cmd, args, err)
 	}
 }
 
 func pullDep() {
 	_, err := exec.LookPath(dep)
 	if err != nil {
-		log.Fatalf("looking for dep in $PATH: (%v)", err)
+		log.Fatalf("Looking for dep in $PATH: (%v)", err)
 	}
 	log.Info("Run dep ensure ...")
 	execCmd(os.Stdout, dep, ensureCmd, "-v")

@@ -93,7 +93,7 @@ func MakeRegexpArray(str string) ([]*regexp.Regexp, error) {
 func MakeRegexpArrayOrDie(str string) []*regexp.Regexp {
 	result, err := MakeRegexpArray(str)
 	if err != nil {
-		log.Error(err, "error compiling re")
+		log.Error(err, "Error compiling re")
 		os.Exit(1)
 	}
 	return result
@@ -102,7 +102,7 @@ func MakeRegexpArrayOrDie(str string) []*regexp.Regexp {
 func matchesRegexp(str string, regexps []*regexp.Regexp) bool {
 	for _, re := range regexps {
 		if re.MatchString(str) {
-			log.Info("matched found", "MatchString", str, "Regexp", re)
+			log.Info("Matched found", "MatchString", str, "Regexp", re)
 			return true
 		}
 	}
@@ -159,7 +159,7 @@ type server struct {
 type responder struct{}
 
 func (r *responder) Error(w http.ResponseWriter, req *http.Request, err error) {
-	log.Error(err, "error while proxying request")
+	log.Error(err, "Error while proxying request")
 	http.Error(w, err.Error(), http.StatusInternalServerError)
 }
 

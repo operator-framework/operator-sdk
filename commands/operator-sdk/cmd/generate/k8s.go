@@ -42,7 +42,7 @@ to comply with kube-API requirements.
 
 func k8sFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 0 {
-		log.Fatal("k8s command doesn't accept any arguments")
+		log.Fatalf("Command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 
 	// Only Go projects can generate k8s deepcopy code.
@@ -64,7 +64,7 @@ func K8sCodegen() {
 
 	gvMap, err := parseGroupVersions()
 	if err != nil {
-		log.Fatalf("failed to parse group versions: (%v)", err)
+		log.Fatalf("Failed to parse group versions: (%v)", err)
 	}
 	gvb := &strings.Builder{}
 	for g, vs := range gvMap {
@@ -178,6 +178,6 @@ func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) {
 	cgPath := filepath.Join(binDir, "deepcopy-gen")
 	err := projutil.ExecCmd(exec.Command(cgPath, args...))
 	if err != nil {
-		log.Fatalf("failed to perform code-generation: %v", err)
+		log.Fatalf("Failed to perform code-generation: %v", err)
 	}
 }

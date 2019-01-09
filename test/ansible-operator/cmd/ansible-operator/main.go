@@ -34,7 +34,7 @@ import (
 func printVersion() {
 	log.Infof("Go Version: %s", runtime.Version())
 	log.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	log.Infof("operator-sdk Version: %v", sdkVersion.Version)
+	log.Infof("Operator SDK Version: %v", sdkVersion.Version)
 }
 
 func main() {
@@ -72,7 +72,7 @@ func main() {
 		ControllerMap: cMap,
 	})
 	if err != nil {
-		log.Fatalf("error starting proxy: (%v)", err)
+		log.Fatalf("Error starting proxy: (%v)", err)
 	}
 
 	// start the operator

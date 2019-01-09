@@ -24,12 +24,12 @@ func TestCmd(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err := s.Execute(appConfig, &Cmd{})
 	if err != nil {
-		t.Fatalf("failed to execute the scaffold: (%v)", err)
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
 	if cmdExp != buf.String() {
 		diffs := diffutil.Diff(cmdExp, buf.String())
-		t.Fatalf("expected vs actual differs.\n%v", diffs)
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
 }
 
@@ -76,7 +76,7 @@ func main() {
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
-		log.Error(err, "failed to get watch namespace")
+		log.Error(err, "Failed to get watch namespace")
 		os.Exit(1)
 	}
 
@@ -123,7 +123,7 @@ func main() {
 
 	// Start the Cmd
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
-		log.Error(err, "manager exited non-zero")
+		log.Error(err, "Manager exited non-zero")
 		os.Exit(1)
 	}
 }

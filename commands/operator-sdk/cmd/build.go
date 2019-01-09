@@ -80,11 +80,11 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 		yamlMap := make(map[string]interface{})
 		err := yaml.Unmarshal(yamlSpec, &yamlMap)
 		if err != nil {
-			log.Fatalf("could not unmarshal yaml namespaced spec: (%v)", err)
+			log.Fatalf("Could not unmarshal yaml namespaced spec: (%v)", err)
 		}
 		kind, ok := yamlMap["kind"].(string)
 		if !ok {
-			log.Fatal("yaml manifest file contains a 'kind' field that is not a string")
+			log.Fatal("YAML manifest file contains a 'kind' field that is not a string")
 		}
 		if kind == "Deployment" {
 			// this is ugly and hacky; we should probably make this cleaner
@@ -116,7 +116,7 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		log.Fatalf("failed to verify deployment image: (%v)", err)
+		log.Fatalf("Failed to verify deployment image: (%v)", err)
 	}
 	if warningMessages == "" {
 		return nil
@@ -127,7 +127,7 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 func verifyTestManifest(image string) {
 	namespacedBytes, err := ioutil.ReadFile(namespacedManBuild)
 	if err != nil {
-		log.Fatalf("could not read namespaced manifest: (%v)", err)
+		log.Fatalf("Could not read namespaced manifest: (%v)", err)
 	}
 
 	err = verifyDeploymentImage(namespacedBytes, image)
@@ -139,7 +139,7 @@ func verifyTestManifest(image string) {
 
 func buildFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		log.Fatalf("build command needs exactly 1 argument")
+		log.Fatalf("Build command needs exactly 1 argument")
 	}
 
 	projutil.MustInProjectRoot()
@@ -156,7 +156,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		buildCmd.Stderr = os.Stderr
 		err := buildCmd.Run()
 		if err != nil {
-			log.Fatalf("failed to build operator binary: (%v)", err)
+			log.Fatalf("Failed to build operator binary: (%v)", err)
 		}
 	}
 
@@ -174,9 +174,9 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	err := dbcmd.Run()
 	if err != nil {
 		if enableTests {
-			log.Fatalf("failed to output intermediate image %s: (%v)", image, err)
+			log.Fatalf("Failed to output intermediate image %s: (%v)", image, err)
 		} else {
-			log.Fatalf("failed to output build image %s: (%v)", image, err)
+			log.Fatalf("Failed to output build image %s: (%v)", image, err)
 		}
 	}
 
@@ -188,7 +188,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		buildTestCmd.Stderr = os.Stderr
 		err = buildTestCmd.Run()
 		if err != nil {
-			log.Fatalf("failed to build test binary: (%v)", err)
+			log.Fatalf("Failed to build test binary: (%v)", err)
 		}
 		// if a user is using an older sdk repo as their library, make sure they have required build files
 		testDockerfile := filepath.Join(scaffold.BuildTestDir, scaffold.DockerfileFile)
@@ -211,7 +211,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 				&scaffold.TestPod{Image: image, TestNamespaceEnv: test.TestNamespaceEnv},
 			)
 			if err != nil {
-				log.Fatalf("test-framework manifest scaffold failed: (%v)", err)
+				log.Fatalf("Test framework manifest scaffold failed: (%v)", err)
 			}
 		}
 
@@ -222,7 +222,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		testDbcmd.Stderr = os.Stderr
 		err = testDbcmd.Run()
 		if err != nil {
-			log.Fatalf("failed to output test image %s: (%v)", image, err)
+			log.Fatalf("Failed to output test image %s: (%v)", image, err)
 		}
 		// Check image name of deployments in namespaced manifest
 		verifyTestManifest(image)

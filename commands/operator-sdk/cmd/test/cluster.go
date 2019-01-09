@@ -115,7 +115,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 	defer func() {
 		err = kubeclient.CoreV1().Pods(tcConfig.namespace).Delete(testPod.Name, &metav1.DeleteOptions{})
 		if err != nil {
-			log.Warn("failed to delete test pod")
+			log.Warn("Failed to delete test pod")
 		}
 	}()
 	err = wait.Poll(time.Second*5, time.Second*time.Duration(tcConfig.pendingTimeout), func() (bool, error) {

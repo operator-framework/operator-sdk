@@ -63,7 +63,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.NewString("api", "apis"), GrouplessAPIPrefixes: sets.NewString("api")}
 			r, err := rf.NewRequestInfo(req)
 			if err != nil {
-				log.Error(err, "failed to convert request")
+				log.Error(err, "Failed to convert request")
 				break
 			}
 
@@ -93,7 +93,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			k, err := restMapper.KindFor(gvr)
 			if err != nil {
 				// break here in case resource doesn't exist in cache
-				log.Info("cache miss", "GVR", gvr)
+				log.Info("Cache miss", "GVR", gvr)
 				break
 			}
 
@@ -112,7 +112,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			resp, err := json.Marshal(un.Object)
 			if err != nil {
 				// return will give a 500
-				log.Error(err, "failed to marshal data")
+				log.Error(err, "Failed to marshal data")
 				http.Error(w, "", http.StatusInternalServerError)
 				return
 			}
@@ -122,7 +122,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			json.Indent(&i, resp, "", "  ")
 			_, err = w.Write(i.Bytes())
 			if err != nil {
-				log.Error(err, "failed to write response")
+				log.Error(err, "Failed to write response")
 				http.Error(w, "", http.StatusInternalServerError)
 				return
 			}
@@ -140,9 +140,9 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.Method == http.MethodPost {
-			log.Info("injecting owner reference")
+			log.Info("Injecting owner reference")
 			dump, _ := httputil.DumpRequest(req, false)
-			log.V(1).Info("dumping request", "RequestDump", string(dump))
+			log.V(1).Info("Dumping request", "RequestDump", string(dump))
 
 			user, _, ok := req.BasicAuth()
 			if !ok {
@@ -186,7 +186,7 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap) http.Handl
 				http.Error(w, m, http.StatusInternalServerError)
 				return
 			}
-			log.V(1).Info("serialized body", "Body", string(newBody))
+			log.V(1).Info("Serialized body", "Body", string(newBody))
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(newBody))
 			req.ContentLength = int64(len(newBody))
 			// add watch for resource

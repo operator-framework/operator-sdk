@@ -43,13 +43,13 @@ func GetOperatorNamespace() (string, error) {
 	nsBytes, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.V(1).Info("current namespace not found")
+			log.V(1).Info("Current namespace not found")
 			return "", fmt.Errorf("namespace not found for current environment")
 		}
 		return "", err
 	}
 	ns := strings.TrimSpace(string(nsBytes))
-	log.V(1).Info("found namespace", "Namespace", ns)
+	log.V(1).Info("Found namespace", "Namespace", ns)
 	return ns, nil
 }
 
