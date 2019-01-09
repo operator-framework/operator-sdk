@@ -182,7 +182,6 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	}
 
 	if enableTests {
-
 		testBinary := filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName+"-test")
 		buildTestCmd := exec.Command("go", "test", "-c", "-o", testBinary, testLocationBuild+"/...")
 		buildTestCmd.Env = goBuildEnv

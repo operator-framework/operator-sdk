@@ -45,6 +45,7 @@ import (
 
 	"{{ .Repo }}/pkg/apis"
 	"{{ .Repo }}/pkg/controller"
+
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/ready"
