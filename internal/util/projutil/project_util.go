@@ -15,13 +15,13 @@
 package projutil
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
@@ -180,9 +180,9 @@ func IsDockerMultistage() bool {
 func IsDockerfileMultistage(dockerfile string) bool {
 	df, err := ioutil.ReadFile(dockerfile)
 	if err != nil {
-		log.Fatal("Dockerfile not found")
+		log.Fatalf("Error reading %s: %v", dockerfile, err)
 	}
-	return bytes.Count(df, []byte("FROM")) > 1
+	return len(regexp.MustCompile("(?m:^FROM .*$)").FindAll(df, -1)) > 1
 }
 
 // DockerBuild runs 'docker build .' using the Dockerfile at relative path
