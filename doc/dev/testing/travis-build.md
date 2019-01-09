@@ -69,7 +69,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 ### Ansible tests
 
 1. Run [ansible e2e tests][ansible-e2e].
-    1. Create base ansible operator image by running [`commands/ansible-operator-base/main.go`][ansible-base].
+    1. Create base ansible operator image by running [`hack/image/scaffold-ansible-image.go`][ansible-base].
     2. Build base ansible operator image.
     3. Create and configure a new ansible type memcached-operator.
     4. Create cluster resources.
@@ -110,7 +110,7 @@ The markdown test does not create a new cluster and runs in a barebones travis V
 [go-e2e]: ../../../hack/tests/e2e-go.sh
 [tls-tests]: ../../../test/e2e/tls_util_test.go
 [ansible-e2e]: ../../../hack/tests/e2e-ansible.sh
-[ansible-base]: ../../../commands/ansible-operator-base/main.go
+[ansible-base]: ../../../hack/image/scaffold-ansible-image.go
 [helm-e2e]: ../../../hack/tests/e2e-helm.sh
 [helm-base]: ../../../test/helm-operator
 [marker-github]: https://github.com/crawford/marker
