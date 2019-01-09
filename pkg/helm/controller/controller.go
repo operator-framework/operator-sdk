@@ -24,6 +24,7 @@ import (
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -78,7 +79,7 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 	}
 
 	if options.WatchDependentResources {
-		watchDependentResources(r, c)
+		watchDependentResources(mgr, r, c)
 	}
 
 	log.Info("Watching resource", "apiVersion", options.GVK.GroupVersion(), "kind", options.GVK.Kind, "namespace", options.Namespace, "resyncPeriod", options.ResyncPeriod.String())
@@ -87,7 +88,7 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 
 // watchDependentResources adds a release hook function to the HelmOperatorReconciler
 // that adds watches for resources in released Helm charts.
-func watchDependentResources(r *HelmOperatorReconciler, c controller.Controller) {
+func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c controller.Controller) {
 	owner := &unstructured.Unstructured{}
 	owner.SetGroupVersionKind(r.GVK)
 
@@ -149,6 +150,28 @@ func watchDependentResources(r *HelmOperatorReconciler, c controller.Controller)
 			_, ok := watches[gvk]
 			m.RUnlock()
 			if ok {
+				continue
+			}
+
+			restMapper := mgr.GetRESTMapper()
+			depMapping, err := restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+			if err != nil {
+				return err
+			}
+			ownerMapping, err := restMapper.RESTMapping(owner.GroupVersionKind().GroupKind(), owner.GroupVersionKind().Version)
+			if err != nil {
+				return err
+			}
+
+			depClusterScoped := depMapping.Scope.Name() == meta.RESTScopeNameRoot
+			ownerClusterScoped := ownerMapping.Scope.Name() == meta.RESTScopeNameRoot
+
+			if !ownerClusterScoped && depClusterScoped {
+				m.Lock()
+				watches[gvk] = struct{}{}
+				m.Unlock()
+				log.Info("Cannot watch cluster-scoped dependent resource for namespace-scoped owner. Changes to this dependent resource type will not be reconciled",
+					"ownerApiVersion", r.GVK.GroupVersion(), "ownerKind", r.GVK.Kind, "apiVersion", gvk.GroupVersion(), "kind", gvk.Kind)
 				continue
 			}
 
