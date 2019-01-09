@@ -22,24 +22,17 @@ import (
 
 type TestFrameworkDockerfile struct {
 	input.Input
-
-	// Multistage determines if a multistage Dockerfile template is used.
-	Multistage bool
 }
 
 func (s *TestFrameworkDockerfile) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = filepath.Join(BuildTestDir, DockerfileFile)
 	}
-	if s.Multistage {
-		s.TemplateBody = testDockerfileMultiTmpl
-	} else {
-		s.TemplateBody = testDockerfileNonMultTmpl
-	}
+	s.TemplateBody = testDockerfileTmpl
 	return s.Input, nil
 }
 
-const testDockerfileMultiTmpl = `# ARG before FROM must always be before the first FROM
+const testDockerfileTmpl = `# ARG before FROM must always be before the first FROM
 ARG BASEIMAGE
 # Test binary builder image
 FROM golang:1.10-alpine3.8 AS builder
@@ -49,24 +42,16 @@ ENV CGO_ENABLED 0
 ENV GOOS linux
 ENV GOARCH amd64
 
-WORKDIR /go/src/{{ .Repo }}
-COPY . /go/src/{{ .Repo }}
+WORKDIR /go/src/{{.Repo}}
+COPY . /go/src/{{.Repo}}
 
 ARG TESTDIR
-RUN go test -c -o /go/bin/{{ .ProjectName }}-test ${TESTDIR}/...
+RUN go test -c -o /go/bin/{{.ProjectName}}-test ${TESTDIR}/...
 
-# Base image containing "{{ .ProjectName }}-test" binary
+# Base image containing "{{.ProjectName}}-test" binary
 FROM ${BASEIMAGE}
-COPY --from=builder /go/bin/{{ .ProjectName }}-test /usr/local/bin/{{ .ProjectName }}-test
+COPY --from=builder /go/bin/{{.ProjectName}}-test /usr/local/bin/{{.ProjectName}}-test
 
-ARG NAMESPACEDMAN
-COPY $NAMESPACEDMAN /namespaced.yaml
-COPY build/test-framework/go-test.sh /go-test.sh
-`
-
-const testDockerfileNonMultTmpl = `ARG BASEIMAGE
-FROM ${BASEIMAGE}
-COPY build/_output/bin/{{.ProjectName}}-test /usr/local/bin/{{.ProjectName}}-test
 ARG NAMESPACEDMAN
 COPY $NAMESPACEDMAN /namespaced.yaml
 COPY build/test-framework/go-test.sh /go-test.sh

@@ -158,7 +158,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	// Otherwise the binary will be built on the host and COPY'd into the
 	// resulting image.
 	buildDockerfile := filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
-	buildDockerfile = makeDockerfileIfMultistage(buildDockerfile, false)
+	buildDockerfile = makeDockerfileIfMultistage(buildDockerfile)
 	if projutil.IsOperatorGo() && !projutil.IsDockerfileMultistage(buildDockerfile) {
 		if err := buildOperatorBinary(); err != nil {
 			log.Fatalf("failed to build operator binary: (%v)", err)
@@ -174,10 +174,14 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	}
 
 	if enableTests {
-		// if a user is using an older sdk repo as their library, make sure they have required build files
+		if !projutil.IsOperatorGo() || !projutil.IsDockerMultistage() {
+			log.Fatalf("In-cluster tests are only available for Go operators on hosts with Docker v17.05+")
+		}
+		// If a user is using an older sdk repo as their library, make sure they
+		// have required build files.
 		testDockerfile := filepath.Join(scaffold.BuildTestDir, scaffold.DockerfileFile)
 		_, err = os.Stat(testDockerfile)
-		if err != nil && os.IsNotExist(err) {
+		if err != nil || !projutil.IsDockerfileMultistage(testDockerfile) {
 
 			log.Info("Generating build manifests for test-framework.")
 
@@ -188,10 +192,9 @@ func buildFunc(cmd *cobra.Command, args []string) {
 				ProjectName:    filepath.Base(absProjectPath),
 			}
 
-			s := &scaffold.Scaffold{}
-			err = s.Execute(cfg,
+			err = (&scaffold.Scaffold{}).Execute(cfg,
 				&scaffold.TestFrameworkDockerfile{
-					Multistage: projutil.IsDockerMultistage(),
+					Input: input.Input{IfExistsAction: input.Overwrite},
 				},
 				&scaffold.GoTestScript{},
 				&scaffold.TestPod{
@@ -202,19 +205,12 @@ func buildFunc(cmd *cobra.Command, args []string) {
 			if err != nil {
 				log.Fatalf("test-framework manifest scaffold failed: (%v)", err)
 			}
-		} else if err == nil {
-			testDockerfile = makeDockerfileIfMultistage(testDockerfile, true)
 		}
 
 		log.Infof("Building test Docker image %s", image)
 
-		// Similarly to the operator binary build, hosts that have docker < v17.05
-		// will build test binaries locally.
-		if !projutil.IsDockerfileMultistage(testDockerfile) {
-			if err := buildTestBinary(); err != nil {
-				log.Fatalf("failed to build operator binary: (%v)", err)
-			}
-		}
+		// Tests require docker v17.05+ anyway so we don't need to conditionally
+		// scaffold a multistage Dockerfile.
 		err = projutil.DockerBuild(testDockerfile, image,
 			"TESTDIR="+testLocationBuild,
 			"BASEIMAGE="+baseImageName,
@@ -232,35 +228,25 @@ func buildFunc(cmd *cobra.Command, args []string) {
 // makeDockerfileIfMultistage is effectively a function for migrating
 // single-stage to multistage Dockerfiles. makeDockerfileIfMultistage scaffolds
 // a multistage Dockerfile for Go operators on hosts with docker v17.05+ if a
-// multistage Dockerfile is not already present at path dockerfile; if isTest
-// is true, makeDockerfileIfMultistage will scaffold a test framework
-// Dockerfile. The newly scaffolded file is named 'multistage.Dockerfile',
-// which users are expected to rename to 'Dockerfile'. Users will see a warning
-// if docker v17.05+ is present but they haven't set the --gen-multistage flag
-// in `operator-sdk build...`
-func makeDockerfileIfMultistage(dockerfile string, isTest bool) string {
+// multistage Dockerfile is not already present at path dockerfile. The newly
+// scaffolded file is named 'multistage.Dockerfile', which users are expected
+// to rename to 'Dockerfile'. Users will see a warning if docker v17.05+ is
+// present but they haven't set the --gen-multistage flag in
+// `operator-sdk build...`
+func makeDockerfileIfMultistage(dockerfile string) string {
 	if !projutil.IsOperatorGo() || !projutil.IsDockerMultistage() {
 		return dockerfile
 	}
 	if !projutil.IsDockerfileMultistage(dockerfile) {
 		msDockerfile := "multistage." + scaffold.DockerfileFile
 		if !genMultistage {
-			warnStr := `Project uses a non-multistage %sDockerfile but the present docker version
+			log.Warnf(`Project uses a non-multistage Dockerfile but the present docker version
 supports multistage builds. Run operator-sdk build with --gen-multistage to write
 a multistage Dockerfile to '%s' and build it. Rename this
-file to '%s' to avoid this warning.`
-			if isTest {
-				warnStr = fmt.Sprintf(warnStr,
-					"test ",
-					filepath.Join(scaffold.BuildTestDir, msDockerfile),
-					dockerfile)
-			} else {
-				warnStr = fmt.Sprintf(warnStr,
-					"",
-					filepath.Join(scaffold.BuildDir, msDockerfile),
-					dockerfile)
-			}
-			log.Warn(warnStr)
+file to '%s' to avoid this warning.`,
+				filepath.Join(scaffold.BuildDir, msDockerfile),
+				dockerfile)
+
 		} else {
 			absProjectPath := projutil.MustGetwd()
 			cfg := &input.Config{
@@ -269,21 +255,15 @@ file to '%s' to avoid this warning.`
 				Repo:           projutil.CheckAndGetProjectGoPkg(),
 			}
 
-			var f input.File
-			if isTest {
-				dockerfile = filepath.Join(scaffold.BuildTestDir, msDockerfile)
-				f = &scaffold.TestFrameworkDockerfile{
-					Multistage: true,
-					Input:      input.Input{Path: dockerfile},
-				}
-			} else {
-				dockerfile = filepath.Join(scaffold.BuildDir, msDockerfile)
-				f = &scaffold.Dockerfile{
-					Multistage: true,
-					Input:      input.Input{Path: dockerfile},
-				}
+			dockerfile = filepath.Join(scaffold.BuildDir, msDockerfile)
+			d := &scaffold.Dockerfile{
+				Multistage: true,
+				Input: input.Input{
+					Path:           dockerfile,
+					IfExistsAction: input.Overwrite,
+				},
 			}
-			err := (&scaffold.Scaffold{}).Execute(cfg, f)
+			err := (&scaffold.Scaffold{}).Execute(cfg, d)
 			if err != nil {
 				log.Fatalf("failed to write %s: (%v)", msDockerfile, err)
 			}
@@ -301,17 +281,6 @@ func buildOperatorBinary() error {
 	outputBinName := filepath.Join(absProjectPath, scaffold.BuildBinDir, binName)
 
 	cmd := exec.Command("go", "build", "-o", outputBinName, managerDir)
-	cmd.Env = append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
-	return projutil.ExecCmd(cmd)
-}
-
-// buildTestBinary builds the test framework binary locally.
-func buildTestBinary() error {
-	absProjectPath := projutil.MustGetwd()
-	binName := filepath.Base(absProjectPath)
-	outputBinName := filepath.Join(absProjectPath, scaffold.BuildBinDir, binName+"-test")
-
-	cmd := exec.Command("go", "test", "-c", "-o", outputBinName, testLocationBuild+"/...")
 	cmd.Env = append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
 	return projutil.ExecCmd(cmd)
 }

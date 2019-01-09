@@ -22,18 +22,18 @@ import (
 
 func TestTestFrameworkDockerfileMultistage(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(appConfig, &TestFrameworkDockerfile{Multistage: true})
+	err := s.Execute(appConfig, &TestFrameworkDockerfile{})
 	if err != nil {
 		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
 
-	if testDockerfileMultiExp != buf.String() {
-		diffs := diffutil.Diff(testDockerfileMultiExp, buf.String())
+	if testDockerfileExp != buf.String() {
+		diffs := diffutil.Diff(testDockerfileExp, buf.String())
 		t.Fatalf("expected vs actual differs.\n%v", diffs)
 	}
 }
 
-const testDockerfileMultiExp = `# ARG before FROM must always be before the first FROM
+const testDockerfileExp = `# ARG before FROM must always be before the first FROM
 ARG BASEIMAGE
 # Test binary builder image
 FROM golang:1.10-alpine3.8 AS builder
@@ -53,27 +53,6 @@ RUN go test -c -o /go/bin/app-operator-test ${TESTDIR}/...
 FROM ${BASEIMAGE}
 COPY --from=builder /go/bin/app-operator-test /usr/local/bin/app-operator-test
 
-ARG NAMESPACEDMAN
-COPY $NAMESPACEDMAN /namespaced.yaml
-COPY build/test-framework/go-test.sh /go-test.sh
-`
-
-func TestTestFrameworkDockerfileNonMultistage(t *testing.T) {
-	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(appConfig, &TestFrameworkDockerfile{})
-	if err != nil {
-		t.Fatalf("failed to execute the scaffold: (%v)", err)
-	}
-
-	if testDockerfileNonMultExp != buf.String() {
-		diffs := diffutil.Diff(testDockerfileNonMultExp, buf.String())
-		t.Fatalf("expected vs actual differs.\n%v", diffs)
-	}
-}
-
-const testDockerfileNonMultExp = `ARG BASEIMAGE
-FROM ${BASEIMAGE}
-COPY build/_output/bin/app-operator-test /usr/local/bin/app-operator-test
 ARG NAMESPACEDMAN
 COPY $NAMESPACEDMAN /namespaced.yaml
 COPY build/test-framework/go-test.sh /go-test.sh
