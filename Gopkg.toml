@@ -40,7 +40,12 @@
 
 [[constraint]]
   name = "github.com/operator-framework/operator-lifecycle-manager"
-  revision = "7790503542c3ae82d2daf1a0b05f720dd21568ad"
+  revision = "7ba3268c94bb247da0e5f3e1e625b5347ad9f1fb"
+
+[[override]]
+  name = "k8s.io/kube-aggregator"
+  # Required for operator-lifecycle-manager version compatibility.
+  version = "kubernetes-1.12.3"
 
 [[constraint]]
   name = "github.com/sirupsen/logrus"
