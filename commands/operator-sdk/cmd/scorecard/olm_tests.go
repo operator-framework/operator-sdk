@@ -45,9 +45,9 @@ func annotationsContainExamples(csv *olmApi.ClusterServiceVersion) {
 }
 
 // statusDescriptors makes sure that all status fields found in the created CR has a matching descriptor in the CSV
-func statusDescriptors(csv *olmApi.ClusterServiceVersion, runtimeClient client.Client, obj unstructured.Unstructured) error {
+func statusDescriptors(csv *olmApi.ClusterServiceVersion, runtimeClient client.Client, obj *unstructured.Unstructured) error {
 	test := scorecardTest{testType: olmIntegration, name: "Status fields with descriptors"}
-	err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: SCConf.Namespace, Name: name}, &obj)
+	err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, obj)
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func statusDescriptors(csv *olmApi.ClusterServiceVersion, runtimeClient client.C
 	test.maximumPoints = len(statusBlock)
 	var crd *olmApi.CRDDescription
 	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
-		if owned.Kind == kind {
+		if owned.Kind == obj.GetKind() {
 			crd = &owned
 			break
 		}
@@ -82,9 +82,9 @@ func statusDescriptors(csv *olmApi.ClusterServiceVersion, runtimeClient client.C
 }
 
 // specDescriptors makes sure that all spec fields found in the created CR has a matching descriptor in the CSV
-func specDescriptors(csv *olmApi.ClusterServiceVersion, runtimeClient client.Client, obj unstructured.Unstructured) error {
+func specDescriptors(csv *olmApi.ClusterServiceVersion, runtimeClient client.Client, obj *unstructured.Unstructured) error {
 	test := scorecardTest{testType: olmIntegration, name: "Spec fields with descriptors"}
-	err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: SCConf.Namespace, Name: name}, &obj)
+	err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, obj)
 	if err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func specDescriptors(csv *olmApi.ClusterServiceVersion, runtimeClient client.Cli
 	test.maximumPoints = len(specBlock)
 	var crd *olmApi.CRDDescription
 	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
-		if owned.Kind == kind {
+		if owned.Kind == obj.GetKind() {
 			crd = &owned
 			break
 		}

@@ -28,7 +28,6 @@ import (
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	extscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/discovery/cached"
@@ -79,9 +78,6 @@ type scorecardTest struct {
 type cleanupFn func() error
 
 var (
-	apiversion     string
-	kind           string
-	name           string
 	kubeconfig     *rest.Config
 	scTests        []scorecardTest
 	dynamicDecoder runtime.Decoder
@@ -167,12 +163,10 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if err := createFromYAMLFile(SCConf.CRManifest); err != nil {
 		return fmt.Errorf("failed to create cr resource: %v", err)
 	}
-	if err := extractKindVersionName(SCConf.CRManifest); err != nil {
-		return fmt.Errorf("failed to extract kind, version, and name from custom resource manifest: %s", err)
+	obj, err := yamlToUnstructured(SCConf.CRManifest)
+	if err != nil {
+		return fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
 	}
-	obj := unstructured.Unstructured{}
-	obj.SetAPIVersion(apiversion)
-	obj.SetKind(kind)
 	if SCConf.BasicTests {
 		fmt.Println("Checking for existence of spec and status blocks in CR")
 		err = checkSpecAndStat(runtimeClient, obj, false)

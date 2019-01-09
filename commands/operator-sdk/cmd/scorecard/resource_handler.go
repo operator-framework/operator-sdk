@@ -38,29 +38,26 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-// extractKindVersionName decodes a yaml file into an object and store the kind, version,
-// and name of the object to the global variables
-func extractKindVersionName(yamlPath string) error {
+// yamlToUnstructured decodes a yaml file into an unstructured object
+func yamlToUnstructured(yamlPath string) (*unstructured.Unstructured, error) {
 	yamlFile, err := ioutil.ReadFile(yamlPath)
 	if err != nil {
-		return fmt.Errorf("failed to read file %s: %v", yamlPath, err)
+		return nil, fmt.Errorf("failed to read file %s: %v", yamlPath, err)
 	}
 	if bytes.Contains(yamlFile, []byte("\n---\n")) {
-		return fmt.Errorf("custom resource manifest cannot have more than 1 resource")
+		return nil, fmt.Errorf("custom resource manifest cannot have more than 1 resource")
 	}
-	// use an unstructured object to more cleanly decode manifest
 	obj := &unstructured.Unstructured{}
 	jsonSpec, err := yaml.YAMLToJSON(yamlFile)
 	if err != nil {
-		return fmt.Errorf("could not convert yaml file to json: %v", err)
+		return nil, fmt.Errorf("could not convert yaml file to json: %v", err)
 	}
 	if err := obj.UnmarshalJSON(jsonSpec); err != nil {
-		return fmt.Errorf("failed to unmarshal custom resource manifest to unstructured: %s", err)
+		return nil, fmt.Errorf("failed to unmarshal custom resource manifest to unstructured: %s", err)
 	}
-	apiversion = obj.GetAPIVersion()
-	kind = obj.GetKind()
-	name = obj.GetName()
-	return nil
+	// set the namespace
+	obj.SetNamespace(SCConf.Namespace)
+	return obj, nil
 }
 
 // createFromYAMLFile will take a path to a YAML file and create the resource. If it finds a

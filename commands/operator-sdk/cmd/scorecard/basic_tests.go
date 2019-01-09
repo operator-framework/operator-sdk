@@ -37,11 +37,11 @@ import (
 // checkSpecAndStat checks that the spec and status blocks exist. If noStore is set to true, this function
 // will not store the result of the test in scTests and will instead just wait until the spec and
 // status blocks exist or return an error after the timeout.
-func checkSpecAndStat(runtimeClient client.Client, obj unstructured.Unstructured, noStore bool) error {
+func checkSpecAndStat(runtimeClient client.Client, obj *unstructured.Unstructured, noStore bool) error {
 	testSpec := scorecardTest{testType: basicOperator, name: "Spec Block Exists", maximumPoints: 1}
 	testStat := scorecardTest{testType: basicOperator, name: "Status Block Exist", maximumPoints: 1}
 	err := wait.Poll(time.Second*1, time.Second*time.Duration(SCConf.InitTimeout), func() (bool, error) {
-		err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: SCConf.Namespace, Name: name}, &obj)
+		err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, obj)
 		if err != nil {
 			return false, fmt.Errorf("error getting custom resource: %v", err)
 		}
@@ -72,9 +72,9 @@ func checkSpecAndStat(runtimeClient client.Client, obj unstructured.Unstructured
 // see if the status changes as a result. This is a bit prone to breakage as this is a black box test and we don't
 // know much about how the operators we are testing actually work and may pass an invalid value. In the future, we
 // should use user-specified tests
-func checkStatusUpdate(runtimeClient client.Client, obj unstructured.Unstructured) error {
+func checkStatusUpdate(runtimeClient client.Client, obj *unstructured.Unstructured) error {
 	test := scorecardTest{testType: basicOperator, name: "Operator actions are reflected in status", maximumPoints: 1}
-	err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: SCConf.Namespace, Name: name}, &obj)
+	err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, obj)
 	if err != nil {
 		return fmt.Errorf("error getting custom resource: %v", err)
 	}
@@ -99,7 +99,7 @@ func checkStatusUpdate(runtimeClient client.Client, obj unstructured.Unstructure
 }
 
 // modifySpecAndCheck is a helper function for checkStatusUpdate
-func modifySpecAndCheck(specMap map[string]interface{}, obj unstructured.Unstructured) error {
+func modifySpecAndCheck(specMap map[string]interface{}, obj *unstructured.Unstructured) error {
 	statCopy := make(map[string]interface{})
 	for k, v := range obj.Object["status"].(map[string]interface{}) {
 		statCopy[k] = v
@@ -134,11 +134,11 @@ func modifySpecAndCheck(specMap map[string]interface{}, obj unstructured.Unstruc
 			fmt.Printf("Unknown type for key (%s) in spec: (%v)\n", k, reflect.TypeOf(t))
 		}
 		if !mapType {
-			if err := runtimeClient.Update(context.TODO(), &obj); err != nil {
+			if err := runtimeClient.Update(context.TODO(), obj); err != nil {
 				return fmt.Errorf("failed to update object: %v", err)
 			}
 			err = wait.Poll(time.Second*1, time.Second*15, func() (done bool, err error) {
-				err = runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: SCConf.Namespace, Name: name}, &obj)
+				err = runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, obj)
 				if err != nil {
 					return false, err
 				}
@@ -159,14 +159,14 @@ func modifySpecAndCheck(specMap map[string]interface{}, obj unstructured.Unstruc
 
 // wiritingIntoCRsHasEffect simply looks at the proxy logs and verifies that the operator is sending PUT
 // and/or POST requests to the API server, which should mean that it is creating or modifying resources.
-func writingIntoCRsHasEffect(obj unstructured.Unstructured) (string, error) {
+func writingIntoCRsHasEffect(obj *unstructured.Unstructured) (string, error) {
 	test := scorecardTest{testType: basicOperator, name: "Writing into CRs has an effect", maximumPoints: 1}
 	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
 	if err != nil {
 		return "", fmt.Errorf("failed to create kubeclient: %v", err)
 	}
 	dep := &appsv1.Deployment{}
-	err = runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: SCConf.Namespace, Name: deploymentName}, dep)
+	err = runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: deploymentName}, dep)
 	if err != nil {
 		return "", fmt.Errorf("failed to get newly created operator deployment: %v", err)
 	}
@@ -177,7 +177,7 @@ func writingIntoCRsHasEffect(obj unstructured.Unstructured) (string, error) {
 		return "", fmt.Errorf("failed to get list of pods in deployment: %v", err)
 	}
 	proxyPod = &pods.Items[0]
-	req := kubeclient.CoreV1().Pods(SCConf.Namespace).GetLogs(proxyPod.GetName(), &v1.PodLogOptions{Container: "scorecard-proxy"})
+	req := kubeclient.CoreV1().Pods(obj.GetNamespace()).GetLogs(proxyPod.GetName(), &v1.PodLogOptions{Container: "scorecard-proxy"})
 	readCloser, err := req.Stream()
 	if err != nil {
 		return "", fmt.Errorf("failed to get logs: %v", err)
