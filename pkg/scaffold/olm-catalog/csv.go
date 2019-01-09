@@ -35,11 +35,11 @@ import (
 )
 
 const (
-	CsvYamlFilePrefix = ".csv.yaml"
-	CsvConfigYamlFile = "csv-config.yaml"
+	CSVYamlFilePrefix = ".csv.yaml"
+	CSVConfigYamlFile = "csv-config.yaml"
 )
 
-type Csv struct {
+type CSV struct {
 	input.Input
 
 	// DeployDir is the dir the SDK should search for deploy files, ex. *crd.yaml.
@@ -47,17 +47,17 @@ type Csv struct {
 	// ConfigFilePath is the location of a configuration file path for this
 	// projects' CSV file.
 	ConfigFilePath string
-	// CsvVersion is the CSV (and operators') current version.
-	CsvVersion string
+	// CSVVersion is the CSV (and operators') current version.
+	CSVVersion string
 }
 
-func (s *Csv) GetInput() (input.Input, error) {
+func (s *CSV) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		fileName := strings.ToLower(s.ProjectName) + CsvYamlFilePrefix
+		fileName := strings.ToLower(s.ProjectName) + CSVYamlFilePrefix
 		s.Path = filepath.Join(scaffold.OlmCatalogDir, fileName)
 	}
 	if s.ConfigFilePath == "" {
-		s.ConfigFilePath = filepath.Join(scaffold.OlmCatalogDir, CsvConfigYamlFile)
+		s.ConfigFilePath = filepath.Join(scaffold.OlmCatalogDir, CSVConfigYamlFile)
 	}
 	if s.DeployDir == "" {
 		s.DeployDir = scaffold.DeployDir
@@ -65,9 +65,9 @@ func (s *Csv) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
-// CustomRender allows a Csv to be written by marshalling
+// CustomRender allows a CSV to be written by marshalling
 // olmApi.ClusterServiceVersion instead of writing to a template.
-func (s *Csv) CustomRender() ([]byte, error) {
+func (s *CSV) CustomRender() ([]byte, error) {
 	// Get current CSV to update.
 	currCSV, exists, err := getCurrentCSVIfExists(s.Path)
 	if err != nil {
@@ -139,7 +139,12 @@ func getDisplayName(name string) string {
 	for _, sep := range ".-_ " {
 		splitName := strings.Split(name, string(sep))
 		for i := 0; i < len(splitName); i++ {
-			splitName[i] = strings.TrimSpace(splitName[i])
+			if splitName[i] == "" {
+				splitName = append(splitName[:i], splitName[i+1:]...)
+				i--
+			} else {
+				splitName[i] = strings.TrimSpace(splitName[i])
+			}
 		}
 		name = strings.Join(splitName, " ")
 	}
@@ -162,15 +167,15 @@ func getDisplayName(name string) string {
 
 // initCSVFields initializes all csv fields that should be populated by a user
 // with sane defaults. initCSVFields should only be called for new csv's.
-func (s *Csv) initCSVFields(csv *olmApi.ClusterServiceVersion) {
+func (s *CSV) initCSVFields(csv *olmApi.ClusterServiceVersion) {
 	// Metadata
 	csv.TypeMeta.APIVersion = olmApi.ClusterServiceVersionAPIVersion
 	csv.TypeMeta.Kind = olmApi.ClusterServiceVersionKind
-	csv.SetName(getCSVName(strings.ToLower(s.ProjectName), s.CsvVersion))
+	csv.SetName(getCSVName(strings.ToLower(s.ProjectName), s.CSVVersion))
 	csv.SetNamespace("placeholder")
 
 	// Spec fields
-	csv.Spec.Version = *semver.New(s.CsvVersion)
+	csv.Spec.Version = *semver.New(s.CSVVersion)
 	csv.Spec.DisplayName = getDisplayName(s.ProjectName)
 	csv.Spec.Description = "Placeholder description"
 	csv.Spec.Maturity = "alpha"
@@ -228,10 +233,10 @@ func checkRequiredCSVFields(csv *olmApi.ClusterServiceVersion) error {
 // updateCSVVersions updates csv's version and data involving the version,
 // ex. ObjectMeta.Name, and place the old version in the `replaces` object,
 // if there is an old version to replace.
-func (s *Csv) updateCSVVersions(csv *olmApi.ClusterServiceVersion) error {
+func (s *CSV) updateCSVVersions(csv *olmApi.ClusterServiceVersion) error {
 
 	// Old csv version to replace, and updated csv version.
-	oldVer, newVer := csv.Spec.Version.String(), s.CsvVersion
+	oldVer, newVer := csv.Spec.Version.String(), s.CSVVersion
 	if oldVer == newVer {
 		return nil
 	}
@@ -284,7 +289,7 @@ func replaceAllBytes(v interface{}, old, new []byte) error {
 
 // updateCSVFromManifestFiles gathers relevant data from generated and user-defined manifests
 // and updates csv.
-func (s *Csv) updateCSVFromManifestFiles(csv *olmApi.ClusterServiceVersion, csvConfig *CsvConfig) error {
+func (s *CSV) updateCSVFromManifestFiles(csv *olmApi.ClusterServiceVersion, csvConfig *CSVConfig) error {
 	for _, f := range append(csvConfig.CrdCrPaths, csvConfig.OperatorPath, csvConfig.RolePath) {
 		yamlData, err := ioutil.ReadFile(f)
 		if err != nil {

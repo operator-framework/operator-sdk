@@ -27,6 +27,6 @@ func NewOLMCatalogCmd() *cobra.Command {
 		Long: `The operator-sdk olm-catalog command invokes a command to perform
 Catalog-related actions.`,
 	}
-	cmd.AddCommand(catalog.NewGenCsvCmd())
+	cmd.AddCommand(catalog.NewGenCSVCmd())
 	return cmd
 }

@@ -24,16 +24,16 @@ import (
 	"github.com/ghodss/yaml"
 )
 
-// CsvConfig is a configuration file for CSV composition. Its fields contain
+// CSVConfig is a configuration file for CSV composition. Its fields contain
 // file path information.
-type CsvConfig struct {
+type CSVConfig struct {
 	OperatorPath string   `json:"operator-path,omitempty"`
 	CrdCrPaths   []string `json:"crd-cr-paths,omitempty"`
 	RolePath     string   `json:"role-path,omitempty"`
 }
 
-func getCSVConfig(configFile string) (*CsvConfig, error) {
-	config := &CsvConfig{}
+func getCSVConfig(configFile string) (*CSVConfig, error) {
+	config := &CSVConfig{}
 	if _, err := os.Stat(configFile); err == nil {
 		configData, err := ioutil.ReadFile(configFile)
 		if err != nil {
@@ -52,7 +52,7 @@ func getCSVConfig(configFile string) (*CsvConfig, error) {
 	return config, nil
 }
 
-func (c *CsvConfig) setFields() error {
+func (c *CSVConfig) setFields() error {
 	if c.OperatorPath == "" {
 		info, err := (&scaffold.Operator{}).GetInput()
 		if err != nil {

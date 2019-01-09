@@ -33,7 +33,7 @@ import (
 
 var testDataDir = "testdata"
 
-func TestCsv(t *testing.T) {
+func TestCSV(t *testing.T) {
 	buf := &bytes.Buffer{}
 	s := &scaffold.Scaffold{
 		GetWriter: func(_ string, _ os.FileMode) (io.Writer, error) {
@@ -48,10 +48,10 @@ func TestCsv(t *testing.T) {
 	opVer := "1.0.1"
 
 	err := s.Execute(cfg,
-		&Csv{
-			CsvVersion:     opVer,
+		&CSV{
+			CSVVersion:     opVer,
 			DeployDir:      filepath.Join(testDataDir, scaffold.DeployDir),
-			ConfigFilePath: filepath.Join(testDataDir, scaffold.OlmCatalogDir, CsvConfigYamlFile),
+			ConfigFilePath: filepath.Join(testDataDir, scaffold.OlmCatalogDir, CSVConfigYamlFile),
 		},
 	)
 	if err != nil {
@@ -161,11 +161,11 @@ func TestUpdateVersion(t *testing.T) {
 	}
 
 	newOpVer := "1.0.2"
-	c := &Csv{
+	c := &CSV{
 		Input: input.Input{
 			ProjectName: "app-operator",
 		},
-		CsvVersion: newOpVer,
+		CSVVersion: newOpVer,
 	}
 	if err := c.updateCSVVersions(csv); err != nil {
 		t.Fatalf("update csv with ver %s: (%v)", newOpVer, err)

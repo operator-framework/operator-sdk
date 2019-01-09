@@ -29,7 +29,7 @@ import (
 
 var csvVersion string
 
-func NewGenCsvCmd() *cobra.Command {
+func NewGenCSVCmd() *cobra.Command {
 	csvCmd := &cobra.Command{
 		Use:   "gen-csv",
 		Short: "Generates a Cluster Service Version yaml file for the operator",
@@ -66,7 +66,7 @@ func csvFunc(cmd *cobra.Command, args []string) {
 
 	s := &scaffold.Scaffold{}
 	err := s.Execute(cfg,
-		&catalog.Csv{CsvVersion: csvVersion},
+		&catalog.CSV{CSVVersion: csvVersion},
 	)
 	if err != nil {
 		log.Fatalf("build catalog scaffold failed: (%v)", err)
