@@ -348,23 +348,23 @@ func reconcileRelease(ctx context.Context, tillerKubeClient *kube.Client, namesp
 	})
 }
 
-func generatePatch(orig, new runtime.Object) ([]byte, error) {
-	origJSON, err := json.Marshal(orig)
+func generatePatch(existing, expected runtime.Object) ([]byte, error) {
+	existingJSON, err := json.Marshal(existing)
 	if err != nil {
 		return nil, err
 	}
-	newJSON, err := json.Marshal(new)
+	expectedJSON, err := json.Marshal(expected)
 	if err != nil {
 		return nil, err
 	}
 
-	ops, err := jsonpatch.CreatePatch(origJSON, newJSON)
+	ops, err := jsonpatch.CreatePatch(existingJSON, expectedJSON)
 	if err != nil {
 		return nil, err
 	}
 
 	// We ignore the "remove" operations from the full patch because they are
-	// fields added by Kubernetes or by the user after the original release
+	// fields added by Kubernetes or by the user after the existing release
 	// resource has been applied. The goal for this patch is to make sure that
 	// the fields managed by the Helm chart are applied.
 	patchOps := make([]jsonpatch.JsonPatchOperation, 0)
