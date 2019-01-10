@@ -110,7 +110,7 @@ image: image/build image/push
 
 image/build: image/build/ansible image/build/helm
 
-image/build/ansible:
+image/build/ansible: build/operator-sdk-dev-x86_64-linux-gnu
 	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
 
 image/build/helm:

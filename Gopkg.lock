@@ -1443,6 +1443,7 @@
     "github.com/go-logr/logr",
     "github.com/markbates/inflect",
     "github.com/martinlindhe/base36",
+    "github.com/mattbaird/jsonpatch",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1",
     "github.com/pborman/uuid",
     "github.com/prometheus/client_golang/prometheus/promhttp",

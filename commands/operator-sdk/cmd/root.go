@@ -36,6 +36,8 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(NewTestCmd())
 	cmd.AddCommand(NewScorecardCmd())
 	cmd.AddCommand(NewPrintDepsCmd())
+	cmd.AddCommand(NewMigrateCmd())
+	cmd.AddCommand(NewRunCmd())
 
 	return cmd
 }
