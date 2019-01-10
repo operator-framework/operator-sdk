@@ -64,6 +64,8 @@ func csvFunc(cmd *cobra.Command, args []string) {
 		cfg.Repo = projutil.CheckAndGetProjectGoPkg()
 	}
 
+	log.Infof("Generating CSV manifest version %s", csvVersion)
+
 	s := &scaffold.Scaffold{}
 	err := s.Execute(cfg,
 		&catalog.CSV{CSVVersion: csvVersion},

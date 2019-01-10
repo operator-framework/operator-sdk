@@ -93,10 +93,10 @@ func (s *CSV) CustomRender() ([]byte, error) {
 	// A new csv won't have several required fields populated.
 	if err = checkRequiredCSVFields(currCSV); err != nil {
 		if exists {
-			log.Warnf("required csv fields not filled in file %s:%s\n", s.Path, err)
+			log.Warnf("Required csv fields not filled in file %s:%s\n", s.Path, err)
 		} else {
 			// Report required fields to user informationally.
-			log.Infof("fill in the following required fields in file %s:%s\n", s.Path, err)
+			log.Infof("Fill in the following required fields in file %s:%s\n", s.Path, err)
 		}
 	}
 

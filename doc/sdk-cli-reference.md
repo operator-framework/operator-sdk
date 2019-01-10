@@ -163,7 +163,13 @@ Generates a Cluster Service Version manifest file in `deploy/olm-catalog`.
 
 ```bash
 $ operator-sdk olm-catalog gen-csv --csv-version 0.1.1
-Generating CSV manifest version 0.1.1
+INFO[0000] Generating CSV manifest version 0.1.1
+INFO[0000] Fill in the following required fields in file deploy/olm-catalog/thing.csv.yaml:
+	spec.keywords
+	spec.maintainers
+	spec.provider
+	spec.labels
+INFO[0000] Create deploy/olm-catalog/thing.csv.yaml     
 ```
 
 ## new
