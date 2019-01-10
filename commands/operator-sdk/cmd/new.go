@@ -197,10 +197,10 @@ func doAnsibleScaffold() {
 		&ansible.Operator{
 			IsClusterScoped: isClusterScoped,
 		},
-		&scaffold.Crd{
+		&scaffold.CRD{
 			Resource: resource,
 		},
-		&scaffold.Cr{
+		&scaffold.CR{
 			Resource: resource,
 		},
 	)
@@ -271,10 +271,10 @@ func doHelmScaffold() {
 		&helm.Operator{
 			IsClusterScoped: isClusterScoped,
 		},
-		&scaffold.Crd{
+		&scaffold.CRD{
 			Resource: resource,
 		},
-		&scaffold.Cr{
+		&scaffold.CR{
 			Resource: resource,
 		},
 	)

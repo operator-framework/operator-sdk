@@ -26,7 +26,7 @@ func TestCr(t *testing.T) {
 		t.Fatal(err)
 	}
 	s, buf := setupScaffoldAndWriter()
-	err = s.Execute(appConfig, &Cr{Resource: r})
+	err = s.Execute(appConfig, &CR{Resource: r})
 	if err != nil {
 		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}

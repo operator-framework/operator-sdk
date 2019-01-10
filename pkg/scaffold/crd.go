@@ -32,8 +32,8 @@ import (
 	crdgenerator "sigs.k8s.io/controller-tools/pkg/crd/generator"
 )
 
-// Crd is the input needed to generate a deploy/crds/<group>_<version>_<kind>_crd.yaml file
-type Crd struct {
+// CRD is the input needed to generate a deploy/crds/<group>_<version>_<kind>_crd.yaml file
+type CRD struct {
 	input.Input
 
 	// Resource defines the inputs for the new custom resource definition
@@ -43,13 +43,13 @@ type Crd struct {
 	IsOperatorGo bool
 }
 
-func (s *Crd) GetInput() (input.Input, error) {
+func (s *CRD) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		fileName := fmt.Sprintf("%s_%s_%s_crd.yaml",
 			strings.ToLower(s.Resource.Group),
 			strings.ToLower(s.Resource.Version),
 			s.Resource.LowerKind)
-		s.Path = filepath.Join(CrdsDir, fileName)
+		s.Path = filepath.Join(CRDsDir, fileName)
 	}
 	initCache()
 	return s.Input, nil
@@ -65,7 +65,7 @@ func (c *fsCache) fileExists(path string) bool {
 }
 
 var (
-	// Global cache so users can use new Crd structs.
+	// Global cache so users can use new CRD structs.
 	cache *fsCache
 	once  sync.Once
 )
@@ -76,7 +76,7 @@ func initCache() {
 	})
 }
 
-func (s *Crd) CustomRender() ([]byte, error) {
+func (s *CRD) CustomRender() ([]byte, error) {
 	i, _ := s.GetInput()
 	// controller-tools generates crd file names with no _crd.yaml suffix:
 	// <group>_<version>_<kind>.yaml.
@@ -100,7 +100,7 @@ func (s *Crd) CustomRender() ([]byte, error) {
 		}
 	}
 
-	dstCrd := newCrdForResource(s.Resource)
+	dstCRD := newCRDForResource(s.Resource)
 	// Get our generated crd's from the in-memory fs. If it doesn't exist in the
 	// fs, the corresponding API does not exist yet, so scaffold a fresh crd
 	// without a validation spec.
@@ -113,11 +113,11 @@ func (s *Crd) CustomRender() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		dstCrd = new(apiextv1beta1.CustomResourceDefinition)
-		if err = yaml.Unmarshal(b, dstCrd); err != nil {
+		dstCRD = new(apiextv1beta1.CustomResourceDefinition)
+		if err = yaml.Unmarshal(b, dstCRD); err != nil {
 			return nil, err
 		}
-		val := dstCrd.Spec.Validation.DeepCopy()
+		val := dstCRD.Spec.Validation.DeepCopy()
 
 		// If the crd exists at i.Path, append the validation spec to its crd spec.
 		if _, err := os.Stat(i.Path); err == nil {
@@ -126,23 +126,23 @@ func (s *Crd) CustomRender() ([]byte, error) {
 				return nil, err
 			}
 			if len(cb) > 0 {
-				dstCrd = new(apiextv1beta1.CustomResourceDefinition)
-				if err = yaml.Unmarshal(cb, dstCrd); err != nil {
+				dstCRD = new(apiextv1beta1.CustomResourceDefinition)
+				if err = yaml.Unmarshal(cb, dstCRD); err != nil {
 					return nil, err
 				}
-				dstCrd.Spec.Validation = val
+				dstCRD.Spec.Validation = val
 			}
 		}
 		// controller-tools does not set ListKind or Singular names.
-		dstCrd.Spec.Names = getCrdNamesForResource(s.Resource)
+		dstCRD.Spec.Names = getCRDNamesForResource(s.Resource)
 		// Remove controller-tools default label.
-		delete(dstCrd.Labels, "controller-tools.k8s.io")
+		delete(dstCRD.Labels, "controller-tools.k8s.io")
 	}
-	addCrdSubresource(dstCrd)
-	return getCrdBytes(dstCrd)
+	addCRDSubresource(dstCRD)
+	return getCRDBytes(dstCRD)
 }
 
-func newCrdForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {
+func newCRDForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {
 	return &apiextv1beta1.CustomResourceDefinition{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apiextensions.k8s.io/v1beta1",
@@ -153,7 +153,7 @@ func newCrdForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {
 		},
 		Spec: apiextv1beta1.CustomResourceDefinitionSpec{
 			Group:   r.FullGroup,
-			Names:   getCrdNamesForResource(r),
+			Names:   getCRDNamesForResource(r),
 			Scope:   apiextv1beta1.NamespaceScoped,
 			Version: r.Version,
 			Subresources: &apiextv1beta1.CustomResourceSubresources{
@@ -163,7 +163,7 @@ func newCrdForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {
 	}
 }
 
-func getCrdNamesForResource(r *Resource) apiextv1beta1.CustomResourceDefinitionNames {
+func getCRDNamesForResource(r *Resource) apiextv1beta1.CustomResourceDefinitionNames {
 	return apiextv1beta1.CustomResourceDefinitionNames{
 		Kind:     r.Kind,
 		ListKind: r.Kind + "List",
@@ -172,7 +172,7 @@ func getCrdNamesForResource(r *Resource) apiextv1beta1.CustomResourceDefinitionN
 	}
 }
 
-func addCrdSubresource(crd *apiextv1beta1.CustomResourceDefinition) {
+func addCRDSubresource(crd *apiextv1beta1.CustomResourceDefinition) {
 	if crd.Spec.Subresources == nil {
 		crd.Spec.Subresources = &apiextv1beta1.CustomResourceSubresources{}
 	}
@@ -181,7 +181,7 @@ func addCrdSubresource(crd *apiextv1beta1.CustomResourceDefinition) {
 	}
 }
 
-func getCrdBytes(crd *apiextv1beta1.CustomResourceDefinition) ([]byte, error) {
+func getCRDBytes(crd *apiextv1beta1.CustomResourceDefinition) ([]byte, error) {
 	// Remove the "status" field from yaml data, which causes a
 	// resource creation error.
 	crdMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(crd)

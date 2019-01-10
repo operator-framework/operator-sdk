@@ -128,16 +128,16 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 			log.Fatalf("could not create %s: (%v)", deployTestDir, err)
 		}
 		tlConfig.globalManPath = filepath.Join(deployTestDir, "global-manifests.yaml")
-		files, err := ioutil.ReadDir(scaffold.CrdsDir)
+		files, err := ioutil.ReadDir(scaffold.CRDsDir)
 		if err != nil {
 			log.Fatalf("could not read deploy directory: (%v)", err)
 		}
 		var combined []byte
 		for _, file := range files {
 			if strings.HasSuffix(file.Name(), "crd.yaml") {
-				fileBytes, err := ioutil.ReadFile(filepath.Join(scaffold.CrdsDir, file.Name()))
+				fileBytes, err := ioutil.ReadFile(filepath.Join(scaffold.CRDsDir, file.Name()))
 				if err != nil {
-					log.Fatalf("could not read file %s: (%v)", filepath.Join(scaffold.CrdsDir, file.Name()), err)
+					log.Fatalf("could not read file %s: (%v)", filepath.Join(scaffold.CRDsDir, file.Name()), err)
 				}
 				if combined == nil {
 					combined = []byte{}

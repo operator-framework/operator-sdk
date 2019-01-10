@@ -47,7 +47,7 @@ func TestCRDGoProject(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() { os.Chdir(absPath) }()
-	err = s.Execute(cfg, &Crd{Resource: r, IsOperatorGo: true})
+	err = s.Execute(cfg, &CRD{Resource: r, IsOperatorGo: true})
 	if err != nil {
 		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}
@@ -102,13 +102,13 @@ spec:
   version: v1alpha1
 `
 
-func TestCrdNonGoProject(t *testing.T) {
+func TestCRDNonGoProject(t *testing.T) {
 	r, err := NewResource(appApiVersion, appKind)
 	if err != nil {
 		t.Fatal(err)
 	}
 	s, buf := setupScaffoldAndWriter()
-	err = s.Execute(appConfig, &Crd{Resource: r})
+	err = s.Execute(appConfig, &CRD{Resource: r})
 	if err != nil {
 		t.Fatalf("failed to execute the scaffold: (%v)", err)
 	}

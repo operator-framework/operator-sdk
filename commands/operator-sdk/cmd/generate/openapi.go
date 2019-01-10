@@ -89,7 +89,7 @@ func OpenAPIGen() {
 		AbsProjectPath: absProjectPath,
 		ProjectName:    filepath.Base(absProjectPath),
 	}
-	crdMap := getCrdGVKMap()
+	crdMap := getCRDGVKMap()
 	for g, vs := range gvMap {
 		for _, v := range vs {
 			gvks := crdMap[filepath.Join(g, v)]
@@ -99,7 +99,7 @@ func OpenAPIGen() {
 					log.Fatal(err)
 				}
 				err = s.Execute(cfg,
-					&scaffold.Crd{Resource: r, IsOperatorGo: projutil.IsOperatorGo()},
+					&scaffold.CRD{Resource: r, IsOperatorGo: projutil.IsOperatorGo()},
 				)
 				if err != nil {
 					log.Fatal(err)
@@ -135,15 +135,15 @@ func openAPIGen(binDir, headerFile string, fqApis []string) {
 	}
 }
 
-func getCrdGVKMap() map[string][]metav1.GroupVersionKind {
-	crdInfos, err := ioutil.ReadDir(scaffold.CrdsDir)
+func getCRDGVKMap() map[string][]metav1.GroupVersionKind {
+	crdInfos, err := ioutil.ReadDir(scaffold.CRDsDir)
 	if err != nil {
 		log.Fatal(err)
 	}
 	crdMap := make(map[string][]metav1.GroupVersionKind)
 	for _, info := range crdInfos {
 		if filepath.Ext(info.Name()) == ".yaml" {
-			path := filepath.Join(scaffold.CrdsDir, info.Name())
+			path := filepath.Join(scaffold.CRDsDir, info.Name())
 			b, err := ioutil.ReadFile(path)
 			if err != nil {
 				log.Fatal(err)

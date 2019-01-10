@@ -33,6 +33,6 @@ const (
 	BuildBinDir   = BuildDir + filePathSep + "_output" + filePathSep + "bin"
 	DeployDir     = "deploy"
 	OlmCatalogDir = DeployDir + filePathSep + "olm-catalog"
-	CrdsDir       = DeployDir + filePathSep + "crds"
+	CRDsDir       = DeployDir + filePathSep + "crds"
 	VersionDir    = "version"
 )

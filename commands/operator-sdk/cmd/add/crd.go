@@ -27,8 +27,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewAddCrdCmd - add crd command
-func NewAddCrdCmd() *cobra.Command {
+// NewAddCRDCmd - add crd command
+func NewAddCRDCmd() *cobra.Command {
 	crdCmd := &cobra.Command{
 		Use:   "crd",
 		Short: "Adds a custom resource definition (CRD) and the custom resource (CR) files",
@@ -56,8 +56,8 @@ func crdFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 0 {
 		log.Fatal("crd command doesn't accept any arguments")
 	}
-	verifyCrdFlags()
-	verifyCrdDeployPath()
+	verifyCRDFlags()
+	verifyCRDDeployPath()
 
 	log.Infof("Generating Custom Resource Definition (CRD) version %s for kind %s.", apiVersion, kind)
 
@@ -69,8 +69,8 @@ func crdFunc(cmd *cobra.Command, args []string) {
 
 	s := scaffold.Scaffold{}
 	err = s.Execute(cfg,
-		&scaffold.Crd{Resource: resource, IsOperatorGo: projutil.IsOperatorGo()},
-		&scaffold.Cr{Resource: resource},
+		&scaffold.CRD{Resource: resource, IsOperatorGo: projutil.IsOperatorGo()},
+		&scaffold.CR{Resource: resource},
 	)
 	if err != nil {
 		log.Fatalf("add scaffold failed: (%v)", err)
@@ -84,7 +84,7 @@ func crdFunc(cmd *cobra.Command, args []string) {
 	log.Info("CRD generation complete.")
 }
 
-func verifyCrdFlags() {
+func verifyCRDFlags() {
 	if len(apiVersion) == 0 {
 		log.Fatal("--api-version must not have empty value")
 	}
@@ -100,8 +100,8 @@ func verifyCrdFlags() {
 	}
 }
 
-// verifyCrdDeployPath checks if the path <project-name>/deploy sub-directory is exists, and that is rooted under $GOPATH
-func verifyCrdDeployPath() {
+// verifyCRDDeployPath checks if the path <project-name>/deploy sub-directory is exists, and that is rooted under $GOPATH
+func verifyCRDDeployPath() {
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("failed to determine the full path of the current directory: (%v)", err)

@@ -100,16 +100,16 @@ func GenerateCombinedGlobalManifest() (*os.File, error) {
 	}
 	defer file.Close()
 
-	files, err := ioutil.ReadDir(scaffold.CrdsDir)
+	files, err := ioutil.ReadDir(scaffold.CRDsDir)
 	if err != nil {
 		return nil, fmt.Errorf("could not read deploy directory: (%v)", err)
 	}
 	combined := []byte{}
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), "crd.yaml") {
-			fileBytes, err := ioutil.ReadFile(filepath.Join(scaffold.CrdsDir, file.Name()))
+			fileBytes, err := ioutil.ReadFile(filepath.Join(scaffold.CRDsDir, file.Name()))
 			if err != nil {
-				return nil, fmt.Errorf("could not read file %s: (%v)", filepath.Join(scaffold.CrdsDir, file.Name()), err)
+				return nil, fmt.Errorf("could not read file %s: (%v)", filepath.Join(scaffold.CRDsDir, file.Name()), err)
 			}
 			combined = CombineManifests(combined, fileBytes)
 		}
