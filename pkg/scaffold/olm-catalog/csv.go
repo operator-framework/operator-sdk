@@ -287,7 +287,7 @@ func replaceAllBytes(v interface{}, old, new []byte) error {
 // updateCSVFromManifestFiles gathers relevant data from generated and user-defined manifests
 // and updates csv.
 func (s *CSV) updateCSVFromManifestFiles(csv *olmApi.ClusterServiceVersion, csvConfig *CSVConfig) error {
-	for _, f := range append(csvConfig.CrdCrPaths, csvConfig.OperatorPath, csvConfig.RolePath) {
+	for _, f := range append(csvConfig.CRDCRPaths, csvConfig.OperatorPath, csvConfig.RolePath) {
 		yamlData, err := ioutil.ReadFile(f)
 		if err != nil {
 			return err

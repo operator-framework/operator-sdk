@@ -26,17 +26,17 @@ func TestConfig(t *testing.T) {
 	crdsDir := filepath.Join(testDataDir, scaffold.CrdsDir)
 
 	testConfig := &CSVConfig{
-		CrdCrPaths: []string{crdsDir},
+		CRDCRPaths: []string{crdsDir},
 	}
 	if err := testConfig.setFields(); err != nil {
 		t.Errorf("set fields crd-cr paths dir only: (%v)", err)
 	}
-	if len(testConfig.CrdCrPaths) != 2 {
-		t.Errorf("wanted 2 crd/cr files, got: %v", testConfig.CrdCrPaths)
+	if len(testConfig.CRDCRPaths) != 2 {
+		t.Errorf("wanted 2 crd/cr files, got: %v", testConfig.CRDCRPaths)
 	}
 
 	testConfig = &CSVConfig{
-		CrdCrPaths: []string{crdsDir, filepath.Join(crdsDir, "app_v1alpha1_app_crd.yaml")},
+		CRDCRPaths: []string{crdsDir, filepath.Join(crdsDir, "app_v1alpha1_app_crd.yaml")},
 	}
 	if err := testConfig.setFields(); err != nil {
 		t.Errorf("set fields crd-cr paths dir file mix: (%v)", err)
@@ -45,7 +45,7 @@ func TestConfig(t *testing.T) {
 		filepath.Join(crdsDir, "app_v1alpha1_app_cr.yaml"),
 		filepath.Join(crdsDir, "app_v1alpha1_app_crd.yaml"),
 	}
-	if !reflect.DeepEqual(want, testConfig.CrdCrPaths) {
-		t.Errorf("wanted crd/cr files %v, got %v", want, testConfig.CrdCrPaths)
+	if !reflect.DeepEqual(want, testConfig.CRDCRPaths) {
+		t.Errorf("wanted crd/cr files %v, got %v", want, testConfig.CRDCRPaths)
 	}
 }

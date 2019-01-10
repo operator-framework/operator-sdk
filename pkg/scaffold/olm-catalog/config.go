@@ -28,7 +28,7 @@ import (
 // file path information.
 type CSVConfig struct {
 	OperatorPath string   `json:"operator-path,omitempty"`
-	CrdCrPaths   []string `json:"crd-cr-paths,omitempty"`
+	CRDCRPaths   []string `json:"crd-cr-paths,omitempty"`
 	RolePath     string   `json:"role-path,omitempty"`
 }
 
@@ -61,16 +61,16 @@ func (c *CSVConfig) setFields() error {
 		c.OperatorPath = info.Path
 	}
 
-	if len(c.CrdCrPaths) == 0 {
+	if len(c.CRDCRPaths) == 0 {
 		paths, err := getManifestPathsFromDir(scaffold.CrdsDir)
 		if err != nil {
 			return err
 		}
-		c.CrdCrPaths = paths
+		c.CRDCRPaths = paths
 	} else {
 		// Allow user to specify a list of dirs to search. Avoid duplicate files.
 		paths, seen := make([]string, 0), make(map[string]struct{})
-		for _, path := range c.CrdCrPaths {
+		for _, path := range c.CRDCRPaths {
 			finfo, err := os.Stat(path)
 			if err != nil {
 				return err
@@ -93,7 +93,7 @@ func (c *CSVConfig) setFields() error {
 				}
 			}
 		}
-		c.CrdCrPaths = paths
+		c.CRDCRPaths = paths
 	}
 
 	if c.RolePath == "" {
