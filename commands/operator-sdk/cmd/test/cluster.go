@@ -62,7 +62,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 	// in main.go, we catch and print errors, so we don't want cobra to print the error itself
 	cmd.SilenceErrors = true
 	if len(args) != 1 {
-		log.Fatalf("Command %s requires exactly one argument", cmd.CommandPath())
+		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
 	}
 
 	log.Info("Testing operator in cluster.")
