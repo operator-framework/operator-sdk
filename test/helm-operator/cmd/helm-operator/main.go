@@ -15,17 +15,17 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"runtime"
-	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/helm/client"
 	"github.com/operator-framework/operator-sdk/pkg/helm/controller"
+	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+	"github.com/spf13/pflag"
 
 	"k8s.io/helm/pkg/storage"
 	"k8s.io/helm/pkg/storage/driver"
@@ -44,7 +44,8 @@ func printVersion() {
 }
 
 func main() {
-	flag.Parse()
+	hflags := hoflags.AddTo(pflag.CommandLine)
+	pflag.Parse()
 
 	logf.SetLogger(logf.ZapLogger(false))
 
@@ -78,7 +79,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	factories, err := release.NewManagerFactoriesFromEnv(storageBackend, tillerKubeClient)
+	factories, err := release.NewManagerFactoriesFromFile(storageBackend, tillerKubeClient, hflags.WatchesFile)
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
@@ -87,10 +88,10 @@ func main() {
 	for gvk, factory := range factories {
 		// Register the controller with the factory.
 		err := controller.Add(mgr, controller.WatchOptions{
-			Namespace:      namespace,
-			GVK:            gvk,
-			ManagerFactory: factory,
-			ResyncPeriod:   5 * time.Second,
+			Namespace:       namespace,
+			GVK:             gvk,
+			ManagerFactory:  factory,
+			ReconcilePeriod: hflags.ReconcilePeriod,
 		})
 		if err != nil {
 			log.Error(err, "")
