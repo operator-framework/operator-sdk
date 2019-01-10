@@ -29,5 +29,6 @@ func NewRunCmd() *cobra.Command {
 	}
 
 	runCmd.AddCommand(run.NewAnsibleCmd())
+	runCmd.AddCommand(run.NewHelmCmd())
 	return runCmd
 }
