@@ -82,8 +82,7 @@ func migrateAnsible() {
 	if err != nil {
 		log.Fatalf("Failed to rename Dockerfile: (%v)", err)
 	}
-	log.Infof("Renamed Dockerfile to %s and replaced with newer version", newDockerfilePath)
-	log.Info("Compare the new Dockerfile to your old one and manually migrate any customizations")
+	log.Infof("Renamed Dockerfile to %s and replaced with newer version. Compare the new Dockerfile to your old one and manually migrate any customizations", newDockerfilePath)
 
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
