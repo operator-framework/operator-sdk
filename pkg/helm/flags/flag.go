@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,15 +19,15 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// AnsibleOperatorFlags - Options to be used by an ansible operator
-type AnsibleOperatorFlags struct {
+// HelmOperatorFlags - Options to be used by a helm operator
+type HelmOperatorFlags struct {
 	flags.WatchFlags
 }
 
-// AddTo - Add the ansible operator flags to the the flagset
+// AddTo - Add the helm operator flags to the the flagset
 // helpTextPrefix will allow you add a prefix to default help text. Joined by a space.
-func AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) *AnsibleOperatorFlags {
-	aof := &AnsibleOperatorFlags{}
-	aof.WatchFlags.AddTo(flagSet, helpTextPrefix...)
-	return aof
+func AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) *HelmOperatorFlags {
+	hof := &HelmOperatorFlags{}
+	hof.WatchFlags.AddTo(flagSet, helpTextPrefix...)
+	return hof
 }

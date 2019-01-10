@@ -15,6 +15,6 @@ pushd "$BASEIMAGEDIR"
 go run "$ROOTDIR/hack/image/scaffold-ansible-image.go"
 
 mkdir -p build/_output/bin/
-cp $(which operator-sdk) build/_output/bin/ansible-operator
+cp $ROOTDIR/build/operator-sdk-dev-x86_64-linux-gnu build/_output/bin/ansible-operator
 operator-sdk build $1
 popd

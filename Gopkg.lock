@@ -1493,6 +1493,7 @@
     "github.com/go-logr/logr",
     "github.com/markbates/inflect",
     "github.com/martinlindhe/base36",
+    "github.com/mattbaird/jsonpatch",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install",
     "github.com/pborman/uuid",
