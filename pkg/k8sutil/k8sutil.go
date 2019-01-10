@@ -20,9 +20,6 @@ import (
 	"os"
 	"strings"
 
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	intstr "k8s.io/apimachinery/pkg/util/intstr"
 	discovery "k8s.io/client-go/discovery"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
@@ -66,44 +63,6 @@ func GetOperatorName() (string, error) {
 		return "", fmt.Errorf("%s must not be empty", OperatorNameEnvVar)
 	}
 	return operatorName, nil
-}
-
-// InitOperatorService returns the static service which exposes specifed port.
-func InitOperatorService(port int32, portName string) (*v1.Service, error) {
-	operatorName, err := GetOperatorName()
-	if err != nil {
-		return nil, err
-	}
-	namespace, err := GetOperatorNamespace()
-	if err != nil {
-		return nil, err
-	}
-	service := &v1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      operatorName,
-			Namespace: namespace,
-			Labels:    map[string]string{"name": operatorName},
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Service",
-			APIVersion: "v1",
-		},
-		Spec: v1.ServiceSpec{
-			Ports: []v1.ServicePort{
-				{
-					Port:     port,
-					Protocol: v1.ProtocolTCP,
-					TargetPort: intstr.IntOrString{
-						Type:   intstr.Int,
-						IntVal: port,
-					},
-					Name: portName,
-				},
-			},
-			Selector: map[string]string{"name": operatorName},
-		},
-	}
-	return service, nil
 }
 
 // ResourceExists returns true if the given resource kind exists

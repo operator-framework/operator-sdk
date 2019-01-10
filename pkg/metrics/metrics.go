@@ -22,6 +22,8 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -43,9 +45,47 @@ func ExposeMetricsPort(address string) (*v1.Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse metrics address %s: %v", address, err)
 	}
-	service, err := k8sutil.InitOperatorService(int32(port64), PrometheusPortName)
+	service, err := initOperatorService(int32(port64), PrometheusPortName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize service object for metrics: %v", err)
+	}
+	return service, nil
+}
+
+// initOperatorService returns the static service which exposes specifed port.
+func initOperatorService(port int32, portName string) (*v1.Service, error) {
+	operatorName, err := k8sutil.GetOperatorName()
+	if err != nil {
+		return nil, err
+	}
+	namespace, err := k8sutil.GetOperatorNamespace()
+	if err != nil {
+		return nil, err
+	}
+	service := &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      operatorName,
+			Namespace: namespace,
+			Labels:    map[string]string{"name": operatorName},
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Service",
+			APIVersion: "v1",
+		},
+		Spec: v1.ServiceSpec{
+			Ports: []v1.ServicePort{
+				{
+					Port:     port,
+					Protocol: v1.ProtocolTCP,
+					TargetPort: intstr.IntOrString{
+						Type:   intstr.Int,
+						IntVal: port,
+					},
+					Name: portName,
+				},
+			},
+			Selector: map[string]string{"name": operatorName},
+		},
 	}
 	return service, nil
 }
