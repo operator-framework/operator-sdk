@@ -28,9 +28,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/pkg/ansible"
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
-	ansibleOperator "github.com/operator-framework/operator-sdk/pkg/ansible/operator"
-	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/helm/client"
 	"github.com/operator-framework/operator-sdk/pkg/helm/controller"
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
@@ -157,39 +156,14 @@ func upLocalAnsible() {
 	if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
 		log.Fatalf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
 	}
-
-	logf.SetLogger(logf.ZapLogger(false))
-
-	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{Namespace: namespace})
-	if err != nil {
-		log.Fatal(err)
+	// Set the kubeconfig that the manager will be able to grab
+	if namespace != "" {
+		if err := os.Setenv(k8sutil.WatchNamespaceEnvVar, namespace); err != nil {
+			log.Fatalf("failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
+		}
 	}
 
-	printVersion()
-	log.Infof("watching namespace: %s", namespace)
-	done := make(chan error)
-
-	// start the proxy
-	err = proxy.Run(done, proxy.Options{
-		Address:    "localhost",
-		Port:       8888,
-		KubeConfig: mgr.GetConfig(),
-		Cache:      mgr.GetCache(),
-		RESTMapper: mgr.GetRESTMapper(),
-	})
-	if err != nil {
-		log.Fatalf("error starting proxy: (%v)", err)
-	}
-
-	// start the operator
-	go ansibleOperator.Run(done, mgr, ansibleOperatorFlags)
-
-	// wait for either to finish
-	err = <-done
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Info("Exiting.")
+	ansible.Run(ansibleOperatorFlags)
 }
 
 func upLocalHelm() {
