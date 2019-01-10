@@ -315,7 +315,7 @@ func addWatchToController(owner metav1.OwnerReference, cMap *ControllerMap, reso
 	u.SetGroupVersionKind(gvk)
 	// Add a watch to controller
 	if watch {
-		log.Info("watching child resource", "kind", resource.GroupVersionKind(), "enqueue_kind", u.GroupVersionKind())
+		log.Info("Watching child resource", "kind", resource.GroupVersionKind(), "enqueue_kind", u.GroupVersionKind())
 		err = c.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{OwnerType: u})
 		if err != nil {
 			return err
