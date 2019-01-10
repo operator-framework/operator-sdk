@@ -162,6 +162,25 @@ $ operator-sdk olm-catalog gen-csv --csv-version 0.1.1
 Generating CSV manifest version 0.1.1
 ```
 
+## migrate
+
+Adds a main.go source file and any associated source files for an operator that
+is not of the "go" type.
+
+### Example
+
+```bash
+$ operator-sdk migrate
+2019/01/10 15:02:45 No playbook was found, so not including it in the new Dockerfile
+2019/01/10 15:02:45 renamed Dockerfile to build/Dockerfile.sdkold and replaced with newer version
+2019/01/10 15:02:45 Compare the new Dockerfile to your old one and manually migrate any customizations
+INFO[0000] Create cmd/manager/main.go
+INFO[0000] Create Gopkg.toml
+INFO[0000] Create build/Dockerfile
+INFO[0000] Create bin/entrypoint
+INFO[0000] Create bin/user_setup
+```
+
 ## new
 
 Scaffolds a new operator project.
@@ -260,6 +279,24 @@ $ operator-sdk add crd --api-version app.example.com/v1alpha1 --kind AppService
 Generating custom resource definition (CRD) files
 Create deploy/crds/app_v1alpha1_appservice_crd.yaml
 Create deploy/crds/app_v1alpha1_appservice_cr.yaml
+```
+
+## run
+
+### ansible
+
+Runs as an ansible operator process. This is intended to be used when running
+in a Pod inside a cluster.
+
+#### Flags
+
+* `--reconcile-period` string - Default reconcile period for controllers (default 1m0s)
+* `--watches-file` string - Path to the watches file to use (default "./watches.yaml")
+
+#### Example
+
+```bash
+$ operator-sdk run ansible --watches-file=/opt/ansible/watches.yaml --reconcile-period=30s
 ```
 
 ## test
