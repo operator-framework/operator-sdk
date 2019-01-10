@@ -160,6 +160,7 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap, restMapper
 			}
 			owner := metav1.OwnerReference{}
 			json.Unmarshal(authString, &owner)
+			log.Info(fmt.Sprintf("Owner: %#v", owner))
 
 			body, err := ioutil.ReadAll(req.Body)
 			if err != nil {
@@ -215,6 +216,7 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap, restMapper
 					m := "could not add watch to controller"
 					log.Error(err, m)
 					http.Error(w, m, http.StatusInternalServerError)
+					return
 				}
 			}
 		}
