@@ -149,7 +149,7 @@ pkg/apis/app/v1alpha1/
 
 ## olm-catalog
 
-Parent command for all OLM Catalog-related commands.
+Parent command for all OLM Catalog related commands.
 
 ### gen-csv
 
