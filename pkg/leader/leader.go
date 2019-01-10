@@ -16,7 +16,6 @@ package leader
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -33,10 +32,6 @@ import (
 )
 
 var log = logf.Log.WithName("leader")
-
-// errNoNS indicates that a namespace could not be found for the current
-// environment
-var errNoNS = errors.New("namespace not found for current environment")
 
 // maxBackoffInterval defines the maximum amount of time to wait between
 // attempts to become the leader.
@@ -56,7 +51,7 @@ func Become(ctx context.Context, lockName string) error {
 
 	ns, err := k8sutil.GetOperatorNamespace()
 	if err != nil {
-		if err == errNoNS {
+		if err == k8sutil.ErrNoNamespace {
 			log.Info("Skipping leader election; not running in a cluster.")
 			return nil
 		}

@@ -217,5 +217,5 @@ func upLocalHelm() {
 func printVersion() {
 	log.Infof("Go Version: %s", runtime.Version())
 	log.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	log.Infof("Operator SDK Version: %v", sdkVersion.Version)
+	log.Infof("Version of operator-sdk: %v", sdkVersion.Version)
 }

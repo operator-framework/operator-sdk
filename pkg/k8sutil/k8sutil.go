@@ -38,13 +38,16 @@ func GetWatchNamespace() (string, error) {
 	return ns, nil
 }
 
+// errNoNS indicates that a namespace could not be found for the current
+// environment
+var ErrNoNamespace = fmt.Errorf("namespace not found for current environment")
+
 // GetOperatorNamespace returns the namespace the operator should be running in.
 func GetOperatorNamespace() (string, error) {
 	nsBytes, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.V(1).Info("Current namespace not found")
-			return "", fmt.Errorf("namespace not found for current environment")
+			return "", ErrNoNamespace
 		}
 		return "", err
 	}
