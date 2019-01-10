@@ -49,6 +49,9 @@ func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags, cM
 			ManageStatus: runner.GetManageStatus(),
 		}
 		applyFlagsToControllerOptions(f, &o)
+		if d, ok := runner.GetReconcilePeriod(); ok {
+			o.ReconcilePeriod = d
+		}
 		ctr := controller.Add(mgr, o)
 		if ctr == nil {
 			done <- errors.New("failed to add controller")

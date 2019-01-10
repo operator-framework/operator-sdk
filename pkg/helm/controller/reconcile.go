@@ -34,10 +34,10 @@ var _ reconcile.Reconciler = &HelmOperatorReconciler{}
 
 // HelmOperatorReconciler reconciles custom resources as Helm releases.
 type HelmOperatorReconciler struct {
-	Client         client.Client
-	GVK            schema.GroupVersionKind
-	ManagerFactory release.ManagerFactory
-	ResyncPeriod   time.Duration
+	Client          client.Client
+	GVK             schema.GroupVersionKind
+	ManagerFactory  release.ManagerFactory
+	ReconcilePeriod time.Duration
 }
 
 const (
@@ -183,7 +183,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 			Release: installedRelease,
 		})
 		err = r.updateResourceStatus(o, status)
-		return reconcile.Result{RequeueAfter: r.ResyncPeriod}, err
+		return reconcile.Result{RequeueAfter: r.ReconcilePeriod}, err
 	}
 
 	if manager.IsUpdateRequired() {
@@ -215,7 +215,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 			Release: updatedRelease,
 		})
 		err = r.updateResourceStatus(o, status)
-		return reconcile.Result{RequeueAfter: r.ResyncPeriod}, err
+		return reconcile.Result{RequeueAfter: r.ReconcilePeriod}, err
 	}
 
 	_, err = manager.ReconcileRelease(context.TODO())
@@ -234,7 +234,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 
 	log.Info("Reconciled release")
 	err = r.updateResourceStatus(o, status)
-	return reconcile.Result{RequeueAfter: r.ResyncPeriod}, err
+	return reconcile.Result{RequeueAfter: r.ReconcilePeriod}, err
 }
 
 func (r HelmOperatorReconciler) updateResource(o *unstructured.Unstructured) error {

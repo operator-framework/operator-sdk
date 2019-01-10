@@ -118,13 +118,13 @@ func NewFromWatches(path string) (map[schema.GroupVersionKind]Runner, error) {
 		}
 		switch {
 		case w.Playbook != "":
-			r, err := NewForPlaybook(w.Playbook, s, w.Finalizer, reconcilePeriod, w.ManageStatus)
+			r, err := NewForPlaybook(w.Playbook, s, w.Finalizer, reconcilePeriod, w.ManageStatus, w.WatchDependentResources)
 			if err != nil {
 				return nil, err
 			}
 			m[s] = r
 		case w.Role != "":
-			r, err := NewForRole(w.Role, s, w.Finalizer, reconcilePeriod, w.ManageStatus)
+			r, err := NewForRole(w.Role, s, w.Finalizer, reconcilePeriod, w.ManageStatus, w.WatchDependentResources)
 			if err != nil {
 				return nil, err
 			}
@@ -137,7 +137,7 @@ func NewFromWatches(path string) (map[schema.GroupVersionKind]Runner, error) {
 }
 
 // NewForPlaybook returns a new Runner based on the path to an ansible playbook.
-func NewForPlaybook(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, reconcilePeriod *time.Duration, manageStatus bool) (Runner, error) {
+func NewForPlaybook(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, reconcilePeriod *time.Duration, manageStatus, dependentResources bool) (Runner, error) {
 	if !filepath.IsAbs(path) {
 		return nil, fmt.Errorf("playbook path must be absolute for %v", gvk)
 	}
@@ -150,8 +150,9 @@ func NewForPlaybook(path string, gvk schema.GroupVersionKind, finalizer *Finaliz
 		cmdFunc: func(ident, inputDirPath string) *exec.Cmd {
 			return exec.Command("ansible-runner", "-vv", "-p", path, "-i", ident, "run", inputDirPath)
 		},
-		reconcilePeriod: reconcilePeriod,
-		manageStatus:    manageStatus,
+		reconcilePeriod:         reconcilePeriod,
+		manageStatus:            manageStatus,
+		watchDependentResources: dependentResources,
 	}
 	err := r.addFinalizer(finalizer)
 	if err != nil {
@@ -161,7 +162,7 @@ func NewForPlaybook(path string, gvk schema.GroupVersionKind, finalizer *Finaliz
 }
 
 // NewForRole returns a new Runner based on the path to an ansible role.
-func NewForRole(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, reconcilePeriod *time.Duration, manageStatus bool) (Runner, error) {
+func NewForRole(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, reconcilePeriod *time.Duration, manageStatus, dependentResources bool) (Runner, error) {
 	if !filepath.IsAbs(path) {
 		return nil, fmt.Errorf("role path must be absolute for %v", gvk)
 	}
@@ -176,8 +177,9 @@ func NewForRole(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, 
 			rolePath, roleName := filepath.Split(path)
 			return exec.Command("ansible-runner", "-vv", "--role", roleName, "--roles-path", rolePath, "--hosts", "localhost", "-i", ident, "run", inputDirPath)
 		},
-		reconcilePeriod: reconcilePeriod,
-		manageStatus:    manageStatus,
+		reconcilePeriod:         reconcilePeriod,
+		manageStatus:            manageStatus,
+		watchDependentResources: dependentResources,
 	}
 	err := r.addFinalizer(finalizer)
 	if err != nil {
