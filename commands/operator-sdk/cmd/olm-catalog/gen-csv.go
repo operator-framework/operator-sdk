@@ -69,6 +69,7 @@ func csvFunc(cmd *cobra.Command, args []string) {
 	s := &scaffold.Scaffold{}
 	err := s.Execute(cfg,
 		&catalog.CSV{CSVVersion: csvVersion},
+		&catalog.ConcatCRD{},
 	)
 	if err != nil {
 		log.Fatalf("build catalog scaffold failed: (%v)", err)

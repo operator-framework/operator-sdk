@@ -170,6 +170,7 @@ INFO[0000] Fill in the following required fields in file deploy/olm-catalog/thin
 	spec.provider
 	spec.labels
 INFO[0000] Create deploy/olm-catalog/thing.csv.yaml     
+INFO[0000] Create deploy/olm-catalog/_generated.concat_crd.yaml
 ```
 
 ## new
