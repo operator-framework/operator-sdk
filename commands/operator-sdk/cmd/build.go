@@ -80,7 +80,7 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 		yamlMap := make(map[string]interface{})
 		err := yaml.Unmarshal(yamlSpec, &yamlMap)
 		if err != nil {
-			log.Fatalf("Could not unmarshal yaml namespaced spec: (%v)", err)
+			log.Fatalf("Could not unmarshal YAML namespaced spec: (%v)", err)
 		}
 		kind, ok := yamlMap["kind"].(string)
 		if !ok {

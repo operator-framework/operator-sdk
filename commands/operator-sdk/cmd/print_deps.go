@@ -50,7 +50,7 @@ func printDepsFunc(cmd *cobra.Command, args []string) {
 		scaffold.PrintDepsAsFile()
 	} else {
 		if err := scaffold.PrintDeps(); err != nil {
-			log.Fatalf("Print deps: (%v)", err)
+			log.Fatalf("Print deps failed: (%v)", err)
 		}
 	}
 }
