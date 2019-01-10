@@ -153,7 +153,7 @@ Parent command for all OLM Catalog-related commands.
 
 ### gen-csv
 
-Generates a Cluster Service Version manifest file in `deploy/olm-catalog`.
+Writes Cluster Service Version manifest and concatenated CRD files to `deploy/olm-catalog`.
 
 #### Flags
 
@@ -161,7 +161,7 @@ Generates a Cluster Service Version manifest file in `deploy/olm-catalog`.
 
 #### Example
 
-```bash
+```console
 $ operator-sdk olm-catalog gen-csv --csv-version 0.1.1
 INFO[0000] Generating CSV manifest version 0.1.1
 INFO[0000] Fill in the following required fields in file deploy/olm-catalog/thing.csv.yaml:
