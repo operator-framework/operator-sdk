@@ -67,10 +67,8 @@ kubernetes cluster using a kubeconfig file.
 	switch projutil.GetOperatorType() {
 	case projutil.OperatorTypeAnsible:
 		ansibleOperatorFlags = aoflags.AddTo(upLocalCmd.Flags(), "(ansible operator)")
-		upLocalCmd.Flags().AddFlagSet(zap.FlagSet())
 	case projutil.OperatorTypeHelm:
 		helmOperatorFlags = hoflags.AddTo(upLocalCmd.Flags(), "(helm operator)")
-		upLocalCmd.Flags().AddFlagSet(zap.FlagSet())
 	}
 	return upLocalCmd
 }

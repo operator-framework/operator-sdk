@@ -17,7 +17,6 @@ package run
 import (
 	"github.com/operator-framework/operator-sdk/pkg/ansible"
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
-	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 
 	"github.com/spf13/cobra"
 )
@@ -34,7 +33,6 @@ func NewAnsibleCmd() *cobra.Command {
 		},
 	}
 	flags = aoflags.AddTo(newCmd.Flags())
-	newCmd.Flags().AddFlagSet(zap.FlagSet())
 
 	return newCmd
 }

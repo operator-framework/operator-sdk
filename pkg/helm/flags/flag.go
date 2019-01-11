@@ -16,6 +16,7 @@ package flags
 
 import (
 	"github.com/operator-framework/operator-sdk/pkg/internal/flags"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/spf13/pflag"
 )
 
@@ -29,5 +30,6 @@ type HelmOperatorFlags struct {
 func AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) *HelmOperatorFlags {
 	hof := &HelmOperatorFlags{}
 	hof.WatchFlags.AddTo(flagSet, helpTextPrefix...)
+	flagSet.AddFlagSet(zap.FlagSet())
 	return hof
 }
