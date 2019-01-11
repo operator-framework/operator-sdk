@@ -26,6 +26,9 @@ func NewRunCmd() *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:   "run",
 		Short: "Runs a generic operator",
+		Long: `Runs a generic operator. This is intended to be used when running
+in a Pod inside a cluster. Developers wanting to run their operator locally
+should use "up local" instead.`,
 	}
 
 	runCmd.AddCommand(run.NewAnsibleCmd())
