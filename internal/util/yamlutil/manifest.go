@@ -62,15 +62,15 @@ func GenerateCombinedNamespacedManifest() (*os.File, error) {
 
 	sa, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.ServiceAccountYamlFile))
 	if err != nil {
-		log.Warnf("could not find the serviceaccount manifest: (%v)", err)
+		log.Warnf("Could not find the serviceaccount manifest: (%v)", err)
 	}
 	role, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleYamlFile))
 	if err != nil {
-		log.Warnf("could not find role manifest: (%v)", err)
+		log.Warnf("Could not find role manifest: (%v)", err)
 	}
 	roleBinding, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleBindingYamlFile))
 	if err != nil {
-		log.Warnf("could not find role_binding manifest: (%v)", err)
+		log.Warnf("Could not find role_binding manifest: (%v)", err)
 	}
 	operator, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.OperatorYamlFile))
 	if err != nil {

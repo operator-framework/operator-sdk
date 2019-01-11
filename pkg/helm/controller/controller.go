@@ -49,17 +49,17 @@ type WatchOptions struct {
 	Namespace               string
 	GVK                     schema.GroupVersionKind
 	ManagerFactory          release.ManagerFactory
-	ResyncPeriod            time.Duration
+	ReconcilePeriod         time.Duration
 	WatchDependentResources bool
 }
 
 // Add creates a new helm operator controller and adds it to the manager
 func Add(mgr manager.Manager, options WatchOptions) error {
 	r := &HelmOperatorReconciler{
-		Client:         mgr.GetClient(),
-		GVK:            options.GVK,
-		ManagerFactory: options.ManagerFactory,
-		ResyncPeriod:   options.ResyncPeriod,
+		Client:          mgr.GetClient(),
+		GVK:             options.GVK,
+		ManagerFactory:  options.ManagerFactory,
+		ReconcilePeriod: options.ReconcilePeriod,
 	}
 
 	// Register the GVK with the schema
@@ -82,7 +82,7 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 		watchDependentResources(mgr, r, c)
 	}
 
-	log.Info("Watching resource", "apiVersion", options.GVK.GroupVersion(), "kind", options.GVK.Kind, "namespace", options.Namespace, "resyncPeriod", options.ResyncPeriod.String())
+	log.Info("Watching resource", "apiVersion", options.GVK.GroupVersion(), "kind", options.GVK.Kind, "namespace", options.Namespace, "reconcilePeriod", options.ReconcilePeriod.String())
 	return nil
 }
 

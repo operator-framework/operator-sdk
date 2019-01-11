@@ -40,7 +40,7 @@ x_base_steps:
     stage: deploy
     if: type != pull_request AND ( tag IS present OR branch = master OR commit_message =~ /\[travis deploy\]/ )
     <<: *go_before_install
-    install: skip
+    install: make install
     before_script:
       - git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
       - git fetch --unshallow --tags
