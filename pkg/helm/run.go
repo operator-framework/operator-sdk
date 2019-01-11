@@ -39,7 +39,7 @@ var log = logf.Log.WithName("cmd")
 func printVersion() {
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
 	log.Info(fmt.Sprintf("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH))
-	log.Info(fmt.Sprintf("operator-sdk Version: %v", sdkVersion.Version))
+	log.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
 }
 
 // Run runs the helm operator
@@ -97,7 +97,7 @@ func Run(flags *hoflags.HelmOperatorFlags) {
 
 	// Start the Cmd
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
-		log.Error(err, "manager exited non-zero")
+		log.Error(err, "Manager exited non-zero")
 		os.Exit(1)
 	}
 }

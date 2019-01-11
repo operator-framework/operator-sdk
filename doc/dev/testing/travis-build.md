@@ -30,7 +30,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 1. Run some basic [sanity checks][sanity].
     1. Run `go vet`.
     2. Check that all source files have a license.
-    3. Check that all error messages use the correct case (message starts with lower case).
+    3. Check that all error messages start with a lower case alphabetical character and do not end with punctuation, and log messages start with an upper case alphabetical character.
     4. Make sure the repo is in a clean state (this is particularly useful for making sure the `Gopkg.lock` file up to date after `dep ensure`).
 2. Run [unit tests][unit].
 3. Run [subcommand tests][subcommand].

@@ -28,12 +28,12 @@ func TestAddController(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err = s.Execute(appConfig, &AddController{Resource: r})
 	if err != nil {
-		t.Fatalf("failed to execute the scaffold: (%v)", err)
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
 	if addControllerExp != buf.String() {
 		diffs := diffutil.Diff(addControllerExp, buf.String())
-		t.Fatalf("expected vs actual differs.\n%v", diffs)
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
 }
 

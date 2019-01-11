@@ -33,7 +33,7 @@ import (
 func printVersion() {
 	log.Infof("Go Version: %s", runtime.Version())
 	log.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	log.Infof("operator-sdk Version: %v", sdkVersion.Version)
+	log.Infof("Version of operator-sdk: %v", sdkVersion.Version)
 }
 
 // Run will start the ansible operator and proxy, blocking until one of them
@@ -70,7 +70,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) {
 		ControllerMap: cMap,
 	})
 	if err != nil {
-		log.Fatalf("error starting proxy: (%v)", err)
+		log.Fatalf("Error starting proxy: (%v)", err)
 	}
 
 	// start the operator

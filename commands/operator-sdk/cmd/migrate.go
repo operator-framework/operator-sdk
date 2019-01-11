@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 
@@ -25,6 +24,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -52,7 +52,7 @@ func migrateRun(cmd *cobra.Command, args []string) {
 	case projutil.OperatorTypeHelm:
 		migrateHelm()
 	default:
-		log.Fatalf("operator of type %s cannot be migrated.", opType)
+		log.Fatalf("Operator of type %s cannot be migrated.", opType)
 	}
 }
 
@@ -74,9 +74,9 @@ func migrateAnsible() {
 	case err == nil:
 		dockerfile.Playbook = true
 	case os.IsNotExist(err):
-		log.Print("No playbook was found, so not including it in the new Dockerfile")
+		log.Info("No playbook was found, so not including it in the new Dockerfile")
 	default:
-		log.Fatalf("error trying to stat playbook.yaml: (%v)", err)
+		log.Fatalf("Error trying to stat playbook.yaml: (%v)", err)
 	}
 
 	renameDockerfile()
@@ -90,7 +90,7 @@ func migrateAnsible() {
 		&ansible.UserSetup{},
 	)
 	if err != nil {
-		log.Fatalf("add scaffold failed: (%v)", err)
+		log.Fatalf("Migrate scaffold failed: (%v)", err)
 	}
 }
 
@@ -117,7 +117,7 @@ func migrateHelm() {
 		&helm.UserSetup{},
 	)
 	if err != nil {
-		log.Fatalf("add scaffold failed: (%v)", err)
+		log.Fatalf("Migrate scaffold failed: (%v)", err)
 	}
 }
 
@@ -126,8 +126,7 @@ func renameDockerfile() {
 	newDockerfilePath := dockerfilePath + ".sdkold"
 	err := os.Rename(dockerfilePath, newDockerfilePath)
 	if err != nil {
-		log.Fatalf("failed to rename Dockerfile: (%v)", err)
+		log.Fatalf("Failed to rename Dockerfile: (%v)", err)
 	}
-	log.Printf("renamed Dockerfile to %s and replaced with newer version", newDockerfilePath)
-	log.Print("Compare the new Dockerfile to your old one and manually migrate any customizations")
+	log.Infof("Renamed Dockerfile to %s and replaced with newer version. Compare the new Dockerfile to your old one and manually migrate any customizations", newDockerfilePath)
 }
