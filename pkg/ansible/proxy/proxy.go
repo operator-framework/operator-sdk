@@ -55,7 +55,7 @@ type ControllerMap struct {
 // resource exists in our cache. If it does then there is no need to bombard
 // the APIserver with our request and we should write the response from the
 // proxy.
-func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper meta.RESTMapper, watchedNamespaces map[string]bool) http.Handler {
+func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper meta.RESTMapper, watchedNamespaces map[string]interface{}) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		switch req.Method {
 		case http.MethodGet:
@@ -251,7 +251,7 @@ type Options struct {
 	Cache             cache.Cache
 	RESTMapper        meta.RESTMapper
 	ControllerMap     *ControllerMap
-	WatchedNamespaces map[string]bool
+	WatchedNamespaces map[string]interface{}
 }
 
 // Run will start a proxy server in a go routine that returns on the error

@@ -68,7 +68,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) {
 		Cache:             mgr.GetCache(),
 		RESTMapper:        mgr.GetRESTMapper(),
 		ControllerMap:     cMap,
-		WatchedNamespaces: map[string]bool{namespace: true},
+		WatchedNamespaces: map[string]interface{}{namespace: nil},
 	})
 	if err != nil {
 		log.Fatalf("Error starting proxy: (%v)", err)

@@ -44,7 +44,7 @@ func TestHandler(t *testing.T) {
 		Cache:             nil,
 		RESTMapper:        mgr.GetRESTMapper(),
 		ControllerMap:     cMap,
-		WatchedNamespaces: map[string]bool{"default": true},
+		WatchedNamespaces: map[string]interface{}{"default": nil},
 	})
 	if err != nil {
 		t.Fatalf("Error starting proxy: %v", err)
