@@ -28,6 +28,9 @@ func NewAnsibleCmd() *cobra.Command {
 	newCmd := &cobra.Command{
 		Use:   "ansible",
 		Short: "Runs as an ansible operator",
+		Long: `Runs as an ansible operator. This is intended to be used when running
+in a Pod inside a cluster. Developers wanting to run their operator locally
+should use "up local" instead.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			ansible.Run(flags)
 		},

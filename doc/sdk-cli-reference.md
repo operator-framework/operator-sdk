@@ -169,7 +169,7 @@ is not of the "go" type.
 
 ### Example
 
-```bash
+```console
 $ operator-sdk migrate
 2019/01/10 15:02:45 No playbook was found, so not including it in the new Dockerfile
 2019/01/10 15:02:45 renamed Dockerfile to build/Dockerfile.sdkold and replaced with newer version
@@ -286,7 +286,8 @@ Create deploy/crds/app_v1alpha1_appservice_cr.yaml
 ### ansible
 
 Runs as an ansible operator process. This is intended to be used when running
-in a Pod inside a cluster.
+in a Pod inside a cluster. Developers wanting to run their operator locally
+should use `up local` instead.
 
 #### Flags
 
@@ -370,9 +371,12 @@ Test Successfully Completed
 
 ##### Use
 
-The operator-sdk up local command launches the operator on the local machine
-by building the operator binary with the ability to access a
-kubernetes cluster using a kubeconfig file.
+The `operator-sdk up local` command launches the operator on the local machine
+with the ability to access a kubernetes cluster using a kubeconfig file, and
+setting any necessary environment variables that the operator would expect to
+find when running in a cluster. For Go-based operators, this command will
+compile and run the operator binary. In the case of non-Go operators, it runs
+the operator-sdk binary itself as the operator.
 
 ##### Flags
 
