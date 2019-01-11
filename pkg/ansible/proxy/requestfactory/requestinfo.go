@@ -229,7 +229,7 @@ func (r *RequestInfoFactory) NewRequestInfo(req *http.Request) (*RequestInfo, er
 		if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion, &opts); err != nil {
 			// An error in parsing request will result in default to "list" and not
 			// setting "name" field.
-			log.Error(err, "couldn't parse request")
+			log.Error(err, "Could not parse request")
 			// Reset opts to not rely on partial results from parsing.
 			// However, if watch is set, let's report it.
 			opts = metainternalversion.ListOptions{}

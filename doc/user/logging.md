@@ -75,7 +75,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
       err = r.client.Create(context.TODO(), dep)
       if err != nil {
         // Include the error in records produced by this log statement.
-        reqLogger.Error(err, "failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+        reqLogger.Error(err, "Failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
         return reconcile.Result{}, err
       }
     }
@@ -89,7 +89,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 Log records will look like the following (from `reqLogger.Error()` above):
 
 ```
-2018-11-08T00:00:25.700Z	ERROR	operator-sdk.controller_memcached pkg/controller/memcached/memcached_controller.go:118	failed to create new Deployment	{"Request.Namespace", "memcached", "Request.Name", "memcached-operator", "Deployment.Namespace", "memcached", "Deployment.Name", "memcached-operator"}
+2018-11-08T00:00:25.700Z	ERROR	operator-sdk.controller_memcached pkg/controller/memcached/memcached_controller.go:118	Failed to create new Deployment	{"Request.Namespace", "memcached", "Request.Name", "memcached-operator", "Deployment.Namespace", "memcached", "Deployment.Name", "memcached-operator"}
 ```
 
 ## Non-default logging

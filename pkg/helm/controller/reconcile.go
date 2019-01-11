@@ -66,7 +66,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		return reconcile.Result{}, nil
 	}
 	if err != nil {
-		log.Error(err, "failed to lookup resource")
+		log.Error(err, "Failed to lookup resource")
 		return reconcile.Result{}, err
 	}
 
@@ -92,7 +92,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 	})
 
 	if err := manager.Sync(context.TODO()); err != nil {
-		log.Error(err, "failed to sync release")
+		log.Error(err, "Failed to sync release")
 		status.SetCondition(types.HelmAppCondition{
 			Type:    types.ConditionIrreconcilable,
 			Status:  types.StatusTrue,
@@ -112,7 +112,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 
 		uninstalledRelease, err := manager.UninstallRelease(context.TODO())
 		if err != nil && err != release.ErrNotFound {
-			log.Error(err, "failed to uninstall release")
+			log.Error(err, "Failed to uninstall release")
 			status.SetCondition(types.HelmAppCondition{
 				Type:    types.ConditionReleaseFailed,
 				Status:  types.StatusTrue,
@@ -157,7 +157,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 	if !manager.IsInstalled() {
 		installedRelease, err := manager.InstallRelease(context.TODO())
 		if err != nil {
-			log.Error(err, "failed to install release")
+			log.Error(err, "Failed to install release")
 			status.SetCondition(types.HelmAppCondition{
 				Type:    types.ConditionReleaseFailed,
 				Status:  types.StatusTrue,
@@ -189,7 +189,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 	if manager.IsUpdateRequired() {
 		previousRelease, updatedRelease, err := manager.UpdateRelease(context.TODO())
 		if err != nil {
-			log.Error(err, "failed to update release")
+			log.Error(err, "Failed to update release")
 			status.SetCondition(types.HelmAppCondition{
 				Type:    types.ConditionReleaseFailed,
 				Status:  types.StatusTrue,
@@ -220,7 +220,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 
 	_, err = manager.ReconcileRelease(context.TODO())
 	if err != nil {
-		log.Error(err, "failed to reconcile release")
+		log.Error(err, "Failed to reconcile release")
 		status.SetCondition(types.HelmAppCondition{
 			Type:    types.ConditionIrreconcilable,
 			Status:  types.StatusTrue,

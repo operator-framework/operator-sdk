@@ -142,9 +142,9 @@ The next watch is for Deployments but the event handler will map each event to a
 
 ```Go
 err := c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &cachev1alpha1.Memcached{},
-	})
+    IsController: true,
+    OwnerType:    &cachev1alpha1.Memcached{},
+  })
 ```
 
 **// TODO:** Doc on eventhandler, arbitrary mapping between watched and reconciled resource.
@@ -215,7 +215,7 @@ $ export OPERATOR_NAMESPACE=$(kubectl config view --minify -o jsonpath='{.contex
 $ sed -i "s|REPLACE_NAMESPACE|$OPERATOR_NAMESPACE|g" deploy/role_binding.yaml
 ```
 
-**Note**  
+**Note**
 If you are performing these steps on OSX, use the following commands instead:
 ```
 $ sed -i "" 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
@@ -370,7 +370,8 @@ import (
 )
 // Setup Scheme for all resources
 if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
-  log.Fatal(err)
+  log.Error(err, "")
+  os.Exit(1)
 }
 ```
 
@@ -390,7 +391,8 @@ import (
 func main() {
     ....
     if err := routev1.AddToScheme(mgr.GetScheme()); err != nil {
-        log.Fatal(err)
+      log.Error(err, "")
+      os.Exit(1)
     }
     ....
 }
