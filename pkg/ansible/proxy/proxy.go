@@ -119,7 +119,9 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 
 			// Set X-Cache header to signal that response is served from Cache
 			w.Header().Set("X-Cache", "HIT")
-			json.Indent(&i, resp, "", "  ")
+			if err := json.Indent(&i, resp, "", "  "); err != nil {
+				log.Error(err, "Failed to indent json")
+			}
 			_, err = w.Write(i.Bytes())
 			if err != nil {
 				log.Error(err, "Failed to write response")
@@ -159,7 +161,12 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap, restMapper
 				return
 			}
 			owner := metav1.OwnerReference{}
-			json.Unmarshal(authString, &owner)
+			if err := json.Unmarshal(authString, &owner); err != nil {
+				m := "Could not unmarshal auth string"
+				log.Error(err, m)
+				http.Error(w, m, http.StatusInternalServerError)
+				return
+			}
 			log.Info(fmt.Sprintf("Owner: %#v", owner))
 
 			body, err := ioutil.ReadAll(req.Body)
@@ -268,7 +275,9 @@ func Run(done chan error, o Options) error {
 		}
 		stop := make(chan struct{})
 		go func() {
-			informerCache.Start(stop)
+			if err := informerCache.Start(stop); err != nil {
+				log.Error(err, "Failed to start informer cache")
+			}
 			defer close(stop)
 		}()
 		log.Info("Waiting for cache to sync...")

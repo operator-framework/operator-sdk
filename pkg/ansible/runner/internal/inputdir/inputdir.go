@@ -117,7 +117,11 @@ func (i *InputDir) Write() error {
 			log.Error(err, "Failed to open playbook file", "Path", i.PlaybookPath)
 			return err
 		}
-		defer f.Close()
+		defer func() {
+			if err := f.Close(); err != nil {
+				log.Error(err, "Failed to close playbook file")
+			}
+		}()
 
 		playbookBytes, err := ioutil.ReadAll(f)
 		if err != nil {

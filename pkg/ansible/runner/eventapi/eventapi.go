@@ -95,7 +95,9 @@ func (e *EventReceiver) Close() {
 	e.stopped = true
 	e.mutex.Unlock()
 	e.logger.V(1).Info("Event API stopped")
-	e.server.Close()
+	if err := e.server.Close(); err != nil {
+		e.logger.Error(err, "Failed to close event receiver")
+	}
 	close(e.Events)
 }
 
@@ -116,7 +118,9 @@ func (e *EventReceiver) handleEvents(w http.ResponseWriter, r *http.Request) {
 	if strings.Split(ct, ";")[0] != "application/json" {
 		e.logger.Info("Wrong content type", "code", "415", "Request.Content-Type", ct)
 		w.WriteHeader(http.StatusUnsupportedMediaType)
-		w.Write([]byte("The content-type must be \"application/json\""))
+		if _, err := w.Write([]byte("The content-type must be \"application/json\"")); err != nil {
+			e.logger.Error(err, "Failed to write response body")
+		}
 		return
 	}
 
@@ -132,7 +136,9 @@ func (e *EventReceiver) handleEvents(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		e.logger.Info("Could not deserialize body.", "code", "400", "Error", err)
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Could not deserialize body as JSON"))
+		if _, err := w.Write([]byte("Could not deserialize body as JSON")); err != nil {
+			e.logger.Error(err, "Failed to write response body")
+		}
 		return
 	}
 
