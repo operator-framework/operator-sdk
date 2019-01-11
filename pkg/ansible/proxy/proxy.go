@@ -55,7 +55,7 @@ type ControllerMap struct {
 // resource exists in our cache. If it does then there is no need to bombard
 // the APIserver with our request and we should write the response from the
 // proxy.
-func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper meta.RESTMapper, watchedNamespaces []string) http.Handler {
+func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper meta.RESTMapper, watchedNamespaces map[string]bool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		switch req.Method {
 		case http.MethodGet:
@@ -73,8 +73,11 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			}
 
 			// check if resource doesn't exist in watched namespaces
-			// if watchedNamespaces[0] == "" then we are watching all namespaces
-			if watchedNamespaces[0] != "" && !contains(watchedNamespaces, r.Namespace) {
+			// if watchedNamespaces[""] exists then we are watching all namespaces
+			// and want to continue
+			_, allNsPresent := watchedNamespaces[""]
+			_, reqNsPresent := watchedNamespaces[r.Namespace]
+			if !allNsPresent && !reqNsPresent {
 				break
 			}
 
@@ -248,7 +251,7 @@ type Options struct {
 	Cache             cache.Cache
 	RESTMapper        meta.RESTMapper
 	ControllerMap     *ControllerMap
-	WatchedNamespaces []string
+	WatchedNamespaces map[string]bool
 }
 
 // Run will start a proxy server in a go routine that returns on the error
@@ -373,13 +376,4 @@ func (cm *ControllerMap) Store(key schema.GroupVersionKind, value controller.Con
 	defer cm.Unlock()
 	cm.internal[key] = value
 	cm.watch[key] = watch
-}
-
-func contains(l []string, s string) bool {
-	for _, i := range l {
-		if i == s {
-			return true
-		}
-	}
-	return false
 }
