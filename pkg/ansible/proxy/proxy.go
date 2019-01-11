@@ -55,7 +55,7 @@ type ControllerMap struct {
 // resource exists in our cache. If it does then there is no need to bombard
 // the APIserver with our request and we should write the response from the
 // proxy.
-func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper meta.RESTMapper) http.Handler {
+func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper meta.RESTMapper, watchedNamespaces []string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		switch req.Method {
 		case http.MethodGet:
@@ -69,6 +69,11 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 
 			// check if resource is present on request
 			if !r.IsResourceRequest {
+				break
+			}
+
+			// check if resource doesn't exist in watched namespaces
+			if !contains(watchedNamespaces, r.Namespace) {
 				break
 			}
 
@@ -234,14 +239,15 @@ type HandlerChain func(http.Handler) http.Handler
 // Options will be used by the user to specify the desired details
 // for the proxy.
 type Options struct {
-	Address          string
-	Port             int
-	Handler          HandlerChain
-	NoOwnerInjection bool
-	KubeConfig       *rest.Config
-	Cache            cache.Cache
-	RESTMapper       meta.RESTMapper
-	ControllerMap    *ControllerMap
+	Address           string
+	Port              int
+	Handler           HandlerChain
+	NoOwnerInjection  bool
+	KubeConfig        *rest.Config
+	Cache             cache.Cache
+	RESTMapper        meta.RESTMapper
+	ControllerMap     *ControllerMap
+	WatchedNamespaces []string
 }
 
 // Run will start a proxy server in a go routine that returns on the error
@@ -257,6 +263,9 @@ func Run(done chan error, o Options) error {
 	}
 	if o.ControllerMap == nil {
 		return fmt.Errorf("failed to get controller map from options")
+	}
+	if o.WatchedNamespaces == nil {
+		return fmt.Errorf("failed to get list of watched namespaces from options")
 	}
 
 	if o.Cache == nil {
@@ -284,7 +293,7 @@ func Run(done chan error, o Options) error {
 		server.Handler = InjectOwnerReferenceHandler(server.Handler, o.ControllerMap, o.RESTMapper)
 	}
 	// Always add cache handler
-	server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper)
+	server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper, o.WatchedNamespaces)
 
 	l, err := server.Listen(o.Address, o.Port)
 	if err != nil {
@@ -363,4 +372,13 @@ func (cm *ControllerMap) Store(key schema.GroupVersionKind, value controller.Con
 	defer cm.Unlock()
 	cm.internal[key] = value
 	cm.watch[key] = watch
+}
+
+func contains(l []string, s string) bool {
+	for _, i := range l {
+		if i == s {
+			return true
+		}
+	}
+	return false
 }

@@ -163,6 +163,25 @@ func upLocalAnsible() {
 		}
 	}
 
+	printVersion()
+	log.Infof("watching namespace: %s", namespace)
+	done := make(chan error)
+	cMap := proxy.NewControllerMap()
+
+	// start the proxy
+	err = proxy.Run(done, proxy.Options{
+		Address:           "localhost",
+		Port:              8888,
+		KubeConfig:        mgr.GetConfig(),
+		Cache:             mgr.GetCache(),
+		RESTMapper:        mgr.GetRESTMapper(),
+		ControllerMap:     cMap,
+		WatchedNamespaces: []string{namespace},
+	})
+	if err != nil {
+		log.Fatalf("error starting proxy: (%v)", err)
+	}
+
 	ansible.Run(ansibleOperatorFlags)
 }
 
