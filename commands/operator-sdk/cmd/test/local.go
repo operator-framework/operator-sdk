@@ -81,9 +81,9 @@ func testLocalFunc(cmd *cobra.Command, args []string) {
 	case projutil.OperatorTypeAnsible:
 		testLocalAnsibleFunc(cmd, args)
 	case projutil.OperatorTypeHelm:
-		log.Fatal("`test local` is not implemented for Helm operators")
+		log.Fatal("`test local` for Helm operators is not implemented")
 	default:
-		log.Fatal("failed to determine operator type")
+		log.Fatal("Failed to determine operator type")
 	}
 }
 
@@ -106,7 +106,7 @@ func testLocalAnsibleFunc(cmd *cobra.Command, args []string) {
 	dc.Stderr = os.Stderr
 	err := dc.Run()
 	if err != nil {
-		log.Fatalf("failed to exec `molecule %s`: (%v)", strings.Join(testArgs, " "), err)
+		log.Fatalf("Failed to exec `molecule %s`: (%v)", strings.Join(testArgs, " "), err)
 	}
 }
 

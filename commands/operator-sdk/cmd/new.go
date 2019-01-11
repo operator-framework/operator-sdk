@@ -264,11 +264,11 @@ func doAnsibleScaffold() {
 	// Remove placeholders from empty directories
 	err = os.Remove(filepath.Join(s.AbsProjectPath, roleFiles.Path))
 	if err != nil {
-		log.Fatalf("new ansible scaffold failed: (%v)", err)
+		log.Fatalf("New ansible scaffold failed: (%v)", err)
 	}
 	err = os.Remove(filepath.Join(s.AbsProjectPath, roleTemplates.Path))
 	if err != nil {
-		log.Fatalf("new ansible scaffold failed: (%v)", err)
+		log.Fatalf("New ansible scaffold failed: (%v)", err)
 	}
 
 	// Decide on playbook.

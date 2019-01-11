@@ -85,9 +85,9 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 	case projutil.OperatorTypeAnsible:
 		testCmd = []string{"/" + ansible.BuildTestFrameworkAnsibleTestScriptFile}
 	case projutil.OperatorTypeHelm:
-		log.Fatal("`test cluster` is not implemented for Helm operators")
+		log.Fatal("`test cluster` for Helm operators is not implemented")
 	default:
-		log.Fatal("failed to determine operator type")
+		log.Fatal("Failed to determine operator type")
 	}
 
 	// cobra prints its help message on error; we silence that here because any errors below

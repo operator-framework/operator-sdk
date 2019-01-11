@@ -215,11 +215,11 @@ func buildFunc(cmd *cobra.Command, args []string) {
 					&scaffold.TestPod{Image: image, TestNamespaceEnv: test.TestNamespaceEnv},
 				)
 			case projutil.OperatorTypeAnsible:
-				log.Fatal("test scaffolding for Ansible Operators is not implemented")
+				log.Fatal("Test scaffolding for Ansible Operators is not implemented")
 			case projutil.OperatorTypeHelm:
-				log.Fatal("test scaffolding for Helm Operators is not implemented")
+				log.Fatal("Test scaffolding for Helm Operators is not implemented")
 			default:
-				log.Fatal("failed to determine operator type")
+				log.Fatal("Failed to determine operator type")
 			}
 
 			if err != nil {
