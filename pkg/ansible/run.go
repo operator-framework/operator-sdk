@@ -62,12 +62,13 @@ func Run(flags *aoflags.AnsibleOperatorFlags) {
 
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{
-		Address:       "localhost",
-		Port:          8888,
-		KubeConfig:    mgr.GetConfig(),
-		Cache:         mgr.GetCache(),
-		RESTMapper:    mgr.GetRESTMapper(),
-		ControllerMap: cMap,
+		Address:           "localhost",
+		Port:              8888,
+		KubeConfig:        mgr.GetConfig(),
+		Cache:             mgr.GetCache(),
+		RESTMapper:        mgr.GetRESTMapper(),
+		ControllerMap:     cMap,
+		WatchedNamespaces: []string{namespace},
 	})
 	if err != nil {
 		log.Fatalf("Error starting proxy: (%v)", err)

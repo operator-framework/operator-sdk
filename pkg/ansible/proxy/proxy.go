@@ -73,7 +73,8 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			}
 
 			// check if resource doesn't exist in watched namespaces
-			if !contains(watchedNamespaces, r.Namespace) {
+			// if watchedNamespaces[0] == "" then we are watching all namespaces
+			if watchedNamespaces[0] != "" && !contains(watchedNamespaces, r.Namespace) {
 				break
 			}
 
