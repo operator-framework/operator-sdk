@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
-	"sync"
 
 	"github.com/ghodss/yaml"
 	olmApi "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -40,13 +39,12 @@ type CSVUpdateSet struct {
 	Updaters []CSVUpdater
 }
 
-// Populate adds a pre-defined set of CSVUpdater's to s. Even though Populate
-// will duplicate CSVUpdater's in s' internal slice, their application to a
-// CSV is idempotent so Populate maintains set semantics.
-func (s *CSVUpdateSet) Populate() {
-	if localUpdater != nil {
-		s.Updaters = append(s.Updaters, localUpdater.installStrategy)
-		s.Updaters = append(s.Updaters, localUpdater.crdUpdate)
+func NewCSVUpdateSet(uf *updaterStore) *CSVUpdateSet {
+	return &CSVUpdateSet{
+		Updaters: []CSVUpdater{
+			uf.installStrategy,
+			uf.crdUpdate,
+		},
 	}
 }
 
@@ -60,50 +58,44 @@ func (s *CSVUpdateSet) Apply(csv *olmApi.ClusterServiceVersion) error {
 	return nil
 }
 
-// TODO: allow custom Kinds that should be interpreted as standard
-// k8s Kinds required in CSV's
-var updateDispTable = map[string]func([]byte) error{
-	"Role":        AddRoleToCSVInstallStrategyUpdate,
-	"ClusterRole": AddClusterRoleToCSVInstallStrategyUpdate,
-	"Deployment":  AddDeploymentSpecToCSVInstallStrategyUpdate,
-	// TODO: determine whether 'owned' or 'required'
-	"CustomResourceDefinition": AddOwnedCRDToCSVCustomResourceDefinitionsUpdate,
-	// "CustomResource": AddCRToCSVCustomResourceDefinitionsUpdate,
+type storeUpdater func([]byte) error
+
+func getUpdaterFunc(store *updaterStore, kind string) storeUpdater {
+	switch kind {
+	case "Role":
+		return store.AddRole
+	case "ClusterRole":
+		return store.AddClusterRole
+	case "Deployment":
+		return store.AddDeploymentSpec
+	case "CustomResourceDefinition":
+		// TODO: determine whether 'owned' or 'required'
+		return store.AddOwnedCRD
+	}
+	return nil
 }
 
-type localUpdaterFactory struct {
+type updaterStore struct {
 	installStrategy *CSVInstallStrategyUpdate
 	crdUpdate       *CSVCustomResourceDefinitionsUpdate
 }
 
-var once sync.Once
-var localUpdater *localUpdaterFactory
-
-func getLocalUpdaterFactory() *localUpdaterFactory {
-	once.Do(func() {
-		localUpdater = &localUpdaterFactory{}
-		localUpdater.installStrategy = &CSVInstallStrategyUpdate{
+func NewUpdaterStore() *updaterStore {
+	return &updaterStore{
+		installStrategy: &CSVInstallStrategyUpdate{
 			&olmInstall.StrategyDetailsDeployment{},
-		}
-		localUpdater.crdUpdate = &CSVCustomResourceDefinitionsUpdate{
+		},
+		crdUpdate: &CSVCustomResourceDefinitionsUpdate{
 			&olmApi.CustomResourceDefinitions{},
-		}
-	})
-	return localUpdater
+		},
+	}
 }
 
 type CSVInstallStrategyUpdate struct {
 	*olmInstall.StrategyDetailsDeployment
 }
 
-func getLocalInstallStrategyUpdate() *CSVInstallStrategyUpdate {
-	factory := getLocalUpdaterFactory()
-	return factory.installStrategy
-}
-
-func AddRoleToCSVInstallStrategyUpdate(yamlDoc []byte) error {
-	localISUpdate := getLocalInstallStrategyUpdate()
-
+func (store *updaterStore) AddRole(yamlDoc []byte) error {
 	newRole := new(rbacv1.Role)
 	if err := yaml.Unmarshal(yamlDoc, newRole); err != nil {
 		return err
@@ -112,14 +104,12 @@ func AddRoleToCSVInstallStrategyUpdate(yamlDoc []byte) error {
 		ServiceAccountName: newRole.ObjectMeta.Name,
 		Rules:              newRole.Rules,
 	}
-	localISUpdate.Permissions = append(localISUpdate.Permissions, newPerm)
+	store.installStrategy.Permissions = append(store.installStrategy.Permissions, newPerm)
 
 	return nil
 }
 
-func AddClusterRoleToCSVInstallStrategyUpdate(yamlDoc []byte) error {
-	localISUpdate := getLocalInstallStrategyUpdate()
-
+func (store *updaterStore) AddClusterRole(yamlDoc []byte) error {
 	newCRole := new(rbacv1.ClusterRole)
 	if err := yaml.Unmarshal(yamlDoc, newCRole); err != nil {
 		return err
@@ -128,14 +118,12 @@ func AddClusterRoleToCSVInstallStrategyUpdate(yamlDoc []byte) error {
 		ServiceAccountName: newCRole.ObjectMeta.Name,
 		Rules:              newCRole.Rules,
 	}
-	localISUpdate.ClusterPermissions = append(localISUpdate.ClusterPermissions, newPerm)
+	store.installStrategy.ClusterPermissions = append(store.installStrategy.ClusterPermissions, newPerm)
 
 	return nil
 }
 
-func AddDeploymentSpecToCSVInstallStrategyUpdate(yamlDoc []byte) error {
-	localISUpdate := getLocalInstallStrategyUpdate()
-
+func (store *updaterStore) AddDeploymentSpec(yamlDoc []byte) error {
 	newDep := new(appsv1.Deployment)
 	if err := yaml.Unmarshal(yamlDoc, newDep); err != nil {
 		return err
@@ -144,7 +132,7 @@ func AddDeploymentSpecToCSVInstallStrategyUpdate(yamlDoc []byte) error {
 		Name: newDep.ObjectMeta.Name,
 		Spec: newDep.Spec,
 	}
-	localISUpdate.DeploymentSpecs = append(localISUpdate.DeploymentSpecs, newDepSpec)
+	store.installStrategy.DeploymentSpecs = append(store.installStrategy.DeploymentSpecs, newDepSpec)
 
 	return nil
 }
@@ -205,25 +193,18 @@ type CSVCustomResourceDefinitionsUpdate struct {
 	*olmApi.CustomResourceDefinitions
 }
 
-func getLocalCustomResourceDefinitionsUpdate() *CSVCustomResourceDefinitionsUpdate {
-	factory := getLocalUpdaterFactory()
-	return factory.crdUpdate
-}
-
-func AddOwnedCRDToCSVCustomResourceDefinitionsUpdate(yamlDoc []byte) error {
-	localCRDsUpdate := getLocalCustomResourceDefinitionsUpdate()
+func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
 	newCRDDesc, err := parseCRDDescriptionFromYAML(yamlDoc)
 	if err == nil {
-		localCRDsUpdate.Owned = append(localCRDsUpdate.Owned, *newCRDDesc)
+		store.crdUpdate.Owned = append(store.crdUpdate.Owned, *newCRDDesc)
 	}
 	return err
 }
 
-func AddRequiredCRDToCSVCustomResourceDefinitionsUpdate(yamlDoc []byte) error {
-	localCRDsUpdate := getLocalCustomResourceDefinitionsUpdate()
+func (store *updaterStore) AddRequiredCRD(yamlDoc []byte) error {
 	newCRDDesc, err := parseCRDDescriptionFromYAML(yamlDoc)
 	if err == nil {
-		localCRDsUpdate.Required = append(localCRDsUpdate.Required, *newCRDDesc)
+		store.crdUpdate.Required = append(store.crdUpdate.Required, *newCRDDesc)
 	}
 	return err
 }

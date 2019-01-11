@@ -287,6 +287,7 @@ func replaceAllBytes(v interface{}, old, new []byte) error {
 // updateCSVFromManifestFiles gathers relevant data from generated and user-defined manifests
 // and updates csv.
 func (s *CSV) updateCSVFromManifestFiles(csv *olmApi.ClusterServiceVersion, csvConfig *CSVConfig) error {
+	store := NewUpdaterStore()
 	for _, f := range append(csvConfig.CRDCRPaths, csvConfig.OperatorPath, csvConfig.RolePath) {
 		yamlData, err := ioutil.ReadFile(f)
 		if err != nil {
@@ -302,16 +303,14 @@ func (s *CSV) updateCSVFromManifestFiles(csv *olmApi.ClusterServiceVersion, csvC
 				return err
 			}
 
-			updateFunc, ok := updateDispTable[k]
-			if ok {
+			updateFunc := getUpdaterFunc(store, k)
+			if updateFunc != nil {
 				updateFunc(yamlSpec)
 			}
 		}
 	}
 
-	updaters := &CSVUpdateSet{}
-	updaters.Populate()
-	return updaters.Apply(csv)
+	return NewCSVUpdateSet(store).Apply(csv)
 }
 
 func getKindfromYAML(yamlData []byte) (string, error) {
