@@ -24,12 +24,12 @@ func TestServiceAccount(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err := s.Execute(appConfig, &ServiceAccount{})
 	if err != nil {
-		t.Fatalf("failed to execute the scaffold: (%v)", err)
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
 	if serviceAccountExp != buf.String() {
 		diffs := diffutil.Diff(serviceAccountExp, buf.String())
-		t.Fatalf("expected vs actual differs.\n%v", diffs)
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
 }
 

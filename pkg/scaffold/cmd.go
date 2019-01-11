@@ -64,7 +64,7 @@ var log = logf.Log.WithName("cmd")
 func printVersion() {
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
 	log.Info(fmt.Sprintf("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH))
-	log.Info(fmt.Sprintf("operator-sdk Version: %v", sdkVersion.Version))
+	log.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
 }
 
 func main() {
@@ -92,7 +92,7 @@ func main() {
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
-		log.Error(err, "failed to get watch namespace")
+		log.Error(err, "Failed to get watch namespace")
 		os.Exit(1)
 	}
 
@@ -139,7 +139,7 @@ func main() {
 
 	// Start the Cmd
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
-		log.Error(err, "manager exited non-zero")
+		log.Error(err, "Manager exited non-zero")
 		os.Exit(1)
 	}
 }

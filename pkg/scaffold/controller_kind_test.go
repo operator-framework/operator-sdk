@@ -28,12 +28,12 @@ func TestControllerKind(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err = s.Execute(appConfig, &ControllerKind{Resource: r})
 	if err != nil {
-		t.Fatalf("failed to execute the scaffold: (%v)", err)
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
 	if controllerKindExp != buf.String() {
 		diffs := diffutil.Diff(controllerKindExp, buf.String())
-		t.Fatalf("expected vs actual differs.\n%v", diffs)
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
 }
 

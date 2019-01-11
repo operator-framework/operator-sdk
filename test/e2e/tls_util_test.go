@@ -112,13 +112,13 @@ func TestBothAppAndCATLSAssetsExist(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(appSecret, actualAppSecret) {
-		t.Fatalf("expect %+v, but got %+v", appSecret, actualAppSecret)
+		t.Fatalf("Expect %+v, but got %+v", appSecret, actualAppSecret)
 	}
 	if !reflect.DeepEqual(caConfigMap, actualCaConfigMap) {
-		t.Fatalf("expect %+v, but got %+v", caConfigMap, actualCaConfigMap)
+		t.Fatalf("Expect %+v, but got %+v", caConfigMap, actualCaConfigMap)
 	}
 	if !reflect.DeepEqual(caSecret, actualCaSecret) {
-		t.Fatalf("expect %+v, but got %+v", caSecret, actualCaSecret)
+		t.Fatalf("Expect %+v, but got %+v", caSecret, actualCaSecret)
 	}
 }
 
@@ -143,10 +143,10 @@ func TestOnlyAppSecretExist(t *testing.T) {
 	cg := tlsutil.NewSDKCertGenerator(f.KubeClient)
 	_, _, _, err = cg.GenerateCert(newDummyCR(namespace), nil, ccfg)
 	if err == nil {
-		t.Fatal("expect error, but got none")
+		t.Fatal("Expect error, but got none")
 	}
 	if err != tlsutil.ErrCANotFound {
-		t.Fatalf("expect %v, but got %v", tlsutil.ErrCANotFound.Error(), err.Error())
+		t.Fatalf("Expect %v, but got %v", tlsutil.ErrCANotFound.Error(), err.Error())
 	}
 }
 
@@ -242,13 +242,13 @@ func TestCustomCA(t *testing.T) {
 func verifyCASecret(t *testing.T, caSecret *v1.Secret, namespace string) {
 	// check if caConfigMap has the correct fields.
 	if caConfigMapAndSecretName != caSecret.Name {
-		t.Fatalf("expect the ca config name %v, but got %v", caConfigMapAndSecretName, caConfigMap.Name)
+		t.Fatalf("Expect the ca config name %v, but got %v", caConfigMapAndSecretName, caConfigMap.Name)
 	}
 	if namespace != caSecret.Namespace {
-		t.Fatalf("expect the ca config namespace %v, but got %v", namespace, appSecret.Namespace)
+		t.Fatalf("Expect the ca config namespace %v, but got %v", namespace, appSecret.Namespace)
 	}
 	if _, ok := caSecret.Data[tlsutil.TLSPrivateCAKeyKey]; !ok {
-		t.Fatalf("expect the ca config to have the data field %v, but got none", tlsutil.TLSPrivateCAKeyKey)
+		t.Fatalf("Expect the ca config to have the data field %v, but got none", tlsutil.TLSPrivateCAKeyKey)
 	}
 
 	// check if caConfigMap exists in k8s cluster.
@@ -258,20 +258,20 @@ func verifyCASecret(t *testing.T, caSecret *v1.Secret, namespace string) {
 	}
 	// check if caSecret returned from GenerateCert is the same as the one that exists in the k8s.
 	if !reflect.DeepEqual(caSecret, caSecretFromCluster) {
-		t.Fatalf("expect %+v, but got %+v", caSecret, caSecretFromCluster)
+		t.Fatalf("Expect %+v, but got %+v", caSecret, caSecretFromCluster)
 	}
 }
 
 func verifyCaConfigMap(t *testing.T, caConfigMap *v1.ConfigMap, namespace string) {
 	// check if caConfigMap has the correct fields.
 	if caConfigMapAndSecretName != caConfigMap.Name {
-		t.Fatalf("expect the ca config name %v, but got %v", caConfigMapAndSecretName, caConfigMap.Name)
+		t.Fatalf("Expect the ca config name %v, but got %v", caConfigMapAndSecretName, caConfigMap.Name)
 	}
 	if namespace != caConfigMap.Namespace {
-		t.Fatalf("expect the ca config namespace %v, but got %v", namespace, appSecret.Namespace)
+		t.Fatalf("Expect the ca config namespace %v, but got %v", namespace, appSecret.Namespace)
 	}
 	if _, ok := caConfigMap.Data[tlsutil.TLSCACertKey]; !ok {
-		t.Fatalf("expect the ca config to have the data field %v, but got none", tlsutil.TLSCACertKey)
+		t.Fatalf("Expect the ca config to have the data field %v, but got none", tlsutil.TLSCACertKey)
 	}
 
 	// check if caConfigMap exists in k8s cluster.
@@ -281,26 +281,26 @@ func verifyCaConfigMap(t *testing.T, caConfigMap *v1.ConfigMap, namespace string
 	}
 	// check if caConfigMap returned from GenerateCert is the same as the one that exists in the k8s.
 	if !reflect.DeepEqual(caConfigMap, caConfigMapFromCluster) {
-		t.Fatalf("expect %+v, but got %+v", caConfigMap, caConfigMapFromCluster)
+		t.Fatalf("Expect %+v, but got %+v", caConfigMap, caConfigMapFromCluster)
 	}
 }
 
 func verifyAppSecret(t *testing.T, appSecret *v1.Secret, namespace string) {
 	// check if appSecret has the correct fields.
 	if appSecretName != appSecret.Name {
-		t.Fatalf("expect the secret name %v, but got %v", appSecretName, appSecret.Name)
+		t.Fatalf("Expect the secret name %v, but got %v", appSecretName, appSecret.Name)
 	}
 	if namespace != appSecret.Namespace {
-		t.Fatalf("expect the secret namespace %v, but got %v", namespace, appSecret.Namespace)
+		t.Fatalf("Expect the secret namespace %v, but got %v", namespace, appSecret.Namespace)
 	}
 	if v1.SecretTypeTLS != appSecret.Type {
-		t.Fatalf("expect the secret type %v, but got %v", v1.SecretTypeTLS, appSecret.Type)
+		t.Fatalf("Expect the secret type %v, but got %v", v1.SecretTypeTLS, appSecret.Type)
 	}
 	if _, ok := appSecret.Data[v1.TLSCertKey]; !ok {
-		t.Fatalf("expect the secret to have the data field %v, but got none", v1.TLSCertKey)
+		t.Fatalf("Expect the secret to have the data field %v, but got none", v1.TLSCertKey)
 	}
 	if _, ok := appSecret.Data[v1.TLSPrivateKeyKey]; !ok {
-		t.Fatalf("expect the secret to have the data field %v, but got none", v1.TLSPrivateKeyKey)
+		t.Fatalf("Expect the secret to have the data field %v, but got none", v1.TLSPrivateKeyKey)
 	}
 
 	// check if appSecret exists in k8s cluster.
@@ -310,7 +310,7 @@ func verifyAppSecret(t *testing.T, appSecret *v1.Secret, namespace string) {
 	}
 	// check if appSecret returned from GenerateCert is the same as the one that exists in the k8s.
 	if !reflect.DeepEqual(appSecret, appSecretFromCluster) {
-		t.Fatalf("expect %+v, but got %+v", appSecret, appSecretFromCluster)
+		t.Fatalf("Expect %+v, but got %+v", appSecret, appSecretFromCluster)
 	}
 }
 

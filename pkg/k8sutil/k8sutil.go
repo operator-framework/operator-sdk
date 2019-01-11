@@ -16,13 +16,18 @@ package k8sutil
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"strings"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 	discovery "k8s.io/client-go/discovery"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
+
+var log = logf.Log.WithName("k8sutil")
 
 // GetWatchNamespace returns the namespace the operator should be watching for changes
 func GetWatchNamespace() (string, error) {
@@ -30,6 +35,24 @@ func GetWatchNamespace() (string, error) {
 	if !found {
 		return "", fmt.Errorf("%s must be set", WatchNamespaceEnvVar)
 	}
+	return ns, nil
+}
+
+// errNoNS indicates that a namespace could not be found for the current
+// environment
+var ErrNoNamespace = fmt.Errorf("namespace not found for current environment")
+
+// GetOperatorNamespace returns the namespace the operator should be running in.
+func GetOperatorNamespace() (string, error) {
+	nsBytes, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", ErrNoNamespace
+		}
+		return "", err
+	}
+	ns := strings.TrimSpace(string(nsBytes))
+	log.V(1).Info("Found namespace", "Namespace", ns)
 	return ns, nil
 }
 
@@ -51,7 +74,7 @@ func InitOperatorService() (*v1.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	namespace, err := GetWatchNamespace()
+	namespace, err := GetOperatorNamespace()
 	if err != nil {
 		return nil, err
 	}

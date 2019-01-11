@@ -31,19 +31,19 @@ type GenerationChangedPredicate struct {
 // Update implements default UpdateEvent filter for validating generation change
 func (GenerationChangedPredicate) Update(e event.UpdateEvent) bool {
 	if e.MetaOld == nil {
-		log.Error(nil, "update event has no old metadata", "event", e)
+		log.Error(nil, "Update event has no old metadata", "event", e)
 		return false
 	}
 	if e.ObjectOld == nil {
-		log.Error(nil, "update event has no old runtime object to update", "event", e)
+		log.Error(nil, "Update event has no old runtime object to update", "event", e)
 		return false
 	}
 	if e.ObjectNew == nil {
-		log.Error(nil, "update event has no new runtime object for update", "event", e)
+		log.Error(nil, "Update event has no new runtime object for update", "event", e)
 		return false
 	}
 	if e.MetaNew == nil {
-		log.Error(nil, "update event has no new metadata", "event", e)
+		log.Error(nil, "Update event has no new metadata", "event", e)
 		return false
 	}
 	if e.MetaNew.GetGeneration() == e.MetaOld.GetGeneration() {
