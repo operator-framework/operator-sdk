@@ -26,7 +26,10 @@ func NewHelmCmd() *cobra.Command {
 	var flags *hoflags.HelmOperatorFlags
 	newCmd := &cobra.Command{
 		Use:   "helm",
-		Short: "Runs as a Helm operator",
+		Short: "Runs as a helm operator",
+		Long: `Runs as a helm operator. This is intended to be used when running
+in a Pod inside a cluster. Developers wanting to run their operator locally
+should use "up local" instead.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			helm.Run(flags)
 		},
