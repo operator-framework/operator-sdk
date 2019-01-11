@@ -46,7 +46,9 @@ func k8sFunc(cmd *cobra.Command, args []string) error {
 	}
 
 	// Only Go projects can generate k8s deepcopy code.
-	projutil.MustGoProjectCmd(cmd)
+	if err := projutil.CheckGoProjectCmd(cmd); err != nil {
+		return err
+	}
 
 	return K8sCodegen()
 }

@@ -64,14 +64,16 @@ Example:
 }
 
 func apiRun(cmd *cobra.Command, args []string) error {
-	// Only Go projects can add apis.
-	projutil.MustGoProjectCmd(cmd)
-
-	// Create and validate new resource
 	projutil.MustInProjectRoot()
+
+	// Only Go projects can add apis.
+	if err := projutil.CheckGoProjectCmd(cmd); err != nil {
+		return err
+	}
 
 	log.Infof("Generating api version %s for kind %s.", apiVersion, kind)
 
+	// Create and validate new resource.
 	r, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
 		return err

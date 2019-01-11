@@ -58,10 +58,12 @@ Example:
 }
 
 func controllerRun(cmd *cobra.Command, args []string) error {
-	// Only Go projects can add controllers.
-	projutil.MustGoProjectCmd(cmd)
-
 	projutil.MustInProjectRoot()
+
+	// Only Go projects can add controllers.
+	if err := projutil.CheckGoProjectCmd(cmd); err != nil {
+		return err
+	}
 
 	log.Infof("Generating controller version %s for kind %s.", apiVersion, kind)
 

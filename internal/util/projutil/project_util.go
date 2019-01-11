@@ -64,13 +64,14 @@ func MustInProjectRoot() {
 	}
 }
 
-func MustGoProjectCmd(cmd *cobra.Command) {
+func CheckGoProjectCmd(cmd *cobra.Command) error {
 	t := GetOperatorType()
 	switch t {
 	case OperatorTypeGo:
 	default:
-		log.Fatalf("'%s' can only be run for Go operators; %s does not exist.", cmd.CommandPath(), mainFile)
+		return fmt.Errorf("'%s' can only be run for Go operators; %s does not exist.", cmd.CommandPath(), mainFile)
 	}
+	return nil
 }
 
 func MustGetwd() string {
