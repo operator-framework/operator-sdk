@@ -25,6 +25,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+
 	"github.com/go-logr/logr"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
@@ -95,7 +97,7 @@ func (e *EventReceiver) Close() {
 	e.stopped = true
 	e.mutex.Unlock()
 	e.logger.V(1).Info("Event API stopped")
-	if err := e.server.Close(); err != nil {
+	if err := e.server.Close(); err != nil && !fileutil.IsClosedError(err) {
 		e.logger.Error(err, "Failed to close event receiver")
 	}
 	close(e.Events)

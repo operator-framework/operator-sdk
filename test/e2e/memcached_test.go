@@ -414,7 +414,7 @@ func MemcachedLocal(t *testing.T) {
 	}
 	cmd.Stderr = stderr
 	defer func() {
-		if err := stderr.Close(); err != nil {
+		if err := stderr.Close(); err != nil && !fileutil.IsClosedError(err) {
 			t.Errorf("Failed to close stderr: (%v)", err)
 		}
 	}()

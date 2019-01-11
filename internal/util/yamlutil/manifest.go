@@ -59,7 +59,7 @@ func GenerateCombinedNamespacedManifest() (*os.File, error) {
 		return nil, err
 	}
 	defer func() {
-		if err := file.Close(); err != nil {
+		if err := file.Close(); err != nil && !fileutil.IsClosedError(err) {
 			log.Errorf("Failed to close file %s: (%v)", file.Name(), err)
 		}
 	}()
@@ -103,7 +103,7 @@ func GenerateCombinedGlobalManifest() (*os.File, error) {
 		return nil, err
 	}
 	defer func() {
-		if err := file.Close(); err != nil {
+		if err := file.Close(); err != nil && !fileutil.IsClosedError(err) {
 			log.Errorf("Failed to close file %s: (%v)", file.Name(), err)
 		}
 	}()

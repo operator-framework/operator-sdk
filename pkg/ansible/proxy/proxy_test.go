@@ -21,6 +21,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+
 	kcorev1 "k8s.io/api/core/v1"
 	kmetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -56,7 +58,7 @@ func TestHandler(t *testing.T) {
 		t.Fatalf("Error getting pod from proxy: %v", err)
 	}
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
+		if err := resp.Body.Close(); err != nil && !fileutil.IsClosedError(err) {
 			t.Errorf("Failed to close response body: (%v)", err)
 		}
 	}()

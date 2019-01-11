@@ -20,6 +20,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/test"
@@ -154,7 +155,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 				return fmt.Errorf("test failed and failed to get error logs")
 			}
 			defer func() {
-				if err := readCloser.Close(); err != nil {
+				if err := readCloser.Close(); err != nil && !fileutil.IsClosedError(err) {
 					log.Printf("Failed to close pod log reader: (%v)", err)
 				}
 			}()

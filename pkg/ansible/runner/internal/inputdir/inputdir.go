@@ -21,6 +21,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -118,7 +120,7 @@ func (i *InputDir) Write() error {
 			return err
 		}
 		defer func() {
-			if err := f.Close(); err != nil {
+			if err := f.Close(); err != nil && !fileutil.IsClosedError(err) {
 				log.Error(err, "Failed to close playbook file")
 			}
 		}()
