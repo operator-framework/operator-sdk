@@ -63,7 +63,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.NewString("api", "apis"), GrouplessAPIPrefixes: sets.NewString("api")}
 			r, err := rf.NewRequestInfo(req)
 			if err != nil {
-				log.Error(err, "failed to convert request")
+				log.Error(err, "Failed to convert request")
 				break
 			}
 
@@ -93,7 +93,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			k, err := restMapper.KindFor(gvr)
 			if err != nil {
 				// break here in case resource doesn't exist in cache
-				log.Info("cache miss can not find in rest mapper", "GVR", gvr)
+				log.Info("Cache miss, can not find in rest mapper", "GVR", gvr)
 				break
 			}
 
@@ -104,7 +104,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			if err != nil {
 				// break here in case resource doesn't exist in cache but exists on APIserver
 				// This is very unlikely but provides user with expected 404
-				log.Info(fmt.Sprintf("cache miss: %v, %v", k, obj))
+				log.Info(fmt.Sprintf("Cache miss: %v, %v", k, obj))
 				break
 			}
 
@@ -112,7 +112,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			resp, err := json.Marshal(un.Object)
 			if err != nil {
 				// return will give a 500
-				log.Error(err, "failed to marshal data")
+				log.Error(err, "Failed to marshal data")
 				http.Error(w, "", http.StatusInternalServerError)
 				return
 			}
@@ -122,7 +122,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			json.Indent(&i, resp, "", "  ")
 			_, err = w.Write(i.Bytes())
 			if err != nil {
-				log.Error(err, "failed to write response")
+				log.Error(err, "Failed to write response")
 				http.Error(w, "", http.StatusInternalServerError)
 				return
 			}
@@ -140,9 +140,9 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap, restMapper meta.RESTMapper) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.Method == http.MethodPost {
-			log.Info("injecting owner reference")
+			log.Info("Injecting owner reference")
 			dump, _ := httputil.DumpRequest(req, false)
-			log.V(1).Info("dumping request", "RequestDump", string(dump))
+			log.V(1).Info("Dumping request", "RequestDump", string(dump))
 
 			user, _, ok := req.BasicAuth()
 			if !ok {
@@ -153,7 +153,7 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap, restMapper
 			}
 			authString, err := base64.StdEncoding.DecodeString(user)
 			if err != nil {
-				m := "could not base64 decode username"
+				m := "Could not base64 decode username"
 				log.Error(err, m)
 				http.Error(w, m, http.StatusBadRequest)
 				return
@@ -164,7 +164,7 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap, restMapper
 
 			body, err := ioutil.ReadAll(req.Body)
 			if err != nil {
-				m := "could not read request body"
+				m := "Could not read request body"
 				log.Error(err, m)
 				http.Error(w, m, http.StatusInternalServerError)
 				return
@@ -172,7 +172,7 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap, restMapper
 			data := &unstructured.Unstructured{}
 			err = json.Unmarshal(body, data)
 			if err != nil {
-				m := "could not deserialize request body"
+				m := "Could not deserialize request body"
 				log.Error(err, m)
 				http.Error(w, m, http.StatusBadRequest)
 				return
@@ -180,17 +180,17 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap, restMapper
 			data.SetOwnerReferences(append(data.GetOwnerReferences(), owner))
 			newBody, err := json.Marshal(data.Object)
 			if err != nil {
-				m := "could not serialize body"
+				m := "Could not serialize body"
 				log.Error(err, m)
 				http.Error(w, m, http.StatusInternalServerError)
 				return
 			}
-			log.V(1).Info("serialized body", "Body", string(newBody))
+			log.V(1).Info("Serialized body", "Body", string(newBody))
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(newBody))
 			req.ContentLength = int64(len(newBody))
 			dataMapping, err := restMapper.RESTMapping(data.GroupVersionKind().GroupKind(), data.GroupVersionKind().Version)
 			if err != nil {
-				m := fmt.Sprintf("could not get rest mapping for: %v", data.GroupVersionKind())
+				m := fmt.Sprintf("Could not get rest mapping for: %v", data.GroupVersionKind())
 				log.Error(err, m)
 				http.Error(w, m, http.StatusInternalServerError)
 				return
@@ -315,7 +315,7 @@ func addWatchToController(owner metav1.OwnerReference, cMap *ControllerMap, reso
 	u.SetGroupVersionKind(gvk)
 	// Add a watch to controller
 	if watch {
-		log.Info("watching child resource", "kind", resource.GroupVersionKind(), "enqueue_kind", u.GroupVersionKind())
+		log.Info("Watching child resource", "kind", resource.GroupVersionKind(), "enqueue_kind", u.GroupVersionKind())
 		err = c.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{OwnerType: u})
 		if err != nil {
 			return err

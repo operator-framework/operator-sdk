@@ -35,7 +35,7 @@ import (
 func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags, cMap *proxy.ControllerMap) {
 	watches, err := runner.NewFromWatches(f.WatchesFile)
 	if err != nil {
-		logf.Log.WithName("manager").Error(err, "failed to get watches")
+		logf.Log.WithName("manager").Error(err, "Failed to get watches")
 		done <- err
 		return
 	}

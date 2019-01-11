@@ -62,7 +62,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 	// in main.go, we catch and print errors, so we don't want cobra to print the error itself
 	cmd.SilenceErrors = true
 	if len(args) != 1 {
-		return fmt.Errorf("operator-sdk test cluster requires exactly 1 argument")
+		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
 	}
 
 	log.Info("Testing operator in cluster.")
@@ -115,7 +115,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 	defer func() {
 		err = kubeclient.CoreV1().Pods(tcConfig.namespace).Delete(testPod.Name, &metav1.DeleteOptions{})
 		if err != nil {
-			log.Warn("failed to delete test pod")
+			log.Warn("Failed to delete test pod")
 		}
 	}()
 	err = wait.Poll(time.Second*5, time.Second*time.Duration(tcConfig.pendingTimeout), func() (bool, error) {

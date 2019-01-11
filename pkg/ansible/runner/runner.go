@@ -86,13 +86,13 @@ func (w *watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 func NewFromWatches(path string) (map[schema.GroupVersionKind]Runner, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Error(err, "failed to get config file")
+		log.Error(err, "Failed to get config file")
 		return nil, err
 	}
 	watches := []watch{}
 	err = yaml.Unmarshal(b, &watches)
 	if err != nil {
-		log.Error(err, "failed to unmarshal config")
+		log.Error(err, "Failed to unmarshal config")
 		return nil, err
 	}
 
@@ -259,14 +259,14 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 		if err != nil {
 			logger.Error(err, string(output))
 		} else {
-			logger.Info("ansible-runner exited successfully")
+			logger.Info("Ansible-runner exited successfully")
 		}
 
 		receiver.Close()
 		err = <-errChan
 		// http.Server returns this in the case of being closed cleanly
 		if err != nil && err != http.ErrServerClosed {
-			logger.Error(err, "error from event api")
+			logger.Error(err, "Error from event API")
 		}
 	}()
 	return &runResult{
@@ -357,7 +357,7 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 	s := u.Object["spec"]
 	spec, ok := s.(map[string]interface{})
 	if !ok {
-		log.Info("spec was not found for CR", "GroupVersionKind", u.GroupVersionKind(), "Namespace", u.GetNamespace(), "Name", u.GetName())
+		log.Info("Spec was not found for CR", "GroupVersionKind", u.GroupVersionKind(), "Namespace", u.GetNamespace(), "Name", u.GetName())
 		spec = map[string]interface{}{}
 	}
 	parameters := paramconv.MapToSnake(spec)

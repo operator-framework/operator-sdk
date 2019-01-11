@@ -70,7 +70,7 @@ func (ctx *TestCtx) Cleanup() {
 	for i := len(ctx.cleanupFns) - 1; i >= 0; i-- {
 		err := ctx.cleanupFns[i]()
 		if err != nil {
-			ctx.t.Errorf("a cleanup function failed with error: (%v)\n", err)
+			ctx.t.Errorf("A cleanup function failed with error: (%v)\n", err)
 		}
 	}
 }
@@ -83,11 +83,11 @@ func (ctx *TestCtx) CleanupNoT() {
 		err := ctx.cleanupFns[i]()
 		if err != nil {
 			failed = true
-			log.Errorf("a cleanup function failed with error: (%v)", err)
+			log.Errorf("A cleanup function failed with error: (%v)", err)
 		}
 	}
 	if failed {
-		log.Fatal("a cleanup function failed")
+		log.Fatal("A cleanup function failed")
 	}
 }
 
