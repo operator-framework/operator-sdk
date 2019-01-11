@@ -58,7 +58,11 @@ func GenerateCombinedNamespacedManifest() (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil && !fileutil.IsClosedError(err) {
+			log.Errorf("Failed to close file %s: (%v)", file.Name(), err)
+		}
+	}()
 
 	sa, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.ServiceAccountYamlFile))
 	if err != nil {
@@ -98,7 +102,11 @@ func GenerateCombinedGlobalManifest() (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil && !fileutil.IsClosedError(err) {
+			log.Errorf("Failed to close file %s: (%v)", file.Name(), err)
+		}
+	}()
 
 	files, err := ioutil.ReadDir(scaffold.CrdsDir)
 	if err != nil {

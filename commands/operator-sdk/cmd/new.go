@@ -225,7 +225,9 @@ func doAnsibleScaffold() {
 	cmd := exec.Command(filepath.Join(galaxyInit.AbsProjectPath, galaxyInit.Path))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Run()
+	if err := cmd.Run(); err != nil {
+		log.Fatalf("Galaxy Init command failed: (%v)", err)
+	}
 
 	// Delete Galxy INIT
 	// Mac OS tmp directory is /var/folders/_c/..... this means we have to make sure that we get the top level directory to remove

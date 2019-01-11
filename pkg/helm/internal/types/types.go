@@ -81,7 +81,9 @@ func (s *HelmAppStatus) ToMap() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	json.Unmarshal(jsonObj, &out)
+	if err := json.Unmarshal(jsonObj, &out); err != nil {
+		return nil, err
+	}
 	return out, nil
 }
 
