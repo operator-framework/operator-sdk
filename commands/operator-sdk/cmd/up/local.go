@@ -56,7 +56,7 @@ func NewLocalCmd() *cobra.Command {
 by building the operator binary with the ability to access a
 kubernetes cluster using a kubeconfig file.
 `,
-		Run: upLocalFunc,
+		RunE: upLocalFunc,
 	}
 
 	upLocalCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "The file path to kubernetes configuration file; defaults to $HOME/.kube/config")
@@ -85,27 +85,28 @@ const (
 	defaultConfigPath = ".kube/config"
 )
 
-func upLocalFunc(cmd *cobra.Command, args []string) {
+func upLocalFunc(cmd *cobra.Command, args []string) error {
 	mustKubeConfig()
 
 	log.Info("Running the operator locally.")
 
-	switch projutil.GetOperatorType() {
+	t := projutil.GetOperatorType()
+	switch t {
 	case projutil.OperatorTypeGo:
 		projutil.MustInProjectRoot()
-		upLocal()
+		return upLocal()
 	case projutil.OperatorTypeAnsible:
-		upLocalAnsible()
+		return upLocalAnsible()
 	case projutil.OperatorTypeHelm:
-		upLocalHelm()
-	default:
-		log.Fatal("Failed to determine operator type")
+		return upLocalHelm()
 	}
+	return fmt.Errorf("unknown operator type '%v'", t)
 }
 
-// mustKubeConfig checks if the kubeconfig file exists.
+// mustKubeConfig exits if the kubeconfig file does not exist.
 func mustKubeConfig() {
-	// if kubeConfig is not specified, search for the default kubeconfig file under the $HOME/.kube/config.
+	// If kubeConfig is not specified, search for the default kubeconfig file
+	// under the $HOME/.kube/config.
 	if len(kubeConfig) == 0 {
 		usr, err := user.Current()
 		if err != nil {
@@ -120,7 +121,7 @@ func mustKubeConfig() {
 	}
 }
 
-func upLocal() {
+func upLocal() error {
 	args := []string{"run"}
 	if ldFlags != "" {
 		args = append(args, []string{"-ldflags", ldFlags}...)
@@ -141,35 +142,34 @@ func upLocal() {
 		}
 		os.Exit(0)
 	}()
-	dc.Stdout = os.Stdout
-	dc.Stderr = os.Stderr
 	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, kubeConfig))
 	dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, namespace))
-	err := dc.Run()
-	if err != nil {
-		log.Fatalf("Failed to run operator locally: (%v)", err)
+	if err := projutil.ExecCmd(dc); err != nil {
+		return fmt.Errorf("failed to run operator locally: (%v)", err)
 	}
+	return nil
 }
 
-func upLocalAnsible() {
+func upLocalAnsible() error {
 	// Set the kubeconfig that the manager will be able to grab
 	if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
-		log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+		return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
 	}
 	// Set the kubeconfig that the manager will be able to grab
 	if namespace != "" {
 		if err := os.Setenv(k8sutil.WatchNamespaceEnvVar, namespace); err != nil {
-			log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
+			return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
 		}
 	}
 
 	ansible.Run(ansibleOperatorFlags)
+	return nil
 }
 
-func upLocalHelm() {
+func upLocalHelm() error {
 	// Set the kubeconfig that the manager will be able to grab
 	if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
-		log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+		return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
 	}
 
 	logf.SetLogger(logf.ZapLogger(false))
@@ -178,24 +178,24 @@ func upLocalHelm() {
 
 	cfg, err := config.GetConfig()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// Create Tiller's storage backend and kubernetes client
 	storageBackend := storage.Init(driver.NewMemory())
 	tillerKubeClient, err := client.NewFromManager(mgr)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	factories, err := release.NewManagerFactoriesFromFile(storageBackend, tillerKubeClient, helmOperatorFlags.WatchesFile)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	for gvk, factory := range factories {
@@ -207,14 +207,12 @@ func upLocalHelm() {
 			ReconcilePeriod: helmOperatorFlags.ReconcilePeriod,
 		})
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 	}
 
 	// Start the Cmd
-	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
-		log.Fatal(err)
-	}
+	return mgr.Start(signals.SetupSignalHandler())
 }
 
 func printVersion() {

@@ -15,6 +15,8 @@
 package add
 
 import (
+	"fmt"
+
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
@@ -44,7 +46,7 @@ Example:
 	└── controller.go
 
 `,
-		Run: controllerRun,
+		RunE: controllerRun,
 	}
 
 	apiCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes APIVersion that has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
@@ -55,7 +57,7 @@ Example:
 	return apiCmd
 }
 
-func controllerRun(cmd *cobra.Command, args []string) {
+func controllerRun(cmd *cobra.Command, args []string) error {
 	// Only Go projects can add controllers.
 	projutil.MustGoProjectCmd(cmd)
 
@@ -66,7 +68,7 @@ func controllerRun(cmd *cobra.Command, args []string) {
 	// Create and validate new resource
 	r, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	cfg := &input.Config{
@@ -80,8 +82,9 @@ func controllerRun(cmd *cobra.Command, args []string) {
 		&scaffold.AddController{Resource: r},
 	)
 	if err != nil {
-		log.Fatalf("Add scaffold failed: (%v)", err)
+		return fmt.Errorf("controller scaffold failed: (%v)", err)
 	}
 
 	log.Info("Controller generation complete.")
+	return nil
 }

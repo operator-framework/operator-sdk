@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -33,13 +34,13 @@ func NewMigrateCmd() *cobra.Command {
 		Use:   "migrate",
 		Short: "Adds source code to an operator",
 		Long:  `operator-sdk migrate adds a main.go source file and any associated source files for an operator that is not of the "go" type.`,
-		Run:   migrateRun,
+		RunE:  migrateRun,
 	}
 }
 
 // migrateRun determines the current operator type and runs the corresponding
 // migrate function.
-func migrateRun(cmd *cobra.Command, args []string) {
+func migrateRun(cmd *cobra.Command, args []string) error {
 	projutil.MustInProjectRoot()
 
 	_ = projutil.CheckAndGetProjectGoPkg()
@@ -47,14 +48,13 @@ func migrateRun(cmd *cobra.Command, args []string) {
 	opType := projutil.GetOperatorType()
 	switch opType {
 	case projutil.OperatorTypeAnsible:
-		migrateAnsible()
-	default:
-		log.Fatalf("Operator of type %s cannot be migrated.", opType)
+		return migrateAnsible()
 	}
+	return fmt.Errorf("operator of type %s cannot be migrated", opType)
 }
 
 // migrateAnsible runs the migration process for an ansible-based operator
-func migrateAnsible() {
+func migrateAnsible() error {
 	wd := projutil.MustGetwd()
 
 	cfg := &input.Config{
@@ -73,14 +73,14 @@ func migrateAnsible() {
 	case os.IsNotExist(err):
 		log.Info("No playbook was found, so not including it in the new Dockerfile")
 	default:
-		log.Fatalf("Error trying to stat playbook.yaml: (%v)", err)
+		return fmt.Errorf("error trying to stat playbook.yaml: (%v)", err)
 	}
 
 	dockerfilePath := filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
 	newDockerfilePath := dockerfilePath + ".sdkold"
 	err = os.Rename(dockerfilePath, newDockerfilePath)
 	if err != nil {
-		log.Fatalf("Failed to rename Dockerfile: (%v)", err)
+		return fmt.Errorf("failed to rename Dockerfile: (%v)", err)
 	}
 	log.Infof("Renamed Dockerfile to %s and replaced with newer version. Compare the new Dockerfile to your old one and manually migrate any customizations", newDockerfilePath)
 
@@ -93,6 +93,7 @@ func migrateAnsible() {
 		&ansible.UserSetup{},
 	)
 	if err != nil {
-		log.Fatalf("Migrate scaffold failed: (%v)", err)
+		return fmt.Errorf("migrate scaffold failed: (%v)", err)
 	}
+	return nil
 }
