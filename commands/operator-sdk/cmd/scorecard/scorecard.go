@@ -113,7 +113,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		defer func() {
 			err := os.Remove(SCConf.NamespacedManifest)
 			if err != nil {
-				log.Fatalf("could not delete temporary namespace manifest file: (%v)", err)
+				log.Fatalf("Could not delete temporary namespace manifest file: (%v)", err)
 			}
 		}()
 	}
@@ -126,7 +126,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		defer func() {
 			err := os.Remove(SCConf.GlobalManifest)
 			if err != nil {
-				log.Fatalf("could not delete global manifest file: (%v)", err)
+				log.Fatalf("Could not delete global manifest file: (%v)", err)
 			}
 		}()
 	}

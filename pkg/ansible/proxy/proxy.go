@@ -231,7 +231,7 @@ func RequestLogHandler(h http.Handler) http.Handler {
 		// read body
 		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
-			log.Error(err, "could not read request body")
+			log.Error(err, "Could not read request body")
 		}
 		// fix body
 		req.Body = ioutil.NopCloser(bytes.NewBuffer(body))
