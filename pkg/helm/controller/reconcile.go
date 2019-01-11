@@ -42,7 +42,7 @@ type HelmOperatorReconciler struct {
 	GVK             schema.GroupVersionKind
 	ManagerFactory  release.ManagerFactory
 	ReconcilePeriod time.Duration
-	ReleaseHooks    []ReleaseHookFunc
+	releaseHook     ReleaseHookFunc
 }
 
 const (
@@ -175,11 +175,9 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		}
 		status.RemoveCondition(types.ConditionReleaseFailed)
 
-		for _, f := range r.ReleaseHooks {
-			if err := f(installedRelease); err != nil {
-				log.Error(err, "Failed to run release hook")
-				return reconcile.Result{}, err
-			}
+		if err := r.releaseHook(installedRelease); err != nil {
+			log.Error(err, "Failed to run release hook")
+			return reconcile.Result{}, err
 		}
 
 		log.Info("Installed release")
@@ -214,11 +212,9 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		}
 		status.RemoveCondition(types.ConditionReleaseFailed)
 
-		for _, f := range r.ReleaseHooks {
-			if err := f(updatedRelease); err != nil {
-				log.Error(err, "Failed to run release hook")
-				return reconcile.Result{}, err
-			}
+		if err := r.releaseHook(updatedRelease); err != nil {
+			log.Error(err, "Failed to run release hook")
+			return reconcile.Result{}, err
 		}
 
 		log.Info("Updated release")
@@ -251,11 +247,9 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 	}
 	status.RemoveCondition(types.ConditionIrreconcilable)
 
-	for _, f := range r.ReleaseHooks {
-		if err := f(expectedRelease); err != nil {
-			log.Error(err, "Failed to run release hook")
-			return reconcile.Result{}, err
-		}
+	if err := r.releaseHook(expectedRelease); err != nil {
+		log.Error(err, "Failed to run release hook")
+		return reconcile.Result{}, err
 	}
 
 	log.Info("Reconciled release")

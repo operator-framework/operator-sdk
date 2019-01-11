@@ -186,5 +186,5 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 			log.Info("Watching dependent resource", "ownerApiVersion", r.GVK.GroupVersion(), "ownerKind", r.GVK.Kind, "apiVersion", gvk.GroupVersion(), "kind", gvk.Kind)
 		}
 	}
-	r.ReleaseHooks = append(r.ReleaseHooks, releaseHook)
+	r.releaseHook = releaseHook
 }
