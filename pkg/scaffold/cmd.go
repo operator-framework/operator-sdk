@@ -75,7 +75,7 @@ func main() {
 	// Add flags registered by imported packages (e.g. glog and
 	// controller-runtime)
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	
+
 	pflag.Parse()
 
 	// Use a zap logr.Logger implementation. If none of the zap
