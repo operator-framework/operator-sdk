@@ -15,6 +15,7 @@
 package ansible
 
 import (
+	"fmt"
 	"os"
 	"runtime"
 
@@ -24,36 +25,37 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
-	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
+var log = logf.Log.WithName("ansible")
+
 func printVersion() {
-	log.Infof("Go Version: %s", runtime.Version())
-	log.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	log.Infof("Version of operator-sdk: %v", sdkVersion.Version)
+	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
+	log.Info(fmt.Sprintf("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH))
+	log.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
 }
 
 // Run will start the ansible operator and proxy, blocking until one of them
 // returns.
-func Run(flags *aoflags.AnsibleOperatorFlags) {
+func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	logf.SetLogger(logf.ZapLogger(false))
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
 	if found {
-		log.Infof("Watching %v namespace.", namespace)
+		log.Info("Watching namespace", "Namespace", namespace)
 	} else {
-		log.Infof("%v environment variable not set. This operator is watching all namespaces.",
-			k8sutil.WatchNamespaceEnvVar)
+		log.Info(fmt.Sprintf("%v environment variable not set. This operator is watching all namespaces.",
+			k8sutil.WatchNamespaceEnvVar))
 	}
 
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{
 		Namespace: namespace,
 	})
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	printVersion()
@@ -70,7 +72,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) {
 		ControllerMap: cMap,
 	})
 	if err != nil {
-		log.Fatalf("Error starting proxy: (%v)", err)
+		return fmt.Errorf("error starting proxy: (%v)", err)
 	}
 
 	// start the operator
@@ -78,8 +80,6 @@ func Run(flags *aoflags.AnsibleOperatorFlags) {
 
 	// wait for either to finish
 	err = <-done
-	if err != nil {
-		log.Fatal(err)
-	}
 	log.Info("Exiting")
+	return err
 }

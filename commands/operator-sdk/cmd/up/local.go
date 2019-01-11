@@ -162,8 +162,7 @@ func upLocalAnsible() error {
 		}
 	}
 
-	ansible.Run(ansibleOperatorFlags)
-	return nil
+	return ansible.Run(ansibleOperatorFlags)
 }
 
 func upLocalHelm() error {

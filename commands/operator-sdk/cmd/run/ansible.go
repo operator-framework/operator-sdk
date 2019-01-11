@@ -28,8 +28,8 @@ func NewAnsibleCmd() *cobra.Command {
 	newCmd := &cobra.Command{
 		Use:   "ansible",
 		Short: "Runs as an ansible operator",
-		Run: func(cmd *cobra.Command, args []string) {
-			ansible.Run(flags)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return ansible.Run(flags)
 		},
 	}
 	flags = aoflags.AddTo(newCmd.Flags())
