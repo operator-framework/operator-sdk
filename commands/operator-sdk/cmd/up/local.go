@@ -201,10 +201,11 @@ func upLocalHelm() {
 	for gvk, factory := range factories {
 		// Register the controller with the factory.
 		err := controller.Add(mgr, controller.WatchOptions{
-			Namespace:       namespace,
-			GVK:             gvk,
-			ManagerFactory:  factory,
-			ReconcilePeriod: helmOperatorFlags.ReconcilePeriod,
+			Namespace:               namespace,
+			GVK:                     gvk,
+			ManagerFactory:          factory,
+			ReconcilePeriod:         helmOperatorFlags.ReconcilePeriod,
+			WatchDependentResources: true,
 		})
 		if err != nil {
 			log.Fatal(err)
