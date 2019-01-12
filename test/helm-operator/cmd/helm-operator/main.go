@@ -15,17 +15,17 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"runtime"
-	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/helm/client"
 	"github.com/operator-framework/operator-sdk/pkg/helm/controller"
+	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+	"github.com/spf13/pflag"
 
 	"k8s.io/helm/pkg/storage"
 	"k8s.io/helm/pkg/storage/driver"
@@ -40,11 +40,12 @@ var log = logf.Log.WithName("cmd")
 func printVersion() {
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
 	log.Info(fmt.Sprintf("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH))
-	log.Info(fmt.Sprintf("operator-sdk Version: %v", sdkVersion.Version))
+	log.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
 }
 
 func main() {
-	flag.Parse()
+	hflags := hoflags.AddTo(pflag.CommandLine)
+	pflag.Parse()
 
 	logf.SetLogger(logf.ZapLogger(false))
 
@@ -52,7 +53,7 @@ func main() {
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
-		log.Error(err, "failed to get watch namespace")
+		log.Error(err, "Failed to get watch namespace")
 		os.Exit(1)
 	}
 
@@ -78,7 +79,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	factories, err := release.NewManagerFactoriesFromEnv(storageBackend, tillerKubeClient)
+	factories, err := release.NewManagerFactoriesFromFile(storageBackend, tillerKubeClient, hflags.WatchesFile)
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
@@ -87,10 +88,10 @@ func main() {
 	for gvk, factory := range factories {
 		// Register the controller with the factory.
 		err := controller.Add(mgr, controller.WatchOptions{
-			Namespace:      namespace,
-			GVK:            gvk,
-			ManagerFactory: factory,
-			ResyncPeriod:   5 * time.Second,
+			Namespace:       namespace,
+			GVK:             gvk,
+			ManagerFactory:  factory,
+			ReconcilePeriod: hflags.ReconcilePeriod,
 		})
 		if err != nil {
 			log.Error(err, "")
@@ -102,7 +103,7 @@ func main() {
 
 	// Start the Cmd
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
-		log.Error(err, "manager exited non-zero")
+		log.Error(err, "Manager exited non-zero")
 		os.Exit(1)
 	}
 }

@@ -41,7 +41,7 @@ func (i *InputDir) makeDirs() error {
 		fullPath := filepath.Join(i.Path, path)
 		err := os.MkdirAll(fullPath, os.ModePerm)
 		if err != nil {
-			log.Error(err, "unable to create directory", "Path", fullPath)
+			log.Error(err, "Unable to create directory", "Path", fullPath)
 			return err
 		}
 	}
@@ -53,7 +53,7 @@ func (i *InputDir) addFile(path string, content []byte) error {
 	fullPath := filepath.Join(i.Path, path)
 	err := ioutil.WriteFile(fullPath, content, 0644)
 	if err != nil {
-		log.Error(err, "unable to write file", "Path", fullPath)
+		log.Error(err, "Unable to write file", "Path", fullPath)
 	}
 	return err
 }
@@ -114,7 +114,7 @@ func (i *InputDir) Write() error {
 	if i.PlaybookPath != "" {
 		f, err := os.Open(i.PlaybookPath)
 		if err != nil {
-			log.Error(err, "failed to open playbook file", "Path", i.PlaybookPath)
+			log.Error(err, "Failed to open playbook file", "Path", i.PlaybookPath)
 			return err
 		}
 		defer f.Close()

@@ -49,12 +49,12 @@ func TestCRDGoProject(t *testing.T) {
 	defer func() { os.Chdir(absPath) }()
 	err = s.Execute(cfg, &CRD{Resource: r, IsOperatorGo: true})
 	if err != nil {
-		t.Fatalf("failed to execute the scaffold: (%v)", err)
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
 	if crdGoExp != buf.String() {
 		diffs := diffutil.Diff(crdGoExp, buf.String())
-		t.Fatalf("expected vs actual differs.\n%v", diffs)
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
 }
 
@@ -110,12 +110,12 @@ func TestCRDNonGoProject(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err = s.Execute(appConfig, &CRD{Resource: r})
 	if err != nil {
-		t.Fatalf("failed to execute the scaffold: (%v)", err)
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
 	if crdNonGoExp != buf.String() {
 		diffs := diffutil.Diff(crdNonGoExp, buf.String())
-		t.Fatalf("expected vs actual differs.\n%v", diffs)
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
 }
 

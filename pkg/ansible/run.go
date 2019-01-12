@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package ansible
 
 import (
 	"os"
@@ -25,7 +25,6 @@ import (
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/pflag"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -34,13 +33,12 @@ import (
 func printVersion() {
 	log.Infof("Go Version: %s", runtime.Version())
 	log.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	log.Infof("operator-sdk Version: %v", sdkVersion.Version)
+	log.Infof("Version of operator-sdk: %v", sdkVersion.Version)
 }
 
-func main() {
-	aflags := aoflags.AddTo(pflag.CommandLine)
-	pflag.Parse()
-
+// Run will start the ansible operator and proxy, blocking until one of them
+// returns.
+func Run(flags *aoflags.AnsibleOperatorFlags) {
 	logf.SetLogger(logf.ZapLogger(false))
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
@@ -60,26 +58,28 @@ func main() {
 
 	printVersion()
 	done := make(chan error)
+	cMap := proxy.NewControllerMap()
 
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{
-		Address:    "localhost",
-		Port:       8888,
-		KubeConfig: mgr.GetConfig(),
-		Cache:      mgr.GetCache(),
-		RESTMapper: mgr.GetRESTMapper(),
+		Address:       "localhost",
+		Port:          8888,
+		KubeConfig:    mgr.GetConfig(),
+		Cache:         mgr.GetCache(),
+		RESTMapper:    mgr.GetRESTMapper(),
+		ControllerMap: cMap,
 	})
 	if err != nil {
-		log.Fatalf("error starting proxy: (%v)", err)
+		log.Fatalf("Error starting proxy: (%v)", err)
 	}
 
 	// start the operator
-	go operator.Run(done, mgr, aflags)
+	go operator.Run(done, mgr, flags, cMap)
 
 	// wait for either to finish
 	err = <-done
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Info("Exiting.")
+	log.Info("Exiting")
 }

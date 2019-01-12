@@ -45,7 +45,7 @@ func TestMemcached(t *testing.T) {
 	}
 	err := framework.AddToFrameworkScheme(apis.AddToScheme, memcachedList)
 	if err != nil {
-		t.Fatalf("failed to add custom resource scheme to framework: %v", err)
+		t.Fatalf("Failed to add custom resource scheme to framework: %v", err)
 	}
 	// run subtests
 	t.Run("memcached-group", func(t *testing.T) {
@@ -104,7 +104,7 @@ func MemcachedCluster(t *testing.T) {
 	defer ctx.Cleanup()
 	err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
-		t.Fatalf("failed to initialize cluster resources: %v", err)
+		t.Fatalf("Failed to initialize cluster resources: %v", err)
 	}
 	t.Log("Initialized cluster resources")
 	namespace, err := ctx.GetNamespace()

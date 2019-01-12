@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"strings"
+	"sync"
 
 	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -38,7 +39,17 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
+
+// ControllerMap - map of GVK to controller
+type ControllerMap struct {
+	sync.RWMutex
+	internal map[schema.GroupVersionKind]controller.Controller
+	watch    map[schema.GroupVersionKind]bool
+}
 
 // CacheResponseHandler will handle proxied requests and check if the requested
 // resource exists in our cache. If it does then there is no need to bombard
@@ -52,7 +63,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.NewString("api", "apis"), GrouplessAPIPrefixes: sets.NewString("api")}
 			r, err := rf.NewRequestInfo(req)
 			if err != nil {
-				log.Error(err, "failed to convert request")
+				log.Error(err, "Failed to convert request")
 				break
 			}
 
@@ -82,7 +93,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			k, err := restMapper.KindFor(gvr)
 			if err != nil {
 				// break here in case resource doesn't exist in cache
-				log.Info("cache miss", "GVR", gvr)
+				log.Info("Cache miss, can not find in rest mapper", "GVR", gvr)
 				break
 			}
 
@@ -93,7 +104,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			if err != nil {
 				// break here in case resource doesn't exist in cache but exists on APIserver
 				// This is very unlikely but provides user with expected 404
-				log.Info(fmt.Sprintf("cache miss: %v, %v", k, obj))
+				log.Info(fmt.Sprintf("Cache miss: %v, %v", k, obj))
 				break
 			}
 
@@ -101,7 +112,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			resp, err := json.Marshal(un.Object)
 			if err != nil {
 				// return will give a 500
-				log.Error(err, "failed to marshal data")
+				log.Error(err, "Failed to marshal data")
 				http.Error(w, "", http.StatusInternalServerError)
 				return
 			}
@@ -111,7 +122,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			json.Indent(&i, resp, "", "  ")
 			_, err = w.Write(i.Bytes())
 			if err != nil {
-				log.Error(err, "failed to write response")
+				log.Error(err, "Failed to write response")
 				http.Error(w, "", http.StatusInternalServerError)
 				return
 			}
@@ -126,12 +137,12 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 // InjectOwnerReferenceHandler will handle proxied requests and inject the
 // owner refernece found in the authorization header. The Authorization is
 // then deleted so that the proxy can re-set with the correct authorization.
-func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
+func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap, restMapper meta.RESTMapper) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.Method == http.MethodPost {
-			log.Info("injecting owner reference")
+			log.Info("Injecting owner reference")
 			dump, _ := httputil.DumpRequest(req, false)
-			log.V(1).Info("dumping request", "RequestDump", string(dump))
+			log.V(1).Info("Dumping request", "RequestDump", string(dump))
 
 			user, _, ok := req.BasicAuth()
 			if !ok {
@@ -142,19 +153,18 @@ func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
 			}
 			authString, err := base64.StdEncoding.DecodeString(user)
 			if err != nil {
-				m := "could not base64 decode username"
+				m := "Could not base64 decode username"
 				log.Error(err, m)
 				http.Error(w, m, http.StatusBadRequest)
 				return
 			}
 			owner := metav1.OwnerReference{}
 			json.Unmarshal(authString, &owner)
-
-			log.V(1).Info(fmt.Sprintf("%#+v", owner))
+			log.Info(fmt.Sprintf("Owner: %#v", owner))
 
 			body, err := ioutil.ReadAll(req.Body)
 			if err != nil {
-				m := "could not read request body"
+				m := "Could not read request body"
 				log.Error(err, m)
 				http.Error(w, m, http.StatusInternalServerError)
 				return
@@ -162,7 +172,7 @@ func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
 			data := &unstructured.Unstructured{}
 			err = json.Unmarshal(body, data)
 			if err != nil {
-				m := "could not deserialize request body"
+				m := "Could not deserialize request body"
 				log.Error(err, m)
 				http.Error(w, m, http.StatusBadRequest)
 				return
@@ -170,14 +180,45 @@ func InjectOwnerReferenceHandler(h http.Handler) http.Handler {
 			data.SetOwnerReferences(append(data.GetOwnerReferences(), owner))
 			newBody, err := json.Marshal(data.Object)
 			if err != nil {
-				m := "could not serialize body"
+				m := "Could not serialize body"
 				log.Error(err, m)
 				http.Error(w, m, http.StatusInternalServerError)
 				return
 			}
-			log.V(1).Info("serialized body", "Body", string(newBody))
+			log.V(1).Info("Serialized body", "Body", string(newBody))
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(newBody))
 			req.ContentLength = int64(len(newBody))
+			dataMapping, err := restMapper.RESTMapping(data.GroupVersionKind().GroupKind(), data.GroupVersionKind().Version)
+			if err != nil {
+				m := fmt.Sprintf("Could not get rest mapping for: %v", data.GroupVersionKind())
+				log.Error(err, m)
+				http.Error(w, m, http.StatusInternalServerError)
+				return
+			}
+			// We need to determine whether or not the owner is a cluster-scoped
+			// resource because enqueue based on an owner reference does not work if
+			// a namespaced resource owns a cluster-scoped resource
+			ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
+			ownerMapping, err := restMapper.RESTMapping(schema.GroupKind{Kind: owner.Kind, Group: ownerGV.Group}, ownerGV.Version)
+			if err != nil {
+				m := fmt.Sprintf("could not get rest mapping for: %v", owner)
+				log.Error(err, m)
+				http.Error(w, m, http.StatusInternalServerError)
+				return
+			}
+
+			dataClusterScoped := dataMapping.Scope.Name() != meta.RESTScopeNameRoot
+			ownerClusterScoped := ownerMapping.Scope.Name() != meta.RESTScopeNameRoot
+			if !ownerClusterScoped || dataClusterScoped {
+				// add watch for resource
+				err = addWatchToController(owner, cMap, data)
+				if err != nil {
+					m := "could not add watch to controller"
+					log.Error(err, m)
+					http.Error(w, m, http.StatusInternalServerError)
+					return
+				}
+			}
 		}
 		// Removing the authorization so that the proxy can set the correct authorization.
 		req.Header.Del("Authorization")
@@ -200,6 +241,7 @@ type Options struct {
 	KubeConfig       *rest.Config
 	Cache            cache.Cache
 	RESTMapper       meta.RESTMapper
+	ControllerMap    *ControllerMap
 }
 
 // Run will start a proxy server in a go routine that returns on the error
@@ -212,6 +254,9 @@ func Run(done chan error, o Options) error {
 	}
 	if o.Handler != nil {
 		server.Handler = o.Handler(server.Handler)
+	}
+	if o.ControllerMap == nil {
+		return fmt.Errorf("failed to get controller map from options")
 	}
 
 	if o.Cache == nil {
@@ -236,7 +281,7 @@ func Run(done chan error, o Options) error {
 	}
 
 	if !o.NoOwnerInjection {
-		server.Handler = InjectOwnerReferenceHandler(server.Handler)
+		server.Handler = InjectOwnerReferenceHandler(server.Handler, o.ControllerMap, o.RESTMapper)
 	}
 	// Always add cache handler
 	server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper)
@@ -250,4 +295,72 @@ func Run(done chan error, o Options) error {
 		done <- server.ServeOnListener(l)
 	}()
 	return nil
+}
+
+func addWatchToController(owner metav1.OwnerReference, cMap *ControllerMap, resource *unstructured.Unstructured) error {
+	gv, err := schema.ParseGroupVersion(owner.APIVersion)
+	if err != nil {
+		return err
+	}
+	gvk := schema.GroupVersionKind{
+		Group:   gv.Group,
+		Version: gv.Version,
+		Kind:    owner.Kind,
+	}
+	c, watch, ok := cMap.Get(gvk)
+	if !ok {
+		return errors.New("failed to find controller in map")
+	}
+	u := &unstructured.Unstructured{}
+	u.SetGroupVersionKind(gvk)
+	// Add a watch to controller
+	if watch {
+		log.Info("Watching child resource", "kind", resource.GroupVersionKind(), "enqueue_kind", u.GroupVersionKind())
+		err = c.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{OwnerType: u})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// NewControllerMap returns a new object that contains a mapping between GVK
+// and controller
+func NewControllerMap() *ControllerMap {
+	return &ControllerMap{
+		internal: make(map[schema.GroupVersionKind]controller.Controller),
+		watch:    make(map[schema.GroupVersionKind]bool),
+	}
+}
+
+// Get - Returns a controller given a GVK as the key. `watch` in the return
+// specifies whether or not the operator will watch dependent resources for
+// this controller. `ok` returns whether the query was successful. `controller`
+// is the associated controller-runtime controller object.
+func (cm *ControllerMap) Get(key schema.GroupVersionKind) (controller controller.Controller, watch, ok bool) {
+	cm.RLock()
+	defer cm.RUnlock()
+	result, ok := cm.internal[key]
+	if !ok {
+		return result, false, ok
+	}
+	watch, ok = cm.watch[key]
+	return result, watch, ok
+}
+
+// Delete - Deletes associated GVK to controller mapping from the ControllerMap
+func (cm *ControllerMap) Delete(key schema.GroupVersionKind) {
+	cm.Lock()
+	defer cm.Unlock()
+	delete(cm.internal, key)
+}
+
+// Store - Adds a new GVK to controller mapping. Also creates a mapping between
+// GVK and a boolean `watch` that specifies whether this controller is watching
+// dependent resources.
+func (cm *ControllerMap) Store(key schema.GroupVersionKind, value controller.Controller, watch bool) {
+	cm.Lock()
+	defer cm.Unlock()
+	cm.internal[key] = value
+	cm.watch[key] = watch
 }

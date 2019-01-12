@@ -1470,6 +1470,7 @@
     "github.com/go-logr/logr",
     "github.com/markbates/inflect",
     "github.com/martinlindhe/base36",
+    "github.com/mattbaird/jsonpatch",
     "github.com/pborman/uuid",
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/sergi/go-diff/diffmatchpatch",

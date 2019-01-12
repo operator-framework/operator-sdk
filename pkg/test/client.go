@@ -58,7 +58,7 @@ func (f *frameworkClient) Create(gCtx goctx.Context, obj runtime.Object, cleanup
 	}
 	cleanupOptions.TestContext.AddCleanupFn(func() error {
 		err = f.Client.Delete(gCtx, objCopy)
-		if err != nil {
+		if err != nil && !apierrors.IsNotFound(err) {
 			return err
 		}
 		if cleanupOptions.Timeout == 0 && cleanupOptions.RetryInterval != 0 {

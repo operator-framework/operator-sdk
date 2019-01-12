@@ -48,7 +48,7 @@ all pkg/apis/<group>/<version> directories.
 
 func openAPIFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 0 {
-		log.Fatal("openapi command doesn't accept any arguments")
+		log.Fatalf("Command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 
 	OpenAPIGen()
@@ -69,7 +69,7 @@ func OpenAPIGen() {
 
 	gvMap, err := genutil.ParseGroupVersions()
 	if err != nil {
-		log.Fatalf("failed to parse group versions: (%v)", err)
+		log.Fatalf("Failed to parse group versions: (%v)", err)
 	}
 	gvb := &strings.Builder{}
 	for g, vs := range gvMap {
@@ -130,7 +130,7 @@ func openAPIGen(binDir, headerFile string, fqApis []string) {
 		}
 		err := projutil.ExecCmd(exec.Command(cgPath, args...))
 		if err != nil {
-			log.Fatalf("failed to perform code-generation: %v", err)
+			log.Fatalf("Failed to perform code-generation: %v", err)
 		}
 	}
 }

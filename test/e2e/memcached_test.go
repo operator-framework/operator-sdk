@@ -87,7 +87,7 @@ func TestMemcached(t *testing.T) {
 		// https://github.com/golang/dep/pull/1658
 		solveFailRe := regexp.MustCompile(`(?m)^[ \t]*Solving failure:.+github\.com/operator-framework/operator-sdk.+:$`)
 		if !solveFailRe.Match(cmdOut) {
-			t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 		}
 	}
 	ctx.AddCleanupFn(func() error { return os.RemoveAll(absProjectPath) })
@@ -120,17 +120,17 @@ func TestMemcached(t *testing.T) {
 			gopkgString = gopkgString[:gopkgLoc] + "\n  source = \"https://github.com/" + repo + "\"\n  revision = \"" + commitSha + "\"\n" + gopkgString[gopkgLoc+1:]
 			err = ioutil.WriteFile("Gopkg.toml", []byte(gopkgString), fileutil.DefaultFileMode)
 			if err != nil {
-				t.Fatalf("failed to write updated Gopkg.toml: %v", err)
+				t.Fatalf("Failed to write updated Gopkg.toml: %v", err)
 			}
 
 			t.Logf("Gopkg.toml: %v", gopkgString)
 		} else {
-			t.Fatal("could not find sha of PR")
+			t.Fatal("Could not find sha of PR")
 		}
 	}
 	cmdOut, err = exec.Command("dep", "ensure").CombinedOutput()
 	if err != nil {
-		t.Fatalf("error after modifying Gopkg.toml: %v\nCommand Output: %s\n", err, string(cmdOut))
+		t.Fatalf("Error after modifying Gopkg.toml: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
 	// Set replicas to 2 to test leader election. In production, this should
@@ -138,12 +138,12 @@ func TestMemcached(t *testing.T) {
 	// a hot spare operator process.
 	opYaml, err := ioutil.ReadFile("deploy/operator.yaml")
 	if err != nil {
-		t.Fatalf("could not read deploy/operator.yaml: %v", err)
+		t.Fatalf("Could not read deploy/operator.yaml: %v", err)
 	}
 	newOpYaml := bytes.Replace(opYaml, []byte("replicas: 1"), []byte("replicas: 2"), 1)
 	err = ioutil.WriteFile("deploy/operator.yaml", newOpYaml, 0644)
 	if err != nil {
-		t.Fatalf("could not write deploy/operator.yaml: %v", err)
+		t.Fatalf("Could not write deploy/operator.yaml: %v", err)
 	}
 
 	cmdOut, err = exec.Command("operator-sdk",
@@ -152,7 +152,7 @@ func TestMemcached(t *testing.T) {
 		"--api-version=cache.example.com/v1alpha1",
 		"--kind=Memcached").CombinedOutput()
 	if err != nil {
-		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 	cmdOut, err = exec.Command("operator-sdk",
 		"add",
@@ -160,13 +160,13 @@ func TestMemcached(t *testing.T) {
 		"--api-version=cache.example.com/v1alpha1",
 		"--kind=Memcached").CombinedOutput()
 	if err != nil {
-		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
 	cmdOut, err = exec.Command("cp", "-a", filepath.Join(gopath, "src/github.com/operator-framework/operator-sdk/example/memcached-operator/memcached_controller.go.tmpl"),
 		"pkg/controller/memcached/memcached_controller.go").CombinedOutput()
 	if err != nil {
-		t.Fatalf("could not copy memcached example to to pkg/controller/memcached/memcached_controller.go: %v\nCommand Output:\n%v", err, string(cmdOut))
+		t.Fatalf("Could not copy memcached example to to pkg/controller/memcached/memcached_controller.go: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 	memcachedTypesFile, err := ioutil.ReadFile("pkg/apis/cache/v1alpha1/memcached_types.go")
 	if err != nil {
@@ -196,31 +196,31 @@ func TestMemcached(t *testing.T) {
 	t.Log("Generating k8s")
 	cmdOut, err = exec.Command("operator-sdk", "generate", "k8s").CombinedOutput()
 	if err != nil {
-		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
 	t.Log("Copying test files to ./test")
 	if err = os.MkdirAll("./test", fileutil.DefaultDirFileMode); err != nil {
-		t.Fatalf("could not create test/e2e dir: %v", err)
+		t.Fatalf("Could not create test/e2e dir: %v", err)
 	}
 	cmdOut, err = exec.Command("cp", "-a", filepath.Join(gopath, "src/github.com/operator-framework/operator-sdk/test/e2e/incluster-test-code"), "./test/e2e").CombinedOutput()
 	if err != nil {
-		t.Fatalf("could not copy tests to test/e2e: %v\nCommand Output:\n%v", err, string(cmdOut))
+		t.Fatalf("Could not copy tests to test/e2e: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 	// fix naming of files
 	cmdOut, err = exec.Command("mv", "test/e2e/main_test.go.tmpl", "test/e2e/main_test.go").CombinedOutput()
 	if err != nil {
-		t.Fatalf("could not rename test/e2e/main_test.go.tmpl: %v\nCommand Output:\n%v", err, string(cmdOut))
+		t.Fatalf("Could not rename test/e2e/main_test.go.tmpl: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 	cmdOut, err = exec.Command("mv", "test/e2e/memcached_test.go.tmpl", "test/e2e/memcached_test.go").CombinedOutput()
 	if err != nil {
-		t.Fatalf("could not rename test/e2e/memcached_test.go.tmpl: %v\nCommand Output:\n%v", err, string(cmdOut))
+		t.Fatalf("Could not rename test/e2e/memcached_test.go.tmpl: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 
 	t.Log("Pulling new dependencies with dep ensure")
 	cmdOut, err = exec.Command("dep", "ensure").CombinedOutput()
 	if err != nil {
-		t.Fatalf("dep ensure failed: %v\nCommand Output:\n%v", err, string(cmdOut))
+		t.Fatalf("Command 'dep ensure' failed: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 	// link local sdk to vendor if not in travis
 	if repo == "" {
@@ -394,14 +394,14 @@ func MemcachedLocal(t *testing.T) {
 	cmd := exec.Command("operator-sdk", "up", "local", "--namespace="+namespace)
 	stderr, err := os.Create("stderr.txt")
 	if err != nil {
-		t.Fatalf("failed to create stderr.txt: %v", err)
+		t.Fatalf("Failed to create stderr.txt: %v", err)
 	}
 	cmd.Stderr = stderr
 	defer stderr.Close()
 
 	err = cmd.Start()
 	if err != nil {
-		t.Fatalf("error: %v", err)
+		t.Fatalf("Error: %v", err)
 	}
 	ctx.AddCleanupFn(func() error { return cmd.Process.Signal(os.Interrupt) })
 
@@ -417,7 +417,7 @@ func MemcachedLocal(t *testing.T) {
 		return true, nil
 	})
 	if err != nil {
-		t.Fatalf("local operator not ready after 100 seconds: %v\n", err)
+		t.Fatalf("Local operator not ready after 100 seconds: %v\n", err)
 	}
 
 	if err = memcachedScaleTest(t, framework.Global, ctx); err != nil {
@@ -431,7 +431,7 @@ func MemcachedCluster(t *testing.T) {
 	defer ctx.Cleanup()
 	operatorYAML, err := ioutil.ReadFile("deploy/operator.yaml")
 	if err != nil {
-		t.Fatalf("could not read deploy/operator.yaml: %v", err)
+		t.Fatalf("Could not read deploy/operator.yaml: %v", err)
 	}
 	local := *e2eImageName == ""
 	if local {
@@ -448,7 +448,7 @@ func MemcachedCluster(t *testing.T) {
 	operatorYAML = bytes.Replace(operatorYAML, []byte("REPLACE_IMAGE"), []byte(*e2eImageName), 1)
 	err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, os.FileMode(0644))
 	if err != nil {
-		t.Fatalf("failed to write deploy/operator.yaml: %v", err)
+		t.Fatalf("Failed to write deploy/operator.yaml: %v", err)
 	}
 	t.Log("Building operator docker image")
 	cmdOut, err := exec.Command("operator-sdk", "build", *e2eImageName,
@@ -456,14 +456,14 @@ func MemcachedCluster(t *testing.T) {
 		"--test-location", "./test/e2e",
 		"--namespaced-manifest", "deploy/operator.yaml").CombinedOutput()
 	if err != nil {
-		t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
 	if !local {
 		t.Log("Pushing docker image to repo")
 		cmdOut, err = exec.Command("docker", "push", *e2eImageName).CombinedOutput()
 		if err != nil {
-			t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 		}
 	}
 
@@ -532,13 +532,13 @@ func MemcachedClusterTest(t *testing.T) {
 
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
-		t.Fatalf("could not get namespace: %v", err)
+		t.Fatalf("Could not get namespace: %v", err)
 	}
 	cmdOut, err := exec.Command("operator-sdk", "test", "cluster", *e2eImageName,
 		"--namespace", namespace,
 		"--image-pull-policy", "Never",
 		"--service-account", "memcached-operator").CombinedOutput()
 	if err != nil {
-		t.Fatalf("in-cluster test failed: %v\nCommand Output:\n%s", err, string(cmdOut))
+		t.Fatalf("In-cluster test failed: %v\nCommand Output:\n%s", err, string(cmdOut))
 	}
 }
