@@ -2,8 +2,19 @@
 
 set -eux
 
+source hack/lib/test_lib.sh
+
+ROOTDIR="$(pwd)"
+GOTMP="$(mktemp -d -p $GOPATH/src)"
+trap_add 'rm -rf $GOTMP' EXIT
+BASEIMAGEDIR="$GOTMP/ansible-operator"
+mkdir -p "$BASEIMAGEDIR"
+
 # build operator binary and base image
-go build -o test/ansible-operator/ansible-operator test/ansible-operator/cmd/ansible-operator/main.go
-pushd test/ansible-operator
-docker build -t "$1" .
+pushd "$BASEIMAGEDIR"
+go run "$ROOTDIR/hack/image/scaffold-ansible-image.go"
+
+mkdir -p build/_output/bin/
+cp $ROOTDIR/build/operator-sdk-dev-x86_64-linux-gnu build/_output/bin/ansible-operator
+operator-sdk build $1
 popd

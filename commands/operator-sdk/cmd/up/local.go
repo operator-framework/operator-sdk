@@ -24,20 +24,18 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
-	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/flags"
-	ansibleOperator "github.com/operator-framework/operator-sdk/pkg/ansible/operator"
-	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
+	"github.com/operator-framework/operator-sdk/pkg/ansible"
+	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	"github.com/operator-framework/operator-sdk/pkg/helm/client"
 	"github.com/operator-framework/operator-sdk/pkg/helm/controller"
+	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
-	helmScaffold "github.com/operator-framework/operator-sdk/pkg/scaffold/helm"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"k8s.io/helm/pkg/storage"
 	"k8s.io/helm/pkg/storage/driver"
@@ -65,8 +63,11 @@ kubernetes cluster using a kubeconfig file.
 	upLocalCmd.Flags().StringVar(&operatorFlags, "operator-flags", "", "The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
 	upLocalCmd.Flags().StringVar(&namespace, "namespace", "default", "The namespace where the operator watches for changes.")
 	upLocalCmd.Flags().StringVar(&ldFlags, "go-ldflags", "", "Set Go linker options")
-	if projutil.GetOperatorType() == projutil.OperatorTypeAnsible {
-		ansibleOperatorFlags = flags.AddTo(upLocalCmd.Flags(), "(ansible operator)")
+	switch projutil.GetOperatorType() {
+	case projutil.OperatorTypeAnsible:
+		ansibleOperatorFlags = aoflags.AddTo(upLocalCmd.Flags(), "(ansible operator)")
+	case projutil.OperatorTypeHelm:
+		helmOperatorFlags = hoflags.AddTo(upLocalCmd.Flags(), "(helm operator)")
 	}
 	return upLocalCmd
 }
@@ -76,7 +77,8 @@ var (
 	operatorFlags        string
 	namespace            string
 	ldFlags              string
-	ansibleOperatorFlags *flags.AnsibleOperatorFlags
+	ansibleOperatorFlags *aoflags.AnsibleOperatorFlags
+	helmOperatorFlags    *hoflags.HelmOperatorFlags
 )
 
 const (
@@ -97,7 +99,7 @@ func upLocalFunc(cmd *cobra.Command, args []string) {
 	case projutil.OperatorTypeHelm:
 		upLocalHelm()
 	default:
-		log.Fatal("failed to determine operator type")
+		log.Fatal("Failed to determine operator type")
 	}
 }
 
@@ -107,14 +109,14 @@ func mustKubeConfig() {
 	if len(kubeConfig) == 0 {
 		usr, err := user.Current()
 		if err != nil {
-			log.Fatalf("failed to determine user's home dir: (%v)", err)
+			log.Fatalf("Failed to determine user's home dir: (%v)", err)
 		}
 		kubeConfig = filepath.Join(usr.HomeDir, defaultConfigPath)
 	}
 
 	_, err := os.Stat(kubeConfig)
 	if err != nil && os.IsNotExist(err) {
-		log.Fatalf("failed to find the kubeconfig file (%v): (%v)", kubeConfig, err)
+		log.Fatalf("Failed to find the kubeconfig file (%v): (%v)", kubeConfig, err)
 	}
 }
 
@@ -135,7 +137,7 @@ func upLocal() {
 		<-c
 		err := dc.Process.Kill()
 		if err != nil {
-			log.Fatalf("failed to terminate the operator: (%v)", err)
+			log.Fatalf("Failed to terminate the operator: (%v)", err)
 		}
 		os.Exit(0)
 	}()
@@ -143,54 +145,29 @@ func upLocal() {
 	dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, namespace))
 	err := projutil.ExecCmd(dc)
 	if err != nil {
-		log.Fatalf("failed to run operator locally: (%v)", err)
+		log.Fatalf("Failed to run operator locally: (%v)", err)
 	}
 }
 
 func upLocalAnsible() {
 	// Set the kubeconfig that the manager will be able to grab
 	if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
-		log.Fatalf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+		log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+	}
+	// Set the kubeconfig that the manager will be able to grab
+	if namespace != "" {
+		if err := os.Setenv(k8sutil.WatchNamespaceEnvVar, namespace); err != nil {
+			log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
+		}
 	}
 
-	logf.SetLogger(logf.ZapLogger(false))
-
-	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{Namespace: namespace})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	printVersion()
-	log.Infof("watching namespace: %s", namespace)
-	done := make(chan error)
-
-	// start the proxy
-	err = proxy.Run(done, proxy.Options{
-		Address:    "localhost",
-		Port:       8888,
-		KubeConfig: mgr.GetConfig(),
-		Cache:      mgr.GetCache(),
-		RESTMapper: mgr.GetRESTMapper(),
-	})
-	if err != nil {
-		log.Fatalf("error starting proxy: (%v)", err)
-	}
-
-	// start the operator
-	go ansibleOperator.Run(done, mgr, ansibleOperatorFlags)
-
-	// wait for either to finish
-	err = <-done
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Info("Exiting.")
+	ansible.Run(ansibleOperatorFlags)
 }
 
 func upLocalHelm() {
 	// Set the kubeconfig that the manager will be able to grab
 	if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
-		log.Fatalf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+		log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
 	}
 
 	logf.SetLogger(logf.ZapLogger(false))
@@ -214,7 +191,7 @@ func upLocalHelm() {
 		log.Fatal(err)
 	}
 
-	factories, err := release.NewManagerFactoriesFromFile(storageBackend, tillerKubeClient, helmScaffold.WatchesYamlFile)
+	factories, err := release.NewManagerFactoriesFromFile(storageBackend, tillerKubeClient, helmOperatorFlags.WatchesFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -222,10 +199,10 @@ func upLocalHelm() {
 	for gvk, factory := range factories {
 		// Register the controller with the factory.
 		err := controller.Add(mgr, controller.WatchOptions{
-			Namespace:      namespace,
-			GVK:            gvk,
-			ManagerFactory: factory,
-			ResyncPeriod:   time.Second * 5,
+			Namespace:       namespace,
+			GVK:             gvk,
+			ManagerFactory:  factory,
+			ReconcilePeriod: helmOperatorFlags.ReconcilePeriod,
 		})
 		if err != nil {
 			log.Fatal(err)
@@ -241,5 +218,5 @@ func upLocalHelm() {
 func printVersion() {
 	log.Infof("Go Version: %s", runtime.Version())
 	log.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	log.Infof("operator-sdk Version: %v", sdkVersion.Version)
+	log.Infof("Version of operator-sdk: %v", sdkVersion.Version)
 }

@@ -92,12 +92,12 @@ func apiRun(cmd *cobra.Command, args []string) {
 		&scaffold.Crd{Resource: r},
 	)
 	if err != nil {
-		log.Fatalf("add scaffold failed: (%v)", err)
+		log.Fatalf("Add scaffold failed: (%v)", err)
 	}
 
 	// update deploy/role.yaml for the given resource r.
 	if err := scaffold.UpdateRoleForResource(r, absProjectPath); err != nil {
-		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): (%v)", r.APIVersion, r.Kind, err)
+		log.Fatalf("Failed to update the RBAC manifest for the resource (%v, %v): (%v)", r.APIVersion, r.Kind, err)
 	}
 
 	// Run k8s codegen for deepcopy

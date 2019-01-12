@@ -24,12 +24,12 @@ func TestDockerfileMultistage(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err := s.Execute(appConfig, &Dockerfile{Multistage: true})
 	if err != nil {
-		t.Fatalf("failed to execute the scaffold: (%v)", err)
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
 	if dockerfileMultiExp != buf.String() {
 		diffs := diffutil.Diff(dockerfileMultiExp, buf.String())
-		t.Fatalf("expected vs actual differs.\n%v", diffs)
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
 }
 
@@ -57,12 +57,12 @@ func TestDockerfileNonMultistage(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err := s.Execute(appConfig, &Dockerfile{})
 	if err != nil {
-		t.Fatalf("failed to execute the scaffold: (%v)", err)
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
 	if dockerfileNonMultiExp != buf.String() {
 		diffs := diffutil.Diff(dockerfileNonMultiExp, buf.String())
-		t.Fatalf("expected vs actual differs.\n%v", diffs)
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
 }
 

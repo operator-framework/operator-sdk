@@ -132,7 +132,7 @@ func createConditionFromMap(cm map[string]interface{}) Condition {
 	if ok {
 		t, err := time.Parse("2006-01-02T15:04:05Z", ltts)
 		if err != nil {
-			log.Info("unable to parse time for status condition", "Time", ltts)
+			log.Info("Unable to parse time for status condition", "Time", ltts)
 		} else {
 			ltt = metav1.NewTime(t)
 		}
@@ -169,7 +169,7 @@ func CreateFromMap(statusMap map[string]interface{}) Status {
 	for _, ci := range conditionsInterface {
 		cm, ok := ci.(map[string]interface{})
 		if !ok {
-			log.Info("unknown condition, removing condition", "ConditionInterface", ci)
+			log.Info("Unknown condition, removing condition", "ConditionInterface", ci)
 			continue
 		}
 		conditions = append(conditions, createConditionFromMap(cm))
@@ -186,7 +186,7 @@ func CreateFromMap(statusMap map[string]interface{}) Status {
 func (status *Status) GetJSONMap() map[string]interface{} {
 	b, err := json.Marshal(status)
 	if err != nil {
-		log.Error(err, "unable to marshal json")
+		log.Error(err, "Unable to marshal json")
 		return status.CustomStatus
 	}
 	json.Unmarshal(b, &status.CustomStatus)

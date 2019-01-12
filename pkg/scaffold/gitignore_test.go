@@ -24,12 +24,12 @@ func TestGitignore(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err := s.Execute(appConfig, &Gitignore{})
 	if err != nil {
-		t.Fatalf("failed to execute the scaffold: (%v)", err)
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
 	if gitignoreExp != buf.String() {
 		diffs := diffutil.Diff(gitignoreExp, buf.String())
-		t.Fatalf("expected vs actual differs.\n%v", diffs)
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
 }
 
