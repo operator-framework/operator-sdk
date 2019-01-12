@@ -5,7 +5,8 @@ set -ex
 go vet ./...
 
 # Make sure all returned errors are checked
-./hack/ci/errcheck ./...
+go get -u github.com/kisielk/errcheck
+errcheck ./...
 
 # Formatting checks
 ./hack/check_license.sh
