@@ -3,7 +3,7 @@ go_import_path: github.com/operator-framework/operator-sdk
 sudo: required
 
 go:
-- 1.10.3
+- "1.10"
 
 # The `x_base_steps` top-level key is unknown to travis,
 # so we can use it to create a bunch of common build step
