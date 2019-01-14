@@ -1,3 +1,4 @@
+dist: xenial
 language: go
 go_import_path: github.com/operator-framework/operator-sdk
 sudo: required
