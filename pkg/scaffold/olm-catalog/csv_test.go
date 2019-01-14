@@ -224,7 +224,7 @@ func TestGetDisplayName(t *testing.T) {
 	for _, c := range cases {
 		dn := getDisplayName(c.input)
 		if dn != c.wanted {
-			t.Errorf("wanted %s, got %s", c.wanted, dn)
+			t.Errorf("Wanted %s, got %s", c.wanted, dn)
 		}
 	}
 }
