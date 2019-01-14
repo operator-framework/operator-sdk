@@ -7,7 +7,7 @@ source "hack/lib/test_lib.sh"
 
 echo "Checking format of error and log messages..."
 allfiles=$(listFiles)
-log_case_output=$(grep -ERn '(Error\((.*[Ee]rr|nil), |[^(fmt\.)]Error(f)?\(|Fatal(f)?\(|Info(f)?\(|Warn(f)?\()"[[:lower:]]' $allfiles | sort -u)
+log_case_output=$(grep -PRn '(Error\((.*[Ee]rr|nil), |^(?!.*fmt).+\.Error(f)?\(|Fatal(f)?\(|Info(f)?\(|Warn(f)?\()"[[:lower:]]' $allfiles | sort -u)
 if [ -n "${log_case_output}" ]; then
   echo -e "Log messages do not begin with upper case:\n${log_case_output}"
 fi
