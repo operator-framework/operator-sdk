@@ -54,10 +54,11 @@ platforms:
     - 8443/tcp
     - 10080/tcp
   published_ports:
-    - 0.0.0.0:9443:8443/tcp
+    - 0.0.0.0:${TEST_CLUSTER_PORT:-9443}:8443/tcp
   pre_build_image: yes
 provisioner:
   name: ansible
+  log: True
   lint:
     name: ansible-lint
     enabled: False
@@ -69,7 +70,7 @@ provisioner:
     K8S_AUTH_KUBECONFIG: /tmp/molecule/kind-default/kubeconfig
     KUBECONFIG: /tmp/molecule/kind-default/kubeconfig
     ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/roles
-    KIND_PORT: '9443'
+    KIND_PORT: '${TEST_CLUSTER_PORT:-9443}'
 scenario:
   name: default
 verifier:
