@@ -15,6 +15,7 @@
 package catalog
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/coreos/go-semver/semver"
@@ -39,7 +40,7 @@ the operator to the OLM Catalog. A CSV semantic version is supplied via the
 --csv-version flag.
 
 Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config.yaml`,
-		Run: csvFunc,
+		RunE: csvFunc,
 	}
 
 	csvCmd.Flags().StringVar(&csvVersion, "csv-version", "", "Semantic version of the CSV")
@@ -48,9 +49,9 @@ Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config
 	return csvCmd
 }
 
-func csvFunc(cmd *cobra.Command, args []string) {
+func csvFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 0 {
-		log.Fatalf("Command %s doesn't accept any arguments", cmd.CommandPath())
+		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 
 	verifyOLMCatalogFlags()
@@ -72,16 +73,18 @@ func csvFunc(cmd *cobra.Command, args []string) {
 		&catalog.ConcatCRD{},
 	)
 	if err != nil {
-		log.Fatalf("Catalog scaffold failed: (%v)", err)
+		return fmt.Errorf("catalog scaffold failed: (%v)", err)
 	}
+	return nil
 }
 
-func verifyOLMCatalogFlags() {
+func verifyOLMCatalogFlags() error {
 	v, err := semver.NewVersion(csvVersion)
 	if err != nil {
-		log.Fatalf("%s is not a valid semantic version: (%v)", csvVersion, err)
+		return fmt.Errorf("%s is not a valid semantic version: (%v)", csvVersion, err)
 	}
 	if v.String() != csvVersion {
-		log.Fatalf("Provided CSV version %s contains bad values (parses to %s)", csvVersion, v)
+		return fmt.Errorf("provided CSV version %s contains bad values (parses to %s)", csvVersion, v)
 	}
+	return nil
 }

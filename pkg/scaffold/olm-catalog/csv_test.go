@@ -190,11 +190,11 @@ func TestUpdateVersion(t *testing.T) {
 	// updateCSVVersions should not update podspec image.
 	wantedImage := "quay.io/example-org/operator:v1.0.1"
 	if csvPodImage != wantedImage {
-		t.Errorf("podspec image changed from %s to %s", wantedImage, csvPodImage)
+		t.Errorf("Podspec image changed from %s to %s", wantedImage, csvPodImage)
 	}
 
 	wantedReplaces := getCSVName("app-operator", "1.0.1")
 	if csv.Spec.Replaces != wantedReplaces {
-		t.Errorf("wanted csv replaces %s, got %s", wantedReplaces, csv.Spec.Replaces)
+		t.Errorf("Wanted csv replaces %s, got %s", wantedReplaces, csv.Spec.Replaces)
 	}
 }

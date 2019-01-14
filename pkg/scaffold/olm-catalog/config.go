@@ -15,6 +15,7 @@
 package catalog
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -52,6 +53,8 @@ func getCSVConfig(configFile string) (*CSVConfig, error) {
 	return config, nil
 }
 
+const yamlExt = ".yaml"
+
 func (c *CSVConfig) setFields() error {
 	if c.OperatorPath == "" {
 		info, err := (&scaffold.Operator{}).GetInput()
@@ -59,6 +62,14 @@ func (c *CSVConfig) setFields() error {
 			return err
 		}
 		c.OperatorPath = info.Path
+	}
+
+	if c.RolePath == "" {
+		info, err := (&scaffold.Role{}).GetInput()
+		if err != nil {
+			return err
+		}
+		c.RolePath = info.Path
 	}
 
 	if len(c.CRDCRPaths) == 0 {
@@ -86,7 +97,7 @@ func (c *CSVConfig) setFields() error {
 						seen[p] = struct{}{}
 					}
 				}
-			} else {
+			} else if filepath.Ext(path) == yamlExt {
 				if _, ok := seen[path]; !ok {
 					paths = append(paths, path)
 					seen[path] = struct{}{}
@@ -96,23 +107,21 @@ func (c *CSVConfig) setFields() error {
 		c.CRDCRPaths = paths
 	}
 
-	if c.RolePath == "" {
-		path, _ := (&scaffold.Role{}).GetInput()
-		c.RolePath = path.Path
-	}
-
 	return nil
 }
 
 func getManifestPathsFromDir(dir string) (paths []string, err error) {
-	finfos, err := ioutil.ReadDir(dir)
+	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if info == nil {
+			return fmt.Errorf("file info for %s was nil", path)
+		}
+		if !info.IsDir() && filepath.Ext(path) == yamlExt {
+			paths = append(paths, path)
+		}
+		return err
+	})
 	if err != nil {
 		return nil, err
-	}
-	for _, finfo := range finfos {
-		if finfo != nil && !finfo.IsDir() {
-			paths = append(paths, filepath.Join(dir, finfo.Name()))
-		}
 	}
 	return paths, nil
 }
