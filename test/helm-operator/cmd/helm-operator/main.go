@@ -23,6 +23,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/controller"
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
+	"github.com/operator-framework/operator-sdk/pkg/helm/watches"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/spf13/pflag"
@@ -79,20 +80,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	factories, err := release.NewManagerFactoriesFromFile(storageBackend, tillerKubeClient, hflags.WatchesFile)
+	watches, err := watches.Load(hflags.WatchesFile)
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
 
-	for gvk, factory := range factories {
+	for _, w := range watches {
 		// Register the controller with the factory.
 		err := controller.Add(mgr, controller.WatchOptions{
 			Namespace:               namespace,
-			GVK:                     gvk,
-			ManagerFactory:          factory,
+			GVK:                     w.GroupVersionKind,
+			ManagerFactory:          release.NewManagerFactory(storageBackend, tillerKubeClient, w.ChartDir),
 			ReconcilePeriod:         hflags.ReconcilePeriod,
-			WatchDependentResources: true,
+			WatchDependentResources: w.WatchDependentResources,
 		})
 		if err != nil {
 			log.Error(err, "")
