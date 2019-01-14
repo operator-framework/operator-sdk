@@ -70,11 +70,12 @@ func NewTestLocalCmd() *cobra.Command {
 	return testCmd
 }
 
-func testLocalFunc(cmd *cobra.Command, args []string) (err error) {
+func testLocalFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
 	}
-	if (tlConfig.noSetup && tlConfig.globalManPath != "") || (tlConfig.noSetup && tlConfig.namespacedManPath != "") {
+	if (tlConfig.noSetup && tlConfig.globalManPath != "") ||
+		(tlConfig.noSetup && tlConfig.namespacedManPath != "") {
 		return fmt.Errorf("the global-manifest and namespaced-manifest flags cannot be enabled at the same time as the no-setup flag")
 	}
 
@@ -92,13 +93,9 @@ func testLocalFunc(cmd *cobra.Command, args []string) (err error) {
 		}
 		tlConfig.namespacedManPath = file.Name()
 		defer func() {
-			rerr := os.Remove(tlConfig.namespacedManPath)
-			if rerr != nil {
-				if err != nil {
-					err = fmt.Errorf("%v\ncould not delete temporary namespace manifest file: (%v)", err, rerr)
-				} else {
-					err = fmt.Errorf("could not delete temporary namespace manifest file: (%v)", rerr)
-				}
+			err := os.Remove(tlConfig.namespacedManPath)
+			if err != nil {
+				log.Errorf("could not delete temporary namespace manifest file: (%v)", err)
 			}
 		}()
 	}
@@ -109,18 +106,14 @@ func testLocalFunc(cmd *cobra.Command, args []string) (err error) {
 		}
 		tlConfig.globalManPath = file.Name()
 		defer func() {
-			rerr := os.Remove(tlConfig.globalManPath)
-			if rerr != nil {
-				if err != nil {
-					err = fmt.Errorf("%v\ncould not delete global manifest file: (%v)", err, rerr)
-				} else {
-					err = fmt.Errorf("could not delete global manifest file: (%v)", rerr)
-				}
+			err := os.Remove(tlConfig.globalManPath)
+			if err != nil {
+				log.Errorf("could not delete global manifest file: (%v)", err)
 			}
 		}()
 	}
 	if tlConfig.noSetup {
-		err = os.MkdirAll(deployTestDir, os.FileMode(fileutil.DefaultDirFileMode))
+		err := os.MkdirAll(deployTestDir, os.FileMode(fileutil.DefaultDirFileMode))
 		if err != nil {
 			return fmt.Errorf("could not create %s: (%v)", deployTestDir, err)
 		}
@@ -132,18 +125,15 @@ func testLocalFunc(cmd *cobra.Command, args []string) (err error) {
 			return fmt.Errorf("could not create empty manifest file: (%v)", err)
 		}
 		defer func() {
-			rerr := os.Remove(tlConfig.globalManPath)
-			if rerr != nil {
-				if err != nil {
-					err = fmt.Errorf("%v\ncould not delete empty manifest file: (%v)", err, rerr)
-				} else {
-					err = fmt.Errorf("could not delete empty manifest file: (%v)", rerr)
-				}
+			err := os.Remove(tlConfig.globalManPath)
+			if err != nil {
+				log.Errorf("could not delete empty manifest file: (%v)", err)
 			}
 		}()
 	}
 	if tlConfig.image != "" {
-		if err = replaceImage(tlConfig.namespacedManPath, tlConfig.image); err != nil {
+		err := replaceImage(tlConfig.namespacedManPath, tlConfig.image)
+		if err != nil {
 			return fmt.Errorf("failed to overwrite operator image in the namespaced manifest: %v", err)
 		}
 	}
@@ -168,7 +158,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) (err error) {
 	dc := exec.Command("go", testArgs...)
 	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
 	dc.Dir = projutil.MustGetwd()
-	if err = projutil.ExecCmd(dc); err != nil {
+	if err := projutil.ExecCmd(dc); err != nil {
 		return err
 	}
 
