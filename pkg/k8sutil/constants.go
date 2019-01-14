@@ -25,7 +25,8 @@ const (
 	WatchNamespaceEnvVar = "WATCH_NAMESPACE"
 
 	// WatchAllNamespacesKey is the constanct for a key value to set
-	// WATCH_NAMESPACE to declare that this operator is watching ALL namespaced.
+	// WATCH_NAMESPACE environment variable to declare that this operator is
+	// watching ALL namespaces.
 	WatchAllNamespacesKey = "__ALL_NS__"
 
 	// OperatorNameEnvVar is the constant for env variable OPERATOR_NAME
