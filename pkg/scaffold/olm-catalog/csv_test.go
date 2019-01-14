@@ -55,12 +55,12 @@ func TestCSV(t *testing.T) {
 		},
 	)
 	if err != nil {
-		t.Fatalf("failed to execute the scaffold: (%v)", err)
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
 	if csvExp != buf.String() {
 		diffs := diffutil.Diff(csvExp, buf.String())
-		t.Fatalf("expected vs actual differs.\n%v", diffs)
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
 }
 
@@ -168,16 +168,16 @@ func TestUpdateVersion(t *testing.T) {
 		CSVVersion: newOpVer,
 	}
 	if err := c.updateCSVVersions(csv); err != nil {
-		t.Fatalf("update csv with ver %s: (%v)", newOpVer, err)
+		t.Fatalf("Update csv with ver %s: (%v)", newOpVer, err)
 	}
 
 	wantedSemver := semver.New(newOpVer)
 	if !csv.Spec.Version.Equal(*wantedSemver) {
-		t.Errorf("wanted csv version %v, got %v", *wantedSemver, csv.Spec.Version)
+		t.Errorf("Wanted csv version %v, got %v", *wantedSemver, csv.Spec.Version)
 	}
 	wantedName := getCSVName("app-operator", newOpVer)
 	if csv.ObjectMeta.Name != wantedName {
-		t.Errorf("wanted csv name %s, got %s", wantedName, csv.ObjectMeta.Name)
+		t.Errorf("Wanted csv name %s, got %s", wantedName, csv.ObjectMeta.Name)
 	}
 
 	var resolver *olmInstall.StrategyResolver

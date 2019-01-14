@@ -50,7 +50,7 @@ Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config
 
 func csvFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 0 {
-		log.Fatal("gen-csv command doesn't accept any arguments")
+		log.Fatalf("Command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 
 	verifyOLMCatalogFlags()
@@ -72,7 +72,7 @@ func csvFunc(cmd *cobra.Command, args []string) {
 		&catalog.ConcatCRD{},
 	)
 	if err != nil {
-		log.Fatalf("build catalog scaffold failed: (%v)", err)
+		log.Fatalf("Catalog scaffold failed: (%v)", err)
 	}
 }
 
@@ -82,6 +82,6 @@ func verifyOLMCatalogFlags() {
 		log.Fatalf("%s is not a valid semantic version: (%v)", csvVersion, err)
 	}
 	if v.String() != csvVersion {
-		log.Fatalf("provided CSV version %s contains bad values (parses to %s)", csvVersion, v)
+		log.Fatalf("Provided CSV version %s contains bad values (parses to %s)", csvVersion, v)
 	}
 }
