@@ -23,6 +23,7 @@ import (
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -47,7 +48,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) {
 	} else {
 		log.Infof("%v environment variable not set. This operator is watching all namespaces.",
 			k8sutil.WatchNamespaceEnvVar)
-		namespace = k8sutil.WatchAllNamespacesKey
+		namespace = metav1.NamespaceAll
 	}
 
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{

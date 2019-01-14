@@ -31,7 +31,6 @@ import (
 	"sync"
 
 	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -76,7 +75,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 			// check if resource doesn't exist in watched namespaces
 			// if watchedNamespaces[""] exists then we are watching all namespaces
 			// and want to continue
-			_, allNsPresent := watchedNamespaces[k8sutil.WatchAllNamespacesKey]
+			_, allNsPresent := watchedNamespaces[metav1.NamespaceAll]
 			_, reqNsPresent := watchedNamespaces[r.Namespace]
 			if !allNsPresent && !reqNsPresent {
 				break
