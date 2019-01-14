@@ -69,3 +69,7 @@
 [[override]]
   name = "github.com/docker/docker"
   revision = "a9fbbdc8dd8794b20af358382ab780559bca589d"
+
+[prune]
+  unused-packages = true
+  go-tests = true
