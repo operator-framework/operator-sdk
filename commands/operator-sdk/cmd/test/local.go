@@ -86,35 +86,11 @@ func testLocalFunc(cmd *cobra.Command, args []string) (err error) {
 
 	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml, deploy/role_binding.yaml and deploy/operator.yaml
 	if tlConfig.namespacedManPath == "" && !tlConfig.noSetup {
-		err = os.MkdirAll(deployTestDir, os.FileMode(fileutil.DefaultDirFileMode))
+		file, err := yamlutil.GenerateCombinedNamespacedManifest()
 		if err != nil {
-			return fmt.Errorf("could not create %s: (%v)", deployTestDir, err)
+			return err
 		}
-		tlConfig.namespacedManPath = filepath.Join(deployTestDir, "namespace-manifests.yaml")
-		combined := []byte{}
-		if !tlConfig.upLocal {
-			sa, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.ServiceAccountYamlFile))
-			if err != nil {
-				log.Warnf("Could not find the serviceaccount manifest: (%v)", err)
-			}
-			role, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleYamlFile))
-			if err != nil {
-				log.Warnf("Could not find role manifest: (%v)", err)
-			}
-			roleBinding, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleBindingYamlFile))
-			if err != nil {
-				log.Warnf("Could not find role_binding manifest: (%v)", err)
-			}
-			operator, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.OperatorYamlFile))
-			if err != nil {
-				return fmt.Errorf("could not find operator manifest: (%v)", err)
-			}
-			combined = yamlutil.CombineManifests(combined, sa, role, roleBinding, operator)
-		}
-		err = ioutil.WriteFile(tlConfig.namespacedManPath, combined, os.FileMode(fileutil.DefaultFileMode))
-		if err != nil {
-			return fmt.Errorf("could not create temporary namespaced manifest file: (%v)", err)
-		}
+		tlConfig.namespacedManPath = file.Name()
 		defer func() {
 			rerr := os.Remove(tlConfig.namespacedManPath)
 			if rerr != nil {
@@ -127,34 +103,11 @@ func testLocalFunc(cmd *cobra.Command, args []string) (err error) {
 		}()
 	}
 	if tlConfig.globalManPath == "" && !tlConfig.noSetup {
-		err = os.MkdirAll(deployTestDir, os.FileMode(fileutil.DefaultDirFileMode))
+		file, err := yamlutil.GenerateCombinedGlobalManifest()
 		if err != nil {
-			return fmt.Errorf("could not create %s: (%v)", deployTestDir, err)
+			return err
 		}
-		tlConfig.globalManPath = filepath.Join(deployTestDir, "global-manifests.yaml")
-		files, err := ioutil.ReadDir(scaffold.CrdsDir)
-		if err != nil {
-			return fmt.Errorf("could not read deploy directory: (%v)", err)
-		}
-		var combined []byte
-		for _, file := range files {
-			if strings.HasSuffix(file.Name(), "crd.yaml") {
-				fileBytes, err := ioutil.ReadFile(filepath.Join(scaffold.CrdsDir, file.Name()))
-				if err != nil {
-					return fmt.Errorf("could not read file %s: (%v)", filepath.Join(scaffold.CrdsDir, file.Name()), err)
-				}
-				if combined == nil {
-					combined = []byte{}
-				} else {
-					combined = append(combined, []byte("\n---\n")...)
-				}
-				combined = append(combined, fileBytes...)
-			}
-		}
-		err = ioutil.WriteFile(tlConfig.globalManPath, combined, os.FileMode(fileutil.DefaultFileMode))
-		if err != nil {
-			return fmt.Errorf("could not create temporary global manifest file: (%v)", err)
-		}
+		tlConfig.globalManPath = file.Name()
 		defer func() {
 			rerr := os.Remove(tlConfig.globalManPath)
 			if rerr != nil {

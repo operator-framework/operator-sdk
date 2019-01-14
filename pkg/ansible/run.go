@@ -24,6 +24,7 @@ import (
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -49,6 +50,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	} else {
 		log.Info(fmt.Sprintf("%v environment variable not set. This operator is watching all namespaces.",
 			k8sutil.WatchNamespaceEnvVar))
+		namespace = metav1.NamespaceAll
 	}
 
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{
@@ -64,12 +66,13 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{
-		Address:       "localhost",
-		Port:          8888,
-		KubeConfig:    mgr.GetConfig(),
-		Cache:         mgr.GetCache(),
-		RESTMapper:    mgr.GetRESTMapper(),
-		ControllerMap: cMap,
+		Address:           "localhost",
+		Port:              8888,
+		KubeConfig:        mgr.GetConfig(),
+		Cache:             mgr.GetCache(),
+		RESTMapper:        mgr.GetRESTMapper(),
+		ControllerMap:     cMap,
+		WatchedNamespaces: []string{namespace},
 	})
 	if err != nil {
 		return fmt.Errorf("error starting proxy: (%v)", err)
