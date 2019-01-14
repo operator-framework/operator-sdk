@@ -15,12 +15,12 @@
 package main
 
 import (
-	"log"
-
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // main renders scaffolds that are required to build the ansible operator base
@@ -40,6 +40,6 @@ func main() {
 		&ansible.UserSetup{},
 	)
 	if err != nil {
-		log.Fatalf("add scaffold failed: (%v)", err)
+		log.Fatalf("Add scaffold failed: (%v)", err)
 	}
 }

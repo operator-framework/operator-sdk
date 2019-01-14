@@ -24,12 +24,12 @@ func TestRole(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err := s.Execute(appConfig, &Role{})
 	if err != nil {
-		t.Fatalf("failed to execute the scaffold: (%v)", err)
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
 	if roleExp != buf.String() {
 		diffs := diffutil.Diff(roleExp, buf.String())
-		t.Fatalf("expected vs actual differs.\n%v", diffs)
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
 }
 
@@ -37,12 +37,12 @@ func TestRoleClusterScoped(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err := s.Execute(appConfig, &Role{IsClusterScoped: true})
 	if err != nil {
-		t.Fatalf("failed to execute the scaffold: (%v)", err)
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
 	if clusterroleExp != buf.String() {
 		diffs := diffutil.Diff(clusterroleExp, buf.String())
-		t.Fatalf("expected vs actual differs.\n%v", diffs)
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
 }
 

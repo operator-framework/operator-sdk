@@ -107,7 +107,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	spec := u.Object["spec"]
 	_, ok := spec.(map[string]interface{})
 	if !ok {
-		logger.V(1).Info("spec was not found")
+		logger.V(1).Info("Spec was not found")
 		u.Object["spec"] = map[string]interface{}{}
 		err = r.Client.Update(context.TODO(), u)
 		if err != nil {
@@ -165,7 +165,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		eventErr := errors.New("did not receive playbook_on_stats event")
 		stdout, err := result.Stdout()
 		if err != nil {
-			logger.Error(err, "failed to get ansible-runner stdout")
+			logger.Error(err, "Failed to get ansible-runner stdout")
 			return reconcileResult, err
 		}
 		logger.Error(eventErr, stdout)
@@ -192,7 +192,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	if r.ManageStatus {
 		err = r.markDone(u, request.NamespacedName, statusEvent, failureMessages)
 		if err != nil {
-			logger.Error(err, "failed to mark status done")
+			logger.Error(err, "Failed to mark status done")
 		}
 	}
 	return reconcileResult, err
@@ -238,7 +238,7 @@ func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, names
 	// Get the latest resource to prevent updating a stale status
 	err := r.Client.Get(context.TODO(), namespacedName, u)
 	if apierrors.IsNotFound(err) {
-		logger.Info("resource not found, assuming it was deleted", err)
+		logger.Info("Resource not found, assuming it was deleted", err)
 		return nil
 	}
 	if err != nil {
