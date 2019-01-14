@@ -55,7 +55,7 @@ type ControllerMap struct {
 // resource exists in our cache. If it does then there is no need to bombard
 // the APIserver with our request and we should write the response from the
 // proxy.
-func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper meta.RESTMapper) http.Handler {
+func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper meta.RESTMapper, watchedNamespaces map[string]interface{}) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		switch req.Method {
 		case http.MethodGet:
@@ -69,6 +69,15 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 
 			// check if resource is present on request
 			if !r.IsResourceRequest {
+				break
+			}
+
+			// check if resource doesn't exist in watched namespaces
+			// if watchedNamespaces[""] exists then we are watching all namespaces
+			// and want to continue
+			_, allNsPresent := watchedNamespaces[metav1.NamespaceAll]
+			_, reqNsPresent := watchedNamespaces[r.Namespace]
+			if !allNsPresent && !reqNsPresent {
 				break
 			}
 
@@ -250,15 +259,16 @@ type HandlerChain func(http.Handler) http.Handler
 // Options will be used by the user to specify the desired details
 // for the proxy.
 type Options struct {
-	Address          string
-	Port             int
-	Handler          HandlerChain
-	NoOwnerInjection bool
-	LogRequests      bool
-	KubeConfig       *rest.Config
-	Cache            cache.Cache
-	RESTMapper       meta.RESTMapper
-	ControllerMap    *ControllerMap
+	Address           string
+	Port              int
+	Handler           HandlerChain
+	NoOwnerInjection  bool
+	LogRequests       bool
+	KubeConfig        *rest.Config
+	Cache             cache.Cache
+	RESTMapper        meta.RESTMapper
+	ControllerMap     *ControllerMap
+	WatchedNamespaces []string
 }
 
 // Run will start a proxy server in a go routine that returns on the error
@@ -274,6 +284,15 @@ func Run(done chan error, o Options) error {
 	}
 	if o.ControllerMap == nil {
 		return fmt.Errorf("failed to get controller map from options")
+	}
+	if o.WatchedNamespaces == nil {
+		return fmt.Errorf("failed to get list of watched namespaces from options")
+	}
+
+	watchedNamespaceMap := make(map[string]interface{})
+	// Convert string list to map
+	for _, ns := range o.WatchedNamespaces {
+		watchedNamespaceMap[ns] = nil
 	}
 
 	if o.Cache == nil {
@@ -304,7 +323,7 @@ func Run(done chan error, o Options) error {
 		server.Handler = RequestLogHandler(server.Handler)
 	}
 	// Always add cache handler
-	server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper)
+	server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper, watchedNamespaceMap)
 
 	l, err := server.Listen(o.Address, o.Port)
 	if err != nil {

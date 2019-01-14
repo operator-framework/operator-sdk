@@ -22,6 +22,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	rpb "k8s.io/helm/pkg/proto/hapi/release"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -32,12 +33,16 @@ import (
 
 var _ reconcile.Reconciler = &HelmOperatorReconciler{}
 
+// ReleaseHookFunc defines a function signature for release hooks.
+type ReleaseHookFunc func(*rpb.Release) error
+
 // HelmOperatorReconciler reconciles custom resources as Helm releases.
 type HelmOperatorReconciler struct {
 	Client          client.Client
 	GVK             schema.GroupVersionKind
 	ManagerFactory  release.ManagerFactory
 	ReconcilePeriod time.Duration
+	releaseHook     ReleaseHookFunc
 }
 
 const (
@@ -170,6 +175,11 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		}
 		status.RemoveCondition(types.ConditionReleaseFailed)
 
+		if err := r.releaseHook(installedRelease); err != nil {
+			log.Error(err, "Failed to run release hook")
+			return reconcile.Result{}, err
+		}
+
 		log.Info("Installed release")
 		if log.Enabled() {
 			fmt.Println(diffutil.Diff("", installedRelease.GetManifest()))
@@ -202,6 +212,11 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		}
 		status.RemoveCondition(types.ConditionReleaseFailed)
 
+		if err := r.releaseHook(updatedRelease); err != nil {
+			log.Error(err, "Failed to run release hook")
+			return reconcile.Result{}, err
+		}
+
 		log.Info("Updated release")
 		if log.Enabled() {
 			fmt.Println(diffutil.Diff(previousRelease.GetManifest(), updatedRelease.GetManifest()))
@@ -218,7 +233,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		return reconcile.Result{RequeueAfter: r.ReconcilePeriod}, err
 	}
 
-	_, err = manager.ReconcileRelease(context.TODO())
+	expectedRelease, err := manager.ReconcileRelease(context.TODO())
 	if err != nil {
 		log.Error(err, "Failed to reconcile release")
 		status.SetCondition(types.HelmAppCondition{
@@ -231,6 +246,11 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		return reconcile.Result{}, err
 	}
 	status.RemoveCondition(types.ConditionIrreconcilable)
+
+	if err := r.releaseHook(expectedRelease); err != nil {
+		log.Error(err, "Failed to run release hook")
+		return reconcile.Result{}, err
+	}
 
 	log.Info("Reconciled release")
 	err = r.updateResourceStatus(o, status)
