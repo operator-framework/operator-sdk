@@ -181,7 +181,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		// have required build files.
 		testDockerfile := filepath.Join(scaffold.BuildTestDir, scaffold.DockerfileFile)
 		_, err = os.Stat(testDockerfile)
-		if err != nil || !projutil.IsDockerfileMultistage(testDockerfile) {
+		if (err != nil && os.IsNotExist(err)) || !projutil.IsDockerfileMultistage(testDockerfile) {
 
 			log.Info("Generating build manifests for test-framework.")
 
@@ -197,10 +197,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 					Input: input.Input{IfExistsAction: input.Overwrite},
 				},
 				&scaffold.GoTestScript{},
-				&scaffold.TestPod{
-					Image:            image,
-					TestNamespaceEnv: test.TestNamespaceEnv,
-				},
+				&scaffold.TestPod{Image: image, TestNamespaceEnv: test.TestNamespaceEnv},
 			)
 			if err != nil {
 				log.Fatalf("Test framework manifest scaffold failed: (%v)", err)
