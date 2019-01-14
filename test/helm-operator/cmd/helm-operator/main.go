@@ -58,7 +58,7 @@ func main() {
 
 	operatorNamespace, err := k8sutil.GetOperatorNamespace()
 	if err != nil {
-		log.Error(err, "failed to get operator namespace")
+		log.Error(err, "Failed to get operator namespace")
 		os.Exit(1)
 	}
 
