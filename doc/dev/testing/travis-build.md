@@ -92,10 +92,12 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
     4. Create cluster resources.
     5. Wait for operator to be ready.
     6. Create nginx CR and wait for it to be ready.
-    7. Delete nginx CR and verify that finalizer (which writes a message in the operator logs) ran.
-    8. Run `operator-sdk migrate` to add go source to the operator.
-    9. Run `operator-sdk build` to compile the new binary and build a new image.
-    10. Re-run steps 4-7 to test the migrated operator.
+    7. Scale up the dependent deployment and verify the operator reconciles it back down.
+    8. Scale up the CR and verify the dependent deployment scales up accordingly.
+    9. Delete nginx CR and verify that finalizer (which writes a message in the operator logs) ran.
+    10. Run `operator-sdk migrate` to add go source to the operator.
+    11. Run `operator-sdk build` to compile the new binary and build a new image.
+    12. Re-run steps 4-9 to test the migrated operator.
 
 **NOTE**: All created resources, including the namespace, are deleted using a bash trap when the test finishes
 

@@ -56,6 +56,28 @@ test_operator() {
     nginx_service=$(kubectl get service -l "app.kubernetes.io/instance=${release_name}" -o jsonpath="{..metadata.name}")
     kubectl get service ${nginx_service}
 
+    # scale deployment replicas to 2 and verify the
+    # deployment automatically scales back down to 1.
+    kubectl scale deployment/${nginx_deployment} --replicas=2
+    if ! timeout 1m test $(kubectl get deployment/${nginx_deployment} -o jsonpath="{..spec.replicas}") -eq 1;
+    then
+        kubectl describe pods -l "app.kubernetes.io/instance=${release_name}"
+        kubectl describe deployments ${nginx_deployment}
+        kubectl logs deployment/${nginx_deployment}
+        exit 1
+    fi
+
+    # update CR to replicaCount=2 and verify the deployment
+    # automatically scales up to 2 replicas.
+    kubectl patch nginxes.helm.example.com example-nginx -p '[{"op":"replace","path":"/spec/replicaCount","value":2}]' --type=json
+    if ! timeout 1m test $(kubectl get deployment/${nginx_deployment} -o jsonpath="{..spec.replicas}") -eq 2;
+    then
+        kubectl describe pods -l "app.kubernetes.io/instance=${release_name}"
+        kubectl describe deployments ${nginx_deployment}
+        kubectl logs deployment/${nginx_deployment}
+        exit 1
+    fi
+
     kubectl delete -f deploy/crds/helm_v1alpha1_nginx_cr.yaml --wait=true
     kubectl logs deployment/nginx-operator | grep "Uninstalled release" | grep "${release_name}"
 }
