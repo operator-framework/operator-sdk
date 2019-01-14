@@ -47,12 +47,10 @@ func printDepsFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 0 {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
-	if !asFile {
+	if asFile {
 		scaffold.PrintDepsAsFile()
-	} else {
-		if err := scaffold.PrintDeps(); err != nil {
-			return fmt.Errorf("print deps failed: (%v)", err)
-		}
+	} else if err := scaffold.PrintDeps(); err != nil {
+		return fmt.Errorf("print deps failed: (%v)", err)
 	}
 	return nil
 }
