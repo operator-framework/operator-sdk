@@ -69,7 +69,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 ### Ansible tests
 
 1. Run [ansible e2e tests][ansible-e2e].
-    1. Create base ansible operator image by running [`hack/image/ansible/scaffold-ansible-image.go`][ansible-base].
+    1. Create base ansible operator project by running [`hack/image/ansible/scaffold-ansible-image.go`][ansible-base].
     2. Build base ansible operator image.
     3. Create and configure a new ansible type memcached-operator.
     4. Create cluster resources.
@@ -86,7 +86,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 ### Helm Tests
 
 1. Run [helm e2e tests][helm-e2e].
-    1. Create base helm operator image by running [`hack/image/helm/scaffold-helm-image.go`][helm-base].
+    1. Create base helm operator project by running [`hack/image/helm/scaffold-helm-image.go`][helm-base].
     2. Build base helm operator image.
     3. Create and configure a new helm type nginx-operator.
     4. Create cluster resources.
