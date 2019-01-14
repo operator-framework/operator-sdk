@@ -251,7 +251,7 @@ type Options struct {
 	Cache             cache.Cache
 	RESTMapper        meta.RESTMapper
 	ControllerMap     *ControllerMap
-	WatchedNamespaces map[string]interface{}
+	WatchedNamespaces []string
 }
 
 // Run will start a proxy server in a go routine that returns on the error
@@ -270,6 +270,12 @@ func Run(done chan error, o Options) error {
 	}
 	if o.WatchedNamespaces == nil {
 		return fmt.Errorf("failed to get list of watched namespaces from options")
+	}
+
+	watchedNamespaceMap := make(map[string]interface{})
+	// Convert string list to map
+	for _, ns := range o.WatchedNamespaces {
+		watchedNamespaceMap[ns] = nil
 	}
 
 	if o.Cache == nil {
@@ -297,7 +303,7 @@ func Run(done chan error, o Options) error {
 		server.Handler = InjectOwnerReferenceHandler(server.Handler, o.ControllerMap, o.RESTMapper)
 	}
 	// Always add cache handler
-	server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper, o.WatchedNamespaces)
+	server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper, watchedNamespaceMap)
 
 	l, err := server.Listen(o.Address, o.Port)
 	if err != nil {
