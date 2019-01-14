@@ -51,14 +51,15 @@ func main() {
 
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{
-		Address:          "localhost",
-		Port:             8888,
-		KubeConfig:       mgr.GetConfig(),
-		Cache:            mgr.GetCache(),
-		RESTMapper:       mgr.GetRESTMapper(),
-		ControllerMap:    cMap,
-		NoOwnerInjection: true,
-		LogRequests:      true,
+		Address:           "localhost",
+		Port:              8888,
+		KubeConfig:        mgr.GetConfig(),
+		Cache:             mgr.GetCache(),
+		RESTMapper:        mgr.GetRESTMapper(),
+		ControllerMap:     cMap,
+		NoOwnerInjection:  true,
+		LogRequests:       true,
+		WatchedNamespaces: []string{namespace},
 	})
 	if err != nil {
 		log.Fatalf("error starting proxy: %v", err)
