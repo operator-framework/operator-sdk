@@ -130,7 +130,11 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 			}
 		}()
 	}
-	defer cleanupScorecard()
+	defer func() {
+		if err := cleanupScorecard(); err != nil {
+			log.Errorf("Failed to clenup resources: (%v)", err)
+		}
+	}()
 	var err error
 	kubeconfig, SCConf.Namespace, err = k8sInternal.GetKubeconfigAndNamespace(SCConf.KubeconfigPath)
 	if err != nil {
@@ -138,11 +142,17 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	}
 	scheme := runtime.NewScheme()
 	// scheme for client go
-	cgoscheme.AddToScheme(scheme)
+	if err := cgoscheme.AddToScheme(scheme); err != nil {
+		return fmt.Errorf("failed to add client-go scheme to client: (%v)", err)
+	}
 	// api extensions scheme (CRDs)
-	extscheme.AddToScheme(scheme)
-	// olm api (CSVs)
-	olmApi.AddToScheme(scheme)
+	if err := extscheme.AddToScheme(scheme); err != nil {
+		return fmt.Errorf("failed to add failed to add extensions api scheme to client: (%v)", err)
+	}
+	// olm api (CS
+	if err := olmApi.AddToScheme(scheme); err != nil {
+		return fmt.Errorf("failed to add failed to add oml api scheme (CSVs) to client: (%v)", err)
+	}
 	dynamicDecoder = serializer.NewCodecFactory(scheme).UniversalDeserializer()
 	// if a user creates a new CRD, we need to be able to reset the rest mapper
 	// temporary kubeclient to get a cached discovery

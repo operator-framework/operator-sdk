@@ -24,6 +24,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -182,7 +184,11 @@ func writingIntoCRsHasEffect(obj *unstructured.Unstructured) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get logs: %v", err)
 	}
-	defer readCloser.Close()
+	defer func() {
+		if err := readCloser.Close(); err != nil && !fileutil.IsClosedError(err) {
+			log.Errorf("Failed to close pod log reader: (%v)", err)
+		}
+	}()
 	buf := new(bytes.Buffer)
 	_, err = buf.ReadFrom(readCloser)
 	if err != nil {

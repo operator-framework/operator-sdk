@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"time"
 
@@ -28,6 +27,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"github.com/ghodss/yaml"
+	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -114,7 +114,7 @@ func createFromYAMLFile(yamlPath string) error {
 			}
 			// don't store error, as only error will be timeout. Error from runtime client will be easier for
 			// the user to understand than the timeout error, so just use that if we fail
-			wait.PollImmediate(time.Second*1, time.Second*10, func() (bool, error) {
+			_ = wait.PollImmediate(time.Second*1, time.Second*10, func() (bool, error) {
 				restMapper.Reset()
 				_, err := restMapper.RESTMappings(obj.GetObjectKind().GroupVersionKind().GroupKind())
 				if err != nil {
@@ -140,7 +140,11 @@ func createKubeconfigSecret() error {
 	if err != nil {
 		return err
 	}
-	defer os.Remove(kc.Name())
+	defer func() {
+		if err := os.Remove(kc.Name()); err != nil {
+			log.Errorf("Failed to delete generated kubeconfig file: (%v)", err)
+		}
+	}()
 	kc, err = os.Open(kc.Name())
 	if err != nil {
 		return err

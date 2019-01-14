@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/scorecard"
@@ -42,7 +43,9 @@ func NewScorecardCmd() *cobra.Command {
 	scorecardCmd.Flags().StringVar(&scorecard.SCConf.ProxyPullPolicy, "proxy-pull-policy", "Always", "Pull policy for scorecard proxy image")
 	scorecardCmd.Flags().BoolVar(&scorecard.SCConf.Verbose, "verbose", false, "Enable verbose logging")
 	// Since it's difficult to handle multiple CRs, we will require users to specify what CR they want to test; we can handle this better in the future
-	scorecardCmd.MarkFlagRequired("cr-manifest")
+	if err := scorecardCmd.MarkFlagRequired("cr-manifest"); err != nil {
+		log.Fatalf("Failed to mark `cr-manifest` flag for `scorecard` subcommand as required")
+	}
 
 	return scorecardCmd
 }
