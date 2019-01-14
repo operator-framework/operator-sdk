@@ -24,6 +24,10 @@ const (
 	// this value is empty if the operator is running with clusterScope.
 	WatchNamespaceEnvVar = "WATCH_NAMESPACE"
 
+	// WatchAllNamespacesKey is the constanct for a key value to set
+	// WATCH_NAMESPACE to declare that this operator is watching ALL namespaced.
+	WatchAllNamespacesKey = "__ALL_NS__"
+
 	// OperatorNameEnvVar is the constant for env variable OPERATOR_NAME
 	// wich is the name of the current operator
 	OperatorNameEnvVar = "OPERATOR_NAME"

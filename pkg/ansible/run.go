@@ -47,6 +47,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) {
 	} else {
 		log.Infof("%v environment variable not set. This operator is watching all namespaces.",
 			k8sutil.WatchNamespaceEnvVar)
+		namespace = k8sutil.WatchAllNamespacesKey
 	}
 
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{
