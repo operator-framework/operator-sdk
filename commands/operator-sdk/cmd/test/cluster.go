@@ -156,7 +156,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 			}
 			defer func() {
 				if err := readCloser.Close(); err != nil && !fileutil.IsClosedError(err) {
-					log.Printf("Failed to close pod log reader: (%v)", err)
+					log.Errorf("Failed to close pod log reader: (%v)", err)
 				}
 			}()
 			buf := new(bytes.Buffer)
