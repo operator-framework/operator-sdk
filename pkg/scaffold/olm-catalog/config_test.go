@@ -31,8 +31,8 @@ func TestConfig(t *testing.T) {
 	if err := testConfig.setFields(); err != nil {
 		t.Errorf("set fields crd-cr paths dir only: (%v)", err)
 	}
-	if len(testConfig.CRDCRPaths) != 2 {
-		t.Errorf("wanted 2 crd/cr files, got: %v", testConfig.CRDCRPaths)
+	if len(testConfig.CRDCRPaths) != 3 {
+		t.Errorf("wanted 3 crd/cr files, got: %v", testConfig.CRDCRPaths)
 	}
 
 	testConfig = &CSVConfig{
@@ -44,6 +44,7 @@ func TestConfig(t *testing.T) {
 	want := []string{
 		filepath.Join(crdsDir, "app_v1alpha1_app_cr.yaml"),
 		filepath.Join(crdsDir, "app_v1alpha1_app_crd.yaml"),
+		filepath.Join(crdsDir, "app_v1alpha2_app_crd.yaml"),
 	}
 	if !reflect.DeepEqual(want, testConfig.CRDCRPaths) {
 		t.Errorf("wanted crd/cr files %v, got %v", want, testConfig.CRDCRPaths)

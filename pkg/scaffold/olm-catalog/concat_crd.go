@@ -51,14 +51,12 @@ func (s *ConcatCRD) CustomRender() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	return s.concatCSVsInPaths(csvConfig.CRDCRPaths)
+	return concatCRDsInPaths(csvConfig.CRDCRPaths)
 }
 
-// concatCSVsInCRDsDir concatenates CRD manifests found at crdPaths into one
+// concatCRDsInPaths concatenates CRD manifests found at crdPaths into one
 // file, delimited by `---`.
-func (s *ConcatCRD) concatCSVsInPaths(crdPaths []string) ([]byte, error) {
-	var concatCRD []byte
+func concatCRDsInPaths(crdPaths []string) (cb []byte, err error) {
 	for _, f := range crdPaths {
 		yamlData, err := ioutil.ReadFile(f)
 		if err != nil {
@@ -68,16 +66,15 @@ func (s *ConcatCRD) concatCSVsInPaths(crdPaths []string) ([]byte, error) {
 		scanner := yamlutil.NewYAMLScanner(yamlData)
 		for scanner.Scan() {
 			yamlSpec := scanner.Bytes()
-
 			k, err := getKindfromYAML(yamlSpec)
 			if err != nil {
 				return nil, err
 			}
 			if k == "CustomResourceDefinition" {
-				concatCRD = yamlutil.CombineManifests(concatCRD, yamlSpec)
+				cb = yamlutil.CombineManifests(cb, yamlSpec)
 			}
 		}
 	}
 
-	return concatCRD, nil
+	return cb, nil
 }

@@ -77,6 +77,9 @@ spec:
     - kind: App
       name: apps.example.com
       version: v1alpha1
+    - kind: App
+      name: apps.example.com
+      version: v1alpha2
   description: Placeholder description
   displayName: App Operator
   install:
@@ -196,5 +199,32 @@ func TestUpdateVersion(t *testing.T) {
 	wantedReplaces := getCSVName("app-operator", "1.0.1")
 	if csv.Spec.Replaces != wantedReplaces {
 		t.Errorf("Wanted csv replaces %s, got %s", wantedReplaces, csv.Spec.Replaces)
+	}
+}
+
+func TestGetDisplayName(t *testing.T) {
+	cases := []struct {
+		input, wanted string
+	}{
+		{"Appoperator", "Appoperator"},
+		{"appoperator", "Appoperator"},
+		{"appoperatoR", "Appoperato R"},
+		{"AppOperator", "App Operator"},
+		{"appOperator", "App Operator"},
+		{"app-operator", "App Operator"},
+		{"app-_operator", "App Operator"},
+		{"App-operator", "App Operator"},
+		{"app-_Operator", "App Operator"},
+		{"app--Operator", "App Operator"},
+		{"app--_Operator", "App Operator"},
+		{"APP", "APP"},
+		{"another-AppOperator_againTwiceThrice More", "Another App Operator Again Twice Thrice More"},
+	}
+
+	for _, c := range cases {
+		dn := getDisplayName(c.input)
+		if dn != c.wanted {
+			t.Errorf("wanted %s, got %s", c.wanted, dn)
+		}
 	}
 }
