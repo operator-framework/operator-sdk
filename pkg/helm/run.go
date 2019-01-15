@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package helm
 
 import (
 	"fmt"
@@ -25,7 +25,6 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
-	"github.com/spf13/pflag"
 
 	"k8s.io/helm/pkg/storage"
 	"k8s.io/helm/pkg/storage/driver"
@@ -43,46 +42,39 @@ func printVersion() {
 	log.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
 }
 
-func main() {
-	hflags := hoflags.AddTo(pflag.CommandLine)
-	pflag.Parse()
-
+// Run runs the helm operator
+func Run(flags *hoflags.HelmOperatorFlags) error {
 	logf.SetLogger(logf.ZapLogger(false))
 
 	printVersion()
 
-	namespace, err := k8sutil.GetWatchNamespace()
-	if err != nil {
-		log.Error(err, "Failed to get watch namespace")
-		os.Exit(1)
+	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
+	if found {
+		log.Info("Watching single namespace", "namespace", namespace)
+	} else {
+		log.Info(k8sutil.WatchNamespaceEnvVar + " environment variable not set, watching all namespaces")
 	}
 
 	cfg, err := config.GetConfig()
 	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
+		return err
 	}
 
 	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
 	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
+		return err
 	}
-
-	log.Info("Registering Components.")
 
 	// Create Tiller's storage backend and kubernetes client
 	storageBackend := storage.Init(driver.NewMemory())
 	tillerKubeClient, err := client.NewFromManager(mgr)
 	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
+		return err
 	}
 
-	factories, err := release.NewManagerFactoriesFromFile(storageBackend, tillerKubeClient, hflags.WatchesFile)
+	factories, err := release.NewManagerFactoriesFromFile(storageBackend, tillerKubeClient, flags.WatchesFile)
 	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
+		return err
 	}
 
 	for gvk, factory := range factories {
@@ -91,20 +83,14 @@ func main() {
 			Namespace:               namespace,
 			GVK:                     gvk,
 			ManagerFactory:          factory,
-			ReconcilePeriod:         hflags.ReconcilePeriod,
+			ReconcilePeriod:         flags.ReconcilePeriod,
 			WatchDependentResources: true,
 		})
 		if err != nil {
-			log.Error(err, "")
-			os.Exit(1)
+			return err
 		}
 	}
 
-	log.Info("Starting the Cmd.")
-
 	// Start the Cmd
-	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
-		log.Error(err, "Manager exited non-zero")
-		os.Exit(1)
-	}
+	return mgr.Start(signals.SetupSignalHandler())
 }

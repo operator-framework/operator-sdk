@@ -23,24 +23,24 @@ func TestFileReady(t *testing.T) {
 	r := NewFileReady()
 	err := r.Set()
 	if err != nil {
-		t.Errorf("could not set ready file: %v", err)
+		t.Errorf("Could not set ready file: %v", err)
 	}
 
 	_, err = os.Stat(FileName)
 	if err != nil {
-		t.Errorf("did not find expected file at %s: %v", FileName, err)
+		t.Errorf("Did not find expected file at %s: %v", FileName, err)
 	}
 
 	err = r.Unset()
 	if err != nil {
-		t.Errorf("could not unset ready file: %v", err)
+		t.Errorf("Could not unset ready file: %v", err)
 	}
 
 	_, err = os.Stat(FileName)
 	if err == nil {
-		t.Errorf("file still exists at %s", FileName)
+		t.Errorf("File still exists at %s", FileName)
 	}
 	if !os.IsNotExist(err) {
-		t.Errorf("error determining if file still exists at %s: %v", FileName, err)
+		t.Errorf("Error determining if file still exists at %s: %v", FileName, err)
 	}
 }

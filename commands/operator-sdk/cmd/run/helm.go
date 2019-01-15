@@ -15,26 +15,26 @@
 package run
 
 import (
-	"github.com/operator-framework/operator-sdk/pkg/ansible"
-	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
+	"github.com/operator-framework/operator-sdk/pkg/helm"
+	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 
 	"github.com/spf13/cobra"
 )
 
-// NewAnsibleCmd returns a command that will run an ansible operator
-func NewAnsibleCmd() *cobra.Command {
-	var flags *aoflags.AnsibleOperatorFlags
+// NewHelmCmd returns a command that will run a helm operator
+func NewHelmCmd() *cobra.Command {
+	var flags *hoflags.HelmOperatorFlags
 	newCmd := &cobra.Command{
-		Use:   "ansible",
-		Short: "Runs as an ansible operator",
-		Long: `Runs as an ansible operator. This is intended to be used when running
+		Use:   "helm",
+		Short: "Runs as a helm operator",
+		Long: `Runs as a helm operator. This is intended to be used when running
 in a Pod inside a cluster. Developers wanting to run their operator locally
 should use "up local" instead.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return ansible.Run(flags)
+		Run: func(cmd *cobra.Command, args []string) {
+			helm.Run(flags)
 		},
 	}
-	flags = aoflags.AddTo(newCmd.Flags())
+	flags = hoflags.AddTo(newCmd.Flags())
 
 	return newCmd
 }

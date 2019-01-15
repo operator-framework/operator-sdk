@@ -95,7 +95,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) error {
 		defer func() {
 			err := os.Remove(tlConfig.namespacedManPath)
 			if err != nil {
-				log.Errorf("could not delete temporary namespace manifest file: (%v)", err)
+				log.Errorf("Could not delete temporary namespace manifest file: (%v)", err)
 			}
 		}()
 	}
@@ -108,7 +108,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) error {
 		defer func() {
 			err := os.Remove(tlConfig.globalManPath)
 			if err != nil {
-				log.Errorf("could not delete global manifest file: (%v)", err)
+				log.Errorf("Could not delete global manifest file: (%v)", err)
 			}
 		}()
 	}
@@ -127,7 +127,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) error {
 		defer func() {
 			err := os.Remove(tlConfig.globalManPath)
 			if err != nil {
-				log.Errorf("could not delete empty manifest file: (%v)", err)
+				log.Errorf("Could not delete empty manifest file: (%v)", err)
 			}
 		}()
 	}
