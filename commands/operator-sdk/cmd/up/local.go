@@ -25,26 +25,17 @@ import (
 	"strings"
 	"syscall"
 
-	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
-
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/ansible"
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
-	"github.com/operator-framework/operator-sdk/pkg/helm/client"
-	"github.com/operator-framework/operator-sdk/pkg/helm/controller"
+	"github.com/operator-framework/operator-sdk/pkg/helm"
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
-	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
-	"k8s.io/helm/pkg/storage"
-	"k8s.io/helm/pkg/storage/driver"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 // NewLocalCmd - up local command to run an operator loccally
@@ -172,50 +163,14 @@ func upLocalHelm() {
 		log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
 	}
 
-	logf.SetLogger(logf.ZapLogger(false))
-
-	printVersion()
-
-	cfg, err := config.GetConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Create Tiller's storage backend and kubernetes client
-	storageBackend := storage.Init(driver.NewMemory())
-	tillerKubeClient, err := client.NewFromManager(mgr)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	factories, err := release.NewManagerFactoriesFromFile(storageBackend, tillerKubeClient, helmOperatorFlags.WatchesFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for gvk, factory := range factories {
-		// Register the controller with the factory.
-		err := controller.Add(mgr, controller.WatchOptions{
-			Namespace:               namespace,
-			GVK:                     gvk,
-			ManagerFactory:          factory,
-			ReconcilePeriod:         helmOperatorFlags.ReconcilePeriod,
-			WatchDependentResources: true,
-		})
-		if err != nil {
-			log.Fatal(err)
+	// Set the kubeconfig that the manager will be able to grab
+	if namespace != "" {
+		if err := os.Setenv(k8sutil.WatchNamespaceEnvVar, namespace); err != nil {
+			log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
 		}
 	}
 
-	// Start the Cmd
-	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
-		log.Fatal(err)
-	}
+	helm.Run(helmOperatorFlags)
 }
 
 func printVersion() {

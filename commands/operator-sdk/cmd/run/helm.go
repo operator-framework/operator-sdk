@@ -12,26 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package run
 
 import (
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/run"
+	"github.com/operator-framework/operator-sdk/pkg/helm"
+	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 
 	"github.com/spf13/cobra"
 )
 
-// NewRunCmd returns a command that contains subcommands to run specific
-// operator types.
-func NewRunCmd() *cobra.Command {
-	runCmd := &cobra.Command{
-		Use:   "run",
-		Short: "Runs a generic operator",
-		Long: `Runs a generic operator. This is intended to be used when running
+// NewHelmCmd returns a command that will run a helm operator
+func NewHelmCmd() *cobra.Command {
+	var flags *hoflags.HelmOperatorFlags
+	newCmd := &cobra.Command{
+		Use:   "helm",
+		Short: "Runs as a helm operator",
+		Long: `Runs as a helm operator. This is intended to be used when running
 in a Pod inside a cluster. Developers wanting to run their operator locally
 should use "up local" instead.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			helm.Run(flags)
+		},
 	}
+	flags = hoflags.AddTo(newCmd.Flags())
 
-	runCmd.AddCommand(run.NewAnsibleCmd())
-	runCmd.AddCommand(run.NewHelmCmd())
-	return runCmd
+	return newCmd
 }
