@@ -567,10 +567,10 @@
   version = "v2.0.1"
 
 [[projects]]
-  digest = "1:7365acd48986e205ccb8652cc746f09c8b7876030d53710ea6ef7d0bd0dcd7ca"
+  digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
   name = "github.com/pkg/errors"
   packages = ["."]
-  pruneopts = ""
+  pruneopts = "UT"
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
 
@@ -1175,7 +1175,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:0cc7d194e005097afad585545a3049ac7b5d1e3a1bfa86aa6bf6f2fb0e0a5063"
+  digest = "1:4defc5df1acbcc491730533734e94a8571ad8c005ca70b71e9697113a27a0166"
   name = "k8s.io/gengo"
   packages = [
     "args",
@@ -1184,7 +1184,7 @@
     "parser",
     "types",
   ]
-  pruneopts = ""
+  pruneopts = "UT"
   revision = "fd15ee9cc2f77baa4f31e59e6acbf21146455073"
 
 [[projects]]
@@ -1219,10 +1219,10 @@
   version = "v2.12.0"
 
 [[projects]]
-  digest = "1:4f5eb833037cc0ba0bf8fe9cae6be9df62c19dd1c869415275c708daa8ccfda5"
+  digest = "1:e2999bf1bb6eddc2a6aa03fe5e6629120a53088926520ca3b4765f77d7ff7eab"
   name = "k8s.io/klog"
   packages = ["."]
-  pruneopts = ""
+  pruneopts = "UT"
   revision = "a5bc97fbc634d635061f3146511332c7e313a55a"
   version = "v0.1.0"
 
@@ -1437,7 +1437,7 @@
   version = "v0.1.8"
 
 [[projects]]
-  digest = "1:b44bf3e4adc37dfebcd1a3715d472509e0f4cf0ac24038cd7fc5654f176bd420"
+  digest = "1:682237faf8a777ed193912b47f933c5c900829ce01079da3f41455537c0e471a"
   name = "sigs.k8s.io/controller-tools"
   packages = [
     "pkg/crd/generator",
@@ -1447,7 +1447,7 @@
     "pkg/internal/general",
     "pkg/util",
   ]
-  pruneopts = ""
+  pruneopts = "UT"
   revision = "b072ef59824b16023b0e12c94d0040d99059a961"
   version = "v0.1.7"
 
