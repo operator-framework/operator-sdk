@@ -27,8 +27,8 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/storage"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
-	"k8s.io/helm/pkg/storage/driver"
 
+	"k8s.io/helm/pkg/storage/driver"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -81,7 +81,7 @@ func Run(flags *hoflags.HelmOperatorFlags) {
 	}
 
 	if flags.StorageDriver == driver.MemoryDriverName {
-		log.Info("Release history persistence disabled", "storageDriver", flags.StorageDriver)
+		log.Info("Release history persistence disabled. This driver is not recommended for production use. When the process exits, all state about release history is lost.", "storageDriver", flags.StorageDriver)
 	} else {
 		log.Info("Release history persistence enabled", "storageDriver", flags.StorageDriver, "storageNamespace", storageNamespace)
 	}
@@ -141,7 +141,7 @@ func getStorageNamespace(driverName, storageNamespace, watchNamespace string) (s
 		if watchNamespace != "" {
 			return watchNamespace, nil
 		}
-		return "", errors.New("must set storage namespace when watching all namespaces")
+		return "", errors.New("must set storage namespace when running outside of cluster and watching all namespaces")
 	}
 
 	if err != nil {
