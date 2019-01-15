@@ -49,7 +49,7 @@ test_operator() {
     then
         kubectl describe pods -l "app.kubernetes.io/instance=${release_name}"
         kubectl describe deployments ${nginx_deployment}
-        kubectl logs deployment/${nginx_deployment}
+        kubectl logs deployment/nginx-operator
         exit 1
     fi
 
@@ -59,22 +59,22 @@ test_operator() {
     # scale deployment replicas to 2 and verify the
     # deployment automatically scales back down to 1.
     kubectl scale deployment/${nginx_deployment} --replicas=2
-    if ! timeout 1m test $(kubectl get deployment/${nginx_deployment} -o jsonpath="{..spec.replicas}") -eq 1;
+    if ! timeout 1m bash -c -- "until test \$(kubectl get deployment/${nginx_deployment} -o jsonpath='{..spec.replicas}') -eq 1; do sleep 1; done";
     then
         kubectl describe pods -l "app.kubernetes.io/instance=${release_name}"
         kubectl describe deployments ${nginx_deployment}
-        kubectl logs deployment/${nginx_deployment}
+        kubectl logs deployment/nginx-operator
         exit 1
     fi
 
     # update CR to replicaCount=2 and verify the deployment
     # automatically scales up to 2 replicas.
     kubectl patch nginxes.helm.example.com example-nginx -p '[{"op":"replace","path":"/spec/replicaCount","value":2}]' --type=json
-    if ! timeout 1m test $(kubectl get deployment/${nginx_deployment} -o jsonpath="{..spec.replicas}") -eq 2;
+    if ! timeout 1m bash -c -- "until test \$(kubectl get deployment/${nginx_deployment} -o jsonpath='{..spec.replicas}') -eq 2; do sleep 1; done";
     then
         kubectl describe pods -l "app.kubernetes.io/instance=${release_name}"
         kubectl describe deployments ${nginx_deployment}
-        kubectl logs deployment/${nginx_deployment}
+        kubectl logs deployment/nginx-operator
         exit 1
     fi
 
