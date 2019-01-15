@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package helm
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"runtime"
@@ -26,7 +27,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/storage"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
-	"github.com/spf13/pflag"
+	"k8s.io/helm/pkg/storage/driver"
 
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -42,23 +43,22 @@ func printVersion() {
 	log.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
 }
 
-func main() {
-	hflags := hoflags.AddTo(pflag.CommandLine)
-	pflag.Parse()
-
+// Run runs the helm operator
+func Run(flags *hoflags.HelmOperatorFlags) {
 	logf.SetLogger(logf.ZapLogger(false))
 
 	printVersion()
 
-	watchNamespace, err := k8sutil.GetWatchNamespace()
-	if err != nil {
-		log.Error(err, "Failed to get watch namespace")
-		os.Exit(1)
+	watchNamespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
+	if found {
+		log.Info("Watching single namespace", "watchNamespace", watchNamespace)
+	} else {
+		log.Info(k8sutil.WatchNamespaceEnvVar + " environment variable not set, watching all namespaces")
 	}
 
-	operatorNamespace, err := k8sutil.GetOperatorNamespace()
+	storageNamespace, err := getStorageNamespace(flags.StorageDriver, flags.StorageNamespace, watchNamespace)
 	if err != nil {
-		log.Error(err, "Failed to get operator namespace")
+		log.Error(err, "Failed to get storage namespace")
 		os.Exit(1)
 	}
 
@@ -74,12 +74,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Info("Registering Components.")
-
-	storageBackend, err := storage.NewFromFlag(cfg, operatorNamespace, hflags.StorageBackend)
+	storageBackend, err := storage.NewFromFlag(cfg, storageNamespace, flags.StorageDriver)
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
+	}
+
+	if flags.StorageDriver == driver.MemoryDriverName {
+		log.Info("Release history persistence disabled", "storageDriver", flags.StorageDriver)
+	} else {
+		log.Info("Release history persistence enabled", "storageDriver", flags.StorageDriver, "storageNamespace", storageNamespace)
 	}
 
 	tillerKubeClient, err := client.NewFromManager(mgr)
@@ -88,7 +92,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	factories, err := release.NewManagerFactoriesFromFile(storageBackend, tillerKubeClient, hflags.WatchesFile)
+	factories, err := release.NewManagerFactoriesFromFile(storageBackend, tillerKubeClient, flags.WatchesFile)
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
@@ -100,7 +104,7 @@ func main() {
 			Namespace:               watchNamespace,
 			GVK:                     gvk,
 			ManagerFactory:          factory,
-			ReconcilePeriod:         hflags.ReconcilePeriod,
+			ReconcilePeriod:         flags.ReconcilePeriod,
 			WatchDependentResources: true,
 		})
 		if err != nil {
@@ -109,11 +113,40 @@ func main() {
 		}
 	}
 
-	log.Info("Starting the Cmd.")
-
 	// Start the Cmd
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
 		log.Error(err, "Manager exited non-zero")
 		os.Exit(1)
 	}
+}
+
+func getStorageNamespace(driverName, storageNamespace, watchNamespace string) (string, error) {
+	// A namespace isn't necessary when using the memory driver
+	if driverName == driver.MemoryDriverName {
+		return "", nil
+	}
+
+	// Use the provided storage namespace if set
+	if storageNamespace != "" {
+		return storageNamespace, nil
+	}
+
+	// Otherwise, try to get and use the operator namespace
+	operatorNamespace, err := k8sutil.GetOperatorNamespace()
+
+	// If a namespace could not be found for the current environment, (e.g.
+	// if we're running `operator-sdk up local`), but we have a watch
+	// namespace, use that instead.
+	if err == k8sutil.ErrNoNamespace {
+		if watchNamespace != "" {
+			return watchNamespace, nil
+		}
+		return "", errors.New("must set storage namespace when watching all namespaces")
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	return operatorNamespace, nil
 }
