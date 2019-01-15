@@ -40,22 +40,22 @@ func NewGenerateOpenAPICmd() *cobra.Command {
 		Long: ` generate openapi generates OpenAPI validation specs in Go from types in
 all pkg/apis/<group>/<version> directories.
 `,
-		Run: openAPIFunc,
+		RunE: openAPIFunc,
 	}
 
 	return openAPICmd
 }
 
-func openAPIFunc(cmd *cobra.Command, args []string) {
+func openAPIFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 0 {
-		log.Fatalf("Command %s doesn't accept any arguments", cmd.CommandPath())
+		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 
-	OpenAPIGen()
+	return OpenAPIGen()
 }
 
 // OpenAPIGen generates OpenAPI validation specs for all CRD's in dirs.
-func OpenAPIGen() {
+func OpenAPIGen() error {
 	projutil.MustInProjectRoot()
 
 	absProjectPath := projutil.MustGetwd()
@@ -65,11 +65,13 @@ func OpenAPIGen() {
 	bpFile := filepath.Join(vendor, "k8s.io", "gengo", "boilerplate", "boilerplate.go.txt")
 	binDir := filepath.Join(absProjectPath, scaffold.BuildBinDir)
 
-	buildOpenAPIGenBinary(binDir, srcDir)
+	if err := buildOpenAPIGenBinary(binDir, srcDir); err != nil {
+		return err
+	}
 
 	gvMap, err := genutil.ParseGroupVersions()
 	if err != nil {
-		log.Fatalf("Failed to parse group versions: (%v)", err)
+		return fmt.Errorf("failed to parse group versions: (%v)", err)
 	}
 	gvb := &strings.Builder{}
 	for g, vs := range gvMap {
@@ -81,7 +83,9 @@ func OpenAPIGen() {
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	fqApiStr := genutil.CreateFQApis(apisPkg, gvMap)
 	fqApis := strings.Split(fqApiStr, ",")
-	openAPIGen(binDir, bpFile, fqApis)
+	if err := openAPIGen(binDir, bpFile, fqApis); err != nil {
+		return err
+	}
 
 	s := &scaffold.Scaffold{}
 	cfg := &input.Config{
@@ -89,37 +93,38 @@ func OpenAPIGen() {
 		AbsProjectPath: absProjectPath,
 		ProjectName:    filepath.Base(absProjectPath),
 	}
-	crdMap := getCRDGVKMap()
+	crdMap, err := getCRDGVKMap()
+	if err != nil {
+		return err
+	}
 	for g, vs := range gvMap {
 		for _, v := range vs {
 			gvks := crdMap[filepath.Join(g, v)]
 			for _, gvk := range gvks {
 				r, err := scaffold.NewResource(filepath.Join(gvk.Group, gvk.Version), gvk.Kind)
 				if err != nil {
-					log.Fatal(err)
+					return err
 				}
 				err = s.Execute(cfg,
 					&scaffold.CRD{Resource: r, IsOperatorGo: projutil.IsOperatorGo()},
 				)
 				if err != nil {
-					log.Fatal(err)
+					return err
 				}
 			}
 		}
 	}
 
 	log.Info("Code-generation complete.")
+	return nil
 }
 
-func buildOpenAPIGenBinary(binDir, codegenSrcDir string) {
+func buildOpenAPIGenBinary(binDir, codegenSrcDir string) error {
 	genDirs := []string{"./cmd/openapi-gen"}
-	err := genutil.BuildCodegenBinaries(genDirs, binDir, codegenSrcDir)
-	if err != nil {
-		log.Fatal(err)
-	}
+	return genutil.BuildCodegenBinaries(genDirs, binDir, codegenSrcDir)
 }
 
-func openAPIGen(binDir, headerFile string, fqApis []string) {
+func openAPIGen(binDir, headerFile string, fqApis []string) error {
 	cgPath := filepath.Join(binDir, "openapi-gen")
 	for _, fqApi := range fqApis {
 		args := []string{
@@ -130,15 +135,16 @@ func openAPIGen(binDir, headerFile string, fqApis []string) {
 		}
 		err := projutil.ExecCmd(exec.Command(cgPath, args...))
 		if err != nil {
-			log.Fatalf("Failed to perform code-generation: %v", err)
+			return fmt.Errorf("failed to perform code-generation: %v", err)
 		}
 	}
+	return nil
 }
 
-func getCRDGVKMap() map[string][]metav1.GroupVersionKind {
+func getCRDGVKMap() (map[string][]metav1.GroupVersionKind, error) {
 	crdInfos, err := ioutil.ReadDir(scaffold.CRDsDir)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	crdMap := make(map[string][]metav1.GroupVersionKind)
 	for _, info := range crdInfos {
@@ -146,11 +152,11 @@ func getCRDGVKMap() map[string][]metav1.GroupVersionKind {
 			path := filepath.Join(scaffold.CRDsDir, info.Name())
 			b, err := ioutil.ReadFile(path)
 			if err != nil {
-				log.Fatal(err)
+				return nil, err
 			}
 			crd := new(apiextv1beta1.CustomResourceDefinition)
 			if err := yaml.Unmarshal(b, crd); err != nil {
-				log.Fatal(err)
+				return nil, err
 			}
 			if crd.Kind != "CustomResourceDefinition" {
 				continue
@@ -163,5 +169,5 @@ func getCRDGVKMap() map[string][]metav1.GroupVersionKind {
 			})
 		}
 	}
-	return crdMap
+	return crdMap, nil
 }
