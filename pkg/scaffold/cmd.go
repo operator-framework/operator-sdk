@@ -104,7 +104,11 @@ func main() {
 	}
 
 	// Become the leader before proceeding
-	leader.Become(context.TODO(), "{{ .ProjectName }}-lock")
+	err = leader.Become(context.TODO(), "{{ .ProjectName }}-lock")
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
 
 	r := ready.NewFileReady()
 	err = r.Set()
@@ -112,7 +116,12 @@ func main() {
 		log.Error(err, "")
 		os.Exit(1)
 	}
-	defer r.Unset()
+	defer func() {
+		if err = r.Unset(); err != nil {
+			log.Error(err, "")
+			os.Exit(1)
+		}
+	}()
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})

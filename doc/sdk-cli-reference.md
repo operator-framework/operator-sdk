@@ -162,6 +162,25 @@ $ operator-sdk olm-catalog gen-csv --csv-version 0.1.1
 Generating CSV manifest version 0.1.1
 ```
 
+## migrate
+
+Adds a main.go source file and any associated source files for an operator that
+is not of the "go" type.
+
+### Example
+
+```console
+$ operator-sdk migrate
+2019/01/10 15:02:45 No playbook was found, so not including it in the new Dockerfile
+2019/01/10 15:02:45 renamed Dockerfile to build/Dockerfile.sdkold and replaced with newer version
+2019/01/10 15:02:45 Compare the new Dockerfile to your old one and manually migrate any customizations
+INFO[0000] Create cmd/manager/main.go
+INFO[0000] Create Gopkg.toml
+INFO[0000] Create build/Dockerfile
+INFO[0000] Create bin/entrypoint
+INFO[0000] Create bin/user_setup
+```
+
 ## new
 
 Scaffolds a new operator project.
@@ -262,6 +281,42 @@ Create deploy/crds/app_v1alpha1_appservice_crd.yaml
 Create deploy/crds/app_v1alpha1_appservice_cr.yaml
 ```
 
+## run
+
+### ansible
+
+Runs as an ansible operator process. This is intended to be used when running
+in a Pod inside a cluster. Developers wanting to run their operator locally
+should use `up local` instead.
+
+#### Flags
+
+* `--reconcile-period` string - Default reconcile period for controllers (default 1m0s)
+* `--watches-file` string - Path to the watches file to use (default "./watches.yaml")
+
+#### Example
+
+```bash
+$ operator-sdk run ansible --watches-file=/opt/ansible/watches.yaml --reconcile-period=30s
+```
+
+### helm
+
+Runs as a helm operator process. This is intended to be used when running
+in a Pod inside a cluster. Developers wanting to run their operator locally
+should use `up local` instead.
+
+#### Flags
+
+* `--reconcile-period` string - Default reconcile period for controllers (default 1m0s)
+* `--watches-file` string - Path to the watches file to use (default "./watches.yaml")
+
+#### Example
+
+```bash
+$ operator-sdk run helm --watches-file=/opt/helm/watches.yaml --reconcile-period=30s
+```
+
 ## test
 
 ### Available Commands
@@ -333,9 +388,12 @@ Test Successfully Completed
 
 ##### Use
 
-The operator-sdk up local command launches the operator on the local machine
-by building the operator binary with the ability to access a
-kubernetes cluster using a kubeconfig file.
+The `operator-sdk up local` command launches the operator on the local machine
+with the ability to access a kubernetes cluster using a kubeconfig file, and
+setting any necessary environment variables that the operator would expect to
+find when running in a cluster. For Go-based operators, this command will
+compile and run the operator binary. In the case of non-Go operators, it runs
+the operator-sdk binary itself as the operator.
 
 ##### Flags
 
