@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"

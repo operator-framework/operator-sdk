@@ -52,7 +52,7 @@ func main() {
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{
 		Address:           "localhost",
-		Port:              8888,
+		Port:              8889,
 		KubeConfig:        mgr.GetConfig(),
 		Cache:             mgr.GetCache(),
 		RESTMapper:        mgr.GetRESTMapper(),

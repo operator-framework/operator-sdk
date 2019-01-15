@@ -136,7 +136,7 @@ func createFromYAMLFile(yamlPath string) error {
 // the kubeconfig for communicating with the proxy
 func createKubeconfigSecret() error {
 	kubeconfigMap := make(map[string][]byte)
-	kc, err := proxyConf.Create(metav1.OwnerReference{Name: "scorecard"}, "http://localhost:8888", SCConf.Namespace)
+	kc, err := proxyConf.Create(metav1.OwnerReference{Name: "scorecard"}, "http://localhost:8889", SCConf.Namespace)
 	if err != nil {
 		return err
 	}
