@@ -127,7 +127,7 @@ func migrateHelm() error {
 	return nil
 }
 
-func renameDockerfile() {
+func renameDockerfile() error {
 	dockerfilePath := filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
 	newDockerfilePath := dockerfilePath + ".sdkold"
 	err := os.Rename(dockerfilePath, newDockerfilePath)
