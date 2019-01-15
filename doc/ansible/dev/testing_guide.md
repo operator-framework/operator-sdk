@@ -25,7 +25,7 @@ To begin, you sould have:
 
 ### Molecule scenarios
 If you look into the `molecule` directory, you will see three directories (`default`, `test-local`, `test-cluster`).
-Each of those directories contains a set of files that together make up what is know as a molecule *scenario*.
+Each of those directories contains a set of files that together make up what is known as a molecule *scenario*.
 
 Our molecule scenarios have the following basic structure:
 
