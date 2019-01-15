@@ -96,6 +96,9 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if !SCConf.BasicTests && !SCConf.OLMTests {
 		return errors.New("at least one test type is required")
 	}
+	if SCConf.OLMTests && SCConf.CSVPath == "" {
+		return fmt.Errorf("if olm-tests is enabled, the --csv-path flag must be set")
+	}
 	if SCConf.ProxyPullPolicy != "Always" && SCConf.ProxyPullPolicy != "Never" && SCConf.ProxyPullPolicy != "PullIfNotPresent" {
 		return fmt.Errorf("invalid proxy pull policy: (%s); valid values: Always, Never", SCConf.ProxyPullPolicy)
 	}
