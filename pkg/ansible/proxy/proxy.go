@@ -66,6 +66,8 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 				log.Error(err, "Failed to convert request")
 				break
 			}
+			// Set Content-Type header
+			w.Header().Set("Content-Type", "application/json")
 
 			// check if resource is present on request
 			if !r.IsResourceRequest {
@@ -148,10 +150,23 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 // then deleted so that the proxy can re-set with the correct authorization.
 func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap, restMapper meta.RESTMapper) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.Method == http.MethodPost {
-			log.Info("Injecting owner reference")
+		switch req.Method {
+		case http.MethodPost:
 			dump, _ := httputil.DumpRequest(req, false)
 			log.V(1).Info("Dumping request", "RequestDump", string(dump))
+			rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.NewString("api", "apis"), GrouplessAPIPrefixes: sets.NewString("api")}
+			r, err := rf.NewRequestInfo(req)
+			if err != nil {
+				m := "Could not convert request"
+				log.Error(err, m)
+				http.Error(w, m, http.StatusBadRequest)
+				return
+			}
+			if r.Subresource != "" {
+				// Don't inject owner ref if we are POSTing to a subresource
+				break
+			}
+			log.Info("Injecting owner reference")
 
 			user, _, ok := req.BasicAuth()
 			if !ok {
