@@ -181,14 +181,16 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	}
 
 	if enableTests {
-		testBinary := filepath.Join(absProjectPath, scaffold.BuildBinDir, filepath.Base(absProjectPath)+"-test")
-		buildTestCmd := exec.Command("go", "test", "-c", "-o", testBinary, testLocationBuild+"/...")
-		buildTestCmd.Env = goBuildEnv
-		buildTestCmd.Stdout = os.Stdout
-		buildTestCmd.Stderr = os.Stderr
-		err = buildTestCmd.Run()
-		if err != nil {
-			log.Fatalf("Failed to build test binary: (%v)", err)
+		if mainExists() {
+			testBinary := filepath.Join(absProjectPath, scaffold.BuildBinDir, filepath.Base(absProjectPath)+"-test")
+			buildTestCmd := exec.Command("go", "test", "-c", "-o", testBinary, testLocationBuild+"/...")
+			buildTestCmd.Env = goBuildEnv
+			buildTestCmd.Stdout = os.Stdout
+			buildTestCmd.Stderr = os.Stderr
+			err = buildTestCmd.Run()
+			if err != nil {
+				log.Fatalf("Failed to build test binary: (%v)", err)
+			}
 		}
 		// if a user is using an older sdk repo as their library, make sure they have required build files
 		testDockerfile := filepath.Join(scaffold.BuildTestDir, scaffold.DockerfileFile)
@@ -205,11 +207,21 @@ func buildFunc(cmd *cobra.Command, args []string) {
 			}
 
 			s := &scaffold.Scaffold{}
-			err = s.Execute(cfg,
-				&scaffold.TestFrameworkDockerfile{},
-				&scaffold.GoTestScript{},
-				&scaffold.TestPod{Image: image, TestNamespaceEnv: test.TestNamespaceEnv},
-			)
+			switch projutil.GetOperatorType() {
+			case projutil.OperatorTypeGo:
+				err = s.Execute(cfg,
+					&scaffold.TestFrameworkDockerfile{},
+					&scaffold.GoTestScript{},
+					&scaffold.TestPod{Image: image, TestNamespaceEnv: test.TestNamespaceEnv},
+				)
+			case projutil.OperatorTypeAnsible:
+				log.Fatal("Test scaffolding for Ansible Operators is not implemented")
+			case projutil.OperatorTypeHelm:
+				log.Fatal("Test scaffolding for Helm Operators is not implemented")
+			default:
+				log.Fatal("Failed to determine operator type")
+			}
+
 			if err != nil {
 				log.Fatalf("Test framework manifest scaffold failed: (%v)", err)
 			}

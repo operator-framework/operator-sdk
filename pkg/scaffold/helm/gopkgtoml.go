@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,39 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ansible
+package helm
 
 import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-const WatchesFile = "watches.yaml"
-
-type Watches struct {
+// GopkgToml - the Gopkg.toml file for a hybrid operator
+type GopkgToml struct {
 	input.Input
-	GeneratePlaybook bool
-	RolesDir         string
-	Resource         scaffold.Resource
 }
 
-// GetInput - gets the input
-func (w *Watches) GetInput() (input.Input, error) {
-	if w.Path == "" {
-		w.Path = WatchesFile
+func (s *GopkgToml) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = scaffold.GopkgTomlFile
 	}
-	w.TemplateBody = watchesAnsibleTmpl
-	w.RolesDir = RolesDir
-	return w.Input, nil
+	s.TemplateBody = gopkgTomlTmpl
+	return s.Input, nil
 }
 
-const watchesAnsibleTmpl = `---
-- version: {{.Resource.Version}}
-  group: {{.Resource.FullGroup}}
-  kind: {{.Resource.Kind}}
-  {{- if .GeneratePlaybook }}
-  playbook: /opt/ansible/playbook.yml
-  {{- else }}
-  role: /opt/ansible/{{.RolesDir}}/{{.Resource.LowerKind}}
-  {{- end }}
+const gopkgTomlTmpl = `[[constraint]]
+  name = "github.com/operator-framework/operator-sdk"
+  # The version rule is used for a specific release and the master branch for in between releases.
+  branch = "master" #osdk_branch_annotation
+  # version = "=v0.3.0" #osdk_version_annotation
+
+[prune]
+  go-tests = true
+  unused-packages = true
 `

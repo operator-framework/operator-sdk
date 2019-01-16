@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package helm
 
 import (
 	"fmt"
@@ -26,8 +26,8 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/watches"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
-	"github.com/spf13/pflag"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/helm/pkg/storage"
 	"k8s.io/helm/pkg/storage/driver"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -44,18 +44,18 @@ func printVersion() {
 	log.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
 }
 
-func main() {
-	hflags := hoflags.AddTo(pflag.CommandLine)
-	pflag.Parse()
-
+// Run runs the helm operator
+func Run(flags *hoflags.HelmOperatorFlags) {
 	logf.SetLogger(logf.ZapLogger(false))
 
 	printVersion()
 
-	namespace, err := k8sutil.GetWatchNamespace()
-	if err != nil {
-		log.Error(err, "Failed to get watch namespace")
-		os.Exit(1)
+	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
+	if found {
+		log.Info("Watching single namespace", "namespace", namespace)
+	} else {
+		log.Info(k8sutil.WatchNamespaceEnvVar + " environment variable not set, watching all namespaces")
+		namespace = metav1.NamespaceAll
 	}
 
 	cfg, err := config.GetConfig()
@@ -70,8 +70,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Info("Registering Components.")
-
 	// Create Tiller's storage backend and kubernetes client
 	storageBackend := storage.Init(driver.NewMemory())
 	tillerKubeClient, err := client.NewFromManager(mgr)
@@ -80,7 +78,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	watches, err := watches.Load(hflags.WatchesFile)
+	watches, err := watches.Load(flags.WatchesFile)
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
@@ -92,7 +90,7 @@ func main() {
 			Namespace:               namespace,
 			GVK:                     w.GroupVersionKind,
 			ManagerFactory:          release.NewManagerFactory(storageBackend, tillerKubeClient, w.ChartDir),
-			ReconcilePeriod:         hflags.ReconcilePeriod,
+			ReconcilePeriod:         flags.ReconcilePeriod,
 			WatchDependentResources: w.WatchDependentResources,
 		})
 		if err != nil {
@@ -100,8 +98,6 @@ func main() {
 			os.Exit(1)
 		}
 	}
-
-	log.Info("Starting the Cmd.")
 
 	// Start the Cmd
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {

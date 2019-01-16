@@ -12,35 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ready
+package ansible
 
-import (
-	"os"
-	"testing"
-)
+import "github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
-func TestFileReady(t *testing.T) {
-	r := NewFileReady()
-	err := r.Set()
-	if err != nil {
-		t.Errorf("Could not set ready file: %v", err)
-	}
+const TravisFile = ".travis.yml"
 
-	_, err = os.Stat(FileName)
-	if err != nil {
-		t.Errorf("Did not find expected file at %s: %v", FileName, err)
-	}
-
-	err = r.Unset()
-	if err != nil {
-		t.Errorf("Could not unset ready file: %v", err)
-	}
-
-	_, err = os.Stat(FileName)
-	if err == nil {
-		t.Errorf("File still exists at %s", FileName)
-	}
-	if !os.IsNotExist(err) {
-		t.Errorf("Error determining if file still exists at %s: %v", FileName, err)
-	}
+type Travis struct {
+	input.Input
 }
+
+// GetInput - gets the input
+func (t *Travis) GetInput() (input.Input, error) {
+	if t.Path == "" {
+		t.Path = TravisFile
+	}
+	t.TemplateBody = travisAnsibleTmpl
+
+	return t.Input, nil
+}
+
+const travisAnsibleTmpl = `sudo: required
+services: docker
+language: python
+install:
+  - pip install docker molecule openshift
+script:
+  - molecule test -s test-local
+`

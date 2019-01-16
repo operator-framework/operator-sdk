@@ -69,7 +69,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 ### Ansible tests
 
 1. Run [ansible e2e tests][ansible-e2e].
-    1. Create base ansible operator image by running [`hack/image/scaffold-ansible-image.go`][ansible-base].
+    1. Create base ansible operator project by running [`hack/image/ansible/scaffold-ansible-image.go`][ansible-base].
     2. Build base ansible operator image.
     3. Create and configure a new ansible type memcached-operator.
     4. Create cluster resources.
@@ -86,12 +86,18 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 ### Helm Tests
 
 1. Run [helm e2e tests][helm-e2e].
-    1. Build base helm operator image from [`test/helm-operator`][helm-base].
-    2. Create and configure a new helm type nginx-operator.
-    3. Create cluster resources.
-    4. Wait for operator to be ready.
-    5. Create nginx CR and wait for it to be ready.
-    6. Delete nginx CR and verify that finalizer (which writes a message in the operator logs) ran.
+    1. Create base helm operator project by running [`hack/image/helm/scaffold-helm-image.go`][helm-base].
+    2. Build base helm operator image.
+    3. Create and configure a new helm type nginx-operator.
+    4. Create cluster resources.
+    5. Wait for operator to be ready.
+    6. Create nginx CR and wait for it to be ready.
+    7. Scale up the dependent deployment and verify the operator reconciles it back down.
+    8. Scale up the CR and verify the dependent deployment scales up accordingly.
+    9. Delete nginx CR and verify that finalizer (which writes a message in the operator logs) ran.
+    10. Run `operator-sdk migrate` to add go source to the operator.
+    11. Run `operator-sdk build` to compile the new binary and build a new image.
+    12. Re-run steps 4-9 to test the migrated operator.
 
 **NOTE**: All created resources, including the namespace, are deleted using a bash trap when the test finishes
 
@@ -110,8 +116,8 @@ The markdown test does not create a new cluster and runs in a barebones travis V
 [go-e2e]: ../../../hack/tests/e2e-go.sh
 [tls-tests]: ../../../test/e2e/tls_util_test.go
 [ansible-e2e]: ../../../hack/tests/e2e-ansible.sh
-[ansible-base]: ../../../hack/image/scaffold-ansible-image.go
+[ansible-base]: ../../../hack/image/ansible/scaffold-ansible-image.go
 [helm-e2e]: ../../../hack/tests/e2e-helm.sh
-[helm-base]: ../../../test/helm-operator
+[helm-base]: ../../../hack/image/helm/scaffold-helm-image.go
 [marker-github]: https://github.com/crawford/marker
 [marker-local]: ../../../hack/ci/marker

@@ -12,35 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ready
+package ansible
 
 import (
-	"os"
-	"testing"
+	"path/filepath"
 )
 
-func TestFileReady(t *testing.T) {
-	r := NewFileReady()
-	err := r.Set()
-	if err != nil {
-		t.Errorf("Could not set ready file: %v", err)
-	}
-
-	_, err = os.Stat(FileName)
-	if err != nil {
-		t.Errorf("Did not find expected file at %s: %v", FileName, err)
-	}
-
-	err = r.Unset()
-	if err != nil {
-		t.Errorf("Could not unset ready file: %v", err)
-	}
-
-	_, err = os.Stat(FileName)
-	if err == nil {
-		t.Errorf("File still exists at %s", FileName)
-	}
-	if !os.IsNotExist(err) {
-		t.Errorf("Error determining if file still exists at %s: %v", FileName, err)
-	}
-}
+const (
+	filePathSep            = string(filepath.Separator)
+	RolesDir               = "roles"
+	MoleculeDir            = "molecule"
+	MoleculeTestClusterDir = MoleculeDir + filePathSep + "test-cluster"
+	MoleculeDefaultDir     = MoleculeDir + filePathSep + "default"
+	MoleculeTestLocalDir   = MoleculeDir + filePathSep + "test-local"
+)

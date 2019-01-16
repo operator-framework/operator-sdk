@@ -12,35 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ready
+package ansible
 
 import (
-	"os"
-	"testing"
+	"path/filepath"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-func TestFileReady(t *testing.T) {
-	r := NewFileReady()
-	err := r.Set()
-	if err != nil {
-		t.Errorf("Could not set ready file: %v", err)
-	}
+const RolesVarsMainFile = "vars" + filePathSep + "main.yml"
 
-	_, err = os.Stat(FileName)
-	if err != nil {
-		t.Errorf("Did not find expected file at %s: %v", FileName, err)
-	}
-
-	err = r.Unset()
-	if err != nil {
-		t.Errorf("Could not unset ready file: %v", err)
-	}
-
-	_, err = os.Stat(FileName)
-	if err == nil {
-		t.Errorf("File still exists at %s", FileName)
-	}
-	if !os.IsNotExist(err) {
-		t.Errorf("Error determining if file still exists at %s: %v", FileName, err)
-	}
+type RolesVarsMain struct {
+	input.Input
+	Resource scaffold.Resource
 }
+
+// GetInput - gets the input
+func (r *RolesVarsMain) GetInput() (input.Input, error) {
+	if r.Path == "" {
+		r.Path = filepath.Join(RolesDir, r.Resource.LowerKind, RolesVarsMainFile)
+	}
+	r.TemplateBody = rolesVarsMainAnsibleTmpl
+
+	return r.Input, nil
+}
+
+const rolesVarsMainAnsibleTmpl = `---
+# vars file for {{.Resource.LowerKind}}
+`

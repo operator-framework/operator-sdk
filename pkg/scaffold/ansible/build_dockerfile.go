@@ -15,36 +15,39 @@
 package ansible
 
 import (
+	"path/filepath"
+	"strings"
+
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/version"
 )
 
-const WatchesFile = "watches.yaml"
+const BuildDockerfileFile = "Dockerfile"
 
-type Watches struct {
+type BuildDockerfile struct {
 	input.Input
-	GeneratePlaybook bool
 	RolesDir         string
-	Resource         scaffold.Resource
+	ImageTag         string
+	GeneratePlaybook bool
 }
 
 // GetInput - gets the input
-func (w *Watches) GetInput() (input.Input, error) {
-	if w.Path == "" {
-		w.Path = WatchesFile
+func (b *BuildDockerfile) GetInput() (input.Input, error) {
+	if b.Path == "" {
+		b.Path = filepath.Join(scaffold.BuildDir, BuildDockerfileFile)
 	}
-	w.TemplateBody = watchesAnsibleTmpl
-	w.RolesDir = RolesDir
-	return w.Input, nil
+	b.TemplateBody = buildDockerfileAnsibleTmpl
+	b.RolesDir = RolesDir
+	b.ImageTag = strings.TrimSuffix(version.Version, "+git")
+	return b.Input, nil
 }
 
-const watchesAnsibleTmpl = `---
-- version: {{.Resource.Version}}
-  group: {{.Resource.FullGroup}}
-  kind: {{.Resource.Kind}}
-  {{- if .GeneratePlaybook }}
-  playbook: /opt/ansible/playbook.yml
-  {{- else }}
-  role: /opt/ansible/{{.RolesDir}}/{{.Resource.LowerKind}}
-  {{- end }}
+const buildDockerfileAnsibleTmpl = `FROM quay.io/operator-framework/ansible-operator:{{.ImageTag}}
+
+COPY {{.RolesDir}}/ ${HOME}/{{.RolesDir}}/
+COPY watches.yaml ${HOME}/watches.yaml
+{{- if .GeneratePlaybook }}
+COPY playbook.yml ${HOME}/playbook.yml
+{{- end }}
 `
