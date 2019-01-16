@@ -82,8 +82,13 @@ test/sanity:
 test/unit:
 	./hack/tests/unit.sh
 
-test/subcommand:
+test/subcommand: test/subcommand/test-local test/subcommand/scorecard
+
+test/subcommand/test-local:
 	./hack/tests/test-subcommand.sh
+
+test/subcommand/scorecard:
+	./hack/tests/scorecard-subcommand.sh
 
 test/e2e: test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm
 

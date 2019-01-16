@@ -289,6 +289,22 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap, restMapper
 	})
 }
 
+func RequestLogHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		// read body
+		body, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			log.Error(err, "Could not read request body")
+		}
+		// fix body
+		req.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+		log.Info("Request Info", "method", req.Method, "uri", req.RequestURI, "body", string(body))
+		// Removing the authorization so that the proxy can set the correct authorization.
+		req.Header.Del("Authorization")
+		h.ServeHTTP(w, req)
+	})
+}
+
 // HandlerChain will be used for users to pass defined handlers to the proxy.
 // The hander chain will be run after InjectingOwnerReference if it is added
 // and before the proxy handler.
@@ -301,11 +317,13 @@ type Options struct {
 	Port              int
 	Handler           HandlerChain
 	NoOwnerInjection  bool
+	LogRequests       bool
 	KubeConfig        *rest.Config
 	Cache             cache.Cache
 	RESTMapper        meta.RESTMapper
 	ControllerMap     *ControllerMap
 	WatchedNamespaces []string
+	DisableCache      bool
 }
 
 // Run will start a proxy server in a go routine that returns on the error
@@ -332,7 +350,7 @@ func Run(done chan error, o Options) error {
 		watchedNamespaceMap[ns] = nil
 	}
 
-	if o.Cache == nil {
+	if o.Cache == nil && !o.DisableCache {
 		// Need to initialize cache since we don't have one
 		log.Info("Initializing and starting informer cache...")
 		informerCache, err := cache.New(o.KubeConfig, cache.Options{})
@@ -356,8 +374,12 @@ func Run(done chan error, o Options) error {
 	if !o.NoOwnerInjection {
 		server.Handler = InjectOwnerReferenceHandler(server.Handler, o.ControllerMap, o.RESTMapper)
 	}
-	// Always add cache handler
-	server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper, watchedNamespaceMap)
+	if o.LogRequests {
+		server.Handler = RequestLogHandler(server.Handler)
+	}
+	if !o.DisableCache {
+		server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper, watchedNamespaceMap)
+	}
 
 	l, err := server.Listen(o.Address, o.Port)
 	if err != nil {
