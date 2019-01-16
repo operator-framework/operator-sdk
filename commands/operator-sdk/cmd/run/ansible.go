@@ -21,10 +21,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var flags *aoflags.AnsibleOperatorFlags
-
 // NewAnsibleCmd returns a command that will run an ansible operator
 func NewAnsibleCmd() *cobra.Command {
+	var flags *aoflags.AnsibleOperatorFlags
 	newCmd := &cobra.Command{
 		Use:   "ansible",
 		Short: "Runs as an ansible operator",

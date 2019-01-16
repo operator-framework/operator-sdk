@@ -15,36 +15,36 @@
 package ansible
 
 import (
+	"path/filepath"
+
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-const WatchesFile = "watches.yaml"
+const BuildTestFrameworkDockerfileFile = "Dockerfile"
 
-type Watches struct {
+type BuildTestFrameworkDockerfile struct {
 	input.Input
-	GeneratePlaybook bool
-	RolesDir         string
-	Resource         scaffold.Resource
 }
 
 // GetInput - gets the input
-func (w *Watches) GetInput() (input.Input, error) {
-	if w.Path == "" {
-		w.Path = WatchesFile
+func (b *BuildTestFrameworkDockerfile) GetInput() (input.Input, error) {
+	if b.Path == "" {
+		b.Path = filepath.Join(scaffold.BuildTestDir, BuildTestFrameworkDockerfileFile)
 	}
-	w.TemplateBody = watchesAnsibleTmpl
-	w.RolesDir = RolesDir
-	return w.Input, nil
+	b.TemplateBody = buildTestFrameworkDockerfileAnsibleTmpl
+
+	return b.Input, nil
 }
 
-const watchesAnsibleTmpl = `---
-- version: {{.Resource.Version}}
-  group: {{.Resource.FullGroup}}
-  kind: {{.Resource.Kind}}
-  {{- if .GeneratePlaybook }}
-  playbook: /opt/ansible/playbook.yml
-  {{- else }}
-  role: /opt/ansible/{{.RolesDir}}/{{.Resource.LowerKind}}
-  {{- end }}
+const buildTestFrameworkDockerfileAnsibleTmpl = `ARG BASEIMAGE
+FROM ${BASEIMAGE}
+USER 0
+RUN yum install -y python-devel gcc libffi-devel && pip install molecule
+ARG NAMESPACEDMAN
+ADD $NAMESPACEDMAN /namespaced.yaml
+ADD build/test-framework/ansible-test.sh /ansible-test.sh
+RUN chmod +x /ansible-test.sh
+USER 1001
+ADD . /opt/ansible/project
 `

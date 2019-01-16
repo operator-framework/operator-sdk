@@ -32,6 +32,7 @@ import (
 
 	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -49,6 +50,10 @@ type ControllerMap struct {
 	sync.RWMutex
 	internal map[schema.GroupVersionKind]controller.Controller
 	watch    map[schema.GroupVersionKind]bool
+}
+
+type marshaler interface {
+	MarshalJSON() ([]byte, error)
 }
 
 // CacheResponseHandler will handle proxied requests and check if the requested
@@ -106,19 +111,53 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 				break
 			}
 
-			un := unstructured.Unstructured{}
-			un.SetGroupVersionKind(k)
-			obj := client.ObjectKey{Namespace: r.Namespace, Name: r.Name}
-			err = informerCache.Get(context.Background(), obj, &un)
-			if err != nil {
-				// break here in case resource doesn't exist in cache but exists on APIserver
-				// This is very unlikely but provides user with expected 404
-				log.Info(fmt.Sprintf("Cache miss: %v, %v", k, obj))
-				break
+			var m marshaler
+
+			log.V(2).Info("Get resource in our cache", "r", r)
+			if r.Verb == "list" {
+				listOptions := &metav1.ListOptions{}
+				if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion, listOptions); err != nil {
+					log.Error(err, "Unable to decode list options from request")
+					break
+				}
+				lo := client.InNamespace(r.Namespace)
+				if err := lo.SetLabelSelector(listOptions.LabelSelector); err != nil {
+					log.Error(err, "Unable to set label selectors for the client")
+					break
+				}
+				if listOptions.FieldSelector != "" {
+					if err := lo.SetFieldSelector(listOptions.FieldSelector); err != nil {
+						log.Error(err, "Unable to set field selectors for the client")
+						break
+					}
+				}
+				k.Kind = k.Kind + "List"
+				un := unstructured.UnstructuredList{}
+				un.SetGroupVersionKind(k)
+				err = informerCache.List(context.Background(), lo, &un)
+				if err != nil {
+					// break here in case resource doesn't exist in cache but exists on APIserver
+					// This is very unlikely but provides user with expected 404
+					log.Info(fmt.Sprintf("cache miss: %v err-%v", k, err))
+					break
+				}
+				m = &un
+			} else {
+				un := unstructured.Unstructured{}
+				un.SetGroupVersionKind(k)
+				obj := client.ObjectKey{Namespace: r.Namespace, Name: r.Name}
+				err = informerCache.Get(context.Background(), obj, &un)
+				if err != nil {
+					// break here in case resource doesn't exist in cache but exists on APIserver
+					// This is very unlikely but provides user with expected 404
+					log.Info(fmt.Sprintf("Cache miss: %v, %v", k, obj))
+					break
+				}
+				m = &un
 			}
 
 			i := bytes.Buffer{}
-			resp, err := json.Marshal(un.Object)
+			resp, err := m.MarshalJSON()
 			if err != nil {
 				// return will give a 500
 				log.Error(err, "Failed to marshal data")
