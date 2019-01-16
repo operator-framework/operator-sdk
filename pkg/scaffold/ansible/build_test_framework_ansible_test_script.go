@@ -15,36 +15,33 @@
 package ansible
 
 import (
+	"path/filepath"
+
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-const WatchesFile = "watches.yaml"
+const BuildTestFrameworkAnsibleTestScriptFile = "ansible-test.sh"
 
-type Watches struct {
+type BuildTestFrameworkAnsibleTestScript struct {
 	input.Input
-	GeneratePlaybook bool
-	RolesDir         string
-	Resource         scaffold.Resource
 }
 
 // GetInput - gets the input
-func (w *Watches) GetInput() (input.Input, error) {
-	if w.Path == "" {
-		w.Path = WatchesFile
+func (b *BuildTestFrameworkAnsibleTestScript) GetInput() (input.Input, error) {
+	if b.Path == "" {
+		b.Path = filepath.Join(scaffold.BuildTestDir, BuildTestFrameworkAnsibleTestScriptFile)
 	}
-	w.TemplateBody = watchesAnsibleTmpl
-	w.RolesDir = RolesDir
-	return w.Input, nil
+	b.TemplateBody = buildTestFrameworkAnsibleTestScriptAnsibleTmpl
+
+	return b.Input, nil
 }
 
-const watchesAnsibleTmpl = `---
-- version: {{.Resource.Version}}
-  group: {{.Resource.FullGroup}}
-  kind: {{.Resource.Kind}}
-  {{- if .GeneratePlaybook }}
-  playbook: /opt/ansible/playbook.yml
-  {{- else }}
-  role: /opt/ansible/{{.RolesDir}}/{{.Resource.LowerKind}}
-  {{- end }}
+const buildTestFrameworkAnsibleTestScriptAnsibleTmpl = `#!/bin/sh
+export WATCH_NAMESPACE=${TEST_NAMESPACE}
+(/usr/local/bin/entrypoint > /tmp/operator.log 2>&1)&
+trap "kill $!" SIGINT SIGTERM EXIT
+
+cd ${HOME}/project
+exec molecule test -s test-cluster
 `

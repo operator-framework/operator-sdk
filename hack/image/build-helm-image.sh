@@ -2,8 +2,19 @@
 
 set -eux
 
+source hack/lib/test_lib.sh
+
+ROOTDIR="$(pwd)"
+GOTMP="$(mktemp -d -p $GOPATH/src)"
+trap_add 'rm -rf $GOTMP' EXIT
+BASEIMAGEDIR="$GOTMP/helm-operator"
+mkdir -p "$BASEIMAGEDIR"
+
 # build operator binary and base image
-GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o test/helm-operator/helm-operator test/helm-operator/cmd/helm-operator/main.go
-pushd test/helm-operator
-docker build -t "$1" .
+pushd "$BASEIMAGEDIR"
+go run "$ROOTDIR/hack/image/helm/scaffold-helm-image.go"
+
+mkdir -p build/_output/bin/
+cp $ROOTDIR/build/operator-sdk-dev-x86_64-linux-gnu build/_output/bin/helm-operator
+operator-sdk build $1
 popd

@@ -174,7 +174,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	}
 
 	if enableTests {
-		if !projutil.IsOperatorGo() || !projutil.IsDockerMultistage() {
+		if !projutil.IsDockerMultistage() {
 			log.Fatalf("In-cluster tests are only available for Go operators on hosts with Docker v17.05+")
 		}
 		// If a user is using an older sdk repo as their library, make sure they
@@ -192,13 +192,25 @@ func buildFunc(cmd *cobra.Command, args []string) {
 				ProjectName:    filepath.Base(absProjectPath),
 			}
 
-			err = (&scaffold.Scaffold{}).Execute(cfg,
-				&scaffold.TestFrameworkDockerfile{
-					Input: input.Input{IfExistsAction: input.Overwrite},
-				},
-				&scaffold.GoTestScript{},
-				&scaffold.TestPod{Image: image, TestNamespaceEnv: test.TestNamespaceEnv},
-			)
+			s := &scaffold.Scaffold{}
+			t := projutil.GetOperatorType()
+			switch t {
+			case projutil.OperatorTypeGo:
+				err = s.Execute(cfg,
+					&scaffold.TestFrameworkDockerfile{
+						Input: input.Input{IfExistsAction: input.Overwrite},
+					},
+					&scaffold.GoTestScript{},
+					&scaffold.TestPod{Image: image, TestNamespaceEnv: test.TestNamespaceEnv},
+				)
+			case projutil.OperatorTypeAnsible:
+				log.Fatal("Test scaffolding for Ansible Operators is not implemented")
+			case projutil.OperatorTypeHelm:
+				log.Fatal("Test scaffolding for Helm Operators is not implemented")
+			default:
+				log.Fatalf("unknown operator type %s", t)
+			}
+
 			if err != nil {
 				log.Fatalf("Test framework manifest scaffold failed: (%v)", err)
 			}
