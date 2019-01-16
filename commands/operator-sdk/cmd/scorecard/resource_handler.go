@@ -200,12 +200,16 @@ func addMountKubeconfigSecret(dep *appsv1.Deployment) {
 // addProxyContainer adds the container spec for the scorecard-proxy to the deployment's podspec
 func addProxyContainer(dep *appsv1.Deployment) {
 	var pullPolicy v1.PullPolicy
-	if SCConf.ProxyPullPolicy == "Always" {
+	switch SCConf.ProxyPullPolicy {
+	case "Always":
 		pullPolicy = v1.PullAlways
-	} else if SCConf.ProxyPullPolicy == "Never" {
+	case "Never":
 		pullPolicy = v1.PullNever
-	} else if SCConf.ProxyPullPolicy == "PullIfNotPresent" {
+	case "PullIfNotPresent":
 		pullPolicy = v1.PullIfNotPresent
+	default:
+		// this case shouldn't happen since we check the values in scorecard.go, but just in case, we'll default to always to prevent errors
+		pullPolicy = v1.PullAlways
 	}
 	dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, v1.Container{
 		Name:            "scorecard-proxy",

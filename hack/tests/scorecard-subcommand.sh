@@ -2,7 +2,7 @@
 
 DEST_IMAGE="quay.io/example/scorecard-proxy"
 
-set -e
+set -ex
 
 # build scorecard-proxy image (and delete intermediate builder image)
 ./hack/image/build-scorecard-proxy-image.sh $DEST_IMAGE
