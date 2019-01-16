@@ -26,6 +26,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/helm/pkg/storage"
 	"k8s.io/helm/pkg/storage/driver"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -53,6 +54,7 @@ func Run(flags *hoflags.HelmOperatorFlags) {
 		log.Info("Watching single namespace", "namespace", namespace)
 	} else {
 		log.Info(k8sutil.WatchNamespaceEnvVar + " environment variable not set, watching all namespaces")
+		namespace = metav1.NamespaceAll
 	}
 
 	cfg, err := config.GetConfig()

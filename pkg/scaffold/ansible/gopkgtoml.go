@@ -38,6 +38,18 @@ const gopkgTomlTmpl = `[[constraint]]
   branch = "master" #osdk_branch_annotation
   # version = "=v0.3.0" #osdk_version_annotation
 
+[[override]]
+  name = "k8s.io/api"
+  version = "kubernetes-1.12.3"
+
+[[override]]
+  name = "k8s.io/apimachinery"
+  version = "kubernetes-1.12.3"
+
+[[override]]
+  name = "k8s.io/client-go"
+  version = "kubernetes-1.12.3"
+
 [prune]
   go-tests = true
   unused-packages = true
