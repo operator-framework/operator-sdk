@@ -308,6 +308,7 @@ type Options struct {
 	RESTMapper        meta.RESTMapper
 	ControllerMap     *ControllerMap
 	WatchedNamespaces []string
+	DisableCache      bool
 }
 
 // Run will start a proxy server in a go routine that returns on the error
@@ -334,7 +335,7 @@ func Run(done chan error, o Options) error {
 		watchedNamespaceMap[ns] = nil
 	}
 
-	if o.Cache == nil {
+	if o.Cache == nil && !o.DisableCache {
 		// Need to initialize cache since we don't have one
 		log.Info("Initializing and starting informer cache...")
 		informerCache, err := cache.New(o.KubeConfig, cache.Options{})
@@ -361,8 +362,9 @@ func Run(done chan error, o Options) error {
 	if o.LogRequests {
 		server.Handler = RequestLogHandler(server.Handler)
 	}
-	// Always add cache handler
-	server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper, watchedNamespaceMap)
+	if !o.DisableCache {
+		server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper, watchedNamespaceMap)
+	}
 
 	l, err := server.Listen(o.Address, o.Port)
 	if err != nil {

@@ -54,12 +54,12 @@ func main() {
 		Address:           "localhost",
 		Port:              8889,
 		KubeConfig:        mgr.GetConfig(),
-		Cache:             mgr.GetCache(),
 		RESTMapper:        mgr.GetRESTMapper(),
 		ControllerMap:     cMap,
 		NoOwnerInjection:  true,
 		LogRequests:       true,
 		WatchedNamespaces: []string{namespace},
+		DisableCache:      true,
 	})
 	if err != nil {
 		log.Fatalf("error starting proxy: %v", err)
