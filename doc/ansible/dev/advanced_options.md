@@ -12,9 +12,9 @@ Some features can be overridden per resource via an annotation on that CR. The o
 | Feature | Yaml Key | Description| Annotation for override | default |
 |--------|----------|------------|-------------------------| --------|
 | Reconcile Period | `reconcilePeriod`  | time between reconcile runs for a particular CR  | ansbile.operator-sdk/reconcile-period  | 1m |
-| Manage Status | `manageStatus` | Allows the ansible operator to manage the conditions section of the resources status section. | | true |
+| Manage Status | `manageStatus` | Allows the ansible operator to manage the conditions section of each resource's status section. | | true |
 | Watching Dependent Resources | `watchDependentResources` | Allows the ansible operator to dynamically watch resources that are created by ansible | | true |
-| Max Runner Artifacts | `maxRunnerArtifacts` | Manages the number of [artifact directories](https://ansible-runner.readthedocs.io/en/latest/intro.html#runner-artifacts-directory-hierarchy) that ansible runner will keep in the operator container. | ansible.operator-sdk/max-runner-artifacts | 20 |
+| Max Runner Artifacts | `maxRunnerArtifacts` | Manages the number of [artifact directories](https://ansible-runner.readthedocs.io/en/latest/intro.html#runner-artifacts-directory-hierarchy) that ansible runner will keep in the operator container for each individual resource. | ansible.operator-sdk/max-runner-artifacts | 20 |
 
 
 #### Example
