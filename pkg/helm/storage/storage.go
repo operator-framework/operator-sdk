@@ -31,20 +31,20 @@ import (
 func NewFromFlag(cfg *rest.Config, namespace, storageDriver string) (*storage.Storage, error) {
 	switch storageDriver {
 	case driver.ConfigMapsDriverName:
-		return NewConfigMaps(cfg, namespace)
+		return newConfigMaps(cfg, namespace)
 	case driver.SecretsDriverName:
-		return NewSecrets(cfg, namespace)
+		return newSecrets(cfg, namespace)
 	case driver.MemoryDriverName:
-		return NewMemory(), nil
+		return newMemory(), nil
 	default:
 		return nil, fmt.Errorf("invalid storage driver \"%s\"", storageDriver)
 	}
 }
 
-// NewConfigMaps returns a ConfigMap storage backend. Release history will be
+// newConfigMaps returns a ConfigMap storage backend. Release history will be
 // stored using ConfigMap resources in the passed namespace. An error is returned
 // if a failure occurs creating a client from the passed REST config.
-func NewConfigMaps(cfg *rest.Config, namespace string) (*storage.Storage, error) {
+func newConfigMaps(cfg *rest.Config, namespace string) (*storage.Storage, error) {
 	client, err := corev1.NewForConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get v1 client: %s", err)
@@ -53,10 +53,10 @@ func NewConfigMaps(cfg *rest.Config, namespace string) (*storage.Storage, error)
 	return storage.Init(driver.NewConfigMaps(cmc)), nil
 }
 
-// NewSecrets returns a Secret storage backend. Release history will be
+// newSecrets returns a Secret storage backend. Release history will be
 // stored using Secret resources in the passed namespace. An error is returned
 // if a failure occurs creating a client from the passed REST config.
-func NewSecrets(cfg *rest.Config, namespace string) (*storage.Storage, error) {
+func newSecrets(cfg *rest.Config, namespace string) (*storage.Storage, error) {
 	client, err := corev1.NewForConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get v1 client: %s", err)
@@ -65,11 +65,11 @@ func NewSecrets(cfg *rest.Config, namespace string) (*storage.Storage, error) {
 	return storage.Init(driver.NewSecrets(sc)), nil
 }
 
-// NewMemory returns an in-memory storage driver. Release history will be
+// newMemory returns an in-memory storage driver. Release history will be
 // stored in the memory of the calling process.
 //
 // NOTE: This driver is not recommended for production use. When the process
 // exits, all state about release history is lost.
-func NewMemory() *storage.Storage {
+func newMemory() *storage.Storage {
 	return storage.Init(driver.NewMemory())
 }
