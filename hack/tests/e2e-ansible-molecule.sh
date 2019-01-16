@@ -11,14 +11,14 @@ trap_add 'rm -rf $GOTMP' EXIT
 pip install --user git+https://github.com/ansible/molecule.git
 pip install --user docker openshift jmespath
 
-deploy_operator() {
+deploy_prereqs() {
     kubectl create -f "$OPERATORDIR/deploy/service_account.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
     kubectl create -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_memcached_crd.yaml"
 }
 
-remove_operator() {
+remove_prereqs() {
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/service_account.yaml"
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/role.yaml"
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/role_binding.yaml"
@@ -44,10 +44,11 @@ TEST_CLUSTER_PORT=24443 operator-sdk test local --namespace default
 DEST_IMAGE="quay.io/example/memcached-operator:v0.0.2-test"
 sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
 operator-sdk build --enable-tests "$DEST_IMAGE"
-trap_add 'remove_operator' EXIT
-deploy_operator
+trap_add 'remove_prereqs' EXIT
+deploy_prereqs
 TEST_CLUSTER_PORT=25443 operator-sdk test cluster --image-pull-policy Never --namespace default --service-account memcached-operator ${DEST_IMAGE}
-remove_operator
+
+remove_prereqs
 
 popd
 popd
