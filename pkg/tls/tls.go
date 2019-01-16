@@ -22,7 +22,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,7 +30,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// CertType defines the type of the cert.
+// CertType defines the certificate type.
 type CertType int
 
 const (
@@ -42,56 +42,67 @@ const (
 	ClientCert
 )
 
-// CertConfig configures how to generate the Cert.
+// CertConfig configures cert generation.
 type CertConfig struct {
 	// CertName is the name of the cert.
 	CertName string
-	// Optional CertType. Serving, client or both; defaults to both.
+	// Optional CertType: Serving, Client or ClientAndServing; defaults to
+	// ClientAndServingCert.
 	CertType CertType
 	// Optional CommonName is the common name of the cert; defaults to "".
 	CommonName string
-	// Optional Organization is Organization of the cert; defaults to "".
+	// Optional Organization is the organization issuing the cert; defaults to nil.
 	Organization []string
-	// Optional CA Key, if user wants to provide custom CA key via a file path.
+	// Optional CA Key path, if the user wants to provide a custom CA key;
+	// defaults to "".
 	CAKey string
-	// Optional CA Certificate, if user wants to provide custom CA cert via file path.
+	// Optional CA Certificate path, if the user wants to provide custom a CA cert.
+	// defaults to "".
 	CACert string
-	// TODO: consider to add passed in SAN fields.
+	// Optionally use the cluster's root CA. If true, a CertGenerator will request
+	// a certificate signing using a CertificateSigningRequest for the service.
+	UseClusterCA bool
+
+	// TODO: consider adding passed-in SAN fields.
 }
 
-// CertGenerator is an operator specific TLS tool that generates TLS assets for the deploying a user's application.
+// CertGenerator is an operator specific TLS tool that generates TLS assets
+// when deploying a user's application.
 type CertGenerator interface {
-	// GenerateCert generates a secret containing TLS encryption key and cert, a Secret
-	// containing the CA key, and a ConfigMap containing the CA Certificate given the Custom
-	// Resource(CR) "cr", the Kubernetes Service "Service", and the CertConfig "config".
+	// GenerateCert generates a Secret containing TLS encryption key and cert,
+	// a Secret containing the CA key, and a ConfigMap containing the CA
+	// Certificate given the Custom Resource (CR) "cr", the Kubernetes Service
+	// "service", and the CertConfig "config".
 	//
 	// GenerateCert creates and manages TLS key and cert and CA with the following:
 	// CA creation and management:
 	// - If CA is not given:
 	//  - A unique CA is generated for the CR.
 	//  - CA's key is packaged into a Secret as shown below.
-	//  - CA's cert is packaged in a ConfigMap as shown below.
-	//  - The CA Secret and ConfigMap are created on the k8s cluster in the CR's namespace before
-	//    returned to the user. The CertGenerator manages the CA Secret and ConfigMap to ensure it's
-	//    unqiue per CR.
+	//  - CA's cert is packaged into a ConfigMap as shown below.
+	//  - The CA Secret and ConfigMap are created on the Kubernetes cluster in
+	//    the CR's namespace before returned to the user. The CertGenerator
+	//    manages the CA Secret and ConfigMap to ensure it is unqiue per CR.
 	// - If CA is given:
 	//  - CA's key is packaged into a Secret as shown below.
-	//  - CA's cert is packaged in a ConfigMap as shown below.
-	//  - The CA Secret and ConfigMap are returned but not created in the K8s cluster in the CR's
-	//    namespace. The CertGenerator doesn't manage the CA because the user controls the lifecycle
-	//    of the CA.
+	//  - CA's cert is packaged into a ConfigMap as shown below.
+	//  - The CA Secret and ConfigMap are returned but not created in the
+	//    Kubernetes cluster in the CR's namespace. The CertGenerator doesn't
+	//    manage the CA because the user controls the lifecycle of the CA.
 	//
 	// TLS Key and Cert Creation and Management:
 	// - A unique TLS cert and key pair is generated per CR + CertConfig.CertName.
 	// - The CA is used to generate and sign the TLS cert.
-	// - The signing process uses the passed in "service" to set the Subject Alternative Names(SAN)
-	//   for the certificate. We assume that the deployed applications are typically communicated
-	//   with via a Kubernetes Service. The SAN is set to the FQDN of the service
+	// - The signing process uses the passed in service to set the Subject
+	//   Alternative Names (SAN) for the certificate. We assume that the deployed
+	//   applications are typically communicated with via a Kubernetes Service.
+	//   The SAN is set to the FQDN of the service:
 	//   `<service-name>.<service-namespace>.svc.cluster.local`.
-	// - Once TLS key and cert are created, they are packaged into a secret as shown below.
-	// - Finally, the secret are created on the k8s cluster in the CR's namespace before returned to
-	//   the user. The CertGenerator manages this secret to ensure that it is unique per CR +
-	//   CertConfig.CertName.
+	// - Once the TLS cert-key pair are created, they are packaged into a Secret,
+	//   as shown below.
+	// - Finally, the Secret is created in the Kubernetes cluster in the CR's
+	//   namespace before being returned to the user. The CertGenerator manages
+	//   this Secret to ensure that it is unique per CR + CertConfig.CertName.
 	//
 	// TLS encryption key and cert Secret format:
 	// kind: Secret
@@ -112,7 +123,7 @@ type CertGenerator interface {
 	//   data:
 	//     ca.crt: ...
 	//
-	// CA Key Secret format:
+	// CA key Secret format:
 	//  kind: Secret
 	//  apiVersion: v1
 	//  metadata:
@@ -120,7 +131,7 @@ type CertGenerator interface {
 	//   namespace: <cr-namespace>
 	//  data:
 	//   ca.key: ..
-	GenerateCert(cr runtime.Object, service *v1.Service, config *CertConfig) (*v1.Secret, *v1.ConfigMap, *v1.Secret, error)
+	GenerateCert(cr runtime.Object, service *corev1.Service, config *CertConfig) (*corev1.Secret, *corev1.ConfigMap, *corev1.Secret, error)
 }
 
 const (
@@ -139,14 +150,18 @@ type SDKCertGenerator struct {
 	KubeClient kubernetes.Interface
 }
 
-// GenerateCert returns a secret containing the TLS encryption key and cert,
-// a ConfigMap containing the CA Certificate and a Secret containing the CA key or it
-// returns a error incase something goes wrong.
-func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service, config *CertConfig) (*v1.Secret, *v1.ConfigMap, *v1.Secret, error) {
+// GenerateCert returns a Secret containing the TLS encryption key and cert,
+// a ConfigMap containing the CA Certificate and a Secret containing the CA key.
+// GenerateCert returns a error if generation fails.
+func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *corev1.Service, config *CertConfig) (*corev1.Secret, *corev1.ConfigMap, *corev1.Secret, error) {
 	if err := verifyConfig(config); err != nil {
 		return nil, nil, nil, err
 	}
 
+	var ownerRefs []metav1.OwnerReference
+	if service != nil {
+		ownerRefs = service.GetOwnerReferences()
+	}
 	k, n, ns, err := toKindNameNamespace(cr)
 	if err != nil {
 		return nil, nil, nil, err
@@ -159,22 +174,16 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 	caSecretAndConfigMapName := ToCASecretAndConfigMapName(k, n)
 
 	var (
-		caSecret    *v1.Secret
-		caConfigMap *v1.ConfigMap
+		caSecret    *corev1.Secret
+		caConfigMap *corev1.ConfigMap
 	)
 
-	caSecret, caConfigMap, err = getCASecretAndConfigMapInCluster(scg.KubeClient, caSecretAndConfigMapName, ns)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
 	if config.CAKey != "" && config.CACert != "" {
-		// custom CA provided by the user.
+		// Custom CA provided by the user.
 		customCAKeyData, err := ioutil.ReadFile(config.CAKey)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("error reading CA Key from the given file name: %v", err)
 		}
-
 		customCACertData, err := ioutil.ReadFile(config.CACert)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("error reading CA Cert from the given file name: %v", err)
@@ -184,14 +193,20 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("error parsing CA Key from the given file name: %v", err)
 		}
-
 		customCACert, err := parsePEMEncodedCert(customCACertData)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("error parsing CA Cert from the given file name: %v", err)
 		}
-		caSecret, caConfigMap = toCASecretAndConfigmap(customCAKey, customCACert, caSecretAndConfigMapName)
-	} else if config.CAKey != "" || config.CACert != "" {
-		// if only one of the custom CA Key or Cert is provided
+
+		caSecret, caConfigMap = toCASecretAndConfigmap(customCAKey, customCACert, caSecretAndConfigMapName, ownerRefs)
+	} else if config.CAKey == "" && config.CACert == "" {
+		// No CA data provided by user, request from the cluster.
+		caSecret, caConfigMap, err = getCASecretAndConfigMapInCluster(scg.KubeClient, caSecretAndConfigMapName, ns)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+	} else {
+		// Error if only one of the custom CA key or cert is provided.
 		return nil, nil, nil, ErrCAKeyAndCACertReq
 	}
 
@@ -206,8 +221,8 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 		return nil, nil, nil, ErrCANotFound
 
 	case !hasAppSecret && hasCASecretAndConfigMap:
-		// Note: if a custom CA is passed in my the user it takes preference over an already
-		// generated CA secret and CA configmap that might exist in the cluster
+		// NOTE: if a custom CA is passed in by the user it takes precedence over
+		// any present CA Secret and CA ConfigMap in the cluster
 		caKey, err := parsePEMEncodedPrivateKey(caSecret.Data[TLSPrivateCAKeyKey])
 		if err != nil {
 			return nil, nil, nil, err
@@ -224,14 +239,15 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		appSecret, err := scg.KubeClient.CoreV1().Secrets(ns).Create(toTLSSecret(key, cert, appSecretName))
+		tlsSecret := toTLSSecret(key, cert, appSecretName, ownerRefs)
+		appSecret, err := scg.KubeClient.CoreV1().Secrets(ns).Create(tlsSecret)
 		if err != nil {
 			return nil, nil, nil, err
 		}
 		return appSecret, caConfigMap, caSecret, nil
 
 	case !hasAppSecret && !hasCASecretAndConfigMap:
-		// If no custom CAKey and CACert are provided we have to generate them
+		// If no custom CA key and CA cert are provided we have to generate them.
 		caKey, err := newPrivateKey()
 		if err != nil {
 			return nil, nil, nil, err
@@ -241,7 +257,7 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 			return nil, nil, nil, err
 		}
 
-		caSecret, caConfigMap := toCASecretAndConfigmap(caKey, caCert, caSecretAndConfigMapName)
+		caSecret, caConfigMap := toCASecretAndConfigmap(caKey, caCert, caSecretAndConfigMapName, ownerRefs)
 		caSecret, err = scg.KubeClient.CoreV1().Secrets(ns).Create(caSecret)
 		if err != nil {
 			return nil, nil, nil, err
@@ -258,14 +274,15 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		appSecret, err := scg.KubeClient.CoreV1().Secrets(ns).Create(toTLSSecret(key, cert, appSecretName))
+		tlsSecret := toTLSSecret(key, cert, appSecretName, ownerRefs)
+		appSecret, err := scg.KubeClient.CoreV1().Secrets(ns).Create(tlsSecret)
 		if err != nil {
 			return nil, nil, nil, err
 		}
 		return appSecret, caConfigMap, caSecret, nil
-	default:
-		return nil, nil, nil, ErrInternal
 	}
+
+	return nil, nil, nil, ErrInternal
 }
 
 func verifyConfig(config *CertConfig) error {
@@ -286,99 +303,106 @@ func ToCASecretAndConfigMapName(kind, name string) string {
 	return strings.ToLower(kind) + "-" + name + "-ca"
 }
 
-func getAppSecretInCluster(kubeClient kubernetes.Interface, name, namespace string) (*v1.Secret, error) {
+func getAppSecretInCluster(kubeClient kubernetes.Interface, name, namespace string) (*corev1.Secret, error) {
 	se, err := kubeClient.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
-	if err != nil && !apiErrors.IsNotFound(err) {
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return nil, nil
+		}
 		return nil, err
-	}
-	if apiErrors.IsNotFound(err) {
-		return nil, nil
 	}
 	return se, nil
 }
 
-// getCASecretAndConfigMapInCluster gets CA secret and configmap of the given name and namespace.
-// it only returns both if they are found and nil if both are not found. In the case if only one of them is found,
-// then we error out because we expect either both CA secret and configmap exit or not.
+// getCASecretAndConfigMapInCluster gets the CA Secret and ConfigMap of the
+// given name and namespace.
+// getCASecretAndConfigMapInCluster returns a Secret and ConfigMap if found in
+// the cluster, otherwise both will be nil. If only one of them is found, an
+// error is returned as we expect either both CA Secret and ConfigMap to exist
+// or neither.
 //
-// NOTE: both the CA secret and configmap have the same name with template `<cr-kind>-<cr-name>-ca` which is what the
-// input parameter `name` refers to.
-func getCASecretAndConfigMapInCluster(kubeClient kubernetes.Interface, name, namespace string) (*v1.Secret, *v1.ConfigMap, error) {
+// NOTE: both the CA Secret and ConfigMap have the same metadata name of the
+// form `<cr-kind>-<cr-name>-ca`, referred to by the name parameter.
+func getCASecretAndConfigMapInCluster(kubeClient kubernetes.Interface, name, namespace string) (*corev1.Secret, *corev1.ConfigMap, error) {
 	hasConfigMap := true
 	cm, err := kubeClient.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
-	if err != nil && !apiErrors.IsNotFound(err) {
-		return nil, nil, err
-	}
-	if apiErrors.IsNotFound(err) {
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return nil, nil, err
+		}
 		hasConfigMap = false
 	}
 
 	hasSecret := true
 	se, err := kubeClient.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
-	if err != nil && !apiErrors.IsNotFound(err) {
-		return nil, nil, err
-	}
-	if apiErrors.IsNotFound(err) {
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return nil, nil, err
+		}
 		hasSecret = false
 	}
 
 	if hasConfigMap != hasSecret {
-		// TODO: this case can happen if creating CA configmap succeeds and creating CA secret failed. We need to handle this case properly.
-		return nil, nil, fmt.Errorf("expect either both ca configmap and secret both exist or not exist, but got hasCAConfigmap==%v and hasCASecret==%v", hasConfigMap, hasSecret)
+		// TODO: this case can happen if creating CA ConfigMap succeeds and creating CA Secret failed. We need to handle this case properly.
+		return nil, nil, fmt.Errorf("expect either both CA ConfigMap and Secret both exist or not exist, but got hasCAConfigmap==%v and hasCASecret==%v", hasConfigMap, hasSecret)
 	}
-	if hasConfigMap == false {
+	if !hasConfigMap {
 		return nil, nil, nil
 	}
 	return se, cm, nil
 }
 
-func toKindNameNamespace(cr runtime.Object) (string, string, string, error) {
+func toKindNameNamespace(cr runtime.Object) (k, n, ns string, err error) {
 	a := meta.NewAccessor()
-	k, err := a.Kind(cr)
-	if err != nil {
+	if k, err = a.Kind(cr); err != nil {
 		return "", "", "", err
 	}
-	n, err := a.Name(cr)
-	if err != nil {
+	if n, err = a.Name(cr); err != nil {
 		return "", "", "", err
 	}
-	ns, err := a.Namespace(cr)
-	if err != nil {
+	if ns, err = a.Namespace(cr); err != nil {
 		return "", "", "", err
 	}
 	return k, n, ns, nil
 }
 
-// toTLSSecret returns a client/server "kubernetes.io/tls" secret.
-// TODO: add owner ref.
-func toTLSSecret(key *rsa.PrivateKey, cert *x509.Certificate, name string) *v1.Secret {
-	return &v1.Secret{
+// toTLSSecret returns a client/server "kubernetes.io/tls" Secret.
+func toTLSSecret(key *rsa.PrivateKey, cert *x509.Certificate, name string, refs []metav1.OwnerReference) *corev1.Secret {
+	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
 		Data: map[string][]byte{
-			v1.TLSPrivateKeyKey: encodePrivateKeyPEM(key),
-			v1.TLSCertKey:       encodeCertificatePEM(cert),
+			corev1.TLSPrivateKeyKey: encodePrivateKeyPEM(key),
+			corev1.TLSCertKey:       encodeCertificatePEM(cert),
 		},
-		Type: v1.SecretTypeTLS,
+		Type: corev1.SecretTypeTLS,
 	}
+	secret.SetOwnerReferences(refs)
+
+	return secret
 }
 
-// TODO: add owner ref.
-func toCASecretAndConfigmap(key *rsa.PrivateKey, cert *x509.Certificate, name string) (*v1.Secret, *v1.ConfigMap) {
-	return &v1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: name,
-			},
-			Data: map[string][]byte{
-				TLSPrivateCAKeyKey: encodePrivateKeyPEM(key),
-			},
-		}, &v1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: name,
-			},
-			Data: map[string]string{
-				TLSCACertKey: string(encodeCertificatePEM(cert)),
-			},
-		}
+func toCASecretAndConfigmap(key *rsa.PrivateKey, cert *x509.Certificate, name string, refs []metav1.OwnerReference) (*corev1.Secret, *corev1.ConfigMap) {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Data: map[string][]byte{
+			TLSPrivateCAKeyKey: encodePrivateKeyPEM(key),
+		},
+	}
+	secret.SetOwnerReferences(refs)
+
+	configMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Data: map[string]string{
+			TLSCACertKey: string(encodeCertificatePEM(cert)),
+		},
+	}
+	configMap.SetOwnerReferences(refs)
+
+	return secret, configMap
 }

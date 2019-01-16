@@ -17,7 +17,7 @@ To provide TLS utilities for operator developers to create self signed Certifica
 We will break down the TLS workflow into the following steps:
 
 1. Generate a Certificate Authority (CA): A CA is a centralized trusted third party that signs the certificates. We need to generate a CA key and CA Certificate to get started. If the users want to provide their own CA, we can add an option to do so. The generated CA certificate can be saved in a ConfigMap as follows:
-	
+
 	Inputs:
 
 	* CR-kind
@@ -54,7 +54,7 @@ We will break down the TLS workflow into the following steps:
 3. Generate Server or Client Certificate: We assume that the components inside an application communicate through a service. Therefore, we generate a TLS private key and certificate for that service.
 
 	Inputs:
-	
+
 	* CR-kind
 	* CR-name
 	* Namespace
@@ -115,7 +115,7 @@ func GenerateCert(cr runtime.Object, service *v1.Service, config *CertConfig) (*
 
 ```
 
-Please note that the `GenerateCert` method cannot be used to generate TLS assets for a service of type [`ExternalName`](https://kubernetes.io/docs/concepts/services-networking/service/#externalname). This is because in the current design the fully qualified domain name (FQDN) of the Service object is used as the SAN for the certificate by default. Currently we do not have a way to customize the SAN value, we will add a field in `CertConfig` for this purpose later on. 
+Please note that the `GenerateCert` method cannot be used to generate TLS assets for a service of type [`ExternalName`](https://kubernetes.io/docs/concepts/services-networking/service/#externalname). This is because in the current design the fully qualified domain name (FQDN) of the Service object is used as the SAN for the certificate by default. Currently we do not have a way to customize the SAN value, we will add a field in `CertConfig` for this purpose later on.
 
 The `GenerateCert` method can be used in the operator handler function to set up TLS for the desired application
 

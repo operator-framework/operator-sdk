@@ -26,7 +26,7 @@ import (
 	"math/big"
 	"time"
 
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -34,12 +34,12 @@ const (
 	duration365d = time.Hour * 24 * 365
 )
 
-// newPrivateKey returns randomly generated RSA private key.
+// newPrivateKey returns a randomly generated RSA private key.
 func newPrivateKey() (*rsa.PrivateKey, error) {
 	return rsa.GenerateKey(rand.Reader, rsaKeySize)
 }
 
-// encodePrivateKeyPEM encodes the given private key pem and returns bytes (base64).
+// encodePrivateKeyPEM encodes the given private key pem in base64.
 func encodePrivateKeyPEM(key *rsa.PrivateKey) []byte {
 	return pem.EncodeToMemory(&pem.Block{
 		Type:  "RSA PRIVATE KEY",
@@ -47,7 +47,7 @@ func encodePrivateKeyPEM(key *rsa.PrivateKey) []byte {
 	})
 }
 
-// encodeCertificatePEM encodes the given certificate pem and returns bytes (base64).
+// encodeCertificatePEM encodes the given certificate pem in base64.
 func encodeCertificatePEM(cert *x509.Certificate) []byte {
 	return pem.EncodeToMemory(&pem.Block{
 		Type:  "CERTIFICATE",
@@ -55,7 +55,7 @@ func encodeCertificatePEM(cert *x509.Certificate) []byte {
 	})
 }
 
-// parsePEMEncodedCert parses a certificate from the given pemdata
+// parsePEMEncodedCert parses a certificate from pemdata.
 func parsePEMEncodedCert(pemdata []byte) (*x509.Certificate, error) {
 	decoded, _ := pem.Decode(pemdata)
 	if decoded == nil {
@@ -64,7 +64,7 @@ func parsePEMEncodedCert(pemdata []byte) (*x509.Certificate, error) {
 	return x509.ParseCertificate(decoded.Bytes)
 }
 
-// parsePEMEncodedPrivateKey parses a private key from given pemdata
+// parsePEMEncodedPrivateKey parses a private key from pemdata.
 func parsePEMEncodedPrivateKey(pemdata []byte) (*rsa.PrivateKey, error) {
 	decoded, _ := pem.Decode(pemdata)
 	if decoded == nil {
@@ -73,8 +73,8 @@ func parsePEMEncodedPrivateKey(pemdata []byte) (*rsa.PrivateKey, error) {
 	return x509.ParsePKCS1PrivateKey(decoded.Bytes)
 }
 
-// newSelfSignedCACertificate returns a self-signed CA certificate based on given configuration and private key.
-// The certificate has one-year lease.
+// newSelfSignedCACertificate returns a self-signed CA certificate using key.
+// The certificate has a one year lease.
 func newSelfSignedCACertificate(key *rsa.PrivateKey) (*x509.Certificate, error) {
 	serial, err := rand.Int(rand.Reader, new(big.Int).SetInt64(math.MaxInt64))
 	if err != nil {
@@ -96,15 +96,17 @@ func newSelfSignedCACertificate(key *rsa.PrivateKey) (*x509.Certificate, error) 
 	return x509.ParseCertificate(certDERBytes)
 }
 
-// newSignedCertificate signs a certificate using the given private key, CA and returns a signed certificate.
-// The certificate could be used for both client and server auth.
-// The certificate has one-year lease.
-func newSignedCertificate(cfg *CertConfig, service *v1.Service, key *rsa.PrivateKey, caCert *x509.Certificate, caKey *rsa.PrivateKey) (*x509.Certificate, error) {
+// newSignedCertificate signs a certificate using configurations in cfg, key,
+// CA cert, and CA key and returns the signed certificate.
+// The certificate can be used for both client and server auth.
+// The certificate has a one year lease.
+func newSignedCertificate(cfg *CertConfig, service *corev1.Service, key *rsa.PrivateKey, caCert *x509.Certificate, caKey *rsa.PrivateKey) (*x509.Certificate, error) {
 	serial, err := rand.Int(rand.Reader, new(big.Int).SetInt64(math.MaxInt64))
 	if err != nil {
 		return nil, err
 	}
-	eku := []x509.ExtKeyUsage{}
+
+	var eku []x509.ExtKeyUsage
 	switch cfg.CertType {
 	case ClientCert:
 		eku = append(eku, x509.ExtKeyUsageClientAuth)
@@ -113,6 +115,7 @@ func newSignedCertificate(cfg *CertConfig, service *v1.Service, key *rsa.Private
 	case ClientAndServingCert:
 		eku = append(eku, x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth)
 	}
+
 	certTmpl := x509.Certificate{
 		Subject: pkix.Name{
 			CommonName:   cfg.CommonName,
