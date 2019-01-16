@@ -113,17 +113,21 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 
 			var m marshaler
 
+			log.V(2).Info("Get resource in our cache", "r", r)
 			if r.Verb == "list" {
 				listOptions := &metav1.ListOptions{}
 				if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion, listOptions); err != nil {
+					log.Error(err, "Unable to decode list options from request")
 					break
 				}
 				lo := client.InNamespace(r.Namespace)
 				if err := lo.SetLabelSelector(listOptions.LabelSelector); err != nil {
+					log.Error(err, "Unable to set label selectors for the client")
 					break
 				}
 				if listOptions.FieldSelector != "" {
 					if err := lo.SetFieldSelector(listOptions.FieldSelector); err != nil {
+						log.Error(err, "Unable to set field selectors for the client")
 						break
 					}
 				}
@@ -142,7 +146,6 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 				un := unstructured.Unstructured{}
 				un.SetGroupVersionKind(k)
 				obj := client.ObjectKey{Namespace: r.Namespace, Name: r.Name}
-				log.Info("Get resource in our cache", "r", r)
 				err = informerCache.Get(context.Background(), obj, &un)
 				if err != nil {
 					// break here in case resource doesn't exist in cache but exists on APIserver
