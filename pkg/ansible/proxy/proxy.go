@@ -125,9 +125,11 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 					log.Error(err, "Unable to set label selectors for the client")
 					break
 				}
-				if err := lo.SetFieldSelector(listOptions.FieldSelector); err != nil {
-					log.Error(err, "Unable to set field selectors for the client")
-					break
+				if listOptions.FieldSelector != "" {
+					if err := lo.SetFieldSelector(listOptions.FieldSelector); err != nil {
+						log.Error(err, "Unable to set field selectors for the client")
+						break
+					}
 				}
 				k.Kind = k.Kind + "List"
 				un := unstructured.UnstructuredList{}
