@@ -16,26 +16,146 @@ package scorecard
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // crdsHaveResources checks to make sure that all owned CRDs have resources listed
-func crdsHaveResources(csv *olmapiv1alpha1.ClusterServiceVersion) {
+// Until there is full support for multiple CRs, we will only be able to check the
+// actual used resources of one CRD, but only the existence of a resources section
+// for other CRDs
+func crdsHaveResources(obj *unstructured.Unstructured, csv *olmapiv1alpha1.ClusterServiceVersion) {
 	test := scorecardTest{testType: olmIntegration, name: "Owned CRDs have resources listed"}
 	for _, crd := range csv.Spec.CustomResourceDefinitions.Owned {
 		test.maximumPoints++
-		if len(crd.Resources) > 0 {
-			test.earnedPoints++
+		gvk := obj.GroupVersionKind()
+		crKind, err := restMapper.ResourceSingularizer(gvk.Kind)
+		if err != nil {
+			log.Warningf("could not find singular version of %s", gvk.Kind)
+		}
+		crdKind, err := restMapper.ResourceSingularizer(crd.Kind)
+		if err != nil {
+			log.Warningf("could not find singular version of %s", crd.Kind)
+		}
+		if strings.EqualFold(crd.Version, gvk.Version) && strings.EqualFold(crdKind, crKind) {
+			resources, err := getUsedResources()
+			if err != nil {
+				log.Warningf("getUsedResource failed: %v", err)
+			}
+			allResourcesListed := true
+			for _, resource := range resources {
+				foundResource := false
+				resourceKind, err := restMapper.ResourceSingularizer(resource.Kind)
+				if err != nil {
+					log.Warningf("could not find singular version of %s", resource.Kind)
+				}
+				for _, listedResource := range crd.Resources {
+					listedResourceKind, err := restMapper.ResourceSingularizer(listedResource.Kind)
+					if err != nil {
+						log.Warningf("could not find singular version of %s", listedResource.Kind)
+					}
+					if strings.EqualFold(resourceKind, listedResourceKind) && strings.EqualFold(resource.Version, listedResource.Version) {
+						foundResource = true
+					}
+				}
+				if foundResource == false {
+					allResourcesListed = false
+				}
+			}
+			if allResourcesListed {
+				test.earnedPoints++
+			}
+		} else {
+			if len(crd.Resources) > 0 {
+				test.earnedPoints++
+			}
 		}
 	}
 	scTests = append(scTests, test)
 	if test.earnedPoints == 0 {
 		scSuggestions = append(scSuggestions, "Add resources to owned CRDs")
 	}
+}
+
+func getUsedResources() ([]schema.GroupVersionKind, error) {
+	logs, err := getProxyLogs()
+	if err != nil {
+		return nil, err
+	}
+	var resources []schema.GroupVersionKind
+	for _, line := range strings.Split(logs, "\n") {
+		logMap := make(map[string]interface{})
+		err := json.Unmarshal([]byte(line), &logMap)
+		if err != nil {
+			// it is very common to get "unexpected end of JSON input", so we'll leave this at the debug level
+			log.Debugf("could not unmarshal line: %v", err)
+			continue
+		}
+		/*
+			There are 6 formats a resource uri can have:
+			Cluster-Scoped:
+				Collection: /apis/GROUP/VERSION/KIND
+				Individual: /apis/GROUP/VERSION/KIND/NAME
+				Core:       /api/v1/KIND
+			Namespaces:
+				All Namespaces:          /apis/GROUP/VERSION/KIND (same as cluster collection)
+				Collection in Namespace: /apis/GROUP/VERSION/namespaces/NAMESPACE/KIND
+				Individual:              /apis/GROUP/VERSION/namespaces/NAMESPACE/KIND/NAME
+				Core:                    /api/v1/namespaces/NAMESPACE/KIND
+
+			These urls are also often appended with options, which are denoted by the '?' symbol
+		*/
+		if msg, ok := logMap["msg"].(string); !ok || msg != "Request Info" {
+			continue
+		}
+		uri, ok := logMap["uri"].(string)
+		if !ok {
+			log.Warn("URI type is not string")
+			continue
+		}
+		removedOptions := strings.Split(uri, "?")[0]
+		splitURI := strings.Split(removedOptions, "/")
+		// first string is empty string ""
+		splitURI = splitURI[1:]
+		switch len(splitURI) {
+		case 3:
+			if splitURI[0] == "api" {
+				resources = append(resources, schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[2]})
+			}
+		case 4:
+			if splitURI[0] == "apis" {
+				resources = append(resources, schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[3]})
+			}
+		case 5:
+			if splitURI[0] == "api" {
+				resources = append(resources, schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[4]})
+			} else if splitURI[0] == "apis" {
+				resources = append(resources, schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[3]})
+			}
+		case 6, 7:
+			if splitURI[0] == "apis" {
+				resources = append(resources, schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[5]})
+			}
+		}
+	}
+	// remove duplicates
+	addedResources := map[schema.GroupVersionKind]bool{}
+	var deduplicatedResources []schema.GroupVersionKind
+	for _, resource := range resources {
+		if !addedResources[resource] {
+			addedResources[resource] = true
+			deduplicatedResources = append(deduplicatedResources, resource)
+		}
+	}
+	return deduplicatedResources, nil
 }
 
 // annotationsContainExamples makes sure that the CSVs list at least 1 example for the CR
