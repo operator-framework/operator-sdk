@@ -66,8 +66,6 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 				log.Error(err, "Failed to convert request")
 				break
 			}
-			// Set Content-Type header
-			w.Header().Set("Content-Type", "application/json")
 
 			// check if resource is present on request
 			if !r.IsResourceRequest {
@@ -128,6 +126,8 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 				return
 			}
 
+			// Set Content-Type header
+			w.Header().Set("Content-Type", "application/json")
 			// Set X-Cache header to signal that response is served from Cache
 			w.Header().Set("X-Cache", "HIT")
 			json.Indent(&i, resp, "", "  ")
