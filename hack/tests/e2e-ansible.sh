@@ -87,16 +87,16 @@ if which oc 2>/dev/null; then oc project default; fi
 # create and build the operator
 pushd "$GOTMP"
 operator-sdk new memcached-operator --api-version=ansible.example.com/v1alpha1 --kind=Memcached --type=ansible
-cp "$ROOTDIR/test/ansible-memcached/tasks.yml" memcached-operator/roles/Memcached/tasks/main.yml
-cp "$ROOTDIR/test/ansible-memcached/defaults.yml" memcached-operator/roles/Memcached/defaults/main.yml
+cp "$ROOTDIR/test/ansible-memcached/tasks.yml" memcached-operator/roles/memcached/tasks/main.yml
+cp "$ROOTDIR/test/ansible-memcached/defaults.yml" memcached-operator/roles/memcached/defaults/main.yml
 cp -a "$ROOTDIR/test/ansible-memcached/memfin" memcached-operator/roles/
 cat "$ROOTDIR/test/ansible-memcached/watches-finalizer.yaml" >> memcached-operator/watches.yaml
 
 pushd memcached-operator
 sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
 operator-sdk build "$DEST_IMAGE"
-sed -i "s|REPLACE_IMAGE|$DEST_IMAGE|g" deploy/operator.yaml
-sed -i 's|Always|Never|g' deploy/operator.yaml
+sed -i "s|{{ REPLACE_IMAGE }}|$DEST_IMAGE|g" deploy/operator.yaml
+sed -i 's|{{ pull_policy.default..Always.. }}|Never|g' deploy/operator.yaml
 
 OPERATORDIR="$(pwd)"
 

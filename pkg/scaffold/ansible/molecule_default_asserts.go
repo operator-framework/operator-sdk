@@ -15,36 +15,42 @@
 package ansible
 
 import (
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"path/filepath"
+
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-const WatchesFile = "watches.yaml"
+const MoleculeDefaultAssertsFile = "asserts.yml"
 
-type Watches struct {
+type MoleculeDefaultAsserts struct {
 	input.Input
-	GeneratePlaybook bool
-	RolesDir         string
-	Resource         scaffold.Resource
 }
 
 // GetInput - gets the input
-func (w *Watches) GetInput() (input.Input, error) {
-	if w.Path == "" {
-		w.Path = WatchesFile
+func (m *MoleculeDefaultAsserts) GetInput() (input.Input, error) {
+	if m.Path == "" {
+		m.Path = filepath.Join(MoleculeDefaultDir, MoleculeDefaultAssertsFile)
 	}
-	w.TemplateBody = watchesAnsibleTmpl
-	w.RolesDir = RolesDir
-	return w.Input, nil
+	m.TemplateBody = moleculeDefaultAssertsAnsibleTmpl
+
+	return m.Input, nil
 }
 
-const watchesAnsibleTmpl = `---
-- version: {{.Resource.Version}}
-  group: {{.Resource.FullGroup}}
-  kind: {{.Resource.Kind}}
-  {{- if .GeneratePlaybook }}
-  playbook: /opt/ansible/playbook.yml
-  {{- else }}
-  role: /opt/ansible/{{.RolesDir}}/{{.Resource.LowerKind}}
-  {{- end }}
+const moleculeDefaultAssertsAnsibleTmpl = `---
+
+- name: Verify
+  hosts: localhost
+  connection: local
+  vars:
+    ansible_python_interpreter: '{{"{{ ansible_playbook_python }}"}}'
+  tasks:
+    - name: Get all pods in {{"{{ namespace }}"}}
+      k8s_facts:
+        api_version: v1
+        kind: Pod
+        namespace: '{{"{{ namespace }}"}}'
+      register: pods
+
+    - name: Output pods
+      debug: var=pods
 `
