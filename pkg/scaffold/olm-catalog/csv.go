@@ -27,6 +27,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/ghodss/yaml"
@@ -35,9 +36,11 @@ import (
 )
 
 const (
-	CSVYamlFilePrefix = ".csv.yaml"
+	CSVYamlFileExt    = ".csv.yaml"
 	CSVConfigYamlFile = "csv-config.yaml"
 )
+
+var ErrNoCSVVersion = errors.New("no CSV version supplied")
 
 type CSV struct {
 	input.Input
@@ -47,14 +50,18 @@ type CSV struct {
 	// ConfigFilePath is the location of a configuration file path for this
 	// projects' CSV file.
 	ConfigFilePath string
-	// CSVVersion is the CSV (and operators') current version.
+	// CSVVersion is the CSV current version.
 	CSVVersion string
 }
 
 func (s *CSV) GetInput() (input.Input, error) {
+	// A CSV version is required.
+	if s.CSVVersion == "" {
+		return input.Input{}, ErrNoCSVVersion
+	}
 	if s.Path == "" {
-		fileName := strings.ToLower(s.ProjectName) + CSVYamlFilePrefix
-		s.Path = filepath.Join(scaffold.OlmCatalogDir, fileName)
+		name := strings.ToLower(s.ProjectName) + CSVYamlFileExt
+		s.Path = filepath.Join(scaffold.OlmCatalogDir, name)
 	}
 	if s.ConfigFilePath == "" {
 		s.ConfigFilePath = filepath.Join(scaffold.OlmCatalogDir, CSVConfigYamlFile)
@@ -100,7 +107,13 @@ func (s *CSV) CustomRender() ([]byte, error) {
 		}
 	}
 
-	return yaml.Marshal(currCSV)
+	// Remove the status field from the CSV, as status is managed at runtime.
+	cu, err := runtime.DefaultUnstructuredConverter.ToUnstructured(currCSV)
+	if err != nil {
+		return nil, err
+	}
+	delete(cu, "status")
+	return yaml.Marshal(&cu)
 }
 
 func getCurrentCSVIfExists(csvPath string) (*olmApi.ClusterServiceVersion, bool, error) {
@@ -118,7 +131,6 @@ func getCurrentCSVIfExists(csvPath string) (*olmApi.ClusterServiceVersion, bool,
 
 	csv := new(olmApi.ClusterServiceVersion)
 	if err := yaml.Unmarshal(csvBytes, csv); err != nil {
-
 		return nil, false, err
 	}
 
@@ -263,11 +275,7 @@ func (s *CSV) updateCSVVersions(csv *olmApi.ClusterServiceVersion) error {
 		return err
 	}
 
-	newSemVer, err := semver.NewVersion(newVer)
-	if err != nil {
-		return err
-	}
-	csv.Spec.Version = *newSemVer
+	csv.Spec.Version = *semver.New(newVer)
 	csv.Spec.Replaces = oldCSVName
 	return nil
 }

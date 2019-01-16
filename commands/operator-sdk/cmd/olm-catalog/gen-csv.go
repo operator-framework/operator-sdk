@@ -31,30 +31,33 @@ import (
 var csvVersion string
 
 func NewGenCSVCmd() *cobra.Command {
-	csvCmd := &cobra.Command{
+	genCSVCmd := &cobra.Command{
 		Use:   "gen-csv",
 		Short: "Generates a Cluster Service Version yaml file for the operator",
-		Long: `The operator-sdk olm-catalog gen-csv command generates a Cluster Service
+		Long: `The gen-csv command generates a Cluster Service Version (CSV) YAML manifest
 Version (CSV) yaml manifest file for the operator. This file is used to publish
-the operator to the OLM Catalog. A CSV semantic version is supplied via the
---csv-version flag.
+for the operator. This file is used to publish the operator to the OLM Catalog.
+
+A CSV semantic version is supplied via the --csv-version flag.
 
 Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config.yaml`,
-		RunE: csvFunc,
+		RunE: genCSVFunc,
 	}
 
-	csvCmd.Flags().StringVar(&csvVersion, "csv-version", "", "Semantic version of the CSV")
-	csvCmd.MarkFlagRequired("csv-version")
+	genCSVCmd.Flags().StringVar(&csvVersion, "csv-version", "", "Semantic version of the CSV")
+	genCSVCmd.MarkFlagRequired("csv-version")
 
-	return csvCmd
+	return genCSVCmd
 }
 
-func csvFunc(cmd *cobra.Command, args []string) error {
+func genCSVFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 0 {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 
-	verifyOLMCatalogFlags()
+	if err := verifyGenCSVFlags(); err != nil {
+		return err
+	}
 
 	absProjectPath := projutil.MustGetwd()
 	cfg := &input.Config{
@@ -78,7 +81,7 @@ func csvFunc(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func verifyOLMCatalogFlags() error {
+func verifyGenCSVFlags() error {
 	v, err := semver.NewVersion(csvVersion)
 	if err != nil {
 		return fmt.Errorf("%s is not a valid semantic version: (%v)", csvVersion, err)

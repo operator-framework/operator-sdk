@@ -47,12 +47,10 @@ func CombineManifests(base []byte, manifests ...[]byte) []byte {
 			// Don't append sep if manifest is the last element in manifests.
 			if j < len(manifests)-1 {
 				base = append(base, yamlSep...)
-			} else {
-				base = append(base, []byte("\n")...)
 			}
 		}
 	}
-	return base
+	return append(base, '\n')
 }
 
 // GenerateCombinedNamespacedManifest creates a temporary manifest yaml

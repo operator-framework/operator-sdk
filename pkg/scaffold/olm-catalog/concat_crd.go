@@ -23,9 +23,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-const (
-	ConcatCRDYamlFile = "_generated.concat_crd.yaml"
-)
+const ConcatCRDYamlFile = "_generated.concat_crd.yaml"
 
 type ConcatCRD struct {
 	input.Input

@@ -31,7 +31,7 @@ import (
 	olmInstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 )
 
-var testDataDir = "testdata"
+const testDataDir = "testdata"
 
 func TestCSV(t *testing.T) {
 	buf := &bytes.Buffer{}
@@ -40,16 +40,11 @@ func TestCSV(t *testing.T) {
 			return buf, nil
 		},
 	}
-	cfg := &input.Config{
-		Repo:           "github.com/example-org/app-operator",
-		AbsProjectPath: "/home/go/src/github.com/example-org/app-operator",
-		ProjectName:    "app-operator",
-	}
-	opVer := "1.0.1"
+	csvVer := "0.1.0"
 
-	err := s.Execute(cfg,
+	err := s.Execute(&input.Config{ProjectName: "app-operator"},
 		&CSV{
-			CSVVersion:     opVer,
+			CSVVersion:     csvVer,
 			DeployDir:      filepath.Join(testDataDir, scaffold.DeployDir),
 			ConfigFilePath: filepath.Join(testDataDir, scaffold.OlmCatalogDir, CSVConfigYamlFile),
 		},
@@ -68,7 +63,7 @@ const csvExp = `apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
   creationTimestamp: null
-  name: app-operator.v1.0.1
+  name: app-operator.v0.1.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -108,7 +103,7 @@ spec:
                       fieldPath: metadata.namespace
                 - name: OPERATOR_NAME
                   value: app-operator
-                image: quay.io/example-org/operator:v1.0.1
+                image: quay.io/example-org/operator:v0.1.0
                 imagePullPolicy: Always
                 name: app-operator
                 ports:
@@ -149,12 +144,7 @@ spec:
     strategy: deployment
   maturity: alpha
   provider: {}
-  version: 1.0.1
-status:
-  certsLastUpdated: null
-  certsRotateAt: null
-  lastTransitionTime: null
-  lastUpdateTime: null
+  version: 0.1.0
 `
 
 func TestUpdateVersion(t *testing.T) {
@@ -163,22 +153,22 @@ func TestUpdateVersion(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	newOpVer := "1.0.2"
+	newCSVVer := "0.2.0"
 	c := &CSV{
 		Input: input.Input{
 			ProjectName: "app-operator",
 		},
-		CSVVersion: newOpVer,
+		CSVVersion: newCSVVer,
 	}
 	if err := c.updateCSVVersions(csv); err != nil {
-		t.Fatalf("Update csv with ver %s: (%v)", newOpVer, err)
+		t.Fatalf("Update csv with ver %s: (%v)", newCSVVer, err)
 	}
 
-	wantedSemver := semver.New(newOpVer)
+	wantedSemver := semver.New(newCSVVer)
 	if !csv.Spec.Version.Equal(*wantedSemver) {
 		t.Errorf("Wanted csv version %v, got %v", *wantedSemver, csv.Spec.Version)
 	}
-	wantedName := getCSVName("app-operator", newOpVer)
+	wantedName := getCSVName("app-operator", newCSVVer)
 	if csv.ObjectMeta.Name != wantedName {
 		t.Errorf("Wanted csv name %s, got %s", wantedName, csv.ObjectMeta.Name)
 	}
@@ -191,12 +181,12 @@ func TestUpdateVersion(t *testing.T) {
 	strat := stratInterface.(*olmInstall.StrategyDetailsDeployment)
 	csvPodImage := strat.DeploymentSpecs[0].Spec.Template.Spec.Containers[0].Image
 	// updateCSVVersions should not update podspec image.
-	wantedImage := "quay.io/example-org/operator:v1.0.1"
+	wantedImage := "quay.io/example-org/operator:v0.1.0"
 	if csvPodImage != wantedImage {
 		t.Errorf("Podspec image changed from %s to %s", wantedImage, csvPodImage)
 	}
 
-	wantedReplaces := getCSVName("app-operator", "1.0.1")
+	wantedReplaces := getCSVName("app-operator", "0.1.0")
 	if csv.Spec.Replaces != wantedReplaces {
 		t.Errorf("Wanted csv replaces %s, got %s", wantedReplaces, csv.Spec.Replaces)
 	}

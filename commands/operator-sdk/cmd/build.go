@@ -202,9 +202,9 @@ func buildFunc(cmd *cobra.Command, args []string) {
 			log.Info("Generating build manifests for test-framework.")
 
 			cfg := &input.Config{
+				Repo:           projutil.CheckAndGetProjectGoPkg(),
 				AbsProjectPath: absProjectPath,
 				ProjectName:    projectName,
-				Repo:           projutil.CheckAndGetProjectGoPkg(),
 			}
 
 			s := &scaffold.Scaffold{}

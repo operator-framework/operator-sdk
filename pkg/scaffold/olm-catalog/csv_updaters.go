@@ -240,6 +240,7 @@ func setCRDDisplayNameIfExist(dstCRDDesc *olmApi.CRDDescription, srcCRD *apiextv
 	for k, v := range srcCRD.ObjectMeta.GetAnnotations() {
 		if dnRegexp.MatchString(k) {
 			dstCRDDesc.DisplayName = v
+			break
 		}
 	}
 }
@@ -250,6 +251,7 @@ func setCRDDescriptionIfExist(dstCRDDesc *olmApi.CRDDescription, srcCRD *apiextv
 	for k, v := range srcCRD.ObjectMeta.GetAnnotations() {
 		if descRegexp.MatchString(k) {
 			dstCRDDesc.Description = v
+			break
 		}
 	}
 }
