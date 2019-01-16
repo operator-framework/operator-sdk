@@ -28,6 +28,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/helm/pkg/storage/driver"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -54,6 +55,7 @@ func Run(flags *hoflags.HelmOperatorFlags) {
 		log.Info("Watching single namespace", "watchNamespace", watchNamespace)
 	} else {
 		log.Info(k8sutil.WatchNamespaceEnvVar + " environment variable not set, watching all namespaces")
+		watchNamespace = metav1.NamespaceAll
 	}
 
 	storageNamespace, err := getStorageNamespace(flags.StorageDriver, flags.StorageNamespace, watchNamespace)
@@ -138,7 +140,7 @@ func getStorageNamespace(driverName, storageNamespace, watchNamespace string) (s
 	// if we're running `operator-sdk up local`), but we have a watch
 	// namespace, use that instead.
 	if err == k8sutil.ErrNoNamespace {
-		if watchNamespace != "" {
+		if watchNamespace != metav1.NamespaceAll {
 			return watchNamespace, nil
 		}
 		return "", errors.New("must set storage namespace when running outside of cluster and watching all namespaces")
