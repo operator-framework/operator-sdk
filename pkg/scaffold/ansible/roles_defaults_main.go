@@ -15,36 +15,29 @@
 package ansible
 
 import (
+	"path/filepath"
+
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-const WatchesFile = "watches.yaml"
+const RolesDefaultsMainFile = "defaults" + filePathSep + "main.yml"
 
-type Watches struct {
+type RolesDefaultsMain struct {
 	input.Input
-	GeneratePlaybook bool
-	RolesDir         string
-	Resource         scaffold.Resource
+	Resource scaffold.Resource
 }
 
 // GetInput - gets the input
-func (w *Watches) GetInput() (input.Input, error) {
-	if w.Path == "" {
-		w.Path = WatchesFile
+func (r *RolesDefaultsMain) GetInput() (input.Input, error) {
+	if r.Path == "" {
+		r.Path = filepath.Join(RolesDir, r.Resource.LowerKind, RolesDefaultsMainFile)
 	}
-	w.TemplateBody = watchesAnsibleTmpl
-	w.RolesDir = RolesDir
-	return w.Input, nil
+	r.TemplateBody = rolesDefaultsMainAnsibleTmpl
+
+	return r.Input, nil
 }
 
-const watchesAnsibleTmpl = `---
-- version: {{.Resource.Version}}
-  group: {{.Resource.FullGroup}}
-  kind: {{.Resource.Kind}}
-  {{- if .GeneratePlaybook }}
-  playbook: /opt/ansible/playbook.yml
-  {{- else }}
-  role: /opt/ansible/{{.RolesDir}}/{{.Resource.LowerKind}}
-  {{- end }}
+const rolesDefaultsMainAnsibleTmpl = `---
+# defaults file for {{.Resource.LowerKind}}
 `

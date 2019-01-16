@@ -44,9 +44,11 @@ type testLocalConfig struct {
 	globalManPath     string
 	namespacedManPath string
 	goTestFlags       string
+	moleculeTestFlags string
 	namespace         string
 	upLocal           bool
 	noSetup           bool
+	debug             bool
 	image             string
 }
 
@@ -62,15 +64,48 @@ func NewTestLocalCmd() *cobra.Command {
 	testCmd.Flags().StringVar(&tlConfig.globalManPath, "global-manifest", "", "Path to manifest for Global resources (e.g. CRD manifests)")
 	testCmd.Flags().StringVar(&tlConfig.namespacedManPath, "namespaced-manifest", "", "Path to manifest for per-test, namespaced resources (e.g. RBAC and Operator manifest)")
 	testCmd.Flags().StringVar(&tlConfig.goTestFlags, "go-test-flags", "", "Additional flags to pass to go test")
+	testCmd.Flags().StringVar(&tlConfig.moleculeTestFlags, "molecule-test-flags", "", "Additional flags to pass to molecule test")
 	testCmd.Flags().StringVar(&tlConfig.namespace, "namespace", "", "If non-empty, single namespace to run tests in")
 	testCmd.Flags().BoolVar(&tlConfig.upLocal, "up-local", false, "Enable running operator locally with go run instead of as an image in the cluster")
 	testCmd.Flags().BoolVar(&tlConfig.noSetup, "no-setup", false, "Disable test resource creation")
+	testCmd.Flags().BoolVar(&tlConfig.debug, "debug", false, "Enable debug-level logging")
 	testCmd.Flags().StringVar(&tlConfig.image, "image", "", "Use a different operator image from the one specified in the namespaced manifest")
 
 	return testCmd
 }
 
 func testLocalFunc(cmd *cobra.Command, args []string) error {
+	t := projutil.GetOperatorType()
+	switch t {
+	case projutil.OperatorTypeGo:
+		return testLocalGoFunc(cmd, args)
+	case projutil.OperatorTypeAnsible:
+		return testLocalAnsibleFunc(cmd, args)
+	case projutil.OperatorTypeHelm:
+		return fmt.Errorf("`test local` for Helm operators is not implemented")
+	}
+	return fmt.Errorf("unknown operator type '%v'", t)
+}
+
+func testLocalAnsibleFunc(cmd *cobra.Command, args []string) error {
+	projutil.MustInProjectRoot()
+	testArgs := []string{}
+	if tlConfig.debug {
+		testArgs = append(testArgs, "--debug")
+	}
+	testArgs = append(testArgs, "test", "-s", "test-local")
+
+	if tlConfig.moleculeTestFlags != "" {
+		testArgs = append(testArgs, strings.Split(tlConfig.moleculeTestFlags, " ")...)
+	}
+
+	dc := exec.Command("molecule", testArgs...)
+	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
+	dc.Dir = projutil.MustGetwd()
+	return projutil.ExecCmd(dc)
+}
+
+func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
 	}

@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -182,34 +181,20 @@ func doAnsibleScaffold() error {
 		return fmt.Errorf("invalid apiVersion and kind: (%v)", err)
 	}
 
-	s := &scaffold.Scaffold{}
-	tmpdir, err := ioutil.TempDir("", "osdk")
-	if err != nil {
-		return fmt.Errorf("unable to get temp directory: (%v)", err)
-	}
-
-	galaxyInit := &ansible.GalaxyInit{
+	roleFiles := ansible.RolesFiles{
 		Resource: *resource,
-		Dir:      tmpdir,
+	}
+	roleTemplates := ansible.RolesTemplates{
+		Resource: *resource,
 	}
 
+	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
-		&ansible.Dockerfile{
-			GeneratePlaybook: generatePlaybook,
-		},
-		&ansible.WatchesYAML{
-			Resource:         *resource,
-			GeneratePlaybook: generatePlaybook,
-		},
-		galaxyInit,
 		&scaffold.ServiceAccount{},
 		&scaffold.Role{
 			IsClusterScoped: isClusterScoped,
 		},
 		&scaffold.RoleBinding{
-			IsClusterScoped: isClusterScoped,
-		},
-		&ansible.Operator{
 			IsClusterScoped: isClusterScoped,
 		},
 		&scaffold.Crd{
@@ -218,7 +203,69 @@ func doAnsibleScaffold() error {
 		&scaffold.Cr{
 			Resource: resource,
 		},
+		&ansible.BuildDockerfile{
+			GeneratePlaybook: generatePlaybook,
+		},
+		&ansible.RolesReadme{
+			Resource: *resource,
+		},
+		&ansible.RolesMetaMain{
+			Resource: *resource,
+		},
+		&roleFiles,
+		&roleTemplates,
+		&ansible.RolesVarsMain{
+			Resource: *resource,
+		},
+		&ansible.MoleculeTestLocalPlaybook{
+			Resource: *resource,
+		},
+		&ansible.RolesDefaultsMain{
+			Resource: *resource,
+		},
+
+		&ansible.RolesTasksMain{
+			Resource: *resource,
+		},
+		&ansible.MoleculeDefaultMolecule{},
+		&ansible.BuildTestFrameworkDockerfile{},
+		&ansible.MoleculeTestClusterMolecule{},
+		&ansible.MoleculeDefaultPrepare{},
+		&ansible.MoleculeDefaultPlaybook{
+			GeneratePlaybook: generatePlaybook,
+			Resource:         *resource,
+		},
+		&ansible.BuildTestFrameworkAnsibleTestScript{},
+		&ansible.MoleculeDefaultAsserts{},
+		&ansible.MoleculeTestClusterPlaybook{
+			Resource: *resource,
+		},
+		&ansible.RolesHandlersMain{
+			Resource: *resource,
+		},
+		&ansible.Watches{
+			GeneratePlaybook: generatePlaybook,
+			Resource:         *resource,
+		},
+		&ansible.DeployOperator{
+			IsClusterScoped: isClusterScoped,
+		},
+		&ansible.Travis{},
+		&ansible.MoleculeTestLocalMolecule{},
+		&ansible.MoleculeTestLocalPrepare{
+			Resource: *resource,
+		},
 	)
+	if err != nil {
+		return fmt.Errorf("new ansible scaffold failed: (%v)", err)
+	}
+
+	// Remove placeholders from empty directories
+	err = os.Remove(filepath.Join(s.AbsProjectPath, roleFiles.Path))
+	if err != nil {
+		return fmt.Errorf("new ansible scaffold failed: (%v)", err)
+	}
+	err = os.Remove(filepath.Join(s.AbsProjectPath, roleTemplates.Path))
 	if err != nil {
 		return fmt.Errorf("new ansible scaffold failed: (%v)", err)
 	}
@@ -233,22 +280,6 @@ func doAnsibleScaffold() error {
 		if err != nil {
 			return fmt.Errorf("new ansible playbook scaffold failed: (%v)", err)
 		}
-	}
-
-	log.Info("Running galaxy-init.")
-
-	// Run galaxy init.
-	cmd := exec.Command(filepath.Join(galaxyInit.AbsProjectPath, galaxyInit.Path))
-	if err := projutil.ExecCmd(cmd); err != nil {
-		return err
-	}
-
-	// Delete Galxy INIT
-	// Mac OS tmp directory is /var/folders/_c/..... this means we have to make sure that we get the top level directory to remove
-	// everything.
-	tmpDirectorySlice := strings.Split(os.TempDir(), "/")
-	if err = os.RemoveAll(filepath.Join(galaxyInit.AbsProjectPath, tmpDirectorySlice[1])); err != nil {
-		return fmt.Errorf("failed to remove the galaxy init script: (%v)", err)
 	}
 
 	// update deploy/role.yaml for the given resource r.
