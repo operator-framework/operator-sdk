@@ -36,6 +36,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 // NewLocalCmd - up local command to run an operator loccally
@@ -142,6 +143,8 @@ func upLocal() error {
 }
 
 func upLocalAnsible() error {
+	logf.SetLogger(logf.ZapLogger(false))
+
 	// Set the kubeconfig that the manager will be able to grab
 	if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
 		return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
@@ -157,6 +160,8 @@ func upLocalAnsible() error {
 }
 
 func upLocalHelm() error {
+	logf.SetLogger(logf.ZapLogger(false))
+
 	// Set the kubeconfig that the manager will be able to grab
 	if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
 		return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)

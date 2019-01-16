@@ -19,6 +19,7 @@ import (
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 
 	"github.com/spf13/cobra"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 // NewHelmCmd returns a command that will run a helm operator
@@ -30,8 +31,10 @@ func NewHelmCmd() *cobra.Command {
 		Long: `Runs as a helm operator. This is intended to be used when running
 in a Pod inside a cluster. Developers wanting to run their operator locally
 should use "up local" instead.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			helm.Run(flags)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			logf.SetLogger(logf.ZapLogger(false))
+
+			return helm.Run(flags)
 		},
 	}
 	flags = hoflags.AddTo(newCmd.Flags())
