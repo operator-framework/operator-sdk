@@ -15,36 +15,44 @@
 package ansible
 
 import (
+	"path/filepath"
+
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-const WatchesFile = "watches.yaml"
+const MoleculeDefaultPlaybookFile = "playbook.yml"
 
-type Watches struct {
+type MoleculeDefaultPlaybook struct {
 	input.Input
 	GeneratePlaybook bool
-	RolesDir         string
 	Resource         scaffold.Resource
 }
 
 // GetInput - gets the input
-func (w *Watches) GetInput() (input.Input, error) {
-	if w.Path == "" {
-		w.Path = WatchesFile
+func (m *MoleculeDefaultPlaybook) GetInput() (input.Input, error) {
+	if m.Path == "" {
+		m.Path = filepath.Join(MoleculeDefaultDir, MoleculeDefaultPlaybookFile)
 	}
-	w.TemplateBody = watchesAnsibleTmpl
-	w.RolesDir = RolesDir
-	return w.Input, nil
+	m.TemplateBody = moleculeDefaultPlaybookAnsibleTmpl
+
+	return m.Input, nil
 }
 
-const watchesAnsibleTmpl = `---
-- version: {{.Resource.Version}}
-  group: {{.Resource.FullGroup}}
-  kind: {{.Resource.Kind}}
-  {{- if .GeneratePlaybook }}
-  playbook: /opt/ansible/playbook.yml
-  {{- else }}
-  role: /opt/ansible/{{.RolesDir}}/{{.Resource.LowerKind}}
+const moleculeDefaultPlaybookAnsibleTmpl = `---
+{{- if .GeneratePlaybook }}
+- import_playbook: '{{"{{ playbook_dir }}/../../playbook.yml"}}'
+{{- end }}
+
+  {{- if not .GeneratePlaybook }}
+- name: Converge
+  hosts: localhost
+  connection: local
+  vars:
+    ansible_python_interpreter: '{{ "{{ ansible_playbook_python }}" }}'
+  roles:
+    - {{.Resource.LowerKind}}
   {{- end }}
+
+- import_playbook: '{{"{{ playbook_dir }}/asserts.yml"}}'
 `

@@ -307,6 +307,23 @@ should use `up local` instead.
 $ operator-sdk run ansible --watches-file=/opt/ansible/watches.yaml --reconcile-period=30s
 ```
 
+### helm
+
+Runs as a helm operator process. This is intended to be used when running
+in a Pod inside a cluster. Developers wanting to run their operator locally
+should use `up local` instead.
+
+#### Flags
+
+* `--reconcile-period` string - Default reconcile period for controllers (default 1m0s)
+* `--watches-file` string - Path to the watches file to use (default "./watches.yaml")
+
+#### Example
+
+```bash
+$ operator-sdk run helm --watches-file=/opt/helm/watches.yaml --reconcile-period=30s
+```
+
 ## test
 
 ### Available Commands

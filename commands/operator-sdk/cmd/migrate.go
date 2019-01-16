@@ -21,6 +21,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
 	log "github.com/sirupsen/logrus"
@@ -48,6 +49,8 @@ func migrateRun(cmd *cobra.Command, args []string) {
 	switch opType {
 	case projutil.OperatorTypeAnsible:
 		migrateAnsible()
+	case projutil.OperatorTypeHelm:
+		migrateHelm()
 	default:
 		log.Fatalf("Operator of type %s cannot be migrated.", opType)
 	}
@@ -76,13 +79,7 @@ func migrateAnsible() {
 		log.Fatalf("Error trying to stat playbook.yaml: (%v)", err)
 	}
 
-	dockerfilePath := filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
-	newDockerfilePath := dockerfilePath + ".sdkold"
-	err = os.Rename(dockerfilePath, newDockerfilePath)
-	if err != nil {
-		log.Fatalf("Failed to rename Dockerfile: (%v)", err)
-	}
-	log.Infof("Renamed Dockerfile to %s and replaced with newer version. Compare the new Dockerfile to your old one and manually migrate any customizations", newDockerfilePath)
+	renameDockerfile()
 
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
@@ -95,4 +92,41 @@ func migrateAnsible() {
 	if err != nil {
 		log.Fatalf("Migrate scaffold failed: (%v)", err)
 	}
+}
+
+// migrateHelm runs the migration process for a helm-based operator
+func migrateHelm() {
+	wd := projutil.MustGetwd()
+
+	cfg := &input.Config{
+		AbsProjectPath: wd,
+		ProjectName:    filepath.Base(wd),
+	}
+
+	renameDockerfile()
+
+	s := &scaffold.Scaffold{}
+	err := s.Execute(cfg,
+		&helm.Main{},
+		&helm.GopkgToml{},
+		&helm.DockerfileHybrid{
+			Watches:    true,
+			HelmCharts: true,
+		},
+		&helm.Entrypoint{},
+		&helm.UserSetup{},
+	)
+	if err != nil {
+		log.Fatalf("Migrate scaffold failed: (%v)", err)
+	}
+}
+
+func renameDockerfile() {
+	dockerfilePath := filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
+	newDockerfilePath := dockerfilePath + ".sdkold"
+	err := os.Rename(dockerfilePath, newDockerfilePath)
+	if err != nil {
+		log.Fatalf("Failed to rename Dockerfile: (%v)", err)
+	}
+	log.Infof("Renamed Dockerfile to %s and replaced with newer version. Compare the new Dockerfile to your old one and manually migrate any customizations", newDockerfilePath)
 }
