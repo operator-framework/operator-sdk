@@ -3,13 +3,15 @@
 ### Added
 
 - A new command [`operator-sdk migrate`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#migrate) which adds a main.go source file and any associated source files for an operator that is not of the "go" type. ([#887](https://github.com/operator-framework/operator-sdk/pull/887) and [#897](https://github.com/operator-framework/operator-sdk/pull/897))
-- New commands [`operator-sdk run ansible`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#ansible) and [`operator-sdk run helm`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#helm) which run the SDK as ansible  and helm operator processes, respectively. These are intended to be used when running in a Pod inside a cluster. Developers wanting to run their operator locally should continue to use `up local`. ([#887](https://github.com/operator-framework/operator-sdk/pull/887) and [#897](https://github.com/operator-framework/operator-sdk/pull/897))
+- New commands [`operator-sdk run ansible`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#ansible) and [`operator-sdk run helm`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#helm) which run the SDK as ansible and helm operator processes, respectively. These are intended to be used when running in a Pod inside a cluster. Developers wanting to run their operator locally should continue to use `up local`. ([#887](https://github.com/operator-framework/operator-sdk/pull/887) and [#897](https://github.com/operator-framework/operator-sdk/pull/897))
+- New Helm operator flags (`--storage-driver` and `--storage-namespace`) which control how Helm release history is persisted. ([#917](https://github.com/operator-framework/operator-sdk/pull/917))
 
 ### Changed
 
 - The official images for the Ansible and Helm operators have moved! Travis now builds, tags, and pushes operator base images during CI ([#832](https://github.com/operator-framework/operator-sdk/pull/832)).
   - [quay.io/operator-framework/ansible-operator](https://quay.io/repository/operator-framework/ansible-operator)
   - [quay.io/operator-framework/helm-operator](https://quay.io/repository/operator-framework/helm-operator)
+- The default storage engine in the Helm operator has been changed from an in-memory implementation to a ConfigMap implementation. Now, Helm-based operators can be restarted without losing state and relying on the status of existing custom resources to reconstitute it. ([#917](https://github.com/operator-framework/operator-sdk/pull/917))
 
 ### Deprecated
 

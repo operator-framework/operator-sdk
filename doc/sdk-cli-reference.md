@@ -310,6 +310,11 @@ should use `up local` instead.
 
 * `--reconcile-period` string - Default reconcile period for controllers (default 1m0s)
 * `--watches-file` string - Path to the watches file to use (default "./watches.yaml")
+* `--storage-driver` string - Storage driver to use. One of 'ConfigMap', 'Secret', or 'Memory' (default "ConfigMap")
+
+    NOTE: The 'Memory' driver is not recommended for production use. When the process exits, all state about release history is lost.
+
+* `--storage-namespace` string - Namespace used by the storage driver for persisting release information
 
 #### Example
 
