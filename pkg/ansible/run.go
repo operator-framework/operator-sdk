@@ -24,7 +24,6 @@ import (
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
-	"github.com/operator-framework/operator-sdk/pkg/ready"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -73,20 +72,6 @@ func Run(flags *aoflags.AnsibleOperatorFlags) {
 		log.Error(err, "")
 		os.Exit(1)
 	}
-
-	// Set ready
-	r := ready.NewFileReady()
-	err = r.Set()
-	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
-	}
-	defer func() {
-		if err = r.Unset(); err != nil {
-			log.Error(err, "")
-			os.Exit(1)
-		}
-	}()
 
 	done := make(chan error)
 	cMap := proxy.NewControllerMap()
