@@ -16,7 +16,6 @@ deploy_operator() {
     kubectl create -f "$OPERATORDIR/deploy/role.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
     kubectl create -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_memcached_crd.yaml"
-    kubectl create -f "$OPERATORDIR/deploy/operator.yaml"
 }
 
 remove_operator() {
@@ -24,7 +23,6 @@ remove_operator() {
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/role.yaml"
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/role_binding.yaml"
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_memcached_crd.yaml"
-    kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/operator.yaml"
 }
 
 pushd "$GOTMP"
@@ -43,13 +41,13 @@ OPERATORDIR="$(pwd)"
 TEST_CLUSTER_PORT=24443 operator-sdk test local --namespace default
 
 # Test cluster
-DEST_IMAGE="quay.io/example/memcached-operator:v0.0.2"
+DEST_IMAGE="quay.io/example/memcached-operator:v0.0.2-test"
 sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
 operator-sdk build --enable-tests "$DEST_IMAGE"
-sed -i "s|{{ REPLACE_IMAGE }}|$DEST_IMAGE|g" deploy/operator.yaml
-sed -i 's|{{ pull_policy.default..Always.. }}|Never|g' deploy/operator.yaml
+trap_add 'remove_operator' EXIT
 deploy_operator
-TEST_CLUSTER_PORT=25443 operator-sdk test cluster --namespace default
+TEST_CLUSTER_PORT=25443 operator-sdk test cluster --image-pull-policy Never --namespace default --service-account memcached-operator ${DEST_IMAGE}
+remove_operator
 
 popd
 popd

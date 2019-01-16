@@ -64,6 +64,17 @@ provisioner:
     ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/roles
 scenario:
   name: test-cluster
+  test_sequence:
+    - lint
+    - destroy
+    - dependency
+    - syntax
+    - create
+    - prepare
+    - converge
+    - side_effect
+    - verify
+    - destroy
 verifier:
   name: testinfra
   lint:

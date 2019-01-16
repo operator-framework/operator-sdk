@@ -16,19 +16,21 @@
         deploy: '{{ lookup("k8s",
           kind="Deployment",
           api_version="apps/v1",
+          namespace=namespace,
           label_selector="app=memcached"
         )}}'
 
-    - name: Wait for memcached deployment
+    - name: Wait 2 minutes for memcached deployment
       debug:
         msg: Waiting for memcached deployment...
       until: deploy and deploy.status and deploy.status.replicas == deploy.status.get("availableReplicas", 0)
-      retries: 10
-      delay: 2
+      retries: 12
+      delay: 10
       vars:
         deploy: '{{ lookup("k8s",
           kind="Deployment",
           api_version="apps/v1",
+          namespace=namespace,
           label_selector="app=memcached"
         )}}'
 
@@ -67,4 +69,4 @@
 
     - name: Verify the Deployment was deleted
       assert:  
-        that: not lookup('k8s', kind='Deployment', api_version='apps/v1', label_selector='app=memcached')
+        that: not lookup('k8s', kind='Deployment', api_version='apps/v1', namespace=namespace, label_selector='app=memcached')

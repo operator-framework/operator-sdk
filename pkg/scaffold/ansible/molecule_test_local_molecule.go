@@ -75,6 +75,17 @@ provisioner:
     KIND_PORT: '${TEST_CLUSTER_PORT:-10443}'
 scenario:
   name: test-local
+  test_sequence:
+    - lint
+    - destroy
+    - dependency
+    - syntax
+    - create
+    - prepare
+    - converge
+    - side_effect
+    - verify
+    - destroy
 verifier:
   name: testinfra
   lint:
