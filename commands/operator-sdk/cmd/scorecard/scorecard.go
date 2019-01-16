@@ -223,7 +223,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 		fmt.Println("Checking for CRD resources")
 		crdsHaveResources(csv)
-		fmt.Println("Checking for existence CR example")
+		fmt.Println("Checking for existence of example CRs")
 		annotationsContainExamples(csv)
 		fmt.Println("Checking spec descriptors")
 		err = specDescriptors(csv, runtimeClient, obj)
