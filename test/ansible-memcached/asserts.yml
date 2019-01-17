@@ -22,7 +22,7 @@
 
     - name: Wait 2 minutes for memcached deployment
       debug:
-        msg: Waiting for memcached deployment...
+        var: deploy
       until: deploy and deploy.status and deploy.status.replicas == deploy.status.get("availableReplicas", 0)
       retries: 12
       delay: 10
