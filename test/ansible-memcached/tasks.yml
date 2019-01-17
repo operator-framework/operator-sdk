@@ -35,3 +35,11 @@
                   port: 11211
                 initialDelaySeconds: 3
                 periodSeconds: 3
+
+- k8s_status:
+    api_version: ansible.example.com/v1alpha1
+    kind: Memcached
+    name: "{{ meta.name }}"
+    namespace: "{{ meta.namespace }}"
+    status:
+      test: "hello world"
