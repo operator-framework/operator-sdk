@@ -40,12 +40,13 @@ func TestHandler(t *testing.T) {
 	done := make(chan error)
 	cMap := NewControllerMap()
 	err = Run(done, Options{
-		Address:       "localhost",
-		Port:          8888,
-		KubeConfig:    mgr.GetConfig(),
-		Cache:         nil,
-		RESTMapper:    mgr.GetRESTMapper(),
-		ControllerMap: cMap,
+		Address:           "localhost",
+		Port:              8888,
+		KubeConfig:        mgr.GetConfig(),
+		Cache:             nil,
+		RESTMapper:        mgr.GetRESTMapper(),
+		ControllerMap:     cMap,
+		WatchedNamespaces: []string{"default"},
 	})
 	if err != nil {
 		t.Fatalf("Error starting proxy: %v", err)

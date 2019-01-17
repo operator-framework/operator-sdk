@@ -22,7 +22,9 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
 	log "github.com/sirupsen/logrus"
@@ -76,6 +78,19 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 	} else {
 		return fmt.Errorf("invalid imagePullPolicy '%v'", tcConfig.imagePullPolicy)
 	}
+
+	var testCmd []string
+	switch projutil.GetOperatorType() {
+	case projutil.OperatorTypeGo:
+		testCmd = []string{"/" + scaffold.GoTestScriptFile}
+	case projutil.OperatorTypeAnsible:
+		testCmd = []string{"/" + ansible.BuildTestFrameworkAnsibleTestScriptFile}
+	case projutil.OperatorTypeHelm:
+		log.Fatal("`test cluster` for Helm operators is not implemented")
+	default:
+		log.Fatal("Failed to determine operator type")
+	}
+
 	// cobra prints its help message on error; we silence that here because any errors below
 	// are due to the test failing, not incorrect user input
 	cmd.SilenceUsage = true
@@ -90,7 +105,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 				Name:            "operator-test",
 				Image:           args[0],
 				ImagePullPolicy: pullPolicy,
-				Command:         []string{"/" + scaffold.GoTestScriptFile},
+				Command:         testCmd,
 				Env: []v1.EnvVar{{
 					Name:      test.TestNamespaceEnv,
 					ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.namespace"}},

@@ -32,5 +32,6 @@ should use "up local" instead.`,
 	}
 
 	runCmd.AddCommand(run.NewAnsibleCmd())
+	runCmd.AddCommand(run.NewHelmCmd())
 	return runCmd
 }
