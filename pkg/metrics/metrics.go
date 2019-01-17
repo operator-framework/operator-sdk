@@ -34,11 +34,7 @@ var log = logf.Log.WithName("metrics")
 // ExposeMetricsPort generate a Kubernetes Service to expose metrics port
 func ExposeMetricsPort() *v1.Service {
 	http.Handle("/"+k8sutil.PrometheusMetricsPortName, promhttp.Handler())
-	go func() {
-		if err := http.ListenAndServe(":"+strconv.Itoa(k8sutil.PrometheusMetricsPort), nil); err != nil {
-			panic(err)
-		}
-	}()
+	go http.ListenAndServe(":"+strconv.Itoa(k8sutil.PrometheusMetricsPort), nil)
 
 	service, err := k8sutil.InitOperatorService()
 	if err != nil {
