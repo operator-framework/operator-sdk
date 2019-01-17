@@ -64,7 +64,7 @@ func TestMemcached(t *testing.T) {
 	}
 	defer func() {
 		if err := os.Chdir(cd); err != nil {
-			t.Errorf("failed to change back to original working directory: (%v)", err)
+			t.Errorf("Failed to change back to original working directory: (%v)", err)
 		}
 	}()
 
