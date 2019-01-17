@@ -178,6 +178,12 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) {
 	testArgs := []string{"test", args[0] + "/..."}
 	if tlConfig.kubeconfig != "" {
 		testArgs = append(testArgs, "-"+test.KubeConfigFlag, tlConfig.kubeconfig)
+	} else {
+		// Use the system default kubeconfig.
+		homedir, ok := os.LookupEnv("HOME")
+		if ok {
+			testArgs = append(testArgs, "-"+test.KubeConfigFlag, homedir+"/.kube/config")
+		}
 	}
 	testArgs = append(testArgs, "-"+test.NamespacedManPathFlag, tlConfig.namespacedManPath)
 	testArgs = append(testArgs, "-"+test.GlobalManPathFlag, tlConfig.globalManPath)
