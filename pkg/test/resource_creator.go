@@ -66,7 +66,9 @@ func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOp
 		if err != nil {
 			return fmt.Errorf("could not convert yaml file to json: %v", err)
 		}
-		obj.UnmarshalJSON(jsonSpec)
+		if err := obj.UnmarshalJSON(jsonSpec); err != nil {
+			return fmt.Errorf("failed to unmarshal object spec: (%v)", err)
+		}
 		obj.SetNamespace(namespace)
 		err = Global.Client.Create(goctx.TODO(), obj, cleanupOptions)
 		if skipIfExists && apierrors.IsAlreadyExists(err) {
@@ -79,7 +81,7 @@ func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOp
 			}
 			// don't store error, as only error will be timeout. Error from runtime client will be easier for
 			// the user to understand than the timeout error, so just use that if we fail
-			wait.PollImmediate(time.Second*1, time.Second*10, func() (bool, error) {
+			_ = wait.PollImmediate(time.Second*1, time.Second*10, func() (bool, error) {
 				restMapper.Reset()
 				_, err := restMapper.RESTMappings(obj.GetObjectKind().GroupVersionKind().GroupKind())
 				if err != nil {

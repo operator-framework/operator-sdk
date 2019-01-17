@@ -63,7 +63,9 @@ func TestMemcached(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() {
-		os.Chdir(cd)
+		if err := os.Chdir(cd); err != nil {
+			t.Errorf("Failed to change back to original working directory: (%v)", err)
+		}
 	}()
 
 	// Setup
@@ -92,7 +94,9 @@ func TestMemcached(t *testing.T) {
 	}
 	ctx.AddCleanupFn(func() error { return os.RemoveAll(absProjectPath) })
 
-	os.Chdir("memcached-operator")
+	if err := os.Chdir("memcached-operator"); err != nil {
+		t.Fatalf("Failed to change to memcached-operator directory: (%v)", err)
+	}
 	repo, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
 	if repo == "" {
 		repo, ok = os.LookupEnv("TRAVIS_REPO_SLUG")
@@ -190,7 +194,9 @@ func TestMemcached(t *testing.T) {
 			break
 		}
 	}
-	os.Remove("pkg/apis/cache/v1alpha1/memcached_types.go")
+	if err := os.Remove("pkg/apis/cache/v1alpha1/memcached_types.go"); err != nil {
+		t.Fatalf("Failed to remove old memcached_type.go file: (%v)", err)
+	}
 	err = ioutil.WriteFile("pkg/apis/cache/v1alpha1/memcached_types.go", bytes.Join(memcachedTypesFileLines, []byte("\n")), fileutil.DefaultFileMode)
 	if err != nil {
 		t.Fatal(err)
@@ -230,8 +236,12 @@ func TestMemcached(t *testing.T) {
 		for _, dir := range []string{"pkg", "internal"} {
 			repoDir := filepath.Join("github.com/operator-framework/operator-sdk", dir)
 			vendorDir := filepath.Join("vendor", repoDir)
-			os.RemoveAll(vendorDir)
-			os.Symlink(filepath.Join(gopath, projutil.SrcDir, repoDir), vendorDir)
+			if err := os.RemoveAll(vendorDir); err != nil {
+				t.Fatalf("Failed to delete old vendor directory: (%v)", err)
+			}
+			if err := os.Symlink(filepath.Join(gopath, projutil.SrcDir, repoDir), vendorDir); err != nil {
+				t.Fatalf("Failed to symlink local operator-sdk project to vendor dir: (%v)", err)
+			}
 		}
 	}
 
@@ -268,7 +278,7 @@ func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.Te
 		return err
 	}
 
-	leader, err := verifyLeader(namespace, f)
+	leader, err := verifyLeader(t, namespace, f)
 	if err != nil {
 		return err
 	}
@@ -284,7 +294,7 @@ func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.Te
 		return err
 	}
 
-	newLeader, err := verifyLeader(namespace, f)
+	newLeader, err := verifyLeader(t, namespace, f)
 	if err != nil {
 		return err
 	}
@@ -295,7 +305,7 @@ func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.Te
 	return nil
 }
 
-func verifyLeader(namespace string, f *framework.Framework) (*v1.Pod, error) {
+func verifyLeader(t *testing.T, namespace string, f *framework.Framework) (*v1.Pod, error) {
 	// get configmap, which is the lock
 	lock := v1.ConfigMap{}
 	err := f.Client.Get(context.TODO(), types.NamespacedName{Name: "memcached-operator-lock", Namespace: namespace}, &lock)
@@ -312,8 +322,12 @@ func verifyLeader(namespace string, f *framework.Framework) (*v1.Pod, error) {
 	// get operator pods
 	pods := v1.PodList{}
 	opts := client.ListOptions{Namespace: namespace}
-	opts.SetLabelSelector("name=memcached-operator")
-	opts.SetFieldSelector("status.phase=Running")
+	if err := opts.SetLabelSelector("name=memcached-operator"); err != nil {
+		t.Fatalf("Failed to set list label selector: (%v)", err)
+	}
+	if err := opts.SetFieldSelector("status.phase=Running"); err != nil {
+		t.Fatalf("Failed to set list field selector: (%v)", err)
+	}
 	err = f.Client.List(context.TODO(), &opts, &pods)
 	if err != nil {
 		return nil, err
@@ -365,7 +379,9 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 	if err != nil {
 		return fmt.Errorf("could not convert yaml file to json: %v", err)
 	}
-	obj.UnmarshalJSON(jsonSpec)
+	if err := obj.UnmarshalJSON(jsonSpec); err != nil {
+		t.Fatalf("Failed to unmarshal memcached CR: (%v)", err)
+	}
 	obj.SetNamespace(namespace)
 	err = f.Client.Get(context.TODO(), types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}, &obj)
 	if err != nil {
@@ -400,7 +416,11 @@ func MemcachedLocal(t *testing.T) {
 		t.Fatalf("Failed to create stderr.txt: %v", err)
 	}
 	cmd.Stderr = stderr
-	defer stderr.Close()
+	defer func() {
+		if err := stderr.Close(); err != nil && !fileutil.IsClosedError(err) {
+			t.Errorf("Failed to close stderr: (%v)", err)
+		}
+	}()
 
 	err = cmd.Start()
 	if err != nil {
