@@ -40,5 +40,5 @@ const playbookTmpl = `- hosts: localhost
   gather_facts: no
   tasks:
   - import_role:
-      name: "{{.Resource.Kind}}"
+      name: "{{.Resource.LowerKind}}"
 `
