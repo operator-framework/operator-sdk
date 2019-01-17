@@ -19,7 +19,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-const PlaybookYamlFile = "playbook.yaml"
+const PlaybookYamlFile = "playbook.yml"
 
 // Playbook - the playbook tmpl wrapper
 type Playbook struct {
