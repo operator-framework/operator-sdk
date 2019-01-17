@@ -69,14 +69,14 @@ func migrateAnsible() {
 		Watches: true,
 		Roles:   true,
 	}
-	_, err := os.Stat("playbook.yaml")
+	_, err := os.Stat("playbook.yml")
 	switch {
 	case err == nil:
 		dockerfile.Playbook = true
 	case os.IsNotExist(err):
 		log.Info("No playbook was found, so not including it in the new Dockerfile")
 	default:
-		log.Fatalf("Error trying to stat playbook.yaml: (%v)", err)
+		log.Fatalf("Error trying to stat playbook.yml: (%v)", err)
 	}
 
 	renameDockerfile()
