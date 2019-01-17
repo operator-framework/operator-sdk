@@ -54,6 +54,8 @@ generates a skeletal app-operator application in $GOPATH/src/github.com/example.
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
 	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false, "Generate a playbook skeleton. (Only used for --type ansible)")
 	newCmd.Flags().BoolVar(&isClusterScoped, "cluster-scoped", false, "Generate cluster-scoped resources instead of namespace-scoped")
+	newCmd.Flags().StringVar(&helmChartSource, "helm-chart-source", "", "Initialize helm operator with specified chart (<repo>/<name> or <local_path>)")
+	newCmd.Flags().StringVar(&helmChartRepo, "helm-chart-repo", "", "Custom helm chart repository")
 
 	return newCmd
 }
@@ -66,6 +68,8 @@ var (
 	skipGit          bool
 	generatePlaybook bool
 	isClusterScoped  bool
+	helmChartSource  string
+	helmChartRepo    string
 )
 
 const (
@@ -297,16 +301,17 @@ func doHelmScaffold() {
 		ProjectName:    projectName,
 	}
 
-	resource, err := scaffold.NewResource(apiVersion, kind)
+	resource, chartName, err := helm.CreateChart(apiVersion, kind, helmChartSource, helmChartRepo, cfg.AbsProjectPath)
 	if err != nil {
-		log.Fatalf("Invalid apiVersion and kind: (%v)", err)
+		log.Fatalf("Failed to create helm chart: %s", err)
 	}
 
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
 		&helm.Dockerfile{},
 		&helm.WatchesYAML{
-			Resource: resource,
+			Resource:  resource,
+			ChartName: chartName,
 		},
 		&scaffold.ServiceAccount{},
 		&scaffold.Role{
@@ -329,10 +334,6 @@ func doHelmScaffold() {
 		log.Fatalf("New helm scaffold failed: (%v)", err)
 	}
 
-	if err := helm.CreateChartForResource(resource, cfg.AbsProjectPath); err != nil {
-		log.Fatalf("Failed to create initial helm chart for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
-	}
-
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
 		log.Fatalf("Failed to update the RBAC manifest for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
 	}
@@ -345,11 +346,17 @@ func verifyFlags() {
 	if operatorType != projutil.OperatorTypeAnsible && generatePlaybook {
 		log.Fatal("Value of --generate-playbook can only be used with --type `ansible`")
 	}
+	if operatorType != projutil.OperatorTypeHelm && len(helmChartSource) != 0 {
+		log.Fatal("Value of --source-helm-chart can only be used with --type `helm`")
+	}
+	if operatorType != projutil.OperatorTypeHelm && len(helmChartSource) == 0 && len(helmChartRepo) != 0 {
+		log.Fatal("Value of --source-helm-repo can only be used with --type `helm` and --source-helm-chart")
+	}
 	if operatorType == projutil.OperatorTypeGo && (len(apiVersion) != 0 || len(kind) != 0) {
 		log.Fatal(`Go type operators do not use --api-version or --kind. Please see "operator-sdk add" command after running new.`)
 	}
 
-	if operatorType != projutil.OperatorTypeGo {
+	if operatorType == projutil.OperatorTypeAnsible || operatorType == projutil.OperatorTypeHelm && len(helmChartSource) == 0 {
 		if len(apiVersion) == 0 {
 			log.Fatal("Value of --api-version must not have empty value")
 		}

@@ -416,6 +416,14 @@
   version = "v1.2.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:89cd2208bdeb192cc83ee287216af3c987fc87a90b9087718ad6631b636cefcf"
+  name = "github.com/iancoleman/strcase"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "3605ed457bf7f8caa1371b4fafadadc026673479"
+
+[[projects]]
   digest = "1:8eb1de8112c9924d59bf1d3e5c26f5eaa2bfc2a5fcbb92dc1c2e4546d695f277"
   name = "github.com/imdario/mergo"
   packages = ["."]
@@ -1441,6 +1449,7 @@
     "github.com/coreos/prometheus-operator/pkg/client/versioned/typed/monitoring/v1",
     "github.com/ghodss/yaml",
     "github.com/go-logr/logr",
+    "github.com/iancoleman/strcase",
     "github.com/markbates/inflect",
     "github.com/martinlindhe/base36",
     "github.com/mattbaird/jsonpatch",
