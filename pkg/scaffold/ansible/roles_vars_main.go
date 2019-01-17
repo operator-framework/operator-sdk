@@ -12,32 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package ansible
 
 import (
-	"github.com/spf13/cobra"
+	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/version"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-func NewRootCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "operator-sdk",
-		Short:   "An SDK for building operators with ease",
-		Version: version.Version,
-	}
+const RolesVarsMainFile = "vars" + filePathSep + "main.yml"
 
-	cmd.AddCommand(NewNewCmd())
-	cmd.AddCommand(NewAddCmd())
-	cmd.AddCommand(NewBuildCmd())
-	cmd.AddCommand(NewGenerateCmd())
-	cmd.AddCommand(NewUpCmd())
-	cmd.AddCommand(NewCompletionCmd())
-	cmd.AddCommand(NewTestCmd())
-	cmd.AddCommand(NewScorecardCmd())
-	cmd.AddCommand(NewPrintDepsCmd())
-	cmd.AddCommand(NewMigrateCmd())
-	cmd.AddCommand(NewRunCmd())
-
-	return cmd
+type RolesVarsMain struct {
+	input.Input
+	Resource scaffold.Resource
 }
+
+// GetInput - gets the input
+func (r *RolesVarsMain) GetInput() (input.Input, error) {
+	if r.Path == "" {
+		r.Path = filepath.Join(RolesDir, r.Resource.LowerKind, RolesVarsMainFile)
+	}
+	r.TemplateBody = rolesVarsMainAnsibleTmpl
+
+	return r.Input, nil
+}
+
+const rolesVarsMainAnsibleTmpl = `---
+# vars file for {{.Resource.LowerKind}}
+`

@@ -16,37 +16,25 @@ package ansible
 
 import (
 	"path/filepath"
-	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
-	"github.com/operator-framework/operator-sdk/version"
 )
 
-//Dockerfile - docker file for creating image
-type Dockerfile struct {
-	input.Input
+const RolesTemplatesDir = "templates" + filePathSep + ".placeholder"
 
-	GeneratePlaybook bool
-	RolesDir         string
-	ImageTag         string
+type RolesTemplates struct {
+	input.Input
+	Resource scaffold.Resource
 }
 
 // GetInput - gets the input
-func (d *Dockerfile) GetInput() (input.Input, error) {
-	if d.Path == "" {
-		d.Path = filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
+func (r *RolesTemplates) GetInput() (input.Input, error) {
+	if r.Path == "" {
+		r.Path = filepath.Join(RolesDir, r.Resource.LowerKind, RolesTemplatesDir)
 	}
-	d.RolesDir = RolesDir
-	d.ImageTag = strings.TrimSuffix(version.Version, "+git")
-	d.TemplateBody = dockerFileAnsibleTmpl
-	return d.Input, nil
+	r.TemplateBody = rolesTemplatesDirPlaceholder
+	return r.Input, nil
 }
 
-const dockerFileAnsibleTmpl = `FROM quay.io/operator-framework/ansible-operator:{{.ImageTag}}
-
-COPY {{.RolesDir}}/ ${HOME}/{{.RolesDir}}/
-{{- if .GeneratePlaybook }}
-COPY playbook.yaml ${HOME}/playbook.yaml{{ end }}
-COPY watches.yaml ${HOME}/watches.yaml
-`
+const rolesTemplatesDirPlaceholder = ``

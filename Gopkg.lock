@@ -98,6 +98,14 @@
   revision = "bf70f2a70fb1b1f36d90d671a72795984eab0fcb"
 
 [[projects]]
+  digest = "1:0ef770954bca104ee99b3b6b7f9b240605ac03517d9f98cbc1893daa03f3c038"
+  name = "github.com/coreos/go-semver"
+  packages = ["semver"]
+  pruneopts = "UT"
+  revision = "8ab6407b697782a06568d4b7f1db25550ec2e4c6"
+  version = "v0.2.0"
+
+[[projects]]
   digest = "1:e8edae4db8ee767863e94b68290007be469f051f4674dc49164632a810a0aac3"
   name = "github.com/coreos/prometheus-operator"
   packages = [
@@ -541,6 +549,16 @@
   pruneopts = "UT"
   revision = "d60099175f88c47cd379c4738d158884749ed235"
   version = "v1.0.1"
+
+[[projects]]
+  digest = "1:4a65cad11472711a96ddb872d802d1e639757612a03a719d3ed5f4a15770d17f"
+  name = "github.com/operator-framework/operator-lifecycle-manager"
+  packages = [
+    "pkg/api/apis/operators",
+    "pkg/api/apis/operators/v1alpha1",
+  ]
+  pruneopts = "UT"
+  revision = "7ba3268c94bb247da0e5f3e1e625b5347ad9f1fb"
 
 [[projects]]
   digest = "1:e5d0bd87abc2781d14e274807a470acd180f0499f8bf5bb18606e9ec22ad9de9"
@@ -1427,6 +1445,7 @@
     "github.com/markbates/inflect",
     "github.com/martinlindhe/base36",
     "github.com/mattbaird/jsonpatch",
+    "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1",
     "github.com/pborman/uuid",
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/sergi/go-diff/diffmatchpatch",
