@@ -133,7 +133,11 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	if err != nil {
 		return reconcileResult, err
 	}
-	defer os.Remove(kc.Name())
+	defer func() {
+		if err := os.Remove(kc.Name()); err != nil {
+			logger.Error(err, "Failed to remove generated kubeconfig file")
+		}
+	}()
 	result, err := r.Runner.Run(ident, u, kc.Name())
 	if err != nil {
 		return reconcileResult, err
