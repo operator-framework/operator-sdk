@@ -17,6 +17,7 @@ package catalog
 import (
 	"bytes"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -41,17 +42,27 @@ func TestCSV(t *testing.T) {
 		},
 	}
 	csvVer := "0.1.0"
+	projectName := "app-operator"
+	testOLMDir := filepath.Join(testDataDir, scaffold.OlmCatalogDir)
 
-	err := s.Execute(&input.Config{ProjectName: "app-operator"},
+	err := s.Execute(&input.Config{ProjectName: projectName},
 		&CSV{
 			CSVVersion:     csvVer,
 			DeployDir:      filepath.Join(testDataDir, scaffold.DeployDir),
-			ConfigFilePath: filepath.Join(testDataDir, scaffold.OlmCatalogDir, CSVConfigYamlFile),
+			ConfigFilePath: filepath.Join(testOLMDir, CSVConfigYamlFile),
 		},
 	)
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
+
+	// Get the expected CSV manifest from test data dir.
+	csvFilePath := projectName + CSVYamlFileExt
+	csvExpBytes, err := ioutil.ReadFile(filepath.Join(testOLMDir, csvFilePath))
+	if err != nil {
+		t.Fatal(err)
+	}
+	csvExp := string(csvExpBytes)
 
 	if csvExp != buf.String() {
 		diffs := diffutil.Diff(csvExp, buf.String())
@@ -59,104 +70,23 @@ func TestCSV(t *testing.T) {
 	}
 }
 
-const csvExp = `apiVersion: operators.coreos.com/v1alpha1
-kind: ClusterServiceVersion
-metadata:
-  creationTimestamp: null
-  name: app-operator.v0.1.0
-  namespace: placeholder
-spec:
-  apiservicedefinitions: {}
-  customresourcedefinitions:
-    owned:
-    - kind: App
-      name: apps.example.com
-      version: v1alpha1
-    - kind: App
-      name: apps.example.com
-      version: v1alpha2
-  description: Placeholder description
-  displayName: App Operator
-  install:
-    spec:
-      deployments:
-      - name: app-operator
-        spec:
-          replicas: 1
-          selector:
-            matchLabels:
-              name: app-operator
-          strategy: {}
-          template:
-            metadata:
-              creationTimestamp: null
-              labels:
-                name: app-operator
-            spec:
-              containers:
-              - command:
-                - app-operator
-                env:
-                - name: WATCH_NAMESPACE
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.namespace
-                - name: OPERATOR_NAME
-                  value: app-operator
-                image: quay.io/example-org/operator:v0.1.0
-                imagePullPolicy: Always
-                name: app-operator
-                ports:
-                - containerPort: 60000
-                  name: metrics
-                resources: {}
-              serviceAccountName: app-operator
-      permissions:
-      - rules:
-        - apiGroups:
-          - ""
-          resources:
-          - pods
-          - services
-          - endpoints
-          - persistentvolumeclaims
-          - events
-          - configmaps
-          - secrets
-          verbs:
-          - '*'
-        - apiGroups:
-          - apps
-          resources:
-          - deployments
-          - daemonsets
-          - replicasets
-          - statefulsets
-          verbs:
-          - '*'
-        - apiGroups:
-          - app.example.com
-          resources:
-          - '*'
-          verbs:
-          - '*'
-        serviceAccountName: app-operator
-    strategy: deployment
-  maturity: alpha
-  provider: {}
-  version: 0.1.0
-`
-
 func TestUpdateVersion(t *testing.T) {
+	projectName := "app-operator"
+	testOLMDir := filepath.Join(testDataDir, scaffold.OlmCatalogDir)
+	csvFilePath := projectName + CSVYamlFileExt
+	csvExpBytes, err := ioutil.ReadFile(filepath.Join(testOLMDir, csvFilePath))
+	if err != nil {
+		t.Fatal(err)
+	}
 	csv := new(olmApi.ClusterServiceVersion)
-	if err := yaml.Unmarshal([]byte(csvExp), csv); err != nil {
+	if err := yaml.Unmarshal(csvExpBytes, csv); err != nil {
 		t.Fatal(err)
 	}
 
 	newCSVVer := "0.2.0"
 	c := &CSV{
 		Input: input.Input{
-			ProjectName: "app-operator",
+			ProjectName: projectName,
 		},
 		CSVVersion: newCSVVer,
 	}
@@ -168,7 +98,7 @@ func TestUpdateVersion(t *testing.T) {
 	if !csv.Spec.Version.Equal(*wantedSemver) {
 		t.Errorf("Wanted csv version %v, got %v", *wantedSemver, csv.Spec.Version)
 	}
-	wantedName := getCSVName("app-operator", newCSVVer)
+	wantedName := getCSVName(projectName, newCSVVer)
 	if csv.ObjectMeta.Name != wantedName {
 		t.Errorf("Wanted csv name %s, got %s", wantedName, csv.ObjectMeta.Name)
 	}
@@ -181,12 +111,12 @@ func TestUpdateVersion(t *testing.T) {
 	strat := stratInterface.(*olmInstall.StrategyDetailsDeployment)
 	csvPodImage := strat.DeploymentSpecs[0].Spec.Template.Spec.Containers[0].Image
 	// updateCSVVersions should not update podspec image.
-	wantedImage := "quay.io/example-org/operator:v0.1.0"
+	wantedImage := "quay.io/example-inc/operator:v0.1.0"
 	if csvPodImage != wantedImage {
 		t.Errorf("Podspec image changed from %s to %s", wantedImage, csvPodImage)
 	}
 
-	wantedReplaces := getCSVName("app-operator", "0.1.0")
+	wantedReplaces := getCSVName(projectName, "0.1.0")
 	if csv.Spec.Replaces != wantedReplaces {
 		t.Errorf("Wanted csv replaces %s, got %s", wantedReplaces, csv.Spec.Replaces)
 	}

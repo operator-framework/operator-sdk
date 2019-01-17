@@ -18,12 +18,12 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/coreos/go-semver/semver"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 	catalog "github.com/operator-framework/operator-sdk/pkg/scaffold/olm-catalog"
 
+	"github.com/coreos/go-semver/semver"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -35,7 +35,6 @@ func NewGenCSVCmd() *cobra.Command {
 		Use:   "gen-csv",
 		Short: "Generates a Cluster Service Version yaml file for the operator",
 		Long: `The gen-csv command generates a Cluster Service Version (CSV) YAML manifest
-Version (CSV) yaml manifest file for the operator. This file is used to publish
 for the operator. This file is used to publish the operator to the OLM Catalog.
 
 A CSV semantic version is supplied via the --csv-version flag.

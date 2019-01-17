@@ -112,13 +112,16 @@ func (c *CSVConfig) setFields() error {
 
 func getManifestPathsFromDir(dir string) (paths []string, err error) {
 	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 		if info == nil {
 			return fmt.Errorf("file info for %s was nil", path)
 		}
 		if !info.IsDir() && filepath.Ext(path) == yamlExt {
 			paths = append(paths, path)
 		}
-		return err
+		return nil
 	})
 	if err != nil {
 		return nil, err
