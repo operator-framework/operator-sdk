@@ -18,6 +18,8 @@
 
 ### Bug Fixes
 
+- Fixes deadlocks during operator deployment rollouts, which were caused by operator pods requiring a leader election lock to become ready ([#932](https://github.com/operator-framework/operator-sdk/pull/932))
+
 ## v0.3.0
 
 ### Added

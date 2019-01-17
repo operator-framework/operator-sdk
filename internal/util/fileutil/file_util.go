@@ -89,3 +89,14 @@ func (fw *FileWriter) WriteFile(filePath string, content []byte) error {
 
 	return nil
 }
+
+func IsClosedError(e error) bool {
+	pathErr, ok := e.(*os.PathError)
+	if !ok {
+		return false
+	}
+	if pathErr.Err == os.ErrClosed {
+		return true
+	}
+	return false
+}
