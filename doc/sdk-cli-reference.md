@@ -167,6 +167,9 @@ Generating CSV manifest version 0.1.1
 Adds a main.go source file and any associated source files for an operator that
 is not of the "go" type.
 
+**Note**: This command will look for playbook.yml in the project root, if you use the .yaml extension
+you will need to rename it before running migrate or manually add it to your Dockerfile.
+
 ### Example
 
 ```console
