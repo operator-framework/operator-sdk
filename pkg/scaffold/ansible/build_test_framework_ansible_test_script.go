@@ -39,7 +39,7 @@ func (b *BuildTestFrameworkAnsibleTestScript) GetInput() (input.Input, error) {
 
 const buildTestFrameworkAnsibleTestScriptAnsibleTmpl = `#!/bin/sh
 export WATCH_NAMESPACE=${TEST_NAMESPACE}
-(/usr/local/bin/entrypoint > /tmp/operator.log 2>&1)&
+(/usr/local/bin/entrypoint)&
 trap "kill $!" SIGINT SIGTERM EXIT
 
 cd ${HOME}/project
