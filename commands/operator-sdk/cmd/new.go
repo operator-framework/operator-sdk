@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -302,6 +303,12 @@ func doHelmScaffold() {
 		log.Fatalf("Invalid apiVersion and kind: (%v)", err)
 	}
 
+	chart, err := helm.CreateChartForResource(resource, cfg.AbsProjectPath)
+	if err != nil {
+		log.Fatalf("Failed to create initial helm chart for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
+	}
+	crSpec := fmt.Sprintf("# Default values copied from %s\n\n%s", filepath.Join("<project_dir>", helm.HelmChartsDir, chart.GetMetadata().GetName(), "values.yaml"), chart.GetValues().GetRaw())
+
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
 		&helm.Dockerfile{},
@@ -323,14 +330,11 @@ func doHelmScaffold() {
 		},
 		&scaffold.Cr{
 			Resource: resource,
+			Spec:     crSpec,
 		},
 	)
 	if err != nil {
 		log.Fatalf("New helm scaffold failed: (%v)", err)
-	}
-
-	if err := helm.CreateChartForResource(resource, cfg.AbsProjectPath); err != nil {
-		log.Fatalf("Failed to create initial helm chart for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
 	}
 
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
