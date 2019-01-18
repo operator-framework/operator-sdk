@@ -45,8 +45,6 @@ var ErrNoCSVVersion = errors.New("no CSV version supplied")
 type CSV struct {
 	input.Input
 
-	// DeployDir is the dir the SDK should search for deploy files, ex. *crd.yaml.
-	DeployDir string
 	// ConfigFilePath is the location of a configuration file path for this
 	// projects' CSV file.
 	ConfigFilePath string
@@ -66,9 +64,6 @@ func (s *CSV) GetInput() (input.Input, error) {
 	if s.ConfigFilePath == "" {
 		s.ConfigFilePath = filepath.Join(scaffold.OlmCatalogDir, CSVConfigYamlFile)
 	}
-	if s.DeployDir == "" {
-		s.DeployDir = scaffold.DeployDir
-	}
 	return s.Input, nil
 }
 
@@ -76,29 +71,29 @@ func (s *CSV) GetInput() (input.Input, error) {
 // olmApi.ClusterServiceVersion instead of writing to a template.
 func (s *CSV) CustomRender() ([]byte, error) {
 	// Get current CSV to update.
-	currCSV, exists, err := getCurrentCSVIfExists(s.Path)
+	csv, exists, err := getCurrentCSVIfExists(s.Path)
 	if err != nil {
 		return nil, err
 	}
 	if !exists {
-		currCSV = new(olmApi.ClusterServiceVersion)
-		s.initCSVFields(currCSV)
+		csv = new(olmApi.ClusterServiceVersion)
+		s.initCSVFields(csv)
 	}
 
-	csvConfig, err := getCSVConfig(s.ConfigFilePath)
+	cfg, err := getCSVConfig(s.ConfigFilePath)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = s.updateCSVVersions(currCSV); err != nil {
+	if err = s.updateCSVVersions(csv); err != nil {
 		return nil, err
 	}
-	if err = s.updateCSVFromManifestFiles(currCSV, csvConfig); err != nil {
+	if err = s.updateCSVFromManifestFiles(cfg, csv); err != nil {
 		return nil, err
 	}
 
 	// A new csv won't have several required fields populated.
-	if err = checkRequiredCSVFields(currCSV); err != nil {
+	if err = checkRequiredCSVFields(csv); err != nil {
 		if exists {
 			log.Warnf("Required csv fields not filled in file %s:%s\n", s.Path, err)
 		} else {
@@ -108,7 +103,7 @@ func (s *CSV) CustomRender() ([]byte, error) {
 	}
 
 	// Remove the status field from the CSV, as status is managed at runtime.
-	cu, err := runtime.DefaultUnstructuredConverter.ToUnstructured(currCSV)
+	cu, err := runtime.DefaultUnstructuredConverter.ToUnstructured(csv)
 	if err != nil {
 		return nil, err
 	}
@@ -294,9 +289,9 @@ func replaceAllBytes(v interface{}, old, new []byte) error {
 
 // updateCSVFromManifestFiles gathers relevant data from generated and user-defined manifests
 // and updates csv.
-func (s *CSV) updateCSVFromManifestFiles(csv *olmApi.ClusterServiceVersion, csvConfig *CSVConfig) error {
+func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmApi.ClusterServiceVersion) error {
 	store := NewUpdaterStore()
-	for _, f := range append(csvConfig.CRDCRPaths, csvConfig.OperatorPath, csvConfig.RolePath) {
+	for _, f := range append(cfg.CRDCRPaths, cfg.OperatorPath, cfg.RolePath) {
 		yamlData, err := ioutil.ReadFile(f)
 		if err != nil {
 			return err

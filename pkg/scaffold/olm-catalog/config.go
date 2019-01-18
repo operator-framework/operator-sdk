@@ -33,24 +33,24 @@ type CSVConfig struct {
 	RolePath     string   `json:"role-path,omitempty"`
 }
 
-func getCSVConfig(configFile string) (*CSVConfig, error) {
-	config := &CSVConfig{}
-	if _, err := os.Stat(configFile); err == nil {
-		configData, err := ioutil.ReadFile(configFile)
+func getCSVConfig(cfgFile string) (*CSVConfig, error) {
+	cfg := &CSVConfig{}
+	if _, err := os.Stat(cfgFile); err == nil {
+		cfgData, err := ioutil.ReadFile(cfgFile)
 		if err != nil {
 			return nil, err
 		}
-		if err = yaml.Unmarshal(configData, config); err != nil {
+		if err = yaml.Unmarshal(cfgData, cfg); err != nil {
 			return nil, err
 		}
 	} else if !os.IsNotExist(err) {
 		return nil, err
 	}
 
-	if err := config.setFields(); err != nil {
+	if err := cfg.setFields(); err != nil {
 		return nil, err
 	}
-	return config, nil
+	return cfg, nil
 }
 
 const yamlExt = ".yaml"

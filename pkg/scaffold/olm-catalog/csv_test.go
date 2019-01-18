@@ -48,7 +48,6 @@ func TestCSV(t *testing.T) {
 	err := s.Execute(&input.Config{ProjectName: projectName},
 		&CSV{
 			CSVVersion:     csvVer,
-			DeployDir:      filepath.Join(testDataDir, scaffold.DeployDir),
 			ConfigFilePath: filepath.Join(testOLMDir, CSVConfigYamlFile),
 		},
 	)

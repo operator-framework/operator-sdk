@@ -25,6 +25,9 @@ import (
 
 const ConcatCRDYamlFile = "_generated.concat_crd.yaml"
 
+// ConcatCRD scaffolds a file of all concatenated CRD's found using config file
+// fields. This file is used by the OLM to create CR's in conjunction with the
+// operators' CSV.
 type ConcatCRD struct {
 	input.Input
 
@@ -45,11 +48,11 @@ func (s *ConcatCRD) GetInput() (input.Input, error) {
 
 // CustomRender returns the bytes of all CRD manifests concatenated into one file.
 func (s *ConcatCRD) CustomRender() ([]byte, error) {
-	csvConfig, err := getCSVConfig(s.ConfigFilePath)
+	cfg, err := getCSVConfig(s.ConfigFilePath)
 	if err != nil {
 		return nil, err
 	}
-	return concatCRDsInPaths(csvConfig.CRDCRPaths)
+	return concatCRDsInPaths(cfg.CRDCRPaths)
 }
 
 // concatCRDsInPaths concatenates CRD manifests found at crdPaths into one
