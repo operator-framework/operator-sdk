@@ -15,6 +15,7 @@
 package ansible
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"runtime"
@@ -23,6 +24,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/leader"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -31,7 +33,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
-var log = logf.Log.WithName("ansible")
+var log = logf.Log.WithName("cmd")
 
 func printVersion() {
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
@@ -42,7 +44,7 @@ func printVersion() {
 // Run will start the ansible operator and proxy, blocking until one of them
 // returns.
 func Run(flags *aoflags.AnsibleOperatorFlags) error {
-	logf.SetLogger(logf.ZapLogger(false))
+	printVersion()
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
 	if found {
@@ -60,7 +62,16 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 		return err
 	}
 
-	printVersion()
+	name, found := os.LookupEnv(k8sutil.OperatorNameEnvVar)
+	if !found {
+		return fmt.Errorf("%s environment variable not set", k8sutil.OperatorNameEnvVar)
+	}
+	// Become the leader before proceeding
+	err = leader.Become(context.TODO(), name+"-lock")
+	if err != nil {
+		return err
+	}
+
 	done := make(chan error)
 	cMap := proxy.NewControllerMap()
 

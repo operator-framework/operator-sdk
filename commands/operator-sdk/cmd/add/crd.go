@@ -44,9 +44,13 @@ Generated CR  filename: <project-name>/deploy/crds/<group>_<version>_<kind>_cr.y
 		RunE: crdFunc,
 	}
 	crdCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
-	crdCmd.MarkFlagRequired("api-version")
+	if err := crdCmd.MarkFlagRequired("api-version"); err != nil {
+		log.Fatalf("Failed to mark `api-version` flag for `add crd` subcommand as required")
+	}
 	crdCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. (e.g AppService)")
-	crdCmd.MarkFlagRequired("kind")
+	if err := crdCmd.MarkFlagRequired("kind"); err != nil {
+		log.Fatalf("Failed to mark `kind` flag for `add crd` subcommand as required")
+	}
 	return crdCmd
 }
 

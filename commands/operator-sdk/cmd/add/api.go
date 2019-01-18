@@ -56,9 +56,13 @@ Example:
 	}
 
 	apiCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes APIVersion that has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
-	apiCmd.MarkFlagRequired("api-version")
+	if err := apiCmd.MarkFlagRequired("api-version"); err != nil {
+		log.Fatalf("Failed to mark `api-version` flag for `add api` subcommand as required")
+	}
 	apiCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes resource Kind name. (e.g AppService)")
-	apiCmd.MarkFlagRequired("kind")
+	if err := apiCmd.MarkFlagRequired("kind"); err != nil {
+		log.Fatalf("Failed to mark `kind` flag for `add api` subcommand as required")
+	}
 
 	return apiCmd
 }

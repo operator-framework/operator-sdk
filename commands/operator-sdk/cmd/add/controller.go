@@ -26,7 +26,7 @@ import (
 )
 
 func NewControllerCmd() *cobra.Command {
-	apiCmd := &cobra.Command{
+	controllerCmd := &cobra.Command{
 		Use:   "controller",
 		Short: "Adds a new controller pkg",
 		Long: `operator-sdk add controller --kind=<kind> --api-version=<group/version> creates a new
@@ -49,12 +49,16 @@ Example:
 		RunE: controllerRun,
 	}
 
-	apiCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes APIVersion that has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
-	apiCmd.MarkFlagRequired("api-version")
-	apiCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes resource Kind name. (e.g AppService)")
-	apiCmd.MarkFlagRequired("kind")
+	controllerCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes APIVersion that has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
+	if err := controllerCmd.MarkFlagRequired("api-version"); err != nil {
+		log.Fatalf("Failed to mark `api-version` flag for `add controller` subcommand as required")
+	}
+	controllerCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes resource Kind name. (e.g AppService)")
+	if err := controllerCmd.MarkFlagRequired("kind"); err != nil {
+		log.Fatalf("Failed to mark `kind` flag for `add controller` subcommand as required")
+	}
 
-	return apiCmd
+	return controllerCmd
 }
 
 func controllerRun(cmd *cobra.Command, args []string) error {
