@@ -72,7 +72,7 @@ RUN  /usr/local/bin/user_setup
 {{- if .Roles }}
 COPY roles/ ${HOME}/roles/{{ end }}
 {{- if .Playbook }}
-COPY playbook.yml ${HOME}/playbook.yaml{{ end }}
+COPY playbook.yml ${HOME}/playbook.yml{{ end }}
 {{- if .Watches }}
 COPY watches.yaml ${HOME}/watches.yaml{{ end }}
 
