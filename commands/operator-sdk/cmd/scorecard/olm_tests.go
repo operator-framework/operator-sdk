@@ -33,6 +33,9 @@ func crdsHaveResources(csv *olmAPI.ClusterServiceVersion) {
 		}
 	}
 	scTests = append(scTests, test)
+	if test.earnedPoints == 0 {
+		scSuggestions = append(scSuggestions, "Add resources to owned CRDs")
+	}
 }
 
 // annotationsContainExamples makes sure that the CSVs list at least 1 example for the CR
@@ -42,6 +45,9 @@ func annotationsContainExamples(csv *olmAPI.ClusterServiceVersion) {
 		test.earnedPoints = 1
 	}
 	scTests = append(scTests, test)
+	if test.earnedPoints == 0 {
+		scSuggestions = append(scSuggestions, "Add an alm-examples annotation to your CSV to pass the "+test.name+" test")
+	}
 }
 
 // statusDescriptors makes sure that all status fields found in the created CR has a matching descriptor in the CSV
@@ -73,11 +79,15 @@ func statusDescriptors(csv *olmAPI.ClusterServiceVersion, runtimeClient client.C
 		for _, statDesc := range crd.StatusDescriptors {
 			if statDesc.Path == key {
 				test.earnedPoints++
+				delete(statusBlock, key)
 				break
 			}
 		}
 	}
 	scTests = append(scTests, test)
+	for key := range statusBlock {
+		scSuggestions = append(scSuggestions, "Add a status descriptor for "+key)
+	}
 	return nil
 }
 
@@ -110,10 +120,14 @@ func specDescriptors(csv *olmAPI.ClusterServiceVersion, runtimeClient client.Cli
 		for _, specDesc := range crd.SpecDescriptors {
 			if specDesc.Path == key {
 				test.earnedPoints++
+				delete(specBlock, key)
 				break
 			}
 		}
 	}
 	scTests = append(scTests, test)
+	for key := range specBlock {
+		scSuggestions = append(scSuggestions, "Add a spec descriptor for "+key)
+	}
 	return nil
 }
