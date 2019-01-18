@@ -1,3 +1,15 @@
+## Unreleased
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
 ## v0.4.0
 
 ### Added
@@ -13,10 +25,6 @@
 - The official images for the Ansible and Helm operators have moved! Travis now builds, tags, and pushes operator base images during CI ([#832](https://github.com/operator-framework/operator-sdk/pull/832)).
   - [quay.io/operator-framework/ansible-operator](https://quay.io/repository/operator-framework/ansible-operator)
   - [quay.io/operator-framework/helm-operator](https://quay.io/repository/operator-framework/helm-operator)
-
-### Deprecated
-
-### Removed
 
 ### Bug Fixes
 
