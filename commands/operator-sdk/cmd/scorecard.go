@@ -26,8 +26,8 @@ import (
 	"github.com/operator-framework/operator-sdk/version"
 )
 
-// config stores all scorecard config passed as flags
-type config struct {
+// scorecardConfig stores all scorecard config passed as flags
+type scorecardConfig struct {
 	namespace          string
 	kubeconfigPath     string
 	initTimeout        int
@@ -43,7 +43,7 @@ type config struct {
 	verbose            bool
 }
 
-var scConf config
+var scConf scorecardConfig
 
 func NewScorecardCmd() *cobra.Command {
 	scorecardCmd := &cobra.Command{
