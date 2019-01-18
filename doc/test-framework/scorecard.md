@@ -29,7 +29,7 @@ flags:
 - `--global-manifest` - if set, this flag must point to all required resources that run globally (not namespaced). By default, the scorecard will combine all CRDs in the `deploy/crds` directory into a temporary manifest and use that as the global manifest.
 - `--namespace` - if set, which namespace to run the scorecard tests in. If it is not set, the scorecard will use the default namespace of the current context set in the kubeconfig file.
 
-To run the tests, simply run the operator-sdk scorecard subcommand from you project root with the flags you want to
+To run the tests, simply run the operator-sdk scorecard subcommand from your project root with the flags you want to
 use. For example:
 
 ```console
