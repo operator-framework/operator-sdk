@@ -149,15 +149,9 @@ func doScaffold() error {
 		&scaffold.Cmd{},
 		&scaffold.Dockerfile{},
 		&scaffold.ServiceAccount{},
-		&scaffold.Role{
-			IsClusterScoped: isClusterScoped,
-		},
-		&scaffold.RoleBinding{
-			IsClusterScoped: isClusterScoped,
-		},
-		&scaffold.Operator{
-			IsClusterScoped: isClusterScoped,
-		},
+		&scaffold.Role{IsClusterScoped: isClusterScoped},
+		&scaffold.RoleBinding{IsClusterScoped: isClusterScoped},
+		&scaffold.Operator{IsClusterScoped: isClusterScoped},
 		&scaffold.Apis{},
 		&scaffold.Controller{},
 		&scaffold.Version{},
@@ -181,52 +175,25 @@ func doAnsibleScaffold() error {
 		return fmt.Errorf("invalid apiVersion and kind: (%v)", err)
 	}
 
-	roleFiles := ansible.RolesFiles{
-		Resource: *resource,
-	}
-	roleTemplates := ansible.RolesTemplates{
-		Resource: *resource,
-	}
+	roleFiles := ansible.RolesFiles{Resource: *resource}
+	roleTemplates := ansible.RolesTemplates{Resource: *resource}
 
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
 		&scaffold.ServiceAccount{},
-		&scaffold.Role{
-			IsClusterScoped: isClusterScoped,
-		},
-		&scaffold.RoleBinding{
-			IsClusterScoped: isClusterScoped,
-		},
-		&scaffold.Crd{
-			Resource: resource,
-		},
-		&scaffold.Cr{
-			Resource: resource,
-		},
-		&ansible.BuildDockerfile{
-			GeneratePlaybook: generatePlaybook,
-		},
-		&ansible.RolesReadme{
-			Resource: *resource,
-		},
-		&ansible.RolesMetaMain{
-			Resource: *resource,
-		},
+		&scaffold.Role{IsClusterScoped: isClusterScoped},
+		&scaffold.RoleBinding{IsClusterScoped: isClusterScoped},
+		&scaffold.Crd{Resource: resource},
+		&scaffold.Cr{Resource: resource},
+		&ansible.BuildDockerfile{GeneratePlaybook: generatePlaybook},
+		&ansible.RolesReadme{Resource: *resource},
+		&ansible.RolesMetaMain{Resource: *resource},
 		&roleFiles,
 		&roleTemplates,
-		&ansible.RolesVarsMain{
-			Resource: *resource,
-		},
-		&ansible.MoleculeTestLocalPlaybook{
-			Resource: *resource,
-		},
-		&ansible.RolesDefaultsMain{
-			Resource: *resource,
-		},
-
-		&ansible.RolesTasksMain{
-			Resource: *resource,
-		},
+		&ansible.RolesVarsMain{Resource: *resource},
+		&ansible.MoleculeTestLocalPlaybook{Resource: *resource},
+		&ansible.RolesDefaultsMain{Resource: *resource},
+		&ansible.RolesTasksMain{Resource: *resource},
 		&ansible.MoleculeDefaultMolecule{},
 		&ansible.BuildTestFrameworkDockerfile{},
 		&ansible.MoleculeTestClusterMolecule{},
@@ -237,24 +204,16 @@ func doAnsibleScaffold() error {
 		},
 		&ansible.BuildTestFrameworkAnsibleTestScript{},
 		&ansible.MoleculeDefaultAsserts{},
-		&ansible.MoleculeTestClusterPlaybook{
-			Resource: *resource,
-		},
-		&ansible.RolesHandlersMain{
-			Resource: *resource,
-		},
+		&ansible.MoleculeTestClusterPlaybook{Resource: *resource},
+		&ansible.RolesHandlersMain{Resource: *resource},
 		&ansible.Watches{
 			GeneratePlaybook: generatePlaybook,
 			Resource:         *resource,
 		},
-		&ansible.DeployOperator{
-			IsClusterScoped: isClusterScoped,
-		},
+		&ansible.DeployOperator{IsClusterScoped: isClusterScoped},
 		&ansible.Travis{},
 		&ansible.MoleculeTestLocalMolecule{},
-		&ansible.MoleculeTestLocalPrepare{
-			Resource: *resource,
-		},
+		&ansible.MoleculeTestLocalPrepare{Resource: *resource},
 	)
 	if err != nil {
 		return fmt.Errorf("new ansible scaffold failed: (%v)", err)
@@ -303,25 +262,13 @@ func doHelmScaffold() error {
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
 		&helm.Dockerfile{},
-		&helm.WatchesYAML{
-			Resource: resource,
-		},
+		&helm.WatchesYAML{Resource: resource},
 		&scaffold.ServiceAccount{},
-		&scaffold.Role{
-			IsClusterScoped: isClusterScoped,
-		},
-		&scaffold.RoleBinding{
-			IsClusterScoped: isClusterScoped,
-		},
-		&helm.Operator{
-			IsClusterScoped: isClusterScoped,
-		},
-		&scaffold.Crd{
-			Resource: resource,
-		},
-		&scaffold.Cr{
-			Resource: resource,
-		},
+		&scaffold.Role{IsClusterScoped: isClusterScoped},
+		&scaffold.RoleBinding{IsClusterScoped: isClusterScoped},
+		&helm.Operator{IsClusterScoped: isClusterScoped},
+		&scaffold.Crd{Resource: resource},
+		&scaffold.Cr{Resource: resource},
 	)
 	if err != nil {
 		return fmt.Errorf("new helm scaffold failed: (%v)", err)

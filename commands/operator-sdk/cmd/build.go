@@ -226,7 +226,9 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to output test image %s: (%v)", image, err)
 		}
 		// Check image name of deployments in namespaced manifest
-		verifyTestManifest(image)
+		if err := verifyTestManifest(image); err != nil {
+			return nil
+		}
 	}
 
 	log.Info("Operator build complete.")

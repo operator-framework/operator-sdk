@@ -32,8 +32,8 @@ import (
 func NewAddCrdCmd() *cobra.Command {
 	crdCmd := &cobra.Command{
 		Use:   "crd",
-		Short: "Adds a custom resource definition (CRD) and the custom resource (CR) files",
-		Long: `The operator-sdk add crd command will create a custom resource definition (CRD) and the custom resource (CR) files for the specified api-version and kind.
+		Short: "Adds a Custom Resource Definition (CRD) and the Custom Resource (CR) files",
+		Long: `The operator-sdk add crd command will create a Custom Resource Definition (CRD) and the Custom Resource (CR) files for the specified api-version and kind.
 
 Generated CRD filename: <project-name>/deploy/crds/<group>_<version>_<kind>_crd.yaml
 Generated CR  filename: <project-name>/deploy/crds/<group>_<version>_<kind>_cr.yaml
@@ -61,10 +61,10 @@ func crdFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 0 {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
-	if err := verifyCrdFlags(); err != nil {
+	if err := verifyCRDFlags(); err != nil {
 		return err
 	}
-	if err := verifyCrdDeployPath(); err != nil {
+	if err := verifyCRDDeployPath(); err != nil {
 		return err
 	}
 
@@ -94,7 +94,7 @@ func crdFunc(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func verifyCrdFlags() error {
+func verifyCRDFlags() error {
 	if len(apiVersion) == 0 {
 		return fmt.Errorf("value of --api-version must not have empty value")
 	}
@@ -111,8 +111,8 @@ func verifyCrdFlags() error {
 	return nil
 }
 
-// verifyCrdDeployPath checks if the path <project-name>/deploy sub-directory is exists, and that is rooted under $GOPATH
-func verifyCrdDeployPath() error {
+// verifyCRDDeployPath checks if the path <project-name>/deploy sub-directory is exists, and that is rooted under $GOPATH
+func verifyCRDDeployPath() error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("failed to determine the full path of the current directory: (%v)", err)
