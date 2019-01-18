@@ -208,7 +208,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 			case projutil.OperatorTypeHelm:
 				log.Fatal("Test scaffolding for Helm Operators is not implemented")
 			default:
-				log.Fatalf("unknown operator type %s", t)
+				log.Fatalf("Unknown operator type %s", t)
 			}
 
 			if err != nil {
