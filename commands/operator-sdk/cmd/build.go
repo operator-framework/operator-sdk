@@ -175,19 +175,20 @@ func buildFunc(cmd *cobra.Command, args []string) {
 
 	if enableTests {
 		if !projutil.IsDockerMultistage() {
-			log.Fatalf("In-cluster tests are only available for Go operators on hosts with Docker v17.05+")
+			log.Fatalf("In-cluster tests are only available on hosts with Docker v17.05+")
 		}
+
 		// If a user is using an older sdk repo as their library, make sure they
 		// have required build files.
 		testDockerfile := filepath.Join(scaffold.BuildTestDir, scaffold.DockerfileFile)
 		_, err = os.Stat(testDockerfile)
-		if (err != nil && os.IsNotExist(err)) || !projutil.IsDockerfileMultistage(testDockerfile) {
+		needsMultiDF := projutil.IsOperatorGo() && !projutil.IsDockerfileMultistage(testDockerfile)
+		if (err != nil && os.IsNotExist(err)) || needsMultiDF {
 
 			log.Info("Generating build manifests for test-framework.")
 
 			absProjectPath := projutil.MustGetwd()
 			cfg := &input.Config{
-				Repo:           projutil.CheckAndGetProjectGoPkg(),
 				AbsProjectPath: absProjectPath,
 				ProjectName:    filepath.Base(absProjectPath),
 			}
@@ -196,6 +197,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 			t := projutil.GetOperatorType()
 			switch t {
 			case projutil.OperatorTypeGo:
+				cfg.Repo = projutil.CheckAndGetProjectGoPkg()
 				err = s.Execute(cfg,
 					&scaffold.TestFrameworkDockerfile{
 						Input: input.Input{IfExistsAction: input.Overwrite},
