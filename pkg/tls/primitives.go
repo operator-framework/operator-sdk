@@ -21,9 +21,9 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"errors"
-	"fmt"
 	"math"
 	"math/big"
+	"net"
 	"time"
 
 	"k8s.io/api/core/v1"
@@ -118,7 +118,7 @@ func newSignedCertificate(cfg *CertConfig, service *v1.Service, key *rsa.Private
 			CommonName:   cfg.CommonName,
 			Organization: cfg.Organization,
 		},
-		DNSNames:     []string{fmt.Sprintf("%s.%s.svc.cluster.local", service.Name, service.Namespace)},
+		DNSNames:     []string{getServiceDNSName(service.Name, service.Namespace)},
 		SerialNumber: serial,
 		NotBefore:    caCert.NotBefore,
 		NotAfter:     time.Now().Add(duration365d).UTC(),
@@ -130,4 +130,17 @@ func newSignedCertificate(cfg *CertConfig, service *v1.Service, key *rsa.Private
 		return nil, err
 	}
 	return x509.ParseCertificate(certDERBytes)
+}
+
+func newCertificateRequest(cfg *CertConfig, key *rsa.PrivateKey, dnsNames []string, ips ...net.IP) ([]byte, error) {
+	csrTmpl := &x509.CertificateRequest{
+		Subject: pkix.Name{
+			CommonName:   cfg.CommonName,
+			Organization: cfg.Organization,
+		},
+		SignatureAlgorithm: x509.SHA512WithRSA,
+		DNSNames:           dnsNames,
+		IPAddresses:        ips,
+	}
+	return x509.CreateCertificateRequest(rand.Reader, csrTmpl, key)
 }

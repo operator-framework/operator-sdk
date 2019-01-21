@@ -22,12 +22,14 @@ import (
 	"io/ioutil"
 	"strings"
 
+	certv1beta1 "k8s.io/api/certificates/v1beta1"
 	"k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
+	csrutil "k8s.io/client-go/util/certificate/csr"
 )
 
 // CertType defines the type of the cert.
@@ -381,4 +383,40 @@ func toCASecretAndConfigmap(key *rsa.PrivateKey, cert *x509.Certificate, name st
 				TLSCACertKey: string(encodeCertificatePEM(cert)),
 			},
 		}
+}
+
+// getServiceDNSName gets a cluster DNS name for a service given the services'
+// name and namespace.
+func getServiceDNSName(name, namespace string) string {
+	return fmt.Sprintf("%s.%s.svc.cluster.local", name, namespace)
+}
+
+// getPodDNSName gets a cluster DNS name for a pod given the pods' name and
+// namespace.
+func getPodDNSName(name, namespace string) string {
+	return fmt.Sprintf("%s.%s.pod.cluster.local", name, namespace)
+}
+
+// createOrGetCSRInCluster gets a CertificateSigningRequest (CSR) for service
+// if a valid CSR is known to the API server. If not a new CSR is created using
+// data from cfg with key as the private key of the signer, and sends the CSR
+// to the API server. The retrieved or created CSR is returned.
+// The authorized certificate can be used for digital signatures, key
+// encipherment, and server auth.
+func createOrGetCSRInCluster(client kubernetes.Interface, cfg *CertConfig, service *v1.Service, key *rsa.PrivateKey) (*certv1beta1.CertificateSigningRequest, error) {
+	dnsNames := []string{getServiceDNSName(service.Name, service.Namespace)}
+	csrBytes, err := newCertificateRequest(cfg, key, dnsNames)
+	if err != nil {
+		return nil, err
+	}
+	usages := []certv1beta1.KeyUsage{
+		certv1beta1.UsageDigitalSignature,
+		certv1beta1.UsageKeyEncipherment,
+		certv1beta1.UsageServerAuth,
+	}
+	return csrutil.RequestCertificate(client.CertificatesV1beta1().CertificateSigningRequests(),
+		csrBytes,
+		service.Name+"."+service.Namespace,
+		usages,
+		key)
 }
