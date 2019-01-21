@@ -46,7 +46,7 @@ func annotationsContainExamples(csv *olmAPI.ClusterServiceVersion) {
 	}
 	scTests = append(scTests, test)
 	if test.earnedPoints == 0 {
-		scSuggestions = append(scSuggestions, "Add an alm-examples annotation to your CSV to pass the "+test.name+" test")
+		scSuggestions = append(scSuggestions, "Add an alm-examples annotation to your CSV to pass the " + test.name + " test")
 	}
 }
 
@@ -127,7 +127,7 @@ func specDescriptors(csv *olmAPI.ClusterServiceVersion, runtimeClient client.Cli
 	}
 	scTests = append(scTests, test)
 	for key := range specBlock {
-		scSuggestions = append(scSuggestions, "Add a spec descriptor for "+key)
+		scSuggestions = append(scSuggestions, "Add a spec descriptor for " + key)
 	}
 	return nil
 }
