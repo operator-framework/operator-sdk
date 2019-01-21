@@ -33,16 +33,17 @@ cp "$ROOTDIR/test/ansible-memcached/asserts.yml"  memcached-operator/molecule/de
 cp "$ROOTDIR/test/ansible-memcached/molecule.yml"  memcached-operator/molecule/test-local/molecule.yml
 cp -a "$ROOTDIR/test/ansible-memcached/memfin" memcached-operator/roles/
 cat "$ROOTDIR/test/ansible-memcached/watches-finalizer.yaml" >> memcached-operator/watches.yaml
+cat "$ROOTDIR/test/ansible-memcached/prepare-test-image.yml" >> memcached-operator/molecule/test-local/prepare.yml
 
 
 # Test local
 pushd memcached-operator
+sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
 OPERATORDIR="$(pwd)"
 TEST_CLUSTER_PORT=24443 operator-sdk test local --namespace default
 
 # Test cluster
 DEST_IMAGE="quay.io/example/memcached-operator:v0.0.2-test"
-sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
 operator-sdk build --enable-tests "$DEST_IMAGE"
 trap_add 'remove_prereqs' EXIT
 deploy_prereqs
