@@ -118,7 +118,7 @@ func main() {
 	}
 
 	// Create Service object to expose metrics port.
-	s, err := metrics.ExposeMetricsPort(metricsAddress, mgr)
+	_, err = metrics.ExposeMetricsPort(metricsAddress, mgr)
 	if err != nil {
 		log.Info(err.Error())
 	}
