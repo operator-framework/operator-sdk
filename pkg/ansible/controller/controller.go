@@ -64,13 +64,6 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 		ManageStatus:    options.ManageStatus,
 	}
 
-	if mgr.GetScheme().IsVersionRegistered(schema.GroupVersion{
-		Group:   options.GVK.Group,
-		Version: options.GVK.Version,
-	}) {
-		log.Info("Version already registered... skipping")
-		return nil
-	}
 	// Register the GVK with the schema
 	mgr.GetScheme().AddKnownTypeWithName(options.GVK, &unstructured.Unstructured{})
 	metav1.AddToGroupVersion(mgr.GetScheme(), schema.GroupVersion{
