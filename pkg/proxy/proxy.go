@@ -30,7 +30,7 @@ import (
 	"strings"
 	"sync"
 
-	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
+	k8sRequest "github.com/operator-framework/operator-sdk/pkg/proxy/requestfactory"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

@@ -26,11 +26,11 @@ import (
 
 	ansiblestatus "github.com/operator-framework/operator-sdk/pkg/ansible/controller/status"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/events"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/eventapi"
+	"github.com/operator-framework/operator-sdk/pkg/proxy/kubeconfig"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"

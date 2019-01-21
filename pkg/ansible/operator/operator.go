@@ -21,8 +21,8 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/controller"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/flags"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
+	"github.com/operator-framework/operator-sdk/pkg/proxy"
 
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"

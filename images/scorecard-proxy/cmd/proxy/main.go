@@ -18,8 +18,8 @@ import (
 	"flag"
 	"os"
 
-	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	proxy "github.com/operator-framework/operator-sdk/pkg/proxy"
 
 	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"

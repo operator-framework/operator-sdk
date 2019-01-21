@@ -23,8 +23,8 @@ import (
 	"os"
 	"time"
 
-	proxyConf "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	proxyConf "github.com/operator-framework/operator-sdk/pkg/proxy/kubeconfig"
 
 	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
