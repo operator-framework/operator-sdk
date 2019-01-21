@@ -148,7 +148,9 @@ func (f *FilterServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 	log.Info("Filter rejection", "Request.Method", req.Method, "Request.URL", req.URL.Path, "Host", host)
 	rw.WriteHeader(http.StatusForbidden)
-	rw.Write([]byte("<h3>Unauthorized</h3>"))
+	if _, err := rw.Write([]byte("<h3>Unauthorized</h3>")); err != nil {
+		log.Error(err, "Failed to write response body")
+	}
 }
 
 // Server is a http.Handler which proxies Kubernetes APIs to remote API server.
@@ -233,7 +235,9 @@ func (s *server) ListenUnix(path string) (net.Listener, error) {
 	// Remove any socket, stale or not, but fall through for other files
 	fi, err := os.Stat(path)
 	if err == nil && (fi.Mode()&os.ModeSocket) != 0 {
-		os.Remove(path)
+		if err := os.Remove(path); err != nil {
+			return nil, err
+		}
 	}
 	// Default to only user accessible socket, caller can open up later if desired
 	oldmask := syscall.Umask(0077)

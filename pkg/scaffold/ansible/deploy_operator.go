@@ -21,21 +21,24 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-type Operator struct {
-	input.Input
+const DeployOperatorFile = "operator.yaml"
 
+type DeployOperator struct {
+	input.Input
 	IsClusterScoped bool
 }
 
-func (s *Operator) GetInput() (input.Input, error) {
-	if s.Path == "" {
-		s.Path = filepath.Join(scaffold.DeployDir, scaffold.OperatorYamlFile)
+// GetInput - gets the input
+func (d *DeployOperator) GetInput() (input.Input, error) {
+	if d.Path == "" {
+		d.Path = filepath.Join(scaffold.DeployDir, DeployOperatorFile)
 	}
-	s.TemplateBody = operatorTemplate
-	return s.Input, nil
+	d.TemplateBody = deployOperatorAnsibleTmpl
+
+	return d.Input, nil
 }
 
-const operatorTemplate = `apiVersion: apps/v1
+const deployOperatorAnsibleTmpl = `apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{.ProjectName}}
@@ -53,8 +56,8 @@ spec:
       containers:
         - name: {{.ProjectName}}
           # Replace this with the built image name
-          image: REPLACE_IMAGE
-          imagePullPolicy: Always
+          image: "{{ "{{ REPLACE_IMAGE }}" }}"
+          imagePullPolicy: "{{ "{{ pull_policy|default('Always') }}"}}"
           env:
             - name: WATCH_NAMESPACE
               {{- if .IsClusterScoped }}
@@ -64,6 +67,10 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
               {{- end}}
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "{{.ProjectName}}"
 `

@@ -32,6 +32,7 @@ import (
 
 	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -51,11 +52,15 @@ type ControllerMap struct {
 	watch    map[schema.GroupVersionKind]bool
 }
 
+type marshaler interface {
+	MarshalJSON() ([]byte, error)
+}
+
 // CacheResponseHandler will handle proxied requests and check if the requested
 // resource exists in our cache. If it does then there is no need to bombard
 // the APIserver with our request and we should write the response from the
 // proxy.
-func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper meta.RESTMapper) http.Handler {
+func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper meta.RESTMapper, watchedNamespaces map[string]interface{}) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		switch req.Method {
 		case http.MethodGet:
@@ -69,6 +74,15 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 
 			// check if resource is present on request
 			if !r.IsResourceRequest {
+				break
+			}
+
+			// check if resource doesn't exist in watched namespaces
+			// if watchedNamespaces[""] exists then we are watching all namespaces
+			// and want to continue
+			_, allNsPresent := watchedNamespaces[metav1.NamespaceAll]
+			_, reqNsPresent := watchedNamespaces[r.Namespace]
+			if !allNsPresent && !reqNsPresent {
 				break
 			}
 
@@ -97,19 +111,53 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 				break
 			}
 
-			un := unstructured.Unstructured{}
-			un.SetGroupVersionKind(k)
-			obj := client.ObjectKey{Namespace: r.Namespace, Name: r.Name}
-			err = informerCache.Get(context.Background(), obj, &un)
-			if err != nil {
-				// break here in case resource doesn't exist in cache but exists on APIserver
-				// This is very unlikely but provides user with expected 404
-				log.Info(fmt.Sprintf("Cache miss: %v, %v", k, obj))
-				break
+			var m marshaler
+
+			log.V(2).Info("Get resource in our cache", "r", r)
+			if r.Verb == "list" {
+				listOptions := &metav1.ListOptions{}
+				if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion, listOptions); err != nil {
+					log.Error(err, "Unable to decode list options from request")
+					break
+				}
+				lo := client.InNamespace(r.Namespace)
+				if err := lo.SetLabelSelector(listOptions.LabelSelector); err != nil {
+					log.Error(err, "Unable to set label selectors for the client")
+					break
+				}
+				if listOptions.FieldSelector != "" {
+					if err := lo.SetFieldSelector(listOptions.FieldSelector); err != nil {
+						log.Error(err, "Unable to set field selectors for the client")
+						break
+					}
+				}
+				k.Kind = k.Kind + "List"
+				un := unstructured.UnstructuredList{}
+				un.SetGroupVersionKind(k)
+				err = informerCache.List(context.Background(), lo, &un)
+				if err != nil {
+					// break here in case resource doesn't exist in cache but exists on APIserver
+					// This is very unlikely but provides user with expected 404
+					log.Info(fmt.Sprintf("cache miss: %v err-%v", k, err))
+					break
+				}
+				m = &un
+			} else {
+				un := unstructured.Unstructured{}
+				un.SetGroupVersionKind(k)
+				obj := client.ObjectKey{Namespace: r.Namespace, Name: r.Name}
+				err = informerCache.Get(context.Background(), obj, &un)
+				if err != nil {
+					// break here in case resource doesn't exist in cache but exists on APIserver
+					// This is very unlikely but provides user with expected 404
+					log.Info(fmt.Sprintf("Cache miss: %v, %v", k, obj))
+					break
+				}
+				m = &un
 			}
 
 			i := bytes.Buffer{}
-			resp, err := json.Marshal(un.Object)
+			resp, err := m.MarshalJSON()
 			if err != nil {
 				// return will give a 500
 				log.Error(err, "Failed to marshal data")
@@ -117,9 +165,13 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 				return
 			}
 
+			// Set Content-Type header
+			w.Header().Set("Content-Type", "application/json")
 			// Set X-Cache header to signal that response is served from Cache
 			w.Header().Set("X-Cache", "HIT")
-			json.Indent(&i, resp, "", "  ")
+			if err := json.Indent(&i, resp, "", "  "); err != nil {
+				log.Error(err, "Failed to indent json")
+			}
 			_, err = w.Write(i.Bytes())
 			if err != nil {
 				log.Error(err, "Failed to write response")
@@ -139,10 +191,23 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 // then deleted so that the proxy can re-set with the correct authorization.
 func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap, restMapper meta.RESTMapper) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.Method == http.MethodPost {
-			log.Info("Injecting owner reference")
+		switch req.Method {
+		case http.MethodPost:
 			dump, _ := httputil.DumpRequest(req, false)
 			log.V(1).Info("Dumping request", "RequestDump", string(dump))
+			rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.NewString("api", "apis"), GrouplessAPIPrefixes: sets.NewString("api")}
+			r, err := rf.NewRequestInfo(req)
+			if err != nil {
+				m := "Could not convert request"
+				log.Error(err, m)
+				http.Error(w, m, http.StatusBadRequest)
+				return
+			}
+			if r.Subresource != "" {
+				// Don't inject owner ref if we are POSTing to a subresource
+				break
+			}
+			log.Info("Injecting owner reference")
 
 			user, _, ok := req.BasicAuth()
 			if !ok {
@@ -159,7 +224,12 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap, restMapper
 				return
 			}
 			owner := metav1.OwnerReference{}
-			json.Unmarshal(authString, &owner)
+			if err := json.Unmarshal(authString, &owner); err != nil {
+				m := "Could not unmarshal auth string"
+				log.Error(err, m)
+				http.Error(w, m, http.StatusInternalServerError)
+				return
+			}
 			log.Info(fmt.Sprintf("Owner: %#v", owner))
 
 			body, err := ioutil.ReadAll(req.Body)
@@ -226,6 +296,22 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *ControllerMap, restMapper
 	})
 }
 
+func RequestLogHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		// read body
+		body, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			log.Error(err, "Could not read request body")
+		}
+		// fix body
+		req.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+		log.Info("Request Info", "method", req.Method, "uri", req.RequestURI, "body", string(body))
+		// Removing the authorization so that the proxy can set the correct authorization.
+		req.Header.Del("Authorization")
+		h.ServeHTTP(w, req)
+	})
+}
+
 // HandlerChain will be used for users to pass defined handlers to the proxy.
 // The hander chain will be run after InjectingOwnerReference if it is added
 // and before the proxy handler.
@@ -234,14 +320,17 @@ type HandlerChain func(http.Handler) http.Handler
 // Options will be used by the user to specify the desired details
 // for the proxy.
 type Options struct {
-	Address          string
-	Port             int
-	Handler          HandlerChain
-	NoOwnerInjection bool
-	KubeConfig       *rest.Config
-	Cache            cache.Cache
-	RESTMapper       meta.RESTMapper
-	ControllerMap    *ControllerMap
+	Address           string
+	Port              int
+	Handler           HandlerChain
+	NoOwnerInjection  bool
+	LogRequests       bool
+	KubeConfig        *rest.Config
+	Cache             cache.Cache
+	RESTMapper        meta.RESTMapper
+	ControllerMap     *ControllerMap
+	WatchedNamespaces []string
+	DisableCache      bool
 }
 
 // Run will start a proxy server in a go routine that returns on the error
@@ -258,8 +347,17 @@ func Run(done chan error, o Options) error {
 	if o.ControllerMap == nil {
 		return fmt.Errorf("failed to get controller map from options")
 	}
+	if o.WatchedNamespaces == nil {
+		return fmt.Errorf("failed to get list of watched namespaces from options")
+	}
 
-	if o.Cache == nil {
+	watchedNamespaceMap := make(map[string]interface{})
+	// Convert string list to map
+	for _, ns := range o.WatchedNamespaces {
+		watchedNamespaceMap[ns] = nil
+	}
+
+	if o.Cache == nil && !o.DisableCache {
 		// Need to initialize cache since we don't have one
 		log.Info("Initializing and starting informer cache...")
 		informerCache, err := cache.New(o.KubeConfig, cache.Options{})
@@ -268,7 +366,9 @@ func Run(done chan error, o Options) error {
 		}
 		stop := make(chan struct{})
 		go func() {
-			informerCache.Start(stop)
+			if err := informerCache.Start(stop); err != nil {
+				log.Error(err, "Failed to start informer cache")
+			}
 			defer close(stop)
 		}()
 		log.Info("Waiting for cache to sync...")
@@ -283,8 +383,12 @@ func Run(done chan error, o Options) error {
 	if !o.NoOwnerInjection {
 		server.Handler = InjectOwnerReferenceHandler(server.Handler, o.ControllerMap, o.RESTMapper)
 	}
-	// Always add cache handler
-	server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper)
+	if o.LogRequests {
+		server.Handler = RequestLogHandler(server.Handler)
+	}
+	if !o.DisableCache {
+		server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper, watchedNamespaceMap)
+	}
 
 	l, err := server.Listen(o.Address, o.Port)
 	if err != nil {

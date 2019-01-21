@@ -171,13 +171,15 @@ Create a new branch to push release commits:
 $ git checkout -b release-v1.3.0
 ```
 
-Commit changes to the following four files:
+Commit changes to the following six files:
 * `version/version.go`: update `Version` to `v1.3.0`.
 * `pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
   * Comment out `branch = "master"`
   * Un-comment `version = "v1.2.0"`
   * Change `v1.2.0` to `v1.3.0`
 * `pkg/scaffold/gopkgtoml_test.go`: same as for `pkg/scaffold/gopkgtoml.go`.
+* `pkg/scaffold/ansible/gopkgtoml.go`: same as for `pkg/scaffold/gopkgtoml.go`.
+* `pkg/scaffold/helm/gopkgtoml.go`: same as for `pkg/scaffold/gopkgtoml.go`.
 * `CHANGELOG.md`: update the `## Unreleased` header to `## v1.3.0`.
 
 Create a new PR for `release-v1.3.0`.
@@ -216,6 +218,8 @@ Check out a new branch from master (or use your `release-v1.3.0`) and commit the
   * Comment out `version = "v1.3.0"`
   * Un-comment `branch = "master"`
 * `pkg/scaffold/gopkgtoml_test.go`: same as for `pkg/scaffold/gopkgtoml.go`.
+* `pkg/scaffold/ansible/gopkgtoml.go`: same as for `pkg/scaffold/gopkgtoml.go`.
+* `pkg/scaffold/helm/gopkgtoml.go`: same as for `pkg/scaffold/gopkgtoml.go`.
 * `CHANGELOG.md`: add the following as a new set of headers above `## v1.3.0`:
     ```
     ## Unreleased

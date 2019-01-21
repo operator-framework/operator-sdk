@@ -19,30 +19,32 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-const WatchesYamlFile = "watches.yaml"
+const WatchesFile = "watches.yaml"
 
-// WatchesYAML - watches yaml input wrapper
-type WatchesYAML struct {
+type Watches struct {
 	input.Input
-
-	Resource         scaffold.Resource
 	GeneratePlaybook bool
 	RolesDir         string
+	Resource         scaffold.Resource
 }
 
 // GetInput - gets the input
-func (s *WatchesYAML) GetInput() (input.Input, error) {
-	if s.Path == "" {
-		s.Path = WatchesYamlFile
+func (w *Watches) GetInput() (input.Input, error) {
+	if w.Path == "" {
+		w.Path = WatchesFile
 	}
-	s.RolesDir = RolesDir
-	s.TemplateBody = watchesYAMLTmpl
-	return s.Input, nil
+	w.TemplateBody = watchesAnsibleTmpl
+	w.RolesDir = RolesDir
+	return w.Input, nil
 }
 
-const watchesYAMLTmpl = `---
+const watchesAnsibleTmpl = `---
 - version: {{.Resource.Version}}
   group: {{.Resource.FullGroup}}
   kind: {{.Resource.Kind}}
-{{ if .GeneratePlaybook }}  playbook: /opt/ansible/playbook.yaml{{ else }}  role: /opt/ansible/{{.RolesDir}}/{{.Resource.Kind}}{{ end }}
+  {{- if .GeneratePlaybook }}
+  playbook: /opt/ansible/playbook.yml
+  {{- else }}
+  role: /opt/ansible/{{.RolesDir}}/{{.Resource.LowerKind}}
+  {{- end }}
 `

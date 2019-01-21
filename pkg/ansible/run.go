@@ -15,6 +15,7 @@
 package ansible
 
 import (
+	"context"
 	"os"
 	"runtime"
 
@@ -22,7 +23,9 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/leader"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -41,12 +44,15 @@ func printVersion() {
 func Run(flags *aoflags.AnsibleOperatorFlags) {
 	logf.SetLogger(logf.ZapLogger(false))
 
+	printVersion()
+
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
 	if found {
 		log.Infof("Watching %v namespace.", namespace)
 	} else {
 		log.Infof("%v environment variable not set. This operator is watching all namespaces.",
 			k8sutil.WatchNamespaceEnvVar)
+		namespace = metav1.NamespaceAll
 	}
 
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{
@@ -56,18 +62,29 @@ func Run(flags *aoflags.AnsibleOperatorFlags) {
 		log.Fatal(err)
 	}
 
-	printVersion()
+	name, found := os.LookupEnv(k8sutil.OperatorNameEnvVar)
+	if !found {
+		log.Fatal("OPERATOR_NAME environment variable not set")
+	}
+	// Become the leader before proceeding
+	err = leader.Become(context.TODO(), name+"-lock")
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
 	done := make(chan error)
 	cMap := proxy.NewControllerMap()
 
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{
-		Address:       "localhost",
-		Port:          8888,
-		KubeConfig:    mgr.GetConfig(),
-		Cache:         mgr.GetCache(),
-		RESTMapper:    mgr.GetRESTMapper(),
-		ControllerMap: cMap,
+		Address:           "localhost",
+		Port:              8888,
+		KubeConfig:        mgr.GetConfig(),
+		Cache:             mgr.GetCache(),
+		RESTMapper:        mgr.GetRESTMapper(),
+		ControllerMap:     cMap,
+		WatchedNamespaces: []string{namespace},
 	})
 	if err != nil {
 		log.Fatalf("Error starting proxy: (%v)", err)
