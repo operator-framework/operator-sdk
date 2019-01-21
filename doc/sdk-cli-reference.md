@@ -360,6 +360,8 @@ OLM Integration:
         Status fields with descriptors: 0/1 points
 
 Total Score: 6/8 points
+SUGGESTION: Add an alm-examples annotation to your CSV to pass the CRs have at least 1 example test
+SUGGESTION: Add a status descriptor for nodes
 ```
 
 ## test
