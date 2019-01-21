@@ -42,6 +42,9 @@ func ExposeMetricsPort(port int32, mgr manager.Manager) (*v1.Service, error) {
 		return nil, fmt.Errorf("failed to initialize service object for metrics: %v", err)
 	}
 	err = createService(mgr, s)
+	if err != nil {
+		return nil, err
+	}
 
 	return s, nil
 }
