@@ -57,8 +57,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
 
-// Change metricsAddress to serve metrics on different host and port.
-var metricsAddress string = ":8383"
+// Change below variables to serve metrics on different host or port.
+var (
+    metricsHost = "0.0.0.0"
+    metricsPort int32 = 8383
+)
 var log = logf.Log.WithName("cmd")
 
 func printVersion() {
@@ -99,7 +102,10 @@ func main() {
 	}
 
 	// Create a new Cmd to provide shared dependencies and start components
-	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace, MetricsBindAddress: metricsAddress})
+	mgr, err := manager.New(cfg, manager.Options{
+		Namespace:          namespace,
+		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+	})	
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
@@ -119,8 +125,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create Service object to expose metrics port.
-	_, err = metrics.ExposeMetricsPort(metricsAddress, mgr)
+	// Create Service object to expose the metrics port.
+	_, err = metrics.ExposeMetricsPort(metricsPort, mgr)
 	if err != nil {
 		log.Info(err.Error())
 	}

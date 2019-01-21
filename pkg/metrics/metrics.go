@@ -17,8 +17,6 @@ package metrics
 import (
 	"context"
 	"fmt"
-	"net"
-	"strconv"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
@@ -35,21 +33,11 @@ var log = logf.Log.WithName("metrics")
 // PrometheusPortName defines the port name used in kubernetes deployment and service resources
 const PrometheusPortName = "metrics"
 
-// ExposeMetricsPort creates a Kubernetes Service to expose the metrics port which is extracted,
-// from the address passed.
-func ExposeMetricsPort(address string, mgr manager.Manager) (*v1.Service, error) {
-	// Split out port from address, to pass to Service object.
+// ExposeMetricsPort creates a Kubernetes Service to expose the passed metrics port.
+func ExposeMetricsPort(port int32, mgr manager.Manager) (*v1.Service, error) {
 	// We do not need to check the validity of the port, as controller-runtime
 	// would error out and we would never get to this stage.
-	_, port, err := net.SplitHostPort(address)
-	if err != nil {
-		return nil, fmt.Errorf("failed to split metrics address %s: %v", address, err)
-	}
-	port64, err := strconv.ParseInt(port, 0, 32)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse metrics address %s: %v", address, err)
-	}
-	s, err := initOperatorService(int32(port64), PrometheusPortName)
+	s, err := initOperatorService(port, PrometheusPortName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize service object for metrics: %v", err)
 	}
