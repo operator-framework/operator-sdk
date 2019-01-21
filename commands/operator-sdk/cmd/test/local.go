@@ -44,9 +44,11 @@ type testLocalConfig struct {
 	globalManPath     string
 	namespacedManPath string
 	goTestFlags       string
+	moleculeTestFlags string
 	namespace         string
 	upLocal           bool
 	noSetup           bool
+	debug             bool
 	image             string
 }
 
@@ -62,15 +64,53 @@ func NewTestLocalCmd() *cobra.Command {
 	testCmd.Flags().StringVar(&tlConfig.globalManPath, "global-manifest", "", "Path to manifest for Global resources (e.g. CRD manifests)")
 	testCmd.Flags().StringVar(&tlConfig.namespacedManPath, "namespaced-manifest", "", "Path to manifest for per-test, namespaced resources (e.g. RBAC and Operator manifest)")
 	testCmd.Flags().StringVar(&tlConfig.goTestFlags, "go-test-flags", "", "Additional flags to pass to go test")
+	testCmd.Flags().StringVar(&tlConfig.moleculeTestFlags, "molecule-test-flags", "", "Additional flags to pass to molecule test")
 	testCmd.Flags().StringVar(&tlConfig.namespace, "namespace", "", "If non-empty, single namespace to run tests in")
 	testCmd.Flags().BoolVar(&tlConfig.upLocal, "up-local", false, "Enable running operator locally with go run instead of as an image in the cluster")
 	testCmd.Flags().BoolVar(&tlConfig.noSetup, "no-setup", false, "Disable test resource creation")
+	testCmd.Flags().BoolVar(&tlConfig.debug, "debug", false, "Enable debug-level logging")
 	testCmd.Flags().StringVar(&tlConfig.image, "image", "", "Use a different operator image from the one specified in the namespaced manifest")
 
 	return testCmd
 }
 
 func testLocalFunc(cmd *cobra.Command, args []string) {
+	switch projutil.GetOperatorType() {
+	case projutil.OperatorTypeGo:
+		testLocalGoFunc(cmd, args)
+	case projutil.OperatorTypeAnsible:
+		testLocalAnsibleFunc(cmd, args)
+	case projutil.OperatorTypeHelm:
+		log.Fatal("`test local` for Helm operators is not implemented")
+	default:
+		log.Fatal("Failed to determine operator type")
+	}
+}
+
+func testLocalAnsibleFunc(cmd *cobra.Command, args []string) {
+	projutil.MustInProjectRoot()
+	testArgs := []string{}
+	if tlConfig.debug {
+		testArgs = append(testArgs, "--debug")
+	}
+	testArgs = append(testArgs, "test", "-s", "test-local")
+
+	if tlConfig.moleculeTestFlags != "" {
+		testArgs = append(testArgs, strings.Split(tlConfig.moleculeTestFlags, " ")...)
+	}
+
+	dc := exec.Command("molecule", testArgs...)
+	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
+	dc.Dir = projutil.MustGetwd()
+	dc.Stdout = os.Stdout
+	dc.Stderr = os.Stderr
+	err := dc.Run()
+	if err != nil {
+		log.Fatalf("Failed to exec `molecule %s`: (%v)", strings.Join(testArgs, " "), err)
+	}
+}
+
+func testLocalGoFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
 		log.Fatalf("Command %s requires exactly one argument", cmd.CommandPath())
 	}
@@ -200,7 +240,9 @@ func replaceImage(manifestPath, image string) error {
 		foundDeployment = true
 		scheme := runtime.NewScheme()
 		// scheme for client go
-		cgoscheme.AddToScheme(scheme)
+		if err := cgoscheme.AddToScheme(scheme); err != nil {
+			log.Fatalf("Failed to add client-go scheme to runtime client: (%v)", err)
+		}
 		dynamicDecoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
 
 		obj, _, err := dynamicDecoder.Decode(yamlSpec, nil, nil)

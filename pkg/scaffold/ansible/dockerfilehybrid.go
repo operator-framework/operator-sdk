@@ -25,7 +25,7 @@ import (
 type DockerfileHybrid struct {
 	input.Input
 
-	// Playbook - if true, include a COPY statement for playbook.yaml
+	// Playbook - if true, include a COPY statement for playbook.yml
 	Playbook bool
 
 	// Roles - if true, include a COPY statement for the roles directory
@@ -72,7 +72,7 @@ RUN  /usr/local/bin/user_setup
 {{- if .Roles }}
 COPY roles/ ${HOME}/roles/{{ end }}
 {{- if .Playbook }}
-COPY playbook.yaml ${HOME}/playbook.yaml{{ end }}
+COPY playbook.yml ${HOME}/playbook.yml{{ end }}
 {{- if .Watches }}
 COPY watches.yaml ${HOME}/watches.yaml{{ end }}
 

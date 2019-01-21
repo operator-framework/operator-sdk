@@ -501,10 +501,13 @@ func TestReconcile(t *testing.T) {
 			if tc.ExpectedObject != nil {
 				actualObject := &unstructured.Unstructured{}
 				actualObject.SetGroupVersionKind(tc.ExpectedObject.GroupVersionKind())
-				tc.Client.Get(context.TODO(), types.NamespacedName{
+				err := tc.Client.Get(context.TODO(), types.NamespacedName{
 					Name:      tc.ExpectedObject.GetName(),
 					Namespace: tc.ExpectedObject.GetNamespace(),
 				}, actualObject)
+				if err != nil {
+					t.Fatalf("Failed to get object: (%v)", err)
+				}
 				if !reflect.DeepEqual(actualObject.GetAnnotations(), tc.ExpectedObject.GetAnnotations()) {
 					t.Fatalf("Annotations are not the same\nexpected: %v\nactual: %v", tc.ExpectedObject.GetAnnotations(), actualObject.GetAnnotations())
 				}

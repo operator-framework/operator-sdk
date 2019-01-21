@@ -36,7 +36,50 @@ const gopkgTomlTmpl = `[[constraint]]
   name = "github.com/operator-framework/operator-sdk"
   # The version rule is used for a specific release and the master branch for in between releases.
   branch = "master" #osdk_branch_annotation
-  # version = "=v0.3.0" #osdk_version_annotation
+  # version = "=v0.4.0" #osdk_version_annotation
+
+[[override]]
+  name = "k8s.io/kubernetes"
+  version = "=1.12.3"
+
+[[override]]
+  name = "k8s.io/api"
+  version = "kubernetes-1.12.3"
+
+[[override]]
+  name = "k8s.io/apimachinery"
+  version = "kubernetes-1.12.3"
+
+[[override]]
+  name = "k8s.io/apiextensions-apiserver"
+  version = "kubernetes-1.12.3"
+
+[[override]]
+  name = "k8s.io/apiserver"
+  version = "kubernetes-1.12.3"
+
+[[override]]
+  name = "k8s.io/client-go"
+  version = "kubernetes-1.12.3"
+
+[[override]]
+  name = "k8s.io/cli-runtime"
+  version = "kubernetes-1.12.3"
+
+# We need overrides for the following imports because dep can't resolve them
+# correctly. The easiest way to get this right is to use the versions that
+# k8s.io/helm uses. See https://github.com/helm/helm/blob/v2.12.0-rc.1/glide.lock
+[[override]]
+name = "github.com/russross/blackfriday"
+revision = "300106c228d52c8941d4b3de6054a6062a86dda3"
+
+[[override]]
+name = "github.com/docker/distribution"
+revision = "edc3ab29cdff8694dd6feb85cfeb4b5f1b38ed9c"
+
+[[override]]
+name = "github.com/docker/docker"
+revision = "a9fbbdc8dd8794b20af358382ab780559bca589d"
 
 [prune]
   go-tests = true
