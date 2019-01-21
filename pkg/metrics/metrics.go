@@ -15,6 +15,7 @@
 package metrics
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strconv"
@@ -24,6 +25,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -32,8 +34,9 @@ var log = logf.Log.WithName("metrics")
 // PrometheusPortName defines the port name used in kubernetes deployment and service resources
 const PrometheusPortName = "metrics"
 
-// ExposeMetricsPort generates a Kubernetes Service to expose the metrics port
-func ExposeMetricsPort(address string) (*v1.Service, error) {
+// ExposeMetricsPort creates a Kubernetes Service to expose the metrics port which is extracted,
+// from the address passed.
+func ExposeMetricsPort(address string, mgr manager.Manager) (*v1.Service, error) {
 	// Split out port from address, to pass to Service object.
 	// We do not need to check the validity of the port, as controller-runtime
 	// would error out and we would never get to this stage.
@@ -45,11 +48,21 @@ func ExposeMetricsPort(address string) (*v1.Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse metrics address %s: %v", address, err)
 	}
-	service, err := initOperatorService(int32(port64), PrometheusPortName)
+	s, err := initOperatorService(int32(port64), PrometheusPortName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize service object for metrics: %v", err)
 	}
-	return service, nil
+	err = createService(mgr, s)
+
+	return s, nil
+}
+
+func createService(mgr manager.Manager, s *v1.Service) error {
+	client := mgr.GetClient()
+	if err := client.Create(context.TODO(), s); err != nil && !apierrors.IsAlreadyExists(err) {
+		return err
+	}
+	return nil
 }
 
 // initOperatorService returns the static service which exposes specifed port.

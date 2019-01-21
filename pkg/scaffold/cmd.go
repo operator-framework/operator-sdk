@@ -51,7 +51,6 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	"github.com/operator-framework/operator-sdk/pkg/ready"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -125,7 +124,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupMetrics(mgr)
+	// Create Service object to expose metrics port.
+	s, err := metrics.ExposeMetricsPort(metricsAddress, mgr)
+	if err != nil {
+		log.Info(err)
+	}
 
 	log.Info("Starting the Cmd.")
 
@@ -133,20 +136,6 @@ func main() {
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
 		log.Error(err, "Manager exited non-zero")
 		os.Exit(1)
-	}
-}
-
-func setupMetrics(mgr manager.Manager) {
-	// Expose metrics by creating a Service object
-	s, err := metrics.ExposeMetricsPort(metricsAddress)
-	if err != nil {
-		log.Info(err.Error())
-		return
-	}
-	client := mgr.GetClient()
-	if err := client.Create(context.TODO(), s); err != nil && !apierrors.IsAlreadyExists(err) {
-		log.Info(err.Error())
-		return
 	}
 }
 `
