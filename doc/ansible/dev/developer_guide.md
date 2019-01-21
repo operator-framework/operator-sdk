@@ -76,7 +76,7 @@ Modify `roles/Foo/defaults/main.yml` to set `state` to `present` by default.
 state: present
 ```
 
-Create an Ansible playbook `playbook.yaml` in the top-level directory which
+Create an Ansible playbook `playbook.yml` in the top-level directory which
 includes role `Foo`:
 ```yaml
 ---
@@ -87,7 +87,7 @@ includes role `Foo`:
 
 Run the playbook:
 ```bash
-$ ansible-playbook playbook.yaml
+$ ansible-playbook playbook.yml
  [WARNING]: provided hosts list is empty, only localhost is available. Note that the implicit localhost does not match 'all'
 
 

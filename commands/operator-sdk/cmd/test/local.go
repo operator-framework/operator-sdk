@@ -240,7 +240,9 @@ func replaceImage(manifestPath, image string) error {
 		foundDeployment = true
 		scheme := runtime.NewScheme()
 		// scheme for client go
-		cgoscheme.AddToScheme(scheme)
+		if err := cgoscheme.AddToScheme(scheme); err != nil {
+			log.Fatalf("Failed to add client-go scheme to runtime client: (%v)", err)
+		}
 		dynamicDecoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
 
 		obj, _, err := dynamicDecoder.Decode(yamlSpec, nil, nil)
