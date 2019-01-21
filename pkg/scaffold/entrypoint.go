@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,33 +20,30 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-const DockerfileFile = "Dockerfile"
-
-type Dockerfile struct {
+// Entrypoint - entrypoint script
+type Entrypoint struct {
 	input.Input
 }
 
-func (s *Dockerfile) GetInput() (input.Input, error) {
-	if s.Path == "" {
-		s.Path = filepath.Join(BuildDir, DockerfileFile)
+func (e *Entrypoint) GetInput() (input.Input, error) {
+	if e.Path == "" {
+		e.Path = filepath.Join("bin", "entrypoint")
 	}
-	s.TemplateBody = dockerfileTmpl
-	return s.Input, nil
+	e.TemplateBody = entrypointTmpl
+	e.IsExec = true
+	return e.Input, nil
 }
 
-const dockerfileTmpl = `FROM alpine:3.8
+const entrypointTmpl = `#!/bin/sh -e
 
-ENV OPERATOR=/usr/local/bin/{{.ProjectName}} \
-    USER_UID=1001 \
-    USER_NAME={{.ProjectName}}
+# This is documented here:
+# https://docs.openshift.com/container-platform/3.11/creating_images/guidelines.html#openshift-specific-guidelines
 
-# install operator binary
-COPY build/_output/bin/{{.ProjectName}} ${OPERATOR}
+if ! whoami &>/dev/null; then
+  if [ -w /etc/passwd ]; then
+    echo "${USER_NAME:-{{.ProjectName}}}:x:$(id -u):$(id -g):${USER_NAME:-{{.ProjectName}}} user:${HOME}:/sbin/nologin" >> /etc/passwd
+  fi
+fi
 
-COPY bin /usr/local/bin
-RUN  /usr/local/bin/user_setup
-
-ENTRYPOINT ["/usr/local/bin/entrypoint"]
-
-USER ${USER_UID}
+exec ${OPERATOR} $@
 `
