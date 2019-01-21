@@ -85,6 +85,8 @@ func verifyGenCSVFlags() error {
 	if err != nil {
 		return fmt.Errorf("%s is not a valid semantic version: (%v)", csvVersion, err)
 	}
+	// Ensures numerical values composing csvVersion don't contain leading 0's,
+	// ex. 01.01.01
 	if v.String() != csvVersion {
 		return fmt.Errorf("provided CSV version %s contains bad values (parses to %s)", csvVersion, v)
 	}
