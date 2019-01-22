@@ -223,7 +223,9 @@ func (r *ReconcileMemcached) deploymentForMemcached(m *cachev1alpha1.Memcached) 
 		},
 	}
 	// Set Memcached instance as the owner and controller
-	controllerutil.SetControllerReference(m, dep, r.scheme)
+	if err := controllerutil.SetControllerReference(m, dep, r.scheme); err != nil {
+		log.Error(err, "Failed to set controller reference for memcached deployment")
+	}
 	return dep
 }
 

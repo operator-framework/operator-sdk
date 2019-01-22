@@ -78,7 +78,9 @@ func NewAnsibleResultFromMap(sm map[string]interface{}) *AnsibleResult {
 	}
 	if v, ok := sm["completion"]; ok {
 		s := v.(string)
-		a.TimeOfCompletion.UnmarshalJSON([]byte(s))
+		if err := a.TimeOfCompletion.UnmarshalJSON([]byte(s)); err != nil {
+			log.Error(err, "Failed to unmarshal time of completion for ansible result")
+		}
 	}
 	return a
 }
@@ -189,6 +191,8 @@ func (status *Status) GetJSONMap() map[string]interface{} {
 		log.Error(err, "Unable to marshal json")
 		return status.CustomStatus
 	}
-	json.Unmarshal(b, &status.CustomStatus)
+	if err := json.Unmarshal(b, &status.CustomStatus); err != nil {
+		log.Error(err, "Unable to unmarshal json")
+	}
 	return status.CustomStatus
 }

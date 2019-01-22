@@ -90,7 +90,7 @@ Prints the most recent Golang packages and versions required by operators. Print
 
 ### Flags
 
-* `--as-file` Print packages and versions in Gopkg.toml format.
+* `--as-file` - Print packages and versions in Gopkg.toml format.
 
 ### Example
 
@@ -143,29 +143,13 @@ pkg/apis/app/v1alpha1/
 └── zz_generated.deepcopy.go
 ```
 
-## olm-catalog
-
-Parent command for all OLM Catalog-related commands.
-
-### gen-csv
-
-Generates a Cluster Service Version manifest file in `deploy/olm-catalog`.
-
-#### Flags
-
-* `--csv-version` (required) operator semantic version with which to create the CSV file.
-
-#### Example
-
-```console
-$ operator-sdk olm-catalog gen-csv --csv-version 0.1.1
-Generating CSV manifest version 0.1.1
-```
-
 ## migrate
 
 Adds a main.go source file and any associated source files for an operator that
 is not of the "go" type.
+
+**Note**: This command will look for playbook.yml in the project root, if you use the .yaml extension
+you will need to rename it before running migrate or manually add it to your Dockerfile.
 
 ### Example
 
@@ -193,8 +177,8 @@ Scaffolds a new operator project.
 
 * `--skip-git-init` - Do not init the directory as a git repository
 * `--type` string - Type of operator to initialize: "ansible", "helm", or "go" (default "go"). Also requires the following flags if `--type=ansible` or `--type=helm`
-  * `--api-version` string - CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
-  * `--kind` string - CRD Kind. (e.g AppService)
+* `--api-version` string - CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
+* `--kind` string - CRD Kind. (e.g AppService)
 * `--generate-playbook` - Generate a playbook skeleton. (Only used for `--type ansible`)
 * `--cluster-scoped` - Initialize the operator to be cluster-scoped instead of namespace-scoped
 * `-h, --help` - help for new
@@ -331,11 +315,13 @@ Runs the tests locally
 
 ##### Flags
 
+* `--debug` - Enable debug-level logging
 * `--kubeconfig` string - location of kubeconfig for kubernetes cluster (default "~/.kube/config")
 * `--global-manifest` string - path to manifest for global resources (default "deploy/crd.yaml)
 * `--namespaced-manifest` string - path to manifest for per-test, namespaced resources (default: combines deploy/service_account.yaml, deploy/rbac.yaml, and deploy/operator.yaml)
 * `--namespace` string - if non-empty, single namespace to run tests in (e.g. "operator-test") (default: "")
-* `--go-test-flags` string - extra arguments to pass to `go test` (e.g. -f "-v -parallel=2")
+* `--go-test-flags` string - Additional flags to pass to go test
+* `--molecule-test-flags` string - Additional flags to pass to molecule test
 * `--up-local` - enable running operator locally with go run instead of as an image in the cluster
 * `--no-setup` - disable test resource creation
 * `--image` string - use a different operator image from the one specified in the namespaced manifest

@@ -12,20 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ansible
+package main
 
 import (
-	"context"
+	"flag"
 	"os"
-	"runtime"
 
-	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
-	"github.com/operator-framework/operator-sdk/pkg/leader"
-	sdkVersion "github.com/operator-framework/operator-sdk/version"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -33,18 +27,9 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
-func printVersion() {
-	log.Infof("Go Version: %s", runtime.Version())
-	log.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	log.Infof("Version of operator-sdk: %v", sdkVersion.Version)
-}
-
-// Run will start the ansible operator and proxy, blocking until one of them
-// returns.
-func Run(flags *aoflags.AnsibleOperatorFlags) {
+func main() {
+	flag.Parse()
 	logf.SetLogger(logf.ZapLogger(false))
-
-	printVersion()
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
 	if found {
@@ -52,7 +37,6 @@ func Run(flags *aoflags.AnsibleOperatorFlags) {
 	} else {
 		log.Infof("%v environment variable not set. This operator is watching all namespaces.",
 			k8sutil.WatchNamespaceEnvVar)
-		namespace = metav1.NamespaceAll
 	}
 
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{
@@ -62,41 +46,30 @@ func Run(flags *aoflags.AnsibleOperatorFlags) {
 		log.Fatal(err)
 	}
 
-	name, found := os.LookupEnv(k8sutil.OperatorNameEnvVar)
-	if !found {
-		log.Fatal("OPERATOR_NAME environment variable not set")
-	}
-	// Become the leader before proceeding
-	err = leader.Become(context.TODO(), name+"-lock")
-	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
-	}
-
 	done := make(chan error)
 	cMap := proxy.NewControllerMap()
 
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{
 		Address:           "localhost",
-		Port:              8888,
+		Port:              8889,
 		KubeConfig:        mgr.GetConfig(),
-		Cache:             mgr.GetCache(),
 		RESTMapper:        mgr.GetRESTMapper(),
 		ControllerMap:     cMap,
+		NoOwnerInjection:  true,
+		LogRequests:       true,
 		WatchedNamespaces: []string{namespace},
+		DisableCache:      true,
 	})
 	if err != nil {
-		log.Fatalf("Error starting proxy: (%v)", err)
+		log.Fatalf("error starting proxy: %v", err)
 	}
 
-	// start the operator
-	go operator.Run(done, mgr, flags, cMap)
-
-	// wait for either to finish
+	// wait forever or exit on proxy crash/finish
 	err = <-done
-	if err != nil {
-		log.Fatal(err)
+	if err == nil {
+		log.Info("Exiting")
+	} else {
+		log.Fatal(err.Error())
 	}
-	log.Info("Exiting")
 }
