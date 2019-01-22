@@ -15,9 +15,9 @@
 package helm
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -26,52 +26,101 @@ import (
 	"github.com/iancoleman/strcase"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/helm/pkg/chartutil"
+	"k8s.io/helm/pkg/downloader"
+	"k8s.io/helm/pkg/getter"
+	"k8s.io/helm/pkg/helm/environment"
+	"k8s.io/helm/pkg/helm/helmpath"
 	"k8s.io/helm/pkg/proto/hapi/chart"
+	"k8s.io/helm/pkg/repo"
 )
 
-// HelmChartsDir is the relative directory within an SDK project where Helm
-// charts are stored.
-const HelmChartsDir string = "helm-charts"
+const (
 
-func CreateChart(apiVersion, kind, source, sourceRepo, projectDir string) (*scaffold.Resource, string, error) {
-	chartDir := filepath.Join(projectDir, HelmChartsDir)
-	err := os.MkdirAll(chartDir, 0755)
+	// HelmChartsDir is the relative directory within an SDK project where Helm
+	// charts are stored.
+	HelmChartsDir string = "helm-charts"
+
+	// DefaultAPIVersion is the Kubernetes CRD API Version used for fetched
+	// charts when the --api-version flag is not specified
+	DefaultAPIVersion string = "charts.helm.k8s.io/v1alpha1"
+)
+
+type FetchChartOptions struct {
+	Chart   string
+	Repo    string
+	Version string
+}
+
+func CreateChart(apiVersion, kind string, opts FetchChartOptions, projectDir string) (*scaffold.Resource, *chart.Chart, error) {
+	chartsDir := filepath.Join(projectDir, HelmChartsDir)
+	err := os.MkdirAll(chartsDir, 0755)
 	if err != nil {
-		return nil, "", err
-	}
-
-	// If we don't have a source helm chart, scaffold the standard Nginx chart
-	// from Helm's default template.
-	if len(source) == 0 {
-		r, err := scaffold.NewResource(apiVersion, kind)
-		if err != nil {
-			return nil, "", err
-		}
-		log.Infof("Create %s/%s/", HelmChartsDir, r.LowerKind)
-
-		if err := createChartForResource(r, chartDir); err != nil {
-			return nil, "", err
-		}
-		return r, "", nil
+		return nil, nil, err
 	}
 
 	var (
-		stat  os.FileInfo
-		chart *chart.Chart
+		r *scaffold.Resource
+		c *chart.Chart
 	)
 
-	if stat, err = os.Stat(source); err == nil {
-		chart, err = createChartFromDisk(source, chartDir, stat.IsDir())
+	// If we don't have a helm chart reference, scaffold the default chart
+	// from Helm's default template. Otherwise, fetch it.
+	if len(opts.Chart) == 0 {
+		r, c, err = scaffoldChart(apiVersion, kind, chartsDir)
 	} else {
-		chart, err = createChartFromRepo(source, sourceRepo, chartDir)
+		r, c, err = fetchChart(apiVersion, kind, opts, chartsDir)
 	}
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
+	}
+	log.Infof("Create %s/%s/", HelmChartsDir, c.GetMetadata().GetName())
+	return r, c, nil
+}
+
+func scaffoldChart(apiVersion, kind, destDir string) (*scaffold.Resource, *chart.Chart, error) {
+	r, err := scaffold.NewResource(apiVersion, kind)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	chartfile := &chart.Metadata{
+		Name:        strcase.ToDelimited(kind, '-'),
+		Description: "A Helm chart for Kubernetes",
+		Version:     "0.1.0",
+		AppVersion:  "1.0",
+		ApiVersion:  chartutil.ApiVersionV1,
+	}
+	chartPath, err := chartutil.Create(chartfile, destDir)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	chart, err := chartutil.LoadDir(chartPath)
+	if err != nil {
+		return nil, nil, err
+	}
+	return r, chart, nil
+}
+
+func fetchChart(apiVersion, kind string, opts FetchChartOptions, destDir string) (*scaffold.Resource, *chart.Chart, error) {
+	var (
+		stat  os.FileInfo
+		chart *chart.Chart
+		err   error
+	)
+
+	if stat, err = os.Stat(opts.Chart); err == nil {
+		chart, err = createChartFromDisk(opts.Chart, destDir, stat.IsDir())
+	} else {
+		chart, err = createChartFromRemote(opts, destDir)
+	}
+	if err != nil {
+		return nil, nil, err
 	}
 
 	chartName := chart.GetMetadata().GetName()
 	if len(apiVersion) == 0 {
-		apiVersion = "charts.helm.k8s.io/v1alpha1"
+		apiVersion = DefaultAPIVersion
 	}
 	if len(kind) == 0 {
 		kind = strcase.ToCamel(chartName)
@@ -79,10 +128,9 @@ func CreateChart(apiVersion, kind, source, sourceRepo, projectDir string) (*scaf
 
 	r, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
-	log.Infof("Create %s/%s/", HelmChartsDir, chartName)
-	return r, chartName, nil
+	return r, chart, nil
 }
 
 func createChartFromDisk(source, destDir string, isDir bool) (*chart.Chart, error) {
@@ -108,55 +156,44 @@ func createChartFromDisk(source, destDir string, isDir bool) (*chart.Chart, erro
 	return chart, nil
 }
 
-func createChartFromRepo(source, sourceRepo, destDir string) (*chart.Chart, error) {
-	if strings.HasSuffix(source, ".tgz") {
-		tmpDir, err := ioutil.TempDir("", "osdk-helm-chart")
+func createChartFromRemote(opts FetchChartOptions, destDir string) (*chart.Chart, error) {
+	helmHome, ok := os.LookupEnv(environment.HomeEnvVar)
+	if !ok {
+		helmHome = environment.DefaultHelmHome
+	}
+	getters := getter.All(environment.EnvSettings{})
+	c := downloader.ChartDownloader{
+		HelmHome: helmpath.Home(helmHome),
+		Out:      os.Stderr,
+		Getters:  getters,
+	}
+
+	if opts.Repo != "" {
+		chartURL, err := repo.FindChartInRepoURL(opts.Repo, opts.Chart, opts.Version, "", "", "", getters)
 		if err != nil {
 			return nil, err
 		}
-		defer os.RemoveAll(tmpDir)
-
-		args := []string{"fetch", source, "--destination", tmpDir}
-		if len(sourceRepo) != 0 {
-			args = append(args, "--repo", sourceRepo)
-		}
-		cmd := exec.Command("helm", args...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
-			return nil, err
-		}
-		chartArchive := filepath.Join(tmpDir, filepath.Base(source))
-		return createChartFromDisk(chartArchive, destDir, false)
+		opts.Chart = chartURL
 	}
 
-	args := []string{"fetch", source, "--untar", "--untardir", destDir}
-	if len(sourceRepo) != 0 {
-		args = append(args, "--repo", sourceRepo)
-	}
-	cmd := exec.Command("helm", args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
+	tmpDir, err := ioutil.TempDir("", "osdk-helm-chart")
+	if err != nil {
 		return nil, err
 	}
-	chartDir := filepath.Join(destDir, filepath.Base(source))
-	return chartutil.LoadDir(chartDir)
-}
+	defer os.RemoveAll(tmpDir)
 
-// createChartForResource creates a new helm chart in the SDK project for the
-// provided resource.
-func createChartForResource(r *scaffold.Resource, chartDir string) error {
-	chartfile := &chart.Metadata{
-		Name:        r.LowerKind,
-		Description: "A Helm chart for Kubernetes",
-		Version:     "0.1.0",
-		AppVersion:  "1.0",
-		ApiVersion:  chartutil.ApiVersionV1,
+	chartArchive, _, err := c.DownloadTo(opts.Chart, opts.Version, tmpDir)
+	if err != nil {
+		// One of Helm's error messages directs users to run `helm init`, which
+		// installs tiller in a remote cluster. Since that's unnecessary and
+		// unhelpful, modify the error message to be relevant for operator-sdk.
+		if strings.Contains(err.Error(), "Couldn't load repositories file") {
+			return nil, fmt.Errorf("failed to load repositories file %s "+
+				"(you might need to run `helm init --client-only` "+
+				"to create and initialize it)", c.HelmHome.RepositoryFile())
+		}
+		return nil, err
 	}
-	if err := os.MkdirAll(chartDir, 0755); err != nil {
-		return err
-	}
-	_, err := chartutil.Create(chartfile, chartDir)
-	return err
+
+	return createChartFromDisk(chartArchive, destDir, false)
 }
