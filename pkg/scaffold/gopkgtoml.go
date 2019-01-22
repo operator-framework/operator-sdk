@@ -60,7 +60,7 @@ required = [
 
 [[override]]
   name = "k8s.io/kube-openapi"
-  branch = "master"
+  revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
 
 [[override]]
   name = "k8s.io/api"
