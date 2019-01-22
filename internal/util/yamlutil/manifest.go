@@ -58,19 +58,23 @@ func GenerateCombinedNamespacedManifest() (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil && !fileutil.IsClosedError(err) {
+			log.Errorf("Failed to close file %s: (%v)", file.Name(), err)
+		}
+	}()
 
 	sa, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.ServiceAccountYamlFile))
 	if err != nil {
-		log.Warnf("could not find the serviceaccount manifest: (%v)", err)
+		log.Warnf("Could not find the serviceaccount manifest: (%v)", err)
 	}
 	role, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleYamlFile))
 	if err != nil {
-		log.Warnf("could not find role manifest: (%v)", err)
+		log.Warnf("Could not find role manifest: (%v)", err)
 	}
 	roleBinding, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleBindingYamlFile))
 	if err != nil {
-		log.Warnf("could not find role_binding manifest: (%v)", err)
+		log.Warnf("Could not find role_binding manifest: (%v)", err)
 	}
 	operator, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.OperatorYamlFile))
 	if err != nil {
@@ -98,7 +102,11 @@ func GenerateCombinedGlobalManifest() (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil && !fileutil.IsClosedError(err) {
+			log.Errorf("Failed to close file %s: (%v)", file.Name(), err)
+		}
+	}()
 
 	files, err := ioutil.ReadDir(scaffold.CrdsDir)
 	if err != nil {

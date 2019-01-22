@@ -28,12 +28,12 @@ func TestPodTest(t *testing.T) {
 			TestNamespaceEnv: "TEST_NAMESPACE",
 		})
 	if err != nil {
-		t.Fatalf("failed to execute the scaffold: (%v)", err)
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
 	if testPodExp != buf.String() {
 		diffs := diffutil.Diff(testPodExp, buf.String())
-		t.Fatalf("expected vs actual differs.\n%v", diffs)
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
 }
 

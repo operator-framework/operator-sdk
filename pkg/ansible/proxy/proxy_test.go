@@ -21,6 +21,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+
 	kcorev1 "k8s.io/api/core/v1"
 	kmetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,42 +35,49 @@ import (
 func TestHandler(t *testing.T) {
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{Namespace: "default"})
 	if err != nil {
-		t.Fatalf("failed to instantiate manager: %v", err)
+		t.Fatalf("Failed to instantiate manager: %v", err)
 	}
 	done := make(chan error)
+	cMap := NewControllerMap()
 	err = Run(done, Options{
-		Address:    "localhost",
-		Port:       8888,
-		KubeConfig: mgr.GetConfig(),
-		Cache:      nil,
-		RESTMapper: mgr.GetRESTMapper(),
+		Address:           "localhost",
+		Port:              8888,
+		KubeConfig:        mgr.GetConfig(),
+		Cache:             nil,
+		RESTMapper:        mgr.GetRESTMapper(),
+		ControllerMap:     cMap,
+		WatchedNamespaces: []string{"default"},
 	})
 	if err != nil {
-		t.Fatalf("error starting proxy: %v", err)
+		t.Fatalf("Error starting proxy: %v", err)
 	}
 
 	po := createPod("test", "default", mgr.GetConfig())
 
 	resp, err := http.Get("http://localhost:8888/api/v1/namespaces/default/pods/test")
 	if err != nil {
-		t.Fatalf("error getting pod from proxy: %v", err)
+		t.Fatalf("Error getting pod from proxy: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil && !fileutil.IsClosedError(err) {
+			t.Errorf("Failed to close response body: (%v)", err)
+		}
+	}()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		t.Fatalf("error reading response body: %v", err)
+		t.Fatalf("Error reading response body: %v", err)
 	}
 	// Should only be one string from 'X-Cache' header (explicitly set to HIT in proxy)
 	if resp.Header["X-Cache"] == nil {
-		t.Fatalf("object was not retrieved from cache")
+		t.Fatalf("Object was not retrieved from cache")
 		if resp.Header["X-Cache"][0] != "HIT" {
-			t.Fatalf("cache response header found but got [%v], expected [HIT]", resp.Header["X-Cache"][0])
+			t.Fatalf("Cache response header found but got [%v], expected [HIT]", resp.Header["X-Cache"][0])
 		}
 	}
 	data := kcorev1.Pod{}
 	err = json.Unmarshal(body, &data)
 	if data.Name != "test" {
-		t.Fatalf("got unexpected pod name: %#v", data.Name)
+		t.Fatalf("Got unexpected pod name: %#v", data.Name)
 	}
 	deletePod(po, mgr.GetConfig())
 }

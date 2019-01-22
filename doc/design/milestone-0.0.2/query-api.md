@@ -49,7 +49,7 @@ d := &apps_v1.Deployment{
         Kind:       "Deployment",
         APIVersion: "apps/v1",
     }
-    ObjectMeta: metav_1.ObjectMeta{
+    ObjectMeta: meta_v1.ObjectMeta{
         Name:      "example",
         Namespace: "default",
     }

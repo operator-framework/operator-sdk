@@ -43,9 +43,13 @@ Generated CR  filename: <project-name>/deploy/crds/<group>_<version>_<kind>_cr.y
 		Run: crdFunc,
 	}
 	crdCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
-	crdCmd.MarkFlagRequired("api-version")
+	if err := crdCmd.MarkFlagRequired("api-version"); err != nil {
+		log.Fatalf("Failed to mark `api-version` flag for `add crd` subcommand as required")
+	}
 	crdCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. (e.g AppService)")
-	crdCmd.MarkFlagRequired("kind")
+	if err := crdCmd.MarkFlagRequired("kind"); err != nil {
+		log.Fatalf("Failed to mark `kind` flag for `add crd` subcommand as required")
+	}
 	return crdCmd
 }
 
@@ -54,7 +58,7 @@ func crdFunc(cmd *cobra.Command, args []string) {
 		AbsProjectPath: projutil.MustGetwd(),
 	}
 	if len(args) != 0 {
-		log.Fatal("crd command doesn't accept any arguments")
+		log.Fatalf("Command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 	verifyCrdFlags()
 	verifyCrdDeployPath()
@@ -73,12 +77,12 @@ func crdFunc(cmd *cobra.Command, args []string) {
 		&scaffold.Cr{Resource: resource},
 	)
 	if err != nil {
-		log.Fatalf("add scaffold failed: (%v)", err)
+		log.Fatalf("Add scaffold failed: (%v)", err)
 	}
 
 	// update deploy/role.yaml for the given resource r.
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
+		log.Fatalf("Failed to update the RBAC manifest for the resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
 	}
 
 	log.Info("CRD generation complete.")
@@ -86,17 +90,17 @@ func crdFunc(cmd *cobra.Command, args []string) {
 
 func verifyCrdFlags() {
 	if len(apiVersion) == 0 {
-		log.Fatal("--api-version must not have empty value")
+		log.Fatal("Value of --api-version must not have empty value")
 	}
 	if len(kind) == 0 {
-		log.Fatal("--kind must not have empty value")
+		log.Fatal("Value of --kind must not have empty value")
 	}
 	kindFirstLetter := string(kind[0])
 	if kindFirstLetter != strings.ToUpper(kindFirstLetter) {
-		log.Fatal("--kind must start with an uppercase letter")
+		log.Fatal("Value of --kind must start with an uppercase letter")
 	}
 	if strings.Count(apiVersion, "/") != 1 {
-		log.Fatalf("api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion)
+		log.Fatalf("Value of --api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion)
 	}
 }
 
@@ -104,11 +108,11 @@ func verifyCrdFlags() {
 func verifyCrdDeployPath() {
 	wd, err := os.Getwd()
 	if err != nil {
-		log.Fatalf("failed to determine the full path of the current directory: (%v)", err)
+		log.Fatalf("Failed to determine the full path of the current directory: (%v)", err)
 	}
 	// check if the deploy sub-directory exist
 	_, err = os.Stat(filepath.Join(wd, scaffold.DeployDir))
 	if err != nil {
-		log.Fatalf("the path (./%v) does not exist. run this command in your project directory", scaffold.DeployDir)
+		log.Fatalf("The path (./%v) does not exist. run this command in your project directory", scaffold.DeployDir)
 	}
 }

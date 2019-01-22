@@ -54,9 +54,13 @@ Example:
 	}
 
 	apiCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes APIVersion that has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
-	apiCmd.MarkFlagRequired("api-version")
+	if err := apiCmd.MarkFlagRequired("api-version"); err != nil {
+		log.Fatalf("Failed to mark `api-version` flag for `add api` subcommand as required")
+	}
 	apiCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes resource Kind name. (e.g AppService)")
-	apiCmd.MarkFlagRequired("kind")
+	if err := apiCmd.MarkFlagRequired("kind"); err != nil {
+		log.Fatalf("Failed to mark `kind` flag for `add api` subcommand as required")
+	}
 
 	return apiCmd
 }
@@ -92,12 +96,12 @@ func apiRun(cmd *cobra.Command, args []string) {
 		&scaffold.Crd{Resource: r},
 	)
 	if err != nil {
-		log.Fatalf("add scaffold failed: (%v)", err)
+		log.Fatalf("Add scaffold failed: (%v)", err)
 	}
 
 	// update deploy/role.yaml for the given resource r.
 	if err := scaffold.UpdateRoleForResource(r, absProjectPath); err != nil {
-		log.Fatalf("failed to update the RBAC manifest for the resource (%v, %v): (%v)", r.APIVersion, r.Kind, err)
+		log.Fatalf("Failed to update the RBAC manifest for the resource (%v, %v): (%v)", r.APIVersion, r.Kind, err)
 	}
 
 	// Run k8s codegen for deepcopy

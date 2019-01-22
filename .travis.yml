@@ -52,7 +52,7 @@ x_base_steps:
     stage: deploy
     if: type != pull_request AND ( tag IS present OR branch = master OR commit_message =~ /\[travis deploy\]/ )
     <<: *go_before_install
-    install: skip
+    install: make install
     before_script:
       - git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
       - git fetch --unshallow --tags
@@ -102,3 +102,10 @@ jobs:
       script:
         - make image/build/helm
         - make image/push/helm
+
+    # Build and deploy scorecard-proxy docker image
+    - <<: *deploy
+      name: Docker image for scorecard-proxy
+      script:
+        - make image/build/scorecard-proxy
+        - make image/push/scorecard-proxy

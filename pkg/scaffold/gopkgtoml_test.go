@@ -24,12 +24,12 @@ func TestGopkgtoml(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err := s.Execute(appConfig, &GopkgToml{})
 	if err != nil {
-		t.Fatalf("failed to execute the scaffold: (%v)", err)
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
 	if gopkgtomlExp != buf.String() {
 		diffs := diffutil.Diff(gopkgtomlExp, buf.String())
-		t.Fatalf("expected vs actual differs.\n%v", diffs)
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
 }
 
@@ -82,7 +82,7 @@ required = [
   name = "github.com/operator-framework/operator-sdk"
   # The version rule is used for a specific release and the master branch for in between releases.
   branch = "master" #osdk_branch_annotation
-  # version = "=v0.3.0" #osdk_version_annotation
+  # version = "=v0.4.0" #osdk_version_annotation
 
 [prune]
   go-tests = true

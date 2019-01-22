@@ -82,11 +82,11 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 		yamlMap := make(map[string]interface{})
 		err := yaml.Unmarshal(yamlSpec, &yamlMap)
 		if err != nil {
-			log.Fatalf("could not unmarshal yaml namespaced spec: (%v)", err)
+			log.Fatalf("Could not unmarshal YAML namespaced spec: (%v)", err)
 		}
 		kind, ok := yamlMap["kind"].(string)
 		if !ok {
-			log.Fatal("yaml manifest file contains a 'kind' field that is not a string")
+			log.Fatal("YAML manifest file contains a 'kind' field that is not a string")
 		}
 		if kind == "Deployment" {
 			// this is ugly and hacky; we should probably make this cleaner
@@ -118,7 +118,7 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		log.Fatalf("failed to verify deployment image: (%v)", err)
+		log.Fatalf("Failed to verify deployment image: (%v)", err)
 	}
 	if warningMessages == "" {
 		return nil
@@ -129,7 +129,7 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 func verifyTestManifest(image string) {
 	namespacedBytes, err := ioutil.ReadFile(namespacedManBuild)
 	if err != nil {
-		log.Fatalf("could not read namespaced manifest: (%v)", err)
+		log.Fatalf("Could not read namespaced manifest: (%v)", err)
 	}
 
 	err = verifyDeploymentImage(namespacedBytes, image)
@@ -146,7 +146,7 @@ func buildWithBuildah() bool {
 
 func buildFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		log.Fatalf("build command needs exactly 1 argument")
+		log.Fatalf("Command %s requires exactly one argument", cmd.CommandPath())
 	}
 	projutil.MustInProjectRoot()
 
@@ -176,9 +176,9 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	err := buildCmd.Run()
 	if err != nil {
 		if enableTests {
-			log.Fatalf("failed to output intermediate image %s: (%v)", image, err)
+			log.Fatalf("Failed to output intermediate image %s: (%v)", image, err)
 		} else {
-			log.Fatalf("failed to output build image %s: (%v)", image, err)
+			log.Fatalf("Failed to output build image %s: (%v)", image, err)
 		}
 	}
 
@@ -198,13 +198,23 @@ func buildFunc(cmd *cobra.Command, args []string) {
 			}
 
 			s := &scaffold.Scaffold{}
-			err = s.Execute(cfg,
-				&scaffold.TestFrameworkDockerfile{},
-				&scaffold.GoTestScript{},
-				&scaffold.TestPod{Image: image, TestNamespaceEnv: test.TestNamespaceEnv},
-			)
+			switch projutil.GetOperatorType() {
+			case projutil.OperatorTypeGo:
+				err = s.Execute(cfg,
+					&scaffold.TestFrameworkDockerfile{},
+					&scaffold.GoTestScript{},
+					&scaffold.TestPod{Image: image, TestNamespaceEnv: test.TestNamespaceEnv},
+				)
+			case projutil.OperatorTypeAnsible:
+				log.Fatal("Test scaffolding for Ansible Operators is not implemented")
+			case projutil.OperatorTypeHelm:
+				log.Fatal("Test scaffolding for Helm Operators is not implemented")
+			default:
+				log.Fatal("Failed to determine operator type")
+			}
+
 			if err != nil {
-				log.Fatalf("test-framework manifest scaffold failed: (%v)", err)
+				log.Fatalf("Test framework manifest scaffold failed: (%v)", err)
 			}
 		}
 
@@ -233,7 +243,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		testBuildCmd.Stderr = os.Stderr
 		err = testBuildCmd.Run()
 		if err != nil {
-			log.Fatalf("failed to output test image %s: (%v)", image, err)
+			log.Fatalf("Failed to output test image %s: (%v)", image, err)
 		}
 		// Check image name of deployments in namespaced manifest
 		verifyTestManifest(image)

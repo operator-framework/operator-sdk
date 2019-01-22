@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -37,6 +38,14 @@ import (
 
 var log = logf.Log.WithName("runner")
 
+const (
+	// MaxRunnerArtifactsAnnotation - annotation used by a user to specify the max artifacts to keep
+	// in the runner directory. This will override the value provided by the watches file for a
+	// particular CR. Setting this to zero will cause all artifact directories to be kept.
+	// Example usage "ansible.operator-sdk/max-runner-artifacts: 100"
+	MaxRunnerArtifactsAnnotation = "ansible.operator-sdk/max-runner-artifacts"
+)
+
 // Runner - a runnable that should take the parameters and name and namespace
 // and run the correct code.
 type Runner interface {
@@ -44,19 +53,22 @@ type Runner interface {
 	GetFinalizer() (string, bool)
 	GetReconcilePeriod() (time.Duration, bool)
 	GetManageStatus() bool
+	GetWatchDependentResources() bool
 }
 
 // watch holds data used to create a mapping of GVK to ansible playbook or role.
 // The mapping is used to compose an ansible operator.
 type watch struct {
-	Version         string     `yaml:"version"`
-	Group           string     `yaml:"group"`
-	Kind            string     `yaml:"kind"`
-	Playbook        string     `yaml:"playbook"`
-	Role            string     `yaml:"role"`
-	ReconcilePeriod string     `yaml:"reconcilePeriod"`
-	ManageStatus    bool       `yaml:"manageStatus"`
-	Finalizer       *Finalizer `yaml:"finalizer"`
+	Version                 string     `yaml:"version"`
+	Group                   string     `yaml:"group"`
+	Kind                    string     `yaml:"kind"`
+	Playbook                string     `yaml:"playbook"`
+	Role                    string     `yaml:"role"`
+	ReconcilePeriod         string     `yaml:"reconcilePeriod"`
+	ManageStatus            bool       `yaml:"manageStatus"`
+	WatchDependentResources bool       `yaml:"watchDependentResources"`
+	MaxRunnerArtifacts      int        `yaml:"maxRunnerArtifacts"`
+	Finalizer               *Finalizer `yaml:"finalizer"`
 }
 
 // Finalizer - Expose finalizer to be used by a user.
@@ -69,8 +81,10 @@ type Finalizer struct {
 
 // UnmarshalYaml - implements the yaml.Unmarshaler interface
 func (w *watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	// by default, the operator will manage status
+	// by default, the operator will manage status and watch dependent resources
 	w.ManageStatus = true
+	w.WatchDependentResources = true
+	w.MaxRunnerArtifacts = 20
 
 	// hide watch data in plain struct to prevent unmarshal from calling
 	// UnmarshalYAML again
@@ -83,13 +97,13 @@ func (w *watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 func NewFromWatches(path string) (map[schema.GroupVersionKind]Runner, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Error(err, "failed to get config file")
+		log.Error(err, "Failed to get config file")
 		return nil, err
 	}
 	watches := []watch{}
 	err = yaml.Unmarshal(b, &watches)
 	if err != nil {
-		log.Error(err, "failed to unmarshal config")
+		log.Error(err, "Failed to unmarshal config")
 		return nil, err
 	}
 
@@ -115,13 +129,13 @@ func NewFromWatches(path string) (map[schema.GroupVersionKind]Runner, error) {
 		}
 		switch {
 		case w.Playbook != "":
-			r, err := NewForPlaybook(w.Playbook, s, w.Finalizer, reconcilePeriod, w.ManageStatus)
+			r, err := NewForPlaybook(w.Playbook, s, w.Finalizer, reconcilePeriod, w.ManageStatus, w.WatchDependentResources, w.MaxRunnerArtifacts)
 			if err != nil {
 				return nil, err
 			}
 			m[s] = r
 		case w.Role != "":
-			r, err := NewForRole(w.Role, s, w.Finalizer, reconcilePeriod, w.ManageStatus)
+			r, err := NewForRole(w.Role, s, w.Finalizer, reconcilePeriod, w.ManageStatus, w.WatchDependentResources, w.MaxRunnerArtifacts)
 			if err != nil {
 				return nil, err
 			}
@@ -134,7 +148,7 @@ func NewFromWatches(path string) (map[schema.GroupVersionKind]Runner, error) {
 }
 
 // NewForPlaybook returns a new Runner based on the path to an ansible playbook.
-func NewForPlaybook(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, reconcilePeriod *time.Duration, manageStatus bool) (Runner, error) {
+func NewForPlaybook(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, reconcilePeriod *time.Duration, manageStatus, dependentResources bool, maxArtifacts int) (Runner, error) {
 	if !filepath.IsAbs(path) {
 		return nil, fmt.Errorf("playbook path must be absolute for %v", gvk)
 	}
@@ -144,11 +158,13 @@ func NewForPlaybook(path string, gvk schema.GroupVersionKind, finalizer *Finaliz
 	r := &runner{
 		Path: path,
 		GVK:  gvk,
-		cmdFunc: func(ident, inputDirPath string) *exec.Cmd {
-			return exec.Command("ansible-runner", "-vv", "-p", path, "-i", ident, "run", inputDirPath)
+		cmdFunc: func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd {
+			return exec.Command("ansible-runner", "-vv", "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "-p", path, "-i", ident, "run", inputDirPath)
 		},
-		reconcilePeriod: reconcilePeriod,
-		manageStatus:    manageStatus,
+		reconcilePeriod:         reconcilePeriod,
+		manageStatus:            manageStatus,
+		watchDependentResources: dependentResources,
+		maxRunnerArtifacts:      maxArtifacts,
 	}
 	err := r.addFinalizer(finalizer)
 	if err != nil {
@@ -158,7 +174,7 @@ func NewForPlaybook(path string, gvk schema.GroupVersionKind, finalizer *Finaliz
 }
 
 // NewForRole returns a new Runner based on the path to an ansible role.
-func NewForRole(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, reconcilePeriod *time.Duration, manageStatus bool) (Runner, error) {
+func NewForRole(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, reconcilePeriod *time.Duration, manageStatus, dependentResources bool, maxArtifacts int) (Runner, error) {
 	if !filepath.IsAbs(path) {
 		return nil, fmt.Errorf("role path must be absolute for %v", gvk)
 	}
@@ -169,12 +185,14 @@ func NewForRole(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, 
 	r := &runner{
 		Path: path,
 		GVK:  gvk,
-		cmdFunc: func(ident, inputDirPath string) *exec.Cmd {
+		cmdFunc: func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd {
 			rolePath, roleName := filepath.Split(path)
-			return exec.Command("ansible-runner", "-vv", "--role", roleName, "--roles-path", rolePath, "--hosts", "localhost", "-i", ident, "run", inputDirPath)
+			return exec.Command("ansible-runner", "-vv", "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath, "--hosts", "localhost", "-i", ident, "run", inputDirPath)
 		},
-		reconcilePeriod: reconcilePeriod,
-		manageStatus:    manageStatus,
+		reconcilePeriod:         reconcilePeriod,
+		manageStatus:            manageStatus,
+		watchDependentResources: dependentResources,
+		maxRunnerArtifacts:      maxArtifacts,
 	}
 	err := r.addFinalizer(finalizer)
 	if err != nil {
@@ -185,13 +203,15 @@ func NewForRole(path string, gvk schema.GroupVersionKind, finalizer *Finalizer, 
 
 // runner - implements the Runner interface for a GVK that's being watched.
 type runner struct {
-	Path             string                  // path on disk to a playbook or role depending on what cmdFunc expects
-	GVK              schema.GroupVersionKind // GVK being watched that corresponds to the Path
-	Finalizer        *Finalizer
-	cmdFunc          func(ident, inputDirPath string) *exec.Cmd // returns a Cmd that runs ansible-runner
-	finalizerCmdFunc func(ident, inputDirPath string) *exec.Cmd
-	reconcilePeriod  *time.Duration
-	manageStatus     bool
+	Path                    string                  // path on disk to a playbook or role depending on what cmdFunc expects
+	GVK                     schema.GroupVersionKind // GVK being watched that corresponds to the Path
+	Finalizer               *Finalizer
+	cmdFunc                 func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd // returns a Cmd that runs ansible-runner
+	finalizerCmdFunc        func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd
+	reconcilePeriod         *time.Duration
+	manageStatus            bool
+	watchDependentResources bool
+	maxRunnerArtifacts      int
 }
 
 func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig string) (RunResult, error) {
@@ -236,29 +256,39 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 	if err != nil {
 		return nil, err
 	}
+	maxArtifacts := r.maxRunnerArtifacts
+	if ma, ok := u.GetAnnotations()[MaxRunnerArtifactsAnnotation]; ok {
+		i, err := strconv.Atoi(ma)
+		if err != nil {
+			log.Info("Invalid max runner artifact annotation", "err", err, "value", ma)
+		}
+		maxArtifacts = i
+	}
 
 	go func() {
 		var dc *exec.Cmd
 		if r.isFinalizerRun(u) {
 			logger.V(1).Info("Resource is marked for deletion, running finalizer", "Finalizer", r.Finalizer.Name)
-			dc = r.finalizerCmdFunc(ident, inputDir.Path)
+			dc = r.finalizerCmdFunc(ident, inputDir.Path, maxArtifacts)
 		} else {
-			dc = r.cmdFunc(ident, inputDir.Path)
+			dc = r.cmdFunc(ident, inputDir.Path, maxArtifacts)
 		}
+		// Append current environment since setting dc.Env to anything other than nil overwrites current env
+		dc.Env = append(dc.Env, os.Environ()...)
 		dc.Env = append(dc.Env, fmt.Sprintf("K8S_AUTH_KUBECONFIG=%s", kubeconfig), fmt.Sprintf("KUBECONFIG=%s", kubeconfig))
 
 		output, err := dc.CombinedOutput()
 		if err != nil {
 			logger.Error(err, string(output))
 		} else {
-			logger.Info("ansible-runner exited successfully")
+			logger.Info("Ansible-runner exited successfully")
 		}
 
 		receiver.Close()
 		err = <-errChan
 		// http.Server returns this in the case of being closed cleanly
 		if err != nil && err != http.ErrServerClosed {
-			logger.Error(err, "error from event api")
+			logger.Error(err, "Error from event API")
 		}
 	}()
 	return &runResult{
@@ -279,6 +309,11 @@ func (r *runner) GetReconcilePeriod() (time.Duration, bool) {
 // GetManageStatus - get the manage status
 func (r *runner) GetManageStatus() bool {
 	return r.manageStatus
+}
+
+// GetWatchDependentResources - get the watch dependent resources value
+func (r *runner) GetWatchDependentResources() bool {
+	return r.watchDependentResources
 }
 
 func (r *runner) GetFinalizer() (string, bool) {
@@ -310,17 +345,17 @@ func (r *runner) addFinalizer(finalizer *Finalizer) error {
 		if !filepath.IsAbs(finalizer.Playbook) {
 			return fmt.Errorf("finalizer playbook path must be absolute for %v", r.GVK)
 		}
-		r.finalizerCmdFunc = func(ident, inputDirPath string) *exec.Cmd {
-			return exec.Command("ansible-runner", "-vv", "-p", finalizer.Playbook, "-i", ident, "run", inputDirPath)
+		r.finalizerCmdFunc = func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd {
+			return exec.Command("ansible-runner", "-vv", "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "-p", finalizer.Playbook, "-i", ident, "run", inputDirPath)
 		}
 	case finalizer.Role != "":
 		if !filepath.IsAbs(finalizer.Role) {
 			return fmt.Errorf("finalizer role path must be absolute for %v", r.GVK)
 		}
-		r.finalizerCmdFunc = func(ident, inputDirPath string) *exec.Cmd {
+		r.finalizerCmdFunc = func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd {
 			path := strings.TrimRight(finalizer.Role, "/")
 			rolePath, roleName := filepath.Split(path)
-			return exec.Command("ansible-runner", "-vv", "--role", roleName, "--roles-path", rolePath, "--hosts", "localhost", "-i", ident, "run", inputDirPath)
+			return exec.Command("ansible-runner", "-vv", "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath, "--hosts", "localhost", "-i", ident, "run", inputDirPath)
 		}
 	case len(finalizer.Vars) != 0:
 		r.finalizerCmdFunc = r.cmdFunc
@@ -344,7 +379,7 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 	s := u.Object["spec"]
 	spec, ok := s.(map[string]interface{})
 	if !ok {
-		log.Info("spec was not found for CR", "GroupVersionKind", u.GroupVersionKind(), "Namespace", u.GetNamespace(), "Name", u.GetName())
+		log.Info("Spec was not found for CR", "GroupVersionKind", u.GroupVersionKind(), "Namespace", u.GetNamespace(), "Name", u.GetName())
 		spec = map[string]interface{}{}
 	}
 	parameters := paramconv.MapToSnake(spec)
