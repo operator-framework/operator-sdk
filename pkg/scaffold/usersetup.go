@@ -27,7 +27,7 @@ type UserSetup struct {
 
 func (u *UserSetup) GetInput() (input.Input, error) {
 	if u.Path == "" {
-		u.Path = filepath.Join("bin", "user_setup")
+		u.Path = filepath.Join("build", "bin", "user_setup")
 	}
 	u.TemplateBody = userSetupTmpl
 	u.IsExec = true

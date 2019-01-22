@@ -27,7 +27,7 @@ type Entrypoint struct {
 
 func (e *Entrypoint) GetInput() (input.Input, error) {
 	if e.Path == "" {
-		e.Path = filepath.Join("bin", "entrypoint")
+		e.Path = filepath.Join("build", "bin", "entrypoint")
 	}
 	e.TemplateBody = entrypointTmpl
 	e.IsExec = true
