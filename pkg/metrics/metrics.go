@@ -23,6 +23,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -41,20 +42,36 @@ func ExposeMetricsPort(port int32, mgr manager.Manager) (*v1.Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize service object for metrics: %v", err)
 	}
-	err = createService(mgr, s)
+	service, err := createService(mgr, s)
 	if err != nil {
 		return nil, err
 	}
 
-	return s, nil
+	return service, nil
 }
 
-func createService(mgr manager.Manager, s *v1.Service) error {
+func createService(mgr manager.Manager, s *v1.Service) (*v1.Service, error) {
 	client := mgr.GetClient()
-	if err := client.Create(context.TODO(), s); err != nil && !apierrors.IsAlreadyExists(err) {
-		return err
+	if err := client.Create(context.TODO(), s); err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			return nil, err
+		}
+		// Get existing Service and return it
+		existingService := &v1.Service{}
+		err := client.Get(context.TODO(), types.NamespacedName{
+			Name:      s.ObjectMeta.Name,
+			Namespace: s.ObjectMeta.Namespace,
+		}, existingService)
+		if err != nil {
+			return nil, err
+		}
+		log.Info("Metrics Service object already existed")
+		return existingService, nil
+
 	}
-	return nil
+
+	log.Info("Metrics Service object created")
+	return s, nil
 }
 
 // initOperatorService returns the static service which exposes specifed port.
