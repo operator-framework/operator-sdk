@@ -47,28 +47,37 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	printVersion()
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
+	log = log.WithValues("Namespace", namespace)
 	if found {
-		log.Info("Watching namespace", "Namespace", namespace)
+		log.Info("Watching namespace.")
 	} else {
 		log.Info(fmt.Sprintf("%v environment variable not set. This operator is watching all namespaces.",
 			k8sutil.WatchNamespaceEnvVar))
 		namespace = metav1.NamespaceAll
 	}
 
-	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{
+	cfg, err := config.GetConfig()
+	if err != nil {
+		log.Error(err, "Failed to get config.")
+		return err
+	}
+	mgr, err := manager.New(cfg, manager.Options{
 		Namespace: namespace,
 	})
 	if err != nil {
+		log.Error(err, "Failed to create a new manager.")
 		return err
 	}
 
 	name, found := os.LookupEnv(k8sutil.OperatorNameEnvVar)
 	if !found {
-		return fmt.Errorf("%s environment variable not set", k8sutil.OperatorNameEnvVar)
+		log.Error(fmt.Errorf("%s environment variable not set", k8sutil.OperatorNameEnvVar), "")
+		return err
 	}
 	// Become the leader before proceeding
 	err = leader.Become(context.TODO(), name+"-lock")
 	if err != nil {
+		log.Error(err, "Failed to become leader.")
 		return err
 	}
 
@@ -86,7 +95,8 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 		WatchedNamespaces: []string{namespace},
 	})
 	if err != nil {
-		return fmt.Errorf("error starting proxy: (%v)", err)
+		log.Error(err, "Error starting proxy.")
+		return err
 	}
 
 	// start the operator
@@ -94,6 +104,10 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 
 	// wait for either to finish
 	err = <-done
-	log.Info("Exiting")
-	return err
+	if err != nil {
+		log.Error(err, "Proxy or operator exited with error.")
+		os.Exit(1)
+	}
+	log.Info("Exiting.")
+	return nil
 }

@@ -48,8 +48,9 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 	printVersion()
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
+	log = log.WithValues("Namespace", namespace)
 	if found {
-		log.Info("Watching single namespace", "namespace", namespace)
+		log.Info("Watching single namespace.")
 	} else {
 		log.Info(fmt.Sprintf("%v environment variable not set. This operator is watching all namespaces.",
 			k8sutil.WatchNamespaceEnvVar))
@@ -58,11 +59,14 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 
 	cfg, err := config.GetConfig()
 	if err != nil {
+		log.Error(err, "Failed to get config.")
 		return err
 	}
-
-	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
+	mgr, err := manager.New(cfg, manager.Options{
+		Namespace: namespace,
+	})
 	if err != nil {
+		log.Error(err, "Failed to create a new manager.")
 		return err
 	}
 
@@ -70,11 +74,13 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 	storageBackend := storage.Init(driver.NewMemory())
 	tillerKubeClient, err := client.NewFromManager(mgr)
 	if err != nil {
+		log.Error(err, "Failed to create new Tiller client.")
 		return err
 	}
 
 	factories, err := release.NewManagerFactoriesFromFile(storageBackend, tillerKubeClient, flags.WatchesFile)
 	if err != nil {
+		log.Error(err, "Failed to create new manager factories.")
 		return err
 	}
 
@@ -88,10 +94,15 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 			WatchDependentResources: true,
 		})
 		if err != nil {
+			log.Error(err, "Failed to add manager factory to controller.")
 			return err
 		}
 	}
 
 	// Start the Cmd
-	return mgr.Start(signals.SetupSignalHandler())
+	if err = mgr.Start(signals.SetupSignalHandler()); err != nil {
+		log.Error(err, "Manager exited non-zero.")
+		os.Exit(1)
+	}
+	return nil
 }

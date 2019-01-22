@@ -22,10 +22,10 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
-// NewHelmCmd returns a command that will run a helm operator
-func NewHelmCmd() *cobra.Command {
+// RunHelmCmd returns a command that will run a helm operator.
+func RunHelmCmd() *cobra.Command {
 	var flags *hoflags.HelmOperatorFlags
-	newCmd := &cobra.Command{
+	runHelmCmd := &cobra.Command{
 		Use:   "helm",
 		Short: "Runs as a helm operator",
 		Long: `Runs as a helm operator. This is intended to be used when running
@@ -37,7 +37,7 @@ should use "up local" instead.`,
 			return helm.Run(flags)
 		},
 	}
-	flags = hoflags.AddTo(newCmd.Flags())
+	flags = hoflags.AddTo(runHelmCmd.Flags())
 
-	return newCmd
+	return runHelmCmd
 }

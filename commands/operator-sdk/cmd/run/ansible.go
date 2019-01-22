@@ -22,10 +22,10 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
-// NewAnsibleCmd returns a command that will run an ansible operator
-func NewAnsibleCmd() *cobra.Command {
+// RunAnsibleCmd returns a command that will run an ansible operator.
+func RunAnsibleCmd() *cobra.Command {
 	var flags *aoflags.AnsibleOperatorFlags
-	newCmd := &cobra.Command{
+	runAnsibleCmd := &cobra.Command{
 		Use:   "ansible",
 		Short: "Runs as an ansible operator",
 		Long: `Runs as an ansible operator. This is intended to be used when running
@@ -37,7 +37,7 @@ should use "up local" instead.`,
 			return ansible.Run(flags)
 		},
 	}
-	flags = aoflags.AddTo(newCmd.Flags())
+	flags = aoflags.AddTo(runAnsibleCmd.Flags())
 
-	return newCmd
+	return runAnsibleCmd
 }
