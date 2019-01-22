@@ -314,12 +314,9 @@ func getAppSecretInCluster(kubeClient kubernetes.Interface, name, namespace stri
 	return se, nil
 }
 
-// getCASecretAndConfigMapInCluster gets the CA Secret and ConfigMap of the
-// given name and namespace.
-// getCASecretAndConfigMapInCluster returns a Secret and ConfigMap if found in
-// the cluster, otherwise both will be nil. If only one of them is found, an
-// error is returned as we expect either both CA Secret and ConfigMap to exist
-// or neither.
+// getCASecretAndConfigMapInCluster gets the CA Secret and ConfigMap for the
+// given name and namespace. An error is returned if only one of them is found
+// as we expect either both a Secret and ConfigMap to exist or neither.
 //
 // NOTE: both the CA Secret and ConfigMap have the same metadata name of the
 // form `<cr-kind>-<cr-name>-ca`, referred to by the name parameter.
