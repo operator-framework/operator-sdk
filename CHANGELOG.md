@@ -10,6 +10,9 @@
 
 ### Bug Fixes
 
+- Make `up local` subcommand respect `KUBECONFIG` env var
+- Make `up local` subcommand use default namespace set in kubeconfig instead of hardcoded `default` and also add ability to watch all namespaces for ansible and helm type operators
+
 ## v0.4.0
 
 ### Added
