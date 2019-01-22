@@ -307,7 +307,9 @@ func doHelmScaffold() {
 	if err != nil {
 		log.Fatalf("Failed to create initial helm chart for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
 	}
-	crSpec := fmt.Sprintf("# Default values copied from %s\n\n%s", filepath.Join("<project_dir>", helm.HelmChartsDir, chart.GetMetadata().GetName(), "values.yaml"), chart.GetValues().GetRaw())
+
+	valuesPath := filepath.Join("<project_dir>", helm.HelmChartsDir, chart.GetMetadata().GetName(), "values.yaml")
+	crSpec := fmt.Sprintf("# Default values copied from %s\n\n%s", valuesPath, chart.GetValues().GetRaw())
 
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
