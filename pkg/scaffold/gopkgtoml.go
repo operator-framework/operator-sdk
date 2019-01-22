@@ -51,6 +51,7 @@ required = [
   "k8s.io/code-generator/cmd/informer-gen",
   "k8s.io/kube-openapi/cmd/openapi-gen",
   "k8s.io/gengo/args",
+  "sigs.k8s.io/controller-tools/pkg/crd/generator",
 ]
 
 [[override]]
@@ -61,6 +62,10 @@ required = [
 [[override]]
   name = "k8s.io/kube-openapi"
   revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
+
+[[override]]
+  name = "sigs.k8s.io/controller-tools"
+  version = "=v0.1.8"
 
 [[override]]
   name = "k8s.io/api"
