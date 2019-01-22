@@ -24,7 +24,7 @@ all of the flags in the help text for the command in the [SDK CLI Reference][cli
 flags:
 
 - `--cr-manifest` - this is a required flag for the scorecard. This flag must point to the location of the manifest for the custom resource you are currently testing.
-- `--csv-path` - this flag is required is the OLM tests are enabled (the tests are enabled by default). This flag must point to the location of the CSV file for this resource.
+- `--csv-path` - this flag is required if the OLM tests are enabled (the tests are enabled by default). This flag must point to the location of the CSV file for this resource.
 - `--namespaced-manifest` - if set, this flag must point to a manifest file with all resources that run within a namespace. By default, the scorecard will combine `service_account.yaml`, `role.yaml`, `role_binding.yaml`, and `operator.yaml` from the `deploy` directory into a temporary manifest and use that as the namespaced manifest.
 - `--global-manifest` - if set, this flag must point to all required resources that run globally (not namespaced). By default, the scorecard will combine all CRDs in the `deploy/crds` directory into a temporary manifest and use that as the global manifest.
 - `--namespace` - if set, which namespace to run the scorecard tests in. If it is not set, the scorecard will use the default namespace of the current context set in the kubeconfig file.
