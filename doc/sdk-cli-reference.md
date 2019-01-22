@@ -313,7 +313,7 @@ should use `up local` instead.
 
 #### Example
 
-```bash
+```console
 $ operator-sdk run helm --watches-file=/opt/helm/watches.yaml --reconcile-period=30s
 ```
 
