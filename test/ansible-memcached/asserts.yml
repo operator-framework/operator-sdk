@@ -45,6 +45,22 @@
           data:
             delete: me
 
+    - name: debug CR lookup
+      debug:
+        var: cr
+      vars:
+        deploy: '{{ lookup("k8s",
+          kind=custom_resource.kind,
+          api_version=custom_resource.apiVersion,
+          namespace=namespace,
+          resource_name=custom_resource.metadata.name
+        )}}'
+
+    - name: Verify custom status exists
+      assert:
+        that: cr.resources[0].status.get("test") == "hello world"
+      when: cr is defined
+
     - name: Delete the custom resource
       k8s:
         state: absent
