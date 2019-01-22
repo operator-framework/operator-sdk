@@ -85,7 +85,7 @@ func upLocalFunc(cmd *cobra.Command, args []string) {
 	if namespace == "#invalid#" {
 		_, defaultNamespace, err := k8sInternal.GetKubeconfigAndNamespace(kubeConfig)
 		if err != nil {
-			log.Fatalf("failed to get kubeconfig and default namespace: %v", err)
+			log.Fatalf("Failed to get kubeconfig and default namespace: %v", err)
 		}
 		namespace = defaultNamespace
 	}
