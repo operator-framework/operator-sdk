@@ -45,17 +45,6 @@
             data:
               delete: me
 
-      - name: debug CR lookup
-        debug:
-          var: debug_cr
-        vars:
-          debug_cr: '{{ lookup("k8s",
-            kind=custom_resource.kind,
-            api_version=custom_resource.apiVersion,
-            namespace=namespace,
-            resource_name=custom_resource.metadata.name
-          )}}'
-
       - name: Verify custom status exists
         assert:
           that: debug_cr.status.get("test") == "hello world"
