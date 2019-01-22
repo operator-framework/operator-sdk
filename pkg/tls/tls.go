@@ -56,7 +56,7 @@ type CertConfig struct {
 	// Optional CA Key path, if the user wants to provide a custom CA key;
 	// defaults to "".
 	CAKey string
-	// Optional CA Certificate path, if the user wants to provide custom a CA cert.
+	// Optional CA Certificate path, if the user wants to provide a custom CA cert.
 	// defaults to "".
 	CACert string
 	// Optionally use the cluster's root CA. If true, a CertGenerator will request
@@ -69,7 +69,7 @@ type CertConfig struct {
 // CertGenerator is an operator specific TLS tool that generates TLS assets
 // when deploying a user's application.
 type CertGenerator interface {
-	// GenerateCert generates a Secret containing TLS encryption key and cert,
+	// GenerateCert generates a Secret containing the TLS encryption key and cert,
 	// a Secret containing the CA key, and a ConfigMap containing the CA
 	// Certificate given the Custom Resource (CR) "cr", the Kubernetes Service
 	// "service", and the CertConfig "config".
@@ -82,7 +82,7 @@ type CertGenerator interface {
 	//  - CA's cert is packaged into a ConfigMap as shown below.
 	//  - The CA Secret and ConfigMap are created on the Kubernetes cluster in
 	//    the CR's namespace before returned to the user. The CertGenerator
-	//    manages the CA Secret and ConfigMap to ensure it is unqiue per CR.
+	//    manages the CA Secret and ConfigMap to ensure it is unique per CR.
 	// - If CA is given:
 	//  - CA's key is packaged into a Secret as shown below.
 	//  - CA's cert is packaged into a ConfigMap as shown below.
@@ -151,8 +151,8 @@ type SDKCertGenerator struct {
 }
 
 // GenerateCert returns a Secret containing the TLS encryption key and cert,
-// a ConfigMap containing the CA Certificate and a Secret containing the CA key.
-// GenerateCert returns a error if generation fails.
+// a ConfigMap containing the CA Certificate, and a Secret containing the CA key.
+// GenerateCert returns an error if generation fails.
 func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *corev1.Service, config *CertConfig) (*corev1.Secret, *corev1.ConfigMap, *corev1.Secret, error) {
 	if err := verifyConfig(config); err != nil {
 		return nil, nil, nil, err
@@ -343,7 +343,7 @@ func getCASecretAndConfigMapInCluster(kubeClient kubernetes.Interface, name, nam
 	}
 
 	if hasConfigMap != hasSecret {
-		// TODO: this case can happen if creating CA ConfigMap succeeds and creating CA Secret failed. We need to handle this case properly.
+		// TODO: this case can happen if creating the CA ConfigMap succeeds and creating the CA Secret failed. We need to handle this case properly.
 		return nil, nil, fmt.Errorf("expect either both CA ConfigMap and Secret both exist or not exist, but got hasCAConfigmap==%v and hasCASecret==%v", hasConfigMap, hasSecret)
 	}
 	if !hasConfigMap {
