@@ -20,6 +20,8 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const EntrypointFile = "entrypoint"
+
 // Entrypoint - entrypoint script
 type Entrypoint struct {
 	input.Input
@@ -27,7 +29,7 @@ type Entrypoint struct {
 
 func (e *Entrypoint) GetInput() (input.Input, error) {
 	if e.Path == "" {
-		e.Path = filepath.Join("build", "bin", "entrypoint")
+		e.Path = filepath.Join(BuildScriptDir, EntrypointFile)
 	}
 	e.TemplateBody = entrypointTmpl
 	e.IsExec = true

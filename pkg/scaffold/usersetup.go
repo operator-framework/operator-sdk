@@ -20,6 +20,8 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const UserSetupFile = "user_setup"
+
 // UserSetup - userSetup script
 type UserSetup struct {
 	input.Input
@@ -27,7 +29,7 @@ type UserSetup struct {
 
 func (u *UserSetup) GetInput() (input.Input, error) {
 	if u.Path == "" {
-		u.Path = filepath.Join("build", "bin", "user_setup")
+		u.Path = filepath.Join(BuildScriptDir, UserSetupFile)
 	}
 	u.TemplateBody = userSetupTmpl
 	u.IsExec = true
