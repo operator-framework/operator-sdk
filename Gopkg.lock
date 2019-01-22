@@ -1093,7 +1093,7 @@
   version = "kubernetes-1.12.3"
 
 [[projects]]
-  digest = "1:56850424b64c01f4f9dfdcb82c60c9b255ca9138c81732497f5d9e006f9e155f"
+  digest = "1:58b4fec5e13981a1f8126292262bcafcc6f2ffc9df7110d48dec459d4051620f"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
@@ -1170,6 +1170,7 @@
     "transport/spdy",
     "util/buffer",
     "util/cert",
+    "util/certificate/csr",
     "util/connrotation",
     "util/exec",
     "util/flowcontrol",
@@ -1457,6 +1458,7 @@
     "golang.org/x/tools/imports",
     "gopkg.in/yaml.v2",
     "k8s.io/api/apps/v1",
+    "k8s.io/api/certificates/v1beta1",
     "k8s.io/api/core/v1",
     "k8s.io/api/rbac/v1",
     "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme",
@@ -1489,6 +1491,7 @@
     "k8s.io/client-go/tools/clientcmd",
     "k8s.io/client-go/tools/clientcmd/api",
     "k8s.io/client-go/transport",
+    "k8s.io/client-go/util/certificate/csr",
     "k8s.io/helm/pkg/chartutil",
     "k8s.io/helm/pkg/engine",
     "k8s.io/helm/pkg/kube",
