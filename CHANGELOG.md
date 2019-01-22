@@ -10,8 +10,8 @@
 
 ### Bug Fixes
 
-- Make `up local` subcommand respect `KUBECONFIG` env var
-- Make `up local` subcommand use default namespace set in kubeconfig instead of hardcoded `default` and also add ability to watch all namespaces for ansible and helm type operators
+- Make `up local` subcommand respect `KUBECONFIG` env var ([#983](https://github.com/operator-framework/operator-sdk/pull/983))
+- Make `up local` subcommand use default namespace set in kubeconfig instead of hardcoded `default` and also add ability to watch all namespaces for ansible and helm type operators ([#983](https://github.com/operator-framework/operator-sdk/pull/983))
 
 ## v0.4.0
 
