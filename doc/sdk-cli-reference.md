@@ -324,8 +324,8 @@ Run scorecard tests on an operator
 ### Flags
 
 * `basic-tests` - Enable basic operator checks (default true)
-* `cr-manifest` string - Path to manifest for Custom Resource
-* `csv-path` string - Path to CSV being tested
+* `cr-manifest` string - (required) Path to manifest for Custom Resource
+* `csv-path` string - (required if `olm-tests` is set) Path to CSV being tested
 * `global-manifest` string - Path to manifest for Global resources (e.g. CRD manifests)
 * `init-timeout` int - Timeout for status block on CR to be created, in seconds (default 10)
 * `kubeconfig` string - Path to kubeconfig of custom resource created in cluster
