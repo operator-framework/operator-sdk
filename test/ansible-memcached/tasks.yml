@@ -43,3 +43,13 @@
     namespace: "{{ meta.namespace }}"
     status:
       test: "hello world"
+
+- k8s:
+    definition:
+      kind: Secret
+      apiVersion: v1
+      metadata:
+        name: test-secret
+        namespace: "{{ meta.namespace }}"
+      data:
+        test: "hello" | b64encode

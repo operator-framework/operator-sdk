@@ -1,0 +1,4 @@
+- version: v1
+  group:
+  kind: Pod
+  role: /opt/ansible/roles/secret

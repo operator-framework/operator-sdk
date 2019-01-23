@@ -56,6 +56,10 @@
             resource_name=custom_resource.metadata.name
           )}}'
 
+      - name: Verify that test-service was created
+        assert:
+          that: lookup('k8s', kind='Service', api_version='v1', namespace=namespace, resource_name='test-service')
+
       - name: Delete the custom resource
         k8s:
           state: absent
@@ -74,15 +78,15 @@
         until: not cr.resources
         failed_when: cr.resources
 
-      - name: Verify the ConfigMap was deleted
-        assert:
-          that: not lookup('k8s', kind='ConfigMap', api_version='v1', namespace=namespace, resource_name='deleteme')
-
       - name: Verify the Deployment was deleted (wait 30s)
         assert:
           that: not lookup('k8s', kind='Deployment', api_version='apps/v1', namespace=namespace, label_selector='app=memcached')
         retries: 10
         delay: 3
+
+      - name: Verify that test-service was deleted
+        assert:
+          that: not lookup('k8s', kind='Service', api_version='v1', namespace=namespace, resource_name='test-service')
 
       rescue:
       - name: debug cr
