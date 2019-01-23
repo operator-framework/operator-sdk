@@ -243,7 +243,7 @@ func TestMemcached(t *testing.T) {
 				filepath.Join(gopath, projutil.SrcDir, repoDir),
 				vendorDir).CombinedOutput()
 			if err != nil {
-				t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+				t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 			}
 		}
 	}
@@ -493,7 +493,7 @@ func MemcachedCluster(t *testing.T) {
 			*e2eImageName, "docker-daemon:"+*e2eImageName,
 		).CombinedOutput()
 		if err != nil {
-			t.Fatalf("error: %v\nCommand Output: %s\n", err, string(cmdOut))
+			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 		}
 	}
 
