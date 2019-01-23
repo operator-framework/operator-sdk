@@ -13,7 +13,7 @@ modifying spec fields and monitoring how the operator responds.
 
 ## Requirements
 
-- Operator made using the `operator-sdk` or using a config getter that supports reading from the `KUBECONFIG` environment variable (such as the `clientcmd` or `controller-runtime` config getters). This is required for the scorecard proxy to work correctly.
+- An operator made using the `operator-sdk` or an operator that uses a config getter that supports reading from the `KUBECONFIG` environment variable (such as the `clientcmd` or `controller-runtime` config getters). This is required for the scorecard proxy to work correctly.
 - Resource manifests for installing/configuring the operator and custom resources (see the [Writing E2E Tests][writing-tests] doc for more information on the global and namespaced manifests).
 - (OLM tests only) A CSV file for your operator.
 
@@ -55,8 +55,10 @@ test has a maximum score of 1.
 #### Operator Action Are Reflected In Status
 
 This test makes modifications to each field in the Custom Resources spec block, waits, then verifies that the
-operator updates the status block. This is somewhat prone to breakage as it can potentially change a spec field to an
-invalid value. We plan to partially replace this test with user defined tests. This test has a maximum score of 1.
+operator updates the status block. This test has a maximum score of 1.
+
+Note: This test is somewhat prone to breakage as it can potentially change a spec field to an
+invalid value. We plan to partially replace this test with user defined tests in the future.
 
 #### Writing Into CRs Has An Effect
 
@@ -67,9 +69,10 @@ API server, indicating that it is modifying resources. This test has a maximum s
 
 #### Owned CRDs Have Resources Listed
 
-This test makes sure that the CRDs listed in the `owned` CRDs section of the CSV have a `resources` subsection. In the
-future, this test will verify that all resources modified by the operator are listed in the resources section. This
+This test makes sure that the CRDs listed in the `owned` CRDs section of the CSV have a `resources` subsection. This
 test has a maximum score equal to the number of CRDs listed in the CSV.
+
+Note: In the future, this test will verify that all resources modified by the operator are listed in the resources section.
 
 #### CRs Have At Least 1 Example
 
