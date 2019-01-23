@@ -52,9 +52,7 @@ kubernetes cluster using a kubeconfig file.
 
 	upLocalCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "The file path to kubernetes configuration file; defaults to location specified by $KUBECONFIG with a fallback to $HOME/.kube/config if not set")
 	upLocalCmd.Flags().StringVar(&operatorFlags, "operator-flags", "", "The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
-	// a user can set this to "" to watch all namespaces, so we need a different, invalid namespace that we can detect when
-	// deciding whether we need to get the kubeconfig's default namespace or not
-	upLocalCmd.Flags().StringVar(&namespace, "namespace", "#invalid#", "The namespace where the operator watches for changes.")
+	upLocalCmd.Flags().StringVar(&namespace, "namespace", "", "The namespace where the operator watches for changes.")
 	upLocalCmd.Flags().StringVar(&ldFlags, "go-ldflags", "", "Set Go linker options")
 	switch projutil.GetOperatorType() {
 	case projutil.OperatorTypeAnsible:
@@ -78,7 +76,7 @@ func upLocalFunc(cmd *cobra.Command, args []string) {
 	log.Info("Running the operator locally.")
 
 	// get default namespace to watch if unset
-	if namespace == "#invalid#" {
+	if !cmd.Flags().Changed("namespace") {
 		_, defaultNamespace, err := k8sInternal.GetKubeconfigAndNamespace(kubeConfig)
 		if err != nil {
 			log.Fatalf("Failed to get kubeconfig and default namespace: %v", err)
