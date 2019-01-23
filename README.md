@@ -112,7 +112,7 @@ NAME                     READY     STATUS    RESTARTS   AGE
 example-appservice-pod   1/1       Running   0          1m
 
 # Test the new Resource Type
-$ kubectl describe appservice
+$ kubectl describe appservice example-appservice
 Name:         example-appservice
 Namespace:    myproject
 Labels:       <none>
