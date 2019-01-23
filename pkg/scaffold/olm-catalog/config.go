@@ -28,9 +28,12 @@ import (
 // CSVConfig is a configuration file for CSV composition. Its fields contain
 // file path information.
 type CSVConfig struct {
-	OperatorPath string   `json:"operator-path,omitempty"`
-	CRDCRPaths   []string `json:"crd-cr-paths,omitempty"`
-	RolePath     string   `json:"role-path,omitempty"`
+	// The operator manifest file path. Defaults to deploy/operator.yaml.
+	OperatorPath string `json:"operator-path,omitempty"`
+	// A list of CRD and CR manifest file paths. Defaults to deploy/crds.
+	CRDCRPaths []string `json:"crd-cr-paths,omitempty"`
+	// The RBAC role manifest file path. Defaults to deploy/role.yaml.
+	RolePath string `json:"role-path,omitempty"`
 }
 
 func getCSVConfig(cfgFile string) (*CSVConfig, error) {
