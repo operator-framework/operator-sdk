@@ -88,6 +88,7 @@ func migrateAnsible() {
 		&dockerfile,
 		&ansible.Entrypoint{},
 		&ansible.UserSetup{},
+		&ansible.K8sStatus{},
 	)
 	if err != nil {
 		log.Fatalf("Migrate scaffold failed: (%v)", err)

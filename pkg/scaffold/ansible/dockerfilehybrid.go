@@ -65,6 +65,8 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
 
 # install operator binary
 COPY build/_output/bin/{{.ProjectName}} ${OPERATOR}
+# install k8s_status Ansible module
+COPY library/k8s_status.py /usr/share/ansible/openshift/
 
 COPY bin /usr/local/bin
 RUN  /usr/local/bin/user_setup
