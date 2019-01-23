@@ -56,6 +56,7 @@
             resource_name=custom_resource.metadata.name
           )}}'
 
+      # This will verify that the `secret` role was executed
       - name: Verify that test-service was created
         assert:
           that: lookup('k8s', kind='Service', api_version='v1', namespace=namespace, resource_name='test-service')
@@ -83,10 +84,6 @@
           that: not lookup('k8s', kind='Deployment', api_version='apps/v1', namespace=namespace, label_selector='app=memcached')
         retries: 10
         delay: 3
-
-      - name: Verify that test-service was deleted
-        assert:
-          that: not lookup('k8s', kind='Service', api_version='v1', namespace=namespace, resource_name='test-service')
 
       rescue:
       - name: debug cr
