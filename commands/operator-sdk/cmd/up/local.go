@@ -50,7 +50,7 @@ kubernetes cluster using a kubeconfig file.
 		Run: upLocalFunc,
 	}
 
-	upLocalCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "The file path to kubernetes configuration file; defaults to $HOME/.kube/config")
+	upLocalCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "The file path to kubernetes configuration file; defaults to location specified by $KUBECONFIG with a fallback to $HOME/.kube/config if not set")
 	upLocalCmd.Flags().StringVar(&operatorFlags, "operator-flags", "", "The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
 	// a user can set this to "" to watch all namespaces, so we need a different, invalid namespace that we can detect when
 	// deciding whether we need to get the kubeconfig's default namespace or not
