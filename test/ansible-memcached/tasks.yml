@@ -52,4 +52,4 @@
         name: test-secret
         namespace: "{{ meta.namespace }}"
       data:
-        test: "hello" | b64encode
+        test: aGVsbG8K
