@@ -64,12 +64,16 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 		ManageStatus:    options.ManageStatus,
 	}
 
-	// Register the GVK with the schema
-	mgr.GetScheme().AddKnownTypeWithName(options.GVK, &unstructured.Unstructured{})
-	metav1.AddToGroupVersion(mgr.GetScheme(), schema.GroupVersion{
-		Group:   options.GVK.Group,
-		Version: options.GVK.Version,
-	})
+	scheme := mgr.GetScheme()
+	_, err := scheme.New(options.GVK)
+	if err != nil {
+		// Register the GVK with the schema
+		scheme.AddKnownTypeWithName(options.GVK, &unstructured.Unstructured{})
+		metav1.AddToGroupVersion(mgr.GetScheme(), schema.GroupVersion{
+			Group:   options.GVK.Group,
+			Version: options.GVK.Version,
+		})
+	}
 
 	//Create new controller runtime controller and set the controller to watch GVK.
 	c, err := controller.New(fmt.Sprintf("%v-controller", strings.ToLower(options.GVK.Kind)), mgr, controller.Options{
