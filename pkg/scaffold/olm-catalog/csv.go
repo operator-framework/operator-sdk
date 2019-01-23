@@ -76,7 +76,7 @@ func (s *CSV) CustomRender() ([]byte, error) {
 		return nil, err
 	}
 	if !exists {
-		csv = new(olmApi.ClusterServiceVersion)
+		csv = &olmApi.ClusterServiceVersion{}
 		s.initCSVFields(csv)
 	}
 
@@ -124,7 +124,7 @@ func getCurrentCSVIfExists(csvPath string) (*olmApi.ClusterServiceVersion, bool,
 		return nil, false, nil
 	}
 
-	csv := new(olmApi.ClusterServiceVersion)
+	csv := &olmApi.ClusterServiceVersion{}
 	if err := yaml.Unmarshal(csvBytes, csv); err != nil {
 		return nil, false, err
 	}

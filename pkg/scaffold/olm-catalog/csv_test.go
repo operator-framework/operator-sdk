@@ -77,7 +77,7 @@ func TestUpdateVersion(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	csv := new(olmApi.ClusterServiceVersion)
+	csv := &olmApi.ClusterServiceVersion{}
 	if err := yaml.Unmarshal(csvExpBytes, csv); err != nil {
 		t.Fatal(err)
 	}

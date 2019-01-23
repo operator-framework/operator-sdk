@@ -96,7 +96,7 @@ type CSVInstallStrategyUpdate struct {
 }
 
 func (store *updaterStore) AddRole(yamlDoc []byte) error {
-	newRole := new(rbacv1.Role)
+	newRole := &rbacv1.Role{}
 	if err := yaml.Unmarshal(yamlDoc, newRole); err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func (store *updaterStore) AddRole(yamlDoc []byte) error {
 }
 
 func (store *updaterStore) AddClusterRole(yamlDoc []byte) error {
-	newCRole := new(rbacv1.ClusterRole)
+	newCRole := &rbacv1.ClusterRole{}
 	if err := yaml.Unmarshal(yamlDoc, newCRole); err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func (store *updaterStore) AddClusterRole(yamlDoc []byte) error {
 }
 
 func (store *updaterStore) AddDeploymentSpec(yamlDoc []byte) error {
-	newDep := new(appsv1.Deployment)
+	newDep := &appsv1.Deployment{}
 	if err := yaml.Unmarshal(yamlDoc, newDep); err != nil {
 		return err
 	}
@@ -210,7 +210,7 @@ func (store *updaterStore) AddRequiredCRD(yamlDoc []byte) error {
 }
 
 func parseCRDDescriptionFromYAML(yamlDoc []byte) (*olmApi.CRDDescription, error) {
-	newCRD := new(apiextv1beta1.CustomResourceDefinition)
+	newCRD := &apiextv1beta1.CustomResourceDefinition{}
 	if err := yaml.Unmarshal(yamlDoc, newCRD); err != nil {
 		return nil, err
 	}
