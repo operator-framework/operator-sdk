@@ -74,10 +74,6 @@ var (
 	helmOperatorFlags    *hoflags.HelmOperatorFlags
 )
 
-const (
-	defaultConfigPath = ".kube/config"
-)
-
 func upLocalFunc(cmd *cobra.Command, args []string) {
 	log.Info("Running the operator locally.")
 
