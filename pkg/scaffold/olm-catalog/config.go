@@ -85,11 +85,11 @@ func (c *CSVConfig) setFields() error {
 		// Allow user to specify a list of dirs to search. Avoid duplicate files.
 		paths, seen := make([]string, 0), make(map[string]struct{})
 		for _, path := range c.CRDCRPaths {
-			finfo, err := os.Stat(path)
+			info, err := os.Stat(path)
 			if err != nil {
 				return err
 			}
-			if finfo.IsDir() {
+			if info.IsDir() {
 				tmpPaths, err := getManifestPathsFromDir(path)
 				if err != nil {
 					return err
