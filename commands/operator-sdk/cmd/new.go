@@ -131,6 +131,8 @@ func doScaffold() {
 	err := s.Execute(cfg,
 		&scaffold.Cmd{},
 		&scaffold.Dockerfile{},
+		&scaffold.Entrypoint{},
+		&scaffold.UserSetup{},
 		&scaffold.ServiceAccount{},
 		&scaffold.Role{
 			IsClusterScoped: isClusterScoped,

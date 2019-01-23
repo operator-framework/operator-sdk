@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,32 +20,30 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 )
 
-func TestDockerfile(t *testing.T) {
+func EntrypointTest(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(appConfig, &Dockerfile{})
+	err := s.Execute(appConfig, &Entrypoint{})
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
-	if dockerfileExp != buf.String() {
-		diffs := diffutil.Diff(dockerfileExp, buf.String())
+	if entrypointExp != buf.String() {
+		diffs := diffutil.Diff(entrypointExp, buf.String())
 		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
 }
 
-const dockerfileExp = `FROM alpine:3.8
+const entrypointExp = `#!/bin/sh -e
 
-ENV OPERATOR=/usr/local/bin/app-operator \
-    USER_UID=1001 \
-    USER_NAME=app-operator
+# This is documented here:
+# https://docs.openshift.com/container-platform/3.11/creating_images/guidelines.html#openshift-specific-guidelines
 
-# install operator binary
-COPY build/_output/bin/app-operator ${OPERATOR}
+if ! whoami &>/dev/null; then
+  if [ -w /etc/passwd ]; then
+    echo "${USER_NAME:-app-operator}:x:$(id -u):$(id -g):${USER_NAME:-app-operator} user:${HOME}:/sbin/nologin" >> /etc/passwd
+  fi
+fi
 
-COPY build/bin /usr/local/bin
-RUN  /usr/local/bin/user_setup
+exec ${OPERATOR} $@
 
-ENTRYPOINT ["/usr/local/bin/entrypoint"]
-
-USER ${USER_UID}
 `
