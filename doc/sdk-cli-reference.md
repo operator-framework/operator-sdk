@@ -154,6 +154,7 @@ Writes a Cluster Service Version (CSV) manifest and concatenated CRD files to `d
 #### Flags
 
 * `--csv-version` (required) Semantic version of the CSV manifest.
+* `--csv-config` Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml.
 
 #### Example
 

@@ -28,7 +28,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var csvVersion string
+var (
+	csvVersion    string
+	csvConfigPath string
+)
 
 func NewGenCSVCmd() *cobra.Command {
 	genCSVCmd := &cobra.Command{
@@ -45,6 +48,7 @@ Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config
 
 	genCSVCmd.Flags().StringVar(&csvVersion, "csv-version", "", "Semantic version of the CSV")
 	genCSVCmd.MarkFlagRequired("csv-version")
+	genCSVCmd.Flags().StringVar(&csvConfigPath, "csv-config", "", "Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml")
 
 	return genCSVCmd
 }
@@ -71,8 +75,8 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 
 	s := &scaffold.Scaffold{}
 	err := s.Execute(cfg,
-		&catalog.CSV{CSVVersion: csvVersion},
-		&catalog.ConcatCRD{},
+		&catalog.CSV{CSVVersion: csvVersion, ConfigFilePath: csvConfigPath},
+		&catalog.ConcatCRD{ConfigFilePath: csvConfigPath},
 	)
 	if err != nil {
 		return fmt.Errorf("catalog scaffold failed: (%v)", err)

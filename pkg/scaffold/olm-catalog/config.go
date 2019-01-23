@@ -30,10 +30,10 @@ import (
 type CSVConfig struct {
 	// The operator manifest file path. Defaults to deploy/operator.yaml.
 	OperatorPath string `json:"operator-path,omitempty"`
-	// A list of CRD and CR manifest file paths. Defaults to deploy/crds.
-	CRDCRPaths []string `json:"crd-cr-paths,omitempty"`
 	// The RBAC role manifest file path. Defaults to deploy/role.yaml.
 	RolePath string `json:"role-path,omitempty"`
+	// A list of CRD and CR manifest file paths. Defaults to deploy/crds.
+	CRDCRPaths []string `json:"crd-cr-paths,omitempty"`
 }
 
 func getCSVConfig(cfgFile string) (*CSVConfig, error) {
