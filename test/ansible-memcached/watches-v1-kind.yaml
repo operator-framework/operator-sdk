@@ -2,3 +2,4 @@
   group:
   kind: Secret
   role: /opt/ansible/roles/secret
+  manageStatus: false
