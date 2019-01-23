@@ -17,6 +17,7 @@ deploy_operator() {
     kubectl create -f "$OPERATORDIR/deploy/role.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
     kubectl create -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_memcached_crd.yaml"
+    kubectl create -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_foo_crd.yaml"
     kubectl create -f "$OPERATORDIR/deploy/operator.yaml"
 }
 
@@ -25,6 +26,7 @@ remove_operator() {
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/role.yaml"
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/role_binding.yaml"
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_memcached_crd.yaml"
+    kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_foo_crd.yaml"
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/operator.yaml"
 }
 
@@ -94,8 +96,11 @@ cp "$ROOTDIR/test/ansible-memcached/tasks.yml" memcached-operator/roles/memcache
 cp "$ROOTDIR/test/ansible-memcached/defaults.yml" memcached-operator/roles/memcached/defaults/main.yml
 cp -a "$ROOTDIR/test/ansible-memcached/memfin" memcached-operator/roles/
 cat "$ROOTDIR/test/ansible-memcached/watches-finalizer.yaml" >> memcached-operator/watches.yaml
+cat "$ROOTDIR/test/ansible-memcached/watches-foo-kind.yaml" >> memcached-operator/watches.yaml
 
 pushd memcached-operator
+# Add a second Kind to test watching multiple GVKs
+operator-sdk add crd --kind=Foo --api-version=ansible.example.com/v1alpha1
 sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
 operator-sdk build "$DEST_IMAGE" --image-builder="$IMAGE_BUILDER"
 if [[ "$IMAGE_BUILDER" == "buildah" ]] && command -v buildah; then

@@ -49,8 +49,17 @@ RUN go build -o /go/bin/app-operator github.com/example-inc/app-operator/cmd/man
 # Base image
 FROM alpine:3.8
 
-RUN apk upgrade --update --no-cache
-USER nobody
+ENV OPERATOR=/usr/local/bin/app-operator \
+    USER_UID=1001 \
+    USER_NAME=app-operator
 
-COPY --from=builder /go/bin/app-operator /usr/local/bin/app-operator
+# install operator binary
+COPY --from=builder /go/bin/app-operator ${OPERATOR}
+
+COPY build/bin /usr/local/bin
+RUN  /usr/local/bin/user_setup
+
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
+
+USER ${USER_UID}
 `
