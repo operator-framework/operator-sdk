@@ -23,11 +23,10 @@ x_base_steps:
       - source hack/ci/check-doc-only-update.sh
       - curl -Lo dep https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64 && chmod +x dep && sudo mv dep /usr/local/bin/
       - travis_retry dep ensure
-      # buildah 1.6.
-      # TODO: remove 'dev' once it is released.
+      # Install buildah 1.6.
       - sudo add-apt-repository -y ppa:projectatomic/ppa
       - sudo apt-get update -qq
-      - sudo apt-get install buildah=1.6-1~dev~ubuntu18.04~ppa4
+      - sudo apt-get install buildah=1.6-1
 
   # Base go, ansbile, and helm job
   - &test
