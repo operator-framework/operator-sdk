@@ -282,7 +282,7 @@ func initConfig() error {
 	} else {
 		viper.AddConfigPath(projutil.MustGetwd())
 		// using SetConfigName allows users to use a .yaml, .json, or .toml file
-		viper.SetConfigName(".cobra")
+		viper.SetConfigName(".osdk-scorecard")
 	}
 
 	if err := viper.ReadInConfig(); err == nil {

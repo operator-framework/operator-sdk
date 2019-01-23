@@ -54,7 +54,7 @@ func NewScorecardCmd() *cobra.Command {
 		RunE: scorecard.ScorecardTests,
 	}
 
-	scorecardCmd.Flags().StringVar(&scorecard.ScorecardConf, scorecard.ConfigOpt, "", "config file (default is $HOME/.cobra.yaml)")
+	scorecardCmd.Flags().StringVar(&scorecard.ScorecardConf, scorecard.ConfigOpt, "", "config file (default is <project_dir>/.osdk-scorecard.yaml)")
 	scorecardCmd.Flags().StringVar(&scConf.namespace, scorecard.NamespaceOpt, "", "Namespace of custom resource created in cluster")
 	scorecardCmd.Flags().StringVar(&scConf.kubeconfigPath, scorecard.KubeconfigOpt, "", "Path to kubeconfig of custom resource created in cluster")
 	scorecardCmd.Flags().IntVar(&scConf.initTimeout, scorecard.InitTimeoutOpt, 10, "Timeout for status block on CR to be created in seconds")
