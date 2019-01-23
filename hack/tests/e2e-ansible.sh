@@ -2,12 +2,10 @@
 
 source hack/lib/test_lib.sh
 
-DEST_IMAGE="quay.io/example/memcached-operator:v0.0.2"
-IMAGE_BUILDER="$(builderFromArgs $@)"
-
 set -eux
 
 DEST_IMAGE="quay.io/example/memcached-operator:v0.0.2"
+IMAGE_BUILDER="$(builderFromArgs $@)"
 ROOTDIR="$(pwd)"
 GOTMP="$(mktemp -d -p $GOPATH/src)"
 trap_add 'rm -rf $GOTMP' EXIT

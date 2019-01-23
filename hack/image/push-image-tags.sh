@@ -5,17 +5,20 @@ source hack/lib/common.sh
 semver_regex="^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
 
 #
-# push_image_tags <source_image> <push_image>
+# push_image_tags <source_image> <push_image> --image-builder=<docker|buildah>
 #
-# push_image_tags tags the source docker image with zero or more
+# push_image_tags tags the source OCI image with zero or more
 # image tags based on TravisCI environment variables and the
 # presence of git tags in the repository of the current working
 # directory. If a second argument is present, it will be used as
-# the base image name in pushed image tags.
+# the base image name in pushed image tags. The tag will be applied
+# and pushed by the argument to --image-builder: either docker or
+# buildah.
 #
 function push_image_tags() {
   source_image=$1; shift || fatal "${FUNCNAME} usage error"
   push_image=$1; shift || push_image=$source_image
+  image_builder="$(builderFromArgs $@)"
 
   print_image_info $source_image
   print_git_tags
@@ -25,8 +28,8 @@ function push_image_tags() {
   images=$(get_image_tags $push_image)
 
   for image in $images; do
-    docker tag "$source_image" "$image"
-    docker push "$image"
+    $image_builder tag "$source_image" "$image"
+    $image_builder push "$image"
   done
 }
 
@@ -85,7 +88,7 @@ function docker_login() {
 # check_can_push
 #
 # check_can_push performs various checks to determine whether images
-# built from this commit should be pushed. It prints a message and 
+# built from this commit should be pushed. It prints a message and
 # returns a failure code if any check doesn't pass.
 #
 function check_can_push() {

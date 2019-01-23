@@ -76,7 +76,7 @@ test: dep test/markdown test/sanity test/unit install test/subcommand test/e2e
 
 test/ci-go: test/sanity test/unit test/subcommand test/e2e/go/buildah
 
-test/ci-ansible: test/e2e/ansible/buildah test/e2e/ansible-molecule
+test/ci-ansible: test/e2e/ansible/buildah test/e2e/ansible-molecule/buildah
 
 test/ci-helm: test/e2e/helm/buildah
 
@@ -103,7 +103,7 @@ test/subcommand/scorecard:
 
 test/e2e: test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm
 
-test/e2e/buildah: test/e2e/go/buildah test/e2e/ansible/buildah test/e2e/helm/buildah
+test/e2e/buildah: test/e2e/go/buildah test/e2e/ansible/buildah test/e2e/ansible-molecule/buildah test/e2e/helm/buildah
 
 test/e2e/go: test/e2e/go/docker
 
@@ -112,15 +112,19 @@ test/e2e/go/%:
 
 test/e2e/ansible: test/e2e/ansible/docker
 
-test/e2e/ansible/%: image/build/ansible
+.SECONDEXPANSION:
+test/e2e/ansible/%: image/build/ansible/$$*
 	./hack/tests/e2e-ansible.sh --image-builder=$*
 
-test/e2e/ansible-molecule:
-	./hack/tests/e2e-ansible-molecule.sh
+test/e2e/ansible-molecule: test/e2e/ansible-molecule/docker
+
+test/e2e/ansible-molecule/%:
+	./hack/tests/e2e-ansible-molecule.sh --image-builder=$*
 
 test/e2e/helm: test/e2e/helm/docker
 
-test/e2e/helm/%: image/build/helm
+.SECONDEXPANSION:
+test/e2e/helm/%: image/build/helm/$$*
 	./hack/tests/e2e-helm.sh --image-builder=$*
 
 .PHONY: test/e2e test/e2e/buildah test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm
@@ -129,24 +133,36 @@ image: image/build image/push
 
 image/build: image/build/ansible image/build/helm image/build/scorecard-proxy
 
-image/build/ansible: build/operator-sdk-dev-x86_64-linux-gnu
-	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
+image/build/ansible: image/build/ansible/docker
 
-image/build/helm: build/operator-sdk-dev-x86_64-linux-gnu
-	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE):dev
+image/build/ansible/%: build/operator-sdk-dev-x86_64-linux-gnu
+	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev --image-builder=$*
 
-image/build/scorecard-proxy:
-	./hack/image/build-scorecard-proxy-image.sh $(SCORECARD_PROXY_BASE_IMAGE):dev
+image/build/helm: image/build/helm/docker
+
+image/build/helm/%: build/operator-sdk-dev-x86_64-linux-gnu
+	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE):dev --image-builder=$*
+
+image/build/scorecard-proxy: image/build/scorecard-proxy/docker
+
+image/build/scorecard-proxy/%:
+	./hack/image/build-scorecard-proxy-image.sh $(SCORECARD_PROXY_BASE_IMAGE):dev --image-builder=$*
 
 image/push: image/push/ansible image/push/helm image/push/scorecard-proxy
 
-image/push/ansible:
-	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE):dev $(ANSIBLE_IMAGE)
+image/push/ansible: image/push/ansible/docker
 
-image/push/helm:
-	./hack/image/push-image-tags.sh $(HELM_BASE_IMAGE):dev $(HELM_IMAGE)
+image/push/ansible/%:
+	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE):dev $(ANSIBLE_IMAGE) --image-builder=$*
 
-image/push/scorecard-proxy:
-	./hack/image/push-image-tags.sh $(SCORECARD_PROXY_BASE_IMAGE):dev $(SCORECARD_PROXY_IMAGE)
+image/push/helm: image/push/helm/docker
+
+image/push/helm/%:
+	./hack/image/push-image-tags.sh $(HELM_BASE_IMAGE):dev $(HELM_IMAGE) --image-builder=$*
+
+image/push/scorecard-proxy: image/push/scorecard-proxy/docker
+
+image/push/scorecard-proxy/%:
+	./hack/image/push-image-tags.sh $(SCORECARD_PROXY_BASE_IMAGE):dev $(SCORECARD_PROXY_IMAGE) --image-builder=$*
 
 .PHONY: image image/build image/build/ansible image/build/helm image/push image/push/ansible image/push/helm

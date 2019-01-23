@@ -16,5 +16,6 @@ go run "$ROOTDIR/hack/image/helm/scaffold-helm-image.go"
 
 mkdir -p build/_output/bin/
 cp $ROOTDIR/build/operator-sdk-dev-x86_64-linux-gnu build/_output/bin/helm-operator
-operator-sdk build $1
+IMAGE="$1"; shift
+operator-sdk build "$IMAGE" --image-builder="$(builderFromArgs $@)"
 popd

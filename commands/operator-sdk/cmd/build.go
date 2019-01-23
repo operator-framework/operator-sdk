@@ -156,7 +156,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		baseImageName += "-intermediate"
 	}
 
-	log.Infof("Building Docker image %s", baseImageName)
+	log.Infof("Building OCI image %s with %s", baseImageName, imageBuilder)
 
 	var buildCmd *exec.Cmd
 	if buildWithBuildah() {
@@ -218,7 +218,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 			}
 		}
 
-		log.Infof("Building test Docker image %s", image)
+		log.Infof("Building test OCI image %s with %s", image, imageBuilder)
 
 		var testBuildCmd *exec.Cmd
 		if buildWithBuildah() {

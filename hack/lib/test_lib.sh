@@ -61,7 +61,7 @@ function builderFromArgs() {
 	IMAGE_BUILDER="docker"
 	while [[ $# -gt 0 ]]; do
 	  flag="$(parseFlag "$1")"
-	  arg="$2"
+	  arg="${2:-}"
 	  if echo "$1" | grep -qoE -e "--[^ =]*="; then arg="$(parseArg "$1")"; fi
 	  case $flag in
 	    --image-builder)
