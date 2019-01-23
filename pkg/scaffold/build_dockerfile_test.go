@@ -46,11 +46,22 @@ COPY . /go/src/github.com/example-inc/app-operator
 
 RUN go build -o /go/bin/app-operator github.com/example-inc/app-operator/cmd/manager
 
-# Base image containing "app-operator" binary
+# Base image
 FROM alpine:3.8
-RUN apk upgrade --update --no-cache
-USER nobody
-COPY --from=builder /go/bin/app-operator /usr/local/bin/app-operator
+
+ENV OPERATOR=/usr/local/bin/app-operator \
+    USER_UID=1001 \
+    USER_NAME=app-operator
+
+# install operator binary
+COPY --from=builder /go/bin/app-operator ${OPERATOR}
+
+COPY build/bin /usr/local/bin
+RUN  /usr/local/bin/user_setup
+
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
+
+USER ${USER_UID}
 `
 
 func TestDockerfileNonMultistage(t *testing.T) {
@@ -67,7 +78,17 @@ func TestDockerfileNonMultistage(t *testing.T) {
 }
 
 const dockerfileNonMultiExp = `FROM alpine:3.8
-RUN apk upgrade --update --no-cache
-USER nobody
-COPY build/_output/bin/app-operator /usr/local/bin/app-operator
+ENV OPERATOR=/usr/local/bin/app-operator \
+    USER_UID=1001 \
+    USER_NAME=app-operator
+
+# install operator binary
+COPY build/_output/bin/app-operator ${OPERATOR}
+
+COPY build/bin /usr/local/bin
+RUN  /usr/local/bin/user_setup
+
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
+
+USER ${USER_UID}
 `

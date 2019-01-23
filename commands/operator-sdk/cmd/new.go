@@ -133,6 +133,8 @@ func doScaffold() {
 		&scaffold.Dockerfile{
 			Multistage: projutil.IsDockerMultistage(),
 		},
+		&scaffold.Entrypoint{},
+		&scaffold.UserSetup{},
 		&scaffold.ServiceAccount{},
 		&scaffold.Role{
 			IsClusterScoped: isClusterScoped,

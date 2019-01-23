@@ -50,20 +50,41 @@ ENV CGO_ENABLED 0
 ENV GOOS linux
 ENV GOARCH amd64
 
-WORKDIR /go/src/{{ .Repo }}
-COPY . /go/src/{{ .Repo }}
+WORKDIR /go/src/{{.Repo}}
+COPY . /go/src/{{.Repo}}
 
-RUN go build -o /go/bin/{{ .ProjectName }} {{ .Repo }}/cmd/manager
+RUN go build -o /go/bin/{{.ProjectName}} {{.Repo}}/cmd/manager
 
-# Base image containing "{{ .ProjectName }}" binary
+# Base image
 FROM alpine:3.8
-RUN apk upgrade --update --no-cache
-USER nobody
-COPY --from=builder /go/bin/{{ .ProjectName }} /usr/local/bin/{{ .ProjectName }}
+
+ENV OPERATOR=/usr/local/bin/{{.ProjectName}} \
+    USER_UID=1001 \
+    USER_NAME={{.ProjectName}}
+
+# install operator binary
+COPY --from=builder /go/bin/{{.ProjectName}} ${OPERATOR}
+
+COPY build/bin /usr/local/bin
+RUN  /usr/local/bin/user_setup
+
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
+
+USER ${USER_UID}
 `
 
 const dockerfileNonMultiTmpl = `FROM alpine:3.8
-RUN apk upgrade --update --no-cache
-USER nobody
-COPY build/_output/bin/{{.ProjectName}} /usr/local/bin/{{.ProjectName}}
+ENV OPERATOR=/usr/local/bin/{{.ProjectName}} \
+    USER_UID=1001 \
+    USER_NAME={{.ProjectName}}
+
+# install operator binary
+COPY build/_output/bin/{{.ProjectName}} ${OPERATOR}
+
+COPY build/bin /usr/local/bin
+RUN  /usr/local/bin/user_setup
+
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
+
+USER ${USER_UID}
 `
