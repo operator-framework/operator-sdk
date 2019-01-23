@@ -327,7 +327,7 @@ Run scorecard tests on an operator
 * `cr-manifest` string - Path to manifest for Custom Resource
 * `csv-path` string - Path to CSV being tested
 * `global-manifest` string - Path to manifest for Global resources (e.g. CRD manifests)
-* `init-timeout` int - Timeout for status block on CR to be created in seconds (default 10)
+* `init-timeout` int - Timeout for status block on CR to be created, in seconds (default 10)
 * `kubeconfig` string - Path to kubeconfig of custom resource created in cluster
 * `namespace` string - Namespace of custom resource created in cluster
 * `namespaced-manifest` string - Path to manifest for namespaced resources (e.g. RBAC and Operator manifest)
