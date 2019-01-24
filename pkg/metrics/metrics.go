@@ -65,7 +65,7 @@ func createService(mgr manager.Manager, s *v1.Service) (*v1.Service, error) {
 		if err != nil {
 			return nil, err
 		}
-		log.Info("Metrics Service object already existed")
+		log.Info("Metrics Service object already exists", "name", existingService.Name)
 		return existingService, nil
 
 	}
