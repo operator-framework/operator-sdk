@@ -146,11 +146,12 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	projutil.MustInProjectRoot()
 	goBuildEnv := append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
 	absProjectPath := projutil.MustGetwd()
+	projectName := filepath.Base(absProjectPath)
 
 	// Don't need to build Go code if a non-Go Operator.
 	if projutil.GetOperatorType() == projutil.OperatorTypeGo {
 		managerDir := filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir)
-		outputBinName := filepath.Join(absProjectPath, scaffold.BuildBinDir, filepath.Base(absProjectPath))
+		outputBinName := filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName)
 		buildCmd := exec.Command("go", "build", "-o", outputBinName, managerDir)
 		buildCmd.Env = goBuildEnv
 		if err := projutil.ExecCmd(buildCmd); err != nil {
@@ -176,13 +177,14 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 	if enableTests {
 		if projutil.GetOperatorType() == projutil.OperatorTypeGo {
-			testBinary := filepath.Join(absProjectPath, scaffold.BuildBinDir, filepath.Base(absProjectPath)+"-test")
+			testBinary := filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName+"-test")
 			buildTestCmd := exec.Command("go", "test", "-c", "-o", testBinary, testLocationBuild+"/...")
 			buildTestCmd.Env = goBuildEnv
 			if err := projutil.ExecCmd(buildTestCmd); err != nil {
 				return fmt.Errorf("failed to build test binary: (%v)", err)
 			}
 		}
+
 		// if a user is using an older sdk repo as their library, make sure they have required build files
 		testDockerfile := filepath.Join(scaffold.BuildTestDir, scaffold.DockerfileFile)
 		_, err := os.Stat(testDockerfile)
@@ -190,11 +192,10 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 			log.Info("Generating build manifests for test-framework.")
 
-			absProjectPath := projutil.MustGetwd()
 			cfg := &input.Config{
 				Repo:           projutil.CheckAndGetProjectGoPkg(),
 				AbsProjectPath: absProjectPath,
-				ProjectName:    filepath.Base(absProjectPath),
+				ProjectName:    projectName,
 			}
 
 			s := &scaffold.Scaffold{}

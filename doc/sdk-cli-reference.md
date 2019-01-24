@@ -143,6 +143,33 @@ pkg/apis/app/v1alpha1/
 └── zz_generated.deepcopy.go
 ```
 
+## olm-catalog
+
+Parent command for all OLM Catalog related commands.
+
+### gen-csv
+
+Writes a Cluster Service Version (CSV) manifest and concatenated CRD files to `deploy/olm-catalog`.
+
+#### Flags
+
+* `--csv-version` (required) Semantic version of the CSV manifest.
+* `--csv-config` Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml.
+
+#### Example
+
+```console
+$ operator-sdk olm-catalog gen-csv --csv-version 0.1.1
+INFO[0000] Generating CSV manifest version 0.1.1
+INFO[0000] Fill in the following required fields in file deploy/olm-catalog/operator-name.csv.yaml:
+	spec.keywords
+	spec.maintainers
+	spec.provider
+	spec.labels
+INFO[0000] Create deploy/olm-catalog/operator-name.csv.yaml     
+INFO[0000] Create deploy/olm-catalog/_generated.concat_crd.yaml
+```
+
 ## migrate
 
 Adds a main.go source file and any associated source files for an operator that
