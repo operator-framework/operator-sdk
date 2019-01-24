@@ -165,27 +165,27 @@ func ExecCmd(cmd *exec.Cmd) error {
 
 // IsDockerMultistage checks whether the docker daemon is version >= 17.05.0.
 // Both ARG before FROM and multistage builds exist in docker version >= 17.05.0.
-func IsDockerMultistage() bool {
+func IsDockerMultistage() (bool, error) {
 	client, err := docker.NewEnvClient()
 	if err != nil {
-		log.Fatalf("get docker client: (%v)", err)
+		return false, fmt.Errorf("failed to get docker client: (%v)", err)
 	}
 	ver, err := client.ServerVersion(context.TODO())
 	if err != nil {
-		log.Fatalf("get docker version: (%v)", err)
+		return false, fmt.Errorf("failed to get docker version: (%v)", err)
 	}
 	dockerVer := semver.New(ver.Version)
 	reqVer := semver.New("17.05.0")
-	return !dockerVer.LessThan(*reqVer)
+	return !dockerVer.LessThan(*reqVer), nil
 }
 
 // IsDockerfileMultistage checks if dockerfile uses a multistage pipeline.
-func IsDockerfileMultistage(dockerfile string) bool {
+func IsDockerfileMultistage(dockerfile string) (bool, error) {
 	df, err := ioutil.ReadFile(dockerfile)
 	if err != nil {
-		log.Fatalf("Error reading %s: %v", dockerfile, err)
+		return false, fmt.Errorf("error reading %s: %v", dockerfile, err)
 	}
-	return len(regexp.MustCompile("(?m:^FROM .*$)").FindAll(df, -1)) > 1
+	return len(regexp.MustCompile("(?m:^FROM .*$)").FindAll(df, -1)) > 1, nil
 }
 
 // DockerBuild runs 'docker build .' using the Dockerfile at relative path

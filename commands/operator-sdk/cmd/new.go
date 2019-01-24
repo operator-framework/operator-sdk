@@ -143,13 +143,15 @@ func doScaffold() error {
 		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
 		ProjectName:    projectName,
 	}
+	dockerMS, err := projutil.IsDockerMultistage()
+	if err != nil {
+		return err
+	}
 
 	s := &scaffold.Scaffold{}
-	err := s.Execute(cfg,
+	err = s.Execute(cfg,
 		&scaffold.Cmd{},
-		&scaffold.Dockerfile{
-			Multistage: projutil.IsDockerMultistage(),
-		},
+		&scaffold.Dockerfile{Multistage: dockerMS},
 		&scaffold.Entrypoint{},
 		&scaffold.UserSetup{},
 		&scaffold.ServiceAccount{},
