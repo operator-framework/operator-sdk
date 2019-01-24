@@ -36,7 +36,7 @@ func TestConcatCRD(t *testing.T) {
 
 	err := s.Execute(&input.Config{},
 		&ConcatCRD{
-			ConfigFilePath: filepath.Join(testDataDir, scaffold.OlmCatalogDir, CSVConfigYamlFile),
+			ConfigFilePath: filepath.Join(testDataDir, scaffold.OLMCatalogDir, CSVConfigYamlFile),
 		},
 	)
 	if err != nil {

@@ -32,7 +32,7 @@ const (
 	BuildTestDir  = BuildDir + filePathSep + "test-framework"
 	BuildBinDir   = BuildDir + filePathSep + "_output" + filePathSep + "bin"
 	DeployDir     = "deploy"
-	OlmCatalogDir = DeployDir + filePathSep + "olm-catalog"
+	OLMCatalogDir = DeployDir + filePathSep + "olm-catalog"
 	CrdsDir       = DeployDir + filePathSep + "crds"
 	VersionDir    = "version"
 )

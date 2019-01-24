@@ -59,10 +59,10 @@ func (s *CSV) GetInput() (input.Input, error) {
 	}
 	if s.Path == "" {
 		name := strings.ToLower(s.ProjectName) + CSVYamlFileExt
-		s.Path = filepath.Join(scaffold.OlmCatalogDir, name)
+		s.Path = filepath.Join(scaffold.OLMCatalogDir, name)
 	}
 	if s.ConfigFilePath == "" {
-		s.ConfigFilePath = filepath.Join(scaffold.OlmCatalogDir, CSVConfigYamlFile)
+		s.ConfigFilePath = filepath.Join(scaffold.OLMCatalogDir, CSVConfigYamlFile)
 	}
 	return s.Input, nil
 }

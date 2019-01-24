@@ -38,10 +38,10 @@ type ConcatCRD struct {
 
 func (s *ConcatCRD) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(scaffold.OlmCatalogDir, ConcatCRDYamlFile)
+		s.Path = filepath.Join(scaffold.OLMCatalogDir, ConcatCRDYamlFile)
 	}
 	if s.ConfigFilePath == "" {
-		s.ConfigFilePath = filepath.Join(scaffold.OlmCatalogDir, CSVConfigYamlFile)
+		s.ConfigFilePath = filepath.Join(scaffold.OLMCatalogDir, CSVConfigYamlFile)
 	}
 	return s.Input, nil
 }
