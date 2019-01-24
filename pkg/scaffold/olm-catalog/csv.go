@@ -92,13 +92,13 @@ func (s *CSV) CustomRender() ([]byte, error) {
 		return nil, err
 	}
 
-	// A new csv won't have several required fields populated.
-	if err = checkRequiredCSVFields(csv); err != nil {
+	if fields := getEmptyRequiredCSVFields(csv); len(fields) != 0 {
 		if exists {
-			log.Warnf("Required csv fields not filled in file %s:%s\n", s.Path, err)
+			log.Warnf("Required csv fields not filled in file %s:%s\n", s.Path, joinFields(fields))
 		} else {
+			// A new csv won't have several required fields populated.
 			// Report required fields to user informationally.
-			log.Infof("Fill in the following required fields in file %s:%s\n", s.Path, err)
+			log.Infof("Fill in the following required fields in file %s:%s\n", s.Path, joinFields(fields))
 		}
 	}
 
@@ -194,46 +194,49 @@ func (s *CSV) initCSVFields(csv *olmApi.ClusterServiceVersion) {
 // TODO: validate that all fields from files are populated as expected
 // ex. add `resources` to a CRD
 
-func checkRequiredCSVFields(csv *olmApi.ClusterServiceVersion) error {
-	errsb := &strings.Builder{}
-
+func getEmptyRequiredCSVFields(csv *olmApi.ClusterServiceVersion) (fields []string) {
 	// Metadata
 	if csv.TypeMeta.APIVersion != olmApi.ClusterServiceVersionAPIVersion {
-		errsb.WriteString("\n\tapiVersion")
+		fields = append(fields, "apiVersion")
 	}
 	if csv.TypeMeta.Kind != olmApi.ClusterServiceVersionKind {
-		errsb.WriteString("\n\tkind")
+		fields = append(fields, "kind")
 	}
 	if csv.ObjectMeta.Name == "" {
-		errsb.WriteString("\n\tmetadata.name")
+		fields = append(fields, "metadata.name")
 	}
 	// Spec fields
 	if csv.Spec.Version.String() == "" {
-		errsb.WriteString("\n\tspec.version")
+		fields = append(fields, "spec.version")
 	}
 	if csv.Spec.DisplayName == "" {
-		errsb.WriteString("\n\tspec.displayName")
+		fields = append(fields, "spec.displayName")
 	}
 	if csv.Spec.Description == "" {
-		errsb.WriteString("\n\tspec.description")
+		fields = append(fields, "spec.description")
 	}
 	if len(csv.Spec.Keywords) == 0 {
-		errsb.WriteString("\n\tspec.keywords")
+		fields = append(fields, "spec.keywords")
 	}
 	if len(csv.Spec.Maintainers) == 0 {
-		errsb.WriteString("\n\tspec.maintainers")
+		fields = append(fields, "spec.maintainers")
 	}
 	if csv.Spec.Provider == (olmApi.AppLink{}) {
-		errsb.WriteString("\n\tspec.provider")
+		fields = append(fields, "spec.provider")
 	}
 	if len(csv.Spec.Labels) == 0 {
-		errsb.WriteString("\n\tspec.labels")
+		fields = append(fields, "spec.labels")
 	}
 
-	if len(errsb.String()) == 0 {
-		return nil
+	return fields
+}
+
+func joinFields(fields []string) string {
+	sb := &strings.Builder{}
+	for _, f := range fields {
+		sb.WriteString("\n\t" + f)
 	}
-	return errors.New(errsb.String())
+	return sb.String()
 }
 
 // updateCSVVersions updates csv's version and data involving the version,
@@ -287,8 +290,8 @@ func replaceAllBytes(v interface{}, old, new []byte) error {
 	return nil
 }
 
-// updateCSVFromManifestFiles gathers relevant data from generated and user-defined manifests
-// and updates csv.
+// updateCSVFromManifestFiles gathers relevant data from generated and
+// user-defined manifests and updates csv.
 func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmApi.ClusterServiceVersion) error {
 	store := NewUpdaterStore()
 	for _, f := range append(cfg.CRDCRPaths, cfg.OperatorPath, cfg.RolePath) {
@@ -301,28 +304,11 @@ func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmApi.ClusterServ
 		for scanner.Scan() {
 			yamlSpec := scanner.Bytes()
 
-			k, err := getKindfromYAML(yamlSpec)
-			if err != nil {
+			if err = store.AddToUpdater(yamlSpec); err != nil {
 				return err
-			}
-
-			updateFunc := getUpdaterFunc(store, k)
-			if updateFunc != nil {
-				updateFunc(yamlSpec)
 			}
 		}
 	}
 
-	return NewCSVUpdateSet(store).Apply(csv)
-}
-
-func getKindfromYAML(yamlData []byte) (string, error) {
-	// Get Kind for inital categorization.
-	var temp struct {
-		Kind string
-	}
-	if err := yaml.Unmarshal(yamlData, &temp); err != nil {
-		return "", err
-	}
-	return temp.Kind, nil
+	return store.Apply(csv)
 }

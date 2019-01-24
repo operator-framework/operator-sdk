@@ -34,47 +34,6 @@ type CSVUpdater interface {
 	Apply(*olmApi.ClusterServiceVersion) error
 }
 
-// CSVUpdateSet is a set of CSVUpdater's.
-type CSVUpdateSet struct {
-	Updaters []CSVUpdater
-}
-
-func NewCSVUpdateSet(uf *updaterStore) *CSVUpdateSet {
-	return &CSVUpdateSet{
-		Updaters: []CSVUpdater{
-			uf.installStrategy,
-			uf.crdUpdate,
-		},
-	}
-}
-
-// Apply iteratively calls each CSVUpdater in s' Apply() method.
-func (s *CSVUpdateSet) Apply(csv *olmApi.ClusterServiceVersion) error {
-	for _, updater := range s.Updaters {
-		if err := updater.Apply(csv); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-type storeUpdater func([]byte) error
-
-func getUpdaterFunc(store *updaterStore, kind string) storeUpdater {
-	switch kind {
-	case "Role":
-		return store.AddRole
-	case "ClusterRole":
-		return store.AddClusterRole
-	case "Deployment":
-		return store.AddDeploymentSpec
-	case "CustomResourceDefinition":
-		// TODO: determine whether 'owned' or 'required'
-		return store.AddOwnedCRD
-	}
-	return nil
-}
-
 type updaterStore struct {
 	installStrategy *CSVInstallStrategyUpdate
 	crdUpdate       *CSVCustomResourceDefinitionsUpdate
@@ -89,6 +48,47 @@ func NewUpdaterStore() *updaterStore {
 			&olmApi.CustomResourceDefinitions{},
 		},
 	}
+}
+
+// Apply iteratively calls each stored CSVUpdater's Apply() method.
+func (s *updaterStore) Apply(csv *olmApi.ClusterServiceVersion) error {
+	for _, updater := range []CSVUpdater{s.installStrategy, s.crdUpdate} {
+		if err := updater.Apply(csv); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func getKindfromYAML(yamlData []byte) (string, error) {
+	// Get Kind for inital categorization.
+	var temp struct {
+		Kind string
+	}
+	if err := yaml.Unmarshal(yamlData, &temp); err != nil {
+		return "", err
+	}
+	return temp.Kind, nil
+}
+
+func (s *updaterStore) AddToUpdater(yamlSpec []byte) error {
+	kind, err := getKindfromYAML(yamlSpec)
+	if err != nil {
+		return err
+	}
+
+	switch kind {
+	case "Role":
+		return s.AddRole(yamlSpec)
+	case "ClusterRole":
+		return s.AddClusterRole(yamlSpec)
+	case "Deployment":
+		return s.AddDeploymentSpec(yamlSpec)
+	case "CustomResourceDefinition":
+		// TODO: determine whether 'owned' or 'required'
+		return s.AddOwnedCRD(yamlSpec)
+	}
+	return nil
 }
 
 type CSVInstallStrategyUpdate struct {
