@@ -36,6 +36,7 @@ type CSVConfig struct {
 	CRDCRPaths []string `json:"crd-cr-paths,omitempty"`
 }
 
+// TODO: discuss case of no config file at default path: write new file or not.
 func getCSVConfig(cfgFile string) (*CSVConfig, error) {
 	cfg := &CSVConfig{}
 	if _, err := os.Stat(cfgFile); err == nil {
