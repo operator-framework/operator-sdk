@@ -158,16 +158,11 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	// can build the binary within a container in a multistage pipeline.
 	// Otherwise the binary will be built on the host and COPY'd into the
 	// resulting image.
-	buildDockerfile := filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
-	dockerfileMS, err := projutil.IsDockerfileMultistage(buildDockerfile)
+	buildDockerfile, err := makeDockerfileIfMultistage(filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile))
 	if err != nil {
 		return err
 	}
-	buildDockerfile, err = makeDockerfileIfMultistage(buildDockerfile)
-	if err != nil {
-		return err
-	}
-	if projutil.IsOperatorGo() && !dockerfileMS {
+	if projutil.IsOperatorGo() && !projutil.IsDockerfileMultistage(buildDockerfile) {
 		if err := buildOperatorBinary(); err != nil {
 			return fmt.Errorf("failed to build operator binary: (%v)", err)
 		}
@@ -180,23 +175,16 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	}
 
 	if enableTests {
-		dockerMS, err := projutil.IsDockerMultistage()
-		if err != nil {
-			return err
-		}
-		if !dockerMS {
+		if !projutil.IsDockerMultistage() {
 			return fmt.Errorf("in-cluster tests are only available on hosts with Docker v17.05+")
 		}
 
 		// If a user is using an older sdk repo as their library, make sure they
 		// have the required build files.
 		testDockerfile := filepath.Join(scaffold.BuildTestDir, scaffold.DockerfileFile)
-		testDockerfileMS, err := projutil.IsDockerfileMultistage(testDockerfile)
-		if err != nil {
-			return err
-		}
 		_, err = os.Stat(testDockerfile)
-		if (err != nil && os.IsNotExist(err)) || (projutil.IsOperatorGo() && !testDockerfileMS) {
+		if (err != nil && os.IsNotExist(err)) ||
+			(projutil.IsOperatorGo() && !projutil.IsDockerfileMultistage(testDockerfile)) {
 
 			log.Info("Generating build manifests for test-framework.")
 
@@ -261,19 +249,11 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 // present but they haven't set the --gen-multistage flag in
 // `operator-sdk build...`
 func makeDockerfileIfMultistage(dockerfile string) (string, error) {
-	dockerMS, err := projutil.IsDockerMultistage()
-	if err != nil {
-		return "", err
-	}
-	if !projutil.IsOperatorGo() || !dockerMS {
+	if !projutil.IsOperatorGo() || !projutil.IsDockerMultistage() {
 		return dockerfile, nil
 	}
 
-	dockerfileMS, err := projutil.IsDockerfileMultistage(dockerfile)
-	if err != nil {
-		return "", err
-	}
-	if !dockerfileMS {
+	if !projutil.IsDockerfileMultistage(dockerfile) {
 		msDockerfile := "multistage." + scaffold.DockerfileFile
 		if !genMultistage {
 			log.Warnf(`Project uses a non-multistage Dockerfile but the present docker version
