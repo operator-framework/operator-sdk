@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,33 +20,33 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-const DockerfileFile = "Dockerfile"
+const UserSetupFile = "user_setup"
 
-type Dockerfile struct {
+// UserSetup - userSetup script
+type UserSetup struct {
 	input.Input
 }
 
-func (s *Dockerfile) GetInput() (input.Input, error) {
-	if s.Path == "" {
-		s.Path = filepath.Join(BuildDir, DockerfileFile)
+func (u *UserSetup) GetInput() (input.Input, error) {
+	if u.Path == "" {
+		u.Path = filepath.Join(BuildScriptDir, UserSetupFile)
 	}
-	s.TemplateBody = dockerfileTmpl
-	return s.Input, nil
+	u.TemplateBody = userSetupTmpl
+	u.IsExec = true
+	return u.Input, nil
 }
 
-const dockerfileTmpl = `FROM alpine:3.8
+const userSetupTmpl = `#!/bin/sh
+set -x
 
-ENV OPERATOR=/usr/local/bin/{{.ProjectName}} \
-    USER_UID=1001 \
-    USER_NAME={{.ProjectName}}
+# ensure $HOME exists and is accessible by group 0 (we don't know what the runtime UID will be)
+mkdir -p ${HOME}
+chown ${USER_UID}:0 ${HOME}
+chmod ug+rwx ${HOME}
 
-# install operator binary
-COPY build/_output/bin/{{.ProjectName}} ${OPERATOR}
+# runtime user will need to be able to self-insert in /etc/passwd
+chmod g+rw /etc/passwd
 
-COPY build/bin /usr/local/bin
-RUN  /usr/local/bin/user_setup
-
-ENTRYPOINT ["/usr/local/bin/entrypoint"]
-
-USER ${USER_UID}
+# no need for this script to remain in the image after running
+rm $0
 `
