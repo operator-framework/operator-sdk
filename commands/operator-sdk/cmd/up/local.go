@@ -36,6 +36,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 // NewLocalCmd - up local command to run an operator loccally
@@ -47,7 +48,7 @@ func NewLocalCmd() *cobra.Command {
 by building the operator binary with the ability to access a
 kubernetes cluster using a kubeconfig file.
 `,
-		Run: upLocalFunc,
+		RunE: upLocalFunc,
 	}
 
 	upLocalCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "The file path to kubernetes configuration file; defaults to $HOME/.kube/config")
@@ -76,27 +77,28 @@ const (
 	defaultConfigPath = ".kube/config"
 )
 
-func upLocalFunc(cmd *cobra.Command, args []string) {
+func upLocalFunc(cmd *cobra.Command, args []string) error {
 	mustKubeConfig()
 
 	log.Info("Running the operator locally.")
 
-	switch projutil.GetOperatorType() {
+	t := projutil.GetOperatorType()
+	switch t {
 	case projutil.OperatorTypeGo:
 		projutil.MustInProjectRoot()
-		upLocal()
+		return upLocal()
 	case projutil.OperatorTypeAnsible:
-		upLocalAnsible()
+		return upLocalAnsible()
 	case projutil.OperatorTypeHelm:
-		upLocalHelm()
-	default:
-		log.Fatal("Failed to determine operator type")
+		return upLocalHelm()
 	}
+	return fmt.Errorf("unknown operator type '%v'", t)
 }
 
-// mustKubeConfig checks if the kubeconfig file exists.
+// mustKubeConfig exits if the kubeconfig file does not exist.
 func mustKubeConfig() {
-	// if kubeConfig is not specified, search for the default kubeconfig file under the $HOME/.kube/config.
+	// If kubeConfig is not specified, search for the default kubeconfig file
+	// under the $HOME/.kube/config.
 	if len(kubeConfig) == 0 {
 		usr, err := user.Current()
 		if err != nil {
@@ -111,7 +113,7 @@ func mustKubeConfig() {
 	}
 }
 
-func upLocal() {
+func upLocal() error {
 	args := []string{"run"}
 	if ldFlags != "" {
 		args = append(args, []string{"-ldflags", ldFlags}...)
@@ -132,45 +134,47 @@ func upLocal() {
 		}
 		os.Exit(0)
 	}()
-	dc.Stdout = os.Stdout
-	dc.Stderr = os.Stderr
 	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, kubeConfig))
 	dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, namespace))
-	err := dc.Run()
-	if err != nil {
-		log.Fatalf("Failed to run operator locally: (%v)", err)
+	if err := projutil.ExecCmd(dc); err != nil {
+		return fmt.Errorf("failed to run operator locally: (%v)", err)
 	}
+	return nil
 }
 
-func upLocalAnsible() {
+func upLocalAnsible() error {
+	logf.SetLogger(logf.ZapLogger(false))
+
 	// Set the kubeconfig that the manager will be able to grab
 	if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
-		log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+		return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
 	}
 	// Set the kubeconfig that the manager will be able to grab
 	if namespace != "" {
 		if err := os.Setenv(k8sutil.WatchNamespaceEnvVar, namespace); err != nil {
-			log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
+			return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
 		}
 	}
 
-	ansible.Run(ansibleOperatorFlags)
+	return ansible.Run(ansibleOperatorFlags)
 }
 
-func upLocalHelm() {
+func upLocalHelm() error {
+	logf.SetLogger(logf.ZapLogger(false))
+
 	// Set the kubeconfig that the manager will be able to grab
 	if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
-		log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+		return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
 	}
 
 	// Set the kubeconfig that the manager will be able to grab
 	if namespace != "" {
 		if err := os.Setenv(k8sutil.WatchNamespaceEnvVar, namespace); err != nil {
-			log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
+			return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
 		}
 	}
 
-	helm.Run(helmOperatorFlags)
+	return helm.Run(helmOperatorFlags)
 }
 
 func printVersion() {
