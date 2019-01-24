@@ -90,7 +90,7 @@ func TestUpdateVersion(t *testing.T) {
 		CSVVersion: newCSVVer,
 	}
 	if err := c.updateCSVVersions(csv); err != nil {
-		t.Fatalf("Update csv with ver %s: (%v)", newCSVVer, err)
+		t.Fatalf("Failed to update csv with version %s: (%v)", newCSVVer, err)
 	}
 
 	wantedSemver := semver.New(newCSVVer)
