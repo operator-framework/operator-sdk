@@ -179,7 +179,7 @@ func buildFunc(cmd *cobra.Command, args []string) {
 		}
 
 		// If a user is using an older sdk repo as their library, make sure they
-		// have required build files.
+		// have the required build files.
 		testDockerfile := filepath.Join(scaffold.BuildTestDir, scaffold.DockerfileFile)
 		_, err = os.Stat(testDockerfile)
 		needsMultiDF := projutil.IsOperatorGo() && !projutil.IsDockerfileMultistage(testDockerfile)
