@@ -44,43 +44,44 @@ func printVersion() {
 }
 
 // Run runs the helm operator
-func Run(flags *hoflags.HelmOperatorFlags) {
-	logf.SetLogger(logf.ZapLogger(false))
-
+func Run(flags *hoflags.HelmOperatorFlags) error {
 	printVersion()
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
+	log = log.WithValues("Namespace", namespace)
 	if found {
-		log.Info("Watching single namespace", "namespace", namespace)
+		log.Info("Watching single namespace.")
 	} else {
-		log.Info(k8sutil.WatchNamespaceEnvVar + " environment variable not set, watching all namespaces")
+		log.Info(fmt.Sprintf("%v environment variable not set. This operator is watching all namespaces.",
+			k8sutil.WatchNamespaceEnvVar))
 		namespace = metav1.NamespaceAll
 	}
 
 	cfg, err := config.GetConfig()
 	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
+		log.Error(err, "Failed to get config.")
+		return err
 	}
-
-	mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
+	mgr, err := manager.New(cfg, manager.Options{
+		Namespace: namespace,
+	})
 	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
+		log.Error(err, "Failed to create a new manager.")
+		return err
 	}
 
 	// Create Tiller's storage backend and kubernetes client
 	storageBackend := storage.Init(driver.NewMemory())
 	tillerKubeClient, err := client.NewFromManager(mgr)
 	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
+		log.Error(err, "Failed to create new Tiller client.")
+		return err
 	}
 
 	factories, err := release.NewManagerFactoriesFromFile(storageBackend, tillerKubeClient, flags.WatchesFile)
 	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
+		log.Error(err, "Failed to create new manager factories.")
+		return err
 	}
 
 	for gvk, factory := range factories {
@@ -93,14 +94,15 @@ func Run(flags *hoflags.HelmOperatorFlags) {
 			WatchDependentResources: true,
 		})
 		if err != nil {
-			log.Error(err, "")
-			os.Exit(1)
+			log.Error(err, "Failed to add manager factory to controller.")
+			return err
 		}
 	}
 
 	// Start the Cmd
-	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
-		log.Error(err, "Manager exited non-zero")
+	if err = mgr.Start(signals.SetupSignalHandler()); err != nil {
+		log.Error(err, "Manager exited non-zero.")
 		os.Exit(1)
 	}
+	return nil
 }

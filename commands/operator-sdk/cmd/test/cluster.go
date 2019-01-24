@@ -64,8 +64,6 @@ func NewTestClusterCmd() *cobra.Command {
 }
 
 func testClusterFunc(cmd *cobra.Command, args []string) error {
-	// in main.go, we catch and print errors, so we don't want cobra to print the error itself
-	cmd.SilenceErrors = true
 	if len(args) != 1 {
 		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
 	}
@@ -137,9 +135,9 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create test pod: %v", err)
 	}
 	defer func() {
-		err = kubeclient.CoreV1().Pods(tcConfig.namespace).Delete(testPod.Name, &metav1.DeleteOptions{})
-		if err != nil {
-			log.Warn("Failed to delete test pod")
+		rerr := kubeclient.CoreV1().Pods(tcConfig.namespace).Delete(testPod.Name, &metav1.DeleteOptions{})
+		if rerr != nil {
+			log.Warnf("Failed to delete test pod: %v", rerr)
 		}
 	}()
 	err = wait.Poll(time.Second*5, time.Second*time.Duration(tcConfig.pendingTimeout), func() (bool, error) {
@@ -175,7 +173,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 			req := kubeclient.CoreV1().Pods(tcConfig.namespace).GetLogs(testPod.Name, &v1.PodLogOptions{})
 			readCloser, err := req.Stream()
 			if err != nil {
-				return fmt.Errorf("test failed and failed to get error logs")
+				return fmt.Errorf("test failed and failed to get error logs: %v", err)
 			}
 			defer func() {
 				if err := readCloser.Close(); err != nil && !fileutil.IsClosedError(err) {

@@ -56,7 +56,7 @@ For example:
 	$ operator-sdk build quay.io/example/operator:v0.0.1
 	$ docker push quay.io/example/operator:v0.0.1
 `,
-		Run: buildFunc,
+		RunE: buildFunc,
 	}
 	buildCmd.Flags().BoolVar(&enableTests, "enable-tests", false, "Enable in-cluster testing by adding test binary to the image")
 	buildCmd.Flags().BoolVar(&genMultistage, "gen-multistage", false, "Generate multistage build and test Dockerfiles")
@@ -82,11 +82,11 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 		yamlMap := make(map[string]interface{})
 		err := yaml.Unmarshal(yamlSpec, &yamlMap)
 		if err != nil {
-			log.Fatalf("Could not unmarshal YAML namespaced spec: (%v)", err)
+			return fmt.Errorf("could not unmarshal YAML namespaced spec: (%v)", err)
 		}
 		kind, ok := yamlMap["kind"].(string)
 		if !ok {
-			log.Fatal("YAML manifest file contains a 'kind' field that is not a string")
+			return fmt.Errorf("yaml manifest file contains a 'kind' field that is not a string")
 		}
 		if kind == "Deployment" {
 			// this is ugly and hacky; we should probably make this cleaner
@@ -118,7 +118,7 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		log.Fatalf("Failed to verify deployment image: (%v)", err)
+		return fmt.Errorf("failed to verify deployment image: (%v)", err)
 	}
 	if warningMessages == "" {
 		return nil
@@ -126,10 +126,10 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 	return errors.New(warningMessages)
 }
 
-func verifyTestManifest(image string) {
+func verifyTestManifest(image string) error {
 	namespacedBytes, err := ioutil.ReadFile(namespacedManBuild)
 	if err != nil {
-		log.Fatalf("Could not read namespaced manifest: (%v)", err)
+		return fmt.Errorf("could not read namespaced manifest: (%v)", err)
 	}
 
 	err = verifyDeploymentImage(namespacedBytes, image)
@@ -137,11 +137,12 @@ func verifyTestManifest(image string) {
 	if err != nil {
 		log.Warn(err)
 	}
+	return nil
 }
 
-func buildFunc(cmd *cobra.Command, args []string) {
+func buildFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
-		log.Fatalf("Command %s requires exactly one argument", cmd.CommandPath())
+		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
 	}
 	projutil.MustInProjectRoot()
 
@@ -158,24 +159,26 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	// Otherwise the binary will be built on the host and COPY'd into the
 	// resulting image.
 	buildDockerfile := filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
-	buildDockerfile = makeDockerfileIfMultistage(buildDockerfile)
+	var err error
+	buildDockerfile, err = makeDockerfileIfMultistage(buildDockerfile)
+	if err != nil {
+		return err
+	}
 	if projutil.IsOperatorGo() && !projutil.IsDockerfileMultistage(buildDockerfile) {
 		if err := buildOperatorBinary(); err != nil {
-			log.Fatalf("Failed to build operator binary: (%v)", err)
+			return fmt.Errorf("failed to build operator binary: (%v)", err)
 		}
 	}
-	err := projutil.DockerBuild(buildDockerfile, baseImageName)
-	if err != nil {
+	if err = projutil.DockerBuild(buildDockerfile, baseImageName); err != nil {
 		if enableTests {
-			log.Fatalf("Failed to output intermediate image %s: (%v)", image, err)
-		} else {
-			log.Fatalf("Failed to output build image %s: (%v)", image, err)
+			return fmt.Errorf("failed to output intermediate image %s: (%v)", image, err)
 		}
+		return fmt.Errorf("failed to output build image %s: (%v)", image, err)
 	}
 
 	if enableTests {
 		if !projutil.IsDockerMultistage() {
-			log.Fatalf("In-cluster tests are only available on hosts with Docker v17.05+")
+			return fmt.Errorf("in-cluster tests are only available on hosts with Docker v17.05+")
 		}
 
 		// If a user is using an older sdk repo as their library, make sure they
@@ -206,15 +209,15 @@ func buildFunc(cmd *cobra.Command, args []string) {
 					&scaffold.TestPod{Image: image, TestNamespaceEnv: test.TestNamespaceEnv},
 				)
 			case projutil.OperatorTypeAnsible:
-				log.Fatal("Test scaffolding for Ansible Operators is not implemented")
+				return fmt.Errorf("test scaffolding for Ansible Operators is not implemented")
 			case projutil.OperatorTypeHelm:
-				log.Fatal("Test scaffolding for Helm Operators is not implemented")
+				return fmt.Errorf("test scaffolding for Helm Operators is not implemented")
 			default:
-				log.Fatalf("Unknown operator type %s", t)
+				return fmt.Errorf("unknown operator type '%v'", t)
 			}
 
 			if err != nil {
-				log.Fatalf("Test framework manifest scaffold failed: (%v)", err)
+				return fmt.Errorf("test framework manifest scaffold failed: (%v)", err)
 			}
 		}
 
@@ -227,13 +230,16 @@ func buildFunc(cmd *cobra.Command, args []string) {
 			"BASEIMAGE="+baseImageName,
 			"NAMESPACEDMAN="+namespacedManBuild)
 		if err != nil {
-			log.Fatalf("Failed to output test image %s: (%v)", image, err)
+			return fmt.Errorf("failed to output test image %s: (%v)", image, err)
 		}
 		// Check image name of deployments in namespaced manifest
-		verifyTestManifest(image)
+		if err := verifyTestManifest(image); err != nil {
+			return nil
+		}
 	}
 
 	log.Info("Operator build complete.")
+	return nil
 }
 
 // makeDockerfileIfMultistage is effectively a function for migrating
@@ -244,9 +250,9 @@ func buildFunc(cmd *cobra.Command, args []string) {
 // to rename to 'Dockerfile'. Users will see a warning if docker v17.05+ is
 // present but they haven't set the --gen-multistage flag in
 // `operator-sdk build...`
-func makeDockerfileIfMultistage(dockerfile string) string {
+func makeDockerfileIfMultistage(dockerfile string) (string, error) {
 	if !projutil.IsOperatorGo() || !projutil.IsDockerMultistage() {
-		return dockerfile
+		return dockerfile, nil
 	}
 	if !projutil.IsDockerfileMultistage(dockerfile) {
 		msDockerfile := "multistage." + scaffold.DockerfileFile
@@ -276,12 +282,12 @@ file to '%s' to avoid this warning.`,
 			}
 			err := (&scaffold.Scaffold{}).Execute(cfg, d)
 			if err != nil {
-				log.Fatalf("Failed to write %s: (%v)", msDockerfile, err)
+				return "", fmt.Errorf("failed to write %s: (%v)", msDockerfile, err)
 			}
 		}
 	}
 
-	return dockerfile
+	return dockerfile, nil
 }
 
 // buildOperatorBinary builds the operator binary locally.
