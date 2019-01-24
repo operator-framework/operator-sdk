@@ -44,7 +44,7 @@ func ExposeMetricsPort(port int32, mgr manager.Manager) (*v1.Service, error) {
 	}
 	service, err := createService(mgr, s)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create or get service for metrics: %v", err)
 	}
 
 	return service, nil
