@@ -86,7 +86,8 @@ func upLocalFunc(cmd *cobra.Command, args []string) error {
 	}
 	log.Infof("Using namespace %s.", namespace)
 
-	switch projutil.GetOperatorType() {
+	t := projutil.GetOperatorType()
+	switch t {
 	case projutil.OperatorTypeGo:
 		projutil.MustInProjectRoot()
 		return upLocal()
@@ -115,7 +116,7 @@ func upLocal() error {
 		<-c
 		err := dc.Process.Kill()
 		if err != nil {
-			return fmt.Errorf("Failed to terminate the operator: (%v)", err)
+			log.Fatalf("Failed to terminate the operator: (%v)", err)
 		}
 		os.Exit(0)
 	}()
