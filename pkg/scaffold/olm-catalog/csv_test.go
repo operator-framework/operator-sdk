@@ -34,6 +34,10 @@ import (
 
 const testDataDir = "testdata"
 
+var (
+	testOLMDir = filepath.Join(testDataDir, scaffold.OLMCatalogDir)
+)
+
 func TestCSV(t *testing.T) {
 	buf := &bytes.Buffer{}
 	s := &scaffold.Scaffold{
@@ -43,7 +47,6 @@ func TestCSV(t *testing.T) {
 	}
 	csvVer := "0.1.0"
 	projectName := "app-operator"
-	testOLMDir := filepath.Join(testDataDir, scaffold.OLMCatalogDir)
 
 	err := s.Execute(&input.Config{ProjectName: projectName},
 		&CSV{
@@ -71,7 +74,6 @@ func TestCSV(t *testing.T) {
 
 func TestUpdateVersion(t *testing.T) {
 	projectName := "app-operator"
-	testOLMDir := filepath.Join(testDataDir, scaffold.OLMCatalogDir)
 	csvFilePath := projectName + CSVYamlFileExt
 	csvExpBytes, err := ioutil.ReadFile(filepath.Join(testOLMDir, csvFilePath))
 	if err != nil {

@@ -46,7 +46,9 @@ type FileWriter struct {
 // WriteCloser returns a WriteCloser to write to given path
 func (fw *FileWriter) WriteCloser(path string, mode os.FileMode) (io.Writer, error) {
 	fw.once.Do(func() {
-		fw.Fs = afero.NewOsFs()
+		if fw.Fs == nil {
+			fw.Fs = afero.NewOsFs()
+		}
 	})
 
 	dir := filepath.Dir(path)
@@ -66,7 +68,9 @@ func (fw *FileWriter) WriteCloser(path string, mode os.FileMode) (io.Writer, err
 // WriteFile write given content to the file path
 func (fw *FileWriter) WriteFile(filePath string, content []byte) error {
 	fw.once.Do(func() {
-		fw.Fs = afero.NewOsFs()
+		if fw.Fs == nil {
+			fw.Fs = afero.NewOsFs()
+		}
 	})
 
 	f, err := fw.WriteCloser(filePath, DefaultFileMode)
