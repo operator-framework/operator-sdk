@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package helm
+package scaffold
 
 import (
 	"path/filepath"
@@ -20,40 +20,32 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-// Main - main source file for helm operator
-type Main struct {
+const EntrypointFile = "entrypoint"
+
+// Entrypoint - entrypoint script
+type Entrypoint struct {
 	input.Input
 }
 
-func (m *Main) GetInput() (input.Input, error) {
-	if m.Path == "" {
-		m.Path = filepath.Join("cmd", "manager", "main.go")
+func (e *Entrypoint) GetInput() (input.Input, error) {
+	if e.Path == "" {
+		e.Path = filepath.Join(BuildScriptDir, EntrypointFile)
 	}
-	m.TemplateBody = mainTmpl
-	return m.Input, nil
+	e.TemplateBody = entrypointTmpl
+	e.IsExec = true
+	return e.Input, nil
 }
 
-const mainTmpl = `package main
+const entrypointTmpl = `#!/bin/sh -e
 
-import (
-	"os"
+# This is documented here:
+# https://docs.openshift.com/container-platform/3.11/creating_images/guidelines.html#openshift-specific-guidelines
 
-	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
-	"github.com/operator-framework/operator-sdk/pkg/helm"
+if ! whoami &>/dev/null; then
+  if [ -w /etc/passwd ]; then
+    echo "${USER_NAME:-{{.ProjectName}}}:x:$(id -u):$(id -g):${USER_NAME:-{{.ProjectName}}} user:${HOME}:/sbin/nologin" >> /etc/passwd
+  fi
+fi
 
-	"github.com/spf13/pflag"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-)
-
-func main() {
-	logf.SetLogger(logf.ZapLogger(false))
-
-	hflags := hoflags.AddTo(pflag.CommandLine)
-	pflag.Parse()
-
-	if err := helm.Run(hflags); err != nil {
-		logf.Log.WithName("cmd").Error(err, "")
-		os.Exit(1)
-	}
-}
+exec ${OPERATOR} $@
 `

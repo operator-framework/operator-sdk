@@ -8,65 +8,118 @@
     deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
     custom_resource: "{{ lookup('file', '/'.join([deploy_dir, 'crds/ansible_v1alpha1_memcached_cr.yaml'])) | from_yaml }}"
   tasks:
+    - block:
+      - name: debug memcached lookup
+        debug:
+          var: deploy
+        vars:
+          deploy: '{{ lookup("k8s",
+            kind="Deployment",
+            api_version="apps/v1",
+            namespace=namespace,
+            label_selector="app=memcached"
+          )}}'
 
-    - name: debug memcached lookup
-      debug:
-        var: deploy
-      vars:
-        deploy: '{{ lookup("k8s",
-          kind="Deployment",
-          api_version="apps/v1",
-          namespace=namespace,
-          label_selector="app=memcached"
-        )}}'
+      - name: Wait 2 minutes for memcached deployment
+        debug:
+          var: deploy
+        until: deploy and deploy.status and deploy.status.replicas == deploy.status.get("availableReplicas", 0)
+        retries: 12
+        delay: 10
+        vars:
+          deploy: '{{ lookup("k8s",
+            kind="Deployment",
+            api_version="apps/v1",
+            namespace=namespace,
+            label_selector="app=memcached"
+          )}}'
 
-    - name: Wait 2 minutes for memcached deployment
-      debug:
-        msg: Waiting for memcached deployment...
-      until: deploy and deploy.status and deploy.status.replicas == deploy.status.get("availableReplicas", 0)
-      retries: 12
-      delay: 10
-      vars:
-        deploy: '{{ lookup("k8s",
-          kind="Deployment",
-          api_version="apps/v1",
-          namespace=namespace,
-          label_selector="app=memcached"
-        )}}'
+      - name: Create ConfigMap that the Operator should delete
+        k8s:
+          definition:
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: deleteme
+              namespace: '{{ namespace }}'
+            data:
+              delete: me
 
-    - name: Create ConfigMap that the Operator should delete
-      k8s:
-        definition:
-          apiVersion: v1
-          kind: ConfigMap
-          metadata:
-            name: deleteme
-            namespace: '{{ namespace }}'
-          data:
-            delete: me
+      - name: Verify custom status exists
+        assert:
+          that: debug_cr.status.get("test") == "hello world"
+        vars:
+          debug_cr: '{{ lookup("k8s",
+            kind=custom_resource.kind,
+            api_version=custom_resource.apiVersion,
+            namespace=namespace,
+            resource_name=custom_resource.metadata.name
+          )}}'
 
-    - name: Delete the custom resource
-      k8s:
-        state: absent
-        namespace: '{{ namespace }}'
-        definition: '{{ custom_resource }}'
+      - name: Delete the custom resource
+        k8s:
+          state: absent
+          namespace: '{{ namespace }}'
+          definition: '{{ custom_resource }}'
 
-    - name: Wait for the custom resource to be deleted
-      k8s_facts:
-        api_version: '{{ custom_resource.apiVersion }}'
-        kind: '{{ custom_resource.kind }}'
-        namespace: '{{ namespace }}'
-        name: '{{ custom_resource.metadata.name }}'
-      register: cr
-      retries: 10
-      delay: 2
-      until: not cr.resources
-      failed_when: cr.resources
+      - name: Wait for the custom resource to be deleted
+        k8s_facts:
+          api_version: '{{ custom_resource.apiVersion }}'
+          kind: '{{ custom_resource.kind }}'
+          namespace: '{{ namespace }}'
+          name: '{{ custom_resource.metadata.name }}'
+        register: cr
+        retries: 10
+        delay: 2
+        until: not cr.resources
+        failed_when: cr.resources
 
-    - name: Verify the ConfigMap was deleted
-      assert:
-        that: not lookup('k8s', kind='ConfigMap', api_version='v1', namespace=namespace, resource_name='deleteme')
+      - name: Verify the ConfigMap was deleted
+        assert:
+          that: not lookup('k8s', kind='ConfigMap', api_version='v1', namespace=namespace, resource_name='deleteme')
 
-    - name: Verify the Deployment was deleted
-      assert:  
-        that: not lookup('k8s', kind='Deployment', api_version='apps/v1', namespace=namespace, label_selector='app=memcached')
+      - name: Verify the Deployment was deleted (wait 30s)
+        assert:
+          that: not lookup('k8s', kind='Deployment', api_version='apps/v1', namespace=namespace, label_selector='app=memcached')
+        retries: 10
+        delay: 3
+
+      rescue:
+      - name: debug cr
+        ignore_errors: yes
+        failed_when: false
+        debug:
+          var: debug_cr
+        vars:
+          debug_cr: '{{ lookup("k8s",
+            kind=custom_resource.kind,
+            api_version=custom_resource.apiVersion,
+            namespace=namespace,
+            resource_name=custom_resource.metadata.name
+          )}}'
+
+      - name: debug memcached lookup
+        ignore_errors: yes
+        failed_when: false
+        debug:
+          var: deploy
+        vars:
+          deploy: '{{ lookup("k8s",
+            kind="Deployment",
+            api_version="apps/v1",
+            namespace=namespace,
+            label_selector="app=memcached"
+          )}}'
+
+      - name: get operator logs
+        ignore_errors: yes
+        failed_when: false
+        command: kubectl logs deployment/{{ definition.metadata.name }} -n {{ namespace }}
+        vars:
+          definition: "{{ lookup('file', '/'.join([deploy_dir, 'operator.yaml'])) | from_yaml }}"
+        register: log
+
+      - debug: var=log.stdout_lines
+
+      - fail:
+          msg: "Failed in asserts.yml"
