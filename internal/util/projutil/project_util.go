@@ -64,13 +64,14 @@ func MustInProjectRoot() {
 	}
 }
 
-func MustGoProjectCmd(cmd *cobra.Command) {
+func CheckGoProjectCmd(cmd *cobra.Command) error {
 	t := GetOperatorType()
 	switch t {
 	case OperatorTypeGo:
 	default:
-		log.Fatalf("'%s' can only be run for Go operators; %s does not exist.", cmd.CommandPath(), mainFile)
+		return fmt.Errorf("'%s' can only be run for Go operators; %s does not exist.", cmd.CommandPath(), mainFile)
 	}
+	return nil
 }
 
 func MustGetwd() string {
@@ -84,7 +85,7 @@ func MustGetwd() string {
 // CheckAndGetProjectGoPkg checks if this project's repository path is rooted under $GOPATH and returns the current directory's import path
 // e.g: "github.com/example-inc/app-operator"
 func CheckAndGetProjectGoPkg() string {
-	gopath := SetGopath(GetGopath())
+	gopath := MustSetGopath(MustGetGopath())
 	goSrc := filepath.Join(gopath, SrcDir)
 	wd := MustGetwd()
 	currPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
@@ -113,8 +114,9 @@ func IsOperatorGo() bool {
 	return GetOperatorType() == OperatorTypeGo
 }
 
-// GetGopath gets GOPATH and makes sure it is set and non-empty.
-func GetGopath() string {
+// MustGetGopath gets GOPATH and ensures it is set and non-empty. If GOPATH
+// is not set or empty, MustGetGopath exits.
+func MustGetGopath() string {
 	gopath, ok := os.LookupEnv(GopathEnv)
 	if !ok || len(gopath) == 0 {
 		log.Fatal("GOPATH env not set")
@@ -122,12 +124,15 @@ func GetGopath() string {
 	return gopath
 }
 
-// SetGopath sets GOPATH=currentGopath after processing a path list,
-// if any, then returns the set path.
-func SetGopath(currentGopath string) string {
-	var newGopath string
-	cwdInGopath := false
-	wd := MustGetwd()
+// MustSetGopath sets GOPATH=currentGopath after processing a path list,
+// if any, then returns the set path. If GOPATH cannot be set, MustSetGopath
+// exits.
+func MustSetGopath(currentGopath string) string {
+	var (
+		newGopath   string
+		cwdInGopath bool
+		wd          = MustGetwd()
+	)
 	for _, newGopath = range strings.Split(currentGopath, ":") {
 		if strings.HasPrefix(filepath.Dir(wd), newGopath) {
 			cwdInGopath = true
@@ -136,11 +141,9 @@ func SetGopath(currentGopath string) string {
 	}
 	if !cwdInGopath {
 		log.Fatalf("Project not in $GOPATH")
-		return ""
 	}
 	if err := os.Setenv(GopathEnv, newGopath); err != nil {
 		log.Fatal(err)
-		return ""
 	}
 	return newGopath
 }

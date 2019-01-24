@@ -31,7 +31,7 @@ in a Pod inside a cluster. Developers wanting to run their operator locally
 should use "up local" instead.`,
 	}
 
-	runCmd.AddCommand(run.NewAnsibleCmd())
-	runCmd.AddCommand(run.NewHelmCmd())
+	runCmd.AddCommand(run.RunAnsibleCmd())
+	runCmd.AddCommand(run.RunHelmCmd())
 	return runCmd
 }

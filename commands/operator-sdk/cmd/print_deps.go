@@ -15,9 +15,10 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -34,7 +35,7 @@ those in an operators' Gopkg.toml file.
 print-deps prints in columnar format by default. Use the --as-file flag to
 print in Gopkg.toml file format.
 `,
-		Run: printDepsFunc,
+		RunE: printDepsFunc,
 	}
 
 	printDepsCmd.Flags().BoolVar(&asFile, "as-file", false, "Print dependencies in Gopkg.toml file format.")
@@ -42,15 +43,14 @@ print in Gopkg.toml file format.
 	return printDepsCmd
 }
 
-func printDepsFunc(cmd *cobra.Command, args []string) {
+func printDepsFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 0 {
-		log.Fatalf("Command %s doesn't accept any arguments", cmd.CommandPath())
+		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 	if asFile {
 		scaffold.PrintDepsAsFile()
-	} else {
-		if err := scaffold.PrintDeps(); err != nil {
-			log.Fatalf("Print deps failed: (%v)", err)
-		}
+	} else if err := scaffold.PrintDeps(); err != nil {
+		return fmt.Errorf("print deps failed: (%v)", err)
 	}
+	return nil
 }
