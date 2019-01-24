@@ -70,7 +70,7 @@ func createService(mgr manager.Manager, s *v1.Service) (*v1.Service, error) {
 
 	}
 
-	log.Info("Metrics Service object created")
+	log.Info("Metrics Service object created", "name", s.Name)
 	return s, nil
 }
 
