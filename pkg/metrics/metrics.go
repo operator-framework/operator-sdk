@@ -25,7 +25,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"k8s.io/client-go/rest"
+	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -35,7 +36,7 @@ var log = logf.Log.WithName("metrics")
 const PrometheusPortName = "metrics"
 
 // ExposeMetricsPort creates a Kubernetes Service to expose the passed metrics port.
-func ExposeMetricsPort(port int32, mgr manager.Manager) (*v1.Service, error) {
+func ExposeMetricsPort(ctx context.Context, port int32) (*v1.Service, error) {
 	// We do not need to check the validity of the port, as controller-runtime
 	// would error out and we would never get to this stage.
 	s, err := initOperatorService(port, PrometheusPortName)
@@ -46,7 +47,7 @@ func ExposeMetricsPort(port int32, mgr manager.Manager) (*v1.Service, error) {
 		}
 		return nil, fmt.Errorf("failed to initialize service object for metrics: %v", err)
 	}
-	service, err := createService(mgr, s)
+	service, err := createService(ctx, s)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create or get service for metrics: %v", err)
 	}
@@ -54,24 +55,32 @@ func ExposeMetricsPort(port int32, mgr manager.Manager) (*v1.Service, error) {
 	return service, nil
 }
 
-func createService(mgr manager.Manager, s *v1.Service) (*v1.Service, error) {
-	client := mgr.GetClient()
-	if err := client.Create(context.TODO(), s); err != nil {
+func createService(ctx context.Context, s *v1.Service) (*v1.Service, error) {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := crclient.New(config, crclient.Options{})
+	if err != nil {
+		return nil, err
+	}
+
+	if err := client.Create(ctx, s); err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return nil, err
 		}
 		// Get existing Service and return it
 		existingService := &v1.Service{}
-		err := client.Get(context.TODO(), types.NamespacedName{
-			Name:      s.ObjectMeta.Name,
-			Namespace: s.ObjectMeta.Namespace,
+		err := client.Get(ctx, types.NamespacedName{
+			Name:      s.Name,
+			Namespace: s.Namespace,
 		}, existingService)
 		if err != nil {
 			return nil, err
 		}
 		log.Info("Metrics Service object already exists", "name", existingService.Name)
 		return existingService, nil
-
 	}
 
 	log.Info("Metrics Service object created", "name", s.Name)

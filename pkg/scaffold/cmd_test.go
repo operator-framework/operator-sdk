@@ -92,8 +92,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	ctx := context.TODO()
+
 	// Become the leader before proceeding
-	err = leader.Become(context.TODO(), "app-operator-lock")
+	err = leader.Become(ctx, "app-operator-lock")
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
@@ -124,7 +126,7 @@ func main() {
 	}
 
 	// Create Service object to expose the metrics port.
-	_, err = metrics.ExposeMetricsPort(metricsPort, mgr)
+	_, err = metrics.ExposeMetricsPort(ctx, metricsPort)
 	if err != nil {
 		log.Info(err.Error())
 	}
