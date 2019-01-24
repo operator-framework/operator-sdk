@@ -37,39 +37,35 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// checkSpecAndStat checks that the spec and status blocks exist. If noStore is set to true, this function
-// will not store the result of the test in scTests and will instead just wait until the spec and
-// status blocks exist or return an error after the timeout.
-func checkSpecAndStat(runtimeClient client.Client, obj *unstructured.Unstructured, noStore bool) error {
-	testSpec := scorecardTest{testType: basicOperator, name: "Spec Block Exists", maximumPoints: 1}
-	testStat := scorecardTest{testType: basicOperator, name: "Status Block Exist", maximumPoints: 1}
-	err := wait.Poll(time.Second*1, time.Second*time.Duration(SCConf.InitTimeout), func() (bool, error) {
-		err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, obj)
-		if err != nil {
-			return false, fmt.Errorf("error getting custom resource: %v", err)
-		}
-		var specPass, statusPass bool
-		if obj.Object["spec"] != nil {
-			testSpec.earnedPoints = 1
-			specPass = true
-		}
-
-		if obj.Object["status"] != nil {
-			testStat.earnedPoints = 1
-			statusPass = true
-		}
-		return statusPass && specPass, nil
-	})
-	if !noStore {
-		scTests = append(scTests, testSpec, testStat)
+// checkSpec checks that the spec block exists
+func checkSpec(test *Test, vars ScorecardVars) error {
+	score := Score{maximumPoints: 1}
+	err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: vars.crObj.GetNamespace(), Name: vars.crObj.GetName()}, vars.crObj)
+	if err != nil {
+		return fmt.Errorf("error getting custom resource: %v", err)
 	}
-	if err != nil && err != wait.ErrWaitTimeout {
-		return err
+	if vars.crObj.Object["spec"] != nil {
+		score.earnedPoints = 1
 	}
-	if testSpec.earnedPoints != 1 {
+	test.scores = append(test.scores, score)
+	if score.earnedPoints != 1 {
 		scSuggestions = append(scSuggestions, "Add a 'spec' field to your Custom Resource")
 	}
-	if testStat.earnedPoints != 1 {
+	return nil
+}
+
+// checkStat checks that the stat block exists
+func checkStat(test *Test, vars ScorecardVars) error {
+	score := Score{maximumPoints: 1}
+	err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: vars.crObj.GetNamespace(), Name: vars.crObj.GetName()}, vars.crObj)
+	if err != nil {
+		return fmt.Errorf("error getting custom resource: %v", err)
+	}
+	if vars.crObj.Object["status"] != nil {
+		score.earnedPoints = 1
+	}
+	test.scores = append(test.scores, score)
+	if score.earnedPoints != 1 {
 		scSuggestions = append(scSuggestions, "Add a 'status' field to your Custom Resource")
 	}
 	return nil
@@ -81,30 +77,29 @@ func checkSpecAndStat(runtimeClient client.Client, obj *unstructured.Unstructure
 // see if the status changes as a result. This is a bit prone to breakage as this is a black box test and we don't
 // know much about how the operators we are testing actually work and may pass an invalid value. In the future, we
 // should use user-specified tests
-func checkStatusUpdate(runtimeClient client.Client, obj *unstructured.Unstructured) error {
-	test := scorecardTest{testType: basicOperator, name: "Operator actions are reflected in status", maximumPoints: 1}
-	err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, obj)
+func checkStatusUpdate(test *Test, vars ScorecardVars) error {
+	score := Score{maximumPoints: 1}
+	err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: vars.crObj.GetNamespace(), Name: vars.crObj.GetName()}, vars.crObj)
 	if err != nil {
 		return fmt.Errorf("error getting custom resource: %v", err)
 	}
-	if obj.Object["status"] == nil || obj.Object["spec"] == nil {
-		scTests = append(scTests, test)
+	if vars.crObj.Object["status"] == nil || vars.crObj.Object["spec"] == nil {
 		return nil
 	}
 	statCopy := make(map[string]interface{})
-	for k, v := range obj.Object["status"].(map[string]interface{}) {
+	for k, v := range vars.crObj.Object["status"].(map[string]interface{}) {
 		statCopy[k] = v
 	}
-	specMap := obj.Object["spec"].(map[string]interface{})
-	err = modifySpecAndCheck(specMap, obj)
+	specMap := vars.crObj.Object["spec"].(map[string]interface{})
+	err = modifySpecAndCheck(specMap, vars.crObj)
 	if err != nil {
-		test.earnedPoints = 0
+		score.earnedPoints = 0
+		test.scores = append(test.scores, score)
 		scSuggestions = append(scSuggestions, "Make sure that the 'status' block is always updated to reflect changes after the 'spec' block is changed")
-		scTests = append(scTests, test)
 		return nil
 	}
-	test.earnedPoints = 1
-	scTests = append(scTests, test)
+	score.earnedPoints = 1
+	test.scores = append(test.scores, score)
 	return nil
 }
 
@@ -169,28 +164,27 @@ func modifySpecAndCheck(specMap map[string]interface{}, obj *unstructured.Unstru
 
 // wiritingIntoCRsHasEffect simply looks at the proxy logs and verifies that the operator is sending PUT
 // and/or POST requests to the API server, which should mean that it is creating or modifying resources.
-func writingIntoCRsHasEffect(obj *unstructured.Unstructured) (string, error) {
-	test := scorecardTest{testType: basicOperator, name: "Writing into CRs has an effect", maximumPoints: 1}
+func writingIntoCRsHasEffect(test *Test, vars ScorecardVars) error {
 	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
 	if err != nil {
-		return "", fmt.Errorf("failed to create kubeclient: %v", err)
+		return fmt.Errorf("failed to create kubeclient: %v", err)
 	}
 	dep := &appsv1.Deployment{}
-	err = runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: deploymentName}, dep)
+	err = runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: vars.crObj.GetNamespace(), Name: deploymentName}, dep)
 	if err != nil {
-		return "", fmt.Errorf("failed to get newly created operator deployment: %v", err)
+		return fmt.Errorf("failed to get newly created operator deployment: %v", err)
 	}
 	set := labels.Set(dep.Spec.Selector.MatchLabels)
 	pods := &v1.PodList{}
 	err = runtimeClient.List(context.TODO(), &client.ListOptions{LabelSelector: set.AsSelector()}, pods)
 	if err != nil {
-		return "", fmt.Errorf("failed to get list of pods in deployment: %v", err)
+		return fmt.Errorf("failed to get list of pods in deployment: %v", err)
 	}
 	proxyPod = &pods.Items[0]
-	req := kubeclient.CoreV1().Pods(obj.GetNamespace()).GetLogs(proxyPod.GetName(), &v1.PodLogOptions{Container: "scorecard-proxy"})
+	req := kubeclient.CoreV1().Pods(vars.crObj.GetNamespace()).GetLogs(proxyPod.GetName(), &v1.PodLogOptions{Container: "scorecard-proxy"})
 	readCloser, err := req.Stream()
 	if err != nil {
-		return "", fmt.Errorf("failed to get logs: %v", err)
+		return fmt.Errorf("failed to get logs: %v", err)
 	}
 	defer func() {
 		if err := readCloser.Close(); err != nil && !fileutil.IsClosedError(err) {
@@ -200,10 +194,11 @@ func writingIntoCRsHasEffect(obj *unstructured.Unstructured) (string, error) {
 	buf := new(bytes.Buffer)
 	_, err = buf.ReadFrom(readCloser)
 	if err != nil {
-		return "", fmt.Errorf("test failed and failed to read pod logs: %v", err)
+		return fmt.Errorf("test failed and failed to read pod logs: %v", err)
 	}
 	logs := buf.String()
 	msgMap := make(map[string]interface{})
+	score := Score{maximumPoints: 1}
 	for _, msg := range strings.Split(logs, "\n") {
 		if err := json.Unmarshal([]byte(msg), &msgMap); err != nil {
 			continue
@@ -213,13 +208,13 @@ func writingIntoCRsHasEffect(obj *unstructured.Unstructured) (string, error) {
 			continue
 		}
 		if method == "PUT" || method == "POST" {
-			test.earnedPoints = 1
+			score.earnedPoints = 1
 			break
 		}
 	}
-	scTests = append(scTests, test)
-	if test.earnedPoints != 1 {
+	test.scores = append(test.scores, score)
+	if score.earnedPoints != 1 {
 		scSuggestions = append(scSuggestions, "The operator should write into objects to update state. No PUT or POST requests from you operator were recorded by the scorecard.")
 	}
-	return buf.String(), nil
+	return nil
 }

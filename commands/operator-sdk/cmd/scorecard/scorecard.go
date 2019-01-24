@@ -66,20 +66,8 @@ const (
 	goodTenant     = "Good Tenant"
 )
 
-// TODO: add point weights to tests
-type scorecardTest struct {
-	testType      string
-	name          string
-	description   string
-	earnedPoints  int
-	maximumPoints int
-}
-
-type cleanupFn func() error
-
 var (
 	kubeconfig     *rest.Config
-	scTests        []scorecardTest
 	scSuggestions  []string
 	dynamicDecoder runtime.Decoder
 	runtimeClient  client.Client
@@ -181,29 +169,22 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
 	}
+	vars := ScorecardVars{
+		client:        &runtimeClient,
+		crObj:         obj,
+		proxyPod:      proxyPod,
+		timeout:       60,
+		retryInterval: 5,
+	}
+	if err := waitUntilReady(obj); err != nil {
+		return fmt.Errorf("failed waiting for CR to be ready: %v", err)
+	}
 	if SCConf.BasicTests {
-		fmt.Println("Checking for existence of spec and status blocks in CR")
-		err = checkSpecAndStat(runtimeClient, obj, false)
-		if err != nil {
-			return err
-		}
-		fmt.Println("Checking that operator actions are reflected in status")
-		err = checkStatusUpdate(runtimeClient, obj)
-		if err != nil {
-			return err
-		}
-		fmt.Println("Checking that writing into CRs has an effect")
-		logs, err := writingIntoCRsHasEffect(obj)
-		if err != nil {
-			return err
-		}
-		log.Debugf("Scorecard Proxy Logs: %v\n", logs)
-	} else {
-		// checkSpecAndStat is used to make sure the operator is ready in this case
-		// the boolean argument set at the end tells the function not to add the result to scTests
-		err = checkSpecAndStat(runtimeClient, obj, true)
-		if err != nil {
-			return err
+		for _, test := range BasicTests.tests {
+			err = test.execute(vars)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	if SCConf.OLMTests {
@@ -222,47 +203,50 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		default:
 			return fmt.Errorf("provided yaml file not of ClusterServiceVersion type")
 		}
-		fmt.Println("Checking for CRD resources")
-		crdsHaveResources(csv)
-		fmt.Println("Checking for existence of example CRs")
-		annotationsContainExamples(csv)
-		fmt.Println("Checking spec descriptors")
-		err = specDescriptors(csv, runtimeClient, obj)
-		if err != nil {
-			return err
-		}
-		fmt.Println("Checking status descriptors")
-		err = statusDescriptors(csv, runtimeClient, obj)
-		if err != nil {
-			return err
-		}
-	}
-	var totalEarned, totalMax int
-	var enabledTestTypes []string
-	if SCConf.BasicTests {
-		enabledTestTypes = append(enabledTestTypes, basicOperator)
-	}
-	if SCConf.OLMTests {
-		enabledTestTypes = append(enabledTestTypes, olmIntegration)
-	}
-	if SCConf.TenantTests {
-		enabledTestTypes = append(enabledTestTypes, goodTenant)
-	}
-	for _, testType := range enabledTestTypes {
-		fmt.Printf("%s:\n", testType)
-		for _, test := range scTests {
-			if test.testType == testType {
-				if !(test.earnedPoints == 0 && test.maximumPoints == 0) {
-					fmt.Printf("\t%s: %d/%d points\n", test.name, test.earnedPoints, test.maximumPoints)
-				} else {
-					fmt.Printf("\t%s: N/A (depends on an earlier test that failed)\n", test.name)
-				}
-				totalEarned += test.earnedPoints
-				totalMax += test.maximumPoints
+		vars.csvObj = csv
+		for _, test := range OLMTests.tests {
+			err = test.execute(vars)
+			if err != nil {
+				return err
 			}
 		}
 	}
-	fmt.Printf("\nTotal Score: %d/%d points\n", totalEarned, totalMax)
+	var totalScores []int
+	if SCConf.BasicTests {
+		fmt.Println("Basic Tests")
+		for _, test := range BasicTests.tests {
+			if !(test.scores[0].earnedPoints == 0 && test.scores[0].maximumPoints == 0) {
+				fmt.Printf("\t%s: %d/%d points\n", test.name, test.scores[0].earnedPoints, test.scores[0].maximumPoints)
+			} else {
+				fmt.Printf("\t%s: N/A (depends on an earlier test that failed)\n", test.name)
+			}
+		}
+		totalScore := BasicTests.calculateTotalScore()
+		fmt.Printf("Basic Tests Score: %d%%\n\n", totalScore)
+		totalScores = append(totalScores, totalScore)
+	}
+	if SCConf.OLMTests {
+		fmt.Println("OLM Tests")
+		for _, test := range OLMTests.tests {
+			if !(test.scores[0].earnedPoints == 0 && test.scores[0].maximumPoints == 0) {
+				fmt.Printf("\t%s: %d/%d points\n", test.name, test.scores[0].earnedPoints, test.scores[0].maximumPoints)
+			} else {
+				fmt.Printf("\t%s: N/A (depends on an earlier test that failed)\n", test.name)
+			}
+		}
+		totalScore := OLMTests.calculateTotalScore()
+		fmt.Printf("OLM Tests Score: %d%%\n\n", totalScore)
+		totalScores = append(totalScores, totalScore)
+	}
+	/* not yet implemented
+	if SCConf.TenantTests {
+	*/
+	totalScore := 0.0
+	for _, score := range totalScores {
+		totalScore += float64(score)
+	}
+	totalScore = totalScore / float64(len(totalScores))
+	fmt.Printf("\nTotal Score: %.0f%%\n", totalScore)
 	for _, suggestion := range scSuggestions {
 		// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
 		fmt.Printf("\x1b[%dmSUGGESTION:\x1b[0m %s\n", 33, suggestion)

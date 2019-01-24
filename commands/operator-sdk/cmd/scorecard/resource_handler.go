@@ -38,6 +38,27 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
+type cleanupFn func() error
+
+// waitUntilReady waits until the status block of the CR currently being tested exists. If the timeout
+// is reached, it simply continues and assumes there is no status block
+func waitUntilReady(obj *unstructured.Unstructured) error {
+	err := wait.Poll(time.Second*1, time.Second*time.Duration(SCConf.InitTimeout), func() (bool, error) {
+		err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, obj)
+		if err != nil {
+			return false, fmt.Errorf("error getting custom resource: %v", err)
+		}
+		if obj.Object["status"] != nil {
+			return true, nil
+		}
+		return false, nil
+	})
+	if err != nil && err != wait.ErrWaitTimeout {
+		return err
+	}
+	return nil
+}
+
 // yamlToUnstructured decodes a yaml file into an unstructured object
 func yamlToUnstructured(yamlPath string) (*unstructured.Unstructured, error) {
 	yamlFile, err := ioutil.ReadFile(yamlPath)
