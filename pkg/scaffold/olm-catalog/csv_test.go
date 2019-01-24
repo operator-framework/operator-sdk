@@ -109,7 +109,7 @@ func TestUpdateVersion(t *testing.T) {
 	}
 	strat, ok := stratInterface.(*olmInstall.StrategyDetailsDeployment)
 	if !ok {
-		t.Fatalf("strategy of type %T was not StrategyDetailsDeployment", stratInterface)
+		t.Fatalf("Strategy of type %T was not StrategyDetailsDeployment", stratInterface)
 	}
 	csvPodImage := strat.DeploymentSpecs[0].Spec.Template.Spec.Containers[0].Image
 	// updateCSVVersions should not update podspec image.
