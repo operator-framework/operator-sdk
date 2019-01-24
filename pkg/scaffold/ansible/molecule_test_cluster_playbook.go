@@ -47,6 +47,7 @@ const moleculeTestClusterPlaybookAnsibleTmpl = `---
     ansible_python_interpreter: '{{ "{{ ansible_playbook_python }}" }}'
     deploy_dir: "{{"{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"}}"
     image_name: {{.Resource.FullGroup}}/{{.ProjectName}}:testing
+    custom_resource: "{{"{{"}} lookup('file', '/'.join([deploy_dir, 'crds/{{.Resource.Group}}_{{.Resource.Version}}_{{.Resource.LowerKind}}_cr.yaml'])) | from_yaml {{"}}"}}"
   tasks:
   - name: Create the {{.Resource.FullGroup}}/{{.Resource.Version}}.{{.Resource.Kind}}
     k8s:
@@ -55,9 +56,19 @@ const moleculeTestClusterPlaybookAnsibleTmpl = `---
 
   - name: Get the newly created Custom Resource
     debug:
-      msg: "{{"{{"}} lookup('k8s', group='{{.Resource.FullGroup}}', api_version='{{.Resource.Version}}', kind='{{.Resource.Kind}}', namespace=namespace, resource_name=cr.metadata.name) {{"}}"}}"
-    vars:
-      cr: "{{"{{"}} lookup('file', '/'.join([deploy_dir, 'crds/{{.Resource.Group}}_{{.Resource.Version}}_{{.Resource.LowerKind}}_cr.yaml'])) | from_yaml {{"}}"}}"
+      msg: "{{"{{"}} lookup('k8s', group='{{.Resource.FullGroup}}', api_version='{{.Resource.Version}}', kind='{{.Resource.Kind}}', namespace=namespace, resource_name=custom_resource.metadata.name) {{"}}"}}"
+
+  - name: Wait 40s for reconcilation to run
+    k8s_facts:
+      api_version: '{{.Resource.Version}}'
+      kind: '{{.Resource.Kind }}'
+      namespace: '{{"{{"}} namespace {{"}}"}}'
+      name: '{{"{{"}} custom_resource.metadata.name {{"}}"}}'
+    register: reconcile_cr
+    until:
+    - "'Successful' in (reconcile_cr | json_query('resources[].status.conditions[].reason'))"
+    delay: 4
+    retries: 10
 
 - import_playbook: "{{"{{ playbook_dir }}/../default/asserts.yml"}}"
 `

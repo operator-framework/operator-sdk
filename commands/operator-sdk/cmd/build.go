@@ -55,7 +55,7 @@ For example:
 	$ operator-sdk build quay.io/example/operator:v0.0.1
 	$ docker push quay.io/example/operator:v0.0.1
 `,
-		Run: buildFunc,
+		RunE: buildFunc,
 	}
 	buildCmd.Flags().BoolVar(&enableTests, "enable-tests", false, "Enable in-cluster testing by adding test binary to the image")
 	buildCmd.Flags().StringVar(&testLocationBuild, "test-location", "./test/e2e", "Location of tests")
@@ -80,11 +80,11 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 		yamlMap := make(map[string]interface{})
 		err := yaml.Unmarshal(yamlSpec, &yamlMap)
 		if err != nil {
-			log.Fatalf("Could not unmarshal YAML namespaced spec: (%v)", err)
+			return fmt.Errorf("could not unmarshal YAML namespaced spec: (%v)", err)
 		}
 		kind, ok := yamlMap["kind"].(string)
 		if !ok {
-			log.Fatal("YAML manifest file contains a 'kind' field that is not a string")
+			return fmt.Errorf("yaml manifest file contains a 'kind' field that is not a string")
 		}
 		if kind == "Deployment" {
 			// this is ugly and hacky; we should probably make this cleaner
@@ -116,7 +116,7 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		log.Fatalf("Failed to verify deployment image: (%v)", err)
+		return fmt.Errorf("failed to verify deployment image: (%v)", err)
 	}
 	if warningMessages == "" {
 		return nil
@@ -124,10 +124,10 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 	return errors.New(warningMessages)
 }
 
-func verifyTestManifest(image string) {
+func verifyTestManifest(image string) error {
 	namespacedBytes, err := ioutil.ReadFile(namespacedManBuild)
 	if err != nil {
-		log.Fatalf("Could not read namespaced manifest: (%v)", err)
+		return fmt.Errorf("could not read namespaced manifest: (%v)", err)
 	}
 
 	err = verifyDeploymentImage(namespacedBytes, image)
@@ -135,28 +135,26 @@ func verifyTestManifest(image string) {
 	if err != nil {
 		log.Warn(err)
 	}
+	return nil
 }
 
-func buildFunc(cmd *cobra.Command, args []string) {
+func buildFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
-		log.Fatalf("Command %s requires exactly one argument", cmd.CommandPath())
+		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
 	}
 
 	projutil.MustInProjectRoot()
 	goBuildEnv := append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
 	absProjectPath := projutil.MustGetwd()
 
-	// Don't need to build go code if Ansible Operator
-	if mainExists() {
+	// Don't need to build Go code if a non-Go Operator.
+	if projutil.GetOperatorType() == projutil.OperatorTypeGo {
 		managerDir := filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir)
 		outputBinName := filepath.Join(absProjectPath, scaffold.BuildBinDir, filepath.Base(absProjectPath))
 		buildCmd := exec.Command("go", "build", "-o", outputBinName, managerDir)
 		buildCmd.Env = goBuildEnv
-		buildCmd.Stdout = os.Stdout
-		buildCmd.Stderr = os.Stderr
-		err := buildCmd.Run()
-		if err != nil {
-			log.Fatalf("Failed to build operator binary: (%v)", err)
+		if err := projutil.ExecCmd(buildCmd); err != nil {
+			return fmt.Errorf("failed to build operator binary: (%v)", err)
 		}
 	}
 
@@ -169,32 +167,25 @@ func buildFunc(cmd *cobra.Command, args []string) {
 	log.Infof("Building Docker image %s", baseImageName)
 
 	dbcmd := exec.Command("docker", "build", ".", "-f", "build/Dockerfile", "-t", baseImageName)
-	dbcmd.Stdout = os.Stdout
-	dbcmd.Stderr = os.Stderr
-	err := dbcmd.Run()
-	if err != nil {
+	if err := projutil.ExecCmd(dbcmd); err != nil {
 		if enableTests {
-			log.Fatalf("Failed to output intermediate image %s: (%v)", image, err)
-		} else {
-			log.Fatalf("Failed to output build image %s: (%v)", image, err)
+			return fmt.Errorf("failed to output intermediate image %s: (%v)", image, err)
 		}
+		return fmt.Errorf("failed to output build image %s: (%v)", image, err)
 	}
 
 	if enableTests {
-		if mainExists() {
+		if projutil.GetOperatorType() == projutil.OperatorTypeGo {
 			testBinary := filepath.Join(absProjectPath, scaffold.BuildBinDir, filepath.Base(absProjectPath)+"-test")
 			buildTestCmd := exec.Command("go", "test", "-c", "-o", testBinary, testLocationBuild+"/...")
 			buildTestCmd.Env = goBuildEnv
-			buildTestCmd.Stdout = os.Stdout
-			buildTestCmd.Stderr = os.Stderr
-			err = buildTestCmd.Run()
-			if err != nil {
-				log.Fatalf("Failed to build test binary: (%v)", err)
+			if err := projutil.ExecCmd(buildTestCmd); err != nil {
+				return fmt.Errorf("failed to build test binary: (%v)", err)
 			}
 		}
 		// if a user is using an older sdk repo as their library, make sure they have required build files
 		testDockerfile := filepath.Join(scaffold.BuildTestDir, scaffold.DockerfileFile)
-		_, err = os.Stat(testDockerfile)
+		_, err := os.Stat(testDockerfile)
 		if err != nil && os.IsNotExist(err) {
 
 			log.Info("Generating build manifests for test-framework.")
@@ -207,7 +198,8 @@ func buildFunc(cmd *cobra.Command, args []string) {
 			}
 
 			s := &scaffold.Scaffold{}
-			switch projutil.GetOperatorType() {
+			t := projutil.GetOperatorType()
+			switch t {
 			case projutil.OperatorTypeGo:
 				err = s.Execute(cfg,
 					&scaffold.TestFrameworkDockerfile{},
@@ -215,35 +207,30 @@ func buildFunc(cmd *cobra.Command, args []string) {
 					&scaffold.TestPod{Image: image, TestNamespaceEnv: test.TestNamespaceEnv},
 				)
 			case projutil.OperatorTypeAnsible:
-				log.Fatal("Test scaffolding for Ansible Operators is not implemented")
+				return fmt.Errorf("test scaffolding for Ansible Operators is not implemented")
 			case projutil.OperatorTypeHelm:
-				log.Fatal("Test scaffolding for Helm Operators is not implemented")
+				return fmt.Errorf("test scaffolding for Helm Operators is not implemented")
 			default:
-				log.Fatal("Failed to determine operator type")
+				return fmt.Errorf("unknown operator type '%v'", t)
 			}
 
 			if err != nil {
-				log.Fatalf("Test framework manifest scaffold failed: (%v)", err)
+				return fmt.Errorf("test framework manifest scaffold failed: (%v)", err)
 			}
 		}
 
 		log.Infof("Building test Docker image %s", image)
 
 		testDbcmd := exec.Command("docker", "build", ".", "-f", testDockerfile, "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+baseImageName)
-		testDbcmd.Stdout = os.Stdout
-		testDbcmd.Stderr = os.Stderr
-		err = testDbcmd.Run()
-		if err != nil {
-			log.Fatalf("Failed to output test image %s: (%v)", image, err)
+		if err := projutil.ExecCmd(testDbcmd); err != nil {
+			return fmt.Errorf("failed to output test image %s: (%v)", image, err)
 		}
 		// Check image name of deployments in namespaced manifest
-		verifyTestManifest(image)
+		if err := verifyTestManifest(image); err != nil {
+			return nil
+		}
 	}
 
 	log.Info("Operator build complete.")
-}
-
-func mainExists() bool {
-	_, err := os.Stat(filepath.Join(scaffold.ManagerDir, scaffold.CmdFile))
-	return err == nil
+	return nil
 }

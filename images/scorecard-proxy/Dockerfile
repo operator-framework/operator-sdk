@@ -1,7 +1,16 @@
 # Base image
 FROM alpine:3.8
 
-RUN apk upgrade --update --no-cache
-USER nobody
+ENV PROXY=/usr/local/bin/scorecard-proxy \
+    USER_UID=1001 \
+    USER_NAME=proxy
 
-COPY scorecard-proxy /usr/local/bin/scorecard-proxy
+# install operator binary
+COPY scorecard-proxy ${PROXY}
+
+COPY bin /usr/local/bin
+RUN  /usr/local/bin/user_setup
+
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
+
+USER ${USER_UID}

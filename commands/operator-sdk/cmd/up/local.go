@@ -36,6 +36,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 // NewLocalCmd - up local command to run an operator loccally
@@ -47,7 +48,7 @@ func NewLocalCmd() *cobra.Command {
 by building the operator binary with the ability to access a
 kubernetes cluster using a kubeconfig file.
 `,
-		Run: upLocalFunc,
+		RunE: upLocalFunc,
 	}
 
 	upLocalCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "The file path to kubernetes configuration file; defaults to location specified by $KUBECONFIG with a fallback to $HOME/.kube/config if not set")
@@ -72,14 +73,14 @@ var (
 	helmOperatorFlags    *hoflags.HelmOperatorFlags
 )
 
-func upLocalFunc(cmd *cobra.Command, args []string) {
+func upLocalFunc(cmd *cobra.Command, args []string) error {
 	log.Info("Running the operator locally.")
 
 	// get default namespace to watch if unset
 	if !cmd.Flags().Changed("namespace") {
 		_, defaultNamespace, err := k8sInternal.GetKubeconfigAndNamespace(kubeConfig)
 		if err != nil {
-			log.Fatalf("Failed to get kubeconfig and default namespace: %v", err)
+			return fmt.Errorf("Failed to get kubeconfig and default namespace: %v", err)
 		}
 		namespace = defaultNamespace
 	}
@@ -88,17 +89,16 @@ func upLocalFunc(cmd *cobra.Command, args []string) {
 	switch projutil.GetOperatorType() {
 	case projutil.OperatorTypeGo:
 		projutil.MustInProjectRoot()
-		upLocal()
+		return upLocal()
 	case projutil.OperatorTypeAnsible:
-		upLocalAnsible()
+		return upLocalAnsible()
 	case projutil.OperatorTypeHelm:
-		upLocalHelm()
-	default:
-		log.Fatal("Failed to determine operator type")
+		return upLocalHelm()
 	}
+	return fmt.Errorf("unknown operator type '%v'", t)
 }
 
-func upLocal() {
+func upLocal() error {
 	args := []string{"run"}
 	if ldFlags != "" {
 		args = append(args, []string{"-ldflags", ldFlags}...)
@@ -115,7 +115,7 @@ func upLocal() {
 		<-c
 		err := dc.Process.Kill()
 		if err != nil {
-			log.Fatalf("Failed to terminate the operator: (%v)", err)
+			return fmt.Errorf("Failed to terminate the operator: (%v)", err)
 		}
 		os.Exit(0)
 	}()
@@ -127,46 +127,50 @@ func upLocal() {
 		dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, kubeConfig))
 	}
 	dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, namespace))
-	err := dc.Run()
-	if err != nil {
-		log.Fatalf("Failed to run operator locally: (%v)", err)
+	if err := projutil.ExecCmd(dc); err != nil {
+		return fmt.Errorf("failed to run operator locally: (%v)", err)
 	}
+	return nil
 }
 
-func upLocalAnsible() {
+func upLocalAnsible() error {
+	logf.SetLogger(logf.ZapLogger(false))
+
 	// Set the kubeconfig that the manager will be able to grab
 	// only set env var if user explicitly specified a kubeconfig path
 	if kubeConfig != "" {
 		if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
-			log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+			return fmt.Errorf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
 		}
 	}
 	// Set the namespace that the manager will be able to grab
 	if namespace != "" {
 		if err := os.Setenv(k8sutil.WatchNamespaceEnvVar, namespace); err != nil {
-			log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
+			return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
 		}
 	}
 
-	ansible.Run(ansibleOperatorFlags)
+	return ansible.Run(ansibleOperatorFlags)
 }
 
-func upLocalHelm() {
+func upLocalHelm() error {
+	logf.SetLogger(logf.ZapLogger(false))
+
 	// Set the kubeconfig that the manager will be able to grab
 	// only set env var if user explicitly specified a kubeconfig path
 	if kubeConfig != "" {
 		if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
-			log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+			return fmt.Errorf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
 		}
 	}
 	// Set the namespace that the manager will be able to grab
 	if namespace != "" {
 		if err := os.Setenv(k8sutil.WatchNamespaceEnvVar, namespace); err != nil {
-			log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
+			return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
 		}
 	}
 
-	helm.Run(helmOperatorFlags)
+	return helm.Run(helmOperatorFlags)
 }
 
 func printVersion() {

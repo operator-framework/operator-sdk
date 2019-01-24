@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package helm
+package scaffold
 
 import (
 	"path/filepath"
@@ -20,40 +20,33 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-// Main - main source file for helm operator
-type Main struct {
+const UserSetupFile = "user_setup"
+
+// UserSetup - userSetup script
+type UserSetup struct {
 	input.Input
 }
 
-func (m *Main) GetInput() (input.Input, error) {
-	if m.Path == "" {
-		m.Path = filepath.Join("cmd", "manager", "main.go")
+func (u *UserSetup) GetInput() (input.Input, error) {
+	if u.Path == "" {
+		u.Path = filepath.Join(BuildScriptDir, UserSetupFile)
 	}
-	m.TemplateBody = mainTmpl
-	return m.Input, nil
+	u.TemplateBody = userSetupTmpl
+	u.IsExec = true
+	return u.Input, nil
 }
 
-const mainTmpl = `package main
+const userSetupTmpl = `#!/bin/sh
+set -x
 
-import (
-	"os"
+# ensure $HOME exists and is accessible by group 0 (we don't know what the runtime UID will be)
+mkdir -p ${HOME}
+chown ${USER_UID}:0 ${HOME}
+chmod ug+rwx ${HOME}
 
-	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
-	"github.com/operator-framework/operator-sdk/pkg/helm"
+# runtime user will need to be able to self-insert in /etc/passwd
+chmod g+rw /etc/passwd
 
-	"github.com/spf13/pflag"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-)
-
-func main() {
-	logf.SetLogger(logf.ZapLogger(false))
-
-	hflags := hoflags.AddTo(pflag.CommandLine)
-	pflag.Parse()
-
-	if err := helm.Run(hflags); err != nil {
-		logf.Log.WithName("cmd").Error(err, "")
-		os.Exit(1)
-	}
-}
+# no need for this script to remain in the image after running
+rm $0
 `
