@@ -17,7 +17,6 @@ package catalog
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
 
 	"github.com/ghodss/yaml"
 	olmApi "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -96,48 +95,48 @@ type CSVInstallStrategyUpdate struct {
 }
 
 func (store *updaterStore) AddRole(yamlDoc []byte) error {
-	newRole := &rbacv1.Role{}
-	if err := yaml.Unmarshal(yamlDoc, newRole); err != nil {
+	role := &rbacv1.Role{}
+	if err := yaml.Unmarshal(yamlDoc, role); err != nil {
 		return err
 	}
-	newPerm := olmInstall.StrategyDeploymentPermissions{
-		ServiceAccountName: newRole.ObjectMeta.Name,
-		Rules:              newRole.Rules,
+	perm := olmInstall.StrategyDeploymentPermissions{
+		ServiceAccountName: role.ObjectMeta.Name,
+		Rules:              role.Rules,
 	}
-	store.installStrategy.Permissions = append(store.installStrategy.Permissions, newPerm)
+	store.installStrategy.Permissions = append(store.installStrategy.Permissions, perm)
 
 	return nil
 }
 
 func (store *updaterStore) AddClusterRole(yamlDoc []byte) error {
-	newCRole := &rbacv1.ClusterRole{}
-	if err := yaml.Unmarshal(yamlDoc, newCRole); err != nil {
+	clusterRole := &rbacv1.ClusterRole{}
+	if err := yaml.Unmarshal(yamlDoc, clusterRole); err != nil {
 		return err
 	}
-	newPerm := olmInstall.StrategyDeploymentPermissions{
-		ServiceAccountName: newCRole.ObjectMeta.Name,
-		Rules:              newCRole.Rules,
+	perm := olmInstall.StrategyDeploymentPermissions{
+		ServiceAccountName: clusterRole.ObjectMeta.Name,
+		Rules:              clusterRole.Rules,
 	}
-	store.installStrategy.ClusterPermissions = append(store.installStrategy.ClusterPermissions, newPerm)
+	store.installStrategy.ClusterPermissions = append(store.installStrategy.ClusterPermissions, perm)
 
 	return nil
 }
 
 func (store *updaterStore) AddDeploymentSpec(yamlDoc []byte) error {
-	newDep := &appsv1.Deployment{}
-	if err := yaml.Unmarshal(yamlDoc, newDep); err != nil {
+	dep := &appsv1.Deployment{}
+	if err := yaml.Unmarshal(yamlDoc, dep); err != nil {
 		return err
 	}
-	newDepSpec := olmInstall.StrategyDeploymentSpec{
-		Name: newDep.ObjectMeta.Name,
-		Spec: newDep.Spec,
+	depSpec := olmInstall.StrategyDeploymentSpec{
+		Name: dep.ObjectMeta.Name,
+		Spec: dep.Spec,
 	}
-	store.installStrategy.DeploymentSpecs = append(store.installStrategy.DeploymentSpecs, newDepSpec)
+	store.installStrategy.DeploymentSpecs = append(store.installStrategy.DeploymentSpecs, depSpec)
 
 	return nil
 }
 
-func (us *CSVInstallStrategyUpdate) Apply(csv *olmApi.ClusterServiceVersion) (err error) {
+func (u *CSVInstallStrategyUpdate) Apply(csv *olmApi.ClusterServiceVersion) (err error) {
 	// Get install strategy from csv. Default to a deployment strategy if none found.
 	var strat olmInstall.Strategy
 	if csv.Spec.InstallStrategy.StrategyName == "" {
@@ -154,9 +153,9 @@ func (us *CSVInstallStrategyUpdate) Apply(csv *olmApi.ClusterServiceVersion) (er
 	switch s := strat.(type) {
 	case *olmInstall.StrategyDetailsDeployment:
 		// Update permissions and deployments.
-		us.updatePermissions(s)
-		us.updateClusterPermissions(s)
-		us.updateDeploymentSpecs(s)
+		u.updatePermissions(s)
+		u.updateClusterPermissions(s)
+		u.updateDeploymentSpecs(s)
 	default:
 		return fmt.Errorf("install strategy (%v) of unknown type", strat)
 	}
@@ -171,21 +170,21 @@ func (us *CSVInstallStrategyUpdate) Apply(csv *olmApi.ClusterServiceVersion) (er
 	return nil
 }
 
-func (us *CSVInstallStrategyUpdate) updatePermissions(strat *olmInstall.StrategyDetailsDeployment) {
-	if len(us.Permissions) != 0 {
-		strat.Permissions = us.Permissions
+func (u *CSVInstallStrategyUpdate) updatePermissions(strat *olmInstall.StrategyDetailsDeployment) {
+	if len(u.Permissions) != 0 {
+		strat.Permissions = u.Permissions
 	}
 }
 
-func (us *CSVInstallStrategyUpdate) updateClusterPermissions(strat *olmInstall.StrategyDetailsDeployment) {
-	if len(us.ClusterPermissions) != 0 {
-		strat.ClusterPermissions = us.ClusterPermissions
+func (u *CSVInstallStrategyUpdate) updateClusterPermissions(strat *olmInstall.StrategyDetailsDeployment) {
+	if len(u.ClusterPermissions) != 0 {
+		strat.ClusterPermissions = u.ClusterPermissions
 	}
 }
 
-func (us *CSVInstallStrategyUpdate) updateDeploymentSpecs(strat *olmInstall.StrategyDetailsDeployment) {
-	if len(us.DeploymentSpecs) != 0 {
-		strat.DeploymentSpecs = us.DeploymentSpecs
+func (u *CSVInstallStrategyUpdate) updateDeploymentSpecs(strat *olmInstall.StrategyDetailsDeployment) {
+	if len(u.DeploymentSpecs) != 0 {
+		strat.DeploymentSpecs = u.DeploymentSpecs
 	}
 }
 
@@ -194,86 +193,53 @@ type CSVCustomResourceDefinitionsUpdate struct {
 }
 
 func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
-	newCRDDesc, err := parseCRDDescriptionFromYAML(yamlDoc)
+	crdDesc, err := parseCRDDescriptionFromYAML(yamlDoc)
 	if err == nil {
-		store.crdUpdate.Owned = append(store.crdUpdate.Owned, *newCRDDesc)
+		store.crdUpdate.Owned = append(store.crdUpdate.Owned, *crdDesc)
 	}
 	return err
 }
 
 func (store *updaterStore) AddRequiredCRD(yamlDoc []byte) error {
-	newCRDDesc, err := parseCRDDescriptionFromYAML(yamlDoc)
+	crdDesc, err := parseCRDDescriptionFromYAML(yamlDoc)
 	if err == nil {
-		store.crdUpdate.Required = append(store.crdUpdate.Required, *newCRDDesc)
+		store.crdUpdate.Required = append(store.crdUpdate.Required, *crdDesc)
 	}
 	return err
 }
 
 func parseCRDDescriptionFromYAML(yamlDoc []byte) (*olmApi.CRDDescription, error) {
-	newCRD := &apiextv1beta1.CustomResourceDefinition{}
-	if err := yaml.Unmarshal(yamlDoc, newCRD); err != nil {
+	crd := &apiextv1beta1.CustomResourceDefinition{}
+	if err := yaml.Unmarshal(yamlDoc, crd); err != nil {
 		return nil, err
 	}
-
-	crdDesc := &olmApi.CRDDescription{
-		Name:    newCRD.ObjectMeta.Name,
-		Version: newCRD.Spec.Version,
-		Kind:    newCRD.Spec.Names.Kind,
-	}
-	setCRDDisplayNameIfExist(crdDesc, newCRD)
-	setCRDDescriptionIfExist(crdDesc, newCRD)
-
-	return crdDesc, nil
+	return &olmApi.CRDDescription{
+		Name:    crd.ObjectMeta.Name,
+		Version: crd.Spec.Version,
+		Kind:    crd.Spec.Names.Kind,
+	}, nil
 }
 
-// Annotations for display name and description in CRD metadata should have
-// keys containing strings that match the following patterns if users want
-// CSV's to correctly describe and display their CRD's.
-var (
-	dnRegexp   = regexp.MustCompile(".*[dD]isplay[nN]ame.*")
-	descRegexp = regexp.MustCompile(".*[dD]escription.*")
-)
-
-// setCRDDisplayNameIfExist sets dstCRDDesc's DisplayName field only if a
-// viable metadata annotation is found.
-func setCRDDisplayNameIfExist(dstCRDDesc *olmApi.CRDDescription, srcCRD *apiextv1beta1.CustomResourceDefinition) {
-	for k, v := range srcCRD.ObjectMeta.GetAnnotations() {
-		if dnRegexp.MatchString(k) {
-			dstCRDDesc.DisplayName = v
-			break
-		}
-	}
-}
-
-// setCRDDescriptionIfExist sets dstCRDDesc's Description field only if a
-// viable metadata annotation is found.
-func setCRDDescriptionIfExist(dstCRDDesc *olmApi.CRDDescription, srcCRD *apiextv1beta1.CustomResourceDefinition) {
-	for k, v := range srcCRD.ObjectMeta.GetAnnotations() {
-		if descRegexp.MatchString(k) {
-			dstCRDDesc.Description = v
-			break
-		}
-	}
-}
-
-func (us *CSVCustomResourceDefinitionsUpdate) Apply(csv *olmApi.ClusterServiceVersion) error {
-	// Update all CRD descriptions, and include any user-written information in
-	// the new CRD descriptions.
+// Apply updates all CRDDescriptions with any user-defined data in csv's
+// CRDDescriptions.
+func (u *CSVCustomResourceDefinitionsUpdate) Apply(csv *olmApi.ClusterServiceVersion) error {
 	crdDescSet := make(map[string]*olmApi.CRDDescription)
-	for _, desc := range us.Owned {
+	for _, desc := range u.Owned {
 		crdDescSet[desc.Name] = &desc
 	}
-	for _, desc := range us.Required {
+	for _, desc := range u.Required {
 		crdDescSet[desc.Name] = &desc
 	}
-	for _, crd := range csv.GetAllCRDDescriptions() {
-		if desc, ok := crdDescSet[crd.Name]; ok {
-			desc.ActionDescriptor = crd.ActionDescriptor
-			desc.SpecDescriptors = crd.SpecDescriptors
-			desc.StatusDescriptors = crd.StatusDescriptors
-			desc.Resources = crd.Resources
+	for _, csvDesc := range csv.GetAllCRDDescriptions() {
+		if uDesc, ok := crdDescSet[csvDesc.Name]; ok {
+			uDesc.DisplayName = csvDesc.DisplayName
+			uDesc.Description = csvDesc.Description
+			uDesc.ActionDescriptor = csvDesc.ActionDescriptor
+			uDesc.SpecDescriptors = csvDesc.SpecDescriptors
+			uDesc.StatusDescriptors = csvDesc.StatusDescriptors
+			uDesc.Resources = csvDesc.Resources
 		}
 	}
-	csv.Spec.CustomResourceDefinitions = *us.CustomResourceDefinitions
+	csv.Spec.CustomResourceDefinitions = *u.CustomResourceDefinitions
 	return nil
 }
