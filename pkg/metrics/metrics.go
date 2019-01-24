@@ -40,6 +40,10 @@ func ExposeMetricsPort(port int32, mgr manager.Manager) (*v1.Service, error) {
 	// would error out and we would never get to this stage.
 	s, err := initOperatorService(port, PrometheusPortName)
 	if err != nil {
+		if err == k8sutil.ErrNoNamespace {
+			log.Info("Skipping metrics Service creation; not running in a cluster.")
+			return nil, nil
+		}
 		return nil, fmt.Errorf("failed to initialize service object for metrics: %v", err)
 	}
 	service, err := createService(mgr, s)
