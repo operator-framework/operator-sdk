@@ -69,14 +69,14 @@ API server, indicating that it is modifying resources. This test has a maximum s
 
 #### Owned CRDs Have Resources Listed
 
-This test makes sure that the CRDs listed in the `owned` CRDs section of the CSV have a `resources` subsection. This
+This test makes sure that the CRDs listed in the [`owned` CRDs section][owned-crds] of the CSV have a `resources` subsection. This
 test has a maximum score equal to the number of CRDs listed in the CSV.
 
 Note: In the future, this test will verify that all resources modified by the operator are listed in the resources section.
 
 #### CRs Have At Least 1 Example
 
-This test checks that the CSV has an `alm-examples` section in its metadatas' annotations. This test has a maximum score of 1.
+This test checks that the CSV has an [`alm-examples` section][alm-examples] in its metadatas' annotations. This test has a maximum score of 1.
 
 #### Spec Fields With Descriptors
 
@@ -90,3 +90,5 @@ the CSV. This test has a maximum score equal to the number of fields in the stat
 
 [cli-reference]: ../sdk-cli-reference.md#scorecard
 [writing-tests]: ./writing-e2e-tests.md
+[owned-crds]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md#owned-crds
+[alm-examples]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md#crd-templates
