@@ -2,6 +2,8 @@
 
 ### Added
 
+- By default the controller-runtime metrics are exposed on port 8383. This is done as part of the scaffold in the main.go file, the port can be adjusted by modifying the `metricsPort` variable. [#786](https://github.com/operator-framework/operator-sdk/pull/786)
+
 ### Changed
 
 ### Deprecated
