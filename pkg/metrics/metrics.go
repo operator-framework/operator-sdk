@@ -20,6 +20,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,14 +33,18 @@ import (
 
 var log = logf.Log.WithName("metrics")
 
-// PrometheusPortName defines the port name used in kubernetes deployment and service resources
+// PrometheusPortName defines the port name used in the Service
 const PrometheusPortName = "metrics"
 
 // ExposeMetricsPort creates a Kubernetes Service to expose the passed metrics port.
 func ExposeMetricsPort(ctx context.Context, port int32) (*v1.Service, error) {
+	client, err := createClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new client: %v", err)
+	}
 	// We do not need to check the validity of the port, as controller-runtime
 	// would error out and we would never get to this stage.
-	s, err := initOperatorService(port, PrometheusPortName)
+	s, err := initOperatorService(ctx, client, port, PrometheusPortName)
 	if err != nil {
 		if err == k8sutil.ErrNoNamespace {
 			log.Info("Skipping metrics Service creation; not running in a cluster.")
@@ -47,7 +52,7 @@ func ExposeMetricsPort(ctx context.Context, port int32) (*v1.Service, error) {
 		}
 		return nil, fmt.Errorf("failed to initialize service object for metrics: %v", err)
 	}
-	service, err := createService(ctx, s)
+	service, err := createService(ctx, client, s)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create or get service for metrics: %v", err)
 	}
@@ -55,17 +60,7 @@ func ExposeMetricsPort(ctx context.Context, port int32) (*v1.Service, error) {
 	return service, nil
 }
 
-func createService(ctx context.Context, s *v1.Service) (*v1.Service, error) {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := crclient.New(config, crclient.Options{})
-	if err != nil {
-		return nil, err
-	}
-
+func createService(ctx context.Context, client crclient.Client, s *v1.Service) (*v1.Service, error) {
 	if err := client.Create(ctx, s); err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return nil, err
@@ -84,11 +79,12 @@ func createService(ctx context.Context, s *v1.Service) (*v1.Service, error) {
 	}
 
 	log.Info("Metrics Service object created", "name", s.Name)
+
 	return s, nil
 }
 
-// initOperatorService returns the static service which exposes specifed port.
-func initOperatorService(port int32, portName string) (*v1.Service, error) {
+// initOperatorService returns the static service which exposes the specifed port.
+func initOperatorService(ctx context.Context, client crclient.Client, port int32, portName string) (*v1.Service, error) {
 	operatorName, err := k8sutil.GetOperatorName()
 	if err != nil {
 		return nil, err
@@ -97,11 +93,24 @@ func initOperatorService(port int32, portName string) (*v1.Service, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	deployment, err := getPodDeployment(ctx, client, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	label := deployment.Spec.Template.Labels
+	if label == nil {
+		// If deployment this pod belongs to does not have any labels
+		// the metrics Service will not be able to select.
+		return nil, fmt.Errorf("failed to initialize new metrics Service object: Deployment labels are empty")
+	}
+
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      operatorName,
 			Namespace: namespace,
-			Labels:    map[string]string{"name": operatorName},
+			Labels:    label,
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",
@@ -119,8 +128,69 @@ func initOperatorService(port int32, portName string) (*v1.Service, error) {
 					Name: portName,
 				},
 			},
-			Selector: map[string]string{"name": operatorName},
+			Selector: label,
 		},
 	}
+
+	// Set Service owner reference to Deployment.
+	trueVar := true
+	deployOwnRefs := []metav1.OwnerReference{
+		{
+			APIVersion: "extensions/v1beta1",
+			Kind:       "deployment",
+			Name:       deployment.Name,
+			UID:        deployment.UID,
+			Controller: &trueVar,
+		}}
+	service.SetOwnerReferences(deployOwnRefs)
+
 	return service, nil
+}
+
+func getPodDeployment(ctx context.Context, client crclient.Client, ns string) (*appsv1.Deployment, error) {
+	// Get current Pod the operator is running in
+	pod, err := k8sutil.GetPod(ctx, client, ns)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get ReplicasSet that the Pod belongs to
+	rsOwnerRef := metav1.GetControllerOf(pod)
+	if rsOwnerRef == nil || rsOwnerRef.Kind != "ReplicaSet" {
+		return nil, fmt.Errorf("failed to get Deployment the Pod belongs to")
+	}
+	rs := &appsv1.ReplicaSet{}
+	key := crclient.ObjectKey{Namespace: ns, Name: rsOwnerRef.Name}
+	if err := client.Get(ctx, key, rs); err != nil {
+		return nil, err
+	}
+
+	// Get Deployment the ReplicaSet and in turn the Pod belongs to
+	deployOwnerRef := metav1.GetControllerOf(rs)
+	if deployOwnerRef == nil || deployOwnerRef.Kind != "Deployment" {
+		return nil, fmt.Errorf("failed to get Deployment the Pod belongs to")
+	}
+	d := &appsv1.Deployment{}
+	key.Name = deployOwnerRef.Name
+	if err := client.Get(context.TODO(), key, d); err != nil {
+		return nil, err
+	}
+
+	log.V(1).Info("Found Deployment the current Pod belongs to", "Deployment.Name", d.Name)
+
+	return d, nil
+}
+
+func createClient() (crclient.Client, error) {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := crclient.New(config, crclient.Options{})
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }
