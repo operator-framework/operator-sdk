@@ -62,6 +62,13 @@ func (s *CSV) initFS(fs afero.Fs) {
 	})
 }
 
+func (s *CSV) getFS() afero.Fs {
+	s.once.Do(func() {
+		s.fs = afero.NewOsFs()
+	})
+	return s.fs
+}
+
 func (s *CSV) GetInput() (input.Input, error) {
 	// A CSV version is required.
 	if s.CSVVersion == "" {
@@ -127,7 +134,7 @@ func (s *CSV) getBaseCSVIfExists() (*olmApi.ClusterServiceVersion, bool, error) 
 	lowerProjName := strings.ToLower(s.ProjectName)
 	name := lowerProjName + CSVYamlFileExt
 	fromCSV := filepath.Join(scaffold.OLMCatalogDir, name)
-	return getCSVFromFSIfExists(s.fs, fromCSV)
+	return getCSVFromFSIfExists(s.getFS(), fromCSV)
 }
 
 func getCSVFromFSIfExists(fs afero.Fs, path string) (*olmApi.ClusterServiceVersion, bool, error) {
@@ -313,7 +320,7 @@ func replaceAllBytes(v interface{}, old, new []byte) error {
 func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmApi.ClusterServiceVersion) error {
 	store := NewUpdaterStore()
 	for _, f := range append(cfg.CRDCRPaths, cfg.OperatorPath, cfg.RolePath) {
-		yamlData, err := afero.ReadFile(s.fs, f)
+		yamlData, err := afero.ReadFile(s.getFS(), f)
 		if err != nil {
 			return err
 		}
