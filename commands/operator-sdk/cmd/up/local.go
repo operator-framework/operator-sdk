@@ -19,12 +19,12 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"os/user"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
 
+	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/ansible"
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
@@ -50,9 +50,9 @@ kubernetes cluster using a kubeconfig file.
 		Run: upLocalFunc,
 	}
 
-	upLocalCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "The file path to kubernetes configuration file; defaults to $HOME/.kube/config")
+	upLocalCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "The file path to kubernetes configuration file; defaults to location specified by $KUBECONFIG with a fallback to $HOME/.kube/config if not set")
 	upLocalCmd.Flags().StringVar(&operatorFlags, "operator-flags", "", "The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
-	upLocalCmd.Flags().StringVar(&namespace, "namespace", "default", "The namespace where the operator watches for changes.")
+	upLocalCmd.Flags().StringVar(&namespace, "namespace", "", "The namespace where the operator watches for changes.")
 	upLocalCmd.Flags().StringVar(&ldFlags, "go-ldflags", "", "Set Go linker options")
 	switch projutil.GetOperatorType() {
 	case projutil.OperatorTypeAnsible:
@@ -72,14 +72,18 @@ var (
 	helmOperatorFlags    *hoflags.HelmOperatorFlags
 )
 
-const (
-	defaultConfigPath = ".kube/config"
-)
-
 func upLocalFunc(cmd *cobra.Command, args []string) {
-	mustKubeConfig()
-
 	log.Info("Running the operator locally.")
+
+	// get default namespace to watch if unset
+	if !cmd.Flags().Changed("namespace") {
+		_, defaultNamespace, err := k8sInternal.GetKubeconfigAndNamespace(kubeConfig)
+		if err != nil {
+			log.Fatalf("Failed to get kubeconfig and default namespace: %v", err)
+		}
+		namespace = defaultNamespace
+	}
+	log.Infof("Using namespace %s.", namespace)
 
 	switch projutil.GetOperatorType() {
 	case projutil.OperatorTypeGo:
@@ -91,23 +95,6 @@ func upLocalFunc(cmd *cobra.Command, args []string) {
 		upLocalHelm()
 	default:
 		log.Fatal("Failed to determine operator type")
-	}
-}
-
-// mustKubeConfig checks if the kubeconfig file exists.
-func mustKubeConfig() {
-	// if kubeConfig is not specified, search for the default kubeconfig file under the $HOME/.kube/config.
-	if len(kubeConfig) == 0 {
-		usr, err := user.Current()
-		if err != nil {
-			log.Fatalf("Failed to determine user's home dir: (%v)", err)
-		}
-		kubeConfig = filepath.Join(usr.HomeDir, defaultConfigPath)
-	}
-
-	_, err := os.Stat(kubeConfig)
-	if err != nil && os.IsNotExist(err) {
-		log.Fatalf("Failed to find the kubeconfig file (%v): (%v)", kubeConfig, err)
 	}
 }
 
@@ -134,7 +121,11 @@ func upLocal() {
 	}()
 	dc.Stdout = os.Stdout
 	dc.Stderr = os.Stderr
-	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, kubeConfig))
+	dc.Env = os.Environ()
+	// only set env var if user explicitly specified a kubeconfig path
+	if kubeConfig != "" {
+		dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, kubeConfig))
+	}
 	dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, namespace))
 	err := dc.Run()
 	if err != nil {
@@ -144,10 +135,13 @@ func upLocal() {
 
 func upLocalAnsible() {
 	// Set the kubeconfig that the manager will be able to grab
-	if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
-		log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+	// only set env var if user explicitly specified a kubeconfig path
+	if kubeConfig != "" {
+		if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
+			log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+		}
 	}
-	// Set the kubeconfig that the manager will be able to grab
+	// Set the namespace that the manager will be able to grab
 	if namespace != "" {
 		if err := os.Setenv(k8sutil.WatchNamespaceEnvVar, namespace); err != nil {
 			log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
@@ -159,11 +153,13 @@ func upLocalAnsible() {
 
 func upLocalHelm() {
 	// Set the kubeconfig that the manager will be able to grab
-	if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
-		log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+	// only set env var if user explicitly specified a kubeconfig path
+	if kubeConfig != "" {
+		if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
+			log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+		}
 	}
-
-	// Set the kubeconfig that the manager will be able to grab
+	// Set the namespace that the manager will be able to grab
 	if namespace != "" {
 		if err := os.Setenv(k8sutil.WatchNamespaceEnvVar, namespace); err != nil {
 			log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
