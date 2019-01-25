@@ -189,8 +189,9 @@ func (s *Scaffold) doRender(i input.Input, e input.File, absPath string) error {
 // the input's TemplateFuncs.
 func newTemplate(i input.Input) (*template.Template, error) {
 	t := template.New(i.Path).Funcs(template.FuncMap{
-		"title": strings.Title,
-		"lower": strings.ToLower,
+		"title":      strings.Title,
+		"lower":      strings.ToLower,
+		"underscore": func(a string) string { return strings.Replace(a, "-", "_", -1) },
 	})
 	if len(i.TemplateFuncs) > 0 {
 		t.Funcs(i.TemplateFuncs)
