@@ -55,20 +55,9 @@ spec:
         - name: {{.ProjectName}}
           # Replace this with the built image name
           image: REPLACE_IMAGE
-          ports:
-          - containerPort: 60000
-            name: metrics
           command:
           - {{.ProjectName}}
           imagePullPolicy: Always
-          readinessProbe:
-            exec:
-              command:
-                - stat
-                - /tmp/operator-sdk-ready
-            initialDelaySeconds: 4
-            periodSeconds: 10
-            failureThreshold: 1
           env:
             - name: WATCH_NAMESPACE
               {{- if .IsClusterScoped }}

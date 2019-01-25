@@ -36,23 +36,25 @@ func NewGenerateK8SCmd() *cobra.Command {
 		Long: `k8s generator generates code for custom resource given the API spec
 to comply with kube-API requirements.
 `,
-		Run: k8sFunc,
+		RunE: k8sFunc,
 	}
 }
 
-func k8sFunc(cmd *cobra.Command, args []string) {
+func k8sFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 0 {
-		log.Fatalf("Command %s doesn't accept any arguments", cmd.CommandPath())
+		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 
 	// Only Go projects can generate k8s deepcopy code.
-	projutil.MustGoProjectCmd(cmd)
+	if err := projutil.CheckGoProjectCmd(cmd); err != nil {
+		return err
+	}
 
-	K8sCodegen()
+	return K8sCodegen()
 }
 
 // K8sCodegen performs deepcopy code-generation for all custom resources under pkg/apis
-func K8sCodegen() {
+func K8sCodegen() error {
 	projutil.MustInProjectRoot()
 
 	wd := projutil.MustGetwd()
@@ -60,11 +62,13 @@ func K8sCodegen() {
 	srcDir := filepath.Join(wd, "vendor", "k8s.io", "code-generator")
 	binDir := filepath.Join(wd, scaffold.BuildBinDir)
 
-	buildCodegenBinaries(binDir, srcDir)
+	if err := buildCodegenBinaries(binDir, srcDir); err != nil {
+		return err
+	}
 
 	gvMap, err := parseGroupVersions()
 	if err != nil {
-		log.Fatalf("Failed to parse group versions: (%v)", err)
+		return fmt.Errorf("failed to parse group versions: (%v)", err)
 	}
 	gvb := &strings.Builder{}
 	for g, vs := range gvMap {
@@ -73,12 +77,15 @@ func K8sCodegen() {
 
 	log.Infof("Running code-generation for Custom Resource group versions: [%v]\n", gvb.String())
 
-	deepcopyGen(binDir, repoPkg, gvMap)
+	if err := deepcopyGen(binDir, repoPkg, gvMap); err != nil {
+		return err
+	}
 
 	log.Info("Code-generation complete.")
+	return nil
 }
 
-func buildCodegenBinaries(binDir, codegenSrcDir string) {
+func buildCodegenBinaries(binDir, codegenSrcDir string) error {
 	genDirs := []string{
 		"./cmd/defaulter-gen",
 		"./cmd/client-gen",
@@ -89,9 +96,10 @@ func buildCodegenBinaries(binDir, codegenSrcDir string) {
 	for _, gd := range genDirs {
 		err := runGoBuildCodegen(binDir, codegenSrcDir, gd)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 	}
+	return nil
 }
 
 func runGoBuildCodegen(binDir, repoDir, genDir string) error {
@@ -168,7 +176,7 @@ func createFQApis(pkg string, gvs map[string][]string) string {
 	return sb.String()
 }
 
-func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) {
+func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) error {
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	args := []string{
 		"--input-dirs", createFQApis(apisPkg, gvMap),
@@ -178,6 +186,7 @@ func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) {
 	cgPath := filepath.Join(binDir, "deepcopy-gen")
 	err := projutil.ExecCmd(exec.Command(cgPath, args...))
 	if err != nil {
-		log.Fatalf("Failed to perform code-generation: %v", err)
+		return fmt.Errorf("failed to perform code-generation: %v", err)
 	}
+	return nil
 }

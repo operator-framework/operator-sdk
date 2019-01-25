@@ -90,7 +90,11 @@ required = [
   name = "github.com/operator-framework/operator-sdk"
   # The version rule is used for a specific release and the master branch for in between releases.
   branch = "master" #osdk_branch_annotation
-  # version = "=v0.3.0" #osdk_version_annotation
+  # version = "=v0.4.0" #osdk_version_annotation
+
+[[override]]
+   name = "k8s.io/kube-openapi"
+  revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
 
 [prune]
   go-tests = true

@@ -20,8 +20,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/pkg/test"
@@ -61,8 +64,6 @@ func NewTestClusterCmd() *cobra.Command {
 }
 
 func testClusterFunc(cmd *cobra.Command, args []string) error {
-	// in main.go, we catch and print errors, so we don't want cobra to print the error itself
-	cmd.SilenceErrors = true
 	if len(args) != 1 {
 		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
 	}
@@ -108,6 +109,12 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 				Env: []v1.EnvVar{{
 					Name:      test.TestNamespaceEnv,
 					ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.namespace"}},
+				}, {
+					Name:  k8sutil.OperatorNameEnvVar,
+					Value: "test-operator",
+				}, {
+					Name:      leader.PodNameEnv,
+					ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.name"}},
 				}},
 			}},
 		},
@@ -128,9 +135,9 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create test pod: %v", err)
 	}
 	defer func() {
-		err = kubeclient.CoreV1().Pods(tcConfig.namespace).Delete(testPod.Name, &metav1.DeleteOptions{})
-		if err != nil {
-			log.Warn("Failed to delete test pod")
+		rerr := kubeclient.CoreV1().Pods(tcConfig.namespace).Delete(testPod.Name, &metav1.DeleteOptions{})
+		if rerr != nil {
+			log.Warnf("Failed to delete test pod: %v", rerr)
 		}
 	}()
 	err = wait.Poll(time.Second*5, time.Second*time.Duration(tcConfig.pendingTimeout), func() (bool, error) {
@@ -166,9 +173,13 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 			req := kubeclient.CoreV1().Pods(tcConfig.namespace).GetLogs(testPod.Name, &v1.PodLogOptions{})
 			readCloser, err := req.Stream()
 			if err != nil {
-				return fmt.Errorf("test failed and failed to get error logs")
+				return fmt.Errorf("test failed and failed to get error logs: %v", err)
 			}
-			defer readCloser.Close()
+			defer func() {
+				if err := readCloser.Close(); err != nil && !fileutil.IsClosedError(err) {
+					log.Errorf("Failed to close pod log reader: (%v)", err)
+				}
+			}()
 			buf := new(bytes.Buffer)
 			_, err = buf.ReadFrom(readCloser)
 			if err != nil {

@@ -90,7 +90,7 @@ Prints the most recent Golang packages and versions required by operators. Print
 
 ### Flags
 
-* `--as-file` Print packages and versions in Gopkg.toml format.
+* `--as-file` - Print packages and versions in Gopkg.toml format.
 
 ### Example
 
@@ -145,27 +145,38 @@ pkg/apis/app/v1alpha1/
 
 ## olm-catalog
 
-Parent command for all OLM Catalog-related commands.
+Parent command for all OLM Catalog related commands.
 
 ### gen-csv
 
-Generates a Cluster Service Version manifest file in `deploy/olm-catalog`.
+Writes a Cluster Service Version (CSV) manifest and concatenated CRD files to `deploy/olm-catalog`.
 
 #### Flags
 
-* `--csv-version` (required) operator semantic version with which to create the CSV file.
+* `--csv-version` (required) Semantic version of the CSV manifest.
+* `--csv-config` Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml.
 
 #### Example
 
 ```console
 $ operator-sdk olm-catalog gen-csv --csv-version 0.1.1
-Generating CSV manifest version 0.1.1
+INFO[0000] Generating CSV manifest version 0.1.1
+INFO[0000] Fill in the following required fields in file deploy/olm-catalog/operator-name.csv.yaml:
+	spec.keywords
+	spec.maintainers
+	spec.provider
+	spec.labels
+INFO[0000] Create deploy/olm-catalog/operator-name.csv.yaml     
+INFO[0000] Create deploy/olm-catalog/_generated.concat_crd.yaml
 ```
 
 ## migrate
 
 Adds a main.go source file and any associated source files for an operator that
 is not of the "go" type.
+
+**Note**: This command will look for playbook.yml in the project root, if you use the .yaml extension
+you will need to rename it before running migrate or manually add it to your Dockerfile.
 
 ### Example
 
@@ -193,8 +204,8 @@ Scaffolds a new operator project.
 
 * `--skip-git-init` - Do not init the directory as a git repository
 * `--type` string - Type of operator to initialize: "ansible", "helm", or "go" (default "go"). Also requires the following flags if `--type=ansible` or `--type=helm`
-  * `--api-version` string - CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
-  * `--kind` string - CRD Kind. (e.g AppService)
+* `--api-version` string - CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
+* `--kind` string - CRD Kind. (e.g AppService)
 * `--generate-playbook` - Generate a playbook skeleton. (Only used for `--type ansible`)
 * `--cluster-scoped` - Initialize the operator to be cluster-scoped instead of namespace-scoped
 * `-h, --help` - help for new
@@ -296,7 +307,7 @@ should use `up local` instead.
 
 #### Example
 
-```bash
+```console
 $ operator-sdk run ansible --watches-file=/opt/ansible/watches.yaml --reconcile-period=30s
 ```
 
@@ -313,8 +324,55 @@ should use `up local` instead.
 
 #### Example
 
-```bash
+```console
 $ operator-sdk run helm --watches-file=/opt/helm/watches.yaml --reconcile-period=30s
+```
+
+## scorecard
+
+Run scorecard tests on an operator
+
+### Flags
+
+* `basic-tests` - Enable basic operator checks (default true)
+* `cr-manifest` string - (required) Path to manifest for Custom Resource
+* `csv-path` string - (required if `olm-tests` is set) Path to CSV being tested
+* `global-manifest` string - Path to manifest for Global resources (e.g. CRD manifests)
+* `init-timeout` int - Timeout for status block on CR to be created, in seconds (default 10)
+* `kubeconfig` string - Path to kubeconfig of custom resource created in cluster
+* `namespace` string - Namespace of custom resource created in cluster
+* `namespaced-manifest` string - Path to manifest for namespaced resources (e.g. RBAC and Operator manifest)
+* `olm-tests` - Enable OLM integration checks (default true)
+* `proxy-image` string - Image name for scorecard proxy (default "quay.io/operator-framework/scorecard-proxy")
+* `proxy-pull-policy` string - Pull policy for scorecard proxy image (default "Always")
+* `verbose` - Enable verbose logging
+* `-h, --help` - help for scorecard
+
+### Example
+
+```console
+$ operator-sdk scorecard --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml --csv-path deploy/memcachedoperator.0.0.2.csv.yaml
+Checking for existence of spec and status blocks in CR
+Checking that operator actions are reflected in status
+Checking that writing into CRs has an effect
+Checking for CRD resources
+Checking for existence CR example
+Checking spec descriptors
+Checking status descriptors
+Basic Operator:
+        Spec Block Exists: 1/1 points
+        Status Block Exist: 1/1 points
+        Operator actions are reflected in status: 1/1 points
+        Writing into CRs has an effect: 1/1 points
+OLM Integration:
+        Owned CRDs have resources listed: 1/1 points
+        CRs have at least 1 example: 0/1 points
+        Spec fields with descriptors: 1/1 points
+        Status fields with descriptors: 0/1 points
+
+Total Score: 6/8 points
+SUGGESTION: Add an alm-examples annotation to your CSV to pass the CRs have at least 1 example test
+SUGGESTION: Add a status descriptor for nodes
 ```
 
 ## test
@@ -331,11 +389,13 @@ Runs the tests locally
 
 ##### Flags
 
+* `--debug` - Enable debug-level logging
 * `--kubeconfig` string - location of kubeconfig for kubernetes cluster (default "~/.kube/config")
 * `--global-manifest` string - path to manifest for global resources (default "deploy/crd.yaml)
 * `--namespaced-manifest` string - path to manifest for per-test, namespaced resources (default: combines deploy/service_account.yaml, deploy/rbac.yaml, and deploy/operator.yaml)
 * `--namespace` string - if non-empty, single namespace to run tests in (e.g. "operator-test") (default: "")
-* `--go-test-flags` string - extra arguments to pass to `go test` (e.g. -f "-v -parallel=2")
+* `--go-test-flags` string - Additional flags to pass to go test
+* `--molecule-test-flags` string - Additional flags to pass to molecule test
 * `--up-local` - enable running operator locally with go run instead of as an image in the cluster
 * `--no-setup` - disable test resource creation
 * `--image` string - use a different operator image from the one specified in the namespaced manifest

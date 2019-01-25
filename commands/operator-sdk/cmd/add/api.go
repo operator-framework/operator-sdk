@@ -15,6 +15,8 @@
 package add
 
 import (
+	"fmt"
+
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/generate"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
@@ -50,29 +52,35 @@ Example:
 			├── types.go
 
 `,
-		Run: apiRun,
+		RunE: apiRun,
 	}
 
 	apiCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes APIVersion that has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
-	apiCmd.MarkFlagRequired("api-version")
+	if err := apiCmd.MarkFlagRequired("api-version"); err != nil {
+		log.Fatalf("Failed to mark `api-version` flag for `add api` subcommand as required")
+	}
 	apiCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes resource Kind name. (e.g AppService)")
-	apiCmd.MarkFlagRequired("kind")
+	if err := apiCmd.MarkFlagRequired("kind"); err != nil {
+		log.Fatalf("Failed to mark `kind` flag for `add api` subcommand as required")
+	}
 
 	return apiCmd
 }
 
-func apiRun(cmd *cobra.Command, args []string) {
-	// Only Go projects can add apis.
-	projutil.MustGoProjectCmd(cmd)
-
-	// Create and validate new resource
+func apiRun(cmd *cobra.Command, args []string) error {
 	projutil.MustInProjectRoot()
+
+	// Only Go projects can add apis.
+	if err := projutil.CheckGoProjectCmd(cmd); err != nil {
+		return err
+	}
 
 	log.Infof("Generating api version %s for kind %s.", apiVersion, kind)
 
+	// Create and validate new resource.
 	r, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	absProjectPath := projutil.MustGetwd()
@@ -92,16 +100,19 @@ func apiRun(cmd *cobra.Command, args []string) {
 		&scaffold.Crd{Resource: r},
 	)
 	if err != nil {
-		log.Fatalf("Add scaffold failed: (%v)", err)
+		return fmt.Errorf("api scaffold failed: (%v)", err)
 	}
 
 	// update deploy/role.yaml for the given resource r.
 	if err := scaffold.UpdateRoleForResource(r, absProjectPath); err != nil {
-		log.Fatalf("Failed to update the RBAC manifest for the resource (%v, %v): (%v)", r.APIVersion, r.Kind, err)
+		return fmt.Errorf("failed to update the RBAC manifest for the resource (%v, %v): (%v)", r.APIVersion, r.Kind, err)
 	}
 
 	// Run k8s codegen for deepcopy
-	generate.K8sCodegen()
+	if err := generate.K8sCodegen(); err != nil {
+		return err
+	}
 
-	log.Info("Api generation complete.")
+	log.Info("API generation complete.")
+	return nil
 }

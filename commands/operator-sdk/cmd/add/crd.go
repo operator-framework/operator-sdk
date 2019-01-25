@@ -15,6 +15,7 @@
 package add
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,8 +32,8 @@ import (
 func NewAddCrdCmd() *cobra.Command {
 	crdCmd := &cobra.Command{
 		Use:   "crd",
-		Short: "Adds a custom resource definition (CRD) and the custom resource (CR) files",
-		Long: `The operator-sdk add crd command will create a custom resource definition (CRD) and the custom resource (CR) files for the specified api-version and kind.
+		Short: "Adds a Custom Resource Definition (CRD) and the Custom Resource (CR) files",
+		Long: `The operator-sdk add crd command will create a Custom Resource Definition (CRD) and the Custom Resource (CR) files for the specified api-version and kind.
 
 Generated CRD filename: <project-name>/deploy/crds/<group>_<version>_<kind>_crd.yaml
 Generated CR  filename: <project-name>/deploy/crds/<group>_<version>_<kind>_cr.yaml
@@ -40,31 +41,39 @@ Generated CR  filename: <project-name>/deploy/crds/<group>_<version>_<kind>_cr.y
 	<project-name>/deploy path must already exist
 	--api-version and --kind are required flags to generate the new operator application.
 `,
-		Run: crdFunc,
+		RunE: crdFunc,
 	}
 	crdCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
-	crdCmd.MarkFlagRequired("api-version")
+	if err := crdCmd.MarkFlagRequired("api-version"); err != nil {
+		log.Fatalf("Failed to mark `api-version` flag for `add crd` subcommand as required")
+	}
 	crdCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. (e.g AppService)")
-	crdCmd.MarkFlagRequired("kind")
+	if err := crdCmd.MarkFlagRequired("kind"); err != nil {
+		log.Fatalf("Failed to mark `kind` flag for `add crd` subcommand as required")
+	}
 	return crdCmd
 }
 
-func crdFunc(cmd *cobra.Command, args []string) {
+func crdFunc(cmd *cobra.Command, args []string) error {
 	cfg := &input.Config{
 		AbsProjectPath: projutil.MustGetwd(),
 	}
 	if len(args) != 0 {
-		log.Fatalf("Command %s doesn't accept any arguments", cmd.CommandPath())
+		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
-	verifyCrdFlags()
-	verifyCrdDeployPath()
+	if err := verifyCRDFlags(); err != nil {
+		return err
+	}
+	if err := verifyCRDDeployPath(); err != nil {
+		return err
+	}
 
 	log.Infof("Generating Custom Resource Definition (CRD) version %s for kind %s.", apiVersion, kind)
 
 	// generate CR/CRD file
 	resource, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	s := scaffold.Scaffold{}
@@ -73,42 +82,45 @@ func crdFunc(cmd *cobra.Command, args []string) {
 		&scaffold.Cr{Resource: resource},
 	)
 	if err != nil {
-		log.Fatalf("Add scaffold failed: (%v)", err)
+		return fmt.Errorf("crd scaffold failed: (%v)", err)
 	}
 
 	// update deploy/role.yaml for the given resource r.
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-		log.Fatalf("Failed to update the RBAC manifest for the resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
+		return fmt.Errorf("failed to update the RBAC manifest for the resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
 	}
 
 	log.Info("CRD generation complete.")
+	return nil
 }
 
-func verifyCrdFlags() {
+func verifyCRDFlags() error {
 	if len(apiVersion) == 0 {
-		log.Fatal("Value of --api-version must not have empty value")
+		return fmt.Errorf("value of --api-version must not have empty value")
 	}
 	if len(kind) == 0 {
-		log.Fatal("Value of --kind must not have empty value")
+		return fmt.Errorf("value of --kind must not have empty value")
 	}
 	kindFirstLetter := string(kind[0])
 	if kindFirstLetter != strings.ToUpper(kindFirstLetter) {
-		log.Fatal("Value of --kind must start with an uppercase letter")
+		return fmt.Errorf("value of --kind must start with an uppercase letter")
 	}
 	if strings.Count(apiVersion, "/") != 1 {
-		log.Fatalf("Value of --api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion)
+		return fmt.Errorf("value of --api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion)
 	}
+	return nil
 }
 
-// verifyCrdDeployPath checks if the path <project-name>/deploy sub-directory is exists, and that is rooted under $GOPATH
-func verifyCrdDeployPath() {
+// verifyCRDDeployPath checks if the path <project-name>/deploy sub-directory is exists, and that is rooted under $GOPATH
+func verifyCRDDeployPath() error {
 	wd, err := os.Getwd()
 	if err != nil {
-		log.Fatalf("Failed to determine the full path of the current directory: (%v)", err)
+		return fmt.Errorf("failed to determine the full path of the current directory: (%v)", err)
 	}
 	// check if the deploy sub-directory exist
 	_, err = os.Stat(filepath.Join(wd, scaffold.DeployDir))
 	if err != nil {
-		log.Fatalf("The path (./%v) does not exist. run this command in your project directory", scaffold.DeployDir)
+		return fmt.Errorf("the path (./%v) does not exist. run this command in your project directory", scaffold.DeployDir)
 	}
+	return nil
 }
