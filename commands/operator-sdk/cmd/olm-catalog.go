@@ -15,30 +15,18 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
+	catalog "github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/olm-catalog"
 
-	"github.com/operator-framework/operator-sdk/version"
+	"github.com/spf13/cobra"
 )
 
-func NewRootCmd() *cobra.Command {
+func NewOLMCatalogCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "operator-sdk",
-		Short:   "An SDK for building operators with ease",
-		Version: version.Version,
+		Use:   "olm-catalog <olm-catalog-command>",
+		Short: "Invokes a olm-catalog command",
+		Long: `The operator-sdk olm-catalog command invokes a command to perform
+Catalog related actions.`,
 	}
-
-	cmd.AddCommand(NewNewCmd())
-	cmd.AddCommand(NewAddCmd())
-	cmd.AddCommand(NewBuildCmd())
-	cmd.AddCommand(NewGenerateCmd())
-	cmd.AddCommand(NewUpCmd())
-	cmd.AddCommand(NewCompletionCmd())
-	cmd.AddCommand(NewTestCmd())
-	cmd.AddCommand(NewScorecardCmd())
-	cmd.AddCommand(NewPrintDepsCmd())
-	cmd.AddCommand(NewMigrateCmd())
-	cmd.AddCommand(NewRunCmd())
-	cmd.AddCommand(NewOLMCatalogCmd())
-
+	cmd.AddCommand(catalog.NewGenCSVCmd())
 	return cmd
 }

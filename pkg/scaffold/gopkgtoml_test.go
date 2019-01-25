@@ -93,6 +93,10 @@ required = [
   branch = "master" #osdk_branch_annotation
   # version = "=v0.4.0" #osdk_version_annotation
 
+[[override]]
+   name = "k8s.io/kube-openapi"
+  revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
+
 [prune]
   go-tests = true
   non-go = true
