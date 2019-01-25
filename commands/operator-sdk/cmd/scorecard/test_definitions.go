@@ -25,6 +25,7 @@ import (
 
 // Struct definitions
 
+// ScorecardVars contains all necessary variables for running scorecard tests
 type ScorecardVars struct {
 	client        *client.Client
 	crObj         *unstructured.Unstructured
@@ -34,13 +35,14 @@ type ScorecardVars struct {
 	retryInterval int
 }
 
+// Score contains the number of earned points and maximum number of points
 type Score struct {
 	earnedPoints  int
 	maximumPoints int
 }
 
+// Test defines a scorecard test
 type Test struct {
-	testType    string
 	name        string
 	description string
 	// by having an array of scores, we can more easily add support for multiple CR
@@ -50,6 +52,7 @@ type Test struct {
 	run        func(*Test, ScorecardVars) error
 }
 
+// TestSuite defines a suite of scorecard tests
 type TestSuite struct {
 	name        string
 	description string
