@@ -27,10 +27,4 @@ const (
 	// OperatorNameEnvVar is the constant for env variable OPERATOR_NAME
 	// wich is the name of the current operator
 	OperatorNameEnvVar = "OPERATOR_NAME"
-
-	// PrometheusMetricsPort defines the port which expose prometheus metrics
-	PrometheusMetricsPort = 60000
-
-	// PrometheusMetricsPortName define the port name used in kubernetes deployment and service
-	PrometheusMetricsPortName = "metrics"
 )
