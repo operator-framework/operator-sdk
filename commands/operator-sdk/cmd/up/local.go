@@ -79,7 +79,7 @@ func upLocalFunc(cmd *cobra.Command, args []string) {
 	if !cmd.Flags().Changed("namespace") {
 		_, defaultNamespace, err := k8sInternal.GetKubeconfigAndNamespace(kubeConfig)
 		if err != nil {
-			log.Fatalf("failed to get kubeconfig and default namespace: %v", err)
+			log.Fatalf("Failed to get kubeconfig and default namespace: %v", err)
 		}
 		namespace = defaultNamespace
 	}
@@ -138,7 +138,7 @@ func upLocalAnsible() {
 	// only set env var if user explicitly specified a kubeconfig path
 	if kubeConfig != "" {
 		if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
-			log.Fatalf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+			log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
 		}
 	}
 	// Set the namespace that the manager will be able to grab
@@ -156,7 +156,7 @@ func upLocalHelm() {
 	// only set env var if user explicitly specified a kubeconfig path
 	if kubeConfig != "" {
 		if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
-			log.Fatalf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+			log.Fatalf("Failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
 		}
 	}
 	// Set the namespace that the manager will be able to grab
