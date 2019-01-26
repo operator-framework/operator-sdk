@@ -142,7 +142,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	var err error
 	kubeconfig, SCConf.Namespace, err = k8sInternal.GetKubeconfigAndNamespace(SCConf.KubeconfigPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to build the kubeconfig: %v", err)
 	}
 	scheme := runtime.NewScheme()
 	// scheme for client go
