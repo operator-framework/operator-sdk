@@ -36,8 +36,17 @@ func NewApiCmd() *cobra.Command {
 		Use:   "api",
 		Short: "Adds a new api definition under pkg/apis",
 		Long: `operator-sdk add api --kind=<kind> --api-version=<group/version> creates the
-api definition for a new custom resource under pkg/apis. This command must be run from the project root directory.
-If the api already exists at pkg/apis/<group>/<version> then the command will not overwrite and return an error.
+api definition for a new custom resource under pkg/apis. This command must be
+run from the project root directory. If the api already exists at
+pkg/apis/<group>/<version> then the command will not overwrite and return an
+error.
+
+This command runs Kubernetes deepcopy and OpenAPI V3 generators on tagged
+types in all paths under pkg/apis. Go code is generated under
+pkg/apis/<group>/<version>/zz_generated.{deepcopy,openapi}.go. CRD's are
+generated, or updated if they exist for a particular group + version + kind,
+under deploy/crds/<group>_<version>_<kind>_crd.yaml; OpenAPI V3 validation YAML
+is generated as a 'validation' object.
 
 Example:
 	$ operator-sdk add api --api-version=app.example.com/v1alpha1 --kind=AppService
@@ -49,8 +58,12 @@ Example:
 		└── v1alpha1
 			├── doc.go
 			├── register.go
-			├── types.go
-
+			├── appservice_types.go
+			├── zz_generated.deepcopy.go
+			├── zz_generated.openapi.go
+	$ tree deploy/crds
+	├── deploy/crds/app_v1alpha1_appservice_cr.yaml
+	├── deploy/crds/app_v1alpha1_appservice_crd.yaml
 `,
 		RunE: apiRun,
 	}
