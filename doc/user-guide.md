@@ -79,7 +79,7 @@ mgr, err := manager.New(cfg, manager.Options{Namespace: ""})
 
 ## Add a new Custom Resource Definition
 
-Add a new Custom Resource Definition(CRD) API called Memcached, with APIVersion `cache.example.com/v1apha1` and Kind `Memcached`.
+Add a new Custom Resource Definition(CRD) API called Memcached, with APIVersion `cache.example.com/v1alpha1` and Kind `Memcached`.
 
 ```sh
 $ operator-sdk add api --api-version=cache.example.com/v1alpha1 --kind=Memcached

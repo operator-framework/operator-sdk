@@ -1,0 +1,5 @@
+operator-path: "testdata/deploy/operator.yaml"
+crd-cr-paths:
+  - "testdata/deploy/crds"
+  - "testdata/deploy/crds/app_v1alpha2_app_crd.yaml"
+role-path: "testdata/deploy/role.yaml"

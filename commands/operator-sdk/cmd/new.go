@@ -46,7 +46,7 @@ For example:
 	$ operator-sdk new app-operator
 generates a skeletal app-operator application in $GOPATH/src/github.com/example.com/app-operator.
 `,
-		Run: newFunc,
+		RunE: newFunc,
 	}
 
 	newCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
@@ -74,35 +74,51 @@ const (
 	ensureCmd = "ensure"
 )
 
-func newFunc(cmd *cobra.Command, args []string) {
-	parse(cmd, args)
+func newFunc(cmd *cobra.Command, args []string) error {
+	if err := parse(cmd, args); err != nil {
+		return err
+	}
 	mustBeNewProject()
-	verifyFlags()
+	if err := verifyFlags(); err != nil {
+		return err
+	}
 
 	log.Infof("Creating new %s operator '%s'.", strings.Title(operatorType), projectName)
 
 	switch operatorType {
 	case projutil.OperatorTypeGo:
-		doScaffold()
-		pullDep()
+		if err := doScaffold(); err != nil {
+			return err
+		}
+		if err := pullDep(); err != nil {
+			return err
+		}
 	case projutil.OperatorTypeAnsible:
-		doAnsibleScaffold()
+		if err := doAnsibleScaffold(); err != nil {
+			return err
+		}
 	case projutil.OperatorTypeHelm:
-		doHelmScaffold()
+		if err := doHelmScaffold(); err != nil {
+			return err
+		}
 	}
-	initGit()
+	if err := initGit(); err != nil {
+		return err
+	}
 
 	log.Info("Project creation complete.")
+	return nil
 }
 
-func parse(cmd *cobra.Command, args []string) {
+func parse(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
-		log.Fatalf("Command %s requires exactly one argument", cmd.CommandPath())
+		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
 	}
 	projectName = args[0]
 	if len(projectName) == 0 {
-		log.Fatal("Project name must not be empty")
+		return fmt.Errorf("project name must not be empty")
 	}
+	return nil
 }
 
 // mustBeNewProject checks if the given project exists under the current diretory.
@@ -117,11 +133,11 @@ func mustBeNewProject() {
 		log.Fatalf("Failed to determine if project (%v) exists", projectName)
 	}
 	if stat.IsDir() {
-		log.Fatalf("Project (%v) in (%v) path already exists, please use a different project name or delete the existing one", projectName, fp)
+		log.Fatalf("Project (%v) in (%v) path already exists. Please use a different project name or delete the existing one", projectName, fp)
 	}
 }
 
-func doScaffold() {
+func doScaffold() error {
 	cfg := &input.Config{
 		Repo:           filepath.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
 		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
@@ -132,16 +148,12 @@ func doScaffold() {
 	err := s.Execute(cfg,
 		&scaffold.Cmd{},
 		&scaffold.Dockerfile{},
+		&scaffold.Entrypoint{},
+		&scaffold.UserSetup{},
 		&scaffold.ServiceAccount{},
-		&scaffold.Role{
-			IsClusterScoped: isClusterScoped,
-		},
-		&scaffold.RoleBinding{
-			IsClusterScoped: isClusterScoped,
-		},
-		&scaffold.Operator{
-			IsClusterScoped: isClusterScoped,
-		},
+		&scaffold.Role{IsClusterScoped: isClusterScoped},
+		&scaffold.RoleBinding{IsClusterScoped: isClusterScoped},
+		&scaffold.Operator{IsClusterScoped: isClusterScoped},
 		&scaffold.Apis{},
 		&scaffold.Controller{},
 		&scaffold.Version{},
@@ -149,11 +161,12 @@ func doScaffold() {
 		&scaffold.GopkgToml{},
 	)
 	if err != nil {
-		log.Fatalf("New go scaffold failed: (%v)", err)
+		return fmt.Errorf("new Go scaffold failed: (%v)", err)
 	}
+	return nil
 }
 
-func doAnsibleScaffold() {
+func doAnsibleScaffold() error {
 	cfg := &input.Config{
 		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
 		ProjectName:    projectName,
@@ -161,115 +174,61 @@ func doAnsibleScaffold() {
 
 	resource, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
-		log.Fatalf("Invalid apiVersion and kind: (%v)", err)
+		return fmt.Errorf("invalid apiVersion and kind: (%v)", err)
 	}
 
-	roleFiles := ansible.RolesFiles{
-		Resource: *resource,
-	}
-	roleTemplates := ansible.RolesTemplates{
-		Resource: *resource,
-	}
+	roleFiles := ansible.RolesFiles{Resource: *resource}
+	roleTemplates := ansible.RolesTemplates{Resource: *resource}
 
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
 		&scaffold.ServiceAccount{},
-		&scaffold.Role{
-			IsClusterScoped: isClusterScoped,
-		},
-		&scaffold.RoleBinding{
-			IsClusterScoped: isClusterScoped,
-		},
-		&scaffold.Crd{
-			Resource: resource,
-		},
-		&scaffold.Cr{
-			Resource: resource,
-		},
-		&ansible.BuildDockerfile{
-			GeneratePlaybook: generatePlaybook,
-		},
-
-		&ansible.RolesReadme{
-			Resource: *resource,
-		},
-
-		&ansible.RolesMetaMain{
-			Resource: *resource,
-		},
+		&scaffold.Role{IsClusterScoped: isClusterScoped},
+		&scaffold.RoleBinding{IsClusterScoped: isClusterScoped},
+		&scaffold.Crd{Resource: resource},
+		&scaffold.Cr{Resource: resource},
+		&ansible.BuildDockerfile{GeneratePlaybook: generatePlaybook},
+		&ansible.RolesReadme{Resource: *resource},
+		&ansible.RolesMetaMain{Resource: *resource},
 		&roleFiles,
 		&roleTemplates,
-
-		&ansible.RolesVarsMain{
-			Resource: *resource,
-		},
-
-		&ansible.MoleculeTestLocalPlaybook{
-			Resource: *resource,
-		},
-
-		&ansible.RolesDefaultsMain{
-			Resource: *resource,
-		},
-
-		&ansible.RolesTasksMain{
-			Resource: *resource,
-		},
-
+		&ansible.RolesVarsMain{Resource: *resource},
+		&ansible.MoleculeTestLocalPlaybook{Resource: *resource},
+		&ansible.RolesDefaultsMain{Resource: *resource},
+		&ansible.RolesTasksMain{Resource: *resource},
 		&ansible.MoleculeDefaultMolecule{},
-
 		&ansible.BuildTestFrameworkDockerfile{},
-
 		&ansible.MoleculeTestClusterMolecule{},
-
 		&ansible.MoleculeDefaultPrepare{},
-
 		&ansible.MoleculeDefaultPlaybook{
 			GeneratePlaybook: generatePlaybook,
 			Resource:         *resource,
 		},
-
 		&ansible.BuildTestFrameworkAnsibleTestScript{},
-
 		&ansible.MoleculeDefaultAsserts{},
-
-		&ansible.MoleculeTestClusterPlaybook{
-			Resource: *resource,
-		},
-
-		&ansible.RolesHandlersMain{
-			Resource: *resource,
-		},
-
+		&ansible.MoleculeTestClusterPlaybook{Resource: *resource},
+		&ansible.RolesHandlersMain{Resource: *resource},
 		&ansible.Watches{
 			GeneratePlaybook: generatePlaybook,
 			Resource:         *resource,
 		},
-
-		&ansible.DeployOperator{
-			IsClusterScoped: isClusterScoped,
-		},
-
+		&ansible.DeployOperator{IsClusterScoped: isClusterScoped},
 		&ansible.Travis{},
-
 		&ansible.MoleculeTestLocalMolecule{},
-
-		&ansible.MoleculeTestLocalPrepare{
-			Resource: *resource,
-		},
+		&ansible.MoleculeTestLocalPrepare{Resource: *resource},
 	)
 	if err != nil {
-		log.Fatalf("New ansible scaffold failed: (%v)", err)
+		return fmt.Errorf("new ansible scaffold failed: (%v)", err)
 	}
 
 	// Remove placeholders from empty directories
 	err = os.Remove(filepath.Join(s.AbsProjectPath, roleFiles.Path))
 	if err != nil {
-		log.Fatalf("New ansible scaffold failed: (%v)", err)
+		return fmt.Errorf("new ansible scaffold failed: (%v)", err)
 	}
 	err = os.Remove(filepath.Join(s.AbsProjectPath, roleTemplates.Path))
 	if err != nil {
-		log.Fatalf("New ansible scaffold failed: (%v)", err)
+		return fmt.Errorf("new ansible scaffold failed: (%v)", err)
 	}
 
 	// Decide on playbook.
@@ -277,22 +236,21 @@ func doAnsibleScaffold() {
 		log.Infof("Generating %s playbook.", strings.Title(operatorType))
 
 		err := s.Execute(cfg,
-			&ansible.Playbook{
-				Resource: *resource,
-			},
+			&ansible.Playbook{Resource: *resource},
 		)
 		if err != nil {
-			log.Fatalf("New ansible playbook scaffold failed: (%v)", err)
+			return fmt.Errorf("new ansible playbook scaffold failed: (%v)", err)
 		}
 	}
 
 	// update deploy/role.yaml for the given resource r.
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-		log.Fatalf("Failed to update the RBAC manifest for the resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
+		return fmt.Errorf("failed to update the RBAC manifest for the resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
 	}
+	return nil
 }
 
-func doHelmScaffold() {
+func doHelmScaffold() error {
 	cfg := &input.Config{
 		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
 		ProjectName:    projectName,
@@ -300,7 +258,7 @@ func doHelmScaffold() {
 
 	resource, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
-		log.Fatalf("Invalid apiVersion and kind: (%v)", err)
+		return err
 	}
 
 	chart, err := helm.CreateChartForResource(resource, cfg.AbsProjectPath)
@@ -314,92 +272,89 @@ func doHelmScaffold() {
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
 		&helm.Dockerfile{},
-		&helm.WatchesYAML{
-			Resource: resource,
-		},
+		&helm.WatchesYAML{Resource: resource},
 		&scaffold.ServiceAccount{},
-		&scaffold.Role{
-			IsClusterScoped: isClusterScoped,
-		},
-		&scaffold.RoleBinding{
-			IsClusterScoped: isClusterScoped,
-		},
-		&helm.Operator{
-			IsClusterScoped: isClusterScoped,
-		},
-		&scaffold.Crd{
-			Resource: resource,
-		},
+		&scaffold.Role{IsClusterScoped: isClusterScoped},
+		&scaffold.RoleBinding{IsClusterScoped: isClusterScoped},
+		&helm.Operator{IsClusterScoped: isClusterScoped},
+		&scaffold.Crd{Resource: resource},
 		&scaffold.Cr{
 			Resource: resource,
 			Spec:     crSpec,
 		},
 	)
 	if err != nil {
-		log.Fatalf("New helm scaffold failed: (%v)", err)
+		return fmt.Errorf("new helm scaffold failed: (%v)", err)
 	}
 
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-		log.Fatalf("Failed to update the RBAC manifest for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
+		return fmt.Errorf("failed to update the RBAC manifest for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
 	}
+	return nil
 }
 
-func verifyFlags() {
+func verifyFlags() error {
 	if operatorType != projutil.OperatorTypeGo && operatorType != projutil.OperatorTypeAnsible && operatorType != projutil.OperatorTypeHelm {
-		log.Fatal("Value of --type can only be `go`, `ansible`, or `helm`")
+		return fmt.Errorf("value of --type can only be `go`, `ansible`, or `helm`")
 	}
 	if operatorType != projutil.OperatorTypeAnsible && generatePlaybook {
-		log.Fatal("Value of --generate-playbook can only be used with --type `ansible`")
+		return fmt.Errorf("value of --generate-playbook can only be used with --type `ansible`")
 	}
 	if operatorType == projutil.OperatorTypeGo && (len(apiVersion) != 0 || len(kind) != 0) {
-		log.Fatal(`Go type operators do not use --api-version or --kind. Please see "operator-sdk add" command after running new.`)
+		return fmt.Errorf("operators of type Go do not use --api-version or --kind")
 	}
 
 	if operatorType != projutil.OperatorTypeGo {
 		if len(apiVersion) == 0 {
-			log.Fatal("Value of --api-version must not have empty value")
+			return fmt.Errorf("value of --api-version must not have empty value")
 		}
 		if len(kind) == 0 {
-			log.Fatal("Value of --kind must not have empty value")
+			return fmt.Errorf("value of --kind must not have empty value")
 		}
 		kindFirstLetter := string(kind[0])
 		if kindFirstLetter != strings.ToUpper(kindFirstLetter) {
-			log.Fatal("Value of --kind must start with an uppercase letter")
+			return fmt.Errorf("value of --kind must start with an uppercase letter")
 		}
 		if strings.Count(apiVersion, "/") != 1 {
-			log.Fatalf("Value of --api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion)
+			return fmt.Errorf("value of --api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion)
 		}
 	}
+	return nil
 }
 
-func execCmd(stdout *os.File, cmd string, args ...string) {
+func execProjCmd(cmd string, args ...string) error {
 	dc := exec.Command(cmd, args...)
 	dc.Dir = filepath.Join(projutil.MustGetwd(), projectName)
-	dc.Stdout = stdout
-	dc.Stderr = os.Stderr
-	err := dc.Run()
-	if err != nil {
-		log.Fatalf("Failed to exec %s %#v: (%v)", cmd, args, err)
-	}
+	return projutil.ExecCmd(dc)
 }
 
-func pullDep() {
+func pullDep() error {
 	_, err := exec.LookPath(dep)
 	if err != nil {
-		log.Fatalf("Looking for dep in $PATH: (%v)", err)
+		return fmt.Errorf("looking for dep in $PATH: (%v)", err)
 	}
 	log.Info("Run dep ensure ...")
-	execCmd(os.Stdout, dep, ensureCmd, "-v")
+	if err := execProjCmd(dep, ensureCmd, "-v"); err != nil {
+		return err
+	}
 	log.Info("Run dep ensure done")
+	return nil
 }
 
-func initGit() {
+func initGit() error {
 	if skipGit {
-		return
+		return nil
 	}
 	log.Info("Run git init ...")
-	execCmd(os.Stdout, "git", "init")
-	execCmd(os.Stdout, "git", "add", "--all")
-	execCmd(os.Stdout, "git", "commit", "-q", "-m", "INITIAL COMMIT")
+	if err := execProjCmd("git", "init"); err != nil {
+		return err
+	}
+	if err := execProjCmd("git", "add", "--all"); err != nil {
+		return err
+	}
+	if err := execProjCmd("git", "commit", "-q", "-m", "INITIAL COMMIT"); err != nil {
+		return err
+	}
 	log.Info("Run git init done")
+	return nil
 }
