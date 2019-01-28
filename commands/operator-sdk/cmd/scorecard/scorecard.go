@@ -92,8 +92,6 @@ var (
 const scorecardPodName = "operator-scorecard-test"
 
 func ScorecardTests(cmd *cobra.Command, args []string) error {
-	// in main.go, we catch and print errors, so we don't want cobra to print the error itself
-	cmd.SilenceErrors = true
 	if !SCConf.BasicTests && !SCConf.OLMTests {
 		return errors.New("at least one test type is required")
 	}
