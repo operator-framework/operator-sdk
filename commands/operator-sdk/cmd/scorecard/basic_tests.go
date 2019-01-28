@@ -66,6 +66,12 @@ func checkSpecAndStat(runtimeClient client.Client, obj *unstructured.Unstructure
 	if err != nil && err != wait.ErrWaitTimeout {
 		return err
 	}
+	if testSpec.earnedPoints != 1 {
+		scSuggestions = append(scSuggestions, "Add a 'spec' field to your Custom Resource")
+	}
+	if testStat.earnedPoints != 1 {
+		scSuggestions = append(scSuggestions, "Add a 'status' field to your Custom Resource")
+	}
 	return nil
 }
 
@@ -93,6 +99,7 @@ func checkStatusUpdate(runtimeClient client.Client, obj *unstructured.Unstructur
 	err = modifySpecAndCheck(specMap, obj)
 	if err != nil {
 		test.earnedPoints = 0
+		scSuggestions = append(scSuggestions, "Make sure that the 'status' block is always updated to reflect changes after the 'spec' block is changed")
 		scTests = append(scTests, test)
 		return nil
 	}
@@ -211,5 +218,8 @@ func writingIntoCRsHasEffect(obj *unstructured.Unstructured) (string, error) {
 		}
 	}
 	scTests = append(scTests, test)
+	if test.earnedPoints != 1 {
+		scSuggestions = append(scSuggestions, "The operator should write into objects to update state. No PUT or POST requests from you operator were recorded by the scorecard.")
+	}
 	return buf.String(), nil
 }

@@ -58,7 +58,7 @@ func NewTestLocalCmd() *cobra.Command {
 	testCmd := &cobra.Command{
 		Use:   "local <path to tests directory> [flags]",
 		Short: "Run End-To-End tests locally",
-		Run:   testLocalFunc,
+		RunE:  testLocalFunc,
 	}
 	testCmd.Flags().StringVar(&tlConfig.kubeconfig, "kubeconfig", "", "Kubeconfig path")
 	testCmd.Flags().StringVar(&tlConfig.globalManPath, "global-manifest", "", "Path to manifest for Global resources (e.g. CRD manifests)")
@@ -74,20 +74,20 @@ func NewTestLocalCmd() *cobra.Command {
 	return testCmd
 }
 
-func testLocalFunc(cmd *cobra.Command, args []string) {
-	switch projutil.GetOperatorType() {
+func testLocalFunc(cmd *cobra.Command, args []string) error {
+	t := projutil.GetOperatorType()
+	switch t {
 	case projutil.OperatorTypeGo:
-		testLocalGoFunc(cmd, args)
+		return testLocalGoFunc(cmd, args)
 	case projutil.OperatorTypeAnsible:
-		testLocalAnsibleFunc(cmd, args)
+		return testLocalAnsibleFunc(cmd, args)
 	case projutil.OperatorTypeHelm:
-		log.Fatal("`test local` for Helm operators is not implemented")
-	default:
-		log.Fatal("Failed to determine operator type")
+		return fmt.Errorf("`test local` for Helm operators is not implemented")
 	}
+	return fmt.Errorf("unknown operator type '%v'", t)
 }
 
-func testLocalAnsibleFunc(cmd *cobra.Command, args []string) {
+func testLocalAnsibleFunc(cmd *cobra.Command, args []string) error {
 	projutil.MustInProjectRoot()
 	testArgs := []string{}
 	if tlConfig.debug {
@@ -102,24 +102,20 @@ func testLocalAnsibleFunc(cmd *cobra.Command, args []string) {
 	dc := exec.Command("molecule", testArgs...)
 	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
 	dc.Dir = projutil.MustGetwd()
-	dc.Stdout = os.Stdout
-	dc.Stderr = os.Stderr
-	err := dc.Run()
-	if err != nil {
-		log.Fatalf("Failed to exec `molecule %s`: (%v)", strings.Join(testArgs, " "), err)
-	}
+	return projutil.ExecCmd(dc)
 }
 
-func testLocalGoFunc(cmd *cobra.Command, args []string) {
+func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
-		log.Fatalf("Command %s requires exactly one argument", cmd.CommandPath())
+		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
 	}
-	if (tlConfig.noSetup && tlConfig.globalManPath != "") || (tlConfig.noSetup && tlConfig.namespacedManPath != "") {
-		log.Fatal("The global-manifest and namespaced-manifest flags cannot be enabled at the same time as the no-setup flag")
+	if (tlConfig.noSetup && tlConfig.globalManPath != "") ||
+		(tlConfig.noSetup && tlConfig.namespacedManPath != "") {
+		return fmt.Errorf("the global-manifest and namespaced-manifest flags cannot be enabled at the same time as the no-setup flag")
 	}
 
 	if tlConfig.upLocal && tlConfig.namespace == "" {
-		log.Fatal("Must specify a namespace to run in when -up-local flag is set")
+		return fmt.Errorf("must specify a namespace to run in when -up-local flag is set")
 	}
 
 	log.Info("Testing operator locally.")
@@ -128,51 +124,52 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) {
 	if tlConfig.namespacedManPath == "" && !tlConfig.noSetup {
 		file, err := yamlutil.GenerateCombinedNamespacedManifest()
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		tlConfig.namespacedManPath = file.Name()
 		defer func() {
 			err := os.Remove(tlConfig.namespacedManPath)
 			if err != nil {
-				log.Fatalf("Could not delete temporary namespace manifest file: (%v)", err)
+				log.Errorf("Could not delete temporary namespace manifest file: (%v)", err)
 			}
 		}()
 	}
 	if tlConfig.globalManPath == "" && !tlConfig.noSetup {
 		file, err := yamlutil.GenerateCombinedGlobalManifest()
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		tlConfig.globalManPath = file.Name()
 		defer func() {
 			err := os.Remove(tlConfig.globalManPath)
 			if err != nil {
-				log.Fatalf("Could not delete global manifest file: (%v)", err)
+				log.Errorf("Could not delete global manifest file: (%v)", err)
 			}
 		}()
 	}
 	if tlConfig.noSetup {
 		err := os.MkdirAll(deployTestDir, os.FileMode(fileutil.DefaultDirFileMode))
 		if err != nil {
-			log.Fatalf("Could not create %s: (%v)", deployTestDir, err)
+			return fmt.Errorf("could not create %s: (%v)", deployTestDir, err)
 		}
 		tlConfig.namespacedManPath = filepath.Join(deployTestDir, "empty.yaml")
 		tlConfig.globalManPath = filepath.Join(deployTestDir, "empty.yaml")
 		emptyBytes := []byte{}
 		err = ioutil.WriteFile(tlConfig.globalManPath, emptyBytes, os.FileMode(fileutil.DefaultFileMode))
 		if err != nil {
-			log.Fatalf("Could not create empty manifest file: (%v)", err)
+			return fmt.Errorf("could not create empty manifest file: (%v)", err)
 		}
 		defer func() {
 			err := os.Remove(tlConfig.globalManPath)
 			if err != nil {
-				log.Fatalf("Could not delete empty manifest file: (%v)", err)
+				log.Errorf("Could not delete empty manifest file: (%v)", err)
 			}
 		}()
 	}
 	if tlConfig.image != "" {
-		if err := replaceImage(tlConfig.namespacedManPath, tlConfig.image); err != nil {
-			log.Fatalf("Failed to overwrite operator image in the namespaced manifest: %v", err)
+		err := replaceImage(tlConfig.namespacedManPath, tlConfig.image)
+		if err != nil {
+			return fmt.Errorf("failed to overwrite operator image in the namespaced manifest: %v", err)
 		}
 	}
 	testArgs := []string{"test", args[0] + "/..."}
@@ -196,14 +193,12 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) {
 	dc := exec.Command("go", testArgs...)
 	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
 	dc.Dir = projutil.MustGetwd()
-	dc.Stdout = os.Stdout
-	dc.Stderr = os.Stderr
-	err := dc.Run()
-	if err != nil {
-		log.Fatalf("Failed to exec `go %s`: (%v)", strings.Join(testArgs, " "), err)
+	if err := projutil.ExecCmd(dc); err != nil {
+		return err
 	}
 
 	log.Info("Local operator test successfully completed.")
+	return nil
 }
 
 // TODO: add support for multiple deployments and containers (user would have to

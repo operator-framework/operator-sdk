@@ -45,41 +45,41 @@ func printVersion() {
 }
 
 // Run runs the helm operator
-func Run(flags *hoflags.HelmOperatorFlags) {
-	logf.SetLogger(logf.ZapLogger(false))
-
+func Run(flags *hoflags.HelmOperatorFlags) error {
 	printVersion()
 
 	watchNamespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
 	if found {
 		log.Info("Watching single namespace", "watchNamespace", watchNamespace)
 	} else {
-		log.Info(k8sutil.WatchNamespaceEnvVar + " environment variable not set, watching all namespaces")
+		log.Info(fmt.Sprintf("%v environment variable not set. This operator is watching all namespaces.",
+			k8sutil.WatchNamespaceEnvVar))
 		watchNamespace = metav1.NamespaceAll
 	}
 
 	storageNamespace, err := getStorageNamespace(flags.StorageDriver, flags.StorageNamespace, watchNamespace)
 	if err != nil {
 		log.Error(err, "Failed to get storage namespace")
-		os.Exit(1)
+		return err
 	}
 
 	cfg, err := config.GetConfig()
 	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
+		log.Error(err, "Failed to get config.")
+		return err
 	}
-
-	mgr, err := manager.New(cfg, manager.Options{Namespace: watchNamespace})
+	mgr, err := manager.New(cfg, manager.Options{
+		Namespace: watchNamespace,
+	})
 	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
+		log.Error(err, "Failed to create a new manager.")
+		return err
 	}
 
 	storageBackend, err := storage.NewFromFlag(cfg, storageNamespace, flags.StorageDriver)
 	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
+		log.Error(err, "Failed to load storage backend")
+		return err
 	}
 
 	if flags.StorageDriver == driver.MemoryDriverName {
@@ -90,14 +90,14 @@ func Run(flags *hoflags.HelmOperatorFlags) {
 
 	tillerKubeClient, err := client.NewFromManager(mgr)
 	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
+		log.Error(err, "Failed to create new Tiller client.")
+		return err
 	}
 
 	factories, err := release.NewManagerFactoriesFromFile(storageBackend, tillerKubeClient, flags.WatchesFile)
 	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
+		log.Error(err, "Failed to create new manager factories.")
+		return err
 	}
 
 	for gvk, factory := range factories {
@@ -110,16 +110,17 @@ func Run(flags *hoflags.HelmOperatorFlags) {
 			WatchDependentResources: true,
 		})
 		if err != nil {
-			log.Error(err, "")
-			os.Exit(1)
+			log.Error(err, "Failed to add manager factory to controller.")
+			return err
 		}
 	}
 
 	// Start the Cmd
-	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
-		log.Error(err, "Manager exited non-zero")
+	if err = mgr.Start(signals.SetupSignalHandler()); err != nil {
+		log.Error(err, "Manager exited non-zero.")
 		os.Exit(1)
 	}
+	return nil
 }
 
 func getStorageNamespace(driverName, storageNamespace, watchNamespace string) (string, error) {
