@@ -40,3 +40,5 @@ spec:
           - nodes
           type: object
   version: v1alpha1
+  subresources:
+    status: {}
