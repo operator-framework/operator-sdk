@@ -78,8 +78,15 @@ func crdFunc(cmd *cobra.Command, args []string) error {
 
 	s := scaffold.Scaffold{}
 	err = s.Execute(cfg,
-		&scaffold.CRD{Resource: resource, IsOperatorGo: projutil.IsOperatorGo()},
-		&scaffold.CR{Resource: resource},
+		&scaffold.CRD{
+			Input:        input.Input{IfExistsAction: input.Skip},
+			Resource:     resource,
+			IsOperatorGo: projutil.IsOperatorGo(),
+		},
+		&scaffold.CR{
+			Input:    input.Input{IfExistsAction: input.Skip},
+			Resource: resource,
+		},
 	)
 	if err != nil {
 		return fmt.Errorf("crd scaffold failed: (%v)", err)

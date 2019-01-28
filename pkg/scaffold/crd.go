@@ -51,7 +51,6 @@ func (s *CRD) GetInput() (input.Input, error) {
 			s.Resource.LowerKind)
 		s.Path = filepath.Join(CRDsDir, fileName)
 	}
-	s.IfExistsAction = input.Skip
 	initCache()
 	return s.Input, nil
 }
