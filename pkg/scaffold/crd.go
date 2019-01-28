@@ -113,7 +113,7 @@ func (s *CRD) CustomRender() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		dstCRD = new(apiextv1beta1.CustomResourceDefinition)
+		dstCRD = &apiextv1beta1.CustomResourceDefinition{}
 		if err = yaml.Unmarshal(b, dstCRD); err != nil {
 			return nil, err
 		}
@@ -126,7 +126,7 @@ func (s *CRD) CustomRender() ([]byte, error) {
 				return nil, err
 			}
 			if len(cb) > 0 {
-				dstCRD = new(apiextv1beta1.CustomResourceDefinition)
+				dstCRD = &apiextv1beta1.CustomResourceDefinition{}
 				if err = yaml.Unmarshal(cb, dstCRD); err != nil {
 					return nil, err
 				}

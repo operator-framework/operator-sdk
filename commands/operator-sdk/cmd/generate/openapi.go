@@ -151,7 +151,7 @@ func getCRDGVKMap() (map[string][]metav1.GroupVersionKind, error) {
 			if err != nil {
 				return nil, err
 			}
-			crd := new(apiextv1beta1.CustomResourceDefinition)
+			crd := &apiextv1beta1.CustomResourceDefinition{}
 			if err := yaml.Unmarshal(b, crd); err != nil {
 				return nil, err
 			}
