@@ -26,6 +26,10 @@
   name = "k8s.io/cli-runtime"
   version = "kubernetes-1.12.3"
 
+[[override]]
+   name = "k8s.io/kube-openapi"
+  revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
+
 [[constraint]]
   name = "sigs.k8s.io/controller-runtime"
   version = "=v0.1.8"

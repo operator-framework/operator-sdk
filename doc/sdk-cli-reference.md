@@ -307,7 +307,7 @@ should use `up local` instead.
 
 #### Example
 
-```bash
+```console
 $ operator-sdk run ansible --watches-file=/opt/ansible/watches.yaml --reconcile-period=30s
 ```
 
@@ -324,8 +324,55 @@ should use `up local` instead.
 
 #### Example
 
-```bash
+```console
 $ operator-sdk run helm --watches-file=/opt/helm/watches.yaml --reconcile-period=30s
+```
+
+## scorecard
+
+Run scorecard tests on an operator
+
+### Flags
+
+* `basic-tests` - Enable basic operator checks (default true)
+* `cr-manifest` string - (required) Path to manifest for Custom Resource
+* `csv-path` string - (required if `olm-tests` is set) Path to CSV being tested
+* `global-manifest` string - Path to manifest for Global resources (e.g. CRD manifests)
+* `init-timeout` int - Timeout for status block on CR to be created, in seconds (default 10)
+* `kubeconfig` string - Path to kubeconfig of custom resource created in cluster
+* `namespace` string - Namespace of custom resource created in cluster
+* `namespaced-manifest` string - Path to manifest for namespaced resources (e.g. RBAC and Operator manifest)
+* `olm-tests` - Enable OLM integration checks (default true)
+* `proxy-image` string - Image name for scorecard proxy (default "quay.io/operator-framework/scorecard-proxy")
+* `proxy-pull-policy` string - Pull policy for scorecard proxy image (default "Always")
+* `verbose` - Enable verbose logging
+* `-h, --help` - help for scorecard
+
+### Example
+
+```console
+$ operator-sdk scorecard --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml --csv-path deploy/memcachedoperator.0.0.2.csv.yaml
+Checking for existence of spec and status blocks in CR
+Checking that operator actions are reflected in status
+Checking that writing into CRs has an effect
+Checking for CRD resources
+Checking for existence CR example
+Checking spec descriptors
+Checking status descriptors
+Basic Operator:
+        Spec Block Exists: 1/1 points
+        Status Block Exist: 1/1 points
+        Operator actions are reflected in status: 1/1 points
+        Writing into CRs has an effect: 1/1 points
+OLM Integration:
+        Owned CRDs have resources listed: 1/1 points
+        CRs have at least 1 example: 0/1 points
+        Spec fields with descriptors: 1/1 points
+        Status fields with descriptors: 0/1 points
+
+Total Score: 6/8 points
+SUGGESTION: Add an alm-examples annotation to your CSV to pass the CRs have at least 1 example test
+SUGGESTION: Add a status descriptor for nodes
 ```
 
 ## test
