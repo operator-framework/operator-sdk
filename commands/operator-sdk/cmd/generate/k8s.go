@@ -16,6 +16,7 @@ package generate
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -95,17 +96,23 @@ func buildCodegenBinaries(binDir, codegenSrcDir string) error {
 	return genutil.BuildCodegenBinaries(genDirs, binDir, codegenSrcDir)
 }
 
-func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) error {
+func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) (err error) {
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	args := []string{
 		"--input-dirs", genutil.CreateFQApis(apisPkg, gvMap),
 		"--output-file-base", "zz_generated.deepcopy",
 		"--bounding-dirs", apisPkg,
 	}
-	cgPath := filepath.Join(binDir, "deepcopy-gen")
-	err := projutil.ExecCmd(exec.Command(cgPath, args...))
+	cmd := exec.Command(filepath.Join(binDir, "deepcopy-gen"), args...)
+	if projutil.IsGoVerbose() {
+		err = projutil.ExecCmd(cmd)
+	} else {
+		cmd.Stdout = ioutil.Discard
+		cmd.Stderr = ioutil.Discard
+		err = cmd.Run()
+	}
 	if err != nil {
-		return fmt.Errorf("failed to perform code-generation: %v", err)
+		return fmt.Errorf("failed to perform deepcopy code-generation: %v", err)
 	}
 	return nil
 }

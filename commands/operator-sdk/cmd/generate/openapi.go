@@ -122,7 +122,7 @@ func buildOpenAPIGenBinary(binDir, codegenSrcDir string) error {
 	return genutil.BuildCodegenBinaries(genDirs, binDir, codegenSrcDir)
 }
 
-func openAPIGen(binDir string, fqApis []string) error {
+func openAPIGen(binDir string, fqApis []string) (err error) {
 	cgPath := filepath.Join(binDir, "openapi-gen")
 	for _, fqApi := range fqApis {
 		args := []string{
@@ -130,9 +130,16 @@ func openAPIGen(binDir string, fqApis []string) error {
 			"--output-package", fqApi,
 			"--output-file-base", "zz_generated.openapi",
 		}
-		err := projutil.ExecCmd(exec.Command(cgPath, args...))
+		cmd := exec.Command(cgPath, args...)
+		if projutil.IsGoVerbose() {
+			err = projutil.ExecCmd(cmd)
+		} else {
+			cmd.Stdout = ioutil.Discard
+			cmd.Stderr = ioutil.Discard
+			err = cmd.Run()
+		}
 		if err != nil {
-			return fmt.Errorf("failed to perform code-generation: %v", err)
+			return fmt.Errorf("failed to perform openapi code-generation: %v", err)
 		}
 	}
 	return nil

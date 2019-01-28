@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 )
 
@@ -37,23 +38,18 @@ func BuildCodegenBinaries(genDirs []string, binDir, codegenSrcDir string) error 
 
 func runGoBuildCodegen(binDir, repoDir, genDir string) error {
 	binPath := filepath.Join(binDir, filepath.Base(genDir))
-	installCmd := exec.Command("go", "build", "-o", binPath, genDir)
-	installCmd.Dir = repoDir
-	isVerbose := false
-	if gf, ok := os.LookupEnv("GOFLAGS"); ok && len(gf) != 0 {
-		installCmd.Env = append(os.Environ(), "GOFLAGS="+gf)
-		if strings.Contains(gf, "-v") {
-			isVerbose = true
-		}
+	cmd := exec.Command("go", "build", "-o", binPath, genDir)
+	cmd.Dir = repoDir
+	if gf, ok := os.LookupEnv(projutil.GoFlagsEnv); ok && len(gf) != 0 {
+		cmd.Env = append(os.Environ(), projutil.GoFlagsEnv+"="+gf)
 	}
-	if isVerbose {
-		installCmd.Stdout = os.Stdout
-		installCmd.Stderr = os.Stderr
-	} else {
-		installCmd.Stdout = ioutil.Discard
-		installCmd.Stderr = ioutil.Discard
+
+	if projutil.IsGoVerbose() {
+		return projutil.ExecCmd(cmd)
 	}
-	return installCmd.Run()
+	cmd.Stdout = ioutil.Discard
+	cmd.Stderr = ioutil.Discard
+	return cmd.Run()
 }
 
 // ParseGroupVersions parses the layout of pkg/apis to return a map of

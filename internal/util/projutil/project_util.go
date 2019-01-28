@@ -19,6 +19,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
@@ -30,8 +31,9 @@ import (
 )
 
 const (
-	GopathEnv = "GOPATH"
-	SrcDir    = "src"
+	GopathEnv  = "GOPATH"
+	GoFlagsEnv = "GOFLAGS"
+	SrcDir     = "src"
 )
 
 var mainFile = filepath.Join(scaffold.ManagerDir, scaffold.CmdFile)
@@ -156,4 +158,13 @@ func ExecCmd(cmd *exec.Cmd) error {
 		return fmt.Errorf("failed to exec %#v: %v", cmd.Args, err)
 	}
 	return nil
+}
+
+var flagRe = regexp.MustCompile("(.* )?-v(.* )?")
+
+// IsGoVerbose returns true if GOFLAGS contains "-v". This function is useful
+// when deciding whether to make "go" command output verbose.
+func IsGoVerbose() bool {
+	gf, ok := os.LookupEnv(GoFlagsEnv)
+	return ok && len(gf) != 0 && flagRe.MatchString(gf)
 }
