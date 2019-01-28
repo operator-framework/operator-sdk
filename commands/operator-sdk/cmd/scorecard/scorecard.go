@@ -80,6 +80,7 @@ type cleanupFn func() error
 var (
 	kubeconfig     *rest.Config
 	scTests        []scorecardTest
+	scSuggestions  []string
 	dynamicDecoder runtime.Decoder
 	runtimeClient  client.Client
 	restMapper     *restmapper.DeferredDiscoveryRESTMapper
@@ -262,5 +263,9 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 	}
 	fmt.Printf("\nTotal Score: %d/%d points\n", totalEarned, totalMax)
+	for _, suggestion := range scSuggestions {
+		// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
+		fmt.Printf("\x1b[%dmSUGGESTION:\x1b[0m %s\n", 33, suggestion)
+	}
 	return nil
 }

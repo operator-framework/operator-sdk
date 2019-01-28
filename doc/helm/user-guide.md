@@ -7,10 +7,10 @@ powered by Helm using tools and libraries provided by the Operator SDK.
 
 - [git][git_tool]
 - [docker][docker_tool] version 17.03+.
-- [kubectl][kubectl_tool] version v1.9.0+.
+- [kubectl][kubectl_tool] version v1.11.3+.
 - [dep][dep_tool] version v0.5.0+. (Optional if you aren't installing from source)
 - [go][go_tool] version v1.10+. (Optional if you aren't installing from source)
-- Access to a kubernetes v.1.9.0+ cluster.
+- Access to a kubernetes v.1.11.3+ cluster.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the
 local kubernetes cluster and quay.io for the public registry.

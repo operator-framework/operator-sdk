@@ -16,6 +16,7 @@ package ansible
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"runtime"
 
@@ -24,54 +25,60 @@ import (
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
-	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
+var log = logf.Log.WithName("cmd")
+
 func printVersion() {
-	log.Infof("Go Version: %s", runtime.Version())
-	log.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	log.Infof("Version of operator-sdk: %v", sdkVersion.Version)
+	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
+	log.Info(fmt.Sprintf("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH))
+	log.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
 }
 
 // Run will start the ansible operator and proxy, blocking until one of them
 // returns.
-func Run(flags *aoflags.AnsibleOperatorFlags) {
-	logf.SetLogger(zap.Logger())
-
+func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	printVersion()
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
+	log = log.WithValues("Namespace", namespace)
 	if found {
-		log.Infof("Watching %v namespace.", namespace)
+		log.Info("Watching namespace.")
 	} else {
-		log.Infof("%v environment variable not set. This operator is watching all namespaces.",
-			k8sutil.WatchNamespaceEnvVar)
+		log.Info(fmt.Sprintf("%v environment variable not set. This operator is watching all namespaces.",
+			k8sutil.WatchNamespaceEnvVar))
 		namespace = metav1.NamespaceAll
 	}
 
-	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{
+	cfg, err := config.GetConfig()
+	if err != nil {
+		log.Error(err, "Failed to get config.")
+		return err
+	}
+	mgr, err := manager.New(cfg, manager.Options{
 		Namespace: namespace,
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err, "Failed to create a new manager.")
+		return err
 	}
 
 	name, found := os.LookupEnv(k8sutil.OperatorNameEnvVar)
 	if !found {
-		log.Fatal("OPERATOR_NAME environment variable not set")
+		log.Error(fmt.Errorf("%s environment variable not set", k8sutil.OperatorNameEnvVar), "")
+		return err
 	}
 	// Become the leader before proceeding
 	err = leader.Become(context.TODO(), name+"-lock")
 	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
+		log.Error(err, "Failed to become leader.")
+		return err
 	}
 
 	done := make(chan error)
@@ -88,7 +95,8 @@ func Run(flags *aoflags.AnsibleOperatorFlags) {
 		WatchedNamespaces: []string{namespace},
 	})
 	if err != nil {
-		log.Fatalf("Error starting proxy: (%v)", err)
+		log.Error(err, "Error starting proxy.")
+		return err
 	}
 
 	// start the operator
@@ -97,7 +105,9 @@ func Run(flags *aoflags.AnsibleOperatorFlags) {
 	// wait for either to finish
 	err = <-done
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err, "Proxy or operator exited with error.")
+		os.Exit(1)
 	}
-	log.Info("Exiting")
+	log.Info("Exiting.")
+	return nil
 }

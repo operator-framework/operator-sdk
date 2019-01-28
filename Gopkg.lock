@@ -328,6 +328,14 @@
   revision = "6f2cf27854a4a29e3811b0371547be335d411b8b"
 
 [[projects]]
+  digest = "1:bc38c7c481812e178d85160472e231c5e1c9a7f5845d67e23ee4e706933c10d8"
+  name = "github.com/golang/mock"
+  packages = ["gomock"]
+  pruneopts = "UT"
+  revision = "c34cdb4725f4c3844d095133c6e40e448b86589b"
+  version = "v1.1.1"
+
+[[projects]]
   digest = "1:4c0989ca0bcd10799064318923b9bc2db6b4d6338dd75f3f2d86c3511aaaf5cf"
   name = "github.com/golang/protobuf"
   packages = [
@@ -551,11 +559,19 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:4a65cad11472711a96ddb872d802d1e639757612a03a719d3ed5f4a15770d17f"
+  digest = "1:3dcc854b578714014e88a91805fd4f947713f3400ebb521095db97a5036eb89f"
   name = "github.com/operator-framework/operator-lifecycle-manager"
   packages = [
     "pkg/api/apis/operators",
     "pkg/api/apis/operators/v1alpha1",
+    "pkg/api/apis/operators/v1alpha2",
+    "pkg/api/client/listers/operators/v1alpha1",
+    "pkg/api/client/listers/operators/v1alpha2",
+    "pkg/api/wrappers",
+    "pkg/controller/install",
+    "pkg/lib/operatorclient",
+    "pkg/lib/operatorlister",
+    "pkg/lib/ownerutil",
   ]
   pruneopts = "UT"
   revision = "7ba3268c94bb247da0e5f3e1e625b5347ad9f1fb"
@@ -583,6 +599,14 @@
   pruneopts = "UT"
   revision = "5f041e8faa004a95c88a202771f4cc3e991971e6"
   version = "v2.0.1"
+
+[[projects]]
+  digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
 
 [[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
@@ -988,12 +1012,15 @@
   version = "kubernetes-1.12.3"
 
 [[projects]]
-  digest = "1:2f2f0c30f4470c69e55421b831a31e3618f17052a3b32e4e3ec5b74a2e885d82"
+  digest = "1:a314f22dd4fc544e3fb496e5b8a6939fcfd68e9eb8b3a2a382d079715541f6b6"
   name = "k8s.io/apiextensions-apiserver"
   packages = [
     "pkg/apis/apiextensions",
     "pkg/apis/apiextensions/v1beta1",
+    "pkg/client/clientset/clientset",
     "pkg/client/clientset/clientset/scheme",
+    "pkg/client/clientset/clientset/typed/apiextensions/v1beta1",
+    "pkg/client/listers/apiextensions/v1beta1",
     "pkg/features",
   ]
   pruneopts = "UT"
@@ -1065,13 +1092,14 @@
   version = "kubernetes-1.12.3"
 
 [[projects]]
-  digest = "1:04cdbd302c8efca41e3fae141a824b98be2bd7ecd7178b94eb66e219633e6488"
+  digest = "1:fb170c52c66228583daf41537effb395d5ab6caba9e4bc9b9dac1366470eb8bd"
   name = "k8s.io/apiserver"
   packages = [
     "pkg/apis/audit",
     "pkg/authentication/authenticator",
     "pkg/authentication/serviceaccount",
     "pkg/authentication/user",
+    "pkg/authorization/authorizer",
     "pkg/endpoints/request",
     "pkg/features",
     "pkg/util/feature",
@@ -1093,7 +1121,7 @@
   version = "kubernetes-1.12.3"
 
 [[projects]]
-  digest = "1:56850424b64c01f4f9dfdcb82c60c9b255ca9138c81732497f5d9e006f9e155f"
+  digest = "1:47bff42895cb1855398982739c7b9dc4ce86001bb15dd43171473d82746bf728"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
@@ -1132,6 +1160,9 @@
     "kubernetes/typed/storage/v1",
     "kubernetes/typed/storage/v1alpha1",
     "kubernetes/typed/storage/v1beta1",
+    "listers/apps/v1",
+    "listers/core/v1",
+    "listers/rbac/v1",
     "pkg/apis/clientauthentication",
     "pkg/apis/clientauthentication/v1alpha1",
     "pkg/apis/clientauthentication/v1beta1",
@@ -1215,6 +1246,23 @@
   version = "v2.12.0"
 
 [[projects]]
+  digest = "1:f6290187c85a269edfc46bec76ded0b9f9b2f3e47ed75b5fa76f237d208e7d90"
+  name = "k8s.io/kube-aggregator"
+  packages = [
+    "pkg/apis/apiregistration",
+    "pkg/apis/apiregistration/v1",
+    "pkg/apis/apiregistration/v1beta1",
+    "pkg/client/clientset_generated/clientset",
+    "pkg/client/clientset_generated/clientset/scheme",
+    "pkg/client/clientset_generated/clientset/typed/apiregistration/v1",
+    "pkg/client/clientset_generated/clientset/typed/apiregistration/v1beta1",
+    "pkg/client/listers/apiregistration/v1",
+  ]
+  pruneopts = "UT"
+  revision = "822d91359baff09d0e90d3befe7191cb5273abdc"
+  version = "kubernetes-1.12.3"
+
+[[projects]]
   digest = "1:91a7c8838cd57527d2fa9e608e0b33226a57679ebbe1a11d568d689657337c4b"
   name = "k8s.io/kube-openapi"
   packages = [
@@ -1226,7 +1274,7 @@
   revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
 
 [[projects]]
-  digest = "1:f57c3174af68bf510f6970b11a38d75baa061c9cadba55e9794b870d2d3354d1"
+  digest = "1:125b57ac6eccea47c1e775c63094a0943b3e6e70bc0a0dcea7c98a397e4a2ea9"
   name = "k8s.io/kubernetes"
   packages = [
     "pkg/api/events",
@@ -1370,6 +1418,7 @@
     "pkg/util/slice",
     "pkg/util/taints",
     "pkg/version",
+    "plugin/pkg/auth/authorizer/rbac",
   ]
   pruneopts = "UT"
   revision = "435f92c719f279a3a67808c80521ea17d5715c66"
@@ -1437,6 +1486,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/BurntSushi/toml",
+    "github.com/coreos/go-semver/semver",
     "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1",
     "github.com/coreos/prometheus-operator/pkg/client/versioned/typed/monitoring/v1",
     "github.com/ghodss/yaml",
@@ -1446,6 +1496,7 @@
     "github.com/martinlindhe/base36",
     "github.com/mattbaird/jsonpatch",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1",
+    "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install",
     "github.com/pborman/uuid",
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/sergi/go-diff/diffmatchpatch",
@@ -1462,6 +1513,7 @@
     "k8s.io/api/apps/v1",
     "k8s.io/api/core/v1",
     "k8s.io/api/rbac/v1",
+    "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",
     "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/api/meta",

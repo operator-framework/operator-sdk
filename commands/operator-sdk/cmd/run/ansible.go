@@ -17,24 +17,28 @@ package run
 import (
 	"github.com/operator-framework/operator-sdk/pkg/ansible"
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 
 	"github.com/spf13/cobra"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
-// NewAnsibleCmd returns a command that will run an ansible operator
-func NewAnsibleCmd() *cobra.Command {
+// RunAnsibleCmd returns a command that will run an ansible operator.
+func RunAnsibleCmd() *cobra.Command {
 	var flags *aoflags.AnsibleOperatorFlags
-	newCmd := &cobra.Command{
+	runAnsibleCmd := &cobra.Command{
 		Use:   "ansible",
 		Short: "Runs as an ansible operator",
 		Long: `Runs as an ansible operator. This is intended to be used when running
 in a Pod inside a cluster. Developers wanting to run their operator locally
 should use "up local" instead.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			ansible.Run(flags)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			logf.SetLogger(zap.Logger())
+
+			return ansible.Run(flags)
 		},
 	}
-	flags = aoflags.AddTo(newCmd.Flags())
+	flags = aoflags.AddTo(runAnsibleCmd.Flags())
 
-	return newCmd
+	return runAnsibleCmd
 }

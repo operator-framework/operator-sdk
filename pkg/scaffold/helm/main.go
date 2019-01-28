@@ -36,16 +36,24 @@ func (m *Main) GetInput() (input.Input, error) {
 const mainTmpl = `package main
 
 import (
+	"os"
+
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 	"github.com/operator-framework/operator-sdk/pkg/helm"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 
 	"github.com/spf13/pflag"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 func main() {
 	hflags := hoflags.AddTo(pflag.CommandLine)
 	pflag.Parse()
+	logf.SetLogger(zap.Logger())
 
-	helm.Run(hflags)
+	if err := helm.Run(hflags); err != nil {
+		logf.Log.WithName("cmd").Error(err, "")
+		os.Exit(1)
+	}
 }
 `
