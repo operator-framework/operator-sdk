@@ -15,11 +15,13 @@
 package main
 
 import (
-	"flag"
 	"os"
+
+	"github.com/spf13/pflag"
 
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 
 	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -28,8 +30,10 @@ import (
 )
 
 func main() {
-	flag.Parse()
-	logf.SetLogger(logf.ZapLogger(false))
+	pflag.CommandLine.AddFlagSet(zap.FlagSet())
+	pflag.Parse()
+
+	logf.SetLogger(zap.Logger())
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
 	if found {
