@@ -19,8 +19,8 @@ import (
 	"fmt"
 
 	"github.com/ghodss/yaml"
-	olmApi "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	olmInstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
+	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 	appsv1 "k8s.io/api/apps/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -30,7 +30,7 @@ import (
 // set to the corresponding field on Apply().
 type CSVUpdater interface {
 	// Apply applies a data update to a CSV argument.
-	Apply(*olmApi.ClusterServiceVersion) error
+	Apply(*olmapiv1alpha1.ClusterServiceVersion) error
 }
 
 type updaterStore struct {
@@ -41,16 +41,16 @@ type updaterStore struct {
 func NewUpdaterStore() *updaterStore {
 	return &updaterStore{
 		installStrategy: &CSVInstallStrategyUpdate{
-			&olmInstall.StrategyDetailsDeployment{},
+			&olminstall.StrategyDetailsDeployment{},
 		},
 		crdUpdate: &CSVCustomResourceDefinitionsUpdate{
-			&olmApi.CustomResourceDefinitions{},
+			&olmapiv1alpha1.CustomResourceDefinitions{},
 		},
 	}
 }
 
 // Apply iteratively calls each stored CSVUpdater's Apply() method.
-func (s *updaterStore) Apply(csv *olmApi.ClusterServiceVersion) error {
+func (s *updaterStore) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	for _, updater := range []CSVUpdater{s.installStrategy, s.crdUpdate} {
 		if err := updater.Apply(csv); err != nil {
 			return err
@@ -91,7 +91,7 @@ func (s *updaterStore) AddToUpdater(yamlSpec []byte) error {
 }
 
 type CSVInstallStrategyUpdate struct {
-	*olmInstall.StrategyDetailsDeployment
+	*olminstall.StrategyDetailsDeployment
 }
 
 func (store *updaterStore) AddRole(yamlDoc []byte) error {
@@ -99,7 +99,7 @@ func (store *updaterStore) AddRole(yamlDoc []byte) error {
 	if err := yaml.Unmarshal(yamlDoc, role); err != nil {
 		return err
 	}
-	perm := olmInstall.StrategyDeploymentPermissions{
+	perm := olminstall.StrategyDeploymentPermissions{
 		ServiceAccountName: role.ObjectMeta.Name,
 		Rules:              role.Rules,
 	}
@@ -113,7 +113,7 @@ func (store *updaterStore) AddClusterRole(yamlDoc []byte) error {
 	if err := yaml.Unmarshal(yamlDoc, clusterRole); err != nil {
 		return err
 	}
-	perm := olmInstall.StrategyDeploymentPermissions{
+	perm := olminstall.StrategyDeploymentPermissions{
 		ServiceAccountName: clusterRole.ObjectMeta.Name,
 		Rules:              clusterRole.Rules,
 	}
@@ -127,7 +127,7 @@ func (store *updaterStore) AddDeploymentSpec(yamlDoc []byte) error {
 	if err := yaml.Unmarshal(yamlDoc, dep); err != nil {
 		return err
 	}
-	depSpec := olmInstall.StrategyDeploymentSpec{
+	depSpec := olminstall.StrategyDeploymentSpec{
 		Name: dep.ObjectMeta.Name,
 		Spec: dep.Spec,
 	}
@@ -136,14 +136,14 @@ func (store *updaterStore) AddDeploymentSpec(yamlDoc []byte) error {
 	return nil
 }
 
-func (u *CSVInstallStrategyUpdate) Apply(csv *olmApi.ClusterServiceVersion) (err error) {
+func (u *CSVInstallStrategyUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	// Get install strategy from csv. Default to a deployment strategy if none found.
-	var strat olmInstall.Strategy
+	var strat olminstall.Strategy
 	if csv.Spec.InstallStrategy.StrategyName == "" {
-		csv.Spec.InstallStrategy.StrategyName = olmInstall.InstallStrategyNameDeployment
-		strat = &olmInstall.StrategyDetailsDeployment{}
+		csv.Spec.InstallStrategy.StrategyName = olminstall.InstallStrategyNameDeployment
+		strat = &olminstall.StrategyDetailsDeployment{}
 	} else {
-		var resolver *olmInstall.StrategyResolver
+		var resolver *olminstall.StrategyResolver
 		strat, err = resolver.UnmarshalStrategy(csv.Spec.InstallStrategy)
 		if err != nil {
 			return err
@@ -151,7 +151,7 @@ func (u *CSVInstallStrategyUpdate) Apply(csv *olmApi.ClusterServiceVersion) (err
 	}
 
 	switch s := strat.(type) {
-	case *olmInstall.StrategyDetailsDeployment:
+	case *olminstall.StrategyDetailsDeployment:
 		// Update permissions and deployments.
 		u.updatePermissions(s)
 		u.updateClusterPermissions(s)
@@ -170,26 +170,26 @@ func (u *CSVInstallStrategyUpdate) Apply(csv *olmApi.ClusterServiceVersion) (err
 	return nil
 }
 
-func (u *CSVInstallStrategyUpdate) updatePermissions(strat *olmInstall.StrategyDetailsDeployment) {
+func (u *CSVInstallStrategyUpdate) updatePermissions(strat *olminstall.StrategyDetailsDeployment) {
 	if len(u.Permissions) != 0 {
 		strat.Permissions = u.Permissions
 	}
 }
 
-func (u *CSVInstallStrategyUpdate) updateClusterPermissions(strat *olmInstall.StrategyDetailsDeployment) {
+func (u *CSVInstallStrategyUpdate) updateClusterPermissions(strat *olminstall.StrategyDetailsDeployment) {
 	if len(u.ClusterPermissions) != 0 {
 		strat.ClusterPermissions = u.ClusterPermissions
 	}
 }
 
-func (u *CSVInstallStrategyUpdate) updateDeploymentSpecs(strat *olmInstall.StrategyDetailsDeployment) {
+func (u *CSVInstallStrategyUpdate) updateDeploymentSpecs(strat *olminstall.StrategyDetailsDeployment) {
 	if len(u.DeploymentSpecs) != 0 {
 		strat.DeploymentSpecs = u.DeploymentSpecs
 	}
 }
 
 type CSVCustomResourceDefinitionsUpdate struct {
-	*olmApi.CustomResourceDefinitions
+	*olmapiv1alpha1.CustomResourceDefinitions
 }
 
 func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
@@ -208,12 +208,12 @@ func (store *updaterStore) AddRequiredCRD(yamlDoc []byte) error {
 	return err
 }
 
-func parseCRDDescriptionFromYAML(yamlDoc []byte) (*olmApi.CRDDescription, error) {
+func parseCRDDescriptionFromYAML(yamlDoc []byte) (*olmapiv1alpha1.CRDDescription, error) {
 	crd := &apiextv1beta1.CustomResourceDefinition{}
 	if err := yaml.Unmarshal(yamlDoc, crd); err != nil {
 		return nil, err
 	}
-	return &olmApi.CRDDescription{
+	return &olmapiv1alpha1.CRDDescription{
 		Name:    crd.ObjectMeta.Name,
 		Version: crd.Spec.Version,
 		Kind:    crd.Spec.Names.Kind,
@@ -222,8 +222,8 @@ func parseCRDDescriptionFromYAML(yamlDoc []byte) (*olmApi.CRDDescription, error)
 
 // Apply updates all CRDDescriptions with any user-defined data in csv's
 // CRDDescriptions.
-func (u *CSVCustomResourceDefinitionsUpdate) Apply(csv *olmApi.ClusterServiceVersion) error {
-	crdDescSet := make(map[string]*olmApi.CRDDescription)
+func (u *CSVCustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
+	crdDescSet := make(map[string]*olmapiv1alpha1.CRDDescription)
 	for _, desc := range u.Owned {
 		crdDescSet[desc.Name] = &desc
 	}
