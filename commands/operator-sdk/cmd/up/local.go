@@ -178,7 +178,7 @@ func upLocalHelm() error {
 func buildLocal(outputBinName string) error {
 	args := []string{"build", "-o", outputBinName}
 	if ldFlags != "" {
-		args = append(args, []string{"-ldflags", ldFlags}...)
+		args = append(args, "-ldflags", ldFlags)
 	}
 	args = append(args, filepath.Join(scaffold.ManagerDir, scaffold.CmdFile))
 
