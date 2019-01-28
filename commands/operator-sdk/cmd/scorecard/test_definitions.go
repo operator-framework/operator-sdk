@@ -17,7 +17,7 @@ package scorecard
 import (
 	"fmt"
 
-	olmAPI "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,7 +29,7 @@ import (
 type ScorecardVars struct {
 	client        *client.Client
 	crObj         *unstructured.Unstructured
-	csvObj        *olmAPI.ClusterServiceVersion
+	csvObj        *olmapiv1alpha1.ClusterServiceVersion
 	proxyPod      *v1.Pod
 	timeout       int
 	retryInterval int

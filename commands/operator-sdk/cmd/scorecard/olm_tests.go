@@ -17,7 +17,7 @@ package scorecard
 import (
 	"context"
 
-	olmAPI "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -63,7 +63,7 @@ func statusDescriptors(test *Test, vars ScorecardVars) error {
 	}
 	statusBlock := vars.crObj.Object["status"].(map[string]interface{})
 	score.maximumPoints = len(statusBlock)
-	var crd *olmAPI.CRDDescription
+	var crd *olmapiv1alpha1.CRDDescription
 	for _, owned := range vars.csvObj.Spec.CustomResourceDefinitions.Owned {
 		if owned.Kind == vars.crObj.GetKind() {
 			crd = &owned
@@ -102,7 +102,7 @@ func specDescriptors(test *Test, vars ScorecardVars) error {
 	}
 	specBlock := vars.crObj.Object["spec"].(map[string]interface{})
 	score.maximumPoints = len(specBlock)
-	var crd *olmAPI.CRDDescription
+	var crd *olmapiv1alpha1.CRDDescription
 	for _, owned := range vars.csvObj.Spec.CustomResourceDefinitions.Owned {
 		if owned.Kind == vars.crObj.GetKind() {
 			crd = &owned

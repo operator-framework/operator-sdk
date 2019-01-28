@@ -44,7 +44,7 @@
 
 [[constraint]]
   name = "github.com/operator-framework/operator-lifecycle-manager"
-  revision = "7ba3268c94bb247da0e5f3e1e625b5347ad9f1fb"
+  revision = "5eb7ae5bdb7ac36a26d6e34e5d0ec07be128927f"
 
 [[override]]
   name = "k8s.io/kube-aggregator"

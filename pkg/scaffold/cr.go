@@ -38,6 +38,7 @@ func (s *Cr) GetInput() (input.Input, error) {
 			s.Resource.LowerKind)
 		s.Path = filepath.Join(CrdsDir, fileName)
 	}
+	s.IfExistsAction = input.Skip
 	s.TemplateBody = crTemplate
 	return s.Input, nil
 }
