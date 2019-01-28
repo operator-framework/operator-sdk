@@ -27,17 +27,17 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
-	"github.com/spf13/afero"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/afero"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
-	CSVYamlFileExt    = ".csv.yaml"
+	CSVYamlFileExt    = ".clusterserviceversion.yaml"
 	CSVConfigYamlFile = "csv-config.yaml"
 )
 
@@ -51,9 +51,14 @@ type CSV struct {
 	ConfigFilePath string
 	// CSVVersion is the CSV current version.
 	CSVVersion string
+	// FromVersion is the CSV version from which to build a new CSV. A CSV
+	// manifest with this version should exist at:
+	// deploy/olm-catalog/{from_version}/operator-name.v{from_version}.{CSVYamlFileExt}
+	FromVersion string
 
-	once sync.Once
-	fs   afero.Fs // For testing, ex. afero.NewMemMapFs()
+	once       sync.Once
+	fs         afero.Fs // For testing, ex. afero.NewMemMapFs()
+	pathPrefix string   // For testing, ex. testdata/deploy/olm-catalog
 }
 
 func (s *CSV) initFS(fs afero.Fs) {
@@ -75,11 +80,18 @@ func (s *CSV) GetInput() (input.Input, error) {
 		return input.Input{}, ErrNoCSVVersion
 	}
 	if s.Path == "" {
-		name := strings.ToLower(s.ProjectName) + CSVYamlFileExt
-		s.Path = filepath.Join(scaffold.OLMCatalogDir, name)
+		lowerProjName := strings.ToLower(s.ProjectName)
+		// Path is what the operator-registry expects:
+		// {manifests -> olm-catalog}/{operator_name}/{semver}/{operator_name}.v{semver}.clusterserviceversion.yaml
+		s.Path = filepath.Join(s.pathPrefix,
+			scaffold.OLMCatalogDir,
+			lowerProjName,
+			s.CSVVersion,
+			getCSVFileName(lowerProjName, s.CSVVersion),
+		)
 	}
 	if s.ConfigFilePath == "" {
-		s.ConfigFilePath = filepath.Join(scaffold.OLMCatalogDir, CSVConfigYamlFile)
+		s.ConfigFilePath = filepath.Join(s.pathPrefix, scaffold.OLMCatalogDir, CSVConfigYamlFile)
 	}
 	return s.Input, nil
 }
@@ -87,8 +99,6 @@ func (s *CSV) GetInput() (input.Input, error) {
 // CustomRender allows a CSV to be written by marshalling
 // olmapiv1alpha1.ClusterServiceVersion instead of writing to a template.
 func (s *CSV) CustomRender() ([]byte, error) {
-	s.initFS(afero.NewOsFs())
-
 	// Get current CSV to update.
 	csv, exists, err := s.getBaseCSVIfExists()
 	if err != nil {
@@ -131,9 +141,13 @@ func (s *CSV) CustomRender() ([]byte, error) {
 }
 
 func (s *CSV) getBaseCSVIfExists() (*olmapiv1alpha1.ClusterServiceVersion, bool, error) {
+	verToGet := s.CSVVersion
+	if s.FromVersion != "" {
+		verToGet = s.FromVersion
+	}
 	lowerProjName := strings.ToLower(s.ProjectName)
-	name := lowerProjName + CSVYamlFileExt
-	fromCSV := filepath.Join(scaffold.OLMCatalogDir, name)
+	name := getCSVFileName(lowerProjName, verToGet)
+	fromCSV := filepath.Join(s.pathPrefix, scaffold.OLMCatalogDir, lowerProjName, verToGet, name)
 	return getCSVFromFSIfExists(s.getFS(), fromCSV)
 }
 
@@ -159,6 +173,10 @@ func getCSVFromFSIfExists(fs afero.Fs, path string) (*olmapiv1alpha1.ClusterServ
 
 func getCSVName(name, version string) string {
 	return name + ".v" + version
+}
+
+func getCSVFileName(name, version string) string {
+	return getCSVName(name, version) + CSVYamlFileExt
 }
 
 // getDisplayName turns a project dir name in any of {snake, chain, camel}

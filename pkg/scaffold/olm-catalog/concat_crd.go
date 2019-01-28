@@ -34,11 +34,14 @@ type ConcatCRD struct {
 	// ConfigFilePath is the location of a configuration file path for this
 	// projects' CSV file.
 	ConfigFilePath string
+	// CSVVersion is the CSV current version. This value is the dir to which
+	// the concatenated CSV file will be written.
+	CSVVersion string
 }
 
 func (s *ConcatCRD) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(scaffold.OLMCatalogDir, ConcatCRDYamlFile)
+		s.Path = filepath.Join(scaffold.OLMCatalogDir, s.ProjectName, s.CSVVersion, ConcatCRDYamlFile)
 	}
 	if s.ConfigFilePath == "" {
 		s.ConfigFilePath = filepath.Join(scaffold.OLMCatalogDir, CSVConfigYamlFile)

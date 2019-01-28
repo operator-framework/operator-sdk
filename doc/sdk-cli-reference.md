@@ -149,25 +149,26 @@ Parent command for all OLM Catalog related commands.
 
 ### gen-csv
 
-Writes a Cluster Service Version (CSV) manifest and concatenated CRD files to `deploy/olm-catalog`.
+Writes a Cluster Service Version (CSV) manifest and concatenated CRD files to `deploy/olm-catalog/{operator-name}/{csv-version}`.
 
 #### Flags
 
 * `--csv-version` (required) Semantic version of the CSV manifest.
+* `--from-version` Semantic version of CSV manifest to use as a base for a new version.
 * `--csv-config` Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml.
 
 #### Example
 
 ```console
-$ operator-sdk olm-catalog gen-csv --csv-version 0.1.1
-INFO[0000] Generating CSV manifest version 0.1.1
-INFO[0000] Fill in the following required fields in file deploy/olm-catalog/operator-name.csv.yaml:
+$ operator-sdk olm-catalog gen-csv --csv-version 0.1.0
+INFO[0000] Generating CSV manifest version 0.1.0
+INFO[0000] Fill in the following required fields in file deploy/olm-catalog/operator-name/0.1.0/operator-name.v0.1.0.clusterserviceversion.yaml:
 	spec.keywords
 	spec.maintainers
 	spec.provider
 	spec.labels
-INFO[0000] Create deploy/olm-catalog/operator-name.csv.yaml     
-INFO[0000] Create deploy/olm-catalog/_generated.concat_crd.yaml
+INFO[0000] Create deploy/olm-catalog/operator-name/0.1.0/operator-name.v0.1.0.clusterserviceversion.yaml     
+INFO[0000] Create deploy/olm-catalog/operator-name/0.1.0/_generated.concat_crd.yaml
 ```
 
 ## migrate
