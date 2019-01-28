@@ -60,9 +60,7 @@ func OpenAPIGen() error {
 
 	absProjectPath := projutil.MustGetwd()
 	repoPkg := projutil.CheckAndGetProjectGoPkg()
-	vendor := filepath.Join(absProjectPath, "vendor")
-	srcDir := filepath.Join(vendor, "k8s.io", "kube-openapi")
-	bpFile := filepath.Join(vendor, "k8s.io", "gengo", "boilerplate", "boilerplate.go.txt")
+	srcDir := filepath.Join(absProjectPath, "vendor", "k8s.io", "kube-openapi")
 	binDir := filepath.Join(absProjectPath, scaffold.BuildBinDir)
 
 	if err := buildOpenAPIGenBinary(binDir, srcDir); err != nil {
@@ -83,7 +81,7 @@ func OpenAPIGen() error {
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	fqApiStr := genutil.CreateFQApis(apisPkg, gvMap)
 	fqApis := strings.Split(fqApiStr, ",")
-	if err := openAPIGen(binDir, bpFile, fqApis); err != nil {
+	if err := openAPIGen(binDir, fqApis); err != nil {
 		return err
 	}
 
@@ -124,14 +122,13 @@ func buildOpenAPIGenBinary(binDir, codegenSrcDir string) error {
 	return genutil.BuildCodegenBinaries(genDirs, binDir, codegenSrcDir)
 }
 
-func openAPIGen(binDir, headerFile string, fqApis []string) error {
+func openAPIGen(binDir string, fqApis []string) error {
 	cgPath := filepath.Join(binDir, "openapi-gen")
 	for _, fqApi := range fqApis {
 		args := []string{
 			"--input-dirs", fqApi,
 			"--output-package", fqApi,
 			"--output-file-base", "zz_generated.openapi",
-			"--go-header-file", headerFile,
 		}
 		err := projutil.ExecCmd(exec.Command(cgPath, args...))
 		if err != nil {
