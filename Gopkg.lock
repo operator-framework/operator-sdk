@@ -559,7 +559,8 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:3dcc854b578714014e88a91805fd4f947713f3400ebb521095db97a5036eb89f"
+  branch = "master"
+  digest = "1:23e2e9001efb9eed6c89b080366f0a483dcc5edbb5b9ed89c0c838258467e6b1"
   name = "github.com/operator-framework/operator-lifecycle-manager"
   packages = [
     "pkg/api/apis/operators",
@@ -574,7 +575,7 @@
     "pkg/lib/ownerutil",
   ]
   pruneopts = "UT"
-  revision = "7ba3268c94bb247da0e5f3e1e625b5347ad9f1fb"
+  revision = "5eb7ae5bdb7ac36a26d6e34e5d0ec07be128927f"
 
 [[projects]]
   digest = "1:e5d0bd87abc2781d14e274807a470acd180f0499f8bf5bb18606e9ec22ad9de9"

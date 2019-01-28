@@ -2,14 +2,6 @@
 
 [![Build Status](https://travis-ci.org/operator-framework/operator-sdk.svg?branch=master)](https://travis-ci.org/operator-framework/operator-sdk)
 
-### Project Status: alpha
-
-The project is currently alpha which means that there are still new features and APIs planned that will be added in the future. Due to this breaking changes may still happen.
-
-**Note:** The core APIs provided by the [controller-runtime][controller_runtime] will most likely stay unchanged however the expectation is that any breaking changes should be relatively minor and easier to handle than the changes from SDK `v0.0.7` to `v0.1.0`.
-
-See the [proposal docs][proposals_docs] and issues for ongoing or planned work.
-
 ## Overview
 
 This project is a component of the [Operator Framework][of-home], an open source toolkit to manage Kubernetes native applications, called Operators, in an effective, automated, and scalable way. Read more in the [introduction blog post][of-blog].
@@ -154,6 +146,8 @@ To explore any operator samples built using the operator-sdk, see the [operator-
 ## Contributing
 
 See [CONTRIBUTING][contrib] for details on submitting patches and the contribution workflow.
+
+See the [proposal docs][proposals_docs] and issues for ongoing or planned work.
 
 ## Reporting bugs
 
