@@ -36,16 +36,24 @@ func (m *Main) GetInput() (input.Input, error) {
 const mainTmpl = `package main
 
 import (
+	"os"
+
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	"github.com/operator-framework/operator-sdk/pkg/ansible"
 
 	"github.com/spf13/pflag"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 func main() {
+	logf.SetLogger(logf.ZapLogger(false))
+
 	aflags := aoflags.AddTo(pflag.CommandLine)
 	pflag.Parse()
 
-	ansible.Run(aflags)
+	if err := ansible.Run(aflags); err != nil {
+		logf.Log.WithName("cmd").Error(err, "")
+		os.Exit(1)
+	}
 }
 `

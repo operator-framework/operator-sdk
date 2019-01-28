@@ -17,14 +17,14 @@ package scorecard
 import (
 	"context"
 
-	olmAPI "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // crdsHaveResources checks to make sure that all owned CRDs have resources listed
-func crdsHaveResources(csv *olmAPI.ClusterServiceVersion) {
+func crdsHaveResources(csv *olmapiv1alpha1.ClusterServiceVersion) {
 	test := scorecardTest{testType: olmIntegration, name: "Owned CRDs have resources listed"}
 	for _, crd := range csv.Spec.CustomResourceDefinitions.Owned {
 		test.maximumPoints++
@@ -33,19 +33,25 @@ func crdsHaveResources(csv *olmAPI.ClusterServiceVersion) {
 		}
 	}
 	scTests = append(scTests, test)
+	if test.earnedPoints == 0 {
+		scSuggestions = append(scSuggestions, "Add resources to owned CRDs")
+	}
 }
 
 // annotationsContainExamples makes sure that the CSVs list at least 1 example for the CR
-func annotationsContainExamples(csv *olmAPI.ClusterServiceVersion) {
+func annotationsContainExamples(csv *olmapiv1alpha1.ClusterServiceVersion) {
 	test := scorecardTest{testType: olmIntegration, name: "CRs have at least 1 example", maximumPoints: 1}
 	if csv.Annotations != nil && csv.Annotations["alm-examples"] != "" {
 		test.earnedPoints = 1
 	}
 	scTests = append(scTests, test)
+	if test.earnedPoints == 0 {
+		scSuggestions = append(scSuggestions, "Add an alm-examples annotation to your CSV to pass the "+test.name+" test")
+	}
 }
 
 // statusDescriptors makes sure that all status fields found in the created CR has a matching descriptor in the CSV
-func statusDescriptors(csv *olmAPI.ClusterServiceVersion, runtimeClient client.Client, obj *unstructured.Unstructured) error {
+func statusDescriptors(csv *olmapiv1alpha1.ClusterServiceVersion, runtimeClient client.Client, obj *unstructured.Unstructured) error {
 	test := scorecardTest{testType: olmIntegration, name: "Status fields with descriptors"}
 	err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, obj)
 	if err != nil {
@@ -58,7 +64,7 @@ func statusDescriptors(csv *olmAPI.ClusterServiceVersion, runtimeClient client.C
 	}
 	statusBlock := obj.Object["status"].(map[string]interface{})
 	test.maximumPoints = len(statusBlock)
-	var crd *olmAPI.CRDDescription
+	var crd *olmapiv1alpha1.CRDDescription
 	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
 		if owned.Kind == obj.GetKind() {
 			crd = &owned
@@ -73,16 +79,20 @@ func statusDescriptors(csv *olmAPI.ClusterServiceVersion, runtimeClient client.C
 		for _, statDesc := range crd.StatusDescriptors {
 			if statDesc.Path == key {
 				test.earnedPoints++
+				delete(statusBlock, key)
 				break
 			}
 		}
 	}
 	scTests = append(scTests, test)
+	for key := range statusBlock {
+		scSuggestions = append(scSuggestions, "Add a status descriptor for "+key)
+	}
 	return nil
 }
 
 // specDescriptors makes sure that all spec fields found in the created CR has a matching descriptor in the CSV
-func specDescriptors(csv *olmAPI.ClusterServiceVersion, runtimeClient client.Client, obj *unstructured.Unstructured) error {
+func specDescriptors(csv *olmapiv1alpha1.ClusterServiceVersion, runtimeClient client.Client, obj *unstructured.Unstructured) error {
 	test := scorecardTest{testType: olmIntegration, name: "Spec fields with descriptors"}
 	err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, obj)
 	if err != nil {
@@ -95,7 +105,7 @@ func specDescriptors(csv *olmAPI.ClusterServiceVersion, runtimeClient client.Cli
 	}
 	specBlock := obj.Object["spec"].(map[string]interface{})
 	test.maximumPoints = len(specBlock)
-	var crd *olmAPI.CRDDescription
+	var crd *olmapiv1alpha1.CRDDescription
 	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
 		if owned.Kind == obj.GetKind() {
 			crd = &owned
@@ -110,10 +120,14 @@ func specDescriptors(csv *olmAPI.ClusterServiceVersion, runtimeClient client.Cli
 		for _, specDesc := range crd.SpecDescriptors {
 			if specDesc.Path == key {
 				test.earnedPoints++
+				delete(specBlock, key)
 				break
 			}
 		}
 	}
 	scTests = append(scTests, test)
+	for key := range specBlock {
+		scSuggestions = append(scSuggestions, "Add a spec descriptor for "+key)
+	}
 	return nil
 }

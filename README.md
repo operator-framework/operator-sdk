@@ -2,14 +2,6 @@
 
 [![Build Status](https://travis-ci.org/operator-framework/operator-sdk.svg?branch=master)](https://travis-ci.org/operator-framework/operator-sdk)
 
-### Project Status: alpha
-
-The project is currently alpha which means that there are still new features and APIs planned that will be added in the future. Due to this breaking changes may still happen.
-
-**Note:** The core APIs provided by the [controller-runtime][controller_runtime] will most likely stay unchanged however the expectation is that any breaking changes should be relatively minor and easier to handle than the changes from SDK `v0.0.7` to `v0.1.0`.
-
-See the [proposal docs][proposals_docs] and issues for ongoing or planned work.
-
 ## Overview
 
 This project is a component of the [Operator Framework][of-home], an open source toolkit to manage Kubernetes native applications, called Operators, in an effective, automated, and scalable way. Read more in the [introduction blog post][of-blog].
@@ -111,6 +103,24 @@ $ kubectl get pod -l app=example-appservice
 NAME                     READY     STATUS    RESTARTS   AGE
 example-appservice-pod   1/1       Running   0          1m
 
+# Test the new Resource Type
+$ kubectl describe appservice example-appservice
+Name:         example-appservice
+Namespace:    myproject
+Labels:       <none>
+Annotations:  <none>
+API Version:  app.example.com/v1alpha1
+Kind:         AppService
+Metadata:
+  Cluster Name:        
+  Creation Timestamp:  2018-12-17T21:18:43Z
+  Generation:          1
+  Resource Version:    248412
+  Self Link:           /apis/app.example.com/v1alpha1/namespaces/myproject/appservices/example-appservice
+  UID:                 554f301f-0241-11e9-b551-080027c7d133
+Spec:
+  Size:  3
+
 # Cleanup
 $ kubectl delete -f deploy/crds/app_v1alpha1_appservice_cr.yaml
 $ kubectl delete -f deploy/operator.yaml
@@ -136,6 +146,8 @@ To explore any operator samples built using the operator-sdk, see the [operator-
 ## Contributing
 
 See [CONTRIBUTING][contrib] for details on submitting patches and the contribution workflow.
+
+See the [proposal docs][proposals_docs] and issues for ongoing or planned work.
 
 ## Reporting bugs
 

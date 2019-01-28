@@ -25,7 +25,7 @@ import (
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
-	olmApi "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -78,6 +78,7 @@ type cleanupFn func() error
 var (
 	kubeconfig     *rest.Config
 	scTests        []scorecardTest
+	scSuggestions  []string
 	dynamicDecoder runtime.Decoder
 	runtimeClient  client.Client
 	restMapper     *restmapper.DeferredDiscoveryRESTMapper
@@ -97,8 +98,6 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if viper.GetString(CRManifestOpt) == "" {
 		return errors.New("cr-manifest config option missing")
 	}
-	// in main.go, we catch and print errors, so we don't want cobra to print the error itself
-	cmd.SilenceErrors = true
 	if !viper.GetBool(BasicTestsOpt) && !viper.GetBool(OLMTestsOpt) {
 		return errors.New("at least one test type is required")
 	}
@@ -148,7 +147,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	var tmpNamespaceVar string
 	kubeconfig, tmpNamespaceVar, err = k8sInternal.GetKubeconfigAndNamespace(viper.GetString(KubeconfigOpt))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to build the kubeconfig: %v", err)
 	}
 	if viper.GetString(NamespaceOpt) == "" {
 		viper.Set(NamespaceOpt, tmpNamespaceVar)
@@ -163,7 +162,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to add failed to add extensions api scheme to client: (%v)", err)
 	}
 	// olm api (CS
-	if err := olmApi.AddToScheme(scheme); err != nil {
+	if err := olmapiv1alpha1.AddToScheme(scheme); err != nil {
 		return fmt.Errorf("failed to add failed to add oml api scheme (CSVs) to client: (%v)", err)
 	}
 	dynamicDecoder = serializer.NewCodecFactory(scheme).UniversalDeserializer()
@@ -224,9 +223,9 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		csv := &olmApi.ClusterServiceVersion{}
+		csv := &olmapiv1alpha1.ClusterServiceVersion{}
 		switch o := rawCSV.(type) {
-		case *olmApi.ClusterServiceVersion:
+		case *olmapiv1alpha1.ClusterServiceVersion:
 			csv = o
 		default:
 			return fmt.Errorf("provided yaml file not of ClusterServiceVersion type")
@@ -272,6 +271,10 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 	}
 	fmt.Printf("\nTotal Score: %d/%d points\n", totalEarned, totalMax)
+	for _, suggestion := range scSuggestions {
+		// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
+		fmt.Printf("\x1b[%dmSUGGESTION:\x1b[0m %s\n", 33, suggestion)
+	}
 	return nil
 }
 
