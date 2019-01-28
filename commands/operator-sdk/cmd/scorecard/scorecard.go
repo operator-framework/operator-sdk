@@ -55,6 +55,7 @@ type Config struct {
 	CRManifest         string
 	ProxyImage         string
 	ProxyPullPolicy    string
+	CRDsDir            string
 	Verbose            bool
 }
 
@@ -219,6 +220,10 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 			csv = o
 		default:
 			return fmt.Errorf("provided yaml file not of ClusterServiceVersion type")
+		}
+		fmt.Println("Checking if all CRDs have validation")
+		if err := crdsHaveValidation(SCConf.CRDsDir, runtimeClient, obj); err != nil {
+			return err
 		}
 		fmt.Println("Checking for CRD resources")
 		crdsHaveResources(csv)

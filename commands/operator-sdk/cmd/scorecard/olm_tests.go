@@ -16,12 +16,112 @@ package scorecard
 
 import (
 	"context"
+	"fmt"
+	"io/ioutil"
+	"path/filepath"
+	"strings"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	log "github.com/sirupsen/logrus"
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+func getCRDs(crdsDir string) ([]apiextv1beta1.CustomResourceDefinition, error) {
+	files, err := ioutil.ReadDir(crdsDir)
+	if err != nil {
+		return nil, fmt.Errorf("could not read deploy directory: (%v)", err)
+	}
+	crds := []apiextv1beta1.CustomResourceDefinition{}
+	for _, file := range files {
+		if strings.HasSuffix(file.Name(), "crd.yaml") {
+			obj, err := yamlToUnstructured(filepath.Join(scaffold.CrdsDir, file.Name()))
+			if err != nil {
+				return nil, err
+			}
+			crd, err := unstructuredToCRD(obj)
+			if err != nil {
+				return nil, err
+			}
+			crds = append(crds, *crd)
+		}
+	}
+	return crds, nil
+}
+
+// matchVersion checks if a []CustomResourceDefinitionVersion contains a version in a case insensitive manner
+func matchVersion(version string, crdVersions []apiextv1beta1.CustomResourceDefinitionVersion) bool {
+	for _, currVer := range crdVersions {
+		if strings.EqualFold(version, currVer.Name) {
+			return true
+		}
+	}
+	return false
+}
+
+// crdsHaveValidation makes sure that all CRDs have a validation block
+func crdsHaveValidation(crdsDir string, runtimeClient client.Client, obj *unstructured.Unstructured) error {
+	test := scorecardTest{testType: olmIntegration, name: "Provided APIs have validation"}
+	crds, err := getCRDs(crdsDir)
+	if err != nil {
+		return err
+	}
+	err = runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, obj)
+	if err != nil {
+		return err
+	}
+	// TODO: we need to make this handle multiple CRs better/correctly
+	for _, crd := range crds {
+		test.maximumPoints++
+		if crd.Spec.Validation != nil {
+			// check if the CRD matches the testing CR
+			gvk := obj.GroupVersionKind()
+			singularCRKind, err := restMapper.ResourceSingularizer(gvk.Kind)
+			if err != nil {
+				log.Warningf("could not find singular version of %s", singularCRKind)
+			}
+			singularCRDKind, err := restMapper.ResourceSingularizer(crd.Spec.Names.Kind)
+			if err != nil {
+				log.Warningf("could not find singular version of %s", crd.Spec.Names.Kind)
+			}
+			// crd.Spec.Version is deprecated, so check in crd.Spec.Versions as well
+			if (matchVersion(gvk.Version, crd.Spec.Versions) || strings.EqualFold(crd.Spec.Version, gvk.Version)) && strings.EqualFold(singularCRKind, singularCRDKind) {
+				failed := false
+				if obj.Object["spec"] != nil {
+					spec := obj.Object["spec"].(map[string]interface{})
+					for key := range spec {
+						if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["spec"].Properties[key]; !ok {
+							failed = true
+							scSuggestions = append(scSuggestions, fmt.Sprintf("Add CRD validation for spec field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
+						}
+					}
+				}
+				if obj.Object["status"] != nil {
+					status := obj.Object["status"].(map[string]interface{})
+					for key := range status {
+						if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["status"].Properties[key]; !ok {
+							failed = true
+							scSuggestions = append(scSuggestions, fmt.Sprintf("Add CRD validation for status field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
+						}
+					}
+				}
+				if !failed {
+					test.earnedPoints++
+				}
+			} else {
+				test.earnedPoints++
+			}
+		} else {
+			scSuggestions = append(scSuggestions, fmt.Sprintf("Add CRD validation for %s/%s", crd.Spec.Names.Kind, crd.Spec.Version))
+		}
+	}
+	scTests = append(scTests, test)
+	return nil
+}
 
 // crdsHaveResources checks to make sure that all owned CRDs have resources listed
 func crdsHaveResources(csv *olmapiv1alpha1.ClusterServiceVersion) {

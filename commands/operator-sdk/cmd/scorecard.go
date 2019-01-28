@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -45,6 +47,7 @@ func NewScorecardCmd() *cobra.Command {
 	scorecardCmd.Flags().StringVar(&scorecard.SCConf.CRManifest, "cr-manifest", "", "Path to manifest for Custom Resource")
 	scorecardCmd.Flags().StringVar(&scorecard.SCConf.ProxyImage, "proxy-image", fmt.Sprintf("quay.io/operator-framework/scorecard-proxy:%s", strings.TrimSuffix(version.Version, "+git")), "Image name for scorecard proxy")
 	scorecardCmd.Flags().StringVar(&scorecard.SCConf.ProxyPullPolicy, "proxy-pull-policy", "Always", "Pull policy for scorecard proxy image")
+	scorecardCmd.Flags().StringVar(&scorecard.SCConf.CRDsDir, "crds-dir", scaffold.CrdsDir, "Directory containing CRDs (all CRDs must end in 'crd.yaml')")
 	scorecardCmd.Flags().BoolVar(&scorecard.SCConf.Verbose, "verbose", false, "Enable verbose logging")
 	// Since it's difficult to handle multiple CRs, we will require users to specify what CR they want to test; we can handle this better in the future
 	if err := scorecardCmd.MarkFlagRequired("cr-manifest"); err != nil {
