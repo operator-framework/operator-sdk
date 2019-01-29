@@ -19,6 +19,7 @@ import (
 	"os"
 
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
+	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	log "github.com/sirupsen/logrus"
@@ -47,7 +48,7 @@ func main() {
 	}
 
 	done := make(chan error)
-	cMap := proxy.NewControllerMap()
+	cMap := controllermap.NewControllerMap()
 
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{
