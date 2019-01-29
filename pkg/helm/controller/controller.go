@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	rpb "k8s.io/helm/pkg/proto/hapi/release"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	crthandler "sigs.k8s.io/controller-runtime/pkg/handler"
@@ -56,7 +57,13 @@ type WatchOptions struct {
 // Add creates a new helm operator controller and adds it to the manager
 func Add(mgr manager.Manager, options WatchOptions) error {
 	r := &HelmOperatorReconciler{
-		Client:          mgr.GetClient(),
+		// The default client will use the DelegatingReader for reads
+		// this forces it to use the cache for unstructured types.
+		Client: client.DelegatingClient{
+			Reader:       mgr.GetCache(),
+			Writer:       mgr.GetClient(),
+			StatusClient: mgr.GetClient(),
+		},
 		GVK:             options.GVK,
 		ManagerFactory:  options.ManagerFactory,
 		ReconcilePeriod: options.ReconcilePeriod,
