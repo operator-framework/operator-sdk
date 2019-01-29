@@ -68,9 +68,7 @@ func (s *CSV) initFS(fs afero.Fs) {
 }
 
 func (s *CSV) getFS() afero.Fs {
-	s.once.Do(func() {
-		s.fs = afero.NewOsFs()
-	})
+	s.initFS(afero.NewOsFs())
 	return s.fs
 }
 
@@ -152,11 +150,11 @@ func (s *CSV) getBaseCSVIfExists() (*olmapiv1alpha1.ClusterServiceVersion, bool,
 }
 
 func getCSVFromFSIfExists(fs afero.Fs, path string) (*olmapiv1alpha1.ClusterServiceVersion, bool, error) {
-	if _, err := fs.Stat(path); err != nil && os.IsNotExist(err) {
-		return nil, false, nil
-	}
 	csvBytes, err := afero.ReadFile(fs, path)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, false, nil
+		}
 		return nil, false, err
 	}
 	if len(csvBytes) == 0 {
