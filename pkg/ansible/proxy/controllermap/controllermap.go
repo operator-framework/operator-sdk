@@ -22,7 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
-// ControllerMap - map of GVK to controllerMapContents
+// ControllerMap - map of GVK to ControllerMapContents
 type ControllerMap struct {
 	mutex    sync.RWMutex
 	internal map[schema.GroupVersionKind]*ControllerMapContents
@@ -72,10 +72,8 @@ func NewUIDMap() *UIDMap {
 	}
 }
 
-// Get - Returns a controller given a GVK as the key. `watch` in the return
-// specifies whether or not the operator will watch dependent resources for
-// this controller. `ok` returns whether the query was successful. `controller`
-// is the associated controller-runtime controller object.
+// Get - Returns a ControllerMapContents given a GVK as the key. `ok`
+// determines if the key exists
 func (cm *ControllerMap) Get(key schema.GroupVersionKind) (value *ControllerMapContents, ok bool) {
 	cm.mutex.RLock()
 	defer cm.mutex.RUnlock()
@@ -90,16 +88,14 @@ func (cm *ControllerMap) Delete(key schema.GroupVersionKind) {
 	delete(cm.internal, key)
 }
 
-// Store - Adds a new GVK to controller mapping. Also creates a mapping between
-// GVK and a boolean `watch` that specifies whether this controller is watching
-// dependent resources.
+// Store - Adds a new GVK to controller mapping
 func (cm *ControllerMap) Store(key schema.GroupVersionKind, value *ControllerMapContents) {
 	cm.mutex.Lock()
 	defer cm.mutex.Unlock()
 	cm.internal[key] = value
 }
 
-// Get - Returns a list of resources watched by an owner reference
+// Get - Checks if GVK is already watched
 func (wm *WatchMap) Get(key schema.GroupVersionKind) (value interface{}, ok bool) {
 	wm.mutex.RLock()
 	defer wm.mutex.RUnlock()
@@ -107,21 +103,21 @@ func (wm *WatchMap) Get(key schema.GroupVersionKind) (value interface{}, ok bool
 	return value, ok
 }
 
-// Delete - Deletes associated watches to a specific owner reference
+// Delete - Deletes associated watches for a specific GVK
 func (wm *WatchMap) Delete(key schema.GroupVersionKind) {
 	wm.mutex.Lock()
 	defer wm.mutex.Unlock()
 	delete(wm.internal, key)
 }
 
-// Store - Adds a new list of watches GVKs for a specific owner reference
+// Store - Adds a new GVK to be watched
 func (wm *WatchMap) Store(key schema.GroupVersionKind) {
 	wm.mutex.Lock()
 	defer wm.mutex.Unlock()
 	wm.internal[key] = nil
 }
 
-// Get - Returns a list of resources watched by an owner reference
+// Get - Returns a NamespacedName of the owner given a UID
 func (um *UIDMap) Get(key types.UID) (value types.NamespacedName, ok bool) {
 	um.mutex.RLock()
 	defer um.mutex.RUnlock()
@@ -129,14 +125,14 @@ func (um *UIDMap) Get(key types.UID) (value types.NamespacedName, ok bool) {
 	return value, ok
 }
 
-// Delete - Deletes associated watches to a specific owner reference
+// Delete - Deletes associated UID to NamespacedName mapping
 func (um *UIDMap) Delete(key types.UID) {
 	um.mutex.Lock()
 	defer um.mutex.Unlock()
 	delete(um.internal, key)
 }
 
-// Store - Adds a new list of watches GVKs for a specific owner reference
+// Store - Adds a new UID to NamespacedName mapping
 func (um *UIDMap) Store(key types.UID, value types.NamespacedName) {
 	um.mutex.Lock()
 	defer um.mutex.Unlock()
