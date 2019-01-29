@@ -20,8 +20,10 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+	"github.com/spf13/afero"
 
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
@@ -58,6 +60,38 @@ func (i *InputDir) addFile(path string, content []byte) error {
 		log.Error(err, "Unable to write file", "Path", fullPath)
 	}
 	return err
+}
+
+// copyInventory copies a file or directory from src to dst
+func (i *InputDir) copyInventory(src string, dst string) error {
+	fs := afero.NewOsFs()
+	return afero.Walk(fs, src,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			fullDst := strings.Replace(path, src, dst, 1)
+			if info.IsDir() {
+				if err = fs.MkdirAll(fullDst, info.Mode()); err != nil {
+					return err
+				}
+				if err = fs.Chmod(fullDst, info.Mode()); err != nil {
+					return err
+				}
+			} else {
+				f, err := fs.Open(path)
+				if err != nil {
+					return err
+				}
+				if err = afero.WriteReader(fs, fullDst, f); err != nil {
+					return err
+				}
+				if err = fs.Chmod(fullDst, info.Mode()); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
 }
 
 // Stdout reads the stdout from the ansible artifact that corresponds to the
@@ -103,14 +137,34 @@ func (i *InputDir) Write() error {
 
 	// If ansible-runner is running in a python virtual environment, propagate
 	// that to ansible.
-	venv := os.Getenv("VIRTUAL_ENV")
-	hosts := "localhost ansible_connection=local"
-	if venv != "" {
-		hosts = fmt.Sprintf("%s ansible_python_interpreter=%s", hosts, filepath.Join(venv, "bin/python"))
-	}
-	err = i.addFile("inventory/hosts", []byte(hosts))
-	if err != nil {
-		return err
+	ansible_inventory := os.Getenv("ANSIBLE_INVENTORY")
+	if ansible_inventory == "" {
+		venv := os.Getenv("VIRTUAL_ENV")
+		hosts := "localhost ansible_connection=local"
+		if venv != "" {
+			hosts = fmt.Sprintf("%s ansible_python_interpreter=%s", hosts, filepath.Join(venv, "bin/python"))
+		}
+		err = i.addFile("inventory/hosts", []byte(hosts))
+		if err != nil {
+			return err
+		}
+	} else {
+		fi, err := os.Stat(ansible_inventory)
+		if err != nil {
+			return err
+		}
+		switch mode := fi.Mode(); {
+		case mode.IsDir():
+			err = i.copyInventory(ansible_inventory, filepath.Join(i.Path, "inventory"))
+			if err != nil {
+				return err
+			}
+		case mode.IsRegular():
+			err = i.copyInventory(ansible_inventory, filepath.Join(i.Path, "inventory/hosts"))
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	if i.PlaybookPath != "" {
