@@ -26,6 +26,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	crthandler "sigs.k8s.io/controller-runtime/pkg/handler"
@@ -64,12 +65,19 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 		ManageStatus:    options.ManageStatus,
 	}
 
-	// Register the GVK with the schema
-	mgr.GetScheme().AddKnownTypeWithName(options.GVK, &unstructured.Unstructured{})
-	metav1.AddToGroupVersion(mgr.GetScheme(), schema.GroupVersion{
-		Group:   options.GVK.Group,
-		Version: options.GVK.Version,
-	})
+	scheme := mgr.GetScheme()
+	_, err := scheme.New(options.GVK)
+	if runtime.IsNotRegisteredError(err) {
+		// Register the GVK with the schema
+		scheme.AddKnownTypeWithName(options.GVK, &unstructured.Unstructured{})
+		metav1.AddToGroupVersion(mgr.GetScheme(), schema.GroupVersion{
+			Group:   options.GVK.Group,
+			Version: options.GVK.Version,
+		})
+	} else if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
 
 	//Create new controller runtime controller and set the controller to watch GVK.
 	c, err := controller.New(fmt.Sprintf("%v-controller", strings.ToLower(options.GVK.Kind)), mgr, controller.Options{
