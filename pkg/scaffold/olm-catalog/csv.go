@@ -63,9 +63,7 @@ func (s *CSV) initFS(fs afero.Fs) {
 }
 
 func (s *CSV) getFS() afero.Fs {
-	s.once.Do(func() {
-		s.fs = afero.NewOsFs()
-	})
+	s.initFS(afero.NewOsFs())
 	return s.fs
 }
 
