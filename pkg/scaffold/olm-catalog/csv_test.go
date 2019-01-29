@@ -106,14 +106,13 @@ func TestCSVFromOld(t *testing.T) {
 		t.Fatalf("Failed to write %s to in-memory test fs: (%v)", testDeployDir, err)
 	}
 
-	err := s.Execute(&input.Config{ProjectName: projectName},
-		&CSV{
-			CSVVersion:  newCSVVer,
-			FromVersion: oldCSVVer,
-			fs:          fw.GetFS(),
-			pathPrefix:  testDataDir,
-		},
-	)
+	c := &CSV{
+		CSVVersion:  newCSVVer,
+		FromVersion: oldCSVVer,
+		pathPrefix:  testDataDir,
+	}
+	c.initFS(fw.GetFS())
+	err := s.Execute(&input.Config{ProjectName: projectName}, c)
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}

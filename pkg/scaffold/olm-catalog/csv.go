@@ -97,6 +97,8 @@ func (s *CSV) GetInput() (input.Input, error) {
 // CustomRender allows a CSV to be written by marshalling
 // olmapiv1alpha1.ClusterServiceVersion instead of writing to a template.
 func (s *CSV) CustomRender() ([]byte, error) {
+	s.initFS(afero.NewOsFs())
+
 	// Get current CSV to update.
 	csv, exists, err := s.getBaseCSVIfExists()
 	if err != nil {
