@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/pflag"
 
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
+	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 
@@ -51,7 +52,7 @@ func main() {
 	}
 
 	done := make(chan error)
-	cMap := proxy.NewControllerMap()
+	cMap := controllermap.NewControllerMap()
 
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{

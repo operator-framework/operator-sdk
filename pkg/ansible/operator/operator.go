@@ -21,7 +21,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/controller"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/flags"
-	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
+	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
 
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -32,7 +32,7 @@ import (
 // Run - A blocking function which starts a controller-runtime manager
 // It starts an Operator by reading in the values in `./watches.yaml`, adds a controller
 // to the manager, and finally running the manager.
-func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags, cMap *proxy.ControllerMap) {
+func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags, cMap *controllermap.ControllerMap) {
 	watches, err := runner.NewFromWatches(f.WatchesFile)
 	if err != nil {
 		logf.Log.WithName("manager").Error(err, "Failed to get watches")
@@ -57,7 +57,12 @@ func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags, cM
 			done <- errors.New("failed to add controller")
 			return
 		}
-		cMap.Store(o.GVK, *ctr, runner.GetWatchDependentResources())
+		cMap.Store(o.GVK, &controllermap.ControllerMapContents{Controller: *ctr,
+			WatchDependentResources:     runner.GetWatchDependentResources(),
+			WatchClusterScopedResources: runner.GetWatchClusterScopedResources(),
+			WatchMap:                    controllermap.NewWatchMap(),
+			UIDMap:                      controllermap.NewUIDMap(),
+		})
 	}
 	done <- mgr.Start(c)
 }

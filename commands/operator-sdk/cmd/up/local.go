@@ -90,7 +90,6 @@ func upLocalFunc(cmd *cobra.Command, args []string) error {
 	t := projutil.GetOperatorType()
 	switch t {
 	case projutil.OperatorTypeGo:
-		projutil.MustInProjectRoot()
 		return upLocal()
 	case projutil.OperatorTypeAnsible:
 		return upLocalAnsible()
@@ -101,16 +100,20 @@ func upLocalFunc(cmd *cobra.Command, args []string) error {
 }
 
 func upLocal() error {
-	args := []string{"run"}
-	if ldFlags != "" {
-		args = append(args, []string{"-ldflags", ldFlags}...)
+	projutil.MustInProjectRoot()
+	absProjectPath := projutil.MustGetwd()
+	projectName := filepath.Base(absProjectPath)
+	outputBinName := filepath.Join(scaffold.BuildBinDir, projectName+"-local")
+	if err := buildLocal(outputBinName); err != nil {
+		return fmt.Errorf("failed to build operator to run locally: (%v)", err)
 	}
-	args = append(args, filepath.Join(scaffold.ManagerDir, scaffold.CmdFile))
+
+	args := []string{}
 	if operatorFlags != "" {
 		extraArgs := strings.Split(operatorFlags, " ")
 		args = append(args, extraArgs...)
 	}
-	dc := exec.Command("go", args...)
+	dc := exec.Command(outputBinName, args...)
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
@@ -121,8 +124,6 @@ func upLocal() error {
 		}
 		os.Exit(0)
 	}()
-	dc.Stdout = os.Stdout
-	dc.Stderr = os.Stderr
 	dc.Env = os.Environ()
 	// only set env var if user explicitly specified a kubeconfig path
 	if kubeConfig != "" {
@@ -137,27 +138,21 @@ func upLocal() error {
 
 func upLocalAnsible() error {
 	logf.SetLogger(zap.Logger())
-
-	// Set the kubeconfig that the manager will be able to grab
-	// only set env var if user explicitly specified a kubeconfig path
-	if kubeConfig != "" {
-		if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
-			return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
-		}
+	if err := setupOperatorEnv(); err != nil {
+		return err
 	}
-	// Set the namespace that the manager will be able to grab
-	if namespace != "" {
-		if err := os.Setenv(k8sutil.WatchNamespaceEnvVar, namespace); err != nil {
-			return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
-		}
-	}
-
 	return ansible.Run(ansibleOperatorFlags)
 }
 
 func upLocalHelm() error {
 	logf.SetLogger(zap.Logger())
+	if err := setupOperatorEnv(); err != nil {
+		return err
+	}
+	return helm.Run(helmOperatorFlags)
+}
 
+func setupOperatorEnv() error {
 	// Set the kubeconfig that the manager will be able to grab
 	// only set env var if user explicitly specified a kubeconfig path
 	if kubeConfig != "" {
@@ -171,8 +166,29 @@ func upLocalHelm() error {
 			return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
 		}
 	}
+	// Set the operator name, if not already set
+	projutil.MustInProjectRoot()
+	if _, err := k8sutil.GetOperatorName(); err != nil {
+		operatorName := filepath.Base(projutil.MustGetwd())
+		if err := os.Setenv(k8sutil.OperatorNameEnvVar, operatorName); err != nil {
+			return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.OperatorNameEnvVar, err)
+		}
+	}
+	return nil
+}
 
-	return helm.Run(helmOperatorFlags)
+func buildLocal(outputBinName string) error {
+	args := []string{"build", "-o", outputBinName}
+	if ldFlags != "" {
+		args = append(args, "-ldflags", ldFlags)
+	}
+	args = append(args, filepath.Join(scaffold.ManagerDir, scaffold.CmdFile))
+
+	bc := exec.Command("go", args...)
+	if err := projutil.ExecCmd(bc); err != nil {
+		return err
+	}
+	return nil
 }
 
 func printVersion() {
