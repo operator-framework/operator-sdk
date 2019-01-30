@@ -43,6 +43,7 @@ var (
 const (
 	namespaceMan = "namespaced-manifest"
 	testLoc      = "test-location"
+	enableTest   = "enable-tests"
 )
 
 func NewBuildCmd() *cobra.Command {
@@ -172,7 +173,7 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 	image := args[0]
 	baseImageName := image
-	if enableTests {
+	if viper.GetBool(enableTest) {
 		baseImageName += "-intermediate"
 	}
 
@@ -180,13 +181,13 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 	dbcmd := exec.Command("docker", "build", ".", "-f", "build/Dockerfile", "-t", baseImageName)
 	if err := projutil.ExecCmd(dbcmd); err != nil {
-		if enableTests {
+		if viper.GetBool(enableTest) {
 			return fmt.Errorf("failed to output intermediate image %s: (%v)", image, err)
 		}
 		return fmt.Errorf("failed to output build image %s: (%v)", image, err)
 	}
 
-	if enableTests {
+	if viper.GetBool(enableTest) {
 		if projutil.GetOperatorType() == projutil.OperatorTypeGo {
 			testBinary := filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName+"-test")
 			buildTestCmd := exec.Command("go", "test", "-c", "-o", testBinary, viper.GetString(testLoc)+"/...")
