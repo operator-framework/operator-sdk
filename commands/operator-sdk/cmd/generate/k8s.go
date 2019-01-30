@@ -33,8 +33,18 @@ func NewGenerateK8SCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "k8s",
 		Short: "Generates Kubernetes code for custom resource",
-		Long: `k8s generator generates code for custom resource given the API spec
-to comply with kube-API requirements.
+		Long: `k8s generator generates code for custom resources given the API
+specs in pkg/apis/<group>/<version> directories to comply with kube-API
+requirements. Go code is generated under
+pkg/apis/<group>/<version>/zz_generated.deepcopy.go.
+
+Example:
+	$ operator-sdk generate k8s
+	$ tree pkg/apis
+	pkg/apis/
+	└── app
+		└── v1alpha1
+			├── zz_generated.deepcopy.go
 `,
 		RunE: k8sFunc,
 	}
