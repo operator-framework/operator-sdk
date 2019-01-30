@@ -64,13 +64,19 @@ type values struct {
 	Namespace string
 }
 
+type NamespacedOwnerReference struct {
+	metav1.OwnerReference
+	Namespace string
+}
+
 // Create renders a kubeconfig template and writes it to disk
 func Create(ownerRef metav1.OwnerReference, proxyURL string, namespace string) (*os.File, error) {
+	nsOwnerRef := NamespacedOwnerReference{OwnerReference: ownerRef, Namespace: namespace}
 	parsedURL, err := url.Parse(proxyURL)
 	if err != nil {
 		return nil, err
 	}
-	ownerRefJSON, err := json.Marshal(ownerRef)
+	ownerRefJSON, err := json.Marshal(nsOwnerRef)
 	if err != nil {
 		return nil, err
 	}
