@@ -85,7 +85,7 @@ func crdsHaveValidation(crdsDir string, runtimeClient client.Client, obj *unstru
 	test := scorecardTest{testType: olmIntegration, name: "Provided APIs have validation"}
 	crds, err := getCRDs(crdsDir)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get crds: %s", err)
 	}
 	err = runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, obj)
 	if err != nil {
