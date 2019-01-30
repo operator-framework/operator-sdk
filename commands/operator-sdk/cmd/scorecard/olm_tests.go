@@ -94,38 +94,38 @@ func crdsHaveValidation(crdsDir string, runtimeClient client.Client, obj *unstru
 	// TODO: we need to make this handle multiple CRs better/correctly
 	for _, crd := range crds {
 		test.maximumPoints++
-		if crd.Spec.Validation != nil {
-			// check if the CRD matches the testing CR
-			gvk := obj.GroupVersionKind()
-			// crd.Spec.Version is deprecated, so check in crd.Spec.Versions as well
-			if matchVersion(gvk.Version, crd) && matchKind(gvk.Kind, crd.Spec.Names.Kind) {
-				failed := false
-				if obj.Object["spec"] != nil {
-					spec := obj.Object["spec"].(map[string]interface{})
-					for key := range spec {
-						if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["spec"].Properties[key]; !ok {
-							failed = true
-							scSuggestions = append(scSuggestions, fmt.Sprintf("Add CRD validation for spec field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
-						}
-					}
-				}
-				if obj.Object["status"] != nil {
-					status := obj.Object["status"].(map[string]interface{})
-					for key := range status {
-						if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["status"].Properties[key]; !ok {
-							failed = true
-							scSuggestions = append(scSuggestions, fmt.Sprintf("Add CRD validation for status field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
-						}
-					}
-				}
-				if !failed {
-					test.earnedPoints++
-				}
-			} else {
-				test.earnedPoints++
-			}
-		} else {
+		if crd.Spec.Validation == nil {
 			scSuggestions = append(scSuggestions, fmt.Sprintf("Add CRD validation for %s/%s", crd.Spec.Names.Kind, crd.Spec.Version))
+			continue
+		}
+		// check if the CRD matches the testing CR
+		gvk := obj.GroupVersionKind()
+		// crd.Spec.Version is deprecated, so check in crd.Spec.Versions as well
+		if !(matchVersion(gvk.Version, crd) && matchKind(gvk.Kind, crd.Spec.Names.Kind)) {
+			test.earnedPoints++
+			continue
+		}
+		failed := false
+		if obj.Object["spec"] != nil {
+			spec := obj.Object["spec"].(map[string]interface{})
+			for key := range spec {
+				if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["spec"].Properties[key]; !ok {
+					failed = true
+					scSuggestions = append(scSuggestions, fmt.Sprintf("Add CRD validation for spec field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
+				}
+			}
+		}
+		if obj.Object["status"] != nil {
+			status := obj.Object["status"].(map[string]interface{})
+			for key := range status {
+				if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["status"].Properties[key]; !ok {
+					failed = true
+					scSuggestions = append(scSuggestions, fmt.Sprintf("Add CRD validation for status field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
+				}
+			}
+		}
+		if !failed {
+			test.earnedPoints++
 		}
 	}
 	scTests = append(scTests, test)
