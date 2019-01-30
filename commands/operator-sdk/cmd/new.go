@@ -261,6 +261,14 @@ func doHelmScaffold() error {
 		return err
 	}
 
+	chart, err := helm.CreateChartForResource(resource, cfg.AbsProjectPath)
+	if err != nil {
+		log.Fatalf("Failed to create initial helm chart for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
+	}
+
+	valuesPath := filepath.Join("<project_dir>", helm.HelmChartsDir, chart.GetMetadata().GetName(), "values.yaml")
+	crSpec := fmt.Sprintf("# Default values copied from %s\n\n%s", valuesPath, chart.GetValues().GetRaw())
+
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
 		&helm.Dockerfile{},
@@ -270,14 +278,13 @@ func doHelmScaffold() error {
 		&scaffold.RoleBinding{IsClusterScoped: isClusterScoped},
 		&helm.Operator{IsClusterScoped: isClusterScoped},
 		&scaffold.Crd{Resource: resource},
-		&scaffold.Cr{Resource: resource},
+		&scaffold.Cr{
+			Resource: resource,
+			Spec:     crSpec,
+		},
 	)
 	if err != nil {
 		return fmt.Errorf("new helm scaffold failed: (%v)", err)
-	}
-
-	if err := helm.CreateChartForResource(resource, cfg.AbsProjectPath); err != nil {
-		return fmt.Errorf("failed to create initial helm chart for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
 	}
 
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
