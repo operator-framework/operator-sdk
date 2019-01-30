@@ -17,6 +17,7 @@ package zap
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
@@ -36,7 +37,7 @@ func init() {
 	zapFlagSet = pflag.NewFlagSet("zap", pflag.ExitOnError)
 	zapFlagSet.BoolVar(&development, "zap-devel", false, "Enable zap development mode (changes defaults to console encoder, debug log level, and disables sampling)")
 	zapFlagSet.Var(&encoderVal, "zap-encoder", "Zap log encoding ('json' or 'console')")
-	zapFlagSet.Var(&levelVal, "zap-level", "Zap log level (one of 'debug', 'info', 'warn', 'error', 'dpanic', 'panic', 'fatal')")
+	zapFlagSet.Var(&levelVal, "zap-level", "Zap log level (one of 'debug', 'info', 'error')")
 	zapFlagSet.Var(&sampleVal, "zap-sample", "Enable zap log sampling")
 }
 
@@ -89,7 +90,12 @@ type levelValue struct {
 
 func (v *levelValue) Set(l string) error {
 	v.set = true
-	return v.level.Set(l)
+	lower := strings.ToLower(l)
+	switch lower {
+	case "debug", "info", "error":
+		return v.level.Set(l)
+	}
+	return fmt.Errorf("invalid log level \"%s\"", l)
 }
 
 func (v levelValue) String() string {
