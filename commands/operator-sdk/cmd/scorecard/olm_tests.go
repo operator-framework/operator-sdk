@@ -37,15 +37,7 @@ func crdsHaveResources(obj *unstructured.Unstructured, csv *olmapiv1alpha1.Clust
 	for _, crd := range csv.Spec.CustomResourceDefinitions.Owned {
 		test.maximumPoints++
 		gvk := obj.GroupVersionKind()
-		crKind, err := restMapper.ResourceSingularizer(gvk.Kind)
-		if err != nil {
-			log.Warningf("could not find singular version of %s", gvk.Kind)
-		}
-		crdKind, err := restMapper.ResourceSingularizer(crd.Kind)
-		if err != nil {
-			log.Warningf("could not find singular version of %s", crd.Kind)
-		}
-		if strings.EqualFold(crd.Version, gvk.Version) && strings.EqualFold(crdKind, crKind) {
+		if strings.EqualFold(crd.Version, gvk.Version) && matchKind(gvk.Kind, crd.Kind) {
 			resources, err := getUsedResources()
 			if err != nil {
 				log.Warningf("getUsedResource failed: %v", err)
@@ -53,16 +45,8 @@ func crdsHaveResources(obj *unstructured.Unstructured, csv *olmapiv1alpha1.Clust
 			allResourcesListed := true
 			for _, resource := range resources {
 				foundResource := false
-				resourceKind, err := restMapper.ResourceSingularizer(resource.Kind)
-				if err != nil {
-					log.Warningf("could not find singular version of %s", resource.Kind)
-				}
 				for _, listedResource := range crd.Resources {
-					listedResourceKind, err := restMapper.ResourceSingularizer(listedResource.Kind)
-					if err != nil {
-						log.Warningf("could not find singular version of %s", listedResource.Kind)
-					}
-					if strings.EqualFold(resourceKind, listedResourceKind) && strings.EqualFold(resource.Version, listedResource.Version) {
+					if matchKind(resource.Kind, listedResource.Kind) && strings.EqualFold(resource.Version, listedResource.Version) {
 						foundResource = true
 					}
 				}
@@ -156,6 +140,20 @@ func getUsedResources() ([]schema.GroupVersionKind, error) {
 		}
 	}
 	return deduplicatedResources, nil
+}
+
+func matchKind(kind1, kind2 string) bool {
+	singularKind1, err := restMapper.ResourceSingularizer(kind1)
+	if err != nil {
+		singularKind1 = kind1
+		log.Warningf("could not find singular version of %s", kind1)
+	}
+	singularKind2, err := restMapper.ResourceSingularizer(kind2)
+	if err != nil {
+		singularKind2 = kind2
+		log.Warningf("could not find singular version of %s", kind2)
+	}
+	return strings.EqualFold(singularKind1, singularKind2)
 }
 
 // annotationsContainExamples makes sure that the CSVs list at least 1 example for the CR
