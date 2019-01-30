@@ -31,12 +31,18 @@ import (
 	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
 	namespacedManBuild string
 	testLocationBuild  string
 	enableTests        bool
+)
+
+const (
+	namespaceMan = "namespaced-manifest"
+	testLoc      = "test-location"
 )
 
 func NewBuildCmd() *cobra.Command {
@@ -60,6 +66,11 @@ For example:
 	buildCmd.Flags().BoolVar(&enableTests, "enable-tests", false, "Enable in-cluster testing by adding test binary to the image")
 	buildCmd.Flags().StringVar(&testLocationBuild, "test-location", "./test/e2e", "Location of tests")
 	buildCmd.Flags().StringVar(&namespacedManBuild, "namespaced-manifest", "deploy/operator.yaml", "Path of namespaced resources manifest for tests")
+
+	if err := viper.BindPFlags(buildCmd.Flags()); err != nil {
+		log.Fatalf("Failed to bind build flags to viper: %v", err)
+	}
+
 	return buildCmd
 }
 
@@ -125,7 +136,7 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 }
 
 func verifyTestManifest(image string) error {
-	namespacedBytes, err := ioutil.ReadFile(namespacedManBuild)
+	namespacedBytes, err := ioutil.ReadFile(viper.GetString(namespaceMan))
 	if err != nil {
 		return fmt.Errorf("could not read namespaced manifest: (%v)", err)
 	}
@@ -178,7 +189,7 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	if enableTests {
 		if projutil.GetOperatorType() == projutil.OperatorTypeGo {
 			testBinary := filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName+"-test")
-			buildTestCmd := exec.Command("go", "test", "-c", "-o", testBinary, testLocationBuild+"/...")
+			buildTestCmd := exec.Command("go", "test", "-c", "-o", testBinary, viper.GetString(testLoc)+"/...")
 			buildTestCmd.Env = goBuildEnv
 			if err := projutil.ExecCmd(buildTestCmd); err != nil {
 				return fmt.Errorf("failed to build test binary: (%v)", err)
@@ -222,7 +233,7 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 		log.Infof("Building test Docker image %s", image)
 
-		testDbcmd := exec.Command("docker", "build", ".", "-f", testDockerfile, "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+baseImageName)
+		testDbcmd := exec.Command("docker", "build", ".", "-f", testDockerfile, "-t", image, "--build-arg", "NAMESPACEDMAN="+viper.GetString(namespaceMan), "--build-arg", "BASEIMAGE="+baseImageName)
 		if err := projutil.ExecCmd(testDbcmd); err != nil {
 			return fmt.Errorf("failed to output test image %s: (%v)", image, err)
 		}
