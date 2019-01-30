@@ -17,6 +17,7 @@ package generate
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -33,6 +34,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+var headerFile string
+
 func NewGenerateOpenAPICmd() *cobra.Command {
 	openAPICmd := &cobra.Command{
 		Use:   "openapi",
@@ -42,6 +45,8 @@ all pkg/apis/<group>/<version> directories.
 `,
 		RunE: openAPIFunc,
 	}
+
+	openAPICmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated files.")
 
 	return openAPICmd
 }
@@ -123,12 +128,27 @@ func buildOpenAPIGenBinary(binDir, codegenSrcDir string) error {
 }
 
 func openAPIGen(binDir string, fqApis []string) (err error) {
+	if headerFile == "" {
+		f, err := ioutil.TempFile(scaffold.BuildBinDir, "")
+		if err != nil {
+			return err
+		}
+		headerFile = f.Name()
+		defer func() {
+			if err = os.RemoveAll(headerFile); err != nil {
+				log.Error(err)
+			}
+		}()
+	}
 	cgPath := filepath.Join(binDir, "openapi-gen")
 	for _, fqApi := range fqApis {
 		args := []string{
 			"--input-dirs", fqApi,
 			"--output-package", fqApi,
 			"--output-file-base", "zz_generated.openapi",
+			// openapi-gen requires a boilerplate file. Either use header or an
+			// empty file if header is empty.
+			"--go-header-file", headerFile,
 		}
 		cmd := exec.Command(cgPath, args...)
 		if projutil.IsGoVerbose() {
