@@ -54,17 +54,17 @@ func getCRDs(crdsDir string) ([]apiextv1beta1.CustomResourceDefinition, error) {
 }
 
 func matchKind(kind1, kind2 string) bool {
-	singularCRKind, err := restMapper.ResourceSingularizer(kind1)
+	singularKind1, err := restMapper.ResourceSingularizer(kind1)
 	if err != nil {
-		singularCRKind = kind1
+		singularKind1 = kind1
 		log.Warningf("could not find singular version of %s", kind1)
 	}
-	singularCRDKind, err := restMapper.ResourceSingularizer(kind2)
+	singularKind2, err := restMapper.ResourceSingularizer(kind2)
 	if err != nil {
-		singularCRDKind = kind2
+		singularKind2 = kind2
 		log.Warningf("could not find singular version of %s", kind2)
 	}
-	return strings.EqualFold(singularCRKind, singularCRDKind)
+	return strings.EqualFold(singularKind1, singularKind2)
 }
 
 // matchVersion checks if a CRD contains a specified version in a case insensitive manner
