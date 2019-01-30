@@ -53,9 +53,12 @@ func getCRDs(crdsDir string) ([]apiextv1beta1.CustomResourceDefinition, error) {
 	return crds, nil
 }
 
-// matchVersion checks if a []CustomResourceDefinitionVersion contains a version in a case insensitive manner
-func matchVersion(version string, crdVersions []apiextv1beta1.CustomResourceDefinitionVersion) bool {
-	for _, currVer := range crdVersions {
+// matchVersion checks if a CRD contains a specified version in a case insensitive manner
+func matchVersion(version string, crd apiextv1beta1.CustomResourceDefinition) bool {
+	if strings.EqualFold(version, crd.Spec.Version) {
+		return true
+	}
+	for _, currVer := range crd.Spec.Versions {
 		if strings.EqualFold(version, currVer.Name) {
 			return true
 		}
@@ -89,7 +92,7 @@ func crdsHaveValidation(crdsDir string, runtimeClient client.Client, obj *unstru
 				log.Warningf("could not find singular version of %s", crd.Spec.Names.Kind)
 			}
 			// crd.Spec.Version is deprecated, so check in crd.Spec.Versions as well
-			if (matchVersion(gvk.Version, crd.Spec.Versions) || strings.EqualFold(crd.Spec.Version, gvk.Version)) && strings.EqualFold(singularCRKind, singularCRDKind) {
+			if matchVersion(gvk.Version, crd) && strings.EqualFold(singularCRKind, singularCRDKind) {
 				failed := false
 				if obj.Object["spec"] != nil {
 					spec := obj.Object["spec"].(map[string]interface{})
