@@ -53,6 +53,20 @@ func getCRDs(crdsDir string) ([]apiextv1beta1.CustomResourceDefinition, error) {
 	return crds, nil
 }
 
+func matchKind(kind1, kind2 string) bool {
+	singularCRKind, err := restMapper.ResourceSingularizer(kind1)
+	if err != nil {
+		singularCRKind = kind1
+		log.Warningf("could not find singular version of %s", kind1)
+	}
+	singularCRDKind, err := restMapper.ResourceSingularizer(kind2)
+	if err != nil {
+		singularCRDKind = kind2
+		log.Warningf("could not find singular version of %s", kind2)
+	}
+	return strings.EqualFold(singularCRKind, singularCRDKind)
+}
+
 // matchVersion checks if a CRD contains a specified version in a case insensitive manner
 func matchVersion(version string, crd apiextv1beta1.CustomResourceDefinition) bool {
 	if strings.EqualFold(version, crd.Spec.Version) {
@@ -83,16 +97,8 @@ func crdsHaveValidation(crdsDir string, runtimeClient client.Client, obj *unstru
 		if crd.Spec.Validation != nil {
 			// check if the CRD matches the testing CR
 			gvk := obj.GroupVersionKind()
-			singularCRKind, err := restMapper.ResourceSingularizer(gvk.Kind)
-			if err != nil {
-				log.Warningf("could not find singular version of %s", singularCRKind)
-			}
-			singularCRDKind, err := restMapper.ResourceSingularizer(crd.Spec.Names.Kind)
-			if err != nil {
-				log.Warningf("could not find singular version of %s", crd.Spec.Names.Kind)
-			}
 			// crd.Spec.Version is deprecated, so check in crd.Spec.Versions as well
-			if matchVersion(gvk.Version, crd) && strings.EqualFold(singularCRKind, singularCRDKind) {
+			if matchVersion(gvk.Version, crd) && matchKind(gvk.Kind, crd.Spec.Names.Kind) {
 				failed := false
 				if obj.Object["spec"] != nil {
 					spec := obj.Object["spec"].(map[string]interface{})
