@@ -174,24 +174,10 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 	if dockerBuildArgs != "" {
 		splitArgs := strings.Fields(dockerBuildArgs)
-		dbcmd := exec.Command("docker", append(dbArgs, splitArgs...)...)
-		if err := projutil.ExecCmd(dbcmd); err != nil {
-			if enableTests {
-				return fmt.Errorf("failed to output intermediate image %s: (%v)", image, err)
-			}
-			return fmt.Errorf("failed to output build image %s: (%v)", image, err)
-		}
-	} else {
-		dbcmd := exec.Command("docker", dbArgs...)
-		if err := projutil.ExecCmd(dbcmd); err != nil {
-			if enableTests {
-				return fmt.Errorf("failed to output intermediate image %s: (%v)", image, err)
-			}
-			return fmt.Errorf("failed to output build image %s: (%v)", image, err)
-		}
+		dbArgs = append(dbArgs, splitArgs...)
 	}
 
-	dbcmd := exec.Command("docker", "build", ".", "-f", "build/Dockerfile", "-t", baseImageName)
+	dbcmd := exec.Command("docker", dbArgs...)
 	if err := projutil.ExecCmd(dbcmd); err != nil {
 		if enableTests {
 			return fmt.Errorf("failed to output intermediate image %s: (%v)", image, err)
@@ -250,23 +236,16 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 		if dockerBuildArgs != "" {
 			splitArgs := strings.Fields(dockerBuildArgs)
-			testDbcmd := exec.Command("docker", append(testDbArgs, splitArgs...)...)
-			if err := projutil.ExecCmd(testDbcmd); err != nil {
-				return fmt.Errorf("failed to output test image %s: (%v)", image, err)
-			}
-			// Check image name of deployments in namespaced manifest
-			if err := verifyTestManifest(image); err != nil {
-				return nil
-			}
-		} else {
-			testDbcmd := exec.Command("docker", testDbArgs...)
-			if err := projutil.ExecCmd(testDbcmd); err != nil {
-				return fmt.Errorf("failed to output test image %s: (%v)", image, err)
-			}
-			// Check image name of deployments in namespaced manifest
-			if err := verifyTestManifest(image); err != nil {
-				return nil
-			}
+			testDbArgs = append(testDbArgs, splitArgs...)
+		}
+
+		testDbcmd := exec.Command("docker", testDbArgs...)
+		if err := projutil.ExecCmd(testDbcmd); err != nil {
+			return fmt.Errorf("failed to output test image %s: (%v)", image, err)
+		}
+		// Check image name of deployments in namespaced manifest
+		if err := verifyTestManifest(image); err != nil {
+			return nil
 		}
 	}
 
