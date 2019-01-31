@@ -196,11 +196,15 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println("Checking that operator actions are reflected in status")
-		err = checkStatusUpdate(runtimeClient, obj)
-		if err != nil {
-			return err
-		}
+		// This test is far too inconsistent and unreliable to be meaningful,
+		// so it has been disabled
+		/*
+			fmt.Println("Checking that operator actions are reflected in status")
+			err = checkStatusUpdate(runtimeClient, obj)
+			if err != nil {
+				return err
+			}
+		*/
 		fmt.Println("Checking that writing into CRs has an effect")
 		logs, err := writingIntoCRsHasEffect(obj)
 		if err != nil {

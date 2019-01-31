@@ -52,14 +52,6 @@ has a maximum score of 1.
 This test checks the Custom Resource that is created in the cluster to make sure that it has a status block. This
 test has a maximum score of 1.
 
-#### Operator Action Are Reflected In Status
-
-This test makes modifications to each field in the Custom Resources spec block, waits, then verifies that the
-operator updates the status block. This test has a maximum score of 1.
-
-Note: This test is somewhat prone to breakage as it can potentially change a spec field to an
-invalid value. We plan to partially replace this test with user defined tests in the future.
-
 #### Writing Into CRs Has An Effect
 
 This test reads the scorecard proxy's logs to verify that the operator is making `PUT` and/or `POST` requests to the

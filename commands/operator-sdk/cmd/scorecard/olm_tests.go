@@ -39,7 +39,7 @@ func getCRDs(crdsDir string) ([]apiextv1beta1.CustomResourceDefinition, error) {
 	crds := []apiextv1beta1.CustomResourceDefinition{}
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), "crd.yaml") {
-			obj, err := yamlToUnstructured(filepath.Join(scaffold.CrdsDir, file.Name()))
+			obj, err := yamlToUnstructured(filepath.Join(scaffold.CRDsDir, file.Name()))
 			if err != nil {
 				return nil, err
 			}
