@@ -69,6 +69,10 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
               {{- end}}
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "{{.ProjectName}}"
 `
