@@ -191,10 +191,16 @@ func newTemplate(i input.Input) (*template.Template, error) {
 	t := template.New(i.Path).Funcs(template.FuncMap{
 		"title":    strings.Title,
 		"lower":    strings.ToLower,
-		"rmhyphen": func(a string) string { return strings.Replace(a, "-", "", -1) },
+		"goimport": GoImportGroup,
 	})
 	if len(i.TemplateFuncs) > 0 {
 		t.Funcs(i.TemplateFuncs)
 	}
 	return t.Parse(i.TemplateBody)
+}
+
+// GoImportGroup returns a copy of the string s with package naming convention.
+func GoImportGroup(s string) string {
+	s = strings.ToLower(s)
+	return strings.Replace(s, "-", "", -1)
 }
