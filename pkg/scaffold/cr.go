@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
@@ -28,6 +29,10 @@ type CR struct {
 
 	// Resource defines the inputs for the new custom resource
 	Resource *Resource
+
+	// Spec is a custom spec for the CR. It will be automatically indented. If
+	// unset, a default spec will be created.
+	Spec string
 }
 
 func (s *CR) GetInput() (input.Input, error) {
@@ -39,7 +44,16 @@ func (s *CR) GetInput() (input.Input, error) {
 		s.Path = filepath.Join(CRDsDir, fileName)
 	}
 	s.TemplateBody = crTemplate
+	if s.TemplateFuncs == nil {
+		s.TemplateFuncs = template.FuncMap{}
+	}
+	s.TemplateFuncs["indent"] = indent
 	return s.Input, nil
+}
+
+func indent(spaces int, v string) string {
+	pad := strings.Repeat(" ", spaces)
+	return pad + strings.Replace(v, "\n", "\n"+pad, -1)
 }
 
 const crTemplate = `apiVersion: {{ .Resource.APIVersion }}
@@ -47,6 +61,10 @@ kind: {{ .Resource.Kind }}
 metadata:
   name: example-{{ .Resource.LowerKind }}
 spec:
+{{- with .Spec }}
+{{ . | indent 2 }}
+{{- else }}
   # Add fields here
   size: 3
+{{- end }}
 `
