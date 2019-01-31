@@ -31,6 +31,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm"
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
@@ -136,28 +137,22 @@ func upLocal() error {
 }
 
 func upLocalAnsible() error {
-	logf.SetLogger(logf.ZapLogger(false))
-
-	// Set the kubeconfig that the manager will be able to grab
-	// only set env var if user explicitly specified a kubeconfig path
-	if kubeConfig != "" {
-		if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
-			return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
-		}
+	logf.SetLogger(zap.Logger())
+	if err := setupOperatorEnv(); err != nil {
+		return err
 	}
-	// Set the namespace that the manager will be able to grab
-	if namespace != "" {
-		if err := os.Setenv(k8sutil.WatchNamespaceEnvVar, namespace); err != nil {
-			return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
-		}
-	}
-
 	return ansible.Run(ansibleOperatorFlags)
 }
 
 func upLocalHelm() error {
-	logf.SetLogger(logf.ZapLogger(false))
+	logf.SetLogger(zap.Logger())
+	if err := setupOperatorEnv(); err != nil {
+		return err
+	}
+	return helm.Run(helmOperatorFlags)
+}
 
+func setupOperatorEnv() error {
 	// Set the kubeconfig that the manager will be able to grab
 	// only set env var if user explicitly specified a kubeconfig path
 	if kubeConfig != "" {
@@ -171,8 +166,15 @@ func upLocalHelm() error {
 			return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
 		}
 	}
-
-	return helm.Run(helmOperatorFlags)
+	// Set the operator name, if not already set
+	projutil.MustInProjectRoot()
+	if _, err := k8sutil.GetOperatorName(); err != nil {
+		operatorName := filepath.Base(projutil.MustGetwd())
+		if err := os.Setenv(k8sutil.OperatorNameEnvVar, operatorName); err != nil {
+			return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.OperatorNameEnvVar, err)
+		}
+	}
+	return nil
 }
 
 func buildLocal(outputBinName string) error {

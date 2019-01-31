@@ -39,13 +39,14 @@ var log = logf.Log.WithName("ansible-controller")
 
 // Options - options for your controller
 type Options struct {
-	EventHandlers           []events.EventHandler
-	LoggingLevel            events.LogLevel
-	Runner                  runner.Runner
-	GVK                     schema.GroupVersionKind
-	ReconcilePeriod         time.Duration
-	ManageStatus            bool
-	WatchDependentResources bool
+	EventHandlers               []events.EventHandler
+	LoggingLevel                events.LogLevel
+	Runner                      runner.Runner
+	GVK                         schema.GroupVersionKind
+	ReconcilePeriod             time.Duration
+	ManageStatus                bool
+	WatchDependentResources     bool
+	WatchClusterScopedResources bool
 }
 
 // Add - Creates a new ansible operator controller and adds it to the manager
