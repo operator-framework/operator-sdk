@@ -113,12 +113,11 @@ var statusDescriptorsTest = &Test{
 var BasicTests = &TestSuite{
 	name:        "Basic Tests",
 	description: "Test suite that runs basic, functional operator tests",
-	tests:       []*Test{checkSpecTest, checkStatTest, checkStatusUpdateTest, writingIntoCRsHasEffectTest},
+	tests:       []*Test{checkSpecTest, checkStatTest, writingIntoCRsHasEffectTest},
 	weights: map[string]int{
-		checkSpecTest.name:               34,
-		checkStatTest.name:               22,
-		checkStatusUpdateTest.name:       22,
-		writingIntoCRsHasEffectTest.name: 22,
+		checkSpecTest.name:               44,
+		checkStatTest.name:               28,
+		writingIntoCRsHasEffectTest.name: 28,
 	},
 }
 var OLMTests = &TestSuite{

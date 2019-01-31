@@ -20,12 +20,15 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	v1 "k8s.io/api/core/v1"
 	extscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -38,27 +41,22 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// TODO: use a config file to reduce number of flags users
-// have to provide for the config
-
-// Config stores all scorecard config passed as flags
-type Config struct {
-	Namespace          string
-	KubeconfigPath     string
-	InitTimeout        int
-	CSVPath            string
-	BasicTests         bool
-	OLMTests           bool
-	TenantTests        bool
-	NamespacedManifest string
-	GlobalManifest     string
-	CRManifest         string
-	ProxyImage         string
-	ProxyPullPolicy    string
-	Verbose            bool
-}
-
-var SCConf Config
+const (
+	ConfigOpt             = "config"
+	NamespaceOpt          = "namespace"
+	KubeconfigOpt         = "kubeconfig"
+	InitTimeoutOpt        = "init-timeout"
+	CSVPathOpt            = "csv-path"
+	BasicTestsOpt         = "basic-tests"
+	OLMTestsOpt           = "olm-tests"
+	TenantTestsOpt        = "good-tenant-tests"
+	NamespacedManifestOpt = "namespace-manifest"
+	GlobalManifestOpt     = "global-manifest"
+	CRManifestOpt         = "cr-manifest"
+	ProxyImageOpt         = "proxy-image"
+	ProxyPullPolicyOpt    = "proxy-pull-policy"
+	VerboseOpt            = "verbose"
+)
 
 const (
 	basicOperator  = "Basic Operator"
@@ -75,48 +73,57 @@ var (
 	deploymentName string
 	proxyPod       *v1.Pod
 	cleanupFns     []cleanupFn
+	ScorecardConf  string
 )
 
 const scorecardPodName = "operator-scorecard-test"
 
 func ScorecardTests(cmd *cobra.Command, args []string) error {
-	if !SCConf.BasicTests && !SCConf.OLMTests {
+	err := initConfig()
+	if err != nil {
+		return err
+	}
+	if viper.GetString(CRManifestOpt) == "" {
+		return errors.New("cr-manifest config option missing")
+	}
+	if !viper.GetBool(BasicTestsOpt) && !viper.GetBool(OLMTestsOpt) {
 		return errors.New("at least one test type is required")
 	}
-	if SCConf.OLMTests && SCConf.CSVPath == "" {
+	if viper.GetBool(OLMTestsOpt) && viper.GetString(CSVPathOpt) == "" {
 		return fmt.Errorf("if olm-tests is enabled, the --csv-path flag must be set")
 	}
-	if SCConf.ProxyPullPolicy != "Always" && SCConf.ProxyPullPolicy != "Never" && SCConf.ProxyPullPolicy != "PullIfNotPresent" {
-		return fmt.Errorf("invalid proxy pull policy: (%s); valid values: Always, Never", SCConf.ProxyPullPolicy)
+	pullPolicy := viper.GetString(ProxyPullPolicyOpt)
+	if pullPolicy != "Always" && pullPolicy != "Never" && pullPolicy != "PullIfNotPresent" {
+		return fmt.Errorf("invalid proxy pull policy: (%s); valid values: Always, Never, PullIfNotPresent", pullPolicy)
 	}
 	cmd.SilenceUsage = true
-	if SCConf.Verbose {
+	if viper.GetBool(VerboseOpt) {
 		log.SetLevel(log.DebugLevel)
 	}
 	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml, deploy/role_binding.yaml and deploy/operator.yaml
-	if SCConf.NamespacedManifest == "" {
+	if viper.GetString(NamespacedManifestOpt) == "" {
 		file, err := yamlutil.GenerateCombinedNamespacedManifest()
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		SCConf.NamespacedManifest = file.Name()
+		viper.Set(NamespacedManifestOpt, file.Name())
 		defer func() {
-			err := os.Remove(SCConf.NamespacedManifest)
+			err := os.Remove(viper.GetString(NamespacedManifestOpt))
 			if err != nil {
-				log.Fatalf("Could not delete temporary namespace manifest file: (%v)", err)
+				log.Errorf("Could not delete temporary namespace manifest file: (%v)", err)
 			}
 		}()
 	}
-	if SCConf.GlobalManifest == "" {
+	if viper.GetString(GlobalManifestOpt) == "" {
 		file, err := yamlutil.GenerateCombinedGlobalManifest()
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		SCConf.GlobalManifest = file.Name()
+		viper.Set(GlobalManifestOpt, file.Name())
 		defer func() {
-			err := os.Remove(SCConf.GlobalManifest)
+			err := os.Remove(viper.GetString(GlobalManifestOpt))
 			if err != nil {
-				log.Fatalf("Could not delete global manifest file: (%v)", err)
+				log.Errorf("Could not delete global manifest file: (%v)", err)
 			}
 		}()
 	}
@@ -125,10 +132,13 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 			log.Errorf("Failed to clenup resources: (%v)", err)
 		}
 	}()
-	var err error
-	kubeconfig, SCConf.Namespace, err = k8sInternal.GetKubeconfigAndNamespace(SCConf.KubeconfigPath)
+	var tmpNamespaceVar string
+	kubeconfig, tmpNamespaceVar, err = k8sInternal.GetKubeconfigAndNamespace(viper.GetString(KubeconfigOpt))
 	if err != nil {
 		return fmt.Errorf("failed to build the kubeconfig: %v", err)
+	}
+	if viper.GetString(NamespaceOpt) == "" {
+		viper.Set(NamespaceOpt, tmpNamespaceVar)
 	}
 	scheme := runtime.NewScheme()
 	// scheme for client go
@@ -154,16 +164,16 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	restMapper = restmapper.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient)
 	restMapper.Reset()
 	runtimeClient, _ = client.New(kubeconfig, client.Options{Scheme: scheme, Mapper: restMapper})
-	if err := createFromYAMLFile(SCConf.GlobalManifest); err != nil {
+	if err := createFromYAMLFile(viper.GetString(GlobalManifestOpt)); err != nil {
 		return fmt.Errorf("failed to create global resources: %v", err)
 	}
-	if err := createFromYAMLFile(SCConf.NamespacedManifest); err != nil {
+	if err := createFromYAMLFile(viper.GetString(NamespacedManifestOpt)); err != nil {
 		return fmt.Errorf("failed to create namespaced resources: %v", err)
 	}
-	if err := createFromYAMLFile(SCConf.CRManifest); err != nil {
+	if err := createFromYAMLFile(viper.GetString(CRManifestOpt)); err != nil {
 		return fmt.Errorf("failed to create cr resource: %v", err)
 	}
-	obj, err := yamlToUnstructured(SCConf.CRManifest)
+	obj, err := yamlToUnstructured(viper.GetString(CRManifestOpt))
 	if err != nil {
 		return fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
 	}
@@ -177,7 +187,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if err := waitUntilReady(obj); err != nil {
 		return fmt.Errorf("failed waiting for CR to be ready: %v", err)
 	}
-	if SCConf.BasicTests {
+	if viper.GetBool(BasicTestsOpt) {
 		for _, test := range BasicTests.tests {
 			err = test.execute(vars)
 			if err != nil {
@@ -185,8 +195,8 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
-	if SCConf.OLMTests {
-		yamlSpec, err := ioutil.ReadFile(SCConf.CSVPath)
+	if viper.GetBool(OLMTestsOpt) {
+		yamlSpec, err := ioutil.ReadFile(viper.GetString(CSVPathOpt))
 		if err != nil {
 			return fmt.Errorf("failed to read csv: %v", err)
 		}
@@ -210,7 +220,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 	}
 	var totalScores []int
-	if SCConf.BasicTests {
+	if viper.GetBool(BasicTestsOpt) {
 		fmt.Println("Basic Tests")
 		for _, test := range BasicTests.tests {
 			if !(test.scores[0].earnedPoints == 0 && test.scores[0].maximumPoints == 0) {
@@ -223,7 +233,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Basic Tests Score: %d%%\n\n", totalScore)
 		totalScores = append(totalScores, totalScore)
 	}
-	if SCConf.OLMTests {
+	if viper.GetBool(OLMTestsOpt) {
 		fmt.Println("OLM Tests")
 		for _, test := range OLMTests.tests {
 			if !(test.scores[0].earnedPoints == 0 && test.scores[0].maximumPoints == 0) {
@@ -248,6 +258,24 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	for _, suggestion := range scSuggestions {
 		// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
 		fmt.Printf("\x1b[%dmSUGGESTION:\x1b[0m %s\n", 33, suggestion)
+	}
+	return nil
+}
+
+func initConfig() error {
+	if ScorecardConf != "" {
+		// Use config file from the flag.
+		viper.SetConfigFile(ScorecardConf)
+	} else {
+		viper.AddConfigPath(projutil.MustGetwd())
+		// using SetConfigName allows users to use a .yaml, .json, or .toml file
+		viper.SetConfigName(".osdk-scorecard")
+	}
+
+	if err := viper.ReadInConfig(); err == nil {
+		log.Info("Using config file: ", viper.ConfigFileUsed())
+	} else {
+		log.Warn("Could not load config file; using only flags")
 	}
 	return nil
 }
