@@ -72,6 +72,7 @@ func matchVersion(version string, crd apiextv1beta1.CustomResourceDefinition) bo
 	if strings.EqualFold(version, crd.Spec.Version) {
 		return true
 	}
+	// crd.Spec.Version is deprecated, so check in crd.Spec.Versions as well
 	for _, currVer := range crd.Spec.Versions {
 		if strings.EqualFold(version, currVer.Name) {
 			return true
@@ -100,7 +101,7 @@ func crdsHaveValidation(crdsDir string, runtimeClient client.Client, obj *unstru
 		}
 		// check if the CRD matches the testing CR
 		gvk := obj.GroupVersionKind()
-		// crd.Spec.Version is deprecated, so check in crd.Spec.Versions as well
+		// Only check the validation block if the CRD and CR have the same Kind and Version
 		if !(matchVersion(gvk.Version, crd) && matchKind(gvk.Kind, crd.Spec.Names.Kind)) {
 			test.earnedPoints++
 			continue
