@@ -20,7 +20,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 )
 
-func TestCr(t *testing.T) {
+func TestCR(t *testing.T) {
 	r, err := NewResource(appApiVersion, appKind)
 	if err != nil {
 		t.Fatal(err)
@@ -37,13 +37,13 @@ func TestCr(t *testing.T) {
 	}
 }
 
-func TestCrCustomSpec(t *testing.T) {
+func TestCRCustomSpec(t *testing.T) {
 	r, err := NewResource(appApiVersion, appKind)
 	if err != nil {
 		t.Fatal(err)
 	}
 	s, buf := setupScaffoldAndWriter()
-	err = s.Execute(appConfig, &Cr{
+	err = s.Execute(appConfig, &CR{
 		Resource: r,
 		Spec:     "# Custom spec here\ncustomSize: 6",
 	})
