@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
@@ -169,6 +170,27 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 	log.Infof("Building Docker image %s", baseImageName)
 
+	dbArgs := []string{"build", ".", "-f", "build/Dockerfile", "-t", baseImageName}
+
+	if dockerBuildArgs != "" {
+		splitArgs := strings.Fields(dockerBuildArgs)
+		dbcmd := exec.Command("docker", append(dbArgs, splitArgs...)...)
+		if err := projutil.ExecCmd(dbcmd); err != nil {
+			if enableTests {
+				return fmt.Errorf("failed to output intermediate image %s: (%v)", image, err)
+			}
+			return fmt.Errorf("failed to output build image %s: (%v)", image, err)
+		}
+	} else {
+		dbcmd := exec.Command("docker", dbArgs...)
+		if err := projutil.ExecCmd(dbcmd); err != nil {
+			if enableTests {
+				return fmt.Errorf("failed to output intermediate image %s: (%v)", image, err)
+			}
+			return fmt.Errorf("failed to output build image %s: (%v)", image, err)
+		}
+	}
+
 	dbcmd := exec.Command("docker", "build", ".", "-f", "build/Dockerfile", "-t", baseImageName)
 	if err := projutil.ExecCmd(dbcmd); err != nil {
 		if enableTests {
@@ -224,13 +246,27 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 		log.Infof("Building test Docker image %s", image)
 
-		testDbcmd := exec.Command("docker", "build", ".", "-f", testDockerfile, "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+baseImageName, dockerBuildArgs)
-		if err := projutil.ExecCmd(testDbcmd); err != nil {
-			return fmt.Errorf("failed to output test image %s: (%v)", image, err)
-		}
-		// Check image name of deployments in namespaced manifest
-		if err := verifyTestManifest(image); err != nil {
-			return nil
+		testDbArgs := []string{"build", ".", "-f", testDockerfile, "-t", image, "--build-arg", "NAMESPACEDMAN=" + namespacedManBuild, "--build-arg", "BASEIMAGE=" + baseImageName}
+
+		if dockerBuildArgs != "" {
+			splitArgs := strings.Fields(dockerBuildArgs)
+			testDbcmd := exec.Command("docker", append(testDbArgs, splitArgs...)...)
+			if err := projutil.ExecCmd(testDbcmd); err != nil {
+				return fmt.Errorf("failed to output test image %s: (%v)", image, err)
+			}
+			// Check image name of deployments in namespaced manifest
+			if err := verifyTestManifest(image); err != nil {
+				return nil
+			}
+		} else {
+			testDbcmd := exec.Command("docker", testDbArgs...)
+			if err := projutil.ExecCmd(testDbcmd); err != nil {
+				return fmt.Errorf("failed to output test image %s: (%v)", image, err)
+			}
+			// Check image name of deployments in namespaced manifest
+			if err := verifyTestManifest(image); err != nil {
+				return nil
+			}
 		}
 	}
 
