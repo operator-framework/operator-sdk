@@ -70,7 +70,7 @@ func NewScorecardCmd() *cobra.Command {
 	scorecardCmd.Flags().StringVar(&scConf.crManifest, scorecard.CRManifestOpt, "", "Path to manifest for Custom Resource (required)")
 	scorecardCmd.Flags().StringVar(&scConf.proxyImage, scorecard.ProxyImageOpt, fmt.Sprintf("quay.io/operator-framework/scorecard-proxy:%s", strings.TrimSuffix(version.Version, "+git")), "Image name for scorecard proxy")
 	scorecardCmd.Flags().StringVar(&scConf.proxyPullPolicy, scorecard.ProxyPullPolicyOpt, "Always", "Pull policy for scorecard proxy image")
-	scorecardCmd.Flags().StringVar(&scConf.crdsDir, "crds-dir", scaffold.CRDsDir, "Directory containing CRDs (all CRDs must end in 'crd.yaml')")
+	scorecardCmd.Flags().StringVar(&scConf.crdsDir, "crds-dir", scaffold.CRDsDir, "Directory containing CRDs (all CRD manifest filenames must have the suffix 'crd.yaml')")
 	scorecardCmd.Flags().BoolVar(&scConf.verbose, scorecard.VerboseOpt, false, "Enable verbose logging")
 
 	if err := viper.BindPFlags(scorecardCmd.Flags()); err != nil {
