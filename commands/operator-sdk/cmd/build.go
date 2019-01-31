@@ -62,7 +62,7 @@ For example:
 	buildCmd.Flags().BoolVar(&enableTests, "enable-tests", false, "Enable in-cluster testing by adding test binary to the image")
 	buildCmd.Flags().StringVar(&testLocationBuild, "test-location", "./test/e2e", "Location of tests")
 	buildCmd.Flags().StringVar(&namespacedManBuild, "namespaced-manifest", "deploy/operator.yaml", "Path of namespaced resources manifest for tests")
-	buildCmd.Flags().StringVar(&dockerBuildArgs, "docker-build-args", "", "Pass any required docker arguments as one string such as \"--build-arg https_proxy=$https_proxy\"")
+	buildCmd.Flags().StringVar(&dockerBuildArgs, "docker-build-args", "", "Extra docker build arguments as one string such as \"--build-arg https_proxy=$https_proxy\"")
 	return buildCmd
 }
 
