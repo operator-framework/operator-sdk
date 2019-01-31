@@ -18,5 +18,8 @@ commandoutput="$(operator-sdk scorecard \
   --proxy-image $DEST_IMAGE \
   --proxy-pull-policy Never \
   2>&1)"
-echo $commandoutput | grep "Total Score: 6/8 points"
+echo $commandoutput | grep "Total Score: 5/7 points"
+# test config file
+commandoutput2="$(operator-sdk scorecard --proxy-image $DEST_IMAGE)"
+echo $commandoutput2 | grep "Total Score: 5/7 points"
 popd

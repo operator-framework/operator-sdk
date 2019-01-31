@@ -32,8 +32,11 @@ cp "$ROOTDIR/test/ansible-memcached/defaults.yml" memcached-operator/roles/memca
 cp "$ROOTDIR/test/ansible-memcached/asserts.yml"  memcached-operator/molecule/default/asserts.yml
 cp "$ROOTDIR/test/ansible-memcached/molecule.yml"  memcached-operator/molecule/test-local/molecule.yml
 cp -a "$ROOTDIR/test/ansible-memcached/memfin" memcached-operator/roles/
+cp -a "$ROOTDIR/test/ansible-memcached/secret" memcached-operator/roles/
 cat "$ROOTDIR/test/ansible-memcached/watches-finalizer.yaml" >> memcached-operator/watches.yaml
 cat "$ROOTDIR/test/ansible-memcached/prepare-test-image.yml" >> memcached-operator/molecule/test-local/prepare.yml
+# Append v1 kind to watches to test watching already registered GVK
+cat "$ROOTDIR/test/ansible-memcached/watches-v1-kind.yaml" >> memcached-operator/watches.yaml
 
 
 # Test local

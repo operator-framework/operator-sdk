@@ -8,6 +8,8 @@
 
 ### Changed
 
+- In new Helm operator projects, the scaffolded CR `spec` field now contains the default values.yaml from the generated chart. ([#967](https://github.com/operator-framework/operator-sdk/pull/967))
+
 ### Deprecated
 
 ### Removed
