@@ -4,10 +4,12 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
+  annotations:
+    alm-examples: '[{"apiVersion":"cache.example.com/v1alpha1","kind":"Memcached","metadata":{"name":"example-memcached"},"spec":{"size":3}}]'
   name: memcachedoperator.v0.0.2
   namespace: default
 spec:
-  install: 
+  install:
     strategy: deployment
     spec:
       permissions:
@@ -19,7 +21,7 @@ spec:
           - "*"
           verbs:
           - "*"
-      deployments: 
+      deployments:
       - name: memcached-app-operator
         spec:
           replicas: 1
