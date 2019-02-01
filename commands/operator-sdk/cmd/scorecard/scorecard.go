@@ -225,7 +225,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 
 		if viper.GetString(GlobalManifestOpt) == "" {
-			file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CrdsDir)
+			file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
 			if err != nil {
 				return err
 			}

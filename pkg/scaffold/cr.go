@@ -23,8 +23,8 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-// Cr is the input needed to generate a deploy/crds/<group>_<version>_<kind>_cr.yaml file
-type Cr struct {
+// CR is the input needed to generate a deploy/crds/<group>_<version>_<kind>_cr.yaml file
+type CR struct {
 	input.Input
 
 	// Resource defines the inputs for the new custom resource
@@ -35,13 +35,13 @@ type Cr struct {
 	Spec string
 }
 
-func (s *Cr) GetInput() (input.Input, error) {
+func (s *CR) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		fileName := fmt.Sprintf("%s_%s_%s_cr.yaml",
 			strings.ToLower(s.Resource.Group),
 			strings.ToLower(s.Resource.Version),
 			s.Resource.LowerKind)
-		s.Path = filepath.Join(CrdsDir, fileName)
+		s.Path = filepath.Join(CRDsDir, fileName)
 	}
 	s.TemplateBody = crTemplate
 	if s.TemplateFuncs == nil {

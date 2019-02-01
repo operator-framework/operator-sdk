@@ -135,7 +135,7 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 		}()
 	}
 	if tlConfig.globalManPath == "" && !tlConfig.noSetup {
-		file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CrdsDir)
+		file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
 		if err != nil {
 			return err
 		}

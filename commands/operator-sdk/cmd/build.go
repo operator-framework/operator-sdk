@@ -145,6 +145,7 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 	projutil.MustInProjectRoot()
 	goBuildEnv := append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
+	goTrimFlags := []string{"-gcflags", "all=-trimpath=${GOPATH}", "-asmflags", "all=-trimpath=${GOPATH}"}
 	absProjectPath := projutil.MustGetwd()
 	projectName := filepath.Base(absProjectPath)
 
@@ -152,7 +153,8 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	if projutil.GetOperatorType() == projutil.OperatorTypeGo {
 		managerDir := filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir)
 		outputBinName := filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName)
-		buildCmd := exec.Command("go", "build", "-o", outputBinName, managerDir)
+		goBuildArgs := append(append([]string{"build"}, goTrimFlags...), "-o", outputBinName, managerDir)
+		buildCmd := exec.Command("go", goBuildArgs...)
 		buildCmd.Env = goBuildEnv
 		if err := projutil.ExecCmd(buildCmd); err != nil {
 			return fmt.Errorf("failed to build operator binary: (%v)", err)
@@ -178,7 +180,8 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	if enableTests {
 		if projutil.GetOperatorType() == projutil.OperatorTypeGo {
 			testBinary := filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName+"-test")
-			buildTestCmd := exec.Command("go", "test", "-c", "-o", testBinary, testLocationBuild+"/...")
+			goTestBuildArgs := append(append([]string{"test"}, goTrimFlags...), "-c", "-o", testBinary, testLocationBuild+"/...")
+			buildTestCmd := exec.Command("go", goTestBuildArgs...)
 			buildTestCmd.Env = goBuildEnv
 			if err := projutil.ExecCmd(buildTestCmd); err != nil {
 				return fmt.Errorf("failed to build test binary: (%v)", err)
