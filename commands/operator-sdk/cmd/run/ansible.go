@@ -17,6 +17,7 @@ package run
 import (
 	"github.com/operator-framework/operator-sdk/pkg/ansible"
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 
 	"github.com/spf13/cobra"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -32,7 +33,7 @@ func RunAnsibleCmd() *cobra.Command {
 in a Pod inside a cluster. Developers wanting to run their operator locally
 should use "up local" instead.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logf.SetLogger(logf.ZapLogger(false))
+			logf.SetLogger(zap.Logger())
 
 			return ansible.Run(flags)
 		},

@@ -41,7 +41,7 @@ clean:
 .PHONY: all test format dep clean
 
 install:
-	$(Q)go install $(BUILD_PATH)
+	$(Q)go install -gcflags "all=-trimpath=${GOPATH}" -asmflags "all=-trimpath=${GOPATH}" $(BUILD_PATH)
 
 release_x86_64 := \
 	build/operator-sdk-$(VERSION)-x86_64-linux-gnu \
@@ -53,7 +53,7 @@ build/operator-sdk-%-x86_64-linux-gnu: GOARGS = GOOS=linux GOARCH=amd64
 build/operator-sdk-%-x86_64-apple-darwin: GOARGS = GOOS=darwin GOARCH=amd64
 
 build/%:
-	$(Q)$(GOARGS) go build -o $@ $(BUILD_PATH)
+	$(Q)$(GOARGS) go build -gcflags "all=-trimpath=${GOPATH}" -asmflags "all=-trimpath=${GOPATH}" -o $@ $(BUILD_PATH)
 	
 build/%.asc:
 	$(Q){ \

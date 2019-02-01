@@ -15,31 +15,114 @@
 package scaffold
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-func TestCRD(t *testing.T) {
+func TestCRDGoProject(t *testing.T) {
+	r, err := NewResource("cache.example.com/v1alpha1", "Memcached")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, buf := setupScaffoldAndWriter()
+	absPath, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Set the project and repo paths to {abs}/test/test-framework, which
+	// contains pkg/apis for the memcached-operator.
+	tfDir := filepath.Join("test", "test-framework")
+	pkgIdx := strings.Index(absPath, "pkg")
+	cfg := &input.Config{
+		Repo:           filepath.Join(absPath[strings.Index(absPath, "github.com"):pkgIdx], tfDir),
+		AbsProjectPath: filepath.Join(absPath[:pkgIdx], tfDir),
+		ProjectName:    tfDir,
+	}
+	if err := os.Chdir(cfg.AbsProjectPath); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { os.Chdir(absPath) }()
+	err = s.Execute(cfg, &CRD{Resource: r, IsOperatorGo: true})
+	if err != nil {
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
+	}
+
+	if crdGoExp != buf.String() {
+		diffs := diffutil.Diff(crdGoExp, buf.String())
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
+	}
+}
+
+const crdGoExp = `apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  name: memcacheds.cache.example.com
+spec:
+  group: cache.example.com
+  names:
+    kind: Memcached
+    listKind: MemcachedList
+    plural: memcacheds
+    singular: memcached
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          type: string
+        kind:
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            size:
+              format: int32
+              type: integer
+          required:
+          - size
+          type: object
+        status:
+          properties:
+            nodes:
+              items:
+                type: string
+              type: array
+          required:
+          - nodes
+          type: object
+  version: v1alpha1
+`
+
+func TestCRDNonGoProject(t *testing.T) {
 	r, err := NewResource(appApiVersion, appKind)
 	if err != nil {
 		t.Fatal(err)
 	}
 	s, buf := setupScaffoldAndWriter()
-	err = s.Execute(appConfig, &Crd{Resource: r})
+	err = s.Execute(appConfig, &CRD{Resource: r})
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
-	if crdExp != buf.String() {
-		diffs := diffutil.Diff(crdExp, buf.String())
+	if crdNonGoExp != buf.String() {
+		diffs := diffutil.Diff(crdNonGoExp, buf.String())
 		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
 }
 
-const crdExp = `apiVersion: apiextensions.k8s.io/v1beta1
+const crdNonGoExp = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
+  creationTimestamp: null
   name: appservices.app.example.com
 spec:
   group: app.example.com
@@ -49,7 +132,7 @@ spec:
     plural: appservices
     singular: appservice
   scope: Namespaced
-  version: v1alpha1
   subresources:
     status: {}
+  version: v1alpha1
 `
