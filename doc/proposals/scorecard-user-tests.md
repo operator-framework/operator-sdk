@@ -31,27 +31,27 @@ A new section would be added to the scorecard config file called `functional_tes
 
 ```yaml
 functional_tests:
-- cr: "deploy/crds/memcached.cr.yaml"
-  expected_resources:
-  - kind: Deployment
-    name: "example_memcached"
-    fields:
-    - status.readyReplicas: 3
-    - spec.template.spec.containers[0].image: memcached:1.4.36-alpine
-  expected_status:
-  - scorecard_function_length:
-    - nodes: 3
-  modifications:
-  - spec:
-    - size: 4
+  - cr: "deploy/crds/memcached.cr.yaml"
     expected_resources:
-    - kind: Deployment
-      name: "example_memcached"
-      fields:
-      - status.readyReplicas: 4
+      - kind: Deployment
+        name: "example_memcached"
+        fields:
+          - status.readyReplicas: 3
+          - spec.template.spec.containers[0].image: memcached:1.4.36-alpine
     expected_status:
-    - scorecard_function_length:
-      - nodes: 4
+      - scorecard_function_length:
+        - nodes: 3
+    modifications:
+      - spec:
+        - size: 4
+        expected_resources:
+          - kind: Deployment
+            name: "example_memcached"
+            fields:
+              - status.readyReplicas: 4
+        expected_status:
+          - scorecard_function_length:
+            - nodes: 4
 ```
 
 This is what the golang structs would look like, including comments describing each field:
@@ -60,33 +60,33 @@ This is what the golang structs would look like, including comments describing e
 // Struct containing a user defined test. User passes tests as an array using the `functional_tests` viper config
 type UserDefinedTest struct {
     // Path to cr to be used for testing
-    CRPath string `yaml:"cr"`
+    CRPath string `mapstructure:"cr"`
     // Resources expected to be created after the operator reacts to the CR
-    ExpectedResources []ExpectedResource `yaml:expected_resources"`
+    ExpectedResources []ExpectedResource `mapstructure:"expected_resources"`
     // Expected values in CR's status after the operator reacts to the CR
-    ExpectedStatus map[string]interface{} `yaml:"expected_status"`
+    ExpectedStatus map[string]interface{} `mapstructure:"expected_status"`
     // Sub-tests modifying a few fields with expected changes
-    Modifications []Modification `yaml:"modifications"`
+    Modifications []Modification `mapstructure:"modifications"`
 }
 
 // Struct containing a resource and its expected fields
 type ExpectedResource struct {
     // Kind of resource
-    Kind string `yaml:"kind"`
+    Kind string `mapstructure:"kind"`
     // Name of resource
-    Name string `yaml:"name"`
+    Name string `mapstructure:"name"`
     // The fields we expect to see in this resource
-    Fields map[string]interface{} `yaml:"fields"`
+    Fields map[string]interface{} `mapstructure:"fields"`
 }
 
 // Modifications specifies a spec field to change in the CR with the expected results
 type Modification struct {
     // a map of the spec fields to modify
-    Spec map[string]interface{} `yaml:"spec"`
+    Spec map[string]interface{} `mapstructure:"spec"`
     // the resources we expect to be created after the spec fields are modified
-    ExpectedResources []ExpectedResource `yaml:"expected_resources"`
+    ExpectedResources []ExpectedResource `mapstructure:"expected_resources"`
     // the status we expect to see after the spec fields are modified
-    ExpectedStatus map[string]interface{} `yaml:"expected_status"`
+    ExpectedStatus map[string]interface{} `mapstructure:"expected_status"`
 }
 ```
 
