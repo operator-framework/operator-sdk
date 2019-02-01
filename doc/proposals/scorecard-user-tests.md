@@ -36,8 +36,13 @@ functional_tests:
       - kind: Deployment
         name: "example_memcached"
         fields:
-          - status.readyReplicas: 3
-          - spec.template.spec.containers[0].image: memcached:1.4.36-alpine
+          - status:
+              readyReplicas: 3
+          - spec:
+              template:
+                spec:
+                  containers:
+                    - image: memcached:1.4.36-alpine
     expected_status:
       - scorecard_function_length:
         - nodes: 3
@@ -48,7 +53,8 @@ functional_tests:
           - kind: Deployment
             name: "example_memcached"
             fields:
-              - status.readyReplicas: 4
+              - status:
+                  readyReplicas: 4
         expected_status:
           - scorecard_function_length:
             - nodes: 4
