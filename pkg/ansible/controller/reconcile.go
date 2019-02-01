@@ -30,7 +30,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/eventapi"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -53,6 +53,7 @@ type AnsibleOperatorReconciler struct {
 	GVK             schema.GroupVersionKind
 	Runner          runner.Runner
 	Client          client.Client
+	APIReader       client.Reader
 	EventHandlers   []events.EventHandler
 	ReconcilePeriod time.Duration
 	ManageStatus    bool
@@ -176,6 +177,11 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		return reconcileResult, eventErr
 	}
 
+	err = r.APIReader.Get(context.TODO(), request.NamespacedName, u)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
 	// We only want to update the CustomResource once, so we'll track changes and do it at the end
 	runSuccessful := len(failureMessages) == 0
 	// The finalizer has run successfully, time to remove it
@@ -204,10 +210,6 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 
 func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, namespacedName types.NamespacedName) error {
 	// Get the latest resource to prevent updating a stale status
-	err := r.Client.Get(context.TODO(), namespacedName, u)
-	if err != nil {
-		return err
-	}
 	statusInterface := u.Object["status"]
 	statusMap, _ := statusInterface.(map[string]interface{})
 	crStatus := ansiblestatus.CreateFromMap(statusMap)
@@ -238,16 +240,6 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, na
 }
 
 func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, namespacedName types.NamespacedName, statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) error {
-	logger := logf.Log.WithName("markDone")
-	// Get the latest resource to prevent updating a stale status
-	err := r.Client.Get(context.TODO(), namespacedName, u)
-	if apierrors.IsNotFound(err) {
-		logger.Info("Resource not found, assuming it was deleted", err)
-		return nil
-	}
-	if err != nil {
-		return err
-	}
 	statusInterface := u.Object["status"]
 	statusMap, _ := statusInterface.(map[string]interface{})
 	crStatus := ansiblestatus.CreateFromMap(statusMap)
