@@ -174,40 +174,38 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 		viper.Set(GlobalManifestOpt, gMan.Name())
 
-		// Create a temporary CR manifest from metadata. All CSV's deployed by the
-		// OLM must have an "alm-examples" metadata field.
+		// Create a temporary CR manifest from metadata if one is not provided.
 		crJSONStr, ok := csv.ObjectMeta.Annotations["alm-examples"]
-		if !ok {
-			return fmt.Errorf("expected \"alm-examples\" metadata from %s, found none", viper.GetString(CSVPathOpt))
-		}
-		var crs []interface{}
-		if err = json.Unmarshal([]byte(crJSONStr), &crs); err != nil {
-			return err
-		}
-		// TODO: run scorecard against all CR's in CSV.
-		cr := crs[0]
-		crJSONBytes, err := json.Marshal(cr)
-		if err != nil {
-			return err
-		}
-		crYAMLBytes, err := yaml.JSONToYAML(crJSONBytes)
-		if err != nil {
-			return err
-		}
-		crFile, err := ioutil.TempFile("", "cr.yaml")
-		if err != nil {
-			return err
-		}
-		if _, err := crFile.Write(crYAMLBytes); err != nil {
-			return err
-		}
-		viper.Set(CRManifestOpt, crFile.Name())
-		defer func() {
-			err := os.Remove(viper.GetString(CRManifestOpt))
-			if err != nil {
-				log.Errorf("Could not delete temporary CR manifest file: (%v)", err)
+		if ok && viper.GetString(CRManifestOpt) == "" {
+			var crs []interface{}
+			if err = json.Unmarshal([]byte(crJSONStr), &crs); err != nil {
+				return err
 			}
-		}()
+			// TODO: run scorecard against all CR's in CSV.
+			cr := crs[0]
+			crJSONBytes, err := json.Marshal(cr)
+			if err != nil {
+				return err
+			}
+			crYAMLBytes, err := yaml.JSONToYAML(crJSONBytes)
+			if err != nil {
+				return err
+			}
+			crFile, err := ioutil.TempFile("", "cr.yaml")
+			if err != nil {
+				return err
+			}
+			if _, err := crFile.Write(crYAMLBytes); err != nil {
+				return err
+			}
+			viper.Set(CRManifestOpt, crFile.Name())
+			defer func() {
+				err := os.Remove(viper.GetString(CRManifestOpt))
+				if err != nil {
+					log.Errorf("Could not delete temporary CR manifest file: (%v)", err)
+				}
+			}()
+		}
 
 	} else {
 		// if no namespaced manifest path is given, combine
