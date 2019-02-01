@@ -31,6 +31,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm"
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
@@ -136,7 +137,7 @@ func upLocal() error {
 }
 
 func upLocalAnsible() error {
-	logf.SetLogger(logf.ZapLogger(false))
+	logf.SetLogger(zap.Logger())
 	if err := setupOperatorEnv(); err != nil {
 		return err
 	}
@@ -144,7 +145,7 @@ func upLocalAnsible() error {
 }
 
 func upLocalHelm() error {
-	logf.SetLogger(logf.ZapLogger(false))
+	logf.SetLogger(zap.Logger())
 	if err := setupOperatorEnv(); err != nil {
 		return err
 	}

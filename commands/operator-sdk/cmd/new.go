@@ -185,8 +185,8 @@ func doAnsibleScaffold() error {
 		&scaffold.ServiceAccount{},
 		&scaffold.Role{IsClusterScoped: isClusterScoped},
 		&scaffold.RoleBinding{IsClusterScoped: isClusterScoped},
-		&scaffold.Crd{Resource: resource},
-		&scaffold.Cr{Resource: resource},
+		&scaffold.CRD{Resource: resource},
+		&scaffold.CR{Resource: resource},
 		&ansible.BuildDockerfile{GeneratePlaybook: generatePlaybook},
 		&ansible.RolesReadme{Resource: *resource},
 		&ansible.RolesMetaMain{Resource: *resource},
@@ -277,8 +277,8 @@ func doHelmScaffold() error {
 		&scaffold.Role{IsClusterScoped: isClusterScoped},
 		&scaffold.RoleBinding{IsClusterScoped: isClusterScoped},
 		&helm.Operator{IsClusterScoped: isClusterScoped},
-		&scaffold.Crd{Resource: resource},
-		&scaffold.Cr{
+		&scaffold.CRD{Resource: resource},
+		&scaffold.CR{
 			Resource: resource,
 			Spec:     crSpec,
 		},
