@@ -252,7 +252,7 @@ func TestMemcached(t *testing.T) {
 		}
 	}
 
-	file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CrdsDir)
+	file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
 	if err != nil {
 		t.Fatal(err)
 	}
