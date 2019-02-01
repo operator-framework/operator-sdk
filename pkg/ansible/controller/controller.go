@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	crthandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -57,7 +58,13 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 	eventHandlers := append(options.EventHandlers, events.NewLoggingEventHandler(options.LoggingLevel))
 
 	aor := &AnsibleOperatorReconciler{
-		Client:          mgr.GetClient(),
+		// The default client will use the DelegatingReader for reads
+		// this forces it to use the cache for unstructured types.
+		Client: client.DelegatingClient{
+			Reader:       mgr.GetCache(),
+			Writer:       mgr.GetClient(),
+			StatusClient: mgr.GetClient(),
+		},
 		GVK:             options.GVK,
 		Runner:          options.Runner,
 		EventHandlers:   eventHandlers,
