@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
@@ -37,6 +38,7 @@ var (
 	namespacedManBuild string
 	testLocationBuild  string
 	enableTests        bool
+	dockerBuildArgs    string
 )
 
 func NewBuildCmd() *cobra.Command {
@@ -60,6 +62,7 @@ For example:
 	buildCmd.Flags().BoolVar(&enableTests, "enable-tests", false, "Enable in-cluster testing by adding test binary to the image")
 	buildCmd.Flags().StringVar(&testLocationBuild, "test-location", "./test/e2e", "Location of tests")
 	buildCmd.Flags().StringVar(&namespacedManBuild, "namespaced-manifest", "deploy/operator.yaml", "Path of namespaced resources manifest for tests")
+	buildCmd.Flags().StringVar(&dockerBuildArgs, "docker-build-args", "", "Extra docker build arguments as one string such as \"--build-arg https_proxy=$https_proxy\"")
 	return buildCmd
 }
 
@@ -169,7 +172,14 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 	log.Infof("Building Docker image %s", baseImageName)
 
-	dbcmd := exec.Command("docker", "build", ".", "-f", "build/Dockerfile", "-t", baseImageName)
+	dbArgs := []string{"build", ".", "-f", "build/Dockerfile", "-t", baseImageName}
+
+	if dockerBuildArgs != "" {
+		splitArgs := strings.Fields(dockerBuildArgs)
+		dbArgs = append(dbArgs, splitArgs...)
+	}
+
+	dbcmd := exec.Command("docker", dbArgs...)
 	if err := projutil.ExecCmd(dbcmd); err != nil {
 		if enableTests {
 			return fmt.Errorf("failed to output intermediate image %s: (%v)", image, err)
@@ -225,7 +235,14 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 		log.Infof("Building test Docker image %s", image)
 
-		testDbcmd := exec.Command("docker", "build", ".", "-f", testDockerfile, "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+baseImageName)
+		testDbArgs := []string{"build", ".", "-f", testDockerfile, "-t", image, "--build-arg", "NAMESPACEDMAN=" + namespacedManBuild, "--build-arg", "BASEIMAGE=" + baseImageName}
+
+		if dockerBuildArgs != "" {
+			splitArgs := strings.Fields(dockerBuildArgs)
+			testDbArgs = append(testDbArgs, splitArgs...)
+		}
+
+		testDbcmd := exec.Command("docker", testDbArgs...)
 		if err := projutil.ExecCmd(testDbcmd); err != nil {
 			return fmt.Errorf("failed to output test image %s: (%v)", image, err)
 		}
