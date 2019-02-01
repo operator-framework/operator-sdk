@@ -34,11 +34,14 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
-
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -83,6 +86,17 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 		Namespace:          namespace,
 		MapperProvider:     restmapper.NewDynamicRESTMapper,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+		NewClient: func(cache cache.Cache, config *rest.Config, options client.Options) (client.Client, error) {
+			c, err := client.New(config, options)
+			if err != nil {
+				return nil, err
+			}
+			return &client.DelegatingClient{
+				Reader:       cache,
+				Writer:       c,
+				StatusClient: c,
+			}, nil
+		},
 	})
 	if err != nil {
 		log.Error(err, "Failed to create a new manager.")

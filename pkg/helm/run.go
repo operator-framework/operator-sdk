@@ -34,6 +34,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -80,6 +83,17 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 	mgr, err := manager.New(cfg, manager.Options{
 		Namespace:          namespace,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+		NewClient: func(cache cache.Cache, config *rest.Config, options crclient.Options) (crclient.Client, error) {
+			c, err := crclient.New(config, options)
+			if err != nil {
+				return nil, err
+			}
+			return &crclient.DelegatingClient{
+				Reader:       cache,
+				Writer:       c,
+				StatusClient: c,
+			}, nil
+		},
 	})
 	if err != nil {
 		log.Error(err, "Failed to create a new manager.")

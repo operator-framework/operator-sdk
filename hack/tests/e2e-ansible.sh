@@ -122,6 +122,8 @@ test_operator() {
         kubectl logs deployment/memcached-operator -c ansible
         exit 1
     fi
+    # If there are errors, that is ok. We just need to handle this correctly,
+    # by having the correct outcomes
 }
 
 # switch to the "default" namespace if on openshift, to match the minikube test
