@@ -65,6 +65,9 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 			Writer:       mgr.GetClient(),
 			StatusClient: mgr.GetClient(),
 		},
+		// This works because unstrucutred calls will go to the
+		// API by default.
+		APIReader:       mgr.GetClient(),
 		GVK:             options.GVK,
 		Runner:          options.Runner,
 		EventHandlers:   eventHandlers,
