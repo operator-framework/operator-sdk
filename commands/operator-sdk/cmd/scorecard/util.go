@@ -47,6 +47,16 @@ func generateCombinedNamespacedManifestFromCSV(csv *olmapiv1alpha1.ClusterServic
 	if err != nil {
 		return nil, err
 	}
+	cRole := &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: stratDep.ClusterPermissions[0].ServiceAccountName,
+		},
+		Rules: stratDep.ClusterPermissions[0].Rules,
+	}
+	cRoleBytes, err := yaml.Marshal(cRole)
+	if err != nil {
+		return nil, err
+	}
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: stratDep.DeploymentSpecs[0].Name,
@@ -57,7 +67,8 @@ func generateCombinedNamespacedManifestFromCSV(csv *olmapiv1alpha1.ClusterServic
 	if err != nil {
 		return nil, err
 	}
-	_, err = man.Write(yamlutil.CombineManifests(roleBytes, depBytes))
+
+	_, err = man.Write(yamlutil.CombineManifests(roleBytes, cRoleBytes, depBytes))
 	if err != nil {
 		return nil, err
 	}
