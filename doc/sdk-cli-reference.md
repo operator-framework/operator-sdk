@@ -147,7 +147,7 @@ pkg/apis/app/v1alpha1/
 
 Runs the [kube-openapi][openapi-code-generator] OpenAPIv3 code generator for all Custom Resource Definition (CRD) API tagged fields under `pkg/apis/...`.
 
-**Note**: This command must be run every time the API (spec and status) for a custom resource type is updated.
+**Note**: This command must be run every time a tagged API struct or struct field for a custom resource type is updated.
 
 #### Example
 
@@ -522,3 +522,4 @@ $ operator-sdk up local --namespace "testing"
 
 [utility_link]: https://github.com/operator-framework/operator-sdk/blob/89bf021063d18b6769bdc551ed08fc37027939d5/pkg/util/k8sutil/k8sutil.go#L140
 [k8s-code-generator]: https://github.com/kubernetes/code-generator
+[openapi-code-generator]: https://github.com/kubernetes/kube-openapi
