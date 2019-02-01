@@ -77,7 +77,7 @@ func (c *CSVConfig) setFields() error {
 	}
 
 	if len(c.CRDCRPaths) == 0 {
-		paths, err := getManifestPathsFromDir(scaffold.CrdsDir)
+		paths, err := getManifestPathsFromDir(scaffold.CRDsDir)
 		if err != nil {
 			return err
 		}

@@ -23,7 +23,7 @@ import (
 )
 
 func TestConfig(t *testing.T) {
-	crdsDir := filepath.Join(testDataDir, scaffold.CrdsDir)
+	crdsDir := filepath.Join(testDataDir, scaffold.CRDsDir)
 
 	cfg := &CSVConfig{
 		CRDCRPaths: []string{crdsDir},

@@ -31,7 +31,7 @@ const HelmChartsDir string = "helm-charts"
 
 // CreateChartForResource creates a new helm chart in the SDK project for the
 // provided resource.
-func CreateChartForResource(r *scaffold.Resource, projectDir string) error {
+func CreateChartForResource(r *scaffold.Resource, projectDir string) (*chart.Chart, error) {
 	log.Infof("Create %s/%s/", HelmChartsDir, r.LowerKind)
 
 	chartfile := &chart.Metadata{
@@ -42,10 +42,13 @@ func CreateChartForResource(r *scaffold.Resource, projectDir string) error {
 		ApiVersion:  chartutil.ApiVersionV1,
 	}
 
-	chartDir := filepath.Join(projectDir, HelmChartsDir)
-	if err := os.MkdirAll(chartDir, 0755); err != nil {
-		return err
+	chartsDir := filepath.Join(projectDir, HelmChartsDir)
+	if err := os.MkdirAll(chartsDir, 0755); err != nil {
+		return nil, err
 	}
-	_, err := chartutil.Create(chartfile, chartDir)
-	return err
+	chartDir, err := chartutil.Create(chartfile, chartsDir)
+	if err != nil {
+		return nil, err
+	}
+	return chartutil.LoadDir(chartDir)
 }
