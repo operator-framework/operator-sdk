@@ -51,25 +51,28 @@ func generateCombinedNamespacedManifestFromCSV(csv *olmapiv1alpha1.ClusterServic
 		return nil, fmt.Errorf("expected StrategyDetailsDeployment, got strategy of type %T", strat)
 	}
 
-	role := &rbacv1.Role{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: stratDep.Permissions[0].ServiceAccountName,
-		},
-		Rules: stratDep.Permissions[0].Rules,
+	var manBytes []byte
+	if perms := stratDep.Permissions; len(perms) > 0 {
+		role := &rbacv1.Role{
+			ObjectMeta: metav1.ObjectMeta{Name: perms[0].ServiceAccountName},
+			Rules:      perms[0].Rules,
+		}
+		roleBytes, err := yaml.Marshal(role)
+		if err != nil {
+			return nil, err
+		}
+		manBytes = yamlutil.CombineManifests(manBytes, roleBytes)
 	}
-	roleBytes, err := yaml.Marshal(role)
-	if err != nil {
-		return nil, err
-	}
-	cRole := &rbacv1.ClusterRole{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: stratDep.ClusterPermissions[0].ServiceAccountName,
-		},
-		Rules: stratDep.ClusterPermissions[0].Rules,
-	}
-	cRoleBytes, err := yaml.Marshal(cRole)
-	if err != nil {
-		return nil, err
+	if cperms := stratDep.ClusterPermissions; len(cperms) > 0 {
+		cRole := &rbacv1.ClusterRole{
+			ObjectMeta: metav1.ObjectMeta{Name: cperms[0].ServiceAccountName},
+			Rules:      cperms[0].Rules,
+		}
+		cRoleBytes, err := yaml.Marshal(cRole)
+		if err != nil {
+			return nil, err
+		}
+		manBytes = yamlutil.CombineManifests(manBytes, cRoleBytes)
 	}
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -82,7 +85,7 @@ func generateCombinedNamespacedManifestFromCSV(csv *olmapiv1alpha1.ClusterServic
 		return nil, err
 	}
 
-	_, err = man.Write(yamlutil.CombineManifests(roleBytes, cRoleBytes, depBytes))
+	_, err = man.Write(yamlutil.CombineManifests(manBytes, depBytes))
 	if err != nil {
 		return nil, err
 	}
