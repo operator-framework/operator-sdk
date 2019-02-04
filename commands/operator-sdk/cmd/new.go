@@ -264,13 +264,15 @@ func doHelmScaffold() error {
 		ProjectName:    projectName,
 	}
 
-	fetchOpts := helm.FetchChartOptions{
-		Chart:   helmChartRef,
-		Version: helmChartVersion,
-		Repo:    helmChartRepo,
+	createOpts := helm.CreateChartOptions{
+		ResourceAPIVersion: apiVersion,
+		ResourceKind:       kind,
+		Chart:              helmChartRef,
+		Version:            helmChartVersion,
+		Repo:               helmChartRepo,
 	}
 
-	resource, chart, err := helm.CreateChart(apiVersion, kind, fetchOpts, cfg.AbsProjectPath)
+	resource, chart, err := helm.CreateChart(cfg.AbsProjectPath, createOpts)
 	if err != nil {
 		return fmt.Errorf("failed to create helm chart: %s", err)
 	}
@@ -315,13 +317,13 @@ func verifyFlags() error {
 
 	if operatorType != projutil.OperatorTypeHelm {
 		if len(helmChartRef) != 0 {
-			log.Fatal("Value of --helm-chart can only be used with --type `helm`")
+			return fmt.Errorf("value of --helm-chart can only be used with --type `helm`")
 		}
 		if len(helmChartRef) == 0 && len(helmChartRepo) != 0 {
-			log.Fatal("Value of --helm-chart-repo can only be used with --type `helm` and --helm-chart")
+			return fmt.Errorf("value of --helm-chart-repo can only be used with --type `helm` and --helm-chart")
 		}
 		if len(helmChartVersion) == 0 && len(helmChartRepo) != 0 {
-			log.Fatal("Value of --helm-chart-version can only be used with --type `helm` and --helm-chart")
+			return fmt.Errorf("value of --helm-chart-version can only be used with --type `helm` and --helm-chart")
 		}
 	}
 

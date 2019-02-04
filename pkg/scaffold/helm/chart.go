@@ -45,13 +45,59 @@ const (
 	DefaultAPIVersion string = "charts.helm.k8s.io/v1alpha1"
 )
 
-type FetchChartOptions struct {
-	Chart   string
-	Repo    string
-	Version string
+type CreateChartOptions struct {
+	ResourceAPIVersion string
+	ResourceKind       string
+	Chart              string
+	Repo               string
+	Version            string
 }
 
-func CreateChart(apiVersion, kind string, opts FetchChartOptions, projectDir string) (*scaffold.Resource, *chart.Chart, error) {
+// CreateChart scaffolds a new helm chart for the project rooted in projectDir
+// based on the passed opts.
+//
+// It returns a scaffold.Resource that can be used by the caller to create
+// other related files. opts.ResourceAPIVersion and opts.ResourceKind are
+// used to create the resource and must be specified if opts.Chart is empty.
+//
+// If opts.Chart is not empty, opts.ResourceAPIVersion and opts.Kind can be
+// left unset: opts.ResourceAPIVersion defaults to "charts.helm.k8s.io/v1alpha1"
+// and opts.ResourceKind is deduced from the specified opts.Chart.
+//
+// CreateChart also returns a chart.Chart that references the newly created
+// chart.
+//
+// If opts.Chart is empty, CreateChart scaffolds the default chart from helm's
+// default template.
+//
+// If opts.Chart is a local file, CreateChart verifies that it is a valid helm
+// chart archive and unpacks it into the project's helm charts directory.
+//
+// If opts.Chart is a local directory, CreateChart verifies that it is a valid
+// helm chart directory and copies it into the project's helm charts directory.
+//
+// For any other value of opts.Chart, CreateChart attempts to fetch the helm chart
+// from a remote repository. The following remote chart references are supported:
+//
+//   - <repoName>/<chartName>: Fetch the helm chart named chartName from the helm
+//                             chart repository named repoName, as specified in the
+//                             $HELM_HOME/repositories/repositories.yaml file.
+//
+//   - <URL>: Fetch the helm chart archive at the specified URL.
+//
+// If opts.Repo is specified, a third format for opts.Chart is also supported:
+//
+//   - <chartName>: Fetch the helm chart named chartName in the helm chart repository
+//                  specified by opts.Repo
+//
+// If opts.Version is not set, CreateChart will fetch the latest available version of
+// the helm chart. Otherwise, CreateChart will fetch the specified version.
+// opts.Version is not used when opts.Chart itself refers to a specific version, for
+// example when it is a local path or a URL.
+//
+// CreateChart returns an error if an error occurs creating the scaffold.Resource or
+// creating the chart.
+func CreateChart(projectDir string, opts CreateChartOptions) (*scaffold.Resource, *chart.Chart, error) {
 	chartsDir := filepath.Join(projectDir, HelmChartsDir)
 	err := os.MkdirAll(chartsDir, 0755)
 	if err != nil {
@@ -66,9 +112,9 @@ func CreateChart(apiVersion, kind string, opts FetchChartOptions, projectDir str
 	// If we don't have a helm chart reference, scaffold the default chart
 	// from Helm's default template. Otherwise, fetch it.
 	if len(opts.Chart) == 0 {
-		r, c, err = scaffoldChart(apiVersion, kind, chartsDir)
+		r, c, err = scaffoldChart(chartsDir, opts.ResourceAPIVersion, opts.ResourceKind)
 	} else {
-		r, c, err = fetchChart(apiVersion, kind, opts, chartsDir)
+		r, c, err = fetchChart(chartsDir, opts)
 	}
 	if err != nil {
 		return nil, nil, err
@@ -77,7 +123,7 @@ func CreateChart(apiVersion, kind string, opts FetchChartOptions, projectDir str
 	return r, c, nil
 }
 
-func scaffoldChart(apiVersion, kind, destDir string) (*scaffold.Resource, *chart.Chart, error) {
+func scaffoldChart(destDir, apiVersion, kind string) (*scaffold.Resource, *chart.Chart, error) {
 	r, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
 		return nil, nil, err
@@ -102,7 +148,7 @@ func scaffoldChart(apiVersion, kind, destDir string) (*scaffold.Resource, *chart
 	return r, chart, nil
 }
 
-func fetchChart(apiVersion, kind string, opts FetchChartOptions, destDir string) (*scaffold.Resource, *chart.Chart, error) {
+func fetchChart(destDir string, opts CreateChartOptions) (*scaffold.Resource, *chart.Chart, error) {
 	var (
 		stat  os.FileInfo
 		chart *chart.Chart
@@ -110,30 +156,30 @@ func fetchChart(apiVersion, kind string, opts FetchChartOptions, destDir string)
 	)
 
 	if stat, err = os.Stat(opts.Chart); err == nil {
-		chart, err = createChartFromDisk(opts.Chart, destDir, stat.IsDir())
+		chart, err = createChartFromDisk(destDir, opts.Chart, stat.IsDir())
 	} else {
-		chart, err = createChartFromRemote(opts, destDir)
+		chart, err = createChartFromRemote(destDir, opts)
 	}
 	if err != nil {
 		return nil, nil, err
 	}
 
 	chartName := chart.GetMetadata().GetName()
-	if len(apiVersion) == 0 {
-		apiVersion = DefaultAPIVersion
+	if len(opts.ResourceAPIVersion) == 0 {
+		opts.ResourceAPIVersion = DefaultAPIVersion
 	}
-	if len(kind) == 0 {
-		kind = strcase.ToCamel(chartName)
+	if len(opts.ResourceKind) == 0 {
+		opts.ResourceKind = strcase.ToCamel(chartName)
 	}
 
-	r, err := scaffold.NewResource(apiVersion, kind)
+	r, err := scaffold.NewResource(opts.ResourceAPIVersion, opts.ResourceKind)
 	if err != nil {
 		return nil, nil, err
 	}
 	return r, chart, nil
 }
 
-func createChartFromDisk(source, destDir string, isDir bool) (*chart.Chart, error) {
+func createChartFromDisk(destDir, source string, isDir bool) (*chart.Chart, error) {
 	var (
 		chart *chart.Chart
 		err   error
@@ -156,7 +202,7 @@ func createChartFromDisk(source, destDir string, isDir bool) (*chart.Chart, erro
 	return chart, nil
 }
 
-func createChartFromRemote(opts FetchChartOptions, destDir string) (*chart.Chart, error) {
+func createChartFromRemote(destDir string, opts CreateChartOptions) (*chart.Chart, error) {
 	helmHome, ok := os.LookupEnv(environment.HomeEnvVar)
 	if !ok {
 		helmHome = environment.DefaultHelmHome
@@ -195,5 +241,5 @@ func createChartFromRemote(opts FetchChartOptions, destDir string) (*chart.Chart
 		return nil, err
 	}
 
-	return createChartFromDisk(chartArchive, destDir, false)
+	return createChartFromDisk(destDir, chartArchive, false)
 }
