@@ -407,7 +407,7 @@ For improved reliability and quick failover it may be necessary to run multiple 
 There are two different leader election implementations to choose from, each with its own tradeoff.
 
 - [Leader-for-life][leader_for_life]: The leader pod only gives up leadership (via garbage collection) when it is deleted. Avoids the possibility of 2 instances mistakenly running as leaders(split brain). However this method can be slow to elect a new leader when the leader pod is on an unresponsive node(partioned) where it takes a long time for the leader pod to be deleted.
-- [Leader-with-lease][leader_with_lease]: The leader pod periodically renews the leader lease and gives up leadership when it can't renew the lease. This method allows for a faster transistion to a new leader when the existing leader is isolated, but there is a possibility of split brain in [certain situations][lease_split_brain].
+- [Leader-with-lease][leader_with_lease]: The leader pod periodically renews the leader lease and gives up leadership when it can't renew the lease. This method allows for a faster transition to a new leader when the existing leader is isolated, but there is a possibility of split brain in [certain situations][lease_split_brain].
 
 By deafult the SDK enables the leader-for-life implementation. However you should consult the docs above for both approaches to consider the tradeoffs that make sense for your use case.
 
