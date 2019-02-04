@@ -17,11 +17,11 @@ package generate
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
+	genutil "github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/generate/internal"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
@@ -33,8 +33,18 @@ func NewGenerateK8SCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "k8s",
 		Short: "Generates Kubernetes code for custom resource",
-		Long: `k8s generator generates code for custom resource given the API spec
-to comply with kube-API requirements.
+		Long: `k8s generator generates code for custom resources given the API
+specs in pkg/apis/<group>/<version> directories to comply with kube-API
+requirements. Go code is generated under
+pkg/apis/<group>/<version>/zz_generated.deepcopy.go.
+
+Example:
+	$ operator-sdk generate k8s
+	$ tree pkg/apis
+	pkg/apis/
+	└── app
+		└── v1alpha1
+			├── zz_generated.deepcopy.go
 `,
 		RunE: k8sFunc,
 	}
@@ -66,7 +76,7 @@ func K8sCodegen() error {
 		return err
 	}
 
-	gvMap, err := parseGroupVersions()
+	gvMap, err := genutil.ParseGroupVersions()
 	if err != nil {
 		return fmt.Errorf("failed to parse group versions: (%v)", err)
 	}
@@ -75,9 +85,13 @@ func K8sCodegen() error {
 		gvb.WriteString(fmt.Sprintf("%s:%v, ", g, vs))
 	}
 
-	log.Infof("Running code-generation for Custom Resource group versions: [%v]\n", gvb.String())
+	log.Infof("Running deepcopy code-generation for Custom Resource group versions: [%v]\n", gvb.String())
 
 	if err := deepcopyGen(binDir, repoPkg, gvMap); err != nil {
+		return err
+	}
+
+	if err = defaulterGen(binDir, repoPkg, gvMap); err != nil {
 		return err
 	}
 
@@ -93,100 +107,46 @@ func buildCodegenBinaries(binDir, codegenSrcDir string) error {
 		"./cmd/informer-gen",
 		"./cmd/deepcopy-gen",
 	}
-	for _, gd := range genDirs {
-		err := runGoBuildCodegen(binDir, codegenSrcDir, gd)
-		if err != nil {
-			return err
-		}
+	return genutil.BuildCodegenBinaries(genDirs, binDir, codegenSrcDir)
+}
+
+func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) (err error) {
+	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
+	args := []string{
+		"--input-dirs", genutil.CreateFQApis(apisPkg, gvMap),
+		"--output-file-base", "zz_generated.deepcopy",
+		"--bounding-dirs", apisPkg,
+	}
+	cmd := exec.Command(filepath.Join(binDir, "deepcopy-gen"), args...)
+	if projutil.IsGoVerbose() {
+		err = projutil.ExecCmd(cmd)
+	} else {
+		cmd.Stdout = ioutil.Discard
+		cmd.Stderr = ioutil.Discard
+		err = cmd.Run()
+	}
+	if err != nil {
+		return fmt.Errorf("failed to perform deepcopy code-generation: %v", err)
 	}
 	return nil
 }
 
-func runGoBuildCodegen(binDir, repoDir, genDir string) error {
-	binPath := filepath.Join(binDir, filepath.Base(genDir))
-	installCmd := exec.Command("go", "build", "-o", binPath, genDir)
-	installCmd.Dir = repoDir
-	isVerbose := false
-	if gf, ok := os.LookupEnv("GOFLAGS"); ok && len(gf) != 0 {
-		installCmd.Env = append(os.Environ(), "GOFLAGS="+gf)
-		if strings.Contains(gf, "-v") {
-			isVerbose = true
-		}
-	}
-	if isVerbose {
-		installCmd.Stdout = os.Stdout
-		installCmd.Stderr = os.Stderr
-	} else {
-		installCmd.Stdout = ioutil.Discard
-		installCmd.Stderr = ioutil.Discard
-	}
-	return installCmd.Run()
-}
-
-// parseGroupVersions parses the layout of pkg/apis to return a map of
-// API groups to versions.
-func parseGroupVersions() (map[string][]string, error) {
-	gvs := make(map[string][]string)
-	groups, err := ioutil.ReadDir(scaffold.ApisDir)
-	if err != nil {
-		return nil, fmt.Errorf("could not read pkg/apis directory to find api Versions: %v", err)
-	}
-
-	for _, g := range groups {
-		if g.IsDir() {
-			groupDir := filepath.Join(scaffold.ApisDir, g.Name())
-			versions, err := ioutil.ReadDir(groupDir)
-			if err != nil {
-				return nil, fmt.Errorf("could not read %s directory to find api Versions: %v", groupDir, err)
-			}
-
-			gvs[g.Name()] = make([]string, 0)
-			for _, v := range versions {
-				if v.IsDir() && scaffold.ResourceVersionRegexp.MatchString(v.Name()) {
-					gvs[g.Name()] = append(gvs[g.Name()], v.Name())
-				}
-			}
-		}
-	}
-
-	if len(gvs) == 0 {
-		return nil, fmt.Errorf("no groups or versions found in %s", scaffold.ApisDir)
-	}
-	return gvs, nil
-}
-
-// createFQApis return a string of all fully qualified pkg + groups + versions
-// of pkg and gvs in the format:
-// "pkg/groupA/v1,pkg/groupA/v2,pkg/groupB/v1"
-func createFQApis(pkg string, gvs map[string][]string) string {
-	gn := 0
-	sb := &strings.Builder{}
-	for g, vs := range gvs {
-		for vn, v := range vs {
-			sb.WriteString(filepath.Join(pkg, g, v))
-			if vn < len(vs)-1 {
-				sb.WriteString(",")
-			}
-		}
-		if gn < len(gvs)-1 {
-			sb.WriteString(",")
-		}
-		gn++
-	}
-	return sb.String()
-}
-
-func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) error {
+func defaulterGen(binDir, repoPkg string, gvMap map[string][]string) (err error) {
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	args := []string{
-		"--input-dirs", createFQApis(apisPkg, gvMap),
-		"-O", "zz_generated.deepcopy",
-		"--bounding-dirs", apisPkg,
+		"--input-dirs", genutil.CreateFQApis(apisPkg, gvMap),
+		"--output-file-base", "zz_generated.defaults",
 	}
-	cgPath := filepath.Join(binDir, "deepcopy-gen")
-	err := projutil.ExecCmd(exec.Command(cgPath, args...))
+	cmd := exec.Command(filepath.Join(binDir, "defaulter-gen"), args...)
+	if projutil.IsGoVerbose() {
+		err = projutil.ExecCmd(cmd)
+	} else {
+		cmd.Stdout = ioutil.Discard
+		cmd.Stderr = ioutil.Discard
+		err = cmd.Run()
+	}
 	if err != nil {
-		return fmt.Errorf("failed to perform code-generation: %v", err)
+		return fmt.Errorf("failed to perform defaulter code-generation: %v", err)
 	}
 	return nil
 }

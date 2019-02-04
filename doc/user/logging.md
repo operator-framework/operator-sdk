@@ -8,11 +8,15 @@ Operators set the logger for all operator logging in [`cmd/manager/main.go`][cod
 
 ```Go
 import (
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
+	"github.com/spf13/pflag"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 func main() {
-  logf.SetLogger(logf.ZapLogger(false))
+  pflag.CommandLine.AddFlagSet(zap.FlagSet())
+  pflag.Parse()
+  logf.SetLogger(zap.Logger())
   log := logf.Log.WithName("cmd")
 
   ...
@@ -25,7 +29,19 @@ func main() {
 
 By using `controller-runtime/pkg/runtime/log`, your logger is propagated through `controller-runtime`. Any logs produced by `controller-runtime` code will be through your logger, and therefore have the same formatting and destination.
 
-In the above example, `logf.ZapLogger()` takes a boolean flag to set development parameters. Passing in `true` will set the logger to log in development mode; debug log statements will trigger, and error log statements will include stack traces.
+### Default zap logger
+
+Operator SDK uses a `zap`-based `logr` backend when scaffolding new projects. To assist with configuring and using this logger, the SDK includes several helper functions.
+
+In the above example, we add the zap flagset to the operator's command line flags with `zap.FlagSet()`, and then set the controller-runtime logger with `zap.Logger()`.
+
+By default, `zap.Logger()` will return a logger that is ready for production use. It uses a JSON encoder, logs starting at the `info` level, and has [sampling][zap_sampling] enabled. To customize the default behavior, users can use the zap flagset and specify flags on the command line. The zap flagset includes the following flags that can be used to configure the logger:
+* `--zap-devel` - Enables the zap development config (changes defaults to console encoder, debug log level, and disables sampling) (default: `false`)
+* `--zap-encoder` string - Sets the zap log encoding (`json` or `console`)
+* `--zap-level` string - Sets the zap log level (`debug`, `info`, or `error`)
+* `--zap-sample` - Enables zap's sampling mode
+
+**NOTE:** Although the `logr` interface supports multiple debug levels (e.g. `log.V(1).Info()`, `log.V(2).Info()`, etc.), zap supports only a single debug level with `log.V(1).Info()`. Log statements with higher debug levels will not be printed with the zap's `logr` backend.
 
 ## Creating a structured log statement
 
@@ -102,4 +118,5 @@ If you do not want to use `logr` as your logging tool, you can remove `logr`-spe
 [godoc_logr_logger]:https://godoc.org/github.com/go-logr/logr#Logger
 [site_struct_logging]:https://www.client9.com/structured-logging-in-golang/
 [code_memcached_controller]:../../example/memcached-operator/memcached_controller.go.tmpl
-[code_set_logger]:https://github.com/operator-framework/operator-sdk/blob/948139171fff0e802c9e68f87cb95939941772ef/pkg/scaffold/cmd.go#L68-L72
+[code_set_logger]:https://github.com/operator-framework/operator-sdk/blob/ecd02000616f11303f1adecd3d4ceb4a8561a9ec/pkg/scaffold/cmd.go#L90-L94
+[zap_sampling]:https://github.com/uber-go/zap/blob/master/FAQ.md#why-sample-application-logs

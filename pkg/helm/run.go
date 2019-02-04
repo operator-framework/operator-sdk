@@ -24,6 +24,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/controller"
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
+	"github.com/operator-framework/operator-sdk/pkg/helm/watches"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
@@ -80,20 +81,20 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 		return err
 	}
 
-	factories, err := release.NewManagerFactoriesFromFile(storageBackend, tillerKubeClient, flags.WatchesFile)
+	watches, err := watches.Load(flags.WatchesFile)
 	if err != nil {
 		log.Error(err, "Failed to create new manager factories.")
 		return err
 	}
 
-	for gvk, factory := range factories {
+	for _, w := range watches {
 		// Register the controller with the factory.
 		err := controller.Add(mgr, controller.WatchOptions{
 			Namespace:               namespace,
-			GVK:                     gvk,
-			ManagerFactory:          factory,
+			GVK:                     w.GroupVersionKind,
+			ManagerFactory:          release.NewManagerFactory(storageBackend, tillerKubeClient, w.ChartDir),
 			ReconcilePeriod:         flags.ReconcilePeriod,
-			WatchDependentResources: true,
+			WatchDependentResources: w.WatchDependentResources,
 		})
 		if err != nil {
 			log.Error(err, "Failed to add manager factory to controller.")
