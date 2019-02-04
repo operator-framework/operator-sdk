@@ -40,16 +40,16 @@ import (
 
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	"github.com/operator-framework/operator-sdk/pkg/ansible"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 
 	"github.com/spf13/pflag"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 func main() {
-	logf.SetLogger(logf.ZapLogger(false))
-
 	aflags := aoflags.AddTo(pflag.CommandLine)
 	pflag.Parse()
+	logf.SetLogger(zap.Logger())
 
 	if err := ansible.Run(aflags); err != nil {
 		logf.Log.WithName("cmd").Error(err, "")

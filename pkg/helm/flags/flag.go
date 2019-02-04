@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/internal/flags"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 
 	"github.com/spf13/pflag"
 	"k8s.io/helm/pkg/storage/driver"
@@ -36,6 +37,7 @@ func AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) *HelmOperatorFlags 
 	hof := &HelmOperatorFlags{}
 	hof.WatchFlags.AddTo(flagSet, helpTextPrefix...)
 	hof.storageFlags.AddTo(flagSet, helpTextPrefix...)
+	flagSet.AddFlagSet(zap.FlagSet())
 	return hof
 }
 

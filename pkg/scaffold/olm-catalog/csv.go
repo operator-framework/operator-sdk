@@ -18,20 +18,21 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"unicode"
 
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+	"github.com/spf13/afero"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/ghodss/yaml"
-	olmApi "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -50,6 +51,20 @@ type CSV struct {
 	ConfigFilePath string
 	// CSVVersion is the CSV current version.
 	CSVVersion string
+
+	once sync.Once
+	fs   afero.Fs // For testing, ex. afero.NewMemMapFs()
+}
+
+func (s *CSV) initFS(fs afero.Fs) {
+	s.once.Do(func() {
+		s.fs = fs
+	})
+}
+
+func (s *CSV) getFS() afero.Fs {
+	s.initFS(afero.NewOsFs())
+	return s.fs
 }
 
 func (s *CSV) GetInput() (input.Input, error) {
@@ -68,15 +83,17 @@ func (s *CSV) GetInput() (input.Input, error) {
 }
 
 // CustomRender allows a CSV to be written by marshalling
-// olmApi.ClusterServiceVersion instead of writing to a template.
+// olmapiv1alpha1.ClusterServiceVersion instead of writing to a template.
 func (s *CSV) CustomRender() ([]byte, error) {
+	s.initFS(afero.NewOsFs())
+
 	// Get current CSV to update.
-	csv, exists, err := getCurrentCSVIfExists(s.Path)
+	csv, exists, err := s.getBaseCSVIfExists()
 	if err != nil {
 		return nil, err
 	}
 	if !exists {
-		csv = &olmApi.ClusterServiceVersion{}
+		csv = &olmapiv1alpha1.ClusterServiceVersion{}
 		s.initCSVFields(csv)
 	}
 
@@ -111,20 +128,26 @@ func (s *CSV) CustomRender() ([]byte, error) {
 	return yaml.Marshal(&cu)
 }
 
-func getCurrentCSVIfExists(csvPath string) (*olmApi.ClusterServiceVersion, bool, error) {
-	if _, err := os.Stat(csvPath); err != nil && os.IsNotExist(err) {
-		return nil, false, nil
-	}
+func (s *CSV) getBaseCSVIfExists() (*olmapiv1alpha1.ClusterServiceVersion, bool, error) {
+	lowerProjName := strings.ToLower(s.ProjectName)
+	name := lowerProjName + CSVYamlFileExt
+	fromCSV := filepath.Join(scaffold.OLMCatalogDir, name)
+	return getCSVFromFSIfExists(s.getFS(), fromCSV)
+}
 
-	csvBytes, err := ioutil.ReadFile(csvPath)
+func getCSVFromFSIfExists(fs afero.Fs, path string) (*olmapiv1alpha1.ClusterServiceVersion, bool, error) {
+	csvBytes, err := afero.ReadFile(fs, path)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, false, nil
+		}
 		return nil, false, err
 	}
 	if len(csvBytes) == 0 {
 		return nil, false, nil
 	}
 
-	csv := &olmApi.ClusterServiceVersion{}
+	csv := &olmapiv1alpha1.ClusterServiceVersion{}
 	if err := yaml.Unmarshal(csvBytes, csv); err != nil {
 		return nil, false, err
 	}
@@ -173,10 +196,10 @@ func getDisplayName(name string) string {
 
 // initCSVFields initializes all csv fields that should be populated by a user
 // with sane defaults. initCSVFields should only be called for new csv's.
-func (s *CSV) initCSVFields(csv *olmApi.ClusterServiceVersion) {
+func (s *CSV) initCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) {
 	// Metadata
-	csv.TypeMeta.APIVersion = olmApi.ClusterServiceVersionAPIVersion
-	csv.TypeMeta.Kind = olmApi.ClusterServiceVersionKind
+	csv.TypeMeta.APIVersion = olmapiv1alpha1.ClusterServiceVersionAPIVersion
+	csv.TypeMeta.Kind = olmapiv1alpha1.ClusterServiceVersionKind
 	csv.SetName(getCSVName(strings.ToLower(s.ProjectName), s.CSVVersion))
 	csv.SetNamespace("placeholder")
 
@@ -185,21 +208,21 @@ func (s *CSV) initCSVFields(csv *olmApi.ClusterServiceVersion) {
 	csv.Spec.DisplayName = getDisplayName(s.ProjectName)
 	csv.Spec.Description = "Placeholder description"
 	csv.Spec.Maturity = "alpha"
-	csv.Spec.Provider = olmApi.AppLink{}
-	csv.Spec.Maintainers = make([]olmApi.Maintainer, 0)
-	csv.Spec.Links = make([]olmApi.AppLink, 0)
+	csv.Spec.Provider = olmapiv1alpha1.AppLink{}
+	csv.Spec.Maintainers = make([]olmapiv1alpha1.Maintainer, 0)
+	csv.Spec.Links = make([]olmapiv1alpha1.AppLink, 0)
 	csv.SetLabels(make(map[string]string))
 }
 
 // TODO: validate that all fields from files are populated as expected
 // ex. add `resources` to a CRD
 
-func getEmptyRequiredCSVFields(csv *olmApi.ClusterServiceVersion) (fields []string) {
+func getEmptyRequiredCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) (fields []string) {
 	// Metadata
-	if csv.TypeMeta.APIVersion != olmApi.ClusterServiceVersionAPIVersion {
+	if csv.TypeMeta.APIVersion != olmapiv1alpha1.ClusterServiceVersionAPIVersion {
 		fields = append(fields, "apiVersion")
 	}
-	if csv.TypeMeta.Kind != olmApi.ClusterServiceVersionKind {
+	if csv.TypeMeta.Kind != olmapiv1alpha1.ClusterServiceVersionKind {
 		fields = append(fields, "kind")
 	}
 	if csv.ObjectMeta.Name == "" {
@@ -221,7 +244,7 @@ func getEmptyRequiredCSVFields(csv *olmApi.ClusterServiceVersion) (fields []stri
 	if len(csv.Spec.Maintainers) == 0 {
 		fields = append(fields, "spec.maintainers")
 	}
-	if csv.Spec.Provider == (olmApi.AppLink{}) {
+	if csv.Spec.Provider == (olmapiv1alpha1.AppLink{}) {
 		fields = append(fields, "spec.provider")
 	}
 	if len(csv.Spec.Labels) == 0 {
@@ -242,7 +265,7 @@ func joinFields(fields []string) string {
 // updateCSVVersions updates csv's version and data involving the version,
 // ex. ObjectMeta.Name, and place the old version in the `replaces` object,
 // if there is an old version to replace.
-func (s *CSV) updateCSVVersions(csv *olmApi.ClusterServiceVersion) error {
+func (s *CSV) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 
 	// Old csv version to replace, and updated csv version.
 	oldVer, newVer := csv.Spec.Version.String(), s.CSVVersion
@@ -292,10 +315,10 @@ func replaceAllBytes(v interface{}, old, new []byte) error {
 
 // updateCSVFromManifestFiles gathers relevant data from generated and
 // user-defined manifests and updates csv.
-func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmApi.ClusterServiceVersion) error {
+func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	store := NewUpdaterStore()
 	for _, f := range append(cfg.CRDCRPaths, cfg.OperatorPath, cfg.RolePath) {
-		yamlData, err := ioutil.ReadFile(f)
+		yamlData, err := afero.ReadFile(s.getFS(), f)
 		if err != nil {
 			return err
 		}

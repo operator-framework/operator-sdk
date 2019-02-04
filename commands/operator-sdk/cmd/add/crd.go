@@ -28,8 +28,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewAddCrdCmd - add crd command
-func NewAddCrdCmd() *cobra.Command {
+// NewAddCRDCmd - add crd command
+func NewAddCRDCmd() *cobra.Command {
 	crdCmd := &cobra.Command{
 		Use:   "crd",
 		Short: "Adds a Custom Resource Definition (CRD) and the Custom Resource (CR) files",
@@ -78,8 +78,15 @@ func crdFunc(cmd *cobra.Command, args []string) error {
 
 	s := scaffold.Scaffold{}
 	err = s.Execute(cfg,
-		&scaffold.Crd{Resource: resource},
-		&scaffold.Cr{Resource: resource},
+		&scaffold.CRD{
+			Input:        input.Input{IfExistsAction: input.Skip},
+			Resource:     resource,
+			IsOperatorGo: projutil.IsOperatorGo(),
+		},
+		&scaffold.CR{
+			Input:    input.Input{IfExistsAction: input.Skip},
+			Resource: resource,
+		},
 	)
 	if err != nil {
 		return fmt.Errorf("crd scaffold failed: (%v)", err)

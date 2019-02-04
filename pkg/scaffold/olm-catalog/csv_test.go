@@ -28,11 +28,15 @@ import (
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/ghodss/yaml"
-	olmApi "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	olmInstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
+	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 )
 
 const testDataDir = "testdata"
+
+var (
+	testOLMDir = filepath.Join(testDataDir, scaffold.OLMCatalogDir)
+)
 
 func TestCSV(t *testing.T) {
 	buf := &bytes.Buffer{}
@@ -43,7 +47,6 @@ func TestCSV(t *testing.T) {
 	}
 	csvVer := "0.1.0"
 	projectName := "app-operator"
-	testOLMDir := filepath.Join(testDataDir, scaffold.OLMCatalogDir)
 
 	err := s.Execute(&input.Config{ProjectName: projectName},
 		&CSV{
@@ -71,13 +74,12 @@ func TestCSV(t *testing.T) {
 
 func TestUpdateVersion(t *testing.T) {
 	projectName := "app-operator"
-	testOLMDir := filepath.Join(testDataDir, scaffold.OLMCatalogDir)
 	csvFilePath := projectName + CSVYamlFileExt
 	csvExpBytes, err := ioutil.ReadFile(filepath.Join(testOLMDir, csvFilePath))
 	if err != nil {
 		t.Fatal(err)
 	}
-	csv := &olmApi.ClusterServiceVersion{}
+	csv := &olmapiv1alpha1.ClusterServiceVersion{}
 	if err := yaml.Unmarshal(csvExpBytes, csv); err != nil {
 		t.Fatal(err)
 	}
@@ -102,12 +104,12 @@ func TestUpdateVersion(t *testing.T) {
 		t.Errorf("Wanted csv name %s, got %s", wantedName, csv.ObjectMeta.Name)
 	}
 
-	var resolver *olmInstall.StrategyResolver
+	var resolver *olminstall.StrategyResolver
 	stratInterface, err := resolver.UnmarshalStrategy(csv.Spec.InstallStrategy)
 	if err != nil {
 		t.Fatal(err)
 	}
-	strat, ok := stratInterface.(*olmInstall.StrategyDetailsDeployment)
+	strat, ok := stratInterface.(*olminstall.StrategyDetailsDeployment)
 	if !ok {
 		t.Fatalf("Strategy of type %T was not StrategyDetailsDeployment", stratInterface)
 	}
