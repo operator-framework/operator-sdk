@@ -84,7 +84,7 @@ func scaffoldChart(apiVersion, kind, destDir string) (*scaffold.Resource, *chart
 	}
 
 	chartfile := &chart.Metadata{
-		Name:        strcase.ToDelimited(kind, '-'),
+		Name:        r.LowerKind,
 		Description: "A Helm chart for Kubernetes",
 		Version:     "0.1.0",
 		AppVersion:  "1.0",
