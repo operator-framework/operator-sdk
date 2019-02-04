@@ -329,6 +329,10 @@ func verifyFlags() error {
 		return fmt.Errorf("operators of type Go do not use --api-version or --kind")
 	}
 
+	// --api-version and --kind are required with --type=ansible and --type=helm, with one exception.
+	//
+	// If --type=helm and --helm-chart is set, --api-version and --kind are optional. If left unset,
+	// sane defaults are used when the specified helm chart is created.
 	if operatorType == projutil.OperatorTypeAnsible || operatorType == projutil.OperatorTypeHelm && len(helmChartRef) == 0 {
 		if len(apiVersion) == 0 {
 			return fmt.Errorf("value of --api-version must not have empty value")
