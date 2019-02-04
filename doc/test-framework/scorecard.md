@@ -49,10 +49,9 @@ init-timeout: 60
 csv-path: "deploy/memcachedoperator.0.0.2.csv.yaml"
 ```
 
-Environment variables can also be used instead of or in addition to the config file and flags. The hierarchy of config
-methods from highest priority to least is: flag->env->file->default.
+The hierarchy of config methods from highest priority to least is: flag->file->default.
 
-The config file and environment variable support is provided by the `viper` package. For more info on how viper
+The config file support is provided by the `viper` package. For more info on how viper
 configuration works, see [`viper`'s README][viper].
 
 ## What Each Test Does
