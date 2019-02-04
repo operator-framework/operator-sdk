@@ -130,6 +130,9 @@ func scaffoldChart(destDir, apiVersion, kind string) (*scaffold.Resource, *chart
 	}
 
 	chartfile := &chart.Metadata{
+		// Many helm charts use hyphenated names, but we chose not to because
+		// of the issues related to how hyphens are interpreted in templates.
+		// See https://github.com/helm/helm/issues/2192
 		Name:        r.LowerKind,
 		Description: "A Helm chart for Kubernetes",
 		Version:     "0.1.0",
