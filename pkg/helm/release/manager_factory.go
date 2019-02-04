@@ -49,6 +49,11 @@ type managerFactory struct {
 	chartDir         string
 }
 
+// NewManagerFactory returns a new Helm manager factory capable of installing and uninstalling releases.
+func NewManagerFactory(storageBackend *storage.Storage, tillerKubeClient *kube.Client, chartDir string) ManagerFactory {
+	return &managerFactory{storageBackend, tillerKubeClient, chartDir}
+}
+
 func (f managerFactory) NewManager(r *unstructured.Unstructured) Manager {
 	return f.newManagerForCR(r)
 }
