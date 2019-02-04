@@ -96,7 +96,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		finalizers := append(pendingFinalizers, finalizer)
 		u.SetFinalizers(finalizers)
 		err := r.Client.Update(context.TODO(), u)
-		if err != nil {
+		if exit, err := determineReturn(err); exit {
 			return reconcileResult, err
 		}
 	}
@@ -111,14 +111,14 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		logger.V(1).Info("Spec was not found")
 		u.Object["spec"] = map[string]interface{}{}
 		err = r.Client.Update(context.TODO(), u)
-		if err != nil {
+		if exit, err := determineReturn(err); exit {
 			return reconcileResult, err
 		}
 	}
 
 	if r.ManageStatus {
 		err = r.markRunning(u, request.NamespacedName)
-		if err != nil {
+		if exit, err := determineReturn(err); exit {
 			return reconcileResult, err
 		}
 	}
@@ -179,6 +179,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 
 	err = r.APIReader.Get(context.TODO(), request.NamespacedName, u)
 	if err != nil {
+		log.Error(err, "Unable to get updated object from api")
 		return reconcile.Result{}, err
 	}
 
@@ -194,16 +195,17 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		}
 		u.SetFinalizers(finalizers)
 		err := r.Client.Update(context.TODO(), u)
-		if err != nil {
+		if exit, err := determineReturn(err); exit {
 			return reconcileResult, err
 		}
 		return reconcileResult, nil
 	}
 	if r.ManageStatus {
 		err = r.markDone(u, request.NamespacedName, statusEvent, failureMessages)
-		if err != nil {
-			logger.Error(err, "Failed to mark status done")
+		if exit, err := determineReturn(err); exit {
+			return reconcileResult, err
 		}
+
 	}
 	return reconcileResult, err
 }
@@ -235,6 +237,7 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, na
 		if err != nil {
 			return err
 		}
+
 	}
 	return nil
 }
@@ -284,4 +287,22 @@ func contains(l []string, s string) bool {
 		}
 	}
 	return false
+}
+
+// determineReturn - if the object was updated outside of our controller
+// this means that the current reconcilation is over and we should use the
+// latest version. To do this, we just exit without error because the
+// latest version should be queued for update.
+func determineReturn(err error) (bool, error) {
+	exit := false
+	if err == nil {
+		return exit, err
+	}
+	exit = true
+
+	if apierrors.IsConflict(err) {
+		log.V(1).Info("Conflict found during an update; re-running reconcilation")
+		return exit, nil
+	}
+	return exit, err
 }

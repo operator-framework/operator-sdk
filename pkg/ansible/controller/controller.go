@@ -57,6 +57,10 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 		options.EventHandlers = []events.EventHandler{}
 	}
 	eventHandlers := append(options.EventHandlers, events.NewLoggingEventHandler(options.LoggingLevel))
+	apiReader, err := client.New(mgr.GetConfig(), client.Options{})
+	if err != nil {
+		log.Error(err, "Unable to get new api client")
+	}
 
 	aor := &AnsibleOperatorReconciler{
 		// The default client will use the DelegatingReader for reads
@@ -66,9 +70,7 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 			Writer:       mgr.GetClient(),
 			StatusClient: mgr.GetClient(),
 		},
-		// This works because unstrucutred calls will go to the
-		// API by default.
-		APIReader:       mgr.GetClient(),
+		APIReader:       apiReader,
 		GVK:             options.GVK,
 		Runner:          options.Runner,
 		EventHandlers:   eventHandlers,
@@ -77,7 +79,7 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 	}
 
 	scheme := mgr.GetScheme()
-	_, err := scheme.New(options.GVK)
+	_, err = scheme.New(options.GVK)
 	if runtime.IsNotRegisteredError(err) {
 		// Register the GVK with the schema
 		scheme.AddKnownTypeWithName(options.GVK, &unstructured.Unstructured{})
