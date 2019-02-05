@@ -15,6 +15,7 @@
 package scorecard
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -67,7 +68,6 @@ const (
 
 var (
 	kubeconfig     *rest.Config
-	scSuggestions  []string
 	dynamicDecoder runtime.Decoder
 	runtimeClient  client.Client
 	restMapper     *restmapper.DeferredDiscoveryRESTMapper
@@ -178,23 +178,21 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
 	}
-	vars := ScorecardVars{
-		client:        &runtimeClient,
-		crObj:         obj,
-		proxyPod:      proxyPod,
-		timeout:       60,
-		retryInterval: 5,
-	}
 	if err := waitUntilReady(obj); err != nil {
 		return fmt.Errorf("failed waiting for CR to be ready: %v", err)
 	}
+	var suites []TestSuite
 	if viper.GetBool(BasicTestsOpt) {
-		for _, test := range BasicTests.tests {
-			err = test.execute(vars)
-			if err != nil {
-				return err
-			}
+		conf := BasicTestConfig{
+			Client:        runtimeClient,
+			CR:            obj,
+			ProxyPod:      proxyPod,
+			Timeout:       60,
+			RetryInterval: 5,
 		}
+		basicTests := NewBasicTestSuite(conf)
+		basicTests.Run(context.TODO())
+		suites = append(suites, *basicTests)
 	}
 	if viper.GetBool(OLMTestsOpt) {
 		yamlSpec, err := ioutil.ReadFile(viper.GetString(CSVPathOpt))
@@ -212,53 +210,44 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		default:
 			return fmt.Errorf("provided yaml file not of ClusterServiceVersion type")
 		}
-		vars.csvObj = csv
-		for _, test := range OLMTests.tests {
-			err = test.execute(vars)
-			if err != nil {
-				return err
-			}
+		conf := OLMTestConfig{
+			Client:   runtimeClient,
+			CR:       obj,
+			CSV:      csv,
+			CRDsDir:  viper.GetString(CRDsDirOpt),
+			ProxyPod: proxyPod,
 		}
+		olmTests := NewOLMTestSuite(conf)
+		olmTests.Run(context.TODO())
+		suites = append(suites, *olmTests)
 	}
-	var totalScores []int
-	if viper.GetBool(BasicTestsOpt) {
-		fmt.Println("Basic Tests")
-		for _, test := range BasicTests.tests {
-			if !(test.scores[0].earnedPoints == 0 && test.scores[0].maximumPoints == 0) {
-				fmt.Printf("\t%s: %d/%d points\n", test.name, test.scores[0].earnedPoints, test.scores[0].maximumPoints)
-			} else {
-				fmt.Printf("\t%s: N/A (depends on an earlier test that failed)\n", test.name)
-			}
-		}
-		totalScore := BasicTests.calculateTotalScore()
-		fmt.Printf("Basic Tests Score: %d%%\n\n", totalScore)
-		totalScores = append(totalScores, totalScore)
-	}
-	if viper.GetBool(OLMTestsOpt) {
-		fmt.Println("OLM Tests")
-		for _, test := range OLMTests.tests {
-			if !(test.scores[0].earnedPoints == 0 && test.scores[0].maximumPoints == 0) {
-				fmt.Printf("\t%s: %d/%d points\n", test.name, test.scores[0].earnedPoints, test.scores[0].maximumPoints)
-			} else {
-				fmt.Printf("\t%s: N/A (depends on an earlier test that failed)\n", test.name)
-			}
-		}
-		totalScore := OLMTests.calculateTotalScore()
-		fmt.Printf("OLM Tests Score: %d%%\n\n", totalScore)
-		totalScores = append(totalScores, totalScore)
-	}
-	/* not yet implemented
-	if SCConf.TenantTests {
-	*/
 	totalScore := 0.0
-	for _, score := range totalScores {
-		totalScore += float64(score)
+	for _, suite := range suites {
+		fmt.Printf("%s:\n", suite.GetName())
+		for _, result := range suite.TestResults {
+			fmt.Printf("\t%s: %d/%d\n", result.Test.GetName(), result.EarnedPoints, result.MaximumPoints)
+		}
+		totalScore += float64(suite.TotalScore())
 	}
-	totalScore = totalScore / float64(len(totalScores))
+	totalScore = totalScore / float64(len(suites))
 	fmt.Printf("\nTotal Score: %.0f%%\n", totalScore)
-	for _, suggestion := range scSuggestions {
-		// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
-		fmt.Printf("\x1b[%dmSUGGESTION:\x1b[0m %s\n", 33, suggestion)
+	// Print suggestions
+	for _, suite := range suites {
+		for _, result := range suite.TestResults {
+			for _, suggestion := range result.Suggestions {
+				// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
+				fmt.Printf("\x1b[%dmSUGGESTION:\x1b[0m %s\n", 33, suggestion)
+			}
+		}
+	}
+	// Print errors
+	for _, suite := range suites {
+		for _, result := range suite.TestResults {
+			for _, err := range result.Errors {
+				// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
+				fmt.Printf("\x1b[%dmSUGGESTION:\x1b[0m %s\n", 33, err)
+			}
+		}
 	}
 	return nil
 }

@@ -15,7 +15,7 @@
 package scorecard
 
 import (
-	"fmt"
+	"context"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	v1 "k8s.io/api/core/v1"
@@ -23,153 +23,254 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Struct definitions
+// Type Definitions
 
-// ScorecardVars contains all necessary variables for running scorecard tests
-type ScorecardVars struct {
-	client        *client.Client
-	crObj         *unstructured.Unstructured
-	csvObj        *olmapiv1alpha1.ClusterServiceVersion
-	proxyPod      *v1.Pod
-	timeout       int
-	retryInterval int
+type Test interface {
+	GetName() string
+	GetDescription() string
+	Run(context.Context) TestResult
 }
 
-// Score contains the number of earned points and maximum number of points
-type Score struct {
-	earnedPoints  int
-	maximumPoints int
+type TestResult struct {
+	Test          Test
+	EarnedPoints  int
+	MaximumPoints int
+	Suggestions   []string
+	Errors        []error
+	isCumulative  bool
 }
 
-// Test defines a scorecard test
-type Test struct {
-	name        string
-	description string
-	// by having an array of scores, we can more easily add support for multiple CR
-	// testing in a future PR
-	scores     []Score
-	cumulative bool
-	run        func(*Test, ScorecardVars) error
+type TestInfo struct {
+	Name        string
+	Description string
 }
 
-// TestSuite defines a suite of scorecard tests
+// Any struct that embeds TestInfo only needs to
+// implement Run to implement the Test interface
+func (i TestInfo) GetName() string        { return i.Name }
+func (i TestInfo) GetDescription() string { return i.Description }
+
+type BasicTestConfig struct {
+	Client        client.Client
+	CR            *unstructured.Unstructured
+	ProxyPod      *v1.Pod
+	Timeout       int
+	RetryInterval int
+}
+
+type OLMTestConfig struct {
+	Client   client.Client
+	CR       *unstructured.Unstructured
+	CSV      *olmapiv1alpha1.ClusterServiceVersion
+	CRDsDir  string
+	ProxyPod *v1.Pod
+}
+
 type TestSuite struct {
-	name        string
-	description string
-	tests       []*Test
-	// we cannot use Test as a key as it contains a slice (which cannot be a key)
-	// use the test name instead
-	weights map[string]int
+	TestInfo
+	Tests       []Test
+	TestResults []TestResult
+	Weights     map[string]int
+}
+
+func (ts *TestSuite) AddTest(t Test, weight int) {
+	ts.Tests = append(ts.Tests, t)
+	ts.Weights[t.GetName()] = weight
 }
 
 // Test definitions
-var checkSpecTest = &Test{
-	name:        "Spec Block Exists",
-	description: "Custom Resource has a Status Block",
-	run:         checkSpec,
+
+type CheckSpecTest struct {
+	TestInfo
+	BasicTestConfig
 }
-var checkStatTest = &Test{
-	name:        "Status Block Exists",
-	description: "Custom Resource has a Status Block",
-	run:         checkStat,
+
+func NewCheckSpecTest(conf BasicTestConfig) *CheckSpecTest {
+	return &CheckSpecTest{
+		BasicTestConfig: conf,
+		TestInfo: TestInfo{
+			Name:        "Spec Block Exists",
+			Description: "Custom Resource has a Spec Block",
+		},
+	}
 }
-var checkStatusUpdateTest = &Test{
-	name:        "Operator actions are reflected in status",
-	description: "Custom Resource status section gets updated after the spec block is modified",
-	run:         checkStatusUpdate,
+
+type CheckStatusTest struct {
+	TestInfo
+	BasicTestConfig
 }
-var writingIntoCRsHasEffectTest = &Test{
-	name:        "Writing into CRs has an effect",
-	description: "A CR sends PUT/POST requests to the API server to modify resources in response to spec block changes",
-	run:         writingIntoCRsHasEffect,
+
+func NewCheckStatusTest(conf BasicTestConfig) *CheckStatusTest {
+	return &CheckStatusTest{
+		BasicTestConfig: conf,
+		TestInfo: TestInfo{
+			Name:        "Status Block Exists",
+			Description: "Custom Resource has a Status Block",
+		},
+	}
 }
-var crdsHaveResourcesTest = &Test{
-	name:        "Owned CRDs have resources listed",
-	description: "All Owned CRDs contain a resources subsection",
-	cumulative:  true,
-	run:         crdsHaveResources,
+
+type WritingIntoCRsHasEffectTest struct {
+	TestInfo
+	BasicTestConfig
 }
-var annotationsContainExamplesTest = &Test{
-	name:        "CRs have at least 1 example",
-	description: "The CSV's metadata contains an alm-examples section",
-	cumulative:  true,
-	run:         annotationsContainExamples,
+
+func NewWritingIntoCRsHasEffectTest(conf BasicTestConfig) *WritingIntoCRsHasEffectTest {
+	return &WritingIntoCRsHasEffectTest{
+		BasicTestConfig: conf,
+		TestInfo: TestInfo{
+			Name:        "Writing into CRs has an effect",
+			Description: "A CR sends PUT/POST requests to the API server to modify resources in response to spec block changes",
+		},
+	}
 }
-var specDescriptorsTest = &Test{
-	name:        "Spec fields with descriptors",
-	description: "All spec fields have matching descriptors in the CSV",
-	cumulative:  true,
-	run:         specDescriptors,
+
+type CRDsHaveValidationTest struct {
+	TestInfo
+	OLMTestConfig
 }
-var statusDescriptorsTest = &Test{
-	name:        "Status fields with descriptors",
-	description: "All status fields have matching descriptors in the CSV",
-	cumulative:  true,
-	run:         statusDescriptors,
+
+func NewCRDsHaveValidationTest(conf OLMTestConfig) *CRDsHaveValidationTest {
+	return &CRDsHaveValidationTest{
+		OLMTestConfig: conf,
+		TestInfo: TestInfo{
+			Name:        "Provided APIs have validation",
+			Description: "All CRDs have an OpenAPI validation subsection",
+		},
+	}
+}
+
+type CRDsHaveResourcesTest struct {
+	TestInfo
+	OLMTestConfig
+}
+
+func NewCRDsHaveResourcesTest(conf OLMTestConfig) *CRDsHaveResourcesTest {
+	return &CRDsHaveResourcesTest{
+		OLMTestConfig: conf,
+		TestInfo: TestInfo{
+			Name:        "Owned CRDs have resources listed",
+			Description: "All Owned CRDs contain a resources subsection",
+		},
+	}
+}
+
+type AnnotationsContainExamplesTest struct {
+	TestInfo
+	OLMTestConfig
+}
+
+func NewAnnotationsContainExamplesTest(conf OLMTestConfig) *AnnotationsContainExamplesTest {
+	return &AnnotationsContainExamplesTest{
+		OLMTestConfig: conf,
+		TestInfo: TestInfo{
+			Name:        "CRs have at least 1 example",
+			Description: "The CSV's metadata contains an alm-examples section",
+		},
+	}
+}
+
+type SpecDescriptorsTest struct {
+	TestInfo
+	OLMTestConfig
+}
+
+func NewSpecDescriptorsTest(conf OLMTestConfig) *SpecDescriptorsTest {
+	return &SpecDescriptorsTest{
+		OLMTestConfig: conf,
+		TestInfo: TestInfo{
+			Name:        "Spec fields with descriptors",
+			Description: "All spec fields have matching descriptors in the CSV",
+		},
+	}
+}
+
+type StatusDescriptorsTest struct {
+	TestInfo
+	OLMTestConfig
+}
+
+func NewStatusDescriptorsTest(conf OLMTestConfig) *StatusDescriptorsTest {
+	return &StatusDescriptorsTest{
+		OLMTestConfig: conf,
+		TestInfo: TestInfo{
+			Name:        "Status fields with descriptors",
+			Description: "All status fields have matching descriptors in the CSV",
+		},
+	}
 }
 
 // Test Suite Declarations
 
-var BasicTests = &TestSuite{
-	name:        "Basic Tests",
-	description: "Test suite that runs basic, functional operator tests",
-	tests:       []*Test{checkSpecTest, checkStatTest, writingIntoCRsHasEffectTest},
-	weights: map[string]int{
-		checkSpecTest.name:               44,
-		checkStatTest.name:               28,
-		writingIntoCRsHasEffectTest.name: 28,
-	},
-}
-var OLMTests = &TestSuite{
-	name:        "OLM Tests",
-	description: "Test suite checks if an operator's CSV follows best practices",
-	tests:       []*Test{crdsHaveResourcesTest, annotationsContainExamplesTest, specDescriptorsTest, statusDescriptorsTest},
-	weights: map[string]int{
-		crdsHaveResourcesTest.name:          25,
-		annotationsContainExamplesTest.name: 25,
-		specDescriptorsTest.name:            25,
-		statusDescriptorsTest.name:          25,
-	},
-}
-
 // Helper functions
 
-func scorePassFail(test *Test) Score {
-	totalScore := Score{maximumPoints: 1}
-	for _, score := range test.scores {
-		if score.earnedPoints != score.maximumPoints {
-			totalScore.earnedPoints = 0
-			return totalScore
+// ResultsPassFail will be used when multiple CRs are supported
+func ResultsPassFail(results []TestResult) (earned, max int) {
+	for _, result := range results {
+		if result.EarnedPoints != result.MaximumPoints {
+			return 0, 1
 		}
 	}
-	totalScore.earnedPoints = 1
-	return totalScore
+	return 1, 1
 }
 
-func scoreCumulative(test *Test) Score {
-	totalScore := Score{}
-	for _, score := range test.scores {
-		totalScore.earnedPoints += score.earnedPoints
-		totalScore.maximumPoints += score.maximumPoints
+// ResultsCumulative will be used when multiple CRs are supported
+func ResultsCumulative(results []TestResult) (earned, max int) {
+	for _, result := range results {
+		earned += result.EarnedPoints
+		max += result.MaximumPoints
 	}
-	return totalScore
+	return earned, max
 }
 
-func (test *Test) totalScore() Score {
-	if test.cumulative {
-		return scoreCumulative(test)
+func (ts *TestSuite) TotalScore() (score int) {
+	floatScore := 0.0
+	for _, result := range ts.TestResults {
+		if result.MaximumPoints != 0 {
+			floatScore += (float64(result.EarnedPoints) / float64(result.MaximumPoints)) * float64(ts.Weights[result.Test.GetName()])
+		}
 	}
-	return scorePassFail(test)
-}
-func (test *Test) execute(vars ScorecardVars) error {
-	fmt.Printf("Running %s test\n", test.name)
-	return test.run(test, vars)
+	return int(floatScore)
 }
 
-func (suite TestSuite) calculateTotalScore() int {
-	score := 0
-	for _, test := range suite.tests {
-		score += (test.totalScore().earnedPoints / test.totalScore().maximumPoints) * suite.weights[test.name]
+func (ts *TestSuite) Run(ctx context.Context) {
+	for _, test := range ts.Tests {
+		ts.TestResults = append(ts.TestResults, test.Run(context.TODO()))
 	}
-	return score
+}
+
+func NewTestSuite(name, description string) *TestSuite {
+	return &TestSuite{
+		TestInfo: TestInfo{
+			Name:        name,
+			Description: description,
+		},
+		Weights: make(map[string]int),
+	}
+}
+
+func NewBasicTestSuite(conf BasicTestConfig) *TestSuite {
+	ts := NewTestSuite(
+		"Basic Tests",
+		"Test suite that runs basic, functional operator tests",
+	)
+	ts.AddTest(NewCheckSpecTest(conf), 44)
+	ts.AddTest(NewCheckStatusTest(conf), 28)
+	ts.AddTest(NewWritingIntoCRsHasEffectTest(conf), 28)
+
+	return ts
+}
+
+func NewOLMTestSuite(conf OLMTestConfig) *TestSuite {
+	ts := NewTestSuite(
+		"OLM Tests",
+		"Test suite checks if an operator's CSV follows best practices",
+	)
+
+	ts.AddTest(NewCRDsHaveResourcesTest(conf), 19)
+	ts.AddTest(NewAnnotationsContainExamplesTest(conf), 19)
+	ts.AddTest(NewSpecDescriptorsTest(conf), 19)
+	ts.AddTest(NewStatusDescriptorsTest(conf), 19)
+
+	return ts
 }

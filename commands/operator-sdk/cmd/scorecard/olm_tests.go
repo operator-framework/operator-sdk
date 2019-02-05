@@ -22,12 +22,10 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -82,160 +80,157 @@ func matchVersion(version string, crd apiextv1beta1.CustomResourceDefinition) bo
 }
 
 // crdsHaveValidation makes sure that all CRDs have a validation block
-func crdsHaveValidation(crdsDir string, runtimeClient client.Client, obj *unstructured.Unstructured) error {
-	test := scorecardTest{testType: olmIntegration, name: "Provided APIs have validation"}
-	crds, err := getCRDs(crdsDir)
+func (t *CRDsHaveValidationTest) Run(ctx context.Context) TestResult {
+	res := TestResult{Test: t}
+	crds, err := getCRDs(t.CRDsDir)
 	if err != nil {
-		return fmt.Errorf("failed to get CRDs in %s directory: %v", crdsDir, err)
+		res.Errors = append(res.Errors, fmt.Errorf("failed to get CRDs in %s directory: %v", t.CRDsDir, err))
+		return res
 	}
-	err = runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, obj)
+	err = t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
-		return err
+		res.Errors = append(res.Errors, err)
+		return res
 	}
 	// TODO: we need to make this handle multiple CRs better/correctly
 	for _, crd := range crds {
-		test.maximumPoints++
+		res.MaximumPoints++
 		if crd.Spec.Validation == nil {
-			scSuggestions = append(scSuggestions, fmt.Sprintf("Add CRD validation for %s/%s", crd.Spec.Names.Kind, crd.Spec.Version))
+			res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for %s/%s", crd.Spec.Names.Kind, crd.Spec.Version))
 			continue
 		}
 		// check if the CRD matches the testing CR
-		gvk := obj.GroupVersionKind()
+		gvk := t.CR.GroupVersionKind()
 		// Only check the validation block if the CRD and CR have the same Kind and Version
 		if !(matchVersion(gvk.Version, crd) && matchKind(gvk.Kind, crd.Spec.Names.Kind)) {
-			test.earnedPoints++
+			res.EarnedPoints++
 			continue
 		}
 		failed := false
-		if obj.Object["spec"] != nil {
-			spec := obj.Object["spec"].(map[string]interface{})
+		if t.CR.Object["spec"] != nil {
+			spec := t.CR.Object["spec"].(map[string]interface{})
 			for key := range spec {
 				if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["spec"].Properties[key]; !ok {
 					failed = true
-					scSuggestions = append(scSuggestions, fmt.Sprintf("Add CRD validation for spec field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
+					res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for spec field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
 				}
 			}
 		}
-		if obj.Object["status"] != nil {
-			status := obj.Object["status"].(map[string]interface{})
+		if t.CR.Object["status"] != nil {
+			status := t.CR.Object["status"].(map[string]interface{})
 			for key := range status {
 				if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["status"].Properties[key]; !ok {
 					failed = true
-					scSuggestions = append(scSuggestions, fmt.Sprintf("Add CRD validation for status field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
+					res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for status field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
 				}
 			}
 		}
 		if !failed {
-			test.earnedPoints++
+			res.EarnedPoints++
 		}
 	}
-	scTests = append(scTests, test)
-	return nil
+	return res
 }
 
 // crdsHaveResources checks to make sure that all owned CRDs have resources listed
-func crdsHaveResources(test *Test, vars ScorecardVars) error {
-	score := Score{}
-	for _, crd := range vars.csvObj.Spec.CustomResourceDefinitions.Owned {
-		score.maximumPoints++
+func (t *CRDsHaveResourcesTest) Run(ctx context.Context) TestResult {
+	res := TestResult{Test: t}
+	for _, crd := range t.CSV.Spec.CustomResourceDefinitions.Owned {
+		res.MaximumPoints++
 		if len(crd.Resources) > 0 {
-			score.earnedPoints++
+			res.EarnedPoints++
 		}
 	}
-	test.scores = append(test.scores, score)
-	if score.earnedPoints < score.maximumPoints {
-		scSuggestions = append(scSuggestions, "Add resources to owned CRDs")
+	if res.EarnedPoints < res.MaximumPoints {
+		res.Suggestions = append(res.Suggestions, "Add resources to owned CRDs")
 	}
-	return nil
+	return res
 }
 
 // annotationsContainExamples makes sure that the CSVs list at least 1 example for the CR
-func annotationsContainExamples(test *Test, vars ScorecardVars) error {
-	score := Score{maximumPoints: 1}
-	if vars.csvObj.Annotations != nil && vars.csvObj.Annotations["alm-examples"] != "" {
-		score.earnedPoints = 1
+func (t *AnnotationsContainExamplesTest) Run(ctx context.Context) TestResult {
+	res := TestResult{Test: t}
+	if t.CSV.Annotations != nil && t.CSV.Annotations["alm-examples"] != "" {
+		res.EarnedPoints = 1
 	}
-	test.scores = append(test.scores, score)
-	if score.earnedPoints == 0 {
-		scSuggestions = append(scSuggestions, "Add an alm-examples annotation to your CSV to pass the "+test.name+" test")
+	if res.EarnedPoints == 0 {
+		res.Suggestions = append(res.Suggestions, "Add an alm-examples annotation to your CSV to pass the "+t.GetName()+" test")
 	}
-	return nil
+	return res
 }
 
 // statusDescriptors makes sure that all status fields found in the created CR has a matching descriptor in the CSV
-func statusDescriptors(test *Test, vars ScorecardVars) error {
-	score := Score{}
-	err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: vars.crObj.GetNamespace(), Name: vars.crObj.GetName()}, vars.crObj)
+func (t *StatusDescriptorsTest) Run(ctx context.Context) TestResult {
+	res := TestResult{Test: t}
+	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
-		return err
+		res.Errors = append(res.Errors, err)
+		return res
 	}
-	if vars.crObj.Object["status"] == nil {
-		// what should we do if there is no status block? Maybe some kind of N/A type output?
-		return nil
+	if t.CR.Object["status"] == nil {
+		return res
 	}
-	statusBlock := vars.crObj.Object["status"].(map[string]interface{})
-	score.maximumPoints = len(statusBlock)
+	statusBlock := t.CR.Object["status"].(map[string]interface{})
+	res.MaximumPoints = len(statusBlock)
 	var crd *olmapiv1alpha1.CRDDescription
-	for _, owned := range vars.csvObj.Spec.CustomResourceDefinitions.Owned {
-		if owned.Kind == vars.crObj.GetKind() {
+	for _, owned := range t.CSV.Spec.CustomResourceDefinitions.Owned {
+		if owned.Kind == t.CR.GetKind() {
 			crd = &owned
 			break
 		}
 	}
 	if crd == nil {
-		return nil
+		return res
 	}
 	for key := range statusBlock {
 		for _, statDesc := range crd.StatusDescriptors {
 			if statDesc.Path == key {
-				score.earnedPoints++
+				res.EarnedPoints++
 				delete(statusBlock, key)
 				break
 			}
 		}
 	}
-	test.scores = append(test.scores, score)
 	for key := range statusBlock {
-		scSuggestions = append(scSuggestions, "Add a status descriptor for "+key)
+		res.Suggestions = append(res.Suggestions, "Add a status descriptor for "+key)
 	}
-	return nil
+	return res
 }
 
 // specDescriptors makes sure that all spec fields found in the created CR has a matching descriptor in the CSV
-func specDescriptors(test *Test, vars ScorecardVars) error {
-	score := Score{}
-	err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: vars.crObj.GetNamespace(), Name: vars.crObj.GetName()}, vars.crObj)
+func (t *SpecDescriptorsTest) Run(ctx context.Context) TestResult {
+	res := TestResult{Test: t}
+	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
-		return err
+		res.Errors = append(res.Errors, err)
+		return res
 	}
-	if vars.crObj.Object["spec"] == nil {
-		// what should we do if there is no spec block? Maybe some kind of N/A type output?
-		return nil
+	if t.CR.Object["spec"] == nil {
+		return res
 	}
-	specBlock := vars.crObj.Object["spec"].(map[string]interface{})
-	score.maximumPoints = len(specBlock)
+	specBlock := t.CR.Object["spec"].(map[string]interface{})
+	res.MaximumPoints = len(specBlock)
 	var crd *olmapiv1alpha1.CRDDescription
-	for _, owned := range vars.csvObj.Spec.CustomResourceDefinitions.Owned {
-		if owned.Kind == vars.crObj.GetKind() {
+	for _, owned := range t.CSV.Spec.CustomResourceDefinitions.Owned {
+		if owned.Kind == t.CR.GetKind() {
 			crd = &owned
 			break
 		}
 	}
 	if crd == nil {
-		return nil
+		return res
 	}
 	for key := range specBlock {
-		for _, specDesc := range crd.SpecDescriptors {
-			if specDesc.Path == key {
-				score.earnedPoints++
+		for _, statDesc := range crd.SpecDescriptors {
+			if statDesc.Path == key {
+				res.EarnedPoints++
 				delete(specBlock, key)
 				break
 			}
 		}
 	}
-	test.scores = append(test.scores, score)
 	for key := range specBlock {
-		scSuggestions = append(scSuggestions, "Add a spec descriptor for "+key)
+		res.Suggestions = append(res.Suggestions, "Add a spec descriptor for "+key)
 	}
-	return nil
+	return res
 }
