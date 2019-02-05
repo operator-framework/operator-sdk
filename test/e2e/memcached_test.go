@@ -32,6 +32,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 
@@ -251,7 +252,7 @@ func TestMemcached(t *testing.T) {
 		}
 	}
 
-	file, err := yamlutil.GenerateCombinedGlobalManifest()
+	file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -496,7 +497,7 @@ func MemcachedCluster(t *testing.T) {
 		}
 	}
 
-	file, err := yamlutil.GenerateCombinedNamespacedManifest()
+	file, err := yamlutil.GenerateCombinedNamespacedManifest(scaffold.DeployDir)
 	if err != nil {
 		t.Fatal(err)
 	}
