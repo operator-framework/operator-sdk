@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 DEST_IMAGE="quay.io/example/scorecard-proxy"
+CONFIG_PATH=".test-osdk-scorecard.yaml"
 CSV_PATH="deploy/memcachedoperator.0.0.2.csv.yaml"
 
 set -ex
@@ -21,7 +22,9 @@ commandoutput="$(operator-sdk scorecard \
 echo $commandoutput | grep "Total Score: 6/7 points"
 
 # test config file
-commandoutput2="$(operator-sdk scorecard --proxy-image "$DEST_IMAGE")"
+commandoutput2="$(operator-sdk scorecard \
+  --proxy-image "$DEST_IMAGE" \
+  --config "$CONFIG_PATH")"
 echo $commandoutput2 | grep "Total Score: 6/7 points"
 
 # Test just using CSV.

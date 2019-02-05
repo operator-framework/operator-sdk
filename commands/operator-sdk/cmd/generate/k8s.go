@@ -91,6 +91,10 @@ func K8sCodegen() error {
 		return err
 	}
 
+	if err = defaulterGen(binDir, repoPkg, gvMap); err != nil {
+		return err
+	}
+
 	log.Info("Code-generation complete.")
 	return nil
 }
@@ -123,6 +127,26 @@ func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) (err error) 
 	}
 	if err != nil {
 		return fmt.Errorf("failed to perform deepcopy code-generation: %v", err)
+	}
+	return nil
+}
+
+func defaulterGen(binDir, repoPkg string, gvMap map[string][]string) (err error) {
+	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
+	args := []string{
+		"--input-dirs", genutil.CreateFQApis(apisPkg, gvMap),
+		"--output-file-base", "zz_generated.defaults",
+	}
+	cmd := exec.Command(filepath.Join(binDir, "defaulter-gen"), args...)
+	if projutil.IsGoVerbose() {
+		err = projutil.ExecCmd(cmd)
+	} else {
+		cmd.Stdout = ioutil.Discard
+		cmd.Stderr = ioutil.Discard
+		err = cmd.Run()
+	}
+	if err != nil {
+		return fmt.Errorf("failed to perform defaulter code-generation: %v", err)
 	}
 	return nil
 }
