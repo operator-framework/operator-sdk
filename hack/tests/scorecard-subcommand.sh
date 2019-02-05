@@ -26,7 +26,7 @@ echo $commandoutput2 | grep "Total Score: 6/7 points"
 
 # Test just using CSV.
 commandoutput3="$(operator-sdk scorecard \
-  --crd-dir deploy \
+  --crds-dir deploy \
   --csv-path "$CSV_PATH" \
   --olm-deployed \
   --verbose \

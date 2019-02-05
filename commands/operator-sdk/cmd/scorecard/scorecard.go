@@ -50,7 +50,7 @@ const (
 	InitTimeoutOpt        = "init-timeout"
 	OlmDeployedOpt        = "olm-deployed"
 	CSVPathOpt            = "csv-path"
-	CRDDirOpt             = "crd-dir"
+	CRDsDirOpt            = "crds-dir"
 	BasicTestsOpt         = "basic-tests"
 	OLMTestsOpt           = "olm-tests"
 	TenantTestsOpt        = "good-tenant-tests"
@@ -168,7 +168,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		viper.Set(NamespacedManifestOpt, nsMan.Name())
-		gMan, err := yamlutil.GenerateCombinedGlobalManifest(viper.GetString(CRDDirOpt))
+		gMan, err := yamlutil.GenerateCombinedGlobalManifest(viper.GetString(CRDsDirOpt))
 		if err != nil {
 			return err
 		}
@@ -365,8 +365,8 @@ func validateScorecardFlags() error {
 	if viper.GetBool(OlmDeployedOpt) && viper.GetString(CSVPathOpt) == "" {
 		return fmt.Errorf("csv-path must be set if olm-deployed is enabled")
 	}
-	if viper.GetBool(OlmDeployedOpt) != (viper.GetString(CRDDirOpt) != "") {
-		return fmt.Errorf("crd-dir can only and must be set if olm-deployed is enabled")
+	if viper.GetBool(OlmDeployedOpt) != (viper.GetString(CRDsDirOpt) != "") {
+		return fmt.Errorf("crds-dir can only and must be set if olm-deployed is enabled")
 	}
 	pullPolicy := viper.GetString(ProxyPullPolicyOpt)
 	if pullPolicy != "Always" && pullPolicy != "Never" && pullPolicy != "PullIfNotPresent" {
