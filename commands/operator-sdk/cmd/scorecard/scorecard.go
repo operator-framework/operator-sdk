@@ -55,6 +55,7 @@ const (
 	CRManifestOpt         = "cr-manifest"
 	ProxyImageOpt         = "proxy-image"
 	ProxyPullPolicyOpt    = "proxy-pull-policy"
+	CRDsDirOpt            = "crds-dir"
 	VerboseOpt            = "verbose"
 )
 
@@ -233,6 +234,10 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 			csv = o
 		default:
 			return fmt.Errorf("provided yaml file not of ClusterServiceVersion type")
+		}
+		fmt.Println("Checking if all CRDs have validation")
+		if err := crdsHaveValidation(viper.GetString(CRDsDirOpt), runtimeClient, obj); err != nil {
+			return err
 		}
 		fmt.Println("Checking for CRD resources")
 		crdsHaveResources(obj, csv)

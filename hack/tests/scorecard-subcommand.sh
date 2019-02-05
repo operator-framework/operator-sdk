@@ -10,8 +10,8 @@ set -ex
 # the test framework directory has all the manifests needed to run the cluster
 pushd test/test-framework
 commandoutput="$(operator-sdk scorecard --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml --init-timeout 60 --csv-path deploy/memcachedoperator.0.0.2.csv.yaml --verbose --proxy-image $DEST_IMAGE --proxy-pull-policy Never 2>&1)"
-echo $commandoutput | grep "Total Score: 4/7 points"
+echo $commandoutput | grep "Total Score: 5/8 points"
 # test config file
 commandoutput2="$(operator-sdk scorecard --proxy-image $DEST_IMAGE)"
-echo $commandoutput2 | grep "Total Score: 4/7 points"
+echo $commandoutput2 | grep "Total Score: 5/8 points"
 popd
