@@ -305,10 +305,14 @@ file to '%s' to avoid this warning.`,
 func buildOperatorBinary() error {
 	absProjectPath := projutil.MustGetwd()
 	binName := filepath.Base(absProjectPath)
-	managerDir := filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir)
-	outputBinName := filepath.Join(absProjectPath, scaffold.BuildBinDir, binName)
+	goFlags := []string{"build",
+		"-gcflags", "all=-trimpath=${GOPATH}",
+		"-asmflags", "all=-trimpath=${GOPATH}",
+		"-o", filepath.Join(absProjectPath, scaffold.BuildBinDir, binName),
+		filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir),
+	}
 
-	cmd := exec.Command("go", "build", "-o", outputBinName, managerDir)
+	cmd := exec.Command("go", goFlags...)
 	cmd.Env = append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
 	return projutil.ExecCmd(cmd)
 }
