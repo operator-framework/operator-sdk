@@ -161,6 +161,7 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 		dbArgs = strings.Fields(splitArgs)
 	}
 	absProjectPath := projutil.MustGetwd()
+	projectName := filepath.Base(absProjectPath)
 
 	log.Infof("Building Docker image %s", baseImageName)
 
