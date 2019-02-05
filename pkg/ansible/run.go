@@ -23,6 +23,7 @@ import (
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
+	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
@@ -82,7 +83,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	}
 
 	done := make(chan error)
-	cMap := proxy.NewControllerMap()
+	cMap := controllermap.NewControllerMap()
 
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{

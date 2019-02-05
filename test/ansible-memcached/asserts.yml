@@ -56,6 +56,11 @@
             resource_name=custom_resource.metadata.name
           )}}'
 
+      # This will verify that the `secret` role was executed
+      - name: Verify that test-service was created
+        assert:
+          that: lookup('k8s', kind='Service', api_version='v1', namespace=namespace, resource_name='test-service')
+
       - name: Delete the custom resource
         k8s:
           state: absent
@@ -73,10 +78,6 @@
         delay: 2
         until: not cr.resources
         failed_when: cr.resources
-
-      - name: Verify the ConfigMap was deleted
-        assert:
-          that: not lookup('k8s', kind='ConfigMap', api_version='v1', namespace=namespace, resource_name='deleteme')
 
       - name: Verify the Deployment was deleted (wait 30s)
         assert:

@@ -101,7 +101,6 @@ sed -i 's|\(FROM quay.io/operator-framework/helm-operator\)\(:.*\)\?|\1:dev|g' b
 operator-sdk build "$DEST_IMAGE"
 sed -i "s|REPLACE_IMAGE|$DEST_IMAGE|g" deploy/operator.yaml
 sed -i 's|Always|Never|g' deploy/operator.yaml
-sed -i 's|size: 3|replicaCount: 1|g' deploy/crds/helm_v1alpha1_nginx_cr.yaml
 
 OPERATORDIR="$(pwd)"
 

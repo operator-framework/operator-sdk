@@ -16,6 +16,7 @@ Usage:
 * `--enable-tests` - enable in-cluster testing by adding test binary to the image
 * `--namespaced-manifest` string - path of namespaced resources manifest for tests (default "deploy/operator.yaml")
 * `--test-location` string - location of tests (default "./test/e2e")
+* `--docker-build-args` string - extra, optional docker build arguments as one string such as `"--build-arg https_proxy=$https_proxy"` (default "")
 * `-h, --help` - help for build
 
 ### Use
@@ -132,8 +133,8 @@ pkg/apis/app/v1alpha1/
 ├── register.go
 
 $ operator-sdk generate k8s
-Running code-generation for custom resource group versions: [app:v1alpha1]
-Generating deepcopy funcs
+INFO[0000] Running deepcopy code-generation for Custom Resource group versions: [app:[v1alpha1], ]
+INFO[0001] Code-generation complete.                    
 
 $ tree pkg/apis/app/v1alpha1/
 pkg/apis/app/v1alpha1/
@@ -141,6 +142,61 @@ pkg/apis/app/v1alpha1/
 ├── doc.go
 ├── register.go
 └── zz_generated.deepcopy.go
+```
+
+### openapi
+
+Runs the [kube-openapi][openapi-code-generator] OpenAPIv3 code generator for all Custom Resource Definition (CRD) API tagged fields under `pkg/apis/...`.
+
+**Note**: This command must be run every time a tagged API struct or struct field for a custom resource type is updated.
+
+#### Example
+
+```console
+$ tree pkg/apis/app/v1alpha1/
+pkg/apis/app/v1alpha1/
+├── appservice_types.go
+├── doc.go
+├── register.go
+
+$ operator-sdk generate openapi
+INFO[0000] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
+INFO[0001] Create deploy/crds/app_v1alpha1_appservice_crd.yaml
+INFO[0001] Code-generation complete.                    
+
+$ tree pkg/apis/app/v1alpha1/
+pkg/apis/app/v1alpha1/
+├── appservice_types.go
+├── doc.go
+├── register.go
+└── zz_generated.openapi.go
+```
+
+## olm-catalog
+
+Parent command for all OLM Catalog related commands.
+
+### gen-csv
+
+Writes a Cluster Service Version (CSV) manifest and concatenated CRD files to `deploy/olm-catalog`.
+
+#### Flags
+
+* `--csv-version` (required) Semantic version of the CSV manifest.
+* `--csv-config` Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml.
+
+#### Example
+
+```console
+$ operator-sdk olm-catalog gen-csv --csv-version 0.1.1
+INFO[0000] Generating CSV manifest version 0.1.1
+INFO[0000] Fill in the following required fields in file deploy/olm-catalog/operator-name.csv.yaml:
+	spec.keywords
+	spec.maintainers
+	spec.provider
+	spec.labels
+INFO[0000] Create deploy/olm-catalog/operator-name.csv.yaml     
+INFO[0000] Create deploy/olm-catalog/_generated.concat_crd.yaml
 ```
 
 ## migrate
@@ -209,7 +265,7 @@ $ operator-sdk new app-operator --type=helm --api-version=app.example.com/v1alph
 
 ### api
 
-Adds the api definition for a new custom resource under `pkg/apis` and generates the CRD and CR files under `depoy/crds/...`.
+Adds the API definition for a new custom resource under `pkg/apis` and generates the CRD and CR files under `depoy/crds/...`, and generates Kubernetes deepcopy functions and OpenAPIv3 validation specs for the new API.
 
 #### Flags
 
@@ -220,14 +276,19 @@ Adds the api definition for a new custom resource under `pkg/apis` and generates
 
 ```console
 $ operator-sdk add api --api-version app.example.com/v1alpha1 --kind AppService
-Create pkg/apis/app/v1alpha1/appservice_types.go
-Create pkg/apis/addtoscheme_app_v1alpha1.go
-Create pkg/apis/app/v1alpha1/register.go
-Create pkg/apis/app/v1alpha1/doc.go
-Create deploy/crds/app_v1alpha1_appservice_cr.yaml
-Create deploy/crds/app_v1alpha1_appservice_crd.yaml
-Running code-generation for custom resource group versions: [app:v1alpha1]
-Generating deepcopy funcs
+INFO[0000] Generating api version app.example.com/v1alpha1 for kind AppService.
+INFO[0000] Create pkg/apis/app/v1alpha1/appservice_types.go
+INFO[0000] Create pkg/apis/addtoscheme_app_v1alpha1.go  
+INFO[0000] Create pkg/apis/app/v1alpha1/register.go     
+INFO[0000] Create pkg/apis/app/v1alpha1/doc.go          
+INFO[0000] Create deploy/crds/app_v1alpha1_appservice_cr.yaml
+INFO[0000] Create deploy/crds/app_v1alpha1_appservice_crd.yaml
+INFO[0001] Running deepcopy code-generation for Custom Resource group versions: [app:[v1alpha1], ]
+INFO[0002] Code-generation complete.                    
+INFO[0002] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
+INFO[0004] Create deploy/crds/app_v1alpha1_appservice_crd.yaml
+INFO[0004] Code-generation complete.                    
+INFO[0004] API generation complete.
 ```
 
 ### controller
@@ -280,7 +341,7 @@ should use `up local` instead.
 
 #### Example
 
-```bash
+```console
 $ operator-sdk run ansible --watches-file=/opt/ansible/watches.yaml --reconcile-period=30s
 ```
 
@@ -297,8 +358,55 @@ should use `up local` instead.
 
 #### Example
 
-```bash
+```console
 $ operator-sdk run helm --watches-file=/opt/helm/watches.yaml --reconcile-period=30s
+```
+
+## scorecard
+
+Run scorecard tests on an operator
+
+### Flags
+
+* `basic-tests` - Enable basic operator checks (default true)
+* `cr-manifest` string - (required) Path to manifest for Custom Resource
+* `csv-path` string - (required if `olm-tests` is set) Path to CSV being tested
+* `global-manifest` string - Path to manifest for Global resources (e.g. CRD manifests)
+* `init-timeout` int - Timeout for status block on CR to be created, in seconds (default 10)
+* `kubeconfig` string - Path to kubeconfig of custom resource created in cluster
+* `namespace` string - Namespace of custom resource created in cluster
+* `namespaced-manifest` string - Path to manifest for namespaced resources (e.g. RBAC and Operator manifest)
+* `olm-tests` - Enable OLM integration checks (default true)
+* `proxy-image` string - Image name for scorecard proxy (default "quay.io/operator-framework/scorecard-proxy")
+* `proxy-pull-policy` string - Pull policy for scorecard proxy image (default "Always")
+* `verbose` - Enable verbose logging
+* `-h, --help` - help for scorecard
+
+### Example
+
+```console
+$ operator-sdk scorecard --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml --csv-path deploy/memcachedoperator.0.0.2.csv.yaml
+Checking for existence of spec and status blocks in CR
+Checking that operator actions are reflected in status
+Checking that writing into CRs has an effect
+Checking for CRD resources
+Checking for existence CR example
+Checking spec descriptors
+Checking status descriptors
+Basic Operator:
+        Spec Block Exists: 1/1 points
+        Status Block Exist: 1/1 points
+        Operator actions are reflected in status: 1/1 points
+        Writing into CRs has an effect: 1/1 points
+OLM Integration:
+        Owned CRDs have resources listed: 1/1 points
+        CRs have at least 1 example: 0/1 points
+        Spec fields with descriptors: 1/1 points
+        Status fields with descriptors: 0/1 points
+
+Total Score: 6/8 points
+SUGGESTION: Add an alm-examples annotation to your CSV to pass the CRs have at least 1 example test
+SUGGESTION: Add a status descriptor for nodes
 ```
 
 ## test
@@ -415,3 +523,4 @@ $ operator-sdk up local --namespace "testing"
 
 [utility_link]: https://github.com/operator-framework/operator-sdk/blob/89bf021063d18b6769bdc551ed08fc37027939d5/pkg/util/k8sutil/k8sutil.go#L140
 [k8s-code-generator]: https://github.com/kubernetes/code-generator
+[openapi-code-generator]: https://github.com/kubernetes/kube-openapi

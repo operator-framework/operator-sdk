@@ -40,11 +40,12 @@ ENV GOPATH /go
 ENV CGO_ENABLED 0
 ENV GOOS linux
 ENV GOARCH amd64
+ENV GOFLAGS "-gcflags all=-trimpath=${GOPATH} -asmflags all=-trimpath=${GOPATH}"
 
 WORKDIR /go/src/github.com/example-inc/app-operator
 COPY . /go/src/github.com/example-inc/app-operator
 
-RUN go build -o /go/bin/app-operator github.com/example-inc/app-operator/cmd/manager
+RUN go build $GOFLAGS -o /go/bin/app-operator github.com/example-inc/app-operator/cmd/manager
 
 # Base image
 FROM alpine:3.8

@@ -75,7 +75,7 @@ func (s *Scaffold) configure(cfg *input.Config) {
 // Execute executes scaffolding the Files
 func (s *Scaffold) Execute(cfg *input.Config, files ...input.File) error {
 	if s.GetWriter == nil {
-		s.GetWriter = (&fileutil.FileWriter{}).WriteCloser
+		s.GetWriter = fileutil.NewFileWriter().WriteCloser
 	}
 
 	// Configure s using common fields from cfg.

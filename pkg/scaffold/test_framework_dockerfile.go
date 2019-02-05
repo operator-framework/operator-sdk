@@ -41,12 +41,13 @@ ENV GOPATH /go
 ENV CGO_ENABLED 0
 ENV GOOS linux
 ENV GOARCH amd64
+ENV GOFLAGS "-gcflags all=-trimpath=${GOPATH} -asmflags all=-trimpath=${GOPATH}"
 
 WORKDIR /go/src/{{.Repo}}
 COPY . /go/src/{{.Repo}}
 
 ARG TESTDIR
-RUN go test -c -o /go/bin/{{.ProjectName}}-test ${TESTDIR}/...
+RUN go test $GOFLAGS -c -o /go/bin/{{.ProjectName}}-test ${TESTDIR}/...
 
 # Base image containing "{{.ProjectName}}-test" binary
 FROM ${BASEIMAGE}

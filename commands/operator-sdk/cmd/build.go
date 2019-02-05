@@ -21,6 +21,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
@@ -37,6 +39,7 @@ var (
 	namespacedManBuild string
 	testLocationBuild  string
 	enableTests        bool
+	dockerBuildArgs    string
 	genMultistage      bool
 )
 
@@ -62,6 +65,7 @@ For example:
 	buildCmd.Flags().BoolVar(&genMultistage, "gen-multistage", false, "Generate multistage build and test Dockerfiles")
 	buildCmd.Flags().StringVar(&testLocationBuild, "test-location", "./test/e2e", "Location of tests")
 	buildCmd.Flags().StringVar(&namespacedManBuild, "namespaced-manifest", "deploy/operator.yaml", "Path of namespaced resources manifest for tests")
+	buildCmd.Flags().StringVar(&dockerBuildArgs, "docker-build-args", "", "Extra docker build arguments as one string such as \"--build-arg https_proxy=$https_proxy\"")
 	return buildCmd
 }
 
@@ -151,6 +155,12 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	if enableTests {
 		baseImageName += "-intermediate"
 	}
+	var dbArgs []string
+	if dockerBuildArgs != "" {
+		splitArgs := regexp.MustCompile("--build-arg(=)?").ReplaceAllString(dockerBuildArgs, "")
+		dbArgs = strings.Fields(splitArgs)
+	}
+	absProjectPath := projutil.MustGetwd()
 
 	log.Infof("Building Docker image %s", baseImageName)
 
@@ -167,7 +177,8 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to build operator binary: (%v)", err)
 		}
 	}
-	if err = projutil.DockerBuild(buildDockerfile, baseImageName); err != nil {
+	err = projutil.DockerBuild(buildDockerfile, baseImageName, dbArgs...)
+	if err != nil {
 		if enableTests {
 			return fmt.Errorf("failed to output intermediate image %s: (%v)", image, err)
 		}
@@ -188,10 +199,9 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 			log.Info("Generating build manifests for test-framework.")
 
-			absProjectPath := projutil.MustGetwd()
 			cfg := &input.Config{
 				AbsProjectPath: absProjectPath,
-				ProjectName:    filepath.Base(absProjectPath),
+				ProjectName:    projectName,
 			}
 
 			s := &scaffold.Scaffold{}
@@ -224,9 +234,10 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 		// Tests require docker v17.05+ anyway so we don't need to conditionally
 		// scaffold a multistage Dockerfile.
 		err = projutil.DockerBuild(testDockerfile, image,
-			"TESTDIR="+testLocationBuild,
-			"BASEIMAGE="+baseImageName,
-			"NAMESPACEDMAN="+namespacedManBuild)
+			append(dbArgs,
+				"TESTDIR="+testLocationBuild,
+				"BASEIMAGE="+baseImageName,
+				"NAMESPACEDMAN="+namespacedManBuild)...)
 		if err != nil {
 			return fmt.Errorf("failed to output test image %s: (%v)", image, err)
 		}

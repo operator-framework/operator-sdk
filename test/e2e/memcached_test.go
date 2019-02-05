@@ -153,11 +153,17 @@ func TestMemcached(t *testing.T) {
 	// 	t.Fatalf("Could not write deploy/operator.yaml: %v", err)
 	// }
 
-	cmdOut, err = exec.Command("operator-sdk",
+	cmd := exec.Command("operator-sdk",
 		"add",
 		"api",
 		"--api-version=cache.example.com/v1alpha1",
-		"--kind=Memcached").CombinedOutput()
+		"--kind=Memcached")
+	// Generators will print errors if -v is set.
+	if !projutil.IsGoVerbose() {
+		os.Setenv(projutil.GoFlagsEnv, os.Getenv(projutil.GoFlagsEnv)+" -v")
+	}
+	cmd.Env = os.Environ()
+	cmdOut, err = cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}

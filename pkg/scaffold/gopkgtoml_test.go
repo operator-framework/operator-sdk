@@ -41,34 +41,47 @@ required = [
   "k8s.io/code-generator/cmd/client-gen",
   "k8s.io/code-generator/cmd/lister-gen",
   "k8s.io/code-generator/cmd/informer-gen",
-  "k8s.io/code-generator/cmd/openapi-gen",
+  "k8s.io/kube-openapi/cmd/openapi-gen",
   "k8s.io/gengo/args",
+  "sigs.k8s.io/controller-tools/pkg/crd/generator",
 ]
 
 [[override]]
   name = "k8s.io/code-generator"
-  # revision for tag "kubernetes-1.12.3"
-  revision = "3dcf91f64f638563e5106f21f50c31fa361c918d"
+  # revision for tag "kubernetes-1.13.1"
+  revision = "c2090bec4d9b1fb25de3812f868accc2bc9ecbae"
+
+[[override]]
+  name = "k8s.io/kube-openapi"
+  revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
+
+[[override]]
+  name = "github.com/go-openapi/spec"
+  branch = "master"
+
+[[override]]
+  name = "sigs.k8s.io/controller-tools"
+  version = "=v0.1.8"
 
 [[override]]
   name = "k8s.io/api"
-  # revision for tag "kubernetes-1.12.3"
-  revision = "b503174bad5991eb66f18247f52e41c3258f6348"
+  # revision for tag "kubernetes-1.13.1"
+  revision = "05914d821849570fba9eacfb29466f2d8d3cd229"
 
 [[override]]
   name = "k8s.io/apiextensions-apiserver"
-  # revision for tag "kubernetes-1.12.3"
-  revision = "0cd23ebeb6882bd1cdc2cb15fc7b2d72e8a86a5b"
+  # revision for tag "kubernetes-1.13.1"
+  revision = "0fe22c71c47604641d9aa352c785b7912c200562"
 
 [[override]]
   name = "k8s.io/apimachinery"
-  # revision for tag "kubernetes-1.12.3"
-  revision = "eddba98df674a16931d2d4ba75edc3a389bf633a"
+  # revision for tag "kubernetes-1.13.1"
+  revision = "2b1284ed4c93a43499e781493253e2ac5959c4fd"
 
 [[override]]
   name = "k8s.io/client-go"
-  # revision for tag "kubernetes-1.12.3"
-  revision = "d082d5923d3cc0bfbb066ee5fbdea3d0ca79acf8"
+  # revision for tag "kubernetes-1.13.1"
+  revision = "8d9ed539ba3134352c586810e749e58df4e94e4f"
 
 [[override]]
   name = "github.com/coreos/prometheus-operator"
@@ -76,7 +89,7 @@ required = [
 
 [[override]]
   name = "sigs.k8s.io/controller-runtime"
-  version = "=v0.1.8"
+  version = "=v0.1.10"
 
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"
@@ -90,5 +103,9 @@ required = [
 
   [[prune.project]]
     name = "k8s.io/code-generator"
+    non-go = false
+
+  [[prune.project]]
+    name = "k8s.io/gengo"
     non-go = false
 `

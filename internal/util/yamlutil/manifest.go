@@ -28,27 +28,29 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var yamlSep = []byte("\n---\n")
+var yamlSep = []byte("\n\n---\n\n")
 
 // CombineManifests combines given manifests with a base manifest and adds yaml
 // style separation. Nothing is appended if the manifest is empty or base
 // already contains a trailing separator.
 func CombineManifests(base []byte, manifests ...[]byte) []byte {
 	// Base already has manifests we're appending to.
-	if len(base) > 0 {
-		tbase := bytes.Trim(base, " \n")
-		if i := bytes.LastIndex(tbase, []byte("---")); i != len(tbase)-3 {
+	base = bytes.Trim(base, " \n")
+	if len(base) > 0 && len(manifests) > 0 {
+		if i := bytes.LastIndex(base, bytes.Trim(yamlSep, "\n")); i != len(base)-3 {
 			base = append(base, yamlSep...)
 		}
 	}
 	for j, manifest := range manifests {
-		base = append(base, manifest...)
-		// Don't append sep if mmanifest is the last element in mmanifests.
-		if len(manifest) > 0 && j < len(manifests)-1 {
-			base = append(base, yamlSep...)
+		if len(manifest) > 0 {
+			base = append(base, bytes.Trim(manifest, " \n")...)
+			// Don't append sep if manifest is the last element in manifests.
+			if j < len(manifests)-1 {
+				base = append(base, yamlSep...)
+			}
 		}
 	}
-	return base
+	return append(base, '\n')
 }
 
 // GenerateCombinedNamespacedManifest creates a temporary manifest yaml
@@ -108,16 +110,16 @@ func GenerateCombinedGlobalManifest() (*os.File, error) {
 		}
 	}()
 
-	files, err := ioutil.ReadDir(scaffold.CrdsDir)
+	files, err := ioutil.ReadDir(scaffold.CRDsDir)
 	if err != nil {
 		return nil, fmt.Errorf("could not read deploy directory: (%v)", err)
 	}
 	combined := []byte{}
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), "crd.yaml") {
-			fileBytes, err := ioutil.ReadFile(filepath.Join(scaffold.CrdsDir, file.Name()))
+			fileBytes, err := ioutil.ReadFile(filepath.Join(scaffold.CRDsDir, file.Name()))
 			if err != nil {
-				return nil, fmt.Errorf("could not read file %s: (%v)", filepath.Join(scaffold.CrdsDir, file.Name()), err)
+				return nil, fmt.Errorf("could not read file %s: (%v)", filepath.Join(scaffold.CRDsDir, file.Name()), err)
 			}
 			combined = CombineManifests(combined, fileBytes)
 		}

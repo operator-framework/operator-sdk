@@ -35,8 +35,9 @@ import (
 )
 
 const (
-	GopathEnv = "GOPATH"
-	SrcDir    = "src"
+	GopathEnv  = "GOPATH"
+	GoFlagsEnv = "GOFLAGS"
+	SrcDir     = "src"
 )
 
 var mainFile = filepath.Join(scaffold.ManagerDir, scaffold.CmdFile)
@@ -206,4 +207,13 @@ func DockerBuild(dockerfile, image string, buildArgs ...string) error {
 		return fmt.Errorf("error building docker image %s: %v", image, err)
 	}
 	return nil
+}
+
+var flagRe = regexp.MustCompile("(.* )?-v(.* )?")
+
+// IsGoVerbose returns true if GOFLAGS contains "-v". This function is useful
+// when deciding whether to make "go" command output verbose.
+func IsGoVerbose() bool {
+	gf, ok := os.LookupEnv(GoFlagsEnv)
+	return ok && len(gf) != 0 && flagRe.MatchString(gf)
 }

@@ -15,21 +15,25 @@
 package main
 
 import (
-	"flag"
 	"os"
 
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
+	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 func main() {
-	flag.Parse()
-	logf.SetLogger(logf.ZapLogger(false))
+	pflag.CommandLine.AddFlagSet(zap.FlagSet())
+	pflag.Parse()
+
+	logf.SetLogger(zap.Logger())
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
 	if found {
@@ -47,7 +51,7 @@ func main() {
 	}
 
 	done := make(chan error)
-	cMap := proxy.NewControllerMap()
+	cMap := controllermap.NewControllerMap()
 
 	// start the proxy
 	err = proxy.Run(done, proxy.Options{

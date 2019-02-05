@@ -42,12 +42,13 @@ ENV GOPATH /go
 ENV CGO_ENABLED 0
 ENV GOOS linux
 ENV GOARCH amd64
+ENV GOFLAGS "-gcflags all=-trimpath=${GOPATH} -asmflags all=-trimpath=${GOPATH}"
 
 WORKDIR /go/src/github.com/example-inc/app-operator
 COPY . /go/src/github.com/example-inc/app-operator
 
 ARG TESTDIR
-RUN go test -c -o /go/bin/app-operator-test ${TESTDIR}/...
+RUN go test $GOFLAGS -c -o /go/bin/app-operator-test ${TESTDIR}/...
 
 # Base image containing "app-operator-test" binary
 FROM ${BASEIMAGE}
