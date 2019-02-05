@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/scorecard"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/version"
 )
 
@@ -62,7 +63,7 @@ func NewScorecardCmd() *cobra.Command {
 	scorecardCmd.Flags().IntVar(&scConf.initTimeout, scorecard.InitTimeoutOpt, 10, "Timeout for status block on CR to be created in seconds")
 	scorecardCmd.Flags().BoolVar(&scConf.olmDeployed, scorecard.OlmDeployedOpt, false, "The OLM has deployed the operator. Use only the CSV for test data")
 	scorecardCmd.Flags().StringVar(&scConf.csvPath, scorecard.CSVPathOpt, "", "Path to CSV being tested")
-	scorecardCmd.Flags().StringVar(&scConf.crdDir, scorecard.CRDsDirOpt, "", "Directory containing CRD's being tested")
+	scorecardCmd.Flags().StringVar(&scConf.crdDir, scorecard.CRDsDirOpt, scaffold.CRDsDir, "Directory containing CRD's being tested")
 	scorecardCmd.Flags().BoolVar(&scConf.basicTests, scorecard.BasicTestsOpt, true, "Enable basic operator checks")
 	scorecardCmd.Flags().BoolVar(&scConf.olmTests, scorecard.OLMTestsOpt, true, "Enable OLM integration checks")
 	scorecardCmd.Flags().BoolVar(&scConf.tenantTests, scorecard.TenantTestsOpt, false, "Enable good tenant checks")

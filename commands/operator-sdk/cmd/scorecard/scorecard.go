@@ -223,9 +223,6 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	}
 
 	if viper.GetString(GlobalManifestOpt) == "" {
-		if viper.GetString(CRDsDirOpt) == "" {
-			viper.Set(CRDsDirOpt, scaffold.CRDsDir)
-		}
 		gMan, err := yamlutil.GenerateCombinedGlobalManifest(viper.GetString(CRDsDirOpt))
 		if err != nil {
 			return err
@@ -363,9 +360,6 @@ func validateScorecardFlags() error {
 	}
 	if viper.GetBool(OlmDeployedOpt) && viper.GetString(CSVPathOpt) == "" {
 		return fmt.Errorf("csv-path must be set if olm-deployed is enabled")
-	}
-	if viper.GetBool(OlmDeployedOpt) != (viper.GetString(CRDsDirOpt) != "") {
-		return fmt.Errorf("crds-dir can only and must be set if olm-deployed is enabled")
 	}
 	pullPolicy := viper.GetString(ProxyPullPolicyOpt)
 	if pullPolicy != "Always" && pullPolicy != "Never" && pullPolicy != "PullIfNotPresent" {
