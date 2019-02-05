@@ -29,10 +29,9 @@ echo $commandoutput2 | grep "Total Score: 6/7 points"
 
 # Test just using CSV.
 commandoutput3="$(operator-sdk scorecard \
-  --crds-dir deploy \
+  --crds-dir deploy/crds \
   --csv-path "$CSV_PATH" \
   --olm-deployed \
-  --verbose \
   --proxy-image "$DEST_IMAGE" \
   --proxy-pull-policy Never \
   2>&1)"

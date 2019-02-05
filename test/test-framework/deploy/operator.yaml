@@ -15,7 +15,6 @@ spec:
       serviceAccountName: memcached-operator
       containers:
         - name: memcached-operator
-          # Replace this with the built image name
           image: quay.io/coreos/operator-sdk-dev:test-framework-operator
           ports:
           - containerPort: 60000

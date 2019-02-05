@@ -16,39 +16,63 @@ spec:
       - serviceAccountName: memcached-operator
         rules:
         - apiGroups:
-          - "*"
+          - ""
           resources:
-          - "*"
+          - pods
+          - services
+          - endpoints
+          - persistentvolumeclaims
+          - events
+          - configmaps
+          - secrets
           verbs:
-          - "*"
+          - '*'
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          - daemonsets
+          - replicasets
+          - statefulsets
+          verbs:
+          - '*'
+        - apiGroups:
+          - cache.example.com
+          resources:
+          - '*'
+          verbs:
+          - '*'
       deployments:
-      - name: memcached-app-operator
+      - name: memcached-operator
         spec:
           replicas: 1
           selector:
             matchLabels:
-              name: memcached-app-operator
+              name: memcached-operator
           template:
             metadata:
               labels:
-                name: memcached-app-operator
+                name: memcached-operator
             spec:
               serviceAccountName: memcached-operator
               containers:
                 - name: memcached-operator
-                  # Replace this with the built image name
-                  image: quay.io/example/memcached-operator:v0.0.1
+                  image: quay.io/coreos/operator-sdk-dev:test-framework-operator
                   ports:
                   - containerPort: 60000
                     name: metrics
                   command:
                   - memcached-operator
-                  imagePullPolicy: Never
+                  imagePullPolicy: Always
                   env:
                     - name: WATCH_NAMESPACE
                       valueFrom:
                         fieldRef:
                           fieldPath: metadata.namespace
+                    - name: POD_NAME
+                      valueFrom:
+                        fieldRef:
+                          fieldPath: metadata.name
                     - name: OPERATOR_NAME
                       value: "memcached-operator"
   customresourcedefinitions:
@@ -97,5 +121,5 @@ spec:
       name: Some Corp
   description: Main enterprise application providing business critical features with high availabilty and no manual intervention.
   labels:
-    alm-owner-enterprise-app: memcached-app-operator
-    alm-status-descriptors: memcached-app-operator.v0.0.2
+    alm-owner-enterprise-app: memcached-operator
+    alm-status-descriptors: memcached-operator.v0.0.2

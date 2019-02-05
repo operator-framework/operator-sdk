@@ -27,6 +27,7 @@ import (
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -54,6 +55,10 @@ func generateCombinedNamespacedManifestFromCSV(csv *olmapiv1alpha1.ClusterServic
 	var manBytes []byte
 	if perms := stratDep.Permissions; len(perms) > 0 {
 		role := &rbacv1.Role{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: rbacv1.SchemeGroupVersion.String(),
+				Kind:       "Role",
+			},
 			ObjectMeta: metav1.ObjectMeta{Name: perms[0].ServiceAccountName},
 			Rules:      perms[0].Rules,
 		}
@@ -61,10 +66,44 @@ func generateCombinedNamespacedManifestFromCSV(csv *olmapiv1alpha1.ClusterServic
 		if err != nil {
 			return nil, err
 		}
-		manBytes = yamlutil.CombineManifests(manBytes, roleBytes)
+		// Create dummy role binding and service accounts for testing.
+		sa := corev1.ServiceAccount{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: corev1.SchemeGroupVersion.String(),
+				Kind:       "ServiceAccount",
+			},
+			ObjectMeta: metav1.ObjectMeta{Name: perms[0].ServiceAccountName},
+		}
+		saBytes, err := yaml.Marshal(sa)
+		if err != nil {
+			return nil, err
+		}
+		rb := &rbacv1.RoleBinding{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: rbacv1.SchemeGroupVersion.String(),
+				Kind:       "RoleBinding",
+			},
+			ObjectMeta: metav1.ObjectMeta{Name: perms[0].ServiceAccountName},
+			Subjects:   []rbacv1.Subject{{Kind: sa.Kind, Name: sa.Name}},
+			RoleRef: rbacv1.RoleRef{
+				Kind:     role.Kind,
+				Name:     role.Name,
+				APIGroup: rbacv1.GroupName,
+			},
+		}
+		rbBytes, err := yaml.Marshal(rb)
+		if err != nil {
+			return nil, err
+		}
+
+		manBytes = yamlutil.CombineManifests(manBytes, saBytes, roleBytes, rbBytes)
 	}
 	if cperms := stratDep.ClusterPermissions; len(cperms) > 0 {
 		cRole := &rbacv1.ClusterRole{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: rbacv1.SchemeGroupVersion.String(),
+				Kind:       "ClusterRole",
+			},
 			ObjectMeta: metav1.ObjectMeta{Name: cperms[0].ServiceAccountName},
 			Rules:      cperms[0].Rules,
 		}
@@ -75,6 +114,10 @@ func generateCombinedNamespacedManifestFromCSV(csv *olmapiv1alpha1.ClusterServic
 		manBytes = yamlutil.CombineManifests(manBytes, cRoleBytes)
 	}
 	dep := &appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: appsv1.SchemeGroupVersion.String(),
+			Kind:       "Deployment",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: stratDep.DeploymentSpecs[0].Name,
 		},
