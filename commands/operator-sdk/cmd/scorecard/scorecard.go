@@ -50,7 +50,6 @@ const (
 	InitTimeoutOpt        = "init-timeout"
 	OlmDeployedOpt        = "olm-deployed"
 	CSVPathOpt            = "csv-path"
-	CRDsDirOpt            = "crds-dir"
 	BasicTestsOpt         = "basic-tests"
 	OLMTestsOpt           = "olm-tests"
 	TenantTestsOpt        = "good-tenant-tests"
@@ -59,6 +58,7 @@ const (
 	CRManifestOpt         = "cr-manifest"
 	ProxyImageOpt         = "proxy-image"
 	ProxyPullPolicyOpt    = "proxy-pull-policy"
+	CRDsDirOpt            = "crds-dir"
 	VerboseOpt            = "verbose"
 )
 
