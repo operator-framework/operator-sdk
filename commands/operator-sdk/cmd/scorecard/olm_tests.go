@@ -16,12 +16,122 @@ package scorecard
 
 import (
 	"context"
+	"fmt"
+	"io/ioutil"
+	"path/filepath"
+	"strings"
+
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	log "github.com/sirupsen/logrus"
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+func getCRDs(crdsDir string) ([]apiextv1beta1.CustomResourceDefinition, error) {
+	files, err := ioutil.ReadDir(crdsDir)
+	if err != nil {
+		return nil, fmt.Errorf("could not read deploy directory: (%v)", err)
+	}
+	crds := []apiextv1beta1.CustomResourceDefinition{}
+	for _, file := range files {
+		if strings.HasSuffix(file.Name(), "crd.yaml") {
+			obj, err := yamlToUnstructured(filepath.Join(scaffold.CRDsDir, file.Name()))
+			if err != nil {
+				return nil, err
+			}
+			crd, err := unstructuredToCRD(obj)
+			if err != nil {
+				return nil, err
+			}
+			crds = append(crds, *crd)
+		}
+	}
+	return crds, nil
+}
+
+func matchKind(kind1, kind2 string) bool {
+	singularKind1, err := restMapper.ResourceSingularizer(kind1)
+	if err != nil {
+		singularKind1 = kind1
+		log.Warningf("could not find singular version of %s", kind1)
+	}
+	singularKind2, err := restMapper.ResourceSingularizer(kind2)
+	if err != nil {
+		singularKind2 = kind2
+		log.Warningf("could not find singular version of %s", kind2)
+	}
+	return strings.EqualFold(singularKind1, singularKind2)
+}
+
+// matchVersion checks if a CRD contains a specified version in a case insensitive manner
+func matchVersion(version string, crd apiextv1beta1.CustomResourceDefinition) bool {
+	if strings.EqualFold(version, crd.Spec.Version) {
+		return true
+	}
+	// crd.Spec.Version is deprecated, so check in crd.Spec.Versions as well
+	for _, currVer := range crd.Spec.Versions {
+		if strings.EqualFold(version, currVer.Name) {
+			return true
+		}
+	}
+	return false
+}
+
+// crdsHaveValidation makes sure that all CRDs have a validation block
+func crdsHaveValidation(crdsDir string, runtimeClient client.Client, obj *unstructured.Unstructured) error {
+	test := scorecardTest{testType: olmIntegration, name: "Provided APIs have validation"}
+	crds, err := getCRDs(crdsDir)
+	if err != nil {
+		return fmt.Errorf("failed to get CRDs in %s directory: %v", crdsDir, err)
+	}
+	err = runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, obj)
+	if err != nil {
+		return err
+	}
+	// TODO: we need to make this handle multiple CRs better/correctly
+	for _, crd := range crds {
+		test.maximumPoints++
+		if crd.Spec.Validation == nil {
+			scSuggestions = append(scSuggestions, fmt.Sprintf("Add CRD validation for %s/%s", crd.Spec.Names.Kind, crd.Spec.Version))
+			continue
+		}
+		// check if the CRD matches the testing CR
+		gvk := obj.GroupVersionKind()
+		// Only check the validation block if the CRD and CR have the same Kind and Version
+		if !(matchVersion(gvk.Version, crd) && matchKind(gvk.Kind, crd.Spec.Names.Kind)) {
+			test.earnedPoints++
+			continue
+		}
+		failed := false
+		if obj.Object["spec"] != nil {
+			spec := obj.Object["spec"].(map[string]interface{})
+			for key := range spec {
+				if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["spec"].Properties[key]; !ok {
+					failed = true
+					scSuggestions = append(scSuggestions, fmt.Sprintf("Add CRD validation for spec field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
+				}
+			}
+		}
+		if obj.Object["status"] != nil {
+			status := obj.Object["status"].(map[string]interface{})
+			for key := range status {
+				if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["status"].Properties[key]; !ok {
+					failed = true
+					scSuggestions = append(scSuggestions, fmt.Sprintf("Add CRD validation for status field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
+				}
+			}
+		}
+		if !failed {
+			test.earnedPoints++
+		}
+	}
+	scTests = append(scTests, test)
+	return nil
+}
 
 // crdsHaveResources checks to make sure that all owned CRDs have resources listed
 func crdsHaveResources(csv *olmapiv1alpha1.ClusterServiceVersion) {

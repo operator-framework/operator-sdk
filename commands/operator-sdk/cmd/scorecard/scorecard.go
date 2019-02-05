@@ -281,6 +281,10 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 	}
 	if viper.GetBool(OLMTestsOpt) {
+		fmt.Println("Checking if all CRDs have validation")
+		if err := crdsHaveValidation(viper.GetString(CRDsDirOpt), runtimeClient, obj); err != nil {
+			return err
+		}
 		fmt.Println("Checking for CRD resources")
 		crdsHaveResources(csv)
 		fmt.Println("Checking for existence of example CRs")

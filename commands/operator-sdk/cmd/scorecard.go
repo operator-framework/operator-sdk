@@ -18,13 +18,13 @@ import (
 	"fmt"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/scorecard"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/version"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // scorecardConfig stores all scorecard config passed as flags
@@ -43,6 +43,7 @@ type scorecardConfig struct {
 	crManifest         string
 	proxyImage         string
 	proxyPullPolicy    string
+	crdsDir            string
 	verbose            bool
 }
 
@@ -72,6 +73,7 @@ func NewScorecardCmd() *cobra.Command {
 	scorecardCmd.Flags().StringVar(&scConf.crManifest, scorecard.CRManifestOpt, "", "Path to manifest for Custom Resource (required)")
 	scorecardCmd.Flags().StringVar(&scConf.proxyImage, scorecard.ProxyImageOpt, fmt.Sprintf("quay.io/operator-framework/scorecard-proxy:%s", strings.TrimSuffix(version.Version, "+git")), "Image name for scorecard proxy")
 	scorecardCmd.Flags().StringVar(&scConf.proxyPullPolicy, scorecard.ProxyPullPolicyOpt, "Always", "Pull policy for scorecard proxy image")
+	scorecardCmd.Flags().StringVar(&scConf.crdsDir, "crds-dir", scaffold.CRDsDir, "Directory containing CRDs (all CRD manifest filenames must have the suffix 'crd.yaml')")
 	scorecardCmd.Flags().BoolVar(&scConf.verbose, scorecard.VerboseOpt, false, "Enable verbose logging")
 
 	if err := viper.BindPFlags(scorecardCmd.Flags()); err != nil {
