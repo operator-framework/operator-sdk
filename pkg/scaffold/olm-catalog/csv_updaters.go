@@ -227,24 +227,23 @@ func (u *CSVCustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterSe
 	for _, desc := range csv.GetAllCRDDescriptions() {
 		set[desc.Name] = &desc
 	}
-	for i, desc := range u.Owned {
+	du := u.DeepCopy()
+	for i, desc := range du.Owned {
 		if csvDesc, ok := set[desc.Name]; ok {
-			d := csvDesc.DeepCopy()
-			d.Name = desc.Name
-			d.Version = desc.Version
-			d.Kind = desc.Kind
-			u.Owned[i] = *d
+			du.Owned[i] = *csvDesc.DeepCopy()
+			du.Owned[i].Name = desc.Name
+			du.Owned[i].Version = desc.Version
+			du.Owned[i].Kind = desc.Kind
 		}
 	}
-	for i, desc := range u.Required {
+	for i, desc := range du.Required {
 		if csvDesc, ok := set[desc.Name]; ok {
-			d := csvDesc.DeepCopy()
-			d.Name = desc.Name
-			d.Version = desc.Version
-			d.Kind = desc.Kind
-			u.Required[i] = *d
+			du.Required[i] = *csvDesc.DeepCopy()
+			du.Required[i].Name = desc.Name
+			du.Required[i].Version = desc.Version
+			du.Required[i].Kind = desc.Kind
 		}
 	}
-	csv.Spec.CustomResourceDefinitions = *u.DeepCopy()
+	csv.Spec.CustomResourceDefinitions = *du
 	return nil
 }
