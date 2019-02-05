@@ -31,6 +31,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -244,6 +245,24 @@ func addProxyContainer(dep *appsv1.Deployment) {
 			ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.namespace"}},
 		}},
 	})
+}
+
+// unstructuredToCRD converts an unstructured object to a CRD
+func unstructuredToCRD(obj *unstructured.Unstructured) (*apiextv1beta1.CustomResourceDefinition, error) {
+	jsonByte, err := obj.MarshalJSON()
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert CRD to json: %v", err)
+	}
+	crdObj, _, err := dynamicDecoder.Decode(jsonByte, nil, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode CRD object: %v", err)
+	}
+	switch o := crdObj.(type) {
+	case *apiextv1beta1.CustomResourceDefinition:
+		return o, nil
+	default:
+		return nil, fmt.Errorf("conversion of runtime object to CRD failed (resulting runtime object not CRD type)")
+	}
 }
 
 // unstructuredToDeployment converts an unstructured object to a deployment

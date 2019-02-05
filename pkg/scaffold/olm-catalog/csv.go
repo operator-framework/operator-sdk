@@ -18,15 +18,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"unicode"
 
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+	"github.com/spf13/afero"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/coreos/go-semver/semver"
@@ -50,6 +51,20 @@ type CSV struct {
 	ConfigFilePath string
 	// CSVVersion is the CSV current version.
 	CSVVersion string
+
+	once sync.Once
+	fs   afero.Fs // For testing, ex. afero.NewMemMapFs()
+}
+
+func (s *CSV) initFS(fs afero.Fs) {
+	s.once.Do(func() {
+		s.fs = fs
+	})
+}
+
+func (s *CSV) getFS() afero.Fs {
+	s.initFS(afero.NewOsFs())
+	return s.fs
 }
 
 func (s *CSV) GetInput() (input.Input, error) {
@@ -70,8 +85,10 @@ func (s *CSV) GetInput() (input.Input, error) {
 // CustomRender allows a CSV to be written by marshalling
 // olmapiv1alpha1.ClusterServiceVersion instead of writing to a template.
 func (s *CSV) CustomRender() ([]byte, error) {
+	s.initFS(afero.NewOsFs())
+
 	// Get current CSV to update.
-	csv, exists, err := getCurrentCSVIfExists(s.Path)
+	csv, exists, err := s.getBaseCSVIfExists()
 	if err != nil {
 		return nil, err
 	}
@@ -111,13 +128,19 @@ func (s *CSV) CustomRender() ([]byte, error) {
 	return yaml.Marshal(&cu)
 }
 
-func getCurrentCSVIfExists(csvPath string) (*olmapiv1alpha1.ClusterServiceVersion, bool, error) {
-	if _, err := os.Stat(csvPath); err != nil && os.IsNotExist(err) {
-		return nil, false, nil
-	}
+func (s *CSV) getBaseCSVIfExists() (*olmapiv1alpha1.ClusterServiceVersion, bool, error) {
+	lowerProjName := strings.ToLower(s.ProjectName)
+	name := lowerProjName + CSVYamlFileExt
+	fromCSV := filepath.Join(scaffold.OLMCatalogDir, name)
+	return getCSVFromFSIfExists(s.getFS(), fromCSV)
+}
 
-	csvBytes, err := ioutil.ReadFile(csvPath)
+func getCSVFromFSIfExists(fs afero.Fs, path string) (*olmapiv1alpha1.ClusterServiceVersion, bool, error) {
+	csvBytes, err := afero.ReadFile(fs, path)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, false, nil
+		}
 		return nil, false, err
 	}
 	if len(csvBytes) == 0 {
@@ -295,7 +318,7 @@ func replaceAllBytes(v interface{}, old, new []byte) error {
 func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	store := NewUpdaterStore()
 	for _, f := range append(cfg.CRDCRPaths, cfg.OperatorPath, cfg.RolePath) {
-		yamlData, err := ioutil.ReadFile(f)
+		yamlData, err := afero.ReadFile(s.getFS(), f)
 		if err != nil {
 			return err
 		}
