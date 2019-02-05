@@ -31,7 +31,7 @@ import (
 	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -156,7 +156,7 @@ func createKubeconfigSecret() error {
 		return err
 	}
 	kubeconfigMap["kubeconfig"] = kcBytes
-	kubeconfigSecret := &corev1.Secret{
+	kubeconfigSecret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "scorecard-kubeconfig",
 			Namespace: viper.GetString(NamespaceOpt),
@@ -174,11 +174,11 @@ func createKubeconfigSecret() error {
 // addMountKubeconfigSecret creates the volume mount for the kubeconfig secret
 func addMountKubeconfigSecret(dep *appsv1.Deployment) {
 	// create mount for secret
-	dep.Spec.Template.Spec.Volumes = append(dep.Spec.Template.Spec.Volumes, corev1.Volume{
+	dep.Spec.Template.Spec.Volumes = append(dep.Spec.Template.Spec.Volumes, v1.Volume{
 		Name: "scorecard-kubeconfig",
-		VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{
+		VolumeSource: v1.VolumeSource{Secret: &v1.SecretVolumeSource{
 			SecretName: "scorecard-kubeconfig",
-			Items: []corev1.KeyToPath{{
+			Items: []v1.KeyToPath{{
 				Key:  "kubeconfig",
 				Path: "config",
 			}},
@@ -187,12 +187,12 @@ func addMountKubeconfigSecret(dep *appsv1.Deployment) {
 	})
 	for index := range dep.Spec.Template.Spec.Containers {
 		// mount the volume
-		dep.Spec.Template.Spec.Containers[index].VolumeMounts = append(dep.Spec.Template.Spec.Containers[index].VolumeMounts, corev1.VolumeMount{
+		dep.Spec.Template.Spec.Containers[index].VolumeMounts = append(dep.Spec.Template.Spec.Containers[index].VolumeMounts, v1.VolumeMount{
 			Name:      "scorecard-kubeconfig",
 			MountPath: "/scorecard-secret",
 		})
 		// specify the path via KUBECONFIG env var
-		dep.Spec.Template.Spec.Containers[index].Env = append(dep.Spec.Template.Spec.Containers[index].Env, corev1.EnvVar{
+		dep.Spec.Template.Spec.Containers[index].Env = append(dep.Spec.Template.Spec.Containers[index].Env, v1.EnvVar{
 			Name:  "KUBECONFIG",
 			Value: "/scorecard-secret/config",
 		})
@@ -202,26 +202,26 @@ func addMountKubeconfigSecret(dep *appsv1.Deployment) {
 // addProxyContainer adds the container spec for the scorecard-proxy to the deployment's podspec
 func addProxyContainer(dep *appsv1.Deployment) {
 	pullPolicyString := viper.GetString(ProxyPullPolicyOpt)
-	var pullPolicy corev1.PullPolicy
+	var pullPolicy v1.PullPolicy
 	switch pullPolicyString {
 	case "Always":
-		pullPolicy = corev1.PullAlways
+		pullPolicy = v1.PullAlways
 	case "Never":
-		pullPolicy = corev1.PullNever
+		pullPolicy = v1.PullNever
 	case "PullIfNotPresent":
-		pullPolicy = corev1.PullIfNotPresent
+		pullPolicy = v1.PullIfNotPresent
 	default:
 		// this case shouldn't happen since we check the values in scorecard.go, but just in case, we'll default to always to prevent errors
-		pullPolicy = corev1.PullAlways
+		pullPolicy = v1.PullAlways
 	}
-	dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, corev1.Container{
+	dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, v1.Container{
 		Name:            "scorecard-proxy",
 		Image:           viper.GetString(ProxyImageOpt),
 		ImagePullPolicy: pullPolicy,
 		Command:         []string{"scorecard-proxy"},
-		Env: []corev1.EnvVar{{
+		Env: []v1.EnvVar{{
 			Name:      k8sutil.WatchNamespaceEnvVar,
-			ValueFrom: &corev1.EnvVarSource{FieldRef: &corev1.ObjectFieldSelector{FieldPath: "metadata.namespace"}},
+			ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.namespace"}},
 		}},
 	})
 }

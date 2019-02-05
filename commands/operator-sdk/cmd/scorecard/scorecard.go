@@ -239,11 +239,11 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}()
 	}
 
-	if err := createFromYAMLFile(viper.GetString(NamespacedManifestOpt)); err != nil {
-		return fmt.Errorf("failed to create namespaced resources: %v", err)
-	}
 	if err := createFromYAMLFile(viper.GetString(GlobalManifestOpt)); err != nil {
 		return fmt.Errorf("failed to create global resources: %v", err)
+	}
+	if err := createFromYAMLFile(viper.GetString(NamespacedManifestOpt)); err != nil {
+		return fmt.Errorf("failed to create namespaced resources: %v", err)
 	}
 	if err := createFromYAMLFile(viper.GetString(CRManifestOpt)); err != nil {
 		return fmt.Errorf("failed to create cr resource: %v", err)

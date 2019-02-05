@@ -2,9 +2,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: memcached-operator
-
 ---
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -38,9 +36,7 @@ rules:
   - '*'
   verbs:
   - '*'
-
 ---
-
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -52,9 +48,7 @@ roleRef:
   kind: Role
   name: memcached-operator
   apiGroup: rbac.authorization.k8s.io
-
 ---
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -69,21 +63,21 @@ spec:
       labels:
         name: memcached-operator
     spec:
-      containers:
-      - command:
-        - memcached-operator
-        env:
-        - name: WATCH_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: OPERATOR_NAME
-          value: memcached-operator
-        image: quay.io/coreos/operator-sdk-dev:test-framework-operator-runtime
-        imagePullPolicy: Always
-        name: memcached-operator
-        ports:
-        - containerPort: 60000
-          name: metrics
-        resources: {}
       serviceAccountName: memcached-operator
+      containers:
+        - name: memcached-operator
+          # Replace this with the built image name
+          image: quay.io/coreos/operator-sdk-dev:test-framework-operator-runtime
+          ports:
+          - containerPort: 60000
+            name: metrics
+          command:
+          - memcached-operator
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: OPERATOR_NAME
+              value: "memcached-operator"
