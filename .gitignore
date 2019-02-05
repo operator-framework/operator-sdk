@@ -2,7 +2,6 @@
 .glide/
 
 # Folders
-vendor
 _obj
 _test
 _output
@@ -73,7 +72,6 @@ flycheck_*.el
 *.out
 
 ### Go Patch ###
-/vendor/
 /Godeps/
 
 ### Vim ###
