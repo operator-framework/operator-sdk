@@ -30,7 +30,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/eventapi"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -191,7 +191,6 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		if err != nil {
 			return reconcileResult, err
 		}
-		return reconcileResult, nil
 	}
 	if r.ManageStatus {
 		err = r.markDone(u, request.NamespacedName, statusEvent, failureMessages)
@@ -214,25 +213,26 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, na
 
 	// If there is no current status add that we are working on this resource.
 	errCond := ansiblestatus.GetCondition(crStatus, ansiblestatus.FailureConditionType)
-	succCond := ansiblestatus.GetCondition(crStatus, ansiblestatus.RunningConditionType)
 
+	if errCond != nil {
+		errCond.Status = v1.ConditionFalse
+		ansiblestatus.SetCondition(&crStatus, *errCond)
+	}
 	// If the condition is currently running, making sure that the values are correct.
 	// If they are the same a no-op, if they are different then it is a good thing we
 	// are updating it.
-	if (errCond == nil && succCond == nil) || (succCond != nil && succCond.Reason != ansiblestatus.SuccessfulReason) {
-		c := ansiblestatus.NewCondition(
-			ansiblestatus.RunningConditionType,
-			v1.ConditionTrue,
-			nil,
-			ansiblestatus.RunningReason,
-			ansiblestatus.RunningMessage,
-		)
-		ansiblestatus.SetCondition(&crStatus, *c)
-		u.Object["status"] = crStatus.GetJSONMap()
-		err := r.Client.Status().Update(context.TODO(), u)
-		if err != nil {
-			return err
-		}
+	c := ansiblestatus.NewCondition(
+		ansiblestatus.RunningConditionType,
+		v1.ConditionTrue,
+		nil,
+		ansiblestatus.RunningReason,
+		ansiblestatus.RunningMessage,
+	)
+	ansiblestatus.SetCondition(&crStatus, *c)
+	u.Object["status"] = crStatus.GetJSONMap()
+	err = r.Client.Status().Update(context.TODO(), u)
+	if err != nil {
+		return err
 	}
 	return nil
 }
