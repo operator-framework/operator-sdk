@@ -77,6 +77,12 @@ API server, indicating that it is modifying resources. This test has a maximum s
 
 ### OLM Integration
 
+#### Provided APIs have validation
+
+This test verifies that all the CRDs in the CRDs folder contain a validation section. If the CRD matches the kind and version of the
+CR currently being tested, it will also verify that there is a validation for each spec and status field in that CR. This test has a
+maximum score of 1.
+
 #### Owned CRDs Have Resources Listed
 
 This test makes sure that the CRDs listed in the [`owned` CRDs section][owned-crds] of the CSV have a `resources` subsection. This
