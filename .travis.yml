@@ -2,6 +2,10 @@ language: go
 go_import_path: github.com/operator-framework/operator-sdk
 sudo: required
 
+cache:
+  directories:
+    - $GOPATH/pkg/dep
+
 go:
 - 1.10.3
 
