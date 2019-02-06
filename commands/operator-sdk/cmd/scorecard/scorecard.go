@@ -96,6 +96,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	if viper.GetString(CRManifestOpt) == "" {
 		return errors.New("cr-manifest config option missing")
 	}
