@@ -75,9 +75,6 @@ func (i *InputDir) copyInventory(src string, dst string) error {
 				if err = fs.MkdirAll(fullDst, info.Mode()); err != nil {
 					return err
 				}
-				if err = fs.Chmod(fullDst, info.Mode()); err != nil {
-					return err
-				}
 			} else {
 				f, err := fs.Open(path)
 				if err != nil {
@@ -135,10 +132,13 @@ func (i *InputDir) Write() error {
 		return err
 	}
 
-	// If ansible-runner is running in a python virtual environment, propagate
-	// that to ansible.
+	// ANSIBLE_INVENTORY takes precendence over our generated hosts file
+	// so if the envvar is set we don't bother making it, we just copy
+	// the inventory into our runner directory
 	ansible_inventory := os.Getenv("ANSIBLE_INVENTORY")
 	if ansible_inventory == "" {
+		// If ansible-runner is running in a python virtual environment, propagate
+		// that to ansible.
 		venv := os.Getenv("VIRTUAL_ENV")
 		hosts := "localhost ansible_connection=local"
 		if venv != "" {
