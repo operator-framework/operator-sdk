@@ -229,7 +229,11 @@ func createChartFromRemote(destDir string, opts CreateChartOptions) (*chart.Char
 	if err != nil {
 		return nil, err
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			log.Errorf("Failed to remove temporary directory %s: %s", tmpDir, err)
+		}
+	}()
 
 	chartArchive, _, err := c.DownloadTo(opts.Chart, opts.Version, tmpDir)
 	if err != nil {
