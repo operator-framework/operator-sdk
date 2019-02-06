@@ -133,8 +133,8 @@ pkg/apis/app/v1alpha1/
 ├── register.go
 
 $ operator-sdk generate k8s
-Running code-generation for custom resource group versions: [app:v1alpha1]
-Generating deepcopy funcs
+INFO[0000] Running deepcopy code-generation for Custom Resource group versions: [app:[v1alpha1], ]
+INFO[0001] Code-generation complete.                    
 
 $ tree pkg/apis/app/v1alpha1/
 pkg/apis/app/v1alpha1/
@@ -142,6 +142,34 @@ pkg/apis/app/v1alpha1/
 ├── doc.go
 ├── register.go
 └── zz_generated.deepcopy.go
+```
+
+### openapi
+
+Runs the [kube-openapi][openapi-code-generator] OpenAPIv3 code generator for all Custom Resource Definition (CRD) API tagged fields under `pkg/apis/...`.
+
+**Note**: This command must be run every time a tagged API struct or struct field for a custom resource type is updated.
+
+#### Example
+
+```console
+$ tree pkg/apis/app/v1alpha1/
+pkg/apis/app/v1alpha1/
+├── appservice_types.go
+├── doc.go
+├── register.go
+
+$ operator-sdk generate openapi
+INFO[0000] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
+INFO[0001] Create deploy/crds/app_v1alpha1_appservice_crd.yaml
+INFO[0001] Code-generation complete.                    
+
+$ tree pkg/apis/app/v1alpha1/
+pkg/apis/app/v1alpha1/
+├── appservice_types.go
+├── doc.go
+├── register.go
+└── zz_generated.openapi.go
 ```
 
 ## olm-catalog
@@ -271,7 +299,7 @@ $ operator-sdk new app-operator --type=helm \
 
 ### api
 
-Adds the api definition for a new custom resource under `pkg/apis` and generates the CRD and CR files under `depoy/crds/...`.
+Adds the API definition for a new custom resource under `pkg/apis` and generates the CRD and CR files under `depoy/crds/...`, and generates Kubernetes deepcopy functions and OpenAPIv3 validation specs for the new API.
 
 #### Flags
 
@@ -282,14 +310,19 @@ Adds the api definition for a new custom resource under `pkg/apis` and generates
 
 ```console
 $ operator-sdk add api --api-version app.example.com/v1alpha1 --kind AppService
-Create pkg/apis/app/v1alpha1/appservice_types.go
-Create pkg/apis/addtoscheme_app_v1alpha1.go
-Create pkg/apis/app/v1alpha1/register.go
-Create pkg/apis/app/v1alpha1/doc.go
-Create deploy/crds/app_v1alpha1_appservice_cr.yaml
-Create deploy/crds/app_v1alpha1_appservice_crd.yaml
-Running code-generation for custom resource group versions: [app:v1alpha1]
-Generating deepcopy funcs
+INFO[0000] Generating api version app.example.com/v1alpha1 for kind AppService.
+INFO[0000] Create pkg/apis/app/v1alpha1/appservice_types.go
+INFO[0000] Create pkg/apis/addtoscheme_app_v1alpha1.go  
+INFO[0000] Create pkg/apis/app/v1alpha1/register.go     
+INFO[0000] Create pkg/apis/app/v1alpha1/doc.go          
+INFO[0000] Create deploy/crds/app_v1alpha1_appservice_cr.yaml
+INFO[0000] Create deploy/crds/app_v1alpha1_appservice_crd.yaml
+INFO[0001] Running deepcopy code-generation for Custom Resource group versions: [app:[v1alpha1], ]
+INFO[0002] Code-generation complete.                    
+INFO[0002] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
+INFO[0004] Create deploy/crds/app_v1alpha1_appservice_crd.yaml
+INFO[0004] Code-generation complete.                    
+INFO[0004] API generation complete.
 ```
 
 ### controller
@@ -524,4 +557,6 @@ $ operator-sdk up local --namespace "testing"
 
 [utility_link]: https://github.com/operator-framework/operator-sdk/blob/89bf021063d18b6769bdc551ed08fc37027939d5/pkg/util/k8sutil/k8sutil.go#L140
 [k8s-code-generator]: https://github.com/kubernetes/code-generator
+[openapi-code-generator]: https://github.com/kubernetes/kube-openapi
 [helm-user-guide-create-project]: https://github.com/operator-framework/operator-sdk/blob/master/doc/helm/user-guide.md#create-a-new-project
+
