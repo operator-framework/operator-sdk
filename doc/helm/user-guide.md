@@ -50,6 +50,31 @@ Nginx resource with APIVersion `example.com/v1apha1` and Kind
 To learn more about the project directory structure, see the 
 [project layout][layout_doc] doc.
 
+### Use an existing chart
+
+Instead of creating your project with a boilerplate Helm chart, you can also use `--helm-chart`, `--helm-chart-repo`, and `--helm-chart-version` to use an existing chart, either from your local filesystem or a remote chart repository.
+
+If `--helm-chart` is specified, `--api-version` and `--kind` become optional. If left unset, the SDK will default `--api-version` to `charts.helm.k8s.io/v1alpha1` and will deduce `--kind` from the specified chart.
+
+If `--helm-chart` is a local chart archive or directory, it will be validated and unpacked or copied into the project.
+
+Otherwise, the SDK will attempt to fetch the specified helm chart from a remote repository.
+
+If a custom repository URL is not specified by `--helm-chart-repo`, the following chart reference formats are supported:
+
+- `<repoName>/<chartName>`: Fetch the helm chart named `chartName` from the helm
+                            chart repository named `repoName`, as specified in the
+                            $HELM_HOME/repositories/repositories.yaml file.
+
+- `<url>`: Fetch the helm chart archive at the specified URL.
+
+If a custom repository URL is specified by `--helm-chart-repo`, the only supported format for `--helm-chart` is:
+
+- `<chartName>`: Fetch the helm chart named `chartName` in the helm chart repository
+                 specified by the `--helm-chart-repo` URL.
+
+If `--helm-chart-version` is not set, the SDK will fetch the latest available version of the helm chart. Otherwise, it will fetch the specified version. `--helm-chart-version` is not used when `--helm-chart` itself refers to a specific version, for example when it is a local path or a URL.
+
 ### Operator scope
 
 A namespace-scoped operator (the default) watches and manages resources in a single namespace, whereas a cluster-scoped operator watches and manages resources cluster-wide. Namespace-scoped operators are preferred because of their flexibility. They enable decoupled upgrades, namespace isolation for failures and monitoring, and differing API definitions. However, there are use cases where a cluster-scoped operator may make sense. For example, the [cert-manager](https://github.com/jetstack/cert-manager) operator is often deployed with cluster-scoped permissions and watches so that it can manage issuing certificates for an entire cluster.

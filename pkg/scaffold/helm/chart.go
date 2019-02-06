@@ -45,12 +45,25 @@ const (
 	DefaultAPIVersion string = "charts.helm.k8s.io/v1alpha1"
 )
 
+// CreateChartOptions is used to configure how a Helm chart is scaffolded
+// for a new Helm operator project.
 type CreateChartOptions struct {
+	// ResourceAPIVersion defines the Kubernetes GroupVersion to be associated
+	// with the created chart.
 	ResourceAPIVersion string
-	ResourceKind       string
-	Chart              string
-	Repo               string
-	Version            string
+
+	// ResourceKind defines the Kubernetes Kind to be associated with the
+	// created chart.
+	ResourceKind string
+
+	// Chart is a chart reference for a local or remote chart.
+	Chart string
+
+	// Repo is a URL to a custom chart repository.
+	Repo string
+
+	// Version is the version of the chart to fetch.
+	Version string
 }
 
 // CreateChart scaffolds a new helm chart for the project rooted in projectDir
@@ -77,15 +90,17 @@ type CreateChartOptions struct {
 // helm chart directory and copies it into the project's helm charts directory.
 //
 // For any other value of opts.Chart, CreateChart attempts to fetch the helm chart
-// from a remote repository. The following remote chart references are supported:
+// from a remote repository.
+//
+// If opts.Repo is not specified, the following chart reference formats are supported:
 //
 //   - <repoName>/<chartName>: Fetch the helm chart named chartName from the helm
 //                             chart repository named repoName, as specified in the
 //                             $HELM_HOME/repositories/repositories.yaml file.
 //
-//   - <URL>: Fetch the helm chart archive at the specified URL.
+//   - <url>: Fetch the helm chart archive at the specified URL.
 //
-// If opts.Repo is specified, a third format for opts.Chart is also supported:
+// If opts.Repo is specified, only one chart reference format is supported:
 //
 //   - <chartName>: Fetch the helm chart named chartName in the helm chart repository
 //                  specified by opts.Repo
