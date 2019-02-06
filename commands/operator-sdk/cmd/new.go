@@ -315,16 +315,14 @@ func verifyFlags() error {
 		return fmt.Errorf("value of --generate-playbook can only be used with --type `ansible`")
 	}
 
-	if operatorType != projutil.OperatorTypeHelm {
-		if len(helmChartRef) != 0 {
-			return fmt.Errorf("value of --helm-chart can only be used with --type `helm`")
+	if len(helmChartRef) != 0 {
+		if operatorType != projutil.OperatorTypeHelm {
+			return fmt.Errorf("value of --helm-chart can only be used with --type=helm")
 		}
-		if len(helmChartRef) == 0 && len(helmChartRepo) != 0 {
-			return fmt.Errorf("value of --helm-chart-repo can only be used with --type `helm` and --helm-chart")
-		}
-		if len(helmChartVersion) == 0 && len(helmChartRepo) != 0 {
-			return fmt.Errorf("value of --helm-chart-version can only be used with --type `helm` and --helm-chart")
-		}
+	} else if len(helmChartRepo) != 0 {
+		return fmt.Errorf("value of --helm-chart-repo can only be used with --type=helm and --helm-chart")
+	} else if len(helmChartVersion) != 0 {
+		return fmt.Errorf("value of --helm-chart-version can only be used with --type=helm and --helm-chart")
 	}
 
 	if operatorType == projutil.OperatorTypeGo && (len(apiVersion) != 0 || len(kind) != 0) {
