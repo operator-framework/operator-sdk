@@ -27,13 +27,12 @@ commandoutput2="$(operator-sdk scorecard \
   --config "$CONFIG_PATH")"
 echo $commandoutput2 | grep "Total Score: 7/8 points"
 
-sleep 20
-
 # Test just using CSV.
 commandoutput3="$(operator-sdk scorecard \
   --crds-dir deploy/crds \
   --csv-path "$CSV_PATH" \
   --olm-deployed \
+  --init-timeout 60 \
   --proxy-image "$DEST_IMAGE" \
   --proxy-pull-policy Never \
   2>&1)"

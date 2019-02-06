@@ -43,7 +43,7 @@ import (
 // status blocks exist or return an error after the timeout.
 func checkSpecAndStat(runtimeClient client.Client, obj *unstructured.Unstructured, noStore bool) error {
 	testSpec := scorecardTest{testType: basicOperator, name: "Spec Block Exists", maximumPoints: 1}
-	testStat := scorecardTest{testType: basicOperator, name: "Status Block Exist", maximumPoints: 1}
+	testStat := scorecardTest{testType: basicOperator, name: "Status Block Exists", maximumPoints: 1}
 	err := wait.Poll(time.Second*1, time.Second*time.Duration(viper.GetInt64(InitTimeoutOpt)), func() (bool, error) {
 		err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, obj)
 		if err != nil {
