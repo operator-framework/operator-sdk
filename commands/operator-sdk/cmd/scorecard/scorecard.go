@@ -300,7 +300,7 @@ func initConfig() error {
 	if err := viper.ReadInConfig(); err == nil {
 		log.Info("Using config file: ", viper.ConfigFileUsed())
 	} else {
-		log.Warn("Could not load config file; using only flags")
+		log.Warn("Could not load config file; using flags")
 	}
 	return nil
 }
