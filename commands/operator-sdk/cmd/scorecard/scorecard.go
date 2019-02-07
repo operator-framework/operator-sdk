@@ -244,8 +244,8 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	for _, suite := range suites {
 		for _, result := range suite.TestResults {
 			for _, err := range result.Errors {
-				// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
-				fmt.Printf("\x1b[%dmSUGGESTION:\x1b[0m %s\n", 33, err)
+				// 31 is red (specifically, the same shade of red that logrus uses for errors)
+				fmt.Printf("\x1b[%dmERROR:\x1b[0m %s\n", 31, err)
 			}
 		}
 	}
