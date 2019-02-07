@@ -189,18 +189,11 @@ func (s *Scaffold) doRender(i input.Input, e input.File, absPath string) error {
 // the input's TemplateFuncs.
 func newTemplate(i input.Input) (*template.Template, error) {
 	t := template.New(i.Path).Funcs(template.FuncMap{
-		"title":    strings.Title,
-		"lower":    strings.ToLower,
-		"goimport": GoImportGroup,
+		"title": strings.Title,
+		"lower": strings.ToLower,
 	})
 	if len(i.TemplateFuncs) > 0 {
 		t.Funcs(i.TemplateFuncs)
 	}
 	return t.Parse(i.TemplateBody)
-}
-
-// GoImportGroup returns a copy of the string s with package naming convention.
-func GoImportGroup(s string) string {
-	s = strings.ToLower(s)
-	return strings.Replace(s, "-", "", -1)
 }
