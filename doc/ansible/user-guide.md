@@ -129,7 +129,7 @@ CR
 ### Watch the Memcached CR
 
 By default, the memcached-operator watches `Memcached` resource events as shown
-in `watches.yaml` and executes Ansible Role `Memached`:
+in `watches.yaml` and executes Ansible Role `Memcached`:
 
 ```yaml
 ---
