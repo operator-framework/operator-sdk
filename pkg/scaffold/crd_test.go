@@ -100,6 +100,10 @@ spec:
           - nodes
           type: object
   version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
 `
 
 func TestCRDNonGoProject(t *testing.T) {
@@ -135,4 +139,8 @@ spec:
   subresources:
     status: {}
   version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
 `
