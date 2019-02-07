@@ -28,7 +28,7 @@ import (
 type Test interface {
 	GetName() string
 	GetDescription() string
-	Run(context.Context) TestResult
+	Run(context.Context) *TestResult
 }
 
 type TestResult struct {
@@ -69,7 +69,7 @@ type OLMTestConfig struct {
 type TestSuite struct {
 	TestInfo
 	Tests       []Test
-	TestResults []TestResult
+	TestResults []*TestResult
 	Weights     map[string]int
 }
 

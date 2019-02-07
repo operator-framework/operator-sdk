@@ -181,7 +181,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if err := waitUntilReady(obj); err != nil {
 		return fmt.Errorf("failed waiting for CR to be ready: %v", err)
 	}
-	var suites []TestSuite
+	var suites []*TestSuite
 	if viper.GetBool(BasicTestsOpt) {
 		conf := BasicTestConfig{
 			Client:        runtimeClient,
@@ -192,7 +192,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 		basicTests := NewBasicTestSuite(conf)
 		basicTests.Run(context.TODO())
-		suites = append(suites, *basicTests)
+		suites = append(suites, basicTests)
 	}
 	if viper.GetBool(OLMTestsOpt) {
 		yamlSpec, err := ioutil.ReadFile(viper.GetString(CSVPathOpt))
@@ -219,7 +219,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 		olmTests := NewOLMTestSuite(conf)
 		olmTests.Run(context.TODO())
-		suites = append(suites, *olmTests)
+		suites = append(suites, olmTests)
 	}
 	totalScore := 0.0
 	for _, suite := range suites {

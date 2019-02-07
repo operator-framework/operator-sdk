@@ -32,8 +32,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (t *CheckSpecTest) Run(ctx context.Context) TestResult {
-	res := TestResult{Test: t, MaximumPoints: 1}
+func (t *CheckSpecTest) Run(ctx context.Context) *TestResult {
+	res := &TestResult{Test: t, MaximumPoints: 1}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("error getting custom resource: %v", err))
@@ -49,8 +49,8 @@ func (t *CheckSpecTest) Run(ctx context.Context) TestResult {
 }
 
 // checkStat checks that the status block exists
-func (t *CheckStatusTest) Run(ctx context.Context) TestResult {
-	res := TestResult{Test: t, MaximumPoints: 1}
+func (t *CheckStatusTest) Run(ctx context.Context) *TestResult {
+	res := &TestResult{Test: t, MaximumPoints: 1}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("error getting custom resource: %v", err))
@@ -67,8 +67,8 @@ func (t *CheckStatusTest) Run(ctx context.Context) TestResult {
 
 // writingIntoCRsHasEffect simply looks at the proxy logs and verifies that the operator is sending PUT
 // and/or POST requests to the API server, which should mean that it is creating or modifying resources.
-func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) TestResult {
-	res := TestResult{Test: t, MaximumPoints: 1}
+func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *TestResult {
+	res := &TestResult{Test: t, MaximumPoints: 1}
 	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("failed to create kubeclient: %v", err))

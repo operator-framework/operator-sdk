@@ -80,8 +80,8 @@ func matchVersion(version string, crd apiextv1beta1.CustomResourceDefinition) bo
 }
 
 // crdsHaveValidation makes sure that all CRDs have a validation block
-func (t *CRDsHaveValidationTest) Run(ctx context.Context) TestResult {
-	res := TestResult{Test: t}
+func (t *CRDsHaveValidationTest) Run(ctx context.Context) *TestResult {
+	res := &TestResult{Test: t}
 	crds, err := getCRDs(t.CRDsDir)
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("failed to get CRDs in %s directory: %v", t.CRDsDir, err))
@@ -133,8 +133,8 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) TestResult {
 }
 
 // crdsHaveResources checks to make sure that all owned CRDs have resources listed
-func (t *CRDsHaveResourcesTest) Run(ctx context.Context) TestResult {
-	res := TestResult{Test: t}
+func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
+	res := &TestResult{Test: t}
 	for _, crd := range t.CSV.Spec.CustomResourceDefinitions.Owned {
 		res.MaximumPoints++
 		if len(crd.Resources) > 0 {
@@ -148,8 +148,8 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) TestResult {
 }
 
 // annotationsContainExamples makes sure that the CSVs list at least 1 example for the CR
-func (t *AnnotationsContainExamplesTest) Run(ctx context.Context) TestResult {
-	res := TestResult{Test: t}
+func (t *AnnotationsContainExamplesTest) Run(ctx context.Context) *TestResult {
+	res := &TestResult{Test: t}
 	if t.CSV.Annotations != nil && t.CSV.Annotations["alm-examples"] != "" {
 		res.EarnedPoints = 1
 	}
@@ -160,8 +160,8 @@ func (t *AnnotationsContainExamplesTest) Run(ctx context.Context) TestResult {
 }
 
 // statusDescriptors makes sure that all status fields found in the created CR has a matching descriptor in the CSV
-func (t *StatusDescriptorsTest) Run(ctx context.Context) TestResult {
-	res := TestResult{Test: t}
+func (t *StatusDescriptorsTest) Run(ctx context.Context) *TestResult {
+	res := &TestResult{Test: t}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
 		res.Errors = append(res.Errors, err)
@@ -198,8 +198,8 @@ func (t *StatusDescriptorsTest) Run(ctx context.Context) TestResult {
 }
 
 // specDescriptors makes sure that all spec fields found in the created CR has a matching descriptor in the CSV
-func (t *SpecDescriptorsTest) Run(ctx context.Context) TestResult {
-	res := TestResult{Test: t}
+func (t *SpecDescriptorsTest) Run(ctx context.Context) *TestResult {
+	res := &TestResult{Test: t}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
 		res.Errors = append(res.Errors, err)
