@@ -16,8 +16,11 @@ package catalog
 
 import (
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
@@ -32,6 +35,8 @@ var (
 	csvVersion    string
 	fromVersion   string
 	csvConfigPath string
+	updateCRDs    bool
+	crdsDir       string
 )
 
 func NewGenCSVCmd() *cobra.Command {
@@ -53,6 +58,8 @@ Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config
 	genCSVCmd.MarkFlagRequired("csv-version")
 	genCSVCmd.Flags().StringVar(&fromVersion, "from-version", "", "Semantic version of an existing CSV to use as a base")
 	genCSVCmd.Flags().StringVar(&csvConfigPath, "csv-config", "", "Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml")
+	genCSVCmd.Flags().BoolVar(&updateCRDs, "update-crds", false, "Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's")
+	genCSVCmd.Flags().StringVar(&crdsDir, "crds-dir", scaffold.CRDsDir, "Add or update CRD manifests in deploy/{operator-name}/{csv-version} the using CRD's in this dir")
 
 	return genCSVCmd
 }
@@ -71,31 +78,41 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 		AbsProjectPath: absProjectPath,
 		ProjectName:    filepath.Base(absProjectPath),
 	}
-	if projutil.GetOperatorType() == projutil.OperatorTypeGo {
+	if projutil.IsOperatorGo() {
 		cfg.Repo = projutil.CheckAndGetProjectGoPkg()
 	}
 
 	log.Infof("Generating CSV manifest version %s", csvVersion)
 
 	s := &scaffold.Scaffold{}
-	err := s.Execute(cfg,
-		&catalog.CSV{
-			CSVVersion:     csvVersion,
-			FromVersion:    fromVersion,
-			ConfigFilePath: csvConfigPath,
-		},
-		&catalog.ConcatCRD{
-			CSVVersion:     csvVersion,
-			ConfigFilePath: csvConfigPath,
-		},
-	)
-	if err != nil {
+	csv := &catalog.CSV{
+		CSVVersion:     csvVersion,
+		FromVersion:    fromVersion,
+		ConfigFilePath: csvConfigPath,
+	}
+	if err := s.Execute(cfg, csv); err != nil {
 		return fmt.Errorf("catalog scaffold failed: (%v)", err)
 	}
+
+	// Write CRD's to the new or updated CSV package dir.
+	if updateCRDs {
+		input, err := csv.GetInput()
+		if err != nil {
+			return err
+		}
+		err = writeCRDsToDir(crdsDir, filepath.Dir(input.Path))
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 func verifyGenCSVFlags() error {
+	if updateCRDs && crdsDir == "" {
+		return fmt.Errorf("--crds-dir must be set if --update-crds is set")
+	}
 	if err := verifyCSVVersion(csvVersion); err != nil {
 		return err
 	}
@@ -116,6 +133,25 @@ func verifyCSVVersion(version string) error {
 	// ex. 01.01.01
 	if v.String() != version {
 		return fmt.Errorf("provided CSV version %s contains bad values (parses to %s)", version, v)
+	}
+	return nil
+}
+
+func writeCRDsToDir(fromDir, toDir string) error {
+	manifests, err := k8sutil.GetCRDManifestPaths(fromDir)
+	if err != nil {
+		return err
+	}
+	for _, m := range manifests {
+		b, err := ioutil.ReadFile(m)
+		if err != nil {
+			return err
+		}
+		path := filepath.Join(toDir, m)
+		err = ioutil.WriteFile(path, b, fileutil.DefaultFileMode)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
