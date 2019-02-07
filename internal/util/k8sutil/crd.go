@@ -39,8 +39,8 @@ func GetCRDManifestPaths(crdsDir string) (crdPaths []string, err error) {
 		if info == nil {
 			return nil
 		}
-		if !info.IsDir() && strings.HasSuffix(info.Name(), "_crd.yaml") {
-			crdPaths = append(crdPaths, filepath.Join(crdsDir, info.Name()))
+		if !info.IsDir() && strings.HasSuffix(path, "_crd.yaml") {
+			crdPaths = append(crdPaths, path)
 		}
 		return nil
 	})
