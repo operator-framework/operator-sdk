@@ -16,10 +16,11 @@ commandoutput="$(operator-sdk scorecard \
   --init-timeout 60 \
   --csv-path "$CSV_PATH" \
   --verbose \
-  --proxy-image $DEST_IMAGE \
+  --proxy-image "$DEST_IMAGE" \
   --proxy-pull-policy Never \
   2>&1)"
 echo $commandoutput | grep "Total Score: 6/8 points"
+
 # test config file
 commandoutput2="$(operator-sdk scorecard \
   --proxy-image "$DEST_IMAGE" \
