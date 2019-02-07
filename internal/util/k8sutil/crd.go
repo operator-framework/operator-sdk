@@ -16,15 +16,17 @@ func GetCRDs(crdsDir string) ([]*apiextv1beta1.CustomResourceDefinition, error) 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get CRD's from %s: (%v)", crdsDir, err)
 	}
-	crds := make([]*apiextv1beta1.CustomResourceDefinition, len(manifests))
-	for i, m := range manifests {
+	var crds []*apiextv1beta1.CustomResourceDefinition
+	for _, m := range manifests {
 		b, err := ioutil.ReadFile(m)
 		if err != nil {
 			return nil, err
 		}
-		if err = yaml.Unmarshal(b, crds[i]); err != nil {
+		crd := &apiextv1beta1.CustomResourceDefinition{}
+		if err = yaml.Unmarshal(b, crd); err != nil {
 			return nil, err
 		}
+		crds = append(crds, crd)
 	}
 	return crds, nil
 }
