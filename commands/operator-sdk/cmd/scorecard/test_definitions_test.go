@@ -19,15 +19,17 @@ import "testing"
 // TestSuiteWeightsCheck makes sure that the combined weights of all
 // the tests in a suite adds up to 100
 func TestSuiteWeightsCheck(t *testing.T) {
+	basicTests := NewBasicTestSuite(BasicTestConfig{})
 	basicWeight := 0
-	for _, weight := range BasicTests.weights {
+	for _, weight := range basicTests.Weights {
 		basicWeight += weight
 	}
 	if basicWeight != 100 {
 		t.Errorf("Weights of Basic Tests add to %d", basicWeight)
 	}
+	olmTests := NewOLMTestSuite(OLMTestConfig{})
 	OLMWeight := 0
-	for _, weight := range OLMTests.weights {
+	for _, weight := range olmTests.Weights {
 		OLMWeight += weight
 	}
 	if OLMWeight != 100 {

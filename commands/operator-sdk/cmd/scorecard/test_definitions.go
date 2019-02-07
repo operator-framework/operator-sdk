@@ -267,6 +267,7 @@ func NewOLMTestSuite(conf OLMTestConfig) *TestSuite {
 		"Test suite checks if an operator's CSV follows best practices",
 	)
 
+	ts.AddTest(NewCRDsHaveValidationTest(conf), 24)
 	ts.AddTest(NewCRDsHaveResourcesTest(conf), 19)
 	ts.AddTest(NewAnnotationsContainExamplesTest(conf), 19)
 	ts.AddTest(NewSpecDescriptorsTest(conf), 19)
