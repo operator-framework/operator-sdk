@@ -1,4 +1,4 @@
-## v0.4.1
+## Unreleased
 
 ### Added
 
@@ -7,6 +7,10 @@
 ### Deprecated
 
 ### Removed
+
+### Bug Fixes
+
+## v0.4.1
 
 ### Bug Fixes
 
