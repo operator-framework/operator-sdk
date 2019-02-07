@@ -73,11 +73,6 @@ type TestSuite struct {
 	Weights     map[string]int
 }
 
-func (ts *TestSuite) AddTest(t Test, weight int) {
-	ts.Tests = append(ts.Tests, t)
-	ts.Weights[t.GetName()] = weight
-}
-
 // Test definitions
 
 type CheckSpecTest struct {
@@ -202,6 +197,33 @@ func NewStatusDescriptorsTest(conf OLMTestConfig) *StatusDescriptorsTest {
 
 // Test Suite Declarations
 
+func NewBasicTestSuite(conf BasicTestConfig) *TestSuite {
+	ts := NewTestSuite(
+		"Basic Tests",
+		"Test suite that runs basic, functional operator tests",
+	)
+	ts.AddTest(NewCheckSpecTest(conf), 44)
+	ts.AddTest(NewCheckStatusTest(conf), 28)
+	ts.AddTest(NewWritingIntoCRsHasEffectTest(conf), 28)
+
+	return ts
+}
+
+func NewOLMTestSuite(conf OLMTestConfig) *TestSuite {
+	ts := NewTestSuite(
+		"OLM Tests",
+		"Test suite checks if an operator's CSV follows best practices",
+	)
+
+	ts.AddTest(NewCRDsHaveValidationTest(conf), 24)
+	ts.AddTest(NewCRDsHaveResourcesTest(conf), 19)
+	ts.AddTest(NewAnnotationsContainExamplesTest(conf), 19)
+	ts.AddTest(NewSpecDescriptorsTest(conf), 19)
+	ts.AddTest(NewStatusDescriptorsTest(conf), 19)
+
+	return ts
+}
+
 // Helper functions
 
 // ResultsPassFail will be used when multiple CRs are supported
@@ -221,6 +243,11 @@ func ResultsCumulative(results []TestResult) (earned, max int) {
 		max += result.MaximumPoints
 	}
 	return earned, max
+}
+
+func (ts *TestSuite) AddTest(t Test, weight int) {
+	ts.Tests = append(ts.Tests, t)
+	ts.Weights[t.GetName()] = weight
 }
 
 func (ts *TestSuite) TotalScore() (score int) {
@@ -247,31 +274,4 @@ func NewTestSuite(name, description string) *TestSuite {
 		},
 		Weights: make(map[string]int),
 	}
-}
-
-func NewBasicTestSuite(conf BasicTestConfig) *TestSuite {
-	ts := NewTestSuite(
-		"Basic Tests",
-		"Test suite that runs basic, functional operator tests",
-	)
-	ts.AddTest(NewCheckSpecTest(conf), 44)
-	ts.AddTest(NewCheckStatusTest(conf), 28)
-	ts.AddTest(NewWritingIntoCRsHasEffectTest(conf), 28)
-
-	return ts
-}
-
-func NewOLMTestSuite(conf OLMTestConfig) *TestSuite {
-	ts := NewTestSuite(
-		"OLM Tests",
-		"Test suite checks if an operator's CSV follows best practices",
-	)
-
-	ts.AddTest(NewCRDsHaveValidationTest(conf), 24)
-	ts.AddTest(NewCRDsHaveResourcesTest(conf), 19)
-	ts.AddTest(NewAnnotationsContainExamplesTest(conf), 19)
-	ts.AddTest(NewSpecDescriptorsTest(conf), 19)
-	ts.AddTest(NewStatusDescriptorsTest(conf), 19)
-
-	return ts
 }
