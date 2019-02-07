@@ -147,7 +147,7 @@ func writeCRDsToDir(fromDir, toDir string) error {
 		if err != nil {
 			return err
 		}
-		path := filepath.Join(toDir, m)
+		path := filepath.Join(toDir, filepath.Base(m))
 		err = ioutil.WriteFile(path, b, fileutil.DefaultFileMode)
 		if err != nil {
 			return err
