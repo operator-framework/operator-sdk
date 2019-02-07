@@ -23,15 +23,13 @@ import (
 	"strings"
 
 	genutil "github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/generate/internal"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
-	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var headerFile string
@@ -111,25 +109,28 @@ func OpenAPIGen() error {
 		AbsProjectPath: absProjectPath,
 		ProjectName:    filepath.Base(absProjectPath),
 	}
-	crdMap, err := getCRDGVKMap()
+	crds, err := k8sutil.GetCRDs(scaffold.CRDsDir)
 	if err != nil {
 		return err
 	}
-	for g, vs := range gvMap {
-		for _, v := range vs {
-			gvks := crdMap[filepath.Join(g, v)]
-			for _, gvk := range gvks {
-				r, err := scaffold.NewResource(filepath.Join(gvk.Group, gvk.Version), gvk.Kind)
-				if err != nil {
-					return err
-				}
-				err = s.Execute(cfg,
-					&scaffold.CRD{Resource: r, IsOperatorGo: projutil.IsOperatorGo()},
-				)
-				if err != nil {
-					return err
-				}
+	for _, crd := range crds {
+		g, v, k := crd.Spec.Group, crd.Spec.Version, crd.Spec.Names.Kind
+		if v == "" {
+			if len(crd.Spec.Versions) != 0 {
+				v = crd.Spec.Versions[0].Name
+			} else {
+				return fmt.Errorf("crd of group %s kind %s has no version", g, k)
 			}
+		}
+		r, err := scaffold.NewResource(g+"/"+v, k)
+		if err != nil {
+			return err
+		}
+		err = s.Execute(cfg,
+			&scaffold.CRD{Resource: r, IsOperatorGo: projutil.IsOperatorGo()},
+		)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -178,35 +179,4 @@ func openAPIGen(binDir string, fqApis []string) (err error) {
 		}
 	}
 	return nil
-}
-
-func getCRDGVKMap() (map[string][]metav1.GroupVersionKind, error) {
-	crdInfos, err := ioutil.ReadDir(scaffold.CRDsDir)
-	if err != nil {
-		return nil, err
-	}
-	crdMap := make(map[string][]metav1.GroupVersionKind)
-	for _, info := range crdInfos {
-		if filepath.Ext(info.Name()) == ".yaml" {
-			path := filepath.Join(scaffold.CRDsDir, info.Name())
-			b, err := ioutil.ReadFile(path)
-			if err != nil {
-				return nil, err
-			}
-			crd := &apiextv1beta1.CustomResourceDefinition{}
-			if err := yaml.Unmarshal(b, crd); err != nil {
-				return nil, err
-			}
-			if crd.Kind != "CustomResourceDefinition" {
-				continue
-			}
-			gv := filepath.Join(strings.Split(info.Name(), "_")[:2]...)
-			crdMap[gv] = append(crdMap[gv], metav1.GroupVersionKind{
-				Group:   crd.Spec.Group,
-				Version: crd.Spec.Version,
-				Kind:    crd.Spec.Names.Kind,
-			})
-		}
-	}
-	return crdMap, nil
 }
