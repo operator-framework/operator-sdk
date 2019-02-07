@@ -235,7 +235,7 @@ func (ts *TestSuite) TotalScore() (score int) {
 
 func (ts *TestSuite) Run(ctx context.Context) {
 	for _, test := range ts.Tests {
-		ts.TestResults = append(ts.TestResults, test.Run(context.TODO()))
+		ts.TestResults = append(ts.TestResults, test.Run(ctx))
 	}
 }
 
