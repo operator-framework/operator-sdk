@@ -56,7 +56,7 @@ func ExposeMetricsPort(ctx context.Context, port int32) (*v1.Service, error) {
 		}
 		return nil, fmt.Errorf("failed to initialize service object for metrics: %v", err)
 	}
-	service, err := createService(ctx, client, s)
+	service, err := createOrUpdateService(ctx, client, s)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create or get service for metrics: %v", err)
 	}
@@ -64,26 +64,32 @@ func ExposeMetricsPort(ctx context.Context, port int32) (*v1.Service, error) {
 	return service, nil
 }
 
-func createService(ctx context.Context, client crclient.Client, s *v1.Service) (*v1.Service, error) {
+func createOrUpdateService(ctx context.Context, client crclient.Client, s *v1.Service) (*v1.Service, error) {
 	if err := client.Create(ctx, s); err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return nil, err
 		}
-		// Get existing Service and return it
+		// Service already exists, we want to update it
+		// as we do not know if any fields might have changed.
 		existingService := &v1.Service{}
 		err := client.Get(ctx, types.NamespacedName{
 			Name:      s.Name,
 			Namespace: s.Namespace,
 		}, existingService)
+
+		s.ResourceVersion = existingService.ResourceVersion
+		if existingService.Spec.Type == v1.ServiceTypeClusterIP {
+			s.Spec.ClusterIP = existingService.Spec.ClusterIP
+		}
+		err = client.Update(ctx, s)
 		if err != nil {
 			return nil, err
 		}
-		log.Info("Metrics Service object already exists", "name", existingService.Name)
+		log.V(1).Info("Metrics Service object updated", "Service.Name", s.Name, "Service.Namespace", s.Namespace)
 		return existingService, nil
 	}
 
-	log.Info("Metrics Service object created", "name", s.Name)
-
+	log.Info("Metrics Service object created", "Service.Name", s.Name, "Service.Namespace", s.Namespace)
 	return s, nil
 }
 
