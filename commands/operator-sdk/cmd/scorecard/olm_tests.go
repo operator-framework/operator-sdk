@@ -17,11 +17,9 @@ package scorecard
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
@@ -30,28 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-func getCRDs(crdsDir string) ([]apiextv1beta1.CustomResourceDefinition, error) {
-	files, err := ioutil.ReadDir(crdsDir)
-	if err != nil {
-		return nil, fmt.Errorf("could not read deploy directory: (%v)", err)
-	}
-	crds := []apiextv1beta1.CustomResourceDefinition{}
-	for _, file := range files {
-		if strings.HasSuffix(file.Name(), "crd.yaml") {
-			obj, err := yamlToUnstructured(filepath.Join(scaffold.CRDsDir, file.Name()))
-			if err != nil {
-				return nil, err
-			}
-			crd, err := unstructuredToCRD(obj)
-			if err != nil {
-				return nil, err
-			}
-			crds = append(crds, *crd)
-		}
-	}
-	return crds, nil
-}
 
 func matchKind(kind1, kind2 string) bool {
 	singularKind1, err := restMapper.ResourceSingularizer(kind1)
@@ -68,7 +44,7 @@ func matchKind(kind1, kind2 string) bool {
 }
 
 // matchVersion checks if a CRD contains a specified version in a case insensitive manner
-func matchVersion(version string, crd apiextv1beta1.CustomResourceDefinition) bool {
+func matchVersion(version string, crd *apiextv1beta1.CustomResourceDefinition) bool {
 	if strings.EqualFold(version, crd.Spec.Version) {
 		return true
 	}
@@ -84,7 +60,7 @@ func matchVersion(version string, crd apiextv1beta1.CustomResourceDefinition) bo
 // crdsHaveValidation makes sure that all CRDs have a validation block
 func crdsHaveValidation(crdsDir string, runtimeClient client.Client, obj *unstructured.Unstructured) error {
 	test := scorecardTest{testType: olmIntegration, name: "Provided APIs have validation"}
-	crds, err := getCRDs(crdsDir)
+	crds, err := k8sutil.GetCRDs(crdsDir)
 	if err != nil {
 		return fmt.Errorf("failed to get CRDs in %s directory: %v", crdsDir, err)
 	}
