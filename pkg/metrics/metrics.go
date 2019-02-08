@@ -21,7 +21,6 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	appsv1 "k8s.io/api/apps/v1"
-	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -182,66 +181,9 @@ func findFinalOwnerRef(ctx context.Context, client crclient.Client, ns string, o
 		// Get Owner of the ReplicaSet and in turn the Pod belongs to
 		rsOwner := metav1.GetControllerOf(rs)
 		return findFinalOwnerRef(ctx, client, ns, rsOwner)
-	case "DaemonSet":
-		ds := &appsv1.DaemonSet{}
-		key := crclient.ObjectKey{Namespace: ns, Name: ownerRef.Name}
-		if err := client.Get(ctx, key, ds); err != nil {
-			return nil, err
-		}
-		log.V(1).Info("DaemonSet was Pods owner", "DaemonSet.Name", ds.Name, "DaemonSet.Namespace", ds.Namespace)
-		return &metav1.OwnerReference{
-			APIVersion: "apps/v1",
-			Kind:       "DaemonSet",
-			Name:       ds.Name,
-			UID:        ds.UID,
-			Controller: &trueVar,
-		}, nil
-	case "StatefulSet":
-		ss := &appsv1.StatefulSet{}
-		key := crclient.ObjectKey{Namespace: ns, Name: ownerRef.Name}
-		if err := client.Get(ctx, key, ss); err != nil {
-			return nil, err
-		}
-
-		log.V(1).Info("StatefulSet was Pods owner", "StatefulSet.Name", ss.Name, "StatefulSet.Namespace", ss.Namespace)
-		return &metav1.OwnerReference{
-			APIVersion: "apps/v1",
-			Kind:       "StatefulSet",
-			Name:       ss.Name,
-			UID:        ss.UID,
-			Controller: &trueVar,
-		}, nil
-	case "Job":
-		job := &batchv1.Job{}
-		key := crclient.ObjectKey{Namespace: ns, Name: ownerRef.Name}
-		if err := client.Get(ctx, key, job); err != nil {
-			return nil, err
-		}
-
-		log.V(1).Info("Job was Pods owner", "Job.Name", job.Name, "Job.Namespace", job.Namespace)
-		return &metav1.OwnerReference{
-			APIVersion: "batch/v1",
-			Kind:       "Job",
-			Name:       job.Name,
-			UID:        job.UID,
-			Controller: &trueVar,
-		}, nil
-	case "Deployment":
-		d := &appsv1.Deployment{}
-		key := crclient.ObjectKey{Namespace: ns, Name: ownerRef.Name}
-		if err := client.Get(ctx, key, d); err != nil {
-			return nil, err
-		}
-
-		log.V(1).Info("Deployment was Pods owner", "Deployment.Name", d.Name, "Deployment.Namespace", d.Namespace)
-		return &metav1.OwnerReference{
-			APIVersion: "apps/v1",
-			Kind:       "Deployment",
-			Name:       d.Name,
-			UID:        d.UID,
-			Controller: &trueVar,
-		}, nil
-
+	case "DaemonSet", "StatefulSet", "Job", "Deployment", "DeploymentConfig":
+		log.V(1).Info("Pods owner found", "Kind", ownerRef.Kind, "Name", ownerRef.Name, "Namespace", ns)
+		return ownerRef, nil
 	case "":
 		// no owner ref was found, we skip this as by default we return pod anyways
 		log.V(1).Info("Pods owner could not be found, ownerRef was empty", "ownerRef.Kind", ownerRef.Kind)
