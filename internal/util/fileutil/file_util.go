@@ -42,10 +42,6 @@ type FileWriter struct {
 	once sync.Once
 }
 
-func NewFileWriter() *FileWriter {
-	return NewFileWriterFS(afero.NewOsFs())
-}
-
 func NewFileWriterFS(fs afero.Fs) *FileWriter {
 	fw := &FileWriter{}
 	fw.once.Do(func() {
