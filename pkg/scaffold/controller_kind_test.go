@@ -104,8 +104,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
-var _ reconcile.Reconciler = &ReconcileAppService{}
-
 // ReconcileAppService reconciles a AppService object
 type ReconcileAppService struct {
 	// This client, initialized using mgr.Client() above, is a split client
