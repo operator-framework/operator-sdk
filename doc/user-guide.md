@@ -437,7 +437,7 @@ If the operator is not running inside a cluster `leader.Become()` will simply re
 
 ### Leader with lease
 
-The leader with leases approach can be enabled via the [Manager Options][manager_options] for leader election.
+The leader-with-lease approach can be enabled via the [Manager Options][manager_options] for leader election.
 
 ```Go
 import (
