@@ -17,39 +17,15 @@ package scorecard
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/types"
 )
-
-func getCRDs(crdsDir string) ([]apiextv1beta1.CustomResourceDefinition, error) {
-	files, err := ioutil.ReadDir(crdsDir)
-	if err != nil {
-		return nil, fmt.Errorf("could not read deploy directory: (%v)", err)
-	}
-	crds := []apiextv1beta1.CustomResourceDefinition{}
-	for _, file := range files {
-		if strings.HasSuffix(file.Name(), "crd.yaml") {
-			obj, err := yamlToUnstructured(filepath.Join(scaffold.CRDsDir, file.Name()))
-			if err != nil {
-				return nil, err
-			}
-			crd, err := unstructuredToCRD(obj)
-			if err != nil {
-				return nil, err
-			}
-			crds = append(crds, *crd)
-		}
-	}
-	return crds, nil
-}
 
 func matchKind(kind1, kind2 string) bool {
 	singularKind1, err := restMapper.ResourceSingularizer(kind1)
@@ -66,7 +42,7 @@ func matchKind(kind1, kind2 string) bool {
 }
 
 // matchVersion checks if a CRD contains a specified version in a case insensitive manner
-func matchVersion(version string, crd apiextv1beta1.CustomResourceDefinition) bool {
+func matchVersion(version string, crd *apiextv1beta1.CustomResourceDefinition) bool {
 	if strings.EqualFold(version, crd.Spec.Version) {
 		return true
 	}
@@ -82,7 +58,7 @@ func matchVersion(version string, crd apiextv1beta1.CustomResourceDefinition) bo
 // crdsHaveValidation makes sure that all CRDs have a validation block
 func (t *CRDsHaveValidationTest) Run(ctx context.Context) *TestResult {
 	res := &TestResult{Test: t}
-	crds, err := getCRDs(t.CRDsDir)
+	crds, err := k8sutil.GetCRDs(t.CRDsDir)
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("failed to get CRDs in %s directory: %v", t.CRDsDir, err))
 		return res

@@ -129,7 +129,7 @@ CR
 ### Watch the Memcached CR
 
 By default, the memcached-operator watches `Memcached` resource events as shown
-in `watches.yaml` and executes Ansible Role `Memached`:
+in `watches.yaml` and executes Ansible Role `Memcached`:
 
 ```yaml
 ---
@@ -334,10 +334,10 @@ INFO[0000] operator-sdk Version: 0.0.5+git
 
 ### Create a Memcached CR
 
-Modify `deploy/cr.yaml` as shown and create a `Memcached` custom resource:
+Modify `deploy/crds/cache_v1alpha1_memcached_cr.yaml` as shown and create a `Memcached` custom resource:
 
 ```sh
-$ cat deploy/cr.yaml
+$ cat deploy/crds/cache_v1alpha1_memcached_cr.yaml
 apiVersion: "cache.example.com/v1alpha1"
 kind: "Memcached"
 metadata:
@@ -374,7 +374,7 @@ Change the `spec.size` field in the memcached CR from 3 to 4 and apply the
 change:
 
 ```sh
-$ cat deploy/cr.yaml
+$ cat deploy/crds/cache_v1alpha1_memcached_cr.yaml
 apiVersion: "cache.example.com/v1alpha1"
 kind: "Memcached"
 metadata:

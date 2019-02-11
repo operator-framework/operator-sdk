@@ -1,0 +1,12 @@
+---
+- hosts: localhost
+  connection: local
+  vars:
+    ansible_python_interpreter: '{{ ansible_playbook_python }}'
+    cm: '{{ lookup("k8s", api_version="v1", kind="ConfigMap", namespace=namespace, resource_name="inventory-cm") }}'
+  tasks:
+  - name: Assert sentinel ConfigMap has been created
+    assert:
+      that: cm.data.sentinel == 'test'
+  - name: output cm
+    debug: var=cm
