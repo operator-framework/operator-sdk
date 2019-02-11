@@ -10,6 +10,8 @@
 
 ### Bug Fixes
 
+- Fix issue where running `operator-sdk test local --up-local` would sometimes leave a running process in the background after exit ([#1089](https://github.com/operator-framework/operator-sdk/pull/1020))
+
 ## v0.5.0
 
 ### Added
