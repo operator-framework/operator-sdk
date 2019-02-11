@@ -106,8 +106,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
-var _ reconcile.Reconciler = &Reconcile{{ .Resource.Kind }}{}
-
 // Reconcile{{ .Resource.Kind }} reconciles a {{ .Resource.Kind }} object
 type Reconcile{{ .Resource.Kind }} struct {
 	// This client, initialized using mgr.Client() above, is a split client

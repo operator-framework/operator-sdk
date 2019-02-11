@@ -31,8 +31,6 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 )
 
-var _ reconcile.Reconciler = &HelmOperatorReconciler{}
-
 // ReleaseHookFunc defines a function signature for release hooks.
 type ReleaseHookFunc func(*rpb.Release) error
 

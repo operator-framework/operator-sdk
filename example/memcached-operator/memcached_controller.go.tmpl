@@ -68,8 +68,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
-var _ reconcile.Reconciler = &ReconcileMemcached{}
-
 // ReconcileMemcached reconciles a Memcached object
 type ReconcileMemcached struct {
 	// TODO: Clarify the split client
