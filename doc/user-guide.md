@@ -402,11 +402,12 @@ After adding new import paths to your operator project, run `dep ensure` in the 
 
 ## Leader election
 
-For improved reliability and quick failover it may be necessary to run multiple replicas of the operator with leader election, so that one leader instance handles the reconciliation while the other instances are inactive but ready to take over when the leader fails.
+During the lifecycle of an operator it's possible that there may be more than 1 instance running at any given time e.g when rolling out an upgrade for the operator.
+In such a scenario it is necessary to avoid contention between multiple operator instances via leader election so that only one leader instance handles the reconciliation while the other instances are inactive but ready to take over when the leader steps down.
 
 There are two different leader election implementations to choose from, each with its own tradeoff.
 
-- [Leader-for-life][leader_for_life]: The leader pod only gives up leadership (via garbage collection) when it is deleted. This implementation precludes the possibility of 2 instances mistakenly running as leaders (split brain). However, this method can be slow to elect a new leader when the leader pod is on an unresponsive node (partitioned), as it takes a long time for the leader pod to be deleted.
+- [Leader-for-life][leader_for_life]: The leader pod only gives up leadership (via garbage collection) when it is deleted. This implementation precludes the possibility of 2 instances mistakenly running as leaders (split brain). However, this method can be subject to a delay in electing a new leader. For instance when the leader pod is on an unresponsive or partitioned node, the [`pod-eviction-timeout`][pod_eviction_timeout] dictates how it takes for the leader pod to be deleted from the node and step down (default 5m).
 - [Leader-with-lease][leader_with_lease]: The leader pod periodically renews the leader lease and gives up leadership when it can't renew the lease. This implementation allows for a faster transition to a new leader when the existing leader is isolated, but there is a possibility of split brain in [certain situations][lease_split_brain].
 
 By default the SDK enables the leader-for-life implementation. However you should consult the docs above for both approaches to consider the tradeoffs that make sense for your use case.
@@ -459,7 +460,8 @@ func main() {
 
 When the operator is not running in a cluster, the Manager will return an error on starting since it can't detect the operator's namespace in order to create the configmap for leader election. You can override this namespace by setting the Manager's `LeaderElectionNamespace` option.
 
-[tools_leaderelection]: https://godoc.org/github.com/kubernetes/client-go/tools/leaderelection
+
+[pod_eviction_timeout]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options
 [lease_split_brain]: https://github.com/kubernetes/client-go/blob/30b06a83d67458700a5378239df6b96948cb9160/tools/leaderelection/leaderelection.go#L21-L24
 [leader_for_life]: https://godoc.org/github.com/operator-framework/operator-sdk/pkg/leader
