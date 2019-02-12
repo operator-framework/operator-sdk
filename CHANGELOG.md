@@ -2,7 +2,11 @@
 
 ### Added
 
+- New Helm operator flags (`--storage-driver` and `--storage-namespace`) which control how Helm release history is persisted. ([#917](https://github.com/operator-framework/operator-sdk/pull/917))
+
 ### Changed
+
+- The default storage engine in the Helm operator has been changed from an in-memory implementation to a ConfigMap implementation. Now, Helm-based operators can be restarted without losing state and relying on the status of existing custom resources to reconstitute it. ([#917](https://github.com/operator-framework/operator-sdk/pull/917))
 
 ### Deprecated
 
@@ -23,12 +27,10 @@
 - Helm-based operators have leader election turned on by default. When upgrading, add environment variable `POD_NAME` to your operator's Deployment using the Kubernetes downward API. To see an example, run `operator-sdk new --type=helm ...` and see file `deploy/operator.yaml`. [#1000](https://github.com/operator-framework/operator-sdk/pull/1000)
 - A new command [`operator-sdk generate openapi`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#openapi) which generates OpenAPIv3 validation specs in Go and in CRD manifests as YAML. ([#869](https://github.com/operator-framework/operator-sdk/pull/869))
 - The `operator-sdk add api` command now generates OpenAPIv3 validation specs in Go for that API, and in all CRD manifests as YAML.
-- New Helm operator flags (`--storage-driver` and `--storage-namespace`) which control how Helm release history is persisted. ([#917](https://github.com/operator-framework/operator-sdk/pull/917))
 
 ### Changed
 
 - In new Helm operator projects, the scaffolded CR `spec` field now contains the default values.yaml from the generated chart. ([#967](https://github.com/operator-framework/operator-sdk/pull/967))
-- The default storage engine in the Helm operator has been changed from an in-memory implementation to a ConfigMap implementation. Now, Helm-based operators can be restarted without losing state and relying on the status of existing custom resources to reconstitute it. ([#917](https://github.com/operator-framework/operator-sdk/pull/917))
 
 ### Deprecated
 
