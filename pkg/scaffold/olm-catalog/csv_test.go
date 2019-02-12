@@ -61,7 +61,7 @@ func TestCSVNew(t *testing.T) {
 	// Get the expected CSV manifest from test data dir.
 	csvFileName := getCSVFileName(projectName, csvVer)
 	csvPath := filepath.Join(testOLMDir, projectName, csvVer, csvFileName)
-	csvExpBytes, err := ioutil.ReadFile(csvPath)
+	csvExpBytes, err := afero.ReadFile(s.Fs, csvPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,46 +73,42 @@ func TestCSVNew(t *testing.T) {
 	}
 }
 
-func writeOSPathToFS(fs afero.Fs, root string) error {
-	if _, err := os.Stat(root); err != nil {
+func writeOSPathToFS(fromFs, toFs afero.Fs, root string) error {
+	if _, err := fromFs.Stat(root); err != nil {
 		return err
 	}
-	return filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	return afero.Walk(fromFs, root, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info == nil {
 			return err
 		}
 		if !info.IsDir() {
-			b, err := ioutil.ReadFile(path)
+			b, err := afero.ReadFile(fromFs, path)
 			if err != nil {
 				return err
 			}
-			return afero.WriteFile(fs, path, b, fileutil.DefaultFileMode)
+			return afero.WriteFile(toFs, path, b, fileutil.DefaultFileMode)
 		}
 		return nil
 	})
 }
 
 func TestCSVFromOld(t *testing.T) {
-	fw := fileutil.NewFileWriterFS(afero.NewMemMapFs())
-	s := &scaffold.Scaffold{
-		GetWriter: fw.WriteCloser,
-	}
+	s := &scaffold.Scaffold{Fs: afero.NewMemMapFs()}
 	projectName := "app-operator"
 	oldCSVVer, newCSVVer := "0.1.0", "0.2.0"
 
 	// Write all files in testdata/deploy to fs so manifests are present when
 	// writing a new CSV.
-	if err := writeOSPathToFS(fw.GetFS(), testDeployDir); err != nil {
+	if err := writeOSPathToFS(afero.NewOsFs(), s.Fs, testDeployDir); err != nil {
 		t.Fatalf("Failed to write %s to in-memory test fs: (%v)", testDeployDir, err)
 	}
 
-	c := &CSV{
+	cfg := &input.Config{ProjectName: projectName}
+	err := s.Execute(cfg, &CSV{
 		CSVVersion:  newCSVVer,
 		FromVersion: oldCSVVer,
 		pathPrefix:  testDataDir,
-	}
-	c.initFS(fw.GetFS())
-	err := s.Execute(&input.Config{ProjectName: projectName}, c)
+	})
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
@@ -120,7 +116,7 @@ func TestCSVFromOld(t *testing.T) {
 	// Check if a new file was written at the expected path.
 	csvFileName := getCSVFileName(projectName, newCSVVer)
 	newCSVPath := filepath.Join(testOLMDir, projectName, newCSVVer, csvFileName)
-	newCSV, newExists, err := getCSVFromFSIfExists(fw.GetFS(), newCSVPath)
+	newCSV, newExists, err := getCSVFromFSIfExists(s.Fs, newCSVPath)
 	if err != nil {
 		t.Fatalf("Failed to get new CSV %s: (%v)", newCSVPath, err)
 	}
