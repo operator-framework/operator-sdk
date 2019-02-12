@@ -16,6 +16,7 @@ package ansible
 
 import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+	"github.com/spf13/afero"
 )
 
 const K8sStatusPythonFile = "library/k8s_status.py"
@@ -33,6 +34,8 @@ func (k *K8sStatus) GetInput() (input.Input, error) {
 	k.TemplateBody = k8sStatusTmpl
 	return k.Input, nil
 }
+
+func (s K8sStatus) SetFS(_ afero.Fs) {}
 
 func (k K8sStatus) CustomRender() ([]byte, error) {
 	return []byte(k8sStatusTmpl), nil
