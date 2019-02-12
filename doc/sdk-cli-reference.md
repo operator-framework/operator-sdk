@@ -178,7 +178,7 @@ Parent command for all OLM Catalog related commands.
 
 ### gen-csv
 
-Writes a Cluster Service Version (CSV) manifest, and optionally CRD files, to `deploy/olm-catalog/{operator-name}/{csv-version}`.
+Writes a Cluster Service Version (CSV) manifest and optionally CRD files to `deploy/olm-catalog/{operator-name}/{csv-version}`.
 
 #### Flags
 
