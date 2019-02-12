@@ -145,6 +145,7 @@ func (s *Scaffold) doRender(i input.Input, e input.File, absPath string) error {
 
 	var b []byte
 	if c, ok := e.(CustomRenderer); ok {
+		c.SetFS(s.Fs)
 		// CustomRenderers have a non-template method of file rendering.
 		if b, err = c.CustomRender(); err != nil {
 			return err

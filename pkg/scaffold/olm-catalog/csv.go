@@ -94,6 +94,8 @@ func (s *CSV) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
+func (s *CSV) SetFS(fs afero.Fs) { s.initFS(fs) }
+
 // CustomRender allows a CSV to be written by marshalling
 // olmapiv1alpha1.ClusterServiceVersion instead of writing to a template.
 func (s *CSV) CustomRender() ([]byte, error) {
