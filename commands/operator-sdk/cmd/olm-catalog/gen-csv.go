@@ -67,7 +67,7 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 		AbsProjectPath: absProjectPath,
 		ProjectName:    filepath.Base(absProjectPath),
 	}
-	if projutil.GetOperatorType() == projutil.OperatorTypeGo {
+	if projutil.IsOperatorGo() {
 		cfg.Repo = projutil.CheckAndGetProjectGoPkg()
 	}
 
