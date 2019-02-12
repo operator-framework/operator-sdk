@@ -31,7 +31,7 @@ type HelmOperatorFlags struct {
 	storageFlags
 }
 
-// AddTo - Add the helm operator flags to the the flagset
+// AddTo - Add the helm operator flags to the flagset.
 // helpTextPrefix will allow you add a prefix to default help text. Joined by a space.
 func AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) *HelmOperatorFlags {
 	hof := &HelmOperatorFlags{}
@@ -46,7 +46,7 @@ type storageFlags struct {
 	StorageNamespace string
 }
 
-// AddTo - Add the helm operator storage flags to the the flagset
+// AddTo - Add the helm operator storage flags to the flagset.
 // helpTextPrefix will allow you add a prefix to default help text. Joined by a space.
 func (sf *storageFlags) AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) {
 	driverNames := fmt.Sprintf("'%s', '%s', or '%s'", driver.ConfigMapsDriverName, driver.SecretsDriverName, driver.MemoryDriverName)
