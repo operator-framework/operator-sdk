@@ -31,7 +31,6 @@ func (k *K8sStatus) GetInput() (input.Input, error) {
 	if k.Path == "" {
 		k.Path = K8sStatusPythonFile
 	}
-	k.TemplateBody = k8sStatusTmpl
 	return k.Input, nil
 }
 
