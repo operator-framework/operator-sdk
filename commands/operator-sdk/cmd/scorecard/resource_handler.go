@@ -236,24 +236,6 @@ func addProxyContainer(dep *appsv1.Deployment) {
 	})
 }
 
-// unstructuredToCRD converts an unstructured object to a CRD
-func unstructuredToCRD(obj *unstructured.Unstructured) (*apiextv1beta1.CustomResourceDefinition, error) {
-	jsonByte, err := obj.MarshalJSON()
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert CRD to json: %v", err)
-	}
-	crdObj, _, err := dynamicDecoder.Decode(jsonByte, nil, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode CRD object: %v", err)
-	}
-	switch o := crdObj.(type) {
-	case *apiextv1beta1.CustomResourceDefinition:
-		return o, nil
-	default:
-		return nil, fmt.Errorf("conversion of runtime object to CRD failed (resulting runtime object not CRD type)")
-	}
-}
-
 // unstructuredToDeployment converts an unstructured object to a deployment
 func unstructuredToDeployment(obj *unstructured.Unstructured) (*appsv1.Deployment, error) {
 	jsonByte, err := obj.MarshalJSON()
