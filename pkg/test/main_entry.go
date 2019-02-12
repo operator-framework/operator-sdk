@@ -28,6 +28,7 @@ import (
 
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	log "github.com/sirupsen/logrus"
@@ -63,10 +64,17 @@ func MainEntry(m *testing.M) {
 	var localCmd *exec.Cmd
 	var localCmdOutBuf, localCmdErrBuf bytes.Buffer
 	if *localOperator {
-		// TODO: make a generic 'up-local' function to deduplicate shared code between this and cmd/up/local
-		// taken from commands/operator-sdk/cmd/up/local.go
-		runArgs := append([]string{"run"}, []string{filepath.Join(scaffold.ManagerDir, scaffold.CmdFile)}...)
-		localCmd = exec.Command("go", runArgs...)
+		absProjectPath := projutil.MustGetwd()
+		projectName := filepath.Base(absProjectPath)
+		outputBinName := filepath.Join(scaffold.BuildBinDir, projectName+"-local")
+		args := []string{"build", "-o", outputBinName}
+		args = append(args, filepath.Join(scaffold.ManagerDir, scaffold.CmdFile))
+		bc := exec.Command("go", args...)
+		if err := projutil.ExecCmd(bc); err != nil {
+			log.Fatalf("Failed to build local operator binary: %s", err)
+		}
+
+		localCmd = exec.Command(outputBinName, args...)
 		localCmd.Stdout = &localCmdOutBuf
 		localCmd.Stderr = &localCmdErrBuf
 		c := make(chan os.Signal)
