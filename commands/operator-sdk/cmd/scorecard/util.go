@@ -15,6 +15,7 @@
 package scorecard
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -29,10 +30,12 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apierr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
-func generateCombinedNamespacedManifestFromCSV(csv *olmapiv1alpha1.ClusterServiceVersion) (*os.File, error) {
+func generateCombinedNamespacedManifestFromCSV(csv *olmapiv1alpha1.ClusterServiceVersion, namespace string) (*os.File, error) {
 	man, err := ioutil.TempFile("", "namespaced-manifest.yaml")
 	if err != nil {
 		return nil, err
@@ -52,29 +55,22 @@ func generateCombinedNamespacedManifestFromCSV(csv *olmapiv1alpha1.ClusterServic
 		return nil, fmt.Errorf("expected StrategyDetailsDeployment, got strategy of type %T", strat)
 	}
 
-	var manBytes []byte
-	if perms := stratDep.Permissions; len(perms) > 0 {
+	// Roles, bindings, and service accounts are not created by the OLM.
+	var (
+		manBytes []byte
+		saSet    = make(map[string]struct{})
+	)
+	for _, perm := range stratDep.Permissions {
+		saName := perm.ServiceAccountName
 		role := &rbacv1.Role{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: rbacv1.SchemeGroupVersion.String(),
 				Kind:       "Role",
 			},
-			ObjectMeta: metav1.ObjectMeta{Name: perms[0].ServiceAccountName},
-			Rules:      perms[0].Rules,
+			ObjectMeta: metav1.ObjectMeta{Name: saName, Namespace: namespace},
+			Rules:      perm.Rules,
 		}
 		roleBytes, err := yaml.Marshal(role)
-		if err != nil {
-			return nil, err
-		}
-		// Create dummy role binding and service accounts for testing.
-		sa := corev1.ServiceAccount{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: corev1.SchemeGroupVersion.String(),
-				Kind:       "ServiceAccount",
-			},
-			ObjectMeta: metav1.ObjectMeta{Name: perms[0].ServiceAccountName},
-		}
-		saBytes, err := yaml.Marshal(sa)
 		if err != nil {
 			return nil, err
 		}
@@ -83,8 +79,8 @@ func generateCombinedNamespacedManifestFromCSV(csv *olmapiv1alpha1.ClusterServic
 				APIVersion: rbacv1.SchemeGroupVersion.String(),
 				Kind:       "RoleBinding",
 			},
-			ObjectMeta: metav1.ObjectMeta{Name: perms[0].ServiceAccountName},
-			Subjects:   []rbacv1.Subject{{Kind: sa.Kind, Name: sa.Name}},
+			ObjectMeta: metav1.ObjectMeta{Name: saName, Namespace: namespace},
+			Subjects:   []rbacv1.Subject{{Kind: "ServiceAccount", Name: saName}},
 			RoleRef: rbacv1.RoleRef{
 				Kind:     role.Kind,
 				Name:     role.Name,
@@ -95,40 +91,97 @@ func generateCombinedNamespacedManifestFromCSV(csv *olmapiv1alpha1.ClusterServic
 		if err != nil {
 			return nil, err
 		}
+		manBytes = yamlutil.CombineManifests(manBytes, roleBytes, rbBytes)
 
-		manBytes = yamlutil.CombineManifests(manBytes, saBytes, roleBytes, rbBytes)
+		if _, ok := saSet[saName]; !ok {
+			sa := corev1.ServiceAccount{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: corev1.SchemeGroupVersion.String(),
+					Kind:       "ServiceAccount",
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: saName, Namespace: namespace},
+			}
+			saBytes, err := yaml.Marshal(sa)
+			if err != nil {
+				return nil, err
+			}
+			manBytes = yamlutil.CombineManifests(manBytes, saBytes)
+			saSet[saName] = struct{}{}
+		}
 	}
-	if cperms := stratDep.ClusterPermissions; len(cperms) > 0 {
+	for _, perm := range stratDep.ClusterPermissions {
+		saName := perm.ServiceAccountName
 		cRole := &rbacv1.ClusterRole{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: rbacv1.SchemeGroupVersion.String(),
 				Kind:       "ClusterRole",
 			},
-			ObjectMeta: metav1.ObjectMeta{Name: cperms[0].ServiceAccountName},
-			Rules:      cperms[0].Rules,
+			ObjectMeta: metav1.ObjectMeta{Name: saName, Namespace: namespace},
+			Rules:      perm.Rules,
 		}
 		cRoleBytes, err := yaml.Marshal(cRole)
 		if err != nil {
 			return nil, err
 		}
-		manBytes = yamlutil.CombineManifests(manBytes, cRoleBytes)
+		rb := &rbacv1.RoleBinding{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: rbacv1.SchemeGroupVersion.String(),
+				Kind:       "RoleBinding",
+			},
+			ObjectMeta: metav1.ObjectMeta{Name: saName, Namespace: namespace},
+			Subjects:   []rbacv1.Subject{{Kind: "ServiceAccount", Name: saName}},
+			RoleRef: rbacv1.RoleRef{
+				Kind:     cRole.Kind,
+				Name:     cRole.Name,
+				APIGroup: rbacv1.GroupName,
+			},
+		}
+		rbBytes, err := yaml.Marshal(rb)
+		if err != nil {
+			return nil, err
+		}
+		manBytes = yamlutil.CombineManifests(manBytes, cRoleBytes, rbBytes)
+
+		if _, ok := saSet[saName]; !ok {
+			sa := corev1.ServiceAccount{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: corev1.SchemeGroupVersion.String(),
+					Kind:       "ServiceAccount",
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: saName, Namespace: namespace},
+			}
+			saBytes, err := yaml.Marshal(sa)
+			if err != nil {
+				return nil, err
+			}
+			manBytes = yamlutil.CombineManifests(manBytes, saBytes)
+			saSet[saName] = struct{}{}
+		}
 	}
-	dep := &appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: appsv1.SchemeGroupVersion.String(),
-			Kind:       "Deployment",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: stratDep.DeploymentSpecs[0].Name,
-		},
-		Spec: stratDep.DeploymentSpecs[0].Spec,
-	}
-	depBytes, err := yaml.Marshal(dep)
+	// Create a deployment if the CSV's deployment hasn't been created yet.
+	depSpec := stratDep.DeploymentSpecs[0]
+	nsName := types.NamespacedName{Name: depSpec.Name, Namespace: namespace}
+	err = runtimeClient.Get(context.TODO(), nsName, &appsv1.Deployment{})
 	if err != nil {
-		return nil, err
+		if !apierr.IsNotFound(err) {
+			return nil, err
+		}
+		dep := &appsv1.Deployment{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: appsv1.SchemeGroupVersion.String(),
+				Kind:       "Deployment",
+			},
+			ObjectMeta: metav1.ObjectMeta{Name: depSpec.Name, Namespace: namespace},
+			Spec:       depSpec.Spec,
+		}
+		depBytes, err := yaml.Marshal(dep)
+		if err != nil {
+			return nil, err
+		}
+		manBytes = yamlutil.CombineManifests(manBytes, depBytes)
 	}
 
-	_, err = man.Write(yamlutil.CombineManifests(manBytes, depBytes))
+	_, err = man.Write(manBytes)
 	if err != nil {
 		return nil, err
 	}

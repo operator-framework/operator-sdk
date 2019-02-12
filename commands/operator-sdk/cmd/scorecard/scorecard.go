@@ -169,7 +169,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 	}
 	if viper.GetBool(OlmDeployedOpt) {
-		nsMan, err := generateCombinedNamespacedManifestFromCSV(csv)
+		nsMan, err := generateCombinedNamespacedManifestFromCSV(csv, viper.GetString(NamespaceOpt))
 		if err != nil {
 			return err
 		}

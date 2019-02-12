@@ -33,6 +33,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	apierr "k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -103,6 +104,14 @@ func createFromYAMLFile(yamlPath string) error {
 			obj, err = deploymentToUnstructured(dep)
 			if err != nil {
 				return fmt.Errorf("failed to convert deployment to unstructured: %v", err)
+			}
+		}
+		if viper.GetBool(OlmDeployedOpt) && obj.GetKind() == "CustomResourceDefinition" {
+			// The OLM will create CRD's from an operators' CSV.
+			nsName := types.NamespacedName{Name: obj.GetName(), Namespace: viper.GetString(NamespaceOpt)}
+			err = runtimeClient.Get(context.TODO(), nsName, &apiextv1beta1.CustomResourceDefinition{})
+			if err == nil || !apierr.IsNotFound(err) {
+				continue
 			}
 		}
 		err = runtimeClient.Create(context.TODO(), obj)
