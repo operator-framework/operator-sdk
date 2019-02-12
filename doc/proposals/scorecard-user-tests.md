@@ -33,7 +33,8 @@ A new section would be added to the scorecard config file called `functional_tes
 functional_tests:
   - cr: "deploy/crds/memcached.cr.yaml"
     expected_resources:
-      - kind: Deployment
+      - apiversion: v1
+        kind: Deployment
         name: "example_memcached"
         fields:
           status:
@@ -78,6 +79,10 @@ type UserDefinedTest struct {
 
 // Struct containing a resource and its expected fields
 type ExpectedResource struct {
+    // (if set) Namespace of resource
+    Namespace string `mapstructure:"namespace"`
+    // APIVersion of resource
+    APIVersion string `mapstructure:"apiversion"`
     // Kind of resource
     Kind string `mapstructure:"kind"`
     // Name of resource
