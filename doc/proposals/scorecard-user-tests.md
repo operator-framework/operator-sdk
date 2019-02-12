@@ -36,16 +36,16 @@ functional_tests:
       - kind: Deployment
         name: "example_memcached"
         fields:
-          - status:
-              readyReplicas: 3
-          - spec:
-              template:
-                spec:
-                  containers:
-                    - image: memcached:1.4.36-alpine
+          status:
+            readyReplicas: 3
+          spec:
+            template:
+              spec:
+                containers:
+                  - image: memcached:1.4.36-alpine
     expected_status:
-      - scorecard_function_length:
-        - nodes: 3
+      scorecard_function_length:
+        nodes: 3
     modifications:
       - spec:
         - size: 4
@@ -53,11 +53,12 @@ functional_tests:
           - kind: Deployment
             name: "example_memcached"
             fields:
-              - status:
-                  readyReplicas: 4
+              status:
+                readyReplicas: 4
         expected_status:
-          - scorecard_function_length:
-            - nodes: 4
+          scorecard_function_length:
+            nodes: 4
+
 ```
 
 This is what the golang structs would look like, including comments describing each field:
