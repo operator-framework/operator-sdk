@@ -28,6 +28,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -163,6 +164,17 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 
 	// Extract operator manifests from the CSV if olm-deployed is set.
 	if viper.GetBool(OlmDeployedOpt) {
+		// Get deploymentName from the deployment manifest within the CSV.
+		strat, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
+		if err != nil {
+			return err
+		}
+		stratDep, ok := strat.(*olminstall.StrategyDetailsDeployment)
+		if !ok {
+			return fmt.Errorf("expected StrategyDetailsDeployment, got strategy of type %T", strat)
+		}
+		deploymentName = stratDep.DeploymentSpecs[0].Name
+
 		// Create a temporary CR manifest from metadata if one is not provided.
 		crJSONStr, ok := csv.ObjectMeta.Annotations["alm-examples"]
 		if ok && viper.GetString(CRManifestOpt) == "" {
@@ -197,8 +209,8 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 
 	} else {
-		// if no namespaced manifest path is given, combine
-		// deploy/{service_account,role.yaml,role_binding,operator}.yaml
+		// If no namespaced manifest path is given, combine
+		// deploy/{service_account,role.yaml,role_binding,operator}.yaml.
 		if viper.GetString(NamespacedManifestOpt) == "" {
 			file, err := yamlutil.GenerateCombinedNamespacedManifest(scaffold.DeployDir)
 			if err != nil {
@@ -212,6 +224,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 				}
 			}()
 		}
+		// If no global manifest is given, combine all CRD's in the given CRD's dir.
 		if viper.GetString(GlobalManifestOpt) == "" {
 			gMan, err := yamlutil.GenerateCombinedGlobalManifest(viper.GetString(CRDsDirOpt))
 			if err != nil {

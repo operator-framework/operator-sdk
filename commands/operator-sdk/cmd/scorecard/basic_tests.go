@@ -188,7 +188,8 @@ func writingIntoCRsHasEffect(obj *unstructured.Unstructured) (string, error) {
 		return "", fmt.Errorf("failed to get list of pods in deployment: %v", err)
 	}
 	proxyPod = &pods.Items[0]
-	req := kubeclient.CoreV1().Pods(obj.GetNamespace()).GetLogs(proxyPod.GetName(), &v1.PodLogOptions{Container: "scorecard-proxy"})
+	logOpts := &v1.PodLogOptions{Container: scorecardContainerName}
+	req := kubeclient.CoreV1().Pods(obj.GetNamespace()).GetLogs(proxyPod.GetName(), logOpts)
 	readCloser, err := req.Stream()
 	if err != nil {
 		return "", fmt.Errorf("failed to get logs: %v", err)

@@ -215,7 +215,7 @@ func addProxyContainer(dep *appsv1.Deployment) {
 		pullPolicy = v1.PullAlways
 	}
 	dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, v1.Container{
-		Name:            "scorecard-proxy",
+		Name:            scorecardContainerName,
 		Image:           viper.GetString(ProxyImageOpt),
 		ImagePullPolicy: pullPolicy,
 		Command:         []string{"scorecard-proxy"},
