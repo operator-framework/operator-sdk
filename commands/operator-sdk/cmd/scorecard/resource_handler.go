@@ -65,11 +65,11 @@ func yamlToUnstructured(yamlPath string) (*unstructured.Unstructured, error) {
 // createFromYAMLFile will take a path to a YAML file and create the resource. If it finds a
 // deployment, it will add the scorecard proxy as a container in the deployments podspec.
 func createFromYAMLFile(yamlPath string) error {
-	yamlSpec, err := ioutil.ReadFile(yamlPath)
+	yamlSpecs, err := ioutil.ReadFile(yamlPath)
 	if err != nil {
 		return fmt.Errorf("failed to read file %s: %v", yamlPath, err)
 	}
-	scanner := yamlutil.NewYAMLScanner(yamlSpec)
+	scanner := yamlutil.NewYAMLScanner(yamlSpecs)
 	for scanner.Scan() {
 		obj := &unstructured.Unstructured{}
 		jsonSpec, err := yaml.YAMLToJSON(scanner.Bytes())
