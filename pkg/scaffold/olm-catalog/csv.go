@@ -209,7 +209,7 @@ func (s *CSV) initCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) {
 	csv.Spec.Version = *semver.New(s.CSVVersion)
 	csv.Spec.DisplayName = getDisplayName(s.ProjectName)
 	csv.Spec.Description = "Placeholder description"
-	csv.Spec.Maturity = "alpha"
+	csv.Spec.Maturity = "Basic Install"
 	csv.Spec.Provider = olmapiv1alpha1.AppLink{}
 	csv.Spec.Maintainers = make([]olmapiv1alpha1.Maintainer, 0)
 	csv.Spec.Links = make([]olmapiv1alpha1.AppLink, 0)

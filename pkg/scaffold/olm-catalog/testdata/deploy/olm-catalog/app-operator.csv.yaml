@@ -81,6 +81,6 @@ spec:
           - '*'
         serviceAccountName: app-operator
     strategy: deployment
-  maturity: alpha
+  maturity: Basic Install
   provider: {}
   version: 0.1.0

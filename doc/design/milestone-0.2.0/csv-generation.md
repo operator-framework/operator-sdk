@@ -157,7 +157,7 @@ Optional:
 - `spec.links`: 1..N URL's to websites, documentation, etc. pertaining to the operator or application being managed, each with a `name` and `url`.
 - `spec.selector`: selectors by which the operator can pair resources in a cluster.
 - `spec.icon`: a base64-encoded icon unique to the operator, set in a `base64data` field with a `mediatype`.
-- `spec.maturity`: the operators' stability, ex. `beta`.
+- `spec.maturity`: the operators capability level according to the [maturity model](https://github.com/operator-framework/operator-sdk/blob/master/doc/images/Operator-Maturity-Detailed.png), ex. `Seamless Upgrades`.
 
 Further details on what data each field above should hold are found in the [CSV spec][olm_csv_spec_doc].
 
