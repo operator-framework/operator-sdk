@@ -29,32 +29,41 @@ all: format test build/operator-sdk
 format:
 	$(Q)go fmt $(PKGS)
 
-dep:
+dep: ## Build the vendor directory
 	$(Q)dep ensure -v
 
-dep-update:
+dep-update: ## Update the vendor directory with any new dependencies
 	$(Q)dep ensure -update -v
 
-clean:
+clean: ## Clean up your working environment
 	$(Q)rm -rf build
 
-.PHONY: all test format dep clean
+help: ## Show this help screen
+	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
+	@echo ''
+	@echo 'Available targets are:'
+	@echo ''
+	@grep -E '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ''
 
-install:
+.PHONY: all test format dep clean help
+
+install: ## Build & install the Operator SDK CLI operator-sdk binary
 	$(Q)go install -gcflags "all=-trimpath=${GOPATH}" -asmflags "all=-trimpath=${GOPATH}" $(BUILD_PATH)
 
 release_x86_64 := \
 	build/operator-sdk-$(VERSION)-x86_64-linux-gnu \
 	build/operator-sdk-$(VERSION)-x86_64-apple-darwin
 
-release: clean $(release_x86_64) $(release_x86_64:=.asc)
+release: clean $(release_x86_64) $(release_x86_64:=.asc) ## Release the operator sdk
 
 build/operator-sdk-%-x86_64-linux-gnu: GOARGS = GOOS=linux GOARCH=amd64
 build/operator-sdk-%-x86_64-apple-darwin: GOARGS = GOOS=darwin GOARCH=amd64
 
 build/%:
 	$(Q)$(GOARGS) go build -gcflags "all=-trimpath=${GOPATH}" -asmflags "all=-trimpath=${GOPATH}" -o $@ $(BUILD_PATH)
-	
+
 build/%.asc:
 	$(Q){ \
 	default_key=$$(gpgconf --list-options gpg | awk -F: '$$1 == "default-key" { gsub(/"/,""); print toupper($$10)}'); \
@@ -70,7 +79,7 @@ build/%.asc:
 
 .PHONY: install release_x86_64 release
 
-test: dep test/markdown test/sanity test/unit install test/subcommand test/e2e
+test: dep test/markdown test/sanity test/unit install test/subcommand test/e2e ## Build the binary and run all tests
 
 test/ci-go: test/sanity test/unit test/subcommand test/e2e/go
 
@@ -111,7 +120,7 @@ test/markdown:
 
 .PHONY: test test/sanity test/unit test/subcommand test/e2e test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm test/ci-go test/ci-ansible test/ci-helm test/markdown
 
-image: image/build image/push
+image: image/build image/push ## Build and push all images
 
 image/build: image/build/ansible image/build/helm image/build/scorecard-proxy
 
