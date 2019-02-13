@@ -14,8 +14,16 @@
 
 package scaffold
 
+import "github.com/spf13/afero"
+
 // CustomRenderer is the interface for writing any scaffold file that does
 // not use a template.
 type CustomRenderer interface {
+	// SetFS sets the fs in the CustomRenderer's underlying type if it exists.
+	// SetFS is used to inject the callers' fs into a CustomRenderer, which may
+	// want to write/read from the same fs.
+	SetFS(afero.Fs)
+	// CustomRender performs arbitrary rendering of file data and returns
+	// bytes to write to a file.
 	CustomRender() ([]byte, error)
 }
