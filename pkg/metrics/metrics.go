@@ -20,10 +20,10 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
-	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -172,33 +172,23 @@ func getPodOwnerRef(ctx context.Context, client crclient.Client, ns string) (*me
 // findFinalOwnerRef tries to locate the final controller/owner based on the owner reference provided.
 func findFinalOwnerRef(ctx context.Context, client crclient.Client, ns string, ownerRef *metav1.OwnerReference) (*metav1.OwnerReference, error) {
 	if ownerRef == nil {
-		log.V(1).Info("Pods owner could not be found")
 		return nil, nil
 	}
 
-	switch ownerRef.Kind {
-	case "ReplicaSet":
-		// try to get the ReplicaSet owner
-		rs := &appsv1.ReplicaSet{}
-		key := crclient.ObjectKey{Namespace: ns, Name: ownerRef.Name}
-		if err := client.Get(ctx, key, rs); err != nil {
-			return nil, err
-		}
-		// Get Owner of the ReplicaSet and in turn the Pod belongs to
-		rsOwner := metav1.GetControllerOf(rs)
-		return findFinalOwnerRef(ctx, client, ns, rsOwner)
-	case "DaemonSet", "StatefulSet", "Job", "Deployment", "DeploymentConfig":
-		log.V(1).Info("Pods owner found", "Kind", ownerRef.Kind, "Name", ownerRef.Name, "Namespace", ns)
-		return ownerRef, nil
-	case "":
-		// no owner ref was found, we skip this as by default we return pod anyways
-		log.V(1).Info("Pods owner could not be found, ownerRef was empty", "ownerRef.Kind", ownerRef.Kind)
-	default:
-		log.V(1).Info("Pods owner could not be found", "ownerRef.Kind", ownerRef.Kind)
+	obj := &unstructured.Unstructured{}
+	obj.SetAPIVersion(ownerRef.APIVersion)
+	obj.SetKind(ownerRef.Kind)
+	err := client.Get(ctx, types.NamespacedName{Namespace: ns, Name: ownerRef.Name}, obj)
+	if err != nil {
+		return nil, err
+	}
+	newOwnerRef := metav1.GetControllerOf(obj)
+	if newOwnerRef != nil {
+		return findFinalOwnerRef(ctx, client, ns, newOwnerRef)
 	}
 
-	// By default we return nothing, so later on Pod is returned.
-	return nil, nil
+	log.V(1).Info("Pods owner found", "Kind", ownerRef.Kind, "Name", ownerRef.Name, "Namespace", ns)
+	return ownerRef, nil
 }
 
 func createClient() (crclient.Client, error) {
