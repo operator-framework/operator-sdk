@@ -33,7 +33,7 @@ type AddToScheme struct {
 func (s *AddToScheme) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		fileName := fmt.Sprintf("addtoscheme_%s_%s.go",
-			strings.ToLower(s.Resource.GoImportGroup),
+			s.Resource.GoImportGroup,
 			strings.ToLower(s.Resource.Version))
 		s.Path = filepath.Join(ApisDir, fileName)
 	}

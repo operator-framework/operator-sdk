@@ -51,6 +51,9 @@ type Resource struct {
 	// Parsed from APIVersion
 	Group string
 
+	// GoImportGroup is the non-hyphenated go import group for this resource
+	GoImportGroup string
+
 	// Version is the API version - e.g. v1alpha1
 	// Parsed from APIVersion
 	Version string
@@ -60,9 +63,6 @@ type Resource struct {
 
 	// LowerKind is lowercased(Kind) e.g appservice
 	LowerKind string
-
-	// GoImportGroup is the non-hyphenated go import group for this resource
-	GoImportGroup string
 
 	// TODO: allow user to specify list of short names for Resource e.g app, myapp
 }
@@ -99,8 +99,6 @@ func (r *Resource) Validate() error {
 		r.Resource = rs.Pluralize(strings.ToLower(r.Kind))
 	}
 
-	r.setImportGroup()
-
 	return nil
 }
 
@@ -132,6 +130,9 @@ func (r *Resource) checkAndSetGroups() error {
 	r.FullGroup = fg[0]
 	r.Group = g[0]
 
+	s := strings.ToLower(r.Group)
+	r.GoImportGroup = strings.Replace(s, "-", "", -1)
+
 	if err := validation.IsDNS1123Subdomain(r.Group); err != nil {
 		return fmt.Errorf("group name is invalid: %v", err)
 	}
@@ -149,9 +150,4 @@ func (r *Resource) checkAndSetVersion() error {
 		return errors.New("version is not in the correct Kubernetes version format, ex. v1alpha1")
 	}
 	return nil
-}
-
-func (r *Resource) setImportGroup() {
-	s := strings.ToLower(r.Group)
-	r.GoImportGroup = strings.Replace(s, "-", "", -1)
 }
