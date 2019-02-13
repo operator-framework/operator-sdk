@@ -24,6 +24,7 @@ import (
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -75,6 +76,11 @@ func Add(mgr manager.Manager, options WatchOptions) error {
 	o := &unstructured.Unstructured{}
 	o.SetGroupVersionKind(options.GVK)
 	if err := c.Watch(&source.Kind{Type: o}, &crthandler.EnqueueRequestForObject{}, predicate.GenerationChangedPredicate{}); err != nil {
+		return err
+	}
+
+	// Watch release secrets
+	if err := c.Watch(&source.Kind{Type: &corev1.Secret{}}, &crthandler.EnqueueRequestForOwner{OwnerType: o, IsController: true}); err != nil {
 		return err
 	}
 
