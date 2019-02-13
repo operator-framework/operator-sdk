@@ -162,20 +162,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	}
 
 	// Extract operator manifests from the CSV if olm-deployed is set.
-	rmNSMan := func() {
-		err := os.Remove(viper.GetString(NamespacedManifestOpt))
-		if err != nil {
-			log.Errorf("Could not delete temporary namespace manifest file: (%v)", err)
-		}
-	}
 	if viper.GetBool(OlmDeployedOpt) {
-		nsMan, err := generateCombinedNamespacedManifestFromCSV(csv, viper.GetString(NamespaceOpt))
-		if err != nil {
-			return err
-		}
-		viper.Set(NamespacedManifestOpt, nsMan.Name())
-		defer rmNSMan()
-
 		// Create a temporary CR manifest from metadata if one is not provided.
 		crJSONStr, ok := csv.ObjectMeta.Annotations["alm-examples"]
 		if ok && viper.GetString(CRManifestOpt) == "" {
@@ -218,30 +205,34 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 				return err
 			}
 			viper.Set(NamespacedManifestOpt, file.Name())
-			defer rmNSMan()
+			defer func() {
+				err := os.Remove(viper.GetString(NamespacedManifestOpt))
+				if err != nil {
+					log.Errorf("Could not delete temporary namespace manifest file: (%v)", err)
+				}
+			}()
 		}
-	}
-
-	if viper.GetString(GlobalManifestOpt) == "" {
-		gMan, err := yamlutil.GenerateCombinedGlobalManifest(viper.GetString(CRDsDirOpt))
-		if err != nil {
-			return err
-		}
-		viper.Set(GlobalManifestOpt, gMan.Name())
-		defer func() {
-			err := os.Remove(viper.GetString(GlobalManifestOpt))
+		if viper.GetString(GlobalManifestOpt) == "" {
+			gMan, err := yamlutil.GenerateCombinedGlobalManifest(viper.GetString(CRDsDirOpt))
 			if err != nil {
-				log.Errorf("Could not delete global manifest file: (%v)", err)
+				return err
 			}
-		}()
+			viper.Set(GlobalManifestOpt, gMan.Name())
+			defer func() {
+				err := os.Remove(viper.GetString(GlobalManifestOpt))
+				if err != nil {
+					log.Errorf("Could not delete global manifest file: (%v)", err)
+				}
+			}()
+		}
+		if err := createFromYAMLFile(viper.GetString(GlobalManifestOpt)); err != nil {
+			return fmt.Errorf("failed to create global resources: %v", err)
+		}
+		if err := createFromYAMLFile(viper.GetString(NamespacedManifestOpt)); err != nil {
+			return fmt.Errorf("failed to create namespaced resources: %v", err)
+		}
 	}
 
-	if err := createFromYAMLFile(viper.GetString(GlobalManifestOpt)); err != nil {
-		return fmt.Errorf("failed to create global resources: %v", err)
-	}
-	if err := createFromYAMLFile(viper.GetString(NamespacedManifestOpt)); err != nil {
-		return fmt.Errorf("failed to create namespaced resources: %v", err)
-	}
 	if err := createFromYAMLFile(viper.GetString(CRManifestOpt)); err != nil {
 		return fmt.Errorf("failed to create cr resource: %v", err)
 	}
