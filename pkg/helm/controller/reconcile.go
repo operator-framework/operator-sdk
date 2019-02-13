@@ -75,7 +75,12 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		return reconcile.Result{}, err
 	}
 
-	manager := r.ManagerFactory.NewManager(o)
+	manager, err := r.ManagerFactory.NewManager(o)
+	if err != nil {
+		log.Error(err, "Failed to get release manager")
+		return reconcile.Result{}, err
+	}
+
 	status := types.StatusFor(o)
 	log = log.WithValues("release", manager.ReleaseName())
 
