@@ -181,7 +181,7 @@ func (s *Scaffold) doRender(i input.Input, e input.File, absPath string) error {
 		}
 	}
 	_, err = f.Write(b)
-	log.Infoln("Create", i.Path)
+	log.Infoln("Created", i.Path)
 	return err
 }
 

@@ -31,15 +31,15 @@ time. To do this, initialize a new project:
 ```sh
 $ operator-sdk new --type helm --kind Foo --api-version foo.example.com/v1alpha1 foo-operator
 INFO[0000] Creating new Helm operator 'foo-operator'.
-INFO[0000] Create build/Dockerfile
-INFO[0000] Create watches.yaml
-INFO[0000] Create deploy/service_account.yaml
-INFO[0000] Create deploy/role.yaml
-INFO[0000] Create deploy/role_binding.yaml
-INFO[0000] Create deploy/operator.yaml
-INFO[0000] Create deploy/crds/foo_v1alpha1_foo_crd.yaml
-INFO[0000] Create deploy/crds/foo_v1alpha1_foo_cr.yaml
-INFO[0000] Create helm-charts/foo/
+INFO[0000] Created build/Dockerfile
+INFO[0000] Created watches.yaml
+INFO[0000] Created deploy/service_account.yaml
+INFO[0000] Created deploy/role.yaml
+INFO[0000] Created deploy/role_binding.yaml
+INFO[0000] Created deploy/operator.yaml
+INFO[0000] Created deploy/crds/foo_v1alpha1_foo_crd.yaml
+INFO[0000] Created deploy/crds/foo_v1alpha1_foo_cr.yaml
+INFO[0000] Created helm-charts/foo/
 INFO[0000] Run git init ...
 Initialized empty Git repository in /home/joe/go/src/github.com/operator-framework/foo-operator/.git/
 INFO[0000] Run git init done

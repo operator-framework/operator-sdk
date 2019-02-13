@@ -122,7 +122,7 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 
 	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml, deploy/role_binding.yaml and deploy/operator.yaml
 	if tlConfig.namespacedManPath == "" && !tlConfig.noSetup {
-		file, err := yamlutil.GenerateCombinedNamespacedManifest()
+		file, err := yamlutil.GenerateCombinedNamespacedManifest(scaffold.DeployDir)
 		if err != nil {
 			return err
 		}
@@ -135,7 +135,7 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 		}()
 	}
 	if tlConfig.globalManPath == "" && !tlConfig.noSetup {
-		file, err := yamlutil.GenerateCombinedGlobalManifest()
+		file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
 		if err != nil {
 			return err
 		}
