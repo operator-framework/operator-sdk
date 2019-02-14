@@ -184,11 +184,9 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	var suites []*TestSuite
 	if viper.GetBool(BasicTestsOpt) {
 		conf := BasicTestConfig{
-			Client:        runtimeClient,
-			CR:            obj,
-			ProxyPod:      proxyPod,
-			Timeout:       60,
-			RetryInterval: 5,
+			Client:   runtimeClient,
+			CR:       obj,
+			ProxyPod: proxyPod,
 		}
 		basicTests := NewBasicTestSuite(conf)
 		basicTests.Run(context.TODO())

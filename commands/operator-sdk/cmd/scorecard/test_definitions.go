@@ -51,11 +51,9 @@ func (i TestInfo) GetName() string        { return i.Name }
 func (i TestInfo) GetDescription() string { return i.Description }
 
 type BasicTestConfig struct {
-	Client        client.Client
-	CR            *unstructured.Unstructured
-	ProxyPod      *v1.Pod
-	Timeout       int
-	RetryInterval int
+	Client   client.Client
+	CR       *unstructured.Unstructured
+	ProxyPod *v1.Pod
 }
 
 type OLMTestConfig struct {
