@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Updated the helm-operator to store release state in kubernetes secrets in the same namespace of the custom resource that defines the release. ([#1102](https://github.com/operator-framework/operator-sdk/pull/1102))
+
 ### Deprecated
 
 ### Removed
