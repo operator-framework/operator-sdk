@@ -32,33 +32,35 @@ A new section would be added to the scorecard config file called `functional_tes
 ```yaml
 functional_tests:
   - cr: "deploy/crds/memcached.cr.yaml"
-    expected_resources:
-      - apiversion: v1
-        kind: Deployment
-        name: "example_memcached"
-        fields:
-          status:
-            readyReplicas: 3
-          spec:
-            template:
-              spec:
-                containers:
-                  - image: memcached:1.4.36-alpine
-    expected_status:
-      scorecard_function_length:
-        nodes: 3
+    expected:
+      resources:
+        - apiversion: v1
+          kind: Deployment
+          name: "example_memcached"
+          fields:
+            status:
+              readyReplicas: 3
+            spec:
+              template:
+                spec:
+                  containers:
+                    - image: memcached:1.4.36-alpine
+      status:
+        scorecard_function_length:
+          nodes: 3
     modifications:
       - spec:
         - size: 4
-        expected_resources:
-          - kind: Deployment
-            name: "example_memcached"
-            fields:
-              status:
-                readyReplicas: 4
-        expected_status:
-          scorecard_function_length:
-            nodes: 4
+        expected:
+          resources:
+            - kind: Deployment
+              name: "example_memcached"
+              fields:
+                status:
+                  readyReplicas: 4
+          status:
+            scorecard_function_length:
+              nodes: 4
 
 ```
 
@@ -69,12 +71,17 @@ This is what the golang structs would look like, including comments describing e
 type UserDefinedTest struct {
     // Path to cr to be used for testing
     CRPath string `mapstructure:"cr"`
-    // Resources expected to be created after the operator reacts to the CR
-    ExpectedResources []ExpectedResource `mapstructure:"expected_resources"`
-    // Expected values in CR's status after the operator reacts to the CR
-    ExpectedStatus map[string]interface{} `mapstructure:"expected_status"`
+    // Expected resources and status
+    Expected Expected `mapstructure:"expected"`
     // Sub-tests modifying a few fields with expected changes
     Modifications []Modification `mapstructure:"modifications"`
+}
+
+type Expected struct {
+    // Resources expected to be created after the operator reacts to the CR
+    ExpectedResources []ExpectedResource `mapstructure:"resources"`
+    // Expected values in CR's status after the operator reacts to the CR
+    ExpectedStatus map[string]interface{} `mapstructure:"status"`
 }
 
 // Struct containing a resource and its expected fields
@@ -95,10 +102,8 @@ type ExpectedResource struct {
 type Modification struct {
     // a map of the spec fields to modify
     Spec map[string]interface{} `mapstructure:"spec"`
-    // the resources we expect to be created after the spec fields are modified
-    ExpectedResources []ExpectedResource `mapstructure:"expected_resources"`
-    // the status we expect to see after the spec fields are modified
-    ExpectedStatus map[string]interface{} `mapstructure:"expected_status"`
+    // Expected resources and status
+    Expected Expected `mapstructure:"expected"`
 }
 ```
 
@@ -108,8 +113,8 @@ these, we can create some functions for these checks that are prepended by `scor
 example, `scorecard_function_length` would check that each field listed under it matches the specified length (like `nodes: 4`). If the yaml key does not
 start with `scorecard_function_`, we do a simple match (like `status.readyReplicas: 4`).
 
-This design would allow us to replace the old "Operator actions are reflected in status" (which would be tested by the `expected_status` check) and
-"Writing into CRs has an effect" (which would be tested by the `exptected_resources` check) tests.
+This design would allow us to replace the old "Operator actions are reflected in status" (which would be tested by the `expected/status` check) and
+"Writing into CRs has an effect" (which would be tested by the `exptected/resources` check) tests.
 
 ## User facing usage (if needed)
 
