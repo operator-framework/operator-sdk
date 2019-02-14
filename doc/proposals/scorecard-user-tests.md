@@ -114,7 +114,7 @@ example, `scorecard_function_length` would check that each field listed under it
 start with `scorecard_function_`, we do a simple match (like `status.readyReplicas: 4`).
 
 This design would allow us to replace the old "Operator actions are reflected in status" (which would be tested by the `expected/status` check) and
-"Writing into CRs has an effect" (which would be tested by the `exptected/resources` check) tests.
+"Writing into CRs has an effect" (which would be tested by the `expected/resources` check) tests.
 
 ## User facing usage (if needed)
 
