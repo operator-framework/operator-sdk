@@ -198,7 +198,7 @@ INFO[0000] Fill in the following required fields in file deploy/olm-catalog/oper
 	spec.maintainers
 	spec.provider
 	spec.labels
-INFO[0000] Create deploy/olm-catalog/operator-name/0.1.0/operator-name.v0.1.0.clusterserviceversion.yaml     
+INFO[0000] Created deploy/olm-catalog/operator-name/0.1.0/operator-name.v0.1.0.clusterserviceversion.yaml     
 ```
 
 ## migrate
