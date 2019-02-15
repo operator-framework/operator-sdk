@@ -134,7 +134,7 @@ func CreateChart(projectDir string, opts CreateChartOptions) (*scaffold.Resource
 	if err != nil {
 		return nil, nil, err
 	}
-	log.Infof("Create %s/%s/", HelmChartsDir, c.GetMetadata().GetName())
+	log.Infof("Created %s/%s/", HelmChartsDir, c.GetMetadata().GetName())
 	return r, c, nil
 }
 

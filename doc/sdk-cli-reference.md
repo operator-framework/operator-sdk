@@ -161,7 +161,7 @@ pkg/apis/app/v1alpha1/
 
 $ operator-sdk generate openapi
 INFO[0000] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
-INFO[0001] Create deploy/crds/app_v1alpha1_appservice_crd.yaml
+INFO[0001] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
 INFO[0001] Code-generation complete.                    
 
 $ tree pkg/apis/app/v1alpha1/
@@ -195,8 +195,8 @@ INFO[0000] Fill in the following required fields in file deploy/olm-catalog/oper
 	spec.maintainers
 	spec.provider
 	spec.labels
-INFO[0000] Create deploy/olm-catalog/operator-name.csv.yaml     
-INFO[0000] Create deploy/olm-catalog/_generated.concat_crd.yaml
+INFO[0000] Created deploy/olm-catalog/operator-name.csv.yaml     
+INFO[0000] Created deploy/olm-catalog/_generated.concat_crd.yaml
 ```
 
 ## migrate
@@ -214,11 +214,11 @@ $ operator-sdk migrate
 2019/01/10 15:02:45 No playbook was found, so not including it in the new Dockerfile
 2019/01/10 15:02:45 renamed Dockerfile to build/Dockerfile.sdkold and replaced with newer version
 2019/01/10 15:02:45 Compare the new Dockerfile to your old one and manually migrate any customizations
-INFO[0000] Create cmd/manager/main.go
-INFO[0000] Create Gopkg.toml
-INFO[0000] Create build/Dockerfile
-INFO[0000] Create bin/entrypoint
-INFO[0000] Create bin/user_setup
+INFO[0000] Created cmd/manager/main.go
+INFO[0000] Created Gopkg.toml
+INFO[0000] Created build/Dockerfile
+INFO[0000] Created bin/entrypoint
+INFO[0000] Created bin/user_setup
 ```
 
 ## new
@@ -311,16 +311,16 @@ Adds the API definition for a new custom resource under `pkg/apis` and generates
 ```console
 $ operator-sdk add api --api-version app.example.com/v1alpha1 --kind AppService
 INFO[0000] Generating api version app.example.com/v1alpha1 for kind AppService.
-INFO[0000] Create pkg/apis/app/v1alpha1/appservice_types.go
-INFO[0000] Create pkg/apis/addtoscheme_app_v1alpha1.go  
-INFO[0000] Create pkg/apis/app/v1alpha1/register.go     
-INFO[0000] Create pkg/apis/app/v1alpha1/doc.go          
-INFO[0000] Create deploy/crds/app_v1alpha1_appservice_cr.yaml
-INFO[0000] Create deploy/crds/app_v1alpha1_appservice_crd.yaml
+INFO[0000] Created pkg/apis/app/v1alpha1/appservice_types.go
+INFO[0000] Created pkg/apis/addtoscheme_app_v1alpha1.go  
+INFO[0000] Created pkg/apis/app/v1alpha1/register.go     
+INFO[0000] Created pkg/apis/app/v1alpha1/doc.go          
+INFO[0000] Created deploy/crds/app_v1alpha1_appservice_cr.yaml
+INFO[0000] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
 INFO[0001] Running deepcopy code-generation for Custom Resource group versions: [app:[v1alpha1], ]
 INFO[0002] Code-generation complete.                    
 INFO[0002] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
-INFO[0004] Create deploy/crds/app_v1alpha1_appservice_crd.yaml
+INFO[0004] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
 INFO[0004] Code-generation complete.                    
 INFO[0004] API generation complete.
 ```
@@ -338,8 +338,8 @@ Adds a new controller under `pkg/controller/<kind>/...` that, by default, reconc
 
 ```console
 $ operator-sdk add controller --api-version app.example.com/v1alpha1 --kind AppService
-Create pkg/controller/appservice/appservice_controller.go
-Create pkg/controller/add_appservice.go
+Created pkg/controller/appservice/appservice_controller.go
+Created pkg/controller/add_appservice.go
 ```
 
 ### crd
@@ -356,8 +356,8 @@ Generates the CRD and the CR files for the specified api-version and kind.
 ```console
 $ operator-sdk add crd --api-version app.example.com/v1alpha1 --kind AppService
 Generating custom resource definition (CRD) files
-Create deploy/crds/app_v1alpha1_appservice_crd.yaml
-Create deploy/crds/app_v1alpha1_appservice_cr.yaml
+Created deploy/crds/app_v1alpha1_appservice_crd.yaml
+Created deploy/crds/app_v1alpha1_appservice_cr.yaml
 ```
 
 ## run

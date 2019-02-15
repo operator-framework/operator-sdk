@@ -21,6 +21,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+
+	"github.com/spf13/afero"
 )
 
 const ConcatCRDYamlFile = "_generated.concat_crd.yaml"
@@ -45,6 +47,8 @@ func (s *ConcatCRD) GetInput() (input.Input, error) {
 	}
 	return s.Input, nil
 }
+
+func (s *ConcatCRD) SetFS(_ afero.Fs) {}
 
 // CustomRender returns the bytes of all CRD manifests concatenated into one file.
 func (s *ConcatCRD) CustomRender() ([]byte, error) {
