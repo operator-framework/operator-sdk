@@ -28,6 +28,7 @@ import (
 type Test interface {
 	GetName() string
 	GetDescription() string
+	IsCumulative() bool
 	Run(context.Context) *TestResult
 }
 
@@ -37,18 +38,19 @@ type TestResult struct {
 	MaximumPoints int
 	Suggestions   []string
 	Errors        []error
-	isCumulative  bool
 }
 
 type TestInfo struct {
 	Name        string
 	Description string
+	Cumulative  bool
 }
 
 // Any struct that embeds TestInfo only needs to
 // implement Run to implement the Test interface
 func (i TestInfo) GetName() string        { return i.Name }
 func (i TestInfo) GetDescription() string { return i.Description }
+func (i TestInfo) IsCumulative() bool     { return i.Cumulative }
 
 type BasicTestConfig struct {
 	Client   client.Client
@@ -84,6 +86,7 @@ func NewCheckSpecTest(conf BasicTestConfig) *CheckSpecTest {
 		TestInfo: TestInfo{
 			Name:        "Spec Block Exists",
 			Description: "Custom Resource has a Spec Block",
+			Cumulative:  false,
 		},
 	}
 }
@@ -99,6 +102,7 @@ func NewCheckStatusTest(conf BasicTestConfig) *CheckStatusTest {
 		TestInfo: TestInfo{
 			Name:        "Status Block Exists",
 			Description: "Custom Resource has a Status Block",
+			Cumulative:  false,
 		},
 	}
 }
@@ -114,6 +118,7 @@ func NewWritingIntoCRsHasEffectTest(conf BasicTestConfig) *WritingIntoCRsHasEffe
 		TestInfo: TestInfo{
 			Name:        "Writing into CRs has an effect",
 			Description: "A CR sends PUT/POST requests to the API server to modify resources in response to spec block changes",
+			Cumulative:  false,
 		},
 	}
 }
@@ -129,6 +134,7 @@ func NewCRDsHaveValidationTest(conf OLMTestConfig) *CRDsHaveValidationTest {
 		TestInfo: TestInfo{
 			Name:        "Provided APIs have validation",
 			Description: "All CRDs have an OpenAPI validation subsection",
+			Cumulative:  true,
 		},
 	}
 }
@@ -144,6 +150,7 @@ func NewCRDsHaveResourcesTest(conf OLMTestConfig) *CRDsHaveResourcesTest {
 		TestInfo: TestInfo{
 			Name:        "Owned CRDs have resources listed",
 			Description: "All Owned CRDs contain a resources subsection",
+			Cumulative:  true,
 		},
 	}
 }
@@ -159,6 +166,7 @@ func NewAnnotationsContainExamplesTest(conf OLMTestConfig) *AnnotationsContainEx
 		TestInfo: TestInfo{
 			Name:        "CRs have at least 1 example",
 			Description: "The CSV's metadata contains an alm-examples section",
+			Cumulative:  true,
 		},
 	}
 }
@@ -174,6 +182,7 @@ func NewSpecDescriptorsTest(conf OLMTestConfig) *SpecDescriptorsTest {
 		TestInfo: TestInfo{
 			Name:        "Spec fields with descriptors",
 			Description: "All spec fields have matching descriptors in the CSV",
+			Cumulative:  true,
 		},
 	}
 }
@@ -189,6 +198,7 @@ func NewStatusDescriptorsTest(conf OLMTestConfig) *StatusDescriptorsTest {
 		TestInfo: TestInfo{
 			Name:        "Status fields with descriptors",
 			Description: "All status fields have matching descriptors in the CSV",
+			Cumulative:  true,
 		},
 	}
 }
