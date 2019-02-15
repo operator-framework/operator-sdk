@@ -73,7 +73,7 @@ var (
 	runtimeClient  client.Client
 	restMapper     *restmapper.DeferredDiscoveryRESTMapper
 	deploymentName string
-	proxyPod       *v1.Pod
+	proxyPodGlobal *v1.Pod
 	cleanupFns     []cleanupFn
 	ScorecardConf  string
 )
@@ -187,7 +187,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		conf := BasicTestConfig{
 			Client:   runtimeClient,
 			CR:       obj,
-			ProxyPod: proxyPod,
+			ProxyPod: proxyPodGlobal,
 		}
 		basicTests := NewBasicTestSuite(conf)
 		basicTests.Run(context.TODO())
@@ -214,7 +214,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 			CR:       obj,
 			CSV:      csv,
 			CRDsDir:  viper.GetString(CRDsDirOpt),
-			ProxyPod: proxyPod,
+			ProxyPod: proxyPodGlobal,
 		}
 		olmTests := NewOLMTestSuite(conf)
 		olmTests.Run(context.TODO())

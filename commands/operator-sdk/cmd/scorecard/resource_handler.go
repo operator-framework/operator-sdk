@@ -169,7 +169,7 @@ func createFromYAMLFile(yamlPath string) error {
 				if len(pods.Items) == 1 {
 					// if the pod has a deletion timestamp, it is the old pod; wait for pod with no deletion timestamp
 					if pods.Items[0].GetDeletionTimestamp() == nil {
-						proxyPod = &pods.Items[0]
+						proxyPodGlobal = &pods.Items[0]
 						return true, nil
 					}
 				} else {
