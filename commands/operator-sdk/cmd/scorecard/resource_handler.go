@@ -151,6 +151,8 @@ func createFromYAMLFile(yamlPath string) error {
 						proxyPod = &pods.Items[0]
 						return true, nil
 					}
+				} else {
+					log.Warn("Operator deployment has more than 1 pod")
 				}
 				return false, nil
 			})

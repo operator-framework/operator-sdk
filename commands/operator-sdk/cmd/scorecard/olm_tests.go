@@ -191,26 +191,39 @@ func getUsedResources() ([]schema.GroupVersionKind, error) {
 		removedOptions := strings.Split(uri, "?")[0]
 		splitURI := strings.Split(removedOptions, "/")
 		// first string is empty string ""
+		if len(splitURI) < 2 {
+			log.Warnf("Invalid URI: \"%s\"", uri)
+			continue
+		}
 		splitURI = splitURI[1:]
 		switch len(splitURI) {
 		case 3:
 			if splitURI[0] == "api" {
 				resources = append(resources, schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[2]})
+				break
 			}
+			log.Warnf("Invalid URI: \"%s\"", uri)
 		case 4:
 			if splitURI[0] == "apis" {
 				resources = append(resources, schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[3]})
+				break
 			}
+			log.Warnf("Invalid URI: \"%s\"", uri)
 		case 5:
 			if splitURI[0] == "api" {
 				resources = append(resources, schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[4]})
+				break
 			} else if splitURI[0] == "apis" {
 				resources = append(resources, schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[3]})
+				break
 			}
+			log.Warnf("Invalid URI: \"%s\"", uri)
 		case 6, 7:
 			if splitURI[0] == "apis" {
 				resources = append(resources, schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[5]})
+				break
 			}
+			log.Warnf("Invalid URI: \"%s\"", uri)
 		}
 	}
 	// remove duplicates
