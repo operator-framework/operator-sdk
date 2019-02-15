@@ -29,6 +29,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/afero"
 	"golang.org/x/tools/imports"
 )
 
@@ -36,13 +37,13 @@ import (
 type Scaffold struct {
 	// Repo is the go project package
 	Repo string
-
 	// AbsProjectPath is the absolute path to the project root, including the project directory.
 	AbsProjectPath string
-
 	// ProjectName is the operator's name, ex. app-operator
 	ProjectName string
-
+	// Fs is the filesystem GetWriter uses to write scaffold files.
+	Fs afero.Fs
+	// GetWriter returns a writer for writing scaffold files.
 	GetWriter func(path string, mode os.FileMode) (io.Writer, error)
 }
 
@@ -74,8 +75,11 @@ func (s *Scaffold) configure(cfg *input.Config) {
 
 // Execute executes scaffolding the Files
 func (s *Scaffold) Execute(cfg *input.Config, files ...input.File) error {
+	if s.Fs == nil {
+		s.Fs = afero.NewOsFs()
+	}
 	if s.GetWriter == nil {
-		s.GetWriter = fileutil.NewFileWriter().WriteCloser
+		s.GetWriter = fileutil.NewFileWriterFS(s.Fs).WriteCloser
 	}
 
 	// Configure s using common fields from cfg.
@@ -107,7 +111,7 @@ func (s *Scaffold) doFile(e input.File) error {
 	absFilePath := filepath.Join(s.AbsProjectPath, i.Path)
 
 	// Check if the file to write already exists
-	if _, err := os.Stat(absFilePath); err == nil || os.IsExist(err) {
+	if _, err := s.Fs.Stat(absFilePath); err == nil || os.IsExist(err) {
 		switch i.IfExistsAction {
 		case input.Overwrite:
 		case input.Skip:
@@ -141,6 +145,7 @@ func (s *Scaffold) doRender(i input.Input, e input.File, absPath string) error {
 
 	var b []byte
 	if c, ok := e.(CustomRenderer); ok {
+		c.SetFS(s.Fs)
 		// CustomRenderers have a non-template method of file rendering.
 		if b, err = c.CustomRender(); err != nil {
 			return err
@@ -168,13 +173,15 @@ func (s *Scaffold) doRender(i input.Input, e input.File, absPath string) error {
 	}
 
 	// Files being overwritten must be trucated to len 0 so no old bytes remain.
-	if _, err = os.Stat(absPath); err == nil && i.IfExistsAction == input.Overwrite {
-		if err = os.Truncate(absPath, 0); err != nil {
-			return err
+	if _, err = s.Fs.Stat(absPath); err == nil && i.IfExistsAction == input.Overwrite {
+		if file, ok := f.(afero.File); ok {
+			if err = file.Truncate(0); err != nil {
+				return err
+			}
 		}
 	}
 	_, err = f.Write(b)
-	log.Infoln("Create", i.Path)
+	log.Infoln("Created", i.Path)
 	return err
 }
 
