@@ -79,9 +79,9 @@ type UserDefinedTest struct {
 
 type Expected struct {
     // Resources expected to be created after the operator reacts to the CR
-    ExpectedResources []ExpectedResource `mapstructure:"resources"`
+    Resources []ExpectedResource `mapstructure:"resources"`
     // Expected values in CR's status after the operator reacts to the CR
-    ExpectedStatus map[string]interface{} `mapstructure:"status"`
+    Status map[string]interface{} `mapstructure:"status"`
 }
 
 // Struct containing a resource and its expected fields
@@ -107,7 +107,7 @@ type Modification struct {
 }
 ```
 
-For `ExpectedStatus` fields and `ExpectedResource.Fields`, we can implement a bit of extra computation instead of simple string checking. For instance,
+For `Status` fields and `ExpectedResource.Fields`, we can implement a bit of extra computation instead of simple string checking. For instance,
 in the memcached-operator test, we should expect that the length of the `nodes` field (which is an array) has a certain length. To implement functions like
 these, we can create some functions for these checks that are prepended by `scorecard_function_` and take an array of objects. For instance, in the above
 example, `scorecard_function_length` would check that each field listed under it matches the specified length (like `nodes: 4`). If the yaml key does not
