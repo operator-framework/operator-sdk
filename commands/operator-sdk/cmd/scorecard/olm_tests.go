@@ -157,7 +157,7 @@ func getUsedResources() ([]schema.GroupVersionKind, error) {
 	if err != nil {
 		return nil, err
 	}
-	var resources []schema.GroupVersionKind
+	resources := map[schema.GroupVersionKind]bool{}
 	for _, line := range strings.Split(logs, "\n") {
 		logMap := make(map[string]interface{})
 		err := json.Unmarshal([]byte(line), &logMap)
@@ -199,43 +199,38 @@ func getUsedResources() ([]schema.GroupVersionKind, error) {
 		switch len(splitURI) {
 		case 3:
 			if splitURI[0] == "api" {
-				resources = append(resources, schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[2]})
+				resources[schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[2]}] = true
 				break
 			}
 			log.Warnf("Invalid URI: \"%s\"", uri)
 		case 4:
 			if splitURI[0] == "apis" {
-				resources = append(resources, schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[3]})
+				resources[schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[3]}] = true
 				break
 			}
 			log.Warnf("Invalid URI: \"%s\"", uri)
 		case 5:
 			if splitURI[0] == "api" {
-				resources = append(resources, schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[4]})
+				resources[schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[4]}] = true
 				break
 			} else if splitURI[0] == "apis" {
-				resources = append(resources, schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[3]})
+				resources[schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[3]}] = true
 				break
 			}
 			log.Warnf("Invalid URI: \"%s\"", uri)
 		case 6, 7:
 			if splitURI[0] == "apis" {
-				resources = append(resources, schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[5]})
+				resources[schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[5]}] = true
 				break
 			}
 			log.Warnf("Invalid URI: \"%s\"", uri)
 		}
 	}
-	// remove duplicates
-	addedResources := map[schema.GroupVersionKind]bool{}
-	var deduplicatedResources []schema.GroupVersionKind
-	for _, resource := range resources {
-		if !addedResources[resource] {
-			addedResources[resource] = true
-			deduplicatedResources = append(deduplicatedResources, resource)
-		}
+	var resourcesArr []schema.GroupVersionKind
+	for gvk := range resources {
+		resourcesArr = append(resourcesArr, gvk)
 	}
-	return deduplicatedResources, nil
+	return resourcesArr, nil
 }
 
 // annotationsContainExamples makes sure that the CSVs list at least 1 example for the CR
