@@ -223,23 +223,29 @@ func parseCRDDescriptionFromYAML(yamlDoc []byte) (*olmapiv1alpha1.CRDDescription
 // Apply updates all CRDDescriptions with any user-defined data in csv's
 // CRDDescriptions.
 func (u *CSVCustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
-	crdDescSet := make(map[string]*olmapiv1alpha1.CRDDescription)
-	for _, desc := range u.Owned {
-		crdDescSet[desc.Name] = &desc
-	}
-	for _, desc := range u.Required {
-		crdDescSet[desc.Name] = &desc
-	}
+	set := make(map[string]*olmapiv1alpha1.CRDDescription)
 	for _, csvDesc := range csv.GetAllCRDDescriptions() {
-		if uDesc, ok := crdDescSet[csvDesc.Name]; ok {
-			uDesc.DisplayName = csvDesc.DisplayName
-			uDesc.Description = csvDesc.Description
-			uDesc.ActionDescriptor = csvDesc.ActionDescriptor
-			uDesc.SpecDescriptors = csvDesc.SpecDescriptors
-			uDesc.StatusDescriptors = csvDesc.StatusDescriptors
-			uDesc.Resources = csvDesc.Resources
+		set[csvDesc.Name] = &csvDesc
+	}
+	du := u.DeepCopy()
+	for i, uDesc := range du.Owned {
+		if csvDesc, ok := set[uDesc.Name]; ok {
+			d := csvDesc.DeepCopy()
+			d.Name = uDesc.Name
+			d.Version = uDesc.Version
+			d.Kind = uDesc.Kind
+			du.Owned[i] = *d
 		}
 	}
-	csv.Spec.CustomResourceDefinitions = *u.CustomResourceDefinitions
+	for i, uDesc := range du.Required {
+		if csvDesc, ok := set[uDesc.Name]; ok {
+			d := csvDesc.DeepCopy()
+			d.Name = uDesc.Name
+			d.Version = uDesc.Version
+			d.Kind = uDesc.Kind
+			du.Required[i] = *d
+		}
+	}
+	csv.Spec.CustomResourceDefinitions = *du
 	return nil
 }

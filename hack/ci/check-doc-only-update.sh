@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ex
+set -e
 
 # Make sure the TRAVIS_COMMIT_RANGE is valid, by catching any errors and exiting.
 if [ -z "$TRAVIS_COMMIT_RANGE" ] || ! git rev-list --quiet $TRAVIS_COMMIT_RANGE; then
