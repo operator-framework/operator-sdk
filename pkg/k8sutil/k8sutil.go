@@ -112,7 +112,7 @@ func GetPod(ctx context.Context, client crclient.Client, ns string) (*corev1.Pod
 		return nil, err
 	}
 
-	log.V(1).Info("Found Pod currently running in", "Pod.Name", pod.Name)
+	log.V(1).Info("Found Pod", "Pod.Namespace", ns, "Pod.Name", pod.Name)
 
 	return pod, nil
 }
