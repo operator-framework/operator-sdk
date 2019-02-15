@@ -201,6 +201,10 @@ func getUsedResources() ([]schema.GroupVersionKind, error) {
 			if splitURI[0] == "api" {
 				resources[schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[2]}] = true
 				break
+			} else if splitURI[0] == "apis" {
+				// this situation happens when the client enumerates the available resources of the server
+				// Example: "/apis/apps/v1?timeout=32s"
+				break
 			}
 			log.Warnf("Invalid URI: \"%s\"", uri)
 		case 4:
