@@ -70,7 +70,7 @@ type TestSuite struct {
 	TestInfo
 	Tests       []Test
 	TestResults []*TestResult
-	Weights     map[string]int
+	Weights     map[string]float64
 }
 
 // Test definitions
@@ -210,9 +210,9 @@ func NewBasicTestSuite(conf BasicTestConfig) *TestSuite {
 		"Basic Tests",
 		"Test suite that runs basic, functional operator tests",
 	)
-	ts.AddTest(NewCheckSpecTest(conf), 44)
-	ts.AddTest(NewCheckStatusTest(conf), 28)
-	ts.AddTest(NewWritingIntoCRsHasEffectTest(conf), 28)
+	ts.AddTest(NewCheckSpecTest(conf), 1.5)
+	ts.AddTest(NewCheckStatusTest(conf), 1)
+	ts.AddTest(NewWritingIntoCRsHasEffectTest(conf), 1)
 
 	return ts
 }
@@ -223,11 +223,11 @@ func NewOLMTestSuite(conf OLMTestConfig) *TestSuite {
 		"Test suite checks if an operator's CSV follows best practices",
 	)
 
-	ts.AddTest(NewCRDsHaveValidationTest(conf), 24)
-	ts.AddTest(NewCRDsHaveResourcesTest(conf), 19)
-	ts.AddTest(NewAnnotationsContainExamplesTest(conf), 19)
-	ts.AddTest(NewSpecDescriptorsTest(conf), 19)
-	ts.AddTest(NewStatusDescriptorsTest(conf), 19)
+	ts.AddTest(NewCRDsHaveValidationTest(conf), 1.25)
+	ts.AddTest(NewCRDsHaveResourcesTest(conf), 1)
+	ts.AddTest(NewAnnotationsContainExamplesTest(conf), 1)
+	ts.AddTest(NewSpecDescriptorsTest(conf), 1)
+	ts.AddTest(NewStatusDescriptorsTest(conf), 1)
 
 	return ts
 }
@@ -253,7 +253,7 @@ func ResultsCumulative(results []TestResult) (earned, max int) {
 	return earned, max
 }
 
-func (ts *TestSuite) AddTest(t Test, weight int) {
+func (ts *TestSuite) AddTest(t Test, weight float64) {
 	ts.Tests = append(ts.Tests, t)
 	ts.Weights[t.GetName()] = weight
 }
@@ -262,9 +262,15 @@ func (ts *TestSuite) TotalScore() (score int) {
 	floatScore := 0.0
 	for _, result := range ts.TestResults {
 		if result.MaximumPoints != 0 {
-			floatScore += (float64(result.EarnedPoints) / float64(result.MaximumPoints)) * float64(ts.Weights[result.Test.GetName()])
+			floatScore += (float64(result.EarnedPoints) / float64(result.MaximumPoints)) * ts.Weights[result.Test.GetName()]
 		}
 	}
+	// scale to a percentage
+	addedWeights := 0.0
+	for _, weight := range ts.Weights {
+		addedWeights += weight
+	}
+	floatScore = floatScore * (100 / addedWeights)
 	return int(floatScore)
 }
 
@@ -280,6 +286,6 @@ func NewTestSuite(name, description string) *TestSuite {
 			Name:        name,
 			Description: description,
 		},
-		Weights: make(map[string]int),
+		Weights: make(map[string]float64),
 	}
 }
