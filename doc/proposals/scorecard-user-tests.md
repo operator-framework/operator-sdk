@@ -31,12 +31,12 @@ A new section would be added to the scorecard config file called `functional_tes
 
 ```yaml
 functional_tests:
-  - cr: "deploy/crds/memcached.cr.yaml"
+  - cr: "deploy/crds/cache_v1alpha1_memcached_cr.yaml"
     expected:
       resources:
-        - apiversion: v1
+        - apiVersion: apps/v1
           kind: Deployment
-          name: "example_memcached"
+          name: "example-memcached"
           fields:
             status:
               readyReplicas: 3
@@ -61,7 +61,6 @@ functional_tests:
           status:
             scorecard_function_length:
               nodes: 4
-
 ```
 
 This is what the golang structs would look like, including comments describing each field:
