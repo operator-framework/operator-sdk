@@ -108,7 +108,7 @@ func GetPod(ctx context.Context, client crclient.Client, ns string) (*corev1.Pod
 	key := crclient.ObjectKey{Namespace: ns, Name: podName}
 	err := client.Get(ctx, key, pod)
 	if err != nil {
-		log.Error(err, "Failed to get Pod currently running in", "Pod.Namespace", ns, "Pod.Name", podName)
+		log.Error(err, "Failed to get Pod", "Pod.Namespace", ns, "Pod.Name", podName)
 		return nil, err
 	}
 
