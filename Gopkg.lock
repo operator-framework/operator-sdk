@@ -425,10 +425,10 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:89cd2208bdeb192cc83ee287216af3c987fc87a90b9087718ad6631b636cefcf"
+  digest = "1:c13aea0b77243f1fcd0253583c90e180010a3a5bbdf43f61a3daddc48d88b0b2"
   name = "github.com/iancoleman/strcase"
   packages = ["."]
-  pruneopts = "UT"
+  pruneopts = "NUT"
   revision = "3605ed457bf7f8caa1371b4fafadadc026673479"
 
 [[projects]]
