@@ -147,14 +147,7 @@ func getPodOwnerRef(ctx context.Context, client crclient.Client, ns string) (*me
 	if err != nil {
 		return nil, err
 	}
-	podOwnerRefs := &metav1.OwnerReference{
-		APIVersion: "core/v1",
-		Kind:       "Pod",
-		Name:       pod.Name,
-		UID:        pod.UID,
-		Controller: &trueVar,
-	}
-
+	podOwnerRefs := metav1.NewControllerRef(pod, pod.GroupVersionKind())
 	// Get Owner that the Pod belongs to
 	ownerRef := metav1.GetControllerOf(pod)
 	finalOwnerRef, err := findFinalOwnerRef(ctx, client, ns, ownerRef)
