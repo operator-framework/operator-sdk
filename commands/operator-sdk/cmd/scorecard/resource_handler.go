@@ -355,7 +355,7 @@ func addResourceCleanup(obj runtime.Object, key types.NamespacedName) {
 	})
 }
 
-func getProxyLogs() (string, error) {
+func getProxyLogs(proxyPod *v1.Pod) (string, error) {
 	// need a standard kubeclient for pod logs
 	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
 	if err != nil {

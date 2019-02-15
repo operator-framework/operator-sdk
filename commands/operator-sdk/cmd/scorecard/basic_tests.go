@@ -60,7 +60,7 @@ func (t *CheckStatusTest) Run(ctx context.Context) *TestResult {
 // and/or POST requests to the API server, which should mean that it is creating or modifying resources.
 func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *TestResult {
 	res := &TestResult{Test: t, MaximumPoints: 1}
-	logs, err := getProxyLogs()
+	logs, err := getProxyLogs(t.ProxyPod)
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("error getting proxy logs: %v", err))
 		return res

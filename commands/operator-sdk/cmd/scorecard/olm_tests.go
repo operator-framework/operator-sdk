@@ -24,6 +24,7 @@ import (
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
+	v1 "k8s.io/api/core/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -120,7 +121,7 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
 		res.MaximumPoints++
 		gvk := t.CR.GroupVersionKind()
 		if strings.EqualFold(crd.Version, gvk.Version) && matchKind(gvk.Kind, crd.Kind) {
-			resources, err := getUsedResources()
+			resources, err := getUsedResources(t.ProxyPod)
 			if err != nil {
 				log.Warningf("getUsedResource failed: %v", err)
 			}
@@ -151,8 +152,8 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
 	return res
 }
 
-func getUsedResources() ([]schema.GroupVersionKind, error) {
-	logs, err := getProxyLogs()
+func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
+	logs, err := getProxyLogs(proxyPod)
 	if err != nil {
 		return nil, err
 	}
