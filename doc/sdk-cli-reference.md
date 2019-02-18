@@ -186,7 +186,6 @@ Writes a Cluster Service Version (CSV) manifest and optionally CRD files to `dep
 * `--from-version` string - Semantic version of CSV manifest to use as a base for a new version.
 * `--csv-config` string - Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml.
 * `--update-crds` Update CRD manifests in deploy/{operator-name}/{csv-version} using the latest CRD manifests.
-* `--crds-dir` string - Dir containing CRD manifests. Only valid with `--update-crds`. Defaults to deploy/crds.
 
 #### Example
 
