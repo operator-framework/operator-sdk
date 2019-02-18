@@ -15,7 +15,6 @@
 package scorecard
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -24,17 +23,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
-
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -172,38 +164,10 @@ func modifySpecAndCheck(specMap map[string]interface{}, obj *unstructured.Unstru
 // and/or POST requests to the API server, which should mean that it is creating or modifying resources.
 func writingIntoCRsHasEffect(obj *unstructured.Unstructured) (string, error) {
 	test := scorecardTest{testType: basicOperator, name: "Writing into CRs has an effect", maximumPoints: 1}
-	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
+	logs, err := getProxyLogs()
 	if err != nil {
-		return "", fmt.Errorf("failed to create kubeclient: %v", err)
+		return "", err
 	}
-	dep := &appsv1.Deployment{}
-	err = runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: deploymentName}, dep)
-	if err != nil {
-		return "", fmt.Errorf("failed to get newly created operator deployment: %v", err)
-	}
-	set := labels.Set(dep.Spec.Selector.MatchLabels)
-	pods := &v1.PodList{}
-	err = runtimeClient.List(context.TODO(), &client.ListOptions{LabelSelector: set.AsSelector()}, pods)
-	if err != nil {
-		return "", fmt.Errorf("failed to get list of pods in deployment: %v", err)
-	}
-	proxyPod = &pods.Items[0]
-	req := kubeclient.CoreV1().Pods(obj.GetNamespace()).GetLogs(proxyPod.GetName(), &v1.PodLogOptions{Container: "scorecard-proxy"})
-	readCloser, err := req.Stream()
-	if err != nil {
-		return "", fmt.Errorf("failed to get logs: %v", err)
-	}
-	defer func() {
-		if err := readCloser.Close(); err != nil && !fileutil.IsClosedError(err) {
-			log.Errorf("Failed to close pod log reader: (%v)", err)
-		}
-	}()
-	buf := new(bytes.Buffer)
-	_, err = buf.ReadFrom(readCloser)
-	if err != nil {
-		return "", fmt.Errorf("test failed and failed to read pod logs: %v", err)
-	}
-	logs := buf.String()
 	msgMap := make(map[string]interface{})
 	for _, msg := range strings.Split(logs, "\n") {
 		if err := json.Unmarshal([]byte(msg), &msgMap); err != nil {
@@ -222,5 +186,5 @@ func writingIntoCRsHasEffect(obj *unstructured.Unstructured) (string, error) {
 	if test.earnedPoints != 1 {
 		scSuggestions = append(scSuggestions, "The operator should write into objects to update state. No PUT or POST requests from you operator were recorded by the scorecard.")
 	}
-	return buf.String(), nil
+	return logs, nil
 }
