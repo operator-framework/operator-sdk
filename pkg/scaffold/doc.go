@@ -34,7 +34,7 @@ type Doc struct {
 func (s *Doc) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = filepath.Join(ApisDir,
-			strings.ToLower(s.Resource.Group),
+			s.Resource.GoImportGroup,
 			strings.ToLower(s.Resource.Version),
 			DocFile)
 	}
