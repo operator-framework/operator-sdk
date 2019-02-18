@@ -1,0 +1,13 @@
+---
+
+- hosts: test
+  gather_facts: no
+  tasks:
+  - import_role:
+      name: inventory
+
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - command: echo hello
+  - debug: msg='{{ "hello" | test }}'

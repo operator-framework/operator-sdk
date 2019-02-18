@@ -16,42 +16,20 @@ package scorecard
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-func getCRDs(crdsDir string) ([]apiextv1beta1.CustomResourceDefinition, error) {
-	files, err := ioutil.ReadDir(crdsDir)
-	if err != nil {
-		return nil, fmt.Errorf("could not read deploy directory: (%v)", err)
-	}
-	crds := []apiextv1beta1.CustomResourceDefinition{}
-	for _, file := range files {
-		if strings.HasSuffix(file.Name(), "crd.yaml") {
-			obj, err := yamlToUnstructured(filepath.Join(scaffold.CRDsDir, file.Name()))
-			if err != nil {
-				return nil, err
-			}
-			crd, err := unstructuredToCRD(obj)
-			if err != nil {
-				return nil, err
-			}
-			crds = append(crds, *crd)
-		}
-	}
-	return crds, nil
-}
 
 func matchKind(kind1, kind2 string) bool {
 	singularKind1, err := restMapper.ResourceSingularizer(kind1)
@@ -68,7 +46,7 @@ func matchKind(kind1, kind2 string) bool {
 }
 
 // matchVersion checks if a CRD contains a specified version in a case insensitive manner
-func matchVersion(version string, crd apiextv1beta1.CustomResourceDefinition) bool {
+func matchVersion(version string, crd *apiextv1beta1.CustomResourceDefinition) bool {
 	if strings.EqualFold(version, crd.Spec.Version) {
 		return true
 	}
@@ -84,7 +62,7 @@ func matchVersion(version string, crd apiextv1beta1.CustomResourceDefinition) bo
 // crdsHaveValidation makes sure that all CRDs have a validation block
 func crdsHaveValidation(crdsDir string, runtimeClient client.Client, obj *unstructured.Unstructured) error {
 	test := scorecardTest{testType: olmIntegration, name: "Provided APIs have validation"}
-	crds, err := getCRDs(crdsDir)
+	crds, err := k8sutil.GetCRDs(crdsDir)
 	if err != nil {
 		return fmt.Errorf("failed to get CRDs in %s directory: %v", crdsDir, err)
 	}
@@ -134,18 +112,129 @@ func crdsHaveValidation(crdsDir string, runtimeClient client.Client, obj *unstru
 }
 
 // crdsHaveResources checks to make sure that all owned CRDs have resources listed
-func crdsHaveResources(csv *olmapiv1alpha1.ClusterServiceVersion) {
+// Until there is full support for multiple CRs, we will only be able to check the
+// actual used resources of one CRD, but only the existence of a resources section
+// for other CRDs
+func crdsHaveResources(obj *unstructured.Unstructured, csv *olmapiv1alpha1.ClusterServiceVersion) {
 	test := scorecardTest{testType: olmIntegration, name: "Owned CRDs have resources listed"}
 	for _, crd := range csv.Spec.CustomResourceDefinitions.Owned {
 		test.maximumPoints++
-		if len(crd.Resources) > 0 {
-			test.earnedPoints++
+		gvk := obj.GroupVersionKind()
+		if strings.EqualFold(crd.Version, gvk.Version) && matchKind(gvk.Kind, crd.Kind) {
+			resources, err := getUsedResources()
+			if err != nil {
+				log.Warningf("getUsedResource failed: %v", err)
+			}
+			allResourcesListed := true
+			for _, resource := range resources {
+				foundResource := false
+				for _, listedResource := range crd.Resources {
+					if matchKind(resource.Kind, listedResource.Kind) && strings.EqualFold(resource.Version, listedResource.Version) {
+						foundResource = true
+					}
+				}
+				if foundResource == false {
+					allResourcesListed = false
+				}
+			}
+			if allResourcesListed {
+				test.earnedPoints++
+			}
+		} else {
+			if len(crd.Resources) > 0 {
+				test.earnedPoints++
+			}
 		}
 	}
 	scTests = append(scTests, test)
 	if test.earnedPoints == 0 {
 		scSuggestions = append(scSuggestions, "Add resources to owned CRDs")
 	}
+}
+
+func getUsedResources() ([]schema.GroupVersionKind, error) {
+	logs, err := getProxyLogs()
+	if err != nil {
+		return nil, err
+	}
+	resources := map[schema.GroupVersionKind]bool{}
+	for _, line := range strings.Split(logs, "\n") {
+		logMap := make(map[string]interface{})
+		err := json.Unmarshal([]byte(line), &logMap)
+		if err != nil {
+			// it is very common to get "unexpected end of JSON input", so we'll leave this at the debug level
+			log.Debugf("could not unmarshal line: %v", err)
+			continue
+		}
+		/*
+			There are 6 formats a resource uri can have:
+			Cluster-Scoped:
+				Collection: /apis/GROUP/VERSION/KIND
+				Individual: /apis/GROUP/VERSION/KIND/NAME
+				Core:       /api/v1/KIND
+			Namespaces:
+				All Namespaces:          /apis/GROUP/VERSION/KIND (same as cluster collection)
+				Collection in Namespace: /apis/GROUP/VERSION/namespaces/NAMESPACE/KIND
+				Individual:              /apis/GROUP/VERSION/namespaces/NAMESPACE/KIND/NAME
+				Core:                    /api/v1/namespaces/NAMESPACE/KIND
+
+			These urls are also often appended with options, which are denoted by the '?' symbol
+		*/
+		if msg, ok := logMap["msg"].(string); !ok || msg != "Request Info" {
+			continue
+		}
+		uri, ok := logMap["uri"].(string)
+		if !ok {
+			log.Warn("URI type is not string")
+			continue
+		}
+		removedOptions := strings.Split(uri, "?")[0]
+		splitURI := strings.Split(removedOptions, "/")
+		// first string is empty string ""
+		if len(splitURI) < 2 {
+			log.Warnf("Invalid URI: \"%s\"", uri)
+			continue
+		}
+		splitURI = splitURI[1:]
+		switch len(splitURI) {
+		case 3:
+			if splitURI[0] == "api" {
+				resources[schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[2]}] = true
+				break
+			} else if splitURI[0] == "apis" {
+				// this situation happens when the client enumerates the available resources of the server
+				// Example: "/apis/apps/v1?timeout=32s"
+				break
+			}
+			log.Warnf("Invalid URI: \"%s\"", uri)
+		case 4:
+			if splitURI[0] == "apis" {
+				resources[schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[3]}] = true
+				break
+			}
+			log.Warnf("Invalid URI: \"%s\"", uri)
+		case 5:
+			if splitURI[0] == "api" {
+				resources[schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[4]}] = true
+				break
+			} else if splitURI[0] == "apis" {
+				resources[schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[3]}] = true
+				break
+			}
+			log.Warnf("Invalid URI: \"%s\"", uri)
+		case 6, 7:
+			if splitURI[0] == "apis" {
+				resources[schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[5]}] = true
+				break
+			}
+			log.Warnf("Invalid URI: \"%s\"", uri)
+		}
+	}
+	var resourcesArr []schema.GroupVersionKind
+	for gvk := range resources {
+		resourcesArr = append(resourcesArr, gvk)
+	}
+	return resourcesArr, nil
 }
 
 // annotationsContainExamples makes sure that the CSVs list at least 1 example for the CR

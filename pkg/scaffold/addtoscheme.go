@@ -33,7 +33,7 @@ type AddToScheme struct {
 func (s *AddToScheme) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		fileName := fmt.Sprintf("addtoscheme_%s_%s.go",
-			strings.ToLower(s.Resource.Group),
+			s.Resource.GoImportGroup,
 			strings.ToLower(s.Resource.Version))
 		s.Path = filepath.Join(ApisDir, fileName)
 	}
@@ -44,7 +44,7 @@ func (s *AddToScheme) GetInput() (input.Input, error) {
 const addToSchemeTemplate = `package apis
 
 import (
-	"{{ .Repo }}/pkg/apis/{{ .Resource.Group }}/{{ .Resource.Version }}"
+	"{{ .Repo }}/pkg/apis/{{ .Resource.GoImportGroup}}/{{ .Resource.Version }}"
 )
 
 func init() {

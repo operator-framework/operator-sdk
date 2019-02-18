@@ -76,6 +76,8 @@ func initCache() {
 	})
 }
 
+func (s *CRD) SetFS(_ afero.Fs) {}
+
 func (s *CRD) CustomRender() ([]byte, error) {
 	i, _ := s.GetInput()
 	// controller-tools generates crd file names with no _crd.yaml suffix:
@@ -139,6 +141,7 @@ func (s *CRD) CustomRender() ([]byte, error) {
 		delete(dstCRD.Labels, "controller-tools.k8s.io")
 	}
 	addCRDSubresource(dstCRD)
+	addCRDVersions(dstCRD)
 	return getCRDBytes(dstCRD)
 }
 
@@ -178,6 +181,39 @@ func addCRDSubresource(crd *apiextv1beta1.CustomResourceDefinition) {
 	}
 	if crd.Spec.Subresources.Status == nil {
 		crd.Spec.Subresources.Status = &apiextv1beta1.CustomResourceSubresourceStatus{}
+	}
+}
+
+func addCRDVersions(crd *apiextv1beta1.CustomResourceDefinition) {
+	// crd.Version is deprecated, use crd.Versions instead.
+	var crdVersions []apiextv1beta1.CustomResourceDefinitionVersion
+	if crd.Spec.Version != "" {
+		var verExists, hasStorageVer bool
+		for _, ver := range crd.Spec.Versions {
+			if crd.Spec.Version == ver.Name {
+				verExists = true
+			}
+			// There must be exactly one version flagged as a storage version.
+			if ver.Storage {
+				hasStorageVer = true
+			}
+		}
+		if !verExists {
+			crdVersions = []apiextv1beta1.CustomResourceDefinitionVersion{
+				{Name: crd.Spec.Version, Served: true, Storage: !hasStorageVer},
+			}
+		}
+	} else {
+		crdVersions = []apiextv1beta1.CustomResourceDefinitionVersion{
+			{Name: "v1alpha1", Served: true, Storage: true},
+		}
+	}
+
+	if len(crd.Spec.Versions) > 0 {
+		// crd.Version should always be the first element in crd.Versions.
+		crd.Spec.Versions = append(crdVersions, crd.Spec.Versions...)
+	} else {
+		crd.Spec.Versions = crdVersions
 	}
 }
 

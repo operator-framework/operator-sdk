@@ -142,6 +142,6 @@ The base image repository will be `quay.io/water-hole/helm-operator`.
 
 ### Observations and open questions
 
-* There will be a large amount of overlap in the `operator-sdk` commands for the Ansible and Helm operators. We should take care to extract the resusable features of the Ansible operator commands into a shared library, usable by both Helm and Ansible commands.
+* There will be a large amount of overlap in the `operator-sdk` commands for the Ansible and Helm operators. We should take care to extract the reusable features of the Ansible operator commands into a shared library, usable by both Helm and Ansible commands.
 
 * There is a moderate amount of complexity already related to how operator types are handled between the `go` and `ansible` types. With the addition of a third type, there may need to be a larger design proposal for operator types. For example, do we need to define an `Operator` interface that each of the operator types can implement for flag verification, scaffolding, project detection, etc.?

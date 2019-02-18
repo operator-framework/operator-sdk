@@ -1,0 +1,84 @@
+---
+- name: Prepare
+  hosts: k8s
+  gather_facts: no
+  vars:
+    kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+  tasks:
+    - name: delete the kubeconfig if present
+      file:
+        path: '{{ kubeconfig }}'
+        state: absent
+      delegate_to: localhost
+
+    - name: Fetch the kubeconfig
+      fetch:
+        dest: '{{ kubeconfig }}'
+        flat: yes
+        src: /root/.kube/config
+
+    - name: Change the kubeconfig port to the proper value
+      replace:
+        regexp: 8443
+        replace: "{{ lookup('env', 'KIND_PORT') }}"
+        path: '{{ kubeconfig }}'
+      delegate_to: localhost
+
+    - name: Wait for the Kubernetes API to become available (this could take a minute)
+      uri:
+        url: "https://localhost:8443/apis"
+        status_code: 200
+        validate_certs: no
+      register: result
+      until: (result.status|default(-1)) == 200
+      retries: 60
+      delay: 5
+
+- name: Prepare operator resources
+  hosts: localhost
+  connection: local
+  vars:
+    ansible_python_interpreter: '{{ ansible_playbook_python }}'
+    deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
+  tasks:
+  - name: Create Custom Resource Definition
+    k8s:
+      definition: "{{ lookup('file', '/'.join([deploy_dir, 'crds/inventory_v1alpha1_inventory_crd.yaml'])) }}"
+
+  - name: Ensure specified namespace is present
+    k8s:
+      api_version: v1
+      kind: Namespace
+      name: '{{ namespace }}'
+
+  - name: Create RBAC resources
+    k8s:
+      definition: "{{ lookup('template', '/'.join([deploy_dir, item])) }}"
+      namespace: '{{ namespace }}'
+    with_items:
+      - role.yaml
+      - role_binding.yaml
+      - service_account.yaml
+
+  - name: Dump the dev image
+    command: docker save -o /tmp/dev-operator.tar quay.io/operator-framework/ansible-operator:dev
+
+  - name: Copy the image to the kind container
+    command: docker cp /tmp/dev-operator.tar kind-test-local:/dev-operator.tar
+
+- name: Make dev operator image available
+  hosts: k8s
+  gather_facts: no
+  tasks:
+  - name: Make dev operator available
+    command: docker load -i /dev-operator.tar
+
+- name: Clean up
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+  - name: remove dev-operator.tar
+    file:
+      path: /tmp/dev-operator.tar
+      state: absent

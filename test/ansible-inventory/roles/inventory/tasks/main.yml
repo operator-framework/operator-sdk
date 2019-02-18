@@ -1,0 +1,13 @@
+---
+- when: sentinel | test
+  block:
+  - k8s:
+      definition:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: inventory-cm
+          namespace: '{{ meta.namespace }}'
+        data:
+          sentinel: '{{ sentinel }}'
+          groups: '{{ groups | to_nice_yaml }}'

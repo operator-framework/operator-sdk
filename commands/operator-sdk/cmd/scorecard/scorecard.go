@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
@@ -115,7 +116,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	}
 	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml, deploy/role_binding.yaml and deploy/operator.yaml
 	if viper.GetString(NamespacedManifestOpt) == "" {
-		file, err := yamlutil.GenerateCombinedNamespacedManifest()
+		file, err := yamlutil.GenerateCombinedNamespacedManifest(scaffold.DeployDir)
 		if err != nil {
 			return err
 		}
@@ -128,7 +129,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}()
 	}
 	if viper.GetString(GlobalManifestOpt) == "" {
-		file, err := yamlutil.GenerateCombinedGlobalManifest()
+		file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
 		if err != nil {
 			return err
 		}
@@ -240,7 +241,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		fmt.Println("Checking for CRD resources")
-		crdsHaveResources(csv)
+		crdsHaveResources(obj, csv)
 		fmt.Println("Checking for existence of example CRs")
 		annotationsContainExamples(csv)
 		fmt.Println("Checking spec descriptors")
