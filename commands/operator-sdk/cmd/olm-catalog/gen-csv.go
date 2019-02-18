@@ -18,9 +18,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
@@ -36,7 +36,6 @@ var (
 	fromVersion   string
 	csvConfigPath string
 	updateCRDs    bool
-	crdsDir       string
 )
 
 func NewGenCSVCmd() *cobra.Command {
@@ -59,7 +58,6 @@ Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config
 	genCSVCmd.Flags().StringVar(&fromVersion, "from-version", "", "Semantic version of an existing CSV to use as a base")
 	genCSVCmd.Flags().StringVar(&csvConfigPath, "csv-config", "", "Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml")
 	genCSVCmd.Flags().BoolVar(&updateCRDs, "update-crds", false, "Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's")
-	genCSVCmd.Flags().StringVar(&crdsDir, "crds-dir", scaffold.CRDsDir, "Add or update CRD manifests in deploy/{operator-name}/{csv-version} the using CRD's in this dir")
 
 	return genCSVCmd
 }
@@ -100,7 +98,11 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		err = writeCRDsToDir(crdsDir, filepath.Dir(input.Path))
+		cfg, err := catalog.GetCSVConfig(csvConfigPath)
+		if err != nil {
+			return err
+		}
+		err = writeCRDsToDir(cfg.CRDCRPaths, filepath.Dir(input.Path))
 		if err != nil {
 			return err
 		}
@@ -110,9 +112,6 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 }
 
 func verifyGenCSVFlags() error {
-	if updateCRDs && crdsDir == "" {
-		return fmt.Errorf("--crds-dir must be set if --update-crds is set")
-	}
 	if err := verifyCSVVersion(csvVersion); err != nil {
 		return err
 	}
@@ -137,17 +136,16 @@ func verifyCSVVersion(version string) error {
 	return nil
 }
 
-func writeCRDsToDir(fromDir, toDir string) error {
-	manifests, err := k8sutil.GetCRDManifestPaths(fromDir)
-	if err != nil {
-		return err
-	}
-	for _, m := range manifests {
-		b, err := ioutil.ReadFile(m)
+func writeCRDsToDir(crdPaths []string, toDir string) error {
+	for _, p := range crdPaths {
+		if !strings.HasSuffix(p, "crd.yaml") {
+			continue
+		}
+		b, err := ioutil.ReadFile(p)
 		if err != nil {
 			return err
 		}
-		path := filepath.Join(toDir, filepath.Base(m))
+		path := filepath.Join(toDir, filepath.Base(p))
 		err = ioutil.WriteFile(path, b, fileutil.DefaultFileMode)
 		if err != nil {
 			return err

@@ -111,7 +111,7 @@ func (s *CSV) CustomRender() ([]byte, error) {
 		s.initCSVFields(csv)
 	}
 
-	cfg, err := getCSVConfig(s.ConfigFilePath)
+	cfg, err := GetCSVConfig(s.ConfigFilePath)
 	if err != nil {
 		return nil, err
 	}
