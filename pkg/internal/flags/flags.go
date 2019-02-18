@@ -26,6 +26,7 @@ import (
 type WatchFlags struct {
 	ReconcilePeriod time.Duration
 	WatchesFile     string
+	MaxWorkers      int
 }
 
 // AddTo - Add the reconcile period and watches file flags to the the flagset
@@ -40,5 +41,10 @@ func (f *WatchFlags) AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) {
 		"watches-file",
 		"./watches.yaml",
 		strings.Join(append(helpTextPrefix, "Path to the watches file to use"), " "),
+	)
+	flagSet.IntVar(&f.MaxWorkers,
+		"max-workers",
+		1,
+		strings.Join(append(helpTextPrefix, "Maximum number of workers to use. Overridden by environment variable."), " "),
 	)
 }
