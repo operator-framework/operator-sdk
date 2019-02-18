@@ -400,6 +400,72 @@ func main() {
 
 After adding new import paths to your operator project, run `dep ensure` in the root of your project directory to fulfill these dependencies.
 
+## Leader election
+
+During the lifecycle of an operator it's possible that there may be more than 1 instance running at any given time e.g when rolling out an upgrade for the operator.
+In such a scenario it is necessary to avoid contention between multiple operator instances via leader election so that only one leader instance handles the reconciliation while the other instances are inactive but ready to take over when the leader steps down.
+
+There are two different leader election implementations to choose from, each with its own tradeoff.
+
+- [Leader-for-life][leader_for_life]: The leader pod only gives up leadership (via garbage collection) when it is deleted. This implementation precludes the possibility of 2 instances mistakenly running as leaders (split brain). However, this method can be subject to a delay in electing a new leader. For instance when the leader pod is on an unresponsive or partitioned node, the [`pod-eviction-timeout`][pod_eviction_timeout] dictates how it takes for the leader pod to be deleted from the node and step down (default 5m).
+- [Leader-with-lease][leader_with_lease]: The leader pod periodically renews the leader lease and gives up leadership when it can't renew the lease. This implementation allows for a faster transition to a new leader when the existing leader is isolated, but there is a possibility of split brain in [certain situations][lease_split_brain].
+
+By default the SDK enables the leader-for-life implementation. However you should consult the docs above for both approaches to consider the tradeoffs that make sense for your use case.
+
+The following examples illustrate how to use the two options:
+
+### Leader for life
+
+A call to `leader.Become()` will block the operator as it retries until it can become the leader by creating the configmap named `memcached-operator-lock`.
+
+```Go
+import (
+  ...
+  "github.com/operator-framework/operator-sdk/pkg/leader"
+)
+
+func main() {
+  ...
+  err = leader.Become(context.TODO(), "memcached-operator-lock")
+  if err != nil {
+    log.Error(err, "Failed to retry for leader lock")
+    os.Exit(1)
+  }
+  ...
+}
+```
+If the operator is not running inside a cluster `leader.Become()` will simply return without error to skip the leader election since it can't detect the operator's namespace.
+
+### Leader with lease
+
+The leader-with-lease approach can be enabled via the [Manager Options][manager_options] for leader election.
+
+```Go
+import (
+  ...
+  "sigs.k8s.io/controller-runtime/pkg/manager"
+)
+
+func main() {
+  ...
+  opts := manager.Options{
+    ...
+    LeaderElection: true,
+    LeaderElectionID: "memcached-operator-lock"
+  }
+  mgr, err := manager.New(cfg, opts)
+  ...
+}
+```
+
+When the operator is not running in a cluster, the Manager will return an error on starting since it can't detect the operator's namespace in order to create the configmap for leader election. You can override this namespace by setting the Manager's `LeaderElectionNamespace` option.
+
+
+[pod_eviction_timeout]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options
+[manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options
+[lease_split_brain]: https://github.com/kubernetes/client-go/blob/30b06a83d67458700a5378239df6b96948cb9160/tools/leaderelection/leaderelection.go#L21-L24
+[leader_for_life]: https://godoc.org/github.com/operator-framework/operator-sdk/pkg/leader
+[leader_with_lease]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/leaderelection
 [memcached_handler]: ../example/memcached-operator/handler.go.tmpl
 [memcached_controller]: ../example/memcached-operator/memcached_controller.go.tmpl
 [layout_doc]:./project_layout.md
