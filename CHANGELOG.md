@@ -10,6 +10,8 @@
 
 ### Bug Fixes
 
+- Do not create namespaced resources when running `test local` subcommand with `--up-local` flag
+
 ## v0.4.1
 
 ### Bug Fixes
