@@ -50,7 +50,7 @@ functional_tests:
           nodes: 3
     modifications:
       - spec:
-        - size: 4
+          size: 4
         expected:
           resources:
             - kind: Deployment
