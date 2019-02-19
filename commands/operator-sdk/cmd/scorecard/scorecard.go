@@ -174,6 +174,11 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("expected StrategyDetailsDeployment, got strategy of type %T", strat)
 		}
 		deploymentName = stratDep.DeploymentSpecs[0].Name
+		// Get the proxy pod, which should have been created with the CSV.
+		proxyPod, err = getProxyPodFromDeployment(deploymentName, viper.GetString(NamespaceOpt))
+		if err != nil {
+			return err
+		}
 
 		// Create a temporary CR manifest from metadata if one is not provided.
 		crJSONStr, ok := csv.ObjectMeta.Annotations["alm-examples"]
