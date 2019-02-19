@@ -129,9 +129,18 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 			}
 			tlConfig.namespacedManPath = file.Name()
 		} else {
-			tlConfig.namespacedManPath = filepath.Join(deployTestDir, "empty.yaml")
+			file, err := ioutil.TempFile("", "empty.yaml")
+			tlConfig.namespacedManPath = file.Name()
 			emptyBytes := []byte{}
-			err := ioutil.WriteFile(tlConfig.namespacedManPath, emptyBytes, os.FileMode(fileutil.DefaultFileMode))
+			if err := file.Chmod(os.FileMode(fileutil.DefaultFileMode)); err != nil {
+				return fmt.Errorf("could not chown temporary namespaced manifest file: (%v)", err)
+			}
+			if _, err := file.Write(emptyBytes); err != nil {
+				return fmt.Errorf("could not create temporary namespaced manifest file: (%v)", err)
+			}
+			if err := file.Close(); err != nil {
+				return err
+			}
 			if err != nil {
 				return fmt.Errorf("could not create empty manifest file: (%v)", err)
 			}
