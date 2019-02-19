@@ -73,8 +73,7 @@ func MainEntry(m *testing.M) {
 		if err := projutil.ExecCmd(bc); err != nil {
 			log.Fatalf("Failed to build local operator binary: %s", err)
 		}
-
-		localCmd = exec.Command(outputBinName, args...)
+		localCmd = exec.Command(outputBinName)
 		localCmd.Stdout = &localCmdOutBuf
 		localCmd.Stderr = &localCmdErrBuf
 		c := make(chan os.Signal)
