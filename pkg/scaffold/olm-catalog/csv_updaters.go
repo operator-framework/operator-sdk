@@ -17,6 +17,7 @@ package catalog
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -34,24 +35,28 @@ type CSVUpdater interface {
 }
 
 type updaterStore struct {
-	installStrategy *CSVInstallStrategyUpdate
-	crdUpdate       *CSVCustomResourceDefinitionsUpdate
+	installStrategy *InstallStrategyUpdate
+	crds            *CustomResourceDefinitionsUpdate
+	almExamples     *ALMExamplesUpdate
 }
 
 func NewUpdaterStore() *updaterStore {
 	return &updaterStore{
-		installStrategy: &CSVInstallStrategyUpdate{
+		installStrategy: &InstallStrategyUpdate{
 			&olminstall.StrategyDetailsDeployment{},
 		},
-		crdUpdate: &CSVCustomResourceDefinitionsUpdate{
+		crds: &CustomResourceDefinitionsUpdate{
 			&olmapiv1alpha1.CustomResourceDefinitions{},
+			make(map[string]struct{}),
 		},
+		almExamples: &ALMExamplesUpdate{},
 	}
 }
 
 // Apply iteratively calls each stored CSVUpdater's Apply() method.
 func (s *updaterStore) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
-	for _, updater := range []CSVUpdater{s.installStrategy, s.crdUpdate} {
+	updaters := []CSVUpdater{s.installStrategy, s.crds, s.almExamples}
+	for _, updater := range updaters {
 		if err := updater.Apply(csv); err != nil {
 			return err
 		}
@@ -60,7 +65,6 @@ func (s *updaterStore) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 }
 
 func getKindfromYAML(yamlData []byte) (string, error) {
-	// Get Kind for inital categorization.
 	var temp struct {
 		Kind string
 	}
@@ -70,27 +74,22 @@ func getKindfromYAML(yamlData []byte) (string, error) {
 	return temp.Kind, nil
 }
 
-func (s *updaterStore) AddToUpdater(yamlSpec []byte) error {
-	kind, err := getKindfromYAML(yamlSpec)
-	if err != nil {
-		return err
-	}
-
+func (s *updaterStore) AddToUpdater(yamlSpec []byte, kind string) (bool, error) {
 	switch kind {
 	case "Role":
-		return s.AddRole(yamlSpec)
+		return true, s.AddRole(yamlSpec)
 	case "ClusterRole":
-		return s.AddClusterRole(yamlSpec)
+		return true, s.AddClusterRole(yamlSpec)
 	case "Deployment":
-		return s.AddDeploymentSpec(yamlSpec)
+		return true, s.AddDeploymentSpec(yamlSpec)
 	case "CustomResourceDefinition":
-		// TODO: determine whether 'owned' or 'required'
-		return s.AddOwnedCRD(yamlSpec)
+		// All CRD's present will be 'owned'.
+		return true, s.AddOwnedCRD(yamlSpec)
 	}
-	return nil
+	return false, nil
 }
 
-type CSVInstallStrategyUpdate struct {
+type InstallStrategyUpdate struct {
 	*olminstall.StrategyDetailsDeployment
 }
 
@@ -136,7 +135,7 @@ func (store *updaterStore) AddDeploymentSpec(yamlDoc []byte) error {
 	return nil
 }
 
-func (u *CSVInstallStrategyUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
+func (u *InstallStrategyUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	// Get install strategy from csv. Default to a deployment strategy if none found.
 	var strat olminstall.Strategy
 	if csv.Spec.InstallStrategy.StrategyName == "" {
@@ -170,32 +169,34 @@ func (u *CSVInstallStrategyUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersi
 	return nil
 }
 
-func (u *CSVInstallStrategyUpdate) updatePermissions(strat *olminstall.StrategyDetailsDeployment) {
+func (u *InstallStrategyUpdate) updatePermissions(strat *olminstall.StrategyDetailsDeployment) {
 	if len(u.Permissions) != 0 {
 		strat.Permissions = u.Permissions
 	}
 }
 
-func (u *CSVInstallStrategyUpdate) updateClusterPermissions(strat *olminstall.StrategyDetailsDeployment) {
+func (u *InstallStrategyUpdate) updateClusterPermissions(strat *olminstall.StrategyDetailsDeployment) {
 	if len(u.ClusterPermissions) != 0 {
 		strat.ClusterPermissions = u.ClusterPermissions
 	}
 }
 
-func (u *CSVInstallStrategyUpdate) updateDeploymentSpecs(strat *olminstall.StrategyDetailsDeployment) {
+func (u *InstallStrategyUpdate) updateDeploymentSpecs(strat *olminstall.StrategyDetailsDeployment) {
 	if len(u.DeploymentSpecs) != 0 {
 		strat.DeploymentSpecs = u.DeploymentSpecs
 	}
 }
 
-type CSVCustomResourceDefinitionsUpdate struct {
+type CustomResourceDefinitionsUpdate struct {
 	*olmapiv1alpha1.CustomResourceDefinitions
+	crKinds map[string]struct{}
 }
 
 func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
 	crdDesc, err := parseCRDDescriptionFromYAML(yamlDoc)
 	if err == nil {
-		store.crdUpdate.Owned = append(store.crdUpdate.Owned, *crdDesc)
+		store.crds.Owned = append(store.crds.Owned, *crdDesc)
+		store.crds.crKinds[crdDesc.Kind] = struct{}{}
 	}
 	return err
 }
@@ -203,7 +204,7 @@ func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
 func (store *updaterStore) AddRequiredCRD(yamlDoc []byte) error {
 	crdDesc, err := parseCRDDescriptionFromYAML(yamlDoc)
 	if err == nil {
-		store.crdUpdate.Required = append(store.crdUpdate.Required, *crdDesc)
+		store.crds.Required = append(store.crds.Required, *crdDesc)
 	}
 	return err
 }
@@ -222,7 +223,7 @@ func parseCRDDescriptionFromYAML(yamlDoc []byte) (*olmapiv1alpha1.CRDDescription
 
 // Apply updates all CRDDescriptions with any user-defined data in csv's
 // CRDDescriptions.
-func (u *CSVCustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
+func (u *CustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	set := make(map[string]*olmapiv1alpha1.CRDDescription)
 	for _, csvDesc := range csv.GetAllCRDDescriptions() {
 		set[csvDesc.Name] = &csvDesc
@@ -247,5 +248,42 @@ func (u *CSVCustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterSe
 		}
 	}
 	csv.Spec.CustomResourceDefinitions = *du
+	return nil
+}
+
+type ALMExamplesUpdate struct {
+	crs []string
+}
+
+func (store *updaterStore) AddCR(yamlDoc []byte) error {
+	if len(yamlDoc) == 0 {
+		return nil
+	}
+	crBytes, err := yaml.YAMLToJSON(yamlDoc)
+	if err != nil {
+		return err
+	}
+	store.almExamples.crs = append(store.almExamples.crs, string(crBytes))
+	return nil
+}
+
+func (u *ALMExamplesUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
+	if len(u.crs) == 0 {
+		return nil
+	}
+	if csv.GetAnnotations() == nil {
+		csv.SetAnnotations(make(map[string]string))
+	}
+	sb := &strings.Builder{}
+	sb.WriteString(`[`)
+	for i, example := range u.crs {
+		sb.WriteString(example)
+		if i < len(u.crs)-1 {
+			sb.WriteString(`,`)
+		}
+	}
+	sb.WriteString(`]`)
+
+	csv.GetAnnotations()["alm-examples"] = sb.String()
 	return nil
 }
