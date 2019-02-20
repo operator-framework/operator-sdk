@@ -7,7 +7,7 @@ metadata:
   name: memcachedoperator.v0.0.2
   namespace: default
 spec:
-  install: 
+  install:
     strategy: deployment
     spec:
       permissions:
@@ -19,7 +19,7 @@ spec:
           - "*"
           verbs:
           - "*"
-      deployments: 
+      deployments:
       - name: memcached-app-operator
         spec:
           replicas: 1
@@ -87,7 +87,7 @@ spec:
   provider:
     name: Example
     url: www.example.com
-  maturity: alpha
+  maturity: Basic Install
   version: 0.0.2
   replaces: memcachedoperator.v0.0.1
   maintainers:
