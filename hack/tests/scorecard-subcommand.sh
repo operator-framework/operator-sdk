@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 DEST_IMAGE="quay.io/example/scorecard-proxy"
+CSV_PATH="deploy/olm-catalog/memcached-operator/0.0.2/memcachedoperator.v0.0.2.clusterserviceversion.yaml"
 CONFIG_PATH=".test-osdk-scorecard.yaml"
 
 set -ex
@@ -13,7 +14,7 @@ pushd test/test-framework
 commandoutput="$(operator-sdk scorecard \
   --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml \
   --init-timeout 60 \
-  --csv-path deploy/olm-catalog/memcachedoperator.v0.0.2.clusterserviceversion.yaml \
+  --csv-path "$CSV_PATH" \
   --verbose \
   --proxy-image "$DEST_IMAGE" \
   --proxy-pull-policy Never \

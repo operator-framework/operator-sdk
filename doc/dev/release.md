@@ -77,7 +77,7 @@ The following sections, often directly copied from our [changelog][doc-changelog
 
 When a new release is created, the tag for the commit it signed with a maintainers' gpg key and
 the binaries for the release are also signed by the same key. All keys used by maintainers will
-be available via public PGP keyservers such as [pool.sks-keyservers.net][sks-keyserver].
+be available via public PGP keyservers such as pool.sks-keyservers.net.
 
 For new maintainers who have not done a release and do not have their PGP key on a public
 keyserver, output your armored public key using this command:
@@ -87,7 +87,7 @@ $ gpg --armor --export "$GPG_EMAIL" > mykey.asc
 ```
 
 Then, copy and paste the content of the outputted file into the `Submit a key` section on
-the [SKS PGP Public Key Server][sks-keyserver] or any other public keyserver that synchronizes
+pool.sks-keyservers.net or any other public keyserver that synchronizes
 the key to other public keyservers. Once that is done, other people can download your public
 key and you are ready to sign releases.
 
@@ -250,11 +250,10 @@ The final step is to upload binaries, their signature files, and release notes f
 You've now fully released a new version of the Operator SDK. Good work!
 
 [doc-maintainers]:../../MAINTAINERS
-[doc-readme-prereqs]:https://github.com/operator-framework/operator-sdk#prerequisites
+[doc-readme-prereqs]:../../README.md#prerequisites
 [doc-git-default-key]:https://help.github.com/articles/telling-git-about-your-signing-key/
 [doc-gpg-default-key]:https://lists.gnupg.org/pipermail/gnupg-users/2001-September/010163.html
 [link-github-gpg-key-upload]:https://github.com/settings/keys
 [link-git-config-gpg-key]:https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work
 [doc-changelog]:../../CHANGELOG.md
-[sks-keyserver]:http://pool.sks-keyservers.net/
 [release-page]:https://github.com/operator-framework/operator-sdk/releases
