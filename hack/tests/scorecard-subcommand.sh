@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 DEST_IMAGE="quay.io/example/scorecard-proxy"
-CSV_PATH="deploy/olm-catalog/memcached-operator/0.0.2/memcachedoperator.v0.0.2.clusterserviceversion.yaml"
+CSV_PATH="deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml"
 CONFIG_PATH=".test-osdk-scorecard.yaml"
 
 set -ex

@@ -41,12 +41,12 @@ $ operator-sdk scorecard --cr-manifest deploy/crds/app_operator_cr.yaml --csv-pa
 The scorecard supports the use of a config file instead of or in addition to flags for configuration. By default, the scorecard will look
 for a file called `.osdk-scorecard` with either a `.yaml`, `.json`, or `.toml` file extension. You can also
 specify a different config file with the `--config` flag. The configuration options in the config file match the flags.
-For instance, for the flags `--cr-manifest "deploy/crds/cache_v1alpha1_memcached_cr.yaml" --init-timeout 60 --csv-path "deploy/olm-catalog/memcached-operator/0.0.2/memcachedoperator.v0.0.2.clusterserviceversion.yaml"`, the corresponding yaml config file would contain:
+For instance, for the flags `--cr-manifest "deploy/crds/cache_v1alpha1_memcached_cr.yaml" --init-timeout 60 --csv-path "deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml"`, the corresponding yaml config file would contain:
 
 ```yaml
 cr-manifest: "deploy/crds/cache_v1alpha1_memcached_cr.yaml"
 init-timeout: 60
-csv-path: "deploy/olm-catalog/memcached-operator/0.0.2/memcachedoperator.v0.0.2.clusterserviceversion.yaml"
+csv-path: "deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml"
 ```
 
 The hierarchy of config methods from highest priority to least is: flag->file->default.

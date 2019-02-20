@@ -386,7 +386,7 @@ Run scorecard tests on an operator
 ### Example
 
 ```console
-$ operator-sdk scorecard --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml --csv-path deploy/olm-catalog/memcached-operator/0.0.2/memcachedoperator.v0.0.2.clusterserviceversion.yaml
+$ operator-sdk scorecard --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml --csv-path deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml
 Checking for existence of spec and status blocks in CR
 Checking that operator actions are reflected in status
 Checking that writing into CRs has an effect
