@@ -157,7 +157,7 @@ func (s *CSV) getBaseCSVIfExists() (*olmapiv1alpha1.ClusterServiceVersion, bool,
 		return nil, false, err
 	}
 	if !exists && s.FromVersion != "" && verToGet == s.FromVersion {
-		log.Warnf("from-version set (%s) but CSV does not exist", s.FromVersion)
+		log.Warnf("FromVersion set (%s) but CSV does not exist", s.FromVersion)
 	}
 	return csv, exists, nil
 }
