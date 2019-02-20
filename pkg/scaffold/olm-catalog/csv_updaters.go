@@ -84,7 +84,7 @@ func (s *updaterStore) AddToUpdater(yamlSpec []byte) error {
 	case "Deployment":
 		return s.AddDeploymentSpec(yamlSpec)
 	case "CustomResourceDefinition":
-		// TODO: determine whether 'owned' or 'required'
+		// All CRD's present will be 'owned'.
 		return s.AddOwnedCRD(yamlSpec)
 	}
 	return nil
