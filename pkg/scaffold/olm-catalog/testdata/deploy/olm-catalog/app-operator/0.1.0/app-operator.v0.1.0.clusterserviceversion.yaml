@@ -1,7 +1,7 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
-  creationTimestamp: null
+  creationTimestamp: "2019-01-01T00:00:00Z"
   name: app-operator.v0.1.0
   namespace: placeholder
 spec:

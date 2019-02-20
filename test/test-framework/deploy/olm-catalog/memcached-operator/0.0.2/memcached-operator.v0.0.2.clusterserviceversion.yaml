@@ -4,6 +4,7 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
+  creationTimestamp: "2019-01-01T00:00:00Z"
   name: memcachedoperator.v0.0.2
   namespace: default
 spec:
