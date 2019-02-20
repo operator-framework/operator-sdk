@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 	"unicode"
 
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
@@ -33,6 +34,7 @@ import (
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -116,6 +118,9 @@ func (s *CSV) CustomRender() ([]byte, error) {
 		return nil, err
 	}
 
+	if err = s.setCSVCreationTimestamp(csv); err != nil {
+		return nil, err
+	}
 	if err = s.updateCSVVersions(csv); err != nil {
 		return nil, err
 	}
@@ -147,10 +152,14 @@ func (s *CSV) getBaseCSVIfExists() (*olmapiv1alpha1.ClusterServiceVersion, bool,
 	if s.FromVersion != "" {
 		verToGet = s.FromVersion
 	}
-	lowerProjName := strings.ToLower(s.ProjectName)
-	name := getCSVFileName(lowerProjName, verToGet)
-	fromCSV := filepath.Join(s.pathPrefix, scaffold.OLMCatalogDir, lowerProjName, verToGet, name)
-	return getCSVFromFSIfExists(s.getFS(), fromCSV)
+	csv, exists, err := getCSVFromFSIfExists(s.getFS(), s.getCSVPath(verToGet))
+	if err != nil {
+		return nil, false, err
+	}
+	if !exists && s.FromVersion != "" && verToGet == s.FromVersion {
+		log.Warnf("from-version set (%s) but CSV does not exist", s.FromVersion)
+	}
+	return csv, exists, nil
 }
 
 func getCSVFromFSIfExists(fs afero.Fs, path string) (*olmapiv1alpha1.ClusterServiceVersion, bool, error) {
@@ -179,6 +188,12 @@ func getCSVName(name, version string) string {
 
 func getCSVFileName(name, version string) string {
 	return getCSVName(name, version) + CSVYamlFileExt
+}
+
+func (s *CSV) getCSVPath(ver string) string {
+	lowerProjName := strings.ToLower(s.ProjectName)
+	name := getCSVFileName(lowerProjName, ver)
+	return filepath.Join(s.pathPrefix, scaffold.OLMCatalogDir, lowerProjName, ver, name)
 }
 
 // getDisplayName turns a project dir name in any of {snake, chain, camel}
@@ -356,4 +371,20 @@ func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.Clu
 	}
 
 	return store.Apply(csv)
+}
+
+func (s *CSV) setCSVCreationTimestamp(csv *olmapiv1alpha1.ClusterServiceVersion) error {
+	// Always use the timestamp from the CSV being updated, if either exist.
+	baseCSV, exists, err := getCSVFromFSIfExists(s.getFS(), s.getCSVPath(s.CSVVersion))
+	if err != nil {
+		return err
+	}
+	t := metav1.NewTime(time.Now())
+	if exists {
+		if tmp := baseCSV.GetCreationTimestamp(); tmp != (metav1.Time{}) {
+			t = tmp
+		}
+	}
+	csv.SetCreationTimestamp(t)
+	return nil
 }
