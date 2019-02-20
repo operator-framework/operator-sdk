@@ -4,7 +4,7 @@
 
 ## Metrics in operator-sdk
 
-The `func ExposeMetricsPort(ctx context.Context, port int32) (*v1.Service, error)` is a helper function that exposes general metrics about the running program. These metrics are inherited from controller-runtime. The metrics are by default served on `:8383/metrics`. A [Service][service] object is created with the metrics port exposed, which can be then accessed by Prometheus. The Service object is [garbage collected][gc] by the owner, which is determined based on the pods owner in which the leader is running in.
+The `func ExposeMetricsPort(ctx context.Context, port int32) (*v1.Service, error)` function exposes general metrics about the running program. These metrics are inherited from controller-runtime. This helper function creates a [Service][service] object with the metrics port exposed, which can then be accessed by Prometheus. The Service object is [garbage collected][gc] when the leader pod's root owner is deleted.
 
 By default, the metrics are served on `0.0.0.0:8383/metrics`. To modify the port the metrics are exposed on, change the `var metricsPort int32 = 8383` variable in the `cmd/manager/main.go` file of the generated operator.
 
