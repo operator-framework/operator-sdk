@@ -74,19 +74,22 @@ func getKindfromYAML(yamlData []byte) (string, error) {
 	return temp.Kind, nil
 }
 
-func (s *updaterStore) AddToUpdater(yamlSpec []byte, kind string) (bool, error) {
+func (s *updaterStore) AddToUpdater(yamlSpec []byte, kind string) (found bool, err error) {
+	found = true
 	switch kind {
 	case "Role":
-		return true, s.AddRole(yamlSpec)
+		err = s.AddRole(yamlSpec)
 	case "ClusterRole":
-		return true, s.AddClusterRole(yamlSpec)
+		err = s.AddClusterRole(yamlSpec)
 	case "Deployment":
-		return true, s.AddDeploymentSpec(yamlSpec)
+		err = s.AddDeploymentSpec(yamlSpec)
 	case "CustomResourceDefinition":
 		// All CRD's present will be 'owned'.
-		return true, s.AddOwnedCRD(yamlSpec)
+		err = s.AddOwnedCRD(yamlSpec)
+	default:
+		found = false
 	}
-	return false, nil
+	return found, err
 }
 
 type InstallStrategyUpdate struct {
