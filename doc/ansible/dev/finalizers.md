@@ -7,7 +7,9 @@ sometimes it is necessary to perform more complex operations (for example, when
 your an action performed against a third party API needs to be undone). These more
 complex cases can still be handled by Ansible Operator, through the use of a finalizer.
 
-Finalizers allow controllers (such as an Ansible Operator) to implement pre-deletion hooks.
+Finalizers allow controllers (such as an Ansible Operator) to implement asynchronous pre-delete hooks.
+This allows custom logic to run after a resource has been marked for deletion, but
+before the resource has actually been deleted from the Kubernetes cluster.
 For Ansible Operator, this hook takes the form of an Ansible playbook or role. You can
 define the mapping from your finalizer to a playbook or role by simply setting the
 `finalizer` field on the entry in your `watches.yaml`. You can also choose to re-run
