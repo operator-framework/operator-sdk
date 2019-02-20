@@ -24,7 +24,6 @@ import (
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
-	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/pkg/test"
@@ -113,7 +112,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 					Name:  k8sutil.OperatorNameEnvVar,
 					Value: "test-operator",
 				}, {
-					Name:      leader.PodNameEnv,
+					Name:      k8sutil.PodNameEnvVar,
 					ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.name"}},
 				}},
 			}},
