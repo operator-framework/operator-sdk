@@ -25,4 +25,4 @@ Minor version changes will not break compatibility between the previous minor ve
 Patch versions changes are meant only for bug fixes, and will not break compatibility of the current minor version. A patch release will contain a collection of minor bug fixes, or individual major and security bug fixes, depending on severity.
 
 [link-semver]:https://semver.org/
-[link-github-milestones]: https://help.github.com/articles/about-milestones/
+[link-github-milestones]: https://help.github.com/en/articles/about-milestones
