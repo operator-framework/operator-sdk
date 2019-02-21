@@ -93,7 +93,7 @@ func createOrUpdateService(ctx context.Context, client crclient.Client, s *v1.Se
 	return s, nil
 }
 
-// initOperatorService returns the static service which exposes specifed port.
+// initOperatorService returns the static service which exposes specified port.
 func initOperatorService(ctx context.Context, client crclient.Client, port int32, portName string) (*v1.Service, error) {
 	operatorName, err := k8sutil.GetOperatorName()
 	if err != nil {

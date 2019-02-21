@@ -207,7 +207,7 @@ directory and simply comment out the existing line:
   role: /home/user/foo-operator/Foo
 ```
 
-Create a Custom Resource Definiton (CRD) and proper Role-Based Access Control
+Create a Custom Resource Definition (CRD) and proper Role-Based Access Control
 (RBAC) definitions for resource Foo. `operator-sdk` autogenerates these files
 inside of the `deploy` folder:
 ```bash

@@ -93,7 +93,7 @@ spec:
   maintainers:
     - email: corp@example.com
       name: Some Corp
-  description: Main enterprise application providing business critical features with high availabilty and no manual intervention.
+  description: Main enterprise application providing business critical features with high availability and no manual intervention.
   labels:
     alm-owner-enterprise-app: memcached-app-operator
     alm-status-descriptors: memcached-app-operator.v0.0.2

@@ -100,7 +100,7 @@ const moleculeTestLocalPlaybookAnsibleTmpl = `---
         namespace: '{{ "{{ namespace }}" }}'
         definition: "{{ "{{ custom_resource }}" }}"
 
-    - name: Wait 40s for reconcilation to run
+    - name: Wait 40s for reconciliation to run
       k8s_facts:
         api_version: '{{"{{"}} custom_resource.apiVersion {{"}}"}}'
         kind: '{{"{{"}} custom_resource.kind {{"}}"}}'
