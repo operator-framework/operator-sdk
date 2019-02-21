@@ -6,6 +6,7 @@ kind: ClusterServiceVersion
 metadata:
   annotations:
     alm-examples: '[{"apiVersion":"cache.example.com/v1alpha1","kind":"Memcached","metadata":{"name":"example-memcached"},"spec":{"size":3}}]'
+    capabilities: Basic Install
   name: memcachedoperator.v0.0.2
   namespace: placeholder
 spec:
@@ -123,7 +124,7 @@ spec:
   provider:
     name: Example
     url: www.example.com
-  maturity: Basic Install
+  maturity: alpha
   version: 0.0.2
   replaces: memcachedoperator.v0.0.1
   maintainers:
