@@ -47,7 +47,7 @@ This creates the nginx-operator project specifically for watching the
 Nginx resource with APIVersion `example.com/v1apha1` and Kind
 `Nginx`.
 
-To learn more about the project directory structure, see the 
+To learn more about the project directory structure, see the
 [project layout][layout_doc] doc.
 
 ### Operator scope
@@ -334,5 +334,5 @@ kubectl delete -f deploy/crds/example_v1alpha1_nginx_cr.yaml
 [docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [minikube_tool]:https://github.com/kubernetes/minikube#installation
-[helm_charts]:https://docs.helm.sh/developing_charts/
-[helm_values]:https://docs.helm.sh/using_helm/#customizing-the-chart-before-installing
+[helm_charts]:https://helm.sh/docs/developing_charts/
+[helm_values]:https://helm.sh/docs/using_helm/#customizing-the-chart-before-installing

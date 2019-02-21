@@ -58,7 +58,7 @@ const moleculeTestClusterPlaybookAnsibleTmpl = `---
     debug:
       msg: "{{"{{"}} lookup('k8s', group='{{.Resource.FullGroup}}', api_version='{{.Resource.Version}}', kind='{{.Resource.Kind}}', namespace=namespace, resource_name=custom_resource.metadata.name) {{"}}"}}"
 
-  - name: Wait 40s for reconcilation to run
+  - name: Wait 40s for reconciliation to run
     k8s_facts:
       api_version: '{{.Resource.Version}}'
       kind: '{{.Resource.Kind }}'
