@@ -73,7 +73,7 @@ func waitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace,
 }
 
 func waitForPod(t *testing.T, runtimeClient test.FrameworkClient, namespace, name string, retryInterval, timeout time.Duration) error {
-	pod := &metav1.Pod{}
+	pod := &corev1.Pod{}
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		err = runtimeClient.Get(context.TODO(), client.ObjectKey{Name: name, Namespace: namespace}, pod)
 		if err != nil {
@@ -90,6 +90,7 @@ func waitForPod(t *testing.T, runtimeClient test.FrameworkClient, namespace, nam
 		t.Logf("Waiting for full availability of %s pod\n", name)
 		return false, nil
 	})
+
 	if err != nil {
 		return err
 	}
