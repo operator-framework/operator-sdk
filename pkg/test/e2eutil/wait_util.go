@@ -15,11 +15,14 @@
 package e2eutil
 
 import (
+	"context"
 	"testing"
 	"time"
+
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/operator-framework/operator-sdk/pkg/test"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
