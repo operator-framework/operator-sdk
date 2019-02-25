@@ -22,7 +22,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 	"unicode"
 
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
@@ -34,7 +33,6 @@ import (
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -118,9 +116,6 @@ func (s *CSV) CustomRender() ([]byte, error) {
 		return nil, err
 	}
 
-	if err = s.setCSVCreationTimestamp(csv); err != nil {
-		return nil, err
-	}
 	if err = s.updateCSVVersions(csv); err != nil {
 		return nil, err
 	}
@@ -138,13 +133,7 @@ func (s *CSV) CustomRender() ([]byte, error) {
 		}
 	}
 
-	// Remove the status field from the CSV, as status is managed at runtime.
-	cu, err := runtime.DefaultUnstructuredConverter.ToUnstructured(csv)
-	if err != nil {
-		return nil, err
-	}
-	delete(cu, "status")
-	return yaml.Marshal(&cu)
+	return getCSVBytes(csv)
 }
 
 func (s *CSV) getBaseCSVIfExists() (*olmapiv1alpha1.ClusterServiceVersion, bool, error) {
@@ -156,7 +145,7 @@ func (s *CSV) getBaseCSVIfExists() (*olmapiv1alpha1.ClusterServiceVersion, bool,
 	if err != nil {
 		return nil, false, err
 	}
-	if !exists && s.FromVersion != "" && verToGet == s.FromVersion {
+	if !exists && s.FromVersion != "" {
 		log.Warnf("FromVersion set (%s) but CSV does not exist", s.FromVersion)
 	}
 	return csv, exists, nil
@@ -373,18 +362,36 @@ func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.Clu
 	return store.Apply(csv)
 }
 
-func (s *CSV) setCSVCreationTimestamp(csv *olmapiv1alpha1.ClusterServiceVersion) error {
-	// Always use the timestamp from the CSV being updated, if either exist.
-	baseCSV, exists, err := getCSVFromFSIfExists(s.getFS(), s.getCSVPath(s.CSVVersion))
+// getCSVBytes marshalls csv and removes runtime-managed fields such as
+// 'status', from csv.
+func getCSVBytes(csv *olmapiv1alpha1.ClusterServiceVersion) ([]byte, error) {
+	cu, err := runtime.DefaultUnstructuredConverter.ToUnstructured(csv)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	t := metav1.NewTime(time.Now())
-	if exists {
-		if tmp := baseCSV.GetCreationTimestamp(); tmp != (metav1.Time{}) {
-			t = tmp
+	deleteKeys := []string{"status", "creationTimestamp"}
+	for _, dk := range deleteKeys {
+		deleteKeyFromMap(cu, dk)
+	}
+	return yaml.Marshal(cu)
+}
+
+func deleteKeyFromMap(child map[string]interface{}, targetKey string) {
+	if _, ok := child[targetKey]; ok {
+		delete(child, targetKey)
+		return
+	}
+
+	for _, v := range child {
+		switch t := v.(type) {
+		case map[string]interface{}:
+			deleteKeyFromMap(t, targetKey)
+		case []interface{}:
+			for _, ti := range t {
+				if m, ok := ti.(map[string]interface{}); ok {
+					deleteKeyFromMap(m, targetKey)
+				}
+			}
 		}
 	}
-	csv.SetCreationTimestamp(t)
-	return nil
 }

@@ -20,7 +20,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
@@ -55,23 +54,14 @@ func TestCSVNew(t *testing.T) {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
-	csvStr := buf.String()
-	tsSplit := regexp.MustCompile("creationTimestamp: \".+\"").Split(csvStr, 2)
-	if len(tsSplit) == 2 {
-		csvStr = tsSplit[0] + `creationTimestamp: "2019-01-01T00:00:00Z"` + tsSplit[1]
-	} else {
-		t.Errorf("Expected to find creationTimestamp in CSV metadata, found none")
-	}
-
 	// Get the expected CSV manifest from test data dir.
 	csvExpBytes, err := afero.ReadFile(s.Fs, sc.getCSVPath(csvVer))
 	if err != nil {
 		t.Fatal(err)
 	}
 	csvExp := string(csvExpBytes)
-	if csvExp != csvStr {
+	if csvExp != buf.String() {
 		diffs := diffutil.Diff(csvExp, buf.String())
-		// If the only difference is in the timestamp, pass the test.
 		t.Errorf("Expected vs actual differs.\n%v", diffs)
 	}
 }
