@@ -13,16 +13,24 @@ The `GenerateServiceMonitor` takes a `Service` object and generates a `ServiceMo
 ### Usage example:
 
 ```go
-    import "github.com/operator-framework/operator-sdk/pkg/metrics"
+    import(
+        v1 "k8s.io/api/core/v1"
+        "github.com/operator-framework/operator-sdk/pkg/metrics"
+    )
+    
+    // Populate bellow with Service(s) for which you want to create `ServiceMonitor` for.
+    services := []*v1.Service{}
 
+    // Create one `ServiceMonitor` per application per namespace.
+    // Change below value to name of the Namespace you want the `ServiceMonitor` to be created in.
+    ns := "default"
+    
     // Pass the Service(s) to the helper function, which in turn returns the `ServiceMonitor` object.
-    serviceMonitors, err := metrics.CreateServiceMonitors(restConfig, "namespace", services)
+    serviceMonitors, err := metrics.CreateServiceMonitors(restConfig, ns, services)
     if err != nil {
         // handle error here
     }
 ```
-
-*Note:* Create one `ServiceMonitor` per application and per `Namespace`.
 
 [prom-operator]: https://github.com/coreos/prometheus-operator
 [sm]: https://github.com/coreos/prometheus-operator/blob/7a25bf6b6bb2347dacb235659b73bc210117acc7/Documentation/design.md#servicemonitor
