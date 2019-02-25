@@ -31,6 +31,7 @@ Some features can be overridden per resource via an annotation on that CR. The o
   manageStatus: False
   watchDependentResources: False
   finalizer:
+    name: finalizer.app.example.com
     vars:
       state: absent
 ```
