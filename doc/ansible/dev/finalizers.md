@@ -4,7 +4,7 @@ The default behavior of an Ansible Operator is to delete all resources the opera
 created during reconciliation when a managed resource is marked for deletion. This
 behavior is usually sufficient for applications that exist only in Kubernetes, but
 sometimes it is necessary to perform more complex operations (for example, when
-your an action performed against a third party API needs to be undone). These more
+your action performed against a third party API needs to be undone). These more
 complex cases can still be handled by Ansible Operator, through the use of a finalizer.
 
 Finalizers allow controllers (such as an Ansible Operator) to implement asynchronous pre-delete hooks.
