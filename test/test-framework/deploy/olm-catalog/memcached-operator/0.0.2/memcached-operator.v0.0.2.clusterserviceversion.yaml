@@ -16,7 +16,7 @@ spec:
   - type: SingleNamespace
     supported: true
   - type: MultiNamespace
-    supported: true
+    supported: false
   - type: AllNamespaces
     supported: true
   install:
@@ -131,6 +131,3 @@ spec:
   - email: corp@example.com
     name: Some Corp
   description: Main enterprise application providing business critical features with high availability and no manual intervention.
-  labels:
-    alm-owner-enterprise-app: memcached-operator
-    alm-status-descriptors: memcached-operator.v0.0.2
