@@ -12,28 +12,35 @@ By default, the metrics are served on `0.0.0.0:8383/metrics`. To modify the port
 
 ```go
     import(
-     "github.com/operator-framework/operator-sdk/pkg/metrics"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
+        "github.com/operator-framework/operator-sdk/pkg/metrics"
+	    "sigs.k8s.io/controller-runtime/pkg/manager"
     )
 
-    // Change the below variables to serve metrics on different host or port.
-    var metricsHost = "0.0.0.0"
-    var metricsPort int32 = 8383
+    func main() {
 
-    // Pass metrics address to controller-runtime manager
-	mgr, err := manager.New(cfg, manager.Options{
-		Namespace:          namespace,
-		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
-	})
-	
-    ...
+        ...
 
-	// Create Service object to expose the metrics port.
-	_, err = metrics.ExposeMetricsPort(ctx, metricsPort)
-	if err != nil {
-        // handle error
-		log.Info(err.Error())
-	}
+        // Change the below variables to serve metrics on different host or port.
+        var metricsHost = "0.0.0.0"
+        var metricsPort int32 = 8383
+
+        // Pass metrics address to controller-runtime manager
+        mgr, err := manager.New(cfg, manager.Options{
+            Namespace:          namespace,
+            MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+        })
+        
+        ...
+
+        // Create Service object to expose the metrics port.
+        _, err = metrics.ExposeMetricsPort(ctx, metricsPort)
+        if err != nil {
+            // handle error
+            log.Info(err.Error())
+        }
+
+        ...
+    }
 ```
 
 Note: The above example is already present in `cmd/manager/main.go` in all the operators generated with operator-sdk.

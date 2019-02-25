@@ -17,18 +17,25 @@ The `GenerateServiceMonitor` takes a `Service` object and generates a `ServiceMo
         v1 "k8s.io/api/core/v1"
         "github.com/operator-framework/operator-sdk/pkg/metrics"
     )
-    
-    // Populate bellow with Service(s) for which you want to create `ServiceMonitor` for.
-    services := []*v1.Service{}
 
-    // Create one `ServiceMonitor` per application per namespace.
-    // Change below value to name of the Namespace you want the `ServiceMonitor` to be created in.
-    ns := "default"
-    
-    // Pass the Service(s) to the helper function, which in turn returns the `ServiceMonitor` object.
-    serviceMonitors, err := metrics.CreateServiceMonitors(restConfig, ns, services)
-    if err != nil {
-        // handle error here
+    func main() {    
+        
+        ...
+
+        // Populate bellow with Service(s) for which you want to create `ServiceMonitor` for.
+        services := []*v1.Service{}
+
+        // Create one `ServiceMonitor` per application per namespace.
+        // Change below value to name of the Namespace you want the `ServiceMonitor` to be created in.
+        ns := "default"
+        
+        // Pass the Service(s) to the helper function, which in turn returns the `ServiceMonitor` object.
+        serviceMonitors, err := metrics.CreateServiceMonitors(restConfig, ns, services)
+        if err != nil {
+            // handle error here
+        }
+
+        ...
     }
 ```
 
