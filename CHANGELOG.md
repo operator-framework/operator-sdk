@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Changed the Go, Helm, and Scorecard base images to `registry.access.redhat.com/ubi7/ubi-minimal:7.6` ([#1139](https://github.com/operator-framework/operator-sdk/pull/1139))
+
 ### Deprecated
 
 ### Removed
