@@ -4,6 +4,9 @@ source hack/lib/test_lib.sh
 
 set -eux
 
+# ansible proxy test require a running cluster; run during e2e instead
+go test -count=1 ./pkg/ansible/proxy/...
+
 DEST_IMAGE="quay.io/example/memcached-operator:v0.0.2"
 ROOTDIR="$(pwd)"
 GOTMP="$(mktemp -d -p $GOPATH/src)"
