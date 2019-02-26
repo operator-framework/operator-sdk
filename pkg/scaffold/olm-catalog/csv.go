@@ -116,6 +116,7 @@ func (s *CSV) CustomRender() ([]byte, error) {
 		return nil, err
 	}
 
+	setCSVDefaultFields(csv)
 	if err = s.updateCSVVersions(csv); err != nil {
 		return nil, err
 	}
@@ -233,7 +234,19 @@ func (s *CSV) initCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) {
 	csv.Spec.Provider = olmapiv1alpha1.AppLink{}
 	csv.Spec.Maintainers = make([]olmapiv1alpha1.Maintainer, 0)
 	csv.Spec.Links = make([]olmapiv1alpha1.AppLink, 0)
-	csv.SetLabels(make(map[string]string))
+}
+
+// setCSVDefaultFields sets default fields on older CSV versions or newly
+// initialized CSV's.
+func setCSVDefaultFields(csv *olmapiv1alpha1.ClusterServiceVersion) {
+	if len(csv.Spec.InstallModes) == 0 {
+		csv.Spec.InstallModes = []olmapiv1alpha1.InstallMode{
+			{Type: olmapiv1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+			{Type: olmapiv1alpha1.InstallModeTypeSingleNamespace, Supported: true},
+			{Type: olmapiv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
+			{Type: olmapiv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
+		}
+	}
 }
 
 // TODO: validate that all fields from files are populated as expected
@@ -269,8 +282,8 @@ func getEmptyRequiredCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) (field
 	if csv.Spec.Provider == (olmapiv1alpha1.AppLink{}) {
 		fields = append(fields, "spec.provider")
 	}
-	if len(csv.Spec.Labels) == 0 {
-		fields = append(fields, "spec.labels")
+	if csv.Spec.Maturity == "" {
+		fields = append(fields, "spec.maturity")
 	}
 
 	return fields

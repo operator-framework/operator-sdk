@@ -81,6 +81,15 @@ spec:
           - '*'
         serviceAccountName: app-operator
     strategy: deployment
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespace
   maturity: Basic Install
   provider: {}
   version: 0.1.0
