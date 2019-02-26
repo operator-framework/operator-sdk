@@ -47,9 +47,6 @@ spec:
                 image: quay.io/example-inc/operator:v0.1.0
                 imagePullPolicy: Always
                 name: app-operator
-                ports:
-                - containerPort: 60000
-                  name: metrics
                 resources: {}
               serviceAccountName: app-operator
       permissions:
@@ -83,6 +80,15 @@ spec:
           - '*'
         serviceAccountName: app-operator
     strategy: deployment
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespace
   maturity: alpha
   provider: {}
   version: 0.1.0
