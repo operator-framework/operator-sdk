@@ -6,6 +6,7 @@
 
 ### Changed
 
+- Changed the Go, Helm, and Scorecard base images to `registry.access.redhat.com/ubi7/ubi-minimal:7.6` ([#1139](https://github.com/operator-framework/operator-sdk/pull/1139))
 - CSV manifest are now versioned according to the `operator-registry` [manifest format](https://github.com/operator-framework/operator-registry#manifest-format). See issue [#900](https://github.com/operator-framework/operator-sdk/issues/900) for more details. ([#1016](https://github.com/operator-framework/operator-sdk/pull/1016))
 
 ### Deprecated
