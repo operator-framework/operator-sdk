@@ -24,6 +24,7 @@ import (
 	"sync"
 	"unicode"
 
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
@@ -33,7 +34,6 @@ import (
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -134,7 +134,7 @@ func (s *CSV) CustomRender() ([]byte, error) {
 		}
 	}
 
-	return getCSVBytes(csv)
+	return k8sutil.GetObjectBytes(csv)
 }
 
 func (s *CSV) getBaseCSVIfExists() (*olmapiv1alpha1.ClusterServiceVersion, bool, error) {
@@ -374,38 +374,4 @@ func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.Clu
 	}
 
 	return store.Apply(csv)
-}
-
-// getCSVBytes marshalls csv and removes runtime-managed fields such as
-// 'status', from csv.
-func getCSVBytes(csv *olmapiv1alpha1.ClusterServiceVersion) ([]byte, error) {
-	cu, err := runtime.DefaultUnstructuredConverter.ToUnstructured(csv)
-	if err != nil {
-		return nil, err
-	}
-	deleteKeys := []string{"status", "creationTimestamp"}
-	for _, dk := range deleteKeys {
-		deleteKeyFromMap(cu, dk)
-	}
-	return yaml.Marshal(cu)
-}
-
-func deleteKeyFromMap(child map[string]interface{}, targetKey string) {
-	if _, ok := child[targetKey]; ok {
-		delete(child, targetKey)
-		return
-	}
-
-	for _, v := range child {
-		switch t := v.(type) {
-		case map[string]interface{}:
-			deleteKeyFromMap(t, targetKey)
-		case []interface{}:
-			for _, ti := range t {
-				if m, ok := ti.(map[string]interface{}); ok {
-					deleteKeyFromMap(m, targetKey)
-				}
-			}
-		}
-	}
 }
