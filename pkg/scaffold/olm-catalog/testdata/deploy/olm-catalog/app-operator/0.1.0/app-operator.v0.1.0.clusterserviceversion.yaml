@@ -1,6 +1,8 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
+  annotations:
+    capabilities: Basic Install
   creationTimestamp: null
   name: app-operator.v0.1.0
   namespace: placeholder
@@ -87,6 +89,6 @@ spec:
     type: MultiNamespace
   - supported: true
     type: AllNamespace
-  maturity: Basic Install
+  maturity: alpha
   provider: {}
   version: 0.1.0
