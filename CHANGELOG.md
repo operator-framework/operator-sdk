@@ -2,6 +2,8 @@
 
 ### Added
 
+- New flags for [`operator-sdk new --type=helm`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#new), which can be used to populate the project with an existing chart. ([#949](https://github.com/operator-framework/operator-sdk/pull/949))
+
 ### Changed
 
 - Changed the Go, Helm, and Scorecard base images to `registry.access.redhat.com/ubi7/ubi-minimal:7.6` ([#1139](https://github.com/operator-framework/operator-sdk/pull/1139))
