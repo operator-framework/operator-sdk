@@ -378,6 +378,8 @@ func Run(done chan error, o Options) error {
 
 	if o.OwnerInjection {
 		server.Handler = InjectOwnerReferenceHandler(server.Handler, o.ControllerMap, o.RESTMapper, watchedNamespaceMap)
+	} else {
+		log.Info("Warning: injection of owner references and dependent watches is turned off")
 	}
 	if o.LogRequests {
 		server.Handler = RequestLogHandler(server.Handler)

@@ -37,7 +37,7 @@ func AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) *AnsibleOperatorFla
 	flagSet.BoolVar(&aof.InjectOwnerRef,
 		"inject-owner-ref",
 		true,
-		strings.Join(append(helpTextPrefix, "The ansible operator will inject owner reference unless this flag is false"), " "),
+		strings.Join(append(helpTextPrefix, "The ansible operator will inject owner references unless this flag is false"), " "),
 	)
 	return aof
 }
