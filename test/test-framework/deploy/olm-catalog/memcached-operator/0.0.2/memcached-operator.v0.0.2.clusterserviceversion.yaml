@@ -36,9 +36,6 @@ spec:
                 - name: memcached-operator
                   # Replace this with the built image name
                   image: quay.io/example/memcached-operator:v0.0.1
-                  ports:
-                  - containerPort: 60000
-                    name: metrics
                   command:
                   - memcached-operator
                   imagePullPolicy: Never
