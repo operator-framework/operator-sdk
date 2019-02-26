@@ -278,7 +278,12 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *controllermap.ControllerM
 				}
 			}
 		}
-		// Removing the authorization so that the proxy can set the correct authorization.
+		h.ServeHTTP(w, req)
+	})
+}
+
+func removeAuthorizationHeader(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		req.Header.Del("Authorization")
 		h.ServeHTTP(w, req)
 	})
@@ -312,7 +317,7 @@ type Options struct {
 	Address           string
 	Port              int
 	Handler           HandlerChain
-	NoOwnerInjection  bool
+	OwnerInjection    bool
 	LogRequests       bool
 	KubeConfig        *rest.Config
 	Cache             cache.Cache
@@ -369,14 +374,16 @@ func Run(done chan error, o Options) error {
 		o.Cache = informerCache
 	}
 
-	if !o.NoOwnerInjection {
+	server.Handler = removeAuthorizationHeader(server.Handler)
+
+	if o.OwnerInjection {
 		server.Handler = InjectOwnerReferenceHandler(server.Handler, o.ControllerMap, o.RESTMapper, watchedNamespaceMap)
 	}
 	if o.LogRequests {
 		server.Handler = RequestLogHandler(server.Handler)
 	}
 	if !o.DisableCache {
-		server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper, watchedNamespaceMap, o.ControllerMap, !o.NoOwnerInjection)
+		server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper, watchedNamespaceMap, o.ControllerMap, o.OwnerInjection)
 	}
 
 	l, err := server.Listen(o.Address, o.Port)
