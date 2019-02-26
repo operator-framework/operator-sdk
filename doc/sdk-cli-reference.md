@@ -36,7 +36,7 @@ building example-operator...
 
 building container quay.io/example/operator:v0.0.1...
 Sending build context to Docker daemon  163.9MB
-Step 1/4 : FROM alpine:3.6
+Step 1/4 : FROM registry.access.redhat.com/ubi7/ubi-minimal:7.6
  ---> 77144d8c6bdc
 Step 2/4 : ADD tmp/_output/bin/example-operator /usr/local/bin/example-operator
  ---> 2ada0d6ca93c
@@ -238,11 +238,14 @@ Scaffolds a new operator project.
 * `--kind` string - CRD Kind. (e.g AppService)
 * `--generate-playbook` - Generate a playbook skeleton. (Only used for `--type ansible`)
 * `--cluster-scoped` - Initialize the operator to be cluster-scoped instead of namespace-scoped
+* `--helm-chart` string - Initialize helm operator with existing helm chart (`<URL>`, `<repo>/<name>`, or local path)
+* `--helm-chart-repo` string - Chart repository URL for the requested helm chart
+* `--helm-chart-version` string - Specific version of the helm chart (default is latest version)
 * `-h, --help` - help for new
 
 ### Example
 
-Go project:
+#### Go project
 
 ```console
 $ mkdir $GOPATH/src/github.com/example.com/
@@ -250,16 +253,47 @@ $ cd $GOPATH/src/github.com/example.com/
 $ operator-sdk new app-operator
 ```
 
-Ansible project:
+#### Ansible project
 
 ```console
 $ operator-sdk new app-operator --type=ansible --api-version=app.example.com/v1alpha1 --kind=AppService
 ```
 
-Helm project:
+#### Helm project
+
+For more details about creating new Helm operator projects, see the [Helm user guide][helm-user-guide-create-project].
 
 ```console
-$ operator-sdk new app-operator --type=helm --api-version=app.example.com/v1alpha1 --kind=AppService
+$ operator-sdk new app-operator --type=helm \
+    --api-version=app.example.com/v1alpha1 \
+    --kind=AppService
+
+$ operator-sdk new app-operator --type=helm \
+    --api-version=app.example.com/v1alpha1 \
+    --kind=AppService \
+    --helm-chart=myrepo/app
+
+$ operator-sdk new app-operator --type=helm \
+    --helm-chart=myrepo/app
+
+$ operator-sdk new app-operator --type=helm \
+    --helm-chart=myrepo/app \
+    --helm-chart-version=1.2.3
+
+$ operator-sdk new app-operator --type=helm \
+    --helm-chart=app \
+    --helm-chart-repo=https://charts.mycompany.com/
+
+$ operator-sdk new app-operator --type=helm \
+    --helm-chart=app \
+    --helm-chart-repo=https://charts.mycompany.com/ \
+    --helm-chart-version=1.2.3
+
+$ operator-sdk new app-operator --type=helm \
+    --helm-chart=/path/to/local/chart-directories/app/
+
+$ operator-sdk new app-operator --type=helm \
+    --helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz
 ```
 
 ## add
@@ -525,3 +559,5 @@ $ operator-sdk up local --namespace "testing"
 [utility_link]: https://github.com/operator-framework/operator-sdk/blob/89bf021063d18b6769bdc551ed08fc37027939d5/pkg/util/k8sutil/k8sutil.go#L140
 [k8s-code-generator]: https://github.com/kubernetes/code-generator
 [openapi-code-generator]: https://github.com/kubernetes/kube-openapi
+[helm-user-guide-create-project]: https://github.com/operator-framework/operator-sdk/blob/master/doc/helm/user-guide.md#create-a-new-project
+

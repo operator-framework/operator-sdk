@@ -27,7 +27,7 @@ Packages will be added to the operator-sdk. These packages are designed to be us
   * NewForWatchers - the method that returns a map of GVK to Runner types based on the watchers file.
   * NewPlaybookRunner - the method that returns a new Runner for a playbook.
   * NewRoleRunner - the method that returns a new Runner for a role.
-  * This contains the events API code and public methods. Implementation should probably be in the internal package. The events API is used for recieving events from ansible runner.
+  * This contains the events API code and public methods. Implementation should probably be in the internal package. The events API is used for receiving events from ansible runner.
 
 * /operator-sdk/pkg/ansible/proxy
   * This is a reverse proxy for the kubernetes API that is used for owner reference injection.

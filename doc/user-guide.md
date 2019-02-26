@@ -400,6 +400,13 @@ func main() {
 
 After adding new import paths to your operator project, run `dep ensure` in the root of your project directory to fulfill these dependencies.
 
+
+### Handle Cleanup on Deletion
+
+To implement complex deletion logic, you can add a finalizer to your Custom Resource. This will prevent your Custom Resource from being
+deleted until you remove the finalizer (ie, after your cleanup logic has successfully run). For more information, see the 
+[official Kubernetes documentation on finalizers](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#finalizers).
+
 ## Leader election
 
 During the lifecycle of an operator it's possible that there may be more than 1 instance running at any given time e.g when rolling out an upgrade for the operator.

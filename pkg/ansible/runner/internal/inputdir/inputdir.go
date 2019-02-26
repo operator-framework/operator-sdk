@@ -132,7 +132,7 @@ func (i *InputDir) Write() error {
 		return err
 	}
 
-	// ANSIBLE_INVENTORY takes precendence over our generated hosts file
+	// ANSIBLE_INVENTORY takes precedence over our generated hosts file
 	// so if the envvar is set we don't bother making it, we just copy
 	// the inventory into our runner directory
 	ansible_inventory := os.Getenv("ANSIBLE_INVENTORY")

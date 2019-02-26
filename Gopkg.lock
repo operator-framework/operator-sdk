@@ -424,6 +424,14 @@
   version = "v1.2.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:c13aea0b77243f1fcd0253583c90e180010a3a5bbdf43f61a3daddc48d88b0b2"
+  name = "github.com/iancoleman/strcase"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "3605ed457bf7f8caa1371b4fafadadc026673479"
+
+[[projects]]
   digest = "1:aaa38889f11896ee3644d77e17dc7764cc47f5f3d3b488268df2af2b52541c5f"
   name = "github.com/imdario/mergo"
   packages = ["."]
@@ -820,11 +828,19 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5bc26e4db5a82c0bfdc77300a36b0f82e31041e93e90c3d204e7b838645f3d1b"
+  digest = "1:1414aa8554b82480dd24259b86be63ac489d354029dc378eada2012b5f4c7776"
   name = "golang.org/x/crypto"
   packages = [
+    "cast5",
     "ed25519",
     "ed25519/internal/edwards25519",
+    "openpgp",
+    "openpgp/armor",
+    "openpgp/clearsign",
+    "openpgp/elgamal",
+    "openpgp/errors",
+    "openpgp/packet",
+    "openpgp/s2k",
     "pbkdf2",
     "scrypt",
     "ssh/terminal",
@@ -1293,22 +1309,30 @@
   revision = "fd15ee9cc2f77baa4f31e59e6acbf21146455073"
 
 [[projects]]
-  digest = "1:ca16b131162cb593ef1e9e9bf3508d753f4dfef8ac2440e7a55574c9652bddb9"
+  digest = "1:b3882e4b4e8d53b2ce6804bed1c9f0d350f3e53d4479b817b7813c6e9a388ee3"
   name = "k8s.io/helm"
   packages = [
     "pkg/chartutil",
+    "pkg/downloader",
     "pkg/engine",
+    "pkg/getter",
+    "pkg/helm/environment",
+    "pkg/helm/helmpath",
     "pkg/hooks",
     "pkg/ignore",
     "pkg/kube",
     "pkg/manifest",
+    "pkg/plugin",
     "pkg/proto/hapi/chart",
     "pkg/proto/hapi/release",
     "pkg/proto/hapi/rudder",
     "pkg/proto/hapi/services",
     "pkg/proto/hapi/version",
+    "pkg/provenance",
     "pkg/releasetesting",
     "pkg/releaseutil",
+    "pkg/repo",
+    "pkg/resolver",
     "pkg/rudder",
     "pkg/storage",
     "pkg/storage/driver",
@@ -1317,6 +1341,8 @@
     "pkg/tiller",
     "pkg/tiller/environment",
     "pkg/timeconv",
+    "pkg/tlsutil",
+    "pkg/urlutil",
     "pkg/version",
   ]
   pruneopts = "NUT"
@@ -1562,6 +1588,7 @@
     "github.com/ghodss/yaml",
     "github.com/go-logr/logr",
     "github.com/go-logr/zapr",
+    "github.com/iancoleman/strcase",
     "github.com/markbates/inflect",
     "github.com/martinlindhe/base36",
     "github.com/mattbaird/jsonpatch",
@@ -1615,12 +1642,17 @@
     "k8s.io/client-go/tools/clientcmd/api",
     "k8s.io/client-go/transport",
     "k8s.io/helm/pkg/chartutil",
+    "k8s.io/helm/pkg/downloader",
     "k8s.io/helm/pkg/engine",
+    "k8s.io/helm/pkg/getter",
+    "k8s.io/helm/pkg/helm/environment",
+    "k8s.io/helm/pkg/helm/helmpath",
     "k8s.io/helm/pkg/kube",
     "k8s.io/helm/pkg/proto/hapi/chart",
     "k8s.io/helm/pkg/proto/hapi/release",
     "k8s.io/helm/pkg/proto/hapi/services",
     "k8s.io/helm/pkg/releaseutil",
+    "k8s.io/helm/pkg/repo",
     "k8s.io/helm/pkg/storage",
     "k8s.io/helm/pkg/storage/driver",
     "k8s.io/helm/pkg/tiller",

@@ -89,7 +89,7 @@
               resource_name="memcached-operator"
             )}}'
 
-        - name: Wait for reconcilation to have a chance at finishing
+        - name: Wait for reconciliation to have a chance at finishing
           pause:
             seconds:  15
 
