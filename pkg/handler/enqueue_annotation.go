@@ -1,3 +1,17 @@
+// Copyright 2019 The Operator-SDK Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package handler
 
 import (
@@ -10,6 +24,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	crtHandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+)
+
+var log = logf.Log.WithName("event_handler")
+
+const (
+	// NamespacedNameAnnotation - annotation that will be used to get the primary resource namespaced name.
+	NamespacedNameAnnotation = "operator-sdk/primary-resource"
+	// TypeAnnotation - annotation that will be used to verify that the primary resource is the primary resource to use.
+	TypeAnnotation = "operator-sdk/primary-resource-type"
 )
 
 // EnqueueRequestForAnnotation enqueues Requests based on the presence of an annotation that contains the
@@ -20,8 +44,7 @@ import (
 // 2. cluster scoped primary object.
 // 3. namespaced primary object and dependent namespaced scoped but in a different namespace object.
 type EnqueueRequestForAnnotation struct {
-	// This is the annotation that will contain the namespaced/name or name if cluster scoped value for your resource.
-	NamespaceNameAnnotation string
+	Type string
 
 	mapper meta.RESTMapper
 }
@@ -60,7 +83,11 @@ func (e *EnqueueRequestForAnnotation) Generic(evt event.GenericEvent, q workqueu
 }
 
 func (e *EnqueueRequestForAnnotation) getAnnotationRequests(object metav1.Object) (bool, reconcile.Request) {
-	if namespacedNameString, ok := object.GetAnnotations()[e.NamespaceNameAnnotation]; ok {
+	if typeString, ok := object.GetAnnotations()[TypeAnnotation]; ok && typeString == e.Type {
+		namespacedNameString, ok := object.GetAnnotations()[NamespacedNameAnnotation]
+		if !ok {
+			log.Info("Unable to find namespaced name annotation for resource", "resource", object)
+		}
 		if namespacedNameString == "" {
 			return false, reconcile.Request{}
 		}
@@ -74,7 +101,8 @@ func parseNamespacedName(namespacedNameString string) types.NamespacedName {
 	values := strings.Split(namespacedNameString, "/")
 	if len(values) == 1 {
 		return types.NamespacedName{
-			Name: values[0],
+			Name:      values[0],
+			Namespace: "",
 		}
 	}
 	if len(values) >= 2 {

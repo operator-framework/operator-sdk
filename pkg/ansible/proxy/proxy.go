@@ -51,8 +51,6 @@ type marshaler interface {
 	MarshalJSON() ([]byte, error)
 }
 
-const dependentResourceAnnotation = "ansible.operator-sdk/primary-resource"
-
 // CacheResponseHandler will handle proxied requests and check if the requested
 // resource exists in our cache. If it does then there is no need to bombard
 // the APIserver with our request and we should write the response from the
@@ -154,31 +152,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 				// Once we get the resource, we are going to attempt to recover the dependent watches here,
 				// This will happen in the background, and log errors.
 				if injectOwnerRef {
-					go func() {
-						ownerRef, err := getRequestOwnerRef(req)
-						if err != nil {
-							log.Error(err, "Could not get ownerRef from proxy")
-							return
-						}
-
-						for _, oRef := range un.GetOwnerReferences() {
-							if oRef.APIVersion == ownerRef.APIVersion && oRef.Kind == ownerRef.Kind {
-								err := addWatchToController(ownerRef, cMap, un, restMapper, true)
-								if err != nil {
-									log.Error(err, "Could not recover dependent resource watch", "owner", ownerRef)
-									return
-								}
-							}
-						}
-						if _, ok := un.GetAnnotations()[dependentResourceAnnotation]; ok {
-							err := addWatchToController(ownerRef, cMap, un, restMapper, false)
-							if err != nil {
-								log.Error(err, "Could not recover dependent resource watch", "owner", ownerRef)
-								return
-							}
-						}
-
-					}()
+					go recoverDependentWatches(req, un, cMap, restMapper)
 				}
 			}
 
@@ -210,6 +184,38 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 		}
 		h.ServeHTTP(w, req)
 	})
+}
+
+func recoverDependentWatches(req *http.Request, un *unstructured.Unstructured, cMap *controllermap.ControllerMap, restMapper meta.RESTMapper) {
+	ownerRef, err := getRequestOwnerRef(req)
+	if err != nil {
+		log.Error(err, "Could not get ownerRef from proxy")
+		return
+	}
+
+	for _, oRef := range un.GetOwnerReferences() {
+		if oRef.APIVersion == ownerRef.APIVersion && oRef.Kind == ownerRef.Kind {
+			err := addWatchToController(ownerRef, cMap, un, restMapper, true)
+			if err != nil {
+				log.Error(err, "Could not recover dependent resource watch", "owner", ownerRef)
+				return
+			}
+		}
+	}
+	if typeString, ok := un.GetAnnotations()[osdkHandler.TypeAnnotation]; ok {
+		ownerGV, err := schema.ParseGroupVersion(ownerRef.APIVersion)
+		if err != nil {
+			log.Error(err, "Could not get ownerRef from proxy")
+			return
+		}
+		if typeString == fmt.Sprintf("%v.%v", ownerRef.Kind, ownerGV.Group) {
+			err := addWatchToController(ownerRef, cMap, un, restMapper, false)
+			if err != nil {
+				log.Error(err, "Could not recover dependent resource watch", "owner", ownerRef)
+				return
+			}
+		}
+	}
 }
 
 // InjectOwnerReferenceHandler will handle proxied requests and inject the
@@ -268,11 +274,20 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *controllermap.ControllerM
 			if addOwnerRef {
 				data.SetOwnerReferences(append(data.GetOwnerReferences(), owner.OwnerReference))
 			} else {
+				ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
+				if err != nil {
+					m := fmt.Sprintf("could not get broup version for: %v", owner)
+					log.Error(err, m)
+					http.Error(w, m, http.StatusBadRequest)
+					return
+				}
 				a := data.GetAnnotations()
 				if a == nil {
 					a = map[string]string{}
 				}
-				a[dependentResourceAnnotation] = strings.Join([]string{owner.Namespace, owner.Name}, "/")
+				a[osdkHandler.NamespacedNameAnnotation] = strings.Join([]string{owner.Namespace, owner.Name}, "/")
+				a[osdkHandler.TypeAnnotation] = fmt.Sprintf("%v.%v", owner.Kind, ownerGV.Group)
+
 				data.SetAnnotations(a)
 			}
 			newBody, err := json.Marshal(data.Object)
@@ -328,7 +343,7 @@ func shouldAddOwnerRef(data *unstructured.Unstructured, owner kubeconfig.Namespa
 	// a namespaced resource owns a cluster-scoped resource
 	ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
 	if err != nil {
-		m := fmt.Sprintf("could not get broup version for: %v", owner)
+		m := fmt.Sprintf("could not get group version for: %v", owner)
 		log.Error(err, m)
 		return false, err
 	}
@@ -512,15 +527,17 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 				return err
 			}
 		case !useOwnerRef && dataNamespaceScoped:
-			log.Info("Watching child resource", "kind", resource.GroupVersionKind(), "enqueue_annotation", dependentResourceAnnotation)
-			err = contents.Controller.Watch(&source.Kind{Type: resource}, &osdkHandler.EnqueueRequestForAnnotation{NamespaceNameAnnotation: dependentResourceAnnotation})
+			typeString := fmt.Sprintf("%v.%v", owner.Kind, ownerGV.Group)
+			log.Info("Watching child resource", "kind", resource.GroupVersionKind(), "enqueue_annotation_type", typeString)
+			err = contents.Controller.Watch(&source.Kind{Type: resource}, &osdkHandler.EnqueueRequestForAnnotation{Type: typeString})
 			if err != nil {
 				return err
 			}
 		case contents.WatchClusterScopedResources:
-			log.Info("Watching child resource which can be cluster-scoped", "kind", resource.GroupVersionKind(), "enqueue_annotation", dependentResourceAnnotation)
+			typeString := fmt.Sprintf("%v.%v", owner.Kind, ownerGV.Group)
+			log.Info("Watching child resource which can be cluster-scoped", "kind", resource.GroupVersionKind(), "enqueue_annotation_type", typeString)
 			// Add watch
-			err = contents.Controller.Watch(&source.Kind{Type: resource}, &osdkHandler.EnqueueRequestForAnnotation{NamespaceNameAnnotation: dependentResourceAnnotation})
+			err = contents.Controller.Watch(&source.Kind{Type: resource}, &osdkHandler.EnqueueRequestForAnnotation{Type: typeString})
 			if err != nil {
 				return err
 			}
