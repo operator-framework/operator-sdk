@@ -49,7 +49,7 @@
       debug:
         var: cr
       vars:
-        deploy: '{{ lookup("k8s",
+        cr: '{{ lookup("k8s",
           kind=custom_resource.kind,
           api_version=custom_resource.apiVersion,
           namespace=namespace,
