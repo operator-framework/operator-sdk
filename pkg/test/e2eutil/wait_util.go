@@ -44,7 +44,7 @@ func WaitForOperatorDeployment(t *testing.T, kubeclient kubernetes.Interface, na
 	return waitForDeployment(t, kubeclient, namespace, name, replicas, retryInterval, timeout, true)
 }
 
-func WaitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int, retryInterval, timeout time.Duration, isOperator bool) error {
+func waitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int, retryInterval, timeout time.Duration, isOperator bool) error {
 	if isOperator && test.Global.LocalOperator {
 		t.Log("Operator is running locally; skip waitForDeployment")
 		return nil
@@ -72,6 +72,8 @@ func WaitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace,
 	return nil
 }
 
+// WaitForPod checks to see if a given pod is running after a specified amount of time.
+// If the deployment is not running after timeout * retries seconds, the function returns an error
 func WaitForPod(t *testing.T, runtimeClient test.FrameworkClient, namespace, name string, retryInterval, timeout time.Duration) error {
 	pod := &corev1.Pod{}
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
