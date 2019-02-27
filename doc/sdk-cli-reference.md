@@ -36,7 +36,7 @@ building example-operator...
 
 building container quay.io/example/operator:v0.0.1...
 Sending build context to Docker daemon  163.9MB
-Step 1/4 : FROM registry.access.redhat.com/ubi7/ubi-minimal:7.6
+Step 1/4 : FROM registry.access.redhat.com/ubi7-dev-preview/ubi-minimal:7.6
  ---> 77144d8c6bdc
 Step 2/4 : ADD tmp/_output/bin/example-operator /usr/local/bin/example-operator
  ---> 2ada0d6ca93c

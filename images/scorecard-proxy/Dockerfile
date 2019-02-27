@@ -1,5 +1,5 @@
 # Base image
-FROM registry.access.redhat.com/ubi7/ubi-minimal:7.6
+FROM registry.access.redhat.com/ubi7-dev-preview/ubi-minimal:7.6
 
 ENV PROXY=/usr/local/bin/scorecard-proxy \
     USER_UID=1001 \
