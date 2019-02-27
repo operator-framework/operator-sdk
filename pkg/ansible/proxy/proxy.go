@@ -32,6 +32,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
 	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
+	osdkHandler "github.com/operator-framework/operator-sdk/pkg/handler"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,13 +44,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type marshaler interface {
 	MarshalJSON() ([]byte, error)
 }
+
+const dependentResourceAnnotation = "ansible.operator-sdk/primary-resource"
 
 // CacheResponseHandler will handle proxied requests and check if the requested
 // resource exists in our cache. If it does then there is no need to bombard
@@ -161,16 +163,23 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 
 						for _, oRef := range un.GetOwnerReferences() {
 							if oRef.APIVersion == ownerRef.APIVersion && oRef.Kind == ownerRef.Kind {
-								err := addWatchToController(ownerRef, cMap, un, restMapper)
+								err := addWatchToController(ownerRef, cMap, un, restMapper, true)
 								if err != nil {
 									log.Error(err, "Could not recover dependent resource watch", "owner", ownerRef)
 									return
 								}
 							}
 						}
+						if _, ok := un.GetAnnotations()[dependentResourceAnnotation]; ok {
+							err := addWatchToController(ownerRef, cMap, un, restMapper, false)
+							if err != nil {
+								log.Error(err, "Could not recover dependent resource watch", "owner", ownerRef)
+								return
+							}
+						}
+
 					}()
 				}
-
 			}
 
 			i := bytes.Buffer{}
@@ -248,7 +257,24 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *controllermap.ControllerM
 				http.Error(w, m, http.StatusBadRequest)
 				return
 			}
-			data.SetOwnerReferences(append(data.GetOwnerReferences(), owner.OwnerReference))
+
+			addOwnerRef, err := shouldAddOwnerRef(data, owner, restMapper)
+			if err != nil {
+				m := "Could not determine if we should add owner ref"
+				log.Error(err, m)
+				http.Error(w, m, http.StatusBadRequest)
+				return
+			}
+			if addOwnerRef {
+				data.SetOwnerReferences(append(data.GetOwnerReferences(), owner.OwnerReference))
+			} else {
+				a := data.GetAnnotations()
+				if a == nil {
+					a = map[string]string{}
+				}
+				a[dependentResourceAnnotation] = strings.Join([]string{owner.Namespace, owner.Name}, "/")
+				data.SetAnnotations(a)
+			}
 			newBody, err := json.Marshal(data.Object)
 			if err != nil {
 				m := "Could not serialize body"
@@ -269,7 +295,7 @@ func InjectOwnerReferenceHandler(h http.Handler, cMap *controllermap.ControllerM
 			_, allNsPresent := watchedNamespaces[metav1.NamespaceAll]
 			_, reqNsPresent := watchedNamespaces[r.Namespace]
 			if allNsPresent || reqNsPresent {
-				err = addWatchToController(owner, cMap, data, restMapper)
+				err = addWatchToController(owner, cMap, data, restMapper, addOwnerRef)
 				if err != nil {
 					m := "could not add watch to controller"
 					log.Error(err, m)
@@ -287,6 +313,39 @@ func removeAuthorizationHeader(h http.Handler) http.Handler {
 		req.Header.Del("Authorization")
 		h.ServeHTTP(w, req)
 	})
+}
+
+func shouldAddOwnerRef(data *unstructured.Unstructured, owner kubeconfig.NamespacedOwnerReference, restMapper meta.RESTMapper) (bool, error) {
+	dataMapping, err := restMapper.RESTMapping(data.GroupVersionKind().GroupKind(), data.GroupVersionKind().Version)
+	if err != nil {
+		m := fmt.Sprintf("Could not get rest mapping for: %v", data.GroupVersionKind())
+		log.Error(err, m)
+		return false, err
+
+	}
+	// We need to determine whether or not the owner is a cluster-scoped
+	// resource because enqueue based on an owner reference does not work if
+	// a namespaced resource owns a cluster-scoped resource
+	ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
+	if err != nil {
+		m := fmt.Sprintf("could not get broup version for: %v", owner)
+		log.Error(err, m)
+		return false, err
+	}
+	ownerMapping, err := restMapper.RESTMapping(schema.GroupKind{Kind: owner.Kind, Group: ownerGV.Group}, ownerGV.Version)
+	if err != nil {
+		m := fmt.Sprintf("could not get rest mapping for: %v", owner)
+		log.Error(err, m)
+		return false, err
+	}
+
+	dataNamespaceScoped := dataMapping.Scope.Name() != meta.RESTScopeNameRoot
+	ownerNamespaceScoped := ownerMapping.Scope.Name() != meta.RESTScopeNameRoot
+
+	if dataNamespaceScoped && ownerNamespaceScoped && data.GetNamespace() == owner.Namespace {
+		return true, nil
+	}
+	return false, nil
 }
 
 // RequestLogHandler - log the requests that come through the proxy.
@@ -399,7 +458,7 @@ func Run(done chan error, o Options) error {
 	return nil
 }
 
-func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *controllermap.ControllerMap, resource *unstructured.Unstructured, restMapper meta.RESTMapper) error {
+func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *controllermap.ControllerMap, resource *unstructured.Unstructured, restMapper meta.RESTMapper, useOwnerRef bool) error {
 	dataMapping, err := restMapper.RESTMapping(resource.GroupVersionKind().GroupKind(), resource.GroupVersionKind().Version)
 	if err != nil {
 		m := fmt.Sprintf("Could not get rest mapping for: %v", resource.GroupVersionKind())
@@ -407,9 +466,6 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 		return err
 
 	}
-	// We need to determine whether or not the owner is a cluster-scoped
-	// resource because enqueue based on an owner reference does not work if
-	// a namespaced resource owns a cluster-scoped resource
 	ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
 	if err != nil {
 		m := fmt.Sprintf("could not get broup version for: %v", owner)
@@ -424,8 +480,6 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 	}
 
 	dataNamespaceScoped := dataMapping.Scope.Name() != meta.RESTScopeNameRoot
-	ownerNamespaceScoped := ownerMapping.Scope.Name() != meta.RESTScopeNameRoot
-	useOwnerReference := !ownerNamespaceScoped || dataNamespaceScoped
 	contents, ok := cMap.Get(ownerMapping.GroupVersionKind)
 	if !ok {
 		return errors.New("failed to find controller in map")
@@ -449,34 +503,24 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 		// Store watch in map
 		wMap.Store(resource.GroupVersionKind())
 		// Use EnqueueRequestForOwner unless user has configured watching cluster scoped resources and we have to
-		if useOwnerReference {
+		switch {
+		case useOwnerRef:
 			log.Info("Watching child resource", "kind", resource.GroupVersionKind(), "enqueue_kind", u.GroupVersionKind())
 			// Store watch in map
-			err = contents.Controller.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{OwnerType: u})
+			err := contents.Controller.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{OwnerType: u})
 			if err != nil {
 				return err
 			}
-		} else if contents.WatchClusterScopedResources {
-			log.Info("Watching child resource which can be cluster-scoped", "kind", resource.GroupVersionKind(), "enqueue_kind", u.GroupVersionKind())
+		case !useOwnerRef && dataNamespaceScoped:
+			log.Info("Watching child resource", "kind", resource.GroupVersionKind(), "enqueue_annotation", dependentResourceAnnotation)
+			err = contents.Controller.Watch(&source.Kind{Type: resource}, &osdkHandler.EnqueueRequestForAnnotation{NamespaceNameAnnotation: dependentResourceAnnotation})
+			if err != nil {
+				return err
+			}
+		case contents.WatchClusterScopedResources:
+			log.Info("Watching child resource which can be cluster-scoped", "kind", resource.GroupVersionKind(), "enqueue_annotation", dependentResourceAnnotation)
 			// Add watch
-			err = contents.Controller.Watch(
-				&source.Kind{Type: resource},
-				// Use Map func since EnqueuRequestForOwner won't work
-				&handler.EnqueueRequestsFromMapFunc{ToRequests: handler.ToRequestsFunc(func(a handler.MapObject) []reconcile.Request {
-					log.V(2).Info("Creating reconcile request from object", "gvk", ownerMapping.GroupVersionKind, "name", a.Meta.GetName())
-					ownRefs := a.Meta.GetOwnerReferences()
-					for _, ref := range ownRefs {
-						nn, exists := uMap.Get(ref.UID)
-						if !exists {
-							continue
-						}
-						return []reconcile.Request{
-							{NamespacedName: nn},
-						}
-					}
-					return nil
-				})},
-			)
+			err = contents.Controller.Watch(&source.Kind{Type: resource}, &osdkHandler.EnqueueRequestForAnnotation{NamespaceNameAnnotation: dependentResourceAnnotation})
 			if err != nil {
 				return err
 			}
