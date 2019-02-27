@@ -450,7 +450,7 @@ message: "Hello world 2"
 newParameter: "newParam"
 ```
 
-[helm_charts]:https://docs.helm.sh/developing_charts
-[helm_values]:https://docs.helm.sh/using_helm/#customizing-the-chart-before-installing
-[helm_install]:https://docs.helm.sh/using_helm/
+[helm_charts]:https://helm.sh/docs/developing_charts/
+[helm_values]:https://helm.sh/docs/using_helm/#customizing-the-chart-before-installing
+[helm_install]:https://helm.sh/docs/using_helm/
 [helm_operator_user_guide]:../user-guide.md

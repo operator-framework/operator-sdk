@@ -34,7 +34,7 @@ func (s *Dockerfile) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
-const dockerfileTmpl = `FROM alpine:3.8
+const dockerfileTmpl = `FROM registry.access.redhat.com/ubi7-dev-preview/ubi-minimal:7.6
 
 ENV OPERATOR=/usr/local/bin/{{.ProjectName}} \
     USER_UID=1001 \

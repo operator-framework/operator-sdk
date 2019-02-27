@@ -204,7 +204,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 }
 
 // InjectOwnerReferenceHandler will handle proxied requests and inject the
-// owner refernece found in the authorization header. The Authorization is
+// owner reference found in the authorization header. The Authorization is
 // then deleted so that the proxy can re-set with the correct authorization.
 func InjectOwnerReferenceHandler(h http.Handler, cMap *controllermap.ControllerMap, restMapper meta.RESTMapper, watchedNamespaces map[string]interface{}) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

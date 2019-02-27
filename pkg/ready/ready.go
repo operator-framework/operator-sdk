@@ -42,7 +42,7 @@ func NewFileReady() Ready {
 
 type fileReady struct{}
 
-// Set creates a file on disk whose presense can be used by a readiness probe
+// Set creates a file on disk whose presence can be used by a readiness probe
 // to determine that the operator is ready.
 func (r fileReady) Set() error {
 	f, err := os.Create(FileName)
