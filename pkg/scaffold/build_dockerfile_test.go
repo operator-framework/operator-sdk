@@ -33,7 +33,7 @@ func TestDockerfile(t *testing.T) {
 	}
 }
 
-const dockerfileExp = `FROM registry.access.redhat.com/ubi7/ubi-minimal:7.6
+const dockerfileExp = `FROM registry.access.redhat.com/ubi7-dev-preview/ubi-minimal:7.6
 
 ENV OPERATOR=/usr/local/bin/app-operator \
     USER_UID=1001 \
