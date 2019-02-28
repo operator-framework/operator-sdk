@@ -138,21 +138,18 @@ func TestMemcached(t *testing.T) {
 		t.Fatalf("Error after modifying Gopkg.toml: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
-	// Temporarily disabling the leader election test due to GitHub issue #920 and PR #932.
-	// TODO: Update this test so that it works with the changes from #932
-	//
-	// // Set replicas to 2 to test leader election. In production, this should
-	// // almost always be set to 1, because there isn't generally value in having
-	// // a hot spare operator process.
-	// opYaml, err := ioutil.ReadFile("deploy/operator.yaml")
-	// if err != nil {
-	// 	t.Fatalf("Could not read deploy/operator.yaml: %v", err)
-	// }
-	// newOpYaml := bytes.Replace(opYaml, []byte("replicas: 1"), []byte("replicas: 2"), 1)
-	// err = ioutil.WriteFile("deploy/operator.yaml", newOpYaml, 0644)
-	// if err != nil {
-	// 	t.Fatalf("Could not write deploy/operator.yaml: %v", err)
-	// }
+	// Set replicas to 2 to test leader election. In production, this should
+	// almost always be set to 1, because there isn't generally value in having
+	// a hot spare operator process.
+	opYaml, err := ioutil.ReadFile("deploy/operator.yaml")
+	if err != nil {
+		t.Fatalf("Could not read deploy/operator.yaml: %v", err)
+	}
+	newOpYaml := bytes.Replace(opYaml, []byte("replicas: 1"), []byte("replicas: 2"), 1)
+	err = ioutil.WriteFile("deploy/operator.yaml", newOpYaml, 0644)
+	if err != nil {
+		t.Fatalf("Could not write deploy/operator.yaml: %v", err)
+	}
 
 	cmd := exec.Command("operator-sdk",
 		"add",
@@ -280,7 +277,7 @@ func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.Te
 		return err
 	}
 
-	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, retryInterval, timeout)
+	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "memcached-operator", 2, retryInterval, timeout)
 	if err != nil {
 		return err
 	}
@@ -296,7 +293,12 @@ func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.Te
 		return err
 	}
 
-	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeletion(t, f.Client.Client, leader, retryInterval, timeout)
+	if err != nil {
+		return err
+	}
+
+	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "memcached-operator", 2, retryInterval, timeout)
 	if err != nil {
 		return err
 	}
@@ -515,16 +517,14 @@ func MemcachedCluster(t *testing.T) {
 		t.Fatal(err)
 	}
 	// wait for memcached-operator to be ready
-	err = e2eutil.WaitForOperatorDeployment(t, framework.Global.KubeClient, namespace, "memcached-operator", 1, retryInterval, timeout)
+	err = e2eutil.WaitForOperatorDeployment(t, framework.Global.KubeClient, namespace, "memcached-operator", 2, retryInterval, timeout)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Temporarily disabling the leader election test due to GitHub issue #920 and PR #932.
-	// TODO: Update this test so that it works with the changes from #932
-	// if err = memcachedLeaderTest(t, framework.Global, ctx); err != nil {
-	// 	t.Fatal(err)
-	// }
+	if err = memcachedLeaderTest(t, framework.Global, ctx); err != nil {
+		t.Fatal(err)
+	}
 
 	if err = memcachedScaleTest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
