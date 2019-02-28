@@ -112,7 +112,6 @@ The markdown test does not create a new cluster and runs in a barebones travis V
 [pr-builds]: https://travis-ci.org/operator-framework/operator-sdk/pull_requests
 [script]: ../../../hack/ci/setup-openshift.sh
 [sanity]: ../../../hack/tests/sanity-check.sh
-[unit]: ../../../hack/tests/unit.sh
 [subcommand]: ../../../hack/tests/test-subcommand.sh
 [go-e2e]: ../../../hack/tests/e2e-go.sh
 [tls-tests]: ../../../test/e2e/tls_util_test.go
