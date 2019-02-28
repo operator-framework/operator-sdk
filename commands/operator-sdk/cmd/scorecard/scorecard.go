@@ -175,7 +175,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 		deploymentName = stratDep.DeploymentSpecs[0].Name
 		// Get the proxy pod, which should have been created with the CSV.
-		proxyPod, err = getProxyPodFromDeployment(deploymentName, viper.GetString(NamespaceOpt))
+		proxyPod, err = getPodFromDeployment(deploymentName, viper.GetString(NamespaceOpt))
 		if err != nil {
 			return err
 		}

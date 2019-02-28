@@ -130,7 +130,7 @@ func createFromYAMLFile(yamlPath string) error {
 		}
 		addResourceCleanup(obj, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()})
 		if obj.GetKind() == "Deployment" {
-			proxyPod, err = getProxyPodFromDeployment(deploymentName, viper.GetString(NamespaceOpt))
+			proxyPod, err = getPodFromDeployment(deploymentName, viper.GetString(NamespaceOpt))
 			if err != nil {
 				return err
 			}
@@ -143,8 +143,8 @@ func createFromYAMLFile(yamlPath string) error {
 	return nil
 }
 
-// getProxyPodFromDeployment returns a deployment depName's pod in namespace.
-func getProxyPodFromDeployment(depName, namespace string) (pod *v1.Pod, err error) {
+// getPodFromDeployment returns a deployment depName's pod in namespace.
+func getPodFromDeployment(depName, namespace string) (pod *v1.Pod, err error) {
 	dep := &appsv1.Deployment{}
 	err = runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: depName}, dep)
 	if err != nil {
@@ -159,7 +159,7 @@ func getProxyPodFromDeployment(depName, namespace string) (pod *v1.Pod, err erro
 		if err != nil {
 			return false, fmt.Errorf("failed to get list of pods in deployment: %v", err)
 		}
-		// Make sure the pods exist. Tere should only be 1 pod per deployment.
+		// Make sure the pods exist. There should only be 1 pod per deployment.
 		if len(pods.Items) == 1 {
 			// If the pod has a deletion timestamp, it is the old pod; wait for
 			// pod with no deletion timestamp
