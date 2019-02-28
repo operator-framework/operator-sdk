@@ -411,6 +411,7 @@ Run scorecard tests on an operator
 * `kubeconfig` string - Path to kubeconfig of custom resource created in cluster
 * `namespace` string - Namespace of custom resource created in cluster
 * `namespaced-manifest` string - Path to manifest for namespaced resources (e.g. RBAC and Operator manifest)
+* `olm-deployed` - Only use the CSV at `csv-path` for manifest data, except for those provided to `cr-manifest`
 * `olm-tests` - Enable OLM integration checks (default true)
 * `proxy-image` string - Image name for scorecard proxy (default "quay.io/operator-framework/scorecard-proxy")
 * `proxy-pull-policy` string - Pull policy for scorecard proxy image (default "Always")
@@ -560,4 +561,3 @@ $ operator-sdk up local --namespace "testing"
 [k8s-code-generator]: https://github.com/kubernetes/code-generator
 [openapi-code-generator]: https://github.com/kubernetes/kube-openapi
 [helm-user-guide-create-project]: https://github.com/operator-framework/operator-sdk/blob/master/doc/helm/user-guide.md#create-a-new-project
-

@@ -18,14 +18,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/scorecard"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/version"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/scorecard"
-	"github.com/operator-framework/operator-sdk/version"
 )
 
 // scorecardConfig stores all scorecard config passed as flags
@@ -33,6 +32,7 @@ type scorecardConfig struct {
 	namespace          string
 	kubeconfigPath     string
 	initTimeout        int
+	olmDeployed        bool
 	csvPath            string
 	basicTests         bool
 	olmTests           bool
@@ -61,6 +61,7 @@ func NewScorecardCmd() *cobra.Command {
 	scorecardCmd.Flags().StringVar(&scConf.namespace, scorecard.NamespaceOpt, "", "Namespace of custom resource created in cluster")
 	scorecardCmd.Flags().StringVar(&scConf.kubeconfigPath, scorecard.KubeconfigOpt, "", "Path to kubeconfig of custom resource created in cluster")
 	scorecardCmd.Flags().IntVar(&scConf.initTimeout, scorecard.InitTimeoutOpt, 10, "Timeout for status block on CR to be created in seconds")
+	scorecardCmd.Flags().BoolVar(&scConf.olmDeployed, scorecard.OlmDeployedOpt, false, "The OLM has deployed the operator. Use only the CSV for test data")
 	scorecardCmd.Flags().StringVar(&scConf.csvPath, scorecard.CSVPathOpt, "", "Path to CSV being tested")
 	scorecardCmd.Flags().BoolVar(&scConf.basicTests, scorecard.BasicTestsOpt, true, "Enable basic operator checks")
 	scorecardCmd.Flags().BoolVar(&scConf.olmTests, scorecard.OLMTestsOpt, true, "Enable OLM integration checks")
