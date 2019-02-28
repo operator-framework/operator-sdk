@@ -36,7 +36,7 @@ building example-operator...
 
 building container quay.io/example/operator:v0.0.1...
 Sending build context to Docker daemon  163.9MB
-Step 1/4 : FROM alpine:3.6
+Step 1/4 : FROM registry.access.redhat.com/ubi7-dev-preview/ubi-minimal:7.6
  ---> 77144d8c6bdc
 Step 2/4 : ADD tmp/_output/bin/example-operator /usr/local/bin/example-operator
  ---> 2ada0d6ca93c
@@ -133,8 +133,8 @@ pkg/apis/app/v1alpha1/
 ├── register.go
 
 $ operator-sdk generate k8s
-Running code-generation for custom resource group versions: [app:v1alpha1]
-Generating deepcopy funcs
+INFO[0000] Running deepcopy code-generation for Custom Resource group versions: [app:[v1alpha1], ]
+INFO[0001] Code-generation complete.                    
 
 $ tree pkg/apis/app/v1alpha1/
 pkg/apis/app/v1alpha1/
@@ -144,31 +144,60 @@ pkg/apis/app/v1alpha1/
 └── zz_generated.deepcopy.go
 ```
 
+### openapi
+
+Runs the [kube-openapi][openapi-code-generator] OpenAPIv3 code generator for all Custom Resource Definition (CRD) API tagged fields under `pkg/apis/...`.
+
+**Note**: This command must be run every time a tagged API struct or struct field for a custom resource type is updated.
+
+#### Example
+
+```console
+$ tree pkg/apis/app/v1alpha1/
+pkg/apis/app/v1alpha1/
+├── appservice_types.go
+├── doc.go
+├── register.go
+
+$ operator-sdk generate openapi
+INFO[0000] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
+INFO[0001] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
+INFO[0001] Code-generation complete.                    
+
+$ tree pkg/apis/app/v1alpha1/
+pkg/apis/app/v1alpha1/
+├── appservice_types.go
+├── doc.go
+├── register.go
+└── zz_generated.openapi.go
+```
+
 ## olm-catalog
 
 Parent command for all OLM Catalog related commands.
 
 ### gen-csv
 
-Writes a Cluster Service Version (CSV) manifest and concatenated CRD files to `deploy/olm-catalog`.
+Writes a Cluster Service Version (CSV) manifest and optionally CRD files to `deploy/olm-catalog/{operator-name}/{csv-version}`.
 
 #### Flags
 
-* `--csv-version` (required) Semantic version of the CSV manifest.
-* `--csv-config` Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml.
+* `--csv-version` string - (required) Semantic version of the CSV manifest.
+* `--from-version` string - Semantic version of CSV manifest to use as a base for a new version.
+* `--csv-config` string - Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml.
+* `--update-crds` Update CRD manifests in deploy/{operator-name}/{csv-version} using the latest CRD manifests.
 
 #### Example
 
 ```console
-$ operator-sdk olm-catalog gen-csv --csv-version 0.1.1
-INFO[0000] Generating CSV manifest version 0.1.1
-INFO[0000] Fill in the following required fields in file deploy/olm-catalog/operator-name.csv.yaml:
+$ operator-sdk olm-catalog gen-csv --csv-version 0.1.0 --update-crds
+INFO[0000] Generating CSV manifest version 0.1.0
+INFO[0000] Fill in the following required fields in file deploy/olm-catalog/operator-name/0.1.0/operator-name.v0.1.0.clusterserviceversion.yaml:
 	spec.keywords
 	spec.maintainers
 	spec.provider
 	spec.labels
-INFO[0000] Create deploy/olm-catalog/operator-name.csv.yaml     
-INFO[0000] Create deploy/olm-catalog/_generated.concat_crd.yaml
+INFO[0000] Created deploy/olm-catalog/operator-name/0.1.0/operator-name.v0.1.0.clusterserviceversion.yaml     
 ```
 
 ## migrate
@@ -186,11 +215,11 @@ $ operator-sdk migrate
 2019/01/10 15:02:45 No playbook was found, so not including it in the new Dockerfile
 2019/01/10 15:02:45 renamed Dockerfile to build/Dockerfile.sdkold and replaced with newer version
 2019/01/10 15:02:45 Compare the new Dockerfile to your old one and manually migrate any customizations
-INFO[0000] Create cmd/manager/main.go
-INFO[0000] Create Gopkg.toml
-INFO[0000] Create build/Dockerfile
-INFO[0000] Create bin/entrypoint
-INFO[0000] Create bin/user_setup
+INFO[0000] Created cmd/manager/main.go
+INFO[0000] Created Gopkg.toml
+INFO[0000] Created build/Dockerfile
+INFO[0000] Created bin/entrypoint
+INFO[0000] Created bin/user_setup
 ```
 
 ## new
@@ -209,11 +238,14 @@ Scaffolds a new operator project.
 * `--kind` string - CRD Kind. (e.g AppService)
 * `--generate-playbook` - Generate a playbook skeleton. (Only used for `--type ansible`)
 * `--cluster-scoped` - Initialize the operator to be cluster-scoped instead of namespace-scoped
+* `--helm-chart` string - Initialize helm operator with existing helm chart (`<URL>`, `<repo>/<name>`, or local path)
+* `--helm-chart-repo` string - Chart repository URL for the requested helm chart
+* `--helm-chart-version` string - Specific version of the helm chart (default is latest version)
 * `-h, --help` - help for new
 
 ### Example
 
-Go project:
+#### Go project
 
 ```console
 $ mkdir $GOPATH/src/github.com/example.com/
@@ -221,23 +253,54 @@ $ cd $GOPATH/src/github.com/example.com/
 $ operator-sdk new app-operator
 ```
 
-Ansible project:
+#### Ansible project
 
 ```console
 $ operator-sdk new app-operator --type=ansible --api-version=app.example.com/v1alpha1 --kind=AppService
 ```
 
-Helm project:
+#### Helm project
+
+For more details about creating new Helm operator projects, see the [Helm user guide][helm-user-guide-create-project].
 
 ```console
-$ operator-sdk new app-operator --type=helm --api-version=app.example.com/v1alpha1 --kind=AppService
+$ operator-sdk new app-operator --type=helm \
+    --api-version=app.example.com/v1alpha1 \
+    --kind=AppService
+
+$ operator-sdk new app-operator --type=helm \
+    --api-version=app.example.com/v1alpha1 \
+    --kind=AppService \
+    --helm-chart=myrepo/app
+
+$ operator-sdk new app-operator --type=helm \
+    --helm-chart=myrepo/app
+
+$ operator-sdk new app-operator --type=helm \
+    --helm-chart=myrepo/app \
+    --helm-chart-version=1.2.3
+
+$ operator-sdk new app-operator --type=helm \
+    --helm-chart=app \
+    --helm-chart-repo=https://charts.mycompany.com/
+
+$ operator-sdk new app-operator --type=helm \
+    --helm-chart=app \
+    --helm-chart-repo=https://charts.mycompany.com/ \
+    --helm-chart-version=1.2.3
+
+$ operator-sdk new app-operator --type=helm \
+    --helm-chart=/path/to/local/chart-directories/app/
+
+$ operator-sdk new app-operator --type=helm \
+    --helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz
 ```
 
 ## add
 
 ### api
 
-Adds the api definition for a new custom resource under `pkg/apis` and generates the CRD and CR files under `depoy/crds/...`.
+Adds the API definition for a new custom resource under `pkg/apis` and generates the CRD and CR files under `depoy/crds/...`, and generates Kubernetes deepcopy functions and OpenAPIv3 validation specs for the new API.
 
 #### Flags
 
@@ -248,14 +311,19 @@ Adds the api definition for a new custom resource under `pkg/apis` and generates
 
 ```console
 $ operator-sdk add api --api-version app.example.com/v1alpha1 --kind AppService
-Create pkg/apis/app/v1alpha1/appservice_types.go
-Create pkg/apis/addtoscheme_app_v1alpha1.go
-Create pkg/apis/app/v1alpha1/register.go
-Create pkg/apis/app/v1alpha1/doc.go
-Create deploy/crds/app_v1alpha1_appservice_cr.yaml
-Create deploy/crds/app_v1alpha1_appservice_crd.yaml
-Running code-generation for custom resource group versions: [app:v1alpha1]
-Generating deepcopy funcs
+INFO[0000] Generating api version app.example.com/v1alpha1 for kind AppService.
+INFO[0000] Created pkg/apis/app/v1alpha1/appservice_types.go
+INFO[0000] Created pkg/apis/addtoscheme_app_v1alpha1.go  
+INFO[0000] Created pkg/apis/app/v1alpha1/register.go     
+INFO[0000] Created pkg/apis/app/v1alpha1/doc.go          
+INFO[0000] Created deploy/crds/app_v1alpha1_appservice_cr.yaml
+INFO[0000] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
+INFO[0001] Running deepcopy code-generation for Custom Resource group versions: [app:[v1alpha1], ]
+INFO[0002] Code-generation complete.                    
+INFO[0002] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
+INFO[0004] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
+INFO[0004] Code-generation complete.                    
+INFO[0004] API generation complete.
 ```
 
 ### controller
@@ -271,8 +339,8 @@ Adds a new controller under `pkg/controller/<kind>/...` that, by default, reconc
 
 ```console
 $ operator-sdk add controller --api-version app.example.com/v1alpha1 --kind AppService
-Create pkg/controller/appservice/appservice_controller.go
-Create pkg/controller/add_appservice.go
+Created pkg/controller/appservice/appservice_controller.go
+Created pkg/controller/add_appservice.go
 ```
 
 ### crd
@@ -289,8 +357,8 @@ Generates the CRD and the CR files for the specified api-version and kind.
 ```console
 $ operator-sdk add crd --api-version app.example.com/v1alpha1 --kind AppService
 Generating custom resource definition (CRD) files
-Create deploy/crds/app_v1alpha1_appservice_crd.yaml
-Create deploy/crds/app_v1alpha1_appservice_cr.yaml
+Created deploy/crds/app_v1alpha1_appservice_crd.yaml
+Created deploy/crds/app_v1alpha1_appservice_cr.yaml
 ```
 
 ## run
@@ -343,6 +411,7 @@ Run scorecard tests on an operator
 * `kubeconfig` string - Path to kubeconfig of custom resource created in cluster
 * `namespace` string - Namespace of custom resource created in cluster
 * `namespaced-manifest` string - Path to manifest for namespaced resources (e.g. RBAC and Operator manifest)
+* `olm-deployed` - Only use the CSV at `csv-path` for manifest data, except for those provided to `cr-manifest`
 * `olm-tests` - Enable OLM integration checks (default true)
 * `proxy-image` string - Image name for scorecard proxy (default "quay.io/operator-framework/scorecard-proxy")
 * `proxy-pull-policy` string - Pull policy for scorecard proxy image (default "Always")
@@ -352,7 +421,7 @@ Run scorecard tests on an operator
 ### Example
 
 ```console
-$ operator-sdk scorecard --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml --csv-path deploy/memcachedoperator.0.0.2.csv.yaml
+$ operator-sdk scorecard --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml --csv-path deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml
 Checking for existence of spec and status blocks in CR
 Checking that operator actions are reflected in status
 Checking that writing into CRs has an effect
@@ -490,3 +559,5 @@ $ operator-sdk up local --namespace "testing"
 
 [utility_link]: https://github.com/operator-framework/operator-sdk/blob/89bf021063d18b6769bdc551ed08fc37027939d5/pkg/util/k8sutil/k8sutil.go#L140
 [k8s-code-generator]: https://github.com/kubernetes/code-generator
+[openapi-code-generator]: https://github.com/kubernetes/kube-openapi
+[helm-user-guide-create-project]: https://github.com/operator-framework/operator-sdk/blob/master/doc/helm/user-guide.md#create-a-new-project

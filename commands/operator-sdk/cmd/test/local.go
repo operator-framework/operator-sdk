@@ -122,11 +122,29 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 
 	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml, deploy/role_binding.yaml and deploy/operator.yaml
 	if tlConfig.namespacedManPath == "" && !tlConfig.noSetup {
-		file, err := yamlutil.GenerateCombinedNamespacedManifest()
-		if err != nil {
-			return err
+		if !tlConfig.upLocal {
+			file, err := yamlutil.GenerateCombinedNamespacedManifest(scaffold.DeployDir)
+			if err != nil {
+				return err
+			}
+			tlConfig.namespacedManPath = file.Name()
+		} else {
+			file, err := ioutil.TempFile("", "empty.yaml")
+			if err != nil {
+				return fmt.Errorf("could not create empty manifest file: (%v)", err)
+			}
+			tlConfig.namespacedManPath = file.Name()
+			emptyBytes := []byte{}
+			if err := file.Chmod(os.FileMode(fileutil.DefaultFileMode)); err != nil {
+				return fmt.Errorf("could not chown temporary namespaced manifest file: (%v)", err)
+			}
+			if _, err := file.Write(emptyBytes); err != nil {
+				return fmt.Errorf("could not write temporary namespaced manifest file: (%v)", err)
+			}
+			if err := file.Close(); err != nil {
+				return err
+			}
 		}
-		tlConfig.namespacedManPath = file.Name()
 		defer func() {
 			err := os.Remove(tlConfig.namespacedManPath)
 			if err != nil {
@@ -135,7 +153,7 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 		}()
 	}
 	if tlConfig.globalManPath == "" && !tlConfig.noSetup {
-		file, err := yamlutil.GenerateCombinedGlobalManifest()
+		file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
 		if err != nil {
 			return err
 		}

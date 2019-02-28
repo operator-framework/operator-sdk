@@ -54,8 +54,8 @@ func CombineManifests(base []byte, manifests ...[]byte) []byte {
 }
 
 // GenerateCombinedNamespacedManifest creates a temporary manifest yaml
-// containing all standard namespaced resource manifests combined into 1 file
-func GenerateCombinedNamespacedManifest() (*os.File, error) {
+// by combining all standard namespaced resource manifests in deployDir.
+func GenerateCombinedNamespacedManifest(deployDir string) (*os.File, error) {
 	file, err := ioutil.TempFile("", "namespaced-manifest.yaml")
 	if err != nil {
 		return nil, err
@@ -66,19 +66,19 @@ func GenerateCombinedNamespacedManifest() (*os.File, error) {
 		}
 	}()
 
-	sa, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.ServiceAccountYamlFile))
+	sa, err := ioutil.ReadFile(filepath.Join(deployDir, scaffold.ServiceAccountYamlFile))
 	if err != nil {
 		log.Warnf("Could not find the serviceaccount manifest: (%v)", err)
 	}
-	role, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleYamlFile))
+	role, err := ioutil.ReadFile(filepath.Join(deployDir, scaffold.RoleYamlFile))
 	if err != nil {
 		log.Warnf("Could not find role manifest: (%v)", err)
 	}
-	roleBinding, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.RoleBindingYamlFile))
+	roleBinding, err := ioutil.ReadFile(filepath.Join(deployDir, scaffold.RoleBindingYamlFile))
 	if err != nil {
 		log.Warnf("Could not find role_binding manifest: (%v)", err)
 	}
-	operator, err := ioutil.ReadFile(filepath.Join(scaffold.DeployDir, scaffold.OperatorYamlFile))
+	operator, err := ioutil.ReadFile(filepath.Join(deployDir, scaffold.OperatorYamlFile))
 	if err != nil {
 		return nil, fmt.Errorf("could not find operator manifest: (%v)", err)
 	}
@@ -98,8 +98,8 @@ func GenerateCombinedNamespacedManifest() (*os.File, error) {
 }
 
 // GenerateCombinedGlobalManifest creates a temporary manifest yaml
-// containing all standard global resource manifests combined into 1 file
-func GenerateCombinedGlobalManifest() (*os.File, error) {
+// by combining all standard global resource manifests in crdsDir.
+func GenerateCombinedGlobalManifest(crdsDir string) (*os.File, error) {
 	file, err := ioutil.TempFile("", "global-manifest.yaml")
 	if err != nil {
 		return nil, err
@@ -110,16 +110,16 @@ func GenerateCombinedGlobalManifest() (*os.File, error) {
 		}
 	}()
 
-	files, err := ioutil.ReadDir(scaffold.CRDsDir)
+	files, err := ioutil.ReadDir(crdsDir)
 	if err != nil {
 		return nil, fmt.Errorf("could not read deploy directory: (%v)", err)
 	}
 	combined := []byte{}
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), "crd.yaml") {
-			fileBytes, err := ioutil.ReadFile(filepath.Join(scaffold.CRDsDir, file.Name()))
+			fileBytes, err := ioutil.ReadFile(filepath.Join(crdsDir, file.Name()))
 			if err != nil {
-				return nil, fmt.Errorf("could not read file %s: (%v)", filepath.Join(scaffold.CRDsDir, file.Name()), err)
+				return nil, fmt.Errorf("could not read file %s: (%v)", filepath.Join(crdsDir, file.Name()), err)
 			}
 			combined = CombineManifests(combined, fileBytes)
 		}

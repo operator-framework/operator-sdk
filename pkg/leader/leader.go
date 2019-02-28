@@ -16,8 +16,6 @@ package leader
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -36,8 +34,6 @@ var log = logf.Log.WithName("leader")
 // maxBackoffInterval defines the maximum amount of time to wait between
 // attempts to become the leader.
 const maxBackoffInterval = time.Second * 16
-
-const PodNameEnv = "POD_NAME"
 
 // Become ensures that the current pod is the leader within its namespace. If
 // run outside a cluster, it will skip leader election and return nil. It
@@ -143,24 +139,8 @@ func Become(ctx context.Context, lockName string) error {
 // this code is currently running.
 // It expects the environment variable POD_NAME to be set by the downwards API
 func myOwnerRef(ctx context.Context, client crclient.Client, ns string) (*metav1.OwnerReference, error) {
-	podName := os.Getenv(PodNameEnv)
-	if podName == "" {
-		return nil, fmt.Errorf("required env %s not set, please configure downward API", PodNameEnv)
-	}
-
-	log.V(1).Info("Found podname", "Pod.Name", podName)
-
-	myPod := &corev1.Pod{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Pod",
-		},
-	}
-
-	key := crclient.ObjectKey{Namespace: ns, Name: podName}
-	err := client.Get(ctx, key, myPod)
+	myPod, err := k8sutil.GetPod(ctx, client, ns)
 	if err != nil {
-		log.Error(err, "Failed to get pod", "Pod.Namespace", ns, "Pod.Name", podName)
 		return nil, err
 	}
 

@@ -36,6 +36,24 @@ use. For example:
 $ operator-sdk scorecard --cr-manifest deploy/crds/app_operator_cr.yaml --csv-path deploy/app_operator-0.0.2.yaml
 ```
 
+## Config File
+
+The scorecard supports the use of a config file instead of or in addition to flags for configuration. By default, the scorecard will look
+for a file called `.osdk-scorecard` with either a `.yaml`, `.json`, or `.toml` file extension. You can also
+specify a different config file with the `--config` flag. The configuration options in the config file match the flags.
+For instance, for the flags `--cr-manifest "deploy/crds/cache_v1alpha1_memcached_cr.yaml" --init-timeout 60 --csv-path "deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml"`, the corresponding yaml config file would contain:
+
+```yaml
+cr-manifest: "deploy/crds/cache_v1alpha1_memcached_cr.yaml"
+init-timeout: 60
+csv-path: "deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml"
+```
+
+The hierarchy of config methods from highest priority to least is: flag->file->default.
+
+The config file support is provided by the `viper` package. For more info on how viper
+configuration works, see [`viper`'s README][viper].
+
 ## What Each Test Does
 
 There are 8 tests the scorecard can run:
@@ -58,6 +76,12 @@ This test reads the scorecard proxy's logs to verify that the operator is making
 API server, indicating that it is modifying resources. This test has a maximum score of 1.
 
 ### OLM Integration
+
+#### Provided APIs have validation
+
+This test verifies that all the CRDs in the CRDs folder contain a validation section. If the CRD matches the kind and version of the
+CR currently being tested, it will also verify that there is a validation for each spec and status field in that CR. This test has a
+maximum score of 1.
 
 #### Owned CRDs Have Resources Listed
 
@@ -84,3 +108,4 @@ the CSV. This test has a maximum score equal to the number of fields in the stat
 [writing-tests]: ./writing-e2e-tests.md
 [owned-crds]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md#owned-crds
 [alm-examples]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md#crd-templates
+[viper]: https://github.com/spf13/viper/blob/master/README.md

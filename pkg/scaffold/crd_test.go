@@ -47,7 +47,11 @@ func TestCRDGoProject(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() { os.Chdir(absPath) }()
-	err = s.Execute(cfg, &CRD{Resource: r, IsOperatorGo: true})
+	err = s.Execute(cfg, &CRD{
+		Input:        input.Input{Path: filepath.Join(tfDir, "cache_v1alpha1_memcached.yaml")},
+		Resource:     r,
+		IsOperatorGo: true,
+	})
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
@@ -100,6 +104,10 @@ spec:
           - nodes
           type: object
   version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
 `
 
 func TestCRDNonGoProject(t *testing.T) {
@@ -135,4 +143,8 @@ spec:
   subresources:
     status: {}
   version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
 `

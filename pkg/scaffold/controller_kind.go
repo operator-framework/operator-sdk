@@ -44,7 +44,7 @@ const controllerKindTemplate = `package {{ .Resource.LowerKind }}
 import (
 	"context"
 
-	{{ .Resource.Group}}{{ .Resource.Version }} "{{ .Repo }}/pkg/apis/{{ .Resource.Group}}/{{ .Resource.Version }}"
+	{{ .Resource.GoImportGroup}}{{ .Resource.Version }} "{{ .Repo }}/pkg/apis/{{ .Resource.GoImportGroup}}/{{ .Resource.Version }}"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -88,7 +88,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource {{ .Resource.Kind }}
-	err = c.Watch(&source.Kind{Type: &{{ .Resource.Group}}{{ .Resource.Version }}.{{ .Resource.Kind }}{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &{{ .Resource.GoImportGroup}}{{ .Resource.Version }}.{{ .Resource.Kind }}{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Watch for changes to secondary resource Pods and requeue the owner {{ .Resource.Kind }}
 	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
-		OwnerType:    &{{ .Resource.Group}}{{ .Resource.Version }}.{{ .Resource.Kind }}{},
+		OwnerType:    &{{ .Resource.GoImportGroup}}{{ .Resource.Version }}.{{ .Resource.Kind }}{},
 	})
 	if err != nil {
 		return err
@@ -128,7 +128,7 @@ func (r *Reconcile{{ .Resource.Kind }}) Reconcile(request reconcile.Request) (re
 	reqLogger.Info("Reconciling {{ .Resource.Kind }}")
 
 	// Fetch the {{ .Resource.Kind }} instance
-	instance := &{{ .Resource.Group}}{{ .Resource.Version }}.{{ .Resource.Kind }}{}
+	instance := &{{ .Resource.GoImportGroup}}{{ .Resource.Version }}.{{ .Resource.Kind }}{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -171,7 +171,7 @@ func (r *Reconcile{{ .Resource.Kind }}) Reconcile(request reconcile.Request) (re
 }
 
 // newPodForCR returns a busybox pod with the same name/namespace as the cr
-func newPodForCR(cr *{{ .Resource.Group}}{{ .Resource.Version }}.{{ .Resource.Kind }}) *corev1.Pod {
+func newPodForCR(cr *{{ .Resource.GoImportGroup}}{{ .Resource.Version }}.{{ .Resource.Kind }}) *corev1.Pod {
 	labels := map[string]string{
 		"app": cr.Name,
 	}

@@ -1,0 +1,6 @@
+cr-manifest: "deploy/crds/cache_v1alpha1_memcached_cr.yaml"
+init-timeout: 60
+csv-path: "deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml"
+proxy-image: "scorecard-proxy"
+proxy-pull-policy: "Never"
+verbose: true

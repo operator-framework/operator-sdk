@@ -61,6 +61,60 @@
         assert:
           that: lookup('k8s', kind='Service', api_version='v1', namespace=namespace, resource_name='test-service')
 
+      - when: molecule_yml.scenario.name == "test-local"
+        block:
+        - name: Restart the operator by killing the pod
+          k8s:
+            state: absent
+            definition:
+              api_version: v1
+              kind: Pod
+              metadata:
+                namespace: '{{ namespace }}'
+                name: '{{ pod.metadata.name }}'
+          vars:
+            pod: '{{ q("k8s", api_version="v1", kind="Pod", namespace=namespace, label_selector="name=memcached-operator").0 }}'
+
+        - name: Wait 2 minutes for operator deployment
+          debug:
+            var: deploy
+          until: deploy and deploy.status and deploy.status.replicas == deploy.status.get("availableReplicas", 0)
+          retries: 12
+          delay: 10
+          vars:
+            deploy: '{{ lookup("k8s",
+              kind="Deployment",
+              api_version="apps/v1",
+              namespace=namespace,
+              resource_name="memcached-operator"
+            )}}'
+
+        - name: Wait for reconciliation to have a chance at finishing
+          pause:
+            seconds:  15
+
+        - name: Delete the service that is created.
+          k8s:
+            kind: Service
+            api_version: v1
+            namespace: '{{ namespace }}'
+            name: test-service
+            state: absent
+
+        - name: Verify that test-service was re-created
+          debug:
+            var: service
+          until: service
+          retries: 12
+          delay: 10
+          vars:
+            service: '{{ lookup("k8s",
+              kind="Service",
+              api_version="v1",
+              namespace=namespace,
+              resource_name="test-service",
+            )}}'
+
       - name: Delete the custom resource
         k8s:
           state: absent

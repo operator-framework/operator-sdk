@@ -25,6 +25,10 @@ const (
 	WatchNamespaceEnvVar = "WATCH_NAMESPACE"
 
 	// OperatorNameEnvVar is the constant for env variable OPERATOR_NAME
-	// wich is the name of the current operator
+	// which is the name of the current operator
 	OperatorNameEnvVar = "OPERATOR_NAME"
+
+	// PodNameEnvVar is the constant for env variable POD_NAME
+	// which is the name of the current pod.
+	PodNameEnvVar = "POD_NAME"
 )

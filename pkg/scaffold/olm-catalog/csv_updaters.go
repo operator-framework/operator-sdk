@@ -84,7 +84,7 @@ func (s *updaterStore) AddToUpdater(yamlSpec []byte) error {
 	case "Deployment":
 		return s.AddDeploymentSpec(yamlSpec)
 	case "CustomResourceDefinition":
-		// TODO: determine whether 'owned' or 'required'
+		// All CRD's present will be 'owned'.
 		return s.AddOwnedCRD(yamlSpec)
 	}
 	return nil
@@ -193,53 +193,34 @@ type CSVCustomResourceDefinitionsUpdate struct {
 }
 
 func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
-	crdDesc, err := parseCRDDescriptionFromYAML(yamlDoc)
-	if err == nil {
-		store.crdUpdate.Owned = append(store.crdUpdate.Owned, *crdDesc)
-	}
-	return err
-}
-
-func (store *updaterStore) AddRequiredCRD(yamlDoc []byte) error {
-	crdDesc, err := parseCRDDescriptionFromYAML(yamlDoc)
-	if err == nil {
-		store.crdUpdate.Required = append(store.crdUpdate.Required, *crdDesc)
-	}
-	return err
-}
-
-func parseCRDDescriptionFromYAML(yamlDoc []byte) (*olmapiv1alpha1.CRDDescription, error) {
 	crd := &apiextv1beta1.CustomResourceDefinition{}
 	if err := yaml.Unmarshal(yamlDoc, crd); err != nil {
-		return nil, err
+		return err
 	}
-	return &olmapiv1alpha1.CRDDescription{
+	store.crdUpdate.Owned = append(store.crdUpdate.Owned, olmapiv1alpha1.CRDDescription{
 		Name:    crd.ObjectMeta.Name,
 		Version: crd.Spec.Version,
 		Kind:    crd.Spec.Names.Kind,
-	}, nil
+	})
+	return nil
 }
 
-// Apply updates all CRDDescriptions with any user-defined data in csv's
-// CRDDescriptions.
+// Apply updates csv's "owned" CRDDescriptions. "required" CRDDescriptions are
+// left as-is, since they are user-defined values.
 func (u *CSVCustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
-	crdDescSet := make(map[string]*olmapiv1alpha1.CRDDescription)
-	for _, desc := range u.Owned {
-		crdDescSet[desc.Name] = &desc
+	set := make(map[string]olmapiv1alpha1.CRDDescription)
+	for _, csvDesc := range csv.Spec.CustomResourceDefinitions.Owned {
+		set[csvDesc.Name] = csvDesc
 	}
-	for _, desc := range u.Required {
-		crdDescSet[desc.Name] = &desc
-	}
-	for _, csvDesc := range csv.GetAllCRDDescriptions() {
-		if uDesc, ok := crdDescSet[csvDesc.Name]; ok {
-			uDesc.DisplayName = csvDesc.DisplayName
-			uDesc.Description = csvDesc.Description
-			uDesc.ActionDescriptor = csvDesc.ActionDescriptor
-			uDesc.SpecDescriptors = csvDesc.SpecDescriptors
-			uDesc.StatusDescriptors = csvDesc.StatusDescriptors
-			uDesc.Resources = csvDesc.Resources
+	du := u.DeepCopy()
+	for i, uDesc := range u.Owned {
+		if csvDesc, ok := set[uDesc.Name]; ok {
+			csvDesc.Name = uDesc.Name
+			csvDesc.Version = uDesc.Version
+			csvDesc.Kind = uDesc.Kind
+			du.Owned[i] = csvDesc
 		}
 	}
-	csv.Spec.CustomResourceDefinitions = *u.CustomResourceDefinitions
+	csv.Spec.CustomResourceDefinitions.Owned = du.Owned
 	return nil
 }
