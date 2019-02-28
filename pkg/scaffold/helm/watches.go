@@ -27,6 +27,7 @@ type WatchesYAML struct {
 
 	Resource      *scaffold.Resource
 	HelmChartsDir string
+	ChartName     string
 }
 
 // GetInput gets the scaffold execution input
@@ -36,6 +37,9 @@ func (s *WatchesYAML) GetInput() (input.Input, error) {
 	}
 	s.HelmChartsDir = HelmChartsDir
 	s.TemplateBody = watchesYAMLTmpl
+	if s.ChartName == "" {
+		s.ChartName = s.Resource.LowerKind
+	}
 	return s.Input, nil
 }
 
@@ -43,5 +47,5 @@ const watchesYAMLTmpl = `---
 - version: {{.Resource.Version}}
   group: {{.Resource.FullGroup}}
   kind: {{.Resource.Kind}}
-  chart: /opt/helm/{{.HelmChartsDir}}/{{.Resource.LowerKind}}
+  chart: /opt/helm/{{.HelmChartsDir}}/{{.ChartName}}
 `

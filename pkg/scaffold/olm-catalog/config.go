@@ -37,7 +37,7 @@ type CSVConfig struct {
 }
 
 // TODO: discuss case of no config file at default path: write new file or not.
-func getCSVConfig(cfgFile string) (*CSVConfig, error) {
+func GetCSVConfig(cfgFile string) (*CSVConfig, error) {
 	cfg := &CSVConfig{}
 	if _, err := os.Stat(cfgFile); err == nil {
 		cfgData, err := ioutil.ReadFile(cfgFile)

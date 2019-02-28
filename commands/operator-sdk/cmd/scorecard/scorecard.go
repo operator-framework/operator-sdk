@@ -16,18 +16,20 @@ package scorecard
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 
+	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
-	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
-
+	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -48,6 +50,7 @@ const (
 	NamespaceOpt          = "namespace"
 	KubeconfigOpt         = "kubeconfig"
 	InitTimeoutOpt        = "init-timeout"
+	OlmDeployedOpt        = "olm-deployed"
 	CSVPathOpt            = "csv-path"
 	BasicTestsOpt         = "basic-tests"
 	OLMTestsOpt           = "olm-tests"
@@ -78,63 +81,32 @@ var (
 	ScorecardConf  string
 )
 
-const scorecardPodName = "operator-scorecard-test"
+const (
+	scorecardPodName       = "operator-scorecard-test"
+	scorecardContainerName = "scorecard-proxy"
+)
 
 func ScorecardTests(cmd *cobra.Command, args []string) error {
-	err := initConfig()
-	if err != nil {
+	if err := initConfig(); err != nil {
 		return err
 	}
-	if viper.GetString(CRManifestOpt) == "" {
-		return errors.New("cr-manifest config option missing")
-	}
-	if !viper.GetBool(BasicTestsOpt) && !viper.GetBool(OLMTestsOpt) {
-		return errors.New("at least one test type is required")
-	}
-	if viper.GetBool(OLMTestsOpt) && viper.GetString(CSVPathOpt) == "" {
-		return fmt.Errorf("if olm-tests is enabled, the --csv-path flag must be set")
-	}
-	pullPolicy := viper.GetString(ProxyPullPolicyOpt)
-	if pullPolicy != "Always" && pullPolicy != "Never" && pullPolicy != "PullIfNotPresent" {
-		return fmt.Errorf("invalid proxy pull policy: (%s); valid values: Always, Never, PullIfNotPresent", pullPolicy)
+	if err := validateScorecardFlags(); err != nil {
+		return err
 	}
 	cmd.SilenceUsage = true
 	if viper.GetBool(VerboseOpt) {
 		log.SetLevel(log.DebugLevel)
-	}
-	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml, deploy/role_binding.yaml and deploy/operator.yaml
-	if viper.GetString(NamespacedManifestOpt) == "" {
-		file, err := yamlutil.GenerateCombinedNamespacedManifest(scaffold.DeployDir)
-		if err != nil {
-			return err
-		}
-		viper.Set(NamespacedManifestOpt, file.Name())
-		defer func() {
-			err := os.Remove(viper.GetString(NamespacedManifestOpt))
-			if err != nil {
-				log.Errorf("Could not delete temporary namespace manifest file: (%v)", err)
-			}
-		}()
-	}
-	if viper.GetString(GlobalManifestOpt) == "" {
-		file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
-		if err != nil {
-			return err
-		}
-		viper.Set(GlobalManifestOpt, file.Name())
-		defer func() {
-			err := os.Remove(viper.GetString(GlobalManifestOpt))
-			if err != nil {
-				log.Errorf("Could not delete global manifest file: (%v)", err)
-			}
-		}()
 	}
 	defer func() {
 		if err := cleanupScorecard(); err != nil {
 			log.Errorf("Failed to clenup resources: (%v)", err)
 		}
 	}()
-	var tmpNamespaceVar string
+
+	var (
+		tmpNamespaceVar string
+		err             error
+	)
 	kubeconfig, tmpNamespaceVar, err = k8sInternal.GetKubeconfigAndNamespace(viper.GetString(KubeconfigOpt))
 	if err != nil {
 		return fmt.Errorf("failed to build the kubeconfig: %v", err)
@@ -166,12 +138,107 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	restMapper = restmapper.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient)
 	restMapper.Reset()
 	runtimeClient, _ = client.New(kubeconfig, client.Options{Scheme: scheme, Mapper: restMapper})
-	if err := createFromYAMLFile(viper.GetString(GlobalManifestOpt)); err != nil {
-		return fmt.Errorf("failed to create global resources: %v", err)
+
+	csv := &olmapiv1alpha1.ClusterServiceVersion{}
+	if viper.GetBool(OLMTestsOpt) {
+		yamlSpec, err := ioutil.ReadFile(viper.GetString(CSVPathOpt))
+		if err != nil {
+			return fmt.Errorf("failed to read csv: %v", err)
+		}
+		if err = yaml.Unmarshal(yamlSpec, csv); err != nil {
+			return fmt.Errorf("error getting ClusterServiceVersion: %v", err)
+		}
 	}
-	if err := createFromYAMLFile(viper.GetString(NamespacedManifestOpt)); err != nil {
-		return fmt.Errorf("failed to create namespaced resources: %v", err)
+
+	// Extract operator manifests from the CSV if olm-deployed is set.
+	if viper.GetBool(OlmDeployedOpt) {
+		// Get deploymentName from the deployment manifest within the CSV.
+		strat, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
+		if err != nil {
+			return err
+		}
+		stratDep, ok := strat.(*olminstall.StrategyDetailsDeployment)
+		if !ok {
+			return fmt.Errorf("expected StrategyDetailsDeployment, got strategy of type %T", strat)
+		}
+		deploymentName = stratDep.DeploymentSpecs[0].Name
+		// Get the proxy pod, which should have been created with the CSV.
+		proxyPodGlobal, err = getPodFromDeployment(deploymentName, viper.GetString(NamespaceOpt))
+		if err != nil {
+			return err
+		}
+
+		// Create a temporary CR manifest from metadata if one is not provided.
+		crJSONStr, ok := csv.ObjectMeta.Annotations["alm-examples"]
+		if ok && viper.GetString(CRManifestOpt) == "" {
+			var crs []interface{}
+			if err = json.Unmarshal([]byte(crJSONStr), &crs); err != nil {
+				return err
+			}
+			// TODO: run scorecard against all CR's in CSV.
+			cr := crs[0]
+			crJSONBytes, err := json.Marshal(cr)
+			if err != nil {
+				return err
+			}
+			crYAMLBytes, err := yaml.JSONToYAML(crJSONBytes)
+			if err != nil {
+				return err
+			}
+			crFile, err := ioutil.TempFile("", "cr.yaml")
+			if err != nil {
+				return err
+			}
+			if _, err := crFile.Write(crYAMLBytes); err != nil {
+				return err
+			}
+			viper.Set(CRManifestOpt, crFile.Name())
+			defer func() {
+				err := os.Remove(viper.GetString(CRManifestOpt))
+				if err != nil {
+					log.Errorf("Could not delete temporary CR manifest file: (%v)", err)
+				}
+			}()
+		}
+
+	} else {
+		// If no namespaced manifest path is given, combine
+		// deploy/{service_account,role.yaml,role_binding,operator}.yaml.
+		if viper.GetString(NamespacedManifestOpt) == "" {
+			file, err := yamlutil.GenerateCombinedNamespacedManifest(scaffold.DeployDir)
+			if err != nil {
+				return err
+			}
+			viper.Set(NamespacedManifestOpt, file.Name())
+			defer func() {
+				err := os.Remove(viper.GetString(NamespacedManifestOpt))
+				if err != nil {
+					log.Errorf("Could not delete temporary namespace manifest file: (%v)", err)
+				}
+			}()
+		}
+		// If no global manifest is given, combine all CRD's in the given CRD's dir.
+		if viper.GetString(GlobalManifestOpt) == "" {
+			gMan, err := yamlutil.GenerateCombinedGlobalManifest(viper.GetString(CRDsDirOpt))
+			if err != nil {
+				return err
+			}
+			viper.Set(GlobalManifestOpt, gMan.Name())
+			defer func() {
+				err := os.Remove(viper.GetString(GlobalManifestOpt))
+				if err != nil {
+					log.Errorf("Could not delete global manifest file: (%v)", err)
+				}
+			}()
+		}
+		if err := createFromYAMLFile(viper.GetString(GlobalManifestOpt)); err != nil {
+			return fmt.Errorf("failed to create global resources: %v", err)
+		}
+		if err := createFromYAMLFile(viper.GetString(NamespacedManifestOpt)); err != nil {
+			return fmt.Errorf("failed to create namespaced resources: %v", err)
+		}
 	}
+
 	if err := createFromYAMLFile(viper.GetString(CRManifestOpt)); err != nil {
 		return fmt.Errorf("failed to create cr resource: %v", err)
 	}
@@ -183,6 +250,8 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed waiting for CR to be ready: %v", err)
 	}
 	var suites []*TestSuite
+
+	// Run tests.
 	if viper.GetBool(BasicTestsOpt) {
 		conf := BasicTestConfig{
 			Client:   runtimeClient,
@@ -194,21 +263,6 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		suites = append(suites, basicTests)
 	}
 	if viper.GetBool(OLMTestsOpt) {
-		yamlSpec, err := ioutil.ReadFile(viper.GetString(CSVPathOpt))
-		if err != nil {
-			return fmt.Errorf("failed to read csv: %v", err)
-		}
-		rawCSV, _, err := dynamicDecoder.Decode(yamlSpec, nil, nil)
-		if err != nil {
-			return err
-		}
-		csv := &olmapiv1alpha1.ClusterServiceVersion{}
-		switch o := rawCSV.(type) {
-		case *olmapiv1alpha1.ClusterServiceVersion:
-			csv = o
-		default:
-			return fmt.Errorf("provided yaml file not of ClusterServiceVersion type")
-		}
 		conf := OLMTestConfig{
 			Client:   runtimeClient,
 			CR:       obj,
@@ -265,6 +319,26 @@ func initConfig() error {
 		log.Info("Using config file: ", viper.ConfigFileUsed())
 	} else {
 		log.Warn("Could not load config file; using flags")
+	}
+	return nil
+}
+
+func validateScorecardFlags() error {
+	if !viper.GetBool(OlmDeployedOpt) && viper.GetString(CRManifestOpt) == "" {
+		return errors.New("cr-manifest config option must be set")
+	}
+	if !viper.GetBool(BasicTestsOpt) && !viper.GetBool(OLMTestsOpt) {
+		return errors.New("at least one test type must be set")
+	}
+	if viper.GetBool(OLMTestsOpt) && viper.GetString(CSVPathOpt) == "" {
+		return fmt.Errorf("csv-path must be set if olm-tests is enabled")
+	}
+	if viper.GetBool(OlmDeployedOpt) && viper.GetString(CSVPathOpt) == "" {
+		return fmt.Errorf("csv-path must be set if olm-deployed is enabled")
+	}
+	pullPolicy := viper.GetString(ProxyPullPolicyOpt)
+	if pullPolicy != "Always" && pullPolicy != "Never" && pullPolicy != "PullIfNotPresent" {
+		return fmt.Errorf("invalid proxy pull policy: (%s); valid values: Always, Never, PullIfNotPresent", pullPolicy)
 	}
 	return nil
 }

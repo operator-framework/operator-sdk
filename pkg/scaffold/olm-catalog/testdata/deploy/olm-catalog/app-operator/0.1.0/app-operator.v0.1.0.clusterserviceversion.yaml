@@ -1,6 +1,8 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
+  annotations:
+    capabilities: Basic Install
   creationTimestamp: null
   name: app-operator.v0.1.0
   namespace: placeholder
@@ -8,12 +10,20 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-    - kind: App
-      name: apps.example.com
+    - displayName: some display name
+      kind: App
+      name: apps1.example.com
       version: v1alpha1
-    - kind: App
-      name: apps.example.com
+    - description: some description
+      kind: App
+      name: apps2.example.com
       version: v1alpha2
+    required:
+    - description: Represents a cluster of etcd nodes.
+      displayName: etcd Cluster
+      kind: EtcdCluster
+      name: etcdclusters.etcd.database.coreos.com
+      version: v1beta2
   description: Placeholder description
   displayName: App Operator
   install:
@@ -45,9 +55,6 @@ spec:
                 image: quay.io/example-inc/operator:v0.1.0
                 imagePullPolicy: Always
                 name: app-operator
-                ports:
-                - containerPort: 60000
-                  name: metrics
                 resources: {}
               serviceAccountName: app-operator
       permissions:
@@ -81,6 +88,15 @@ spec:
           - '*'
         serviceAccountName: app-operator
     strategy: deployment
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespace
   maturity: alpha
   provider: {}
   version: 0.1.0

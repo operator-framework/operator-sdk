@@ -47,8 +47,33 @@ This creates the nginx-operator project specifically for watching the
 Nginx resource with APIVersion `example.com/v1apha1` and Kind
 `Nginx`.
 
-To learn more about the project directory structure, see the 
+To learn more about the project directory structure, see the
 [project layout][layout_doc] doc.
+
+### Use an existing chart
+
+Instead of creating your project with a boilerplate Helm chart, you can also use `--helm-chart`, `--helm-chart-repo`, and `--helm-chart-version` to use an existing chart, either from your local filesystem or a remote chart repository.
+
+If `--helm-chart` is specified, `--api-version` and `--kind` become optional. If left unset, the SDK will default `--api-version` to `charts.helm.k8s.io/v1alpha1` and will deduce `--kind` from the specified chart.
+
+If `--helm-chart` is a local chart archive or directory, it will be validated and unpacked or copied into the project.
+
+Otherwise, the SDK will attempt to fetch the specified helm chart from a remote repository.
+
+If a custom repository URL is not specified by `--helm-chart-repo`, the following chart reference formats are supported:
+
+- `<repoName>/<chartName>`: Fetch the helm chart named `chartName` from the helm
+                            chart repository named `repoName`, as specified in the
+                            $HELM_HOME/repositories/repositories.yaml file.
+
+- `<url>`: Fetch the helm chart archive at the specified URL.
+
+If a custom repository URL is specified by `--helm-chart-repo`, the only supported format for `--helm-chart` is:
+
+- `<chartName>`: Fetch the helm chart named `chartName` in the helm chart repository
+                 specified by the `--helm-chart-repo` URL.
+
+If `--helm-chart-version` is not set, the SDK will fetch the latest available version of the helm chart. Otherwise, it will fetch the specified version. `--helm-chart-version` is not used when `--helm-chart` itself refers to a specific version, for example when it is a local path or a URL.
 
 ### Operator scope
 
@@ -334,5 +359,5 @@ kubectl delete -f deploy/crds/example_v1alpha1_nginx_cr.yaml
 [docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [minikube_tool]:https://github.com/kubernetes/minikube#installation
-[helm_charts]:https://docs.helm.sh/developing_charts/
-[helm_values]:https://docs.helm.sh/using_helm/#customizing-the-chart-before-installing
+[helm_charts]:https://helm.sh/docs/developing_charts/
+[helm_values]:https://helm.sh/docs/using_helm/#customizing-the-chart-before-installing
