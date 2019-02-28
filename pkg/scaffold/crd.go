@@ -25,6 +25,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
 	"github.com/ghodss/yaml"
+	"github.com/imdario/mergo"
 	"github.com/spf13/afero"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -132,7 +133,12 @@ func (s *CRD) CustomRender() ([]byte, error) {
 				if err = yaml.Unmarshal(cb, dstCRD); err != nil {
 					return nil, err
 				}
-				dstCRD.Spec.Validation = val
+				// val contains all validation fields from source code tagged with
+				// +kubebuilder directives. These fields should populate dstCRD
+				// validation fields unless they were added manually, hence the merge.
+				if err = mergo.Merge(dstCRD.Spec.Validation, val); err != nil {
+					return nil, err
+				}
 			}
 		}
 		// controller-tools does not set ListKind or Singular names.
