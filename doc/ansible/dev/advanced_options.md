@@ -40,3 +40,13 @@ Some features can be overridden per resource via an annotation on that CR. The o
 ### Runner Directory
 
 The ansible runner will keep information about the ansible run in the container.  This is located `/tmp/ansible-operator/runner/<group>/<version>/<kind>/<namespace>/<name>`. To learn more  about the runner directory you can read the [ansible-runner docs](https://ansible-runner.readthedocs.io/en/latest/index.html).
+
+## Turning off Dependent Watches and Owner Reference Injection
+
+You may want to manage what your operator watches and the owner references. This means that your operator will need to understand how to clean up after itself when your CR is deleted. To disable these features you will need to edit your `build/Dockerfile` to include the line below.
+
+**NOTE**: That if you use this feature there will be a warning that dependent watches is turned off but there will be no error.
+
+```
+ENTRYPOINT ["/usr/local/bin/entrypoint", "--inject-owner-ref=false"]
+```
