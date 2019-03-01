@@ -13,6 +13,7 @@ VERSION = $(shell git describe --dirty --tags --always)
 REPO = github.com/operator-framework/operator-sdk
 BUILD_PATH = $(REPO)/commands/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
+SOURCES = $(shell find . -name '*.go' -not -path "*/vendor/*")
 
 ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
 HELM_BASE_IMAGE = quay.io/operator-framework/helm-operator
@@ -52,9 +53,9 @@ release: clean $(release_x86_64) $(release_x86_64:=.asc)
 build/operator-sdk-%-x86_64-linux-gnu: GOARGS = GOOS=linux GOARCH=amd64
 build/operator-sdk-%-x86_64-apple-darwin: GOARGS = GOOS=darwin GOARCH=amd64
 
-build/%:
+build/%: $(SOURCES)
 	$(Q)$(GOARGS) go build -gcflags "all=-trimpath=${GOPATH}" -asmflags "all=-trimpath=${GOPATH}" -o $@ $(BUILD_PATH)
-	
+
 build/%.asc:
 	$(Q){ \
 	default_key=$$(gpgconf --list-options gpg | awk -F: '$$1 == "default-key" { gsub(/"/,""); print toupper($$10)}'); \
