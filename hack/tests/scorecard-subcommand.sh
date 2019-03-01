@@ -7,7 +7,7 @@ CONFIG_PATH=".test-osdk-scorecard.yaml"
 set -ex
 
 # build scorecard-proxy image (and delete intermediate builder image)
-./hack/image/build-scorecard-proxy-image.sh "$DEST_IMAGE"
+#./hack/image/build-scorecard-proxy-image.sh "$DEST_IMAGE"
 
 # the test framework directory has all the manifests needed to run the cluster
 pushd test/test-framework
@@ -16,7 +16,7 @@ commandoutput="$(operator-sdk scorecard \
   --init-timeout 60 \
   --csv-path "$CSV_PATH" \
   --verbose \
-  --proxy-image "$DEST_IMAGE" \
+  --proxy-image pipeline:operator-scorecard-proxy" \
   --proxy-pull-policy Never \
   2>&1)"
 echo $commandoutput | grep "Total Score: 80%"
