@@ -27,7 +27,9 @@ implementation to be inaccurate or too insufficient to be useful. For more usefu
 
 ## Design overview
 
-A new section would be added to the scorecard config file called `functional_tests` where a user can define various aspects of a test. For example, this definition runs a similar test to the memcached-operator scale test from the SDK's e2e test:
+### Basic YAML Defined Test
+
+A new basic testing system would be added where a user can simply define various aspects of a test. For example, this definition runs a similar test to the memcached-operator scale test from the SDK's e2e test:
 
 ```yaml
 functional_tests:
@@ -95,12 +97,57 @@ For `Status` and `Resources` fields, we can implement a bit of extra computation
 in the memcached-operator test, we should expect that the length of the `nodes` field (which is an array) has a certain length. To implement functions like
 these, we can create some functions for these checks that are prepended by `scorecard_function_` and take an array of objects. For instance, in the above
 example, `scorecard_function_length` would check that each field listed under it matches the specified length (like `nodes: 4`). If the yaml key does not
-start with `scorecard_function_`, we do a simple match (like `status.readyReplicas: 4`).
+start with `scorecard_function_`, we do a simple match (like `status/readyReplicas: 4`).
 
 This design would allow us to replace the old "Operator actions are reflected in status" (which would be tested by the `expected/status` check) and
 "Writing into CRs has an effect" (which would be tested by the `expected/resources` check) tests.
 
-## User facing usage (if needed)
+### Plugin System
 
-We would require a user to provide a config file with the `functional_tests` field run the 2 tests mentioned above. If not provided, those tests would be marked
-as failed (`0/1 points`). To make sure a user knows how to design their tests to get a good score in the scorecard, we would need detailed docs.
+In order to increase the flexibility of the user defined tests and allow users to implement more complex E2E style tests for scorecard,
+the user-defined tests will be implemented via a plugin system. Users will specify the path of the script they wish to run as well
+as environment variable to set for the command. The command would then print out the result as JSON to stdout. Here is an example:
+
+```yaml
+user_defined_tests:
+- path: "scorecard/simple-scorecard.sh"
+  env:
+    - CONFIG_FILE: "scorecard/simple-scorecard.yaml"
+- path: "scorecard/go-test.sh"
+  env:
+    - ENABLE_SCORECARD: true
+    - NAMESPACED_MANIFEST: "deploy/namespaced_init.yaml"
+    - GO_TEST_FLAGS: "-parallel=1"
+```
+
+The above is an example of a user-defined test suite with 2 tests: the new simple scorecard tests described above and a test
+built using the Operator SDK's test framework that's been modified to be able to output results in the standardized JSON output.
+
+Below is an example of what the JSON output of a test would look like:
+
+```json
+{
+  "actions_reflected_in_status": {
+    "description": "The operator correctly updates the CR's status",
+    "earned": 2,
+    "maximum": 3,
+    "suggestions": [
+      {
+        "message": "Expected 4 items in status/nodes but found 2"
+      }
+    ],
+    "errors": []
+  },
+  "my_custom_tests": {
+    "description": "This test verifies that the created service is running correctly",
+    "earned": 1,
+    "maximum": 1,
+    "suggestions": [],
+    "errors": []
+  },
+}
+```
+
+This JSON output would make it simple for others to create scorecard plugins while keeping it simple for the scorecard
+to parse and integrate with the other tests. The above JSON design is based on the `TestResult` type that will be implemented
+by PR [#994](https://github.com/operator-framework/operator-sdk/pull/994).
