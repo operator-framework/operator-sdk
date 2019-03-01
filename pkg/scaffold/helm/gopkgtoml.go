@@ -40,7 +40,7 @@ const gopkgTomlTmpl = `[[constraint]]
 
 [[override]]
   name = "k8s.io/kubernetes"
-  version = "=1.12.3"
+  version = "=1.13.1"
 
 [[override]]
   name = "k8s.io/api"
@@ -68,7 +68,7 @@ const gopkgTomlTmpl = `[[constraint]]
 
 # We need overrides for the following imports because dep can't resolve them
 # correctly. The easiest way to get this right is to use the versions that
-# k8s.io/helm uses. See https://github.com/helm/helm/blob/v2.12.0-rc.1/glide.lock
+# k8s.io/helm uses. See https://github.com/helm/helm/blob/v2.13.0/glide.lock
 [[override]]
 name = "github.com/russross/blackfriday"
 revision = "300106c228d52c8941d4b3de6054a6062a86dda3"
