@@ -24,6 +24,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // CSVUpdater is an interface for any data that can be in a CSV, which will be
@@ -197,11 +198,17 @@ func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
 	if err := yaml.Unmarshal(yamlDoc, crd); err != nil {
 		return err
 	}
-	store.crdUpdate.Owned = append(store.crdUpdate.Owned, olmapiv1alpha1.CRDDescription{
+	crdDesc := olmapiv1alpha1.CRDDescription{
 		Name:    crd.ObjectMeta.Name,
 		Version: crd.Spec.Version,
 		Kind:    crd.Spec.Names.Kind,
-	})
+	}
+	// Parse {spec,status}Descriptor's from source code comments.
+	gv := schema.GroupVersion{Group: crd.Spec.Group, Version: crd.Spec.Version}
+	if err := setCRDDescriptorsForGV(&crdDesc, gv); err != nil {
+		return err
+	}
+	store.crdUpdate.Owned = append(store.crdUpdate.Owned, crdDesc)
 	return nil
 }
 
@@ -218,6 +225,12 @@ func (u *CSVCustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterSe
 			csvDesc.Name = uDesc.Name
 			csvDesc.Version = uDesc.Version
 			csvDesc.Kind = uDesc.Kind
+			csvDesc.Description = uDesc.Description
+			if csvDesc.DisplayName == "" {
+				csvDesc.DisplayName = getDisplayName(uDesc.Kind)
+			}
+			csvDesc.SpecDescriptors = uDesc.SpecDescriptors
+			csvDesc.StatusDescriptors = uDesc.StatusDescriptors
 			du.Owned[i] = csvDesc
 		}
 	}

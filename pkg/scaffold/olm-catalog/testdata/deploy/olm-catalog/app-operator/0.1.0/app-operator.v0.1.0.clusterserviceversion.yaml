@@ -14,7 +14,7 @@ spec:
       kind: App
       name: apps1.example.com
       version: v1alpha1
-    - description: some description
+    - displayName: App
       kind: App
       name: apps2.example.com
       version: v1alpha2
