@@ -38,6 +38,9 @@ type fieldVals struct {
 	name, typ, tag, comments string
 }
 
+// setCRDDescriptorsForGV parses document and type declaration comments on
+// CRD types to populate a csv's 'crds.owned[].{spec,status}Descriptors' for
+// a given group and version.
 func setCRDDescriptorsForGV(crdDesc *olmapiv1alpha1.CRDDescription, gv schema.GroupVersion) error {
 	fset := token.NewFileSet()
 	ff := func(info os.FileInfo) bool {
@@ -62,7 +65,7 @@ func setCRDDescriptorsForGV(crdDesc *olmapiv1alpha1.CRDDescription, gv schema.Gr
 					if spec, ok := spec.(*ast.TypeSpec); ok {
 						specName := spec.Name.Name
 						if specName == crdDesc.Kind {
-							crdDesc.Description = joinComments(x.Doc.Text())
+							crdDesc.Description = processComments(x.Doc.Text())
 						}
 						vals, ok := allTypes[specName]
 						if !ok {
@@ -72,7 +75,7 @@ func setCRDDescriptorsForGV(crdDesc *olmapiv1alpha1.CRDDescription, gv schema.Gr
 						case *ast.StructType:
 							for _, field := range st.Fields.List {
 								typ := processType(fset, field.Type)
-								comments := joinComments(field.Doc.Text())
+								comments := processComments(field.Doc.Text())
 								names := field.Names
 								if len(names) == 0 {
 									names = []*ast.Ident{{Name: typ}}
@@ -125,7 +128,9 @@ func setCRDDescriptorsForGV(crdDesc *olmapiv1alpha1.CRDDescription, gv schema.Gr
 	return nil
 }
 
-func joinComments(comments string) string {
+// processComments joins comment strings into one line, removing any tool
+// directives.
+func processComments(comments string) string {
 	lines := make([]string, 0)
 	scanner := bufio.NewScanner(strings.NewReader(comments))
 	for scanner.Scan() {
@@ -143,16 +148,18 @@ func joinComments(comments string) string {
 
 var mapRe = regexp.MustCompile(`map\[.+\]`)
 
+// processType cleans and returns the string of a type expression within fset.
 func processType(fset *token.FileSet, e ast.Expr) (t string) {
 	tbuf := &bytes.Buffer{}
 	if err := printer.Fprint(tbuf, fset, e); err != nil {
 		log.Fatal(err)
 	}
 	t = tbuf.String()
+	// Clean slice, map, and pointer syntax.
 	tt := strings.Replace(t, "[]", "", -1)
 	tt = strings.Replace(tt, "*", "", -1)
 	tt = mapRe.ReplaceAllString(tt, "")
-	// Only remove braces, map, pointer syntax from non-primitive types.
+	// Only return non-primitive types without extra syntax.
 	if types.Universe.Lookup(tt) == nil {
 		t = tt
 	}
@@ -162,7 +169,7 @@ func processType(fset *token.FileSet, e ast.Expr) (t string) {
 // From https://github.com/openshift/console/blob/master/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L5-L14
 var specXDescriptors = map[string][]string{
 	"size":                 {"size", "urn:alm:descriptor:com.tectonic.ui:podCount"},
-	"endpointList":         {"endpointList", "urn:alm:descriptor:com.tectonic.ui:endpointList"},
+	"endpoints":            {"endpointList", "urn:alm:descriptor:com.tectonic.ui:endpointList"},
 	"label":                {"label", "urn:alm:descriptor:com.tectonic.ui:label"},
 	"resourceRequirements": {"resourceRequirements", "urn:alm:descriptor:com.tectonic.ui:resourceRequirements"},
 	"selector":             {"selector", "urn:alm:descriptor:com.tectonic.ui:selector:"},
@@ -172,10 +179,9 @@ var specXDescriptors = map[string][]string{
 
 // From https://github.com/openshift/console/blob/master/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L16-L27
 var statusXDescriptors = map[string][]string{
-	"nodes":              {"size", "urn:alm:descriptor:com.tectonic.ui:podCount"},
 	"size":               {"size", "urn:alm:descriptor:com.tectonic.ui:podCount"},
 	"podStatuses":        {"podStatuses", "urn:alm:descriptor:com.tectonic.ui:podStatuses"},
-	"w3Link":             {"w3Link", "urn:alm:descriptor:org.w3:link"},
+	"links":              {"w3Link", "urn:alm:descriptor:org.w3:link"},
 	"conditions":         {"conditions", "urn:alm:descriptor:io.kubernetes.conditions"},
 	"text":               {"text", "urn:alm:descriptor:text"},
 	"prometheusEndpoint": {"prometheusEndpoint", "urn:alm:descriptor:prometheusEndpoint"},
@@ -185,21 +191,25 @@ var statusXDescriptors = map[string][]string{
 
 var jsonTagRe = regexp.MustCompile("`json:\"([^,]+),?.*\"`")
 
+// guessPathAndXDescriptorFromTag uses json field tags to guess which path
+// and x-descriptor a CRD should have. This choice is a guess based on tag
+// identifier.
 func guessPathAndXDescriptorFromTag(tag string, isSpec bool) (path string, xd []string) {
 	tagMatches := jsonTagRe.FindStringSubmatch(tag)
 	if len(tagMatches) == 2 {
 		path = tagMatches[1]
 	}
+	var (
+		pathAndXD []string
+		ok        bool
+	)
 	if isSpec {
-		pathAndXD, ok := specXDescriptors[path]
-		if ok {
-			path, xd = pathAndXD[0], []string{pathAndXD[1]}
-		}
+		pathAndXD, ok = specXDescriptors[path]
 	} else {
-		pathAndXD, ok := statusXDescriptors[path]
-		if ok {
-			path, xd = pathAndXD[0], []string{pathAndXD[1]}
-		}
+		pathAndXD, ok = statusXDescriptors[path]
+	}
+	if ok {
+		return pathAndXD[0], []string{pathAndXD[1]}
 	}
 	return path, xd
 }
