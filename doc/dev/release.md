@@ -252,8 +252,8 @@ The final step is to upload binaries, their signature files, and release notes f
 You've now fully released a new version of the Operator SDK. Good work!
 
 [doc-maintainers]:../../MAINTAINERS
-[doc-readme-prereqs]:https://github.com/operator-framework/operator-sdk#prerequisites
-[doc-git-default-key]:https://help.github.com/articles/telling-git-about-your-signing-key/
+[doc-readme-prereqs]:../../README.md#prerequisites
+[doc-git-default-key]:https://help.github.com/en/articles/telling-git-about-your-signing-key
 [doc-gpg-default-key]:https://lists.gnupg.org/pipermail/gnupg-users/2001-September/010163.html
 [link-github-gpg-key-upload]:https://github.com/settings/keys
 [link-git-config-gpg-key]:https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work
