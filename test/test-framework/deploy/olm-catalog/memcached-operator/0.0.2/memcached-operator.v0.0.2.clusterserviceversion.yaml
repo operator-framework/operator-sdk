@@ -53,6 +53,14 @@ spec:
           - '*'
           verbs:
           - '*'
+        - apiGroups:
+          - apps
+          resources:
+          - deployments/finalizers
+          resourceNames:
+          - memcached-operator
+          verbs:
+          - "update"
       deployments:
       - name: memcached-operator
         spec:

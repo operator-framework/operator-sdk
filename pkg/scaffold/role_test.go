@@ -85,6 +85,14 @@ rules:
   verbs:
   - "get"
   - "create"
+- apiGroups:
+  - apps
+  resources:
+  - deployments/finalizers
+  resourceNames:
+  - app-operator
+  verbs:
+  - "update"
 `
 
 const clusterroleExp = `kind: ClusterRole
@@ -126,4 +134,12 @@ rules:
   verbs:
   - "get"
   - "create"
+- apiGroups:
+  - apps
+  resources:
+  - deployments/finalizers
+  resourceNames:
+  - app-operator
+  verbs:
+  - "update"
 `
