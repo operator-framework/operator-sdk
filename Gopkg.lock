@@ -1402,7 +1402,7 @@
   revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
 
 [[projects]]
-  digest = "1:0c17078fc7b197f1e3944a7e7c7fcf704c5c444a66c09fd759c100445e192307"
+  digest = "1:c4633d96d5a84297fe4b7045060034c6f219d9a18bcd53b88bd560bdf976194f"
   name = "k8s.io/kubernetes"
   packages = [
     "pkg/api/legacyscheme",
@@ -1509,8 +1509,7 @@
     "plugin/pkg/auth/authorizer/rbac",
   ]
   pruneopts = "NUT"
-  revision = "eec55b9ba98609a46fee712359c7b5b365bdd920"
-  version = "v1.13.1"
+  revision = "c6d339953bd4fd8c021a6b5fb46d7952b30be9f9"
 
 [[projects]]
   branch = "master"
