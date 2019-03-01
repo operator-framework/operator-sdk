@@ -319,7 +319,7 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework) (*v1.P
 	// get configmap, which is the lock
 	lockName := "memcached-operator-lock"
 	lock := v1.ConfigMap{}
-	err := wait.Poll(time.Second*5, time.Second*60, func() (done bool, err error) {
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		err = f.Client.Get(context.TODO(), types.NamespacedName{Name: lockName, Namespace: namespace}, &lock)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
