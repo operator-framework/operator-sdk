@@ -50,8 +50,12 @@ func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags, cM
 
 	for gvk, runner := range watches {
 
-		// if the max workers was set on the CLI, use that otherwise, use
-		// the value from the environment.
+		// if the WORKER_* environment variable is set, use that value.
+		// Otherwise, use the value from the CLI. This is definitely
+		// counter-intuitive but it allows the operator admin adjust the
+		// number of workers based on their cluster resources. While the
+		// author may use the CLI option to specify a suggested
+		// configuration for the operator.
 		maxWorkers := getMaxWorkers(gvk, f.MaxWorkers)
 
 		o := controller.Options{
