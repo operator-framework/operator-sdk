@@ -37,6 +37,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 
 	"k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -316,11 +317,23 @@ func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.Te
 
 func verifyLeader(t *testing.T, namespace string, f *framework.Framework) (*v1.Pod, error) {
 	// get configmap, which is the lock
+	lockName := "memcached-operator-lock"
 	lock := v1.ConfigMap{}
-	err := f.Client.Get(context.TODO(), types.NamespacedName{Name: "memcached-operator-lock", Namespace: namespace}, &lock)
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		err = f.Client.Get(context.TODO(), types.NamespacedName{Name: lockName, Namespace: namespace}, &lock)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				t.Logf("Waiting for availability of leader lock configmap %s\n", lockName)
+				return false, nil
+			}
+			return false, err
+		}
+		return true, nil
+	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting leader lock configmap: %v\n", err)
 	}
+	t.Logf("Found leader lock configmap %s\n", lockName)
 
 	owners := lock.GetOwnerReferences()
 	if len(owners) != 1 {
