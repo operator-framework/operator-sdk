@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+// checkSpec checks that the spec block exists
 func (t *CheckSpecTest) Run(ctx context.Context) *TestResult {
 	res := &TestResult{Test: t, MaximumPoints: 1}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
