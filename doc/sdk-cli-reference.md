@@ -460,7 +460,7 @@ Runs the tests locally
 ##### Flags
 
 * `--debug` - Enable debug-level logging
-* `--kubeconfig` string - location of kubeconfig for kubernetes cluster (default "~/.kube/config")
+* `--kubeconfig` string - location of kubeconfig for Kubernetes cluster (default "~/.kube/config")
 * `--global-manifest` string - path to manifest for global resources (default "deploy/crd.yaml)
 * `--namespaced-manifest` string - path to manifest for per-test, namespaced resources (default: combines deploy/service_account.yaml, deploy/rbac.yaml, and deploy/operator.yaml)
 * `--namespace` string - if non-empty, single namespace to run tests in (e.g. "operator-test") (default: "")
@@ -492,7 +492,7 @@ Runs the e2e tests packaged in an operator image as a pod in the cluster
 
 ##### Flags
 
-* `--kubeconfig` string - location of kubeconfig for kubernetes cluster (default "~/.kube/config")
+* `--kubeconfig` string - location of kubeconfig for Kubernetes cluster (default "~/.kube/config")
 * `--image-pull-policy` string - set test pod image pull policy. Allowed values: Always, Never (default "Always")
 * `--namespace` string - namespace to run tests in (default "default")
 * `--pending-timeout` int - timeout in seconds for testing pod to stay in pending state (default 60s)
@@ -519,7 +519,7 @@ Test Successfully Completed
 ##### Use
 
 The `operator-sdk up local` command launches the operator on the local machine
-with the ability to access a kubernetes cluster using a kubeconfig file, and
+with the ability to access a Kubernetes cluster using a kubeconfig file, and
 setting any necessary environment variables that the operator would expect to
 find when running in a cluster. For Go-based operators, this command will
 compile and run the operator binary. In the case of non-Go operators, it runs
@@ -528,7 +528,7 @@ the operator-sdk binary itself as the operator.
 ##### Flags
 
 * `--go-ldflags` string - Set Go linker options
-* `--kubeconfig` string - The file path to kubernetes configuration file; defaults to $HOME/.kube/config
+* `--kubeconfig` string - The file path to Kubernetes configuration file; defaults to $HOME/.kube/config
 * `--namespace` string - The namespace where the operator watches for changes. (default "default")
 * `--operator-flags` string - Flags that the local operator may need.
 * `-h, --help` - help for local
