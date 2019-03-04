@@ -27,6 +27,7 @@ import (
 	proxyConf "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/spf13/viper"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
@@ -35,9 +36,11 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
 )
 
 // yamlToUnstructured decodes a yaml file into an unstructured object
@@ -126,12 +129,53 @@ func createFromYAMLFile(yamlPath string) error {
 			}
 		}
 		addResourceCleanup(obj, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()})
+		if obj.GetKind() == "Deployment" {
+			proxyPod, err = getPodFromDeployment(deploymentName, viper.GetString(NamespaceOpt))
+			if err != nil {
+				return err
+			}
+		}
 	}
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("failed to scan %s: (%v)", yamlPath, err)
 	}
 
 	return nil
+}
+
+// getPodFromDeployment returns a deployment depName's pod in namespace.
+func getPodFromDeployment(depName, namespace string) (pod *v1.Pod, err error) {
+	dep := &appsv1.Deployment{}
+	err = runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: depName}, dep)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get newly created deployment: %v", err)
+	}
+	set := labels.Set(dep.Spec.Selector.MatchLabels)
+	// In some cases, the pod from the old deployment will be picked up
+	// instead of the new one.
+	err = wait.PollImmediate(time.Second*1, time.Second*60, func() (bool, error) {
+		pods := &v1.PodList{}
+		err = runtimeClient.List(context.TODO(), &client.ListOptions{LabelSelector: set.AsSelector()}, pods)
+		if err != nil {
+			return false, fmt.Errorf("failed to get list of pods in deployment: %v", err)
+		}
+		// Make sure the pods exist. There should only be 1 pod per deployment.
+		if len(pods.Items) == 1 {
+			// If the pod has a deletion timestamp, it is the old pod; wait for
+			// pod with no deletion timestamp
+			if pods.Items[0].GetDeletionTimestamp() == nil {
+				pod = &pods.Items[0]
+				return true, nil
+			}
+		} else {
+			log.Debug("Operator deployment has more than 1 pod")
+		}
+		return false, nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get proxyPod: %s", err)
+	}
+	return pod, nil
 }
 
 // createKubeconfigSecret creates the secret that will be mounted in the operator's container and contains
@@ -215,7 +259,7 @@ func addProxyContainer(dep *appsv1.Deployment) {
 		pullPolicy = v1.PullAlways
 	}
 	dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, v1.Container{
-		Name:            "scorecard-proxy",
+		Name:            scorecardContainerName,
 		Image:           viper.GetString(ProxyImageOpt),
 		ImagePullPolicy: pullPolicy,
 		Command:         []string{"scorecard-proxy"},
@@ -298,4 +342,25 @@ func addResourceCleanup(obj runtime.Object, key types.NamespacedName) {
 		}
 		return nil
 	})
+}
+
+func getProxyLogs() (string, error) {
+	// need a standard kubeclient for pod logs
+	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
+	if err != nil {
+		return "", fmt.Errorf("failed to create kubeclient: %v", err)
+	}
+	logOpts := &v1.PodLogOptions{Container: scorecardContainerName}
+	req := kubeclient.CoreV1().Pods(proxyPod.GetNamespace()).GetLogs(proxyPod.GetName(), logOpts)
+	readCloser, err := req.Stream()
+	if err != nil {
+		return "", fmt.Errorf("failed to get logs: %v", err)
+	}
+	defer readCloser.Close()
+	buf := new(bytes.Buffer)
+	_, err = buf.ReadFrom(readCloser)
+	if err != nil {
+		return "", fmt.Errorf("test failed and failed to read pod logs: %v", err)
+	}
+	return buf.String(), nil
 }
