@@ -43,7 +43,9 @@ type TestResult struct {
 type TestInfo struct {
 	Name        string
 	Description string
-	Cumulative  bool
+	// If a test is set to cumulative, the scores of multiple runs of the same test on separate CRs are added together for the total score.
+	// If cumulative is false, if any test failed, the total score is 0/1. Otherwise 1/1.
+	Cumulative bool
 }
 
 // Any struct that embeds TestInfo only needs to
