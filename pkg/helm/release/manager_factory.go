@@ -88,7 +88,7 @@ func (f managerFactory) newManagerForCR(r *unstructured.Unstructured) (Manager, 
 	}, nil
 }
 
-// tillerRendererForCR creates a ReleaseServer configured with a rendering engine that adds ownerrefs to rendered assets
+// getReleaseServer creates a ReleaseServer configured with a rendering engine that adds ownerrefs to rendered assets
 // based on the CR.
 func getReleaseServer(r *unstructured.Unstructured, storageBackend *storage.Storage, tillerKubeClient *kube.Client) (*tiller.ReleaseServer, error) {
 	controllerRef := metav1.NewControllerRef(r, r.GroupVersionKind())

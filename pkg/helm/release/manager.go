@@ -94,7 +94,7 @@ func (m manager) IsUpdateRequired() bool {
 // Sync ensures the Helm storage backend is in sync with the status of the
 // custom resource.
 func (m *manager) Sync(ctx context.Context) error {
-	// We're now persisting releases as secrets. To support seamless upgrades, we
+	// TODO: We're now persisting releases as secrets. To support seamless upgrades, we
 	// need to sync the release status from the CR to the persistent storage backend.
 	// Once we release the storage backend migration, this function (and comment)
 	// can be removed.
