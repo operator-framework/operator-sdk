@@ -409,7 +409,7 @@ deleted until you remove the finalizer (ie, after your cleanup logic has success
 
 ### Metrics
 
-To learn about how metrics works in operator-sdk read the [metrics section][metrics_doc] of the user documentation.
+To learn about how metrics work in the Operator SDK read the [metrics section][metrics_doc] of the user documentation.
 
 ## Leader election
 
