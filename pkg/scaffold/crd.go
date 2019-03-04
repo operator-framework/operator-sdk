@@ -22,13 +22,13 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
 	"github.com/ghodss/yaml"
 	"github.com/spf13/afero"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	crdgenerator "sigs.k8s.io/controller-tools/pkg/crd/generator"
 )
 
@@ -142,7 +142,7 @@ func (s *CRD) CustomRender() ([]byte, error) {
 	}
 	addCRDSubresource(dstCRD)
 	addCRDVersions(dstCRD)
-	return getCRDBytes(dstCRD)
+	return k8sutil.GetObjectBytes(dstCRD)
 }
 
 func newCRDForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {
@@ -215,15 +215,4 @@ func addCRDVersions(crd *apiextv1beta1.CustomResourceDefinition) {
 	} else {
 		crd.Spec.Versions = crdVersions
 	}
-}
-
-func getCRDBytes(crd *apiextv1beta1.CustomResourceDefinition) ([]byte, error) {
-	// Remove the "status" field from yaml data, which causes a
-	// resource creation error.
-	crdMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(crd)
-	if err != nil {
-		return nil, err
-	}
-	delete(crdMap, "status")
-	return yaml.Marshal(&crdMap)
 }
