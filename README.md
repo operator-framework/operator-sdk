@@ -42,8 +42,8 @@ The following workflow is for a new **Helm** operator:
 - [git][git_tool]
 - [go][go_tool] version v1.10+.
 - [docker][docker_tool] version 17.03+.
-- [kubectl][kubectl_tool] version v1.11.0+.
-- Access to a kubernetes v.1.11.0+ cluster.
+- [kubectl][kubectl_tool] version v1.11.3+.
+- Access to a kubernetes v.1.11.3+ cluster.
 
 ## Quick Start
 
