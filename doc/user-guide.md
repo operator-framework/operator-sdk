@@ -12,9 +12,9 @@ Guide][helm_user_guide]. The rest of this document will show how to program an o
 - [go][go_tool] version v1.10+.
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.0+.
-- Access to a kubernetes v.1.11.0+ cluster.
+- Access to a Kubernetes v.1.11.0+ cluster.
 
-**Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the local kubernetes cluster and quay.io for the public registry.
+**Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the local Kubernetes cluster and quay.io for the public registry.
 
 ## Install the Operator SDK CLI
 
@@ -251,7 +251,7 @@ Set the name of the operator in an environment variable:
 export OPERATOR_NAME=memcached-operator
 ```
 
-Run the operator locally with the default kubernetes config file present at `$HOME/.kube/config`:
+Run the operator locally with the default Kubernetes config file present at `$HOME/.kube/config`:
 
 ```sh
 $ operator-sdk up local --namespace=default

@@ -105,7 +105,7 @@ ctx := framework.NewTestCtx(t)
 defer ctx.Cleanup()
 ```
 
-Now that there is a `TestCtx`, the test's kubernetes resources (specifically the test namespace,
+Now that there is a `TestCtx`, the test's Kubernetes resources (specifically the test namespace,
 Service Account, RBAC, and Operator deployment in `local` testing; just the Operator deployment
 in `cluster` testing) can be initialized:
 
@@ -304,7 +304,7 @@ $ go test ./test/e2e/... -root=$(pwd) -kubeconfig=$HOME/.kube/config -globalMan 
 
 ### Cluster
 
-Another way to run the tests is from within a kubernetes cluster. To do this, you first need to build an image with
+Another way to run the tests is from within a Kubernetes cluster. To do this, you first need to build an image with
 the testing binary embedded by using the `operator-sdk build` command and using the `--enable-tests` flag to enable tests:
 
 ```shell

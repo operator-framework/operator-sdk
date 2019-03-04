@@ -69,7 +69,6 @@ func TestCRDGoProject(t *testing.T) {
 const crdGoExp = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  creationTimestamp: null
   name: memcacheds.cache.example.com
 spec:
   group: cache.example.com
@@ -134,7 +133,6 @@ func TestCRDNonGoProject(t *testing.T) {
 const crdNonGoExp = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  creationTimestamp: null
   name: appservices.app.example.com
 spec:
   group: app.example.com
