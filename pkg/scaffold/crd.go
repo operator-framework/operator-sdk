@@ -19,13 +19,13 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync"
 
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 
 	"github.com/ghodss/yaml"
-	"github.com/imdario/mergo"
 	"github.com/spf13/afero"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -134,11 +134,9 @@ func (s *CRD) CustomRender() ([]byte, error) {
 					return nil, err
 				}
 				// val contains all validation fields from source code tagged with
-				// +kubebuilder directives. These fields should populate dstCRD
-				// validation fields unless they were added manually, hence the merge.
-				if err = mergo.Merge(dstCRD.Spec.Validation, val); err != nil {
-					return nil, err
-				}
+				// '+kubebuilder' directives. These fields should overwrite dstCRD
+				// validation fields except for those added manually, hence the merge.
+				mergeValidations(dstCRD.Spec.Validation, val)
 			}
 		}
 		// controller-tools does not set ListKind or Singular names.
@@ -232,4 +230,112 @@ func getCRDBytes(crd *apiextv1beta1.CustomResourceDefinition) ([]byte, error) {
 	}
 	delete(crdMap, "status")
 	return yaml.Marshal(&crdMap)
+}
+
+func mergeValidations(dstv, srcv *apiextv1beta1.CustomResourceValidation) {
+	mergeJSONSchemaProps(dstv.OpenAPIV3Schema, srcv.OpenAPIV3Schema)
+	return
+}
+
+func mergeJSONSchemaProps(dstp, srcp *apiextv1beta1.JSONSchemaProps) {
+	if dstp == nil || srcp == nil {
+		if srcp != nil {
+			dstp = srcp
+		}
+		return
+	}
+	if reflect.DeepEqual(dstp, srcp) {
+		return
+	}
+
+	prop := srcp.DeepCopy()
+	// Overwrite fields not writeable by kubebuilder directives with old values.
+	if prop.ID == "" {
+		prop.ID = dstp.ID
+	}
+	if prop.Schema == "" {
+		prop.Schema = dstp.Schema
+	}
+	if prop.Ref == nil {
+		prop.Ref = dstp.Ref
+	}
+	if prop.Description == "" {
+		prop.Description = dstp.Description
+	}
+	if prop.Title == "" {
+		prop.Title = dstp.Title
+	}
+	if prop.Default == nil {
+		prop.Default = dstp.Default
+	}
+	if prop.MaxProperties == nil {
+		prop.MaxProperties = dstp.MaxProperties
+	}
+	if prop.MinProperties == nil {
+		prop.MinProperties = dstp.MinProperties
+	}
+	if prop.ExternalDocs == nil {
+		prop.ExternalDocs = dstp.ExternalDocs
+	}
+	if prop.Example == nil {
+		prop.Example = dstp.Example
+	}
+	if prop.Items == nil {
+		prop.Items = dstp.Items
+	}
+	if prop.Not == nil {
+		prop.Not = dstp.Not
+	}
+	if prop.AdditionalProperties == nil {
+		prop.AdditionalProperties = dstp.AdditionalProperties
+	}
+	if prop.AdditionalItems == nil {
+		prop.AdditionalItems = dstp.AdditionalItems
+	}
+	if len(prop.Required) == 0 {
+		prop.Required = dstp.Required
+	}
+	if len(prop.AllOf) == 0 {
+		prop.AllOf = dstp.AllOf
+	}
+	if len(prop.OneOf) == 0 {
+		prop.OneOf = dstp.OneOf
+	}
+	if len(prop.AnyOf) == 0 {
+		prop.AnyOf = dstp.AnyOf
+	}
+	// Recursively merge the following fields until no sub schema props exist.
+	for dk, dv := range dstp.Properties {
+		if pv, ok := prop.Properties[dk]; ok {
+			mergeJSONSchemaProps(&dv, &pv)
+			prop.Properties[dk] = dv
+		}
+	}
+	for dk, dv := range dstp.PatternProperties {
+		if pv, ok := prop.PatternProperties[dk]; ok {
+			mergeJSONSchemaProps(&dv, &pv)
+			prop.PatternProperties[dk] = dv
+		}
+	}
+	for dk, dv := range dstp.Definitions {
+		if pv, ok := prop.Definitions[dk]; ok {
+			mergeJSONSchemaProps(&dv, &pv)
+			prop.Definitions[dk] = dv
+		}
+	}
+	for dk, dv := range dstp.Dependencies {
+		if pv, ok := prop.Dependencies[dk]; ok {
+			if dv.Schema != nil {
+				if pv.Schema != nil {
+					mergeJSONSchemaProps(dv.Schema, pv.Schema)
+				}
+				prop.Dependencies[dk] = dv
+			} else if len(dv.Property) != 0 && len(pv.Property) == 0 && pv.Schema == nil {
+				prop.Dependencies[dk] = dv
+			}
+		}
+	}
+
+	*dstp = *prop
+	return
 }
