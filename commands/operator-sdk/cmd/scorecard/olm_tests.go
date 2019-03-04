@@ -244,7 +244,7 @@ func (t *AnnotationsContainExamplesTest) Run(ctx context.Context) *TestResult {
 		res.EarnedPoints = 1
 	}
 	if res.EarnedPoints == 0 {
-		res.Suggestions = append(res.Suggestions, "Add an alm-examples annotation to your CSV to pass the "+t.GetName()+" test")
+		res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add an alm-examples annotation to your CSV to pass the %s test", t.GetName()))
 	}
 	return res
 }

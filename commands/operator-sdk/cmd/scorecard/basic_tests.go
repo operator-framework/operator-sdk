@@ -39,7 +39,7 @@ func (t *CheckSpecTest) Run(ctx context.Context) *TestResult {
 	return res
 }
 
-// checkStat checks that the status block exists
+// checkStatus checks that the status block exists
 func (t *CheckStatusTest) Run(ctx context.Context) *TestResult {
 	res := &TestResult{Test: t, MaximumPoints: 1}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
@@ -80,7 +80,7 @@ func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *TestResult {
 		}
 	}
 	if res.EarnedPoints != 1 {
-		res.Suggestions = append(res.Suggestions, "The operator should write into objects to update state. No PUT or POST requests from you operator were recorded by the scorecard.")
+		res.Suggestions = append(res.Suggestions, "The operator should write into objects to update state. No PUT or POST requests from the operator were recorded by the scorecard.")
 	}
 	return res
 }
