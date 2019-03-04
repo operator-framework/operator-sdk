@@ -1589,7 +1589,6 @@
     "github.com/go-logr/logr",
     "github.com/go-logr/zapr",
     "github.com/iancoleman/strcase",
-    "github.com/imdario/mergo",
     "github.com/markbates/inflect",
     "github.com/martinlindhe/base36",
     "github.com/mattbaird/jsonpatch",
