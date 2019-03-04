@@ -45,15 +45,15 @@ import (
 
 type cleanupFn func() error
 
-// waitUntilReady waits until the status block of the CR currently being tested exists. If the timeout
+// waitUntilCRStatusExists waits until the status block of the CR currently being tested exists. If the timeout
 // is reached, it simply continues and assumes there is no status block
-func waitUntilReady(obj *unstructured.Unstructured) error {
+func waitUntilCRStatusExists(cr *unstructured.Unstructured) error {
 	err := wait.Poll(time.Second*1, time.Second*time.Duration(viper.GetInt(InitTimeoutOpt)), func() (bool, error) {
-		err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, obj)
+		err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: cr.GetNamespace(), Name: cr.GetName()}, cr)
 		if err != nil {
 			return false, fmt.Errorf("error getting custom resource: %v", err)
 		}
-		if obj.Object["status"] != nil {
+		if cr.Object["status"] != nil {
 			return true, nil
 		}
 		return false, nil

@@ -246,7 +246,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
 	}
-	if err := waitUntilReady(obj); err != nil {
+	if err := waitUntilCRStatusExists(obj); err != nil {
 		return fmt.Errorf("failed waiting for CR to be ready: %v", err)
 	}
 	var suites []*TestSuite
