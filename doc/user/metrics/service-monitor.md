@@ -4,7 +4,7 @@
 
 `ServiceMonitor` is a [CR][cr] of the prometheus-operator, which discovers the `Endpoints` in `Service` objects and configures Prometheus to monitor those `Pod`s. See the prometheus-operator [documention][sm] to learn more about `ServiceMonitor`s.
 
-The `GenerateServiceMonitor` takes a `Service` object and generates a `ServiceMonitor` resource based on it. To add `Service` target discovery of your created monitoring `Service`s you can use the `metrics.CreateServiceMonitor()` helper function, which accepts the newly created `Service`.
+The `GenerateServiceMonitor` function takes a `Service` object and generates a `ServiceMonitor` resource based on it. To add `Service` target discovery of your created monitoring `Service`s you can use the `metrics.CreateServiceMonitor()` helper function, which accepts the newly created `Service`.
 
 ### Prerequisites:
 
