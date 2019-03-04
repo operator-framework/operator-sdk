@@ -8,7 +8,7 @@ The `GenerateServiceMonitor` function takes a `Service` object and generates a `
 
 ### Prerequisites:
 
-- [prometheus-operator][prom-quickstart] needs to be deployed already in the cluster.
+- [prometheus-operator][prom-quickstart] needs to be deployed in the cluster.
 
 ### Usage example:
 
