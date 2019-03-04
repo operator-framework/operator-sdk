@@ -1,6 +1,6 @@
 ## Using the ServiceMonitor prometheus-operator CRD
 
-[prometheus-operator][prom-operator] an operator that creates, configures and manages Prometheus clusters atop Kubernetes.
+[prometheus-operator][prom-operator] is an operator that creates, configures, and manages Prometheus clusters atop Kubernetes.
 
 `ServiceMonitor` is a [CR][cr] of the prometheus-operator, which discovers the `Endpoints` in `Service` objects and configures Prometheus to monitor those `Pod`s. See the prometheus-operator [documention][sm] to learn more about `ServiceMonitor`s.
 
