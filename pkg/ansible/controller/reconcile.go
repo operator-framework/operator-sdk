@@ -42,7 +42,7 @@ import (
 )
 
 const (
-	// ReconcilePeriodAnnotation - annotation used by a user to specify the reconcilation interval for the CR.
+	// ReconcilePeriodAnnotation - annotation used by a user to specify the reconciliation interval for the CR.
 	// To use create a CR with an annotation "ansible.operator-sdk/reconcile-period: 30s" or some other valid
 	// Duration. This will override the operators/or controllers reconcile period for that particular CR.
 	ReconcilePeriodAnnotation = "ansible.operator-sdk/reconcile-period"
@@ -100,7 +100,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		}
 	}
 	if !contains(pendingFinalizers, finalizer) && deleted {
-		logger.Info("Resource is terminated, skipping reconcilation")
+		logger.Info("Resource is terminated, skipping reconciliation")
 		return reconcile.Result{}, nil
 	}
 

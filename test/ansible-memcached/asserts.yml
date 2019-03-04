@@ -89,7 +89,7 @@
               resource_name="memcached-operator"
             )}}'
 
-        - name: Wait for reconcilation to have a chance at finishing
+        - name: Wait for reconciliation to have a chance at finishing
           pause:
             seconds:  15
 
@@ -139,6 +139,16 @@
         retries: 10
         delay: 3
 
+      - name: Add operator pod to inventory
+        add_host:
+          name: '{{ pod.metadata.name }}'
+          groups: operator
+          ansible_connection: kubectl
+          ansible_remote_tmp: /tmp/ansible
+          kubectl_namespace: '{{ namespace }}'
+        when: molecule_yml.scenario.name == "test-local"
+        vars:
+          pod: '{{ q("k8s", api_version="v1", kind="Pod", namespace=namespace, label_selector="name=memcached-operator").0 }}'
       rescue:
       - name: debug cr
         ignore_errors: yes
@@ -178,3 +188,12 @@
 
       - fail:
           msg: "Failed in asserts.yml"
+
+- hosts: operator
+  gather_facts: no
+  become: false
+  tasks:
+  - name: Output latest log
+    command: cat /tmp/ansible-operator/runner/ansible.example.com/v1alpha1/Memcached/{{ namespace }}/example-memcached/artifacts/latest/stdout
+    register: ansible_log
+  - debug: var=ansible_log.stdout_lines

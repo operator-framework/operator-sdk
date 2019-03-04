@@ -36,10 +36,7 @@ import (
 
 const testDataDir = "testdata"
 
-var (
-	testDeployDir = filepath.Join(testDataDir, scaffold.DeployDir)
-	testOLMDir    = filepath.Join(testDataDir, scaffold.OLMCatalogDir)
-)
+var testDeployDir = filepath.Join(testDataDir, scaffold.DeployDir)
 
 func TestCSVNew(t *testing.T) {
 	buf := &bytes.Buffer{}
@@ -51,22 +48,18 @@ func TestCSVNew(t *testing.T) {
 	csvVer := "0.1.0"
 	projectName := "app-operator"
 
-	err := s.Execute(&input.Config{ProjectName: projectName},
-		&CSV{CSVVersion: csvVer, pathPrefix: testDataDir},
-	)
+	sc := &CSV{CSVVersion: csvVer, pathPrefix: testDataDir}
+	err := s.Execute(&input.Config{ProjectName: projectName}, sc)
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
 	// Get the expected CSV manifest from test data dir.
-	csvFileName := getCSVFileName(projectName, csvVer)
-	csvPath := filepath.Join(testOLMDir, projectName, csvVer, csvFileName)
-	csvExpBytes, err := afero.ReadFile(s.Fs, csvPath)
+	csvExpBytes, err := afero.ReadFile(s.Fs, sc.getCSVPath(csvVer))
 	if err != nil {
 		t.Fatal(err)
 	}
 	csvExp := string(csvExpBytes)
-
 	if csvExp != buf.String() {
 		diffs := diffutil.Diff(csvExp, buf.String())
 		t.Errorf("Expected vs actual differs.\n%v", diffs)
@@ -103,19 +96,18 @@ func TestCSVFromOld(t *testing.T) {
 		t.Fatalf("Failed to write %s to in-memory test fs: (%v)", testDeployDir, err)
 	}
 
-	cfg := &input.Config{ProjectName: projectName}
-	err := s.Execute(cfg, &CSV{
+	sc := &CSV{
 		CSVVersion:  newCSVVer,
 		FromVersion: oldCSVVer,
 		pathPrefix:  testDataDir,
-	})
+	}
+	err := s.Execute(&input.Config{ProjectName: projectName}, sc)
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
 	// Check if a new file was written at the expected path.
-	csvFileName := getCSVFileName(projectName, newCSVVer)
-	newCSVPath := filepath.Join(testOLMDir, projectName, newCSVVer, csvFileName)
+	newCSVPath := sc.getCSVPath(newCSVVer)
 	newCSV, newExists, err := getCSVFromFSIfExists(s.Fs, newCSVPath)
 	if err != nil {
 		t.Fatalf("Failed to get new CSV %s: (%v)", newCSVPath, err)
@@ -136,10 +128,13 @@ func TestCSVFromOld(t *testing.T) {
 
 func TestUpdateVersion(t *testing.T) {
 	projectName := "app-operator"
-	oldCSVVEr, newCSVVer := "0.1.0", "0.2.0"
-	csvFileName := getCSVFileName(projectName, oldCSVVEr)
-	csvPath := filepath.Join(testOLMDir, projectName, oldCSVVEr, csvFileName)
-	csvExpBytes, err := ioutil.ReadFile(csvPath)
+	oldCSVVer, newCSVVer := "0.1.0", "0.2.0"
+	sc := &CSV{
+		Input:      input.Input{ProjectName: projectName},
+		CSVVersion: newCSVVer,
+		pathPrefix: testDataDir,
+	}
+	csvExpBytes, err := ioutil.ReadFile(sc.getCSVPath(oldCSVVer))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,11 +143,7 @@ func TestUpdateVersion(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	c := &CSV{
-		Input:      input.Input{ProjectName: projectName},
-		CSVVersion: newCSVVer,
-	}
-	if err := c.updateCSVVersions(csv); err != nil {
+	if err := sc.updateCSVVersions(csv); err != nil {
 		t.Fatalf("Failed to update csv with version %s: (%v)", newCSVVer, err)
 	}
 

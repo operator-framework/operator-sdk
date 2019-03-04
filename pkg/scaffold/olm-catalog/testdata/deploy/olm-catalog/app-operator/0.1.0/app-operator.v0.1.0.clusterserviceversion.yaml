@@ -3,7 +3,7 @@ kind: ClusterServiceVersion
 metadata:
   annotations:
     alm-examples: '[{"apiVersion":"app.example.com/v1alpha1","kind":"App","metadata":{"name":"example-app"},"spec":{"size":3}}]'
-  creationTimestamp: null
+    capabilities: Basic Install
   name: app-operator.v0.1.0
   namespace: placeholder
 spec:
@@ -38,7 +38,6 @@ spec:
           strategy: {}
           template:
             metadata:
-              creationTimestamp: null
               labels:
                 name: app-operator
             spec:
@@ -55,9 +54,6 @@ spec:
                 image: quay.io/example-inc/operator:v0.1.0
                 imagePullPolicy: Always
                 name: app-operator
-                ports:
-                - containerPort: 60000
-                  name: metrics
                 resources: {}
               serviceAccountName: app-operator
       permissions:
@@ -91,6 +87,15 @@ spec:
           - '*'
         serviceAccountName: app-operator
     strategy: deployment
-  maturity: Basic Install
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespace
+  maturity: alpha
   provider: {}
   version: 0.1.0

@@ -6,9 +6,19 @@ kind: ClusterServiceVersion
 metadata:
   annotations:
     alm-examples: '[{"apiVersion":"cache.example.com/v1alpha1","kind":"Memcached","metadata":{"name":"example-memcached"},"spec":{"size":3}}]'
+    capabilities: Basic Install
   name: memcachedoperator.v0.0.2
-  namespace: default
+  namespace: placeholder
 spec:
+  installModes:
+  - type: OwnNamespace
+    supported: true
+  - type: SingleNamespace
+    supported: true
+  - type: MultiNamespace
+    supported: false
+  - type: AllNamespaces
+    supported: true
   install:
     strategy: deployment
     spec:
@@ -16,86 +26,105 @@ spec:
       - serviceAccountName: memcached-operator
         rules:
         - apiGroups:
-          - "*"
+          - ""
           resources:
-          - "*"
+          - pods
+          - services
+          - endpoints
+          - persistentvolumeclaims
+          - events
+          - configmaps
+          - secrets
+          - namespaces
           verbs:
-          - "*"
+          - '*'
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          - daemonsets
+          - replicasets
+          - statefulsets
+          verbs:
+          - '*'
+        - apiGroups:
+          - cache.example.com
+          resources:
+          - '*'
+          verbs:
+          - '*'
       deployments:
-      - name: memcached-app-operator
+      - name: memcached-operator
         spec:
           replicas: 1
           selector:
             matchLabels:
-              name: memcached-app-operator
+              name: memcached-operator
           template:
             metadata:
               labels:
-                name: memcached-app-operator
+                name: memcached-operator
             spec:
               serviceAccountName: memcached-operator
               containers:
-                - name: memcached-operator
-                  # Replace this with the built image name
-                  image: quay.io/example/memcached-operator:v0.0.1
-                  ports:
-                  - containerPort: 60000
-                    name: metrics
-                  command:
-                  - memcached-operator
-                  imagePullPolicy: Never
-                  env:
-                    - name: WATCH_NAMESPACE
-                      valueFrom:
-                        fieldRef:
-                          fieldPath: metadata.namespace
-                    - name: OPERATOR_NAME
-                      value: "memcached-operator"
+              - name: memcached-operator
+                image: quay.io/coreos/operator-sdk-dev:test-framework-operator
+                command:
+                - memcached-operator
+                imagePullPolicy: Always
+                env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: OPERATOR_NAME
+                  value: "memcached-operator"
   customresourcedefinitions:
     owned:
-      - description: Represents a cluster of Memcached apps
-        displayName: Memcached App
-        kind: Memcached
-        name: memcacheds.cache.example.com
-        version: v1alpha1
-        resources:
-          - kind: Deployment
-            version: v1
-          - kind: ReplicaSet
-            version: v1beta2
-          - kind: Pod
-            version: v1
-        specDescriptors:
-          - description: The desired number of member Pods for the deployment.
-            displayName: Size
-            path: size
-            x-descriptors:
-              - 'urn:alm:descriptor:com.tectonic.ui:podCount'
-        statusDescriptors:
-          - description: The current status of the application.
-            displayName: Status
-            path: phase
-            x-descriptors:
-              - 'urn:alm:descriptor:io.kubernetes.phase'
-          - description: Explanation for the current status of the application.
-            displayName: Status Details
-            path: reason
-            x-descriptors:
-              - 'urn:alm:descriptor:io.kubernetes.phase:reason'
+    - description: Represents a cluster of Memcached apps
+      displayName: Memcached App
+      kind: Memcached
+      name: memcacheds.cache.example.com
+      version: v1alpha1
+      resources:
+      - kind: Deployment
+        version: v1
+      - kind: ReplicaSet
+        version: v1beta2
+      - kind: Pod
+        version: v1
+      specDescriptors:
+      - description: The desired number of member Pods for the deployment.
+        displayName: Size
+        path: size
+        x-descriptors:
+        - 'urn:alm:descriptor:com.tectonic.ui:podCount'
+      statusDescriptors:
+      - description: The current status of the application.
+        displayName: Status
+        path: phase
+        x-descriptors:
+        - 'urn:alm:descriptor:io.kubernetes.phase'
+      - description: Explanation for the current status of the application.
+        displayName: Status Details
+        path: reason
+        x-descriptors:
+        - 'urn:alm:descriptor:io.kubernetes.phase:reason'
   keywords:
-    - memcached
-    - app
+  - memcached
+  - app
   displayName: Memcached Application
   provider:
     name: Example
     url: www.example.com
-  maturity: Basic Install
+  maturity: alpha
   version: 0.0.2
   replaces: memcachedoperator.v0.0.1
   maintainers:
-    - email: corp@example.com
-      name: Some Corp
-  description: Main enterprise application providing business critical features with high availabilty and no manual intervention.
-  labels:
-    alm-owner-enterprise-app: memcached-app-operator
-    alm-status-descriptors: memcached-app-operator.v0.0.2
+  - email: corp@example.com
+    name: Some Corp
+  description: Main enterprise application providing business critical features with high availability and no manual intervention.

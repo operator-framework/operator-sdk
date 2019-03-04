@@ -24,6 +24,7 @@ import (
 	"sync"
 	"unicode"
 
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
@@ -33,7 +34,6 @@ import (
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -116,6 +116,7 @@ func (s *CSV) CustomRender() ([]byte, error) {
 		return nil, err
 	}
 
+	setCSVDefaultFields(csv)
 	if err = s.updateCSVVersions(csv); err != nil {
 		return nil, err
 	}
@@ -133,13 +134,7 @@ func (s *CSV) CustomRender() ([]byte, error) {
 		}
 	}
 
-	// Remove the status field from the CSV, as status is managed at runtime.
-	cu, err := runtime.DefaultUnstructuredConverter.ToUnstructured(csv)
-	if err != nil {
-		return nil, err
-	}
-	delete(cu, "status")
-	return yaml.Marshal(&cu)
+	return k8sutil.GetObjectBytes(csv)
 }
 
 func (s *CSV) getBaseCSVIfExists() (*olmapiv1alpha1.ClusterServiceVersion, bool, error) {
@@ -147,10 +142,14 @@ func (s *CSV) getBaseCSVIfExists() (*olmapiv1alpha1.ClusterServiceVersion, bool,
 	if s.FromVersion != "" {
 		verToGet = s.FromVersion
 	}
-	lowerProjName := strings.ToLower(s.ProjectName)
-	name := getCSVFileName(lowerProjName, verToGet)
-	fromCSV := filepath.Join(s.pathPrefix, scaffold.OLMCatalogDir, lowerProjName, verToGet, name)
-	return getCSVFromFSIfExists(s.getFS(), fromCSV)
+	csv, exists, err := getCSVFromFSIfExists(s.getFS(), s.getCSVPath(verToGet))
+	if err != nil {
+		return nil, false, err
+	}
+	if !exists && s.FromVersion != "" {
+		log.Warnf("FromVersion set (%s) but CSV does not exist", s.FromVersion)
+	}
+	return csv, exists, nil
 }
 
 func getCSVFromFSIfExists(fs afero.Fs, path string) (*olmapiv1alpha1.ClusterServiceVersion, bool, error) {
@@ -179,6 +178,12 @@ func getCSVName(name, version string) string {
 
 func getCSVFileName(name, version string) string {
 	return getCSVName(name, version) + CSVYamlFileExt
+}
+
+func (s *CSV) getCSVPath(ver string) string {
+	lowerProjName := strings.ToLower(s.ProjectName)
+	name := getCSVFileName(lowerProjName, ver)
+	return filepath.Join(s.pathPrefix, scaffold.OLMCatalogDir, lowerProjName, ver, name)
 }
 
 // getDisplayName turns a project dir name in any of {snake, chain, camel}
@@ -224,16 +229,29 @@ func (s *CSV) initCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) {
 	csv.TypeMeta.Kind = olmapiv1alpha1.ClusterServiceVersionKind
 	csv.SetName(getCSVName(strings.ToLower(s.ProjectName), s.CSVVersion))
 	csv.SetNamespace("placeholder")
+	csv.SetAnnotations(map[string]string{"capabilities": "Basic Install"})
 
 	// Spec fields
 	csv.Spec.Version = *semver.New(s.CSVVersion)
 	csv.Spec.DisplayName = getDisplayName(s.ProjectName)
 	csv.Spec.Description = "Placeholder description"
-	csv.Spec.Maturity = "Basic Install"
+	csv.Spec.Maturity = "alpha"
 	csv.Spec.Provider = olmapiv1alpha1.AppLink{}
 	csv.Spec.Maintainers = make([]olmapiv1alpha1.Maintainer, 0)
 	csv.Spec.Links = make([]olmapiv1alpha1.AppLink, 0)
-	csv.SetLabels(make(map[string]string))
+}
+
+// setCSVDefaultFields sets default fields on older CSV versions or newly
+// initialized CSV's.
+func setCSVDefaultFields(csv *olmapiv1alpha1.ClusterServiceVersion) {
+	if len(csv.Spec.InstallModes) == 0 {
+		csv.Spec.InstallModes = []olmapiv1alpha1.InstallMode{
+			{Type: olmapiv1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+			{Type: olmapiv1alpha1.InstallModeTypeSingleNamespace, Supported: true},
+			{Type: olmapiv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
+			{Type: olmapiv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
+		}
+	}
 }
 
 // TODO: validate that all fields from files are populated as expected
@@ -269,8 +287,8 @@ func getEmptyRequiredCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) (field
 	if csv.Spec.Provider == (olmapiv1alpha1.AppLink{}) {
 		fields = append(fields, "spec.provider")
 	}
-	if len(csv.Spec.Labels) == 0 {
-		fields = append(fields, "spec.labels")
+	if csv.Spec.Maturity == "" {
+		fields = append(fields, "spec.maturity")
 	}
 
 	return fields

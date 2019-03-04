@@ -25,7 +25,7 @@ Fedora/Centos:
 $ sudo dnf install ansible
 ```
 
-In addition to Ansible, a user must install the [Openshift Restclient
+In addition to Ansible, a user must install the [OpenShift Restclient
 Python][openshift_restclient_python] package. This can be installed from pip:
 ```bash
 $ pip install openshift
@@ -161,8 +161,8 @@ mandatory fields:
 **spec**:  This is the key-value list of variables which are passed to Ansible.
 This field is optional and will be empty by default.
 
-**annotations**: Kubernetes specific annotations to be appened to the CR. See
-the below section for Ansible Operator specifc annotations.
+**annotations**: Kubernetes specific annotations to be appended to the CR. See
+the below section for Ansible Operator specific annotations.
 
 #### Ansible Operator annotations
 This is the list of CR annotations which will modify the behavior of the operator:
@@ -188,7 +188,7 @@ Once a developer is comfortable working with the above workflow, it will be
 beneficial to test the logic inside of an operator. To accomplish this, we can
 use `operator-sdk up local` from the top-level directory of our project. The
 `up local` command reads from `./watches.yaml` and uses `~/.kube/config` to
-communicate with a kubernetes cluster just as the `k8s` modules do. This
+communicate with a Kubernetes cluster just as the `k8s` modules do. This
 section assumes the developer has read the [Ansible Operator user
 guide][ansible_operator_user_guide] and has the proper dependencies installed.
 
@@ -207,8 +207,8 @@ directory and simply comment out the existing line:
   role: /home/user/foo-operator/Foo
 ```
 
-Create a Custom Resource Definiton (CRD) and proper Role-Based Access Control
-(RBAC) definitions for resource Foo. `operator-sdk` autogenerates these files
+Create a Custom Resource Definition (CRD) and proper Role-Based Access Control
+(RBAC) definitions for resource Foo. `operator-sdk` auto-generates these files
 inside of the `deploy` folder:
 ```bash
 $ kubectl create -f deploy/crds/foo_v1alpha1_foo_crd.yaml

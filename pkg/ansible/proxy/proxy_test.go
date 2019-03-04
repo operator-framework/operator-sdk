@@ -34,6 +34,9 @@ import (
 )
 
 func TestHandler(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping ansible proxy testing in short mode")
+	}
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{Namespace: "default"})
 	if err != nil {
 		t.Fatalf("Failed to instantiate manager: %v", err)
