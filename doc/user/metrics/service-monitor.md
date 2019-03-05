@@ -29,7 +29,7 @@ The `GenerateServiceMonitor` function takes a `Service` object and generates a `
         // Change below value to name of the Namespace you want the `ServiceMonitor` to be created in.
         ns := "default"
         
-        // Pass the Service(s) to the helper function, which in turn returns the `ServiceMonitor` object.
+        // Pass the Service(s) to the helper function, which in turn returns the array of `ServiceMonitor` objects.
         serviceMonitors, err := metrics.CreateServiceMonitors(restConfig, ns, services)
         if err != nil {
             // handle error here
