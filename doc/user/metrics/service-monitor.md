@@ -2,9 +2,9 @@
 
 [prometheus-operator][prom-operator] is an operator that creates, configures, and manages Prometheus clusters atop Kubernetes.
 
-`ServiceMonitor` is a CustomResource of the prometheus-operator, which discovers the `Endpoints` in `Service` objects and configures Prometheus to monitor those `Pod`s. See the prometheus-operator [documentation][service-monitor] to learn more about `ServiceMonitor`s.
+`ServiceMonitor` is a CustomResource of the prometheus-operator, which discovers the `Endpoints` in `Service` objects and configures Prometheus to monitor those pods. See the prometheus-operator [documentation][service-monitor] to learn more about `ServiceMonitor`.
 
-The `GenerateServiceMonitor` function takes a `Service` object and generates a `ServiceMonitor` resource based on it. To add `Service` target discovery of your created monitoring `Service`s you can use the `metrics.CreateServiceMonitor()` helper function, which accepts the newly created `Service`.
+The `GenerateServiceMonitor` function takes a `Service` object and generates a `ServiceMonitor` resource based on it. To add `Service` target discovery of your created monitoring `Service` you can use the `metrics.CreateServiceMonitor()` helper function, which accepts the newly created `Service`.
 
 ### Prerequisites:
 
@@ -41,5 +41,4 @@ The `GenerateServiceMonitor` function takes a `Service` object and generates a `
 
 [prom-operator]: https://github.com/coreos/prometheus-operator
 [service-monitor]: https://github.com/coreos/prometheus-operator/blob/7a25bf6b6bb2347dacb235659b73bc210117acc7/Documentation/design.md#servicemonitor
-[cr]: https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/
 [prom-quickstart]: https://github.com/coreos/prometheus-operator/tree/master/contrib/kube-prometheus#quickstart
