@@ -151,7 +151,7 @@ func (s *CRD) CustomRender() ([]byte, error) {
 	return k8sutil.GetObjectBytes(dstCRD)
 }
 
-func (s *CRD) newCRD() (*apiextv1beta1.CustomResourceDefinition, error) {
+func (s *CRD) newCRD() *apiextv1beta1.CustomResourceDefinition {
 	scope := apiextv1beta1.NamespaceScoped
 	if s.IsClusterScoped {
 		scope = apiextv1beta1.ClusterScoped
