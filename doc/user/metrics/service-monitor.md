@@ -22,7 +22,7 @@ The `GenerateServiceMonitor` function takes a `Service` object and generates a `
         
         ...
 
-        // Populate bellow with Service(s) for which you want to create `ServiceMonitor` for.
+        // Populate below with the Service(s) for which you want to create ServiceMonitors.
         services := []*v1.Service{}
 
         // Create one `ServiceMonitor` per application per namespace.
