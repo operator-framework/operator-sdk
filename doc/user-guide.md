@@ -11,8 +11,8 @@ Guide][helm_user_guide]. The rest of this document will show how to program an o
 - [git][git_tool]
 - [go][go_tool] version v1.10+.
 - [docker][docker_tool] version 17.03+.
-- [kubectl][kubectl_tool] version v1.11.0+.
-- Access to a Kubernetes v.1.11.0+ cluster.
+- [kubectl][kubectl_tool] version v1.11.3+.
+- Access to a Kubernetes v1.11.3+ cluster.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the local Kubernetes cluster and quay.io for the public registry.
 

@@ -15,7 +15,7 @@ local Kubernetes instance running on the machine.
 ### Remote Kubernetes Instance
 
 To run the tests on a remote cluster, the tests need access to a remote Kubernetes cluster
-running Kubernetes 1.11 or higher as well as a docker image repo to push the operator image to,
+running Kubernetes 1.11.3 or higher as well as a docker image repo to push the operator image to,
 such as [`quay.io`][quay]. Your kubeconfig must be located at `$HOME/.kube/config` and certain
 tests will not run on remote clusters. See [Running the Tests](#running-the-tests) for more details.
 
