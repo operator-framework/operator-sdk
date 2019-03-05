@@ -9,19 +9,19 @@ This doc will talk about how to run the tests locally as well.
 
 ## Running the Tests Locally
 
-To run the tests locally, the tests either need access to a remote kubernetes cluster or a
-local kubernetes instance running on the machine.
+To run the tests locally, the tests either need access to a remote Kubernetes cluster or a
+local Kubernetes instance running on the machine.
 
 ### Remote Kubernetes Instance
 
-To run the tests on a remote cluster, the tests need access to a remote kubernetes cluster
-running kubernetes 1.11.3 or higher as well as a docker image repo to push the operator image to,
+To run the tests on a remote cluster, the tests need access to a remote Kubernetes cluster
+running Kubernetes 1.11.3 or higher as well as a docker image repo to push the operator image to,
 such as [`quay.io`][quay]. Your kubeconfig must be located at `$HOME/.kube/config` and certain
 tests will not run on remote clusters. See [Running the Tests](#running-the-tests) for more details.
 
-### Local Openshift Cluster
+### Local OpenShift Cluster
 
-One way to run the tests is with an openshift 3.11 cluster and `oc cluster up` on a Linux system.
+One way to run the tests is with an OpenShift 3.11 cluster and `oc cluster up` on a Linux system.
 
 For the first run configuration, either you can either run the `hack/ci/setup-openshift.sh` script, or download
 and install the [oc binary][oc-binary] and run these commands:
@@ -62,7 +62,7 @@ and the tests will be updated in the future to support openshift 4.0.
 
 ### Local Minikube
 
-Another option for testing is using minikube. This is not advised as it uses vanilla kubernetes, which has less
+Another option for testing is using minikube. This is not advised as it uses vanilla Kubernetes, which has less
 strict security and may allow some tests to pass when they would not under openshift. Minikube is faster than
 openshift and uses less RAM though. To start the minikube cluster, download and install the proper [binary][minikube-binary]
 for your system and run these commands.

@@ -297,7 +297,21 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 		if err != nil && err != http.ErrServerClosed {
 			logger.Error(err, "Error from event API")
 		}
+
+		// link the current run to the `latest` directory under artifacts
+		currentRun := filepath.Join(inputDir.Path, "artifacts", ident)
+		latestArtifacts := filepath.Join(inputDir.Path, "artifacts", "latest")
+		if _, err = os.Lstat(latestArtifacts); err == nil {
+			if err = os.Remove(latestArtifacts); err != nil {
+				logger.Error(err, "Error removing the latest artifacts symlink")
+			}
+		}
+		if err = os.Symlink(currentRun, latestArtifacts); err != nil {
+			logger.Error(err, "Error symlinking latest artifacts")
+		}
+
 	}()
+
 	return &runResult{
 		events:   receiver.Events,
 		inputDir: &inputDir,

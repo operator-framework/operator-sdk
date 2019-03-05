@@ -6,7 +6,7 @@ After creating a new operator project using
 
 | File/Folders   | Purpose                           |
 | :---           | :--- |
-| deploy | Contains a generic set of kubernetes manifests for deploying this operator on a kubernetes cluster. |
+| deploy | Contains a generic set of Kubernetes manifests for deploying this operator on a Kubernetes cluster. |
 | roles/<kind> | Contains an Ansible Role initialized using [Ansible Galaxy](https://docs.ansible.com/ansible/latest/reference_appendices/galaxy.html) |
 | build | Contains scripts that the operator-sdk uses for build and initialization. |
 | watches.yaml | Contains Group, Version, Kind, and Ansible invocation method. |
