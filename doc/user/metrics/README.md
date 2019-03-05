@@ -13,7 +13,7 @@ By default, the metrics are served on `0.0.0.0:8383/metrics`. To modify the port
 ```go
     import(
         "github.com/operator-framework/operator-sdk/pkg/metrics"
-	    "sigs.k8s.io/controller-runtime/pkg/manager"
+        "sigs.k8s.io/controller-runtime/pkg/manager"
     )
 
     func main() {
