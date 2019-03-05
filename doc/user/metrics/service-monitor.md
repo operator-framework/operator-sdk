@@ -2,7 +2,7 @@
 
 [prometheus-operator][prom-operator] is an operator that creates, configures, and manages Prometheus clusters atop Kubernetes.
 
-`ServiceMonitor` is a [CR][cr] of the prometheus-operator, which discovers the `Endpoints` in `Service` objects and configures Prometheus to monitor those `Pod`s. See the prometheus-operator [documention][service-monitor] to learn more about `ServiceMonitor`s.
+`ServiceMonitor` is a CustomResource of the prometheus-operator, which discovers the `Endpoints` in `Service` objects and configures Prometheus to monitor those `Pod`s. See the prometheus-operator [documentation][service-monitor] to learn more about `ServiceMonitor`s.
 
 The `GenerateServiceMonitor` function takes a `Service` object and generates a `ServiceMonitor` resource based on it. To add `Service` target discovery of your created monitoring `Service`s you can use the `metrics.CreateServiceMonitor()` helper function, which accepts the newly created `Service`.
 
