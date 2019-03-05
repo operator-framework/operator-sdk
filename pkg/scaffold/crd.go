@@ -80,7 +80,10 @@ func initCache() {
 func (s *CRD) SetFS(_ afero.Fs) {}
 
 func (s *CRD) CustomRender() ([]byte, error) {
-	i, _ := s.GetInput()
+	i, err := s.GetInput()
+	if err != nil {
+		return nil, err
+	}
 	// controller-tools generates crd file names with no _crd.yaml suffix:
 	// <group>_<version>_<kind>.yaml.
 	path := strings.Replace(filepath.Base(i.Path), "_crd.yaml", ".yaml", 1)
