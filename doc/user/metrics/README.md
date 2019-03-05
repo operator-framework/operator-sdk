@@ -43,7 +43,7 @@ By default, the metrics are served on `0.0.0.0:8383/metrics`. To modify the port
     }
 ```
 
-Note: The above example is already present in `cmd/manager/main.go` in all the operators generated with operator-sdk.
+*Note:* The above example is already present in `cmd/manager/main.go` in all the operators generated with operator-sdk.
 
 [prometheus]: https://prometheus.io/
 [service]: https://kubernetes.io/docs/concepts/services-networking/service/
