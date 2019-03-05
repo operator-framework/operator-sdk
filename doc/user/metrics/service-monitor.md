@@ -14,7 +14,7 @@ The `GenerateServiceMonitor` function takes a `Service` object and generates a `
 
 ```go
     import(
-        v1 "k8s.io/api/core/v1"
+        "k8s.io/api/core/v1"
         "github.com/operator-framework/operator-sdk/pkg/metrics"
     )
 
