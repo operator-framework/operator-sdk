@@ -127,6 +127,14 @@
   version = "v0.28.0"
 
 [[projects]]
+  digest = "1:8449bb0c1da0fd7ec4706afb5ae46ad0ad658fd87f17a7eb067c5a307ffe3818"
+  name = "github.com/cyphar/filepath-securejoin"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "a261ee33d7a517f054effbf451841abaafe3e0fd"
+  version = "v0.2.2"
+
+[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -883,6 +891,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:75515eedc0dc2cb0b40372008b616fa2841d831c63eedd403285ff286c593295"
+  name = "golang.org/x/sync"
+  packages = ["semaphore"]
+  pruneopts = "NUT"
+  revision = "e225da77a7e68af35c70ccbf71af2b83e6acac3c"
+
+[[projects]]
+  branch = "master"
   digest = "1:fbab383158a51e14497ea75116286c7b5c0246358acd1ade27adfe81922d144d"
   name = "golang.org/x/sys"
   packages = [
@@ -1309,7 +1325,7 @@
   revision = "fd15ee9cc2f77baa4f31e59e6acbf21146455073"
 
 [[projects]]
-  digest = "1:b3882e4b4e8d53b2ce6804bed1c9f0d350f3e53d4479b817b7813c6e9a388ee3"
+  digest = "1:c31467fbb43cc1fda0459314ca9f182c6c9779645b171d4883ee5d3684744c2b"
   name = "k8s.io/helm"
   packages = [
     "pkg/chartutil",
@@ -1346,8 +1362,8 @@
     "pkg/version",
   ]
   pruneopts = "NUT"
-  revision = "d325d2a9c179b33af1a024cdb5a4472b6288016a"
-  version = "v2.12.0"
+  revision = "79d07943b03aea2b76c12644b4b54733bc5958d6"
+  version = "v2.13.0"
 
 [[projects]]
   digest = "1:9cc257b3c9ff6a0158c9c661ab6eebda1fe8a4a4453cd5c4044dc9a2ebfb992b"
@@ -1386,7 +1402,7 @@
   revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
 
 [[projects]]
-  digest = "1:0c17078fc7b197f1e3944a7e7c7fcf704c5c444a66c09fd759c100445e192307"
+  digest = "1:c4633d96d5a84297fe4b7045060034c6f219d9a18bcd53b88bd560bdf976194f"
   name = "k8s.io/kubernetes"
   packages = [
     "pkg/api/legacyscheme",
@@ -1493,8 +1509,7 @@
     "plugin/pkg/auth/authorizer/rbac",
   ]
   pruneopts = "NUT"
-  revision = "eec55b9ba98609a46fee712359c7b5b365bdd920"
-  version = "v1.13.1"
+  revision = "c6d339953bd4fd8c021a6b5fb46d7952b30be9f9"
 
 [[projects]]
   branch = "master"
