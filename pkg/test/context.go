@@ -75,7 +75,7 @@ func (ctx *TestCtx) Cleanup() {
 	}
 }
 
-// CleanupNoT is a modified version of Cleanup; does not use t for logging, instead uses log
+// cleanupNoT is a modified version of Cleanup; does not use t for logging, instead uses log
 // intended for use by MainEntry, which does not have a testing.T
 func (ctx *TestCtx) cleanupNoT() {
 	failed := false
