@@ -54,8 +54,8 @@ generates a skeletal app-operator application in $GOPATH/src/github.com/example.
 	newCmd.Flags().StringVar(&operatorType, "type", "go", "Type of operator to initialize (choices: \"go\", \"ansible\" or \"helm\")")
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
 	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false, "Generate a playbook skeleton. (Only used for --type ansible)")
-	newCmd.Flags().BoolVar(&isClusterScoped, "cluster-scoped", false, "Generate cluster-scoped resources instead of namespace-scoped")
-
+	newCmd.Flags().BoolVar(&isClusterScopedOperator, "cluster-scoped-operator", false, "Generate cluster-scoped resources instead of namespace-scoped")
+	newCmd.Flags().BoolVar(&isClusterScopedCRD, "cluster-scoped-crd", false, "Generate a cluster-scoped CRD instead of namespace-scoped (only applies for \"ansible\" and \"helm\" operators)")
 	newCmd.Flags().StringVar(&helmChartRef, "helm-chart", "", "Initialize helm operator with existing helm chart (<URL>, <repo>/<name>, or local path)")
 	newCmd.Flags().StringVar(&helmChartVersion, "helm-chart-version", "", "Specific version of the helm chart (default is latest version)")
 	newCmd.Flags().StringVar(&helmChartRepo, "helm-chart-repo", "", "Chart repository URL for the requested helm chart")
@@ -64,13 +64,14 @@ generates a skeletal app-operator application in $GOPATH/src/github.com/example.
 }
 
 var (
-	apiVersion       string
-	kind             string
-	operatorType     string
-	projectName      string
-	skipGit          bool
-	generatePlaybook bool
-	isClusterScoped  bool
+	apiVersion              string
+	kind                    string
+	operatorType            string
+	projectName             string
+	skipGit                 bool
+	generatePlaybook        bool
+	isClusterScopedOperator bool
+	isClusterScopedCRD      bool
 
 	helmChartRef     string
 	helmChartVersion string
@@ -159,9 +160,9 @@ func doScaffold() error {
 		&scaffold.Entrypoint{},
 		&scaffold.UserSetup{},
 		&scaffold.ServiceAccount{},
-		&scaffold.Role{IsClusterScoped: isClusterScoped},
-		&scaffold.RoleBinding{IsClusterScoped: isClusterScoped},
-		&scaffold.Operator{IsClusterScoped: isClusterScoped},
+		&scaffold.Role{IsClusterScoped: isClusterScopedOperator},
+		&scaffold.RoleBinding{IsClusterScoped: isClusterScopedOperator},
+		&scaffold.Operator{IsClusterScoped: isClusterScopedOperator},
 		&scaffold.Apis{},
 		&scaffold.Controller{},
 		&scaffold.Version{},
@@ -191,9 +192,12 @@ func doAnsibleScaffold() error {
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
 		&scaffold.ServiceAccount{},
-		&scaffold.Role{IsClusterScoped: isClusterScoped},
-		&scaffold.RoleBinding{IsClusterScoped: isClusterScoped},
-		&scaffold.CRD{Resource: resource},
+		&scaffold.Role{IsClusterScoped: isClusterScopedOperator},
+		&scaffold.RoleBinding{IsClusterScoped: isClusterScopedOperator},
+		&scaffold.CRD{
+			Resource:        resource,
+			IsClusterScoped: isClusterScopedCRD,
+		},
 		&scaffold.CR{Resource: resource},
 		&ansible.BuildDockerfile{GeneratePlaybook: generatePlaybook},
 		&ansible.RolesReadme{Resource: *resource},
@@ -220,7 +224,7 @@ func doAnsibleScaffold() error {
 			GeneratePlaybook: generatePlaybook,
 			Resource:         *resource,
 		},
-		&ansible.DeployOperator{IsClusterScoped: isClusterScoped},
+		&ansible.DeployOperator{IsClusterScoped: isClusterScopedOperator},
 		&ansible.Travis{},
 		&ansible.MoleculeTestLocalMolecule{},
 		&ansible.MoleculeTestLocalPrepare{Resource: *resource},
@@ -288,9 +292,9 @@ func doHelmScaffold() error {
 			ChartName: chart.GetMetadata().GetName(),
 		},
 		&scaffold.ServiceAccount{},
-		&scaffold.Role{IsClusterScoped: isClusterScoped},
-		&scaffold.RoleBinding{IsClusterScoped: isClusterScoped},
-		&helm.Operator{IsClusterScoped: isClusterScoped},
+		&scaffold.Role{IsClusterScoped: isClusterScopedOperator},
+		&scaffold.RoleBinding{IsClusterScoped: isClusterScopedOperator},
+		&helm.Operator{IsClusterScoped: isClusterScopedOperator},
 		&scaffold.CRD{Resource: resource},
 		&scaffold.CR{
 			Resource: resource,

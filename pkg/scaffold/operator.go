@@ -24,7 +24,6 @@ const OperatorYamlFile = "operator.yaml"
 
 type Operator struct {
 	input.Input
-
 	IsClusterScoped bool
 }
 

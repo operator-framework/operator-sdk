@@ -41,6 +41,9 @@ type CRD struct {
 
 	// IsOperatorGo is true when the operator is written in Go.
 	IsOperatorGo bool
+
+	// IsClusterScoped is true if the CRD has a `Cluster` scope
+	IsClusterScoped bool
 }
 
 func (s *CRD) GetInput() (input.Input, error) {
@@ -102,7 +105,10 @@ func (s *CRD) CustomRender() ([]byte, error) {
 		}
 	}
 
-	dstCRD := newCRDForResource(s.Resource)
+	dstCRD, err := s.newCRD()
+	if err != nil {
+		return nil, err
+	}
 	// Get our generated crd's from the in-memory fs. If it doesn't exist in the
 	// fs, the corresponding API does not exist yet, so scaffold a fresh crd
 	// without a validation spec.
@@ -145,25 +151,30 @@ func (s *CRD) CustomRender() ([]byte, error) {
 	return k8sutil.GetObjectBytes(dstCRD)
 }
 
-func newCRDForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {
-	return &apiextv1beta1.CustomResourceDefinition{
+func (s *CRD) newCRD() (*apiextv1beta1.CustomResourceDefinition, error) {
+	scope := apiextv1beta1.NamespaceScoped
+	if s.IsClusterScoped {
+		scope = apiextv1beta1.ClusterScoped
+	}
+	crd := &apiextv1beta1.CustomResourceDefinition{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apiextensions.k8s.io/v1beta1",
 			Kind:       "CustomResourceDefinition",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: r.Resource + "." + r.FullGroup,
+			Name: s.Resource.Resource + "." + s.Resource.FullGroup,
 		},
 		Spec: apiextv1beta1.CustomResourceDefinitionSpec{
-			Group:   r.FullGroup,
-			Names:   getCRDNamesForResource(r),
-			Scope:   apiextv1beta1.NamespaceScoped,
-			Version: r.Version,
+			Group:   s.Resource.FullGroup,
+			Names:   getCRDNamesForResource(s.Resource),
+			Scope:   scope,
+			Version: s.Resource.Version,
 			Subresources: &apiextv1beta1.CustomResourceSubresources{
 				Status: &apiextv1beta1.CustomResourceSubresourceStatus{},
 			},
 		},
 	}
+	return crd, nil
 }
 
 func getCRDNamesForResource(r *Resource) apiextv1beta1.CustomResourceDefinitionNames {

@@ -27,10 +27,12 @@ import (
 )
 
 var (
-	apiVersion string
-	kind       string
+	apiVersion         string
+	kind               string
+	isClusterScopedCRD bool
 )
 
+// NewApiCmd returns an implementation to support the `new api` cmd
 func NewApiCmd() *cobra.Command {
 	apiCmd := &cobra.Command{
 		Use:   "api",
@@ -76,6 +78,7 @@ Example:
 	if err := apiCmd.MarkFlagRequired("kind"); err != nil {
 		log.Fatalf("Failed to mark `kind` flag for `add api` subcommand as required")
 	}
+	apiCmd.Flags().BoolVar(&isClusterScopedCRD, "cluster-scoped-crd", false, "Generate a cluster-scoped CRD instead of a namespace-scoped one")
 
 	return apiCmd
 }
@@ -110,7 +113,11 @@ func apiRun(cmd *cobra.Command, args []string) error {
 		&scaffold.Register{Resource: r},
 		&scaffold.Doc{Resource: r},
 		&scaffold.CR{Resource: r},
-		&scaffold.CRD{Resource: r, IsOperatorGo: projutil.IsOperatorGo()},
+		&scaffold.CRD{
+			Resource:        r,
+			IsClusterScoped: isClusterScopedCRD,
+			IsOperatorGo:    projutil.IsOperatorGo(),
+		},
 	)
 	if err != nil {
 		return fmt.Errorf("api scaffold failed: (%v)", err)

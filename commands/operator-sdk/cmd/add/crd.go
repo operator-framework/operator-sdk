@@ -79,9 +79,10 @@ func crdFunc(cmd *cobra.Command, args []string) error {
 	s := scaffold.Scaffold{}
 	err = s.Execute(cfg,
 		&scaffold.CRD{
-			Input:        input.Input{IfExistsAction: input.Skip},
-			Resource:     resource,
-			IsOperatorGo: projutil.IsOperatorGo(),
+			Input:           input.Input{IfExistsAction: input.Skip},
+			Resource:        resource,
+			IsClusterScoped: isClusterScopedCRD,
+			IsOperatorGo:    projutil.IsOperatorGo(),
 		},
 		&scaffold.CR{
 			Input:    input.Input{IfExistsAction: input.Skip},
