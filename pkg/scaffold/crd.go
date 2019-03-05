@@ -27,8 +27,10 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/spf13/afero"
+	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	cgoscheme "k8s.io/client-go/kubernetes/scheme"
 	crdgenerator "sigs.k8s.io/controller-tools/pkg/crd/generator"
 )
 
@@ -102,7 +104,10 @@ func (s *CRD) CustomRender() ([]byte, error) {
 		}
 	}
 
-	dstCRD := newCRDForResource(s.Resource)
+	dstCRD, err := newCRDForResource(s.Resource)
+	if err != nil {
+		return nil, err
+	}
 	// Get our generated crd's from the in-memory fs. If it doesn't exist in the
 	// fs, the corresponding API does not exist yet, so scaffold a fresh crd
 	// without a validation spec.
@@ -145,7 +150,11 @@ func (s *CRD) CustomRender() ([]byte, error) {
 	return k8sutil.GetObjectBytes(dstCRD)
 }
 
-func newCRDForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {
+func newCRDForResource(r *Resource) (*apiextv1beta1.CustomResourceDefinition, error) {
+	scope, err := getScopeForResource()
+	if err != nil {
+		return nil, err
+	}
 	return &apiextv1beta1.CustomResourceDefinition{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apiextensions.k8s.io/v1beta1",
@@ -157,13 +166,13 @@ func newCRDForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {
 		Spec: apiextv1beta1.CustomResourceDefinitionSpec{
 			Group:   r.FullGroup,
 			Names:   getCRDNamesForResource(r),
-			Scope:   apiextv1beta1.NamespaceScoped,
+			Scope:   scope,
 			Version: r.Version,
 			Subresources: &apiextv1beta1.CustomResourceSubresources{
 				Status: &apiextv1beta1.CustomResourceSubresourceStatus{},
 			},
 		},
-	}
+	}, nil
 }
 
 func getCRDNamesForResource(r *Resource) apiextv1beta1.CustomResourceDefinitionNames {
@@ -172,6 +181,27 @@ func getCRDNamesForResource(r *Resource) apiextv1beta1.CustomResourceDefinitionN
 		ListKind: r.Kind + "List",
 		Plural:   r.Resource,
 		Singular: r.LowerKind,
+	}
+}
+
+func getScopeForResource() (apiextv1beta1.ResourceScope, error) {
+	// check the kind of resource defined in `deploy/role.yaml` to see if the operator
+	// has a cluster scope
+	absProjectPath, _ := os.Getwd()
+	roleFilePath := filepath.Join(absProjectPath, DeployDir, RoleYamlFile)
+	roleYAML, err := ioutil.ReadFile(roleFilePath)
+	if err != nil {
+		return apiextv1beta1.NamespaceScoped, fmt.Errorf("failed to read role manifest '%s': %v", roleFilePath, err)
+	}
+	obj, _, err := cgoscheme.Codecs.UniversalDeserializer().Decode(roleYAML, nil, nil)
+	if err != nil {
+		return apiextv1beta1.NamespaceScoped, fmt.Errorf("failed to decode role manifest '%s': %v", roleFilePath, err)
+	}
+	switch obj.(type) {
+	case *rbacv1.ClusterRole:
+		return apiextv1beta1.ClusterScoped, nil
+	default:
+		return apiextv1beta1.NamespaceScoped, nil
 	}
 }
 

@@ -15,13 +15,20 @@
 package scaffold
 
 import (
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+
+	"github.com/stretchr/testify/assert"
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCRDGoProject(t *testing.T) {
@@ -36,7 +43,7 @@ func TestCRDGoProject(t *testing.T) {
 	}
 	// Set the project and repo paths to {abs}/test/test-framework, which
 	// contains pkg/apis for the memcached-operator.
-	tfDir := filepath.Join("test", "test-framework")
+	tfDir := filepath.Join("test", "test-framework-memcached")
 	pkgIdx := strings.Index(absPath, "pkg")
 	cfg := &input.Config{
 		Repo:           filepath.Join(absPath[strings.Index(absPath, "github.com"):pkgIdx], tfDir),
@@ -108,6 +115,129 @@ spec:
     served: true
     storage: true
 `
+
+const namespacedRole = `apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  name: memcached-operator
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  - configmaps
+  - secrets
+  verbs:
+  - '*'
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
+  verbs:
+  - '*'
+- apiGroups:
+  - cache.example.com
+  resources:
+  - '*'
+  verbs:
+  - '*'
+`
+
+const clusterRole = `apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: podset-cluster-operator
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  - configmaps
+  - secrets
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
+  verbs:
+  - '*'
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - servicemonitors
+  verbs:
+  - get
+  - create
+- apiGroups:
+  - app.example.com
+  resources:
+  - '*'
+  verbs:
+  - '*'
+`
+
+func TestGetScopeForResource(t *testing.T) {
+
+	absPath, err := os.Getwd()
+	require.NoError(t, err)
+	defer func() { os.Chdir(absPath) }()
+
+	t.Run("namespaced scope", func(t *testing.T) {
+		// given
+		tmpDir, err := ioutil.TempDir("", "operatorsdk-test")
+		defer func() { os.Remove(tmpDir) }()
+		require.NoError(t, err)
+		deployDir := filepath.Join(tmpDir, DeployDir)
+		os.Mkdir(deployDir, os.ModeDir+os.ModePerm)
+		os.Chdir(tmpDir)
+		err = ioutil.WriteFile(filepath.Join(deployDir, "role.yaml"), []byte(namespacedRole), fileutil.DefaultFileMode)
+		// when
+		scope, err := getScopeForResource()
+		require.NoError(t, err)
+		// then
+		assert.Equal(t, apiextv1beta1.NamespaceScoped, scope)
+	})
+
+	t.Run("clustered scope", func(t *testing.T) {
+		// given
+		tmpDir, err := ioutil.TempDir("", "operatorsdk-test")
+		defer func() { os.Remove(tmpDir) }()
+		require.NoError(t, err)
+		os.Chdir(tmpDir)
+		deployDir := filepath.Join(tmpDir, DeployDir)
+		os.Mkdir(deployDir, os.ModeDir+os.ModePerm)
+		err = ioutil.WriteFile(filepath.Join(deployDir, "role.yaml"), []byte(clusterRole), fileutil.DefaultFileMode)
+		// when
+		scope, err := getScopeForResource()
+		require.NoError(t, err)
+		// then
+		assert.Equal(t, apiextv1beta1.ClusterScoped, scope)
+
+	})
+}
 
 func TestCRDNonGoProject(t *testing.T) {
 	r, err := NewResource(appApiVersion, appKind)
