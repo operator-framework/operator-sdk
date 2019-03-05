@@ -51,6 +51,7 @@ Generated CR  filename: <project-name>/deploy/crds/<group>_<version>_<kind>_cr.y
 	if err := crdCmd.MarkFlagRequired("kind"); err != nil {
 		log.Fatalf("Failed to mark `kind` flag for `add crd` subcommand as required")
 	}
+	crdCmd.Flags().BoolVar(&isClusterScopedCRD, "cluster-scoped-crd", false, "Generate a cluster-scoped CRD instead of a namespace-scoped one")
 	return crdCmd
 }
 
