@@ -105,10 +105,7 @@ func (s *CRD) CustomRender() ([]byte, error) {
 		}
 	}
 
-	dstCRD, err := s.newCRD()
-	if err != nil {
-		return nil, err
-	}
+	dstCRD := s.newCRD()
 	// Get our generated crd's from the in-memory fs. If it doesn't exist in the
 	// fs, the corresponding API does not exist yet, so scaffold a fresh crd
 	// without a validation spec.
@@ -174,7 +171,7 @@ func (s *CRD) newCRD() *apiextv1beta1.CustomResourceDefinition {
 			},
 		},
 	}
-	return crd, nil
+	return crd
 }
 
 func getCRDNamesForResource(r *Resource) apiextv1beta1.CustomResourceDefinitionNames {

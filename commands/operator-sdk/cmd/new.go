@@ -296,8 +296,8 @@ func doHelmScaffold() error {
 		&scaffold.RoleBinding{IsClusterScoped: isClusterScopedOperator},
 		&helm.Operator{IsClusterScoped: isClusterScopedOperator},
 		&scaffold.CRD{
-			Resource: resource
-			isClusterScopedCRD: isClusterScopedCRD,
+			Resource:        resource,
+			IsClusterScoped: isClusterScopedCRD,
 		},
 		&scaffold.CR{
 			Resource: resource,
