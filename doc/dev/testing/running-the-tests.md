@@ -15,7 +15,7 @@ local kubernetes instance running on the machine.
 ### Remote Kubernetes Instance
 
 To run the tests on a remote cluster, the tests need access to a remote kubernetes cluster
-running kubernetes 1.11 or higher as well as a docker image repo to push the operator image to,
+running kubernetes 1.11.3 or higher as well as a docker image repo to push the operator image to,
 such as [`quay.io`][quay]. Your kubeconfig must be located at `$HOME/.kube/config` and certain
 tests will not run on remote clusters. See [Running the Tests](#running-the-tests) for more details.
 
@@ -68,8 +68,7 @@ openshift and uses less RAM though. To start the minikube cluster, download and 
 for your system and run these commands.
 
 ```sh
-# The latest version of minikube at the time of writing (v0.31.0) defaults to k8s v1.10.0, so we must explicitly specify the latest k8s v1.11
-$ minikube start --kubernetes-version v1.11.6
+$ minikube start
 $ eval $(minikube docker-env)
 ```
 
