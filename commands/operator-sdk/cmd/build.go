@@ -25,8 +25,8 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
 	"github.com/ghodss/yaml"

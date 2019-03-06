@@ -16,9 +16,9 @@ package main
 
 import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
+	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 
 	log "github.com/sirupsen/logrus"
 )

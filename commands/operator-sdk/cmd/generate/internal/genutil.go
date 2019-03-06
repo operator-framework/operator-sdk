@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
 )
 
 func BuildCodegenBinaries(genDirs []string, binDir, codegenSrcDir string) error {

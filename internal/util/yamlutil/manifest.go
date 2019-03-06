@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
 
 	log "github.com/sirupsen/logrus"
 )

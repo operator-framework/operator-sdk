@@ -22,9 +22,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/helm"
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
+	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
