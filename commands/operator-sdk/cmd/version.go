@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import (
 func NewVersionCmd() *cobra.Command {
 	versionCmd := &cobra.Command{
 		Use:   "version",
-		Short: "Provides version of the operator-sdk",
+		Short: "Prints the version of operator-sdk",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("operator-sdk version:", ver.Version)
 		},
