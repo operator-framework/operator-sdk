@@ -23,7 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// checkSpec checks that the spec block exists
+// Run - implements Test interface
 func (t *CheckSpecTest) Run(ctx context.Context) *TestResult {
 	res := &TestResult{Test: t, MaximumPoints: 1}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
@@ -40,7 +40,7 @@ func (t *CheckSpecTest) Run(ctx context.Context) *TestResult {
 	return res
 }
 
-// checkStatus checks that the status block exists
+// Run - implements Test interface
 func (t *CheckStatusTest) Run(ctx context.Context) *TestResult {
 	res := &TestResult{Test: t, MaximumPoints: 1}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
@@ -57,8 +57,7 @@ func (t *CheckStatusTest) Run(ctx context.Context) *TestResult {
 	return res
 }
 
-// writingIntoCRsHasEffect simply looks at the proxy logs and verifies that the operator is sending PUT
-// and/or POST requests to the API server, which should mean that it is creating or modifying resources.
+// Run - implements Test interface
 func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *TestResult {
 	res := &TestResult{Test: t, MaximumPoints: 1}
 	logs, err := getProxyLogs(t.ProxyPod)

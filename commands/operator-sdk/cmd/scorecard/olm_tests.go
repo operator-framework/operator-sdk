@@ -58,7 +58,7 @@ func matchVersion(version string, crd *apiextv1beta1.CustomResourceDefinition) b
 	return false
 }
 
-// crdsHaveValidation makes sure that all CRDs have a validation block
+// Run - implements Test interface
 func (t *CRDsHaveValidationTest) Run(ctx context.Context) *TestResult {
 	res := &TestResult{Test: t}
 	crds, err := k8sutil.GetCRDs(t.CRDsDir)
@@ -111,10 +111,7 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *TestResult {
 	return res
 }
 
-// crdsHaveResources checks to make sure that all owned CRDs have resources listed
-// Until there is full support for multiple CRs, we will only be able to check the
-// actual used resources of one CRD, but only the existence of a resources section
-// for other CRDs
+// Run - implements Test interface
 func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
 	res := &TestResult{Test: t}
 	for _, crd := range t.CSV.Spec.CustomResourceDefinitions.Owned {
@@ -237,7 +234,7 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 	return resourcesArr, nil
 }
 
-// annotationsContainExamples makes sure that the CSVs list at least 1 example for the CR
+// Run - implements Test interface
 func (t *AnnotationsContainExamplesTest) Run(ctx context.Context) *TestResult {
 	res := &TestResult{Test: t}
 	if t.CSV.Annotations != nil && t.CSV.Annotations["alm-examples"] != "" {
@@ -249,7 +246,7 @@ func (t *AnnotationsContainExamplesTest) Run(ctx context.Context) *TestResult {
 	return res
 }
 
-// statusDescriptors makes sure that all status fields found in the created CR has a matching descriptor in the CSV
+// Run - implements Test interface
 func (t *StatusDescriptorsTest) Run(ctx context.Context) *TestResult {
 	res := &TestResult{Test: t}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
@@ -287,7 +284,7 @@ func (t *StatusDescriptorsTest) Run(ctx context.Context) *TestResult {
 	return res
 }
 
-// specDescriptors makes sure that all spec fields found in the created CR has a matching descriptor in the CSV
+// Run - implements Test interface
 func (t *SpecDescriptorsTest) Run(ctx context.Context) *TestResult {
 	res := &TestResult{Test: t}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)

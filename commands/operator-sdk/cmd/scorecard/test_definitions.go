@@ -25,6 +25,7 @@ import (
 
 // Type Definitions
 
+// Test provides methods for running scorecard tests
 type Test interface {
 	GetName() string
 	GetDescription() string
@@ -32,6 +33,7 @@ type Test interface {
 	Run(context.Context) *TestResult
 }
 
+// TestResult contains a test's points, suggestions, and errors
 type TestResult struct {
 	Test          Test
 	EarnedPoints  int
@@ -40,6 +42,7 @@ type TestResult struct {
 	Errors        []error
 }
 
+// TestInfo contains information about the scorecard test
 type TestInfo struct {
 	Name        string
 	Description string
@@ -48,18 +51,23 @@ type TestInfo struct {
 	Cumulative bool
 }
 
-// Any struct that embeds TestInfo only needs to
-// implement Run to implement the Test interface
-func (i TestInfo) GetName() string        { return i.Name }
-func (i TestInfo) GetDescription() string { return i.Description }
-func (i TestInfo) IsCumulative() bool     { return i.Cumulative }
+// GetName return the test name
+func (i TestInfo) GetName() string { return i.Name }
 
+// GetDescription returns the test description
+func (i TestInfo) GetDescription() string { return i.Description }
+
+// IsCumulative returns true if the test's scores are intended to be cumulative
+func (i TestInfo) IsCumulative() bool { return i.Cumulative }
+
+// BasicTestConfig contains all variables required by the BasicTest TestSuite
 type BasicTestConfig struct {
 	Client   client.Client
 	CR       *unstructured.Unstructured
 	ProxyPod *v1.Pod
 }
 
+// OLMTestConfig contains all variables required by the OLMTest TestSuite
 type OLMTestConfig struct {
 	Client   client.Client
 	CR       *unstructured.Unstructured
@@ -68,6 +76,7 @@ type OLMTestConfig struct {
 	ProxyPod *v1.Pod
 }
 
+// TestSuite contains a list of tests and results, along with the relative weights of each test
 type TestSuite struct {
 	TestInfo
 	Tests       []Test
@@ -77,11 +86,13 @@ type TestSuite struct {
 
 // Test definitions
 
+// CheckSpecTest is a scorecard test that verifies that the CR has a spec block
 type CheckSpecTest struct {
 	TestInfo
 	BasicTestConfig
 }
 
+// NewCheckSpecTest returns a new CheckSpecTest object
 func NewCheckSpecTest(conf BasicTestConfig) *CheckSpecTest {
 	return &CheckSpecTest{
 		BasicTestConfig: conf,
@@ -93,11 +104,13 @@ func NewCheckSpecTest(conf BasicTestConfig) *CheckSpecTest {
 	}
 }
 
+// CheckStatusTest is a scorecard test that verifies that the CR has a status block
 type CheckStatusTest struct {
 	TestInfo
 	BasicTestConfig
 }
 
+// NewCheckStatusTest returns a new CheckStatusTest object
 func NewCheckStatusTest(conf BasicTestConfig) *CheckStatusTest {
 	return &CheckStatusTest{
 		BasicTestConfig: conf,
@@ -109,11 +122,13 @@ func NewCheckStatusTest(conf BasicTestConfig) *CheckStatusTest {
 	}
 }
 
+// WritingIntoCRsHasEffectTest is a scorecard test that verifies that the operator is making PUT and/or POST requests to the API server
 type WritingIntoCRsHasEffectTest struct {
 	TestInfo
 	BasicTestConfig
 }
 
+// NewWritingIntoCRsHasEffectTest returns a new WritingIntoCRsHasEffectTest object
 func NewWritingIntoCRsHasEffectTest(conf BasicTestConfig) *WritingIntoCRsHasEffectTest {
 	return &WritingIntoCRsHasEffectTest{
 		BasicTestConfig: conf,
@@ -125,11 +140,13 @@ func NewWritingIntoCRsHasEffectTest(conf BasicTestConfig) *WritingIntoCRsHasEffe
 	}
 }
 
+// CRDsHaveValidationTest is a scorecard test that verifies that all CRDs have a validation section
 type CRDsHaveValidationTest struct {
 	TestInfo
 	OLMTestConfig
 }
 
+// NewCRDsHaveValidationTest returns a new CRDsHaveValidationTest object
 func NewCRDsHaveValidationTest(conf OLMTestConfig) *CRDsHaveValidationTest {
 	return &CRDsHaveValidationTest{
 		OLMTestConfig: conf,
@@ -141,11 +158,13 @@ func NewCRDsHaveValidationTest(conf OLMTestConfig) *CRDsHaveValidationTest {
 	}
 }
 
+// CRDsHaveResourcesTest is a scorecard test that verifies that the CSV lists used resources in its owned CRDs secyion
 type CRDsHaveResourcesTest struct {
 	TestInfo
 	OLMTestConfig
 }
 
+// NewCRDsHaveResourcesTest returns a new CRDsHaveResourcesTest object
 func NewCRDsHaveResourcesTest(conf OLMTestConfig) *CRDsHaveResourcesTest {
 	return &CRDsHaveResourcesTest{
 		OLMTestConfig: conf,
@@ -157,11 +176,13 @@ func NewCRDsHaveResourcesTest(conf OLMTestConfig) *CRDsHaveResourcesTest {
 	}
 }
 
+// AnnotationsContainExamplesTest is a scorecard test that verifies that the CSV contains examples via the alm-examples annotation
 type AnnotationsContainExamplesTest struct {
 	TestInfo
 	OLMTestConfig
 }
 
+// NewAnnotationsContainExamplesTest returns a new AnnotationsContainExamplesTest object
 func NewAnnotationsContainExamplesTest(conf OLMTestConfig) *AnnotationsContainExamplesTest {
 	return &AnnotationsContainExamplesTest{
 		OLMTestConfig: conf,
@@ -173,11 +194,13 @@ func NewAnnotationsContainExamplesTest(conf OLMTestConfig) *AnnotationsContainEx
 	}
 }
 
+// SpecDescriptorsTest is a scorecard test that verifies that all spec fields have descriptors
 type SpecDescriptorsTest struct {
 	TestInfo
 	OLMTestConfig
 }
 
+// NewSpecDescriptorsTest returns a new SpecDescriptorsTest object
 func NewSpecDescriptorsTest(conf OLMTestConfig) *SpecDescriptorsTest {
 	return &SpecDescriptorsTest{
 		OLMTestConfig: conf,
@@ -189,11 +212,13 @@ func NewSpecDescriptorsTest(conf OLMTestConfig) *SpecDescriptorsTest {
 	}
 }
 
+// StatusDescriptorsTest is a scorecard test that verifies that all status fields have descriptors
 type StatusDescriptorsTest struct {
 	TestInfo
 	OLMTestConfig
 }
 
+// NewStatusDescriptorsTest returns a new StatusDescriptorsTest object
 func NewStatusDescriptorsTest(conf OLMTestConfig) *StatusDescriptorsTest {
 	return &StatusDescriptorsTest{
 		OLMTestConfig: conf,
@@ -207,6 +232,7 @@ func NewStatusDescriptorsTest(conf OLMTestConfig) *StatusDescriptorsTest {
 
 // Test Suite Declarations
 
+// NewBasicTestSuite returns a new TestSuite object containing basic, functional operator tests
 func NewBasicTestSuite(conf BasicTestConfig) *TestSuite {
 	ts := NewTestSuite(
 		"Basic Tests",
@@ -219,6 +245,7 @@ func NewBasicTestSuite(conf BasicTestConfig) *TestSuite {
 	return ts
 }
 
+// NewOLMTestSuite returns a new TestSuite object containing CSV best practice checks
 func NewOLMTestSuite(conf OLMTestConfig) *TestSuite {
 	ts := NewTestSuite(
 		"OLM Tests",
@@ -255,11 +282,13 @@ func ResultsCumulative(results []TestResult) (earned, max int) {
 	return earned, max
 }
 
+// AddTest adds a new Test to a TestSuite along with a relative weight for the new Test
 func (ts *TestSuite) AddTest(t Test, weight float64) {
 	ts.Tests = append(ts.Tests, t)
 	ts.Weights[t.GetName()] = weight
 }
 
+// TotalScore calculates and returns the total score of all run Tests in a TestSuite
 func (ts *TestSuite) TotalScore() (score int) {
 	floatScore := 0.0
 	for _, result := range ts.TestResults {
@@ -276,12 +305,14 @@ func (ts *TestSuite) TotalScore() (score int) {
 	return int(floatScore)
 }
 
+// Run runs all Tests in a TestSuite
 func (ts *TestSuite) Run(ctx context.Context) {
 	for _, test := range ts.Tests {
 		ts.TestResults = append(ts.TestResults, test.Run(ctx))
 	}
 }
 
+// NewTestSuite returns a new TestSuite with a given name and description
 func NewTestSuite(name, description string) *TestSuite {
 	return &TestSuite{
 		TestInfo: TestInfo{
