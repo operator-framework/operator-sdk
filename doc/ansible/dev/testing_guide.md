@@ -216,4 +216,7 @@ Now that we have a functional Operator, and an assertion of its behavior, we can
 by running `operator-sdk test local`.
 
 #### The Ansible `assert` and `fail` modules
-TODO: Describe ansible assert and fail modules
+These modules are handy for adding assertions and failure conditions to your Ansible Operator tests:
+
+- [assert](https://docs.ansible.com/ansible/latest/modules/assert_module.html)
+- [fail](https://docs.ansible.com/ansible/latest/modules/fail_module.html)
