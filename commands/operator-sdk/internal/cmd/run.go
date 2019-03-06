@@ -15,7 +15,7 @@
 package cmd
 
 import (
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/run"
+	"github.com/operator-framework/operator-sdk/commands/operator-sdk/internal/cmd/run"
 
 	"github.com/spf13/cobra"
 )

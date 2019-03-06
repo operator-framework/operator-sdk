@@ -15,20 +15,18 @@
 package cmd
 
 import (
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/test"
+	catalog "github.com/operator-framework/operator-sdk/commands/operator-sdk/internal/cmd/olm-catalog"
 
 	"github.com/spf13/cobra"
 )
 
-func NewTestCmd() *cobra.Command {
-	testCmd := &cobra.Command{
-		Use:   "test",
-		Short: "Tests the operator",
-		Long: `The test command has subcommands that can test the operator locally or from within a cluster.
-`,
+func NewOLMCatalogCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "olm-catalog <olm-catalog-command>",
+		Short: "Invokes a olm-catalog command",
+		Long: `The operator-sdk olm-catalog command invokes a command to perform
+Catalog related actions.`,
 	}
-
-	testCmd.AddCommand(cmdtest.NewTestLocalCmd())
-	testCmd.AddCommand(cmdtest.NewTestClusterCmd())
-	return testCmd
+	cmd.AddCommand(catalog.NewGenCSVCmd())
+	return cmd
 }

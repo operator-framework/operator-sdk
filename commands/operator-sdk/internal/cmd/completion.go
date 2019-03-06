@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright © 2018 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,18 +15,17 @@
 package cmd
 
 import (
-	catalog "github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/olm-catalog"
-
 	"github.com/spf13/cobra"
+
+	"github.com/operator-framework/operator-sdk/commands/operator-sdk/internal/cmd/completion"
 )
 
-func NewOLMCatalogCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "olm-catalog <olm-catalog-command>",
-		Short: "Invokes a olm-catalog command",
-		Long: `The operator-sdk olm-catalog command invokes a command to perform
-Catalog related actions.`,
+func NewCompletionCmd() *cobra.Command {
+	completionCmd := &cobra.Command{
+		Use:   "completion",
+		Short: "Generators for shell completions",
 	}
-	cmd.AddCommand(catalog.NewGenCSVCmd())
-	return cmd
+	completionCmd.AddCommand(completion.NewZshCmd())
+	completionCmd.AddCommand(completion.NewBashCmd())
+	return completionCmd
 }

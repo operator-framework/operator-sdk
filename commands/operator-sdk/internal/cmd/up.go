@@ -1,4 +1,4 @@
-// Copyright © 2018 The Operator-SDK Authors
+// Copyright 2018 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,17 +15,19 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
+	"github.com/operator-framework/operator-sdk/commands/operator-sdk/internal/cmd/up"
 
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/completion"
+	"github.com/spf13/cobra"
 )
 
-func NewCompletionCmd() *cobra.Command {
-	completionCmd := &cobra.Command{
-		Use:   "completion",
-		Short: "Generators for shell completions",
+func NewUpCmd() *cobra.Command {
+	upCmd := &cobra.Command{
+		Use:   "up",
+		Short: "Launches the operator",
+		Long: `The up command has subcommands that can launch the operator in various ways.
+`,
 	}
-	completionCmd.AddCommand(completion.NewZshCmd())
-	completionCmd.AddCommand(completion.NewBashCmd())
-	return completionCmd
+
+	upCmd.AddCommand(up.NewLocalCmd())
+	return upCmd
 }

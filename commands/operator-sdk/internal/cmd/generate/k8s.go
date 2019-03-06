@@ -21,7 +21,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	genutil "github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/generate/internal"
+	genutil "github.com/operator-framework/operator-sdk/commands/operator-sdk/internal/cmd/generate/internal"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
