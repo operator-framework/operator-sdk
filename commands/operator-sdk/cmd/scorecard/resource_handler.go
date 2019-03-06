@@ -43,6 +43,27 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+type cleanupFn func() error
+
+// waitUntilCRStatusExists waits until the status block of the CR currently being tested exists. If the timeout
+// is reached, it simply continues and assumes there is no status block
+func waitUntilCRStatusExists(cr *unstructured.Unstructured) error {
+	err := wait.Poll(time.Second*1, time.Second*time.Duration(viper.GetInt(InitTimeoutOpt)), func() (bool, error) {
+		err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: cr.GetNamespace(), Name: cr.GetName()}, cr)
+		if err != nil {
+			return false, fmt.Errorf("error getting custom resource: %v", err)
+		}
+		if cr.Object["status"] != nil {
+			return true, nil
+		}
+		return false, nil
+	})
+	if err != nil && err != wait.ErrWaitTimeout {
+		return err
+	}
+	return nil
+}
+
 // yamlToUnstructured decodes a yaml file into an unstructured object
 func yamlToUnstructured(yamlPath string) (*unstructured.Unstructured, error) {
 	yamlFile, err := ioutil.ReadFile(yamlPath)
@@ -130,7 +151,7 @@ func createFromYAMLFile(yamlPath string) error {
 		}
 		addResourceCleanup(obj, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()})
 		if obj.GetKind() == "Deployment" {
-			proxyPod, err = getPodFromDeployment(deploymentName, viper.GetString(NamespaceOpt))
+			proxyPodGlobal, err = getPodFromDeployment(deploymentName, viper.GetString(NamespaceOpt))
 			if err != nil {
 				return err
 			}
@@ -344,7 +365,7 @@ func addResourceCleanup(obj runtime.Object, key types.NamespacedName) {
 	})
 }
 
-func getProxyLogs() (string, error) {
+func getProxyLogs(proxyPod *v1.Pod) (string, error) {
 	// need a standard kubeclient for pod logs
 	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
 	if err != nil {
