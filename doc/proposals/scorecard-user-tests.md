@@ -115,6 +115,7 @@ user_defined_tests:
     - CONFIG_FILE: "scorecard/simple-scorecard.yaml"
 - path: "scorecard/go-test.sh"
   env:
+    - TEST_DIR: "./test/e2e"
     - ENABLE_SCORECARD: true
     - NAMESPACED_MANIFEST: "deploy/namespaced_init.yaml"
     - GO_TEST_FLAGS: "-parallel=1"
