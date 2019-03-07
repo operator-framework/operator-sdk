@@ -236,7 +236,7 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 
 // Run - implements Test interface
 func (t *AnnotationsContainExamplesTest) Run(ctx context.Context) *TestResult {
-	res := &TestResult{Test: t}
+	res := &TestResult{Test: t, MaximumPoints: 1}
 	if t.CSV.Annotations != nil && t.CSV.Annotations["alm-examples"] != "" {
 		res.EarnedPoints = 1
 	}
