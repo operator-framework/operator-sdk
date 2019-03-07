@@ -691,6 +691,14 @@
   revision = "0e558783f66ddbe4331040ff9c20a78f14367d08"
 
 [[projects]]
+  digest = "1:5fc8cccd10729a1289637cd08138df656a30db77e9c864927316e7e8c3751b7d"
+  name = "github.com/prometheus/prometheus"
+  packages = ["util/promlint"]
+  pruneopts = "NUT"
+  revision = "62e591f928ddf6b3468308b7ac1de1c63aa7fcf3"
+  version = "v2.7.1"
+
+[[projects]]
   digest = "1:e09ada96a5a41deda4748b1659cc8953961799e798aea557257b56baee4ecaf3"
   name = "github.com/rogpeppe/go-internal"
   packages = [
@@ -1610,6 +1618,7 @@
     "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install",
     "github.com/pborman/uuid",
+    "github.com/prometheus/prometheus/util/promlint",
     "github.com/sergi/go-diff/diffmatchpatch",
     "github.com/sirupsen/logrus",
     "github.com/spf13/afero",
