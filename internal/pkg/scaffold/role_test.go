@@ -93,12 +93,6 @@ rules:
   verbs:
   - "*"
 - apiGroups:
-  - ""
-  resources:
-  - namespaces
-  verbs:
-  - get
-- apiGroups:
   - apps
   resources:
   - deployments
@@ -141,12 +135,6 @@ rules:
   - secrets
   verbs:
   - "*"
-- apiGroups:
-  - ""
-  resources:
-  - namespaces
-  verbs:
-  - get
 - apiGroups:
   - apps
   resources:
