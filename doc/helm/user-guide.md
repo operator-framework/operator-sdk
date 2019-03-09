@@ -44,7 +44,7 @@ cd nginx-operator
 ```
 
 This creates the nginx-operator project specifically for watching the
-Nginx resource with APIVersion `example.com/v1apha1` and Kind
+Nginx resource with APIVersion `example.com/v1alpha1` and Kind
 `Nginx`.
 
 To learn more about the project directory structure, see the
