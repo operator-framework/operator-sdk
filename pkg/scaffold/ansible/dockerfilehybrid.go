@@ -47,6 +47,7 @@ func (d *DockerfileHybrid) GetInput() (input.Input, error) {
 const dockerFileHybridAnsibleTmpl = `FROM ansible/ansible-runner
 
 RUN yum remove -y ansible python-idna
+RUN yum install -y inotify-tools && yum clean all
 RUN pip uninstall ansible-runner -y
 
 RUN pip install --upgrade setuptools
