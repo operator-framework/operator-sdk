@@ -128,27 +128,40 @@ Below is an example of what the JSON output of a test would look like:
 
 ```json
 {
-  "actions_reflected_in_status": {
-    "description": "The operator correctly updates the CR's status",
-    "earned": 2,
-    "maximum": 3,
-    "suggestions": [
-      {
-        "message": "Expected 4 items in status/nodes but found 2"
-      }
-    ],
-    "errors": []
-  },
-  "my_custom_tests": {
-    "description": "This test verifies that the created service is running correctly",
-    "earned": 1,
-    "maximum": 1,
-    "suggestions": [],
-    "errors": []
-  },
+    "error": 0,
+    "pass": 1,
+    "partial_pass": 1,
+    "fail": 0,
+    "total_score": 71,
+    "tests": [
+        {
+            "state": "partial_pass",
+            "name": "Operator Actions Reflected In Status",
+            "description": "The operator updates the Custom Resources status when the application state is updated",
+            "earned": 2,
+            "maximum": 3,
+            "suggestions": [
+                {
+                    "suggestion": "Operator should update status when scaling cluster down"
+                }
+            ],
+            "errors": []
+        },
+        {
+            "state": "pass",
+            "name": "Verify health of cluster",
+            "description": "The cluster created by the operator is working properly",
+            "earned": 1,
+            "maximum": 1,
+            "suggestions": [],
+            "errors": []
+        }
+    ]
 }
 ```
 
 This JSON output would make it simple for others to create scorecard plugins while keeping it simple for the scorecard
-to parse and integrate with the other tests. The above JSON design is based on the `TestResult` type that will be implemented
-by PR [#994](https://github.com/operator-framework/operator-sdk/pull/994).
+to parse and integrate with the other tests. The above JSON design is based on the `TestResult` type with the addition
+of a `state` type, which can be `pass` (earned == max), `partial_pass` (0 < earned < max), `fail` (earned == 0), or `error`
+(fatal error; disregard output score). We also print the number of tests in each state as well as the total score to make
+it easier for users to quickly see what states the tests are in.
