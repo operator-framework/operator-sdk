@@ -73,7 +73,6 @@ spec:
           volumeMounts:
           - mountPath: /tmp/ansible-operator/runner
             name: runner
-            readOnly: true
           env:
             - name: WATCH_NAMESPACE
               {{- if .IsClusterScoped }}
