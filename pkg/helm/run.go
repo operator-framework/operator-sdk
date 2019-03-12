@@ -20,6 +20,9 @@ import (
 	"os"
 	"runtime"
 
+	// Import all Kubernetes client auth plugins, e.g. Azure, GCP, OIDC, etc.
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+
 	"github.com/operator-framework/operator-sdk/pkg/helm/client"
 	"github.com/operator-framework/operator-sdk/pkg/helm/controller"
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"

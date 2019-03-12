@@ -20,6 +20,9 @@ import (
 	"os"
 	"runtime"
 
+	// Import all Kubernetes client auth plugins, e.g. Azure, GCP, OIDC, etc.
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/operator"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
