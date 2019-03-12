@@ -73,7 +73,7 @@ build/%.asc:
 
 test: dep test/markdown test/sanity test/unit install test/subcommand test/e2e
 
-test/ci-go: test/sanity test/unit test/subcommand test/e2e/go
+test/ci-go: test/subcommand test/e2e/go
 
 test/ci-ansible: test/e2e/ansible test/e2e/ansible-molecule
 

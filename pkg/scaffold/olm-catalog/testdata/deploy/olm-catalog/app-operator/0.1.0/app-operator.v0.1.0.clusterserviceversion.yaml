@@ -3,7 +3,6 @@ kind: ClusterServiceVersion
 metadata:
   annotations:
     capabilities: Basic Install
-  creationTimestamp: null
   name: app-operator.v0.1.0
   namespace: placeholder
 spec:
@@ -38,7 +37,6 @@ spec:
           strategy: {}
           template:
             metadata:
-              creationTimestamp: null
               labels:
                 name: app-operator
             spec:
@@ -86,6 +84,14 @@ spec:
           - '*'
           verbs:
           - '*'
+        - apiGroups:
+          - apps
+          resourceNames:
+          - app-operator
+          resources:
+          - deployments/finalizers
+          verbs:
+          - update
         serviceAccountName: app-operator
     strategy: deployment
   installModes:

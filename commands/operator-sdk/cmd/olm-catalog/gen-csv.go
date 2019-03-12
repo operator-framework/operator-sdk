@@ -120,6 +120,9 @@ func verifyGenCSVFlags() error {
 			return err
 		}
 	}
+	if fromVersion != "" && csvVersion == fromVersion {
+		return fmt.Errorf("from-version (%s) cannot equal csv-version; set only csv-version instead", fromVersion)
+	}
 	return nil
 }
 

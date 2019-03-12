@@ -10,10 +10,10 @@ powered by Helm using tools and libraries provided by the Operator SDK.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - [dep][dep_tool] version v0.5.0+. (Optional if you aren't installing from source)
 - [go][go_tool] version v1.10+. (Optional if you aren't installing from source)
-- Access to a kubernetes v.1.11.3+ cluster.
+- Access to a Kubernetes v.1.11.3+ cluster.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the
-local kubernetes cluster and quay.io for the public registry.
+local Kubernetes cluster and quay.io for the public registry.
 
 ## Install the Operator SDK CLI
 
@@ -44,7 +44,7 @@ cd nginx-operator
 ```
 
 This creates the nginx-operator project specifically for watching the
-Nginx resource with APIVersion `example.com/v1apha1` and Kind
+Nginx resource with APIVersion `example.com/v1alpha1` and Kind
 `Nginx`.
 
 To learn more about the project directory structure, see the
@@ -254,7 +254,7 @@ sudo mkdir -p /opt/helm/helm-charts
 sudo ln -s $PWD/helm-charts/nginx /opt/helm/helm-charts/nginx
 ```
 
-Run the operator locally with the default kubernetes config file present at
+Run the operator locally with the default Kubernetes config file present at
 `$HOME/.kube/config`:
 
 ```sh
@@ -264,7 +264,7 @@ INFO[0000] Go OS/Arch: linux/amd64
 INFO[0000] operator-sdk Version: v0.1.1+git
 ```
 
-Run the operator locally with a provided kubernetes config file:
+Run the operator locally with a provided Kubernetes config file:
 
 ```sh
 $ operator-sdk up local --kubeconfig=<path_to_config>

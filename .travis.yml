@@ -13,7 +13,12 @@ go:
 # so we can use it to create a bunch of common build step
 # YAML anchors which we use in our build jobs.
 x_base_steps:
-  # before_install for jobs that require go builds
+  # before_install for jobs that require dep
+  - &dep_before_install
+    before_install:
+      - curl -Lo dep https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64 && chmod +x dep && sudo mv dep /usr/local/bin/
+      - travis_retry dep ensure -v
+  # before_install for jobs that require go builds and do not run for doc-only changes
   - &go_before_install
     before_install:
       # hack/ci/check-doc-only-update.sh needs to be sourced so
@@ -73,13 +78,15 @@ jobs:
       name: Helm on OpenShift
       script: make test/ci-helm
 
-    # Test markdown
+    # Run the unit, sanity, and markdown tests
     - stage: test
-      name: Markdown Link Checker
-      language: bash
-      script: make test/markdown
-      after_success: echo 'Markdown links are correct'
-      after_failure: echo 'Incorrect markdown link detected'
+      name: Unit, Sanity, and Markdown Tests
+      # Currently, prow/api-ci tests all PRs that target master; use travis for post merge testing and non-master PRs
+      if: type != pull_request OR branch != master
+      <<: *dep_before_install
+      script: make test/sanity test/unit test/markdown
+      after_success: echo 'Tests Passed'
+      after_failure: echo 'Failure in unit, sanity, or markdown test'
 
     # Build and deploy ansible-operator docker image
     - <<: *deploy

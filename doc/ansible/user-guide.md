@@ -13,10 +13,10 @@ powered by Ansible using tools and libraries provided by the Operator SDK.
 - [ansible-runner-http][ansible_runner_http_plugin] version v1.0.0+
 - [dep][dep_tool] version v0.5.0+. (Optional if you aren't installing from source)
 - [go][go_tool] version v1.10+. (Optional if you aren't installing from source)
-- Access to a kubernetes v.1.9.0+ cluster.
+- Access to a Kubernetes v.1.9.0+ cluster.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the
-local kubernetes cluster and quay.io for the public registry.
+local Kubernetes cluster and quay.io for the public registry.
 
 ## Install the Operator SDK CLI
 
@@ -313,7 +313,7 @@ on your machine. Since we are normally used to using a container where the Role
 is put on disk for us, we need to manually copy our role to the configured
 Ansible Roles path (e.g `/etc/ansible/roles`.
 
-Run the operator locally with the default kubernetes config file present at
+Run the operator locally with the default Kubernetes config file present at
 `$HOME/.kube/config`:
 
 ```sh
@@ -323,7 +323,7 @@ INFO[0000] Go OS/Arch: darwin/amd64
 INFO[0000] operator-sdk Version: 0.0.5+git
 ```
 
-Run the operator locally with a provided kubernetes config file:
+Run the operator locally with a provided Kubernetes config file:
 
 ```sh
 $ operator-sdk up local --kubeconfig=config
