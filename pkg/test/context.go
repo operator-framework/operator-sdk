@@ -41,6 +41,7 @@ type cleanupFn func() error
 func NewTestCtx(t *testing.T) *TestCtx {
 	var prefix string
 	if t != nil {
+		// Use the name of the test as the prefix
 		// TestCtx is used among others for namespace names where '/' is forbidden
 		prefix = strings.TrimPrefix(
 			strings.Replace(
@@ -52,10 +53,11 @@ func NewTestCtx(t *testing.T) *TestCtx {
 			"test",
 		)
 	} else {
-		prefix = "main"
+		prefix = "operator-sdk"
 	}
 
-	id := prefix + "-" + strconv.FormatInt(time.Now().Unix(), 10)
+	// add a creation timestamp to the ID
+	id := prefix + "-" + strconv.FormatInt(time.Now().UnixNano(), 10)
 	return &TestCtx{
 		id: id,
 		t:  t,
