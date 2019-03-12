@@ -66,7 +66,7 @@ spec:
           - mountPath: /tmp/ansible-operator/runner
             name: runner
             readOnly: true
-        - name: {{.ProjectName}}
+        - name: operator
           # Replace this with the built image name
           image: "{{ "{{ REPLACE_IMAGE }}" }}"
           imagePullPolicy: "{{ "{{ pull_policy|default('Always') }}"}}"
