@@ -258,13 +258,13 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// hacky way to use createFromYAML without exposing the method
-	// create crd
-	filename := file.Name()
-	framework.Global.NamespacedManPath = filename
-	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
+	globalYAML, err := ioutil.ReadFile(file.Name())
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to read global resource manifest: %v", err)
+	}
+	err = ctx.CreateFromYAML(globalYAML, false, &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
+	if err != nil {
+		t.Fatalf("Failed to create global resources: %v", err)
 	}
 	t.Log("Created global resources")
 
@@ -337,7 +337,7 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework, labels
 		return true, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error getting leader lock configmap: %v\n", err)
+		return nil, fmt.Errorf("error getting leader lock configmap: %v", err)
 	}
 	t.Logf("Found leader lock configmap %s\n", lockName)
 
@@ -376,21 +376,8 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework, labels
 }
 
 func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
-	// create example-memcached yaml file
-	filename := "deploy/cr.yaml"
-	err := ioutil.WriteFile(filename,
-		[]byte(crYAML),
-		fileutil.DefaultFileMode)
-	if err != nil {
-		return err
-	}
-
 	// create memcached custom resource
-	framework.Global.NamespacedManPath = filename
-	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
-	if err != nil {
-		return err
-	}
+	err := ctx.CreateFromYAML([]byte(crYAML), false, &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	t.Log("Created cr")
 
 	namespace, err := ctx.GetNamespace()
@@ -525,11 +512,13 @@ func MemcachedCluster(t *testing.T) {
 		t.Fatal(err)
 	}
 	// create namespaced resources
-	filename := file.Name()
-	framework.Global.NamespacedManPath = filename
-	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
+	namespacedYAML, err := ioutil.ReadFile(file.Name())
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to read namespaced resource manifest: %v", err)
+	}
+	err = ctx.CreateFromYAML(namespacedYAML, false, &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
+	if err != nil {
+		t.Fatalf("Failed to create namespaced resources: %v", err)
 	}
 	t.Log("Created namespaced resources")
 
@@ -560,30 +549,38 @@ func MemcachedClusterTest(t *testing.T) {
 	// get global framework variables
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
+	cleanupOptions := &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval}
 
-	// create sa
-	filename := "deploy/service_account.yaml"
-	framework.Global.NamespacedManPath = filename
-	err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
+	// create service account
+	serviceAccountYAML, err := ioutil.ReadFile("deploy/service_account.yaml")
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to read service account manifest: %v", err)
 	}
-	t.Log("Created sa")
-
-	// create rbac
-	filename = "deploy/role.yaml"
-	framework.Global.NamespacedManPath = filename
-	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
+	err = ctx.CreateFromYAML(serviceAccountYAML, false, cleanupOptions)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to create service account: %v", err)
+	}
+	t.Log("Created service account")
+
+	// create role
+	roleYAML, err := ioutil.ReadFile("deploy/role.yaml")
+	if err != nil {
+		t.Fatalf("Failed to read role manifest: %v", err)
+	}
+	err = ctx.CreateFromYAML(roleYAML, false, cleanupOptions)
+	if err != nil {
+		t.Fatalf("Failed to create role: %v", err)
 	}
 	t.Log("Created role")
 
-	filename = "deploy/role_binding.yaml"
-	framework.Global.NamespacedManPath = filename
-	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
+	// create role binding
+	roleBindingYAML, err := ioutil.ReadFile("deploy/role_binding.yaml")
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to read role binding manifest: %v", err)
+	}
+	err = ctx.CreateFromYAML(roleBindingYAML, false, cleanupOptions)
+	if err != nil {
+		t.Fatalf("Failed to create role binding: %v", err)
 	}
 	t.Log("Created role_binding")
 

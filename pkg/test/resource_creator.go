@@ -52,7 +52,7 @@ func (ctx *TestCtx) GetNamespace() (string, error) {
 	return ctx.namespace, nil
 }
 
-func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOptions *CleanupOptions) error {
+func (ctx *TestCtx) CreateFromYAML(yamlFile []byte, skipIfExists bool, cleanupOptions *CleanupOptions) error {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return err
@@ -111,5 +111,5 @@ func (ctx *TestCtx) InitializeClusterResources(cleanupOptions *CleanupOptions) e
 	if err != nil {
 		return fmt.Errorf("failed to read namespaced manifest: %v", err)
 	}
-	return ctx.createFromYAML(namespacedYAML, false, cleanupOptions)
+	return ctx.CreateFromYAML(namespacedYAML, false, cleanupOptions)
 }
