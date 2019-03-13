@@ -106,7 +106,7 @@ defer ctx.Cleanup()
 ```
 
 Now that there is a `TestCtx`, the test's Kubernetes resources (specifically the test namespace,
-Service Account, RBAC, and Operator deployment in `local` testing; just the Operator deployment
+Service Account, Role, Role Binding, and Operator deployment in `local` testing; just the Operator deployment
 in `cluster` testing) can be initialized:
 
 ```go
@@ -226,9 +226,9 @@ functions will automatically be run since they were deferred when the TestCtx wa
 ## Running the Tests
 
 To make running the tests simpler, the `operator-sdk` CLI tool has a `test` subcommand that can configure
-default test settings, such as locations of your global resource manifest file (by default
-`deploy/crd.yaml`) and your namespaced resource manifest file (by default `deploy/service_account.yaml` concatenated with
-`deploy/rbac.yaml` and `deploy/operator.yaml`), and allows the user to configure runtime options. There are 2 ways to use the
+default test settings, such as locations of your global resource manifest file (by default all CRDs in
+`deploy/crds`) and your namespaced resource manifest file (by default `deploy/service_account.yaml` concatenated with
+`deploy/role.yaml`, `deploy/role_binding.yaml`, and `deploy/operator.yaml`), and allows the user to configure runtime options. There are 2 ways to use the
 subcommand: local and cluster.
 
 ### Local
@@ -295,7 +295,9 @@ will result in undefined behavior. This is an example `go test` equivalent to th
 # Combine service_account, rbac, operator manifest into namespaced manifest
 $ cp deploy/service_account.yaml deploy/namespace-init.yaml
 $ echo -e "\n---\n" >> deploy/namespace-init.yaml
-$ cat deploy/rbac.yaml >> deploy/namespace-init.yaml
+$ cat deploy/role.yaml >> deploy/namespace-init.yaml
+$ echo -e "\n---\n" >> deploy/namespace-init.yaml
+$ cat deploy/role_binding.yaml >> deploy/namespace-init.yaml
 $ echo -e "\n---\n" >> deploy/namespace-init.yaml
 $ cat deploy/operator.yaml >> deploy/namespace-init.yaml
 # Run tests
@@ -352,24 +354,24 @@ in your cluster. You can do this with `kubectl`:
 $ kubectl get namespaces
 
 Example Output:
-NAME                                            STATUS    AGE
-default                                         Active    2h
-kube-public                                     Active    2h
-kube-system                                     Active    2h
-main-1534287036                                 Active    23s
-memcached-memcached-group-cluster-1534287037    Active    22s
-memcached-memcached-group-cluster2-1534287037   Active    22s
+NAME                                                     STATUS   AGE
+default                                                  Active   2h
+kube-public                                              Active   2h
+kube-system                                              Active   2h
+memcached-memcached-group-cluster-1552500058464380681    Active   5s
+memcached-memcached-group-cluster2-1552500058464409898   Active   5s
+operator-sdk-1552500057336429125                         Active   6s
 ```
 
-The names of the namespaces will be either start with `main` or with the name of the tests and the suffix will
-be a Unix timestamp (number of seconds since January 1, 1970 00:00 UTC). Kubectl can be used to delete these
+The names of the namespaces will be either start with `operator-sdk` or with the name of the tests and the suffix will
+be a Unix nanosecond timestamp (number of nanoseconds since January 1, 1970 00:00 UTC). Kubectl can be used to delete these
 namespaces and the resources in those namespaces:
 
 ```shell
-$ kubectl delete namespace main-153428703
+$ kubectl delete namespace operator-sdk-1552500057336429125
 ```
 
-Since the CRD is not namespaced, it must be deleted separately. Clean up the CRD created by the tests using the CRD manifest `deploy/crd.yaml`:
+Since the CRD is not namespaced, it must be deleted separately. Clean up the CRD created by the tests using the CRD manifest(s) in `deploy/crds`:
 
 ```shell
 $ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
