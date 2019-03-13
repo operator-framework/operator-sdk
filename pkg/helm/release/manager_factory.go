@@ -24,7 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	clientset "k8s.io/client-go/kubernetes"
-	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/kubernetes/typed/core/v1"
 	helmengine "k8s.io/helm/pkg/engine"
 	"k8s.io/helm/pkg/kube"
 	"k8s.io/helm/pkg/storage"
@@ -63,16 +63,16 @@ func (f managerFactory) NewManager(r *unstructured.Unstructured) (Manager, error
 func (f managerFactory) newManagerForCR(r *unstructured.Unstructured) (Manager, error) {
 	clientv1, err := v1.NewForConfig(f.mgr.GetConfig())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get core/v1 client: %s", err)
 	}
 	storageBackend := storage.Init(driver.NewSecrets(clientv1.Secrets(r.GetNamespace())))
 	tillerKubeClient, err := client.NewFromManager(f.mgr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get client from manager: %s", err)
 	}
 	releaseServer, err := getReleaseServer(r, storageBackend, tillerKubeClient)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get helm release server: %s", err)
 	}
 	return &manager{
 		storageBackend:   storageBackend,
