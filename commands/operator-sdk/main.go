@@ -18,7 +18,7 @@ import (
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that `run` and `up local` can make use of these plugins.
+	// to ensure that `run` and `up local` can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd"
