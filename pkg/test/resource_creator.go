@@ -30,7 +30,7 @@ import (
 )
 
 // GetNamespace returns the namespace for the current context, creating a new namespace
-// if one does not exist
+// if one does not exist using the context's ID as the new namespace's name
 func (ctx *TestCtx) GetNamespace() (string, error) {
 	if ctx.namespace != "" {
 		return ctx.namespace, nil
@@ -52,6 +52,25 @@ func (ctx *TestCtx) GetNamespace() (string, error) {
 		return Global.KubeClient.CoreV1().Namespaces().Delete(ctx.namespace, metav1.NewDeleteOptions(0))
 	})
 	return ctx.namespace, nil
+}
+
+// SetNamespace sets a static namespace for the current context. If the specifed namespace does not exist,
+// it will be created and a cleanup function for the new namespace will be added to the context
+func (ctx *TestCtx) SetNamespace(namespace string) error {
+	ctx.namespace = namespace
+	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ctx.namespace}}
+	_, err := Global.KubeClient.CoreV1().Namespaces().Create(namespaceObj)
+	// do not add a cleanup function if the namespace already exists
+	if apierrors.IsAlreadyExists(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	ctx.AddCleanupFn(func() error {
+		return Global.KubeClient.CoreV1().Namespaces().Delete(ctx.namespace, metav1.NewDeleteOptions(0))
+	})
+	return nil
 }
 
 // CreateFromYAML takes a raw yaml file and creates the resource(s) in it in the cluster and adds cleanup functions
