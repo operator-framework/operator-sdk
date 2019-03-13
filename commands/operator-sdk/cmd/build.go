@@ -172,7 +172,7 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 	log.Infof("Building Docker image %s", baseImageName)
 
-	dbArgs := []string{"build", ".", "-f", "build/Dockerfile", "-t", baseImageName}
+	dbArgs := []string{"build", "build/", "-t", baseImageName}
 
 	if dockerBuildArgs != "" {
 		splitArgs := strings.Fields(dockerBuildArgs)
