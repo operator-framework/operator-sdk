@@ -50,6 +50,7 @@ var (
 	restMapper *restmapper.DeferredDiscoveryRESTMapper
 )
 
+// Framework contains all relevant variables needed for running tests with the operator-sdk
 type Framework struct {
 	Client            *frameworkClient
 	KubeConfig        *rest.Config
@@ -60,6 +61,7 @@ type Framework struct {
 	LocalOperator     bool
 }
 
+// Setup initializes the Global.Framework variable and its fields
 func Setup(kubeconfigPath, namespacedManPath, namespace string, localOperator bool) error {
 	var err error
 	var kubeconfig *rest.Config

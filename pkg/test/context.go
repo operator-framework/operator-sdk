@@ -23,6 +23,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// TestCtx contains the state of a test, which includes ID, namespace, and cleanup functions
 type TestCtx struct {
 	id         string
 	cleanupFns []cleanupFn
@@ -30,6 +31,7 @@ type TestCtx struct {
 	t          *testing.T
 }
 
+// CleanupOptions allows for configuration of resource cleanup functions
 type CleanupOptions struct {
 	TestContext   *TestCtx
 	Timeout       time.Duration
@@ -38,6 +40,7 @@ type CleanupOptions struct {
 
 type cleanupFn func() error
 
+// NewTestCtx returns a new TestCtx object
 func NewTestCtx(t *testing.T) *TestCtx {
 	var prefix string
 	if t != nil {
@@ -64,10 +67,12 @@ func NewTestCtx(t *testing.T) *TestCtx {
 	}
 }
 
+// GetID returns the ID of the TestCtx
 func (ctx *TestCtx) GetID() string {
 	return ctx.id
 }
 
+// Cleanup runs all the TestCtx's cleanup function in reverse order of their insertion
 func (ctx *TestCtx) Cleanup() {
 	failed := false
 	for i := len(ctx.cleanupFns) - 1; i >= 0; i-- {
@@ -86,6 +91,7 @@ func (ctx *TestCtx) Cleanup() {
 	}
 }
 
+// AddCleanupFn adds a new cleanup function to the TestCtx
 func (ctx *TestCtx) AddCleanupFn(fn cleanupFn) {
 	ctx.cleanupFns = append(ctx.cleanupFns, fn)
 }

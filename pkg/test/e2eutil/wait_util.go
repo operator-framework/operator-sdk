@@ -71,6 +71,7 @@ func waitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace,
 	return nil
 }
 
+// WaitForDeletion waits for a given object to be fully deleted according to the apiserver before returning
 func WaitForDeletion(t *testing.T, dynclient client.Client, obj runtime.Object, retryInterval, timeout time.Duration) error {
 	key, err := client.ObjectKeyFromObject(obj)
 	if err != nil {

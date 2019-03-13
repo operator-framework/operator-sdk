@@ -30,6 +30,8 @@ type frameworkClient struct {
 
 var _ FrameworkClient = &frameworkClient{}
 
+// FrameworkClient is a wrapper for the controller-runtime client with a modified Create function
+// that automatically adds a cleanup function for the created resource
 type FrameworkClient interface {
 	Get(gCtx goctx.Context, key dynclient.ObjectKey, obj runtime.Object) error
 	List(gCtx goctx.Context, opts *dynclient.ListOptions, list runtime.Object) error
@@ -89,18 +91,22 @@ func (f *frameworkClient) Create(gCtx goctx.Context, obj runtime.Object, cleanup
 	return nil
 }
 
+// Get is a simple wrapper for the controller-runtime client's Get function
 func (f *frameworkClient) Get(gCtx goctx.Context, key dynclient.ObjectKey, obj runtime.Object) error {
 	return f.Client.Get(gCtx, key, obj)
 }
 
+// List is a simple wrapper for the controller-runtime client's List function
 func (f *frameworkClient) List(gCtx goctx.Context, opts *dynclient.ListOptions, list runtime.Object) error {
 	return f.Client.List(gCtx, opts, list)
 }
 
+// Delete is a simple wrapper for the controller-runtime client's Delete function
 func (f *frameworkClient) Delete(gCtx goctx.Context, obj runtime.Object, opts ...dynclient.DeleteOptionFunc) error {
 	return f.Client.Delete(gCtx, obj, opts...)
 }
 
+// Update is a simple wrapper for the controller-runtime client's Update function
 func (f *frameworkClient) Update(gCtx goctx.Context, obj runtime.Object) error {
 	return f.Client.Update(gCtx, obj)
 }
