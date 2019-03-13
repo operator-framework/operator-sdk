@@ -37,7 +37,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 
 	"github.com/prometheus/prometheus/util/promlint"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
@@ -261,7 +261,7 @@ func TestMemcached(t *testing.T) {
 	// hacky way to use createFromYAML without exposing the method
 	// create crd
 	filename := file.Name()
-	framework.Global.NamespacedManPath = &filename
+	framework.Global.NamespacedManPath = filename
 	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		t.Fatal(err)
@@ -386,7 +386,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 	}
 
 	// create memcached custom resource
-	framework.Global.NamespacedManPath = &filename
+	framework.Global.NamespacedManPath = filename
 	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		return err
@@ -526,7 +526,7 @@ func MemcachedCluster(t *testing.T) {
 	}
 	// create namespaced resources
 	filename := file.Name()
-	framework.Global.NamespacedManPath = &filename
+	framework.Global.NamespacedManPath = filename
 	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		t.Fatal(err)
@@ -563,7 +563,7 @@ func MemcachedClusterTest(t *testing.T) {
 
 	// create sa
 	filename := "deploy/service_account.yaml"
-	framework.Global.NamespacedManPath = &filename
+	framework.Global.NamespacedManPath = filename
 	err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		t.Fatal(err)
@@ -572,7 +572,7 @@ func MemcachedClusterTest(t *testing.T) {
 
 	// create rbac
 	filename = "deploy/role.yaml"
-	framework.Global.NamespacedManPath = &filename
+	framework.Global.NamespacedManPath = filename
 	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		t.Fatal(err)
@@ -580,7 +580,7 @@ func MemcachedClusterTest(t *testing.T) {
 	t.Log("Created role")
 
 	filename = "deploy/role_binding.yaml"
-	framework.Global.NamespacedManPath = &filename
+	framework.Global.NamespacedManPath = filename
 	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
 		t.Fatal(err)

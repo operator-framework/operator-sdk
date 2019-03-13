@@ -107,7 +107,7 @@ func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOp
 
 func (ctx *TestCtx) InitializeClusterResources(cleanupOptions *CleanupOptions) error {
 	// create namespaced resources
-	namespacedYAML, err := ioutil.ReadFile(*Global.NamespacedManPath)
+	namespacedYAML, err := ioutil.ReadFile(Global.NamespacedManPath)
 	if err != nil {
 		return fmt.Errorf("failed to read namespaced manifest: %v", err)
 	}

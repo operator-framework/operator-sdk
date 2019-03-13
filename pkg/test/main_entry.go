@@ -57,7 +57,11 @@ func MainEntry(m *testing.M) {
 	if err != nil {
 		log.Fatalf("Failed to change directory to project root: %v", err)
 	}
-	if err := setup(kubeconfigPath, namespacedManPath, *localOperator); err != nil {
+	namespace := ""
+	if *singleNamespace || *kubeconfigPath == "incluster" {
+		namespace = os.Getenv(TestNamespaceEnv)
+	}
+	if err := Setup(*kubeconfigPath, *namespacedManPath, namespace, *localOperator); err != nil {
 		log.Fatalf("Failed to set up framework: %v", err)
 	}
 	// setup local operator command, but don't start it yet

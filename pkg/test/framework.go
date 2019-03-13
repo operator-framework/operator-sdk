@@ -55,19 +55,20 @@ type Framework struct {
 	KubeConfig        *rest.Config
 	KubeClient        kubernetes.Interface
 	Scheme            *runtime.Scheme
-	NamespacedManPath *string
+	NamespacedManPath string
 	Namespace         string
 	LocalOperator     bool
 }
 
-func setup(kubeconfigPath, namespacedManPath *string, localOperator bool) error {
-	namespace := ""
-	if *singleNamespace {
-		namespace = os.Getenv(TestNamespaceEnv)
-	}
+func Setup(kubeconfigPath, namespacedManPath, namespace string, localOperator bool) error {
 	var err error
 	var kubeconfig *rest.Config
-	if *kubeconfigPath == "incluster" {
+	if kubeconfigPath == "incluster" {
+		// when running with an InCluster config, we don't have permission to create new namespaces
+		*singleNamespace = true
+		if len(namespace) == 0 {
+			return fmt.Errorf("namespace must be set for in cluster testing mode")
+		}
 		// Work around https://github.com/kubernetes/kubernetes/issues/40973
 		if len(os.Getenv("KUBERNETES_SERVICE_HOST")) == 0 {
 			addrs, err := net.LookupHost("kubernetes.default.svc")
@@ -84,14 +85,9 @@ func setup(kubeconfigPath, namespacedManPath *string, localOperator bool) error 
 			}
 		}
 		kubeconfig, err = rest.InClusterConfig()
-		*singleNamespace = true
-		namespace = os.Getenv(TestNamespaceEnv)
-		if len(namespace) == 0 {
-			return fmt.Errorf("test namespace env not set")
-		}
 	} else {
 		var kcNamespace string
-		kubeconfig, kcNamespace, err = k8sInternal.GetKubeconfigAndNamespace(*kubeconfigPath)
+		kubeconfig, kcNamespace, err = k8sInternal.GetKubeconfigAndNamespace(kubeconfigPath)
 		if *singleNamespace && namespace == "" {
 			namespace = kcNamespace
 		}
@@ -151,28 +147,23 @@ func AddToFrameworkScheme(addToScheme addToSchemeFunc, obj runtime.Object) error
 	defer mutex.Unlock()
 	err := addToScheme(Global.Scheme)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to update global scheme: %v", err)
 	}
 	restMapper.Reset()
-	dynClient, err := dynclient.New(Global.KubeConfig, dynclient.Options{Scheme: Global.Scheme, Mapper: restMapper})
-	if err != nil {
-		return fmt.Errorf("failed to initialize new dynamic client: (%v)", err)
-	}
 	err = wait.PollImmediate(time.Second, time.Second*10, func() (done bool, err error) {
 		if *singleNamespace {
-			err = dynClient.List(goctx.TODO(), &dynclient.ListOptions{Namespace: Global.Namespace}, obj)
+			err = Global.Client.List(goctx.TODO(), &dynclient.ListOptions{Namespace: Global.Namespace}, obj)
 		} else {
-			err = dynClient.List(goctx.TODO(), &dynclient.ListOptions{Namespace: "default"}, obj)
+			err = Global.Client.List(goctx.TODO(), &dynclient.ListOptions{Namespace: "default"}, obj)
 		}
 		if err != nil {
 			restMapper.Reset()
 			return false, nil
 		}
-		Global.Client = &frameworkClient{Client: dynClient}
 		return true, nil
 	})
 	if err != nil {
-		return fmt.Errorf("failed to build the dynamic client: %v", err)
+		return fmt.Errorf("failed to update the client restmapper: %v", err)
 	}
 	dynamicDecoder = serializer.NewCodecFactory(Global.Scheme).UniversalDeserializer()
 	return nil
