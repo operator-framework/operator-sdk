@@ -43,7 +43,7 @@ var (
 	// mutex for AddToFrameworkScheme
 	mutex = sync.Mutex{}
 	// whether to run tests in a single namespace
-	singleNamespace *bool
+	SingleNamespace *bool
 	// decoder used by createFromYaml
 	dynamicDecoder runtime.Decoder
 	// restMapper for the dynamic client
@@ -63,11 +63,18 @@ type Framework struct {
 
 // Setup initializes the Global.Framework variable and its fields
 func Setup(kubeconfigPath, namespacedManPath, namespace string, localOperator bool) error {
+	if SingleNamespace == nil {
+		a := false
+		SingleNamespace = &a
+	}
+	if namespace != "" {
+		*SingleNamespace = true
+	}
 	var err error
 	var kubeconfig *rest.Config
 	if kubeconfigPath == "incluster" {
 		// when running with an InCluster config, we don't have permission to create new namespaces
-		*singleNamespace = true
+		*SingleNamespace = true
 		if len(namespace) == 0 {
 			return fmt.Errorf("namespace must be set for in cluster testing mode")
 		}
@@ -90,7 +97,7 @@ func Setup(kubeconfigPath, namespacedManPath, namespace string, localOperator bo
 	} else {
 		var kcNamespace string
 		kubeconfig, kcNamespace, err = k8sInternal.GetKubeconfigAndNamespace(kubeconfigPath)
-		if *singleNamespace && namespace == "" {
+		if *SingleNamespace && namespace == "" {
 			namespace = kcNamespace
 		}
 	}
@@ -153,7 +160,7 @@ func AddToFrameworkScheme(addToScheme addToSchemeFunc, obj runtime.Object) error
 	}
 	restMapper.Reset()
 	err = wait.PollImmediate(time.Second, time.Second*10, func() (done bool, err error) {
-		if *singleNamespace {
+		if *SingleNamespace {
 			err = Global.Client.List(goctx.TODO(), &dynclient.ListOptions{Namespace: Global.Namespace}, obj)
 		} else {
 			err = Global.Client.List(goctx.TODO(), &dynclient.ListOptions{Namespace: "default"}, obj)

@@ -35,7 +35,7 @@ func (ctx *TestCtx) GetNamespace() (string, error) {
 	if ctx.namespace != "" {
 		return ctx.namespace, nil
 	}
-	if *singleNamespace {
+	if *SingleNamespace {
 		ctx.namespace = Global.Namespace
 		return ctx.namespace, nil
 	}
