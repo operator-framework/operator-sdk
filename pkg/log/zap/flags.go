@@ -91,11 +91,28 @@ type levelValue struct {
 func (v *levelValue) Set(l string) error {
 	v.set = true
 	lower := strings.ToLower(l)
+	var lvl int
 	switch lower {
-	case "debug", "info", "error":
-		return v.level.Set(l)
+	case "debug":
+		lvl = -1
+	case "info":
+		lvl = 0
+	case "error":
+		lvl = 1
+	default:
+		i, err := strconv.Atoi(lower)
+		if err != nil {
+			return fmt.Errorf("invalid log level \"%s\"", l)
+		}
+
+		if i > 0 {
+			lvl = -1 * i
+		} else {
+			lvl = i
+		}
 	}
-	return fmt.Errorf("invalid log level \"%s\"", l)
+	v.level = zapcore.Level(int8(lvl))
+	return nil
 }
 
 func (v levelValue) String() string {

@@ -75,6 +75,13 @@ func getConfig(destWriter io.Writer) config {
 	}
 	if levelVal.set {
 		c.level = zap.NewAtomicLevelAt(levelVal.level)
+
+		// Disable sampling when we are in debug mode. Otherwise, this will
+		// cause index out of bounds errors in the sampling code.
+		if levelVal.level < -1 {
+			sampleVal.set = false
+			c.sample = false
+		}
 	}
 	if sampleVal.set {
 		c.sample = sampleVal.sample
