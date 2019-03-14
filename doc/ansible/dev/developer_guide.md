@@ -321,6 +321,21 @@ NAME                     DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
 foo-operator       1         1         1            1           1m
 ```
 
+#### Viewing the Ansible logs
+
+The `foo-operator` deployment creates a Pod with two containers, `operator` and `ansible`.
+The `ansible` container exists only to expose the standard Ansible stdout logs that most Ansible
+users will be familiar with. In order to see the logs from a particular container, you can run
+
+```sh
+kubectl logs deployment/foo-operator -c ansible
+kubectl logs deployment/foo-operator -c operator
+```
+
+The `ansible` logs contain all of the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks, 
+whereas the `operator` logs will contain much more detailed information about the Ansible Operator's internals and interface with Kubernetes.
+
+
 ## Custom Resource Status Management
 The operator will automatically update the CR's `status` subresource with
 generic information about the previous Ansible run. This includes the number of
