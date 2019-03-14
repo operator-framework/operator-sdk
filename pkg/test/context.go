@@ -74,20 +74,15 @@ func (ctx *TestCtx) GetID() string {
 
 // Cleanup runs all the TestCtx's cleanup function in reverse order of their insertion
 func (ctx *TestCtx) Cleanup() {
-	failed := false
 	for i := len(ctx.cleanupFns) - 1; i >= 0; i-- {
 		err := ctx.cleanupFns[i]()
 		if err != nil {
-			failed = true
 			if ctx.t != nil {
 				ctx.t.Errorf("A cleanup function failed with error: (%v)\n", err)
 			} else {
 				log.Errorf("A cleanup function failed with error: (%v)", err)
 			}
 		}
-	}
-	if ctx.t == nil && failed {
-		log.Fatal("A cleanup function failed")
 	}
 }
 
