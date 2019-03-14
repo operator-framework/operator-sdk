@@ -38,10 +38,9 @@ In the above example, we add the zap flagset to the operator's command line flag
 By default, `zap.Logger()` will return a logger that is ready for production use. It uses a JSON encoder, logs starting at the `info` level, and has [sampling][zap_sampling] enabled. To customize the default behavior, users can use the zap flagset and specify flags on the command line. The zap flagset includes the following flags that can be used to configure the logger:
 * `--zap-devel` - Enables the zap development config (changes defaults to console encoder, debug log level, and disables sampling) (default: `false`)
 * `--zap-encoder` string - Sets the zap log encoding (`json` or `console`)
-* `--zap-level` string - Sets the zap log level (`debug`, `info`, or `error`)
-* `--zap-sample` - Enables zap's sampling mode
+* `--zap-level` string or integer - Sets the zap log level (`debug`, `info`, `error`, or an integer value greater than 0)
+* `--zap-sample` - Enables zap's sampling mode. Sampling will be disabled for integer log levels > 1.
 
-**NOTE:** Although the `logr` interface supports multiple debug levels (e.g. `log.V(1).Info()`, `log.V(2).Info()`, etc.), zap supports only a single debug level with `log.V(1).Info()`. Log statements with higher debug levels will not be printed with the zap's `logr` backend.
 
 ## Creating a structured log statement
 

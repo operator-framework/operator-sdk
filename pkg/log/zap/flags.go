@@ -37,8 +37,8 @@ func init() {
 	zapFlagSet = pflag.NewFlagSet("zap", pflag.ExitOnError)
 	zapFlagSet.BoolVar(&development, "zap-devel", false, "Enable zap development mode (changes defaults to console encoder, debug log level, and disables sampling)")
 	zapFlagSet.Var(&encoderVal, "zap-encoder", "Zap log encoding ('json' or 'console')")
-	zapFlagSet.Var(&levelVal, "zap-level", "Zap log level (one of 'debug', 'info', 'error')")
-	zapFlagSet.Var(&sampleVal, "zap-sample", "Enable zap log sampling")
+	zapFlagSet.Var(&levelVal, "zap-level", "Zap log level (one of 'debug', 'info', 'error' or any integer value > 0)")
+	zapFlagSet.Var(&sampleVal, "zap-sample", "Enable zap log sampling. Sampling will be disabled for integer log levels > 1")
 }
 
 func FlagSet() *pflag.FlagSet {
@@ -108,7 +108,7 @@ func (v *levelValue) Set(l string) error {
 		if i > 0 {
 			lvl = -1 * i
 		} else {
-			lvl = i
+			return fmt.Errorf("invalid log level \"%s\"", l)
 		}
 	}
 	v.level = zapcore.Level(int8(lvl))

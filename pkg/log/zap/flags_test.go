@@ -53,11 +53,10 @@ func TestLevel(t *testing.T) {
 			expLevel: zapcore.ErrorLevel,
 		},
 		{
-			name:     "negative number level set",
-			input:    "-10",
-			expStr:   "Level(-10)",
-			expSet:   true,
-			expLevel: zapcore.Level(int8(-10)),
+			name:      "negative number should error",
+			input:     "-10",
+			shouldErr: true,
+			expSet:    false,
 		},
 		{
 			name:     "positive number level results in negative level set",
@@ -79,7 +78,7 @@ func TestLevel(t *testing.T) {
 			lvl := levelValue{}
 			err := lvl.Set(tc.input)
 			if err != nil && !tc.shouldErr {
-				t.Fatalf("unknown error - %v", err)
+				t.Fatalf("Unknown error - %v", err)
 			}
 			if err != nil && tc.shouldErr {
 				return
@@ -141,7 +140,7 @@ func TestSample(t *testing.T) {
 			sample := sampleValue{}
 			err := sample.Set(tc.input)
 			if err != nil && !tc.shouldErr {
-				t.Fatalf("unknown error - %v", err)
+				t.Fatalf("Unknown error - %v", err)
 			}
 			if err != nil && tc.shouldErr {
 				return
@@ -189,7 +188,7 @@ func TestEncoder(t *testing.T) {
 			encoder := encoderValue{}
 			err := encoder.Set(tc.input)
 			if err != nil && !tc.shouldErr {
-				t.Fatalf("unknown error - %v", err)
+				t.Fatalf("Unknown error - %v", err)
 			}
 			if err != nil && tc.shouldErr {
 				return
