@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/rand"
 	"os"
 	"strconv"
@@ -81,6 +82,9 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	if ds, ok := u.GetAnnotations()[ReconcilePeriodAnnotation]; ok {
 		duration, err := time.ParseDuration(ds)
 		if err != nil {
+			// Should attempt to update to a failed condition
+			r.markError(u, request.NamespacedName, fmt.Sprintf("Unable to parse reconcile period annotation: %v", err))
+			logger.Error(err, "Unable to parse reconcile period annotation")
 			return reconcileResult, err
 		}
 		reconcileResult.RequeueAfter = duration
@@ -96,6 +100,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		u.SetFinalizers(finalizers)
 		err := r.Client.Update(context.TODO(), u)
 		if err != nil {
+			logger.Error(err, "Unable to update cr with finalizer")
 			return reconcileResult, err
 		}
 	}
@@ -106,18 +111,19 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 
 	spec := u.Object["spec"]
 	_, ok := spec.(map[string]interface{})
+	// Need to handle cases where there is no spec.
+	// We can add the spec to the object, which will allow
+	// everything to work, and will not get updated.
+	// Therefore we can now deal with the case of secrets and configmaps.
 	if !ok {
 		logger.V(1).Info("Spec was not found")
 		u.Object["spec"] = map[string]interface{}{}
-		err = r.Client.Update(context.TODO(), u)
-		if err != nil {
-			return reconcileResult, err
-		}
 	}
 
 	if r.ManageStatus {
 		err = r.markRunning(u, request.NamespacedName)
 		if err != nil {
+			logger.Error(err, "Unable to update the status to mark cr as running")
 			return reconcileResult, err
 		}
 	}
@@ -131,6 +137,8 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 
 	kc, err := kubeconfig.Create(ownerRef, "http://localhost:8888", u.GetNamespace())
 	if err != nil {
+		r.markError(u, request.NamespacedName, "Unable to run reconciliation")
+		logger.Error(err, "Unable to generate kubeconfig")
 		return reconcileResult, err
 	}
 	defer func() {
@@ -140,6 +148,8 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	}()
 	result, err := r.Runner.Run(ident, u, kc.Name())
 	if err != nil {
+		r.markError(u, request.NamespacedName, "Unable to run reconciliation")
+		logger.Error(err, "Unable to run ansible runner")
 		return reconcileResult, err
 	}
 
@@ -161,7 +171,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 				return reconcile.Result{}, err
 			}
 		}
-		if event.Event == eventapi.EventRunnerOnFailed {
+		if event.Event == eventapi.EventRunnerOnFailed && !event.IgnoreError() {
 			failureMessages = append(failureMessages, event.GetFailedPlaybookMessage())
 		}
 	}
@@ -189,6 +199,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		u.SetFinalizers(finalizers)
 		err := r.Client.Update(context.TODO(), u)
 		if err != nil {
+			logger.Error(err, "Failed to remove finalizer")
 			return reconcileResult, err
 		}
 	}
@@ -235,6 +246,47 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, na
 		return err
 	}
 	return nil
+}
+
+// markError - used to alert the user to the issues during the validation of a reconcile run.
+// i.e Annotations that could be incorrect
+func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, namespacedName types.NamespacedName, failureMessage string) error {
+	logger := logf.Log.WithName("markError")
+	// Get the latest resource to prevent updating a stale status
+	err := r.Client.Get(context.TODO(), namespacedName, u)
+	if apierrors.IsNotFound(err) {
+		logger.Info("Resource not found, assuming it was deleted", err)
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	statusInterface := u.Object["status"]
+	statusMap, ok := statusInterface.(map[string]interface{})
+	// If the map is not available create one.
+	if !ok {
+		statusMap = map[string]interface{}{}
+	}
+	crStatus := ansiblestatus.CreateFromMap(statusMap)
+
+	sc := ansiblestatus.GetCondition(crStatus, ansiblestatus.RunningConditionType)
+	if sc != nil {
+		sc.Status = v1.ConditionFalse
+		ansiblestatus.SetCondition(&crStatus, *sc)
+	}
+
+	c := ansiblestatus.NewCondition(
+		ansiblestatus.FailureConditionType,
+		v1.ConditionTrue,
+		nil,
+		ansiblestatus.FailedReason,
+		failureMessage,
+	)
+	ansiblestatus.SetCondition(&crStatus, *c)
+	// This needs the status subresource to be enabled by default.
+	u.Object["status"] = crStatus.GetJSONMap()
+
+	return r.Client.Status().Update(context.TODO(), u)
 }
 
 func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, namespacedName types.NamespacedName, statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) error {
