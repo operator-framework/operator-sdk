@@ -98,7 +98,7 @@ func (v *levelValue) Set(l string) error {
 	case "info":
 		lvl = 0
 	case "error":
-		lvl = 1
+		lvl = 2
 	default:
 		i, err := strconv.Atoi(lower)
 		if err != nil {
