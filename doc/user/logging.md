@@ -39,7 +39,7 @@ By default, `zap.Logger()` will return a logger that is ready for production use
 * `--zap-devel` - Enables the zap development config (changes defaults to console encoder, debug log level, and disables sampling) (default: `false`)
 * `--zap-encoder` string - Sets the zap log encoding (`json` or `console`)
 * `--zap-level` string or integer - Sets the zap log level (`debug`, `info`, `error`, or an integer value greater than 0)
-* `--zap-sample` - Enables zap's sampling mode. Sampling will be disabled for integer log levels > 1.
+* `--zap-sample` - Enables zap's sampling mode. Sampling will be disabled for integer log levels greater than 1.
 
 
 ## Creating a structured log statement
