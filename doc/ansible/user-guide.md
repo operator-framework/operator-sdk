@@ -67,6 +67,7 @@ Using `--cluster-scoped` will scaffold the new operator with the following modif
 * `deploy/role.yaml` - Use `ClusterRole` instead of `Role`
 * `deploy/role_binding.yaml`:
   * Use `ClusterRoleBinding` instead of `RoleBinding`
+  * Use `ClusterRole` instead of `Role` for roleRef
   * Set the subject namespace to `REPLACE_NAMESPACE`. This must be changed to the namespace in which the operator is deployed.
 
 ### Watches file
