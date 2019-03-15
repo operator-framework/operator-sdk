@@ -42,7 +42,7 @@ import (
 	"os"
 	"runtime"
 
-	// Import all Kubernetes client auth plugins, e.g. Azure, GCP, OIDC, etc.
+	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/example-inc/app-operator/pkg/apis"
