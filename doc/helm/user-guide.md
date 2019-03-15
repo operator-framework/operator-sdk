@@ -133,7 +133,7 @@ Helm uses a concept called [values][helm_values] to provide customizations
 to a Helm chart's defaults, which are defined in the Helm chart's `values.yaml`
 file.
 
-Overriding these defaults is a simple as setting the desired values in the CR
+Overriding these defaults is as simple as setting the desired values in the CR
 spec. Let's use the number of replicas as an example.
 
 First, inspecting `helm-charts/nginx/values.yaml`, we see that the chart has a
@@ -349,7 +349,7 @@ kubectl delete -f deploy/operator.yaml
 kubectl delete -f deploy/role_binding.yaml
 kubectl delete -f deploy/role.yaml
 kubectl delete -f deploy/service_account.yaml
-kubectl delete -f deploy/crds/example_v1alpha1_nginx_cr.yaml
+kubectl delete -f deploy/crds/example_v1alpha1_nginx_crd.yaml
 ```
 
 [layout_doc]:./project_layout.md
