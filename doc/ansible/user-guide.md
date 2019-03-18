@@ -16,7 +16,7 @@ powered by Ansible using tools and libraries provided by the Operator SDK.
 - Access to a Kubernetes v.1.9.0+ cluster.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the
-local Kubernetes cluster and quay.io for the public registry.
+local Kubernetes cluster and [quay.io](https://quay.io) for the public registry.
 
 ## Install the Operator SDK CLI
 
