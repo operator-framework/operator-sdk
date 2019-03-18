@@ -56,21 +56,17 @@ func NewManagerFactory(mgr crmanager.Manager, chartDir string) ManagerFactory {
 	return &managerFactory{mgr, chartDir}
 }
 
-func (f managerFactory) NewManager(r *unstructured.Unstructured) (Manager, error) {
-	return f.newManagerForCR(r)
-}
-
-func (f managerFactory) newManagerForCR(r *unstructured.Unstructured) (Manager, error) {
+func (f managerFactory) NewManager(cr *unstructured.Unstructured) (Manager, error) {
 	clientv1, err := v1.NewForConfig(f.mgr.GetConfig())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get core/v1 client: %s", err)
 	}
-	storageBackend := storage.Init(driver.NewSecrets(clientv1.Secrets(r.GetNamespace())))
+	storageBackend := storage.Init(driver.NewSecrets(clientv1.Secrets(cr.GetNamespace())))
 	tillerKubeClient, err := client.NewFromManager(f.mgr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get client from manager: %s", err)
 	}
-	releaseServer, err := getReleaseServer(r, storageBackend, tillerKubeClient)
+	releaseServer, err := getReleaseServer(cr, storageBackend, tillerKubeClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get helm release server: %s", err)
 	}
@@ -80,18 +76,18 @@ func (f managerFactory) newManagerForCR(r *unstructured.Unstructured) (Manager, 
 		chartDir:         f.chartDir,
 
 		tiller:      releaseServer,
-		releaseName: getReleaseName(r),
-		namespace:   r.GetNamespace(),
+		releaseName: getReleaseName(cr),
+		namespace:   cr.GetNamespace(),
 
-		spec:   r.Object["spec"],
-		status: types.StatusFor(r),
+		spec:   cr.Object["spec"],
+		status: types.StatusFor(cr),
 	}, nil
 }
 
 // getReleaseServer creates a ReleaseServer configured with a rendering engine that adds ownerrefs to rendered assets
 // based on the CR.
-func getReleaseServer(r *unstructured.Unstructured, storageBackend *storage.Storage, tillerKubeClient *kube.Client) (*tiller.ReleaseServer, error) {
-	controllerRef := metav1.NewControllerRef(r, r.GroupVersionKind())
+func getReleaseServer(cr *unstructured.Unstructured, storageBackend *storage.Storage, tillerKubeClient *kube.Client) (*tiller.ReleaseServer, error) {
+	controllerRef := metav1.NewControllerRef(cr, cr.GroupVersionKind())
 	ownerRefs := []metav1.OwnerReference{
 		*controllerRef,
 	}
@@ -117,8 +113,8 @@ func getReleaseServer(r *unstructured.Unstructured, storageBackend *storage.Stor
 	return tiller.NewReleaseServer(env, cs, false), nil
 }
 
-func getReleaseName(r *unstructured.Unstructured) string {
-	return fmt.Sprintf("%s-%s", r.GetName(), shortenUID(r.GetUID()))
+func getReleaseName(cr *unstructured.Unstructured) string {
+	return fmt.Sprintf("%s-%s", cr.GetName(), shortenUID(cr.GetUID()))
 }
 
 func shortenUID(uid apitypes.UID) string {
