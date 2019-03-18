@@ -25,7 +25,7 @@ A clear and concise description of what you expected to happen (or insert a code
 **Environment**
 * operator-sdk version:
 
-  Insert operator-sdk release or Git SHA here. If you have paste the Gopkg.lock operator-sdk information here. 
+  Insert operator-sdk release or Git SHA here.
 
 * Kubernetes version information:
 
