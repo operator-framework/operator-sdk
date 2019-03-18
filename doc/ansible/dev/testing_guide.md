@@ -63,14 +63,14 @@ The scenario has the following structure:
 
 ```
 molecule/default
-├── asserts.yml
 ├── molecule.yml
 ├── playbook.yml
-└── prepare.yml
+├── prepare.yml
+└── verify.yml
 ```
 
-`asserts.yml` is an Ansible playbook contains Ansible assert tasks that will be run by all three scenarios. 
-If you would like to write specific asserts for individual scenarios, you can instead remove the `asserts.yml`
+`verify.yml` is an Ansible playbook contains Ansible assert tasks that will be run by all three scenarios. 
+If you would like to write specific asserts for individual scenarios, you can instead remove the `verify.yml`
 playbook import from that scenario's `playbook.yml`, or if you only want to add additional asserts, you can
 create a new playbook in that scenario and import it at the bottom of that scenario's `playbook.yml`.
 
@@ -81,7 +81,7 @@ variables which are used in `prepare.yml` and `playbook.yml`.
 `prepare.yml` ensures that a kubeconfig properly configured to connect to the Kubernetes-in-Docker cluster exists and is mapped to the proper port, and also waits for the Kubernetes API to become
 available before allowing testing to begin.
 
-`playbook.yml` only imports your role or playbook and then imports the `asserts.yml` playbook.
+`playbook.yml` only imports your role or playbook and then imports the `verify.yml` playbook.
 
 #### test-local
 The test-local scenario is a more full integration test of your operator. It brings up a Kubernetes-in-docker cluster, builds your Operator, deploys it
@@ -112,7 +112,7 @@ This makes your Operator available to the cluster without needing to push it to 
 registry. Next, it will ensure that a fresh deployment of your Operator is present in the
 cluster, and once there is it will create an instance of your Custom Resource 
 (specified in `deploy/crds/`). It will then wait for the CustomResource to report a successful
-run, and once it has, will import the `asserts.yml` from the default scenario.
+run, and once it has, will import the `verify.yml` from the default scenario.
 
 #### test-cluster
 The test-cluster scenario is intended as a full integration test against
@@ -135,7 +135,7 @@ present. It essentially is just specifying the metadata of the scenario, and tel
 not to try and create or destroy anything when run.
 
 `playbook.yml` is also pretty simple, compared to the previous scenarios. All it does is create
-an instance of your Custom Resource (specified in `deploy/crds`), and then import the `asserts.yml` from the `default` scenario.
+an instance of your Custom Resource (specified in `deploy/crds`), and then import the `verify.yml` from the `default` scenario.
 
 #### converge vs test
 The two most common molecule commands for testing during development are `molecule test` and `molecule converge`. 
@@ -153,7 +153,7 @@ will reset it.
 The `operator-sdk test local` command kicks off an end-to-end test of your Operator. It will bring up a [Kubernetes-in-Docker (kind)](https://github.com/bsycorp/kind) cluster, builds your Operator
 image and make it available to that cluster, create all the required resources from the `deploy/` directory, create an instance of your
 Custom Resource (specified in the `deploy/crds` directory), and then verify that the Operator has responded appropriately by running
-the asserts from `molecule/default/asserts.yml`.
+the asserts from `molecule/default/verify.yml`.
 
 
 ### test cluster
@@ -161,7 +161,7 @@ the asserts from `molecule/default/asserts.yml`.
 The `operator-sdk test cluster` command does much less than the `test local` command. It is intended as a full integration test against
 an existing Kubernetes cluster, and assumes that the cluster is already available, the dependent resources from the `deploy/` directory
 are created, the operator image is built with `--enable-tests`, and that the image is available in a container registry. When you run the command, it will connect
-to the existing Kubernetes cluster and deploy the test Operator, create a Custom Resource, and run the asserts in `molecule/default/asserts.yml`.
+to the existing Kubernetes cluster and deploy the test Operator, create a Custom Resource, and run the asserts in `molecule/default/verify.yml`.
 
 ## Writing tests
 
@@ -190,7 +190,7 @@ We'll be adding the task to `roles/example/tasks/main.yml`, which should now loo
 
 ### Adding a test
 
-Now that our Operator actually does some work, we can add a corresponding assert to `molecule/default/asserts.yml`. 
+Now that our Operator actually does some work, we can add a corresponding assert to `molecule/default/verify.yml`. 
 We'll also add a debug message so that we can see what the ConfigMap looks like.
 The file should now look like this:
 

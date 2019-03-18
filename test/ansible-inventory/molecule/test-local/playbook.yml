@@ -71,4 +71,4 @@
     delay: 3
     retries: 10
 
-- import_playbook: asserts.yml
+- import_playbook: verify.yml

@@ -70,5 +70,5 @@ const moleculeTestClusterPlaybookAnsibleTmpl = `---
     delay: 4
     retries: 10
 
-- import_playbook: "{{"{{ playbook_dir }}/../default/asserts.yml"}}"
+- import_playbook: "{{"{{ playbook_dir }}/../default/verify.yml"}}"
 `

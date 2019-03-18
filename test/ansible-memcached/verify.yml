@@ -197,7 +197,7 @@
       - debug: var=ansible_log.stdout_lines
 
       - fail:
-          msg: "Failed in asserts.yml"
+          msg: "Failed in verify.yml"
 
 - hosts: operator
   gather_facts: no

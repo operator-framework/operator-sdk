@@ -20,7 +20,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-const MoleculeDefaultAssertsFile = "asserts.yml"
+const MoleculeDefaultAssertsFile = "verify.yml"
 
 type MoleculeDefaultAsserts struct {
 	input.Input

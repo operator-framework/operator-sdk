@@ -54,5 +54,5 @@ const moleculeDefaultPlaybookAnsibleTmpl = `---
     - {{.Resource.LowerKind}}
   {{- end }}
 
-- import_playbook: '{{"{{ playbook_dir }}/asserts.yml"}}'
+- import_playbook: '{{"{{ playbook_dir }}/verify.yml"}}'
 `
