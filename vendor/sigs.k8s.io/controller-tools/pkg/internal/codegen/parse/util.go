@@ -334,6 +334,20 @@ func parseByteValue(b []byte) string {
 	return elem
 }
 
+// parseDescription parse comments above each field in the type definition.
+func parseDescription(res []string) string {
+	var temp strings.Builder
+	var desc string
+	for _, comment := range res {
+		if !(strings.Contains(comment, "+kubebuilder") || strings.Contains(comment, "+optional")) {
+			temp.WriteString(comment)
+			temp.WriteString(" ")
+			desc = strings.TrimRight(temp.String(), " ")
+		}
+	}
+	return desc
+}
+
 // parseEnumToString returns a representive validated go format string from JSONSchemaProps schema
 func parseEnumToString(value []v1beta1.JSON) string {
 	res := "[]v1beta1.JSON{"
@@ -387,9 +401,6 @@ func parseScaleParams(t *types.Type) (map[string]string, error) {
 				return nil, fmt.Errorf(jsonPathError)
 			}
 			for _, s := range path {
-				fmt.Printf("\n[debug] %s", s)
-			}
-			for _, s := range path {
 				kv := strings.Split(s, "=")
 				if kv[0] == specReplicasPath || kv[0] == statusReplicasPath || kv[0] == labelSelectorPath {
 					jsonPath[kv[0]] = kv[1]
@@ -435,9 +446,6 @@ func helperPrintColumn(parts string, comment string) (v1beta1.CustomResourceColu
 		return v1beta1.CustomResourceColumnDefinition{}, fmt.Errorf(printColumnError)
 	}
 
-	for _, s := range part {
-		fmt.Printf("\n[debug] %s", s)
-	}
 	for _, elem := range strings.Split(parts, ",") {
 		key, value, err := printColumnKV(elem)
 		if err != nil {
