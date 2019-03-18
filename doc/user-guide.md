@@ -14,7 +14,7 @@ Guide][helm_user_guide]. The rest of this document will show how to program an o
 - [kubectl][kubectl_tool] version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
 
-**Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the local Kubernetes cluster and [quay.io](https://quay.io) for the public registry.
+**Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the local Kubernetes cluster and [quay.io][quay_link] for the public registry.
 
 ## Install the Operator SDK CLI
 
@@ -499,3 +499,4 @@ When the operator is not running in a cluster, the Manager will return an error 
 [request-go-doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Request
 [result_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Result
 [metrics_doc]: ./user/metrics/README.md
+[quay_link]: https://quay.io
