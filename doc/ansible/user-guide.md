@@ -16,7 +16,7 @@ powered by Ansible using tools and libraries provided by the Operator SDK.
 - Access to a Kubernetes v.1.9.0+ cluster.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the
-local Kubernetes cluster and quay.io for the public registry.
+local Kubernetes cluster and [quay.io][quay_link] for the public registry.
 
 ## Install the Operator SDK CLI
 
@@ -431,3 +431,4 @@ $ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
 [ansible_tool]:https://docs.ansible.com/ansible/latest/index.html
 [ansible_runner_tool]:https://ansible-runner.readthedocs.io/en/latest/install.html
 [ansible_runner_http_plugin]:https://github.com/ansible/ansible-runner-http
+[quay_link]:https://quay.io
