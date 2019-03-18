@@ -38,11 +38,11 @@ import (
 )
 
 var (
-	// Global framework struct
+	// Global is a global framework struct that the test can use.
 	Global *Framework
 	// mutex for AddToFrameworkScheme
 	mutex = sync.Mutex{}
-	// whether to run tests in a single namespace
+	// SingleNamespace determines whether tests are to be run in a single namespace or not.
 	SingleNamespace *bool
 	// decoder used by createFromYaml
 	dynamicDecoder runtime.Decoder
@@ -50,7 +50,7 @@ var (
 	restMapper *restmapper.DeferredDiscoveryRESTMapper
 )
 
-// Framework contains all relevant variables needed for running tests with the operator-sdk
+// Framework contains all relevant variables needed for running tests with the operator-sdk.
 type Framework struct {
 	Client            *frameworkClient
 	KubeConfig        *rest.Config
@@ -61,7 +61,7 @@ type Framework struct {
 	LocalOperator     bool
 }
 
-// Setup initializes the Global.Framework variable and its fields
+// Setup initializes the Global.Framework variable and its fields.
 func Setup(kubeconfigPath, namespacedManPath, namespace string, localOperator bool) error {
 	if SingleNamespace == nil {
 		a := false
@@ -150,7 +150,7 @@ type addToSchemeFunc func(*runtime.Scheme) error
 //	}
 // The List object is needed because the CRD has not always been fully registered
 // by the time this function is called. If the CRD takes more than 5 seconds to
-// become ready, this function throws an error
+// become ready, this function throws an error.
 func AddToFrameworkScheme(addToScheme addToSchemeFunc, obj runtime.Object) error {
 	mutex.Lock()
 	defer mutex.Unlock()

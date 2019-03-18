@@ -45,7 +45,7 @@ const (
 )
 
 // MainEntry parses the flags set by the operator-sdk test command, configures the testing environment, and then
-// runs the tests
+// runs the tests.
 func MainEntry(m *testing.M) {
 	projRoot := flag.String(ProjRootFlag, "", "path to project root")
 	kubeconfigPath := flag.String(KubeConfigFlag, "", "path to kubeconfig")

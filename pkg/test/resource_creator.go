@@ -30,7 +30,7 @@ import (
 )
 
 // GetNamespace returns the namespace for the current context, creating a new namespace
-// if one does not exist using the context's ID as the new namespace's name
+// if one does not exist using the context's ID as the new namespace's name.
 func (ctx *TestCtx) GetNamespace() (string, error) {
 	if ctx.namespace != "" {
 		return ctx.namespace, nil
@@ -55,7 +55,7 @@ func (ctx *TestCtx) GetNamespace() (string, error) {
 }
 
 // SetNamespace sets a static namespace for the current context. If the specifed namespace does not exist,
-// it will be created and a cleanup function for the new namespace will be added to the context
+// it will be created and a cleanup function for the new namespace will be added to the context.
 func (ctx *TestCtx) SetNamespace(namespace string) error {
 	ctx.namespace = namespace
 	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ctx.namespace}}
@@ -74,7 +74,7 @@ func (ctx *TestCtx) SetNamespace(namespace string) error {
 }
 
 // CreateFromYAML takes a raw yaml file and creates the resource(s) in it in the cluster and adds cleanup functions
-// for the created resource(s)
+// for the created resource(s).
 func (ctx *TestCtx) CreateFromYAML(yamlFile []byte, skipIfExists bool, cleanupOptions *CleanupOptions) error {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
@@ -129,7 +129,7 @@ func (ctx *TestCtx) CreateFromYAML(yamlFile []byte, skipIfExists bool, cleanupOp
 }
 
 // InitializeClusterResources creates all resources in the namespaced manifest file
-// using the CreateFromYAML function
+// using the CreateFromYAML function.
 func (ctx *TestCtx) InitializeClusterResources(cleanupOptions *CleanupOptions) error {
 	// create namespaced resources
 	namespacedYAML, err := ioutil.ReadFile(Global.NamespacedManPath)

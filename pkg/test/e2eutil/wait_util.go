@@ -38,7 +38,7 @@ func WaitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace,
 }
 
 // WaitForOperatorDeployment has the same functionality as WaitForDeployment but will no wait for the deployment if the
-// test was run with a locally run operator (--up-local flag)
+// test was run with a locally run operator (--up-local flag).
 func WaitForOperatorDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int, retryInterval, timeout time.Duration) error {
 	return waitForDeployment(t, kubeclient, namespace, name, replicas, retryInterval, timeout, true)
 }
@@ -71,7 +71,7 @@ func waitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace,
 	return nil
 }
 
-// WaitForDeletion waits for a given object to be fully deleted according to the apiserver before returning
+// WaitForDeletion waits for a given object to be fully deleted according to the apiserver before returning.
 func WaitForDeletion(t *testing.T, dynclient client.Client, obj runtime.Object, retryInterval, timeout time.Duration) error {
 	key, err := client.ObjectKeyFromObject(obj)
 	if err != nil {
