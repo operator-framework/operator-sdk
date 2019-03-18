@@ -20,23 +20,24 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-const MoleculeDefaultAssertsFile = "verify.yml"
+const MoleculeVerifyFile = "verify.yml"
 
-type MoleculeDefaultAsserts struct {
+type MoleculeVerify struct {
 	input.Input
+	ScenarioName string
 }
 
 // GetInput - gets the input
-func (m *MoleculeDefaultAsserts) GetInput() (input.Input, error) {
+func (m *MoleculeVerify) GetInput() (input.Input, error) {
 	if m.Path == "" {
-		m.Path = filepath.Join(MoleculeDefaultDir, MoleculeDefaultAssertsFile)
+		m.Path = filepath.Join(MoleculeDir, m.ScenarioName, MoleculeVerifyFile)
 	}
-	m.TemplateBody = moleculeDefaultAssertsAnsibleTmpl
+	m.TemplateBody = moleculeDefaultVerifyAnsibleTmpl
 
 	return m.Input, nil
 }
 
-const moleculeDefaultAssertsAnsibleTmpl = `---
+const moleculeVerifyAnsibleTmpl = `---
 
 - name: Verify
   hosts: localhost
@@ -53,4 +54,8 @@ const moleculeDefaultAssertsAnsibleTmpl = `---
 
     - name: Output pods
       debug: var=pods
+
+    - name: Assert that there is at least one pod
+      assert:
+        that: (pods.resources | length) > 0
 `

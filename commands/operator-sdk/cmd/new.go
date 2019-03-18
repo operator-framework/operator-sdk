@@ -213,7 +213,9 @@ func doAnsibleScaffold() error {
 			Resource:         *resource,
 		},
 		&ansible.BuildTestFrameworkAnsibleTestScript{},
-		&ansible.MoleculeDefaultAsserts{},
+		&ansible.MoleculeVerify{ScenarioName: "default"},
+		&ansible.MoleculeVerify{ScenarioName: "test-local"},
+		&ansible.MoleculeVerify{ScenarioName: "test-cluster"},
 		&ansible.MoleculeTestClusterPlaybook{Resource: *resource},
 		&ansible.RolesHandlersMain{Resource: *resource},
 		&ansible.Watches{
