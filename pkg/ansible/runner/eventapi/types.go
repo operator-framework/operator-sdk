@@ -110,3 +110,15 @@ func (je JobEvent) GetFailedPlaybookMessage() string {
 	}
 	return message
 }
+
+// IgnoreError - Does the job event contain the ignore_error ansible flag
+func (je JobEvent) IgnoreError() bool {
+	ignoreErrors, ok := je.EventData["ignore_errors"]
+	if !ok {
+		return false
+	}
+	if b, ok := ignoreErrors.(bool); ok && b {
+		return b
+	}
+	return false
+}
