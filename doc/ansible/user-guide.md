@@ -37,6 +37,12 @@ $ make install
 
 This installs the CLI binary `operator-sdk` at `$GOPATH/bin`.
 
+Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
+
+```sh
+$ brew install operator-sdk
+```
+
 ## Create a new project
 
 Use the CLI to create a new Ansible-based memcached-operator project:
@@ -178,7 +184,7 @@ Ansible Operator will simply pass all key value pairs listed in the Custom
 Resource spec field along to Ansible as
 [variables](https://docs.ansible.com/ansible/2.5/user_guide/playbooks_variables.html#passing-variables-on-the-command-line).
 The names of all variables in the spec field are converted to snake_case
-by the operator before running ansible. For example, `serviceAccount` in 
+by the operator before running ansible. For example, `serviceAccount` in
 the spec becomes `service_account` in ansible.
 It is recommended that you perform some type validation in Ansible on the
 variables to ensure that your application is receiving expected input.
@@ -380,7 +386,7 @@ kubectl logs deployment/memcached-operator -c ansible
 kubectl logs deployment/memcached-operator -c operator
 ```
 
-The `ansible` logs contain all of the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks, 
+The `ansible` logs contain all of the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks,
 whereas the `operator` logs will contain much more detailed information about the Ansible Operator's internals and interface with Kubernetes.
 
 ### Update the size
@@ -422,6 +428,7 @@ $ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
 ```
 
 [layout_doc]:./project_layout.md
+[homebrew_tool]:https://brew.sh/
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
