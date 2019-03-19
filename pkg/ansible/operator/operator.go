@@ -89,7 +89,7 @@ func getMaxWorkers(gvk schema.GroupVersionKind, defvalue int) int {
 	if err != nil {
 		// we don't care why we couldn't parse it just use one.
 		// maybe we should log that we are defaulting to 1.
-		logf.Log.WithName("manager").V(0).Info("Using default value for workers %d", defvalue)
+		logf.Log.WithName("manager").V(0).Info(fmt.Sprintf("Using default value for workers %d", defvalue))
 		return defvalue
 	}
 
