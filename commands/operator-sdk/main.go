@@ -17,7 +17,7 @@ package main
 import (
 	"os"
 
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/internal/cmd"
+	"github.com/operator-framework/operator-sdk/internal/commands/operator-sdk/cmd"
 )
 
 func main() {

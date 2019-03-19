@@ -15,19 +15,18 @@
 package cmd
 
 import (
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/internal/cmd/up"
+	catalog "github.com/operator-framework/operator-sdk/internal/commands/operator-sdk/cmd/olm-catalog"
 
 	"github.com/spf13/cobra"
 )
 
-func NewUpCmd() *cobra.Command {
-	upCmd := &cobra.Command{
-		Use:   "up",
-		Short: "Launches the operator",
-		Long: `The up command has subcommands that can launch the operator in various ways.
-`,
+func NewOLMCatalogCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "olm-catalog <olm-catalog-command>",
+		Short: "Invokes a olm-catalog command",
+		Long: `The operator-sdk olm-catalog command invokes a command to perform
+Catalog related actions.`,
 	}
-
-	upCmd.AddCommand(up.NewLocalCmd())
-	return upCmd
+	cmd.AddCommand(catalog.NewGenCSVCmd())
+	return cmd
 }

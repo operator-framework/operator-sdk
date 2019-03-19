@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/internal/cmd/scorecard"
+	"github.com/operator-framework/operator-sdk/internal/commands/operator-sdk/cmd/scorecard"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/version"
 

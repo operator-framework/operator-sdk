@@ -1,4 +1,4 @@
-// Copyright © 2018 The Operator-SDK Authors
+// Copyright 2018 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,17 +15,20 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
+	"github.com/operator-framework/operator-sdk/internal/commands/operator-sdk/cmd/test"
 
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/internal/cmd/completion"
+	"github.com/spf13/cobra"
 )
 
-func NewCompletionCmd() *cobra.Command {
-	completionCmd := &cobra.Command{
-		Use:   "completion",
-		Short: "Generators for shell completions",
+func NewTestCmd() *cobra.Command {
+	testCmd := &cobra.Command{
+		Use:   "test",
+		Short: "Tests the operator",
+		Long: `The test command has subcommands that can test the operator locally or from within a cluster.
+`,
 	}
-	completionCmd.AddCommand(completion.NewZshCmd())
-	completionCmd.AddCommand(completion.NewBashCmd())
-	return completionCmd
+
+	testCmd.AddCommand(cmdtest.NewTestLocalCmd())
+	testCmd.AddCommand(cmdtest.NewTestClusterCmd())
+	return testCmd
 }

@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,18 +15,23 @@
 package cmd
 
 import (
-	catalog "github.com/operator-framework/operator-sdk/commands/operator-sdk/internal/cmd/olm-catalog"
+	"github.com/operator-framework/operator-sdk/internal/commands/operator-sdk/cmd/run"
 
 	"github.com/spf13/cobra"
 )
 
-func NewOLMCatalogCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "olm-catalog <olm-catalog-command>",
-		Short: "Invokes a olm-catalog command",
-		Long: `The operator-sdk olm-catalog command invokes a command to perform
-Catalog related actions.`,
+// NewRunCmd returns a command that contains subcommands to run specific
+// operator types.
+func NewRunCmd() *cobra.Command {
+	runCmd := &cobra.Command{
+		Use:   "run",
+		Short: "Runs a generic operator",
+		Long: `Runs a generic operator. This is intended to be used when running
+in a Pod inside a cluster. Developers wanting to run their operator locally
+should use "up local" instead.`,
 	}
-	cmd.AddCommand(catalog.NewGenCSVCmd())
-	return cmd
+
+	runCmd.AddCommand(run.RunAnsibleCmd())
+	runCmd.AddCommand(run.RunHelmCmd())
+	return runCmd
 }
