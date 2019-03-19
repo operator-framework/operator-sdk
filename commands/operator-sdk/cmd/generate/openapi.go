@@ -25,8 +25,8 @@ import (
 	genutil "github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/generate/internal"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	"github.com/operator-framework/operator-sdk/internal/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

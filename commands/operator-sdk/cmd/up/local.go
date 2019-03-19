@@ -32,7 +32,7 @@ import (
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
-	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
 	log "github.com/sirupsen/logrus"
