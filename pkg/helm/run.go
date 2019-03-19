@@ -20,7 +20,6 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/operator-framework/operator-sdk/pkg/helm/client"
 	"github.com/operator-framework/operator-sdk/pkg/helm/controller"
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
@@ -30,8 +29,6 @@ import (
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/helm/pkg/storage"
-	"k8s.io/helm/pkg/storage/driver"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -77,14 +74,6 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 		return err
 	}
 
-	// Create Tiller's storage backend and kubernetes client
-	storageBackend := storage.Init(driver.NewMemory())
-	tillerKubeClient, err := client.NewFromManager(mgr)
-	if err != nil {
-		log.Error(err, "Failed to create new Tiller client.")
-		return err
-	}
-
 	watches, err := watches.Load(flags.WatchesFile)
 	if err != nil {
 		log.Error(err, "Failed to create new manager factories.")
@@ -96,7 +85,7 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 		err := controller.Add(mgr, controller.WatchOptions{
 			Namespace:               namespace,
 			GVK:                     w.GroupVersionKind,
-			ManagerFactory:          release.NewManagerFactory(storageBackend, tillerKubeClient, w.ChartDir),
+			ManagerFactory:          release.NewManagerFactory(mgr, w.ChartDir),
 			ReconcilePeriod:         flags.ReconcilePeriod,
 			WatchDependentResources: w.WatchDependentResources,
 		})

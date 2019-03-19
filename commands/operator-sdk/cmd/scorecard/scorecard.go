@@ -15,6 +15,7 @@
 package scorecard
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -69,26 +70,13 @@ const (
 	goodTenant     = "Good Tenant"
 )
 
-// TODO: add point weights to tests
-type scorecardTest struct {
-	testType      string
-	name          string
-	description   string
-	earnedPoints  int
-	maximumPoints int
-}
-
-type cleanupFn func() error
-
 var (
 	kubeconfig     *rest.Config
-	scTests        []scorecardTest
-	scSuggestions  []string
 	dynamicDecoder runtime.Decoder
 	runtimeClient  client.Client
 	restMapper     *restmapper.DeferredDiscoveryRESTMapper
 	deploymentName string
-	proxyPod       *v1.Pod
+	proxyPodGlobal *v1.Pod
 	cleanupFns     []cleanupFn
 	ScorecardConf  string
 )
@@ -175,7 +163,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 		deploymentName = stratDep.DeploymentSpecs[0].Name
 		// Get the proxy pod, which should have been created with the CSV.
-		proxyPod, err = getPodFromDeployment(deploymentName, viper.GetString(NamespaceOpt))
+		proxyPodGlobal, err = getPodFromDeployment(deploymentName, viper.GetString(NamespaceOpt))
 		if err != nil {
 			return err
 		}
@@ -258,87 +246,61 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
 	}
+	if err := waitUntilCRStatusExists(obj); err != nil {
+		return fmt.Errorf("failed waiting to check if CR status exists: %v", err)
+	}
+	var suites []*TestSuite
 
 	// Run tests.
 	if viper.GetBool(BasicTestsOpt) {
-		fmt.Println("Checking for existence of spec and status blocks in CR")
-		err = checkSpecAndStat(runtimeClient, obj, false)
-		if err != nil {
-			return err
+		conf := BasicTestConfig{
+			Client:   runtimeClient,
+			CR:       obj,
+			ProxyPod: proxyPodGlobal,
 		}
-		// This test is far too inconsistent and unreliable to be meaningful,
-		// so it has been disabled
-		/*
-			fmt.Println("Checking that operator actions are reflected in status")
-			err = checkStatusUpdate(runtimeClient, obj)
-			if err != nil {
-				return err
-			}
-		*/
-		fmt.Println("Checking that writing into CRs has an effect")
-		logs, err := writingIntoCRsHasEffect(obj)
-		if err != nil {
-			return err
-		}
-		log.Debugf("Scorecard Proxy Logs: %v\n", logs)
-	} else {
-		// checkSpecAndStat is used to make sure the operator is ready in this case
-		// the boolean argument set at the end tells the function not to add the result to scTests
-		err = checkSpecAndStat(runtimeClient, obj, true)
-		if err != nil {
-			return err
-		}
+		basicTests := NewBasicTestSuite(conf)
+		basicTests.Run(context.TODO())
+		suites = append(suites, basicTests)
 	}
 	if viper.GetBool(OLMTestsOpt) {
-		fmt.Println("Checking if all CRDs have validation")
-		if err := crdsHaveValidation(viper.GetString(CRDsDirOpt), runtimeClient, obj); err != nil {
-			return err
+		conf := OLMTestConfig{
+			Client:   runtimeClient,
+			CR:       obj,
+			CSV:      csv,
+			CRDsDir:  viper.GetString(CRDsDirOpt),
+			ProxyPod: proxyPodGlobal,
 		}
-		fmt.Println("Checking for CRD resources")
-		crdsHaveResources(obj, csv)
-		fmt.Println("Checking for existence of example CRs")
-		annotationsContainExamples(csv)
-		fmt.Println("Checking spec descriptors")
-		err = specDescriptors(csv, runtimeClient, obj)
-		if err != nil {
-			return err
+		olmTests := NewOLMTestSuite(conf)
+		olmTests.Run(context.TODO())
+		suites = append(suites, olmTests)
+	}
+	totalScore := 0.0
+	for _, suite := range suites {
+		fmt.Printf("%s:\n", suite.GetName())
+		for _, result := range suite.TestResults {
+			fmt.Printf("\t%s: %d/%d\n", result.Test.GetName(), result.EarnedPoints, result.MaximumPoints)
 		}
-		fmt.Println("Checking status descriptors")
-		err = statusDescriptors(csv, runtimeClient, obj)
-		if err != nil {
-			return err
-		}
+		totalScore += float64(suite.TotalScore())
 	}
-
-	var totalEarned, totalMax int
-	var enabledTestTypes []string
-	if viper.GetBool(BasicTestsOpt) {
-		enabledTestTypes = append(enabledTestTypes, basicOperator)
-	}
-	if viper.GetBool(OLMTestsOpt) {
-		enabledTestTypes = append(enabledTestTypes, olmIntegration)
-	}
-	if viper.GetBool(TenantTestsOpt) {
-		enabledTestTypes = append(enabledTestTypes, goodTenant)
-	}
-	for _, testType := range enabledTestTypes {
-		fmt.Printf("%s:\n", testType)
-		for _, test := range scTests {
-			if test.testType == testType {
-				if !(test.earnedPoints == 0 && test.maximumPoints == 0) {
-					fmt.Printf("\t%s: %d/%d points\n", test.name, test.earnedPoints, test.maximumPoints)
-				} else {
-					fmt.Printf("\t%s: N/A (depends on an earlier test that failed)\n", test.name)
-				}
-				totalEarned += test.earnedPoints
-				totalMax += test.maximumPoints
+	totalScore = totalScore / float64(len(suites))
+	fmt.Printf("\nTotal Score: %.0f%%\n", totalScore)
+	// Print suggestions
+	for _, suite := range suites {
+		for _, result := range suite.TestResults {
+			for _, suggestion := range result.Suggestions {
+				// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
+				fmt.Printf("\x1b[%dmSUGGESTION:\x1b[0m %s\n", 33, suggestion)
 			}
 		}
 	}
-	fmt.Printf("\nTotal Score: %d/%d points\n", totalEarned, totalMax)
-	for _, suggestion := range scSuggestions {
-		// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
-		fmt.Printf("\x1b[%dmSUGGESTION:\x1b[0m %s\n", 33, suggestion)
+	// Print errors
+	for _, suite := range suites {
+		for _, result := range suite.TestResults {
+			for _, err := range result.Errors {
+				// 31 is red (specifically, the same shade of red that logrus uses for errors)
+				fmt.Printf("\x1b[%dmERROR:\x1b[0m %s\n", 31, err)
+			}
+		}
 	}
 	return nil
 }
