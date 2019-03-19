@@ -26,6 +26,16 @@
   name = "k8s.io/kube-openapi"
   revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
 
+# This override is required due to unspecificed dependency versions in
+# contrib.go.opencensus.io/exporter/ocagent (v0.2.0), which is a dependency of
+# the Azure auth plugin. contrib.go.opencensus.io/exporter/ocagent depends on
+# (but does not declare a version constraint for) opencensus-proto. The most
+# recent release of opencensus-proto (v0.2.0) breaks ocagent, so we need to
+# override it back to a working release.
+[[override]]
+  name = "github.com/census-instrumentation/opencensus-proto"
+  version = "=v0.1.0"
+
 [[constraint]]
   name = "sigs.k8s.io/controller-runtime"
   version = "=v0.1.10"
