@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package genutil
+package generate
 
 import (
 	"fmt"
@@ -26,7 +26,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 )
 
-func BuildCodegenBinaries(genDirs []string, binDir, codegenSrcDir string) error {
+func buildCodegenBinaries(genDirs []string, binDir, codegenSrcDir string) error {
 	for _, gd := range genDirs {
 		err := runGoBuildCodegen(binDir, codegenSrcDir, gd)
 		if err != nil {
@@ -54,7 +54,7 @@ func runGoBuildCodegen(binDir, repoDir, genDir string) error {
 
 // ParseGroupVersions parses the layout of pkg/apis to return a map of
 // API groups to versions.
-func ParseGroupVersions() (map[string][]string, error) {
+func parseGroupVersions() (map[string][]string, error) {
 	gvs := make(map[string][]string)
 	groups, err := ioutil.ReadDir(scaffold.ApisDir)
 	if err != nil {
@@ -87,7 +87,7 @@ func ParseGroupVersions() (map[string][]string, error) {
 // CreateFQApis return a string of all fully qualified pkg + groups + versions
 // of pkg and gvs in the format:
 // "pkg/groupA/v1,pkg/groupA/v2,pkg/groupB/v1"
-func CreateFQApis(pkg string, gvs map[string][]string) string {
+func createFQApis(pkg string, gvs map[string][]string) string {
 	gn := 0
 	fqb := &strings.Builder{}
 	for g, vs := range gvs {

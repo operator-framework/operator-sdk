@@ -22,7 +22,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	genutil "github.com/operator-framework/operator-sdk/internal/commands/operator-sdk/cmd/generate/internal"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
@@ -85,7 +84,7 @@ func OpenAPIGen() error {
 		return err
 	}
 
-	gvMap, err := genutil.ParseGroupVersions()
+	gvMap, err := parseGroupVersions()
 	if err != nil {
 		return fmt.Errorf("failed to parse group versions: (%v)", err)
 	}
@@ -97,7 +96,7 @@ func OpenAPIGen() error {
 	log.Infof("Running OpenAPI code-generation for Custom Resource group versions: [%v]\n", gvb.String())
 
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
-	fqApiStr := genutil.CreateFQApis(apisPkg, gvMap)
+	fqApiStr := createFQApis(apisPkg, gvMap)
 	fqApis := strings.Split(fqApiStr, ",")
 	if err := openAPIGen(binDir, fqApis); err != nil {
 		return err
@@ -140,7 +139,7 @@ func OpenAPIGen() error {
 
 func buildOpenAPIGenBinary(binDir, codegenSrcDir string) error {
 	genDirs := []string{"./cmd/openapi-gen"}
-	return genutil.BuildCodegenBinaries(genDirs, binDir, codegenSrcDir)
+	return buildCodegenBinaries(genDirs, binDir, codegenSrcDir)
 }
 
 func openAPIGen(binDir string, fqApis []string) (err error) {

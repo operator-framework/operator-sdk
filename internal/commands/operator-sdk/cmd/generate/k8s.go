@@ -21,7 +21,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	genutil "github.com/operator-framework/operator-sdk/internal/commands/operator-sdk/cmd/generate/internal"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
@@ -72,11 +71,18 @@ func K8sCodegen() error {
 	srcDir := filepath.Join(wd, "vendor", "k8s.io", "code-generator")
 	binDir := filepath.Join(wd, scaffold.BuildBinDir)
 
-	if err := buildCodegenBinaries(binDir, srcDir); err != nil {
+	genDirs := []string{
+		"./cmd/defaulter-gen",
+		"./cmd/client-gen",
+		"./cmd/lister-gen",
+		"./cmd/informer-gen",
+		"./cmd/deepcopy-gen",
+	}
+	if err := buildCodegenBinaries(genDirs, binDir, srcDir); err != nil {
 		return err
 	}
 
-	gvMap, err := genutil.ParseGroupVersions()
+	gvMap, err := parseGroupVersions()
 	if err != nil {
 		return fmt.Errorf("failed to parse group versions: (%v)", err)
 	}
@@ -99,21 +105,10 @@ func K8sCodegen() error {
 	return nil
 }
 
-func buildCodegenBinaries(binDir, codegenSrcDir string) error {
-	genDirs := []string{
-		"./cmd/defaulter-gen",
-		"./cmd/client-gen",
-		"./cmd/lister-gen",
-		"./cmd/informer-gen",
-		"./cmd/deepcopy-gen",
-	}
-	return genutil.BuildCodegenBinaries(genDirs, binDir, codegenSrcDir)
-}
-
 func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) (err error) {
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	args := []string{
-		"--input-dirs", genutil.CreateFQApis(apisPkg, gvMap),
+		"--input-dirs", createFQApis(apisPkg, gvMap),
 		"--output-file-base", "zz_generated.deepcopy",
 		"--bounding-dirs", apisPkg,
 	}
@@ -134,7 +129,7 @@ func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) (err error) 
 func defaulterGen(binDir, repoPkg string, gvMap map[string][]string) (err error) {
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	args := []string{
-		"--input-dirs", genutil.CreateFQApis(apisPkg, gvMap),
+		"--input-dirs", createFQApis(apisPkg, gvMap),
 		"--output-file-base", "zz_generated.defaults",
 	}
 	cmd := exec.Command(filepath.Join(binDir, "defaulter-gen"), args...)
