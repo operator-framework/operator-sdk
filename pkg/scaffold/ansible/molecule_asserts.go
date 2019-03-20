@@ -32,7 +32,7 @@ func (m *MoleculeVerify) GetInput() (input.Input, error) {
 	if m.Path == "" {
 		m.Path = filepath.Join(MoleculeDir, m.ScenarioName, MoleculeVerifyFile)
 	}
-	m.TemplateBody = moleculeDefaultVerifyAnsibleTmpl
+	m.TemplateBody = moleculeVerifyAnsibleTmpl
 
 	return m.Input, nil
 }
