@@ -132,7 +132,8 @@ Below is an example of what the JSON output of a test would look like:
     "pass": 1,
     "partial_pass": 1,
     "fail": 0,
-    "total_score": 71,
+    "total_tests": 2,
+    "total_score_percent": 71,
     "tests": [
         {
             "state": "partial_pass",
