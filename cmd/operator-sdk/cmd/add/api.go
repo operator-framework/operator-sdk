@@ -17,7 +17,7 @@ package add
 import (
 	"fmt"
 
-	"github.com/operator-framework/operator-sdk/internal/commands/operator-sdk/cmd/generate"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cmd/generate"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"

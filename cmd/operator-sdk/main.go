@@ -12,21 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package main
 
 import (
-	catalog "github.com/operator-framework/operator-sdk/internal/commands/operator-sdk/cmd/olm-catalog"
+	"os"
 
-	"github.com/spf13/cobra"
+	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
+	// to ensure that `run` and `up local` can make use of them.
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cmd"
 )
 
-func NewOLMCatalogCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "olm-catalog <olm-catalog-command>",
-		Short: "Invokes a olm-catalog command",
-		Long: `The operator-sdk olm-catalog command invokes a command to perform
-Catalog related actions.`,
+func main() {
+	if err := cmd.NewRootCmd().Execute(); err != nil {
+		os.Exit(1)
 	}
-	cmd.AddCommand(catalog.NewGenCSVCmd())
-	return cmd
 }

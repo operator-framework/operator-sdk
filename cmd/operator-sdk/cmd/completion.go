@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright © 2018 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,18 +15,17 @@
 package cmd
 
 import (
-	"github.com/operator-framework/operator-sdk/internal/commands/operator-sdk/cmd/generate"
-
 	"github.com/spf13/cobra"
+
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cmd/completion"
 )
 
-func NewGenerateCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "generate <generator>",
-		Short: "Invokes specific generator",
-		Long:  `The operator-sdk generate command invokes specific generator to generate code as needed.`,
+func NewCompletionCmd() *cobra.Command {
+	completionCmd := &cobra.Command{
+		Use:   "completion",
+		Short: "Generators for shell completions",
 	}
-	cmd.AddCommand(generate.NewGenerateK8SCmd())
-	cmd.AddCommand(generate.NewGenerateOpenAPICmd())
-	return cmd
+	completionCmd.AddCommand(completion.NewZshCmd())
+	completionCmd.AddCommand(completion.NewBashCmd())
+	return completionCmd
 }

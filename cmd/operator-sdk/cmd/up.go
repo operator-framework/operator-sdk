@@ -15,20 +15,19 @@
 package cmd
 
 import (
-	"github.com/operator-framework/operator-sdk/internal/commands/operator-sdk/cmd/add"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cmd/up"
 
 	"github.com/spf13/cobra"
 )
 
-func NewAddCmd() *cobra.Command {
+func NewUpCmd() *cobra.Command {
 	upCmd := &cobra.Command{
-		Use:   "add",
-		Short: "Adds a controller or resource to the project",
-		Long:  "",
+		Use:   "up",
+		Short: "Launches the operator",
+		Long: `The up command has subcommands that can launch the operator in various ways.
+`,
 	}
 
-	upCmd.AddCommand(add.NewApiCmd())
-	upCmd.AddCommand(add.NewControllerCmd())
-	upCmd.AddCommand(add.NewAddCRDCmd())
+	upCmd.AddCommand(up.NewLocalCmd())
 	return upCmd
 }

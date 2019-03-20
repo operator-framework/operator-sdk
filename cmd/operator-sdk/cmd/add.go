@@ -1,4 +1,4 @@
-// Copyright 2019 The Operator-SDK Authors
+// Copyright 2018 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,23 +15,20 @@
 package cmd
 
 import (
-	"github.com/operator-framework/operator-sdk/internal/commands/operator-sdk/cmd/run"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cmd/add"
 
 	"github.com/spf13/cobra"
 )
 
-// NewRunCmd returns a command that contains subcommands to run specific
-// operator types.
-func NewRunCmd() *cobra.Command {
-	runCmd := &cobra.Command{
-		Use:   "run",
-		Short: "Runs a generic operator",
-		Long: `Runs a generic operator. This is intended to be used when running
-in a Pod inside a cluster. Developers wanting to run their operator locally
-should use "up local" instead.`,
+func NewAddCmd() *cobra.Command {
+	upCmd := &cobra.Command{
+		Use:   "add",
+		Short: "Adds a controller or resource to the project",
+		Long:  "",
 	}
 
-	runCmd.AddCommand(run.RunAnsibleCmd())
-	runCmd.AddCommand(run.RunHelmCmd())
-	return runCmd
+	upCmd.AddCommand(add.NewApiCmd())
+	upCmd.AddCommand(add.NewControllerCmd())
+	upCmd.AddCommand(add.NewAddCRDCmd())
+	return upCmd
 }
