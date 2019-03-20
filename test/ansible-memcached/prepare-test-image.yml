@@ -1,7 +1,7 @@
   - name: Dump the dev image
     command: docker save -o /tmp/dev-operator.tar quay.io/operator-framework/ansible-operator:dev
   - name: Copy the image to the kind container
-    command: docker cp /tmp/dev-operator.tar kind-test-local:/dev-operator.tar
+    command: docker cp /tmp/dev-operator.tar kind-local:/dev-operator.tar
 
 - name: Make dev operator image available
   hosts: k8s

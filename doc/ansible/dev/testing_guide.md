@@ -25,7 +25,7 @@ To begin, you sould have:
     ```
 
 ### Molecule scenarios
-If you look into the `molecule` directory, you will see three directories (`default`, `test-local`, `test-cluster`).
+If you look into the `molecule` directory, you will see three directories (`default`, `local`, `test-cluster`).
 Each of those directories contains a set of files that together make up what is known as a molecule *scenario*.
 
 Our molecule scenarios have the following basic structure:
@@ -86,17 +86,17 @@ available before allowing testing to begin.
 
 `verify.yml` is an Ansible playbook contains Ansible assert tasks that will be run by after your role or playbook is imported.
 
-#### test-local
-The test-local scenario is a more full integration test of your operator. It brings up a Kubernetes-in-docker cluster, builds your Operator, deploys it
+#### local
+The local scenario is a more full integration test of your operator. It brings up a Kubernetes-in-docker cluster, builds your Operator, deploys it
 into the cluster, and then creates an instance of your CustomResource and runs your assertions to make sure the Operator responded properly. You can run
 this scenario with
-`molecule test -s local`, which is equivalent to `operator-sdk test local`, or with `molecule converge -s test-local`, which will leave the environment up
+`molecule test -s local`, which is equivalent to `operator-sdk test local`, or with `molecule converge -s local`, which will leave the environment up
 afterward.
 
 The scenario has the following structure:
 
 ```
-molecule/test-local
+molecule/local
 ├── molecule.yml
 ├── playbook.yml
 ├── prepare.yml
@@ -150,10 +150,10 @@ not to try and create or destroy anything when run.
 an instance of your Custom Resource (specified in `deploy/crds`), and then import the `verify.yml` from the `default` scenario.
 
 `verify.yml` is an Ansible playbook contains Ansible assert tasks that will be run by after your role or playbook is imported. If you'd
-like to import the assertions from the `test-local` scenario, you can add the following line to the `verify.yml` file:
+like to import the assertions from the `local` scenario, you can add the following line to the `verify.yml` file:
 
 ```yaml
-- import_playbook: '{{ playbook_dir }}/../test-local/verify.yml'
+- import_playbook: '{{ playbook_dir }}/../local/verify.yml'
 ```
 
 #### converge vs test

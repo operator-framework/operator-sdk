@@ -201,7 +201,7 @@ func doAnsibleScaffold() error {
 		&roleFiles,
 		&roleTemplates,
 		&ansible.RolesVarsMain{Resource: *resource},
-		&ansible.MoleculeTestLocalPlaybook{Resource: *resource},
+		&ansible.MoleculeLocalPlaybook{Resource: *resource},
 		&ansible.RolesDefaultsMain{Resource: *resource},
 		&ansible.RolesTasksMain{Resource: *resource},
 		&ansible.MoleculeDefaultMolecule{},
@@ -214,7 +214,7 @@ func doAnsibleScaffold() error {
 		},
 		&ansible.BuildTestFrameworkAnsibleTestScript{},
 		&ansible.MoleculeVerify{ScenarioName: "default"},
-		&ansible.MoleculeVerify{ScenarioName: "test-local"},
+		&ansible.MoleculeVerify{ScenarioName: "local"},
 		&ansible.MoleculeVerify{ScenarioName: "test-cluster"},
 		&ansible.MoleculeTestClusterPlaybook{Resource: *resource},
 		&ansible.RolesHandlersMain{Resource: *resource},
@@ -224,8 +224,8 @@ func doAnsibleScaffold() error {
 		},
 		&ansible.DeployOperator{IsClusterScoped: isClusterScoped},
 		&ansible.Travis{},
-		&ansible.MoleculeTestLocalMolecule{},
-		&ansible.MoleculeTestLocalPrepare{Resource: *resource},
+		&ansible.MoleculeLocalMolecule{},
+		&ansible.MoleculeLocalPrepare{Resource: *resource},
 	)
 	if err != nil {
 		return fmt.Errorf("new ansible scaffold failed: (%v)", err)

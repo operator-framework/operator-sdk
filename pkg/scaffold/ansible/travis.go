@@ -38,5 +38,5 @@ language: python
 install:
   - pip install docker molecule openshift
 script:
-  - molecule test -s test-local
+  - molecule test -s local
 `

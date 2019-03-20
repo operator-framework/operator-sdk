@@ -61,7 +61,7 @@
         assert:
           that: lookup('k8s', kind='Service', api_version='v1', namespace=namespace, resource_name='test-service')
 
-      - when: molecule_yml.scenario.name == "test-local"
+      - when: molecule_yml.scenario.name == "local"
         block:
         - name: Restart the operator by killing the pod
           k8s:
@@ -146,7 +146,7 @@
           ansible_connection: kubectl
           ansible_remote_tmp: /tmp/ansible
           kubectl_namespace: '{{ namespace }}'
-        when: molecule_yml.scenario.name == "test-local"
+        when: molecule_yml.scenario.name == "local"
         vars:
           pod: '{{ q("k8s", api_version="v1", kind="Pod", namespace=namespace, label_selector="name=memcached-operator").0 }}'
       rescue:

@@ -20,23 +20,23 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-const MoleculeTestLocalMoleculeFile = "molecule.yml"
+const MoleculeLocalMoleculeFile = "molecule.yml"
 
-type MoleculeTestLocalMolecule struct {
+type MoleculeLocalMolecule struct {
 	input.Input
 }
 
 // GetInput - gets the input
-func (m *MoleculeTestLocalMolecule) GetInput() (input.Input, error) {
+func (m *MoleculeLocalMolecule) GetInput() (input.Input, error) {
 	if m.Path == "" {
-		m.Path = filepath.Join(MoleculeTestLocalDir, MoleculeTestLocalMoleculeFile)
+		m.Path = filepath.Join(MoleculeLocalDir, MoleculeLocalMoleculeFile)
 	}
-	m.TemplateBody = moleculeTestLocalMoleculeAnsibleTmpl
+	m.TemplateBody = moleculeLocalMoleculeAnsibleTmpl
 
 	return m.Input, nil
 }
 
-const moleculeTestLocalMoleculeAnsibleTmpl = `---
+const moleculeLocalMoleculeAnsibleTmpl = `---
 dependency:
   name: galaxy
 driver:
@@ -45,17 +45,17 @@ lint:
   name: yamllint
   enabled: False
 platforms:
-- name: kind-test-local
+- name: kind-${MOLECULE_SCENARIO_NAME}
   groups:
   - k8s
-  image: bsycorp/kind:latest-1.12
+  image: ${KIND_IMAGE:-bsycorp/kind:latest-1.12}
   privileged: True
   override_command: no
   exposed_ports:
     - 8443/tcp
     - 10080/tcp
   published_ports:
-    - 0.0.0.0:${TEST_CLUSTER_PORT:-10443}:8443/tcp
+    - 0.0.0.0:${TEST_CLUSTER_PORT:-14443}:8443/tcp
   pre_build_image: yes
   volumes:
     - ${MOLECULE_PROJECT_DIRECTORY}:/build:Z
@@ -70,23 +70,12 @@ provisioner:
       all:
         namespace: ${TEST_NAMESPACE:-osdk-test}
   env:
-    K8S_AUTH_KUBECONFIG: /tmp/molecule/kind-test-local/kubeconfig
-    KUBECONFIG: /tmp/molecule/kind-test-local/kubeconfig
+    K8S_AUTH_KUBECONFIG: /tmp/molecule/kind-${MOLECULE_SCENARIO_NAME}-local/kubeconfig
+    KUBECONFIG: /tmp/molecule/kind-${MOLECULE_SCENARIO_NAME}/kubeconfig
     ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/roles
-    KIND_PORT: '${TEST_CLUSTER_PORT:-10443}'
+    KIND_PORT: '${TEST_CLUSTER_PORT:-14443}'
 scenario:
-  name: test-local
-  test_sequence:
-    - lint
-    - destroy
-    - dependency
-    - syntax
-    - create
-    - prepare
-    - converge
-    - side_effect
-    - verify
-    - destroy
+  name: local
 verifier:
   name: testinfra
   lint:

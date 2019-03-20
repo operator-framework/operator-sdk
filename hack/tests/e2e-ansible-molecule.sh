@@ -30,11 +30,11 @@ operator-sdk new memcached-operator --api-version=ansible.example.com/v1alpha1 -
 cp "$ROOTDIR/test/ansible-memcached/tasks.yml" memcached-operator/roles/memcached/tasks/main.yml
 cp "$ROOTDIR/test/ansible-memcached/defaults.yml" memcached-operator/roles/memcached/defaults/main.yml
 cp "$ROOTDIR/test/ansible-memcached/verify.yml"  memcached-operator/molecule/default/verify.yml
-cp "$ROOTDIR/test/ansible-memcached/molecule.yml"  memcached-operator/molecule/test-local/molecule.yml
+cp "$ROOTDIR/test/ansible-memcached/molecule.yml"  memcached-operator/molecule/local/molecule.yml
 cp -a "$ROOTDIR/test/ansible-memcached/memfin" memcached-operator/roles/
 cp -a "$ROOTDIR/test/ansible-memcached/secret" memcached-operator/roles/
 cat "$ROOTDIR/test/ansible-memcached/watches-finalizer.yaml" >> memcached-operator/watches.yaml
-cat "$ROOTDIR/test/ansible-memcached/prepare-test-image.yml" >> memcached-operator/molecule/test-local/prepare.yml
+cat "$ROOTDIR/test/ansible-memcached/prepare-test-image.yml" >> memcached-operator/molecule/local/prepare.yml
 # Append v1 kind to watches to test watching already registered GVK
 cat "$ROOTDIR/test/ansible-memcached/watches-v1-kind.yaml" >> memcached-operator/watches.yaml
 

@@ -24,5 +24,5 @@ const (
 	MoleculeDir            = "molecule"
 	MoleculeTestClusterDir = MoleculeDir + filePathSep + "test-cluster"
 	MoleculeDefaultDir     = MoleculeDir + filePathSep + "default"
-	MoleculeTestLocalDir   = MoleculeDir + filePathSep + "test-local"
+	MoleculeLocalDir       = MoleculeDir + filePathSep + "local"
 )

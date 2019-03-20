@@ -93,7 +93,7 @@ func testLocalAnsibleFunc(cmd *cobra.Command, args []string) error {
 	if tlConfig.debug {
 		testArgs = append(testArgs, "--debug")
 	}
-	testArgs = append(testArgs, "test", "-s", "test-local")
+	testArgs = append(testArgs, "test", "-s", "local")
 
 	if tlConfig.moleculeTestFlags != "" {
 		testArgs = append(testArgs, strings.Split(tlConfig.moleculeTestFlags, " ")...)

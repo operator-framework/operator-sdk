@@ -21,24 +21,24 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-const MoleculeTestLocalPrepareFile = "prepare.yml"
+const MoleculeLocalPrepareFile = "prepare.yml"
 
-type MoleculeTestLocalPrepare struct {
+type MoleculeLocalPrepare struct {
 	input.Input
 	Resource scaffold.Resource
 }
 
 // GetInput - gets the input
-func (m *MoleculeTestLocalPrepare) GetInput() (input.Input, error) {
+func (m *MoleculeLocalPrepare) GetInput() (input.Input, error) {
 	if m.Path == "" {
-		m.Path = filepath.Join(MoleculeTestLocalDir, MoleculeTestLocalPrepareFile)
+		m.Path = filepath.Join(MoleculeLocalDir, MoleculeLocalPrepareFile)
 	}
-	m.TemplateBody = moleculeTestLocalPrepareAnsibleTmpl
+	m.TemplateBody = moleculeLocalPrepareAnsibleTmpl
 
 	return m.Input, nil
 }
 
-const moleculeTestLocalPrepareAnsibleTmpl = `---
+const moleculeLocalPrepareAnsibleTmpl = `---
 - import_playbook: ../default/prepare.yml
 
 - name: Prepare operator resources

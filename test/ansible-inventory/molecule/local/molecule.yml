@@ -7,7 +7,7 @@ lint:
   name: yamllint
   enabled: False
 platforms:
-- name: kind-test-local
+- name: kind-${MOLECULE_SCENARIO_NAME}
   groups:
   - k8s
   image: bsycorp/kind:latest-1.12
@@ -32,12 +32,12 @@ provisioner:
       all:
         namespace: ${TEST_NAMESPACE:-osdk-test}
   env:
-    K8S_AUTH_KUBECONFIG: /tmp/molecule/kind-test-local/kubeconfig
-    KUBECONFIG: /tmp/molecule/kind-test-local/kubeconfig
+    K8S_AUTH_KUBECONFIG: /tmp/molecule/kind-${MOLECULE_SCENARIO_NAME}/kubeconfig
+    KUBECONFIG: /tmp/molecule/kind-${MOLECULE_SCENARIO_NAME}/kubeconfig
     ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/roles
     KIND_PORT: '${TEST_CLUSTER_PORT:-10443}'
 scenario:
-  name: test-local
+  name: local
   test_sequence:
     - lint
     - destroy
