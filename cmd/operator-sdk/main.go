@@ -19,13 +19,46 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that `run` and `up local` can make use of them.
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/add"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/migrate"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/new"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olmcatalog"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/printdeps"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/run"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/scorecard"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/test"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/up"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
+	osdkversion "github.com/operator-framework/operator-sdk/version"
+	"github.com/spf13/cobra"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cmd"
 )
 
 func main() {
-	if err := cmd.NewRootCmd().Execute(); err != nil {
+	root := &cobra.Command{
+		Use:     "operator-sdk",
+		Short:   "An SDK for building operators with ease",
+		Version: osdkversion.Version,
+	}
+
+	root.AddCommand(new.NewCmd())
+	root.AddCommand(add.NewCmd())
+	root.AddCommand(build.NewCmd())
+	root.AddCommand(generate.NewCmd())
+	root.AddCommand(up.NewCmd())
+	root.AddCommand(completion.NewCmd())
+	root.AddCommand(test.NewCmd())
+	root.AddCommand(scorecard.NewCmd())
+	root.AddCommand(printdeps.NewCmd())
+	root.AddCommand(migrate.NewCmd())
+	root.AddCommand(run.NewCmd())
+	root.AddCommand(olmcatalog.NewCmd())
+	root.AddCommand(version.NewCmd())
+
+	if err := root.Execute(); err != nil {
 		os.Exit(1)
 	}
 }
