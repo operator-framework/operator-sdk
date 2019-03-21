@@ -17,7 +17,7 @@ package add
 import (
 	"fmt"
 
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
@@ -122,12 +122,12 @@ func apiRun(cmd *cobra.Command, args []string) error {
 	}
 
 	// Run k8s codegen for deepcopy
-	if err := generate.K8sCodegen(); err != nil {
+	if err := genutil.K8sCodegen(); err != nil {
 		return err
 	}
 
 	// Generate a validation spec for the new CRD.
-	if err := generate.OpenAPIGen(); err != nil {
+	if err := genutil.OpenAPIGen(); err != nil {
 		return err
 	}
 

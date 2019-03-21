@@ -16,18 +16,8 @@ package generate
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
 
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
-
-	log "github.com/sirupsen/logrus"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
 	"github.com/spf13/cobra"
 )
 
@@ -68,114 +58,5 @@ func openAPIFunc(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 
-	return OpenAPIGen()
-}
-
-// OpenAPIGen generates OpenAPI validation specs for all CRD's in dirs.
-func OpenAPIGen() error {
-	projutil.MustInProjectRoot()
-
-	absProjectPath := projutil.MustGetwd()
-	repoPkg := projutil.CheckAndGetProjectGoPkg()
-	srcDir := filepath.Join(absProjectPath, "vendor", "k8s.io", "kube-openapi")
-	binDir := filepath.Join(absProjectPath, scaffold.BuildBinDir)
-
-	if err := buildOpenAPIGenBinary(binDir, srcDir); err != nil {
-		return err
-	}
-
-	gvMap, err := parseGroupVersions()
-	if err != nil {
-		return fmt.Errorf("failed to parse group versions: (%v)", err)
-	}
-	gvb := &strings.Builder{}
-	for g, vs := range gvMap {
-		gvb.WriteString(fmt.Sprintf("%s:%v, ", g, vs))
-	}
-
-	log.Infof("Running OpenAPI code-generation for Custom Resource group versions: [%v]\n", gvb.String())
-
-	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
-	fqApiStr := createFQApis(apisPkg, gvMap)
-	fqApis := strings.Split(fqApiStr, ",")
-	if err := openAPIGen(binDir, fqApis); err != nil {
-		return err
-	}
-
-	s := &scaffold.Scaffold{}
-	cfg := &input.Config{
-		Repo:           repoPkg,
-		AbsProjectPath: absProjectPath,
-		ProjectName:    filepath.Base(absProjectPath),
-	}
-	crds, err := k8sutil.GetCRDs(scaffold.CRDsDir)
-	if err != nil {
-		return err
-	}
-	for _, crd := range crds {
-		g, v, k := crd.Spec.Group, crd.Spec.Version, crd.Spec.Names.Kind
-		if v == "" {
-			if len(crd.Spec.Versions) != 0 {
-				v = crd.Spec.Versions[0].Name
-			} else {
-				return fmt.Errorf("crd of group %s kind %s has no version", g, k)
-			}
-		}
-		r, err := scaffold.NewResource(g+"/"+v, k)
-		if err != nil {
-			return err
-		}
-		err = s.Execute(cfg,
-			&scaffold.CRD{Resource: r, IsOperatorGo: projutil.IsOperatorGo()},
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	log.Info("Code-generation complete.")
-	return nil
-}
-
-func buildOpenAPIGenBinary(binDir, codegenSrcDir string) error {
-	genDirs := []string{"./cmd/openapi-gen"}
-	return buildCodegenBinaries(genDirs, binDir, codegenSrcDir)
-}
-
-func openAPIGen(binDir string, fqApis []string) (err error) {
-	if headerFile == "" {
-		f, err := ioutil.TempFile(scaffold.BuildBinDir, "")
-		if err != nil {
-			return err
-		}
-		headerFile = f.Name()
-		defer func() {
-			if err = os.RemoveAll(headerFile); err != nil {
-				log.Error(err)
-			}
-		}()
-	}
-	cgPath := filepath.Join(binDir, "openapi-gen")
-	for _, fqApi := range fqApis {
-		args := []string{
-			"--input-dirs", fqApi,
-			"--output-package", fqApi,
-			"--output-file-base", "zz_generated.openapi",
-			// openapi-gen requires a boilerplate file. Either use header or an
-			// empty file if header is empty.
-			"--go-header-file", headerFile,
-		}
-		cmd := exec.Command(cgPath, args...)
-		if projutil.IsGoVerbose() {
-			err = projutil.ExecCmd(cmd)
-		} else {
-			cmd.Stdout = ioutil.Discard
-			cmd.Stderr = ioutil.Discard
-			err = cmd.Run()
-		}
-		if err != nil {
-			return fmt.Errorf("failed to perform openapi code-generation: %v", err)
-		}
-	}
-	return nil
+	return genutil.OpenAPIGenWithHeader(headerFile)
 }

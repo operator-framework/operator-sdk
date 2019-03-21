@@ -16,15 +16,10 @@ package generate
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os/exec"
-	"path/filepath"
-	"strings"
 
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -59,89 +54,5 @@ func k8sFunc(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return K8sCodegen()
-}
-
-// K8sCodegen performs deepcopy code-generation for all custom resources under pkg/apis
-func K8sCodegen() error {
-	projutil.MustInProjectRoot()
-
-	wd := projutil.MustGetwd()
-	repoPkg := projutil.CheckAndGetProjectGoPkg()
-	srcDir := filepath.Join(wd, "vendor", "k8s.io", "code-generator")
-	binDir := filepath.Join(wd, scaffold.BuildBinDir)
-
-	genDirs := []string{
-		"./cmd/defaulter-gen",
-		"./cmd/client-gen",
-		"./cmd/lister-gen",
-		"./cmd/informer-gen",
-		"./cmd/deepcopy-gen",
-	}
-	if err := buildCodegenBinaries(genDirs, binDir, srcDir); err != nil {
-		return err
-	}
-
-	gvMap, err := parseGroupVersions()
-	if err != nil {
-		return fmt.Errorf("failed to parse group versions: (%v)", err)
-	}
-	gvb := &strings.Builder{}
-	for g, vs := range gvMap {
-		gvb.WriteString(fmt.Sprintf("%s:%v, ", g, vs))
-	}
-
-	log.Infof("Running deepcopy code-generation for Custom Resource group versions: [%v]\n", gvb.String())
-
-	if err := deepcopyGen(binDir, repoPkg, gvMap); err != nil {
-		return err
-	}
-
-	if err = defaulterGen(binDir, repoPkg, gvMap); err != nil {
-		return err
-	}
-
-	log.Info("Code-generation complete.")
-	return nil
-}
-
-func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) (err error) {
-	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
-	args := []string{
-		"--input-dirs", createFQApis(apisPkg, gvMap),
-		"--output-file-base", "zz_generated.deepcopy",
-		"--bounding-dirs", apisPkg,
-	}
-	cmd := exec.Command(filepath.Join(binDir, "deepcopy-gen"), args...)
-	if projutil.IsGoVerbose() {
-		err = projutil.ExecCmd(cmd)
-	} else {
-		cmd.Stdout = ioutil.Discard
-		cmd.Stderr = ioutil.Discard
-		err = cmd.Run()
-	}
-	if err != nil {
-		return fmt.Errorf("failed to perform deepcopy code-generation: %v", err)
-	}
-	return nil
-}
-
-func defaulterGen(binDir, repoPkg string, gvMap map[string][]string) (err error) {
-	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
-	args := []string{
-		"--input-dirs", createFQApis(apisPkg, gvMap),
-		"--output-file-base", "zz_generated.defaults",
-	}
-	cmd := exec.Command(filepath.Join(binDir, "defaulter-gen"), args...)
-	if projutil.IsGoVerbose() {
-		err = projutil.ExecCmd(cmd)
-	} else {
-		cmd.Stdout = ioutil.Discard
-		cmd.Stderr = ioutil.Discard
-		err = cmd.Run()
-	}
-	if err != nil {
-		return fmt.Errorf("failed to perform defaulter code-generation: %v", err)
-	}
-	return nil
+	return genutil.K8sCodegen()
 }
