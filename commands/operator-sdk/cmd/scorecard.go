@@ -39,7 +39,7 @@ type scorecardConfig struct {
 	tenantTests        bool
 	namespacedManifest string
 	globalManifest     string
-	crManifest         string
+	crManifest         []string
 	proxyImage         string
 	proxyPullPolicy    string
 	crdsDir            string
@@ -68,7 +68,7 @@ func NewScorecardCmd() *cobra.Command {
 	scorecardCmd.Flags().BoolVar(&scConf.tenantTests, scorecard.TenantTestsOpt, false, "Enable good tenant checks")
 	scorecardCmd.Flags().StringVar(&scConf.namespacedManifest, scorecard.NamespacedManifestOpt, "", "Path to manifest for namespaced resources (e.g. RBAC and Operator manifest)")
 	scorecardCmd.Flags().StringVar(&scConf.globalManifest, scorecard.GlobalManifestOpt, "", "Path to manifest for Global resources (e.g. CRD manifests)")
-	scorecardCmd.Flags().StringVar(&scConf.crManifest, scorecard.CRManifestOpt, "", "Path to manifest for Custom Resource (required)")
+	scorecardCmd.Flags().StringSliceVar(&scConf.crManifest, scorecard.CRManifestOpt, nil, "Path to manifest for Custom Resource (required) (specify flag multiple times for multiple CRs)")
 	scorecardCmd.Flags().StringVar(&scConf.proxyImage, scorecard.ProxyImageOpt, fmt.Sprintf("quay.io/operator-framework/scorecard-proxy:%s", strings.TrimSuffix(version.Version, "+git")), "Image name for scorecard proxy")
 	scorecardCmd.Flags().StringVar(&scConf.proxyPullPolicy, scorecard.ProxyPullPolicyOpt, "Always", "Pull policy for scorecard proxy image")
 	scorecardCmd.Flags().StringVar(&scConf.crdsDir, "crds-dir", scaffold.CRDsDir, "Directory containing CRDs (all CRD manifest filenames must have the suffix 'crd.yaml')")

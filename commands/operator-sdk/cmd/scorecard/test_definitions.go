@@ -16,6 +16,7 @@ package scorecard
 
 import (
 	"context"
+	"fmt"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	v1 "k8s.io/api/core/v1"
@@ -264,22 +265,54 @@ func NewOLMTestSuite(conf OLMTestConfig) *TestSuite {
 // Helper functions
 
 // ResultsPassFail will be used when multiple CRs are supported
-func ResultsPassFail(results []TestResult) (earned, max int) {
-	for _, result := range results {
-		if result.EarnedPoints != result.MaximumPoints {
-			return 0, 1
-		}
+func ResultsPassFail(results []*TestResult) (*TestResult, error) {
+	var name string
+	finalResult := TestResult{}
+	if len(results) > 0 {
+		name = results[0].Test.GetName()
+		// all results have the same test
+		finalResult.Test = results[0].Test
+		finalResult.MaximumPoints = 1
+		finalResult.EarnedPoints = 1
 	}
-	return 1, 1
+	for _, result := range results {
+		if result.Test.IsCumulative() {
+			return nil, fmt.Errorf("cumulative test passed to ResultsPassFail: name (%s)", result.Test.GetName())
+		}
+		if result.Test.GetName() != name {
+			return nil, fmt.Errorf("test name mismatch in ResultsPassFail: %s != %s", result.Test.GetName(), name)
+		}
+		if result.EarnedPoints != result.MaximumPoints {
+			finalResult.EarnedPoints = 0
+		}
+		finalResult.Suggestions = append(finalResult.Suggestions, result.Suggestions...)
+		finalResult.Errors = append(finalResult.Errors, result.Errors...)
+	}
+	return &finalResult, nil
 }
 
 // ResultsCumulative will be used when multiple CRs are supported
-func ResultsCumulative(results []TestResult) (earned, max int) {
-	for _, result := range results {
-		earned += result.EarnedPoints
-		max += result.MaximumPoints
+func ResultsCumulative(results []*TestResult) (*TestResult, error) {
+	var name string
+	finalResult := TestResult{}
+	if len(results) > 0 {
+		name = results[0].Test.GetName()
+		// all results have the same test
+		finalResult.Test = results[0].Test
 	}
-	return earned, max
+	for _, result := range results {
+		if !result.Test.IsCumulative() {
+			return nil, fmt.Errorf("non-cumulative test passed to ResultsCumulative: name (%s)", result.Test.GetName())
+		}
+		if result.Test.GetName() != name {
+			return nil, fmt.Errorf("test name mismatch in ResultsCumulative: %s != %s", result.Test.GetName(), name)
+		}
+		finalResult.EarnedPoints += result.EarnedPoints
+		finalResult.MaximumPoints += result.MaximumPoints
+		finalResult.Suggestions = append(finalResult.Suggestions, result.Suggestions...)
+		finalResult.Errors = append(finalResult.Errors, result.Errors...)
+	}
+	return &finalResult, nil
 }
 
 // AddTest adds a new Test to a TestSuite along with a relative weight for the new Test
@@ -321,4 +354,41 @@ func NewTestSuite(name, description string) *TestSuite {
 		},
 		Weights: make(map[string]float64),
 	}
+}
+
+// MergeSuites takes an array of TestSuites and combines all suites with the same name
+func MergeSuites(suites []*TestSuite) ([]*TestSuite, error) {
+	suiteMap := make(map[string][]*TestSuite)
+	for _, suite := range suites {
+		suiteMap[suite.GetName()] = append(suiteMap[suite.GetName()], suite)
+	}
+	mergedSuites := []*TestSuite{}
+	for _, suiteSlice := range suiteMap {
+		testMap := make(map[string][]*TestResult)
+		for _, suite := range suiteSlice {
+			for _, result := range suite.TestResults {
+				testMap[result.Test.GetName()] = append(testMap[result.Test.GetName()], result)
+			}
+		}
+		mergedTestResults := []*TestResult{}
+		for _, testSlice := range testMap {
+			if testSlice[0].Test.IsCumulative() {
+				newResult, err := ResultsCumulative(testSlice)
+				if err != nil {
+					return nil, fmt.Errorf("failed to combine test results: %s", err)
+				}
+				mergedTestResults = append(mergedTestResults, newResult)
+			} else {
+				newResult, err := ResultsPassFail(testSlice)
+				if err != nil {
+					return nil, fmt.Errorf("failed to combine test results: %s", err)
+				}
+				mergedTestResults = append(mergedTestResults, newResult)
+			}
+		}
+		newSuite := suiteSlice[0]
+		newSuite.TestResults = mergedTestResults
+		mergedSuites = append(mergedSuites, newSuite)
+	}
+	return mergedSuites, nil
 }
