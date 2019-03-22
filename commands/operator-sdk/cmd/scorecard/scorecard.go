@@ -250,7 +250,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	dupMap := make(map[schema.GroupVersionKind]bool)
 	for _, gvk := range gvks {
 		if _, ok := dupMap[gvk]; ok {
-			log.Warnf("duplicate gvks in CR list detected (%s); results may be inaccurate", gvk)
+			log.Warnf("Duplicate gvks in CR list detected (%s); results may be inaccurate", gvk)
 		}
 		dupMap[gvk] = true
 	}
