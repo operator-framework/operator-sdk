@@ -225,12 +225,17 @@ func (u *CSVCustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterSe
 			csvDesc.Name = uDesc.Name
 			csvDesc.Version = uDesc.Version
 			csvDesc.Kind = uDesc.Kind
+			// Description comes from code comments so should always be updated.
 			csvDesc.Description = uDesc.Description
 			if csvDesc.DisplayName == "" {
-				csvDesc.DisplayName = getDisplayName(uDesc.Kind)
+				csvDesc.DisplayName = uDesc.DisplayName
 			}
-			csvDesc.SpecDescriptors = uDesc.SpecDescriptors
-			csvDesc.StatusDescriptors = uDesc.StatusDescriptors
+			if len(csvDesc.SpecDescriptors) == 0 {
+				csvDesc.SpecDescriptors = uDesc.SpecDescriptors
+			}
+			if len(csvDesc.StatusDescriptors) == 0 {
+				csvDesc.StatusDescriptors = uDesc.StatusDescriptors
+			}
 			du.Owned[i] = csvDesc
 		}
 	}
