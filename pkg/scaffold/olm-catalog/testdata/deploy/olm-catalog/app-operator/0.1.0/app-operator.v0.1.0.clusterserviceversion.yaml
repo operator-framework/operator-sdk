@@ -84,6 +84,14 @@ spec:
           - '*'
           verbs:
           - '*'
+        - apiGroups:
+          - apps
+          resourceNames:
+          - app-operator
+          resources:
+          - deployments/finalizers
+          verbs:
+          - update
         serviceAccountName: app-operator
     strategy: deployment
   installModes:

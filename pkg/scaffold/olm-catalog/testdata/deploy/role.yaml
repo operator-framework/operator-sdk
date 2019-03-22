@@ -30,4 +30,12 @@ rules:
   - '*'
   verbs:
   - '*'
+- apiGroups:
+  - apps
+  resources:
+  - deployments/finalizers
+  resourceNames:
+  - app-operator
+  verbs:
+  - "update"
 serviceAccountName: app-operator

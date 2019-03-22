@@ -35,6 +35,12 @@ To build the binary and run all tests (assuming you have a correctly configured 
 you can simple run:
 
 ```sh
+$ make test-ci
+```
+
+If you simply want to run the unit tests, you can run:
+
+```sh
 $ make test
 ```
 

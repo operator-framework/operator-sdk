@@ -117,7 +117,7 @@ func MainEntry(m *testing.M) {
 			log.Infof("Local operator stdout: %s", string(localCmdOutBuf.Bytes()))
 			log.Infof("Local operator stderr: %s", string(localCmdErrBuf.Bytes()))
 		}
-		ctx.CleanupNoT()
+		ctx.Cleanup()
 		os.Exit(exitCode)
 	}()
 	// create crd

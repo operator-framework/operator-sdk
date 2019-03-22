@@ -191,4 +191,12 @@ rules:
   verbs:
   - "get"
   - "create"
+- apiGroups:
+  - apps
+  resources:
+  - deployments/finalizers
+  resourceNames:
+  - {{ .ProjectName }}
+  verbs:
+  - "update"
 `

@@ -38,6 +38,9 @@ const mainTmpl = `package main
 import (
 	"os"
 
+	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	"github.com/operator-framework/operator-sdk/pkg/ansible"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"

@@ -35,7 +35,8 @@ test_operator() {
     if ! timeout 1m kubectl rollout status deployment/memcached-operator;
     then
         echo FAIL: operator failed to run
-        kubectl logs deployment/memcached-operator
+        kubectl logs deployment/memcached-operator -c operator
+        kubectl logs deployment/memcached-operator -c ansible
         exit 1
     fi
 
@@ -44,7 +45,8 @@ test_operator() {
     if ! timeout 20s bash -c -- 'until kubectl get deployment -l app=memcached | grep memcached; do sleep 1; done';
     then
         echo FAIL: operator failed to create memcached Deployment
-        kubectl logs deployment/memcached-operator
+        kubectl logs deployment/memcached-operator -c operator
+        kubectl logs deployment/memcached-operator -c ansible
         exit 1
     fi
     memcached_deployment=$(kubectl get deployment -l app=memcached -o jsonpath="{..metadata.name}")
@@ -65,7 +67,8 @@ test_operator() {
     if kubectl get configmap deleteme 2> /dev/null;
     then
         echo FAIL: the finalizer did not delete the configmap
-        kubectl logs deployment/memcached-operator
+        kubectl logs deployment/memcached-operator -c operator
+        kubectl logs deployment/memcached-operator -c ansible
         exit 1
     fi
 
@@ -73,15 +76,17 @@ test_operator() {
     if ! timeout 20s bash -c -- "while kubectl get deployment ${memcached_deployment} 2> /dev/null; do sleep 1; done";
     then
         echo FAIL: memcached Deployment did not get garbage collected
-        kubectl logs deployment/memcached-operator
+        kubectl logs deployment/memcached-operator -c operator
+        kubectl logs deployment/memcached-operator -c ansible
         exit 1
     fi
 
     # Ensure that no errors appear in the log
-    if kubectl logs deployment/memcached-operator | grep -i error;
+    if kubectl logs deployment/memcached-operator -c operator | grep -i error;
     then
         echo FAIL: the operator log includes errors
-        kubectl logs deployment/memcached-operator
+        kubectl logs deployment/memcached-operator -c operator
+        kubectl logs deployment/memcached-operator -c ansible
         exit 1
     fi
 }
