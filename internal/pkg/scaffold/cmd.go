@@ -45,17 +45,20 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 
 	"{{ .Repo }}/pkg/apis"
 	"{{ .Repo }}/pkg/controller"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/spf13/pflag"
+	kuberuntime "k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -64,8 +67,9 @@ import (
 
 // Change below variables to serve metrics on different host or port.
 var (
-    metricsHost = "0.0.0.0"
-    metricsPort int32 = 8383
+	metricsHost               = "0.0.0.0"
+	metricsPort         int32 = 8383
+	operatorMetricsPort int32 = 8686
 )
 var log = logf.Log.WithName("cmd")
 
@@ -112,7 +116,6 @@ func main() {
 	}
 	
 	ctx := context.TODO()
-
 	// Become the leader before proceeding
 	err = leader.Become(ctx, "{{ .ProjectName }}-lock")
 	if err != nil {
@@ -145,6 +148,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	serveCRMetrics(cfg)
+
 	// Create Service object to expose the metrics port.
 	_, err = metrics.ExposeMetricsPort(ctx, metricsPort)
 	if err != nil {
@@ -157,6 +162,16 @@ func main() {
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
 		log.Error(err, "Manager exited non-zero")
 		os.Exit(1)
+	}
+}
+
+func serveCRMetrics(cfg *rest.Config) {
+	operatorSpecificScheme := kuberuntime.NewScheme()
+	apis.AddToScheme(operatorSpecificScheme)
+	filteredScheme := kubemetrics.FilterOutMetaTypes(operatorSpecificScheme)
+	err := kubemetrics.ServeCRMetrics(cfg, []string{}, filteredScheme, metricsHost, operatorMetricsPort)
+	if err != nil {
+		log.Error(err, "Could not serve Custom Resource metrics")
 	}
 }
 `
