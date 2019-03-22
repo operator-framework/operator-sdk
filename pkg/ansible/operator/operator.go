@@ -16,8 +16,14 @@ package operator
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
+	"os"
+	"strconv"
+	"strings"
 	"time"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/controller"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/flags"
@@ -43,10 +49,20 @@ func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags, cM
 	c := signals.SetupSignalHandler()
 
 	for gvk, runner := range watches {
+
+		// if the WORKER_* environment variable is set, use that value.
+		// Otherwise, use the value from the CLI. This is definitely
+		// counter-intuitive but it allows the operator admin adjust the
+		// number of workers based on their cluster resources. While the
+		// author may use the CLI option to specify a suggested
+		// configuration for the operator.
+		maxWorkers := getMaxWorkers(gvk, f.MaxWorkers)
+
 		o := controller.Options{
 			GVK:          gvk,
 			Runner:       runner,
 			ManageStatus: runner.GetManageStatus(),
+			MaxWorkers:   maxWorkers,
 		}
 		applyFlagsToControllerOptions(f, &o)
 		if d, ok := runner.GetReconcilePeriod(); ok {
@@ -65,6 +81,24 @@ func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags, cM
 		})
 	}
 	done <- mgr.Start(c)
+}
+
+func getMaxWorkers(gvk schema.GroupVersionKind, defvalue int) int {
+	envvar := formatEnvVar(gvk.Kind, gvk.Group)
+	maxWorkers, err := strconv.Atoi(os.Getenv(envvar))
+	if err != nil {
+		// we don't care why we couldn't parse it just use one.
+		// maybe we should log that we are defaulting to 1.
+		logf.Log.WithName("manager").V(0).Info(fmt.Sprintf("Using default value for workers %d", defvalue))
+		return defvalue
+	}
+
+	return maxWorkers
+}
+
+func formatEnvVar(kind string, group string) string {
+	envvar := fmt.Sprintf("WORKER_%s_%s", kind, group)
+	return strings.ToUpper(strings.Replace(envvar, ".", "_", -1))
 }
 
 func applyFlagsToControllerOptions(f *flags.AnsibleOperatorFlags, o *controller.Options) {

@@ -65,7 +65,6 @@ func TestCRDGoProject(t *testing.T) {
 const crdGoExp = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  creationTimestamp: null
   name: memcacheds.cache.example.com
 spec:
   group: cache.example.com
@@ -81,14 +80,21 @@ spec:
     openAPIV3Schema:
       properties:
         apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
           type: string
         kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
           type: string
         metadata:
           type: object
         spec:
           properties:
             size:
+              description: Size is the size of the memcached deployment
               format: int32
               type: integer
           required:
@@ -97,6 +103,7 @@ spec:
         status:
           properties:
             nodes:
+              description: Nodes are the names of the memcached pods
               items:
                 type: string
               type: array
@@ -130,7 +137,6 @@ func TestCRDNonGoProject(t *testing.T) {
 const crdNonGoExp = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  creationTimestamp: null
   name: appservices.app.example.com
 spec:
   group: app.example.com

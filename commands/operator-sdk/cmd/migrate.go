@@ -91,6 +91,7 @@ func migrateAnsible() error {
 		&ansible.Entrypoint{},
 		&ansible.UserSetup{},
 		&ansible.K8sStatus{},
+		&ansible.AoLogs{},
 	)
 	if err != nil {
 		return fmt.Errorf("migrate ansible scaffold failed: (%v)", err)

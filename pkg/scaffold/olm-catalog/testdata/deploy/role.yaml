@@ -1,7 +1,6 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  creationTimestamp: null
   name: app-operator
 rules:
 - apiGroups:
@@ -31,4 +30,12 @@ rules:
   - '*'
   verbs:
   - '*'
+- apiGroups:
+  - apps
+  resources:
+  - deployments/finalizers
+  resourceNames:
+  - app-operator
+  verbs:
+  - "update"
 serviceAccountName: app-operator

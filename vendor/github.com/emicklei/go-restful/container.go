@@ -220,20 +220,6 @@ func (c *Container) dispatch(httpWriter http.ResponseWriter, httpRequest *http.R
 		}()
 	}
 
-	// Detect if compression is needed
-	// assume without compression, test for override
-	if c.contentEncodingEnabled {
-		doCompress, encoding := wantsCompressedResponse(httpRequest)
-		if doCompress {
-			var err error
-			writer, err = NewCompressingResponseWriter(httpWriter, encoding)
-			if err != nil {
-				log.Print("unable to install compressor: ", err)
-				httpWriter.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-		}
-	}
 	// Find best match Route ; err is non nil if no match was found
 	var webService *WebService
 	var route *Route
@@ -245,6 +231,26 @@ func (c *Container) dispatch(httpWriter http.ResponseWriter, httpRequest *http.R
 			c.webServices,
 			httpRequest)
 	}()
+
+	// Detect if compression is needed
+	// assume without compression, test for override
+	contentEncodingEnabled := c.contentEncodingEnabled
+	if route != nil && route.contentEncodingEnabled != nil {
+		contentEncodingEnabled = *route.contentEncodingEnabled
+	}
+	if contentEncodingEnabled {
+		doCompress, encoding := wantsCompressedResponse(httpRequest)
+		if doCompress {
+			var err error
+			writer, err = NewCompressingResponseWriter(httpWriter, encoding)
+			if err != nil {
+				log.Print("unable to install compressor: ", err)
+				httpWriter.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
 	if err != nil {
 		// a non-200 response has already been written
 		// run container filters anyway ; they should not touch the response...

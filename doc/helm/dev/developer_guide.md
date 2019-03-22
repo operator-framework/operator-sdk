@@ -262,7 +262,7 @@ Once a developer is comfortable working with the above workflow, it will be
 beneficial to test the logic inside of an operator. To accomplish this, we can
 use `operator-sdk up local` from the top-level directory of our project. The
 `up local` command reads from `./watches.yaml` and uses `~/.kube/config` to
-communicate with a kubernetes cluster just as the `kubectl apply` commands did
+communicate with a Kubernetes cluster just as the `kubectl apply` commands did
 when we were testing our Helm chart locally. This section assumes the developer
 has read the [Helm Operator user guide][helm_operator_user_guide] and has the
 proper dependencies installed.

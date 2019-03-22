@@ -13,10 +13,10 @@ powered by Ansible using tools and libraries provided by the Operator SDK.
 - [ansible-runner-http][ansible_runner_http_plugin] version v1.0.0+
 - [dep][dep_tool] version v0.5.0+. (Optional if you aren't installing from source)
 - [go][go_tool] version v1.10+. (Optional if you aren't installing from source)
-- Access to a kubernetes v.1.9.0+ cluster.
+- Access to a Kubernetes v.1.9.0+ cluster.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the
-local kubernetes cluster and quay.io for the public registry.
+local Kubernetes cluster and [quay.io][quay_link] for the public registry.
 
 ## Install the Operator SDK CLI
 
@@ -67,6 +67,7 @@ Using `--cluster-scoped` will scaffold the new operator with the following modif
 * `deploy/role.yaml` - Use `ClusterRole` instead of `Role`
 * `deploy/role_binding.yaml`:
   * Use `ClusterRoleBinding` instead of `RoleBinding`
+  * Use `ClusterRole` instead of `Role` for roleRef
   * Set the subject namespace to `REPLACE_NAMESPACE`. This must be changed to the namespace in which the operator is deployed.
 
 ### Watches file
@@ -313,7 +314,7 @@ on your machine. Since we are normally used to using a container where the Role
 is put on disk for us, we need to manually copy our role to the configured
 Ansible Roles path (e.g `/etc/ansible/roles`.
 
-Run the operator locally with the default kubernetes config file present at
+Run the operator locally with the default Kubernetes config file present at
 `$HOME/.kube/config`:
 
 ```sh
@@ -323,7 +324,7 @@ INFO[0000] Go OS/Arch: darwin/amd64
 INFO[0000] operator-sdk Version: 0.0.5+git
 ```
 
-Run the operator locally with a provided kubernetes config file:
+Run the operator locally with a provided Kubernetes config file:
 
 ```sh
 $ operator-sdk up local --kubeconfig=config
@@ -365,8 +366,22 @@ NAME                                  READY     STATUS    RESTARTS   AGE
 example-memcached-6fd7c98d8-7dqdr     1/1       Running   0          1m
 example-memcached-6fd7c98d8-g5k7v     1/1       Running   0          1m
 example-memcached-6fd7c98d8-m7vn7     1/1       Running   0          1m
-memcached-operator-7cc7cfdf86-vvjqk   1/1       Running   0          2m
+memcached-operator-7cc7cfdf86-vvjqk   2/2       Running   0          2m
 ```
+
+### View the Ansible logs
+
+The `memcached-operator` deployment creates a Pod with two containers, `operator` and `ansible`.
+The `ansible` container exists only to expose the standard Ansible stdout logs that most Ansible
+users will be familiar with. In order to see the logs from a particular container, you can run
+
+```sh
+kubectl logs deployment/memcached-operator -c ansible
+kubectl logs deployment/memcached-operator -c operator
+```
+
+The `ansible` logs contain all of the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks, 
+whereas the `operator` logs will contain much more detailed information about the Ansible Operator's internals and interface with Kubernetes.
 
 ### Update the size
 
@@ -416,3 +431,4 @@ $ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
 [ansible_tool]:https://docs.ansible.com/ansible/latest/index.html
 [ansible_runner_tool]:https://ansible-runner.readthedocs.io/en/latest/install.html
 [ansible_runner_http_plugin]:https://github.com/ansible/ansible-runner-http
+[quay_link]:https://quay.io
