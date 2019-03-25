@@ -21,6 +21,7 @@ import (
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
+	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -230,8 +231,36 @@ func (u *CSVCustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterSe
 			if csvDesc.DisplayName == "" {
 				csvDesc.DisplayName = uDesc.DisplayName
 			}
+			// Suggest status and spec descriptor paths and x-descriptors for any
+			// descriptor not in the CSV or that does not have a value.
+			specMap := make(map[string]olmapiv1alpha1.SpecDescriptor)
+			for _, cd := range csvDesc.SpecDescriptors {
+				specMap[cd.DisplayName] = cd
+			}
+			for _, ud := range uDesc.SpecDescriptors {
+				cd, ok := specMap[ud.DisplayName]
+				if ud.Path != "" && (!ok || cd.Path == "") {
+					log.Infof("Suggestion: owned CRD specDescriptor '%s' should have path '%s'.", ud.DisplayName, ud.Path)
+				}
+				if len(ud.XDescriptors) != 0 && (!ok || len(cd.XDescriptors) == 0) {
+					log.Infof("Suggestion: owned CRD specDescriptor '%s' should have x-descriptors '%s'.", ud.DisplayName, ud.XDescriptors)
+				}
+			}
 			if len(csvDesc.SpecDescriptors) == 0 {
 				csvDesc.SpecDescriptors = uDesc.SpecDescriptors
+			}
+			statusMap := make(map[string]olmapiv1alpha1.StatusDescriptor)
+			for _, cd := range csvDesc.StatusDescriptors {
+				statusMap[cd.DisplayName] = cd
+			}
+			for _, ud := range uDesc.StatusDescriptors {
+				cd, ok := statusMap[ud.DisplayName]
+				if ud.Path != "" && (!ok || cd.Path == "") {
+					log.Infof("Suggestion: owned CRD statusDescriptor '%s' should have path '%s'.", ud.DisplayName, ud.Path)
+				}
+				if len(ud.XDescriptors) != 0 && (!ok || len(cd.XDescriptors) == 0) {
+					log.Infof("Suggestion: owned CRD statusDescriptor '%s' should have x-descriptors '%s'.", ud.DisplayName, ud.XDescriptors)
+				}
 			}
 			if len(csvDesc.StatusDescriptors) == 0 {
 				csvDesc.StatusDescriptors = uDesc.StatusDescriptors
