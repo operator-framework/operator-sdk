@@ -17,6 +17,7 @@ package generate
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -30,7 +31,7 @@ import (
 )
 
 func NewGenerateK8SCmd() *cobra.Command {
-	return &cobra.Command{
+	k8sCmd := &cobra.Command{
 		Use:   "k8s",
 		Short: "Generates Kubernetes code for custom resource",
 		Long: `k8s generator generates code for custom resources given the API
@@ -48,11 +49,30 @@ Example:
 `,
 		RunE: k8sFunc,
 	}
+
+	k8sCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated files.")
+
+	return k8sCmd
 }
 
 func k8sFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 0 {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
+	}
+	for i := 0; i < cmd.Flags().NFlag(); i++ {
+		fmt.Println(cmd.Flags().Arg(i))
+	}
+	if headerFile == "" {
+		f, err := ioutil.TempFile(scaffold.BuildBinDir, "")
+		if err != nil {
+			return err
+		}
+		headerFile = f.Name()
+		defer func() {
+			if err = os.RemoveAll(headerFile); err != nil {
+				log.Error(err)
+			}
+		}()
 	}
 
 	// Only Go projects can generate k8s deepcopy code.
@@ -116,6 +136,9 @@ func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) (err error) 
 		"--input-dirs", genutil.CreateFQApis(apisPkg, gvMap),
 		"--output-file-base", "zz_generated.deepcopy",
 		"--bounding-dirs", apisPkg,
+		// deepcopy-gen requires a boilerplate file. Either use header or an
+		// empty file if header is empty.
+		"--go-header-file", headerFile,
 	}
 	cmd := exec.Command(filepath.Join(binDir, "deepcopy-gen"), args...)
 	if projutil.IsGoVerbose() {
@@ -136,6 +159,9 @@ func defaulterGen(binDir, repoPkg string, gvMap map[string][]string) (err error)
 	args := []string{
 		"--input-dirs", genutil.CreateFQApis(apisPkg, gvMap),
 		"--output-file-base", "zz_generated.defaults",
+		// defaulter-gen requires a boilerplate file. Either use header or an
+		// empty file if header is empty.
+		"--go-header-file", headerFile,
 	}
 	cmd := exec.Command(filepath.Join(binDir, "defaulter-gen"), args...)
 	if projutil.IsGoVerbose() {

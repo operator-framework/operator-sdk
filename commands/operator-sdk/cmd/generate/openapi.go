@@ -68,6 +68,18 @@ func openAPIFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 0 {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
+	if headerFile == "" {
+		f, err := ioutil.TempFile(scaffold.BuildBinDir, "")
+		if err != nil {
+			return err
+		}
+		headerFile = f.Name()
+		defer func() {
+			if err = os.RemoveAll(headerFile); err != nil {
+				log.Error(err)
+			}
+		}()
+	}
 
 	return OpenAPIGen()
 }
@@ -144,18 +156,6 @@ func buildOpenAPIGenBinary(binDir, codegenSrcDir string) error {
 }
 
 func openAPIGen(binDir string, fqApis []string) (err error) {
-	if headerFile == "" {
-		f, err := ioutil.TempFile(scaffold.BuildBinDir, "")
-		if err != nil {
-			return err
-		}
-		headerFile = f.Name()
-		defer func() {
-			if err = os.RemoveAll(headerFile); err != nil {
-				log.Error(err)
-			}
-		}()
-	}
 	cgPath := filepath.Join(binDir, "openapi-gen")
 	for _, fqApi := range fqApis {
 		args := []string{
