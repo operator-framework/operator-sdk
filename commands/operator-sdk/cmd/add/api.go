@@ -29,6 +29,7 @@ import (
 var (
 	apiVersion string
 	kind       string
+	headerFile string
 )
 
 func NewApiCmd() *cobra.Command {
@@ -76,6 +77,7 @@ Example:
 	if err := apiCmd.MarkFlagRequired("kind"); err != nil {
 		log.Fatalf("Failed to mark `kind` flag for `add api` subcommand as required")
 	}
+	apiCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated files.")
 
 	return apiCmd
 }
@@ -122,12 +124,12 @@ func apiRun(cmd *cobra.Command, args []string) error {
 	}
 
 	// Run k8s codegen for deepcopy
-	if err := generate.K8sCodegen(); err != nil {
+	if err := generate.K8sCodegen(headerFile); err != nil {
 		return err
 	}
 
 	// Generate a validation spec for the new CRD.
-	if err := generate.OpenAPIGen(); err != nil {
+	if err := generate.OpenAPIGen(headerFile); err != nil {
 		return err
 	}
 
