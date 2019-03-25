@@ -10,10 +10,6 @@ Status: Draft
 
 [Design overview](#Design_overview)
 
-[User facing usage](#User_facing_usage)
-
-[Observations and open questions](#Observations_and_open_questions)
-
 ## Background
 
 The operator scorecard is intended to allow users to run a generic set of tests on their operators. Some simple checks can be performed, but more complicated
@@ -25,81 +21,6 @@ implementation to be inaccurate or too insufficient to be useful. For more usefu
 - Implement user-defined scorecard tests
 
 ## Design overview
-
-### Basic YAML Defined Test
-
-A new basic testing system would be added where a user can simply define various aspects of a test. For example, this definition runs a similar test to the memcached-operator scale test from the SDK's e2e test:
-
-```yaml
-functional_tests:
-  - cr: "deploy/crds/cache_v1alpha1_memcached_cr.yaml"
-    expected:
-      resources:
-        - apiVersion: apps/v1
-          kind: Deployment
-          metadata:
-            name: example-memcached
-          status:
-            readyReplicas: 3
-          spec:
-            template:
-              spec:
-                containers:
-                  - image: memcached:1.4.36-alpine
-      status:
-        scorecard_function_length:
-          nodes: 3
-    modifications:
-      - spec:
-          size: 4
-        expected:
-          resources:
-            - kind: Deployment
-              name: "example_memcached"
-              status:
-                readyReplicas: 4
-          status:
-            scorecard_function_length:
-              nodes: 4
-```
-
-This is what the golang structs would look like, including comments describing each field:
-
-```go
-// Struct containing a user defined test. User passes tests as an array using the `functional_tests` viper config
-type UserDefinedTest struct {
-    // Path to cr to be used for testing
-    CRPath string `mapstructure:"cr"`
-    // Expected resources and status
-    Expected Expected `mapstructure:"expected"`
-    // Sub-tests modifying a few fields with expected changes
-    Modifications []Modification `mapstructure:"modifications"`
-}
-
-type Expected struct {
-    // Resources expected to be created after the operator reacts to the CR
-    Resources []map[string]interface{} `mapstructure:"resources"`
-    // Expected values in CR's status after the operator reacts to the CR
-    Status map[string]interface{} `mapstructure:"status"`
-}
-
-// Modifications specifies a spec field to change in the CR with the expected results
-type Modification struct {
-    // a map of the spec fields to modify
-    Spec map[string]interface{} `mapstructure:"spec"`
-    // Expected resources and status
-    Expected Expected `mapstructure:"expected"`
-}
-```
-
-For `Status` and `Resources` fields, we can implement a bit of extra computation instead of simple string checking. For instance,
-in the memcached-operator test, we should expect that the length of the `nodes` field (which is an array) has a certain length. To implement functions like
-these, we can create some functions for these checks that are prepended by `scorecard_function_` and take an array of objects. For instance, in the above
-example, `scorecard_function_length` would check that each field listed under it matches the specified length (like `nodes: 4`). If the yaml key does not
-start with `scorecard_function_`, we do a simple match (like `status/readyReplicas: 4`).
-
-This design would allow us to replace the old "Operator actions are reflected in status" (which would be tested by the `expected/status` check) and
-"Writing into CRs has an effect" (which would be tested by the `expected/resources` check) tests.
 
 ### Plugin System
 
