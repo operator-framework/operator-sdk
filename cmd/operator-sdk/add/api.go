@@ -127,7 +127,7 @@ func apiRun(cmd *cobra.Command, args []string) error {
 	}
 
 	// Generate a validation spec for the new CRD.
-	if err := genutil.OpenAPIGen(); err != nil {
+	if err := genutil.OpenAPIGen(nil); err != nil {
 		return err
 	}
 
