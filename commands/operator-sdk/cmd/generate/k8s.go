@@ -75,8 +75,11 @@ func K8sCodegen(hf string) error {
 	projutil.MustInProjectRoot()
 
 	if hf == "" {
-		f, err := ioutil.TempFile(scaffold.BuildBinDir, "")
+		f, err := ioutil.TempFile("", "")
 		if err != nil {
+			return err
+		}
+		if err = f.Close(); err != nil {
 			return err
 		}
 		hf = f.Name()
