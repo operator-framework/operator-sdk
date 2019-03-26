@@ -17,7 +17,6 @@ package generate
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -69,11 +68,12 @@ func openAPIFunc(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 
-	return OpenAPIGen()
+	return OpenAPIGen(headerFile)
 }
 
-// OpenAPIGen generates OpenAPI validation specs for all CRD's in dirs.
-func OpenAPIGen() error {
+// OpenAPIGen generates OpenAPI validation specs for all CRD's in dirs. hf is
+// a path to a header file containing text to add to generated files.
+func OpenAPIGen(hf string) error {
 	projutil.MustInProjectRoot()
 
 	absProjectPath := projutil.MustGetwd()
@@ -99,7 +99,8 @@ func OpenAPIGen() error {
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	fqApiStr := genutil.CreateFQApis(apisPkg, gvMap)
 	fqApis := strings.Split(fqApiStr, ",")
-	if err := openAPIGen(binDir, fqApis); err != nil {
+	f := func(a string) error { return openAPIGen(binDir, a, fqApis) }
+	if err = genutil.WithHeaderFile(hf, f); err != nil {
 		return err
 	}
 
@@ -143,19 +144,7 @@ func buildOpenAPIGenBinary(binDir, codegenSrcDir string) error {
 	return genutil.BuildCodegenBinaries(genDirs, binDir, codegenSrcDir)
 }
 
-func openAPIGen(binDir string, fqApis []string) (err error) {
-	if headerFile == "" {
-		f, err := ioutil.TempFile(scaffold.BuildBinDir, "")
-		if err != nil {
-			return err
-		}
-		headerFile = f.Name()
-		defer func() {
-			if err = os.RemoveAll(headerFile); err != nil {
-				log.Error(err)
-			}
-		}()
-	}
+func openAPIGen(binDir, hf string, fqApis []string) (err error) {
 	cgPath := filepath.Join(binDir, "openapi-gen")
 	for _, fqApi := range fqApis {
 		args := []string{
@@ -164,7 +153,7 @@ func openAPIGen(binDir string, fqApis []string) (err error) {
 			"--output-file-base", "zz_generated.openapi",
 			// openapi-gen requires a boilerplate file. Either use header or an
 			// empty file if header is empty.
-			"--go-header-file", headerFile,
+			"--go-header-file", hf,
 		}
 		cmd := exec.Command(cgPath, args...)
 		if projutil.IsGoVerbose() {
