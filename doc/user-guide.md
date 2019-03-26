@@ -34,6 +34,12 @@ $ make install
 
 This installs the CLI binary `operator-sdk` at `$GOPATH/bin`.
 
+Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
+
+```sh
+$ brew install operator-sdk
+```
+
 ## Create a new project
 
 Use the CLI to create a new memcached-operator project:
@@ -405,7 +411,7 @@ After adding new import paths to your operator project, run `dep ensure` in the 
 ### Handle Cleanup on Deletion
 
 To implement complex deletion logic, you can add a finalizer to your Custom Resource. This will prevent your Custom Resource from being
-deleted until you remove the finalizer (ie, after your cleanup logic has successfully run). For more information, see the 
+deleted until you remove the finalizer (ie, after your cleanup logic has successfully run). For more information, see the
 [official Kubernetes documentation on finalizers](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#finalizers).
 
 ### Metrics
@@ -484,6 +490,7 @@ When the operator is not running in a cluster, the Manager will return an error 
 [layout_doc]:./project_layout.md
 [ansible_user_guide]:./ansible/user-guide.md
 [helm_user_guide]:./helm/user-guide.md
+[homebrew_tool]:https://brew.sh/
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
