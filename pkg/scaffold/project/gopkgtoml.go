@@ -12,28 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scaffold
+package project
 
 import (
-	"testing"
+	"fmt"
 
-	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/internal/deps"
 )
 
-func TestGopkgtoml(t *testing.T) {
-	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(appConfig, &GopkgToml{})
-	if err != nil {
-		t.Fatalf("Failed to execute the scaffold: (%v)", err)
-	}
+const GopkgTomlFile = "Gopkg.toml"
 
-	if gopkgtomlExp != buf.String() {
-		diffs := diffutil.Diff(gopkgtomlExp, buf.String())
-		t.Fatalf("Expected vs actual differs.\n%v", diffs)
-	}
+type GopkgToml struct {
+	input.Input
 }
 
-const gopkgtomlExp = `# Force dep to vendor the code generators, which aren't imported just used at dev time.
+func (s *GopkgToml) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = GopkgTomlFile
+	}
+	s.TemplateBody = gopkgTomlTmpl
+	return s.Input, nil
+}
+
+const gopkgTomlTmpl = `# Force dep to vendor the code generators, which aren't imported just used at dev time.
 required = [
   "k8s.io/code-generator/cmd/defaulter-gen",
   "k8s.io/code-generator/cmd/deepcopy-gen",
@@ -109,3 +111,12 @@ required = [
     name = "k8s.io/gengo"
     non-go = false
 `
+
+func PrintDepGopkgTOMLAsFile() error {
+	_, err := fmt.Println(gopkgTomlTmpl)
+	return err
+}
+
+func PrintDepGopkgTOML() error {
+	return deps.PrintDepGopkgTOML(gopkgTomlTmpl)
+}

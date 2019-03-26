@@ -12,28 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scaffold
+package project
 
 import (
-	"testing"
-
-	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-func TestGitignore(t *testing.T) {
-	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(appConfig, &Gitignore{})
-	if err != nil {
-		t.Fatalf("Failed to execute the scaffold: (%v)", err)
-	}
+const GitignoreFile = ".gitignore"
 
-	if gitignoreExp != buf.String() {
-		diffs := diffutil.Diff(gitignoreExp, buf.String())
-		t.Fatalf("Expected vs actual differs.\n%v", diffs)
-	}
+type Gitignore struct {
+	input.Input
 }
 
-const gitignoreExp = `# Temporary Build Files
+func (s *Gitignore) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = GitignoreFile
+	}
+	s.TemplateBody = gitignoreTmpl
+	return s.Input, nil
+}
+
+const gitignoreTmpl = `# Temporary Build Files
 build/_output
 build/_test
 # Created by https://www.gitignore.io/api/go,vim,emacs,visualstudiocode

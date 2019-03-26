@@ -6,7 +6,7 @@ about: If things aren't working as expected.
 
 ## Bug Report
 
-<!-- 
+<!--
 Thanks for filing an issue! Before hitting the button, please answer these questions.
 
 Fill in as much of the template below as you can. If you leave out information, we can't help you as well.
@@ -31,7 +31,7 @@ A clear and concise description of what you expected to happen (or insert a code
 
   Insert output of `kubectl version` here
 
-* Kubernetes cluster kind: 
+* Kubernetes cluster kind:
 
 * Are you writing your operator in ansible, helm, or go?
 

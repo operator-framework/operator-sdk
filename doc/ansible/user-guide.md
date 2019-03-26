@@ -11,8 +11,7 @@ powered by Ansible using tools and libraries provided by the Operator SDK.
 - [ansible][ansible_tool] version v2.6.0+
 - [ansible-runner][ansible_runner_tool] version v1.1.0+
 - [ansible-runner-http][ansible_runner_http_plugin] version v1.0.0+
-- [dep][dep_tool] version v0.5.0+. (Optional if you aren't installing from source)
-- [go][go_tool] version v1.10+. (Optional if you aren't installing from source)
+- [go][go_tool] version v1.11+. (Optional if you aren't installing from source)
 - Access to a Kubernetes v.1.9.0+ cluster.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the
@@ -429,7 +428,6 @@ $ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
 
 [layout_doc]:./project_layout.md
 [homebrew_tool]:https://brew.sh/
-[dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
 [docker_tool]:https://docs.docker.com/install/

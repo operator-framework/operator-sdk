@@ -10,9 +10,9 @@ The `operator-sdk` CLI generates a number of packages for each project. The foll
 | pkg/controller | This pkg contains the controller implementations. Users are expected to edit the `pkg/controller/<kind>/<kind>_controller.go` to define the controller's reconcile logic for handling a resource type of the specified `kind`. |
 | build | Contains the `Dockerfile` and build scripts used to build the operator. |
 | deploy | Contains various YAML manifests for registering CRDs, setting up [RBAC][RBAC], and deploying the operator as a Deployment.
-| Gopkg.toml Gopkg.lock | The [Go Dep][dep] manifests that describe the external dependencies of this operator. |
-| vendor | The golang [vendor][Vendor] folder that contains the local copies of the external dependencies that satisfy the imports of this project. [Go Dep][dep] manages the vendor directly. |
+| go.mod go.sum | The [Go module][go_mod] manifests that describe the external dependencies of this operator. |
+| vendor | The golang [vendor][Vendor] folder that contains the local copies of the external dependencies that satisfy the imports of this project. [Go mod][go_mod] manages the vendor directly. |
 
 [RBAC]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 [Vendor]: https://golang.org/cmd/go/#hdr-Vendor_Directories
-[dep]: https://github.com/golang/dep
+[go_mod]: https://github.com/golang/go/wiki/Modules

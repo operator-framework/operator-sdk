@@ -153,7 +153,7 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	projectName := filepath.Base(absProjectPath)
 
 	// Don't need to build Go code if a non-Go Operator.
-	if projutil.GetOperatorType() == projutil.OperatorTypeGo {
+	if projutil.IsOperatorGo() {
 		managerDir := filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir)
 		outputBinName := filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName)
 		goBuildArgs := append(append([]string{"build"}, goTrimFlags...), "-o", outputBinName, managerDir)
@@ -225,7 +225,7 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 			case projutil.OperatorTypeHelm:
 				return fmt.Errorf("test scaffolding for Helm Operators is not implemented")
 			default:
-				return fmt.Errorf("unknown operator type '%v'", t)
+				return &projutil.ErrUnknownOperatorType{Type: t}
 			}
 
 			if err != nil {

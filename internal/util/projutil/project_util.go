@@ -22,10 +22,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/helm"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -36,7 +32,11 @@ const (
 	SrcDir     = "src"
 )
 
-var mainFile = filepath.Join(scaffold.ManagerDir, scaffold.CmdFile)
+var (
+	mainFile      = filepath.Join("cmd", "manager", "main.go")
+	rolesDir      = "roles"
+	helmChartsDir = "helm-charts"
+)
 
 // OperatorType - the type of operator
 type OperatorType = string
@@ -52,15 +52,24 @@ const (
 	OperatorTypeUnknown OperatorType = "unknown"
 )
 
-// MustInProjectRoot checks if the current dir is the project root and returns the current repo's import path
-// e.g github.com/example-inc/app-operator
+type ErrUnknownOperatorType struct {
+	Type string
+}
+
+func (e *ErrUnknownOperatorType) Error() string {
+	return fmt.Sprintf("unknown operator type '%v'", e.Type)
+}
+
+// MustInProjectRoot checks if the current dir is the project root and returns
+// the current repo's import path, e.g. github.com/example-inc/app-operator
 func MustInProjectRoot() {
-	// if the current directory has the "./build/dockerfile" file, then it is safe to say
-	// we are at the project root.
-	_, err := os.Stat(filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile))
+	// If the current directory structure contains "./build/Dcokerfile", then
+	// it is safe to say we are at the project root.
+	df := filepath.Join("build", "Dockerfile")
+	_, err := os.Stat(df)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Fatal("Must run command in project root dir: project structure requires ./build/Dockerfile")
+			log.Fatalf("Must run command in project root dir: project structure requires %s", df)
 		}
 		log.Fatalf("Error while checking if current directory is the project root: (%v)", err)
 	}
@@ -103,10 +112,10 @@ func GetOperatorType() OperatorType {
 	if _, err := os.Stat(mainFile); err == nil {
 		return OperatorTypeGo
 	}
-	if stat, err := os.Stat(ansible.RolesDir); err == nil && stat.IsDir() {
+	if stat, err := os.Stat(rolesDir); err == nil && stat.IsDir() {
 		return OperatorTypeAnsible
 	}
-	if stat, err := os.Stat(helm.HelmChartsDir); err == nil && stat.IsDir() {
+	if stat, err := os.Stat(helmChartsDir); err == nil && stat.IsDir() {
 		return OperatorTypeHelm
 	}
 	return OperatorTypeUnknown

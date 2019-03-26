@@ -12,30 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scaffold
+package project
 
 import (
-	"testing"
-
-	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
-func TestVersion(t *testing.T) {
-	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(appConfig, &Version{})
-	if err != nil {
-		t.Fatalf("Failed to execute the scaffold: (%v)", err)
-	}
+const ToolsFile = "tools.go"
 
-	if versionExp != buf.String() {
-		diffs := diffutil.Diff(versionExp, buf.String())
-		t.Fatalf("Expected vs actual differs.\n%v", diffs)
-	}
+type Tools struct {
+	input.Input
 }
 
-const versionExp = `package version
+func (s *Tools) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = ToolsFile
+	}
+	s.TemplateBody = toolsTmpl
+	return s.Input, nil
+}
 
-var (
-	Version = "0.0.1"
+const toolsTmpl = `// +build tools
+
+package tools
+
+import (
+	_ "k8s.io/code-generator/cmd/client-gen"
+	_ "k8s.io/code-generator/cmd/deepcopy-gen"
+	_ "k8s.io/code-generator/cmd/defaulter-gen"
+	_ "k8s.io/code-generator/cmd/informer-gen"
+	_ "k8s.io/code-generator/cmd/lister-gen"
+	_ "k8s.io/kube-openapi/cmd/openapi-gen"
 )
 `

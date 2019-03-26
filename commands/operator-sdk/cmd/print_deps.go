@@ -16,8 +16,12 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/helm"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/project"
 
 	"github.com/spf13/cobra"
 )
@@ -30,15 +34,15 @@ func NewPrintDepsCmd() *cobra.Command {
 		Short: "Print Golang packages and versions required to run the operator",
 		Long: `The operator-sdk print-deps command prints all Golang packages and versions expected
 by this version of the Operator SDK. Versions for these packages should match
-those in an operators' Gopkg.toml file.
+those in an operators' go.mod file.
 
 print-deps prints in columnar format by default. Use the --as-file flag to
-print in Gopkg.toml file format.
+print in go.mod file format.
 `,
 		RunE: printDepsFunc,
 	}
 
-	printDepsCmd.Flags().BoolVar(&asFile, "as-file", false, "Print dependencies in Gopkg.toml file format.")
+	printDepsCmd.Flags().BoolVar(&asFile, "as-file", false, "Print dependencies in go.mod file format.")
 
 	return printDepsCmd
 }
@@ -47,10 +51,78 @@ func printDepsFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 0 {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
+
+	var err error
 	if asFile {
-		scaffold.PrintDepsAsFile()
-	} else if err := scaffold.PrintDeps(); err != nil {
+		err = printDepsAsFile()
+	} else {
+		err = printDeps()
+	}
+	if err != nil {
 		return fmt.Errorf("print deps failed: (%v)", err)
 	}
 	return nil
+}
+
+func isDepsManagerDep() (bool, error) {
+	if _, err := os.Stat(project.GopkgTomlFile); err == nil {
+		return true, nil
+	} else if _, err := os.Stat(project.GoModFile); os.IsNotExist(err) {
+		return false, fmt.Errorf("no dependency manager file found")
+	}
+	return false, nil
+}
+
+func printDeps() error {
+	isDep, err := isDepsManagerDep()
+	if err != nil {
+		return err
+	}
+
+	switch t := projutil.GetOperatorType(); t {
+	case projutil.OperatorTypeGo:
+		if isDep {
+			return project.PrintDepGopkgTOML()
+		}
+		return project.PrintGoMod()
+	case projutil.OperatorTypeAnsible:
+		if isDep {
+			return ansible.PrintDepGopkgTOML()
+		}
+		return ansible.PrintGoMod()
+	case projutil.OperatorTypeHelm:
+		if isDep {
+			return helm.PrintDepGopkgTOML()
+		}
+		return helm.PrintGoMod()
+	default:
+		return &projutil.ErrUnknownOperatorType{Type: t}
+	}
+}
+
+func printDepsAsFile() error {
+	isDep, err := isDepsManagerDep()
+	if err != nil {
+		return err
+	}
+
+	switch t := projutil.GetOperatorType(); t {
+	case projutil.OperatorTypeGo:
+		if isDep {
+			return project.PrintDepGopkgTOMLAsFile()
+		}
+		return project.PrintGoModAsFile()
+	case projutil.OperatorTypeAnsible:
+		if isDep {
+			return ansible.PrintDepGopkgTOMLAsFile()
+		}
+		return ansible.PrintGoModAsFile()
+	case projutil.OperatorTypeHelm:
+		if isDep {
+			return helm.PrintDepGopkgTOMLAsFile()
+		}
+		return helm.PrintGoModAsFile()
+	default:
+		return &projutil.ErrUnknownOperatorType{Type: t}
+	}
 }

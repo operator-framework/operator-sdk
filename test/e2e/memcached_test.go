@@ -23,12 +23,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
@@ -36,7 +34,9 @@ import (
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 
+	"github.com/ghodss/yaml"
 	"github.com/prometheus/prometheus/util/promlint"
+	"github.com/rogpeppe/go-internal/modfile"
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -73,6 +73,10 @@ func TestMemcached(t *testing.T) {
 			t.Errorf("Failed to change back to original working directory: (%v)", err)
 		}
 	}()
+	// For go commands in operator projects.
+	if err = os.Setenv("GO111MODULE", "on"); err != nil {
+		t.Fatal(err)
+	}
 
 	// Setup
 	absProjectPath := filepath.Join(gopath, "src/github.com/example-inc")
@@ -88,15 +92,7 @@ func TestMemcached(t *testing.T) {
 		"new",
 		operatorName).CombinedOutput()
 	if err != nil {
-		// HACK: dep cannot resolve non-master branches as the base branch for PR's,
-		// so running `dep ensure` will fail when first running
-		// `operator-sdk new ...`. For now we can ignore the first solve failure.
-		// A permanent solution can be implemented once the following is merged:
-		// https://github.com/golang/dep/pull/1658
-		solveFailRe := regexp.MustCompile(`(?m)^[ \t]*Solving failure:.+github\.com/operator-framework/operator-sdk.+:$`)
-		if !solveFailRe.Match(cmdOut) {
-			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
-		}
+		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 	ctx.AddCleanupFn(func() error { return os.RemoveAll(absProjectPath) })
 
@@ -113,34 +109,34 @@ func TestMemcached(t *testing.T) {
 			commitSha, ok = os.LookupEnv("TRAVIS_COMMIT")
 		}
 		if ok && commitSha != "" {
-			gopkg, err := ioutil.ReadFile("Gopkg.toml")
+			modBytes, err := ioutil.ReadFile("go.mod")
 			if err != nil {
 				t.Fatal(err)
 			}
-			// Match against the '#osdk_branch_annotation' used for version substitution
-			// and comment out the current branch.
-			branchRe := regexp.MustCompile("([ ]+)(.+#osdk_branch_annotation)")
-			gopkg = branchRe.ReplaceAll(gopkg, []byte("$1# $2"))
-			versionRe := regexp.MustCompile("([ ]+)(.+#osdk_version_annotation)")
-			gopkg = versionRe.ReplaceAll(gopkg, []byte("$1# $2"))
-			// Plug in the fork to test against so `dep ensure` can resolve dependencies
-			// correctly.
-			gopkgString := string(gopkg)
-			gopkgLoc := strings.LastIndex(gopkgString, "\n  name = \"github.com/operator-framework/operator-sdk\"\n")
-			gopkgString = gopkgString[:gopkgLoc] + "\n  source = \"https://github.com/" + repo + "\"\n  revision = \"" + commitSha + "\"\n" + gopkgString[gopkgLoc+1:]
-			err = ioutil.WriteFile("Gopkg.toml", []byte(gopkgString), fileutil.DefaultFileMode)
+			modFile, err := modfile.ParseLax("go.mod", modBytes, nil)
 			if err != nil {
-				t.Fatalf("Failed to write updated Gopkg.toml: %v", err)
+				t.Fatal(err)
+			}
+			sdkPath := "github.com/operator-framework/operator-sdk"
+			modFile.DropRequire(sdkPath)
+			modFile.Cleanup()
+			modFile.AddRequire(sdkPath, commitSha)
+			if modBytes, err = modFile.Format(); err != nil {
+				t.Fatal(err)
+			}
+			err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
+			if err != nil {
+				t.Fatalf("Failed to write updated go.mod: %v", err)
 			}
 
-			t.Logf("Gopkg.toml: %v", gopkgString)
+			t.Logf("go.mod: %v", string(modBytes))
 		} else {
 			t.Fatal("Could not find sha of PR")
 		}
 	}
-	cmdOut, err = exec.Command("dep", "ensure").CombinedOutput()
+	cmdOut, err = exec.Command("go", "mod", "vendor").CombinedOutput()
 	if err != nil {
-		t.Fatalf("Error after modifying Gopkg.toml: %v\nCommand Output: %s\n", err, string(cmdOut))
+		t.Fatalf("Error after modifying go.mod: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
 	// Set replicas to 2 to test leader election. In production, this should
@@ -235,8 +231,8 @@ func TestMemcached(t *testing.T) {
 		t.Fatalf("Could not rename test/e2e/memcached_test.go.tmpl: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 
-	t.Log("Pulling new dependencies with dep ensure")
-	cmdOut, err = exec.Command("dep", "ensure").CombinedOutput()
+	t.Log("Pulling new dependencies with go mod")
+	cmdOut, err = exec.Command("go", "mod", "vendor").CombinedOutput()
 	if err != nil {
 		t.Fatalf("Command 'dep ensure' failed: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}

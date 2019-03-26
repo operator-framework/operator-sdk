@@ -91,7 +91,7 @@ Prints the most recent Golang packages and versions required by operators. Print
 
 ### Flags
 
-* `--as-file` - Print packages and versions in Gopkg.toml format.
+* `--as-file` - Print packages and versions in go.mod format.
 
 ### Example
 

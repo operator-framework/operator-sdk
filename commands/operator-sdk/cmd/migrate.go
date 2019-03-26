@@ -86,7 +86,7 @@ func migrateAnsible() error {
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
 		&ansible.Main{},
-		&ansible.GopkgToml{},
+		&ansible.GoMod{},
 		&dockerfile,
 		&ansible.Entrypoint{},
 		&ansible.UserSetup{},
@@ -115,7 +115,7 @@ func migrateHelm() error {
 	s := &scaffold.Scaffold{}
 	err := s.Execute(cfg,
 		&helm.Main{},
-		&helm.GopkgToml{},
+		&helm.GoMod{},
 		&helm.DockerfileHybrid{
 			Watches:    true,
 			HelmCharts: true,

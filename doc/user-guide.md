@@ -7,9 +7,8 @@ Guide][helm_user_guide]. The rest of this document will show how to program an o
 
 ## Prerequisites
 
-- [dep][dep_tool] version v0.5.0+.
 - [git][git_tool]
-- [go][go_tool] version v1.10+.
+- [go][go_tool] version v1.11+.
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
@@ -405,7 +404,7 @@ func main() {
 }
 ```
 
-After adding new import paths to your operator project, run `dep ensure` in the root of your project directory to fulfill these dependencies.
+After adding new import paths to your operator project, run `go mod vendor` in the root of your project directory to fulfill these dependencies.
 
 
 ### Handle Cleanup on Deletion
