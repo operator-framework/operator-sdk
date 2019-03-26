@@ -25,42 +25,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 )
-
-func newGenerateK8SCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "k8s",
-		Short: "Generates Kubernetes code for custom resource",
-		Long: `k8s generator generates code for custom resources given the API
-specs in pkg/apis/<group>/<version> directories to comply with kube-API
-requirements. Go code is generated under
-pkg/apis/<group>/<version>/zz_generated.deepcopy.go.
-
-Example:
-	$ operator-sdk generate k8s
-	$ tree pkg/apis
-	pkg/apis/
-	└── app
-		└── v1alpha1
-			├── zz_generated.deepcopy.go
-`,
-		RunE: k8sFunc,
-	}
-}
-
-func k8sFunc(cmd *cobra.Command, args []string) error {
-	if len(args) != 0 {
-		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
-	}
-
-	// Only Go projects can generate k8s deepcopy code.
-	if err := projutil.CheckGoProjectCmd(cmd); err != nil {
-		return err
-	}
-
-	return K8sCodegen()
-}
 
 // K8sCodegen performs deepcopy code-generation for all custom resources under pkg/apis
 func K8sCodegen() error {
