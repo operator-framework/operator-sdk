@@ -58,6 +58,5 @@ func openAPIFunc(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 
-	opts := &genutil.OpenAPIGenOptions{HeaderFile: headerFile}
-	return genutil.OpenAPIGen(opts)
+	return genutil.OpenAPIGen(headerFile)
 }

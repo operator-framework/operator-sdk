@@ -17,7 +17,6 @@ package genutil
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -30,17 +29,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type OpenAPIGenOptions struct {
-	HeaderFile string
-}
-
-// OpenAPIGenWithHeader generates OpenAPI validation specs for all CRD's in dirs
-// using the provided header file.
-func OpenAPIGen(opts *OpenAPIGenOptions) error {
-	if opts == nil {
-		opts = &OpenAPIGenOptions{}
-	}
-
+// OpenAPIGen generates OpenAPI validation specs for all CRD's in dirs. hf is
+// a path to a header file containing text to add to generated files.
+func OpenAPIGen(hf string) error {
 	projutil.MustInProjectRoot()
 
 	absProjectPath := projutil.MustGetwd()
@@ -66,7 +57,8 @@ func OpenAPIGen(opts *OpenAPIGenOptions) error {
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	fqApiStr := createFQApis(apisPkg, gvMap)
 	fqApis := strings.Split(fqApiStr, ",")
-	if err := openAPIGen(opts.HeaderFile, binDir, fqApis); err != nil {
+	f := func(a string) error { return openAPIGen(binDir, a, fqApis) }
+	if err = withHeaderFile(hf, f); err != nil {
 		return err
 	}
 
@@ -110,19 +102,7 @@ func buildOpenAPIGenBinary(binDir, codegenSrcDir string) error {
 	return buildCodegenBinaries(genDirs, binDir, codegenSrcDir)
 }
 
-func openAPIGen(headerFile, binDir string, fqApis []string) (err error) {
-	if headerFile == "" {
-		f, err := ioutil.TempFile(scaffold.BuildBinDir, "")
-		if err != nil {
-			return err
-		}
-		headerFile = f.Name()
-		defer func() {
-			if err = os.RemoveAll(headerFile); err != nil {
-				log.Error(err)
-			}
-		}()
-	}
+func openAPIGen(binDir, hf string, fqApis []string) (err error) {
 	cgPath := filepath.Join(binDir, "openapi-gen")
 	for _, fqApi := range fqApis {
 		args := []string{
@@ -131,7 +111,7 @@ func openAPIGen(headerFile, binDir string, fqApis []string) (err error) {
 			"--output-file-base", "zz_generated.openapi",
 			// openapi-gen requires a boilerplate file. Either use header or an
 			// empty file if header is empty.
-			"--go-header-file", headerFile,
+			"--go-header-file", hf,
 		}
 		cmd := exec.Command(cgPath, args...)
 		if projutil.IsGoVerbose() {
