@@ -88,10 +88,6 @@ required = [
   version = "=v0.26.0"
 
 [[override]]
-  name = "github.com/census-instrumentation/opencensus-proto"
-  version = "=v0.1.0"
-
-[[override]]
   name = "sigs.k8s.io/controller-runtime"
   version = "=v0.1.10"
 
