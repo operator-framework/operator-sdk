@@ -172,15 +172,16 @@ $ git checkout -b release-v1.3.0
 ```
 
 Commit changes to the following six files:
-* `version/version.go`: update `Version` to `v1.3.0`.
-* `pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
-  * Comment out `branch = "master"`
-  * Un-comment `version = "v1.2.0"`
-  * Change `v1.2.0` to `v1.3.0`
-* `pkg/scaffold/gopkgtoml_test.go`: same as for `pkg/scaffold/gopkgtoml.go`.
-* `pkg/scaffold/ansible/gopkgtoml.go`: same as for `pkg/scaffold/gopkgtoml.go`.
-* `pkg/scaffold/helm/gopkgtoml.go`: same as for `pkg/scaffold/gopkgtoml.go`.
-* `CHANGELOG.md`: update the `## Unreleased` header to `## v1.3.0`.
+
+- `version/version.go`: update `Version` to `v1.3.0`.
+- `pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
+  - Comment out `branch = "master"`
+  - Un-comment `version = "v1.2.0"`
+  - Change `v1.2.0` to `v1.3.0`
+- `pkg/scaffold/gopkgtoml_test.go`: same as for `pkg/scaffold/gopkgtoml.go`.
+- `pkg/scaffold/ansible/gopkgtoml.go`: same as for `pkg/scaffold/gopkgtoml.go`.
+- `pkg/scaffold/helm/gopkgtoml.go`: same as for `pkg/scaffold/gopkgtoml.go`.
+- `CHANGELOG.md`: update the `## Unreleased` header to `## v1.3.0`.
 
 Create a new PR for `release-v1.3.0`.
 
@@ -211,15 +212,17 @@ Once this tag passes CI, go to step 3. For more info on tagging, see the [releas
 ### 3. Create a PR for post-release version and CHANGELOG.md updates
 
 Check out a new branch from master (or use your `release-v1.3.0`) and commit the following changes:
-* `version/version.go`: update `Version` to `v1.3.0+git`.
-* `pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
-  * Comment out `version = "v1.3.0"`
-  * Un-comment `branch = "master"`
-* `pkg/scaffold/gopkgtoml_test.go`: same as for `pkg/scaffold/gopkgtoml.go`.
-* `pkg/scaffold/ansible/gopkgtoml.go`: same as for `pkg/scaffold/gopkgtoml.go`.
-* `pkg/scaffold/helm/gopkgtoml.go`: same as for `pkg/scaffold/gopkgtoml.go`.
-* `CHANGELOG.md`: add the following as a new set of headers above `## v1.3.0`:
-    ```
+
+- `version/version.go`: update `Version` to `v1.3.0+git`.
+- `pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
+  - Comment out `version = "v1.3.0"`
+  - Un-comment `branch = "master"`
+- `pkg/scaffold/gopkgtoml_test.go`: same as for `pkg/scaffold/gopkgtoml.go`.
+- `pkg/scaffold/ansible/gopkgtoml.go`: same as for `pkg/scaffold/gopkgtoml.go`.
+- `pkg/scaffold/helm/gopkgtoml.go`: same as for `pkg/scaffold/gopkgtoml.go`.
+- `CHANGELOG.md`: add the following as a new set of headers above `## v1.3.0`:
+
+    ```markdown
     ## Unreleased
 
     ### Added
@@ -247,7 +250,29 @@ The final step is to upload binaries, their signature files, and release notes f
 1. Attach all binaries and `.asc` signature files to the release by dragging and dropping them.
 1. Click the `Publish release` button.
 
-You've now fully released a new version of the Operator SDK. Good work!
+You've now fully released a new version of the Operator SDK. Good work! However, there is one more step that needs to be completed: making a release branch to allow us to make patch fixes for this release.
+
+### 5. Making a new release branch
+
+If you have created a new minor release, you need to make a new branch for it. To do this, checkout the tag that you created and make a new branch that matches the version you released with `x` in the position of the patch number. For example, to make a new release branch after `v1.3.0` and push it to the repo, you would follow these steps:
+
+```console
+$ git checkout tags/v1.3.0
+Note: checking out 'tags/v1.3.0'.
+...
+$ git checkout -b v1.3.x
+Switched to a new branch 'v1.3.x'
+$ git push origin v1.3.x
+Total 0 (delta 0), reused 0 (delta 0)
+remote:
+remote: Create a pull request for 'v1.3.x' on GitHub by visiting:
+remote:      https://github.com/operator-framework/operator-sdk/pull/new/v1.3.x
+remote:
+To github.com:operator-framework/operator-sdk.git
+ * [new branch]      v1.3.x -> v1.3.x
+```
+
+Now that the branch exists, you need to make the post-release PR for the new release branch. To do this, simply follow the same steps as in [step 3](#3-create-a-pr-for-post-release-version-and-changelogmd-updates) with the addition of changing the branch name in the `gopkgtoml` scaffold from `master` to the new branch (for example, `v1.3.x`). Then, make the PR against the new branch.
 
 [doc-maintainers]:../../MAINTAINERS
 [doc-readme-prereqs]:../../README.md#prerequisites
