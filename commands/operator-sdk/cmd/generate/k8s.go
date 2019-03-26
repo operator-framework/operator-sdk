@@ -73,15 +73,6 @@ func k8sFunc(cmd *cobra.Command, args []string) error {
 func K8sCodegen(hf string) error {
 	projutil.MustInProjectRoot()
 
-	hft, rm, err := genutil.GetHeaderFileIfEmpty(hf)
-	if err != nil {
-		return err
-	}
-	if rm != nil {
-		defer rm()
-	}
-	hf = hft
-
 	wd := projutil.MustGetwd()
 	repoPkg := projutil.CheckAndGetProjectGoPkg()
 	srcDir := filepath.Join(wd, "vendor", "k8s.io", "code-generator")
@@ -102,11 +93,12 @@ func K8sCodegen(hf string) error {
 
 	log.Infof("Running deepcopy code-generation for Custom Resource group versions: [%v]\n", gvb.String())
 
-	if err := deepcopyGen(binDir, repoPkg, hf, gvMap); err != nil {
+	fdc := func(a string) error { return deepcopyGen(binDir, repoPkg, a, gvMap) }
+	if err = genutil.WithHeaderFile(hf, fdc); err != nil {
 		return err
 	}
-
-	if err = defaulterGen(binDir, repoPkg, hf, gvMap); err != nil {
+	fd := func(a string) error { return defaulterGen(binDir, repoPkg, a, gvMap) }
+	if err = genutil.WithHeaderFile(hf, fd); err != nil {
 		return err
 	}
 

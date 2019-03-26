@@ -76,15 +76,6 @@ func openAPIFunc(cmd *cobra.Command, args []string) error {
 func OpenAPIGen(hf string) error {
 	projutil.MustInProjectRoot()
 
-	hft, rm, err := genutil.GetHeaderFileIfEmpty(hf)
-	if err != nil {
-		return err
-	}
-	if rm != nil {
-		defer rm()
-	}
-	hf = hft
-
 	absProjectPath := projutil.MustGetwd()
 	repoPkg := projutil.CheckAndGetProjectGoPkg()
 	srcDir := filepath.Join(absProjectPath, "vendor", "k8s.io", "kube-openapi")
@@ -108,7 +99,8 @@ func OpenAPIGen(hf string) error {
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	fqApiStr := genutil.CreateFQApis(apisPkg, gvMap)
 	fqApis := strings.Split(fqApiStr, ",")
-	if err := openAPIGen(binDir, hf, fqApis); err != nil {
+	f := func(a string) error { return openAPIGen(binDir, a, fqApis) }
+	if err = genutil.WithHeaderFile(hf, f); err != nil {
 		return err
 	}
 

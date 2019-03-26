@@ -107,22 +107,28 @@ func CreateFQApis(pkg string, gvs map[string][]string) string {
 	return fqb.String()
 }
 
-func GetHeaderFileIfEmpty(hf string) (string, func(), error) {
+func WithHeaderFile(hf string, f func(string) error) (err error) {
 	if hf == "" {
-		f, err := ioutil.TempFile("", "")
+		hf, err = createEmptyTmpFile()
 		if err != nil {
-			return "", nil, err
+			return err
 		}
-		if err = f.Close(); err != nil {
-			return "", nil, err
-		}
-		hf = f.Name()
-		rm := func() {
+		defer func() {
 			if err = os.RemoveAll(hf); err != nil {
 				log.Error(err)
 			}
-		}
-		return hf, rm, nil
+		}()
 	}
-	return hf, nil, nil
+	return f(hf)
+}
+
+func createEmptyTmpFile() (string, error) {
+	f, err := ioutil.TempFile("", "")
+	if err != nil {
+		return "", err
+	}
+	if err = f.Close(); err != nil {
+		return "", err
+	}
+	return f.Name(), nil
 }
