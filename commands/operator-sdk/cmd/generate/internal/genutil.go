@@ -24,6 +24,8 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func BuildCodegenBinaries(genDirs []string, binDir, codegenSrcDir string) error {
@@ -103,4 +105,24 @@ func CreateFQApis(pkg string, gvs map[string][]string) string {
 		gn++
 	}
 	return fqb.String()
+}
+
+func GetHeaderFileIfEmpty(hf string) (string, func(), error) {
+	if hf == "" {
+		f, err := ioutil.TempFile("", "")
+		if err != nil {
+			return "", nil, err
+		}
+		if err = f.Close(); err != nil {
+			return "", nil, err
+		}
+		hf = f.Name()
+		rm := func() {
+			if err = os.RemoveAll(hf); err != nil {
+				log.Error(err)
+			}
+		}
+		return hf, rm, nil
+	}
+	return hf, nil, nil
 }

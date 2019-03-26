@@ -17,7 +17,6 @@ package generate
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -74,21 +73,14 @@ func k8sFunc(cmd *cobra.Command, args []string) error {
 func K8sCodegen(hf string) error {
 	projutil.MustInProjectRoot()
 
-	if hf == "" {
-		f, err := ioutil.TempFile("", "")
-		if err != nil {
-			return err
-		}
-		if err = f.Close(); err != nil {
-			return err
-		}
-		hf = f.Name()
-		defer func() {
-			if err = os.RemoveAll(hf); err != nil {
-				log.Error(err)
-			}
-		}()
+	hft, rm, err := genutil.GetHeaderFileIfEmpty(hf)
+	if err != nil {
+		return err
 	}
+	if rm != nil {
+		defer rm()
+	}
+	hf = hft
 
 	wd := projutil.MustGetwd()
 	repoPkg := projutil.CheckAndGetProjectGoPkg()
