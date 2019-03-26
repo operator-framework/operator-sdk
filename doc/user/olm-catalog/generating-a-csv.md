@@ -1,6 +1,10 @@
 # Generating a Cluster Service Version (CSV)
 
-A [CSV][doc-csv] manifest defines your operator in a way that allows the [Operator Lifecycle Manager][olm] (OLM) to deploy it on a Kubernetes cluster and the Operator Hub (https://operatorhub.io) to create an appealing, descriptive page for your operator. This document describes how to generate a CSV for your operator using [`operator-sdk olm-catalog gen-csv`][doc-gen-csv], and some of the nuances of how the SDK generates a CSV.
+This document describes how to manage the following lifecycle for your Operator using the SDK's [`operator-sdk olm-catalog gen-csv`][doc-gen-csv] command:
+
+- **Generate your first release** - encapsulate the metadata needed to install your Operator and configure the permissions it needs from the generated SDK files.
+- **Upgrade your Operator** - Carry over any customizations you have made and ensure a rolling update to the next version of your Operator.
+- **Refresh your CRDs** - If a new version has updated CRDs, refresh those definitions within the CSV automatically.
 
 ## Configuration
 
@@ -25,15 +29,15 @@ Fields in this config file can be modified to point towards alternate manifest l
 
 ## Versioning
 
-CSV's are versioned in path, file name, and in their `metadata.name` field. For example, running `operator-sdk olm-catalog gen-csv --csv-version 0.0.1` will generate a CSV at `deploy/olm-catalog/<operator-name>/0.0.1/<operator-name>.v0.0.1.clusterserviceversion.yaml`. A versioned directory such as `deploy/olm-catalog/<operator-name>/0.0.1` is known as a [*bundle*][doc-bundle]. Versions allow the OLM to upgrade or downgrade your operator at runtime, i.e. in a cluster. A valid semantic version is required.
+CSV's are versioned in path, file name, and in their `metadata.name` field. For example, running `operator-sdk olm-catalog gen-csv --csv-version 0.0.1` will generate a CSV at `deploy/olm-catalog/<operator-name>/0.0.1/<operator-name>.v0.0.1.clusterserviceversion.yaml`. A versioned directory such as `deploy/olm-catalog/<operator-name>/0.0.1` is known as a [*bundle*][doc-bundle]. Versions allow the OLM to upgrade or downgrade your Operator at runtime, i.e. in a cluster. A valid semantic version is required.
 
 `gen-csv` allows you to upgrade your CSV using the `--from-version` flag. If you have an existing CSV with version `0.0.1` and want to write a new version `0.0.2`, you can run `operator-sdk olm-catalog gen-csv --csv-version 0.0.2 --from-version 0.0.1`. This will write a new CSV manifest to `deploy/olm-catalog/<operator-name>/0.0.2/<operator-name>.v0.0.2.clusterserviceversion.yaml` containing user-defined data from `0.0.1` and any modifications you've made to `roles.yaml`, `operator.yaml`, CR's, or CRD's.
 
-The SDK can manage CRD's in your operator bundle as well. You can pass the `--update-crds` flag to `gen-csv` to add or update your CRD's in your operator bundle by copying manifests pointed to by `crd-cr-path-list` in your config. CRD's in a bundle are not updated by default.
+The SDK can manage CRD's in your Operator bundle as well. You can pass the `--update-crds` flag to `gen-csv` to add or update your CRD's in your bundle by copying manifests pointed to by `crd-cr-path-list` in your config. CRD's in a bundle are not updated by default.
 
 ## First Generation
 
-Now that you've configured the generator, assuming version `0.0.1` is being generated, running `operator-sdk olm-catalog gen-csv --csv-version 0.0.1` will generate a CSV defining your operator under `deploy/olm-catalog/<operator-name>/0.0.1/<operator-name>.v0.0.1.clusterserviceversion.yaml`. No CSV existed previously in `deploy/olm-catalog/<operator-name>/0.0.1`, so no manifests were overwritten or modified.
+Now that you've configured the generator, assuming version `0.0.1` is being generated, running `operator-sdk olm-catalog gen-csv --csv-version 0.0.1` will generate a CSV defining your Operator under `deploy/olm-catalog/<operator-name>/0.0.1/<operator-name>.v0.0.1.clusterserviceversion.yaml`. No CSV existed previously in `deploy/olm-catalog/<operator-name>/0.0.1`, so no manifests were overwritten or modified.
 
 Some fields might not have values after running `gen-csv` the first time. The SDK will warn you to fill required fields and make suggestions for values for other fields:
 
@@ -47,20 +51,20 @@ INFO[0000] Required csv fields not filled in file deploy/olm-catalog/app-operato
 INFO[0000] Created deploy/olm-catalog/app-operator/0.0.1/app-operator.v0.0.1.clusterserviceversion.yaml
 ```
 
-When running `gen-csv` with a version that already exists, the `Required csv fields...` info statement will become a warning, as these fields are useful for displaying your operator in Operator Hub.
+When running `gen-csv` with a version that already exists, the `Required csv fields...` info statement will become a warning, as these fields are useful for displaying your Operator in Operator Hub.
 
 A note on `specDescriptors` and `specDescriptors` fields in `spec.customresourcedefinitions.owned`:
-* Code comments are parsed to create `description`'s for each item in `specDescriptors` and `specDescriptors`, so these comments should be kept up-to-date with operator semantics.
+* Code comments are parsed to create `description`'s for each item in `specDescriptors` and `specDescriptors`, so these comments should be kept up-to-date with Operator semantics.
 * `displayName` is guessed from type names, but will not overwrite values already present.
 * `path` and `x-descriptors` are guessed from JSON tags and their corresponding UI element from [this list][x-desc-list]. These values are presented as suggestions by `gen-csv` if they are not filled.
 
 ## Updating your CSV
 
-Let's say you added a new CRD `deploy/crds/group_v1beta1_yourkind_crd.yaml` to your operator project, and added a port to your Deployment manifest `operator.yaml`. Assuming you're using the same version as above, updating your CSV is as simple as running `operator-sdk olm-catalog gen-csv --csv-version 0.0.1`. `gen-csv` will append your new CRD to `spec.customresourcedefinitions.owned`, replace the old data at `spec.install.spec.deployments` with your updated Deployment, and write an updated CSV to the same location.
+Let's say you added a new CRD `deploy/crds/group_v1beta1_yourkind_crd.yaml` to your Operator project, and added a port to your Deployment manifest `operator.yaml`. Assuming you're using the same version as above, updating your CSV is as simple as running `operator-sdk olm-catalog gen-csv --csv-version 0.0.1`. `gen-csv` will append your new CRD to `spec.customresourcedefinitions.owned`, replace the old data at `spec.install.spec.deployments` with your updated Deployment, and write an updated CSV to the same location.
 
 The SDK will not overwrite user-defined fields like `spec.maintainers` or descriptions of CSV elements, with the exception of `specDescriptors[].displayName` and `specDescriptors[].displayName` in `spec.customresourcedefinitions.owned`, as mentioned [above](#first-generation).
 
-Including the `--update-crds` flag will update the CRD's in your operator bundle.
+Including the `--update-crds` flag will update the CRD's in your Operator bundle.
 
 ## Upgrading your CSV
 
@@ -77,29 +81,29 @@ Several fields require user input. The set of fields with this requirement may c
 Required:
 
 * `metadata.name`: a *unique* name for this CSV. Operator version should be included in the name to ensure uniqueness, ex. `app-operator.v0.1.1`.
-* `spec.description` (user): a thorough description of the operator's functionality.
-* `spec.displayName` (user): a name to display for the operator in Operator Hub.
-* `spec.keywords`: (user) a list of keywords describing the operator.
-* `spec.maintainers`: (user) a list of human or organizational entities maintaining the operator, with a `name` and `email`.
-* `spec.provider`: (user) the operators' provider, with a `name`; usually an organization.
-* `spec.labels`: (user) a list of `key:value` pairs to be used by operator internals.
-* `spec.version`: semantic version of the operator, ex. `0.1.1`.
-* `spec.installModes`: what mode of [installation namespacing][install-modes] OLM should use. Currently all but `MultiNamespace` are supported by SDK operators.
-* `spec.customresourcedefinitions`: any CRD's the operator uses. This field will be filled by the SDK if any CRD manifests pointed to by `crd-cr-path-list` in your config.
+* `spec.description` (user): a thorough description of the Operator's functionality.
+* `spec.displayName` (user): a name to display for the Operator in Operator Hub.
+* `spec.keywords`: (user) a list of keywords describing the Operator.
+* `spec.maintainers`: (user) a list of human or organizational entities maintaining the Operator, with a `name` and `email`.
+* `spec.provider`: (user) the Operator provider, with a `name`; usually an organization.
+* `spec.labels`: (user) a list of `key:value` pairs to be used by Operator internals.
+* `spec.version`: semantic version of the Operator, ex. `0.1.1`.
+* `spec.installModes`: what mode of [installation namespacing][install-modes] OLM should use. Currently all but `MultiNamespace` are supported by SDK Operators.
+* `spec.customresourcedefinitions`: any CRD's the Operator uses. This field will be filled by the SDK if any CRD manifests pointed to by `crd-cr-path-list` in your config.
   * `description`: description of the CRD.
   * `resources`: any Kubernetes resources used by the CRD, ex. `Pod`'s and `ConfigMap`'s.
-  * `specDescriptors`: UI hints for inputs and outputs of the operators' spec.
-  * `statusDescriptors`: UI hints for inputs and outputs of the operators' status.
+  * `specDescriptors`: UI hints for inputs and outputs of the Operator's spec.
+  * `statusDescriptors`: UI hints for inputs and outputs of the Operator's status.
 
 Optional:
 
 * `metadata.annotations.alm-examples`: CR examples, in JSON string literal format, for your CRD's. Ideally one per CRD.
-* `metadata.annotations.capabilities`: level of operator capability. See the [operator maturity model][olm-capabilities] for a list of valid values.
+* `metadata.annotations.capabilities`: level of Operator capability. See the [Operator maturity model][olm-capabilities] for a list of valid values.
 * `spec.replaces`: the name of the CSV being replaced by this CSV.
-* `spec.links`: (user) a list of URL's to websites, documentation, etc. pertaining to the operator or application being managed, each with a `name` and `url`.
-* `spec.selector`: (user) selectors by which the operator can pair resources in a cluster.
-* `spec.icon`: (user) a base64-encoded icon unique to the operator, set in a `base64data` field with a `mediatype`.
-* `spec.maturity`: the operators' maturity, ex. `alpha`.
+* `spec.links`: (user) a list of URL's to websites, documentation, etc. pertaining to the Operator or application being managed, each with a `name` and `url`.
+* `spec.selector`: (user) selectors by which the Operator can pair resources in a cluster.
+* `spec.icon`: (user) a base64-encoded icon unique to the Operator, set in a `base64data` field with a `mediatype`.
+* `spec.maturity`: the Operator's maturity, ex. `alpha`.
 
 ## Further Reading
 
