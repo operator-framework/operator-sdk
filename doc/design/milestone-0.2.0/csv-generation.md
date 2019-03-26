@@ -140,4 +140,4 @@ func (us *CSVInstallStrategyUpdate) Apply(csv *v1alpha1.ClusterServiceVersion) e
 [olm_csv_spec_doc]:https://github.com/operator-framework/operator-lifecycle-manager/blob/16ff8f983b50503c4d8b8015bd0c14b5c7d6786a/Documentation/design/building-your-csv.md#building-a-cluster-service-version-csv-for-the-operator-framework
 [olm_csv_install_strat_doc]:https://github.com/operator-framework/operator-lifecycle-manager/blob/16ff8f983b50503c4d8b8015bd0c14b5c7d6786a/Documentation/design/building-your-csv.md#operator-install
 [olm_csv_crd_doc]:https://github.com/operator-framework/operator-lifecycle-manager/blob/16ff8f983b50503c4d8b8015bd0c14b5c7d6786a/Documentation/design/building-your-csv.md#owned-crds
-[csv_user_doc]:../../user/olm-catalog/generating-csvs.md#csv-fields
+[csv_user_doc]:../../user/olm-catalog/generating-a-csv.md#csv-fields
