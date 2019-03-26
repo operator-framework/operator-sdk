@@ -2,7 +2,7 @@
 
 ## Goal
 
-The `operator-sdk olm-catalog gen-csv` sub-command will generate a [**Cluster Service Version (CSV)**][olm_csv_definition] customized using information contained in user-defined yaml manifests and operator source files. Operator developers, *users*, will run `operator-sdk olm-catalog gen-csv` with the `--csv-version $version` flag to have their operators' state encapsulated in a CSV with the supplied version; this action should be idempotent and only update the CSV file when a new version is supplied, or a yaml manifest or source file is changed. Users should not have to directly modify most fields in a CSV manifest. Those that require modification are defined [below](#user-defined-yaml-fields). A CSV-generating command removes the responsibility from users of having in-depth [**Operator Lifecycle Manager (OLM)**][olm_description] knowledge in order for their operator to interact with OLM or publish metadata to the [**Catalog**][catalog_description].
+The `operator-sdk olm-catalog gen-csv` sub-command will generate a [**Cluster Service Version (CSV)**][olm_csv_definition] customized using information contained in user-defined yaml manifests and operator source files. Operator developers, *users*, will run `operator-sdk olm-catalog gen-csv` with the `--csv-version $version` flag to have their operators' state encapsulated in a CSV with the supplied version; this action should be idempotent and only update the CSV file when a new version is supplied, or a yaml manifest or source file is changed. Users should not have to directly modify most fields in a CSV manifest. Those that require modification are defined in the [user docs][csv_user_doc]. A CSV-generating command removes the responsibility from users of having in-depth [**Operator Lifecycle Manager (OLM)**][olm_description] knowledge in order for their operator to interact with OLM or publish metadata to the [**Catalog**][catalog_description].
 
 ## Background
 
@@ -132,43 +132,6 @@ func (us *CSVInstallStrategyUpdate) Apply(csv *v1alpha1.ClusterServiceVersion) e
 }
 ```
 
-### User-defined yaml fields
-
-Many CSV fields cannot be populated using generated, non-SDK-specific manifests. These fields are mostly human-written, English metadata about the operator and various CRD's. Users must directly modify their CSV yaml file, adding personalized data to the following required fields. Users will receive a warning from `operator-sdk olm-catalog gen-csv` when a lack of data in any of the required fields is detected.
-
-Required:
-
-- `metadata.name`: a *unique* name for this CSV. Operator version should be included in the name to ensure uniqueness, ex. `app-operator.v0.1.1`.
-- `spec.displayName`: a public name to identify the operator.
-- `spec.description`: a short description of the operator's functionality.
-- `spec.keywords`: 1..N keywords describing the operator.
-- `spec.maintainers`: 1..N human or organizational entities maintaining the operator, with a `name` and `email`.
-- `spec.provider`: the operators' provider, with a `name`; usually an organization.
-- `spec.labels`: 1..N `key`:`value` pairs to be used by operator internals.
-- `spec.version`: semantic version of the operator, ex. `0.1.1`.
-- `spec.customresourcedefinitions`: any CRD's the operator uses. This field will be populated automatically by the SDK if any CRD yaml files are present in `deploy`; however, several fields not in the CRD manifest spec that require user input (more details in the [CSV CRD spec section][olm_csv_crd_doc]):
-        - `description`: description of the CRD.
-        - `resources`: any Kubernetes resources leveraged by the CRD, ex. `Pod`'s, `StatefulSet`'s.
-        - `specDescriptors`: UI hints for inputs and outputs of the operator.
-
-Optional:
-
-- `spec.replaces`: the name of the CSV being replaced by this CSV.
-- `spec.links`: 1..N URL's to websites, documentation, etc. pertaining to the operator or application being managed, each with a `name` and `url`.
-- `spec.selector`: selectors by which the operator can pair resources in a cluster.
-- `spec.icon`: a base64-encoded icon unique to the operator, set in a `base64data` field with a `mediatype`.
-- `spec.maturity`: the operators' capability level according to the [maturity model](../../images/operator-maturity-model.png), ex. `Seamless Upgrades`.
-
-Further details on what data each field above should hold are found in the [CSV spec][olm_csv_spec_doc].
-
-**Note**: Several yaml fields currently requiring user intervention can potentially be parsed from operator code; such SDK functionality will be addressed in a future design document.
-
-### CSV versioning
-
-The CSV version is the same as the operators', and should be included somewhere in `metadata.name`. A new CSV will be generated when upgrading operator versions.
-
-**TODO:** discuss whether multiple CSV files can be present, each with a unique file name (ex. `app-operator.csv.0.1.1.yaml`), or a single `app-operator.csv.yaml` file that relies on VCS (git) to version the file.
-
 [olm_csv_definition]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md#what-is-a-cluster-service-version-csv
 [olm_description]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/README.md
 [catalog_description]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/architecture.md#catalog-registry-design
@@ -177,3 +140,4 @@ The CSV version is the same as the operators', and should be included somewhere 
 [olm_csv_spec_doc]:https://github.com/operator-framework/operator-lifecycle-manager/blob/16ff8f983b50503c4d8b8015bd0c14b5c7d6786a/Documentation/design/building-your-csv.md#building-a-cluster-service-version-csv-for-the-operator-framework
 [olm_csv_install_strat_doc]:https://github.com/operator-framework/operator-lifecycle-manager/blob/16ff8f983b50503c4d8b8015bd0c14b5c7d6786a/Documentation/design/building-your-csv.md#operator-install
 [olm_csv_crd_doc]:https://github.com/operator-framework/operator-lifecycle-manager/blob/16ff8f983b50503c4d8b8015bd0c14b5c7d6786a/Documentation/design/building-your-csv.md#owned-crds
+[csv_user_doc]:../../user/olm-catalog/generating-csvs.md#csv-fields
