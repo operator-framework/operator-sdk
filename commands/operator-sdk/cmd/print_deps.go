@@ -34,15 +34,15 @@ func NewPrintDepsCmd() *cobra.Command {
 		Short: "Print Golang packages and versions required to run the operator",
 		Long: `The operator-sdk print-deps command prints all Golang packages and versions expected
 by this version of the Operator SDK. Versions for these packages should match
-those in an operators' go.mod file.
+those in an operators' go.mod or Gopkg.toml file.
 
 print-deps prints in columnar format by default. Use the --as-file flag to
-print in go.mod file format.
+print in go.mod or Gopkg.toml file format.
 `,
 		RunE: printDepsFunc,
 	}
 
-	printDepsCmd.Flags().BoolVar(&asFile, "as-file", false, "Print dependencies in go.mod file format.")
+	printDepsCmd.Flags().BoolVar(&asFile, "as-file", false, "Print dependencies in go.mod or Gopkg.toml file format.")
 
 	return printDepsCmd
 }
