@@ -4,7 +4,14 @@ A [CSV][doc-csv] manifest defines your operator in a way that allows the [Operat
 
 ## Configuration
 
-Operator SDK projects have an expected [project layout][doc-project-layout]. In particular, a few manifests are expected to be present in the `deploy` directory: Kubernetes Roles (`role.yaml`), Deployments (`operator.yaml`), and CR's (`crds/<group>_<version>_<kind>_cr.yaml`) and Custom Resource Definitions (CRD's) (`crds/<group>_<version>_<kind>_crd.yaml`). `gen-csv` reads these files and adds their data to a CSV in an alternate form.
+Operator SDK projects have an expected [project layout][doc-project-layout]. In particular, a few manifests are expected to be present in the `deploy` directory:
+
+* Roles: `role.yaml`
+* Deployments: `operator.yaml`
+* Custom Resources (CR's): `crds/<group>_<version>_<kind>_cr.yaml`
+* Custom Resource Definitions (CRD's): `crds/<group>_<version>_<kind>_crd.yaml`.
+
+`gen-csv` reads these files and adds their data to a CSV in an alternate form.
 
 By default, a `deploy/olm-catalog/csv-config.yaml` file is generated when `gen-csv` is first run. The defaults written in the following fields contain paths to the aforementioned files. From the [design doc][doc-csv-design]:
 
@@ -49,7 +56,7 @@ A note on `specDescriptors` and `specDescriptors` fields in `spec.customresource
 
 ## Updating your CSV
 
-Lets say you added a new CRD `deploy/crds/group_v1beta1_yourkind_crd.yaml` to your operator project, and added a port to your Deployment manifest `operator.yaml`. Assuming you're using the same version as above, updating your CSV is as simple as running `operator-sdk olm-catalog gen-csv --csv-version 0.0.1`. `gen-csv` will append your new CRD to `spec.customresourcedefinitions.owned`, replace the old data at `spec.install.spec.deployments` with your updated Deployment, and write an updated CSV to the same location.
+Let's say you added a new CRD `deploy/crds/group_v1beta1_yourkind_crd.yaml` to your operator project, and added a port to your Deployment manifest `operator.yaml`. Assuming you're using the same version as above, updating your CSV is as simple as running `operator-sdk olm-catalog gen-csv --csv-version 0.0.1`. `gen-csv` will append your new CRD to `spec.customresourcedefinitions.owned`, replace the old data at `spec.install.spec.deployments` with your updated Deployment, and write an updated CSV to the same location.
 
 The SDK will not overwrite user-defined fields like `spec.maintainers` or descriptions of CSV elements, with the exception of `specDescriptors[].displayName` and `specDescriptors[].displayName` in `spec.customresourcedefinitions.owned`, as mentioned [above](#first-generation).
 
@@ -63,7 +70,7 @@ Be sure to include the `--update-crds` flag if you want to add CRD's to your bun
 
 ## CSV fields
 
-Below are two lists of fields: the first is a list of all fields the SDK and OLM expect in a CSV, and the second are those users should ideally fill but are not necessary.
+Below are two lists of fields: the first is a list of all fields the SDK and OLM expect in a CSV, and the second are optional.
 
 Several fields require user input. The set of fields with this requirement may change as the SDK becomes better at generating CSV's. For now, those are marked with a `(user)` qualifier.
 
