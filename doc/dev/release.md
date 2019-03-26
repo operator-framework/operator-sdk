@@ -254,7 +254,7 @@ You've now fully released a new version of the Operator SDK. Good work! However,
 
 ### 5. Making a new release branch
 
-If you have created a new minor release, you need to make a new branch for it. To do this, checkout the tag that you created and make a new branch that matches the version you released with `x` in the position of the patch number. For example, to make a new release branch after `v1.3.0` and push it to the repo, you would follow these steps:
+If you have created a new major or minor release, you need to make a new branch for it. To do this, checkout the tag that you created and make a new branch that matches the version you released with `x` in the position of the patch number. For example, to make a new release branch after `v1.3.0` and push it to the repo, you would follow these steps:
 
 ```console
 $ git checkout tags/v1.3.0
