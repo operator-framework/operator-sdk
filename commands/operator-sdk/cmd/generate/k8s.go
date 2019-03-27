@@ -30,7 +30,7 @@ import (
 )
 
 func NewGenerateK8SCmd() *cobra.Command {
-	return &cobra.Command{
+	k8sCmd := &cobra.Command{
 		Use:   "k8s",
 		Short: "Generates Kubernetes code for custom resource",
 		Long: `k8s generator generates code for custom resources given the API
@@ -48,6 +48,10 @@ Example:
 `,
 		RunE: k8sFunc,
 	}
+
+	k8sCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated files.")
+
+	return k8sCmd
 }
 
 func k8sFunc(cmd *cobra.Command, args []string) error {
@@ -60,11 +64,13 @@ func k8sFunc(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return K8sCodegen()
+	return K8sCodegen(headerFile)
 }
 
-// K8sCodegen performs deepcopy code-generation for all custom resources under pkg/apis
-func K8sCodegen() error {
+// K8sCodegen performs deepcopy code-generation for all custom resources under
+// pkg/apis. hf is  a path to a header file containing text to add to generated
+// files.
+func K8sCodegen(hf string) error {
 	projutil.MustInProjectRoot()
 
 	wd := projutil.MustGetwd()
@@ -87,11 +93,12 @@ func K8sCodegen() error {
 
 	log.Infof("Running deepcopy code-generation for Custom Resource group versions: [%v]\n", gvb.String())
 
-	if err := deepcopyGen(binDir, repoPkg, gvMap); err != nil {
+	fdc := func(a string) error { return deepcopyGen(binDir, repoPkg, a, gvMap) }
+	if err = genutil.WithHeaderFile(hf, fdc); err != nil {
 		return err
 	}
-
-	if err = defaulterGen(binDir, repoPkg, gvMap); err != nil {
+	fd := func(a string) error { return defaulterGen(binDir, repoPkg, a, gvMap) }
+	if err = genutil.WithHeaderFile(hf, fd); err != nil {
 		return err
 	}
 
@@ -110,12 +117,15 @@ func buildCodegenBinaries(binDir, codegenSrcDir string) error {
 	return genutil.BuildCodegenBinaries(genDirs, binDir, codegenSrcDir)
 }
 
-func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) (err error) {
+func deepcopyGen(binDir, repoPkg, hf string, gvMap map[string][]string) (err error) {
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	args := []string{
 		"--input-dirs", genutil.CreateFQApis(apisPkg, gvMap),
 		"--output-file-base", "zz_generated.deepcopy",
 		"--bounding-dirs", apisPkg,
+		// deepcopy-gen requires a boilerplate file. Either use header or an
+		// empty file if header is empty.
+		"--go-header-file", hf,
 	}
 	cmd := exec.Command(filepath.Join(binDir, "deepcopy-gen"), args...)
 	if projutil.IsGoVerbose() {
@@ -131,11 +141,14 @@ func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) (err error) 
 	return nil
 }
 
-func defaulterGen(binDir, repoPkg string, gvMap map[string][]string) (err error) {
+func defaulterGen(binDir, repoPkg, hf string, gvMap map[string][]string) (err error) {
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	args := []string{
 		"--input-dirs", genutil.CreateFQApis(apisPkg, gvMap),
 		"--output-file-base", "zz_generated.defaults",
+		// defaulter-gen requires a boilerplate file. Either use header or an
+		// empty file if header is empty.
+		"--go-header-file", hf,
 	}
 	cmd := exec.Command(filepath.Join(binDir, "defaulter-gen"), args...)
 	if projutil.IsGoVerbose() {
