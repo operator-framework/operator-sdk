@@ -45,8 +45,9 @@ func (b *BuildDockerfile) GetInput() (input.Input, error) {
 
 const buildDockerfileAnsibleTmpl = `FROM quay.io/operator-framework/ansible-operator:{{.ImageTag}}
 
-COPY {{.RolesDir}}/ ${HOME}/{{.RolesDir}}/
 COPY watches.yaml ${HOME}/watches.yaml
+
+COPY {{.RolesDir}}/ ${HOME}/{{.RolesDir}}/
 {{- if .GeneratePlaybook }}
 COPY playbook.yml ${HOME}/playbook.yml
 {{- end }}
