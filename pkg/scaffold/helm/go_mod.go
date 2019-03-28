@@ -162,18 +162,13 @@ replace (
 )
 `
 
-func PrintGoModAsFile() error {
+func PrintGoMod(asFile bool) error {
 	b, err := deps.ExecGoModTmpl(goModTmpl)
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(b))
-	return nil
-}
-
-func PrintGoMod() error {
-	b, err := deps.ExecGoModTmpl(goModTmpl)
-	if err != nil {
+	if asFile {
+		_, err = fmt.Println(string(b))
 		return err
 	}
 	return deps.PrintGoMod(b)

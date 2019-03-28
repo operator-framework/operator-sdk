@@ -52,13 +52,7 @@ func printDepsFunc(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 
-	var err error
-	if asFile {
-		err = printDepsAsFile()
-	} else {
-		err = printDeps()
-	}
-	if err != nil {
+	if err := printDeps(asFile); err != nil {
 		return fmt.Errorf("print deps failed: (%v)", err)
 	}
 	return nil
@@ -73,7 +67,7 @@ func isDepsManagerDep() (bool, error) {
 	return false, nil
 }
 
-func printDeps() error {
+func printDeps(asFile bool) error {
 	isDep, err := isDepsManagerDep()
 	if err != nil {
 		return err
@@ -82,46 +76,19 @@ func printDeps() error {
 	switch t := projutil.GetOperatorType(); t {
 	case projutil.OperatorTypeGo:
 		if isDep {
-			return project.PrintDepGopkgTOML()
+			return project.PrintDepGopkgTOML(asFile)
 		}
-		return project.PrintGoMod()
+		return project.PrintGoMod(asFile)
 	case projutil.OperatorTypeAnsible:
 		if isDep {
-			return ansible.PrintDepGopkgTOML()
+			return ansible.PrintDepGopkgTOML(asFile)
 		}
-		return ansible.PrintGoMod()
+		return ansible.PrintGoMod(asFile)
 	case projutil.OperatorTypeHelm:
 		if isDep {
-			return helm.PrintDepGopkgTOML()
+			return helm.PrintDepGopkgTOML(asFile)
 		}
-		return helm.PrintGoMod()
-	default:
-		return &projutil.ErrUnknownOperatorType{Type: t}
-	}
-}
-
-func printDepsAsFile() error {
-	isDep, err := isDepsManagerDep()
-	if err != nil {
-		return err
-	}
-
-	switch t := projutil.GetOperatorType(); t {
-	case projutil.OperatorTypeGo:
-		if isDep {
-			return project.PrintDepGopkgTOMLAsFile()
-		}
-		return project.PrintGoModAsFile()
-	case projutil.OperatorTypeAnsible:
-		if isDep {
-			return ansible.PrintDepGopkgTOMLAsFile()
-		}
-		return ansible.PrintGoModAsFile()
-	case projutil.OperatorTypeHelm:
-		if isDep {
-			return helm.PrintDepGopkgTOMLAsFile()
-		}
-		return helm.PrintGoModAsFile()
+		return helm.PrintGoMod(asFile)
 	default:
 		return &projutil.ErrUnknownOperatorType{Type: t}
 	}

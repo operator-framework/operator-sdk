@@ -112,11 +112,10 @@ required = [
     non-go = false
 `
 
-func PrintDepGopkgTOMLAsFile() error {
-	_, err := fmt.Println(gopkgTomlTmpl)
-	return err
-}
-
-func PrintDepGopkgTOML() error {
+func PrintDepGopkgTOML(asFile bool) error {
+	if asFile {
+		_, err := fmt.Println(gopkgTomlTmpl)
+		return err
+	}
 	return deps.PrintDepGopkgTOML(gopkgTomlTmpl)
 }
