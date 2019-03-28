@@ -59,10 +59,12 @@ func migrateRun(cmd *cobra.Command, args []string) error {
 // migrateAnsible runs the migration process for an ansible-based operator
 func migrateAnsible() error {
 	wd := projutil.MustGetwd()
+	projectName := filepath.Base(wd)
 
 	cfg := &input.Config{
+		Repo:           filepath.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
 		AbsProjectPath: wd,
-		ProjectName:    filepath.Base(wd),
+		ProjectName:    projectName,
 	}
 
 	dockerfile := ansible.DockerfileHybrid{
@@ -102,10 +104,12 @@ func migrateAnsible() error {
 // migrateHelm runs the migration process for a helm-based operator
 func migrateHelm() error {
 	wd := projutil.MustGetwd()
+	projectName := filepath.Base(wd)
 
 	cfg := &input.Config{
+		Repo:           filepath.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
 		AbsProjectPath: wd,
-		ProjectName:    filepath.Base(wd),
+		ProjectName:    projectName,
 	}
 
 	if err := renameDockerfile(); err != nil {
