@@ -37,6 +37,8 @@ func (s *GoMod) GetInput() (input.Input, error) {
 
 const goModTmpl = `module {{ .Repo }}
 
+go 1.11
+
 require (
 	contrib.go.opencensus.io/exporter/ocagent v0.4.9 // indirect
 	github.com/Azure/go-autorest v11.5.2+incompatible // indirect
