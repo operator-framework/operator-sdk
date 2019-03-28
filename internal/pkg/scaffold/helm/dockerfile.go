@@ -44,6 +44,6 @@ func (d *Dockerfile) GetInput() (input.Input, error) {
 
 const dockerFileHelmTmpl = `FROM quay.io/operator-framework/helm-operator:{{.ImageTag}}
 
-COPY {{.HelmChartsDir}}/ ${HOME}/{{.HelmChartsDir}}/
 COPY watches.yaml ${HOME}/watches.yaml
+COPY {{.HelmChartsDir}}/ ${HOME}/{{.HelmChartsDir}}/
 `

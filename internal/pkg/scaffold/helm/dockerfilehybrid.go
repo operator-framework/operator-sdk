@@ -48,6 +48,9 @@ ENV OPERATOR=/usr/local/bin/helm-operator \
     USER_NAME=helm \
     HOME=/opt/helm
 
+{{- if .Watches }}
+COPY watches.yaml ${HOME}/watches.yaml{{ end }}
+
 # install operator binary
 COPY build/_output/bin/{{.ProjectName}} ${OPERATOR}
 
@@ -56,8 +59,6 @@ RUN  /usr/local/bin/user_setup
 
 {{- if .HelmCharts }}
 COPY helm-charts/ ${HOME}/helm-charts/{{ end }}
-{{- if .Watches }}
-COPY watches.yaml ${HOME}/watches.yaml{{ end }}
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
 
