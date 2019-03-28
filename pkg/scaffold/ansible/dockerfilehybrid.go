@@ -64,6 +64,9 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
     USER_NAME=ansible-operator\
     HOME=/opt/ansible
 
+{{- if .Watches }}
+COPY watches.yaml ${HOME}/watches.yaml{{ end }}
+
 # install operator binary
 COPY build/_output/bin/{{.ProjectName}} ${OPERATOR}
 # install k8s_status Ansible Module
@@ -76,8 +79,6 @@ RUN  /usr/local/bin/user_setup
 COPY roles/ ${HOME}/roles/{{ end }}
 {{- if .Playbook }}
 COPY playbook.yml ${HOME}/playbook.yml{{ end }}
-{{- if .Watches }}
-COPY watches.yaml ${HOME}/watches.yaml{{ end }}
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
 
