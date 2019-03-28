@@ -125,7 +125,7 @@ Currently only runs `deepcopy-gen` to generate the required `DeepCopy()` functio
 
 ### Flags
 
-* `--header-file` string - Path to file containing headers for generated files.
+* `--header-file` string - Path to file containing headers for generated files (optional).
 
 #### Example
 
@@ -310,7 +310,7 @@ Adds the API definition for a new custom resource under `pkg/apis` and generates
 
 * `--api-version` string - CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
 * `--kind` string - CRD Kind. (e.g AppService)
-* `--header-file` string - Path to file containing headers for generated files.
+* `--header-file` string - Path to file containing headers for generated files (optional).
 
 #### Example
 
