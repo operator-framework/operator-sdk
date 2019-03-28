@@ -18,10 +18,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/ansible"
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/helm"
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/project"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/helm"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/project"
 
 	"github.com/spf13/cobra"
 )

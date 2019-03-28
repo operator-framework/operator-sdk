@@ -28,9 +28,9 @@ import (
 
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	log "github.com/sirupsen/logrus"
 )
 
