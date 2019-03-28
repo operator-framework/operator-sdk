@@ -65,7 +65,7 @@ func (s *Scanner) Scan() bool {
 			s.err = err
 			return false
 		}
-		if tok == nil {
+		if len(bytes.TrimSpace(tok)) == 0 {
 			s.empties++
 			if s.empties > maxExecutiveEmpties {
 				panic("yaml.Scan: too many empty tokens without progressing")
