@@ -1,4 +1,4 @@
-# User Defined Tests for the Operator Scorecard
+# Plugin System for the Operator Scorecard
 
 Implementation Owner: AlexNPavel
 
@@ -12,15 +12,16 @@ Status: Draft
 
 ## Background
 
-The operator scorecard is intended to allow users to run a generic set of tests on their operators. Some simple checks can be performed, but more complicated
-tests verifying that the operator actually works are not possible to do in a generic way. This leads to some of the functional tests in the current scorecard
-implementation to be inaccurate or too insufficient to be useful. For more useful functional scorecard tests, we need to allow some basic user input for tests.
+The operator scorecard is intended to allow users to run a generic set of tests on their operators. The scorecard currently only has
+built-in tests, and it would be beneficial to allow a simple way to add or remove various tests that the scorecard can run. This proposal
+outlines a plugin system that would allow us and users to dynamically add new tests without having to compile them into the scorecard/SDK
+binary.
 
 ## Goals
 
-- Implement user-defined scorecard tests
+- Implement a configurable plugin based scorecard test system
 
-## Design overview
+## Design Overview
 
 ### Plugin System
 
