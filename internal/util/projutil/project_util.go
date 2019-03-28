@@ -17,7 +17,6 @@ package projutil
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -157,16 +156,6 @@ func MustSetGopath(currentGopath string) string {
 		log.Fatal(err)
 	}
 	return newGopath
-}
-
-func ExecCmd(cmd *exec.Cmd) error {
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		return fmt.Errorf("failed to exec %#v: %v", cmd.Args, err)
-	}
-	return nil
 }
 
 var flagRe = regexp.MustCompile("(.* )?-v(.* )?")
