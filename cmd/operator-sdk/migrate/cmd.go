@@ -29,14 +29,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var depManager string
+
 // NewCmd returns a command that will add source code to an existing non-go operator
 func NewCmd() *cobra.Command {
-	return &cobra.Command{
+	newCmd := &cobra.Command{
 		Use:   "migrate",
 		Short: "Adds source code to an operator",
 		Long:  `operator-sdk migrate adds a main.go source file and any associated source files for an operator that is not of the "go" type.`,
 		RunE:  migrateRun,
 	}
+
+	newCmd.Flags().StringVar(&depManager, "dep-manager", "mod", "Dependency manager the new project will use (choices: \"dep\", \"mod\")")
+
+	return newCmd
 }
 
 // migrateRun determines the current operator type and runs the corresponding
@@ -80,15 +86,22 @@ func migrateAnsible() error {
 	default:
 		return fmt.Errorf("error trying to stat %s: (%v)", ansible.PlaybookYamlFile, err)
 	}
-
 	if err := renameDockerfile(); err != nil {
 		return err
+	}
+
+	var depsFile input.File
+	switch depManager {
+	case "dep":
+		depsFile = &ansible.GopkgToml{}
+	default:
+		depsFile = &ansible.GoMod{}
 	}
 
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
 		&ansible.Main{},
-		&ansible.GoMod{},
+		depsFile,
 		&dockerfile,
 		&ansible.Entrypoint{},
 		&ansible.UserSetup{},
@@ -116,10 +129,18 @@ func migrateHelm() error {
 		return err
 	}
 
+	var depsFile input.File
+	switch depManager {
+	case "dep":
+		depsFile = &helm.GopkgToml{}
+	default:
+		depsFile = &helm.GoMod{}
+	}
+
 	s := &scaffold.Scaffold{}
 	err := s.Execute(cfg,
 		&helm.Main{},
-		&helm.GoMod{},
+		depsFile,
 		&helm.DockerfileHybrid{
 			Watches:    true,
 			HelmCharts: true,
