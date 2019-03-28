@@ -21,8 +21,8 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 
 	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"

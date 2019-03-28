@@ -22,8 +22,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
 	"github.com/ghodss/yaml"
 	"github.com/spf13/afero"

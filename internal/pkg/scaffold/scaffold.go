@@ -25,8 +25,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"

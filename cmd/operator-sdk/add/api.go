@@ -18,9 +18,9 @@ import (
 	"fmt"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

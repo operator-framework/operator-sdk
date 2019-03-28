@@ -20,12 +20,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
 	log "github.com/sirupsen/logrus"

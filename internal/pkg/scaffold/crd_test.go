@@ -20,8 +20,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 )
 
 func TestCRDGoProject(t *testing.T) {

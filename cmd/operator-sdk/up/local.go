@@ -24,6 +24,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/ansible"
@@ -32,7 +33,6 @@ import (
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
 	log "github.com/sirupsen/logrus"

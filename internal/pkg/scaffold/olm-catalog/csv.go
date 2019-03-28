@@ -24,10 +24,10 @@ import (
 	"sync"
 	"unicode"
 
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/ghodss/yaml"
