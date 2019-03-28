@@ -17,7 +17,7 @@ package printdeps
 import (
 	"fmt"
 
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 
 	"github.com/spf13/cobra"
 )
