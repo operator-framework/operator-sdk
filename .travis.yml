@@ -65,7 +65,7 @@ jobs:
     # Build and test go
     - <<: *test
       name: Go on OpenShift
-      script: make test/ci-go ARGS="-v"
+      script: travis_wait 20 make test/ci-go ARGS="-v"
 
     # Build and test ansible
     - <<: *test
