@@ -29,17 +29,21 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 
+	"github.com/prometheus/prometheus/util/promlint"
 	"k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -49,6 +53,7 @@ const (
 	timeout                     = time.Second * 60
 	cleanupRetryInterval        = time.Second * 1
 	cleanupTimeout              = time.Second * 10
+	operatorName                = "memcached-operator"
 )
 
 func TestMemcached(t *testing.T) {
@@ -81,7 +86,7 @@ func TestMemcached(t *testing.T) {
 	t.Log("Creating new operator project")
 	cmdOut, err := exec.Command("operator-sdk",
 		"new",
-		"memcached-operator").CombinedOutput()
+		operatorName).CombinedOutput()
 	if err != nil {
 		// HACK: dep cannot resolve non-master branches as the base branch for PR's,
 		// so running `dep ensure` will fail when first running
@@ -95,8 +100,8 @@ func TestMemcached(t *testing.T) {
 	}
 	ctx.AddCleanupFn(func() error { return os.RemoveAll(absProjectPath) })
 
-	if err := os.Chdir("memcached-operator"); err != nil {
-		t.Fatalf("Failed to change to memcached-operator directory: (%v)", err)
+	if err := os.Chdir(operatorName); err != nil {
+		t.Fatalf("Failed to change to %s directory: (%v)", operatorName, err)
 	}
 	repo, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
 	if repo == "" {
@@ -138,21 +143,18 @@ func TestMemcached(t *testing.T) {
 		t.Fatalf("Error after modifying Gopkg.toml: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
-	// Temporarily disabling the leader election test due to GitHub issue #920 and PR #932.
-	// TODO: Update this test so that it works with the changes from #932
-	//
-	// // Set replicas to 2 to test leader election. In production, this should
-	// // almost always be set to 1, because there isn't generally value in having
-	// // a hot spare operator process.
-	// opYaml, err := ioutil.ReadFile("deploy/operator.yaml")
-	// if err != nil {
-	// 	t.Fatalf("Could not read deploy/operator.yaml: %v", err)
-	// }
-	// newOpYaml := bytes.Replace(opYaml, []byte("replicas: 1"), []byte("replicas: 2"), 1)
-	// err = ioutil.WriteFile("deploy/operator.yaml", newOpYaml, 0644)
-	// if err != nil {
-	// 	t.Fatalf("Could not write deploy/operator.yaml: %v", err)
-	// }
+	// Set replicas to 2 to test leader election. In production, this should
+	// almost always be set to 1, because there isn't generally value in having
+	// a hot spare operator process.
+	opYaml, err := ioutil.ReadFile("deploy/operator.yaml")
+	if err != nil {
+		t.Fatalf("Could not read deploy/operator.yaml: %v", err)
+	}
+	newOpYaml := bytes.Replace(opYaml, []byte("replicas: 1"), []byte("replicas: 2"), 1)
+	err = ioutil.WriteFile("deploy/operator.yaml", newOpYaml, 0644)
+	if err != nil {
+		t.Fatalf("Could not write deploy/operator.yaml: %v", err)
+	}
 
 	cmd := exec.Command("operator-sdk",
 		"add",
@@ -282,12 +284,14 @@ func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.Te
 		return err
 	}
 
-	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, retryInterval, timeout)
+	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, operatorName, 2, retryInterval, timeout)
 	if err != nil {
 		return err
 	}
 
-	leader, err := verifyLeader(t, namespace, f)
+	label := map[string]string{"name": operatorName}
+
+	leader, err := verifyLeader(t, namespace, f, label)
 	if err != nil {
 		return err
 	}
@@ -298,12 +302,17 @@ func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.Te
 		return err
 	}
 
-	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "memcached-operator", 1, retryInterval, timeout)
+	err = e2eutil.WaitForDeletion(t, f.Client.Client, leader, retryInterval, timeout)
 	if err != nil {
 		return err
 	}
 
-	newLeader, err := verifyLeader(t, namespace, f)
+	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, operatorName, 2, retryInterval, timeout)
+	if err != nil {
+		return err
+	}
+
+	newLeader, err := verifyLeader(t, namespace, f, label)
 	if err != nil {
 		return err
 	}
@@ -314,13 +323,25 @@ func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.Te
 	return nil
 }
 
-func verifyLeader(t *testing.T, namespace string, f *framework.Framework) (*v1.Pod, error) {
+func verifyLeader(t *testing.T, namespace string, f *framework.Framework, labels map[string]string) (*v1.Pod, error) {
 	// get configmap, which is the lock
+	lockName := "memcached-operator-lock"
 	lock := v1.ConfigMap{}
-	err := f.Client.Get(context.TODO(), types.NamespacedName{Name: "memcached-operator-lock", Namespace: namespace}, &lock)
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		err = f.Client.Get(context.TODO(), types.NamespacedName{Name: lockName, Namespace: namespace}, &lock)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				t.Logf("Waiting for availability of leader lock configmap %s\n", lockName)
+				return false, nil
+			}
+			return false, err
+		}
+		return true, nil
+	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting leader lock configmap: %v\n", err)
 	}
+	t.Logf("Found leader lock configmap %s\n", lockName)
 
 	owners := lock.GetOwnerReferences()
 	if len(owners) != 1 {
@@ -331,8 +352,10 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework) (*v1.P
 	// get operator pods
 	pods := v1.PodList{}
 	opts := client.ListOptions{Namespace: namespace}
-	if err := opts.SetLabelSelector("name=memcached-operator"); err != nil {
-		t.Fatalf("Failed to set list label selector: (%v)", err)
+	for k, v := range labels {
+		if err := opts.SetLabelSelector(fmt.Sprintf("%s=%s", k, v)); err != nil {
+			return nil, fmt.Errorf("failed to set list label selector: (%v)", err)
+		}
 	}
 	if err := opts.SetFieldSelector("status.phase=Running"); err != nil {
 		t.Fatalf("Failed to set list field selector: (%v)", err)
@@ -517,18 +540,20 @@ func MemcachedCluster(t *testing.T) {
 		t.Fatal(err)
 	}
 	// wait for memcached-operator to be ready
-	err = e2eutil.WaitForOperatorDeployment(t, framework.Global.KubeClient, namespace, "memcached-operator", 1, retryInterval, timeout)
+	err = e2eutil.WaitForOperatorDeployment(t, framework.Global.KubeClient, namespace, operatorName, 2, retryInterval, timeout)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Temporarily disabling the leader election test due to GitHub issue #920 and PR #932.
-	// TODO: Update this test so that it works with the changes from #932
-	// if err = memcachedLeaderTest(t, framework.Global, ctx); err != nil {
-	// 	t.Fatal(err)
-	// }
+	if err = memcachedLeaderTest(t, framework.Global, ctx); err != nil {
+		t.Fatal(err)
+	}
 
 	if err = memcachedScaleTest(t, framework.Global, ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = memcachedMetricsTest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -571,8 +596,103 @@ func MemcachedClusterTest(t *testing.T) {
 	cmdOut, err := exec.Command("operator-sdk", "test", "cluster", *e2eImageName,
 		"--namespace", namespace,
 		"--image-pull-policy", "Never",
-		"--service-account", "memcached-operator").CombinedOutput()
+		"--service-account", operatorName).CombinedOutput()
 	if err != nil {
 		t.Fatalf("In-cluster test failed: %v\nCommand Output:\n%s", err, string(cmdOut))
 	}
+}
+
+func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		return err
+	}
+
+	// Make sure metrics Service exists
+	s := v1.Service{}
+	err = f.Client.Get(context.TODO(), types.NamespacedName{Name: operatorName, Namespace: namespace}, &s)
+	if err != nil {
+		return fmt.Errorf("could not get metrics Service: (%v)", err)
+	}
+
+	// Get operator pod
+	pods := v1.PodList{}
+	opts := client.InNamespace(namespace)
+	if len(s.Spec.Selector) == 0 {
+		return fmt.Errorf("no labels found in metrics Service")
+	}
+
+	for k, v := range s.Spec.Selector {
+		if err := opts.SetLabelSelector(fmt.Sprintf("%s=%s", k, v)); err != nil {
+			return fmt.Errorf("failed to set list label selector: (%v)", err)
+		}
+	}
+
+	if err := opts.SetFieldSelector("status.phase=Running"); err != nil {
+		return fmt.Errorf("failed to set list field selector: (%v)", err)
+	}
+	err = f.Client.List(context.TODO(), opts, &pods)
+	if err != nil {
+		return fmt.Errorf("failed to get pods: (%v)", err)
+	}
+
+	podName := ""
+	numPods := len(pods.Items)
+	// TODO(lili): Remove below logic when we enable exposing metrics in all pods.
+	if numPods == 0 {
+		podName = pods.Items[0].Name
+	} else if numPods > 1 {
+		// If we got more than one pod, get leader pod name.
+		leader, err := verifyLeader(t, namespace, f, s.Spec.Selector)
+		if err != nil {
+			return err
+		}
+		podName = leader.Name
+	} else {
+		return fmt.Errorf("failed to get operator pod: could not select any pods with Service selector %v", s.Spec.Selector)
+	}
+	// Pod name must be there, otherwise we cannot read metrics data via pod proxy.
+	if podName == "" {
+		return fmt.Errorf("failed to get pod name")
+	}
+
+	// Get metrics data
+	request := proxyViaPod(f.KubeClient, namespace, podName, "8383", "/metrics")
+	response, err := request.DoRaw()
+	if err != nil {
+		return fmt.Errorf("failed to get response from metrics: %v", err)
+	}
+
+	// Make sure metrics are present
+	if len(response) == 0 {
+		return fmt.Errorf("metrics body is empty")
+	}
+
+	// Perform prometheus metrics lint checks
+	l := promlint.New(bytes.NewReader(response))
+	problems, err := l.Lint()
+	if err != nil {
+		return fmt.Errorf("failed to lint metrics: %v", err)
+	}
+	// TODO(lili): Change to 0, when we upgrade to 1.14.
+	// currently there is a problem with one of the metrics in upstream Kubernetes:
+	// `workqueue_longest_running_processor_microseconds`.
+	// This has been fixed in 1.14 release.
+	if len(problems) > 1 {
+		return fmt.Errorf("found problems with metrics: %#+v", problems)
+	}
+
+	return nil
+}
+
+func proxyViaPod(kubeClient kubernetes.Interface, namespace, podName, podPortName, path string) *rest.Request {
+	return kubeClient.
+		CoreV1().
+		RESTClient().
+		Get().
+		Namespace(namespace).
+		Resource("pods").
+		SubResource("proxy").
+		Name(fmt.Sprintf("%s:%s", podName, podPortName)).
+		Suffix(path)
 }

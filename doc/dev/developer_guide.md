@@ -35,6 +35,12 @@ To build the binary and run all tests (assuming you have a correctly configured 
 you can simple run:
 
 ```sh
+$ make test-ci
+```
+
+If you simply want to run the unit tests, you can run:
+
+```sh
 $ make test
 ```
 
@@ -47,7 +53,7 @@ See the project [README][sdk_readme] for more details.
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
 [repo_sdk]:https://github.com/operator-framework/operator-sdk
-[fork_guide]:https://help.github.com/articles/fork-a-repo/
+[fork_guide]:https://help.github.com/en/articles/fork-a-repo
 [docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [sdk_readme]:../../README.md

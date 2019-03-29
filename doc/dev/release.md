@@ -77,7 +77,7 @@ The following sections, often directly copied from our [changelog][doc-changelog
 
 When a new release is created, the tag for the commit it signed with a maintainers' gpg key and
 the binaries for the release are also signed by the same key. All keys used by maintainers will
-be available via public PGP keyservers such as [pool.sks-keyservers.net][sks-keyserver].
+be available via public PGP keyservers such as pool.sks-keyservers.net.
 
 For new maintainers who have not done a release and do not have their PGP key on a public
 keyserver, output your armored public key using this command:
@@ -87,7 +87,7 @@ $ gpg --armor --export "$GPG_EMAIL" > mykey.asc
 ```
 
 Then, copy and paste the content of the outputted file into the `Submit a key` section on
-the [SKS PGP Public Key Server][sks-keyserver] or any other public keyserver that synchronizes
+pool.sks-keyservers.net or any other public keyserver that synchronizes
 the key to other public keyservers. Once that is done, other people can download your public
 key and you are ready to sign releases.
 
@@ -172,15 +172,16 @@ $ git checkout -b release-v1.3.0
 ```
 
 Commit changes to the following six files:
-* `version/version.go`: update `Version` to `v1.3.0`.
-* `pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
-  * Comment out `branch = "master"`
-  * Un-comment `version = "v1.2.0"`
-  * Change `v1.2.0` to `v1.3.0`
-* `pkg/scaffold/gopkgtoml_test.go`: same as for `pkg/scaffold/gopkgtoml.go`.
-* `pkg/scaffold/ansible/gopkgtoml.go`: same as for `pkg/scaffold/gopkgtoml.go`.
-* `pkg/scaffold/helm/gopkgtoml.go`: same as for `pkg/scaffold/gopkgtoml.go`.
-* `CHANGELOG.md`: update the `## Unreleased` header to `## v1.3.0`.
+
+- `version/version.go`: update `Version` to `v1.3.0`.
+- `internal/pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
+  - Comment out `branch = "master"`
+  - Un-comment `version = "v1.2.0"`
+  - Change `v1.2.0` to `v1.3.0`
+- `internal/pkg/scaffold/gopkgtoml_test.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
+- `internal/pkg/scaffold/ansible/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
+- `internal/pkg/scaffold/helm/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
+- `CHANGELOG.md`: update the `## Unreleased` header to `## v1.3.0`.
 
 Create a new PR for `release-v1.3.0`.
 
@@ -211,15 +212,17 @@ Once this tag passes CI, go to step 3. For more info on tagging, see the [releas
 ### 3. Create a PR for post-release version and CHANGELOG.md updates
 
 Check out a new branch from master (or use your `release-v1.3.0`) and commit the following changes:
-* `version/version.go`: update `Version` to `v1.3.0+git`.
-* `pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
-  * Comment out `version = "v1.3.0"`
-  * Un-comment `branch = "master"`
-* `pkg/scaffold/gopkgtoml_test.go`: same as for `pkg/scaffold/gopkgtoml.go`.
-* `pkg/scaffold/ansible/gopkgtoml.go`: same as for `pkg/scaffold/gopkgtoml.go`.
-* `pkg/scaffold/helm/gopkgtoml.go`: same as for `pkg/scaffold/gopkgtoml.go`.
-* `CHANGELOG.md`: add the following as a new set of headers above `## v1.3.0`:
-    ```
+
+- `version/version.go`: update `Version` to `v1.3.0+git`.
+- `internal/pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
+  - Comment out `version = "v1.3.0"`
+  - Un-comment `branch = "master"`
+- `internal/pkg/scaffold/gopkgtoml_test.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
+- `internal/pkg/scaffold/ansible/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
+- `internal/pkg/scaffold/helm/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
+- `CHANGELOG.md`: add the following as a new set of headers above `## v1.3.0`:
+
+    ```markdown
     ## Unreleased
 
     ### Added
@@ -247,14 +250,35 @@ The final step is to upload binaries, their signature files, and release notes f
 1. Attach all binaries and `.asc` signature files to the release by dragging and dropping them.
 1. Click the `Publish release` button.
 
-You've now fully released a new version of the Operator SDK. Good work!
+You've now fully released a new version of the Operator SDK. Good work! However, there is one more step that needs to be completed: making a release branch to allow us to make patch fixes for this release.
+
+### 5. Making a new release branch
+
+If you have created a new major or minor release, you need to make a new branch for it. To do this, checkout the tag that you created and make a new branch that matches the version you released with `x` in the position of the patch number. For example, to make a new release branch after `v1.3.0` and push it to the repo, you would follow these steps:
+
+```console
+$ git checkout tags/v1.3.0
+Note: checking out 'tags/v1.3.0'.
+...
+$ git checkout -b v1.3.x
+Switched to a new branch 'v1.3.x'
+$ git push origin v1.3.x
+Total 0 (delta 0), reused 0 (delta 0)
+remote:
+remote: Create a pull request for 'v1.3.x' on GitHub by visiting:
+remote:      https://github.com/operator-framework/operator-sdk/pull/new/v1.3.x
+remote:
+To github.com:operator-framework/operator-sdk.git
+ * [new branch]      v1.3.x -> v1.3.x
+```
+
+Now that the branch exists, you need to make the post-release PR for the new release branch. To do this, simply follow the same steps as in [step 3](#3-create-a-pr-for-post-release-version-and-changelogmd-updates) with the addition of changing the branch name in the `gopkgtoml` scaffold from `master` to the new branch (for example, `v1.3.x`). Then, make the PR against the new branch.
 
 [doc-maintainers]:../../MAINTAINERS
-[doc-readme-prereqs]:https://github.com/operator-framework/operator-sdk#prerequisites
-[doc-git-default-key]:https://help.github.com/articles/telling-git-about-your-signing-key/
+[doc-readme-prereqs]:../../README.md#prerequisites
+[doc-git-default-key]:https://help.github.com/en/articles/telling-git-about-your-signing-key
 [doc-gpg-default-key]:https://lists.gnupg.org/pipermail/gnupg-users/2001-September/010163.html
 [link-github-gpg-key-upload]:https://github.com/settings/keys
 [link-git-config-gpg-key]:https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work
 [doc-changelog]:../../CHANGELOG.md
-[sks-keyserver]:http://pool.sks-keyservers.net/
 [release-page]:https://github.com/operator-framework/operator-sdk/releases

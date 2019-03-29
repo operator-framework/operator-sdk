@@ -10,10 +10,10 @@ powered by Helm using tools and libraries provided by the Operator SDK.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - [dep][dep_tool] version v0.5.0+. (Optional if you aren't installing from source)
 - [go][go_tool] version v1.10+. (Optional if you aren't installing from source)
-- Access to a kubernetes v.1.11.3+ cluster.
+- Access to a Kubernetes v.1.11.3+ cluster.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the
-local kubernetes cluster and quay.io for the public registry.
+local Kubernetes cluster and [quay.io][quay_link] for the public registry.
 
 ## Install the Operator SDK CLI
 
@@ -34,6 +34,12 @@ make install
 
 This installs the CLI binary `operator-sdk` at `$GOPATH/bin`.
 
+Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
+
+```sh
+$ brew install operator-sdk
+```
+
 ## Create a new project
 
 Use the CLI to create a new Helm-based nginx-operator project:
@@ -44,11 +50,36 @@ cd nginx-operator
 ```
 
 This creates the nginx-operator project specifically for watching the
-Nginx resource with APIVersion `example.com/v1apha1` and Kind
+Nginx resource with APIVersion `example.com/v1alpha1` and Kind
 `Nginx`.
 
-To learn more about the project directory structure, see the 
+To learn more about the project directory structure, see the
 [project layout][layout_doc] doc.
+
+### Use an existing chart
+
+Instead of creating your project with a boilerplate Helm chart, you can also use `--helm-chart`, `--helm-chart-repo`, and `--helm-chart-version` to use an existing chart, either from your local filesystem or a remote chart repository.
+
+If `--helm-chart` is specified, `--api-version` and `--kind` become optional. If left unset, the SDK will default `--api-version` to `charts.helm.k8s.io/v1alpha1` and will deduce `--kind` from the specified chart.
+
+If `--helm-chart` is a local chart archive or directory, it will be validated and unpacked or copied into the project.
+
+Otherwise, the SDK will attempt to fetch the specified helm chart from a remote repository.
+
+If a custom repository URL is not specified by `--helm-chart-repo`, the following chart reference formats are supported:
+
+- `<repoName>/<chartName>`: Fetch the helm chart named `chartName` from the helm
+                            chart repository named `repoName`, as specified in the
+                            $HELM_HOME/repositories/repositories.yaml file.
+
+- `<url>`: Fetch the helm chart archive at the specified URL.
+
+If a custom repository URL is specified by `--helm-chart-repo`, the only supported format for `--helm-chart` is:
+
+- `<chartName>`: Fetch the helm chart named `chartName` in the helm chart repository
+                 specified by the `--helm-chart-repo` URL.
+
+If `--helm-chart-version` is not set, the SDK will fetch the latest available version of the helm chart. Otherwise, it will fetch the specified version. `--helm-chart-version` is not used when `--helm-chart` itself refers to a specific version, for example when it is a local path or a URL.
 
 ### Operator scope
 
@@ -65,6 +96,7 @@ Using `--cluster-scoped` will scaffold the new operator with the following modif
 * `deploy/role.yaml` - Use `ClusterRole` instead of `Role`
 * `deploy/role_binding.yaml`:
   * Use `ClusterRoleBinding` instead of `RoleBinding`
+  * Use `ClusterRole` instead of `Role` for roleRef
   * Set the subject namespace to `REPLACE_NAMESPACE`. This must be changed to the namespace in which the operator is deployed.
 
 ## Customize the operator logic
@@ -108,7 +140,7 @@ Helm uses a concept called [values][helm_values] to provide customizations
 to a Helm chart's defaults, which are defined in the Helm chart's `values.yaml`
 file.
 
-Overriding these defaults is a simple as setting the desired values in the CR
+Overriding these defaults is as simple as setting the desired values in the CR
 spec. Let's use the number of replicas as an example.
 
 First, inspecting `helm-charts/nginx/values.yaml`, we see that the chart has a
@@ -229,7 +261,7 @@ sudo mkdir -p /opt/helm/helm-charts
 sudo ln -s $PWD/helm-charts/nginx /opt/helm/helm-charts/nginx
 ```
 
-Run the operator locally with the default kubernetes config file present at
+Run the operator locally with the default Kubernetes config file present at
 `$HOME/.kube/config`:
 
 ```sh
@@ -239,7 +271,7 @@ INFO[0000] Go OS/Arch: linux/amd64
 INFO[0000] operator-sdk Version: v0.1.1+git
 ```
 
-Run the operator locally with a provided kubernetes config file:
+Run the operator locally with a provided Kubernetes config file:
 
 ```sh
 $ operator-sdk up local --kubeconfig=<path_to_config>
@@ -324,15 +356,17 @@ kubectl delete -f deploy/operator.yaml
 kubectl delete -f deploy/role_binding.yaml
 kubectl delete -f deploy/role.yaml
 kubectl delete -f deploy/service_account.yaml
-kubectl delete -f deploy/crds/example_v1alpha1_nginx_cr.yaml
+kubectl delete -f deploy/crds/example_v1alpha1_nginx_crd.yaml
 ```
 
 [layout_doc]:./project_layout.md
+[homebrew_tool]:https://brew.sh/
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
 [docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [minikube_tool]:https://github.com/kubernetes/minikube#installation
-[helm_charts]:https://docs.helm.sh/developing_charts/
-[helm_values]:https://docs.helm.sh/using_helm/#customizing-the-chart-before-installing
+[helm_charts]:https://helm.sh/docs/developing_charts/
+[helm_values]:https://helm.sh/docs/using_helm/#customizing-the-chart-before-installing
+[quay_link]:https://quay.io

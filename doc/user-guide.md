@@ -11,10 +11,10 @@ Guide][helm_user_guide]. The rest of this document will show how to program an o
 - [git][git_tool]
 - [go][go_tool] version v1.10+.
 - [docker][docker_tool] version 17.03+.
-- [kubectl][kubectl_tool] version v1.11.0+.
-- Access to a kubernetes v.1.11.0+ cluster.
+- [kubectl][kubectl_tool] version v1.11.3+.
+- Access to a Kubernetes v1.11.3+ cluster.
 
-**Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the local kubernetes cluster and quay.io for the public registry.
+**Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the local Kubernetes cluster and [quay.io][quay_link] for the public registry.
 
 ## Install the Operator SDK CLI
 
@@ -33,6 +33,12 @@ $ make install
 ```
 
 This installs the CLI binary `operator-sdk` at `$GOPATH/bin`.
+
+Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
+
+```sh
+$ brew install operator-sdk
+```
 
 ## Create a new project
 
@@ -61,6 +67,7 @@ Using `--cluster-scoped` will scaffold the new operator with the following modif
 * `deploy/role.yaml` - Use `ClusterRole` instead of `Role`
 * `deploy/role_binding.yaml`:
   * Use `ClusterRoleBinding` instead of `RoleBinding`
+  * Use `ClusterRole` instead of `Role` for roleRef
   * Set the subject namespace to `REPLACE_NAMESPACE`. This must be changed to the namespace in which the operator is deployed.
 
 ### Manager
@@ -251,7 +258,7 @@ Set the name of the operator in an environment variable:
 export OPERATOR_NAME=memcached-operator
 ```
 
-Run the operator locally with the default kubernetes config file present at `$HOME/.kube/config`:
+Run the operator locally with the default Kubernetes config file present at `$HOME/.kube/config`:
 
 ```sh
 $ operator-sdk up local --namespace=default
@@ -400,11 +407,90 @@ func main() {
 
 After adding new import paths to your operator project, run `dep ensure` in the root of your project directory to fulfill these dependencies.
 
+
+### Handle Cleanup on Deletion
+
+To implement complex deletion logic, you can add a finalizer to your Custom Resource. This will prevent your Custom Resource from being
+deleted until you remove the finalizer (ie, after your cleanup logic has successfully run). For more information, see the
+[official Kubernetes documentation on finalizers](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#finalizers).
+
+### Metrics
+
+To learn about how metrics work in the Operator SDK read the [metrics section][metrics_doc] of the user documentation.
+
+## Leader election
+
+During the lifecycle of an operator it's possible that there may be more than 1 instance running at any given time e.g when rolling out an upgrade for the operator.
+In such a scenario it is necessary to avoid contention between multiple operator instances via leader election so that only one leader instance handles the reconciliation while the other instances are inactive but ready to take over when the leader steps down.
+
+There are two different leader election implementations to choose from, each with its own tradeoff.
+
+- [Leader-for-life][leader_for_life]: The leader pod only gives up leadership (via garbage collection) when it is deleted. This implementation precludes the possibility of 2 instances mistakenly running as leaders (split brain). However, this method can be subject to a delay in electing a new leader. For instance when the leader pod is on an unresponsive or partitioned node, the [`pod-eviction-timeout`][pod_eviction_timeout] dictates how it takes for the leader pod to be deleted from the node and step down (default 5m).
+- [Leader-with-lease][leader_with_lease]: The leader pod periodically renews the leader lease and gives up leadership when it can't renew the lease. This implementation allows for a faster transition to a new leader when the existing leader is isolated, but there is a possibility of split brain in [certain situations][lease_split_brain].
+
+By default the SDK enables the leader-for-life implementation. However you should consult the docs above for both approaches to consider the tradeoffs that make sense for your use case.
+
+The following examples illustrate how to use the two options:
+
+### Leader for life
+
+A call to `leader.Become()` will block the operator as it retries until it can become the leader by creating the configmap named `memcached-operator-lock`.
+
+```Go
+import (
+  ...
+  "github.com/operator-framework/operator-sdk/pkg/leader"
+)
+
+func main() {
+  ...
+  err = leader.Become(context.TODO(), "memcached-operator-lock")
+  if err != nil {
+    log.Error(err, "Failed to retry for leader lock")
+    os.Exit(1)
+  }
+  ...
+}
+```
+If the operator is not running inside a cluster `leader.Become()` will simply return without error to skip the leader election since it can't detect the operator's namespace.
+
+### Leader with lease
+
+The leader-with-lease approach can be enabled via the [Manager Options][manager_options] for leader election.
+
+```Go
+import (
+  ...
+  "sigs.k8s.io/controller-runtime/pkg/manager"
+)
+
+func main() {
+  ...
+  opts := manager.Options{
+    ...
+    LeaderElection: true,
+    LeaderElectionID: "memcached-operator-lock"
+  }
+  mgr, err := manager.New(cfg, opts)
+  ...
+}
+```
+
+When the operator is not running in a cluster, the Manager will return an error on starting since it can't detect the operator's namespace in order to create the configmap for leader election. You can override this namespace by setting the Manager's `LeaderElectionNamespace` option.
+
+
+
+[pod_eviction_timeout]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options
+[manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options
+[lease_split_brain]: https://github.com/kubernetes/client-go/blob/30b06a83d67458700a5378239df6b96948cb9160/tools/leaderelection/leaderelection.go#L21-L24
+[leader_for_life]: https://godoc.org/github.com/operator-framework/operator-sdk/pkg/leader
+[leader_with_lease]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/leaderelection
 [memcached_handler]: ../example/memcached-operator/handler.go.tmpl
 [memcached_controller]: ../example/memcached-operator/memcached_controller.go.tmpl
 [layout_doc]:./project_layout.md
 [ansible_user_guide]:./ansible/user-guide.md
 [helm_user_guide]:./helm/user-guide.md
+[homebrew_tool]:https://brew.sh/
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
@@ -419,3 +505,5 @@ After adding new import paths to your operator project, run `dep ensure` in the 
 [controller-go-doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg#hdr-Controller
 [request-go-doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Request
 [result_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Result
+[metrics_doc]: ./user/metrics/README.md
+[quay_link]: https://quay.io

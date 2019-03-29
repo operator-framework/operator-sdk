@@ -36,7 +36,7 @@ building example-operator...
 
 building container quay.io/example/operator:v0.0.1...
 Sending build context to Docker daemon  163.9MB
-Step 1/4 : FROM alpine:3.6
+Step 1/4 : FROM registry.access.redhat.com/ubi7-dev-preview/ubi-minimal:7.6
  ---> 77144d8c6bdc
 Step 2/4 : ADD tmp/_output/bin/example-operator /usr/local/bin/example-operator
  ---> 2ada0d6ca93c
@@ -178,25 +178,26 @@ Parent command for all OLM Catalog related commands.
 
 ### gen-csv
 
-Writes a Cluster Service Version (CSV) manifest and concatenated CRD files to `deploy/olm-catalog`.
+Writes a Cluster Service Version (CSV) manifest and optionally CRD files to `deploy/olm-catalog/{operator-name}/{csv-version}`.
 
 #### Flags
 
-* `--csv-version` (required) Semantic version of the CSV manifest.
-* `--csv-config` Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml.
+* `--csv-version` string - (required) Semantic version of the CSV manifest.
+* `--from-version` string - Semantic version of CSV manifest to use as a base for a new version.
+* `--csv-config` string - Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml.
+* `--update-crds` Update CRD manifests in deploy/{operator-name}/{csv-version} using the latest CRD manifests.
 
 #### Example
 
 ```console
-$ operator-sdk olm-catalog gen-csv --csv-version 0.1.1
-INFO[0000] Generating CSV manifest version 0.1.1
-INFO[0000] Fill in the following required fields in file deploy/olm-catalog/operator-name.csv.yaml:
+$ operator-sdk olm-catalog gen-csv --csv-version 0.1.0 --update-crds
+INFO[0000] Generating CSV manifest version 0.1.0
+INFO[0000] Fill in the following required fields in file deploy/olm-catalog/operator-name/0.1.0/operator-name.v0.1.0.clusterserviceversion.yaml:
 	spec.keywords
 	spec.maintainers
 	spec.provider
 	spec.labels
-INFO[0000] Created deploy/olm-catalog/operator-name.csv.yaml     
-INFO[0000] Created deploy/olm-catalog/_generated.concat_crd.yaml
+INFO[0000] Created deploy/olm-catalog/operator-name/0.1.0/operator-name.v0.1.0.clusterserviceversion.yaml     
 ```
 
 ## migrate
@@ -237,11 +238,14 @@ Scaffolds a new operator project.
 * `--kind` string - CRD Kind. (e.g AppService)
 * `--generate-playbook` - Generate a playbook skeleton. (Only used for `--type ansible`)
 * `--cluster-scoped` - Initialize the operator to be cluster-scoped instead of namespace-scoped
+* `--helm-chart` string - Initialize helm operator with existing helm chart (`<URL>`, `<repo>/<name>`, or local path)
+* `--helm-chart-repo` string - Chart repository URL for the requested helm chart
+* `--helm-chart-version` string - Specific version of the helm chart (default is latest version)
 * `-h, --help` - help for new
 
 ### Example
 
-Go project:
+#### Go project
 
 ```console
 $ mkdir $GOPATH/src/github.com/example.com/
@@ -249,16 +253,47 @@ $ cd $GOPATH/src/github.com/example.com/
 $ operator-sdk new app-operator
 ```
 
-Ansible project:
+#### Ansible project
 
 ```console
 $ operator-sdk new app-operator --type=ansible --api-version=app.example.com/v1alpha1 --kind=AppService
 ```
 
-Helm project:
+#### Helm project
+
+For more details about creating new Helm operator projects, see the [Helm user guide][helm-user-guide-create-project].
 
 ```console
-$ operator-sdk new app-operator --type=helm --api-version=app.example.com/v1alpha1 --kind=AppService
+$ operator-sdk new app-operator --type=helm \
+    --api-version=app.example.com/v1alpha1 \
+    --kind=AppService
+
+$ operator-sdk new app-operator --type=helm \
+    --api-version=app.example.com/v1alpha1 \
+    --kind=AppService \
+    --helm-chart=myrepo/app
+
+$ operator-sdk new app-operator --type=helm \
+    --helm-chart=myrepo/app
+
+$ operator-sdk new app-operator --type=helm \
+    --helm-chart=myrepo/app \
+    --helm-chart-version=1.2.3
+
+$ operator-sdk new app-operator --type=helm \
+    --helm-chart=app \
+    --helm-chart-repo=https://charts.mycompany.com/
+
+$ operator-sdk new app-operator --type=helm \
+    --helm-chart=app \
+    --helm-chart-repo=https://charts.mycompany.com/ \
+    --helm-chart-version=1.2.3
+
+$ operator-sdk new app-operator --type=helm \
+    --helm-chart=/path/to/local/chart-directories/app/
+
+$ operator-sdk new app-operator --type=helm \
+    --helm-chart=/path/to/local/chart-archives/app-1.2.3.tgz
 ```
 
 ## add
@@ -376,6 +411,7 @@ Run scorecard tests on an operator
 * `kubeconfig` string - Path to kubeconfig of custom resource created in cluster
 * `namespace` string - Namespace of custom resource created in cluster
 * `namespaced-manifest` string - Path to manifest for namespaced resources (e.g. RBAC and Operator manifest)
+* `olm-deployed` - Only use the CSV at `csv-path` for manifest data, except for those provided to `cr-manifest`
 * `olm-tests` - Enable OLM integration checks (default true)
 * `proxy-image` string - Image name for scorecard proxy (default "quay.io/operator-framework/scorecard-proxy")
 * `proxy-pull-policy` string - Pull policy for scorecard proxy image (default "Always")
@@ -385,7 +421,7 @@ Run scorecard tests on an operator
 ### Example
 
 ```console
-$ operator-sdk scorecard --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml --csv-path deploy/memcachedoperator.0.0.2.csv.yaml
+$ operator-sdk scorecard --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml --csv-path deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml
 Checking for existence of spec and status blocks in CR
 Checking that operator actions are reflected in status
 Checking that writing into CRs has an effect
@@ -424,7 +460,7 @@ Runs the tests locally
 ##### Flags
 
 * `--debug` - Enable debug-level logging
-* `--kubeconfig` string - location of kubeconfig for kubernetes cluster (default "~/.kube/config")
+* `--kubeconfig` string - location of kubeconfig for Kubernetes cluster (default "~/.kube/config")
 * `--global-manifest` string - path to manifest for global resources (default "deploy/crd.yaml)
 * `--namespaced-manifest` string - path to manifest for per-test, namespaced resources (default: combines deploy/service_account.yaml, deploy/rbac.yaml, and deploy/operator.yaml)
 * `--namespace` string - if non-empty, single namespace to run tests in (e.g. "operator-test") (default: "")
@@ -456,7 +492,7 @@ Runs the e2e tests packaged in an operator image as a pod in the cluster
 
 ##### Flags
 
-* `--kubeconfig` string - location of kubeconfig for kubernetes cluster (default "~/.kube/config")
+* `--kubeconfig` string - location of kubeconfig for Kubernetes cluster (default "~/.kube/config")
 * `--image-pull-policy` string - set test pod image pull policy. Allowed values: Always, Never (default "Always")
 * `--namespace` string - namespace to run tests in (default "default")
 * `--pending-timeout` int - timeout in seconds for testing pod to stay in pending state (default 60s)
@@ -483,7 +519,7 @@ Test Successfully Completed
 ##### Use
 
 The `operator-sdk up local` command launches the operator on the local machine
-with the ability to access a kubernetes cluster using a kubeconfig file, and
+with the ability to access a Kubernetes cluster using a kubeconfig file, and
 setting any necessary environment variables that the operator would expect to
 find when running in a cluster. For Go-based operators, this command will
 compile and run the operator binary. In the case of non-Go operators, it runs
@@ -492,7 +528,7 @@ the operator-sdk binary itself as the operator.
 ##### Flags
 
 * `--go-ldflags` string - Set Go linker options
-* `--kubeconfig` string - The file path to kubernetes configuration file; defaults to $HOME/.kube/config
+* `--kubeconfig` string - The file path to Kubernetes configuration file; defaults to $HOME/.kube/config
 * `--namespace` string - The namespace where the operator watches for changes. (default "default")
 * `--operator-flags` string - Flags that the local operator may need.
 * `-h, --help` - help for local
@@ -524,3 +560,4 @@ $ operator-sdk up local --namespace "testing"
 [utility_link]: https://github.com/operator-framework/operator-sdk/blob/89bf021063d18b6769bdc551ed08fc37027939d5/pkg/util/k8sutil/k8sutil.go#L140
 [k8s-code-generator]: https://github.com/kubernetes/code-generator
 [openapi-code-generator]: https://github.com/kubernetes/kube-openapi
+[helm-user-guide-create-project]: https://github.com/operator-framework/operator-sdk/blob/master/doc/helm/user-guide.md#create-a-new-project

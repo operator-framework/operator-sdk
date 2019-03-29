@@ -24,9 +24,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/helm"
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/ansible"
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/helm"
 
 	docker "docker.io/go-docker"
 	"github.com/coreos/go-semver/semver"

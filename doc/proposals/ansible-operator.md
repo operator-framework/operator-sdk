@@ -2,9 +2,9 @@
 
 ### Background
 
-Not everyone is a golang developer, and therefore gaining adoption for the operator-sdk is capped by the number of golang developers. Also, tooling for kubernetes in other languages is lacking support for things such as informers, caches, and listers.
+Not everyone is a golang developer, and therefore gaining adoption for the operator-sdk is capped by the number of golang developers. Also, tooling for Kubernetes in other languages is lacking support for things such as informers, caches, and listers.
 
-Operators purpose is to codify the operations of an application on kubernetes. [Ansible](https://www.ansible.com/) is already an industry standard tool for automation and is a good fit for the kind of work that kubernetes operators need to do. Adding the ability for users of the SDK to choose which between ansible and golang to follow will increase the number of potential users, and will grant existing users even more behavior. 
+Operators purpose is to codify the operations of an application on Kubernetes. [Ansible](https://www.ansible.com/) is already an industry standard tool for automation and is a good fit for the kind of work that Kubernetes operators need to do. Adding the ability for users of the SDK to choose which between ansible and golang to follow will increase the number of potential users, and will grant existing users even more behavior. 
 
 ### Goals
 
@@ -27,10 +27,10 @@ Packages will be added to the operator-sdk. These packages are designed to be us
   * NewForWatchers - the method that returns a map of GVK to Runner types based on the watchers file.
   * NewPlaybookRunner - the method that returns a new Runner for a playbook.
   * NewRoleRunner - the method that returns a new Runner for a role.
-  * This contains the events API code and public methods. Implementation should probably be in the internal package. The events API is used for recieving events from ansible runner.
+  * This contains the events API code and public methods. Implementation should probably be in the internal package. The events API is used for receiving events from ansible runner.
 
 * /operator-sdk/pkg/ansible/proxy
-  * This is a reverse proxy for the kubernetes API that is used for owner reference injection.
+  * This is a reverse proxy for the Kubernetes API that is used for owner reference injection.
 * /operator-sdk/pkg/ansible/proxy/kubeconfig
   * Code needed to generate the kubeconfig for the proxy.
 * /operator-sdk/pkg/ansible/events

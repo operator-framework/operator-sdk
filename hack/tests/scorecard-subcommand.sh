@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 DEST_IMAGE="quay.io/example/scorecard-proxy"
+CSV_PATH="deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml"
 CONFIG_PATH=".test-osdk-scorecard.yaml"
 
 set -ex
@@ -13,16 +14,16 @@ pushd test/test-framework
 commandoutput="$(operator-sdk scorecard \
   --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml \
   --init-timeout 60 \
-  --csv-path deploy/memcachedoperator.0.0.2.csv.yaml \
+  --csv-path "$CSV_PATH" \
   --verbose \
   --proxy-image "$DEST_IMAGE" \
   --proxy-pull-policy Never \
   2>&1)"
-echo $commandoutput | grep "Total Score: 5/8 points"
+echo $commandoutput | grep "Total Score: 80%"
 
 # test config file
 commandoutput2="$(operator-sdk scorecard \
   --proxy-image "$DEST_IMAGE" \
   --config "$CONFIG_PATH")"
-echo $commandoutput2 | grep "Total Score: 5/8 points"
+echo $commandoutput2 | grep "Total Score: 80%"
 popd
