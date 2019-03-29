@@ -195,7 +195,8 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 		// have the required build files.
 		testDockerfile := filepath.Join(scaffold.BuildTestDir, scaffold.DockerfileFile)
 		_, err = os.Stat(testDockerfile)
-		if (err != nil && os.IsNotExist(err)) || !projutil.IsDockerfileMultistage(testDockerfile) {
+		if (err != nil && os.IsNotExist(err)) ||
+			(projutil.IsOperatorGo() && !projutil.IsDockerfileMultistage(testDockerfile)) {
 
 			log.Info("Generating build manifests for test-framework.")
 
