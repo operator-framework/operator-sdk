@@ -6,6 +6,7 @@
 
 - Updated the helm-operator to store release state in kubernetes secrets in the same namespace of the custom resource that defines the release. ([#1102](https://github.com/operator-framework/operator-sdk/pull/1102))
   - **WARNING**: Users with active CRs and releases who are upgrading their helm-based operator should not skip this version. Future versions will not seamlessly transition release state to the persistent backend, and will instead uninstall and reinstall all managed releases.
+- Change `namespace-manifest` flag in scorecard subcommand to `namespaced-manifest` to match other subcommands
 
 ### Deprecated
 
