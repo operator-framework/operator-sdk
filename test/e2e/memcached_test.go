@@ -242,7 +242,7 @@ func TestMemcached(t *testing.T) {
 	}
 	// Copy local sdk to vendor if not in CI.
 	if repo == "" {
-		for _, dir := range []string{"pkg", "internal"} {
+		for _, dir := range []string{filepath.Join("internal", "pkg")} {
 			repoDir := filepath.Join("github.com/operator-framework/operator-sdk", dir)
 			vendorDir := filepath.Join("vendor", repoDir)
 			if err := os.RemoveAll(vendorDir); err != nil {
