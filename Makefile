@@ -75,8 +75,6 @@ test: test/unit
 
 test-ci: test/markdown test/sanity test/unit install test/subcommand test/e2e
 
-test/ci-go: test/subcommand test/e2e/go
-
 test/ci-ansible: test/e2e/ansible test/e2e/ansible-molecule
 
 test/ci-helm: test/e2e/helm
@@ -113,7 +111,7 @@ test/e2e/helm: image/build/helm
 test/markdown:
 	./hack/ci/marker --root=doc
 
-.PHONY: test test-ci test/sanity test/unit test/subcommand test/e2e test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm test/ci-go test/ci-ansible test/ci-helm test/markdown
+.PHONY: test test-ci test/sanity test/unit test/subcommand test/e2e test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm test/ci-ansible test/ci-helm test/markdown
 
 image: image/build image/push
 
