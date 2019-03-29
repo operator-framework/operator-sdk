@@ -18,6 +18,32 @@
   version = "v0.2.0"
 
 [[projects]]
+  digest = "1:6f4450c226e184eb62b1e33c817a9d9719d55a500f6d9191de3407a99b3af304"
+  name = "docker.io/go-docker"
+  packages = [
+    ".",
+    "api",
+    "api/types",
+    "api/types/blkiodev",
+    "api/types/container",
+    "api/types/events",
+    "api/types/filters",
+    "api/types/image",
+    "api/types/mount",
+    "api/types/network",
+    "api/types/registry",
+    "api/types/strslice",
+    "api/types/swarm",
+    "api/types/swarm/runtime",
+    "api/types/time",
+    "api/types/versions",
+    "api/types/volume",
+  ]
+  pruneopts = "NUT"
+  revision = "b3f5b5de7bbce0acc6a7fc0a4c2b88db678e262e"
+  version = "v1.0.0"
+
+[[projects]]
   branch = "master"
   digest = "1:81f8c061c3d18ed1710957910542bc17d2b789c6cd19e0f654c30b35fd255ca5"
   name = "github.com/Azure/go-ansiterm"
@@ -82,6 +108,14 @@
   pruneopts = "NUT"
   revision = "9f8fceff796fb9f4e992cd2bece016be0121ab74"
   version = "2.19.0"
+
+[[projects]]
+  digest = "1:2be791e7b333ff7c06f8fb3dc18a7d70580e9399dbdffd352621d067ff260b6e"
+  name = "github.com/Microsoft/go-winio"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "1a8911d1ed007260465c3bfbbc785ac6915a0bb8"
+  version = "v0.4.12"
 
 [[projects]]
   digest = "1:0a111edd8693fd977f42a0c4f199a0efb13c20aec9da99ad8830c7bb6a87e8d6"
@@ -205,6 +239,26 @@
   ]
   pruneopts = "NUT"
   revision = "a9fbbdc8dd8794b20af358382ab780559bca589d"
+
+[[projects]]
+  digest = "1:f133477f38c590bdcd6fc534617df17983f7a21e5b686d4a3495abeb21c631ec"
+  name = "github.com/docker/go-connections"
+  packages = [
+    "nat",
+    "sockets",
+    "tlsconfig",
+  ]
+  pruneopts = "NUT"
+  revision = "3ede32e2033de7505e6500d6c868c2b9ed9f169d"
+  version = "v0.3.0"
+
+[[projects]]
+  digest = "1:4340101f42556a9cb2f7a360a0e95a019bfef6247d92e6c4c46f2433cf86a482"
+  name = "github.com/docker/go-units"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "47565b4f722fb6ceae66b95f853feed578a4a51c"
+  version = "v0.3.3"
 
 [[projects]]
   branch = "master"
@@ -334,15 +388,15 @@
   version = "v0.2.3"
 
 [[projects]]
-  digest = "1:a1b2a5e38f79688ee8250942d5fa960525fceb1024c855c7bc76fa77b0f3cca2"
+  digest = "1:a6afc27b2a73a5506832f3c5a1c19a30772cb69e7bd1ced4639eb36a55db224f"
   name = "github.com/gogo/protobuf"
   packages = [
     "proto",
     "sortkeys",
   ]
   pruneopts = "NUT"
-  revision = "ba06b47c162d49f2af050fb4c75bcbc86a159d5c"
-  version = "v1.2.1"
+  revision = "100ba4e885062801d56799d78530b73b178a78f3"
+  version = "v0.4"
 
 [[projects]]
   branch = "master"
@@ -639,6 +693,17 @@
   pruneopts = "NUT"
   revision = "279bed98673dd5bef374d3b6e4b09e2af76183bf"
   version = "v1.0.0-rc1"
+
+[[projects]]
+  digest = "1:11db38d694c130c800d0aefb502fb02519e514dc53d9804ce51d1ad25ec27db6"
+  name = "github.com/opencontainers/image-spec"
+  packages = [
+    "specs-go",
+    "specs-go/v1",
+  ]
+  pruneopts = "NUT"
+  revision = "d60099175f88c47cd379c4738d158884749ed235"
+  version = "v1.0.1"
 
 [[projects]]
   digest = "1:23e2e9001efb9eed6c89b080366f0a483dcc5edbb5b9ed89c0c838258467e6b1"
@@ -952,7 +1017,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:36f21875a3957c76ab144b8e75ef8c4157afe30ce04bb13109aa3087746a879d"
+  digest = "1:ad8386171f92f205bcd4f6917dcaeec822df6885a21aacf9b975a02c49f3caab"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -963,7 +1028,9 @@
     "http2",
     "http2/hpack",
     "idna",
+    "internal/socks",
     "internal/timeseries",
+    "proxy",
     "trace",
   ]
   pruneopts = "NUT"
@@ -1702,6 +1769,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "docker.io/go-docker",
     "github.com/BurntSushi/toml",
     "github.com/coreos/go-semver/semver",
     "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1",
