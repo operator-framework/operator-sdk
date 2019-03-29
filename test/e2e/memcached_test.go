@@ -77,6 +77,12 @@ func TestMemcached(t *testing.T) {
 	if err = os.Setenv("GO111MODULE", "on"); err != nil {
 		t.Fatal(err)
 	}
+	// Local repo HEAD commit.
+	cb, err := exec.Command("git", "rev-parse", "HEAD").CombinedOutput()
+	if err != nil {
+		t.Fatal(err)
+	}
+	localCommitSha := string(cb)
 
 	// Setup
 	absProjectPath := filepath.Join(gopath, "src/github.com/example-inc")
@@ -99,13 +105,20 @@ func TestMemcached(t *testing.T) {
 	if err := os.Chdir(operatorName); err != nil {
 		t.Fatalf("Failed to change to %s directory: (%v)", operatorName, err)
 	}
+
+	// Get repo being tested. If neither TRAVIS_* repo variable is set, we must be
+	// running locally.
 	repo, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
 	if repo == "" {
 		repo, ok = os.LookupEnv("TRAVIS_REPO_SLUG")
 	}
-	if ok && repo != "" && repo != "operator-framework/operator-sdk" {
+	if (ok && repo != "" && repo != "operator-framework/operator-sdk") || !ok {
+		// Get commit being tested. If neither TRAVIS_* variable is set, we must
+		// be running locally, so use local HEAD commit.
 		commitSha, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SHA")
-		if commitSha == "" {
+		if !ok {
+			commitSha, ok = localCommitSha, true
+		} else if commitSha == "" {
 			commitSha, ok = os.LookupEnv("TRAVIS_COMMIT")
 		}
 		if ok && commitSha != "" {
@@ -234,20 +247,7 @@ func TestMemcached(t *testing.T) {
 	t.Log("Pulling new dependencies with go mod")
 	cmdOut, err = exec.Command("go", "mod", "vendor").CombinedOutput()
 	if err != nil {
-		t.Fatalf("Command 'dep ensure' failed: %v\nCommand Output:\n%v", err, string(cmdOut))
-	}
-	// link local sdk to vendor if not in travis
-	if repo == "" {
-		for _, dir := range []string{"pkg", "internal"} {
-			repoDir := filepath.Join("github.com/operator-framework/operator-sdk", dir)
-			vendorDir := filepath.Join("vendor", repoDir)
-			if err := os.RemoveAll(vendorDir); err != nil {
-				t.Fatalf("Failed to delete old vendor directory: (%v)", err)
-			}
-			if err := os.Symlink(filepath.Join(gopath, projutil.SrcDir, repoDir), vendorDir); err != nil {
-				t.Fatalf("Failed to symlink local operator-sdk project to vendor dir: (%v)", err)
-			}
-		}
+		t.Fatalf("Command 'go mod vendor' failed: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 
 	file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
