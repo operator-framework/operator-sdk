@@ -74,13 +74,6 @@
   name = "github.com/docker/docker"
   revision = "a9fbbdc8dd8794b20af358382ab780559bca589d"
 
-# This override enables to use quantity.Resource as type during generation of OpenAPI specs
-# (https://github.com/kubernetes-sigs/controller-tools/pull/174)
-# TODO: avoid revision once a release containing this feature has been rolled out
-[[override]]
-  name = "sigs.k8s.io/controller-tools"
-  revision = "b8adde9bc6d7f3fba449d306613a9daed23676c8"
-
 [prune]
   unused-packages = true
   go-tests = true
