@@ -38,7 +38,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -499,44 +498,38 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 	if !ok {
 		return errors.New("failed to find controller in map")
 	}
-	wMap := contents.WatchMap
-	uMap := contents.UIDMap
+	owMap := contents.OwnerWatchMap
+	awMap := contents.AnnotationWatchMap
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(ownerMapping.GroupVersionKind)
 	// Add a watch to controller
 	if contents.WatchDependentResources {
-		// Store UID
-		uMap.Store(owner.UID, types.NamespacedName{
-			Name:      owner.Name,
-			Namespace: owner.Namespace,
-		})
-		_, exists := wMap.Get(resource.GroupVersionKind())
-		// If already watching resource no need to add a new watch
-		if exists {
-			return nil
-		}
 		// Store watch in map
-		wMap.Store(resource.GroupVersionKind())
 		// Use EnqueueRequestForOwner unless user has configured watching cluster scoped resources and we have to
 		switch {
 		case useOwnerRef:
+			_, exists := owMap.Get(resource.GroupVersionKind())
+			// If already watching resource no need to add a new watch
+			if exists {
+				return nil
+			}
+
+			owMap.Store(resource.GroupVersionKind())
 			log.Info("Watching child resource", "kind", resource.GroupVersionKind(), "enqueue_kind", u.GroupVersionKind())
 			// Store watch in map
 			err := contents.Controller.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{OwnerType: u})
 			if err != nil {
 				return err
 			}
-		case !useOwnerRef && dataNamespaceScoped:
+		case (!useOwnerRef && dataNamespaceScoped) || contents.WatchClusterScopedResources:
+			_, exists := awMap.Get(resource.GroupVersionKind())
+			// If already watching resource no need to add a new watch
+			if exists {
+				return nil
+			}
+			awMap.Store(resource.GroupVersionKind())
 			typeString := fmt.Sprintf("%v.%v", owner.Kind, ownerGV.Group)
 			log.Info("Watching child resource", "kind", resource.GroupVersionKind(), "enqueue_annotation_type", typeString)
-			err = contents.Controller.Watch(&source.Kind{Type: resource}, &osdkHandler.EnqueueRequestForAnnotation{Type: typeString})
-			if err != nil {
-				return err
-			}
-		case contents.WatchClusterScopedResources:
-			typeString := fmt.Sprintf("%v.%v", owner.Kind, ownerGV.Group)
-			log.Info("Watching child resource which can be cluster-scoped", "kind", resource.GroupVersionKind(), "enqueue_annotation_type", typeString)
-			// Add watch
 			err = contents.Controller.Watch(&source.Kind{Type: resource}, &osdkHandler.EnqueueRequestForAnnotation{Type: typeString})
 			if err != nil {
 				return err
