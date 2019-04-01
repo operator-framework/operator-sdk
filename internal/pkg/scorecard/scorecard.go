@@ -15,10 +15,12 @@
 package scorecard
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 
@@ -63,6 +65,7 @@ const (
 	ProxyPullPolicyOpt    = "proxy-pull-policy"
 	CRDsDirOpt            = "crds-dir"
 	VerboseOpt            = "verbose"
+	OutputFormatOpt       = "output"
 )
 
 const (
@@ -89,6 +92,32 @@ const (
 func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if err := initConfig(); err != nil {
 		return err
+	}
+	origStdout := os.Stdout
+	readLog, writeLog, _ := os.Pipe()
+	deferLogPrint := true
+	// suppress all output except the resulting json
+	if viper.GetString(OutputFormatOpt) == "json" {
+		os.Stdout = writeLog
+		os.Stderr = writeLog
+		log.SetOutput(os.Stderr)
+		defer func() {
+			if deferLogPrint {
+				capturedLog := make(chan string)
+				// copy the output in a separate goroutine so printing can't block indefinitely
+				go func() {
+					var buf bytes.Buffer
+					io.Copy(&buf, readLog)
+					capturedLog <- buf.String()
+				}()
+
+				// back to normal state
+				writeLog.Close()
+				os.Stdout = origStdout // restoring the real stdout
+				log := <-capturedLog
+				fmt.Println(log)
+			}
+		}()
 	}
 	if err := validateScorecardFlags(); err != nil {
 		return err
@@ -275,32 +304,65 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		suites = append(suites, olmTests)
 	}
 	totalScore := 0.0
+	// Update the state for the tests
 	for _, suite := range suites {
-		fmt.Printf("%s:\n", suite.GetName())
-		for _, result := range suite.TestResults {
-			fmt.Printf("\t%s: %d/%d\n", result.Test.GetName(), result.EarnedPoints, result.MaximumPoints)
+		for _, res := range suite.TestResults {
+			res.UpdateState()
 		}
-		totalScore += float64(suite.TotalScore())
 	}
-	totalScore = totalScore / float64(len(suites))
-	fmt.Printf("\nTotal Score: %.0f%%\n", totalScore)
-	// Print suggestions
-	for _, suite := range suites {
-		for _, result := range suite.TestResults {
-			for _, suggestion := range result.Suggestions {
-				// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
-				fmt.Printf("\x1b[%dmSUGGESTION:\x1b[0m %s\n", 33, suggestion)
+	if viper.GetString(OutputFormatOpt) == "human-readable" {
+		for _, suite := range suites {
+			fmt.Printf("%s:\n", suite.GetName())
+			for _, result := range suite.TestResults {
+				fmt.Printf("\t%s: %d/%d\n", result.Test.GetName(), result.EarnedPoints, result.MaximumPoints)
+			}
+			totalScore += float64(suite.TotalScore())
+		}
+		totalScore = totalScore / float64(len(suites))
+		fmt.Printf("\nTotal Score: %.0f%%\n", totalScore)
+		// Print suggestions
+		for _, suite := range suites {
+			for _, result := range suite.TestResults {
+				for _, suggestion := range result.Suggestions {
+					// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
+					fmt.Printf("\x1b[%dmSUGGESTION:\x1b[0m %s\n", 33, suggestion)
+				}
+			}
+		}
+		// Print errors
+		for _, suite := range suites {
+			for _, result := range suite.TestResults {
+				for _, err := range result.Errors {
+					// 31 is red (specifically, the same shade of red that logrus uses for errors)
+					fmt.Printf("\x1b[%dmERROR:\x1b[0m %s\n", 31, err)
+				}
 			}
 		}
 	}
-	// Print errors
-	for _, suite := range suites {
-		for _, result := range suite.TestResults {
-			for _, err := range result.Errors {
-				// 31 is red (specifically, the same shade of red that logrus uses for errors)
-				fmt.Printf("\x1b[%dmERROR:\x1b[0m %s\n", 31, err)
-			}
+	if viper.GetString(OutputFormatOpt) == "json" {
+		capturedLog := make(chan string)
+		// copy the output in a separate goroutine so printing can't block indefinitely
+		go func() {
+			var buf bytes.Buffer
+			io.Copy(&buf, readLog)
+			capturedLog <- buf.String()
+		}()
+
+		// back to normal state
+		writeLog.Close()
+		os.Stdout = origStdout // restoring the real stdout
+		log := <-capturedLog
+		scTest := scorecard.TestSuitesToScorecardTest(suites, "Complete Scorecard Test", "This test contains all tests run for this operator", log)
+		// Pretty print so users can also read the json output
+		bytes, err := json.MarshalIndent(scTest, "", "  ")
+		if err != nil {
+			return err
 		}
+		// restore stdout for printing
+		os.Stdout = origStdout
+		fmt.Printf("%s\n", string(bytes))
+		// don't do the deferred print
+		deferLogPrint = false
 	}
 	return nil
 }
@@ -317,9 +379,13 @@ func initConfig() error {
 	}
 
 	if err := viper.ReadInConfig(); err == nil {
-		log.Info("Using config file: ", viper.ConfigFileUsed())
+		if viper.GetString(OutputFormatOpt) != "json" {
+			log.Info("Using config file: ", viper.ConfigFileUsed())
+		}
 	} else {
-		log.Warn("Could not load config file; using flags")
+		if viper.GetString(OutputFormatOpt) != "json" {
+			log.Warn("Could not load config file; using flags")
+		}
 	}
 	return nil
 }
@@ -340,6 +406,10 @@ func validateScorecardFlags() error {
 	pullPolicy := viper.GetString(ProxyPullPolicyOpt)
 	if pullPolicy != "Always" && pullPolicy != "Never" && pullPolicy != "PullIfNotPresent" {
 		return fmt.Errorf("invalid proxy pull policy: (%s); valid values: Always, Never, PullIfNotPresent", pullPolicy)
+	}
+	outputFormat := viper.GetString(OutputFormatOpt)
+	if outputFormat != "human-readable" && outputFormat != "json" {
+		return fmt.Errorf("invalid output format (%s); valid values: human-readable, json", outputFormat)
 	}
 	return nil
 }

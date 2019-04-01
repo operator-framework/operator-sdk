@@ -111,7 +111,7 @@ func (t *CheckSpecTest) Run(ctx context.Context) *scorecard.TestResult {
 	res := &scorecard.TestResult{Test: t, MaximumPoints: 1}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
-		res.Errors = append(res.Errors, fmt.Errorf("error getting custom resource: %v", err))
+		res.Errors = append(res.Errors, fmt.Sprintf("error getting custom resource: %v", err))
 		return res
 	}
 	if t.CR.Object["spec"] != nil {
@@ -128,7 +128,7 @@ func (t *CheckStatusTest) Run(ctx context.Context) *scorecard.TestResult {
 	res := &scorecard.TestResult{Test: t, MaximumPoints: 1}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
-		res.Errors = append(res.Errors, fmt.Errorf("error getting custom resource: %v", err))
+		res.Errors = append(res.Errors, fmt.Sprintf("error getting custom resource: %v", err))
 		return res
 	}
 	if t.CR.Object["status"] != nil {
@@ -145,7 +145,7 @@ func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *scorecard.TestRe
 	res := &scorecard.TestResult{Test: t, MaximumPoints: 1}
 	logs, err := getProxyLogs(t.ProxyPod)
 	if err != nil {
-		res.Errors = append(res.Errors, fmt.Errorf("error getting proxy logs: %v", err))
+		res.Errors = append(res.Errors, fmt.Sprintf("error getting proxy logs: %v", err))
 		return res
 	}
 	msgMap := make(map[string]interface{})

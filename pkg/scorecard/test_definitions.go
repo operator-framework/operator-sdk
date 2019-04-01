@@ -16,6 +16,8 @@ package scorecard
 
 import (
 	"context"
+
+	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/scorecard/apis/scorecard/v1alpha1"
 )
 
 // Type Definitions
@@ -30,11 +32,12 @@ type Test interface {
 
 // TestResult contains a test's points, suggestions, and errors
 type TestResult struct {
+	State         scapiv1alpha1.State
 	Test          Test
 	EarnedPoints  int
 	MaximumPoints int
 	Suggestions   []string
-	Errors        []error
+	Errors        []string
 }
 
 // TestInfo contains information about the scorecard test

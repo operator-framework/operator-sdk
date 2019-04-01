@@ -22,6 +22,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/scorecard"
+	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/scorecard/apis/scorecard/v1alpha1"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"
@@ -185,12 +186,14 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *scorecard.TestResult 
 	res := &scorecard.TestResult{Test: t}
 	crds, err := k8sutil.GetCRDs(t.CRDsDir)
 	if err != nil {
-		res.Errors = append(res.Errors, fmt.Errorf("failed to get CRDs in %s directory: %v", t.CRDsDir, err))
+		res.Errors = append(res.Errors, fmt.Sprintf("failed to get CRDs in %s directory: %v", t.CRDsDir, err))
+		res.State = scapiv1alpha1.ErrorState
 		return res
 	}
 	err = t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
-		res.Errors = append(res.Errors, err)
+		res.Errors = append(res.Errors, err.Error())
+		res.State = scapiv1alpha1.ErrorState
 		return res
 	}
 	// TODO: we need to make this handle multiple CRs better/correctly
@@ -373,7 +376,8 @@ func (t *StatusDescriptorsTest) Run(ctx context.Context) *scorecard.TestResult {
 	res := &scorecard.TestResult{Test: t}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
-		res.Errors = append(res.Errors, err)
+		res.Errors = append(res.Errors, err.Error())
+		res.State = scapiv1alpha1.ErrorState
 		return res
 	}
 	if t.CR.Object["status"] == nil {
@@ -411,7 +415,8 @@ func (t *SpecDescriptorsTest) Run(ctx context.Context) *scorecard.TestResult {
 	res := &scorecard.TestResult{Test: t}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
-		res.Errors = append(res.Errors, err)
+		res.Errors = append(res.Errors, err.Error())
+		res.State = scapiv1alpha1.ErrorState
 		return res
 	}
 	if t.CR.Object["spec"] == nil {

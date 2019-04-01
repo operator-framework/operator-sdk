@@ -27,6 +27,28 @@ import (
 	"github.com/spf13/viper"
 )
 
+// scorecardConfig stores all scorecard config passed as flags
+type scorecardConfig struct {
+	namespace          string
+	kubeconfigPath     string
+	initTimeout        int
+	olmDeployed        bool
+	csvPath            string
+	basicTests         bool
+	olmTests           bool
+	tenantTests        bool
+	namespacedManifest string
+	globalManifest     string
+	crManifest         string
+	proxyImage         string
+	proxyPullPolicy    string
+	crdsDir            string
+	verbose            bool
+	outputFormat       string
+}
+
+var scConf scorecardConfig
+
 func NewCmd() *cobra.Command {
 	scorecardCmd := &cobra.Command{
 		Use:   "scorecard",
@@ -51,6 +73,7 @@ func NewCmd() *cobra.Command {
 	scorecardCmd.Flags().String(scorecard.ProxyImageOpt, fmt.Sprintf("quay.io/operator-framework/scorecard-proxy:%s", strings.TrimSuffix(version.Version, "+git")), "Image name for scorecard proxy")
 	scorecardCmd.Flags().String(scorecard.ProxyPullPolicyOpt, "Always", "Pull policy for scorecard proxy image")
 	scorecardCmd.Flags().String(scorecard.CRDsDirOpt, scaffold.CRDsDir, "Directory containing CRDs (all CRD manifest filenames must have the suffix 'crd.yaml')")
+	scorecardCmd.Flags().String(scorecard.OutputFormatOpt, "human-readable", "Output format for results. Valid values: human-readable, json")
 	scorecardCmd.Flags().Bool(scorecard.VerboseOpt, false, "Enable verbose logging")
 
 	if err := viper.BindPFlags(scorecardCmd.Flags()); err != nil {

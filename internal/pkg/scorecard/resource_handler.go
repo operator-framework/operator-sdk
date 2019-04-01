@@ -345,7 +345,7 @@ func addResourceCleanup(obj runtime.Object, key types.NamespacedName) {
 		// make a copy of the object because the client changes it
 		objCopy := obj.DeepCopyObject()
 		err := runtimeClient.Delete(context.TODO(), obj)
-		if err != nil {
+		if err != nil && !apierrors.IsNotFound(err) {
 			return err
 		}
 		err = wait.PollImmediate(time.Second*1, time.Second*10, func() (bool, error) {
