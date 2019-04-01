@@ -17,6 +17,7 @@
 ### Bug Fixes
 
 - Fixed an issue that caused `operator-sdk new --type=helm` to fail for charts that have template files in nested template directories. ([#1235](https://github.com/operator-framework/operator-sdk/pull/1235))
+- Fix bug in the YAML scanner that could result in a panic if a manifest file started with `---` ([#1258](https://github.com/operator-framework/operator-sdk/pull/1258))
 
 ## v0.6.0
 
