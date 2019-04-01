@@ -16,7 +16,6 @@ package generate
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -118,14 +117,7 @@ func deepcopyGen(binDir, repoPkg string, gvMap map[string][]string) (err error) 
 		"--bounding-dirs", apisPkg,
 	}
 	cmd := exec.Command(filepath.Join(binDir, "deepcopy-gen"), args...)
-	if projutil.IsGoVerbose() {
-		err = projutil.ExecCmd(cmd)
-	} else {
-		cmd.Stdout = ioutil.Discard
-		cmd.Stderr = ioutil.Discard
-		err = cmd.Run()
-	}
-	if err != nil {
+	if err = projutil.ExecCmd(cmd); err != nil {
 		return fmt.Errorf("failed to perform deepcopy code-generation: %v", err)
 	}
 	return nil
@@ -138,14 +130,7 @@ func defaulterGen(binDir, repoPkg string, gvMap map[string][]string) (err error)
 		"--output-file-base", "zz_generated.defaults",
 	}
 	cmd := exec.Command(filepath.Join(binDir, "defaulter-gen"), args...)
-	if projutil.IsGoVerbose() {
-		err = projutil.ExecCmd(cmd)
-	} else {
-		cmd.Stdout = ioutil.Discard
-		cmd.Stderr = ioutil.Discard
-		err = cmd.Run()
-	}
-	if err != nil {
+	if err = projutil.ExecCmd(cmd); err != nil {
 		return fmt.Errorf("failed to perform defaulter code-generation: %v", err)
 	}
 	return nil

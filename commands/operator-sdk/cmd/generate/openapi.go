@@ -167,14 +167,7 @@ func openAPIGen(binDir string, fqApis []string) (err error) {
 			"--go-header-file", headerFile,
 		}
 		cmd := exec.Command(cgPath, args...)
-		if projutil.IsGoVerbose() {
-			err = projutil.ExecCmd(cmd)
-		} else {
-			cmd.Stdout = ioutil.Discard
-			cmd.Stderr = ioutil.Discard
-			err = cmd.Run()
-		}
-		if err != nil {
+		if err = projutil.ExecCmd(cmd); err != nil {
 			return fmt.Errorf("failed to perform openapi code-generation: %v", err)
 		}
 	}
