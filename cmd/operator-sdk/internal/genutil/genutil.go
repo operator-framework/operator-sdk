@@ -107,10 +107,14 @@ func createFQApis(pkg string, gvs map[string][]string) string {
 	return fqb.String()
 }
 
-func withHeaderFile(hf string, f func(string) error) (err error) {
-	if hf == "" {
-		hf, err = createEmptyTmpFile()
-		if err != nil {
+func withHeaderFile(f func(string) error) (err error) {
+	i, err := (&scaffold.Boilerplate{}).GetInput()
+	if err != nil {
+		return err
+	}
+	hf := i.Path
+	if _, err := os.Stat(hf); os.IsNotExist(err) {
+		if hf, err = createEmptyTmpFile(); err != nil {
 			return err
 		}
 		defer func() {

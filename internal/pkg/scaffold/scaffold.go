@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -45,6 +46,10 @@ type Scaffold struct {
 	Fs afero.Fs
 	// GetWriter returns a writer for writing scaffold files.
 	GetWriter func(path string, mode os.FileMode) (io.Writer, error)
+	// BoilerplatePath is the path to a file containing Go boilerplate text.
+	BoilerplatePath string
+	// BoilerplateBytes are bytes of Go boilerplate text.
+	BoilerplateBytes []byte
 }
 
 func (s *Scaffold) setFieldsAndValidate(t input.File) error {
@@ -73,6 +78,29 @@ func (s *Scaffold) configure(cfg *input.Config) {
 	s.ProjectName = cfg.ProjectName
 }
 
+func (s *Scaffold) setBoilerplate() (err error) {
+	if len(s.BoilerplateBytes) == 0 {
+		bp := s.BoilerplatePath
+		if bp == "" {
+			i, err := (&Boilerplate{}).GetInput()
+			if err != nil {
+				return err
+			}
+			if _, err := os.Stat(i.Path); err == nil {
+				bp = i.Path
+			}
+		}
+		if bp != "" {
+			s.BoilerplateBytes, err = ioutil.ReadFile(bp)
+			if err != nil {
+				return err
+			}
+			s.BoilerplateBytes = append(bytes.TrimSpace(s.BoilerplateBytes), []byte("\n\n")...)
+		}
+	}
+	return nil
+}
+
 // Execute executes scaffolding the Files
 func (s *Scaffold) Execute(cfg *input.Config, files ...input.File) error {
 	if s.Fs == nil {
@@ -80,6 +108,11 @@ func (s *Scaffold) Execute(cfg *input.Config, files ...input.File) error {
 	}
 	if s.GetWriter == nil {
 		s.GetWriter = fileutil.NewFileWriterFS(s.Fs).WriteCloser
+	}
+
+	// Generate boilerplate file first so new Go files get headers.
+	if err := s.setBoilerplate(); err != nil {
+		return err
 	}
 
 	// Configure s using common fields from cfg.
@@ -126,6 +159,10 @@ func (s *Scaffold) doFile(e input.File) error {
 
 const goFileExt = ".go"
 
+func isGoFile(p string) bool {
+	return filepath.Ext(p) == goFileExt
+}
+
 func (s *Scaffold) doRender(i input.Input, e input.File, absPath string) error {
 	var mode os.FileMode = fileutil.DefaultFileMode
 	if i.IsExec {
@@ -165,7 +202,7 @@ func (s *Scaffold) doRender(i input.Input, e input.File, absPath string) error {
 	}
 
 	// gofmt the imports
-	if filepath.Ext(absPath) == goFileExt {
+	if isGoFile(absPath) {
 		b, err = imports.Process(absPath, b, nil)
 		if err != nil {
 			return err
@@ -178,6 +215,12 @@ func (s *Scaffold) doRender(i input.Input, e input.File, absPath string) error {
 			if err = file.Truncate(0); err != nil {
 				return err
 			}
+		}
+	}
+
+	if isGoFile(absPath) && len(s.BoilerplateBytes) != 0 {
+		if _, err = f.Write(s.BoilerplateBytes); err != nil {
+			return err
 		}
 	}
 	_, err = f.Write(b)

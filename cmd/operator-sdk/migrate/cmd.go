@@ -29,14 +29,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var headerFile string
+
 // NewCmd returns a command that will add source code to an existing non-go operator
 func NewCmd() *cobra.Command {
-	return &cobra.Command{
+	newCmd := &cobra.Command{
 		Use:   "migrate",
 		Short: "Adds source code to an operator",
 		Long:  `operator-sdk migrate adds a main.go source file and any associated source files for an operator that is not of the "go" type.`,
 		RunE:  migrateRun,
 	}
+
+	newCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
+
+	return newCmd
 }
 
 // migrateRun determines the current operator type and runs the corresponding
@@ -84,6 +90,14 @@ func migrateAnsible() error {
 	}
 
 	s := &scaffold.Scaffold{}
+	if headerFile != "" {
+		err = s.Execute(cfg, &scaffold.Boilerplate{BoilerplateSrcPath: headerFile})
+		if err != nil {
+			return fmt.Errorf("boilerplate scaffold failed: (%v)", err)
+		}
+		s.BoilerplatePath = headerFile
+	}
+
 	err = s.Execute(cfg,
 		&ansible.Main{},
 		&ansible.GopkgToml{},
@@ -113,6 +127,14 @@ func migrateHelm() error {
 	}
 
 	s := &scaffold.Scaffold{}
+	if headerFile != "" {
+		err := s.Execute(cfg, &scaffold.Boilerplate{BoilerplateSrcPath: headerFile})
+		if err != nil {
+			return fmt.Errorf("boilerplate scaffold failed: (%v)", err)
+		}
+		s.BoilerplatePath = headerFile
+	}
+
 	err := s.Execute(cfg,
 		&helm.Main{},
 		&helm.GopkgToml{},

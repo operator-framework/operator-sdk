@@ -53,6 +53,7 @@ generates a skeletal app-operator application in $GOPATH/src/github.com/example.
 	newCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. (e.g AppService) - used with \"ansible\" or \"helm\" types")
 	newCmd.Flags().StringVar(&operatorType, "type", "go", "Type of operator to initialize (choices: \"go\", \"ansible\" or \"helm\")")
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
+	newCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
 	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false, "Generate a playbook skeleton. (Only used for --type ansible)")
 	newCmd.Flags().BoolVar(&isClusterScoped, "cluster-scoped", false, "Generate cluster-scoped resources instead of namespace-scoped")
 
@@ -68,6 +69,7 @@ var (
 	kind             string
 	operatorType     string
 	projectName      string
+	headerFile       string
 	skipGit          bool
 	generatePlaybook bool
 	isClusterScoped  bool
@@ -153,6 +155,14 @@ func doScaffold() error {
 	}
 
 	s := &scaffold.Scaffold{}
+	if headerFile != "" {
+		err := s.Execute(cfg, &scaffold.Boilerplate{BoilerplateSrcPath: headerFile})
+		if err != nil {
+			return fmt.Errorf("boilerplate scaffold failed: (%v)", err)
+		}
+		s.BoilerplatePath = headerFile
+	}
+
 	err := s.Execute(cfg,
 		&scaffold.Cmd{},
 		&scaffold.Dockerfile{},
