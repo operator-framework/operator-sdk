@@ -36,7 +36,7 @@ func (d *Dockerfile) GetInput() (input.Input, error) {
 	if d.Path == "" {
 		d.Path = filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
 	}
-	d.HelmChartsDir = HelmChartsDir
+	d.HelmChartsDir = scaffold.HelmChartsDir
 	d.ImageTag = strings.TrimSuffix(version.Version, "+git")
 	d.TemplateBody = dockerFileHelmTmpl
 	return d.Input, nil

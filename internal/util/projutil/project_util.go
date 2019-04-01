@@ -24,7 +24,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/ansible"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/helm"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -106,7 +105,7 @@ func GetOperatorType() OperatorType {
 	if stat, err := os.Stat(ansible.RolesDir); err == nil && stat.IsDir() {
 		return OperatorTypeAnsible
 	}
-	if stat, err := os.Stat(helm.HelmChartsDir); err == nil && stat.IsDir() {
+	if stat, err := os.Stat(scaffold.HelmChartsDir); err == nil && stat.IsDir() {
 		return OperatorTypeHelm
 	}
 	return OperatorTypeUnknown

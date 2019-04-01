@@ -35,5 +35,6 @@ const (
 	DeployDir      = "deploy"
 	OLMCatalogDir  = DeployDir + filePathSep + "olm-catalog"
 	CRDsDir        = DeployDir + filePathSep + "crds"
+	HelmChartsDir  = "helm-charts"
 	VersionDir     = "version"
 )
