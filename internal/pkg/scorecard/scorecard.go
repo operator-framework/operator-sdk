@@ -26,6 +26,7 @@ import (
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
+	sclib "github.com/operator-framework/operator-sdk/pkg/scorecard/lib"
 
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -249,7 +250,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if err := waitUntilCRStatusExists(obj); err != nil {
 		return fmt.Errorf("failed waiting to check if CR status exists: %v", err)
 	}
-	var suites []*TestSuite
+	var suites []*sclib.TestSuite
 
 	// Run tests.
 	if viper.GetBool(BasicTestsOpt) {
