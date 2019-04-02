@@ -10,6 +10,8 @@
 
 ### Bug Fixes
 
+- Fix bug in the YAML scanner used by `operator-sdk test` and `operator-sdk scorecard` that could result in a panic if a manifest file started with `---` ([#1258](https://github.com/operator-framework/operator-sdk/pull/1258))
+
 ## v0.6.0
 
 ### Added
