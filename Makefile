@@ -41,7 +41,7 @@ clean:
 
 .PHONY: all test format dep clean
 
-install:
+install: build/operator-sdk
 	$(Q)go install -gcflags "all=-trimpath=${GOPATH}" -asmflags "all=-trimpath=${GOPATH}" $(BUILD_PATH)
 
 release_x86_64 := \
