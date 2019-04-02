@@ -16,7 +16,6 @@ package printdeps
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/helm"
@@ -58,20 +57,12 @@ func printDepsFunc(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func isDepsManagerDep() (bool, error) {
-	if _, err := os.Stat(project.GopkgTomlFile); err == nil {
-		return true, nil
-	} else if _, err := os.Stat(project.GoModFile); os.IsNotExist(err) {
-		return false, fmt.Errorf("no dependency manager file found")
-	}
-	return false, nil
-}
-
 func printDeps(asFile bool) error {
-	isDep, err := isDepsManagerDep()
+	mt, err := projutil.GetDepManagerType()
 	if err != nil {
 		return err
 	}
+	isDep := mt == projutil.DepManagerDep
 
 	switch t := projutil.GetOperatorType(); t {
 	case projutil.OperatorTypeGo:

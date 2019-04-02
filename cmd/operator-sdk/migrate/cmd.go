@@ -23,6 +23,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/project"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"
@@ -72,6 +73,7 @@ func migrateAnsible() error {
 		AbsProjectPath: wd,
 		ProjectName:    projectName,
 	}
+	s := &scaffold.Scaffold{}
 
 	dockerfile := ansible.DockerfileHybrid{
 		Watches: true,
@@ -90,18 +92,12 @@ func migrateAnsible() error {
 		return err
 	}
 
-	var depsFile input.File
-	switch depManager {
-	case "dep":
-		depsFile = &ansible.GopkgToml{}
-	default:
-		depsFile = &ansible.GoMod{}
+	if err := scaffoldDepManager(s, cfg); err != nil {
+		return fmt.Errorf("migrate helm dependency manager file scaffold failed: (%v)", err)
 	}
 
-	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
 		&ansible.Main{},
-		depsFile,
 		&dockerfile,
 		&ansible.Entrypoint{},
 		&ansible.UserSetup{},
@@ -129,18 +125,13 @@ func migrateHelm() error {
 		return err
 	}
 
-	var depsFile input.File
-	switch depManager {
-	case "dep":
-		depsFile = &helm.GopkgToml{}
-	default:
-		depsFile = &helm.GoMod{}
+	s := &scaffold.Scaffold{}
+	if err := scaffoldDepManager(s, cfg); err != nil {
+		return fmt.Errorf("migrate helm dependency manager file scaffold failed: (%v)", err)
 	}
 
-	s := &scaffold.Scaffold{}
 	err := s.Execute(cfg,
 		&helm.Main{},
-		depsFile,
 		&helm.DockerfileHybrid{
 			Watches:    true,
 			HelmCharts: true,
@@ -163,4 +154,15 @@ func renameDockerfile() error {
 	}
 	log.Infof("Renamed Dockerfile to %s and replaced with newer version. Compare the new Dockerfile to your old one and manually migrate any customizations", newDockerfilePath)
 	return nil
+}
+
+func scaffoldDepManager(s *scaffold.Scaffold, cfg *input.Config) error {
+	switch m := projutil.DepManagerType(depManager); m {
+	case projutil.DepManagerDep:
+		return s.Execute(cfg, &ansible.GopkgToml{})
+	case projutil.DepManagerGoMod:
+		return s.Execute(cfg, &project.GoMod{}, &project.Tools{})
+	default:
+		return projutil.ErrInvalidDepManagerType{Type: m}
+	}
 }

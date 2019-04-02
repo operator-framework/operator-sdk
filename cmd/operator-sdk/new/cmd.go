@@ -149,9 +149,22 @@ func doGoScaffold() error {
 		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
 		ProjectName:    projectName,
 	}
-
 	s := &scaffold.Scaffold{}
-	err := s.Execute(cfg,
+
+	var err error
+	switch m := projutil.DepManagerType(depManager); m {
+	case projutil.DepManagerDep:
+		err = s.Execute(cfg, &ansible.GopkgToml{})
+	case projutil.DepManagerGoMod:
+		err = s.Execute(cfg, &project.GoMod{}, &project.Tools{})
+	default:
+		err = projutil.ErrInvalidDepManagerType{Type: m}
+	}
+	if err != nil {
+		return fmt.Errorf("Go dependency manager file scaffold failed: (%v)", err)
+	}
+
+	err = s.Execute(cfg,
 		&scaffold.Cmd{},
 		&scaffold.Dockerfile{},
 		&scaffold.Entrypoint{},
@@ -164,8 +177,6 @@ func doGoScaffold() error {
 		&scaffold.Controller{},
 		&project.Version{},
 		&project.Gitignore{},
-		&project.GoMod{},
-		&project.Tools{},
 	)
 	if err != nil {
 		return fmt.Errorf("new Go scaffold failed: (%v)", err)
@@ -357,13 +368,13 @@ func execProjCmd(cmd string, args ...string) error {
 }
 
 func getDeps() error {
-	switch depManager {
-	case "dep":
+	switch m := projutil.DepManagerType(depManager); m {
+	case projutil.DepManagerDep:
 		log.Info("Running dep ensure ...")
 		if err := execProjCmd("dep", "ensure", "-v"); err != nil {
 			return err
 		}
-	default:
+	case projutil.DepManagerGoMod:
 		log.Info("Running go mod ...")
 		if err := execProjCmd("go", "mod", "vendor", "-v"); err != nil {
 			return err
@@ -371,6 +382,8 @@ func getDeps() error {
 		if err := execProjCmd("go", "mod", "tidy", "-v"); err != nil {
 			return err
 		}
+	default:
+		return projutil.ErrInvalidDepManagerType{Type: m}
 	}
 	log.Info("Done getting dependencies")
 	return nil

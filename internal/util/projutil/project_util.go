@@ -15,6 +15,7 @@
 package projutil
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -35,6 +36,8 @@ var (
 	mainFile      = filepath.Join("cmd", "manager", "main.go")
 	rolesDir      = "roles"
 	helmChartsDir = "helm-charts"
+	goModFile     = "go.mod"
+	gopkgTOMLFile = "Gopkg.toml"
 )
 
 // OperatorType - the type of operator
@@ -50,6 +53,31 @@ const (
 	// OperatorTypeUnknown - unknown type of operator.
 	OperatorTypeUnknown OperatorType = "unknown"
 )
+
+type DepManagerType string
+
+const (
+	DepManagerNone  DepManagerType = "none"
+	DepManagerGoMod DepManagerType = "mod"
+	DepManagerDep   DepManagerType = "dep"
+)
+
+type ErrInvalidDepManagerType struct {
+	Type DepManagerType
+}
+
+func (e ErrInvalidDepManagerType) Error() string {
+	return fmt.Sprintf(`invalid dependency manager type "%v"; must be one of ["%v", "%v"]`, e.Type, DepManagerGoMod, DepManagerDep)
+}
+
+func GetDepManagerType() (DepManagerType, error) {
+	if _, err := os.Stat(gopkgTOMLFile); err == nil {
+		return DepManagerDep, nil
+	} else if _, err := os.Stat(goModFile); err == nil {
+		return DepManagerGoMod, nil
+	}
+	return DepManagerNone, errors.New("unable to determine dependency manager: no dependency manager file found")
+}
 
 type ErrUnknownOperatorType struct {
 	Type string
