@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Subcommands of [`operator-sdk generate`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#generate) are now verbose by default. ([#1271](https://github.com/operator-framework/operator-sdk/pull/1271))
+
 ### Deprecated
 
 ### Removed
