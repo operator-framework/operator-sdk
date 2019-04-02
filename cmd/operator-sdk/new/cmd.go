@@ -161,7 +161,7 @@ func doGoScaffold() error {
 		err = projutil.ErrInvalidDepManagerType{Type: m}
 	}
 	if err != nil {
-		return fmt.Errorf("Go dependency manager file scaffold failed: (%v)", err)
+		return fmt.Errorf("dependency manager file scaffold failed: (%v)", err)
 	}
 
 	err = s.Execute(cfg,
