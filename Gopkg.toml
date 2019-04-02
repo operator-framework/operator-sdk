@@ -26,16 +26,6 @@
   name = "k8s.io/kube-openapi"
   revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
 
-# This override is required due to unspecificed dependency versions in
-# contrib.go.opencensus.io/exporter/ocagent (v0.2.0), which is a dependency of
-# the Azure auth plugin. contrib.go.opencensus.io/exporter/ocagent depends on
-# (but does not declare a version constraint for) opencensus-proto. The most
-# recent release of opencensus-proto (v0.2.0) breaks ocagent, so we need to
-# override it back to a working release.
-[[override]]
-  name = "github.com/census-instrumentation/opencensus-proto"
-  version = "=v0.1.0"
-
 [[constraint]]
   name = "sigs.k8s.io/controller-runtime"
   version = "=v0.1.10"
@@ -46,7 +36,7 @@
 
 [[constraint]]
   name = "k8s.io/helm"
-  version = "=v2.13.0"
+  version = "=v2.13.1"
 
 [[constraint]]
   name = "github.com/operator-framework/operator-lifecycle-manager"
@@ -67,7 +57,7 @@
 
 # We need overrides for the following imports because dep can't resolve them
 # correctly. The easiest way to get this right is to use the versions that
-# k8s.io/helm uses. See https://github.com/helm/helm/blob/v2.13.0/glide.lock
+# k8s.io/helm uses. See https://github.com/helm/helm/blob/v2.13.1/glide.lock
 [[override]]
   name = "k8s.io/kubernetes"
   revision = "c6d339953bd4fd8c021a6b5fb46d7952b30be9f9"

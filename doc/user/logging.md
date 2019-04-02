@@ -117,5 +117,5 @@ If you do not want to use `logr` as your logging tool, you can remove `logr`-spe
 [godoc_logr_logger]:https://godoc.org/github.com/go-logr/logr#Logger
 [site_struct_logging]:https://www.client9.com/structured-logging-in-golang/
 [code_memcached_controller]:../../example/memcached-operator/memcached_controller.go.tmpl
-[code_set_logger]:https://github.com/operator-framework/operator-sdk/blob/ecd02000616f11303f1adecd3d4ceb4a8561a9ec/pkg/scaffold/cmd.go#L90-L94
+[code_set_logger]:https://github.com/operator-framework/operator-sdk/blob/4d66be409a69d169aaa29d470242a1defbaf08bb/internal/pkg/scaffold/cmd.go#L92-L96
 [zap_sampling]:https://github.com/uber-go/zap/blob/master/FAQ.md#why-sample-application-logs

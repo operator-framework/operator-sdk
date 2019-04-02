@@ -34,6 +34,12 @@ make install
 
 This installs the CLI binary `operator-sdk` at `$GOPATH/bin`.
 
+Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
+
+```sh
+$ brew install operator-sdk
+```
+
 ## Create a new project
 
 Use the CLI to create a new Helm-based nginx-operator project:
@@ -354,6 +360,7 @@ kubectl delete -f deploy/crds/example_v1alpha1_nginx_crd.yaml
 ```
 
 [layout_doc]:./project_layout.md
+[homebrew_tool]:https://brew.sh/
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/

@@ -11,7 +11,7 @@ endif
 
 VERSION = $(shell git describe --dirty --tags --always)
 REPO = github.com/operator-framework/operator-sdk
-BUILD_PATH = $(REPO)/commands/operator-sdk
+BUILD_PATH = $(REPO)/cmd/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
 SOURCES = $(shell find . -name '*.go' -not -path "*/vendor/*")
 
@@ -85,8 +85,9 @@ test/sanity:
 	./hack/tests/sanity-check.sh
 
 test/unit:
-	$(Q)go test -count=1 -short ./commands/...
+	$(Q)go test -count=1 -short ./cmd/...
 	$(Q)go test -count=1 -short ./pkg/...
+	$(Q)go test -count=1 -short ./internal/...
 
 test/subcommand: test/subcommand/test-local test/subcommand/scorecard
 
