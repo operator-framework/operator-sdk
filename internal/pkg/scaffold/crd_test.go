@@ -37,7 +37,7 @@ func TestCRDGoProject(t *testing.T) {
 	// Set the project and repo paths to {abs}/test/test-framework, which
 	// contains pkg/apis for the memcached-operator.
 	tfDir := filepath.Join("test", "test-framework")
-	pkgIdx := strings.Index(absPath, "pkg")
+	pkgIdx := strings.Index(absPath, "internal/pkg")
 	cfg := &input.Config{
 		Repo:           filepath.Join(absPath[strings.Index(absPath, "github.com"):pkgIdx], tfDir),
 		AbsProjectPath: filepath.Join(absPath[:pkgIdx], tfDir),
