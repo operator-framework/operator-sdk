@@ -53,8 +53,8 @@ INFO[0000] Created deploy/olm-catalog/app-operator/0.0.1/app-operator.v0.0.1.clu
 
 When running `gen-csv` with a version that already exists, the `Required csv fields...` info statement will become a warning, as these fields are useful for displaying your Operator in Operator Hub.
 
-A note on `specDescriptors` and `specDescriptors` fields in `spec.customresourcedefinitions.owned`:
-* Code comments are parsed to create `description`'s for each item in `specDescriptors` and `specDescriptors`, so these comments should be kept up-to-date with Operator semantics.
+A note on `specDescriptors` and `statusDescriptors` fields in `spec.customresourcedefinitions.owned`:
+* Code comments are parsed to create `description`'s for each item in `specDescriptors` and `statusDescriptors`, so these comments should be kept up-to-date with Operator semantics.
 * `displayName` is guessed from type names, but will not overwrite values already present.
 * `path` and `x-descriptors` are guessed from JSON tags and their corresponding UI element from [this list][x-desc-list]. These values are presented as suggestions by `gen-csv` if they are not filled.
 
@@ -62,7 +62,7 @@ A note on `specDescriptors` and `specDescriptors` fields in `spec.customresource
 
 Let's say you added a new CRD `deploy/crds/group_v1beta1_yourkind_crd.yaml` to your Operator project, and added a port to your Deployment manifest `operator.yaml`. Assuming you're using the same version as above, updating your CSV is as simple as running `operator-sdk olm-catalog gen-csv --csv-version 0.0.1`. `gen-csv` will append your new CRD to `spec.customresourcedefinitions.owned`, replace the old data at `spec.install.spec.deployments` with your updated Deployment, and write an updated CSV to the same location.
 
-The SDK will not overwrite user-defined fields like `spec.maintainers` or descriptions of CSV elements, with the exception of `specDescriptors[].displayName` and `specDescriptors[].displayName` in `spec.customresourcedefinitions.owned`, as mentioned [above](#first-generation).
+The SDK will not overwrite user-defined fields like `spec.maintainers` or descriptions of CSV elements, with the exception of `specDescriptors[].displayName` and `statusDescriptors[].displayName` in `spec.customresourcedefinitions.owned`, as mentioned [above](#first-generation).
 
 Including the `--update-crds` flag will update the CRD's in your Operator bundle.
 
