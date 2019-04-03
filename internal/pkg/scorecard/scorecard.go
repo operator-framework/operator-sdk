@@ -26,7 +26,7 @@ import (
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
-	sclib "github.com/operator-framework/operator-sdk/pkg/scorecard/lib"
+	sclib "github.com/operator-framework/operator-sdk/pkg/scorecard"
 
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"

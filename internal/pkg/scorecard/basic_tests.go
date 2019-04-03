@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	sclib "github.com/operator-framework/operator-sdk/pkg/scorecard/lib"
+	sclib "github.com/operator-framework/operator-sdk/pkg/scorecard"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
