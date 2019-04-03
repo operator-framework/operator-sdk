@@ -27,27 +27,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-// scorecardConfig stores all scorecard config passed as flags
-type scorecardConfig struct {
-	namespace          string
-	kubeconfigPath     string
-	initTimeout        int
-	olmDeployed        bool
-	csvPath            string
-	basicTests         bool
-	olmTests           bool
-	tenantTests        bool
-	namespacedManifest string
-	globalManifest     string
-	crManifest         string
-	proxyImage         string
-	proxyPullPolicy    string
-	crdsDir            string
-	verbose            bool
-}
-
-var scConf scorecardConfig
-
 func NewCmd() *cobra.Command {
 	scorecardCmd := &cobra.Command{
 		Use:   "scorecard",
@@ -57,22 +36,22 @@ func NewCmd() *cobra.Command {
 		RunE: scorecard.ScorecardTests,
 	}
 
-	scorecardCmd.Flags().StringVar(&scorecard.ScorecardConf, scorecard.ConfigOpt, "", "config file (default is <project_dir>/.osdk-yaml)")
-	scorecardCmd.Flags().StringVar(&scConf.namespace, scorecard.NamespaceOpt, "", "Namespace of custom resource created in cluster")
-	scorecardCmd.Flags().StringVar(&scConf.kubeconfigPath, scorecard.KubeconfigOpt, "", "Path to kubeconfig of custom resource created in cluster")
-	scorecardCmd.Flags().IntVar(&scConf.initTimeout, scorecard.InitTimeoutOpt, 10, "Timeout for status block on CR to be created in seconds")
-	scorecardCmd.Flags().BoolVar(&scConf.olmDeployed, scorecard.OlmDeployedOpt, false, "The OLM has deployed the operator. Use only the CSV for test data")
-	scorecardCmd.Flags().StringVar(&scConf.csvPath, scorecard.CSVPathOpt, "", "Path to CSV being tested")
-	scorecardCmd.Flags().BoolVar(&scConf.basicTests, scorecard.BasicTestsOpt, true, "Enable basic operator checks")
-	scorecardCmd.Flags().BoolVar(&scConf.olmTests, scorecard.OLMTestsOpt, true, "Enable OLM integration checks")
-	scorecardCmd.Flags().BoolVar(&scConf.tenantTests, scorecard.TenantTestsOpt, false, "Enable good tenant checks")
-	scorecardCmd.Flags().StringVar(&scConf.namespacedManifest, scorecard.NamespacedManifestOpt, "", "Path to manifest for namespaced resources (e.g. RBAC and Operator manifest)")
-	scorecardCmd.Flags().StringVar(&scConf.globalManifest, scorecard.GlobalManifestOpt, "", "Path to manifest for Global resources (e.g. CRD manifests)")
-	scorecardCmd.Flags().StringVar(&scConf.crManifest, scorecard.CRManifestOpt, "", "Path to manifest for Custom Resource (required)")
-	scorecardCmd.Flags().StringVar(&scConf.proxyImage, scorecard.ProxyImageOpt, fmt.Sprintf("quay.io/operator-framework/scorecard-proxy:%s", strings.TrimSuffix(version.Version, "+git")), "Image name for scorecard proxy")
-	scorecardCmd.Flags().StringVar(&scConf.proxyPullPolicy, scorecard.ProxyPullPolicyOpt, "Always", "Pull policy for scorecard proxy image")
-	scorecardCmd.Flags().StringVar(&scConf.crdsDir, scorecard.CRDsDirOpt, scaffold.CRDsDir, "Directory containing CRDs (all CRD manifest filenames must have the suffix 'crd.yaml')")
-	scorecardCmd.Flags().BoolVar(&scConf.verbose, scorecard.VerboseOpt, false, "Enable verbose logging")
+	scorecardCmd.Flags().String(scorecard.ConfigOpt, "", "config file (default is <project_dir>/.osdk-yaml)")
+	scorecardCmd.Flags().String(scorecard.NamespaceOpt, "", "Namespace of custom resource created in cluster")
+	scorecardCmd.Flags().String(scorecard.KubeconfigOpt, "", "Path to kubeconfig of custom resource created in cluster")
+	scorecardCmd.Flags().Int(scorecard.InitTimeoutOpt, 10, "Timeout for status block on CR to be created in seconds")
+	scorecardCmd.Flags().Bool(scorecard.OlmDeployedOpt, false, "The OLM has deployed the operator. Use only the CSV for test data")
+	scorecardCmd.Flags().String(scorecard.CSVPathOpt, "", "Path to CSV being tested")
+	scorecardCmd.Flags().Bool(scorecard.BasicTestsOpt, true, "Enable basic operator checks")
+	scorecardCmd.Flags().Bool(scorecard.OLMTestsOpt, true, "Enable OLM integration checks")
+	scorecardCmd.Flags().Bool(scorecard.TenantTestsOpt, false, "Enable good tenant checks")
+	scorecardCmd.Flags().String(scorecard.NamespacedManifestOpt, "", "Path to manifest for namespaced resources (e.g. RBAC and Operator manifest)")
+	scorecardCmd.Flags().String(scorecard.GlobalManifestOpt, "", "Path to manifest for Global resources (e.g. CRD manifests)")
+	scorecardCmd.Flags().String(scorecard.CRManifestOpt, "", "Path to manifest for Custom Resource (required)")
+	scorecardCmd.Flags().String(scorecard.ProxyImageOpt, fmt.Sprintf("quay.io/operator-framework/scorecard-proxy:%s", strings.TrimSuffix(version.Version, "+git")), "Image name for scorecard proxy")
+	scorecardCmd.Flags().String(scorecard.ProxyPullPolicyOpt, "Always", "Pull policy for scorecard proxy image")
+	scorecardCmd.Flags().String(scorecard.CRDsDirOpt, scaffold.CRDsDir, "Directory containing CRDs (all CRD manifest filenames must have the suffix 'crd.yaml')")
+	scorecardCmd.Flags().Bool(scorecard.VerboseOpt, false, "Enable verbose logging")
 
 	if err := viper.BindPFlags(scorecardCmd.Flags()); err != nil {
 		log.Fatalf("Failed to bind scorecard flags to viper: %v", err)

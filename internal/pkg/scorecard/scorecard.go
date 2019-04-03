@@ -79,7 +79,6 @@ var (
 	deploymentName string
 	proxyPodGlobal *v1.Pod
 	cleanupFns     []cleanupFn
-	ScorecardConf  string
 )
 
 const (
@@ -307,9 +306,10 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 }
 
 func initConfig() error {
-	if ScorecardConf != "" {
+	// viper/cobra already has flags parsed at this point; we can check is a config file flag is set
+	if viper.GetString(ConfigOpt) != "" {
 		// Use config file from the flag.
-		viper.SetConfigFile(ScorecardConf)
+		viper.SetConfigFile(viper.GetString(ConfigOpt))
 	} else {
 		viper.AddConfigPath(projutil.MustGetwd())
 		// using SetConfigName allows users to use a .yaml, .json, or .toml file
