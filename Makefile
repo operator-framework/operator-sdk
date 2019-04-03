@@ -11,7 +11,7 @@ endif
 
 VERSION = $(shell git describe --dirty --tags --always)
 REPO = github.com/operator-framework/operator-sdk
-BUILD_PATH = $(REPO)/commands/operator-sdk
+BUILD_PATH = $(REPO)/cmd/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
 SOURCES = $(shell find . -name '*.go' -not -path "*/vendor/*")
 
@@ -71,7 +71,9 @@ build/%.asc:
 
 .PHONY: install release_x86_64 release
 
-test: dep test/markdown test/sanity test/unit install test/subcommand test/e2e
+test: test/unit
+
+test-ci: test/markdown test/sanity test/unit install test/subcommand test/e2e
 
 test/ci-go: test/subcommand test/e2e/go
 
@@ -83,7 +85,9 @@ test/sanity:
 	./hack/tests/sanity-check.sh
 
 test/unit:
-	./hack/tests/unit.sh
+	$(Q)go test -count=1 -short ./cmd/...
+	$(Q)go test -count=1 -short ./pkg/...
+	$(Q)go test -count=1 -short ./internal/...
 
 test/subcommand: test/subcommand/test-local test/subcommand/scorecard
 
@@ -110,7 +114,7 @@ test/e2e/helm: image/build/helm
 test/markdown:
 	./hack/ci/marker --root=doc
 
-.PHONY: test test/sanity test/unit test/subcommand test/e2e test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm test/ci-go test/ci-ansible test/ci-helm test/markdown
+.PHONY: test test-ci test/sanity test/unit test/subcommand test/e2e test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm test/ci-go test/ci-ansible test/ci-helm test/markdown
 
 image: image/build image/push
 

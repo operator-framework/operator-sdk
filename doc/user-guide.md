@@ -14,7 +14,7 @@ Guide][helm_user_guide]. The rest of this document will show how to program an o
 - [kubectl][kubectl_tool] version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
 
-**Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the local Kubernetes cluster and quay.io for the public registry.
+**Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the local Kubernetes cluster and [quay.io][quay_link] for the public registry.
 
 ## Install the Operator SDK CLI
 
@@ -33,6 +33,12 @@ $ make install
 ```
 
 This installs the CLI binary `operator-sdk` at `$GOPATH/bin`.
+
+Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
+
+```sh
+$ brew install operator-sdk
+```
 
 ## Create a new project
 
@@ -61,6 +67,7 @@ Using `--cluster-scoped` will scaffold the new operator with the following modif
 * `deploy/role.yaml` - Use `ClusterRole` instead of `Role`
 * `deploy/role_binding.yaml`:
   * Use `ClusterRoleBinding` instead of `RoleBinding`
+  * Use `ClusterRole` instead of `Role` for roleRef
   * Set the subject namespace to `REPLACE_NAMESPACE`. This must be changed to the namespace in which the operator is deployed.
 
 ### Manager
@@ -404,7 +411,7 @@ After adding new import paths to your operator project, run `dep ensure` in the 
 ### Handle Cleanup on Deletion
 
 To implement complex deletion logic, you can add a finalizer to your Custom Resource. This will prevent your Custom Resource from being
-deleted until you remove the finalizer (ie, after your cleanup logic has successfully run). For more information, see the 
+deleted until you remove the finalizer (ie, after your cleanup logic has successfully run). For more information, see the
 [official Kubernetes documentation on finalizers](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#finalizers).
 
 ### Metrics
@@ -483,6 +490,7 @@ When the operator is not running in a cluster, the Manager will return an error 
 [layout_doc]:./project_layout.md
 [ansible_user_guide]:./ansible/user-guide.md
 [helm_user_guide]:./helm/user-guide.md
+[homebrew_tool]:https://brew.sh/
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
@@ -498,3 +506,4 @@ When the operator is not running in a cluster, the Manager will return an error 
 [request-go-doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Request
 [result_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Result
 [metrics_doc]: ./user/metrics/README.md
+[quay_link]: https://quay.io

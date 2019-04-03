@@ -37,8 +37,8 @@ func init() {
 	zapFlagSet = pflag.NewFlagSet("zap", pflag.ExitOnError)
 	zapFlagSet.BoolVar(&development, "zap-devel", false, "Enable zap development mode (changes defaults to console encoder, debug log level, and disables sampling)")
 	zapFlagSet.Var(&encoderVal, "zap-encoder", "Zap log encoding ('json' or 'console')")
-	zapFlagSet.Var(&levelVal, "zap-level", "Zap log level (one of 'debug', 'info', 'error')")
-	zapFlagSet.Var(&sampleVal, "zap-sample", "Enable zap log sampling")
+	zapFlagSet.Var(&levelVal, "zap-level", "Zap log level (one of 'debug', 'info', 'error' or any integer value > 0)")
+	zapFlagSet.Var(&sampleVal, "zap-sample", "Enable zap log sampling. Sampling will be disabled for integer log levels > 1")
 }
 
 func FlagSet() *pflag.FlagSet {
@@ -91,11 +91,28 @@ type levelValue struct {
 func (v *levelValue) Set(l string) error {
 	v.set = true
 	lower := strings.ToLower(l)
+	var lvl int
 	switch lower {
-	case "debug", "info", "error":
-		return v.level.Set(l)
+	case "debug":
+		lvl = -1
+	case "info":
+		lvl = 0
+	case "error":
+		lvl = 2
+	default:
+		i, err := strconv.Atoi(lower)
+		if err != nil {
+			return fmt.Errorf("invalid log level \"%s\"", l)
+		}
+
+		if i > 0 {
+			lvl = -1 * i
+		} else {
+			return fmt.Errorf("invalid log level \"%s\"", l)
+		}
 	}
-	return fmt.Errorf("invalid log level \"%s\"", l)
+	v.level = zapcore.Level(int8(lvl))
+	return nil
 }
 
 func (v levelValue) String() string {

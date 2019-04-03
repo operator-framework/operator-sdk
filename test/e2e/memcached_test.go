@@ -29,10 +29,10 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 
@@ -50,7 +50,7 @@ import (
 const (
 	crYAML               string = "apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: 3"
 	retryInterval               = time.Second * 5
-	timeout                     = time.Second * 60
+	timeout                     = time.Second * 120
 	cleanupRetryInterval        = time.Second * 1
 	cleanupTimeout              = time.Second * 10
 	operatorName                = "memcached-operator"
@@ -161,10 +161,6 @@ func TestMemcached(t *testing.T) {
 		"api",
 		"--api-version=cache.example.com/v1alpha1",
 		"--kind=Memcached")
-	// Generators will print errors if -v is set.
-	if !projutil.IsGoVerbose() {
-		os.Setenv(projutil.GoFlagsEnv, os.Getenv(projutil.GoFlagsEnv)+" -v")
-	}
 	cmd.Env = os.Environ()
 	cmdOut, err = cmd.CombinedOutput()
 	if err != nil {
