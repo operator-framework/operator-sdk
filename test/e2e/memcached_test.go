@@ -50,7 +50,7 @@ import (
 const (
 	crYAML               string = "apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: 3"
 	retryInterval               = time.Second * 5
-	timeout                     = time.Second * 60
+	timeout                     = time.Second * 120
 	cleanupRetryInterval        = time.Second * 1
 	cleanupTimeout              = time.Second * 10
 	operatorName                = "memcached-operator"
