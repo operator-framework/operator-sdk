@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	sclib "github.com/operator-framework/operator-sdk/pkg/scorecard"
+	"github.com/operator-framework/operator-sdk/pkg/scorecard"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -39,7 +39,7 @@ type BasicTestConfig struct {
 
 // CheckSpecTest is a scorecard test that verifies that the CR has a spec block
 type CheckSpecTest struct {
-	sclib.TestInfo
+	scorecard.TestInfo
 	BasicTestConfig
 }
 
@@ -47,7 +47,7 @@ type CheckSpecTest struct {
 func NewCheckSpecTest(conf BasicTestConfig) *CheckSpecTest {
 	return &CheckSpecTest{
 		BasicTestConfig: conf,
-		TestInfo: sclib.TestInfo{
+		TestInfo: scorecard.TestInfo{
 			Name:        "Spec Block Exists",
 			Description: "Custom Resource has a Spec Block",
 			Cumulative:  false,
@@ -57,7 +57,7 @@ func NewCheckSpecTest(conf BasicTestConfig) *CheckSpecTest {
 
 // CheckStatusTest is a scorecard test that verifies that the CR has a status block
 type CheckStatusTest struct {
-	sclib.TestInfo
+	scorecard.TestInfo
 	BasicTestConfig
 }
 
@@ -65,7 +65,7 @@ type CheckStatusTest struct {
 func NewCheckStatusTest(conf BasicTestConfig) *CheckStatusTest {
 	return &CheckStatusTest{
 		BasicTestConfig: conf,
-		TestInfo: sclib.TestInfo{
+		TestInfo: scorecard.TestInfo{
 			Name:        "Status Block Exists",
 			Description: "Custom Resource has a Status Block",
 			Cumulative:  false,
@@ -75,7 +75,7 @@ func NewCheckStatusTest(conf BasicTestConfig) *CheckStatusTest {
 
 // WritingIntoCRsHasEffectTest is a scorecard test that verifies that the operator is making PUT and/or POST requests to the API server
 type WritingIntoCRsHasEffectTest struct {
-	sclib.TestInfo
+	scorecard.TestInfo
 	BasicTestConfig
 }
 
@@ -83,7 +83,7 @@ type WritingIntoCRsHasEffectTest struct {
 func NewWritingIntoCRsHasEffectTest(conf BasicTestConfig) *WritingIntoCRsHasEffectTest {
 	return &WritingIntoCRsHasEffectTest{
 		BasicTestConfig: conf,
-		TestInfo: sclib.TestInfo{
+		TestInfo: scorecard.TestInfo{
 			Name:        "Writing into CRs has an effect",
 			Description: "A CR sends PUT/POST requests to the API server to modify resources in response to spec block changes",
 			Cumulative:  false,
@@ -92,8 +92,8 @@ func NewWritingIntoCRsHasEffectTest(conf BasicTestConfig) *WritingIntoCRsHasEffe
 }
 
 // NewBasicTestSuite returns a new TestSuite object containing basic, functional operator tests
-func NewBasicTestSuite(conf BasicTestConfig) *sclib.TestSuite {
-	ts := sclib.NewTestSuite(
+func NewBasicTestSuite(conf BasicTestConfig) *scorecard.TestSuite {
+	ts := scorecard.NewTestSuite(
 		"Basic Tests",
 		"Test suite that runs basic, functional operator tests",
 	)
@@ -107,8 +107,8 @@ func NewBasicTestSuite(conf BasicTestConfig) *sclib.TestSuite {
 // Test Implementations
 
 // Run - implements Test interface
-func (t *CheckSpecTest) Run(ctx context.Context) *sclib.TestResult {
-	res := &sclib.TestResult{Test: t, MaximumPoints: 1}
+func (t *CheckSpecTest) Run(ctx context.Context) *scorecard.TestResult {
+	res := &scorecard.TestResult{Test: t, MaximumPoints: 1}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("error getting custom resource: %v", err))
@@ -124,8 +124,8 @@ func (t *CheckSpecTest) Run(ctx context.Context) *sclib.TestResult {
 }
 
 // Run - implements Test interface
-func (t *CheckStatusTest) Run(ctx context.Context) *sclib.TestResult {
-	res := &sclib.TestResult{Test: t, MaximumPoints: 1}
+func (t *CheckStatusTest) Run(ctx context.Context) *scorecard.TestResult {
+	res := &scorecard.TestResult{Test: t, MaximumPoints: 1}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("error getting custom resource: %v", err))
@@ -141,8 +141,8 @@ func (t *CheckStatusTest) Run(ctx context.Context) *sclib.TestResult {
 }
 
 // Run - implements Test interface
-func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *sclib.TestResult {
-	res := &sclib.TestResult{Test: t, MaximumPoints: 1}
+func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *scorecard.TestResult {
+	res := &scorecard.TestResult{Test: t, MaximumPoints: 1}
 	logs, err := getProxyLogs(t.ProxyPod)
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("error getting proxy logs: %v", err))

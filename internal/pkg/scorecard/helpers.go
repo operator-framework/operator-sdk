@@ -14,13 +14,13 @@
 
 package scorecard
 
-import sclib "github.com/operator-framework/operator-sdk/pkg/scorecard"
+import "github.com/operator-framework/operator-sdk/pkg/scorecard"
 
 // These functions should be in the public test definitions file, but they are not complete/stable,
 // so we'll keep these here until they get fully implemented
 
 // ResultsPassFail will be used when multiple CRs are supported
-func ResultsPassFail(results []sclib.TestResult) (earned, max int) {
+func ResultsPassFail(results []scorecard.TestResult) (earned, max int) {
 	for _, result := range results {
 		if result.EarnedPoints != result.MaximumPoints {
 			return 0, 1
@@ -30,7 +30,7 @@ func ResultsPassFail(results []sclib.TestResult) (earned, max int) {
 }
 
 // ResultsCumulative will be used when multiple CRs are supported
-func ResultsCumulative(results []sclib.TestResult) (earned, max int) {
+func ResultsCumulative(results []scorecard.TestResult) (earned, max int) {
 	for _, result := range results {
 		earned += result.EarnedPoints
 		max += result.MaximumPoints
