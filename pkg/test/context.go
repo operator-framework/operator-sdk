@@ -67,26 +67,19 @@ func (ctx *TestCtx) GetID() string {
 }
 
 func (ctx *TestCtx) Cleanup() {
-	for i := len(ctx.cleanupFns) - 1; i >= 0; i-- {
-		err := ctx.cleanupFns[i]()
-		if err != nil {
-			ctx.t.Errorf("A cleanup function failed with error: (%v)\n", err)
-		}
-	}
-}
-
-// CleanupNoT is a modified version of Cleanup; does not use t for logging, instead uses log
-// intended for use by MainEntry, which does not have a testing.T
-func (ctx *TestCtx) CleanupNoT() {
 	failed := false
 	for i := len(ctx.cleanupFns) - 1; i >= 0; i-- {
 		err := ctx.cleanupFns[i]()
 		if err != nil {
 			failed = true
-			log.Errorf("A cleanup function failed with error: (%v)", err)
+			if ctx.t != nil {
+				ctx.t.Errorf("A cleanup function failed with error: (%v)\n", err)
+			} else {
+				log.Errorf("A cleanup function failed with error: (%v)", err)
+			}
 		}
 	}
-	if failed {
+	if ctx.t == nil && failed {
 		log.Fatal("A cleanup function failed")
 	}
 }

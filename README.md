@@ -42,8 +42,8 @@ The following workflow is for a new **Helm** operator:
 - [git][git_tool]
 - [go][go_tool] version v1.10+.
 - [docker][docker_tool] version 17.03+.
-- [kubectl][kubectl_tool] version v1.11.0+.
-- Access to a kubernetes v.1.11.0+ cluster.
+- [kubectl][kubectl_tool] version v1.11.3+.
+- Access to a Kubernetes v1.11.3+ cluster.
 
 ## Quick Start
 
@@ -57,6 +57,12 @@ $ cd operator-sdk
 $ git checkout master
 $ make dep
 $ make install
+```
+
+Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
+
+```sh
+$ brew install operator-sdk
 ```
 
 Create and deploy an app-operator using the SDK CLI:
@@ -167,6 +173,7 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [contrib]: ./CONTRIBUTING.MD
 [bug_guide]:./doc/dev/reporting_bugs.md
 [license_file]:./LICENSE
+[homebrew_tool]:https://brew.sh/
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
