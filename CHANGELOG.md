@@ -16,6 +16,8 @@
 
 ### Removed
 
+- Reverted deafulter-gen PR #1050, to remove defaulter-gen. Users should use mutating webhooks to default instead. ([#1288](https://github.com/operator-framework/operator-sdk/pull/1288)) 
+
 ### Bug Fixes
 
 - Fixed an issue that caused `operator-sdk new --type=helm` to fail for charts that have template files in nested template directories. ([#1235](https://github.com/operator-framework/operator-sdk/pull/1235))
