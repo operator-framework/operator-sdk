@@ -1716,6 +1716,7 @@
     "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install",
     "github.com/pborman/uuid",
+    "github.com/pkg/errors",
     "github.com/prometheus/prometheus/util/promlint",
     "github.com/rogpeppe/go-internal/modfile",
     "github.com/sergi/go-diff/diffmatchpatch",
