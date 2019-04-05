@@ -305,7 +305,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 }
 
 func initConfig() error {
-	// viper/cobra already has flags parsed at this point; we can check is a config file flag is set
+	// viper/cobra already has flags parsed at this point; we can check if a config file flag is set
 	if viper.GetString(ConfigOpt) != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(viper.GetString(ConfigOpt))
