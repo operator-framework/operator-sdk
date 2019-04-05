@@ -185,7 +185,7 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	}
 
 	if enableTests {
-		if projutil.GetOperatorType() == projutil.OperatorTypeGo {
+		if projutil.IsOperatorGo() {
 			testBinary := filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName+"-test")
 			goTestBuildArgs := append(append([]string{"test"}, goTrimFlags...), "-mod=vendor", "-c", "-o", testBinary, testLocationBuild+"/...")
 			buildTestCmd := exec.Command("go", goTestBuildArgs...)
@@ -209,8 +209,7 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 			}
 
 			s := &scaffold.Scaffold{}
-			t := projutil.GetOperatorType()
-			switch t {
+			switch t := projutil.GetOperatorType(); t {
 			case projutil.OperatorTypeGo:
 				err = s.Execute(cfg,
 					&scaffold.TestFrameworkDockerfile{},
@@ -222,7 +221,7 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 			case projutil.OperatorTypeHelm:
 				return fmt.Errorf("test scaffolding for Helm Operators is not implemented")
 			default:
-				return &projutil.ErrUnknownOperatorType{Type: t}
+				return projutil.ErrUnknownOperatorType{}
 			}
 
 			if err != nil {

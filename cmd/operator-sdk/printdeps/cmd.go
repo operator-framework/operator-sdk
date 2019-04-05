@@ -64,23 +64,25 @@ func printDeps(asFile bool) error {
 	}
 	isDep := mt == projutil.DepManagerDep
 
-	switch t := projutil.GetOperatorType(); t {
-	case projutil.OperatorTypeGo:
-		if isDep {
-			return project.PrintDepGopkgTOML(asFile)
-		}
-		return project.PrintGoMod(asFile)
-	case projutil.OperatorTypeAnsible:
+	// Migrated Ansible and Helm projects will be of type OperatorTypeGo but
+	// their deps files will differ from a vanilla Go project.
+	switch {
+	case projutil.IsOperatorAnsible():
 		if isDep {
 			return ansible.PrintDepGopkgTOML(asFile)
 		}
 		return ansible.PrintGoMod(asFile)
-	case projutil.OperatorTypeHelm:
+	case projutil.IsOperatorHelm():
 		if isDep {
 			return helm.PrintDepGopkgTOML(asFile)
 		}
 		return helm.PrintGoMod(asFile)
-	default:
-		return &projutil.ErrUnknownOperatorType{Type: t}
+	case projutil.IsOperatorGo():
+		if isDep {
+			return project.PrintDepGopkgTOML(asFile)
+		}
+		return project.PrintGoMod(asFile)
 	}
+
+	return projutil.ErrUnknownOperatorType{}
 }

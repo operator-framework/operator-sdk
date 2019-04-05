@@ -30,14 +30,14 @@ const (
 	GopathEnv  = "GOPATH"
 	GoFlagsEnv = "GOFLAGS"
 	SrcDir     = "src"
-)
 
-var (
-	mainFile      = filepath.Join("cmd", "manager", "main.go")
-	rolesDir      = "roles"
-	helmChartsDir = "helm-charts"
-	goModFile     = "go.mod"
-	gopkgTOMLFile = "Gopkg.toml"
+	fsep            = string(filepath.Separator)
+	mainFile        = "cmd" + fsep + "manager" + fsep + "main.go"
+	buildDockerfile = "build" + fsep + "Dockerfile"
+	rolesDir        = "roles"
+	helmChartsDir   = "helm-charts"
+	goModFile       = "go.mod"
+	gopkgTOMLFile   = "Gopkg.toml"
 )
 
 // OperatorType - the type of operator
@@ -83,33 +83,31 @@ type ErrUnknownOperatorType struct {
 	Type string
 }
 
-func (e *ErrUnknownOperatorType) Error() string {
-	return fmt.Sprintf("unknown operator type '%v'", e.Type)
+func (e ErrUnknownOperatorType) Error() string {
+	if e.Type == "" {
+		return "unknown operator type"
+	}
+	return fmt.Sprintf(`unknown operator type "%v"`, e.Type)
 }
 
 // MustInProjectRoot checks if the current dir is the project root and returns
-// the current repo's import path, e.g. github.com/example-inc/app-operator
+// the current repo's import path, ex github.com/example-inc/app-operator
 func MustInProjectRoot() {
-	// If the current directory structure contains "./build/Dcokerfile", then
-	// it is safe to say we are at the project root.
-	df := filepath.Join("build", "Dockerfile")
-	_, err := os.Stat(df)
-	if err != nil {
+	// If the current directory has a "build/dockerfile", then it is safe to say
+	// we are at the project root.
+	if _, err := os.Stat(buildDockerfile); err != nil {
 		if os.IsNotExist(err) {
-			log.Fatalf("Must run command in project root dir: project structure requires %s", df)
+			log.Fatalf("Must run command in project root dir: project structure requires %s", buildDockerfile)
 		}
 		log.Fatalf("Error while checking if current directory is the project root: (%v)", err)
 	}
 }
 
 func CheckGoProjectCmd(cmd *cobra.Command) error {
-	t := GetOperatorType()
-	switch t {
-	case OperatorTypeGo:
-	default:
-		return fmt.Errorf("'%s' can only be run for Go operators; %s does not exist.", cmd.CommandPath(), mainFile)
+	if IsOperatorGo() {
+		return nil
 	}
-	return nil
+	return fmt.Errorf("'%s' can only be run for Go operators; %s does not exist.", cmd.CommandPath(), mainFile)
 }
 
 func MustGetwd() string {
@@ -126,30 +124,38 @@ func CheckAndGetProjectGoPkg() string {
 	gopath := MustSetGopath(MustGetGopath())
 	goSrc := filepath.Join(gopath, SrcDir)
 	wd := MustGetwd()
-	currPkg := strings.Replace(wd, goSrc+string(filepath.Separator), "", 1)
+	currPkg := strings.Replace(wd, goSrc+fsep, "", 1)
 	// strip any "/" prefix from the repo path.
-	return strings.TrimPrefix(currPkg, string(filepath.Separator))
+	return strings.TrimPrefix(currPkg, fsep)
 }
 
-// GetOperatorType returns type of operator is in cwd
-// This function should be called after verifying the user is in project root
-// e.g: "go", "ansible"
+// GetOperatorType returns type of operator is in cwd.
+// This function should be called after verifying the user is in project root.
 func GetOperatorType() OperatorType {
-	// Assuming that if main.go exists then this is a Go operator
-	if _, err := os.Stat(mainFile); err == nil {
+	switch {
+	case IsOperatorGo():
 		return OperatorTypeGo
-	}
-	if stat, err := os.Stat(rolesDir); err == nil && stat.IsDir() {
+	case IsOperatorAnsible():
 		return OperatorTypeAnsible
-	}
-	if stat, err := os.Stat(helmChartsDir); err == nil && stat.IsDir() {
+	case IsOperatorHelm():
 		return OperatorTypeHelm
 	}
 	return OperatorTypeUnknown
 }
 
 func IsOperatorGo() bool {
-	return GetOperatorType() == OperatorTypeGo
+	_, err := os.Stat(mainFile)
+	return err == nil
+}
+
+func IsOperatorAnsible() bool {
+	stat, err := os.Stat(rolesDir)
+	return err == nil && stat.IsDir()
+}
+
+func IsOperatorHelm() bool {
+	stat, err := os.Stat(helmChartsDir)
+	return err == nil && stat.IsDir()
 }
 
 // MustGetGopath gets GOPATH and ensures it is set and non-empty. If GOPATH
