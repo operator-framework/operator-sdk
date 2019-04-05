@@ -15,14 +15,38 @@
 package scaffold
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	testutil "github.com/operator-framework/operator-sdk/internal/pkg/scaffold/internal/testutil"
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+
+	"github.com/spf13/afero"
 )
+
+func setupCRDConfig(t *testing.T, s *Scaffold) *input.Config {
+	absPath, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fmt.Println("abspath:", absPath)
+	absPath = absPath[:strings.Index(absPath, "internal/pkg")]
+	tfDir := filepath.Join(absPath, "test", "test-framework")
+
+	// Set the project and repo paths to {abs}/test/test-framework, which
+	// contains pkg/apis for the memcached-operator.
+	return &input.Config{
+		Repo:           tfDir[strings.Index(absPath, "github.com"):],
+		AbsProjectPath: tfDir,
+		ProjectName:    filepath.Base(tfDir),
+	}
+}
 
 func TestCRDGoProject(t *testing.T) {
 	r, err := NewResource("cache.example.com/v1alpha1", "Memcached")
@@ -30,28 +54,21 @@ func TestCRDGoProject(t *testing.T) {
 		t.Fatal(err)
 	}
 	s, buf := setupScaffoldAndWriter()
-	absPath, err := os.Getwd()
+	s.Fs = afero.NewMemMapFs()
+	cfg := setupCRDConfig(t, s)
+
+	err = testutil.WriteOSPathToFS(afero.NewOsFs(), s.Fs, cfg.AbsProjectPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Set the project and repo paths to {abs}/test/test-framework, which
-	// contains pkg/apis for the memcached-operator.
-	tfDir := filepath.Join("test", "test-framework")
-	pkgIdx := strings.Index(absPath, "internal/pkg")
-	cfg := &input.Config{
-		Repo:           filepath.Join(absPath[strings.Index(absPath, "github.com"):pkgIdx], tfDir),
-		AbsProjectPath: filepath.Join(absPath[:pkgIdx], tfDir),
-		ProjectName:    tfDir,
-	}
-	if err := os.Chdir(cfg.AbsProjectPath); err != nil {
+
+	wd, err := os.Getwd()
+	if err != nil {
 		t.Fatal(err)
 	}
-	defer func() { os.Chdir(absPath) }()
-	err = s.Execute(cfg, &CRD{
-		Input:        input.Input{Path: filepath.Join(tfDir, "cache_v1alpha1_memcached.yaml")},
-		Resource:     r,
-		IsOperatorGo: true,
-	})
+	fmt.Println("go wd:", wd)
+
+	err = s.Execute(cfg, &CRD{Resource: r, IsOperatorGo: true})
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
@@ -60,6 +77,11 @@ func TestCRDGoProject(t *testing.T) {
 		diffs := diffutil.Diff(crdGoExp, buf.String())
 		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
+	wd, err = os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("go wd:", wd)
 }
 
 const crdGoExp = `apiVersion: apiextensions.k8s.io/v1beta1
@@ -74,8 +96,6 @@ spec:
     plural: memcacheds
     singular: memcached
   scope: Namespaced
-  subresources:
-    status: {}
   validation:
     openAPIV3Schema:
       properties:
@@ -118,13 +138,32 @@ spec:
 `
 
 func TestCRDNonGoProject(t *testing.T) {
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("non go wd:", wd)
+	s, buf := setupScaffoldAndWriter()
+	s.Fs = afero.NewMemMapFs()
+
 	r, err := NewResource(appApiVersion, appKind)
 	if err != nil {
 		t.Fatal(err)
 	}
-	s, buf := setupScaffoldAndWriter()
-	err = s.Execute(appConfig, &CRD{Resource: r})
+
+	crd := &CRD{Resource: r}
+	i, err := crd.GetInput()
 	if err != nil {
+		t.Fatal(err)
+	}
+	cfg := setupCRDConfig(t, s)
+	path := filepath.Join(cfg.AbsProjectPath, i.Path)
+	err = afero.WriteFile(s.Fs, path, []byte(crdNonGoExp), fileutil.DefaultFileMode)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = s.Execute(cfg, crd); err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
@@ -134,6 +173,9 @@ func TestCRDNonGoProject(t *testing.T) {
 	}
 }
 
+// crdNonGoExp contains a simple validation block to make sure manually-added
+// validation is not overwritten. Non-go projects don't have the luxury of
+// kubebuilder annotations.
 const crdNonGoExp = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
@@ -148,6 +190,26 @@ spec:
   scope: Namespaced
   subresources:
     status: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            size:
+              format: int32
+              type: integer
+          required:
+          - size
+          type: object
+        status:
+          properties:
+            nodes:
+              items:
+                type: string
+              type: array
+          required:
+          - nodes
+          type: object
   version: v1alpha1
   versions:
   - name: v1alpha1
