@@ -98,7 +98,6 @@ Prints the most recent Golang packages and versions required by operators. Print
 ```console
 $ operator-sdk print-deps --as-file
 required = [
-  "k8s.io/code-generator/cmd/defaulter-gen",
   "k8s.io/code-generator/cmd/deepcopy-gen",
   "k8s.io/code-generator/cmd/conversion-gen",
   "k8s.io/code-generator/cmd/client-gen",

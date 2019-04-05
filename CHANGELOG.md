@@ -16,7 +16,7 @@
 
 ### Removed
 
-- Reverted deafulter-gen PR #1050, to remove defaulter-gen. Users should use mutating webhooks to default instead. ([#1288](https://github.com/operator-framework/operator-sdk/pull/1288)) 
+- The SDK will no longer run `defaulter-gen` on running `operator-sdk generate k8s`. Defaulting for CRDs should be handled with mutating admission webhooks. ([#1288](https://github.com/operator-framework/operator-sdk/pull/1288)) 
 
 ### Bug Fixes
 

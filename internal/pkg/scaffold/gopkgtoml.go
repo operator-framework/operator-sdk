@@ -43,7 +43,6 @@ func (s *GopkgToml) GetInput() (input.Input, error) {
 
 const gopkgTomlTmpl = `# Force dep to vendor the code generators, which aren't imported just used at dev time.
 required = [
-  "k8s.io/code-generator/cmd/defaulter-gen",
   "k8s.io/code-generator/cmd/deepcopy-gen",
   "k8s.io/code-generator/cmd/conversion-gen",
   "k8s.io/code-generator/cmd/client-gen",
