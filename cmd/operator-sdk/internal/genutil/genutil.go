@@ -46,6 +46,7 @@ func runGoBuildCodegen(binDir, repoDir, genDir string) error {
 		cmd.Env = append(os.Environ(), projutil.GoFlagsEnv+"="+gf)
 	}
 
+	// Only print binary build info if verbosity is explicitly set.
 	if projutil.IsGoVerbose() {
 		return projutil.ExecCmd(cmd)
 	}
