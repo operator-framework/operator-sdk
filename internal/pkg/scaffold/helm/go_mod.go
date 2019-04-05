@@ -62,6 +62,7 @@ require (
 	github.com/docker/docker v0.0.0-20180612054059-a9fbbdc8dd87 // indirect
 	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
 	github.com/elazarl/goproxy v0.0.0-20181111060418-2ce16c963a8a // indirect
+	github.com/emicklei/go-restful v2.9.3+incompatible // indirect
 	github.com/evanphx/json-patch v4.1.0+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
@@ -137,9 +138,11 @@ require (
 	k8s.io/apiserver v0.0.0-20181213151703-3ccfe8365421 // indirect
 	k8s.io/cli-runtime v0.0.0-20181213153952-835b10687cb6 // indirect
 	k8s.io/client-go v0.0.0-20181213151034-8d9ed539ba31
+	k8s.io/code-generator v0.0.0-20190405172246-9a4d48088f6a
+	k8s.io/gengo v0.0.0-20190327210449-e17681d19d3a // indirect
 	k8s.io/helm v2.13.1+incompatible // indirect
 	k8s.io/klog v0.2.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20190320154901-5e45bb682580 // indirect
+	k8s.io/kube-openapi v0.0.0-20190320154901-5e45bb682580
 	k8s.io/kubernetes v0.0.0-20190201210629-c6d339953bd4 // indirect
 	k8s.io/utils v0.0.0-20190308190857-21c4ce38f2a7 // indirect
 	sigs.k8s.io/controller-runtime v0.1.10

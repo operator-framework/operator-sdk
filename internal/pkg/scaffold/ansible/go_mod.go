@@ -46,8 +46,10 @@ require (
 	github.com/Azure/go-autorest v11.7.0+incompatible // indirect
 	github.com/appscode/jsonpatch v0.0.0-20190108182946-7c0e3b262f30 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
+	github.com/emicklei/go-restful v2.9.3+incompatible // indirect
 	github.com/go-logr/logr v0.1.0 // indirect
 	github.com/go-logr/zapr v0.1.1 // indirect
+	github.com/go-openapi/spec v0.19.0 // indirect
 	github.com/gogo/protobuf v1.2.1 // indirect
 	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
 	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf // indirect
@@ -85,8 +87,10 @@ require (
 	k8s.io/apiextensions-apiserver v0.0.0-20190328030136-8ada4fd07db4 // indirect
 	k8s.io/apimachinery v0.0.0-20181127025237-2b1284ed4c93 // indirect
 	k8s.io/client-go v0.0.0-20181213151034-8d9ed539ba31
+	k8s.io/code-generator v0.0.0-20190405172246-9a4d48088f6a
+	k8s.io/gengo v0.0.0-20190327210449-e17681d19d3a // indirect
 	k8s.io/klog v0.2.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20190320154901-5e45bb682580 // indirect
+	k8s.io/kube-openapi v0.0.0-20190320154901-5e45bb682580
 	sigs.k8s.io/controller-runtime v0.1.10
 	sigs.k8s.io/testing_frameworks v0.1.1 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
