@@ -25,6 +25,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/project"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -93,7 +94,7 @@ func migrateAnsible() error {
 	}
 
 	if err := scaffoldDepManager(s, cfg); err != nil {
-		return fmt.Errorf("migrate helm dependency manager file scaffold failed: (%v)", err)
+		return errors.Wrap(err, "migrate Ansible dependency manager file scaffold failed")
 	}
 
 	err = s.Execute(cfg,
@@ -127,7 +128,7 @@ func migrateHelm() error {
 
 	s := &scaffold.Scaffold{}
 	if err := scaffoldDepManager(s, cfg); err != nil {
-		return fmt.Errorf("migrate helm dependency manager file scaffold failed: (%v)", err)
+		return errors.Wrap(err, "migrate Helm dependency manager file scaffold failed")
 	}
 
 	err := s.Execute(cfg,
@@ -157,12 +158,26 @@ func renameDockerfile() error {
 }
 
 func scaffoldDepManager(s *scaffold.Scaffold, cfg *input.Config) error {
+	var files []input.File
 	switch m := projutil.DepManagerType(depManager); m {
 	case projutil.DepManagerDep:
-		return s.Execute(cfg, &ansible.GopkgToml{})
+		if projutil.IsOperatorAnsible() {
+			files = append(files, &ansible.GopkgToml{})
+		} else if projutil.IsOperatorHelm() {
+			files = append(files, &helm.GopkgToml{})
+		} else {
+			return projutil.ErrUnknownOperatorType{}
+		}
 	case projutil.DepManagerGoMod:
-		return s.Execute(cfg, &project.GoMod{}, &project.Tools{})
+		if projutil.IsOperatorAnsible() {
+			files = append(files, &ansible.GoMod{}, &project.Tools{})
+		} else if projutil.IsOperatorHelm() {
+			files = append(files, &helm.GoMod{}, &project.Tools{})
+		} else {
+			return projutil.ErrUnknownOperatorType{}
+		}
 	default:
 		return projutil.ErrInvalidDepManagerType{Type: m}
 	}
+	return s.Execute(cfg, files...)
 }
