@@ -20,8 +20,89 @@ import (
 	"fmt"
 	"strings"
 
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+// BasicTestConfig contains all variables required by the BasicTest TestSuite
+type BasicTestConfig struct {
+	Client   client.Client
+	CR       *unstructured.Unstructured
+	ProxyPod *v1.Pod
+}
+
+// Test Defintions
+
+// CheckSpecTest is a scorecard test that verifies that the CR has a spec block
+type CheckSpecTest struct {
+	TestInfo
+	BasicTestConfig
+}
+
+// NewCheckSpecTest returns a new CheckSpecTest object
+func NewCheckSpecTest(conf BasicTestConfig) *CheckSpecTest {
+	return &CheckSpecTest{
+		BasicTestConfig: conf,
+		TestInfo: TestInfo{
+			Name:        "Spec Block Exists",
+			Description: "Custom Resource has a Spec Block",
+			Cumulative:  false,
+		},
+	}
+}
+
+// CheckStatusTest is a scorecard test that verifies that the CR has a status block
+type CheckStatusTest struct {
+	TestInfo
+	BasicTestConfig
+}
+
+// NewCheckStatusTest returns a new CheckStatusTest object
+func NewCheckStatusTest(conf BasicTestConfig) *CheckStatusTest {
+	return &CheckStatusTest{
+		BasicTestConfig: conf,
+		TestInfo: TestInfo{
+			Name:        "Status Block Exists",
+			Description: "Custom Resource has a Status Block",
+			Cumulative:  false,
+		},
+	}
+}
+
+// WritingIntoCRsHasEffectTest is a scorecard test that verifies that the operator is making PUT and/or POST requests to the API server
+type WritingIntoCRsHasEffectTest struct {
+	TestInfo
+	BasicTestConfig
+}
+
+// NewWritingIntoCRsHasEffectTest returns a new WritingIntoCRsHasEffectTest object
+func NewWritingIntoCRsHasEffectTest(conf BasicTestConfig) *WritingIntoCRsHasEffectTest {
+	return &WritingIntoCRsHasEffectTest{
+		BasicTestConfig: conf,
+		TestInfo: TestInfo{
+			Name:        "Writing into CRs has an effect",
+			Description: "A CR sends PUT/POST requests to the API server to modify resources in response to spec block changes",
+			Cumulative:  false,
+		},
+	}
+}
+
+// NewBasicTestSuite returns a new TestSuite object containing basic, functional operator tests
+func NewBasicTestSuite(conf BasicTestConfig) *TestSuite {
+	ts := NewTestSuite(
+		"Basic Tests",
+		"Test suite that runs basic, functional operator tests",
+	)
+	ts.AddTest(NewCheckSpecTest(conf), 1.5)
+	ts.AddTest(NewCheckStatusTest(conf), 1)
+	ts.AddTest(NewWritingIntoCRsHasEffectTest(conf), 1)
+
+	return ts
+}
+
+// Test Implementations
 
 // Run - implements Test interface
 func (t *CheckSpecTest) Run(ctx context.Context) *TestResult {
