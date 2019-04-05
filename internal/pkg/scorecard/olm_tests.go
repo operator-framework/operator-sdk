@@ -26,9 +26,112 @@ import (
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+// OLMTestConfig contains all variables required by the OLMTest TestSuite
+type OLMTestConfig struct {
+	Client   client.Client
+	CR       *unstructured.Unstructured
+	CSV      *olmapiv1alpha1.ClusterServiceVersion
+	CRDsDir  string
+	ProxyPod *v1.Pod
+}
+
+// Test Defintions
+
+// CRDsHaveValidationTest is a scorecard test that verifies that all CRDs have a validation section
+type CRDsHaveValidationTest struct {
+	TestInfo
+	OLMTestConfig
+}
+
+// NewCRDsHaveValidationTest returns a new CRDsHaveValidationTest object
+func NewCRDsHaveValidationTest(conf OLMTestConfig) *CRDsHaveValidationTest {
+	return &CRDsHaveValidationTest{
+		OLMTestConfig: conf,
+		TestInfo: TestInfo{
+			Name:        "Provided APIs have validation",
+			Description: "All CRDs have an OpenAPI validation subsection",
+			Cumulative:  true,
+		},
+	}
+}
+
+// CRDsHaveResourcesTest is a scorecard test that verifies that the CSV lists used resources in its owned CRDs secyion
+type CRDsHaveResourcesTest struct {
+	TestInfo
+	OLMTestConfig
+}
+
+// NewCRDsHaveResourcesTest returns a new CRDsHaveResourcesTest object
+func NewCRDsHaveResourcesTest(conf OLMTestConfig) *CRDsHaveResourcesTest {
+	return &CRDsHaveResourcesTest{
+		OLMTestConfig: conf,
+		TestInfo: TestInfo{
+			Name:        "Owned CRDs have resources listed",
+			Description: "All Owned CRDs contain a resources subsection",
+			Cumulative:  true,
+		},
+	}
+}
+
+// AnnotationsContainExamplesTest is a scorecard test that verifies that the CSV contains examples via the alm-examples annotation
+type AnnotationsContainExamplesTest struct {
+	TestInfo
+	OLMTestConfig
+}
+
+// NewAnnotationsContainExamplesTest returns a new AnnotationsContainExamplesTest object
+func NewAnnotationsContainExamplesTest(conf OLMTestConfig) *AnnotationsContainExamplesTest {
+	return &AnnotationsContainExamplesTest{
+		OLMTestConfig: conf,
+		TestInfo: TestInfo{
+			Name:        "CRs have at least 1 example",
+			Description: "The CSV's metadata contains an alm-examples section",
+			Cumulative:  true,
+		},
+	}
+}
+
+// SpecDescriptorsTest is a scorecard test that verifies that all spec fields have descriptors
+type SpecDescriptorsTest struct {
+	TestInfo
+	OLMTestConfig
+}
+
+// NewSpecDescriptorsTest returns a new SpecDescriptorsTest object
+func NewSpecDescriptorsTest(conf OLMTestConfig) *SpecDescriptorsTest {
+	return &SpecDescriptorsTest{
+		OLMTestConfig: conf,
+		TestInfo: TestInfo{
+			Name:        "Spec fields with descriptors",
+			Description: "All spec fields have matching descriptors in the CSV",
+			Cumulative:  true,
+		},
+	}
+}
+
+// StatusDescriptorsTest is a scorecard test that verifies that all status fields have descriptors
+type StatusDescriptorsTest struct {
+	TestInfo
+	OLMTestConfig
+}
+
+// NewStatusDescriptorsTest returns a new StatusDescriptorsTest object
+func NewStatusDescriptorsTest(conf OLMTestConfig) *StatusDescriptorsTest {
+	return &StatusDescriptorsTest{
+		OLMTestConfig: conf,
+		TestInfo: TestInfo{
+			Name:        "Status fields with descriptors",
+			Description: "All status fields have matching descriptors in the CSV",
+			Cumulative:  true,
+		},
+	}
+}
 
 func matchKind(kind1, kind2 string) bool {
 	singularKind1, err := restMapper.ResourceSingularizer(kind1)
@@ -43,6 +146,24 @@ func matchKind(kind1, kind2 string) bool {
 	}
 	return strings.EqualFold(singularKind1, singularKind2)
 }
+
+// NewOLMTestSuite returns a new TestSuite object containing CSV best practice checks
+func NewOLMTestSuite(conf OLMTestConfig) *TestSuite {
+	ts := NewTestSuite(
+		"OLM Tests",
+		"Test suite checks if an operator's CSV follows best practices",
+	)
+
+	ts.AddTest(NewCRDsHaveValidationTest(conf), 1.25)
+	ts.AddTest(NewCRDsHaveResourcesTest(conf), 1)
+	ts.AddTest(NewAnnotationsContainExamplesTest(conf), 1)
+	ts.AddTest(NewSpecDescriptorsTest(conf), 1)
+	ts.AddTest(NewStatusDescriptorsTest(conf), 1)
+
+	return ts
+}
+
+// Test Implentations
 
 // matchVersion checks if a CRD contains a specified version in a case insensitive manner
 func matchVersion(version string, crd *apiextv1beta1.CustomResourceDefinition) bool {
