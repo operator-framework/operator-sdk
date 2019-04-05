@@ -55,7 +55,7 @@ const (
 	BasicTestsOpt         = "basic-tests"
 	OLMTestsOpt           = "olm-tests"
 	TenantTestsOpt        = "good-tenant-tests"
-	NamespacedManifestOpt = "namespace-manifest"
+	NamespacedManifestOpt = "namespaced-manifest"
 	GlobalManifestOpt     = "global-manifest"
 	CRManifestOpt         = "cr-manifest"
 	ProxyImageOpt         = "proxy-image"

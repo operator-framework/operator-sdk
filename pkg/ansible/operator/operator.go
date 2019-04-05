@@ -73,11 +73,11 @@ func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags, cM
 			done <- errors.New("failed to add controller")
 			return
 		}
-		cMap.Store(o.GVK, &controllermap.ControllerMapContents{Controller: *ctr,
+		cMap.Store(o.GVK, &controllermap.Contents{Controller: *ctr,
 			WatchDependentResources:     runner.GetWatchDependentResources(),
 			WatchClusterScopedResources: runner.GetWatchClusterScopedResources(),
-			WatchMap:                    controllermap.NewWatchMap(),
-			UIDMap:                      controllermap.NewUIDMap(),
+			OwnerWatchMap:               controllermap.NewWatchMap(),
+			AnnotationWatchMap:          controllermap.NewWatchMap(),
 		})
 	}
 	done <- mgr.Start(c)
