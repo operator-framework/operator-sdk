@@ -38,7 +38,7 @@ func (s *GoMod) GetInput() (input.Input, error) {
 
 const goModTmpl = `module {{ .Repo }}
 
-go 1.11
+go 1.12
 
 require (
 	cloud.google.com/go v0.37.2 // indirect

@@ -38,7 +38,7 @@ func TestGoMod(t *testing.T) {
 
 const goModExp = `module github.com/example-inc/app-operator
 
-go 1.11
+go 1.12
 
 require (
 	contrib.go.opencensus.io/exporter/ocagent v0.4.9 // indirect
