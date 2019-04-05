@@ -17,6 +17,7 @@
 package scaffold
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -78,6 +79,26 @@ func (s *Scaffold) configure(cfg *input.Config) {
 	s.ProjectName = cfg.ProjectName
 }
 
+const commentPrefix = "//"
+
+func getAndValidateBoilerplateBytes(bp string) ([]byte, error) {
+	b, err := ioutil.ReadFile(bp)
+	if err != nil {
+		return nil, err
+	}
+	if len(bytes.TrimSpace(b)) == 0 {
+		return nil, fmt.Errorf(`boilerplate file "%s" is empty`, bp)
+	}
+	scanner := bufio.NewScanner(bytes.NewBuffer(b))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.HasPrefix(strings.TrimSpace(line), commentPrefix) {
+			return nil, fmt.Errorf(`this boilerplate line must be a comment: "%s"`, line)
+		}
+	}
+	return append(bytes.TrimSpace(b), []byte("\n\n")...), nil
+}
+
 func (s *Scaffold) setBoilerplate() (err error) {
 	if len(s.BoilerplateBytes) == 0 {
 		bp := s.BoilerplatePath
@@ -91,11 +112,8 @@ func (s *Scaffold) setBoilerplate() (err error) {
 			}
 		}
 		if bp != "" {
-			s.BoilerplateBytes, err = ioutil.ReadFile(bp)
-			if err != nil {
-				return err
-			}
-			s.BoilerplateBytes = append(bytes.TrimSpace(s.BoilerplateBytes), []byte("\n\n")...)
+			s.BoilerplateBytes, err = getAndValidateBoilerplateBytes(bp)
+			return err
 		}
 	}
 	return nil
