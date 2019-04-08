@@ -16,7 +16,8 @@ package scorecard
 
 import "fmt"
 
-// ResultsPassFail will be used when multiple CRs are supported
+// ResultsPassFail combines multiple test results and returns a single test results
+// with 1 maximum point and either 0 or 1 earned points
 func ResultsPassFail(results []*TestResult) (*TestResult, error) {
 	var name string
 	finalResult := TestResult{}
@@ -43,7 +44,9 @@ func ResultsPassFail(results []*TestResult) (*TestResult, error) {
 	return &finalResult, nil
 }
 
-// ResultsCumulative will be used when multiple CRs are supported
+// ResultsCumulative takes multiple TestResults and returns a single TestResult with MaximumPoints
+// equal to the sum of the MaximumPoints of the input and EarnedPoints as the sum of EarnedPoints
+// of the input
 func ResultsCumulative(results []*TestResult) (*TestResult, error) {
 	var name string
 	finalResult := TestResult{}
