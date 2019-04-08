@@ -17,7 +17,7 @@ package scorecard
 import (
 	"context"
 
-	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/scorecard/apis/scorecard/v1alpha1"
+	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
 )
 
 // Type Definitions

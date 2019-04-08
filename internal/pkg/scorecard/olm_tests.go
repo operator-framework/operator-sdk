@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/scorecard/apis/scorecard/v1alpha1"
+	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	log "github.com/sirupsen/logrus"

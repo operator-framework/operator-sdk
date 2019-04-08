@@ -14,8 +14,10 @@
 
 package scorecard
 
-import scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/scorecard/apis/scorecard/v1alpha1"
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 // These functions should be in the public test definitions file, but they are not complete/stable,
 // so we'll keep these here until they get fully implemented
