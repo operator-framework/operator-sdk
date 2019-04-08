@@ -253,8 +253,6 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		dupMap[gvk] = true
 	}
 
-	// TODO: add warning if a user is missing CRDs in his CR list that are listed as owned in the CSV
-
 	var suites []*TestSuite
 	for _, cr := range crs {
 		fmt.Printf("Running for cr: %s\n", cr)
