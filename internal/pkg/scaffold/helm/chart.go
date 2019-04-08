@@ -15,6 +15,7 @@
 package helm
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -271,11 +272,16 @@ func fetchChartDependencies(chartPath string) error {
 	}
 	getters := getter.All(environment.EnvSettings{})
 
+	out := &bytes.Buffer{}
 	man := &downloader.Manager{
-		Out:       ioutil.Discard,
+		Out:       out,
 		ChartPath: chartPath,
 		HelmHome:  helmpath.Home(helmHome),
 		Getters:   getters,
 	}
-	return man.Build()
+	if err := man.Build(); err != nil {
+		fmt.Println(out.String())
+		return err
+	}
+	return nil
 }
