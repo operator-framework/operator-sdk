@@ -27,28 +27,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-// scorecardConfig stores all scorecard config passed as flags
-type scorecardConfig struct {
-	namespace          string
-	kubeconfigPath     string
-	initTimeout        int
-	olmDeployed        bool
-	csvPath            string
-	basicTests         bool
-	olmTests           bool
-	tenantTests        bool
-	namespacedManifest string
-	globalManifest     string
-	crManifest         string
-	proxyImage         string
-	proxyPullPolicy    string
-	crdsDir            string
-	verbose            bool
-	outputFormat       string
-}
-
-var scConf scorecardConfig
-
 func NewCmd() *cobra.Command {
 	scorecardCmd := &cobra.Command{
 		Use:   "scorecard",
