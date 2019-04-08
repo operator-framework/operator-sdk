@@ -17,9 +17,10 @@
 package scaffold
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
+	"go/parser"
+	"go/token"
 	"io"
 	"io/ioutil"
 	"os"
@@ -79,22 +80,36 @@ func (s *Scaffold) configure(cfg *input.Config) {
 	s.ProjectName = cfg.ProjectName
 }
 
-const commentPrefix = "//"
-
 func getAndValidateBoilerplateBytes(bp string) ([]byte, error) {
 	b, err := ioutil.ReadFile(bp)
 	if err != nil {
 		return nil, err
 	}
-	if len(bytes.TrimSpace(b)) == 0 {
-		return nil, fmt.Errorf(`boilerplate file "%s" is empty`, bp)
+	// Append a 'package main' so we can parse the file.
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "", append([]byte("package main\n"), b...), parser.ParseComments)
+	if err != nil {
+		return nil, fmt.Errorf("parse comments from %s: %v", bp, err)
 	}
-	scanner := bufio.NewScanner(bytes.NewBuffer(b))
-	for scanner.Scan() {
-		line := scanner.Text()
-		if !strings.HasPrefix(strings.TrimSpace(line), commentPrefix) {
-			return nil, fmt.Errorf(`this boilerplate line must be a comment: "%s"`, line)
+	if len(f.Comments) == 0 {
+		return nil, fmt.Errorf(`boilerplate file "%s" does not contain comments`, bp)
+	}
+	var cb []byte
+	for _, cg := range f.Comments {
+		for _, c := range cg.List {
+			cb = append(cb, []byte(strings.TrimSpace(c.Text)+"\n")...)
 		}
+	}
+	// Remove empty lines before comparison.
+	var tb []byte
+	for _, l := range bytes.Split(b, []byte("\n")) {
+		if len(l) > 0 {
+			tb = append(tb, append(l, []byte("\n")...)...)
+		}
+	}
+	tb, cb = bytes.TrimSpace(tb), bytes.TrimSpace(cb)
+	if bytes.Compare(tb, cb) != 0 {
+		return nil, fmt.Errorf(`boilerplate file "%s" contains text other than comments:\n"%s"\n`, bp, tb)
 	}
 	return append(bytes.TrimSpace(b), []byte("\n\n")...), nil
 }
