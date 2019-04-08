@@ -26,11 +26,10 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	proxyConf "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
-	"github.com/spf13/viper"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -41,6 +40,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type cleanupFn func() error
