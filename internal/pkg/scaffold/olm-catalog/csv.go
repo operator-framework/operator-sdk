@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -166,7 +167,7 @@ func getCSVFromFSIfExists(fs afero.Fs, path string) (*olmapiv1alpha1.ClusterServ
 
 	csv := &olmapiv1alpha1.ClusterServiceVersion{}
 	if err := yaml.Unmarshal(csvBytes, csv); err != nil {
-		return nil, false, err
+		return nil, false, fmt.Errorf("%s: %v", path, err)
 	}
 
 	return csv, true, nil
@@ -357,6 +358,7 @@ func replaceAllBytes(v interface{}, old, new []byte) error {
 // user-defined manifests and updates csv.
 func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	store := NewUpdaterStore()
+	otherSpecs := make(map[string][][]byte)
 	for _, f := range append(cfg.CRDCRPaths, cfg.OperatorPath, cfg.RolePath) {
 		yamlData, err := afero.ReadFile(s.getFS(), f)
 		if err != nil {
@@ -366,9 +368,32 @@ func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.Clu
 		scanner := yamlutil.NewYAMLScanner(yamlData)
 		for scanner.Scan() {
 			yamlSpec := scanner.Bytes()
+			kind, err := getKindfromYAML(yamlSpec)
+			if err != nil {
+				return fmt.Errorf("%s: %v", f, err)
+			}
+			found, err := store.AddToUpdater(yamlSpec, kind)
+			if err != nil {
+				return fmt.Errorf("%s: %v", f, err)
+			}
+			if !found {
+				if _, ok := otherSpecs[kind]; !ok {
+					otherSpecs[kind] = make([][]byte, 0)
+				}
+				otherSpecs[kind] = append(otherSpecs[kind], yamlSpec)
+			}
+		}
+		if err = scanner.Err(); err != nil {
+			return err
+		}
+	}
 
-			if err = store.AddToUpdater(yamlSpec); err != nil {
-				return err
+	for k := range store.crds.crKinds {
+		if crSpecs, ok := otherSpecs[k]; ok {
+			for _, spec := range crSpecs {
+				if err := store.AddCR(spec); err != nil {
+					return err
+				}
 			}
 		}
 	}
