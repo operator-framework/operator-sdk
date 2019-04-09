@@ -15,7 +15,6 @@
 package scaffold
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -34,8 +33,6 @@ func setupCRDConfig(t *testing.T, s *Scaffold) *input.Config {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	fmt.Println("abspath:", absPath)
 	absPath = absPath[:strings.Index(absPath, "internal/pkg")]
 	tfDir := filepath.Join(absPath, "test", "test-framework")
 
@@ -62,12 +59,6 @@ func TestCRDGoProject(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println("go wd:", wd)
-
 	err = s.Execute(cfg, &CRD{Resource: r, IsOperatorGo: true})
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
@@ -77,11 +68,6 @@ func TestCRDGoProject(t *testing.T) {
 		diffs := diffutil.Diff(crdGoExp, buf.String())
 		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
-	wd, err = os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println("go wd:", wd)
 }
 
 const crdGoExp = `apiVersion: apiextensions.k8s.io/v1beta1
@@ -138,11 +124,6 @@ spec:
 `
 
 func TestCRDNonGoProject(t *testing.T) {
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println("non go wd:", wd)
 	s, buf := setupScaffoldAndWriter()
 	s.Fs = afero.NewMemMapFs()
 
