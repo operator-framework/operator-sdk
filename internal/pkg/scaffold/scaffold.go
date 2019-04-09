@@ -104,7 +104,7 @@ func getAndValidateBoilerplateBytes(bp string) ([]byte, error) {
 	var tb []byte
 	for _, l := range bytes.Split(b, []byte("\n")) {
 		if len(l) > 0 {
-			tb = append(tb, append(l, []byte("\n")...)...)
+			tb = append(tb, append(bytes.TrimSpace(l), []byte("\n")...)...)
 		}
 	}
 	tb, cb = bytes.TrimSpace(tb), bytes.TrimSpace(cb)
