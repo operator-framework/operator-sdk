@@ -217,6 +217,20 @@ func HasDocAnnotation(t *types.Type) bool {
 	return false
 }
 
+// hasSingular returns true if t is an APIResource annotated with
+// +kubebuilder:singular
+func hasSingular(t *types.Type) bool {
+	if !IsAPIResource(t) {
+		return false
+	}
+	for _, c := range t.CommentLines{
+		if strings.Contains(c, "+kubebuilder:singular"){
+			return true
+		}
+	}
+	return false
+}
+
 // IsUnversioned returns true if t is in given group, and not in versioned path.
 func IsUnversioned(t *types.Type, group string) bool {
 	return IsApisDir(filepath.Base(filepath.Dir(t.Name.Package))) && GetGroup(t) == group
@@ -309,6 +323,16 @@ func getCategoriesTag(c *types.Type) string {
 		panic(errors.Errorf("Must specify +kubebuilder:categories comment for type %v", c.Name))
 	}
 	return resource
+}
+
+// getSingularName returns the value of the +kubebuilder:singular tag
+func getSingularName(c *types.Type) string {
+	comments := Comments(c.CommentLines)
+	singular := comments.getTag("kubebuilder:singular", "=")
+	if len(singular) == 0 {
+		panic(errors.Errorf("Must specify a value to use with +kubebuilder:singular comment for type %v", c.Name))
+	}
+	return singular
 }
 
 // getDocAnnotation parse annotations of "+kubebuilder:doc:" with tags of "warning" or "doc" for control generating doc config.

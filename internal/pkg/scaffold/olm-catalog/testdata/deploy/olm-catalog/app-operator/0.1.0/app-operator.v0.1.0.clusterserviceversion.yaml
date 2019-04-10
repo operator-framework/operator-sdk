@@ -2,6 +2,7 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
   annotations:
+    alm-examples: '[{"apiVersion":"app.example.com/v1alpha1","kind":"App","metadata":{"name":"example-app"},"spec":{"size":3}}]'
     capabilities: Basic Install
   name: app-operator.v0.1.0
   namespace: placeholder
