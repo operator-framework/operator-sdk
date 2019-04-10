@@ -62,6 +62,8 @@ func MainEntry(m *testing.M) {
 	namespace := ""
 	if singleNamespaceInternal || *kubeconfigPath == "incluster" {
 		namespace = os.Getenv(TestNamespaceEnv)
+		// if kubeconfig is set to incluster, make sure single namespace mode is set
+		singleNamespaceInternal = true
 	}
 	if err := Setup(*kubeconfigPath, *namespacedManPath, namespace, singleNamespaceInternal, *localOperator); err != nil {
 		log.Fatalf("Failed to set up framework: %v", err)

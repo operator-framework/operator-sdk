@@ -74,7 +74,7 @@ func Setup(kubeconfigPath, namespacedManPath, namespace string, singleNamespace,
 	if kubeconfigPath == "incluster" {
 		// when running with an InCluster config, we don't have permission to create new namespaces, so we must be in single namespace mode
 		if singleNamespaceInternal != true {
-			return fmt.Errorf("oneNamespace must be set to true for in cluster testing mode")
+			return fmt.Errorf("singleNamespace must be set to true for in cluster testing mode")
 		}
 		if len(namespace) == 0 {
 			return fmt.Errorf("namespace must be set for in cluster testing mode")
