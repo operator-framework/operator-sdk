@@ -87,8 +87,7 @@ func upLocalFunc(cmd *cobra.Command, args []string) error {
 	}
 	log.Infof("Using namespace %s.", namespace)
 
-	t := projutil.GetOperatorType()
-	switch t {
+	switch t := projutil.GetOperatorType(); t {
 	case projutil.OperatorTypeGo:
 		return upLocal()
 	case projutil.OperatorTypeAnsible:
@@ -96,7 +95,7 @@ func upLocalFunc(cmd *cobra.Command, args []string) error {
 	case projutil.OperatorTypeHelm:
 		return upLocalHelm()
 	}
-	return fmt.Errorf("unknown operator type '%v'", t)
+	return projutil.ErrUnknownOperatorType{}
 }
 
 func upLocal() error {
