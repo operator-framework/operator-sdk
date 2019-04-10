@@ -39,6 +39,8 @@ var (
 	testLocationBuild  string
 	enableTests        bool
 	dockerBuildArgs    string
+	buildahBuildArgs   string
+	imageBuilder       string
 )
 
 func NewCmd() *cobra.Command {
@@ -63,6 +65,8 @@ For example:
 	buildCmd.Flags().StringVar(&testLocationBuild, "test-location", "./test/e2e", "Location of tests")
 	buildCmd.Flags().StringVar(&namespacedManBuild, "namespaced-manifest", "deploy/operator.yaml", "Path of namespaced resources manifest for tests")
 	buildCmd.Flags().StringVar(&dockerBuildArgs, "docker-build-args", "", "Extra docker build arguments as one string such as \"--build-arg https_proxy=$https_proxy\"")
+	buildCmd.Flags().StringVar(&buildahBuildArgs, "buildah-build-args", "", "Extra buildah build arguments as one string such as \"--build-arg https_proxy=$https_proxy\"")
+	buildCmd.Flags().StringVar(&imageBuilder, "image-builder", "docker", "Tool to build OCI images. One of: [docker, buildah]")
 	return buildCmd
 }
 
@@ -172,15 +176,31 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 	log.Infof("Building Docker image %s", baseImageName)
 
-	dbArgs := []string{"build", ".", "-f", "build/Dockerfile", "-t", baseImageName}
+	var buildCmd *exec.Cmd
+	switch imageBuilder {
+	case "docker":
+		dbArgs := []string{"build", ".", "-f", "build/Dockerfile", "-t", baseImageName}
 
-	if dockerBuildArgs != "" {
-		splitArgs := strings.Fields(dockerBuildArgs)
-		dbArgs = append(dbArgs, splitArgs...)
+		if dockerBuildArgs != "" {
+			splitArgs := strings.Fields(dockerBuildArgs)
+			dbArgs = append(dbArgs, splitArgs...)
+		}
+
+		buildCmd = exec.Command("docker", dbArgs...)
+	case "buildah":
+		bbArgs := []string{"bud", "--format=docker", "-f", "build/Dockerfile", "-t", baseImageName, "."}
+
+		if buildahBuildArgs != "" {
+			splitArgs := strings.Fields(buildahBuildArgs)
+			bbArgs = append(bbArgs, splitArgs...)
+		}
+
+		buildCmd = exec.Command("buildah", bbArgs...)
+	default:
+		return fmt.Errorf("%s is not supported image builder", imageBuilder)
 	}
 
-	dbcmd := exec.Command("docker", dbArgs...)
-	if err := projutil.ExecCmd(dbcmd); err != nil {
+	if err := projutil.ExecCmd(buildCmd); err != nil {
 		if enableTests {
 			return fmt.Errorf("failed to output intermediate image %s: (%v)", image, err)
 		}
@@ -234,15 +254,31 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 		log.Infof("Building test Docker image %s", image)
 
-		testDbArgs := []string{"build", ".", "-f", testDockerfile, "-t", image, "--build-arg", "NAMESPACEDMAN=" + namespacedManBuild, "--build-arg", "BASEIMAGE=" + baseImageName}
+		var testBuildCmd *exec.Cmd
+		switch imageBuilder {
+		case "docker":
+			testDbArgs := []string{"build", ".", "-f", testDockerfile, "-t", image, "--build-arg", "NAMESPACEDMAN=" + namespacedManBuild, "--build-arg", "BASEIMAGE=" + baseImageName}
 
-		if dockerBuildArgs != "" {
-			splitArgs := strings.Fields(dockerBuildArgs)
-			testDbArgs = append(testDbArgs, splitArgs...)
+			if dockerBuildArgs != "" {
+				splitArgs := strings.Fields(dockerBuildArgs)
+				testDbArgs = append(testDbArgs, splitArgs...)
+			}
+
+			testBuildCmd = exec.Command("docker", testDbArgs...)
+		case "buildah":
+			testBbArgs := []string{"bud", "--format=docker", "-f", testDockerfile, "-t", image, "--build-arg", "NAMESPACEDMAN=" + namespacedManBuild, "--build-arg", "BASEIMAGE=" + baseImageName, "."}
+
+			if buildahBuildArgs != "" {
+				splitArgs := strings.Fields(buildahBuildArgs)
+				testBbArgs = append(testBbArgs, splitArgs...)
+			}
+
+			testBuildCmd = exec.Command("buildah", testBbArgs...)
+		default:
+			return fmt.Errorf("%s is not supported image builder", imageBuilder)
 		}
 
-		testDbcmd := exec.Command("docker", testDbArgs...)
-		if err := projutil.ExecCmd(testDbcmd); err != nil {
+		if err := projutil.ExecCmd(testBuildCmd); err != nil {
 			return fmt.Errorf("failed to output test image %s: (%v)", image, err)
 		}
 		// Check image name of deployments in namespaced manifest
