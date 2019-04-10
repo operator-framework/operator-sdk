@@ -51,8 +51,8 @@ func MainEntry(m *testing.M) {
 	kubeconfigPath := flag.String(KubeConfigFlag, "", "path to kubeconfig")
 	globalManPath := flag.String(GlobalManPathFlag, "", "path to operator manifest")
 	namespacedManPath := flag.String(NamespacedManPathFlag, "", "path to rbac manifest")
-	SingleNamespace = flag.Bool(SingleNamespaceFlag, false, "enable single namespace mode")
 	localOperator := flag.Bool(LocalOperatorFlag, false, "enable if operator is running locally (not in cluster)")
+	flag.BoolVar(&SingleNamespace, SingleNamespaceFlag, false, "enable single namespace mode")
 	flag.Parse()
 	// go test always runs from the test directory; change to project root
 	err := os.Chdir(*projRoot)
@@ -60,7 +60,7 @@ func MainEntry(m *testing.M) {
 		log.Fatalf("Failed to change directory to project root: %v", err)
 	}
 	namespace := ""
-	if *SingleNamespace || *kubeconfigPath == "incluster" {
+	if SingleNamespace || *kubeconfigPath == "incluster" {
 		namespace = os.Getenv(TestNamespaceEnv)
 	}
 	if err := Setup(*kubeconfigPath, *namespacedManPath, namespace, *localOperator); err != nil {
