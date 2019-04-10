@@ -41,26 +41,24 @@ func ResultsCumulative(results []TestResult) (earned, max int) {
 	return earned, max
 }
 
-// CalculateStates updates the state fields of the JSONOut based on the TestResults in out.Tests
-func CalculateStates(out *scapiv1alpha1.ScorecardResult) {
-	out.Error = 0
-	out.Pass = 0
-	out.PartialPass = 0
-	out.Fail = 0
-	out.TotalTests = 0
-	for _, test := range out.Tests {
-		out.TotalTests++
+// CalculateResult returns a ScorecardResult with the state and Tests fields set based on a slice of JSONTestResults
+func CalculateResult(tests []*scapiv1alpha1.JSONTestResult) *scapiv1alpha1.ScorecardResult {
+	scorecardResult := scapiv1alpha1.ScorecardResult{}
+	scorecardResult.Tests = tests
+	for _, test := range scorecardResult.Tests {
+		scorecardResult.TotalTests++
 		switch test.State {
 		case scapiv1alpha1.ErrorState:
-			out.Error++
+			scorecardResult.Error++
 		case scapiv1alpha1.PassState:
-			out.Pass++
+			scorecardResult.Pass++
 		case scapiv1alpha1.PartialPassState:
-			out.PartialPass++
+			scorecardResult.PartialPass++
 		case scapiv1alpha1.FailState:
-			out.Fail++
+			scorecardResult.Fail++
 		}
 	}
+	return &scorecardResult
 }
 
 // TestSuitesToScorecardTest takes an array of test suites and generates a v1alpha1 ScorecardTest object with the
@@ -81,15 +79,13 @@ func TestSuitesToScorecardTest(suites []*TestSuite, name, description, log strin
 	}
 	scorecardResults := []scapiv1alpha1.ScorecardResult{}
 	for _, suite := range suites {
-		scorecardResult := scapiv1alpha1.ScorecardResult{}
 		results := []*scapiv1alpha1.JSONTestResult{}
 		for _, testResult := range suite.TestResults {
 			results = append(results, TestResultToJSONTestResult(testResult))
 		}
-		scorecardResult.Tests = results
+		scorecardResult := CalculateResult(results)
 		scorecardResult.TotalScore = suite.TotalScore()
-		CalculateStates(&scorecardResult)
-		scorecardResults = append(scorecardResults, scorecardResult)
+		scorecardResults = append(scorecardResults, *scorecardResult)
 	}
 	test.Status.Results = scorecardResults
 	return test
