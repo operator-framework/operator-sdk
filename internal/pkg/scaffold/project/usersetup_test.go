@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scaffold
+package project
 
 import (
 	"testing"
@@ -20,30 +20,30 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 )
 
-func EntrypointTest(t *testing.T) {
+func UserSetupTest(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(appConfig, &Entrypoint{})
+	err := s.Execute(appConfig, &UserSetup{})
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
-	if entrypointExp != buf.String() {
-		diffs := diffutil.Diff(entrypointExp, buf.String())
+	if userSetupExp != buf.String() {
+		diffs := diffutil.Diff(userSetupExp, buf.String())
 		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
 }
 
-const entrypointExp = `#!/bin/sh -e
+const userSetupExp = `#!/bin/sh
+set -x
 
-# This is documented here:
-# https://docs.openshift.com/container-platform/3.11/creating_images/guidelines.html#openshift-specific-guidelines
+# ensure $HOME exists and is accessible by group 0 (we don't know what the runtime UID will be)
+mkdir -p ${HOME}
+chown ${USER_UID}:0 ${HOME}
+chmod ug+rwx ${HOME}
 
-if ! whoami &>/dev/null; then
-  if [ -w /etc/passwd ]; then
-    echo "${USER_NAME:-app-operator}:x:$(id -u):$(id -g):${USER_NAME:-app-operator} user:${HOME}:/sbin/nologin" >> /etc/passwd
-  fi
-fi
+# runtime user will need to be able to self-insert in /etc/passwd
+chmod g+rw /etc/passwd
 
-exec ${OPERATOR} $@
-
+# no need for this script to remain in the image after running
+rm $0
 `

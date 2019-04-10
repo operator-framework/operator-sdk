@@ -12,29 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scaffold
+package project
 
 import (
-	"path/filepath"
+	"testing"
 
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 )
 
-const VersionFile = "version.go"
-
-type Version struct {
-	input.Input
-}
-
-func (s *Version) GetInput() (input.Input, error) {
-	if s.Path == "" {
-		s.Path = filepath.Join(VersionDir, VersionFile)
+func TestVersion(t *testing.T) {
+	s, buf := setupScaffoldAndWriter()
+	err := s.Execute(appConfig, &Version{})
+	if err != nil {
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
-	s.TemplateBody = versionTemplate
-	return s.Input, nil
+
+	if versionExp != buf.String() {
+		diffs := diffutil.Diff(versionExp, buf.String())
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
+	}
 }
 
-const versionTemplate = `package version
+const versionExp = `package version
 
 var (
 	Version = "0.0.1"

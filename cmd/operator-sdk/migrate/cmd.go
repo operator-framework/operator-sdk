@@ -23,20 +23,28 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/project"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
+var depManager string
+
 // NewCmd returns a command that will add source code to an existing non-go operator
 func NewCmd() *cobra.Command {
-	return &cobra.Command{
+	newCmd := &cobra.Command{
 		Use:   "migrate",
 		Short: "Adds source code to an operator",
 		Long:  `operator-sdk migrate adds a main.go source file and any associated source files for an operator that is not of the "go" type.`,
 		RunE:  migrateRun,
 	}
+
+	newCmd.Flags().StringVar(&depManager, "dep-manager", "dep", "Dependency manager the new project will use (choices: \"dep\")")
+
+	return newCmd
 }
 
 // migrateRun determines the current operator type and runs the corresponding
@@ -59,11 +67,14 @@ func migrateRun(cmd *cobra.Command, args []string) error {
 // migrateAnsible runs the migration process for an ansible-based operator
 func migrateAnsible() error {
 	wd := projutil.MustGetwd()
+	projectName := filepath.Base(wd)
 
 	cfg := &input.Config{
+		Repo:           filepath.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
 		AbsProjectPath: wd,
-		ProjectName:    filepath.Base(wd),
+		ProjectName:    projectName,
 	}
+	s := &scaffold.Scaffold{}
 
 	dockerfile := ansible.DockerfileHybrid{
 		Watches: true,
@@ -78,15 +89,16 @@ func migrateAnsible() error {
 	default:
 		return fmt.Errorf("error trying to stat %s: (%v)", ansible.PlaybookYamlFile, err)
 	}
-
 	if err := renameDockerfile(); err != nil {
 		return err
 	}
 
-	s := &scaffold.Scaffold{}
+	if err := scaffoldDepManager(s, cfg); err != nil {
+		return errors.Wrap(err, "migrate Ansible dependency manager file scaffold failed")
+	}
+
 	err = s.Execute(cfg,
 		&ansible.Main{},
-		&ansible.GopkgToml{},
 		&dockerfile,
 		&ansible.Entrypoint{},
 		&ansible.UserSetup{},
@@ -102,10 +114,12 @@ func migrateAnsible() error {
 // migrateHelm runs the migration process for a helm-based operator
 func migrateHelm() error {
 	wd := projutil.MustGetwd()
+	projectName := filepath.Base(wd)
 
 	cfg := &input.Config{
+		Repo:           filepath.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
 		AbsProjectPath: wd,
-		ProjectName:    filepath.Base(wd),
+		ProjectName:    projectName,
 	}
 
 	if err := renameDockerfile(); err != nil {
@@ -113,9 +127,12 @@ func migrateHelm() error {
 	}
 
 	s := &scaffold.Scaffold{}
+	if err := scaffoldDepManager(s, cfg); err != nil {
+		return errors.Wrap(err, "migrate Helm dependency manager file scaffold failed")
+	}
+
 	err := s.Execute(cfg,
 		&helm.Main{},
-		&helm.GopkgToml{},
 		&helm.DockerfileHybrid{
 			Watches:    true,
 			HelmCharts: true,
@@ -130,7 +147,7 @@ func migrateHelm() error {
 }
 
 func renameDockerfile() error {
-	dockerfilePath := filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
+	dockerfilePath := filepath.Join(scaffold.BuildDir, project.DockerfileFile)
 	newDockerfilePath := dockerfilePath + ".sdkold"
 	err := os.Rename(dockerfilePath, newDockerfilePath)
 	if err != nil {
@@ -138,4 +155,21 @@ func renameDockerfile() error {
 	}
 	log.Infof("Renamed Dockerfile to %s and replaced with newer version. Compare the new Dockerfile to your old one and manually migrate any customizations", newDockerfilePath)
 	return nil
+}
+
+func scaffoldDepManager(s *scaffold.Scaffold, cfg *input.Config) error {
+	var files []input.File
+	switch m := projutil.DepManagerType(depManager); m {
+	case projutil.DepManagerDep:
+		if projutil.IsOperatorAnsible() {
+			files = append(files, &ansible.GopkgToml{})
+		} else if projutil.IsOperatorHelm() {
+			files = append(files, &helm.GopkgToml{})
+		} else {
+			return projutil.ErrUnknownOperatorType{}
+		}
+	default:
+		return projutil.ErrInvalidDepManagerType{Type: m}
+	}
+	return s.Execute(cfg, files...)
 }

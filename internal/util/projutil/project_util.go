@@ -15,6 +15,7 @@
 package projutil
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -36,6 +37,7 @@ const (
 	buildDockerfile = "build" + fsep + "Dockerfile"
 	rolesDir        = "roles"
 	helmChartsDir   = "helm-charts"
+	gopkgTOMLFile   = "Gopkg.toml"
 )
 
 // OperatorType - the type of operator
@@ -51,6 +53,28 @@ const (
 	// OperatorTypeUnknown - unknown type of operator.
 	OperatorTypeUnknown OperatorType = "unknown"
 )
+
+type DepManagerType string
+
+const (
+	DepManagerNone DepManagerType = "none"
+	DepManagerDep  DepManagerType = "dep"
+)
+
+type ErrInvalidDepManagerType struct {
+	Type DepManagerType
+}
+
+func (e ErrInvalidDepManagerType) Error() string {
+	return fmt.Sprintf(`invalid dependency manager type "%v"; must be one of ["%v"]`, e.Type, DepManagerDep)
+}
+
+func GetDepManagerType() (DepManagerType, error) {
+	if _, err := os.Stat(gopkgTOMLFile); err == nil {
+		return DepManagerDep, nil
+	}
+	return DepManagerNone, errors.New("unable to determine dependency manager: no dependency manager file found")
+}
 
 type ErrUnknownOperatorType struct {
 	Type string

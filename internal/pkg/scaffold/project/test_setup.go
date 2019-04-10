@@ -12,41 +12,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scaffold
+package project
 
 import (
+	"bytes"
+	"io"
+	"os"
 	"path/filepath"
 
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+
+	log "github.com/sirupsen/logrus"
 )
 
-const UserSetupFile = "user_setup"
-
-// UserSetup - userSetup script
-type UserSetup struct {
-	input.Input
-}
-
-func (u *UserSetup) GetInput() (input.Input, error) {
-	if u.Path == "" {
-		u.Path = filepath.Join(BuildScriptDir, UserSetupFile)
+var (
+	appRepo   = filepath.Join("github.com", "example-inc", "app-operator")
+	appConfig = &input.Config{
+		Repo: appRepo,
 	}
-	u.TemplateBody = userSetupTmpl
-	u.IsExec = true
-	return u.Input, nil
+)
+
+func mustGetImportPath() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Failed to get working directory: (%v)", err)
+	}
+	return filepath.Join(wd, appRepo)
 }
 
-const userSetupTmpl = `#!/bin/sh
-set -x
-
-# ensure $HOME exists and is accessible by group 0 (we don't know what the runtime UID will be)
-mkdir -p ${HOME}
-chown ${USER_UID}:0 ${HOME}
-chmod ug+rwx ${HOME}
-
-# runtime user will need to be able to self-insert in /etc/passwd
-chmod g+rw /etc/passwd
-
-# no need for this script to remain in the image after running
-rm $0
-`
+func setupScaffoldAndWriter() (*scaffold.Scaffold, *bytes.Buffer) {
+	buf := &bytes.Buffer{}
+	return &scaffold.Scaffold{
+		GetWriter: func(_ string, _ os.FileMode) (io.Writer, error) {
+			return buf, nil
+		},
+	}, buf
+}

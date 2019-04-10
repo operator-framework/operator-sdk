@@ -20,13 +20,15 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 )
 
+const TestFrameworkDockerfileFile = "Dockerfile"
+
 type TestFrameworkDockerfile struct {
 	input.Input
 }
 
 func (s *TestFrameworkDockerfile) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(BuildTestDir, DockerfileFile)
+		s.Path = filepath.Join(BuildTestDir, TestFrameworkDockerfileFile)
 	}
 	s.TemplateBody = testFrameworkDockerfileTmpl
 	return s.Input, nil
