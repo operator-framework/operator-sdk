@@ -73,7 +73,7 @@ func (ctx *TestCtx) SetNamespace(namespace string) error {
 	return nil
 }
 
-// CreateFromYAML takes a raw yaml file and creates the resource(s) in it in the cluster and adds cleanup functions
+// CreateFromYAML takes a raw YAML file and creates the resource(s) in the cluster and adds cleanup functions
 // for the created resource(s).
 func (ctx *TestCtx) CreateFromYAML(yamlFile []byte, skipIfExists bool, cleanupOptions *CleanupOptions) error {
 	namespace, err := ctx.GetNamespace()
