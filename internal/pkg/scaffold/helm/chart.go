@@ -36,6 +36,11 @@ import (
 )
 
 const (
+
+	// HelmChartsDir is the relative directory within an SDK project where Helm
+	// charts are stored.
+	HelmChartsDir string = "helm-charts"
+
 	// DefaultAPIVersion is the Kubernetes CRD API Version used for fetched
 	// charts when the --api-version flag is not specified
 	DefaultAPIVersion string = "charts.helm.k8s.io/v1alpha1"
@@ -109,7 +114,7 @@ type CreateChartOptions struct {
 // CreateChart returns an error if an error occurs creating the scaffold.Resource or
 // creating the chart.
 func CreateChart(projectDir string, opts CreateChartOptions) (*scaffold.Resource, *chart.Chart, error) {
-	chartsDir := filepath.Join(projectDir, scaffold.HelmChartsDir)
+	chartsDir := filepath.Join(projectDir, HelmChartsDir)
 	err := os.MkdirAll(chartsDir, 0755)
 	if err != nil {
 		return nil, nil, err
@@ -131,7 +136,7 @@ func CreateChart(projectDir string, opts CreateChartOptions) (*scaffold.Resource
 		return nil, nil, err
 	}
 
-	relChartPath := filepath.Join(scaffold.HelmChartsDir, c.GetMetadata().GetName())
+	relChartPath := filepath.Join(HelmChartsDir, c.GetMetadata().GetName())
 	absChartPath := filepath.Join(projectDir, relChartPath)
 	if err := fetchChartDependencies(absChartPath); err != nil {
 		return nil, nil, err

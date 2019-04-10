@@ -35,7 +35,7 @@ func (s *WatchesYAML) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = WatchesYamlFile
 	}
-	s.HelmChartsDir = scaffold.HelmChartsDir
+	s.HelmChartsDir = HelmChartsDir
 	s.TemplateBody = watchesYAMLTmpl
 	if s.ChartName == "" {
 		s.ChartName = s.Resource.LowerKind
