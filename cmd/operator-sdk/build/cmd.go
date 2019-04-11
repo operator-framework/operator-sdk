@@ -143,7 +143,7 @@ func verifyTestManifest(image string) error {
 	return nil
 }
 
-func createBuildCommand(imageBuilder, context, dockerFile, image, imageBuildArgs string) (*exec.Cmd, error) {
+func createBuildCommand(imageBuilder, context, dockerFile, image string, imageBuildArgs ...string) (*exec.Cmd, error) {
 	var args []string
 	switch imageBuilder {
 	case "docker":
@@ -154,9 +154,11 @@ func createBuildCommand(imageBuilder, context, dockerFile, image, imageBuildArgs
 		return nil, fmt.Errorf("%s is not supported image builder", imageBuilder)
 	}
 
-	if imageBuildArgs != "" {
-		splitArgs := strings.Fields(imageBuildArgs)
-		args = append(args, splitArgs...)
+	for _, bargs := range imageBuildArgs {
+		if bargs != "" {
+			splitArgs := strings.Fields(bargs)
+			args = append(args, splitArgs...)
+		}
 	}
 
 	args = append(args, context)
@@ -254,8 +256,8 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 		log.Infof("Building test OCI image %s", image)
 
-		testImageBuildArgs := fmt.Sprintf("%s --build-arg NAMESPACEDMAN=%s --build-arg BASEIMAGE=%s", imageBuildArgs, namespacedManBuild, baseImageName)
-		testBuildCmd, err := createBuildCommand(imageBuilder, ".", testDockerfile, image, testImageBuildArgs)
+		testImageBuildArgs := fmt.Sprintf("--build-arg NAMESPACEDMAN=%s --build-arg BASEIMAGE=%s", namespacedManBuild, baseImageName)
+		testBuildCmd, err := createBuildCommand(imageBuilder, ".", testDockerfile, image, imageBuildArgs, testImageBuildArgs)
 		if err != nil {
 			return err
 		}
