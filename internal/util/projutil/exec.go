@@ -51,21 +51,29 @@ type GoBuildOptions struct {
 	NoGoMod bool
 }
 
+const (
+	goBuildCmd = "build"
+	goTestCmd  = "test"
+)
+
 // GoBuild runs "go build" configured with opts.
 func GoBuild(opts GoBuildOptions) error {
-	return goCmd("build", opts)
+	return goCmd(goBuildCmd, opts)
 }
 
 // GoBuild runs "go test" configured with opts.
 func GoTest(opts GoBuildOptions) error {
-	return goCmd("test", opts)
+	return goCmd(goTestCmd, opts)
 }
 
-// goCmd runs "go {cmd}"
+// goCmd runs "go {cmd}", where cmd is either "build" or "test".
 func goCmd(cmd string, opts GoBuildOptions) error {
 	bargs := []string{cmd}
 	if opts.BinName != "" {
 		bargs = append(bargs, "-o", opts.BinName)
+	}
+	if cmd == goTestCmd {
+		bargs = append(bargs, opts.BuildPath)
 	}
 	bargs = append(bargs, opts.BuildArgs...)
 	// Modules can be used if either GO111MODULE=on or we're not in $GOPATH/src.
@@ -78,7 +86,10 @@ func goCmd(cmd string, opts GoBuildOptions) error {
 			bargs = append(bargs, "-mod=vendor")
 		}
 	}
-	c := exec.Command("go", append(bargs, opts.BuildPath)...)
+	if cmd == goBuildCmd {
+		bargs = append(bargs, opts.BuildPath)
+	}
+	c := exec.Command("go", bargs...)
 	if len(opts.Env) != 0 {
 		c.Env = append(os.Environ(), opts.Env...)
 	}
