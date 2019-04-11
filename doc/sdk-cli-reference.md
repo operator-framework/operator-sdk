@@ -16,7 +16,8 @@ Usage:
 * `--enable-tests` - enable in-cluster testing by adding test binary to the image
 * `--namespaced-manifest` string - path of namespaced resources manifest for tests (default "deploy/operator.yaml")
 * `--test-location` string - location of tests (default "./test/e2e")
-* `--docker-build-args` string - extra, optional docker build arguments as one string such as `"--build-arg https_proxy=$https_proxy"` (default "")
+* `--image-build-args` string - extra, optional image build arguments as one string such as `"--build-arg https_proxy=$https_proxy"` (default "")
+* `--image-builder` string - tool to build OCI images. One of: [docker, buildah] (default "docker")
 * `-h, --help` - help for build
 
 ### Use
