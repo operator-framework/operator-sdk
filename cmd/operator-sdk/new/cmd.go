@@ -155,7 +155,7 @@ func doGoScaffold() error {
 	var err error
 	switch m := projutil.DepManagerType(depManager); m {
 	case projutil.DepManagerDep:
-		err = s.Execute(cfg, &ansible.GopkgToml{})
+		err = s.Execute(cfg, &project.GopkgToml{})
 	default:
 		err = projutil.ErrInvalidDepManagerType{Type: m}
 	}
