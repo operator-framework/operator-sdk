@@ -189,13 +189,14 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to overwrite operator image in the namespaced manifest: %v", err)
 		}
 	}
-	testArgs := []string{"test", args[0] + "/..."}
+	testArgs := []string{
+		"-" + test.NamespacedManPathFlag, tlConfig.namespacedManPath,
+		"-" + test.GlobalManPathFlag, tlConfig.globalManPath,
+		"-" + test.ProjRootFlag, projutil.MustGetwd(),
+	}
 	if tlConfig.kubeconfig != "" {
 		testArgs = append(testArgs, "-"+test.KubeConfigFlag, tlConfig.kubeconfig)
 	}
-	testArgs = append(testArgs, "-"+test.NamespacedManPathFlag, tlConfig.namespacedManPath)
-	testArgs = append(testArgs, "-"+test.GlobalManPathFlag, tlConfig.globalManPath)
-	testArgs = append(testArgs, "-"+test.ProjRootFlag, projutil.MustGetwd())
 	// if we do the append using an empty go flags, it inserts an empty arg, which causes
 	// any later flags to be ignored
 	if tlConfig.goTestFlags != "" {
@@ -207,13 +208,15 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 	if tlConfig.upLocal {
 		testArgs = append(testArgs, "-"+test.LocalOperatorFlag)
 	}
-	dc := exec.Command("go", testArgs...)
-	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
-	dc.Dir = projutil.MustGetwd()
-	if err := projutil.ExecCmd(dc); err != nil {
-		return err
+	opts := projutil.GoBuildOptions{
+		BuildPath: args[0] + "/...",
+		BuildArgs: testArgs,
+		Env:       append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace)),
+		Dir:       projutil.MustGetwd(),
 	}
-
+	if err := projutil.GoTest(opts); err != nil {
+		return fmt.Errorf("failed to build test binary: (%v)", err)
+	}
 	log.Info("Local operator test successfully completed.")
 	return nil
 }

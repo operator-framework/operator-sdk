@@ -147,16 +147,20 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	}
 
 	projutil.MustInProjectRoot()
+	goBuildEnv := append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
 	goTrimFlags := []string{"-gcflags", "all=-trimpath=${GOPATH}", "-asmflags", "all=-trimpath=${GOPATH}"}
 	absProjectPath := projutil.MustGetwd()
 	projectName := filepath.Base(absProjectPath)
 
 	// Don't need to build Go code if a non-Go Operator.
 	if projutil.IsOperatorGo() {
-		managerDir := filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir)
-		outputBinName := filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName)
-		err := projutil.GoBuild(outputBinName, managerDir, goTrimFlags...)
-		if err != nil {
+		opts := projutil.GoBuildOptions{
+			BinName:   filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName),
+			BuildPath: filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir),
+			BuildArgs: goTrimFlags,
+			Env:       goBuildEnv,
+		}
+		if err := projutil.GoBuild(opts); err != nil {
 			return fmt.Errorf("failed to build operator binary: (%v)", err)
 		}
 	}
@@ -186,11 +190,13 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 	if enableTests {
 		if projutil.IsOperatorGo() {
-			testBinary := filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName+"-test")
-			goTestBuildArgs := append(append([]string{"test"}, goTrimFlags...), "-c", "-o", testBinary, testLocationBuild+"/...")
-			buildTestCmd := exec.Command("go", goTestBuildArgs...)
-			buildTestCmd.Env = append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
-			if err := projutil.ExecCmd(buildTestCmd); err != nil {
+			opts := projutil.GoBuildOptions{
+				BinName:   filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName+"-test"),
+				BuildPath: testLocationBuild + "/...",
+				BuildArgs: append(goTrimFlags, "-c"),
+				Env:       goBuildEnv,
+			}
+			if err := projutil.GoTest(opts); err != nil {
 				return fmt.Errorf("failed to build test binary: (%v)", err)
 			}
 		}

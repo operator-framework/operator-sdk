@@ -30,21 +30,59 @@ func ExecCmd(cmd *exec.Cmd) error {
 	return nil
 }
 
-// GoBuild runs 'go build -o binName args...' with '-mod=vendor' if using
-// go modules.
-func GoBuild(binName, buildPath string, args ...string) error {
-	bargs := []string{"build", "-o", binName}
-	bargs = append(bargs, args...)
+// GoBuildOptions configures "go build" and "go test".
+type GoBuildOptions struct {
+	// BinName is the name of the compiled binary, passed to -o.
+	BinName string
+	// BuildArgs are args passed to "go build", aside from "-o {bin_name}".
+	BuildArgs []string
+	// BuildPath is the path containing main package file.
+	BuildPath string
+	// Env is a list of environment variables to pass to "go build";
+	// exec.Command.Env is set to this value.
+	Env []string
+	// Dir is the dir to run "go build" in; exec.Command.Dir is set to this value.
+	Dir string
+	// NoGoMod determines whether to set the "-mod=vendor" flag.
+	// If false, GoBuild will use go modules.
+	// If true, "go build" will not use modules.
+	NoGoMod bool
+}
+
+// GoBuild runs "go build" configured with opts.
+func GoBuild(opts GoBuildOptions) error {
+	return goCmd("build", opts)
+}
+
+// GoBuild runs "go test" configured with opts.
+func GoTest(opts GoBuildOptions) error {
+	return goCmd("test", opts)
+}
+
+// goCmd runs "go {cmd}"
+func goCmd(cmd string, opts GoBuildOptions) error {
+	bargs := []string{cmd}
+	if opts.BinName != "" {
+		bargs = append(bargs, "-o", opts.BinName)
+	}
+	bargs = append(bargs, opts.BuildArgs...)
 	// Modules can be used if either GO111MODULE=on or we're not in $GOPATH/src.
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
+	if !opts.NoGoMod {
+		wd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		goPath := os.Getenv(GoPathEnv)
+		if os.Getenv(GoModEnv) == "on" || goPath == "" || !strings.HasPrefix(wd, goPath) {
+			bargs = append(bargs, "-mod=vendor")
+		}
 	}
-	goPath := os.Getenv(GoPathEnv)
-	if os.Getenv(GoModEnv) == "on" || goPath == "" || !strings.HasPrefix(wd, goPath) {
-		bargs = append(bargs, "-mod=vendor")
+	c := exec.Command("go", append(bargs, opts.BuildPath)...)
+	if len(opts.Env) != 0 {
+		c.Env = append(os.Environ(), opts.Env...)
 	}
-	bc := exec.Command("go", append(bargs, buildPath)...)
-	bc.Env = append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
-	return ExecCmd(bc)
+	if opts.Dir != "" {
+		c.Dir = opts.Dir
+	}
+	return ExecCmd(c)
 }
