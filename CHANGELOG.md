@@ -4,6 +4,8 @@
 
 ### Changed
 
+- When Helm operator projects are created, the SDK now generates RBAC rules in `deploy/role.yaml` based on the chart's default manifest. ([#1188](https://github.com/operator-framework/operator-sdk/pull/1188))
+
 ### Deprecated
 
 ### Removed
