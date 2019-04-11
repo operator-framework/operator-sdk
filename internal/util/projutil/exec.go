@@ -19,6 +19,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	homedir "github.com/mitchellh/go-homedir"
 )
 
 func ExecCmd(cmd *exec.Cmd) error {
@@ -68,12 +70,11 @@ func goCmd(cmd string, opts GoBuildOptions) error {
 	bargs = append(bargs, opts.BuildArgs...)
 	// Modules can be used if either GO111MODULE=on or we're not in $GOPATH/src.
 	if !opts.NoGoMod {
-		wd, err := os.Getwd()
+		inGoPath, err := wdInGoPath()
 		if err != nil {
 			return err
 		}
-		goPath := os.Getenv(GoPathEnv)
-		if os.Getenv(GoModEnv) == "on" || goPath == "" || !strings.HasPrefix(wd, goPath) {
+		if os.Getenv(GoModEnv) == "on" || !inGoPath {
 			bargs = append(bargs, "-mod=vendor")
 		}
 	}
@@ -85,4 +86,20 @@ func goCmd(cmd string, opts GoBuildOptions) error {
 		c.Dir = opts.Dir
 	}
 	return ExecCmd(c)
+}
+
+func wdInGoPath() (bool, error) {
+	wd, err := os.Getwd()
+	if err != nil {
+		return false, err
+	}
+	hd, err := homedir.Dir()
+	if err != nil {
+		return false, err
+	}
+	if hd, err = homedir.Expand(hd); err != nil {
+		return false, err
+	}
+	goPath, ok := os.LookupEnv(GoPathEnv)
+	return (!ok && strings.HasPrefix(wd, hd)) || (goPath != "" && strings.HasPrefix(wd, goPath)), nil
 }
