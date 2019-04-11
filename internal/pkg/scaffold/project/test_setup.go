@@ -27,9 +27,14 @@ import (
 )
 
 var (
-	appRepo   = filepath.Join("github.com", "example-inc", "app-operator")
-	appConfig = &input.Config{
-		Repo: appRepo,
+	appProjectName = "app-operator"
+	appApiVersion  = "app.example.com/v1alpha1"
+	appKind        = "AppService"
+	appRepo        = filepath.Join("github.com", "example-inc", appProjectName)
+	appConfig      = &input.Config{
+		Repo:           appRepo,
+		AbsProjectPath: mustGetImportPath(),
+		ProjectName:    appProjectName,
 	}
 )
 
