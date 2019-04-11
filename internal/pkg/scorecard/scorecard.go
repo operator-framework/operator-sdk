@@ -351,7 +351,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		writeLog.Close()
 		os.Stdout = origStdout // restoring the real stdout
 		log := <-capturedLog
-		scTest := TestSuitesToScorecardTest(suites, "Complete Scorecard Test", "This test contains all tests run for this operator", log)
+		scTest := TestSuitesToScorecardOutput(suites, log)
 		// Pretty print so users can also read the json output
 		bytes, err := json.MarshalIndent(scTest, "", "  ")
 		if err != nil {

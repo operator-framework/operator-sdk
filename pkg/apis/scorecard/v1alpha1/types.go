@@ -34,28 +34,9 @@ const (
 	ErrorState State = "error"
 )
 
-// ScorecardTestSpec contains info about a the test in a ScorecardTest object. In the future, this will likely
-// be updated to contain more info about how the tests can be run
+// ScorecardSuiteResult contains the combined results of a suite of tests.
 // +k8s:openapi-gen=true
-type ScorecardTestSpec struct {
-	// Name is the name of the test, which should be obtained from TestInfo
-	Name string `json:"name"`
-	// Description is the description of the test, which should be obtained from TestInfo
-	Description string `json:"description"`
-}
-
-// ScorecardTestResult stores the results of a scorecard tests and the logs from the tests
-// +k8s:openapi-gen=true
-type ScorecardTestResult struct {
-	// Log contains the scorecard's current log.
-	Log string `json:"log"`
-	// Results is an array of ScorecardResult for each suite of the curent scorecard run.
-	Results []ScorecardResult `json:"results"`
-}
-
-// ScorecardResult contains the combined results of a suite of tests
-// +k8s:openapi-gen=true
-type ScorecardResult struct {
+type ScorecardSuiteResult struct {
 	// Error is the number of tests that ended in the Error state
 	Error int `json:"error"`
 	// Pass is the number of tests that ended in the Pass state
@@ -69,12 +50,15 @@ type ScorecardResult struct {
 	// TotalScore is the total score of this quite as a percentage
 	TotalScore int `json:"totalScorePercent"`
 	// Tests is an array containing a json-ified version of the TestResults for the suite
-	Tests []*JSONTestResult `json:"tests"`
+	Tests []*ScorecardTestResult `json:"tests"`
+	// Log is extra logging information from the scorecard suite/plugin.
+	// +optional
+	Log string `json:"log"`
 }
 
-// JSONTestResult is a simplified version of the TestResult that only include the Name and Description of the TestInfo field in TestResult
+// ScorecardTestResult contains the results of an individual scorecard test.
 // +k8s:openapi-gen=true
-type JSONTestResult struct {
+type ScorecardTestResult struct {
 	// State is the final state of the test
 	State State `json:"state"`
 	// Name is the name of the test
@@ -93,29 +77,28 @@ type JSONTestResult struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// ScorecardTest is the schema for the scorecard API
+// ScorecardOutput is the schema for the scorecard API
 // +k8s:openapi-gen=true
-type ScorecardTest struct {
+type ScorecardOutput struct {
 	metav1.TypeMeta `json:",inline"`
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
-	// Spec describes the attributes for the test.
-	Spec *ScorecardTestSpec `json:"spec"`
 
-	// Status describes the current state of the test and final results.
-	// +optional
-	Status *ScorecardTestResult `json:"results,omitempty"`
+	// Log contains the scorecard's log.
+	Log string `json:"log"`
+	// Results is an array of ScorecardResult for each suite of the curent scorecard run.
+	Results []ScorecardSuiteResult `json:"results"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// ScorecardTestList contains a list of ScorecardTest
-type ScorecardTestList struct {
+// ScorecardOutputList contains a list of ScorecardTest
+type ScorecardOutputList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []ScorecardTest `json:"items"`
+	Items           []ScorecardOutput `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&ScorecardTest{}, &ScorecardTestList{})
+	SchemeBuilder.Register(&ScorecardOutput{}, &ScorecardOutputList{})
 }

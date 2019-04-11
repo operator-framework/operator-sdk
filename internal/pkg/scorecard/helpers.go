@@ -41,74 +41,68 @@ func ResultsCumulative(results []TestResult) (earned, max int) {
 	return earned, max
 }
 
-// CalculateResult returns a ScorecardResult with the state and Tests fields set based on a slice of JSONTestResults
-func CalculateResult(tests []*scapiv1alpha1.JSONTestResult) *scapiv1alpha1.ScorecardResult {
-	scorecardResult := scapiv1alpha1.ScorecardResult{}
-	scorecardResult.Tests = tests
-	for _, test := range scorecardResult.Tests {
-		scorecardResult.TotalTests++
+// CalculateResult returns a ScorecardSuiteResult with the state and Tests fields set based on a slice of ScorecardTestResults
+func CalculateResult(tests []*scapiv1alpha1.ScorecardTestResult) *scapiv1alpha1.ScorecardSuiteResult {
+	scorecardSuiteResult := scapiv1alpha1.ScorecardSuiteResult{}
+	scorecardSuiteResult.Tests = tests
+	for _, test := range scorecardSuiteResult.Tests {
+		scorecardSuiteResult.TotalTests++
 		switch test.State {
 		case scapiv1alpha1.ErrorState:
-			scorecardResult.Error++
+			scorecardSuiteResult.Error++
 		case scapiv1alpha1.PassState:
-			scorecardResult.Pass++
+			scorecardSuiteResult.Pass++
 		case scapiv1alpha1.PartialPassState:
-			scorecardResult.PartialPass++
+			scorecardSuiteResult.PartialPass++
 		case scapiv1alpha1.FailState:
-			scorecardResult.Fail++
+			scorecardSuiteResult.Fail++
 		}
 	}
-	return &scorecardResult
+	return &scorecardSuiteResult
 }
 
-// TestSuitesToScorecardTest takes an array of test suites and generates a v1alpha1 ScorecardTest object with the
+// TestSuitesToScorecardOutput takes an array of test suites and generates a v1alpha1 ScorecardOutput object with the
 // provided name, description, and log
-func TestSuitesToScorecardTest(suites []*TestSuite, name, description, log string) *scapiv1alpha1.ScorecardTest {
-	test := &scapiv1alpha1.ScorecardTest{
+func TestSuitesToScorecardOutput(suites []*TestSuite, log string) *scapiv1alpha1.ScorecardOutput {
+	test := &scapiv1alpha1.ScorecardOutput{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "Scorecard",
+			Kind:       "ScorecardOutput",
 			APIVersion: "scorecard/v1alpha1",
 		},
-		Spec: &scapiv1alpha1.ScorecardTestSpec{
-			Name:        name,
-			Description: description,
-		},
-		Status: &scapiv1alpha1.ScorecardTestResult{
-			Log: log,
-		},
+		Log: log,
 	}
-	scorecardResults := []scapiv1alpha1.ScorecardResult{}
+	scorecardSuiteResults := []scapiv1alpha1.ScorecardSuiteResult{}
 	for _, suite := range suites {
-		results := []*scapiv1alpha1.JSONTestResult{}
+		results := []*scapiv1alpha1.ScorecardTestResult{}
 		for _, testResult := range suite.TestResults {
-			results = append(results, TestResultToJSONTestResult(testResult))
+			results = append(results, TestResultToScorecardTestResult(testResult))
 		}
-		scorecardResult := CalculateResult(results)
-		scorecardResult.TotalScore = suite.TotalScore()
-		scorecardResults = append(scorecardResults, *scorecardResult)
+		scorecardSuiteResult := CalculateResult(results)
+		scorecardSuiteResult.TotalScore = suite.TotalScore()
+		scorecardSuiteResults = append(scorecardSuiteResults, *scorecardSuiteResult)
 	}
-	test.Status.Results = scorecardResults
+	test.Results = scorecardSuiteResults
 	return test
 }
 
-// TestResultToJSONTestResult is a helper function for converting from the TestResult type to the JSONTestResult type
-func TestResultToJSONTestResult(tr *TestResult) *scapiv1alpha1.JSONTestResult {
-	jtr := scapiv1alpha1.JSONTestResult{}
-	jtr.State = tr.State
-	jtr.Name = tr.Test.GetName()
-	jtr.Description = tr.Test.GetDescription()
-	jtr.EarnedPoints = tr.EarnedPoints
-	jtr.MaximumPoints = tr.MaximumPoints
-	jtr.Suggestions = tr.Suggestions
-	if jtr.Suggestions == nil {
-		jtr.Suggestions = []string{}
+// TestResultToScorecardTestResult is a helper function for converting from the TestResult type to the ScorecardTestResult type
+func TestResultToScorecardTestResult(tr *TestResult) *scapiv1alpha1.ScorecardTestResult {
+	sctr := scapiv1alpha1.ScorecardTestResult{}
+	sctr.State = tr.State
+	sctr.Name = tr.Test.GetName()
+	sctr.Description = tr.Test.GetDescription()
+	sctr.EarnedPoints = tr.EarnedPoints
+	sctr.MaximumPoints = tr.MaximumPoints
+	sctr.Suggestions = tr.Suggestions
+	if sctr.Suggestions == nil {
+		sctr.Suggestions = []string{}
 	}
 	stringErrors := []string{}
 	for _, err := range tr.Errors {
 		stringErrors = append(stringErrors, err.Error())
 	}
-	jtr.Errors = stringErrors
-	return &jtr
+	sctr.Errors = stringErrors
+	return &sctr
 }
 
 // UpdateState updates the state of a TestResult.
