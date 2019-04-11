@@ -75,7 +75,7 @@ func TestSuitesToScorecardOutput(suites []*TestSuite, log string) *scapiv1alpha1
 	for _, suite := range suites {
 		results := []*scapiv1alpha1.ScorecardTestResult{}
 		for _, testResult := range suite.TestResults {
-			results = append(results, TestResultToScorecardTestResult(testResult))
+			results = append(results, TestResultToScorecardTestResult(*testResult))
 		}
 		scorecardSuiteResult := CalculateResult(results)
 		scorecardSuiteResult.TotalScore = suite.TotalScore()
@@ -86,7 +86,7 @@ func TestSuitesToScorecardOutput(suites []*TestSuite, log string) *scapiv1alpha1
 }
 
 // TestResultToScorecardTestResult is a helper function for converting from the TestResult type to the ScorecardTestResult type
-func TestResultToScorecardTestResult(tr *TestResult) *scapiv1alpha1.ScorecardTestResult {
+func TestResultToScorecardTestResult(tr TestResult) *scapiv1alpha1.ScorecardTestResult {
 	sctr := scapiv1alpha1.ScorecardTestResult{}
 	sctr.State = tr.State
 	sctr.Name = tr.Test.GetName()
