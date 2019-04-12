@@ -236,15 +236,18 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 
 	crs := viper.GetStringSlice(CRManifestOpt)
 	// check if there are duplicate CRs
-	combinedManifests := []byte{}
+	gvks := []schema.GroupVersionKind{}
 	for _, cr := range crs {
 		file, err := ioutil.ReadFile(cr)
 		if err != nil {
 			return fmt.Errorf("failed to read file: %s", cr)
 		}
-		combinedManifests = yamlutil.CombineManifests(combinedManifests, file)
+		newGVKs, err := getGVKs(file)
+		if err != nil {
+			return fmt.Errorf("could not get GVKs for resource(s) in file: %s, due to error: (%v)", cr, err)
+		}
+		gvks = append(gvks, newGVKs...)
 	}
-	gvks, err := getGVKs(combinedManifests)
 	dupMap := make(map[schema.GroupVersionKind]bool)
 	for _, gvk := range gvks {
 		if _, ok := dupMap[gvk]; ok {
