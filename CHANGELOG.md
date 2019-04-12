@@ -5,6 +5,8 @@
 ### Changed
 
 - When Helm operator projects are created, the SDK now generates RBAC rules in `deploy/role.yaml` based on the chart's default manifest. ([#1188](https://github.com/operator-framework/operator-sdk/pull/1188))
+- Reduces Helm release information in CR status to only the release name and manifest and moves it from `status.conditions` to a new top-level `deployedRelease` field. ([#1309](https://github.com/operator-framework/operator-sdk/pull/1309))
+  - **WARNING**: Users with active CRs and releases who are upgrading their helm-based operator should upgrade to one based on v0.7.0 before upgrading further. Helm operators based on v0.8.0+ will not seamlessly transition release state to the persistent backend, and will instead uninstall and reinstall all managed releases.
 
 ### Deprecated
 
