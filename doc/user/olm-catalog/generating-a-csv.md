@@ -118,4 +118,4 @@ Optional:
 [doc-bundle]:https://github.com/operator-framework/operator-registry#manifest-format
 [x-desc-list]:https://github.com/openshift/console/blob/master/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L5-L14
 [install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md#operator-metadata
-[olm-capabilities]:../../images/operator-maturity-model.png
+[olm-capabilities]:../../images/operator-capability-level.png
