@@ -42,7 +42,7 @@ const moleculeDefaultPrepareAnsibleTmpl = `---
   hosts: k8s
   gather_facts: no
   vars:
-    kubeconfig: '{{ lookup('env', 'KUBECONFIG') }}'
+    kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
   tasks:
     - name: delete the kubeconfig if present
       file:
@@ -59,7 +59,7 @@ const moleculeDefaultPrepareAnsibleTmpl = `---
     - name: Change the kubeconfig port to the proper value
       replace:
         regexp: 8443
-        replace: '{{ lookup('env', 'KIND_PORT') }}'
+        replace: "{{ lookup('env', 'KIND_PORT') }}"
         path: '{{ kubeconfig }}'
       delegate_to: localhost
 

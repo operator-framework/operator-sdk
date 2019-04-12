@@ -47,7 +47,7 @@ const moleculeTestLocalPrepareAnsibleTmpl = `---
   connection: local
   vars:
     ansible_python_interpreter: '{{ ansible_playbook_python }}'
-    deploy_dir: '{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy'
+    deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
   tasks:
   - name: Create Custom Resource Definition
     k8s:

@@ -46,7 +46,7 @@ const moleculeTestClusterPlaybookAnsibleTmpl = `---
   connection: local
   vars:
     ansible_python_interpreter: '{{ ansible_playbook_python }}'
-    deploy_dir: '{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy'
+    deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
     image_name: [[.Resource.FullGroup]]/[[.ProjectName]]:testing
     custom_resource: "{{ lookup('file', '/'.join([deploy_dir, 'crds/[[.Resource.Group]]_[[.Resource.Version]]_[[.Resource.LowerKind]]_cr.yaml'])) | from_yaml }}"
   tasks:

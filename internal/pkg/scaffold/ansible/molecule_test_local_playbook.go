@@ -48,12 +48,12 @@ const moleculeTestLocalPlaybookAnsibleTmpl = `---
   tasks:
   # using command so we don't need to install any dependencies
   - name: Get existing image hash
-    command: docker images -q {{"{{image_name}}"}}
+    command: docker images -q {{ image_name }}
     register: prev_hash
     changed_when: false
 
   - name: Build Operator Image
-    command: docker build -f /build/build/Dockerfile -t {{"{{ image_name }}"}} /build
+    command: docker build -f /build/build/Dockerfile -t {{ image_name }} /build
     register: build_cmd
     changed_when: not prev_hash.stdout or (prev_hash.stdout and prev_hash.stdout not in ''.join(build_cmd.stdout_lines[-2:]))
 
@@ -62,7 +62,7 @@ const moleculeTestLocalPlaybookAnsibleTmpl = `---
   connection: local
   vars:
     ansible_python_interpreter: '{{ ansible_playbook_python }}'
-    deploy_dir: '{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy'
+    deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
     pull_policy: Never
     REPLACE_IMAGE: [[.Resource.FullGroup]]/[[.ProjectName]]:testing
     custom_resource: "{{ lookup('file', '/'.join([deploy_dir, 'crds/[[.Resource.Group]]_[[.Resource.Version]]_[[.Resource.LowerKind]]_cr.yaml'])) | from_yaml }}"
