@@ -34,17 +34,18 @@ func (w *Watches) GetInput() (input.Input, error) {
 		w.Path = WatchesFile
 	}
 	w.TemplateBody = watchesAnsibleTmpl
+	w.Delims = AnsibleDelims
 	w.RolesDir = RolesDir
 	return w.Input, nil
 }
 
 const watchesAnsibleTmpl = `---
-- version: {{.Resource.Version}}
-  group: {{.Resource.FullGroup}}
-  kind: {{.Resource.Kind}}
-  {{- if .GeneratePlaybook }}
+- version: [[.Resource.Version]]
+  group: [[.Resource.FullGroup]]
+  kind: [[.Resource.Kind]]
+  [[- if .GeneratePlaybook ]]
   playbook: /opt/ansible/playbook.yml
-  {{- else }}
-  role: /opt/ansible/{{.RolesDir}}/{{.Resource.LowerKind}}
-  {{- end }}
+  [[- else ]]
+  role: /opt/ansible/[[.RolesDir]]/[[.Resource.LowerKind]]
+  [[- end ]]
 `
