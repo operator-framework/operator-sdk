@@ -15,202 +15,265 @@
 package catalog
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
-	"go/ast"
-	"go/parser"
-	"go/printer"
-	"go/token"
-	"go/types"
-	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/gengo/parser"
+	"k8s.io/gengo/types"
 )
 
-type fieldVals struct {
-	name, typ, tag, comments string
-}
+const csvgenPrefix = "+operator-sdk:csv-gen:"
 
-// setCRDDescriptorsForGV parses document and type declaration comments on
+// setCRDDescriptorsForGVK2 parses document and type declaration comments on
 // CRD types to populate a csv's 'crds.owned[].{spec,status}Descriptors' for
-// a given group and version.
-func setCRDDescriptorsForGV(crdDesc *olmapiv1alpha1.CRDDescription, gv schema.GroupVersion) error {
-	fset := token.NewFileSet()
-	ff := func(info os.FileInfo) bool {
-		return strings.HasSuffix(info.Name(), "_types.go")
-	}
-	dir := filepath.Join(scaffold.ApisDir, strings.Split(gv.Group, ".")[0], gv.Version)
-	pkgs, err := parser.ParseDir(fset, dir, ff, parser.ParseComments)
-	if err != nil {
-		// Don't return in error as other CSV components can still be generated.
-		if os.IsNotExist(err) {
-			return nil
-		}
-		log.Fatal(err)
-	}
+// a given Group, Version, and Kind.
+func setCRDDescriptorsForGVK2(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.GroupVersionKind) error {
+	projutil.MustInProjectRoot()
 
-	allTypes := make(map[string][]fieldVals)
-	for _, pkg := range pkgs {
-		ast.Inspect(pkg, func(n ast.Node) bool {
-			switch x := n.(type) {
-			case *ast.GenDecl:
-				for _, spec := range x.Specs {
-					if spec, ok := spec.(*ast.TypeSpec); ok {
-						specName := spec.Name.Name
-						if specName == crdDesc.Kind {
-							crdDesc.Description = processComments(x.Doc.Text())
+	group := gvk.Group
+	if strings.Contains(group, ".") {
+		group = strings.Split(gvk.Group, ".")[0]
+	}
+	dir := filepath.Join(scaffold.ApisDir, group, gvk.Version)
+	p := parser.New()
+	if err := p.AddDirRecursive("./" + dir); err != nil {
+		return err
+	}
+	universe, err := p.FindTypes()
+	if err != nil {
+		return err
+	}
+	pp := projutil.CheckAndGetProjectGoPkg()
+
+	var pkgTypes []*types.Type
+	var specType, statusType *types.Type
+	for _, pkg := range universe {
+		if !strings.HasPrefix(pkg.Path, pp) {
+			continue
+		}
+		for _, t := range pkg.Types {
+			pkgTypes = append(pkgTypes, t)
+			if t.Name.Name == gvk.Kind {
+				for _, m := range t.Members {
+					if m.Tags == "" {
+						continue
+					}
+					tagMatches := jsonTagRe.FindStringSubmatch(m.Tags)
+					if len(tagMatches) == 0 {
+						continue
+					}
+					ts := strings.Split(tagMatches[1], ",")
+					if len(ts) != 0 && ts[0] != "" {
+						if ts[0] == "spec" {
+							specType = m.Type
+						} else if ts[0] == "status" {
+							statusType = m.Type
 						}
-						vals, ok := allTypes[specName]
-						if !ok {
-							vals = make([]fieldVals, 0)
-						}
-						switch st := spec.Type.(type) {
-						case *ast.StructType:
-							for _, field := range st.Fields.List {
-								typ := processType(fset, field.Type)
-								comments := processComments(field.Doc.Text())
-								names := field.Names
-								if len(names) == 0 {
-									names = []*ast.Ident{{Name: typ}}
-								}
-								for _, name := range names {
-									// Is exported, primitive, or imported.
-									if name.IsExported() || strings.Contains(name.Name, ".") {
-										vals = append(vals, fieldVals{
-											name:     getDisplayName(name.Name),
-											typ:      typ,
-											tag:      field.Tag.Value,
-											comments: comments,
-										})
-									}
-								}
-							}
-						}
-						allTypes[specName] = vals
 					}
 				}
 			}
-			return true
-		})
+		}
 	}
-	kindTypes, ok := allTypes[crdDesc.Kind]
-	if !ok {
-		return fmt.Errorf("no type found for kind %s", crdDesc.Kind)
+	if specType.Name.Name == "" {
+		return fmt.Errorf("no spec found in type %s", gvk.Kind)
+	} else if statusType.Name.Name == "" {
+		return fmt.Errorf("no status found in type %s", gvk.Kind)
 	}
-	for _, kt := range kindTypes {
-		for _, fields := range allTypes[kt.typ] {
-			if strings.HasSuffix(kt.name, "Spec") {
-				path, xd := guessPathAndXDescriptorFromTag(fields.tag, true)
-				crdDesc.SpecDescriptors = append(crdDesc.SpecDescriptors, olmapiv1alpha1.SpecDescriptor{
-					Description:  fields.comments,
-					DisplayName:  fields.name,
-					Path:         path,
-					XDescriptors: xd,
-				})
-			} else if strings.HasSuffix(kt.name, "Status") {
-				path, xd := guessPathAndXDescriptorFromTag(fields.tag, false)
-				crdDesc.StatusDescriptors = append(crdDesc.StatusDescriptors, olmapiv1alpha1.StatusDescriptor{
-					Description:  fields.comments,
-					DisplayName:  fields.name,
-					Path:         path,
-					XDescriptors: xd,
-				})
+	fmt.Println("kind:", gvk.Kind)
+
+	var descriptors []descriptor
+	for _, t := range pkgTypes {
+		// fmt.Printf("type %s\n", t.Name.Name)
+		for _, m := range t.Members {
+			// fmt.Printf("\tmember %s %s\n", m.Name, m.Type.Name.Name)
+			comments := m.CommentLines
+			desc := processDescription(comments)
+			// fmt.Printf("\tcomment lines: %+q\n\n", m.CommentLines)
+			for len(comments) > 0 {
+				d, cs, err := parseCSVGenAnnotation(m, comments)
+				if err != nil {
+					return err
+				}
+				// fmt.Println("done parsing")
+				d.description = desc
+				descriptors = append(descriptors, d)
+				comments = cs
 			}
 		}
 	}
+
+	for _, d := range descriptors {
+		if d.spec && crdDesc.Kind == d.kind {
+			crdDesc.SpecDescriptors = append(crdDesc.SpecDescriptors, olmapiv1alpha1.SpecDescriptor{
+				Description:  d.description,
+				DisplayName:  d.displayName,
+				Path:         d.path,
+				XDescriptors: d.xdesc,
+			})
+		} else if d.status && crdDesc.Kind == d.kind {
+			crdDesc.StatusDescriptors = append(crdDesc.StatusDescriptors, olmapiv1alpha1.StatusDescriptor{
+				Description:  d.description,
+				DisplayName:  d.displayName,
+				Path:         d.path,
+				XDescriptors: d.xdesc,
+			})
+		}
+	}
+
 	return nil
 }
 
-// processComments joins comment strings into one line, removing any tool
+type descriptor struct {
+	typ          *types.Type
+	kind         string
+	spec, status bool
+
+	description string
+	displayName string
+	path        string
+	xdesc       []string
+}
+
+var jsonTagRe = regexp.MustCompile(`json:"([a-zA-Z0-9,]+)"`)
+
+func parseCSVGenAnnotation(m types.Member, comments []string) (d descriptor, cs []string, err error) {
+	d.typ = m.Type
+	var numLinesParsed int
+	var doneForKind bool
+	for _, line := range comments {
+		line = strings.TrimSpace(line)
+		trimmed := strings.TrimPrefix(line, csvgenPrefix)
+		if trimmed == line {
+			continue
+		}
+		// fmt.Printf("parsing \"%s\"\n", line)
+		parts := strings.Split(trimmed, "=")
+		if len(parts) != 2 {
+			return descriptor{}, nil, fmt.Errorf(`invalid descriptor format "%s"`, trimmed)
+		}
+		// fmt.Printf("parts \"%+q\"\n", parts)
+		aSplit := strings.Split(parts[0], ".")
+		if len(aSplit) == 0 {
+			return descriptor{}, nil, fmt.Errorf(`invalid descriptor format "%s"`, parts[0])
+		}
+		// fmt.Printf("aSplit \"%+q\"\n", aSplit)
+		numLinesParsed++
+		switch aSplit[0] {
+		case "customresourcedefinitions":
+			switch aSplit[1] {
+			case "descriptor":
+				p, err := strconv.Unquote(parts[1])
+				if err != nil {
+					return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", parts[1], err)
+				}
+				if p != "spec" && p != "status" {
+					return descriptor{}, nil, fmt.Errorf("error parsing %s type %s: must be either spec or status", aSplit[0], p)
+				}
+				d.spec = p == "spec"
+				d.status = !d.spec
+			case "kind":
+				// Once we hit another "kind" descriptor, we've finished this block.
+				if doneForKind {
+					break
+				}
+				d.kind, err = strconv.Unquote(parts[1])
+				if err != nil {
+					return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", parts[1], err)
+				}
+				doneForKind = true
+			case "displayName":
+				d.displayName, err = strconv.Unquote(parts[1])
+				if err != nil {
+					return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", parts[1], err)
+				}
+			case "path":
+				d.path, err = strconv.Unquote(parts[1])
+				if err != nil {
+					return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", parts[1], err)
+				}
+			case "x-descriptors":
+				xdStr, err := strconv.Unquote(parts[1])
+				if err != nil {
+					return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", parts[1], err)
+				}
+				d.xdesc = strings.Split(xdStr, ",")
+			default:
+				numLinesParsed--
+			}
+		}
+	}
+	if d.displayName == "" {
+		d.displayName = getDisplayName(m.Name)
+	}
+	if d.path == "" {
+		tagMatches := jsonTagRe.FindStringSubmatch(m.Tags)
+		if len(tagMatches) != 0 {
+			ts := strings.Split(tagMatches[1], ",")
+			if len(ts) != 0 && ts[0] != "" {
+				d.path = ts[0]
+			} else {
+				d.path = strings.ToLower(string(m.Name[0])) + m.Name[1:]
+			}
+		}
+	}
+	if len(d.xdesc) == 0 {
+		d.xdesc = getXDescriptorByPath(d.path, d.spec)
+	}
+	return d, nil, nil
+}
+
+// processDescription joins comment strings into one line, removing any tool
 // directives.
-func processComments(comments string) string {
-	lines := make([]string, 0)
-	scanner := bufio.NewScanner(strings.NewReader(comments))
-	for scanner.Scan() {
-		l := strings.TrimSpace(scanner.Text())
-		if l == "" || strings.Contains(l, "+k8s:") || strings.Contains(l, "+kubebuilder:") {
+func processDescription(comments []string) string {
+	var lines []string
+	for _, c := range comments {
+		l := strings.TrimSpace(strings.TrimLeft(c, "/"))
+		if l == "" || strings.Contains(l, "+") {
 			continue
 		}
 		lines = append(lines, l)
 	}
-	if err := scanner.Err(); err != nil {
-		log.Error(err)
-	}
 	return strings.Join(lines, " ")
-}
-
-var mapRe = regexp.MustCompile(`map\[.+\]`)
-
-// processType cleans and returns the string of a type expression within fset.
-func processType(fset *token.FileSet, e ast.Expr) (t string) {
-	tbuf := &bytes.Buffer{}
-	if err := printer.Fprint(tbuf, fset, e); err != nil {
-		log.Fatal(err)
-	}
-	t = tbuf.String()
-	// Clean slice, map, and pointer syntax.
-	tt := strings.Replace(t, "[]", "", -1)
-	tt = strings.Replace(tt, "*", "", -1)
-	tt = mapRe.ReplaceAllString(tt, "")
-	// Only return non-primitive types without extra syntax.
-	if types.Universe.Lookup(tt) == nil {
-		t = tt
-	}
-	return t
 }
 
 // From https://github.com/openshift/console/blob/master/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L5-L14
 var specXDescriptors = map[string][]string{
-	"size":                 {"size", "urn:alm:descriptor:com.tectonic.ui:podCount"},
-	"endpoints":            {"endpointList", "urn:alm:descriptor:com.tectonic.ui:endpointList"},
-	"label":                {"label", "urn:alm:descriptor:com.tectonic.ui:label"},
-	"resourceRequirements": {"resourceRequirements", "urn:alm:descriptor:com.tectonic.ui:resourceRequirements"},
-	"selector":             {"selector", "urn:alm:descriptor:com.tectonic.ui:selector:"},
-	"namespaceSelector":    {"namespaceSelector", "urn:alm:descriptor:com.tectonic.ui:namespaceSelector"},
-	"booleanSwitch":        {"booleanSwitch", "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"},
+	"size":              []string{"urn:alm:descriptor:com.tectonic.ui:podCount"},
+	"endpoints":         []string{"urn:alm:descriptor:com.tectonic.ui:endpointList"},
+	"label":             []string{"urn:alm:descriptor:com.tectonic.ui:label"},
+	"resources":         []string{"urn:alm:descriptor:com.tectonic.ui:resourceRequirements"},
+	"selector":          []string{"urn:alm:descriptor:com.tectonic.ui:selector:"},
+	"namespaceSelector": []string{"urn:alm:descriptor:com.tectonic.ui:namespaceSelector"},
+	"booleanSwitch":     []string{"urn:alm:descriptor:com.tectonic.ui:booleanSwitch"},
 }
 
 // From https://github.com/openshift/console/blob/master/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L16-L27
 var statusXDescriptors = map[string][]string{
-	"size":               {"size", "urn:alm:descriptor:com.tectonic.ui:podCount"},
-	"podStatuses":        {"podStatuses", "urn:alm:descriptor:com.tectonic.ui:podStatuses"},
-	"links":              {"w3Link", "urn:alm:descriptor:org.w3:link"},
-	"conditions":         {"conditions", "urn:alm:descriptor:io.kubernetes.conditions"},
-	"text":               {"text", "urn:alm:descriptor:text"},
-	"prometheusEndpoint": {"prometheusEndpoint", "urn:alm:descriptor:prometheusEndpoint"},
-	"status":             {"phase", "urn:alm:descriptor:io.kubernetes.phase"},
-	"reason":             {"reason", "urn:alm:descriptor:io.kubernetes.phase:reason"},
+	"size":               []string{"urn:alm:descriptor:com.tectonic.ui:podCount"},
+	"podStatuses":        []string{"urn:alm:descriptor:com.tectonic.ui:podStatuses"},
+	"links":              []string{"urn:alm:descriptor:org.w3:link"},
+	"conditions":         []string{"urn:alm:descriptor:io.kubernetes.conditions"},
+	"text":               []string{"urn:alm:descriptor:text"},
+	"prometheusEndpoint": []string{"urn:alm:descriptor:prometheusEndpoint"},
+	"status":             []string{"urn:alm:descriptor:io.kubernetes.phase"},
+	"reason":             []string{"urn:alm:descriptor:io.kubernetes.phase:reason"},
 }
 
-var jsonTagRe = regexp.MustCompile("`json:\"([^,]+),?.*\"`")
-
-// guessPathAndXDescriptorFromTag uses json field tags to guess which path
-// and x-descriptor a CRD should have. This choice is a guess based on tag
-// identifier.
-func guessPathAndXDescriptorFromTag(tag string, isSpec bool) (path string, xd []string) {
-	tagMatches := jsonTagRe.FindStringSubmatch(tag)
-	if len(tagMatches) == 2 {
-		path = tagMatches[1]
-	}
-	var (
-		pathAndXD []string
-		ok        bool
-	)
+// getXDescriptorByPath uses a path name to get a likely x-descriptor a CRD
+// descriptor should have.
+func getXDescriptorByPath(path string, isSpec bool) (xd []string) {
+	pathSplit := strings.Split(path, ".")
+	tag := pathSplit[len(pathSplit)-1]
 	if isSpec {
-		pathAndXD, ok = specXDescriptors[path]
-	} else {
-		pathAndXD, ok = statusXDescriptors[path]
+		return specXDescriptors[tag]
 	}
-	if ok {
-		return pathAndXD[0], []string{pathAndXD[1]}
-	}
-	return path, xd
+	return statusXDescriptors[tag]
 }
