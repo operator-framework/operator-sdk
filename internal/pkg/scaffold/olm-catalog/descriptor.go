@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -32,26 +33,26 @@ import (
 
 const csvgenPrefix = "+operator-sdk:csv-gen:"
 
-// setCRDDescriptorsForGVK2 parses document and type declaration comments on
+// setCRDDescriptorsForGVK parses document and type declaration comments on
 // CRD types to populate a csv's 'crds.owned[].{spec,status}Descriptors' for
 // a given Group, Version, and Kind.
-func setCRDDescriptorsForGVK2(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.GroupVersionKind) error {
+func setCRDDescriptorsForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.GroupVersionKind) error {
 	projutil.MustInProjectRoot()
 
 	group := gvk.Group
 	if strings.Contains(group, ".") {
 		group = strings.Split(gvk.Group, ".")[0]
 	}
-	dir := filepath.Join(scaffold.ApisDir, group, gvk.Version)
+	apisDir := filepath.Join(scaffold.ApisDir, group, gvk.Version)
 	p := parser.New()
-	if err := p.AddDirRecursive("./" + dir); err != nil {
+	if err := p.AddDirRecursive("./" + apisDir); err != nil {
 		return err
 	}
 	universe, err := p.FindTypes()
 	if err != nil {
 		return err
 	}
-	pp := projutil.CheckAndGetProjectGoPkg()
+	pp := strings.TrimSuffix(projutil.CheckAndGetProjectGoPkg(), apisDir)
 
 	var pkgTypes []*types.Type
 	var specType, statusType *types.Type
@@ -63,20 +64,14 @@ func setCRDDescriptorsForGVK2(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema
 			pkgTypes = append(pkgTypes, t)
 			if t.Name.Name == gvk.Kind {
 				for _, m := range t.Members {
-					if m.Tags == "" {
-						continue
+					path := getPathFromJSONTags(m.Tags)
+					if path == "spec" {
+						specType = m.Type
+					} else if path == "status" {
+						statusType = m.Type
 					}
-					tagMatches := jsonTagRe.FindStringSubmatch(m.Tags)
-					if len(tagMatches) == 0 {
-						continue
-					}
-					ts := strings.Split(tagMatches[1], ",")
-					if len(ts) != 0 && ts[0] != "" {
-						if ts[0] == "spec" {
-							specType = m.Type
-						} else if ts[0] == "status" {
-							statusType = m.Type
-						}
+					if specType != nil && statusType != nil {
+						break
 					}
 				}
 			}
@@ -87,13 +82,13 @@ func setCRDDescriptorsForGVK2(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema
 	} else if statusType.Name.Name == "" {
 		return fmt.Errorf("no status found in type %s", gvk.Kind)
 	}
-	fmt.Println("kind:", gvk.Kind)
+	// fmt.Println("kind:", gvk.Kind)
 
 	var descriptors []descriptor
 	for _, t := range pkgTypes {
-		// fmt.Printf("type %s\n", t.Name.Name)
+		// fmt.Printf("\ntype %s\n", t.Name.Name)
 		for _, m := range t.Members {
-			// fmt.Printf("\tmember %s %s\n", m.Name, m.Type.Name.Name)
+			// fmt.Printf("member %s %s\n", m.Name, m.Type.Name.Name)
 			comments := m.CommentLines
 			desc := processDescription(comments)
 			// fmt.Printf("\tcomment lines: %+q\n\n", m.CommentLines)
@@ -102,13 +97,15 @@ func setCRDDescriptorsForGVK2(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema
 				if err != nil {
 					return err
 				}
-				// fmt.Println("done parsing")
 				d.description = desc
 				descriptors = append(descriptors, d)
 				comments = cs
 			}
 		}
 	}
+	sort.Slice(descriptors, func(i int, j int) bool {
+		return descriptors[i].displayName < descriptors[j].displayName
+	})
 
 	for _, d := range descriptors {
 		if d.spec && crdDesc.Kind == d.kind {
@@ -142,90 +139,97 @@ type descriptor struct {
 	xdesc       []string
 }
 
-var jsonTagRe = regexp.MustCompile(`json:"([a-zA-Z0-9,]+)"`)
-
 func parseCSVGenAnnotation(m types.Member, comments []string) (d descriptor, cs []string, err error) {
-	d.typ = m.Type
+	if len(comments) == 0 {
+		return descriptor{}, nil, nil
+	}
 	var numLinesParsed int
 	var doneForKind bool
 	for _, line := range comments {
+		numLinesParsed++
 		line = strings.TrimSpace(line)
 		trimmed := strings.TrimPrefix(line, csvgenPrefix)
 		if trimmed == line {
 			continue
 		}
 		// fmt.Printf("parsing \"%s\"\n", line)
-		parts := strings.Split(trimmed, "=")
-		if len(parts) != 2 {
+		keyValue := strings.Split(trimmed, "=")
+		if len(keyValue) != 2 {
 			return descriptor{}, nil, fmt.Errorf(`invalid descriptor format "%s"`, trimmed)
 		}
-		// fmt.Printf("parts \"%+q\"\n", parts)
-		aSplit := strings.Split(parts[0], ".")
-		if len(aSplit) == 0 {
-			return descriptor{}, nil, fmt.Errorf(`invalid descriptor format "%s"`, parts[0])
+		// fmt.Printf("keyValue \"%+q\"\n", keyValue)
+		keyParts := strings.Split(keyValue[0], ".")
+		if len(keyParts) == 0 {
+			return descriptor{}, nil, fmt.Errorf(`invalid descriptor format "%s"`, keyValue[0])
 		}
-		// fmt.Printf("aSplit \"%+q\"\n", aSplit)
-		numLinesParsed++
-		switch aSplit[0] {
+		// fmt.Printf("keyParts \"%+q\"\n", keyParts)
+		val, keyType, keyPath := keyValue[1], keyParts[0], keyParts[1:]
+		switch keyType {
 		case "customresourcedefinitions":
-			switch aSplit[1] {
+			switch keyPath[0] {
 			case "descriptor":
-				p, err := strconv.Unquote(parts[1])
-				if err != nil {
-					return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", parts[1], err)
+				switch len(keyPath) {
+				case 1:
+					p, err := strconv.Unquote(val)
+					if err != nil {
+						return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", val, err)
+					}
+					if p != "spec" && p != "status" {
+						return descriptor{}, nil, fmt.Errorf("error parsing %s type %s: must be either spec or status", keyType, p)
+					}
+					d.spec = p == "spec"
+					d.status = !d.spec
+				case 2:
+					switch keyPath[1] {
+					case "displayName":
+						d.displayName, err = strconv.Unquote(val)
+						if err != nil {
+							return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", val, err)
+						}
+					case "path":
+						d.path, err = strconv.Unquote(val)
+						if err != nil {
+							return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", val, err)
+						}
+					case "x-descriptors":
+						xdStr, err := strconv.Unquote(val)
+						if err != nil {
+							return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", val, err)
+						}
+						d.xdesc = strings.Split(xdStr, ",")
+					}
 				}
-				if p != "spec" && p != "status" {
-					return descriptor{}, nil, fmt.Errorf("error parsing %s type %s: must be either spec or status", aSplit[0], p)
-				}
-				d.spec = p == "spec"
-				d.status = !d.spec
 			case "kind":
 				// Once we hit another "kind" descriptor, we've finished this block.
 				if doneForKind {
-					break
+					numLinesParsed--
+					goto finishParse
 				}
-				d.kind, err = strconv.Unquote(parts[1])
+				d.kind, err = strconv.Unquote(val)
 				if err != nil {
-					return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", parts[1], err)
+					return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", val, err)
 				}
 				doneForKind = true
-			case "displayName":
-				d.displayName, err = strconv.Unquote(parts[1])
-				if err != nil {
-					return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", parts[1], err)
-				}
-			case "path":
-				d.path, err = strconv.Unquote(parts[1])
-				if err != nil {
-					return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", parts[1], err)
-				}
-			case "x-descriptors":
-				xdStr, err := strconv.Unquote(parts[1])
-				if err != nil {
-					return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", parts[1], err)
-				}
-				d.xdesc = strings.Split(xdStr, ",")
 			default:
-				numLinesParsed--
+				return descriptor{}, nil, fmt.Errorf(`error parsing csv-gen annotation: unsupported annotation "%s"`, keyType)
 			}
 		}
 	}
+
+finishParse:
+
+	d.typ = m.Type
 	if d.displayName == "" {
 		d.displayName = getDisplayName(m.Name)
 	}
 	if d.path == "" {
-		tagMatches := jsonTagRe.FindStringSubmatch(m.Tags)
-		if len(tagMatches) != 0 {
-			ts := strings.Split(tagMatches[1], ",")
-			if len(ts) != 0 && ts[0] != "" {
-				d.path = ts[0]
-			} else {
-				d.path = strings.ToLower(string(m.Name[0])) + m.Name[1:]
-			}
-		}
+		d.path = getPathFromJSONTags(m.Tags)
 	}
 	if len(d.xdesc) == 0 {
 		d.xdesc = getXDescriptorByPath(d.path, d.spec)
+	}
+	if len(comments) > numLinesParsed {
+		return d, comments[numLinesParsed:], nil
 	}
 	return d, nil, nil
 }
@@ -244,36 +248,64 @@ func processDescription(comments []string) string {
 	return strings.Join(lines, " ")
 }
 
+var jsonTagRe = regexp.MustCompile(`json:"([a-zA-Z0-9,]+)"`)
+
+func getPathFromJSONTags(tags string) string {
+	tagMatches := jsonTagRe.FindStringSubmatch(tags)
+	if len(tagMatches) > 1 {
+		ts := strings.Split(tagMatches[1], ",")
+		if len(ts) != 0 && ts[0] != "" {
+			return ts[0]
+		}
+	}
+	return ""
+}
+
 // From https://github.com/openshift/console/blob/master/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L5-L14
-var specXDescriptors = map[string][]string{
-	"size":              []string{"urn:alm:descriptor:com.tectonic.ui:podCount"},
-	"endpoints":         []string{"urn:alm:descriptor:com.tectonic.ui:endpointList"},
-	"label":             []string{"urn:alm:descriptor:com.tectonic.ui:label"},
-	"resources":         []string{"urn:alm:descriptor:com.tectonic.ui:resourceRequirements"},
-	"selector":          []string{"urn:alm:descriptor:com.tectonic.ui:selector:"},
-	"namespaceSelector": []string{"urn:alm:descriptor:com.tectonic.ui:namespaceSelector"},
-	"booleanSwitch":     []string{"urn:alm:descriptor:com.tectonic.ui:booleanSwitch"},
+var specXDescriptors = map[string]string{
+	"size":                 "urn:alm:descriptor:com.tectonic.ui:podCount",
+	"podCount":             "urn:alm:descriptor:com.tectonic.ui:podCount",
+	"endpoints":            "urn:alm:descriptor:com.tectonic.ui:endpointList",
+	"endpointList":         "urn:alm:descriptor:com.tectonic.ui:endpointList",
+	"label":                "urn:alm:descriptor:com.tectonic.ui:label",
+	"resources":            "urn:alm:descriptor:com.tectonic.ui:resourceRequirements",
+	"resourceRequirements": "urn:alm:descriptor:com.tectonic.ui:resourceRequirements",
+	"selector":             "urn:alm:descriptor:com.tectonic.ui:selector:",
+	"namespaceSelector":    "urn:alm:descriptor:com.tectonic.ui:namespaceSelector",
+	"booleanSwitch":        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch",
 }
 
 // From https://github.com/openshift/console/blob/master/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L16-L27
-var statusXDescriptors = map[string][]string{
-	"size":               []string{"urn:alm:descriptor:com.tectonic.ui:podCount"},
-	"podStatuses":        []string{"urn:alm:descriptor:com.tectonic.ui:podStatuses"},
-	"links":              []string{"urn:alm:descriptor:org.w3:link"},
-	"conditions":         []string{"urn:alm:descriptor:io.kubernetes.conditions"},
-	"text":               []string{"urn:alm:descriptor:text"},
-	"prometheusEndpoint": []string{"urn:alm:descriptor:prometheusEndpoint"},
-	"status":             []string{"urn:alm:descriptor:io.kubernetes.phase"},
-	"reason":             []string{"urn:alm:descriptor:io.kubernetes.phase:reason"},
+var statusXDescriptors = map[string]string{
+	"podStatuses":        "urn:alm:descriptor:com.tectonic.ui:podStatuses",
+	"size":               "urn:alm:descriptor:com.tectonic.ui:podCount",
+	"podCount":           "urn:alm:descriptor:com.tectonic.ui:podCount",
+	"link":               "urn:alm:descriptor:org.w3:link",
+	"w3link":             "urn:alm:descriptor:org.w3:link",
+	"conditions":         "urn:alm:descriptor:io.kubernetes.conditions",
+	"text":               "urn:alm:descriptor:text",
+	"prometheusEndpoint": "urn:alm:descriptor:prometheusEndpoint",
+	"phase":              "urn:alm:descriptor:io.kubernetes.phase",
+	"k8sPhase":           "urn:alm:descriptor:io.kubernetes.phase",
+	"reason":             "urn:alm:descriptor:io.kubernetes.phase:reason",
+	"k8sReason":          "urn:alm:descriptor:io.kubernetes.phase:reason",
 }
 
 // getXDescriptorByPath uses a path name to get a likely x-descriptor a CRD
 // descriptor should have.
-func getXDescriptorByPath(path string, isSpec bool) (xd []string) {
+func getXDescriptorByPath(path string, isSpec bool) []string {
 	pathSplit := strings.Split(path, ".")
 	tag := pathSplit[len(pathSplit)-1]
 	if isSpec {
-		return specXDescriptors[tag]
+		xd, ok := specXDescriptors[tag]
+		if ok {
+			return []string{xd}
+		}
+	} else {
+		xd, ok := statusXDescriptors[tag]
+		if ok {
+			return []string{xd}
+		}
 	}
-	return statusXDescriptors[tag]
+	return nil
 }

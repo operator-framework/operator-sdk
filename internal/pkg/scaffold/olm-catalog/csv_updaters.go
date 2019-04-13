@@ -22,7 +22,6 @@ import (
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
-	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -208,9 +207,9 @@ func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
 		Kind:    crd.Spec.Names.Kind,
 	}
 	store.crds.crKinds[crdDesc.Kind] = struct{}{}
-	// Parse {spec,status}Descriptor's from source code comments.
+	// Parse CRD descriptors from source code comments and annotations.
 	gvk := schema.GroupVersionKind{crd.Spec.Group, crdDesc.Version, crdDesc.Kind}
-	if err := setCRDDescriptorsForGVK2(&crdDesc, gvk); err != nil {
+	if err := setCRDDescriptorsForGVK(&crdDesc, gvk); err != nil {
 		return err
 	}
 	store.crds.Owned = append(store.crds.Owned, crdDesc)
@@ -230,44 +229,17 @@ func (u *CustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterServi
 			csvDesc.Name = uDesc.Name
 			csvDesc.Version = uDesc.Version
 			csvDesc.Kind = uDesc.Kind
-			// Description comes from code comments so should always be updated.
 			csvDesc.Description = uDesc.Description
+			csvDesc.SpecDescriptors = uDesc.SpecDescriptors
+			csvDesc.StatusDescriptors = uDesc.StatusDescriptors
 			if csvDesc.DisplayName == "" {
 				csvDesc.DisplayName = uDesc.DisplayName
 			}
-			// Suggest status and spec descriptor paths and x-descriptors for any
-			// descriptor not in the CSV or that does not have a value.
-			specMap := make(map[string]olmapiv1alpha1.SpecDescriptor)
-			for _, cd := range csvDesc.SpecDescriptors {
-				specMap[cd.DisplayName] = cd
+			if len(csvDesc.ActionDescriptor) == 0 {
+				csvDesc.ActionDescriptor = uDesc.ActionDescriptor
 			}
-			for _, ud := range uDesc.SpecDescriptors {
-				cd, ok := specMap[ud.DisplayName]
-				if ud.Path != "" && (!ok || cd.Path == "") {
-					log.Infof("Suggestion: owned CRD specDescriptor '%s' should have path '%s'.", ud.DisplayName, ud.Path)
-				}
-				if len(ud.XDescriptors) != 0 && (!ok || len(cd.XDescriptors) == 0) {
-					log.Infof("Suggestion: owned CRD specDescriptor '%s' should have x-descriptors '%s'.", ud.DisplayName, ud.XDescriptors)
-				}
-			}
-			if len(csvDesc.SpecDescriptors) == 0 {
-				csvDesc.SpecDescriptors = uDesc.SpecDescriptors
-			}
-			statusMap := make(map[string]olmapiv1alpha1.StatusDescriptor)
-			for _, cd := range csvDesc.StatusDescriptors {
-				statusMap[cd.DisplayName] = cd
-			}
-			for _, ud := range uDesc.StatusDescriptors {
-				cd, ok := statusMap[ud.DisplayName]
-				if ud.Path != "" && (!ok || cd.Path == "") {
-					log.Infof("Suggestion: owned CRD statusDescriptor '%s' should have path '%s'.", ud.DisplayName, ud.Path)
-				}
-				if len(ud.XDescriptors) != 0 && (!ok || len(cd.XDescriptors) == 0) {
-					log.Infof("Suggestion: owned CRD statusDescriptor '%s' should have x-descriptors '%s'.", ud.DisplayName, ud.XDescriptors)
-				}
-			}
-			if len(csvDesc.StatusDescriptors) == 0 {
-				csvDesc.StatusDescriptors = uDesc.StatusDescriptors
+			if len(csvDesc.Resources) == 0 {
+				csvDesc.Resources = uDesc.Resources
 			}
 			du.Owned[i] = csvDesc
 		}
