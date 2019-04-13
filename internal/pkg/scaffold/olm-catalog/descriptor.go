@@ -139,6 +139,12 @@ type descriptor struct {
 	xdesc       []string
 }
 
+// TODO(estroz): apply annotations to all versions or select versions specified by an annotation.
+// TODO(estroz): slim down number of annotations with compact annotations.
+// Ex:
+// +operator-sdk:csv-gen:customresourcedefinitions.vk[v1beta1/EtcdCluster].spec.path="pod.Resources"
+// +operator-sdk:csv-gen:customresourcedefinitions.vk[*/EtcdCluster].status.displayName="Some type"
+// TODO(estroz): make annotations for all supported customresourcedefinition fields.
 func parseCSVGenAnnotation(m types.Member, comments []string) (d descriptor, cs []string, err error) {
 	if len(comments) == 0 {
 		return descriptor{}, nil, nil
