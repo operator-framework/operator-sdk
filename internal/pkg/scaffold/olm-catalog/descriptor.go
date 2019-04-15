@@ -22,8 +22,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/internal/annotations"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/pkg/errors"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -31,7 +33,7 @@ import (
 	"k8s.io/gengo/types"
 )
 
-const csvgenPrefix = "+operator-sdk:csv-gen:"
+const csvgenPrefix = annotations.SDKPrefix + ":csv-gen:"
 
 // setCRDDescriptorsForGVK parses document and type declaration comments on
 // CRD types to populate a csv's 'crds.owned[].{spec,status}Descriptors' for
@@ -77,167 +79,161 @@ func setCRDDescriptorsForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.
 			}
 		}
 	}
-	if specType.Name.Name == "" {
+	if specType == nil {
 		return fmt.Errorf("no spec found in type %s", gvk.Kind)
-	} else if statusType.Name.Name == "" {
+	} else if statusType == nil {
 		return fmt.Errorf("no status found in type %s", gvk.Kind)
 	}
 	// fmt.Println("kind:", gvk.Kind)
 
-	var descriptors []descriptor
+	var specDescriptors, statusDescriptors []descriptor
 	for _, t := range pkgTypes {
 		// fmt.Printf("\ntype %s\n", t.Name.Name)
 		for _, m := range t.Members {
 			// fmt.Printf("member %s %s\n", m.Name, m.Type.Name.Name)
-			comments := m.CommentLines
-			desc := processDescription(comments)
 			// fmt.Printf("\tcomment lines: %+q\n\n", m.CommentLines)
-			for len(comments) > 0 {
-				d, cs, err := parseCSVGenAnnotation(m, comments)
-				if err != nil {
-					return err
-				}
-				d.description = desc
-				descriptors = append(descriptors, d)
-				comments = cs
+			specDesc, statusDesc, err := parseCSVGenAnnotations(m, m.CommentLines)
+			if err != nil {
+				return err
+			}
+			if specDesc.include {
+				setDescriptorDefaultsIfEmpty(&specDesc, m, true)
+				specDescriptors = append(specDescriptors, specDesc)
+			}
+			if statusDesc.include {
+				setDescriptorDefaultsIfEmpty(&statusDesc, m, false)
+				statusDescriptors = append(statusDescriptors, statusDesc)
 			}
 		}
 	}
-	sort.Slice(descriptors, func(i int, j int) bool {
-		return descriptors[i].displayName < descriptors[j].displayName
-	})
 
-	for _, d := range descriptors {
-		if d.spec && crdDesc.Kind == d.kind {
-			crdDesc.SpecDescriptors = append(crdDesc.SpecDescriptors, olmapiv1alpha1.SpecDescriptor{
-				Description:  d.description,
-				DisplayName:  d.displayName,
-				Path:         d.path,
-				XDescriptors: d.xdesc,
-			})
-		} else if d.status && crdDesc.Kind == d.kind {
-			crdDesc.StatusDescriptors = append(crdDesc.StatusDescriptors, olmapiv1alpha1.StatusDescriptor{
-				Description:  d.description,
-				DisplayName:  d.displayName,
-				Path:         d.path,
-				XDescriptors: d.xdesc,
-			})
-		}
+	specDescriptors = sortDescriptors(specDescriptors)
+	for _, d := range specDescriptors {
+		crdDesc.SpecDescriptors = append(crdDesc.SpecDescriptors, olmapiv1alpha1.SpecDescriptor{
+			Description:  d.description,
+			DisplayName:  d.displayName,
+			Path:         d.path,
+			XDescriptors: d.xdesc,
+		})
+	}
+	statusDescriptors = sortDescriptors(statusDescriptors)
+	for _, d := range statusDescriptors {
+		crdDesc.StatusDescriptors = append(crdDesc.StatusDescriptors, olmapiv1alpha1.StatusDescriptor{
+			Description:  d.description,
+			DisplayName:  d.displayName,
+			Path:         d.path,
+			XDescriptors: d.xdesc,
+		})
 	}
 
 	return nil
 }
 
 type descriptor struct {
-	typ          *types.Type
-	kind         string
-	spec, status bool
-
+	typ         *types.Type
+	include     bool
 	description string
 	displayName string
 	path        string
 	xdesc       []string
 }
 
+func sortDescriptors(ds []descriptor) []descriptor {
+	sort.Slice(ds, func(i, j int) bool {
+		return ds[i].displayName < ds[j].displayName
+	})
+	return ds
+}
+
+func wrapParseErr(err error) error {
+	return errors.Wrap(err, "error parsing csv-gen annotation")
+}
+
 // TODO(estroz): apply annotations to all versions or select versions specified by an annotation.
-// TODO(estroz): slim down number of annotations with compact annotations.
-// Ex:
-// +operator-sdk:csv-gen:customresourcedefinitions.vk[v1beta1/EtcdCluster].spec.path="pod.Resources"
-// +operator-sdk:csv-gen:customresourcedefinitions.vk[*/EtcdCluster].status.displayName="Some type"
 // TODO(estroz): make annotations for all supported customresourcedefinition fields.
-func parseCSVGenAnnotation(m types.Member, comments []string) (d descriptor, cs []string, err error) {
-	if len(comments) == 0 {
-		return descriptor{}, nil, nil
-	}
-	var numLinesParsed int
-	var doneForKind bool
-	for _, line := range comments {
-		numLinesParsed++
-		line = strings.TrimSpace(line)
-		trimmed := strings.TrimPrefix(line, csvgenPrefix)
-		if trimmed == line {
-			continue
+func parseCSVGenAnnotations(m types.Member, comments []string) (specDesc, statusDesc descriptor, err error) {
+	tags := types.ExtractCommentTags(csvgenPrefix, comments)
+	for path, vals := range tags {
+		if len(vals) != 1 {
+			return specDesc, statusDesc, wrapParseErr(fmt.Errorf("expected one value for %s, got %+q", path, vals))
 		}
-		// fmt.Printf("parsing \"%s\"\n", line)
-		keyValue := strings.Split(trimmed, "=")
-		if len(keyValue) != 2 {
-			return descriptor{}, nil, fmt.Errorf(`invalid descriptor format "%s"`, trimmed)
+		val := vals[0]
+		// fmt.Printf("path \"%+q\"\n", path)
+		pathElems, err := annotations.SplitPath(path)
+		if err != nil {
+			return specDesc, statusDesc, wrapParseErr(err)
 		}
-		// fmt.Printf("keyValue \"%+q\"\n", keyValue)
-		keyParts := strings.Split(keyValue[0], ".")
-		if len(keyParts) == 0 {
-			return descriptor{}, nil, fmt.Errorf(`invalid descriptor format "%s"`, keyValue[0])
-		}
-		// fmt.Printf("keyParts \"%+q\"\n", keyParts)
-		val, keyType, keyPath := keyValue[1], keyParts[0], keyParts[1:]
-		switch keyType {
+		// fmt.Printf("pathElems \"%+q\"\n", pathElems)
+		parentPathElem, childPathElems := pathElems[0], pathElems[1:]
+		switch parentPathElem {
 		case "customresourcedefinitions":
-			switch keyPath[0] {
-			case "descriptor":
-				switch len(keyPath) {
-				case 1:
-					p, err := strconv.Unquote(val)
-					if err != nil {
-						return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", val, err)
-					}
-					if p != "spec" && p != "status" {
-						return descriptor{}, nil, fmt.Errorf("error parsing %s type %s: must be either spec or status", keyType, p)
-					}
-					d.spec = p == "spec"
-					d.status = !d.spec
-				case 2:
-					switch keyPath[1] {
-					case "displayName":
-						d.displayName, err = strconv.Unquote(val)
-						if err != nil {
-							return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", val, err)
-						}
-					case "path":
-						d.path, err = strconv.Unquote(val)
-						if err != nil {
-							return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", val, err)
-						}
-					case "x-descriptors":
-						xdStr, err := strconv.Unquote(val)
-						if err != nil {
-							return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", val, err)
-						}
-						d.xdesc = strings.Split(xdStr, ",")
-					}
-				}
-			case "kind":
-				// Once we hit another "kind" descriptor, we've finished this block.
-				if doneForKind {
-					numLinesParsed--
-					goto finishParse
-				}
-				d.kind, err = strconv.Unquote(val)
+			switch childPathElems[0] {
+			case "specDescriptors":
+				err = processDescriptor(&specDesc, childPathElems, val)
 				if err != nil {
-					return descriptor{}, nil, fmt.Errorf("error unquoting %s: %v", val, err)
+					return specDesc, statusDesc, wrapParseErr(err)
 				}
-				doneForKind = true
+			case "statusDescriptors":
+				err = processDescriptor(&statusDesc, childPathElems, val)
+				if err != nil {
+					return specDesc, statusDesc, wrapParseErr(err)
+				}
 			default:
-				return descriptor{}, nil, fmt.Errorf(`error parsing csv-gen annotation: unsupported annotation "%s"`, keyType)
+				return specDesc, statusDesc, wrapParseErr(fmt.Errorf(`unsupported %s child path element "%s"`, parentPathElem, childPathElems[0]))
 			}
+		default:
+			return specDesc, statusDesc, wrapParseErr(fmt.Errorf(`unsupported path element "%s"`, parentPathElem))
 		}
 	}
+	return specDesc, statusDesc, nil
+}
 
-finishParse:
+func processDescriptor(desc *descriptor, pathElems []string, val string) (err error) {
+	switch len(pathElems) {
+	case 1:
+		desc.include, err = strconv.ParseBool(val)
+		if err != nil {
+			return fmt.Errorf("error parsing %s bool val '%s': %v", pathElems[0], val, err)
+		}
+	case 2:
+		switch pathElems[1] {
+		case "displayName":
+			desc.displayName, err = strconv.Unquote(val)
+			if err != nil {
+				return fmt.Errorf("error unquoting %s: %v", val, err)
+			}
+		case "path":
+			desc.path, err = strconv.Unquote(val)
+			if err != nil {
+				return fmt.Errorf("error unquoting %s: %v", val, err)
+			}
+		case "x-descriptors":
+			xdStr, err := strconv.Unquote(val)
+			if err != nil {
+				return fmt.Errorf("error unquoting %s: %v", val, err)
+			}
+			desc.xdesc = strings.Split(xdStr, ",")
+		default:
+			return fmt.Errorf(`unsupported descriptor path element "%s"`, pathElems[1])
+		}
+	default:
+		return fmt.Errorf(`unsupported descriptor path "%s"`, annotations.JoinPath(pathElems...))
+	}
+	return nil
+}
 
-	d.typ = m.Type
-	if d.displayName == "" {
-		d.displayName = getDisplayName(m.Name)
+func setDescriptorDefaultsIfEmpty(desc *descriptor, m types.Member, isSpec bool) {
+	desc.typ = m.Type
+	desc.description = processDescription(m.CommentLines)
+	if desc.displayName == "" {
+		desc.displayName = getDisplayName(m.Name)
 	}
-	if d.path == "" {
-		d.path = getPathFromJSONTags(m.Tags)
+	if desc.path == "" {
+		desc.path = getPathFromJSONTags(m.Tags)
 	}
-	if len(d.xdesc) == 0 {
-		d.xdesc = getXDescriptorByPath(d.path, d.spec)
+	if len(desc.xdesc) == 0 {
+		desc.xdesc = getXDescriptorByPath(desc.path, isSpec)
 	}
-	if len(comments) > numLinesParsed {
-		return d, comments[numLinesParsed:], nil
-	}
-	return d, nil, nil
 }
 
 // processDescription joins comment strings into one line, removing any tool
