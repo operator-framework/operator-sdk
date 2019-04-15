@@ -10,7 +10,7 @@ powered by Helm using tools and libraries provided by the Operator SDK.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - [dep][dep_tool] version v0.5.0+. (Optional if you aren't installing from source)
 - [go][go_tool] version v1.10+. (Optional if you aren't installing from source)
-- Access to a Kubernetes v.1.11.3+ cluster.
+- Access to a Kubernetes v1.11.3+ cluster.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the
 local Kubernetes cluster and [quay.io][quay_link] for the public registry.
@@ -52,6 +52,11 @@ cd nginx-operator
 This creates the nginx-operator project specifically for watching the
 Nginx resource with APIVersion `example.com/v1alpha1` and Kind
 `Nginx`.
+
+For Helm-based projects, `operator-sdk new` also generates the RBAC rules
+in `deploy/role.yaml` based on the resources that would be deployed by the
+chart's default manifest. Be sure to double check that the rules generated
+in `deploy/role.yaml` meet the operator's permission requirements.
 
 To learn more about the project directory structure, see the
 [project layout][layout_doc] doc.

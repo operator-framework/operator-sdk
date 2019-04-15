@@ -1451,7 +1451,7 @@
   revision = "e17681d19d3ac4837a019ece36c2a0ec31ffe985"
 
 [[projects]]
-  digest = "1:eb6da42f08a1a53b7375b7ee8188d70df15767691f66e030308b759b8a685141"
+  digest = "1:b93e3ee55e5e7b3ac9c21b145d0b481ed343af914d0fd8c09563a2e8968f4e46"
   name = "k8s.io/helm"
   packages = [
     "pkg/chartutil",
@@ -1473,6 +1473,7 @@
     "pkg/provenance",
     "pkg/releasetesting",
     "pkg/releaseutil",
+    "pkg/renderutil",
     "pkg/repo",
     "pkg/resolver",
     "pkg/rudder",
@@ -1735,6 +1736,7 @@
     "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install",
     "github.com/pborman/uuid",
+    "github.com/pkg/errors",
     "github.com/prometheus/prometheus/util/promlint",
     "github.com/sergi/go-diff/diffmatchpatch",
     "github.com/sirupsen/logrus",
@@ -1771,6 +1773,7 @@
     "k8s.io/apimachinery/pkg/util/validation",
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/apimachinery/pkg/util/yaml",
+    "k8s.io/apimachinery/pkg/version",
     "k8s.io/cli-runtime/pkg/genericclioptions/resource",
     "k8s.io/client-go/discovery",
     "k8s.io/client-go/discovery/cached",
@@ -1791,15 +1794,18 @@
     "k8s.io/helm/pkg/helm/environment",
     "k8s.io/helm/pkg/helm/helmpath",
     "k8s.io/helm/pkg/kube",
+    "k8s.io/helm/pkg/manifest",
     "k8s.io/helm/pkg/proto/hapi/chart",
     "k8s.io/helm/pkg/proto/hapi/release",
     "k8s.io/helm/pkg/proto/hapi/services",
     "k8s.io/helm/pkg/releaseutil",
+    "k8s.io/helm/pkg/renderutil",
     "k8s.io/helm/pkg/repo",
     "k8s.io/helm/pkg/storage",
     "k8s.io/helm/pkg/storage/driver",
     "k8s.io/helm/pkg/tiller",
     "k8s.io/helm/pkg/tiller/environment",
+    "k8s.io/klog",
     "sigs.k8s.io/controller-runtime/pkg/cache",
     "sigs.k8s.io/controller-runtime/pkg/client",
     "sigs.k8s.io/controller-runtime/pkg/client/config",
