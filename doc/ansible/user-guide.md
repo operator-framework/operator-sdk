@@ -274,7 +274,12 @@ Kubernetes deployment manifests are generated in `deploy/operator.yaml`. The
 deployment image in this file needs to be modified from the placeholder
 `REPLACE_IMAGE` to the previous built image. To do this run:
 ```
-$ sed -i 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
+$ sed -i 's|{{ REPLACE_IMAGE }}|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
+```
+
+The `imagePullPolicy` also requires an update.  To do this run:
+```
+$ sed -i 's|{{ pull_policy\|default('\''Always'\'') }}|Always|g' deploy/operator.yaml
 ```
 
 If you created your operator using `--cluster-scoped=true`, update the service account namespace in the generated `ClusterRoleBinding` to match where you are deploying your operator.
@@ -286,8 +291,9 @@ $ sed -i "s|REPLACE_NAMESPACE|$OPERATOR_NAMESPACE|g" deploy/role_binding.yaml
 **Note**  
 If you are performing these steps on OSX, use the following commands instead:
 ```
-$ sed -i "" 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
+$ sed -i "" 's|{{ REPLACE_IMAGE }}|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
 $ sed -i "" "s|REPLACE_NAMESPACE|$OPERATOR_NAMESPACE|g" deploy/role_binding.yaml
+$ sed -i "" 's|{{ pull_policy\|default('\''Always'\'') }}|Always|g' deploy/operator.yaml
 ```
 
 Deploy the memcached-operator:

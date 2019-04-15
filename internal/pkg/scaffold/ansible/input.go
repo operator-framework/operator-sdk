@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,34 +11,22 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 package ansible
 
 import (
-	"path/filepath"
-
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/spf13/afero"
 )
 
-const RolesTasksMainFile = "tasks" + filePathSep + "main.yml"
-
-type RolesTasksMain struct {
+// StaticInput is the input for scaffolding a static file with
+// no parameteres
+type StaticInput struct {
 	input.Input
-	Resource scaffold.Resource
 }
 
-// GetInput - gets the input
-func (r *RolesTasksMain) GetInput() (input.Input, error) {
-	if r.Path == "" {
-		r.Path = filepath.Join(RolesDir, r.Resource.LowerKind, RolesTasksMainFile)
-	}
-	r.TemplateBody = rolesTasksMainAnsibleTmpl
-	r.Delims = AnsibleDelims
-
-	return r.Input, nil
+// CustomRender return the template body unmodified
+func (s *StaticInput) CustomRender() ([]byte, error) {
+	return []byte(s.TemplateBody), nil
 }
 
-const rolesTasksMainAnsibleTmpl = `---
-# tasks file for [[.Resource.LowerKind]]
-`
+func (s StaticInput) SetFS(_ afero.Fs) {}
