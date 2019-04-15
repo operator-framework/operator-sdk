@@ -38,7 +38,6 @@ func K8sCodegen(hf string) error {
 	binDir := filepath.Join(wd, scaffold.BuildBinDir)
 
 	genDirs := []string{
-		"./cmd/defaulter-gen",
 		"./cmd/client-gen",
 		"./cmd/lister-gen",
 		"./cmd/informer-gen",
@@ -63,10 +62,6 @@ func K8sCodegen(hf string) error {
 	if err = withHeaderFile(hf, fdc); err != nil {
 		return err
 	}
-	fd := func(a string) error { return defaulterGen(binDir, repoPkg, a, gvMap) }
-	if err = withHeaderFile(hf, fd); err != nil {
-		return err
-	}
 
 	log.Info("Code-generation complete.")
 	return nil
@@ -85,22 +80,6 @@ func deepcopyGen(binDir, repoPkg, hf string, gvMap map[string][]string) (err err
 	cmd := exec.Command(filepath.Join(binDir, "deepcopy-gen"), args...)
 	if err = projutil.ExecCmd(cmd); err != nil {
 		return fmt.Errorf("failed to perform deepcopy code-generation: %v", err)
-	}
-	return nil
-}
-
-func defaulterGen(binDir, repoPkg, hf string, gvMap map[string][]string) (err error) {
-	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
-	args := []string{
-		"--input-dirs", createFQApis(apisPkg, gvMap),
-		"--output-file-base", "zz_generated.defaults",
-		// defaulter-gen requires a boilerplate file. Either use header or an
-		// empty file if header is empty.
-		"--go-header-file", hf,
-	}
-	cmd := exec.Command(filepath.Join(binDir, "defaulter-gen"), args...)
-	if err = projutil.ExecCmd(cmd); err != nil {
-		return fmt.Errorf("failed to perform defaulter code-generation: %v", err)
 	}
 	return nil
 }

@@ -5,10 +5,13 @@
 ### Changed
 
 - When Helm operator projects are created, the SDK now generates RBAC rules in `deploy/role.yaml` based on the chart's default manifest. ([#1188](https://github.com/operator-framework/operator-sdk/pull/1188))
+- When debug level is 3 or higher, we will set the klog verbosity to that level. ([#1322](https://github.com/operator-framework/operator-sdk/pull/1322))
 
 ### Deprecated
 
 ### Removed
+
+- The SDK will no longer run `defaulter-gen` on running `operator-sdk generate k8s`. Defaulting for CRDs should be handled with mutating admission webhooks. ([#1288](https://github.com/operator-framework/operator-sdk/pull/1288))
 
 ### Bug Fixes
 
