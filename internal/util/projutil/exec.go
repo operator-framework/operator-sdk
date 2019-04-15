@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -45,10 +46,10 @@ type GoBuildOptions struct {
 	Env []string
 	// Dir is the dir to run "go build" in; exec.Command.Dir is set to this value.
 	Dir string
-	// NoGoMod determines whether to set the "-mod=vendor" flag.
-	// If false, GoBuild will use go modules.
-	// If true, "go build" will not use modules.
-	NoGoMod bool
+	// GoMod determines whether to set the "-mod=vendor" flag.
+	// If true, "go build" will use modules.
+	// If false, "go build" will not use go modules. This is the default.
+	GoMod bool
 }
 
 const (
@@ -77,7 +78,7 @@ func goCmd(cmd string, opts GoBuildOptions) error {
 	}
 	bargs = append(bargs, opts.BuildArgs...)
 	// Modules can be used if either GO111MODULE=on or we're not in $GOPATH/src.
-	if !opts.NoGoMod {
+	if opts.GoMod {
 		inGoPath, err := wdInGoPath()
 		if err != nil {
 			return err
@@ -112,5 +113,6 @@ func wdInGoPath() (bool, error) {
 		return false, err
 	}
 	goPath, ok := os.LookupEnv(GoPathEnv)
-	return (!ok && strings.HasPrefix(wd, hd)) || (goPath != "" && strings.HasPrefix(wd, goPath)), nil
+	defaultGoPath := filepath.Join(hd, "go")
+	return (!ok && strings.HasPrefix(wd, defaultGoPath)) || (goPath != "" && strings.HasPrefix(wd, goPath)), nil
 }
