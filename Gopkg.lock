@@ -1529,7 +1529,7 @@
   revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
 
 [[projects]]
-  digest = "1:c4633d96d5a84297fe4b7045060034c6f219d9a18bcd53b88bd560bdf976194f"
+  digest = "1:a2ca0c9095f3fd4160abcb64ebc3d99d3e2439da9c350705db7ab65dc98ee21d"
   name = "k8s.io/kubernetes"
   packages = [
     "pkg/api/legacyscheme",
@@ -1610,6 +1610,7 @@
     "pkg/kubectl/cmd/util/openapi/validation",
     "pkg/kubectl/generated",
     "pkg/kubectl/scheme",
+    "pkg/kubectl/util",
     "pkg/kubectl/util/i18n",
     "pkg/kubectl/util/printers",
     "pkg/kubectl/util/templates",
@@ -1806,6 +1807,7 @@
     "k8s.io/helm/pkg/storage/driver",
     "k8s.io/helm/pkg/tiller",
     "k8s.io/helm/pkg/tiller/environment",
+    "k8s.io/kubernetes/pkg/kubectl/util",
     "sigs.k8s.io/controller-runtime/pkg/cache",
     "sigs.k8s.io/controller-runtime/pkg/client",
     "sigs.k8s.io/controller-runtime/pkg/client/config",
