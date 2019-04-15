@@ -5,10 +5,13 @@ import (
 	"github.com/spf13/afero"
 )
 
+// StaticInput is the input for scaffolding a static file with
+// no parameteres
 type StaticInput struct {
 	input.Input
 }
 
+// CustomRender return the template body unmodified
 func (s *StaticInput) CustomRender() ([]byte, error) {
 	return []byte(s.TemplateBody), nil
 }
