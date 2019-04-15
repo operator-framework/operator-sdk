@@ -86,6 +86,11 @@ func (b *APIs) parseCRDs() {
 						resource.Categories = categories
 					}
 
+					if hasSingular(resource.Type) {
+						singularName := getSingularName(resource.Type)
+						resource.CRD.Spec.Names.Singular = singularName
+					}
+
 					if hasStatusSubresource(resource.Type) {
 						if resource.CRD.Spec.Subresources == nil {
 							resource.CRD.Spec.Subresources = &v1beta1.CustomResourceSubresources{}
@@ -121,7 +126,7 @@ func (b *APIs) parseCRDs() {
 						resource.CRD.Spec.AdditionalPrinterColumns = result
 					}
 					if len(resource.ShortName) > 0 {
-						resource.CRD.Spec.Names.ShortNames = []string{resource.ShortName}
+						resource.CRD.Spec.Names.ShortNames = strings.Split(resource.ShortName, ";")
 					}
 				}
 			}
@@ -136,6 +141,18 @@ func (b *APIs) getTime() string {
 }`
 }
 
+func (b *APIs) getDuration() string {
+	return `v1beta1.JSONSchemaProps{
+    Type:   "string",
+}`
+}
+
+func (b *APIs) getQuantity() string {
+	return `v1beta1.JSONSchemaProps{
+    Type:   "string",
+}`
+}
+
 func (b *APIs) objSchema() string {
 	return `v1beta1.JSONSchemaProps{
     Type:   "object",
@@ -147,38 +164,43 @@ func (b *APIs) objSchema() string {
 func (b *APIs) typeToJSONSchemaProps(t *types.Type, found sets.String, comments []string, isRoot bool) (v1beta1.JSONSchemaProps, string) {
 	// Special cases
 	time := types.Name{Name: "Time", Package: "k8s.io/apimachinery/pkg/apis/meta/v1"}
+	duration := types.Name{Name: "Duration", Package: "k8s.io/apimachinery/pkg/apis/meta/v1"}
+	quantity := types.Name{Name: "Quantity", Package: "k8s.io/apimachinery/pkg/api/resource"}
 	meta := types.Name{Name: "ObjectMeta", Package: "k8s.io/apimachinery/pkg/apis/meta/v1"}
 	unstructured := types.Name{Name: "Unstructured", Package: "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"}
+	rawExtension := types.Name{Name: "RawExtension", Package: "k8s.io/apimachinery/pkg/runtime"}
 	intOrString := types.Name{Name: "IntOrString", Package: "k8s.io/apimachinery/pkg/util/intstr"}
+	// special types first
+	specialTypeProps := v1beta1.JSONSchemaProps{
+		Description: parseDescription(comments),
+	}
+	for _, l := range comments {
+		getValidation(l, &specialTypeProps)
+	}
 	switch t.Name {
 	case time:
-		return v1beta1.JSONSchemaProps{
-			Type:        "string",
-			Format:      "date-time",
-			Description: parseDescription(comments),
-		}, b.getTime()
-	case meta:
-		return v1beta1.JSONSchemaProps{
-			Type:        "object",
-			Description: parseDescription(comments),
-		}, b.objSchema()
-	case unstructured:
-		return v1beta1.JSONSchemaProps{
-			Type:        "object",
-			Description: parseDescription(comments),
-		}, b.objSchema()
+		specialTypeProps.Type = "string"
+		specialTypeProps.Format = "date-time"
+		return specialTypeProps, b.getTime()
+	case duration:
+		specialTypeProps.Type = "string"
+		return specialTypeProps, b.getDuration()
+	case quantity:
+		specialTypeProps.Type = "string"
+		return specialTypeProps, b.getQuantity()
+	case meta, unstructured, rawExtension:
+		specialTypeProps.Type = "object"
+		return specialTypeProps, b.objSchema()
 	case intOrString:
-		return v1beta1.JSONSchemaProps{
-			OneOf: []v1beta1.JSONSchemaProps{
-				{
-					Type: "string",
-				},
-				{
-					Type: "integer",
-				},
+		specialTypeProps.AnyOf = []v1beta1.JSONSchemaProps{
+			{
+				Type: "string",
 			},
-			Description: parseDescription(comments),
-		}, b.objSchema()
+			{
+				Type: "integer",
+			},
+		}
+		return specialTypeProps, b.objSchema()
 	}
 
 	var v v1beta1.JSONSchemaProps
@@ -205,7 +227,7 @@ func (b *APIs) typeToJSONSchemaProps(t *types.Type, found sets.String, comments 
 	return v, s
 }
 
-var jsonRegex = regexp.MustCompile("json:\"([a-zA-Z,]+)\"")
+var jsonRegex = regexp.MustCompile("json:\"([a-zA-Z0-9,]+)\"")
 
 type primitiveTemplateArgs struct {
 	v1beta1.JSONSchemaProps
@@ -277,6 +299,7 @@ func (b *APIs) parsePrimitiveValidation(t *types.Type, found sets.String, commen
 		n = "boolean"
 	case "string":
 		n = "string"
+		f = props.Format
 	default:
 		n = t.Name.Name
 	}
@@ -322,6 +345,11 @@ func (b *APIs) parseMapValidation(t *types.Type, found sets.String, comments []s
 			Allows: true,
 			Schema: &additionalProps}
 	}
+
+	for _, l := range comments {
+		getValidation(l, &props)
+	}
+
 	buff := &bytes.Buffer{}
 	if err := mapTemplate.Execute(buff, mapTempateArgs{Result: result, SkipMapValidation: parseOption.SkipMapValidation}); err != nil {
 		log.Fatalf("%v", err)
@@ -377,6 +405,11 @@ func (b *APIs) parseArrayValidation(t *types.Type, found sets.String, comments [
 	for _, l := range comments {
 		getValidation(l, &props)
 	}
+	if t.Name.Name != "[]byte" {
+		// Except for the byte array special case above, the "format" property
+		// should be applied to the array items and not the array itself.
+		props.Format = ""
+	}
 	buff := &bytes.Buffer{}
 	if err := arrayTemplate.Execute(buff, arrayTemplateArgs{props, result}); err != nil {
 		log.Fatalf("%v", err)
@@ -417,6 +450,10 @@ func (b *APIs) parseObjectValidation(t *types.Type, found sets.String, comments 
 		Description: parseDescription(comments),
 	}
 
+	for _, l := range comments {
+		getValidation(l, &props)
+	}
+
 	if strings.HasPrefix(t.Name.String(), "k8s.io/api") {
 		if err := objectTemplate.Execute(buff, objectTemplateArgs{props, nil, nil, false}); err != nil {
 			log.Fatalf("%v", err)
@@ -425,11 +462,6 @@ func (b *APIs) parseObjectValidation(t *types.Type, found sets.String, comments 
 		m, result, required := b.getMembers(t, found)
 		props.Properties = m
 		props.Required = required
-
-		// Only add field validation for non-inlined fields
-		for _, l := range comments {
-			getValidation(l, &props)
-		}
 
 		if err := objectTemplate.Execute(buff, objectTemplateArgs{props, result, required, isRoot}); err != nil {
 			log.Fatalf("%v", err)

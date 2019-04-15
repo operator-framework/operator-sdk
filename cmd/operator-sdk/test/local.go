@@ -75,8 +75,7 @@ func newTestLocalCmd() *cobra.Command {
 }
 
 func testLocalFunc(cmd *cobra.Command, args []string) error {
-	t := projutil.GetOperatorType()
-	switch t {
+	switch t := projutil.GetOperatorType(); t {
 	case projutil.OperatorTypeGo:
 		return testLocalGoFunc(cmd, args)
 	case projutil.OperatorTypeAnsible:
@@ -84,7 +83,7 @@ func testLocalFunc(cmd *cobra.Command, args []string) error {
 	case projutil.OperatorTypeHelm:
 		return fmt.Errorf("`test local` for Helm operators is not implemented")
 	}
-	return fmt.Errorf("unknown operator type '%v'", t)
+	return projutil.ErrUnknownOperatorType{}
 }
 
 func testLocalAnsibleFunc(cmd *cobra.Command, args []string) error {

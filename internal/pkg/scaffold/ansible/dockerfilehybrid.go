@@ -41,6 +41,7 @@ func (d *DockerfileHybrid) GetInput() (input.Input, error) {
 		d.Path = filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
 	}
 	d.TemplateBody = dockerFileHybridAnsibleTmpl
+	d.Delims = AnsibleDelims
 	return d.Input, nil
 }
 
@@ -64,21 +65,21 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
     USER_NAME=ansible-operator\
     HOME=/opt/ansible
 
-{{- if .Watches }}
-COPY watches.yaml ${HOME}/watches.yaml{{ end }}
+[[- if .Watches ]]
+COPY watches.yaml ${HOME}/watches.yaml[[ end ]]
 
 # install operator binary
-COPY build/_output/bin/{{.ProjectName}} ${OPERATOR}
+COPY build/_output/bin/[[.ProjectName]] ${OPERATOR}
 # install k8s_status Ansible Module
 COPY library/k8s_status.py /usr/share/ansible/openshift/
 
 COPY bin /usr/local/bin
 RUN  /usr/local/bin/user_setup
 
-{{- if .Roles }}
-COPY roles/ ${HOME}/roles/{{ end }}
-{{- if .Playbook }}
-COPY playbook.yml ${HOME}/playbook.yml{{ end }}
+[[- if .Roles ]]
+COPY roles/ ${HOME}/roles/[[ end ]]
+[[- if .Playbook ]]
+COPY playbook.yml ${HOME}/playbook.yml[[ end ]]
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
 
