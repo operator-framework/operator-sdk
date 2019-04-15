@@ -119,7 +119,10 @@ func (v *levelValue) Set(l string) error {
 	if lvl < -3 {
 		fs := flag.NewFlagSet("", flag.ContinueOnError)
 		klog.InitFlags(fs)
-		fs.Set("v", fmt.Sprintf("%v", -1*lvl))
+		err := fs.Set("v", fmt.Sprintf("%v", -1*lvl))
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
