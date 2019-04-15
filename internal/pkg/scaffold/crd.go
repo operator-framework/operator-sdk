@@ -110,6 +110,7 @@ func (s *CRD) CustomRender() ([]byte, error) {
 			g := &crdgenerator.Generator{
 				RootPath:          s.AbsProjectPath,
 				Domain:            strings.SplitN(s.Resource.FullGroup, ".", 2)[1],
+				Repo:              s.Repo,
 				OutputDir:         ".",
 				SkipMapValidation: false,
 				OutFs:             cache,
@@ -131,7 +132,7 @@ func (s *CRD) CustomRender() ([]byte, error) {
 			return nil, err
 		}
 		// controller-tools does not set ListKind or Singular names.
-		crd.Spec.Names = getCRDNamesForResource(s.Resource)
+		setCRDNamesForResource(crd, s.Resource)
 		// Remove controller-tools default label.
 		delete(crd.Labels, "controller-tools.k8s.io")
 	} else {
@@ -158,7 +159,7 @@ func (s *CRD) CustomRender() ([]byte, error) {
 }
 
 func newCRDForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {
-	return &apiextv1beta1.CustomResourceDefinition{
+	crd := &apiextv1beta1.CustomResourceDefinition{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apiextensions.k8s.io/v1beta1",
 			Kind:       "CustomResourceDefinition",
@@ -168,7 +169,6 @@ func newCRDForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {
 		},
 		Spec: apiextv1beta1.CustomResourceDefinitionSpec{
 			Group:   r.FullGroup,
-			Names:   getCRDNamesForResource(r),
 			Scope:   apiextv1beta1.NamespaceScoped,
 			Version: r.Version,
 			Subresources: &apiextv1beta1.CustomResourceSubresources{
@@ -176,14 +176,22 @@ func newCRDForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {
 			},
 		},
 	}
+	setCRDNamesForResource(crd, r)
+	return crd
 }
 
-func getCRDNamesForResource(r *Resource) apiextv1beta1.CustomResourceDefinitionNames {
-	return apiextv1beta1.CustomResourceDefinitionNames{
-		Kind:     r.Kind,
-		ListKind: r.Kind + "List",
-		Plural:   r.Resource,
-		Singular: r.LowerKind,
+func setCRDNamesForResource(crd *apiextv1beta1.CustomResourceDefinition, r *Resource) {
+	if crd.Spec.Names.Kind == "" {
+		crd.Spec.Names.Kind = r.Kind
+	}
+	if crd.Spec.Names.ListKind == "" {
+		crd.Spec.Names.ListKind = r.Kind + "List"
+	}
+	if crd.Spec.Names.Plural == "" {
+		crd.Spec.Names.Plural = r.Resource
+	}
+	if crd.Spec.Names.Singular == "" {
+		crd.Spec.Names.Singular = r.LowerKind
 	}
 }
 
