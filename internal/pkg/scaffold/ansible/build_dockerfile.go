@@ -38,17 +38,18 @@ func (b *BuildDockerfile) GetInput() (input.Input, error) {
 		b.Path = filepath.Join(scaffold.BuildDir, BuildDockerfileFile)
 	}
 	b.TemplateBody = buildDockerfileAnsibleTmpl
+	b.Delims = AnsibleDelims
 	b.RolesDir = RolesDir
 	b.ImageTag = strings.TrimSuffix(version.Version, "+git")
 	return b.Input, nil
 }
 
-const buildDockerfileAnsibleTmpl = `FROM quay.io/operator-framework/ansible-operator:{{.ImageTag}}
+const buildDockerfileAnsibleTmpl = `FROM quay.io/operator-framework/ansible-operator:[[.ImageTag]]
 
 COPY watches.yaml ${HOME}/watches.yaml
 
-COPY {{.RolesDir}}/ ${HOME}/{{.RolesDir}}/
-{{- if .GeneratePlaybook }}
+COPY [[.RolesDir]]/ ${HOME}/[[.RolesDir]]/
+[[- if .GeneratePlaybook ]]
 COPY playbook.yml ${HOME}/playbook.yml
-{{- end }}
+[[- end ]]
 `
