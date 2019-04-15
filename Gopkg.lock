@@ -1688,7 +1688,7 @@
   version = "v0.1.10"
 
 [[projects]]
-  digest = "1:d9b023a1f03e70736cedd89f6a0d700a298c73cedc1ad20c55275abcdc71fc50"
+  digest = "1:024781b25f1d15e78be60cc44842c092d3cda8d494f6c972e6f35707ac35419a"
   name = "sigs.k8s.io/controller-tools"
   packages = [
     "pkg/crd/generator",
@@ -1699,8 +1699,7 @@
     "pkg/util",
   ]
   pruneopts = "NUT"
-  revision = "b8adde9bc6d7f3fba449d306613a9daed23676c8"
-  version = "v0.1.10"
+  revision = "9d55346c2bde73fb3326ac22eac2e5210a730207"
 
 [[projects]]
   digest = "1:8730e0150dfb2b7e173890c8b9868e7a273082ef8e39f4940e3506a481cf895c"
