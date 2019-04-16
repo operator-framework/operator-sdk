@@ -98,14 +98,14 @@ func (s *CRD) CustomRender() ([]byte, error) {
 		return nil, err
 	}
 
-	// controller-tools' generators read and make crds for all apis in pkg/apis,
-	// so generate crds in a cached, in-memory fs to extract the data we need.
 	var crd *apiextv1beta1.CustomResourceDefinition
 	if s.IsOperatorGo {
 		// controller-tools generates crd file names with no _crd.yaml suffix:
 		// <group>_<version>_<kind>.yaml.
 		path := strings.Replace(filepath.Base(i.Path), "_crd.yaml", ".yaml", 1)
 
+		// controller-tools' generators read and make crds for all apis in pkg/apis,
+		// so generate crds in a cached, in-memory fs to extract the data we need.
 		if !cache.fileExists(path) {
 			g := &crdgenerator.Generator{
 				RootPath:          s.AbsProjectPath,
