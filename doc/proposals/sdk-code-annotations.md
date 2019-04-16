@@ -1,5 +1,9 @@
 # SDK Code Annotations
 
+Implementation Owner: @estroz
+
+Status: Draft
+
 [Background](#Background)
 
 [Goals](#Goals)
@@ -39,10 +43,10 @@ An example for [`operator-sdk olm-catalog gen-csv`][sdk_cli_ref_gen_csv], using 
 ```Go
 // PodPolicy defines the policy to create pod for the etcd container.
 type PodPolicy struct {
-...
+	...
 	// +operator-sdk:csv-gen:customresourcedefinitions.specDescriptor.path="pod.resources"
 	Resources v1.ResourceRequirements `json:"resources,omitempty"`
-...
+	...
 }
 ```
 
