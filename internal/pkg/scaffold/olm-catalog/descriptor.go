@@ -16,6 +16,7 @@ package catalog
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -28,6 +29,7 @@ import (
 	"github.com/pkg/errors"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/gengo/parser"
 	"k8s.io/gengo/types"
@@ -39,13 +41,15 @@ const csvgenPrefix = annotations.SDKPrefix + ":csv-gen:"
 // CRD types to populate a csv's 'crds.owned[].{spec,status}Descriptors' for
 // a given Group, Version, and Kind.
 func setCRDDescriptorsForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.GroupVersionKind) error {
-	projutil.MustInProjectRoot()
-
 	group := gvk.Group
 	if strings.Contains(group, ".") {
 		group = strings.Split(gvk.Group, ".")[0]
 	}
 	apisDir := filepath.Join(scaffold.ApisDir, group, gvk.Version)
+	if _, err := os.Stat(apisDir); err != nil && os.IsNotExist(err) {
+		log.Infof(`API "%s" does not exist. Skipping CSV annotation parsing for this API.`, gvk)
+		return nil
+	}
 	p := parser.New()
 	if err := p.AddDirRecursive("./" + apisDir); err != nil {
 		return err
@@ -59,7 +63,7 @@ func setCRDDescriptorsForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.
 	var pkgTypes []*types.Type
 	var specType, statusType *types.Type
 	for _, pkg := range universe {
-		if !strings.HasPrefix(pkg.Path, pp) {
+		if !strings.HasPrefix(pkg.Path, pp) && !strings.HasPrefix(pkg.Path, "./") {
 			continue
 		}
 		for _, t := range pkg.Types {
