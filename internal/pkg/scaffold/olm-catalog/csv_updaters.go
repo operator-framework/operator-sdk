@@ -208,7 +208,7 @@ func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
 	}
 	store.crds.crKinds[crdDesc.Kind] = struct{}{}
 	// Parse CRD descriptors from source code comments and annotations.
-	gvk := schema.GroupVersionKind{crd.Spec.Group, crdDesc.Version, crdDesc.Kind}
+	gvk := schema.GroupVersionKind{Group: crd.Spec.Group, Version: crdDesc.Version, Kind: crdDesc.Kind}
 	if err := setCRDDescriptorsForGVK(&crdDesc, gvk); err != nil {
 		return err
 	}
