@@ -35,7 +35,7 @@ import (
 	"k8s.io/gengo/types"
 )
 
-const csvgenPrefix = annotations.SDKPrefix + ":csv-gen:"
+const csvgenPrefix = annotations.SDKPrefix + ":gen-csv:"
 
 // setCRDDescriptorsForGVK parses document and type declaration comments on
 // CRD types to populate a csv's 'crds.owned[].{spec,status}Descriptors' for
@@ -90,52 +90,77 @@ func setCRDDescriptorsForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.
 	}
 	// fmt.Println("kind:", gvk.Kind)
 
-	var specDescriptors, statusDescriptors []descriptor
+	var descriptors []descriptor
 	for _, t := range pkgTypes {
-		// fmt.Printf("\ntype %s\n", t.Name.Name)
-		for _, m := range t.Members {
-			// fmt.Printf("member %s %s\n", m.Name, m.Type.Name.Name)
-			// fmt.Printf("\tcomment lines: %+q\n\n", m.CommentLines)
-			specDesc, statusDesc, err := parseCSVGenAnnotations(m, m.CommentLines)
-			if err != nil {
-				return err
+		switch t.Kind {
+		case types.Struct:
+			// fmt.Println("type:", t.Name.Name, "kind:", gvk.Kind)
+			if t.Name.Name == gvk.Kind {
+				comments := append(t.SecondClosestCommentLines, t.CommentLines...)
+				// fmt.Printf("\ttype comment lines: %+q\n\n", comments)
+				desc, err := parseCSVGenAnnotations(comments)
+				if err != nil {
+					return err
+				}
+				crdDesc.Description = processDescription(comments)
+				crdDesc.DisplayName = desc.displayName
+				crdDesc.Resources = append(crdDesc.Resources, desc.resources...)
 			}
-			if specDesc.include {
-				setDescriptorDefaultsIfEmpty(&specDesc, m, true)
-				specDescriptors = append(specDescriptors, specDesc)
-			}
-			if statusDesc.include {
-				setDescriptorDefaultsIfEmpty(&statusDesc, m, false)
-				statusDescriptors = append(statusDescriptors, statusDesc)
+			for _, m := range t.Members {
+				// fmt.Printf("member %s %s\n", m.Name, m.Type.Name.Name)
+				// fmt.Printf("\tmember comment lines: %+q\n\n", m.CommentLines)
+				desc, err := parseCSVGenAnnotations(m.CommentLines)
+				if err != nil {
+					return err
+				}
+				for _, d := range desc.descriptors {
+					setDescriptorDefaultsIfEmpty(&d, m)
+					descriptors = append(descriptors, d)
+				}
 			}
 		}
 	}
 
-	specDescriptors = sortDescriptors(specDescriptors)
-	for _, d := range specDescriptors {
-		crdDesc.SpecDescriptors = append(crdDesc.SpecDescriptors, olmapiv1alpha1.SpecDescriptor{
-			Description:  d.description,
-			DisplayName:  d.displayName,
-			Path:         d.path,
-			XDescriptors: d.xdesc,
-		})
+	descriptors = sortDescriptors(descriptors)
+	for _, d := range descriptors {
+		switch d.typ {
+		case typeSpec:
+			crdDesc.SpecDescriptors = append(crdDesc.SpecDescriptors, olmapiv1alpha1.SpecDescriptor{
+				Description:  d.description,
+				DisplayName:  d.displayName,
+				Path:         d.path,
+				XDescriptors: d.xdesc,
+			})
+		case typeStatus:
+			crdDesc.StatusDescriptors = append(crdDesc.StatusDescriptors, olmapiv1alpha1.StatusDescriptor{
+				Description:  d.description,
+				DisplayName:  d.displayName,
+				Path:         d.path,
+				XDescriptors: d.xdesc,
+			})
+		case typeAction:
+			crdDesc.ActionDescriptor = append(crdDesc.ActionDescriptor, olmapiv1alpha1.ActionDescriptor{
+				Description:  d.description,
+				DisplayName:  d.displayName,
+				Path:         d.path,
+				XDescriptors: d.xdesc,
+			})
+		}
 	}
-	statusDescriptors = sortDescriptors(statusDescriptors)
-	for _, d := range statusDescriptors {
-		crdDesc.StatusDescriptors = append(crdDesc.StatusDescriptors, olmapiv1alpha1.StatusDescriptor{
-			Description:  d.description,
-			DisplayName:  d.displayName,
-			Path:         d.path,
-			XDescriptors: d.xdesc,
-		})
-	}
-
 	return nil
 }
 
+type descriptorType int
+
+const (
+	typeSpec descriptorType = iota
+	typeStatus
+	typeAction
+)
+
 type descriptor struct {
-	typ         *types.Type
 	include     bool
+	typ         descriptorType
 	description string
 	displayName string
 	path        string
@@ -149,23 +174,24 @@ func sortDescriptors(ds []descriptor) []descriptor {
 	return ds
 }
 
+type parsedCRDDescriptions struct {
+	descriptors []descriptor
+	displayName string
+	resources   []olmapiv1alpha1.APIResourceReference
+}
+
 func wrapParseErr(err error) error {
 	return errors.Wrap(err, "error parsing csv-gen annotation")
 }
 
-// TODO(estroz): apply annotations to all versions or select versions specified by an annotation.
-// TODO(estroz): make annotations for all supported customresourcedefinition fields.
-func parseCSVGenAnnotations(m types.Member, comments []string) (specDesc, statusDesc descriptor, err error) {
+func parseCSVGenAnnotations(comments []string) (desc parsedCRDDescriptions, err error) {
 	tags := types.ExtractCommentTags(csvgenPrefix, comments)
+	spec, status, action := descriptor{typ: typeSpec}, descriptor{typ: typeStatus}, descriptor{typ: typeAction}
 	for path, vals := range tags {
-		if len(vals) != 1 {
-			return specDesc, statusDesc, wrapParseErr(fmt.Errorf("expected one value for %s, got %+q", path, vals))
-		}
-		val := vals[0]
 		// fmt.Printf("path \"%+q\"\n", path)
 		pathElems, err := annotations.SplitPath(path)
 		if err != nil {
-			return specDesc, statusDesc, wrapParseErr(err)
+			return desc, wrapParseErr(err)
 		}
 		// fmt.Printf("pathElems \"%+q\"\n", pathElems)
 		parentPathElem, childPathElems := pathElems[0], pathElems[1:]
@@ -173,26 +199,50 @@ func parseCSVGenAnnotations(m types.Member, comments []string) (specDesc, status
 		case "customresourcedefinitions":
 			switch childPathElems[0] {
 			case "specDescriptors":
-				err = processDescriptor(&specDesc, childPathElems, val)
+				err = parseDescriptor(&spec, childPathElems, vals[0])
 				if err != nil {
-					return specDesc, statusDesc, wrapParseErr(err)
+					return desc, wrapParseErr(err)
 				}
 			case "statusDescriptors":
-				err = processDescriptor(&statusDesc, childPathElems, val)
+				err = parseDescriptor(&status, childPathElems, vals[0])
 				if err != nil {
-					return specDesc, statusDesc, wrapParseErr(err)
+					return desc, wrapParseErr(err)
+				}
+			case "actionDescriptors":
+				err = parseDescriptor(&action, childPathElems, vals[0])
+				if err != nil {
+					return desc, wrapParseErr(err)
+				}
+			case "displayName":
+				desc.displayName, err = strconv.Unquote(vals[0])
+				if err != nil {
+					return desc, fmt.Errorf("error unquoting %s: %v", vals[0], err)
+				}
+			case "resources":
+				for _, v := range vals {
+					r, err := parseResource(v)
+					if err != nil {
+						return desc, fmt.Errorf("error parsing resource %s: %v", v, err)
+					}
+					desc.resources = append(desc.resources, r)
 				}
 			default:
-				return specDesc, statusDesc, wrapParseErr(fmt.Errorf(`unsupported %s child path element "%s"`, parentPathElem, childPathElems[0]))
+				return desc, wrapParseErr(fmt.Errorf(`unsupported %s child path element "%s"`, parentPathElem, childPathElems[0]))
 			}
 		default:
-			return specDesc, statusDesc, wrapParseErr(fmt.Errorf(`unsupported path element "%s"`, parentPathElem))
+			return desc, wrapParseErr(fmt.Errorf(`unsupported path element "%s"`, parentPathElem))
 		}
 	}
-	return specDesc, statusDesc, nil
+
+	for _, d := range []descriptor{spec, status, action} {
+		if d.include {
+			desc.descriptors = append(desc.descriptors, d)
+		}
+	}
+	return desc, nil
 }
 
-func processDescriptor(desc *descriptor, pathElems []string, val string) (err error) {
+func parseDescriptor(desc *descriptor, pathElems []string, val string) (err error) {
 	switch len(pathElems) {
 	case 1:
 		desc.include, err = strconv.ParseBool(val)
@@ -226,17 +276,43 @@ func processDescriptor(desc *descriptor, pathElems []string, val string) (err er
 	return nil
 }
 
-func setDescriptorDefaultsIfEmpty(desc *descriptor, m types.Member, isSpec bool) {
-	desc.typ = m.Type
-	desc.description = processDescription(m.CommentLines)
-	if desc.displayName == "" {
-		desc.displayName = getDisplayName(m.Name)
+func parseResource(rStr string) (r olmapiv1alpha1.APIResourceReference, err error) {
+	rStr, err = strconv.Unquote(rStr)
+	if err != nil {
+		return r, err
 	}
-	if desc.path == "" {
-		desc.path = getPathFromJSONTags(m.Tags)
+	rSplit := strings.SplitN(rStr, ",", 3)
+	if len(rSplit) < 2 {
+		return r, fmt.Errorf("resource string %s did not have at least a kind and a version", rStr)
+	}
+	r.Kind, r.Version = rSplit[0], rSplit[1]
+	if len(rSplit) == 3 {
+		r.Name, err = strconv.Unquote(rSplit[2])
+		if err != nil {
+			return r, err
+		}
+	}
+	return r, nil
+}
+
+func setDescriptorDefaultsIfEmpty(desc *descriptor, m types.Member) {
+	switch desc.typ {
+	case typeSpec, typeStatus, typeAction:
+		desc.description = processDescription(m.CommentLines)
+		if desc.displayName == "" {
+			desc.displayName = getDisplayName(m.Name)
+		}
+		if desc.path == "" {
+			desc.path = getPathFromJSONTags(m.Tags)
+		}
 	}
 	if len(desc.xdesc) == 0 {
-		desc.xdesc = getXDescriptorByPath(desc.path, isSpec)
+		switch desc.typ {
+		case typeSpec:
+			desc.xdesc = getSpecXDescriptorByPath(desc.path)
+		case typeStatus:
+			desc.xdesc = getStatusXDescriptorByPath(desc.path)
+		}
 	}
 }
 
@@ -281,6 +357,18 @@ var specXDescriptors = map[string]string{
 	"booleanSwitch":        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch",
 }
 
+// getSpecXDescriptorByPath uses a path name to get a likely x-descriptor a CRD
+// descriptor should have.
+func getSpecXDescriptorByPath(path string) []string {
+	pathSplit := strings.Split(path, ".")
+	tag := pathSplit[len(pathSplit)-1]
+	xd, ok := specXDescriptors[tag]
+	if ok {
+		return []string{xd}
+	}
+	return nil
+}
+
 // From https://github.com/openshift/console/blob/master/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L16-L27
 var statusXDescriptors = map[string]string{
 	"podStatuses":        "urn:alm:descriptor:com.tectonic.ui:podStatuses",
@@ -297,21 +385,14 @@ var statusXDescriptors = map[string]string{
 	"k8sReason":          "urn:alm:descriptor:io.kubernetes.phase:reason",
 }
 
-// getXDescriptorByPath uses a path name to get a likely x-descriptor a CRD
+// getStatusXDescriptorByPath uses a path name to get a likely x-descriptor a CRD
 // descriptor should have.
-func getXDescriptorByPath(path string, isSpec bool) []string {
+func getStatusXDescriptorByPath(path string) []string {
 	pathSplit := strings.Split(path, ".")
 	tag := pathSplit[len(pathSplit)-1]
-	if isSpec {
-		xd, ok := specXDescriptors[tag]
-		if ok {
-			return []string{xd}
-		}
-	} else {
-		xd, ok := statusXDescriptors[tag]
-		if ok {
-			return []string{xd}
-		}
+	xd, ok := statusXDescriptors[tag]
+	if ok {
+		return []string{xd}
 	}
 	return nil
 }
