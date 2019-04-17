@@ -71,9 +71,9 @@ func setCRDDescriptorsForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.
 			if t.Name.Name == gvk.Kind {
 				for _, m := range t.Members {
 					path := getPathFromJSONTags(m.Tags)
-					if path == "spec" {
+					if path == typeSpec {
 						specType = m.Type
-					} else if path == "status" {
+					} else if path == typeStatus {
 						statusType = m.Type
 					}
 					if specType != nil && statusType != nil {
@@ -114,6 +114,7 @@ func setCRDDescriptorsForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.
 					return err
 				}
 				for _, d := range desc.descriptors {
+					d.parentType = t
 					setDescriptorDefaultsIfEmpty(&d, m)
 					descriptors = append(descriptors, d)
 				}
@@ -121,9 +122,10 @@ func setCRDDescriptorsForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.
 		}
 	}
 
+	descriptors = mergeChildPaths(pkgTypes, descriptors)
 	descriptors = sortDescriptors(descriptors)
 	for _, d := range descriptors {
-		switch d.typ {
+		switch d.descType {
 		case typeSpec:
 			crdDesc.SpecDescriptors = append(crdDesc.SpecDescriptors, olmapiv1alpha1.SpecDescriptor{
 				Description:  d.description,
@@ -150,17 +152,18 @@ func setCRDDescriptorsForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.
 	return nil
 }
 
-type descriptorType int
+type descriptorType = string
 
 const (
-	typeSpec descriptorType = iota
-	typeStatus
-	typeAction
+	typeSpec   descriptorType = "spec"
+	typeStatus descriptorType = "status"
+	typeAction descriptorType = "action"
 )
 
 type descriptor struct {
 	include     bool
-	typ         descriptorType
+	parentType  *types.Type
+	descType    descriptorType
 	description string
 	displayName string
 	path        string
@@ -186,7 +189,7 @@ func wrapParseErr(err error) error {
 
 func parseCSVGenAnnotations(comments []string) (desc parsedCRDDescriptions, err error) {
 	tags := types.ExtractCommentTags(csvgenPrefix, comments)
-	spec, status, action := descriptor{typ: typeSpec}, descriptor{typ: typeStatus}, descriptor{typ: typeAction}
+	spec, status, action := descriptor{descType: typeSpec}, descriptor{descType: typeStatus}, descriptor{descType: typeAction}
 	for path, vals := range tags {
 		// fmt.Printf("path \"%+q\"\n", path)
 		pathElems, err := annotations.SplitPath(path)
@@ -256,11 +259,6 @@ func parseDescriptor(desc *descriptor, pathElems []string, val string) (err erro
 			if err != nil {
 				return fmt.Errorf("error unquoting %s: %v", val, err)
 			}
-		case "path":
-			desc.path, err = strconv.Unquote(val)
-			if err != nil {
-				return fmt.Errorf("error unquoting %s: %v", val, err)
-			}
 		case "x-descriptors":
 			xdStr, err := strconv.Unquote(val)
 			if err != nil {
@@ -296,24 +294,44 @@ func parseResource(rStr string) (r olmapiv1alpha1.APIResourceReference, err erro
 }
 
 func setDescriptorDefaultsIfEmpty(desc *descriptor, m types.Member) {
-	switch desc.typ {
+	switch desc.descType {
 	case typeSpec, typeStatus, typeAction:
 		desc.description = processDescription(m.CommentLines)
+		desc.path = getPathFromJSONTags(m.Tags)
 		if desc.displayName == "" {
 			desc.displayName = getDisplayName(m.Name)
 		}
-		if desc.path == "" {
-			desc.path = getPathFromJSONTags(m.Tags)
-		}
 	}
 	if len(desc.xdesc) == 0 {
-		switch desc.typ {
+		switch desc.descType {
 		case typeSpec:
 			desc.xdesc = getSpecXDescriptorByPath(desc.path)
 		case typeStatus:
 			desc.xdesc = getStatusXDescriptorByPath(desc.path)
 		}
 	}
+}
+
+func mergeChildPaths(pkgTypes []*types.Type, descriptors []descriptor) (newDescs []descriptor) {
+	for _, t := range pkgTypes {
+		for _, m := range t.Members {
+			if m.Type.IsPrimitive() {
+				continue
+			}
+			nameSplit := strings.Split(m.Type.Name.Name, ".")
+			memberName := nameSplit[len(nameSplit)-1]
+			for _, d := range descriptors {
+				if memberName == d.parentType.Name.Name {
+					tags := getPathFromJSONTags(m.Tags)
+					if tags != "" && tags != typeSpec && tags != typeStatus {
+						d.path = tags + "." + d.path
+					}
+					newDescs = append(newDescs, d)
+				}
+			}
+		}
+	}
+	return newDescs
 }
 
 // processDescription joins comment strings into one line, removing any tool
