@@ -36,7 +36,7 @@ value = ['"'] , "text" , ['"'] ;
 annotation = prefixed path , "=" , value ;
 ```
 
-While all token in a prefix up to command-specific prefixes must be followed, a path token can have command-specific structure. If the destination of data in a `.go` file is a YAML manifest with a list of values interpreted from that code, then a parser for an annotation can create a path including values (and symbols) indexing that list.
+While all token in a prefix up to command-specific prefixes must be followed, a path token can have command-specific structure. If the destination of data in a `.go` file is a YAML manifest with a list of values interpreted from that code, then a parser for an annotation can create a path including values (and symbols) indexing that list. In this specific case, an annotation's full path should follow the YAML path being set/modified.
 
 An example for [`operator-sdk olm-catalog gen-csv`][sdk_cli_ref_gen_csv], using [`etcd-operator`][etcd_operator_api] API code:
 
@@ -44,13 +44,13 @@ An example for [`operator-sdk olm-catalog gen-csv`][sdk_cli_ref_gen_csv], using 
 // PodPolicy defines the policy to create pod for the etcd container.
 type PodPolicy struct {
 	...
-	// +operator-sdk:csv-gen:customresourcedefinitions.specDescriptor.path="pod.resources"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Resource Requirements"
 	Resources v1.ResourceRequirements `json:"resources,omitempty"`
 	...
 }
 ```
 
-`gen-csv` generates a CSV by pulling data from all over an SDK-generated Operator project. By defining a set of CSV-specific paths with a `:gen-csv` command-specific token, a parser of API code annotations will know that the `customresourcedefinitions` spec field for the CSV generated using a type that has a field of type `PodPolicy` will include a `specDescriptor` list entry with a path value of `pod.resources`. Only the `gen-csv`-specific parser knows that `customresourcedefinitions` is a child of `spec`, a `specDescriptor` is a list field. Other commands will ignore this annotation.
+`gen-csv` generates a CSV by pulling data from all over an SDK-generated Operator project. By defining a set of CSV-specific paths with a `:gen-csv` command-specific token, a parser of API code annotations will know that the `customresourcedefinitions` spec field for the CSV generated using a type that has a field of type `PodPolicy` will include a `specDescriptor` list entry with a `displayName` value of `Resource Requirements`. Only the `gen-csv`-specific parser knows that `customresourcedefinitions` is a child of `spec` in a CSV, and a `specDescriptor` is a YAML list field. Other commands will ignore this annotation.
 
 A malleable path element structure allows commands to interpret complex annotations. For an annotation set to be user-friendly, these elements must be kept as simple as possible for the given task. Their parser implementation *must* be accompanied by user-friendly documentation that explains how to create annotations for all supported fields, how the parser will interpret those annotations, and any constraints or requirements on paths or values.
 

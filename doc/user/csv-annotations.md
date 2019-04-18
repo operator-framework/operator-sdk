@@ -19,15 +19,15 @@ Example: `+operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displa
 - `customresourcedefinitions`: child path token
 	-	`displayName`: string
 	- `resources`: string, in the format `"kind,version,\"name\""`, where `kind`, `version`, and `name` are fields in each CSV `resources` entry
-	- `specDescriptors`, `statusDescriptors`, `actionDescriptors`: bool, or child path token
+	- `specDescriptors`, `statusDescriptors`: bool, or child path token
 		- `displayName`: string
-		- `path`: string
 		- `x-descriptors`: string comma-separated list of [`x-descriptor`][csv_x_desc] UI hints.
 
 Notes:
-- `resources`, `specDescriptors`, `statusDescriptors`, `actionDescriptors` with a value of `true` is required for each field to be included in their respective `customresourcedefinitions` CSV fields. See the examples below.
-- Each `customresourcedefinitions` top-level `kind`, `name`, and `version` fields are extracted from API code.
-- `descriptions` are extracted from type and `struct` type field comments.
+- `specDescriptors` and `statusDescriptors` with a value of `true` is required for each field to be included in their respective `customresourcedefinitions` CSV fields. See the examples below.
+- `customresourcedefinitions` top-level `kind`, `name`, and `version` fields are parsed from API code.
+- All `description`'s are parsed from type declaration and `struct` type field comments.
+- `path` is parsed out of a field's JSON tag and merged with parent field path's in dot-hierarchy notation.
 
 ### Examples
 
@@ -50,16 +50,15 @@ type Memcached struct {
 
 ```go
 type MemcachedSpec struct {
-	// Size is the size of the memcached deployment.
+	// Size is the size of the memcached deployment. <-- This will become Size's specDescriptors.description.
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Pod Count"
-	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.path="not.size"
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:podCount,urn:alm:descriptor:io.kubernetes:custom"
-	Size int32 `json:"size"`
+	Size int32 `json:"size"` // <-- Size's specDescriptors.path is inferred from this JSON tag.
 }
 ```
 
-3. Let the SDK infer un-annotated paths on a field for a `customresourcedefinitions.specDescriptors` entry:
+3. Let the SDK infer all un-annotated paths on a field for a `customresourcedefinitions.specDescriptors` entry:
 
 ```go
 type MemcachedSpec struct {
@@ -69,11 +68,11 @@ type MemcachedSpec struct {
 }
 ```
 
-The SDK uses the `Size` fields' `json` tag name as `path` and `Size` as `displayName`.
-The SDK also checks `path` against a list of well-known path to x-descriptor string [mappings][csv_x_desc_mappings] and either uses a match as `x-descriptors`, or does not set `x-descriptors`.
+The SDK uses the `Size` fields' `json` tag name as `path`, `Size` as `displayName`, and field comments as `description`.
+The SDK also checks `path` elements against a list of well-known path to x-descriptor string [mappings][csv_x_desc_mappings] and either uses a match as `x-descriptors`, or does not set `x-descriptors`.
 
 4. A comprehensive example:
-- Set a different `path` for `specDescriptors`, `statusDescriptors`, and `actionDescriptors` entries.
+- Infer `path`, `description`, `displayName`, and `x-descriptors` for `specDescriptors` and `statusDescriptors` entries.
 - Create three `resources` entries each with `kind`, `version`, and `name` values.
 
 ```go
@@ -81,6 +80,7 @@ The SDK also checks `path` against a list of well-known path to x-descriptor str
 // +operator-sdk:gen-csv:customresourcedefinitions.displayName="Memcached App"
 // +operator-sdk:gen-csv:customresourcedefinitions.resources="Deployment,v1,\"A Kubernetes Deployment\""
 // +operator-sdk:gen-csv:customresourcedefinitions.resources="ReplicaSet,v1beta2,\"A Kubernetes ReplicaSet\""
+// +operator-sdk:gen-csv:customresourcedefinitions.resources="Pod,v1,\"A Kubernetes Pod\""
 type Memcached struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -94,18 +94,13 @@ type MemcachedSpec struct {
 }
 
 type MemcachedStatus struct {
-	Pods MemcachedPods `json:"pods"`
+	Pods MemcachedPods `json:"podStatuses"`
 }
 
-// +operator-sdk:gen-csv:customresourcedefinitions.resources="Pod,v1,\"A Kubernetes Pod\""
 type MemcachedPods struct {
 	// Size is the size of the memcached deployment.
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
-	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.path="not.size"
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
-	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.path="podCount"
-	// +operator-sdk:gen-csv:customresourcedefinitions.actionDescriptors=true
-	// +operator-sdk:gen-csv:customresourcedefinitions.actionDescriptors.path="podAction"
 	Size int32 `json:"size"`
 }
 ```
@@ -122,26 +117,26 @@ customresourcedefinitions:
     version: v1alpha1
     resources:
     - kind: Deployment
+      name: A Kubernetes Deployment
       version: v1
     - kind: ReplicaSet
+      name: A Kubernetes ReplicaSet
       version: v1beta2
     - kind: Pod
+      name: A Kubernetes Pod
       version: v1
-    actionDescriptors:
-    - description: The desired number of member Pods for the deployment.
-      displayName: Size
-      path: podAction
     specDescriptors:
     - description: The desired number of member Pods for the deployment.
       displayName: Size
-      path: podCount
+      path: pods.size
       x-descriptors:
       - 'urn:alm:descriptor:com.tectonic.ui:podCount'
     statusDescriptors:
     - description: The desired number of member Pods for the deployment.
       displayName: Size
-      path: not.size
+      path: podStatuses.size
       x-descriptors:
+      - 'urn:alm:descriptor:com.tectonic.ui:podStatuses'
       - 'urn:alm:descriptor:com.tectonic.ui:podCount'
 ```
 
