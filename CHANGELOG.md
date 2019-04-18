@@ -2,10 +2,14 @@
 
 ### Added
 
+- New option for [`operator-sdk build --image-builder`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#build), which can be used to specify which image builder to use. Adds support for [buildah](https://github.com/containers/buildah/). ([#1311](https://github.com/operator-framework/operator-sdk/pull/1311))
+
 ### Changed
 
 - When Helm operator projects are created, the SDK now generates RBAC rules in `deploy/role.yaml` based on the chart's default manifest. ([#1188](https://github.com/operator-framework/operator-sdk/pull/1188))
 - When debug level is 3 or higher, we will set the klog verbosity to that level. ([#1322](https://github.com/operator-framework/operator-sdk/pull/1322))
+- Relaxed requirements for groups in new project API's. Groups passed to [`operator-sdk add api`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#api)'s `--api-version` flag can now have no subdomains, ex `core/v1`. See ([#1191](https://github.com/operator-framework/operator-sdk/issues/1191)) for discussion. ([#1313](https://github.com/operator-framework/operator-sdk/pull/1313))
+- Renamed `--docker-build-args` option to `--image-build-args` option for `build` subcommand, because this option can now be shared with other image build tools than docker when `--image-builder` option is specified. ([#1311](https://github.com/operator-framework/operator-sdk/pull/1311))
 
 ### Deprecated
 
