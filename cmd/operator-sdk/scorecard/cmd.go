@@ -44,7 +44,6 @@ func NewCmd() *cobra.Command {
 	scorecardCmd.Flags().String(scorecard.CSVPathOpt, "", "Path to CSV being tested")
 	scorecardCmd.Flags().Bool(scorecard.BasicTestsOpt, true, "Enable basic operator checks")
 	scorecardCmd.Flags().Bool(scorecard.OLMTestsOpt, true, "Enable OLM integration checks")
-	scorecardCmd.Flags().Bool(scorecard.TenantTestsOpt, false, "Enable good tenant checks")
 	scorecardCmd.Flags().String(scorecard.NamespacedManifestOpt, "", "Path to manifest for namespaced resources (e.g. RBAC and Operator manifest)")
 	scorecardCmd.Flags().String(scorecard.GlobalManifestOpt, "", "Path to manifest for Global resources (e.g. CRD manifests)")
 	scorecardCmd.Flags().StringSlice(scorecard.CRManifestOpt, nil, "Path to manifest for Custom Resource (required) (specify flag multiple times for multiple CRs)")
@@ -52,6 +51,7 @@ func NewCmd() *cobra.Command {
 	scorecardCmd.Flags().String(scorecard.ProxyPullPolicyOpt, "Always", "Pull policy for scorecard proxy image")
 	scorecardCmd.Flags().String(scorecard.CRDsDirOpt, scaffold.CRDsDir, "Directory containing CRDs (all CRD manifest filenames must have the suffix 'crd.yaml')")
 	scorecardCmd.Flags().StringP(scorecard.OutputFormatOpt, "o", "human-readable", "Output format for results. Valid values: human-readable, json")
+	scorecardCmd.Flags().String(scorecard.PluginDirOpt, "scorecard", "Scorecard plugin directory (plugin exectuables must be in a \"bin\" subdirectory")
 
 	if err := viper.BindPFlags(scorecardCmd.Flags()); err != nil {
 		log.Fatalf("Failed to bind scorecard flags to viper: %v", err)
