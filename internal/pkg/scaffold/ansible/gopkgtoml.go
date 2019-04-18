@@ -21,7 +21,7 @@ import (
 
 // GopkgToml - the Gopkg.toml file for a hybrid operator
 type GopkgToml struct {
-	input.Input
+	StaticInput
 }
 
 func (s *GopkgToml) GetInput() (input.Input, error) {
