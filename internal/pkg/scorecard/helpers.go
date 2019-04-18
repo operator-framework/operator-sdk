@@ -79,6 +79,8 @@ func TestSuitesToScorecardOutput(suites []*TestSuite, log string) *scapiv1alpha1
 		}
 		scorecardSuiteResult := CalculateResult(results)
 		scorecardSuiteResult.TotalScore = suite.TotalScore()
+		scorecardSuiteResult.Name = suite.GetName()
+		scorecardSuiteResult.Description = suite.GetDescription()
 		scorecardSuiteResult.Log = suite.Log
 		scorecardSuiteResults = append(scorecardSuiteResults, *scorecardSuiteResult)
 	}

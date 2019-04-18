@@ -37,6 +37,10 @@ const (
 // ScorecardSuiteResult contains the combined results of a suite of tests.
 // +k8s:openapi-gen=true
 type ScorecardSuiteResult struct {
+	// Name is the name of the test suite
+	Name string `json:"name"`
+	// Description is a description of the test suite
+	Description string `json:"description"`
 	// Error is the number of tests that ended in the Error state
 	Error int `json:"error"`
 	// Pass is the number of tests that ended in the Pass state
