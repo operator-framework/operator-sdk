@@ -26,9 +26,9 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/annotations"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	"github.com/pkg/errors"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/gengo/parser"
@@ -37,10 +37,10 @@ import (
 
 const csvgenPrefix = annotations.SDKPrefix + ":gen-csv:"
 
-// setCRDDescriptorsForGVK parses document and type declaration comments on
-// CRD types to populate a csv's 'crds.owned[].{spec,status}Descriptors' for
-// a given Group, Version, and Kind.
-func setCRDDescriptorsForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.GroupVersionKind) error {
+// setCRDDescriptorForGVK parses type and struct field declaration comments on
+// API types to populate a csv's spec.customresourcedefinitions.owned fields
+// for a given API identified by Group, Version, and Kind.
+func setCRDDescriptorForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.GroupVersionKind) error {
 	group := gvk.Group
 	if strings.Contains(group, ".") {
 		group = strings.Split(gvk.Group, ".")[0]
@@ -50,54 +50,17 @@ func setCRDDescriptorsForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.
 		log.Infof(`API "%s" does not exist. Skipping CSV annotation parsing for this API.`, gvk)
 		return nil
 	}
-	p := parser.New()
-	if err := p.AddDirRecursive("./" + apisDir); err != nil {
-		return err
-	}
-	universe, err := p.FindTypes()
+	specType, statusType, pkgTypes, err := getSpecStatusPkgTypesForGVK(apisDir, gvk)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, `get spec, status, and package types for "%s"`, gvk)
 	}
-	pp := strings.TrimSuffix(projutil.CheckAndGetProjectGoPkg(), apisDir)
-
-	var pkgTypes []*types.Type
-	var specType, statusType *types.Type
-	for _, pkg := range universe {
-		if !strings.HasPrefix(pkg.Path, pp) && !strings.HasPrefix(pkg.Path, "./") {
-			continue
-		}
-		for _, t := range pkg.Types {
-			pkgTypes = append(pkgTypes, t)
-			if t.Name.Name == gvk.Kind {
-				for _, m := range t.Members {
-					path := getPathFromJSONTags(m.Tags)
-					if path == typeSpec {
-						specType = m.Type
-					} else if path == typeStatus {
-						statusType = m.Type
-					}
-					if specType != nil && statusType != nil {
-						break
-					}
-				}
-			}
-		}
-	}
-	if specType == nil {
-		return fmt.Errorf("no spec found in type %s", gvk.Kind)
-	} else if statusType == nil {
-		return fmt.Errorf("no status found in type %s", gvk.Kind)
-	}
-	// fmt.Println("kind:", gvk.Kind)
 
 	var descriptors []descriptor
 	for _, t := range pkgTypes {
 		switch t.Kind {
 		case types.Struct:
-			// fmt.Println("type:", t.Name.Name, "kind:", gvk.Kind)
 			if t.Name.Name == gvk.Kind {
 				comments := append(t.SecondClosestCommentLines, t.CommentLines...)
-				// fmt.Printf("\ttype comment lines: %+q\n\n", comments)
 				desc, err := parseCSVGenAnnotations(comments)
 				if err != nil {
 					return err
@@ -107,22 +70,22 @@ func setCRDDescriptorsForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.
 				crdDesc.Resources = append(crdDesc.Resources, desc.resources...)
 			}
 			for _, m := range t.Members {
-				// fmt.Printf("member %s %s\n", m.Name, m.Type.Name.Name)
-				// fmt.Printf("\tmember comment lines: %+q\n\n", m.CommentLines)
 				desc, err := parseCSVGenAnnotations(m.CommentLines)
 				if err != nil {
 					return err
 				}
 				for _, d := range desc.descriptors {
 					d.parentType = t
+					d.member = m
 					setDescriptorDefaultsIfEmpty(&d, m)
 					descriptors = append(descriptors, d)
 				}
 			}
 		}
 	}
+	crdDesc.Resources = sortResources(crdDesc.Resources)
 
-	descriptors = mergeChildPaths(pkgTypes, descriptors)
+	descriptors = mergeChildPaths(specType, statusType, descriptors)
 	descriptors = sortDescriptors(descriptors)
 	for _, d := range descriptors {
 		switch d.descType {
@@ -152,6 +115,46 @@ func setCRDDescriptorsForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.
 	return nil
 }
 
+func getSpecStatusPkgTypesForGVK(apisDir string, gvk schema.GroupVersionKind) (spec, status *types.Type, pkgTypes []*types.Type, err error) {
+	p := parser.New()
+	if err := p.AddDirRecursive("./" + apisDir); err != nil {
+		return nil, nil, nil, err
+	}
+	universe, err := p.FindTypes()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	pp := strings.TrimSuffix(projutil.CheckAndGetProjectGoPkg(), apisDir)
+	for _, pkg := range universe {
+		if !strings.HasPrefix(pkg.Path, pp) && !strings.HasPrefix(pkg.Path, "./") {
+			continue
+		}
+		for _, t := range pkg.Types {
+			pkgTypes = append(pkgTypes, t)
+			if t.Name.Name == gvk.Kind {
+				for _, m := range t.Members {
+					path := getPathFromJSONTags(m.Tags)
+					if path == "spec" {
+						spec = m.Type
+					} else if path == "status" {
+						status = m.Type
+					}
+					if spec != nil && status != nil {
+						break
+					}
+				}
+			}
+		}
+	}
+	if spec == nil {
+		return nil, nil, nil, fmt.Errorf("no spec found in type %s", gvk.Kind)
+	} else if status == nil {
+		return nil, nil, nil, fmt.Errorf("no status found in type %s", gvk.Kind)
+	}
+	return spec, status, pkgTypes, nil
+}
+
 type descriptorType = string
 
 const (
@@ -163,6 +166,7 @@ const (
 type descriptor struct {
 	include     bool
 	parentType  *types.Type
+	member      types.Member
 	descType    descriptorType
 	description string
 	displayName string
@@ -183,6 +187,13 @@ type parsedCRDDescriptions struct {
 	resources   []olmapiv1alpha1.APIResourceReference
 }
 
+func sortResources(rs []olmapiv1alpha1.APIResourceReference) []olmapiv1alpha1.APIResourceReference {
+	sort.Slice(rs, func(i, j int) bool {
+		return rs[i].Kind < rs[j].Kind
+	})
+	return rs
+}
+
 func wrapParseErr(err error) error {
 	return errors.Wrap(err, "error parsing csv-gen annotation")
 }
@@ -191,12 +202,10 @@ func parseCSVGenAnnotations(comments []string) (desc parsedCRDDescriptions, err 
 	tags := types.ExtractCommentTags(csvgenPrefix, comments)
 	spec, status, action := descriptor{descType: typeSpec}, descriptor{descType: typeStatus}, descriptor{descType: typeAction}
 	for path, vals := range tags {
-		// fmt.Printf("path \"%+q\"\n", path)
 		pathElems, err := annotations.SplitPath(path)
 		if err != nil {
 			return desc, wrapParseErr(err)
 		}
-		// fmt.Printf("pathElems \"%+q\"\n", pathElems)
 		parentPathElem, childPathElems := pathElems[0], pathElems[1:]
 		switch parentPathElem {
 		case "customresourcedefinitions":
@@ -312,26 +321,70 @@ func setDescriptorDefaultsIfEmpty(desc *descriptor, m types.Member) {
 	}
 }
 
-func mergeChildPaths(pkgTypes []*types.Type, descriptors []descriptor) (newDescs []descriptor) {
-	for _, t := range pkgTypes {
-		for _, m := range t.Members {
-			if m.Type.IsPrimitive() {
-				continue
-			}
-			nameSplit := strings.Split(m.Type.Name.Name, ".")
-			memberName := nameSplit[len(nameSplit)-1]
-			for _, d := range descriptors {
-				if memberName == d.parentType.Name.Name {
-					tags := getPathFromJSONTags(m.Tags)
-					if tags != "" && tags != typeSpec && tags != typeStatus {
-						d.path = tags + "." + d.path
-					}
-					newDescs = append(newDescs, d)
-				}
-			}
+func getTypeName(t *types.Type) string {
+	nameSplit := strings.Split(t.Name.Name, ".")
+	return nameSplit[len(nameSplit)-1]
+}
+
+func typeNamesEqual(t1, t2 *types.Type) bool {
+	return getTypeName(t1) == getTypeName(t2)
+}
+
+func mergeChildPaths(specType, statusType *types.Type, descriptors []descriptor) (newDescs []descriptor) {
+	descMap := map[string][]descriptor{}
+	for _, d := range descriptors {
+		n := getTypeName(d.member.Type)
+		descMap[n] = append(descMap[n], d)
+	}
+	bfsJoinDescriptorPaths(specType, typeSpec, descMap)
+	bfsJoinDescriptorPaths(statusType, typeStatus, descMap)
+	for _, ds := range descMap {
+		for _, d := range ds {
+			newDescs = append(newDescs, d)
 		}
 	}
 	return newDescs
+}
+
+func bfsJoinDescriptorPaths(parentType *types.Type, pt descriptorType, descMap map[string][]descriptor) {
+	nextMembers := parentType.Members
+	level, lenNextMembers := 0, len(nextMembers)
+	// BFS up to 5 levels.
+	for len(nextMembers) > 0 && level < 5 {
+		for _, m := range nextMembers {
+			t := m.Type
+			switch m.Type.Kind {
+			case types.Map, types.Slice, types.Pointer, types.Chan:
+				t = t.Elem
+			case types.Alias, types.DeclarationOf:
+				t = t.Underlying
+			}
+			if t.IsPrimitive() {
+				continue
+			}
+			for _, mm := range t.Members {
+				if mm.Type.IsPrimitive() {
+					continue
+				}
+				mn := getTypeName(mm.Type)
+				if ds, ok := descMap[mn]; ok {
+					for i := 0; i < len(ds); i++ {
+						if ds[i].descType == pt && typeNamesEqual(m.Type, ds[i].parentType) {
+							tags := getPathFromJSONTags(m.Tags)
+							if tags != "" && tags != typeSpec && tags != typeStatus {
+								ds[i].path = tags + "." + ds[i].path
+							}
+						}
+					}
+					descMap[mn] = ds
+				}
+				nextMembers = append(nextMembers, mm)
+			}
+		}
+		nextMembers = nextMembers[lenNextMembers:]
+		lenNextMembers = len(nextMembers)
+		level++
+	}
 }
 
 // processDescription joins comment strings into one line, removing any tool

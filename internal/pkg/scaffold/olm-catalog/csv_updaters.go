@@ -209,7 +209,7 @@ func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
 	store.crds.crKinds[crdDesc.Kind] = struct{}{}
 	// Parse CRD descriptors from source code comments and annotations.
 	gvk := schema.GroupVersionKind{Group: crd.Spec.Group, Version: crdDesc.Version, Kind: crdDesc.Kind}
-	if err := setCRDDescriptorsForGVK(&crdDesc, gvk); err != nil {
+	if err := setCRDDescriptorForGVK(&crdDesc, gvk); err != nil {
 		return err
 	}
 	store.crds.Owned = append(store.crds.Owned, crdDesc)
@@ -219,32 +219,7 @@ func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
 // Apply updates csv's "owned" CRDDescriptions. "required" CRDDescriptions are
 // left as-is, since they are user-defined values.
 func (u *CustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
-	set := make(map[string]olmapiv1alpha1.CRDDescription)
-	for _, csvDesc := range csv.Spec.CustomResourceDefinitions.Owned {
-		set[csvDesc.Name] = csvDesc
-	}
-	du := u.DeepCopy()
-	for i, uDesc := range u.Owned {
-		if csvDesc, ok := set[uDesc.Name]; ok {
-			csvDesc.Name = uDesc.Name
-			csvDesc.Version = uDesc.Version
-			csvDesc.Kind = uDesc.Kind
-			csvDesc.Description = uDesc.Description
-			csvDesc.SpecDescriptors = uDesc.SpecDescriptors
-			csvDesc.StatusDescriptors = uDesc.StatusDescriptors
-			if csvDesc.DisplayName == "" {
-				csvDesc.DisplayName = uDesc.DisplayName
-			}
-			if len(csvDesc.ActionDescriptor) == 0 {
-				csvDesc.ActionDescriptor = uDesc.ActionDescriptor
-			}
-			if len(csvDesc.Resources) == 0 {
-				csvDesc.Resources = uDesc.Resources
-			}
-			du.Owned[i] = csvDesc
-		}
-	}
-	csv.Spec.CustomResourceDefinitions.Owned = du.Owned
+	csv.Spec.CustomResourceDefinitions = *u.DeepCopy()
 	return nil
 }
 
