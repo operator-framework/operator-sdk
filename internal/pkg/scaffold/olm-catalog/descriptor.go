@@ -311,13 +311,11 @@ func setDescriptorDefaultsIfEmpty(desc *descriptor, m types.Member) {
 			desc.displayName = getDisplayName(m.Name)
 		}
 	}
-	if len(desc.xdesc) == 0 {
-		switch desc.descType {
-		case typeSpec:
-			desc.xdesc = getSpecXDescriptorByPath(desc.path)
-		case typeStatus:
-			desc.xdesc = getStatusXDescriptorByPath(desc.path)
-		}
+	switch desc.descType {
+	case typeSpec:
+		desc.xdesc = getSpecXDescriptorByPath(desc.xdesc, desc.path)
+	case typeStatus:
+		desc.xdesc = getStatusXDescriptorByPath(desc.xdesc, desc.path)
 	}
 }
 
@@ -428,16 +426,10 @@ var specXDescriptors = map[string]string{
 	"booleanSwitch":        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch",
 }
 
-// getSpecXDescriptorByPath uses a path name to get a likely x-descriptor a CRD
+// getSpecXDescriptorByPath uses path's elements to get x-descriptors a CRD
 // descriptor should have.
-func getSpecXDescriptorByPath(path string) []string {
-	pathSplit := strings.Split(path, ".")
-	tag := pathSplit[len(pathSplit)-1]
-	xd, ok := specXDescriptors[tag]
-	if ok {
-		return []string{xd}
-	}
-	return nil
+func getSpecXDescriptorByPath(setXDescs []string, path string) (xdescs []string) {
+	return getXDescriptorByPath(specXDescriptors, setXDescs, path)
 }
 
 // From https://github.com/openshift/console/blob/master/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L16-L27
@@ -456,14 +448,28 @@ var statusXDescriptors = map[string]string{
 	"k8sReason":          "urn:alm:descriptor:io.kubernetes.phase:reason",
 }
 
-// getStatusXDescriptorByPath uses a path name to get a likely x-descriptor a CRD
+// getStatusXDescriptorByPath uses path's elements to get x-descriptors a CRD
 // descriptor should have.
-func getStatusXDescriptorByPath(path string) []string {
-	pathSplit := strings.Split(path, ".")
-	tag := pathSplit[len(pathSplit)-1]
-	xd, ok := statusXDescriptors[tag]
-	if ok {
-		return []string{xd}
+func getStatusXDescriptorByPath(setXDescs []string, path string) (xdescs []string) {
+	return getXDescriptorByPath(statusXDescriptors, setXDescs, path)
+}
+
+func getXDescriptorByPath(relevantXDescs map[string]string, setXDescs []string, path string) (xdescs []string) {
+	// Ensure no duplicate x-descriptors are returned.
+	xdescMap := map[string]struct{}{}
+	for _, xd := range setXDescs {
+		xdescMap[xd] = struct{}{}
 	}
-	return nil
+	pathSplit := strings.Split(path, ".")
+	for _, tag := range pathSplit {
+		xd, ok := relevantXDescs[tag]
+		if ok {
+			xdescMap[xd] = struct{}{}
+		}
+	}
+	for xd := range xdescMap {
+		xdescs = append(xdescs, xd)
+	}
+	sort.Strings(xdescs)
+	return xdescs
 }
