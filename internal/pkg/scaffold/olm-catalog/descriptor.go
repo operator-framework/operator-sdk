@@ -103,13 +103,6 @@ func setCRDDescriptorForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.G
 				Path:         d.path,
 				XDescriptors: d.xdesc,
 			})
-		case typeAction:
-			crdDesc.ActionDescriptor = append(crdDesc.ActionDescriptor, olmapiv1alpha1.ActionDescriptor{
-				Description:  d.description,
-				DisplayName:  d.displayName,
-				Path:         d.path,
-				XDescriptors: d.xdesc,
-			})
 		}
 	}
 	return nil
@@ -160,7 +153,6 @@ type descriptorType = string
 const (
 	typeSpec   descriptorType = "spec"
 	typeStatus descriptorType = "status"
-	typeAction descriptorType = "action"
 )
 
 type descriptor struct {
@@ -200,7 +192,7 @@ func wrapParseErr(err error) error {
 
 func parseCSVGenAnnotations(comments []string) (desc parsedCRDDescriptions, err error) {
 	tags := types.ExtractCommentTags(csvgenPrefix, comments)
-	spec, status, action := descriptor{descType: typeSpec}, descriptor{descType: typeStatus}, descriptor{descType: typeAction}
+	spec, status := descriptor{descType: typeSpec}, descriptor{descType: typeStatus}
 	for path, vals := range tags {
 		pathElems, err := annotations.SplitPath(path)
 		if err != nil {
@@ -217,11 +209,6 @@ func parseCSVGenAnnotations(comments []string) (desc parsedCRDDescriptions, err 
 				}
 			case "statusDescriptors":
 				err = parseDescriptor(&status, childPathElems, vals[0])
-				if err != nil {
-					return desc, wrapParseErr(err)
-				}
-			case "actionDescriptors":
-				err = parseDescriptor(&action, childPathElems, vals[0])
 				if err != nil {
 					return desc, wrapParseErr(err)
 				}
@@ -246,7 +233,7 @@ func parseCSVGenAnnotations(comments []string) (desc parsedCRDDescriptions, err 
 		}
 	}
 
-	for _, d := range []descriptor{spec, status, action} {
+	for _, d := range []descriptor{spec, status} {
 		if d.include {
 			desc.descriptors = append(desc.descriptors, d)
 		}
@@ -303,13 +290,10 @@ func parseResource(rStr string) (r olmapiv1alpha1.APIResourceReference, err erro
 }
 
 func setDescriptorDefaultsIfEmpty(desc *descriptor, m types.Member) {
-	switch desc.descType {
-	case typeSpec, typeStatus, typeAction:
-		desc.description = processDescription(m.CommentLines)
-		desc.path = getPathFromJSONTags(m.Tags)
-		if desc.displayName == "" {
-			desc.displayName = getDisplayName(m.Name)
-		}
+	desc.description = processDescription(m.CommentLines)
+	desc.path = getPathFromJSONTags(m.Tags)
+	if desc.displayName == "" {
+		desc.displayName = getDisplayName(m.Name)
 	}
 	switch desc.descType {
 	case typeSpec:
