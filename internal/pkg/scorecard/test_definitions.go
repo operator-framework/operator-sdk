@@ -58,12 +58,13 @@ func (i TestInfo) GetDescription() string { return i.Description }
 // IsCumulative returns true if the test's scores are intended to be cumulative
 func (i TestInfo) IsCumulative() bool { return i.Cumulative }
 
-// TestSuite contains a list of tests and results, along with the relative weights of each test
+// TestSuite contains a list of tests and results, along with the relative weights of each test. Also can optionally contain a log
 type TestSuite struct {
 	TestInfo
 	Tests       []Test
 	TestResults []*TestResult
 	Weights     map[string]float64
+	Log         string
 }
 
 // Helper functions
