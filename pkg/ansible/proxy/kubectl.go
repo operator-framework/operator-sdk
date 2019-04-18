@@ -28,13 +28,13 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"syscall"
 	"time"
 
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	k8sproxy "k8s.io/apimachinery/pkg/util/proxy"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
+	"k8s.io/kubernetes/pkg/kubectl/util"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -240,9 +240,9 @@ func (s *server) ListenUnix(path string) (net.Listener, error) {
 		}
 	}
 	// Default to only user accessible socket, caller can open up later if desired
-	oldmask := syscall.Umask(0077)
+	oldmask, _ := util.Umask(0077)
 	l, err := net.Listen("unix", path)
-	syscall.Umask(oldmask)
+	util.Umask(oldmask)
 	return l, err
 }
 
