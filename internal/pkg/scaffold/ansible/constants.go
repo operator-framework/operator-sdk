@@ -26,3 +26,6 @@ const (
 	MoleculeDefaultDir     = MoleculeDir + filePathSep + "default"
 	MoleculeTestLocalDir   = MoleculeDir + filePathSep + "test-local"
 )
+
+// Arrays can't be constants but this should be a constant
+var AnsibleDelims = [2]string{"[[", "]]"}

@@ -23,7 +23,7 @@ import (
 const MoleculeTestClusterMoleculeFile = "molecule.yml"
 
 type MoleculeTestClusterMolecule struct {
-	input.Input
+	StaticInput
 }
 
 // GetInput - gets the input
