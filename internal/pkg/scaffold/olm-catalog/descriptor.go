@@ -65,7 +65,7 @@ func setCRDDescriptorForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.G
 				if err != nil {
 					return err
 				}
-				crdDesc.Description = processDescription(comments)
+				crdDesc.Description = parseDescription(comments)
 				crdDesc.DisplayName = desc.displayName
 				crdDesc.Resources = append(crdDesc.Resources, desc.resources...)
 			}
@@ -85,7 +85,12 @@ func setCRDDescriptorForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.G
 	}
 	crdDesc.Resources = sortResources(crdDesc.Resources)
 
-	descriptors = mergeChildPaths(specType, statusType, descriptors)
+	descriptors = mergeChildDescriptorPaths(specType, statusType, descriptors)
+	// Now that we've merged child paths, ensure all possible x-descriptors
+	// are added.
+	for _, d := range descriptors {
+		setXDescriptors(&d)
+	}
 	descriptors = sortDescriptors(descriptors)
 	for _, d := range descriptors {
 		switch d.descType {
@@ -127,7 +132,7 @@ func getSpecStatusPkgTypesForGVK(apisDir string, gvk schema.GroupVersionKind) (s
 			pkgTypes = append(pkgTypes, t)
 			if t.Name.Name == gvk.Kind {
 				for _, m := range t.Members {
-					path := getPathFromJSONTags(m.Tags)
+					path := parsePathFromJSONTags(m.Tags)
 					if path == "spec" {
 						spec = m.Type
 					} else if path == "status" {
@@ -290,16 +295,20 @@ func parseResource(rStr string) (r olmapiv1alpha1.APIResourceReference, err erro
 }
 
 func setDescriptorDefaultsIfEmpty(desc *descriptor, m types.Member) {
-	desc.description = processDescription(m.CommentLines)
-	desc.path = getPathFromJSONTags(m.Tags)
+	desc.description = parseDescription(m.CommentLines)
+	desc.path = parsePathFromJSONTags(m.Tags)
 	if desc.displayName == "" {
 		desc.displayName = getDisplayName(m.Name)
 	}
+	setXDescriptors(desc)
+}
+
+func setXDescriptors(desc *descriptor) {
 	switch desc.descType {
 	case typeSpec:
-		desc.xdesc = getSpecXDescriptorByPath(desc.xdesc, desc.path)
+		desc.xdesc = getSpecXDescriptorsByPath(desc.xdesc, desc.path)
 	case typeStatus:
-		desc.xdesc = getStatusXDescriptorByPath(desc.xdesc, desc.path)
+		desc.xdesc = getStatusXDescriptorsByPath(desc.xdesc, desc.path)
 	}
 }
 
@@ -312,7 +321,7 @@ func typeNamesEqual(t1, t2 *types.Type) bool {
 	return getTypeName(t1) == getTypeName(t2)
 }
 
-func mergeChildPaths(specType, statusType *types.Type, descriptors []descriptor) (newDescs []descriptor) {
+func mergeChildDescriptorPaths(specType, statusType *types.Type, descriptors []descriptor) (newDescs []descriptor) {
 	descMap := map[string][]descriptor{}
 	for _, d := range descriptors {
 		n := getTypeName(d.member.Type)
@@ -345,14 +354,13 @@ func bfsJoinDescriptorPaths(parentType *types.Type, pt descriptorType, descMap m
 				continue
 			}
 			for _, mm := range t.Members {
-				if mm.Type.IsPrimitive() {
-					continue
-				}
 				mn := getTypeName(mm.Type)
 				if ds, ok := descMap[mn]; ok {
 					for i := 0; i < len(ds); i++ {
-						if ds[i].descType == pt && typeNamesEqual(m.Type, ds[i].parentType) {
-							tags := getPathFromJSONTags(m.Tags)
+						typesEqual := typeNamesEqual(m.Type, ds[i].parentType)
+						membersEqual := mm.Name == ds[i].member.Name
+						if ds[i].descType == pt && typesEqual && membersEqual {
+							tags := parsePathFromJSONTags(m.Tags)
 							if tags != "" && tags != typeSpec && tags != typeStatus {
 								ds[i].path = tags + "." + ds[i].path
 							}
@@ -369,9 +377,9 @@ func bfsJoinDescriptorPaths(parentType *types.Type, pt descriptorType, descMap m
 	}
 }
 
-// processDescription joins comment strings into one line, removing any tool
+// parseDescription joins comment strings into one line, removing any tool
 // directives.
-func processDescription(comments []string) string {
+func parseDescription(comments []string) string {
 	var lines []string
 	for _, c := range comments {
 		l := strings.TrimSpace(strings.TrimLeft(c, "/"))
@@ -385,7 +393,7 @@ func processDescription(comments []string) string {
 
 var jsonTagRe = regexp.MustCompile(`json:"([a-zA-Z0-9,]+)"`)
 
-func getPathFromJSONTags(tags string) string {
+func parsePathFromJSONTags(tags string) string {
 	tagMatches := jsonTagRe.FindStringSubmatch(tags)
 	if len(tagMatches) > 1 {
 		ts := strings.Split(tagMatches[1], ",")
@@ -410,10 +418,10 @@ var specXDescriptors = map[string]string{
 	"booleanSwitch":        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch",
 }
 
-// getSpecXDescriptorByPath uses path's elements to get x-descriptors a CRD
+// getSpecXDescriptorsByPath uses path's elements to get x-descriptors a CRD
 // descriptor should have.
-func getSpecXDescriptorByPath(setXDescs []string, path string) (xdescs []string) {
-	return getXDescriptorByPath(specXDescriptors, setXDescs, path)
+func getSpecXDescriptorsByPath(existingXDescs []string, path string) []string {
+	return getXDescriptorsByPath(specXDescriptors, existingXDescs, path)
 }
 
 // From https://github.com/openshift/console/blob/master/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L16-L27
@@ -432,16 +440,16 @@ var statusXDescriptors = map[string]string{
 	"k8sReason":          "urn:alm:descriptor:io.kubernetes.phase:reason",
 }
 
-// getStatusXDescriptorByPath uses path's elements to get x-descriptors a CRD
+// getStatusXDescriptorsByPath uses path's elements to get x-descriptors a CRD
 // descriptor should have.
-func getStatusXDescriptorByPath(setXDescs []string, path string) (xdescs []string) {
-	return getXDescriptorByPath(statusXDescriptors, setXDescs, path)
+func getStatusXDescriptorsByPath(existingXDescs []string, path string) []string {
+	return getXDescriptorsByPath(statusXDescriptors, existingXDescs, path)
 }
 
-func getXDescriptorByPath(relevantXDescs map[string]string, setXDescs []string, path string) (xdescs []string) {
+func getXDescriptorsByPath(relevantXDescs map[string]string, existingXDescs []string, path string) (xdescs []string) {
 	// Ensure no duplicate x-descriptors are returned.
 	xdescMap := map[string]struct{}{}
-	for _, xd := range setXDescs {
+	for _, xd := range existingXDescs {
 		xdescMap[xd] = struct{}{}
 	}
 	pathSplit := strings.Split(path, ".")
