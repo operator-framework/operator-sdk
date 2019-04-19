@@ -54,11 +54,11 @@ var templateCases = []struct {
 	},
 	{
 		`{{range .TopLevels}} Foo {{end}}`,
-		map[string]struct{}{".TopLevels": struct{}{}},
+		map[string]struct{}{},
 	},
 	{
 		`{{range $k, $v := .TopLevelMap}} "{{$k}}:{{$v}}" {{end}}`,
-		map[string]struct{}{".TopLevelMap": struct{}{}},
+		map[string]struct{}{},
 	},
 	{
 		`{{range .TopLevels}} Foo {{else}} Bar {{end}}`,

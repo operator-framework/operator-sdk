@@ -88,17 +88,13 @@ func CheckFileTemplateFields(f File) (err error) {
 	for _, splitPath := range splitFields {
 		fv := v
 		pathSoFar := ""
-		// fmt.Println("split path:", splitPath)
 		for _, currPath := range splitPath {
 			pathSoFar = strings.Trim(pathSoFar+"."+currPath, ".")
 			if fv.Kind() == reflect.Struct {
 				fieldValue := fv.FieldByName(currPath)
-				// fmt.Printf("\tscaffold %s field %s\n", v.Type().Name(), pathSoFar)
 				if isEmptyValue(fieldValue) {
-					// fmt.Printf("\t\tempty\n")
 					return ErrEmptyScaffoldField{ScaffoldName: v.Type().Name(), Field: pathSoFar}
 				} else {
-					// fmt.Printf("\t\tnot empty: %v\n", fieldValue)
 					switch fieldValue.Kind() {
 					case reflect.Struct:
 						fv = fieldValue.FieldByName(currPath)
@@ -109,12 +105,8 @@ func CheckFileTemplateFields(f File) (err error) {
 					}
 				}
 			} else {
-				// fmt.Printf("\tscaffold %s non struct field %s\n", v.Type().Name(), pathSoFar)
 				if isEmptyValue(fv) {
-					// fmt.Printf("\t\tnon struct empty\n")
 					return ErrEmptyScaffoldField{ScaffoldName: v.Type().Name(), Field: pathSoFar}
-				} else {
-					// fmt.Printf("\t\tnon struct not empty: %v\n", fv)
 				}
 				break
 			}
@@ -134,8 +126,6 @@ func isEmptyValue(v reflect.Value) bool {
 		return true
 	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
 		return v.Len() == 0
-	case reflect.Bool:
-		// Ignore bools since bool being false is valid.
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return v.Int() == 0
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
@@ -165,62 +155,22 @@ func getTemplatePipelines(i Input) (map[string]struct{}, error) {
 		for _, n := range currNodes {
 			switch v := n.(type) {
 			case *parse.ActionNode:
-				// fmt.Println("Action node: \n", n.String())
 				currNodes = append(currNodes, v.Pipe)
 			case *parse.ListNode:
-				// fmt.Println("List node:", v.String())
 				currNodes = append(currNodes, v.Nodes...)
-			case *parse.ChainNode:
-				// fmt.Println("Chain node:", v.String())
 			case *parse.PipeNode:
-				// fmt.Println("Pipe node:", v.String())
 				for _, n := range v.Cmds {
 					currNodes = append(currNodes, n)
 				}
 				for _, n := range v.Decl {
 					currNodes = append(currNodes, n)
 				}
-			case *parse.BoolNode:
-				// fmt.Println("Bool node:", v.String())
-			case *parse.BranchNode:
-				// fmt.Println("Branch node:", v.String())
-				// currNodes = append(currNodes, v.Pipe, v.List)
-				// if v.ElseList != nil  {
-				// 	currNodes = append(currNodes, v.ElseList)
-				// }
-				// if v.ElseList == nil || len(v.ElseList.Nodes) == 0 {
-				// 	currNodes = append(currNodes, v.Pipe, v.List)
-				// }
 			case *parse.CommandNode:
-				// fmt.Println("Command node:", v.String())
 				currNodes = append(currNodes, v.Args...)
-			case *parse.DotNode:
-				// fmt.Println("Dot node:", v.String())
 			case *parse.FieldNode:
-				// fmt.Println("Field node:", v.String())
 				fields[v.String()] = struct{}{}
-			case *parse.IdentifierNode:
-				// fmt.Println("Identifier node:", v.String())
-			case *parse.IfNode:
-				// fmt.Println("If node:", v.String())
-				// currNodes = append(currNodes, &v.BranchNode)
-			case *parse.NilNode:
-				// fmt.Println("Nil node:", v.String())
-			case *parse.NumberNode:
-				// fmt.Println("Number node:", v.String())
-			case *parse.RangeNode:
-				// fmt.Println("Range node:", v.String())
-				// currNodes = append(currNodes, &v.BranchNode)
-			case *parse.StringNode:
-				// fmt.Println("String node:", v.String())
 			case *parse.TemplateNode:
-				// fmt.Println("Template node:", v.String())
 				currNodes = append(currNodes, v.Pipe)
-			case *parse.VariableNode:
-				// fmt.Println("Variable node:", v.String())
-			case *parse.WithNode:
-				// fmt.Println("With node:", v.String())
-				// currNodes = append(currNodes, &v.BranchNode)
 			}
 		}
 		currNodes = currNodes[currNodesLen:]
