@@ -28,6 +28,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"golang.org/x/tools/imports"
@@ -60,11 +61,11 @@ func (s *Scaffold) setFieldsAndValidate(f input.File) error {
 
 	// Validate the template and field values.
 	if err := input.CheckFileTemplateFields(f); err != nil {
-		return err
+		return errors.Wrapf(err, "scaffold %T template check failed", f)
 	}
 	if v, ok := f.(input.Validate); ok {
 		if err := v.Validate(); err != nil {
-			return err
+			return errors.Wrapf(err, "scaffold %T validate failed", f)
 		}
 	}
 	return nil
@@ -90,7 +91,7 @@ func (s *Scaffold) Execute(cfg *input.Config, files ...input.File) error {
 
 	for _, f := range files {
 		if err := s.doFile(f); err != nil {
-			return err
+			return errors.Wrapf(err, "scaffold file %T", f)
 		}
 	}
 	return nil

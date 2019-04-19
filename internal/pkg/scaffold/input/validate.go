@@ -144,6 +144,9 @@ func getTemplatePipelines(i Input) (map[string]struct{}, error) {
 	}
 
 	t := template.New("").Funcs(i.TemplateFuncs)
+	if i.Delims[0] != "" && i.Delims[1] != "" {
+		t = t.Delims(i.Delims[0], i.Delims[1])
+	}
 	t, err := t.Parse(i.TemplateBody)
 	if err != nil {
 		return nil, err

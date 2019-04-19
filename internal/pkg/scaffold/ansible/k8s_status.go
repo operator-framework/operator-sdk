@@ -32,7 +32,7 @@ func (k *K8sStatus) GetInput() (input.Input, error) {
 	}
 
 	k.TemplateBody = k8sStatusTmpl
-
+	k.Delims = AnsibleDelims
 	return k.Input, nil
 }
 
