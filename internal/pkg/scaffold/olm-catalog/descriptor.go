@@ -61,38 +61,33 @@ func setCRDDescriptorForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.G
 		case types.Struct:
 			if t.Name.Name == gvk.Kind {
 				comments := append(t.SecondClosestCommentLines, t.CommentLines...)
-				desc, err := parseCSVGenAnnotations(comments)
+				pd, err := parseCSVGenAnnotations(comments)
 				if err != nil {
 					return err
 				}
 				crdDesc.Description = parseDescription(comments)
-				crdDesc.DisplayName = desc.displayName
-				crdDesc.Resources = append(crdDesc.Resources, desc.resources...)
+				crdDesc.DisplayName = pd.displayName
+				crdDesc.Resources = sortResources(append(crdDesc.Resources, pd.resources...))
 			}
 			for _, m := range t.Members {
-				desc, err := parseCSVGenAnnotations(m.CommentLines)
+				pd, err := parseCSVGenAnnotations(m.CommentLines)
 				if err != nil {
 					return err
 				}
-				for _, d := range desc.descriptors {
-					d.parentType = t
-					d.member = m
-					setDescriptorDefaultsIfEmpty(&d, m)
+				for _, d := range pd.descriptors {
+					d.parentType, d.member = t, m
 					descriptors = append(descriptors, d)
 				}
 			}
 		}
 	}
-	crdDesc.Resources = sortResources(crdDesc.Resources)
 
 	descriptors = mergeChildDescriptorPaths(specType, statusType, descriptors)
-	// Now that we've merged child paths, ensure all possible x-descriptors
-	// are added.
-	for _, d := range descriptors {
-		setXDescriptors(&d)
+	// Now that we've merged child paths, ensure all fields not set are added.
+	for i := 0; i < len(descriptors); i++ {
+		setDescriptorDefaultsIfEmpty(&descriptors[i])
 	}
-	descriptors = sortDescriptors(descriptors)
-	for _, d := range descriptors {
+	for _, d := range sortDescriptors(descriptors) {
 		switch d.descType {
 		case typeSpec:
 			crdDesc.SpecDescriptors = append(crdDesc.SpecDescriptors, olmapiv1alpha1.SpecDescriptor{
@@ -173,7 +168,7 @@ type descriptor struct {
 
 func sortDescriptors(ds []descriptor) []descriptor {
 	sort.Slice(ds, func(i, j int) bool {
-		return ds[i].displayName < ds[j].displayName
+		return ds[i].path < ds[j].path
 	})
 	return ds
 }
@@ -195,68 +190,68 @@ func wrapParseErr(err error) error {
 	return errors.Wrap(err, "error parsing csv-gen annotation")
 }
 
-func parseCSVGenAnnotations(comments []string) (desc parsedCRDDescriptions, err error) {
+func parseCSVGenAnnotations(comments []string) (pd parsedCRDDescriptions, err error) {
 	tags := types.ExtractCommentTags(csvgenPrefix, comments)
-	spec, status := descriptor{descType: typeSpec}, descriptor{descType: typeStatus}
+	specd, statusd := descriptor{descType: typeSpec}, descriptor{descType: typeStatus}
 	for path, vals := range tags {
 		pathElems, err := annotations.SplitPath(path)
 		if err != nil {
-			return desc, wrapParseErr(err)
+			return pd, wrapParseErr(err)
 		}
 		parentPathElem, childPathElems := pathElems[0], pathElems[1:]
 		switch parentPathElem {
 		case "customresourcedefinitions":
 			switch childPathElems[0] {
 			case "specDescriptors":
-				err = parseDescriptor(&spec, childPathElems, vals[0])
+				err = parseDescriptor(&specd, childPathElems, vals[0])
 				if err != nil {
-					return desc, wrapParseErr(err)
+					return pd, wrapParseErr(err)
 				}
 			case "statusDescriptors":
-				err = parseDescriptor(&status, childPathElems, vals[0])
+				err = parseDescriptor(&statusd, childPathElems, vals[0])
 				if err != nil {
-					return desc, wrapParseErr(err)
+					return pd, wrapParseErr(err)
 				}
 			case "displayName":
-				desc.displayName, err = strconv.Unquote(vals[0])
+				pd.displayName, err = strconv.Unquote(vals[0])
 				if err != nil {
-					return desc, fmt.Errorf("error unquoting %s: %v", vals[0], err)
+					return pd, fmt.Errorf("error unquoting %s: %v", vals[0], err)
 				}
 			case "resources":
 				for _, v := range vals {
 					r, err := parseResource(v)
 					if err != nil {
-						return desc, fmt.Errorf("error parsing resource %s: %v", v, err)
+						return pd, fmt.Errorf("error parsing resource %s: %v", v, err)
 					}
-					desc.resources = append(desc.resources, r)
+					pd.resources = append(pd.resources, r)
 				}
 			default:
-				return desc, wrapParseErr(fmt.Errorf(`unsupported %s child path element "%s"`, parentPathElem, childPathElems[0]))
+				return pd, wrapParseErr(fmt.Errorf(`unsupported %s child path element "%s"`, parentPathElem, childPathElems[0]))
 			}
 		default:
-			return desc, wrapParseErr(fmt.Errorf(`unsupported path element "%s"`, parentPathElem))
+			return pd, wrapParseErr(fmt.Errorf(`unsupported path element "%s"`, parentPathElem))
 		}
 	}
 
-	for _, d := range []descriptor{spec, status} {
+	for _, d := range []descriptor{specd, statusd} {
 		if d.include {
-			desc.descriptors = append(desc.descriptors, d)
+			pd.descriptors = append(pd.descriptors, d)
 		}
 	}
-	return desc, nil
+	return pd, nil
 }
 
-func parseDescriptor(desc *descriptor, pathElems []string, val string) (err error) {
+func parseDescriptor(d *descriptor, pathElems []string, val string) (err error) {
 	switch len(pathElems) {
 	case 1:
-		desc.include, err = strconv.ParseBool(val)
+		d.include, err = strconv.ParseBool(val)
 		if err != nil {
 			return fmt.Errorf("error parsing %s bool val '%s': %v", pathElems[0], val, err)
 		}
 	case 2:
 		switch pathElems[1] {
 		case "displayName":
-			desc.displayName, err = strconv.Unquote(val)
+			d.displayName, err = strconv.Unquote(val)
 			if err != nil {
 				return fmt.Errorf("error unquoting %s: %v", val, err)
 			}
@@ -265,7 +260,7 @@ func parseDescriptor(desc *descriptor, pathElems []string, val string) (err erro
 			if err != nil {
 				return fmt.Errorf("error unquoting %s: %v", val, err)
 			}
-			desc.xdesc = strings.Split(xdStr, ",")
+			d.xdesc = strings.Split(xdStr, ",")
 		default:
 			return fmt.Errorf(`unsupported descriptor path element "%s"`, pathElems[1])
 		}
@@ -294,27 +289,26 @@ func parseResource(rStr string) (r olmapiv1alpha1.APIResourceReference, err erro
 	return r, nil
 }
 
-func setDescriptorDefaultsIfEmpty(desc *descriptor, m types.Member) {
-	desc.description = parseDescription(m.CommentLines)
-	desc.path = parsePathFromJSONTags(m.Tags)
-	if desc.displayName == "" {
-		desc.displayName = getDisplayName(m.Name)
+func setDescriptorDefaultsIfEmpty(d *descriptor) {
+	if d.description == "" {
+		d.description = parseDescription(d.member.CommentLines)
 	}
-	setXDescriptors(desc)
-}
-
-func setXDescriptors(desc *descriptor) {
-	switch desc.descType {
+	if d.path == "" {
+		d.path = parsePathFromJSONTags(d.member.Tags)
+	}
+	if d.displayName == "" {
+		d.displayName = getDisplayName(d.member.Name)
+	}
+	switch d.descType {
 	case typeSpec:
-		desc.xdesc = getSpecXDescriptorsByPath(desc.xdesc, desc.path)
+		d.xdesc = getSpecXDescriptorsByPath(d.xdesc, d.path)
 	case typeStatus:
-		desc.xdesc = getStatusXDescriptorsByPath(desc.xdesc, desc.path)
+		d.xdesc = getStatusXDescriptorsByPath(d.xdesc, d.path)
 	}
 }
 
 func getTypeName(t *types.Type) string {
-	nameSplit := strings.Split(t.Name.Name, ".")
-	return nameSplit[len(nameSplit)-1]
+	return getUnderlyingType(t).Name.String()
 }
 
 func typeNamesEqual(t1, t2 *types.Type) bool {
@@ -337,43 +331,70 @@ func mergeChildDescriptorPaths(specType, statusType *types.Type, descriptors []d
 	return newDescs
 }
 
+func getUnderlyingType(t *types.Type) *types.Type {
+	switch t.Kind {
+	case types.Map, types.Slice, types.Pointer, types.Chan:
+		t = t.Elem
+	case types.Alias, types.DeclarationOf:
+		t = t.Underlying
+	}
+	return t
+}
+
+type memberNode struct {
+	types.Member
+	parentNode *memberNode
+}
+
+type descNodeMapping struct {
+	parentNode *memberNode
+	descriptor descriptor
+}
+
 func bfsJoinDescriptorPaths(parentType *types.Type, pt descriptorType, descMap map[string][]descriptor) {
-	nextMembers := parentType.Members
+	nextMembers, leaves := []*memberNode{}, []descNodeMapping{}
+	for _, m := range parentType.Members {
+		nextMembers = append(nextMembers, &memberNode{m, nil})
+	}
 	level, lenNextMembers := 0, len(nextMembers)
 	// BFS up to 5 levels.
 	for len(nextMembers) > 0 && level < 5 {
 		for _, m := range nextMembers {
-			t := m.Type
-			switch m.Type.Kind {
-			case types.Map, types.Slice, types.Pointer, types.Chan:
-				t = t.Elem
-			case types.Alias, types.DeclarationOf:
-				t = t.Underlying
-			}
-			if t.IsPrimitive() {
-				continue
-			}
+			t := getUnderlyingType(m.Type)
 			for _, mm := range t.Members {
-				mn := getTypeName(mm.Type)
-				if ds, ok := descMap[mn]; ok {
-					for i := 0; i < len(ds); i++ {
-						typesEqual := typeNamesEqual(m.Type, ds[i].parentType)
-						membersEqual := mm.Name == ds[i].member.Name
-						if ds[i].descType == pt && typesEqual && membersEqual {
-							tags := parsePathFromJSONTags(m.Tags)
-							if tags != "" && tags != typeSpec && tags != typeStatus {
-								ds[i].path = tags + "." + ds[i].path
-							}
+				node := memberNode{mm, m}
+				nextMembers = append(nextMembers, &node)
+				mmn := getTypeName(mm.Type)
+				if ds, ok := descMap[mmn]; ok {
+					newDs := []descriptor{}
+					for _, d := range ds {
+						typesEqual := typeNamesEqual(m.Type, d.parentType)
+						membersEqual := mm.Name == d.member.Name
+						if d.descType == pt && typesEqual && membersEqual {
+							leaves = append(leaves, descNodeMapping{&node, d})
+						} else {
+							newDs = append(newDs, d)
 						}
 					}
-					descMap[mn] = ds
+					descMap[mmn] = newDs
 				}
-				nextMembers = append(nextMembers, mm)
 			}
 		}
 		nextMembers = nextMembers[lenNextMembers:]
 		lenNextMembers = len(nextMembers)
 		level++
+	}
+
+	for _, l := range leaves {
+		for parent := l.parentNode; parent != nil; parent = parent.parentNode {
+			tags := parsePathFromJSONTags(parent.Tags)
+			if tags != "" && tags != typeSpec && tags != typeStatus {
+				l.descriptor.path = tags + "." + l.descriptor.path
+			}
+		}
+		l.descriptor.path = strings.Trim(l.descriptor.path, ".")
+		n := getTypeName(l.descriptor.member.Type)
+		descMap[n] = append(descMap[n], l.descriptor)
 	}
 }
 
@@ -383,7 +404,7 @@ func parseDescription(comments []string) string {
 	var lines []string
 	for _, c := range comments {
 		l := strings.TrimSpace(strings.TrimLeft(c, "/"))
-		if l == "" || strings.Contains(l, "+") {
+		if l == "" || strings.HasPrefix(l, "+") {
 			continue
 		}
 		lines = append(lines, l)
