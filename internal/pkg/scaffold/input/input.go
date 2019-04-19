@@ -16,7 +16,9 @@
 
 package input
 
-import "text/template"
+import (
+	"text/template"
+)
 
 // IfExistsAction determines what to do if the scaffold file already exists
 type IfExistsAction int
@@ -109,13 +111,6 @@ func (i *Input) SetProjectName(n string) {
 type File interface {
 	// GetInput returns the Input for creating a scaffold file
 	GetInput() (Input, error)
-}
-
-// Validate validates input
-type Validate interface {
-	// Validate returns nil if the inputs' validation logic approves of
-	// field values, the template, etc.
-	Validate() error
 }
 
 // Config configures the execution scaffold templates
