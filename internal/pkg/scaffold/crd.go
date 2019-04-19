@@ -44,6 +44,9 @@ type CRD struct {
 }
 
 func (s *CRD) GetInput() (input.Input, error) {
+	if s.Resource == nil {
+		return input.Input{}, input.NewEmptyScaffoldFieldError(s, "Resource")
+	}
 	if s.Path == "" {
 		fileName := fmt.Sprintf("%s_%s_%s_crd.yaml",
 			strings.ToLower(s.Resource.Group),

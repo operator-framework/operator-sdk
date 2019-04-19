@@ -29,6 +29,9 @@ type ControllerKind struct {
 }
 
 func (s *ControllerKind) GetInput() (input.Input, error) {
+	if s.Resource == nil {
+		return input.Input{}, input.NewEmptyScaffoldFieldError(s, "Resource")
+	}
 	if s.Path == "" {
 		fileName := s.Resource.LowerKind + "_controller.go"
 		s.Path = filepath.Join(ControllerDir, s.Resource.LowerKind, fileName)

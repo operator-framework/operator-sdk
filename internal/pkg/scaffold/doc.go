@@ -32,6 +32,9 @@ type Doc struct {
 }
 
 func (s *Doc) GetInput() (input.Input, error) {
+	if s.Resource == nil {
+		return input.Input{}, input.NewEmptyScaffoldFieldError(s, "Resource")
+	}
 	if s.Path == "" {
 		s.Path = filepath.Join(ApisDir,
 			s.Resource.GoImportGroup,

@@ -31,6 +31,9 @@ type AddToScheme struct {
 }
 
 func (s *AddToScheme) GetInput() (input.Input, error) {
+	if s.Resource == nil {
+		return input.Input{}, input.NewEmptyScaffoldFieldError(s, "Resource")
+	}
 	if s.Path == "" {
 		fileName := fmt.Sprintf("addtoscheme_%s_%s.go",
 			s.Resource.GoImportGroup,
