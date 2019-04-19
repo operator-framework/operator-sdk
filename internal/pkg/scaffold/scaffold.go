@@ -47,19 +47,22 @@ type Scaffold struct {
 	GetWriter func(path string, mode os.FileMode) (io.Writer, error)
 }
 
-func (s *Scaffold) setFieldsAndValidate(t input.File) error {
-	if b, ok := t.(input.Repo); ok {
+func (s *Scaffold) setFieldsAndValidate(f input.File) error {
+	if b, ok := f.(input.Repo); ok {
 		b.SetRepo(s.Repo)
 	}
-	if b, ok := t.(input.AbsProjectPath); ok {
+	if b, ok := f.(input.AbsProjectPath); ok {
 		b.SetAbsProjectPath(s.AbsProjectPath)
 	}
-	if b, ok := t.(input.ProjectName); ok {
+	if b, ok := f.(input.ProjectName); ok {
 		b.SetProjectName(s.ProjectName)
 	}
 
-	// Validate the template is ok
-	if v, ok := t.(input.Validate); ok {
+	// Validate the template and field values.
+	if err := input.CheckFileTemplateFields(f); err != nil {
+		return err
+	}
+	if v, ok := f.(input.Validate); ok {
 		if err := v.Validate(); err != nil {
 			return err
 		}
@@ -94,15 +97,15 @@ func (s *Scaffold) Execute(cfg *input.Config, files ...input.File) error {
 }
 
 // doFile scaffolds a single file
-func (s *Scaffold) doFile(e input.File) error {
+func (s *Scaffold) doFile(f input.File) error {
 	// Set common fields
-	err := s.setFieldsAndValidate(e)
+	err := s.setFieldsAndValidate(f)
 	if err != nil {
 		return err
 	}
 
 	// Get the template input params
-	i, err := e.GetInput()
+	i, err := f.GetInput()
 	if err != nil {
 		return err
 	}
@@ -121,7 +124,7 @@ func (s *Scaffold) doFile(e input.File) error {
 		}
 	}
 
-	return s.doRender(i, e, absFilePath)
+	return s.doRender(i, f, absFilePath)
 }
 
 const goFileExt = ".go"
