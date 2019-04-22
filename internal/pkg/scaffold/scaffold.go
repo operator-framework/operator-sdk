@@ -22,6 +22,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"text/template"
 
@@ -61,11 +62,11 @@ func (s *Scaffold) setFieldsAndValidate(f input.File) error {
 
 	// Validate the template and field values.
 	if err := input.CheckFileTemplateFields(f); err != nil {
-		return errors.Wrapf(err, "scaffold %T template check failed", f)
+		return err
 	}
 	if v, ok := f.(input.Validate); ok {
 		if err := v.Validate(); err != nil {
-			return errors.Wrapf(err, "scaffold %T validate failed", f)
+			return err
 		}
 	}
 	return nil
@@ -91,7 +92,7 @@ func (s *Scaffold) Execute(cfg *input.Config, files ...input.File) error {
 
 	for _, f := range files {
 		if err := s.doFile(f); err != nil {
-			return errors.Wrapf(err, "scaffold file %T", f)
+			return errors.Wrapf(err, "scaffold file %s", reflect.TypeOf(f).Elem().Name())
 		}
 	}
 	return nil
