@@ -15,6 +15,7 @@
 package zap
 
 import (
+	"flag"
 	"fmt"
 	"strconv"
 	"strings"
@@ -22,6 +23,7 @@ import (
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"k8s.io/klog"
 )
 
 var (
@@ -41,6 +43,7 @@ func init() {
 	zapFlagSet.Var(&sampleVal, "zap-sample", "Enable zap log sampling. Sampling will be disabled for integer log levels > 1")
 }
 
+// FlagSet - The zap logging flagset.
 func FlagSet() *pflag.FlagSet {
 	return zapFlagSet
 }
@@ -112,6 +115,15 @@ func (v *levelValue) Set(l string) error {
 		}
 	}
 	v.level = zapcore.Level(int8(lvl))
+	// If log level is greater than debug, set glog/klog level to that level.
+	if lvl < -3 {
+		fs := flag.NewFlagSet("", flag.ContinueOnError)
+		klog.InitFlags(fs)
+		err := fs.Set("v", fmt.Sprintf("%v", -1*lvl))
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
