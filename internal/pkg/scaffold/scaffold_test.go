@@ -40,51 +40,34 @@ func TestExecuteValidate(t *testing.T) {
 		AbsProjectPath: filepath.Join(wd[:strings.Index(wd, "github.com")], repo),
 		ProjectName:    projName,
 	}
-	s := &Scaffold{
-		Fs: afero.NewMemMapFs(),
+	s := &Scaffold{Fs: afero.NewMemMapFs()}
+	f := &AddController{Resource: r}
+
+	// Execute should run as expected if all File fields used in its template
+	// are populated.
+	i, err := f.GetInput()
+	if err != nil {
+		t.Fatalf("get input for input.File %T: %v", f, err)
+	}
+	err = s.Execute(cfg, f)
+	if err != nil {
+		t.Errorf("execute scaffold on %T: %v", f, err)
+	}
+	path := filepath.Join(cfg.AbsProjectPath, i.Path)
+	if _, err = s.Fs.Stat(path); err != nil {
+		t.Errorf("expected file to exist at %s, does not exist", path)
 	}
 
-	var allFiles = []input.File{
-		&AddController{Resource: r},
-		&AddToScheme{Resource: r},
-		&Apis{},
-		&Dockerfile{},
-		&Cmd{},
-		&ControllerKind{Resource: r},
-		&Controller{},
-		&CR{Resource: r},
-		&Doc{Resource: r},
-		&Entrypoint{},
-		&Gitignore{},
-		&GoTestScript{},
-		&GopkgToml{},
-		&Operator{},
-		&Register{Resource: r},
-		&Role{},
-		&RoleBinding{},
-		&ServiceAccount{},
-		&TestFrameworkDockerfile{},
-		&TestPod{Image: "test", TestNamespaceEnv: "TEST"},
-		&Types{Resource: r},
-		&UserSetup{},
-		&Version{},
+	// Make sure Execute returns an error when Resource is missing.
+	f.Resource = nil
+	if err = s.Fs.RemoveAll(path); err != nil {
+		t.Fatal(err)
 	}
-
-	for _, f := range allFiles {
-		i, err := f.GetInput()
-		if err != nil {
-			t.Errorf("get input for input.File %T: %v", f, err)
-			continue
-		}
-		err = s.Execute(cfg, f)
-		if err != nil {
-			t.Errorf("execute scaffold on %T: %v", f, err)
-			continue
-		}
-
-		path := filepath.Join(cfg.AbsProjectPath, i.Path)
-		if _, err = s.Fs.Stat(path); err != nil {
-			t.Errorf("expected file to exist at %s, does not exist", path)
-		}
+	err = s.Execute(cfg, f)
+	if err == nil {
+		t.Errorf("execute scaffold on %T: expected error, got none", f)
+	}
+	if _, err = s.Fs.Stat(path); err == nil {
+		t.Errorf("expected file to not exist at %s, does exist", path)
 	}
 }
