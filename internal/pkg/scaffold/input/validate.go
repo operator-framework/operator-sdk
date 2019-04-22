@@ -33,20 +33,12 @@ type Validate interface {
 }
 
 type ErrEmptyScaffoldField struct {
-	ScaffoldName string
-	Field        string
-	Value        interface{}
+	Field string
+	Value interface{}
 }
 
-func NewEmptyScaffoldFieldError(f File, fieldName string, value ...interface{}) error {
-	ft := reflect.TypeOf(f)
-	if ft.Kind() == reflect.Ptr {
-		ft = ft.Elem()
-	}
-	e := ErrEmptyScaffoldField{
-		ScaffoldName: ft.Name(),
-		Field:        fieldName,
-	}
+func NewEmptyScaffoldFieldError(fieldName string, value ...interface{}) error {
+	e := ErrEmptyScaffoldField{Field: fieldName}
 	if len(value) == 1 {
 		e.Value = value[0]
 	}
@@ -55,9 +47,9 @@ func NewEmptyScaffoldFieldError(f File, fieldName string, value ...interface{}) 
 
 func (e ErrEmptyScaffoldField) Error() string {
 	if e.Value != nil {
-		return fmt.Sprintf("validate %s: template field %s cannot have value %v", e.ScaffoldName, e.Field, e.Value)
+		return fmt.Sprintf("template field %s cannot have value %v", e.Field, e.Value)
 	}
-	return fmt.Sprintf("validate %s: template field %s not set", e.ScaffoldName, e.Field)
+	return fmt.Sprintf("template field %s not set", e.Field)
 }
 
 func CheckFileTemplateFields(f File) (err error) {
@@ -78,7 +70,7 @@ func CheckFileTemplateFields(f File) (err error) {
 		if !v.IsNil() {
 			v = v.Elem()
 		} else {
-			return fmt.Errorf("scaffold %s is nil\n", v.Type().Name())
+			return fmt.Errorf("scaffold %s is nil", v.Type().Name())
 		}
 	}
 	splitFields := map[string][]string{}
@@ -89,28 +81,36 @@ func CheckFileTemplateFields(f File) (err error) {
 		fv := v
 		pathSoFar := ""
 		for _, currPath := range splitPath {
-			pathSoFar = strings.Trim(pathSoFar+"."+currPath, ".")
-			if fv.Kind() == reflect.Struct {
-				fieldValue := fv.FieldByName(currPath)
-				if isEmptyValue(fieldValue) {
-					return ErrEmptyScaffoldField{ScaffoldName: v.Type().Name(), Field: pathSoFar}
-				} else {
-					switch fieldValue.Kind() {
-					case reflect.Struct:
-						fv = fieldValue.FieldByName(currPath)
-					case reflect.Ptr, reflect.Interface:
-						fv = fieldValue.Elem()
-					default:
-						break
-					}
+			pathSoFar = strings.Trim(pathSoFar + "." + currPath, ".")
+			fmt.Printf("validating %s\n", pathSoFar)
+			switch fv.Kind() {
+			case reflect.Struct:
+				_, found := fv.Type().FieldByName(currPath)
+				if !found {
+					return fmt.Errorf("template field %s does not exist in struct %s", pathSoFar, fv.Type().Name())
 				}
-			} else {
+				fmt.Printf("\tstruct %s field %s: ", fv.Type().Name(), currPath)
+				fv = fv.FieldByName(currPath)
 				if isEmptyValue(fv) {
-					return ErrEmptyScaffoldField{ScaffoldName: v.Type().Name(), Field: pathSoFar}
+					fmt.Println("empty")
+					return ErrEmptyScaffoldField{Field: pathSoFar}
 				}
+				fmt.Println("not empty")
+				switch fv.Kind() {
+				case reflect.Ptr, reflect.Interface:
+					fv = fv.Elem()
+				}
+			default:
+				fmt.Printf("\tnon struct %s: ", fv.Type().Name())
+				if isEmptyValue(fv) {
+					fmt.Println("empty")
+					return ErrEmptyScaffoldField{Field: pathSoFar}
+				}
+				fmt.Println("not empty")
 				break
 			}
 		}
+		fmt.Println()
 	}
 	return nil
 }
