@@ -24,8 +24,7 @@ echo $commandoutput | grep "Total Score: 80%"
 # test config file
 commandoutput2="$(operator-sdk scorecard \
   --proxy-image "$DEST_IMAGE" \
-  --config "$CONFIG_PATH" \
-  --output json)"
+  --config "$CONFIG_PATH")"
 # check basic suite
 echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 3,[[:space:]]"partialPass": 0,[[:space:]]"fail": 0,[[:space:]]"totalTests": 3,[[:space:]]"totalScorePercent": 100,.*$'
 # check olm suite

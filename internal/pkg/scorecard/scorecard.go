@@ -32,7 +32,7 @@ import (
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
-	log "github.com/sirupsen/logrus"
+	logrus "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	v1 "k8s.io/api/core/v1"
@@ -88,42 +88,22 @@ const (
 	scorecardContainerName = "scorecard-proxy"
 )
 
+// make a global logger for scorecard
+var (
+	logReadWriter io.ReadWriter
+	log           = logrus.New()
+)
+
 func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if err := initConfig(); err != nil {
 		return err
-	}
-	origStdout := os.Stdout
-	readLog, writeLog, _ := os.Pipe()
-	deferLogPrint := true
-	// suppress all output except the resulting json
-	if viper.GetString(OutputFormatOpt) == "json" {
-		os.Stdout = writeLog
-		os.Stderr = writeLog
-		log.SetOutput(os.Stderr)
-		defer func() {
-			if deferLogPrint {
-				capturedLog := make(chan string)
-				// copy the output in a separate goroutine so printing can't block indefinitely
-				go func() {
-					var buf bytes.Buffer
-					io.Copy(&buf, readLog)
-					capturedLog <- buf.String()
-				}()
-
-				// back to normal state
-				writeLog.Close()
-				os.Stdout = origStdout // restoring the real stdout
-				log := <-capturedLog
-				fmt.Println(log)
-			}
-		}()
 	}
 	if err := validateScorecardFlags(); err != nil {
 		return err
 	}
 	cmd.SilenceUsage = true
 	if viper.GetBool(VerboseOpt) {
-		log.SetLevel(log.DebugLevel)
+		log.SetLevel(logrus.DebugLevel)
 	}
 	defer func() {
 		if err := cleanupScorecard(); err != nil {
@@ -339,29 +319,17 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 	}
 	if viper.GetString(OutputFormatOpt) == "json" {
-		capturedLog := make(chan string)
-		// copy the output in a separate goroutine so printing can't block indefinitely
-		go func() {
-			var buf bytes.Buffer
-			io.Copy(&buf, readLog)
-			capturedLog <- buf.String()
-		}()
-
-		// back to normal state
-		writeLog.Close()
-		os.Stdout = origStdout // restoring the real stdout
-		log := <-capturedLog
-		scTest := TestSuitesToScorecardOutput(suites, log)
+		log, err := ioutil.ReadAll(logReadWriter)
+		if err != nil {
+			return fmt.Errorf("failed to read log buffer: %v", err)
+		}
+		scTest := TestSuitesToScorecardOutput(suites, string(log))
 		// Pretty print so users can also read the json output
 		bytes, err := json.MarshalIndent(scTest, "", "  ")
 		if err != nil {
 			return err
 		}
-		// restore stdout for printing
-		os.Stdout = origStdout
 		fmt.Printf("%s\n", string(bytes))
-		// don't do the deferred print
-		deferLogPrint = false
 	}
 	return nil
 }
@@ -378,14 +346,31 @@ func initConfig() error {
 	}
 
 	if err := viper.ReadInConfig(); err == nil {
-		if viper.GetString(OutputFormatOpt) != "json" {
-			log.Info("Using config file: ", viper.ConfigFileUsed())
+		// configure logger output before logging anything
+		err := configureLogger()
+		if err != nil {
+			return err
 		}
+		log.Info("Using config file: ", viper.ConfigFileUsed())
 	} else {
-		if viper.GetString(OutputFormatOpt) != "json" {
-			log.Warn("Could not load config file; using flags")
+		err := configureLogger()
+		if err != nil {
+			return err
 		}
+		log.Warn("Could not load config file; using flags")
 	}
+	return nil
+}
+
+func configureLogger() error {
+	if viper.GetString(OutputFormatOpt) == "human-readable" {
+		logReadWriter = os.Stdout
+	} else if viper.GetString(OutputFormatOpt) == "json" {
+		logReadWriter = &bytes.Buffer{}
+	} else {
+		return fmt.Errorf("invalid output format: %s", viper.GetString(OutputFormatOpt))
+	}
+	log.SetOutput(logReadWriter)
 	return nil
 }
 
@@ -406,6 +391,7 @@ func validateScorecardFlags() error {
 	if pullPolicy != "Always" && pullPolicy != "Never" && pullPolicy != "PullIfNotPresent" {
 		return fmt.Errorf("invalid proxy pull policy: (%s); valid values: Always, Never, PullIfNotPresent", pullPolicy)
 	}
+	// this is already being checked in configure logger; may be unnecessary
 	outputFormat := viper.GetString(OutputFormatOpt)
 	if outputFormat != "human-readable" && outputFormat != "json" {
 		return fmt.Errorf("invalid output format (%s); valid values: human-readable, json", outputFormat)
