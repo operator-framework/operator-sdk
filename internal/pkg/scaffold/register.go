@@ -32,9 +32,6 @@ type Register struct {
 }
 
 func (s *Register) GetInput() (input.Input, error) {
-	if s.Resource == nil {
-		return input.Input{}, input.NewEmptyScaffoldFieldError(s, "Resource")
-	}
 	if s.Path == "" {
 		s.Path = filepath.Join(ApisDir,
 			s.Resource.GoImportGroup,
@@ -67,3 +64,12 @@ var (
 	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}
 )
 `
+
+var _ input.Validator = &Register{}
+
+func (s *Register) Validate() error {
+	if s.Resource == nil {
+		return ValidateFileResource(s)
+	}
+	return nil
+}

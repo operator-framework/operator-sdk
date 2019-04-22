@@ -64,7 +64,7 @@ func (s *Scaffold) setFieldsAndValidate(f input.File) error {
 	if err := input.CheckFileTemplateFields(f); err != nil {
 		return err
 	}
-	if v, ok := f.(input.Validate); ok {
+	if v, ok := f.(input.Validator); ok {
 		if err := v.Validate(); err != nil {
 			return err
 		}

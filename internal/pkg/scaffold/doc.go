@@ -32,9 +32,6 @@ type Doc struct {
 }
 
 func (s *Doc) GetInput() (input.Input, error) {
-	if s.Resource == nil {
-		return input.Input{}, input.NewEmptyScaffoldFieldError(s, "Resource")
-	}
 	if s.Path == "" {
 		s.Path = filepath.Join(ApisDir,
 			s.Resource.GoImportGroup,
@@ -51,3 +48,12 @@ const docTemplate = `// Package {{.Resource.Version}} contains API Schema defini
 // +groupName={{ .Resource.FullGroup }}
 package {{.Resource.Version}}
 `
+
+var _ input.Validator = &Doc{}
+
+func (s *Doc) Validate() error {
+	if s.Resource == nil {
+		return ValidateFileResource(s)
+	}
+	return nil
+}

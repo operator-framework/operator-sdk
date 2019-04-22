@@ -15,6 +15,7 @@
 package scaffold
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
@@ -57,3 +58,15 @@ spec:
           fieldRef:
             fieldPath: metadata.namespace
 `
+
+var _ input.Validator = &TestPod{}
+
+func (s *TestPod) Validate() error {
+	if s.Image == "" {
+		return fmt.Errorf("%T.Image is empty", s)
+	}
+	if s.TestNamespaceEnv == "" {
+		return fmt.Errorf("%T.TestNamespaceEnv is empty", s)
+	}
+	return nil
+}

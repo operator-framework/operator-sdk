@@ -44,9 +44,6 @@ type CRD struct {
 }
 
 func (s *CRD) GetInput() (input.Input, error) {
-	if s.Resource == nil {
-		return input.Input{}, input.NewEmptyScaffoldFieldError(s, "Resource")
-	}
 	if s.Path == "" {
 		fileName := fmt.Sprintf("%s_%s_%s_crd.yaml",
 			strings.ToLower(s.Resource.Group),
@@ -218,4 +215,13 @@ func addCRDVersions(crd *apiextv1beta1.CustomResourceDefinition) {
 	} else {
 		crd.Spec.Versions = crdVersions
 	}
+}
+
+var _ input.Validator = &CRD{}
+
+func (s *CRD) Validate() error {
+	if s.Resource == nil {
+		return ValidateFileResource(s)
+	}
+	return nil
 }

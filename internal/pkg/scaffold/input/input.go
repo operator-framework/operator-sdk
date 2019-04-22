@@ -16,9 +16,7 @@
 
 package input
 
-import (
-	"text/template"
-)
+import "text/template"
 
 // IfExistsAction determines what to do if the scaffold file already exists
 type IfExistsAction int

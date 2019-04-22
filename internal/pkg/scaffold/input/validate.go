@@ -24,8 +24,8 @@ import (
 	"text/template/parse"
 )
 
-// Validate validates input
-type Validate interface {
+// Validator validates input.
+type Validator interface {
 	// Validate returns nil if the inputs' validation logic approves of
 	// field values. Validation of the template is performed by
 	// CheckFileTemplateFields and should not be done by Validate().
@@ -35,14 +35,6 @@ type Validate interface {
 type ErrEmptyScaffoldField struct {
 	Field string
 	Value interface{}
-}
-
-func NewEmptyScaffoldFieldError(fieldName string, value ...interface{}) error {
-	e := ErrEmptyScaffoldField{Field: fieldName}
-	if len(value) == 1 {
-		e.Value = value[0]
-	}
-	return e
 }
 
 func (e ErrEmptyScaffoldField) Error() string {
@@ -81,38 +73,37 @@ func CheckFileTemplateFields(f File) (err error) {
 		fv := v
 		pathSoFar := ""
 		for _, currPath := range splitPath {
-			pathSoFar = strings.Trim(pathSoFar + "." + currPath, ".")
-			fmt.Printf("validating %s\n", pathSoFar)
+			pathSoFar = strings.Trim(pathSoFar+"."+currPath, ".")
 			switch fv.Kind() {
 			case reflect.Struct:
 				_, found := fv.Type().FieldByName(currPath)
 				if !found {
 					return fmt.Errorf("template field %s does not exist in struct %s", pathSoFar, fv.Type().Name())
 				}
-				fmt.Printf("\tstruct %s field %s: ", fv.Type().Name(), currPath)
 				fv = fv.FieldByName(currPath)
 				if isEmptyValue(fv) {
-					fmt.Println("empty")
 					return ErrEmptyScaffoldField{Field: pathSoFar}
 				}
-				fmt.Println("not empty")
 				switch fv.Kind() {
 				case reflect.Ptr, reflect.Interface:
 					fv = fv.Elem()
 				}
 			default:
-				fmt.Printf("\tnon struct %s: ", fv.Type().Name())
 				if isEmptyValue(fv) {
-					fmt.Println("empty")
 					return ErrEmptyScaffoldField{Field: pathSoFar}
 				}
-				fmt.Println("not empty")
 				break
 			}
 		}
-		fmt.Println()
 	}
 	return nil
+}
+
+func IsEmptyValue(i interface{}) bool {
+	if v, ok := i.(reflect.Value); ok {
+		return isEmptyValue(v)
+	}
+	return isEmptyValue(reflect.ValueOf(i))
 }
 
 func isEmptyValue(v reflect.Value) bool {

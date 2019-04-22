@@ -29,9 +29,6 @@ type AddController struct {
 }
 
 func (s *AddController) GetInput() (input.Input, error) {
-	if s.Resource == nil {
-		return input.Input{}, input.NewEmptyScaffoldFieldError(s, "Resource")
-	}
 	if s.Path == "" {
 		fileName := "add_" + s.Resource.LowerKind + ".go"
 		s.Path = filepath.Join(ControllerDir, fileName)
@@ -51,3 +48,12 @@ func init() {
 	AddToManagerFuncs = append(AddToManagerFuncs, {{ .Resource.LowerKind }}.Add)
 }
 `
+
+var _ input.Validator = &AddController{}
+
+func (s *AddController) Validate() error {
+	if s.Resource == nil {
+		return ValidateFileResource(s)
+	}
+	return nil
+}

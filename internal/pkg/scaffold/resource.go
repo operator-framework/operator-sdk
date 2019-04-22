@@ -19,11 +19,13 @@ package scaffold
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 
-	"github.com/markbates/inflect"
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 
+	"github.com/markbates/inflect"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
@@ -148,6 +150,23 @@ func (r *Resource) checkAndSetVersion() error {
 
 	if !ResourceVersionRegexp.MatchString(r.Version) {
 		return errors.New("version is not in the correct Kubernetes version format, ex. v1alpha1")
+	}
+	return nil
+}
+
+func ValidateFileResource(f input.File) error {
+	return ValidateFileField(f, "Resource")
+}
+
+func ValidateFileField(f input.File, fieldName string) error {
+	v := reflect.ValueOf(f)
+	if v.Kind() == reflect.Interface || v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	if v.Kind() == reflect.Struct {
+		if input.IsEmptyValue(v.FieldByName(fieldName)) {
+			return fmt.Errorf("scaffold %s.%s is empty", v.Type().Name(), fieldName)
+		}
 	}
 	return nil
 }

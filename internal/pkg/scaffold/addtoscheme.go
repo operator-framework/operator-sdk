@@ -31,9 +31,6 @@ type AddToScheme struct {
 }
 
 func (s *AddToScheme) GetInput() (input.Input, error) {
-	if s.Resource == nil {
-		return input.Input{}, input.NewEmptyScaffoldFieldError(s, "Resource")
-	}
 	if s.Path == "" {
 		fileName := fmt.Sprintf("addtoscheme_%s_%s.go",
 			s.Resource.GoImportGroup,
@@ -55,3 +52,12 @@ func init() {
 	AddToSchemes = append(AddToSchemes, {{ .Resource.Version }}.SchemeBuilder.AddToScheme)
 }
 `
+
+var _ input.Validator = &AddToScheme{}
+
+func (s *AddToScheme) Validate() error {
+	if s.Resource == nil {
+		return ValidateFileResource(s)
+	}
+	return nil
+}

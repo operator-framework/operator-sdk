@@ -36,9 +36,6 @@ type CR struct {
 }
 
 func (s *CR) GetInput() (input.Input, error) {
-	if s.Resource == nil {
-		return input.Input{}, input.NewEmptyScaffoldFieldError(s, "Resource")
-	}
 	if s.Path == "" {
 		fileName := fmt.Sprintf("%s_%s_%s_cr.yaml",
 			strings.ToLower(s.Resource.Group),
@@ -71,3 +68,12 @@ spec:
   size: 3
 {{- end }}
 `
+
+var _ input.Validator = &CR{}
+
+func (s *CR) Validate() error {
+	if s.Resource == nil {
+		return ValidateFileResource(s)
+	}
+	return nil
+}

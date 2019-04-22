@@ -30,9 +30,6 @@ type Types struct {
 }
 
 func (s *Types) GetInput() (input.Input, error) {
-	if s.Resource == nil {
-		return input.Input{}, input.NewEmptyScaffoldFieldError(s, "Resource")
-	}
 	if s.Path == "" {
 		s.Path = filepath.Join(ApisDir,
 			s.Resource.GoImportGroup,
@@ -95,3 +92,12 @@ func init() {
 	SchemeBuilder.Register(&{{.Resource.Kind}}{}, &{{.Resource.Kind}}List{})
 }
 `
+
+var _ input.Validator = &Types{}
+
+func (s *Types) Validate() error {
+	if s.Resource == nil {
+		return ValidateFileResource(s)
+	}
+	return nil
+}
