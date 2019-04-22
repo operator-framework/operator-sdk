@@ -32,6 +32,8 @@ type Validator interface {
 	Validate() error
 }
 
+// ErrEmptyScaffoldField hold information about an empty field found when
+// checking a scaffold for all template field pipelines.
 type ErrEmptyScaffoldField struct {
 	Field string
 	Value interface{}
@@ -44,6 +46,10 @@ func (e ErrEmptyScaffoldField) Error() string {
 	return fmt.Sprintf("template field %s not set", e.Field)
 }
 
+// CheckFileTemplateFields checks pipeline fields in f's template string,
+// if one exists,  against f's underlying struct fields for zero values.
+// If any struct field  that exists in a template is its zero value (empty),
+// CheckFileTemplateFields  returns an error.
 func CheckFileTemplateFields(f File) (err error) {
 	i, err := f.GetInput()
 	if err != nil {
@@ -99,6 +105,8 @@ func CheckFileTemplateFields(f File) (err error) {
 	return nil
 }
 
+// IsEmptyValue returns true if i's underlying instantiation, represented as a
+// reflect.Value, is empty, i.e. equal to the underlying type's zero value.
 func IsEmptyValue(i interface{}) bool {
 	if v, ok := i.(reflect.Value); ok {
 		return isEmptyValue(v)
@@ -129,6 +137,10 @@ func isEmptyValue(v reflect.Value) bool {
 	return false
 }
 
+// getTemplatePipelines collects all _field_ template pipelines from i's
+// TemplateBody, if one exists, by BFS. All template tree nodes that have an
+// underlying BranchNode are ignored, as these are optional when executing
+// a template.
 func getTemplatePipelines(i Input) (map[string]struct{}, error) {
 	if i.TemplateBody == "" {
 		return nil, nil

@@ -154,16 +154,22 @@ func (r *Resource) checkAndSetVersion() error {
 	return nil
 }
 
+// ValidateFileResource calls ValidateFileField with arguments f and "Resource".
 func ValidateFileResource(f input.File) error {
 	return ValidateFileField(f, "Resource")
 }
 
+// ValidateFileField checks whether f has a field of name fieldName,
+// and whether that field is empty.
 func ValidateFileField(f input.File, fieldName string) error {
 	v := reflect.ValueOf(f)
 	if v.Kind() == reflect.Interface || v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
 	if v.Kind() == reflect.Struct {
+		if _, found := v.Type().FieldByName(fieldName); !found {
+			return fmt.Errorf("scaffold %s has no field of name %s", v.Type().Name(), fieldName)
+		}
 		if input.IsEmptyValue(v.FieldByName(fieldName)) {
 			return fmt.Errorf("scaffold %s.%s is empty", v.Type().Name(), fieldName)
 		}
