@@ -19,6 +19,8 @@
 
 ### Bug Fixes
 
+- In Helm-based operators, when a custom resource with a failing release is reverted back to a working state, the `ReleaseFailed` condition is now correctly removed. ([#1321](https://github.com/operator-framework/operator-sdk/pull/1321))
+
 ## v0.7.0
 
 ### Added
