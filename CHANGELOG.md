@@ -4,6 +4,7 @@
 
 - New option for [`operator-sdk build --image-builder`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#build), which can be used to specify which image builder to use. Adds support for [buildah](https://github.com/containers/buildah/). ([#1311](https://github.com/operator-framework/operator-sdk/pull/1311))
 - Manager is now configured with a new `DynamicRESTMapper`, which accounts for the fact that the default `RESTMapper`, which only checks resource types at startup, can't handle the case of first creating a CRD and then an instance of that CRD. ([#1329](https://github.com/operator-framework/operator-sdk/pull/1329))
+- New optional flags `--k8s-api` and `--k8s-import-path` for [`operator-sdk add controller`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#controller) to specify that the new controller reconciles a built-in Kubernetes API. ([#1344](https://github.com/operator-framework/operator-sdk/pull/1344))
 
 ### Changed
 
