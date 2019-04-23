@@ -15,6 +15,7 @@
 package scaffold
 
 import (
+	"path"
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
@@ -26,6 +27,12 @@ type ControllerKind struct {
 
 	// Resource defines the inputs for the controller's primary resource
 	Resource *Resource
+	// K8sImportPath holds the import path for a built-in Kubernetes API that
+	// this controller reconciles if specified by the scaffold invoker.
+	K8sImportPath string
+	// ImportMap maps all imports destined for the scaffold to their import
+	// identifier, if any.
+	ImportMap map[string]string
 }
 
 func (s *ControllerKind) GetInput() (input.Input, error) {
@@ -36,7 +43,34 @@ func (s *ControllerKind) GetInput() (input.Input, error) {
 	// Error if this file exists.
 	s.IfExistsAction = input.Error
 	s.TemplateBody = controllerKindTemplate
+
+	// Set imports.
+	if len(s.ImportMap) == 0 {
+		s.ImportMap = controllerKindImports
+	}
+	importPrefix := path.Join(s.Repo, "pkg", "apis")
+	if s.K8sImportPath != "" {
+		importPrefix = s.K8sImportPath
+	}
+	importPath := path.Join(importPrefix, s.Resource.GoImportGroup, s.Resource.Version)
+	s.ImportMap[importPath] = s.Resource.GoImportGroup + s.Resource.Version
 	return s.Input, nil
+}
+
+var controllerKindImports = map[string]string{
+	"k8s.io/api/core/v1":                                           "corev1",
+	"k8s.io/apimachinery/pkg/api/errors":                           "",
+	"k8s.io/apimachinery/pkg/apis/meta/v1":                         "metav1",
+	"k8s.io/apimachinery/pkg/runtime":                              "",
+	"k8s.io/apimachinery/pkg/types":                                "",
+	"sigs.k8s.io/controller-runtime/pkg/client":                    "",
+	"sigs.k8s.io/controller-runtime/pkg/controller":                "",
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil": "",
+	"sigs.k8s.io/controller-runtime/pkg/handler":                   "",
+	"sigs.k8s.io/controller-runtime/pkg/manager":                   "",
+	"sigs.k8s.io/controller-runtime/pkg/reconcile":                 "",
+	"sigs.k8s.io/controller-runtime/pkg/runtime/log":               "logf",
+	"sigs.k8s.io/controller-runtime/pkg/source":                    "",
 }
 
 const controllerKindTemplate = `package {{ .Resource.LowerKind }}
@@ -44,21 +78,9 @@ const controllerKindTemplate = `package {{ .Resource.LowerKind }}
 import (
 	"context"
 
-	{{ .Resource.GoImportGroup}}{{ .Resource.Version }} "{{ .Repo }}/pkg/apis/{{ .Resource.GoImportGroup}}/{{ .Resource.Version }}"
-
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-	"sigs.k8s.io/controller-runtime/pkg/source"
+	{{range $p, $i := .ImportMap -}}
+	{{$i}} "{{$p}}"
+	{{end}}
 )
 
 var log = logf.Log.WithName("controller_{{ .Resource.LowerKind }}")
