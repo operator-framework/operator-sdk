@@ -57,8 +57,7 @@ const (
 type DepManagerType string
 
 const (
-	DepManagerNone DepManagerType = "none"
-	DepManagerDep  DepManagerType = "dep"
+	DepManagerDep DepManagerType = "dep"
 )
 
 type ErrInvalidDepManagerType struct {
@@ -73,7 +72,7 @@ func GetDepManagerType() (DepManagerType, error) {
 	if _, err := os.Stat(gopkgTOMLFile); err == nil {
 		return DepManagerDep, nil
 	}
-	return DepManagerNone, errors.New("unable to determine dependency manager: no dependency manager file found")
+	return "", errors.New("unable to determine dependency manager: no dependency manager file found")
 }
 
 type ErrUnknownOperatorType struct {
