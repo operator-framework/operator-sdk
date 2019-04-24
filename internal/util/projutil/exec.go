@@ -62,7 +62,7 @@ func GoBuild(opts GoBuildOptions) error {
 	return goCmd(goBuildCmd, opts)
 }
 
-// GoBuild runs "go test" configured with opts.
+// GoTest runs "go test" configured with opts.
 func GoTest(opts GoBuildOptions) error {
 	return goCmd(goTestCmd, opts)
 }
