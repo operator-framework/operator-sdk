@@ -38,8 +38,10 @@ import (
 )
 
 const (
-	CSVYamlFileExt    = ".clusterserviceversion.yaml"
-	CSVConfigYamlFile = "csv-config.yaml"
+	filePathSep = string(filepath.Separator)
+
+	OLMCatalogDir  = scaffold.DeployDir + filePathSep + "olm-catalog"
+	CSVYamlFileExt = ".clusterserviceversion.yaml"
 )
 
 var ErrNoCSVVersion = errors.New("no CSV version supplied")
@@ -47,15 +49,14 @@ var ErrNoCSVVersion = errors.New("no CSV version supplied")
 type CSV struct {
 	input.Input
 
-	// ConfigFilePath is the location of a configuration file path for this
-	// projects' CSV file.
-	ConfigFilePath string
 	// CSVVersion is the CSV current version.
 	CSVVersion string
 	// FromVersion is the CSV version from which to build a new CSV. A CSV
 	// manifest with this version should exist at:
 	// deploy/olm-catalog/{from_version}/operator-name.v{from_version}.{CSVYamlFileExt}
 	FromVersion string
+	// CSVConfigFile is data from a file that configures CSV generation.
+	CSVConfigFile *CSVConfigFile
 
 	once       sync.Once
 	fs         afero.Fs // For testing, ex. afero.NewMemMapFs()
@@ -83,14 +84,17 @@ func (s *CSV) GetInput() (input.Input, error) {
 		// Path is what the operator-registry expects:
 		// {manifests -> olm-catalog}/{operator_name}/{semver}/{operator_name}.v{semver}.clusterserviceversion.yaml
 		s.Path = filepath.Join(s.pathPrefix,
-			scaffold.OLMCatalogDir,
+			OLMCatalogDir,
 			lowerProjName,
 			s.CSVVersion,
 			getCSVFileName(lowerProjName, s.CSVVersion),
 		)
 	}
-	if s.ConfigFilePath == "" {
-		s.ConfigFilePath = filepath.Join(s.pathPrefix, scaffold.OLMCatalogDir, CSVConfigYamlFile)
+	if s.CSVConfigFile == nil {
+		s.CSVConfigFile = &CSVConfigFile{}
+	}
+	if err := s.CSVConfigFile.setFields(); err != nil {
+		return input.Input{}, err
 	}
 	return s.Input, nil
 }
@@ -112,16 +116,11 @@ func (s *CSV) CustomRender() ([]byte, error) {
 		s.initCSVFields(csv)
 	}
 
-	cfg, err := GetCSVConfig(s.ConfigFilePath)
-	if err != nil {
-		return nil, err
-	}
-
 	setCSVDefaultFields(csv)
 	if err = s.updateCSVVersions(csv); err != nil {
 		return nil, err
 	}
-	if err = s.updateCSVFromManifestFiles(cfg, csv); err != nil {
+	if err = s.updateCSVFromManifestFiles(s.CSVConfigFile, csv); err != nil {
 		return nil, err
 	}
 
@@ -184,7 +183,7 @@ func getCSVFileName(name, version string) string {
 func (s *CSV) getCSVPath(ver string) string {
 	lowerProjName := strings.ToLower(s.ProjectName)
 	name := getCSVFileName(lowerProjName, ver)
-	return filepath.Join(s.pathPrefix, scaffold.OLMCatalogDir, lowerProjName, ver, name)
+	return filepath.Join(s.pathPrefix, OLMCatalogDir, lowerProjName, ver, name)
 }
 
 // getDisplayName turns a project dir name in any of {snake, chain, camel}
@@ -356,7 +355,7 @@ func replaceAllBytes(v interface{}, old, new []byte) error {
 
 // updateCSVFromManifestFiles gathers relevant data from generated and
 // user-defined manifests and updates csv.
-func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.ClusterServiceVersion) error {
+func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfigFile, csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	store := NewUpdaterStore()
 	otherSpecs := make(map[string][][]byte)
 	for _, f := range append(cfg.CRDCRPaths, cfg.OperatorPath, cfg.RolePath) {

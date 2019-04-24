@@ -25,7 +25,7 @@ import (
 func TestConfig(t *testing.T) {
 	crdsDir := filepath.Join(testDataDir, scaffold.CRDsDir)
 
-	cfg := &CSVConfig{
+	cfg := &CSVConfigFile{
 		CRDCRPaths: []string{crdsDir},
 	}
 	if err := cfg.setFields(); err != nil {
@@ -35,9 +35,7 @@ func TestConfig(t *testing.T) {
 		t.Errorf("Wanted 3 crd/cr files, got: %v", cfg.CRDCRPaths)
 	}
 
-	cfg = &CSVConfig{
-		CRDCRPaths: []string{crdsDir, filepath.Join(crdsDir, "app_v1alpha1_app_crd.yaml")},
-	}
+	cfg.CRDCRPaths = []string{crdsDir, filepath.Join(crdsDir, "app_v1alpha1_app_crd.yaml")}
 	if err := cfg.setFields(); err != nil {
 		t.Errorf("Set fields crd-cr paths dir file mix: (%v)", err)
 	}

@@ -36,7 +36,10 @@ import (
 
 const testDataDir = "testdata"
 
-var testDeployDir = filepath.Join(testDataDir, scaffold.DeployDir)
+var (
+	testDeployDir = filepath.Join(testDataDir, scaffold.DeployDir)
+	csvCfgPath    = filepath.Join(testDeployDir, "olm-catalog", CSVConfigYamlFile)
+)
 
 func TestCSVNew(t *testing.T) {
 	buf := &bytes.Buffer{}
@@ -48,8 +51,16 @@ func TestCSVNew(t *testing.T) {
 	csvVer := "0.1.0"
 	projectName := "app-operator"
 
-	sc := &CSV{CSVVersion: csvVer, pathPrefix: testDataDir}
-	err := s.Execute(&input.Config{ProjectName: projectName}, sc)
+	csvCfgFile, err := GetCSVConfigFile(csvCfgPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sc := &CSV{
+		CSVVersion:    csvVer,
+		CSVConfigFile: csvCfgFile,
+		pathPrefix:    testDataDir,
+	}
+	err = s.Execute(&input.Config{ProjectName: projectName}, sc)
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
@@ -96,12 +107,17 @@ func TestCSVFromOld(t *testing.T) {
 		t.Fatalf("Failed to write %s to in-memory test fs: (%v)", testDeployDir, err)
 	}
 
-	sc := &CSV{
-		CSVVersion:  newCSVVer,
-		FromVersion: oldCSVVer,
-		pathPrefix:  testDataDir,
+	csvCfgFile, err := GetCSVConfigFile(csvCfgPath)
+	if err != nil {
+		t.Fatal(err)
 	}
-	err := s.Execute(&input.Config{ProjectName: projectName}, sc)
+	sc := &CSV{
+		CSVVersion:    newCSVVer,
+		FromVersion:   oldCSVVer,
+		CSVConfigFile: csvCfgFile,
+		pathPrefix:    testDataDir,
+	}
+	err = s.Execute(&input.Config{ProjectName: projectName}, sc)
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}

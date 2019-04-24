@@ -21,13 +21,50 @@ import (
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 
 	"github.com/ghodss/yaml"
+	"github.com/spf13/afero"
 )
 
-// CSVConfig is a configuration file for CSV composition. Its fields contain
-// file path information.
+const CSVConfigYamlFile = "csv-config.yaml"
+
+// CSVConfig is a scaffold wrapper for CSVConfig such that CSVConfig's can
+// be marshalled and unmarshalled correctly.
 type CSVConfig struct {
+	input.Input
+	File *CSVConfigFile
+
+	// TODO: remove once fs is moved to input.Input.
+	fs afero.Fs
+}
+
+var _ input.File = &CSVConfig{}
+
+func (c *CSVConfig) GetInput() (input.Input, error) {
+	if c.Path == "" {
+		c.Path = filepath.Join(OLMCatalogDir, CSVConfigYamlFile)
+	}
+	if c.File == nil {
+		c.File = &CSVConfigFile{}
+	}
+	return c.Input, nil
+}
+
+var _ scaffold.CustomRenderer = &CSVConfig{}
+
+func (c *CSVConfig) SetFS(fs afero.Fs) { c.fs = fs }
+
+func (c *CSVConfig) CustomRender() ([]byte, error) {
+	if err := c.File.setFields(); err != nil {
+		return nil, err
+	}
+	return yaml.Marshal(c.File)
+}
+
+// CSVConfigFile is a configuration file for CSV composition. Its fields contain
+// file path information.
+type CSVConfigFile struct {
 	// The operator manifest file path. Defaults to deploy/operator.yaml.
 	OperatorPath string `json:"operator-path,omitempty"`
 	// The RBAC role manifest file path. Defaults to deploy/role.yaml.
@@ -36,11 +73,10 @@ type CSVConfig struct {
 	CRDCRPaths []string `json:"crd-cr-paths,omitempty"`
 }
 
-// TODO: discuss case of no config file at default path: write new file or not.
-func GetCSVConfig(cfgFile string) (*CSVConfig, error) {
-	cfg := &CSVConfig{}
-	if _, err := os.Stat(cfgFile); err == nil {
-		cfgData, err := ioutil.ReadFile(cfgFile)
+func GetCSVConfigFile(path string) (*CSVConfigFile, error) {
+	cfg := &CSVConfigFile{}
+	if _, err := os.Stat(path); err == nil {
+		cfgData, err := ioutil.ReadFile(path)
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +95,11 @@ func GetCSVConfig(cfgFile string) (*CSVConfig, error) {
 
 const yamlExt = ".yaml"
 
-func (c *CSVConfig) setFields() error {
+func isYAMLFile(path string) bool {
+	return filepath.Ext(path) == yamlExt
+}
+
+func (c *CSVConfigFile) setFields() error {
 	if c.OperatorPath == "" {
 		info, err := (&scaffold.Operator{}).GetInput()
 		if err != nil {
@@ -101,7 +141,7 @@ func (c *CSVConfig) setFields() error {
 						seen[p] = struct{}{}
 					}
 				}
-			} else if filepath.Ext(path) == yamlExt {
+			} else if isYAMLFile(path) {
 				if _, ok := seen[path]; !ok {
 					paths = append(paths, path)
 					seen[path] = struct{}{}
@@ -122,7 +162,7 @@ func getManifestPathsFromDir(dir string) (paths []string, err error) {
 		if info == nil {
 			return fmt.Errorf("file info for %s was nil", path)
 		}
-		if !info.IsDir() && filepath.Ext(path) == yamlExt {
+		if !info.IsDir() && isYAMLFile(path) {
 			paths = append(paths, path)
 		}
 		return nil

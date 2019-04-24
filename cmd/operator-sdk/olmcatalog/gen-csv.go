@@ -17,6 +17,7 @@ package olmcatalog
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -56,18 +57,18 @@ Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config
 	genCSVCmd.Flags().StringVar(&csvVersion, "csv-version", "", "Semantic version of the CSV")
 	genCSVCmd.MarkFlagRequired("csv-version")
 	genCSVCmd.Flags().StringVar(&fromVersion, "from-version", "", "Semantic version of an existing CSV to use as a base")
-	genCSVCmd.Flags().StringVar(&csvConfigPath, "csv-config", "", "Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml")
+	genCSVCmd.Flags().StringVar(&csvConfigPath, "csv-config", "", "Path to CSV config file. If unset, default file paths are used")
 	genCSVCmd.Flags().BoolVar(&updateCRDs, "update-crds", false, "Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's")
 
 	return genCSVCmd
 }
 
-func genCSVFunc(cmd *cobra.Command, args []string) error {
+func genCSVFunc(cmd *cobra.Command, args []string) (err error) {
 	if len(args) != 0 {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 
-	if err := verifyGenCSVFlags(); err != nil {
+	if err = verifyGenCSVFlags(); err != nil {
 		return err
 	}
 
@@ -79,14 +80,34 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 	if projutil.IsOperatorGo() {
 		cfg.Repo = projutil.CheckAndGetProjectGoPkg()
 	}
+	s := &scaffold.Scaffold{}
+
+	if cmd.Flags().Changed(writeCSVConfigOpt) {
+		if err := writeConfig(s, cfg); err != nil {
+			return err
+		}
+	}
+
+	var csvCfgFile *catalog.CSVConfigFile
+	if _, err = os.Stat(csvConfigPath); err == nil {
+		log.Infof("Using custom CSV config %s.", csvConfigPath)
+		csvCfgFile, err = catalog.GetCSVConfigFile(csvConfigPath)
+		if err != nil {
+			return err
+		}
+	} else if err != nil && csvConfigPath != "" {
+		return fmt.Errorf("error reading CSV config %s: %v", csvConfigPath, err)
+	} else {
+		log.Info("Using default CSV config.")
+		csvCfgFile = &catalog.CSVConfigFile{}
+	}
 
 	log.Infof("Generating CSV manifest version %s", csvVersion)
 
-	s := &scaffold.Scaffold{}
 	csv := &catalog.CSV{
-		CSVVersion:     csvVersion,
-		FromVersion:    fromVersion,
-		ConfigFilePath: csvConfigPath,
+		CSVVersion:    csvVersion,
+		FromVersion:   fromVersion,
+		CSVConfigFile: csvCfgFile,
 	}
 	if err := s.Execute(cfg, csv); err != nil {
 		return fmt.Errorf("catalog scaffold failed: (%v)", err)
@@ -94,15 +115,11 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 
 	// Write CRD's to the new or updated CSV package dir.
 	if updateCRDs {
-		input, err := csv.GetInput()
+		i, err := csv.GetInput()
 		if err != nil {
 			return err
 		}
-		cfg, err := catalog.GetCSVConfig(csvConfigPath)
-		if err != nil {
-			return err
-		}
-		err = writeCRDsToDir(cfg.CRDCRPaths, filepath.Dir(input.Path))
+		err = writeCRDsToDir(csvCfgFile.CRDCRPaths, filepath.Dir(i.Path))
 		if err != nil {
 			return err
 		}
