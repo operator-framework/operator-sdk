@@ -31,6 +31,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"golang.org/x/tools/imports"
@@ -50,8 +51,9 @@ type Scaffold struct {
 	GetWriter func(path string, mode os.FileMode) (io.Writer, error)
 	// BoilerplatePath is the path to a file containing Go boilerplate text.
 	BoilerplatePath string
-	// BoilerplateBytes are bytes of Go boilerplate text.
-	BoilerplateBytes []byte
+
+	// boilerplateBytes are bytes of Go boilerplate text.
+	boilerplateBytes []byte
 }
 
 func (s *Scaffold) setFieldsAndValidate(t input.File) error {
@@ -80,19 +82,15 @@ func (s *Scaffold) configure(cfg *input.Config) {
 	s.ProjectName = cfg.ProjectName
 }
 
-func getAndValidateBoilerplateBytes(bp string) ([]byte, error) {
-	b, err := ioutil.ReadFile(bp)
-	if err != nil {
-		return nil, err
-	}
+func validateBoilerplateBytes(b []byte) error {
 	// Append a 'package main' so we can parse the file.
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, "", append([]byte("package main\n"), b...), parser.ParseComments)
 	if err != nil {
-		return nil, fmt.Errorf("parse comments from %s: %v", bp, err)
+		return fmt.Errorf("parse boilerplate comments: %v", err)
 	}
 	if len(f.Comments) == 0 {
-		return nil, fmt.Errorf(`boilerplate file "%s" does not contain comments`, bp)
+		return fmt.Errorf("boilerplate does not contain comments")
 	}
 	var cb []byte
 	for _, cg := range f.Comments {
@@ -109,26 +107,37 @@ func getAndValidateBoilerplateBytes(bp string) ([]byte, error) {
 	}
 	tb, cb = bytes.TrimSpace(tb), bytes.TrimSpace(cb)
 	if bytes.Compare(tb, cb) != 0 {
-		return nil, fmt.Errorf(`boilerplate file "%s" contains text other than comments:\n"%s"\n`, bp, tb)
+		return fmt.Errorf(`boilerplate contains text other than comments:\n"%s"\n`, tb)
 	}
-	return append(bytes.TrimSpace(b), []byte("\n\n")...), nil
+	return nil
+}
+
+func wrapBoilerplateErr(err error, bp string) error {
+	return errors.Wrapf(err, `boilerplate file "%s"`, bp)
 }
 
 func (s *Scaffold) setBoilerplate() (err error) {
-	if len(s.BoilerplateBytes) == 0 {
+	// If we've already set boilerplate bytes, don't overwrite them.
+	if len(s.boilerplateBytes) == 0 {
 		bp := s.BoilerplatePath
 		if bp == "" {
 			i, err := (&Boilerplate{}).GetInput()
 			if err != nil {
-				return err
+				return wrapBoilerplateErr(err, i.Path)
 			}
 			if _, err := os.Stat(i.Path); err == nil {
 				bp = i.Path
 			}
 		}
 		if bp != "" {
-			s.BoilerplateBytes, err = getAndValidateBoilerplateBytes(bp)
-			return err
+			b, err := ioutil.ReadFile(bp)
+			if err != nil {
+				return wrapBoilerplateErr(err, bp)
+			}
+			if err = validateBoilerplateBytes(b); err != nil {
+				return wrapBoilerplateErr(err, bp)
+			}
+			s.boilerplateBytes = append(bytes.TrimSpace(b), '\n', '\n')
 		}
 	}
 	return nil
@@ -251,8 +260,8 @@ func (s *Scaffold) doRender(i input.Input, e input.File, absPath string) error {
 		}
 	}
 
-	if isGoFile(absPath) && len(s.BoilerplateBytes) != 0 {
-		if _, err = f.Write(s.BoilerplateBytes); err != nil {
+	if isGoFile(absPath) && len(s.boilerplateBytes) != 0 {
+		if _, err = f.Write(s.boilerplateBytes); err != nil {
 			return err
 		}
 	}
