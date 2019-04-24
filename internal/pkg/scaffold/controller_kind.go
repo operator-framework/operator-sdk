@@ -45,9 +45,7 @@ func (s *ControllerKind) GetInput() (input.Input, error) {
 	s.TemplateBody = controllerKindTemplate
 
 	// Set imports.
-	if len(s.ImportMap) == 0 {
-		s.ImportMap = controllerKindImports
-	}
+	s.ImportMap = controllerKindImports
 	importPrefix := path.Join(s.Repo, "pkg", "apis")
 	if s.K8sImportPath != "" {
 		importPrefix = s.K8sImportPath
