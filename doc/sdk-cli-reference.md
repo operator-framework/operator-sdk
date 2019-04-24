@@ -180,6 +180,10 @@ pkg/apis/app/v1alpha1/
 
 Parent command for all OLM Catalog related commands.
 
+#### Flags
+
+* `--write-csv-config` string or empty - Write a default CSV config file. A default path is used if no value is provided. Set --write-csv-config=<path> to supply a non-default path
+
 ### gen-csv
 
 Writes a Cluster Service Version (CSV) manifest and optionally CRD files to `deploy/olm-catalog/{operator-name}/{csv-version}`.
@@ -188,7 +192,8 @@ Writes a Cluster Service Version (CSV) manifest and optionally CRD files to `dep
 
 * `--csv-version` string - (required) Semantic version of the CSV manifest.
 * `--from-version` string - Semantic version of CSV manifest to use as a base for a new version.
-* `--csv-config` string - Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml.
+* `--csv-config` string - Path to CSV config file. If unset, default file paths are used
+* `--write-csv-config` string or empty - Write a default CSV config file. A default path is used if no value is provided. Set --write-csv-config=<path> to supply a non-default path
 * `--update-crds` Update CRD manifests in deploy/{operator-name}/{csv-version} using the latest CRD manifests.
 
 #### Example
