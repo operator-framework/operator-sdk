@@ -30,6 +30,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 func NewCmd() *cobra.Command {
@@ -281,6 +282,15 @@ func doHelmScaffold() error {
 	valuesPath := filepath.Join("<project_dir>", helm.HelmChartsDir, chart.GetMetadata().GetName(), "values.yaml")
 	crSpec := fmt.Sprintf("# Default values copied from %s\n\n%s", valuesPath, chart.GetValues().GetRaw())
 
+	k8sCfg, err := config.GetConfig()
+	if err != nil {
+		return fmt.Errorf("failed to get kubernetes config: %s", err)
+	}
+	roleScaffold, err := helm.CreateRoleScaffold(k8sCfg, chart, isClusterScoped)
+	if err != nil {
+		return fmt.Errorf("failed to generate role scaffold: %s", err)
+	}
+
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
 		&helm.Dockerfile{},
@@ -289,7 +299,7 @@ func doHelmScaffold() error {
 			ChartName: chart.GetMetadata().GetName(),
 		},
 		&scaffold.ServiceAccount{},
-		&scaffold.Role{IsClusterScoped: isClusterScoped},
+		roleScaffold,
 		&scaffold.RoleBinding{IsClusterScoped: isClusterScoped},
 		&helm.Operator{IsClusterScoped: isClusterScoped},
 		&scaffold.CRD{Resource: resource},

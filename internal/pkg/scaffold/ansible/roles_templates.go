@@ -24,7 +24,7 @@ import (
 const RolesTemplatesDir = "templates" + filePathSep + ".placeholder"
 
 type RolesTemplates struct {
-	input.Input
+	StaticInput
 	Resource scaffold.Resource
 }
 

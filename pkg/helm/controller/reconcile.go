@@ -242,6 +242,14 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		return reconcile.Result{RequeueAfter: r.ReconcilePeriod}, err
 	}
 
+	// If a change is made to the CR spec that causes a release failure, a
+	// ConditionReleaseFailed is added to the status conditions. If that change
+	// is then reverted to its previous state, the operator will stop
+	// attempting the release and will resume reconciling. In this case, we
+	// need to remove the ConditionReleaseFailed because the failing release is
+	// no longer being attempted.
+	status.RemoveCondition(types.ConditionReleaseFailed)
+
 	expectedRelease, err := manager.ReconcileRelease(context.TODO())
 	if err != nil {
 		log.Error(err, "Failed to reconcile release")

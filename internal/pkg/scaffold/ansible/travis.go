@@ -19,7 +19,7 @@ import "github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 const TravisFile = ".travis.yml"
 
 type Travis struct {
-	input.Input
+	StaticInput
 }
 
 // GetInput - gets the input
