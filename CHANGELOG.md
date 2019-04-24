@@ -4,6 +4,7 @@
 
 - New option for [`operator-sdk build --image-builder`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#build), which can be used to specify which image builder to use. Adds support for [buildah](https://github.com/containers/buildah/). ([#1311](https://github.com/operator-framework/operator-sdk/pull/1311))
 - Manager is now configured with a new `DynamicRESTMapper`, which accounts for the fact that the default `RESTMapper`, which only checks resource types at startup, can't handle the case of first creating a CRD and then an instance of that CRD. ([#1329](https://github.com/operator-framework/operator-sdk/pull/1329))
+- New optional flag `--write-csv-config[=path]` for [`operator-sdk olm-catalog`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#olm-catalog) and [`operator-sdk olm-catalog gen-csv`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#gen-csv) which writes a default CSV config file to `deploy/olm-catalog/csv-config.yaml` if no value is passed, or `path` if passed. This file can be modified and passed to `--csv-config` to configure `gen-csv`. ([#1346](https://github.com/operator-framework/operator-sdk/pull/1346))
 
 ### Changed
 
