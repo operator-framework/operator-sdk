@@ -22,7 +22,6 @@ import (
 	"go/parser"
 	"go/token"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -125,12 +124,12 @@ func (s *Scaffold) setBoilerplate() (err error) {
 			if err != nil {
 				return wrapBoilerplateErr(err, i.Path)
 			}
-			if _, err := os.Stat(i.Path); err == nil {
+			if _, err := s.Fs.Stat(i.Path); err == nil {
 				bp = i.Path
 			}
 		}
 		if bp != "" {
-			b, err := ioutil.ReadFile(bp)
+			b, err := afero.ReadFile(s.Fs, bp)
 			if err != nil {
 				return wrapBoilerplateErr(err, bp)
 			}

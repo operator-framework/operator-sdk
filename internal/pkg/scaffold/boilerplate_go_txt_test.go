@@ -15,24 +15,20 @@
 package scaffold
 
 import (
-	"io/ioutil"
-	"os"
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
+
+	"github.com/spf13/afero"
 )
 
 func TestBoilerplate(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
-	f, err := ioutil.TempFile("", "")
+	s.Fs = afero.NewMemMapFs()
+	f, err := afero.TempFile(s.Fs, "", "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer func() {
-		if err = os.RemoveAll(f.Name()); err != nil {
-			t.Fatal(err)
-		}
-	}()
 	if _, err = f.Write([]byte(boilerplate)); err != nil {
 		t.Fatal(err)
 	}
