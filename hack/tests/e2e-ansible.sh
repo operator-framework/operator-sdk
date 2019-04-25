@@ -114,8 +114,8 @@ sed -i 's|{{ pull_policy.default..Always.. }}|Never|g' deploy/operator.yaml
 
 OPERATORDIR="$(pwd)"
 
-deploy_operator
 trap_add 'remove_operator' EXIT
+deploy_operator
 test_operator
 remove_operator
 

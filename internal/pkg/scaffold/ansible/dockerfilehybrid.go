@@ -51,8 +51,13 @@ RUN yum remove -y ansible python-idna
 RUN yum install -y inotify-tools && yum clean all
 RUN pip uninstall ansible-runner -y
 
-RUN pip install --upgrade setuptools
-RUN pip install ansible ansible-runner openshift kubernetes ansible-runner-http idna==2.7
+RUN pip install --upgrade setuptools==41.0.1
+RUN pip install ansible==2.7.10 \
+	ansible-runner==1.3.3 \
+	ansible-runner-http==1.0.0 \
+	idna==2.7 \
+	kubernetes==9.0.0 \
+	openshift==0.8.7
 
 RUN mkdir -p /etc/ansible \
     && echo "localhost ansible_connection=local" > /etc/ansible/hosts \
