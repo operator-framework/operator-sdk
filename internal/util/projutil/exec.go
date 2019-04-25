@@ -33,22 +33,28 @@ func ExecCmd(cmd *exec.Cmd) error {
 	return nil
 }
 
-// GoBuildOptions configures "go build" and "go test".
-type GoBuildOptions struct {
+// GoCmdOptions configures "go" subcommands.
+type GoCmdOptions struct {
 	// BinName is the name of the compiled binary, passed to -o.
 	BinName string
-	// BuildArgs are args passed to "go build", aside from "-o {bin_name}".
-	BuildArgs []string
-	// BuildPath is the path containing main package file.
-	BuildPath string
-	// Env is a list of environment variables to pass to "go build";
+	// Args are args passed to "go {cmd}", aside from "-o {bin_name}" and
+	// test binary args.
+	// These apply to build, clean, get, install, list, run, and test.
+	Args []string
+	// TestBinaryArgs are args passed to the binary compiled by "go test".
+	// Only valid in GoTest().
+	TestBinaryArgs []string
+	// PackagePath is the path to the main (go build) or test (go test) packages.
+	PackagePath string
+	// Env is a list of environment variables to pass to the cmd;
 	// exec.Command.Env is set to this value.
 	Env []string
-	// Dir is the dir to run "go build" in; exec.Command.Dir is set to this value.
+	// Dir is the dir to run "go {cmd}" in; exec.Command.Dir is set to this value.
 	Dir string
 	// GoMod determines whether to set the "-mod=vendor" flag.
-	// If true, "go build" will use modules.
-	// If false, "go build" will not use go modules. This is the default.
+	// If true, "go {cmd}" will use modules.
+	// If false, "go {cmd}" will not use go modules. This is the default.
+	// This applies to build, clean, get, install, list, run, and test.
 	GoMod bool
 }
 
@@ -58,25 +64,22 @@ const (
 )
 
 // GoBuild runs "go build" configured with opts.
-func GoBuild(opts GoBuildOptions) error {
+func GoBuild(opts GoCmdOptions) error {
 	return goCmd(goBuildCmd, opts)
 }
 
 // GoTest runs "go test" configured with opts.
-func GoTest(opts GoBuildOptions) error {
+func GoTest(opts GoCmdOptions) error {
 	return goCmd(goTestCmd, opts)
 }
 
 // goCmd runs "go {cmd}", where cmd is either "build" or "test".
-func goCmd(cmd string, opts GoBuildOptions) error {
+func goCmd(cmd string, opts GoCmdOptions) error {
 	bargs := []string{cmd}
 	if opts.BinName != "" {
 		bargs = append(bargs, "-o", opts.BinName)
 	}
-	if cmd == goTestCmd {
-		bargs = append(bargs, opts.BuildPath)
-	}
-	bargs = append(bargs, opts.BuildArgs...)
+	bargs = append(bargs, opts.Args...)
 	// Modules can be used if either GO111MODULE=on or we're not in $GOPATH/src.
 	if opts.GoMod {
 		inGoPath, err := wdInGoPath()
@@ -87,8 +90,9 @@ func goCmd(cmd string, opts GoBuildOptions) error {
 			bargs = append(bargs, "-mod=vendor")
 		}
 	}
-	if cmd == goBuildCmd {
-		bargs = append(bargs, opts.BuildPath)
+	bargs = append(bargs, opts.PackagePath)
+	if cmd == goTestCmd {
+		bargs = append(bargs, opts.TestBinaryArgs...)
 	}
 	c := exec.Command("go", bargs...)
 	if len(opts.Env) != 0 {

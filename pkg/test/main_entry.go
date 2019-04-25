@@ -66,9 +66,9 @@ func MainEntry(m *testing.M) {
 	if *localOperator {
 		projectName := filepath.Base(projutil.MustGetwd())
 		outputBinName := filepath.Join(scaffold.BuildBinDir, projectName+"-local")
-		opts := projutil.GoBuildOptions{
-			BinName:   outputBinName,
-			BuildPath: filepath.Join(scaffold.ManagerDir, scaffold.CmdFile),
+		opts := projutil.GoCmdOptions{
+			BinName:     outputBinName,
+			PackagePath: filepath.Join(scaffold.ManagerDir, scaffold.CmdFile),
 		}
 		if err := projutil.GoBuild(opts); err != nil {
 			log.Fatalf("Failed to build local operator binary: %s", err)

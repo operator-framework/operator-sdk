@@ -179,11 +179,11 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 	// Don't need to build Go code if a non-Go Operator.
 	if projutil.IsOperatorGo() {
-		opts := projutil.GoBuildOptions{
-			BinName:   filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName),
-			BuildPath: filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir),
-			BuildArgs: goTrimFlags,
-			Env:       goBuildEnv,
+		opts := projutil.GoCmdOptions{
+			BinName:     filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName),
+			PackagePath: filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir),
+			Args:        goTrimFlags,
+			Env:         goBuildEnv,
 		}
 		if err := projutil.GoBuild(opts); err != nil {
 			return fmt.Errorf("failed to build operator binary: (%v)", err)
@@ -212,11 +212,11 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 	if enableTests {
 		if projutil.IsOperatorGo() {
-			opts := projutil.GoBuildOptions{
-				BinName:   filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName+"-test"),
-				BuildPath: testLocationBuild + "/...",
-				BuildArgs: append(goTrimFlags, "-c"),
-				Env:       goBuildEnv,
+			opts := projutil.GoCmdOptions{
+				BinName:     filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName+"-test"),
+				PackagePath: testLocationBuild + "/...",
+				Args:        append(goTrimFlags, "-c"),
+				Env:         goBuildEnv,
 			}
 			if err := projutil.GoTest(opts); err != nil {
 				return fmt.Errorf("failed to build test binary: (%v)", err)

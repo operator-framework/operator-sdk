@@ -208,11 +208,11 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 	if tlConfig.upLocal {
 		testArgs = append(testArgs, "-"+test.LocalOperatorFlag)
 	}
-	opts := projutil.GoBuildOptions{
-		BuildPath: args[0] + "/...",
-		BuildArgs: testArgs,
-		Env:       append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace)),
-		Dir:       projutil.MustGetwd(),
+	opts := projutil.GoCmdOptions{
+		PackagePath:    args[0] + "/...",
+		Env:            append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace)),
+		Dir:            projutil.MustGetwd(),
+		TestBinaryArgs: testArgs,
 	}
 	if err := projutil.GoTest(opts); err != nil {
 		return fmt.Errorf("failed to build test binary: (%v)", err)

@@ -181,10 +181,10 @@ func buildLocal(outputBinName string) error {
 	if ldFlags != "" {
 		args = []string{"-ldflags", ldFlags}
 	}
-	opts := projutil.GoBuildOptions{
-		BinName:   outputBinName,
-		BuildPath: filepath.Join(scaffold.ManagerDir, scaffold.CmdFile),
-		BuildArgs: args,
+	opts := projutil.GoCmdOptions{
+		BinName:     outputBinName,
+		PackagePath: filepath.Join(scaffold.ManagerDir, scaffold.CmdFile),
+		Args:        args,
 	}
 	return projutil.GoBuild(opts)
 }
