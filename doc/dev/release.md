@@ -174,18 +174,19 @@ $ git checkout -b release-v1.3.0
 Commit changes to the following files:
 
 - `version/version.go`: update `Version` to `v1.3.0`.
-- `internal/pkg/scaffold/project/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
+- `internal/pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
   - Comment out `branch = "master"`.
   - Un-comment `version = "v1.2.0"`.
   - Change `v1.2.0` to `v1.3.0`.
-- `internal/pkg/scaffold/project/gopkgtoml_test.go`: same as for `internal/pkg/scaffold/project/gopkgtoml.go`.
-- `internal/pkg/scaffold/ansible/gopkgtoml.go`: same as for `internal/pkg/scaffold/project/gopkgtoml.go`.
-- `internal/pkg/scaffold/helm/gopkgtoml.go`: same as for `internal/pkg/scaffold/project/gopkgtoml.go`.
-- `internal/pkg/scaffold/project/go_mod.go`, in the `require` block for `github.com/operator-framework/operator-sdk`:
-  - Change the current version (usually something like `v0.1.2-0.20180405175821-7e07b20c9e22`) to `v1.3.0`.
-- `internal/pkg/scaffold/project/go_mod_test.go`: same as for `internal/pkg/scaffold/project/go_mod.go`.
-- `internal/pkg/scaffold/helm/go_mod.go`: same as for `internal/pkg/scaffold/project/go_mod.go`.
-- `internal/pkg/scaffold/ansible/go_mod.go`: same as for `internal/pkg/scaffold/project/go_mod.go`.
+- `internal/pkg/scaffold/gopkgtoml_test.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
+- `internal/pkg/scaffold/ansible/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
+- `internal/pkg/scaffold/helm/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
+- `internal/pkg/scaffold/go_mod.go`, in the `replace` block for `github.com/operator-framework/operator-sdk`:
+  - Add the following `replace` entry: `github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v1.3.0`.
+  - If an entry already exists, change the version to `v1.3.0`.
+- `internal/pkg/scaffold/go_mod_test.go`: same as for `internal/pkg/scaffold/go_mod.go`.
+- `internal/pkg/scaffold/helm/go_mod.go`: same as for `internal/pkg/scaffold/go_mod.go`.
+- `internal/pkg/scaffold/ansible/go_mod.go`: same as for `internal/pkg/scaffold/go_mod.go`.
 - `CHANGELOG.md`: update the `## Unreleased` header to `## v1.3.0`.
 
 Create a new PR for `release-v1.3.0`.

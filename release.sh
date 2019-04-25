@@ -37,41 +37,41 @@ if [[ "$VER" != "$CURR_VER" ]]; then
 	exit 1
 fi
 
-GO_GOMOD="internal/pkg/scaffold/project/go_mod.go"
+GO_GOMOD="internal/pkg/scaffold/go_mod.go"
 ANS_GOMOD="internal/pkg/scaffold/ansible/go_mod.go"
 HELM_GOMOD="internal/pkg/scaffold/helm/go_mod.go"
-CURR_VER_GO_GOMOD="$(sed -E -n -r 's|.*operator-sdk ([^ \t\n]+).*|\1|p' "$GO_GOMOD" | tr -d ' \t\n')"
+CURR_VER_GO_GOMOD="$(sed -E -n -r 's|.*operator-sdk ([^ \t\n]+).*|\1|p' "$GO_GOMOD" | tail -1 | tr -d ' \t\n')"
 if [[ "$VER" != "$CURR_VER_GO_GOMOD" ]]; then
-	echo "version is not set correctly in $GO_GOMOD"
+	echo "go.mod 'replace' entry version is not set correctly in $GO_GOMOD"
 	exit 1
 fi
-CURR_VER_ANS_GOMOD="$(sed -E -n -r 's|.*operator-sdk ([^ \t\n]+).*|\1|p' "$ANS_GOMOD" | tr -d ' \t\n')"
+CURR_VER_ANS_GOMOD="$(sed -E -n -r 's|.*operator-sdk ([^ \t\n]+).*|\1|p' "$ANS_GOMOD" | tail -1 | tr -d ' \t\n')"
 if [[ "$VER" != "$CURR_VER_ANS_GOMOD" ]]; then
-	echo "version is not set correctly in $ANS_GOMOD"
+	echo "go.mod 'replace' entry version is not set correctly in $ANS_GOMOD"
 	exit 1
 fi
-CURR_VER_HELM_GOMOD="$(sed -E -n -r 's|.*operator-sdk ([^ \t\n]+).*|\1|p' "$HELM_GOMOD" | tr -d ' \t\n')"
+CURR_VER_HELM_GOMOD="$(sed -E -n -r 's|.*operator-sdk ([^ \t\n]+).*|\1|p' "$HELM_GOMOD" | tail -1 | tr -d ' \t\n')"
 if [[ "$VER" != "$CURR_VER_HELM_GOMOD" ]]; then
-	echo "version is not set correctly in $HELM_GOMOD"
+	echo "go.mod 'replace' entry version is not set correctly in $HELM_GOMOD"
 	exit 1
 fi
 
-GO_DEP="internal/pkg/scaffold/project/gopkgtoml.go"
+GO_DEP="internal/pkg/scaffold/gopkgtoml.go"
 ANS_DEP="internal/pkg/scaffold/ansible/gopkgtoml.go"
 HELM_DEP="internal/pkg/scaffold/helm/gopkgtoml.go"
 CURR_VER_GO_DEP="$(sed -nr 's/.*".*v(.+)".*#osdk_version_annotation/v\1/p' "$GO_DEP" | tr -d ' \t\n')"
 if [[ "$VER" != "$CURR_VER_GO_DEP" ]]; then
-	echo "version is not set correctly in $GO_DEP"
+	echo "Gopkg.toml 'constraint' version is not set correctly in $GO_DEP"
 	exit 1
 fi
 CURR_VER_ANS_DEP="$(sed -nr 's/.*".*v(.+)".*#osdk_version_annotation/v\1/p' "$ANS_DEP" | tr -d ' \t\n')"
 if [[ "$VER" != "$CURR_VER_ANS_DEP" ]]; then
-	echo "version is not set correctly in $ANS_DEP"
+	echo "Gopkg.toml 'constraint' version is not set correctly in $ANS_DEP"
 	exit 1
 fi
 CURR_VER_HELM_DEP="$(sed -nr 's/.*".*v(.+)".*#osdk_version_annotation/v\1/p' "$HELM_DEP" | tr -d ' \t\n')"
 if [[ "$VER" != "$CURR_VER_HELM_DEP" ]]; then
-	echo "version is not set correctly in $HELM_DEP"
+	echo "Gopkg.toml 'constraint' version is not set correctly in $HELM_DEP"
 	exit 1
 fi
 
