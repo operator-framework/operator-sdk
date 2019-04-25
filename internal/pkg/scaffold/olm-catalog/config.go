@@ -23,6 +23,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 
 	"github.com/ghodss/yaml"
+	log "github.com/sirupsen/logrus"
 )
 
 // CSVConfig is a configuration file for CSV composition. Its fields contain
@@ -78,8 +79,16 @@ func (c *CSVConfig) setFields() error {
 
 	if len(c.CRDCRPaths) == 0 {
 		paths, err := getManifestPathsFromDir(scaffold.CRDsDir)
-		if err != nil {
+		if err != nil && !os.IsNotExist(err) {
 			return err
+		}
+		if os.IsNotExist(err) {
+			log.Infof(`Default CRDs dir "%s" does not exist. Omitting field spec.customresourcedefinitions.owned from CSV.`, scaffold.CRDsDir)
+			return nil
+		}
+		if len(paths) == 0 {
+			log.Infof(`Default CRDs dir "%s" is empty. Omitting field spec.customresourcedefinitions.owned from CSV.`, scaffold.CRDsDir)
+			return nil
 		}
 		c.CRDCRPaths = paths
 	} else {
