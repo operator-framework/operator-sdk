@@ -177,12 +177,17 @@ func setupOperatorEnv() error {
 }
 
 func buildLocal(outputBinName string) error {
-	var args []string
+	args := []string{"build", "-o", outputBinName}
 	if ldFlags != "" {
-		args = []string{"-ldflags", ldFlags}
+		args = append(args, "-ldflags", ldFlags)
 	}
 	args = append(args, filepath.Join(scaffold.ManagerDir, scaffold.CmdFile))
-	return projutil.GoBuild(outputBinName, args...)
+
+	bc := exec.Command("go", args...)
+	if err := projutil.ExecCmd(bc); err != nil {
+		return err
+	}
+	return nil
 }
 
 func printVersion() {

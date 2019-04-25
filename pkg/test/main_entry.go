@@ -64,10 +64,13 @@ func MainEntry(m *testing.M) {
 	var localCmd *exec.Cmd
 	var localCmdOutBuf, localCmdErrBuf bytes.Buffer
 	if *localOperator {
-		projectName := filepath.Base(projutil.MustGetwd())
+		absProjectPath := projutil.MustGetwd()
+		projectName := filepath.Base(absProjectPath)
 		outputBinName := filepath.Join(scaffold.BuildBinDir, projectName+"-local")
-		args := []string{filepath.Join(scaffold.ManagerDir, scaffold.CmdFile)}
-		if err := projutil.GoBuild(outputBinName, args...); err != nil {
+		args := []string{"build", "-o", outputBinName}
+		args = append(args, filepath.Join(scaffold.ManagerDir, scaffold.CmdFile))
+		bc := exec.Command("go", args...)
+		if err := projutil.ExecCmd(bc); err != nil {
 			log.Fatalf("Failed to build local operator binary: %s", err)
 		}
 		localCmd = exec.Command(outputBinName)

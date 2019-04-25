@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -54,10 +55,20 @@ const (
 	OperatorTypeUnknown OperatorType = "unknown"
 )
 
+type ErrUnknownOperatorType struct {
+	Type string
+}
+
+func (e ErrUnknownOperatorType) Error() string {
+	if e.Type == "" {
+		return "unknown operator type"
+	}
+	return fmt.Sprintf(`unknown operator type "%v"`, e.Type)
+}
+
 type DepManagerType string
 
 const (
-	DepManagerNone  DepManagerType = "none"
 	DepManagerGoMod DepManagerType = "mod"
 	DepManagerDep   DepManagerType = "dep"
 )
@@ -76,18 +87,7 @@ func GetDepManagerType() (DepManagerType, error) {
 	} else if _, err := os.Stat(goModFile); err == nil {
 		return DepManagerGoMod, nil
 	}
-	return DepManagerNone, errors.New("unable to determine dependency manager: no dependency manager file found")
-}
-
-type ErrUnknownOperatorType struct {
-	Type string
-}
-
-func (e ErrUnknownOperatorType) Error() string {
-	if e.Type == "" {
-		return "unknown operator type"
-	}
-	return fmt.Sprintf(`unknown operator type "%v"`, e.Type)
+	return "", errors.New("unable to determine dependency manager: no dependency manager file found")
 }
 
 // MustInProjectRoot checks if the current dir is the project root and returns
@@ -190,6 +190,16 @@ func MustSetGopath(currentGopath string) string {
 		log.Fatal(err)
 	}
 	return newGopath
+}
+
+func ExecCmd(cmd *exec.Cmd) error {
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to exec %#v: %v", cmd.Args, err)
+	}
+	return nil
 }
 
 var flagRe = regexp.MustCompile("(.* )?-v(.* )?")
