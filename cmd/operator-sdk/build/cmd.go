@@ -38,7 +38,8 @@ var (
 	namespacedManBuild string
 	testLocationBuild  string
 	enableTests        bool
-	dockerBuildArgs    string
+	imageBuildArgs     string
+	imageBuilder       string
 )
 
 func NewCmd() *cobra.Command {
@@ -62,7 +63,8 @@ For example:
 	buildCmd.Flags().BoolVar(&enableTests, "enable-tests", false, "Enable in-cluster testing by adding test binary to the image")
 	buildCmd.Flags().StringVar(&testLocationBuild, "test-location", "./test/e2e", "Location of tests")
 	buildCmd.Flags().StringVar(&namespacedManBuild, "namespaced-manifest", "deploy/operator.yaml", "Path of namespaced resources manifest for tests")
-	buildCmd.Flags().StringVar(&dockerBuildArgs, "docker-build-args", "", "Extra docker build arguments as one string such as \"--build-arg https_proxy=$https_proxy\"")
+	buildCmd.Flags().StringVar(&imageBuildArgs, "image-build-args", "", "Extra image build arguments as one string such as \"--build-arg https_proxy=$https_proxy\"")
+	buildCmd.Flags().StringVar(&imageBuilder, "image-builder", "docker", "Tool to build OCI images. One of: [docker, buildah]")
 	return buildCmd
 }
 
@@ -141,6 +143,29 @@ func verifyTestManifest(image string) error {
 	return nil
 }
 
+func createBuildCommand(imageBuilder, context, dockerFile, image string, imageBuildArgs ...string) (*exec.Cmd, error) {
+	var args []string
+	switch imageBuilder {
+	case "docker":
+		args = append(args, "build", "-f", dockerFile, "-t", image)
+	case "buildah":
+		args = append(args, "bud", "--format=docker", "-f", dockerFile, "-t", image)
+	default:
+		return nil, fmt.Errorf("%s is not supported image builder", imageBuilder)
+	}
+
+	for _, bargs := range imageBuildArgs {
+		if bargs != "" {
+			splitArgs := strings.Fields(bargs)
+			args = append(args, splitArgs...)
+		}
+	}
+
+	args = append(args, context)
+
+	return exec.Command(imageBuilder, args...), nil
+}
+
 func buildFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
@@ -153,13 +178,14 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	projectName := filepath.Base(absProjectPath)
 
 	// Don't need to build Go code if a non-Go Operator.
-	if projutil.GetOperatorType() == projutil.OperatorTypeGo {
-		managerDir := filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir)
-		outputBinName := filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName)
-		goBuildArgs := append(append([]string{"build"}, goTrimFlags...), "-o", outputBinName, managerDir)
-		buildCmd := exec.Command("go", goBuildArgs...)
-		buildCmd.Env = goBuildEnv
-		if err := projutil.ExecCmd(buildCmd); err != nil {
+	if projutil.IsOperatorGo() {
+		opts := projutil.GoCmdOptions{
+			BinName:     filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName),
+			PackagePath: filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir),
+			Args:        goTrimFlags,
+			Env:         goBuildEnv,
+		}
+		if err := projutil.GoBuild(opts); err != nil {
 			return fmt.Errorf("failed to build operator binary: (%v)", err)
 		}
 	}
@@ -170,17 +196,14 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 		baseImageName += "-intermediate"
 	}
 
-	log.Infof("Building Docker image %s", baseImageName)
+	log.Infof("Building OCI image %s", baseImageName)
 
-	dbArgs := []string{"build", ".", "-f", "build/Dockerfile", "-t", baseImageName}
-
-	if dockerBuildArgs != "" {
-		splitArgs := strings.Fields(dockerBuildArgs)
-		dbArgs = append(dbArgs, splitArgs...)
+	buildCmd, err := createBuildCommand(imageBuilder, ".", "build/Dockerfile", baseImageName, imageBuildArgs)
+	if err != nil {
+		return err
 	}
 
-	dbcmd := exec.Command("docker", dbArgs...)
-	if err := projutil.ExecCmd(dbcmd); err != nil {
+	if err := projutil.ExecCmd(buildCmd); err != nil {
 		if enableTests {
 			return fmt.Errorf("failed to output intermediate image %s: (%v)", image, err)
 		}
@@ -188,12 +211,16 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	}
 
 	if enableTests {
-		if projutil.GetOperatorType() == projutil.OperatorTypeGo {
-			testBinary := filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName+"-test")
-			goTestBuildArgs := append(append([]string{"test"}, goTrimFlags...), "-c", "-o", testBinary, testLocationBuild+"/...")
-			buildTestCmd := exec.Command("go", goTestBuildArgs...)
-			buildTestCmd.Env = goBuildEnv
-			if err := projutil.ExecCmd(buildTestCmd); err != nil {
+		if projutil.IsOperatorGo() {
+			opts := projutil.GoTestOptions{
+				GoCmdOptions: projutil.GoCmdOptions{
+					BinName:     filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName+"-test"),
+					PackagePath: testLocationBuild + "/...",
+					Args:        append(goTrimFlags, "-c"),
+					Env:         goBuildEnv,
+				},
+			}
+			if err := projutil.GoTest(opts); err != nil {
 				return fmt.Errorf("failed to build test binary: (%v)", err)
 			}
 		}
@@ -212,8 +239,7 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 			}
 
 			s := &scaffold.Scaffold{}
-			t := projutil.GetOperatorType()
-			switch t {
+			switch t := projutil.GetOperatorType(); t {
 			case projutil.OperatorTypeGo:
 				err = s.Execute(cfg,
 					&scaffold.TestFrameworkDockerfile{},
@@ -225,7 +251,7 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 			case projutil.OperatorTypeHelm:
 				return fmt.Errorf("test scaffolding for Helm Operators is not implemented")
 			default:
-				return fmt.Errorf("unknown operator type '%v'", t)
+				return projutil.ErrUnknownOperatorType{}
 			}
 
 			if err != nil {
@@ -233,17 +259,15 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		log.Infof("Building test Docker image %s", image)
+		log.Infof("Building test OCI image %s", image)
 
-		testDbArgs := []string{"build", ".", "-f", testDockerfile, "-t", image, "--build-arg", "NAMESPACEDMAN=" + namespacedManBuild, "--build-arg", "BASEIMAGE=" + baseImageName}
-
-		if dockerBuildArgs != "" {
-			splitArgs := strings.Fields(dockerBuildArgs)
-			testDbArgs = append(testDbArgs, splitArgs...)
+		testImageBuildArgs := fmt.Sprintf("--build-arg NAMESPACEDMAN=%s --build-arg BASEIMAGE=%s", namespacedManBuild, baseImageName)
+		testBuildCmd, err := createBuildCommand(imageBuilder, ".", testDockerfile, image, imageBuildArgs, testImageBuildArgs)
+		if err != nil {
+			return err
 		}
 
-		testDbcmd := exec.Command("docker", testDbArgs...)
-		if err := projutil.ExecCmd(testDbcmd); err != nil {
+		if err := projutil.ExecCmd(testBuildCmd); err != nil {
 			return fmt.Errorf("failed to output test image %s: (%v)", image, err)
 		}
 		// Check image name of deployments in namespaced manifest

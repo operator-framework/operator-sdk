@@ -20,7 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/helm/pkg/proto/hapi/release"
 )
 
 const (
@@ -32,13 +31,11 @@ var now = metav1.Now()
 
 func TestSetCondition(t *testing.T) {
 	message := "uninstall was successful"
-	releaseName := "TestRelease"
 	newStatus, err := newTestStatus().SetCondition(HelmAppCondition{
 		Type:    ConditionDeployed,
 		Status:  StatusFalse,
 		Reason:  ReasonUninstallSuccessful,
 		Message: message,
-		Release: &release.Release{Name: releaseName},
 	}).ToMap()
 	assert.NoError(t, err)
 
@@ -50,7 +47,6 @@ func TestSetCondition(t *testing.T) {
 	assert.Equal(t, StatusFalse, actual.Conditions[0].Status)
 	assert.Equal(t, ReasonUninstallSuccessful, actual.Conditions[0].Reason)
 	assert.Equal(t, message, actual.Conditions[0].Message)
-	assert.Equal(t, releaseName, actual.Conditions[0].Release.Name)
 	assert.NotEqual(t, metav1.Now(), actual.Conditions[0].LastTransitionTime)
 }
 func TestRemoveCondition(t *testing.T) {
@@ -75,7 +71,7 @@ func TestStatusForFilled(t *testing.T) {
 	expectedResource.Object["status"] = newTestStatus()
 	status := StatusFor(expectedResource)
 
-	assert.EqualValues(t, newTestStatus().Conditions, status.Conditions)
+	assert.EqualValues(t, newTestStatus(), status)
 }
 
 func TestStatusForFilledRaw(t *testing.T) {
@@ -87,8 +83,8 @@ func TestStatusForFilledRaw(t *testing.T) {
 	assert.Equal(t, StatusTrue, status.Conditions[0].Status)
 	assert.Equal(t, ReasonInstallSuccessful, status.Conditions[0].Reason)
 	assert.Equal(t, "some message", status.Conditions[0].Message)
-	assert.Equal(t, "SomeRelease", status.Conditions[0].Release.Name)
 	assert.NotEqual(t, metav1.Now(), status.Conditions[0].LastTransitionTime)
+	assert.Equal(t, "SomeRelease", status.DeployedRelease.Name)
 }
 
 func newTestResource() *unstructured.Unstructured {
@@ -117,10 +113,10 @@ func newTestStatus() *HelmAppStatus {
 				Status:             StatusTrue,
 				Reason:             ReasonInstallSuccessful,
 				Message:            "some message",
-				Release:            &release.Release{Name: "SomeRelease"},
 				LastTransitionTime: now,
 			},
 		},
+		DeployedRelease: &HelmAppRelease{Name: "SomeRelease"},
 	}
 }
 
@@ -132,9 +128,9 @@ func newTestStatusRaw() map[string]interface{} {
 				"status":             "True",
 				"reason":             "InstallSuccessful",
 				"message":            "some message",
-				"release":            map[string]interface{}{"name": "SomeRelease"},
 				"lastTransitionTime": now.UTC(),
 			},
 		},
+		"deployedRelease": map[string]interface{}{"name": "SomeRelease"},
 	}
 }

@@ -41,17 +41,24 @@ func (d *DockerfileHybrid) GetInput() (input.Input, error) {
 		d.Path = filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
 	}
 	d.TemplateBody = dockerFileHybridAnsibleTmpl
+	d.Delims = AnsibleDelims
 	return d.Input, nil
 }
 
-const dockerFileHybridAnsibleTmpl = `FROM ansible/ansible-runner
+const dockerFileHybridAnsibleTmpl = `FROM ansible/ansible-runner:1.2
 
 RUN yum remove -y ansible python-idna
 RUN yum install -y inotify-tools && yum clean all
 RUN pip uninstall ansible-runner -y
 
-RUN pip install --upgrade setuptools
-RUN pip install ansible ansible-runner openshift kubernetes ansible-runner-http idna==2.7
+RUN pip install --upgrade setuptools==41.0.1
+RUN pip install "urllib3>=1.23,<1.25"
+RUN pip install ansible==2.7.10 \
+	ansible-runner==1.2 \
+	ansible-runner-http==1.0.0 \
+	idna==2.7 \
+	"kubernetes>=8.0.0,<9.0.0" \
+	openshift==0.8.8
 
 RUN mkdir -p /etc/ansible \
     && echo "localhost ansible_connection=local" > /etc/ansible/hosts \
@@ -64,21 +71,21 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
     USER_NAME=ansible-operator\
     HOME=/opt/ansible
 
-{{- if .Watches }}
-COPY watches.yaml ${HOME}/watches.yaml{{ end }}
+[[- if .Watches ]]
+COPY watches.yaml ${HOME}/watches.yaml[[ end ]]
 
 # install operator binary
-COPY build/_output/bin/{{.ProjectName}} ${OPERATOR}
+COPY build/_output/bin/[[.ProjectName]] ${OPERATOR}
 # install k8s_status Ansible Module
 COPY library/k8s_status.py /usr/share/ansible/openshift/
 
 COPY bin /usr/local/bin
 RUN  /usr/local/bin/user_setup
 
-{{- if .Roles }}
-COPY roles/ ${HOME}/roles/{{ end }}
-{{- if .Playbook }}
-COPY playbook.yml ${HOME}/playbook.yml{{ end }}
+[[- if .Roles ]]
+COPY roles/ ${HOME}/roles/[[ end ]]
+[[- if .Playbook ]]
+COPY playbook.yml ${HOME}/playbook.yml[[ end ]]
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
 

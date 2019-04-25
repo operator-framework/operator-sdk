@@ -18,6 +18,8 @@ import (
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
+
+	rbacv1 "k8s.io/api/rbac/v1"
 )
 
 func TestRole(t *testing.T) {
@@ -46,6 +48,33 @@ func TestRoleClusterScoped(t *testing.T) {
 	}
 }
 
+func TestRoleCustomRules(t *testing.T) {
+	s, buf := setupScaffoldAndWriter()
+	err := s.Execute(appConfig, &Role{
+		SkipDefaultRules: true,
+		SkipMetricsRules: true,
+		CustomRules: []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{"policy"},
+				Resources: []string{"poddisruptionbudgets"},
+				Verbs:     []string{rbacv1.VerbAll},
+			},
+			{
+				APIGroups: []string{"rbac.authorization.k8s.io"},
+				Resources: []string{"roles", "rolebindings"},
+				Verbs:     []string{"get", "list", "watch"},
+			},
+		}})
+	if err != nil {
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
+	}
+
+	if roleCustomRulesExp != buf.String() {
+		diffs := diffutil.Diff(roleCustomRulesExp, buf.String())
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
+	}
+}
+
 const roleExp = `kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -63,12 +92,6 @@ rules:
   - secrets
   verbs:
   - "*"
-- apiGroups:
-  - ""
-  resources:
-  - namespaces
-  verbs:
-  - get
 - apiGroups:
   - apps
   resources:
@@ -113,12 +136,6 @@ rules:
   verbs:
   - "*"
 - apiGroups:
-  - ""
-  resources:
-  - namespaces
-  verbs:
-  - get
-- apiGroups:
   - apps
   resources:
   - deployments
@@ -142,4 +159,26 @@ rules:
   - app-operator
   verbs:
   - "update"
+`
+
+const roleCustomRulesExp = `kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: app-operator
+rules:
+- verbs:
+  - "*"
+  apiGroups:
+  - "policy"
+  resources:
+  - "poddisruptionbudgets"
+- verbs:
+  - "get"
+  - "list"
+  - "watch"
+  apiGroups:
+  - "rbac.authorization.k8s.io"
+  resources:
+  - "roles"
+  - "rolebindings"
 `
