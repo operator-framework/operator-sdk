@@ -25,10 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	k8sAPI        bool
-	k8sImportPath string
-)
+var k8sAPIImport string
 
 func newAddControllerCmd() *cobra.Command {
 	controllerCmd := &cobra.Command{
@@ -62,8 +59,7 @@ Example:
 	if err := controllerCmd.MarkFlagRequired("kind"); err != nil {
 		log.Fatalf("Failed to mark `kind` flag for `add controller` subcommand as required")
 	}
-	controllerCmd.Flags().StringVar(&k8sImportPath, "k8s-import-path", "k8s.io/api", "Kubernetes resource import path. Only valid if --k8s-api is set")
-	controllerCmd.Flags().BoolVar(&k8sAPI, "k8s-api", false, "The provided kind for api-version is a Kubernetes resource API")
+	controllerCmd.Flags().StringVar(&k8sAPIImport, "k8s-api-import", "", `External Kubernetes resource import path of the form "host.com/repo/path[=import_identifier]". import_identifier is optional`)
 
 	return controllerCmd
 }
@@ -90,12 +86,8 @@ func controllerRun(cmd *cobra.Command, args []string) error {
 	}
 	s := &scaffold.Scaffold{}
 
-	ck := &scaffold.ControllerKind{Resource: r}
-	if k8sAPI {
-		ck.K8sImportPath = k8sImportPath
-	}
 	err = s.Execute(cfg,
-		ck,
+		&scaffold.ControllerKind{Resource: r, K8sImport: k8sAPIImport},
 		&scaffold.AddController{Resource: r},
 	)
 	if err != nil {
