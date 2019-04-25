@@ -24,8 +24,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	"github.com/pkg/errors"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -91,7 +91,7 @@ func migrateAnsible() error {
 		return err
 	}
 
-	if err := scaffoldDepManager(s, cfg); err != nil {
+	if err := scaffoldAnsibleDepManager(s, cfg); err != nil {
 		return errors.Wrap(err, "migrate Ansible dependency manager file scaffold failed")
 	}
 
@@ -124,7 +124,7 @@ func migrateHelm() error {
 	}
 
 	s := &scaffold.Scaffold{}
-	if err := scaffoldDepManager(s, cfg); err != nil {
+	if err := scaffoldHelmDepManager(s, cfg); err != nil {
 		return errors.Wrap(err, "migrate Helm dependency manager file scaffold failed")
 	}
 
@@ -154,25 +154,26 @@ func renameDockerfile() error {
 	return nil
 }
 
-func scaffoldDepManager(s *scaffold.Scaffold, cfg *input.Config) error {
+func scaffoldHelmDepManager(s *scaffold.Scaffold, cfg *input.Config) error {
 	var files []input.File
 	switch m := projutil.DepManagerType(depManager); m {
 	case projutil.DepManagerDep:
-		if projutil.IsOperatorAnsible() {
-			files = append(files, &ansible.GopkgToml{})
-		} else if projutil.IsOperatorHelm() {
-			files = append(files, &helm.GopkgToml{})
-		} else {
-			return projutil.ErrUnknownOperatorType{}
-		}
+		files = append(files, &helm.GopkgToml{})
 	case projutil.DepManagerGoMod:
-		if projutil.IsOperatorAnsible() {
-			files = append(files, &ansible.GoMod{}, &scaffold.Tools{})
-		} else if projutil.IsOperatorHelm() {
-			files = append(files, &helm.GoMod{}, &scaffold.Tools{})
-		} else {
-			return projutil.ErrUnknownOperatorType{}
-		}
+		files = append(files, &helm.GoMod{}, &scaffold.Tools{})
+	default:
+		return projutil.ErrInvalidDepManagerType{Type: m}
+	}
+	return s.Execute(cfg, files...)
+}
+
+func scaffoldAnsibleDepManager(s *scaffold.Scaffold, cfg *input.Config) error {
+	var files []input.File
+	switch m := projutil.DepManagerType(depManager); m {
+	case projutil.DepManagerDep:
+		files = append(files, &ansible.GopkgToml{})
+	case projutil.DepManagerGoMod:
+		files = append(files, &ansible.GoMod{}, &scaffold.Tools{})
 	default:
 		return projutil.ErrInvalidDepManagerType{Type: m}
 	}
