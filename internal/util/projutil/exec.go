@@ -33,7 +33,7 @@ func ExecCmd(cmd *exec.Cmd) error {
 	return nil
 }
 
-// GoCmdOptions configures "go" subcommands.
+// GoCmdOptions is the base option set for "go" subcommands.
 type GoCmdOptions struct {
 	// BinName is the name of the compiled binary, passed to -o.
 	BinName string
@@ -41,9 +41,6 @@ type GoCmdOptions struct {
 	// test binary args.
 	// These apply to build, clean, get, install, list, run, and test.
 	Args []string
-	// TestBinaryArgs are args passed to the binary compiled by "go test".
-	// Only valid in GoTest().
-	TestBinaryArgs []string
 	// PackagePath is the path to the main (go build) or test (go test) packages.
 	PackagePath string
 	// Env is a list of environment variables to pass to the cmd;
@@ -58,6 +55,13 @@ type GoCmdOptions struct {
 	GoMod bool
 }
 
+// GoTestOptions is the set of options for "go test".
+type GoTestOptions struct {
+	GoCmdOptions
+	// TestBinaryArgs are args passed to the binary compiled by "go test".
+	TestBinaryArgs []string
+}
+
 const (
 	goBuildCmd = "build"
 	goTestCmd  = "test"
@@ -69,12 +73,29 @@ func GoBuild(opts GoCmdOptions) error {
 }
 
 // GoTest runs "go test" configured with opts.
-func GoTest(opts GoCmdOptions) error {
-	return goCmd(goTestCmd, opts)
+func GoTest(opts GoTestOptions) error {
+	bargs, err := getGeneralArgs("test", opts.GoCmdOptions)
+	if err != nil {
+		return err
+	}
+	bargs = append(bargs, opts.TestBinaryArgs...)
+	c := exec.Command("go", bargs...)
+	setCommandFields(c, opts.GoCmdOptions)
+	return ExecCmd(c)
 }
 
-// goCmd runs "go {cmd}", where cmd is either "build" or "test".
+// goCmd runs "go cmd"..
 func goCmd(cmd string, opts GoCmdOptions) error {
+	bargs, err := getGeneralArgs(cmd, opts)
+	if err != nil {
+		return err
+	}
+	c := exec.Command("go", bargs...)
+	setCommandFields(c, opts)
+	return ExecCmd(c)
+}
+
+func getGeneralArgs(cmd string, opts GoCmdOptions) ([]string, error) {
 	bargs := []string{cmd}
 	if opts.BinName != "" {
 		bargs = append(bargs, "-o", opts.BinName)
@@ -84,24 +105,22 @@ func goCmd(cmd string, opts GoCmdOptions) error {
 	if opts.GoMod {
 		inGoPath, err := wdInGoPath()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if os.Getenv(GoModEnv) == "on" || !inGoPath {
 			bargs = append(bargs, "-mod=vendor")
 		}
 	}
-	bargs = append(bargs, opts.PackagePath)
-	if cmd == goTestCmd {
-		bargs = append(bargs, opts.TestBinaryArgs...)
-	}
-	c := exec.Command("go", bargs...)
+	return append(bargs, opts.PackagePath), nil
+}
+
+func setCommandFields(c *exec.Cmd, opts GoCmdOptions) {
 	if len(opts.Env) != 0 {
 		c.Env = append(os.Environ(), opts.Env...)
 	}
 	if opts.Dir != "" {
 		c.Dir = opts.Dir
 	}
-	return ExecCmd(c)
 }
 
 func wdInGoPath() (bool, error) {

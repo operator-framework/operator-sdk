@@ -212,11 +212,13 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 	if enableTests {
 		if projutil.IsOperatorGo() {
-			opts := projutil.GoCmdOptions{
-				BinName:     filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName+"-test"),
-				PackagePath: testLocationBuild + "/...",
-				Args:        append(goTrimFlags, "-c"),
-				Env:         goBuildEnv,
+			opts := projutil.GoTestOptions{
+				GoCmdOptions: projutil.GoCmdOptions{
+					BinName:     filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName+"-test"),
+					PackagePath: testLocationBuild + "/...",
+					Args:        append(goTrimFlags, "-c"),
+					Env:         goBuildEnv,
+				},
 			}
 			if err := projutil.GoTest(opts); err != nil {
 				return fmt.Errorf("failed to build test binary: (%v)", err)
