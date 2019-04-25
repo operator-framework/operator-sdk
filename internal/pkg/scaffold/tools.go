@@ -12,40 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package project
+package scaffold
 
 import (
-	"bytes"
-	"io"
-	"os"
-	"path/filepath"
-
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
-
-	log "github.com/sirupsen/logrus"
 )
 
-var (
-	appRepo   = filepath.Join("github.com", "example-inc", "app-operator")
-	appConfig = &input.Config{
-		Repo: appRepo,
+const ToolsFile = "tools.go"
+
+type Tools struct {
+	input.Input
+}
+
+func (s *Tools) GetInput() (input.Input, error) {
+	if s.Path == "" {
+		s.Path = ToolsFile
 	}
+	s.TemplateBody = toolsTmpl
+	return s.Input, nil
+}
+
+const toolsTmpl = `// +build tools
+
+package tools
+
+import (
+	_ "k8s.io/code-generator/cmd/client-gen"
+	_ "k8s.io/code-generator/cmd/deepcopy-gen"
+	_ "k8s.io/code-generator/cmd/defaulter-gen"
+	_ "k8s.io/code-generator/cmd/informer-gen"
+	_ "k8s.io/code-generator/cmd/lister-gen"
+	_ "k8s.io/kube-openapi/cmd/openapi-gen"
 )
-
-func mustGetImportPath() string {
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("Failed to get working directory: (%v)", err)
-	}
-	return filepath.Join(wd, appRepo)
-}
-
-func setupScaffoldAndWriter() (*scaffold.Scaffold, *bytes.Buffer) {
-	buf := &bytes.Buffer{}
-	return &scaffold.Scaffold{
-		GetWriter: func(_ string, _ os.FileMode) (io.Writer, error) {
-			return buf, nil
-		},
-	}, buf
-}
+`

@@ -12,30 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package project
+package scaffold
 
 import (
-	"fmt"
+	"testing"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/internal/deps"
+	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 )
 
-const GoModFile = "go.mod"
-
-type GoMod struct {
-	input.Input
-}
-
-func (s *GoMod) GetInput() (input.Input, error) {
-	if s.Path == "" {
-		s.Path = GoModFile
+func TestGoMod(t *testing.T) {
+	s, buf := setupScaffoldAndWriter()
+	err := s.Execute(appConfig, &GoMod{
+		Input: input.Input{Repo: "github.com/example-inc/app-operator"},
+	})
+	if err != nil {
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
-	s.TemplateBody = goModTmpl
-	return s.Input, nil
+
+	if goModExp != buf.String() {
+		diffs := diffutil.Diff(goModExp, buf.String())
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
+	}
 }
 
-const goModTmpl = `module {{ .Repo }}
+const goModExp = `module github.com/example-inc/app-operator
 
 go 1.12
 
@@ -96,15 +97,3 @@ replace (
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20180711000925-0cf8f7e6ed1d
 )
 `
-
-func PrintGoMod(asFile bool) error {
-	b, err := deps.ExecGoModTmpl(goModTmpl)
-	if err != nil {
-		return err
-	}
-	if asFile {
-		_, err := fmt.Println(string(b))
-		return err
-	}
-	return deps.PrintGoMod(b)
-}

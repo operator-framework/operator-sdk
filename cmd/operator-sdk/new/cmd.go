@@ -25,7 +25,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/project"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	"github.com/pkg/errors"
@@ -155,9 +154,9 @@ func doGoScaffold() error {
 	var err error
 	switch m := projutil.DepManagerType(depManager); m {
 	case projutil.DepManagerDep:
-		err = s.Execute(cfg, &ansible.GopkgToml{})
+		err = s.Execute(cfg, &scaffold.GopkgToml{})
 	case projutil.DepManagerGoMod:
-		err = s.Execute(cfg, &project.GoMod{}, &project.Tools{})
+		err = s.Execute(cfg, &scaffold.GoMod{}, &scaffold.Tools{})
 	default:
 		err = projutil.ErrInvalidDepManagerType{Type: m}
 	}
@@ -176,8 +175,8 @@ func doGoScaffold() error {
 		&scaffold.Operator{IsClusterScoped: isClusterScoped},
 		&scaffold.Apis{},
 		&scaffold.Controller{},
-		&project.Version{},
-		&project.Gitignore{},
+		&scaffold.Version{},
+		&scaffold.Gitignore{},
 	)
 	if err != nil {
 		return fmt.Errorf("new Go scaffold failed: (%v)", err)

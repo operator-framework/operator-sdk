@@ -23,7 +23,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/project"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/pkg/errors"
 
@@ -170,9 +169,9 @@ func scaffoldDepManager(s *scaffold.Scaffold, cfg *input.Config) error {
 		}
 	case projutil.DepManagerGoMod:
 		if projutil.IsOperatorAnsible() {
-			files = append(files, &ansible.GoMod{}, &project.Tools{})
+			files = append(files, &ansible.GoMod{}, &scaffold.Tools{})
 		} else if projutil.IsOperatorHelm() {
-			files = append(files, &helm.GoMod{}, &project.Tools{})
+			files = append(files, &helm.GoMod{}, &scaffold.Tools{})
 		} else {
 			return projutil.ErrUnknownOperatorType{}
 		}
