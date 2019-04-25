@@ -45,7 +45,7 @@ func (d *DockerfileHybrid) GetInput() (input.Input, error) {
 	return d.Input, nil
 }
 
-const dockerFileHybridAnsibleTmpl = `FROM ansible/ansible-runner:1.3.2
+const dockerFileHybridAnsibleTmpl = `FROM ansible/ansible-runner:1.2
 
 RUN yum remove -y ansible python-idna
 RUN yum install -y inotify-tools && yum clean all
@@ -54,7 +54,7 @@ RUN pip uninstall ansible-runner -y
 RUN pip install --upgrade setuptools==41.0.1
 RUN pip install "urllib3<1.25,>=1.23"
 RUN pip install ansible==2.7.10 \
-	ansible-runner==1.3.2 \
+	ansible-runner==1.2 \
 	ansible-runner-http==1.0.0 \
 	idna==2.7 \
 	kubernetes==9.0.0 \
