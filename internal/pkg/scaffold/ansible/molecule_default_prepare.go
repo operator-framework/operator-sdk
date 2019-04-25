@@ -32,6 +32,7 @@ func (m *MoleculeDefaultPrepare) GetInput() (input.Input, error) {
 		m.Path = filepath.Join(MoleculeDefaultDir, MoleculeDefaultPrepareFile)
 	}
 	m.TemplateBody = moleculeDefaultPrepareAnsibleTmpl
+	m.Delims = AnsibleDelims
 
 	return m.Input, nil
 }
@@ -41,25 +42,25 @@ const moleculeDefaultPrepareAnsibleTmpl = `---
   hosts: k8s
   gather_facts: no
   vars:
-    kubeconfig: "{{"{{ lookup('env', 'KUBECONFIG') }}"}}"
+    kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
   tasks:
     - name: delete the kubeconfig if present
       file:
-        path: '{{"{{ kubeconfig }}"}}'
+        path: '{{ kubeconfig }}'
         state: absent
       delegate_to: localhost
 
     - name: Fetch the kubeconfig
       fetch:
-        dest: '{{ "{{ kubeconfig }}" }}'
+        dest: '{{ kubeconfig }}'
         flat: yes
         src: /root/.kube/config
 
     - name: Change the kubeconfig port to the proper value
       replace:
         regexp: 8443
-        replace: "{{"{{ lookup('env', 'KIND_PORT') }}"}}"
-        path: '{{ "{{ kubeconfig }}" }}'
+        replace: "{{ lookup('env', 'KIND_PORT') }}"
+        path: '{{ kubeconfig }}'
       delegate_to: localhost
 
     - name: Wait for the Kubernetes API to become available (this could take a minute)

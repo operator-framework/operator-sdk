@@ -15,6 +15,7 @@
 package helm
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -116,7 +117,7 @@ func CreateChart(projectDir string, opts CreateChartOptions) (*scaffold.Resource
 	chartsDir := filepath.Join(projectDir, HelmChartsDir)
 	err := os.MkdirAll(chartsDir, 0755)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to create helm-charts directory: %s", err)
 	}
 
 	var (
@@ -128,13 +129,29 @@ func CreateChart(projectDir string, opts CreateChartOptions) (*scaffold.Resource
 	// from Helm's default template. Otherwise, fetch it.
 	if len(opts.Chart) == 0 {
 		r, c, err = scaffoldChart(chartsDir, opts.ResourceAPIVersion, opts.ResourceKind)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to scaffold default chart: %s", err)
+		}
 	} else {
 		r, c, err = fetchChart(chartsDir, opts)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to fetch chart: %s", err)
+		}
 	}
+
+	relChartPath := filepath.Join(HelmChartsDir, c.GetMetadata().GetName())
+	absChartPath := filepath.Join(projectDir, relChartPath)
+	if err := fetchChartDependencies(absChartPath); err != nil {
+		return nil, nil, fmt.Errorf("failed to fetch chart dependencies: %s", err)
+	}
+
+	// Reload chart in case dependencies changed
+	c, err = chartutil.Load(absChartPath)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to load chart: %s", err)
 	}
-	log.Infof("Created %s/%s/", HelmChartsDir, c.GetMetadata().GetName())
+
+	log.Infof("Created %s", relChartPath)
 	return r, c, nil
 }
 
@@ -159,7 +176,7 @@ func scaffoldChart(destDir, apiVersion, kind string) (*scaffold.Resource, *chart
 		return nil, nil, err
 	}
 
-	chart, err := chartutil.LoadDir(chartPath)
+	chart, err := chartutil.Load(chartPath)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -198,17 +215,7 @@ func fetchChart(destDir string, opts CreateChartOptions) (*scaffold.Resource, *c
 }
 
 func createChartFromDisk(destDir, source string, isDir bool) (*chart.Chart, error) {
-	var (
-		chart *chart.Chart
-		err   error
-	)
-
-	// If source is a file or directory, attempt to load it
-	if isDir {
-		chart, err = chartutil.LoadDir(source)
-	} else {
-		chart, err = chartutil.LoadFile(source)
-	}
+	chart, err := chartutil.Load(source)
 	if err != nil {
 		return nil, err
 	}
@@ -264,4 +271,25 @@ func createChartFromRemote(destDir string, opts CreateChartOptions) (*chart.Char
 	}
 
 	return createChartFromDisk(destDir, chartArchive, false)
+}
+
+func fetchChartDependencies(chartPath string) error {
+	helmHome, ok := os.LookupEnv(environment.HomeEnvVar)
+	if !ok {
+		helmHome = environment.DefaultHelmHome
+	}
+	getters := getter.All(environment.EnvSettings{})
+
+	out := &bytes.Buffer{}
+	man := &downloader.Manager{
+		Out:       out,
+		ChartPath: chartPath,
+		HelmHome:  helmpath.Home(helmHome),
+		Getters:   getters,
+	}
+	if err := man.Build(); err != nil {
+		fmt.Println(out.String())
+		return err
+	}
+	return nil
 }

@@ -24,7 +24,7 @@ import (
 const BuildTestFrameworkDockerfileFile = "Dockerfile"
 
 type BuildTestFrameworkDockerfile struct {
-	input.Input
+	StaticInput
 }
 
 // GetInput - gets the input
