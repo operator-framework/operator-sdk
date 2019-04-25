@@ -94,20 +94,10 @@ var (
 	log           = logrus.New()
 )
 
-func ScorecardTests(cmd *cobra.Command, args []string) error {
-	if err := initConfig(); err != nil {
-		return err
-	}
-	if err := validateScorecardFlags(); err != nil {
-		return err
-	}
-	cmd.SilenceUsage = true
-	if viper.GetBool(VerboseOpt) {
-		log.SetLevel(logrus.DebugLevel)
-	}
+func runTests() ([]*TestSuite, error) {
 	defer func() {
 		if err := cleanupScorecard(); err != nil {
-			log.Errorf("Failed to clenup resources: (%v)", err)
+			log.Errorf("Failed to cleanup resources: (%v)", err)
 		}
 	}()
 
@@ -117,7 +107,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	)
 	kubeconfig, tmpNamespaceVar, err = k8sInternal.GetKubeconfigAndNamespace(viper.GetString(KubeconfigOpt))
 	if err != nil {
-		return fmt.Errorf("failed to build the kubeconfig: %v", err)
+		return nil, fmt.Errorf("failed to build the kubeconfig: %v", err)
 	}
 	if viper.GetString(NamespaceOpt) == "" {
 		viper.Set(NamespaceOpt, tmpNamespaceVar)
@@ -125,22 +115,22 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	scheme := runtime.NewScheme()
 	// scheme for client go
 	if err := cgoscheme.AddToScheme(scheme); err != nil {
-		return fmt.Errorf("failed to add client-go scheme to client: (%v)", err)
+		return nil, fmt.Errorf("failed to add client-go scheme to client: (%v)", err)
 	}
 	// api extensions scheme (CRDs)
 	if err := extscheme.AddToScheme(scheme); err != nil {
-		return fmt.Errorf("failed to add failed to add extensions api scheme to client: (%v)", err)
+		return nil, fmt.Errorf("failed to add failed to add extensions api scheme to client: (%v)", err)
 	}
 	// olm api (CS
 	if err := olmapiv1alpha1.AddToScheme(scheme); err != nil {
-		return fmt.Errorf("failed to add failed to add oml api scheme (CSVs) to client: (%v)", err)
+		return nil, fmt.Errorf("failed to add failed to add oml api scheme (CSVs) to client: (%v)", err)
 	}
 	dynamicDecoder = serializer.NewCodecFactory(scheme).UniversalDeserializer()
 	// if a user creates a new CRD, we need to be able to reset the rest mapper
 	// temporary kubeclient to get a cached discovery
 	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
 	if err != nil {
-		return fmt.Errorf("failed to get a kubeclient: %v", err)
+		return nil, fmt.Errorf("failed to get a kubeclient: %v", err)
 	}
 	cachedDiscoveryClient := cached.NewMemCacheClient(kubeclient.Discovery())
 	restMapper = restmapper.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient)
@@ -151,10 +141,10 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if viper.GetBool(OLMTestsOpt) {
 		yamlSpec, err := ioutil.ReadFile(viper.GetString(CSVPathOpt))
 		if err != nil {
-			return fmt.Errorf("failed to read csv: %v", err)
+			return nil, fmt.Errorf("failed to read csv: %v", err)
 		}
 		if err = yaml.Unmarshal(yamlSpec, csv); err != nil {
-			return fmt.Errorf("error getting ClusterServiceVersion: %v", err)
+			return nil, fmt.Errorf("error getting ClusterServiceVersion: %v", err)
 		}
 	}
 
@@ -163,17 +153,17 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		// Get deploymentName from the deployment manifest within the CSV.
 		strat, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		stratDep, ok := strat.(*olminstall.StrategyDetailsDeployment)
 		if !ok {
-			return fmt.Errorf("expected StrategyDetailsDeployment, got strategy of type %T", strat)
+			return nil, fmt.Errorf("expected StrategyDetailsDeployment, got strategy of type %T", strat)
 		}
 		deploymentName = stratDep.DeploymentSpecs[0].Name
 		// Get the proxy pod, which should have been created with the CSV.
 		proxyPodGlobal, err = getPodFromDeployment(deploymentName, viper.GetString(NamespaceOpt))
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		// Create a temporary CR manifest from metadata if one is not provided.
@@ -181,24 +171,24 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		if ok && viper.GetString(CRManifestOpt) == "" {
 			var crs []interface{}
 			if err = json.Unmarshal([]byte(crJSONStr), &crs); err != nil {
-				return err
+				return nil, err
 			}
 			// TODO: run scorecard against all CR's in CSV.
 			cr := crs[0]
 			crJSONBytes, err := json.Marshal(cr)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			crYAMLBytes, err := yaml.JSONToYAML(crJSONBytes)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			crFile, err := ioutil.TempFile("", "cr.yaml")
 			if err != nil {
-				return err
+				return nil, err
 			}
 			if _, err := crFile.Write(crYAMLBytes); err != nil {
-				return err
+				return nil, err
 			}
 			viper.Set(CRManifestOpt, crFile.Name())
 			defer func() {
@@ -215,7 +205,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		if viper.GetString(NamespacedManifestOpt) == "" {
 			file, err := yamlutil.GenerateCombinedNamespacedManifest(scaffold.DeployDir)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			viper.Set(NamespacedManifestOpt, file.Name())
 			defer func() {
@@ -229,7 +219,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		if viper.GetString(GlobalManifestOpt) == "" {
 			gMan, err := yamlutil.GenerateCombinedGlobalManifest(viper.GetString(CRDsDirOpt))
 			if err != nil {
-				return err
+				return nil, err
 			}
 			viper.Set(GlobalManifestOpt, gMan.Name())
 			defer func() {
@@ -240,22 +230,22 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 			}()
 		}
 		if err := createFromYAMLFile(viper.GetString(GlobalManifestOpt)); err != nil {
-			return fmt.Errorf("failed to create global resources: %v", err)
+			return nil, fmt.Errorf("failed to create global resources: %v", err)
 		}
 		if err := createFromYAMLFile(viper.GetString(NamespacedManifestOpt)); err != nil {
-			return fmt.Errorf("failed to create namespaced resources: %v", err)
+			return nil, fmt.Errorf("failed to create namespaced resources: %v", err)
 		}
 	}
 
 	if err := createFromYAMLFile(viper.GetString(CRManifestOpt)); err != nil {
-		return fmt.Errorf("failed to create cr resource: %v", err)
+		return nil, fmt.Errorf("failed to create cr resource: %v", err)
 	}
 	obj, err := yamlToUnstructured(viper.GetString(CRManifestOpt))
 	if err != nil {
-		return fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
+		return nil, fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
 	}
 	if err := waitUntilCRStatusExists(obj); err != nil {
-		return fmt.Errorf("failed waiting to check if CR status exists: %v", err)
+		return nil, fmt.Errorf("failed waiting to check if CR status exists: %v", err)
 	}
 	var suites []*TestSuite
 
@@ -281,6 +271,24 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		olmTests := NewOLMTestSuite(conf)
 		olmTests.Run(context.TODO())
 		suites = append(suites, olmTests)
+	}
+	return suites, nil
+}
+
+func ScorecardTests(cmd *cobra.Command, args []string) error {
+	if err := initConfig(); err != nil {
+		return err
+	}
+	if err := validateScorecardFlags(); err != nil {
+		return err
+	}
+	cmd.SilenceUsage = true
+	if viper.GetBool(VerboseOpt) {
+		log.SetLevel(logrus.DebugLevel)
+	}
+	suites, err := runTests()
+	if err != nil {
+		return err
 	}
 	totalScore := 0.0
 	// Update the state for the tests
