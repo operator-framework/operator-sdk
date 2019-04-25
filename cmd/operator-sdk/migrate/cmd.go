@@ -69,7 +69,7 @@ func migrateAnsible() error {
 	projectName := filepath.Base(wd)
 
 	cfg := &input.Config{
-		Repo:           filepath.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
+		Repo:           projutil.CheckAndGetProjectGoPkg(),
 		AbsProjectPath: wd,
 		ProjectName:    projectName,
 	}
@@ -116,7 +116,7 @@ func migrateHelm() error {
 	projectName := filepath.Base(wd)
 
 	cfg := &input.Config{
-		Repo:           filepath.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
+		Repo:           projutil.CheckAndGetProjectGoPkg(),
 		AbsProjectPath: wd,
 		ProjectName:    projectName,
 	}
