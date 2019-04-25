@@ -38,8 +38,6 @@ func (s *GoMod) GetInput() (input.Input, error) {
 
 const goModTmpl = `module {{ .Repo }}
 
-go 1.12
-
 require (
 	cloud.google.com/go v0.37.2 // indirect
 	contrib.go.opencensus.io/exporter/ocagent v0.4.9 // indirect
@@ -62,10 +60,11 @@ require (
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/json-iterator/go v1.1.6 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
+	github.com/markbates/inflect v1.0.4 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
-	github.com/operator-framework/operator-sdk v0.7.0
+	github.com/operator-framework/operator-sdk v0.7.1-0.20190423132450-ec538b5b4e4c
 	github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90 // indirect
@@ -88,20 +87,25 @@ require (
 	k8s.io/apimachinery v0.0.0-20181127025237-2b1284ed4c93 // indirect
 	k8s.io/client-go v0.0.0-20181213151034-8d9ed539ba31
 	k8s.io/code-generator v0.0.0-20190405172246-9a4d48088f6a
-	k8s.io/gengo v0.0.0-20190327210449-e17681d19d3a // indirect
+	k8s.io/gengo v0.0.0-20190327210449-e17681d19d3a
 	k8s.io/klog v0.2.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20190320154901-5e45bb682580
+	k8s.io/kubernetes v1.14.1 // indirect
 	sigs.k8s.io/controller-runtime v0.1.10
+	sigs.k8s.io/controller-tools v0.1.10
 	sigs.k8s.io/testing_frameworks v0.1.1 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
 
+// Pinned to kubernetes-1.13.1
 replace (
-	// The following are locked to kubernetes-1.13.3
-	k8s.io/api => k8s.io/api v0.0.0-20190202010724-74b699b93c15
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20190202013456-d4288ab64945
-	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190117220443-572dfc7bdfcb
-	k8s.io/client-go => k8s.io/client-go v2.0.0-alpha.0.0.20190202011228-6e4752048fde+incompatible
+	k8s.io/api => k8s.io/api v0.0.0-20181213150558-05914d821849
+	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20181127025237-2b1284ed4c93
+	k8s.io/client-go => k8s.io/client-go v0.0.0-20181213151034-8d9ed539ba31
+	k8s.io/kubernetes => k8s.io/kubernetes v1.13.1
+)
+
+replace (
 	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20181117043124-c2090bec4d9b
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20180711000925-0cf8f7e6ed1d
 )
