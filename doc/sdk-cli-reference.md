@@ -339,8 +339,7 @@ Adds a new controller under `pkg/controller/<kind>/...` that, by default, reconc
 
 * `--api-version` string - CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
 * `--kind` string - CRD Kind. (e.g AppService)
-* `--k8s-api` - The provided kind for api-version is a Kubernetes resource API
-* `--k8s-import-path` - Kubernetes resource import path. Only valid if --k8s-api is set (default `k8s.io/api`)
+* `--k8s-api-import` - External Kubernetes resource import path of the form "host.com/repo/path[=import_identifier]". import_identifier is optional
 
 #### Example
 
