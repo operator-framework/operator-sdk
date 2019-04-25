@@ -48,11 +48,11 @@ type GoCmdOptions struct {
 	Env []string
 	// Dir is the dir to run "go {cmd}" in; exec.Command.Dir is set to this value.
 	Dir string
-	// GoMod determines whether to set the "-mod=vendor" flag.
-	// If true, "go {cmd}" will use modules.
-	// If false, "go {cmd}" will not use go modules. This is the default.
+	// NoGoMod determines whether to set the "-mod=vendor" flag.
+	// If true, "go {cmd}" will not use modules.
+	// If false, "go {cmd}" will use go modules. This is the default.
 	// This applies to build, clean, get, install, list, run, and test.
-	GoMod bool
+	NoGoMod bool
 }
 
 // GoTestOptions is the set of options for "go test".
@@ -102,7 +102,7 @@ func getGeneralArgs(cmd string, opts GoCmdOptions) ([]string, error) {
 	}
 	bargs = append(bargs, opts.Args...)
 	// Modules can be used if either GO111MODULE=on or we're not in $GOPATH/src.
-	if opts.GoMod {
+	if !opts.NoGoMod {
 		inGoPath, err := wdInGoPath()
 		if err != nil {
 			return nil, err
