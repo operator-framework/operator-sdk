@@ -30,9 +30,9 @@ type ControllerKind struct {
 
 	// Resource defines the inputs for the controller's primary resource
 	Resource *Resource
-	// K8sImport holds the import path for a built-in or custom Kubernetes
+	// CustomImport holds the import path for a built-in or custom Kubernetes
 	// API that this controller reconciles, if specified by the scaffold invoker.
-	K8sImport string
+	CustomImport string
 
 	// ImportMap maps all imports destined for the scaffold to their import
 	// identifier, if any.
@@ -54,8 +54,8 @@ func (s *ControllerKind) GetInput() (_ input.Input, err error) {
 	// Set imports.
 	s.ImportMap = controllerKindImports
 	importPath := ""
-	if s.K8sImport != "" {
-		importPath, s.GoImportIdent, err = getK8sAPIImportPathAndIdent(s.K8sImport)
+	if s.CustomImport != "" {
+		importPath, s.GoImportIdent, err = getCustomAPIImportPathAndIdent(s.CustomImport)
 		if err != nil {
 			return input.Input{}, err
 		}
@@ -75,7 +75,7 @@ func (s *ControllerKind) GetInput() (_ input.Input, err error) {
 	return s.Input, nil
 }
 
-func getK8sAPIImportPathAndIdent(m string) (p string, id string, err error) {
+func getCustomAPIImportPathAndIdent(m string) (p string, id string, err error) {
 	sm := strings.Split(m, "=")
 	for i, e := range sm {
 		if i == 0 {

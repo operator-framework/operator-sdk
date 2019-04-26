@@ -191,7 +191,7 @@ func newPodForCR(cr *appv1alpha1.AppService) *corev1.Pod {
 }
 `
 
-func TestGetK8sAPIImportPathAndIdentifier(t *testing.T) {
+func TestGetCustomAPIImportPathAndIdentifier(t *testing.T) {
 	cases := []struct {
 		inputImport, wantImportPath, wantImportIdent string
 		wantErr                                      bool
@@ -209,7 +209,7 @@ func TestGetK8sAPIImportPathAndIdentifier(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		gotPath, gotIdent, err := getK8sAPIImportPathAndIdent(c.inputImport)
+		gotPath, gotIdent, err := getCustomAPIImportPathAndIdent(c.inputImport)
 		if err != nil && !c.wantErr {
 			t.Errorf(`wanted import path "%s" and identifier "%s" from "%s", got error %v`, c.wantImportPath, c.wantImportIdent, c.inputImport, err)
 			continue
