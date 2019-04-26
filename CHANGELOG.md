@@ -10,6 +10,8 @@
 
 ### Bug Fixes
 
+- Pin dependency versions in Ansible build and test framework Dockerfiles to fix broken build and test framework images. ([#1348](https://github.com/operator-framework/operator-sdk/pull/1348))
+
 ## v0.7.0
 
 ### Added
