@@ -51,7 +51,7 @@ type ScorecardSuiteResult struct {
 	Fail int `json:"fail"`
 	// TotalTests is the total number of tests run in this suite
 	TotalTests int `json:"totalTests"`
-	// TotalScore is the total score of this quite as a percentage
+	// TotalScore is the total score of this suite as a percentage
 	TotalScore int `json:"totalScorePercent"`
 	// Tests is an array containing a json-ified version of the TestResults for the suite
 	Tests []*ScorecardTestResult `json:"tests"`
