@@ -82,12 +82,22 @@ func (e ErrInvalidDepManagerType) Error() string {
 }
 
 func GetDepManagerType() (DepManagerType, error) {
-	if _, err := os.Stat(gopkgTOMLFile); err == nil {
+	if IsDepManagerDep() {
 		return DepManagerDep, nil
-	} else if _, err := os.Stat(goModFile); err == nil {
+	} else if IsDepManagerGoMod() {
 		return DepManagerGoMod, nil
 	}
 	return "", errors.New("unable to determine dependency manager: no dependency manager file found")
+}
+
+func IsDepManagerDep() bool {
+	_, err := os.Stat(gopkgTOMLFile)
+	return err == nil || os.IsExist(err)
+}
+
+func IsDepManagerGoMod() bool {
+	_, err := os.Stat(goModFile)
+	return err == nil || os.IsExist(err)
 }
 
 // MustInProjectRoot checks if the current dir is the project root and returns
