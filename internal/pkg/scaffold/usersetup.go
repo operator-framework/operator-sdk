@@ -20,10 +20,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 )
 
-const (
-	BuildScriptDir = BuildDir + filePathSep + "bin"
-	UserSetupFile  = "user_setup"
-)
+const UserSetupFile = "user_setup"
 
 // UserSetup - userSetup script
 type UserSetup struct {

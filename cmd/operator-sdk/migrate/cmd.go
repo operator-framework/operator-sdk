@@ -41,7 +41,7 @@ func NewCmd() *cobra.Command {
 		RunE:  migrateRun,
 	}
 
-	newCmd.Flags().StringVar(&depManager, "dep-manager", "dep", "Dependency manager the migrated project will use (choices: \"dep\")")
+	newCmd.Flags().StringVar(&depManager, "dep-manager", "mod", `Dependency manager the new project will use (choices: "dep")`)
 
 	return newCmd
 }
@@ -66,12 +66,11 @@ func migrateRun(cmd *cobra.Command, args []string) error {
 // migrateAnsible runs the migration process for an ansible-based operator
 func migrateAnsible() error {
 	wd := projutil.MustGetwd()
-	projectName := filepath.Base(wd)
 
 	cfg := &input.Config{
-		Repo:           filepath.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
+		Repo:           projutil.CheckAndGetProjectGoPkg(),
 		AbsProjectPath: wd,
-		ProjectName:    projectName,
+		ProjectName:    filepath.Base(wd),
 	}
 	s := &scaffold.Scaffold{}
 
@@ -92,7 +91,7 @@ func migrateAnsible() error {
 		return err
 	}
 
-	if err := scaffoldDepManager(s, cfg); err != nil {
+	if err := scaffoldAnsibleDepManager(s, cfg); err != nil {
 		return errors.Wrap(err, "migrate Ansible dependency manager file scaffold failed")
 	}
 
@@ -113,12 +112,11 @@ func migrateAnsible() error {
 // migrateHelm runs the migration process for a helm-based operator
 func migrateHelm() error {
 	wd := projutil.MustGetwd()
-	projectName := filepath.Base(wd)
 
 	cfg := &input.Config{
-		Repo:           filepath.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
+		Repo:           projutil.CheckAndGetProjectGoPkg(),
 		AbsProjectPath: wd,
-		ProjectName:    projectName,
+		ProjectName:    filepath.Base(wd),
 	}
 
 	if err := renameDockerfile(); err != nil {
@@ -126,7 +124,7 @@ func migrateHelm() error {
 	}
 
 	s := &scaffold.Scaffold{}
-	if err := scaffoldDepManager(s, cfg); err != nil {
+	if err := scaffoldHelmDepManager(s, cfg); err != nil {
 		return errors.Wrap(err, "migrate Helm dependency manager file scaffold failed")
 	}
 
@@ -156,19 +154,24 @@ func renameDockerfile() error {
 	return nil
 }
 
-func scaffoldDepManager(s *scaffold.Scaffold, cfg *input.Config) error {
+func scaffoldHelmDepManager(s *scaffold.Scaffold, cfg *input.Config) error {
 	var files []input.File
 	switch m := projutil.DepManagerType(depManager); m {
 	case projutil.DepManagerDep:
-		if projutil.IsOperatorAnsible() {
-			files = append(files, &ansible.GopkgToml{})
-		} else if projutil.IsOperatorHelm() {
-			files = append(files, &helm.GopkgToml{})
-		} else {
-			return projutil.ErrUnknownOperatorType{}
-		}
+		files = append(files, &helm.GopkgToml{})
 	default:
-		return projutil.ErrInvalidDepManagerType{Type: m}
+		return projutil.ErrInvalidDepManager
+	}
+	return s.Execute(cfg, files...)
+}
+
+func scaffoldAnsibleDepManager(s *scaffold.Scaffold, cfg *input.Config) error {
+	var files []input.File
+	switch m := projutil.DepManagerType(depManager); m {
+	case projutil.DepManagerDep:
+		files = append(files, &ansible.GopkgToml{})
+	default:
+		return projutil.ErrInvalidDepManager
 	}
 	return s.Execute(cfg, files...)
 }
