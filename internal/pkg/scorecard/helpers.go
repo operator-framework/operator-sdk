@@ -67,7 +67,7 @@ func TestSuitesToScorecardOutput(suites []*TestSuite, log string) *scapiv1alpha1
 	test := &scapiv1alpha1.ScorecardOutput{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ScorecardOutput",
-			APIVersion: "osdk.scorecard.com/v1alpha1",
+			APIVersion: "osdk.openshift.io/v1alpha1",
 		},
 		Log: log,
 	}
