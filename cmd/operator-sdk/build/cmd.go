@@ -25,7 +25,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/project"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	"github.com/operator-framework/operator-sdk/pkg/test"
@@ -222,7 +221,7 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 		}
 
 		// if a user is using an older sdk repo as their library, make sure they have required build files
-		testDockerfile := filepath.Join(scaffold.BuildTestDir, project.DockerfileFile)
+		testDockerfile := filepath.Join(scaffold.BuildTestDir, scaffold.DockerfileFile)
 		_, err := os.Stat(testDockerfile)
 		if err != nil && os.IsNotExist(err) {
 

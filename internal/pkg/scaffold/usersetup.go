@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package project
+package scaffold
 
 import (
 	"path/filepath"
@@ -21,8 +21,6 @@ import (
 )
 
 const (
-	filePathSep    = string(filepath.Separator)
-	BuildDir       = "build"
 	BuildScriptDir = BuildDir + filePathSep + "bin"
 	UserSetupFile  = "user_setup"
 )

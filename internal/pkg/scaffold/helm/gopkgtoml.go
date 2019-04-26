@@ -17,9 +17,9 @@ package helm
 import (
 	"fmt"
 
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/internal/deps"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/project"
 )
 
 // GopkgToml - the Gopkg.toml file for a hybrid operator
@@ -29,7 +29,7 @@ type GopkgToml struct {
 
 func (s *GopkgToml) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = project.GopkgTomlFile
+		s.Path = scaffold.GopkgTomlFile
 	}
 	s.TemplateBody = gopkgTomlTmpl
 	return s.Input, nil

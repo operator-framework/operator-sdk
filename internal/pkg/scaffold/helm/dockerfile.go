@@ -20,7 +20,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/project"
 	"github.com/operator-framework/operator-sdk/version"
 )
 
@@ -35,7 +34,7 @@ type Dockerfile struct {
 // GetInput gets the scaffold execution input
 func (d *Dockerfile) GetInput() (input.Input, error) {
 	if d.Path == "" {
-		d.Path = filepath.Join(scaffold.BuildDir, project.DockerfileFile)
+		d.Path = filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
 	}
 	d.HelmChartsDir = HelmChartsDir
 	d.ImageTag = strings.TrimSuffix(version.Version, "+git")

@@ -19,7 +19,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/project"
 )
 
 //DockerfileHybrid - Dockerfile for a hybrid operator
@@ -36,7 +35,7 @@ type DockerfileHybrid struct {
 // GetInput - gets the input
 func (d *DockerfileHybrid) GetInput() (input.Input, error) {
 	if d.Path == "" {
-		d.Path = filepath.Join(scaffold.BuildDir, project.DockerfileFile)
+		d.Path = filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
 	}
 	d.TemplateBody = dockerFileHybridHelmTmpl
 	return d.Input, nil

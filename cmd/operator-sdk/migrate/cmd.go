@@ -23,7 +23,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/project"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	"github.com/pkg/errors"
@@ -42,7 +41,7 @@ func NewCmd() *cobra.Command {
 		RunE:  migrateRun,
 	}
 
-	newCmd.Flags().StringVar(&depManager, "dep-manager", "dep", "Dependency manager the new project will use (choices: \"dep\")")
+	newCmd.Flags().StringVar(&depManager, "dep-manager", "dep", "Dependency manager the migrated project will use (choices: \"dep\")")
 
 	return newCmd
 }
@@ -147,7 +146,7 @@ func migrateHelm() error {
 }
 
 func renameDockerfile() error {
-	dockerfilePath := filepath.Join(scaffold.BuildDir, project.DockerfileFile)
+	dockerfilePath := filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
 	newDockerfilePath := dockerfilePath + ".sdkold"
 	err := os.Rename(dockerfilePath, newDockerfilePath)
 	if err != nil {

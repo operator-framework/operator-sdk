@@ -17,9 +17,9 @@ package printdeps
 import (
 	"fmt"
 
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/helm"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/project"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	"github.com/spf13/cobra"
@@ -77,7 +77,7 @@ func printDeps(asFile bool) error {
 		}
 	case projutil.IsOperatorGo():
 		if isDep {
-			return project.PrintDepGopkgTOML(asFile)
+			return scaffold.PrintDepGopkgTOML(asFile)
 		}
 	}
 

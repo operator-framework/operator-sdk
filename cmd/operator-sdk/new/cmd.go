@@ -25,7 +25,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/project"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	"github.com/pkg/errors"
@@ -156,7 +155,7 @@ func doGoScaffold() error {
 	var err error
 	switch m := projutil.DepManagerType(depManager); m {
 	case projutil.DepManagerDep:
-		err = s.Execute(cfg, &project.GopkgToml{})
+		err = s.Execute(cfg, &scaffold.GopkgToml{})
 	default:
 		err = projutil.ErrInvalidDepManagerType{Type: m}
 	}
@@ -166,17 +165,17 @@ func doGoScaffold() error {
 
 	err = s.Execute(cfg,
 		&scaffold.Cmd{},
-		&project.Dockerfile{},
-		&project.Entrypoint{},
-		&project.UserSetup{},
+		&scaffold.Dockerfile{},
+		&scaffold.Entrypoint{},
+		&scaffold.UserSetup{},
 		&scaffold.ServiceAccount{},
 		&scaffold.Role{IsClusterScoped: isClusterScoped},
 		&scaffold.RoleBinding{IsClusterScoped: isClusterScoped},
 		&scaffold.Operator{IsClusterScoped: isClusterScoped},
 		&scaffold.Apis{},
 		&scaffold.Controller{},
-		&project.Version{},
-		&project.Gitignore{},
+		&scaffold.Version{},
+		&scaffold.Gitignore{},
 	)
 	if err != nil {
 		return fmt.Errorf("new Go scaffold failed: (%v)", err)
