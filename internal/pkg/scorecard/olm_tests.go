@@ -192,7 +192,6 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *TestResult {
 		res.Errors = append(res.Errors, err)
 		return res
 	}
-	// TODO: we need to make this handle multiple CRs better/correctly
 	for _, crd := range crds {
 		// check if the CRD matches the testing CR
 		gvk := t.CR.GroupVersionKind()
