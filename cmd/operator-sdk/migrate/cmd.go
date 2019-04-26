@@ -41,7 +41,7 @@ func NewCmd() *cobra.Command {
 		RunE:  migrateRun,
 	}
 
-	newCmd.Flags().StringVar(&depManager, "dep-manager", "mod", `Dependency manager the new project will use (choices: "dep")`)
+	newCmd.Flags().StringVar(&depManager, "dep-manager", "dep", `Dependency manager the new project will use (choices: "dep")`)
 
 	return newCmd
 }
