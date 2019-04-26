@@ -185,6 +185,7 @@ func buildLocal(outputBinName string) error {
 		BinName:     outputBinName,
 		PackagePath: filepath.Join(scaffold.ManagerDir, scaffold.CmdFile),
 		Args:        args,
+		NoGoMod:     !projutil.IsDepManagerGoMod(),
 	}
 	return projutil.GoBuild(opts)
 }

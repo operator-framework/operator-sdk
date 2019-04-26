@@ -58,6 +58,7 @@ func printDepsFunc(cmd *cobra.Command, args []string) error {
 }
 
 func printDeps(asFile bool) error {
+	// Make sure the project has a dep manager file.
 	mt, err := projutil.GetDepManagerType()
 	if err != nil {
 		return err
