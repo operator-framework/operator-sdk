@@ -69,10 +69,15 @@ func (e ErrInvalidDepManagerType) Error() string {
 }
 
 func GetDepManagerType() (DepManagerType, error) {
-	if _, err := os.Stat(gopkgTOMLFile); err == nil {
+	if IsDepManagerDep() {
 		return DepManagerDep, nil
 	}
 	return "", errors.New("unable to determine dependency manager: no dependency manager file found")
+}
+
+func IsDepManagerDep() bool {
+	_, err := os.Stat(gopkgTOMLFile)
+	return err == nil || os.IsExist(err)
 }
 
 type ErrUnknownOperatorType struct {
