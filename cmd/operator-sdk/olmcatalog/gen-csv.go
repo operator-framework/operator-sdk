@@ -33,6 +33,7 @@ import (
 
 var (
 	csvVersion    string
+	csvChannel    string
 	fromVersion   string
 	csvConfigPath string
 	updateCRDs    bool
@@ -54,10 +55,13 @@ Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config
 	}
 
 	genCSVCmd.Flags().StringVar(&csvVersion, "csv-version", "", "Semantic version of the CSV")
-	genCSVCmd.MarkFlagRequired("csv-version")
+	if err := genCSVCmd.MarkFlagRequired("csv-version"); err != nil {
+		log.Fatalf("Failed to mark `csv-version` flag for `olm-catalog gen-csv` subcommand as required")
+	}
 	genCSVCmd.Flags().StringVar(&fromVersion, "from-version", "", "Semantic version of an existing CSV to use as a base")
 	genCSVCmd.Flags().StringVar(&csvConfigPath, "csv-config", "", "Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml")
 	genCSVCmd.Flags().BoolVar(&updateCRDs, "update-crds", false, "Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's")
+	genCSVCmd.Flags().StringVar(&csvChannel, "csv-channel", "", "Channel the CSV should be registered under in the package manifest")
 
 	return genCSVCmd
 }
@@ -88,7 +92,14 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 		FromVersion:    fromVersion,
 		ConfigFilePath: csvConfigPath,
 	}
-	if err := s.Execute(cfg, csv); err != nil {
+	err := s.Execute(cfg,
+		csv,
+		&catalog.PackageManifest{
+			CSVVersion: csvVersion,
+			Channel:    csvChannel,
+		},
+	)
+	if err != nil {
 		return fmt.Errorf("catalog scaffold failed: (%v)", err)
 	}
 

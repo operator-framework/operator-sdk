@@ -38,6 +38,7 @@ import (
 )
 
 const (
+	OLMCatalogDir     = scaffold.DeployDir + string(filepath.Separator) + "olm-catalog"
 	CSVYamlFileExt    = ".clusterserviceversion.yaml"
 	CSVConfigYamlFile = "csv-config.yaml"
 )
@@ -82,15 +83,12 @@ func (s *CSV) GetInput() (input.Input, error) {
 		lowerProjName := strings.ToLower(s.ProjectName)
 		// Path is what the operator-registry expects:
 		// {manifests -> olm-catalog}/{operator_name}/{semver}/{operator_name}.v{semver}.clusterserviceversion.yaml
-		s.Path = filepath.Join(s.pathPrefix,
-			scaffold.OLMCatalogDir,
-			lowerProjName,
-			s.CSVVersion,
+		s.Path = filepath.Join(s.pathPrefix, OLMCatalogDir, lowerProjName, s.CSVVersion,
 			getCSVFileName(lowerProjName, s.CSVVersion),
 		)
 	}
 	if s.ConfigFilePath == "" {
-		s.ConfigFilePath = filepath.Join(s.pathPrefix, scaffold.OLMCatalogDir, CSVConfigYamlFile)
+		s.ConfigFilePath = filepath.Join(s.pathPrefix, OLMCatalogDir, CSVConfigYamlFile)
 	}
 	return s.Input, nil
 }
@@ -184,7 +182,7 @@ func getCSVFileName(name, version string) string {
 func (s *CSV) getCSVPath(ver string) string {
 	lowerProjName := strings.ToLower(s.ProjectName)
 	name := getCSVFileName(lowerProjName, ver)
-	return filepath.Join(s.pathPrefix, scaffold.OLMCatalogDir, lowerProjName, ver, name)
+	return filepath.Join(s.pathPrefix, OLMCatalogDir, lowerProjName, ver, name)
 }
 
 // getDisplayName turns a project dir name in any of {snake, chain, camel}
