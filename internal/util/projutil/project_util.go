@@ -36,6 +36,7 @@ const (
 	buildDockerfile = "build" + fsep + "Dockerfile"
 	rolesDir        = "roles"
 	helmChartsDir   = "helm-charts"
+	gopkgTOMLFile   = "Gopkg.toml"
 )
 
 // OperatorType - the type of operator
@@ -51,6 +52,26 @@ const (
 	// OperatorTypeUnknown - unknown type of operator.
 	OperatorTypeUnknown OperatorType = "unknown"
 )
+
+type DepManagerType string
+
+const (
+	DepManagerDep DepManagerType = "dep"
+)
+
+var ErrInvalidDepManager = fmt.Errorf(`no valid dependency manager file found; dep manager must be one of ["%v"]`, DepManagerDep)
+
+func GetDepManagerType() (DepManagerType, error) {
+	if IsDepManagerDep() {
+		return DepManagerDep, nil
+	}
+	return "", ErrInvalidDepManager
+}
+
+func IsDepManagerDep() bool {
+	_, err := os.Stat(gopkgTOMLFile)
+	return err == nil || os.IsExist(err)
+}
 
 type ErrUnknownOperatorType struct {
 	Type string
