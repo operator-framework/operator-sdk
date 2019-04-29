@@ -90,7 +90,6 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 		log.Error(err, "")
 		os.Exit(1)
 	}
-
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(options.GVK)
 	if err := c.Watch(&source.Kind{Type: u}, &crthandler.EnqueueRequestForObject{}, predicate.GenerationChangedPredicate{}); err != nil {
