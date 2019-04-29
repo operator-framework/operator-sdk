@@ -198,7 +198,6 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	}
 
 	// try to get the updated finalizers
-	finalizer, finalizerExists = r.Runner.GetFinalizer()
 	pendingFinalizers = u.GetFinalizers()
 
 	// We only want to update the CustomResource once, so we'll track changes
