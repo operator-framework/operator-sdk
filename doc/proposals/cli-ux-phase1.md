@@ -83,7 +83,7 @@ OLM uses Kubernetes APIs to learn about the set of operators that are available 
 | `OperatorGroup` | Tells OLM which namespaces the operator will have RBAC permissions for. We will set this up with the namespace of the current context from the user's `$KUBECONFIG`. |
 | `Subscription`  | Tells OLM to manage installation and upgrade of an operator in the namespace in which the `Subscription` is created. We'll create it in the namespace of the current context from the user's `$KUBECONFIG`. |
 
-**Open question:** Should we handle cleanup for any of the InstallPlan, CSV, CRD, and CR resources? Which of these will be automatically garbage-collected?
+**Open question:** When the user aborts the process, should we handle cleanup for any of the InstallPlan, CSV, CRD, and CR resources? Which of these will be automatically garbage-collected?
 
 ## References
 
