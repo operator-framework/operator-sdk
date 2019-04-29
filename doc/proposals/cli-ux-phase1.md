@@ -55,6 +55,9 @@ Deploys the Operator Lifecycle Manager (OLM). The initial proof-of-concept will 
 | `--olm-version`  | string | The version of OLM to deploy (default `latest`)                                                 |
 | `--kubeconfig`   | string | Path for custom Kubernetes client config file (overrides the default locations)                 |
 
+**Open questions:** 
+1. Do we need to support different cluster types? Or should we just always use `upstream` since OLM is already installed by default in OCP and OKD clusters?
+
 ### `operator-sdk alpha olm up`
 
 Creates all necessary resources in the cluster to run the operator via OLM, waits for the operator to be deployed by OLM, and tails the operator log, similar to `operator-sdk up local`. When the user terminates the process or if a timeout or error occurs, all of the created resources will be cleaned up.
@@ -83,7 +86,9 @@ OLM uses Kubernetes APIs to learn about the set of operators that are available 
 | `OperatorGroup` | Tells OLM which namespaces the operator will have RBAC permissions for. We will set this up with the namespace of the current context from the user's `$KUBECONFIG`. |
 | `Subscription`  | Tells OLM to manage installation and upgrade of an operator in the namespace in which the `Subscription` is created. We'll create it in the namespace of the current context from the user's `$KUBECONFIG`. |
 
-**Open question:** When the user aborts the process, should we handle cleanup for any of the InstallPlan, CSV, CRD, and CR resources? Which of these will be automatically garbage-collected?
+**Open questions:** 
+1. When the user aborts the process, should we handle cleanup for any of the InstallPlan, CSV, CRD, and CR resources? Which of these will be automatically garbage-collected?
+2. The `upstream` version of the manifests have several differences with the `ocp` and `okd` manifests, notably installation in different namespaces. Since `olm up` will need to create resources in these namespaces, how will we account for these (and any other) differences?
 
 ## References
 
