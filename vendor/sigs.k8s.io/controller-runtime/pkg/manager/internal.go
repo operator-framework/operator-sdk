@@ -33,14 +33,14 @@ import (
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	logf "sigs.k8s.io/controller-runtime/pkg/internal/log"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 	"sigs.k8s.io/controller-runtime/pkg/recorder"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/inject"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission/types"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
-var log = logf.KBLog.WithName("manager")
+var log = logf.RuntimeLog.WithName("manager")
 
 type controllerManager struct {
 	// config is the rest.config used to talk to the apiserver.  Required.
@@ -49,8 +49,6 @@ type controllerManager struct {
 	// scheme is the scheme injected into Controllers, EventHandlers, Sources and Predicates.  Defaults
 	// to scheme.scheme.
 	scheme *runtime.Scheme
-	// admissionDecoder is used to decode an admission.Request.
-	admissionDecoder types.Decoder
 
 	// runnables is the set of Controllers that the controllerManager injects deps into and Starts.
 	runnables []Runnable
@@ -60,6 +58,9 @@ type controllerManager struct {
 	// TODO(directxman12): Provide an escape hatch to get individual indexers
 	// client is the client injected into Controllers (and EventHandlers, Sources and Predicates).
 	client client.Client
+
+	// apiReader is the reader that will make requests to the api server and not the cache.
+	apiReader client.Reader
 
 	// fieldIndexes knows how to add field indexes over the Cache used by this controller,
 	// which can later be consumed via field selectors from the injected client.
@@ -93,6 +94,13 @@ type controllerManager struct {
 	internalStopper chan<- struct{}
 
 	startCache func(stop <-chan struct{}) error
+
+	// port is the port that the webhook server serves at.
+	port int
+	// host is the hostname that the webhook server binds to.
+	host string
+
+	webhookServer *webhook.Server
 }
 
 // Add sets dependencies on i, and adds it to the list of runnables to start.
@@ -124,6 +132,9 @@ func (cm *controllerManager) SetFields(i interface{}) error {
 	if _, err := inject.ClientInto(cm.client, i); err != nil {
 		return err
 	}
+	if _, err := inject.APIReaderInto(cm.apiReader, i); err != nil {
+		return err
+	}
 	if _, err := inject.SchemeInto(cm.scheme, i); err != nil {
 		return err
 	}
@@ -136,7 +147,7 @@ func (cm *controllerManager) SetFields(i interface{}) error {
 	if _, err := inject.StopChannelInto(cm.internalStop, i); err != nil {
 		return err
 	}
-	if _, err := inject.DecoderInto(cm.admissionDecoder, i); err != nil {
+	if _, err := inject.MapperInto(cm.mapper, i); err != nil {
 		return err
 	}
 	return nil
@@ -154,10 +165,6 @@ func (cm *controllerManager) GetScheme() *runtime.Scheme {
 	return cm.scheme
 }
 
-func (cm *controllerManager) GetAdmissionDecoder() types.Decoder {
-	return cm.admissionDecoder
-}
-
 func (cm *controllerManager) GetFieldIndexer() client.FieldIndexer {
 	return cm.fieldIndexes
 }
@@ -166,12 +173,29 @@ func (cm *controllerManager) GetCache() cache.Cache {
 	return cm.cache
 }
 
-func (cm *controllerManager) GetRecorder(name string) record.EventRecorder {
+func (cm *controllerManager) GetEventRecorderFor(name string) record.EventRecorder {
 	return cm.recorderProvider.GetEventRecorderFor(name)
 }
 
 func (cm *controllerManager) GetRESTMapper() meta.RESTMapper {
 	return cm.mapper
+}
+
+func (cm *controllerManager) GetAPIReader() client.Reader {
+	return cm.apiReader
+}
+
+func (cm *controllerManager) GetWebhookServer() *webhook.Server {
+	if cm.webhookServer == nil {
+		cm.webhookServer = &webhook.Server{
+			Port: cm.port,
+			Host: cm.host,
+		}
+		if err := cm.Add(cm.webhookServer); err != nil {
+			panic("unable to add webhookServer to the controller manager")
+		}
+	}
+	return cm.webhookServer
 }
 
 func (cm *controllerManager) serveMetrics(stop <-chan struct{}) {

@@ -110,35 +110,35 @@ var (
 	workQueueSubsystem = "workqueue"
 
 	depth = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Subsystem:   workQueueSubsystem,
-		Name:        "depth",
-		Help:        "Current depth of workqueue",
+		Subsystem: workQueueSubsystem,
+		Name:      "depth",
+		Help:      "Current depth of workqueue",
 	}, []string{"name"})
 
 	adds = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Subsystem:   workQueueSubsystem,
-		Name:        "adds_total",
-		Help:        "Total number of adds handled by workqueue",
+		Subsystem: workQueueSubsystem,
+		Name:      "adds_total",
+		Help:      "Total number of adds handled by workqueue",
 	}, []string{"name"})
 
 	latency = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Subsystem:   workQueueSubsystem,
-		Name:        "queue_latency_seconds",
-		Help:        "How long in seconds an item stays in workqueue before being requested.",
-		Buckets:     prometheus.ExponentialBuckets(10e-9, 10, 10),
+		Subsystem: workQueueSubsystem,
+		Name:      "queue_latency_seconds",
+		Help:      "How long in seconds an item stays in workqueue before being requested.",
+		Buckets:   prometheus.ExponentialBuckets(10e-9, 10, 10),
 	}, []string{"name"})
 
 	workDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Subsystem:   workQueueSubsystem,
-		Name:        "work_duration_seconds",
-		Help:        "How long in seconds processing an item from workqueue takes.",
-		Buckets:     prometheus.ExponentialBuckets(10e-9, 10, 10),
+		Subsystem: workQueueSubsystem,
+		Name:      "work_duration_seconds",
+		Help:      "How long in seconds processing an item from workqueue takes.",
+		Buckets:   prometheus.ExponentialBuckets(10e-9, 10, 10),
 	}, []string{"name"})
 
 	retries = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Subsystem:   workQueueSubsystem,
-		Name:        "retries_total",
-		Help:        "Total number of retries handled by workqueue",
+		Subsystem: workQueueSubsystem,
+		Name:      "retries_total",
+		Help:      "Total number of retries handled by workqueue",
 	}, []string{"name"})
 
 	longestRunning = prometheus.NewGaugeVec(prometheus.GaugeOpts{
