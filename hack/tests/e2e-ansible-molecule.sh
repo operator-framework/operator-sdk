@@ -45,13 +45,6 @@ sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g
 OPERATORDIR="$(pwd)"
 TEST_CLUSTER_PORT=24443 operator-sdk test local --namespace default
 
-# Test cluster
-DEST_IMAGE="quay.io/example/memcached-operator:v0.0.2-test"
-operator-sdk build --enable-tests "$DEST_IMAGE"
-trap_add 'remove_prereqs' EXIT
-deploy_prereqs
-operator-sdk test cluster --image-pull-policy Never --namespace default --service-account memcached-operator ${DEST_IMAGE}
-
 remove_prereqs
 
 popd
