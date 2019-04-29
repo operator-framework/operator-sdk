@@ -25,6 +25,8 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"net/http"
 	"net/http/httputil"
 	"strings"
@@ -114,7 +116,7 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 					log.Error(err, "Unable to decode list options from request")
 					break
 				}
-				lo := client.InNamespace(r.Namespace)
+				lo := client.ListOptions{Namespace: r.Namespace}
 				if err := lo.SetLabelSelector(listOptions.LabelSelector); err != nil {
 					log.Error(err, "Unable to set label selectors for the client")
 					break
@@ -128,7 +130,25 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 				k.Kind = k.Kind + "List"
 				un := unstructured.UnstructuredList{}
 				un.SetGroupVersionKind(k)
-				err = informerCache.List(context.Background(), lo, &un)
+				lbs, err := labels.ConvertSelectorToLabelsMap(lo.LabelSelector.String())
+				if err != nil {
+					log.Error(err, "Unable to set label selectors for the client")
+					break
+				}
+				s, err := fields.ParseSelector(lo.FieldSelector.String())
+				reqs := s.Requirements()
+				p := []client.ListOptionFunc{client.InNamespace(lo.Namespace)}
+				if len(lbs) > 0 {
+					p = append(p, client.MatchingLabels(lbs))
+				}
+				if len(reqs) > 0 { // TODO(corinnekrych) translate operator to function like field selection.
+					//for _, reg := range reqs {
+					//	reg.Operator == '=='
+					//
+					//}
+					p = append(p, client.MatchingField(reqs[0].Field, reqs[0].Value))
+				}
+				err = informerCache.List(context.Background(), &un, p...)
 				if err != nil {
 					// break here in case resource doesn't exist in cache but exists on APIserver
 					// This is very unlikely but provides user with expected 404

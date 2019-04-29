@@ -17,6 +17,8 @@ package test
 import (
 	goctx "context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -94,7 +96,30 @@ func (f *frameworkClient) Get(gCtx goctx.Context, key dynclient.ObjectKey, obj r
 }
 
 func (f *frameworkClient) List(gCtx goctx.Context, opts *dynclient.ListOptions, list runtime.Object) error {
-	return f.Client.List(gCtx, opts, list)
+
+	lbs, err := labels.ConvertSelectorToLabelsMap(opts.LabelSelector.String())
+	if err != nil {
+		return err
+	}
+	s, err := fields.ParseSelector(opts.FieldSelector.String())
+	if err != nil {
+		return err
+	}
+	reqs := s.Requirements()
+	p := []dynclient.ListOptionFunc{dynclient.InNamespace(opts.Namespace)}
+	if len(lbs) > 0 {
+		p = append(p, dynclient.MatchingLabels(lbs))
+	}
+	if len(reqs) > 0 {
+		// TODO(corinnekrych) translate operator to function like field selection.
+		//for _, reg := range reqs {
+		//	reg.Operator == '=='
+		//
+		//}
+		p = append(p, dynclient.MatchingField(reqs[0].Field, reqs[0].Value))
+	}
+
+	return f.Client.List(gCtx, list, p...)
 }
 
 func (f *frameworkClient) Delete(gCtx goctx.Context, obj runtime.Object, opts ...dynclient.DeleteOptionFunc) error {
