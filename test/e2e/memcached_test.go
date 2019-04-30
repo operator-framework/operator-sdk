@@ -60,7 +60,7 @@ func TestMemcached(t *testing.T) {
 	// get global framework variables
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
-	gopath, ok := os.LookupEnv(projutil.GopathEnv)
+	gopath, ok := os.LookupEnv(projutil.GoPathEnv)
 	if !ok {
 		t.Fatalf("$GOPATH not set")
 	}
