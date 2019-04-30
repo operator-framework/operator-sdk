@@ -69,11 +69,12 @@ Creates all necessary resources in the cluster to run the operator via OLM, wait
 
 #### Flags for `olm up`
 
-| Flag           | Type   | Description                                                                                     |
-|----------------|--------|-------------------------------------------------------------------------------------------------|
-| `--bundle-dir` | string | The directory containing the operator bundle (default `./deploy/olm-catalog/<operator-name>`)   |
-| `--kubeconfig` | string | Path for custom Kubernetes client config file (overrides the default locations)                 |
-| `--namespace`  | string | Namespace in which to deploy operator and RBAC rules (overrides namespace from current context) |
+| Flag             | Type   | Description                                                                                     |
+|------------------|--------|-------------------------------------------------------------------------------------------------|
+| `--bundle-dir`   | string | The directory containing the operator bundle (default `./deploy/olm-catalog/<operator-name>`)   |
+| `--install-mode` | string | The [`InstallMode`][olm_install_modes] to use when running the operator, one of `OwnNamespace`, `SingleNamespace`, `MultiNamespace`, or `AllNamespaces` (default `OwnNamespace`). If using `MultiNamespace`, users can define the `OperatorGroup` target namespaces with `--install-mode=MultiNamespace=ns1,ns2,nsN`  |
+| `--kubeconfig`   | string | Path for custom Kubernetes client config file (overrides the default locations)                 |
+| `--namespace`    | string | Namespace in which to deploy operator and RBAC rules (overrides namespace from current context). We'll verify this is compatible with the defined install mode. |
 
 #### Resources
 
@@ -83,8 +84,8 @@ OLM uses Kubernetes APIs to learn about the set of operators that are available 
 |-----------------|--------------|
 | `ConfigMap`     | Contains catalog data created from the on-disk operator bundle. |
 | `CatalogSource` | Tells OLM where to find operator catalog data. This will refer to the catalog `ConfigMap`. |
-| `OperatorGroup` | Tells OLM which namespaces the operator will have RBAC permissions for. We will set this up with the namespace of the current context from the user's `$KUBECONFIG`. |
-| `Subscription`  | Tells OLM to manage installation and upgrade of an operator in the namespace in which the `Subscription` is created. We'll create it in the namespace of the current context from the user's `$KUBECONFIG`. |
+| `OperatorGroup` | Tells OLM which namespaces the operator will have RBAC permissions for. We'll configure it based on the `--install-mode` and `--namespace` flags. |
+| `Subscription`  | Tells OLM to manage installation and upgrade of an operator in the namespace in which the `Subscription` is created. We'll create it based on the value of the `--namespace` flag. |
 
 **Open questions:** 
 1. When the user aborts the process, should we handle cleanup for any of the InstallPlan, CSV, CRD, and CR resources? Which of these will be automatically garbage-collected?
@@ -118,4 +119,5 @@ OLM uses Kubernetes APIs to learn about the set of operators that are available 
 
 [olm_github]: https://github.com/operator-framework/operator-lifecycle-manager
 [olm_arch]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/architecture.md
+[olm_install_modes]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/operatorgroups.md#installmodes-and-supported-operatorgroups
 
