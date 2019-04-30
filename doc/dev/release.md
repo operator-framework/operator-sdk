@@ -280,6 +280,27 @@ To github.com:operator-framework/operator-sdk.git
 
 Now that the branch exists, you need to make the post-release PR for the new release branch. To do this, simply follow the same steps as in [step 3](#3-create-a-pr-for-post-release-version-and-changelogmd-updates) with the addition of changing the branch name in the `gopkgtoml` scaffold from `master` to the new branch (for example, `v1.3.x`). Then, make the PR against the new branch.
 
+### 6. Updating the Homebrew formula
+
+We support installing via [Homebrew][homebrew], so we need to update the operator-sdk [Homebrew formula][homebrew-formula] once the release is cut. Follow the instructions below, or for more detailed ones on the Homebrew contribution [README][homebrew-readme], to open a PR against the [repository][homebrew-repo].
+
+
+```
+docker run -t -d linuxbrew/brew:latest
+docker exec -it <CONTAINER_ID> /bin/bash`
+# Run the following commands in the container.
+git config --global github.name <GITHUB-USERNAME>
+git config --global github.token <GITHUB-TOKEN>
+# Replace the release version of the newly cut release.
+OPERATORSDKURL=https://github.com/operator-framework/operator-sdk/archive/<RELEASE-VERSION>.tar.gz
+curl $OPERATORSDKURL -o operator-sdk
+# Calculate the SHA256
+OPERATORSUM="$(sha256sum operator-sdk | cut -d ' ' -f 1)"
+brew bump-formula-pr --strict --url=$OPERATORSDKURL --sha256=$OPERATORSUM operator-sdk
+```
+
+Note: If there were any changes made to the CLI commands, make sure to look at the existing tests, in case they need updating.
+
 [doc-maintainers]:../../MAINTAINERS
 [doc-readme-prereqs]:../../README.md#prerequisites
 [doc-git-default-key]:https://help.github.com/en/articles/telling-git-about-your-signing-key
@@ -288,3 +309,7 @@ Now that the branch exists, you need to make the post-release PR for the new rel
 [link-git-config-gpg-key]:https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work
 [doc-changelog]:../../CHANGELOG.md
 [release-page]:https://github.com/operator-framework/operator-sdk/releases
+[homebrew]:https://brew.sh/
+[homebrew-formula]:https://github.com/Homebrew/homebrew-core/blob/master/Formula/operator-sdk.rb
+[homebrew-readme]:https://github.com/Homebrew/homebrew-core/blob/master/CONTRIBUTING.md#to-submit-a-version-upgrade-for-the-foo-formula
+[homebrew-repo]:https://github.com/Homebrew/homebrew-core

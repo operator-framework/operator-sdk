@@ -15,7 +15,6 @@
 package projutil
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -73,13 +72,13 @@ const (
 	DepManagerDep   DepManagerType = "dep"
 )
 
-type ErrInvalidDepManagerType struct {
-	Type DepManagerType
+type ErrInvalidDepManager string
+
+func (e ErrInvalidDepManager) Error() string {
+	return fmt.Sprintf(`"%s" is not a valid dep manager; dep manager must be one of ["%v", "%v"]`, e, DepManagerDep, DepManagerGoMod)
 }
 
-func (e ErrInvalidDepManagerType) Error() string {
-	return fmt.Sprintf(`invalid dependency manager type "%v"; must be one of ["%v", "%v"]`, e.Type, DepManagerGoMod, DepManagerDep)
-}
+var ErrNoDepManager = fmt.Errorf(`no valid dependency manager file found; dep manager must be one of ["%v", "%v"]`, DepManagerDep, DepManagerGoMod)
 
 func GetDepManagerType() (DepManagerType, error) {
 	if IsDepManagerDep() {
@@ -87,7 +86,7 @@ func GetDepManagerType() (DepManagerType, error) {
 	} else if IsDepManagerGoMod() {
 		return DepManagerGoMod, nil
 	}
-	return "", errors.New("unable to determine dependency manager: no dependency manager file found")
+	return "", ErrNoDepManager
 }
 
 func IsDepManagerDep() bool {

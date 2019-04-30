@@ -212,6 +212,10 @@ is not of the "go" type.
 **Note**: This command will look for playbook.yml in the project root, if you use the .yaml extension
 you will need to rename it before running migrate or manually add it to your Dockerfile.
 
+#### Flags
+
+* `--dep-manager` string - Dependency manager the migrated project will use (choices: "dep")
+
 ### Example
 
 ```console
@@ -245,6 +249,7 @@ Scaffolds a new operator project.
 * `--helm-chart` string - Initialize helm operator with existing helm chart (`<URL>`, `<repo>/<name>`, or local path)
 * `--helm-chart-repo` string - Chart repository URL for the requested helm chart
 * `--helm-chart-version` string - Specific version of the helm chart (default is latest version)
+* `--dep-manager` string - Dependency manager the new project will use (choices: "dep")
 * `-h, --help` - help for new
 
 ### Example

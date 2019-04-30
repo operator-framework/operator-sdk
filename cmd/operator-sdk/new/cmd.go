@@ -54,7 +54,7 @@ generates a skeletal app-operator application in $GOPATH/src/github.com/example.
 	newCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1) - used with \"ansible\" or \"helm\" types")
 	newCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. (e.g AppService) - used with \"ansible\" or \"helm\" types")
 	newCmd.Flags().StringVar(&operatorType, "type", "go", "Type of operator to initialize (choices: \"go\", \"ansible\" or \"helm\")")
-	newCmd.Flags().StringVar(&depManager, "dep-manager", "mod", "Dependency manager the new project will use (choices: \"dep\", \"mod\")")
+	newCmd.Flags().StringVar(&depManager, "dep-manager", "mod", `Dependency manager the new project will use (choices: "dep", "mod")`)
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
 	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false, "Generate a playbook skeleton. (Only used for --type ansible)")
 	newCmd.Flags().BoolVar(&isClusterScoped, "cluster-scoped", false, "Generate cluster-scoped resources instead of namespace-scoped")
@@ -159,7 +159,7 @@ func doGoScaffold() error {
 	case projutil.DepManagerGoMod:
 		err = s.Execute(cfg, &scaffold.GoMod{}, &scaffold.Tools{})
 	default:
-		err = projutil.ErrInvalidDepManagerType{Type: m}
+		err = projutil.ErrNoDepManager
 	}
 	if err != nil {
 		return fmt.Errorf("dependency manager file scaffold failed: (%v)", err)
@@ -393,7 +393,7 @@ func getDeps() error {
 			return err
 		}
 	default:
-		return projutil.ErrInvalidDepManagerType{Type: m}
+		return projutil.ErrInvalidDepManager(depManager)
 	}
 	log.Info("Done getting dependencies")
 	return nil

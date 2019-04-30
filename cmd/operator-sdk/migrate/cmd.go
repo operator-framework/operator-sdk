@@ -41,7 +41,7 @@ func NewCmd() *cobra.Command {
 		RunE:  migrateRun,
 	}
 
-	newCmd.Flags().StringVar(&depManager, "dep-manager", "mod", "Dependency manager the new project will use (choices: \"dep\", \"mod\")")
+	newCmd.Flags().StringVar(&depManager, "dep-manager", "mod", `Dependency manager the new project will use (choices: "dep", "mod")`)
 
 	return newCmd
 }
@@ -162,7 +162,7 @@ func scaffoldHelmDepManager(s *scaffold.Scaffold, cfg *input.Config) error {
 	case projutil.DepManagerGoMod:
 		files = append(files, &helm.GoMod{}, &scaffold.Tools{})
 	default:
-		return projutil.ErrInvalidDepManagerType{Type: m}
+		return projutil.ErrInvalidDepManager(depManager)
 	}
 	return s.Execute(cfg, files...)
 }
@@ -175,7 +175,7 @@ func scaffoldAnsibleDepManager(s *scaffold.Scaffold, cfg *input.Config) error {
 	case projutil.DepManagerGoMod:
 		files = append(files, &ansible.GoMod{}, &scaffold.Tools{})
 	default:
-		return projutil.ErrInvalidDepManagerType{Type: m}
+		return projutil.ErrInvalidDepManager(depManager)
 	}
 	return s.Execute(cfg, files...)
 }
