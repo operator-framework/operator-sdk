@@ -33,8 +33,14 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/up"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
 	osdkversion "github.com/operator-framework/operator-sdk/version"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+)
+
+const (
+	VerboseOpt = "verbose"
 )
 
 func main() {
@@ -42,6 +48,12 @@ func main() {
 		Use:     "operator-sdk",
 		Short:   "An SDK for building operators with ease",
 		Version: osdkversion.Version,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			if viper.GetBool(VerboseOpt) {
+				log.SetLevel(log.DebugLevel)
+				log.Debug("Debug logging is set")
+			}
+		},
 	}
 
 	root.AddCommand(new.NewCmd())
@@ -57,6 +69,9 @@ func main() {
 	root.AddCommand(run.NewCmd())
 	root.AddCommand(olmcatalog.NewCmd())
 	root.AddCommand(version.NewCmd())
+
+	root.PersistentFlags().Bool(VerboseOpt, false, "Enable verbose logging")
+	viper.BindPFlag(VerboseOpt, root.PersistentFlags().Lookup(VerboseOpt))
 
 	if err := root.Execute(); err != nil {
 		os.Exit(1)

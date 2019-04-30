@@ -93,9 +93,6 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	cmd.SilenceUsage = true
-	if viper.GetBool(VerboseOpt) {
-		log.SetLevel(log.DebugLevel)
-	}
 	defer func() {
 		if err := cleanupScorecard(); err != nil {
 			log.Errorf("Failed to clenup resources: (%v)", err)
