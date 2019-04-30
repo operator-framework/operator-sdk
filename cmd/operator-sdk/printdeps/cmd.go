@@ -33,7 +33,8 @@ func NewCmd() *cobra.Command {
 		Short: "Print Golang packages and versions required to run the operator",
 		Long: `The operator-sdk print-deps command prints all Golang packages and versions expected
 by this version of the Operator SDK. Versions for these packages should match
-those in an operators' go.mod or Gopkg.toml file.
+those in an operators' go.mod or Gopkg.toml file, depending on the dependency
+manager chosen when initializing or migrating a project.
 
 print-deps prints in columnar format by default. Use the --as-file flag to
 print in go.mod or Gopkg.toml file format.

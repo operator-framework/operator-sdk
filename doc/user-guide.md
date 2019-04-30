@@ -8,7 +8,7 @@ Guide][helm_user_guide]. The rest of this document will show how to program an o
 ## Prerequisites
 
 - [git][git_tool]
-- [go][go_tool] version v1.12+.
+- [go][go_tool] version v1.11+.
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.

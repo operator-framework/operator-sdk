@@ -92,9 +92,11 @@ Prints the most recent Golang packages and versions required by operators. Print
 
 ### Flags
 
-* `--as-file` - Print packages and versions in go.mod or Gopkg.toml format.
+* `--as-file` - Print packages and versions in go.mod or Gopkg.toml format, depending on the dependency manager chosen when initializing or migrating a project.
 
 ### Example
+
+With dependency manager `dep`:
 
 ```console
 $ operator-sdk print-deps --as-file
@@ -112,6 +114,19 @@ required = [
   name = "k8s.io/code-generator"
   revision = "6702109cc68eb6fe6350b83e14407c8d7309fd1a"
 ...
+```
+
+With dependency manager `mod`, i.e. go mod:
+
+```console
+$ operator-sdk print-deps --as-file
+module github.com/example-inc/memcached-operator
+
+require (
+	contrib.go.opencensus.io/exporter/ocagent v0.4.9 // indirect
+	github.com/Azure/go-autorest v11.5.2+incompatible // indirect
+	github.com/appscode/jsonpatch v0.0.0-20190108182946-7c0e3b262f30 // indirect
+	github.com/coreos/prometheus-operator v0.26.0 // indirect
 ```
 
 ## generate
@@ -214,20 +229,21 @@ you will need to rename it before running migrate or manually add it to your Doc
 
 #### Flags
 
-* `--dep-manager` string - Dependency manager the migrated project will use (choices: "dep")
+* `--dep-manager` string - Dependency manager the migrated project will use (choices: "dep", "mod") (default "mod")
 
 ### Example
 
 ```console
 $ operator-sdk migrate
-2019/01/10 15:02:45 No playbook was found, so not including it in the new Dockerfile
-2019/01/10 15:02:45 renamed Dockerfile to build/Dockerfile.sdkold and replaced with newer version
-2019/01/10 15:02:45 Compare the new Dockerfile to your old one and manually migrate any customizations
+INFO[0000] No playbook was found, so not including it in the new Dockerfile
+INFO[0000] Renamed Dockerfile to build/Dockerfile.sdkold and replaced with newer version. Compare the new Dockerfile to your old one and manually migrate any customizations
+INFO[0000] Created go.mod
 INFO[0000] Created cmd/manager/main.go
-INFO[0000] Created Gopkg.toml
 INFO[0000] Created build/Dockerfile
 INFO[0000] Created bin/entrypoint
 INFO[0000] Created bin/user_setup
+INFO[0000] Created library/k8s_status.py
+INFO[0000] Created bin/ao-logs
 ```
 
 ## new
@@ -249,7 +265,7 @@ Scaffolds a new operator project.
 * `--helm-chart` string - Initialize helm operator with existing helm chart (`<URL>`, `<repo>/<name>`, or local path)
 * `--helm-chart-repo` string - Chart repository URL for the requested helm chart
 * `--helm-chart-version` string - Specific version of the helm chart (default is latest version)
-* `--dep-manager` string - Dependency manager the new project will use (choices: "dep")
+* `--dep-manager` string - Dependency manager the new project will use (choices: "dep", "mod") (default "mod")
 * `-h, --help` - help for new
 
 ### Example
