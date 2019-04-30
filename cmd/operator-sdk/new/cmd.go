@@ -54,6 +54,7 @@ generates a skeletal app-operator application in $GOPATH/src/github.com/example.
 	newCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1) - used with \"ansible\" or \"helm\" types")
 	newCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. (e.g AppService) - used with \"ansible\" or \"helm\" types")
 	newCmd.Flags().StringVar(&operatorType, "type", "go", "Type of operator to initialize (choices: \"go\", \"ansible\" or \"helm\")")
+	newCmd.Flags().StringVar(&depManager, "dep-manager", "dep", `Dependency manager the new project will use (choices: "dep")`)
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
 	newCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
 	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false, "Generate a playbook skeleton. (Only used for --type ansible)")
@@ -71,6 +72,7 @@ var (
 	kind             string
 	operatorType     string
 	projectName      string
+	depManager       string
 	headerFile       string
 	skipGit          bool
 	generatePlaybook bool
@@ -79,11 +81,6 @@ var (
 	helmChartRef     string
 	helmChartVersion string
 	helmChartRepo    string
-)
-
-const (
-	dep       = "dep"
-	ensureCmd = "ensure"
 )
 
 func newFunc(cmd *cobra.Command, args []string) error {
@@ -99,10 +96,10 @@ func newFunc(cmd *cobra.Command, args []string) error {
 
 	switch operatorType {
 	case projutil.OperatorTypeGo:
-		if err := doScaffold(); err != nil {
+		if err := doGoScaffold(); err != nil {
 			return err
 		}
-		if err := pullDep(); err != nil {
+		if err := getDeps(); err != nil {
 			return err
 		}
 	case projutil.OperatorTypeAnsible:
@@ -149,14 +146,14 @@ func mustBeNewProject() {
 	}
 }
 
-func doScaffold() error {
+func doGoScaffold() error {
 	cfg := &input.Config{
 		Repo:           filepath.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
 		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
 		ProjectName:    projectName,
 	}
-
 	s := &scaffold.Scaffold{}
+
 	if headerFile != "" {
 		err := s.Execute(cfg, &scaffold.Boilerplate{BoilerplateSrcPath: headerFile})
 		if err != nil {
@@ -165,7 +162,18 @@ func doScaffold() error {
 		s.BoilerplatePath = headerFile
 	}
 
-	err := s.Execute(cfg,
+	var err error
+	switch m := projutil.DepManagerType(depManager); m {
+	case projutil.DepManagerDep:
+		err = s.Execute(cfg, &scaffold.GopkgToml{})
+	default:
+		err = projutil.ErrInvalidDepManager
+	}
+	if err != nil {
+		return fmt.Errorf("dependency manager file scaffold failed: (%v)", err)
+	}
+
+	err = s.Execute(cfg,
 		&scaffold.Cmd{},
 		&scaffold.Dockerfile{},
 		&scaffold.Entrypoint{},
@@ -178,7 +186,6 @@ func doScaffold() error {
 		&scaffold.Controller{},
 		&scaffold.Version{},
 		&scaffold.Gitignore{},
-		&scaffold.GopkgToml{},
 	)
 	if err != nil {
 		return fmt.Errorf("new Go scaffold failed: (%v)", err)
@@ -378,16 +385,17 @@ func execProjCmd(cmd string, args ...string) error {
 	return projutil.ExecCmd(dc)
 }
 
-func pullDep() error {
-	_, err := exec.LookPath(dep)
-	if err != nil {
-		return fmt.Errorf("looking for dep in $PATH: (%v)", err)
+func getDeps() error {
+	switch m := projutil.DepManagerType(depManager); m {
+	case projutil.DepManagerDep:
+		log.Info("Running dep ensure ...")
+		if err := execProjCmd("dep", "ensure", "-v"); err != nil {
+			return err
+		}
+	default:
+		return projutil.ErrInvalidDepManager
 	}
-	log.Info("Run dep ensure ...")
-	if err := execProjCmd(dep, ensureCmd, "-v"); err != nil {
-		return err
-	}
-	log.Info("Run dep ensure done")
+	log.Info("Done getting dependencies")
 	return nil
 }
 

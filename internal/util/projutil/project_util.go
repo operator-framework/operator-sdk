@@ -17,7 +17,6 @@ package projutil
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -27,8 +26,9 @@ import (
 )
 
 const (
-	GopathEnv  = "GOPATH"
+	GoPathEnv  = "GOPATH"
 	GoFlagsEnv = "GOFLAGS"
+	GoModEnv   = "GO111MODULE"
 	SrcDir     = "src"
 
 	fsep            = string(filepath.Separator)
@@ -36,6 +36,7 @@ const (
 	buildDockerfile = "build" + fsep + "Dockerfile"
 	rolesDir        = "roles"
 	helmChartsDir   = "helm-charts"
+	gopkgTOMLFile   = "Gopkg.toml"
 )
 
 // OperatorType - the type of operator
@@ -51,6 +52,26 @@ const (
 	// OperatorTypeUnknown - unknown type of operator.
 	OperatorTypeUnknown OperatorType = "unknown"
 )
+
+type DepManagerType string
+
+const (
+	DepManagerDep DepManagerType = "dep"
+)
+
+var ErrInvalidDepManager = fmt.Errorf(`no valid dependency manager file found; dep manager must be one of ["%v"]`, DepManagerDep)
+
+func GetDepManagerType() (DepManagerType, error) {
+	if IsDepManagerDep() {
+		return DepManagerDep, nil
+	}
+	return "", ErrInvalidDepManager
+}
+
+func IsDepManagerDep() bool {
+	_, err := os.Stat(gopkgTOMLFile)
+	return err == nil || os.IsExist(err)
+}
 
 type ErrUnknownOperatorType struct {
 	Type string
@@ -134,7 +155,7 @@ func IsOperatorHelm() bool {
 // MustGetGopath gets GOPATH and ensures it is set and non-empty. If GOPATH
 // is not set or empty, MustGetGopath exits.
 func MustGetGopath() string {
-	gopath, ok := os.LookupEnv(GopathEnv)
+	gopath, ok := os.LookupEnv(GoPathEnv)
 	if !ok || len(gopath) == 0 {
 		log.Fatal("GOPATH env not set")
 	}
@@ -159,20 +180,10 @@ func MustSetGopath(currentGopath string) string {
 	if !cwdInGopath {
 		log.Fatalf("Project not in $GOPATH")
 	}
-	if err := os.Setenv(GopathEnv, newGopath); err != nil {
+	if err := os.Setenv(GoPathEnv, newGopath); err != nil {
 		log.Fatal(err)
 	}
 	return newGopath
-}
-
-func ExecCmd(cmd *exec.Cmd) error {
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		return fmt.Errorf("failed to exec %#v: %v", cmd.Args, err)
-	}
-	return nil
 }
 
 var flagRe = regexp.MustCompile("(.* )?-v(.* )?")
