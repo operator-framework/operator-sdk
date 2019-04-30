@@ -32,11 +32,12 @@ import (
 )
 
 var (
-	csvVersion    string
-	csvChannel    string
-	fromVersion   string
-	csvConfigPath string
-	updateCRDs    bool
+	csvVersion     string
+	csvChannel     string
+	fromVersion    string
+	csvConfigPath  string
+	updateCRDs     bool
+	defaultChannel bool
 )
 
 func newGenCSVCmd() *cobra.Command {
@@ -62,6 +63,7 @@ Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config
 	genCSVCmd.Flags().StringVar(&csvConfigPath, "csv-config", "", "Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml")
 	genCSVCmd.Flags().BoolVar(&updateCRDs, "update-crds", false, "Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's")
 	genCSVCmd.Flags().StringVar(&csvChannel, "csv-channel", "", "Channel the CSV should be registered under in the package manifest")
+	genCSVCmd.Flags().BoolVar(&defaultChannel, "default-channel", false, "Use the channel passed to --csv-channel as the package manifests' default channel. Only valid when --csv-channel is set")
 
 	return genCSVCmd
 }
@@ -95,8 +97,9 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 	err := s.Execute(cfg,
 		csv,
 		&catalog.PackageManifest{
-			CSVVersion: csvVersion,
-			Channel:    csvChannel,
+			CSVVersion:       csvVersion,
+			Channel:          csvChannel,
+			ChannelIsDefault: defaultChannel,
 		},
 	)
 	if err != nil {
@@ -134,6 +137,11 @@ func verifyGenCSVFlags() error {
 	if fromVersion != "" && csvVersion == fromVersion {
 		return fmt.Errorf("from-version (%s) cannot equal csv-version; set only csv-version instead", fromVersion)
 	}
+
+	if defaultChannel && csvChannel == "" {
+		return fmt.Errorf("default-channel can only be used if csv-channel is set")
+	}
+
 	return nil
 }
 

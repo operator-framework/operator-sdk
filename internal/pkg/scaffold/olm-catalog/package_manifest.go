@@ -41,6 +41,9 @@ type PackageManifest struct {
 	// Channel is CSVVersion's package manifest channel. If a new package
 	// manifest is generated, this channel will be the manifest default.
 	Channel string
+	// If ChannelIsDefault is true, Channel will be the package manifests'
+	// default channel.
+	ChannelIsDefault bool
 }
 
 var _ input.File = &PackageManifest{}
@@ -99,6 +102,10 @@ func (s *PackageManifest) CustomRender() ([]byte, error) {
 			})
 		}
 		pm.Channels = channels
+
+		if s.ChannelIsDefault {
+			pm.DefaultChannelName = s.Channel
+		}
 	}
 
 	sort.Slice(pm.Channels, func(i int, j int) bool {

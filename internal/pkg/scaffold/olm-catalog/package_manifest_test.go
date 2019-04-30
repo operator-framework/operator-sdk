@@ -45,8 +45,9 @@ func TestPackageManifest(t *testing.T) {
 	}
 
 	pm := &PackageManifest{
-		CSVVersion: csvVer,
-		Channel:    "stable",
+		CSVVersion:       csvVer,
+		Channel:          "stable",
+		ChannelIsDefault: true,
 	}
 	err = s.Execute(cfg, pm)
 	if err != nil {
@@ -64,6 +65,6 @@ const packageManifestExp = `channels:
   name: beta
 - currentCSV: app-operator.v1.0.0
   name: stable
-defaultChannel: beta
+defaultChannel: stable
 packageName: app-operator
 `
