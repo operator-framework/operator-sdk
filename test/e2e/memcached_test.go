@@ -124,18 +124,16 @@ func TestMemcached(t *testing.T) {
 		if ok && commitSha != "" {
 			modBytes, err := ioutil.ReadFile("go.mod")
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("Failed to read go.mod: %v", err)
 			}
-			modFile, err := modfile.ParseLax("go.mod", modBytes, nil)
+			modFile, err := modfile.Parse("go.mod", modBytes, nil)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("Failed to parse go.mod: %v", err)
 			}
 			sdkPath := "github.com/operator-framework/operator-sdk"
-			modFile.DropRequire(sdkPath)
-			modFile.Cleanup()
-			modFile.AddRequire(sdkPath, commitSha)
+			modFile.AddReplace(sdkPath, "", sdkPath, commitSha)
 			if modBytes, err = modFile.Format(); err != nil {
-				t.Fatal(err)
+				t.Fatalf("Failed to format go.mod: %v", err)
 			}
 			err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
 			if err != nil {
