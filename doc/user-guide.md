@@ -7,6 +7,7 @@ Guide][helm_user_guide]. The rest of this document will show how to program an o
 
 ## Prerequisites
 
+- [dep][dep_tool] version v0.5.0+.
 - [git][git_tool]
 - [go][go_tool] version v1.11+.
 - [docker][docker_tool] version 17.03+.
@@ -51,6 +52,8 @@ $ cd memcached-operator
 ```
 
 To learn about the project directory structure, see [project layout][layout_doc] doc.
+
+By default, `operator-sdk new` generates a `go.mod` file to be used with [Go modules][go_mod]. If you'd like to use `dep`, set `--dep-manager=dep` when initializing your project.
 
 #### Operator scope
 
@@ -404,7 +407,7 @@ func main() {
 }
 ```
 
-After adding new import paths to your operator project, run `go mod vendor` in the root of your project directory to fulfill these dependencies.
+After adding new import paths to your operator project, run `go mod vendor` (or `dep ensure` if you set `--dep-manager=dep` when initializing your project) in the root of your project directory to fulfill these dependencies.
 
 
 ### Handle Cleanup on Deletion
@@ -490,6 +493,7 @@ When the operator is not running in a cluster, the Manager will return an error 
 [ansible_user_guide]:./ansible/user-guide.md
 [helm_user_guide]:./helm/user-guide.md
 [homebrew_tool]:https://brew.sh/
+[go_mod]: https://github.com/golang/go/wiki/Modules
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/

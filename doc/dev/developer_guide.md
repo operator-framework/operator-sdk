@@ -3,6 +3,7 @@
 This document explains how to setup your dev environment.
 
 ## Prerequisites
+- [dep][dep_tool] version v0.5.0+
 - [git][git_tool]
 - [go][go_tool] version v1.11+
 
@@ -48,6 +49,7 @@ refer to the [`Running the Tests Locally`][running-the-tests] document.
 
 See the project [README][sdk_readme] for more details.
 
+[dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
 [repo_sdk]:https://github.com/operator-framework/operator-sdk

@@ -42,7 +42,7 @@ print in go.mod or Gopkg.toml file format.
 		RunE: printDepsFunc,
 	}
 
-	printDepsCmd.Flags().BoolVar(&asFile, "as-file", false, "Print dependencies in go.mod or Gopkg.toml file format.")
+	printDepsCmd.Flags().BoolVar(&asFile, "as-file", false, "Print dependencies in go.mod or Gopkg.toml file format, depending on the dependency manager chosen when initializing or migrating a project")
 
 	return printDepsCmd
 }

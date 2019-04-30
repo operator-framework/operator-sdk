@@ -175,9 +175,9 @@ Commit changes to the following files:
 
 - `version/version.go`: update `Version` to `v1.3.0`.
 - `internal/pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
-  - Comment out `branch = "master"`.
-  - Un-comment `version = "v1.2.0"`.
-  - Change `v1.2.0` to `v1.3.0`.
+  - Comment out `branch = "master"`
+  - Un-comment `version = "v1.2.0"`
+  - Change `v1.2.0` to `v1.3.0`
 - `internal/pkg/scaffold/gopkgtoml_test.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
 - `internal/pkg/scaffold/ansible/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
 - `internal/pkg/scaffold/helm/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
