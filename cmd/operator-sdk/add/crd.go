@@ -118,8 +118,7 @@ func verifyCRDFlags() error {
 	return nil
 }
 
-// verifyCRDDeployPath checks if the path <project-name>/deploy sub-directory
-// exists.
+// verifyCRDDeployPath checks if the path <project-name>/deploy sub-directory is exists, and that is rooted under $GOPATH
 func verifyCRDDeployPath() error {
 	wd, err := os.Getwd()
 	if err != nil {

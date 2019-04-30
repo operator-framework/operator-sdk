@@ -9,7 +9,7 @@ assignees: ''
 
 ## Bug Report
 
-<!--
+<!-- 
 Note: Make sure to first check the prerequisites that can be found in the main README file!
 
 Thanks for filing an issue! Before hitting the button, please answer these questions.
@@ -39,7 +39,7 @@ A clear and concise description of what you expected to happen (or insert a code
 
 <!--- Insert the output of `kubectl version` here -->
 
-* Kubernetes cluster kind:
+* Kubernetes cluster kind: 
 
 * Are you writing your operator in ansible, helm, or go?
 
