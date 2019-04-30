@@ -15,35 +15,15 @@
 package scaffold
 
 import (
-	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	testutil "github.com/operator-framework/operator-sdk/internal/pkg/scaffold/internal/testutil"
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 
 	"github.com/spf13/afero"
 )
-
-func setupCRDConfig(t *testing.T, s *Scaffold) *input.Config {
-	absPath, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	absPath = absPath[:strings.Index(absPath, "internal/pkg")]
-	tfDir := filepath.Join(absPath, "test", "test-framework")
-
-	// Set the project and repo paths to {abs}/test/test-framework, which
-	// contains pkg/apis for the memcached-operator.
-	return &input.Config{
-		Repo:           tfDir[strings.Index(absPath, "github.com"):],
-		AbsProjectPath: tfDir,
-		ProjectName:    filepath.Base(tfDir),
-	}
-}
 
 func TestCRDGoProject(t *testing.T) {
 	r, err := NewResource("cache.example.com/v1alpha1", "Memcached")
@@ -52,7 +32,10 @@ func TestCRDGoProject(t *testing.T) {
 	}
 	s, buf := setupScaffoldAndWriter()
 	s.Fs = afero.NewMemMapFs()
-	cfg := setupCRDConfig(t, s)
+	cfg, err := setupTestFrameworkConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	err = testutil.WriteOSPathToFS(afero.NewOsFs(), s.Fs, cfg.AbsProjectPath)
 	if err != nil {
@@ -137,7 +120,11 @@ func TestCRDNonGoProject(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cfg := setupCRDConfig(t, s)
+	cfg, err := setupTestFrameworkConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	path := filepath.Join(cfg.AbsProjectPath, i.Path)
 	err = afero.WriteFile(s.Fs, path, []byte(crdNonGoExp), fileutil.DefaultFileMode)
 	if err != nil {

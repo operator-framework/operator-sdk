@@ -98,7 +98,7 @@ func (s *CRD) CustomRender() ([]byte, error) {
 		return nil, err
 	}
 
-	var crd *apiextv1beta1.CustomResourceDefinition
+	crd := &apiextv1beta1.CustomResourceDefinition{}
 	if s.IsOperatorGo {
 		// controller-tools generates crd file names with no _crd.yaml suffix:
 		// <group>_<version>_<kind>.yaml.
@@ -127,7 +127,6 @@ func (s *CRD) CustomRender() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		crd = &apiextv1beta1.CustomResourceDefinition{}
 		if err = yaml.Unmarshal(b, crd); err != nil {
 			return nil, err
 		}
@@ -148,7 +147,6 @@ func (s *CRD) CustomRender() ([]byte, error) {
 			if len(b) == 0 {
 				crd = newCRDForResource(s.Resource)
 			} else {
-				crd = &apiextv1beta1.CustomResourceDefinition{}
 				if err = yaml.Unmarshal(b, crd); err != nil {
 					return nil, err
 				}
