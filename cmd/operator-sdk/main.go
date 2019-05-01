@@ -69,7 +69,9 @@ func main() {
 	root.AddCommand(version.NewCmd())
 
 	root.PersistentFlags().Bool(flags.VerboseOpt, false, "Enable verbose logging")
-	_ = viper.BindPFlag(flags.VerboseOpt, root.PersistentFlags().Lookup(flags.VerboseOpt))
+	if err := viper.BindPFlags(root.PersistentFlags()); err != nil {
+	    log.Fatalf("Failed to bind root flags: %v", err)
+	}
 
 	if err := root.Execute(); err != nil {
 		os.Exit(1)
