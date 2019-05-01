@@ -62,7 +62,7 @@ func (i TestInfo) IsCumulative() bool { return i.Cumulative }
 type TestSuite struct {
 	TestInfo
 	Tests       []Test
-	TestResults []*TestResult
+	TestResults []TestResult
 	Weights     map[string]float64
 	Log         string
 }
@@ -95,7 +95,7 @@ func (ts *TestSuite) TotalScore() (score int) {
 // Run runs all Tests in a TestSuite
 func (ts *TestSuite) Run(ctx context.Context) {
 	for _, test := range ts.Tests {
-		ts.TestResults = append(ts.TestResults, test.Run(ctx))
+		ts.TestResults = append(ts.TestResults, *test.Run(ctx))
 	}
 }
 

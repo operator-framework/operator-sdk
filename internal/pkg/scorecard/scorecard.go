@@ -293,8 +293,8 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	totalScore := 0.0
 	// Update the state for the tests
 	for _, suite := range suites {
-		for _, res := range suite.TestResults {
-			res.UpdateState()
+		for idx, res := range suite.TestResults {
+			suite.TestResults[idx] = UpdateState(res)
 		}
 	}
 	if viper.GetString(OutputFormatOpt) == "human-readable" {

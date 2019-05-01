@@ -54,7 +54,7 @@ type ScorecardSuiteResult struct {
 	// TotalScore is the total score of this suite as a percentage
 	TotalScore int `json:"totalScorePercent"`
 	// Tests is an array containing a json-ified version of the TestResults for the suite
-	Tests []*ScorecardTestResult `json:"tests"`
+	Tests []ScorecardTestResult `json:"tests"`
 	// Log is extra logging information from the scorecard suite/plugin.
 	// +optional
 	Log string `json:"log"`

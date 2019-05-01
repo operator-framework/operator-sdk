@@ -93,13 +93,9 @@ func (in *ScorecardSuiteResult) DeepCopyInto(out *ScorecardSuiteResult) {
 	*out = *in
 	if in.Tests != nil {
 		in, out := &in.Tests, &out.Tests
-		*out = make([]*ScorecardTestResult, len(*in))
+		*out = make([]ScorecardTestResult, len(*in))
 		for i := range *in {
-			if (*in)[i] != nil {
-				in, out := &(*in)[i], &(*out)[i]
-				*out = new(ScorecardTestResult)
-				(*in).DeepCopyInto(*out)
-			}
+			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
 	return

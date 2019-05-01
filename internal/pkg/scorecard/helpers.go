@@ -42,7 +42,7 @@ func ResultsCumulative(results []TestResult) (earned, max int) {
 }
 
 // CalculateResult returns a ScorecardSuiteResult with the state and Tests fields set based on a slice of ScorecardTestResults
-func CalculateResult(tests []*scapiv1alpha1.ScorecardTestResult) *scapiv1alpha1.ScorecardSuiteResult {
+func CalculateResult(tests []scapiv1alpha1.ScorecardTestResult) scapiv1alpha1.ScorecardSuiteResult {
 	scorecardSuiteResult := scapiv1alpha1.ScorecardSuiteResult{}
 	scorecardSuiteResult.Tests = tests
 	for _, test := range scorecardSuiteResult.Tests {
@@ -58,7 +58,7 @@ func CalculateResult(tests []*scapiv1alpha1.ScorecardTestResult) *scapiv1alpha1.
 			scorecardSuiteResult.Fail++
 		}
 	}
-	return &scorecardSuiteResult
+	return scorecardSuiteResult
 }
 
 // TestSuitesToScorecardOutput takes an array of test suites and generates a v1alpha1 ScorecardOutput object with the
@@ -73,23 +73,23 @@ func TestSuitesToScorecardOutput(suites []*TestSuite, log string) *scapiv1alpha1
 	}
 	scorecardSuiteResults := []scapiv1alpha1.ScorecardSuiteResult{}
 	for _, suite := range suites {
-		results := []*scapiv1alpha1.ScorecardTestResult{}
+		results := []scapiv1alpha1.ScorecardTestResult{}
 		for _, testResult := range suite.TestResults {
-			results = append(results, TestResultToScorecardTestResult(*testResult))
+			results = append(results, TestResultToScorecardTestResult(testResult))
 		}
 		scorecardSuiteResult := CalculateResult(results)
 		scorecardSuiteResult.TotalScore = suite.TotalScore()
 		scorecardSuiteResult.Name = suite.GetName()
 		scorecardSuiteResult.Description = suite.GetDescription()
 		scorecardSuiteResult.Log = suite.Log
-		scorecardSuiteResults = append(scorecardSuiteResults, *scorecardSuiteResult)
+		scorecardSuiteResults = append(scorecardSuiteResults, scorecardSuiteResult)
 	}
 	test.Results = scorecardSuiteResults
 	return test
 }
 
 // TestResultToScorecardTestResult is a helper function for converting from the TestResult type to the ScorecardTestResult type
-func TestResultToScorecardTestResult(tr TestResult) *scapiv1alpha1.ScorecardTestResult {
+func TestResultToScorecardTestResult(tr TestResult) scapiv1alpha1.ScorecardTestResult {
 	sctr := scapiv1alpha1.ScorecardTestResult{}
 	sctr.State = tr.State
 	sctr.Name = tr.Test.GetName()
@@ -105,13 +105,13 @@ func TestResultToScorecardTestResult(tr TestResult) *scapiv1alpha1.ScorecardTest
 		stringErrors = append(stringErrors, err.Error())
 	}
 	sctr.Errors = stringErrors
-	return &sctr
+	return sctr
 }
 
 // UpdateState updates the state of a TestResult.
-func (res *TestResult) UpdateState() {
+func UpdateState(res TestResult) TestResult {
 	if res.State == scapiv1alpha1.ErrorState {
-		return
+		return res
 	}
 	if res.EarnedPoints == 0 {
 		res.State = scapiv1alpha1.FailState
@@ -120,5 +120,6 @@ func (res *TestResult) UpdateState() {
 	} else if res.EarnedPoints == res.MaximumPoints {
 		res.State = scapiv1alpha1.PassState
 	}
+	return res
 	// TODO: decide what to do if a Test incorrectly sets points (Earned > Max)
 }
