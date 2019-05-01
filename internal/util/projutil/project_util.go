@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -183,4 +184,19 @@ func MustSetGopath(currentGopath string) string {
 		log.Fatal(err)
 	}
 	return newGopath
+}
+
+var flagRe = regexp.MustCompile("(.* )?-v(.* )?")
+
+// SetGoVerbose sets GOFLAGS="${GOFLAGS} -v" if GOFLAGS does not
+// already contain "-v" to make "go" command output verbose.
+func SetGoVerbose() error {
+	gf, ok := os.LookupEnv(GoFlagsEnv)
+	if !ok || len(gf) == 0 {
+		return os.Setenv(GoFlagsEnv, "-v")
+	}
+	if !flagRe.MatchString(gf) {
+		return os.Setenv(GoFlagsEnv, gf+" -v")
+	}
+	return nil
 }

@@ -22,11 +22,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/spf13/viper"
+	flags "github.com/operator-framework/operator-sdk/internal/pkg/flags"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	flags "github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal"
+
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 func buildCodegenBinaries(genDirs []string, binDir, codegenSrcDir string) error {
@@ -49,7 +50,10 @@ func runGoBuildCodegen(binDir, repoDir, genDir string) error {
 
 	// Only print binary build info if verbosity is explicitly set.
 	if viper.GetBool(flags.VerboseOpt) {
-		_ = os.Setenv(projutil.GoFlagsEnv, os.Getenv(projutil.GoFlagsEnv)+" -v")
+		err := projutil.SetGoVerbose()
+		if err != nil {
+			return err
+		}
 		return projutil.ExecCmd(cmd)
 	}
 	cmd.Stdout = ioutil.Discard
