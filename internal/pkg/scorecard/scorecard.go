@@ -61,7 +61,6 @@ const (
 	ProxyImageOpt         = "proxy-image"
 	ProxyPullPolicyOpt    = "proxy-pull-policy"
 	CRDsDirOpt            = "crds-dir"
-	VerboseOpt            = "verbose"
 )
 
 const (

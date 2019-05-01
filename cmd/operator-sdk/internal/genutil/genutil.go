@@ -22,9 +22,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/spf13/viper"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-
+	flags "github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -47,7 +48,8 @@ func runGoBuildCodegen(binDir, repoDir, genDir string) error {
 	}
 
 	// Only print binary build info if verbosity is explicitly set.
-	if projutil.IsGoVerbose() {
+	if viper.GetViper().GetBool(flags.VerboseOpt) {
+		_ = os.Setenv(projutil.GoFlagsEnv, os.Getenv(projutil.GoFlagsEnv)+" -v")
 		return projutil.ExecCmd(cmd)
 	}
 	cmd.Stdout = ioutil.Discard

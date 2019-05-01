@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -184,13 +183,4 @@ func MustSetGopath(currentGopath string) string {
 		log.Fatal(err)
 	}
 	return newGopath
-}
-
-var flagRe = regexp.MustCompile("(.* )?-v(.* )?")
-
-// IsGoVerbose returns true if GOFLAGS contains "-v". This function is useful
-// when deciding whether to make "go" command output verbose.
-func IsGoVerbose() bool {
-	gf, ok := os.LookupEnv(GoFlagsEnv)
-	return ok && len(gf) != 0 && flagRe.MatchString(gf)
 }

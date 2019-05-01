@@ -23,6 +23,7 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
+	flags "github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/migrate"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/new"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olmcatalog"
@@ -39,9 +40,6 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
-const (
-	VerboseOpt = "verbose"
-)
 
 func main() {
 	root := &cobra.Command{
@@ -49,7 +47,7 @@ func main() {
 		Short:   "An SDK for building operators with ease",
 		Version: osdkversion.Version,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			if viper.GetBool(VerboseOpt) {
+			if viper.GetBool(flags.VerboseOpt) {
 				log.SetLevel(log.DebugLevel)
 				log.Debug("Debug logging is set")
 			}
@@ -70,8 +68,8 @@ func main() {
 	root.AddCommand(olmcatalog.NewCmd())
 	root.AddCommand(version.NewCmd())
 
-	root.PersistentFlags().Bool(VerboseOpt, false, "Enable verbose logging")
-	viper.BindPFlag(VerboseOpt, root.PersistentFlags().Lookup(VerboseOpt))
+	root.PersistentFlags().Bool(flags.VerboseOpt, false, "Enable verbose logging")
+	_ = viper.BindPFlag(flags.VerboseOpt, root.PersistentFlags().Lookup(flags.VerboseOpt))
 
 	if err := root.Execute(); err != nil {
 		os.Exit(1)
