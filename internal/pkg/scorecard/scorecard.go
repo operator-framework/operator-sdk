@@ -96,7 +96,7 @@ var (
 	log           = logrus.New()
 )
 
-func runTests() ([]*TestSuite, error) {
+func runTests() ([]TestSuite, error) {
 	defer func() {
 		if err := cleanupScorecard(); err != nil {
 			log.Errorf("Failed to cleanup resources: (%v)", err)
@@ -255,7 +255,7 @@ func runTests() ([]*TestSuite, error) {
 		dupMap[gvk] = true
 	}
 
-	var suites []*TestSuite
+	var suites []TestSuite
 	for _, cr := range crs {
 		fmt.Printf("Running for cr: %s\n", cr)
 		if !viper.GetBool(OlmDeployedOpt) {
@@ -286,7 +286,7 @@ func runTests() ([]*TestSuite, error) {
 			}
 			basicTests := NewBasicTestSuite(conf)
 			basicTests.Run(context.TODO())
-			suites = append(suites, basicTests)
+			suites = append(suites, *basicTests)
 		}
 		if viper.GetBool(OLMTestsOpt) {
 			conf := OLMTestConfig{
@@ -298,7 +298,7 @@ func runTests() ([]*TestSuite, error) {
 			}
 			olmTests := NewOLMTestSuite(conf)
 			olmTests.Run(context.TODO())
-			suites = append(suites, olmTests)
+			suites = append(suites, *olmTests)
 		}
 		// set up clean environment for every CR
 		cleanupScorecard()

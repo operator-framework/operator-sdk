@@ -29,5 +29,5 @@ commandoutput2="$(operator-sdk scorecard \
 # check basic suite
 echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 3,[[:space:]]"partialPass": 0,[[:space:]]"fail": 0,[[:space:]]"totalTests": 3,[[:space:]]"totalScorePercent": 100,.*$'
 # check olm suite
-echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 3,[[:space:]]"partialPass": 0,[[:space:]]"fail": 2,[[:space:]]"totalTests": 5,[[:space:]]"totalScorePercent": 61,.*$'
+echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 2,[[:space:]]"partialPass": 2,[[:space:]]"fail": 1,[[:space:]]"totalTests": 5,[[:space:]]"totalScorePercent": 65,.*$'
 popd

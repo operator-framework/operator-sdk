@@ -112,12 +112,12 @@ func NewTestSuite(name, description string) *TestSuite {
 }
 
 // MergeSuites takes an array of TestSuites and combines all suites with the same name
-func MergeSuites(suites []*TestSuite) ([]*TestSuite, error) {
-	suiteMap := make(map[string][]*TestSuite)
+func MergeSuites(suites []TestSuite) ([]TestSuite, error) {
+	suiteMap := make(map[string][]TestSuite)
 	for _, suite := range suites {
 		suiteMap[suite.GetName()] = append(suiteMap[suite.GetName()], suite)
 	}
-	mergedSuites := []*TestSuite{}
+	mergedSuites := []TestSuite{}
 	for _, suiteSlice := range suiteMap {
 		testMap := make(map[string][]TestResult)
 		for _, suite := range suiteSlice {
