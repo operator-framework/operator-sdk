@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,34 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scaffold
+// +k8s:deepcopy-gen=package,register
+// +groupName=osdk.openshift.io
 
-import (
-	"path/filepath"
-
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
-)
-
-const (
-	VersionDir  = "version"
-	VersionFile = "version.go"
-)
-
-type Version struct {
-	input.Input
-}
-
-func (s *Version) GetInput() (input.Input, error) {
-	if s.Path == "" {
-		s.Path = filepath.Join(VersionDir, VersionFile)
-	}
-	s.TemplateBody = versionTemplate
-	return s.Input, nil
-}
-
-const versionTemplate = `package version
-
-var (
-	Version = "0.0.1"
-)
-`
+package v1alpha1

@@ -14,11 +14,19 @@
 
 package scorecard
 
-import "fmt"
+import (
+	"fmt"
+
+	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// These functions should be in the public test definitions file, but they are not complete/stable,
+// so we'll keep these here until they get fully implemented
 
 // ResultsPassFail combines multiple test results and returns a single test results
 // with 1 maximum point and either 0 or 1 earned points
-func ResultsPassFail(results []*TestResult) (*TestResult, error) {
+func ResultsPassFail(results []TestResult) (TestResult, error) {
 	var name string
 	finalResult := TestResult{}
 	if len(results) > 0 {
@@ -30,10 +38,10 @@ func ResultsPassFail(results []*TestResult) (*TestResult, error) {
 	}
 	for _, result := range results {
 		if result.Test.IsCumulative() {
-			return nil, fmt.Errorf("cumulative test passed to ResultsPassFail: name (%s)", result.Test.GetName())
+			return finalResult, fmt.Errorf("cumulative test passed to ResultsPassFail: name (%s)", result.Test.GetName())
 		}
 		if result.Test.GetName() != name {
-			return nil, fmt.Errorf("test name mismatch in ResultsPassFail: %s != %s", result.Test.GetName(), name)
+			return finalResult, fmt.Errorf("test name mismatch in ResultsPassFail: %s != %s", result.Test.GetName(), name)
 		}
 		if result.EarnedPoints != result.MaximumPoints {
 			finalResult.EarnedPoints = 0
@@ -41,13 +49,13 @@ func ResultsPassFail(results []*TestResult) (*TestResult, error) {
 		finalResult.Suggestions = append(finalResult.Suggestions, result.Suggestions...)
 		finalResult.Errors = append(finalResult.Errors, result.Errors...)
 	}
-	return &finalResult, nil
+	return finalResult, nil
 }
 
 // ResultsCumulative takes multiple TestResults and returns a single TestResult with MaximumPoints
 // equal to the sum of the MaximumPoints of the input and EarnedPoints as the sum of EarnedPoints
 // of the input
-func ResultsCumulative(results []*TestResult) (*TestResult, error) {
+func ResultsCumulative(results []TestResult) (TestResult, error) {
 	var name string
 	finalResult := TestResult{}
 	if len(results) > 0 {
@@ -57,15 +65,98 @@ func ResultsCumulative(results []*TestResult) (*TestResult, error) {
 	}
 	for _, result := range results {
 		if !result.Test.IsCumulative() {
-			return nil, fmt.Errorf("non-cumulative test passed to ResultsCumulative: name (%s)", result.Test.GetName())
+			return finalResult, fmt.Errorf("non-cumulative test passed to ResultsCumulative: name (%s)", result.Test.GetName())
 		}
 		if result.Test.GetName() != name {
-			return nil, fmt.Errorf("test name mismatch in ResultsCumulative: %s != %s", result.Test.GetName(), name)
+			return finalResult, fmt.Errorf("test name mismatch in ResultsCumulative: %s != %s", result.Test.GetName(), name)
 		}
 		finalResult.EarnedPoints += result.EarnedPoints
 		finalResult.MaximumPoints += result.MaximumPoints
 		finalResult.Suggestions = append(finalResult.Suggestions, result.Suggestions...)
 		finalResult.Errors = append(finalResult.Errors, result.Errors...)
 	}
-	return &finalResult, nil
+	return finalResult, nil
+}
+
+// CalculateResult returns a ScorecardSuiteResult with the state and Tests fields set based on a slice of ScorecardTestResults
+func CalculateResult(tests []scapiv1alpha1.ScorecardTestResult) scapiv1alpha1.ScorecardSuiteResult {
+	scorecardSuiteResult := scapiv1alpha1.ScorecardSuiteResult{}
+	scorecardSuiteResult.Tests = tests
+	for _, test := range scorecardSuiteResult.Tests {
+		scorecardSuiteResult.TotalTests++
+		switch test.State {
+		case scapiv1alpha1.ErrorState:
+			scorecardSuiteResult.Error++
+		case scapiv1alpha1.PassState:
+			scorecardSuiteResult.Pass++
+		case scapiv1alpha1.PartialPassState:
+			scorecardSuiteResult.PartialPass++
+		case scapiv1alpha1.FailState:
+			scorecardSuiteResult.Fail++
+		}
+	}
+	return scorecardSuiteResult
+}
+
+// TestSuitesToScorecardOutput takes an array of test suites and generates a v1alpha1 ScorecardOutput object with the
+// provided name, description, and log
+func TestSuitesToScorecardOutput(suites []*TestSuite, log string) *scapiv1alpha1.ScorecardOutput {
+	test := &scapiv1alpha1.ScorecardOutput{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ScorecardOutput",
+			APIVersion: "osdk.openshift.io/v1alpha1",
+		},
+		Log: log,
+	}
+	scorecardSuiteResults := []scapiv1alpha1.ScorecardSuiteResult{}
+	for _, suite := range suites {
+		results := []scapiv1alpha1.ScorecardTestResult{}
+		for _, testResult := range suite.TestResults {
+			results = append(results, TestResultToScorecardTestResult(testResult))
+		}
+		scorecardSuiteResult := CalculateResult(results)
+		scorecardSuiteResult.TotalScore = suite.TotalScore()
+		scorecardSuiteResult.Name = suite.GetName()
+		scorecardSuiteResult.Description = suite.GetDescription()
+		scorecardSuiteResult.Log = suite.Log
+		scorecardSuiteResults = append(scorecardSuiteResults, scorecardSuiteResult)
+	}
+	test.Results = scorecardSuiteResults
+	return test
+}
+
+// TestResultToScorecardTestResult is a helper function for converting from the TestResult type to the ScorecardTestResult type
+func TestResultToScorecardTestResult(tr TestResult) scapiv1alpha1.ScorecardTestResult {
+	sctr := scapiv1alpha1.ScorecardTestResult{}
+	sctr.State = tr.State
+	sctr.Name = tr.Test.GetName()
+	sctr.Description = tr.Test.GetDescription()
+	sctr.EarnedPoints = tr.EarnedPoints
+	sctr.MaximumPoints = tr.MaximumPoints
+	sctr.Suggestions = tr.Suggestions
+	if sctr.Suggestions == nil {
+		sctr.Suggestions = []string{}
+	}
+	stringErrors := []string{}
+	for _, err := range tr.Errors {
+		stringErrors = append(stringErrors, err.Error())
+	}
+	sctr.Errors = stringErrors
+	return sctr
+}
+
+// UpdateState updates the state of a TestResult.
+func UpdateState(res TestResult) TestResult {
+	if res.State == scapiv1alpha1.ErrorState {
+		return res
+	}
+	if res.EarnedPoints == 0 {
+		res.State = scapiv1alpha1.FailState
+	} else if res.EarnedPoints < res.MaximumPoints {
+		res.State = scapiv1alpha1.PartialPassState
+	} else if res.EarnedPoints == res.MaximumPoints {
+		res.State = scapiv1alpha1.PassState
+	}
+	return res
+	// TODO: decide what to do if a Test incorrectly sets points (Earned > Max)
 }

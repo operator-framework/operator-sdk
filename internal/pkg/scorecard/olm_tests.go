@@ -21,9 +21,9 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -185,11 +185,13 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *TestResult {
 	crds, err := k8sutil.GetCRDs(t.CRDsDir)
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("failed to get CRDs in %s directory: %v", t.CRDsDir, err))
+		res.State = scapiv1alpha1.ErrorState
 		return res
 	}
 	err = t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
 		res.Errors = append(res.Errors, err)
+		res.State = scapiv1alpha1.ErrorState
 		return res
 	}
 	for _, crd := range crds {
@@ -370,6 +372,7 @@ func (t *StatusDescriptorsTest) Run(ctx context.Context) *TestResult {
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
 		res.Errors = append(res.Errors, err)
+		res.State = scapiv1alpha1.ErrorState
 		return res
 	}
 	if t.CR.Object["status"] == nil {
@@ -408,6 +411,7 @@ func (t *SpecDescriptorsTest) Run(ctx context.Context) *TestResult {
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
 		res.Errors = append(res.Errors, err)
+		res.State = scapiv1alpha1.ErrorState
 		return res
 	}
 	if t.CR.Object["spec"] == nil {

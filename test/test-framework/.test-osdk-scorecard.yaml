@@ -6,3 +6,4 @@ csv-path: "deploy/olm-catalog/memcached-operator/0.0.3/memcached-operator.v0.0.3
 proxy-image: "scorecard-proxy"
 proxy-pull-policy: "Never"
 verbose: true
+output: json
