@@ -15,6 +15,7 @@
 package main
 
 import (
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -41,7 +42,6 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
-
 func main() {
 	root := &cobra.Command{
 		Use:     "operator-sdk",
@@ -49,6 +49,11 @@ func main() {
 		Version: osdkversion.Version,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if viper.GetBool(flags.VerboseOpt) {
+				err := projutil.SetGoVerbose()
+				if err != nil {
+					log.Errorf("Could not set GOFLAGS: (%v)", err)
+					return
+				}
 				log.SetLevel(log.DebugLevel)
 				log.Debug("Debug logging is set")
 			}
@@ -71,7 +76,7 @@ func main() {
 
 	root.PersistentFlags().Bool(flags.VerboseOpt, false, "Enable verbose logging")
 	if err := viper.BindPFlags(root.PersistentFlags()); err != nil {
-	    log.Fatalf("Failed to bind root flags: %v", err)
+		log.Fatalf("Failed to bind root flags: %v", err)
 	}
 
 	if err := root.Execute(); err != nil {
