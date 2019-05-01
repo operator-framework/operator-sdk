@@ -16,6 +16,8 @@ package scorecard
 
 import (
 	"context"
+
+	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
 )
 
 // Type Definitions
@@ -30,6 +32,7 @@ type Test interface {
 
 // TestResult contains a test's points, suggestions, and errors
 type TestResult struct {
+	State         scapiv1alpha1.State
 	Test          Test
 	EarnedPoints  int
 	MaximumPoints int
@@ -55,12 +58,13 @@ func (i TestInfo) GetDescription() string { return i.Description }
 // IsCumulative returns true if the test's scores are intended to be cumulative
 func (i TestInfo) IsCumulative() bool { return i.Cumulative }
 
-// TestSuite contains a list of tests and results, along with the relative weights of each test
+// TestSuite contains a list of tests and results, along with the relative weights of each test. Also can optionally contain a log
 type TestSuite struct {
 	TestInfo
 	Tests       []Test
-	TestResults []*TestResult
+	TestResults []TestResult
 	Weights     map[string]float64
+	Log         string
 }
 
 // Helper functions
@@ -91,7 +95,7 @@ func (ts *TestSuite) TotalScore() (score int) {
 // Run runs all Tests in a TestSuite
 func (ts *TestSuite) Run(ctx context.Context) {
 	for _, test := range ts.Tests {
-		ts.TestResults = append(ts.TestResults, test.Run(ctx))
+		ts.TestResults = append(ts.TestResults, *test.Run(ctx))
 	}
 }
 
