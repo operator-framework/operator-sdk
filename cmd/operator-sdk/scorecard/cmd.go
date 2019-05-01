@@ -51,6 +51,7 @@ func NewCmd() *cobra.Command {
 	scorecardCmd.Flags().String(scorecard.ProxyImageOpt, fmt.Sprintf("quay.io/operator-framework/scorecard-proxy:%s", strings.TrimSuffix(version.Version, "+git")), "Image name for scorecard proxy")
 	scorecardCmd.Flags().String(scorecard.ProxyPullPolicyOpt, "Always", "Pull policy for scorecard proxy image")
 	scorecardCmd.Flags().String(scorecard.CRDsDirOpt, scaffold.CRDsDir, "Directory containing CRDs (all CRD manifest filenames must have the suffix 'crd.yaml')")
+	scorecardCmd.Flags().StringP(scorecard.OutputFormatOpt, "o", "human-readable", "Output format for results. Valid values: human-readable, json")
 
 	if err := viper.BindPFlags(scorecardCmd.Flags()); err != nil {
 		log.Fatalf("Failed to bind scorecard flags to viper: %v", err)
