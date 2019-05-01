@@ -1,14 +1,18 @@
 ---
 name: Bug Report
 about: If things aren't working as expected.
+title: ''
+labels: ''
+assignees: ''
 
 ---
 
 ## Bug Report
 
 <!-- 
-Thanks for filing an issue! Before hitting the button, please answer these questions.
+Note: Make sure to first check the prerequisites that can be found in the main README file!
 
+Thanks for filing an issue! Before hitting the button, please answer these questions.
 Fill in as much of the template below as you can. If you leave out information, we can't help you as well.
 -->
 
@@ -25,11 +29,15 @@ A clear and concise description of what you expected to happen (or insert a code
 **Environment**
 * operator-sdk version:
 
-  Insert operator-sdk release or Git SHA here. If you have paste the Gopkg.lock operator-sdk information here. 
+<!--- Insert operator-sdk release or Git SHA here. -->
+
+* go version:
+
+<!--- Insert the output of `go version` here -->
 
 * Kubernetes version information:
 
-  Insert output of `kubectl version` here
+<!--- Insert the output of `kubectl version` here -->
 
 * Kubernetes cluster kind: 
 

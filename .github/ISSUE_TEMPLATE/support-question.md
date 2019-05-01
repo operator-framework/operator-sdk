@@ -1,6 +1,9 @@
 ---
 name: Support Question
 about: Any support questions you might have.
+title: ''
+labels: ''
+assignees: ''
 
 ---
 

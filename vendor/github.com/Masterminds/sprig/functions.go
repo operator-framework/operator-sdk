@@ -10,7 +10,7 @@ import (
 	ttemplate "text/template"
 	"time"
 
-	util "github.com/aokoli/goutils"
+	util "github.com/Masterminds/goutils"
 	"github.com/huandu/xstrings"
 )
 
@@ -245,6 +245,7 @@ var genericMap = map[string]interface{}{
 	"pick":   pick,
 	"omit":   omit,
 	"merge":  merge,
+	"mergeOverwrite": mergeOverwrite,
 	"values": values,
 
 	"append": push, "push": push,

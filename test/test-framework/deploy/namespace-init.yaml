@@ -8,7 +8,6 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  creationTimestamp: null
   name: memcached-operator
 rules:
 - apiGroups:
@@ -38,6 +37,14 @@ rules:
   - '*'
   verbs:
   - '*'
+- apiGroups:
+  - apps
+  resources:
+  - deployments/finalizers
+  resourceNames:
+  - memcached-operator
+  verbs:
+  - "update"
 
 ---
 
@@ -58,7 +65,6 @@ roleRef:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  creationTimestamp: null
   name: memcached-operator
 spec:
   replicas: 1
@@ -68,7 +74,6 @@ spec:
   strategy: {}
   template:
     metadata:
-      creationTimestamp: null
       labels:
         name: memcached-operator
     spec:

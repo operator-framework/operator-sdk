@@ -16,7 +16,8 @@ Usage:
 * `--enable-tests` - enable in-cluster testing by adding test binary to the image
 * `--namespaced-manifest` string - path of namespaced resources manifest for tests (default "deploy/operator.yaml")
 * `--test-location` string - location of tests (default "./test/e2e")
-* `--docker-build-args` string - extra, optional docker build arguments as one string such as `"--build-arg https_proxy=$https_proxy"` (default "")
+* `--image-build-args` string - extra, optional image build arguments as one string such as `"--build-arg https_proxy=$https_proxy"` (default "")
+* `--image-builder` string - tool to build OCI images. One of: `[docker, buildah]` (default "docker")
 * `-h, --help` - help for build
 
 ### Use
@@ -98,7 +99,6 @@ Prints the most recent Golang packages and versions required by operators. Print
 ```console
 $ operator-sdk print-deps --as-file
 required = [
-  "k8s.io/code-generator/cmd/defaulter-gen",
   "k8s.io/code-generator/cmd/deepcopy-gen",
   "k8s.io/code-generator/cmd/conversion-gen",
   "k8s.io/code-generator/cmd/client-gen",
@@ -122,6 +122,10 @@ Runs the Kubernetes [code-generators][k8s-code-generator] for all Custom Resourc
 Currently only runs `deepcopy-gen` to generate the required `DeepCopy()` functions for all custom resource types.
 
 **Note**: This command must be run every time the api (spec and status) for a custom resource type is updated.
+
+### Flags
+
+* `--header-file` string - Path to file containing headers for generated files (optional).
 
 #### Example
 
@@ -208,6 +212,10 @@ is not of the "go" type.
 **Note**: This command will look for playbook.yml in the project root, if you use the .yaml extension
 you will need to rename it before running migrate or manually add it to your Dockerfile.
 
+#### Flags
+
+* `--dep-manager` string - Dependency manager the migrated project will use (choices: "dep")
+
 ### Example
 
 ```console
@@ -241,6 +249,7 @@ Scaffolds a new operator project.
 * `--helm-chart` string - Initialize helm operator with existing helm chart (`<URL>`, `<repo>/<name>`, or local path)
 * `--helm-chart-repo` string - Chart repository URL for the requested helm chart
 * `--helm-chart-version` string - Specific version of the helm chart (default is latest version)
+* `--dep-manager` string - Dependency manager the new project will use (choices: "dep")
 * `-h, --help` - help for new
 
 ### Example
@@ -306,6 +315,7 @@ Adds the API definition for a new custom resource under `pkg/apis` and generates
 
 * `--api-version` string - CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
 * `--kind` string - CRD Kind. (e.g AppService)
+* `--header-file` string - Path to file containing headers for generated files (optional).
 
 #### Example
 
@@ -460,7 +470,7 @@ Runs the tests locally
 ##### Flags
 
 * `--debug` - Enable debug-level logging
-* `--kubeconfig` string - location of kubeconfig for kubernetes cluster (default "~/.kube/config")
+* `--kubeconfig` string - location of kubeconfig for Kubernetes cluster (default "~/.kube/config")
 * `--global-manifest` string - path to manifest for global resources (default "deploy/crd.yaml)
 * `--namespaced-manifest` string - path to manifest for per-test, namespaced resources (default: combines deploy/service_account.yaml, deploy/rbac.yaml, and deploy/operator.yaml)
 * `--namespace` string - if non-empty, single namespace to run tests in (e.g. "operator-test") (default: "")
@@ -492,7 +502,7 @@ Runs the e2e tests packaged in an operator image as a pod in the cluster
 
 ##### Flags
 
-* `--kubeconfig` string - location of kubeconfig for kubernetes cluster (default "~/.kube/config")
+* `--kubeconfig` string - location of kubeconfig for Kubernetes cluster (default "~/.kube/config")
 * `--image-pull-policy` string - set test pod image pull policy. Allowed values: Always, Never (default "Always")
 * `--namespace` string - namespace to run tests in (default "default")
 * `--pending-timeout` int - timeout in seconds for testing pod to stay in pending state (default 60s)
@@ -519,7 +529,7 @@ Test Successfully Completed
 ##### Use
 
 The `operator-sdk up local` command launches the operator on the local machine
-with the ability to access a kubernetes cluster using a kubeconfig file, and
+with the ability to access a Kubernetes cluster using a kubeconfig file, and
 setting any necessary environment variables that the operator would expect to
 find when running in a cluster. For Go-based operators, this command will
 compile and run the operator binary. In the case of non-Go operators, it runs
@@ -528,7 +538,7 @@ the operator-sdk binary itself as the operator.
 ##### Flags
 
 * `--go-ldflags` string - Set Go linker options
-* `--kubeconfig` string - The file path to kubernetes configuration file; defaults to $HOME/.kube/config
+* `--kubeconfig` string - The file path to Kubernetes configuration file; defaults to $HOME/.kube/config
 * `--namespace` string - The namespace where the operator watches for changes. (default "default")
 * `--operator-flags` string - Flags that the local operator may need.
 * `-h, --help` - help for local

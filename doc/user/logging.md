@@ -38,10 +38,9 @@ In the above example, we add the zap flagset to the operator's command line flag
 By default, `zap.Logger()` will return a logger that is ready for production use. It uses a JSON encoder, logs starting at the `info` level, and has [sampling][zap_sampling] enabled. To customize the default behavior, users can use the zap flagset and specify flags on the command line. The zap flagset includes the following flags that can be used to configure the logger:
 * `--zap-devel` - Enables the zap development config (changes defaults to console encoder, debug log level, and disables sampling) (default: `false`)
 * `--zap-encoder` string - Sets the zap log encoding (`json` or `console`)
-* `--zap-level` string - Sets the zap log level (`debug`, `info`, or `error`)
-* `--zap-sample` - Enables zap's sampling mode
+* `--zap-level` string or integer - Sets the zap log level (`debug`, `info`, `error`, or an integer value greater than 0). If 4 or greater the verbosity of client-go will be set to this level.
+* `--zap-sample` - Enables zap's sampling mode. Sampling will be disabled for integer log levels greater than 1.
 
-**NOTE:** Although the `logr` interface supports multiple debug levels (e.g. `log.V(1).Info()`, `log.V(2).Info()`, etc.), zap supports only a single debug level with `log.V(1).Info()`. Log statements with higher debug levels will not be printed with the zap's `logr` backend.
 
 ## Creating a structured log statement
 
@@ -118,5 +117,5 @@ If you do not want to use `logr` as your logging tool, you can remove `logr`-spe
 [godoc_logr_logger]:https://godoc.org/github.com/go-logr/logr#Logger
 [site_struct_logging]:https://www.client9.com/structured-logging-in-golang/
 [code_memcached_controller]:../../example/memcached-operator/memcached_controller.go.tmpl
-[code_set_logger]:https://github.com/operator-framework/operator-sdk/blob/ecd02000616f11303f1adecd3d4ceb4a8561a9ec/pkg/scaffold/cmd.go#L90-L94
+[code_set_logger]:https://github.com/operator-framework/operator-sdk/blob/4d66be409a69d169aaa29d470242a1defbaf08bb/internal/pkg/scaffold/cmd.go#L92-L96
 [zap_sampling]:https://github.com/uber-go/zap/blob/master/FAQ.md#why-sample-application-logs

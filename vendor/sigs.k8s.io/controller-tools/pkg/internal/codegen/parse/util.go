@@ -217,6 +217,20 @@ func HasDocAnnotation(t *types.Type) bool {
 	return false
 }
 
+// hasSingular returns true if t is an APIResource annotated with
+// +kubebuilder:singular
+func hasSingular(t *types.Type) bool {
+	if !IsAPIResource(t) {
+		return false
+	}
+	for _, c := range t.CommentLines{
+		if strings.Contains(c, "+kubebuilder:singular"){
+			return true
+		}
+	}
+	return false
+}
+
 // IsUnversioned returns true if t is in given group, and not in versioned path.
 func IsUnversioned(t *types.Type, group string) bool {
 	return IsApisDir(filepath.Base(filepath.Dir(t.Name.Package))) && GetGroup(t) == group
@@ -311,6 +325,16 @@ func getCategoriesTag(c *types.Type) string {
 	return resource
 }
 
+// getSingularName returns the value of the +kubebuilder:singular tag
+func getSingularName(c *types.Type) string {
+	comments := Comments(c.CommentLines)
+	singular := comments.getTag("kubebuilder:singular", "=")
+	if len(singular) == 0 {
+		panic(errors.Errorf("Must specify a value to use with +kubebuilder:singular comment for type %v", c.Name))
+	}
+	return singular
+}
+
 // getDocAnnotation parse annotations of "+kubebuilder:doc:" with tags of "warning" or "doc" for control generating doc config.
 // E.g. +kubebuilder:doc:warning=foo  +kubebuilder:doc:note=bar
 func getDocAnnotation(t *types.Type, tags ...string) map[string]string {
@@ -332,6 +356,20 @@ func parseByteValue(b []byte) string {
 	elem = strings.TrimPrefix(elem, "[")
 	elem = strings.TrimSuffix(elem, "]")
 	return elem
+}
+
+// parseDescription parse comments above each field in the type definition.
+func parseDescription(res []string) string {
+	var temp strings.Builder
+	var desc string
+	for _, comment := range res {
+		if !(strings.Contains(comment, "+kubebuilder") || strings.Contains(comment, "+optional")) {
+			temp.WriteString(comment)
+			temp.WriteString(" ")
+			desc = strings.TrimRight(temp.String(), " ")
+		}
+	}
+	return desc
 }
 
 // parseEnumToString returns a representive validated go format string from JSONSchemaProps schema
@@ -387,9 +425,6 @@ func parseScaleParams(t *types.Type) (map[string]string, error) {
 				return nil, fmt.Errorf(jsonPathError)
 			}
 			for _, s := range path {
-				fmt.Printf("\n[debug] %s", s)
-			}
-			for _, s := range path {
 				kv := strings.Split(s, "=")
 				if kv[0] == specReplicasPath || kv[0] == statusReplicasPath || kv[0] == labelSelectorPath {
 					jsonPath[kv[0]] = kv[1]
@@ -435,9 +470,6 @@ func helperPrintColumn(parts string, comment string) (v1beta1.CustomResourceColu
 		return v1beta1.CustomResourceColumnDefinition{}, fmt.Errorf(printColumnError)
 	}
 
-	for _, s := range part {
-		fmt.Printf("\n[debug] %s", s)
-	}
 	for _, elem := range strings.Split(parts, ",") {
 		key, value, err := printColumnKV(elem)
 		if err != nil {

@@ -239,6 +239,9 @@ func without(list interface{}, omit ...interface{}) []interface{} {
 }
 
 func has(needle interface{}, haystack interface{}) bool {
+	if haystack == nil {
+		return false
+	}
 	tp := reflect.TypeOf(haystack).Kind()
 	switch tp {
 	case reflect.Slice, reflect.Array:

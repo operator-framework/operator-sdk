@@ -6,10 +6,10 @@ In order to build a functional operator, the ability to observe state is a must.
 
 ## Background
 
-Client-go provides APIs for querying objects in the standard kubernetes groups via `Get` and `List`.
+Client-go provides APIs for querying objects in the standard Kubernetes groups via `Get` and `List`.
 However, each client is specific to an object’s APIVersion and Kind which makes the API too verbose.
 For example, to get a specific Deployment object:
-- Create a kubernetes clientset that implements kubernetes.Interface.
+- Create a Kubernetes clientset that implements kubernetes.Interface.
 - Call `kubeclient.AppsV1().Deployments("default").Get("name", v1.GetOptions{})`
 
 To retrieve a different object like a Pod, the above API would change to:
@@ -28,7 +28,7 @@ To simplify the retrieval of Kubernetes objects, the SDK can use a dynamic resou
 ### Get()
 
 ```Go
-// Get gets the kubernetes object and then unmarshals the retrieved data into the "into" object.
+// Get gets the Kubernetes object and then unmarshals the retrieved data into the "into" object.
 // "into" is a Kubernetes runtime.Object that must have
 // "Kind" and "APIVersion" specified in its "TypeMeta" field
 // and "Name" and "Namespace" specified in its "ObjectMeta" field.
@@ -64,8 +64,8 @@ err := sdk.Get(d, sdk.WithGetOptions(o))
 ### List()
 
 ```Go
-// List gets a list of kubernetes object and then unmarshals the retrieved data into the "into" object.
-// "namespace" indicates which kubernetes namespace to look for the list of kubernetes objects.
+// List gets a list of Kubernetes object and then unmarshals the retrieved data into the "into" object.
+// "namespace" indicates which Kubernetes namespace to look for the list of Kubernetes objects.
 // "into" is a sdkType.Object that must have
 // "Kind" and "APIVersion" specified in its "TypeMeta" field
 // Those are used to construct the underlying resource client.
