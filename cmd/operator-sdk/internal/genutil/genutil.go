@@ -48,7 +48,7 @@ func runGoBuildCodegen(binDir, repoDir, genDir string) error {
 	}
 
 	// Only print binary build info if verbosity is explicitly set.
-	if viper.GetViper().GetBool(flags.VerboseOpt) {
+	if viper.GetBool(flags.VerboseOpt) {
 		_ = os.Setenv(projutil.GoFlagsEnv, os.Getenv(projutil.GoFlagsEnv)+" -v")
 		return projutil.ExecCmd(cmd)
 	}
