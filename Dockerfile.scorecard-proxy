@@ -1,4 +1,4 @@
-FROM openshift/origin-release:golang-1.10 as builder
+FROM openshift/origin-release:golang-1.11 as builder
 WORKDIR /go/src/github.com/operator-framework/operator-sdk
 
 ENV CGO_ENABLED=0
