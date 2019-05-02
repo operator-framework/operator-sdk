@@ -237,6 +237,7 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *TestResult {
 // Run - implements Test interface
 func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
 	res := &TestResult{Test: t}
+	var missingResources []string
 	for _, crd := range t.CSV.Spec.CustomResourceDefinitions.Owned {
 		res.MaximumPoints++
 		gvk := t.CR.GroupVersionKind()
@@ -255,6 +256,7 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
 				}
 				if foundResource == false {
 					allResourcesListed = false
+					missingResources = append(missingResources, fmt.Sprintf("%s/%s", resource.Kind, resource.Version))
 				}
 			}
 			if allResourcesListed {
@@ -267,7 +269,7 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
 		}
 	}
 	if res.EarnedPoints < res.MaximumPoints {
-		res.Suggestions = append(res.Suggestions, "Add resources to owned CRDs")
+		res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add resources to owned CRDs for %s: %v", t.CR.GroupVersionKind(), missingResources))
 	}
 	return res
 }
@@ -289,14 +291,17 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 		/*
 			There are 6 formats a resource uri can have:
 			Cluster-Scoped:
-				Collection: /apis/GROUP/VERSION/KIND
-				Individual: /apis/GROUP/VERSION/KIND/NAME
-				Core:       /api/v1/KIND
+				Collection:      /apis/GROUP/VERSION/KIND
+				Individual:      /apis/GROUP/VERSION/KIND/NAME
+				Core:            /api/v1/KIND
+				Core Individual: /api/v1/KIND/NAME
+
 			Namespaces:
 				All Namespaces:          /apis/GROUP/VERSION/KIND (same as cluster collection)
 				Collection in Namespace: /apis/GROUP/VERSION/namespaces/NAMESPACE/KIND
 				Individual:              /apis/GROUP/VERSION/namespaces/NAMESPACE/KIND/NAME
 				Core:                    /api/v1/namespaces/NAMESPACE/KIND
+				Core Indiviual:          /api/v1/namespaces/NAMESPACE/KIND/NAME
 
 			These urls are also often appended with options, which are denoted by the '?' symbol
 		*/
@@ -328,7 +333,10 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 			}
 			log.Warnf("Invalid URI: \"%s\"", uri)
 		case 4:
-			if splitURI[0] == "apis" {
+			if splitURI[0] == "api" {
+				resources[schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[2]}] = true
+				break
+			} else if splitURI[0] == "apis" {
 				resources[schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[3]}] = true
 				break
 			}
@@ -343,7 +351,10 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 			}
 			log.Warnf("Invalid URI: \"%s\"", uri)
 		case 6, 7:
-			if splitURI[0] == "apis" {
+			if splitURI[0] == "api" {
+				resources[schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[4]}] = true
+				break
+			} else if splitURI[0] == "apis" {
 				resources[schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[5]}] = true
 				break
 			}
