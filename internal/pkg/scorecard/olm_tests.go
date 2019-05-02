@@ -262,7 +262,7 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
 		}
 	}
 	if len(missingResources) > 0 {
-		res.Suggestions = append(res.Suggestions, fmt.Sprintf("Detected used resources not listed in resources section for owned CRD %s: %v", t.CR.GroupVersionKind(), missingResources))
+		res.Suggestions = append(res.Suggestions, fmt.Sprintf("If it would be helpful to an end-user to understand or troubleshoot your CR, consider adding resources %v to the resources section for owned CRD %s", missingResources, t.CR.GroupVersionKind().Kind))
 	}
 	return res
 }
