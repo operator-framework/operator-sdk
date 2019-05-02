@@ -336,8 +336,7 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 			if splitURI[0] == "api" {
 				resources[schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[2]}] = true
 				break
-			}
-			if splitURI[0] == "apis" {
+			} else if splitURI[0] == "apis" {
 				resources[schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[3]}] = true
 				break
 			}
@@ -355,8 +354,7 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 			if splitURI[0] == "api" {
 				resources[schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[4]}] = true
 				break
-			}
-			if splitURI[0] == "apis" {
+			} else if splitURI[0] == "apis" {
 				resources[schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[5]}] = true
 				break
 			}
