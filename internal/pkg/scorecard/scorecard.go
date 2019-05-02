@@ -32,7 +32,7 @@ import (
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
-	logrus "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	v1 "k8s.io/api/core/v1"
@@ -65,7 +65,6 @@ const (
 	ProxyImageOpt         = "proxy-image"
 	ProxyPullPolicyOpt    = "proxy-pull-policy"
 	CRDsDirOpt            = "crds-dir"
-	VerboseOpt            = "verbose"
 	OutputFormatOpt       = "output"
 )
 
@@ -322,9 +321,6 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	cmd.SilenceUsage = true
-	if viper.GetBool(VerboseOpt) {
-		log.SetLevel(logrus.DebugLevel)
-	}
 	suites, err := runTests()
 	if err != nil {
 		return err
