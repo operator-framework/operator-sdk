@@ -389,9 +389,6 @@ func getDeps() error {
 		if err := execProjCmd("go", "mod", "vendor", "-v"); err != nil {
 			return err
 		}
-		if err := execProjCmd("go", "mod", "tidy", "-v"); err != nil {
-			return err
-		}
 	default:
 		return projutil.ErrInvalidDepManager(depManager)
 	}
