@@ -51,7 +51,7 @@ func main() {
 			if viper.GetBool(flags.VerboseOpt) {
 				err := projutil.SetGoVerbose()
 				if err != nil {
-					log.Errorf("could not set GOFLAGS: (%v)", err)
+					log.Errorf("Could not set GOFLAGS: (%v)", err)
 					return
 				}
 				log.SetLevel(log.DebugLevel)
@@ -76,7 +76,7 @@ func main() {
 
 	root.PersistentFlags().Bool(flags.VerboseOpt, false, "Enable verbose logging")
 	if err := viper.BindPFlags(root.PersistentFlags()); err != nil {
-		log.Fatalf("failed to bind root flags: %v", err)
+		log.Fatalf("Failed to bind root flags: %v", err)
 	}
 
 	if err := root.Execute(); err != nil {
