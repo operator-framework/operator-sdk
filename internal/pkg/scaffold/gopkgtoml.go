@@ -62,7 +62,7 @@ required = [
 
 [[override]]
   name = "sigs.k8s.io/controller-tools"
-  version = "=v0.1.8"
+  revision = "9d55346c2bde73fb3326ac22eac2e5210a730207"
 
 [[override]]
   name = "k8s.io/api"

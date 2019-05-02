@@ -30,6 +30,12 @@
   name = "sigs.k8s.io/controller-runtime"
   version = "=v0.1.10"
 
+# This override revision has a fix that allows CRD unit tests to run correctly.
+# Remove once v0.1.11 is released.
+[[override]]
+  name = "sigs.k8s.io/controller-tools"
+  revision = "9d55346c2bde73fb3326ac22eac2e5210a730207"
+
 [[constraint]]
   name = "github.com/sergi/go-diff"
   version = "1.0.0"
