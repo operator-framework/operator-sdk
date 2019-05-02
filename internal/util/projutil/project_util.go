@@ -68,7 +68,7 @@ func (e ErrUnknownOperatorType) Error() string {
 type DepManagerType string
 
 const (
-	DepManagerGoMod DepManagerType = "mod"
+	DepManagerGoMod DepManagerType = "modules"
 	DepManagerDep   DepManagerType = "dep"
 )
 

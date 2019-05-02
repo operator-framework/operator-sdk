@@ -229,7 +229,7 @@ you will need to rename it before running migrate or manually add it to your Doc
 
 #### Flags
 
-* `--dep-manager` string - Dependency manager the migrated project will use (choices: "dep", "mod") (default "mod")
+* `--dep-manager` string - Dependency manager the migrated project will use (choices: "dep", "modules") (default "modules")
 
 ### Example
 
@@ -265,7 +265,7 @@ Scaffolds a new operator project.
 * `--helm-chart` string - Initialize helm operator with existing helm chart (`<URL>`, `<repo>/<name>`, or local path)
 * `--helm-chart-repo` string - Chart repository URL for the requested helm chart
 * `--helm-chart-version` string - Specific version of the helm chart (default is latest version)
-* `--dep-manager` string - Dependency manager the new project will use (choices: "dep", "mod") (default "mod")
+* `--dep-manager` string - Dependency manager the new project will use (choices: "dep", "modules") (default "modules")
 * `-h, --help` - help for new
 
 ### Example
