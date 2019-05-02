@@ -59,7 +59,7 @@ func (s *CRD) getFS() afero.Fs {
 func (s *CRD) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		fileName := fmt.Sprintf("%s_%s_%s_crd.yaml",
-			strings.ToLower(s.Resource.GoImportGroup),
+			s.Resource.GoImportGroup,
 			strings.ToLower(s.Resource.Version),
 			s.Resource.LowerKind)
 		s.Path = filepath.Join(CRDsDir, fileName)
