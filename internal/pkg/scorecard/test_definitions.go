@@ -16,6 +16,7 @@ package scorecard
 
 import (
 	"context"
+	"fmt"
 
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
 )
@@ -108,4 +109,41 @@ func NewTestSuite(name, description string) *TestSuite {
 		},
 		Weights: make(map[string]float64),
 	}
+}
+
+// MergeSuites takes an array of TestSuites and combines all suites with the same name
+func MergeSuites(suites []TestSuite) ([]TestSuite, error) {
+	suiteMap := make(map[string][]TestSuite)
+	for _, suite := range suites {
+		suiteMap[suite.GetName()] = append(suiteMap[suite.GetName()], suite)
+	}
+	mergedSuites := []TestSuite{}
+	for _, suiteSlice := range suiteMap {
+		testMap := make(map[string][]TestResult)
+		for _, suite := range suiteSlice {
+			for _, result := range suite.TestResults {
+				testMap[result.Test.GetName()] = append(testMap[result.Test.GetName()], result)
+			}
+		}
+		mergedTestResults := []TestResult{}
+		for _, testSlice := range testMap {
+			if testSlice[0].Test.IsCumulative() {
+				newResult, err := ResultsCumulative(testSlice)
+				if err != nil {
+					return nil, fmt.Errorf("failed to combine test results: %s", err)
+				}
+				mergedTestResults = append(mergedTestResults, newResult)
+			} else {
+				newResult, err := ResultsPassFail(testSlice)
+				if err != nil {
+					return nil, fmt.Errorf("failed to combine test results: %s", err)
+				}
+				mergedTestResults = append(mergedTestResults, newResult)
+			}
+		}
+		newSuite := suiteSlice[0]
+		newSuite.TestResults = mergedTestResults
+		mergedSuites = append(mergedSuites, newSuite)
+	}
+	return mergedSuites, nil
 }

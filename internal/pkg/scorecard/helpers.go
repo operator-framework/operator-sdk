@@ -15,30 +15,68 @@
 package scorecard
 
 import (
+	"fmt"
+
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // These functions should be in the public test definitions file, but they are not complete/stable,
 // so we'll keep these here until they get fully implemented
 
-// ResultsPassFail will be used when multiple CRs are supported
-func ResultsPassFail(results []TestResult) (earned, max int) {
-	for _, result := range results {
-		if result.EarnedPoints != result.MaximumPoints {
-			return 0, 1
-		}
+// ResultsPassFail combines multiple test results and returns a single test results
+// with 1 maximum point and either 0 or 1 earned points
+func ResultsPassFail(results []TestResult) (TestResult, error) {
+	var name string
+	finalResult := TestResult{}
+	if len(results) > 0 {
+		name = results[0].Test.GetName()
+		// all results have the same test
+		finalResult.Test = results[0].Test
+		finalResult.MaximumPoints = 1
+		finalResult.EarnedPoints = 1
 	}
-	return 1, 1
+	for _, result := range results {
+		if result.Test.IsCumulative() {
+			return finalResult, fmt.Errorf("cumulative test passed to ResultsPassFail: name (%s)", result.Test.GetName())
+		}
+		if result.Test.GetName() != name {
+			return finalResult, fmt.Errorf("test name mismatch in ResultsPassFail: %s != %s", result.Test.GetName(), name)
+		}
+		if result.EarnedPoints != result.MaximumPoints {
+			finalResult.EarnedPoints = 0
+		}
+		finalResult.Suggestions = append(finalResult.Suggestions, result.Suggestions...)
+		finalResult.Errors = append(finalResult.Errors, result.Errors...)
+	}
+	return finalResult, nil
 }
 
-// ResultsCumulative will be used when multiple CRs are supported
-func ResultsCumulative(results []TestResult) (earned, max int) {
-	for _, result := range results {
-		earned += result.EarnedPoints
-		max += result.MaximumPoints
+// ResultsCumulative takes multiple TestResults and returns a single TestResult with MaximumPoints
+// equal to the sum of the MaximumPoints of the input and EarnedPoints as the sum of EarnedPoints
+// of the input
+func ResultsCumulative(results []TestResult) (TestResult, error) {
+	var name string
+	finalResult := TestResult{}
+	if len(results) > 0 {
+		name = results[0].Test.GetName()
+		// all results have the same test
+		finalResult.Test = results[0].Test
 	}
-	return earned, max
+	for _, result := range results {
+		if !result.Test.IsCumulative() {
+			return finalResult, fmt.Errorf("non-cumulative test passed to ResultsCumulative: name (%s)", result.Test.GetName())
+		}
+		if result.Test.GetName() != name {
+			return finalResult, fmt.Errorf("test name mismatch in ResultsCumulative: %s != %s", result.Test.GetName(), name)
+		}
+		finalResult.EarnedPoints += result.EarnedPoints
+		finalResult.MaximumPoints += result.MaximumPoints
+		finalResult.Suggestions = append(finalResult.Suggestions, result.Suggestions...)
+		finalResult.Errors = append(finalResult.Errors, result.Errors...)
+	}
+	return finalResult, nil
 }
 
 // CalculateResult returns a ScorecardSuiteResult with the state and Tests fields set based on a slice of ScorecardTestResults
@@ -63,8 +101,8 @@ func CalculateResult(tests []scapiv1alpha1.ScorecardTestResult) scapiv1alpha1.Sc
 
 // TestSuitesToScorecardOutput takes an array of test suites and generates a v1alpha1 ScorecardOutput object with the
 // provided name, description, and log
-func TestSuitesToScorecardOutput(suites []*TestSuite, log string) *scapiv1alpha1.ScorecardOutput {
-	test := &scapiv1alpha1.ScorecardOutput{
+func TestSuitesToScorecardOutput(suites []TestSuite, log string) scapiv1alpha1.ScorecardOutput {
+	test := scapiv1alpha1.ScorecardOutput{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ScorecardOutput",
 			APIVersion: "osdk.openshift.io/v1alpha1",

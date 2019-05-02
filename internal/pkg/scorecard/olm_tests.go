@@ -194,18 +194,16 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *TestResult {
 		res.State = scapiv1alpha1.ErrorState
 		return res
 	}
-	// TODO: we need to make this handle multiple CRs better/correctly
 	for _, crd := range crds {
-		res.MaximumPoints++
-		if crd.Spec.Validation == nil {
-			res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for %s/%s", crd.Spec.Names.Kind, crd.Spec.Version))
-			continue
-		}
 		// check if the CRD matches the testing CR
 		gvk := t.CR.GroupVersionKind()
 		// Only check the validation block if the CRD and CR have the same Kind and Version
 		if !(matchVersion(gvk.Version, crd) && matchKind(gvk.Kind, crd.Spec.Names.Kind)) {
-			res.EarnedPoints++
+			continue
+		}
+		res.MaximumPoints++
+		if crd.Spec.Validation == nil {
+			res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for %s/%s", crd.Spec.Names.Kind, crd.Spec.Version))
 			continue
 		}
 		failed := false
@@ -239,9 +237,9 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
 	res := &TestResult{Test: t}
 	var missingResources []string
 	for _, crd := range t.CSV.Spec.CustomResourceDefinitions.Owned {
-		res.MaximumPoints++
 		gvk := t.CR.GroupVersionKind()
 		if strings.EqualFold(crd.Version, gvk.Version) && matchKind(gvk.Kind, crd.Kind) {
+			res.MaximumPoints++
 			resources, err := getUsedResources(t.ProxyPod)
 			if err != nil {
 				log.Warningf("getUsedResource failed: %v", err)
@@ -252,6 +250,7 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
 				for _, listedResource := range crd.Resources {
 					if matchKind(resource.Kind, listedResource.Kind) && strings.EqualFold(resource.Version, listedResource.Version) {
 						foundResource = true
+						break
 					}
 				}
 				if foundResource == false {
@@ -260,10 +259,6 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
 				}
 			}
 			if allResourcesListed {
-				res.EarnedPoints++
-			}
-		} else {
-			if len(crd.Resources) > 0 {
 				res.EarnedPoints++
 			}
 		}
