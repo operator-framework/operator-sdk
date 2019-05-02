@@ -39,7 +39,7 @@ func NewCmd() *cobra.Command {
 	scorecardCmd.Flags().String(scorecard.ConfigOpt, "", "config file (default is <project_dir>/.osdk-yaml)")
 	scorecardCmd.Flags().String(scorecard.NamespaceOpt, "", "Namespace of custom resource created in cluster")
 	scorecardCmd.Flags().String(scorecard.KubeconfigOpt, "", "Path to kubeconfig of custom resource created in cluster")
-	scorecardCmd.Flags().Int(scorecard.InitTimeoutOpt, 10, "Timeout for status block on CR to be created in seconds")
+	scorecardCmd.Flags().Int(scorecard.InitTimeoutOpt, 60, "Timeout for status block on CR to be created in seconds")
 	scorecardCmd.Flags().Bool(scorecard.OlmDeployedOpt, false, "The OLM has deployed the operator. Use only the CSV for test data")
 	scorecardCmd.Flags().String(scorecard.CSVPathOpt, "", "Path to CSV being tested")
 	scorecardCmd.Flags().Bool(scorecard.BasicTestsOpt, true, "Enable basic operator checks")
