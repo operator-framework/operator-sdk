@@ -441,7 +441,7 @@
     "pagination",
   ]
   pruneopts = "NUT"
-  revision = "b9b92a82580638d091517faa0a8a9655657ed263"
+  revision = "60507118a582789eaa9c8dcefc1374c7f5431b9b"
 
 [[projects]]
   branch = "master"
@@ -955,7 +955,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f884aed9fa6026044dfd41011b6b7593dce344d49d9a72e17aa2d366925f3f57"
+  digest = "1:39b5d0409f5757ceac2692980e7aaa91ad1becc9151eaafa22dc49eb78bf42d5"
   name = "golang.org/x/crypto"
   packages = [
     "cast5",
@@ -973,7 +973,7 @@
     "ssh/terminal",
   ]
   pruneopts = "NUT"
-  revision = "c05e17bb3b2dca130fc919668a96b4bec9eb9442"
+  revision = "a29dc8fdc73485234dbef99ebedb95d2eced08de"
 
 [[projects]]
   branch = "master"
@@ -1018,14 +1018,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5fea895555e2fffc1cee5e5f4864f0d6af1c0d5a779c7aafe2b9eeaa6bd691b7"
+  digest = "1:9e22a348c6985d674f084ec680ebd938a23a021f64f0f3f213eb2551512d5711"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "16072639606ea9e22c7d86e4cbd6af6314f4193c"
+  revision = "2cc0cad0ac78f3ede1f4d2b6ca16ea3038641af4"
 
 [[projects]]
   digest = "1:dfcb3d446a3c6a6c71b74cf7baf366cd630a8cb43c3fcb741f34e49727da168d"
@@ -1085,7 +1085,7 @@
     "internal/semver",
   ]
   pruneopts = "NUT"
-  revision = "ad9eeb80039afa52dec461f6814f3f79c5b45c39"
+  revision = "550556f78a900afacb9e8b22219f5e5b5c6106db"
 
 [[projects]]
   digest = "1:5f003878aabe31d7f6b842d4de32b41c46c214bb629bb485387dbcce1edf5643"

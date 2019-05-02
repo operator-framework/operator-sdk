@@ -27,6 +27,7 @@ import (
 	"io/ioutil"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 	"net/http"
 	"net/http/httputil"
 	"strings"
@@ -135,18 +136,18 @@ func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper 
 					log.Error(err, "Unable to set label selectors for the client")
 					break
 				}
-				s, err := fields.ParseSelector(lo.FieldSelector.String())
-				reqs := s.Requirements()
 				p := []client.ListOptionFunc{client.InNamespace(lo.Namespace)}
 				if len(lbs) > 0 {
 					p = append(p, client.MatchingLabels(lbs))
 				}
-				if len(reqs) > 0 { // TODO(corinnekrych) translate operator to function like field selection.
-					//for _, reg := range reqs {
-					//	reg.Operator == '=='
-					//
-					//}
-					p = append(p, client.MatchingField(reqs[0].Field, reqs[0].Value))
+				s, err := fields.ParseSelector(lo.FieldSelector.String())
+				reqs := s.Requirements()
+				if len(reqs) > 0 {
+					for idx, reg := range reqs {
+						if reg.Operator == selection.Equals || reg.Operator == selection.DoubleEquals {
+							p = append(p, client.MatchingField(reqs[idx].Field, reqs[idx].Value))
+						}
+					}
 				}
 				err = informerCache.List(context.Background(), &un, p...)
 				if err != nil {
