@@ -51,7 +51,7 @@ func main() {
 			if viper.GetBool(flags.VerboseOpt) {
 				err := projutil.SetGoVerbose()
 				if err != nil {
-					log.Errorf("Could not set GOFLAGS: (%v)", err)
+					log.Errorf("could not set GOFLAGS: (%v)", err)
 					return
 				}
 				log.SetLevel(log.DebugLevel)
