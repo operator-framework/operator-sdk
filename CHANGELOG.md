@@ -11,6 +11,7 @@
 ### Bug Fixes
 
 - Pin dependency versions in Ansible build and test framework Dockerfiles to fix broken build and test framework images. ([#1348](https://github.com/operator-framework/operator-sdk/pull/1348))
+- In Helm-based operators, when a custom resource with a failing release is reverted back to a working state, the `ReleaseFailed` condition is now correctly removed. ([#1321](https://github.com/operator-framework/operator-sdk/pull/1321))
 
 ## v0.7.0
 
