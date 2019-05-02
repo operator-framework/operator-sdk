@@ -69,7 +69,7 @@ func MainEntry(m *testing.M) {
 		opts := projutil.GoCmdOptions{
 			BinName:     outputBinName,
 			PackagePath: filepath.Join(scaffold.ManagerDir, scaffold.CmdFile),
-			NoGoMod:     !projutil.IsDepManagerGoMod(),
+			GoMod:       projutil.IsDepManagerGoMod(),
 		}
 		if err := projutil.GoBuild(opts); err != nil {
 			log.Fatalf("Failed to build local operator binary: %s", err)
