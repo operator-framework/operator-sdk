@@ -41,7 +41,6 @@ func ExecGoModTmpl(tmpl string) ([]byte, error) {
 }
 
 func PrintGoMod(b []byte) error {
-	fmt.Println("full mod file:\n", string(b))
 	modFile, err := modfile.Parse("go.mod", b, nil)
 	if err != nil {
 		return err

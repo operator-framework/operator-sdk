@@ -107,8 +107,8 @@ func PrintGoMod(asFile bool) error {
 		return err
 	}
 	if asFile {
-		_, err := fmt.Println(string(b))
-		return err
+		fmt.Print(string(b))
+		return nil
 	}
 	return deps.PrintGoMod(b)
 }
