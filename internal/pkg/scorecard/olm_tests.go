@@ -237,6 +237,7 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *TestResult {
 // Run - implements Test interface
 func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
 	res := &TestResult{Test: t}
+	var missingResources []string
 	for _, crd := range t.CSV.Spec.CustomResourceDefinitions.Owned {
 		res.MaximumPoints++
 		gvk := t.CR.GroupVersionKind()
@@ -255,6 +256,7 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
 				}
 				if foundResource == false {
 					allResourcesListed = false
+					missingResources = append(missingResources, fmt.Sprintf("%s/%s", resource.Kind, resource.Version))
 				}
 			}
 			if allResourcesListed {
@@ -267,7 +269,7 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
 		}
 	}
 	if res.EarnedPoints < res.MaximumPoints {
-		res.Suggestions = append(res.Suggestions, "Add resources to owned CRDs")
+		res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add resources to owned CRDs for %s: %v", t.CR.GroupVersionKind(), missingResources))
 	}
 	return res
 }
