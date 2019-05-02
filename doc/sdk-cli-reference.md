@@ -5,6 +5,10 @@ Usage:
   operator-sdk [command]
 ```
 
+### Global Flags
+
+* `--verbose` - enable debug logging
+
 ## build
 
 ### Args
