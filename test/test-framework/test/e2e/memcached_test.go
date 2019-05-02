@@ -61,10 +61,10 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 	}
 	// create memcached custom resource
 	exampleMemcached := &operator.Memcached{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Memcached",
-			APIVersion: "cache.example.com/v1alpha1",
-		},
+		//TypeMeta: metav1.TypeMeta{
+		//	Kind:       "Memcached",
+		//	APIVersion: "cache.example.com/v1alpha1",
+		//},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "example-memcached",
 			Namespace: namespace,
