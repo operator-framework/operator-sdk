@@ -44,6 +44,7 @@ required = [
   "k8s.io/code-generator/cmd/informer-gen",
   "k8s.io/kube-openapi/cmd/openapi-gen",
   "k8s.io/gengo/args",
+  "sigs.k8s.io/controller-tools/pkg/crd/generator",
 ]
 
 [[override]]
@@ -58,6 +59,10 @@ required = [
 [[override]]
   name = "github.com/go-openapi/spec"
   branch = "master"
+
+[[override]]
+  name = "sigs.k8s.io/controller-tools"
+  revision = "9d55346c2bde73fb3326ac22eac2e5210a730207"
 
 [[override]]
   name = "k8s.io/api"

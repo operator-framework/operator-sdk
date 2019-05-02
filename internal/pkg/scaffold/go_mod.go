@@ -96,6 +96,7 @@ replace (
 	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20181117043124-c2090bec4d9b
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20180711000925-0cf8f7e6ed1d
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.1.10
+	sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.1.11-0.20190411181648-9d55346c2bde
 )
 `
 
