@@ -2,12 +2,12 @@
 
 
 [[projects]]
-  digest = "1:4d6f036ea3fe636bcb2e89850bcdc62a771354e157cd51b8b22a2de8562bf663"
+  digest = "1:80004fcc5cf64e591486b3e11b406f1e0d17bf85d475d64203c8494f5da4fcd1"
   name = "cloud.google.com/go"
   packages = ["compute/metadata"]
   pruneopts = "NUT"
-  revision = "fcb9a2d5f791d07be64506ab54434de65989d370"
-  version = "v0.37.4"
+  revision = "8c41231e01b2085512d98153bcffb847ff9b4b9f"
+  version = "v0.38.0"
 
 [[projects]]
   digest = "1:3fb854fc35fafced21615a93db3c0e324c8cb1d5a89f39dd1e72db0c4200345a"
@@ -231,12 +231,12 @@
   version = "v2.9.3"
 
 [[projects]]
-  digest = "1:32598368f409bbee79deb9d43569fcd92b9fb27f39155f5e166b3371217f051f"
+  digest = "1:db115eee0ae265dab922fecbb7966c3fcdc4eae3c2e9caae302fdcba3ba422c7"
   name = "github.com/evanphx/json-patch"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "72bf35d0ff611848c1dc9df0f976c81192392fa5"
-  version = "v4.1.0"
+  revision = "5858425f75500d40c52783dce87d085a483ce135"
+  version = "v4.2.0"
 
 [[projects]]
   branch = "master"
@@ -441,7 +441,7 @@
     "pagination",
   ]
   pruneopts = "NUT"
-  revision = "60507118a582789eaa9c8dcefc1374c7f5431b9b"
+  revision = "e0311c0920d47879e99ac9826142bc097eacd5b7"
 
 [[projects]]
   branch = "master"
@@ -695,12 +695,12 @@
   version = "v1.2"
 
 [[projects]]
-  digest = "1:f0ef3f67e144a3c491fd687cc3a82850a23ae62736ff6a2602c861afd9233ada"
+  digest = "1:4e9827f31d4fc1ddd732a0e3af4e863d281dd405adb2bfb96a25cc5346a77caf"
   name = "github.com/pelletier/go-toml"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "63909f0a90ab0f36909e8e044e46ace10cf13ba2"
-  version = "v1.3.0"
+  revision = "728039f679cbcd4f6a54e080d2219a4c4928c546"
+  version = "v1.4.0"
 
 [[projects]]
   branch = "master"
@@ -923,12 +923,12 @@
   version = "v0.19.3"
 
 [[projects]]
-  digest = "1:22f696cee54865fb8e9ff91df7b633f6b8f22037a8015253c6b6a71ca82219c7"
+  digest = "1:cc9d86ec4e6e3bdf87e3a421273bfeed003cf8e21351c0302fe8b0eb7b10efe6"
   name = "go.uber.org/atomic"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "1ea20fb1cbb1cc08cbd0d913a96dead89aa18289"
-  version = "v1.3.2"
+  revision = "df976f2515e274675050de7b3f42545de80594fd"
+  version = "v1.4.0"
 
 [[projects]]
   digest = "1:58ca93bdf81bac106ded02226b5395a0595d5346cdc4caa8d9c1f3a5f8f9976e"
@@ -939,7 +939,7 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:85674ac609b704fd4e9f463553b6ffc3a3527a993ae0ba550eb56beaabdfe094"
+  digest = "1:4af5a022f8c5c97734c3c6fad58fdce078e2322ddc98d3102b225a729f03916e"
   name = "go.uber.org/zap"
   packages = [
     ".",
@@ -950,8 +950,8 @@
     "zapcore",
   ]
   pruneopts = "NUT"
-  revision = "ff33455a0e382e8a81d14dd7c922020b6b5e7982"
-  version = "v1.9.1"
+  revision = "27376062155ad36be76b0f12cf1572a221d3a48c"
+  version = "v1.10.0"
 
 [[projects]]
   branch = "master"
@@ -977,7 +977,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:61e538b9d371d99344dc750189ab2c7a892563c39014e7ba54a1a56eb015fe78"
+  digest = "1:6f5543200df8216d5e471a9e777638690d6956b8d1c454afedec08503c9f57f8"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -992,7 +992,7 @@
     "trace",
   ]
   pruneopts = "NUT"
-  revision = "4829fb13d2c62012c17688fa7f629f371014946d"
+  revision = "9ce7a6920f093fc0b908c4a5f66ae049110f417e"
 
 [[projects]]
   branch = "master"
@@ -1018,14 +1018,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:9e22a348c6985d674f084ec680ebd938a23a021f64f0f3f213eb2551512d5711"
+  digest = "1:5dd24de689c9d7a471bc7e57c720ae57cbff2cb5671127b2cd29ca78bc2cb4fd"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "2cc0cad0ac78f3ede1f4d2b6ca16ea3038641af4"
+  revision = "d89cdac9e8725f2aefce25fcbfef41134c9ad412"
 
 [[projects]]
   digest = "1:dfcb3d446a3c6a6c71b74cf7baf366cd630a8cb43c3fcb741f34e49727da168d"
@@ -1085,7 +1085,7 @@
     "internal/semver",
   ]
   pruneopts = "NUT"
-  revision = "550556f78a900afacb9e8b22219f5e5b5c6106db"
+  revision = "23463209683dad3f2b9cc7f7c2663e1847c59017"
 
 [[projects]]
   digest = "1:5f003878aabe31d7f6b842d4de32b41c46c214bb629bb485387dbcce1edf5643"
@@ -1662,7 +1662,7 @@
   revision = "21c4ce38f2a793ec01e925ddc31216500183b773"
 
 [[projects]]
-  digest = "1:f9fbcd6d52f3b4846bbfd66b07bff9e6a41052ce4bfff2333dcf6239053d51ed"
+  digest = "1:48be2ebb8dd4c01a980d0809cc1f7cbda5db8e592533c60838547bb826789555"
   name = "sigs.k8s.io/controller-runtime"
   packages = [
     "pkg/cache",
@@ -1693,6 +1693,7 @@
     "pkg/runtime/log",
     "pkg/runtime/scheme",
     "pkg/runtime/signals",
+    "pkg/scheme",
     "pkg/source",
     "pkg/source/internal",
     "pkg/webhook",
@@ -1783,6 +1784,7 @@
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
     "k8s.io/apimachinery/pkg/runtime/serializer",
+    "k8s.io/apimachinery/pkg/selection",
     "k8s.io/apimachinery/pkg/types",
     "k8s.io/apimachinery/pkg/util/intstr",
     "k8s.io/apimachinery/pkg/util/net",
@@ -1841,6 +1843,7 @@
     "sigs.k8s.io/controller-runtime/pkg/runtime/log",
     "sigs.k8s.io/controller-runtime/pkg/runtime/scheme",
     "sigs.k8s.io/controller-runtime/pkg/runtime/signals",
+    "sigs.k8s.io/controller-runtime/pkg/scheme",
     "sigs.k8s.io/controller-runtime/pkg/source",
     "sigs.k8s.io/controller-tools/pkg/crd/generator",
   ]
