@@ -16,6 +16,7 @@ package scaffold
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -125,6 +126,10 @@ func (s *CRD) CustomRender() ([]byte, error) {
 
 		b, err := afero.ReadFile(cache, path)
 		if err != nil {
+			if os.IsNotExist(err) {
+				return nil, fmt.Errorf("no API exists for Group %s Version %s Kind %s",
+					s.Resource.GoImportGroup, s.Resource.Version, s.Resource.Kind)
+			}
 			return nil, err
 		}
 		if err = yaml.Unmarshal(b, crd); err != nil {
