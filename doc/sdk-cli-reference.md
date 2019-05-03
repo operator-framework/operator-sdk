@@ -5,6 +5,10 @@ Usage:
   operator-sdk [command]
 ```
 
+### Global Flags
+
+* `--verbose` - enable debug logging
+
 ## build
 
 ### Args
@@ -37,7 +41,7 @@ building example-operator...
 
 building container quay.io/example/operator:v0.0.1...
 Sending build context to Docker daemon  163.9MB
-Step 1/4 : FROM registry.access.redhat.com/ubi7-dev-preview/ubi-minimal:7.6
+Step 1/4 : FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
  ---> 77144d8c6bdc
 Step 2/4 : ADD tmp/_output/bin/example-operator /usr/local/bin/example-operator
  ---> 2ada0d6ca93c
@@ -212,6 +216,10 @@ is not of the "go" type.
 **Note**: This command will look for playbook.yml in the project root, if you use the .yaml extension
 you will need to rename it before running migrate or manually add it to your Dockerfile.
 
+#### Flags
+
+* `--dep-manager` string - Dependency manager the migrated project will use (choices: "dep")
+
 ### Example
 
 ```console
@@ -245,6 +253,7 @@ Scaffolds a new operator project.
 * `--helm-chart` string - Initialize helm operator with existing helm chart (`<URL>`, `<repo>/<name>`, or local path)
 * `--helm-chart-repo` string - Chart repository URL for the requested helm chart
 * `--helm-chart-version` string - Specific version of the helm chart (default is latest version)
+* `--dep-manager` string - Dependency manager the new project will use (choices: "dep")
 * `-h, --help` - help for new
 
 ### Example

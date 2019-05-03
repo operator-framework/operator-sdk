@@ -38,6 +38,7 @@ import (
 type Generator struct {
 	RootPath          string
 	OutputDir         string
+	Repo              string
 	Domain            string
 	Namespace         string
 	SkipMapValidation bool
@@ -70,17 +71,20 @@ func (c *Generator) ValidateAndInitFields() error {
 		}
 	}
 
-	// Validate root path is under go src path
-	if !crdutil.IsUnderGoSrcPath(c.RootPath) {
-		return fmt.Errorf("command must be run from path under $GOPATH/src/<package>")
+	// Validate PROJECT file if Domain or Repo are not set manually
+	if len(c.Domain) == 0 || len(c.Repo) == 0 {
+		if !crdutil.PathHasProjectFile(c.RootPath) {
+			return fmt.Errorf("PROJECT file missing in dir %s", c.RootPath)
+		}
+	}
+
+	if len(c.Repo) == 0 {
+		c.Repo = crdutil.GetRepoFromProject(c.RootPath)
 	}
 
 	// If Domain is not explicitly specified,
 	// try to search for PROJECT file as a basis.
 	if len(c.Domain) == 0 {
-		if !crdutil.PathHasProjectFile(c.RootPath) {
-			return fmt.Errorf("PROJECT file missing in dir %s", c.RootPath)
-		}
 		c.Domain = crdutil.GetDomainFromProject(c.RootPath)
 	}
 
@@ -106,13 +110,23 @@ func (c *Generator) Do() error {
 	}
 
 	// Switch working directory to root path.
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
 	if err := os.Chdir(c.RootPath); err != nil {
 		return fmt.Errorf("failed switching working dir: %v", err)
 	}
+	defer func() {
+		if err := os.Chdir(wd); err != nil {
+			log.Fatalf("Failed to switch back to original working dir: %v", err)
+		}
+	}()
 
-	if err := b.AddDirRecursive("./" + c.APIsPath); err != nil {
+	if err := b.AddDirRecursive(fmt.Sprintf("%s/%s", c.Repo, c.APIsPath)); err != nil {
 		return fmt.Errorf("failed making a parser: %v", err)
 	}
+
 	ctx, err := parse.NewContext(b)
 	if err != nil {
 		return fmt.Errorf("failed making a context: %v", err)
@@ -185,7 +199,6 @@ func (c *Generator) belongsToAPIsPkg(t *types.Type) bool {
 }
 
 func (c *Generator) setAPIsPkg() error {
-	var err error
 	if c.APIsPath == "" {
 		c.APIsPath = "pkg/apis"
 	}
@@ -198,10 +211,7 @@ func (c *Generator) setAPIsPkg() error {
 			return fmt.Errorf("error validating apis path %s: %v", apisPath, err)
 		}
 
-		c.apisPkg, err = crdutil.DirToGoPkg(apisPath)
-		if err != nil {
-			return err
-		}
+		c.apisPkg = path.Join(c.Repo, c.APIsPath)
 	}
 	return nil
 }

@@ -15,13 +15,14 @@
 package scaffold
 
 import (
-	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	testutil "github.com/operator-framework/operator-sdk/internal/pkg/scaffold/internal/testutil"
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+
+	"github.com/spf13/afero"
 )
 
 func TestCRDGoProject(t *testing.T) {
@@ -30,28 +31,18 @@ func TestCRDGoProject(t *testing.T) {
 		t.Fatal(err)
 	}
 	s, buf := setupScaffoldAndWriter()
-	absPath, err := os.Getwd()
+	s.Fs = afero.NewMemMapFs()
+	cfg, err := setupTestFrameworkConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Set the project and repo paths to {abs}/test/test-framework, which
-	// contains pkg/apis for the memcached-operator.
-	tfDir := filepath.Join("test", "test-framework")
-	pkgIdx := strings.Index(absPath, "internal/pkg")
-	cfg := &input.Config{
-		Repo:           filepath.Join(absPath[strings.Index(absPath, "github.com"):pkgIdx], tfDir),
-		AbsProjectPath: filepath.Join(absPath[:pkgIdx], tfDir),
-		ProjectName:    tfDir,
-	}
-	if err := os.Chdir(cfg.AbsProjectPath); err != nil {
+
+	err = testutil.WriteOSPathToFS(afero.NewOsFs(), s.Fs, cfg.AbsProjectPath)
+	if err != nil {
 		t.Fatal(err)
 	}
-	defer func() { os.Chdir(absPath) }()
-	err = s.Execute(cfg, &CRD{
-		Input:        input.Input{Path: filepath.Join(tfDir, "cache_v1alpha1_memcached.yaml")},
-		Resource:     r,
-		IsOperatorGo: true,
-	})
+
+	err = s.Execute(cfg, &CRD{Resource: r, IsOperatorGo: true})
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
@@ -74,8 +65,6 @@ spec:
     plural: memcacheds
     singular: memcached
   scope: Namespaced
-  subresources:
-    status: {}
   validation:
     openAPIV3Schema:
       properties:
@@ -118,13 +107,31 @@ spec:
 `
 
 func TestCRDNonGoProject(t *testing.T) {
+	s, buf := setupScaffoldAndWriter()
+	s.Fs = afero.NewMemMapFs()
+
 	r, err := NewResource(appApiVersion, appKind)
 	if err != nil {
 		t.Fatal(err)
 	}
-	s, buf := setupScaffoldAndWriter()
-	err = s.Execute(appConfig, &CRD{Resource: r})
+
+	crd := &CRD{Resource: r}
+	i, err := crd.GetInput()
 	if err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := setupTestFrameworkConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	path := filepath.Join(cfg.AbsProjectPath, i.Path)
+	err = afero.WriteFile(s.Fs, path, []byte(crdNonGoExp), fileutil.DefaultFileMode)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = s.Execute(cfg, crd); err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
@@ -134,6 +141,9 @@ func TestCRDNonGoProject(t *testing.T) {
 	}
 }
 
+// crdNonGoExp contains a simple validation block to make sure manually-added
+// validation is not overwritten. Non-go projects don't have the luxury of
+// kubebuilder annotations.
 const crdNonGoExp = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
@@ -148,6 +158,26 @@ spec:
   scope: Namespaced
   subresources:
     status: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            size:
+              format: int32
+              type: integer
+          required:
+          - size
+          type: object
+        status:
+          properties:
+            nodes:
+              items:
+                type: string
+              type: array
+          required:
+          - nodes
+          type: object
   version: v1alpha1
   versions:
   - name: v1alpha1
