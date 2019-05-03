@@ -345,16 +345,7 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework, labels
 
 	// get operator pods
 	pods := v1.PodList{}
-	opts := client.ListOptions{Namespace: namespace}
-	for k, v := range labels {
-		if err := opts.SetLabelSelector(fmt.Sprintf("%s=%s", k, v)); err != nil {
-			return nil, fmt.Errorf("failed to set list label selector: (%v)", err)
-		}
-	}
-	if err := opts.SetFieldSelector("status.phase=Running"); err != nil {
-		t.Fatalf("Failed to set list field selector: (%v)", err)
-	}
-	err = f.Client.List(context.TODO(), &opts, &pods)
+	err = f.Client.List(context.TODO(), &pods, client.InNamespace(namespace), client.MatchingLabels(labels), client.MatchingField("stauts.phase", "Running"))
 	if err != nil {
 		return nil, err
 	}
@@ -611,21 +602,17 @@ func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.T
 
 	// Get operator pod
 	pods := v1.PodList{}
-	opts := client.InNamespace(namespace)
+	//opts := client.InNamespace(namespace)
 	if len(s.Spec.Selector) == 0 {
 		return fmt.Errorf("no labels found in metrics Service")
 	}
 
+	lbs := map[string]string{}
 	for k, v := range s.Spec.Selector {
-		if err := opts.SetLabelSelector(fmt.Sprintf("%s=%s", k, v)); err != nil {
-			return fmt.Errorf("failed to set list label selector: (%v)", err)
-		}
+		lbs[k] = v
 	}
 
-	if err := opts.SetFieldSelector("status.phase=Running"); err != nil {
-		return fmt.Errorf("failed to set list field selector: (%v)", err)
-	}
-	err = f.Client.List(context.TODO(), opts, &pods)
+	err = f.Client.List(context.TODO(), &pods, client.MatchingLabels(lbs), client.MatchingField("stauts.phase", "Running"))
 	if err != nil {
 		return fmt.Errorf("failed to get pods: (%v)", err)
 	}
