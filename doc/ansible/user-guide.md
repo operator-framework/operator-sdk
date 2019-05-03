@@ -12,7 +12,7 @@ powered by Ansible using tools and libraries provided by the Operator SDK.
 - [ansible-runner][ansible_runner_tool] version v1.1.0+
 - [ansible-runner-http][ansible_runner_http_plugin] version v1.0.0+
 - [dep][dep_tool] version v0.5.0+. (Optional if you aren't installing from source)
-- [go][go_tool] version v1.11+. (Optional if you aren't installing from source)
+- [go][go_tool] version v1.12+. (Optional if you aren't installing from source)
 - Access to a Kubernetes v.1.9.0+ cluster.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the

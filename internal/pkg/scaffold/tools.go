@@ -37,9 +37,6 @@ const toolsTmpl = `// +build tools
 package tools
 
 import (
-	// Causes module vendor errors if not explicitly specified as a runtime dep.
-	_ "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
-
 	// Code generators built at runtime.
 	_ "k8s.io/code-generator/cmd/client-gen"
 	_ "k8s.io/code-generator/cmd/conversion-gen"

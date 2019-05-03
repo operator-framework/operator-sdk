@@ -40,7 +40,7 @@ The following workflow is for a new **Helm** operator:
 
 - [dep][dep_tool] version v0.5.0+.
 - [git][git_tool]
-- [go][go_tool] version v1.10+.
+- [go][go_tool] version v1.12+.
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
