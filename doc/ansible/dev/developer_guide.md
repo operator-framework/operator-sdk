@@ -38,17 +38,17 @@ local machine as opposed to running/rebuilding the operator each time. To do
 this, initialize a new project:
 ```bash
 $ operator-sdk new --type ansible --kind Foo --api-version foo.example.com/v1alpha1 foo-operator
-Create foo-operator/tmp/init/galaxy-init.sh 
-Create foo-operator/tmp/build/Dockerfile 
-Create foo-operator/tmp/build/test-framework/Dockerfile 
-Create foo-operator/tmp/build/go-test.sh 
+Create foo-operator/tmp/init/galaxy-init.sh
+Create foo-operator/tmp/build/Dockerfile
+Create foo-operator/tmp/build/test-framework/Dockerfile
+Create foo-operator/tmp/build/go-test.sh
 Rendering Ansible Galaxy role [foo-operator/roles/Foo]...
 Cleaning up foo-operator/tmp/init
-Create foo-operator/watches.yaml 
-Create foo-operator/deploy/rbac.yaml 
-Create foo-operator/deploy/crd.yaml 
-Create foo-operator/deploy/cr.yaml 
-Create foo-operator/deploy/operator.yaml 
+Create foo-operator/watches.yaml
+Create foo-operator/deploy/rbac.yaml
+Create foo-operator/deploy/crd.yaml
+Create foo-operator/deploy/cr.yaml
+Create foo-operator/deploy/operator.yaml
 Run git init ...
 Initialized empty Git repository in /home/dymurray/go/src/github.com/dymurray/opsdk/foo-operator/.git/
 Run git init done
@@ -220,12 +220,12 @@ $ kubectl create -f deploy/role_binding.yaml
 Run the `up local` command:
 ```bash
 $ operator-sdk up local
-INFO[0000] Go Version: go1.10.3                         
-INFO[0000] Go OS/Arch: linux/amd64                      
-INFO[0000] operator-sdk Version: 0.0.6+git              
+INFO[0000] Go Version: go1.10.3
+INFO[0000] Go OS/Arch: linux/amd64
+INFO[0000] operator-sdk Version: 0.0.6+git
 INFO[0000] Starting to serve on 127.0.0.1:8888
-         
-INFO[0000] Watching foo.example.com/v1alpha1, Foo, default 
+
+INFO[0000] Watching foo.example.com/v1alpha1, Foo, default
 ```
 
 Now that the operator is watching resource `Foo` for events, the creation of a
@@ -297,7 +297,7 @@ deployment image in this file needs to be modified from the placeholder
 $ sed -i 's|REPLACE_IMAGE|quay.io/example/foo-operator:v0.0.1|g' deploy/operator.yaml
 ```
 
-**Note**  
+**Note**
 If you are performing these steps on OSX, use the following command:
 ```
 $ sed -i "" 's|REPLACE_IMAGE|quay.io/example/foo-operator:v0.0.1|g' deploy/operator.yaml
@@ -332,7 +332,7 @@ kubectl logs deployment/foo-operator -c ansible
 kubectl logs deployment/foo-operator -c operator
 ```
 
-The `ansible` logs contain all of the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks, 
+The `ansible` logs contain all of the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks,
 whereas the `operator` logs will contain much more detailed information about the Ansible Operator's internals and interface with Kubernetes.
 
 
