@@ -345,7 +345,7 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework, labels
 
 	// get operator pods
 	pods := v1.PodList{}
-	err = f.Client.List(context.TODO(), &pods, client.InNamespace(namespace), client.MatchingLabels(labels), client.MatchingField("stauts.phase", "Running"))
+	err = f.Client.List(context.TODO(), &pods, client.InNamespace(namespace), client.MatchingLabels(labels), client.MatchingField("status.phase", "Running"))
 	if err != nil {
 		return nil, err
 	}
@@ -612,7 +612,7 @@ func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.T
 		lbs[k] = v
 	}
 
-	err = f.Client.List(context.TODO(), &pods, client.MatchingLabels(lbs), client.MatchingField("stauts.phase", "Running"))
+	err = f.Client.List(context.TODO(), &pods, client.MatchingLabels(lbs), client.MatchingField("status.phase", "Running"))
 	if err != nil {
 		return fmt.Errorf("failed to get pods: (%v)", err)
 	}

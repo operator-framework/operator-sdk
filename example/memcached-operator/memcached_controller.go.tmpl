@@ -142,8 +142,13 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 	// List the pods for this memcached's deployment
 	podList := &corev1.PodList{}
 	labelSelector := labels.SelectorFromSet(labelsForMemcached(memcached.Name))
-	listOps := &client.ListOptions{Namespace: memcached.Namespace, LabelSelector: labelSelector}
-	err = r.client.List(context.TODO(), listOps, podList)
+	//listOps := &client.ListOptions{Namespace: memcached.Namespace, LabelSelector: labelSelector}
+	p := []client.ListOptionFunc{client.InNamespace(memcached.Namespace)}
+    lbs := labelsForMemcached(memcached.Name)
+    if len(lbs) > 0 {
+    	p = append(p, client.MatchingLabels(lbs))
+    }
+	err = r.client.List(context.TODO(), podList, p...)
 	if err != nil {
 		reqLogger.Error(err, "Failed to list pods", "Memcached.Namespace", memcached.Namespace, "Memcached.Name", memcached.Name)
 		return reconcile.Result{}, err
