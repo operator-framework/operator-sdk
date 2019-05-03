@@ -168,7 +168,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
   memcached := &cachev1alpha1.Memcached{}
   err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
   ...
-}  
+}
 ```
 
 Based on the return values, [`Result`][result_go_doc] and error, the `Request` may be requeued and the reconcile loop may be triggered again:
