@@ -131,7 +131,9 @@ func TestMemcached(t *testing.T) {
 				t.Fatalf("Failed to parse go.mod: %v", err)
 			}
 			sdkPath := "github.com/operator-framework/operator-sdk"
-			modFile.AddReplace(sdkPath, "", sdkPath, commitSha)
+			if err = modFile.AddReplace(sdkPath, "", sdkPath, commitSha); err != nil {
+				t.Fatalf(`Failed to add "replace %s => %s %s: %v"`, sdkPath, sdkPath, commitSha, err)
+			}
 			if modBytes, err = modFile.Format(); err != nil {
 				t.Fatalf("Failed to format go.mod: %v", err)
 			}
