@@ -203,9 +203,15 @@ func MustSetGopath(currentGopath string) string {
 
 var flagRe = regexp.MustCompile("(.* )?-v(.* )?")
 
-// IsGoVerbose returns true if GOFLAGS contains "-v". This function is useful
-// when deciding whether to make "go" command output verbose.
-func IsGoVerbose() bool {
+// SetGoVerbose sets GOFLAGS="${GOFLAGS} -v" if GOFLAGS does not
+// already contain "-v" to make "go" command output verbose.
+func SetGoVerbose() error {
 	gf, ok := os.LookupEnv(GoFlagsEnv)
-	return ok && len(gf) != 0 && flagRe.MatchString(gf)
+	if !ok || len(gf) == 0 {
+		return os.Setenv(GoFlagsEnv, "-v")
+	}
+	if !flagRe.MatchString(gf) {
+		return os.Setenv(GoFlagsEnv, gf+" -v")
+	}
+	return nil
 }

@@ -37,7 +37,7 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/prometheus/prometheus/util/promlint"
 	"github.com/rogpeppe/go-internal/modfile"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"

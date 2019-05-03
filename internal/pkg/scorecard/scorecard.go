@@ -32,12 +32,14 @@ import (
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
-	logrus "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	v1 "k8s.io/api/core/v1"
 	extscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/kubernetes"
@@ -63,7 +65,6 @@ const (
 	ProxyImageOpt         = "proxy-image"
 	ProxyPullPolicyOpt    = "proxy-pull-policy"
 	CRDsDirOpt            = "crds-dir"
-	VerboseOpt            = "verbose"
 	OutputFormatOpt       = "output"
 )
 
@@ -94,7 +95,7 @@ var (
 	log           = logrus.New()
 )
 
-func runTests() ([]*TestSuite, error) {
+func runTests() ([]TestSuite, error) {
 	defer func() {
 		if err := cleanupScorecard(); err != nil {
 			log.Errorf("Failed to cleanup resources: (%v)", err)
@@ -229,48 +230,85 @@ func runTests() ([]*TestSuite, error) {
 				}
 			}()
 		}
-		if err := createFromYAMLFile(viper.GetString(GlobalManifestOpt)); err != nil {
-			return nil, fmt.Errorf("failed to create global resources: %v", err)
-		}
-		if err := createFromYAMLFile(viper.GetString(NamespacedManifestOpt)); err != nil {
-			return nil, fmt.Errorf("failed to create namespaced resources: %v", err)
-		}
 	}
 
-	if err := createFromYAMLFile(viper.GetString(CRManifestOpt)); err != nil {
-		return nil, fmt.Errorf("failed to create cr resource: %v", err)
+	crs := viper.GetStringSlice(CRManifestOpt)
+	// check if there are duplicate CRs
+	gvks := []schema.GroupVersionKind{}
+	for _, cr := range crs {
+		file, err := ioutil.ReadFile(cr)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read file: %s", cr)
+		}
+		newGVKs, err := getGVKs(file)
+		if err != nil {
+			return nil, fmt.Errorf("could not get GVKs for resource(s) in file: %s, due to error: (%v)", cr, err)
+		}
+		gvks = append(gvks, newGVKs...)
 	}
-	obj, err := yamlToUnstructured(viper.GetString(CRManifestOpt))
+	dupMap := make(map[schema.GroupVersionKind]bool)
+	for _, gvk := range gvks {
+		if _, ok := dupMap[gvk]; ok {
+			log.Warnf("Duplicate gvks in CR list detected (%s); results may be inaccurate", gvk)
+		}
+		dupMap[gvk] = true
+	}
+
+	var suites []TestSuite
+	for _, cr := range crs {
+		fmt.Printf("Running for cr: %s\n", cr)
+		if !viper.GetBool(OlmDeployedOpt) {
+			if err := createFromYAMLFile(viper.GetString(GlobalManifestOpt)); err != nil {
+				return nil, fmt.Errorf("failed to create global resources: %v", err)
+			}
+			if err := createFromYAMLFile(viper.GetString(NamespacedManifestOpt)); err != nil {
+				return nil, fmt.Errorf("failed to create namespaced resources: %v", err)
+			}
+		}
+		if err := createFromYAMLFile(cr); err != nil {
+			return nil, fmt.Errorf("failed to create cr resource: %v", err)
+		}
+		obj, err := yamlToUnstructured(cr)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
+		}
+		if err := waitUntilCRStatusExists(obj); err != nil {
+			return nil, fmt.Errorf("failed waiting to check if CR status exists: %v", err)
+		}
+
+		// Run tests.
+		if viper.GetBool(BasicTestsOpt) {
+			conf := BasicTestConfig{
+				Client:   runtimeClient,
+				CR:       obj,
+				ProxyPod: proxyPodGlobal,
+			}
+			basicTests := NewBasicTestSuite(conf)
+			basicTests.Run(context.TODO())
+			suites = append(suites, *basicTests)
+		}
+		if viper.GetBool(OLMTestsOpt) {
+			conf := OLMTestConfig{
+				Client:   runtimeClient,
+				CR:       obj,
+				CSV:      csv,
+				CRDsDir:  viper.GetString(CRDsDirOpt),
+				ProxyPod: proxyPodGlobal,
+			}
+			olmTests := NewOLMTestSuite(conf)
+			olmTests.Run(context.TODO())
+			suites = append(suites, *olmTests)
+		}
+		// set up clean environment for every CR
+		cleanupScorecard()
+		// reset cleanup functions
+		cleanupFns = []cleanupFn{}
+		// clear name of operator deployment
+		deploymentName = ""
+	}
+	suites, err = MergeSuites(suites)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
-	}
-	if err := waitUntilCRStatusExists(obj); err != nil {
-		return nil, fmt.Errorf("failed waiting to check if CR status exists: %v", err)
-	}
-	var suites []*TestSuite
-
-	// Run tests.
-	if viper.GetBool(BasicTestsOpt) {
-		conf := BasicTestConfig{
-			Client:   runtimeClient,
-			CR:       obj,
-			ProxyPod: proxyPodGlobal,
-		}
-		basicTests := NewBasicTestSuite(conf)
-		basicTests.Run(context.TODO())
-		suites = append(suites, basicTests)
-	}
-	if viper.GetBool(OLMTestsOpt) {
-		conf := OLMTestConfig{
-			Client:   runtimeClient,
-			CR:       obj,
-			CSV:      csv,
-			CRDsDir:  viper.GetString(CRDsDirOpt),
-			ProxyPod: proxyPodGlobal,
-		}
-		olmTests := NewOLMTestSuite(conf)
-		olmTests.Run(context.TODO())
-		suites = append(suites, olmTests)
+		return nil, fmt.Errorf("failed to merge test suite results: %v", err)
 	}
 	return suites, nil
 }
@@ -283,9 +321,6 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	cmd.SilenceUsage = true
-	if viper.GetBool(VerboseOpt) {
-		log.SetLevel(logrus.DebugLevel)
-	}
 	suites, err := runTests()
 	if err != nil {
 		return err
@@ -383,7 +418,7 @@ func configureLogger() error {
 }
 
 func validateScorecardFlags() error {
-	if !viper.GetBool(OlmDeployedOpt) && viper.GetString(CRManifestOpt) == "" {
+	if !viper.GetBool(OlmDeployedOpt) && viper.GetStringSlice(CRManifestOpt) == nil {
 		return errors.New("cr-manifest config option must be set")
 	}
 	if !viper.GetBool(BasicTestsOpt) && !viper.GetBool(OLMTestsOpt) {
@@ -405,4 +440,24 @@ func validateScorecardFlags() error {
 		return fmt.Errorf("invalid output format (%s); valid values: human-readable, json", outputFormat)
 	}
 	return nil
+}
+
+func getGVKs(yamlFile []byte) ([]schema.GroupVersionKind, error) {
+	var gvks []schema.GroupVersionKind
+
+	scanner := yamlutil.NewYAMLScanner(yamlFile)
+	for scanner.Scan() {
+		yamlSpec := scanner.Bytes()
+
+		obj := &unstructured.Unstructured{}
+		jsonSpec, err := yaml.YAMLToJSON(yamlSpec)
+		if err != nil {
+			return nil, fmt.Errorf("could not convert yaml file to json: %v", err)
+		}
+		if err := obj.UnmarshalJSON(jsonSpec); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal object spec: (%v)", err)
+		}
+		gvks = append(gvks, obj.GroupVersionKind())
+	}
+	return gvks, nil
 }

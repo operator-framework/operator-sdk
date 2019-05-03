@@ -1,0 +1,165 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[{"apiVersion":"cache.example.com/v1alpha1","kind":"Memcached","metadata":{"name":"example-memcached"},"spec":{"size":3}}]'
+    capabilities: Basic Install
+  name: memcachedoperator.v0.0.3
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: Represents a cluster of Memcached apps
+      displayName: Memcached App
+      kind: Memcached
+      name: memcacheds.cache.example.com
+      resources:
+      - kind: Deployment
+        name: ""
+        version: v1
+      - kind: ReplicaSet
+        name: ""
+        version: v1
+      - kind: Pod
+        name: ""
+        version: v1
+      specDescriptors:
+      - description: The desired number of member Pods for the deployment.
+        displayName: Size
+        path: size
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:podCount
+      statusDescriptors:
+      - description: The current status of the application.
+        displayName: Status
+        path: phase
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes.phase
+      - description: Explanation for the current status of the application.
+        displayName: Status Details
+        path: reason
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes.phase:reason
+      version: v1alpha1
+    - kind: MemcachedRS
+      name: memcachedrs.cache.example.com
+      version: v1alpha1
+      statusDescriptors:
+      - description: List of the pod names running Memcached in the cluster
+        displayName: Nodes
+        path: nodeList
+      - description: A useless testing variable
+        displayName: Test
+        path: test
+  description: Main enterprise application providing business critical features with
+    high availability and no manual intervention.
+  displayName: Memcached Application
+  install:
+    spec:
+      deployments:
+      - name: memcached-operator
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              name: memcached-operator
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                name: memcached-operator
+            spec:
+              containers:
+              - command:
+                - memcached-operator
+                env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: OPERATOR_NAME
+                  value: memcached-operator
+                image: quay.io/example/memcached-operator:v0.0.1
+                imagePullPolicy: Never
+                name: memcached-operator
+                resources: {}
+              serviceAccountName: memcached-operator
+      permissions:
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          - services
+          - endpoints
+          - persistentvolumeclaims
+          - events
+          - configmaps
+          - secrets
+          verbs:
+          - '*'
+        - apiGroups:
+          - ""
+          resources:
+          - namespaces
+          verbs:
+          - get
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          - daemonsets
+          - replicasets
+          - statefulsets
+          verbs:
+          - '*'
+        - apiGroups:
+          - monitoring.coreos.com
+          resources:
+          - servicemonitors
+          verbs:
+          - get
+          - create
+        - apiGroups:
+          - apps
+          resourceNames:
+          - memcached-operator
+          resources:
+          - deployments/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - cache.example.com
+          resources:
+          - '*'
+          - memcachedrs
+          verbs:
+          - '*'
+        serviceAccountName: memcached-operator
+    strategy: deployment
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - memcached
+  - app
+  maintainers:
+  - email: corp@example.com
+    name: Some Corp
+  maturity: alpha
+  provider:
+    name: Example
+    url: www.example.com
+  replaces: memcached-operator.v0.0.2
+  version: 0.0.3
