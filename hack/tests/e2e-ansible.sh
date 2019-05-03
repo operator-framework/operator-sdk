@@ -124,6 +124,7 @@ echo "### Base image testing passed"
 echo "### Now testing migrate to hybrid operator"
 echo "###"
 
+export GO111MODULE=on
 operator-sdk migrate
 
 if [[ ! -e build/Dockerfile.sdkold ]];
