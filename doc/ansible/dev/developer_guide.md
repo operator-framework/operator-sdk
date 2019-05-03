@@ -394,17 +394,19 @@ can be used as shown:
 The Ansible Operator has a set of conditions which it will use as it performs
 its reconciliation procedure. There are only a few main conditions:
 
-* Running - the Ansible Operator has called Run on the Ansible Runner to invoke
-  your Ansible logic.
+* Running - the Ansible Operator is currently running the Ansible for
+  reconciliation.
 
 * Successful - if the run has finished and there were no errors, the Ansible
   Operator will be marked as Successful. It will then wait for the next
-  reconciliation period.
+  reconciliation action, either the reconcile period, dependent watches triggers
+  or the resource is updated.
 
-* Failed - if there is any error during the reconcilation run, the Ansible
+* Failed - if there is any error during the reconciliation run, the Ansible
   Operator will be marked as Failed with the error message from the error that
-  caused this condition. If the failure is intermittent, often times the
-  situation can be resolved when the Operator reruns the reconcilation loop.
+  caused this condition. The error message is the raw output from the Ansible
+  run for reconciliation. If the failure is intermittent, often times the
+  situation can be resolved when the Operator reruns the reconciliation loop.
 
 ### Using k8s_status Ansible module with `up local`
 This section covers the required steps to using the `k8s_status` Ansible module
