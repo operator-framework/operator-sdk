@@ -21,7 +21,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -103,13 +102,10 @@ func getGeneralArgs(cmd string, opts GoCmdOptions) ([]string, error) {
 		bargs = append(bargs, "-o", opts.BinName)
 	}
 	bargs = append(bargs, opts.Args...)
-	// Modules can be used if either GO111MODULE=on or we're not in $GOPATH/src.
 	if opts.GoMod {
-		inGoPath, err := wdInGoPath()
-		if err != nil {
+		if goModOn, err := GoModOn(); err != nil {
 			return nil, err
-		}
-		if os.Getenv(GoModEnv) == "on" || !inGoPath {
+		} else if goModOn {
 			bargs = append(bargs, "-mod=vendor")
 		}
 	}
@@ -130,14 +126,47 @@ func wdInGoPath() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	hd, err := homedir.Dir()
+	hd, err := getHomeDir()
 	if err != nil {
-		return false, err
-	}
-	if hd, err = homedir.Expand(hd); err != nil {
 		return false, err
 	}
 	goPath, ok := os.LookupEnv(GoPathEnv)
 	defaultGoPath := filepath.Join(hd, "go")
 	return (!ok && strings.HasPrefix(wd, defaultGoPath)) || (goPath != "" && strings.HasPrefix(wd, goPath)), nil
+}
+
+// From https://github.com/golang/go/wiki/Modules:
+//	Once installed, you can then activate module support in one of two ways:
+//	- Invoke the go command in a directory outside of the $GOPATH/src tree,
+//		with a valid go.mod file in the current directory or any parent of it and
+//		the environment variable GO111MODULE unset (or explicitly set to auto).
+//	- Invoke the go command with GO111MODULE=on environment variable set.
+//
+// GoModOn returns true if go modules are on in one of the above two ways.
+func GoModOn() (bool, error) {
+	inSrc, err := wdInGoPathSrc()
+	if err != nil {
+		return false, err
+	}
+	v, ok := os.LookupEnv(GoModEnv)
+	if v == "off" {
+		return false, nil
+	}
+	return (v == "on" && inSrc) || ((!ok || v == "" || v == "auto") && !inSrc), nil
+}
+
+func wdInGoPathSrc() (bool, error) {
+	wd, err := os.Getwd()
+	if err != nil {
+		return false, err
+	}
+	goPath, ok := os.LookupEnv(GoPathEnv)
+	if !ok || goPath == "" {
+		hd, err := getHomeDir()
+		if err != nil {
+			return false, err
+		}
+		goPath = filepath.Join(hd, "go")
+	}
+	return strings.HasPrefix(wd, filepath.Join(goPath, "src")), nil
 }

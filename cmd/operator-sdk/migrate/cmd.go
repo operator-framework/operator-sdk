@@ -160,6 +160,9 @@ func scaffoldHelmDepManager(s *scaffold.Scaffold, cfg *input.Config) error {
 	case projutil.DepManagerDep:
 		files = append(files, &helm.GopkgToml{})
 	case projutil.DepManagerGoMod:
+		if err := goModCheck(); err != nil {
+			return err
+		}
 		files = append(files, &helm.GoMod{}, &scaffold.Tools{})
 	default:
 		return projutil.ErrInvalidDepManager(depManager)
@@ -173,9 +176,21 @@ func scaffoldAnsibleDepManager(s *scaffold.Scaffold, cfg *input.Config) error {
 	case projutil.DepManagerDep:
 		files = append(files, &ansible.GopkgToml{})
 	case projutil.DepManagerGoMod:
+		if err := goModCheck(); err != nil {
+			return err
+		}
 		files = append(files, &ansible.GoMod{}, &scaffold.Tools{})
 	default:
 		return projutil.ErrInvalidDepManager(depManager)
 	}
 	return s.Execute(cfg, files...)
+}
+
+func goModCheck() error {
+	goModOn, err := projutil.GoModOn()
+	if err == nil && !goModOn {
+		log.Fatal(`Dependency manager "modules" has been selected but go modules are not active. ` +
+			`Activate modules then run "operator-sdk migrate".`)
+	}
+	return err
 }

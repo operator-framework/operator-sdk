@@ -157,6 +157,12 @@ func doGoScaffold() error {
 	case projutil.DepManagerDep:
 		err = s.Execute(cfg, &scaffold.GopkgToml{})
 	case projutil.DepManagerGoMod:
+		if goModOn, merr := projutil.GoModOn(); merr != nil {
+			return merr
+		} else if !goModOn {
+			log.Fatalf(`Dependency manager "%s" has been selected but go modules are not active. `+
+				`Activate modules then run "operator-sdk new %s".`, m, projectName)
+		}
 		err = s.Execute(cfg, &scaffold.GoMod{}, &scaffold.Tools{})
 	default:
 		err = projutil.ErrNoDepManager

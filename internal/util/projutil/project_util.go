@@ -21,6 +21,7 @@ import (
 	"regexp"
 	"strings"
 
+	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -125,6 +126,14 @@ func MustGetwd() string {
 		log.Fatalf("Failed to get working directory: (%v)", err)
 	}
 	return wd
+}
+
+func getHomeDir() (string, error) {
+	hd, err := homedir.Dir()
+	if err != nil {
+		return "", err
+	}
+	return homedir.Expand(hd)
 }
 
 // CheckAndGetProjectGoPkg checks if this project's repository path is rooted under $GOPATH and returns the current directory's import path
