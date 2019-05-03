@@ -83,7 +83,7 @@ require (
 	google.golang.org/appengine v1.5.0 // indirect
 	google.golang.org/genproto v0.0.0-20190327125643-d831d65fe17d // indirect
 	k8s.io/api v0.0.0-20181213150558-05914d821849 // indirect
-	k8s.io/apiextensions-apiserver v0.0.0-20190328030136-8ada4fd07db4 // indirect
+	k8s.io/apiextensions-apiserver v0.0.0-20190328030136-8ada4fd07db4
 	k8s.io/apimachinery v0.0.0-20181127025237-2b1284ed4c93 // indirect
 	k8s.io/client-go v0.0.0-20181213151034-8d9ed539ba31
 	k8s.io/code-generator v0.0.0-20190405172246-9a4d48088f6a
@@ -92,7 +92,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20190320154901-5e45bb682580
 	k8s.io/kubernetes v1.14.1 // indirect
 	sigs.k8s.io/controller-runtime v0.1.10
-	sigs.k8s.io/controller-tools v0.1.10 // indirect
+	sigs.k8s.io/controller-tools v0.1.10
 	sigs.k8s.io/testing_frameworks v0.1.1 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
