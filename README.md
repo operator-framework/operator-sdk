@@ -72,6 +72,7 @@ Create and deploy an app-operator using the SDK CLI:
 $ mkdir -p $GOPATH/src/github.com/example-inc/
 # Create a new app-operator project
 $ cd $GOPATH/src/github.com/example-inc/
+$ export GO111MODULE=on
 $ operator-sdk new app-operator
 $ cd app-operator
 

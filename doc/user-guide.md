@@ -53,7 +53,29 @@ $ cd memcached-operator
 
 To learn about the project directory structure, see [project layout][layout_doc] doc.
 
-By default, `operator-sdk new` generates a `go.mod` file to be used with [Go modules][go_mod]. If you'd like to use `dep`, set `--dep-manager=dep` when initializing your project.
+#### A note on dependency management
+
+By default, `operator-sdk new` generates a `go.mod` file to be used with [Go modules][go_mod_wiki]. If you'd like to use [`dep`][dep_tool], set `--dep-manager=dep` when initializing your project, which will create a `Gopkg.toml` file with the same dependency information.
+
+##### Go modules
+
+If using go modules (the default dependency manager) in your project, ensure you activate module support before using the SDK. From the [go modules Wiki][go_mod_wiki]:
+
+> You can activate module support in one of two ways:
+> - Invoke the go command in a directory outside of the $GOPATH/src tree, with a valid go.mod file in the current directory or any parent of it and the environment variable GO111MODULE unset (or explicitly set to auto).
+> - Invoke the go command with GO111MODULE=on environment variable set.
+
+As of now, the SDK only supports initializing new projects in `$GOPATH/src`. We intend to support all go module modes for projects in the near future.
+
+You can set `GO111MODULE` in your CLI to activate currently supported behavior by running the following command:
+
+```sh
+$ export GO111MODULE=on
+```
+
+##### Vendoring
+
+The Operator SDK uses [vendoring][go_vendoring] to supply dependencies to operator projects, regardless of dependency manager. As with the above module mode constraint, we intend to allow use of dependencies [outside of `vendor`][module_vendoring] for projects in the near future.
 
 #### Operator scope
 
@@ -493,7 +515,9 @@ When the operator is not running in a cluster, the Manager will return an error 
 [ansible_user_guide]:./ansible/user-guide.md
 [helm_user_guide]:./helm/user-guide.md
 [homebrew_tool]:https://brew.sh/
-[go_mod]: https://github.com/golang/go/wiki/Modules
+[go_mod_wiki]: https://github.com/golang/go/wiki/Modules
+[go_vendoring]: https://blog.gopheracademy.com/advent-2015/vendor-folder/
+[module_vendoring]: https://github.com/golang/go/wiki/Modules#how-do-i-use-vendoring-with-modules-is-vendoring-going-away
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/

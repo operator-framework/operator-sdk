@@ -79,7 +79,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
     6. Create a memcached CR and wait for it to be ready.
     7. Create a configmap that the memcached-operator is configured to delete using a finalizer.
     8. Delete memcached CR and verify that the finalizer deleted the configmap.
-    9. Run `operator-sdk migrate` to add go source to the operator.
+    9. Run `operator-sdk migrate` to add go source to the operator (see this [note][deps_mgmt] on dependency management first).
     10. Run `operator-sdk build` to compile the new binary and build a new image.
     11. Re-run steps 4-8 to test the migrated operator.
 
@@ -97,7 +97,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
     7. Scale up the dependent deployment and verify the operator reconciles it back down.
     8. Scale up the CR and verify the dependent deployment scales up accordingly.
     9. Delete nginx CR and verify that finalizer (which writes a message in the operator logs) ran.
-    10. Run `operator-sdk migrate` to add go source to the operator.
+    10. Run `operator-sdk migrate` to add go source to the operator (see this [note][deps_mgmt] on dependency management first).
     11. Run `operator-sdk build` to compile the new binary and build a new image.
     12. Re-run steps 4-9 to test the migrated operator.
 
@@ -122,3 +122,4 @@ The markdown test does not create a new cluster and runs in a barebones Travis V
 [helm-base]: ../../../hack/image/helm/scaffold-helm-image.go
 [marker-github]: https://github.com/crawford/marker
 [marker-local]: ../../../hack/ci/marker
+[deps_mgmt]: ../../user-guide.md#a-note-on-dependency-management
