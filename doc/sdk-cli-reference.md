@@ -120,7 +120,7 @@ required = [
 ...
 ```
 
-With dependency manager `mod`, i.e. go mod:
+With dependency manager `modules`, i.e. go mod:
 
 ```console
 $ operator-sdk print-deps --as-file
