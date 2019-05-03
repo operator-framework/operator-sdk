@@ -408,6 +408,13 @@ its reconciliation procedure. There are only a few main conditions:
   run for reconciliation. If the failure is intermittent, often times the
   situation can be resolved when the Operator reruns the reconciliation loop.
 
+Please look over the following sections for help debugging an Ansible Operator:
+
+
+* [View the Ansible logs](../user-guide.md#view-the-ansible-logs)
+* [Additional Ansible debug](../user-guide.md#additional-ansible-debug)
+* [Testing Ansible Operators with Molecule](testing_guide.md#testing-ansible-operators-with-molecule)
+
 ### Using k8s_status Ansible module with `up local`
 This section covers the required steps to using the `k8s_status` Ansible module
 with `operator-sdk up local`. If you are unfamiliar with managing status from
