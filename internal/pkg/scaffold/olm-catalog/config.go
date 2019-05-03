@@ -84,13 +84,11 @@ func (c *CSVConfig) setFields() error {
 		}
 		if os.IsNotExist(err) {
 			log.Infof(`Default CRDs dir "%s" does not exist. Omitting field spec.customresourcedefinitions.owned from CSV.`, scaffold.CRDsDir)
-			return nil
-		}
-		if len(paths) == 0 {
+		} else if len(paths) == 0 {
 			log.Infof(`Default CRDs dir "%s" is empty. Omitting field spec.customresourcedefinitions.owned from CSV.`, scaffold.CRDsDir)
-			return nil
+		} else {
+			c.CRDCRPaths = paths
 		}
-		c.CRDCRPaths = paths
 	} else {
 		// Allow user to specify a list of dirs to search. Avoid duplicate files.
 		paths, seen := make([]string, 0), make(map[string]struct{})
