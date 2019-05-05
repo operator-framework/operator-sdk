@@ -8,6 +8,24 @@
 
 ### Changed
 - Remove TypeMeta declaration from the implementation of the objects [#1462](https://github.com/operator-framework/operator-sdk/pull/1462/)
+- Upgrade the version of the dependency [controller-runtime](https://github.com/kubernetes-sigs/controller-runtime) from `v0.1.10` to `v0.2.0-beta.1` [#1388](https://github.com/operator-framework/operator-sdk/pull/1388)
+- Upgrade Kubernetes dependency versions from `kubernetes-1.13.1` to `kubernetes-1.14.1` [#1388](https://github.com/operator-framework/operator-sdk/pull/1388)
+- Upgrade github.com/operator-framework/operator-lifecycle-manager dependency from the commit `b8a4faf68e36feb6d99a6aec623b405e587b17b1` to `tag 0.10.1` [#1388](https://github.com/operator-framework/operator-sdk/pull/1388)
+- Upgrade k8s.io/kube-openapi from `0cf8f7e6ed1d2e3d47d02e3b6e559369af24d8`  dependency to a `01b7d5d6c2258c80a4a10070f3dee9cd575d9c7` [#1388](https://github.com/operator-framework/operator-sdk/pull/1388)
+
+### Break changes
+
+- The package `"sigs.k8s.io/controller-runtime/pkg/runtime/scheme"` is deprecated. Replace this import with `"sigs.k8s.io/controller-runtime/pkg/scheme"` in `pkg/apis/{{projectName}}/v1alpha1/register.go`. [#1388](https://github.com/operator-framework/operator-sdk/pull/1388)
+- The package `"sigs.k8s.io/controller-runtime/pkg/runtime/log"` is deprecated. Replace this import with `"sigs.k8s.io/controller-runtime/pkg/log"` in `pkg/apis/{{projectName}}/v1alpha1/register.go`. [#1388](https://github.com/operator-framework/operator-sdk/pull/1388)
+- The package `"sigs.k8s.io/controller-runtime/pkg/runtime/signals"` is deprecated. Replace this import with `"sigs.k8s.io/controller-runtime/pkg/manager/signals"` in `pkg/apis/{{projectName}}/v1alpha1/register.go`. [#1388](https://github.com/operator-framework/operator-sdk/pull/1388)
+- The client.List `List(ctx context.Context, list runtime.Object, opts ...ListOptionFunc) error` was replaced for `List(ctx context.Context, opts ...ListOption, list runtime.Object) error`. Following an example fix it. [#1388](https://github.com/operator-framework/operator-sdk/pull/1388)
+
+```go
+// Replace
+err = r.client.List(context.TODO(), listOps, podList) 
+// With
+err = r.client.List(context.TODO(), podList, client.UseListOptions(listOps))
+```
 
 ### Deprecated
 
