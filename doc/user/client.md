@@ -134,7 +134,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 ```Go
 // List retrieves a list of objects for a given namespace and list options
 // and stores the list in obj.
-func (c Client) List(ctx context.Context, opts *ListOptions, obj runtime.Object) error
+func (c Client) List(ctx context.Context, list runtime.Object, opts ...ListOptionFunc) error
 ```
 A `client.ListOptions` sets filters and options for a `List` call:
 ```Go
@@ -178,7 +178,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 
 	podList := &v1.PodList{}
 	ctx := context.TODO()
-	err := r.client.List(ctx, opts, podList)
+	err := r.client.List(ctx, podList, client.UseListOptions(listOps))
 
 	...
 }
@@ -416,7 +416,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 	podList := &corev1.PodList{}
 	labelSelector := labels.SelectorFromSet(labelsForApp(app.Name))
 	listOps := &client.ListOptions{Namespace: app.Namespace, LabelSelector: labelSelector}
-	if err = r.client.List(context.TODO(), listOps, podList); err != nil {
+	if err = r.client.List(context.TODO(), podList, client.UseListOptions(listOps)); err != nil {
 		return reconcile.Result{}, err
 	}
 
