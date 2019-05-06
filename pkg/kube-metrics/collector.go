@@ -57,12 +57,11 @@ func NewCollectors(uc *Client, namespaces []string, api string, kind string, met
 	return collectors, nil
 }
 
-func deduplicateNamespaces(ns []string) []string {
-	keys := make(map[string]bool)
-	list := []string{}
+func deduplicateNamespaces(ns []string) (list []string) {
+	keys := make(map[string]struct{})
 	for _, entry := range ns {
-		if _, value := keys[entry]; !value {
-			keys[entry] = true
+		if _, ok := keys[entry]; !ok {
+			keys[entry] = struct{}{}
 			list = append(list, entry)
 		}
 	}
