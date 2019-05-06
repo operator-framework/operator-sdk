@@ -29,7 +29,7 @@ By default, the metrics are served on `0.0.0.0:8383/metrics`. To modify the port
             Namespace:          namespace,
             MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
         })
-        
+
         ...
 
         // Create Service object to expose the metrics port.

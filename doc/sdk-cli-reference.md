@@ -142,7 +142,7 @@ pkg/apis/app/v1alpha1/
 
 $ operator-sdk generate k8s
 INFO[0000] Running deepcopy code-generation for Custom Resource group versions: [app:[v1alpha1], ]
-INFO[0001] Code-generation complete.                    
+INFO[0001] Code-generation complete.
 
 $ tree pkg/apis/app/v1alpha1/
 pkg/apis/app/v1alpha1/
@@ -170,7 +170,7 @@ pkg/apis/app/v1alpha1/
 $ operator-sdk generate openapi
 INFO[0000] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
 INFO[0001] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
-INFO[0001] Code-generation complete.                    
+INFO[0001] Code-generation complete.
 
 $ tree pkg/apis/app/v1alpha1/
 pkg/apis/app/v1alpha1/
@@ -205,7 +205,7 @@ INFO[0000] Fill in the following required fields in file deploy/olm-catalog/oper
 	spec.maintainers
 	spec.provider
 	spec.labels
-INFO[0000] Created deploy/olm-catalog/operator-name/0.1.0/operator-name.v0.1.0.clusterserviceversion.yaml     
+INFO[0000] Created deploy/olm-catalog/operator-name/0.1.0/operator-name.v0.1.0.clusterserviceversion.yaml
 ```
 
 ## migrate
@@ -327,16 +327,16 @@ Adds the API definition for a new custom resource under `pkg/apis` and generates
 $ operator-sdk add api --api-version app.example.com/v1alpha1 --kind AppService
 INFO[0000] Generating api version app.example.com/v1alpha1 for kind AppService.
 INFO[0000] Created pkg/apis/app/v1alpha1/appservice_types.go
-INFO[0000] Created pkg/apis/addtoscheme_app_v1alpha1.go  
-INFO[0000] Created pkg/apis/app/v1alpha1/register.go     
-INFO[0000] Created pkg/apis/app/v1alpha1/doc.go          
+INFO[0000] Created pkg/apis/addtoscheme_app_v1alpha1.go
+INFO[0000] Created pkg/apis/app/v1alpha1/register.go
+INFO[0000] Created pkg/apis/app/v1alpha1/doc.go
 INFO[0000] Created deploy/crds/app_v1alpha1_appservice_cr.yaml
 INFO[0000] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
 INFO[0001] Running deepcopy code-generation for Custom Resource group versions: [app:[v1alpha1], ]
-INFO[0002] Code-generation complete.                    
+INFO[0002] Code-generation complete.
 INFO[0002] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
 INFO[0004] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
-INFO[0004] Code-generation complete.                    
+INFO[0004] Code-generation complete.
 INFO[0004] API generation complete.
 ```
 

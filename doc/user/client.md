@@ -30,7 +30,7 @@ type ReconcileKind struct {
 }
 ```
 
-A split client reads (Get and List) from the Cache and writes (Create, Update, Delete) to the API server. Reading from the Cache significantly reduces request load on the API server; as long as the Cache is updated by the API server, read operations are eventually consistent. 
+A split client reads (Get and List) from the Cache and writes (Create, Update, Delete) to the API server. Reading from the Cache significantly reduces request load on the API server; as long as the Cache is updated by the API server, read operations are eventually consistent.
 
 ### Non-default Client
 
@@ -87,7 +87,7 @@ type ReconcileKind struct {
 	// a type registry for converting group, version, and kind information
 	// to and from Go schemas, and mappings between Go schemas of different
 	// versions. A scheme is the foundation for a versioned API and versioned
-	// configuration over time. 
+	// configuration over time.
 	scheme *runtime.Scheme
 }
 
@@ -170,7 +170,7 @@ import (
 
 func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	...
-	
+
 	// Return all pods in the request namespace with a label of `app=<name>`
 	opts := &client.ListOptions{}
 	opts.SetLabelSelector(fmt.Sprintf("app=%s", request.NamespacedName.Name))
@@ -188,7 +188,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 
 ```Go
 // Create saves the object obj in the Kubernetes cluster.
-// Returns an error 
+// Returns an error
 func (c Client) Create(ctx context.Context, obj runtime.Object) error
 ```
 Example:
@@ -201,7 +201,7 @@ import (
 
 func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	...
-	
+
 	app := &v1.Deployment{ // Any cluster object you want to create.
 		...
 	}
