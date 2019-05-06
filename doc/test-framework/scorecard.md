@@ -85,10 +85,9 @@ maximum score of 1.
 
 #### Owned CRDs Have Resources Listed
 
-This test makes sure that the CRDs listed in the [`owned` CRDs section][owned-crds] of the CSV have a `resources` subsection. This
-test has a maximum score equal to the number of CRDs listed in the CSV.
-
-Note: In the future, this test will verify that all resources modified by the operator are listed in the resources section.
+This test makes sure that the CRDs listed in the [`owned` CRDs section][owned-crds] of the CSV have a `resources` subsection. If the
+test detects used resources that are not listed in the resources section, it will list them in the suggestions at the end of the test.
+This test has a maximum score equal to the number of CRDs listed in the CSV.
 
 #### CRs Have At Least 1 Example
 
