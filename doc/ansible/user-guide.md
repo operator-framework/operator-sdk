@@ -442,7 +442,7 @@ $ kubectl delete -f deploy/operator.yaml
 $ kubectl delete -f deploy/role_binding.yaml
 $ kubectl delete -f deploy/role.yaml
 $ kubectl delete -f deploy/service_account.yaml
-$ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
+$ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
 ```
 
 [layout_doc]:./project_layout.md

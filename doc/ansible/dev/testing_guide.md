@@ -10,7 +10,7 @@ To begin, you sould have:
 - [Ansible](https://github.com/ansible/ansible) >= v2.7
 - [jmespath](https://pypi.org/project/jmespath/)
 - [The OpenShift Python client](https://github.com/openshift/openshift-restclient-python) >= v0.8
-- An initialized Ansible Operator project, with the molecule directory present. If you initialized a project with a previous 
+- An initialized Ansible Operator project, with the molecule directory present. If you initialized a project with a previous
   version of operator-sdk, you can generate a new dummy project and copy in the `molecule` directory. Just be sure
   to generate the dummy project with the same `api-version` and `kind`, or some of the generated files will not work
   without modification. Your top-level project structure should look like this:
@@ -54,9 +54,9 @@ Below we will walk through the structure and function of each file for each scen
 #### default
 The default scenario is intended for use during the development of your Ansible role or playbook, and will run it
 outside of the context of an operator.
-You can run this scenario with 
+You can run this scenario with
 `molecule test`
-or 
+or
 `molecule converge`. There is no corresponding `operator-sdk` command for this scenario.
 
 The scenario has the following structure:
@@ -69,12 +69,12 @@ molecule/default
 └── prepare.yml
 ```
 
-`asserts.yml` is an Ansible playbook contains Ansible assert tasks that will be run by all three scenarios. 
+`asserts.yml` is an Ansible playbook contains Ansible assert tasks that will be run by all three scenarios.
 If you would like to write specific asserts for individual scenarios, you can instead remove the `asserts.yml`
 playbook import from that scenario's `playbook.yml`, or if you only want to add additional asserts, you can
 create a new playbook in that scenario and import it at the bottom of that scenario's `playbook.yml`.
 
-`molecule.yml` for this scenario tells molecule to use the docker driver to bring up a Kubernetes-in-Docker container, 
+`molecule.yml` for this scenario tells molecule to use the docker driver to bring up a Kubernetes-in-Docker container,
 and exposes the API on the host's port 9443. It also specifies a few inventory and environment
 variables which are used in `prepare.yml` and `playbook.yml`.
 
@@ -86,7 +86,7 @@ available before allowing testing to begin.
 #### test-local
 The test-local scenario is a more full integration test of your operator. It brings up a Kubernetes-in-docker cluster, builds your Operator, deploys it
 into the cluster, and then creates an instance of your CustomResource and runs your assertions to make sure the Operator responded properly. You can run
-this scenario with 
+this scenario with
 `molecule test -s local`, which is equivalent to `operator-sdk test local`, or with `molecule converge -s test-local`, which will leave the environment up
 afterward.
 
@@ -110,7 +110,7 @@ resources specified in the `deploy/` directory.
 Kubernetes-in-Docker container, and uses your mounted project root to build your Operator.
 This makes your Operator available to the cluster without needing to push it to an external
 registry. Next, it will ensure that a fresh deployment of your Operator is present in the
-cluster, and once there is it will create an instance of your Custom Resource 
+cluster, and once there is it will create an instance of your Custom Resource
 (specified in `deploy/crds/`). It will then wait for the CustomResource to report a successful
 run, and once it has, will import the `asserts.yml` from the default scenario.
 
@@ -119,7 +119,7 @@ The test-cluster scenario is intended as a full integration test against
 an existing Kubernetes cluster, and assumes that the cluster is already available, the dependent resources from the `deploy/` directory
 are created, the operator image is built with `--enable-tests`, and that the image is available in a container registry. It connects
 to the existing Kubernetes cluster and deploys the test Operator, creates a Custom Resource, and runs your asserts.  You shouldn't
-call this scenario directly, rather you should build your operator with the `--enable-tests` flag, in which case a new entrypoint will 
+call this scenario directly, rather you should build your operator with the `--enable-tests` flag, in which case a new entrypoint will
 be added that runs this scenario when the container starts up. It is recommended that you only interact with this scenario through
 `operator-sdk test cluster`.
 
@@ -131,14 +131,14 @@ molecule/test-cluster
 └── playbook.yml
 ```
 `molecule.yml` for this scenario is very simple, as it assumes an environment is already
-present. It essentially is just specifying the metadata of the scenario, and telling molecule 
+present. It essentially is just specifying the metadata of the scenario, and telling molecule
 not to try and create or destroy anything when run.
 
 `playbook.yml` is also pretty simple, compared to the previous scenarios. All it does is create
 an instance of your Custom Resource (specified in `deploy/crds`), and then import the `asserts.yml` from the `default` scenario.
 
 #### converge vs test
-The two most common molecule commands for testing during development are `molecule test` and `molecule converge`. 
+The two most common molecule commands for testing during development are `molecule test` and `molecule converge`.
 `molecule test` performs a full loop, bringing a cluster up, preparing it, running your tasks, and tearing it down.
 `molecule converge` is more useful for iterative development, as it leaves your environment up between runs. This
 can cause unexpected problems if you end up corrupting your environment during testing, but running `molecule destroy`
@@ -190,7 +190,7 @@ We'll be adding the task to `roles/example/tasks/main.yml`, which should now loo
 
 ### Adding a test
 
-Now that our Operator actually does some work, we can add a corresponding assert to `molecule/default/asserts.yml`. 
+Now that our Operator actually does some work, we can add a corresponding assert to `molecule/default/asserts.yml`.
 We'll also add a debug message so that we can see what the ConfigMap looks like.
 The file should now look like this:
 

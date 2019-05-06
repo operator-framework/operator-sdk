@@ -240,11 +240,13 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
 		gvk := t.CR.GroupVersionKind()
 		if strings.EqualFold(crd.Version, gvk.Version) && matchKind(gvk.Kind, crd.Kind) {
 			res.MaximumPoints++
+			if len(crd.Resources) > 0 {
+				res.EarnedPoints++
+			}
 			resources, err := getUsedResources(t.ProxyPod)
 			if err != nil {
 				log.Warningf("getUsedResource failed: %v", err)
 			}
-			allResourcesListed := true
 			for _, resource := range resources {
 				foundResource := false
 				for _, listedResource := range crd.Resources {
@@ -254,17 +256,13 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
 					}
 				}
 				if foundResource == false {
-					allResourcesListed = false
 					missingResources = append(missingResources, fmt.Sprintf("%s/%s", resource.Kind, resource.Version))
 				}
 			}
-			if allResourcesListed {
-				res.EarnedPoints++
-			}
 		}
 	}
-	if res.EarnedPoints < res.MaximumPoints {
-		res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add resources to owned CRDs for %s: %v", t.CR.GroupVersionKind(), missingResources))
+	if len(missingResources) > 0 {
+		res.Suggestions = append(res.Suggestions, fmt.Sprintf("If it would be helpful to an end-user to understand or troubleshoot your CR, consider adding resources %v to the resources section for owned CRD %s", missingResources, t.CR.GroupVersionKind().Kind))
 	}
 	return res
 }
