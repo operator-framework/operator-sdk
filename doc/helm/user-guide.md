@@ -225,7 +225,7 @@ export OPERATOR_NAMESPACE=$(kubectl config view --minify -o jsonpath='{.contexts
 sed -i "s|REPLACE_NAMESPACE|$OPERATOR_NAMESPACE|g" deploy/role_binding.yaml
 ```
 
-**Note**  
+**Note**
 If you are performing these steps on OSX, use the following commands instead:
 
 ```sh

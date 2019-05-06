@@ -35,7 +35,7 @@ The SDK should provide an API to Create, Update and Delete objects from inside t
 This method also aligns with the original goal of ensuring that all actions of the operator are taken through the SDK.
 
 ## API
-**Note:** `sdkTypes.Object` is just the kubernetes `runtime.Object` 
+**Note:** `sdkTypes.Object` is just the kubernetes `runtime.Object`
 
 ### Handler:
 
@@ -48,11 +48,11 @@ func Handle(ctx context.Context, event sdkTypes.Event) error
 
 ### Create Update Delete:
 ```Go
-// Create creates the provided object on the server, and updates 
+// Create creates the provided object on the server, and updates
 // the local object with the generated result from the server(UID, resourceVersion, etc).
 // Returns an error if the object’s TypeMeta(Kind, APIVersion) or ObjectMeta(Name, Namespace) is missing or incorrect.
 // Can also return an api error from the server
-// e.g AlreadyExists https://github.com/kubernetes/apimachinery/blob/master/pkg/api/errors/errors.go#L423 
+// e.g AlreadyExists https://github.com/kubernetes/apimachinery/blob/master/pkg/api/errors/errors.go#L423
 func Create(object sdkTypes.Object) error
 ```
 
@@ -61,7 +61,7 @@ func Create(object sdkTypes.Object) error
 // the local object with the generated result from the server(UID, resourceVersion, etc).
 // Returns an error if the object’s TypeMeta(Kind, APIVersion) or ObjectMeta(Name, Namespace) is missing or incorrect.
 // Can also return an api error from the server
-// e.g Conflict https://github.com/kubernetes/apimachinery/blob/master/pkg/api/errors/errors.go#L428 
+// e.g Conflict https://github.com/kubernetes/apimachinery/blob/master/pkg/api/errors/errors.go#L428
 func Update(object sdkTypes.Object) error
 ```
 
@@ -112,13 +112,13 @@ func Handle(ctx context.Context, event sdkType.Event) {
     }
 
     ...
-	
+
     // Delete with default options
     err := sdk.Delete(pod)
     if err != nil {
         return errors.New("failed to delete pod")
     }
-    
+
     // Delete with custom options
     gracePeriodSeconds := int64(5)
     metav1DeleteOptions := &metav1.DeleteOptions{GracePeriodSeconds: &gracePeriodSeconds}
@@ -137,7 +137,7 @@ type DeleteOp struct {
 }
 
 // DeleteOption configures DeleteOp
-type DeleteOption func(*DeleteOp) 
+type DeleteOption func(*DeleteOp)
 
 // WithDeleteOptions sets the meta_v1.DeleteOptions for
 // the Delete() operation.
