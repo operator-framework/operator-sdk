@@ -26,12 +26,14 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	testutil "github.com/operator-framework/operator-sdk/internal/pkg/scaffold/internal/testutil"
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 	"github.com/spf13/afero"
+	appsv1 "k8s.io/api/apps/v1"
 )
 
 const testDataDir = "testdata"
@@ -183,5 +185,51 @@ func TestGetDisplayName(t *testing.T) {
 		if dn != c.wanted {
 			t.Errorf("Wanted %s, got %s", c.wanted, dn)
 		}
+	}
+}
+
+func TestSetAndCheckOLMNamespaces(t *testing.T) {
+	depBytes, err := ioutil.ReadFile(filepath.Join(testDeployDir, "operator.yaml"))
+	if err != nil {
+		t.Fatalf("Failed to read Deployment bytes: %v", err)
+	}
+
+	// The test operator.yaml doesn't have "olm.targetNamespaces", so first
+	// check that depHasOLMNamespaces() returns false.
+	dep := &appsv1.Deployment{}
+	if err := yaml.Unmarshal(depBytes, dep); err != nil {
+		t.Fatalf("(1) Failed to unmarshal Deployment bytes: %v", err)
+	}
+	if depHasOLMNamespaces(dep) {
+		t.Error("(1) Expected depHasOLMNamespaces to return false, got true")
+	}
+
+	// Insert "olm.targetNamespaces" into WATCH_NAMESPACE and check that
+	// depHasOLMNamespaces() returns true.
+	dep = &appsv1.Deployment{}
+	if err := yaml.Unmarshal(depBytes, dep); err != nil {
+		t.Fatalf("(2) Failed to unmarshal Deployment bytes: %v", err)
+	}
+	setWatchNamespacesEnv(dep)
+	if !depHasOLMNamespaces(dep) {
+		t.Error("(2) Expected depHasOLMNamespaces to return true, got false")
+	}
+
+	// Overwrite WATCH_NAMESPACE and check that depHasOLMNamespaces() returns
+	// false.
+	overwriteContainerEnvVar(dep, k8sutil.WatchNamespaceEnvVar, newEnvVar("FOO", "bar"))
+	if depHasOLMNamespaces(dep) {
+		t.Error("(3) Expected depHasOLMNamespaces to return false, got true")
+	}
+
+	// Insert "olm.targetNamespaces" elsewhere in the deployment pod spec
+	// and check that depHasOLMNamespaces() returns true.
+	dep = &appsv1.Deployment{}
+	if err := yaml.Unmarshal(depBytes, dep); err != nil {
+		t.Fatalf("(4) Failed to unmarshal Deployment bytes: %v", err)
+	}
+	dep.Spec.Template.ObjectMeta.Labels["namespace"] = olmTNMeta
+	if !depHasOLMNamespaces(dep) {
+		t.Error("(4) Expected depHasOLMNamespaces to return true, got false")
 	}
 }
