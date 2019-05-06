@@ -397,16 +397,25 @@ import (
 
 func main() {
     ....
+    // Adding the routev1 
     if err := routev1.AddToScheme(mgr.GetScheme()); err != nil {
       log.Error(err, "")
       os.Exit(1)
     }
     ....
+    	
+    // Setup all Controllers
+    if err := controller.AddToManager(mgr); err != nil {
+        log.Error(err, "")
+        os.Exit(1)
+    }	
 }
 ```
 
-After adding new import paths to your operator project, run `dep ensure` in the root of your project directory to fulfill these dependencies.
+**NOTES:**
 
+* After adding new import paths to your operator project, run `dep ensure` in the root of your project directory to fulfill these dependencies.
+* Your 3rd party resource needs to be added before add the controller in `"Setup all Controllers"`.
 
 ### Handle Cleanup on Deletion
 
