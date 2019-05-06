@@ -65,7 +65,7 @@ func ServeCRMetrics(cfg *rest.Config, ns []string, operatorTypes map[schema.Grou
 
 func generateMetricFamilies(kind string) []ksmetric.FamilyGenerator {
 	helpText := fmt.Sprintf("Information about the %s operator replica.", kind)
-	kindName := fmt.Sprintf("%s", kind)
+	kindName := fmt.Sprintf("%s", strings.ToLower(kind))
 	metricName := fmt.Sprintf("%s_info", strings.ToLower(kind))
 
 	return []ksmetric.FamilyGenerator{
