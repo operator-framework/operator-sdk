@@ -1559,8 +1559,8 @@
     "pkg/metrics_store",
   ]
   pruneopts = "NUT"
-  revision = "d7b8a74b2ba1cbabb26a7dfdd7bd0d65f2724a9e"
-  version = "v1.6.0-rc.0"
+  revision = "de19ed4f12d471fccc79f9a9fee73f7c107ecd33"
+  version = "v1.6.0"
 
 [[projects]]
   digest = "1:a2ca0c9095f3fd4160abcb64ebc3d99d3e2439da9c350705db7ab65dc98ee21d"

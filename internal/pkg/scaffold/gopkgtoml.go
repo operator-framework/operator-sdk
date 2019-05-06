@@ -72,9 +72,9 @@ required = [
   name = "github.com/coreos/prometheus-operator"
   version = "=v0.29.0"
 
-[[constraint]]
+[[override]]
   name = "k8s.io/kube-state-metrics"
-  version = "v1.6.0-rc.0"
+  version = "v1.6.0"
 
 [[override]]
   name = "sigs.k8s.io/controller-runtime"
