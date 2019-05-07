@@ -3,11 +3,11 @@
 Implementation Owner: < github username >
 Status: Draft
 
-[Background](#Background)  
-[Goals](#Goals)  
-[Design overview](#Design_overview)   
-[User facing usage](#User_facing_usage)  
-[Observations and open questions](#Observations_and_open_questions)   
+[Background](#Background)
+[Goals](#Goals)
+[Design overview](#Design_overview)
+[User facing usage](#User_facing_usage)
+[Observations and open questions](#Observations_and_open_questions)
 
 ### Background
 

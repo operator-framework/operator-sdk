@@ -37,7 +37,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 
 	"github.com/prometheus/prometheus/util/promlint"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
@@ -60,7 +60,7 @@ func TestMemcached(t *testing.T) {
 	// get global framework variables
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
-	gopath, ok := os.LookupEnv(projutil.GopathEnv)
+	gopath, ok := os.LookupEnv(projutil.GoPathEnv)
 	if !ok {
 		t.Fatalf("$GOPATH not set")
 	}

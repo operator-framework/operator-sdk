@@ -288,7 +288,7 @@ $ export OPERATOR_NAMESPACE=$(kubectl config view --minify -o jsonpath='{.contex
 $ sed -i "s|REPLACE_NAMESPACE|$OPERATOR_NAMESPACE|g" deploy/role_binding.yaml
 ```
 
-**Note**  
+**Note**
 If you are performing these steps on OSX, use the following commands instead:
 ```
 $ sed -i "" 's|{{ REPLACE_IMAGE }}|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
@@ -395,6 +395,18 @@ kubectl logs deployment/memcached-operator -c operator
 The `ansible` logs contain all of the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks,
 whereas the `operator` logs will contain much more detailed information about the Ansible Operator's internals and interface with Kubernetes.
 
+### Additional Ansible debug
+
+Occasionally while developing additional debug in the Operator logs is nice to have. To enable Ansible debug output, ie `-vvvv`.
+Add the following to the `operator.yaml` manifest.
+
+```yaml
+          env:
+           ...
+           - name: ANSIBLE_VERBOSITY
+             value: "4"
+```
+
 ### Update the size
 
 Change the `spec.size` field in the memcached CR from 3 to 4 and apply the
@@ -430,7 +442,7 @@ $ kubectl delete -f deploy/operator.yaml
 $ kubectl delete -f deploy/role_binding.yaml
 $ kubectl delete -f deploy/role.yaml
 $ kubectl delete -f deploy/service_account.yaml
-$ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
+$ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
 ```
 
 [layout_doc]:./project_layout.md
