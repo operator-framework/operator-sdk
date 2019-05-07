@@ -105,6 +105,7 @@ func apiRun(cmd *cobra.Command, args []string) error {
 
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
+		&scaffold.Stub{Resource: r},
 		&scaffold.Types{Resource: r},
 		&scaffold.AddToScheme{Resource: r},
 		&scaffold.Register{Resource: r},
