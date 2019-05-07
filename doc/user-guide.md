@@ -75,7 +75,7 @@ $ export GO111MODULE=on
 
 ##### Vendoring
 
-The Operator SDK uses [vendoring][go_vendoring] to supply dependencies to operator projects, regardless of dependency manager. As with the above module mode constraint, we intend to allow use of dependencies [outside of `vendor`][module_vendoring] for projects in the near future.
+The Operator SDK uses [vendoring][go_vendoring] to supply dependencies to operator projects, regardless of the dependency manager. As with the above module mode constraint, we intend to allow use of dependencies [outside of `vendor`][module_vendoring] for projects in the near future.
 
 #### Operator scope
 
