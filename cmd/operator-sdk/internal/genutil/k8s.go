@@ -27,9 +27,8 @@ import (
 )
 
 // K8sCodegen performs deepcopy code-generation for all custom resources under
-// pkg/apis. hf is  a path to a header file containing text to add to generated
-// files.
-func K8sCodegen(hf string) error {
+// pkg/apis.
+func K8sCodegen() error {
 	projutil.MustInProjectRoot()
 
 	wd := projutil.MustGetwd()
@@ -59,7 +58,7 @@ func K8sCodegen(hf string) error {
 	log.Infof("Running deepcopy code-generation for Custom Resource group versions: [%v]\n", gvb.String())
 
 	fdc := func(a string) error { return deepcopyGen(binDir, repoPkg, a, gvMap) }
-	if err = withHeaderFile(hf, fdc); err != nil {
+	if err = withHeaderFile(fdc); err != nil {
 		return err
 	}
 
