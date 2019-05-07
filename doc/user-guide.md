@@ -391,9 +391,9 @@ $ kubectl delete -f deploy/service_account.yaml
 
 ## Advanced Topics
 
-### Adding external API Resources To Your Operator
+### Adding 3rd Party Resources To Your Operator
 
-The operator's Manager supports external and Core Kubernetes (referred to here as "external") resource types as found in the client-go [scheme][scheme_package] package and will also register the schemes of all custom resource types defined in your project under `pkg/apis`.
+The operator's Manager supports the Core Kubernetes resource types as found in the client-go [scheme][scheme_package] package and will also register the schemes of all custom resource types defined in your project under `pkg/apis`.
 
 ```Go
 import (
@@ -408,11 +408,11 @@ if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
 }
 ```
 
-To add an external resource to an operator, you must add it to the Manager's scheme. By creating an `AddToScheme()` method or reusing one you can easily add a resource to your scheme. An [example][deployments_register] shows how to define a function, then use the [runtime][runtime_package] package to create a `SchemeBuilder`.
+To add a 3rd party resource to an operator, you must add it to the Manager's scheme. By creating an `AddToScheme()` method or reusing one you can easily add a resource to your scheme. An [example][deployments_register] shows that you define a function and then use the [runtime][runtime_package] package to create a `SchemeBuilder`.
 
 #### Register with the Manager's scheme
 
-Call the `AddToScheme()` function for your external resource and pass it to the Manager's scheme via `mgr.GetScheme()`.
+Call the `AddToScheme()` function for your 3rd party resource and pass it the Manager's scheme via `mgr.GetScheme()`.
 
 Example:
 ```go
@@ -444,7 +444,7 @@ func main() {
 **NOTES:**
 
 * After adding new import paths to your operator project, run `go mod vendor` (or `dep ensure` if you set `--dep-manager=dep` when initializing your project) in the root of your project directory to fulfill these dependencies.
-* Your external resource *must* be added before adding the controller (before the `Setup all Controllers` comment).
+* Your 3rd party resource needs to be added before add the controller in `"Setup all Controllers"`.
 
 ### Handle Cleanup on Deletion
 
