@@ -48,6 +48,7 @@ type PackageManifest struct {
 
 var _ input.File = &PackageManifest{}
 
+// GetInput gets s' Input.
 func (s *PackageManifest) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		lowerProjName := strings.ToLower(s.ProjectName)
@@ -61,8 +62,11 @@ func (s *PackageManifest) GetInput() (input.Input, error) {
 
 var _ scaffold.CustomRenderer = &PackageManifest{}
 
+// SetFS is a no-op to implement CustomRenderer.
 func (s *PackageManifest) SetFS(_ afero.Fs) {}
 
+// CustomRender either reads an existing package manifest or creates a new
+// manifest and modifies it based on values set in s.
 func (s *PackageManifest) CustomRender() ([]byte, error) {
 	i, err := s.GetInput()
 	if err != nil {
@@ -86,25 +90,8 @@ func (s *PackageManifest) CustomRender() ([]byte, error) {
 	}
 
 	if s.Channel != "" {
-		channelMap := map[string]string{}
-		for _, c := range pm.Channels {
-			if _, ok := channelMap[c.Name]; ok {
-				return nil, fmt.Errorf(`duplicate package manifest channel name "%s"; channel names must be unique`, c.Name)
-			}
-			channelMap[c.Name] = c.CurrentCSVName
-		}
-		channelMap[s.Channel] = getCSVName(s.ProjectName, s.CSVVersion)
-		channels := []olmregistry.PackageChannel{}
-		for n, cn := range channelMap {
-			channels = append(channels, olmregistry.PackageChannel{
-				Name:           n,
-				CurrentCSVName: cn,
-			})
-		}
-		pm.Channels = channels
-
-		if s.ChannelIsDefault {
-			pm.DefaultChannelName = s.Channel
+		if err = s.setChannels(pm); err != nil {
+			return nil, err
 		}
 	}
 
@@ -116,8 +103,8 @@ func (s *PackageManifest) CustomRender() ([]byte, error) {
 }
 
 func (s *PackageManifest) newPackageManifest() *olmregistry.PackageManifest {
-	// Take the current version to be the "alpha" channel, as an operator
-	// should be designated anything greater than "alpha" by a human.
+	// Take the current CSV version to be the "alpha" channel, as an operator
+	// should only be designated anything more stable than "alpha" by a human.
 	channel := "alpha"
 	if s.Channel != "" {
 		channel = s.Channel
@@ -130,4 +117,28 @@ func (s *PackageManifest) newPackageManifest() *olmregistry.PackageManifest {
 		DefaultChannelName: channel,
 	}
 	return pm
+}
+
+func (s *PackageManifest) setChannels(pm *olmregistry.PackageManifest) error {
+	channelMap := map[string]string{}
+	for _, c := range pm.Channels {
+		if _, ok := channelMap[c.Name]; ok {
+			return fmt.Errorf(`duplicate package manifest channel name "%s"; channel names must be unique`, c.Name)
+		}
+		channelMap[c.Name] = c.CurrentCSVName
+	}
+	channelMap[s.Channel] = getCSVName(s.ProjectName, s.CSVVersion)
+	channels := []olmregistry.PackageChannel{}
+	for n, cn := range channelMap {
+		channels = append(channels, olmregistry.PackageChannel{
+			Name:           n,
+			CurrentCSVName: cn,
+		})
+	}
+	pm.Channels = channels
+
+	if s.ChannelIsDefault {
+		pm.DefaultChannelName = s.Channel
+	}
+	return nil
 }
