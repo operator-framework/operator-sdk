@@ -34,6 +34,8 @@ type ControllerKind struct {
 	// API that this controller reconciles, if specified by the scaffold invoker.
 	CustomImport string
 
+	// The following fields will be overwritten by GetInput().
+	//
 	// ImportMap maps all imports destined for the scaffold to their import
 	// identifier, if any.
 	ImportMap map[string]string
@@ -42,7 +44,7 @@ type ControllerKind struct {
 	GoImportIdent string
 }
 
-func (s *ControllerKind) GetInput() (_ input.Input, err error) {
+func (s *ControllerKind) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		fileName := s.Resource.LowerKind + "_controller.go"
 		s.Path = filepath.Join(ControllerDir, s.Resource.LowerKind, fileName)
@@ -52,12 +54,19 @@ func (s *ControllerKind) GetInput() (_ input.Input, err error) {
 	s.TemplateBody = controllerKindTemplate
 
 	// Set imports.
+	if err := s.setImports(); err != nil {
+		return input.Input{}, err
+	}
+	return s.Input, nil
+}
+
+func (s *ControllerKind) setImports() (err error) {
 	s.ImportMap = controllerKindImports
 	importPath := ""
 	if s.CustomImport != "" {
 		importPath, s.GoImportIdent, err = getCustomAPIImportPathAndIdent(s.CustomImport)
 		if err != nil {
-			return input.Input{}, err
+			return err
 		}
 	} else {
 		importPath = path.Join(s.Repo, "pkg", "apis", s.Resource.GoImportGroup, s.Resource.Version)
@@ -72,7 +81,7 @@ func (s *ControllerKind) GetInput() (_ input.Input, err error) {
 		}
 	}
 	s.ImportMap[importPath] = s.GoImportIdent
-	return s.Input, nil
+	return nil
 }
 
 func getCustomAPIImportPathAndIdent(m string) (p string, id string, err error) {
