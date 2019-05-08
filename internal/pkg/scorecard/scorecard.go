@@ -336,7 +336,7 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 			cmd := exec.Command("./bin/" + file.Name())
 			output, err := cmd.CombinedOutput()
 			if err != nil {
-				pluginResults = append(pluginResults, failedPlugin(fmt.Sprintf("Failed Plugin: %s", file.Name()), fmt.Sprintf("Plugin with file name %s", file.Name()), string(output)))
+				pluginResults = append(pluginResults, failedPlugin(fmt.Sprintf("Plugin output invalid: %s", file.Name()), fmt.Sprintf("Plugin with file name %s did not produce valid ScorecardOutput JSON", file.Name()), fmt.Sprintf("%s: %s", err, string(output))))
 				// output error to main logger as well for human-readable output
 				log.Errorf("Plugin `%s` failed with error (%v)", file.Name(), err)
 				continue
