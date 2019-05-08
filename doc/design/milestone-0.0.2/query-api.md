@@ -37,7 +37,7 @@ To simplify the retrieval of Kubernetes objects, the SDK can use a dynamic resou
 func Get(into sdkTypes.Object, opts ...GetOption) error
 ```
 
-Get() accepts GetOption as variadic functional parameters. In this way, we follow the open-close principle 
+Get() accepts GetOption as variadic functional parameters. In this way, we follow the open-close principle
 which allows us to extend the Get API with unforeseen parameters without modifying the API itself. See the reference section on how the options are implemented.
 
 Example Usage:
@@ -56,7 +56,7 @@ d := &apps_v1.Deployment{
 }
 // Get with default options
 err := sdk.Get(d)
-// Get with custom options 
+// Get with custom options
 o := &meta_v1.GetOptions{ResourceVersion: "0"}
 err := sdk.Get(d, sdk.WithGetOptions(o))
 ```
@@ -97,7 +97,7 @@ err = sdk.List("default", dl, op.WithListOptions(o))
 
 
 
-## Reference: 
+## Reference:
 
 ### GetOptions:
 

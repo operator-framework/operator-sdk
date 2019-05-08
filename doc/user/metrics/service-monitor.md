@@ -18,8 +18,8 @@ The `GenerateServiceMonitor` function takes a `Service` object and generates a `
         "github.com/operator-framework/operator-sdk/pkg/metrics"
     )
 
-    func main() {    
-        
+    func main() {
+
         ...
 
         // Populate below with the Service(s) for which you want to create ServiceMonitors.
@@ -28,7 +28,7 @@ The `GenerateServiceMonitor` function takes a `Service` object and generates a `
         // Create one `ServiceMonitor` per application per namespace.
         // Change below value to name of the Namespace you want the `ServiceMonitor` to be created in.
         ns := "default"
-        
+
         // Pass the Service(s) to the helper function, which in turn returns the array of `ServiceMonitor` objects.
         serviceMonitors, err := metrics.CreateServiceMonitors(restConfig, ns, services)
         if err != nil {

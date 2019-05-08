@@ -43,7 +43,7 @@ Some fields might not have values after running `gen-csv` the first time. The SD
 
 ```console
 $ operator-sdk olm-catalog gen-csv --csv-version 0.0.1
-INFO[0000] Generating CSV manifest version 0.0.1        
+INFO[0000] Generating CSV manifest version 0.0.1
 INFO[0000] Required csv fields not filled in file deploy/olm-catalog/app-operator/0.0.1/app-operator.v0.0.1.clusterserviceversion.yaml:
 	spec.keywords
 	spec.maintainers
@@ -118,4 +118,4 @@ Optional:
 [doc-bundle]:https://github.com/operator-framework/operator-registry#manifest-format
 [x-desc-list]:https://github.com/openshift/console/blob/master/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L5-L14
 [install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md#operator-metadata
-[olm-capabilities]:../../images/operator-maturity-model.png
+[olm-capabilities]:../../images/operator-capability-level.png

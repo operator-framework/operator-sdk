@@ -20,7 +20,7 @@ commandoutput="$(operator-sdk scorecard \
   --proxy-image "$DEST_IMAGE" \
   --proxy-pull-policy Never \
   2>&1)"
-echo $commandoutput | grep "Total Score: 79%"
+echo $commandoutput | grep "Total Score: 82%"
 
 # test config file
 commandoutput2="$(operator-sdk scorecard \
@@ -29,7 +29,7 @@ commandoutput2="$(operator-sdk scorecard \
 # check basic suite
 echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 3,[[:space:]]"partialPass": 0,[[:space:]]"fail": 0,[[:space:]]"totalTests": 3,[[:space:]]"totalScorePercent": 100,.*$'
 # check olm suite
-echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 2,[[:space:]]"partialPass": 2,[[:space:]]"fail": 1,[[:space:]]"totalTests": 5,[[:space:]]"totalScorePercent": 65,.*$'
+echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 2,[[:space:]]"partialPass": 3,[[:space:]]"fail": 0,[[:space:]]"totalTests": 5,[[:space:]]"totalScorePercent": 74,.*$'
 # check custom json result
 echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 1,[[:space:]]"partialPass": 1,[[:space:]]"fail": 0,[[:space:]]"totalTests": 2,[[:space:]]"totalScorePercent": 71,.*$'
 popd

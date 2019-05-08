@@ -56,6 +56,7 @@ generates a skeletal app-operator application in $GOPATH/src/github.com/example.
 	newCmd.Flags().StringVar(&operatorType, "type", "go", "Type of operator to initialize (choices: \"go\", \"ansible\" or \"helm\")")
 	newCmd.Flags().StringVar(&depManager, "dep-manager", "dep", `Dependency manager the new project will use (choices: "dep")`)
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
+	newCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
 	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false, "Generate a playbook skeleton. (Only used for --type ansible)")
 	newCmd.Flags().BoolVar(&isClusterScoped, "cluster-scoped", false, "Generate cluster-scoped resources instead of namespace-scoped")
 
@@ -72,6 +73,7 @@ var (
 	operatorType     string
 	projectName      string
 	depManager       string
+	headerFile       string
 	skipGit          bool
 	generatePlaybook bool
 	isClusterScoped  bool
@@ -151,6 +153,14 @@ func doGoScaffold() error {
 		ProjectName:    projectName,
 	}
 	s := &scaffold.Scaffold{}
+
+	if headerFile != "" {
+		err := s.Execute(cfg, &scaffold.Boilerplate{BoilerplateSrcPath: headerFile})
+		if err != nil {
+			return fmt.Errorf("boilerplate scaffold failed: (%v)", err)
+		}
+		s.BoilerplatePath = headerFile
+	}
 
 	var err error
 	switch m := projutil.DepManagerType(depManager); m {
