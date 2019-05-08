@@ -333,7 +333,7 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 			return nil, fmt.Errorf("failed to list files in %s/bin", pluginDir)
 		}
 		for _, file := range files {
-			cmd := exec.Command("bash", "-c", "./bin/"+file.Name())
+			cmd := exec.Command("./bin/" + file.Name())
 			output, err := cmd.CombinedOutput()
 			if err != nil {
 				pluginResults = append(pluginResults, failedPlugin(fmt.Sprintf("Failed Plugin: %s", file.Name()), fmt.Sprintf("Plugin with file name %s", file.Name()), string(output)))
