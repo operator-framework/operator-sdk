@@ -17,11 +17,11 @@ Example: `+operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displa
 #### customresourcedefinitions
 
 - `customresourcedefinitions`: child path token
-	-	`displayName`: string
-	- `resources`: string, in the format `"kind,version,\"name\""`, where `kind`, `version`, and `name` are fields in each CSV `resources` entry
+	-	`displayName`: quoted string
+	- `resources`: quoted string, in the format `"kind,version,\"name\""`, where `kind`, `version`, and `name` are fields in each CSV `resources` entry
 	- `specDescriptors`, `statusDescriptors`: bool, or child path token
-		- `displayName`: string
-		- `x-descriptors`: string comma-separated list of [`x-descriptor`][csv_x_desc] UI hints.
+		- `displayName`: quoted string
+		- `x-descriptors`: quoted string comma-separated list of [`x-descriptor`][csv_x_desc] UI hints.
 
 Notes:
 - `specDescriptors` and `statusDescriptors` with a value of `true` is required for each field to be included in their respective `customresourcedefinitions` CSV fields. See the examples below.

@@ -26,21 +26,35 @@ Annotations should follow this EBNF:
 comment token = ? the character(s) that define a line comment in some language, ex. // in go ? ;
 global prefix token = "+operator-sdk" ;
 global prefix = comment token , global prefix token ;
-command-specific token = ":command-name" ;
-command-specific prefix = global prefix , command-specific token , { command-specific token } ; (* a set of annotations for a sub-command *)
+use case token = ":use-case" ;
+use case prefix = global prefix , use case token , { use case token } ; (* a set of annotations for some use case *)
 parent path token = "parent" ;
 child path token = ".child" ;
 full path = parent path token , { child path token } ;
-prefixed path = command-specific prefix , ":" , full path ;
+prefixed path = use case prefix , ":" , full path ;
 value = ['"'] , "text" , ['"'] ;
 annotation = prefixed path , "=" , value ;
 ```
 
-While all token in a prefix up to command-specific prefixes must be followed, a path token can have command-specific structure. If the destination of data in a `.go` file is a YAML manifest with a list of values interpreted from that code, then a parser for an annotation can create a path including values (and symbols) indexing that list. In this specific case, an annotation's full path should follow the YAML path being set/modified.
+The "use case" token is meant to encapsulate the usage for an annotation, ex. `:gen-csv` is used for generating CSV's.
 
-An example for [`operator-sdk olm-catalog gen-csv`][sdk_cli_ref_gen_csv], using [`etcd-operator`][etcd_operator_api] API code:
+A path token should have use-case-specific structure. The following [`etcd-operator`][etcd_operator_api] API code would be successfully parsed by [`operator-sdk olm-catalog gen-csv`][sdk_cli_ref_gen_csv] in the manner described below:
 
 ```Go
+type EtcdCluster struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	Spec              ClusterSpec   `json:"spec"`
+	Status            ClusterStatus `json:"status"`
+}
+
+type ClusterSpec struct {
+	// Pod defines the policy to create pod for the etcd pod.
+	//
+	// Updating Pod does not take effect on any existing etcd pods.
+	Pod *PodPolicy `json:"pod,omitempty"`
+}
+
 // PodPolicy defines the policy to create pod for the etcd container.
 type PodPolicy struct {
 	...
@@ -50,9 +64,9 @@ type PodPolicy struct {
 }
 ```
 
-`gen-csv` generates a CSV by pulling data from all over an SDK-generated Operator project. By defining a set of CSV-specific paths with a `:gen-csv` command-specific token, a parser of API code annotations will know that the `customresourcedefinitions` spec field for the CSV generated using a type that has a field of type `PodPolicy` will include a `specDescriptor` list entry with a `displayName` value of `Resource Requirements`. Only the `gen-csv`-specific parser knows that `customresourcedefinitions` is a child of `spec` in a CSV, and a `specDescriptor` is a YAML list field. Other commands will ignore this annotation.
+By defining a set of paths with a `:gen-csv` use case token, an annotation parser "knows" that the `EtcdCluster` spec `ClusterSpec` has a `struct` field of type `PodPolicy` that should be included in the CSV manifest `spec.customresourcedefinitions` field as a `specDescriptor` entry with a `displayName` value of `Resource Requirements`.
 
-A malleable path element structure allows commands to interpret complex annotations. For an annotation set to be user-friendly, these elements must be kept as simple as possible for the given task. Their parser implementation *must* be accompanied by user-friendly documentation that explains how to create annotations for all supported fields, how the parser will interpret those annotations, and any constraints or requirements on paths or values.
+For an annotation set to be user-friendly, these elements must be kept as simple as possible for the given task. Their parser implementation *must* be accompanied by documentation that explains how to create annotations for all supported fields, how the parser will interpret those annotations, and any constraints or requirements on paths or values.
 
 [go_build_tags]:https://golang.org/pkg/go/build/#hdr-Build_Constraints
 [k8s_code_gen]:https://blog.openshift.com/kubernetes-deep-dive-code-generation-customresources/
