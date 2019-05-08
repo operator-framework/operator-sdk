@@ -338,14 +338,7 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 			cmd := exec.Command("bash", "-c", "./bin/"+file.Name())
 			output, err := cmd.CombinedOutput()
 			if err != nil {
-				failedPlugin := scapiv1alpha1.ScorecardOutput{}
-				failedResult := scapiv1alpha1.ScorecardSuiteResult{}
-				failedResult.Name = fmt.Sprintf("Failed Plugin: %s", file.Name())
-				failedResult.Description = fmt.Sprintf("Plugin with file name %s", file.Name())
-				failedResult.Error = 1
-				failedResult.Log = string(output)
-				failedPlugin.Results = append(failedPlugin.Results, failedResult)
-				pluginResults = append(pluginResults, failedPlugin)
+				pluginResults = append(pluginResults, failedPlugin(fmt.Sprintf("Failed Plugin: %s", file.Name()), fmt.Sprintf("Plugin with file name %s", file.Name()), string(output)))
 				// output error to main logger as well for human-readable output
 				log.Errorf("Plugin `%s` failed with error (%v)", file.Name(), err)
 				continue
@@ -354,14 +347,7 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 			result := scapiv1alpha1.ScorecardOutput{}
 			err = json.Unmarshal(output, &result)
 			if err != nil {
-				failedPlugin := scapiv1alpha1.ScorecardOutput{}
-				failedResult := scapiv1alpha1.ScorecardSuiteResult{}
-				failedResult.Name = fmt.Sprintf("Failed Plugin: %s", file.Name())
-				failedResult.Description = fmt.Sprintf("Plugin with file name `%s` failed", file.Name())
-				failedResult.Error = 1
-				failedResult.Log = string(output)
-				failedPlugin.Results = append(failedPlugin.Results, failedResult)
-				pluginResults = append(pluginResults, failedPlugin)
+				pluginResults = append(pluginResults, failedPlugin(fmt.Sprintf("Failed Plugin: %s", file.Name()), fmt.Sprintf("Plugin with file name `%s` failed", file.Name()), string(output)))
 				log.Errorf("Output from plugin `%s` failed to unmarshal with error (%v)", file.Name(), err)
 				continue
 			}
@@ -527,4 +513,15 @@ func getGVKs(yamlFile []byte) ([]schema.GroupVersionKind, error) {
 		gvks = append(gvks, obj.GroupVersionKind())
 	}
 	return gvks, nil
+}
+
+func failedPlugin(name, desc, log string) scapiv1alpha1.ScorecardOutput {
+	failedPlugin := scapiv1alpha1.ScorecardOutput{}
+	failedResult := scapiv1alpha1.ScorecardSuiteResult{}
+	failedResult.Name = name
+	failedResult.Description = desc
+	failedResult.Error = 1
+	failedResult.Log = log
+	failedPlugin.Results = append(failedPlugin.Results, failedResult)
+	return failedPlugin
 }
