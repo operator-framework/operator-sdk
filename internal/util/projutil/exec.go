@@ -121,20 +121,6 @@ func setCommandFields(c *exec.Cmd, opts GoCmdOptions) {
 	}
 }
 
-func wdInGoPath() (bool, error) {
-	wd, err := os.Getwd()
-	if err != nil {
-		return false, err
-	}
-	hd, err := getHomeDir()
-	if err != nil {
-		return false, err
-	}
-	goPath, ok := os.LookupEnv(GoPathEnv)
-	defaultGoPath := filepath.Join(hd, "go")
-	return (!ok && strings.HasPrefix(wd, defaultGoPath)) || (goPath != "" && strings.HasPrefix(wd, goPath)), nil
-}
-
 // From https://github.com/golang/go/wiki/Modules:
 //	You can activate module support in one of two ways:
 //	- Invoke the go command in a directory outside of the $GOPATH/src tree,
@@ -144,15 +130,18 @@ func wdInGoPath() (bool, error) {
 //
 // GoModOn returns true if go modules are on in one of the above two ways.
 func GoModOn() (bool, error) {
-	inSrc, err := wdInGoPathSrc()
-	if err != nil {
-		return false, err
-	}
 	v, ok := os.LookupEnv(GoModEnv)
 	if v == "off" {
 		return false, nil
 	}
-	return (v == "on" && inSrc) || ((!ok || v == "" || v == "auto") && !inSrc), nil
+	if v == "on" {
+		return true, nil
+	}
+	inSrc, err := wdInGoPathSrc()
+	if err != nil {
+		return false, err
+	}
+	return !inSrc && (!ok || v == "" || v == "auto"), nil
 }
 
 func wdInGoPathSrc() (bool, error) {
