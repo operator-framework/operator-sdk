@@ -28,6 +28,8 @@ type Stub struct {
 	Resource *Resource
 }
 
+var _ input.File = &Stub{}
+
 func (s *Stub) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = filepath.Join(ApisDir, s.Resource.GoImportGroup, StubFile)
