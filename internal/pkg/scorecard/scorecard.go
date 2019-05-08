@@ -302,7 +302,9 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 			suites = append(suites, *olmTests)
 		}
 		// set up clean environment for every CR
-		cleanupScorecard()
+		if err := cleanupScorecard(); err != nil {
+			log.Errorf("Failed to cleanup resources: (%v)", err)
+		}
 		// reset cleanup functions
 		cleanupFns = []cleanupFn{}
 		// clear name of operator deployment
@@ -316,10 +318,6 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 		// convert to ScorecardOutput format
 		// will add log when basic and olm tests are separated into plugins
 		pluginResults = append(pluginResults, TestSuitesToScorecardOutput([]TestSuite{suite}, ""))
-	}
-	// Cleanup built-in test resources before running plugins
-	if err := cleanupScorecard(); err != nil {
-		log.Errorf("Failed to cleanup resources: (%v)", err)
 	}
 	// Run plugins
 	pluginDir := viper.GetString(PluginDirOpt)
