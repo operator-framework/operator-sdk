@@ -9,7 +9,7 @@ powered by Helm using tools and libraries provided by the Operator SDK.
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - [dep][dep_tool] version v0.5.0+. (Optional if you aren't installing from source)
-- [go][go_tool] version v1.10+. (Optional if you aren't installing from source)
+- [go][go_tool] version v1.12+. (Optional if you aren't installing from source)
 - Access to a Kubernetes v1.11.3+ cluster.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the

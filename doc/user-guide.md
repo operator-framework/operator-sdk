@@ -9,7 +9,7 @@ Guide][helm_user_guide]. The rest of this document will show how to program an o
 
 - [dep][dep_tool] version v0.5.0+.
 - [git][git_tool]
-- [go][go_tool] version v1.10+.
+- [go][go_tool] version v1.12+.
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
@@ -52,6 +52,30 @@ $ cd memcached-operator
 ```
 
 To learn about the project directory structure, see [project layout][layout_doc] doc.
+
+#### A note on dependency management
+
+By default, `operator-sdk new` generates a `go.mod` file to be used with [Go modules][go_mod_wiki]. If you'd like to use [`dep`][dep_tool], set `--dep-manager=dep` when initializing your project, which will create a `Gopkg.toml` file with the same dependency information.
+
+##### Go modules
+
+If using go modules (the default dependency manager) in your project, ensure you activate module support before using the SDK. From the [go modules Wiki][go_mod_wiki]:
+
+> You can activate module support in one of two ways:
+> - Invoke the go command in a directory outside of the $GOPATH/src tree, with a valid go.mod file in the current directory or any parent of it and the environment variable GO111MODULE unset (or explicitly set to auto).
+> - Invoke the go command with GO111MODULE=on environment variable set.
+
+As of now, the SDK only supports initializing new projects in `$GOPATH/src`. We intend to support all go module modes for projects in the near future.
+
+You can set `GO111MODULE` in your CLI to activate currently supported behavior by running the following command:
+
+```sh
+$ export GO111MODULE=on
+```
+
+##### Vendoring
+
+The Operator SDK uses [vendoring][go_vendoring] to supply dependencies to operator projects, regardless of the dependency manager. As with the above module mode constraint, we intend to allow use of dependencies [outside of `vendor`][module_vendoring] for projects in the near future.
 
 #### Operator scope
 
@@ -370,11 +394,13 @@ $ kubectl delete -f deploy/service_account.yaml
 ### Adding 3rd Party Resources To Your Operator
 
 The operator's Manager supports the Core Kubernetes resource types as found in the client-go [scheme][scheme_package] package and will also register the schemes of all custom resource types defined in your project under `pkg/apis`.
+
 ```Go
 import (
   "github.com/example-inc/memcached-operator/pkg/apis"
   ...
 )
+
 // Setup Scheme for all resources
 if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
   log.Error(err, "")
@@ -382,7 +408,7 @@ if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
 }
 ```
 
-To add a 3rd party resource to an operator, you must add it to the Manager's scheme. By creating an `AddToScheme` method or reusing one you can easily add a resource to your scheme. An [example][deployments_register] shows that you define a function and then use the [runtime][runtime_package] package to create a `SchemeBuilder`.
+To add a 3rd party resource to an operator, you must add it to the Manager's scheme. By creating an `AddToScheme()` method or reusing one you can easily add a resource to your scheme. An [example][deployments_register] shows that you define a function and then use the [runtime][runtime_package] package to create a `SchemeBuilder`.
 
 #### Register with the Manager's scheme
 
@@ -391,30 +417,33 @@ Call the `AddToScheme()` function for your 3rd party resource and pass it the Ma
 Example:
 ```go
 import (
-    ....
-    routev1 "github.com/openshift/api/route/v1"
+  ....
+
+  routev1 "github.com/openshift/api/route/v1"
 )
 
 func main() {
-    ....
-    // Adding the routev1 
-    if err := routev1.AddToScheme(mgr.GetScheme()); err != nil {
-      log.Error(err, "")
-      os.Exit(1)
-    }
-    ....
-    	
-    // Setup all Controllers
-    if err := controller.AddToManager(mgr); err != nil {
-        log.Error(err, "")
-        os.Exit(1)
-    }	
+  ....
+
+  // Adding the routev1
+  if err := routev1.AddToScheme(mgr.GetScheme()); err != nil {
+    log.Error(err, "")
+    os.Exit(1)
+  }
+
+  ....
+
+  // Setup all Controllers
+  if err := controller.AddToManager(mgr); err != nil {
+    log.Error(err, "")
+    os.Exit(1)
+  }
 }
 ```
 
 **NOTES:**
 
-* After adding new import paths to your operator project, run `dep ensure` in the root of your project directory to fulfill these dependencies.
+* After adding new import paths to your operator project, run `go mod vendor` (or `dep ensure` if you set `--dep-manager=dep` when initializing your project) in the root of your project directory to fulfill these dependencies.
 * Your 3rd party resource needs to be added before add the controller in `"Setup all Controllers"`.
 
 ### Handle Cleanup on Deletion
@@ -500,6 +529,9 @@ When the operator is not running in a cluster, the Manager will return an error 
 [ansible_user_guide]:./ansible/user-guide.md
 [helm_user_guide]:./helm/user-guide.md
 [homebrew_tool]:https://brew.sh/
+[go_mod_wiki]: https://github.com/golang/go/wiki/Modules
+[go_vendoring]: https://blog.gopheracademy.com/advent-2015/vendor-folder/
+[module_vendoring]: https://github.com/golang/go/wiki/Modules#how-do-i-use-vendoring-with-modules-is-vendoring-going-away
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/

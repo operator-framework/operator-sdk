@@ -171,7 +171,7 @@ Create a new branch to push release commits:
 $ git checkout -b release-v1.3.0
 ```
 
-Commit changes to the following six files:
+Commit changes to the following files:
 
 - `version/version.go`: update `Version` to `v1.3.0`.
 - `internal/pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
@@ -181,6 +181,12 @@ Commit changes to the following six files:
 - `internal/pkg/scaffold/gopkgtoml_test.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
 - `internal/pkg/scaffold/ansible/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
 - `internal/pkg/scaffold/helm/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
+- `internal/pkg/scaffold/go_mod.go`, in the `replace` block for `github.com/operator-framework/operator-sdk`:
+  - Add the following `replace` entry: `github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v1.3.0`.
+  - If an entry already exists, change the version to `v1.3.0`.
+- `internal/pkg/scaffold/go_mod_test.go`: same as for `internal/pkg/scaffold/go_mod.go`.
+- `internal/pkg/scaffold/helm/go_mod.go`: same as for `internal/pkg/scaffold/go_mod.go`.
+- `internal/pkg/scaffold/ansible/go_mod.go`: same as for `internal/pkg/scaffold/go_mod.go`.
 - `CHANGELOG.md`: update the `## Unreleased` header to `## v1.3.0`.
 
 Create a new PR for `release-v1.3.0`.

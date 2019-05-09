@@ -33,15 +33,16 @@ func NewCmd() *cobra.Command {
 		Short: "Print Golang packages and versions required to run the operator",
 		Long: `The operator-sdk print-deps command prints all Golang packages and versions expected
 by this version of the Operator SDK. Versions for these packages should match
-those in an operators' Gopkg.toml file.
+those in an operators' go.mod or Gopkg.toml file, depending on the dependency
+manager chosen when initializing or migrating a project.
 
 print-deps prints in columnar format by default. Use the --as-file flag to
-print in Gopkg.toml file format.
+print in go.mod or Gopkg.toml file format.
 `,
 		RunE: printDepsFunc,
 	}
 
-	printDepsCmd.Flags().BoolVar(&asFile, "as-file", false, "Print dependencies in Gopkg.toml file format.")
+	printDepsCmd.Flags().BoolVar(&asFile, "as-file", false, "Print dependencies in go.mod or Gopkg.toml file format, depending on the dependency manager chosen when initializing or migrating a project")
 
 	return printDepsCmd
 }
@@ -72,14 +73,17 @@ func printDeps(asFile bool) error {
 		if isDep {
 			return ansible.PrintDepGopkgTOML(asFile)
 		}
+		return ansible.PrintGoMod(asFile)
 	case projutil.IsOperatorHelm():
 		if isDep {
 			return helm.PrintDepGopkgTOML(asFile)
 		}
+		return helm.PrintGoMod(asFile)
 	case projutil.IsOperatorGo():
 		if isDep {
 			return scaffold.PrintDepGopkgTOML(asFile)
 		}
+		return scaffold.PrintGoMod(asFile)
 	}
 
 	return projutil.ErrUnknownOperatorType{}

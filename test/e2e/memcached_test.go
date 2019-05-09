@@ -23,12 +23,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -36,7 +34,9 @@ import (
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 
+	"github.com/ghodss/yaml"
 	"github.com/prometheus/prometheus/util/promlint"
+	"github.com/rogpeppe/go-internal/modfile"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -73,6 +73,16 @@ func TestMemcached(t *testing.T) {
 			t.Errorf("Failed to change back to original working directory: (%v)", err)
 		}
 	}()
+	// For go commands in operator projects.
+	if err = os.Setenv("GO111MODULE", "on"); err != nil {
+		t.Fatal(err)
+	}
+	// Local repo HEAD commit.
+	cb, err := exec.Command("git", "rev-parse", "HEAD").CombinedOutput()
+	if err != nil {
+		t.Fatal(err)
+	}
+	localCommitSha := string(cb)
 
 	// Setup
 	absProjectPath := filepath.Join(gopath, "src/github.com/example-inc")
@@ -88,59 +98,58 @@ func TestMemcached(t *testing.T) {
 		"new",
 		operatorName).CombinedOutput()
 	if err != nil {
-		// HACK: dep cannot resolve non-master branches as the base branch for PR's,
-		// so running `dep ensure` will fail when first running
-		// `operator-sdk new ...`. For now we can ignore the first solve failure.
-		// A permanent solution can be implemented once the following is merged:
-		// https://github.com/golang/dep/pull/1658
-		solveFailRe := regexp.MustCompile(`(?m)^[ \t]*Solving failure:.+github\.com/operator-framework/operator-sdk.+:$`)
-		if !solveFailRe.Match(cmdOut) {
-			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
-		}
+		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 	ctx.AddCleanupFn(func() error { return os.RemoveAll(absProjectPath) })
 
 	if err := os.Chdir(operatorName); err != nil {
 		t.Fatalf("Failed to change to %s directory: (%v)", operatorName, err)
 	}
+
+	// Get repo being tested. If neither TRAVIS_* repo variable is set, we must be
+	// running locally.
 	repo, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
 	if repo == "" {
 		repo, ok = os.LookupEnv("TRAVIS_REPO_SLUG")
 	}
-	if ok && repo != "" && repo != "operator-framework/operator-sdk" {
+	if (ok && repo != "" && repo != "operator-framework/operator-sdk") || !ok {
+		// Get commit being tested. If neither TRAVIS_* variable is set, we must
+		// be running locally, so use local HEAD commit.
 		commitSha, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SHA")
-		if commitSha == "" {
+		if !ok {
+			commitSha, ok = localCommitSha, true
+		} else if commitSha == "" {
 			commitSha, ok = os.LookupEnv("TRAVIS_COMMIT")
 		}
 		if ok && commitSha != "" {
-			gopkg, err := ioutil.ReadFile("Gopkg.toml")
+			modBytes, err := ioutil.ReadFile("go.mod")
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("Failed to read go.mod: %v", err)
 			}
-			// Match against the '#osdk_branch_annotation' used for version substitution
-			// and comment out the current branch.
-			branchRe := regexp.MustCompile("([ ]+)(.+#osdk_branch_annotation)")
-			gopkg = branchRe.ReplaceAll(gopkg, []byte("$1# $2"))
-			versionRe := regexp.MustCompile("([ ]+)(.+#osdk_version_annotation)")
-			gopkg = versionRe.ReplaceAll(gopkg, []byte("$1# $2"))
-			// Plug in the fork to test against so `dep ensure` can resolve dependencies
-			// correctly.
-			gopkgString := string(gopkg)
-			gopkgLoc := strings.LastIndex(gopkgString, "\n  name = \"github.com/operator-framework/operator-sdk\"\n")
-			gopkgString = gopkgString[:gopkgLoc] + "\n  source = \"https://github.com/" + repo + "\"\n  revision = \"" + commitSha + "\"\n" + gopkgString[gopkgLoc+1:]
-			err = ioutil.WriteFile("Gopkg.toml", []byte(gopkgString), fileutil.DefaultFileMode)
+			modFile, err := modfile.Parse("go.mod", modBytes, nil)
 			if err != nil {
-				t.Fatalf("Failed to write updated Gopkg.toml: %v", err)
+				t.Fatalf("Failed to parse go.mod: %v", err)
+			}
+			sdkPath := "github.com/operator-framework/operator-sdk"
+			if err = modFile.AddReplace(sdkPath, "", sdkPath, commitSha); err != nil {
+				t.Fatalf(`Failed to add "replace %s => %s %s: %v"`, sdkPath, sdkPath, commitSha, err)
+			}
+			if modBytes, err = modFile.Format(); err != nil {
+				t.Fatalf("Failed to format go.mod: %v", err)
+			}
+			err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
+			if err != nil {
+				t.Fatalf("Failed to write updated go.mod: %v", err)
 			}
 
-			t.Logf("Gopkg.toml: %v", gopkgString)
+			t.Logf("go.mod: %v", string(modBytes))
 		} else {
 			t.Fatal("Could not find sha of PR")
 		}
 	}
-	cmdOut, err = exec.Command("dep", "ensure").CombinedOutput()
+	cmdOut, err = exec.Command("go", "mod", "vendor").CombinedOutput()
 	if err != nil {
-		t.Fatalf("Error after modifying Gopkg.toml: %v\nCommand Output: %s\n", err, string(cmdOut))
+		t.Fatalf("Error after modifying go.mod: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
 	// Set replicas to 2 to test leader election. In production, this should
@@ -231,23 +240,10 @@ func TestMemcached(t *testing.T) {
 		t.Fatalf("Could not rename test/e2e/memcached_test.go.tmpl: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 
-	t.Log("Pulling new dependencies with dep ensure")
-	cmdOut, err = exec.Command("dep", "ensure").CombinedOutput()
+	t.Log("Pulling new dependencies with go mod")
+	cmdOut, err = exec.Command("go", "mod", "vendor").CombinedOutput()
 	if err != nil {
-		t.Fatalf("Command 'dep ensure' failed: %v\nCommand Output:\n%v", err, string(cmdOut))
-	}
-	// link local sdk to vendor if not in travis
-	if repo == "" {
-		for _, dir := range []string{"pkg", "internal"} {
-			repoDir := filepath.Join("github.com/operator-framework/operator-sdk", dir)
-			vendorDir := filepath.Join("vendor", repoDir)
-			if err := os.RemoveAll(vendorDir); err != nil {
-				t.Fatalf("Failed to delete old vendor directory: (%v)", err)
-			}
-			if err := os.Symlink(filepath.Join(gopath, projutil.SrcDir, repoDir), vendorDir); err != nil {
-				t.Fatalf("Failed to symlink local operator-sdk project to vendor dir: (%v)", err)
-			}
-		}
+		t.Fatalf("Command 'go mod vendor' failed: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 
 	file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)

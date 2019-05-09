@@ -213,6 +213,7 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 			PackagePath: args[0] + "/...",
 			Env:         append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace)),
 			Dir:         projutil.MustGetwd(),
+			GoMod:       projutil.IsDepManagerGoMod(),
 		},
 		TestBinaryArgs: testArgs,
 	}
