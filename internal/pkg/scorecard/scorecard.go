@@ -359,7 +359,10 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 				log.Errorf("Output from plugin `%s` failed to unmarshal with error (%v)", file.Name(), err)
 				continue
 			}
-			log.Warn(string(stderr.Bytes()))
+			stderrString := string(stderr.Bytes())
+			if len(stderrString) != 0 {
+				log.Warn(stderrString)
+			}
 			pluginResults = append(pluginResults, result)
 		}
 	}
