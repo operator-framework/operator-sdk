@@ -79,7 +79,12 @@ func TestMemcached(t *testing.T) {
 	}
 
 	// Setup
-	absProjectPath := filepath.Join(gopath, "src/github.com/example-inc")
+	absProjectPath, err := ioutil.TempDir(filepath.Join(gopath, "src"), "tmp.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx.AddCleanupFn(func() error { return os.RemoveAll(absProjectPath) })
+
 	if err := os.MkdirAll(absProjectPath, fileutil.DefaultDirFileMode); err != nil {
 		t.Fatal(err)
 	}
@@ -94,7 +99,6 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
-	ctx.AddCleanupFn(func() error { return os.RemoveAll(absProjectPath) })
 
 	if err := os.Chdir(operatorName); err != nil {
 		t.Fatalf("Failed to change to %s directory: (%v)", operatorName, err)
@@ -161,11 +165,25 @@ func TestMemcached(t *testing.T) {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
-	cmdOut, err = exec.Command("cp", "-a", filepath.Join(gopath, "src/github.com/operator-framework/operator-sdk/example/memcached-operator/memcached_controller.go.tmpl"),
-		"pkg/controller/memcached/memcached_controller.go").CombinedOutput()
-	if err != nil {
-		t.Fatalf("Could not copy memcached example to to pkg/controller/memcached/memcached_controller.go: %v\nCommand Output:\n%v", err, string(cmdOut))
+	tmplFiles := map[string]string{
+		filepath.Join(localSDKPath, "example/memcached-operator/memcached_controller.go.tmpl"): "pkg/controller/memcached/memcached_controller.go",
+		filepath.Join(localSDKPath, "test/e2e/incluster-test-code/main_test.go.tmpl"):          "test/e2e/main_test.go",
+		filepath.Join(localSDKPath, "test/e2e/incluster-test-code/memcached_test.go.tmpl"):     "test/e2e/memcached_test.go",
 	}
+	for src, dst := range tmplFiles {
+		if err := os.MkdirAll(filepath.Dir(dst), fileutil.DefaultDirFileMode); err != nil {
+			t.Fatalf("Could not create template destination directory: %s", err)
+		}
+		srcTmpl, err := ioutil.ReadFile(src)
+		if err != nil {
+			t.Fatalf("Could not read template from %s: %s", src, err)
+		}
+		dstData := strings.ReplaceAll(string(srcTmpl), "github.com/example-inc", filepath.Base(absProjectPath))
+		if err := ioutil.WriteFile(dst, []byte(dstData), fileutil.DefaultFileMode); err != nil {
+			t.Fatalf("Could not write template output to %s: %s", dst, err)
+		}
+	}
+
 	memcachedTypesFile, err := ioutil.ReadFile("pkg/apis/cache/v1alpha1/memcached_types.go")
 	if err != nil {
 		t.Fatal(err)
@@ -199,24 +217,6 @@ func TestMemcached(t *testing.T) {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
-	t.Log("Copying test files to ./test")
-	if err = os.MkdirAll("./test", fileutil.DefaultDirFileMode); err != nil {
-		t.Fatalf("Could not create test/e2e dir: %v", err)
-	}
-	cmdOut, err = exec.Command("cp", "-a", filepath.Join(gopath, "src/github.com/operator-framework/operator-sdk/test/e2e/incluster-test-code"), "./test/e2e").CombinedOutput()
-	if err != nil {
-		t.Fatalf("Could not copy tests to test/e2e: %v\nCommand Output:\n%v", err, string(cmdOut))
-	}
-	// fix naming of files
-	cmdOut, err = exec.Command("mv", "test/e2e/main_test.go.tmpl", "test/e2e/main_test.go").CombinedOutput()
-	if err != nil {
-		t.Fatalf("Could not rename test/e2e/main_test.go.tmpl: %v\nCommand Output:\n%v", err, string(cmdOut))
-	}
-	cmdOut, err = exec.Command("mv", "test/e2e/memcached_test.go.tmpl", "test/e2e/memcached_test.go").CombinedOutput()
-	if err != nil {
-		t.Fatalf("Could not rename test/e2e/memcached_test.go.tmpl: %v\nCommand Output:\n%v", err, string(cmdOut))
-	}
-
 	t.Log("Pulling new dependencies with go mod")
 	cmdOut, err = exec.Command("go", "mod", "vendor").CombinedOutput()
 	if err != nil {
@@ -227,6 +227,8 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	ctx.AddCleanupFn(func() error { return os.Remove(file.Name()) })
+
 	// hacky way to use createFromYAML without exposing the method
 	// create crd
 	filename := file.Name()
@@ -579,6 +581,8 @@ func MemcachedCluster(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	ctx.AddCleanupFn(func() error { return os.Remove(file.Name()) })
+
 	// create namespaced resources
 	filename := file.Name()
 	framework.Global.NamespacedManPath = &filename
