@@ -61,7 +61,7 @@ func TestMemcached(t *testing.T) {
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
 	gopath, ok := os.LookupEnv(projutil.GoPathEnv)
-	if !ok {
+	if !ok || gopath == "" {
 		t.Fatalf("$GOPATH not set")
 	}
 	cd, err := os.Getwd()
@@ -77,12 +77,6 @@ func TestMemcached(t *testing.T) {
 	if err = os.Setenv("GO111MODULE", "on"); err != nil {
 		t.Fatal(err)
 	}
-	// Local repo HEAD commit.
-	cb, err := exec.Command("git", "rev-parse", "HEAD").CombinedOutput()
-	if err != nil {
-		t.Fatal(err)
-	}
-	localCommitSha := string(cb)
 
 	// Setup
 	absProjectPath := filepath.Join(gopath, "src/github.com/example-inc")
@@ -106,43 +100,48 @@ func TestMemcached(t *testing.T) {
 		t.Fatalf("Failed to change to %s directory: (%v)", operatorName, err)
 	}
 
-	// Get repo being tested. If neither TRAVIS_* repo variable is set, we must be
-	// running locally.
-	repo, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
-	if repo == "" {
-		repo, ok = os.LookupEnv("TRAVIS_REPO_SLUG")
+	sdkRepo := "github.com/operator-framework/operator-sdk"
+	sdkPath := sdkRepo
+	// Get repo being tested. If neither TRAVIS_* repo variable is set, we must
+	// be running locally.
+	isLocal := false
+	repo, repoOK := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
+	if !repoOK || repo == "" {
+		repo, repoOK = os.LookupEnv("TRAVIS_REPO_SLUG")
 	}
-	if (ok && repo != "" && repo != "operator-framework/operator-sdk") || !ok {
-		// Get commit being tested. If neither TRAVIS_* variable is set, we must
-		// be running locally, so use local HEAD commit.
-		commitSha, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SHA")
-		if !ok {
-			commitSha, ok = localCommitSha, true
-		} else if commitSha == "" {
-			commitSha, ok = os.LookupEnv("TRAVIS_COMMIT")
+	if !repoOK || repo == "" {
+		sdkPath = filepath.Join(gopath, "src", sdkRepo)
+		isLocal = true
+	}
+	// Get commit being tested. If neither TRAVIS_* variable is set, we must
+	// be running locally. Local repos do not need a commit.
+	commitSha, shaOK := "", false
+	if !isLocal {
+		commitSha, shaOK = os.LookupEnv("TRAVIS_PULL_REQUEST_SHA")
+		if !shaOK || commitSha == "" {
+			commitSha, shaOK = os.LookupEnv("TRAVIS_COMMIT")
 		}
-		if ok && commitSha != "" {
-			modBytes, err := ioutil.ReadFile("go.mod")
-			if err != nil {
-				t.Fatalf("Failed to read go.mod: %v", err)
-			}
-			modFile, err := modfile.Parse("go.mod", modBytes, nil)
-			if err != nil {
-				t.Fatalf("Failed to parse go.mod: %v", err)
-			}
-			sdkPath := "github.com/operator-framework/operator-sdk"
-			if err = modFile.AddReplace(sdkPath, "", sdkPath, commitSha); err != nil {
-				t.Fatalf(`Failed to add "replace %s => %s %s: %v"`, sdkPath, sdkPath, commitSha, err)
-			}
-			if modBytes, err = modFile.Format(); err != nil {
-				t.Fatalf("Failed to format go.mod: %v", err)
-			}
-			err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
-			if err != nil {
-				t.Fatalf("Failed to write updated go.mod: %v", err)
-			}
+	}
 
-			t.Logf("go.mod: %v", string(modBytes))
+	if (repoOK && repo != "" && repo != "operator-framework/operator-sdk") || isLocal {
+		if (shaOK && commitSha != "") || isLocal {
+			if isLocal {
+				// A hacky way to get local module substitution to work is to write a
+				// stub go.mod into the local SDK repo referred to in
+				// memcached-operator's go.mod, which allows go to recognize
+				// the local SDK repo as a module.
+				sdkModPath := filepath.Join(sdkPath, "go.mod")
+				err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
+				if err != nil {
+					t.Fatalf("Failed to write main repo go.mod file: %v", err)
+				}
+				defer func() {
+					if err = os.RemoveAll(sdkModPath); err != nil {
+						t.Fatalf("Failed to remove %s: %v", sdkModPath, err)
+					}
+				}()
+			}
+			writeGoModReplace(t, sdkRepo, sdkPath, commitSha)
 		} else {
 			t.Fatal("Could not find sha of PR")
 		}
@@ -266,6 +265,32 @@ func TestMemcached(t *testing.T) {
 		t.Run("ClusterTest", MemcachedClusterTest)
 		t.Run("Local", MemcachedLocal)
 	})
+}
+
+func writeGoModReplace(t *testing.T, repo, path, sha string) {
+	modBytes, err := ioutil.ReadFile("go.mod")
+	if err != nil {
+		t.Fatalf("Failed to read go.mod: %v", err)
+	}
+	modFile, err := modfile.Parse("go.mod", modBytes, nil)
+	if err != nil {
+		t.Fatalf("Failed to parse go.mod: %v", err)
+	}
+	if err = modFile.AddReplace(repo, "", path, sha); err != nil {
+		s := ""
+		if sha != "" {
+			s = " " + sha
+		}
+		t.Fatalf(`Failed to add "replace %s => %s%s: %v"`, repo, path, s, err)
+	}
+	if modBytes, err = modFile.Format(); err != nil {
+		t.Fatalf("Failed to format go.mod: %v", err)
+	}
+	err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
+	if err != nil {
+		t.Fatalf("Failed to write updated go.mod: %v", err)
+	}
+	t.Logf("go.mod: %v", string(modBytes))
 }
 
 func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
