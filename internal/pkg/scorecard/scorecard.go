@@ -520,12 +520,13 @@ func getGVKs(yamlFile []byte) ([]schema.GroupVersionKind, error) {
 }
 
 func failedPlugin(name, desc, log string) scapiv1alpha1.ScorecardOutput {
-	failedPlugin := scapiv1alpha1.ScorecardOutput{}
-	failedResult := scapiv1alpha1.ScorecardSuiteResult{}
-	failedResult.Name = name
-	failedResult.Description = desc
-	failedResult.Error = 1
-	failedResult.Log = log
-	failedPlugin.Results = append(failedPlugin.Results, failedResult)
-	return failedPlugin
+	return scapiv1alpha1.ScorecardOutput{
+		Results: []scapiv1alpha1.ScorecardSuiteResult{{
+			Name:        name,
+			Description: desc,
+			Error:       1,
+			Log:         log,
+		},
+		},
+	}
 }
