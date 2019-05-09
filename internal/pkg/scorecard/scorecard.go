@@ -334,27 +334,32 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 		}
 		for _, file := range files {
 			cmd := exec.Command("./bin/" + file.Name())
-			output, err := cmd.CombinedOutput()
+			stdout := &bytes.Buffer{}
+			cmd.Stdout = stdout
+			stderr := &bytes.Buffer{}
+			cmd.Stderr = stderr
+			err := cmd.Run()
 			if err != nil {
 				pluginResults = append(pluginResults, failedPlugin(
-					fmt.Sprintf("Plugin output invalid: %s", file.Name()),
-					fmt.Sprintf("Plugin with file name %s did not produce valid ScorecardOutput JSON", file.Name()),
-					fmt.Sprintf("%s: %s", err, string(output))))
+					fmt.Sprintf("Failed Plugin: %s", file.Name()),
+					fmt.Sprintf("Plugin with file name `%s` failed", file.Name()),
+					fmt.Sprintf("%s:\nStdout: %s\nStderr: %s", err, string(stdout.Bytes()), string(stderr.Bytes()))))
 				// output error to main logger as well for human-readable output
 				log.Errorf("Plugin `%s` failed with error (%v)", file.Name(), err)
 				continue
 			}
 			//parse output and add to suites
 			result := scapiv1alpha1.ScorecardOutput{}
-			err = json.Unmarshal(output, &result)
+			err = json.Unmarshal(stdout.Bytes(), &result)
 			if err != nil {
 				pluginResults = append(pluginResults, failedPlugin(
-					fmt.Sprintf("Failed Plugin: %s", file.Name()),
-					fmt.Sprintf("Plugin with file name `%s` failed", file.Name()),
-					string(output)))
+					fmt.Sprintf("Plugin output invalid: %s", file.Name()),
+					fmt.Sprintf("Plugin with file name %s did not produce valid ScorecardOutput JSON", file.Name()),
+					fmt.Sprintf("Stdout: %s\nStderr: %s", string(stdout.Bytes()), string(stderr.Bytes()))))
 				log.Errorf("Output from plugin `%s` failed to unmarshal with error (%v)", file.Name(), err)
 				continue
 			}
+			log.Warn(string(stderr.Bytes()))
 			pluginResults = append(pluginResults, result)
 		}
 	}
