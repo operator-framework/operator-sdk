@@ -233,6 +233,8 @@ Once this is done, there are two ways to run the operator:
 
 ### 1. Run as a Deployment inside the cluster
 
+**Note**: `operator-sdk build` invokes `docker build`. Make sure your docker daemon is running and that you can run the docker client without sudo. You can check if this is the case by running `docker version`, which should complete without errors. Follow instructions for your OS/distribution on how to start the docker daemon and configure your access permissions, if needed.
+
 Build the memcached-operator image and push it to a registry:
 ```
 $ operator-sdk build quay.io/example/memcached-operator:v0.0.1
