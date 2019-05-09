@@ -38,6 +38,7 @@ type MemcachedRSStatus struct {
 
 // MemcachedRS is the Schema for the memcachedrs API
 // +k8s:openapi-gen=true
+// +kubebuilder:subresource:status
 type MemcachedRS struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
