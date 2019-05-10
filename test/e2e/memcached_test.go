@@ -112,6 +112,8 @@ func TestMemcached(t *testing.T) {
 	if !repoOK || repo == "" {
 		sdkPath = filepath.Join(gopath, "src", sdkRepo)
 		isLocal = true
+	} else {
+		sdkPath = fmt.Sprintf("github.com/%s", repo)
 	}
 	// Get commit being tested. If neither TRAVIS_* variable is set, we must
 	// be running locally. Local repos do not need a commit.
