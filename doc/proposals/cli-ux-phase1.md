@@ -24,8 +24,7 @@ newcomers.
 
 ## Goal
 
-Describe an initial set of CLI additions to support a simplified workflow for an Operator SDK user to run an Operator SDK-developed project in a cluster using OLM.
-
+Implement a proof-of-concept with an initial set of CLI additions to support a simplified workflow for an Operator SDK user to run an Operator SDK-developed project in a cluster using OLM.
 
 ## Use cases
 
