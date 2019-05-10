@@ -27,4 +27,4 @@ My suggested method for interacting with this feature is to have a command in th
 
 ### Observations and open questions
 
-< Any open questions that need solving or implementation details should go here. These can be removed at the end of the proposal if they are resolved. >
+[Here](https://github.com/operator-framework/operator-sdk-samples/pull/63) is an example of the planned implementation on the alpha version of controller runtime. 
