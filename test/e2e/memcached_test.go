@@ -101,51 +101,29 @@ func TestMemcached(t *testing.T) {
 	}
 
 	sdkRepo := "github.com/operator-framework/operator-sdk"
-	sdkPath := sdkRepo
-	// Get repo being tested. If neither TRAVIS_* repo variable is set, we must
-	// be running locally.
-	isLocal := false
-	repo, repoOK := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
-	if !repoOK || repo == "" {
-		repo, repoOK = os.LookupEnv("TRAVIS_REPO_SLUG")
-	}
-	if !repoOK || repo == "" {
-		sdkPath = filepath.Join(gopath, "src", sdkRepo)
-		isLocal = true
-	}
-	// Get commit being tested. If neither TRAVIS_* variable is set, we must
-	// be running locally. Local repos do not need a commit.
-	commitSha, shaOK := "", false
-	if !isLocal {
-		commitSha, shaOK = os.LookupEnv("TRAVIS_PULL_REQUEST_SHA")
-		if !shaOK || commitSha == "" {
-			commitSha, shaOK = os.LookupEnv("TRAVIS_COMMIT")
+	localSDKPath := filepath.Join(gopath, "src", sdkRepo)
+
+	replace := getGoModReplace(t, localSDKPath)
+	if replace.repo != sdkRepo {
+		if replace.isLocal {
+			// A hacky way to get local module substitution to work is to write a
+			// stub go.mod into the local SDK repo referred to in
+			// memcached-operator's go.mod, which allows go to recognize
+			// the local SDK repo as a module.
+			sdkModPath := filepath.Join(replace.repo, "go.mod")
+			err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
+			if err != nil {
+				t.Fatalf("Failed to write main repo go.mod file: %v", err)
+			}
+			defer func() {
+				if err = os.RemoveAll(sdkModPath); err != nil {
+					t.Fatalf("Failed to remove %s: %v", sdkModPath, err)
+				}
+			}()
 		}
+		writeGoModReplace(t, sdkRepo, replace.repo, replace.ref)
 	}
 
-	if (repoOK && repo != "" && repo != "operator-framework/operator-sdk") || isLocal {
-		if (shaOK && commitSha != "") || isLocal {
-			if isLocal {
-				// A hacky way to get local module substitution to work is to write a
-				// stub go.mod into the local SDK repo referred to in
-				// memcached-operator's go.mod, which allows go to recognize
-				// the local SDK repo as a module.
-				sdkModPath := filepath.Join(sdkPath, "go.mod")
-				err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
-				if err != nil {
-					t.Fatalf("Failed to write main repo go.mod file: %v", err)
-				}
-				defer func() {
-					if err = os.RemoveAll(sdkModPath); err != nil {
-						t.Fatalf("Failed to remove %s: %v", sdkModPath, err)
-					}
-				}()
-			}
-			writeGoModReplace(t, sdkRepo, sdkPath, commitSha)
-		} else {
-			t.Fatal("Could not find sha of PR")
-		}
-	}
 	cmdOut, err = exec.Command("go", "mod", "vendor").CombinedOutput()
 	if err != nil {
 		t.Fatalf("Error after modifying go.mod: %v\nCommand Output: %s\n", err, string(cmdOut))
@@ -265,6 +243,66 @@ func TestMemcached(t *testing.T) {
 		t.Run("ClusterTest", MemcachedClusterTest)
 		t.Run("Local", MemcachedLocal)
 	})
+}
+
+type goModReplace struct {
+	repo    string
+	ref     string
+	isLocal bool
+}
+
+// getGoModReplace returns a go.mod replacement that is appropriate based on the build's
+// environment to support PR, fork/branch, and local builds.
+//
+//   PR:
+//     1. Activate when TRAVIS_PULL_REQUEST_SLUG and TRAVIS_PULL_REQUEST_SHA are set
+//     2. Modify go.mod to replace osdk import with github.com/${TRAVIS_PULL_REQUEST_SLUG} ${TRAVIS_PULL_REQUEST_SHA}
+//
+//   Fork/branch:
+//     1. Activate when TRAVIS_REPO_SLUG and TRAVIS_COMMIT are set
+//     2. Modify go.mod to replace osdk import with github.com/${TRAVIS_REPO_SLUG} ${TRAVIS_COMMIT}
+//
+//   Local:
+//     1. Activate when none of the above TRAVIS_* variables are set.
+//     2. Modify go.mod to replace osdk import with local filesystem path.
+//
+func getGoModReplace(t *testing.T, localSDKPath string) goModReplace {
+	// PR environment
+	prSlug, prSlugOk := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
+	prSha, prShaOk := os.LookupEnv("TRAVIS_PULL_REQUEST_SHA")
+	if prSlugOk && prSlug != "" && prShaOk && prSha != "" {
+		return goModReplace{
+			repo: fmt.Sprintf("github.com/%s", prSlug),
+			ref:  prSha,
+		}
+	}
+
+	// Fork/branch environment
+	slug, slugOk := os.LookupEnv("TRAVIS_REPO_SLUG")
+	sha, shaOk := os.LookupEnv("TRAVIS_COMMIT")
+	if slugOk && slug != "" && shaOk && sha != "" {
+		return goModReplace{
+			repo: fmt.Sprintf("github.com/%s", slug),
+			ref:  sha,
+		}
+	}
+
+	// If neither of the above cases is applicable, but one of the TRAVIS_*
+	// variables is nonetheless set, something unexpected is going on. Log
+	// the vars and exit.
+	if prSlugOk || prShaOk || slugOk || shaOk {
+		t.Logf("TRAVIS_PULL_REQUEST_SLUG='%s', set: %t", prSlug, prSlugOk)
+		t.Logf("TRAVIS_PULL_REQUEST_SHA='%s', set: %t", prSha, prShaOk)
+		t.Logf("TRAVIS_REPO_SLUG='%s', set: %t", slug, slugOk)
+		t.Logf("TRAVIS_COMMIT='%s', set: %t", sha, shaOk)
+		t.Fatal("Invalid travis environment")
+	}
+
+	// Local environment
+	return goModReplace{
+		repo:    localSDKPath,
+		isLocal: true,
+	}
 }
 
 func writeGoModReplace(t *testing.T, repo, path, sha string) {
