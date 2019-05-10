@@ -287,7 +287,14 @@ func getGoModReplace(t *testing.T, localSDKPath string) goModReplace {
 		}
 	}
 
+	// If neither of the above cases is applicable, but one of the TRAVIS_*
+	// variables is nonetheless set, something unexpected is going on. Log
+	// the vars and exit.
 	if prSlugOk || prShaOk || slugOk || shaOk {
+		t.Logf("TRAVIS_PULL_REQUEST_SLUG='%s', set: %t", prSlug, prSlugOk)
+		t.Logf("TRAVIS_PULL_REQUEST_SHA='%s', set: %t", prSha, prShaOk)
+		t.Logf("TRAVIS_REPO_SLUG='%s', set: %t", slug, slugOk)
+		t.Logf("TRAVIS_COMMIT='%s', set: %t", sha, shaOk)
 		t.Fatal("Invalid travis environment")
 	}
 
