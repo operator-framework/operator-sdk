@@ -178,7 +178,7 @@ func TestMemcached(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Could not read template from %s: %s", src, err)
 		}
-		dstData := strings.ReplaceAll(string(srcTmpl), "github.com/example-inc", filepath.Base(absProjectPath))
+		dstData := strings.Replace(string(srcTmpl), "github.com/example-inc", filepath.Base(absProjectPath), -1)
 		if err := ioutil.WriteFile(dst, []byte(dstData), fileutil.DefaultFileMode); err != nil {
 			t.Fatalf("Could not write template output to %s: %s", dst, err)
 		}
