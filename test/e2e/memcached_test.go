@@ -262,7 +262,6 @@ func TestMemcached(t *testing.T) {
 	// run subtests
 	t.Run("memcached-group", func(t *testing.T) {
 		t.Run("Cluster", MemcachedCluster)
-		t.Run("ClusterTest", MemcachedClusterTest)
 		t.Run("Local", MemcachedLocal)
 	})
 }
@@ -521,10 +520,7 @@ func MemcachedCluster(t *testing.T) {
 		t.Fatalf("Failed to write deploy/operator.yaml: %v", err)
 	}
 	t.Log("Building operator docker image")
-	cmdOut, err := exec.Command("operator-sdk", "build", *e2eImageName,
-		"--enable-tests",
-		"--test-location", "./test/e2e",
-		"--namespaced-manifest", "deploy/operator.yaml").CombinedOutput()
+	cmdOut, err := exec.Command("operator-sdk", "build", *e2eImageName).CombinedOutput()
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
@@ -570,50 +566,6 @@ func MemcachedCluster(t *testing.T) {
 
 	if err = memcachedMetricsTest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
-	}
-}
-
-func MemcachedClusterTest(t *testing.T) {
-	// get global framework variables
-	ctx := framework.NewTestCtx(t)
-	defer ctx.Cleanup()
-
-	// create sa
-	filename := "deploy/service_account.yaml"
-	framework.Global.NamespacedManPath = &filename
-	err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("Created sa")
-
-	// create rbac
-	filename = "deploy/role.yaml"
-	framework.Global.NamespacedManPath = &filename
-	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("Created role")
-
-	filename = "deploy/role_binding.yaml"
-	framework.Global.NamespacedManPath = &filename
-	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("Created role_binding")
-
-	namespace, err := ctx.GetNamespace()
-	if err != nil {
-		t.Fatalf("Could not get namespace: %v", err)
-	}
-	cmdOut, err := exec.Command("operator-sdk", "test", "cluster", *e2eImageName,
-		"--namespace", namespace,
-		"--image-pull-policy", "Never",
-		"--service-account", operatorName).CombinedOutput()
-	if err != nil {
-		t.Fatalf("In-cluster test failed: %v\nCommand Output:\n%s", err, string(cmdOut))
 	}
 }
 

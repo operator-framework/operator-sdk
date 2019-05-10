@@ -17,7 +17,6 @@ package test
 import (
 	goctx "context"
 	"fmt"
-	"net"
 	"os"
 	"sync"
 	"time"
@@ -69,34 +68,10 @@ func setup(kubeconfigPath, namespacedManPath *string, localOperator bool) error 
 	}
 	var err error
 	var kubeconfig *rest.Config
-	if *kubeconfigPath == "incluster" {
-		// Work around https://github.com/kubernetes/kubernetes/issues/40973
-		if len(os.Getenv("KUBERNETES_SERVICE_HOST")) == 0 {
-			addrs, err := net.LookupHost("kubernetes.default.svc")
-			if err != nil {
-				return fmt.Errorf("failed to get service host: %v", err)
-			}
-			if err := os.Setenv("KUBERNETES_SERVICE_HOST", addrs[0]); err != nil {
-				return fmt.Errorf("failed to set kubernetes host env var: (%v)", err)
-			}
-		}
-		if len(os.Getenv("KUBERNETES_SERVICE_PORT")) == 0 {
-			if err := os.Setenv("KUBERNETES_SERVICE_PORT", "443"); err != nil {
-				return fmt.Errorf("failed to set kubernetes port env var: (%v)", err)
-			}
-		}
-		kubeconfig, err = rest.InClusterConfig()
-		*singleNamespace = true
-		namespace = os.Getenv(TestNamespaceEnv)
-		if len(namespace) == 0 {
-			return fmt.Errorf("test namespace env not set")
-		}
-	} else {
-		var kcNamespace string
-		kubeconfig, kcNamespace, err = k8sInternal.GetKubeconfigAndNamespace(*kubeconfigPath)
-		if *singleNamespace && namespace == "" {
-			namespace = kcNamespace
-		}
+	var kcNamespace string
+	kubeconfig, kcNamespace, err = k8sInternal.GetKubeconfigAndNamespace(*kubeconfigPath)
+	if *singleNamespace && namespace == "" {
+		namespace = kcNamespace
 	}
 	if err != nil {
 		return fmt.Errorf("failed to build the kubeconfig: %v", err)
