@@ -192,17 +192,12 @@ func MustGetGopath() string {
 func MustSetGopath(currentGopath string) string {
 	var (
 		newGopath   string
-		cwdInGopath bool
 		wd          = MustGetwd()
 	)
 	for _, newGopath = range strings.Split(currentGopath, ":") {
 		if strings.HasPrefix(filepath.Dir(wd), newGopath) {
-			cwdInGopath = true
 			break
 		}
-	}
-	if !cwdInGopath {
-		log.Fatalf("Project not in $GOPATH")
 	}
 	if err := os.Setenv(GoPathEnv, newGopath); err != nil {
 		log.Fatal(err)
