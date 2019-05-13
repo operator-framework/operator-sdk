@@ -58,7 +58,6 @@ generates a skeletal app-operator application in $GOPATH/src/github.com/example.
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
 	newCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
 	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false, "Generate a playbook skeleton. (Only used for --type ansible)")
-	newCmd.Flags().BoolVar(&isClusterScoped, "cluster-scoped", false, "Generate cluster-scoped resources instead of namespace-scoped")
 
 	newCmd.Flags().StringVar(&helmChartRef, "helm-chart", "", "Initialize helm operator with existing helm chart (<URL>, <repo>/<name>, or local path)")
 	newCmd.Flags().StringVar(&helmChartVersion, "helm-chart-version", "", "Specific version of the helm chart (default is latest version)")
@@ -76,7 +75,6 @@ var (
 	headerFile       string
 	skipGit          bool
 	generatePlaybook bool
-	isClusterScoped  bool
 
 	helmChartRef     string
 	helmChartVersion string
@@ -187,9 +185,9 @@ func doGoScaffold() error {
 		&scaffold.Entrypoint{},
 		&scaffold.UserSetup{},
 		&scaffold.ServiceAccount{},
-		&scaffold.Role{IsClusterScoped: isClusterScoped},
-		&scaffold.RoleBinding{IsClusterScoped: isClusterScoped},
-		&scaffold.Operator{IsClusterScoped: isClusterScoped},
+		&scaffold.Role{},
+		&scaffold.RoleBinding{},
+		&scaffold.Operator{},
 		&scaffold.Apis{},
 		&scaffold.Controller{},
 		&scaffold.Version{},
@@ -218,8 +216,8 @@ func doAnsibleScaffold() error {
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
 		&scaffold.ServiceAccount{},
-		&scaffold.Role{IsClusterScoped: isClusterScoped},
-		&scaffold.RoleBinding{IsClusterScoped: isClusterScoped},
+		&scaffold.Role{},
+		&scaffold.RoleBinding{},
 		&scaffold.CRD{Resource: resource},
 		&scaffold.CR{Resource: resource},
 		&ansible.BuildDockerfile{GeneratePlaybook: generatePlaybook},
@@ -247,7 +245,7 @@ func doAnsibleScaffold() error {
 			GeneratePlaybook: generatePlaybook,
 			Resource:         *resource,
 		},
-		&ansible.DeployOperator{IsClusterScoped: isClusterScoped},
+		&ansible.DeployOperator{},
 		&ansible.Travis{},
 		&ansible.MoleculeTestLocalMolecule{},
 		&ansible.MoleculeTestLocalPrepare{Resource: *resource},
@@ -311,7 +309,7 @@ func doHelmScaffold() error {
 	if err != nil {
 		return fmt.Errorf("failed to get kubernetes config: %s", err)
 	}
-	roleScaffold, err := helm.CreateRoleScaffold(k8sCfg, chart, isClusterScoped)
+	roleScaffold, err := helm.CreateRoleScaffold(k8sCfg, chart)
 	if err != nil {
 		return fmt.Errorf("failed to generate role scaffold: %s", err)
 	}
@@ -325,8 +323,8 @@ func doHelmScaffold() error {
 		},
 		&scaffold.ServiceAccount{},
 		roleScaffold,
-		&scaffold.RoleBinding{IsClusterScoped: isClusterScoped},
-		&helm.Operator{IsClusterScoped: isClusterScoped},
+		&scaffold.RoleBinding{IsClusterScoped: roleScaffold.IsClusterScoped},
+		&helm.Operator{},
 		&scaffold.CRD{Resource: resource},
 		&scaffold.CR{
 			Resource: resource,
