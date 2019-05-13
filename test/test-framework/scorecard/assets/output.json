@@ -1,9 +1,6 @@
 {
   "kind": "ScorecardOutput",
-  "apiVersion": "scorecard/v1alpha1",
-  "metadata": {
-    "creationTimestamp": null
-  },
+  "apiVersion": "osdk.openshift.io/v1alpha1",
   "log": "",
   "results": [
     {
