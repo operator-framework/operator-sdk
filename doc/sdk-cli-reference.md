@@ -19,6 +19,7 @@ Usage:
 
 * `--image-build-args` string - extra, optional image build arguments as one string such as `"--build-arg https_proxy=$https_proxy"` (default "")
 * `--image-builder` string - tool to build OCI images. One of: `[docker, podman, buildah]` (default "docker")
+* `--debug` bool - starts the operator locally and enables attaching a debugger on port 2345
 * `-h, --help` - help for build
 
 ### Use
