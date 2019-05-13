@@ -90,7 +90,7 @@ type ScorecardOutput struct {
 
 	// Log contains the scorecard's log.
 	Log string `json:"log"`
-	// Results is an array of ScorecardResult for each suite of the curent scorecard run.
+	// Results is an array of ScorecardResult for each suite of the current scorecard run.
 	Results []ScorecardSuiteResult `json:"results"`
 }
 
