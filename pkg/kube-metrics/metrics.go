@@ -16,13 +16,13 @@ package kubemetrics
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	kuberuntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 	kcollector "k8s.io/kube-state-metrics/pkg/collector"
@@ -32,20 +32,58 @@ import (
 
 var log = logf.Log.WithName("kubemetrics")
 
+// GetGVKsFromAddToScheme takes in the operator specific scheme and
+// filters out all generic apimachinery meta types. It returns the GVK specific to this operator.
+func GetGVKsFromAddToScheme(addToSchemeFunc func(*runtime.Scheme)) ([]schema.GroupVersionKind, error) {
+	s := kuberuntime.NewScheme()
+	addToSchemeFunc(s)
+	operatorKnownTypes := s.AllKnownTypes()
+	operatorGVKs := []schema.GroupVersionKind{}
+	for gvk, _ := range operatorKnownTypes {
+		if !isKubeMetaKind(gvk.Kind) {
+			operatorGVKs = append(operatorGVKs, gvk)
+		}
+	}
+
+	return operatorGVKs, nil
+}
+
+func isKubeMetaKind(kind string) bool {
+	if strings.HasSuffix(kind, "List") ||
+		kind == "GetOptions" ||
+		kind == "DeleteOptions" ||
+		kind == "ExportOptions" ||
+		kind == "APIVersions" ||
+		kind == "APIGroupList" ||
+		kind == "APIResourceList" ||
+		kind == "UpdateOptions" ||
+		kind == "CreateOptions" ||
+		kind == "Status" ||
+		kind == "WatchEvent" ||
+		kind == "ListOptions" ||
+		kind == "APIGroup" {
+		return true
+	}
+
+	return false
+}
+
 // ServeCRMetrics generates CR specific metrics based on the operator GVK.
 // It starts serving collections of those metrics on given host and port.
-func ServeCRMetrics(cfg *rest.Config, ns []string, operatorTypes map[schema.GroupVersionKind]reflect.Type, host string, port int32) error {
+func ServeCRMetrics(cfg *rest.Config,
+	ns []string,
+	operatorGVKs []schema.GroupVersionKind,
+	host string, port int32) error {
 	// Create new unstructured client.
 	uc := NewClientForConfig(cfg)
 	var collectors [][]*kcollector.Collector
 	log.V(1).Info("Starting collecting operator types")
-
-	// Loop through all the possible operator specific types.
-	for gvk, _ := range operatorTypes {
+	// Loop through all the possible operator/custom resource specific types.
+	for _, gvk := range operatorGVKs {
 		// Generate metric based on the kind.
 		metricFamilies := generateMetricFamilies(gvk.Kind)
 		log.V(1).Info("Generating metric families for kind ", gvk.Kind, "and group/version", gvk.GroupVersion().String())
-		// Generate collector based on the resource, kind and the metric families.
+		// Generate collector based on the group/version, kind and the metric families.
 		c, err := NewCollectors(uc, ns, gvk.GroupVersion().String(), gvk.Kind, metricFamilies)
 		if err != nil {
 			if err == k8sutil.ErrNoNamespace {
@@ -57,14 +95,14 @@ func ServeCRMetrics(cfg *rest.Config, ns []string, operatorTypes map[schema.Grou
 		collectors = append(collectors, c)
 	}
 	// Start serving metrics.
-	log.V(1).Info("Starting serving metric families")
+	log.V(1).Info("Starting serving custom resource metrics")
 	go ServeMetrics(collectors, host, port)
 
 	return nil
 }
 
 func generateMetricFamilies(kind string) []ksmetric.FamilyGenerator {
-	helpText := fmt.Sprintf("Information about the %s operator replica.", kind)
+	helpText := fmt.Sprintf("Information about the %s operator custom resource replica.", kind)
 	kindName := fmt.Sprintf("%s", strings.ToLower(kind))
 	metricName := fmt.Sprintf("%s_info", strings.ToLower(kind))
 
@@ -87,30 +125,4 @@ func generateMetricFamilies(kind string) []ksmetric.FamilyGenerator {
 			},
 		},
 	}
-}
-
-// FilterOut takes in the operator specific scheme and filters out all generic apimachinery meta types.
-// It returns the GVK specific to this operator.
-func FilterOutMetaTypes(operatorSpecificScheme *runtime.Scheme) map[schema.GroupVersionKind]reflect.Type {
-	allOperatorKnownTypes := operatorSpecificScheme.AllKnownTypes()
-	for gvk, _ := range allOperatorKnownTypes {
-		kind := gvk.Kind
-		if strings.HasSuffix(kind, "List") ||
-			kind == "GetOptions" ||
-			kind == "DeleteOptions" ||
-			kind == "ExportOptions" ||
-			kind == "APIVersions" ||
-			kind == "APIGroupList" ||
-			kind == "APIResourceList" ||
-			kind == "UpdateOptions" ||
-			kind == "CreateOptions" ||
-			kind == "Status" ||
-			kind == "WatchEvent" ||
-			kind == "ListOptions" ||
-			kind == "APIGroup" {
-			delete(allOperatorKnownTypes, gvk)
-		}
-	}
-
-	return allOperatorKnownTypes
 }

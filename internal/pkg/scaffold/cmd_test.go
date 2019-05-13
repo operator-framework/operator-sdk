@@ -57,7 +57,6 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/spf13/pflag"
-	kuberuntime "k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -164,13 +163,20 @@ func main() {
 	}
 }
 
+// serveCRMetrics gets the Operator/CustomResource GVKs
+// and generates metrics based on those types.
+// It serves those metrics on "metricsHost/operatorMetricsPort".
 func serveCRMetrics(cfg *rest.Config) {
-	operatorSpecificScheme := kuberuntime.NewScheme()
-	apis.AddToScheme(operatorSpecificScheme)
-	filteredScheme := kubemetrics.FilterOutMetaTypes(operatorSpecificScheme)
-	err := kubemetrics.ServeCRMetrics(cfg, []string{}, filteredScheme, metricsHost, operatorMetricsPort)
+	// Below returns filterted operator/CustomResource specific GVKs.
+	// For more control create below GVK list with your own custom logic.
+	filteredGVK, err := kubemetrics.GetGVKsFromAddToScheme(apis.AddToScheme())
 	if err != nil {
-		log.Error(err, "Could not serve Custom Resource metrics")
+		log.Error(err, "Could not generate or serve Custom Resource metrics")
+		return
+	}
+	err := kubemetrics.ServeCRMetrics(cfg, []string{}, filteredGVK, metricsHost, operatorMetricsPort)
+	if err != nil {
+		log.Error(err, "Could not generate or serve Custom Resource metrics")
 	}
 }
 `
