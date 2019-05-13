@@ -24,7 +24,7 @@ newcomers.
 
 ## Goal
 
-Implement a proof-of-concept with an initial set of CLI additions to support a simplified workflow for an Operator SDK user to run an Operator SDK-developed project in a cluster using OLM.
+Implement a proof-of-concept with an initial set of CLI additions to support a simplified workflow for an Operator SDK user to run an Operator SDK-developed project in a cluster using the Operator Lifecyle Manager (OLM).
 
 ## Use cases
 
@@ -42,28 +42,37 @@ The general idea is that new subcommand features should be introduced under the 
 
 ### `operator-sdk alpha olm init`
 
-Deploys the Operator Lifecycle Manager (OLM). The initial proof-of-concept will initialize OLM using manifests from OLM's repository, using the following URL format, based on provided flags:
+Checks cluster facts based on the current kubeconfig context (e.g. cluster type, version, OLM status), and ensures OLM is running. Using this command with unsupported clusters results in a failure.
 
-`https://raw.githubusercontent.com/operator-framework/operator-lifecycle-manager/master/deploy/<cluster-type>/manifests/<olm-version>/`
+#### OCP/OKD
+
+For clusters where OLM is expected to be installed by default, this command will print OLM's current status and exit.
+
+#### Upstream Kubernetes
+
+For other clusters that meet OLM's prerequisites, the command will check to see if OLM is already deployed. If so, it will print OLM's current status and exit. If not, it will deploy OLM using the `upstream` manifests from OLM's repository at the version specified by the `--olm-version` flag, based on the following URL pattern:
+
+`https://raw.githubusercontent.com/operator-framework/operator-lifecycle-manager/master/deploy/upstream/manifests/<olm-version>/`
+
+Each resource that is applied will be logged so that users can manually backout the OLM deployment if desired. Once the manifests have been applied, the command will wait until OLM is running (or until a specified timeout) and then print its status.
 
 #### Flags for `olm init`
 
 | Flag             | Type   | Description                                                                                     |
 |------------------|--------|-------------------------------------------------------------------------------------------------|
-| `--cluster-type` | string | The type of cluster to deploy OLM to, one of `upstream`, `ocp`, `okd` (default `upstream`)      |
 | `--olm-version`  | string | The version of OLM to deploy (default `latest`)                                                 |
+| `--timeout`      | string | Timeout duration to wait for OLM to become ready before outputting status (default 60s)         |
 | `--kubeconfig`   | string | Path for custom Kubernetes client config file (overrides the default locations)                 |
-
-**Open questions:** 
-1. Do we need to support different cluster types? Or should we just always use `upstream` since OLM is already installed by default in OCP and OKD clusters?
 
 ### `operator-sdk alpha olm up`
 
 Creates all necessary resources in the cluster to run the operator via OLM, waits for the operator to be deployed by OLM, and tails the operator log, similar to `operator-sdk up local`. When the user terminates the process or if a timeout or error occurs, all of the created resources will be cleaned up.
 
+Different clusters install OLM in different namespaces. Since `olm up` may need to create resources in these namespaces, the cluster fact collection used in `operator-sdk alpha olm init` should be used here as well to determine which OLM namespaces are in use. This cluster fact collection package should be maintained in a separate shared package within the SDK repo, such that it is decoupled and could be extracted into a separate `operator-framework-tools` (or similar) repo in the future.
+
 #### Prerequisites
 
-1. An operator container image built and pushed to a registry accessible to the cluster.
+1. The operator container image referenced by the CSV is available to the cluster.
 2. An operator bundle on disk (created by `operator-sdk olm-catalog gen-csv`).
 
 #### Flags for `olm up`
@@ -88,7 +97,6 @@ OLM uses Kubernetes APIs to learn about the set of operators that are available 
 
 **Open questions:** 
 1. When the user aborts the process, should we handle cleanup for any of the InstallPlan, CSV, CRD, and CR resources? Which of these will be automatically garbage-collected?
-2. The `upstream` version of the manifests have several differences with the `ocp` and `okd` manifests, notably installation in different namespaces. Since `olm up` will need to create resources in these namespaces, how will we account for these (and any other) differences?
 
 ## References
 
