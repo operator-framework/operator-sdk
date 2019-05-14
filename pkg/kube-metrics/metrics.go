@@ -34,9 +34,12 @@ var log = logf.Log.WithName("kubemetrics")
 
 // GetGVKsFromAddToScheme takes in the operator specific scheme and
 // filters out all generic apimachinery meta types. It returns the GVK specific to this operator.
-func GetGVKsFromAddToScheme(addToSchemeFunc func(*runtime.Scheme)) ([]schema.GroupVersionKind, error) {
+func GetGVKsFromAddToScheme(addToSchemeFunc func(*runtime.Scheme) error) ([]schema.GroupVersionKind, error) {
 	s := kuberuntime.NewScheme()
-	addToSchemeFunc(s)
+	err := addToSchemeFunc(s)
+	if err != nil {
+		return nil, err
+	}
 	operatorKnownTypes := s.AllKnownTypes()
 	operatorGVKs := []schema.GroupVersionKind{}
 	for gvk, _ := range operatorKnownTypes {
