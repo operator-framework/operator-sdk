@@ -42,6 +42,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
     5. Run `test local` with both `--up-local` and `--kubeconfig` flags.
     6. Create all test resources with kubectl and run `test local` with `--no-setup` flag.
     7. Run `scorecard` subcommand and check that expected score matches actual score.
+    8. Run `scorecard` subcommand with json output enabled and verify the output.
 4. Run [go e2e tests][go-e2e].
     1. Use `operator-sdk` to create and configure a new `memcached-operator` project and install the memcached CRD in the cluster.
     2. Run cluster test (namespace is auto-generated and deleted by test framework).
@@ -56,16 +57,12 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
         4. Run the memcached scale test.
             1. Create memcached CR specifying a desired cluster size of 3 and wait until memcached cluster is of size 3.
             2. Increase desired cluster size to 4 and wait until memcached cluster is of size 4.
-    3. Run in-cluster test.
-        1. Create new namespace for the test.
-        2. Run the tests using the `test cluster` subcommand with the image generated in the cluster test (which contains the scale test described in step 4.2.4).
-        3. Delete the test namespace.
-    4. Run local test.
+    3. Run local test.
         1. Create new namespace for the test.
         2. Start operator using `up local` subcommand.
         3. Run memcached scale test (described in step 4.2.4)
         4. Delete the test namespace.
-    5. Run [TLS library tests][tls-tests].
+    4. Run [TLS library tests][tls-tests].
         1. This test runs multiple simple tests of the operator-sdk's TLS library. The tests run in parallel and each tests runs in its own namespace.
 
 ### Ansible tests
