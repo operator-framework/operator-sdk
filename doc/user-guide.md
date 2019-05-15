@@ -1,9 +1,7 @@
 # User Guide
 
-This guide walks through an example of building a simple memcached-operator using the operator-sdk
-CLI tool and controller-runtime library API. To learn how to use Ansible or Helm to create an
-operator, see the [Ansible Operator User Guide][ansible_user_guide] or the [Helm Operator User
-Guide][helm_user_guide]. The rest of this document will show how to program an operator in Go.
+This guide walks through an example of building a simple memcached-operator using the operator-sdk CLI tool and controller-runtime library API. To learn how to use Ansible or Helm to create an operator, see the [Ansible Operator User Guide][ansible_user_guide] or the [Helm Operator User Guide][helm_user_guide]. The rest of this document will show how to program an operator in Go.
+
 
 ## Prerequisites
 
@@ -18,27 +16,7 @@ Guide][helm_user_guide]. The rest of this document will show how to program an o
 
 ## Install the Operator SDK CLI
 
-The Operator SDK has a CLI tool that helps the developer to create, build, and deploy a new operator project.
-
-Checkout the desired release tag and install the SDK CLI tool:
-
-```sh
-$ mkdir -p $GOPATH/src/github.com/operator-framework
-$ cd $GOPATH/src/github.com/operator-framework
-$ git clone https://github.com/operator-framework/operator-sdk
-$ cd operator-sdk
-$ git checkout master
-$ make dep
-$ make install
-```
-
-This installs the CLI binary `operator-sdk` at `$GOPATH/bin`.
-
-Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
-
-```sh
-$ brew install operator-sdk
-```
+Follow the steps in the [installation guide][install_guide] to learn how to install the Operator SDK CLI tool.
 
 ## Create a new project
 
@@ -517,7 +495,7 @@ func main() {
 When the operator is not running in a cluster, the Manager will return an error on starting since it can't detect the operator's namespace in order to create the configmap for leader election. You can override this namespace by setting the Manager's `LeaderElectionNamespace` option.
 
 
-
+[install_guide]: ./user/install-operator-sdk.md
 [pod_eviction_timeout]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options
 [lease_split_brain]: https://github.com/kubernetes/client-go/blob/30b06a83d67458700a5378239df6b96948cb9160/tools/leaderelection/leaderelection.go#L21-L24
