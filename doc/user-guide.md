@@ -57,24 +57,7 @@ The Operator SDK uses [vendoring][go_vendoring] to supply dependencies to operat
 
 #### Operator scope
 
-<<<<<<< HEAD
-A namespace-scoped operator (the default) watches and manages resources in a single namespace, whereas a cluster-scoped operator watches and manages resources cluster-wide. Namespace-scoped operators are preferred because of their flexibility. They enable decoupled upgrades, namespace isolation for failures and monitoring, and differing API definitions. However, there are use cases where a cluster-scoped operator may make sense. For example, the [cert-manager](https://github.com/jetstack/cert-manager) operator is often deployed with cluster-scoped permissions and watches so that it can manage issuing certificates for an entire cluster.
-
-If you'd like to create your memcached-operator project to be cluster-scoped use the following `operator-sdk new` command instead:
-```sh
-$ operator-sdk new memcached-operator --cluster-scoped
-```
-
-Using `--cluster-scoped` will scaffold the new operator with the following modifications:
-* `deploy/operator.yaml` - Set `WATCH_NAMESPACE=""` instead of setting it to the pod's namespace
-* `deploy/role.yaml` - Use `ClusterRole` instead of `Role`
-* `deploy/role_binding.yaml`:
-  * Use `ClusterRoleBinding` instead of `RoleBinding`
-  * Use `ClusterRole` instead of `Role` for roleRef
-  * Set the subject namespace to `REPLACE_NAMESPACE`. This must be changed to the namespace in which the operator is deployed.
-=======
 Read the [operator scope][operator_scope] documentation on how to run your operator as namespace-scoped vs cluster-scoped.
->>>>>>> doc: consolidate cluster-scoped documentation
 
 ### Manager
 The main program for the operator `cmd/manager/main.go` initializes and runs the [Manager][manager_go_doc].
@@ -561,7 +544,7 @@ func main() {
 
 When the operator is not running in a cluster, the Manager will return an error on starting since it can't detect the operator's namespace in order to create the configmap for leader election. You can override this namespace by setting the Manager's `LeaderElectionNamespace` option.
 
-
+[operator_scope]:./operator-scope.md
 [install_guide]: ./user/install-operator-sdk.md
 [pod_eviction_timeout]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options

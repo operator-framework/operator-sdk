@@ -6,7 +6,6 @@ However, there are use cases where a cluster-scoped operator may make sense. For
 
 The SDK scaffolds operators to be namespaced by default but with a few modifications to the default manifests the operator can be run as cluster-scoped.
 
-
 * `deploy/operator.yaml`:
   * Set `WATCH_NAMESPACE=""` to watch all namespaces instead of setting it to the pod's namespace
 * `deploy/role.yaml`:
@@ -20,6 +19,7 @@ The SDK scaffolds operators to be namespaced by default but with a few modificat
 
 Additionally the CustomResourceDefinition (CRD) scope can also be changed for cluster-scoped operators so that there is only a single instance (of a given name) of the CRD to manage across the cluster.
 
-For each CRD that needs to be cluster-scoped update it's given manifest to be cluster-scoped
+For each CRD that needs to be cluster-scoped, update its manifest to be cluster-scoped.
+
 * `deploy/crds/<group>_<version>_<kind>_crd.yaml`
   * Set `spec.scope: Namespaced`

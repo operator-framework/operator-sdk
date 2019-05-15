@@ -329,6 +329,7 @@ kubectl delete -f deploy/service_account.yaml
 kubectl delete -f deploy/crds/example_v1alpha1_nginx_crd.yaml
 ```
 
+[operator_scope]:./../operator-scope.md
 [install_guide]: ../user/install-operator-sdk.md
 [layout_doc]:./project_layout.md
 [homebrew_tool]:https://brew.sh/
