@@ -327,12 +327,12 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 		log.Warnf("Plugin directory not found; skipping plugin tests: %v", err)
 	} else {
 		if err := os.Chdir(pluginDir); err != nil {
-			return nil, fmt.Errorf("failed to chdir into scorecard plugin directory")
+			return nil, fmt.Errorf("failed to chdir into scorecard plugin directory: %v", err)
 		}
 		// executable files must be in "bin" subdirectory
 		files, err := ioutil.ReadDir("bin")
 		if err != nil {
-			return nil, fmt.Errorf("failed to list files in %s/bin", pluginDir)
+			return nil, fmt.Errorf("failed to list files in %s/bin: %v", pluginDir, err)
 		}
 		for _, file := range files {
 			cmd := exec.Command("./bin/" + file.Name())
@@ -350,7 +350,7 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 				log.Errorf("Plugin `%s` failed with error (%v)", file.Name(), err)
 				continue
 			}
-			//parse output and add to suites
+			// parse output and add to suites
 			result := scapiv1alpha1.ScorecardOutput{}
 			err = json.Unmarshal(stdout.Bytes(), &result)
 			if err != nil {
