@@ -31,6 +31,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 )
 
+// blank assignment to verify that HelmOperatorReconciler implements reconcile.Reconciler
 var _ reconcile.Reconciler = &HelmOperatorReconciler{}
 
 // ReleaseHookFunc defines a function signature for release hooks.
