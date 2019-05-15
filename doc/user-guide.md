@@ -211,7 +211,7 @@ Once this is done, there are two ways to run the operator:
 
 ### 1. Run as a Deployment inside the cluster
 
-**Note**: `operator-sdk build` invokes `docker build`. Make sure your docker daemon is running and that you can run the docker client without sudo. You can check if this is the case by running `docker version`, which should complete without errors. Follow instructions for your OS/distribution on how to start the docker daemon and configure your access permissions, if needed.
+**Note**: `operator-sdk build` invokes `docker build` by default, and optionally `buildah bud`. If using `buildah`, skip to the `operator-sdk build` invocation instructions below. If using `docker`, make sure your docker daemon is running and that you can run the docker client without sudo. You can check if this is the case by running `docker version`, which should complete without errors. Follow instructions for your OS/distribution on how to start the docker daemon and configure your access permissions, if needed.
 
 **Note**: If using go modules, run
 ```sh
