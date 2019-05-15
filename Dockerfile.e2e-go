@@ -1,0 +1,28 @@
+FROM openshift/origin-release:golang-1.11 as builder
+
+ENV GOPATH=/go PATH=/go/bin:$PATH
+WORKDIR /go/src/github.com/operator-framework/operator-sdk
+
+COPY . .
+
+RUN make install
+
+RUN hack/tests/e2e-go-part-1.sh
+
+RUN go build -gcflags "all=-trimpath=${GOPATH}" -asmflags "all=-trimpath=${GOPATH}" -o /memcached-operator $(cat project_path.tmp)/memcached-operator/cmd/manager/main.go
+
+FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
+
+ENV OPERATOR=/usr/local/bin/memcached-operator \
+    USER_UID=1001 \
+    USER_NAME=memcached-operator
+
+# install operator binary
+COPY --from=builder /memcached-operator ${OPERATOR}
+COPY test/test-framework/build/bin /usr/local/bin
+
+RUN  /usr/local/bin/user_setup
+
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
+
+USER ${USER_UID}

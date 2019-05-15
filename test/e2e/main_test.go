@@ -18,12 +18,19 @@ import (
 	"flag"
 	"testing"
 
+	test "github.com/operator-framework/operator-sdk/internal/test"
 	f "github.com/operator-framework/operator-sdk/pkg/test"
 )
 
-var e2eImageName *string
+var (
+	e2eImageName *string
+	noImageBuild *bool
+	openshiftCI  *bool
+)
 
 func TestMain(m *testing.M) {
 	e2eImageName = flag.String("image", "", "operator image name <repository>:<tag> used to push the image, defaults to none (builds image to local docker repo)")
+	test.OnlyGenerate = flag.Bool("generate-only", false, "only generate the project (used for multi-stage build test)")
+	noImageBuild = flag.Bool("no-image-build", false, "do not build the image during the test (used for multu-stage build test)")
 	f.MainEntry(m)
 }

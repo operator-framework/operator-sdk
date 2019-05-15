@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
+	test "github.com/operator-framework/operator-sdk/internal/test"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
@@ -83,7 +84,9 @@ func TestMemcached(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx.AddCleanupFn(func() error { return os.RemoveAll(absProjectPath) })
+	if !*test.OnlyGenerate {
+		ctx.AddCleanupFn(func() error { return os.RemoveAll(absProjectPath) })
+	}
 
 	if err := os.MkdirAll(absProjectPath, fileutil.DefaultDirFileMode); err != nil {
 		t.Fatal(err)
@@ -221,6 +224,14 @@ func TestMemcached(t *testing.T) {
 	cmdOut, err = exec.Command("go", "mod", "vendor").CombinedOutput()
 	if err != nil {
 		t.Fatalf("Command 'go mod vendor' failed: %v\nCommand Output:\n%v", err, string(cmdOut))
+	}
+
+	if *test.OnlyGenerate {
+		err := ioutil.WriteFile(filepath.Join(cd, "project_path.tmp"), []byte(absProjectPath), os.FileMode(0644))
+		if err != nil {
+			t.Fatalf("Failed to write project_path.tmp: %v", err)
+		}
+		return
 	}
 
 	file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
@@ -393,7 +404,7 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework, labels
 		return true, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error getting leader lock configmap: %v\n", err)
+		return nil, fmt.Errorf("error getting leader lock configmap: %v", err)
 	}
 	t.Logf("Found leader lock configmap %s\n", lockName)
 
@@ -489,6 +500,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 }
 
 func MemcachedLocal(t *testing.T) {
+	t.Parallel()
 	// get global framework variables
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
@@ -496,7 +508,7 @@ func MemcachedLocal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command("operator-sdk", "up", "local", "--namespace="+namespace)
+	cmd := exec.Command("operator-sdk", "up", "local", "--namespace="+namespace, "--operator-flags", "--disable-leader-election --disable-metrics")
 	stderr, err := os.Create("stderr.txt")
 	if err != nil {
 		t.Fatalf("Failed to create stderr.txt: %v", err)
@@ -529,12 +541,19 @@ func MemcachedLocal(t *testing.T) {
 		t.Fatalf("Local operator not ready after 100 seconds: %v\n", err)
 	}
 
-	if err = memcachedScaleTest(t, framework.Global, ctx); err != nil {
+	if err := memcachedScaleTest(t, framework.Global, ctx); err != nil {
+		file, err2 := ioutil.ReadFile("stderr.txt")
+		if err2 != nil {
+			t.Logf("could not read log file: %v", err2)
+		} else {
+			t.Logf("up local log: %s", string(file))
+		}
 		t.Fatal(err)
 	}
 }
 
 func MemcachedCluster(t *testing.T) {
+	t.Parallel()
 	// get global framework variables
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
@@ -559,17 +578,22 @@ func MemcachedCluster(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to write deploy/operator.yaml: %v", err)
 	}
-	t.Log("Building operator docker image")
-	cmdOut, err := exec.Command("operator-sdk", "build", *e2eImageName).CombinedOutput()
-	if err != nil {
-		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
-	}
-
-	if !local {
-		t.Log("Pushing docker image to repo")
-		cmdOut, err = exec.Command("docker", "push", *e2eImageName).CombinedOutput()
+	if !*noImageBuild {
+		t.Log("Building operator docker image")
+		cmdOut, err := exec.Command("operator-sdk", "build", *e2eImageName).CombinedOutput()
 		if err != nil {
 			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		}
+		if err != nil {
+			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+		}
+
+		if !local {
+			t.Log("Pushing docker image to repo")
+			cmdOut, err = exec.Command("docker", "push", *e2eImageName).CombinedOutput()
+			if err != nil {
+				t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+			}
 		}
 	}
 
