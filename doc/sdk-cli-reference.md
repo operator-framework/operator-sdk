@@ -17,19 +17,13 @@ Usage:
 
 ### Flags
 
-* `--enable-tests` - enable in-cluster testing by adding test binary to the image
-* `--namespaced-manifest` string - path of namespaced resources manifest for tests (default "deploy/operator.yaml")
-* `--test-location` string - location of tests (default "./test/e2e")
 * `--image-build-args` string - extra, optional image build arguments as one string such as `"--build-arg https_proxy=$https_proxy"` (default "")
 * `--image-builder` string - tool to build OCI images. One of: `[docker, buildah]` (default "docker")
 * `-h, --help` - help for build
 
 ### Use
 
-The operator-sdk build command compiles the code and builds the executables. After build completes, the image is built locally in docker. Then it needs to be pushed to a remote registry.
-
-If `--enable-tests` is set, the build command will also build the testing binary, add it to the docker image, and generate
-a `deploy/test-pod.yaml` file that allows a user to run the tests as a pod on a cluster.
+The operator-sdk build command compiles the code and builds the executables. After build completes, the image is built locally using the image builder specified by the `--image-builder` flag (default `docker`). Then it needs to be pushed to a remote registry.
 
 ### Example
 
@@ -510,34 +504,6 @@ The operator-sdk test command runs go tests built using the Operator SDK's test 
 ```console
 $ operator-sdk test local ./test/e2e/
 ok    github.com/operator-framework/operator-sdk-samples/memcached-operator/test/e2e  20.410s
-```
-
-#### cluster
-
-Runs the e2e tests packaged in an operator image as a pod in the cluster
-
-##### Args
-
-* `image-name` - the operator image that is used to run the tests in a pod (e.g. "quay.io/example/memcached-operator:v0.0.1")
-
-##### Flags
-
-* `--kubeconfig` string - location of kubeconfig for Kubernetes cluster (default "~/.kube/config")
-* `--image-pull-policy` string - set test pod image pull policy. Allowed values: Always, Never (default "Always")
-* `--namespace` string - namespace to run tests in (default "default")
-* `--pending-timeout` int - timeout in seconds for testing pod to stay in pending state (default 60s)
-* `--service-account` string - service account to run tests on (default "default")
-* `-h, --help` - help for cluster
-
-##### Use
-
-The operator-sdk test command runs go tests embedded in an operator image built using the Operator SDK.
-
-##### Example
-
-```console
-$ operator-sdk test cluster quay.io/example/memcached-operator:v0.0.1
-Test Successfully Completed
 ```
 
 ## up
