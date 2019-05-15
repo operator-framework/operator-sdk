@@ -52,22 +52,24 @@ import (
 )
 
 const (
-	ConfigOpt             = "config"
-	NamespaceOpt          = "namespace"
-	KubeconfigOpt         = "kubeconfig"
-	InitTimeoutOpt        = "init-timeout"
-	OlmDeployedOpt        = "olm-deployed"
-	CSVPathOpt            = "csv-path"
-	BasicTestsOpt         = "basic-tests"
-	OLMTestsOpt           = "olm-tests"
-	NamespacedManifestOpt = "namespaced-manifest"
-	GlobalManifestOpt     = "global-manifest"
-	CRManifestOpt         = "cr-manifest"
-	ProxyImageOpt         = "proxy-image"
-	ProxyPullPolicyOpt    = "proxy-pull-policy"
-	CRDsDirOpt            = "crds-dir"
-	OutputFormatOpt       = "output"
-	PluginDirOpt          = "plugin-dir"
+	ConfigOpt                 = "config"
+	NamespaceOpt              = "namespace"
+	KubeconfigOpt             = "kubeconfig"
+	InitTimeoutOpt            = "init-timeout"
+	OlmDeployedOpt            = "olm-deployed"
+	CSVPathOpt                = "csv-path"
+	BasicTestsOpt             = "basic-tests"
+	OLMTestsOpt               = "olm-tests"
+	NamespacedManifestOpt     = "namespaced-manifest"
+	GlobalManifestOpt         = "global-manifest"
+	CRManifestOpt             = "cr-manifest"
+	ProxyImageOpt             = "proxy-image"
+	ProxyPullPolicyOpt        = "proxy-pull-policy"
+	CRDsDirOpt                = "crds-dir"
+	OutputFormatOpt           = "output"
+	PluginDirOpt              = "plugin-dir"
+	JSONOutputFormat          = "json"
+	HumanReadableOutputFormat = "human-readable"
 )
 
 const (
@@ -322,7 +324,7 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 	// Run plugins
 	pluginDir := viper.GetString(PluginDirOpt)
 	if dir, err := os.Stat(pluginDir); err != nil || !dir.IsDir() {
-		log.Warnf("Plugin directory not found; skipping plugin tests")
+		log.Warnf("Plugin directory not found; skipping plugin tests: %v", err)
 	} else {
 		if err := os.Chdir(pluginDir); err != nil {
 			return nil, fmt.Errorf("failed to chdir into scorecard plugin directory")
@@ -388,7 +390,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 			suite.Results[idx] = UpdateSuiteStates(res)
 		}
 	}
-	if viper.GetString(OutputFormatOpt) == "human-readable" {
+	if viper.GetString(OutputFormatOpt) == HumanReadableOutputFormat {
 		numSuites := 0
 		for _, plugin := range pluginOutputs {
 			for _, suite := range plugin.Results {
@@ -426,7 +428,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
-	if viper.GetString(OutputFormatOpt) == "json" {
+	if viper.GetString(OutputFormatOpt) == JSONOutputFormat {
 		log, err := ioutil.ReadAll(logReadWriter)
 		if err != nil {
 			return fmt.Errorf("failed to read log buffer: %v", err)
@@ -471,9 +473,9 @@ func initConfig() error {
 }
 
 func configureLogger() error {
-	if viper.GetString(OutputFormatOpt) == "human-readable" {
+	if viper.GetString(OutputFormatOpt) == HumanReadableOutputFormat {
 		logReadWriter = os.Stdout
-	} else if viper.GetString(OutputFormatOpt) == "json" {
+	} else if viper.GetString(OutputFormatOpt) == JSONOutputFormat {
 		logReadWriter = &bytes.Buffer{}
 	} else {
 		return fmt.Errorf("invalid output format: %s", viper.GetString(OutputFormatOpt))
@@ -501,8 +503,8 @@ func validateScorecardFlags() error {
 	}
 	// this is already being checked in configure logger; may be unnecessary
 	outputFormat := viper.GetString(OutputFormatOpt)
-	if outputFormat != "human-readable" && outputFormat != "json" {
-		return fmt.Errorf("invalid output format (%s); valid values: human-readable, json", outputFormat)
+	if outputFormat != HumanReadableOutputFormat && outputFormat != JSONOutputFormat {
+		return fmt.Errorf("invalid output format (%s); valid values: %s, %s", outputFormat, HumanReadableOutputFormat, JSONOutputFormat)
 	}
 	return nil
 }
