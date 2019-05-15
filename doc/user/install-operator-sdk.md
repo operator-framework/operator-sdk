@@ -53,7 +53,7 @@ Now you should be able to verify the binary.
 ### Install the release binary in your PATH
 
 ```
-# Linux 
+# Linux
 $ chmod +x operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu && sudo cp operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu /usr/local/bin/operator-sdk && rm operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu
 # macOS
 $ chmod +x operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin && sudo cp operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin /usr/local/bin/operator-sdk && rm operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin
@@ -70,10 +70,8 @@ $ brew install operator-sdk
 ## Compile and install from master
 
 ```sh
-$ mkdir -p $GOPATH/src/github.com/operator-framework
-$ cd $GOPATH/src/github.com/operator-framework
-$ git clone https://github.com/operator-framework/operator-sdk
-$ cd operator-sdk
+$ go get -d github.com/operator-framework/operator-sdk #This will download the git repository and not install it
+$ cd $GOPATH/src/github.com/operator-framework/operator-sdk
 $ git checkout master
 $ make dep
 $ make install

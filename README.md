@@ -64,7 +64,7 @@ $ brew install operator-sdk
 ```
 
 ```sh
-$ go get github.com/operator-framework/operator-sdk
+$ go get -d github.com/operator-framework/operator-sdk #This will download the git repository and not install it
 $ cd $GOPATH/src/github.com/operator-framework/operator-sdk
 $ git checkout master
 $ make dep
