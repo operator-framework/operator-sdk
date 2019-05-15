@@ -68,6 +68,7 @@ generates a skeletal app-operator application in $HOME/projects/example.com/app-
 	newCmd.Flags().StringVar(&helmChartRef, "helm-chart", "", "Initialize helm operator with existing helm chart (<URL>, <repo>/<name>, or local path)")
 	newCmd.Flags().StringVar(&helmChartVersion, "helm-chart-version", "", "Specific version of the helm chart (default is latest version)")
 	newCmd.Flags().StringVar(&helmChartRepo, "helm-chart-repo", "", "Chart repository URL for the requested helm chart")
+	newCmd.Flags().BoolVar(&helmNoRole, "no-helm-role", false, "Disable generation of role.yaml for helm-operator (generation of the role.yaml file requires a running cluster)")
 
 	return newCmd
 }
@@ -88,6 +89,7 @@ var (
 	helmChartRef     string
 	helmChartVersion string
 	helmChartRepo    string
+	helmNoRole       bool
 )
 
 func newFunc(cmd *cobra.Command, args []string) error {
@@ -324,19 +326,22 @@ func doHelmScaffold() error {
 	valuesPath := filepath.Join("<project_dir>", helm.HelmChartsDir, chart.GetMetadata().GetName(), "values.yaml")
 	crSpec := fmt.Sprintf("# Default values copied from %s\n\n%s", valuesPath, chart.GetValues().GetRaw())
 
-	k8sCfg, err := config.GetConfig()
-	if err != nil {
-		return fmt.Errorf("failed to get kubernetes config: %s", err)
-	}
+	roleScaffold := &scaffold.Role{}
+	if !helmNoRole {
+		k8sCfg, err := config.GetConfig()
+		if err != nil {
+			return fmt.Errorf("failed to get kubernetes config: %s", err)
+		}
 
-	dc, err := discovery.NewDiscoveryClientForConfig(k8sCfg)
-	if err != nil {
-		return fmt.Errorf("failed to get kubernetes discovery client: %s", err)
-	}
+		dc, err := discovery.NewDiscoveryClientForConfig(k8sCfg)
+		if err != nil {
+			return fmt.Errorf("failed to get kubernetes discovery client: %s", err)
+		}
 
-	roleScaffold, err := helm.CreateRoleScaffold(dc, chart)
-	if err != nil {
-		return fmt.Errorf("failed to generate role scaffold: %s", err)
+		roleScaffold, err = helm.CreateRoleScaffold(dc, chart)
+		if err != nil {
+			return fmt.Errorf("failed to generate role scaffold: %s", err)
+		}
 	}
 
 	s := &scaffold.Scaffold{}
@@ -360,8 +365,10 @@ func doHelmScaffold() error {
 		return fmt.Errorf("new helm scaffold failed: (%v)", err)
 	}
 
-	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-		return fmt.Errorf("failed to update the RBAC manifest for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
+	if !helmNoRole {
+		if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
+			return fmt.Errorf("failed to update the RBAC manifest for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
+		}
 	}
 	return nil
 }
