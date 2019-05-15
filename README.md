@@ -69,6 +69,7 @@ $ operator-sdk add api --api-version=app.example.com/v1alpha1 --kind=AppService
 $ operator-sdk add controller --api-version=app.example.com/v1alpha1 --kind=AppService
 
 # Build and push the app-operator image to a public registry such as quay.io
+$ go mod vendor
 $ operator-sdk build quay.io/example/app-operator
 $ docker push quay.io/example/app-operator
 
