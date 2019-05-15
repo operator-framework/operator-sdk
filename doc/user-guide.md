@@ -57,6 +57,7 @@ The Operator SDK uses [vendoring][go_vendoring] to supply dependencies to operat
 
 #### Operator scope
 
+<<<<<<< HEAD
 A namespace-scoped operator (the default) watches and manages resources in a single namespace, whereas a cluster-scoped operator watches and manages resources cluster-wide. Namespace-scoped operators are preferred because of their flexibility. They enable decoupled upgrades, namespace isolation for failures and monitoring, and differing API definitions. However, there are use cases where a cluster-scoped operator may make sense. For example, the [cert-manager](https://github.com/jetstack/cert-manager) operator is often deployed with cluster-scoped permissions and watches so that it can manage issuing certificates for an entire cluster.
 
 If you'd like to create your memcached-operator project to be cluster-scoped use the following `operator-sdk new` command instead:
@@ -71,6 +72,9 @@ Using `--cluster-scoped` will scaffold the new operator with the following modif
   * Use `ClusterRoleBinding` instead of `RoleBinding`
   * Use `ClusterRole` instead of `Role` for roleRef
   * Set the subject namespace to `REPLACE_NAMESPACE`. This must be changed to the namespace in which the operator is deployed.
+=======
+Read the [operator scope][operator_scope] documentation on how to run your operator as namespace-scoped vs cluster-scoped.
+>>>>>>> doc: consolidate cluster-scoped documentation
 
 ### Manager
 The main program for the operator `cmd/manager/main.go` initializes and runs the [Manager][manager_go_doc].

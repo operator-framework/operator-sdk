@@ -66,21 +66,8 @@ If `--helm-chart-version` is not set, the SDK will fetch the latest available ve
 
 ### Operator scope
 
-A namespace-scoped operator (the default) watches and manages resources in a single namespace, whereas a cluster-scoped operator watches and manages resources cluster-wide. Namespace-scoped operators are preferred because of their flexibility. They enable decoupled upgrades, namespace isolation for failures and monitoring, and differing API definitions. However, there are use cases where a cluster-scoped operator may make sense. For example, the [cert-manager](https://github.com/jetstack/cert-manager) operator is often deployed with cluster-scoped permissions and watches so that it can manage issuing certificates for an entire cluster.
+Read the [operator scope][operator_scope] documentation on how to run your operator as namespace-scoped vs cluster-scoped.
 
-If you'd like to create your nginx-operator project to be cluster-scoped use the following `operator-sdk new` command instead:
-
-```sh
-operator-sdk new nginx-operator --cluster-scoped --api-version=example.com/v1alpha1 --kind=Nginx --type=helm
-```
-
-Using `--cluster-scoped` will scaffold the new operator with the following modifications:
-* `deploy/operator.yaml` - Set `WATCH_NAMESPACE=""` instead of setting it to the pod's namespace
-* `deploy/role.yaml` - Use `ClusterRole` instead of `Role`
-* `deploy/role_binding.yaml`:
-  * Use `ClusterRoleBinding` instead of `RoleBinding`
-  * Use `ClusterRole` instead of `Role` for roleRef
-  * Set the subject namespace to `REPLACE_NAMESPACE`. This must be changed to the namespace in which the operator is deployed.
 
 ## Customize the operator logic
 
