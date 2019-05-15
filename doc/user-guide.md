@@ -430,6 +430,61 @@ To implement complex deletion logic, you can add a finalizer to your Custom Reso
 deleted until you remove the finalizer (ie, after your cleanup logic has successfully run). For more information, see the
 [official Kubernetes documentation on finalizers](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#finalizers).
 
+**Example:**
+
+The following is a snippet from the controller file under `pkg/controller/memcached/memcached_controller.go`
+
+```Go
+func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+ 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
+ 	reqLogger.Info("Reconciling Memcached")
+ 
+ 	// Fetch the Memcached instance
+ 	memcached := &cachev1alpha1.Memcached{}
+ 	err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
+ 	...
+ 	// Check if the APP CR was marked to be deleted
+ 	isMemcachedMarkedToBeDeleted := memcached.GetDeletionTimestamp() != nil
+ 	if isMemcachedMarkedToBeDeleted {
+ 		// TODO(user): Add the cleanup steps that the operator needs to do before the CR can be deleted
+ 		// Update finalizer to allow delete CR
+ 		memcached.SetFinalizers(nil)
+ 
+ 		// Update CR
+ 		err := r.client.Update(context.TODO(), memcached)
+ 		if err != nil {
+ 			return reconcile.Result{}, err
+ 		}
+ 		return reconcile.Result{}, nil
+ 	}
+ 	
+ 	// Add finalizer for this CR
+ 	if err := r.addFinalizer(reqLogger, instance); err != nil {
+ 		return reconcile.Result{}, err
+ 	}
+ 	...
+ 
+ 	return reconcile.Result{}, nil
+ }
+ 
+//addFinalizer will add this attribute to the Memcached CR
+func (r *ReconcileMemcached) addFinalizer(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
+    if len(m.GetFinalizers()) < 1 && m.GetDeletionTimestamp() == nil {
+        reqLogger.Info("Adding Finalizer for the Memcached")
+        m.SetFinalizers([]string{"finalizer.cache.example.com"})
+    
+        // Update CR
+        err := r.client.Update(context.TODO(), m)
+        if err != nil {
+            reqLogger.Error(err, "Failed to update Memcached with finalizer")
+            return err
+        }
+    }
+    return nil
+}
+
+```
+
 ### Metrics
 
 To learn about how metrics work in the Operator SDK read the [metrics section][metrics_doc] of the user documentation.
