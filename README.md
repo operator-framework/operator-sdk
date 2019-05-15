@@ -63,6 +63,20 @@ Alternatively, if you are using [Homebrew][homebrew_tool], you can install the S
 $ brew install operator-sdk
 ```
 
+```sh
+$ go get github.com/operator-framework/operator-sdk
+$ cd $GOPATH/src/github.com/operator-framework/operator-sdk
+$ git checkout master
+$ make dep
+$ make install
+```
+
+Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
+
+```sh
+$ brew install operator-sdk
+```
+
 ### Create and deploy an app-operator
 
 ```sh
