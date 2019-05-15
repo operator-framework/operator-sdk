@@ -39,8 +39,8 @@ Assuming all configuration defaults are used, `operator-sdk olm-catalog gen-csv`
 Users can configure CSV composition by populating several fields in the file `deploy/olm-catalog/csv-config.yaml`:
 
 - `operator-path`: (string) the operator resource manifest file path. Defaults to `deploy/operator.yaml`.
-- `crd-cr-path-list`: (string(, string)\*) a list of CRD and CR manifest file paths. Defaults to `[deploy/crds/*_{crd,cr}.yaml]`.
-- `rbac-path-list`: (string(, string)\*) a list of RBAC role manifest file paths. Defaults to `[deploy/role.yaml]`.
+- `crd-cr-paths`: (string(, string)\*) a list of CRD and CR manifest file paths. Defaults to `[deploy/crds/*_{crd,cr}.yaml]`.
+- `role-path`: (string) the RBAC role manifest file path. Defaults to `[deploy/role.yaml]`.
 
 ### Extensible `CSVUpdater` CSV update mechanism
 
