@@ -47,25 +47,11 @@ The following workflow is for a new **Helm** operator:
 
 ## Quick Start
 
-First, checkout and install the operator-sdk CLI:
+### Install the Operator SDK CLI
 
-```sh
-$ mkdir -p $GOPATH/src/github.com/operator-framework
-$ cd $GOPATH/src/github.com/operator-framework
-$ git clone https://github.com/operator-framework/operator-sdk
-$ cd operator-sdk
-$ git checkout master
-$ make dep
-$ make install
-```
+Follow the steps in the [installation guide][install_guide] to learn how to install the Operator SDK CLI tool.
 
-Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
-
-```sh
-$ brew install operator-sdk
-```
-
-Create and deploy an app-operator using the SDK CLI:
+### Create and deploy an app-operator
 
 ```sh
 # Create an app-operator project that defines the App CR.
@@ -165,6 +151,7 @@ See [reporting bugs][bug_guide] for details about reporting any issues.
 
 Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file for details.
 
+[install_guide]: ./doc/user/install-operator-sdk.md
 [operator_link]: https://coreos.com/operators/
 [proposals_docs]: ./doc/proposals
 [sdk_cli_ref]: ./doc/sdk-cli-reference.md
@@ -175,7 +162,6 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [contrib]: ./CONTRIBUTING.MD
 [bug_guide]:./doc/dev/reporting_bugs.md
 [license_file]:./LICENSE
-[homebrew_tool]:https://brew.sh/
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/

@@ -1,9 +1,7 @@
 # User Guide
 
-This guide walks through an example of building a simple memcached-operator using the operator-sdk
-CLI tool and controller-runtime library API. To learn how to use Ansible or Helm to create an
-operator, see the [Ansible Operator User Guide][ansible_user_guide] or the [Helm Operator User
-Guide][helm_user_guide]. The rest of this document will show how to program an operator in Go.
+This guide walks through an example of building a simple memcached-operator using the operator-sdk CLI tool and controller-runtime library API. To learn how to use Ansible or Helm to create an operator, see the [Ansible Operator User Guide][ansible_user_guide] or the [Helm Operator User Guide][helm_user_guide]. The rest of this document will show how to program an operator in Go.
+
 
 ## Prerequisites
 
@@ -18,27 +16,7 @@ Guide][helm_user_guide]. The rest of this document will show how to program an o
 
 ## Install the Operator SDK CLI
 
-The Operator SDK has a CLI tool that helps the developer to create, build, and deploy a new operator project.
-
-Checkout the desired release tag and install the SDK CLI tool:
-
-```sh
-$ mkdir -p $GOPATH/src/github.com/operator-framework
-$ cd $GOPATH/src/github.com/operator-framework
-$ git clone https://github.com/operator-framework/operator-sdk
-$ cd operator-sdk
-$ git checkout master
-$ make dep
-$ make install
-```
-
-This installs the CLI binary `operator-sdk` at `$GOPATH/bin`.
-
-Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
-
-```sh
-$ brew install operator-sdk
-```
+Follow the steps in the [installation guide][install_guide] to learn how to install the Operator SDK CLI tool.
 
 ## Create a new project
 
@@ -460,6 +438,61 @@ To implement complex deletion logic, you can add a finalizer to your Custom Reso
 deleted until you remove the finalizer (ie, after your cleanup logic has successfully run). For more information, see the
 [official Kubernetes documentation on finalizers](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#finalizers).
 
+**Example:**
+
+The following is a snippet from the controller file under `pkg/controller/memcached/memcached_controller.go`
+
+```Go
+func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+ 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
+ 	reqLogger.Info("Reconciling Memcached")
+ 
+ 	// Fetch the Memcached instance
+ 	memcached := &cachev1alpha1.Memcached{}
+ 	err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
+ 	...
+ 	// Check if the APP CR was marked to be deleted
+ 	isMemcachedMarkedToBeDeleted := memcached.GetDeletionTimestamp() != nil
+ 	if isMemcachedMarkedToBeDeleted {
+ 		// TODO(user): Add the cleanup steps that the operator needs to do before the CR can be deleted
+ 		// Update finalizer to allow delete CR
+ 		memcached.SetFinalizers(nil)
+ 
+ 		// Update CR
+ 		err := r.client.Update(context.TODO(), memcached)
+ 		if err != nil {
+ 			return reconcile.Result{}, err
+ 		}
+ 		return reconcile.Result{}, nil
+ 	}
+ 	
+ 	// Add finalizer for this CR
+ 	if err := r.addFinalizer(reqLogger, instance); err != nil {
+ 		return reconcile.Result{}, err
+ 	}
+ 	...
+ 
+ 	return reconcile.Result{}, nil
+ }
+ 
+//addFinalizer will add this attribute to the Memcached CR
+func (r *ReconcileMemcached) addFinalizer(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
+    if len(m.GetFinalizers()) < 1 && m.GetDeletionTimestamp() == nil {
+        reqLogger.Info("Adding Finalizer for the Memcached")
+        m.SetFinalizers([]string{"finalizer.cache.example.com"})
+    
+        // Update CR
+        err := r.client.Update(context.TODO(), m)
+        if err != nil {
+            reqLogger.Error(err, "Failed to update Memcached with finalizer")
+            return err
+        }
+    }
+    return nil
+}
+
+```
+
 ### Metrics
 
 To learn about how metrics work in the Operator SDK read the [metrics section][metrics_doc] of the user documentation.
@@ -525,7 +558,7 @@ func main() {
 When the operator is not running in a cluster, the Manager will return an error on starting since it can't detect the operator's namespace in order to create the configmap for leader election. You can override this namespace by setting the Manager's `LeaderElectionNamespace` option.
 
 
-
+[install_guide]: ./user/install-operator-sdk.md
 [pod_eviction_timeout]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options
 [lease_split_brain]: https://github.com/kubernetes/client-go/blob/30b06a83d67458700a5378239df6b96948cb9160/tools/leaderelection/leaderelection.go#L21-L24

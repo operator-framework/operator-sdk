@@ -77,6 +77,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
+// blank assignment to verify that ReconcileMemcached implements reconcile.Reconciler
 var _ reconcile.Reconciler = &ReconcileMemcached{}
 
 // ReconcileMemcached reconciles a Memcached object

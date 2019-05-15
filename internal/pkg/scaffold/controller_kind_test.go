@@ -104,6 +104,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
+// blank assignment to verify that ReconcileAppService implements reconcile.Reconciler
 var _ reconcile.Reconciler = &ReconcileAppService{}
 
 // ReconcileAppService reconciles a AppService object
