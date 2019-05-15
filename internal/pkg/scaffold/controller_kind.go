@@ -106,6 +106,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
+// blank assignment to verify that Reconcile{{ .Resource.Kind }} implements reconcile.Reconciler
 var _ reconcile.Reconciler = &Reconcile{{ .Resource.Kind }}{}
 
 // Reconcile{{ .Resource.Kind }} reconciles a {{ .Resource.Kind }} object
