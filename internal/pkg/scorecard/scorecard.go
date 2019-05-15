@@ -325,48 +325,48 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 	pluginDir := viper.GetString(PluginDirOpt)
 	if dir, err := os.Stat(pluginDir); err != nil || !dir.IsDir() {
 		log.Warnf("Plugin directory not found; skipping plugin tests: %v", err)
-	} else {
-		if err := os.Chdir(pluginDir); err != nil {
-			return nil, fmt.Errorf("failed to chdir into scorecard plugin directory: %v", err)
-		}
-		// executable files must be in "bin" subdirectory
-		files, err := ioutil.ReadDir("bin")
+		return pluginResults, nil
+	}
+	if err := os.Chdir(pluginDir); err != nil {
+		return nil, fmt.Errorf("failed to chdir into scorecard plugin directory: %v", err)
+	}
+	// executable files must be in "bin" subdirectory
+	files, err := ioutil.ReadDir("bin")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list files in %s/bin: %v", pluginDir, err)
+	}
+	for _, file := range files {
+		cmd := exec.Command("./bin/" + file.Name())
+		stdout := &bytes.Buffer{}
+		cmd.Stdout = stdout
+		stderr := &bytes.Buffer{}
+		cmd.Stderr = stderr
+		err := cmd.Run()
 		if err != nil {
-			return nil, fmt.Errorf("failed to list files in %s/bin: %v", pluginDir, err)
+			name := fmt.Sprintf("Failed Plugin: %s", file.Name())
+			description := fmt.Sprintf("Plugin with file name `%s` failed", file.Name())
+			logs := fmt.Sprintf("%s:\nStdout: %s\nStderr: %s", err, string(stdout.Bytes()), string(stderr.Bytes()))
+			pluginResults = append(pluginResults, failedPlugin(name, description, logs))
+			// output error to main logger as well for human-readable output
+			log.Errorf("Plugin `%s` failed with error (%v)", file.Name(), err)
+			continue
 		}
-		for _, file := range files {
-			cmd := exec.Command("./bin/" + file.Name())
-			stdout := &bytes.Buffer{}
-			cmd.Stdout = stdout
-			stderr := &bytes.Buffer{}
-			cmd.Stderr = stderr
-			err := cmd.Run()
-			if err != nil {
-				pluginResults = append(pluginResults, failedPlugin(
-					fmt.Sprintf("Failed Plugin: %s", file.Name()),
-					fmt.Sprintf("Plugin with file name `%s` failed", file.Name()),
-					fmt.Sprintf("%s:\nStdout: %s\nStderr: %s", err, string(stdout.Bytes()), string(stderr.Bytes()))))
-				// output error to main logger as well for human-readable output
-				log.Errorf("Plugin `%s` failed with error (%v)", file.Name(), err)
-				continue
-			}
-			// parse output and add to suites
-			result := scapiv1alpha1.ScorecardOutput{}
-			err = json.Unmarshal(stdout.Bytes(), &result)
-			if err != nil {
-				pluginResults = append(pluginResults, failedPlugin(
-					fmt.Sprintf("Plugin output invalid: %s", file.Name()),
-					fmt.Sprintf("Plugin with file name %s did not produce valid ScorecardOutput JSON", file.Name()),
-					fmt.Sprintf("Stdout: %s\nStderr: %s", string(stdout.Bytes()), string(stderr.Bytes()))))
-				log.Errorf("Output from plugin `%s` failed to unmarshal with error (%v)", file.Name(), err)
-				continue
-			}
-			stderrString := string(stderr.Bytes())
-			if len(stderrString) != 0 {
-				log.Warn(stderrString)
-			}
-			pluginResults = append(pluginResults, result)
+		// parse output and add to suites
+		result := scapiv1alpha1.ScorecardOutput{}
+		err = json.Unmarshal(stdout.Bytes(), &result)
+		if err != nil {
+			name := fmt.Sprintf("Plugin output invalid: %s", file.Name())
+			description := fmt.Sprintf("Plugin with file name %s did not produce valid ScorecardOutput JSON", file.Name())
+			logs := fmt.Sprintf("Stdout: %s\nStderr: %s", string(stdout.Bytes()), string(stderr.Bytes()))
+			pluginResults = append(pluginResults, failedPlugin(name, description, logs))
+			log.Errorf("Output from plugin `%s` failed to unmarshal with error (%v)", file.Name(), err)
+			continue
 		}
+		stderrString := string(stderr.Bytes())
+		if len(stderrString) != 0 {
+			log.Warn(stderrString)
+		}
+		pluginResults = append(pluginResults, result)
 	}
 	return pluginResults, nil
 }
