@@ -22,4 +22,4 @@ Additionally the CustomResourceDefinition (CRD) scope can also be changed for cl
 For each CRD that needs to be cluster-scoped, update its manifest to be cluster-scoped.
 
 * `deploy/crds/<group>_<version>_<kind>_crd.yaml`
-  * Set `spec.scope: Namespaced`
+  * Set `spec.scope: Cluster`
