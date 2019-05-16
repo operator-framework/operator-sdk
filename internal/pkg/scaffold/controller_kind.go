@@ -94,11 +94,11 @@ func getCustomAPIImportPathAndIdent(m string) (p string, id string, err error) {
 		}
 	}
 	if p == "" {
-		return "", "", fmt.Errorf(`k8s import "%s" path is empty`, m)
+		return "", "", fmt.Errorf(`custom import "%s" path is empty`, m)
 	}
 	if id == "" {
 		if len(sm) == 2 {
-			return "", "", fmt.Errorf(`k8s import "%s" identifier is empty, remove "=" from passed string`, m)
+			return "", "", fmt.Errorf(`custom import "%s" identifier is empty, remove "=" from passed string`, m)
 		}
 		sp := strings.Split(p, "/")
 		if len(sp) > 1 {
