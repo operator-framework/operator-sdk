@@ -21,9 +21,9 @@ By default, a `deploy/olm-catalog/csv-config.yaml` file is generated when `gen-c
 
 >Users can configure CSV composition by populating several fields in the file `deploy/olm-catalog/csv-config.yaml`:
 >
->- `crd-cr-path-list`: (string(, string)\*) a list of CRD and CR manifest file/directory paths. Defaults to `[deploy/crds]`.
+>- `crd-cr-paths`: (string(, string)\*) a list of CRD and CR manifest file/directory paths. Defaults to `[deploy/crds]`.
 >- `operator-path`: (string) the operator resource manifest file path. Defaults to `deploy/operator.yaml`.
->- `rbac-path-list`: (string(, string)\*) a list of RBAC role manifest file paths. Defaults to `[deploy/role.yaml]`.
+>- `role-path`: (string) the RBAC role manifest file path. Defaults to `[deploy/role.yaml]`.
 
 Fields in this config file can be modified to point towards alternate manifest locations. For example, if I have one set of production CR/CRD manifests under `deploy/crds/production`, and a set of test manifests under `deploy/crds/test`, and I only want to include production manifests in my CSV, I can set `crd-cr-path-list: [deploy/crds/production]`. `gen-csv` will then ignore `deploy/crds/test` when getting CR/CRD data.
 
@@ -43,7 +43,7 @@ Some fields might not have values after running `gen-csv` the first time. The SD
 
 ```console
 $ operator-sdk olm-catalog gen-csv --csv-version 0.0.1
-INFO[0000] Generating CSV manifest version 0.0.1        
+INFO[0000] Generating CSV manifest version 0.0.1
 INFO[0000] Required csv fields not filled in file deploy/olm-catalog/app-operator/0.0.1/app-operator.v0.0.1.clusterserviceversion.yaml:
 	spec.keywords
 	spec.maintainers
@@ -118,4 +118,4 @@ Optional:
 [doc-bundle]:https://github.com/operator-framework/operator-registry#manifest-format
 [x-desc-list]:https://github.com/openshift/console/blob/master/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L5-L14
 [install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md#operator-metadata
-[olm-capabilities]:../../images/operator-maturity-model.png
+[olm-capabilities]:../../images/operator-capability-level.png

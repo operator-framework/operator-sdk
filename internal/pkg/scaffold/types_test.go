@@ -66,6 +66,7 @@ type AppServiceStatus struct {
 
 // AppService is the Schema for the appservices API
 // +k8s:openapi-gen=true
+// +kubebuilder:subresource:status
 type AppService struct {
 	metav1.TypeMeta   ` + "`" + `json:",inline"` + "`" + `
 	metav1.ObjectMeta ` + "`" + `json:"metadata,omitempty"` + "`" + `

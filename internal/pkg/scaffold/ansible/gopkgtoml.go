@@ -15,8 +15,11 @@
 package ansible
 
 import (
+	"fmt"
+
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/internal/deps"
 )
 
 // GopkgToml - the Gopkg.toml file for a hybrid operator
@@ -54,3 +57,11 @@ const gopkgTomlTmpl = `[[constraint]]
   go-tests = true
   unused-packages = true
 `
+
+func PrintDepGopkgTOML(asFile bool) error {
+	if asFile {
+		_, err := fmt.Println(gopkgTomlTmpl)
+		return err
+	}
+	return deps.PrintDepGopkgTOML(gopkgTomlTmpl)
+}

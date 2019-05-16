@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,27 +15,36 @@
 package scaffold
 
 import (
-	"path/filepath"
-
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 )
 
-type TestFrameworkDockerfile struct {
+const ToolsFile = "tools.go"
+
+type Tools struct {
 	input.Input
 }
 
-func (s *TestFrameworkDockerfile) GetInput() (input.Input, error) {
+func (s *Tools) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(BuildTestDir, DockerfileFile)
+		s.Path = ToolsFile
 	}
-	s.TemplateBody = testFrameworkDockerfileTmpl
+	s.TemplateBody = toolsTmpl
 	return s.Input, nil
 }
 
-const testFrameworkDockerfileTmpl = `ARG BASEIMAGE
-FROM ${BASEIMAGE}
-ADD build/_output/bin/{{.ProjectName}}-test /usr/local/bin/{{.ProjectName}}-test
-ARG NAMESPACEDMAN
-ADD $NAMESPACEDMAN /namespaced.yaml
-ADD build/test-framework/go-test.sh /go-test.sh
+const toolsTmpl = `// +build tools
+
+package tools
+
+import (
+	// Code generators built at runtime.
+	_ "k8s.io/code-generator/cmd/client-gen"
+	_ "k8s.io/code-generator/cmd/conversion-gen"
+	_ "k8s.io/code-generator/cmd/deepcopy-gen"
+	_ "k8s.io/code-generator/cmd/informer-gen"
+	_ "k8s.io/code-generator/cmd/lister-gen"
+	_ "k8s.io/gengo/args"
+	_ "k8s.io/kube-openapi/cmd/openapi-gen"
+	_ "sigs.k8s.io/controller-tools/pkg/crd/generator"
+)
 `

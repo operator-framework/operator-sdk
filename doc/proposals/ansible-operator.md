@@ -4,15 +4,15 @@
 
 Not everyone is a golang developer, and therefore gaining adoption for the operator-sdk is capped by the number of golang developers. Also, tooling for Kubernetes in other languages is lacking support for things such as informers, caches, and listers.
 
-Operators purpose is to codify the operations of an application on Kubernetes. [Ansible](https://www.ansible.com/) is already an industry standard tool for automation and is a good fit for the kind of work that Kubernetes operators need to do. Adding the ability for users of the SDK to choose which between ansible and golang to follow will increase the number of potential users, and will grant existing users even more behavior. 
+Operators purpose is to codify the operations of an application on Kubernetes. [Ansible](https://www.ansible.com/) is already an industry standard tool for automation and is a good fit for the kind of work that Kubernetes operators need to do. Adding the ability for users of the SDK to choose which between ansible and golang to follow will increase the number of potential users, and will grant existing users even more behavior.
 
 ### Goals
 
-The goal of the Ansible Operator will be to create a fully functional framework for Ansible developers to create operators. It will also expose a library for golang users to use ansible in their operator if they so choose. These two goals in conjunction will allow users to select the best technology for their project or skillset. 
+The goal of the Ansible Operator will be to create a fully functional framework for Ansible developers to create operators. It will also expose a library for golang users to use ansible in their operator if they so choose. These two goals in conjunction will allow users to select the best technology for their project or skillset.
 
 ### New Operator Type
 
-This proposal creates a new type of operator called `ansible`.  The new type is used to tell the tooling to act on that type of operator. 
+This proposal creates a new type of operator called `ansible`.  The new type is used to tell the tooling to act on that type of operator.
 
 ### Package Structure
 Packages will be added to the operator-sdk. These packages are designed to be usable by the end user if they choose to and should have a well documented public API. The proposed packages are:

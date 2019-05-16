@@ -34,5 +34,4 @@ const (
 	BuildScriptDir = BuildDir + filePathSep + "bin"
 	DeployDir      = "deploy"
 	CRDsDir        = DeployDir + filePathSep + "crds"
-	VersionDir     = "version"
 )

@@ -22,11 +22,10 @@ func NewCmd() *cobra.Command {
 	testCmd := &cobra.Command{
 		Use:   "test",
 		Short: "Tests the operator",
-		Long: `The test command has subcommands that can test the operator locally or from within a cluster.
+		Long: `The test command has subcommands that can test the operator.
 `,
 	}
 
 	testCmd.AddCommand(newTestLocalCmd())
-	testCmd.AddCommand(newTestClusterCmd())
 	return testCmd
 }

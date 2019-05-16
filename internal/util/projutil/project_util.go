@@ -21,6 +21,7 @@ import (
 	"regexp"
 	"strings"
 
+	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -36,6 +37,8 @@ const (
 	buildDockerfile = "build" + fsep + "Dockerfile"
 	rolesDir        = "roles"
 	helmChartsDir   = "helm-charts"
+	goModFile       = "go.mod"
+	gopkgTOMLFile   = "Gopkg.toml"
 )
 
 // OperatorType - the type of operator
@@ -61,6 +64,40 @@ func (e ErrUnknownOperatorType) Error() string {
 		return "unknown operator type"
 	}
 	return fmt.Sprintf(`unknown operator type "%v"`, e.Type)
+}
+
+type DepManagerType string
+
+const (
+	DepManagerGoMod DepManagerType = "modules"
+	DepManagerDep   DepManagerType = "dep"
+)
+
+type ErrInvalidDepManager string
+
+func (e ErrInvalidDepManager) Error() string {
+	return fmt.Sprintf(`"%s" is not a valid dep manager; dep manager must be one of ["%v", "%v"]`, e, DepManagerDep, DepManagerGoMod)
+}
+
+var ErrNoDepManager = fmt.Errorf(`no valid dependency manager file found; dep manager must be one of ["%v", "%v"]`, DepManagerDep, DepManagerGoMod)
+
+func GetDepManagerType() (DepManagerType, error) {
+	if IsDepManagerDep() {
+		return DepManagerDep, nil
+	} else if IsDepManagerGoMod() {
+		return DepManagerGoMod, nil
+	}
+	return "", ErrNoDepManager
+}
+
+func IsDepManagerDep() bool {
+	_, err := os.Stat(gopkgTOMLFile)
+	return err == nil || os.IsExist(err)
+}
+
+func IsDepManagerGoMod() bool {
+	_, err := os.Stat(goModFile)
+	return err == nil || os.IsExist(err)
 }
 
 // MustInProjectRoot checks if the current dir is the project root and returns
@@ -91,13 +128,21 @@ func MustGetwd() string {
 	return wd
 }
 
+func getHomeDir() (string, error) {
+	hd, err := homedir.Dir()
+	if err != nil {
+		return "", err
+	}
+	return homedir.Expand(hd)
+}
+
 // CheckAndGetProjectGoPkg checks if this project's repository path is rooted under $GOPATH and returns the current directory's import path
 // e.g: "github.com/example-inc/app-operator"
 func CheckAndGetProjectGoPkg() string {
 	gopath := MustSetGopath(MustGetGopath())
 	goSrc := filepath.Join(gopath, SrcDir)
 	wd := MustGetwd()
-	currPkg := strings.Replace(wd, goSrc+fsep, "", 1)
+	currPkg := strings.Replace(wd, goSrc, "", 1)
 	// strip any "/" prefix from the repo path.
 	return strings.TrimPrefix(currPkg, fsep)
 }
@@ -167,9 +212,15 @@ func MustSetGopath(currentGopath string) string {
 
 var flagRe = regexp.MustCompile("(.* )?-v(.* )?")
 
-// IsGoVerbose returns true if GOFLAGS contains "-v". This function is useful
-// when deciding whether to make "go" command output verbose.
-func IsGoVerbose() bool {
+// SetGoVerbose sets GOFLAGS="${GOFLAGS} -v" if GOFLAGS does not
+// already contain "-v" to make "go" command output verbose.
+func SetGoVerbose() error {
 	gf, ok := os.LookupEnv(GoFlagsEnv)
-	return ok && len(gf) != 0 && flagRe.MatchString(gf)
+	if !ok || len(gf) == 0 {
+		return os.Setenv(GoFlagsEnv, "-v")
+	}
+	if !flagRe.MatchString(gf) {
+		return os.Setenv(GoFlagsEnv, gf+" -v")
+	}
+	return nil
 }

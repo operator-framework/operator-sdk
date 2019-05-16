@@ -114,6 +114,7 @@ echo "### Base image testing passed"
 echo "### Now testing migrate to hybrid operator"
 echo "###"
 
+export GO111MODULE=on
 operator-sdk migrate
 
 if [[ ! -e build/Dockerfile.sdkold ]];
@@ -122,15 +123,17 @@ then
     exit 1
 fi
 
-# We can't reliably run `dep ensure` because when there are changes to
-# operator-sdk itself, and those changes are not merged upstream, we hit this
-# bug: https://github.com/golang/dep/issues/1747
-# Instead, this re-uses operator-sdk's own vendor directory.
-cp -a "$ROOTDIR"/vendor ./
-mkdir -p vendor/github.com/operator-framework/operator-sdk/
-# We cannot just use operator-sdk from $GOPATH because compilation tries to use
-# its vendor directory, which can conflict with the local one.
-cp -a "$ROOTDIR"/{internal,pkg,version,LICENSE} vendor/github.com/operator-framework/operator-sdk/
+# Right now, SDK projects still need a vendor directory, so run `go mod vendor`
+# to pull down the deps specified by the scaffolded `go.mod` file.
+go mod vendor
+
+# Use the local operator-sdk directory as the repo. To make the go toolchain
+# happy, the directory needs a `go.mod` file that specifies the module name,
+# so we need this temporary hack until we update the SDK repo itself to use
+# go modules.
+echo "module github.com/operator-framework/operator-sdk" > $ROOTDIR/go.mod
+trap_add 'rm $ROOTDIR/go.mod' EXIT
+go mod edit -replace=github.com/operator-framework/operator-sdk=$ROOTDIR
 
 operator-sdk build "$DEST_IMAGE"
 

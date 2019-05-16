@@ -23,12 +23,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -36,8 +34,10 @@ import (
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 
+	"github.com/ghodss/yaml"
 	"github.com/prometheus/prometheus/util/promlint"
-	"k8s.io/api/core/v1"
+	"github.com/rogpeppe/go-internal/modfile"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
@@ -61,7 +61,7 @@ func TestMemcached(t *testing.T) {
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
 	gopath, ok := os.LookupEnv(projutil.GoPathEnv)
-	if !ok {
+	if !ok || gopath == "" {
 		t.Fatalf("$GOPATH not set")
 	}
 	cd, err := os.Getwd()
@@ -73,9 +73,18 @@ func TestMemcached(t *testing.T) {
 			t.Errorf("Failed to change back to original working directory: (%v)", err)
 		}
 	}()
+	// For go commands in operator projects.
+	if err = os.Setenv("GO111MODULE", "on"); err != nil {
+		t.Fatal(err)
+	}
 
 	// Setup
-	absProjectPath := filepath.Join(gopath, "src/github.com/example-inc")
+	absProjectPath, err := ioutil.TempDir(filepath.Join(gopath, "src"), "tmp.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx.AddCleanupFn(func() error { return os.RemoveAll(absProjectPath) })
+
 	if err := os.MkdirAll(absProjectPath, fileutil.DefaultDirFileMode); err != nil {
 		t.Fatal(err)
 	}
@@ -88,59 +97,40 @@ func TestMemcached(t *testing.T) {
 		"new",
 		operatorName).CombinedOutput()
 	if err != nil {
-		// HACK: dep cannot resolve non-master branches as the base branch for PR's,
-		// so running `dep ensure` will fail when first running
-		// `operator-sdk new ...`. For now we can ignore the first solve failure.
-		// A permanent solution can be implemented once the following is merged:
-		// https://github.com/golang/dep/pull/1658
-		solveFailRe := regexp.MustCompile(`(?m)^[ \t]*Solving failure:.+github\.com/operator-framework/operator-sdk.+:$`)
-		if !solveFailRe.Match(cmdOut) {
-			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
-		}
+		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
-	ctx.AddCleanupFn(func() error { return os.RemoveAll(absProjectPath) })
 
 	if err := os.Chdir(operatorName); err != nil {
 		t.Fatalf("Failed to change to %s directory: (%v)", operatorName, err)
 	}
-	repo, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
-	if repo == "" {
-		repo, ok = os.LookupEnv("TRAVIS_REPO_SLUG")
-	}
-	if ok && repo != "" && repo != "operator-framework/operator-sdk" {
-		commitSha, ok := os.LookupEnv("TRAVIS_PULL_REQUEST_SHA")
-		if commitSha == "" {
-			commitSha, ok = os.LookupEnv("TRAVIS_COMMIT")
-		}
-		if ok && commitSha != "" {
-			gopkg, err := ioutil.ReadFile("Gopkg.toml")
-			if err != nil {
-				t.Fatal(err)
-			}
-			// Match against the '#osdk_branch_annotation' used for version substitution
-			// and comment out the current branch.
-			branchRe := regexp.MustCompile("([ ]+)(.+#osdk_branch_annotation)")
-			gopkg = branchRe.ReplaceAll(gopkg, []byte("$1# $2"))
-			versionRe := regexp.MustCompile("([ ]+)(.+#osdk_version_annotation)")
-			gopkg = versionRe.ReplaceAll(gopkg, []byte("$1# $2"))
-			// Plug in the fork to test against so `dep ensure` can resolve dependencies
-			// correctly.
-			gopkgString := string(gopkg)
-			gopkgLoc := strings.LastIndex(gopkgString, "\n  name = \"github.com/operator-framework/operator-sdk\"\n")
-			gopkgString = gopkgString[:gopkgLoc] + "\n  source = \"https://github.com/" + repo + "\"\n  revision = \"" + commitSha + "\"\n" + gopkgString[gopkgLoc+1:]
-			err = ioutil.WriteFile("Gopkg.toml", []byte(gopkgString), fileutil.DefaultFileMode)
-			if err != nil {
-				t.Fatalf("Failed to write updated Gopkg.toml: %v", err)
-			}
 
-			t.Logf("Gopkg.toml: %v", gopkgString)
-		} else {
-			t.Fatal("Could not find sha of PR")
+	sdkRepo := "github.com/operator-framework/operator-sdk"
+	localSDKPath := filepath.Join(gopath, "src", sdkRepo)
+
+	replace := getGoModReplace(t, localSDKPath)
+	if replace.repo != sdkRepo {
+		if replace.isLocal {
+			// A hacky way to get local module substitution to work is to write a
+			// stub go.mod into the local SDK repo referred to in
+			// memcached-operator's go.mod, which allows go to recognize
+			// the local SDK repo as a module.
+			sdkModPath := filepath.Join(replace.repo, "go.mod")
+			err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
+			if err != nil {
+				t.Fatalf("Failed to write main repo go.mod file: %v", err)
+			}
+			defer func() {
+				if err = os.RemoveAll(sdkModPath); err != nil {
+					t.Fatalf("Failed to remove %s: %v", sdkModPath, err)
+				}
+			}()
 		}
+		writeGoModReplace(t, sdkRepo, replace.repo, replace.ref)
 	}
-	cmdOut, err = exec.Command("dep", "ensure").CombinedOutput()
+
+	cmdOut, err = exec.Command("go", "mod", "vendor").CombinedOutput()
 	if err != nil {
-		t.Fatalf("Error after modifying Gopkg.toml: %v\nCommand Output: %s\n", err, string(cmdOut))
+		t.Fatalf("Error after modifying go.mod: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
 	// Set replicas to 2 to test leader election. In production, this should
@@ -175,11 +165,25 @@ func TestMemcached(t *testing.T) {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
-	cmdOut, err = exec.Command("cp", "-a", filepath.Join(gopath, "src/github.com/operator-framework/operator-sdk/example/memcached-operator/memcached_controller.go.tmpl"),
-		"pkg/controller/memcached/memcached_controller.go").CombinedOutput()
-	if err != nil {
-		t.Fatalf("Could not copy memcached example to to pkg/controller/memcached/memcached_controller.go: %v\nCommand Output:\n%v", err, string(cmdOut))
+	tmplFiles := map[string]string{
+		filepath.Join(localSDKPath, "example/memcached-operator/memcached_controller.go.tmpl"): "pkg/controller/memcached/memcached_controller.go",
+		filepath.Join(localSDKPath, "test/e2e/incluster-test-code/main_test.go.tmpl"):          "test/e2e/main_test.go",
+		filepath.Join(localSDKPath, "test/e2e/incluster-test-code/memcached_test.go.tmpl"):     "test/e2e/memcached_test.go",
 	}
+	for src, dst := range tmplFiles {
+		if err := os.MkdirAll(filepath.Dir(dst), fileutil.DefaultDirFileMode); err != nil {
+			t.Fatalf("Could not create template destination directory: %s", err)
+		}
+		srcTmpl, err := ioutil.ReadFile(src)
+		if err != nil {
+			t.Fatalf("Could not read template from %s: %s", src, err)
+		}
+		dstData := strings.Replace(string(srcTmpl), "github.com/example-inc", filepath.Base(absProjectPath), -1)
+		if err := ioutil.WriteFile(dst, []byte(dstData), fileutil.DefaultFileMode); err != nil {
+			t.Fatalf("Could not write template output to %s: %s", dst, err)
+		}
+	}
+
 	memcachedTypesFile, err := ioutil.ReadFile("pkg/apis/cache/v1alpha1/memcached_types.go")
 	if err != nil {
 		t.Fatal(err)
@@ -213,47 +217,18 @@ func TestMemcached(t *testing.T) {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
-	t.Log("Copying test files to ./test")
-	if err = os.MkdirAll("./test", fileutil.DefaultDirFileMode); err != nil {
-		t.Fatalf("Could not create test/e2e dir: %v", err)
-	}
-	cmdOut, err = exec.Command("cp", "-a", filepath.Join(gopath, "src/github.com/operator-framework/operator-sdk/test/e2e/incluster-test-code"), "./test/e2e").CombinedOutput()
+	t.Log("Pulling new dependencies with go mod")
+	cmdOut, err = exec.Command("go", "mod", "vendor").CombinedOutput()
 	if err != nil {
-		t.Fatalf("Could not copy tests to test/e2e: %v\nCommand Output:\n%v", err, string(cmdOut))
-	}
-	// fix naming of files
-	cmdOut, err = exec.Command("mv", "test/e2e/main_test.go.tmpl", "test/e2e/main_test.go").CombinedOutput()
-	if err != nil {
-		t.Fatalf("Could not rename test/e2e/main_test.go.tmpl: %v\nCommand Output:\n%v", err, string(cmdOut))
-	}
-	cmdOut, err = exec.Command("mv", "test/e2e/memcached_test.go.tmpl", "test/e2e/memcached_test.go").CombinedOutput()
-	if err != nil {
-		t.Fatalf("Could not rename test/e2e/memcached_test.go.tmpl: %v\nCommand Output:\n%v", err, string(cmdOut))
-	}
-
-	t.Log("Pulling new dependencies with dep ensure")
-	cmdOut, err = exec.Command("dep", "ensure").CombinedOutput()
-	if err != nil {
-		t.Fatalf("Command 'dep ensure' failed: %v\nCommand Output:\n%v", err, string(cmdOut))
-	}
-	// link local sdk to vendor if not in travis
-	if repo == "" {
-		for _, dir := range []string{"pkg", "internal"} {
-			repoDir := filepath.Join("github.com/operator-framework/operator-sdk", dir)
-			vendorDir := filepath.Join("vendor", repoDir)
-			if err := os.RemoveAll(vendorDir); err != nil {
-				t.Fatalf("Failed to delete old vendor directory: (%v)", err)
-			}
-			if err := os.Symlink(filepath.Join(gopath, projutil.SrcDir, repoDir), vendorDir); err != nil {
-				t.Fatalf("Failed to symlink local operator-sdk project to vendor dir: (%v)", err)
-			}
-		}
+		t.Fatalf("Command 'go mod vendor' failed: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 
 	file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
 	if err != nil {
 		t.Fatal(err)
 	}
+	ctx.AddCleanupFn(func() error { return os.Remove(file.Name()) })
+
 	// hacky way to use createFromYAML without exposing the method
 	// create crd
 	filename := file.Name()
@@ -267,9 +242,94 @@ func TestMemcached(t *testing.T) {
 	// run subtests
 	t.Run("memcached-group", func(t *testing.T) {
 		t.Run("Cluster", MemcachedCluster)
-		t.Run("ClusterTest", MemcachedClusterTest)
 		t.Run("Local", MemcachedLocal)
 	})
+}
+
+type goModReplace struct {
+	repo    string
+	ref     string
+	isLocal bool
+}
+
+// getGoModReplace returns a go.mod replacement that is appropriate based on the build's
+// environment to support PR, fork/branch, and local builds.
+//
+//   PR:
+//     1. Activate when TRAVIS_PULL_REQUEST_SLUG and TRAVIS_PULL_REQUEST_SHA are set
+//     2. Modify go.mod to replace osdk import with github.com/${TRAVIS_PULL_REQUEST_SLUG} ${TRAVIS_PULL_REQUEST_SHA}
+//
+//   Fork/branch:
+//     1. Activate when TRAVIS_REPO_SLUG and TRAVIS_COMMIT are set
+//     2. Modify go.mod to replace osdk import with github.com/${TRAVIS_REPO_SLUG} ${TRAVIS_COMMIT}
+//
+//   Local:
+//     1. Activate when none of the above TRAVIS_* variables are set.
+//     2. Modify go.mod to replace osdk import with local filesystem path.
+//
+func getGoModReplace(t *testing.T, localSDKPath string) goModReplace {
+	// PR environment
+	prSlug, prSlugOk := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
+	prSha, prShaOk := os.LookupEnv("TRAVIS_PULL_REQUEST_SHA")
+	if prSlugOk && prSlug != "" && prShaOk && prSha != "" {
+		return goModReplace{
+			repo: fmt.Sprintf("github.com/%s", prSlug),
+			ref:  prSha,
+		}
+	}
+
+	// Fork/branch environment
+	slug, slugOk := os.LookupEnv("TRAVIS_REPO_SLUG")
+	sha, shaOk := os.LookupEnv("TRAVIS_COMMIT")
+	if slugOk && slug != "" && shaOk && sha != "" {
+		return goModReplace{
+			repo: fmt.Sprintf("github.com/%s", slug),
+			ref:  sha,
+		}
+	}
+
+	// If neither of the above cases is applicable, but one of the TRAVIS_*
+	// variables is nonetheless set, something unexpected is going on. Log
+	// the vars and exit.
+	if prSlugOk || prShaOk || slugOk || shaOk {
+		t.Logf("TRAVIS_PULL_REQUEST_SLUG='%s', set: %t", prSlug, prSlugOk)
+		t.Logf("TRAVIS_PULL_REQUEST_SHA='%s', set: %t", prSha, prShaOk)
+		t.Logf("TRAVIS_REPO_SLUG='%s', set: %t", slug, slugOk)
+		t.Logf("TRAVIS_COMMIT='%s', set: %t", sha, shaOk)
+		t.Fatal("Invalid travis environment")
+	}
+
+	// Local environment
+	return goModReplace{
+		repo:    localSDKPath,
+		isLocal: true,
+	}
+}
+
+func writeGoModReplace(t *testing.T, repo, path, sha string) {
+	modBytes, err := ioutil.ReadFile("go.mod")
+	if err != nil {
+		t.Fatalf("Failed to read go.mod: %v", err)
+	}
+	modFile, err := modfile.Parse("go.mod", modBytes, nil)
+	if err != nil {
+		t.Fatalf("Failed to parse go.mod: %v", err)
+	}
+	if err = modFile.AddReplace(repo, "", path, sha); err != nil {
+		s := ""
+		if sha != "" {
+			s = " " + sha
+		}
+		t.Fatalf(`Failed to add "replace %s => %s%s: %v"`, repo, path, s, err)
+	}
+	if modBytes, err = modFile.Format(); err != nil {
+		t.Fatalf("Failed to format go.mod: %v", err)
+	}
+	err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
+	if err != nil {
+		t.Fatalf("Failed to write updated go.mod: %v", err)
+	}
+	t.Logf("go.mod: %v", string(modBytes))
 }
 
 func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
@@ -500,10 +560,7 @@ func MemcachedCluster(t *testing.T) {
 		t.Fatalf("Failed to write deploy/operator.yaml: %v", err)
 	}
 	t.Log("Building operator docker image")
-	cmdOut, err := exec.Command("operator-sdk", "build", *e2eImageName,
-		"--enable-tests",
-		"--test-location", "./test/e2e",
-		"--namespaced-manifest", "deploy/operator.yaml").CombinedOutput()
+	cmdOut, err := exec.Command("operator-sdk", "build", *e2eImageName).CombinedOutput()
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
@@ -520,6 +577,8 @@ func MemcachedCluster(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	ctx.AddCleanupFn(func() error { return os.Remove(file.Name()) })
+
 	// create namespaced resources
 	filename := file.Name()
 	framework.Global.NamespacedManPath = &filename
@@ -549,50 +608,6 @@ func MemcachedCluster(t *testing.T) {
 
 	if err = memcachedMetricsTest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
-	}
-}
-
-func MemcachedClusterTest(t *testing.T) {
-	// get global framework variables
-	ctx := framework.NewTestCtx(t)
-	defer ctx.Cleanup()
-
-	// create sa
-	filename := "deploy/service_account.yaml"
-	framework.Global.NamespacedManPath = &filename
-	err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("Created sa")
-
-	// create rbac
-	filename = "deploy/role.yaml"
-	framework.Global.NamespacedManPath = &filename
-	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("Created role")
-
-	filename = "deploy/role_binding.yaml"
-	framework.Global.NamespacedManPath = &filename
-	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("Created role_binding")
-
-	namespace, err := ctx.GetNamespace()
-	if err != nil {
-		t.Fatalf("Could not get namespace: %v", err)
-	}
-	cmdOut, err := exec.Command("operator-sdk", "test", "cluster", *e2eImageName,
-		"--namespace", namespace,
-		"--image-pull-policy", "Never",
-		"--service-account", operatorName).CombinedOutput()
-	if err != nil {
-		t.Fatalf("In-cluster test failed: %v\nCommand Output:\n%s", err, string(cmdOut))
 	}
 }
 
