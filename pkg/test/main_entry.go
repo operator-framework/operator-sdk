@@ -69,6 +69,7 @@ func MainEntry(m *testing.M) {
 		opts := projutil.GoCmdOptions{
 			BinName:     outputBinName,
 			PackagePath: filepath.Join(scaffold.ManagerDir, scaffold.CmdFile),
+			GoMod:       projutil.IsDepManagerGoMod(),
 		}
 		if err := projutil.GoBuild(opts); err != nil {
 			log.Fatalf("Failed to build local operator binary: %s", err)
@@ -121,14 +122,12 @@ func MainEntry(m *testing.M) {
 		os.Exit(exitCode)
 	}()
 	// create crd
-	if *kubeconfigPath != "incluster" {
-		globalYAML, err := ioutil.ReadFile(*globalManPath)
-		if err != nil {
-			log.Fatalf("Failed to read global resource manifest: %v", err)
-		}
-		err = ctx.createFromYAML(globalYAML, true, &CleanupOptions{TestContext: ctx})
-		if err != nil {
-			log.Fatalf("Failed to create resource(s) in global resource manifest: %v", err)
-		}
+	globalYAML, err := ioutil.ReadFile(*globalManPath)
+	if err != nil {
+		log.Fatalf("Failed to read global resource manifest: %v", err)
+	}
+	err = ctx.createFromYAML(globalYAML, true, &CleanupOptions{TestContext: ctx})
+	if err != nil {
+		log.Fatalf("Failed to create resource(s) in global resource manifest: %v", err)
 	}
 }

@@ -228,19 +228,16 @@ functions will automatically be run since they were deferred when the TestCtx wa
 To make running the tests simpler, the `operator-sdk` CLI tool has a `test` subcommand that can configure
 default test settings, such as locations of your global resource manifest file (by default
 `deploy/crd.yaml`) and your namespaced resource manifest file (by default `deploy/service_account.yaml` concatenated with
-`deploy/rbac.yaml` and `deploy/operator.yaml`), and allows the user to configure runtime options. There are 2 ways to use the
-subcommand: local and cluster.
+`deploy/rbac.yaml` and `deploy/operator.yaml`), and allows the user to configure runtime options.
 
-### Local
-
-To run the tests locally, run the `operator-sdk test local` command in your project root and pass the location of the tests
+To run the tests, run the `operator-sdk test local` command in your project root and pass the location of the tests
 as an argument. You can use `--help` to view the other configuration options and use `--go-test-flags` to pass in arguments to `go test`. Here is an example command:
 
 ```shell
 $ operator-sdk test local ./test/e2e --go-test-flags "-v -parallel=2"
 ```
 
-#### Image Flag
+### Image Flag
 
 If you wish to specify a different operator image than specified in your `operator.yaml` file (or a user-specified
 namespaced manifest file), you can use the `--image` flag:
@@ -249,7 +246,7 @@ namespaced manifest file), you can use the `--image` flag:
 $ operator-sdk test local ./test/e2e --image quay.io/example/my-operator:v0.0.2
 ```
 
-#### Namespace Flag
+### Namespace Flag
 
 If you wish to run all the tests in 1 namespace (which also forces `-parallel=1`), you can use the `--namespace` flag:
 
@@ -258,7 +255,7 @@ $ kubectl create namespace operator-test
 $ operator-sdk test local ./test/e2e --namespace operator-test
 ```
 
-#### Up-Local Flag
+### Up-Local Flag
 
 To run the operator itself locally during the tests instead of starting a deployment in the cluster, you can use the
 `--up-local` flag. This mode will still create global resources, but by default will not create any in-cluster namespaced
@@ -270,7 +267,7 @@ $ kubectl create namespace operator-test
 $ operator-sdk test local ./test/e2e --namespace operator-test --up-local
 ```
 
-#### No-Setup Flag
+### No-Setup Flag
 
 If you would prefer to create the resources yourself and skip resource creation, you can use the `--no-setup` flag:
 ```shell
@@ -285,7 +282,7 @@ $ operator-sdk test local ./test/e2e --namespace operator-test --no-setup
 
 For more documentation on the `operator-sdk test local` command, see the [SDK CLI Reference][sdk-cli-ref] doc.
 
-#### Running Go Test Directly (Not Recommended)
+### Running Go Test Directly (Not Recommended)
 
 For advanced use cases, it is possible to run the tests via `go test` directly. As long as all flags defined
 in [MainEntry][main-entry-link] are declared, the tests will run correctly. Running the tests directly with missing flags
@@ -301,45 +298,6 @@ $ cat deploy/operator.yaml >> deploy/namespace-init.yaml
 # Run tests
 $ go test ./test/e2e/... -root=$(pwd) -kubeconfig=$HOME/.kube/config -globalMan deploy/crd.yaml -namespacedMan deploy/namespace-init.yaml -v -parallel=2
 ```
-
-### Cluster
-
-Another way to run the tests is from within a Kubernetes cluster. To do this, you first need to build an image with
-the testing binary embedded by using the `operator-sdk build` command and using the `--enable-tests` flag to enable tests:
-
-```shell
-$ operator-sdk build quay.io/example/memcached-operator:v0.0.1 --enable-tests
-```
-
-Note that the namespaced yaml must be up to date before running this command. The `build` subcommand will warn you
-if it finds a deployment in the namespaced manifest with an image that doesn't match the argument you provided. The
-`operator-sdk build` command has other flags for configuring the tests that can be viewed with the `--help` flag
-or at the [SDK CLI Reference][sdk-cli-ref].
-
-Once the image is ready, the tests are ready to be run. To run the tests, make sure you have all global resources
-and a namespace with proper rbac configured:
-
-```shell
-$ kubectl create -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
-$ kubectl create namespace memcached-test
-$ kubectl create -f deploy/service_account.yaml -n memcached-test
-$ kubectl create -f deploy/role.yaml -n memcached-test
-$ kubectl create -f deploy/role_binding.yaml -n memcached-test
-```
-
-Once you have your environment properly configured, you can start the tests using the `operator-sdk test cluster` command:
-
-```shell
-$ operator-sdk test cluster quay.io/example/memcached-operator:v0.0.1 --namespace memcached-test --service-account memcached-operator
-
-Example Output:
-Test Successfully Completed
-```
-
-The `test cluster` command will deploy a test pod in the given namespace that will run the e2e tests packaged in the image.
-The tests run sequentially in the namespace (`-parallel=1`), the same as running `operator-sdk test local --namespace <namespace>`.
-The command will wait until the tests succeed (pod phase=`Succeeded`) or fail (pod phase=`Failed`).
-If the tests fail, the command will output the test pod logs which should be the standard go test error logs.
 
 ## Manual Cleanup
 

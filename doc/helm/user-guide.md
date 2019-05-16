@@ -1,7 +1,6 @@
 # User Guide
 
-This guide walks through an example of building a simple nginx-operator
-powered by Helm using tools and libraries provided by the Operator SDK.
+This guide walks through an example of building a simple nginx-operator powered by Helm using tools and libraries provided by the Operator SDK.
 
 ## Prerequisites
 
@@ -9,7 +8,7 @@ powered by Helm using tools and libraries provided by the Operator SDK.
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - [dep][dep_tool] version v0.5.0+. (Optional if you aren't installing from source)
-- [go][go_tool] version v1.10+. (Optional if you aren't installing from source)
+- [go][go_tool] version v1.12+. (Optional if you aren't installing from source)
 - Access to a Kubernetes v1.11.3+ cluster.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the
@@ -17,28 +16,7 @@ local Kubernetes cluster and [quay.io][quay_link] for the public registry.
 
 ## Install the Operator SDK CLI
 
-The Operator SDK has a CLI tool that helps the developer to create, build, and
-deploy a new operator project.
-
-Checkout the desired release tag and install the SDK CLI tool:
-
-```sh
-mkdir -p $GOPATH/src/github.com/operator-framework
-cd $GOPATH/src/github.com/operator-framework
-git clone https://github.com/operator-framework/operator-sdk
-cd operator-sdk
-git checkout master
-make dep
-make install
-```
-
-This installs the CLI binary `operator-sdk` at `$GOPATH/bin`.
-
-Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
-
-```sh
-$ brew install operator-sdk
-```
+Follow the steps in the [installation guide][install_guide] to learn how to install the Operator SDK CLI tool.
 
 ## Create a new project
 
@@ -364,6 +342,7 @@ kubectl delete -f deploy/service_account.yaml
 kubectl delete -f deploy/crds/example_v1alpha1_nginx_crd.yaml
 ```
 
+[install_guide]: ../user/install-operator-sdk.md
 [layout_doc]:./project_layout.md
 [homebrew_tool]:https://brew.sh/
 [dep_tool]:https://golang.github.io/dep/docs/installation.html

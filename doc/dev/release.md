@@ -93,40 +93,34 @@ key and you are ready to sign releases.
 
 ## Verifying a release
 
-To verify a git tag signature, use this command:
+To verify a git tag, use this command:
 
 ```sh
 $ git verify-tag --verbose "$TAG_NAME"
 ```
 
-To verify a release binary using the provided asc files, place the binary and corresponding asc
-file into the same directory and use the corresponding command:
+If you do not have the mantainers public key on your machine, you will get an error message similiar to this:
 
 ```sh
-# macOS
-$ gpg --verify operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin.asc
-# GNU/Linux
-$ gpg --verify operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu.asc
+git verify-tag --verbose "$TAG_NAME"
+object 61e0c23e9d2e217f8d95ac104a8f2545c102b5c3
+type commit
+tag v0.6.0
+tagger Ish Shah <ishah@redhat.com> 1552688145 -0700
+
+Operator SDK v0.6.0
+gpg: Signature made Fri Mar 15 23:15:45 2019 CET
+gpg:                using RSA key <KEY_ID>
+gpg: Can't check signature: No public key
 ```
 
-If you do not have the maintainers public key on your machine, you will get an error message similar
-to this:
-
-```sh
-$ git verify-tag ${TAG_NAME}
-gpg: Signature made Wed 31 Oct 2018 02:57:31 PM PDT
-gpg:                using RSA key 4AEE18F83AFDEB23
-gpg: Cant check signature: public key not found
-```
-
-To download the key, use this command, replacing `$KEY_ID` with the RSA key string provided in the output
-of the previous command:
+To download the key, use the following command, replacing `$KEY_ID` with the RSA key string provided in the output of the previous command:
 
 ```sh
 $ gpg --recv-key "$KEY_ID"
 ```
 
-Now you should be able to verify the tags and/or binaries.
+To verify a release binary using the provided asc files see the [installation guide.][install-guide]
 
 ## Release steps
 
@@ -171,7 +165,7 @@ Create a new branch to push release commits:
 $ git checkout -b release-v1.3.0
 ```
 
-Commit changes to the following six files:
+Commit changes to the following files:
 
 - `version/version.go`: update `Version` to `v1.3.0`.
 - `internal/pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
@@ -181,7 +175,14 @@ Commit changes to the following six files:
 - `internal/pkg/scaffold/gopkgtoml_test.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
 - `internal/pkg/scaffold/ansible/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
 - `internal/pkg/scaffold/helm/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
+- `internal/pkg/scaffold/go_mod.go`, in the `replace` block for `github.com/operator-framework/operator-sdk`:
+  - Add the following `replace` entry: `github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v1.3.0`.
+  - If an entry already exists, change the version to `v1.3.0`.
+- `internal/pkg/scaffold/go_mod_test.go`: same as for `internal/pkg/scaffold/go_mod.go`.
+- `internal/pkg/scaffold/helm/go_mod.go`: same as for `internal/pkg/scaffold/go_mod.go`.
+- `internal/pkg/scaffold/ansible/go_mod.go`: same as for `internal/pkg/scaffold/go_mod.go`.
 - `CHANGELOG.md`: update the `## Unreleased` header to `## v1.3.0`.
+- `doc/user/install-operator-sdk.md`: update the linux and macOS URLs to point to the new release URLs.
 
 Create a new PR for `release-v1.3.0`.
 
@@ -295,6 +296,7 @@ brew bump-formula-pr --strict --url=$OPERATORSDKURL --sha256=$OPERATORSUM operat
 
 Note: If there were any changes made to the CLI commands, make sure to look at the existing tests, in case they need updating.
 
+[install-guide]:../user/install-operator-sdk.md
 [doc-maintainers]:../../MAINTAINERS
 [doc-readme-prereqs]:../../README.md#prerequisites
 [doc-git-default-key]:https://help.github.com/en/articles/telling-git-about-your-signing-key
