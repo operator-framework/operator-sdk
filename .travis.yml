@@ -5,6 +5,7 @@ sudo: required
 cache:
   directories:
     - $HOME/.cache/go-build
+    - $GOPATH/pkg/mod
 
 go:
 - 1.12.x
