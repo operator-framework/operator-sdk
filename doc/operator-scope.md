@@ -17,7 +17,7 @@ The SDK scaffolds operators to be namespaced by default but with a few modificat
 
 ### CRD scope
 
-Additionally the CustomResourceDefinition (CRD) scope can also be changed for cluster-scoped operators so that there is only a single instance (of a given name) of the CRD to manage across the cluster.
+Additionally the CustomResourceDefinition (CRD) scope can also be changed for cluster-scoped operators so that there is only a single instance (for a given name) of the CRD to manage across the cluster.
 
 For each CRD that needs to be cluster-scoped, update its manifest to be cluster-scoped.
 
