@@ -99,7 +99,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
-	github.com/operator-framework/operator-sdk master
+	github.com/operator-framework/operator-sdk v0.8.x
 	github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.8.1 // indirect
@@ -165,7 +165,6 @@ replace (
 replace (
 	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20181117043124-c2090bec4d9b
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20180711000925-0cf8f7e6ed1d
-	github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v0.8.0
 )
 `
 
