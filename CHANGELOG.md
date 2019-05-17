@@ -6,6 +6,7 @@
 - Manager is now configured with a new `DynamicRESTMapper`, which accounts for the fact that the default `RESTMapper`, which only checks resource types at startup, can't handle the case of first creating a CRD and then an instance of that CRD. ([#1329](https://github.com/operator-framework/operator-sdk/pull/1329))
 - Unify CLI debug logging under a global `--verbose` flag ([#1361](https://github.com/operator-framework/operator-sdk/pull/1361))
 - [Go module](https://github.com/golang/go/wiki/Modules) support by default for new Go operators and during Ansible and Helm operator migration. The dependency manager used for a new operator can be explicitly specified for new operators through the `--dep-manager` flag, available in [`operator-sdk new`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#new) and [`operator-sdk migrate`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#migrate). `dep` is still available through `--dep-manager=dep`. ([#1001](https://github.com/operator-framework/operator-sdk/pull/1001))
+- New optional flag `--custom-api-import` for [`operator-sdk add controller`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#controller) to specify that the new controller reconciles a built-in or external Kubernetes API, and what import path and identifier it should have. ([#1344](https://github.com/operator-framework/operator-sdk/pull/1344))
 
 ### Changed
 
