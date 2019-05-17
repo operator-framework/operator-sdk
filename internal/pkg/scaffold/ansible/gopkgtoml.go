@@ -35,8 +35,8 @@ func (s *GopkgToml) GetInput() (input.Input, error) {
 const gopkgTomlTmpl = `[[constraint]]
   name = "github.com/operator-framework/operator-sdk"
   # The version rule is used for a specific release and the master branch for in between releases.
-  # branch = "v0.7.x" #osdk_branch_annotation
-  version = "=v0.7.1" #osdk_version_annotation
+  branch = "v0.7.x" #osdk_branch_annotation
+  # version = "=v0.7.1" #osdk_version_annotation
 
 [[override]]
   name = "k8s.io/api"
