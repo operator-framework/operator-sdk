@@ -76,9 +76,15 @@ func (s *Scaffold) setFieldsAndValidate(t input.File) error {
 }
 
 func (s *Scaffold) configure(cfg *input.Config) {
-	s.Repo = cfg.Repo
-	s.AbsProjectPath = cfg.AbsProjectPath
-	s.ProjectName = cfg.ProjectName
+	if cfg.Repo != "" {
+		s.Repo = cfg.Repo
+	}
+	if cfg.AbsProjectPath != "" {
+		s.AbsProjectPath = cfg.AbsProjectPath
+	}
+	if cfg.ProjectName != "" {
+		s.ProjectName = cfg.ProjectName
+	}
 }
 
 func validateBoilerplateBytes(b []byte) error {
