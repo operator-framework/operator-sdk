@@ -25,9 +25,9 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/flags"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	"github.com/spf13/viper"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 func buildCodegenBinaries(genDirs []string, binDir, codegenSrcDir string) error {
