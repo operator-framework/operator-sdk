@@ -30,7 +30,6 @@ import (
 
 // OpenAPIGen generates OpenAPI validation specs for all CRD's in dirs.
 func OpenAPIGen() error {
-	projutil.MustInProjectRoot()
 
 	absProjectPath := projutil.MustGetwd()
 	repoPkg := projutil.CheckAndGetProjectGoPkg()
@@ -41,7 +40,7 @@ func OpenAPIGen() error {
 		return err
 	}
 
-	gvMap, err := parseGroupVersions()
+	gvMap, err := parseGroupVersions(scaffold.APIsDir)
 	if err != nil {
 		return fmt.Errorf("failed to parse group versions: (%v)", err)
 	}
@@ -52,7 +51,7 @@ func OpenAPIGen() error {
 
 	log.Infof("Running OpenAPI code-generation for Custom Resource group versions: [%v]\n", gvb.String())
 
-	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
+	apisPkg := filepath.Join(repoPkg, scaffold.APIsDir)
 	fqApiStr := createFQApis(apisPkg, gvMap)
 	fqApis := strings.Split(fqApiStr, ",")
 	f := func(a string) error { return openAPIGen(binDir, a, fqApis) }
@@ -60,8 +59,7 @@ func OpenAPIGen() error {
 		return err
 	}
 
-	s := &scaffold.Scaffold{}
-	cfg := &input.Config{
+	s := &scaffold.Scaffold{
 		Repo:           repoPkg,
 		AbsProjectPath: absProjectPath,
 		ProjectName:    filepath.Base(absProjectPath),
@@ -83,7 +81,7 @@ func OpenAPIGen() error {
 		if err != nil {
 			return err
 		}
-		err = s.Execute(cfg,
+		err = s.Execute(&input.Config{},
 			&scaffold.CRD{Resource: r, IsOperatorGo: projutil.IsOperatorGo()},
 		)
 		if err != nil {

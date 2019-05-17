@@ -15,11 +15,8 @@
 package add
 
 import (
-	"fmt"
-
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -28,6 +25,8 @@ import (
 var customAPIImport string
 
 func newAddControllerCmd() *cobra.Command {
+	c := &scaffold.AddControllerCmd{}
+
 	controllerCmd := &cobra.Command{
 		Use:   "controller",
 		Short: "Adds a new controller pkg",
@@ -45,55 +44,26 @@ Example:
 	├── add_appservice.go
 	├── appservice
 	│   └── appservice_controller.go
-	└── controller.go
-
-`,
-		RunE: controllerRun,
+	└── controller.go`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// Only Go projects can add apis.
+			if err := projutil.CheckGoProjectCmd(cmd); err != nil {
+				return err
+			}
+			projutil.MustInProjectRoot()
+			return c.Run()
+		},
 	}
 
-	controllerCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes APIVersion that has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
+	controllerCmd.Flags().StringVar(&c.APIVersion, "api-version", "", "Kubernetes APIVersion that has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
 	if err := controllerCmd.MarkFlagRequired("api-version"); err != nil {
 		log.Fatalf("Failed to mark `api-version` flag for `add controller` subcommand as required")
 	}
-	controllerCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes resource Kind name. (e.g AppService)")
+	controllerCmd.Flags().StringVar(&c.Kind, "kind", "", "Kubernetes resource Kind name. (e.g AppService)")
 	if err := controllerCmd.MarkFlagRequired("kind"); err != nil {
 		log.Fatalf("Failed to mark `kind` flag for `add controller` subcommand as required")
 	}
-	controllerCmd.Flags().StringVar(&customAPIImport, "custom-api-import", "", `External Kubernetes resource import path of the form "host.com/repo/path[=import_identifier]". import_identifier is optional`)
+	controllerCmd.Flags().StringVar(&c.CustomAPIImport, "custom-api-import", "", `External Kubernetes resource import path of the form "host.com/repo/path[=import_identifier]". import_identifier is optional`)
 
 	return controllerCmd
-}
-
-func controllerRun(cmd *cobra.Command, args []string) error {
-	projutil.MustInProjectRoot()
-
-	// Only Go projects can add controllers.
-	if err := projutil.CheckGoProjectCmd(cmd); err != nil {
-		return err
-	}
-
-	log.Infof("Generating controller version %s for kind %s.", apiVersion, kind)
-
-	// Create and validate new resource
-	r, err := scaffold.NewResource(apiVersion, kind)
-	if err != nil {
-		return err
-	}
-
-	cfg := &input.Config{
-		Repo:           projutil.CheckAndGetProjectGoPkg(),
-		AbsProjectPath: projutil.MustGetwd(),
-	}
-	s := &scaffold.Scaffold{}
-
-	err = s.Execute(cfg,
-		&scaffold.ControllerKind{Resource: r, CustomImport: customAPIImport},
-		&scaffold.AddController{Resource: r},
-	)
-	if err != nil {
-		return fmt.Errorf("controller scaffold failed: (%v)", err)
-	}
-
-	log.Info("Controller generation complete.")
-	return nil
 }

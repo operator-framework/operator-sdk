@@ -22,12 +22,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	flags "github.com/operator-framework/operator-sdk/internal/pkg/flags"
+	"github.com/operator-framework/operator-sdk/internal/pkg/flags"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/spf13/viper"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 func buildCodegenBinaries(genDirs []string, binDir, codegenSrcDir string) error {
@@ -59,16 +59,16 @@ func runGoBuildCodegen(binDir, repoDir, genDir string) error {
 
 // ParseGroupVersions parses the layout of pkg/apis to return a map of
 // API groups to versions.
-func parseGroupVersions() (map[string][]string, error) {
+func parseGroupVersions(apisDir string) (map[string][]string, error) {
 	gvs := make(map[string][]string)
-	groups, err := ioutil.ReadDir(scaffold.ApisDir)
+	groups, err := ioutil.ReadDir(apisDir)
 	if err != nil {
 		return nil, fmt.Errorf("could not read pkg/apis directory to find api Versions: %v", err)
 	}
 
 	for _, g := range groups {
 		if g.IsDir() {
-			groupDir := filepath.Join(scaffold.ApisDir, g.Name())
+			groupDir := filepath.Join(apisDir, g.Name())
 			versions, err := ioutil.ReadDir(groupDir)
 			if err != nil {
 				return nil, fmt.Errorf("could not read %s directory to find api Versions: %v", groupDir, err)
@@ -84,7 +84,7 @@ func parseGroupVersions() (map[string][]string, error) {
 	}
 
 	if len(gvs) == 0 {
-		return nil, fmt.Errorf("no groups or versions found in %s", scaffold.ApisDir)
+		return nil, fmt.Errorf("no groups or versions found in %s", apisDir)
 	}
 	return gvs, nil
 }

@@ -17,7 +17,9 @@ package generate
 import (
 	"fmt"
 
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
+	"github.com/operator-framework/operator-sdk/internal/util/genutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+
 	"github.com/spf13/cobra"
 )
 
@@ -43,14 +45,12 @@ Example:
 	├── deploy/crds/app_v1alpha1_appservice_cr.yaml
 	├── deploy/crds/app_v1alpha1_appservice_crd.yaml
 `,
-		RunE: openAPIFunc,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
+			}
+			projutil.MustInProjectRoot()
+			return genutil.OpenAPIGen()
+		},
 	}
-}
-
-func openAPIFunc(cmd *cobra.Command, args []string) error {
-	if len(args) != 0 {
-		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
-	}
-
-	return genutil.OpenAPIGen()
 }

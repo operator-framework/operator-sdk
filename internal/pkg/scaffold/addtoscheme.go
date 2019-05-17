@@ -35,7 +35,7 @@ func (s *AddToScheme) GetInput() (input.Input, error) {
 		fileName := fmt.Sprintf("addtoscheme_%s_%s.go",
 			s.Resource.GoImportGroup,
 			strings.ToLower(s.Resource.Version))
-		s.Path = filepath.Join(ApisDir, fileName)
+		s.Path = filepath.Join(APIsDir, fileName)
 	}
 	s.TemplateBody = addToSchemeTemplate
 	return s.Input, nil

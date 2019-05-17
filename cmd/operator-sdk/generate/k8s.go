@@ -17,7 +17,7 @@ package generate
 import (
 	"fmt"
 
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
+	"github.com/operator-framework/operator-sdk/internal/util/genutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	"github.com/spf13/cobra"
@@ -39,19 +39,16 @@ Example:
 		└── v1alpha1
 			├── zz_generated.deepcopy.go
 `,
-		RunE: k8sFunc,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
+			}
+			// Only Go projects can generate k8s deepcopy code.
+			if err := projutil.CheckGoProjectCmd(cmd); err != nil {
+				return err
+			}
+			projutil.MustInProjectRoot()
+			return genutil.K8sCodegen()
+		},
 	}
-}
-
-func k8sFunc(cmd *cobra.Command, args []string) error {
-	if len(args) != 0 {
-		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
-	}
-
-	// Only Go projects can generate k8s deepcopy code.
-	if err := projutil.CheckGoProjectCmd(cmd); err != nil {
-		return err
-	}
-
-	return genutil.K8sCodegen()
 }
