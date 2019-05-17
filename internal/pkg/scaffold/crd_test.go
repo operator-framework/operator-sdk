@@ -30,19 +30,18 @@ func TestCRDGoProject(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s, buf := setupScaffoldAndWriter()
+	s, buf, err := setupTestFrameworkScaffoldAndWriter()
+	if err != nil {
+		t.Fatalf("Failed to set up test scaffold and writer: %v", err)
+	}
 	s.Fs = afero.NewMemMapFs()
-	cfg, err := setupTestFrameworkConfig()
+
+	err = testutil.WriteOSPathToFS(afero.NewOsFs(), s.Fs, s.AbsProjectPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = testutil.WriteOSPathToFS(afero.NewOsFs(), s.Fs, cfg.AbsProjectPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = s.Execute(cfg, &CRD{Resource: r, IsOperatorGo: true})
+	err = s.Execute(&CRD{Resource: r, IsOperatorGo: true})
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
@@ -109,7 +108,10 @@ spec:
 `
 
 func TestCRDNonGoProject(t *testing.T) {
-	s, buf := setupScaffoldAndWriter()
+	s, buf, err := setupTestFrameworkScaffoldAndWriter()
+	if err != nil {
+		t.Fatalf("Failed to set up test scaffold and writer: %v", err)
+	}
 	s.Fs = afero.NewMemMapFs()
 
 	r, err := NewResource(appApiVersion, appKind)
@@ -122,18 +124,14 @@ func TestCRDNonGoProject(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cfg, err := setupTestFrameworkConfig()
-	if err != nil {
-		t.Fatal(err)
-	}
 
-	path := filepath.Join(cfg.AbsProjectPath, i.Path)
+	path := filepath.Join(s.AbsProjectPath, i.Path)
 	err = afero.WriteFile(s.Fs, path, []byte(crdNonGoExp), fileutil.DefaultFileMode)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err = s.Execute(cfg, crd); err != nil {
+	if err = s.Execute(crd); err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 

@@ -2,7 +2,7 @@
 
 DEST_IMAGE="quay.io/example/scorecard-proxy"
 CSV_PATH="deploy/olm-catalog/memcached-operator/0.0.3/memcached-operator.v0.0.3.clusterserviceversion.yaml"
-CONFIG_PATH=".test-osdk-scorecard.yaml"
+CONFIG_PATH=".test-osdk-config.yaml"
 
 set -ex
 

@@ -22,8 +22,11 @@ import (
 )
 
 func TestGoMod(t *testing.T) {
-	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(appConfig, &GoMod{
+	s, buf, err := setupTestScaffoldAndWriter()
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = s.Execute(&GoMod{
 		Input: input.Input{Repo: "github.com/example-inc/app-operator"},
 	})
 	if err != nil {

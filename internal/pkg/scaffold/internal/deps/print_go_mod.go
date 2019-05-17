@@ -22,13 +22,15 @@ import (
 	"text/tabwriter"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/pkg/config"
 
 	"github.com/rogpeppe/go-internal/modfile"
+	"github.com/spf13/viper"
 )
 
 func ExecGoModTmpl(tmpl string) ([]byte, error) {
 	projutil.MustInProjectRoot()
-	repo := projutil.CheckAndGetProjectGoPkg()
+	repo := viper.GetString(config.RepoOpt)
 	t, err := template.New("").Parse(tmpl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse go mod template: (%v)", err)

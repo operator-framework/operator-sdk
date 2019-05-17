@@ -26,7 +26,7 @@ const (
 	CmdDir         = "cmd"
 	ManagerDir     = CmdDir + filePathSep + "manager"
 	PkgDir         = "pkg"
-	ApisDir        = PkgDir + filePathSep + "apis"
+	APIsDir        = PkgDir + filePathSep + "apis"
 	ControllerDir  = PkgDir + filePathSep + "controller"
 	BuildDir       = "build"
 	BuildTestDir   = BuildDir + filePathSep + "test-framework"

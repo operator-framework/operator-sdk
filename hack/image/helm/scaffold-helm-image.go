@@ -19,7 +19,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/helm"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 )
 
@@ -28,13 +27,11 @@ import (
 // you can place a binary in `build/_output/bin/helm-operator` and then run
 // `operator-sdk build`.
 func main() {
-	cfg := &input.Config{
+	s := &scaffold.Scaffold{
 		AbsProjectPath: projutil.MustGetwd(),
 		ProjectName:    "helm-operator",
 	}
-
-	s := &scaffold.Scaffold{}
-	err := s.Execute(cfg,
+	err := s.Execute(
 		&helm.DockerfileHybrid{},
 		&helm.Entrypoint{},
 		&helm.UserSetup{},

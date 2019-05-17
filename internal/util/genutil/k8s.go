@@ -22,17 +22,17 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/pkg/config"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 // K8sCodegen performs deepcopy code-generation for all custom resources under
 // pkg/apis.
 func K8sCodegen() error {
-	projutil.MustInProjectRoot()
 
 	wd := projutil.MustGetwd()
-	repoPkg := projutil.CheckAndGetProjectGoPkg()
 	srcDir := filepath.Join(wd, "vendor", "k8s.io", "code-generator")
 	binDir := filepath.Join(wd, scaffold.BuildBinDir)
 
@@ -46,7 +46,7 @@ func K8sCodegen() error {
 		return err
 	}
 
-	gvMap, err := parseGroupVersions()
+	gvMap, err := parseGroupVersions(viper.GetString(config.APIsDirOpt))
 	if err != nil {
 		return fmt.Errorf("failed to parse group versions: (%v)", err)
 	}
@@ -56,8 +56,8 @@ func K8sCodegen() error {
 	}
 
 	log.Infof("Running deepcopy code-generation for Custom Resource group versions: [%v]\n", gvb.String())
-
-	fdc := func(a string) error { return deepcopyGen(binDir, repoPkg, a, gvMap) }
+	apisPkg := filepath.Join(viper.GetString(config.RepoOpt), viper.GetString(config.APIsDirOpt))
+	fdc := func(a string) error { return deepcopyGen(binDir, apisPkg, a, gvMap) }
 	if err = withHeaderFile(fdc); err != nil {
 		return err
 	}
@@ -66,8 +66,7 @@ func K8sCodegen() error {
 	return nil
 }
 
-func deepcopyGen(binDir, repoPkg, hf string, gvMap map[string][]string) (err error) {
-	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
+func deepcopyGen(binDir, apisPkg, hf string, gvMap map[string][]string) (err error) {
 	args := []string{
 		"--input-dirs", createFQApis(apisPkg, gvMap),
 		"--output-file-base", "zz_generated.deepcopy",

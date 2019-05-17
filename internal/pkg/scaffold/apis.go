@@ -18,9 +18,12 @@ import (
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/pkg/config"
+
+	"github.com/spf13/viper"
 )
 
-const ApisFile = "apis.go"
+const APIsFile = "apis.go"
 
 type Apis struct {
 	input.Input
@@ -28,7 +31,7 @@ type Apis struct {
 
 func (s *Apis) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(ApisDir, ApisFile)
+		s.Path = filepath.Join(viper.GetString(config.APIsDirOpt), APIsFile)
 	}
 	s.TemplateBody = apisTmpl
 	return s.Input, nil

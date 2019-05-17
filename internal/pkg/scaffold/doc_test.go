@@ -25,8 +25,11 @@ func TestDoc(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s, buf := setupScaffoldAndWriter()
-	err = s.Execute(appConfig, &Doc{Resource: r})
+	s, buf, err := setupTestScaffoldAndWriter()
+	if err != nil {
+		t.Fatalf("Failed to set up test scaffold and writer: %v", err)
+	}
+	err = s.Execute(&Doc{Resource: r})
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}

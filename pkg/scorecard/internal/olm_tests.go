@@ -24,21 +24,18 @@ import (
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	v1 "k8s.io/api/core/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // OLMTestConfig contains all variables required by the OLMTest TestSuite
 type OLMTestConfig struct {
-	Client   client.Client
-	CR       *unstructured.Unstructured
-	CSV      *olmapiv1alpha1.ClusterServiceVersion
-	CRDsDir  string
-	ProxyPod *v1.Pod
+	*ResourceConfig
+	CR      *unstructured.Unstructured
+	CSV     *olmapiv1alpha1.ClusterServiceVersion
+	CRDsDir string
 }
 
 // Test Defintions
@@ -133,16 +130,16 @@ func NewStatusDescriptorsTest(conf OLMTestConfig) *StatusDescriptorsTest {
 	}
 }
 
-func matchKind(kind1, kind2 string) bool {
-	singularKind1, err := restMapper.ResourceSingularizer(kind1)
+func (t OLMTestConfig) matchKind(kind1, kind2 string) bool {
+	singularKind1, err := t.RestMapper.ResourceSingularizer(kind1)
 	if err != nil {
 		singularKind1 = kind1
-		log.Warningf("could not find singular version of %s", kind1)
+		t.log.Warningf("could not find singular version of %s", kind1)
 	}
-	singularKind2, err := restMapper.ResourceSingularizer(kind2)
+	singularKind2, err := t.RestMapper.ResourceSingularizer(kind2)
 	if err != nil {
 		singularKind2 = kind2
-		log.Warningf("could not find singular version of %s", kind2)
+		t.log.Warningf("could not find singular version of %s", kind2)
 	}
 	return strings.EqualFold(singularKind1, singularKind2)
 }
@@ -198,7 +195,7 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *TestResult {
 		// check if the CRD matches the testing CR
 		gvk := t.CR.GroupVersionKind()
 		// Only check the validation block if the CRD and CR have the same Kind and Version
-		if !(matchVersion(gvk.Version, crd) && matchKind(gvk.Kind, crd.Spec.Names.Kind)) {
+		if !(matchVersion(gvk.Version, crd) && t.matchKind(gvk.Kind, crd.Spec.Names.Kind)) {
 			continue
 		}
 		res.MaximumPoints++
@@ -238,19 +235,19 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
 	var missingResources []string
 	for _, crd := range t.CSV.Spec.CustomResourceDefinitions.Owned {
 		gvk := t.CR.GroupVersionKind()
-		if strings.EqualFold(crd.Version, gvk.Version) && matchKind(gvk.Kind, crd.Kind) {
+		if strings.EqualFold(crd.Version, gvk.Version) && t.matchKind(gvk.Kind, crd.Kind) {
 			res.MaximumPoints++
 			if len(crd.Resources) > 0 {
 				res.EarnedPoints++
 			}
-			resources, err := getUsedResources(t.ProxyPod)
+			resources, err := t.getUsedResources()
 			if err != nil {
-				log.Warningf("getUsedResource failed: %v", err)
+				t.log.Warningf("getUsedResource failed: %v", err)
 			}
 			for _, resource := range resources {
 				foundResource := false
 				for _, listedResource := range crd.Resources {
-					if matchKind(resource.Kind, listedResource.Kind) && strings.EqualFold(resource.Version, listedResource.Version) {
+					if t.matchKind(resource.Kind, listedResource.Kind) && strings.EqualFold(resource.Version, listedResource.Version) {
 						foundResource = true
 						break
 					}
@@ -267,8 +264,8 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
 	return res
 }
 
-func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
-	logs, err := getProxyLogs(proxyPod)
+func (t OLMTestConfig) getUsedResources() ([]schema.GroupVersionKind, error) {
+	logs, err := t.GetProxyLogs()
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +275,7 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 		err := json.Unmarshal([]byte(line), &logMap)
 		if err != nil {
 			// it is very common to get "unexpected end of JSON input", so we'll leave this at the debug level
-			log.Debugf("could not unmarshal line: %v", err)
+			t.log.Debugf("could not unmarshal line: %v", err)
 			continue
 		}
 		/*
@@ -303,14 +300,14 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 		}
 		uri, ok := logMap["uri"].(string)
 		if !ok {
-			log.Warn("URI type is not string")
+			t.log.Warn("URI type is not string")
 			continue
 		}
 		removedOptions := strings.Split(uri, "?")[0]
 		splitURI := strings.Split(removedOptions, "/")
 		// first string is empty string ""
 		if len(splitURI) < 2 {
-			log.Warnf("Invalid URI: \"%s\"", uri)
+			t.log.Warnf("Invalid URI: \"%s\"", uri)
 			continue
 		}
 		splitURI = splitURI[1:]
@@ -324,7 +321,7 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 				// Example: "/apis/apps/v1?timeout=32s"
 				break
 			}
-			log.Warnf("Invalid URI: \"%s\"", uri)
+			t.log.Warnf("Invalid URI: \"%s\"", uri)
 		case 4:
 			if splitURI[0] == "api" {
 				resources[schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[2]}] = true
@@ -333,7 +330,7 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 				resources[schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[3]}] = true
 				break
 			}
-			log.Warnf("Invalid URI: \"%s\"", uri)
+			t.log.Warnf("Invalid URI: \"%s\"", uri)
 		case 5:
 			if splitURI[0] == "api" {
 				resources[schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[4]}] = true
@@ -342,7 +339,7 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 				resources[schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[3]}] = true
 				break
 			}
-			log.Warnf("Invalid URI: \"%s\"", uri)
+			t.log.Warnf("Invalid URI: \"%s\"", uri)
 		case 6, 7:
 			if splitURI[0] == "api" {
 				resources[schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[4]}] = true
@@ -351,7 +348,7 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 				resources[schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[5]}] = true
 				break
 			}
-			log.Warnf("Invalid URI: \"%s\"", uri)
+			t.log.Warnf("Invalid URI: \"%s\"", uri)
 		}
 	}
 	var resourcesArr []schema.GroupVersionKind

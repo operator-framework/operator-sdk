@@ -20,6 +20,9 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/pkg/config"
+
+	"github.com/spf13/viper"
 )
 
 // AddToScheme is the input needed to generate an addtoscheme_<group>_<version>.go file
@@ -35,7 +38,7 @@ func (s *AddToScheme) GetInput() (input.Input, error) {
 		fileName := fmt.Sprintf("addtoscheme_%s_%s.go",
 			s.Resource.GoImportGroup,
 			strings.ToLower(s.Resource.Version))
-		s.Path = filepath.Join(ApisDir, fileName)
+		s.Path = filepath.Join(viper.GetString(config.APIsDirOpt), fileName)
 	}
 	s.TemplateBody = addToSchemeTemplate
 	return s.Input, nil

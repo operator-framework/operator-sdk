@@ -20,58 +20,50 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const (
 	// test constants describing an app operator project
 	appProjectName = "app-operator"
-	appRepo        = "github.com" + filePathSep + "example-inc" + filePathSep + appProjectName
 	appApiVersion  = "app.example.com/v1alpha1"
 	appKind        = "AppService"
 )
 
-var (
-	appConfig = &input.Config{
-		Repo:           appRepo,
-		AbsProjectPath: mustGetImportPath(),
-		ProjectName:    appProjectName,
-	}
-)
+var appRepo = filepath.Join("github.com", "example-inc", appProjectName)
 
-func mustGetImportPath() string {
-	wd, err := os.Getwd()
+func setupTestScaffoldAndWriter() (*Scaffold, *bytes.Buffer, error) {
+	absPath, err := os.Getwd()
 	if err != nil {
-		log.Fatalf("Failed to get working directory: (%v)", err)
+		return nil, nil, err
 	}
-	return filepath.Join(wd, appRepo)
-}
-
-func setupScaffoldAndWriter() (*Scaffold, *bytes.Buffer) {
 	buf := &bytes.Buffer{}
 	return &Scaffold{
+		Repo:           appRepo,
+		AbsProjectPath: filepath.Join(absPath, appRepo),
+		ProjectName:    appProjectName,
 		GetWriter: func(_ string, _ os.FileMode) (io.Writer, error) {
 			return buf, nil
 		},
-	}, buf
+	}, buf, nil
 }
 
-func setupTestFrameworkConfig() (*input.Config, error) {
+func setupTestFrameworkScaffoldAndWriter() (*Scaffold, *bytes.Buffer, error) {
 	absPath, err := os.Getwd()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	absPath = absPath[:strings.Index(absPath, "internal/pkg")]
 	tfDir := filepath.Join(absPath, "test", "test-framework")
+	buf := &bytes.Buffer{}
 
 	// Set the project and repo paths to {abs}/test/test-framework, which
 	// contains pkg/apis for the memcached-operator.
-	return &input.Config{
+	return &Scaffold{
 		Repo:           tfDir[strings.Index(absPath, "github.com"):],
 		AbsProjectPath: tfDir,
 		ProjectName:    filepath.Base(tfDir),
-	}, nil
+		GetWriter: func(_ string, _ os.FileMode) (io.Writer, error) {
+			return buf, nil
+		},
+	}, buf, nil
 }

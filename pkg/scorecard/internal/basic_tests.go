@@ -20,17 +20,14 @@ import (
 	"fmt"
 	"strings"
 
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // BasicTestConfig contains all variables required by the BasicTest TestSuite
 type BasicTestConfig struct {
-	Client   client.Client
-	CR       *unstructured.Unstructured
-	ProxyPod *v1.Pod
+	*ResourceConfig
+	CR *unstructured.Unstructured
 }
 
 // Test Defintions
@@ -141,7 +138,7 @@ func (t *CheckStatusTest) Run(ctx context.Context) *TestResult {
 // Run - implements Test interface
 func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *TestResult {
 	res := &TestResult{Test: t, MaximumPoints: 1}
-	logs, err := getProxyLogs(t.ProxyPod)
+	logs, err := t.GetProxyLogs()
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("error getting proxy logs: %v", err))
 		return res

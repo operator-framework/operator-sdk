@@ -1,0 +1,8 @@
+deploy-dir: testdata/deploy
+crds-dir: testdata/deploy/crds
+olm-catalog-dir: testdata/deploy/olm-catalog
+olm-catalog-config:
+  operator-path: testdata/deploy/operator.yaml
+  crd-cr-paths:
+    - testdata/deploy/crds
+  role-path: testdata/deploy/role.yaml

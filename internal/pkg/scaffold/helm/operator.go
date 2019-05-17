@@ -19,6 +19,9 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/pkg/config"
+
+	"github.com/spf13/viper"
 )
 
 // Operator specifies the Helm operator.yaml manifest scaffold
@@ -29,7 +32,7 @@ type Operator struct {
 // GetInput gets the scaffold execution input
 func (s *Operator) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(scaffold.DeployDir, scaffold.OperatorYamlFile)
+		s.Path = filepath.Join(viper.GetString(config.DeployDirOpt), scaffold.OperatorYamlFile)
 	}
 	s.TemplateBody = operatorTemplate
 	return s.Input, nil

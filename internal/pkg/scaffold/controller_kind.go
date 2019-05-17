@@ -30,9 +30,9 @@ type ControllerKind struct {
 
 	// Resource defines the inputs for the controller's primary resource
 	Resource *Resource
-	// CustomImport holds the import path for a built-in or custom Kubernetes
+	// CustomAPIImport holds the import path for a built-in or custom Kubernetes
 	// API that this controller reconciles, if specified by the scaffold invoker.
-	CustomImport string
+	CustomAPIImport string
 
 	// The following fields will be overwritten by GetInput().
 	//
@@ -63,8 +63,8 @@ func (s *ControllerKind) GetInput() (input.Input, error) {
 func (s *ControllerKind) setImports() (err error) {
 	s.ImportMap = controllerKindImports
 	importPath := ""
-	if s.CustomImport != "" {
-		importPath, s.GoImportIdent, err = getCustomAPIImportPathAndIdent(s.CustomImport)
+	if s.CustomAPIImport != "" {
+		importPath, s.GoImportIdent, err = getCustomAPIImportPathAndIdent(s.CustomAPIImport)
 		if err != nil {
 			return err
 		}

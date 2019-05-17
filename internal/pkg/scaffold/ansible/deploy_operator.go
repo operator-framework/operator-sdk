@@ -17,8 +17,10 @@ package ansible
 import (
 	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/pkg/config"
+
+	"github.com/spf13/viper"
 )
 
 const DeployOperatorFile = "operator.yaml"
@@ -30,7 +32,7 @@ type DeployOperator struct {
 // GetInput - gets the input
 func (d *DeployOperator) GetInput() (input.Input, error) {
 	if d.Path == "" {
-		d.Path = filepath.Join(scaffold.DeployDir, DeployOperatorFile)
+		d.Path = filepath.Join(viper.GetString(config.DeployDirOpt), DeployOperatorFile)
 	}
 	d.TemplateBody = deployOperatorAnsibleTmpl
 	d.Delims = AnsibleDelims

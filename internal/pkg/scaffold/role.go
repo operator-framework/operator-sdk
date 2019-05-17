@@ -23,9 +23,11 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+	"github.com/operator-framework/operator-sdk/pkg/config"
 
+	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
-	yaml "gopkg.in/yaml.v2"
+	"github.com/spf13/viper"
 	rbacv1 "k8s.io/api/rbac/v1"
 	cgoscheme "k8s.io/client-go/kubernetes/scheme"
 )
@@ -43,7 +45,7 @@ type Role struct {
 
 func (s *Role) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(DeployDir, RoleYamlFile)
+		s.Path = filepath.Join(viper.GetString(config.DeployDirOpt), RoleYamlFile)
 	}
 	s.TemplateBody = roleTemplate
 	return s.Input, nil

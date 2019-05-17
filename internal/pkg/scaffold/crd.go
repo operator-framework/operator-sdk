@@ -23,9 +23,11 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/config"
 
 	"github.com/ghodss/yaml"
 	"github.com/spf13/afero"
+	"github.com/spf13/viper"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	crdgenerator "sigs.k8s.io/controller-tools/pkg/crd/generator"
@@ -62,7 +64,7 @@ func (s *CRD) GetInput() (input.Input, error) {
 			s.Resource.GoImportGroup,
 			strings.ToLower(s.Resource.Version),
 			s.Resource.LowerKind)
-		s.Path = filepath.Join(CRDsDir, fileName)
+		s.Path = filepath.Join(viper.GetString(config.CRDsDirOpt), fileName)
 	}
 	initCache()
 	return s.Input, nil

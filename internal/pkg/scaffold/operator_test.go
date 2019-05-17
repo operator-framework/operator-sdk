@@ -21,8 +21,11 @@ import (
 )
 
 func TestOperator(t *testing.T) {
-	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(appConfig, &Operator{})
+	s, buf, err := setupTestScaffoldAndWriter()
+	if err != nil {
+		t.Fatalf("Failed to set up test scaffold and writer: %v", err)
+	}
+	err = s.Execute(&Operator{})
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}

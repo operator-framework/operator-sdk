@@ -32,24 +32,45 @@ import (
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 	"github.com/spf13/afero"
+	"github.com/spf13/viper"
 )
 
 const testDataDir = "testdata"
 
-var testDeployDir = filepath.Join(testDataDir, scaffold.DeployDir)
+var (
+	testDeployDir = filepath.Join(testDataDir, "deploy")
+	testCRDsDir   = filepath.Join(testDeployDir, "crds")
+)
 
 func TestCSVNew(t *testing.T) {
 	buf := &bytes.Buffer{}
+	csvVer := "0.1.0"
+	projectName := "app-operator"
 	s := &scaffold.Scaffold{
+		Repo:        "github.com/example-inc/app-operator",
+		ProjectName: projectName,
 		GetWriter: func(_ string, _ os.FileMode) (io.Writer, error) {
 			return buf, nil
 		},
 	}
-	csvVer := "0.1.0"
-	projectName := "app-operator"
+	viper.SetConfigFile(filepath.Join(testDataDir, ".osdk-config.yaml"))
+	if err := viper.ReadInConfig(); err != nil {
+		t.Fatal(err)
+	}
+	manifests := []string{
+		viper.GetString(OperatorPathOpt),
+		viper.GetString(RolePathOpt),
+		filepath.Join(testCRDsDir, "app_v1alpha1_app_cr.yaml"),
+		filepath.Join(testCRDsDir, "app_v1alpha1_app_crd.yaml"),
+		filepath.Join(testCRDsDir, "app_v1alpha2_app_crd.yaml"),
+	}
 
-	sc := &CSV{CSVVersion: csvVer, pathPrefix: testDataDir}
-	err := s.Execute(&input.Config{ProjectName: projectName}, sc)
+	sc := &CSV{
+		CSVVersion:           csvVer,
+		IncludeManifestPaths: manifests,
+		pathPrefix:           testDataDir,
+	}
+	err := s.Execute(sc)
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
@@ -67,9 +88,24 @@ func TestCSVNew(t *testing.T) {
 }
 
 func TestCSVFromOld(t *testing.T) {
-	s := &scaffold.Scaffold{Fs: afero.NewMemMapFs()}
 	projectName := "app-operator"
 	oldCSVVer, newCSVVer := "0.1.0", "0.2.0"
+	s := &scaffold.Scaffold{
+		Repo:        "github.com/example-inc/app-operator",
+		ProjectName: projectName,
+		Fs:          afero.NewMemMapFs(),
+	}
+	viper.SetConfigFile(filepath.Join(testDataDir, ".osdk-config.yaml"))
+	if err := viper.ReadInConfig(); err != nil {
+		t.Fatal(err)
+	}
+	manifests := []string{
+		viper.GetString(OperatorPathOpt),
+		viper.GetString(RolePathOpt),
+		filepath.Join(testCRDsDir, "app_v1alpha1_app_cr.yaml"),
+		filepath.Join(testCRDsDir, "app_v1alpha1_app_crd.yaml"),
+		filepath.Join(testCRDsDir, "app_v1alpha2_app_crd.yaml"),
+	}
 
 	// Write all files in testdata/deploy to fs so manifests are present when
 	// writing a new CSV.
@@ -78,11 +114,12 @@ func TestCSVFromOld(t *testing.T) {
 	}
 
 	sc := &CSV{
-		CSVVersion:  newCSVVer,
-		FromVersion: oldCSVVer,
-		pathPrefix:  testDataDir,
+		CSVVersion:           newCSVVer,
+		FromVersion:          oldCSVVer,
+		IncludeManifestPaths: manifests,
+		pathPrefix:           testDataDir,
 	}
-	err := s.Execute(&input.Config{ProjectName: projectName}, sc)
+	err := s.Execute(sc)
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
@@ -110,6 +147,11 @@ func TestCSVFromOld(t *testing.T) {
 func TestUpdateVersion(t *testing.T) {
 	projectName := "app-operator"
 	oldCSVVer, newCSVVer := "0.1.0", "0.2.0"
+	viper.SetConfigFile(filepath.Join(testDataDir, ".osdk-config.yaml"))
+	if err := viper.ReadInConfig(); err != nil {
+		t.Fatal(err)
+	}
+
 	sc := &CSV{
 		Input:      input.Input{ProjectName: projectName},
 		CSVVersion: newCSVVer,

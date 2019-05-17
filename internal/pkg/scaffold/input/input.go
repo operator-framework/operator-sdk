@@ -117,15 +117,3 @@ type Validate interface {
 	// field values, the template, etc.
 	Validate() error
 }
-
-// Config configures the execution scaffold templates
-type Config struct {
-	// Repo is the go project package
-	Repo string
-
-	// AbsProjectPath is the absolute path to the project root, including the project directory.
-	AbsProjectPath string
-
-	// ProjectName is the operator's name, ex. app-operator
-	ProjectName string
-}

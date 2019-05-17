@@ -25,8 +25,11 @@ func TestCR(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s, buf := setupScaffoldAndWriter()
-	err = s.Execute(appConfig, &CR{Resource: r})
+	s, buf, err := setupTestScaffoldAndWriter()
+	if err != nil {
+		t.Fatalf("Failed to set up test scaffold and writer: %v", err)
+	}
+	err = s.Execute(&CR{Resource: r})
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
@@ -42,8 +45,11 @@ func TestCRCustomSpec(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s, buf := setupScaffoldAndWriter()
-	err = s.Execute(appConfig, &CR{
+	s, buf, err := setupTestScaffoldAndWriter()
+	if err != nil {
+		t.Fatalf("Failed to set up test scaffold and writer: %v", err)
+	}
+	err = s.Execute(&CR{
 		Resource: r,
 		Spec:     "# Custom spec here\ncustomSize: 6",
 	})

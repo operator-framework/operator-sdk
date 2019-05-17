@@ -21,6 +21,9 @@ import (
 	"text/template"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/pkg/config"
+
+	"github.com/spf13/viper"
 )
 
 // CR is the input needed to generate a deploy/crds/<group>_<version>_<kind>_cr.yaml file
@@ -41,7 +44,7 @@ func (s *CR) GetInput() (input.Input, error) {
 			s.Resource.GoImportGroup,
 			strings.ToLower(s.Resource.Version),
 			s.Resource.LowerKind)
-		s.Path = filepath.Join(CRDsDir, fileName)
+		s.Path = filepath.Join(viper.GetString(config.CRDsDirOpt), fileName)
 	}
 	s.TemplateBody = crTemplate
 	if s.TemplateFuncs == nil {

@@ -55,7 +55,7 @@ type Scaffold struct {
 	boilerplateBytes []byte
 }
 
-func (s *Scaffold) setFieldsAndValidate(t input.File) error {
+func (s *Scaffold) setFieldsAndValidate(t input.File) (err error) {
 	if b, ok := t.(input.Repo); ok {
 		b.SetRepo(s.Repo)
 	}
@@ -73,12 +73,6 @@ func (s *Scaffold) setFieldsAndValidate(t input.File) error {
 		}
 	}
 	return nil
-}
-
-func (s *Scaffold) configure(cfg *input.Config) {
-	s.Repo = cfg.Repo
-	s.AbsProjectPath = cfg.AbsProjectPath
-	s.ProjectName = cfg.ProjectName
 }
 
 func validateBoilerplateBytes(b []byte) error {
@@ -143,7 +137,7 @@ func (s *Scaffold) setBoilerplate() (err error) {
 }
 
 // Execute executes scaffolding the Files
-func (s *Scaffold) Execute(cfg *input.Config, files ...input.File) error {
+func (s *Scaffold) Execute(files ...input.File) error {
 	if s.Fs == nil {
 		s.Fs = afero.NewOsFs()
 	}
@@ -155,9 +149,6 @@ func (s *Scaffold) Execute(cfg *input.Config, files ...input.File) error {
 	if err := s.setBoilerplate(); err != nil {
 		return err
 	}
-
-	// Configure s using common fields from cfg.
-	s.configure(cfg)
 
 	for _, f := range files {
 		if err := s.doFile(f); err != nil {

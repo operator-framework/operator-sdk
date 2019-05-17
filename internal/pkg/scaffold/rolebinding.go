@@ -18,6 +18,9 @@ import (
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/pkg/config"
+
+	"github.com/spf13/viper"
 )
 
 const RoleBindingYamlFile = "role_binding.yaml"
@@ -30,7 +33,7 @@ type RoleBinding struct {
 
 func (s *RoleBinding) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(DeployDir, RoleBindingYamlFile)
+		s.Path = filepath.Join(viper.GetString(config.DeployDirOpt), RoleBindingYamlFile)
 	}
 	s.TemplateBody = roleBindingTemplate
 	return s.Input, nil

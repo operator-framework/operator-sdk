@@ -112,7 +112,7 @@ func GenerateCombinedGlobalManifest(crdsDir string) (*os.File, error) {
 
 	files, err := ioutil.ReadDir(crdsDir)
 	if err != nil {
-		return nil, fmt.Errorf("could not read deploy directory: (%v)", err)
+		return nil, fmt.Errorf("could not read CRDs directory: (%v)", err)
 	}
 	combined := []byte{}
 	for _, file := range files {

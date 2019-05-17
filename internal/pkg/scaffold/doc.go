@@ -19,6 +19,9 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/pkg/config"
+
+	"github.com/spf13/viper"
 )
 
 const DocFile = "doc.go"
@@ -33,7 +36,7 @@ type Doc struct {
 
 func (s *Doc) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(ApisDir,
+		s.Path = filepath.Join(viper.GetString(config.APIsDirOpt),
 			s.Resource.GoImportGroup,
 			strings.ToLower(s.Resource.Version),
 			DocFile)

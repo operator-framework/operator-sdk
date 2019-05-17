@@ -21,8 +21,11 @@ import (
 )
 
 func TestCmd(t *testing.T) {
-	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(appConfig, &Cmd{})
+	s, buf, err := setupTestScaffoldAndWriter()
+	if err != nil {
+		t.Fatalf("Failed to set up test scaffold and writer: %v", err)
+	}
+	err = s.Execute(&Cmd{})
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}

@@ -30,7 +30,6 @@ const (
 	GoPathEnv  = "GOPATH"
 	GoFlagsEnv = "GOFLAGS"
 	GoModEnv   = "GO111MODULE"
-	SrcDir     = "src"
 
 	fsep            = string(filepath.Separator)
 	mainFile        = "cmd" + fsep + "manager" + fsep + "main.go"
@@ -128,23 +127,12 @@ func MustGetwd() string {
 	return wd
 }
 
-func getHomeDir() (string, error) {
+func GetHomeDir() (string, error) {
 	hd, err := homedir.Dir()
 	if err != nil {
 		return "", err
 	}
 	return homedir.Expand(hd)
-}
-
-// CheckAndGetProjectGoPkg checks if this project's repository path is rooted under $GOPATH and returns the current directory's import path
-// e.g: "github.com/example-inc/app-operator"
-func CheckAndGetProjectGoPkg() string {
-	gopath := MustSetGopath(MustGetGopath())
-	goSrc := filepath.Join(gopath, SrcDir)
-	wd := MustGetwd()
-	currPkg := strings.Replace(wd, goSrc, "", 1)
-	// strip any "/" prefix from the repo path.
-	return strings.TrimPrefix(currPkg, fsep)
 }
 
 // GetOperatorType returns type of operator is in cwd.

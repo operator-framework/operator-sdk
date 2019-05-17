@@ -17,7 +17,6 @@ package main
 import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/ansible"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"
@@ -28,13 +27,11 @@ import (
 // you can place a binary in `build/_output/bin/ansible-operator` and then run
 // `operator-sdk build`.
 func main() {
-	cfg := &input.Config{
+	s := &scaffold.Scaffold{
 		AbsProjectPath: projutil.MustGetwd(),
 		ProjectName:    "ansible-operator",
 	}
-
-	s := &scaffold.Scaffold{}
-	err := s.Execute(cfg,
+	err := s.Execute(
 		&ansible.DockerfileHybrid{},
 		&ansible.Entrypoint{},
 		&ansible.UserSetup{},

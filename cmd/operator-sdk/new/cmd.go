@@ -16,24 +16,22 @@ package new
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/ansible"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/helm"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	catalog "github.com/operator-framework/operator-sdk/internal/pkg/scaffold/olm-catalog"
+	"github.com/operator-framework/operator-sdk/pkg/config"
+	scaffoldcmd "github.com/operator-framework/operator-sdk/pkg/scaffold"
 
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
 func NewCmd() *cobra.Command {
+	c := &scaffoldcmd.NewCmd{}
+
 	newCmd := &cobra.Command{
 		Use:   "new <project-name>",
 		Short: "Creates a new operator application",
@@ -48,382 +46,110 @@ For example:
 	$ operator-sdk new app-operator
 generates a skeletal app-operator application in $GOPATH/src/github.com/example.com/app-operator.
 `,
-		RunE: newFunc,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 {
+				return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
+			}
+			c.ProjectName = args[0]
+			if c.ProjectName == "" {
+				return fmt.Errorf("project name must not be empty")
+			}
+
+			// --repo must be set if the project is not under $GOPATH/src.
+			if err := config.CheckRepo(); err != nil {
+				return fmt.Errorf("%v: projects not in $GOPATH/src require --%s=<repo> be set", err, config.RepoOpt)
+			}
+			if !cmd.Flags().Changed(config.RepoOpt) {
+				repo, err := config.GetGoPathRepo()
+				if err != nil {
+					return err
+				}
+				viper.Set(config.RepoOpt, filepath.Join(repo, c.ProjectName))
+			}
+
+			// By default, both CRDs and OLM manifest dirs are contained in the
+			// deploy dir. If --deploy-dir is set and any child dirs in the config
+			// are not, make sure they have the correct parent. Otherwise update
+			// config values that contain CRDs or OLM dir paths.
+			if cmd.Flags().Changed(config.DeployDirOpt) {
+				deployDir := viper.GetString(config.DeployDirOpt)
+				setDirChildren(scaffold.DeployDir, deployDir)
+				// Update child dirs if the deploy dir has been changed.
+				if f := cmd.Flags().Lookup(config.CRDsDirOpt); f != nil && f.Changed {
+					setDirChildren(filepath.Join(deployDir, filepath.Base(scaffold.CRDsDir)), f.Value.String())
+				}
+				if f := cmd.Flags().Lookup(config.OLMCatalogDirOpt); f != nil && f.Changed {
+					setDirChildren(filepath.Join(deployDir, filepath.Base(catalog.OLMCatalogDir)), f.Value.String())
+				}
+			} else {
+				if f := cmd.Flags().Lookup(config.CRDsDirOpt); f != nil && f.Changed {
+					setDirChildren(scaffold.CRDsDir, f.Value.String())
+				}
+				if f := cmd.Flags().Lookup(config.OLMCatalogDirOpt); f != nil && f.Changed {
+					setDirChildren(catalog.OLMCatalogDir, f.Value.String())
+				}
+			}
+
+			// If --config was not set, write a new config file for the project.
+			c.WriteConfig = !cmd.Flags().Changed(config.ConfigOpt)
+
+			return c.Run()
+		},
 	}
 
-	newCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1) - used with \"ansible\" or \"helm\" types")
-	newCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. (e.g AppService) - used with \"ansible\" or \"helm\" types")
-	newCmd.Flags().StringVar(&operatorType, "type", "go", "Type of operator to initialize (choices: \"go\", \"ansible\" or \"helm\")")
-	newCmd.Flags().StringVar(&depManager, "dep-manager", "modules", `Dependency manager the new project will use (choices: "dep", "modules")`)
-	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
-	newCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
-	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false, "Generate a playbook skeleton. (Only used for --type ansible)")
+	newCmd.Flags().StringVar(&c.APIVersion, "api-version", "", "Kubernetes apiVersion and has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1) - used with \"ansible\" or \"helm\" types")
+	newCmd.Flags().StringVar(&c.Kind, "kind", "", "Kubernetes CustomResourceDefintion kind. (e.g AppService) - used with \"ansible\" or \"helm\" types")
+	newCmd.Flags().StringVar(&c.OperatorType, "type", "go", "Type of operator to initialize (choices: \"go\", \"ansible\" or \"helm\")")
+	newCmd.Flags().StringVar(&c.DepManager, "dep-manager", "modules", `Dependency manager the new project will use (choices: "dep", "modules")`)
+	newCmd.Flags().BoolVar(&c.SkipGit, "skip-git-init", false, "Do not init the directory as a git repository")
+	newCmd.Flags().StringVar(&c.HeaderFile, "header-file", "", "Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
 
-	newCmd.Flags().StringVar(&helmChartRef, "helm-chart", "", "Initialize helm operator with existing helm chart (<URL>, <repo>/<name>, or local path)")
-	newCmd.Flags().StringVar(&helmChartVersion, "helm-chart-version", "", "Specific version of the helm chart (default is latest version)")
-	newCmd.Flags().StringVar(&helmChartRepo, "helm-chart-repo", "", "Chart repository URL for the requested helm chart")
+	newCmd.Flags().BoolVar(&c.Ansible.GeneratePlaybook, "generate-playbook", false, "Generate a playbook skeleton. (Only used for --type ansible)")
+
+	newCmd.Flags().StringVar(&c.Helm.ChartRef, "helm-chart", "", "Initialize helm operator with existing helm chart (<URL>, <repo>/<name>, or local path)")
+	newCmd.Flags().StringVar(&c.Helm.ChartVersion, "helm-chart-version", "", "Specific version of the helm chart (default is latest version)")
+	newCmd.Flags().StringVar(&c.Helm.ChartRepo, "helm-chart-repo", "", "Chart repository URL for the requested helm chart")
+
+	fset := pflag.NewFlagSet("", pflag.ExitOnError)
+	fset.String(config.RepoOpt, "", "Project repository path, ex. github.com/operator-framework/operator-sdk. This flag is required if the project is not in $GOPATH/src")
+	fset.String(config.DeployDirOpt, scaffold.DeployDir, "Directory to write deployment manifests. This flag is optional")
+	fset.String(config.CRDsDirOpt, scaffold.CRDsDir, "Directory to write CRD and CR manifests. This flag is optional")
+	fset.String(config.APIsDirOpt, scaffold.APIsDir, "Directory to write Kubernetes resource API code. This flag is optional")
+	fset.String(catalog.OLMCatalogDirOpt, catalog.OLMCatalogDir, "Directory to write OLM manifests. This flag is optional")
+	viper.BindPFlags(fset)
+	newCmd.Flags().AddFlagSet(fset)
 
 	return newCmd
 }
 
-var (
-	apiVersion       string
-	kind             string
-	operatorType     string
-	projectName      string
-	depManager       string
-	headerFile       string
-	skipGit          bool
-	generatePlaybook bool
-
-	helmChartRef     string
-	helmChartVersion string
-	helmChartRepo    string
-)
-
-func newFunc(cmd *cobra.Command, args []string) error {
-	if err := parse(cmd, args); err != nil {
-		return err
-	}
-	mustBeNewProject()
-	if err := verifyFlags(); err != nil {
-		return err
-	}
-
-	log.Infof("Creating new %s operator '%s'.", strings.Title(operatorType), projectName)
-
-	switch operatorType {
-	case projutil.OperatorTypeGo:
-		if err := doGoScaffold(); err != nil {
-			return err
+func setDirChildren(fromDir, toDir string) {
+	configKeys := viper.AllKeys()
+	lenConfigKeys := len(configKeys)
+	for lenConfigKeys > 0 {
+		for _, k := range configKeys {
+			v := viper.Get(k)
+			switch t := v.(type) {
+			case string:
+				if strings.HasPrefix(t, fromDir) {
+					viper.Set(k, strings.Replace(t, fromDir, toDir, 1))
+				}
+			case []string, []interface{}:
+				vs := []string{}
+				for _, tv := range t.([]interface{}) {
+					if s, ok := tv.(string); ok {
+						if strings.HasPrefix(s, fromDir) {
+							vs = append(vs, strings.Replace(s, fromDir, toDir, 1))
+						}
+					}
+				}
+				viper.Set(k, vs)
+			case map[string]interface{}, map[string]string:
+				for mk := range t.(map[string]interface{}) {
+					configKeys = append(configKeys, k+"."+mk)
+				}
+			}
 		}
-		if err := getDeps(); err != nil {
-			return err
-		}
-	case projutil.OperatorTypeAnsible:
-		if err := doAnsibleScaffold(); err != nil {
-			return err
-		}
-	case projutil.OperatorTypeHelm:
-		if err := doHelmScaffold(); err != nil {
-			return err
-		}
+		configKeys = configKeys[lenConfigKeys:]
+		lenConfigKeys = len(configKeys)
 	}
-	if err := initGit(); err != nil {
-		return err
-	}
-
-	log.Info("Project creation complete.")
-	return nil
-}
-
-func parse(cmd *cobra.Command, args []string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
-	}
-	projectName = args[0]
-	if len(projectName) == 0 {
-		return fmt.Errorf("project name must not be empty")
-	}
-	return nil
-}
-
-// mustBeNewProject checks if the given project exists under the current diretory.
-// it exits with error when the project exists.
-func mustBeNewProject() {
-	fp := filepath.Join(projutil.MustGetwd(), projectName)
-	stat, err := os.Stat(fp)
-	if err != nil && os.IsNotExist(err) {
-		return
-	}
-	if err != nil {
-		log.Fatalf("Failed to determine if project (%v) exists", projectName)
-	}
-	if stat.IsDir() {
-		log.Fatalf("Project (%v) in (%v) path already exists. Please use a different project name or delete the existing one", projectName, fp)
-	}
-}
-
-func doGoScaffold() error {
-	cfg := &input.Config{
-		Repo:           filepath.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
-		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
-		ProjectName:    projectName,
-	}
-	s := &scaffold.Scaffold{}
-
-	if headerFile != "" {
-		err := s.Execute(cfg, &scaffold.Boilerplate{BoilerplateSrcPath: headerFile})
-		if err != nil {
-			return fmt.Errorf("boilerplate scaffold failed: (%v)", err)
-		}
-		s.BoilerplatePath = headerFile
-	}
-
-	var err error
-	switch m := projutil.DepManagerType(depManager); m {
-	case projutil.DepManagerDep:
-		err = s.Execute(cfg, &scaffold.GopkgToml{})
-	case projutil.DepManagerGoMod:
-		if goModOn, merr := projutil.GoModOn(); merr != nil {
-			return merr
-		} else if !goModOn {
-			log.Fatalf(`Dependency manager "%s" has been selected but go modules are not active. `+
-				`Activate modules then run "operator-sdk new %s".`, m, projectName)
-		}
-		err = s.Execute(cfg, &scaffold.GoMod{}, &scaffold.Tools{})
-	default:
-		err = projutil.ErrNoDepManager
-	}
-	if err != nil {
-		return fmt.Errorf("dependency manager file scaffold failed: (%v)", err)
-	}
-
-	err = s.Execute(cfg,
-		&scaffold.Cmd{},
-		&scaffold.Dockerfile{},
-		&scaffold.Entrypoint{},
-		&scaffold.UserSetup{},
-		&scaffold.ServiceAccount{},
-		&scaffold.Role{},
-		&scaffold.RoleBinding{},
-		&scaffold.Operator{},
-		&scaffold.Apis{},
-		&scaffold.Controller{},
-		&scaffold.Version{},
-		&scaffold.Gitignore{},
-	)
-	if err != nil {
-		return fmt.Errorf("new Go scaffold failed: (%v)", err)
-	}
-	return nil
-}
-
-func doAnsibleScaffold() error {
-	cfg := &input.Config{
-		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
-		ProjectName:    projectName,
-	}
-
-	resource, err := scaffold.NewResource(apiVersion, kind)
-	if err != nil {
-		return fmt.Errorf("invalid apiVersion and kind: (%v)", err)
-	}
-
-	roleFiles := ansible.RolesFiles{Resource: *resource}
-	roleTemplates := ansible.RolesTemplates{Resource: *resource}
-
-	s := &scaffold.Scaffold{}
-	err = s.Execute(cfg,
-		&scaffold.ServiceAccount{},
-		&scaffold.Role{},
-		&scaffold.RoleBinding{},
-		&scaffold.CRD{Resource: resource},
-		&scaffold.CR{Resource: resource},
-		&ansible.BuildDockerfile{GeneratePlaybook: generatePlaybook},
-		&ansible.RolesReadme{Resource: *resource},
-		&ansible.RolesMetaMain{Resource: *resource},
-		&roleFiles,
-		&roleTemplates,
-		&ansible.RolesVarsMain{Resource: *resource},
-		&ansible.MoleculeTestLocalPlaybook{Resource: *resource},
-		&ansible.RolesDefaultsMain{Resource: *resource},
-		&ansible.RolesTasksMain{Resource: *resource},
-		&ansible.MoleculeDefaultMolecule{},
-		&ansible.BuildTestFrameworkDockerfile{},
-		&ansible.MoleculeTestClusterMolecule{},
-		&ansible.MoleculeDefaultPrepare{},
-		&ansible.MoleculeDefaultPlaybook{
-			GeneratePlaybook: generatePlaybook,
-			Resource:         *resource,
-		},
-		&ansible.BuildTestFrameworkAnsibleTestScript{},
-		&ansible.MoleculeDefaultAsserts{},
-		&ansible.MoleculeTestClusterPlaybook{Resource: *resource},
-		&ansible.RolesHandlersMain{Resource: *resource},
-		&ansible.Watches{
-			GeneratePlaybook: generatePlaybook,
-			Resource:         *resource,
-		},
-		&ansible.DeployOperator{},
-		&ansible.Travis{},
-		&ansible.MoleculeTestLocalMolecule{},
-		&ansible.MoleculeTestLocalPrepare{Resource: *resource},
-	)
-	if err != nil {
-		return fmt.Errorf("new ansible scaffold failed: (%v)", err)
-	}
-
-	// Remove placeholders from empty directories
-	err = os.Remove(filepath.Join(s.AbsProjectPath, roleFiles.Path))
-	if err != nil {
-		return fmt.Errorf("new ansible scaffold failed: (%v)", err)
-	}
-	err = os.Remove(filepath.Join(s.AbsProjectPath, roleTemplates.Path))
-	if err != nil {
-		return fmt.Errorf("new ansible scaffold failed: (%v)", err)
-	}
-
-	// Decide on playbook.
-	if generatePlaybook {
-		log.Infof("Generating %s playbook.", strings.Title(operatorType))
-
-		err := s.Execute(cfg,
-			&ansible.Playbook{Resource: *resource},
-		)
-		if err != nil {
-			return fmt.Errorf("new ansible playbook scaffold failed: (%v)", err)
-		}
-	}
-
-	// update deploy/role.yaml for the given resource r.
-	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-		return fmt.Errorf("failed to update the RBAC manifest for the resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
-	}
-	return nil
-}
-
-func doHelmScaffold() error {
-	cfg := &input.Config{
-		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
-		ProjectName:    projectName,
-	}
-
-	createOpts := helm.CreateChartOptions{
-		ResourceAPIVersion: apiVersion,
-		ResourceKind:       kind,
-		Chart:              helmChartRef,
-		Version:            helmChartVersion,
-		Repo:               helmChartRepo,
-	}
-
-	resource, chart, err := helm.CreateChart(cfg.AbsProjectPath, createOpts)
-	if err != nil {
-		return fmt.Errorf("failed to create helm chart: %s", err)
-	}
-
-	valuesPath := filepath.Join("<project_dir>", helm.HelmChartsDir, chart.GetMetadata().GetName(), "values.yaml")
-	crSpec := fmt.Sprintf("# Default values copied from %s\n\n%s", valuesPath, chart.GetValues().GetRaw())
-
-	k8sCfg, err := config.GetConfig()
-	if err != nil {
-		return fmt.Errorf("failed to get kubernetes config: %s", err)
-	}
-	roleScaffold, err := helm.CreateRoleScaffold(k8sCfg, chart)
-	if err != nil {
-		return fmt.Errorf("failed to generate role scaffold: %s", err)
-	}
-
-	s := &scaffold.Scaffold{}
-	err = s.Execute(cfg,
-		&helm.Dockerfile{},
-		&helm.WatchesYAML{
-			Resource:  resource,
-			ChartName: chart.GetMetadata().GetName(),
-		},
-		&scaffold.ServiceAccount{},
-		roleScaffold,
-		&scaffold.RoleBinding{IsClusterScoped: roleScaffold.IsClusterScoped},
-		&helm.Operator{},
-		&scaffold.CRD{Resource: resource},
-		&scaffold.CR{
-			Resource: resource,
-			Spec:     crSpec,
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("new helm scaffold failed: (%v)", err)
-	}
-
-	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-		return fmt.Errorf("failed to update the RBAC manifest for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
-	}
-	return nil
-}
-
-func verifyFlags() error {
-	if operatorType != projutil.OperatorTypeGo && operatorType != projutil.OperatorTypeAnsible && operatorType != projutil.OperatorTypeHelm {
-		return errors.Wrap(projutil.ErrUnknownOperatorType{Type: operatorType}, "value of --type can only be `go`, `ansible`, or `helm`")
-	}
-	if operatorType != projutil.OperatorTypeAnsible && generatePlaybook {
-		return fmt.Errorf("value of --generate-playbook can only be used with --type `ansible`")
-	}
-
-	if len(helmChartRef) != 0 {
-		if operatorType != projutil.OperatorTypeHelm {
-			return fmt.Errorf("value of --helm-chart can only be used with --type=helm")
-		}
-	} else if len(helmChartRepo) != 0 {
-		return fmt.Errorf("value of --helm-chart-repo can only be used with --type=helm and --helm-chart")
-	} else if len(helmChartVersion) != 0 {
-		return fmt.Errorf("value of --helm-chart-version can only be used with --type=helm and --helm-chart")
-	}
-
-	if operatorType == projutil.OperatorTypeGo && (len(apiVersion) != 0 || len(kind) != 0) {
-		return fmt.Errorf("operators of type Go do not use --api-version or --kind")
-	}
-
-	// --api-version and --kind are required with --type=ansible and --type=helm, with one exception.
-	//
-	// If --type=helm and --helm-chart is set, --api-version and --kind are optional. If left unset,
-	// sane defaults are used when the specified helm chart is created.
-	if operatorType == projutil.OperatorTypeAnsible || operatorType == projutil.OperatorTypeHelm && len(helmChartRef) == 0 {
-		if len(apiVersion) == 0 {
-			return fmt.Errorf("value of --api-version must not have empty value")
-		}
-		if len(kind) == 0 {
-			return fmt.Errorf("value of --kind must not have empty value")
-		}
-		kindFirstLetter := string(kind[0])
-		if kindFirstLetter != strings.ToUpper(kindFirstLetter) {
-			return fmt.Errorf("value of --kind must start with an uppercase letter")
-		}
-		if strings.Count(apiVersion, "/") != 1 {
-			return fmt.Errorf("value of --api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion)
-		}
-	}
-	return nil
-}
-
-func execProjCmd(cmd string, args ...string) error {
-	dc := exec.Command(cmd, args...)
-	dc.Dir = filepath.Join(projutil.MustGetwd(), projectName)
-	return projutil.ExecCmd(dc)
-}
-
-func getDeps() error {
-	switch m := projutil.DepManagerType(depManager); m {
-	case projutil.DepManagerDep:
-		log.Info("Running dep ensure ...")
-		if err := execProjCmd("dep", "ensure", "-v"); err != nil {
-			return err
-		}
-	case projutil.DepManagerGoMod:
-		log.Info("Running go mod ...")
-		if err := execProjCmd("go", "mod", "vendor", "-v"); err != nil {
-			return err
-		}
-	default:
-		return projutil.ErrInvalidDepManager(depManager)
-	}
-	log.Info("Done getting dependencies")
-	return nil
-}
-
-func initGit() error {
-	if skipGit {
-		return nil
-	}
-	log.Info("Run git init ...")
-	if err := execProjCmd("git", "init"); err != nil {
-		return err
-	}
-	if err := execProjCmd("git", "add", "--all"); err != nil {
-		return err
-	}
-	if err := execProjCmd("git", "commit", "-q", "-m", "INITIAL COMMIT"); err != nil {
-		return err
-	}
-	log.Info("Run git init done")
-	return nil
 }

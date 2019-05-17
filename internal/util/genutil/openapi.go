@@ -21,19 +21,18 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/pkg/config"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 // OpenAPIGen generates OpenAPI validation specs for all CRD's in dirs.
 func OpenAPIGen() error {
-	projutil.MustInProjectRoot()
 
 	absProjectPath := projutil.MustGetwd()
-	repoPkg := projutil.CheckAndGetProjectGoPkg()
 	srcDir := filepath.Join(absProjectPath, "vendor", "k8s.io", "kube-openapi")
 	binDir := filepath.Join(absProjectPath, scaffold.BuildBinDir)
 
@@ -41,7 +40,7 @@ func OpenAPIGen() error {
 		return err
 	}
 
-	gvMap, err := parseGroupVersions()
+	gvMap, err := parseGroupVersions(viper.GetString(config.APIsDirOpt))
 	if err != nil {
 		return fmt.Errorf("failed to parse group versions: (%v)", err)
 	}
@@ -52,7 +51,7 @@ func OpenAPIGen() error {
 
 	log.Infof("Running OpenAPI code-generation for Custom Resource group versions: [%v]\n", gvb.String())
 
-	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
+	apisPkg := filepath.Join(viper.GetString(config.RepoOpt), viper.GetString(config.APIsDirOpt))
 	fqApiStr := createFQApis(apisPkg, gvMap)
 	fqApis := strings.Split(fqApiStr, ",")
 	f := func(a string) error { return openAPIGen(binDir, a, fqApis) }
@@ -60,13 +59,12 @@ func OpenAPIGen() error {
 		return err
 	}
 
-	s := &scaffold.Scaffold{}
-	cfg := &input.Config{
-		Repo:           repoPkg,
+	s := &scaffold.Scaffold{
+		Repo:           viper.GetString(config.RepoOpt),
 		AbsProjectPath: absProjectPath,
 		ProjectName:    filepath.Base(absProjectPath),
 	}
-	crds, err := k8sutil.GetCRDs(scaffold.CRDsDir)
+	crds, err := k8sutil.GetCRDs(viper.GetString(config.CRDsDirOpt))
 	if err != nil {
 		return err
 	}
@@ -83,7 +81,7 @@ func OpenAPIGen() error {
 		if err != nil {
 			return err
 		}
-		err = s.Execute(cfg,
+		err = s.Execute(
 			&scaffold.CRD{Resource: r, IsOperatorGo: projutil.IsOperatorGo()},
 		)
 		if err != nil {

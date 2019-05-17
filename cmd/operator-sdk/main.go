@@ -15,11 +15,10 @@
 package main
 
 import (
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"os"
+	"path/filepath"
+	"strings"
 
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that `run` and `up local` can make use of them.
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/add"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
@@ -33,22 +32,66 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/test"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/up"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
-	flags "github.com/operator-framework/operator-sdk/internal/pkg/flags"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/writeconfig"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/pkg/config"
 	osdkversion "github.com/operator-framework/operator-sdk/version"
 
+	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
+	// to ensure that `run` and `up local` can make use of them.
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
+// These commands do not need a config file.
+var skipConfigCmds = map[string]struct{}{
+	"new":          struct{}{},
+	"write-config": struct{}{},
+}
+
 func main() {
+	var cfgFile string
+
 	root := &cobra.Command{
 		Use:     "operator-sdk",
 		Short:   "An SDK for building operators with ease",
 		Version: osdkversion.Version,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := config.SetDefaults(); err != nil {
+				return err
+			}
+
+			if _, ok := skipConfigCmds[cmd.Name()]; ok {
+				return nil
+			}
+
+			if cfgFile != "" {
+				if _, err := os.Stat(cfgFile); err != nil {
+					return errors.Wrapf(err, "error getting config file %s", cfgFile)
+				}
+				viper.SetConfigFile(cfgFile)
+			} else {
+				path := projutil.MustGetwd()
+				viper.AddConfigPath(path)
+				fn := config.DefaultFileName
+				viper.SetConfigName(strings.TrimSuffix(fn, filepath.Ext(fn)))
+			}
+
+			if err := viper.ReadInConfig(); err == nil {
+				log.Infof("Using config file %s", viper.ConfigFileUsed())
+			} else {
+				log.Info("No config file found. Using defaults and flags.")
+			}
+
+			return nil
+		},
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			if viper.GetBool(flags.VerboseOpt) {
+			if viper.GetBool(config.VerboseOpt) {
 				err := projutil.SetGoVerbose()
 				if err != nil {
 					log.Errorf("Could not set GOFLAGS: (%v)", err)
@@ -65,18 +108,30 @@ func main() {
 	root.AddCommand(build.NewCmd())
 	root.AddCommand(generate.NewCmd())
 	root.AddCommand(up.NewCmd())
-	root.AddCommand(completion.NewCmd())
 	root.AddCommand(test.NewCmd())
 	root.AddCommand(scorecard.NewCmd())
 	root.AddCommand(printdeps.NewCmd())
 	root.AddCommand(migrate.NewCmd())
 	root.AddCommand(run.NewCmd())
 	root.AddCommand(olmcatalog.NewCmd())
+	root.AddCommand(completion.NewCmd())
 	root.AddCommand(version.NewCmd())
+	root.AddCommand(writeconfig.NewCmd())
 
-	root.PersistentFlags().Bool(flags.VerboseOpt, false, "Enable verbose logging")
-	if err := viper.BindPFlags(root.PersistentFlags()); err != nil {
-		log.Fatalf("Failed to bind root flags: %v", err)
+	root.PersistentFlags().Bool(config.VerboseOpt, false, "Enable verbose logging")
+	viper.BindPFlag(config.VerboseOpt, root.PersistentFlags().Lookup(config.VerboseOpt))
+	root.PersistentFlags().StringVar(&cfgFile, config.ConfigOpt, "", "Operator SDK global configuration file")
+
+	// Ensure persistent flags are inherited by all children.
+	cmds := root.Commands()
+	numCmds := len(cmds)
+	for numCmds > 0 {
+		for _, cmd := range cmds {
+			cmd.LocalFlags()
+			cmds = append(cmds, cmd.Commands()...)
+		}
+		cmds = cmds[numCmds:]
+		numCmds = len(cmds) - numCmds
 	}
 
 	if err := root.Execute(); err != nil {

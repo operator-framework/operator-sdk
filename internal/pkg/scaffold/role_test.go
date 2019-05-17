@@ -23,8 +23,11 @@ import (
 )
 
 func TestRole(t *testing.T) {
-	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(appConfig, &Role{})
+	s, buf, err := setupTestScaffoldAndWriter()
+	if err != nil {
+		t.Fatalf("Failed to set up test scaffold and writer: %v", err)
+	}
+	err = s.Execute(&Role{})
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
@@ -36,8 +39,11 @@ func TestRole(t *testing.T) {
 }
 
 func TestRoleClusterScoped(t *testing.T) {
-	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(appConfig, &Role{IsClusterScoped: true})
+	s, buf, err := setupTestScaffoldAndWriter()
+	if err != nil {
+		t.Fatalf("Failed to set up test scaffold and writer: %v", err)
+	}
+	err = s.Execute(&Role{IsClusterScoped: true})
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
@@ -49,8 +55,11 @@ func TestRoleClusterScoped(t *testing.T) {
 }
 
 func TestRoleCustomRules(t *testing.T) {
-	s, buf := setupScaffoldAndWriter()
-	err := s.Execute(appConfig, &Role{
+	s, buf, err := setupTestScaffoldAndWriter()
+	if err != nil {
+		t.Fatalf("Failed to set up test scaffold and writer: %v", err)
+	}
+	err = s.Execute(&Role{
 		SkipDefaultRules: true,
 		SkipMetricsRules: true,
 		CustomRules: []rbacv1.PolicyRule{

@@ -18,6 +18,9 @@ import (
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/pkg/config"
+
+	"github.com/spf13/viper"
 )
 
 const ServiceAccountYamlFile = "service_account.yaml"
@@ -28,7 +31,7 @@ type ServiceAccount struct {
 
 func (s *ServiceAccount) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(DeployDir, ServiceAccountYamlFile)
+		s.Path = filepath.Join(viper.GetString(config.DeployDirOpt), ServiceAccountYamlFile)
 	}
 	s.TemplateBody = serviceAccountTemplate
 	return s.Input, nil

@@ -19,6 +19,9 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/pkg/config"
+
+	"github.com/spf13/viper"
 )
 
 // Types is the input needed to generate a pkg/apis/<group>/<version>/<kind>_types.go file
@@ -31,7 +34,7 @@ type Types struct {
 
 func (s *Types) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(ApisDir,
+		s.Path = filepath.Join(viper.GetString(config.APIsDirOpt),
 			s.Resource.GoImportGroup,
 			strings.ToLower(s.Resource.Version),
 			s.Resource.LowerKind+"_types.go")

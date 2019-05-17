@@ -23,7 +23,10 @@ import (
 )
 
 func TestBoilerplate(t *testing.T) {
-	s, buf := setupScaffoldAndWriter()
+	s, buf, err := setupTestScaffoldAndWriter()
+	if err != nil {
+		t.Fatal(err)
+	}
 	s.Fs = afero.NewMemMapFs()
 	f, err := afero.TempFile(s.Fs, "", "")
 	if err != nil {
@@ -36,7 +39,7 @@ func TestBoilerplate(t *testing.T) {
 		t.Fatal(err)
 	}
 	s.BoilerplatePath = f.Name()
-	err = s.Execute(appConfig, &Apis{})
+	err = s.Execute(&Apis{})
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
