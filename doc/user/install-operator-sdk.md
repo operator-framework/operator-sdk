@@ -6,7 +6,7 @@
 
 ```sh
 # Set the release version variable
-RELEASE_VERSION=v0.7.0
+RELEASE_VERSION=v0.8.0
 # Linux
 $ curl -OJL https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu
 # macOS
@@ -53,7 +53,7 @@ Now you should be able to verify the binary.
 ### Install the release binary in your PATH
 
 ```
-# Linux 
+# Linux
 $ chmod +x operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu && sudo cp operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu /usr/local/bin/operator-sdk && rm operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu
 # macOS
 $ chmod +x operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin && sudo cp operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin /usr/local/bin/operator-sdk && rm operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin
