@@ -35,7 +35,6 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/writeconfig"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/config"
-	osdkversion "github.com/operator-framework/operator-sdk/version"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that `run` and `up local` can make use of them.
@@ -58,9 +57,8 @@ func main() {
 	var cfgFile string
 
 	root := &cobra.Command{
-		Use:     "operator-sdk",
-		Short:   "An SDK for building operators with ease",
-		Version: osdkversion.Version,
+		Use:   "operator-sdk",
+		Short: "An SDK for building operators with ease",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			if err := config.SetDefaults(); err != nil {
 				return err
