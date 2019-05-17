@@ -24,8 +24,6 @@ import (
 // Operator specifies the Helm operator.yaml manifest scaffold
 type Operator struct {
 	input.Input
-
-	IsClusterScoped bool
 }
 
 // GetInput gets the scaffold execution input
@@ -59,13 +57,9 @@ spec:
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
-              {{- if .IsClusterScoped }}
-              value: ""
-              {{- else }}
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-              {{- end}}
             - name: POD_NAME
               valueFrom:
                 fieldRef:
