@@ -34,7 +34,6 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/up"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
 	flags "github.com/operator-framework/operator-sdk/internal/pkg/flags"
-	osdkversion "github.com/operator-framework/operator-sdk/version"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -44,9 +43,8 @@ import (
 
 func main() {
 	root := &cobra.Command{
-		Use:     "operator-sdk",
-		Short:   "An SDK for building operators with ease",
-		Version: osdkversion.Version,
+		Use:   "operator-sdk",
+		Short: "An SDK for building operators with ease",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if viper.GetBool(flags.VerboseOpt) {
 				err := projutil.SetGoVerbose()
