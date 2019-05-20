@@ -16,7 +16,8 @@ func WriteOSPathToFS(fromFS, toFS afero.Fs, root string) error {
 		if err != nil || info == nil {
 			return err
 		}
-		if !info.IsDir() {
+		// only copy non-dir and non-symlink files
+		if !info.IsDir() && info.Mode()&os.ModeSymlink == 0 {
 			b, err := afero.ReadFile(fromFS, path)
 			if err != nil {
 				return err

@@ -4,6 +4,8 @@
 
 ### Changed
 
+- **Breaking Change**: The Operator SDK scorecard does not include built-in scorecard tests anymore. The previous "Basic Tests" and "OLM Integration Tests" are separate scorecard plugins now, and the binaries will be made available on the Operator SDK's github release page.
+
 ### Deprecated
 
 ### Removed
