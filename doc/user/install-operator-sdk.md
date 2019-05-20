@@ -47,6 +47,12 @@ To download the key, use the following command, replacing `$KEY_ID` with the RSA
 $ gpg --recv-key "$KEY_ID"
 ```
 
+You'll need to specify a key server if one hasn't been configured. For example:
+
+```sh
+$ gpg --keyserver keyserver.ubuntu.com --recv-key "$KEY_ID"
+```
+
 Now you should be able to verify the binary.
 
 
