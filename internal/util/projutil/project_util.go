@@ -142,7 +142,7 @@ func CheckAndGetProjectGoPkg() string {
 	gopath := MustSetGopath(MustGetGopath())
 	goSrc := filepath.Join(gopath, SrcDir)
 	wd := MustGetwd()
-	currPkg := strings.Replace(wd, goSrc+fsep, "", 1)
+	currPkg := strings.Replace(wd, goSrc, "", 1)
 	// strip any "/" prefix from the repo path.
 	return strings.TrimPrefix(currPkg, fsep)
 }
