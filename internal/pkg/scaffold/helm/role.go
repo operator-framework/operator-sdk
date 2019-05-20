@@ -76,8 +76,8 @@ func CreateRoleScaffold(cfg *rest.Config, chart *chart.Chart) (*scaffold.Role, e
 	if len(clusterResourceRules) > 0 {
 		log.Info("Scaffolding ClusterRole and ClusterRolebinding for cluster scoped resources in the helm chart")
 		roleScaffold.IsClusterScoped = true
-		roleScaffold.CustomRules = append(roleScaffold.CustomRules, append(clusterResourceRules, namespacedResourceRules...)...)
 	}
+	roleScaffold.CustomRules = append(roleScaffold.CustomRules, append(clusterResourceRules, namespacedResourceRules...)...)
 
 	log.Warn("The RBAC rules generated in deploy/role.yaml are based on the chart's default manifest." +
 		" Some rules may be missing for resources that are only enabled with custom values, and" +
