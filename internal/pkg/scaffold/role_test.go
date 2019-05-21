@@ -116,6 +116,18 @@ rules:
   - app-operator
   verbs:
   - "update"
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+- apiGroups:
+  - apps
+  resources:
+  - replicasets
+  verbs:
+  - get
 `
 
 const clusterroleExp = `kind: ClusterRole
@@ -159,6 +171,18 @@ rules:
   - app-operator
   verbs:
   - "update"
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+- apiGroups:
+  - apps
+  resources:
+  - replicasets
+  verbs:
+  - get
 `
 
 const roleCustomRulesExp = `kind: Role

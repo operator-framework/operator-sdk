@@ -229,5 +229,17 @@ rules:
   - {{ .ProjectName }}
   verbs:
   - "update"
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+- apiGroups:
+  - apps
+  resources:
+  - replicasets
+  verbs:
+  - get
 {{- end }}
 `

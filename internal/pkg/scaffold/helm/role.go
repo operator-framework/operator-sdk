@@ -47,8 +47,6 @@ func CreateRoleScaffold(cfg *rest.Config, chart *chart.Chart) (*scaffold.Role, e
 	roleScaffold := &scaffold.Role{
 		IsClusterScoped:  false,
 		SkipDefaultRules: true,
-		// TODO: enable metrics in helm operator
-		SkipMetricsRules: true,
 		CustomRules: []rbacv1.PolicyRule{
 			// We need this rule so tiller can read namespaces to ensure they exist
 			{
