@@ -95,7 +95,7 @@ This test has a maximum score equal to the number of CRs provided via the `--cr-
 
 #### CRs Have At Least 1 Example
 
-This test checks that the CSV has an [`alm-examples` section][alm-examples] for each CR provided by the `--cr-manifest` flag in its metadatas' annotations. This test has a maximum score
+This test checks that the CSV has an [`alm-examples` section][alm-examples] for each CR provided by the `--cr-manifest` flag in its metadata's annotations. This test has a maximum score
 equal to the number of CRs provided via the `--cr-manifest` flag.
 
 #### Spec Fields With Descriptors
@@ -122,8 +122,8 @@ to the console if the scorecard is being run in with `human-readable` output or 
 
 ### JSON format
 
-The JSON output is formatted in the same way that a Kubernetes API would be, which allows us to make updates and new versions of the schema if necessary as well as use various
-kubernetes helpers. The Golang structs are defined in `pkg/apis/scorecard/v1alpha1/types.go` and can be easily implemented by plugins written in Golang. Below is the JSON Schema:
+The JSON output is formatted in the same way that a Kubernetes API would be, which allows for updates to the schema as well as the use of various
+Kubernetes helpers. The Golang structs are defined in `pkg/apis/scorecard/v1alpha1/types.go` and can be easily implemented by plugins written in Golang. Below is the JSON Schema:
 
 ```json
 {
@@ -273,7 +273,7 @@ kubernetes helpers. The Golang structs are defined in `pkg/apis/scorecard/v1alph
 }
 ```
 
-NOTE: The `ScorecardOutput` object is designed the same as a kubernetes API, and thus also has a full `TypeMeta` and `ObjectMeta`. Those are optional and not
+**NOTE:** The `ScorecardOutput` object is designed the same as a Kubernetes API, and thus also has a full `TypeMeta` and `ObjectMeta`. Those are optional and not
 used by the scorecard at the current time. These optional fields have thus been removed from the schema for cleanliness and the schema only includes the fields
 the scorecard currently looks at.
 
@@ -322,7 +322,7 @@ Example of a valid JSON output:
 }
 ```
 
-NOTE: The `ScorecardOutput.Log` field is only intended to be used to log the scorecard's output and the scorecard will ignore that field if a plugin provides it.
+**NOTE:** The `ScorecardOutput.Log` field is only intended to be used to log the scorecard's output and the scorecard will ignore that field if a plugin provides it.
 
 [cli-reference]: ../sdk-cli-reference.md#scorecard
 [writing-tests]: ./writing-e2e-tests.md

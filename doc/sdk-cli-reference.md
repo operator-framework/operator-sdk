@@ -439,7 +439,7 @@ Run scorecard tests on an operator
 * `namespaced-manifest` string - Path to manifest for namespaced resources (e.g. RBAC and Operator manifest)
 * `olm-deployed` - Only use the CSV at `csv-path` for manifest data, except for those provided to `cr-manifest`
 * `olm-tests` - Enable OLM integration checks (default true)
-* `-o, --output` string - Output format for results. Valid values: human-readable, json (default "human-readable")
+* `-o, --output` string - Output format for results. Valid values: `human-readable` or `json` (default `human-readable`)
 * `proxy-image` string - Image name for scorecard proxy (default "quay.io/operator-framework/scorecard-proxy")
 * `proxy-pull-policy` string - Pull policy for scorecard proxy image (default "Always")
 * `-h, --help` - help for scorecard
