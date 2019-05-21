@@ -70,6 +70,7 @@ func CreateRoleScaffold(cfg *rest.Config, chart *chart.Chart) (*scaffold.Role, e
 	if err != nil {
 		log.Warnf("Using default RBAC rules: failed to generate RBAC rules: %s", err)
 		roleScaffold.SkipDefaultRules = false
+		return roleScaffold, nil
 	}
 
 	// Use a ClusterRole if cluster scoped resources are listed in the chart
@@ -183,12 +184,13 @@ func getServerVersionAndResources(cfg *rest.Config) (*version.Info, []*metav1.AP
 }
 
 func getDefaultManifests(c *chart.Chart, kubeVersion *version.Info) ([]tiller.Manifest, error) {
+	v := strings.TrimSuffix(fmt.Sprintf("%s.%s", kubeVersion.Major, kubeVersion.Minor), "+")
 	renderOpts := renderutil.Options{
 		ReleaseOptions: chartutil.ReleaseOptions{
 			IsInstall: true,
 			IsUpgrade: false,
 		},
-		KubeVersion: fmt.Sprintf("%s.%s", kubeVersion.Major, kubeVersion.Minor),
+		KubeVersion: v,
 	}
 
 	renderedTemplates, err := renderutil.Render(c, &chart.Config{}, renderOpts)
