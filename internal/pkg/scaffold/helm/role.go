@@ -70,6 +70,7 @@ func CreateRoleScaffold(cfg *rest.Config, chart *chart.Chart) (*scaffold.Role, e
 	if err != nil {
 		log.Warnf("Using default RBAC rules: failed to generate RBAC rules: %s", err)
 		roleScaffold.SkipDefaultRules = false
+		return roleScaffold, nil
 	}
 
 	// Use a ClusterRole if cluster scoped resources are listed in the chart
