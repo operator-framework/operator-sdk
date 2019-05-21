@@ -49,33 +49,7 @@ The following workflow is for a new **Helm** operator:
 
 ### Install the Operator SDK CLI
 
-```sh
-$ go get github.com/operator-framework/operator-sdk
-$ cd $GOPATH/src/github.com/operator-framework/operator-sdk
-$ git checkout master
-$ make dep
-$ make install
-```
-
-Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
-
-```sh
-$ brew install operator-sdk
-```
-
-```sh
-$ go get -d github.com/operator-framework/operator-sdk #This will download the git repository and not install it
-$ cd $GOPATH/src/github.com/operator-framework/operator-sdk
-$ git checkout master
-$ make dep
-$ make install
-```
-
-Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
-
-```sh
-$ brew install operator-sdk
-```
+Follow the steps in the [installation guide][install_guide] to learn how to install the Operator SDK CLI tool.
 
 ### Create and deploy an app-operator
 
