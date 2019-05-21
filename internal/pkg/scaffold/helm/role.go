@@ -184,12 +184,13 @@ func getServerVersionAndResources(cfg *rest.Config) (*version.Info, []*metav1.AP
 }
 
 func getDefaultManifests(c *chart.Chart, kubeVersion *version.Info) ([]tiller.Manifest, error) {
+	v := strings.TrimSuffix(fmt.Sprintf("%s.%s", kubeVersion.Major, kubeVersion.Minor), "+")
 	renderOpts := renderutil.Options{
 		ReleaseOptions: chartutil.ReleaseOptions{
 			IsInstall: true,
 			IsUpgrade: false,
 		},
-		KubeVersion: fmt.Sprintf("%s.%s", kubeVersion.Major, kubeVersion.Minor),
+		KubeVersion: v,
 	}
 
 	renderedTemplates, err := renderutil.Render(c, &chart.Config{}, renderOpts)
