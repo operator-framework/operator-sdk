@@ -119,6 +119,7 @@ func upLocal() error {
 
 	if debugFlag {
 		debugArgs := []string{"--listen=:2345", "--headless=true", "--api-version=2", "exec", outputBinName, "--"}
+		debugArgs = append(debugArgs, args...)
 
 		dc = exec.Command("dlv", debugArgs...)
 		log.Infof("Running as debug %#v", debugArgs)
