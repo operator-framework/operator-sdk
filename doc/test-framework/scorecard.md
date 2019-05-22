@@ -11,7 +11,7 @@ deployment, it also adds another container to the operator's pod that is used to
 which are analyzed by the scorecard for various tests. The scorecard will also look at some of the fields in the
 CR object itself for some of the tests.
 
-As of `v0.8.0` scorecard also supports plugins. This allows external developers extend the functionality of the scorecard and add additional tests.
+As of `v0.8.0` scorecard also supports plugins. This allows external developers to extend the functionality of the scorecard and add additional tests.
 
 ## Requirements
 
