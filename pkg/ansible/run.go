@@ -27,6 +27,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
+	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -67,6 +68,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	mgr, err := manager.New(cfg, manager.Options{
 		Namespace:          namespace,
 		MetricsBindAddress: "0.0.0.0:8383",
+		MapperProvider:     restmapper.NewDynamicRESTMapper,
 	})
 	if err != nil {
 		log.Error(err, "Failed to create a new manager.")
