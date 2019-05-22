@@ -197,6 +197,9 @@ func buildLocal(outputBinName string) error {
 	if ldFlags != "" {
 		args = []string{"-ldflags", ldFlags}
 	}
+	if debugFlag {
+		args = append(args, "-gcflags=\"all=-N -l\"")
+	}
 	opts := projutil.GoCmdOptions{
 		BinName:     outputBinName,
 		PackagePath: filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir),
