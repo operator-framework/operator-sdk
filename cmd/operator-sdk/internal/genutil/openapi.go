@@ -15,8 +15,9 @@
 package genutil
 
 import (
+	"flag"
 	"fmt"
-	"os/exec"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -25,7 +26,11 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	gengoargs "k8s.io/gengo/args"
+	generatorargs "k8s.io/kube-openapi/cmd/openapi-gen/args"
+	"k8s.io/kube-openapi/pkg/generators"
 )
 
 // OpenAPIGen generates OpenAPI validation specs for all CRD's in dirs.
@@ -34,12 +39,6 @@ func OpenAPIGen() error {
 
 	absProjectPath := projutil.MustGetwd()
 	repoPkg := projutil.GetGoPkg()
-	srcDir := filepath.Join(absProjectPath, "vendor", "k8s.io", "kube-openapi")
-	binDir := filepath.Join(absProjectPath, scaffold.BuildBinDir)
-
-	if err := buildOpenAPIGenBinary(binDir, srcDir); err != nil {
-		return err
-	}
 
 	gvMap, err := parseGroupVersions()
 	if err != nil {
@@ -53,9 +52,8 @@ func OpenAPIGen() error {
 	log.Infof("Running OpenAPI code-generation for Custom Resource group versions: [%v]\n", gvb.String())
 
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
-	fqApiStr := createFQApis(apisPkg, gvMap)
-	fqApis := strings.Split(fqApiStr, ",")
-	f := func(a string) error { return openAPIGen(binDir, a, fqApis) }
+	fqApis := createFQAPIs(apisPkg, gvMap)
+	f := func(a string) error { return openAPIGen(a, fqApis) }
 	if err = withHeaderFile(f); err != nil {
 		return err
 	}
@@ -95,25 +93,36 @@ func OpenAPIGen() error {
 	return nil
 }
 
-func buildOpenAPIGenBinary(binDir, codegenSrcDir string) error {
-	genDirs := []string{"./cmd/openapi-gen"}
-	return buildCodegenBinaries(genDirs, binDir, codegenSrcDir)
-}
-
-func openAPIGen(binDir, hf string, fqApis []string) (err error) {
-	cgPath := filepath.Join(binDir, "openapi-gen")
-	for _, fqApi := range fqApis {
-		args := []string{
-			"--input-dirs", fqApi,
-			"--output-package", fqApi,
-			"--output-file-base", "zz_generated.openapi",
-			// openapi-gen requires a boilerplate file. Either use header or an
-			// empty file if header is empty.
-			"--go-header-file", hf,
+func openAPIGen(hf string, fqApis []string) error {
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	flag.Set("logtostderr", "true")
+	for _, api := range fqApis {
+		apisIdx := strings.Index(api, scaffold.ApisDir)
+		args := &gengoargs.GeneratorArgs{
+			InputDirs:          []string{api},
+			OutputFileBaseName: "zz_generated.openapi",
+			OutputPackagePath:  filepath.Join(wd, api[apisIdx:]),
+			GoHeaderFilePath:   hf,
+			CustomArgs: &generatorargs.CustomArgs{
+				ReportFilename: "-", // stdout
+			},
 		}
-		cmd := exec.Command(cgPath, args...)
-		if err = projutil.ExecCmd(cmd); err != nil {
-			return fmt.Errorf("failed to perform openapi code-generation: %v", err)
+
+		if err := generatorargs.Validate(args); err != nil {
+			return errors.Wrap(err, "openapi-gen argument validation error")
+		}
+
+		// Generates the code for the OpenAPIDefinitions.
+		err := args.Execute(
+			generators.NameSystems(),
+			generators.DefaultNameSystem(),
+			generators.Packages,
+		)
+		if err != nil {
+			return errors.Wrap(err, "openapi-gen generator error")
 		}
 	}
 	return nil
