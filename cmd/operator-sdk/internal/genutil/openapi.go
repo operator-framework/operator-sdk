@@ -110,12 +110,10 @@ func openAPIGen(hf string, fqApis []string) error {
 				ReportFilename: "-", // stdout
 			},
 		}
-
 		if err := generatorargs.Validate(args); err != nil {
 			return errors.Wrap(err, "openapi-gen argument validation error")
 		}
 
-		// Generates the code for the OpenAPIDefinitions.
 		err := args.Execute(
 			generators.NameSystems(),
 			generators.DefaultNameSystem(),

@@ -27,6 +27,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	generatorargs "k8s.io/code-generator/cmd/deepcopy-gen/args"
+	gengoargs "k8s.io/gengo/args"
 	"k8s.io/gengo/examples/deepcopy-gen/generators"
 )
 
@@ -66,17 +67,19 @@ func deepcopyGen(hf string, fqApis []string) error {
 	}
 	flag.Set("logtostderr", "true")
 	for _, api := range fqApis {
-		apisIdx := strings.Index(api, scaffold.ApisDir)
-		// deepcopy-gen does not write to the target directory unless defaults
-		// are used for some reason.
-		args, cargs := generatorargs.NewDefaults()
-		args.InputDirs = []string{api}
-		args.OutputFileBaseName = "zz_generated.deepcopy"
-		args.OutputPackagePath = filepath.Join(wd, api[apisIdx:])
-		args.GoHeaderFilePath = hf
-		cargs.BoundingDirs = []string{api}
+		// Use relative API path so the generator writes to the correct path.
+		apiPath := "./" + api[strings.Index(api, scaffold.ApisDir):]
+		args := &gengoargs.GeneratorArgs{
+			InputDirs:          []string{apiPath},
+			OutputPackagePath:  filepath.Join(wd, apiPath),
+			OutputFileBaseName: "zz_generated.deepcopy",
+			GoHeaderFilePath:   hf,
+		}
+		cargs := &generatorargs.CustomArgs{
+			BoundingDirs: []string{apiPath},
+		}
+		// Cast for use upstream.
 		args.CustomArgs = (*generators.CustomArgs)(cargs)
-
 		if err := generatorargs.Validate(args); err != nil {
 			return errors.Wrap(err, "deepcopy-gen argument validation error")
 		}
