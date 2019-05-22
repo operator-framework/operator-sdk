@@ -55,8 +55,10 @@ generates a skeletal app-operator application in $GOPATH/src/github.com/example.
 	newCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. (e.g AppService) - used with \"ansible\" or \"helm\" types")
 	newCmd.Flags().StringVar(&operatorType, "type", "go", "Type of operator to initialize (choices: \"go\", \"ansible\" or \"helm\")")
 	newCmd.Flags().StringVar(&depManager, "dep-manager", "modules", `Dependency manager the new project will use (choices: "dep", "modules")`)
+	newCmd.Flags().StringVar(&repo, "repo", "", "Project repository path. Used as the project's go import path. This must be set if outside of $GOPATH/src, and cannot be set of --dep-manager=dep")
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
 	newCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
+	newCmd.Flags().BoolVar(&makeVendor, "vendor", false, "Use a vendor directory for dependencies. This flag only applies when --dep-manager=modules (the default)")
 	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false, "Generate a playbook skeleton. (Only used for --type ansible)")
 
 	newCmd.Flags().StringVar(&helmChartRef, "helm-chart", "", "Initialize helm operator with existing helm chart (<URL>, <repo>/<name>, or local path)")
@@ -73,7 +75,9 @@ var (
 	projectName      string
 	depManager       string
 	headerFile       string
+	repo             string
 	skipGit          bool
+	makeVendor       bool
 	generatePlaybook bool
 
 	helmChartRef     string
@@ -88,6 +92,10 @@ func newFunc(cmd *cobra.Command, args []string) error {
 	mustBeNewProject()
 	if err := verifyFlags(); err != nil {
 		return err
+	}
+
+	if repo == "" {
+		repo = filepath.Join(projutil.GetGoPkg(), projectName)
 	}
 
 	log.Infof("Creating new %s operator '%s'.", strings.Title(operatorType), projectName)
@@ -109,6 +117,11 @@ func newFunc(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
+
+	if err := checkProject(); err != nil {
+		return err
+	}
+
 	if err := initGit(); err != nil {
 		return err
 	}
@@ -146,7 +159,7 @@ func mustBeNewProject() {
 
 func doGoScaffold() error {
 	cfg := &input.Config{
-		Repo:           filepath.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
+		Repo:           repo,
 		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
 		ProjectName:    projectName,
 	}
@@ -201,6 +214,7 @@ func doGoScaffold() error {
 
 func doAnsibleScaffold() error {
 	cfg := &input.Config{
+		Repo:           repo,
 		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
 		ProjectName:    projectName,
 	}
@@ -285,6 +299,7 @@ func doAnsibleScaffold() error {
 
 func doHelmScaffold() error {
 	cfg := &input.Config{
+		Repo:           repo,
 		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
 		ProjectName:    projectName,
 	}
@@ -382,6 +397,35 @@ func verifyFlags() error {
 			return fmt.Errorf("value of --api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion)
 		}
 	}
+
+	// dep assumes the project's path under $GOPATH/src is the project's
+	// repo path.
+	if repo != "" && depManager == string(projutil.DepManagerDep) {
+		return fmt.Errorf(`--repo flag cannot be used with --dep-manger=dep`)
+	}
+
+	inGopathSrc, err := projutil.WdInGoPathSrc()
+	if err != nil {
+		return err
+	}
+	if !inGopathSrc {
+		if depManager == string(projutil.DepManagerDep) {
+			return fmt.Errorf(`depedency manger "dep" selected but wd not in $GOPATH/src`)
+		}
+		if repo == "" && depManager == string(projutil.DepManagerGoMod) {
+			return fmt.Errorf(`depedency manger "modules" requires --repo be set if wd not in $GOPATH/src`)
+		}
+	}
+
+	goModOn, err := projutil.GoModOn()
+	if err != nil {
+		return err
+	}
+	if !goModOn && depManager == string(projutil.DepManagerGoMod) {
+		return fmt.Errorf(`depedency manger "modules" requires wd be in $GOPATH/src` +
+			` and GO111MODULE=on, or outside of $GOPATH/src and GO111MODULE="auto" or unset`)
+	}
+
 	return nil
 }
 
@@ -394,14 +438,25 @@ func execProjCmd(cmd string, args ...string) error {
 func getDeps() error {
 	switch m := projutil.DepManagerType(depManager); m {
 	case projutil.DepManagerDep:
-		log.Info("Running dep ensure ...")
+		log.Info("Running dep ensure")
 		if err := execProjCmd("dep", "ensure", "-v"); err != nil {
 			return err
 		}
 	case projutil.DepManagerGoMod:
-		log.Info("Running go mod ...")
-		if err := execProjCmd("go", "mod", "vendor", "-v"); err != nil {
-			return err
+		// Only when a user requests a vendor directory be created should "go mod"
+		// be run during project initialization.
+		if makeVendor {
+			log.Info("Running go mod vendor")
+			opts := projutil.GoCmdOptions{
+				Args: []string{"-v"},
+				Dir:  filepath.Join(projutil.MustGetwd(), projectName),
+			}
+			if err := projutil.GoCmd("mod vendor", opts); err != nil {
+				return err
+			}
+		} else {
+			// Avoid done message.
+			return nil
 		}
 	default:
 		return projutil.ErrInvalidDepManager(depManager)
@@ -410,11 +465,34 @@ func getDeps() error {
 	return nil
 }
 
+func checkProject() error {
+	log.Info("Checking project")
+	switch projutil.DepManagerType(depManager) {
+	case projutil.DepManagerGoMod:
+		// Run "go build ./..." to make sure all packages can be built
+		// currectly. From "go help build":
+		//
+		//	When compiling multiple packages or a single non-main package,
+		//	build compiles the packages but discards the resulting object,
+		//	serving only as a check that the packages can be built.
+		opts := projutil.GoCmdOptions{
+			PackagePath: "./...",
+			Dir:         filepath.Join(projutil.MustGetwd(), projectName),
+		}
+		if err := projutil.GoBuild(opts); err != nil {
+			return err
+		}
+	}
+
+	log.Info("Check project successful.")
+	return nil
+}
+
 func initGit() error {
 	if skipGit {
 		return nil
 	}
-	log.Info("Run git init ...")
+	log.Info("Running git init")
 	if err := execProjCmd("git", "init"); err != nil {
 		return err
 	}

@@ -100,7 +100,7 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	if projutil.IsOperatorGo() {
 		opts := projutil.GoCmdOptions{
 			BinName:     filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName),
-			PackagePath: filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir),
+			PackagePath: filepath.Join(projutil.GetGoPkg(), scaffold.ManagerDir),
 			Args:        goTrimFlags,
 			Env:         goBuildEnv,
 			GoMod:       projutil.IsDepManagerGoMod(),

@@ -16,12 +16,14 @@ package projutil
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
 	homedir "github.com/mitchellh/go-homedir"
+	"github.com/rogpeppe/go-internal/modfile"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -136,10 +138,48 @@ func getHomeDir() (string, error) {
 	return homedir.Expand(hd)
 }
 
-// CheckAndGetProjectGoPkg checks if this project's repository path is rooted under $GOPATH and returns the current directory's import path
-// e.g: "github.com/example-inc/app-operator"
-func CheckAndGetProjectGoPkg() string {
-	gopath := MustSetGopath(MustGetGopath())
+// GetGoPkg returns the current directory's import path by parsing it from
+// wd if this project's repository path is rooted under $GOPATH/src, or
+// from go.mod the project uses go modules to manage dependencies.
+//
+// Example: "github.com/example-inc/app-operator"
+func GetGoPkg() string {
+	// Default to reading from go.mod, as it should usually have the (correct)
+	// package path, and no further processing need be done on it if so.
+	if _, err := os.Stat(goModFile); err == nil {
+		b, err := ioutil.ReadFile(goModFile)
+		if err != nil {
+			log.Fatalf("Read go.mod: %v", err)
+		}
+		mf, err := modfile.Parse(goModFile, b, nil)
+		if err != nil {
+			log.Fatalf("Parse go.mod: %v", err)
+		}
+		if mf.Module != nil && mf.Module.Mod.Path != "" {
+			return mf.Module.Mod.Path
+		}
+	}
+
+	// Then try parsing package path from $GOPATH (set env or default).
+	goPath, ok := os.LookupEnv(GoPathEnv)
+	if !ok || goPath == "" {
+		hd, err := getHomeDir()
+		if err != nil {
+			log.Fatal(err)
+		}
+		goPath = filepath.Join(hd, "go", "src")
+	} else {
+		// MustSetFirstGopath is necessary here because the user has set GOPATH,
+		// which could be a path list.
+		goPath = MustSetFirstGopath(goPath)
+	}
+	if !strings.HasPrefix(MustGetwd(), goPath) {
+		log.Fatal("Could not determine project repository path: $GOPATH not set, wd in default $HOME/go/src, or wd does not contain a go.mod")
+	}
+	return parseGoPkg(goPath)
+}
+
+func parseGoPkg(gopath string) string {
 	goSrc := filepath.Join(gopath, SrcDir)
 	wd := MustGetwd()
 	currPkg := strings.Replace(wd, goSrc, "", 1)
@@ -176,26 +216,16 @@ func IsOperatorHelm() bool {
 	return err == nil && stat.IsDir()
 }
 
-// MustGetGopath gets GOPATH and ensures it is set and non-empty. If GOPATH
-// is not set or empty, MustGetGopath exits.
-func MustGetGopath() string {
-	gopath, ok := os.LookupEnv(GoPathEnv)
-	if !ok || len(gopath) == 0 {
-		log.Fatal("GOPATH env not set")
-	}
-	return gopath
-}
-
-// MustSetGopath sets GOPATH=currentGopath after processing a path list,
-// if any, then returns the set path. If GOPATH cannot be set, MustSetGopath
-// exits.
-func MustSetGopath(currentGopath string) string {
+// MustSetFirstGopath sets GOPATH to the first element of the path list in
+// currentGopath, then returns the set path.
+// If GOPATH cannot be set, MustSetFirstGopath exits.
+func MustSetFirstGopath(currentGopath string) string {
 	var (
 		newGopath   string
 		cwdInGopath bool
 		wd          = MustGetwd()
 	)
-	for _, newGopath = range strings.Split(currentGopath, ":") {
+	for _, newGopath = range filepath.SplitList(currentGopath) {
 		if strings.HasPrefix(filepath.Dir(wd), newGopath) {
 			cwdInGopath = true
 			break

@@ -33,7 +33,7 @@ func OpenAPIGen() error {
 	projutil.MustInProjectRoot()
 
 	absProjectPath := projutil.MustGetwd()
-	repoPkg := projutil.CheckAndGetProjectGoPkg()
+	repoPkg := projutil.GetGoPkg()
 	srcDir := filepath.Join(absProjectPath, "vendor", "k8s.io", "kube-openapi")
 	binDir := filepath.Join(absProjectPath, scaffold.BuildBinDir)
 

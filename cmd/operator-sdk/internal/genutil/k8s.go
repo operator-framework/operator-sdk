@@ -32,7 +32,7 @@ func K8sCodegen() error {
 	projutil.MustInProjectRoot()
 
 	wd := projutil.MustGetwd()
-	repoPkg := projutil.CheckAndGetProjectGoPkg()
+	repoPkg := projutil.GetGoPkg()
 	srcDir := filepath.Join(wd, "vendor", "k8s.io", "code-generator")
 	binDir := filepath.Join(wd, scaffold.BuildBinDir)
 
