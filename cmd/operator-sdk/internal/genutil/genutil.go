@@ -20,7 +20,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	flags "github.com/operator-framework/operator-sdk/internal/pkg/flags"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
@@ -89,25 +88,15 @@ func parseGroupVersions() (map[string][]string, error) {
 	return gvs, nil
 }
 
-// CreateFQApis return a string of all fully qualified pkg + groups + versions
-// of pkg and gvs in the format:
-// "pkg/groupA/v1,pkg/groupA/v2,pkg/groupB/v1"
-func createFQApis(pkg string, gvs map[string][]string) string {
-	gn := 0
-	fqb := &strings.Builder{}
+// createFQAPIs return a slice of all fully qualified pkg + groups + versions
+// of pkg and gvs in the format "pkg/groupA/v1".
+func createFQAPIs(pkg string, gvs map[string][]string) (apis []string) {
 	for g, vs := range gvs {
-		for vn, v := range vs {
-			fqb.WriteString(filepath.Join(pkg, g, v))
-			if vn < len(vs)-1 {
-				fqb.WriteString(",")
-			}
+		for _, v := range vs {
+			apis = append(apis, filepath.Join(pkg, g, v))
 		}
-		if gn < len(gvs)-1 {
-			fqb.WriteString(",")
-		}
-		gn++
 	}
-	return fqb.String()
+	return apis
 }
 
 func withHeaderFile(f func(string) error) (err error) {

@@ -15,15 +15,19 @@
 package genutil
 
 import (
+	"flag"
 	"fmt"
-	"os/exec"
+	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	generatorargs "k8s.io/code-generator/cmd/deepcopy-gen/args"
+	"k8s.io/gengo/examples/deepcopy-gen/generators"
 )
 
 // K8sCodegen performs deepcopy code-generation for all custom resources under
@@ -31,20 +35,7 @@ import (
 func K8sCodegen() error {
 	projutil.MustInProjectRoot()
 
-	wd := projutil.MustGetwd()
 	repoPkg := projutil.CheckAndGetProjectGoPkg()
-	srcDir := filepath.Join(wd, "vendor", "k8s.io", "code-generator")
-	binDir := filepath.Join(wd, scaffold.BuildBinDir)
-
-	genDirs := []string{
-		"./cmd/client-gen",
-		"./cmd/lister-gen",
-		"./cmd/informer-gen",
-		"./cmd/deepcopy-gen",
-	}
-	if err := buildCodegenBinaries(genDirs, binDir, srcDir); err != nil {
-		return err
-	}
 
 	gvMap, err := parseGroupVersions()
 	if err != nil {
@@ -57,8 +48,10 @@ func K8sCodegen() error {
 
 	log.Infof("Running deepcopy code-generation for Custom Resource group versions: [%v]\n", gvb.String())
 
-	fdc := func(a string) error { return deepcopyGen(binDir, repoPkg, a, gvMap) }
-	if err = withHeaderFile(fdc); err != nil {
+	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
+	fqApis := createFQAPIs(apisPkg, gvMap)
+	f := func(a string) error { return deepcopyGen(a, fqApis) }
+	if err = withHeaderFile(f); err != nil {
 		return err
 	}
 
@@ -66,19 +59,36 @@ func K8sCodegen() error {
 	return nil
 }
 
-func deepcopyGen(binDir, repoPkg, hf string, gvMap map[string][]string) (err error) {
-	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
-	args := []string{
-		"--input-dirs", createFQApis(apisPkg, gvMap),
-		"--output-file-base", "zz_generated.deepcopy",
-		"--bounding-dirs", apisPkg,
-		// deepcopy-gen requires a boilerplate file. Either use header or an
-		// empty file if header is empty.
-		"--go-header-file", hf,
+func deepcopyGen(hf string, fqApis []string) error {
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
 	}
-	cmd := exec.Command(filepath.Join(binDir, "deepcopy-gen"), args...)
-	if err = projutil.ExecCmd(cmd); err != nil {
-		return fmt.Errorf("failed to perform deepcopy code-generation: %v", err)
+	flag.Set("logtostderr", "true")
+	for _, api := range fqApis {
+		apisIdx := strings.Index(api, scaffold.ApisDir)
+		// deepcopy-gen does not write to the target directory unless defaults
+		// are used for some reason.
+		args, cargs := generatorargs.NewDefaults()
+		args.InputDirs = []string{api}
+		args.OutputFileBaseName = "zz_generated.deepcopy"
+		args.OutputPackagePath = filepath.Join(wd, api[apisIdx:])
+		args.GoHeaderFilePath = hf
+		cargs.BoundingDirs = []string{api}
+		args.CustomArgs = (*generators.CustomArgs)(cargs)
+
+		if err := generatorargs.Validate(args); err != nil {
+			return errors.Wrap(err, "deepcopy-gen argument validation error")
+		}
+
+		err := args.Execute(
+			generators.NameSystems(),
+			generators.DefaultNameSystem(),
+			generators.Packages,
+		)
+		if err != nil {
+			return errors.Wrap(err, "deepcopy-gen generator error")
+		}
 	}
 	return nil
 }
