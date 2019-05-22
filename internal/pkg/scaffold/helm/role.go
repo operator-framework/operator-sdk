@@ -70,14 +70,15 @@ func CreateRoleScaffold(cfg *rest.Config, chart *chart.Chart) (*scaffold.Role, e
 	if err != nil {
 		log.Warnf("Using default RBAC rules: failed to generate RBAC rules: %s", err)
 		roleScaffold.SkipDefaultRules = false
+		return roleScaffold, nil
 	}
 
 	// Use a ClusterRole if cluster scoped resources are listed in the chart
 	if len(clusterResourceRules) > 0 {
 		log.Info("Scaffolding ClusterRole and ClusterRolebinding for cluster scoped resources in the helm chart")
 		roleScaffold.IsClusterScoped = true
-		roleScaffold.CustomRules = append(roleScaffold.CustomRules, append(clusterResourceRules, namespacedResourceRules...)...)
 	}
+	roleScaffold.CustomRules = append(roleScaffold.CustomRules, append(clusterResourceRules, namespacedResourceRules...)...)
 
 	log.Warn("The RBAC rules generated in deploy/role.yaml are based on the chart's default manifest." +
 		" Some rules may be missing for resources that are only enabled with custom values, and" +
@@ -183,12 +184,13 @@ func getServerVersionAndResources(cfg *rest.Config) (*version.Info, []*metav1.AP
 }
 
 func getDefaultManifests(c *chart.Chart, kubeVersion *version.Info) ([]tiller.Manifest, error) {
+	v := strings.TrimSuffix(fmt.Sprintf("%s.%s", kubeVersion.Major, kubeVersion.Minor), "+")
 	renderOpts := renderutil.Options{
 		ReleaseOptions: chartutil.ReleaseOptions{
 			IsInstall: true,
 			IsUpgrade: false,
 		},
-		KubeVersion: fmt.Sprintf("%s.%s", kubeVersion.Major, kubeVersion.Minor),
+		KubeVersion: v,
 	}
 
 	renderedTemplates, err := renderutil.Render(c, &chart.Config{}, renderOpts)
