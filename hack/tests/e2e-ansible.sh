@@ -9,7 +9,7 @@ go test -count=1 ./pkg/ansible/proxy/...
 
 DEST_IMAGE="quay.io/example/memcached-operator:v0.0.2"
 ROOTDIR="$(pwd)"
-GOTMP="$(mktemp -d -p $GOPATH/src)"
+GOTMP="$(mktemp -d)"
 trap_add 'rm -rf $GOTMP' EXIT
 
 deploy_operator() {

@@ -5,7 +5,7 @@ source hack/lib/test_lib.sh
 set -eux
 
 ROOTDIR="$(pwd)"
-GOTMP="$(mktemp -d -p $GOPATH/src)"
+GOTMP="$(mktemp -d)"
 trap_add 'rm -rf $GOTMP' EXIT
 # Needs to be from source until 2.20 comes out
 pip install --user git+https://github.com/ansible/molecule.git

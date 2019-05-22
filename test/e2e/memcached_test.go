@@ -29,7 +29,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
@@ -60,16 +59,12 @@ func TestMemcached(t *testing.T) {
 	// get global framework variables
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
-	gopath, ok := os.LookupEnv(projutil.GoPathEnv)
-	if !ok || gopath == "" {
-		t.Fatalf("$GOPATH not set")
-	}
-	cd, err := os.Getwd()
+	sdkDir, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
-		if err := os.Chdir(cd); err != nil {
+		if err := os.Chdir(sdkDir); err != nil {
 			t.Errorf("Failed to change back to original working directory: (%v)", err)
 		}
 	}()
@@ -79,7 +74,7 @@ func TestMemcached(t *testing.T) {
 	}
 
 	// Setup
-	absProjectPath, err := ioutil.TempDir(filepath.Join(gopath, "src"), "tmp.")
+	absProjectPath, err := ioutil.TempDir("", "tmp.")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,7 +100,7 @@ func TestMemcached(t *testing.T) {
 	}
 
 	sdkRepo := "github.com/operator-framework/operator-sdk"
-	localSDKPath := filepath.Join(gopath, "src", sdkRepo)
+	localSDKPath := sdkDir
 
 	replace := getGoModReplace(t, localSDKPath)
 	if replace.repo != sdkRepo {

@@ -6,7 +6,7 @@ set -eux
 
 DEST_IMAGE="quay.io/example/nginx-operator:v0.0.2"
 ROOTDIR="$(pwd)"
-GOTMP="$(mktemp -d -p $GOPATH/src)"
+GOTMP="$(mktemp -d)"
 trap_add 'rm -rf $GOTMP' EXIT
 
 deploy_operator() {
