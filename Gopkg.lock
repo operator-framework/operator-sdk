@@ -1445,12 +1445,12 @@
   version = "kubernetes-1.13.1"
 
 [[projects]]
-  branch = "master"
   digest = "1:9cf5396ad425691289c57c8ec922a0ab733b9ec8afdf22044056ee708250c05f"
   name = "k8s.io/code-generator"
   packages = ["cmd/deepcopy-gen/args"]
   pruneopts = "NUT"
-  revision = "639c964206c28ac3859cf36f212c24775616884a"
+  revision = "c2090bec4d9b1fb25de3812f868accc2bc9ecbae"
+  version = "kubernetes-1.13.1"
 
 [[projects]]
   branch = "master"
