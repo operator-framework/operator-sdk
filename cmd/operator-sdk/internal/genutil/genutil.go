@@ -99,7 +99,11 @@ func createFQAPIs(pkg string, gvs map[string][]string) (apis []string) {
 	return apis
 }
 
-func withHeaderFile(f func(string) error) (err error) {
+// generateWithHeaderFile runs f with a header file path as an arguemnt.
+// If there is no project boilerplate.go.txt file, an empty header file is
+// created and its path passed as the argument.
+// generateWithHeaderFile is meant to be used with Kubernetes code generators.
+func generateWithHeaderFile(f func(string) error) (err error) {
 	i, err := (&scaffold.Boilerplate{}).GetInput()
 	if err != nil {
 		return err

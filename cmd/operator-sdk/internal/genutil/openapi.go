@@ -54,7 +54,7 @@ func OpenAPIGen() error {
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	fqApis := createFQAPIs(apisPkg, gvMap)
 	f := func(a string) error { return openAPIGen(a, fqApis) }
-	if err = withHeaderFile(f); err != nil {
+	if err = generateWithHeaderFile(f); err != nil {
 		return err
 	}
 
@@ -108,7 +108,8 @@ func openAPIGen(hf string, fqApis []string) error {
 			OutputPackagePath:  filepath.Join(wd, apiPath),
 			GoHeaderFilePath:   hf,
 			CustomArgs: &generatorargs.CustomArgs{
-				ReportFilename: "-", // stdout
+				// Print API rule violations to stdout
+				ReportFilename: "-",
 			},
 		}
 		if err := generatorargs.Validate(args); err != nil {

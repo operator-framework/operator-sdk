@@ -51,7 +51,7 @@ func K8sCodegen() error {
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	fqApis := createFQAPIs(apisPkg, gvMap)
 	f := func(a string) error { return deepcopyGen(a, fqApis) }
-	if err = withHeaderFile(f); err != nil {
+	if err = generateWithHeaderFile(f); err != nil {
 		return err
 	}
 
