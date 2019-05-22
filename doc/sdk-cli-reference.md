@@ -270,8 +270,8 @@ Scaffolds a new operator project.
 #### Go project
 
 ```console
-$ mkdir $GOPATH/src/github.com/example.com/
-$ cd $GOPATH/src/github.com/example.com/
+$ mkdir $HOME/projects/example.com/
+$ cd $HOME/projects/example.com/
 $ operator-sdk new app-operator
 ```
 
