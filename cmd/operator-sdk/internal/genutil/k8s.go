@@ -66,22 +66,31 @@ func deepcopyGen(hf string, fqApis []string) error {
 	}
 	flag.Set("logtostderr", "true")
 	for _, api := range fqApis {
-		apisIdx := strings.Index(api, scaffold.ApisDir)
-		// deepcopy-gen does not write to the target directory unless defaults
-		// are used for some reason.
+		// Use relative API path so the generator writes to the correct path.
+		apiPath := "./" + api[strings.Index(api, scaffold.ApisDir):]
 		args, cargs := generatorargs.NewDefaults()
-		args.InputDirs = []string{api}
+		args.InputDirs = []string{apiPath}
+		args.OutputPackagePath = filepath.Join(wd, apiPath)
 		args.OutputFileBaseName = "zz_generated.deepcopy"
-		args.OutputPackagePath = filepath.Join(wd, api[apisIdx:])
 		args.GoHeaderFilePath = hf
-		cargs.BoundingDirs = []string{api}
-		args.CustomArgs = (*generators.CustomArgs)(cargs)
+		cargs.BoundingDirs = []string{apiPath}
+		// deepcopy-gen will use the import path of an API if in $GOPATH/src, but
+		// if we're outside of that dir it'll use apiPath. In order to generate
+		// deepcopy code at the correct path in all cases, we must unset the
+		// base output dir, which is $GOPATH/src by default, when we're outside.
+		inGopathSrc, err := projutil.WdInGoPathSrc()
+		if err != nil {
+			return err
+		}
+		if !inGopathSrc {
+			args.OutputBase = ""
+		}
 
 		if err := generatorargs.Validate(args); err != nil {
 			return errors.Wrap(err, "deepcopy-gen argument validation error")
 		}
 
-		err := args.Execute(
+		err = args.Execute(
 			generators.NameSystems(),
 			generators.DefaultNameSystem(),
 			generators.Packages,

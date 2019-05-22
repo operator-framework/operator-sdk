@@ -100,22 +100,21 @@ func openAPIGen(hf string, fqApis []string) error {
 	}
 	flag.Set("logtostderr", "true")
 	for _, api := range fqApis {
-		apisIdx := strings.Index(api, scaffold.ApisDir)
+		// Use relative API path so the generator writes to the correct path.
+		apiPath := "./" + api[strings.Index(api, scaffold.ApisDir):]
 		args := &gengoargs.GeneratorArgs{
-			InputDirs:          []string{api},
+			InputDirs:          []string{apiPath},
 			OutputFileBaseName: "zz_generated.openapi",
-			OutputPackagePath:  filepath.Join(wd, api[apisIdx:]),
+			OutputPackagePath:  filepath.Join(wd, apiPath),
 			GoHeaderFilePath:   hf,
 			CustomArgs: &generatorargs.CustomArgs{
 				ReportFilename: "-", // stdout
 			},
 		}
-
 		if err := generatorargs.Validate(args); err != nil {
 			return errors.Wrap(err, "openapi-gen argument validation error")
 		}
 
-		// Generates the code for the OpenAPIDefinitions.
 		err := args.Execute(
 			generators.NameSystems(),
 			generators.DefaultNameSystem(),
