@@ -27,7 +27,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	generatorargs "k8s.io/code-generator/cmd/deepcopy-gen/args"
-	gengoargs "k8s.io/gengo/args"
 	"k8s.io/gengo/examples/deepcopy-gen/generators"
 )
 
@@ -69,22 +68,29 @@ func deepcopyGen(hf string, fqApis []string) error {
 	for _, api := range fqApis {
 		// Use relative API path so the generator writes to the correct path.
 		apiPath := "./" + api[strings.Index(api, scaffold.ApisDir):]
-		args := &gengoargs.GeneratorArgs{
-			InputDirs:          []string{apiPath},
-			OutputPackagePath:  filepath.Join(wd, apiPath),
-			OutputFileBaseName: "zz_generated.deepcopy",
-			GoHeaderFilePath:   hf,
+		args, cargs := generatorargs.NewDefaults()
+		args.InputDirs = []string{apiPath}
+		args.OutputPackagePath = filepath.Join(wd, apiPath)
+		args.OutputFileBaseName = "zz_generated.deepcopy"
+		args.GoHeaderFilePath = hf
+		cargs.BoundingDirs = []string{apiPath}
+		// deepcopy-gen will use the import path of an API if in $GOPATH/src, but
+		// if we're outside of that dir it'll use apiPath. In order to generate
+		// deepcopy code at the correct path in all cases, we must unset the
+		// base output dir, which is $GOPATH/src by default, when we're outside.
+		inGopathSrc, err := projutil.WdInGoPathSrc()
+		if err != nil {
+			return err
 		}
-		cargs := &generatorargs.CustomArgs{
-			BoundingDirs: []string{apiPath},
+		if !inGopathSrc {
+			args.OutputBase = ""
 		}
-		// Cast for use upstream.
-		args.CustomArgs = (*generators.CustomArgs)(cargs)
+
 		if err := generatorargs.Validate(args); err != nil {
 			return errors.Wrap(err, "deepcopy-gen argument validation error")
 		}
 
-		err := args.Execute(
+		err = args.Execute(
 			generators.NameSystems(),
 			generators.DefaultNameSystem(),
 			generators.Packages,
