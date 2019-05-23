@@ -36,13 +36,13 @@ test_operator() {
     # create CR
     kubectl create -f deploy/crds/helm_v1alpha1_nginx_cr.yaml
     trap_add 'kubectl delete --ignore-not-found -f ${OPERATORDIR}/deploy/crds/helm_v1alpha1_nginx_cr.yaml' EXIT
-    if ! timeout 1m bash -c -- 'until kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.conditions[1].release.info.status.code}" | grep 1; do sleep 1; done';
+    if ! timeout 1m bash -c -- 'until kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.deployedRelease.name}" | grep "example-nginx"; do sleep 1; done';
     then
         kubectl logs deployment/nginx-operator
         exit 1
     fi
 
-    release_name=$(kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.conditions[1].release.name}")
+    release_name=$(kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.deployedRelease.name}")
     nginx_deployment=$(kubectl get deployment -l "app.kubernetes.io/instance=${release_name}" -o jsonpath="{..metadata.name}")
 
     if ! timeout 1m kubectl rollout status deployment/${nginx_deployment};
@@ -94,7 +94,12 @@ fi
 
 # create and build the operator
 pushd "$GOTMP"
-operator-sdk new nginx-operator --api-version=helm.example.com/v1alpha1 --kind=Nginx --type=helm
+log=$(operator-sdk new nginx-operator --api-version=helm.example.com/v1alpha1 --kind=Nginx --type=helm 2>&1)
+echo $log
+if echo $log | grep -q "failed to generate RBAC rules"; then
+    echo FAIL expected successful generation of RBAC rules
+    exit 1
+fi
 
 pushd nginx-operator
 sed -i 's|\(FROM quay.io/operator-framework/helm-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
@@ -114,6 +119,7 @@ echo "### Base image testing passed"
 echo "### Now testing migrate to hybrid operator"
 echo "###"
 
+export GO111MODULE=on
 operator-sdk migrate
 
 if [[ ! -e build/Dockerfile.sdkold ]];
@@ -122,15 +128,17 @@ then
     exit 1
 fi
 
-# We can't reliably run `dep ensure` because when there are changes to
-# operator-sdk itself, and those changes are not merged upstream, we hit this
-# bug: https://github.com/golang/dep/issues/1747
-# Instead, this re-uses operator-sdk's own vendor directory.
-cp -a "$ROOTDIR"/vendor ./
-mkdir -p vendor/github.com/operator-framework/operator-sdk/
-# We cannot just use operator-sdk from $GOPATH because compilation tries to use
-# its vendor directory, which can conflict with the local one.
-cp -a "$ROOTDIR"/{internal,pkg,version,LICENSE} vendor/github.com/operator-framework/operator-sdk/
+# Right now, SDK projects still need a vendor directory, so run `go mod vendor`
+# to pull down the deps specified by the scaffolded `go.mod` file.
+go mod vendor
+
+# Use the local operator-sdk directory as the repo. To make the go toolchain
+# happy, the directory needs a `go.mod` file that specifies the module name,
+# so we need this temporary hack until we update the SDK repo itself to use
+# go modules.
+echo "module github.com/operator-framework/operator-sdk" > $ROOTDIR/go.mod
+trap_add 'rm $ROOTDIR/go.mod' EXIT
+go mod edit -replace=github.com/operator-framework/operator-sdk=$ROOTDIR
 
 operator-sdk build "$DEST_IMAGE"
 

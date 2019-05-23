@@ -31,6 +31,9 @@ kubectl create namespace test-memcached
 kubectl create -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
 # this runs after the popd at the end, so it needs the path from the project root
 trap_add 'kubectl delete -f test/test-framework/deploy/crds/cache_v1alpha1_memcached_crd.yaml' EXIT
+kubectl create -f deploy/crds/cache_v1alpha1_memcachedrs_crd.yaml
+# this runs after the popd at the end, so it needs the path from the project root
+trap_add 'kubectl delete -f test/test-framework/deploy/crds/cache_v1alpha1_memcachedrs_crd.yaml' EXIT
 kubectl create -f deploy/service_account.yaml --namespace test-memcached
 kubectl create -f deploy/role.yaml --namespace test-memcached
 kubectl create -f deploy/role_binding.yaml --namespace test-memcached

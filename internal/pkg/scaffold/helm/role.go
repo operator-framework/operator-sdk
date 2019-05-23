@@ -15,7 +15,6 @@
 package helm
 
 import (
-	"errors"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -41,11 +40,12 @@ import (
 // CreateRoleScaffold generates a role scaffold from the provided helm chart. It
 // renders a release manifest using the chart's default values and uses the Kubernetes
 // discovery API to lookup each resource in the resulting manifest.
-func CreateRoleScaffold(cfg *rest.Config, chart *chart.Chart, isClusterScoped bool) (*scaffold.Role, error) {
+// The role scaffold will have IsClusterScoped=true if the chart lists cluster scoped resources
+func CreateRoleScaffold(cfg *rest.Config, chart *chart.Chart) (*scaffold.Role, error) {
 	log.Info("Generating RBAC rules")
 
 	roleScaffold := &scaffold.Role{
-		IsClusterScoped:  isClusterScoped,
+		IsClusterScoped:  false,
 		SkipDefaultRules: true,
 		// TODO: enable metrics in helm operator
 		SkipMetricsRules: true,
@@ -70,26 +70,15 @@ func CreateRoleScaffold(cfg *rest.Config, chart *chart.Chart, isClusterScoped bo
 	if err != nil {
 		log.Warnf("Using default RBAC rules: failed to generate RBAC rules: %s", err)
 		roleScaffold.SkipDefaultRules = false
+		return roleScaffold, nil
 	}
 
-	if !isClusterScoped {
-		// If there are cluster-scoped resources, but we're creating a namespace-scoped operator,
-		// log all of the cluster-scoped resources, and return a helpful error message.
-		for _, rule := range clusterResourceRules {
-			for _, resource := range rule.Resources {
-				log.Errorf("Resource %s.%s is cluster-scoped, but --cluster-scoped was not set.", resource, rule.APIGroups[0])
-			}
-		}
-		if len(clusterResourceRules) > 0 {
-			return nil, errors.New("must use --cluster-scoped with chart containing cluster-scoped resources")
-		}
-
-		// If we're here, there are no cluster-scoped resources, so add just the rules for namespaced resources
-		roleScaffold.CustomRules = append(roleScaffold.CustomRules, namespacedResourceRules...)
-	} else {
-		// For a cluster-scoped operator, add all of the rules
-		roleScaffold.CustomRules = append(roleScaffold.CustomRules, append(clusterResourceRules, namespacedResourceRules...)...)
+	// Use a ClusterRole if cluster scoped resources are listed in the chart
+	if len(clusterResourceRules) > 0 {
+		log.Info("Scaffolding ClusterRole and ClusterRolebinding for cluster scoped resources in the helm chart")
+		roleScaffold.IsClusterScoped = true
 	}
+	roleScaffold.CustomRules = append(roleScaffold.CustomRules, append(clusterResourceRules, namespacedResourceRules...)...)
 
 	log.Warn("The RBAC rules generated in deploy/role.yaml are based on the chart's default manifest." +
 		" Some rules may be missing for resources that are only enabled with custom values, and" +
@@ -195,12 +184,13 @@ func getServerVersionAndResources(cfg *rest.Config) (*version.Info, []*metav1.AP
 }
 
 func getDefaultManifests(c *chart.Chart, kubeVersion *version.Info) ([]tiller.Manifest, error) {
+	v := strings.TrimSuffix(fmt.Sprintf("%s.%s", kubeVersion.Major, kubeVersion.Minor), "+")
 	renderOpts := renderutil.Options{
 		ReleaseOptions: chartutil.ReleaseOptions{
 			IsInstall: true,
 			IsUpgrade: false,
 		},
-		KubeVersion: fmt.Sprintf("%s.%s", kubeVersion.Major, kubeVersion.Minor),
+		KubeVersion: v,
 	}
 
 	renderedTemplates, err := renderutil.Render(c, &chart.Config{}, renderOpts)

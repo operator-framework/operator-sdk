@@ -17,18 +17,19 @@ package projutil
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
 
+	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 const (
-	GopathEnv  = "GOPATH"
+	GoPathEnv  = "GOPATH"
 	GoFlagsEnv = "GOFLAGS"
+	GoModEnv   = "GO111MODULE"
 	SrcDir     = "src"
 
 	fsep            = string(filepath.Separator)
@@ -36,6 +37,8 @@ const (
 	buildDockerfile = "build" + fsep + "Dockerfile"
 	rolesDir        = "roles"
 	helmChartsDir   = "helm-charts"
+	goModFile       = "go.mod"
+	gopkgTOMLFile   = "Gopkg.toml"
 )
 
 // OperatorType - the type of operator
@@ -61,6 +64,40 @@ func (e ErrUnknownOperatorType) Error() string {
 		return "unknown operator type"
 	}
 	return fmt.Sprintf(`unknown operator type "%v"`, e.Type)
+}
+
+type DepManagerType string
+
+const (
+	DepManagerGoMod DepManagerType = "modules"
+	DepManagerDep   DepManagerType = "dep"
+)
+
+type ErrInvalidDepManager string
+
+func (e ErrInvalidDepManager) Error() string {
+	return fmt.Sprintf(`"%s" is not a valid dep manager; dep manager must be one of ["%v", "%v"]`, e, DepManagerDep, DepManagerGoMod)
+}
+
+var ErrNoDepManager = fmt.Errorf(`no valid dependency manager file found; dep manager must be one of ["%v", "%v"]`, DepManagerDep, DepManagerGoMod)
+
+func GetDepManagerType() (DepManagerType, error) {
+	if IsDepManagerDep() {
+		return DepManagerDep, nil
+	} else if IsDepManagerGoMod() {
+		return DepManagerGoMod, nil
+	}
+	return "", ErrNoDepManager
+}
+
+func IsDepManagerDep() bool {
+	_, err := os.Stat(gopkgTOMLFile)
+	return err == nil || os.IsExist(err)
+}
+
+func IsDepManagerGoMod() bool {
+	_, err := os.Stat(goModFile)
+	return err == nil || os.IsExist(err)
 }
 
 // MustInProjectRoot checks if the current dir is the project root and returns
@@ -91,13 +128,21 @@ func MustGetwd() string {
 	return wd
 }
 
+func getHomeDir() (string, error) {
+	hd, err := homedir.Dir()
+	if err != nil {
+		return "", err
+	}
+	return homedir.Expand(hd)
+}
+
 // CheckAndGetProjectGoPkg checks if this project's repository path is rooted under $GOPATH and returns the current directory's import path
 // e.g: "github.com/example-inc/app-operator"
 func CheckAndGetProjectGoPkg() string {
 	gopath := MustSetGopath(MustGetGopath())
 	goSrc := filepath.Join(gopath, SrcDir)
 	wd := MustGetwd()
-	currPkg := strings.Replace(wd, goSrc+fsep, "", 1)
+	currPkg := strings.Replace(wd, goSrc, "", 1)
 	// strip any "/" prefix from the repo path.
 	return strings.TrimPrefix(currPkg, fsep)
 }
@@ -134,7 +179,7 @@ func IsOperatorHelm() bool {
 // MustGetGopath gets GOPATH and ensures it is set and non-empty. If GOPATH
 // is not set or empty, MustGetGopath exits.
 func MustGetGopath() string {
-	gopath, ok := os.LookupEnv(GopathEnv)
+	gopath, ok := os.LookupEnv(GoPathEnv)
 	if !ok || len(gopath) == 0 {
 		log.Fatal("GOPATH env not set")
 	}
@@ -159,27 +204,23 @@ func MustSetGopath(currentGopath string) string {
 	if !cwdInGopath {
 		log.Fatalf("Project not in $GOPATH")
 	}
-	if err := os.Setenv(GopathEnv, newGopath); err != nil {
+	if err := os.Setenv(GoPathEnv, newGopath); err != nil {
 		log.Fatal(err)
 	}
 	return newGopath
 }
 
-func ExecCmd(cmd *exec.Cmd) error {
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		return fmt.Errorf("failed to exec %#v: %v", cmd.Args, err)
-	}
-	return nil
-}
-
 var flagRe = regexp.MustCompile("(.* )?-v(.* )?")
 
-// IsGoVerbose returns true if GOFLAGS contains "-v". This function is useful
-// when deciding whether to make "go" command output verbose.
-func IsGoVerbose() bool {
+// SetGoVerbose sets GOFLAGS="${GOFLAGS} -v" if GOFLAGS does not
+// already contain "-v" to make "go" command output verbose.
+func SetGoVerbose() error {
 	gf, ok := os.LookupEnv(GoFlagsEnv)
-	return ok && len(gf) != 0 && flagRe.MatchString(gf)
+	if !ok || len(gf) == 0 {
+		return os.Setenv(GoFlagsEnv, "-v")
+	}
+	if !flagRe.MatchString(gf) {
+		return os.Setenv(GoFlagsEnv, gf+" -v")
+	}
+	return nil
 }

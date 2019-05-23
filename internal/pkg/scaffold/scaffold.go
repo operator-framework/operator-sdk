@@ -19,6 +19,8 @@ package scaffold
 import (
 	"bytes"
 	"fmt"
+	"go/parser"
+	"go/token"
 	"io"
 	"os"
 	"path/filepath"
@@ -28,6 +30,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"golang.org/x/tools/imports"
@@ -45,6 +48,11 @@ type Scaffold struct {
 	Fs afero.Fs
 	// GetWriter returns a writer for writing scaffold files.
 	GetWriter func(path string, mode os.FileMode) (io.Writer, error)
+	// BoilerplatePath is the path to a file containing Go boilerplate text.
+	BoilerplatePath string
+
+	// boilerplateBytes are bytes of Go boilerplate text.
+	boilerplateBytes []byte
 }
 
 func (s *Scaffold) setFieldsAndValidate(t input.File) error {
@@ -73,6 +81,67 @@ func (s *Scaffold) configure(cfg *input.Config) {
 	s.ProjectName = cfg.ProjectName
 }
 
+func validateBoilerplateBytes(b []byte) error {
+	// Append a 'package main' so we can parse the file.
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "", append([]byte("package main\n"), b...), parser.ParseComments)
+	if err != nil {
+		return fmt.Errorf("parse boilerplate comments: %v", err)
+	}
+	if len(f.Comments) == 0 {
+		return fmt.Errorf("boilerplate does not contain comments")
+	}
+	var cb []byte
+	for _, cg := range f.Comments {
+		for _, c := range cg.List {
+			cb = append(cb, []byte(strings.TrimSpace(c.Text)+"\n")...)
+		}
+	}
+	// Remove empty lines before comparison.
+	var tb []byte
+	for _, l := range bytes.Split(b, []byte("\n")) {
+		if len(l) > 0 {
+			tb = append(tb, append(bytes.TrimSpace(l), []byte("\n")...)...)
+		}
+	}
+	tb, cb = bytes.TrimSpace(tb), bytes.TrimSpace(cb)
+	if bytes.Compare(tb, cb) != 0 {
+		return fmt.Errorf(`boilerplate contains text other than comments:\n"%s"\n`, tb)
+	}
+	return nil
+}
+
+func wrapBoilerplateErr(err error, bp string) error {
+	return errors.Wrapf(err, `boilerplate file "%s"`, bp)
+}
+
+func (s *Scaffold) setBoilerplate() (err error) {
+	// If we've already set boilerplate bytes, don't overwrite them.
+	if len(s.boilerplateBytes) == 0 {
+		bp := s.BoilerplatePath
+		if bp == "" {
+			i, err := (&Boilerplate{}).GetInput()
+			if err != nil {
+				return wrapBoilerplateErr(err, i.Path)
+			}
+			if _, err := s.Fs.Stat(i.Path); err == nil {
+				bp = i.Path
+			}
+		}
+		if bp != "" {
+			b, err := afero.ReadFile(s.Fs, bp)
+			if err != nil {
+				return wrapBoilerplateErr(err, bp)
+			}
+			if err = validateBoilerplateBytes(b); err != nil {
+				return wrapBoilerplateErr(err, bp)
+			}
+			s.boilerplateBytes = append(bytes.TrimSpace(b), '\n', '\n')
+		}
+	}
+	return nil
+}
+
 // Execute executes scaffolding the Files
 func (s *Scaffold) Execute(cfg *input.Config, files ...input.File) error {
 	if s.Fs == nil {
@@ -80,6 +149,11 @@ func (s *Scaffold) Execute(cfg *input.Config, files ...input.File) error {
 	}
 	if s.GetWriter == nil {
 		s.GetWriter = fileutil.NewFileWriterFS(s.Fs).WriteCloser
+	}
+
+	// Generate boilerplate file first so new Go files get headers.
+	if err := s.setBoilerplate(); err != nil {
+		return err
 	}
 
 	// Configure s using common fields from cfg.
@@ -126,6 +200,10 @@ func (s *Scaffold) doFile(e input.File) error {
 
 const goFileExt = ".go"
 
+func isGoFile(p string) bool {
+	return filepath.Ext(p) == goFileExt
+}
+
 func (s *Scaffold) doRender(i input.Input, e input.File, absPath string) error {
 	var mode os.FileMode = fileutil.DefaultFileMode
 	if i.IsExec {
@@ -165,7 +243,7 @@ func (s *Scaffold) doRender(i input.Input, e input.File, absPath string) error {
 	}
 
 	// gofmt the imports
-	if filepath.Ext(absPath) == goFileExt {
+	if isGoFile(absPath) {
 		b, err = imports.Process(absPath, b, nil)
 		if err != nil {
 			return err
@@ -178,6 +256,12 @@ func (s *Scaffold) doRender(i input.Input, e input.File, absPath string) error {
 			if err = file.Truncate(0); err != nil {
 				return err
 			}
+		}
+	}
+
+	if isGoFile(absPath) && len(s.boilerplateBytes) != 0 {
+		if _, err = f.Write(s.boilerplateBytes); err != nil {
+			return err
 		}
 	}
 	_, err = f.Write(b)
@@ -194,6 +278,9 @@ func newTemplate(i input.Input) (*template.Template, error) {
 	})
 	if len(i.TemplateFuncs) > 0 {
 		t.Funcs(i.TemplateFuncs)
+	}
+	if i.Delims[0] != "" && i.Delims[1] != "" {
+		t.Delims(i.Delims[0], i.Delims[1])
 	}
 	return t.Parse(i.TemplateBody)
 }

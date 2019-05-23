@@ -38,7 +38,7 @@ type CR struct {
 func (s *CR) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		fileName := fmt.Sprintf("%s_%s_%s_cr.yaml",
-			strings.ToLower(s.Resource.Group),
+			s.Resource.GoImportGroup,
 			strings.ToLower(s.Resource.Version),
 			s.Resource.LowerKind)
 		s.Path = filepath.Join(CRDsDir, fileName)

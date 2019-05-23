@@ -5,6 +5,10 @@ Usage:
   operator-sdk [command]
 ```
 
+### Global Flags
+
+* `--verbose` - enable debug logging
+
 ## build
 
 ### Args
@@ -13,18 +17,13 @@ Usage:
 
 ### Flags
 
-* `--enable-tests` - enable in-cluster testing by adding test binary to the image
-* `--namespaced-manifest` string - path of namespaced resources manifest for tests (default "deploy/operator.yaml")
-* `--test-location` string - location of tests (default "./test/e2e")
-* `--docker-build-args` string - extra, optional docker build arguments as one string such as `"--build-arg https_proxy=$https_proxy"` (default "")
+* `--image-build-args` string - extra, optional image build arguments as one string such as `"--build-arg https_proxy=$https_proxy"` (default "")
+* `--image-builder` string - tool to build OCI images. One of: `[docker, buildah]` (default "docker")
 * `-h, --help` - help for build
 
 ### Use
 
-The operator-sdk build command compiles the code and builds the executables. After build completes, the image is built locally in docker. Then it needs to be pushed to a remote registry.
-
-If `--enable-tests` is set, the build command will also build the testing binary, add it to the docker image, and generate
-a `deploy/test-pod.yaml` file that allows a user to run the tests as a pod on a cluster.
+The operator-sdk build command compiles the code and builds the executables. After build completes, the image is built locally using the image builder specified by the `--image-builder` flag (default `docker`). Then it needs to be pushed to a remote registry.
 
 ### Example
 
@@ -36,7 +35,7 @@ building example-operator...
 
 building container quay.io/example/operator:v0.0.1...
 Sending build context to Docker daemon  163.9MB
-Step 1/4 : FROM registry.access.redhat.com/ubi7-dev-preview/ubi-minimal:7.6
+Step 1/4 : FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
  ---> 77144d8c6bdc
 Step 2/4 : ADD tmp/_output/bin/example-operator /usr/local/bin/example-operator
  ---> 2ada0d6ca93c
@@ -91,14 +90,15 @@ Prints the most recent Golang packages and versions required by operators. Print
 
 ### Flags
 
-* `--as-file` - Print packages and versions in Gopkg.toml format.
+* `--as-file` - Print packages and versions in go.mod or Gopkg.toml format, depending on the dependency manager chosen when initializing or migrating a project.
 
 ### Example
+
+With dependency manager `dep`:
 
 ```console
 $ operator-sdk print-deps --as-file
 required = [
-  "k8s.io/code-generator/cmd/defaulter-gen",
   "k8s.io/code-generator/cmd/deepcopy-gen",
   "k8s.io/code-generator/cmd/conversion-gen",
   "k8s.io/code-generator/cmd/client-gen",
@@ -112,6 +112,19 @@ required = [
   name = "k8s.io/code-generator"
   revision = "6702109cc68eb6fe6350b83e14407c8d7309fd1a"
 ...
+```
+
+With dependency manager `modules`, i.e. go mod:
+
+```console
+$ operator-sdk print-deps --as-file
+module github.com/example-inc/memcached-operator
+
+require (
+	contrib.go.opencensus.io/exporter/ocagent v0.4.9 // indirect
+	github.com/Azure/go-autorest v11.5.2+incompatible // indirect
+	github.com/appscode/jsonpatch v0.0.0-20190108182946-7c0e3b262f30 // indirect
+	github.com/coreos/prometheus-operator v0.26.0 // indirect
 ```
 
 ## generate
@@ -138,7 +151,7 @@ pkg/apis/app/v1alpha1/
 
 $ operator-sdk generate k8s
 INFO[0000] Running deepcopy code-generation for Custom Resource group versions: [app:[v1alpha1], ]
-INFO[0001] Code-generation complete.                    
+INFO[0001] Code-generation complete.
 
 $ tree pkg/apis/app/v1alpha1/
 pkg/apis/app/v1alpha1/
@@ -166,7 +179,7 @@ pkg/apis/app/v1alpha1/
 $ operator-sdk generate openapi
 INFO[0000] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
 INFO[0001] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
-INFO[0001] Code-generation complete.                    
+INFO[0001] Code-generation complete.
 
 $ tree pkg/apis/app/v1alpha1/
 pkg/apis/app/v1alpha1/
@@ -201,7 +214,7 @@ INFO[0000] Fill in the following required fields in file deploy/olm-catalog/oper
 	spec.maintainers
 	spec.provider
 	spec.labels
-INFO[0000] Created deploy/olm-catalog/operator-name/0.1.0/operator-name.v0.1.0.clusterserviceversion.yaml     
+INFO[0000] Created deploy/olm-catalog/operator-name/0.1.0/operator-name.v0.1.0.clusterserviceversion.yaml
 ```
 
 ## migrate
@@ -212,18 +225,23 @@ is not of the "go" type.
 **Note**: This command will look for playbook.yml in the project root, if you use the .yaml extension
 you will need to rename it before running migrate or manually add it to your Dockerfile.
 
+#### Flags
+
+* `--dep-manager` string - Dependency manager the migrated project will use (choices: "dep", "modules") (default "modules")
+
 ### Example
 
 ```console
 $ operator-sdk migrate
-2019/01/10 15:02:45 No playbook was found, so not including it in the new Dockerfile
-2019/01/10 15:02:45 renamed Dockerfile to build/Dockerfile.sdkold and replaced with newer version
-2019/01/10 15:02:45 Compare the new Dockerfile to your old one and manually migrate any customizations
+INFO[0000] No playbook was found, so not including it in the new Dockerfile
+INFO[0000] Renamed Dockerfile to build/Dockerfile.sdkold and replaced with newer version. Compare the new Dockerfile to your old one and manually migrate any customizations
+INFO[0000] Created go.mod
 INFO[0000] Created cmd/manager/main.go
-INFO[0000] Created Gopkg.toml
 INFO[0000] Created build/Dockerfile
 INFO[0000] Created bin/entrypoint
 INFO[0000] Created bin/user_setup
+INFO[0000] Created library/k8s_status.py
+INFO[0000] Created bin/ao-logs
 ```
 
 ## new
@@ -241,10 +259,10 @@ Scaffolds a new operator project.
 * `--api-version` string - CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
 * `--kind` string - CRD Kind. (e.g AppService)
 * `--generate-playbook` - Generate a playbook skeleton. (Only used for `--type ansible`)
-* `--cluster-scoped` - Initialize the operator to be cluster-scoped instead of namespace-scoped
 * `--helm-chart` string - Initialize helm operator with existing helm chart (`<URL>`, `<repo>/<name>`, or local path)
 * `--helm-chart-repo` string - Chart repository URL for the requested helm chart
 * `--helm-chart-version` string - Specific version of the helm chart (default is latest version)
+* `--dep-manager` string - Dependency manager the new project will use (choices: "dep", "modules") (default "modules")
 * `-h, --help` - help for new
 
 ### Example
@@ -318,16 +336,16 @@ Adds the API definition for a new custom resource under `pkg/apis` and generates
 $ operator-sdk add api --api-version app.example.com/v1alpha1 --kind AppService
 INFO[0000] Generating api version app.example.com/v1alpha1 for kind AppService.
 INFO[0000] Created pkg/apis/app/v1alpha1/appservice_types.go
-INFO[0000] Created pkg/apis/addtoscheme_app_v1alpha1.go  
-INFO[0000] Created pkg/apis/app/v1alpha1/register.go     
-INFO[0000] Created pkg/apis/app/v1alpha1/doc.go          
+INFO[0000] Created pkg/apis/addtoscheme_app_v1alpha1.go
+INFO[0000] Created pkg/apis/app/v1alpha1/register.go
+INFO[0000] Created pkg/apis/app/v1alpha1/doc.go
 INFO[0000] Created deploy/crds/app_v1alpha1_appservice_cr.yaml
 INFO[0000] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
 INFO[0001] Running deepcopy code-generation for Custom Resource group versions: [app:[v1alpha1], ]
-INFO[0002] Code-generation complete.                    
+INFO[0002] Code-generation complete.
 INFO[0002] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
 INFO[0004] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
-INFO[0004] Code-generation complete.                    
+INFO[0004] Code-generation complete.
 INFO[0004] API generation complete.
 ```
 
@@ -339,6 +357,7 @@ Adds a new controller under `pkg/controller/<kind>/...` that, by default, reconc
 
 * `--api-version` string - CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
 * `--kind` string - CRD Kind. (e.g AppService)
+* `--custom-api-import` string - External Kubernetes resource import path of the form "host.com/repo/path[=import_identifier]". import_identifier is optional
 
 #### Example
 
@@ -485,34 +504,6 @@ The operator-sdk test command runs go tests built using the Operator SDK's test 
 ```console
 $ operator-sdk test local ./test/e2e/
 ok    github.com/operator-framework/operator-sdk-samples/memcached-operator/test/e2e  20.410s
-```
-
-#### cluster
-
-Runs the e2e tests packaged in an operator image as a pod in the cluster
-
-##### Args
-
-* `image-name` - the operator image that is used to run the tests in a pod (e.g. "quay.io/example/memcached-operator:v0.0.1")
-
-##### Flags
-
-* `--kubeconfig` string - location of kubeconfig for Kubernetes cluster (default "~/.kube/config")
-* `--image-pull-policy` string - set test pod image pull policy. Allowed values: Always, Never (default "Always")
-* `--namespace` string - namespace to run tests in (default "default")
-* `--pending-timeout` int - timeout in seconds for testing pod to stay in pending state (default 60s)
-* `--service-account` string - service account to run tests on (default "default")
-* `-h, --help` - help for cluster
-
-##### Use
-
-The operator-sdk test command runs go tests embedded in an operator image built using the Operator SDK.
-
-##### Example
-
-```console
-$ operator-sdk test cluster quay.io/example/memcached-operator:v0.0.1
-Test Successfully Completed
 ```
 
 ## up

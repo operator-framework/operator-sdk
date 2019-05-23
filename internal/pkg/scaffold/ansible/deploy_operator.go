@@ -25,7 +25,6 @@ const DeployOperatorFile = "operator.yaml"
 
 type DeployOperator struct {
 	input.Input
-	IsClusterScoped bool
 }
 
 // GetInput - gets the input
@@ -34,6 +33,7 @@ func (d *DeployOperator) GetInput() (input.Input, error) {
 		d.Path = filepath.Join(scaffold.DeployDir, DeployOperatorFile)
 	}
 	d.TemplateBody = deployOperatorAnsibleTmpl
+	d.Delims = AnsibleDelims
 
 	return d.Input, nil
 }
@@ -41,18 +41,18 @@ func (d *DeployOperator) GetInput() (input.Input, error) {
 const deployOperatorAnsibleTmpl = `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{.ProjectName}}
+  name: [[.ProjectName]]
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: {{.ProjectName}}
+      name: [[.ProjectName]]
   template:
     metadata:
       labels:
-        name: {{.ProjectName}}
+        name: [[.ProjectName]]
     spec:
-      serviceAccountName: {{.ProjectName}}
+      serviceAccountName: [[.ProjectName]]
       containers:
         - name: ansible
           command:
@@ -60,34 +60,30 @@ spec:
           - /tmp/ansible-operator/runner
           - stdout
           # Replace this with the built image name
-          image: "{{ "{{ REPLACE_IMAGE }}" }}"
-          imagePullPolicy: "{{ "{{ pull_policy|default('Always') }}"}}"
+          image: "{{ REPLACE_IMAGE }}"
+          imagePullPolicy: "{{ pull_policy|default('Always') }}"
           volumeMounts:
           - mountPath: /tmp/ansible-operator/runner
             name: runner
             readOnly: true
         - name: operator
           # Replace this with the built image name
-          image: "{{ "{{ REPLACE_IMAGE }}" }}"
-          imagePullPolicy: "{{ "{{ pull_policy|default('Always') }}"}}"
+          image: "{{ REPLACE_IMAGE }}"
+          imagePullPolicy: "{{ pull_policy|default('Always') }}"
           volumeMounts:
           - mountPath: /tmp/ansible-operator/runner
             name: runner
           env:
             - name: WATCH_NAMESPACE
-              {{- if .IsClusterScoped }}
-              value: ""
-              {{- else }}
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-              {{- end}}
             - name: POD_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
-              value: "{{.ProjectName}}"
+              value: "[[.ProjectName]]"
       volumes:
         - name: runner
           emptyDir: {}

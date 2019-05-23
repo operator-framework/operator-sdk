@@ -26,12 +26,12 @@ import (
 	"syscall"
 	"testing"
 
-	"k8s.io/client-go/tools/clientcmd"
-
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+
 	log "github.com/sirupsen/logrus"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const (
@@ -64,13 +64,14 @@ func MainEntry(m *testing.M) {
 	var localCmd *exec.Cmd
 	var localCmdOutBuf, localCmdErrBuf bytes.Buffer
 	if *localOperator {
-		absProjectPath := projutil.MustGetwd()
-		projectName := filepath.Base(absProjectPath)
+		projectName := filepath.Base(projutil.MustGetwd())
 		outputBinName := filepath.Join(scaffold.BuildBinDir, projectName+"-local")
-		args := []string{"build", "-o", outputBinName}
-		args = append(args, filepath.Join(scaffold.ManagerDir, scaffold.CmdFile))
-		bc := exec.Command("go", args...)
-		if err := projutil.ExecCmd(bc); err != nil {
+		opts := projutil.GoCmdOptions{
+			BinName:     outputBinName,
+			PackagePath: filepath.Join(scaffold.ManagerDir, scaffold.CmdFile),
+			GoMod:       projutil.IsDepManagerGoMod(),
+		}
+		if err := projutil.GoBuild(opts); err != nil {
 			log.Fatalf("Failed to build local operator binary: %s", err)
 		}
 		localCmd = exec.Command(outputBinName)
@@ -121,14 +122,12 @@ func MainEntry(m *testing.M) {
 		os.Exit(exitCode)
 	}()
 	// create crd
-	if *kubeconfigPath != "incluster" {
-		globalYAML, err := ioutil.ReadFile(*globalManPath)
-		if err != nil {
-			log.Fatalf("Failed to read global resource manifest: %v", err)
-		}
-		err = ctx.createFromYAML(globalYAML, true, &CleanupOptions{TestContext: ctx})
-		if err != nil {
-			log.Fatalf("Failed to create resource(s) in global resource manifest: %v", err)
-		}
+	globalYAML, err := ioutil.ReadFile(*globalManPath)
+	if err != nil {
+		log.Fatalf("Failed to read global resource manifest: %v", err)
+	}
+	err = ctx.createFromYAML(globalYAML, true, &CleanupOptions{TestContext: ctx})
+	if err != nil {
+		log.Fatalf("Failed to create resource(s) in global resource manifest: %v", err)
 	}
 }

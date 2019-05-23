@@ -613,6 +613,14 @@
   version = "v1.0.1"
 
 [[projects]]
+  digest = "1:f9f72e583aaacf1d1ac5d6121abd4afd3c690baa9e14e1d009df26bf831ba347"
+  name = "github.com/mitchellh/go-homedir"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "af06845cf3004701891bf4fdb884bfe4920b3727"
+  version = "v1.1.0"
+
+[[projects]]
   digest = "1:9f63926f52745d1f9d6053f8fbbb3bd3983c2c97c0565957e682b8d2f7aad3af"
   name = "github.com/mitchellh/go-wordwrap"
   packages = ["."]
@@ -1529,7 +1537,7 @@
   revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
 
 [[projects]]
-  digest = "1:c4633d96d5a84297fe4b7045060034c6f219d9a18bcd53b88bd560bdf976194f"
+  digest = "1:a2ca0c9095f3fd4160abcb64ebc3d99d3e2439da9c350705db7ab65dc98ee21d"
   name = "k8s.io/kubernetes"
   packages = [
     "pkg/api/legacyscheme",
@@ -1610,6 +1618,7 @@
     "pkg/kubectl/cmd/util/openapi/validation",
     "pkg/kubectl/generated",
     "pkg/kubectl/scheme",
+    "pkg/kubectl/util",
     "pkg/kubectl/util/i18n",
     "pkg/kubectl/util/printers",
     "pkg/kubectl/util/templates",
@@ -1689,7 +1698,7 @@
   version = "v0.1.10"
 
 [[projects]]
-  digest = "1:d9b023a1f03e70736cedd89f6a0d700a298c73cedc1ad20c55275abcdc71fc50"
+  digest = "1:024781b25f1d15e78be60cc44842c092d3cda8d494f6c972e6f35707ac35419a"
   name = "sigs.k8s.io/controller-tools"
   packages = [
     "pkg/crd/generator",
@@ -1700,8 +1709,7 @@
     "pkg/util",
   ]
   pruneopts = "NUT"
-  revision = "b8adde9bc6d7f3fba449d306613a9daed23676c8"
-  version = "v0.1.10"
+  revision = "9d55346c2bde73fb3326ac22eac2e5210a730207"
 
 [[projects]]
   digest = "1:8730e0150dfb2b7e173890c8b9868e7a273082ef8e39f4940e3506a481cf895c"
@@ -1734,11 +1742,14 @@
     "github.com/markbates/inflect",
     "github.com/martinlindhe/base36",
     "github.com/mattbaird/jsonpatch",
+    "github.com/mitchellh/go-homedir",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install",
     "github.com/pborman/uuid",
     "github.com/pkg/errors",
+    "github.com/prometheus/client_golang/prometheus",
     "github.com/prometheus/prometheus/util/promlint",
+    "github.com/rogpeppe/go-internal/modfile",
     "github.com/sergi/go-diff/diffmatchpatch",
     "github.com/sirupsen/logrus",
     "github.com/spf13/afero",
@@ -1770,6 +1781,7 @@
     "k8s.io/apimachinery/pkg/util/intstr",
     "k8s.io/apimachinery/pkg/util/net",
     "k8s.io/apimachinery/pkg/util/proxy",
+    "k8s.io/apimachinery/pkg/util/runtime",
     "k8s.io/apimachinery/pkg/util/sets",
     "k8s.io/apimachinery/pkg/util/validation",
     "k8s.io/apimachinery/pkg/util/wait",
@@ -1806,6 +1818,8 @@
     "k8s.io/helm/pkg/storage/driver",
     "k8s.io/helm/pkg/tiller",
     "k8s.io/helm/pkg/tiller/environment",
+    "k8s.io/klog",
+    "k8s.io/kubernetes/pkg/kubectl/util",
     "sigs.k8s.io/controller-runtime/pkg/cache",
     "sigs.k8s.io/controller-runtime/pkg/client",
     "sigs.k8s.io/controller-runtime/pkg/client/config",
@@ -1815,6 +1829,7 @@
     "sigs.k8s.io/controller-runtime/pkg/event",
     "sigs.k8s.io/controller-runtime/pkg/handler",
     "sigs.k8s.io/controller-runtime/pkg/manager",
+    "sigs.k8s.io/controller-runtime/pkg/metrics",
     "sigs.k8s.io/controller-runtime/pkg/predicate",
     "sigs.k8s.io/controller-runtime/pkg/reconcile",
     "sigs.k8s.io/controller-runtime/pkg/runtime/log",

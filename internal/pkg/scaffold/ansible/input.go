@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,31 +11,22 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-package scaffold
+package ansible
 
 import (
-	"path/filepath"
-
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/spf13/afero"
 )
 
-const GoTestScriptFile = "go-test.sh"
-
-type GoTestScript struct {
+// StaticInput is the input for scaffolding a static file with
+// no parameteres
+type StaticInput struct {
 	input.Input
 }
 
-func (s *GoTestScript) GetInput() (input.Input, error) {
-	if s.Path == "" {
-		s.Path = filepath.Join(BuildTestDir, GoTestScriptFile)
-	}
-	s.IsExec = true
-	s.TemplateBody = goTestScriptTmpl
-	return s.Input, nil
+// CustomRender return the template body unmodified
+func (s *StaticInput) CustomRender() ([]byte, error) {
+	return []byte(s.TemplateBody), nil
 }
 
-const goTestScriptTmpl = `#!/bin/sh
-
-{{.ProjectName}}-test -test.parallel=1 -test.failfast -root=/ -kubeconfig=incluster -namespacedMan=namespaced.yaml -test.v
-`
+func (s StaticInput) SetFS(_ afero.Fs) {}

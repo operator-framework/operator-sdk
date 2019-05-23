@@ -1,15 +1,13 @@
 # User Guide
 
-This guide walks through an example of building a simple memcached-operator using the operator-sdk
-CLI tool and controller-runtime library API. To learn how to use Ansible or Helm to create an
-operator, see the [Ansible Operator User Guide][ansible_user_guide] or the [Helm Operator User
-Guide][helm_user_guide]. The rest of this document will show how to program an operator in Go.
+This guide walks through an example of building a simple memcached-operator using the operator-sdk CLI tool and controller-runtime library API. To learn how to use Ansible or Helm to create an operator, see the [Ansible Operator User Guide][ansible_user_guide] or the [Helm Operator User Guide][helm_user_guide]. The rest of this document will show how to program an operator in Go.
+
 
 ## Prerequisites
 
 - [dep][dep_tool] version v0.5.0+.
 - [git][git_tool]
-- [go][go_tool] version v1.10+.
+- [go][go_tool] version v1.12+.
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
@@ -18,27 +16,7 @@ Guide][helm_user_guide]. The rest of this document will show how to program an o
 
 ## Install the Operator SDK CLI
 
-The Operator SDK has a CLI tool that helps the developer to create, build, and deploy a new operator project.
-
-Checkout the desired release tag and install the SDK CLI tool:
-
-```sh
-$ mkdir -p $GOPATH/src/github.com/operator-framework
-$ cd $GOPATH/src/github.com/operator-framework
-$ git clone https://github.com/operator-framework/operator-sdk
-$ cd operator-sdk
-$ git checkout master
-$ make dep
-$ make install
-```
-
-This installs the CLI binary `operator-sdk` at `$GOPATH/bin`.
-
-Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
-
-```sh
-$ brew install operator-sdk
-```
+Follow the steps in the [installation guide][install_guide] to learn how to install the Operator SDK CLI tool.
 
 ## Create a new project
 
@@ -53,22 +31,33 @@ $ cd memcached-operator
 
 To learn about the project directory structure, see [project layout][layout_doc] doc.
 
+#### A note on dependency management
+
+By default, `operator-sdk new` generates a `go.mod` file to be used with [Go modules][go_mod_wiki]. If you'd like to use [`dep`][dep_tool], set `--dep-manager=dep` when initializing your project, which will create a `Gopkg.toml` file with the same dependency information.
+
+##### Go modules
+
+If using go modules (the default dependency manager) in your project, ensure you activate module support before using the SDK. From the [go modules Wiki][go_mod_wiki]:
+
+> You can activate module support in one of two ways:
+> - Invoke the go command in a directory outside of the $GOPATH/src tree, with a valid go.mod file in the current directory or any parent of it and the environment variable GO111MODULE unset (or explicitly set to auto).
+> - Invoke the go command with GO111MODULE=on environment variable set.
+
+As of now, the SDK only supports initializing new projects in `$GOPATH/src`. We intend to support all go module modes for projects in the near future.
+
+You can set `GO111MODULE` in your CLI to activate currently supported behavior by running the following command:
+
+```sh
+$ export GO111MODULE=on
+```
+
+##### Vendoring
+
+The Operator SDK uses [vendoring][go_vendoring] to supply dependencies to operator projects, regardless of the dependency manager. As with the above module mode constraint, we intend to allow use of dependencies [outside of `vendor`][module_vendoring] for projects in the near future.
+
 #### Operator scope
 
-A namespace-scoped operator (the default) watches and manages resources in a single namespace, whereas a cluster-scoped operator watches and manages resources cluster-wide. Namespace-scoped operators are preferred because of their flexibility. They enable decoupled upgrades, namespace isolation for failures and monitoring, and differing API definitions. However, there are use cases where a cluster-scoped operator may make sense. For example, the [cert-manager](https://github.com/jetstack/cert-manager) operator is often deployed with cluster-scoped permissions and watches so that it can manage issuing certificates for an entire cluster.
-
-If you'd like to create your memcached-operator project to be cluster-scoped use the following `operator-sdk new` command instead:
-```
-$ operator-sdk new memcached-operator --cluster-scoped
-```
-
-Using `--cluster-scoped` will scaffold the new operator with the following modifications:
-* `deploy/operator.yaml` - Set `WATCH_NAMESPACE=""` instead of setting it to the pod's namespace
-* `deploy/role.yaml` - Use `ClusterRole` instead of `Role`
-* `deploy/role_binding.yaml`:
-  * Use `ClusterRoleBinding` instead of `RoleBinding`
-  * Use `ClusterRole` instead of `Role` for roleRef
-  * Set the subject namespace to `REPLACE_NAMESPACE`. This must be changed to the namespace in which the operator is deployed.
+Read the [operator scope][operator_scope] documentation on how to run your operator as namespace-scoped vs cluster-scoped.
 
 ### Manager
 The main program for the operator `cmd/manager/main.go` initializes and runs the [Manager][manager_go_doc].
@@ -168,7 +157,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
   memcached := &cachev1alpha1.Memcached{}
   err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
   ...
-}  
+}
 ```
 
 Based on the return values, [`Result`][result_go_doc] and error, the `Request` may be requeued and the reconcile loop may be triggered again:
@@ -209,22 +198,30 @@ Once this is done, there are two ways to run the operator:
 
 ### 1. Run as a Deployment inside the cluster
 
-Build the memcached-operator image and push it to a registry:
+**Note**: `operator-sdk build` invokes `docker build` by default, and optionally `buildah bud`. If using `buildah`, skip to the `operator-sdk build` invocation instructions below. If using `docker`, make sure your docker daemon is running and that you can run the docker client without sudo. You can check if this is the case by running `docker version`, which should complete without errors. Follow instructions for your OS/distribution on how to start the docker daemon and configure your access permissions, if needed.
+
+**Note**: If using go modules, run
+```sh
+$ go mod vendor
 ```
+before building the memcached-operator image.
+
+Build the memcached-operator image and push it to a registry:
+```sh
 $ operator-sdk build quay.io/example/memcached-operator:v0.0.1
 $ sed -i 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
 $ docker push quay.io/example/memcached-operator:v0.0.1
 ```
 
 If you created your operator using `--cluster-scoped=true`, update the service account namespace in the generated `ClusterRoleBinding` to match where you are deploying your operator.
-```
+```sh
 $ export OPERATOR_NAMESPACE=$(kubectl config view --minify -o jsonpath='{.contexts[0].context.namespace}')
 $ sed -i "s|REPLACE_NAMESPACE|$OPERATOR_NAMESPACE|g" deploy/role_binding.yaml
 ```
 
 **Note**
 If you are performing these steps on OSX, use the following commands instead:
-```
+```sh
 $ sed -i "" 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
 $ sed -i "" "s|REPLACE_NAMESPACE|$OPERATOR_NAMESPACE|g" deploy/role_binding.yaml
 ```
@@ -370,11 +367,13 @@ $ kubectl delete -f deploy/service_account.yaml
 ### Adding 3rd Party Resources To Your Operator
 
 The operator's Manager supports the Core Kubernetes resource types as found in the client-go [scheme][scheme_package] package and will also register the schemes of all custom resource types defined in your project under `pkg/apis`.
+
 ```Go
 import (
   "github.com/example-inc/memcached-operator/pkg/apis"
   ...
 )
+
 // Setup Scheme for all resources
 if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
   log.Error(err, "")
@@ -382,7 +381,7 @@ if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
 }
 ```
 
-To add a 3rd party resource to an operator, you must add it to the Manager's scheme. By creating an `AddToScheme` method or reusing one you can easily add a resource to your scheme. An [example][deployments_register] shows that you define a function and then use the [runtime][runtime_package] package to create a `SchemeBuilder`.
+To add a 3rd party resource to an operator, you must add it to the Manager's scheme. By creating an `AddToScheme()` method or reusing one you can easily add a resource to your scheme. An [example][deployments_register] shows that you define a function and then use the [runtime][runtime_package] package to create a `SchemeBuilder`.
 
 #### Register with the Manager's scheme
 
@@ -391,28 +390,95 @@ Call the `AddToScheme()` function for your 3rd party resource and pass it the Ma
 Example:
 ```go
 import (
-    ....
-    routev1 "github.com/openshift/api/route/v1"
+  ....
+
+  routev1 "github.com/openshift/api/route/v1"
 )
 
 func main() {
-    ....
-    if err := routev1.AddToScheme(mgr.GetScheme()); err != nil {
-      log.Error(err, "")
-      os.Exit(1)
-    }
-    ....
+  ....
+
+  // Adding the routev1
+  if err := routev1.AddToScheme(mgr.GetScheme()); err != nil {
+    log.Error(err, "")
+    os.Exit(1)
+  }
+
+  ....
+
+  // Setup all Controllers
+  if err := controller.AddToManager(mgr); err != nil {
+    log.Error(err, "")
+    os.Exit(1)
+  }
 }
 ```
 
-After adding new import paths to your operator project, run `dep ensure` in the root of your project directory to fulfill these dependencies.
+**NOTES:**
 
+* After adding new import paths to your operator project, run `go mod vendor` (or `dep ensure` if you set `--dep-manager=dep` when initializing your project) in the root of your project directory to fulfill these dependencies.
+* Your 3rd party resource needs to be added before add the controller in `"Setup all Controllers"`.
 
 ### Handle Cleanup on Deletion
 
 To implement complex deletion logic, you can add a finalizer to your Custom Resource. This will prevent your Custom Resource from being
 deleted until you remove the finalizer (ie, after your cleanup logic has successfully run). For more information, see the
 [official Kubernetes documentation on finalizers](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#finalizers).
+
+**Example:**
+
+The following is a snippet from the controller file under `pkg/controller/memcached/memcached_controller.go`
+
+```Go
+func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+ 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
+ 	reqLogger.Info("Reconciling Memcached")
+ 
+ 	// Fetch the Memcached instance
+ 	memcached := &cachev1alpha1.Memcached{}
+ 	err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
+ 	...
+ 	// Check if the APP CR was marked to be deleted
+ 	isMemcachedMarkedToBeDeleted := memcached.GetDeletionTimestamp() != nil
+ 	if isMemcachedMarkedToBeDeleted {
+ 		// TODO(user): Add the cleanup steps that the operator needs to do before the CR can be deleted
+ 		// Update finalizer to allow delete CR
+ 		memcached.SetFinalizers(nil)
+ 
+ 		// Update CR
+ 		err := r.client.Update(context.TODO(), memcached)
+ 		if err != nil {
+ 			return reconcile.Result{}, err
+ 		}
+ 		return reconcile.Result{}, nil
+ 	}
+ 	
+ 	// Add finalizer for this CR
+ 	if err := r.addFinalizer(reqLogger, instance); err != nil {
+ 		return reconcile.Result{}, err
+ 	}
+ 	...
+ 
+ 	return reconcile.Result{}, nil
+ }
+ 
+//addFinalizer will add this attribute to the Memcached CR
+func (r *ReconcileMemcached) addFinalizer(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
+    if len(m.GetFinalizers()) < 1 && m.GetDeletionTimestamp() == nil {
+        reqLogger.Info("Adding Finalizer for the Memcached")
+        m.SetFinalizers([]string{"finalizer.cache.example.com"})
+    
+        // Update CR
+        err := r.client.Update(context.TODO(), m)
+        if err != nil {
+            reqLogger.Error(err, "Failed to update Memcached with finalizer")
+            return err
+        }
+    }
+    return nil
+}
+
+```
 
 ### Metrics
 
@@ -478,8 +544,8 @@ func main() {
 
 When the operator is not running in a cluster, the Manager will return an error on starting since it can't detect the operator's namespace in order to create the configmap for leader election. You can override this namespace by setting the Manager's `LeaderElectionNamespace` option.
 
-
-
+[operator_scope]:./operator-scope.md
+[install_guide]: ./user/install-operator-sdk.md
 [pod_eviction_timeout]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options
 [lease_split_brain]: https://github.com/kubernetes/client-go/blob/30b06a83d67458700a5378239df6b96948cb9160/tools/leaderelection/leaderelection.go#L21-L24
@@ -491,6 +557,9 @@ When the operator is not running in a cluster, the Manager will return an error 
 [ansible_user_guide]:./ansible/user-guide.md
 [helm_user_guide]:./helm/user-guide.md
 [homebrew_tool]:https://brew.sh/
+[go_mod_wiki]: https://github.com/golang/go/wiki/Modules
+[go_vendoring]: https://blog.gopheracademy.com/advent-2015/vendor-folder/
+[module_vendoring]: https://github.com/golang/go/wiki/Modules#how-do-i-use-vendoring-with-modules-is-vendoring-going-away
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/

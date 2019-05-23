@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,27 +15,38 @@
 package scaffold
 
 import (
+	"io/ioutil"
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+
+	"github.com/spf13/afero"
 )
 
-type TestFrameworkDockerfile struct {
+const (
+	BoilerplateFile = "boilerplate.go.txt"
+	HackDir         = "hack"
+)
+
+type Boilerplate struct {
 	input.Input
+
+	// BoilerplateSrcPath is the path to a file containing boilerplate text for
+	// generated Go files.
+	BoilerplateSrcPath string
 }
 
-func (s *TestFrameworkDockerfile) GetInput() (input.Input, error) {
+func (s *Boilerplate) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(BuildTestDir, DockerfileFile)
+		s.Path = filepath.Join(HackDir, BoilerplateFile)
 	}
-	s.TemplateBody = testFrameworkDockerfileTmpl
 	return s.Input, nil
 }
 
-const testFrameworkDockerfileTmpl = `ARG BASEIMAGE
-FROM ${BASEIMAGE}
-ADD build/_output/bin/{{.ProjectName}}-test /usr/local/bin/{{.ProjectName}}-test
-ARG NAMESPACEDMAN
-ADD $NAMESPACEDMAN /namespaced.yaml
-ADD build/test-framework/go-test.sh /go-test.sh
-`
+var _ CustomRenderer = &Boilerplate{}
+
+func (s *Boilerplate) SetFS(_ afero.Fs) {}
+
+func (s *Boilerplate) CustomRender() ([]byte, error) {
+	return ioutil.ReadFile(s.BoilerplateSrcPath)
+}

@@ -35,7 +35,6 @@ func TestGopkgtoml(t *testing.T) {
 
 const gopkgtomlExp = `# Force dep to vendor the code generators, which aren't imported just used at dev time.
 required = [
-  "k8s.io/code-generator/cmd/defaulter-gen",
   "k8s.io/code-generator/cmd/deepcopy-gen",
   "k8s.io/code-generator/cmd/conversion-gen",
   "k8s.io/code-generator/cmd/client-gen",
@@ -61,7 +60,7 @@ required = [
 
 [[override]]
   name = "sigs.k8s.io/controller-tools"
-  version = "=v0.1.8"
+  revision = "9d55346c2bde73fb3326ac22eac2e5210a730207"
 
 [[override]]
   name = "k8s.io/api"
@@ -95,7 +94,7 @@ required = [
   name = "github.com/operator-framework/operator-sdk"
   # The version rule is used for a specific release and the master branch for in between releases.
   branch = "master" #osdk_branch_annotation
-  # version = "=v0.7.0" #osdk_version_annotation
+  # version = "=v0.8.0" #osdk_version_annotation
 
 [prune]
   go-tests = true
