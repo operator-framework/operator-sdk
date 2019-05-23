@@ -64,22 +64,27 @@ func TestMemcached(t *testing.T) {
 	if !ok || gopath == "" {
 		t.Fatalf("$GOPATH not set")
 	}
-	sdkDir, err := os.Getwd()
+	sdkTestE2EDir, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
-		if err := os.Chdir(sdkDir); err != nil {
+		if err := os.Chdir(sdkTestE2EDir); err != nil {
 			t.Errorf("Failed to change back to original working directory: (%v)", err)
 		}
 	}()
+	localSDKPath := *args.localRepo
+	if localSDKPath == "" {
+		// We're in ${sdk_repo}/test/e2e
+		localSDKPath = filepath.Dir(filepath.Dir(sdkTestE2EDir))
+	}
 	// For go commands in operator projects.
 	if err = os.Setenv("GO111MODULE", "on"); err != nil {
 		t.Fatal(err)
 	}
 
 	// Setup
-	absProjectPath, err := ioutil.TempDir(filepath.Join(gopath, "src"), "sdktmp.")
+	absProjectPath, err := ioutil.TempDir(filepath.Join(gopath, "src"), "tmp.")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,11 +110,6 @@ func TestMemcached(t *testing.T) {
 	}
 
 	sdkRepo := "github.com/operator-framework/operator-sdk"
-	localSDKPath := *args.localRepo
-	if localSDKPath == "" {
-		localSDKPath = sdkDir
-	}
-
 	replace := getGoModReplace(t, localSDKPath)
 	if replace.repo != sdkRepo {
 		if replace.isLocal {
