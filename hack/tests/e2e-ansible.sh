@@ -96,7 +96,11 @@ if which oc 2>/dev/null; then oc project default; fi
 
 # create and build the operator
 pushd "$GOTMP"
-operator-sdk new memcached-operator --api-version=ansible.example.com/v1alpha1 --kind=Memcached --type=ansible
+operator-sdk new memcached-operator \
+  --api-version=ansible.example.com/v1alpha1 \
+  --kind=Memcached \
+  --type=ansible \
+  --repo=github.com/example-inc/memcached-operator
 cp "$ROOTDIR/test/ansible-memcached/tasks.yml" memcached-operator/roles/memcached/tasks/main.yml
 cp "$ROOTDIR/test/ansible-memcached/defaults.yml" memcached-operator/roles/memcached/defaults/main.yml
 cp -a "$ROOTDIR/test/ansible-memcached/memfin" memcached-operator/roles/
@@ -125,7 +129,7 @@ echo "### Now testing migrate to hybrid operator"
 echo "###"
 
 export GO111MODULE=on
-operator-sdk migrate
+operator-sdk migrate --repo=github.com/example-inc/memcached-operator
 
 if [[ ! -e build/Dockerfile.sdkold ]];
 then

@@ -88,9 +88,11 @@ func TestMemcached(t *testing.T) {
 	}
 
 	t.Log("Creating new operator project")
+	sdkRepo := "github.com/operator-framework/operator-sdk"
 	cmdOut, err := exec.Command("operator-sdk",
 		"new",
-		operatorName).CombinedOutput()
+		operatorName,
+		"--repo", sdkRepo).CombinedOutput()
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
@@ -99,9 +101,7 @@ func TestMemcached(t *testing.T) {
 		t.Fatalf("Failed to change to %s directory: (%v)", operatorName, err)
 	}
 
-	sdkRepo := "github.com/operator-framework/operator-sdk"
 	localSDKPath := sdkDir
-
 	replace := getGoModReplace(t, localSDKPath)
 	if replace.repo != sdkRepo {
 		if replace.isLocal {
