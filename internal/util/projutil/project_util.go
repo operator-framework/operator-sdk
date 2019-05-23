@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	homedir "github.com/mitchellh/go-homedir"
+	"github.com/pkg/errors"
 	"github.com/rogpeppe/go-internal/modfile"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -102,24 +103,33 @@ func IsDepManagerGoMod() bool {
 	return err == nil || os.IsExist(err)
 }
 
-// MustInProjectRoot checks if the current dir is the project root and returns
-// the current repo's import path, ex github.com/example-inc/app-operator
+// MustInProjectRoot checks if the current dir is the project root, and exits
+// if not.
 func MustInProjectRoot() {
-	// If the current directory has a "build/dockerfile", then it is safe to say
+	if err := CheckProjectRoot(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// CheckProjectRoot checks if the current dir is the project root, and returns
+// an error if not.
+func CheckProjectRoot() error {
+	// If the current directory has a "build/Dockerfile", then it is safe to say
 	// we are at the project root.
 	if _, err := os.Stat(buildDockerfile); err != nil {
 		if os.IsNotExist(err) {
-			log.Fatalf("Must run command in project root dir: project structure requires %s", buildDockerfile)
+			return fmt.Errorf("must run command in project root dir: project structure requires %s", buildDockerfile)
 		}
-		log.Fatalf("Error while checking if current directory is the project root: (%v)", err)
+		return errors.Wrap(err, "error while checking if current directory is the project root")
 	}
+	return nil
 }
 
 func CheckGoProjectCmd(cmd *cobra.Command) error {
 	if IsOperatorGo() {
 		return nil
 	}
-	return fmt.Errorf("'%s' can only be run for Go operators; %s does not exist.", cmd.CommandPath(), mainFile)
+	return fmt.Errorf("command '%s' can only be run for Go operators; %s does not exist", cmd.CommandPath(), mainFile)
 }
 
 func MustGetwd() string {

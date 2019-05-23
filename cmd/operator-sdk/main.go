@@ -15,8 +15,10 @@
 package main
 
 import (
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"fmt"
 	"os"
+
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that `run` and `up local` can make use of them.
@@ -47,13 +49,14 @@ func main() {
 		Short: "An SDK for building operators with ease",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if viper.GetBool(flags.VerboseOpt) {
-				err := projutil.SetGoVerbose()
-				if err != nil {
-					log.Errorf("Could not set GOFLAGS: (%v)", err)
-					return
+				if err := projutil.SetGoVerbose(); err != nil {
+					log.Fatalf("Could not set GOFLAGS: (%v)", err)
 				}
 				log.SetLevel(log.DebugLevel)
 				log.Debug("Debug logging is set")
+			}
+			if err := checkDepManagerForCmd(cmd); err != nil {
+				log.Fatal(err)
 			}
 		},
 	}
@@ -80,4 +83,67 @@ func main() {
 	if err := root.Execute(); err != nil {
 		os.Exit(1)
 	}
+}
+
+func checkDepManagerForCmd(cmd *cobra.Command) (err error) {
+	// Do not perform this check if wd is not in the project root,
+	// as some sub-commands might not require project root.
+	if err := projutil.CheckProjectRoot(); err != nil {
+		return nil
+	}
+
+	var dm projutil.DepManagerType
+	switch cmd.Name() {
+	case "new", "migrate":
+		// Do not perform this check if the new project is non-Go, as they do not
+		// have (Go) dep managers.
+		if cmd.Name() == "new" {
+			projType, err := cmd.Flags().GetString("type")
+			if err != nil {
+				return err
+			}
+			if projType != "go" {
+				return nil
+			}
+		}
+		// "new" and "migrate" commands are for projects that establish witch
+		// dep manager to use. "new" should not be called if we're in the project
+		// root but could be, so check it anyway.
+		dmStr, err := cmd.Flags().GetString("dep-manager")
+		if err != nil {
+			return err
+		}
+		dm = projutil.DepManagerType(dmStr)
+	default:
+		// Do not perform this check if the project is non-Go, as they do not
+		// have (Go) dep managers.
+		if !projutil.IsOperatorGo() {
+			return nil
+		}
+		if dm, err = projutil.GetDepManagerType(); err != nil {
+			return err
+		}
+	}
+
+	switch dm {
+	case projutil.DepManagerGoMod:
+		goModOn, err := projutil.GoModOn()
+		if err != nil {
+			return err
+		}
+		if !goModOn {
+			return fmt.Errorf(`depedency manger "modules" requires wd be in $GOPATH/src` +
+				` and GO111MODULE=on, or outside of $GOPATH/src and GO111MODULE="on", "auto", or unset`)
+		}
+	case projutil.DepManagerDep:
+		inGopathSrc, err := projutil.WdInGoPathSrc()
+		if err != nil {
+			return err
+		}
+		if !inGopathSrc {
+			return fmt.Errorf(`depedency manger "dep" requires wd be in $GOPATH/src`)
+		}
+	}
+
+	return nil
 }

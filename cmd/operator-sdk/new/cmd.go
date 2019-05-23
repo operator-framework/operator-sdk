@@ -408,22 +408,8 @@ func verifyFlags() error {
 	if err != nil {
 		return err
 	}
-	if !inGopathSrc {
-		if depManager == string(projutil.DepManagerDep) {
-			return fmt.Errorf(`depedency manger "dep" selected but wd not in $GOPATH/src`)
-		}
-		if repo == "" && depManager == string(projutil.DepManagerGoMod) {
-			return fmt.Errorf(`depedency manger "modules" requires --repo be set if wd not in $GOPATH/src`)
-		}
-	}
-
-	goModOn, err := projutil.GoModOn()
-	if err != nil {
-		return err
-	}
-	if !goModOn && depManager == string(projutil.DepManagerGoMod) {
-		return fmt.Errorf(`depedency manger "modules" requires wd be in $GOPATH/src` +
-			` and GO111MODULE=on, or outside of $GOPATH/src and GO111MODULE="auto" or unset`)
+	if !inGopathSrc && repo == "" && depManager == string(projutil.DepManagerGoMod) {
+		return fmt.Errorf(`depedency manger "modules" requires --repo be set if wd not in $GOPATH/src`)
 	}
 
 	return nil
