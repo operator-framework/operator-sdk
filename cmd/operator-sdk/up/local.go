@@ -56,7 +56,7 @@ kubernetes cluster using a kubeconfig file.
 	upLocalCmd.Flags().StringVar(&operatorFlags, "operator-flags", "", "The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
 	upLocalCmd.Flags().StringVar(&namespace, "namespace", "", "The namespace where the operator watches for changes.")
 	upLocalCmd.Flags().StringVar(&ldFlags, "go-ldflags", "", "Set Go linker options")
-	upLocalCmd.Flags().BoolVar(&debugFlag, "enable-delve", false, "Start the operator using the delve debugger")
+	upLocalCmd.Flags().BoolVar(&enableDelve, "enable-delve", false, "Start the operator using the delve debugger")
 	switch projutil.GetOperatorType() {
 	case projutil.OperatorTypeAnsible:
 		ansibleOperatorFlags = aoflags.AddTo(upLocalCmd.Flags(), "(ansible operator)")
@@ -71,7 +71,7 @@ var (
 	operatorFlags        string
 	namespace            string
 	ldFlags              string
-	debugFlag            bool
+	enableDelve          bool
 	ansibleOperatorFlags *aoflags.AnsibleOperatorFlags
 	helmOperatorFlags    *hoflags.HelmOperatorFlags
 )
@@ -117,7 +117,7 @@ func upLocal() error {
 
 	var dc *exec.Cmd
 
-	if debugFlag {
+	if enableDelve {
 		debugArgs := []string{"--listen=:2345", "--headless=true", "--api-version=2", "exec", outputBinName, "--"}
 		debugArgs = append(debugArgs, args...)
 
@@ -197,7 +197,7 @@ func buildLocal(outputBinName string) error {
 	if ldFlags != "" {
 		args = []string{"-ldflags", ldFlags}
 	}
-	if debugFlag {
+	if enableDelve {
 		args = append(args, "-gcflags=\"all=-N -l\"")
 	}
 	opts := projutil.GoCmdOptions{
