@@ -21,6 +21,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"k8s.io/client-go/discovery"
+
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/helm"
@@ -309,7 +311,13 @@ func doHelmScaffold() error {
 	if err != nil {
 		return fmt.Errorf("failed to get kubernetes config: %s", err)
 	}
-	roleScaffold, err := helm.CreateRoleScaffold(k8sCfg, chart)
+
+	dc, err := discovery.NewDiscoveryClientForConfig(k8sCfg)
+	if err != nil {
+		return fmt.Errorf("failed to get kubernetes discovery client: %s", err)
+	}
+
+	roleScaffold, err := helm.CreateRoleScaffold(dc, chart)
 	if err != nil {
 		return fmt.Errorf("failed to generate role scaffold: %s", err)
 	}
