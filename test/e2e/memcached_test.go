@@ -500,7 +500,6 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 }
 
 func MemcachedLocal(t *testing.T) {
-	t.Parallel()
 	// get global framework variables
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
@@ -553,7 +552,6 @@ func MemcachedLocal(t *testing.T) {
 }
 
 func MemcachedCluster(t *testing.T) {
-	t.Parallel()
 	// get global framework variables
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
