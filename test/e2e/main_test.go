@@ -21,9 +21,15 @@ import (
 	f "github.com/operator-framework/operator-sdk/pkg/test"
 )
 
-var e2eImageName *string
+type testArgs struct {
+	e2eImageName *string
+	localRepo    *string
+}
+
+var args = &testArgs{}
 
 func TestMain(m *testing.M) {
-	e2eImageName = flag.String("image", "", "operator image name <repository>:<tag> used to push the image, defaults to none (builds image to local docker repo)")
+	args.e2eImageName = flag.String("image", "", "operator image name <repository>:<tag> used to push the image, defaults to none (builds image to local docker repo)")
+	args.localRepo = flag.String("local-repo", "", "Path to local SDK repository being tested. Only use when running e2e tests locally")
 	f.MainEntry(m)
 }

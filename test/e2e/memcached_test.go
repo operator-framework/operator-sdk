@@ -61,15 +61,20 @@ func TestMemcached(t *testing.T) {
 	// get global framework variables
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
-	sdkDir, err := os.Getwd()
+	sdkTestE2EDir, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
-		if err := os.Chdir(sdkDir); err != nil {
+		if err := os.Chdir(sdkTestE2EDir); err != nil {
 			t.Errorf("Failed to change back to original working directory: (%v)", err)
 		}
 	}()
+	localSDKPath := *args.localRepo
+	if localSDKPath == "" {
+		// We're in ${sdk_repo}/test/e2e
+		localSDKPath = filepath.Dir(filepath.Dir(sdkTestE2EDir))
+	}
 	// For go commands in operator projects.
 	if err = os.Setenv("GO111MODULE", "on"); err != nil {
 		t.Fatal(err)
@@ -102,7 +107,6 @@ func TestMemcached(t *testing.T) {
 		t.Fatalf("Failed to change to %s directory: (%v)", operatorName, err)
 	}
 
-	localSDKPath := sdkDir
 	replace := getGoModReplace(t, localSDKPath)
 	if replace.repo != sdkRepo {
 		if replace.isLocal {
@@ -307,6 +311,16 @@ func writeGoModReplace(t *testing.T, repo, path, sha string) {
 	if err != nil {
 		t.Fatalf("Failed to parse go.mod: %v", err)
 	}
+	// Remove an existing replace line for the SDK if one exists. This is
+	// necessary for release PR's, which contain a replace directive for
+	// new SDK versions.
+	for _, r := range modFile.Replace {
+		if r.Old.Path == repo {
+			if err := modFile.DropReplace(repo, r.Old.Version); err != nil {
+				t.Fatalf(`Failed to remove "%s": %v`, modBytes[r.Syntax.Start.Byte:r.Syntax.End.Byte], err)
+			}
+		}
+	}
 	if err = modFile.AddReplace(repo, "", path, sha); err != nil {
 		s := ""
 		if sha != "" {
@@ -314,6 +328,7 @@ func writeGoModReplace(t *testing.T, repo, path, sha string) {
 		}
 		t.Fatalf(`Failed to add "replace %s => %s%s: %v"`, repo, path, s, err)
 	}
+	modFile.Cleanup()
 	if modBytes, err = modFile.Format(); err != nil {
 		t.Fatalf("Failed to format go.mod: %v", err)
 	}
@@ -534,9 +549,9 @@ func MemcachedCluster(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Could not read deploy/operator.yaml: %v", err)
 	}
-	local := *e2eImageName == ""
+	local := *args.e2eImageName == ""
 	if local {
-		*e2eImageName = "quay.io/example/memcached-operator:v0.0.1"
+		*args.e2eImageName = "quay.io/example/memcached-operator:v0.0.1"
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -546,20 +561,20 @@ func MemcachedCluster(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	operatorYAML = bytes.Replace(operatorYAML, []byte("REPLACE_IMAGE"), []byte(*e2eImageName), 1)
+	operatorYAML = bytes.Replace(operatorYAML, []byte("REPLACE_IMAGE"), []byte(*args.e2eImageName), 1)
 	err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, os.FileMode(0644))
 	if err != nil {
 		t.Fatalf("Failed to write deploy/operator.yaml: %v", err)
 	}
 	t.Log("Building operator docker image")
-	cmdOut, err := exec.Command("operator-sdk", "build", *e2eImageName).CombinedOutput()
+	cmdOut, err := exec.Command("operator-sdk", "build", *args.e2eImageName).CombinedOutput()
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
 	if !local {
 		t.Log("Pushing docker image to repo")
-		cmdOut, err = exec.Command("docker", "push", *e2eImageName).CombinedOutput()
+		cmdOut, err = exec.Command("docker", "push", *args.e2eImageName).CombinedOutput()
 		if err != nil {
 			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 		}
