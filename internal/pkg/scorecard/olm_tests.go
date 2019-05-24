@@ -21,9 +21,9 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -185,25 +185,25 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *TestResult {
 	crds, err := k8sutil.GetCRDs(t.CRDsDir)
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("failed to get CRDs in %s directory: %v", t.CRDsDir, err))
+		res.State = scapiv1alpha1.ErrorState
 		return res
 	}
 	err = t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
 		res.Errors = append(res.Errors, err)
+		res.State = scapiv1alpha1.ErrorState
 		return res
 	}
-	// TODO: we need to make this handle multiple CRs better/correctly
 	for _, crd := range crds {
-		res.MaximumPoints++
-		if crd.Spec.Validation == nil {
-			res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for %s/%s", crd.Spec.Names.Kind, crd.Spec.Version))
-			continue
-		}
 		// check if the CRD matches the testing CR
 		gvk := t.CR.GroupVersionKind()
 		// Only check the validation block if the CRD and CR have the same Kind and Version
 		if !(matchVersion(gvk.Version, crd) && matchKind(gvk.Kind, crd.Spec.Names.Kind)) {
-			res.EarnedPoints++
+			continue
+		}
+		res.MaximumPoints++
+		if crd.Spec.Validation == nil {
+			res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for %s/%s", crd.Spec.Names.Kind, crd.Spec.Version))
 			continue
 		}
 		failed := false
@@ -235,37 +235,34 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *TestResult {
 // Run - implements Test interface
 func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
 	res := &TestResult{Test: t}
+	var missingResources []string
 	for _, crd := range t.CSV.Spec.CustomResourceDefinitions.Owned {
-		res.MaximumPoints++
 		gvk := t.CR.GroupVersionKind()
 		if strings.EqualFold(crd.Version, gvk.Version) && matchKind(gvk.Kind, crd.Kind) {
+			res.MaximumPoints++
+			if len(crd.Resources) > 0 {
+				res.EarnedPoints++
+			}
 			resources, err := getUsedResources(t.ProxyPod)
 			if err != nil {
 				log.Warningf("getUsedResource failed: %v", err)
 			}
-			allResourcesListed := true
 			for _, resource := range resources {
 				foundResource := false
 				for _, listedResource := range crd.Resources {
 					if matchKind(resource.Kind, listedResource.Kind) && strings.EqualFold(resource.Version, listedResource.Version) {
 						foundResource = true
+						break
 					}
 				}
 				if foundResource == false {
-					allResourcesListed = false
+					missingResources = append(missingResources, fmt.Sprintf("%s/%s", resource.Kind, resource.Version))
 				}
-			}
-			if allResourcesListed {
-				res.EarnedPoints++
-			}
-		} else {
-			if len(crd.Resources) > 0 {
-				res.EarnedPoints++
 			}
 		}
 	}
-	if res.EarnedPoints < res.MaximumPoints {
-		res.Suggestions = append(res.Suggestions, "Add resources to owned CRDs")
+	if len(missingResources) > 0 {
+		res.Suggestions = append(res.Suggestions, fmt.Sprintf("If it would be helpful to an end-user to understand or troubleshoot your CR, consider adding resources %v to the resources section for owned CRD %s", missingResources, t.CR.GroupVersionKind().Kind))
 	}
 	return res
 }
@@ -287,14 +284,17 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 		/*
 			There are 6 formats a resource uri can have:
 			Cluster-Scoped:
-				Collection: /apis/GROUP/VERSION/KIND
-				Individual: /apis/GROUP/VERSION/KIND/NAME
-				Core:       /api/v1/KIND
+				Collection:      /apis/GROUP/VERSION/KIND
+				Individual:      /apis/GROUP/VERSION/KIND/NAME
+				Core:            /api/v1/KIND
+				Core Individual: /api/v1/KIND/NAME
+
 			Namespaces:
 				All Namespaces:          /apis/GROUP/VERSION/KIND (same as cluster collection)
 				Collection in Namespace: /apis/GROUP/VERSION/namespaces/NAMESPACE/KIND
 				Individual:              /apis/GROUP/VERSION/namespaces/NAMESPACE/KIND/NAME
 				Core:                    /api/v1/namespaces/NAMESPACE/KIND
+				Core Indiviual:          /api/v1/namespaces/NAMESPACE/KIND/NAME
 
 			These urls are also often appended with options, which are denoted by the '?' symbol
 		*/
@@ -326,7 +326,10 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 			}
 			log.Warnf("Invalid URI: \"%s\"", uri)
 		case 4:
-			if splitURI[0] == "apis" {
+			if splitURI[0] == "api" {
+				resources[schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[2]}] = true
+				break
+			} else if splitURI[0] == "apis" {
 				resources[schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[3]}] = true
 				break
 			}
@@ -341,7 +344,10 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 			}
 			log.Warnf("Invalid URI: \"%s\"", uri)
 		case 6, 7:
-			if splitURI[0] == "apis" {
+			if splitURI[0] == "api" {
+				resources[schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[4]}] = true
+				break
+			} else if splitURI[0] == "apis" {
 				resources[schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[5]}] = true
 				break
 			}
@@ -373,6 +379,7 @@ func (t *StatusDescriptorsTest) Run(ctx context.Context) *TestResult {
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
 		res.Errors = append(res.Errors, err)
+		res.State = scapiv1alpha1.ErrorState
 		return res
 	}
 	if t.CR.Object["status"] == nil {
@@ -411,6 +418,7 @@ func (t *SpecDescriptorsTest) Run(ctx context.Context) *TestResult {
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
 		res.Errors = append(res.Errors, err)
+		res.State = scapiv1alpha1.ErrorState
 		return res
 	}
 	if t.CR.Object["spec"] == nil {

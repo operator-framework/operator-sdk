@@ -5,9 +5,10 @@ sudo: required
 cache:
   directories:
     - $HOME/.cache/go-build
+    - $GOPATH/pkg/mod
 
 go:
-- 1.10.3
+- 1.12.x
 
 # The `x_base_steps` top-level key is unknown to travis,
 # so we can use it to create a bunch of common build step

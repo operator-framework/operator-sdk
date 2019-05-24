@@ -1,7 +1,6 @@
 # User Guide
 
-This guide walks through an example of building a simple nginx-operator
-powered by Helm using tools and libraries provided by the Operator SDK.
+This guide walks through an example of building a simple nginx-operator powered by Helm using tools and libraries provided by the Operator SDK.
 
 ## Prerequisites
 
@@ -9,7 +8,7 @@ powered by Helm using tools and libraries provided by the Operator SDK.
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - [dep][dep_tool] version v0.5.0+. (Optional if you aren't installing from source)
-- [go][go_tool] version v1.10+. (Optional if you aren't installing from source)
+- [go][go_tool] version v1.12+. (Optional if you aren't installing from source)
 - Access to a Kubernetes v1.11.3+ cluster.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the
@@ -17,28 +16,7 @@ local Kubernetes cluster and [quay.io][quay_link] for the public registry.
 
 ## Install the Operator SDK CLI
 
-The Operator SDK has a CLI tool that helps the developer to create, build, and
-deploy a new operator project.
-
-Checkout the desired release tag and install the SDK CLI tool:
-
-```sh
-mkdir -p $GOPATH/src/github.com/operator-framework
-cd $GOPATH/src/github.com/operator-framework
-git clone https://github.com/operator-framework/operator-sdk
-cd operator-sdk
-git checkout master
-make dep
-make install
-```
-
-This installs the CLI binary `operator-sdk` at `$GOPATH/bin`.
-
-Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
-
-```sh
-$ brew install operator-sdk
-```
+Follow the steps in the [installation guide][install_guide] to learn how to install the Operator SDK CLI tool.
 
 ## Create a new project
 
@@ -88,21 +66,8 @@ If `--helm-chart-version` is not set, the SDK will fetch the latest available ve
 
 ### Operator scope
 
-A namespace-scoped operator (the default) watches and manages resources in a single namespace, whereas a cluster-scoped operator watches and manages resources cluster-wide. Namespace-scoped operators are preferred because of their flexibility. They enable decoupled upgrades, namespace isolation for failures and monitoring, and differing API definitions. However, there are use cases where a cluster-scoped operator may make sense. For example, the [cert-manager](https://github.com/jetstack/cert-manager) operator is often deployed with cluster-scoped permissions and watches so that it can manage issuing certificates for an entire cluster.
+Read the [operator scope][operator_scope] documentation on how to run your operator as namespace-scoped vs cluster-scoped.
 
-If you'd like to create your nginx-operator project to be cluster-scoped use the following `operator-sdk new` command instead:
-
-```sh
-operator-sdk new nginx-operator --cluster-scoped --api-version=example.com/v1alpha1 --kind=Nginx --type=helm
-```
-
-Using `--cluster-scoped` will scaffold the new operator with the following modifications:
-* `deploy/operator.yaml` - Set `WATCH_NAMESPACE=""` instead of setting it to the pod's namespace
-* `deploy/role.yaml` - Use `ClusterRole` instead of `Role`
-* `deploy/role_binding.yaml`:
-  * Use `ClusterRoleBinding` instead of `RoleBinding`
-  * Use `ClusterRole` instead of `Role` for roleRef
-  * Set the subject namespace to `REPLACE_NAMESPACE`. This must be changed to the namespace in which the operator is deployed.
 
 ## Customize the operator logic
 
@@ -225,7 +190,7 @@ export OPERATOR_NAMESPACE=$(kubectl config view --minify -o jsonpath='{.contexts
 sed -i "s|REPLACE_NAMESPACE|$OPERATOR_NAMESPACE|g" deploy/role_binding.yaml
 ```
 
-**Note**  
+**Note**
 If you are performing these steps on OSX, use the following commands instead:
 
 ```sh
@@ -364,6 +329,8 @@ kubectl delete -f deploy/service_account.yaml
 kubectl delete -f deploy/crds/example_v1alpha1_nginx_crd.yaml
 ```
 
+[operator_scope]:./../operator-scope.md
+[install_guide]: ../user/install-operator-sdk.md
 [layout_doc]:./project_layout.md
 [homebrew_tool]:https://brew.sh/
 [dep_tool]:https://golang.github.io/dep/docs/installation.html

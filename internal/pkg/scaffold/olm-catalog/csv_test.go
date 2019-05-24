@@ -24,8 +24,8 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	testutil "github.com/operator-framework/operator-sdk/internal/pkg/scaffold/internal/testutil"
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/ghodss/yaml"
@@ -66,25 +66,6 @@ func TestCSVNew(t *testing.T) {
 	}
 }
 
-func writeOSPathToFS(fromFs, toFs afero.Fs, root string) error {
-	if _, err := fromFs.Stat(root); err != nil {
-		return err
-	}
-	return afero.Walk(fromFs, root, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info == nil {
-			return err
-		}
-		if !info.IsDir() {
-			b, err := afero.ReadFile(fromFs, path)
-			if err != nil {
-				return err
-			}
-			return afero.WriteFile(toFs, path, b, fileutil.DefaultFileMode)
-		}
-		return nil
-	})
-}
-
 func TestCSVFromOld(t *testing.T) {
 	s := &scaffold.Scaffold{Fs: afero.NewMemMapFs()}
 	projectName := "app-operator"
@@ -92,7 +73,7 @@ func TestCSVFromOld(t *testing.T) {
 
 	// Write all files in testdata/deploy to fs so manifests are present when
 	// writing a new CSV.
-	if err := writeOSPathToFS(afero.NewOsFs(), s.Fs, testDeployDir); err != nil {
+	if err := testutil.WriteOSPathToFS(afero.NewOsFs(), s.Fs, testDeployDir); err != nil {
 		t.Fatalf("Failed to write %s to in-memory test fs: (%v)", testDeployDir, err)
 	}
 

@@ -1,7 +1,6 @@
 # User Guide
 
-This guide walks through an example of building a simple memcached-operator
-powered by Ansible using tools and libraries provided by the Operator SDK.
+This guide walks through an example of building a simple memcached-operator powered by Ansible using tools and libraries provided by the Operator SDK.
 
 ## Prerequisites
 
@@ -12,7 +11,7 @@ powered by Ansible using tools and libraries provided by the Operator SDK.
 - [ansible-runner][ansible_runner_tool] version v1.1.0+
 - [ansible-runner-http][ansible_runner_http_plugin] version v1.0.0+
 - [dep][dep_tool] version v0.5.0+. (Optional if you aren't installing from source)
-- [go][go_tool] version v1.10+. (Optional if you aren't installing from source)
+- [go][go_tool] version v1.12+. (Optional if you aren't installing from source)
 - Access to a Kubernetes v.1.9.0+ cluster.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the
@@ -20,28 +19,7 @@ local Kubernetes cluster and [quay.io][quay_link] for the public registry.
 
 ## Install the Operator SDK CLI
 
-The Operator SDK has a CLI tool that helps the developer to create, build, and
-deploy a new operator project.
-
-Checkout the desired release tag and install the SDK CLI tool:
-
-```sh
-$ mkdir -p $GOPATH/src/github.com/operator-framework
-$ cd $GOPATH/src/github.com/operator-framework
-$ git clone https://github.com/operator-framework/operator-sdk
-$ cd operator-sdk
-$ git checkout master
-$ make dep
-$ make install
-```
-
-This installs the CLI binary `operator-sdk` at `$GOPATH/bin`.
-
-Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
-
-```sh
-$ brew install operator-sdk
-```
+Follow the steps in the [installation guide][install_guide] to learn how to install the Operator SDK CLI tool.
 
 ## Create a new project
 
@@ -61,20 +39,7 @@ layout][layout_doc] doc.
 
 #### Operator scope
 
-A namespace-scoped operator (the default) watches and manages resources in a single namespace, whereas a cluster-scoped operator watches and manages resources cluster-wide. Namespace-scoped operators are preferred because of their flexibility. They enable decoupled upgrades, namespace isolation for failures and monitoring, and differing API definitions. However, there are use cases where a cluster-scoped operator may make sense. For example, the [cert-manager](https://github.com/jetstack/cert-manager) operator is often deployed with cluster-scoped permissions and watches so that it can manage issuing certificates for an entire cluster.
-
-If you'd like to create your memcached-operator project to be cluster-scoped use the following `operator-sdk new` command instead:
-```
-$ operator-sdk new memcached-operator --cluster-scoped --api-version=cache.example.com/v1alpha1 --kind=Memcached --type=ansible
-```
-
-Using `--cluster-scoped` will scaffold the new operator with the following modifications:
-* `deploy/operator.yaml` - Set `WATCH_NAMESPACE=""` instead of setting it to the pod's namespace
-* `deploy/role.yaml` - Use `ClusterRole` instead of `Role`
-* `deploy/role_binding.yaml`:
-  * Use `ClusterRoleBinding` instead of `RoleBinding`
-  * Use `ClusterRole` instead of `Role` for roleRef
-  * Set the subject namespace to `REPLACE_NAMESPACE`. This must be changed to the namespace in which the operator is deployed.
+Read the [operator scope][operator_scope] documentation on how to run your operator as namespace-scoped vs cluster-scoped.
 
 ### Watches file
 
@@ -288,7 +253,7 @@ $ export OPERATOR_NAMESPACE=$(kubectl config view --minify -o jsonpath='{.contex
 $ sed -i "s|REPLACE_NAMESPACE|$OPERATOR_NAMESPACE|g" deploy/role_binding.yaml
 ```
 
-**Note**  
+**Note**
 If you are performing these steps on OSX, use the following commands instead:
 ```
 $ sed -i "" 's|{{ REPLACE_IMAGE }}|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
@@ -395,6 +360,18 @@ kubectl logs deployment/memcached-operator -c operator
 The `ansible` logs contain all of the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks,
 whereas the `operator` logs will contain much more detailed information about the Ansible Operator's internals and interface with Kubernetes.
 
+### Additional Ansible debug
+
+Occasionally while developing additional debug in the Operator logs is nice to have. To enable Ansible debug output, ie `-vvvv`.
+Add the following to the `operator.yaml` manifest.
+
+```yaml
+          env:
+           ...
+           - name: ANSIBLE_VERBOSITY
+             value: "4"
+```
+
 ### Update the size
 
 Change the `spec.size` field in the memcached CR from 3 to 4 and apply the
@@ -430,9 +407,11 @@ $ kubectl delete -f deploy/operator.yaml
 $ kubectl delete -f deploy/role_binding.yaml
 $ kubectl delete -f deploy/role.yaml
 $ kubectl delete -f deploy/service_account.yaml
-$ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
+$ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
 ```
 
+[operator_scope]:./../operator-scope.md
+[install_guide]: ../user/install-operator-sdk.md
 [layout_doc]:./project_layout.md
 [homebrew_tool]:https://brew.sh/
 [dep_tool]:https://golang.github.io/dep/docs/installation.html

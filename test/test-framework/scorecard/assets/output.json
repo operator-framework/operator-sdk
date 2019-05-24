@@ -1,0 +1,39 @@
+{
+  "kind": "ScorecardOutput",
+  "apiVersion": "osdk.openshift.io/v1alpha1",
+  "log": "",
+  "results": [
+    {
+      "name": "Custom Scorecard",
+      "description": "Custom operator scorecard tests",
+      "error": 0,
+      "pass": 1,
+      "partialPass": 1,
+      "fail": 0,
+      "totalTests": 2,
+      "totalScorePercent": 71,
+      "tests": [
+        {
+          "state": "partial_pass",
+          "name": "Operator Actions Reflected In Status",
+          "description": "The operator updates the Custom Resources status when the application state is updated",
+          "earnedPoints": 2,
+          "maximumPoints": 3,
+          "suggestions": [
+              "Operator should update status when scaling cluster down"
+          ],
+          "errors": []
+        },
+        {
+          "state": "pass",
+          "name": "Verify health of cluster",
+          "description": "The cluster created by the operator is working properly",
+          "earnedPoints": 1,
+          "maximumPoints": 1,
+          "suggestions": [],
+          "errors": []
+        }
+      ]
+    }
+  ]
+}

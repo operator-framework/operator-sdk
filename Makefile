@@ -10,6 +10,7 @@ else
 endif
 
 VERSION = $(shell git describe --dirty --tags --always)
+GIT_COMMIT = $(shell git rev-parse HEAD)
 REPO = github.com/operator-framework/operator-sdk
 BUILD_PATH = $(REPO)/cmd/operator-sdk
 PKGS = $(shell go list ./... | grep -v /vendor/)
@@ -42,7 +43,14 @@ clean:
 .PHONY: all test format dep clean
 
 install:
-	$(Q)go install -gcflags "all=-trimpath=${GOPATH}" -asmflags "all=-trimpath=${GOPATH}" $(BUILD_PATH)
+	$(Q)go install \
+		-gcflags "all=-trimpath=${GOPATH}" \
+		-asmflags "all=-trimpath=${GOPATH}" \
+		-ldflags " \
+			-X '${REPO}/version.GitVersion=${VERSION}' \
+			-X '${REPO}/version.GitCommit=${GIT_COMMIT}' \
+		" \
+		$(BUILD_PATH)
 
 release_x86_64 := \
 	build/operator-sdk-$(VERSION)-x86_64-linux-gnu \
@@ -54,7 +62,14 @@ build/operator-sdk-%-x86_64-linux-gnu: GOARGS = GOOS=linux GOARCH=amd64
 build/operator-sdk-%-x86_64-apple-darwin: GOARGS = GOOS=darwin GOARCH=amd64
 
 build/%: $(SOURCES)
-	$(Q)$(GOARGS) go build -gcflags "all=-trimpath=${GOPATH}" -asmflags "all=-trimpath=${GOPATH}" -o $@ $(BUILD_PATH)
+	$(Q)$(GOARGS) go build \
+		-gcflags "all=-trimpath=${GOPATH}" \
+		-asmflags "all=-trimpath=${GOPATH}" \
+		-ldflags " \
+			-X '${REPO}/version.GitVersion=${VERSION}' \
+			-X '${REPO}/version.GitCommit=${GIT_COMMIT}' \
+		" \
+		-o $@ $(BUILD_PATH)
 
 build/%.asc:
 	$(Q){ \

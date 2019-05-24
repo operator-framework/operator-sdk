@@ -28,7 +28,6 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"github.com/ghodss/yaml"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -345,7 +344,7 @@ func addResourceCleanup(obj runtime.Object, key types.NamespacedName) {
 		// make a copy of the object because the client changes it
 		objCopy := obj.DeepCopyObject()
 		err := runtimeClient.Delete(context.TODO(), obj)
-		if err != nil {
+		if err != nil && !apierrors.IsNotFound(err) {
 			return err
 		}
 		err = wait.PollImmediate(time.Second*1, time.Second*10, func() (bool, error) {
