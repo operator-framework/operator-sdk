@@ -136,15 +136,17 @@ func getHomeDir() (string, error) {
 	return homedir.Expand(hd)
 }
 
-// CheckAndGetProjectGoPkg checks if this project's repository path is rooted under $GOPATH and returns the current directory's import path
+// CheckAndGetProjectGoPkg checks if this project's repository path is rooted
+// under $GOPATH and returns the current directory's import path,
 // e.g: "github.com/example-inc/app-operator"
 func CheckAndGetProjectGoPkg() string {
 	gopath := MustSetGopath(MustGetGopath())
 	goSrc := filepath.Join(gopath, SrcDir)
 	wd := MustGetwd()
-	currPkg := strings.Replace(wd, goSrc, "", 1)
-	// strip any "/" prefix from the repo path.
-	return strings.TrimPrefix(currPkg, fsep)
+	pathedPkg := strings.Replace(wd, goSrc, "", 1)
+	// Make sure package only contains the "/" separator and no others, and
+	// trim any leading/trailing "/".
+	return strings.Trim(filepath.ToSlash(pathedPkg), "/")
 }
 
 // GetOperatorType returns type of operator is in cwd.
