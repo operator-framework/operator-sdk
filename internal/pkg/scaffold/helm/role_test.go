@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/helm"
+	
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
