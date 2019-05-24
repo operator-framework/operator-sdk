@@ -273,9 +273,9 @@ Kubernetes helpers. The Golang structs are defined in `pkg/apis/scorecard/v1alph
 }
 ```
 
-**NOTE:** The `ScorecardOutput` object is designed the same as a Kubernetes API, and thus also has a full `TypeMeta` and `ObjectMeta`. Those are optional and not
-used by the scorecard at the current time. These optional fields have thus been removed from the schema for cleanliness and the schema only includes the fields
-the scorecard currently looks at.
+**NOTE:** The `ScorecardOutput` object is designed the same as a Kubernetes API, and thus also has a full `TypeMeta` and `ObjectMeta`. This means that it contains
+various other fields such as `selfLink`, `uid`, and others. At the moment, the only required fields and the only fields that will be checked by the scorecard
+are the `kind` and `apiVersion` fields as listed in the above JSONSchema.
 
 Example of a valid JSON output:
 
