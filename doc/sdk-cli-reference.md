@@ -428,7 +428,7 @@ Run scorecard tests on an operator
 ### Flags
 
 * `basic-tests` - Enable basic operator checks (default true)
-* `config` string - config file (default is `<project_dir>/.osdk-yaml`)
+* `config` string - config file (default is '<project_dir>/.osdk-scorecard'; the config file's extension and format can be .yaml, .json, or .toml)
 * `cr-manifest` string - (required) Path to manifest for Custom Resource
 * `crds-dir` string - Directory containing CRDs (all CRD manifest filenames must have the suffix 'crd.yaml') (default "deploy/crds")
 * `csv-path` string - (required if `olm-tests` is set) Path to CSV being tested
