@@ -52,7 +52,9 @@ const (
 	timeout                     = time.Second * 120
 	cleanupRetryInterval        = time.Second * 1
 	cleanupTimeout              = time.Second * 10
+	sdkRepo                     = "github.com/operator-framework/operator-sdk"
 	operatorName                = "memcached-operator"
+	testRepo                    = "github.com/example-inc/" + operatorName
 )
 
 func TestMemcached(t *testing.T) {
@@ -88,11 +90,10 @@ func TestMemcached(t *testing.T) {
 	}
 
 	t.Log("Creating new operator project")
-	sdkRepo := "github.com/operator-framework/operator-sdk"
 	cmdOut, err := exec.Command("operator-sdk",
 		"new",
 		operatorName,
-		"--repo", sdkRepo).CombinedOutput()
+		"--repo", testRepo).CombinedOutput()
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
@@ -169,13 +170,9 @@ func TestMemcached(t *testing.T) {
 		if err := os.MkdirAll(filepath.Dir(dst), fileutil.DefaultDirFileMode); err != nil {
 			t.Fatalf("Could not create template destination directory: %s", err)
 		}
-		srcTmpl, err := ioutil.ReadFile(src)
+		cmdOut, err = exec.Command("cp", src, dst).CombinedOutput()
 		if err != nil {
-			t.Fatalf("Could not read template from %s: %s", src, err)
-		}
-		dstData := strings.Replace(string(srcTmpl), "github.com/example-inc", filepath.Base(absProjectPath), -1)
-		if err := ioutil.WriteFile(dst, []byte(dstData), fileutil.DefaultFileMode); err != nil {
-			t.Fatalf("Could not write template output to %s: %s", dst, err)
+			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 		}
 	}
 
