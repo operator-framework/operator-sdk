@@ -17,6 +17,7 @@ package catalog
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -40,17 +41,29 @@ const csvgenPrefix = annotations.SDKPrefix + ":gen-csv:"
 // setCRDDescriptorForGVK parses type and struct field declaration comments on
 // API types to populate a csv's spec.customresourcedefinitions.owned fields
 // for a given API identified by Group, Version, and Kind.
+// TODO(estroz): support ActionDescriptors parsing/setting.
 func setCRDDescriptorForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.GroupVersionKind) error {
-	group := gvk.Group
-	if strings.Contains(group, ".") {
-		group = strings.Split(gvk.Group, ".")[0]
+	if strings.Contains(gvk.Group, ".") {
+		gvk.Group = strings.Split(gvk.Group, ".")[0]
 	}
-	apisDir := filepath.Join(scaffold.ApisDir, group, gvk.Version)
-	if _, err := os.Stat(apisDir); err != nil && os.IsNotExist(err) {
-		log.Infof(`API "%s" does not exist. Skipping CSV annotation parsing for this API.`, gvk)
-		return nil
+	apisDir := filepath.Join(scaffold.ApisDir, gvk.Group, gvk.Version)
+	if _, err := os.Stat(apisDir); err != nil {
+		if os.IsNotExist(err) {
+			log.Infof(`API "%s" does not exist. Skipping CSV annotation parsing for this API.`, gvk)
+			return nil
+		}
+		return err
 	}
-	specType, statusType, pkgTypes, err := getSpecStatusPkgTypesForGVK(apisDir, gvk)
+	p := parser.New()
+	if err := p.AddDirRecursive("./" + apisDir); err != nil {
+		return err
+	}
+	universe, err := p.FindTypes()
+	if err != nil {
+		return err
+	}
+	apiPkg := path.Join(projutil.CheckAndGetProjectGoPkg(), apisDir)
+	specType, statusType, pkgTypes, err := getSpecStatusPkgTypesForAPI(universe, apiPkg, gvk.Kind)
 	if err != nil {
 		return errors.Wrapf(err, `get spec, status, and package types for "%s"`, gvk)
 	}
@@ -109,24 +122,16 @@ func setCRDDescriptorForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.G
 	return nil
 }
 
-func getSpecStatusPkgTypesForGVK(apisDir string, gvk schema.GroupVersionKind) (spec, status *types.Type, pkgTypes []*types.Type, err error) {
-	p := parser.New()
-	if err := p.AddDirRecursive("./" + apisDir); err != nil {
-		return nil, nil, nil, err
-	}
-	universe, err := p.FindTypes()
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	pp := strings.TrimSuffix(projutil.CheckAndGetProjectGoPkg(), apisDir)
+// getSpecStatusPkgTypesForAPI finds and returns types {kind}Spec, {kind}Status,
+// and all types in apiPkg.
+func getSpecStatusPkgTypesForAPI(universe types.Universe, apiPkg, kind string) (spec, status *types.Type, pkgTypes []*types.Type, err error) {
 	for _, pkg := range universe {
-		if !strings.HasPrefix(pkg.Path, pp) && !strings.HasPrefix(pkg.Path, "./") {
+		if pkg.Path != apiPkg && !strings.HasPrefix(pkg.Path, "./") {
 			continue
 		}
 		for _, t := range pkg.Types {
 			pkgTypes = append(pkgTypes, t)
-			if t.Name.Name == gvk.Kind {
+			if t.Name.Name == kind {
 				for _, m := range t.Members {
 					path := parsePathFromJSONTags(m.Tags)
 					if path == "spec" {
@@ -142,9 +147,13 @@ func getSpecStatusPkgTypesForGVK(apisDir string, gvk schema.GroupVersionKind) (s
 		}
 	}
 	if spec == nil {
-		return nil, nil, nil, fmt.Errorf("no spec found in type %s", gvk.Kind)
-	} else if status == nil {
-		return nil, nil, nil, fmt.Errorf("no status found in type %s", gvk.Kind)
+		return nil, nil, nil, fmt.Errorf("no spec found in type %s", kind)
+	}
+	if status == nil {
+		return nil, nil, nil, fmt.Errorf("no status found in type %s", kind)
+	}
+	if len(pkgTypes) == 0 {
+		return nil, nil, nil, fmt.Errorf("no package types found in API %s", apiPkg)
 	}
 	return spec, status, pkgTypes, nil
 }
@@ -191,6 +200,10 @@ func wrapParseErr(err error) error {
 	return errors.Wrap(err, "error parsing csv-gen annotation")
 }
 
+// parseCSVGenAnnotations parses all descriptor annotations from comments,
+// each of which should contain one spec.customresourcedefinitions.owned entry.
+// field Once all comments have been parsed, the entry is added to a
+// parsedCRDDescriptions.
 func parseCSVGenAnnotations(comments []string) (pd parsedCRDDescriptions, err error) {
 	tags := types.ExtractCommentTags(csvgenPrefix, comments)
 	specd, statusd := descriptor{descType: typeSpec}, descriptor{descType: typeStatus}
@@ -242,6 +255,8 @@ func parseCSVGenAnnotations(comments []string) (pd parsedCRDDescriptions, err er
 	return pd, nil
 }
 
+// parseDescriptor determines which descriptor annotation was passed from
+// pathElems and sets val to the corresponding field in d.
 func parseDescriptor(d *descriptor, pathElems []string, val string) (err error) {
 	switch len(pathElems) {
 	case 1:
@@ -271,6 +286,8 @@ func parseDescriptor(d *descriptor, pathElems []string, val string) (err error) 
 	return nil
 }
 
+// parseResource parses a resource string of the form:
+// "kind,version,\"quoted name\""
 func parseResource(rStr string) (r olmapiv1alpha1.APIResourceReference, err error) {
 	rStr, err = strconv.Unquote(rStr)
 	if err != nil {
@@ -290,6 +307,9 @@ func parseResource(rStr string) (r olmapiv1alpha1.APIResourceReference, err erro
 	return r, nil
 }
 
+// setDescriptorDefaultsIfEmpty sets d's fields by parsing values from their
+// typical locations in data contained in d, ex. d.member, but only if those
+// fields are empty or should be overwritten.
 func setDescriptorDefaultsIfEmpty(d *descriptor) {
 	if d.description == "" {
 		d.description = parseDescription(d.member.CommentLines)
@@ -308,14 +328,8 @@ func setDescriptorDefaultsIfEmpty(d *descriptor) {
 	}
 }
 
-func getTypeName(t *types.Type) string {
-	return getUnderlyingType(t).Name.String()
-}
-
-func typeNamesEqual(t1, t2 *types.Type) bool {
-	return getTypeName(t1) == getTypeName(t2)
-}
-
+// mergeChildDescriptorPaths joins all child descriptor paths with their
+// parents, and returns the updated descriptors.
 func mergeChildDescriptorPaths(specType, statusType *types.Type, descriptors []descriptor) (newDescs []descriptor) {
 	descMap := map[string][]descriptor{}
 	for _, d := range descriptors {
@@ -332,16 +346,6 @@ func mergeChildDescriptorPaths(specType, statusType *types.Type, descriptors []d
 	return newDescs
 }
 
-func getUnderlyingType(t *types.Type) *types.Type {
-	switch t.Kind {
-	case types.Map, types.Slice, types.Pointer, types.Chan:
-		t = t.Elem
-	case types.Alias, types.DeclarationOf:
-		t = t.Underlying
-	}
-	return t
-}
-
 type memberNode struct {
 	types.Member
 	parentNode *memberNode
@@ -352,6 +356,10 @@ type descNodeMapping struct {
 	descriptor descriptor
 }
 
+// bfsJoinDescriptorPaths performs BFS on all struct members in parentType to
+// find members corresponding to descriptors in descMap, which contain the
+// member they were parsed from. pt determines parentType;s descriptor type,
+// ex. "spec", "status".
 func bfsJoinDescriptorPaths(parentType *types.Type, pt descriptorType, descMap map[string][]descriptor) {
 	nextMembers, leaves := []*memberNode{}, []descNodeMapping{}
 	for _, m := range parentType.Members {
@@ -359,7 +367,12 @@ func bfsJoinDescriptorPaths(parentType *types.Type, pt descriptorType, descMap m
 	}
 	maxLevel := 10
 	level, lenNextMembers := 0, len(nextMembers)
-	// BFS up to 5 levels.
+	// BFS up to maxLevel for qualifying leaves. We must check that both the
+	// parent type and member type, and member names are equal before adding a
+	// leaf. We must loop through all fields in a parent struct type, not just
+	// all members in nextMembers, in order to do so. We could find an incorrect
+	// leaf if we only checked member type/name equality since different structs
+	// can have the same field signatures.
 	for len(nextMembers) > 0 && level < maxLevel {
 		for _, m := range nextMembers {
 			t := getUnderlyingType(m.Type)
@@ -387,9 +400,6 @@ func bfsJoinDescriptorPaths(parentType *types.Type, pt descriptorType, descMap m
 		level++
 	}
 
-	// We should only skip parsing "spec" and "status" tags once, since
-	// children could have one of the two, which we want to include in the
-	// final path.
 	seenSpec, seenStatus := false, false
 	for _, l := range leaves {
 		segments := []string{}
@@ -397,7 +407,18 @@ func bfsJoinDescriptorPaths(parentType *types.Type, pt descriptorType, descMap m
 			segments = append(segments, l.descriptor.path)
 		}
 		for parent := l.parentNode; parent != nil; parent = parent.parentNode {
-			if pathSeg := parsePathFromJSONTags(parent.Tags); pathSeg != "" {
+			pathSeg := ""
+			// Use the field's name if it doesn't have a JSON tag.
+			if parent.Tags == "" {
+				pathSeg = parent.Name
+			} else {
+				pathSeg = parsePathFromJSONTags(parent.Tags)
+			}
+			if pathSeg != "" {
+				// {Kind}Spec and {Kind}Status pathSegs should not be in the resulting
+				// path, as spec/status is implied by specDescriptors/statusDescriptors;
+				// children of these types with "spec"/"status" pathSegs should be
+				// included.
 				if pathSeg == typeSpec && !seenSpec {
 					seenSpec = true
 					continue
@@ -413,6 +434,24 @@ func bfsJoinDescriptorPaths(parentType *types.Type, pt descriptorType, descMap m
 		n := getTypeName(l.descriptor.member.Type)
 		descMap[n] = append(descMap[n], l.descriptor)
 	}
+}
+
+func getUnderlyingType(t *types.Type) *types.Type {
+	switch t.Kind {
+	case types.Map, types.Slice, types.Pointer, types.Chan:
+		t = t.Elem
+	case types.Alias, types.DeclarationOf:
+		t = t.Underlying
+	}
+	return t
+}
+
+func getTypeName(t *types.Type) string {
+	return getUnderlyingType(t).Name.String()
+}
+
+func typeNamesEqual(t1, t2 *types.Type) bool {
+	return getTypeName(t1) == getTypeName(t2)
 }
 
 // parseDescription joins comment strings into one line, removing any tool
