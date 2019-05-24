@@ -67,7 +67,7 @@ func setCRDDescriptorForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.G
 				}
 				crdDesc.Description = parseDescription(comments)
 				crdDesc.DisplayName = pd.displayName
-				crdDesc.Resources = sortResources(append(crdDesc.Resources, pd.resources...))
+				crdDesc.Resources = append(crdDesc.Resources, pd.resources...)
 			}
 			for _, m := range t.Members {
 				pd, err := parseCSVGenAnnotations(m.CommentLines)
@@ -82,6 +82,7 @@ func setCRDDescriptorForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.G
 		}
 	}
 
+	crdDesc.Resources = sortResources(crdDesc.Resources)
 	descriptors = mergeChildDescriptorPaths(specType, statusType, descriptors)
 	// Now that we've merged child paths, ensure all fields not set are added.
 	for i := 0; i < len(descriptors); i++ {
@@ -356,9 +357,10 @@ func bfsJoinDescriptorPaths(parentType *types.Type, pt descriptorType, descMap m
 	for _, m := range parentType.Members {
 		nextMembers = append(nextMembers, &memberNode{m, nil})
 	}
+	maxLevel := 10
 	level, lenNextMembers := 0, len(nextMembers)
 	// BFS up to 5 levels.
-	for len(nextMembers) > 0 && level < 5 {
+	for len(nextMembers) > 0 && level < maxLevel {
 		for _, m := range nextMembers {
 			t := getUnderlyingType(m.Type)
 			for _, mm := range t.Members {
@@ -385,14 +387,29 @@ func bfsJoinDescriptorPaths(parentType *types.Type, pt descriptorType, descMap m
 		level++
 	}
 
+	// We should only skip parsing "spec" and "status" tags once, since
+	// children could have one of the two, which we want to include in the
+	// final path.
+	seenSpec, seenStatus := false, false
 	for _, l := range leaves {
+		segments := []string{}
+		if l.descriptor.path != "" {
+			segments = append(segments, l.descriptor.path)
+		}
 		for parent := l.parentNode; parent != nil; parent = parent.parentNode {
-			tags := parsePathFromJSONTags(parent.Tags)
-			if tags != "" && tags != typeSpec && tags != typeStatus {
-				l.descriptor.path = tags + "." + l.descriptor.path
+			if pathSeg := parsePathFromJSONTags(parent.Tags); pathSeg != "" {
+				if pathSeg == typeSpec && !seenSpec {
+					seenSpec = true
+					continue
+				}
+				if pathSeg == typeStatus && !seenStatus {
+					seenStatus = true
+					continue
+				}
+				segments = append([]string{pathSeg}, segments...)
 			}
 		}
-		l.descriptor.path = strings.Trim(l.descriptor.path, ".")
+		l.descriptor.path = strings.Join(segments, ".")
 		n := getTypeName(l.descriptor.member.Type)
 		descMap[n] = append(descMap[n], l.descriptor)
 	}
