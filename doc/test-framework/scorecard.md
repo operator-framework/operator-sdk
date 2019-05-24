@@ -67,12 +67,12 @@ There are 8 builtin tests the scorecard can run. If multiple CRs are specified, 
 
 #### Spec Block Exists
 
-This test checks the Custom Resource(s) that is created in the cluster to make sure that all CRs have a spec block. This test
+This test checks the Custom Resource(s) created in the cluster to make sure that all CRs have a spec block. This test
 has a maximum score of 1.
 
 #### Status Block Exists
 
-This test checks the Custom Resource(s) that is created in the cluster to make sure that all CRs have a status block. This
+This test checks the Custom Resource(s) created in the cluster to make sure that all CRs have a status block. This
 test has a maximum score of 1.
 
 #### Writing Into CRs Has An Effect
@@ -84,7 +84,7 @@ API server, indicating that it is modifying resources. This test has a maximum s
 
 #### Provided APIs have validation
 
-This test verifies that the CRDs for the provided CRs contain a validation section and that there is a validation for each
+This test verifies that the CRDs for the provided CRs contain a validation section and that there is validation for each
 spec and status field detected in the CR. This test has a maximum score equal to the number of CRs provided via the `--cr-manifest` flag.
 
 #### Owned CRDs Have Resources Listed
@@ -95,7 +95,7 @@ This test has a maximum score equal to the number of CRs provided via the `--cr-
 
 #### CRs Have At Least 1 Example
 
-This test checks that the CSV has an [`alm-examples` section][alm-examples] for each CR provided by the `--cr-manifest` flag in its metadata's annotations. This test has a maximum score
+This test checks that the CSV has an [`alm-examples` annotation][alm-examples] for each CR passed to the `--cr-manifest` flag in its metadata. This test has a maximum score
 equal to the number of CRs provided via the `--cr-manifest` flag.
 
 #### Spec Fields With Descriptors
@@ -112,13 +112,13 @@ the CSV. This test has a maximum score equal to the total number of fields in th
 
 To allow the scorecard to be further extended and capable of more complex testing as well as allow the community to make their own scorecard tests, a plugin system has been implemented
 for the scorecard. To use it, a user simply needs to add a binary or script to a `scorecard/bin` directory in their operator's root directory that runs the plugin. It is
-recommended to run plugins with a script to allow more configuration from the user and place other required assets in another subdirectory in the `scorecard` directory.
-For instance, `scorecard/assets`. The scorecard runs all plugins from the root `scorecard` directory. Since the scorecard will run all executable files in the scorecard's
+recommended to run plugins with a script to allow more configuration from the user and place other required assets in another subdirectory in the `scorecard` directory, ex. `scorecard/assets`.
+The scorecard runs all plugins from the root `scorecard` directory. Since the scorecard will run all executable files in the scorecard's
 `bin` subdirectory, the plugins can be written in any programming language supported by the OS the scorecard is being run on.
 
-To provide results to the scorecard, the plugin must output a valid JSON object to its `stdout`. Invalid JSON in the `stdout` will result in the plugin being marked as failed.
+To provide results to the scorecard, the plugin must output a valid JSON object to its `stdout`. Invalid JSON in `stdout` will result in the plugin being marked as failed.
 To provide logs to the scorecard, plugins can either set the `log` field for the scorecard suites they return or they can output logs to `stderr`, which will stream the log
-to the console if the scorecard is being run in with `human-readable` output or be added to the main ScorecardOutput `log` field when being run with the output flag set to `json`.
+to the console if the scorecard is being run in with `--output=human-readable` or be added to the main ScorecardOutput `log` field when being run with `--output=json`.
 
 ### JSON format
 
