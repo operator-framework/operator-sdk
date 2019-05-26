@@ -24,11 +24,23 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// ExecCmd runs the given command and wait for completion
 func ExecCmd(cmd *exec.Cmd) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	log.Debugf("Running %#v", cmd.Args)
 	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to exec %#v: %v", cmd.Args, err)
+	}
+	return nil
+}
+
+// StartCmd runs the given command without waiting for completion
+func StartCmd(cmd *exec.Cmd) error {
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	log.Debugf("Running %#v", cmd.Args)
+	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("failed to exec %#v: %v", cmd.Args, err)
 	}
 	return nil
@@ -121,14 +133,13 @@ func setCommandFields(c *exec.Cmd, opts GoCmdOptions) {
 	}
 }
 
+// GoModOn returns true if go modules are on in one of the above two ways.
 // From https://github.com/golang/go/wiki/Modules:
 //	You can activate module support in one of two ways:
 //	- Invoke the go command in a directory outside of the $GOPATH/src tree,
 //		with a valid go.mod file in the current directory or any parent of it and
 //		the environment variable GO111MODULE unset (or explicitly set to auto).
 //	- Invoke the go command with GO111MODULE=on environment variable set.
-//
-// GoModOn returns true if go modules are on in one of the above two ways.
 func GoModOn() (bool, error) {
 	v, ok := os.LookupEnv(GoModEnv)
 	if v == "off" {
