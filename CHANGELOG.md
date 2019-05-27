@@ -3,6 +3,7 @@
 ### Added
 
 ### Changed
+- Remove TypeMeta declaration from the implementation of the objects [#1462](https://github.com/operator-framework/operator-sdk/pull/1462/)
 
 ### Deprecated
 

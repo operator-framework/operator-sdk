@@ -438,10 +438,6 @@ func (r *ReconcileKind) deploymentForApp(m *appv1alpha1.App) *appsv1.Deployment 
 	replicas := m.Spec.Size
 
 	dep := &appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "apps/v1",
-			Kind:       "Deployment",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name,
 			Namespace: m.Namespace,
