@@ -28,7 +28,7 @@ const (
 	healthzPath = "/healthz"
 )
 
-func ServeMetrics(collectors [][]*kcollector.Collector, host string, port int32) {
+func ServeMetrics(collectors [][]kcollector.Collector, host string, port int32) {
 	listenAddress := net.JoinHostPort(host, fmt.Sprint(port))
 	mux := http.NewServeMux()
 	// Add metricsPath
@@ -55,7 +55,7 @@ func ServeMetrics(collectors [][]*kcollector.Collector, host string, port int32)
 }
 
 type metricHandler struct {
-	collectors [][]*kcollector.Collector
+	collectors [][]kcollector.Collector
 }
 
 func (m *metricHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

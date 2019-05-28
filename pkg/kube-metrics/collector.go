@@ -32,7 +32,7 @@ import (
 // NewCollectors returns collections of metrics in the namespaces provided, per the api/kind resource.
 // The metrics are registered in the custom generateStore function that needs to be defined.
 // Current operators namespace will be added to the passed namespaces if it is not present.
-func NewCollectors(uc *Client, namespaces []string, api string, kind string, metricFamily []metric.FamilyGenerator) ([]*kcollector.Collector, error) {
+func NewCollectors(uc *Client, namespaces []string, api string, kind string, metricFamily []metric.FamilyGenerator) ([]kcollector.Collector, error) {
 	// Detect in which namespace the operator is deployed in.
 	operatorNamespace, err := k8sutil.GetOperatorNamespace()
 	if err != nil {
@@ -40,7 +40,7 @@ func NewCollectors(uc *Client, namespaces []string, api string, kind string, met
 	}
 	namespaces = append(namespaces, operatorNamespace)
 	namespaces = deduplicateNamespaces(namespaces)
-	var collectors []*kcollector.Collector
+	var collectors []kcollector.Collector
 	// Generate collector per namespace.
 	for _, ns := range namespaces {
 		dclient, err := uc.ClientFor(api, kind, ns)
@@ -52,7 +52,7 @@ func NewCollectors(uc *Client, namespaces []string, api string, kind string, met
 		store := metricsstore.NewMetricsStore(headers, composedMetricGenFuncs)
 		reflectorPerNamespace(context.TODO(), dclient, &unstructured.Unstructured{}, store, ns)
 		collector := kcollector.NewCollector(store)
-		collectors = append(collectors, collector)
+		collectors = append(collectors, *collector)
 	}
 	return collectors, nil
 }

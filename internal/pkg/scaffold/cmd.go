@@ -170,7 +170,7 @@ func main() {
 func serveCRMetrics(cfg *rest.Config) {
 	// Below returns filterted operator/CustomResource specific GVKs.
 	// For more control create below GVK list with your own custom logic.
-	filteredGVK, err := kubemetrics.GetGVKsFromAddToScheme(apis.AddToScheme)
+	filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(apis.AddToScheme)
 	if err != nil {
 		log.Error(err, "Could not generate or serve Custom Resource metrics")
 		return

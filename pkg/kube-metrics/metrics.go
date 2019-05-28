@@ -21,8 +21,6 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	kuberuntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 	kcollector "k8s.io/kube-state-metrics/pkg/collector"
@@ -32,54 +30,17 @@ import (
 
 var log = logf.Log.WithName("kubemetrics")
 
-// GetGVKsFromAddToScheme takes in the operator specific scheme and
-// filters out all generic apimachinery meta types. It returns the GVK specific to this operator.
-func GetGVKsFromAddToScheme(addToSchemeFunc func(*runtime.Scheme) error) ([]schema.GroupVersionKind, error) {
-	s := kuberuntime.NewScheme()
-	err := addToSchemeFunc(s)
-	if err != nil {
-		return nil, err
-	}
-	operatorKnownTypes := s.AllKnownTypes()
-	operatorGVKs := []schema.GroupVersionKind{}
-	for gvk, _ := range operatorKnownTypes {
-		if !isKubeMetaKind(gvk.Kind) {
-			operatorGVKs = append(operatorGVKs, gvk)
-		}
-	}
-
-	return operatorGVKs, nil
-}
-
-func isKubeMetaKind(kind string) bool {
-	if strings.HasSuffix(kind, "List") ||
-		kind == "GetOptions" ||
-		kind == "DeleteOptions" ||
-		kind == "ExportOptions" ||
-		kind == "APIVersions" ||
-		kind == "APIGroupList" ||
-		kind == "APIResourceList" ||
-		kind == "UpdateOptions" ||
-		kind == "CreateOptions" ||
-		kind == "Status" ||
-		kind == "WatchEvent" ||
-		kind == "ListOptions" ||
-		kind == "APIGroup" {
-		return true
-	}
-
-	return false
-}
-
-// ServeCRMetrics generates CR specific metrics based on the operator GVK.
-// It starts serving collections of those metrics on given host and port.
+// ServeCRMetrics generates CustomResource specific metrics based on the inputted custom resource GVK.
+// A list of namespaces, ns, can be passed to ServeCRMetrics to scope the generated metrics. Passing nil or
+// an empty list of namespaces will result in using just the namespace the operator is deployed in.
+// The function also starts serving the generated collections of the metrics on given host and port.
 func ServeCRMetrics(cfg *rest.Config,
 	ns []string,
 	operatorGVKs []schema.GroupVersionKind,
 	host string, port int32) error {
 	// Create new unstructured client.
 	uc := NewClientForConfig(cfg)
-	var collectors [][]*kcollector.Collector
+	var collectors [][]kcollector.Collector
 	log.V(1).Info("Starting collecting operator types")
 	// Loop through all the possible operator/custom resource specific types.
 	for _, gvk := range operatorGVKs {
