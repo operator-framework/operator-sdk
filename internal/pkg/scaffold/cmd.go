@@ -166,7 +166,7 @@ func main() {
 
 // serveCRMetrics gets the Operator/CustomResource GVKs
 // and generates metrics based on those types.
-// It serves those metrics on "metricsHost/operatorMetricsPort".
+// It serves those metrics on "http://metricsHost:operatorMetricsPort".
 func serveCRMetrics(cfg *rest.Config) {
 	// Below returns filterted operator/CustomResource specific GVKs.
 	// For more control create below GVK list with your own custom logic.
