@@ -2,6 +2,8 @@
 
 ### Added
 
+- Adds support for building OCI images with [podman](https://podman.io/), e.g. `operator-sdk build --image-builder=podman`. ([#1488](https://github.com/operator-framework/operator-sdk/pull/1488))
+
 ### Changed
 - Remove TypeMeta declaration from the implementation of the objects [#1462](https://github.com/operator-framework/operator-sdk/pull/1462/)
 
