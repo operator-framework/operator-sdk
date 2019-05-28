@@ -57,6 +57,7 @@ kubernetes cluster using a kubeconfig file.
 	upLocalCmd.Flags().StringVar(&operatorFlags, "operator-flags", "", "The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
 	upLocalCmd.Flags().StringVar(&namespace, "namespace", "", "The namespace where the operator watches for changes.")
 	upLocalCmd.Flags().StringVar(&ldFlags, "go-ldflags", "", "Set Go linker options")
+	upLocalCmd.Flags().BoolVar(&dlv, "dlv", false, "Start the operator under the dlv debugger")
 	switch projutil.GetOperatorType() {
 	case projutil.OperatorTypeAnsible:
 		ansibleOperatorFlags = aoflags.AddTo(upLocalCmd.Flags(), "(ansible operator)")
@@ -71,6 +72,7 @@ var (
 	operatorFlags        string
 	namespace            string
 	ldFlags              string
+	dlv                  bool
 	ansibleOperatorFlags *aoflags.AnsibleOperatorFlags
 	helmOperatorFlags    *hoflags.HelmOperatorFlags
 )
@@ -113,7 +115,14 @@ func upLocal() error {
 		extraArgs := strings.Split(operatorFlags, " ")
 		args = append(args, extraArgs...)
 	}
-	dc := exec.Command(outputBinName, args...)
+
+	var dc *exec.Cmd
+	if dlv {
+		args = append([]string{"exec", outputBinName}, args...)
+		dc = exec.Command("dlv", args...)
+	} else {
+		dc = exec.Command(outputBinName, args...)
+	}
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {

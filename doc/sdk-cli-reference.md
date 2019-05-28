@@ -523,6 +523,7 @@ the operator-sdk binary itself as the operator.
 
 ##### Flags
 
+* `--dlv` - Start the operator under the dlv debugger
 * `--go-ldflags` string - Set Go linker options
 * `--kubeconfig` string - The file path to Kubernetes configuration file; defaults to $HOME/.kube/config
 * `--namespace` string - The namespace where the operator watches for changes. (default "default")
