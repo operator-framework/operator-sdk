@@ -85,7 +85,7 @@ func ServeCRMetrics(cfg *rest.Config,
 	for _, gvk := range operatorGVKs {
 		// Generate metric based on the kind.
 		metricFamilies := generateMetricFamilies(gvk.Kind)
-		log.V(1).Info("Generating metric families for kind ", gvk.Kind, "and group/version", gvk.GroupVersion().String())
+		log.V(1).Info("Generating metric families", "apiVersion", gvk.GroupVersion().String(), "kind", gvk.Kind)
 		// Generate collector based on the group/version, kind and the metric families.
 		c, err := NewCollectors(uc, ns, gvk.GroupVersion().String(), gvk.Kind, metricFamilies)
 		if err != nil {
