@@ -650,7 +650,7 @@ func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.T
 
 	response, err := getMetrics(t, f, s.Spec.Selector, namespace, "8383")
 	if err != nil {
-		return fmt.Errorf("failed to lint metrics: %v", err)
+		return fmt.Errorf("failed to get metrics: %v", err)
 	}
 	// Make sure metrics are present
 	if len(response) == 0 {
