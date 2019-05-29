@@ -28,6 +28,7 @@ import (
 	"github.com/ghodss/yaml"
 	olmregistry "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/registry"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
 
@@ -74,9 +75,9 @@ func (s *PackageManifest) CustomRender() ([]byte, error) {
 	}
 	path := filepath.Join(s.AbsProjectPath, i.Path)
 
-	pm := s.newPackageManifest()
-	if _, err := os.Stat(path); err != nil && !os.IsNotExist(err) {
-		return nil, errors.Wrapf(err, "package manifest %s", path)
+	pm := &olmregistry.PackageManifest{}
+	if _, err := os.Stat(path); err != nil && os.IsNotExist(err) {
+		pm = s.newPackageManifest()
 	} else if err == nil {
 		b, err := ioutil.ReadFile(path)
 		if err != nil {
@@ -86,13 +87,16 @@ func (s *PackageManifest) CustomRender() ([]byte, error) {
 			if err = yaml.Unmarshal(b, pm); err != nil {
 				return nil, errors.Wrapf(err, "unmarshal package manifest %s", path)
 			}
+		} else {
+			// File exists but is empty.
+			pm = s.newPackageManifest()
 		}
+	} else {
+		return nil, errors.Wrapf(err, "package manifest %s", path)
 	}
 
-	if s.Channel != "" {
-		if err = s.setChannels(pm); err != nil {
-			return nil, err
-		}
+	if err = s.setChannels(pm); err != nil {
+		return nil, err
 	}
 
 	sort.Slice(pm.Channels, func(i int, j int) bool {
@@ -119,6 +123,8 @@ func (s *PackageManifest) newPackageManifest() *olmregistry.PackageManifest {
 	return pm
 }
 
+// setChannels checks for duplicate channels in pm and sets the default
+// channel if possible.
 func (s *PackageManifest) setChannels(pm *olmregistry.PackageManifest) error {
 	channelMap := map[string]string{}
 	for _, c := range pm.Channels {
@@ -127,7 +133,9 @@ func (s *PackageManifest) setChannels(pm *olmregistry.PackageManifest) error {
 		}
 		channelMap[c.Name] = c.CurrentCSVName
 	}
-	channelMap[s.Channel] = getCSVName(s.ProjectName, s.CSVVersion)
+	if s.Channel != "" {
+		channelMap[s.Channel] = getCSVName(s.ProjectName, s.CSVVersion)
+	}
 	channels := []olmregistry.PackageChannel{}
 	for n, cn := range channelMap {
 		channels = append(channels, olmregistry.PackageChannel{
@@ -137,8 +145,19 @@ func (s *PackageManifest) setChannels(pm *olmregistry.PackageManifest) error {
 	}
 	pm.Channels = channels
 
-	if s.ChannelIsDefault {
+	// Use s.Channel as the default channel if caller has specified it as the
+	// default. If no default channel was specified and there is only one
+	// channel, use that channel as the default.
+	if s.ChannelIsDefault && s.Channel != "" {
 		pm.DefaultChannelName = s.Channel
+	} else if len(pm.Channels) == 1 {
+		pm.DefaultChannelName = pm.Channels[0].Name
 	}
+	if pm.DefaultChannelName == "" {
+		log.Warn("Package manifest default channel is empty and should be set to an existing channel.")
+	} else if _, ok := channelMap[pm.DefaultChannelName]; !ok {
+		log.Warnf(`Package manifest default channel "%s" does not exist in channels.`, pm.DefaultChannelName)
+	}
+
 	return nil
 }
