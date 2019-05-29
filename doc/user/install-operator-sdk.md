@@ -6,20 +6,20 @@
 
 ```sh
 # Set the release version variable
-RELEASE_VERSION=v0.7.0
+$ RELEASE_VERSION=v0.8.0
 # Linux
-$ curl -OJ https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu
+$ curl -OJL https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu
 # macOS
-$ curl -OJ https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin
+$ curl -OJL https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin
 ```
 
 #### Verify the downloaded release binary
 
 ```sh
 # Linux
-curl -OJ https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu.asc
+$ curl -OJL https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu.asc
 # macOS
-curl -OJ https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin.asc
+$ curl -OJL https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin.asc
 ```
 
 To verify a release binary using the provided asc files, place the binary and corresponding asc file into the same directory and use the corresponding command:
@@ -38,7 +38,7 @@ $ gpg --verify operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin.asc
 $ gpg: assuming signed data in 'operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin'
 $ gpg: Signature made Fri Apr  5 20:03:22 2019 CEST
 $ gpg:                using RSA key <KEY_ID>
-$gpg: Can't check signature: No public key
+$ gpg: Can't check signature: No public key
 ```
 
 To download the key, use the following command, replacing `$KEY_ID` with the RSA key string provided in the output of the previous command:
@@ -47,13 +47,19 @@ To download the key, use the following command, replacing `$KEY_ID` with the RSA
 $ gpg --recv-key "$KEY_ID"
 ```
 
+You'll need to specify a key server if one hasn't been configured. For example:
+
+```sh
+$ gpg --keyserver keyserver.ubuntu.com --recv-key "$KEY_ID"
+```
+
 Now you should be able to verify the binary.
 
 
 ### Install the release binary in your PATH
 
 ```
-# Linux 
+# Linux
 $ chmod +x operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu && sudo cp operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu /usr/local/bin/operator-sdk && rm operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu
 # macOS
 $ chmod +x operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin && sudo cp operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin /usr/local/bin/operator-sdk && rm operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin

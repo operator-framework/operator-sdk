@@ -15,7 +15,6 @@
 package helm
 
 import (
-	"errors"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -30,7 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/rest"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/manifest"
 	"k8s.io/helm/pkg/proto/hapi/chart"
@@ -38,14 +36,23 @@ import (
 	"k8s.io/helm/pkg/tiller"
 )
 
+// roleDiscoveryInterface is an interface that contains just the discovery
+// methods needed by the Helm role scaffold generator. Requiring just this
+// interface simplifies testing.
+type roleDiscoveryInterface interface {
+	discovery.ServerVersionInterface
+	ServerResources() ([]*metav1.APIResourceList, error)
+}
+
 // CreateRoleScaffold generates a role scaffold from the provided helm chart. It
 // renders a release manifest using the chart's default values and uses the Kubernetes
 // discovery API to lookup each resource in the resulting manifest.
-func CreateRoleScaffold(cfg *rest.Config, chart *chart.Chart, isClusterScoped bool) (*scaffold.Role, error) {
+// The role scaffold will have IsClusterScoped=true if the chart lists cluster scoped resources
+func CreateRoleScaffold(dc roleDiscoveryInterface, chart *chart.Chart) (*scaffold.Role, error) {
 	log.Info("Generating RBAC rules")
 
 	roleScaffold := &scaffold.Role{
-		IsClusterScoped:  isClusterScoped,
+		IsClusterScoped:  false,
 		SkipDefaultRules: true,
 		// TODO: enable metrics in helm operator
 		SkipMetricsRules: true,
@@ -66,30 +73,19 @@ func CreateRoleScaffold(cfg *rest.Config, chart *chart.Chart, isClusterScoped bo
 		},
 	}
 
-	clusterResourceRules, namespacedResourceRules, err := generateRoleRules(cfg, chart)
+	clusterResourceRules, namespacedResourceRules, err := generateRoleRules(dc, chart)
 	if err != nil {
 		log.Warnf("Using default RBAC rules: failed to generate RBAC rules: %s", err)
 		roleScaffold.SkipDefaultRules = false
+		return roleScaffold, nil
 	}
 
-	if !isClusterScoped {
-		// If there are cluster-scoped resources, but we're creating a namespace-scoped operator,
-		// log all of the cluster-scoped resources, and return a helpful error message.
-		for _, rule := range clusterResourceRules {
-			for _, resource := range rule.Resources {
-				log.Errorf("Resource %s.%s is cluster-scoped, but --cluster-scoped was not set.", resource, rule.APIGroups[0])
-			}
-		}
-		if len(clusterResourceRules) > 0 {
-			return nil, errors.New("must use --cluster-scoped with chart containing cluster-scoped resources")
-		}
-
-		// If we're here, there are no cluster-scoped resources, so add just the rules for namespaced resources
-		roleScaffold.CustomRules = append(roleScaffold.CustomRules, namespacedResourceRules...)
-	} else {
-		// For a cluster-scoped operator, add all of the rules
-		roleScaffold.CustomRules = append(roleScaffold.CustomRules, append(clusterResourceRules, namespacedResourceRules...)...)
+	// Use a ClusterRole if cluster scoped resources are listed in the chart
+	if len(clusterResourceRules) > 0 {
+		log.Info("Scaffolding ClusterRole and ClusterRolebinding for cluster scoped resources in the helm chart")
+		roleScaffold.IsClusterScoped = true
 	}
+	roleScaffold.CustomRules = append(roleScaffold.CustomRules, append(clusterResourceRules, namespacedResourceRules...)...)
 
 	log.Warn("The RBAC rules generated in deploy/role.yaml are based on the chart's default manifest." +
 		" Some rules may be missing for resources that are only enabled with custom values, and" +
@@ -99,8 +95,8 @@ func CreateRoleScaffold(cfg *rest.Config, chart *chart.Chart, isClusterScoped bo
 	return roleScaffold, nil
 }
 
-func generateRoleRules(cfg *rest.Config, chart *chart.Chart) ([]rbacv1.PolicyRule, []rbacv1.PolicyRule, error) {
-	kubeVersion, serverResources, err := getServerVersionAndResources(cfg)
+func generateRoleRules(dc roleDiscoveryInterface, chart *chart.Chart) ([]rbacv1.PolicyRule, []rbacv1.PolicyRule, error) {
+	kubeVersion, serverResources, err := getServerVersionAndResources(dc)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get server info: %s", err)
 	}
@@ -178,11 +174,7 @@ func generateRoleRules(cfg *rest.Config, chart *chart.Chart) ([]rbacv1.PolicyRul
 	return clusterRules, namespacedRules, nil
 }
 
-func getServerVersionAndResources(cfg *rest.Config) (*version.Info, []*metav1.APIResourceList, error) {
-	dc, err := discovery.NewDiscoveryClientForConfig(cfg)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create discovery client: %s", err)
-	}
+func getServerVersionAndResources(dc roleDiscoveryInterface) (*version.Info, []*metav1.APIResourceList, error) {
 	kubeVersion, err := dc.ServerVersion()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get kubernetes server version: %s", err)
@@ -195,12 +187,13 @@ func getServerVersionAndResources(cfg *rest.Config) (*version.Info, []*metav1.AP
 }
 
 func getDefaultManifests(c *chart.Chart, kubeVersion *version.Info) ([]tiller.Manifest, error) {
+	v := strings.TrimSuffix(fmt.Sprintf("%s.%s", kubeVersion.Major, kubeVersion.Minor), "+")
 	renderOpts := renderutil.Options{
 		ReleaseOptions: chartutil.ReleaseOptions{
 			IsInstall: true,
 			IsUpgrade: false,
 		},
-		KubeVersion: fmt.Sprintf("%s.%s", kubeVersion.Major, kubeVersion.Minor),
+		KubeVersion: v,
 	}
 
 	renderedTemplates, err := renderutil.Render(c, &chart.Config{}, renderOpts)

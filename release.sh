@@ -31,7 +31,7 @@ fi
 
 # Detect whether versions in code were updated.
 VER_FILE="version/version.go"
-CURR_VER="$(sed -nr 's|Version = "(.+)"|\1|p' "$VER_FILE" | tr -d ' \t\n')"
+CURR_VER="$(sed -nr 's|\s+Version\s+= "(.+)"|\1|p' "$VER_FILE" | tr -d ' \t\n')"
 if [[ "$VER" != "$CURR_VER" ]]; then
 	echo "version is not set correctly in $VER_FILE"
 	exit 1
