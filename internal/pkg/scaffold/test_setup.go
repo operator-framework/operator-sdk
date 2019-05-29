@@ -29,7 +29,7 @@ import (
 const (
 	// test constants describing an app operator project
 	appProjectName = "app-operator"
-	appRepo        = "github.com" + filePathSep + "example-inc" + filePathSep + appProjectName
+	appRepo        = "github.com/example-inc/" + appProjectName
 	appApiVersion  = "app.example.com/v1alpha1"
 	appKind        = "AppService"
 )
@@ -47,7 +47,7 @@ func mustGetImportPath() string {
 	if err != nil {
 		log.Fatalf("Failed to get working directory: (%v)", err)
 	}
-	return filepath.Join(wd, appRepo)
+	return filepath.Join(wd, filepath.FromSlash(appRepo))
 }
 
 func setupScaffoldAndWriter() (*Scaffold, *bytes.Buffer) {

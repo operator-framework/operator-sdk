@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -148,7 +149,7 @@ func mustBeNewProject() {
 
 func doGoScaffold() error {
 	cfg := &input.Config{
-		Repo:           filepath.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
+		Repo:           path.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
 		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
 		ProjectName:    projectName,
 	}
