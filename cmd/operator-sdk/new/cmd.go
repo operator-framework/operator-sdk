@@ -306,7 +306,7 @@ func doHelmScaffold() error {
 	}
 
 	valuesPath := filepath.Join("<project_dir>", helm.HelmChartsDir, chart.GetMetadata().GetName(), "values.yaml")
-	crSpec := fmt.Sprintf("# Default values copied from %s\n\n%s", valuesPath, chart.GetValues().GetRaw())
+	crSpec := fmt.Sprintf("# Default values copied from %s\n%s", valuesPath, chart.GetValues().GetRaw())
 
 	k8sCfg, err := config.GetConfig()
 	if err != nil {
