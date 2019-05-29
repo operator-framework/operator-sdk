@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/pkg/errors"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -32,12 +33,16 @@ var log = logf.Log.WithName("kubemetrics")
 
 // ServeCRMetrics generates CustomResource specific metrics based on the inputted custom resource GVK.
 // A list of namespaces, ns, can be passed to ServeCRMetrics to scope the generated metrics. Passing nil or
-// an empty list of namespaces will result in using just the namespace the operator is deployed in.
+// an empty list of namespaces will result in an error.
 // The function also starts serving the generated collections of the metrics on given host and port.
 func ServeCRMetrics(cfg *rest.Config,
 	ns []string,
 	operatorGVKs []schema.GroupVersionKind,
 	host string, port int32) error {
+	// We have to have at least one namespace.
+	if len(ns) < 1 {
+		return errors.New("namespaces were empty; pass at least one namespace to generate custom resource metrics")
+	}
 	// Create new unstructured client.
 	uc := NewClientForConfig(cfg)
 	var collectors [][]kcollector.Collector

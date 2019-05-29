@@ -17,7 +17,6 @@ package kubemetrics
 import (
 	"context"
 
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,14 +30,7 @@ import (
 
 // NewCollectors returns collections of metrics in the namespaces provided, per the api/kind resource.
 // The metrics are registered in the custom generateStore function that needs to be defined.
-// Current operators namespace will be added to the passed namespaces if it is not present.
 func NewCollectors(uc *Client, namespaces []string, api string, kind string, metricFamily []metric.FamilyGenerator) ([]kcollector.Collector, error) {
-	// Detect in which namespace the operator is deployed in.
-	operatorNamespace, err := k8sutil.GetOperatorNamespace()
-	if err != nil {
-		return nil, err
-	}
-	namespaces = append(namespaces, operatorNamespace)
 	namespaces = deduplicateNamespaces(namespaces)
 	var collectors []kcollector.Collector
 	// Generate collector per namespace.
