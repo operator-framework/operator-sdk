@@ -1,13 +1,6 @@
-FROM openshift/origin-release:golang-1.12 as builder
+FROM osdk-intermediate as builder
 
-ENV GOPATH=/go PATH=/go/bin:$PATH
-WORKDIR /go/src/github.com/operator-framework/operator-sdk
-
-COPY . .
-
-RUN make install
-
-RUN hack/tests/e2e-go-part-1.sh
+RUN ci/tests/e2e-go-scaffold.sh
 
 RUN go build -gcflags "all=-trimpath=${GOPATH}" -asmflags "all=-trimpath=${GOPATH}" -o /memcached-operator $(cat project_path.tmp)/memcached-operator/cmd/manager/main.go
 
