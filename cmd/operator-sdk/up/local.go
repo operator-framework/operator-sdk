@@ -118,11 +118,11 @@ func upLocal() error {
 	var dc *exec.Cmd
 
 	if enableDelve {
-		debugArgs := []string{"--listen=:2345", "--headless=true", "--api-version=2", "exec", outputBinName, "--"}
-		debugArgs = append(debugArgs, args...)
+		delveArgs := []string{"--listen=:2345", "--headless=true", "--api-version=2", "exec", outputBinName, "--"}
+		delveArgs = append(delveArgs, args...)
 
-		dc = exec.Command("dlv", debugArgs...)
-		log.Infof("Running as debug %#v", debugArgs)
+		dc = exec.Command("dlv", delveArgs...)
+		log.Infof("Delve debugger enabled with args %s", delveArgs)
 	} else {
 		dc = exec.Command(outputBinName, args...)
 	}
