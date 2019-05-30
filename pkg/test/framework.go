@@ -114,12 +114,7 @@ type addToSchemeFunc func(*runtime.Scheme) error
 // the addToScheme function (located in the register.go file of their operator
 // project) and the List struct for their custom resource. For example, for a
 // memcached operator, the list stuct may look like:
-// &MemcachedList{
-//	TypeMeta: metav1.TypeMeta{
-//		Kind: "Memcached",
-//		APIVersion: "cache.example.com/v1alpha1",
-//		},
-//	}
+// &MemcachedList{}
 // The List object is needed because the CRD has not always been fully registered
 // by the time this function is called. If the CRD takes more than 5 seconds to
 // become ready, this function throws an error

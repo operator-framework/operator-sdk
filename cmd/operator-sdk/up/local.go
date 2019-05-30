@@ -19,6 +19,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -183,7 +184,7 @@ func buildLocal(outputBinName string) error {
 	}
 	opts := projutil.GoCmdOptions{
 		BinName:     outputBinName,
-		PackagePath: filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir),
+		PackagePath: path.Join(projutil.CheckAndGetProjectGoPkg(), filepath.ToSlash(scaffold.ManagerDir)),
 		Args:        args,
 		GoMod:       projutil.IsDepManagerGoMod(),
 	}

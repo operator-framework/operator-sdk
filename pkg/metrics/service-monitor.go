@@ -61,10 +61,6 @@ func GenerateServiceMonitor(s *v1.Service) *monitoringv1.ServiceMonitor {
 	}
 
 	return &monitoringv1.ServiceMonitor{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ServiceMonitor",
-			APIVersion: "monitoring.coreos.com/v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      s.ObjectMeta.Name,
 			Namespace: s.ObjectMeta.Namespace,
