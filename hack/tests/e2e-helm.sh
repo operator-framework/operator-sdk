@@ -94,7 +94,12 @@ fi
 
 # create and build the operator
 pushd "$GOTMP"
-operator-sdk new nginx-operator --api-version=helm.example.com/v1alpha1 --kind=Nginx --type=helm
+log=$(operator-sdk new nginx-operator --api-version=helm.example.com/v1alpha1 --kind=Nginx --type=helm 2>&1)
+echo $log
+if echo $log | grep -q "failed to generate RBAC rules"; then
+    echo FAIL expected successful generation of RBAC rules
+    exit 1
+fi
 
 pushd nginx-operator
 sed -i 's|\(FROM quay.io/operator-framework/helm-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile

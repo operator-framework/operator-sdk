@@ -90,6 +90,5 @@ replace (
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20180711000925-0cf8f7e6ed1d
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.1.10
 	sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.1.11-0.20190411181648-9d55346c2bde
-	github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v0.8.0
 )
 `

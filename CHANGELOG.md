@@ -1,3 +1,21 @@
+## Unreleased
+
+### Added
+
+- Adds support for building OCI images with [podman](https://podman.io/), e.g. `operator-sdk build --image-builder=podman`. ([#1488](https://github.com/operator-framework/operator-sdk/pull/1488))
+
+### Changed
+- Remove TypeMeta declaration from the implementation of the objects [#1462](https://github.com/operator-framework/operator-sdk/pull/1462/)
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
+- Fixes a regression that causes Helm RBAC generation to contain an empty custom ruleset when the chart's default manifest contains only namespaced resources. ([#1456](https://github.com/operator-framework/operator-sdk/pull/1456))
+- Fixes an issue that causes Helm RBAC generation to fail when creating new operators with a Kubernetes context configured to connect to an OpenShift cluster. ([#1461](https://github.com/operator-framework/operator-sdk/pull/1461))
+
 ## v0.8.0
 
 ### Added

@@ -117,7 +117,7 @@ func TestMemcached(t *testing.T) {
 			// stub go.mod into the local SDK repo referred to in
 			// memcached-operator's go.mod, which allows go to recognize
 			// the local SDK repo as a module.
-			sdkModPath := filepath.Join(replace.repo, "go.mod")
+			sdkModPath := filepath.Join(filepath.FromSlash(replace.repo), "go.mod")
 			err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
 			if err != nil {
 				t.Fatalf("Failed to write main repo go.mod file: %v", err)
