@@ -70,12 +70,7 @@ func Become(ctx context.Context, lockName string) error {
 	}
 
 	// check for existing lock from this pod, in case we got restarted
-	existing := &corev1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "ConfigMap",
-		},
-	}
+	existing := &corev1.ConfigMap{}
 	key := crclient.ObjectKey{Namespace: ns, Name: lockName}
 	err = client.Get(ctx, key, existing)
 
@@ -98,10 +93,6 @@ func Become(ctx context.Context, lockName string) error {
 	}
 
 	cm := &corev1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "ConfigMap",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            lockName,
 			Namespace:       ns,

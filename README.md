@@ -42,6 +42,7 @@ The following workflow is for a new **Helm** operator:
 - [git][git_tool]
 - [go][go_tool] version v1.12+.
 - [docker][docker_tool] version 17.03+.
+  - Alternatively [podman][podman_tool] `v1.2.0+` or [buildah][buildah_tool] `v1.7+`
 - [kubectl][kubectl_tool] version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
 
@@ -166,6 +167,8 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
 [docker_tool]:https://docs.docker.com/install/
+[podman_tool]:https://github.com/containers/libpod/blob/master/install.md
+[buildah_tool]:https://github.com/containers/buildah/blob/master/install.md
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [controller_runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [ansible_user_guide]:./doc/ansible/user-guide.md

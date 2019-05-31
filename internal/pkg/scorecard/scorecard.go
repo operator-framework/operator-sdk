@@ -35,6 +35,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+const DefaultConfigFile = ".osdk-scorecard"
+
 // make a global logger for scorecard
 var (
 	logReadWriter io.ReadWriter
@@ -174,7 +176,7 @@ func initConfig() error {
 	} else {
 		viper.AddConfigPath(projutil.MustGetwd())
 		// using SetConfigName allows users to use a .yaml, .json, or .toml file
-		viper.SetConfigName(".osdk-scorecard")
+		viper.SetConfigName(DefaultConfigFile)
 	}
 
 	if err := viper.ReadInConfig(); err == nil {
