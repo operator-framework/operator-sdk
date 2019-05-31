@@ -18,8 +18,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
+
+	"k8s.io/client-go/discovery"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/ansible"
@@ -95,7 +98,7 @@ func newFunc(cmd *cobra.Command, args []string) error {
 	}
 
 	if repo == "" {
-		repo = filepath.Join(projutil.GetGoPkg(), projectName)
+		repo = path.Join(projutil.GetGoPkg(), projectName)
 	}
 
 	log.Infof("Creating new %s operator '%s'.", strings.Title(operatorType), projectName)
@@ -324,7 +327,13 @@ func doHelmScaffold() error {
 	if err != nil {
 		return fmt.Errorf("failed to get kubernetes config: %s", err)
 	}
-	roleScaffold, err := helm.CreateRoleScaffold(k8sCfg, chart)
+
+	dc, err := discovery.NewDiscoveryClientForConfig(k8sCfg)
+	if err != nil {
+		return fmt.Errorf("failed to get kubernetes discovery client: %s", err)
+	}
+
+	roleScaffold, err := helm.CreateRoleScaffold(dc, chart)
 	if err != nil {
 		return fmt.Errorf("failed to generate role scaffold: %s", err)
 	}

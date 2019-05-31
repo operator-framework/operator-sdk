@@ -79,12 +79,7 @@ To do this, pass the CRD's `AddToScheme` function and its List type object to th
 [AddToFrameworkScheme][scheme-link] function. For our example memcached-operator, it looks like this:
 
 ```go
-memcachedList := &cachev1alpha1.MemcachedList{
-    TypeMeta: metav1.TypeMeta{
-        Kind:       "Memcached",
-        APIVersion: "cache.example.com/v1alpha1",
-    },
-}
+memcachedList := &cachev1alpha1.MemcachedList{}
 err := framework.AddToFrameworkScheme(apis.AddToScheme, memcachedList)
 if err != nil {
     t.Fatalf("failed to add custom resource scheme to framework: %v", err)
@@ -168,10 +163,6 @@ This is how we can create a custom memcached custom resource with a size of 3:
 ```go
 // create memcached custom resource
 exampleMemcached := &cachev1alpha1.Memcached{
-    TypeMeta: metav1.TypeMeta{
-        Kind:       "Memcached",
-        APIVersion: "cache.example.com/v1alpha1",
-    },
     ObjectMeta: metav1.ObjectMeta{
         Name:      "example-memcached",
         Namespace: namespace,

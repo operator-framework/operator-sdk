@@ -192,9 +192,10 @@ func GetGoPkg() string {
 func parseGoPkg(gopath string) string {
 	goSrc := filepath.Join(gopath, SrcDir)
 	wd := MustGetwd()
-	currPkg := strings.Replace(wd, goSrc, "", 1)
-	// strip any "/" prefix from the repo path.
-	return strings.TrimPrefix(currPkg, fsep)
+	pathedPkg := strings.Replace(wd, goSrc, "", 1)
+	// Make sure package only contains the "/" separator and no others, and
+	// trim any leading/trailing "/".
+	return strings.Trim(filepath.ToSlash(pathedPkg), "/")
 }
 
 // GetOperatorType returns type of operator is in cwd.
