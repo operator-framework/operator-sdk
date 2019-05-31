@@ -24,6 +24,8 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
+
+	olmregistry "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/registry"
 )
 
 func TestPackageManifest(t *testing.T) {
@@ -68,3 +70,34 @@ const packageManifestExp = `channels:
 defaultChannel: stable
 packageName: app-operator
 `
+
+func TestValidatePackageManifest(t *testing.T) {
+	channels := []olmregistry.PackageChannel{
+		{Name: "foo", CurrentCSVName: "bar"},
+	}
+	pm := &olmregistry.PackageManifest{
+		Channels:           channels,
+		DefaultChannelName: "baz",
+		PackageName:        "test-package",
+	}
+	err := validatePackageManifest(pm)
+	if err == nil || err.Error() != "default channel baz does not exist in channels" {
+		t.Errorf("Expected non-existent default channel validation error, got none")
+	}
+	pm.DefaultChannelName = pm.Channels[0].Name
+	if err = validatePackageManifest(pm); err != nil {
+		t.Errorf("Expected no validation error, got an error")
+	}
+	pm.Channels = nil
+	err = validatePackageManifest(pm)
+	if err == nil || err.Error() != "channels cannot be empty" {
+		t.Errorf("Expected empty channels validation error, got none")
+	}
+	pm.Channels = make([]olmregistry.PackageChannel, 1)
+	copy(pm.Channels, channels)
+	pm.Channels[0].CurrentCSVName = ""
+	err = validatePackageManifest(pm)
+	if err == nil || err.Error() != "channel foo currentCSV cannot be empty" {
+		t.Errorf("Expected empty currentCSV validation error, got none")
+	}
+}

@@ -95,7 +95,7 @@ func (s *PackageManifest) CustomRender() ([]byte, error) {
 		return nil, errors.Wrapf(err, "package manifest %s", path)
 	}
 
-	if err := s.validatePackageManifest(pm); err != nil {
+	if err := validatePackageManifest(pm); err != nil {
 		return nil, errors.Wrapf(err, "validate package manifest %s", pm.PackageName)
 	}
 
@@ -127,7 +127,13 @@ func (s *PackageManifest) newPackageManifest() *olmregistry.PackageManifest {
 	return pm
 }
 
-func (s *PackageManifest) validatePackageManifest(pm *olmregistry.PackageManifest) error {
+func validatePackageManifest(pm *olmregistry.PackageManifest) error {
+	if pm.PackageName == "" {
+		return fmt.Errorf("package name cannot be empty")
+	}
+	if len(pm.Channels) == 0 {
+		return fmt.Errorf("channels cannot be empty")
+	}
 	if pm.DefaultChannelName == "" {
 		return fmt.Errorf("default channel cannot be empty")
 	}
