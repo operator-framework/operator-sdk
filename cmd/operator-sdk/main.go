@@ -106,7 +106,7 @@ func checkDepManagerForCmd(cmd *cobra.Command) (err error) {
 				return nil
 			}
 		}
-		// "new" and "migrate" commands are for projects that establish witch
+		// "new" and "migrate" commands are for projects that establish which
 		// dep manager to use. "new" should not be called if we're in the project
 		// root but could be, so check it anyway.
 		dmStr, err := cmd.Flags().GetString("dep-manager")
