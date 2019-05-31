@@ -80,24 +80,34 @@ func TestValidatePackageManifest(t *testing.T) {
 		DefaultChannelName: "baz",
 		PackageName:        "test-package",
 	}
+
 	err := validatePackageManifest(pm)
 	if err == nil || err.Error() != "default channel baz does not exist in channels" {
 		t.Errorf("Expected non-existent default channel validation error, got none")
 	}
+
 	pm.DefaultChannelName = pm.Channels[0].Name
 	if err = validatePackageManifest(pm); err != nil {
 		t.Errorf("Expected no validation error, got an error")
 	}
+
 	pm.Channels = nil
 	err = validatePackageManifest(pm)
 	if err == nil || err.Error() != "channels cannot be empty" {
 		t.Errorf("Expected empty channels validation error, got none")
 	}
+
 	pm.Channels = make([]olmregistry.PackageChannel, 1)
 	copy(pm.Channels, channels)
 	pm.Channels[0].CurrentCSVName = ""
 	err = validatePackageManifest(pm)
 	if err == nil || err.Error() != "channel foo currentCSV cannot be empty" {
 		t.Errorf("Expected empty currentCSV validation error, got none")
+	}
+
+	pm.Channels = append(channels, channels...)
+	err = validatePackageManifest(pm)
+	if err == nil || err.Error() != "duplicate package manifest channel name foo; channel names must be unique" {
+		t.Errorf("Expected duplicate channel name validation error, got none")
 	}
 }

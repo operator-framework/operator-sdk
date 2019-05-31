@@ -137,7 +137,8 @@ func validatePackageManifest(pm *olmregistry.PackageManifest) error {
 	if pm.DefaultChannelName == "" {
 		return fmt.Errorf("default channel cannot be empty")
 	}
-	defaultExists := false
+
+	seen := map[string]struct{}{}
 	for i, c := range pm.Channels {
 		if c.Name == "" {
 			return fmt.Errorf("channel %d name cannot be empty", i)
@@ -145,37 +146,27 @@ func validatePackageManifest(pm *olmregistry.PackageManifest) error {
 		if c.CurrentCSVName == "" {
 			return fmt.Errorf("channel %s currentCSV cannot be empty", c.Name)
 		}
-		if pm.DefaultChannelName == c.Name {
-			defaultExists = true
+		if _, ok := seen[c.Name]; ok {
+			return fmt.Errorf("duplicate package manifest channel name %s; channel names must be unique", c.Name)
 		}
+		seen[c.Name] = struct{}{}
 	}
-	if !defaultExists {
+	if _, ok := seen[pm.DefaultChannelName]; !ok {
 		return fmt.Errorf("default channel %s does not exist in channels", pm.DefaultChannelName)
 	}
+
 	return nil
 }
 
 // setChannels checks for duplicate channels in pm and sets the default
 // channel if possible.
 func (s *PackageManifest) setChannels(pm *olmregistry.PackageManifest) error {
-	channelMap := map[string]string{}
-	for _, c := range pm.Channels {
-		if _, ok := channelMap[c.Name]; ok {
-			return fmt.Errorf(`duplicate package manifest channel name "%s"; channel names must be unique`, c.Name)
-		}
-		channelMap[c.Name] = c.CurrentCSVName
-	}
 	if s.Channel != "" {
-		channelMap[s.Channel] = getCSVName(s.ProjectName, s.CSVVersion)
-	}
-	channels := []olmregistry.PackageChannel{}
-	for n, cn := range channelMap {
-		channels = append(channels, olmregistry.PackageChannel{
-			Name:           n,
-			CurrentCSVName: cn,
+		pm.Channels = append(pm.Channels, olmregistry.PackageChannel{
+			Name:           s.Channel,
+			CurrentCSVName: getCSVName(s.ProjectName, s.CSVVersion),
 		})
 	}
-	pm.Channels = channels
 
 	// Use s.Channel as the default channel if caller has specified it as the
 	// default.
@@ -184,7 +175,14 @@ func (s *PackageManifest) setChannels(pm *olmregistry.PackageManifest) error {
 	}
 	if pm.DefaultChannelName == "" {
 		log.Warn("Package manifest default channel is empty and should be set to an existing channel.")
-	} else if _, ok := channelMap[pm.DefaultChannelName]; !ok {
+	}
+	defaultExists := false
+	for _, c := range pm.Channels {
+		if pm.DefaultChannelName == c.Name {
+			defaultExists = true
+		}
+	}
+	if !defaultExists {
 		log.Warnf("Package manifest default channel %s does not exist in channels.", pm.DefaultChannelName)
 	}
 
