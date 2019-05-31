@@ -95,6 +95,10 @@ func (s *PackageManifest) CustomRender() ([]byte, error) {
 		return nil, errors.Wrapf(err, "package manifest %s", path)
 	}
 
+	if err := s.validatePackageManifest(pm); err != nil {
+		return nil, errors.Wrapf(err, "validate package manifest %s", pm.PackageName)
+	}
+
 	if err = s.setChannels(pm); err != nil {
 		return nil, err
 	}
@@ -123,6 +127,28 @@ func (s *PackageManifest) newPackageManifest() *olmregistry.PackageManifest {
 	return pm
 }
 
+func (s *PackageManifest) validatePackageManifest(pm *olmregistry.PackageManifest) error {
+	if pm.DefaultChannelName == "" {
+		return fmt.Errorf("default channel cannot be empty")
+	}
+	defaultExists := false
+	for i, c := range pm.Channels {
+		if c.Name == "" {
+			return fmt.Errorf("channel %d name cannot be empty", i)
+		}
+		if c.CurrentCSVName == "" {
+			return fmt.Errorf("channel %s currentCSV cannot be empty", c.Name)
+		}
+		if pm.DefaultChannelName == c.Name {
+			defaultExists = true
+		}
+	}
+	if !defaultExists {
+		return fmt.Errorf("default channel %s does not exist in channels", pm.DefaultChannelName)
+	}
+	return nil
+}
+
 // setChannels checks for duplicate channels in pm and sets the default
 // channel if possible.
 func (s *PackageManifest) setChannels(pm *olmregistry.PackageManifest) error {
@@ -146,17 +172,14 @@ func (s *PackageManifest) setChannels(pm *olmregistry.PackageManifest) error {
 	pm.Channels = channels
 
 	// Use s.Channel as the default channel if caller has specified it as the
-	// default. If no default channel was specified and there is only one
-	// channel, use that channel as the default.
+	// default.
 	if s.ChannelIsDefault && s.Channel != "" {
 		pm.DefaultChannelName = s.Channel
-	} else if len(pm.Channels) == 1 {
-		pm.DefaultChannelName = pm.Channels[0].Name
 	}
 	if pm.DefaultChannelName == "" {
 		log.Warn("Package manifest default channel is empty and should be set to an existing channel.")
 	} else if _, ok := channelMap[pm.DefaultChannelName]; !ok {
-		log.Warnf(`Package manifest default channel "%s" does not exist in channels.`, pm.DefaultChannelName)
+		log.Warnf("Package manifest default channel %s does not exist in channels.", pm.DefaultChannelName)
 	}
 
 	return nil
