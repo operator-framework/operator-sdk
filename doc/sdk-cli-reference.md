@@ -487,6 +487,7 @@ Runs the tests locally
 * `--go-test-flags` string - Additional flags to pass to go test
 * `--molecule-test-flags` string - Additional flags to pass to molecule test
 * `--up-local` - enable running operator locally with go run instead of as an image in the cluster
+* `--local-operator-flags` string - flags that the operator needs, while using --up-local (e.g. \"--flag1 value1 --flag2=value2\")
 * `--no-setup` - disable test resource creation
 * `--image` string - use a different operator image from the one specified in the namespaced manifest
 * `-h, --help` - help for local
