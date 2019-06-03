@@ -519,6 +519,7 @@ the operator-sdk binary itself as the operator.
 
 ##### Flags
 
+* `--enable-delve` bool - starts the operator locally and enables the delve debugger listening on port 2345
 * `--go-ldflags` string - Set Go linker options
 * `--kubeconfig` string - The file path to Kubernetes configuration file; defaults to $HOME/.kube/config
 * `--namespace` string - The namespace where the operator watches for changes. (default "default")
