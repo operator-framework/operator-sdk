@@ -32,12 +32,20 @@ func JoinPrefix(tokens ...string) string {
 }
 
 func SplitPrefix(prefix string) ([]string, error) {
+	if !strings.Contains(prefix, prefixSep) {
+		return nil, fmt.Errorf(`prefix "%s" does not contain the prefix separator "%s"`, prefix, prefixSep)
+	}
 	split := strings.Split(prefix, prefixSep)
 	if len(split) == 0 || (len(split) == 1 && split[0] == "") {
-		return nil, fmt.Errorf("prefix '%s' has no prefix tokens delimited by '%s'", prefix, prefixSep)
+		return nil, fmt.Errorf(`prefix "%s" has no prefix tokens delimited by "%s"`, prefix, prefixSep)
 	}
 	if strings.TrimSpace(split[0]) != SDKPrefix {
-		return nil, fmt.Errorf("prefix '%s' does not have SDK prefix '%s'", prefix, prefixSep)
+		return nil, fmt.Errorf(`prefix "%s" does not have SDK prefix "%s"`, prefix, prefixSep)
+	}
+	for i, p := range split {
+		if strings.TrimSpace(p) == "" {
+			return nil, fmt.Errorf(`prefix "%s" contains an empty token after colon %d`, prefix, i)
+		}
 	}
 	return split, nil
 }
@@ -47,9 +55,17 @@ func JoinPath(elements ...string) string {
 }
 
 func SplitPath(path string) ([]string, error) {
+	if !strings.Contains(path, pathSep) {
+		return nil, fmt.Errorf(`path "%s" does not contain the path separator "%s"`, path, pathSep)
+	}
 	split := strings.Split(path, pathSep)
 	if len(split) == 0 || (len(split) == 1 && split[0] == "") {
-		return nil, fmt.Errorf("path '%s' has no path elements delimited by '%s'", path, pathSep)
+		return nil, fmt.Errorf(`path "%s" has no path elements delimited by "%s"`, path, pathSep)
+	}
+	for i, p := range split {
+		if strings.TrimSpace(p) == "" {
+			return nil, fmt.Errorf(`path "%s" contains an empty path element after dot %d`, path, i)
+		}
 	}
 	return split, nil
 }
@@ -59,9 +75,18 @@ func JoinAnnotation(prefixedPath, value string) string {
 }
 
 func SplitAnnotation(annotation string) (prefixedPath, val string, err error) {
+	if !strings.Contains(annotation, valueSep) {
+		return "", "", fmt.Errorf(`annotation "%s" does not contain the value separator "%s"`, annotation, valueSep)
+	}
 	split := strings.Split(annotation, valueSep)
 	if len(split) != 2 {
-		return "", "", fmt.Errorf("annotation '%s' does not have exactly one value separator '%s'", annotation, valueSep)
+		return "", "", fmt.Errorf(`annotation "%s" does not have exactly one value separator "%s"`, annotation, valueSep)
+	}
+	if strings.TrimSpace(split[0]) == "" {
+		return "", "", fmt.Errorf(`annotation "%s" contains an empty annotation component`, annotation)
+	}
+	if strings.TrimSpace(split[1]) == "" {
+		return "", "", fmt.Errorf(`annotation "%s" contains an empty value component`, annotation)
 	}
 	return split[0], split[1], nil
 }
