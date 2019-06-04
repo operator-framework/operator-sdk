@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/pkg/errors"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -48,18 +47,17 @@ func ServeCRMetrics(cfg *rest.Config,
 	log.V(1).Info("Starting collecting operator types")
 	// Loop through all the possible operator/custom resource specific types.
 	for _, gvk := range operatorGVKs {
+		api := gvk.GroupVersion().String()
+		kind := gvk.Kind
 		// Generate metric based on the kind.
 		metricFamilies := generateMetricFamilies(gvk.Kind)
-		log.V(1).Info("Generating metric families", "apiVersion", gvk.GroupVersion().String(), "kind", gvk.Kind)
-		// Generate collector based on the group/version, kind and the metric families.
-		c, err := NewCollectors(cfg, ns, gvk.GroupVersion().String(), gvk.Kind, metricFamilies)
+		log.V(1).Info("Generating metric families", "apiVersion", api, "kind", kind)
+		dclient, err := newClientForGVK(cfg, api, kind)
 		if err != nil {
-			if err == k8sutil.ErrNoNamespace {
-				log.Info("Skipping operator specific metrics; not running in a cluster.")
-				return nil
-			}
 			return err
 		}
+		// Generate collector based on the group/version, kind and the metric families.
+		c := NewCollectors(dclient, ns, api, kind, metricFamilies)
 		collectors = append(collectors, c)
 	}
 	// Start serving metrics.
