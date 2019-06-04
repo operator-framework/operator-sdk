@@ -52,7 +52,6 @@ func TestRoleCustomRules(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	err := s.Execute(appConfig, &Role{
 		SkipDefaultRules: true,
-		SkipMetricsRules: true,
 		CustomRules: []rbacv1.PolicyRule{
 			{
 				APIGroups: []string{"policy"},
@@ -205,4 +204,31 @@ rules:
   resources:
   - "roles"
   - "rolebindings"
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - servicemonitors
+  verbs:
+  - "get"
+  - "create"
+- apiGroups:
+  - apps
+  resources:
+  - deployments/finalizers
+  resourceNames:
+  - app-operator
+  verbs:
+  - "update"
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+- apiGroups:
+  - apps
+  resources:
+  - replicasets
+  verbs:
+  - get
 `
