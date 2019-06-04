@@ -128,7 +128,7 @@ func TestMemcached(t *testing.T) {
 		writeGoModReplace(t, sdkRepo, replace.repo, replace.ref)
 	}
 
-	cmdOut, err = exec.Command("go", "mod", "vendor").CombinedOutput()
+	cmdOut, err = exec.Command("go", "build", "./...").CombinedOutput()
 	if err != nil {
 		t.Fatalf("Error after modifying go.mod: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
@@ -218,9 +218,9 @@ func TestMemcached(t *testing.T) {
 	}
 
 	t.Log("Pulling new dependencies with go mod")
-	cmdOut, err = exec.Command("go", "mod", "vendor").CombinedOutput()
+	cmdOut, err = exec.Command("go", "build", "./...").CombinedOutput()
 	if err != nil {
-		t.Fatalf("Command 'go mod vendor' failed: %v\nCommand Output:\n%v", err, string(cmdOut))
+		t.Fatalf("Pulling modules failed: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 
 	file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
