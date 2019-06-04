@@ -233,10 +233,12 @@ func installRelease(ctx context.Context, tiller *tiller.ReleaseServer, namespace
 
 			// In certain cases, InstallRelease will return a partial release in
 			// the response even when it doesn't record the release in its release
-			// store. In that case the rollback will fail with a not found error
-			// because there was nothing to rollback. So we check for that and
-			// skip logging the rollback error when the error was that it didn't
-			// exist.
+			// store (e.g. when there is an error rendering the release manifest).
+			// In that case the rollback will fail with a not found error because
+			// there was nothing to rollback.
+			//
+			// Only log a message about a rollback failure if the failure was caused
+			// by something other than the release not being found.
 			if uninstallErr != nil && !notFoundErr(uninstallErr) {
 				return nil, fmt.Errorf("failed installation (%s) and failed rollback (%s)", err, uninstallErr)
 			}
