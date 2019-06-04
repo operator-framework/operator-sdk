@@ -112,10 +112,6 @@ func initOperatorService(ctx context.Context, client crclient.Client, port int32
 			Namespace: namespace,
 			Labels:    label,
 		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Service",
-			APIVersion: "v1",
-		},
 		Spec: v1.ServiceSpec{
 			Ports: []v1.ServicePort{
 				{

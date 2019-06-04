@@ -70,6 +70,7 @@ const (
 	PluginDirOpt              = "plugin-dir"
 	JSONOutputFormat          = "json"
 	HumanReadableOutputFormat = "human-readable"
+	DefaultConfigFile         = ".osdk-scorecard"
 )
 
 const (
@@ -452,7 +453,7 @@ func initConfig() error {
 	} else {
 		viper.AddConfigPath(projutil.MustGetwd())
 		// using SetConfigName allows users to use a .yaml, .json, or .toml file
-		viper.SetConfigName(".osdk-scorecard")
+		viper.SetConfigName(DefaultConfigFile)
 	}
 
 	if err := viper.ReadInConfig(); err == nil {

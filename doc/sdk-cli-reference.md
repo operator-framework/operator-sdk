@@ -18,7 +18,7 @@ Usage:
 ### Flags
 
 * `--image-build-args` string - extra, optional image build arguments as one string such as `"--build-arg https_proxy=$https_proxy"` (default "")
-* `--image-builder` string - tool to build OCI images. One of: `[docker, buildah]` (default "docker")
+* `--image-builder` string - tool to build OCI images. One of: `[docker, podman, buildah]` (default "docker")
 * `-h, --help` - help for build
 
 ### Use
@@ -428,7 +428,9 @@ Run scorecard tests on an operator
 ### Flags
 
 * `basic-tests` - Enable basic operator checks (default true)
+* `config` string - config file (default is '<project_dir>/.osdk-scorecard'; the config file's extension and format can be .yaml, .json, or .toml)
 * `cr-manifest` string - (required) Path to manifest for Custom Resource
+* `crds-dir` string - Directory containing CRDs (all CRD manifest filenames must have the suffix 'crd.yaml') (default "deploy/crds")
 * `csv-path` string - (required if `olm-tests` is set) Path to CSV being tested
 * `global-manifest` string - Path to manifest for Global resources (e.g. CRD manifests)
 * `init-timeout` int - Timeout for status block on CR to be created, in seconds (default 10)
@@ -437,34 +439,28 @@ Run scorecard tests on an operator
 * `namespaced-manifest` string - Path to manifest for namespaced resources (e.g. RBAC and Operator manifest)
 * `olm-deployed` - Only use the CSV at `csv-path` for manifest data, except for those provided to `cr-manifest`
 * `olm-tests` - Enable OLM integration checks (default true)
+* `-o, --output` string - Output format for results. Valid values: `human-readable` or `json` (default `human-readable`)
 * `proxy-image` string - Image name for scorecard proxy (default "quay.io/operator-framework/scorecard-proxy")
 * `proxy-pull-policy` string - Pull policy for scorecard proxy image (default "Always")
-* `verbose` - Enable verbose logging
 * `-h, --help` - help for scorecard
 
 ### Example
 
 ```console
 $ operator-sdk scorecard --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml --csv-path deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml
-Checking for existence of spec and status blocks in CR
-Checking that operator actions are reflected in status
-Checking that writing into CRs has an effect
-Checking for CRD resources
-Checking for existence CR example
-Checking spec descriptors
-Checking status descriptors
 Basic Operator:
         Spec Block Exists: 1/1 points
         Status Block Exist: 1/1 points
         Operator actions are reflected in status: 1/1 points
         Writing into CRs has an effect: 1/1 points
 OLM Integration:
+        Provided APIs have validation: 1/1
         Owned CRDs have resources listed: 1/1 points
         CRs have at least 1 example: 0/1 points
         Spec fields with descriptors: 1/1 points
         Status fields with descriptors: 0/1 points
 
-Total Score: 6/8 points
+Total Score: 84%
 SUGGESTION: Add an alm-examples annotation to your CSV to pass the CRs have at least 1 example test
 SUGGESTION: Add a status descriptor for nodes
 ```
@@ -523,6 +519,7 @@ the operator-sdk binary itself as the operator.
 
 ##### Flags
 
+* `--enable-delve` bool - starts the operator locally and enables the delve debugger listening on port 2345
 * `--go-ldflags` string - Set Go linker options
 * `--kubeconfig` string - The file path to Kubernetes configuration file; defaults to $HOME/.kube/config
 * `--namespace` string - The namespace where the operator watches for changes. (default "default")
