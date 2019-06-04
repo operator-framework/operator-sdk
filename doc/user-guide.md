@@ -53,7 +53,7 @@ $ export GO111MODULE=on
 
 ##### Vendoring
 
-The Operator SDK uses [vendoring][go_vendoring] to supply dependencies to operator projects, regardless of the dependency manager. As with the above module mode constraint, we intend to allow use of dependencies [outside of `vendor`][module_vendoring] for projects in the near future.
+The Operator SDK uses [vendoring][go_vendoring] to supply dependencies to Go operator projects if the dependency manager is `dep`, or `modules` and the project was initialized with the `--vendor` flag set. If the operator's dependencies are managed with `modules` and `--vendor` is not set, calls to `go {build,clean,get,install,list,run,test}` by `operator-sdk` subcommands will use an external modules directory. Execute `go help modules` for more information.
 
 #### Operator scope
 
@@ -200,7 +200,7 @@ Once this is done, there are two ways to run the operator:
 
 **Note**: `operator-sdk build` invokes `docker build` by default, and optionally `buildah bud`. If using `buildah`, skip to the `operator-sdk build` invocation instructions below. If using `docker`, make sure your docker daemon is running and that you can run the docker client without sudo. You can check if this is the case by running `docker version`, which should complete without errors. Follow instructions for your OS/distribution on how to start the docker daemon and configure your access permissions, if needed.
 
-**Note**: If using go modules, run
+**Note**: If using go modules and a `vendor/` directory, run
 ```sh
 $ go mod vendor
 ```
@@ -416,7 +416,7 @@ func main() {
 
 **NOTES:**
 
-* After adding new import paths to your operator project, run `go mod vendor` (or `dep ensure` if you set `--dep-manager=dep` when initializing your project) in the root of your project directory to fulfill these dependencies.
+* After adding new import paths to your operator project, run `go mod vendor` if using a `vendor/` directory (or `dep ensure` if you set `--dep-manager=dep` when initializing your project) in the root of your project directory to fulfill these dependencies.
 * Your 3rd party resource needs to be added before add the controller in `"Setup all Controllers"`.
 
 ### Handle Cleanup on Deletion
@@ -433,7 +433,7 @@ The following is a snippet from the controller file under `pkg/controller/memcac
 func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Result, error) {
  	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
  	reqLogger.Info("Reconciling Memcached")
- 
+
  	// Fetch the Memcached instance
  	memcached := &cachev1alpha1.Memcached{}
  	err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
@@ -444,7 +444,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
  		// TODO(user): Add the cleanup steps that the operator needs to do before the CR can be deleted
  		// Update finalizer to allow delete CR
  		memcached.SetFinalizers(nil)
- 
+
  		// Update CR
  		err := r.client.Update(context.TODO(), memcached)
  		if err != nil {
@@ -452,22 +452,22 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
  		}
  		return reconcile.Result{}, nil
  	}
- 	
+
  	// Add finalizer for this CR
  	if err := r.addFinalizer(reqLogger, instance); err != nil {
  		return reconcile.Result{}, err
  	}
  	...
- 
+
  	return reconcile.Result{}, nil
  }
- 
+
 //addFinalizer will add this attribute to the Memcached CR
 func (r *ReconcileMemcached) addFinalizer(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
     if len(m.GetFinalizers()) < 1 && m.GetDeletionTimestamp() == nil {
         reqLogger.Info("Adding Finalizer for the Memcached")
         m.SetFinalizers([]string{"finalizer.cache.example.com"})
-    
+
         // Update CR
         err := r.client.Update(context.TODO(), m)
         if err != nil {
@@ -559,7 +559,6 @@ When the operator is not running in a cluster, the Manager will return an error 
 [homebrew_tool]:https://brew.sh/
 [go_mod_wiki]: https://github.com/golang/go/wiki/Modules
 [go_vendoring]: https://blog.gopheracademy.com/advent-2015/vendor-folder/
-[module_vendoring]: https://github.com/golang/go/wiki/Modules#how-do-i-use-vendoring-with-modules-is-vendoring-going-away
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
