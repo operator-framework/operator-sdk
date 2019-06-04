@@ -66,8 +66,9 @@ func deepcopyGen(hf string, fqApis []string) error {
 	}
 	flag.Set("logtostderr", "true")
 	for _, api := range fqApis {
+		api = filepath.FromSlash(api)
 		// Use relative API path so the generator writes to the correct path.
-		apiPath := "./" + api[strings.Index(api, scaffold.ApisDir):]
+		apiPath := "." + string(filepath.Separator) + api[strings.Index(api, scaffold.ApisDir):]
 		args, cargs := generatorargs.NewDefaults()
 		args.InputDirs = []string{apiPath}
 		args.OutputPackagePath = filepath.Join(wd, apiPath)

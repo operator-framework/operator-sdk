@@ -100,8 +100,9 @@ func openAPIGen(hf string, fqApis []string) error {
 	}
 	flag.Set("logtostderr", "true")
 	for _, api := range fqApis {
+		api = filepath.FromSlash(api)
 		// Use relative API path so the generator writes to the correct path.
-		apiPath := "./" + api[strings.Index(api, scaffold.ApisDir):]
+		apiPath := "." + string(filepath.Separator) + api[strings.Index(api, scaffold.ApisDir):]
 		args := &gengoargs.GeneratorArgs{
 			InputDirs:          []string{apiPath},
 			OutputFileBaseName: "zz_generated.openapi",

@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
@@ -62,7 +63,7 @@ func parseGroupVersions() (map[string][]string, error) {
 func createFQAPIs(pkg string, gvs map[string][]string) (apis []string) {
 	for g, vs := range gvs {
 		for _, v := range vs {
-			apis = append(apis, filepath.Join(pkg, g, v))
+			apis = append(apis, path.Join(pkg, g, v))
 		}
 	}
 	return apis
