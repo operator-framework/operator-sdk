@@ -18,43 +18,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 
-	flags "github.com/operator-framework/operator-sdk/internal/pkg/flags"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
-
-func buildCodegenBinaries(genDirs []string, binDir, codegenSrcDir string) error {
-	for _, gd := range genDirs {
-		err := runGoBuildCodegen(binDir, codegenSrcDir, gd)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func runGoBuildCodegen(binDir, repoDir, genDir string) error {
-	binPath := filepath.Join(binDir, filepath.Base(genDir))
-	cmd := exec.Command("go", "build", "-o", binPath, genDir)
-	cmd.Dir = repoDir
-	if gf, ok := os.LookupEnv(projutil.GoFlagsEnv); ok && len(gf) != 0 {
-		cmd.Env = append(os.Environ(), projutil.GoFlagsEnv+"="+gf)
-	}
-
-	// Only print binary build info if verbosity is explicitly set.
-	if viper.GetBool(flags.VerboseOpt) {
-		return projutil.ExecCmd(cmd)
-	}
-	cmd.Stdout = ioutil.Discard
-	cmd.Stderr = ioutil.Discard
-	return cmd.Run()
-}
 
 // ParseGroupVersions parses the layout of pkg/apis to return a map of
 // API groups to versions.
