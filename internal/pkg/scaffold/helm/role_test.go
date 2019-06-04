@@ -19,7 +19,7 @@ import (
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/helm"
-	
+
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
@@ -43,7 +43,6 @@ func TestCreateRoleScaffold(t *testing.T) {
 			name:                   "fallback to default",
 			chart:                  failChart(),
 			expectSkipDefaultRules: false,
-			expectSkipMetricsRules: true,
 			expectIsClusterScoped:  false,
 			expectLenCustomRules:   2,
 		},
@@ -51,7 +50,6 @@ func TestCreateRoleScaffold(t *testing.T) {
 			name:                   "namespaced manifest",
 			chart:                  namespacedChart(),
 			expectSkipDefaultRules: true,
-			expectSkipMetricsRules: true,
 			expectIsClusterScoped:  false,
 			expectLenCustomRules:   3,
 		},
@@ -59,7 +57,6 @@ func TestCreateRoleScaffold(t *testing.T) {
 			name:                   "cluster scoped manifest",
 			chart:                  clusterScopedChart(),
 			expectSkipDefaultRules: true,
-			expectSkipMetricsRules: true,
 			expectIsClusterScoped:  true,
 			expectLenCustomRules:   4,
 		},
@@ -77,7 +74,6 @@ func TestCreateRoleScaffold(t *testing.T) {
 					assert.NoError(t, err)
 				}
 				assert.Equal(t, tc.expectSkipDefaultRules, roleScaffold.SkipDefaultRules)
-				assert.Equal(t, tc.expectSkipMetricsRules, roleScaffold.SkipMetricsRules)
 				assert.Equal(t, tc.expectLenCustomRules, len(roleScaffold.CustomRules))
 				assert.Equal(t, tc.expectIsClusterScoped, roleScaffold.IsClusterScoped)
 			})
@@ -122,7 +118,6 @@ type roleScaffoldTestCase struct {
 	name                   string
 	chart                  *chart.Chart
 	expectSkipDefaultRules bool
-	expectSkipMetricsRules bool
 	expectIsClusterScoped  bool
 	expectLenCustomRules   int
 	expectErr              bool
