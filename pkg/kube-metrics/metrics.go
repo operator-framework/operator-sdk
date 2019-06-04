@@ -44,7 +44,6 @@ func ServeCRMetrics(cfg *rest.Config,
 		return errors.New("namespaces were empty; pass at least one namespace to generate custom resource metrics")
 	}
 	// Create new unstructured client.
-	uc := NewClientForConfig(cfg)
 	var collectors [][]kcollector.Collector
 	log.V(1).Info("Starting collecting operator types")
 	// Loop through all the possible operator/custom resource specific types.
@@ -53,7 +52,7 @@ func ServeCRMetrics(cfg *rest.Config,
 		metricFamilies := generateMetricFamilies(gvk.Kind)
 		log.V(1).Info("Generating metric families", "apiVersion", gvk.GroupVersion().String(), "kind", gvk.Kind)
 		// Generate collector based on the group/version, kind and the metric families.
-		c, err := NewCollectors(uc, ns, gvk.GroupVersion().String(), gvk.Kind, metricFamilies)
+		c, err := NewCollectors(cfg, ns, gvk.GroupVersion().String(), gvk.Kind, metricFamilies)
 		if err != nil {
 			if err == k8sutil.ErrNoNamespace {
 				log.Info("Skipping operator specific metrics; not running in a cluster.")

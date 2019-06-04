@@ -27,25 +27,13 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-type Client struct {
-	cfg *rest.Config
-}
-
-func NewClientForConfig(cfg *rest.Config) *Client {
-	c := &Client{
-		cfg: cfg,
-	}
-
-	return c
-}
-
-func (c *Client) ClientFor(apiVersion, kind, namespace string) (dynamic.NamespaceableResourceInterface, error) {
-	apiResourceList, apiResource, err := c.getAPIResource(apiVersion, kind)
+func newClientForGVK(cfg *rest.Config, apiVersion, kind string) (dynamic.NamespaceableResourceInterface, error) {
+	apiResourceList, apiResource, err := getAPIResource(cfg, apiVersion, kind)
 	if err != nil {
 		return nil, errors.Wrapf(err, "discovering resource information failed for %s in %s", kind, apiVersion)
 	}
 
-	dc, err := newForConfig(apiResourceList.GroupVersion, c.cfg)
+	dc, err := newForConfig(cfg, apiResourceList.GroupVersion)
 	if err != nil {
 		return nil, errors.Wrapf(err, "creating dynamic client failed for %s", apiResourceList.GroupVersion)
 	}
@@ -64,8 +52,8 @@ func (c *Client) ClientFor(apiVersion, kind, namespace string) (dynamic.Namespac
 	return dc.Resource(gvr), nil
 }
 
-func (c *Client) getAPIResource(apiVersion, kind string) (*metav1.APIResourceList, *metav1.APIResource, error) {
-	kclient, err := kubernetes.NewForConfig(c.cfg)
+func getAPIResource(cfg *rest.Config, apiVersion, kind string) (*metav1.APIResourceList, *metav1.APIResource, error) {
+	kclient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -88,7 +76,7 @@ func (c *Client) getAPIResource(apiVersion, kind string) (*metav1.APIResourceLis
 	return nil, nil, fmt.Errorf("apiVersion %s and kind %s not found available in Kubernetes cluster", apiVersion, kind)
 }
 
-func newForConfig(groupVersion string, c *rest.Config) (dynamic.Interface, error) {
+func newForConfig(c *rest.Config, groupVersion string) (dynamic.Interface, error) {
 	config := rest.CopyConfig(c)
 
 	err := setConfigDefaults(groupVersion, config)
