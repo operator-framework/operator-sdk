@@ -435,7 +435,7 @@ The following is a snippet from the controller file under `pkg/controller/memcac
 func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Result, error) {
  	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
  	reqLogger.Info("Reconciling Memcached")
-
+ 
  	// Fetch the Memcached instance
  	memcached := &cachev1alpha1.Memcached{}
  	err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
@@ -446,7 +446,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
  		// TODO(user): Add the cleanup steps that the operator needs to do before the CR can be deleted
  		// Update finalizer to allow delete CR
  		memcached.SetFinalizers(nil)
-
+ 
  		// Update CR
  		err := r.client.Update(context.TODO(), memcached)
  		if err != nil {
@@ -454,22 +454,22 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
  		}
  		return reconcile.Result{}, nil
  	}
-
+ 	
  	// Add finalizer for this CR
  	if err := r.addFinalizer(reqLogger, instance); err != nil {
  		return reconcile.Result{}, err
  	}
  	...
-
+ 
  	return reconcile.Result{}, nil
  }
-
+ 
 //addFinalizer will add this attribute to the Memcached CR
 func (r *ReconcileMemcached) addFinalizer(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
     if len(m.GetFinalizers()) < 1 && m.GetDeletionTimestamp() == nil {
         reqLogger.Info("Adding Finalizer for the Memcached")
         m.SetFinalizers([]string{"finalizer.cache.example.com"})
-
+    
         // Update CR
         err := r.client.Update(context.TODO(), m)
         if err != nil {
