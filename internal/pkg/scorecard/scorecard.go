@@ -22,10 +22,12 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	ver "github.com/operator-framework/operator-sdk/version"
 
 	"github.com/ghodss/yaml"
 	"github.com/sirupsen/logrus"
@@ -48,8 +50,7 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 	var pluginResults []scapiv1alpha1.ScorecardOutput
 	pluginDir := viper.GetString(PluginDirOpt)
 	if dir, err := os.Stat(pluginDir); err != nil || !dir.IsDir() {
-		log.Warnf("Plugin directory not found; skipping plugin tests: %v", err)
-		return pluginResults, nil
+		return nil, fmt.Errorf("Plugin directory not found: %v", err)
 	}
 	if err := os.Chdir(pluginDir); err != nil {
 		return nil, fmt.Errorf("failed to chdir into scorecard plugin directory: %v", err)
@@ -58,6 +59,9 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 	files, err := ioutil.ReadDir("bin")
 	if err != nil {
 		return nil, fmt.Errorf("failed to list files in %s/bin: %v", pluginDir, err)
+	}
+	if len(files) == 0 {
+		return nil, fmt.Errorf("No scorecard tests found in %s/bin", pluginDir)
 	}
 	for _, file := range files {
 		cmd := exec.Command("./bin/" + file.Name())
@@ -105,7 +109,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	pluginOutputs, err := runTests()
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to run scorecard tests with error: (%v)\nPlease see %s for documentation on how to configure and use the operator-sdk scorecard", err, scorecardDocsLink())
 	}
 	totalScore := 0.0
 	// Update the state for the tests
@@ -247,4 +251,11 @@ func failedPlugin(name, desc, log string) scapiv1alpha1.ScorecardOutput {
 		},
 		},
 	}
+}
+
+func scorecardDocsLink() string {
+	if strings.HasSuffix(ver.Version, "+git") {
+		return "https://github.com/operator-framework/operator-sdk/blob/master/doc/test-framework/scorecard.md"
+	}
+	return fmt.Sprintf("https://github.com/operator-framework/operator-sdk/blob/%s/doc/test-framework/scorecard.md", ver.Version)
 }
