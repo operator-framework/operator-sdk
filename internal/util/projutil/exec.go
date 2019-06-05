@@ -63,14 +63,19 @@ type GoTestOptions struct {
 	TestBinaryArgs []string
 }
 
-const (
-	goBuildCmd = "build"
-	goTestCmd  = "test"
-)
+var validVendorCmds = map[string]struct{}{
+	"build":   struct{}{},
+	"clean":   struct{}{},
+	"get":     struct{}{},
+	"install": struct{}{},
+	"list":    struct{}{},
+	"run":     struct{}{},
+	"test":    struct{}{},
+}
 
 // GoBuild runs "go build" configured with opts.
 func GoBuild(opts GoCmdOptions) error {
-	return GoCmd(goBuildCmd, opts)
+	return GoCmd("build", opts)
 }
 
 // GoTest runs "go test" configured with opts.
@@ -114,7 +119,11 @@ func getGeneralArgs(cmd string, opts GoCmdOptions) ([]string, error) {
 		if goModOn, err := GoModOn(); err != nil {
 			return nil, err
 		} else if goModOn {
-			if info, err := os.Stat("vendor"); err == nil && info.IsDir() {
+			// Does vendor exist?
+			info, err := os.Stat("vendor")
+			// Does the first "go" subcommand accept -mod=vendor?
+			_, ok := validVendorCmds[bargs[0]]
+			if err == nil && info.IsDir() && ok {
 				bargs = append(bargs, "-mod=vendor")
 			}
 		}
