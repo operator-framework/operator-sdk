@@ -159,6 +159,8 @@ replace (
 	k8s.io/client-go => k8s.io/client-go v0.0.0-20181213151034-8d9ed539ba31
 	k8s.io/kubernetes => k8s.io/kubernetes v1.13.1
 )
+
+replace github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.29.0
 `
 
 func PrintGoMod(asFile bool) error {
