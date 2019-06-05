@@ -23,7 +23,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/metrics"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/paramconv"
