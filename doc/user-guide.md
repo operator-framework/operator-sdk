@@ -53,7 +53,9 @@ $ export GO111MODULE=on
 
 ##### Vendoring
 
-The Operator SDK uses [vendoring][go_vendoring] to supply dependencies to Go operator projects if the dependency manager is `dep`, or `modules` and the project was initialized with the `--vendor` flag set. If the operator's dependencies are managed with `modules` and `--vendor` is not set, calls to `go {build,clean,get,install,list,run,test}` by `operator-sdk` subcommands will use an external modules directory. Execute `go help modules` for more information.
+The Operator SDK uses [vendoring][go_vendoring] to supply dependencies to Go operator projects if the dependency manager is `modules` and the project was initialized with the `--vendor` flag set or if the dependency manager is `dep` (which always uses vendoring).
+
+By default, the operator's dependencies are managed with `modules` and `--vendor` is not set, so calls to `go {build,clean,get,install,list,run,test}` by `operator-sdk` subcommands will use an external modules directory. Execute `go help modules` for more information.
 
 #### Operator scope
 
