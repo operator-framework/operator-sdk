@@ -21,9 +21,9 @@ By default, a `deploy/olm-catalog/csv-config.yaml` file is generated when `gen-c
 
 >Users can configure CSV composition by populating several fields in the file `deploy/olm-catalog/csv-config.yaml`:
 >
->- `crd-cr-path-list`: (string(, string)\*) a list of CRD and CR manifest file/directory paths. Defaults to `[deploy/crds]`.
+>- `crd-cr-paths`: (string(, string)\*) a list of CRD and CR manifest file/directory paths. Defaults to `[deploy/crds]`.
 >- `operator-path`: (string) the operator resource manifest file path. Defaults to `deploy/operator.yaml`.
->- `rbac-path-list`: (string(, string)\*) a list of RBAC role manifest file paths. Defaults to `[deploy/role.yaml]`.
+>- `role-path`: (string) the RBAC role manifest file path. Defaults to `[deploy/role.yaml]`.
 
 Fields in this config file can be modified to point towards alternate manifest locations. For example, if I have one set of production CR/CRD manifests under `deploy/crds/production`, and a set of test manifests under `deploy/crds/test`, and I only want to include production manifests in my CSV, I can set `crd-cr-path-list: [deploy/crds/production]`. `gen-csv` will then ignore `deploy/crds/test` when getting CR/CRD data.
 

@@ -2,9 +2,32 @@
 
 ### Added
 
+- Adds support for building OCI images with [podman](https://podman.io/), e.g. `operator-sdk build --image-builder=podman`. ([#1488](https://github.com/operator-framework/operator-sdk/pull/1488))
+- New option for [`operator-sdk up local --enable-delve`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#up), which can be used to start the operator in remote debug mode with the [delve](https://github.com/go-delve/delve) debugger listening on port 2345. ([#1422](https://github.com/operator-framework/operator-sdk/pull/1422))
+- Enables controller-runtime metrics in Helm operator projects. ([#1482](https://github.com/operator-framework/operator-sdk/pull/1482))
+
+### Changed
+- Remove TypeMeta declaration from the implementation of the objects [#1462](https://github.com/operator-framework/operator-sdk/pull/1462/)
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
+- Fixes a regression that causes Helm RBAC generation to contain an empty custom ruleset when the chart's default manifest contains only namespaced resources. ([#1456](https://github.com/operator-framework/operator-sdk/pull/1456))
+- Fixes an issue that causes Helm RBAC generation to fail when creating new operators with a Kubernetes context configured to connect to an OpenShift cluster. ([#1461](https://github.com/operator-framework/operator-sdk/pull/1461))
+
+## v0.8.0
+
+### Added
+
 - New option for [`operator-sdk build --image-builder`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#build), which can be used to specify which image builder to use. Adds support for [buildah](https://github.com/containers/buildah/). ([#1311](https://github.com/operator-framework/operator-sdk/pull/1311))
 - Manager is now configured with a new `DynamicRESTMapper`, which accounts for the fact that the default `RESTMapper`, which only checks resource types at startup, can't handle the case of first creating a CRD and then an instance of that CRD. ([#1329](https://github.com/operator-framework/operator-sdk/pull/1329))
 - Unify CLI debug logging under a global `--verbose` flag ([#1361](https://github.com/operator-framework/operator-sdk/pull/1361))
+- [Go module](https://github.com/golang/go/wiki/Modules) support by default for new Go operators and during Ansible and Helm operator migration. The dependency manager used for a new operator can be explicitly specified for new operators through the `--dep-manager` flag, available in [`operator-sdk new`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#new) and [`operator-sdk migrate`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#migrate). `dep` is still available through `--dep-manager=dep`. ([#1001](https://github.com/operator-framework/operator-sdk/pull/1001))
+- New optional flag `--custom-api-import` for [`operator-sdk add controller`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#controller) to specify that the new controller reconciles a built-in or external Kubernetes API, and what import path and identifier it should have. ([#1344](https://github.com/operator-framework/operator-sdk/pull/1344))
+- Operator Scorecard plugin support ([#1379](https://github.com/operator-framework/operator-sdk/pull/1379)). Documentation for scorecard plugins can be found in the main scorecard doc: [doc/test-framework/scorecard.md](./doc/test-framework/scorecard.md)
 
 ### Changed
 
@@ -23,6 +46,9 @@
 ### Removed
 
 - The SDK will no longer run `defaulter-gen` on running `operator-sdk generate k8s`. Defaulting for CRDs should be handled with mutating admission webhooks. ([#1288](https://github.com/operator-framework/operator-sdk/pull/1288))
+- The `--version` flag was removed. Users should use the `operator-sdk version` command. ([#1444](https://github.com/operator-framework/operator-sdk/pull/1444))
+- **Breaking Change**: The `test cluster` subcommand and the corresponding `--enable-tests` flag for the `build` subcommand have been removed ([#1414](https://github.com/operator-framework/operator-sdk/pull/1414))
+- **Breaking Change**: The `--cluster-scoped` flag for `operator-sdk new` has been removed so it won't scaffold a cluster-scoped operator. Read the [operator scope](https://github.com/operator-framework/operator-sdk/blob/master/doc/operator-scope.md) documentation on the changes needed to run a cluster-scoped operator. ([#1434](https://github.com/operator-framework/operator-sdk/pull/1434))
 
 ### Bug Fixes
 

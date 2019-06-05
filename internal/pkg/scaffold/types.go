@@ -56,7 +56,7 @@ import (
 type {{.Resource.Kind}}Spec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
+	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 }
 
 // {{.Resource.Kind}}Status defines the observed state of {{.Resource.Kind}}
@@ -64,13 +64,14 @@ type {{.Resource.Kind}}Spec struct {
 type {{.Resource.Kind}}Status struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
+	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // {{.Resource.Kind}} is the Schema for the {{ .Resource.Resource }} API
 // +k8s:openapi-gen=true
+// +kubebuilder:subresource:status
 type {{.Resource.Kind}} struct {
 	metav1.TypeMeta   ` + "`" + `json:",inline"` + "`" + `
 	metav1.ObjectMeta ` + "`" + `json:"metadata,omitempty"` + "`" + `

@@ -23,11 +23,13 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
+	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
 
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -50,28 +52,30 @@ import (
 )
 
 const (
-	ConfigOpt             = "config"
-	NamespaceOpt          = "namespace"
-	KubeconfigOpt         = "kubeconfig"
-	InitTimeoutOpt        = "init-timeout"
-	OlmDeployedOpt        = "olm-deployed"
-	CSVPathOpt            = "csv-path"
-	BasicTestsOpt         = "basic-tests"
-	OLMTestsOpt           = "olm-tests"
-	TenantTestsOpt        = "good-tenant-tests"
-	NamespacedManifestOpt = "namespaced-manifest"
-	GlobalManifestOpt     = "global-manifest"
-	CRManifestOpt         = "cr-manifest"
-	ProxyImageOpt         = "proxy-image"
-	ProxyPullPolicyOpt    = "proxy-pull-policy"
-	CRDsDirOpt            = "crds-dir"
-	OutputFormatOpt       = "output"
+	ConfigOpt                 = "config"
+	NamespaceOpt              = "namespace"
+	KubeconfigOpt             = "kubeconfig"
+	InitTimeoutOpt            = "init-timeout"
+	OlmDeployedOpt            = "olm-deployed"
+	CSVPathOpt                = "csv-path"
+	BasicTestsOpt             = "basic-tests"
+	OLMTestsOpt               = "olm-tests"
+	NamespacedManifestOpt     = "namespaced-manifest"
+	GlobalManifestOpt         = "global-manifest"
+	CRManifestOpt             = "cr-manifest"
+	ProxyImageOpt             = "proxy-image"
+	ProxyPullPolicyOpt        = "proxy-pull-policy"
+	CRDsDirOpt                = "crds-dir"
+	OutputFormatOpt           = "output"
+	PluginDirOpt              = "plugin-dir"
+	JSONOutputFormat          = "json"
+	HumanReadableOutputFormat = "human-readable"
+	DefaultConfigFile         = ".osdk-scorecard"
 )
 
 const (
 	basicOperator  = "Basic Operator"
 	olmIntegration = "OLM Integration"
-	goodTenant     = "Good Tenant"
 )
 
 var (
@@ -95,7 +99,7 @@ var (
 	log           = logrus.New()
 )
 
-func runTests() ([]TestSuite, error) {
+func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 	defer func() {
 		if err := cleanupScorecard(); err != nil {
 			log.Errorf("Failed to cleanup resources: (%v)", err)
@@ -254,8 +258,11 @@ func runTests() ([]TestSuite, error) {
 		dupMap[gvk] = true
 	}
 
+	var pluginResults []scapiv1alpha1.ScorecardOutput
 	var suites []TestSuite
 	for _, cr := range crs {
+		// TODO: Change built-in tests into plugins
+		// Run built-in tests.
 		fmt.Printf("Running for cr: %s\n", cr)
 		if !viper.GetBool(OlmDeployedOpt) {
 			if err := createFromYAMLFile(viper.GetString(GlobalManifestOpt)); err != nil {
@@ -275,8 +282,6 @@ func runTests() ([]TestSuite, error) {
 		if err := waitUntilCRStatusExists(obj); err != nil {
 			return nil, fmt.Errorf("failed waiting to check if CR status exists: %v", err)
 		}
-
-		// Run tests.
 		if viper.GetBool(BasicTestsOpt) {
 			conf := BasicTestConfig{
 				Client:   runtimeClient,
@@ -300,7 +305,9 @@ func runTests() ([]TestSuite, error) {
 			suites = append(suites, *olmTests)
 		}
 		// set up clean environment for every CR
-		cleanupScorecard()
+		if err := cleanupScorecard(); err != nil {
+			log.Errorf("Failed to cleanup resources: (%v)", err)
+		}
 		// reset cleanup functions
 		cleanupFns = []cleanupFn{}
 		// clear name of operator deployment
@@ -310,7 +317,59 @@ func runTests() ([]TestSuite, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to merge test suite results: %v", err)
 	}
-	return suites, nil
+	for _, suite := range suites {
+		// convert to ScorecardOutput format
+		// will add log when basic and olm tests are separated into plugins
+		pluginResults = append(pluginResults, TestSuitesToScorecardOutput([]TestSuite{suite}, ""))
+	}
+	// Run plugins
+	pluginDir := viper.GetString(PluginDirOpt)
+	if dir, err := os.Stat(pluginDir); err != nil || !dir.IsDir() {
+		log.Warnf("Plugin directory not found; skipping plugin tests: %v", err)
+		return pluginResults, nil
+	}
+	if err := os.Chdir(pluginDir); err != nil {
+		return nil, fmt.Errorf("failed to chdir into scorecard plugin directory: %v", err)
+	}
+	// executable files must be in "bin" subdirectory
+	files, err := ioutil.ReadDir("bin")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list files in %s/bin: %v", pluginDir, err)
+	}
+	for _, file := range files {
+		cmd := exec.Command("./bin/" + file.Name())
+		stdout := &bytes.Buffer{}
+		cmd.Stdout = stdout
+		stderr := &bytes.Buffer{}
+		cmd.Stderr = stderr
+		err := cmd.Run()
+		if err != nil {
+			name := fmt.Sprintf("Failed Plugin: %s", file.Name())
+			description := fmt.Sprintf("Plugin with file name `%s` failed", file.Name())
+			logs := fmt.Sprintf("%s:\nStdout: %s\nStderr: %s", err, string(stdout.Bytes()), string(stderr.Bytes()))
+			pluginResults = append(pluginResults, failedPlugin(name, description, logs))
+			// output error to main logger as well for human-readable output
+			log.Errorf("Plugin `%s` failed with error (%v)", file.Name(), err)
+			continue
+		}
+		// parse output and add to suites
+		result := scapiv1alpha1.ScorecardOutput{}
+		err = json.Unmarshal(stdout.Bytes(), &result)
+		if err != nil {
+			name := fmt.Sprintf("Plugin output invalid: %s", file.Name())
+			description := fmt.Sprintf("Plugin with file name %s did not produce valid ScorecardOutput JSON", file.Name())
+			logs := fmt.Sprintf("Stdout: %s\nStderr: %s", string(stdout.Bytes()), string(stderr.Bytes()))
+			pluginResults = append(pluginResults, failedPlugin(name, description, logs))
+			log.Errorf("Output from plugin `%s` failed to unmarshal with error (%v)", file.Name(), err)
+			continue
+		}
+		stderrString := string(stderr.Bytes())
+		if len(stderrString) != 0 {
+			log.Warn(stderrString)
+		}
+		pluginResults = append(pluginResults, result)
+	}
+	return pluginResults, nil
 }
 
 func ScorecardTests(cmd *cobra.Command, args []string) error {
@@ -321,52 +380,61 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	cmd.SilenceUsage = true
-	suites, err := runTests()
+	pluginOutputs, err := runTests()
 	if err != nil {
 		return err
 	}
 	totalScore := 0.0
 	// Update the state for the tests
-	for _, suite := range suites {
-		for idx, res := range suite.TestResults {
-			suite.TestResults[idx] = UpdateState(res)
+	for _, suite := range pluginOutputs {
+		for idx, res := range suite.Results {
+			suite.Results[idx] = UpdateSuiteStates(res)
 		}
 	}
-	if viper.GetString(OutputFormatOpt) == "human-readable" {
-		for _, suite := range suites {
-			fmt.Printf("%s:\n", suite.GetName())
-			for _, result := range suite.TestResults {
-				fmt.Printf("\t%s: %d/%d\n", result.Test.GetName(), result.EarnedPoints, result.MaximumPoints)
+	if viper.GetString(OutputFormatOpt) == HumanReadableOutputFormat {
+		numSuites := 0
+		for _, plugin := range pluginOutputs {
+			for _, suite := range plugin.Results {
+				fmt.Printf("%s:\n", suite.Name)
+				for _, result := range suite.Tests {
+					fmt.Printf("\t%s: %d/%d\n", result.Name, result.EarnedPoints, result.MaximumPoints)
+				}
+				totalScore += float64(suite.TotalScore)
+				numSuites++
 			}
-			totalScore += float64(suite.TotalScore())
 		}
-		totalScore = totalScore / float64(len(suites))
+		totalScore = totalScore / float64(numSuites)
 		fmt.Printf("\nTotal Score: %.0f%%\n", totalScore)
+		// TODO: We can probably use some helper functions to clean up these quadruple nested loops
 		// Print suggestions
-		for _, suite := range suites {
-			for _, result := range suite.TestResults {
-				for _, suggestion := range result.Suggestions {
-					// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
-					fmt.Printf("\x1b[%dmSUGGESTION:\x1b[0m %s\n", 33, suggestion)
+		for _, plugin := range pluginOutputs {
+			for _, suite := range plugin.Results {
+				for _, result := range suite.Tests {
+					for _, suggestion := range result.Suggestions {
+						// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
+						fmt.Printf("\x1b[%dmSUGGESTION:\x1b[0m %s\n", 33, suggestion)
+					}
 				}
 			}
 		}
 		// Print errors
-		for _, suite := range suites {
-			for _, result := range suite.TestResults {
-				for _, err := range result.Errors {
-					// 31 is red (specifically, the same shade of red that logrus uses for errors)
-					fmt.Printf("\x1b[%dmERROR:\x1b[0m %s\n", 31, err)
+		for _, plugin := range pluginOutputs {
+			for _, suite := range plugin.Results {
+				for _, result := range suite.Tests {
+					for _, err := range result.Errors {
+						// 31 is red (specifically, the same shade of red that logrus uses for errors)
+						fmt.Printf("\x1b[%dmERROR:\x1b[0m %s\n", 31, err)
+					}
 				}
 			}
 		}
 	}
-	if viper.GetString(OutputFormatOpt) == "json" {
+	if viper.GetString(OutputFormatOpt) == JSONOutputFormat {
 		log, err := ioutil.ReadAll(logReadWriter)
 		if err != nil {
 			return fmt.Errorf("failed to read log buffer: %v", err)
 		}
-		scTest := TestSuitesToScorecardOutput(suites, string(log))
+		scTest := CombineScorecardOutput(pluginOutputs, string(log))
 		// Pretty print so users can also read the json output
 		bytes, err := json.MarshalIndent(scTest, "", "  ")
 		if err != nil {
@@ -385,7 +453,7 @@ func initConfig() error {
 	} else {
 		viper.AddConfigPath(projutil.MustGetwd())
 		// using SetConfigName allows users to use a .yaml, .json, or .toml file
-		viper.SetConfigName(".osdk-scorecard")
+		viper.SetConfigName(DefaultConfigFile)
 	}
 
 	if err := viper.ReadInConfig(); err == nil {
@@ -406,9 +474,9 @@ func initConfig() error {
 }
 
 func configureLogger() error {
-	if viper.GetString(OutputFormatOpt) == "human-readable" {
+	if viper.GetString(OutputFormatOpt) == HumanReadableOutputFormat {
 		logReadWriter = os.Stdout
-	} else if viper.GetString(OutputFormatOpt) == "json" {
+	} else if viper.GetString(OutputFormatOpt) == JSONOutputFormat {
 		logReadWriter = &bytes.Buffer{}
 	} else {
 		return fmt.Errorf("invalid output format: %s", viper.GetString(OutputFormatOpt))
@@ -436,8 +504,8 @@ func validateScorecardFlags() error {
 	}
 	// this is already being checked in configure logger; may be unnecessary
 	outputFormat := viper.GetString(OutputFormatOpt)
-	if outputFormat != "human-readable" && outputFormat != "json" {
-		return fmt.Errorf("invalid output format (%s); valid values: human-readable, json", outputFormat)
+	if outputFormat != HumanReadableOutputFormat && outputFormat != JSONOutputFormat {
+		return fmt.Errorf("invalid output format (%s); valid values: %s, %s", outputFormat, HumanReadableOutputFormat, JSONOutputFormat)
 	}
 	return nil
 }
@@ -460,4 +528,16 @@ func getGVKs(yamlFile []byte) ([]schema.GroupVersionKind, error) {
 		gvks = append(gvks, obj.GroupVersionKind())
 	}
 	return gvks, nil
+}
+
+func failedPlugin(name, desc, log string) scapiv1alpha1.ScorecardOutput {
+	return scapiv1alpha1.ScorecardOutput{
+		Results: []scapiv1alpha1.ScorecardSuiteResult{{
+			Name:        name,
+			Description: desc,
+			Error:       1,
+			Log:         log,
+		},
+		},
+	}
 }

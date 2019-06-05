@@ -1445,11 +1445,21 @@
   version = "kubernetes-1.13.1"
 
 [[projects]]
+  digest = "1:9cf5396ad425691289c57c8ec922a0ab733b9ec8afdf22044056ee708250c05f"
+  name = "k8s.io/code-generator"
+  packages = ["cmd/deepcopy-gen/args"]
+  pruneopts = "NUT"
+  revision = "c2090bec4d9b1fb25de3812f868accc2bc9ecbae"
+  version = "kubernetes-1.13.1"
+
+[[projects]]
   branch = "master"
-  digest = "1:28a32d7ac148ae6f81d5903f6455ae6530c19ba48708d0366263d61679945b13"
+  digest = "1:6dc0e912aaeea5f98199e018d3601b4c98b7549afd0cd5ef4ca025911e0a90b2"
   name = "k8s.io/gengo"
   packages = [
     "args",
+    "examples/deepcopy-gen/generators",
+    "examples/set-gen/sets",
     "generator",
     "namer",
     "parser",
@@ -1526,12 +1536,16 @@
   version = "kubernetes-1.13.1"
 
 [[projects]]
-  digest = "1:91a7c8838cd57527d2fa9e608e0b33226a57679ebbe1a11d568d689657337c4b"
+  digest = "1:6b1f11445d7962a357d4b5f98324d11d8a543f7fd368f9405eba5bdd9877e743"
   name = "k8s.io/kube-openapi"
   packages = [
+    "cmd/openapi-gen/args",
     "pkg/common",
+    "pkg/generators",
+    "pkg/generators/rules",
     "pkg/util/proto",
     "pkg/util/proto/validation",
+    "pkg/util/sets",
   ]
   pruneopts = "NUT"
   revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
@@ -1749,6 +1763,7 @@
     "github.com/pkg/errors",
     "github.com/prometheus/client_golang/prometheus",
     "github.com/prometheus/prometheus/util/promlint",
+    "github.com/rogpeppe/go-internal/modfile",
     "github.com/sergi/go-diff/diffmatchpatch",
     "github.com/sirupsen/logrus",
     "github.com/spf13/afero",
@@ -1799,6 +1814,9 @@
     "k8s.io/client-go/tools/clientcmd/api",
     "k8s.io/client-go/transport",
     "k8s.io/client-go/util/workqueue",
+    "k8s.io/code-generator/cmd/deepcopy-gen/args",
+    "k8s.io/gengo/args",
+    "k8s.io/gengo/examples/deepcopy-gen/generators",
     "k8s.io/helm/pkg/chartutil",
     "k8s.io/helm/pkg/downloader",
     "k8s.io/helm/pkg/engine",
@@ -1818,6 +1836,8 @@
     "k8s.io/helm/pkg/tiller",
     "k8s.io/helm/pkg/tiller/environment",
     "k8s.io/klog",
+    "k8s.io/kube-openapi/cmd/openapi-gen/args",
+    "k8s.io/kube-openapi/pkg/generators",
     "k8s.io/kubernetes/pkg/kubectl/util",
     "sigs.k8s.io/controller-runtime/pkg/cache",
     "sigs.k8s.io/controller-runtime/pkg/client",

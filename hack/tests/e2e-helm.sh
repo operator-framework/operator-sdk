@@ -33,6 +33,20 @@ test_operator() {
         exit 1
     fi
 
+    # verify that metrics service was created
+    if ! timeout 20s bash -c -- "until kubectl get service/nginx-operator > /dev/null 2>&1; do sleep 1; done";
+    then
+        kubectl logs deployment/nginx-operator
+        exit 1
+    fi
+
+    # verify that the metrics endpoint exists
+    if ! timeout 1m bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl -sfo /dev/null http://nginx-operator:8383/metrics; do sleep 1; done";
+    then
+        kubectl logs deployment/nginx-operator
+        exit 1
+    fi
+
     # create CR
     kubectl create -f deploy/crds/helm_v1alpha1_nginx_cr.yaml
     trap_add 'kubectl delete --ignore-not-found -f ${OPERATORDIR}/deploy/crds/helm_v1alpha1_nginx_cr.yaml' EXIT
@@ -94,7 +108,12 @@ fi
 
 # create and build the operator
 pushd "$GOTMP"
-operator-sdk new nginx-operator --api-version=helm.example.com/v1alpha1 --kind=Nginx --type=helm
+log=$(operator-sdk new nginx-operator --api-version=helm.example.com/v1alpha1 --kind=Nginx --type=helm 2>&1)
+echo $log
+if echo $log | grep -q "failed to generate RBAC rules"; then
+    echo FAIL expected successful generation of RBAC rules
+    exit 1
+fi
 
 pushd nginx-operator
 sed -i 's|\(FROM quay.io/operator-framework/helm-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
@@ -114,6 +133,7 @@ echo "### Base image testing passed"
 echo "### Now testing migrate to hybrid operator"
 echo "###"
 
+export GO111MODULE=on
 operator-sdk migrate
 
 if [[ ! -e build/Dockerfile.sdkold ]];
@@ -122,15 +142,18 @@ then
     exit 1
 fi
 
-# We can't reliably run `dep ensure` because when there are changes to
-# operator-sdk itself, and those changes are not merged upstream, we hit this
-# bug: https://github.com/golang/dep/issues/1747
-# Instead, this re-uses operator-sdk's own vendor directory.
-cp -a "$ROOTDIR"/vendor ./
-mkdir -p vendor/github.com/operator-framework/operator-sdk/
-# We cannot just use operator-sdk from $GOPATH because compilation tries to use
-# its vendor directory, which can conflict with the local one.
-cp -a "$ROOTDIR"/{internal,pkg,version,LICENSE} vendor/github.com/operator-framework/operator-sdk/
+# Right now, SDK projects still need a vendor directory, so run `go mod vendor`
+# to pull down the deps specified by the scaffolded `go.mod` file.
+go mod vendor
+
+# Use the local operator-sdk directory as the repo. To make the go toolchain
+# happy, the directory needs a `go.mod` file that specifies the module name,
+# so we need this temporary hack until we update the SDK repo itself to use
+# go modules.
+echo "module github.com/operator-framework/operator-sdk" > $ROOTDIR/go.mod
+trap_add 'rm $ROOTDIR/go.mod' EXIT
+go mod edit -replace=github.com/operator-framework/operator-sdk=$ROOTDIR
+go mod vendor
 
 operator-sdk build "$DEST_IMAGE"
 

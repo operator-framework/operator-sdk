@@ -21,6 +21,7 @@ import (
 	"regexp"
 	"strings"
 
+	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -36,6 +37,7 @@ const (
 	buildDockerfile = "build" + fsep + "Dockerfile"
 	rolesDir        = "roles"
 	helmChartsDir   = "helm-charts"
+	goModFile       = "go.mod"
 	gopkgTOMLFile   = "Gopkg.toml"
 )
 
@@ -53,26 +55,6 @@ const (
 	OperatorTypeUnknown OperatorType = "unknown"
 )
 
-type DepManagerType string
-
-const (
-	DepManagerDep DepManagerType = "dep"
-)
-
-var ErrInvalidDepManager = fmt.Errorf(`no valid dependency manager file found; dep manager must be one of ["%v"]`, DepManagerDep)
-
-func GetDepManagerType() (DepManagerType, error) {
-	if IsDepManagerDep() {
-		return DepManagerDep, nil
-	}
-	return "", ErrInvalidDepManager
-}
-
-func IsDepManagerDep() bool {
-	_, err := os.Stat(gopkgTOMLFile)
-	return err == nil || os.IsExist(err)
-}
-
 type ErrUnknownOperatorType struct {
 	Type string
 }
@@ -82,6 +64,40 @@ func (e ErrUnknownOperatorType) Error() string {
 		return "unknown operator type"
 	}
 	return fmt.Sprintf(`unknown operator type "%v"`, e.Type)
+}
+
+type DepManagerType string
+
+const (
+	DepManagerGoMod DepManagerType = "modules"
+	DepManagerDep   DepManagerType = "dep"
+)
+
+type ErrInvalidDepManager string
+
+func (e ErrInvalidDepManager) Error() string {
+	return fmt.Sprintf(`"%s" is not a valid dep manager; dep manager must be one of ["%v", "%v"]`, e, DepManagerDep, DepManagerGoMod)
+}
+
+var ErrNoDepManager = fmt.Errorf(`no valid dependency manager file found; dep manager must be one of ["%v", "%v"]`, DepManagerDep, DepManagerGoMod)
+
+func GetDepManagerType() (DepManagerType, error) {
+	if IsDepManagerDep() {
+		return DepManagerDep, nil
+	} else if IsDepManagerGoMod() {
+		return DepManagerGoMod, nil
+	}
+	return "", ErrNoDepManager
+}
+
+func IsDepManagerDep() bool {
+	_, err := os.Stat(gopkgTOMLFile)
+	return err == nil || os.IsExist(err)
+}
+
+func IsDepManagerGoMod() bool {
+	_, err := os.Stat(goModFile)
+	return err == nil || os.IsExist(err)
 }
 
 // MustInProjectRoot checks if the current dir is the project root and returns
@@ -112,15 +128,25 @@ func MustGetwd() string {
 	return wd
 }
 
-// CheckAndGetProjectGoPkg checks if this project's repository path is rooted under $GOPATH and returns the current directory's import path
+func getHomeDir() (string, error) {
+	hd, err := homedir.Dir()
+	if err != nil {
+		return "", err
+	}
+	return homedir.Expand(hd)
+}
+
+// CheckAndGetProjectGoPkg checks if this project's repository path is rooted
+// under $GOPATH and returns the current directory's import path,
 // e.g: "github.com/example-inc/app-operator"
 func CheckAndGetProjectGoPkg() string {
 	gopath := MustSetGopath(MustGetGopath())
 	goSrc := filepath.Join(gopath, SrcDir)
 	wd := MustGetwd()
-	currPkg := strings.Replace(wd, goSrc+fsep, "", 1)
-	// strip any "/" prefix from the repo path.
-	return strings.TrimPrefix(currPkg, fsep)
+	pathedPkg := strings.Replace(wd, goSrc, "", 1)
+	// Make sure package only contains the "/" separator and no others, and
+	// trim any leading/trailing "/".
+	return strings.Trim(filepath.ToSlash(pathedPkg), "/")
 }
 
 // GetOperatorType returns type of operator is in cwd.
