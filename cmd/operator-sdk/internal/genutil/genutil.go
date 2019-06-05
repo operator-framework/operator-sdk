@@ -45,8 +45,20 @@ func parseGroupVersions() (map[string][]string, error) {
 
 			gvs[g.Name()] = make([]string, 0)
 			for _, v := range versions {
-				if v.IsDir() && scaffold.ResourceVersionRegexp.MatchString(v.Name()) {
-					gvs[g.Name()] = append(gvs[g.Name()], v.Name())
+				if v.IsDir() {
+					// Ignore directories that do not contain any files, so generators
+					// do not get empty directories as arguments.
+					verDir := filepath.Join(groupDir, v.Name())
+					files, err := ioutil.ReadDir(verDir)
+					if err != nil {
+						return nil, fmt.Errorf("could not read %s directory to find api Versions: %v", verDir, err)
+					}
+					for _, f := range files {
+						if !f.IsDir() {
+							gvs[g.Name()] = append(gvs[g.Name()], filepath.ToSlash(v.Name()))
+							break
+						}
+					}
 				}
 			}
 		}
