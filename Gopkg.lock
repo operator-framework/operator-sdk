@@ -1854,6 +1854,7 @@
     "k8s.io/helm/pkg/tiller/environment",
     "k8s.io/klog",
     "k8s.io/kube-openapi/cmd/openapi-gen/args",
+    "k8s.io/kube-openapi/pkg/generators",
     "k8s.io/kube-state-metrics/pkg/collector",
     "k8s.io/kube-state-metrics/pkg/metric",
     "k8s.io/kube-state-metrics/pkg/metrics_store",
