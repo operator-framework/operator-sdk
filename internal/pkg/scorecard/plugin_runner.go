@@ -265,7 +265,7 @@ func SetupAndRunPlugin() (*scapiv1alpha1.ScorecardOutput, error) {
 	for _, cr := range crs {
 		logReadWriter = &bytes.Buffer{}
 		log.SetOutput(logReadWriter)
-		log.Printf("Running for cr: %s\n", cr)
+		log.Printf("Running for cr: %s", cr)
 		if !viper.GetBool(OlmDeployedOpt) {
 			if err := createFromYAMLFile(viper.GetString(GlobalManifestOpt)); err != nil {
 				return nil, fmt.Errorf("failed to create global resources: %v", err)

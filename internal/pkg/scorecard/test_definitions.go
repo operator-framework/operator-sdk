@@ -17,6 +17,7 @@ package scorecard
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
 )
@@ -123,12 +124,12 @@ func MergeSuites(suites []TestSuite) ([]TestSuite, error) {
 	mergedSuites := []TestSuite{}
 	for _, suiteSlice := range suiteMap {
 		testMap := make(map[string][]TestResult)
-		logs := ""
+		var logs strings.Builder
 		for _, suite := range suiteSlice {
 			for _, result := range suite.TestResults {
 				testMap[result.Test.GetName()] = append(testMap[result.Test.GetName()], result)
 			}
-			logs = logs + suite.Log
+			logs.WriteString(fmt.Sprintf("%s\n---\n", suite.Log))
 		}
 		mergedTestResults := []TestResult{}
 		for _, testSlice := range testMap {
@@ -148,7 +149,7 @@ func MergeSuites(suites []TestSuite) ([]TestSuite, error) {
 		}
 		newSuite := suiteSlice[0]
 		newSuite.TestResults = mergedTestResults
-		newSuite.Log = logs
+		newSuite.Log = logs.String()
 		mergedSuites = append(mergedSuites, newSuite)
 	}
 	return mergedSuites, nil
