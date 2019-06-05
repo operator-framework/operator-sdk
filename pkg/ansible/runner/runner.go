@@ -83,8 +83,6 @@ func New(watch watches.Watch) (Runner, error) {
 			rolePath, roleName := filepath.Split(path)
 			return exec.Command("ansible-runner", "-vv", "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath, "--hosts", "localhost", "-i", ident, "run", inputDirPath)
 		}
-	default:
-		return nil, fmt.Errorf("Either playbook or role must be defined for %v", watch.GroupVersionKind)
 	}
 
 	// handle finalizer

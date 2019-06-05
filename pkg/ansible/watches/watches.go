@@ -86,7 +86,7 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// need to check if that's okay
 	reconcilePeriod, err := time.ParseDuration(tmp.ReconcilePeriod)
 	if err != nil {
-		return fmt.Errorf("Failed to parse '%s' to time.Duration: %v", tmp.ReconcilePeriod, err)
+		return fmt.Errorf("failed to parse '%s' to time.Duration: %v", tmp.ReconcilePeriod, err)
 	}
 
 	gvk := schema.GroupVersionKind{
@@ -96,7 +96,7 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 	err = verifyGVK(gvk)
 	if err != nil {
-		return fmt.Errorf("Invalid GVK: %v - %s", gvk.String(), err)
+		return fmt.Errorf("invalid GVK: %v - %s", gvk.String(), err)
 	}
 
 	// Rewrite values to struct being unmarshalled
@@ -133,25 +133,25 @@ func Load(path string) ([]Watch, error) {
 
 		// prevent dupes
 		if _, ok := watchesMap[watch.GroupVersionKind]; ok {
-			return nil, fmt.Errorf("Duplicate GVK: %v", watch.GroupVersionKind.String())
+			return nil, fmt.Errorf("duplicate GVK: %v", watch.GroupVersionKind.String())
 		}
 		watchesMap[watch.GroupVersionKind] = true
 
 		err = verifyAnsiblePath(watch.Playbook, watch.Role)
 		if err != nil {
-			log.Error(err, "Invalid Ansible path for GVK: %v", watch.GroupVersionKind.String())
+			log.Error(err, "Invalid ansible path for GVK: %v", watch.GroupVersionKind.String())
 			return nil, err
 		}
 
 		if watch.Finalizer != nil {
 			if watch.Finalizer.Name == "" {
-				err = fmt.Errorf("Finalizer must have name")
+				err = fmt.Errorf("finalizer must have name")
 				log.Error(err, "Invalid finalizer for GVK: %v", watch.GroupVersionKind.String())
 				return nil, err
 			}
 			err = verifyAnsiblePath(watch.Finalizer.Playbook, watch.Finalizer.Role)
 			if err != nil {
-				log.Error(err, "Invalid Ansible path on Finalizer for GVK: %v", watch.GroupVersionKind.String())
+				log.Error(err, "Invalid ansible path on Finalizer for GVK: %v", watch.GroupVersionKind.String())
 				return nil, err
 			}
 		}
@@ -178,20 +178,20 @@ func verifyAnsiblePath(playbook string, role string) error {
 	switch {
 	case playbook != "":
 		if !filepath.IsAbs(playbook) {
-			return fmt.Errorf("Playbook path must be absolute")
+			return fmt.Errorf("playbook path must be absolute")
 		}
 		if _, err := os.Stat(playbook); err != nil {
-			return fmt.Errorf("Playbook: %v was not found", playbook)
+			return fmt.Errorf("playbook: %v was not found", playbook)
 		}
 	case role != "":
 		if !filepath.IsAbs(role) {
-			return fmt.Errorf("Role path must be absolute")
+			return fmt.Errorf("role path must be absolute")
 		}
 		if _, err := os.Stat(role); err != nil {
-			return fmt.Errorf("Role path: %v was not found", role)
+			return fmt.Errorf("role path: %v was not found", role)
 		}
 	default:
-		return fmt.Errorf("Must specify Role or Playbook")
+		return fmt.Errorf("must specify Role or Playbook")
 	}
 	return nil
 }
