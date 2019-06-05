@@ -150,14 +150,14 @@ func GoModOn() (bool, error) {
 	if v == "on" {
 		return true, nil
 	}
-	inSrc, err := wdInGoPathSrc()
+	inSrc, err := WdInGoPathSrc()
 	if err != nil {
 		return false, err
 	}
 	return !inSrc && (!ok || v == "" || v == "auto"), nil
 }
 
-func wdInGoPathSrc() (bool, error) {
+func WdInGoPathSrc() (bool, error) {
 	wd, err := os.Getwd()
 	if err != nil {
 		return false, err
