@@ -263,8 +263,8 @@ Scaffolds a new operator project.
 * `--helm-chart-version` string - Specific version of the helm chart (default is latest version)
 * `--dep-manager` string - Dependency manager the new project will use (choices: "dep", "modules") (default "modules")
 * `--skip-git-init` - Do not init the directory as a git repository
-* `--vendor` - Use a vendor directory for dependencies. This flag only applies when --dep-manager=modules (the default). If --no-check is set, vendoring is skipped
-* `--no-check` - Do not validate the resulting projects' structure and dependencies
+* `--vendor` - Use a vendor directory for dependencies. This flag only applies when --dep-manager=modules (the default)
+* `--skip-validation` - Do not validate the resulting projects' structure and dependencies
 * `-h, --help` - help for new
 
 ### Example

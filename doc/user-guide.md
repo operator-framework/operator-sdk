@@ -416,7 +416,7 @@ func main() {
 
 **NOTES:**
 
-* After adding new import paths to your operator project, run `go mod vendor` if using a `vendor/` directory (or `dep ensure` if you set `--dep-manager=dep` when initializing your project) in the root of your project directory to fulfill these dependencies.
+* After adding new import paths to your operator project, run `go mod vendor` if using modules and a `vendor/` directory (or `dep ensure` if you set `--dep-manager=dep` when initializing your project) in the root of your project directory to fulfill these dependencies.
 * Your 3rd party resource needs to be added before add the controller in `"Setup all Controllers"`.
 
 ### Handle Cleanup on Deletion

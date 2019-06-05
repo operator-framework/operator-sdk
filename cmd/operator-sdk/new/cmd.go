@@ -60,8 +60,8 @@ generates a skeletal app-operator application in $GOPATH/src/github.com/example.
 	newCmd.Flags().StringVar(&depManager, "dep-manager", "modules", `Dependency manager the new project will use (choices: "dep", "modules")`)
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
 	newCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
-	newCmd.Flags().BoolVar(&makeVendor, "vendor", false, "Use a vendor directory for dependencies. This flag only applies when --dep-manager=modules (the default). If --no-check is set, vendoring is skipped")
-	newCmd.Flags().BoolVar(&noCheck, "no-check", false, "Do not validate the resulting projects' structure and dependencies")
+	newCmd.Flags().BoolVar(&makeVendor, "vendor", false, "Use a vendor directory for dependencies. This flag only applies when --dep-manager=modules (the default)")
+	newCmd.Flags().BoolVar(&skipValidation, "skip-validation", false, "Do not validate the resulting projects' structure and dependencies")
 	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false, "Generate a playbook skeleton. (Only used for --type ansible)")
 
 	newCmd.Flags().StringVar(&helmChartRef, "helm-chart", "", "Initialize helm operator with existing helm chart (<URL>, <repo>/<name>, or local path)")
@@ -80,7 +80,7 @@ var (
 	headerFile       string
 	skipGit          bool
 	makeVendor       bool
-	noCheck          bool
+	skipValidation   bool
 	generatePlaybook bool
 
 	helmChartRef     string
@@ -117,8 +117,8 @@ func newFunc(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if !noCheck {
-		if err := checkProject(); err != nil {
+	if !skipValidation {
+		if err := validateProject(); err != nil {
 			return err
 		}
 	}
@@ -424,9 +424,9 @@ func getDeps() error {
 			return err
 		}
 	case projutil.DepManagerGoMod:
-		// Only when a user requests a vendor directory be created and a check be
-		// performed should "go mod vendor" be run during project initialization.
-		if makeVendor && !noCheck {
+		// Only when a user requests a vendor directory be created should
+		// "go mod vendor" be run during project initialization.
+		if makeVendor {
 			opts := projutil.GoCmdOptions{
 				Args: []string{"-v"},
 				Dir:  filepath.Join(projutil.MustGetwd(), projectName),
@@ -463,8 +463,8 @@ func initGit() error {
 	return nil
 }
 
-func checkProject() error {
-	log.Info("Checking project")
+func validateProject() error {
+	log.Info("Validating project")
 	switch projutil.DepManagerType(depManager) {
 	case projutil.DepManagerGoMod:
 		// Run "go build ./..." to make sure all packages can be built
@@ -482,6 +482,6 @@ func checkProject() error {
 		}
 	}
 
-	log.Info("Check project successful.")
+	log.Info("Project validation successful.")
 	return nil
 }
