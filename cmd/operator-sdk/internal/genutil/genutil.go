@@ -54,7 +54,7 @@ func parseGroupVersions() (map[string][]string, error) {
 						return nil, fmt.Errorf("could not read %s directory to find api Versions: %v", verDir, err)
 					}
 					for _, f := range files {
-						if !f.IsDir() {
+						if !f.IsDir() && filepath.Ext(f.Name()) == ".go" {
 							gvs[g.Name()] = append(gvs[g.Name()], filepath.ToSlash(v.Name()))
 							break
 						}
