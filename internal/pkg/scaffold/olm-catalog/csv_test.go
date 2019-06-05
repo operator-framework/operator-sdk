@@ -198,38 +198,34 @@ func TestSetAndCheckOLMNamespaces(t *testing.T) {
 	// check that depHasOLMNamespaces() returns false.
 	dep := &appsv1.Deployment{}
 	if err := yaml.Unmarshal(depBytes, dep); err != nil {
-		t.Fatalf("(1) Failed to unmarshal Deployment bytes: %v", err)
+		t.Fatalf("Failed to unmarshal Deployment bytes: %v", err)
 	}
 	if depHasOLMNamespaces(dep) {
-		t.Error("(1) Expected depHasOLMNamespaces to return false, got true")
+		t.Error("Expected depHasOLMNamespaces to return false, got true")
 	}
 
 	// Insert "olm.targetNamespaces" into WATCH_NAMESPACE and check that
 	// depHasOLMNamespaces() returns true.
-	dep = &appsv1.Deployment{}
-	if err := yaml.Unmarshal(depBytes, dep); err != nil {
-		t.Fatalf("(2) Failed to unmarshal Deployment bytes: %v", err)
-	}
 	setWatchNamespacesEnv(dep)
 	if !depHasOLMNamespaces(dep) {
-		t.Error("(2) Expected depHasOLMNamespaces to return true, got false")
+		t.Error("Expected depHasOLMNamespaces to return true, got false")
 	}
 
 	// Overwrite WATCH_NAMESPACE and check that depHasOLMNamespaces() returns
 	// false.
 	overwriteContainerEnvVar(dep, k8sutil.WatchNamespaceEnvVar, newEnvVar("FOO", "bar"))
 	if depHasOLMNamespaces(dep) {
-		t.Error("(3) Expected depHasOLMNamespaces to return false, got true")
+		t.Error("Expected depHasOLMNamespaces to return false, got true")
 	}
 
 	// Insert "olm.targetNamespaces" elsewhere in the deployment pod spec
 	// and check that depHasOLMNamespaces() returns true.
 	dep = &appsv1.Deployment{}
 	if err := yaml.Unmarshal(depBytes, dep); err != nil {
-		t.Fatalf("(4) Failed to unmarshal Deployment bytes: %v", err)
+		t.Fatalf("Failed to unmarshal Deployment bytes: %v", err)
 	}
 	dep.Spec.Template.ObjectMeta.Labels["namespace"] = olmTNMeta
 	if !depHasOLMNamespaces(dep) {
-		t.Error("(4) Expected depHasOLMNamespaces to return true, got false")
+		t.Error("Expected depHasOLMNamespaces to return true, got false")
 	}
 }
