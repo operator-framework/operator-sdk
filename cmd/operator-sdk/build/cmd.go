@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -52,14 +53,14 @@ For example:
 		RunE: buildFunc,
 	}
 	buildCmd.Flags().StringVar(&imageBuildArgs, "image-build-args", "", "Extra image build arguments as one string such as \"--build-arg https_proxy=$https_proxy\"")
-	buildCmd.Flags().StringVar(&imageBuilder, "image-builder", "docker", "Tool to build OCI images. One of: [docker, buildah]")
+	buildCmd.Flags().StringVar(&imageBuilder, "image-builder", "docker", "Tool to build OCI images. One of: [docker, podman, buildah]")
 	return buildCmd
 }
 
 func createBuildCommand(imageBuilder, context, dockerFile, image string, imageBuildArgs ...string) (*exec.Cmd, error) {
 	var args []string
 	switch imageBuilder {
-	case "docker":
+	case "docker", "podman":
 		args = append(args, "build", "-f", dockerFile, "-t", image)
 	case "buildah":
 		args = append(args, "bud", "--format=docker", "-f", dockerFile, "-t", image)
@@ -100,7 +101,7 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	if projutil.IsOperatorGo() {
 		opts := projutil.GoCmdOptions{
 			BinName:     filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName),
-			PackagePath: filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir),
+			PackagePath: path.Join(projutil.CheckAndGetProjectGoPkg(), filepath.ToSlash(scaffold.ManagerDir)),
 			Args:        goTrimFlags,
 			Env:         goBuildEnv,
 			GoMod:       projutil.IsDepManagerGoMod(),

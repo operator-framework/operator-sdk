@@ -176,10 +176,6 @@ func UpdateSuiteStates(suite scapiv1alpha1.ScorecardSuiteResult) scapiv1alpha1.S
 
 func CombineScorecardOutput(outputs []scapiv1alpha1.ScorecardOutput, log string) scapiv1alpha1.ScorecardOutput {
 	output := scapiv1alpha1.ScorecardOutput{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ScorecardOutput",
-			APIVersion: "osdk.openshift.io/v1alpha1",
-		},
 		Log: log,
 	}
 	for _, item := range outputs {

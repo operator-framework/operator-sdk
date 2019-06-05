@@ -33,6 +33,20 @@ test_operator() {
         exit 1
     fi
 
+    # verify that metrics service was created
+    if ! timeout 20s bash -c -- "until kubectl get service/nginx-operator > /dev/null 2>&1; do sleep 1; done";
+    then
+        kubectl logs deployment/nginx-operator
+        exit 1
+    fi
+
+    # verify that the metrics endpoint exists
+    if ! timeout 1m bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl -sfo /dev/null http://nginx-operator:8383/metrics; do sleep 1; done";
+    then
+        kubectl logs deployment/nginx-operator
+        exit 1
+    fi
+
     # create CR
     kubectl create -f deploy/crds/helm_v1alpha1_nginx_cr.yaml
     trap_add 'kubectl delete --ignore-not-found -f ${OPERATORDIR}/deploy/crds/helm_v1alpha1_nginx_cr.yaml' EXIT
@@ -94,7 +108,12 @@ fi
 
 # create and build the operator
 pushd "$GOTMP"
-operator-sdk new nginx-operator --api-version=helm.example.com/v1alpha1 --kind=Nginx --type=helm
+log=$(operator-sdk new nginx-operator --api-version=helm.example.com/v1alpha1 --kind=Nginx --type=helm 2>&1)
+echo $log
+if echo $log | grep -q "failed to generate RBAC rules"; then
+    echo FAIL expected successful generation of RBAC rules
+    exit 1
+fi
 
 pushd nginx-operator
 sed -i 's|\(FROM quay.io/operator-framework/helm-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
@@ -134,6 +153,7 @@ go mod vendor
 echo "module github.com/operator-framework/operator-sdk" > $ROOTDIR/go.mod
 trap_add 'rm $ROOTDIR/go.mod' EXIT
 go mod edit -replace=github.com/operator-framework/operator-sdk=$ROOTDIR
+go mod vendor
 
 operator-sdk build "$DEST_IMAGE"
 
