@@ -84,9 +84,6 @@ func main() {
 	// controller-runtime)
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 
-	disableLeaderElection := pflag.Bool("disable-leader-election", false, "Disable leader election")
-	disableMetrics := pflag.Bool("disable-metrics", false, "Disable metrics service creation")
-
 	pflag.Parse()
 
 	// Use a zap logr.Logger implementation. If none of the zap
@@ -113,16 +110,14 @@ func main() {
 		log.Error(err, "")
 		os.Exit(1)
 	}
-
+	
 	ctx := context.TODO()
 
 	// Become the leader before proceeding
-	if !*disableLeaderElection {
-		err = leader.Become(ctx, "{{ .ProjectName }}-lock")
-		if err != nil {
-			log.Error(err, "")
-			os.Exit(1)
-		}
+	err = leader.Become(ctx, "{{ .ProjectName }}-lock")
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
 	}
 
 	// Create a new Cmd to provide shared dependencies and start components
@@ -130,7 +125,7 @@ func main() {
 		Namespace:          namespace,
 		MapperProvider:     restmapper.NewDynamicRESTMapper,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
-	})
+	})	
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
@@ -151,11 +146,9 @@ func main() {
 	}
 
 	// Create Service object to expose the metrics port.
-	if !*disableMetrics {
-		_, err = metrics.ExposeMetricsPort(ctx, metricsPort)
-		if err != nil {
-			log.Info(err.Error())
-		}
+	_, err = metrics.ExposeMetricsPort(ctx, metricsPort)
+	if err != nil {
+		log.Info(err.Error())
 	}
 
 	log.Info("Starting the Cmd.")

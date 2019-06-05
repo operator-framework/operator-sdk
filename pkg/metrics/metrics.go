@@ -50,7 +50,7 @@ func ExposeMetricsPort(ctx context.Context, port int32) (*v1.Service, error) {
 	// would error out and we would never get to this stage.
 	s, err := initOperatorService(ctx, client, port, PrometheusPortName)
 	if err != nil {
-		if err == k8sutil.ErrNoNamespace {
+		if err == k8sutil.ErrNoNamespace || err == k8sutil.ErrRunLocal {
 			log.Info("Skipping metrics Service creation; not running in a cluster.")
 			return nil, nil
 		}
