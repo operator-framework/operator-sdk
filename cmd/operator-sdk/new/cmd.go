@@ -464,9 +464,9 @@ func initGit() error {
 }
 
 func validateProject() error {
-	log.Info("Validating project")
 	switch projutil.DepManagerType(depManager) {
 	case projutil.DepManagerGoMod:
+		log.Info("Validating project")
 		// Run "go build ./..." to make sure all packages can be built
 		// correctly. From "go help build":
 		//
@@ -480,8 +480,8 @@ func validateProject() error {
 		if err := projutil.GoBuild(opts); err != nil {
 			return err
 		}
+		log.Info("Project validation successful.")
 	}
 
-	log.Info("Project validation successful.")
 	return nil
 }
