@@ -47,17 +47,17 @@ func ServeCRMetrics(cfg *rest.Config,
 	log.V(1).Info("Starting collecting operator types")
 	// Loop through all the possible operator/custom resource specific types.
 	for _, gvk := range operatorGVKs {
-		api := gvk.GroupVersion().String()
+		apiVersion := gvk.GroupVersion().String()
 		kind := gvk.Kind
 		// Generate metric based on the kind.
 		metricFamilies := generateMetricFamilies(gvk.Kind)
-		log.V(1).Info("Generating metric families", "apiVersion", api, "kind", kind)
-		dclient, err := newClientForGVK(cfg, api, kind)
+		log.V(1).Info("Generating metric families", "apiVersion", apiVersion, "kind", kind)
+		dclient, err := newClientForGVK(cfg, apiVersion, kind)
 		if err != nil {
 			return err
 		}
 		// Generate collector based on the group/version, kind and the metric families.
-		c := NewCollectors(dclient, ns, api, kind, metricFamilies)
+		c := NewCollectors(dclient, ns, apiVersion, kind, metricFamilies)
 		collectors = append(collectors, c)
 	}
 	// Start serving metrics.
