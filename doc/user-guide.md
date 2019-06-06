@@ -434,24 +434,24 @@ The following is a snippet from the controller file under `pkg/controller/memcac
 const memcachedFinalizer = "finalizer.cache.example.com"
 
 func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Result, error) {
- 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
- 	reqLogger.Info("Reconciling Memcached")
- 
- 	// Fetch the Memcached instance
- 	memcached := &cachev1alpha1.Memcached{}
- 	err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
+	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
+	reqLogger.Info("Reconciling Memcached")
 
- 	...
+	// Fetch the Memcached instance
+	memcached := &cachev1alpha1.Memcached{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
 
- 	// Check if the APP CR was marked to be deleted
- 	isMemcachedMarkedToBeDeleted := memcached.GetDeletionTimestamp() != nil
- 	if isMemcachedMarkedToBeDeleted {
+	...
+
+	// Check if the Memcached instance is marked to be deleted
+	isMemcachedMarkedToBeDeleted := memcached.GetDeletionTimestamp() != nil
+	if isMemcachedMarkedToBeDeleted {
 		if contains(memcached.GetFinalizers(), memcachedFinalizer) {
 			// Run finalization logic for memcachedFinalizer. If the
 			// finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation.
-			if err := r.finalizeMemcached(); err != nil {
-			     return reconcile.Result{}, err
+			if err := r.finalizeMemcached(reqLogger, memcached); err != nil {
+				return reconcile.Result{}, err
 			}
 
 			// Remove memcachedFinalizer. Once all finalizers have been
@@ -462,21 +462,21 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 				return reconcile.Result{}, err
 			}
 		}
- 		return reconcile.Result{}, nil
- 	}
- 	
- 	// Add finalizer for this CR
+		return reconcile.Result{}, nil
+	}
+
+	// Add finalizer for this CR
 	if !contains(memcached.GetFinalizers(), memcachedFinalizer) {
-		if err := r.addFinalizer(reqLogger, instance); err != nil {
+		if err := r.addFinalizer(reqLogger, memcached); err != nil {
 			return reconcile.Result{}, err
 		}
 	}
 
- 	...
- 
- 	return reconcile.Result{}, nil
- }
- 
+	...
+
+	return reconcile.Result{}, nil
+}
+
 func (r *ReconcileMemcached) finalizeMemcached(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
 	// TODO(user): Add the cleanup steps that the operator
 	// needs to do before the CR can be deleted
@@ -509,7 +509,7 @@ func contains(list []string, s string) bool {
 func remove(list []string, s string) []string {
 	for i, v := range list {
 		if v == s {
-			list = append(list[:i], list[i+1:]...]
+			list = append(list[:i], list[i+1:]...)
 		}
 	}
 	return list
