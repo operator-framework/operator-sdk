@@ -468,7 +468,7 @@ func validateProject() error {
 	switch projutil.DepManagerType(depManager) {
 	case projutil.DepManagerGoMod:
 		// Run "go build ./..." to make sure all packages can be built
-		// currectly. From "go help build":
+		// correctly. From "go help build":
 		//
 		//	When compiling multiple packages or a single non-main package,
 		//	build compiles the packages but discards the resulting object,
