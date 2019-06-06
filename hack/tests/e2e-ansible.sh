@@ -133,7 +133,7 @@ then
     exit 1
 fi
 
-# Run `go build ./..` to pull down the deps specified by the scaffolded
+# Run `go build ./...` to pull down the deps specified by the scaffolded
 # `go.mod` file and verify dependencies build correctly.
 go build ./...
 
