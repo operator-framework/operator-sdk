@@ -25,12 +25,12 @@ import (
 
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/internal/log"
 )
 
 var (
-	kubeconfig, masterURL string
-	log                   = logf.KBLog.WithName("client").WithName("config")
+	kubeconfig, apiServerURL string
+	log                      = logf.RuntimeLog.WithName("client").WithName("config")
 )
 
 func init() {
@@ -38,14 +38,18 @@ func init() {
 	flag.StringVar(&kubeconfig, "kubeconfig", "",
 		"Paths to a kubeconfig. Only required if out-of-cluster.")
 
-	flag.StringVar(&masterURL, "master", "",
-		"The address of the Kubernetes API server. Overrides any value in kubeconfig. "+
+	// This flag is deprecated, it'll be removed in a future iteration, please switch to --kubeconfig.
+	flag.StringVar(&apiServerURL, "master", "",
+		"(Deprecated: switch to `--kubeconfig`) The address of the Kubernetes API server. Overrides any value in kubeconfig. "+
 			"Only required if out-of-cluster.")
 }
 
-// GetConfig creates a *rest.Config for talking to a Kubernetes apiserver.
+// GetConfig creates a *rest.Config for talking to a Kubernetes API server.
 // If --kubeconfig is set, will use the kubeconfig file at that location.  Otherwise will assume running
 // in cluster and use the cluster provided kubeconfig.
+//
+// It also applies saner defaults for QPS and burst based on the Kubernetes
+// controller manager defaults (20 QPS, 30 burst)
 //
 // Config precedence
 //
@@ -57,13 +61,28 @@ func init() {
 //
 // * $HOME/.kube/config if exists
 func GetConfig() (*rest.Config, error) {
+	cfg, err := loadConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	if cfg.QPS == 0.0 {
+		cfg.QPS = 20.0
+		cfg.Burst = 30.0
+	}
+
+	return cfg, nil
+}
+
+// loadConfig loads a REST Config as per the rules specified in GetConfig
+func loadConfig() (*rest.Config, error) {
 	// If a flag is specified with the config location, use that
 	if len(kubeconfig) > 0 {
-		return clientcmd.BuildConfigFromFlags(masterURL, kubeconfig)
+		return clientcmd.BuildConfigFromFlags(apiServerURL, kubeconfig)
 	}
 	// If an env variable is specified with the config locaiton, use that
 	if len(os.Getenv("KUBECONFIG")) > 0 {
-		return clientcmd.BuildConfigFromFlags(masterURL, os.Getenv("KUBECONFIG"))
+		return clientcmd.BuildConfigFromFlags(apiServerURL, os.Getenv("KUBECONFIG"))
 	}
 	// If no explicit location, try the in-cluster config
 	if c, err := rest.InClusterConfig(); err == nil {

@@ -6,13 +6,11 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators"
 )
 
 const (
 	InstallPlanKind       = "InstallPlan"
-	InstallPlanAPIVersion = operators.GroupName + "/" + GroupVersion
+	InstallPlanAPIVersion = GroupName + "/" + GroupVersion
 )
 
 // Approval is the user approval policy for an InstallPlan.
@@ -145,6 +143,43 @@ type Step struct {
 	Status    StepStatus   `json:"status"`
 }
 
+// ManifestsMatch returns true if the CSV manifests in the StepResources of the given list of steps
+// matches those in the InstallPlanStatus.
+func (s *InstallPlanStatus) CSVManifestsMatch(steps []*Step) bool {
+	if s.Plan == nil && steps == nil {
+		return true
+	}
+	if s.Plan == nil || steps == nil {
+		return false
+	}
+
+	manifests := make(map[string]struct{})
+	for _, step := range s.Plan {
+		resource := step.Resource
+		if resource.Kind != ClusterServiceVersionKind {
+			continue
+		}
+		manifests[resource.Manifest] = struct{}{}
+	}
+
+	for _, step := range steps {
+		resource := step.Resource
+		if resource.Kind != ClusterServiceVersionKind {
+			continue
+		}
+		if _, ok := manifests[resource.Manifest]; !ok {
+			return false
+		}
+		delete(manifests, resource.Manifest)
+	}
+
+	if len(manifests) == 0 {
+		return true
+	}
+
+	return false
+}
+
 func (s *Step) String() string {
 	return fmt.Sprintf("%s: %s (%s)", s.Resolving, s.Resource, s.Status)
 }
@@ -167,6 +202,8 @@ func (r StepResource) String() string {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +genclient
+
+// InstallPlan defines the installation of a set of operators.
 type InstallPlan struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
@@ -188,6 +225,8 @@ func (p *InstallPlan) EnsureCatalogSource(sourceName string) {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// InstallPlanList is a list of InstallPlan resources.
 type InstallPlanList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
