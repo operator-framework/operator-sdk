@@ -10,7 +10,7 @@ Operators set the logger for all operator logging in [`cmd/manager/main.go`][cod
 import (
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/spf13/pflag"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func main() {
@@ -52,7 +52,7 @@ An example from [`memcached_controller.go`][code_memcached_controller]:
 package memcached
 
 import (
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // Set a global logger for the memcached package. Each log record produced
