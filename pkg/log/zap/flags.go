@@ -29,10 +29,11 @@ import (
 var (
 	zapFlagSet *pflag.FlagSet
 
-	development bool
-	encoderVal  encoderValue
-	levelVal    levelValue
-	sampleVal   sampleValue
+	development   bool
+	encoderVal    encoderValue
+	levelVal      levelValue
+	sampleVal     sampleValue
+	timeformatVal timeformatValue
 )
 
 func init() {
@@ -41,6 +42,7 @@ func init() {
 	zapFlagSet.Var(&encoderVal, "zap-encoder", "Zap log encoding ('json' or 'console')")
 	zapFlagSet.Var(&levelVal, "zap-level", "Zap log level (one of 'debug', 'info', 'error' or any integer value > 0)")
 	zapFlagSet.Var(&sampleVal, "zap-sample", "Enable zap log sampling. Sampling will be disabled for integer log levels > 1")
+	zapFlagSet.Var(&timeformatVal, "zap-timeformat", "Use 'unix' or 'iso8601' time formatting. 'unix' is the default.")
 }
 
 // FlagSet - The zap logging flagset.
@@ -78,11 +80,17 @@ func (v encoderValue) Type() string {
 
 func jsonEncoder() zapcore.Encoder {
 	encoderConfig := zap.NewProductionEncoderConfig()
+	if timeformatVal.String() == "iso8601" {
+		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	}
 	return zapcore.NewJSONEncoder(encoderConfig)
 }
 
 func consoleEncoder() zapcore.Encoder {
 	encoderConfig := zap.NewDevelopmentEncoderConfig()
+	if timeformatVal.String() == "iso8601" {
+		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	}
 	return zapcore.NewConsoleEncoder(encoderConfig)
 }
 
@@ -157,4 +165,35 @@ func (v sampleValue) IsBoolFlag() bool {
 
 func (v sampleValue) Type() string {
 	return "sample"
+}
+
+type timeformatValue struct {
+	set bool
+	str string
+}
+
+func (v *timeformatValue) Set(s string) error {
+	v.set = true
+	if len(s) > 1 {
+		if s == "unix" || s == "iso8601" {
+			v.str = s
+			return nil
+		}
+		return fmt.Errorf("unknown timeformat \"%s\"", s)
+
+	}
+	v.str = "unix"
+	return nil
+}
+
+func (v timeformatValue) String() string {
+	return v.str
+}
+
+func (v timeformatValue) IsBoolFlag() bool {
+	return false
+}
+
+func (v timeformatValue) Type() string {
+	return "string"
 }
