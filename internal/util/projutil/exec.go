@@ -113,8 +113,9 @@ func getGeneralArgs(cmd string, opts GoCmdOptions) ([]string, error) {
 }
 
 func setCommandFields(c *exec.Cmd, opts GoCmdOptions) {
+	c.Env = append(c.Env, os.Environ()...)
 	if len(opts.Env) != 0 {
-		c.Env = append(os.Environ(), opts.Env...)
+		c.Env = append(c.Env, opts.Env...)
 	}
 	if opts.Dir != "" {
 		c.Dir = opts.Dir
