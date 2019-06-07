@@ -93,7 +93,8 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 		goBuildEnv = append(goBuildEnv, "CGO_ENABLED=0")
 	}
 
-	goTrimFlags := []string{"-gcflags", "all=-trimpath=${GOPATH}", "-asmflags", "all=-trimpath=${GOPATH}"}
+	trimPath := os.ExpandEnv("all=-trimpath=${GOPATH}")
+	goTrimFlags := []string{"-gcflags", trimPath, "-asmflags", trimPath}
 	absProjectPath := projutil.MustGetwd()
 	projectName := filepath.Base(absProjectPath)
 
