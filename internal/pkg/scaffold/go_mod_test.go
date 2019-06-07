@@ -68,23 +68,36 @@ require (
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
 	k8s.io/apimachinery v0.0.0-20190221213512-86fb29eff628
 	k8s.io/client-go v2.0.0-alpha.0.0.20181126152608-d082d5923d3c+incompatible
+<<<<<<< HEAD
 	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208 // indirect
 	sigs.k8s.io/controller-runtime v0.1.10
+=======
+	k8s.io/code-generator 50b561225d70b3eb79a1faafd3dfe7b1a62cbe73
+	k8s.io/gengo v0.0.0-20190128074634-0689ccc1d7d6
+	k8s.io/kube-openapi a01b7d5d6c2258c80a4a10070f3dee9cd575d9c7
+	sigs.k8s.io/controller-runtime v0.2.0-beta.1
+>>>>>>> bump operator dep manager files to controller-runtime v0.2.0-beta.1 and all k8s.io deps to kubernetes-1.14.1
 	sigs.k8s.io/controller-tools v0.1.10
 	sigs.k8s.io/testing_frameworks v0.1.0 // indirect
 )
 
-// Pinned to kubernetes-1.13.1
+// Pinned to kubernetes-1.14.1
 replace (
-	k8s.io/api => k8s.io/api v0.0.0-20181213150558-05914d821849
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20181213153335-0fe22c71c476
-	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20181127025237-2b1284ed4c93
-	k8s.io/client-go => k8s.io/client-go v0.0.0-20181213151034-8d9ed539ba31
+	k8s.io/api => k8s.io/api kubernetes-1.14.1
+	k8s.io/apiextensions-apiserver => kubernetes-1.14.1
+	k8s.io/apimachinery => k8s.io/apimachinery kubernetes-1.14.1
+	k8s.io/client-go => k8s.io/client-go kubernetes-1.14.1
 )
 
 replace (
 	github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.29.0
+<<<<<<< HEAD
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.1.10
+=======
+	k8s.io/code-generator => k8s.io/code-generator 50b561225d70b3eb79a1faafd3dfe7b1a62cbe73
+	k8s.io/kube-openapi => k8s.io/kube-openapi a01b7d5d6c2258c80a4a10070f3dee9cd575d9c7
+	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.2.0-beta.1
+>>>>>>> bump operator dep manager files to controller-runtime v0.2.0-beta.1 and all k8s.io deps to kubernetes-1.14.1
 	sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.1.11-0.20190411181648-9d55346c2bde
 )
 `

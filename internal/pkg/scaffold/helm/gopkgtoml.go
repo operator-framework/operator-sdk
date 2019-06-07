@@ -42,36 +42,36 @@ const gopkgTomlTmpl = `[[constraint]]
   # version = "=v0.8.0" #osdk_version_annotation
 
 [[override]]
+  name = "k8s.io/kubernetes"
+  version = "v1.14.1"
+
+[[override]]
   name = "k8s.io/api"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.14.1"
 
 [[override]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.14.1"
 
 [[override]]
   name = "k8s.io/apiextensions-apiserver"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.14.1"
 
 [[override]]
   name = "k8s.io/apiserver"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.14.1"
 
 [[override]]
   name = "k8s.io/client-go"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.14.1"
 
 [[override]]
   name = "k8s.io/cli-runtime"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.14.1"
 
 # We need overrides for the following imports because dep can't resolve them
 # correctly. The easiest way to get this right is to use the versions that
-# k8s.io/helm uses. See https://github.com/helm/helm/blob/v2.13.1/glide.lock
-[[override]]
-  name = "k8s.io/kubernetes"
-  revision = "c6d339953bd4fd8c021a6b5fb46d7952b30be9f9"
-
+# k8s.io/helm uses. See https://github.com/helm/helm/blob/v2.14.0/glide.lock
 [[override]]
 name = "github.com/russross/blackfriday"
 revision = "300106c228d52c8941d4b3de6054a6062a86dda3"

@@ -185,18 +185,19 @@ func (c *cacheResponseHandler) recoverDependentWatches(req *http.Request, un *un
 }
 
 func (c *cacheResponseHandler) getListFromCache(r *requestfactory.RequestInfo, req *http.Request, k schema.GroupVersionKind) (marshaler, error) {
-	listOptions := &metav1.ListOptions{}
-	if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion, listOptions); err != nil {
+	k8sListOpts := &metav1.ListOptions{}
+	if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion, k8sListOpts); err != nil {
 		log.Error(err, "Unable to decode list options from request")
 		return nil, err
 	}
-	lo := client.InNamespace(r.Namespace)
-	if err := lo.SetLabelSelector(listOptions.LabelSelector); err != nil {
+	clientListOpts := &client.ListOptions{}
+	clientListOpts.InNamespace(r.Namespace)
+	if err := clientListOpts.SetLabelSelector(k8sListOpts.LabelSelector); err != nil {
 		log.Error(err, "Unable to set label selectors for the client")
 		return nil, err
 	}
-	if listOptions.FieldSelector != "" {
-		if err := lo.SetFieldSelector(listOptions.FieldSelector); err != nil {
+	if k8sListOpts.FieldSelector != "" {
+		if err := clientListOpts.SetFieldSelector(k8sListOpts.FieldSelector); err != nil {
 			log.Error(err, "Unable to set field selectors for the client")
 			return nil, err
 		}
@@ -204,7 +205,7 @@ func (c *cacheResponseHandler) getListFromCache(r *requestfactory.RequestInfo, r
 	k.Kind = k.Kind + "List"
 	un := unstructured.UnstructuredList{}
 	un.SetGroupVersionKind(k)
-	err := c.informerCache.List(context.Background(), lo, &un)
+	err := c.informerCache.List(context.Background(), &un, client.UseListOptions(clientListOpts))
 	if err != nil {
 		// break here in case resource doesn't exist in cache but exists on APIserver
 		// This is very unlikely but provides user with expected 404

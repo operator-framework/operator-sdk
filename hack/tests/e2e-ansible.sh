@@ -144,6 +144,7 @@ go mod vendor
 echo "module github.com/operator-framework/operator-sdk" > $ROOTDIR/go.mod
 trap_add 'rm $ROOTDIR/go.mod' EXIT
 go mod edit -replace=github.com/operator-framework/operator-sdk=$ROOTDIR
+go mod vendor
 
 operator-sdk build "$DEST_IMAGE"
 
