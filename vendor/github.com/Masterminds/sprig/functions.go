@@ -1,7 +1,6 @@
 package sprig
 
 import (
-	"errors"
 	"html/template"
 	"os"
 	"path"
@@ -10,8 +9,7 @@ import (
 	ttemplate "text/template"
 	"time"
 
-	util "github.com/Masterminds/goutils"
-	"github.com/huandu/xstrings"
+	util "github.com/aokoli/goutils"
 )
 
 // Produce the function map.
@@ -98,8 +96,6 @@ var genericMap = map[string]interface{}{
 	"htmlDateInZone": htmlDateInZone,
 	"dateInZone":     dateInZone,
 	"dateModify":     dateModify,
-	"ago":            dateAgo,
-	"toDate":         toDate,
 
 	// Strings
 	"abbrev":     abbrev,
@@ -126,10 +122,6 @@ var genericMap = map[string]interface{}{
 	"randAscii":    randAscii,
 	"randNumeric":  randNumeric,
 	"swapcase":     util.SwapCase,
-	"shuffle":      xstrings.Shuffle,
-	"snakecase":    xstrings.ToSnakeCase,
-	"camelcase":    xstrings.ToCamelCase,
-	"kebabcase":    xstrings.ToKebabCase,
 	"wrap":         func(l int, s string) string { return util.Wrap(s, l) },
 	"wrapWith":     func(l int, sep, str string) string { return util.WrapCustom(str, l, sep, true) },
 	// Switch order so that "foobar" | contains "foo"
@@ -140,12 +132,9 @@ var genericMap = map[string]interface{}{
 	"squote":    squote,
 	"cat":       cat,
 	"indent":    indent,
-	"nindent":   nindent,
 	"replace":   replace,
 	"plural":    plural,
-	"sha1sum":   sha1sum,
 	"sha256sum": sha256sum,
-	"adler32sum": adler32sum,
 	"toString":  strval,
 
 	// Wrap Atoi to stop errors.
@@ -162,8 +151,6 @@ var genericMap = map[string]interface{}{
 	// split "/" foo/bar returns map[int]string{0: foo, 1: bar}
 	"split":     split,
 	"splitList": func(sep, orig string) []string { return strings.Split(orig, sep) },
-	// splitn "/" foo/bar/fuu returns map[int]string{0: foo, 1: bar/fuu}
-	"splitn":    splitn,
 	"toStrings": strslice,
 
 	"until":     until,
@@ -191,9 +178,6 @@ var genericMap = map[string]interface{}{
 	"biggest": max,
 	"max":     max,
 	"min":     min,
-	"ceil":    ceil,
-	"floor":   floor,
-	"round":   round,
 
 	// string slices. Note that we reverse the order b/c that's better
 	// for template processing.
@@ -207,7 +191,6 @@ var genericMap = map[string]interface{}{
 	"compact":      compact,
 	"toJson":       toJson,
 	"toPrettyJson": toPrettyJson,
-	"ternary":      ternary,
 
 	// Reflection
 	"typeOf":     typeOf,
@@ -245,8 +228,6 @@ var genericMap = map[string]interface{}{
 	"pick":   pick,
 	"omit":   omit,
 	"merge":  merge,
-	"mergeOverwrite": mergeOverwrite,
-	"values": values,
 
 	"append": push, "push": push,
 	"prepend": prepend,
@@ -257,16 +238,11 @@ var genericMap = map[string]interface{}{
 	"reverse": reverse,
 	"uniq":    uniq,
 	"without": without,
-	"has":     has,
-	"slice":   slice,
+	"has":     func(needle interface{}, haystack []interface{}) bool { return inList(haystack, needle) },
 
 	// Crypto:
-	"genPrivateKey":     generatePrivateKey,
-	"derivePassword":    derivePassword,
-	"buildCustomCert":   buildCustomCertificate,
-	"genCA":             generateCertificateAuthority,
-	"genSelfSignedCert": generateSelfSignedCertificate,
-	"genSignedCert":     generateSignedCertificate,
+	"genPrivateKey":  generatePrivateKey,
+	"derivePassword": derivePassword,
 
 	// UUIDs:
 	"uuidv4": uuidv4,
@@ -274,15 +250,4 @@ var genericMap = map[string]interface{}{
 	// SemVer:
 	"semver":        semver,
 	"semverCompare": semverCompare,
-
-	// Flow Control:
-	"fail": func(msg string) (string, error) { return "", errors.New(msg) },
-
-	// Regex
-	"regexMatch":             regexMatch,
-	"regexFindAll":           regexFindAll,
-	"regexFind":              regexFind,
-	"regexReplaceAll":        regexReplaceAll,
-	"regexReplaceAllLiteral": regexReplaceAllLiteral,
-	"regexSplit":             regexSplit,
 }

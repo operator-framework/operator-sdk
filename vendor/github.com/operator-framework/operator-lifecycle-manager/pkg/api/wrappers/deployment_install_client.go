@@ -8,6 +8,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/operator-framework/operator-lifecycle-manager/pkg/lib/operatorclient"
 	"github.com/operator-framework/operator-lifecycle-manager/pkg/lib/operatorlister"
@@ -25,6 +26,7 @@ type InstallStrategyDeploymentInterface interface {
 	DeleteDeployment(name string) error
 	GetServiceAccountByName(serviceAccountName string) (*corev1.ServiceAccount, error)
 	FindAnyDeploymentsMatchingNames(depNames []string) ([]*appsv1.Deployment, error)
+	FindAnyDeploymentsMatchingLabels(label labels.Selector) ([]*appsv1.Deployment, error)
 }
 
 type InstallStrategyDeploymentClientForNamespace struct {
@@ -116,5 +118,15 @@ func (c *InstallStrategyDeploymentClientForNamespace) FindAnyDeploymentsMatching
 			}
 		}
 	}
+	return deployments, nil
+}
+
+func (c *InstallStrategyDeploymentClientForNamespace) FindAnyDeploymentsMatchingLabels(label labels.Selector) ([]*appsv1.Deployment, error) {
+	deployments, err := c.opLister.AppsV1().DeploymentLister().Deployments(c.Namespace).List(label)
+	// Any errors other than !exists are propagated up
+	if err != nil && !apierrors.IsNotFound(err) {
+		return nil, err
+	}
+
 	return deployments, nil
 }

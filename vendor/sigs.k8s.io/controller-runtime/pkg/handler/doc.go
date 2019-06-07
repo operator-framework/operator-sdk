@@ -19,6 +19,8 @@ Package handler defines EventHandlers that enqueue reconcile.Requests in respons
 observed from Watching Kubernetes APIs.  Users should provide a source.Source and handler.EventHandler to
 Controller.Watch in order to generate and enqueue reconcile.Request work items.
 
+Generally, following premade event handlers should be sufficient for most use cases:
+
 EventHandlers
 
 EnqueueRequestForObject - Enqueues a reconcile.Request containing the Name and Namespace of the object in the Event.  This will

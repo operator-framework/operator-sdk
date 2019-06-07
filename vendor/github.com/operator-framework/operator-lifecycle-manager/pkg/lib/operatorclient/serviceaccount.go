@@ -35,5 +35,5 @@ func (c *Client) UpdateServiceAccount(sa *v1.ServiceAccount) (*v1.ServiceAccount
 	if err != nil {
 		return nil, fmt.Errorf("error creating patch for ServiceAccount: %v", err)
 	}
-	return c.Core().ServiceAccounts(sa.GetNamespace()).Patch(sa.GetName(), types.StrategicMergePatchType, patchBytes)
+	return c.CoreV1().ServiceAccounts(sa.GetNamespace()).Patch(sa.GetName(), types.StrategicMergePatchType, patchBytes)
 }

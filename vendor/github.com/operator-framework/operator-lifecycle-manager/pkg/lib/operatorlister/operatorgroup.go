@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha2"
-	listers "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/listers/operators/v1alpha2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
+	listers "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/listers/operators/v1"
 )
 
 type UnionOperatorGroupLister struct {
@@ -17,11 +18,11 @@ type UnionOperatorGroupLister struct {
 }
 
 // List lists all OperatorGroups in the indexer.
-func (uol *UnionOperatorGroupLister) List(selector labels.Selector) (ret []*v1alpha2.OperatorGroup, err error) {
+func (uol *UnionOperatorGroupLister) List(selector labels.Selector) (ret []*v1.OperatorGroup, err error) {
 	uol.csvLock.RLock()
 	defer uol.csvLock.RUnlock()
 
-	set := make(map[types.UID]*v1alpha2.OperatorGroup)
+	set := make(map[types.UID]*v1.OperatorGroup)
 	for _, cl := range uol.csvListers {
 		csvs, err := cl.List(selector)
 		if err != nil {
@@ -69,11 +70,11 @@ func (uol *UnionOperatorGroupLister) RegisterOperatorGroupLister(namespace strin
 	uol.csvListers[namespace] = lister
 }
 
-func (l *operatorsV1alpha2Lister) RegisterOperatorGroupLister(namespace string, lister listers.OperatorGroupLister) {
+func (l *operatorsV1Lister) RegisterOperatorGroupLister(namespace string, lister listers.OperatorGroupLister) {
 	l.operatorGroupLister.RegisterOperatorGroupLister(namespace, lister)
 }
 
-func (l *operatorsV1alpha2Lister) OperatorGroupLister() listers.OperatorGroupLister {
+func (l *operatorsV1Lister) OperatorGroupLister() listers.OperatorGroupLister {
 	return l.operatorGroupLister
 }
 
@@ -85,11 +86,11 @@ type NullOperatorGroupNamespaceLister struct {
 }
 
 // List returns nil and an error explaining that this is a NullOperatorGroupNamespaceLister.
-func (n *NullOperatorGroupNamespaceLister) List(selector labels.Selector) (ret []*v1alpha2.OperatorGroup, err error) {
+func (n *NullOperatorGroupNamespaceLister) List(selector labels.Selector) (ret []*v1.OperatorGroup, err error) {
 	return nil, fmt.Errorf("cannot list OperatorGroups with a NullOperatorGroupNamespaceLister")
 }
 
 // Get returns nil and an error explaining that this is a NullOperatorGroupNamespaceLister.
-func (n *NullOperatorGroupNamespaceLister) Get(name string) (*v1alpha2.OperatorGroup, error) {
+func (n *NullOperatorGroupNamespaceLister) Get(name string) (*v1.OperatorGroup, error) {
 	return nil, fmt.Errorf("cannot get OperatorGroup with a NullOperatorGroupNamespaceLister")
 }
