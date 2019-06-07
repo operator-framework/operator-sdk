@@ -384,7 +384,7 @@ func verifyFlags() error {
 			return fmt.Errorf("operators of type Go do not use --api-version or --kind")
 		}
 		if !makeVendor && projutil.DepManagerType(depManager) == projutil.DepManagerDep {
-			return fmt.Errorf("--vendor cannot be used with --dep-manager=dep")
+			log.Warnf("--dep-manager=dep requires a vendor directory; ignoring --vendor=false")
 		}
 	}
 
