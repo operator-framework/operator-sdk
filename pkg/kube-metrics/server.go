@@ -16,7 +16,6 @@ package kubemetrics
 
 import (
 	"fmt"
-	logg "log"
 	"net"
 	"net/http"
 
@@ -51,7 +50,8 @@ func ServeMetrics(collectors [][]kcollector.Collector, host string, port int32) 
              </body>
              </html>`))
 	})
-	logg.Fatal(http.ListenAndServe(listenAddress, mux))
+	err := http.ListenAndServe(listenAddress, mux)
+	log.Error(err, "Failed to serve custom metrics")
 }
 
 type metricHandler struct {
