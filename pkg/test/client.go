@@ -17,7 +17,6 @@ package test
 import (
 	goctx "context"
 	"fmt"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -32,7 +31,7 @@ var _ FrameworkClient = &frameworkClient{}
 
 type FrameworkClient interface {
 	Get(gCtx goctx.Context, key dynclient.ObjectKey, obj runtime.Object) error
-	List(gCtx goctx.Context, opts *dynclient.ListOptions, list runtime.Object) error
+	List(gCtx goctx.Context, opts dynclient.ListOptionFunc, list runtime.Object) error
 	Create(gCtx goctx.Context, obj runtime.Object, cleanupOptions *CleanupOptions) error
 	Delete(gCtx goctx.Context, obj runtime.Object, opts ...dynclient.DeleteOptionFunc) error
 	Update(gCtx goctx.Context, obj runtime.Object) error
@@ -93,8 +92,8 @@ func (f *frameworkClient) Get(gCtx goctx.Context, key dynclient.ObjectKey, obj r
 	return f.Client.Get(gCtx, key, obj)
 }
 
-func (f *frameworkClient) List(gCtx goctx.Context, opts *dynclient.ListOptions, list runtime.Object) error {
-	return f.Client.List(gCtx, opts, list)
+func (f *frameworkClient) List(gCtx goctx.Context, opts dynclient.ListOptionFunc, list runtime.Object) error {
+	return f.Client.List(gCtx, list, opts)
 }
 
 func (f *frameworkClient) Delete(gCtx goctx.Context, obj runtime.Object, opts ...dynclient.DeleteOptionFunc) error {

@@ -20,7 +20,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 
 	"github.com/spf13/cobra"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // newRunAnsibleCmd returns a command that will run an ansible operator.

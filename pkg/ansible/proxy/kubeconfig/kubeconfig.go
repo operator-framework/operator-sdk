@@ -26,7 +26,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var log = logf.Log.WithName("kubeconfig")
