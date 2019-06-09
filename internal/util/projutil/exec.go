@@ -121,6 +121,9 @@ func getGeneralArgs(cmd string, opts GoCmdOptions) ([]string, error) {
 		} else if goModOn {
 			// Does vendor exist?
 			info, err := os.Stat("vendor")
+			if err != nil && !os.IsNotExist(err) {
+				return nil, err
+			}
 			// Does the first "go" subcommand accept -mod=vendor?
 			_, ok := validVendorCmds[bargs[0]]
 			if err == nil && info.IsDir() && ok {
