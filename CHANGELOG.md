@@ -8,7 +8,9 @@
 - New flags `--vendor` and `--skip-validation` for [`operator-sdk new`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#new) that direct the SDK to initialize a new project with a `vendor/` directory, and without validating project dependencies. `vendor/` is not written by default. ([#1519](https://github.com/operator-framework/operator-sdk/pull/1519))
 
 ### Changed
+
 - Remove TypeMeta declaration from the implementation of the objects [#1462](https://github.com/operator-framework/operator-sdk/pull/1462/)
+- Relaxed API version format check when parsing `pkg/apis` in code generators. API dir structures can now be of the format `pkg/apis/<group>/<anything>`, where `<anything>` was previously required to be in the Kubernetes version format, ex. `v1alpha1`. ([#1525](https://github.com/operator-framework/operator-sdk/pull/1525))
 
 ### Deprecated
 
