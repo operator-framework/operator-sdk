@@ -110,6 +110,9 @@ func getGeneralArgs(cmd string, opts GoCmdOptions) ([]string, error) {
 			bargs = append(bargs, ct)
 		}
 	}
+	if len(bargs) == 0 {
+		return nil, fmt.Errorf("the go binary cannot be run without subcommands")
+	}
 
 	if opts.BinName != "" {
 		bargs = append(bargs, "-o", opts.BinName)
