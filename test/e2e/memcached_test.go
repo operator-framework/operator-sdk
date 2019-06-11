@@ -648,6 +648,7 @@ func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.T
 		return fmt.Errorf("no labels found in metrics Service")
 	}
 
+	// TODO(lili): Make port a constant in internal/scaffold/cmd.go.
 	response, err := getMetrics(t, f, s.Spec.Selector, namespace, "8383")
 	if err != nil {
 		return fmt.Errorf("failed to get metrics: %v", err)
@@ -680,6 +681,7 @@ func memcachedOperatorMetricsTest(t *testing.T, f *framework.Framework, ctx *fra
 		return err
 	}
 
+	// TODO(lili): Make port a constant in internal/scaffold/cmd.go.
 	response, err := getMetrics(t, f, map[string]string{"name": operatorName}, namespace, "8686")
 	if err != nil {
 		return fmt.Errorf("failed to lint metrics: %v", err)
