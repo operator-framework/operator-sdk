@@ -60,7 +60,8 @@
       - name: Verify that test-service was created
         assert:
           that: lookup('k8s', kind='Service', api_version='v1', namespace=namespace, resource_name='test-service')
-      
+        when: "'project.openshift.io' in lookup('k8s', cluster_info='api_groups')"
+
       - name: Verify that project testing-foo was created
         assert:
           that: lookup('k8s', kind='Namespace', api_version='v1', resource_name='testing-foo')

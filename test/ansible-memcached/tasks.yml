@@ -59,8 +59,9 @@
 
 - name: create project if projects are available
   k8s:
-    api_version: project.openshift.io/v1
-    kind: Project
-    metadata:
-      name: testing-foo
-  when: projects.openshift.io in api_groups
+    definition:
+      apiVersion: project.openshift.io/v1
+      kind: Project
+      metadata:
+        name: testing-foo
+  when: "'project.openshift.io' in api_groups"
