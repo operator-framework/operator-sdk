@@ -183,7 +183,7 @@ func serveCRMetrics(cfg *rest.Config) error {
 	// To generate metrics in other namespaces, add the values below.
 	ns := []string{operatorNs}
 	// Generate and serve custom resource specific metrics.
-	err = kubemetrics.ServeCRMetrics(cfg, ns, filteredGVK, metricsHost, operatorMetricsPort)
+	err = kubemetrics.GenerateAndServeCRMetrics(cfg, ns, filteredGVK, metricsHost, operatorMetricsPort)
 	if err != nil {
 	    return err
 	}

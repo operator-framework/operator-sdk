@@ -29,11 +29,11 @@ import (
 
 var log = logf.Log.WithName("kubemetrics")
 
-// ServeCRMetrics generates CustomResource specific metrics for each custom resource GVK in operatorGVKs.
+// GenerateAndServeCRMetrics generates CustomResource specific metrics for each custom resource GVK in operatorGVKs.
 // A list of namespaces, ns, can be passed to ServeCRMetrics to scope the generated metrics. Passing nil or
 // an empty list of namespaces will result in an error.
 // The function also starts serving the generated collections of the metrics on given host and port.
-func ServeCRMetrics(cfg *rest.Config,
+func GenerateAndServeCRMetrics(cfg *rest.Config,
 	ns []string,
 	operatorGVKs []schema.GroupVersionKind,
 	host string, port int32) error {
