@@ -469,29 +469,6 @@ func getDeps() error {
 	return nil
 }
 
-func checkProject() error {
-	log.Info("Checking project")
-	switch projutil.DepManagerType(depManager) {
-	case projutil.DepManagerGoMod:
-		// Run "go build ./..." to make sure all packages can be built
-		// currectly. From "go help build":
-		//
-		//	When compiling multiple packages or a single non-main package,
-		//	build compiles the packages but discards the resulting object,
-		//	serving only as a check that the packages can be built.
-		opts := projutil.GoCmdOptions{
-			PackagePath: "./...",
-			Dir:         filepath.Join(projutil.MustGetwd(), projectName),
-		}
-		if err := projutil.GoBuild(opts); err != nil {
-			return err
-		}
-	}
-
-	log.Info("Check project successful.")
-	return nil
-}
-
 func initGit() error {
 	if skipGit {
 		return nil
