@@ -254,7 +254,6 @@ Scaffolds a new operator project.
 
 ### Flags
 
-* `--skip-git-init` - Do not init the directory as a git repository
 * `--type` string - Type of operator to initialize: "ansible", "helm", or "go" (default "go"). Also requires the following flags if `--type=ansible` or `--type=helm`
 * `--api-version` string - CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
 * `--kind` string - CRD Kind. (e.g AppService)
@@ -263,6 +262,9 @@ Scaffolds a new operator project.
 * `--helm-chart-repo` string - Chart repository URL for the requested helm chart
 * `--helm-chart-version` string - Specific version of the helm chart (default is latest version)
 * `--dep-manager` string - Dependency manager the new project will use (choices: "dep", "modules") (default "modules")
+* `--skip-git-init` - Do not init the directory as a git repository
+* `--vendor` - Use a vendor directory for dependencies. This flag only applies when `--dep-manager=modules` (the default)
+* `--skip-validation` - Do not validate the resulting project's structure and dependencies
 * `-h, --help` - help for new
 
 ### Example
@@ -487,6 +489,7 @@ Runs the tests locally
 * `--go-test-flags` string - Additional flags to pass to go test
 * `--molecule-test-flags` string - Additional flags to pass to molecule test
 * `--up-local` - enable running operator locally with go run instead of as an image in the cluster
+* `--local-operator-flags` string - flags that the operator needs, while using --up-local (e.g. \"--flag1 value1 --flag2=value2\")
 * `--no-setup` - disable test resource creation
 * `--image` string - use a different operator image from the one specified in the namespaced manifest
 * `-h, --help` - help for local
@@ -519,6 +522,7 @@ the operator-sdk binary itself as the operator.
 
 ##### Flags
 
+* `--enable-delve` bool - starts the operator locally and enables the delve debugger listening on port 2345
 * `--go-ldflags` string - Set Go linker options
 * `--kubeconfig` string - The file path to Kubernetes configuration file; defaults to $HOME/.kube/config
 * `--namespace` string - The namespace where the operator watches for changes. (default "default")

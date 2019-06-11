@@ -105,7 +105,8 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 			GoMod:       projutil.IsDepManagerGoMod(),
 		}
 		if _, ok := os.LookupEnv(projutil.GoPathEnv); ok {
-			opts.Args = []string{"-gcflags", "all=-trimpath=${GOPATH}", "-asmflags", "all=-trimpath=${GOPATH}"}
+			trimPath := os.ExpandEnv("all=-trimpath=${GOPATH}")
+			opts.Args = []string{"-gcflags", trimPath, "-asmflags", trimPath}
 		}
 		if err := projutil.GoBuild(opts); err != nil {
 			return fmt.Errorf("failed to build operator binary: (%v)", err)

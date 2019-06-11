@@ -18,43 +18,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
+	"path"
 	"path/filepath"
 
-	flags "github.com/operator-framework/operator-sdk/internal/pkg/flags"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
-
-func buildCodegenBinaries(genDirs []string, binDir, codegenSrcDir string) error {
-	for _, gd := range genDirs {
-		err := runGoBuildCodegen(binDir, codegenSrcDir, gd)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func runGoBuildCodegen(binDir, repoDir, genDir string) error {
-	binPath := filepath.Join(binDir, filepath.Base(genDir))
-	cmd := exec.Command("go", "build", "-o", binPath, genDir)
-	cmd.Dir = repoDir
-	if gf, ok := os.LookupEnv(projutil.GoFlagsEnv); ok && len(gf) != 0 {
-		cmd.Env = append(os.Environ(), projutil.GoFlagsEnv+"="+gf)
-	}
-
-	// Only print binary build info if verbosity is explicitly set.
-	if viper.GetBool(flags.VerboseOpt) {
-		return projutil.ExecCmd(cmd)
-	}
-	cmd.Stdout = ioutil.Discard
-	cmd.Stderr = ioutil.Discard
-	return cmd.Run()
-}
 
 // ParseGroupVersions parses the layout of pkg/apis to return a map of
 // API groups to versions.
@@ -75,8 +45,20 @@ func parseGroupVersions() (map[string][]string, error) {
 
 			gvs[g.Name()] = make([]string, 0)
 			for _, v := range versions {
-				if v.IsDir() && scaffold.ResourceVersionRegexp.MatchString(v.Name()) {
-					gvs[g.Name()] = append(gvs[g.Name()], v.Name())
+				if v.IsDir() {
+					// Ignore directories that do not contain any files, so generators
+					// do not get empty directories as arguments.
+					verDir := filepath.Join(groupDir, v.Name())
+					files, err := ioutil.ReadDir(verDir)
+					if err != nil {
+						return nil, fmt.Errorf("could not read %s directory to find api Versions: %v", verDir, err)
+					}
+					for _, f := range files {
+						if !f.IsDir() && filepath.Ext(f.Name()) == ".go" {
+							gvs[g.Name()] = append(gvs[g.Name()], filepath.ToSlash(v.Name()))
+							break
+						}
+					}
 				}
 			}
 		}
@@ -93,13 +75,17 @@ func parseGroupVersions() (map[string][]string, error) {
 func createFQAPIs(pkg string, gvs map[string][]string) (apis []string) {
 	for g, vs := range gvs {
 		for _, v := range vs {
-			apis = append(apis, filepath.Join(pkg, g, v))
+			apis = append(apis, path.Join(pkg, g, v))
 		}
 	}
 	return apis
 }
 
-func withHeaderFile(f func(string) error) (err error) {
+// generateWithHeaderFile runs f with a header file path as an arguemnt.
+// If there is no project boilerplate.go.txt file, an empty header file is
+// created and its path passed as the argument.
+// generateWithHeaderFile is meant to be used with Kubernetes code generators.
+func generateWithHeaderFile(f func(string) error) (err error) {
 	i, err := (&scaffold.Boilerplate{}).GetInput()
 	if err != nil {
 		return err

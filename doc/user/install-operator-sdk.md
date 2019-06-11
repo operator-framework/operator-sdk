@@ -6,7 +6,7 @@
 
 ```sh
 # Set the release version variable
-$ RELEASE_VERSION=v0.8.0
+$ RELEASE_VERSION=v0.8.1
 # Linux
 $ curl -OJL https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu
 # macOS
@@ -76,10 +76,8 @@ $ brew install operator-sdk
 ## Compile and install from master
 
 ```sh
-$ mkdir -p $GOPATH/src/github.com/operator-framework
-$ cd $GOPATH/src/github.com/operator-framework
-$ git clone https://github.com/operator-framework/operator-sdk
-$ cd operator-sdk
+$ go get -d github.com/operator-framework/operator-sdk # This will download the git repository and not install it
+$ cd $GOPATH/src/github.com/operator-framework/operator-sdk
 $ git checkout master
 $ make dep
 $ make install

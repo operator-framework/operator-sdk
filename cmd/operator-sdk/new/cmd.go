@@ -62,6 +62,7 @@ generates a skeletal app-operator application in $HOME/projects/example.com/app-
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
 	newCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
 	newCmd.Flags().BoolVar(&makeVendor, "vendor", false, "Use a vendor directory for dependencies. This flag only applies when --dep-manager=modules (the default)")
+	newCmd.Flags().BoolVar(&skipValidation, "skip-validation", false, "Do not validate the resulting project's structure and dependencies")
 	newCmd.Flags().BoolVar(&generatePlaybook, "generate-playbook", false, "Generate a playbook skeleton. (Only used for --type ansible)")
 
 	newCmd.Flags().StringVar(&helmChartRef, "helm-chart", "", "Initialize helm operator with existing helm chart (<URL>, <repo>/<name>, or local path)")
@@ -81,6 +82,7 @@ var (
 	repo             string
 	skipGit          bool
 	makeVendor       bool
+	skipValidation   bool
 	generatePlaybook bool
 
 	helmChartRef     string
@@ -121,8 +123,10 @@ func newFunc(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if err := checkProject(); err != nil {
-		return err
+	if !skipValidation {
+		if err := validateProject(); err != nil {
+			return err
+		}
 	}
 
 	if err := initGit(); err != nil {
@@ -383,8 +387,13 @@ func verifyFlags() error {
 		return fmt.Errorf("value of --helm-chart-version can only be used with --type=helm and --helm-chart")
 	}
 
-	if operatorType == projutil.OperatorTypeGo && (len(apiVersion) != 0 || len(kind) != 0) {
-		return fmt.Errorf("operators of type Go do not use --api-version or --kind")
+	if operatorType == projutil.OperatorTypeGo {
+		if len(apiVersion) != 0 || len(kind) != 0 {
+			return fmt.Errorf("operators of type Go do not use --api-version or --kind")
+		}
+		if !makeVendor && projutil.DepManagerType(depManager) == projutil.DepManagerDep {
+			log.Warnf("--dep-manager=dep requires a vendor directory; ignoring --vendor=false")
+		}
 	}
 
 	// --api-version and --kind are required with --type=ansible and --type=helm, with one exception.
@@ -438,8 +447,8 @@ func getDeps() error {
 			return err
 		}
 	case projutil.DepManagerGoMod:
-		// Only when a user requests a vendor directory be created should "go mod"
-		// be run during project initialization.
+		// Only when a user requests a vendor directory be created should
+		// "go mod vendor" be run during project initialization.
 		if makeVendor {
 			log.Info("Running go mod vendor")
 			opts := projutil.GoCmdOptions{
@@ -498,5 +507,28 @@ func initGit() error {
 		return err
 	}
 	log.Info("Run git init done")
+	return nil
+}
+
+func validateProject() error {
+	switch projutil.DepManagerType(depManager) {
+	case projutil.DepManagerGoMod:
+		log.Info("Validating project")
+		// Run "go build ./..." to make sure all packages can be built
+		// correctly. From "go help build":
+		//
+		//	When compiling multiple packages or a single non-main package,
+		//	build compiles the packages but discards the resulting object,
+		//	serving only as a check that the packages can be built.
+		opts := projutil.GoCmdOptions{
+			PackagePath: "./...",
+			Dir:         filepath.Join(projutil.MustGetwd(), projectName),
+		}
+		if err := projutil.GoBuild(opts); err != nil {
+			return err
+		}
+		log.Info("Project validation successful.")
+	}
+
 	return nil
 }

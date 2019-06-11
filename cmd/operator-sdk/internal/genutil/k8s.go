@@ -51,7 +51,7 @@ func K8sCodegen() error {
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	fqApis := createFQAPIs(apisPkg, gvMap)
 	f := func(a string) error { return deepcopyGen(a, fqApis) }
-	if err = withHeaderFile(f); err != nil {
+	if err = generateWithHeaderFile(f); err != nil {
 		return err
 	}
 
@@ -66,8 +66,9 @@ func deepcopyGen(hf string, fqApis []string) error {
 	}
 	flag.Set("logtostderr", "true")
 	for _, api := range fqApis {
+		api = filepath.FromSlash(api)
 		// Use relative API path so the generator writes to the correct path.
-		apiPath := "./" + api[strings.Index(api, scaffold.ApisDir):]
+		apiPath := "." + string(filepath.Separator) + api[strings.Index(api, scaffold.ApisDir):]
 		args, cargs := generatorargs.NewDefaults()
 		args.InputDirs = []string{apiPath}
 		args.OutputPackagePath = filepath.Join(wd, apiPath)
