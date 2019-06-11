@@ -179,9 +179,9 @@ func GetGoPkg() string {
 		}
 		goPath = filepath.Join(hd, "go", "src")
 	} else {
-		// MustSetFirstGopath is necessary here because the user has set GOPATH,
+		// MustSetWdGopath is necessary here because the user has set GOPATH,
 		// which could be a path list.
-		goPath = MustSetFirstGopath(goPath)
+		goPath = MustSetWdGopath(goPath)
 	}
 	if !strings.HasPrefix(MustGetwd(), goPath) {
 		log.Fatal("Could not determine project repository path: $GOPATH not set, wd in default $HOME/go/src, or wd does not contain a go.mod")
@@ -227,10 +227,20 @@ func IsOperatorHelm() bool {
 	return err == nil && stat.IsDir()
 }
 
-// MustSetFirstGopath sets GOPATH to the first element of the path list in
-// currentGopath, then returns the set path.
-// If GOPATH cannot be set, MustSetFirstGopath exits.
-func MustSetFirstGopath(currentGopath string) string {
+// MustGetGopath gets GOPATH and ensures it is set and non-empty. If GOPATH
+// is not set or empty, MustGetGopath exits.
+func MustGetGopath() string {
+	gopath, ok := os.LookupEnv(GoPathEnv)
+	if !ok || len(gopath) == 0 {
+		log.Fatal("GOPATH env not set")
+	}
+	return gopath
+}
+
+// MustSetWdGopath sets GOPATH to the first element of the path list in
+// currentGopath that prefixes the wd, then returns the set path.
+// If GOPATH cannot be set, MustSetWdGopath exits.
+func MustSetWdGopath(currentGopath string) string {
 	var (
 		newGopath   string
 		cwdInGopath bool
