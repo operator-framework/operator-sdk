@@ -140,9 +140,9 @@ fi
 SDK_REPO="github.com/operator-framework/operator-sdk"
 sed -E -i 's|^(replace)?.*'"$SDK_REPO"'.*=>.*$||g' go.mod
 
-# Right now, SDK projects still need a vendor directory, so run `go mod vendor`
-# to pull down the deps specified by the scaffolded `go.mod` file.
-go mod vendor
+# Run `go build ./...` to pull down the deps specified by the scaffolded
+# `go.mod` file and verify dependencies build correctly.
+go build ./...
 
 # Use the local operator-sdk directory as the repo. To make the go toolchain
 # happy, the directory needs a `go.mod` file that specifies the module name,
@@ -151,7 +151,7 @@ go mod vendor
 echo "module ${SDK_REPO}" > "${ROOTDIR}/go.mod"
 trap_add "rm ${ROOTDIR}/go.mod" EXIT
 go mod edit -replace="${SDK_REPO}=$ROOTDIR"
-go mod vendor
+go build ./...
 
 operator-sdk build "$DEST_IMAGE"
 
