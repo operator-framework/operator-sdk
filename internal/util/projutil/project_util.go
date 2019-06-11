@@ -152,7 +152,7 @@ func getHomeDir() (string, error) {
 // under $GOPATH and returns the current directory's import path,
 // e.g: "github.com/example-inc/app-operator"
 func CheckAndGetProjectGoPkg() string {
-	gopath := MustSetFirstGopath(MustGetGopath())
+	gopath := MustSetWdGopath(MustGetGopath())
 	return parseGoPkg(gopath)
 }
 
@@ -187,9 +187,9 @@ func GetGoPkg() string {
 		}
 		goPath = filepath.Join(hd, "go", "src")
 	} else {
-		// MustSetFirstGopath is necessary here because the user has set GOPATH,
+		// MustSetWdGopath is necessary here because the user has set GOPATH,
 		// which could be a path list.
-		goPath = MustSetFirstGopath(goPath)
+		goPath = MustSetWdGopath(goPath)
 	}
 	if !strings.HasPrefix(MustGetwd(), goPath) {
 		log.Fatal("Could not determine project repository path: $GOPATH not set, wd in default $HOME/go/src, or wd does not contain a go.mod")
@@ -245,10 +245,10 @@ func MustGetGopath() string {
 	return gopath
 }
 
-// MustSetFirstGopath sets GOPATH to the first element of the path list in
-// currentGopath, then returns the set path.
-// If GOPATH cannot be set, MustSetFirstGopath exits.
-func MustSetFirstGopath(currentGopath string) string {
+// MustSetWdGopath sets GOPATH to the first element of the path list in
+// currentGopath that prefixes the wd, then returns the set path.
+// If GOPATH cannot be set, MustSetWdGopath exits.
+func MustSetWdGopath(currentGopath string) string {
 	var (
 		newGopath   string
 		cwdInGopath bool
