@@ -1,4 +1,4 @@
-FROM osdk-intermediate as builder
+FROM osdk-builder as builder
 
 RUN ci/tests/e2e-go-scaffold.sh
 
