@@ -142,12 +142,12 @@ then
     exit 1
 fi
 
-# Remove any "replace" lines for the SDK repo before vendoring in case this is
-# a release PR and the tag doesn't exist yet. This must be done without using
-# "go mod edit", which first parses go.mod and will error if it doesn't find
-# a tag/version.
+# Remove any "replace" and "require" lines for the SDK repo before vendoring
+# in case this is a release PR and the tag doesn't exist yet. This must be
+# done without using "go mod edit", which first parses go.mod and will error
+# if it doesn't find a tag/version/package.
 SDK_REPO="github.com/operator-framework/operator-sdk"
-sed -E -i 's|^(replace)?.*'"$SDK_REPO"'.*=>.*$||g' go.mod
+sed -E -i 's|^.*'"$SDK_REPO"'.*$||g' go.mod
 
 # Run `go build ./...` to pull down the deps specified by the scaffolded
 # `go.mod` file and verify dependencies build correctly.

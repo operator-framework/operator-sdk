@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -133,16 +134,13 @@ func TestMemcached(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to read go.mod: %v", err)
 		}
-		// Comment out SDK repo require line so we can parse the modfile.
-		sdkRequire := []byte(fmt.Sprintf("%s master", sdkRepo))
-		sdkRequireCommented := []byte(fmt.Sprintf("// %s", string(sdkRequire)))
-		modBytes = bytes.Replace(modBytes, sdkRequire, sdkRequireCommented, 1)
+		// Remove SDK repo dependency lines so we can parse the modfile.
+		sdkRe := regexp.MustCompile(`.*github\.com/operator-framework/operator-sdk.*`)
+		modBytes = sdkRe.ReplaceAll(modBytes, nil)
 		modBytes, err = insertGoModReplace(t, modBytes, sdkRepo, replace.repo, replace.ref)
 		if err != nil {
 			t.Fatalf("Failed to insert replace: %v", err)
 		}
-		// Uncomment before writing.
-		modBytes = bytes.Replace(modBytes, sdkRequireCommented, sdkRequire, 1)
 		err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
 		if err != nil {
 			t.Fatalf("Failed to write updated go.mod: %v", err)
@@ -332,16 +330,6 @@ func insertGoModReplace(t *testing.T, modBytes []byte, repo, path, sha string) (
 	modFile, err := modfile.Parse("go.mod", modBytes, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse go.mod: %v", err)
-	}
-	// Remove an existing replace line for the SDK if one exists. This is
-	// necessary for release PR's, which contain a replace directive for
-	// new SDK versions.
-	for _, r := range modFile.Replace {
-		if r.Old.Path == repo {
-			if err := modFile.DropReplace(repo, r.Old.Version); err != nil {
-				return nil, fmt.Errorf(`failed to remove "%s": %v`, modBytes[r.Syntax.Start.Byte:r.Syntax.End.Byte], err)
-			}
-		}
 	}
 	if err = modFile.AddReplace(repo, "", path, sha); err != nil {
 		s := ""
