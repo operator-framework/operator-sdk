@@ -227,7 +227,7 @@ func TestMemcached(t *testing.T) {
 	}
 
 	if *test.OnlyGenerate {
-		err := ioutil.WriteFile(filepath.Join(cd, "project_path.tmp"), []byte(absProjectPath), os.FileMode(0644))
+		err := ioutil.WriteFile(filepath.Join("/", "project_path.tmp"), []byte(filepath.Base(absProjectPath)), os.FileMode(0644))
 		if err != nil {
 			t.Fatalf("Failed to write project_path.tmp: %v", err)
 		}
