@@ -2,20 +2,13 @@
 
 source hack/lib/common.sh
 
-function listPkgs() {
-	go list ./cmd/... ./pkg/... ./test/... | grep -v generated
+function listPkgDirs() {
+	go list -f '{{.Dir}}' ./cmd/... ./pkg/... ./test/... ./internal/... | grep -v generated
 }
 
 function listFiles() {
-	# make it work with composed gopath
-	for gopath in ${GOPATH//:/ }; do
-		if [[ "$(pwd)" =~ "$gopath" ]]; then
-			GOPATH="$gopath"
-			break
-		fi
-	done
 	# pipeline is much faster than for loop
-	listPkgs | xargs -I {} find "${GOPATH}/src/{}" -name '*.go' | grep -v generated
+	listPkgDirs | xargs -I {} find {} -name '*.go' | grep -v generated
 }
 
 #===================================================================
