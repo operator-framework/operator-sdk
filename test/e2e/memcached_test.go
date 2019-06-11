@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -64,15 +65,20 @@ func TestMemcached(t *testing.T) {
 	if !ok || gopath == "" {
 		t.Fatalf("$GOPATH not set")
 	}
-	cd, err := os.Getwd()
+	sdkTestE2EDir, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
-		if err := os.Chdir(cd); err != nil {
+		if err := os.Chdir(sdkTestE2EDir); err != nil {
 			t.Errorf("Failed to change back to original working directory: (%v)", err)
 		}
 	}()
+	localSDKPath := *args.localRepo
+	if localSDKPath == "" {
+		// We're in ${sdk_repo}/test/e2e
+		localSDKPath = filepath.Dir(filepath.Dir(sdkTestE2EDir))
+	}
 	// For go commands in operator projects.
 	if err = os.Setenv("GO111MODULE", "on"); err != nil {
 		t.Fatal(err)
@@ -95,7 +101,8 @@ func TestMemcached(t *testing.T) {
 	t.Log("Creating new operator project")
 	cmdOut, err := exec.Command("operator-sdk",
 		"new",
-		operatorName).CombinedOutput()
+		operatorName,
+		"--skip-validation").CombinedOutput()
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
@@ -105,8 +112,6 @@ func TestMemcached(t *testing.T) {
 	}
 
 	sdkRepo := "github.com/operator-framework/operator-sdk"
-	localSDKPath := filepath.Join(gopath, "src", filepath.FromSlash(sdkRepo))
-
 	replace := getGoModReplace(t, localSDKPath)
 	if replace.repo != sdkRepo {
 		if replace.isLocal {
@@ -125,7 +130,22 @@ func TestMemcached(t *testing.T) {
 				}
 			}()
 		}
-		writeGoModReplace(t, sdkRepo, replace.repo, replace.ref)
+		modBytes, err := ioutil.ReadFile("go.mod")
+		if err != nil {
+			t.Fatalf("Failed to read go.mod: %v", err)
+		}
+		// Remove SDK repo dependency lines so we can parse the modfile.
+		sdkRe := regexp.MustCompile(`.*github\.com/operator-framework/operator-sdk.*`)
+		modBytes = sdkRe.ReplaceAll(modBytes, nil)
+		modBytes, err = insertGoModReplace(t, modBytes, sdkRepo, replace.repo, replace.ref)
+		if err != nil {
+			t.Fatalf("Failed to insert replace: %v", err)
+		}
+		err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
+		if err != nil {
+			t.Fatalf("Failed to write updated go.mod: %v", err)
+		}
+		t.Logf("go.mod: %v", string(modBytes))
 	}
 
 	cmdOut, err = exec.Command("go", "build", "./...").CombinedOutput()
@@ -306,30 +326,23 @@ func getGoModReplace(t *testing.T, localSDKPath string) goModReplace {
 	}
 }
 
-func writeGoModReplace(t *testing.T, repo, path, sha string) {
-	modBytes, err := ioutil.ReadFile("go.mod")
-	if err != nil {
-		t.Fatalf("Failed to read go.mod: %v", err)
-	}
+func insertGoModReplace(t *testing.T, modBytes []byte, repo, path, sha string) ([]byte, error) {
 	modFile, err := modfile.Parse("go.mod", modBytes, nil)
 	if err != nil {
-		t.Fatalf("Failed to parse go.mod: %v", err)
+		return nil, fmt.Errorf("failed to parse go.mod: %v", err)
 	}
 	if err = modFile.AddReplace(repo, "", path, sha); err != nil {
 		s := ""
 		if sha != "" {
 			s = " " + sha
 		}
-		t.Fatalf(`Failed to add "replace %s => %s%s: %v"`, repo, path, s, err)
+		return nil, fmt.Errorf(`failed to add "replace %s => %s%s: %v"`, repo, path, s, err)
 	}
+	modFile.Cleanup()
 	if modBytes, err = modFile.Format(); err != nil {
-		t.Fatalf("Failed to format go.mod: %v", err)
+		return nil, fmt.Errorf("failed to format go.mod: %v", err)
 	}
-	err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
-	if err != nil {
-		t.Fatalf("Failed to write updated go.mod: %v", err)
-	}
-	t.Logf("go.mod: %v", string(modBytes))
+	return modBytes, nil
 }
 
 func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
@@ -542,9 +555,9 @@ func MemcachedCluster(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Could not read deploy/operator.yaml: %v", err)
 	}
-	local := *e2eImageName == ""
+	local := *args.e2eImageName == ""
 	if local {
-		*e2eImageName = "quay.io/example/memcached-operator:v0.0.1"
+		*args.e2eImageName = "quay.io/example/memcached-operator:v0.0.1"
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -554,20 +567,20 @@ func MemcachedCluster(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	operatorYAML = bytes.Replace(operatorYAML, []byte("REPLACE_IMAGE"), []byte(*e2eImageName), 1)
+	operatorYAML = bytes.Replace(operatorYAML, []byte("REPLACE_IMAGE"), []byte(*args.e2eImageName), 1)
 	err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, os.FileMode(0644))
 	if err != nil {
 		t.Fatalf("Failed to write deploy/operator.yaml: %v", err)
 	}
 	t.Log("Building operator docker image")
-	cmdOut, err := exec.Command("operator-sdk", "build", *e2eImageName).CombinedOutput()
+	cmdOut, err := exec.Command("operator-sdk", "build", *args.e2eImageName).CombinedOutput()
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
 	if !local {
 		t.Log("Pushing docker image to repo")
-		cmdOut, err = exec.Command("docker", "push", *e2eImageName).CombinedOutput()
+		cmdOut, err = exec.Command("docker", "push", *args.e2eImageName).CombinedOutput()
 		if err != nil {
 			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 		}
