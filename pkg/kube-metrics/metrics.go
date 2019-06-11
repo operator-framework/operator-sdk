@@ -69,7 +69,7 @@ func GenerateAndServeCRMetrics(cfg *rest.Config,
 func generateMetricFamilies(kind string) []ksmetric.FamilyGenerator {
 	helpText := fmt.Sprintf("Information about the %s custom resource.", kind)
 	kindName := strings.ToLower(kind)
-	metricName := fmt.Sprintf("%s_info", strings.ToLower(kind))
+	metricName := fmt.Sprintf("%s_info", kindName)
 
 	return []ksmetric.FamilyGenerator{
 		ksmetric.FamilyGenerator{
