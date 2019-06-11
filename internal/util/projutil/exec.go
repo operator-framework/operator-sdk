@@ -63,14 +63,19 @@ type GoTestOptions struct {
 	TestBinaryArgs []string
 }
 
-const (
-	goBuildCmd = "build"
-	goTestCmd  = "test"
-)
+var validVendorCmds = map[string]struct{}{
+	"build":   struct{}{},
+	"clean":   struct{}{},
+	"get":     struct{}{},
+	"install": struct{}{},
+	"list":    struct{}{},
+	"run":     struct{}{},
+	"test":    struct{}{},
+}
 
 // GoBuild runs "go build" configured with opts.
 func GoBuild(opts GoCmdOptions) error {
-	return GoCmd(goBuildCmd, opts)
+	return GoCmd("build", opts)
 }
 
 // GoTest runs "go test" configured with opts.
@@ -85,7 +90,7 @@ func GoTest(opts GoTestOptions) error {
 	return ExecCmd(c)
 }
 
-// GoCmd runs "go cmd"..
+// GoCmd runs "go {cmd}".
 func GoCmd(cmd string, opts GoCmdOptions) error {
 	bargs, err := opts.getGeneralArgsWithCmd(cmd)
 	if err != nil {
@@ -105,6 +110,9 @@ func (opts GoCmdOptions) getGeneralArgsWithCmd(cmd string) ([]string, error) {
 			bargs = append(bargs, ct)
 		}
 	}
+	if len(bargs) == 0 {
+		return nil, fmt.Errorf("the go binary cannot be run without subcommands")
+	}
 
 	if opts.BinName != "" {
 		bargs = append(bargs, "-o", opts.BinName)
@@ -114,7 +122,14 @@ func (opts GoCmdOptions) getGeneralArgsWithCmd(cmd string) ([]string, error) {
 		if goModOn, err := GoModOn(); err != nil {
 			return nil, err
 		} else if goModOn {
-			if info, err := os.Stat("vendor"); err == nil && info.IsDir() {
+			// Does vendor exist?
+			info, err := os.Stat("vendor")
+			if err != nil && !os.IsNotExist(err) {
+				return nil, err
+			}
+			// Does the first "go" subcommand accept -mod=vendor?
+			_, ok := validVendorCmds[bargs[0]]
+			if err == nil && info.IsDir() && ok {
 				bargs = append(bargs, "-mod=vendor")
 			}
 		}
@@ -126,8 +141,9 @@ func (opts GoCmdOptions) getGeneralArgsWithCmd(cmd string) ([]string, error) {
 }
 
 func (opts GoCmdOptions) setCmdFields(c *exec.Cmd) {
+	c.Env = append(c.Env, os.Environ()...)
 	if len(opts.Env) != 0 {
-		c.Env = append(os.Environ(), opts.Env...)
+		c.Env = append(c.Env, opts.Env...)
 	}
 	if opts.Dir != "" {
 		c.Dir = opts.Dir
