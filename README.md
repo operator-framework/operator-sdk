@@ -139,6 +139,10 @@ The SDK also supports developing an operator using Ansible or Helm. See the [Ans
 
 To explore any operator samples built using the operator-sdk, see the [operator-sdk-samples][samples].
 
+## FAQ
+
+For common Operator SDK related questions, see the [FAQ][faq].
+
 ## Contributing
 
 See [CONTRIBUTING][contrib] for details on submitting patches and the contribution workflow.
@@ -174,3 +178,4 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [controller_runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [ansible_user_guide]:./doc/ansible/user-guide.md
 [helm_user_guide]:./doc/helm/user-guide.md
+[faq]: ./doc/faq.md
