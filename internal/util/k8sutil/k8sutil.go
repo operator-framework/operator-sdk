@@ -17,6 +17,7 @@ package k8sutil
 import (
 	"fmt"
 
+	"github.com/ghodss/yaml"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -50,4 +51,14 @@ func GetKubeconfigAndNamespace(configPath string) (*rest.Config, string, error) 
 		return nil, "", err
 	}
 	return kubeconfig, namespace, nil
+}
+
+func GetKindfromYAML(yamlData []byte) (string, error) {
+	var temp struct {
+		Kind string
+	}
+	if err := yaml.Unmarshal(yamlData, &temp); err != nil {
+		return "", err
+	}
+	return temp.Kind, nil
 }

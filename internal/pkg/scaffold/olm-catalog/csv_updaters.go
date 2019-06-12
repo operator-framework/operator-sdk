@@ -69,16 +69,6 @@ func (s *updaterStore) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	return nil
 }
 
-func getKindfromYAML(yamlData []byte) (string, error) {
-	var temp struct {
-		Kind string
-	}
-	if err := yaml.Unmarshal(yamlData, &temp); err != nil {
-		return "", err
-	}
-	return temp.Kind, nil
-}
-
 func (s *updaterStore) AddToUpdater(yamlSpec []byte, kind string) (found bool, err error) {
 	found = true
 	switch kind {

@@ -368,7 +368,7 @@ func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.Clu
 		scanner := yamlutil.NewYAMLScanner(yamlData)
 		for scanner.Scan() {
 			yamlSpec := scanner.Bytes()
-			kind, err := getKindfromYAML(yamlSpec)
+			kind, err := k8sutil.GetKindfromYAML(yamlSpec)
 			if err != nil {
 				return fmt.Errorf("%s: %v", f, err)
 			}
