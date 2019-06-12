@@ -40,11 +40,11 @@ func SplitPrefix(prefix string) ([]string, error) {
 		return nil, fmt.Errorf(`prefix "%s" has no prefix tokens delimited by "%s"`, prefix, prefixSep)
 	}
 	if strings.TrimSpace(split[0]) != SDKPrefix {
-		return nil, fmt.Errorf(`prefix "%s" does not have SDK prefix "%s"`, prefix, prefixSep)
+		return nil, fmt.Errorf(`prefix "%s" does not have SDK prefix "%s"`, prefix, SDKPrefix)
 	}
 	for i, p := range split {
 		if strings.TrimSpace(p) == "" {
-			return nil, fmt.Errorf(`prefix "%s" contains an empty token after colon %d`, prefix, i)
+			return nil, fmt.Errorf(`prefix "%s" contains an empty token after colon index %d`, prefix, i)
 		}
 	}
 	return split, nil
@@ -64,7 +64,7 @@ func SplitPath(path string) ([]string, error) {
 	}
 	for i, p := range split {
 		if strings.TrimSpace(p) == "" {
-			return nil, fmt.Errorf(`path "%s" contains an empty path element after dot %d`, path, i)
+			return nil, fmt.Errorf(`path "%s" contains an empty path element after dot index %d`, path, i)
 		}
 	}
 	return split, nil
