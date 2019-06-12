@@ -53,3 +53,15 @@
         namespace: "{{ meta.namespace }}"
       data:
         test: aGVsbG8K
+- name: Get cluster api_groups
+  set_fact:
+    api_groups: "{{ lookup('k8s', cluster_info='api_groups', kubeconfig=lookup('env', 'K8S_AUTH_KUBECONFIG')) }}"
+
+- name: create project if projects are available
+  k8s:
+    definition:
+      apiVersion: project.openshift.io/v1
+      kind: Project
+      metadata:
+        name: testing-foo
+  when: "'project.openshift.io' in api_groups"

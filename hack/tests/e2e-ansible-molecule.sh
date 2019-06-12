@@ -13,6 +13,7 @@ pip install --user docker openshift jmespath
 
 deploy_prereqs() {
     kubectl create -f "$OPERATORDIR/deploy/service_account.yaml"
+    oc adm policy add-cluster-role-to-user cluster-admin -z memcached-operator || :
     kubectl create -f "$OPERATORDIR/deploy/role.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
     kubectl create -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_memcached_crd.yaml"
@@ -37,6 +38,7 @@ cat "$ROOTDIR/test/ansible-memcached/watches-finalizer.yaml" >> memcached-operat
 cat "$ROOTDIR/test/ansible-memcached/prepare-test-image.yml" >> memcached-operator/molecule/test-local/prepare.yml
 # Append v1 kind to watches to test watching already registered GVK
 cat "$ROOTDIR/test/ansible-memcached/watches-v1-kind.yaml" >> memcached-operator/watches.yaml
+
 
 
 # Test local
