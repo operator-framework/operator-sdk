@@ -123,7 +123,7 @@ test/e2e/go:
 	./hack/tests/e2e-go.sh $(ARGS)
 
 test/e2e/go2:
-	./ci/tests/e2e-go.sh
+	./ci/tests/e2e-go.sh $(ARGS)
 
 test/e2e/ansible: image/build/ansible
 	./hack/tests/e2e-ansible.sh
