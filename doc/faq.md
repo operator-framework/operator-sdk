@@ -1,5 +1,12 @@
 # FAQ
 
+### How can I have separate logic for Create, Update, and Delete events? When reconciling an object can I access its previous state?
+
+You should not have separate logic. Instead design your reconciler to be idempotent. See the [controller-runtime FAQ][controller-runtime_faq] for more details.
+
+### When my Custom Resource is deleted, I need to know it's contents or perform cleanup tasks. How can I do that?
+
+Use a [finalizer].
 
 ### I keep seeing the following intermitent warning in my Operator's logs: `The resourceVersion for the provided watch is too old.` What's wrong?
 
@@ -14,13 +21,6 @@ Never seeing this warning may suggest that your watch or cache is not healthy. I
 For more information on `kube-apiserver` request timeout options, see the [Kubernetes API Server Command Line Tool Reference][kube-apiserver_options]
 
 
-### How can I have separate logic for Create, Update, and Delete events? When reconciling an object can I access its previous state?
-
-You should not have separate logic. Instead design your reconciler to be idempotent. See the [controller-runtime FAQ][controller-runtime_faq] for more details.
-
-### When my Custom Resource is deleted, I need to know it's contents or perform cleanup tasks. How can I do that?
-
-Use a [finalizer].
 
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
 [controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my-reconciler-for-different-types-of-events-eg-create-update-delete
