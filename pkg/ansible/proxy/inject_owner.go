@@ -42,6 +42,7 @@ type injectOwnerReferenceHandler struct {
 	cMap              *controllermap.ControllerMap
 	restMapper        meta.RESTMapper
 	watchedNamespaces map[string]interface{}
+	apiResources      *apiResources
 }
 
 func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -61,6 +62,34 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 			// Don't inject owner ref if we are POSTing to a subresource
 			break
 		}
+
+		if i.restMapper == nil {
+			i.restMapper = meta.NewDefaultRESTMapper([]schema.GroupVersion{schema.GroupVersion{
+				Group:   r.APIGroup,
+				Version: r.APIVersion,
+			}})
+		}
+
+		k, err := getGVKFromRequestInfo(r, i.restMapper)
+		if err != nil {
+			// break here in case resource doesn't exist in cache
+			log.Info("Cache miss, can not find in rest mapper")
+			break
+		}
+
+		// Determine if the resource is virtual. If it is then we should not attempt to use cache
+		isVR, err := i.apiResources.IsVirtualResource(k)
+		if err != nil {
+			// break here in case we can not understand if virtual resource or not
+			log.Info("Unable to determine if virual resource", "gvk", k)
+			break
+		}
+
+		if isVR {
+			log.V(2).Info("Virtual resource, must ask the cluster API", "gvk", k)
+			break
+		}
+
 		log.Info("Injecting owner reference")
 		owner, err := getRequestOwnerRef(req)
 		if err != nil {
