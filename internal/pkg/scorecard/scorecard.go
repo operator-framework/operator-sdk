@@ -50,7 +50,7 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 	var pluginResults []scapiv1alpha1.ScorecardOutput
 	pluginDir := viper.GetString(PluginDirOpt)
 	if dir, err := os.Stat(pluginDir); err != nil || !dir.IsDir() {
-		return nil, fmt.Errorf("Plugin directory not found: %v", err)
+		return nil, fmt.Errorf("plugin directory not found: %v", err)
 	}
 	if err := os.Chdir(pluginDir); err != nil {
 		return nil, fmt.Errorf("failed to chdir into scorecard plugin directory: %v", err)
@@ -61,7 +61,7 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 		return nil, fmt.Errorf("failed to list files in %s/bin: %v", pluginDir, err)
 	}
 	if len(files) == 0 {
-		return nil, fmt.Errorf("No scorecard tests found in %s/bin", pluginDir)
+		return nil, fmt.Errorf("no scorecard tests found in %s/bin", pluginDir)
 	}
 	for _, file := range files {
 		cmd := exec.Command("./bin/" + file.Name())
@@ -146,7 +146,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	}
 	pluginOutputs, err := runTests()
 	if err != nil {
-		return fmt.Errorf("Failed to run scorecard tests with error: (%v)\nPlease see %s for documentation on how to configure and use the operator-sdk scorecard", err, scorecardDocsLink())
+		return fmt.Errorf("failed to run scorecard tests with error: (%v)\nPlease see %s for documentation on how to configure and use the operator-sdk scorecard", err, scorecardDocsLink())
 	}
 	pluginOutputs = append(internalPluginOutputs, pluginOutputs...)
 	totalScore := 0.0
