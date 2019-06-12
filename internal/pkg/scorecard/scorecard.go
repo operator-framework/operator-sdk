@@ -107,10 +107,48 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	cmd.SilenceUsage = true
+	internalPluginOutputs := []scapiv1alpha1.ScorecardOutput{}
+	if viper.GetBool(BasicTestsOpt) {
+		// TODO: make individual viper configs
+		res, err := setupAndRunPlugin(basicOperator, viper.GetViper())
+		if err != nil {
+			name := fmt.Sprintf("Failed Plugin: %s", BasicTestsOpt)
+			description := fmt.Sprintf("Plugin with file name `%s` failed", BasicTestsOpt)
+			logs := fmt.Sprintf("%s:\nLogs: %s", err, internalPluginLogs.String())
+			internalPluginOutputs = append(internalPluginOutputs, failedPlugin(name, description, logs))
+			// output error to main logger as well for human-readable output
+			log.Errorf("Plugin `%s` failed with error (%v)", BasicTestsOpt, err)
+		} else {
+			stderrString := internalPluginLogs.String()
+			if len(stderrString) != 0 {
+				log.Warn(stderrString)
+			}
+			internalPluginOutputs = append(internalPluginOutputs, res)
+		}
+	}
+	if viper.GetBool(OLMTestsOpt) {
+		// TODO: make individual viper configs
+		res, err := setupAndRunPlugin(olmIntegration, viper.GetViper())
+		if err != nil {
+			name := fmt.Sprintf("Failed Plugin: %s", OLMTestsOpt)
+			description := fmt.Sprintf("Plugin with file name `%s` failed", OLMTestsOpt)
+			logs := fmt.Sprintf("%s:\nLogs: %s", err, internalPluginLogs.String())
+			internalPluginOutputs = append(internalPluginOutputs, failedPlugin(name, description, logs))
+			// output error to main logger as well for human-readable output
+			log.Errorf("Plugin `%s` failed with error (%v)", OLMTestsOpt, err)
+		} else {
+			stderrString := internalPluginLogs.String()
+			if len(stderrString) != 0 {
+				log.Warn(stderrString)
+			}
+			internalPluginOutputs = append(internalPluginOutputs, res)
+		}
+	}
 	pluginOutputs, err := runTests()
 	if err != nil {
 		return fmt.Errorf("Failed to run scorecard tests with error: (%v)\nPlease see %s for documentation on how to configure and use the operator-sdk scorecard", err, scorecardDocsLink())
 	}
+	pluginOutputs = append(internalPluginOutputs, pluginOutputs...)
 	totalScore := 0.0
 	// Update the state for the tests
 	for _, suite := range pluginOutputs {
@@ -202,7 +240,7 @@ func initConfig() error {
 
 func configureLogger() error {
 	if viper.GetString(OutputFormatOpt) == HumanReadableOutputFormat {
-		logReadWriter = os.Stdout
+		logReadWriter = os.Stderr
 	} else if viper.GetString(OutputFormatOpt) == JSONOutputFormat {
 		logReadWriter = &bytes.Buffer{}
 	} else {

@@ -1,7 +1,0 @@
-deploy-dir: "assets/deploy"
-cr-manifest:
-  - "assets/deploy/crds/cache_v1alpha1_memcached_cr.yaml"
-  - "assets/deploy/crds/cache_v1alpha1_memcachedrs_cr.yaml"
-csv-path: "assets/deploy/olm-catalog/memcached-operator/0.0.3/memcached-operator.v0.0.3.clusterserviceversion.yaml"
-proxy-image: "quay.io/example/scorecard-proxy"
-proxy-pull-policy: "Never"
