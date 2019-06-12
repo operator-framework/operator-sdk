@@ -33,6 +33,20 @@ test_operator() {
         exit 1
     fi
 
+    # verify that metrics service was created
+    if ! timeout 20s bash -c -- "until kubectl get service/nginx-operator > /dev/null 2>&1; do sleep 1; done";
+    then
+        kubectl logs deployment/nginx-operator
+        exit 1
+    fi
+
+    # verify that the metrics endpoint exists
+    if ! timeout 1m bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl -sfo /dev/null http://nginx-operator:8383/metrics; do sleep 1; done";
+    then
+        kubectl logs deployment/nginx-operator
+        exit 1
+    fi
+
     # create CR
     kubectl create -f deploy/crds/helm_v1alpha1_nginx_cr.yaml
     trap_add 'kubectl delete --ignore-not-found -f ${OPERATORDIR}/deploy/crds/helm_v1alpha1_nginx_cr.yaml' EXIT
@@ -128,17 +142,26 @@ then
     exit 1
 fi
 
-# Right now, SDK projects still need a vendor directory, so run `go mod vendor`
-# to pull down the deps specified by the scaffolded `go.mod` file.
-go mod vendor
+# Remove any "replace" and "require" lines for the SDK repo before vendoring
+# in case this is a release PR and the tag doesn't exist yet. This must be
+# done without using "go mod edit", which first parses go.mod and will error
+# if it doesn't find a tag/version/package.
+# TODO: remove SDK repo references if PR/branch is not from the main SDK repo.
+SDK_REPO="github.com/operator-framework/operator-sdk"
+sed -E -i 's|^.*'"$SDK_REPO"'.*$||g' go.mod
+
+# Run `go build ./...` to pull down the deps specified by the scaffolded
+# `go.mod` file and verify dependencies build correctly.
+go build ./...
 
 # Use the local operator-sdk directory as the repo. To make the go toolchain
 # happy, the directory needs a `go.mod` file that specifies the module name,
 # so we need this temporary hack until we update the SDK repo itself to use
 # go modules.
-echo "module github.com/operator-framework/operator-sdk" > $ROOTDIR/go.mod
-trap_add 'rm $ROOTDIR/go.mod' EXIT
-go mod edit -replace=github.com/operator-framework/operator-sdk=$ROOTDIR
+echo "module ${SDK_REPO}" > "${ROOTDIR}/go.mod"
+trap_add "rm ${ROOTDIR}/go.mod" EXIT
+go mod edit -replace="${SDK_REPO}=$ROOTDIR"
+go build ./...
 
 operator-sdk build "$DEST_IMAGE"
 
