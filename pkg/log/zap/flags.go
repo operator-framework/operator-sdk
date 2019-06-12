@@ -179,7 +179,7 @@ func (v *timeformatValue) Set(s string) error {
 			v.str = s
 			return nil
 		}
-		return fmt.Errorf("unknown timeformat \"%s\"", s)
+		return fmt.Errorf("unknown zap timeformat \"%s\"", s)
 
 	}
 	v.str = "unix"
