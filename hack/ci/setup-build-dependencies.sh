@@ -2,8 +2,7 @@
 
 set -e
 
-# Install dep
-curl -Lo dep https://github.com/golang/dep/releases/download/v0.5.3/dep-linux-amd64 && chmod +x dep && mv dep /usr/local/bin/
+# Install mercurial and bazaar
+yum install -y bzr mercurial
 
-# Ensure vendor directory is up-to-date
-make dep
+make tidy

@@ -25,22 +25,20 @@ HELM_IMAGE ?= $(HELM_BASE_IMAGE)
 SCORECARD_PROXY_IMAGE ?= $(SCORECARD_PROXY_BASE_IMAGE)
 
 export CGO_ENABLED:=0
+export GO111MODULE:=on
 
 all: format test build/operator-sdk
 
 format:
 	$(Q)go fmt $(PKGS)
 
-dep:
-	$(Q)dep ensure -v
-
-dep-update:
-	$(Q)dep ensure -update -v
+tidy:
+	$(Q)go mod tidy -v
 
 clean:
 	$(Q)rm -rf build
 
-.PHONY: all test format dep clean
+.PHONY: all test format tidy clean
 
 install:
 	$(Q)go install \
