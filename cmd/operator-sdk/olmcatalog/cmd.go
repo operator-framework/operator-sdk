@@ -26,5 +26,6 @@ func NewCmd() *cobra.Command {
 Catalog related actions.`,
 	}
 	cmd.AddCommand(newGenCSVCmd())
+	cmd.AddCommand(newGenCatalogSourceCmd())
 	return cmd
 }
