@@ -20,68 +20,77 @@ import (
 
 func TestSplitPrefix(t *testing.T) {
 	cases := []struct {
+		name      string
 		prefix    string
 		result    []string
 		wantError bool
 	}{
-		{"", nil, true},
-		{"+operator-sdk", nil, true},
-		{"+operator-sdk:", nil, true},
-		{"+operator-sdk:foo", []string{"foo"}, false},
-		{"+operator-sdk:foo:bar", []string{"foo", "bar"}, false},
+		{"empty", "", nil, true},
+		{"no prefix separator or use case prefix", "+operator-sdk", nil, true},
+		{"no use case prefix", "+operator-sdk:", nil, true},
+		{"use case prefix", "+operator-sdk:foo", []string{"foo"}, false},
+		{"use case prefix and one path token", "+operator-sdk:foo:bar", []string{"foo", "bar"}, false},
 	}
 
-	for i, c := range cases {
-		got, err := SplitPrefix(c.prefix)
-		if err != nil && !c.wantError {
-			t.Errorf("Case %d: wanted result %+q, got error: %v", i, c.result, err)
-		} else if err == nil && c.wantError {
-			t.Errorf("Case %d: wanted error, got result %+q", i, got)
-		}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got, err := SplitPrefix(c.prefix)
+			if err != nil && !c.wantError {
+				t.Errorf("Wanted result %+q, got error: %v", c.result, err)
+			} else if err == nil && c.wantError {
+				t.Errorf("Wanted error, got result %+q", got)
+			}
+		})
 	}
 }
 
 func TestSplitPath(t *testing.T) {
 	cases := []struct {
+		name      string
 		path      string
 		result    []string
 		wantError bool
 	}{
-		{"", nil, true},
-		{"+operator-sdk", nil, true},
-		{"+operator-sdk:foo", nil, true},
-		{"+operator-sdk:foo:bar.", nil, true},
-		{"+operator-sdk:foo:bar.baz", []string{"+operator-sdk:foo:bar", "baz"}, false},
+		{"empty", "", nil, true},
+		{"no prefix separator or use case prefix", "+operator-sdk", nil, true},
+		{"use case prefix", "+operator-sdk:foo", nil, true},
+		{"use case prefix and path element with empty child path element", "+operator-sdk:foo:bar.", nil, true},
+		{"use case prefix and path elements", "+operator-sdk:foo:bar.baz", []string{"+operator-sdk:foo:bar", "baz"}, false},
 	}
 
-	for i, c := range cases {
-		got, err := SplitPath(c.path)
-		if err != nil && !c.wantError {
-			t.Errorf("Case %d: wanted result %+q, got error: %v", i, c.result, err)
-		} else if err == nil && c.wantError {
-			t.Errorf("Case %d: wanted error, got result %+q", i, got)
-		}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got, err := SplitPath(c.path)
+			if err != nil && !c.wantError {
+				t.Errorf("Wanted result %+q, got error: %v", c.result, err)
+			} else if err == nil && c.wantError {
+				t.Errorf("Wanted error, got result %+q", got)
+			}
+		})
 	}
 }
 
 func TestSplitAnnotation(t *testing.T) {
 	cases := []struct {
+		name       string
 		annotation string
 		path, val  string
 		wantError  bool
 	}{
-		{"", "", "", true},
-		{"+operator-sdk", "", "", true},
-		{"+operator-sdk:foo:bar.baz=", "", "", true},
-		{"+operator-sdk:foo:bar.baz=value", "+operator-sdk:foo:bar.baz", "value", false},
+		{"empty", "", "", "", true},
+		{"no prefix separator or use case prefix", "+operator-sdk", "", "", true},
+		{"prefixed path with empty value", "+operator-sdk:foo:bar.baz=", "", "", true},
+		{"prefixed path with value", "+operator-sdk:foo:bar.baz=value", "+operator-sdk:foo:bar.baz", "value", false},
 	}
 
-	for i, c := range cases {
-		gotPath, gotVal, err := SplitAnnotation(c.annotation)
-		if err != nil && !c.wantError {
-			t.Errorf("Case %d: wanted path %s and val %s, got error: %v", i, c.path, c.val, err)
-		} else if err == nil && c.wantError {
-			t.Errorf("Case %d: wanted error, got path %s and val %s", i, gotPath, gotVal)
-		}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			gotPath, gotVal, err := SplitAnnotation(c.annotation)
+			if err != nil && !c.wantError {
+				t.Errorf("Wanted path %s and val %s, got error: %v", c.path, c.val, err)
+			} else if err == nil && c.wantError {
+				t.Errorf("Wanted error, got path %s and val %s", gotPath, gotVal)
+			}
+		})
 	}
 }
