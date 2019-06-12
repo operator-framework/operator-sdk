@@ -15,8 +15,9 @@
 package main
 
 import (
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"os"
+
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that `run` and `up local` can make use of them.
@@ -33,7 +34,7 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/test"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/up"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
-	flags "github.com/operator-framework/operator-sdk/internal/pkg/flags"
+	"github.com/operator-framework/operator-sdk/internal/flags"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

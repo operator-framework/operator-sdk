@@ -15,7 +15,7 @@
 package flags
 
 import (
-	"github.com/operator-framework/operator-sdk/internal/pkg/flags/watch"
+	"github.com/operator-framework/operator-sdk/internal/flags/watch"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/spf13/pflag"
 )
