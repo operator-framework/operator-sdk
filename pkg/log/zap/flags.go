@@ -29,11 +29,11 @@ import (
 var (
 	zapFlagSet *pflag.FlagSet
 
-	development   bool
-	encoderVal    encoderValue
-	levelVal      levelValue
-	sampleVal     sampleValue
-	timeformatVal timeformatValue
+	development     bool
+	encoderVal      encoderValue
+	levelVal        levelValue
+	sampleVal       sampleValue
+	timeEncodingVal timeEncodingValue
 )
 
 func init() {
@@ -42,7 +42,7 @@ func init() {
 	zapFlagSet.Var(&encoderVal, "zap-encoder", "Zap log encoding ('json' or 'console')")
 	zapFlagSet.Var(&levelVal, "zap-level", "Zap log level (one of 'debug', 'info', 'error' or any integer value > 0)")
 	zapFlagSet.Var(&sampleVal, "zap-sample", "Enable zap log sampling. Sampling will be disabled for integer log levels > 1")
-	zapFlagSet.Var(&timeformatVal, "zap-timeformat", "Sets the zap time format ('epoch', 'millis', 'nano', or 'iso8601')")
+	zapFlagSet.Var(&timeEncodingVal, "zap-time-encoding", "Sets the zap time format ('epoch', 'millis', 'nano', or 'iso8601')")
 }
 
 // FlagSet - The zap logging flagset.
@@ -169,31 +169,31 @@ func (v sampleValue) Type() string {
 	return "sample"
 }
 
-type timeformatValue struct {
+type timeEncodingValue struct {
 	set         bool
 	timeEncoder zapcore.TimeEncoder
 	str         string
 }
 
-func (v *timeformatValue) Set(s string) error {
+func (v *timeEncodingValue) Set(s string) error {
 	v.set = true
 	v.timeEncoder.UnmarshalText([]byte(s))
 	return nil
 }
 
-func (v timeformatValue) String() string {
+func (v timeEncodingValue) String() string {
 	return v.str
 }
 
-func (v timeformatValue) IsBoolFlag() bool {
+func (v timeEncodingValue) IsBoolFlag() bool {
 	return false
 }
 
-func (v timeformatValue) Type() string {
+func (v timeEncodingValue) Type() string {
 	return "string"
 }
 
-func withTimeFormat(te zapcore.TimeEncoder) encoderConfigFunc {
+func withTimeEncoding(te zapcore.TimeEncoder) encoderConfigFunc {
 	return func(ec *zapcore.EncoderConfig) {
 		ec.EncodeTime = te
 	}

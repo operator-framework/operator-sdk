@@ -76,8 +76,8 @@ func getConfig() config {
 	if encoderVal.set {
 		newEncoder = encoderVal.newEncoder
 	}
-	if timeformatVal.set {
-		ecfs = append(ecfs, withTimeFormat(timeformatVal.timeEncoder))
+	if timeEncodingVal.set {
+		ecfs = append(ecfs, withTimeEncoding(timeEncodingVal.timeEncoder))
 	}
 
 	c.encoder = newEncoder(ecfs...)
