@@ -40,7 +40,7 @@ By default, `zap.Logger()` will return a logger that is ready for production use
 * `--zap-encoder` string - Sets the zap log encoding (`json` or `console`)
 * `--zap-level` string or integer - Sets the zap log level (`debug`, `info`, `error`, or an integer value greater than 0). If 4 or greater the verbosity of client-go will be set to this level.
 * `--zap-sample` - Enables zap's sampling mode. Sampling will be disabled for integer log levels greater than 1.
-* `--zap-timeformat` - Specifies a custom logging time format as either 'millis', 'nano', or 'iso8601'. The default zap timeformat is 'epoch'
+* `--zap-timeformat` string - Sets the zap time format ('epoch', 'millis', 'nano', or 'iso8601')
 
 
 ## Creating a structured log statement
