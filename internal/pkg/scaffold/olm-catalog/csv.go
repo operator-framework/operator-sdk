@@ -23,7 +23,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"unicode"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
@@ -187,41 +186,6 @@ func (s *CSV) getCSVPath(ver string) string {
 	return filepath.Join(s.pathPrefix, scaffold.OLMCatalogDir, lowerProjName, ver, name)
 }
 
-// getDisplayName turns a project dir name in any of {snake, chain, camel}
-// cases, hierarchical dot structure, or space-delimited into a
-// space-delimited, title'd display name.
-// Ex. "another-_AppOperator_againTwiceThrice More"
-// ->  "Another App Operator Again Twice Thrice More"
-func getDisplayName(name string) string {
-	for _, sep := range ".-_ " {
-		splitName := strings.Split(name, string(sep))
-		for i := 0; i < len(splitName); i++ {
-			if splitName[i] == "" {
-				splitName = append(splitName[:i], splitName[i+1:]...)
-				i--
-			} else {
-				splitName[i] = strings.TrimSpace(splitName[i])
-			}
-		}
-		name = strings.Join(splitName, " ")
-	}
-	splitName := strings.Split(name, " ")
-	for i, word := range splitName {
-		temp := word
-		o := 0
-		for j, r := range word {
-			if unicode.IsUpper(r) {
-				if j > 0 && !unicode.IsUpper(rune(word[j-1])) {
-					temp = temp[0:j+o] + " " + temp[j+o:len(temp)]
-					o++
-				}
-			}
-		}
-		splitName[i] = temp
-	}
-	return strings.TrimSpace(strings.Title(strings.Join(splitName, " ")))
-}
-
 // initCSVFields initializes all csv fields that should be populated by a user
 // with sane defaults. initCSVFields should only be called for new csv's.
 func (s *CSV) initCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) {
@@ -234,7 +198,7 @@ func (s *CSV) initCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) {
 
 	// Spec fields
 	csv.Spec.Version = *semver.New(s.CSVVersion)
-	csv.Spec.DisplayName = getDisplayName(s.ProjectName)
+	csv.Spec.DisplayName = k8sutil.GetDisplayName(s.ProjectName)
 	csv.Spec.Description = "Placeholder description"
 	csv.Spec.Maturity = "alpha"
 	csv.Spec.Provider = olmapiv1alpha1.AppLink{}

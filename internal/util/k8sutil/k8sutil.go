@@ -16,6 +16,8 @@ package k8sutil
 
 import (
 	"fmt"
+	"strings"
+	"unicode"
 
 	"github.com/ghodss/yaml"
 	"k8s.io/client-go/rest"
@@ -61,4 +63,39 @@ func GetKindfromYAML(yamlData []byte) (string, error) {
 		return "", err
 	}
 	return temp.Kind, nil
+}
+
+// GetDisplayName turns a project dir name in any of {snake, chain, camel}
+// cases, hierarchical dot structure, or space-delimited into a
+// space-delimited, title'd display name.
+// Ex. "another-_AppOperator_againTwiceThrice More"
+// ->  "Another App Operator Again Twice Thrice More"
+func GetDisplayName(name string) string {
+	for _, sep := range ".-_ " {
+		splitName := strings.Split(name, string(sep))
+		for i := 0; i < len(splitName); i++ {
+			if splitName[i] == "" {
+				splitName = append(splitName[:i], splitName[i+1:]...)
+				i--
+			} else {
+				splitName[i] = strings.TrimSpace(splitName[i])
+			}
+		}
+		name = strings.Join(splitName, " ")
+	}
+	splitName := strings.Split(name, " ")
+	for i, word := range splitName {
+		temp := word
+		o := 0
+		for j, r := range word {
+			if unicode.IsUpper(r) {
+				if j > 0 && !unicode.IsUpper(rune(word[j-1])) {
+					temp = temp[0:j+o] + " " + temp[j+o:len(temp)]
+					o++
+				}
+			}
+		}
+		splitName[i] = temp
+	}
+	return strings.TrimSpace(strings.Title(strings.Join(splitName, " ")))
 }
