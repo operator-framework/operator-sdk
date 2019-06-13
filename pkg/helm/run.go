@@ -117,8 +117,12 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 		return err
 	}
 
-	// Create Service object to expose the metrics port.
-	_, err = metrics.ExposeMetricsPort(ctx, metricsPort)
+	// Add to the below struct any other metrics ports you want to expose.
+	metricsService := []metrics.MetricService{
+		{Port: metricsPort, PortName: metrics.OperatorPortName},
+	}
+	// Create Service object to expose the metrics port(s).
+	_, err = metrics.CreateMetricsService(ctx, metricsService)
 	if err != nil {
 		log.Info(err.Error())
 	}
