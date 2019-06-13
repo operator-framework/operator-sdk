@@ -107,18 +107,18 @@ func newFunc(cmd *cobra.Command, args []string) error {
 		if err := getDeps(); err != nil {
 			return err
 		}
+		if !skipValidation {
+			if err := validateProject(); err != nil {
+				return err
+			}
+		}
+
 	case projutil.OperatorTypeAnsible:
 		if err := doAnsibleScaffold(); err != nil {
 			return err
 		}
 	case projutil.OperatorTypeHelm:
 		if err := doHelmScaffold(); err != nil {
-			return err
-		}
-	}
-
-	if !skipValidation {
-		if err := validateProject(); err != nil {
 			return err
 		}
 	}
