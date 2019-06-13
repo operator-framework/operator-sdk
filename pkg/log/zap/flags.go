@@ -177,18 +177,7 @@ type timeformatValue struct {
 
 func (v *timeformatValue) Set(s string) error {
 	v.set = true
-
-	switch string(s) {
-	case "iso8601", "ISO8601":
-		v.timeEncoder = zapcore.ISO8601TimeEncoder
-	case "millis":
-		v.timeEncoder = zapcore.EpochMillisTimeEncoder
-	case "nanos":
-		v.timeEncoder = zapcore.EpochNanosTimeEncoder
-	default:
-		v.timeEncoder = zapcore.EpochTimeEncoder
-	}
-
+	v.timeEncoder.UnmarshalText([]byte(s))
 	return nil
 }
 
