@@ -23,8 +23,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const noFileIndicator = "##nofile##"
-
 func newGenCatalogSourceCmd() *cobra.Command {
 	c := &catalogcmd.GenCatalogSourceCmd{}
 
@@ -35,9 +33,6 @@ func newGenCatalogSourceCmd() *cobra.Command {
 			if len(args) != 0 {
 				return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 			}
-			// If the user has specified --write/-w without any args, inform c that
-			// the CatalogSource should be written to the default path.
-			c.Write = cmd.Flags().Changed("write") && c.WriteTo == noFileIndicator
 			return c.Run()
 		},
 	}
@@ -49,8 +44,5 @@ func newGenCatalogSourceCmd() *cobra.Command {
 	cmd.Flags().StringVar(&c.PackageManifestPath, "package-manifest", "", "Path of the package manifest. Optional if the bundle dir contains one")
 	cmd.Flags().StringVarP(&c.OutputFormat, "output-format", "o", string(catalogcmd.OutputFormatYAML),
 		fmt.Sprintf("Format of ConfigMap being printed or written. Must be one of: %s, %s", catalogcmd.OutputFormatJSON, catalogcmd.OutputFormatYAML))
-	cmd.Flags().StringVarP(&c.WriteTo, "write", "w", "", "Write output to a specified file, or to deploy/olm-catalog/{project_name} if no file path is provided")
-	// Set the default value of "write" so we can treat it as a boolean.
-	cmd.Flags().Lookup("write").NoOptDefVal = noFileIndicator
 	return cmd
 }

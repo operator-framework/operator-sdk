@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package catalog
+package internal
 
 import (
 	"fmt"
@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
@@ -29,84 +28,74 @@ import (
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olmregistry "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/registry"
 	"github.com/pkg/errors"
-	"github.com/spf13/afero"
 	corev1 "k8s.io/api/core/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-const BundleYAMLPrefix = ".bundle.yaml"
-
 type CatalogSource struct {
-	input.Input
-
+	ProjectName         string
 	BundleDir           string
 	PackageManifestPath string
 }
 
-var _ input.File = &CatalogSource{}
+func wrapBytesErr(err error) error {
+	return errors.Wrap(err, "get CatalogSource bytes")
+}
 
-func (s *CatalogSource) GetInput() (input.Input, error) {
+func (s *CatalogSource) Bytes() ([]byte, error) {
 	lowerProjName := strings.ToLower(s.ProjectName)
 	if s.BundleDir == "" {
 		s.BundleDir = filepath.Join(scaffold.OLMCatalogDir, lowerProjName)
 	}
-	if s.Path == "" {
-		// Path is what the operator-registry expects:
-		// {bundle_dir}/{operator_name}.bundle.yaml
-		s.Path = filepath.Join(s.BundleDir, fmt.Sprintf("%s.%s", lowerProjName, BundleYAMLPrefix))
-	}
-	return s.Input, nil
-}
 
-var _ scaffold.CustomRenderer = &CatalogSource{}
-
-func (s *CatalogSource) SetFS(fs afero.Fs) {}
-
-func (s *CatalogSource) wrapCustomRenderErr(err error) error {
-	return errors.Wrap(err, "custom render CatalogSource")
-}
-
-func (s *CatalogSource) CustomRender() ([]byte, error) {
 	csv, crds, pkg, err := readBundleDir(s.BundleDir, s.PackageManifestPath)
 	if err != nil {
-		return nil, s.wrapCustomRenderErr(err)
+		return nil, wrapBytesErr(err)
 	}
 	// Users can have all "required" and no "owned" CRD's in their CSV so do not
 	// check if crds is empty.
 	if csv == nil {
-		return nil, s.wrapCustomRenderErr(fmt.Errorf("no CSV found in bundle dir %s", s.BundleDir))
+		return nil, wrapBytesErr(fmt.Errorf("no CSV found in bundle dir %s", s.BundleDir))
 	}
 	if pkg == nil {
-		return nil, s.wrapCustomRenderErr(fmt.Errorf("no package manifest found in bundle dir %s", s.BundleDir))
+		return nil, wrapBytesErr(fmt.Errorf("no package manifest found in bundle dir %s", s.BundleDir))
 	}
 
 	csvBytes, err := yaml.Marshal(csv)
 	if err != nil {
-		return nil, s.wrapCustomRenderErr(errors.Wrap(err, "unmarshal CSV"))
+		return nil, wrapBytesErr(errors.Wrap(err, "unmarshal CSV"))
 	}
 	crdBytes := []byte{}
 	for _, crd := range crds {
 		b, err := yaml.Marshal(crd)
 		if err != nil {
-			return nil, s.wrapCustomRenderErr(errors.Wrap(err, "unmarshal CRD"))
+			return nil, wrapBytesErr(errors.Wrap(err, "unmarshal CRD"))
 		}
 		crdBytes = yamlutil.CombineManifests(crdBytes, b)
 	}
 	pkgBytes, err := yaml.Marshal(pkg)
 	if err != nil {
-		return nil, s.wrapCustomRenderErr(errors.Wrap(err, "unmarshal package manifest"))
+		return nil, wrapBytesErr(errors.Wrap(err, "unmarshal package manifest"))
 	}
 	configMap := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: strings.ToLower(s.ProjectName),
+		},
 		Data: map[string]string{
-			"packageManifest":       string(pkgBytes),
-			"clusterServiceVersion": string(csvBytes),
+			"packages":               string(pkgBytes),
+			"clusterServiceVersions": string(csvBytes),
 		},
 	}
 	if len(crdBytes) != 0 {
 		configMap.Data["customResourceDefinitions"] = string(crdBytes)
 	}
-	return yaml.Marshal(configMap)
+	return k8sutil.GetObjectBytes(configMap)
 }
 
 func readBundleDir(dir string, pkgManPath ...string) (csv *olmapiv1alpha1.ClusterServiceVersion, crds []*apiextv1beta1.CustomResourceDefinition, pkg *olmregistry.PackageManifest, err error) {
@@ -127,7 +116,7 @@ func readBundleDir(dir string, pkgManPath ...string) (csv *olmapiv1alpha1.Cluste
 	}
 	for _, info := range infos {
 		if !info.IsDir() {
-			b, err := ioutil.ReadFile(info.Name())
+			b, err := ioutil.ReadFile(filepath.Join(dir, info.Name()))
 			if err != nil {
 				return nil, nil, nil, errors.Wrapf(err, "read manifest %s", info.Name())
 			}
