@@ -24,6 +24,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/olm-catalog/internal"
 
 	"github.com/ghodss/yaml"
@@ -39,10 +40,12 @@ const (
 // GenCatalogSourceCmd holds arguments used to configure CatalogSource
 // generation.
 type GenCatalogSourceCmd struct {
+	Namespace           string
 	BundleDir           string
 	PackageManifestPath string
 	OutputFormat        string
-	Writer              io.Writer
+	// Write bytes to Writer.
+	Writer io.Writer
 }
 
 // Run generates a CatalogSource from data in c. Run will write the resulting
@@ -60,28 +63,34 @@ func (c *GenCatalogSourceCmd) Run() error {
 		return err
 	}
 
-	log.Infof("Generating %s CatalogSource manifest", strings.ToUpper(c.OutputFormat))
+	log.Infof("Generating %s CatalogSource and ConfigMap manifest", strings.ToUpper(c.OutputFormat))
 
 	cs := &internal.CatalogSource{
 		ProjectName:         filepath.Base(projutil.MustGetwd()),
+		Namespace:           c.Namespace,
 		BundleDir:           c.BundleDir,
 		PackageManifestPath: c.PackageManifestPath,
 	}
-	configMap, err := cs.ToConfigMap()
+	configMap, catsrc, err := cs.ToConfigMapAndCatalogSource()
 	if err != nil {
-		return errors.Wrap(err, "failed to get CatalogSource")
+		return errors.Wrap(err, "failed to get CatalogSource and ConfigMap")
 	}
 
 	var m k8sutil.MarshalFunc = yaml.Marshal
 	if c.OutputFormat == OutputFormatJSON {
 		m = json.Marshal
 	}
-	b, err := k8sutil.GetObjectBytes(configMap, m)
+	cmb, err := k8sutil.GetObjectBytes(configMap, m)
+	if err != nil {
+		return errors.Wrap(err, "get ConfigMap bytes")
+	}
+	csb, err := k8sutil.GetObjectBytes(catsrc, m)
 	if err != nil {
 		return errors.Wrap(err, "get CatalogSource bytes")
 	}
+	b := yamlutil.CombineManifests(csb, cmb)
 	if _, err := fmt.Fprintln(c.Writer, string(b)); err != nil {
-		return errors.Wrap(err, "failed to write CatalogSource")
+		return errors.Wrap(err, "failed to write CatalogSource and ConfigMap")
 	}
 	return nil
 }

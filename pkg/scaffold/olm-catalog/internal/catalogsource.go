@@ -37,39 +37,44 @@ import (
 // construct a CatalogSource object.
 type CatalogSource struct {
 	ProjectName         string
+	Namespace           string
 	BundleDir           string
 	PackageManifestPath string
+
+	// CatalogSourcePath is an existing CatalogSource manifest to be included
+	// in the final combined manifest.
+	CatalogSourcePath string
 }
 
 func wrapBytesErr(err error) error {
 	return errors.Wrap(err, "get CatalogSource bytes")
 }
 
-// ToConfigMap reads all files in s.BundleDir and s.PackageManifestPath,
-// combining them into a ConfigMap.
-func (s *CatalogSource) ToConfigMap() (*corev1.ConfigMap, error) {
+// ToConfigMapAndCatalogSource reads all files in s.BundleDir and
+// s.PackageManifestPath, combining them into a ConfigMap and CatalogSource.
+func (s *CatalogSource) ToConfigMapAndCatalogSource() (*corev1.ConfigMap, *olmapiv1alpha1.CatalogSource, error) {
 	if s.BundleDir == "" {
-		return nil, fmt.Errorf("bundle dir must be set")
+		return nil, nil, fmt.Errorf("bundle dir must be set")
 	}
 
 	csvs, crds, pkg, err := readBundleDir(s.BundleDir, s.PackageManifestPath)
 	if err != nil {
-		return nil, wrapBytesErr(err)
+		return nil, nil, wrapBytesErr(err)
 	}
 	// Users can have all "required" and no "owned" CRD's in their CSV so do not
 	// check if crds is empty.
 	if len(csvs) == 0 {
-		return nil, wrapBytesErr(fmt.Errorf("no CSV's found in bundle dir %s", s.BundleDir))
+		return nil, nil, wrapBytesErr(fmt.Errorf("no CSV's found in bundle dir %s", s.BundleDir))
 	}
 	if pkg == nil {
-		return nil, wrapBytesErr(fmt.Errorf("no package manifest found in bundle dir %s", s.BundleDir))
+		return nil, nil, wrapBytesErr(fmt.Errorf("no package manifest found in bundle dir %s", s.BundleDir))
 	}
 
 	csvBytes := []byte{}
 	for _, csv := range csvs {
 		b, err := yaml.Marshal(csv)
 		if err != nil {
-			return nil, wrapBytesErr(errors.Wrapf(err, "unmarshal CSV %s", csv.GetName()))
+			return nil, nil, wrapBytesErr(errors.Wrapf(err, "unmarshal CSV %s", csv.GetName()))
 		}
 		csvBytes = yamlutil.CombineManifests(csvBytes, b)
 	}
@@ -77,13 +82,13 @@ func (s *CatalogSource) ToConfigMap() (*corev1.ConfigMap, error) {
 	for _, crd := range crds {
 		b, err := yaml.Marshal(crd)
 		if err != nil {
-			return nil, wrapBytesErr(errors.Wrapf(err, "unmarshal CRD %s", crd.GetName()))
+			return nil, nil, wrapBytesErr(errors.Wrapf(err, "unmarshal CRD %s", crd.GetName()))
 		}
 		crdBytes = yamlutil.CombineManifests(crdBytes, b)
 	}
 	pkgBytes, err := yaml.Marshal(pkg)
 	if err != nil {
-		return nil, wrapBytesErr(errors.Wrap(err, "unmarshal package manifest"))
+		return nil, nil, wrapBytesErr(errors.Wrap(err, "unmarshal package manifest"))
 	}
 	configMap := &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
@@ -98,10 +103,50 @@ func (s *CatalogSource) ToConfigMap() (*corev1.ConfigMap, error) {
 			"clusterServiceVersions": string(csvBytes),
 		},
 	}
+	if s.Namespace != "" {
+		configMap.SetNamespace(s.Namespace)
+	}
 	if len(crdBytes) != 0 {
 		configMap.Data["customResourceDefinitions"] = string(crdBytes)
 	}
-	return configMap, nil
+	cs, err := s.getCatalogSource()
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "get CatalogSource")
+	}
+	return configMap, cs, nil
+}
+
+func (s *CatalogSource) getCatalogSource() (cs *olmapiv1alpha1.CatalogSource, err error) {
+	name := strings.ToLower(s.ProjectName)
+	if s.CatalogSourcePath == "" {
+		cs = &olmapiv1alpha1.CatalogSource{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "operators.coreos.com/v1alpha1",
+				Kind:       "CatalogSource",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: name,
+			},
+			Spec: olmapiv1alpha1.CatalogSourceSpec{
+				SourceType:  olmapiv1alpha1.SourceTypeConfigmap,
+				ConfigMap:   name,
+				DisplayName: k8sutil.GetDisplayName(s.ProjectName),
+			},
+		}
+	} else {
+		b, err := ioutil.ReadFile(s.CatalogSourcePath)
+		if err != nil {
+			return nil, errors.Wrapf(err, "read CatalogSource manifest %s", s.CatalogSourcePath)
+		}
+		cs = &olmapiv1alpha1.CatalogSource{}
+		if err = yaml.Unmarshal(b, cs); err != nil {
+			return nil, errors.Wrapf(err, "unmarshal CatalogSource manifest %s", s.CatalogSourcePath)
+		}
+	}
+	if s.Namespace != "" {
+		cs.SetNamespace(s.Namespace)
+	}
+	return cs, nil
 }
 
 // readBundleDir finds all ClusterServiceVersions, CustomResourceDefinitions,

@@ -37,6 +37,7 @@ func newGenCatalogSourceCmd() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVar(&c.Namespace, "namespace", "", "Namespace to set in output ConfigMap and CatalogSource")
 	cmd.Flags().StringVar(&c.BundleDir, "bundle-dir", "", "Directory of bundled operator CSV, CRD's, and optionally a package manifest")
 	if err := cmd.MarkFlagRequired("bundle-dir"); err != nil {
 		log.Fatalf("Failed to mark `bundle-dir` flag for `gen-catalogsource` subcommand as required")
