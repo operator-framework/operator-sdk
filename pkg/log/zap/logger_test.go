@@ -82,7 +82,7 @@ func TestGetConfig(t *testing.T) {
 			inDevel: false,
 			inEncoder: encoderValue{
 				set:        true,
-				newEncoder: newConsoleEncoder(),
+				newEncoder: newConsoleEncoder,
 			},
 			inLevel: levelValue{
 				set: false,
