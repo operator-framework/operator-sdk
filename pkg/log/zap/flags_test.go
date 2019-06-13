@@ -167,14 +167,14 @@ func TestEncoder(t *testing.T) {
 			input:      "json",
 			expStr:     "json",
 			expSet:     true,
-			expEncoder: jsonEncoder(),
+			expEncoder: newJSONEncoder(),
 		},
 		{
 			name:       "console encoder",
 			input:      "console",
 			expStr:     "console",
 			expSet:     true,
-			expEncoder: consoleEncoder(),
+			expEncoder: newConsoleEncoder(),
 		},
 		{
 			name:       "unknown encoder",

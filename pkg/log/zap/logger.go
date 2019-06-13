@@ -21,6 +21,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -56,23 +57,32 @@ type config struct {
 func getConfig() config {
 	var c config
 
+	var newEncoder func(...encoderConfigFunc) zapcore.Encoder
+
 	// Set the defaults depending on the log mode (development vs. production)
 	if development {
-		c.encoder = consoleEncoder()
+		newEncoder = newConsoleEncoder
 		c.level = zap.NewAtomicLevelAt(zap.DebugLevel)
 		c.opts = append(c.opts, zap.Development(), zap.AddStacktrace(zap.ErrorLevel))
 		c.sample = false
 	} else {
-		c.encoder = jsonEncoder()
+		newEncoder = newJSONEncoder
 		c.level = zap.NewAtomicLevelAt(zap.InfoLevel)
 		c.opts = append(c.opts, zap.AddStacktrace(zap.WarnLevel))
 		c.sample = true
 	}
 
 	// Override the defaults if the flags were set explicitly on the command line
-	if encoderVal.set {
-		c.encoder = encoderVal.encoder
+	var ecfs []encoderConfigFunc
+	if encoderVal.String() == "console" {
+		newEncoder = newConsoleEncoder
 	}
+	if timeformatVal.set {
+		ecfs = append(ecfs, withTimeFormat(timeformatVal.timeEncoder))
+	}
+
+	c.encoder = newEncoder(ecfs...)
+
 	if levelVal.set {
 		c.level = zap.NewAtomicLevelAt(levelVal.level)
 	}

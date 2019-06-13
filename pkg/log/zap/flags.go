@@ -50,19 +50,21 @@ func FlagSet() *pflag.FlagSet {
 	return zapFlagSet
 }
 
+type encoderConfigFunc func(*zapcore.EncoderConfig)
+
 type encoderValue struct {
-	set     bool
-	encoder zapcore.Encoder
-	str     string
+	set        bool
+	newEncoder func(...encoderConfigFunc) zapcore.Encoder
+	str        string
 }
 
 func (v *encoderValue) Set(e string) error {
 	v.set = true
 	switch e {
 	case "json":
-		v.encoder = jsonEncoder()
+		v.newEncoder = newJSONEncoder
 	case "console":
-		v.encoder = consoleEncoder()
+		v.newEncoder = newConsoleEncoder
 	default:
 		return fmt.Errorf("unknown encoder \"%s\"", e)
 	}
@@ -78,18 +80,18 @@ func (v encoderValue) Type() string {
 	return "encoder"
 }
 
-func jsonEncoder() zapcore.Encoder {
+func newJSONEncoder(ecfs ...encoderConfigFunc) zapcore.Encoder {
 	encoderConfig := zap.NewProductionEncoderConfig()
-	if timeformatVal.set {
-		encoderConfig.EncodeTime = timeformatVal.timeEncoder
+	for _, f := range ecfs {
+		f(&encoderConfig)
 	}
 	return zapcore.NewJSONEncoder(encoderConfig)
 }
 
-func consoleEncoder() zapcore.Encoder {
-	encoderConfig := zap.NewDevelopmentEncoderConfig()
-	if timeformatVal.set {
-		encoderConfig.EncodeTime = timeformatVal.timeEncoder
+func newConsoleEncoder(ecfs ...encoderConfigFunc) zapcore.Encoder {
+	encoderConfig := zap.NewProductionEncoderConfig()
+	for _, f := range ecfs {
+		f(&encoderConfig)
 	}
 	return zapcore.NewConsoleEncoder(encoderConfig)
 }
@@ -200,4 +202,10 @@ func (v timeformatValue) IsBoolFlag() bool {
 
 func (v timeformatValue) Type() string {
 	return "string"
+}
+
+func withTimeFormat(te zapcore.TimeEncoder) encoderConfigFunc {
+	return func(ec *zapcore.EncoderConfig) {
+		ec.EncodeTime = te
+	}
 }

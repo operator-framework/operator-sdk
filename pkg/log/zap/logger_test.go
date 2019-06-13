@@ -52,7 +52,7 @@ func TestGetConfig(t *testing.T) {
 				set: false,
 			},
 			expected: config{
-				encoder: consoleEncoder(),
+				encoder: newConsoleEncoder(),
 				level:   zap.NewAtomicLevelAt(zap.DebugLevel),
 				opts:    append(opts, zap.Development(), zap.AddStacktrace(zap.ErrorLevel)),
 				sample:  false,
@@ -71,7 +71,7 @@ func TestGetConfig(t *testing.T) {
 				set: false,
 			},
 			expected: config{
-				encoder: jsonEncoder(),
+				encoder: newJSONEncoder(),
 				level:   zap.NewAtomicLevelAt(zap.InfoLevel),
 				opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
 				sample:  true,
@@ -82,7 +82,7 @@ func TestGetConfig(t *testing.T) {
 			inDevel: false,
 			inEncoder: encoderValue{
 				set:     true,
-				encoder: consoleEncoder(),
+				encoder: newConsoleEncoder(),
 			},
 			inLevel: levelValue{
 				set: false,
@@ -91,7 +91,7 @@ func TestGetConfig(t *testing.T) {
 				set: false,
 			},
 			expected: config{
-				encoder: jsonEncoder(),
+				encoder: newJSONEncoder(),
 				level:   zap.NewAtomicLevelAt(zap.InfoLevel),
 				opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
 				sample:  true,
@@ -111,7 +111,7 @@ func TestGetConfig(t *testing.T) {
 				set: false,
 			},
 			expected: config{
-				encoder: jsonEncoder(),
+				encoder: newJSONEncoder(),
 				level:   zap.NewAtomicLevelAt(zap.ErrorLevel),
 				opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
 				sample:  true,
@@ -131,7 +131,7 @@ func TestGetConfig(t *testing.T) {
 				set: false,
 			},
 			expected: config{
-				encoder: jsonEncoder(),
+				encoder: newJSONEncoder(),
 				level:   zap.NewAtomicLevelAt(zapcore.Level(-10)),
 				opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
 				sample:  false,
@@ -152,7 +152,7 @@ func TestGetConfig(t *testing.T) {
 				sample: true,
 			},
 			expected: config{
-				encoder: jsonEncoder(),
+				encoder: newJSONEncoder(),
 				level:   zap.NewAtomicLevelAt(zapcore.Level(-10)),
 				opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
 				sample:  false,
