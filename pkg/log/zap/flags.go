@@ -42,7 +42,7 @@ func init() {
 	zapFlagSet.Var(&encoderVal, "zap-encoder", "Zap log encoding ('json' or 'console')")
 	zapFlagSet.Var(&levelVal, "zap-level", "Zap log level (one of 'debug', 'info', 'error' or any integer value > 0)")
 	zapFlagSet.Var(&sampleVal, "zap-sample", "Enable zap log sampling. Sampling will be disabled for integer log levels > 1")
-	zapFlagSet.Var(&timeformatVal, "zap-timeformat", "Use 'unix' or 'iso8601' time formatting. 'unix' is the default.")
+	zapFlagSet.Var(&timeformatVal, "zap-timeformat", "Sets the zap time format ('epoch', 'millis', 'nano', or 'iso8601')")
 }
 
 // FlagSet - The zap logging flagset.
