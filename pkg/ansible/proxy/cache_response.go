@@ -47,6 +47,7 @@ type cacheResponseHandler struct {
 	watchedNamespaces map[string]interface{}
 	cMap              *controllermap.ControllerMap
 	injectOwnerRef    bool
+	apiResources      *apiResources
 }
 
 func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -61,25 +62,33 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 		}
 
 		if c.skipCacheLookup(r) {
+			log.V(2).Info("Skipping cache lookup", "resource", r)
 			break
 		}
 
-		gvr := schema.GroupVersionResource{
-			Group:    r.APIGroup,
-			Version:  r.APIVersion,
-			Resource: r.Resource,
-		}
 		if c.restMapper == nil {
 			c.restMapper = meta.NewDefaultRESTMapper([]schema.GroupVersion{schema.GroupVersion{
 				Group:   r.APIGroup,
 				Version: r.APIVersion,
 			}})
 		}
-
-		k, err := c.restMapper.KindFor(gvr)
+		k, err := getGVKFromRequestInfo(r, c.restMapper)
 		if err != nil {
 			// break here in case resource doesn't exist in cache
-			log.Info("Cache miss, can not find in rest mapper", "GVR", gvr)
+			log.Info("Cache miss, can not find in rest mapper")
+			break
+		}
+
+		// Determine if the resource is virtual. If it is then we should not attempt to use cache
+		isVR, err := c.apiResources.IsVirtualResource(k)
+		if err != nil {
+			// break here in case we can not understand if virtual resource or not
+			log.Info("Unable to determine if virtual resource", "gvk", k)
+			break
+		}
+
+		if isVR {
+			log.V(2).Info("Virtual resource, must ask the cluster API", "gvk", k)
 			break
 		}
 

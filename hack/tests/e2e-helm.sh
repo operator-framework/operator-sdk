@@ -151,6 +151,7 @@ fi
 # in case this is a release PR and the tag doesn't exist yet. This must be
 # done without using "go mod edit", which first parses go.mod and will error
 # if it doesn't find a tag/version/package.
+# TODO: remove SDK repo references if PR/branch is not from the main SDK repo.
 SDK_REPO="github.com/operator-framework/operator-sdk"
 sed -E -i 's|^.*'"$SDK_REPO"'.*$||g' go.mod
 

@@ -97,14 +97,8 @@ func validateBoilerplateBytes(b []byte) error {
 			cb = append(cb, []byte(strings.TrimSpace(c.Text)+"\n")...)
 		}
 	}
-	// Remove empty lines before comparison.
 	var tb []byte
-	for _, l := range bytes.Split(b, []byte("\n")) {
-		if len(l) > 0 {
-			tb = append(tb, append(bytes.TrimSpace(l), []byte("\n")...)...)
-		}
-	}
-	tb, cb = bytes.TrimSpace(tb), bytes.TrimSpace(cb)
+	tb, cb = bytes.TrimSpace(b), bytes.TrimSpace(cb)
 	if bytes.Compare(tb, cb) != 0 {
 		return fmt.Errorf(`boilerplate contains text other than comments:\n"%s"\n`, tb)
 	}
