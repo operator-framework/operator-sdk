@@ -196,7 +196,7 @@ func TestEncoder(t *testing.T) {
 			assert.Equal(t, tc.expSet, encoder.set)
 			assert.Equal(t, "encoder", encoder.Type())
 			assert.Equal(t, tc.expStr, encoder.String())
-			assert.ObjectsAreEqual(tc.expEncoder, encoder.encoder)
+			assert.ObjectsAreEqual(tc.expEncoder, encoder.newEncoder)
 		})
 	}
 }
