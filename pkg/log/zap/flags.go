@@ -80,16 +80,16 @@ func (v encoderValue) Type() string {
 
 func jsonEncoder() zapcore.Encoder {
 	encoderConfig := zap.NewProductionEncoderConfig()
-	if timeformatVal.String() == "iso8601" {
-		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	if timeformatVal.set {
+		encoderConfig.EncodeTime = timeformatVal.timeEncoder
 	}
 	return zapcore.NewJSONEncoder(encoderConfig)
 }
 
 func consoleEncoder() zapcore.Encoder {
 	encoderConfig := zap.NewDevelopmentEncoderConfig()
-	if timeformatVal.String() == "iso8601" {
-		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	if timeformatVal.set {
+		encoderConfig.EncodeTime = timeformatVal.timeEncoder
 	}
 	return zapcore.NewConsoleEncoder(encoderConfig)
 }
@@ -168,21 +168,25 @@ func (v sampleValue) Type() string {
 }
 
 type timeformatValue struct {
-	set bool
-	str string
+	set         bool
+	timeEncoder zapcore.TimeEncoder
+	str         string
 }
 
 func (v *timeformatValue) Set(s string) error {
 	v.set = true
-	if len(s) > 1 {
-		if s == "unix" || s == "iso8601" {
-			v.str = s
-			return nil
-		}
-		return fmt.Errorf("unknown zap timeformat \"%s\"", s)
 
+	switch string(s) {
+	case "iso8601", "ISO8601":
+		v.timeEncoder = zapcore.ISO8601TimeEncoder
+	case "millis":
+		v.timeEncoder = zapcore.EpochMillisTimeEncoder
+	case "nanos":
+		v.timeEncoder = zapcore.EpochNanosTimeEncoder
+	default:
+		v.timeEncoder = zapcore.EpochTimeEncoder
 	}
-	v.str = "unix"
+
 	return nil
 }
 
