@@ -156,7 +156,9 @@ func getHomeDir() (string, error) {
 func GetGoPkg() string {
 	// Default to reading from go.mod, as it should usually have the (correct)
 	// package path, and no further processing need be done on it if so.
-	if _, err := os.Stat(goModFile); err == nil {
+	if _, err := os.Stat(goModFile); err != nil && !os.IsNotExist(err) {
+		log.Fatalf("Failed to read go.mod: %v", err)
+	} else if err == nil {
 		b, err := ioutil.ReadFile(goModFile)
 		if err != nil {
 			log.Fatalf("Read go.mod: %v", err)
