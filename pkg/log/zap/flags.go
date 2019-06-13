@@ -190,7 +190,7 @@ func (v timeEncodingValue) IsBoolFlag() bool {
 }
 
 func (v timeEncodingValue) Type() string {
-	return "string"
+	return "timeEncoding"
 }
 
 func withTimeEncoding(te zapcore.TimeEncoder) encoderConfigFunc {
