@@ -52,19 +52,6 @@ type Runner interface {
 	GetFinalizer() (string, bool)
 }
 
-// runner - implements the Runner interface for a GVK that's being watched.
-type runner struct {
-	maxRunnerArtifacts          int
-	Path                        string                  // path on disk to a playbook or role depending on what cmdFunc expects
-	GVK                         schema.GroupVersionKind // GVK being watched that corresponds to the Path
-	Finalizer                   *watches.Finalizer
-	cmdFunc                     func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd // returns a Cmd that runs ansible-runner
-	finalizerCmdFunc            func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd
-	manageStatus                bool
-	watchDependentResources     bool
-	watchClusterScopedResources bool
-}
-
 // New - creates a Runner from a Watch struct
 func New(watch watches.Watch) (Runner, error) {
 	// handle role or playbook
@@ -83,6 +70,8 @@ func New(watch watches.Watch) (Runner, error) {
 			rolePath, roleName := filepath.Split(path)
 			return exec.Command("ansible-runner", "-vv", "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath, "--hosts", "localhost", "-i", ident, "run", inputDirPath)
 		}
+	default:
+		return nil, fmt.Errorf("must specify Role or Path")
 	}
 
 	// handle finalizer
@@ -110,16 +99,23 @@ func New(watch watches.Watch) (Runner, error) {
 	}
 
 	return &runner{
-		Path:                        path,
-		cmdFunc:                     cmdFunc,
-		Finalizer:                   finalizer,
-		finalizerCmdFunc:            finalizerCmdFunc,
-		GVK:                         watch.GroupVersionKind,
-		maxRunnerArtifacts:          watch.MaxRunnerArtifacts,
-		manageStatus:                watch.ManageStatus,
-		watchDependentResources:     watch.WatchDependentResources,
-		watchClusterScopedResources: watch.WatchClusterScopedResources,
+		Path:               path,
+		cmdFunc:            cmdFunc,
+		Finalizer:          finalizer,
+		finalizerCmdFunc:   finalizerCmdFunc,
+		GVK:                watch.GroupVersionKind,
+		maxRunnerArtifacts: watch.MaxRunnerArtifacts,
 	}, nil
+}
+
+// runner - implements the Runner interface for a GVK that's being watched.
+type runner struct {
+	Path               string                  // path on disk to a playbook or role depending on what cmdFunc expects
+	GVK                schema.GroupVersionKind // GVK being watched that corresponds to the Path
+	Finalizer          *watches.Finalizer
+	cmdFunc            func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd // returns a Cmd that runs ansible-runner
+	finalizerCmdFunc   func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd
+	maxRunnerArtifacts int
 }
 
 func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig string) (RunResult, error) {

@@ -52,6 +52,16 @@ type Finalizer struct {
 	Vars     map[string]interface{} `yaml:"vars"`
 }
 
+// Default values for optional fields on Watch
+const (
+	ManageStatusDefault                bool          = true
+	WatchDependentResourcesDefault     bool          = true
+	MaxRunnerArtifactsDefault          int           = 20
+	ReconcilePeriodDefault             string        = "0s"
+	ReconcilePeriodDurationDefault     time.Duration = time.Duration(0)
+	WatchClusterScopedResourcesDefault bool          = false
+)
+
 // UnmarshalYAML - implements the yaml.Unmarshaler interface for Watch
 func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// Use an alias struct to handle complex types
@@ -72,11 +82,11 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	// by default, the operator will manage status and watch dependent resources
 	// The operator will not manage cluster scoped resources by default.
-	tmp.ManageStatus = true
-	tmp.WatchDependentResources = true
-	tmp.MaxRunnerArtifacts = 20
-	tmp.ReconcilePeriod = "0s"
-	tmp.WatchClusterScopedResources = false
+	tmp.ManageStatus = ManageStatusDefault
+	tmp.WatchDependentResources = WatchDependentResourcesDefault
+	tmp.MaxRunnerArtifacts = MaxRunnerArtifactsDefault
+	tmp.ReconcilePeriod = ReconcilePeriodDefault
+	tmp.WatchClusterScopedResources = WatchClusterScopedResourcesDefault
 
 	if err := unmarshal(&tmp); err != nil {
 		return err
@@ -84,6 +94,7 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	// TODO: Failing on invalid ReconcilePeriod is (I believe) new behavior
 	// need to check if that's okay
+	// if it's not reconcilePeriod = ReconcilePeriodDurationDefault
 	reconcilePeriod, err := time.ParseDuration(tmp.ReconcilePeriod)
 	if err != nil {
 		return fmt.Errorf("failed to parse '%s' to time.Duration: %v", tmp.ReconcilePeriod, err)
