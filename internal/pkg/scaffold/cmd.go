@@ -151,8 +151,13 @@ func main() {
 		log.Info("Could not generate and serve custom resource metrics: ", err.Error())
 	}
 
-	// Create Service object to expose the metrics port.
-	_, err = metrics.ExposeMetricsPort(ctx, metricsPort)
+	// Add to the below struct any other metrics ports you want to expose.
+	metricsService := []metrics.MetricService{
+		{Port: operatorMetricsPort, PortName: metrics.CRPortName},
+		{Port: metricsPort, PortName: metrics.OperatorPortName},
+	}
+	// Create Service object to expose the metrics port(s).
+	_, err = metrics.CreateMetricsService(ctx, metricsService)
 	if err != nil {
 		log.Info(err.Error())
 	}
