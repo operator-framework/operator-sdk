@@ -160,7 +160,7 @@ func (s *CRD) CustomRender() ([]byte, error) {
 	}
 
 	setCRDVersions(crd)
-	return k8sutil.GetObjectBytes(crd)
+	return k8sutil.GetObjectBytes(crd, yaml.Marshal)
 }
 
 func newCRDForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {

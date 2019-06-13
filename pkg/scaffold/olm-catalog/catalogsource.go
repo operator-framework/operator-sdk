@@ -15,14 +15,18 @@
 package catalog
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/olm-catalog/internal"
 
+	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -32,15 +36,22 @@ const (
 	OutputFormatYAML = "yaml"
 )
 
+// GenCatalogSourceCmd holds arguments used to configure CatalogSource
+// generation.
 type GenCatalogSourceCmd struct {
 	BundleDir           string
 	PackageManifestPath string
 	OutputFormat        string
-	Write               bool
+	Writer              io.Writer
 }
 
+// Run generates a CatalogSource from data in c. Run will write the resulting
+// bytes in the format specified by c.OutputFormat to c.Writer, which default
+// to "yaml" and stdout.
 func (c *GenCatalogSourceCmd) Run() error {
-
+	if c.Writer == nil {
+		c.Writer = os.Stdout
+	}
 	if c.OutputFormat == "" {
 		c.OutputFormat = OutputFormatYAML
 	}
@@ -56,14 +67,21 @@ func (c *GenCatalogSourceCmd) Run() error {
 		BundleDir:           c.BundleDir,
 		PackageManifestPath: c.PackageManifestPath,
 	}
-	b, err := cs.Bytes()
+	configMap, err := cs.ToConfigMap()
 	if err != nil {
-		return errors.Wrap(err, "failed to get catalog source bytes")
+		return errors.Wrap(err, "failed to get CatalogSource")
 	}
 
-	// TODO(estroz): respect c.OutputFormat.
-	if _, err := fmt.Fprintln(os.Stdout, string(b)); err != nil {
-		return errors.Wrap(err, "failed to print catalog source")
+	var m k8sutil.MarshalFunc = yaml.Marshal
+	if c.OutputFormat == OutputFormatJSON {
+		m = json.Marshal
+	}
+	b, err := k8sutil.GetObjectBytes(configMap, m)
+	if err != nil {
+		return errors.Wrap(err, "get CatalogSource bytes")
+	}
+	if _, err := fmt.Fprintln(c.Writer, string(b)); err != nil {
+		return errors.Wrap(err, "failed to write CatalogSource")
 	}
 	return nil
 }

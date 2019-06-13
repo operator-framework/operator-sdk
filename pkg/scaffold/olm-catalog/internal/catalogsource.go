@@ -34,6 +34,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
+// CatalogSource represents the paths of files containing all data needed to
+// construct a CatalogSource object.
 type CatalogSource struct {
 	ProjectName         string
 	BundleDir           string
@@ -44,34 +46,40 @@ func wrapBytesErr(err error) error {
 	return errors.Wrap(err, "get CatalogSource bytes")
 }
 
-func (s *CatalogSource) Bytes() ([]byte, error) {
+// ToConfigMap reads all files in s.BundleDir and s.PackageManifestPath,
+// combining them into a ConfigMap.
+func (s *CatalogSource) ToConfigMap() (*corev1.ConfigMap, error) {
 	lowerProjName := strings.ToLower(s.ProjectName)
 	if s.BundleDir == "" {
 		s.BundleDir = filepath.Join(scaffold.OLMCatalogDir, lowerProjName)
 	}
 
-	csv, crds, pkg, err := readBundleDir(s.BundleDir, s.PackageManifestPath)
+	csvs, crds, pkg, err := readBundleDir(s.BundleDir, s.PackageManifestPath)
 	if err != nil {
 		return nil, wrapBytesErr(err)
 	}
 	// Users can have all "required" and no "owned" CRD's in their CSV so do not
 	// check if crds is empty.
-	if csv == nil {
-		return nil, wrapBytesErr(fmt.Errorf("no CSV found in bundle dir %s", s.BundleDir))
+	if len(csvs) == 0 {
+		return nil, wrapBytesErr(fmt.Errorf("no CSV's found in bundle dir %s", s.BundleDir))
 	}
 	if pkg == nil {
 		return nil, wrapBytesErr(fmt.Errorf("no package manifest found in bundle dir %s", s.BundleDir))
 	}
 
-	csvBytes, err := yaml.Marshal(csv)
-	if err != nil {
-		return nil, wrapBytesErr(errors.Wrap(err, "unmarshal CSV"))
+	csvBytes := []byte{}
+	for _, csv := range csvs {
+		b, err := yaml.Marshal(csv)
+		if err != nil {
+			return nil, wrapBytesErr(errors.Wrapf(err, "unmarshal CSV %s", csv.GetName()))
+		}
+		csvBytes = yamlutil.CombineManifests(csvBytes, b)
 	}
 	crdBytes := []byte{}
 	for _, crd := range crds {
 		b, err := yaml.Marshal(crd)
 		if err != nil {
-			return nil, wrapBytesErr(errors.Wrap(err, "unmarshal CRD"))
+			return nil, wrapBytesErr(errors.Wrapf(err, "unmarshal CRD %s", crd.GetName()))
 		}
 		crdBytes = yamlutil.CombineManifests(crdBytes, b)
 	}
@@ -95,10 +103,18 @@ func (s *CatalogSource) Bytes() ([]byte, error) {
 	if len(crdBytes) != 0 {
 		configMap.Data["customResourceDefinitions"] = string(crdBytes)
 	}
-	return k8sutil.GetObjectBytes(configMap)
+	return configMap, nil
 }
 
-func readBundleDir(dir string, pkgManPath ...string) (csv *olmapiv1alpha1.ClusterServiceVersion, crds []*apiextv1beta1.CustomResourceDefinition, pkg *olmregistry.PackageManifest, err error) {
+// readBundleDir finds all ClusterServiceVersions, CustomResourceDefinitions,
+// and optionally a package manifests in dir. If pkgManPath is not empty, that
+// file's data will be used instead of any package manifest found in dir.
+func readBundleDir(dir string, pkgManPath ...string) (
+	csvs []*olmapiv1alpha1.ClusterServiceVersion,
+	crds []*apiextv1beta1.CustomResourceDefinition,
+	pkg *olmregistry.PackageManifest,
+	err error) {
+
 	infos, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return nil, nil, nil, errors.Wrapf(err, "read bundle dir %s", dir)
@@ -126,10 +142,11 @@ func readBundleDir(dir string, pkgManPath ...string) (csv *olmapiv1alpha1.Cluste
 			}
 			switch kind {
 			case "ClusterServiceVersion":
-				csv = &olmapiv1alpha1.ClusterServiceVersion{}
+				csv := &olmapiv1alpha1.ClusterServiceVersion{}
 				if err := yaml.Unmarshal(b, csv); err != nil {
 					return nil, nil, nil, errors.Wrapf(err, "unmarshal CSV from manifest %s", info.Name())
 				}
+				csvs = append(csvs, csv)
 			case "CustomResourceDefinition":
 				crd := &apiextv1beta1.CustomResourceDefinition{}
 				if err := yaml.Unmarshal(b, crd); err != nil {
@@ -159,5 +176,5 @@ func readBundleDir(dir string, pkgManPath ...string) (csv *olmapiv1alpha1.Cluste
 			}
 		}
 	}
-	return csv, crds, pkg, nil
+	return csvs, crds, pkg, nil
 }

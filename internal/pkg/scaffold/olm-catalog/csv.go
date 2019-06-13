@@ -135,7 +135,7 @@ func (s *CSV) CustomRender() ([]byte, error) {
 		}
 	}
 
-	return k8sutil.GetObjectBytes(csv)
+	return k8sutil.GetObjectBytes(csv, yaml.Marshal)
 }
 
 func (s *CSV) getBaseCSVIfExists() (*olmapiv1alpha1.ClusterServiceVersion, bool, error) {
