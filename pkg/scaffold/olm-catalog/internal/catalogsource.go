@@ -20,7 +20,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
@@ -49,9 +48,8 @@ func wrapBytesErr(err error) error {
 // ToConfigMap reads all files in s.BundleDir and s.PackageManifestPath,
 // combining them into a ConfigMap.
 func (s *CatalogSource) ToConfigMap() (*corev1.ConfigMap, error) {
-	lowerProjName := strings.ToLower(s.ProjectName)
 	if s.BundleDir == "" {
-		s.BundleDir = filepath.Join(scaffold.OLMCatalogDir, lowerProjName)
+		return nil, fmt.Errorf("bundle dir must be set")
 	}
 
 	csvs, crds, pkg, err := readBundleDir(s.BundleDir, s.PackageManifestPath)
@@ -161,7 +159,8 @@ func readBundleDir(dir string, pkgManPath ...string) (
 						if err := yaml.Unmarshal(b, u); err != nil {
 							return nil, nil, nil, errors.Wrapf(err, "unmarshal into map from manifest %s", info.Name())
 						}
-						// If u does not have a package manifest's required key, skip.
+						// If u does not have a package manifest's required key, it is not
+						// a package manifest.
 						if _, ok := u.Object["packageName"]; !ok {
 							continue
 						}

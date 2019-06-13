@@ -60,7 +60,7 @@ func (c *GenCatalogSourceCmd) Run() error {
 		return err
 	}
 
-	log.Infof("Generating %s CatalogSource manifest", strings.ToUpper(string(c.OutputFormat)))
+	log.Infof("Generating %s CatalogSource manifest", strings.ToUpper(c.OutputFormat))
 
 	cs := &internal.CatalogSource{
 		ProjectName:         filepath.Base(projutil.MustGetwd()),
