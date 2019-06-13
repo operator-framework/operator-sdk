@@ -21,7 +21,6 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -74,8 +73,8 @@ func getConfig() config {
 
 	// Override the defaults if the flags were set explicitly on the command line
 	var ecfs []encoderConfigFunc
-	if encoderVal.String() == "console" {
-		newEncoder = newConsoleEncoder
+	if encoderVal.set {
+		newEncoder = encoderVal.newEncoder
 	}
 	if timeformatVal.set {
 		ecfs = append(ecfs, withTimeFormat(timeformatVal.timeEncoder))
