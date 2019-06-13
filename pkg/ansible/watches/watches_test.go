@@ -96,6 +96,11 @@ func TestLoad(t *testing.T) {
 			shouldError: true,
 		},
 		{
+			name:        "error invalid finalizer no path/role/vars",
+			path:        "testdata/invalid_finalizer_no_vars.yaml",
+			shouldError: true,
+		},
+		{
 			name:        "error invalid duration",
 			path:        "testdata/invalid_duration.yaml",
 			shouldError: true,

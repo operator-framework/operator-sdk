@@ -150,19 +150,20 @@ func Load(path string) ([]Watch, error) {
 
 		err = verifyAnsiblePath(watch.Playbook, watch.Role)
 		if err != nil {
-			log.Error(err, "Invalid ansible path for GVK: %v", watch.GroupVersionKind.String())
+			log.Error(err, fmt.Sprintf("Invalid ansible path for GVK: %v", watch.GroupVersionKind.String()))
 			return nil, err
 		}
 
 		if watch.Finalizer != nil {
 			if watch.Finalizer.Name == "" {
 				err = fmt.Errorf("finalizer must have name")
-				log.Error(err, "Invalid finalizer for GVK: %v", watch.GroupVersionKind.String())
+				log.Error(err, fmt.Sprintf("Invalid finalizer for GVK: %v", watch.GroupVersionKind.String()))
 				return nil, err
 			}
+			// only fail if Vars not set
 			err = verifyAnsiblePath(watch.Finalizer.Playbook, watch.Finalizer.Role)
-			if err != nil {
-				log.Error(err, "Invalid ansible path on Finalizer for GVK: %v", watch.GroupVersionKind.String())
+			if err != nil && len(watch.Finalizer.Vars) == 0 {
+				log.Error(err, fmt.Sprintf("Invalid ansible path on Finalizer for GVK: %v", watch.GroupVersionKind.String()))
 				return nil, err
 			}
 		}
