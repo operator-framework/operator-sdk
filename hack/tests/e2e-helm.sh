@@ -112,7 +112,6 @@ log=$(operator-sdk new nginx-operator \
   --api-version=helm.example.com/v1alpha1 \
   --kind=Nginx \
   --type=helm \
-  --repo=github.com/example-inc/nginx-operator \
   2>&1)
 echo $log
 if echo $log | grep -q "failed to generate RBAC rules"; then

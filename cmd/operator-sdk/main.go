@@ -93,11 +93,11 @@ func checkDepManagerForCmd(cmd *cobra.Command) (err error) {
 	}
 
 	var dm projutil.DepManagerType
-	switch cmd.Name() {
+	switch n := cmd.Name(); n {
 	case "new", "migrate":
 		// Do not perform this check if the new project is non-Go, as they do not
 		// have (Go) dep managers.
-		if cmd.Name() == "new" {
+		if n == "new" {
 			projType, err := cmd.Flags().GetString("type")
 			if err != nil {
 				return err
@@ -115,6 +115,10 @@ func checkDepManagerForCmd(cmd *cobra.Command) (err error) {
 		}
 		dm = projutil.DepManagerType(dmStr)
 	default:
+		// version and completion commands are able to be run anywhere.
+		if n == "version" || n == "completion" {
+			return nil
+		}
 		// Do not perform this check if the project is non-Go, as they do not
 		// have (Go) dep managers.
 		if !projutil.IsOperatorGo() {

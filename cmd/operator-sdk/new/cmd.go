@@ -58,7 +58,7 @@ generates a skeletal app-operator application in $HOME/projects/example.com/app-
 	newCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. (e.g AppService) - used with \"ansible\" or \"helm\" types")
 	newCmd.Flags().StringVar(&operatorType, "type", "go", "Type of operator to initialize (choices: \"go\", \"ansible\" or \"helm\")")
 	newCmd.Flags().StringVar(&depManager, "dep-manager", "modules", `Dependency manager the new project will use (choices: "dep", "modules")`)
-	newCmd.Flags().StringVar(&repo, "repo", "", "Project repository path. Used as the project's go import path. This must be set if outside of $GOPATH/src, and cannot be set of --dep-manager=dep")
+	newCmd.Flags().StringVar(&repo, "repo", "", "Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of $GOPATH/src, and cannot be set if --dep-manager=dep")
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
 	newCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
 	newCmd.Flags().BoolVar(&makeVendor, "vendor", false, "Use a vendor directory for dependencies. This flag only applies when --dep-manager=modules (the default)")
@@ -99,14 +99,13 @@ func newFunc(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if repo == "" {
-		repo = path.Join(projutil.GetGoPkg(), projectName)
-	}
-
 	log.Infof("Creating new %s operator '%s'.", strings.Title(operatorType), projectName)
 
 	switch operatorType {
 	case projutil.OperatorTypeGo:
+		if repo == "" {
+			repo = path.Join(projutil.GetGoPkg(), projectName)
+		}
 		if err := doGoScaffold(); err != nil {
 			return err
 		}
@@ -221,7 +220,6 @@ func doGoScaffold() error {
 
 func doAnsibleScaffold() error {
 	cfg := &input.Config{
-		Repo:           repo,
 		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
 		ProjectName:    projectName,
 	}
@@ -306,7 +304,6 @@ func doAnsibleScaffold() error {
 
 func doHelmScaffold() error {
 	cfg := &input.Config{
-		Repo:           repo,
 		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
 		ProjectName:    projectName,
 	}
@@ -394,6 +391,19 @@ func verifyFlags() error {
 		if !makeVendor && projutil.DepManagerType(depManager) == projutil.DepManagerDep {
 			log.Warnf("--dep-manager=dep requires a vendor directory; ignoring --vendor=false")
 		}
+		// dep assumes the project's path under $GOPATH/src is the project's
+		// repo path.
+		if repo != "" && depManager == string(projutil.DepManagerDep) {
+			return fmt.Errorf(`--repo flag cannot be used with --dep-manger=dep`)
+		}
+
+		inGopathSrc, err := projutil.WdInGoPathSrc()
+		if err != nil {
+			return err
+		}
+		if !inGopathSrc && repo == "" && depManager == string(projutil.DepManagerGoMod) {
+			return fmt.Errorf(`depedency manger "modules" requires --repo be set if wd not in $GOPATH/src`)
+		}
 	}
 
 	// --api-version and --kind are required with --type=ansible and --type=helm, with one exception.
@@ -414,20 +424,6 @@ func verifyFlags() error {
 		if strings.Count(apiVersion, "/") != 1 {
 			return fmt.Errorf("value of --api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion)
 		}
-	}
-
-	// dep assumes the project's path under $GOPATH/src is the project's
-	// repo path.
-	if repo != "" && depManager == string(projutil.DepManagerDep) {
-		return fmt.Errorf(`--repo flag cannot be used with --dep-manger=dep`)
-	}
-
-	inGopathSrc, err := projutil.WdInGoPathSrc()
-	if err != nil {
-		return err
-	}
-	if !inGopathSrc && repo == "" && depManager == string(projutil.DepManagerGoMod) {
-		return fmt.Errorf(`depedency manger "modules" requires --repo be set if wd not in $GOPATH/src`)
 	}
 
 	return nil

@@ -98,15 +98,13 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 
 	// Don't need to build Go code if a non-Go Operator.
 	if projutil.IsOperatorGo() {
+		trimPath := fmt.Sprintf("all=-trimpath=%s", filepath.Dir(absProjectPath))
 		opts := projutil.GoCmdOptions{
 			BinName:     filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName),
 			PackagePath: path.Join(projutil.GetGoPkg(), filepath.ToSlash(scaffold.ManagerDir)),
+			Args:        []string{"-gcflags", trimPath, "-asmflags", trimPath},
 			Env:         goBuildEnv,
 			GoMod:       projutil.IsDepManagerGoMod(),
-		}
-		if _, ok := os.LookupEnv(projutil.GoPathEnv); ok {
-			trimPath := os.ExpandEnv("all=-trimpath=${GOPATH}")
-			opts.Args = []string{"-gcflags", trimPath, "-asmflags", trimPath}
 		}
 		if err := projutil.GoBuild(opts); err != nil {
 			return fmt.Errorf("failed to build operator binary: (%v)", err)

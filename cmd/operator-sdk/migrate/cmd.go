@@ -47,7 +47,7 @@ func NewCmd() *cobra.Command {
 
 	newCmd.Flags().StringVar(&depManager, "dep-manager", "modules", `Dependency manager the new project will use (choices: "dep", "modules")`)
 	newCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
-	newCmd.Flags().StringVar(&repo, "repo", "", "Project repository path. Used as the project's go import path. This must be set if outside of $GOPATH/src, and cannot be set of --dep-manager=dep")
+	newCmd.Flags().StringVar(&repo, "repo", "", "Project repository path. Used as the project's Go import path. This must be set if outside of $GOPATH/src, and cannot be set if --dep-manager=dep")
 
 	return newCmd
 }

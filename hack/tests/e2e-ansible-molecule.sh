@@ -31,8 +31,7 @@ operator-sdk new memcached-operator \
   --api-version=ansible.example.com/v1alpha1 \
   --kind=Memcached \
   --type=ansible \
-  --generate-playbook \
-  --repo=github.com/example-inc/memcached-operator
+  --generate-playbook
 cp "$ROOTDIR/test/ansible-memcached/tasks.yml" memcached-operator/roles/memcached/tasks/main.yml
 cp "$ROOTDIR/test/ansible-memcached/defaults.yml" memcached-operator/roles/memcached/defaults/main.yml
 cp "$ROOTDIR/test/ansible-memcached/asserts.yml"  memcached-operator/molecule/default/asserts.yml
