@@ -91,7 +91,7 @@ func checkDepManagerForCmd(cmd *cobra.Command) (err error) {
 	if skipCheckForCmd(cmd) {
 		return nil
 	}
-	// Do not perform this check if the project is non-Go, as thy will not have
+	// Do not perform this check if the project is non-Go, as they will not have
 	// a (Go) dep manager.
 	if !projutil.IsOperatorGo() {
 		return nil
