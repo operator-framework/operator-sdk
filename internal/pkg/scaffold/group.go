@@ -38,6 +38,10 @@ func (s *Group) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
-const groupTmpl = `// Package {{.Resource.GoImportGroup}} contains {{.Resource.GoImportGroup}} API versions
+const groupTmpl = `// Package {{.Resource.GoImportGroup}} contains {{.Resource.GoImportGroup}} API versions.
+//
+// This file ensures Go source parsers acknowledge the {{.Resource.GoImportGroup}} package
+// and any child packages. It can be removed if any other Go source files are
+// added to this package.
 package {{.Resource.GoImportGroup}}
 `
