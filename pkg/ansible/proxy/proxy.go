@@ -25,13 +25,18 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
+	"sync"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
+	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	osdkHandler "github.com/operator-framework/operator-sdk/pkg/handler"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -100,6 +105,17 @@ func Run(done chan error, o Options) error {
 		watchedNamespaceMap[ns] = nil
 	}
 
+	// Create apiResources and
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(o.KubeConfig)
+	if err != nil {
+		return err
+	}
+	resources := &apiResources{
+		mu:               &sync.RWMutex{},
+		gvkToAPIResource: map[string]metav1.APIResource{},
+		discoveryClient:  discoveryClient,
+	}
+
 	if o.Cache == nil && !o.DisableCache {
 		// Need to initialize cache since we don't have one
 		log.Info("Initializing and starting informer cache...")
@@ -132,6 +148,7 @@ func Run(done chan error, o Options) error {
 			cMap:              o.ControllerMap,
 			restMapper:        o.RESTMapper,
 			watchedNamespaces: watchedNamespaceMap,
+			apiResources:      resources,
 		}
 	} else {
 		log.Info("Warning: injection of owner references and dependent watches is turned off")
@@ -147,6 +164,7 @@ func Run(done chan error, o Options) error {
 			watchedNamespaces: watchedNamespaceMap,
 			cMap:              o.ControllerMap,
 			injectOwnerRef:    o.OwnerInjection,
+			apiResources:      resources,
 		}
 	}
 
@@ -260,4 +278,83 @@ func getRequestOwnerRef(req *http.Request) (kubeconfig.NamespacedOwnerReference,
 		return owner, err
 	}
 	return owner, err
+}
+
+func getGVKFromRequestInfo(r *k8sRequest.RequestInfo, restMapper meta.RESTMapper) (schema.GroupVersionKind, error) {
+	gvr := schema.GroupVersionResource{
+		Group:    r.APIGroup,
+		Version:  r.APIVersion,
+		Resource: r.Resource,
+	}
+	return restMapper.KindFor(gvr)
+}
+
+type apiResources struct {
+	mu               *sync.RWMutex
+	gvkToAPIResource map[string]metav1.APIResource
+	discoveryClient  discovery.DiscoveryInterface
+}
+
+func (a *apiResources) resetResources() error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	apisResourceList, err := a.discoveryClient.ServerResources()
+	if err != nil {
+		return err
+	}
+
+	a.gvkToAPIResource = map[string]metav1.APIResource{}
+
+	for _, apiResource := range apisResourceList {
+		gv, err := schema.ParseGroupVersion(apiResource.GroupVersion)
+		if err != nil {
+			return err
+		}
+		for _, resource := range apiResource.APIResources {
+			// Names containing a "/" are subresources and should be ignored
+			if strings.Contains(resource.Name, "/") {
+				continue
+			}
+			gvk := schema.GroupVersionKind{
+				Group:   gv.Group,
+				Version: gv.Version,
+				Kind:    resource.Kind,
+			}
+
+			a.gvkToAPIResource[gvk.String()] = resource
+		}
+	}
+
+	return nil
+}
+
+func (a *apiResources) IsVirtualResource(gvk schema.GroupVersionKind) (bool, error) {
+	a.mu.RLock()
+	apiResource, ok := a.gvkToAPIResource[gvk.String()]
+	a.mu.RUnlock()
+
+	if !ok {
+		//reset the resources
+		err := a.resetResources()
+		if err != nil {
+			return false, err
+		}
+		// retry to get the resource
+		a.mu.RLock()
+		apiResource, ok = a.gvkToAPIResource[gvk.String()]
+		a.mu.RUnlock()
+		if !ok {
+			return false, fmt.Errorf("unable to get api resource for gvk: %v", gvk)
+		}
+	}
+
+	allVerbs := discovery.SupportsAllVerbs{
+		Verbs: []string{"watch", "get", "list"},
+	}
+
+	if !allVerbs.Match(gvk.GroupVersion().String(), &apiResource) {
+		return true, nil
+	}
+
+	return false, nil
 }

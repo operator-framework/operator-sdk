@@ -53,7 +53,9 @@ $ export GO111MODULE=on
 
 ##### Vendoring
 
-The Operator SDK uses [vendoring][go_vendoring] to supply dependencies to operator projects, regardless of the dependency manager. As with the above module mode constraint, we intend to allow use of dependencies [outside of `vendor`][module_vendoring] for projects in the near future.
+By default, an operator's dependencies are managed with `modules` and `--vendor=false`, so calls to `go {build,clean,get,install,list,run,test}` by `operator-sdk` subcommands will use an external modules directory. Execute `go help modules` for more information.
+
+The Operator SDK can create a [`vendor`][go_vendoring] directory for Go dependencies if the dependency manager is `modules` and the project is initialized with `--vendor=true`, or if the dependency manager is `dep` (which requires vendoring).
 
 #### Operator scope
 
@@ -200,7 +202,7 @@ Once this is done, there are two ways to run the operator:
 
 **Note**: `operator-sdk build` invokes `docker build` by default, and optionally `buildah bud`. If using `buildah`, skip to the `operator-sdk build` invocation instructions below. If using `docker`, make sure your docker daemon is running and that you can run the docker client without sudo. You can check if this is the case by running `docker version`, which should complete without errors. Follow instructions for your OS/distribution on how to start the docker daemon and configure your access permissions, if needed.
 
-**Note**: If using go modules, run
+**Note**: If using go modules and a `vendor/` directory, run
 ```sh
 $ go mod vendor
 ```
@@ -416,7 +418,7 @@ func main() {
 
 **NOTES:**
 
-* After adding new import paths to your operator project, run `go mod vendor` (or `dep ensure` if you set `--dep-manager=dep` when initializing your project) in the root of your project directory to fulfill these dependencies.
+* After adding new import paths to your operator project, run `go mod vendor` if using modules and a `vendor/` directory (or `dep ensure` if you set `--dep-manager=dep` when initializing your project) in the root of your project directory to fulfill these dependencies.
 * Your 3rd party resource needs to be added before add the controller in `"Setup all Controllers"`.
 
 ### Handle Cleanup on Deletion
@@ -597,7 +599,6 @@ When the operator is not running in a cluster, the Manager will return an error 
 [homebrew_tool]:https://brew.sh/
 [go_mod_wiki]: https://github.com/golang/go/wiki/Modules
 [go_vendoring]: https://blog.gopheracademy.com/advent-2015/vendor-folder/
-[module_vendoring]: https://github.com/golang/go/wiki/Modules#how-do-i-use-vendoring-with-modules-is-vendoring-going-away
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
