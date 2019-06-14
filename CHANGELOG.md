@@ -8,6 +8,7 @@
 - New flags `--vendor` and `--skip-validation` for [`operator-sdk new`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#new) that direct the SDK to initialize a new project with a `vendor/` directory, and without validating project dependencies. `vendor/` is not written by default. ([#1519](https://github.com/operator-framework/operator-sdk/pull/1519))
 - Generating and serving info metrics about each custom resource. By default these metrics are exposed on port 8686. ([#1277](https://github.com/operator-framework/operator-sdk/pull/1277))
 - Scaffold a `pkg/apis/<group>/group.go` package file to avoid `go/build` errors when running Kubernetes code generators. ([#1401](https://github.com/operator-framework/operator-sdk/pull/1401))
+- Adds a new extra variable containing the unmodified CR spec for ansible based operators. [#1563](https://github.com/operator-framework/operator-sdk/pull/1563)
 
 ### Changed
 
