@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,27 +15,28 @@
 package scaffold
 
 import (
-	"path/filepath"
-
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 )
 
-const GoTestScriptFile = "go-test.sh"
+const ToolsFile = "tools.go"
 
-type GoTestScript struct {
+type Tools struct {
 	input.Input
 }
 
-func (s *GoTestScript) GetInput() (input.Input, error) {
+func (s *Tools) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(BuildTestDir, GoTestScriptFile)
+		s.Path = ToolsFile
 	}
-	s.IsExec = true
-	s.TemplateBody = goTestScriptTmpl
+	s.TemplateBody = toolsTmpl
 	return s.Input, nil
 }
 
-const goTestScriptTmpl = `#!/bin/sh
+const toolsTmpl = `// +build tools
 
-{{.ProjectName}}-test -test.parallel=1 -test.failfast -root=/ -kubeconfig=incluster -namespacedMan=namespaced.yaml -test.v
+package tools
+
+import (
+	_ "sigs.k8s.io/controller-tools/pkg/crd/generator"
+)
 `

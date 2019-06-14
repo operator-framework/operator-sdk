@@ -31,6 +31,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 )
 
+// blank assignment to verify that HelmOperatorReconciler implements reconcile.Reconciler
 var _ reconcile.Reconciler = &HelmOperatorReconciler{}
 
 // ReleaseHookFunc defines a function signature for release hooks.
@@ -168,7 +169,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 	if !manager.IsInstalled() {
 		installedRelease, err := manager.InstallRelease(context.TODO())
 		if err != nil {
-			log.Error(err, "Failed to install release")
+			log.Error(err, "Release failed")
 			status.SetCondition(types.HelmAppCondition{
 				Type:    types.ConditionReleaseFailed,
 				Status:  types.StatusTrue,
@@ -209,7 +210,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 	if manager.IsUpdateRequired() {
 		previousRelease, updatedRelease, err := manager.UpdateRelease(context.TODO())
 		if err != nil {
-			log.Error(err, "Failed to update release")
+			log.Error(err, "Release failed")
 			status.SetCondition(types.HelmAppCondition{
 				Type:    types.ConditionReleaseFailed,
 				Status:  types.StatusTrue,

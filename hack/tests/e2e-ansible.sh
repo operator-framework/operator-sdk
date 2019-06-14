@@ -14,6 +14,7 @@ trap_add 'rm -rf $GOTMP' EXIT
 
 deploy_operator() {
     kubectl create -f "$OPERATORDIR/deploy/service_account.yaml"
+    oc adm policy add-cluster-role-to-user cluster-admin -z memcached-operator || :
     kubectl create -f "$OPERATORDIR/deploy/role.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
     kubectl create -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_memcached_crd.yaml"
@@ -124,6 +125,7 @@ echo "### Base image testing passed"
 echo "### Now testing migrate to hybrid operator"
 echo "###"
 
+export GO111MODULE=on
 operator-sdk migrate
 
 if [[ ! -e build/Dockerfile.sdkold ]];
@@ -132,15 +134,26 @@ then
     exit 1
 fi
 
-# We can't reliably run `dep ensure` because when there are changes to
-# operator-sdk itself, and those changes are not merged upstream, we hit this
-# bug: https://github.com/golang/dep/issues/1747
-# Instead, this re-uses operator-sdk's own vendor directory.
-cp -a "$ROOTDIR"/vendor ./
-mkdir -p vendor/github.com/operator-framework/operator-sdk/
-# We cannot just use operator-sdk from $GOPATH because compilation tries to use
-# its vendor directory, which can conflict with the local one.
-cp -a "$ROOTDIR"/{internal,pkg,version,LICENSE} vendor/github.com/operator-framework/operator-sdk/
+# Remove any "replace" and "require" lines for the SDK repo before vendoring
+# in case this is a release PR and the tag doesn't exist yet. This must be
+# done without using "go mod edit", which first parses go.mod and will error
+# if it doesn't find a tag/version/package.
+# TODO: remove SDK repo references if PR/branch is not from the main SDK repo.
+SDK_REPO="github.com/operator-framework/operator-sdk"
+sed -E -i 's|^.*'"$SDK_REPO"'.*$||g' go.mod
+
+# Run `go build ./...` to pull down the deps specified by the scaffolded
+# `go.mod` file and verify dependencies build correctly.
+go build ./...
+
+# Use the local operator-sdk directory as the repo. To make the go toolchain
+# happy, the directory needs a `go.mod` file that specifies the module name,
+# so we need this temporary hack until we update the SDK repo itself to use
+# go modules.
+echo "module ${SDK_REPO}" > "${ROOTDIR}/go.mod"
+trap_add "rm ${ROOTDIR}/go.mod" EXIT
+go mod edit -replace="${SDK_REPO}=$ROOTDIR"
+go build ./...
 
 operator-sdk build "$DEST_IMAGE"
 

@@ -91,7 +91,7 @@ dl := &apps_v1.DeploymentList{
 err = sdk.List("default", dl)
 // List with custom options
 labelSelector := getLabelSelector("app", "dev")
-o := &metav1.ListOptions{LabelSelector: labelSelector}
+o := &meta_v1.ListOptions{LabelSelector: labelSelector}
 err = sdk.List("default", dl, op.WithListOptions(o))
 ```
 

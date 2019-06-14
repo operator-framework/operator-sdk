@@ -89,8 +89,11 @@ func (ts *TestSuite) TotalScore() (score int) {
 	for _, weight := range ts.Weights {
 		addedWeights += weight
 	}
-	floatScore = floatScore * (100 / addedWeights)
-	return int(floatScore)
+	// protect against divide by zero for failed plugins
+	if addedWeights == 0 {
+		return 0
+	}
+	return int(floatScore * (100 / addedWeights))
 }
 
 // Run runs all Tests in a TestSuite

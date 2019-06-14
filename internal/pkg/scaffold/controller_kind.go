@@ -15,7 +15,11 @@
 package scaffold
 
 import (
+	"fmt"
+	"path"
 	"path/filepath"
+	"strings"
+	"unicode"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 )
@@ -26,6 +30,18 @@ type ControllerKind struct {
 
 	// Resource defines the inputs for the controller's primary resource
 	Resource *Resource
+	// CustomImport holds the import path for a built-in or custom Kubernetes
+	// API that this controller reconciles, if specified by the scaffold invoker.
+	CustomImport string
+
+	// The following fields will be overwritten by GetInput().
+	//
+	// ImportMap maps all imports destined for the scaffold to their import
+	// identifier, if any.
+	ImportMap map[string]string
+	// GoImportIdent is the import identifier for the API reconciled by this
+	// controller.
+	GoImportIdent string
 }
 
 func (s *ControllerKind) GetInput() (input.Input, error) {
@@ -36,7 +52,89 @@ func (s *ControllerKind) GetInput() (input.Input, error) {
 	// Error if this file exists.
 	s.IfExistsAction = input.Error
 	s.TemplateBody = controllerKindTemplate
+
+	// Set imports.
+	if err := s.setImports(); err != nil {
+		return input.Input{}, err
+	}
 	return s.Input, nil
+}
+
+func (s *ControllerKind) setImports() (err error) {
+	s.ImportMap = controllerKindImports
+	importPath := ""
+	if s.CustomImport != "" {
+		importPath, s.GoImportIdent, err = getCustomAPIImportPathAndIdent(s.CustomImport)
+		if err != nil {
+			return err
+		}
+	} else {
+		importPath = path.Join(s.Repo, "pkg", "apis", s.Resource.GoImportGroup, s.Resource.Version)
+		s.GoImportIdent = s.Resource.GoImportGroup + s.Resource.Version
+	}
+	// Import identifiers must be unique within a file.
+	for p, id := range s.ImportMap {
+		if s.GoImportIdent == id && importPath != p {
+			// Append "api" to the conflicting import identifier.
+			s.GoImportIdent = s.GoImportIdent + "api"
+			break
+		}
+	}
+	s.ImportMap[importPath] = s.GoImportIdent
+	return nil
+}
+
+func getCustomAPIImportPathAndIdent(m string) (p string, id string, err error) {
+	sm := strings.Split(m, "=")
+	for i, e := range sm {
+		if i == 0 {
+			p = strings.TrimSpace(e)
+		} else if i == 1 {
+			id = strings.TrimSpace(e)
+		}
+	}
+	if p == "" {
+		return "", "", fmt.Errorf(`custom import "%s" path is empty`, m)
+	}
+	if id == "" {
+		if len(sm) == 2 {
+			return "", "", fmt.Errorf(`custom import "%s" identifier is empty, remove "=" from passed string`, m)
+		}
+		sp := strings.Split(p, "/")
+		if len(sp) > 1 {
+			id = sp[len(sp)-2] + sp[len(sp)-1]
+		} else {
+			id = sp[0]
+		}
+		id = strings.ToLower(id)
+	}
+	idb := &strings.Builder{}
+	// By definition, all package identifiers must be comprised of "_", unicode
+	// digits, and/or letters.
+	for _, r := range id {
+		if unicode.IsDigit(r) || unicode.IsLetter(r) || r == '_' {
+			if _, err := idb.WriteRune(r); err != nil {
+				return "", "", err
+			}
+		}
+	}
+	return p, idb.String(), nil
+}
+
+var controllerKindImports = map[string]string{
+	"k8s.io/api/core/v1":                                           "corev1",
+	"k8s.io/apimachinery/pkg/api/errors":                           "",
+	"k8s.io/apimachinery/pkg/apis/meta/v1":                         "metav1",
+	"k8s.io/apimachinery/pkg/runtime":                              "",
+	"k8s.io/apimachinery/pkg/types":                                "",
+	"sigs.k8s.io/controller-runtime/pkg/client":                    "",
+	"sigs.k8s.io/controller-runtime/pkg/controller":                "",
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil": "",
+	"sigs.k8s.io/controller-runtime/pkg/handler":                   "",
+	"sigs.k8s.io/controller-runtime/pkg/manager":                   "",
+	"sigs.k8s.io/controller-runtime/pkg/reconcile":                 "",
+	"sigs.k8s.io/controller-runtime/pkg/runtime/log":               "logf",
+	"sigs.k8s.io/controller-runtime/pkg/source":                    "",
 }
 
 const controllerKindTemplate = `package {{ .Resource.LowerKind }}
@@ -44,21 +142,9 @@ const controllerKindTemplate = `package {{ .Resource.LowerKind }}
 import (
 	"context"
 
-	{{ .Resource.GoImportGroup}}{{ .Resource.Version }} "{{ .Repo }}/pkg/apis/{{ .Resource.GoImportGroup}}/{{ .Resource.Version }}"
-
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-	"sigs.k8s.io/controller-runtime/pkg/source"
+	{{range $p, $i := .ImportMap -}}
+	{{$i}} "{{$p}}"
+	{{end}}
 )
 
 var log = logf.Log.WithName("controller_{{ .Resource.LowerKind }}")
@@ -88,7 +174,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource {{ .Resource.Kind }}
-	err = c.Watch(&source.Kind{Type: &{{ .Resource.GoImportGroup}}{{ .Resource.Version }}.{{ .Resource.Kind }}{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &{{ .GoImportIdent }}.{{ .Resource.Kind }}{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
@@ -97,7 +183,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Watch for changes to secondary resource Pods and requeue the owner {{ .Resource.Kind }}
 	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
-		OwnerType:    &{{ .Resource.GoImportGroup}}{{ .Resource.Version }}.{{ .Resource.Kind }}{},
+		OwnerType:    &{{ .GoImportIdent }}.{{ .Resource.Kind }}{},
 	})
 	if err != nil {
 		return err
@@ -106,6 +192,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
+// blank assignment to verify that Reconcile{{ .Resource.Kind }} implements reconcile.Reconciler
 var _ reconcile.Reconciler = &Reconcile{{ .Resource.Kind }}{}
 
 // Reconcile{{ .Resource.Kind }} reconciles a {{ .Resource.Kind }} object
@@ -128,7 +215,7 @@ func (r *Reconcile{{ .Resource.Kind }}) Reconcile(request reconcile.Request) (re
 	reqLogger.Info("Reconciling {{ .Resource.Kind }}")
 
 	// Fetch the {{ .Resource.Kind }} instance
-	instance := &{{ .Resource.GoImportGroup}}{{ .Resource.Version }}.{{ .Resource.Kind }}{}
+	instance := &{{ .GoImportIdent }}.{{ .Resource.Kind }}{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -171,7 +258,7 @@ func (r *Reconcile{{ .Resource.Kind }}) Reconcile(request reconcile.Request) (re
 }
 
 // newPodForCR returns a busybox pod with the same name/namespace as the cr
-func newPodForCR(cr *{{ .Resource.GoImportGroup}}{{ .Resource.Version }}.{{ .Resource.Kind }}) *corev1.Pod {
+func newPodForCR(cr *{{ .GoImportIdent }}.{{ .Resource.Kind }}) *corev1.Pod {
 	labels := map[string]string{
 		"app": cr.Name,
 	}

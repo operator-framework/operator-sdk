@@ -82,6 +82,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
+// blank assignment to verify that ReconcileMemcachedRS implements reconcile.Reconciler
 var _ reconcile.Reconciler = &ReconcileMemcachedRS{}
 
 // ReconcileMemcachedRS reconciles a MemcachedRS object
@@ -192,10 +193,6 @@ func (r *ReconcileMemcachedRS) replicaSetForMemcached(m *cachev1alpha1.Memcached
 	replicas := m.Spec.NumNodes
 
 	replicaSet := &appsv1.ReplicaSet{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "apps/v1",
-			Kind:       "ReplicaSet",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name,
 			Namespace: m.Namespace,

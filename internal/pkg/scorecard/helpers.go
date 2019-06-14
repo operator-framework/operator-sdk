@@ -83,19 +83,7 @@ func ResultsCumulative(results []TestResult) (TestResult, error) {
 func CalculateResult(tests []scapiv1alpha1.ScorecardTestResult) scapiv1alpha1.ScorecardSuiteResult {
 	scorecardSuiteResult := scapiv1alpha1.ScorecardSuiteResult{}
 	scorecardSuiteResult.Tests = tests
-	for _, test := range scorecardSuiteResult.Tests {
-		scorecardSuiteResult.TotalTests++
-		switch test.State {
-		case scapiv1alpha1.ErrorState:
-			scorecardSuiteResult.Error++
-		case scapiv1alpha1.PassState:
-			scorecardSuiteResult.Pass++
-		case scapiv1alpha1.PartialPassState:
-			scorecardSuiteResult.PartialPass++
-		case scapiv1alpha1.FailState:
-			scorecardSuiteResult.Fail++
-		}
-	}
+	scorecardSuiteResult = UpdateSuiteStates(scorecardSuiteResult)
 	return scorecardSuiteResult
 }
 
@@ -147,7 +135,7 @@ func TestResultToScorecardTestResult(tr TestResult) scapiv1alpha1.ScorecardTestR
 }
 
 // UpdateState updates the state of a TestResult.
-func UpdateState(res TestResult) TestResult {
+func UpdateState(res scapiv1alpha1.ScorecardTestResult) scapiv1alpha1.ScorecardTestResult {
 	if res.State == scapiv1alpha1.ErrorState {
 		return res
 	}
@@ -160,4 +148,38 @@ func UpdateState(res TestResult) TestResult {
 	}
 	return res
 	// TODO: decide what to do if a Test incorrectly sets points (Earned > Max)
+}
+
+// UpdateSuiteStates update the state of each test in a suite and updates the count to the suite's states to match
+func UpdateSuiteStates(suite scapiv1alpha1.ScorecardSuiteResult) scapiv1alpha1.ScorecardSuiteResult {
+	suite.TotalTests = len(suite.Tests)
+	// reset all state values
+	suite.Error = 0
+	suite.Fail = 0
+	suite.PartialPass = 0
+	suite.Pass = 0
+	for idx, test := range suite.Tests {
+		suite.Tests[idx] = UpdateState(test)
+		switch test.State {
+		case scapiv1alpha1.ErrorState:
+			suite.Error++
+		case scapiv1alpha1.PassState:
+			suite.Pass++
+		case scapiv1alpha1.PartialPassState:
+			suite.PartialPass++
+		case scapiv1alpha1.FailState:
+			suite.Fail++
+		}
+	}
+	return suite
+}
+
+func CombineScorecardOutput(outputs []scapiv1alpha1.ScorecardOutput, log string) scapiv1alpha1.ScorecardOutput {
+	output := scapiv1alpha1.ScorecardOutput{
+		Log: log,
+	}
+	for _, item := range outputs {
+		output.Results = append(output.Results, item.Results...)
+	}
+	return output
 }

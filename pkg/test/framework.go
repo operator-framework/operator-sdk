@@ -17,7 +17,6 @@ package test
 import (
 	goctx "context"
 	"fmt"
-	"net"
 	"os"
 	"sync"
 	"time"
@@ -69,34 +68,10 @@ func setup(kubeconfigPath, namespacedManPath *string, localOperator bool) error 
 	}
 	var err error
 	var kubeconfig *rest.Config
-	if *kubeconfigPath == "incluster" {
-		// Work around https://github.com/kubernetes/kubernetes/issues/40973
-		if len(os.Getenv("KUBERNETES_SERVICE_HOST")) == 0 {
-			addrs, err := net.LookupHost("kubernetes.default.svc")
-			if err != nil {
-				return fmt.Errorf("failed to get service host: %v", err)
-			}
-			if err := os.Setenv("KUBERNETES_SERVICE_HOST", addrs[0]); err != nil {
-				return fmt.Errorf("failed to set kubernetes host env var: (%v)", err)
-			}
-		}
-		if len(os.Getenv("KUBERNETES_SERVICE_PORT")) == 0 {
-			if err := os.Setenv("KUBERNETES_SERVICE_PORT", "443"); err != nil {
-				return fmt.Errorf("failed to set kubernetes port env var: (%v)", err)
-			}
-		}
-		kubeconfig, err = rest.InClusterConfig()
-		*singleNamespace = true
-		namespace = os.Getenv(TestNamespaceEnv)
-		if len(namespace) == 0 {
-			return fmt.Errorf("test namespace env not set")
-		}
-	} else {
-		var kcNamespace string
-		kubeconfig, kcNamespace, err = k8sInternal.GetKubeconfigAndNamespace(*kubeconfigPath)
-		if *singleNamespace && namespace == "" {
-			namespace = kcNamespace
-		}
+	var kcNamespace string
+	kubeconfig, kcNamespace, err = k8sInternal.GetKubeconfigAndNamespace(*kubeconfigPath)
+	if *singleNamespace && namespace == "" {
+		namespace = kcNamespace
 	}
 	if err != nil {
 		return fmt.Errorf("failed to build the kubeconfig: %v", err)
@@ -139,12 +114,7 @@ type addToSchemeFunc func(*runtime.Scheme) error
 // the addToScheme function (located in the register.go file of their operator
 // project) and the List struct for their custom resource. For example, for a
 // memcached operator, the list stuct may look like:
-// &MemcachedList{
-//	TypeMeta: metav1.TypeMeta{
-//		Kind: "Memcached",
-//		APIVersion: "cache.example.com/v1alpha1",
-//		},
-//	}
+// &MemcachedList{}
 // The List object is needed because the CRD has not always been fully registered
 // by the time this function is called. If the CRD takes more than 5 seconds to
 // become ready, this function throws an error

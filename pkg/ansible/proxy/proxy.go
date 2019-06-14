@@ -19,348 +19,29 @@ package proxy
 
 import (
 	"bytes"
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/http/httputil"
 	"strings"
+	"sync"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
 	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	osdkHandler "github.com/operator-framework/operator-sdk/pkg/handler"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
-
-type marshaler interface {
-	MarshalJSON() ([]byte, error)
-}
-
-// CacheResponseHandler will handle proxied requests and check if the requested
-// resource exists in our cache. If it does then there is no need to bombard
-// the APIserver with our request and we should write the response from the
-// proxy.
-func CacheResponseHandler(h http.Handler, informerCache cache.Cache, restMapper meta.RESTMapper, watchedNamespaces map[string]interface{}, cMap *controllermap.ControllerMap, injectOwnerRef bool) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		switch req.Method {
-		case http.MethodGet:
-			// GET request means we need to check the cache
-			rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.NewString("api", "apis"), GrouplessAPIPrefixes: sets.NewString("api")}
-			r, err := rf.NewRequestInfo(req)
-			if err != nil {
-				log.Error(err, "Failed to convert request")
-				break
-			}
-
-			// check if resource is present on request
-			if !r.IsResourceRequest {
-				break
-			}
-
-			// check if resource doesn't exist in watched namespaces
-			// if watchedNamespaces[""] exists then we are watching all namespaces
-			// and want to continue
-			_, allNsPresent := watchedNamespaces[metav1.NamespaceAll]
-			_, reqNsPresent := watchedNamespaces[r.Namespace]
-			if !allNsPresent && !reqNsPresent {
-				break
-			}
-
-			if strings.HasPrefix(r.Path, "/version") {
-				// Temporarily pass along to API server
-				// Ideally we cache this response as well
-				break
-			}
-
-			gvr := schema.GroupVersionResource{
-				Group:    r.APIGroup,
-				Version:  r.APIVersion,
-				Resource: r.Resource,
-			}
-			if restMapper == nil {
-				restMapper = meta.NewDefaultRESTMapper([]schema.GroupVersion{schema.GroupVersion{
-					Group:   r.APIGroup,
-					Version: r.APIVersion,
-				}})
-			}
-
-			k, err := restMapper.KindFor(gvr)
-			if err != nil {
-				// break here in case resource doesn't exist in cache
-				log.Info("Cache miss, can not find in rest mapper", "GVR", gvr)
-				break
-			}
-
-			var m marshaler
-
-			log.V(2).Info("Get resource in our cache", "r", r)
-			if r.Verb == "list" {
-				listOptions := &metav1.ListOptions{}
-				if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion, listOptions); err != nil {
-					log.Error(err, "Unable to decode list options from request")
-					break
-				}
-				lo := client.InNamespace(r.Namespace)
-				if err := lo.SetLabelSelector(listOptions.LabelSelector); err != nil {
-					log.Error(err, "Unable to set label selectors for the client")
-					break
-				}
-				if listOptions.FieldSelector != "" {
-					if err := lo.SetFieldSelector(listOptions.FieldSelector); err != nil {
-						log.Error(err, "Unable to set field selectors for the client")
-						break
-					}
-				}
-				k.Kind = k.Kind + "List"
-				un := unstructured.UnstructuredList{}
-				un.SetGroupVersionKind(k)
-				err = informerCache.List(context.Background(), lo, &un)
-				if err != nil {
-					// break here in case resource doesn't exist in cache but exists on APIserver
-					// This is very unlikely but provides user with expected 404
-					log.Info(fmt.Sprintf("cache miss: %v err-%v", k, err))
-					break
-				}
-				m = &un
-			} else {
-				un := &unstructured.Unstructured{}
-				un.SetGroupVersionKind(k)
-				obj := client.ObjectKey{Namespace: r.Namespace, Name: r.Name}
-				err = informerCache.Get(context.Background(), obj, un)
-				if err != nil {
-					// break here in case resource doesn't exist in cache but exists on APIserver
-					// This is very unlikely but provides user with expected 404
-					log.Info(fmt.Sprintf("Cache miss: %v, %v", k, obj))
-					break
-				}
-				m = un
-				// Once we get the resource, we are going to attempt to recover the dependent watches here,
-				// This will happen in the background, and log errors.
-				if injectOwnerRef {
-					go recoverDependentWatches(req, un, cMap, restMapper)
-				}
-			}
-
-			i := bytes.Buffer{}
-			resp, err := m.MarshalJSON()
-			if err != nil {
-				// return will give a 500
-				log.Error(err, "Failed to marshal data")
-				http.Error(w, "", http.StatusInternalServerError)
-				return
-			}
-
-			// Set Content-Type header
-			w.Header().Set("Content-Type", "application/json")
-			// Set X-Cache header to signal that response is served from Cache
-			w.Header().Set("X-Cache", "HIT")
-			if err := json.Indent(&i, resp, "", "  "); err != nil {
-				log.Error(err, "Failed to indent json")
-			}
-			_, err = w.Write(i.Bytes())
-			if err != nil {
-				log.Error(err, "Failed to write response")
-				http.Error(w, "", http.StatusInternalServerError)
-				return
-			}
-
-			// Return so that request isn't passed along to APIserver
-			return
-		}
-		h.ServeHTTP(w, req)
-	})
-}
-
-func recoverDependentWatches(req *http.Request, un *unstructured.Unstructured, cMap *controllermap.ControllerMap, restMapper meta.RESTMapper) {
-	ownerRef, err := getRequestOwnerRef(req)
-	if err != nil {
-		log.Error(err, "Could not get ownerRef from proxy")
-		return
-	}
-
-	for _, oRef := range un.GetOwnerReferences() {
-		if oRef.APIVersion == ownerRef.APIVersion && oRef.Kind == ownerRef.Kind {
-			err := addWatchToController(ownerRef, cMap, un, restMapper, true)
-			if err != nil {
-				log.Error(err, "Could not recover dependent resource watch", "owner", ownerRef)
-				return
-			}
-		}
-	}
-	if typeString, ok := un.GetAnnotations()[osdkHandler.TypeAnnotation]; ok {
-		ownerGV, err := schema.ParseGroupVersion(ownerRef.APIVersion)
-		if err != nil {
-			log.Error(err, "Could not get ownerRef from proxy")
-			return
-		}
-		if typeString == fmt.Sprintf("%v.%v", ownerRef.Kind, ownerGV.Group) {
-			err := addWatchToController(ownerRef, cMap, un, restMapper, false)
-			if err != nil {
-				log.Error(err, "Could not recover dependent resource watch", "owner", ownerRef)
-				return
-			}
-		}
-	}
-}
-
-// InjectOwnerReferenceHandler will handle proxied requests and inject the
-// owner reference found in the authorization header. The Authorization is
-// then deleted so that the proxy can re-set with the correct authorization.
-func InjectOwnerReferenceHandler(h http.Handler, cMap *controllermap.ControllerMap, restMapper meta.RESTMapper, watchedNamespaces map[string]interface{}) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		switch req.Method {
-		case http.MethodPost:
-			dump, _ := httputil.DumpRequest(req, false)
-			log.V(1).Info("Dumping request", "RequestDump", string(dump))
-			rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.NewString("api", "apis"), GrouplessAPIPrefixes: sets.NewString("api")}
-			r, err := rf.NewRequestInfo(req)
-			if err != nil {
-				m := "Could not convert request"
-				log.Error(err, m)
-				http.Error(w, m, http.StatusBadRequest)
-				return
-			}
-			if r.Subresource != "" {
-				// Don't inject owner ref if we are POSTing to a subresource
-				break
-			}
-			log.Info("Injecting owner reference")
-			owner, err := getRequestOwnerRef(req)
-			if err != nil {
-				m := "Could not get owner reference"
-				log.Error(err, m)
-				http.Error(w, m, http.StatusInternalServerError)
-				return
-			}
-
-			body, err := ioutil.ReadAll(req.Body)
-			if err != nil {
-				m := "Could not read request body"
-				log.Error(err, m)
-				http.Error(w, m, http.StatusInternalServerError)
-				return
-			}
-			data := &unstructured.Unstructured{}
-			err = json.Unmarshal(body, data)
-			if err != nil {
-				m := "Could not deserialize request body"
-				log.Error(err, m)
-				http.Error(w, m, http.StatusBadRequest)
-				return
-			}
-
-			addOwnerRef, err := shouldAddOwnerRef(data, owner, restMapper)
-			if err != nil {
-				m := "Could not determine if we should add owner ref"
-				log.Error(err, m)
-				http.Error(w, m, http.StatusBadRequest)
-				return
-			}
-			if addOwnerRef {
-				data.SetOwnerReferences(append(data.GetOwnerReferences(), owner.OwnerReference))
-			} else {
-				ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
-				if err != nil {
-					m := fmt.Sprintf("could not get broup version for: %v", owner)
-					log.Error(err, m)
-					http.Error(w, m, http.StatusBadRequest)
-					return
-				}
-				a := data.GetAnnotations()
-				if a == nil {
-					a = map[string]string{}
-				}
-				a[osdkHandler.NamespacedNameAnnotation] = strings.Join([]string{owner.Namespace, owner.Name}, "/")
-				a[osdkHandler.TypeAnnotation] = fmt.Sprintf("%v.%v", owner.Kind, ownerGV.Group)
-
-				data.SetAnnotations(a)
-			}
-			newBody, err := json.Marshal(data.Object)
-			if err != nil {
-				m := "Could not serialize body"
-				log.Error(err, m)
-				http.Error(w, m, http.StatusInternalServerError)
-				return
-			}
-			log.V(1).Info("Serialized body", "Body", string(newBody))
-			req.Body = ioutil.NopCloser(bytes.NewBuffer(newBody))
-			req.ContentLength = int64(len(newBody))
-
-			// add watch for resource
-			// check if resource doesn't exist in watched namespaces
-			// if watchedNamespaces[""] exists then we are watching all namespaces
-			// and want to continue
-			// This is making sure we are not attempting to watch a resource outside of the
-			// namespaces that the cache can watch.
-			_, allNsPresent := watchedNamespaces[metav1.NamespaceAll]
-			_, reqNsPresent := watchedNamespaces[r.Namespace]
-			if allNsPresent || reqNsPresent {
-				err = addWatchToController(owner, cMap, data, restMapper, addOwnerRef)
-				if err != nil {
-					m := "could not add watch to controller"
-					log.Error(err, m)
-					http.Error(w, m, http.StatusInternalServerError)
-					return
-				}
-			}
-		}
-		h.ServeHTTP(w, req)
-	})
-}
-
-func removeAuthorizationHeader(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		req.Header.Del("Authorization")
-		h.ServeHTTP(w, req)
-	})
-}
-
-func shouldAddOwnerRef(data *unstructured.Unstructured, owner kubeconfig.NamespacedOwnerReference, restMapper meta.RESTMapper) (bool, error) {
-	dataMapping, err := restMapper.RESTMapping(data.GroupVersionKind().GroupKind(), data.GroupVersionKind().Version)
-	if err != nil {
-		m := fmt.Sprintf("Could not get rest mapping for: %v", data.GroupVersionKind())
-		log.Error(err, m)
-		return false, err
-
-	}
-	// We need to determine whether or not the owner is a cluster-scoped
-	// resource because enqueue based on an owner reference does not work if
-	// a namespaced resource owns a cluster-scoped resource
-	ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
-	if err != nil {
-		m := fmt.Sprintf("could not get group version for: %v", owner)
-		log.Error(err, m)
-		return false, err
-	}
-	ownerMapping, err := restMapper.RESTMapping(schema.GroupKind{Kind: owner.Kind, Group: ownerGV.Group}, ownerGV.Version)
-	if err != nil {
-		m := fmt.Sprintf("could not get rest mapping for: %v", owner)
-		log.Error(err, m)
-		return false, err
-	}
-
-	dataNamespaceScoped := dataMapping.Scope.Name() != meta.RESTScopeNameRoot
-	ownerNamespaceScoped := ownerMapping.Scope.Name() != meta.RESTScopeNameRoot
-
-	if dataNamespaceScoped && ownerNamespaceScoped && data.GetNamespace() == owner.Namespace {
-		return true, nil
-	}
-	return false, nil
-}
 
 // RequestLogHandler - log the requests that come through the proxy.
 func RequestLogHandler(h http.Handler) http.Handler {
@@ -424,6 +105,17 @@ func Run(done chan error, o Options) error {
 		watchedNamespaceMap[ns] = nil
 	}
 
+	// Create apiResources and
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(o.KubeConfig)
+	if err != nil {
+		return err
+	}
+	resources := &apiResources{
+		mu:               &sync.RWMutex{},
+		gvkToAPIResource: map[string]metav1.APIResource{},
+		discoveryClient:  discoveryClient,
+	}
+
 	if o.Cache == nil && !o.DisableCache {
 		// Need to initialize cache since we don't have one
 		log.Info("Initializing and starting informer cache...")
@@ -447,10 +139,17 @@ func Run(done chan error, o Options) error {
 		o.Cache = informerCache
 	}
 
+	// Remove the authorization header so the proxy can correctly inject the header.
 	server.Handler = removeAuthorizationHeader(server.Handler)
 
 	if o.OwnerInjection {
-		server.Handler = InjectOwnerReferenceHandler(server.Handler, o.ControllerMap, o.RESTMapper, watchedNamespaceMap)
+		server.Handler = &injectOwnerReferenceHandler{
+			next:              server.Handler,
+			cMap:              o.ControllerMap,
+			restMapper:        o.RESTMapper,
+			watchedNamespaces: watchedNamespaceMap,
+			apiResources:      resources,
+		}
 	} else {
 		log.Info("Warning: injection of owner references and dependent watches is turned off")
 	}
@@ -458,7 +157,15 @@ func Run(done chan error, o Options) error {
 		server.Handler = RequestLogHandler(server.Handler)
 	}
 	if !o.DisableCache {
-		server.Handler = CacheResponseHandler(server.Handler, o.Cache, o.RESTMapper, watchedNamespaceMap, o.ControllerMap, o.OwnerInjection)
+		server.Handler = &cacheResponseHandler{
+			next:              server.Handler,
+			informerCache:     o.Cache,
+			restMapper:        o.RESTMapper,
+			watchedNamespaces: watchedNamespaceMap,
+			cMap:              o.ControllerMap,
+			injectOwnerRef:    o.OwnerInjection,
+			apiResources:      resources,
+		}
 	}
 
 	l, err := server.Listen(o.Address, o.Port)
@@ -472,6 +179,7 @@ func Run(done chan error, o Options) error {
 	return nil
 }
 
+// Helper function used by cache response and owner injection
 func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *controllermap.ControllerMap, resource *unstructured.Unstructured, restMapper meta.RESTMapper, useOwnerRef bool) error {
 	dataMapping, err := restMapper.RESTMapping(resource.GroupVersionKind().GroupKind(), resource.GroupVersionKind().Version)
 	if err != nil {
@@ -539,6 +247,14 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 	return nil
 }
 
+func removeAuthorizationHeader(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		req.Header.Del("Authorization")
+		h.ServeHTTP(w, req)
+	})
+}
+
+// Helper function used by recovering dependent watches and owner ref injection.
 func getRequestOwnerRef(req *http.Request) (kubeconfig.NamespacedOwnerReference, error) {
 	owner := kubeconfig.NamespacedOwnerReference{}
 	user, _, ok := req.BasicAuth()
@@ -562,4 +278,83 @@ func getRequestOwnerRef(req *http.Request) (kubeconfig.NamespacedOwnerReference,
 		return owner, err
 	}
 	return owner, err
+}
+
+func getGVKFromRequestInfo(r *k8sRequest.RequestInfo, restMapper meta.RESTMapper) (schema.GroupVersionKind, error) {
+	gvr := schema.GroupVersionResource{
+		Group:    r.APIGroup,
+		Version:  r.APIVersion,
+		Resource: r.Resource,
+	}
+	return restMapper.KindFor(gvr)
+}
+
+type apiResources struct {
+	mu               *sync.RWMutex
+	gvkToAPIResource map[string]metav1.APIResource
+	discoveryClient  discovery.DiscoveryInterface
+}
+
+func (a *apiResources) resetResources() error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	apisResourceList, err := a.discoveryClient.ServerResources()
+	if err != nil {
+		return err
+	}
+
+	a.gvkToAPIResource = map[string]metav1.APIResource{}
+
+	for _, apiResource := range apisResourceList {
+		gv, err := schema.ParseGroupVersion(apiResource.GroupVersion)
+		if err != nil {
+			return err
+		}
+		for _, resource := range apiResource.APIResources {
+			// Names containing a "/" are subresources and should be ignored
+			if strings.Contains(resource.Name, "/") {
+				continue
+			}
+			gvk := schema.GroupVersionKind{
+				Group:   gv.Group,
+				Version: gv.Version,
+				Kind:    resource.Kind,
+			}
+
+			a.gvkToAPIResource[gvk.String()] = resource
+		}
+	}
+
+	return nil
+}
+
+func (a *apiResources) IsVirtualResource(gvk schema.GroupVersionKind) (bool, error) {
+	a.mu.RLock()
+	apiResource, ok := a.gvkToAPIResource[gvk.String()]
+	a.mu.RUnlock()
+
+	if !ok {
+		//reset the resources
+		err := a.resetResources()
+		if err != nil {
+			return false, err
+		}
+		// retry to get the resource
+		a.mu.RLock()
+		apiResource, ok = a.gvkToAPIResource[gvk.String()]
+		a.mu.RUnlock()
+		if !ok {
+			return false, fmt.Errorf("unable to get api resource for gvk: %v", gvk)
+		}
+	}
+
+	allVerbs := discovery.SupportsAllVerbs{
+		Verbs: []string{"watch", "get", "list"},
+	}
+
+	if !allVerbs.Match(gvk.GroupVersion().String(), &apiResource) {
+		return true, nil
+	}
+
+	return false, nil
 }
