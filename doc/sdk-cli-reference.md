@@ -217,6 +217,32 @@ INFO[0000] Fill in the following required fields in file deploy/olm-catalog/oper
 INFO[0000] Created deploy/olm-catalog/operator-name/0.1.0/operator-name.v0.1.0.clusterserviceversion.yaml
 ```
 
+### gen-catalogsource
+
+Writes a combined CatalogSource and ConfigMap manifest to `deploy/olm-catalog/{operator-name}/{csv-version}` using manifests in a CSV bundle directory.
+
+#### Flags
+
+* `--bundle-dir` string - (required) Directory of bundled operator CSV, CRD's, and optionally a package manifest
+* `--namespace` string - Namespace to set in output ConfigMap and CatalogSource
+* `--package-manifest` string - Path of the package manifest. Optional if the bundle dir contains one
+* `--catalogsource-manifest` string - Path to an existing CatalogSource manifest to be included in the output. Optional
+* `--output-format`, `-o` string - Format of output being printed or written. Must be one of: "yaml", "json"
+
+#### Example
+
+```console
+$ export MANIFEST_DIR="deploy/olm-catalog/app-operator"
+$ operator-sdk olm-catalog gen-catalogsource --bundle-dir "${MANIFEST_DIR}/0.0.1" --package-manifest "${MANIFEST_DIR}/app-operator.package.yaml" --namespace "app"
+INFO[0000] Generating YAML CatalogSource and ConfigMap manifest
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: app-operator
+  namespace: app
+...
+```
+
 ## migrate
 
 Adds a main.go source file and any associated source files for an operator that
