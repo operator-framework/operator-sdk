@@ -479,7 +479,9 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 
 func (r *ReconcileMemcached) finalizeMemcached(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
 	// TODO(user): Add the cleanup steps that the operator
-	// needs to do before the CR can be deleted
+	// needs to do before the CR can be deleted. Examples
+	// of finalizers include performing backups and deleting 
+	// resources that are not owned by this CR, like a PVC.
 	reqLogger.Info("Successfully finalized memcached")
 	return nil
 }
