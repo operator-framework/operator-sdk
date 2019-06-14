@@ -34,10 +34,10 @@ func (s *Group) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = filepath.Join(ApisDir, s.Resource.GoImportGroup, GroupFile)
 	}
-	s.TemplateBody = stubTmpl
+	s.TemplateBody = groupTmpl
 	return s.Input, nil
 }
 
-const stubTmpl = `// Package {{.Resource.GoImportGroup}} contains {{.Resource.GoImportGroup}} API versions
+const groupTmpl = `// Package {{.Resource.GoImportGroup}} contains {{.Resource.GoImportGroup}} API versions
 package {{.Resource.GoImportGroup}}
 `
