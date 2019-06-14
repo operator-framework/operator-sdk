@@ -136,7 +136,7 @@ func checkDepManagerForCmd(cmd *cobra.Command) (err error) {
 			return err
 		}
 		if !goModOn {
-			return fmt.Errorf(`depedency manger "modules" requires wd be in $GOPATH/src` +
+			return fmt.Errorf(`dependency manager "modules" requires working directory to be in $GOPATH/src` +
 				` and GO111MODULE=on, or outside of $GOPATH/src and GO111MODULE="on", "auto", or unset`)
 		}
 	case projutil.DepManagerDep:
@@ -145,7 +145,7 @@ func checkDepManagerForCmd(cmd *cobra.Command) (err error) {
 			return err
 		}
 		if !inGopathSrc {
-			return fmt.Errorf(`depedency manger "dep" requires wd be in $GOPATH/src`)
+			return fmt.Errorf(`dependency manager "dep" requires working directory to be in $GOPATH/src`)
 		}
 	}
 
