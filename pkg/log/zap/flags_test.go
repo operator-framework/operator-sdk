@@ -200,3 +200,52 @@ func TestEncoder(t *testing.T) {
 		})
 	}
 }
+func TestTimeEncoder(t *testing.T) {
+	testCases := []struct {
+		name      string
+		input     string
+		shouldErr bool
+		expStr    string
+		expSet    bool
+	}{
+		{
+			name:   "iso8601",
+			input:  "iso8601",
+			expStr: "iso8601",
+			expSet: true,
+		},
+		{
+			name:   "millis",
+			input:  "millis",
+			expStr: "millis",
+			expSet: true,
+		},
+		{
+			name:   "nanos",
+			input:  "nanos",
+			expStr: "nanos",
+			expSet: true,
+		},
+		{
+			name:   "epoch",
+			input:  "epoch",
+			expStr: "epoch",
+			expSet: true,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			te := timeEncodingValue{}
+			err := te.Set(tc.input)
+			if err != nil && !tc.shouldErr {
+				t.Fatalf("Unknown error - %v", err)
+			}
+			if err != nil && tc.shouldErr {
+				return
+			}
+			assert.Equal(t, tc.expSet, te.set)
+			assert.Equal(t, "timeEncoding", te.Type())
+			assert.Equal(t, tc.expStr, te.String())
+		})
+	}
+}

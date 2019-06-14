@@ -178,6 +178,7 @@ type timeEncodingValue struct {
 func (v *timeEncodingValue) Set(s string) error {
 	v.set = true
 	v.timeEncoder.UnmarshalText([]byte(s))
+	v.str = s
 	return nil
 }
 
