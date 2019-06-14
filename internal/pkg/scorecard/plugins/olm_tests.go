@@ -148,7 +148,7 @@ func matchKind(kind1, kind2 string) bool {
 	return strings.EqualFold(singularKind1, singularKind2)
 }
 
-// NewOLMschelpers.TestSuite returns a new schelpers.TestSuite object containing CSV best practice checks
+// NewOLMTestSuite returns a new schelpers.TestSuite object containing CSV best practice checks
 func NewOLMTestSuite(conf OLMTestConfig) *schelpers.TestSuite {
 	ts := schelpers.NewTestSuite(
 		"OLM Tests",

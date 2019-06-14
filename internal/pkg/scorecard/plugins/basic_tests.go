@@ -91,7 +91,7 @@ func NewWritingIntoCRsHasEffectTest(conf BasicTestConfig) *WritingIntoCRsHasEffe
 	}
 }
 
-// NewBasicschelpers.TestSuite returns a new schelpers.TestSuite object containing basic, functional operator tests
+// NewBasicTestSuite returns a new schelpers.TestSuite object containing basic, functional operator tests
 func NewBasicTestSuite(conf BasicTestConfig) *schelpers.TestSuite {
 	ts := schelpers.NewTestSuite(
 		"Basic Tests",
