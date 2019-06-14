@@ -68,7 +68,7 @@ In Kubernetes clusters where [OwnerReferencesPermissionEnforcement][ownerref-per
 
 ### Custom resource specific metrics
 
-By default operator will expose info metrics based on the number of the current instances of operators custom resources in the cluster. It leverages [kube-state-metrics][ksm] as a library to generate those metrics. This lives in the `cmd/manager/main.go` file of the operator in the `serveCRMetrics` function. It takes in the group version and kind to generate the metrics. The metrics are served on `0.0.0.0:8686/metrics` by default. To modify the port the metrics are exposed on, change the `operatorMetricsPort` variable at the top of the `cmd/manager/main.go` file in the generated operator.
+By default operator will expose info metrics based on the number of the current instances of an operator's custom resources in the cluster. It leverages [kube-state-metrics][ksm] as a library to generate those metrics. Metrics initialization lives in the `cmd/manager/main.go` file of the operator in the `serveCRMetrics` function. Its arguments are a custom resource's group, version, and kind to generate the metrics. The metrics are served on `0.0.0.0:8686/metrics` by default. To modify the exposed metrics port number, change the `operatorMetricsPort` variable at the top of the `cmd/manager/main.go` file in the generated operator.
 
 
 [prometheus]: https://prometheus.io/
