@@ -153,6 +153,8 @@ func checkDepManager(dm projutil.DepManagerType) error {
 		if !inGopathSrc {
 			return fmt.Errorf(`dependency manager "dep" requires working directory to be in $GOPATH/src`)
 		}
+	default:
+		return projutil.ErrInvalidDepManager(dm)
 	}
-	return projutil.ErrInvalidDepManager(dm)
+	return nil
 }
