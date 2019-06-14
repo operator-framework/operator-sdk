@@ -110,7 +110,7 @@ func apiRun(cmd *cobra.Command, args []string) error {
 
 	// Check if any package files for this API group dir exist, and if not
 	// scaffold a stub.go to prevent erroneous gengo parse errors.
-	stub := &scaffold.Stub{Resource: r}
+	stub := &scaffold.Group{Resource: r}
 	if err := scaffoldIfNoPkgFileExists(s, cfg, stub); err != nil {
 		return errors.Wrap(err, "scaffold stub file")
 	}

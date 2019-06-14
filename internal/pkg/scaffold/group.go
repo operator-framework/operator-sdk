@@ -20,23 +20,24 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 )
 
-const StubFile = "stub.go"
+const GroupFile = "group.go"
 
-type Stub struct {
+type Group struct {
 	input.Input
 
 	Resource *Resource
 }
 
-var _ input.File = &Stub{}
+var _ input.File = &Group{}
 
-func (s *Stub) GetInput() (input.Input, error) {
+func (s *Group) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(ApisDir, s.Resource.GoImportGroup, StubFile)
+		s.Path = filepath.Join(ApisDir, s.Resource.GoImportGroup, GroupFile)
 	}
 	s.TemplateBody = stubTmpl
 	return s.Input, nil
 }
 
-const stubTmpl = `package {{.Resource.GoImportGroup}}
+const stubTmpl = `// Package {{.Resource.GoImportGroup}} contains {{.Resource.GoImportGroup}} API versions
+package {{.Resource.GoImportGroup}}
 `
