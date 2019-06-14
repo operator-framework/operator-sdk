@@ -24,20 +24,26 @@ import (
 	"os/exec"
 	"strings"
 
+	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
+	scplugins "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/plugins"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
 	ver "github.com/operator-framework/operator-sdk/version"
 
-	"github.com/ghodss/yaml"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const DefaultConfigFile = ".osdk-scorecard"
+
+const (
+	ConfigOpt                 = "config"
+	OutputFormatOpt           = "output"
+	PluginDirOpt              = "plugin-dir"
+	JSONOutputFormat          = "json"
+	HumanReadableOutputFormat = "human-readable"
+)
 
 // make a global logger for scorecard
 var (
@@ -108,36 +114,38 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	}
 	cmd.SilenceUsage = true
 	internalPluginOutputs := []scapiv1alpha1.ScorecardOutput{}
-	if viper.GetBool(BasicTestsOpt) {
+	if viper.GetBool(scplugins.BasicTestsOpt) {
 		// TODO: make individual viper configs
-		res, err := setupAndRunPlugin(basicOperator, viper.GetViper())
+		pluginLogs := &bytes.Buffer{}
+		res, err := scplugins.RunInternalPlugin(scplugins.BasicOperator, viper.GetViper(), pluginLogs)
 		if err != nil {
-			name := fmt.Sprintf("Failed Plugin: %s", BasicTestsOpt)
-			description := fmt.Sprintf("Plugin with file name `%s` failed", BasicTestsOpt)
-			logs := fmt.Sprintf("%s:\nLogs: %s", err, internalPluginLogs.String())
+			name := fmt.Sprintf("Failed Plugin: %s", scplugins.BasicTestsOpt)
+			description := fmt.Sprintf("Plugin with file name `%s` failed", scplugins.BasicTestsOpt)
+			logs := fmt.Sprintf("%s:\nLogs: %s", err, pluginLogs.String())
 			internalPluginOutputs = append(internalPluginOutputs, failedPlugin(name, description, logs))
 			// output error to main logger as well for human-readable output
-			log.Errorf("Plugin `%s` failed with error (%v)", BasicTestsOpt, err)
+			log.Errorf("Plugin `%s` failed with error (%v)", scplugins.BasicTestsOpt, err)
 		} else {
-			stderrString := internalPluginLogs.String()
+			stderrString := pluginLogs.String()
 			if len(stderrString) != 0 {
 				log.Warn(stderrString)
 			}
 			internalPluginOutputs = append(internalPluginOutputs, res)
 		}
 	}
-	if viper.GetBool(OLMTestsOpt) {
+	if viper.GetBool(scplugins.OLMTestsOpt) {
 		// TODO: make individual viper configs
-		res, err := setupAndRunPlugin(olmIntegration, viper.GetViper())
+		pluginLogs := &bytes.Buffer{}
+		res, err := scplugins.RunInternalPlugin(scplugins.OLMIntegration, viper.GetViper(), pluginLogs)
 		if err != nil {
-			name := fmt.Sprintf("Failed Plugin: %s", OLMTestsOpt)
-			description := fmt.Sprintf("Plugin with file name `%s` failed", OLMTestsOpt)
-			logs := fmt.Sprintf("%s:\nLogs: %s", err, internalPluginLogs.String())
+			name := fmt.Sprintf("Failed Plugin: %s", scplugins.OLMTestsOpt)
+			description := fmt.Sprintf("Plugin with file name `%s` failed", scplugins.OLMTestsOpt)
+			logs := fmt.Sprintf("%s:\nLogs: %s", err, pluginLogs.String())
 			internalPluginOutputs = append(internalPluginOutputs, failedPlugin(name, description, logs))
 			// output error to main logger as well for human-readable output
-			log.Errorf("Plugin `%s` failed with error (%v)", OLMTestsOpt, err)
+			log.Errorf("Plugin `%s` failed with error (%v)", scplugins.OLMTestsOpt, err)
 		} else {
-			stderrString := internalPluginLogs.String()
+			stderrString := pluginLogs.String()
 			if len(stderrString) != 0 {
 				log.Warn(stderrString)
 			}
@@ -153,7 +161,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	// Update the state for the tests
 	for _, suite := range pluginOutputs {
 		for idx, res := range suite.Results {
-			suite.Results[idx] = UpdateSuiteStates(res)
+			suite.Results[idx] = schelpers.UpdateSuiteStates(res)
 		}
 	}
 	if viper.GetString(OutputFormatOpt) == HumanReadableOutputFormat {
@@ -199,7 +207,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("failed to read log buffer: %v", err)
 		}
-		scTest := CombineScorecardOutput(pluginOutputs, string(log))
+		scTest := schelpers.CombineScorecardOutput(pluginOutputs, string(log))
 		// Pretty print so users can also read the json output
 		bytes, err := json.MarshalIndent(scTest, "", "  ")
 		if err != nil {
@@ -257,26 +265,6 @@ func validateScorecardFlags() error {
 		return fmt.Errorf("invalid output format (%s); valid values: %s, %s", outputFormat, HumanReadableOutputFormat, JSONOutputFormat)
 	}
 	return nil
-}
-
-func getGVKs(yamlFile []byte) ([]schema.GroupVersionKind, error) {
-	var gvks []schema.GroupVersionKind
-
-	scanner := yamlutil.NewYAMLScanner(yamlFile)
-	for scanner.Scan() {
-		yamlSpec := scanner.Bytes()
-
-		obj := &unstructured.Unstructured{}
-		jsonSpec, err := yaml.YAMLToJSON(yamlSpec)
-		if err != nil {
-			return nil, fmt.Errorf("could not convert yaml file to json: %v", err)
-		}
-		if err := obj.UnmarshalJSON(jsonSpec); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal object spec: (%v)", err)
-		}
-		gvks = append(gvks, obj.GroupVersionKind())
-	}
-	return gvks, nil
 }
 
 func failedPlugin(name, desc, log string) scapiv1alpha1.ScorecardOutput {

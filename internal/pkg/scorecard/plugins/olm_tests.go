@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scorecard
+package scplugins
 
 import (
 	"context"
@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"strings"
 
+	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
 
@@ -32,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// OLMTestConfig contains all variables required by the OLMTest TestSuite
+// OLMTestConfig contains all variables required by the OLMTest schelpers.TestSuite
 type OLMTestConfig struct {
 	Client   client.Client
 	CR       *unstructured.Unstructured
@@ -45,7 +46,7 @@ type OLMTestConfig struct {
 
 // CRDsHaveValidationTest is a scorecard test that verifies that all CRDs have a validation section
 type CRDsHaveValidationTest struct {
-	TestInfo
+	schelpers.TestInfo
 	OLMTestConfig
 }
 
@@ -53,7 +54,7 @@ type CRDsHaveValidationTest struct {
 func NewCRDsHaveValidationTest(conf OLMTestConfig) *CRDsHaveValidationTest {
 	return &CRDsHaveValidationTest{
 		OLMTestConfig: conf,
-		TestInfo: TestInfo{
+		TestInfo: schelpers.TestInfo{
 			Name:        "Provided APIs have validation",
 			Description: "All CRDs have an OpenAPI validation subsection",
 			Cumulative:  true,
@@ -63,7 +64,7 @@ func NewCRDsHaveValidationTest(conf OLMTestConfig) *CRDsHaveValidationTest {
 
 // CRDsHaveResourcesTest is a scorecard test that verifies that the CSV lists used resources in its owned CRDs secyion
 type CRDsHaveResourcesTest struct {
-	TestInfo
+	schelpers.TestInfo
 	OLMTestConfig
 }
 
@@ -71,7 +72,7 @@ type CRDsHaveResourcesTest struct {
 func NewCRDsHaveResourcesTest(conf OLMTestConfig) *CRDsHaveResourcesTest {
 	return &CRDsHaveResourcesTest{
 		OLMTestConfig: conf,
-		TestInfo: TestInfo{
+		TestInfo: schelpers.TestInfo{
 			Name:        "Owned CRDs have resources listed",
 			Description: "All Owned CRDs contain a resources subsection",
 			Cumulative:  true,
@@ -81,7 +82,7 @@ func NewCRDsHaveResourcesTest(conf OLMTestConfig) *CRDsHaveResourcesTest {
 
 // AnnotationsContainExamplesTest is a scorecard test that verifies that the CSV contains examples via the alm-examples annotation
 type AnnotationsContainExamplesTest struct {
-	TestInfo
+	schelpers.TestInfo
 	OLMTestConfig
 }
 
@@ -89,7 +90,7 @@ type AnnotationsContainExamplesTest struct {
 func NewAnnotationsContainExamplesTest(conf OLMTestConfig) *AnnotationsContainExamplesTest {
 	return &AnnotationsContainExamplesTest{
 		OLMTestConfig: conf,
-		TestInfo: TestInfo{
+		TestInfo: schelpers.TestInfo{
 			Name:        "CRs have at least 1 example",
 			Description: "The CSV's metadata contains an alm-examples section",
 			Cumulative:  true,
@@ -99,7 +100,7 @@ func NewAnnotationsContainExamplesTest(conf OLMTestConfig) *AnnotationsContainEx
 
 // SpecDescriptorsTest is a scorecard test that verifies that all spec fields have descriptors
 type SpecDescriptorsTest struct {
-	TestInfo
+	schelpers.TestInfo
 	OLMTestConfig
 }
 
@@ -107,7 +108,7 @@ type SpecDescriptorsTest struct {
 func NewSpecDescriptorsTest(conf OLMTestConfig) *SpecDescriptorsTest {
 	return &SpecDescriptorsTest{
 		OLMTestConfig: conf,
-		TestInfo: TestInfo{
+		TestInfo: schelpers.TestInfo{
 			Name:        "Spec fields with descriptors",
 			Description: "All spec fields have matching descriptors in the CSV",
 			Cumulative:  true,
@@ -117,7 +118,7 @@ func NewSpecDescriptorsTest(conf OLMTestConfig) *SpecDescriptorsTest {
 
 // StatusDescriptorsTest is a scorecard test that verifies that all status fields have descriptors
 type StatusDescriptorsTest struct {
-	TestInfo
+	schelpers.TestInfo
 	OLMTestConfig
 }
 
@@ -125,7 +126,7 @@ type StatusDescriptorsTest struct {
 func NewStatusDescriptorsTest(conf OLMTestConfig) *StatusDescriptorsTest {
 	return &StatusDescriptorsTest{
 		OLMTestConfig: conf,
-		TestInfo: TestInfo{
+		TestInfo: schelpers.TestInfo{
 			Name:        "Status fields with descriptors",
 			Description: "All status fields have matching descriptors in the CSV",
 			Cumulative:  true,
@@ -147,9 +148,9 @@ func matchKind(kind1, kind2 string) bool {
 	return strings.EqualFold(singularKind1, singularKind2)
 }
 
-// NewOLMTestSuite returns a new TestSuite object containing CSV best practice checks
-func NewOLMTestSuite(conf OLMTestConfig) *TestSuite {
-	ts := NewTestSuite(
+// NewOLMschelpers.TestSuite returns a new schelpers.TestSuite object containing CSV best practice checks
+func NewOLMTestSuite(conf OLMTestConfig) *schelpers.TestSuite {
+	ts := schelpers.NewTestSuite(
 		"OLM Tests",
 		"Test suite checks if an operator's CSV follows best practices",
 	)
@@ -180,8 +181,8 @@ func matchVersion(version string, crd *apiextv1beta1.CustomResourceDefinition) b
 }
 
 // Run - implements Test interface
-func (t *CRDsHaveValidationTest) Run(ctx context.Context) *TestResult {
-	res := &TestResult{Test: t}
+func (t *CRDsHaveValidationTest) Run(ctx context.Context) *schelpers.TestResult {
+	res := &schelpers.TestResult{Test: t}
 	crds, err := k8sutil.GetCRDs(t.CRDsDir)
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("failed to get CRDs in %s directory: %v", t.CRDsDir, err))
@@ -233,8 +234,8 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *TestResult {
 }
 
 // Run - implements Test interface
-func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *TestResult {
-	res := &TestResult{Test: t}
+func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *schelpers.TestResult {
+	res := &schelpers.TestResult{Test: t}
 	var missingResources []string
 	for _, crd := range t.CSV.Spec.CustomResourceDefinitions.Owned {
 		gvk := t.CR.GroupVersionKind()
@@ -362,8 +363,8 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 }
 
 // Run - implements Test interface
-func (t *AnnotationsContainExamplesTest) Run(ctx context.Context) *TestResult {
-	res := &TestResult{Test: t, MaximumPoints: 1}
+func (t *AnnotationsContainExamplesTest) Run(ctx context.Context) *schelpers.TestResult {
+	res := &schelpers.TestResult{Test: t, MaximumPoints: 1}
 	if t.CSV.Annotations != nil && t.CSV.Annotations["alm-examples"] != "" {
 		res.EarnedPoints = 1
 	}
@@ -374,8 +375,8 @@ func (t *AnnotationsContainExamplesTest) Run(ctx context.Context) *TestResult {
 }
 
 // Run - implements Test interface
-func (t *StatusDescriptorsTest) Run(ctx context.Context) *TestResult {
-	res := &TestResult{Test: t}
+func (t *StatusDescriptorsTest) Run(ctx context.Context) *schelpers.TestResult {
+	res := &schelpers.TestResult{Test: t}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
 		res.Errors = append(res.Errors, err)
@@ -413,8 +414,8 @@ func (t *StatusDescriptorsTest) Run(ctx context.Context) *TestResult {
 }
 
 // Run - implements Test interface
-func (t *SpecDescriptorsTest) Run(ctx context.Context) *TestResult {
-	res := &TestResult{Test: t}
+func (t *SpecDescriptorsTest) Run(ctx context.Context) *schelpers.TestResult {
+	res := &schelpers.TestResult{Test: t}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
 		res.Errors = append(res.Errors, err)

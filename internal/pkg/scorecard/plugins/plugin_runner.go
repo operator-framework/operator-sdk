@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scorecard
+package scplugins
 
 import (
 	"bytes"
@@ -20,17 +20,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
-	"github.com/ghodss/yaml"
-	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
+	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+
+	"github.com/ghodss/yaml"
+	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	v1 "k8s.io/api/core/v1"
@@ -47,32 +50,27 @@ import (
 )
 
 const (
-	ConfigOpt                 = "config"
-	NamespaceOpt              = "namespace"
-	KubeconfigOpt             = "kubeconfig"
-	InitTimeoutOpt            = "init-timeout"
-	OlmDeployedOpt            = "olm-deployed"
-	CSVPathOpt                = "csv-path"
-	BasicTestsOpt             = "basic-tests"
-	OLMTestsOpt               = "olm-tests"
-	NamespacedManifestOpt     = "namespaced-manifest"
-	GlobalManifestOpt         = "global-manifest"
-	CRManifestOpt             = "cr-manifest"
-	ProxyImageOpt             = "proxy-image"
-	ProxyPullPolicyOpt        = "proxy-pull-policy"
-	CRDsDirOpt                = "crds-dir"
-	DeployDirOpt              = "deploy-dir"
-	OutputFormatOpt           = "output"
-	PluginDirOpt              = "plugin-dir"
-	JSONOutputFormat          = "json"
-	HumanReadableOutputFormat = "human-readable"
+	NamespaceOpt          = "namespace"
+	KubeconfigOpt         = "kubeconfig"
+	InitTimeoutOpt        = "init-timeout"
+	OlmDeployedOpt        = "olm-deployed"
+	CSVPathOpt            = "csv-path"
+	NamespacedManifestOpt = "namespaced-manifest"
+	GlobalManifestOpt     = "global-manifest"
+	CRManifestOpt         = "cr-manifest"
+	ProxyImageOpt         = "proxy-image"
+	ProxyPullPolicyOpt    = "proxy-pull-policy"
+	CRDsDirOpt            = "crds-dir"
+	DeployDirOpt          = "deploy-dir"
+	BasicTestsOpt         = "basic-tests"
+	OLMTestsOpt           = "olm-tests"
 )
 
-type internalPlugin int
+type PluginType int
 
 const (
-	basicOperator  internalPlugin = 0
-	olmIntegration internalPlugin = 1
+	BasicOperator  PluginType = 0
+	OLMIntegration PluginType = 1
 )
 
 var (
@@ -90,22 +88,19 @@ const (
 	scorecardContainerName = "scorecard-proxy"
 )
 
-var internalPluginLogs bytes.Buffer
+var log *logrus.Logger
 
-func setupAndRunPlugin(plugin internalPlugin, pluginViper *viper.Viper) (scapiv1alpha1.ScorecardOutput, error) {
-	logCopy := log
-	defer func() { log = logCopy }()
+func RunInternalPlugin(plugin PluginType, pluginViper *viper.Viper, logFile io.ReadWriter) (scapiv1alpha1.ScorecardOutput, error) {
 	log = logrus.New()
 	log.SetFormatter(&logrus.TextFormatter{DisableColors: true})
-	internalPluginLogs = bytes.Buffer{}
-	log.SetOutput(&internalPluginLogs)
+	log.SetOutput(logFile)
 	// use stderr for logging not related to a single suite
 	if err := validateScorecardPluginFlags(pluginViper); err != nil {
 		return scapiv1alpha1.ScorecardOutput{}, err
 	}
 	defer func() {
 		if err := cleanupScorecard(); err != nil {
-			log.SetOutput(&internalPluginLogs)
+			log.SetOutput(logFile)
 			log.Errorf("Failed to cleanup resources: (%v)", err)
 		}
 	}()
@@ -267,9 +262,9 @@ func setupAndRunPlugin(plugin internalPlugin, pluginViper *viper.Viper) (scapiv1
 		dupMap[gvk] = true
 	}
 
-	var suites []TestSuite
+	var suites []schelpers.TestSuite
 	for _, cr := range crs {
-		logReadWriter = &bytes.Buffer{}
+		logReadWriter := &bytes.Buffer{}
 		log.SetOutput(logReadWriter)
 		log.Printf("Running for cr: %s", cr)
 		if !pluginViper.GetBool(OlmDeployedOpt) {
@@ -290,7 +285,7 @@ func setupAndRunPlugin(plugin internalPlugin, pluginViper *viper.Viper) (scapiv1
 		if err := waitUntilCRStatusExists(obj); err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed waiting to check if CR status exists: %v", err)
 		}
-		if plugin == basicOperator {
+		if plugin == BasicOperator {
 			conf := BasicTestConfig{
 				Client:   runtimeClient,
 				CR:       obj,
@@ -306,7 +301,7 @@ func setupAndRunPlugin(plugin internalPlugin, pluginViper *viper.Viper) (scapiv1
 			}
 			suites = append(suites, *basicTests)
 		}
-		if plugin == olmIntegration {
+		if plugin == OLMIntegration {
 			conf := OLMTestConfig{
 				Client:   runtimeClient,
 				CR:       obj,
@@ -325,7 +320,7 @@ func setupAndRunPlugin(plugin internalPlugin, pluginViper *viper.Viper) (scapiv1
 			suites = append(suites, *olmTests)
 		}
 		// change logging back to main log
-		log.SetOutput(&internalPluginLogs)
+		log.SetOutput(logFile)
 		// set up clean environment for every CR
 		if err := cleanupScorecard(); err != nil {
 			log.Errorf("Failed to cleanup resources: (%v)", err)
@@ -335,13 +330,13 @@ func setupAndRunPlugin(plugin internalPlugin, pluginViper *viper.Viper) (scapiv1
 		// clear name of operator deployment
 		deploymentName = ""
 	}
-	suites, err = MergeSuites(suites)
+	suites, err = schelpers.MergeSuites(suites)
 	if err != nil {
 		return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to merge test suite results: %v", err)
 	}
-	output := TestSuitesToScorecardOutput(suites, "")
+	output := schelpers.TestSuitesToScorecardOutput(suites, "")
 	for idx, suite := range output.Results {
-		output.Results[idx] = UpdateSuiteStates(suite)
+		output.Results[idx] = schelpers.UpdateSuiteStates(suite)
 	}
 	return output, nil
 }
