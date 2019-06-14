@@ -43,6 +43,7 @@ type GenCatalogSourceCmd struct {
 	Namespace           string
 	BundleDir           string
 	PackageManifestPath string
+	CatalogSourcePath   string
 	OutputFormat        string
 	// Write bytes to Writer.
 	Writer io.Writer
@@ -70,6 +71,7 @@ func (c *GenCatalogSourceCmd) Run() error {
 		Namespace:           c.Namespace,
 		BundleDir:           c.BundleDir,
 		PackageManifestPath: c.PackageManifestPath,
+		CatalogSourcePath:   c.CatalogSourcePath,
 	}
 	configMap, catsrc, err := cs.ToConfigMapAndCatalogSource()
 	if err != nil {

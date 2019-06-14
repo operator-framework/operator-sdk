@@ -16,6 +16,7 @@ package olmcatalog
 
 import (
 	"fmt"
+	"strings"
 
 	catalogcmd "github.com/operator-framework/operator-sdk/pkg/scaffold/olm-catalog"
 
@@ -33,6 +34,7 @@ func newGenCatalogSourceCmd() *cobra.Command {
 			if len(args) != 0 {
 				return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 			}
+			c.OutputFormat = strings.ToLower(c.OutputFormat)
 			return c.Run()
 		},
 	}
@@ -43,7 +45,8 @@ func newGenCatalogSourceCmd() *cobra.Command {
 		log.Fatalf("Failed to mark `bundle-dir` flag for `gen-catalogsource` subcommand as required")
 	}
 	cmd.Flags().StringVar(&c.PackageManifestPath, "package-manifest", "", "Path of the package manifest. Optional if the bundle dir contains one")
+	cmd.Flags().StringVar(&c.CatalogSourcePath, "catalogsource-manifest", "", "Path to an existing CatalogSource manifest to be included in the output. Optional")
 	cmd.Flags().StringVarP(&c.OutputFormat, "output-format", "o", string(catalogcmd.OutputFormatYAML),
-		fmt.Sprintf("Format of ConfigMap being printed or written. Must be one of: %s, %s", catalogcmd.OutputFormatJSON, catalogcmd.OutputFormatYAML))
+		fmt.Sprintf("Format of output being printed or written. Must be one of: %s, %s", catalogcmd.OutputFormatJSON, catalogcmd.OutputFormatYAML))
 	return cmd
 }
