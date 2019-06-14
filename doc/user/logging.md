@@ -2,7 +2,20 @@
 
 Operator SDK-generated operators use the [`logr`][godoc_logr] interface to log. This log interface has several backends such as [`zap`][repo_zapr], which the SDK uses in generated code by default. [`logr.Logger`][godoc_logr_logger] exposes [structured logging][site_struct_logging] methods that help create machine-readable logs and adding a wealth of information to log records.
 
-## A simple example
+## Default zap logger
+
+Operator SDK uses a `zap`-based `logr` backend when scaffolding new projects. To assist with configuring and using this logger, the SDK includes several helper functions.
+
+In the simple example below, we add the zap flagset to the operator's command line flags with `zap.FlagSet()`, and then set the controller-runtime logger with `zap.Logger()`.
+
+By default, `zap.Logger()` will return a logger that is ready for production use. It uses a JSON encoder, logs starting at the `info` level, and has [sampling][zap_sampling] enabled. To customize the default behavior, users can use the zap flagset and specify flags on the command line. The zap flagset includes the following flags that can be used to configure the logger:
+
+* `--zap-devel` - Enables the zap development config (changes defaults to console encoder, debug log level, and disables sampling) (default: `false`)
+* `--zap-encoder` string - Sets the zap log encoding (`json` or `console`)
+* `--zap-level` string or integer - Sets the zap log level (`debug`, `info`, `error`, or an integer value greater than 0). If 4 or greater the verbosity of client-go will be set to this level.
+* `--zap-sample` - Enables zap's sampling mode. Sampling will be disabled for integer log levels greater than 1.
+
+### A simple example
 
 Operators set the logger for all operator logging in [`cmd/manager/main.go`][code_set_logger]. To illustrate how this works, try out this simple example:
 
@@ -30,14 +43,14 @@ func main() {
 }
 ```
 
-Default log level:
+#### Output using the defaults
 ```console
 $ go run main.go
 {"level":"info","ts":1559866292.307987,"logger":"global","msg":"Printing at INFO level"}
 {"level":"info","ts":1559866292.308039,"logger":"scoped","msg":"Printing at INFO level"}
 ```
 
-Debug log level:
+#### Output overriding the log level to 1 (debug)
 ```console
 $ go run main.go --zap-level=1
 {"level":"info","ts":1559866310.065048,"logger":"global","msg":"Printing at INFO level"}
@@ -48,17 +61,56 @@ $ go run main.go --zap-level=1
 
 By using `controller-runtime/pkg/runtime/log`, your logger is propagated through `controller-runtime`. Any logs produced by `controller-runtime` code will be through your logger, and therefore have the same formatting and destination.
 
-### Default zap logger
+### Setting flags when running locally
 
-Operator SDK uses a `zap`-based `logr` backend when scaffolding new projects. To assist with configuring and using this logger, the SDK includes several helper functions.
+When running locally with `operator-sdk up local`, you can use the `--operator-flags` flag to pass additional flags to your operator, including the zap flags. For example:
 
-In the above example, we add the zap flagset to the operator's command line flags with `zap.FlagSet()`, and then set the controller-runtime logger with `zap.Logger()`.
+```console
+$ operator-sdk up local --operator-flags="--zap-level=debug --zap-encoder=console"`
+```
 
-By default, `zap.Logger()` will return a logger that is ready for production use. It uses a JSON encoder, logs starting at the `info` level, and has [sampling][zap_sampling] enabled. To customize the default behavior, users can use the zap flagset and specify flags on the command line. The zap flagset includes the following flags that can be used to configure the logger:
-* `--zap-devel` - Enables the zap development config (changes defaults to console encoder, debug log level, and disables sampling) (default: `false`)
-* `--zap-encoder` string - Sets the zap log encoding (`json` or `console`)
-* `--zap-level` string or integer - Sets the zap log level (`debug`, `info`, `error`, or an integer value greater than 0). If 4 or greater the verbosity of client-go will be set to this level.
-* `--zap-sample` - Enables zap's sampling mode. Sampling will be disabled for integer log levels greater than 1.
+### Setting flags when deploying to a cluster
+
+When deploying your operator to a cluster you can set additional flags using an `args` array in your operator's `container` spec. For example:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memcached-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: memcached-operator
+  template:
+    metadata:
+      labels:
+        name: memcached-operator
+    spec:
+      serviceAccountName: memcached-operator
+      containers:
+        - name: memcached-operator
+          # Replace this with the built image name
+          image: REPLACE_IMAGE
+          command:
+            - memcached-operator
+          args:
+            - "--zap-level=debug"
+            - "--zap-encoder=console"
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "memcached-operator"
+```
 
 ## Creating a structured log statement
 
