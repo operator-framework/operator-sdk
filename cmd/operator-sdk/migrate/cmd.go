@@ -76,18 +76,26 @@ func migrateRun(cmd *cobra.Command, args []string) error {
 }
 
 func verifyFlags() error {
-	// dep assumes the project's path under $GOPATH/src is the project's
-	// repo path.
-	if repo != "" && depManager == string(projutil.DepManagerDep) {
-		return fmt.Errorf(`--repo flag cannot be used with --dep-manger=dep`)
-	}
-
 	inGopathSrc, err := projutil.WdInGoPathSrc()
 	if err != nil {
 		return err
 	}
-	if !inGopathSrc && repo == "" && depManager == string(projutil.DepManagerGoMod) {
-		return fmt.Errorf(`depedency manger "modules" requires --repo be set if wd not in $GOPATH/src`)
+	switch projutil.DepManagerType(depManager) {
+	case projutil.DepManagerDep:
+		// dep assumes the project's path under $GOPATH/src is the project's
+		// repo path.
+		if repo != "" {
+			return fmt.Errorf(`--repo flag cannot be used with --dep-manger=dep`)
+		}
+		if !inGopathSrc {
+			return fmt.Errorf(`depedency manger "dep" requires wd be in $GOPATH/src`)
+		}
+	case projutil.DepManagerGoMod:
+		if !inGopathSrc && repo == "" {
+			return fmt.Errorf(`depedency manger "modules" requires --repo be set if the working directory is not in $GOPATH/src`)
+		}
+	default:
+		return projutil.ErrInvalidDepManager(depManager)
 	}
 
 	return nil

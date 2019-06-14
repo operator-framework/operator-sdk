@@ -187,8 +187,8 @@ func doGoScaffold() error {
 		if goModOn, merr := projutil.GoModOn(); merr != nil {
 			return merr
 		} else if !goModOn {
-			log.Fatalf(`Dependency manager "%s" has been selected but go modules are not active. `+
-				`Activate modules then run "operator-sdk new %s".`, m, projectName)
+			return errors.New(`dependency manager "modules" requires working directory to be in $GOPATH/src` +
+				` and GO111MODULE=on, or outside of $GOPATH/src and GO111MODULE="on", "auto", or unset`)
 		}
 		err = s.Execute(cfg, &scaffold.GoMod{}, &scaffold.Tools{})
 	default:
@@ -388,21 +388,29 @@ func verifyFlags() error {
 		if len(apiVersion) != 0 || len(kind) != 0 {
 			return fmt.Errorf("operators of type Go do not use --api-version or --kind")
 		}
-		if !makeVendor && projutil.DepManagerType(depManager) == projutil.DepManagerDep {
-			log.Warnf("--dep-manager=dep requires a vendor directory; ignoring --vendor=false")
-		}
-		// dep assumes the project's path under $GOPATH/src is the project's
-		// repo path.
-		if repo != "" && depManager == string(projutil.DepManagerDep) {
-			return fmt.Errorf(`--repo flag cannot be used with --dep-manger=dep`)
-		}
-
 		inGopathSrc, err := projutil.WdInGoPathSrc()
 		if err != nil {
 			return err
 		}
-		if !inGopathSrc && repo == "" && depManager == string(projutil.DepManagerGoMod) {
-			return fmt.Errorf(`depedency manger "modules" requires --repo be set if wd not in $GOPATH/src`)
+		switch projutil.DepManagerType(depManager) {
+		case projutil.DepManagerDep:
+			if !makeVendor {
+				log.Warnf("--dep-manager=dep requires a vendor directory; ignoring --vendor=false")
+			}
+			// dep assumes the project's path under $GOPATH/src is the project's
+			// repo path.
+			if repo != "" {
+				return fmt.Errorf(`--repo flag cannot be used with --dep-manger=dep`)
+			}
+			if !inGopathSrc {
+				return fmt.Errorf(`depedency manger "dep" requires the working directory be in $GOPATH/src`)
+			}
+		case projutil.DepManagerGoMod:
+			if !inGopathSrc && repo == "" {
+				return fmt.Errorf(`depedency manger "modules" requires --repo be set if the working directory is not in $GOPATH/src`)
+			}
+		default:
+			return projutil.ErrInvalidDepManager(depManager)
 		}
 	}
 

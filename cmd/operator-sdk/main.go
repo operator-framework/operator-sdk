@@ -86,49 +86,55 @@ func main() {
 }
 
 func checkDepManagerForCmd(cmd *cobra.Command) (err error) {
-	// Do not perform this check if wd is not in the project root,
-	// as some sub-commands might not require project root.
+	// Certain commands are able to be run anywhere or handle this check
+	// differently in their CLI code.
+	if skipCheckForCmd(cmd) {
+		return nil
+	}
+	// Do not perform this check if the project is non-Go, as thy will not have
+	// a (Go) dep manager.
+	if !projutil.IsOperatorGo() {
+		return nil
+	}
+	// Do not perform a dep manager check if the working directory is not in
+	// the project root, as some sub-commands might not require project root.
+	// Individual subcommands will perform this check as needed.
 	if err := projutil.CheckProjectRoot(); err != nil {
 		return nil
 	}
 
-	var dm projutil.DepManagerType
-	switch n := cmd.Name(); n {
-	case "new", "migrate":
-		// Do not perform this check if the new project is non-Go, as they do not
-		// have (Go) dep managers.
-		if n == "new" {
-			projType, err := cmd.Flags().GetString("type")
-			if err != nil {
-				return err
-			}
-			if projType != "go" {
-				return nil
-			}
-		}
-		// "new" and "migrate" commands are for projects that establish which
-		// dep manager to use. "new" should not be called if we're in the project
-		// root but could be, so check it anyway.
-		dmStr, err := cmd.Flags().GetString("dep-manager")
-		if err != nil {
-			return err
-		}
-		dm = projutil.DepManagerType(dmStr)
-	default:
-		// version and completion commands are able to be run anywhere.
-		if n == "version" || n == "completion" {
-			return nil
-		}
-		// Do not perform this check if the project is non-Go, as they do not
-		// have (Go) dep managers.
-		if !projutil.IsOperatorGo() {
-			return nil
-		}
-		if dm, err = projutil.GetDepManagerType(); err != nil {
-			return err
-		}
+	dm, err := projutil.GetDepManagerType()
+	if err != nil {
+		return err
 	}
+	return checkDepManager(dm)
+}
 
+var commandsToSkip = map[string]struct{}{
+	"new":          struct{}{}, // Handles this logic in cmd/operator-sdk/new
+	"migrate":      struct{}{}, // Handles this logic in cmd/operator-sdk/migrate
+	"operator-sdk": struct{}{}, // Alias for "help"
+	"help":         struct{}{},
+	"completion":   struct{}{},
+	"version":      struct{}{},
+}
+
+func skipCheckForCmd(cmd *cobra.Command) (skip bool) {
+	if _, ok := commandsToSkip[cmd.Name()]; ok {
+		return true
+	}
+	cmd.VisitParents(func(pc *cobra.Command) {
+		if _, ok := commandsToSkip[pc.Name()]; ok {
+			// The bare "operator-sdk" command will be checked above.
+			if pc.Name() != "operator-sdk" {
+				skip = true
+			}
+		}
+	})
+	return skip
+}
+
+func checkDepManager(dm projutil.DepManagerType) error {
 	switch dm {
 	case projutil.DepManagerGoMod:
 		goModOn, err := projutil.GoModOn()
@@ -148,6 +154,5 @@ func checkDepManagerForCmd(cmd *cobra.Command) (err error) {
 			return fmt.Errorf(`dependency manager "dep" requires working directory to be in $GOPATH/src`)
 		}
 	}
-
-	return nil
+	return projutil.ErrInvalidDepManager(dm)
 }
