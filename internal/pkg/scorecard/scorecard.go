@@ -63,16 +63,16 @@ func getPlugins() []Plugin {
 	// find external plugins
 	pluginDir := viper.GetString(PluginDirOpt)
 	if dir, err := os.Stat(pluginDir); err != nil || !dir.IsDir() {
-		log.Warnf("plugin directory not found; skipping external plugins: %v", err)
+		log.Warnf("Plugin directory not found; skipping external plugins: %v", err)
 		return plugins
 	}
 	if err := os.Chdir(pluginDir); err != nil {
-		log.Warnf("failed to chdir into scorecard plugin directory: %v", err)
+		log.Warnf("Failed to chdir into scorecard plugin directory: %v", err)
 		return plugins
 	}
 	files, err := ioutil.ReadDir("bin")
 	if err != nil {
-		log.Errorf("failed to list files in %s/bin; skipping external plugin tests: %v", pluginDir, err)
+		log.Errorf("Failed to list files in %s/bin; skipping external plugin tests: %v", pluginDir, err)
 		return plugins
 	}
 	for _, f := range files {

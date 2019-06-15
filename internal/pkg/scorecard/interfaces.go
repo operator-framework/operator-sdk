@@ -53,7 +53,7 @@ func (p genericPlugin) Run() scapiv1alpha1.ScorecardOutput {
 		description := fmt.Sprintf("Plugin with file name `%s` failed", filepath.Base(p.binPath))
 		logs := fmt.Sprintf("failed to chdir into scorecard plugin directory: %v", err)
 		// output error to main logger as well for human-readable output
-		log.Errorf("failed to chdir into scorecard plugin directory: %v", err)
+		log.Errorf("Failed to chdir into scorecard plugin directory: %v", err)
 		return failedPlugin(name, description, logs)
 	}
 	cmd := exec.Command(p.binPath)
@@ -109,7 +109,7 @@ func (p internalPlugin) Run() scapiv1alpha1.ScorecardOutput {
 		description := fmt.Sprintf("Internal plugin `%s` failed", p.name)
 		logs := fmt.Sprintf("failed to chdir into project root directory: %v", err)
 		// output error to main logger as well for human-readable output
-		log.Errorf("failed to chdir into project root directory: %v", err)
+		log.Errorf("Failed to chdir into project root directory: %v", err)
 		return failedPlugin(name, description, logs)
 	}
 	// TODO: make individual viper configs
