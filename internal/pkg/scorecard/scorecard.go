@@ -21,14 +21,12 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/exec"
-	"strings"
+	"path/filepath"
 
 	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
 	scplugins "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/plugins"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
-	ver "github.com/operator-framework/operator-sdk/version"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -51,58 +49,36 @@ var (
 	log           = logrus.New()
 )
 
-func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
-	// Run plugins
-	var pluginResults []scapiv1alpha1.ScorecardOutput
+var rootDir string
+
+func getPlugins() []Plugin {
+	var plugins []Plugin
+	// Add internal plugins
+	if viper.GetBool(scplugins.BasicTestsOpt) {
+		plugins = append(plugins, BasicTestsPlugin)
+	}
+	if viper.GetBool(scplugins.OLMTestsOpt) {
+		plugins = append(plugins, OLMTestsPlugin)
+	}
+	// find external plugins
 	pluginDir := viper.GetString(PluginDirOpt)
 	if dir, err := os.Stat(pluginDir); err != nil || !dir.IsDir() {
-		return nil, fmt.Errorf("plugin directory not found: %v", err)
+		log.Warnf("plugin directory not found; skipping external plugins: %v", err)
+		return plugins
 	}
 	if err := os.Chdir(pluginDir); err != nil {
-		return nil, fmt.Errorf("failed to chdir into scorecard plugin directory: %v", err)
+		log.Warnf("failed to chdir into scorecard plugin directory: %v", err)
+		return plugins
 	}
-	// executable files must be in "bin" subdirectory
 	files, err := ioutil.ReadDir("bin")
 	if err != nil {
-		return nil, fmt.Errorf("failed to list files in %s/bin: %v", pluginDir, err)
+		log.Errorf("failed to list files in %s/bin; skipping external plugin tests: %v", pluginDir, err)
+		return plugins
 	}
-	if len(files) == 0 {
-		return nil, fmt.Errorf("no scorecard tests found in %s/bin", pluginDir)
+	for _, f := range files {
+		plugins = append(plugins, genericPlugin{filepath.Join("./bin", f.Name())})
 	}
-	for _, file := range files {
-		cmd := exec.Command("./bin/" + file.Name())
-		stdout := &bytes.Buffer{}
-		cmd.Stdout = stdout
-		stderr := &bytes.Buffer{}
-		cmd.Stderr = stderr
-		err := cmd.Run()
-		if err != nil {
-			name := fmt.Sprintf("Failed Plugin: %s", file.Name())
-			description := fmt.Sprintf("Plugin with file name `%s` failed", file.Name())
-			logs := fmt.Sprintf("%s:\nStdout: %s\nStderr: %s", err, string(stdout.Bytes()), string(stderr.Bytes()))
-			pluginResults = append(pluginResults, failedPlugin(name, description, logs))
-			// output error to main logger as well for human-readable output
-			log.Errorf("Plugin `%s` failed with error (%v)", file.Name(), err)
-			continue
-		}
-		// parse output and add to suites
-		result := scapiv1alpha1.ScorecardOutput{}
-		err = json.Unmarshal(stdout.Bytes(), &result)
-		if err != nil {
-			name := fmt.Sprintf("Plugin output invalid: %s", file.Name())
-			description := fmt.Sprintf("Plugin with file name %s did not produce valid ScorecardOutput JSON", file.Name())
-			logs := fmt.Sprintf("Stdout: %s\nStderr: %s", string(stdout.Bytes()), string(stderr.Bytes()))
-			pluginResults = append(pluginResults, failedPlugin(name, description, logs))
-			log.Errorf("Output from plugin `%s` failed to unmarshal with error (%v)", file.Name(), err)
-			continue
-		}
-		stderrString := string(stderr.Bytes())
-		if len(stderrString) != 0 {
-			log.Warn(stderrString)
-		}
-		pluginResults = append(pluginResults, result)
-	}
-	return pluginResults, nil
+	return plugins
 }
 
 func ScorecardTests(cmd *cobra.Command, args []string) error {
@@ -112,51 +88,16 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if err := validateScorecardFlags(); err != nil {
 		return err
 	}
-	cmd.SilenceUsage = true
-	internalPluginOutputs := []scapiv1alpha1.ScorecardOutput{}
-	if viper.GetBool(scplugins.BasicTestsOpt) {
-		// TODO: make individual viper configs
-		pluginLogs := &bytes.Buffer{}
-		res, err := scplugins.RunInternalPlugin(scplugins.BasicOperator, viper.GetViper(), pluginLogs)
-		if err != nil {
-			name := fmt.Sprintf("Failed Plugin: %s", scplugins.BasicTestsOpt)
-			description := fmt.Sprintf("Plugin with file name `%s` failed", scplugins.BasicTestsOpt)
-			logs := fmt.Sprintf("%s:\nLogs: %s", err, pluginLogs.String())
-			internalPluginOutputs = append(internalPluginOutputs, failedPlugin(name, description, logs))
-			// output error to main logger as well for human-readable output
-			log.Errorf("Plugin `%s` failed with error (%v)", scplugins.BasicTestsOpt, err)
-		} else {
-			stderrString := pluginLogs.String()
-			if len(stderrString) != 0 {
-				log.Warn(stderrString)
-			}
-			internalPluginOutputs = append(internalPluginOutputs, res)
-		}
-	}
-	if viper.GetBool(scplugins.OLMTestsOpt) {
-		// TODO: make individual viper configs
-		pluginLogs := &bytes.Buffer{}
-		res, err := scplugins.RunInternalPlugin(scplugins.OLMIntegration, viper.GetViper(), pluginLogs)
-		if err != nil {
-			name := fmt.Sprintf("Failed Plugin: %s", scplugins.OLMTestsOpt)
-			description := fmt.Sprintf("Plugin with file name `%s` failed", scplugins.OLMTestsOpt)
-			logs := fmt.Sprintf("%s:\nLogs: %s", err, pluginLogs.String())
-			internalPluginOutputs = append(internalPluginOutputs, failedPlugin(name, description, logs))
-			// output error to main logger as well for human-readable output
-			log.Errorf("Plugin `%s` failed with error (%v)", scplugins.OLMTestsOpt, err)
-		} else {
-			stderrString := pluginLogs.String()
-			if len(stderrString) != 0 {
-				log.Warn(stderrString)
-			}
-			internalPluginOutputs = append(internalPluginOutputs, res)
-		}
-	}
-	pluginOutputs, err := runTests()
+	var err error
+	rootDir, err = os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to run scorecard tests with error: (%v)\nPlease see %s for documentation on how to configure and use the operator-sdk scorecard", err, scorecardDocsLink())
+		return fmt.Errorf("faild to get current working directory: %v", err)
 	}
-	pluginOutputs = append(internalPluginOutputs, pluginOutputs...)
+	cmd.SilenceUsage = true
+	var pluginOutputs []scapiv1alpha1.ScorecardOutput
+	for _, plugin := range getPlugins() {
+		pluginOutputs = append(pluginOutputs, plugin.Run())
+	}
 	totalScore := 0.0
 	// Update the state for the tests
 	for _, suite := range pluginOutputs {
@@ -265,23 +206,4 @@ func validateScorecardFlags() error {
 		return fmt.Errorf("invalid output format (%s); valid values: %s, %s", outputFormat, HumanReadableOutputFormat, JSONOutputFormat)
 	}
 	return nil
-}
-
-func failedPlugin(name, desc, log string) scapiv1alpha1.ScorecardOutput {
-	return scapiv1alpha1.ScorecardOutput{
-		Results: []scapiv1alpha1.ScorecardSuiteResult{{
-			Name:        name,
-			Description: desc,
-			Error:       1,
-			Log:         log,
-		},
-		},
-	}
-}
-
-func scorecardDocsLink() string {
-	if strings.HasSuffix(ver.Version, "+git") {
-		return "https://github.com/operator-framework/operator-sdk/blob/master/doc/test-framework/scorecard.md"
-	}
-	return fmt.Sprintf("https://github.com/operator-framework/operator-sdk/blob/%s/doc/test-framework/scorecard.md", ver.Version)
 }
