@@ -264,7 +264,7 @@ Scaffolds a new operator project.
 * `--dep-manager` string - Dependency manager the new project will use (choices: "dep", "modules") (default "modules")
 * `--skip-git-init` - Do not init the directory as a git repository
 * `--vendor` - Use a vendor directory for dependencies. This flag only applies when `--dep-manager=modules` (the default)
-* `--skip-validation` - Do not validate the resulting project's structure and dependencies
+* `--skip-validation` - Do not validate the resulting project's structure and dependencies. (Only used for --type go)
 * `-h, --help` - help for new
 
 ### Example

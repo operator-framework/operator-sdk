@@ -65,6 +65,10 @@
   name = "github.com/spf13/cobra"
   version = "0.0.3"
 
+[[override]]
+  name = "k8s.io/kube-state-metrics"
+  version = "v1.6.0"
+
 # We need overrides for the following imports because dep can't resolve them
 # correctly. The easiest way to get this right is to use the versions that
 # k8s.io/helm uses. See https://github.com/helm/helm/blob/v2.13.1/glide.lock
