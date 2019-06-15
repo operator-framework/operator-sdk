@@ -88,12 +88,12 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if err := validateScorecardFlags(); err != nil {
 		return err
 	}
+	cmd.SilenceUsage = true
 	var err error
 	rootDir, err = os.Getwd()
 	if err != nil {
 		return fmt.Errorf("faild to get current working directory: %v", err)
 	}
-	cmd.SilenceUsage = true
 	var pluginOutputs []scapiv1alpha1.ScorecardOutput
 	for _, plugin := range getPlugins() {
 		pluginOutputs = append(pluginOutputs, plugin.Run())
