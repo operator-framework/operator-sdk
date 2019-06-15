@@ -14,8 +14,6 @@
 - Remove TypeMeta declaration from the implementation of the objects [#1462](https://github.com/operator-framework/operator-sdk/pull/1462/)
 - Relaxed API version format check when parsing `pkg/apis` in code generators. API dir structures can now be of the format `pkg/apis/<group>/<anything>`, where `<anything>` was previously required to be in the Kubernetes version format, ex. `v1alpha1`. ([#1525](https://github.com/operator-framework/operator-sdk/pull/1525))
 
-- **Breaking Change**: The Operator SDK scorecard does not include built-in scorecard tests anymore. The previous "Basic Tests" and "OLM Integration Tests" are separate scorecard plugins now, and the binaries will be made available on the Operator SDK's github release page.
-
 ### Deprecated
 
 ### Removed

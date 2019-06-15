@@ -102,7 +102,6 @@ build/*
 test/ansible-operator/ansible-operator
 test/helm-operator/helm-operator
 images/scorecard-proxy/scorecard-proxy
-test/test-framework/scorecard/assets/osdk-scorecard-*
 
 # Test artifacts
 pkg/ansible/runner/testdata/valid.yaml
