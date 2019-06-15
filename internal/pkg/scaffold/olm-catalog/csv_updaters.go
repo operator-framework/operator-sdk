@@ -191,7 +191,7 @@ func depHasOLMNamespaces(dep *appsv1.Deployment) bool {
 	b, err := dep.Spec.Template.Marshal()
 	if err != nil {
 		// Something is wrong with the deployment manifest, not with CLI inputs.
-		log.Fatalf("marshal Deployment spec: %v", err)
+		log.Fatalf("Marshal Deployment spec: %v", err)
 	}
 	return bytes.Index(b, []byte(olmTNMeta)) != -1
 }

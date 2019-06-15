@@ -5,19 +5,27 @@
 - Adds support for building OCI images with [podman](https://podman.io/), e.g. `operator-sdk build --image-builder=podman`. ([#1488](https://github.com/operator-framework/operator-sdk/pull/1488))
 - New option for [`operator-sdk up local --enable-delve`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#up), which can be used to start the operator in remote debug mode with the [delve](https://github.com/go-delve/delve) debugger listening on port 2345. ([#1422](https://github.com/operator-framework/operator-sdk/pull/1422))
 - Enables controller-runtime metrics in Helm operator projects. ([#1482](https://github.com/operator-framework/operator-sdk/pull/1482))
+- New flags `--vendor` and `--skip-validation` for [`operator-sdk new`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#new) that direct the SDK to initialize a new project with a `vendor/` directory, and without validating project dependencies. `vendor/` is not written by default. ([#1519](https://github.com/operator-framework/operator-sdk/pull/1519))
+- Generating and serving info metrics about each custom resource. By default these metrics are exposed on port 8686. ([#1277](https://github.com/operator-framework/operator-sdk/pull/1277))
+- Scaffold a `pkg/apis/<group>/group.go` package file to avoid `go/build` errors when running Kubernetes code generators. ([#1401](https://github.com/operator-framework/operator-sdk/pull/1401))
 
 ### Changed
+
 - Remove TypeMeta declaration from the implementation of the objects [#1462](https://github.com/operator-framework/operator-sdk/pull/1462/)
+- Relaxed API version format check when parsing `pkg/apis` in code generators. API dir structures can now be of the format `pkg/apis/<group>/<anything>`, where `<anything>` was previously required to be in the Kubernetes version format, ex. `v1alpha1`. ([#1525](https://github.com/operator-framework/operator-sdk/pull/1525))
 
 ### Deprecated
 
 ### Removed
+
+- The SDK no longer depends on a `vendor/` directory to manage dependencies *only if* using [Go modules](https://github.com/golang/go/wiki/Modules). The SDK and operator projects will only use vendoring if using `dep`, or modules and a `vendor/` dir is present. ([#1519](https://github.com/operator-framework/operator-sdk/pull/1519))
 
 ### Bug Fixes
 
 - Fixes a regression that causes Helm RBAC generation to contain an empty custom ruleset when the chart's default manifest contains only namespaced resources. ([#1456](https://github.com/operator-framework/operator-sdk/pull/1456))
 - Fixes an issue that causes Helm RBAC generation to fail when creating new operators with a Kubernetes context configured to connect to an OpenShift cluster. ([#1461](https://github.com/operator-framework/operator-sdk/pull/1461))
 - Generated CSV's that include a deployment install strategy will be checked for a reference to `metadata.annotations['olm.targetNamespaces']`, and if one is not found a reference will be added to the `WATCH_NAMESPACE` env var for all containers in the deployment. This is a bug because any other value that references the CSV's namespace is incorrect. ([#1396](https://github.com/operator-framework/operator-sdk/pull/1396))
+- Build `-trimpath` was not being respected. `$GOPATH` was not expanding because `exec.Cmd{}` is not executed in a shell environment. ([#1535](https://github.com/operator-framework/operator-sdk/pull/1535))
 
 ## v0.8.0
 

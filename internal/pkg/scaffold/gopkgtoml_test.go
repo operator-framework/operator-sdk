@@ -71,6 +71,10 @@ required = [
   version = "=v0.29.0"
 
 [[override]]
+  name = "k8s.io/kube-state-metrics"
+  version = "v1.6.0"
+
+[[override]]
   name = "sigs.k8s.io/controller-runtime"
   version = "=v0.1.10"
 
@@ -83,4 +87,9 @@ required = [
 [prune]
   go-tests = true
   non-go = true
+
+  [[prune.project]]
+    name = "k8s.io/kube-state-metrics"
+    unused-packages = true
+  
 `
