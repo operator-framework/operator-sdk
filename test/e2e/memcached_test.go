@@ -151,9 +151,10 @@ func TestMemcached(t *testing.T) {
 		t.Logf("go.mod: %v", string(modBytes))
 	}
 
-	cmdOut, err = exec.Command("go", "build", "./...").CombinedOutput()
+	// Use vendoring to speed up tests.
+	cmdOut, err = exec.Command("go", "mod", "vendor", "-v").CombinedOutput()
 	if err != nil {
-		t.Fatalf("Command \"go build ./...\" failed after modifying go.mod: %v\nCommand Output:\n%v", err, string(cmdOut))
+		t.Fatalf("Command \"go mod vendor\" failed after modifying go.mod: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 
 	// Set replicas to 2 to test leader election. In production, this should
@@ -241,9 +242,9 @@ func TestMemcached(t *testing.T) {
 	}
 
 	t.Log("Pulling new dependencies with go mod")
-	cmdOut, err = exec.Command("go", "build", "./...").CombinedOutput()
+	cmdOut, err = exec.Command("go", "mod", "vendor", "-v").CombinedOutput()
 	if err != nil {
-		t.Fatalf("Command \"go build ./...\" failed: %v\nCommand Output:\n%v", err, string(cmdOut))
+		t.Fatalf("Command \"go mod vendor\" failed after modifying go.mod: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 
 	file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
