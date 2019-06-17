@@ -88,11 +88,11 @@ func verifyFlags() error {
 			return fmt.Errorf(`--repo flag cannot be used with --dep-manger=dep`)
 		}
 		if !inGopathSrc {
-			return fmt.Errorf(`depedency manger "dep" requires wd be in $GOPATH/src`)
+			return fmt.Errorf(`dependency manager "dep" requires working directory be in $GOPATH/src`)
 		}
 	case projutil.DepManagerGoMod:
 		if !inGopathSrc && repo == "" {
-			return fmt.Errorf(`depedency manger "modules" requires --repo be set if the working directory is not in $GOPATH/src`)
+			return fmt.Errorf(`dependency manager "modules" requires flag --repo to be set if the working directory is not in $GOPATH/src`)
 		}
 	default:
 		return projutil.ErrInvalidDepManager(depManager)
