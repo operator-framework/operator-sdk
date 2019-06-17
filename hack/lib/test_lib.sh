@@ -64,6 +64,6 @@ function edit_replace_modfile() {
 	# go modules.
 	echo "module ${sdk_repo}" > "${sdk_dir}/go.mod"
 	trap_add "rm ${sdk_dir}/go.mod" EXIT
-	go mod edit -replace="${sdk_repo}=$sdk_dir"
+	go mod edit -replace="${sdk_repo}=${sdk_dir}"
 	go mod vendor -v
 }
