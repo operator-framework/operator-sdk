@@ -41,3 +41,29 @@ function trap_add() {
                 fatal "unable to add to trap ${trap_add_name}"
     done
 }
+
+function edit_replace_modfile() {
+	local modfile="$1"
+	local sdk_dir="$2"
+	local sdk_repo="github.com/operator-framework/operator-sdk"
+
+	# Remove any "replace" and "require" lines for the SDK repo before vendoring
+	# in case this is a release PR and the tag doesn't exist yet. This must be
+	# done without using "go mod edit", which first parses go.mod and will error
+	# if it doesn't find a tag/version/package.
+	# TODO: remove SDK repo references if PR/branch is not from the main SDK repo.
+	sed -E -i 's|^.*'"$sdk_repo"'.*$||g' "$modfile"
+
+	# Run "go mod vendor" to pull down the deps specified by the scaffolded
+	# `go.mod` file.
+	go mod vendor -v
+
+	# Use the local operator-sdk directory as the repo. To make the go toolchain
+	# happy, the directory needs a `go.mod` file that specifies the module name,
+	# so we need this temporary hack until we update the SDK repo itself to use
+	# go modules.
+	echo "module ${SDK_REPO}" > "${sdk_dir}/go.mod"
+	trap_add "rm ${sdk_dir}/go.mod" EXIT
+	go mod edit -replace="${SDK_REPO}=$sdk_dir"
+	go mod vendor -v
+}

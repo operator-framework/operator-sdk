@@ -104,13 +104,16 @@ test/unit:
 	$(Q)go test -count=1 -short ./pkg/...
 	$(Q)go test -count=1 -short ./internal/...
 
-test/subcommand: test/subcommand/test-local test/subcommand/scorecard
+test/subcommand: test/subcommand/test-local test/subcommand/scorecard test/subcommand/new
 
 test/subcommand/test-local:
-	./hack/tests/test-subcommand.sh
+	./hack/tests/subcommand/test-local.sh
 
 test/subcommand/scorecard:
-	./hack/tests/scorecard-subcommand.sh
+	./hack/tests/subcommand/scorecard.sh
+
+test/subcommand/new:
+	./hack/tests/subcommand/new-no-vendor.sh
 
 test/e2e: test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm
 
