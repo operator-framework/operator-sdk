@@ -15,14 +15,14 @@
 package flags
 
 import (
-	"github.com/operator-framework/operator-sdk/pkg/internal/flags"
+	"github.com/operator-framework/operator-sdk/internal/flags/watch"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/spf13/pflag"
 )
 
 // HelmOperatorFlags - Options to be used by a helm operator
 type HelmOperatorFlags struct {
-	flags.WatchFlags
+	watch.WatchFlags
 }
 
 // AddTo - Add the helm operator flags to the the flagset
