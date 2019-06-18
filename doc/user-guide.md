@@ -442,10 +442,21 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 	// Fetch the Memcached instance
 	memcached := &cachev1alpha1.Memcached{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
+	if err != nil {
+		// If the resource is not found, that means all of
+		// the finalizers have been removed, and the memcached
+		// resource has been deleted, so there is nothing left
+		// to do.
+		if apierrors.IsNotFound(err) {
+			return reconcile.Result{}, nil
+		}
+		return reconcile.Result{}, fmt.Errorf("could not fetch memcached instance: %s", err)
+	}
 
 	...
 
-	// Check if the Memcached instance is marked to be deleted
+	// Check if the Memcached instance is marked to be deleted, which is
+	// indicated by the deletion timestamp being set.
 	isMemcachedMarkedToBeDeleted := memcached.GetDeletionTimestamp() != nil
 	if isMemcachedMarkedToBeDeleted {
 		if contains(memcached.GetFinalizers(), memcachedFinalizer) {
