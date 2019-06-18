@@ -291,14 +291,14 @@ func CheckDepManagerWithRepo(dm DepManagerType, repo string) error {
 		// dep assumes the project's path under $GOPATH/src is the project's
 		// repo path.
 		if repo != "" {
-			return fmt.Errorf(`repo cannot be set with dependency manager "dep"`)
+			return fmt.Errorf(`The flag --repo cannot be set with dependency manager "dep"`)
 		}
 		if !inGopathSrc {
 			return fmt.Errorf(`dependency manager "dep" requires working directory to be in $GOPATH/src`)
 		}
 	case DepManagerGoMod:
 		if !inGopathSrc && repo == "" {
-			return fmt.Errorf(`dependency manager "modules" requires repo to be set if the working directory is not in $GOPATH/src`)
+			return fmt.Errorf(`dependency manager "modules" requires the flag --repo to be set if the working directory is not in $GOPATH/src. See "operator-sdk new -h"`)
 		}
 	default:
 		return ErrInvalidDepManager(dm)
