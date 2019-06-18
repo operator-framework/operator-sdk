@@ -432,54 +432,103 @@ deleted until you remove the finalizer (ie, after your cleanup logic has success
 The following is a snippet from the controller file under `pkg/controller/memcached/memcached_controller.go`
 
 ```Go
+
+const memcachedFinalizer = "finalizer.cache.example.com"
+
 func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Result, error) {
- 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
- 	reqLogger.Info("Reconciling Memcached")
+	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
+	reqLogger.Info("Reconciling Memcached")
 
- 	// Fetch the Memcached instance
- 	memcached := &cachev1alpha1.Memcached{}
- 	err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
- 	...
- 	// Check if the APP CR was marked to be deleted
- 	isMemcachedMarkedToBeDeleted := memcached.GetDeletionTimestamp() != nil
- 	if isMemcachedMarkedToBeDeleted {
- 		// TODO(user): Add the cleanup steps that the operator needs to do before the CR can be deleted
- 		// Update finalizer to allow delete CR
- 		memcached.SetFinalizers(nil)
+	// Fetch the Memcached instance
+	memcached := &cachev1alpha1.Memcached{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
+	if err != nil {
+		// If the resource is not found, that means all of
+		// the finalizers have been removed, and the memcached
+		// resource has been deleted, so there is nothing left
+		// to do.
+		if apierrors.IsNotFound(err) {
+			return reconcile.Result{}, nil
+		}
+		return reconcile.Result{}, fmt.Errorf("could not fetch memcached instance: %s", err)
+	}
 
- 		// Update CR
- 		err := r.client.Update(context.TODO(), memcached)
- 		if err != nil {
- 			return reconcile.Result{}, err
- 		}
- 		return reconcile.Result{}, nil
- 	}
+	...
 
- 	// Add finalizer for this CR
- 	if err := r.addFinalizer(reqLogger, instance); err != nil {
- 		return reconcile.Result{}, err
- 	}
- 	...
+	// Check if the Memcached instance is marked to be deleted, which is
+	// indicated by the deletion timestamp being set.
+	isMemcachedMarkedToBeDeleted := memcached.GetDeletionTimestamp() != nil
+	if isMemcachedMarkedToBeDeleted {
+		if contains(memcached.GetFinalizers(), memcachedFinalizer) {
+			// Run finalization logic for memcachedFinalizer. If the
+			// finalization logic fails, don't remove the finalizer so
+			// that we can retry during the next reconciliation.
+			if err := r.finalizeMemcached(reqLogger, memcached); err != nil {
+				return reconcile.Result{}, err
+			}
 
- 	return reconcile.Result{}, nil
- }
+			// Remove memcachedFinalizer. Once all finalizers have been
+			// removed, the object will be deleted.
+			memcached.SetFinalizers(remove(memcached.GetFinalizers(), memcachedFinalizer))
+			err := r.client.Update(context.TODO(), memcached)
+			if err != nil {
+				return reconcile.Result{}, err
+			}
+		}
+		return reconcile.Result{}, nil
+	}
 
-//addFinalizer will add this attribute to the Memcached CR
-func (r *ReconcileMemcached) addFinalizer(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
-    if len(m.GetFinalizers()) < 1 && m.GetDeletionTimestamp() == nil {
-        reqLogger.Info("Adding Finalizer for the Memcached")
-        m.SetFinalizers([]string{"finalizer.cache.example.com"})
+	// Add finalizer for this CR
+	if !contains(memcached.GetFinalizers(), memcachedFinalizer) {
+		if err := r.addFinalizer(reqLogger, memcached); err != nil {
+			return reconcile.Result{}, err
+		}
+	}
 
-        // Update CR
-        err := r.client.Update(context.TODO(), m)
-        if err != nil {
-            reqLogger.Error(err, "Failed to update Memcached with finalizer")
-            return err
-        }
-    }
-    return nil
+	...
+
+	return reconcile.Result{}, nil
 }
 
+func (r *ReconcileMemcached) finalizeMemcached(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
+	// TODO(user): Add the cleanup steps that the operator
+	// needs to do before the CR can be deleted. Examples
+	// of finalizers include performing backups and deleting 
+	// resources that are not owned by this CR, like a PVC.
+	reqLogger.Info("Successfully finalized memcached")
+	return nil
+}
+
+func (r *ReconcileMemcached) addFinalizer(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
+	reqLogger.Info("Adding Finalizer for the Memcached")
+	m.SetFinalizers(append(m.GetFinalizers(), memcachedFinalizer))
+
+	// Update CR
+	err := r.client.Update(context.TODO(), m)
+	if err != nil {
+		reqLogger.Error(err, "Failed to update Memcached with finalizer")
+		return err
+	}
+	return nil
+}
+
+func contains(list []string, s string) bool {
+	for _, v := range list {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
+
+func remove(list []string, s string) []string {
+	for i, v := range list {
+		if v == s {
+			list = append(list[:i], list[i+1:]...)
+		}
+	}
+	return list
+}
 ```
 
 ### Metrics
