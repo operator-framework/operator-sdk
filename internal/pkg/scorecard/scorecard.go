@@ -171,7 +171,8 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 			return nil, err
 		}
 
-		if len(viper.GetStringSlice(CRManifestOpt)) == 0 {
+		logCRMsg := false
+		if crMans := viper.GetStringSlice(CRManifestOpt); len(crMans) == 0 {
 			// Create a temporary CR manifest from metadata if one is not provided.
 			if crJSONStr, ok := csv.ObjectMeta.Annotations["alm-examples"]; ok {
 				var crs []interface{}
@@ -180,6 +181,7 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 				}
 				// TODO: run scorecard against all CR's in CSV.
 				cr := crs[0]
+				logCRMsg = len(crs) > 1
 				crJSONBytes, err := json.Marshal(cr)
 				if err != nil {
 					return nil, err
@@ -208,7 +210,12 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 			}
 		} else {
 			// TODO: run scorecard against all CR's in CSV.
-			viper.Set(CRManifestOpt, []string{viper.GetStringSlice(CRManifestOpt)[0]})
+			viper.Set(CRManifestOpt, []string{crMans[0]})
+			logCRMsg = len(crMans) > 1
+		}
+		// Let users know that only the first CR is being tested.
+		if logCRMsg {
+			log.Infof("The scorecard does not support testing multiple CR's at once when run with --olm-deployed. Testing the first CR %s", viper.GetStringSlice(CRManifestOpt)[0])
 		}
 
 	} else {
