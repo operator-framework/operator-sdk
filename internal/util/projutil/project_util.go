@@ -277,3 +277,32 @@ func SetGoVerbose() error {
 	}
 	return nil
 }
+
+// CheckDepManagerWithRepo ensures dm and repo are being used in combination
+// correctly, as different dependency managers have different Go environment
+// requirements.
+func CheckDepManagerWithRepo(dm DepManagerType, repo string) error {
+	inGopathSrc, err := WdInGoPathSrc()
+	if err != nil {
+		return err
+	}
+	switch dm {
+	case DepManagerDep:
+		// dep assumes the project's path under $GOPATH/src is the project's
+		// repo path.
+		if repo != "" {
+			return fmt.Errorf(`repo cannot be set with dependency manager "dep"`)
+		}
+		if !inGopathSrc {
+			return fmt.Errorf(`dependency manager "dep" requires working directory to be in $GOPATH/src`)
+		}
+	case DepManagerGoMod:
+		if !inGopathSrc && repo == "" {
+			return fmt.Errorf(`dependency manager "modules" requires repo to be set if the working directory is not in $GOPATH/src`)
+		}
+	default:
+		return ErrInvalidDepManager(dm)
+	}
+
+	return nil
+}

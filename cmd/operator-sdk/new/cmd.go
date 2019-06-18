@@ -388,29 +388,14 @@ func verifyFlags() error {
 		if len(apiVersion) != 0 || len(kind) != 0 {
 			return fmt.Errorf("operators of type Go do not use --api-version or --kind")
 		}
-		inGopathSrc, err := projutil.WdInGoPathSrc()
+
+		dm := projutil.DepManagerType(depManager)
+		if !makeVendor && dm == projutil.DepManagerDep {
+			log.Warnf("--dep-manager=dep requires a vendor directory; ignoring --vendor=false")
+		}
+		err := projutil.CheckDepManagerWithRepo(dm, repo)
 		if err != nil {
 			return err
-		}
-		switch projutil.DepManagerType(depManager) {
-		case projutil.DepManagerDep:
-			if !makeVendor {
-				log.Warnf("--dep-manager=dep requires a vendor directory; ignoring --vendor=false")
-			}
-			// dep assumes the project's path under $GOPATH/src is the project's
-			// repo path.
-			if repo != "" {
-				return fmt.Errorf(`--repo flag cannot be used with --dep-manger=dep`)
-			}
-			if !inGopathSrc {
-				return fmt.Errorf(`dependency manager "dep" requires the working directory to be in $GOPATH/src`)
-			}
-		case projutil.DepManagerGoMod:
-			if !inGopathSrc && repo == "" {
-				return fmt.Errorf(`dependency manager "modules" requires flag --repo be set if the working directory is not in $GOPATH/src`)
-			}
-		default:
-			return projutil.ErrInvalidDepManager(depManager)
 		}
 	}
 
