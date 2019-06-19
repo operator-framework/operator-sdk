@@ -55,10 +55,10 @@ func getPlugins() []Plugin {
 	var plugins []Plugin
 	// Add internal plugins
 	if viper.GetBool(scplugins.BasicTestsOpt) {
-		plugins = append(plugins, BasicTestsPlugin)
+		plugins = append(plugins, basicTestsPlugin)
 	}
 	if viper.GetBool(scplugins.OLMTestsOpt) {
-		plugins = append(plugins, OLMTestsPlugin)
+		plugins = append(plugins, olmTestsPlugin)
 	}
 	// find external plugins
 	pluginDir := viper.GetString(PluginDirOpt)

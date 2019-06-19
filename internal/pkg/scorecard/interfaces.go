@@ -88,12 +88,12 @@ func (p genericPlugin) Run() scapiv1alpha1.ScorecardOutput {
 	return result
 }
 
-var BasicTestsPlugin = internalPlugin{
+var basicTestsPlugin = internalPlugin{
 	name:       scplugins.BasicTestsOpt,
 	pluginType: scplugins.BasicOperator,
 }
 
-var OLMTestsPlugin = internalPlugin{
+var olmTestsPlugin = internalPlugin{
 	name:       scplugins.OLMTestsOpt,
 	pluginType: scplugins.OLMIntegration,
 }
