@@ -11,6 +11,7 @@
 ### Bug Fixes
 
 - Fixes header file content validation when the content contains empty lines or centered text. ([#1544](https://github.com/operator-framework/operator-sdk/pull/1544))
+- Running the [scorecard](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#up) with `--olm-deployed` will now only use the first CR set in either the `cr-manifest` config option or the CSV's `metadata.annotations['alm-examples']` as was intended, and access manifests correctly from the config. ([#1565](https://github.com/operator-framework/operator-sdk/pull/1565))
 
 ## v0.8.1
 
