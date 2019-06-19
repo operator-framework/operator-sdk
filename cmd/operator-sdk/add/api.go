@@ -103,7 +103,7 @@ func apiRun(cmd *cobra.Command, args []string) error {
 	absProjectPath := projutil.MustGetwd()
 
 	cfg := &input.Config{
-		Repo:           projutil.CheckAndGetProjectGoPkg(),
+		Repo:           projutil.GetGoPkg(),
 		AbsProjectPath: absProjectPath,
 	}
 	s := &scaffold.Scaffold{}

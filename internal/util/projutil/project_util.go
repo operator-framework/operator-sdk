@@ -79,7 +79,7 @@ const (
 type ErrInvalidDepManager string
 
 func (e ErrInvalidDepManager) Error() string {
-	return fmt.Sprintf(`"%s" is not a valid dep manager; dep manager must be one of ["%v", "%v"]`, e, DepManagerDep, DepManagerGoMod)
+	return fmt.Sprintf(`"%s" is not a valid dep manager; dep manager must be one of ["%v", "%v"]`, string(e), DepManagerDep, DepManagerGoMod)
 }
 
 var ErrNoDepManager = fmt.Errorf(`no valid dependency manager file found; dep manager must be one of ["%v", "%v"]`, DepManagerDep, DepManagerGoMod)
@@ -148,23 +148,17 @@ func getHomeDir() (string, error) {
 	return homedir.Expand(hd)
 }
 
-// CheckAndGetProjectGoPkg checks if this project's repository path is rooted
-// under $GOPATH and returns the current directory's import path,
-// e.g: "github.com/example-inc/app-operator"
-func CheckAndGetProjectGoPkg() string {
-	gopath := MustSetWdGopath(MustGetGopath())
-	return parseGoPkg(gopath)
-}
-
 // GetGoPkg returns the current directory's import path by parsing it from
 // wd if this project's repository path is rooted under $GOPATH/src, or
-// from go.mod the project uses go modules to manage dependencies.
+// from go.mod the project uses Go modules to manage dependencies.
 //
 // Example: "github.com/example-inc/app-operator"
 func GetGoPkg() string {
 	// Default to reading from go.mod, as it should usually have the (correct)
 	// package path, and no further processing need be done on it if so.
-	if _, err := os.Stat(goModFile); err == nil {
+	if _, err := os.Stat(goModFile); err != nil && !os.IsNotExist(err) {
+		log.Fatalf("Failed to read go.mod: %v", err)
+	} else if err == nil {
 		b, err := ioutil.ReadFile(goModFile)
 		if err != nil {
 			log.Fatalf("Read go.mod: %v", err)
@@ -281,5 +275,34 @@ func SetGoVerbose() error {
 	if !flagRe.MatchString(gf) {
 		return os.Setenv(GoFlagsEnv, gf+" -v")
 	}
+	return nil
+}
+
+// CheckDepManagerWithRepo ensures dependency manager type and repo are being used in combination
+// correctly, as different dependency managers have different Go environment
+// requirements.
+func CheckDepManagerWithRepo(dm DepManagerType, repo string) error {
+	inGopathSrc, err := WdInGoPathSrc()
+	if err != nil {
+		return err
+	}
+	switch dm {
+	case DepManagerDep:
+		// dep assumes the project's path under $GOPATH/src is the project's
+		// repo path.
+		if repo != "" {
+			return fmt.Errorf(`The flag --repo cannot be set with dependency manager "dep", as dep always infers the repo path`)
+		}
+		if !inGopathSrc {
+			return fmt.Errorf(`dependency manager "dep" requires working directory to be in $GOPATH/src`)
+		}
+	case DepManagerGoMod:
+		if !inGopathSrc && repo == "" {
+			return fmt.Errorf(`dependency manager "modules" requires the flag --repo to be set if the working directory is not in $GOPATH/src. See "operator-sdk new -h"`)
+		}
+	default:
+		return ErrInvalidDepManager(dm)
+	}
+
 	return nil
 }

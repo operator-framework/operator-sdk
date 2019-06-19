@@ -93,17 +93,16 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 		goBuildEnv = append(goBuildEnv, "CGO_ENABLED=0")
 	}
 
-	trimPath := os.ExpandEnv("all=-trimpath=${GOPATH}")
-	goTrimFlags := []string{"-gcflags", trimPath, "-asmflags", trimPath}
 	absProjectPath := projutil.MustGetwd()
 	projectName := filepath.Base(absProjectPath)
 
 	// Don't need to build Go code if a non-Go Operator.
 	if projutil.IsOperatorGo() {
+		trimPath := fmt.Sprintf("all=-trimpath=%s", filepath.Dir(absProjectPath))
 		opts := projutil.GoCmdOptions{
 			BinName:     filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName),
-			PackagePath: path.Join(projutil.CheckAndGetProjectGoPkg(), filepath.ToSlash(scaffold.ManagerDir)),
-			Args:        goTrimFlags,
+			PackagePath: path.Join(projutil.GetGoPkg(), filepath.ToSlash(scaffold.ManagerDir)),
+			Args:        []string{"-gcflags", trimPath, "-asmflags", trimPath},
 			Env:         goBuildEnv,
 			GoMod:       projutil.IsDepManagerGoMod(),
 		}

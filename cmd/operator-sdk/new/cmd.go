@@ -46,10 +46,10 @@ generates a default directory layout based on the input <project-name>.
 <project-name> is the project name of the new operator. (e.g app-operator)
 
 For example:
-	$ mkdir $GOPATH/src/github.com/example.com/
-	$ cd $GOPATH/src/github.com/example.com/
+	$ mkdir $HOME/projects/example.com/
+	$ cd $HOME/projects/example.com/
 	$ operator-sdk new app-operator
-generates a skeletal app-operator application in $GOPATH/src/github.com/example.com/app-operator.
+generates a skeletal app-operator application in $HOME/projects/example.com/app-operator.
 `,
 		RunE: newFunc,
 	}
@@ -58,6 +58,7 @@ generates a skeletal app-operator application in $GOPATH/src/github.com/example.
 	newCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. (e.g AppService) - used with \"ansible\" or \"helm\" types")
 	newCmd.Flags().StringVar(&operatorType, "type", "go", "Type of operator to initialize (choices: \"go\", \"ansible\" or \"helm\")")
 	newCmd.Flags().StringVar(&depManager, "dep-manager", "modules", `Dependency manager the new project will use (choices: "dep", "modules")`)
+	newCmd.Flags().StringVar(&repo, "repo", "", "Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of $GOPATH/src with Go modules, and cannot be set if --dep-manager=dep")
 	newCmd.Flags().BoolVar(&skipGit, "skip-git-init", false, "Do not init the directory as a git repository")
 	newCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
 	newCmd.Flags().BoolVar(&makeVendor, "vendor", false, "Use a vendor directory for dependencies. This flag only applies when --dep-manager=modules (the default)")
@@ -78,6 +79,7 @@ var (
 	projectName      string
 	depManager       string
 	headerFile       string
+	repo             string
 	skipGit          bool
 	makeVendor       bool
 	skipValidation   bool
@@ -101,6 +103,9 @@ func newFunc(cmd *cobra.Command, args []string) error {
 
 	switch operatorType {
 	case projutil.OperatorTypeGo:
+		if repo == "" {
+			repo = path.Join(projutil.GetGoPkg(), projectName)
+		}
 		if err := doGoScaffold(); err != nil {
 			return err
 		}
@@ -160,7 +165,7 @@ func mustBeNewProject() {
 
 func doGoScaffold() error {
 	cfg := &input.Config{
-		Repo:           path.Join(projutil.CheckAndGetProjectGoPkg(), projectName),
+		Repo:           repo,
 		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
 		ProjectName:    projectName,
 	}
@@ -182,8 +187,8 @@ func doGoScaffold() error {
 		if goModOn, merr := projutil.GoModOn(); merr != nil {
 			return merr
 		} else if !goModOn {
-			log.Fatalf(`Dependency manager "%s" has been selected but go modules are not active. `+
-				`Activate modules then run "operator-sdk new %s".`, m, projectName)
+			return errors.New(`dependency manager "modules" requires working directory to be in $GOPATH/src` +
+				` and GO111MODULE=on, or outside of $GOPATH/src and GO111MODULE="on", "auto", or unset`)
 		}
 		err = s.Execute(cfg, &scaffold.GoMod{}, &scaffold.Tools{})
 	default:
@@ -383,8 +388,14 @@ func verifyFlags() error {
 		if len(apiVersion) != 0 || len(kind) != 0 {
 			return fmt.Errorf("operators of type Go do not use --api-version or --kind")
 		}
-		if !makeVendor && projutil.DepManagerType(depManager) == projutil.DepManagerDep {
+
+		dm := projutil.DepManagerType(depManager)
+		if !makeVendor && dm == projutil.DepManagerDep {
 			log.Warnf("--dep-manager=dep requires a vendor directory; ignoring --vendor=false")
+		}
+		err := projutil.CheckDepManagerWithRepo(dm, repo)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -407,6 +418,7 @@ func verifyFlags() error {
 			return fmt.Errorf("value of --api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion)
 		}
 	}
+
 	return nil
 }
 
@@ -419,7 +431,7 @@ func execProjCmd(cmd string, args ...string) error {
 func getDeps() error {
 	switch m := projutil.DepManagerType(depManager); m {
 	case projutil.DepManagerDep:
-		log.Info("Running dep ensure ...")
+		log.Info("Running dep ensure")
 		if err := execProjCmd("dep", "ensure", "-v"); err != nil {
 			return err
 		}
@@ -427,6 +439,7 @@ func getDeps() error {
 		// Only when a user requests a vendor directory be created should
 		// "go mod vendor" be run during project initialization.
 		if makeVendor {
+			log.Info("Running go mod vendor")
 			opts := projutil.GoCmdOptions{
 				Args: []string{"-v"},
 				Dir:  filepath.Join(projutil.MustGetwd(), projectName),
@@ -449,7 +462,7 @@ func initGit() error {
 	if skipGit {
 		return nil
 	}
-	log.Info("Run git init ...")
+	log.Info("Running git init")
 	if err := execProjCmd("git", "init"); err != nil {
 		return err
 	}

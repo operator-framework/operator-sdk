@@ -51,7 +51,7 @@ type GoCmdOptions struct {
 	Dir string
 	// GoMod determines whether to set the "-mod=vendor" flag.
 	// If true and ./vendor/ exists, "go {cmd}" will use vendored modules.
-	// If false, "go {cmd}" will not use go modules. This is the default.
+	// If false, "go {cmd}" will not use Go modules. This is the default.
 	// This applies to build, clean, get, install, list, run, and test.
 	GoMod bool
 }
@@ -157,7 +157,7 @@ func (opts GoCmdOptions) setCmdFields(c *exec.Cmd) {
 //		the environment variable GO111MODULE unset (or explicitly set to auto).
 //	- Invoke the go command with GO111MODULE=on environment variable set.
 //
-// GoModOn returns true if go modules are on in one of the above two ways.
+// GoModOn returns true if Go modules are on in one of the above two ways.
 func GoModOn() (bool, error) {
 	v, ok := os.LookupEnv(GoModEnv)
 	if v == "off" {
