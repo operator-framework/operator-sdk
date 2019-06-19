@@ -49,23 +49,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	NamespaceOpt          = "namespace"
-	KubeconfigOpt         = "kubeconfig"
-	InitTimeoutOpt        = "init-timeout"
-	OlmDeployedOpt        = "olm-deployed"
-	CSVPathOpt            = "csv-path"
-	NamespacedManifestOpt = "namespaced-manifest"
-	GlobalManifestOpt     = "global-manifest"
-	CRManifestOpt         = "cr-manifest"
-	ProxyImageOpt         = "proxy-image"
-	ProxyPullPolicyOpt    = "proxy-pull-policy"
-	CRDsDirOpt            = "crds-dir"
-	DeployDirOpt          = "deploy-dir"
-	BasicTestsOpt         = "basic-tests"
-	OLMTestsOpt           = "olm-tests"
-)
-
 type PluginType int
 
 const (
@@ -353,24 +336,4 @@ func RunInternalPlugin(plugin PluginType, config *viper.Viper, logFile io.ReadWr
 		output.Results[idx] = schelpers.UpdateSuiteStates(suite)
 	}
 	return output, nil
-}
-
-func validateScorecardPluginFlags(config *viper.Viper) error {
-	if !config.GetBool(OlmDeployedOpt) && len(config.GetStringSlice(CRManifestOpt)) == 0 {
-		return errors.New("cr-manifest config option must be set")
-	}
-	if !config.GetBool(BasicTestsOpt) && !config.GetBool(OLMTestsOpt) {
-		return errors.New("at least one test type must be set")
-	}
-	if config.GetBool(OLMTestsOpt) && config.GetString(CSVPathOpt) == "" {
-		return fmt.Errorf("csv-path must be set if olm-tests is enabled")
-	}
-	if config.GetBool(OlmDeployedOpt) && config.GetString(CSVPathOpt) == "" {
-		return fmt.Errorf("csv-path must be set if olm-deployed is enabled")
-	}
-	pullPolicy := config.GetString(ProxyPullPolicyOpt)
-	if pullPolicy != "Always" && pullPolicy != "Never" && pullPolicy != "PullIfNotPresent" {
-		return fmt.Errorf("invalid proxy pull policy: (%s); valid values: Always, Never, PullIfNotPresent", pullPolicy)
-	}
-	return nil
 }
