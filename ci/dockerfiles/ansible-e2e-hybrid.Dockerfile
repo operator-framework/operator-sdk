@@ -2,10 +2,6 @@ FROM osdk-builder as builder
 
 RUN go run hack/image/ansible/scaffold-ansible-image.go
 RUN ci/tests/e2e-ansible-scaffold-hybrid.sh
-ENV GO111MODULE=on
-WORKDIR /go/src/github.com/ansible-op/memcached-operator/
-RUN go build -gcflags "all=-trimpath=${GOPATH}" -asmflags "all=-trimpath=${GOPATH}" -o /memcached-operator github.com/ansible-op/memcached-operator/cmd/manager && \
-    mv /go/src/github.com/ansible-op /ansible
 
 FROM ansible/ansible-runner:1.2
 
