@@ -355,20 +355,20 @@ func RunInternalPlugin(plugin PluginType, config *viper.Viper, logFile io.ReadWr
 	return output, nil
 }
 
-func validateScorecardPluginFlags(pluginViper *viper.Viper) error {
-	if !pluginViper.GetBool(OlmDeployedOpt) && len(pluginViper.GetStringSlice(CRManifestOpt)) == 0 {
+func validateScorecardPluginFlags(config *viper.Viper) error {
+	if !config.GetBool(OlmDeployedOpt) && len(config.GetStringSlice(CRManifestOpt)) == 0 {
 		return errors.New("cr-manifest config option must be set")
 	}
-	if !pluginViper.GetBool(BasicTestsOpt) && !pluginViper.GetBool(OLMTestsOpt) {
+	if !config.GetBool(BasicTestsOpt) && !config.GetBool(OLMTestsOpt) {
 		return errors.New("at least one test type must be set")
 	}
-	if pluginViper.GetBool(OLMTestsOpt) && pluginViper.GetString(CSVPathOpt) == "" {
+	if config.GetBool(OLMTestsOpt) && config.GetString(CSVPathOpt) == "" {
 		return fmt.Errorf("csv-path must be set if olm-tests is enabled")
 	}
-	if pluginViper.GetBool(OlmDeployedOpt) && pluginViper.GetString(CSVPathOpt) == "" {
+	if config.GetBool(OlmDeployedOpt) && config.GetString(CSVPathOpt) == "" {
 		return fmt.Errorf("csv-path must be set if olm-deployed is enabled")
 	}
-	pullPolicy := pluginViper.GetString(ProxyPullPolicyOpt)
+	pullPolicy := config.GetString(ProxyPullPolicyOpt)
 	if pullPolicy != "Always" && pullPolicy != "Never" && pullPolicy != "PullIfNotPresent" {
 		return fmt.Errorf("invalid proxy pull policy: (%s); valid values: Always, Never, PullIfNotPresent", pullPolicy)
 	}
