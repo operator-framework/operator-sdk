@@ -136,10 +136,6 @@ Currently only runs `deepcopy-gen` to generate the required `DeepCopy()` functio
 
 **Note**: This command must be run every time the api (spec and status) for a custom resource type is updated.
 
-### Flags
-
-* `--header-file` string - Path to file containing headers for generated files (optional).
-
 #### Example
 
 ```console
@@ -228,6 +224,8 @@ you will need to rename it before running migrate or manually add it to your Doc
 #### Flags
 
 * `--dep-manager` string - Dependency manager the migrated project will use (choices: "dep", "modules") (default "modules")
+* `--header-file` string - Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt
+* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` with Go modules, and cannot be set if `--dep-manager=dep`
 
 ### Example
 
@@ -261,7 +259,9 @@ Scaffolds a new operator project.
 * `--helm-chart` string - Initialize helm operator with existing helm chart (`<URL>`, `<repo>/<name>`, or local path)
 * `--helm-chart-repo` string - Chart repository URL for the requested helm chart
 * `--helm-chart-version` string - Specific version of the helm chart (default is latest version)
+* `--header-file` string - Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt
 * `--dep-manager` string - Dependency manager the new project will use (choices: "dep", "modules") (default "modules")
+* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` with Go modules, and cannot be set if `--dep-manager=dep`
 * `--skip-git-init` - Do not init the directory as a git repository
 * `--vendor` - Use a vendor directory for dependencies. This flag only applies when `--dep-manager=modules` (the default)
 * `--skip-validation` - Do not validate the resulting project's structure and dependencies. (Only used for --type go)
@@ -330,7 +330,6 @@ Adds the API definition for a new custom resource under `pkg/apis` and generates
 
 * `--api-version` string - CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
 * `--kind` string - CRD Kind. (e.g AppService)
-* `--header-file` string - Path to file containing headers for generated files (optional).
 
 #### Example
 
