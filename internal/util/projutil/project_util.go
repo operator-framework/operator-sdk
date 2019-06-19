@@ -278,7 +278,7 @@ func SetGoVerbose() error {
 	return nil
 }
 
-// CheckDepManagerWithRepo ensures dm and repo are being used in combination
+// CheckDepManagerWithRepo ensures dependency manager type and repo are being used in combination
 // correctly, as different dependency managers have different Go environment
 // requirements.
 func CheckDepManagerWithRepo(dm DepManagerType, repo string) error {
