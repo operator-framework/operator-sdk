@@ -170,37 +170,51 @@ func RunInternalPlugin(plugin PluginType, config *viper.Viper, logFile io.ReadWr
 			return scapiv1alpha1.ScorecardOutput{}, err
 		}
 
-		// Create a temporary CR manifest from metadata if one is not provided.
-		crJSONStr, ok := csv.ObjectMeta.Annotations["alm-examples"]
-		if ok && config.GetString(CRManifestOpt) == "" {
-			var crs []interface{}
-			if err = json.Unmarshal([]byte(crJSONStr), &crs); err != nil {
-				return scapiv1alpha1.ScorecardOutput{}, err
-			}
-			// TODO: run scorecard against all CR's in CSV.
-			cr := crs[0]
-			crJSONBytes, err := json.Marshal(cr)
-			if err != nil {
-				return scapiv1alpha1.ScorecardOutput{}, err
-			}
-			crYAMLBytes, err := yaml.JSONToYAML(crJSONBytes)
-			if err != nil {
-				return scapiv1alpha1.ScorecardOutput{}, err
-			}
-			crFile, err := ioutil.TempFile("", "cr.yaml")
-			if err != nil {
-				return scapiv1alpha1.ScorecardOutput{}, err
-			}
-			if _, err := crFile.Write(crYAMLBytes); err != nil {
-				return scapiv1alpha1.ScorecardOutput{}, err
-			}
-			config.Set(CRManifestOpt, crFile.Name())
-			defer func() {
-				err := os.Remove(config.GetString(CRManifestOpt))
-				if err != nil {
-					log.Errorf("Could not delete temporary CR manifest file: (%v)", err)
+		logCRMsg := false
+		if crMans := config.GetStringSlice(CRManifestOpt); len(crMans) == 0 {
+			// Create a temporary CR manifest from metadata if one is not provided.
+			if crJSONStr, ok := csv.ObjectMeta.Annotations["alm-examples"]; ok {
+				var crs []interface{}
+				if err = json.Unmarshal([]byte(crJSONStr), &crs); err != nil {
+					return scapiv1alpha1.ScorecardOutput{}, err
 				}
-			}()
+				// TODO: run scorecard against all CR's in CSV.
+				cr := crs[0]
+				logCRMsg = len(crs) > 1
+				crJSONBytes, err := json.Marshal(cr)
+				if err != nil {
+					return scapiv1alpha1.ScorecardOutput{}, err
+				}
+				crYAMLBytes, err := yaml.JSONToYAML(crJSONBytes)
+				if err != nil {
+					return scapiv1alpha1.ScorecardOutput{}, err
+				}
+				crFile, err := ioutil.TempFile("", "*.cr.yaml")
+				if err != nil {
+					return scapiv1alpha1.ScorecardOutput{}, err
+				}
+				if _, err := crFile.Write(crYAMLBytes); err != nil {
+					return scapiv1alpha1.ScorecardOutput{}, err
+				}
+				config.Set(CRManifestOpt, []string{crFile.Name()})
+				defer func() {
+					for _, f := range config.GetStringSlice(CRManifestOpt) {
+						if err := os.Remove(f); err != nil {
+							log.Errorf("Could not delete temporary CR manifest file: (%v)", err)
+						}
+					}
+				}()
+			} else {
+				return scapiv1alpha1.ScorecardOutput{}, errors.New("cr-manifest config option must be set if CSV has no metadata.annotations['alm-examples']")
+			}
+		} else {
+			// TODO: run scorecard against all CR's in CSV.
+			config.Set(CRManifestOpt, []string{crMans[0]})
+			logCRMsg = len(crMans) > 1
+		}
+		// Let users know that only the first CR is being tested.
+		if logCRMsg {
+			log.Infof("The scorecard does not support testing multiple CR's at once when run with --olm-deployed. Testing the first CR %s", config.GetStringSlice(CRManifestOpt)[0])
 		}
 
 	} else {
@@ -342,7 +356,7 @@ func RunInternalPlugin(plugin PluginType, config *viper.Viper, logFile io.ReadWr
 }
 
 func validateScorecardPluginFlags(pluginViper *viper.Viper) error {
-	if !pluginViper.GetBool(OlmDeployedOpt) && pluginViper.GetStringSlice(CRManifestOpt) == nil {
+	if !pluginViper.GetBool(OlmDeployedOpt) && len(pluginViper.GetStringSlice(CRManifestOpt)) == 0 {
 		return errors.New("cr-manifest config option must be set")
 	}
 	if !pluginViper.GetBool(BasicTestsOpt) && !pluginViper.GetBool(OLMTestsOpt) {
