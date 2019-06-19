@@ -23,9 +23,9 @@ import (
 	"path/filepath"
 
 	scplugins "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/plugins"
-	"github.com/spf13/viper"
-
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+
+	"github.com/spf13/viper"
 )
 
 type Plugin interface {
