@@ -34,15 +34,15 @@ and what they do:
 - `plugin-dir` string - path to scorecard plugin directory. This is the directory where the plugins are run from, and all executable files in a `bin` subdirectory of the `plugin-dir` are automtically run by default.
 - `plugins` - an array of objects that configure both internal and external scorecard plugins
 
-The objects in the `plugins` configuration have 3 elements: `name`, `disabled`, and either `internal` or `external`. The `name` is
-the name of the plugin and `internal` and `external` are configuration blocks used if the plugin in `internal` or `external`
-respectively. If `internal` and `external` are both specified for the same block, the plugin is automatically marked as failed. The
-`disabled` field is `false` by default, but can be set to `true` to disable tests that would be automatically run, such as the
-`basic` and `olm` tests and external plugins in `{plugin-dir}/bin`. For internal plugins, the `type` field must be set in
-the `internal` config block and for external plugins the `command` field must be set in the `external` config block for the`disabled`
+The objects in the `plugins` configuration have 3 elements: `name`, `disable`, and either `basic`, `olm`, or `external`. The `name` is
+the name of the plugin and `basic`, `olm`, and `external` are configuration blocks used if the plugin is the `basic`, `olm`, or an `external`
+plugin respectively. If any of `basic`, `olm`, or `external` are specified for the same plugin, the plugin is automatically marked as failed. The
+`disable` field is `false` by default, but can be set to `true` to disable tests that would be automatically run, such as the
+`basic` and `olm` tests and external plugins in `{plugin-dir}/bin`. For internal plugins, the `basic` or `olm` struct must be set in
+to identify the plugin and for external plugins the `command` field must be set in the `external` config block for the `disable`
 config to work properly.
 
-Configuration for `internal` contains all of the original configuration options for the scorecard that pertained to internal plugins. They are:
+Configuration for both `basic` and `olm` contains all of the original configuration options for the scorecard that pertained to internal plugins. They are:
 
 - `namespace`
 - `init-timeout`
@@ -54,8 +54,6 @@ Configuration for `internal` contains all of the original configuration options 
 - `proxy-image`
 - `proxy-pull-policy`
 - `crds-dir`
-
-There is also another config option called `type` which can be set to `basic` or `olm` to configure which internal plugin to run.
 
 Configuration for `external` contains 3 fields:
 
@@ -70,8 +68,7 @@ scorecard:
   output: json
   plugins:
     - name: Basic Tests
-      internal:
-        type: basic
+      basic:
         cr-manifest:
           - "deploy/crds/cache_v1alpha1_memcached_cr.yaml"
           - "deploy/crds/cache_v1alpha1_memcachedrs_cr.yaml"
@@ -80,8 +77,7 @@ scorecard:
         proxy-image: "scorecard-proxy"
         proxy-pull-policy: "Never"
     - name: OLM Tests
-      internal:
-        type: olm
+      olm:
         cr-manifest:
           - "deploy/crds/cache_v1alpha1_memcached_cr.yaml"
           - "deploy/crds/cache_v1alpha1_memcachedrs_cr.yaml"
