@@ -161,7 +161,7 @@ go build ./...
 # Use the local operator-sdk directory as the repo. To make the go toolchain
 # happy, the directory needs a `go.mod` file that specifies the module name,
 # so we need this temporary hack until we update the SDK repo itself to use
-# go modules.
+# Go modules.
 echo "module ${SDK_REPO}" > "${ROOTDIR}/go.mod"
 trap_add "rm ${ROOTDIR}/go.mod" EXIT
 go mod edit -replace="${SDK_REPO}=$ROOTDIR"

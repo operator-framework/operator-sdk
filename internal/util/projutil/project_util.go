@@ -150,7 +150,7 @@ func getHomeDir() (string, error) {
 
 // GetGoPkg returns the current directory's import path by parsing it from
 // wd if this project's repository path is rooted under $GOPATH/src, or
-// from go.mod the project uses go modules to manage dependencies.
+// from go.mod the project uses Go modules to manage dependencies.
 //
 // Example: "github.com/example-inc/app-operator"
 func GetGoPkg() string {

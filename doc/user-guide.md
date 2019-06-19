@@ -37,7 +37,7 @@ By default, `operator-sdk new` generates a `go.mod` file to be used with [Go mod
 
 ##### Go modules
 
-If using go modules (the default dependency manager) in your project, ensure you activate module support before using the SDK. From the [go modules Wiki][go_mod_wiki]:
+If using Go modules (the default dependency manager) in your project, ensure you activate module support before using the SDK. From the [Go modules Wiki][go_mod_wiki]:
 
 > You can activate module support in one of two ways:
 > - Invoke the go command in a directory outside of the $GOPATH/src tree, with a valid go.mod file in the current directory or any parent of it and the environment variable GO111MODULE unset (or explicitly set to auto).
@@ -202,7 +202,7 @@ Once this is done, there are two ways to run the operator:
 
 **Note**: `operator-sdk build` invokes `docker build` by default, and optionally `buildah bud`. If using `buildah`, skip to the `operator-sdk build` invocation instructions below. If using `docker`, make sure your docker daemon is running and that you can run the docker client without sudo. You can check if this is the case by running `docker version`, which should complete without errors. Follow instructions for your OS/distribution on how to start the docker daemon and configure your access permissions, if needed.
 
-**Note**: If using go modules and a `vendor/` directory, run
+**Note**: If using Go modules and a `vendor/` directory, run
 ```sh
 $ go mod vendor
 ```
