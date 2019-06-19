@@ -17,14 +17,12 @@ package e2e
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -36,10 +34,10 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 
 	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/prometheus/util/promlint"
-	"github.com/rogpeppe/go-internal/modfile"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -130,20 +128,9 @@ func TestMemcached(t *testing.T) {
 				}
 			}()
 		}
-		modBytes, err := ioutil.ReadFile("go.mod")
+		modBytes, err := insertGoModReplace(t, sdkRepo, replace.repo, replace.ref)
 		if err != nil {
-			t.Fatalf("Failed to read go.mod: %v", err)
-		}
-		// Remove SDK repo dependency lines so we can parse the modfile.
-		sdkRe := regexp.MustCompile(`.*github\.com/operator-framework/operator-sdk.*`)
-		modBytes = sdkRe.ReplaceAll(modBytes, nil)
-		modBytes, err = insertGoModReplace(t, modBytes, sdkRepo, replace.repo, replace.ref)
-		if err != nil {
-			t.Fatalf("Failed to insert replace: %v", err)
-		}
-		err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
-		if err != nil {
-			t.Fatalf("Failed to write updated go.mod: %v", err)
+			t.Fatalf("Failed to insert go.mod replace: %v", err)
 		}
 		t.Logf("go.mod: %v", string(modBytes))
 	}
@@ -322,21 +309,23 @@ func getGoModReplace(t *testing.T, localSDKPath string) goModReplace {
 	}
 }
 
-func insertGoModReplace(t *testing.T, modBytes []byte, repo, path, sha string) ([]byte, error) {
-	modFile, err := modfile.Parse("go.mod", modBytes, nil)
+func insertGoModReplace(t *testing.T, repo, path, sha string) ([]byte, error) {
+	modBytes, err := ioutil.ReadFile("go.mod")
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse go.mod: %v", err)
+		return nil, errors.Wrap(err, "failed to read go.mod")
 	}
-	if err = modFile.AddReplace(repo, "", path, sha); err != nil {
-		s := ""
-		if sha != "" {
-			s = " " + sha
-		}
-		return nil, fmt.Errorf(`failed to add "replace %s => %s%s: %v"`, repo, path, s, err)
+	sdkReplace := fmt.Sprintf("replace %s => %s", repo, path)
+	if sha != "" {
+		sdkReplace = fmt.Sprintf("%s %s", sdkReplace, sha)
 	}
-	modFile.Cleanup()
-	if modBytes, err = modFile.Format(); err != nil {
-		return nil, fmt.Errorf("failed to format go.mod: %v", err)
+	modBytes = append(modBytes, []byte("\n"+sdkReplace)...)
+	err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to write go.mod before replacing SDK repo")
+	}
+	cmdOut, err := exec.Command("go", "build", "./...").CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("\"go build ./...\" failed before replacing SDK repo: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 	return modBytes, nil
 }
