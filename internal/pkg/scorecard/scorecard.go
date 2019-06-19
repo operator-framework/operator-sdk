@@ -189,7 +189,7 @@ func initConfig() error {
 
 func configureLogger() error {
 	if viper.GetString(OutputFormatOpt) == HumanReadableOutputFormat {
-		logReadWriter = os.Stderr
+		logReadWriter = os.Stdout
 	} else if viper.GetString(OutputFormatOpt) == JSONOutputFormat {
 		logReadWriter = &bytes.Buffer{}
 	} else {
