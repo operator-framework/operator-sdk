@@ -25,7 +25,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -42,23 +41,17 @@ const (
 	CRPortName = "cr-metrics"
 )
 
-//MetricService holds information about metrics port and port name.
-type MetricService struct {
-	Port     int32
-	PortName string
-}
-
 // CreateMetricsService creates a Kubernetes Service to expose the passed metrics
 // port(s) with the given name(s).
-func CreateMetricsService(ctx context.Context, ms []MetricService) (*v1.Service, error) {
-	if len(ms) < 1 {
-		return nil, fmt.Errorf("failed to create metrics Serice; MetricsService empty")
+func CreateMetricsService(ctx context.Context, servicePorts []v1.ServicePort) (*v1.Service, error) {
+	if len(servicePorts) < 1 {
+		return nil, fmt.Errorf("failed to create metrics Serice; service ports were empty")
 	}
 	client, err := createClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new client: %v", err)
 	}
-	s, err := initOperatorService(ctx, client, ms)
+	s, err := initOperatorService(ctx, client, servicePorts)
 	if err != nil {
 		if err == k8sutil.ErrNoNamespace {
 			log.Info("Skipping metrics Service creation; not running in a cluster.")
@@ -104,7 +97,7 @@ func createOrUpdateService(ctx context.Context, client crclient.Client, s *v1.Se
 }
 
 // initOperatorService returns the static service which exposes specified port(s).
-func initOperatorService(ctx context.Context, client crclient.Client, ms []MetricService) (*v1.Service, error) {
+func initOperatorService(ctx context.Context, client crclient.Client, sp []v1.ServicePort) (*v1.Service, error) {
 	operatorName, err := k8sutil.GetOperatorName()
 	if err != nil {
 		return nil, err
@@ -113,10 +106,7 @@ func initOperatorService(ctx context.Context, client crclient.Client, ms []Metri
 	if err != nil {
 		return nil, err
 	}
-
 	label := map[string]string{"name": operatorName}
-
-	ports := populateServicePorts(ms)
 
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -125,7 +115,7 @@ func initOperatorService(ctx context.Context, client crclient.Client, ms []Metri
 			Labels:    label,
 		},
 		Spec: v1.ServiceSpec{
-			Ports:    ports,
+			Ports:    sp,
 			Selector: label,
 		},
 	}
@@ -137,22 +127,6 @@ func initOperatorService(ctx context.Context, client crclient.Client, ms []Metri
 	service.SetOwnerReferences([]metav1.OwnerReference{*ownRef})
 
 	return service, nil
-}
-
-func populateServicePorts(ms []MetricService) []v1.ServicePort {
-	var servicePorts []v1.ServicePort
-	for _, v := range ms {
-		servicePorts = append(servicePorts, v1.ServicePort{
-			Port:     v.Port,
-			Protocol: v1.ProtocolTCP,
-			TargetPort: intstr.IntOrString{
-				Type:   intstr.Int,
-				IntVal: v.Port,
-			},
-			Name: v.PortName,
-		})
-	}
-	return servicePorts
 }
 
 func getPodOwnerRef(ctx context.Context, client crclient.Client, ns string) (*metav1.OwnerReference, error) {

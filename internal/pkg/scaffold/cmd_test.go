@@ -57,6 +57,8 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/spf13/pflag"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -151,12 +153,12 @@ func main() {
 	}
 
 	// Add to the below struct any other metrics ports you want to expose.
-	metricsService := []metrics.MetricService{
-		{Port: operatorMetricsPort, PortName: metrics.CRPortName},
-		{Port: metricsPort, PortName: metrics.OperatorPortName},
+	servicePorts := []v1.ServicePort{
+		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
+		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
 	}
 	// Create Service object to expose the metrics port(s).
-	_, err = metrics.CreateMetricsService(ctx, metricsService)
+	_, err = metrics.CreateMetricsService(ctx, servicePorts)
 	if err != nil {
 		log.Info(err.Error())
 	}

@@ -28,14 +28,19 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
-var log = logf.Log.WithName("cmd")
+var (
+	log               = logf.Log.WithName("cmd")
+	metricsPort int32 = 8383
+)
 
 func printVersion() {
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
@@ -66,7 +71,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	// TODO: probably should expose the host & port as an environment variables
 	mgr, err := manager.New(cfg, manager.Options{
 		Namespace:          namespace,
-		MetricsBindAddress: "0.0.0.0:8383",
+		MetricsBindAddress: fmt.Sprintf("0.0.0.0:%d", metricsPort),
 	})
 	if err != nil {
 		log.Error(err, "Failed to create a new manager.")
@@ -85,11 +90,13 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 		return err
 	}
 
-	metricsService := []metrics.MetricService{
-		{Port: 8383, PortName: metrics.OperatorPortName},
+	// Add to the below struct any other metrics ports you want to expose.
+	servicePorts := []v1.ServicePort{
+		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
 	}
+	// Create Service object to expose the metrics port(s).
 	// TODO: probably should expose the port as an environment variable
-	_, err = metrics.CreateMetricsService(context.TODO(), metricsService)
+	_, err = metrics.CreateMetricsService(context.TODO(), servicePorts)
 	if err != nil {
 		log.Error(err, "Exposing metrics port failed.")
 		return err
