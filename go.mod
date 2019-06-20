@@ -48,6 +48,7 @@ require (
 	sigs.k8s.io/controller-tools v0.0.0-20190411181648-9d55346c2bde
 )
 
+// Pinned to kubernetes-1.13.1
 replace (
 	k8s.io/api => k8s.io/api v0.0.0-20181213150558-05914d821849
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20181213153335-0fe22c71c476
