@@ -447,26 +447,26 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		[]byte(crYAML),
 		fileutil.DefaultFileMode)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not write CR to file: %v", err)
 	}
 
 	// create memcached custom resource
 	framework.Global.NamespacedManPath = &filename
 	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
-		return err
+		return fmt.Errorf("could not initialize cluster resources: %v", err)
 	}
 	t.Log("Created cr")
 
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
-		return err
+		return fmt.Errorf("could not get namespace: %v", err)
 	}
 
 	// wait for example-memcached to reach 3 replicas
 	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 3, retryInterval, timeout)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed waiting for 3 example-memcached replicas: %v", err)
 	}
 
 	// get fresh copy of memcached object as unstructured
@@ -479,23 +479,36 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		t.Fatalf("Failed to unmarshal memcached CR: (%v)", err)
 	}
 	obj.SetNamespace(namespace)
-	err = f.Client.Get(context.TODO(), types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}, &obj)
+
+	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		err = f.Client.Get(context.TODO(), types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}, &obj)
+		if err != nil {
+			return false, fmt.Errorf("failed to get memcached object: %s", err)
+		}
+		// update memcached CR size to 4
+		spec, ok := obj.Object["spec"].(map[string]interface{})
+		if !ok {
+			return false, errors.New("memcached object missing spec field")
+		}
+		spec["size"] = 4
+		err = f.Client.Update(context.TODO(), &obj)
+		if err != nil {
+			if apierrors.IsConflict(err) {
+				return false, nil
+			}
+			return false, err
+		}
+		return true, nil
+	})
 	if err != nil {
-		return fmt.Errorf("failed to get memcached object: %s", err)
-	}
-	// update memcached CR size to 4
-	spec, ok := obj.Object["spec"].(map[string]interface{})
-	if !ok {
-		return errors.New("memcached object missing spec field")
-	}
-	spec["size"] = 4
-	err = f.Client.Update(context.TODO(), &obj)
-	if err != nil {
-		return err
+		return fmt.Errorf("could not update memcached CR: %v", err)
 	}
 
 	// wait for example-memcached to reach 4 replicas
-	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 4, retryInterval, timeout)
+	if err := e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 4, retryInterval, timeout); err != nil {
+		return fmt.Errorf("failed waiting for 4 example-memcached replicas: %v", err)
+	}
+	return nil
 }
 
 func MemcachedLocal(t *testing.T) {
