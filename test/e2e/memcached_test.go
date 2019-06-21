@@ -47,6 +47,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -481,26 +482,19 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 	}
 	obj.SetNamespace(namespace)
 
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		err = f.Client.Get(context.TODO(), types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}, &obj)
-		if err != nil {
-			return false, fmt.Errorf("failed to get memcached object: %s", err)
-		}
+	err = f.Client.Get(context.TODO(), types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}, &obj)
+	if err != nil {
+		return fmt.Errorf("failed to get memcached object: %s", err)
+	}
+
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		// update memcached CR size to `toReplicas` replicas
 		spec, ok := obj.Object["spec"].(map[string]interface{})
 		if !ok {
-			return false, errors.New("memcached object missing spec field")
+			return errors.New("memcached object missing spec field")
 		}
 		spec["size"] = toReplicas
-		err = f.Client.Update(context.TODO(), &obj)
-		if err != nil {
-			if apierrors.IsConflict(err) {
-				t.Logf("Update conflict for example-memcached, retrying.")
-				return false, nil
-			}
-			return false, err
-		}
-		return true, nil
+		return f.Client.Update(context.TODO(), &obj)
 	})
 	if err != nil {
 		return fmt.Errorf("could not update memcached CR: %v", err)

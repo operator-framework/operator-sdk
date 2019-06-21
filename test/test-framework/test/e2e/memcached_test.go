@@ -25,10 +25,9 @@ import (
 	apis "github.com/operator-framework/operator-sdk/test/test-framework/pkg/apis"
 	operator "github.com/operator-framework/operator-sdk/test/test-framework/pkg/apis/cache/v1alpha1"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 )
 
 const (
@@ -77,23 +76,14 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		return fmt.Errorf("failed waiting for %d example-memcached replicas: %v", fromReplicas, err)
 	}
 
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: "example-memcached", Namespace: namespace}, exampleMemcached)
-		if err != nil {
-			return false, fmt.Errorf("could not get example-memcached: %v", err)
-		}
+	err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: "example-memcached", Namespace: namespace}, exampleMemcached)
+	if err != nil {
+		return fmt.Errorf("could not get example-memcached: %v", err)
+	}
 
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		exampleMemcached.Spec.Size = int32(toReplicas)
-
-		err = f.Client.Update(goctx.TODO(), exampleMemcached)
-		if err != nil {
-			if apierrors.IsConflict(err) {
-				t.Logf("Update conflict for example-memcached, retrying.")
-				return false, nil
-			}
-			return false, err
-		}
-		return true, nil
+		return f.Client.Update(goctx.TODO(), exampleMemcached)
 	})
 	if err != nil {
 		return fmt.Errorf("could not update example-memcached: %v", err)
