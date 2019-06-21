@@ -19,6 +19,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
+	v1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -52,8 +53,8 @@ func validateScorecardPluginFlags(config *viper.Viper) error {
 		return fmt.Errorf("csv-path must be set if olm-deployed is enabled")
 	}
 	pullPolicy := config.GetString(ProxyPullPolicyOpt)
-	if pullPolicy != "Always" && pullPolicy != "Never" && pullPolicy != "PullIfNotPresent" {
-		return fmt.Errorf("invalid proxy pull policy: (%s); valid values: Always, Never, PullIfNotPresent", pullPolicy)
+	if pullPolicy != string(v1.PullAlways) && pullPolicy != string(v1.PullNever) && pullPolicy != string(v1.PullIfNotPresent) {
+		return fmt.Errorf("invalid proxy pull policy: (%s); valid values: %s, %s, %s", pullPolicy, v1.PullAlways, v1.PullNever, v1.PullIfNotPresent)
 	}
 	return nil
 }
