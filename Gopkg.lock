@@ -775,14 +775,6 @@
   revision = "ea9eea63887261e4d8ed8315f4078e88d540c725"
 
 [[projects]]
-  digest = "1:85d173178711fffb3a9d13bbcb7957facbf676bd555ce2632cb17c307daf7828"
-  name = "github.com/prometheus/prometheus"
-  packages = ["util/promlint"]
-  pruneopts = "NUT"
-  revision = "4d60eb36dcbed725fcac5b27018574118f12fffb"
-  version = "v2.8.1"
-
-[[projects]]
   digest = "1:e09ada96a5a41deda4748b1659cc8953961799e798aea557257b56baee4ecaf3"
   name = "github.com/rogpeppe/go-internal"
   packages = [
@@ -1774,9 +1766,6 @@
     "github.com/pborman/uuid",
     "github.com/pkg/errors",
     "github.com/prometheus/client_golang/prometheus",
-    "github.com/prometheus/client_model/go",
-    "github.com/prometheus/common/expfmt",
-    "github.com/prometheus/prometheus/util/promlint",
     "github.com/rogpeppe/go-internal/modfile",
     "github.com/sergi/go-diff/diffmatchpatch",
     "github.com/sirupsen/logrus",
