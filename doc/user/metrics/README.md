@@ -4,11 +4,13 @@
 
 ## Metrics in Operator SDK
 
+### General metrics
+
 The `func ExposeMetricsPort(ctx context.Context, port int32) (*v1.Service, error)` function exposes general metrics about the running program. These metrics are inherited from controller-runtime. This helper function creates a [Service][service] object with the metrics port exposed, which can then be accessed by Prometheus. The Service object is [garbage collected][gc] when the leader pod's root owner is deleted.
 
 By default, the metrics are served on `0.0.0.0:8383/metrics`. To modify the port the metrics are exposed on, change the `var metricsPort int32 = 8383` variable in the `cmd/manager/main.go` file of the generated operator.
 
-### Usage:
+#### Usage:
 
 ```go
     import(
@@ -45,7 +47,7 @@ By default, the metrics are served on `0.0.0.0:8383/metrics`. To modify the port
 
 *Note:* The above example is already present in `cmd/manager/main.go` in all the operators generated with Operator SDK from v0.5.0 onwards.
 
-### Garbage collection
+#### Garbage collection
 
 The metrics Service is [garbage collected][gc] when the resource used to deploy the operator is deleted (e.g. `Deployment`). This resource is determined when the metrics Service is created, at that time the resource owner reference is added to the Service.
 
@@ -64,7 +66,13 @@ In Kubernetes clusters where [OwnerReferencesPermissionEnforcement][ownerref-per
 ...
 ```
 
+### Custom resource specific metrics
+
+By default operator will expose info metrics based on the number of the current instances of an operator's custom resources in the cluster. It leverages [kube-state-metrics][ksm] as a library to generate those metrics. Metrics initialization lives in the `cmd/manager/main.go` file of the operator in the `serveCRMetrics` function. Its arguments are a custom resource's group, version, and kind to generate the metrics. The metrics are served on `0.0.0.0:8686/metrics` by default. To modify the exposed metrics port number, change the `operatorMetricsPort` variable at the top of the `cmd/manager/main.go` file in the generated operator.
+
+
 [prometheus]: https://prometheus.io/
 [service]: https://kubernetes.io/docs/concepts/services-networking/service/
 [gc]: https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/#owners-and-dependents
 [ownerref-permission]: https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
+[ksm]: https://github.com/kubernetes/kube-state-metrics
