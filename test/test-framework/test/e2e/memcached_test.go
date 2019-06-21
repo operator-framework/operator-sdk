@@ -51,7 +51,7 @@ func TestMemcached(t *testing.T) {
 	})
 }
 
-func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx, fromReplicas, toReplicas int) error {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return fmt.Errorf("could not get namespace: %v", err)
@@ -63,7 +63,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 			Namespace: namespace,
 		},
 		Spec: operator.MemcachedSpec{
-			Size: 3,
+			Size: int32(fromReplicas),
 		},
 	}
 	// use TestCtx's create helper to create the object and add a cleanup function for the new object
@@ -71,10 +71,10 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 	if err != nil {
 		return fmt.Errorf("could not create example-memcached: %v", err)
 	}
-	// wait for example-memcached to reach 3 replicas
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 3, retryInterval, timeout)
+	// wait for example-memcached to reach `fromReplicas` replicas
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", fromReplicas, retryInterval, timeout)
 	if err != nil {
-		return fmt.Errorf("failed waiting for 3 example-memcached replicas: %v", err)
+		return fmt.Errorf("failed waiting for %d example-memcached replicas: %v", fromReplicas, err)
 	}
 
 	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
@@ -83,7 +83,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 			return false, fmt.Errorf("could not get example-memcached: %v", err)
 		}
 
-		exampleMemcached.Spec.Size = 4
+		exampleMemcached.Spec.Size = int32(toReplicas)
 
 		err = f.Client.Update(goctx.TODO(), exampleMemcached)
 		if err != nil {
@@ -99,9 +99,9 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		return fmt.Errorf("could not update example-memcached: %v", err)
 	}
 
-	// wait for example-memcached to reach 4 replicas
-	if err := e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 4, retryInterval, timeout); err != nil {
-		return fmt.Errorf("failed waiting for 4 example-memcached replicas: %v", err)
+	// wait for example-memcached to reach `toReplicas` replicas
+	if err := e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", toReplicas, retryInterval, timeout); err != nil {
+		return fmt.Errorf("failed waiting for %d example-memcached replicas: %v", toReplicas, err)
 	}
 	return nil
 }
@@ -127,7 +127,7 @@ func MemcachedCluster(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = memcachedScaleTest(t, f, ctx); err != nil {
+	if err = memcachedScaleTest(t, f, ctx, 3, 4); err != nil {
 		t.Fatal(err)
 	}
 }

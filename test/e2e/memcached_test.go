@@ -51,14 +51,13 @@ import (
 )
 
 const (
-	crYAML               string = "apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: 3"
-	retryInterval               = time.Second * 5
-	timeout                     = time.Second * 120
-	cleanupRetryInterval        = time.Second * 1
-	cleanupTimeout              = time.Second * 10
-	sdkRepo                     = "github.com/operator-framework/operator-sdk"
-	operatorName                = "memcached-operator"
-	testRepo                    = "github.com/example-inc/" + operatorName
+	retryInterval        = time.Second * 5
+	timeout              = time.Second * 120
+	cleanupRetryInterval = time.Second * 1
+	cleanupTimeout       = time.Second * 10
+	sdkRepo              = "github.com/operator-framework/operator-sdk"
+	operatorName         = "memcached-operator"
+	testRepo             = "github.com/example-inc/" + operatorName
 )
 
 func TestMemcached(t *testing.T) {
@@ -440,7 +439,9 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework, labels
 	return nil, fmt.Errorf("did not find operator pod that was referenced by configmap")
 }
 
-func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx, fromReplicas, toReplicas int) error {
+	crYAML := fmt.Sprintf("apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: %d", fromReplicas)
+
 	// create example-memcached yaml file
 	filename := "deploy/cr.yaml"
 	err := ioutil.WriteFile(filename,
@@ -463,10 +464,10 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		return fmt.Errorf("could not get namespace: %v", err)
 	}
 
-	// wait for example-memcached to reach 3 replicas
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 3, retryInterval, timeout)
+	// wait for example-memcached to reach `fromReplicas` replicas
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", fromReplicas, retryInterval, timeout)
 	if err != nil {
-		return fmt.Errorf("failed waiting for 3 example-memcached replicas: %v", err)
+		return fmt.Errorf("failed waiting for %d example-memcached replicas: %v", fromReplicas, err)
 	}
 
 	// get fresh copy of memcached object as unstructured
@@ -485,15 +486,16 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		if err != nil {
 			return false, fmt.Errorf("failed to get memcached object: %s", err)
 		}
-		// update memcached CR size to 4
+		// update memcached CR size to `toReplicas` replicas
 		spec, ok := obj.Object["spec"].(map[string]interface{})
 		if !ok {
 			return false, errors.New("memcached object missing spec field")
 		}
-		spec["size"] = 4
+		spec["size"] = toReplicas
 		err = f.Client.Update(context.TODO(), &obj)
 		if err != nil {
 			if apierrors.IsConflict(err) {
+				t.Logf("Update conflict for example-memcached, retrying.")
 				return false, nil
 			}
 			return false, err
@@ -504,9 +506,9 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		return fmt.Errorf("could not update memcached CR: %v", err)
 	}
 
-	// wait for example-memcached to reach 4 replicas
-	if err := e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 4, retryInterval, timeout); err != nil {
-		return fmt.Errorf("failed waiting for 4 example-memcached replicas: %v", err)
+	// wait for example-memcached to reach `toReplicas` replicas
+	if err := e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", toReplicas, retryInterval, timeout); err != nil {
+		return fmt.Errorf("failed waiting for %d example-memcached replicas: %v", toReplicas, err)
 	}
 	return nil
 }
@@ -552,7 +554,7 @@ func MemcachedLocal(t *testing.T) {
 		t.Fatalf("Local operator not ready after 100 seconds: %v\n", err)
 	}
 
-	if err = memcachedScaleTest(t, framework.Global, ctx); err != nil {
+	if err = memcachedScaleTest(t, framework.Global, ctx, 3, 4); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -625,7 +627,7 @@ func MemcachedCluster(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = memcachedScaleTest(t, framework.Global, ctx); err != nil {
+	if err = memcachedScaleTest(t, framework.Global, ctx, 3, 4); err != nil {
 		t.Fatal(err)
 	}
 
