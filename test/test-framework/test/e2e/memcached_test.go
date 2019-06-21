@@ -81,8 +81,9 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		return fmt.Errorf("could not get example-memcached: %v", err)
 	}
 
-	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		exampleMemcached.Spec.Size = int32(toReplicas)
+		t.Logf("Attempting memcached CR update, resourceVersion: %s", exampleMemcached.GetResourceVersion())
 		return f.Client.Update(goctx.TODO(), exampleMemcached)
 	})
 	if err != nil {

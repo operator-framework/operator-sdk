@@ -487,13 +487,14 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		return fmt.Errorf("failed to get memcached object: %s", err)
 	}
 
-	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		// update memcached CR size to `toReplicas` replicas
 		spec, ok := obj.Object["spec"].(map[string]interface{})
 		if !ok {
 			return errors.New("memcached object missing spec field")
 		}
 		spec["size"] = toReplicas
+		t.Logf("Attempting memcached CR update, resourceVersion: %s", obj.GetResourceVersion())
 		return f.Client.Update(context.TODO(), &obj)
 	})
 	if err != nil {
