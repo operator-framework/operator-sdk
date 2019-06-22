@@ -49,6 +49,9 @@ function add_go_mod_replace() {
 	local to_path="$2"
 	local version="${3:-}"
 
+	if [[ ! -d "$to_path" ]]; then
+		echo "$to_path does not exist"
+	fi
 	if [[ ! -e go.mod ]]; then
 		echo "go.mod file not found in $(pwd)"
 	fi
