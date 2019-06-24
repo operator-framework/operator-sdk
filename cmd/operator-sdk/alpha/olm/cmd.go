@@ -12,19 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package alpha
+package olm
 
 import (
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/olm"
 	"github.com/spf13/cobra"
 )
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "alpha",
-		Short: "Run an alpha subcommand",
+		Use:   "olm",
+		Short: "Manage the Operator Lifecycle Manager installation in your cluster",
 	}
-
-	cmd.AddCommand(olm.NewCmd())
+	cmd.AddCommand(
+		NewInitCmd(),
+		NewResetCmd(),
+		NewStatusCmd(),
+	)
 	return cmd
 }

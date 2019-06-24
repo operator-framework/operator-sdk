@@ -22,12 +22,9 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"sync"
 	"text/tabwriter"
 	"time"
-
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 
@@ -35,7 +32,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -63,7 +62,7 @@ type Client struct {
 	BaseReleasesAPIURL string
 }
 
-func NewForConfig(cfg *rest.Config) (*Client, error) {
+func ClientForConfig(cfg *rest.Config) (*Client, error) {
 	rm, err := restmapper.NewDynamicRESTMapper(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dynamic rest mapper: %s", err)
@@ -92,36 +91,18 @@ func NewForConfig(cfg *rest.Config) (*Client, error) {
 }
 
 func (c Client) InstallVersion(ctx context.Context, version string) (*Status, error) {
-	log.Info("Verifying version")
-	version, err := c.resolveVersion(ctx, version)
+	resources, err := c.getResources(ctx, version)
 	if err != nil {
-		return nil, fmt.Errorf("failed to verify version '%s': %s", version, err)
+		return nil, fmt.Errorf("failed to get resources: %s", err)
 	}
 
-	var objs []unstructured.Unstructured
-
-	log.Info("Fetching CRDs")
-	crdResources, err := c.getCRDs(ctx, version)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch CRDs: %s", err)
-	}
-	objs = append(objs, crdResources...)
-
-	log.Info("Fetching resources")
-	olmResources, err := c.getOLM(ctx, version)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch resources: %s", err)
-	}
-	objs = append(objs, olmResources...)
-
-	status := c.getStatus(ctx, objs)
+	status := c.getStatus(ctx, resources)
 	if status.HasExistingResources() {
-		status.Message = "Detected existing OLM resources. Skipping initialization."
-		return &status, nil
+		return nil, fmt.Errorf("detected existing OLM resources")
 	}
 
 	log.Print("Creating CRDs and resources")
-	if err := c.doCreate(ctx, objs); err != nil {
+	if err := c.doCreate(ctx, resources); err != nil {
 		return nil, fmt.Errorf("failed to create CRDs and resources: %s", err)
 	}
 
@@ -146,9 +127,66 @@ func (c Client) InstallVersion(ctx context.Context, version string) (*Status, er
 		return nil, fmt.Errorf("deployment %q failed to rollout: %s", packageServerKey.Name, err)
 	}
 
-	status = c.getStatus(ctx, objs)
-	status.Message = fmt.Sprintf("Successfully installed OLM version %s", version)
+	status = c.getStatus(ctx, resources)
 	return &status, nil
+}
+
+func (c Client) UninstallVersion(ctx context.Context, version string) error {
+	resources, err := c.getResources(ctx, version)
+	if err != nil {
+		return fmt.Errorf("failed to get resources: %s", err)
+	}
+
+	status := c.getStatus(ctx, resources)
+	if !status.HasExistingResources() {
+		return fmt.Errorf("failed to delete OLM version %s: no existing installation found", version)
+	}
+
+	log.Infof("Uninstalling resources for version %s", version)
+	if err := c.doDelete(ctx, resources); err != nil {
+		return fmt.Errorf("failed to delete OLM version %s: %s", version, err)
+	}
+	return nil
+}
+
+func (c Client) GetVersion(ctx context.Context, version string) (string, error) {
+	log.Infof("Resolving version %q", version)
+	version, err := c.resolveVersion(ctx, version)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve version %s: %s", version, err)
+	}
+	log.Infof("  Found GitHub release version %s", version)
+	return version, nil
+}
+
+func (c Client) GetStatus(ctx context.Context, version string) (*Status, error) {
+	resources, err := c.getResources(ctx, version)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get resources: %s", err)
+	}
+
+	status := c.getStatus(ctx, resources)
+	if !status.HasExistingResources() {
+		return nil, fmt.Errorf("no existing installation found")
+	}
+	return &status, nil
+}
+
+func (c Client) getResources(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
+	log.Infof("Fetching CRDs for version %s", version)
+	crdResources, err := c.getCRDs(ctx, version)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch CRDs: %s", err)
+	}
+
+	log.Infof("Fetching resources for version %s", version)
+	olmResources, err := c.getOLM(ctx, version)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch resources: %s", err)
+	}
+
+	resources := append(crdResources, olmResources...)
+	return resources, nil
 }
 
 func (c Client) getStatus(ctx context.Context, objs []unstructured.Unstructured) Status {
@@ -273,12 +311,41 @@ func decodeResources(rds ...io.Reader) ([]unstructured.Unstructured, error) {
 
 func (c Client) doCreate(ctx context.Context, objs []unstructured.Unstructured) error {
 	for _, obj := range objs {
+		log.Infof("  Creating %s %q", obj.GroupVersionKind().Kind, getName(obj.GetNamespace(), obj.GetName()))
 		err := c.KubeClient.Create(ctx, &obj)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func (c Client) doDelete(ctx context.Context, objs []unstructured.Unstructured) error {
+	for _, obj := range objs {
+		log.Infof("  Removing %s %q", obj.GroupVersionKind().Kind, getName(obj.GetNamespace(), obj.GetName()))
+		err := c.KubeClient.Delete(ctx, &obj, client.PropagationPolicy(metav1.DeletePropagationForeground))
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				continue
+			}
+			return err
+		}
+	}
+
+	log.Infof("  Waiting for deleted resources to disappear")
+	wait.PollImmediateUntil(time.Second, func() (bool, error) {
+		s := c.getStatus(ctx, objs)
+		return !s.HasExistingResources(), nil
+	}, ctx.Done())
+
+	return nil
+}
+
+func getName(namespace, name string) string {
+	if namespace != "" {
+		name = fmt.Sprintf("%s/%s", namespace, name)
+	}
+	return name
 }
 
 func (c Client) doRolloutWait(ctx context.Context, key types.NamespacedName) error {
@@ -359,7 +426,6 @@ func (c Client) doCSVWait(ctx context.Context, key types.NamespacedName) error {
 
 type Status struct {
 	Resources []ResourceStatus
-	Message   string
 }
 
 type ResourceStatus struct {
@@ -397,8 +463,5 @@ func (s Status) String() string {
 	}
 	tw.Flush()
 
-	var sb strings.Builder
-	sb.WriteString(s.Message + "\n")
-	sb.WriteString("\n" + out.String())
-	return sb.String()
+	return out.String()
 }
