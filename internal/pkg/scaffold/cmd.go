@@ -64,7 +64,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // Change below variables to serve metrics on different host or port.
