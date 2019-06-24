@@ -17,7 +17,6 @@ package e2e
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -441,7 +440,8 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework, labels
 }
 
 func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx, fromReplicas, toReplicas int) error {
-	crYAML := fmt.Sprintf("apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: %d", fromReplicas)
+	name := "example-memcached"
+	crYAML := fmt.Sprintf("apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"%s\"\nspec:\n  size: %d", name, fromReplicas)
 
 	// create example-memcached yaml file
 	filename := "deploy/cr.yaml"
@@ -464,11 +464,12 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 	if err != nil {
 		return fmt.Errorf("could not get namespace: %v", err)
 	}
+	key := types.NamespacedName{Name: name, Namespace: namespace}
 
 	// wait for example-memcached to reach `fromReplicas` replicas
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", fromReplicas, retryInterval, timeout)
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, key.Namespace, key.Name, fromReplicas, retryInterval, timeout)
 	if err != nil {
-		return fmt.Errorf("failed waiting for %d example-memcached replicas: %v", fromReplicas, err)
+		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %v", fromReplicas, key.Name, err)
 	}
 
 	// get fresh copy of memcached object as unstructured
@@ -478,32 +479,32 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		return fmt.Errorf("could not convert yaml file to json: %v", err)
 	}
 	if err := obj.UnmarshalJSON(jsonSpec); err != nil {
-		t.Fatalf("Failed to unmarshal memcached CR: (%v)", err)
+		return fmt.Errorf("failed to unmarshal memcached CR %q: %v", key, err)
 	}
-	obj.SetNamespace(namespace)
+	obj.SetNamespace(key.Namespace)
 
-	err = f.Client.Get(context.TODO(), types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}, &obj)
+	err = f.Client.Get(context.TODO(), key, &obj)
 	if err != nil {
-		return fmt.Errorf("failed to get memcached object: %s", err)
+		return fmt.Errorf("could not get memcached CR %q: %v", key, err)
 	}
 
 	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		// update memcached CR size to `toReplicas` replicas
 		spec, ok := obj.Object["spec"].(map[string]interface{})
 		if !ok {
-			return errors.New("memcached object missing spec field")
+			return fmt.Errorf("memcached CR %q missing spec field", key)
 		}
 		spec["size"] = toReplicas
-		t.Logf("Attempting memcached CR update, resourceVersion: %s", obj.GetResourceVersion())
+		t.Logf("Attempting memcached CR %q update, resourceVersion: %s", key, obj.GetResourceVersion())
 		return f.Client.Update(context.TODO(), &obj)
 	})
 	if err != nil {
-		return fmt.Errorf("could not update memcached CR: %v", err)
+		return fmt.Errorf("could not update memcached CR %q: %v", key, err)
 	}
 
 	// wait for example-memcached to reach `toReplicas` replicas
-	if err := e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", toReplicas, retryInterval, timeout); err != nil {
-		return fmt.Errorf("failed waiting for %d example-memcached replicas: %v", toReplicas, err)
+	if err := e2eutil.WaitForDeployment(t, f.KubeClient, key.Namespace, key.Name, toReplicas, retryInterval, timeout); err != nil {
+		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %v", toReplicas, key.Name, err)
 	}
 	return nil
 }
