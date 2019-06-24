@@ -17,6 +17,22 @@
 - Remove TypeMeta declaration from the implementation of the objects [#1462](https://github.com/operator-framework/operator-sdk/pull/1462/)
 - Relaxed API version format check when parsing `pkg/apis` in code generators. API dir structures can now be of the format `pkg/apis/<group>/<anything>`, where `<anything>` was previously required to be in the Kubernetes version format, ex. `v1alpha1`. ([#1525](https://github.com/operator-framework/operator-sdk/pull/1525))
 - The SDK and operator projects will work outside of `$GOPATH/src` when using [Go modules](https://github.com/golang/go/wiki/Modules). ([#1475](https://github.com/operator-framework/operator-sdk/pull/1475))
+- Upgrade [`controller-runtime`](https://github.com/kubernetes-sigs/controller-runtime) version from `v0.1.10` to `v0.2.0-beta.2`
+- Upgrade Kubernetes version from `kubernetes-1.13.1` to `kubernetes-1.14.1`
+- Upgrade `github.com/operator-framework/operator-lifecycle-manager` version from `b8a4faf68e36feb6d99a6aec623b405e587b17b1` to `0.10.1`
+
+### Breaking changes
+
+- The package `sigs.k8s.io/controller-runtime/pkg/runtime/scheme` is deprecated, and contains no code. Replace this import with `sigs.k8s.io/controller-runtime/pkg/scheme` where relevant.
+- The package `sigs.k8s.io/controller-runtime/pkg/runtime/log` is deprecated. Replace this import with `sigs.k8s.io/controller-runtime/pkg/log` where relevant.
+- The package `sigs.k8s.io/controller-runtime/pkg/runtime/signals` is deprecated. Replace this import with `sigs.k8s.io/controller-runtime/pkg/manager/signals` where relevant.
+- [`pkg/client.Client`](https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/interfaces.go#L61)'s `List()` method has been updated: `List(ctx context.Context, opts *client.ListOptions, list runtime.Object) error` is now `List(ctx context.Context, list runtime.Object, opts ...client.ListOptionFunc) error`. To migrate:
+```go
+// Old
+err = r.client.List(context.TODO(), listOps, podList)
+// New
+err = r.client.List(context.TODO(), podList, client.UseListOptions(listOps))
+```
 
 ### Deprecated
 
