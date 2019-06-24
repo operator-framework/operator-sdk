@@ -329,7 +329,7 @@ Example of a valid JSON output:
 
 The scorecard can be run using only a [Cluster Service Version (CSV)][olm-csv], providing a way to test cluster-ready and non-SDK operators.
 
-Running with a CSV alone requires both the `--csv-path=<CSV manifest path>` and `--olm-deployed` flags are set. The scorecard assumes your CSV and relevant CRD's have been deployed onto the cluster using the OLM when using `--olm-deployed`. This [document][olm-deploy-operator] walks through bundling your CSV and CRD's, deploying the OLM on minikube or [OKD][okd], and deploying your operator. Once these steps have been completed, run the scorecard with both `--csv-path=<CSV manifest path>` and `--olm-deployed` flags.
+Running with a CSV alone requires both the `--csv-path=<CSV manifest path>` and `--olm-deployed` flags to be set. The scorecard assumes your CSV and relevant CRD's have been deployed onto the cluster using the OLM when using `--olm-deployed`. This [document][olm-deploy-operator] walks through bundling your CSV and CRD's, deploying the OLM on minikube or [OKD][okd], and deploying your operator. Once these steps have been completed, run the scorecard with both the `--csv-path=<CSV manifest path>` and `--olm-deployed` flags.
 
 A few notes:
 
