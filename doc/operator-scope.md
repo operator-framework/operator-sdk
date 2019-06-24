@@ -25,7 +25,7 @@ For each CRD that needs to be cluster-scoped, update its manifest to be cluster-
   * Set `spec.scope: Cluster`
 
 
-### Example
+### Example for cluster scoped operator
 
 With the above changes the specified manifests should look as follows:
 
