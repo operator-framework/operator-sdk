@@ -22,8 +22,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"k8s.io/client-go/discovery"
-
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/helm"
@@ -33,6 +31,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
@@ -462,17 +461,15 @@ func initGit() error {
 	if skipGit {
 		return nil
 	}
+	if _, err := exec.LookPath("git"); err != nil {
+		log.Infof("Skipping git init: %v", err)
+		return nil
+	}
+
 	log.Info("Running git init")
 	if err := execProjCmd("git", "init"); err != nil {
-		return err
+		return errors.Wrapf(err, "failed to run git init")
 	}
-	if err := execProjCmd("git", "add", "--all"); err != nil {
-		return err
-	}
-	if err := execProjCmd("git", "commit", "-q", "-m", "INITIAL COMMIT"); err != nil {
-		return err
-	}
-	log.Info("Run git init done")
 	return nil
 }
 
