@@ -470,6 +470,7 @@ func initGit() error {
 	if err := execProjCmd("git", "init"); err != nil {
 		return errors.Wrapf(err, "failed to run git init")
 	}
+	log.Info("Run git init done")
 	return nil
 }
 
