@@ -8,12 +8,57 @@ import (
 	"k8s.io/client-go/tools/record"
 )
 
+const (
+	CopiedLabelKey = "olm.copiedFrom"
+
+	// ConditionsLengthLimit is the maximum length of Status.Conditions of a
+	// given ClusterServiceVersion object. The oldest condition(s) are removed
+	// from the list as it grows over time to keep it at limit.
+	ConditionsLengthLimit = 20
+)
+
 // obsoleteReasons are the set of reasons that mean a CSV should no longer be processed as active
 var obsoleteReasons = map[ConditionReason]struct{}{
 	CSVReasonReplaced:      {},
 	CSVReasonBeingReplaced: {},
 }
 
+// uncopiableReasons are the set of reasons that should prevent a CSV from being copied to target namespaces
+var uncopiableReasons = map[ConditionReason]struct{}{
+	CSVReasonCopied:                                      {},
+	CSVReasonInvalidInstallModes:                         {},
+	CSVReasonNoTargetNamespaces:                          {},
+	CSVReasonUnsupportedOperatorGroup:                    {},
+	CSVReasonNoOperatorGroup:                             {},
+	CSVReasonTooManyOperatorGroups:                       {},
+	CSVReasonInterOperatorGroupOwnerConflict:             {},
+	CSVReasonCannotModifyStaticOperatorGroupProvidedAPIs: {},
+}
+
+// safeToAnnotateOperatorGroupReasons are the set of reasons that it's safe to attempt to update the operatorgroup
+// annotations
+var safeToAnnotateOperatorGroupReasons = map[ConditionReason]struct{}{
+	CSVReasonOwnerConflict:                               {},
+	CSVReasonInstallSuccessful:                           {},
+	CSVReasonInvalidInstallModes:                         {},
+	CSVReasonNoTargetNamespaces:                          {},
+	CSVReasonUnsupportedOperatorGroup:                    {},
+	CSVReasonNoOperatorGroup:                             {},
+	CSVReasonTooManyOperatorGroups:                       {},
+	CSVReasonInterOperatorGroupOwnerConflict:             {},
+	CSVReasonCannotModifyStaticOperatorGroupProvidedAPIs: {},
+}
+
+// SetPhaseWithEventIfChanged emits a Kubernetes event with details of a phase change and sets the current phase if phase, reason, or message would changed
+func (c *ClusterServiceVersion) SetPhaseWithEventIfChanged(phase ClusterServiceVersionPhase, reason ConditionReason, message string, now metav1.Time, recorder record.EventRecorder) {
+	if c.Status.Phase == phase && c.Status.Reason == reason && c.Status.Message == message {
+		return
+	}
+
+	c.SetPhaseWithEvent(phase, reason, message, now, recorder)
+}
+
+// SetPhaseWithEvent generates a Kubernetes event with details about the phase change and sets the current phase
 func (c *ClusterServiceVersion) SetPhaseWithEvent(phase ClusterServiceVersionPhase, reason ConditionReason, message string, now metav1.Time, recorder record.EventRecorder) {
 	var eventtype string
 	if phase == CSVPhaseFailed {
@@ -27,6 +72,18 @@ func (c *ClusterServiceVersion) SetPhaseWithEvent(phase ClusterServiceVersionPha
 
 // SetPhase sets the current phase and adds a condition if necessary
 func (c *ClusterServiceVersion) SetPhase(phase ClusterServiceVersionPhase, reason ConditionReason, message string, now metav1.Time) {
+	newCondition := func() ClusterServiceVersionCondition {
+		return ClusterServiceVersionCondition{
+			Phase:              c.Status.Phase,
+			LastTransitionTime: c.Status.LastTransitionTime,
+			LastUpdateTime:     c.Status.LastUpdateTime,
+			Message:            message,
+			Reason:             reason,
+		}
+	}
+
+	defer c.TrimConditionsIfLimitExceeded()
+
 	c.Status.LastUpdateTime = now
 	if c.Status.Phase != phase {
 		c.Status.Phase = phase
@@ -35,23 +92,13 @@ func (c *ClusterServiceVersion) SetPhase(phase ClusterServiceVersionPhase, reaso
 	c.Status.Message = message
 	c.Status.Reason = reason
 	if len(c.Status.Conditions) == 0 {
-		c.Status.Conditions = append(c.Status.Conditions, ClusterServiceVersionCondition{
-			Phase:              c.Status.Phase,
-			LastTransitionTime: c.Status.LastTransitionTime,
-			LastUpdateTime:     c.Status.LastUpdateTime,
-			Message:            message,
-			Reason:             reason,
-		})
+		c.Status.Conditions = append(c.Status.Conditions, newCondition())
+		return
 	}
+
 	previousCondition := c.Status.Conditions[len(c.Status.Conditions)-1]
 	if previousCondition.Phase != c.Status.Phase || previousCondition.Reason != c.Status.Reason {
-		c.Status.Conditions = append(c.Status.Conditions, ClusterServiceVersionCondition{
-			Phase:              c.Status.Phase,
-			LastTransitionTime: c.Status.LastTransitionTime,
-			LastUpdateTime:     c.Status.LastUpdateTime,
-			Message:            message,
-			Reason:             reason,
-		})
+		c.Status.Conditions = append(c.Status.Conditions, newCondition())
 	}
 }
 
@@ -77,7 +124,26 @@ func (c *ClusterServiceVersion) IsCopied() bool {
 	if c.Status.Reason == CSVReasonCopied || ok && c.GetNamespace() != operatorNamespace {
 		return true
 	}
+
+	if labels := c.GetLabels(); labels != nil {
+		if _, ok := labels[CopiedLabelKey]; ok {
+			return true
+		}
+	}
 	return false
+}
+
+func (c *ClusterServiceVersion) IsUncopiable() bool {
+	if c.Status.Phase == CSVPhaseNone {
+		return true
+	}
+	_, ok := uncopiableReasons[c.Status.Reason]
+	return ok
+}
+
+func (c *ClusterServiceVersion) IsSafeToUpdateOperatorGroupAnnotations() bool {
+	_, ok := safeToAnnotateOperatorGroupReasons[c.Status.Reason]
+	return ok
 }
 
 // NewInstallModeSet returns an InstallModeSet instantiated from the given list of InstallModes.
@@ -98,26 +164,45 @@ func NewInstallModeSet(modes []InstallMode) (InstallModeSet, error) {
 // the given operatorNamespace and list of target namespaces.
 func (set InstallModeSet) Supports(operatorNamespace string, namespaces []string) error {
 	numNamespaces := len(namespaces)
-	if !set[InstallModeTypeAllNamespaces] && numNamespaces == 1 && namespaces[0] == v1.NamespaceAll {
-		return fmt.Errorf("%s InstallModeType not supported, cannot configure to watch all namespaces", InstallModeTypeAllNamespaces)
-	}
-
-	if !set[InstallModeTypeSingleNamespace] && !set[InstallModeTypeMultiNamespace] && numNamespaces == 1 && namespaces[0] != v1.NamespaceAll {
-		return fmt.Errorf("%s InstallModeType not supported, cannot configure to watch one namespace", InstallModeTypeSingleNamespace)
-	}
-
-	if !set[InstallModeTypeMultiNamespace] && numNamespaces > 1 {
-		return fmt.Errorf("%s InstallModeType not supported, cannot configure to watch %d namespaces", InstallModeTypeMultiNamespace, numNamespaces)
-	}
-
-	for i, namespace := range namespaces {
-		if !set[InstallModeTypeOwnNamespace] && namespace == operatorNamespace {
-			return fmt.Errorf("%s InstallModeType not supported, cannot configure to watch own namespace", InstallModeTypeOwnNamespace)
+	switch {
+	case numNamespaces == 0:
+		return fmt.Errorf("operatorgroup has invalid selected namespaces, cannot configure to watch zero namespaces")
+	case numNamespaces == 1:
+		switch namespaces[0] {
+		case operatorNamespace:
+			if !set[InstallModeTypeOwnNamespace] {
+				return fmt.Errorf("%s InstallModeType not supported, cannot configure to watch own namespace", InstallModeTypeOwnNamespace)
+			}
+		case v1.NamespaceAll:
+			if !set[InstallModeTypeAllNamespaces] {
+				return fmt.Errorf("%s InstallModeType not supported, cannot configure to watch all namespaces", InstallModeTypeAllNamespaces)
+			}
+		default:
+			if !set[InstallModeTypeSingleNamespace] {
+				return fmt.Errorf("%s InstallModeType not supported, cannot configure to watch one namespace", InstallModeTypeSingleNamespace)
+			}
 		}
-		if i > 0 && namespace == v1.NamespaceAll {
-			return fmt.Errorf("Invalid selected namespaces, NamespaceAll found when |selected namespaces| > 1")
+	case numNamespaces > 1 && !set[InstallModeTypeMultiNamespace]:
+		return fmt.Errorf("%s InstallModeType not supported, cannot configure to watch %d namespaces", InstallModeTypeMultiNamespace, numNamespaces)
+	case numNamespaces > 1:
+		for _, namespace := range namespaces {
+			if namespace == operatorNamespace && !set[InstallModeTypeOwnNamespace] {
+				return fmt.Errorf("%s InstallModeType not supported, cannot configure to watch own namespace", InstallModeTypeOwnNamespace)
+			}
+			if namespace == v1.NamespaceAll {
+				return fmt.Errorf("operatorgroup has invalid selected namespaces, NamespaceAll found when |selected namespaces| > 1")
+			}
 		}
 	}
 
 	return nil
+}
+
+func (c *ClusterServiceVersion) TrimConditionsIfLimitExceeded() {
+	if len(c.Status.Conditions) <= ConditionsLengthLimit {
+		return
+	}
+
+	firstIndex := len(c.Status.Conditions) - ConditionsLengthLimit
+	c.Status.Conditions = c.Status.Conditions[firstIndex:len(c.Status.Conditions)]
 }

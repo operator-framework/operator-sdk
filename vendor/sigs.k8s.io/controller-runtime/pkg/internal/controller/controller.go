@@ -31,14 +31,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	ctrlmetrics "sigs.k8s.io/controller-runtime/pkg/internal/controller/metrics"
+	logf "sigs.k8s.io/controller-runtime/pkg/internal/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/inject"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logf.KBLog.WithName("controller")
+var log = logf.RuntimeLog.WithName("controller")
 
 var _ inject.Injector = &Controller{}
 
@@ -180,11 +180,6 @@ func (c *Controller) processNextWorkItem() bool {
 	}()
 
 	obj, shutdown := c.Queue.Get()
-	if obj == nil {
-		// Sometimes the Queue gives us nil items when it starts up
-		c.Queue.Forget(obj)
-	}
-
 	if shutdown {
 		// Stop working
 		return false
@@ -219,6 +214,11 @@ func (c *Controller) processNextWorkItem() bool {
 		ctrlmetrics.ReconcileTotal.WithLabelValues(c.Name, "error").Inc()
 		return false
 	} else if result.RequeueAfter > 0 {
+		// The result.RequeueAfter request will be lost, if it is returned
+		// along with a non-nil error. But this is intended as
+		// We need to drive to stable reconcile loops before queuing due
+		// to result.RequestAfter
+		c.Queue.Forget(obj)
 		c.Queue.AddAfter(req, result.RequeueAfter)
 		ctrlmetrics.ReconcileTotal.WithLabelValues(c.Name, "requeue_after").Inc()
 		return true
