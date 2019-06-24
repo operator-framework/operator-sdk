@@ -6,7 +6,7 @@
 
 ### General metrics
 
-The `func ExposeMetricsPort(ctx context.Context, port int32) (*v1.Service, error)` function exposes general metrics about the running program. These metrics are inherited from controller-runtime. This helper function creates a [Service][service] object with the metrics port exposed, which can then be accessed by Prometheus. The Service object is [garbage collected][gc] when the leader pod's root owner is deleted.
+The `ExposeMetricsPort(ctx context.Context, port int32) (*v1.Service, error)` function exposes general metrics about the running program. These metrics are inherited from controller-runtime. To understand which metrics are exposed, read the metrics package doc of [controller-runtime][controller-metrics]. The `ExposeMetricsPort` function creates a [Service][service] object with the metrics port exposed, which can then be accessed by Prometheus. The Service object is [garbage collected][gc] when the leader pod's root owner is deleted.
 
 By default, the metrics are served on `0.0.0.0:8383/metrics`. To modify the port the metrics are exposed on, change the `var metricsPort int32 = 8383` variable in the `cmd/manager/main.go` file of the generated operator.
 
@@ -76,3 +76,4 @@ By default operator will expose info metrics based on the number of the current 
 [gc]: https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/#owners-and-dependents
 [ownerref-permission]: https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
 [ksm]: https://github.com/kubernetes/kube-state-metrics
+[controller-metrics]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/internal/controller/metrics
