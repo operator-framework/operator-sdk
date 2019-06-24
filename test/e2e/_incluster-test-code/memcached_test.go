@@ -40,6 +40,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -163,45 +164,53 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework, labels
 	return nil, fmt.Errorf("did not find operator pod that was referenced by configmap")
 }
 
-func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx, fromReplicas, toReplicas int) error {
+	name := "example-memcached"
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return fmt.Errorf("could not get namespace: %v", err)
 	}
+	key := types.NamespacedName{Name: name, Namespace: namespace}
 	// create memcached custom resource
 	exampleMemcached := &operator.Memcached{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "example-memcached",
-			Namespace: namespace,
+			Name:      key.Name,
+			Namespace: key.Namespace,
 		},
 		Spec: operator.MemcachedSpec{
-			Size: 3,
+			Size: int32(fromReplicas),
 		},
 	}
 	// use TestCtx's create helper to create the object and add a cleanup function for the new object
 	err = f.Client.Create(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
-		return err
+		return fmt.Errorf("could no create CR: %v", err)
 	}
-	// wait for example-memcached to reach 3 replicas
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 3, retryInterval, timeout)
+	// wait for example-memcached to reach `fromReplicas` replicas
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, key.Namespace, key.Name, fromReplicas, retryInterval, timeout)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %v", fromReplicas, key.Name, err)
 	}
 
-	err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: exampleMemcached.GetName(), Namespace: exampleMemcached.GetNamespace()}, exampleMemcached)
+	err = f.Client.Get(goctx.TODO(), key, exampleMemcached)
 	if err != nil {
-		return fmt.Errorf("failed to get memcached object: %s", err)
+		return fmt.Errorf("could not get memcached CR %q: %v", key, err)
 	}
-	// update memcached CR size to 4
-	exampleMemcached.Spec.Size = 4
-	err = f.Client.Update(goctx.TODO(), exampleMemcached)
+	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		// update memcached CR size to `toReplicas` replicas
+		exampleMemcached.Spec.Size = int32(toReplicas)
+		t.Logf("Attempting memcached CR %q update, resourceVersion: %s", key, exampleMemcached.GetResourceVersion())
+		return f.Client.Update(goctx.TODO(), exampleMemcached)
+	})
 	if err != nil {
-		return err
+		return fmt.Errorf("could not update memcached CR %q: %v", key, err)
 	}
 
-	// wait for example-memcached to reach 4 replicas
-	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 4, retryInterval, timeout)
+	// wait for example-memcached to reach `toReplicas` replicas
+	if err := e2eutil.WaitForDeployment(t, f.KubeClient, key.Namespace, key.Name, toReplicas, retryInterval, timeout); err != nil {
+		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %v", toReplicas, key.Name, err)
+	}
+	return nil
 }
 
 func MemcachedLocal(t *testing.T) {
@@ -245,7 +254,7 @@ func MemcachedLocal(t *testing.T) {
 		t.Fatalf("Local operator not ready after 100 seconds: %v\n", err)
 	}
 
-	if err = memcachedScaleTest(t, framework.Global, ctx); err != nil {
+	if err = memcachedScaleTest(t, framework.Global, ctx, 3, 4); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -276,7 +285,7 @@ func MemcachedCluster(t *testing.T) {
 	}
 	t.Log("Completed leader test")
 
-	if err := memcachedScaleTest(t, f, ctx); err != nil {
+	if err := memcachedScaleTest(t, f, ctx, 3, 4); err != nil {
 		t.Error(err)
 	}
 	t.Log("Completed scale test")
