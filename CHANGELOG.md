@@ -23,7 +23,7 @@
 ### Removed
 
 - The SDK no longer depends on a `vendor/` directory to manage dependencies *only if* using [Go modules](https://github.com/golang/go/wiki/Modules). The SDK and operator projects will only use vendoring if using `dep`, or modules and a `vendor/` dir is present. ([#1519](https://github.com/operator-framework/operator-sdk/pull/1519))
-- `ExposeMetricsPort` is now depracted and was replaced with `CreateMetricsService()` function. `PrometheusPortName` constant is replaced with `OperatorPortName`. ([#1560](https://github.com/operator-framework/operator-sdk/pull/1560))
+- **Breaking change:** `ExposeMetricsPort` is removed and replaced with `CreateMetricsService()` function. `PrometheusPortName` constant is replaced with `OperatorPortName`. ([#1560](https://github.com/operator-framework/operator-sdk/pull/1560))
 
 ### Bug Fixes
 
