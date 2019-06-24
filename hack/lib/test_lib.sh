@@ -41,3 +41,31 @@ function trap_add() {
                 fatal "unable to add to trap ${trap_add_name}"
     done
 }
+
+# add_go_mod_replace adds a "replace" directive from $1 to $2 with an
+# optional version version $3 to the current working directory's go.mod file.
+function add_go_mod_replace() {
+	local from_path="$1"
+	local to_path="$2"
+	local version="${3:-}"
+
+	if [[ ! -d "$to_path" ]]; then
+		echo "$to_path does not exist"
+	fi
+	if [[ ! -e go.mod ]]; then
+		echo "go.mod file not found in $(pwd)"
+	fi
+
+	# Use the local operator-sdk directory as the repo. To make the go toolchain
+	# happy, the directory needs a `go.mod` file that specifies the module name,
+	# so we need this temporary hack until we update the SDK repo itself to use
+	# Go modules.
+	echo "module ${from_path}" > "${to_path}/go.mod"
+	trap_add "rm ${to_path}/go.mod" EXIT
+	# Do not use "go mod edit" so formatting stays the same.
+	local replace="replace ${from_path} => ${to_path}"
+	if [[ -n "$version" ]]; then
+		replace="$replace $version"
+	fi
+	echo "$replace" >> go.mod
+}

@@ -23,7 +23,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -35,10 +34,10 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 
 	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/prometheus/util/promlint"
-	"github.com/rogpeppe/go-internal/modfile"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -129,20 +128,9 @@ func TestMemcached(t *testing.T) {
 				}
 			}()
 		}
-		modBytes, err := ioutil.ReadFile("go.mod")
+		modBytes, err := insertGoModReplace(t, sdkRepo, replace.repo, replace.ref)
 		if err != nil {
-			t.Fatalf("Failed to read go.mod: %v", err)
-		}
-		// Remove SDK repo dependency lines so we can parse the modfile.
-		sdkRe := regexp.MustCompile(`.*github\.com/operator-framework/operator-sdk.*`)
-		modBytes = sdkRe.ReplaceAll(modBytes, nil)
-		modBytes, err = insertGoModReplace(t, modBytes, sdkRepo, replace.repo, replace.ref)
-		if err != nil {
-			t.Fatalf("Failed to insert replace: %v", err)
-		}
-		err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
-		if err != nil {
-			t.Fatalf("Failed to write updated go.mod: %v", err)
+			t.Fatalf("Failed to insert go.mod replace: %v", err)
 		}
 		t.Logf("go.mod: %v", string(modBytes))
 	}
@@ -321,21 +309,23 @@ func getGoModReplace(t *testing.T, localSDKPath string) goModReplace {
 	}
 }
 
-func insertGoModReplace(t *testing.T, modBytes []byte, repo, path, sha string) ([]byte, error) {
-	modFile, err := modfile.Parse("go.mod", modBytes, nil)
+func insertGoModReplace(t *testing.T, repo, path, sha string) ([]byte, error) {
+	modBytes, err := ioutil.ReadFile("go.mod")
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse go.mod: %v", err)
+		return nil, errors.Wrap(err, "failed to read go.mod")
 	}
-	if err = modFile.AddReplace(repo, "", path, sha); err != nil {
-		s := ""
-		if sha != "" {
-			s = " " + sha
-		}
-		return nil, fmt.Errorf(`failed to add "replace %s => %s%s: %v"`, repo, path, s, err)
+	sdkReplace := fmt.Sprintf("replace %s => %s", repo, path)
+	if sha != "" {
+		sdkReplace = fmt.Sprintf("%s %s", sdkReplace, sha)
 	}
-	modFile.Cleanup()
-	if modBytes, err = modFile.Format(); err != nil {
-		return nil, fmt.Errorf("failed to format go.mod: %v", err)
+	modBytes = append(modBytes, []byte("\n"+sdkReplace)...)
+	err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to write go.mod before replacing SDK repo")
+	}
+	cmdOut, err := exec.Command("go", "build", "./...").CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("\"go build ./...\" failed before replacing SDK repo: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 	return modBytes, nil
 }
@@ -413,16 +403,11 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework, labels
 
 	// get operator pods
 	pods := v1.PodList{}
-	opts := client.ListOptions{Namespace: namespace}
-	for k, v := range labels {
-		if err := opts.SetLabelSelector(fmt.Sprintf("%s=%s", k, v)); err != nil {
-			return nil, fmt.Errorf("failed to set list label selector: (%v)", err)
-		}
-	}
-	if err := opts.SetFieldSelector("status.phase=Running"); err != nil {
-		t.Fatalf("Failed to set list field selector: (%v)", err)
-	}
-	err = f.Client.List(context.TODO(), &opts, &pods)
+	opts := &client.ListOptions{}
+	opts.InNamespace(namespace)
+	opts.MatchingLabels(labels)
+	opts.MatchingField("status.phase", "Running")
+	err = f.Client.List(context.TODO(), &pods, client.UseListOptions(opts))
 	if err != nil {
 		return nil, err
 	}
@@ -688,7 +673,7 @@ func memcachedOperatorMetricsTest(t *testing.T, f *framework.Framework, ctx *fra
 	// TODO(lili): Make port a constant in internal/scaffold/cmd.go.
 	response, err := getMetrics(t, f, map[string]string{"name": operatorName}, namespace, "8686")
 	if err != nil {
-		return fmt.Errorf("failed to lint metrics: %v", err)
+		return fmt.Errorf("failed to get metrics: %v", err)
 	}
 	// Make sure metrics are present
 	if len(response) == 0 {
@@ -752,19 +737,14 @@ func memcachedOperatorMetricsTest(t *testing.T, f *framework.Framework, ctx *fra
 	return nil
 }
 
-func getMetrics(t *testing.T, f *framework.Framework, label map[string]string, ns, port string) ([]byte, error) {
+func getMetrics(t *testing.T, f *framework.Framework, labels map[string]string, ns, port string) ([]byte, error) {
 	// Get operator pod
 	pods := v1.PodList{}
-	opts := client.InNamespace(ns)
-	for k, v := range label {
-		if err := opts.SetLabelSelector(fmt.Sprintf("%s=%s", k, v)); err != nil {
-			return nil, fmt.Errorf("failed to set list label selector: (%v)", err)
-		}
-	}
-	if err := opts.SetFieldSelector("status.phase=Running"); err != nil {
-		return nil, fmt.Errorf("failed to set list field selector: (%v)", err)
-	}
-	err := f.Client.List(context.TODO(), opts, &pods)
+	opts := &client.ListOptions{}
+	opts.InNamespace(ns)
+	opts.MatchingLabels(labels)
+	opts.MatchingField("status.phase", "Running")
+	err := f.Client.List(context.TODO(), &pods, client.UseListOptions(opts))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pods: (%v)", err)
 	}
@@ -776,13 +756,13 @@ func getMetrics(t *testing.T, f *framework.Framework, label map[string]string, n
 		podName = pods.Items[0].Name
 	} else if numPods > 1 {
 		// If we got more than one pod, get leader pod name.
-		leader, err := verifyLeader(t, ns, f, label)
+		leader, err := verifyLeader(t, ns, f, labels)
 		if err != nil {
 			return nil, err
 		}
 		podName = leader.Name
 	} else {
-		return nil, fmt.Errorf("failed to get operator pod: could not select any pods with selector %v", label)
+		return nil, fmt.Errorf("failed to get operator pod: could not select any pods with selector %v", labels)
 	}
 	// Pod name must be there, otherwise we cannot read metrics data via pod proxy.
 	if podName == "" {

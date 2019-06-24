@@ -34,7 +34,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -170,12 +169,11 @@ func getPodFromDeployment(depName, namespace string) (pod *v1.Pod, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get newly created deployment: %v", err)
 	}
-	set := labels.Set(dep.Spec.Selector.MatchLabels)
 	// In some cases, the pod from the old deployment will be picked up
 	// instead of the new one.
 	err = wait.PollImmediate(time.Second*1, time.Second*60, func() (bool, error) {
 		pods := &v1.PodList{}
-		err = runtimeClient.List(context.TODO(), &client.ListOptions{LabelSelector: set.AsSelector()}, pods)
+		err = runtimeClient.List(context.TODO(), pods, client.MatchingLabels(dep.Spec.Selector.MatchLabels))
 		if err != nil {
 			return false, fmt.Errorf("failed to get list of pods in deployment: %v", err)
 		}

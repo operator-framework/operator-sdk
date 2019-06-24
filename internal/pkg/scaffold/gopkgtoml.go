@@ -50,23 +50,23 @@ required = [
 
 [[override]]
   name = "k8s.io/api"
-  # revision for tag "kubernetes-1.13.1"
-  revision = "05914d821849570fba9eacfb29466f2d8d3cd229"
+  # revision for tag "kubernetes-1.14.1"
+  revision = "6e4e0e4f393bf5e8bbff570acd13217aa5a770cd"
 
 [[override]]
   name = "k8s.io/apiextensions-apiserver"
-  # revision for tag "kubernetes-1.13.1"
-  revision = "0fe22c71c47604641d9aa352c785b7912c200562"
+  # revision for tag "kubernetes-1.14.1"
+  revision = "727a075fdec8319bf095330e344b3ccc668abc73"
 
 [[override]]
   name = "k8s.io/apimachinery"
-  # revision for tag "kubernetes-1.13.1"
-  revision = "2b1284ed4c93a43499e781493253e2ac5959c4fd"
+  # revision for tag "kubernetes-1.14.1"
+  revision = "6a84e37a896db9780c75367af8d2ed2bb944022e"
 
 [[override]]
   name = "k8s.io/client-go"
-  # revision for tag "kubernetes-1.13.1"
-  revision = "8d9ed539ba3134352c586810e749e58df4e94e4f"
+  # revision for tag "kubernetes-1.14.1"
+  revision = "1a26190bd76a9017e289958b9fba936430aa3704"
 
 [[override]]
   name = "github.com/coreos/prometheus-operator"
@@ -78,7 +78,7 @@ required = [
 
 [[override]]
   name = "sigs.k8s.io/controller-runtime"
-  version = "=v0.1.10"
+  version = "=v0.2.0-beta.2"
 
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"
