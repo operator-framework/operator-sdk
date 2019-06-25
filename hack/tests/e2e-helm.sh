@@ -58,6 +58,14 @@ test_operator() {
         exit 1
     fi
 
+    # verify that the custom resource metrics endpoint exists
+    if ! timeout 1m bash -c -- "until kubectl run -it --rm --restart=Never test-cr-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl -sfo /dev/null http://nginx-operator-metrics:8686/metrics; do sleep 1; done";
+    then
+        echo "Failed to verify that custom resource metrics endpoint exists"
+        kubectl logs deployment/nginx-operator
+        exit 1
+    fi
+
     release_name=$(kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.deployedRelease.name}")
     nginx_deployment=$(kubectl get deployment -l "app.kubernetes.io/instance=${release_name}" -o jsonpath="{..metadata.name}")
 
