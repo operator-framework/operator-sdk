@@ -53,13 +53,15 @@ The following workflow is for a new **Helm** operator:
 
 Follow the steps in the [installation guide][install_guide] to learn how to install the Operator SDK CLI tool.
 
+**Note:** If you are using a release version of the SDK, make sure to follow the documentation for that version. e.g.: For version 0.8.1, see docs in https://github.com/operator-framework/operator-sdk/tree/v0.8.1.
+
 ### Create and deploy an app-operator
 
 ```sh
 # Create an app-operator project that defines the App CR.
-$ mkdir -p $GOPATH/src/github.com/example-inc/
+$ mkdir -p $HOME/projects/example-inc/
 # Create a new app-operator project
-$ cd $GOPATH/src/github.com/example-inc/
+$ cd $HOME/projects/example-inc/
 $ export GO111MODULE=on
 $ operator-sdk new app-operator
 $ cd app-operator

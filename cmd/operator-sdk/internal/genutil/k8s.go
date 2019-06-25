@@ -35,7 +35,7 @@ import (
 func K8sCodegen() error {
 	projutil.MustInProjectRoot()
 
-	repoPkg := projutil.CheckAndGetProjectGoPkg()
+	repoPkg := projutil.GetGoPkg()
 
 	gvMap, err := parseGroupVersions()
 	if err != nil {
