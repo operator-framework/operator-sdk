@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scorecard
+package scplugins
 
 import (
 	"context"
@@ -20,13 +20,15 @@ import (
 	"fmt"
 	"strings"
 
+	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
+
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// BasicTestConfig contains all variables required by the BasicTest TestSuite
+// BasicTestConfig contains all variables required by the BasicTest schelpers.TestSuite
 type BasicTestConfig struct {
 	Client   client.Client
 	CR       *unstructured.Unstructured
@@ -37,7 +39,7 @@ type BasicTestConfig struct {
 
 // CheckSpecTest is a scorecard test that verifies that the CR has a spec block
 type CheckSpecTest struct {
-	TestInfo
+	schelpers.TestInfo
 	BasicTestConfig
 }
 
@@ -45,7 +47,7 @@ type CheckSpecTest struct {
 func NewCheckSpecTest(conf BasicTestConfig) *CheckSpecTest {
 	return &CheckSpecTest{
 		BasicTestConfig: conf,
-		TestInfo: TestInfo{
+		TestInfo: schelpers.TestInfo{
 			Name:        "Spec Block Exists",
 			Description: "Custom Resource has a Spec Block",
 			Cumulative:  false,
@@ -55,7 +57,7 @@ func NewCheckSpecTest(conf BasicTestConfig) *CheckSpecTest {
 
 // CheckStatusTest is a scorecard test that verifies that the CR has a status block
 type CheckStatusTest struct {
-	TestInfo
+	schelpers.TestInfo
 	BasicTestConfig
 }
 
@@ -63,7 +65,7 @@ type CheckStatusTest struct {
 func NewCheckStatusTest(conf BasicTestConfig) *CheckStatusTest {
 	return &CheckStatusTest{
 		BasicTestConfig: conf,
-		TestInfo: TestInfo{
+		TestInfo: schelpers.TestInfo{
 			Name:        "Status Block Exists",
 			Description: "Custom Resource has a Status Block",
 			Cumulative:  false,
@@ -73,7 +75,7 @@ func NewCheckStatusTest(conf BasicTestConfig) *CheckStatusTest {
 
 // WritingIntoCRsHasEffectTest is a scorecard test that verifies that the operator is making PUT and/or POST requests to the API server
 type WritingIntoCRsHasEffectTest struct {
-	TestInfo
+	schelpers.TestInfo
 	BasicTestConfig
 }
 
@@ -81,7 +83,7 @@ type WritingIntoCRsHasEffectTest struct {
 func NewWritingIntoCRsHasEffectTest(conf BasicTestConfig) *WritingIntoCRsHasEffectTest {
 	return &WritingIntoCRsHasEffectTest{
 		BasicTestConfig: conf,
-		TestInfo: TestInfo{
+		TestInfo: schelpers.TestInfo{
 			Name:        "Writing into CRs has an effect",
 			Description: "A CR sends PUT/POST requests to the API server to modify resources in response to spec block changes",
 			Cumulative:  false,
@@ -89,9 +91,9 @@ func NewWritingIntoCRsHasEffectTest(conf BasicTestConfig) *WritingIntoCRsHasEffe
 	}
 }
 
-// NewBasicTestSuite returns a new TestSuite object containing basic, functional operator tests
-func NewBasicTestSuite(conf BasicTestConfig) *TestSuite {
-	ts := NewTestSuite(
+// NewBasicTestSuite returns a new schelpers.TestSuite object containing basic, functional operator tests
+func NewBasicTestSuite(conf BasicTestConfig) *schelpers.TestSuite {
+	ts := schelpers.NewTestSuite(
 		"Basic Tests",
 		"Test suite that runs basic, functional operator tests",
 	)
@@ -105,8 +107,8 @@ func NewBasicTestSuite(conf BasicTestConfig) *TestSuite {
 // Test Implementations
 
 // Run - implements Test interface
-func (t *CheckSpecTest) Run(ctx context.Context) *TestResult {
-	res := &TestResult{Test: t, MaximumPoints: 1}
+func (t *CheckSpecTest) Run(ctx context.Context) *schelpers.TestResult {
+	res := &schelpers.TestResult{Test: t, MaximumPoints: 1}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("error getting custom resource: %v", err))
@@ -122,8 +124,8 @@ func (t *CheckSpecTest) Run(ctx context.Context) *TestResult {
 }
 
 // Run - implements Test interface
-func (t *CheckStatusTest) Run(ctx context.Context) *TestResult {
-	res := &TestResult{Test: t, MaximumPoints: 1}
+func (t *CheckStatusTest) Run(ctx context.Context) *schelpers.TestResult {
+	res := &schelpers.TestResult{Test: t, MaximumPoints: 1}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("error getting custom resource: %v", err))
@@ -139,8 +141,8 @@ func (t *CheckStatusTest) Run(ctx context.Context) *TestResult {
 }
 
 // Run - implements Test interface
-func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *TestResult {
-	res := &TestResult{Test: t, MaximumPoints: 1}
+func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *schelpers.TestResult {
+	res := &schelpers.TestResult{Test: t, MaximumPoints: 1}
 	logs, err := getProxyLogs(t.ProxyPod)
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("error getting proxy logs: %v", err))
