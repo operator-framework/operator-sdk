@@ -31,7 +31,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
     1. Run `go vet`.
     2. Check that all source files have a license.
     3. Check that all error messages start with a lower case alphabetical character and do not end with punctuation, and log messages start with an upper case alphabetical character.
-    4. Make sure the repo is in a clean state (this is particularly useful for making sure `go.mod` and `go.sum` are up-to-date after running `make tidy`)).
+    4. Make sure the repo is in a clean state (this is particularly useful for making sure `go.mod` and `go.sum` are up-to-date after running `make tidy`).
 2. Run unit tests.
     1. Run `make test`.
 3. Run [subcommand tests][subcommand].
