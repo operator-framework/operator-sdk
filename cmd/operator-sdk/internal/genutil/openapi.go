@@ -38,7 +38,7 @@ func OpenAPIGen() error {
 	projutil.MustInProjectRoot()
 
 	absProjectPath := projutil.MustGetwd()
-	repoPkg := projutil.CheckAndGetProjectGoPkg()
+	repoPkg := projutil.GetGoPkg()
 
 	gvMap, err := parseGroupVersions()
 	if err != nil {

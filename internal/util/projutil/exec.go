@@ -51,7 +51,7 @@ type GoCmdOptions struct {
 	Dir string
 	// GoMod determines whether to set the "-mod=vendor" flag.
 	// If true and ./vendor/ exists, "go {cmd}" will use vendored modules.
-	// If false, "go {cmd}" will not use go modules. This is the default.
+	// If false, "go {cmd}" will not use Go modules. This is the default.
 	// This applies to build, clean, get, install, list, run, and test.
 	GoMod bool
 }
@@ -80,28 +80,28 @@ func GoBuild(opts GoCmdOptions) error {
 
 // GoTest runs "go test" configured with opts.
 func GoTest(opts GoTestOptions) error {
-	bargs, err := getGeneralArgs("test", opts.GoCmdOptions)
+	bargs, err := opts.getGeneralArgsWithCmd("test")
 	if err != nil {
 		return err
 	}
 	bargs = append(bargs, opts.TestBinaryArgs...)
 	c := exec.Command("go", bargs...)
-	setCommandFields(c, opts.GoCmdOptions)
+	opts.setCmdFields(c)
 	return ExecCmd(c)
 }
 
 // GoCmd runs "go {cmd}".
 func GoCmd(cmd string, opts GoCmdOptions) error {
-	bargs, err := getGeneralArgs(cmd, opts)
+	bargs, err := opts.getGeneralArgsWithCmd(cmd)
 	if err != nil {
 		return err
 	}
 	c := exec.Command("go", bargs...)
-	setCommandFields(c, opts)
+	opts.setCmdFields(c)
 	return ExecCmd(c)
 }
 
-func getGeneralArgs(cmd string, opts GoCmdOptions) ([]string, error) {
+func (opts GoCmdOptions) getGeneralArgsWithCmd(cmd string) ([]string, error) {
 	// Go subcommands with more than one child command must be passed as
 	// multiple arguments instead of a spaced string, ex. "go mod init".
 	bargs := []string{}
@@ -140,7 +140,7 @@ func getGeneralArgs(cmd string, opts GoCmdOptions) ([]string, error) {
 	return bargs, nil
 }
 
-func setCommandFields(c *exec.Cmd, opts GoCmdOptions) {
+func (opts GoCmdOptions) setCmdFields(c *exec.Cmd) {
 	c.Env = append(c.Env, os.Environ()...)
 	if len(opts.Env) != 0 {
 		c.Env = append(c.Env, opts.Env...)
@@ -157,7 +157,7 @@ func setCommandFields(c *exec.Cmd, opts GoCmdOptions) {
 //		the environment variable GO111MODULE unset (or explicitly set to auto).
 //	- Invoke the go command with GO111MODULE=on environment variable set.
 //
-// GoModOn returns true if go modules are on in one of the above two ways.
+// GoModOn returns true if Go modules are on in one of the above two ways.
 func GoModOn() (bool, error) {
 	v, ok := os.LookupEnv(GoModEnv)
 	if v == "off" {

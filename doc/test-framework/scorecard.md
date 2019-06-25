@@ -31,6 +31,7 @@ flags:
 - `--namespaced-manifest` - if set, this flag must point to a manifest file with all resources that run within a namespace. By default, the scorecard will combine `service_account.yaml`, `role.yaml`, `role_binding.yaml`, and `operator.yaml` from the `deploy` directory into a temporary manifest to use as the namespaced manifest.
 - `--global-manifest` - if set, this flag must point to all required resources that run globally (not namespaced). By default, the scorecard will combine all CRDs in the `deploy/crds` directory into a temporary manifest to use as the global manifest.
 - `--namespace` - if set, which namespace to run the scorecard tests in. If it is not set, the scorecard will use the default namespace of the current context set in the kubeconfig file.
+- `--olm-deployed` - indicates that the CSV and relevant CRD's have been deployed onto the cluster by the [Operator Lifecycle Manager (OLM)][olm]. This flag cannot be used in conjunction with `--namespaced-manifest` or `--global-manifest`. See the [CSV-only tests](#running-the-scorecard-with-a-deployed-csv) section below for more details.
 
 To run the tests, simply run the `scorecard` subcommand from your project root with the flags you want to
 use. For example:
@@ -324,8 +325,24 @@ Example of a valid JSON output:
 
 **NOTE:** The `ScorecardOutput.Log` field is only intended to be used to log the scorecard's output and the scorecard will ignore that field if a plugin provides it.
 
+## Running the scorecard with a deployed CSV
+
+The scorecard can be run using only a [Cluster Service Version (CSV)][olm-csv], providing a way to test cluster-ready and non-SDK operators.
+
+Running with a CSV alone requires both the `--csv-path=<CSV manifest path>` and `--olm-deployed` flags to be set. The scorecard assumes your CSV and relevant CRD's have been deployed onto the cluster using the OLM when using `--olm-deployed`. This [document][olm-deploy-operator] walks through bundling your CSV and CRD's, deploying the OLM on minikube or [OKD][okd], and deploying your operator. Once these steps have been completed, run the scorecard with both the `--csv-path=<CSV manifest path>` and `--olm-deployed` flags.
+
+A few notes:
+
+- As of now, using the scorecard with a CSV does not permit multiple CR manifests to be set through the CLI/config/CSV annotations. You will have to tear down your operator in the cluster, re-deploy, and re-run the scorecard for each CR being tested. In the future the scorecard will fully support testing multiple CR's without requiring users to teardown/standup each time.
+- You can either use `--cr-manifest` or your CSV's [`metadata.annotations['alm-examples']`][olm-csv-alm-examples] to provide CR's to the scorecard, but not both.
+
 [cli-reference]: ../sdk-cli-reference.md#scorecard
 [writing-tests]: ./writing-e2e-tests.md
 [owned-crds]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md#owned-crds
 [alm-examples]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md#crd-templates
 [viper]: https://github.com/spf13/viper/blob/master/README.md
+[olm-csv]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md
+[olm-csv-alm-examples]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md#crd-templates
+[olm]:https://github.com/operator-framework/operator-lifecycle-manager
+[olm-deploy-operator]:https://github.com/operator-framework/community-operators/blob/master/docs/testing-operators.md
+[okd]:https://www.okd.io/

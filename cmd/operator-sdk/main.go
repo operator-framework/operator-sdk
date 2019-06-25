@@ -15,11 +15,13 @@
 package main
 
 import (
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"fmt"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that `run` and `up local` can make use of them.
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/add"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
@@ -33,12 +35,12 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/test"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/up"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
-	flags "github.com/operator-framework/operator-sdk/internal/pkg/flags"
+	"github.com/operator-framework/operator-sdk/internal/flags"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
 func main() {
@@ -47,13 +49,14 @@ func main() {
 		Short: "An SDK for building operators with ease",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if viper.GetBool(flags.VerboseOpt) {
-				err := projutil.SetGoVerbose()
-				if err != nil {
-					log.Errorf("Could not set GOFLAGS: (%v)", err)
-					return
+				if err := projutil.SetGoVerbose(); err != nil {
+					log.Fatalf("Could not set GOFLAGS: (%v)", err)
 				}
 				log.SetLevel(log.DebugLevel)
 				log.Debug("Debug logging is set")
+			}
+			if err := checkDepManagerForCmd(cmd); err != nil {
+				log.Fatal(err)
 			}
 		},
 	}
@@ -80,4 +83,78 @@ func main() {
 	if err := root.Execute(); err != nil {
 		os.Exit(1)
 	}
+}
+
+func checkDepManagerForCmd(cmd *cobra.Command) (err error) {
+	// Certain commands are able to be run anywhere or handle this check
+	// differently in their CLI code.
+	if skipCheckForCmd(cmd) {
+		return nil
+	}
+	// Do not perform this check if the project is non-Go, as they will not have
+	// a (Go) dep manager.
+	if !projutil.IsOperatorGo() {
+		return nil
+	}
+	// Do not perform a dep manager check if the working directory is not in
+	// the project root, as some sub-commands might not require project root.
+	// Individual subcommands will perform this check as needed.
+	if err := projutil.CheckProjectRoot(); err != nil {
+		return nil
+	}
+
+	dm, err := projutil.GetDepManagerType()
+	if err != nil {
+		return err
+	}
+	return checkDepManager(dm)
+}
+
+var commandsToSkip = map[string]struct{}{
+	"new":          struct{}{}, // Handles this logic in cmd/operator-sdk/new
+	"migrate":      struct{}{}, // Handles this logic in cmd/operator-sdk/migrate
+	"operator-sdk": struct{}{}, // Alias for "help"
+	"help":         struct{}{},
+	"completion":   struct{}{},
+	"version":      struct{}{},
+}
+
+func skipCheckForCmd(cmd *cobra.Command) (skip bool) {
+	if _, ok := commandsToSkip[cmd.Name()]; ok {
+		return true
+	}
+	cmd.VisitParents(func(pc *cobra.Command) {
+		if _, ok := commandsToSkip[pc.Name()]; ok {
+			// The bare "operator-sdk" command will be checked above.
+			if pc.Name() != "operator-sdk" {
+				skip = true
+			}
+		}
+	})
+	return skip
+}
+
+func checkDepManager(dm projutil.DepManagerType) error {
+	switch dm {
+	case projutil.DepManagerGoMod:
+		goModOn, err := projutil.GoModOn()
+		if err != nil {
+			return err
+		}
+		if !goModOn {
+			return fmt.Errorf(`dependency manager "modules" requires working directory to be in $GOPATH/src` +
+				` and GO111MODULE=on, or outside of $GOPATH/src and GO111MODULE="on", "auto", or unset`)
+		}
+	case projutil.DepManagerDep:
+		inGopathSrc, err := projutil.WdInGoPathSrc()
+		if err != nil {
+			return err
+		}
+		if !inGopathSrc {
+			return fmt.Errorf(`dependency manager "dep" requires working directory to be in $GOPATH/src`)
+		}
+	default:
+		return projutil.ErrInvalidDepManager(dm)
+	}
+	return nil
 }

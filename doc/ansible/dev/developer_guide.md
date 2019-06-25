@@ -470,6 +470,9 @@ The structure passed to Ansible as extra vars is:
   "_app_example_com_database": {
      <Full CRD>
    },
+  "_app_example_com_database_spec": {
+     <Full CRD .spec>
+   },
 }
 ```
 `message` and `newParameter` are set in the top level as extra variables, and

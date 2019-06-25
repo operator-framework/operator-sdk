@@ -59,7 +59,7 @@ const moleculeTestClusterPlaybookAnsibleTmpl = `---
     debug:
       msg: "{{ lookup('k8s', group='[[.Resource.FullGroup]]', api_version='[[.Resource.Version]]', kind='[[.Resource.Kind]]', namespace=namespace, resource_name=custom_resource.metadata.name) }}"
 
-  - name: Wait 40s for reconciliation to run
+  - name: Wait 60s for reconciliation to run
     k8s_facts:
       api_version: '[[.Resource.Version]]'
       kind: '[[.Resource.Kind]]'
@@ -68,7 +68,7 @@ const moleculeTestClusterPlaybookAnsibleTmpl = `---
     register: reconcile_cr
     until:
     - "'Successful' in (reconcile_cr | json_query('resources[].status.conditions[].reason'))"
-    delay: 4
+    delay: 6
     retries: 10
 
 - import_playbook: '{{ playbook_dir }}/../default/asserts.yml'
