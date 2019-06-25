@@ -149,12 +149,7 @@ sed -E -i 's|^.*'"$SDK_REPO"'.*$||g' go.mod
 # `go.mod` file and verify dependencies build correctly.
 go build ./...
 
-# Use the local operator-sdk directory as the repo. To make the go toolchain
-# happy, the directory needs a `go.mod` file that specifies the module name,
-# so we need this temporary hack until we update the SDK repo itself to use
-# Go modules.
-echo "module ${SDK_REPO}" > "${ROOTDIR}/go.mod"
-trap_add "rm ${ROOTDIR}/go.mod" EXIT
+# Use the local operator-sdk directory as the repo.
 go mod edit -replace="${SDK_REPO}=$ROOTDIR"
 go build ./...
 

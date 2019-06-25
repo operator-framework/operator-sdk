@@ -113,22 +113,6 @@ func TestMemcached(t *testing.T) {
 
 	replace := getGoModReplace(t, localSDKPath)
 	if replace.repo != sdkRepo {
-		if replace.isLocal {
-			// A hacky way to get local module substitution to work is to write a
-			// stub go.mod into the local SDK repo referred to in
-			// memcached-operator's go.mod, which allows go to recognize
-			// the local SDK repo as a module.
-			sdkModPath := filepath.Join(filepath.FromSlash(replace.repo), "go.mod")
-			err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
-			if err != nil {
-				t.Fatalf("Failed to write main repo go.mod file: %v", err)
-			}
-			defer func() {
-				if err = os.RemoveAll(sdkModPath); err != nil {
-					t.Fatalf("Failed to remove %s: %v", sdkModPath, err)
-				}
-			}()
-		}
 		modBytes, err := ioutil.ReadFile("go.mod")
 		if err != nil {
 			t.Fatalf("Failed to read go.mod: %v", err)
