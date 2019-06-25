@@ -34,15 +34,17 @@ test_operator() {
     fi
 
     # verify that metrics service was created
-    if ! timeout 20s bash -c -- "until kubectl get service/nginx-operator > /dev/null 2>&1; do sleep 1; done";
+    if ! timeout 20s bash -c -- "until kubectl get service/nginx-operator-metrics > /dev/null 2>&1; do sleep 1; done";
     then
+        echo "Failed to get metrics service"
         kubectl logs deployment/nginx-operator
         exit 1
     fi
 
     # verify that the metrics endpoint exists
-    if ! timeout 1m bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl -sfo /dev/null http://nginx-operator:8383/metrics; do sleep 1; done";
+    if ! timeout 1m bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl -sfo /dev/null http://nginx-operator-metrics:8383/metrics; do sleep 1; done";
     then
+        echo "Failed to verify that metrics endpoint exists"
         kubectl logs deployment/nginx-operator
         exit 1
     fi
