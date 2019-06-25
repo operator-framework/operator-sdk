@@ -2,5 +2,4 @@
 
 set -e
 
-export GOPROXY=https://proxy.golang.org/
 make tidy

@@ -25,7 +25,9 @@ HELM_IMAGE ?= $(HELM_BASE_IMAGE)
 SCORECARD_PROXY_IMAGE ?= $(SCORECARD_PROXY_BASE_IMAGE)
 
 export CGO_ENABLED:=0
-export GO111MODULE:=on
+
+export GO111MODULE ?= on
+export GOPROXY ?= https://proxy.golang.org/
 
 all: format test build/operator-sdk
 

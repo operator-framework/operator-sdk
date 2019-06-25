@@ -34,7 +34,6 @@ x_base_steps:
     stage: test
     env:
     - CLUSTER=openshift
-    - GOPROXY=https://proxy.golang.org/
     <<: *go_before_install
     install:
       - make install
@@ -51,8 +50,6 @@ x_base_steps:
   # Base deploy job
   - &deploy
     stage: deploy
-    env:
-    - GOPROXY=https://proxy.golang.org/
     if: type != pull_request AND ( tag IS present OR branch = master OR commit_message =~ /\[travis deploy\]/ )
     <<: *go_before_install
     install: make install
