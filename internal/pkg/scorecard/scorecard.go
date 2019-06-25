@@ -89,6 +89,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	cmd.SilenceUsage = true
+	// declare err var to prevent redeclaration of global rootDir var
 	var err error
 	rootDir, err = os.Getwd()
 	if err != nil {
