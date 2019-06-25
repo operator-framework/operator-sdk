@@ -3,12 +3,12 @@
 This document explains how to setup your dev environment.
 
 ## Prerequisites
-- [git][git_tool]
-- [go][go_tool] version v1.12+
+- [git][git-tool]
+- [go][go-tool] version v1.12+
 
 ## Download Operator SDK
 
-Go to the [Operator SDK repo][repo_sdk] and follow the [fork guide][fork_guide] to fork, clone, and setup the local operator-sdk repository.
+Go to the [Operator SDK repo][repo-sdk] and follow the [fork guide][fork-guide] to fork, clone, and setup the local operator-sdk repository.
 
 ## Vendor dependencies
 
@@ -46,13 +46,13 @@ $ make test
 For more information on running testing and correctly configuring your environment,
 refer to the [`Running the Tests Locally`][running-the-tests] document.
 
-See the project [README][sdk_readme] for more details.
+See the project [README][sdk-readme] for more details.
 
-[git_tool]:https://git-scm.com/downloads
-[go_tool]:https://golang.org/dl/
-[repo_sdk]:https://github.com/operator-framework/operator-sdk
-[fork_guide]:https://help.github.com/en/articles/fork-a-repo
-[docker_tool]:https://docs.docker.com/install/
-[kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
-[sdk_readme]:../../README.md
+[git-tool]:https://git-scm.com/downloads
+[go-tool]:https://golang.org/dl/
+[repo-sdk]:https://github.com/operator-framework/operator-sdk
+[fork-guide]:https://help.github.com/en/articles/fork-a-repo
+[docker-tool]:https://docs.docker.com/install/
+[kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
+[sdk-readme]:../../README.md
 [running-the-tests]: ./testing/running-the-tests.md
