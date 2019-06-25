@@ -192,11 +192,11 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %v", fromReplicas, key.Name, err)
 	}
 
-	err = f.Client.Get(goctx.TODO(), key, exampleMemcached)
-	if err != nil {
-		return fmt.Errorf("could not get memcached CR %q: %v", key, err)
-	}
 	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		err = f.Client.Get(goctx.TODO(), key, exampleMemcached)
+		if err != nil {
+			return fmt.Errorf("could not get memcached CR %q: %v", key, err)
+		}
 		// update memcached CR size to `toReplicas` replicas
 		exampleMemcached.Spec.Size = int32(toReplicas)
 		t.Logf("Attempting memcached CR %q update, resourceVersion: %s", key, exampleMemcached.GetResourceVersion())
@@ -309,7 +309,7 @@ func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.T
 
 	// Make sure metrics Service exists
 	s := v1.Service{}
-	err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: operatorName, Namespace: namespace}, &s)
+	err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: fmt.Sprintf("%s-metrics", operatorName), Namespace: namespace}, &s)
 	if err != nil {
 		return fmt.Errorf("could not get metrics Service: (%v)", err)
 	}

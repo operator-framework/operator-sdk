@@ -53,6 +53,8 @@ The following workflow is for a new **Helm** operator:
 
 Follow the steps in the [installation guide][install_guide] to learn how to install the Operator SDK CLI tool.
 
+**Note:** If you are using a release version of the SDK, make sure to follow the documentation for that version. e.g.: For version 0.8.1, see docs in https://github.com/operator-framework/operator-sdk/tree/v0.8.1.
+
 ### Create and deploy an app-operator
 
 ```sh

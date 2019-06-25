@@ -23,3 +23,62 @@ For each CRD that needs to be cluster-scoped, update its manifest to be cluster-
 
 * `deploy/crds/<group>_<version>_<kind>_crd.yaml`
   * Set `spec.scope: Cluster`
+
+
+### Example for cluster scoped operator
+
+With the above changes the specified manifests should look as follows:
+
+* `deploy/operator.yaml`:
+    ```YAML
+    apiVersion: apps/v1
+    kind: Deployment
+    ...
+    spec:
+      ...
+      template:
+        ...
+        spec:
+          ...
+          serviceAccountName: memcached-operator
+          containers:
+          - name: memcached-operator
+            ...
+            env:
+              - name: WATCH_NAMESPACE
+              value: ""
+    ```
+* `deploy/role.yaml`:
+    ```YAML
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      name: memcached-operator
+    ...
+    ```
+* `deploy/role_binding.yaml`:
+    ```YAML 
+    kind: ClusterRoleBinding
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: memcached-operator
+    subjects:
+    - kind: ServiceAccount
+      name: memcached-operator
+      namespace: <operator-namespace>
+    roleRef:
+      kind: ClusterRole
+      name: memcached-operator
+      apiGroup: rbac.authorization.k8s.io
+    ```
+* `deploy/crds/cache_v1alpha1_memcached_crd.yaml`
+    ```YAML
+    apiVersion: apiextensions.k8s.io/v1beta1
+    kind: CustomResourceDefinition
+    metadata:
+      name: memcacheds.cache.example.com
+    spec:
+      group: cache.example.com
+      ...
+      scope: Cluster
+    ```

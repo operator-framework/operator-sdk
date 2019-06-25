@@ -6,7 +6,7 @@ We want to be able to generate the metering reports based on the operator specif
 
 ### Overview of the metrics
 
-To follow both the Prometheus instrumentation [best practices](https://prometheus.io/docs/practices/naming/) as well as the official Kubernetes instrumentation [guide](https://github.com/kubernetes/community/blob/master/contributors/devel/instrumentation.md), the metrics will have the following format:
+To follow both the Prometheus instrumentation [best practices](https://prometheus.io/docs/practices/naming/) as well as the official Kubernetes instrumentation [guide](https://github.com/kubernetes/community/blob/cbe9c8ac5f71a99179d7ffe4a008b9018830af72/contributors/devel/sig-instrumentation/instrumentation.md), the metrics will have the following format:
 
 ```
 crd_kind_info{namespace="namespace",crdkind="instance-name"} 1

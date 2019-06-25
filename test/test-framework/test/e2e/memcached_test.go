@@ -77,12 +77,12 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %v", fromReplicas, key.Name, err)
 	}
 
-	err = f.Client.Get(goctx.TODO(), key, exampleMemcached)
-	if err != nil {
-		return fmt.Errorf("could not get memcached CR %q: %v", key, err)
-	}
-
 	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		err = f.Client.Get(goctx.TODO(), key, exampleMemcached)
+		if err != nil {
+			return fmt.Errorf("could not get memcached CR %q: %v", key, err)
+		}
+
 		exampleMemcached.Spec.Size = int32(toReplicas)
 		t.Logf("Attempting memcached %q update, resourceVersion: %s", key, exampleMemcached.GetResourceVersion())
 		return f.Client.Update(goctx.TODO(), exampleMemcached)
