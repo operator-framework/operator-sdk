@@ -483,12 +483,12 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 	}
 	obj.SetNamespace(key.Namespace)
 
-	err = f.Client.Get(context.TODO(), key, &obj)
-	if err != nil {
-		return fmt.Errorf("could not get memcached CR %q: %v", key, err)
-	}
-
 	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		err = f.Client.Get(context.TODO(), key, &obj)
+		if err != nil {
+			return fmt.Errorf("could not get memcached CR %q: %v", key, err)
+		}
+
 		// update memcached CR size to `toReplicas` replicas
 		spec, ok := obj.Object["spec"].(map[string]interface{})
 		if !ok {
