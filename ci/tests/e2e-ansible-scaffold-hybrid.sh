@@ -36,6 +36,7 @@ fi
 # `go.mod` file and verify dependencies build correctly.
 go build ./...
 
+# TODO: remove go.mod file generation after PR 1566 gets merged
 # Use the local operator-sdk directory as the repo. To make the go toolchain
 # happy, the directory needs a `go.mod` file that specifies the module name,
 # so we need this temporary hack until we update the SDK repo itself to use
