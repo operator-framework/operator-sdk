@@ -101,7 +101,7 @@ const moleculeTestLocalPlaybookAnsibleTmpl = `---
         namespace: '{{ namespace }}'
         definition: '{{ custom_resource }}'
 
-    - name: Wait 40s for reconciliation to run
+    - name: Wait 60s for reconciliation to run
       k8s_facts:
         api_version: '{{ custom_resource.apiVersion }}'
         kind: '{{ custom_resource.kind }}'
@@ -110,7 +110,7 @@ const moleculeTestLocalPlaybookAnsibleTmpl = `---
       register: cr
       until:
       - "'Successful' in (cr | json_query('resources[].status.conditions[].reason'))"
-      delay: 4
+      delay: 6
       retries: 10
     rescue:
     - name: debug cr
