@@ -1551,6 +1551,18 @@
   revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
 
 [[projects]]
+  digest = "1:584e35289f5869d56bea9469d4de6f96758a3276125bb3e7b2c41bd65cb5a226"
+  name = "k8s.io/kube-state-metrics"
+  packages = [
+    "pkg/collector",
+    "pkg/metric",
+    "pkg/metrics_store",
+  ]
+  pruneopts = "NUT"
+  revision = "de19ed4f12d471fccc79f9a9fee73f7c107ecd33"
+  version = "v1.6.0"
+
+[[projects]]
   digest = "1:a2ca0c9095f3fd4160abcb64ebc3d99d3e2439da9c350705db7ab65dc98ee21d"
   name = "k8s.io/kubernetes"
   packages = [
@@ -1762,6 +1774,8 @@
     "github.com/pborman/uuid",
     "github.com/pkg/errors",
     "github.com/prometheus/client_golang/prometheus",
+    "github.com/prometheus/client_model/go",
+    "github.com/prometheus/common/expfmt",
     "github.com/prometheus/prometheus/util/promlint",
     "github.com/rogpeppe/go-internal/modfile",
     "github.com/sergi/go-diff/diffmatchpatch",
@@ -1801,18 +1815,22 @@
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/apimachinery/pkg/util/yaml",
     "k8s.io/apimachinery/pkg/version",
+    "k8s.io/apimachinery/pkg/watch",
     "k8s.io/cli-runtime/pkg/genericclioptions/resource",
     "k8s.io/client-go/discovery",
     "k8s.io/client-go/discovery/cached",
+    "k8s.io/client-go/dynamic",
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/kubernetes/typed/core/v1",
     "k8s.io/client-go/plugin/pkg/client/auth",
     "k8s.io/client-go/rest",
     "k8s.io/client-go/restmapper",
+    "k8s.io/client-go/tools/cache",
     "k8s.io/client-go/tools/clientcmd",
     "k8s.io/client-go/tools/clientcmd/api",
     "k8s.io/client-go/transport",
+    "k8s.io/client-go/util/retry",
     "k8s.io/client-go/util/workqueue",
     "k8s.io/code-generator/cmd/deepcopy-gen/args",
     "k8s.io/gengo/args",
@@ -1838,6 +1856,9 @@
     "k8s.io/klog",
     "k8s.io/kube-openapi/cmd/openapi-gen/args",
     "k8s.io/kube-openapi/pkg/generators",
+    "k8s.io/kube-state-metrics/pkg/collector",
+    "k8s.io/kube-state-metrics/pkg/metric",
+    "k8s.io/kube-state-metrics/pkg/metrics_store",
     "k8s.io/kubernetes/pkg/kubectl/util",
     "sigs.k8s.io/controller-runtime/pkg/cache",
     "sigs.k8s.io/controller-runtime/pkg/client",

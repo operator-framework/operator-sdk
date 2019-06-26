@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scorecard
+package scplugins
 
 import (
 	"bytes"
@@ -36,6 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -383,4 +384,24 @@ func getProxyLogs(proxyPod *v1.Pod) (string, error) {
 		return "", fmt.Errorf("test failed and failed to read pod logs: %v", err)
 	}
 	return buf.String(), nil
+}
+
+func getGVKs(yamlFile []byte) ([]schema.GroupVersionKind, error) {
+	var gvks []schema.GroupVersionKind
+
+	scanner := yamlutil.NewYAMLScanner(yamlFile)
+	for scanner.Scan() {
+		yamlSpec := scanner.Bytes()
+
+		obj := &unstructured.Unstructured{}
+		jsonSpec, err := yaml.YAMLToJSON(yamlSpec)
+		if err != nil {
+			return nil, fmt.Errorf("could not convert yaml file to json: %v", err)
+		}
+		if err := obj.UnmarshalJSON(jsonSpec); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal object spec: (%v)", err)
+		}
+		gvks = append(gvks, obj.GroupVersionKind())
+	}
+	return gvks, nil
 }

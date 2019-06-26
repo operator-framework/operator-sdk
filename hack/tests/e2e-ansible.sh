@@ -9,11 +9,12 @@ go test -count=1 ./pkg/ansible/proxy/...
 
 DEST_IMAGE="quay.io/example/memcached-operator:v0.0.2"
 ROOTDIR="$(pwd)"
-GOTMP="$(mktemp -d -p $GOPATH/src)"
+GOTMP="$(mktemp -d)"
 trap_add 'rm -rf $GOTMP' EXIT
 
 deploy_operator() {
     kubectl create -f "$OPERATORDIR/deploy/service_account.yaml"
+    oc adm policy add-cluster-role-to-user cluster-admin -z memcached-operator || :
     kubectl create -f "$OPERATORDIR/deploy/role.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
     kubectl create -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_memcached_crd.yaml"
@@ -96,7 +97,10 @@ if which oc 2>/dev/null; then oc project default; fi
 
 # create and build the operator
 pushd "$GOTMP"
-operator-sdk new memcached-operator --api-version=ansible.example.com/v1alpha1 --kind=Memcached --type=ansible
+operator-sdk new memcached-operator \
+  --api-version=ansible.example.com/v1alpha1 \
+  --kind=Memcached \
+  --type=ansible
 cp "$ROOTDIR/test/ansible-memcached/tasks.yml" memcached-operator/roles/memcached/tasks/main.yml
 cp "$ROOTDIR/test/ansible-memcached/defaults.yml" memcached-operator/roles/memcached/defaults/main.yml
 cp -a "$ROOTDIR/test/ansible-memcached/memfin" memcached-operator/roles/
@@ -125,7 +129,7 @@ echo "### Now testing migrate to hybrid operator"
 echo "###"
 
 export GO111MODULE=on
-operator-sdk migrate
+operator-sdk migrate --repo=github.com/example-inc/memcached-operator
 
 if [[ ! -e build/Dockerfile.sdkold ]];
 then
@@ -148,7 +152,7 @@ go build ./...
 # Use the local operator-sdk directory as the repo. To make the go toolchain
 # happy, the directory needs a `go.mod` file that specifies the module name,
 # so we need this temporary hack until we update the SDK repo itself to use
-# go modules.
+# Go modules.
 echo "module ${SDK_REPO}" > "${ROOTDIR}/go.mod"
 trap_add "rm ${ROOTDIR}/go.mod" EXIT
 go mod edit -replace="${SDK_REPO}=$ROOTDIR"

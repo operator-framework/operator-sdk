@@ -28,7 +28,7 @@ import (
 
 func ExecGoModTmpl(tmpl string) ([]byte, error) {
 	projutil.MustInProjectRoot()
-	repo := projutil.CheckAndGetProjectGoPkg()
+	repo := projutil.GetGoPkg()
 	t, err := template.New("").Parse(tmpl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse go mod template: (%v)", err)

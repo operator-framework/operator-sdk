@@ -117,8 +117,8 @@ during the go tests can cause these cleanups to fail (the ansible and helm E2E t
 always clean up correctly). For example, if a segfault occurs or a user kills the
 testing process, the cleanup functions for the go tests will not run. To manually clean up a test:
 
-1. Delete the CRD (`kubectl delete -f $GOPATH/src/github.com/example-inc/memcached-operator/deploy/crds/cache_v1alpha1_memcached_crd.yaml`).
-2. Delete the created project in `$GOPATH/src/github.com/example-inc/memcached-operator`
+1. Delete the CRD (`kubectl delete -f $HOME/projects/example.com/memcached-operator/deploy/crds/cache_v1alpha1_memcached_crd.yaml`).
+2. Delete the created project in `$HOME/projects/example.com/memcached-operator`
 3. Delete the namespaces that the tests run in, which also deletes any resources created within the namespaces. The namespaces start with `memcached-memcached-group` or `main` and are appended with a unix timestamp (seconds since Jan 1 1970). The kubectl command can be used to delete namespaces: `kubectl delete namespace $NAMESPACE`.
 
 [travis]: ./travis-build.md

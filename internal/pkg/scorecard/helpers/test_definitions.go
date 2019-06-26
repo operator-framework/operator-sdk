@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scorecard
+package schelpers
 
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
 )
@@ -123,29 +124,32 @@ func MergeSuites(suites []TestSuite) ([]TestSuite, error) {
 	mergedSuites := []TestSuite{}
 	for _, suiteSlice := range suiteMap {
 		testMap := make(map[string][]TestResult)
+		var logs strings.Builder
 		for _, suite := range suiteSlice {
 			for _, result := range suite.TestResults {
 				testMap[result.Test.GetName()] = append(testMap[result.Test.GetName()], result)
 			}
+			logs.WriteString(fmt.Sprintf("%s\n---\n", suite.Log))
 		}
 		mergedTestResults := []TestResult{}
 		for _, testSlice := range testMap {
+			var (
+				newResult TestResult
+				err       error
+			)
 			if testSlice[0].Test.IsCumulative() {
-				newResult, err := ResultsCumulative(testSlice)
-				if err != nil {
-					return nil, fmt.Errorf("failed to combine test results: %s", err)
-				}
-				mergedTestResults = append(mergedTestResults, newResult)
+				newResult, err = ResultsCumulative(testSlice)
 			} else {
-				newResult, err := ResultsPassFail(testSlice)
-				if err != nil {
-					return nil, fmt.Errorf("failed to combine test results: %s", err)
-				}
-				mergedTestResults = append(mergedTestResults, newResult)
+				newResult, err = ResultsPassFail(testSlice)
 			}
+			if err != nil {
+				return nil, fmt.Errorf("failed to combine test results: %s", err)
+			}
+			mergedTestResults = append(mergedTestResults, newResult)
 		}
 		newSuite := suiteSlice[0]
 		newSuite.TestResults = mergedTestResults
+		newSuite.Log = logs.String()
 		mergedSuites = append(mergedSuites, newSuite)
 	}
 	return mergedSuites, nil
