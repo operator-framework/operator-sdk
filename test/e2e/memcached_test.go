@@ -468,12 +468,12 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 	}
 	obj.SetNamespace(key.Namespace)
 
-	err = f.Client.Get(context.TODO(), key, &obj)
-	if err != nil {
-		return fmt.Errorf("could not get memcached CR %q: %v", key, err)
-	}
-
 	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		err = f.Client.Get(context.TODO(), key, &obj)
+		if err != nil {
+			return fmt.Errorf("could not get memcached CR %q: %v", key, err)
+		}
+
 		// update memcached CR size to `toReplicas` replicas
 		spec, ok := obj.Object["spec"].(map[string]interface{})
 		if !ok {
@@ -629,7 +629,7 @@ func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.T
 
 	// Make sure metrics Service exists
 	s := v1.Service{}
-	err = f.Client.Get(context.TODO(), types.NamespacedName{Name: operatorName, Namespace: namespace}, &s)
+	err = f.Client.Get(context.TODO(), types.NamespacedName{Name: fmt.Sprintf("%s-metrics", operatorName), Namespace: namespace}, &s)
 	if err != nil {
 		return fmt.Errorf("could not get metrics Service: (%v)", err)
 	}
