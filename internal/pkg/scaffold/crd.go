@@ -112,7 +112,7 @@ func (s *CRD) CustomRender() ([]byte, error) {
 			// In turn this defaults to extracting the domain from project root file
 			// in controller-tools.
 			fg := strings.SplitN(s.Resource.FullGroup, ".", 2)
-			domain := ""
+			domain := s.Resource.FullGroup
 			if len(fg) > 1 {
 				domain = fg[1]
 			}
