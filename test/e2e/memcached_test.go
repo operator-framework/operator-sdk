@@ -325,10 +325,6 @@ func insertGoModReplace(t *testing.T, repo, path, sha string) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to write go.mod before replacing SDK repo")
 	}
-	cmdOut, err := exec.Command("go", "build", "./...").CombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("\"go build ./...\" failed before replacing SDK repo: %v\nCommand Output:\n%v", err, string(cmdOut))
-	}
 	return modBytes, nil
 }
 
