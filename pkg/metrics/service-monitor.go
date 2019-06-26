@@ -33,6 +33,7 @@ func CreateServiceMonitors(config *rest.Config, ns string, services []*v1.Servic
 		return nil, err
 	}
 	if !exists {
+		log.Info("ServiceMonitor object could not be created as ServiceMonitor is not registered with the API")
 		// ServiceMonitor was not registered, but we don't want to produce more errors just return.
 		return nil, nil
 	}
