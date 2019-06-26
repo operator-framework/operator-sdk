@@ -33,6 +33,7 @@ var (
 	imageBuildArgs string
 	imageBuilder   string
 	goBuildArgs    string
+	goWithoutImage bool
 )
 
 func NewCmd() *cobra.Command {
@@ -56,6 +57,7 @@ For example:
 	buildCmd.Flags().StringVar(&imageBuildArgs, "image-build-args", "", "Extra image build arguments as one string such as \"--build-arg https_proxy=$https_proxy\"")
 	buildCmd.Flags().StringVar(&imageBuilder, "image-builder", "docker", "Tool to build OCI images. One of: [docker, podman, buildah]")
 	buildCmd.Flags().StringVar(&goBuildArgs, "go-build-args", "", "Extra Go build arguments as one string such as \"-ldflags -X=main.xyz=abc\"")
+	buildCmd.Flags().BoolVar(&goWithoutImage, "without-image", false, "Do not build OCI image.")
 	return buildCmd
 }
 
@@ -83,8 +85,8 @@ func createBuildCommand(imageBuilder, context, dockerFile, image string, imageBu
 }
 
 func buildFunc(cmd *cobra.Command, args []string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
+	if len(args) != 1 && !goWithoutImage {
+		return fmt.Errorf("command %s requires exactly one argument (if there is no '--without-image' flag)", cmd.CommandPath())
 	}
 
 	projutil.MustInProjectRoot()
@@ -117,6 +119,9 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 		}
 		if err := projutil.GoBuild(opts); err != nil {
 			return fmt.Errorf("failed to build operator binary: (%v)", err)
+		}
+		if goWithoutImage {
+			return nil
 		}
 	}
 
