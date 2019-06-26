@@ -4,19 +4,19 @@ This guide walks through an example of building a simple nginx-operator powered 
 
 ## Prerequisites
 
-- [git][git_tool]
-- [docker][docker_tool] version 17.03+.
-- [kubectl][kubectl_tool] version v1.11.3+.
-- [dep][dep_tool] version v0.5.0+. (Optional if you aren't installing from source)
-- [go][go_tool] version v1.12+. (Optional if you aren't installing from source)
+- [git][git-tool]
+- [docker][docker-tool] version 17.03+.
+- [kubectl][kubectl-tool] version v1.11.3+.
+- [dep][dep-tool] version v0.5.0+. (Optional if you aren't installing from source)
+- [go][go-tool] version v1.12+. (Optional if you aren't installing from source)
 - Access to a Kubernetes v1.11.3+ cluster.
 
-**Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the
-local Kubernetes cluster and [quay.io][quay_link] for the public registry.
+**Note**: This guide uses [minikube][minikube-tool] version v0.25.0+ as the
+local Kubernetes cluster and [quay.io][quay-link] for the public registry.
 
 ## Install the Operator SDK CLI
 
-Follow the steps in the [installation guide][install_guide] to learn how to install the Operator SDK CLI tool.
+Follow the steps in the [installation guide][install-guide] to learn how to install the Operator SDK CLI tool.
 
 ## Create a new project
 
@@ -37,7 +37,7 @@ chart's default manifest. Be sure to double check that the rules generated
 in `deploy/role.yaml` meet the operator's permission requirements.
 
 To learn more about the project directory structure, see the
-[project layout][layout_doc] doc.
+[project layout][layout-doc] doc.
 
 ### Use an existing chart
 
@@ -66,7 +66,7 @@ If `--helm-chart-version` is not set, the SDK will fetch the latest available ve
 
 ### Operator scope
 
-Read the [operator scope][operator_scope] documentation on how to run your operator as namespace-scoped vs cluster-scoped.
+Read the [operator scope][operator-scope] documentation on how to run your operator as namespace-scoped vs cluster-scoped.
 
 
 ## Customize the operator logic
@@ -102,11 +102,11 @@ resources, along with a NOTES.txt template, which Helm chart developers use
 to convey helpful information about a release.
 
 If you aren't already familiar with Helm Charts, take a moment to review
-the [Helm Chart developer documentation][helm_charts].
+the [Helm Chart developer documentation][helm-charts].
 
 ### Understanding the Nginx CR spec
 
-Helm uses a concept called [values][helm_values] to provide customizations
+Helm uses a concept called [values][helm-values] to provide customizations
 to a Helm chart's defaults, which are defined in the Helm chart's `values.yaml`
 file.
 
@@ -329,16 +329,16 @@ kubectl delete -f deploy/service_account.yaml
 kubectl delete -f deploy/crds/example_v1alpha1_nginx_crd.yaml
 ```
 
-[operator_scope]:./../operator-scope.md
-[install_guide]: ../user/install-operator-sdk.md
-[layout_doc]:./project_layout.md
-[homebrew_tool]:https://brew.sh/
-[dep_tool]:https://golang.github.io/dep/docs/installation.html
-[git_tool]:https://git-scm.com/downloads
-[go_tool]:https://golang.org/dl/
-[docker_tool]:https://docs.docker.com/install/
-[kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
-[minikube_tool]:https://github.com/kubernetes/minikube#installation
-[helm_charts]:https://helm.sh/docs/developing_charts/
-[helm_values]:https://helm.sh/docs/using_helm/#customizing-the-chart-before-installing
-[quay_link]:https://quay.io
+[operator-scope]:./../operator-scope.md
+[install-guide]: ../user/install-operator-sdk.md
+[layout-doc]:./project_layout.md
+[homebrew-tool]:https://brew.sh/
+[dep-tool]:https://golang.github.io/dep/docs/installation.html
+[git-tool]:https://git-scm.com/downloads
+[go-tool]:https://golang.org/dl/
+[docker-tool]:https://docs.docker.com/install/
+[kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
+[minikube-tool]:https://github.com/kubernetes/minikube#installation
+[helm-charts]:https://helm.sh/docs/developing_charts/
+[helm-values]:https://helm.sh/docs/using_helm/#customizing-the-chart-before-installing
+[quay-link]:https://quay.io
