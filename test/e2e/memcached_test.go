@@ -118,15 +118,17 @@ func TestMemcached(t *testing.T) {
 			// memcached-operator's go.mod, which allows go to recognize
 			// the local SDK repo as a module.
 			sdkModPath := filepath.Join(filepath.FromSlash(replace.repo), "go.mod")
-			err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
-			if err != nil {
-				t.Fatalf("Failed to write main repo go.mod file: %v", err)
-			}
-			defer func() {
-				if err = os.RemoveAll(sdkModPath); err != nil {
-					t.Fatalf("Failed to remove %s: %v", sdkModPath, err)
+			if _, err = os.Stat(sdkModPath); err != nil && os.IsNotExist(err) {
+				err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
+				if err != nil {
+					t.Fatalf("Failed to write main repo go.mod file: %v", err)
 				}
-			}()
+				defer func() {
+					if err = os.RemoveAll(sdkModPath); err != nil {
+						t.Fatalf("Failed to remove %s: %v", sdkModPath, err)
+					}
+				}()
+			}
 		}
 		modBytes, err := insertGoModReplace(t, sdkRepo, replace.repo, replace.ref)
 		if err != nil {
@@ -322,10 +324,6 @@ func insertGoModReplace(t *testing.T, repo, path, sha string) ([]byte, error) {
 	err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to write go.mod before replacing SDK repo")
-	}
-	cmdOut, err := exec.Command("go", "build", "./...").CombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("\"go build ./...\" failed before replacing SDK repo: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 	return modBytes, nil
 }
