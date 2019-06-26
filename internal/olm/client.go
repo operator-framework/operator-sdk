@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package olm provides an API to install, uninstall, and check the
+// status of an Operator Lifecycle Manager installation.
+// TODO: move to OLM repository?
 package olm
 
 import (
@@ -56,7 +59,7 @@ var (
 
 type Client struct {
 	KubeClient client.Client
-	HttpClient http.Client
+	HTTPClient http.Client
 
 	BaseDownloadURL    string
 	BaseReleasesAPIURL string
@@ -83,7 +86,7 @@ func ClientForConfig(cfg *rest.Config) (*Client, error) {
 
 	c := &Client{
 		KubeClient:         cl,
-		HttpClient:         *http.DefaultClient,
+		HTTPClient:         *http.DefaultClient,
 		BaseDownloadURL:    "https://github.com/operator-framework/operator-lifecycle-manager/releases",
 		BaseReleasesAPIURL: "https://api.github.com/repos/operator-framework/operator-lifecycle-manager/releases",
 	}
@@ -266,7 +269,7 @@ func (c Client) doRequest(ctx context.Context, url string) (*http.Response, erro
 		return nil, fmt.Errorf("create request: %s", err)
 	}
 	req = req.WithContext(ctx)
-	resp, err := c.HttpClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed GET '%s': %s", url, err)
 	}
@@ -276,7 +279,7 @@ func (c Client) doRequest(ctx context.Context, url string) (*http.Response, erro
 	return resp, nil
 }
 
-func (c Client) getBaseURL(version string) string {
+func (c Client) getBaseDownloadURL(version string) string {
 	if version == "latest" {
 		return fmt.Sprintf("%s/%s/download", c.BaseDownloadURL, version)
 	}
@@ -284,11 +287,11 @@ func (c Client) getBaseURL(version string) string {
 }
 
 func (c Client) crdsURL(version string) string {
-	return fmt.Sprintf("%s/crds.yaml", c.getBaseURL(version))
+	return fmt.Sprintf("%s/crds.yaml", c.getBaseDownloadURL(version))
 }
 
 func (c Client) olmURL(version string) string {
-	return fmt.Sprintf("%s/olm.yaml", c.getBaseURL(version))
+	return fmt.Sprintf("%s/olm.yaml", c.getBaseDownloadURL(version))
 }
 
 func decodeResources(rds ...io.Reader) ([]unstructured.Unstructured, error) {
