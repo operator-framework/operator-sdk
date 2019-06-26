@@ -61,12 +61,23 @@ func GenerateServiceMonitor(s *v1.Service) *monitoringv1.ServiceMonitor {
 		labels[k] = v
 	}
 	endpoints := populateEndpointsFromServicePorts(s)
+	boolTrue := true
 
 	return &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      s.ObjectMeta.Name,
 			Namespace: s.ObjectMeta.Namespace,
 			Labels:    labels,
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion:         "v1",
+					BlockOwnerDeletion: &boolTrue,
+					Controller:         &boolTrue,
+					Kind:               "Service",
+					Name:               s.Name,
+					UID:                s.UID,
+				},
+			},
 		},
 		Spec: monitoringv1.ServiceMonitorSpec{
 			Selector: metav1.LabelSelector{
