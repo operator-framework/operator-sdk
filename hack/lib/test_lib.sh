@@ -49,9 +49,6 @@ function add_go_mod_replace() {
 	local to_path="$2"
 	local version="${3:-}"
 
-	if [[ ! -d "$to_path" ]]; then
-		echo "$to_path does not exist"
-	fi
 	if [[ ! -e go.mod ]]; then
 		echo "go.mod file not found in $(pwd)"
 	fi
@@ -60,8 +57,10 @@ function add_go_mod_replace() {
 	# happy, the directory needs a `go.mod` file that specifies the module name,
 	# so we need this temporary hack until we update the SDK repo itself to use
 	# Go modules.
-	echo "module ${from_path}" > "${to_path}/go.mod"
-	trap_add "rm ${to_path}/go.mod" EXIT
+	if [[ ! -e "${to_path}/go.mod" ]]; then
+		echo "module ${from_path}" > "${to_path}/go.mod"
+		trap_add "rm ${to_path}/go.mod" EXIT
+	fi
 	# Do not use "go mod edit" so formatting stays the same.
 	local replace="replace ${from_path} => ${to_path}"
 	if [[ -n "$version" ]]; then

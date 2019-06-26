@@ -118,15 +118,17 @@ func TestMemcached(t *testing.T) {
 			// memcached-operator's go.mod, which allows go to recognize
 			// the local SDK repo as a module.
 			sdkModPath := filepath.Join(filepath.FromSlash(replace.repo), "go.mod")
-			err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
-			if err != nil {
-				t.Fatalf("Failed to write main repo go.mod file: %v", err)
-			}
-			defer func() {
-				if err = os.RemoveAll(sdkModPath); err != nil {
-					t.Fatalf("Failed to remove %s: %v", sdkModPath, err)
+			if _, err = os.Stat(sdkModPath); err != nil && os.IsNotExist(err) {
+				err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
+				if err != nil {
+					t.Fatalf("Failed to write main repo go.mod file: %v", err)
 				}
-			}()
+				defer func() {
+					if err = os.RemoveAll(sdkModPath); err != nil {
+						t.Fatalf("Failed to remove %s: %v", sdkModPath, err)
+					}
+				}()
+			}
 		}
 		modBytes, err := insertGoModReplace(t, sdkRepo, replace.repo, replace.ref)
 		if err != nil {
