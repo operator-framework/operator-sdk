@@ -139,6 +139,7 @@ func GetGVKsFromAddToScheme(addToSchemeFunc func(*runtime.Scheme) error) ([]sche
 
 func isKubeMetaKind(kind string) bool {
 	if strings.HasSuffix(kind, "List") ||
+		kind == "PatchOptions" ||
 		kind == "GetOptions" ||
 		kind == "DeleteOptions" ||
 		kind == "ExportOptions" ||
