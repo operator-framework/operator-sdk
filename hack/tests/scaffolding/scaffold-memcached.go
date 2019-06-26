@@ -77,6 +77,7 @@ func main() {
 
 	replace := getGoModReplace(localSDKPath)
 	if replace.repo != sdkRepo {
+		// TODO: Remove when PR 1566 is merged
 		if replace.isLocal {
 			// A hacky way to get local module substitution to work is to write a
 			// stub go.mod into the local SDK repo referred to in
