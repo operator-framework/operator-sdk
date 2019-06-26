@@ -45,19 +45,26 @@ function trap_add() {
 # add_go_mod_replace adds a "replace" directive from $1 to $2 with an
 # optional version version $3 to the current working directory's go.mod file.
 function add_go_mod_replace() {
-	local from_path="$1"
-	local to_path="$2"
+	local from_path="${1:?first path in replace statement is required}"
+	local to_path="${2:?second path in replace statement is required}"
 	local version="${3:-}"
 
+	if [[ ! -d "$to_path" && -z "$version" ]]; then
+		echo "second replace path $to_path requires a version be set because it is not a directory"
+		exit 1
+	fi
 	if [[ ! -e go.mod ]]; then
 		echo "go.mod file not found in $(pwd)"
+		exit 1
 	fi
 
-	# Use the local operator-sdk directory as the repo. To make the go toolchain
-	# happy, the directory needs a `go.mod` file that specifies the module name,
-	# so we need this temporary hack until we update the SDK repo itself to use
-	# Go modules.
-	if [[ ! -e "${to_path}/go.mod" ]]; then
+	# If $to_path is a directory, it needs a `go.mod` file that specifies the
+	# module name to make the go toolchain happy.
+	#
+	# TODO: remove the below if statement once
+	# https://github.com/operator-framework/operator-sdk/pull/1566 is merged,
+	# which updates the SDK to use go modules.
+	if [[ -d "${to_path}" && ! -e "${to_path}/go.mod" ]]; then
 		echo "module ${from_path}" > "${to_path}/go.mod"
 		trap_add "rm ${to_path}/go.mod" EXIT
 	fi
