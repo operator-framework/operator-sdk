@@ -158,9 +158,17 @@ func main() {
 		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
 	}
 	// Create Service object to expose the metrics port(s).
-	_, err = metrics.CreateMetricsService(ctx, cfg, servicePorts)
+	service, err = metrics.CreateMetricsService(ctx, cfg, servicePorts)
 	if err != nil {
-		log.Info(err.Error())
+		log.Info("Could not create metrics Service: ", err.Error())
+	}
+
+	// Remove below code if you do not have Prometheus operator running in the cluster.
+	// Populate services with any additional Service(s) for which you want to create ServiceMonitors.
+	services := []*v1.Service{service}
+	_, err = metrics.CreateServiceMonitors(cfg, namespace, services)
+	if err != nil {
+		log.Info("Could not create ServiceMonitor object: ", err.Error())
 	}
 
 	log.Info("Starting the Cmd.")
