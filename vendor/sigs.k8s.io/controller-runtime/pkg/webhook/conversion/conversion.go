@@ -75,10 +75,11 @@ func (wh *Webhook) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err, "failed to convert", "request", convertReview.Request.UID)
 		convertReview.Response = errored(err)
-		convertReview.Response.UID = convertReview.Request.UID
 	} else {
 		convertReview.Response = resp
 	}
+	convertReview.Response.UID = convertReview.Request.UID
+	convertReview.Request = nil
 
 	err = json.NewEncoder(w).Encode(convertReview)
 	if err != nil {
@@ -112,6 +113,9 @@ func (wh *Webhook) handleConvertRequest(req *apix.ConversionRequest) (*apix.Conv
 	return &apix.ConversionResponse{
 		UID:              req.UID,
 		ConvertedObjects: objects,
+		Result: metav1.Status{
+			Status: metav1.StatusSuccess,
+		},
 	}, nil
 }
 

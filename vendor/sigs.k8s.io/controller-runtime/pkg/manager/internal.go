@@ -288,6 +288,41 @@ func (cm *controllerManager) startNonLeaderElectionRunnables() {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 
+	cm.waitForCache()
+
+	// Start the non-leaderelection Runnables after the cache has synced
+	for _, c := range cm.nonLeaderElectionRunnables {
+		// Controllers block, but we want to return an error if any have an error starting.
+		// Write any Start errors to a channel so we can return them
+		ctrl := c
+		go func() {
+			cm.errChan <- ctrl.Start(cm.internalStop)
+		}()
+	}
+}
+
+func (cm *controllerManager) startLeaderElectionRunnables() {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+
+	cm.waitForCache()
+
+	// Start the leader election Runnables after the cache has synced
+	for _, c := range cm.leaderElectionRunnables {
+		// Controllers block, but we want to return an error if any have an error starting.
+		// Write any Start errors to a channel so we can return them
+		ctrl := c
+		go func() {
+			cm.errChan <- ctrl.Start(cm.internalStop)
+		}()
+	}
+}
+
+func (cm *controllerManager) waitForCache() {
+	if cm.started {
+		return
+	}
+
 	// Start the Cache. Allow the function to start the cache to be mocked out for testing
 	if cm.startCache == nil {
 		cm.startCache = cm.cache.Start
@@ -301,35 +336,6 @@ func (cm *controllerManager) startNonLeaderElectionRunnables() {
 	// Wait for the caches to sync.
 	// TODO(community): Check the return value and write a test
 	cm.cache.WaitForCacheSync(cm.internalStop)
-
-	// Start the non-leaderelection Runnables after the cache has synced
-	for _, c := range cm.nonLeaderElectionRunnables {
-		// Controllers block, but we want to return an error if any have an error starting.
-		// Write any Start errors to a channel so we can return them
-		ctrl := c
-		go func() {
-			cm.errChan <- ctrl.Start(cm.internalStop)
-		}()
-	}
-
-	cm.started = true
-}
-
-func (cm *controllerManager) startLeaderElectionRunnables() {
-	// Wait for the caches to sync.
-	// TODO(community): Check the return value and write a test
-	cm.cache.WaitForCacheSync(cm.internalStop)
-
-	// Start the leader election Runnables after the cache has synced
-	for _, c := range cm.leaderElectionRunnables {
-		// Controllers block, but we want to return an error if any have an error starting.
-		// Write any Start errors to a channel so we can return them
-		ctrl := c
-		go func() {
-			cm.errChan <- ctrl.Start(cm.internalStop)
-		}()
-	}
-
 	cm.started = true
 }
 
@@ -355,7 +361,16 @@ func (cm *controllerManager) startLeaderElection() (err error) {
 		return err
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		select {
+		case <-cm.internalStop:
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
+
 	// Start the leader elector process
-	go l.Run(context.Background())
+	go l.Run(ctx)
 	return nil
 }

@@ -78,7 +78,15 @@ required = [
 
 [[override]]
   name = "sigs.k8s.io/controller-runtime"
-  version = "=v0.2.0-beta.2"
+  # Uncomment once v0.2.0 is released
+  # version = "=v0.2.0-beta.2"
+  # Commit containing a fix for metrics naming issue.
+  revision = "3bc157084f5327264397261d64023e5f2c6d73f2"
+
+# Required when resolving controller-runtime dependencies.
+[[override]]
+  name = "gopkg.in/fsnotify.v1"
+  source = "https://github.com/fsnotify/fsnotify.git"
 
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"
@@ -93,7 +101,7 @@ required = [
   [[prune.project]]
     name = "k8s.io/kube-state-metrics"
     unused-packages = true
-  
+
 `
 
 func PrintDepGopkgTOML(asFile bool) error {
