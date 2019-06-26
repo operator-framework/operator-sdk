@@ -2,4 +2,4 @@
 
 set -e
 
-make tidy
+#make tidy
