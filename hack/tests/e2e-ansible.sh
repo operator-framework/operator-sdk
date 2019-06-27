@@ -9,7 +9,7 @@ go test -count=1 ./pkg/ansible/proxy/...
 
 DEST_IMAGE="quay.io/example/memcached-operator:v0.0.2"
 ROOTDIR="$(pwd)"
-GOTMP="$(mktemp -d -p $GOPATH/src)"
+GOTMP="$(mktemp -d)"
 trap_add 'rm -rf $GOTMP' EXIT
 
 deploy_operator() {
@@ -97,7 +97,10 @@ if which oc 2>/dev/null; then oc project default; fi
 
 # create and build the operator
 pushd "$GOTMP"
-operator-sdk new memcached-operator --api-version=ansible.example.com/v1alpha1 --kind=Memcached --type=ansible
+operator-sdk new memcached-operator \
+  --api-version=ansible.example.com/v1alpha1 \
+  --kind=Memcached \
+  --type=ansible
 cp "$ROOTDIR/test/ansible-memcached/tasks.yml" memcached-operator/roles/memcached/tasks/main.yml
 cp "$ROOTDIR/test/ansible-memcached/defaults.yml" memcached-operator/roles/memcached/defaults/main.yml
 cp -a "$ROOTDIR/test/ansible-memcached/memfin" memcached-operator/roles/
@@ -126,7 +129,7 @@ echo "### Now testing migrate to hybrid operator"
 echo "###"
 
 export GO111MODULE=on
-operator-sdk migrate
+operator-sdk migrate --repo=github.com/example-inc/memcached-operator
 
 if [[ ! -e build/Dockerfile.sdkold ]];
 then
@@ -134,25 +137,8 @@ then
     exit 1
 fi
 
-# Remove any "replace" and "require" lines for the SDK repo before vendoring
-# in case this is a release PR and the tag doesn't exist yet. This must be
-# done without using "go mod edit", which first parses go.mod and will error
-# if it doesn't find a tag/version/package.
-# TODO: remove SDK repo references if PR/branch is not from the main SDK repo.
-SDK_REPO="github.com/operator-framework/operator-sdk"
-sed -E -i 's|^.*'"$SDK_REPO"'.*$||g' go.mod
-
-# Run `go build ./...` to pull down the deps specified by the scaffolded
-# `go.mod` file and verify dependencies build correctly.
-go build ./...
-
-# Use the local operator-sdk directory as the repo. To make the go toolchain
-# happy, the directory needs a `go.mod` file that specifies the module name,
-# so we need this temporary hack until we update the SDK repo itself to use
-# go modules.
-echo "module ${SDK_REPO}" > "${ROOTDIR}/go.mod"
-trap_add "rm ${ROOTDIR}/go.mod" EXIT
-go mod edit -replace="${SDK_REPO}=$ROOTDIR"
+add_go_mod_replace "github.com/operator-framework/operator-sdk" "$ROOTDIR"
+# Build the project to resolve dependency versions in the modfile.
 go build ./...
 
 operator-sdk build "$DEST_IMAGE"

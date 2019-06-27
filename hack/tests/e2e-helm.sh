@@ -6,7 +6,7 @@ set -eux
 
 DEST_IMAGE="quay.io/example/nginx-operator:v0.0.2"
 ROOTDIR="$(pwd)"
-GOTMP="$(mktemp -d -p $GOPATH/src)"
+GOTMP="$(mktemp -d)"
 trap_add 'rm -rf $GOTMP' EXIT
 
 deploy_operator() {
@@ -34,15 +34,17 @@ test_operator() {
     fi
 
     # verify that metrics service was created
-    if ! timeout 20s bash -c -- "until kubectl get service/nginx-operator > /dev/null 2>&1; do sleep 1; done";
+    if ! timeout 20s bash -c -- "until kubectl get service/nginx-operator-metrics > /dev/null 2>&1; do sleep 1; done";
     then
+        echo "Failed to get metrics service"
         kubectl logs deployment/nginx-operator
         exit 1
     fi
 
     # verify that the metrics endpoint exists
-    if ! timeout 1m bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl -sfo /dev/null http://nginx-operator:8383/metrics; do sleep 1; done";
+    if ! timeout 1m bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl -sfo /dev/null http://nginx-operator-metrics:8383/metrics; do sleep 1; done";
     then
+        echo "Failed to verify that metrics endpoint exists"
         kubectl logs deployment/nginx-operator
         exit 1
     fi
@@ -108,7 +110,11 @@ fi
 
 # create and build the operator
 pushd "$GOTMP"
-log=$(operator-sdk new nginx-operator --api-version=helm.example.com/v1alpha1 --kind=Nginx --type=helm 2>&1)
+log=$(operator-sdk new nginx-operator \
+  --api-version=helm.example.com/v1alpha1 \
+  --kind=Nginx \
+  --type=helm \
+  2>&1)
 echo $log
 if echo $log | grep -q "failed to generate RBAC rules"; then
     echo FAIL expected successful generation of RBAC rules
@@ -134,7 +140,7 @@ echo "### Now testing migrate to hybrid operator"
 echo "###"
 
 export GO111MODULE=on
-operator-sdk migrate
+operator-sdk migrate --repo=github.com/example-inc/nginx-operator
 
 if [[ ! -e build/Dockerfile.sdkold ]];
 then
@@ -142,25 +148,8 @@ then
     exit 1
 fi
 
-# Remove any "replace" and "require" lines for the SDK repo before vendoring
-# in case this is a release PR and the tag doesn't exist yet. This must be
-# done without using "go mod edit", which first parses go.mod and will error
-# if it doesn't find a tag/version/package.
-# TODO: remove SDK repo references if PR/branch is not from the main SDK repo.
-SDK_REPO="github.com/operator-framework/operator-sdk"
-sed -E -i 's|^.*'"$SDK_REPO"'.*$||g' go.mod
-
-# Run `go build ./...` to pull down the deps specified by the scaffolded
-# `go.mod` file and verify dependencies build correctly.
-go build ./...
-
-# Use the local operator-sdk directory as the repo. To make the go toolchain
-# happy, the directory needs a `go.mod` file that specifies the module name,
-# so we need this temporary hack until we update the SDK repo itself to use
-# go modules.
-echo "module ${SDK_REPO}" > "${ROOTDIR}/go.mod"
-trap_add "rm ${ROOTDIR}/go.mod" EXIT
-go mod edit -replace="${SDK_REPO}=$ROOTDIR"
+add_go_mod_replace "github.com/operator-framework/operator-sdk" "$ROOTDIR"
+# Build the project to resolve dependency versions in the modfile.
 go build ./...
 
 operator-sdk build "$DEST_IMAGE"

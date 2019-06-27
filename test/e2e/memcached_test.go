@@ -17,30 +17,27 @@ package e2e
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 
 	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/prometheus/util/promlint"
-	"github.com/rogpeppe/go-internal/modfile"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -48,26 +45,24 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	crYAML               string = "apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: 3"
-	retryInterval               = time.Second * 5
-	timeout                     = time.Second * 120
-	cleanupRetryInterval        = time.Second * 1
-	cleanupTimeout              = time.Second * 10
-	operatorName                = "memcached-operator"
+	retryInterval        = time.Second * 5
+	timeout              = time.Second * 120
+	cleanupRetryInterval = time.Second * 1
+	cleanupTimeout       = time.Second * 10
+	sdkRepo              = "github.com/operator-framework/operator-sdk"
+	operatorName         = "memcached-operator"
+	testRepo             = "github.com/example-inc/" + operatorName
 )
 
 func TestMemcached(t *testing.T) {
 	// get global framework variables
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
-	gopath, ok := os.LookupEnv(projutil.GoPathEnv)
-	if !ok || gopath == "" {
-		t.Fatalf("$GOPATH not set")
-	}
 	sdkTestE2EDir, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
@@ -88,7 +83,7 @@ func TestMemcached(t *testing.T) {
 	}
 
 	// Setup
-	absProjectPath, err := ioutil.TempDir(filepath.Join(gopath, "src"), "tmp.")
+	absProjectPath, err := ioutil.TempDir("", "tmp.")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,6 +100,7 @@ func TestMemcached(t *testing.T) {
 	cmdOut, err := exec.Command("operator-sdk",
 		"new",
 		operatorName,
+		"--repo", testRepo,
 		"--skip-validation").CombinedOutput()
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
@@ -114,7 +110,6 @@ func TestMemcached(t *testing.T) {
 		t.Fatalf("Failed to change to %s directory: (%v)", operatorName, err)
 	}
 
-	sdkRepo := "github.com/operator-framework/operator-sdk"
 	replace := getGoModReplace(t, localSDKPath)
 	if replace.repo != sdkRepo {
 		if replace.isLocal {
@@ -123,30 +118,21 @@ func TestMemcached(t *testing.T) {
 			// memcached-operator's go.mod, which allows go to recognize
 			// the local SDK repo as a module.
 			sdkModPath := filepath.Join(filepath.FromSlash(replace.repo), "go.mod")
-			err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
-			if err != nil {
-				t.Fatalf("Failed to write main repo go.mod file: %v", err)
-			}
-			defer func() {
-				if err = os.RemoveAll(sdkModPath); err != nil {
-					t.Fatalf("Failed to remove %s: %v", sdkModPath, err)
+			if _, err = os.Stat(sdkModPath); err != nil && os.IsNotExist(err) {
+				err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
+				if err != nil {
+					t.Fatalf("Failed to write main repo go.mod file: %v", err)
 				}
-			}()
+				defer func() {
+					if err = os.RemoveAll(sdkModPath); err != nil {
+						t.Fatalf("Failed to remove %s: %v", sdkModPath, err)
+					}
+				}()
+			}
 		}
-		modBytes, err := ioutil.ReadFile("go.mod")
+		modBytes, err := insertGoModReplace(t, sdkRepo, replace.repo, replace.ref)
 		if err != nil {
-			t.Fatalf("Failed to read go.mod: %v", err)
-		}
-		// Remove SDK repo dependency lines so we can parse the modfile.
-		sdkRe := regexp.MustCompile(`.*github\.com/operator-framework/operator-sdk.*`)
-		modBytes = sdkRe.ReplaceAll(modBytes, nil)
-		modBytes, err = insertGoModReplace(t, modBytes, sdkRepo, replace.repo, replace.ref)
-		if err != nil {
-			t.Fatalf("Failed to insert replace: %v", err)
-		}
-		err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
-		if err != nil {
-			t.Fatalf("Failed to write updated go.mod: %v", err)
+			t.Fatalf("Failed to insert go.mod replace: %v", err)
 		}
 		t.Logf("go.mod: %v", string(modBytes))
 	}
@@ -197,13 +183,9 @@ func TestMemcached(t *testing.T) {
 		if err := os.MkdirAll(filepath.Dir(dst), fileutil.DefaultDirFileMode); err != nil {
 			t.Fatalf("Could not create template destination directory: %s", err)
 		}
-		srcTmpl, err := ioutil.ReadFile(src)
+		cmdOut, err = exec.Command("cp", src, dst).CombinedOutput()
 		if err != nil {
-			t.Fatalf("Could not read template from %s: %s", src, err)
-		}
-		dstData := strings.Replace(string(srcTmpl), "github.com/example-inc", filepath.Base(absProjectPath), -1)
-		if err := ioutil.WriteFile(dst, []byte(dstData), fileutil.DefaultFileMode); err != nil {
-			t.Fatalf("Could not write template output to %s: %s", dst, err)
+			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 		}
 	}
 
@@ -329,21 +311,19 @@ func getGoModReplace(t *testing.T, localSDKPath string) goModReplace {
 	}
 }
 
-func insertGoModReplace(t *testing.T, modBytes []byte, repo, path, sha string) ([]byte, error) {
-	modFile, err := modfile.Parse("go.mod", modBytes, nil)
+func insertGoModReplace(t *testing.T, repo, path, sha string) ([]byte, error) {
+	modBytes, err := ioutil.ReadFile("go.mod")
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse go.mod: %v", err)
+		return nil, errors.Wrap(err, "failed to read go.mod")
 	}
-	if err = modFile.AddReplace(repo, "", path, sha); err != nil {
-		s := ""
-		if sha != "" {
-			s = " " + sha
-		}
-		return nil, fmt.Errorf(`failed to add "replace %s => %s%s: %v"`, repo, path, s, err)
+	sdkReplace := fmt.Sprintf("replace %s => %s", repo, path)
+	if sha != "" {
+		sdkReplace = fmt.Sprintf("%s %s", sdkReplace, sha)
 	}
-	modFile.Cleanup()
-	if modBytes, err = modFile.Format(); err != nil {
-		return nil, fmt.Errorf("failed to format go.mod: %v", err)
+	modBytes = append(modBytes, []byte("\n"+sdkReplace)...)
+	err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to write go.mod before replacing SDK repo")
 	}
 	return modBytes, nil
 }
@@ -447,33 +427,37 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework, labels
 	return nil, fmt.Errorf("did not find operator pod that was referenced by configmap")
 }
 
-func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx, fromReplicas, toReplicas int) error {
+	name := "example-memcached"
+	crYAML := fmt.Sprintf("apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"%s\"\nspec:\n  size: %d", name, fromReplicas)
+
 	// create example-memcached yaml file
 	filename := "deploy/cr.yaml"
 	err := ioutil.WriteFile(filename,
 		[]byte(crYAML),
 		fileutil.DefaultFileMode)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not write CR to file: %v", err)
 	}
 
 	// create memcached custom resource
 	framework.Global.NamespacedManPath = &filename
 	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
-		return err
+		return fmt.Errorf("could not initialize cluster resources: %v", err)
 	}
 	t.Log("Created cr")
 
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
-		return err
+		return fmt.Errorf("could not get namespace: %v", err)
 	}
+	key := types.NamespacedName{Name: name, Namespace: namespace}
 
-	// wait for example-memcached to reach 3 replicas
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 3, retryInterval, timeout)
+	// wait for example-memcached to reach `fromReplicas` replicas
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, key.Namespace, key.Name, fromReplicas, retryInterval, timeout)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %v", fromReplicas, key.Name, err)
 	}
 
 	// get fresh copy of memcached object as unstructured
@@ -483,26 +467,34 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		return fmt.Errorf("could not convert yaml file to json: %v", err)
 	}
 	if err := obj.UnmarshalJSON(jsonSpec); err != nil {
-		t.Fatalf("Failed to unmarshal memcached CR: (%v)", err)
+		return fmt.Errorf("failed to unmarshal memcached CR %q: %v", key, err)
 	}
-	obj.SetNamespace(namespace)
-	err = f.Client.Get(context.TODO(), types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}, &obj)
+	obj.SetNamespace(key.Namespace)
+
+	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		err = f.Client.Get(context.TODO(), key, &obj)
+		if err != nil {
+			return fmt.Errorf("could not get memcached CR %q: %v", key, err)
+		}
+
+		// update memcached CR size to `toReplicas` replicas
+		spec, ok := obj.Object["spec"].(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("memcached CR %q missing spec field", key)
+		}
+		spec["size"] = toReplicas
+		t.Logf("Attempting memcached CR %q update, resourceVersion: %s", key, obj.GetResourceVersion())
+		return f.Client.Update(context.TODO(), &obj)
+	})
 	if err != nil {
-		return fmt.Errorf("failed to get memcached object: %s", err)
-	}
-	// update memcached CR size to 4
-	spec, ok := obj.Object["spec"].(map[string]interface{})
-	if !ok {
-		return errors.New("memcached object missing spec field")
-	}
-	spec["size"] = 4
-	err = f.Client.Update(context.TODO(), &obj)
-	if err != nil {
-		return err
+		return fmt.Errorf("could not update memcached CR %q: %v", key, err)
 	}
 
-	// wait for example-memcached to reach 4 replicas
-	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 4, retryInterval, timeout)
+	// wait for example-memcached to reach `toReplicas` replicas
+	if err := e2eutil.WaitForDeployment(t, f.KubeClient, key.Namespace, key.Name, toReplicas, retryInterval, timeout); err != nil {
+		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %v", toReplicas, key.Name, err)
+	}
+	return nil
 }
 
 func MemcachedLocal(t *testing.T) {
@@ -546,7 +538,7 @@ func MemcachedLocal(t *testing.T) {
 		t.Fatalf("Local operator not ready after 100 seconds: %v\n", err)
 	}
 
-	if err = memcachedScaleTest(t, framework.Global, ctx); err != nil {
+	if err = memcachedScaleTest(t, framework.Global, ctx, 3, 4); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -619,7 +611,7 @@ func MemcachedCluster(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = memcachedScaleTest(t, framework.Global, ctx); err != nil {
+	if err = memcachedScaleTest(t, framework.Global, ctx, 3, 4); err != nil {
 		t.Fatal(err)
 	}
 
@@ -640,7 +632,7 @@ func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.T
 
 	// Make sure metrics Service exists
 	s := v1.Service{}
-	err = f.Client.Get(context.TODO(), types.NamespacedName{Name: operatorName, Namespace: namespace}, &s)
+	err = f.Client.Get(context.TODO(), types.NamespacedName{Name: fmt.Sprintf("%s-metrics", operatorName), Namespace: namespace}, &s)
 	if err != nil {
 		return fmt.Errorf("could not get metrics Service: (%v)", err)
 	}

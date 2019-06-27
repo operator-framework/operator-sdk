@@ -16,12 +16,16 @@ package add
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -99,11 +103,18 @@ func apiRun(cmd *cobra.Command, args []string) error {
 	absProjectPath := projutil.MustGetwd()
 
 	cfg := &input.Config{
-		Repo:           projutil.CheckAndGetProjectGoPkg(),
+		Repo:           projutil.GetGoPkg(),
 		AbsProjectPath: absProjectPath,
 	}
-
 	s := &scaffold.Scaffold{}
+
+	// Check if any package files for this API group dir exist, and if not
+	// scaffold a group.go to prevent erroneous gengo parse errors.
+	group := &scaffold.Group{Resource: r}
+	if err := scaffoldIfNoPkgFileExists(s, cfg, group); err != nil {
+		return errors.Wrap(err, "scaffold group file")
+	}
+
 	err = s.Execute(cfg,
 		&scaffold.Types{Resource: r},
 		&scaffold.AddToScheme{Resource: r},
@@ -133,4 +144,27 @@ func apiRun(cmd *cobra.Command, args []string) error {
 
 	log.Info("API generation complete.")
 	return nil
+}
+
+// scaffoldIfNoPkgFileExists executes f using s and cfg if no go files
+// in f's directory exist.
+func scaffoldIfNoPkgFileExists(s *scaffold.Scaffold, cfg *input.Config, f input.File) error {
+	i, err := f.GetInput()
+	if err != nil {
+		return errors.Wrapf(err, "error getting file %s input", i.Path)
+	}
+	groupDir := filepath.Dir(i.Path)
+	gdInfos, err := ioutil.ReadDir(groupDir)
+	if err != nil && !os.IsNotExist(err) {
+		return errors.Wrapf(err, "error reading dir %s", groupDir)
+	}
+	if err == nil {
+		for _, info := range gdInfos {
+			if !info.IsDir() && filepath.Ext(info.Name()) == ".go" {
+				return nil
+			}
+		}
+	}
+	// err must be a non-existence error or no go files exist, so execute f.
+	return s.Execute(cfg, f)
 }
