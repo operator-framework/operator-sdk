@@ -84,11 +84,11 @@ func (c *GenCatalogSourceCmd) Run() error {
 	}
 	cmb, err := k8sutil.GetObjectBytes(configMap, m)
 	if err != nil {
-		return errors.Wrap(err, "get ConfigMap bytes")
+		return errors.Wrap(err, "failed to get ConfigMap bytes")
 	}
 	csb, err := k8sutil.GetObjectBytes(catsrc, m)
 	if err != nil {
-		return errors.Wrap(err, "get CatalogSource bytes")
+		return errors.Wrap(err, "failed to get CatalogSource bytes")
 	}
 	b := yamlutil.CombineManifests(csb, cmb)
 	if _, err := fmt.Fprintln(c.Writer, string(b)); err != nil {
