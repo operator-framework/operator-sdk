@@ -58,7 +58,7 @@ generates a skeletal app-operator application in $HOME/projects/example.com/app-
 	newCmd.Flags().StringVar(&operatorType, "type", "go", "Type of operator to initialize (choices: \"go\", \"ansible\" or \"helm\")")
 	newCmd.Flags().StringVar(&depManager, "dep-manager", "modules", `Dependency manager the new project will use (choices: "dep", "modules")`)
 	newCmd.Flags().StringVar(&repo, "repo", "", "Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of $GOPATH/src with Go modules, and cannot be set if --dep-manager=dep")
-	newCmd.Flags().BoolVar(&gitInit, "git-init", false, "Initialize the project directory as a git repository")
+	newCmd.Flags().BoolVar(&gitInit, "git-init", false, "Initialize the project directory as a git repository (default false)")
 	newCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
 	newCmd.Flags().BoolVar(&makeVendor, "vendor", false, "Use a vendor directory for dependencies. This flag only applies when --dep-manager=modules (the default)")
 	newCmd.Flags().BoolVar(&skipValidation, "skip-validation", false, "Do not validate the resulting project's structure and dependencies. (Only used for --type go)")
@@ -127,8 +127,10 @@ func newFunc(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if err := initGit(); err != nil {
-		return err
+	if gitInit {
+		if err := initGit(); err != nil {
+			return err
+		}
 	}
 
 	log.Info("Project creation complete.")
@@ -458,13 +460,6 @@ func getDeps() error {
 }
 
 func initGit() error {
-	if !gitInit {
-		return nil
-	}
-	if _, err := exec.LookPath("git"); err != nil {
-		return errors.Wrapf(err, "failed to find git")
-	}
-
 	log.Info("Running git init")
 	if err := execProjCmd("git", "init"); err != nil {
 		return errors.Wrapf(err, "failed to run git init")
