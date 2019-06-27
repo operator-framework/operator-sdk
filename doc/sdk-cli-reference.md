@@ -216,7 +216,7 @@ INFO[0000] Created deploy/olm-catalog/operator-name/0.1.0/operator-name.v0.1.0.c
 
 ### gen-catalogsource
 
-Writes a combined CatalogSource and ConfigMap manifest to `deploy/olm-catalog/{operator-name}/{csv-version}` using manifests in a CSV bundle directory.
+Prints a combined CatalogSource and ConfigMap manifest using manifests in a registry bundle directory and package manifest file. The ConfigMap contains all manifests in the bundle dir and the package manifest.
 
 #### Flags
 

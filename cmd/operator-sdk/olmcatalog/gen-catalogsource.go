@@ -29,7 +29,7 @@ func newGenCatalogSourceCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "gen-catalogsource",
-		Short: "Generates a CatalogSource ConfigMap yaml file from an operator's registry bundle",
+		Short: "Prints a combined CatalogSource and ConfigMap manifest from an operator's registry bundle to stdout",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
 				return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
