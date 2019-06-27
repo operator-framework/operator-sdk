@@ -148,20 +148,9 @@ then
     exit 1
 fi
 
-# Remove any "replace" and "require" lines for the SDK repo before vendoring
-# in case this is a release PR and the tag doesn't exist yet. This must be
-# done without using "go mod edit", which first parses go.mod and will error
-# if it doesn't find a tag/version/package.
-# TODO: remove SDK repo references if PR/branch is not from the main SDK repo.
-SDK_REPO="github.com/operator-framework/operator-sdk"
-sed -E -i 's|^.*'"$SDK_REPO"'.*$||g' go.mod
+add_go_mod_replace "github.com/operator-framework/operator-sdk" "$ROOTDIR"
 
-# Run `go build ./...` to pull down the deps specified by the scaffolded
-# `go.mod` file and verify dependencies build correctly.
-go build ./...
-
-# Use the local operator-sdk directory as the repo.
-go mod edit -replace="${SDK_REPO}=$ROOTDIR"
+# Build the project to resolve dependency versions in the modfile.
 go build ./...
 
 operator-sdk build "$DEST_IMAGE"
