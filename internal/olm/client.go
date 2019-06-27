@@ -32,6 +32,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -68,12 +69,12 @@ type Client struct {
 func ClientForConfig(cfg *rest.Config) (*Client, error) {
 	rm, err := restmapper.NewDynamicRESTMapper(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create dynamic rest mapper: %s", err)
+		return nil, errors.Wrap(err, "failed to create dynamic rest mapper")
 	}
 
 	sch := scheme.Scheme
 	if err := olmapiv1alpha1.AddToScheme(sch); err != nil {
-		return nil, fmt.Errorf("failed to add OLM types to scheme: %s", err)
+		return nil, errors.Wrap(err, "failed to add OLM types to scheme")
 	}
 
 	cl, err := client.New(cfg, client.Options{
@@ -81,7 +82,7 @@ func ClientForConfig(cfg *rest.Config) (*Client, error) {
 		Mapper: rm,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create client: %s", err)
+		return nil, errors.Wrap(err, "failed to create client")
 	}
 
 	c := &Client{
@@ -96,38 +97,38 @@ func ClientForConfig(cfg *rest.Config) (*Client, error) {
 func (c Client) InstallVersion(ctx context.Context, version string) (*Status, error) {
 	resources, err := c.getResources(ctx, version)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get resources: %s", err)
+		return nil, errors.Wrap(err, "failed to get resources")
 	}
 
 	status := c.getStatus(ctx, resources)
 	if status.HasExistingResources() {
-		return nil, fmt.Errorf("detected existing OLM resources")
+		return nil, errors.New("detected existing OLM resources: OLM must be completely uninstalled before installation")
 	}
 
 	log.Print("Creating CRDs and resources")
 	if err := c.doCreate(ctx, resources); err != nil {
-		return nil, fmt.Errorf("failed to create CRDs and resources: %s", err)
+		return nil, errors.Wrap(err, "failed to create CRDs and resources")
 	}
 
 	log.Print("Waiting for deployment/olm-operator rollout to complete")
 	if err := c.doRolloutWait(ctx, olmOperatorKey); err != nil {
-		return nil, fmt.Errorf("deployment %q failed to rollout: %s", olmOperatorKey.Name, err)
+		return nil, errors.Wrapf(err, "deployment %q failed to rollout", olmOperatorKey.Name)
 	}
 
 	log.Print("Waiting for deployment/catalog-operator rollout to complete")
 	if err := c.doRolloutWait(ctx, catalogOperatorKey); err != nil {
-		return nil, fmt.Errorf("deployment %q failed to rollout: %s", catalogOperatorKey.Name, err)
+		return nil, errors.Wrapf(err, "deployment %q failed to rollout", catalogOperatorKey.Name)
 	}
 
 	packageServerCSV := types.NamespacedName{Namespace: olmNamespace, Name: fmt.Sprintf("packageserver.v%s", version)}
 	log.Printf("Waiting for clusterserviceversion %q to reach 'Succeeded' phase", packageServerCSV.Name)
 	if err := c.doCSVWait(ctx, packageServerCSV); err != nil {
-		return nil, fmt.Errorf("clusterservice version %q failed to reach phase succeeded: %s", packageServerCSV.Name, err)
+		return nil, errors.Wrapf(err, "clusterservice version %q failed to reach phase succeeded", packageServerCSV.Name)
 	}
 
 	log.Printf("Waiting for deployment %q rollout to complete", packageServerKey.Name)
 	if err := c.doRolloutWait(ctx, packageServerKey); err != nil {
-		return nil, fmt.Errorf("deployment %q failed to rollout: %s", packageServerKey.Name, err)
+		return nil, errors.Wrapf(err, "deployment %q failed to rollout", packageServerKey.Name)
 	}
 
 	status = c.getStatus(ctx, resources)
@@ -137,7 +138,7 @@ func (c Client) InstallVersion(ctx context.Context, version string) (*Status, er
 func (c Client) UninstallVersion(ctx context.Context, version string) error {
 	resources, err := c.getResources(ctx, version)
 	if err != nil {
-		return fmt.Errorf("failed to get resources: %s", err)
+		return errors.Wrap(err, "failed to get resources")
 	}
 
 	status := c.getStatus(ctx, resources)
@@ -147,7 +148,7 @@ func (c Client) UninstallVersion(ctx context.Context, version string) error {
 
 	log.Infof("Uninstalling resources for version %s", version)
 	if err := c.doDelete(ctx, resources); err != nil {
-		return fmt.Errorf("failed to delete OLM version %s: %s", version, err)
+		return errors.Wrapf(err, "failed to delete OLM version %s", version)
 	}
 	return nil
 }
@@ -156,7 +157,7 @@ func (c Client) GetVersion(ctx context.Context, version string) (string, error) 
 	log.Infof("Resolving version %q", version)
 	version, err := c.resolveVersion(ctx, version)
 	if err != nil {
-		return "", fmt.Errorf("failed to resolve version %s: %s", version, err)
+		return "", errors.Wrapf(err, "failed to resolve version %s", version)
 	}
 	log.Infof("  Found GitHub release version %s", version)
 	return version, nil
@@ -165,12 +166,12 @@ func (c Client) GetVersion(ctx context.Context, version string) (string, error) 
 func (c Client) GetStatus(ctx context.Context, version string) (*Status, error) {
 	resources, err := c.getResources(ctx, version)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get resources: %s", err)
+		return nil, errors.Wrap(err, "failed to get resources")
 	}
 
 	status := c.getStatus(ctx, resources)
 	if !status.HasExistingResources() {
-		return nil, fmt.Errorf("no existing installation found")
+		return nil, errors.New("no existing installation found")
 	}
 	return &status, nil
 }
@@ -179,13 +180,13 @@ func (c Client) getResources(ctx context.Context, version string) ([]unstructure
 	log.Infof("Fetching CRDs for version %s", version)
 	crdResources, err := c.getCRDs(ctx, version)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch CRDs: %s", err)
+		return nil, errors.Wrap(err, "failed to fetch CRDs")
 	}
 
 	log.Infof("Fetching resources for version %s", version)
 	olmResources, err := c.getOLM(ctx, version)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch resources: %s", err)
+		return nil, errors.Wrap(err, "failed to fetch resources")
 	}
 
 	resources := append(crdResources, olmResources...)
@@ -227,20 +228,20 @@ func (c Client) resolveVersion(ctx context.Context, version string) (string, err
 
 	resp, err := c.doRequest(ctx, url)
 	if err != nil {
-		return version, fmt.Errorf("request failed: %s", err)
+		return version, errors.Wrap(err, "request failed")
 	}
 	defer resp.Body.Close()
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return version, fmt.Errorf("read response body: %s", err)
+		return version, errors.Wrap(err, "read response body")
 	}
 
 	var d struct {
 		TagName string `json:"tag_name"`
 	}
 	if err := json.Unmarshal([]byte(data), &d); err != nil {
-		return version, fmt.Errorf("unmarshal json: %s", err)
+		return version, errors.Wrap(err, "unmarshal json")
 	}
 	return d.TagName, nil
 }
@@ -248,7 +249,7 @@ func (c Client) resolveVersion(ctx context.Context, version string) (string, err
 func (c Client) getCRDs(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
 	resp, err := c.doRequest(ctx, c.crdsURL(version))
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %s", err)
+		return nil, errors.Wrap(err, "request failed")
 	}
 	defer resp.Body.Close()
 	return decodeResources(resp.Body)
@@ -257,7 +258,7 @@ func (c Client) getCRDs(ctx context.Context, version string) ([]unstructured.Uns
 func (c Client) getOLM(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
 	resp, err := c.doRequest(ctx, c.olmURL(version))
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %s", err)
+		return nil, errors.Wrap(err, "request failed")
 	}
 	defer resp.Body.Close()
 	return decodeResources(resp.Body)
@@ -266,12 +267,12 @@ func (c Client) getOLM(ctx context.Context, version string) ([]unstructured.Unst
 func (c Client) doRequest(ctx context.Context, url string) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("create request: %s", err)
+		return nil, errors.Wrap(err, "create request")
 	}
 	req = req.WithContext(ctx)
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed GET '%s': %s", url, err)
+		return nil, errors.Wrapf(err, "failed GET '%s'", url)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed GET '%s': unexpected status code %d, expected %d", url, resp.StatusCode, http.StatusOK)
@@ -366,7 +367,7 @@ func (c Client) doRolloutWait(ctx context.Context, key types.NamespacedName) err
 		if deployment.Generation <= deployment.Status.ObservedGeneration {
 			cond := deploymentutil.GetDeploymentCondition(deployment.Status, appsv1.DeploymentProgressing)
 			if cond != nil && cond.Reason == deploymentutil.TimedOutReason {
-				return false, fmt.Errorf("progress deadline exceeded")
+				return false, errors.New("progress deadline exceeded")
 			}
 			if deployment.Spec.Replicas != nil && deployment.Status.UpdatedReplicas < *deployment.Spec.Replicas {
 				onceReplicasUpdated.Do(func() {

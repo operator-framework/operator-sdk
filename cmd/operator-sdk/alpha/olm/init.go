@@ -16,6 +16,7 @@ package olm
 
 import (
 	"github.com/operator-framework/operator-sdk/internal/olm"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

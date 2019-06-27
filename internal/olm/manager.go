@@ -20,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -38,19 +39,18 @@ type Manager struct {
 	once sync.Once
 }
 
-func (m *Manager) initialize() error {
-	var err error
+func (m *Manager) initialize() (err error) {
 	m.once.Do(func() {
 		if m.Client == nil {
 			cfg, err := config.GetConfig()
 			if err != nil {
-				err = fmt.Errorf("failed to get Kubernetes config: %s", err)
+				err = errors.Wrapf(err, "failed to get Kubernetes config")
 				return
 			}
 
 			client, err := ClientForConfig(cfg)
 			if err != nil {
-				err = fmt.Errorf("failed to create manager client: %s", err)
+				err = errors.Wrapf(err, "failed to create manager client")
 				return
 			}
 			m.Client = client
