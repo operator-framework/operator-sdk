@@ -201,7 +201,7 @@ Writes a Cluster Service Version (CSV) manifest and optionally CRD files to `dep
 * `--csv-config` string - Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml.
 * `--update-crds` Update CRD manifests in deploy/{operator-name}/{csv-version} using the latest CRD manifests.
 * `--csv-channel` string - Channel the CSV should be registered under in the package manifest
-* `--default-channel` - Use the channel passed to --csv-channel as the package manifests' default channel. Only valid when --csv-channel is set
+* `--default-channel` - Use the channel passed to --csv-channel as the package manifests' default channel. Only valid when --csv-channel is set.
 
 #### Example
 
