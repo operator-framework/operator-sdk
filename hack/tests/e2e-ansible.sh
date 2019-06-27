@@ -138,7 +138,6 @@ then
 fi
 
 add_go_mod_replace "github.com/operator-framework/operator-sdk" "$ROOTDIR"
-
 # Build the project to resolve dependency versions in the modfile.
 go build ./...
 
