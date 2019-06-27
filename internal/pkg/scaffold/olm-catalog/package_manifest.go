@@ -32,7 +32,7 @@ import (
 	"github.com/spf13/afero"
 )
 
-const PackageManifestPrefix = ".package.yaml"
+const PackageManifestFileExt = ".package.yaml"
 
 type PackageManifest struct {
 	input.Input
@@ -56,7 +56,7 @@ func (s *PackageManifest) GetInput() (input.Input, error) {
 		// Path is what the operator-registry expects:
 		// {manifests -> olm-catalog}/{operator_name}/{operator_name}.package.yaml
 		s.Path = filepath.Join(OLMCatalogDir, lowerProjName,
-			lowerProjName+PackageManifestPrefix)
+			lowerProjName+PackageManifestFileExt)
 	}
 	return s.Input, nil
 }
