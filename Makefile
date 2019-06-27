@@ -141,6 +141,12 @@ test/markdown:
 
 image: image/build image/push
 
+image/scaffold/ansible:
+	go run ./hack/image/ansible/scaffold-ansible-image.go
+
+image/scaffold/helm:
+	go run ./hack/image/helm/scaffold-helm-image.go
+
 image/build: image/build/ansible image/build/helm image/build/scorecard-proxy
 
 image/build/ansible: build/operator-sdk-dev-x86_64-linux-gnu
@@ -163,4 +169,4 @@ image/push/helm:
 image/push/scorecard-proxy:
 	./hack/image/push-image-tags.sh $(SCORECARD_PROXY_BASE_IMAGE):dev $(SCORECARD_PROXY_IMAGE)
 
-.PHONY: image image/build image/build/ansible image/build/helm image/push image/push/ansible image/push/helm
+.PHONY: image image/scaffold/ansible image/scaffold/helm image/build image/build/ansible image/build/helm image/push image/push/ansible image/push/helm
