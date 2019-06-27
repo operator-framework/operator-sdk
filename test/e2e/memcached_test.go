@@ -234,9 +234,8 @@ func TestMemcached(t *testing.T) {
 }
 
 type goModReplace struct {
-	repo    string
-	ref     string
-	isLocal bool
+	repo string
+	ref  string
 }
 
 // getGoModReplace returns a go.mod replacement that is appropriate based on the build's
@@ -288,8 +287,7 @@ func getGoModReplace(t *testing.T, localSDKPath string) goModReplace {
 
 	// Local environment
 	return goModReplace{
-		repo:    localSDKPath,
-		isLocal: true,
+		repo: localSDKPath,
 	}
 }
 
