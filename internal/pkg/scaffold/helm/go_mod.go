@@ -96,7 +96,6 @@ require (
 	github.com/martinlindhe/base36 v0.0.0-20180729042928-5cda0030da17 // indirect
 	github.com/mattbaird/jsonpatch v0.0.0-20171005235357-81af80346b1a // indirect
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/operator-framework/operator-sdk master
@@ -137,11 +136,10 @@ require (
 	k8s.io/apiserver v0.0.0-20181213151703-3ccfe8365421 // indirect
 	k8s.io/cli-runtime v0.0.0-20181213153952-835b10687cb6 // indirect
 	k8s.io/client-go v0.0.0-20181213151034-8d9ed539ba31
-	k8s.io/code-generator v0.0.0-20190405172246-9a4d48088f6a
-	k8s.io/gengo v0.0.0-20190327210449-e17681d19d3a
+	k8s.io/gengo v0.0.0-20190327210449-e17681d19d3a // indirect
 	k8s.io/helm v2.13.1+incompatible // indirect
 	k8s.io/klog v0.2.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20190320154901-5e45bb682580
+	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208 // indirect
 	k8s.io/kubernetes v0.0.0-20190201210629-c6d339953bd4 // indirect
 	k8s.io/utils v0.0.0-20190308190857-21c4ce38f2a7 // indirect
 	sigs.k8s.io/controller-runtime v0.1.10
@@ -162,10 +160,7 @@ replace (
 	k8s.io/kubernetes => k8s.io/kubernetes v1.13.1
 )
 
-replace (
-	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20181117043124-c2090bec4d9b
-	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20180711000925-0cf8f7e6ed1d
-)
+replace github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.29.0
 `
 
 func PrintGoMod(asFile bool) error {

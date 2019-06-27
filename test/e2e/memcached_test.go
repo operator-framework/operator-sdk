@@ -17,8 +17,8 @@ package e2e
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -29,14 +29,15 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
-	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 
 	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
+	dto "github.com/prometheus/client_model/go"
+	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/prometheus/util/promlint"
-	"github.com/rogpeppe/go-internal/modfile"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -44,42 +45,45 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	crYAML               string = "apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"example-memcached\"\nspec:\n  size: 3"
-	retryInterval               = time.Second * 5
-	timeout                     = time.Second * 120
-	cleanupRetryInterval        = time.Second * 1
-	cleanupTimeout              = time.Second * 10
-	operatorName                = "memcached-operator"
+	retryInterval        = time.Second * 5
+	timeout              = time.Second * 120
+	cleanupRetryInterval = time.Second * 1
+	cleanupTimeout       = time.Second * 10
+	sdkRepo              = "github.com/operator-framework/operator-sdk"
+	operatorName         = "memcached-operator"
+	testRepo             = "github.com/example-inc/" + operatorName
 )
 
 func TestMemcached(t *testing.T) {
 	// get global framework variables
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
-	gopath, ok := os.LookupEnv(projutil.GoPathEnv)
-	if !ok || gopath == "" {
-		t.Fatalf("$GOPATH not set")
-	}
-	cd, err := os.Getwd()
+	sdkTestE2EDir, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
-		if err := os.Chdir(cd); err != nil {
+		if err := os.Chdir(sdkTestE2EDir); err != nil {
 			t.Errorf("Failed to change back to original working directory: (%v)", err)
 		}
 	}()
+	localSDKPath := *args.localRepo
+	if localSDKPath == "" {
+		// We're in ${sdk_repo}/test/e2e
+		localSDKPath = filepath.Dir(filepath.Dir(sdkTestE2EDir))
+	}
 	// For go commands in operator projects.
 	if err = os.Setenv("GO111MODULE", "on"); err != nil {
 		t.Fatal(err)
 	}
 
 	// Setup
-	absProjectPath, err := ioutil.TempDir(filepath.Join(gopath, "src"), "tmp.")
+	absProjectPath, err := ioutil.TempDir("", "tmp.")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,7 +99,9 @@ func TestMemcached(t *testing.T) {
 	t.Log("Creating new operator project")
 	cmdOut, err := exec.Command("operator-sdk",
 		"new",
-		operatorName).CombinedOutput()
+		operatorName,
+		"--repo", testRepo,
+		"--skip-validation").CombinedOutput()
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
@@ -103,9 +109,6 @@ func TestMemcached(t *testing.T) {
 	if err := os.Chdir(operatorName); err != nil {
 		t.Fatalf("Failed to change to %s directory: (%v)", operatorName, err)
 	}
-
-	sdkRepo := "github.com/operator-framework/operator-sdk"
-	localSDKPath := filepath.Join(gopath, "src", filepath.FromSlash(sdkRepo))
 
 	replace := getGoModReplace(t, localSDKPath)
 	if replace.repo != sdkRepo {
@@ -115,22 +118,28 @@ func TestMemcached(t *testing.T) {
 			// memcached-operator's go.mod, which allows go to recognize
 			// the local SDK repo as a module.
 			sdkModPath := filepath.Join(filepath.FromSlash(replace.repo), "go.mod")
-			err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
-			if err != nil {
-				t.Fatalf("Failed to write main repo go.mod file: %v", err)
-			}
-			defer func() {
-				if err = os.RemoveAll(sdkModPath); err != nil {
-					t.Fatalf("Failed to remove %s: %v", sdkModPath, err)
+			if _, err = os.Stat(sdkModPath); err != nil && os.IsNotExist(err) {
+				err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
+				if err != nil {
+					t.Fatalf("Failed to write main repo go.mod file: %v", err)
 				}
-			}()
+				defer func() {
+					if err = os.RemoveAll(sdkModPath); err != nil {
+						t.Fatalf("Failed to remove %s: %v", sdkModPath, err)
+					}
+				}()
+			}
 		}
-		writeGoModReplace(t, sdkRepo, replace.repo, replace.ref)
+		modBytes, err := insertGoModReplace(t, sdkRepo, replace.repo, replace.ref)
+		if err != nil {
+			t.Fatalf("Failed to insert go.mod replace: %v", err)
+		}
+		t.Logf("go.mod: %v", string(modBytes))
 	}
 
-	cmdOut, err = exec.Command("go", "mod", "vendor").CombinedOutput()
+	cmdOut, err = exec.Command("go", "build", "./...").CombinedOutput()
 	if err != nil {
-		t.Fatalf("Error after modifying go.mod: %v\nCommand Output: %s\n", err, string(cmdOut))
+		t.Fatalf("Command \"go build ./...\" failed after modifying go.mod: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 
 	// Set replicas to 2 to test leader election. In production, this should
@@ -174,13 +183,9 @@ func TestMemcached(t *testing.T) {
 		if err := os.MkdirAll(filepath.Dir(dst), fileutil.DefaultDirFileMode); err != nil {
 			t.Fatalf("Could not create template destination directory: %s", err)
 		}
-		srcTmpl, err := ioutil.ReadFile(src)
+		cmdOut, err = exec.Command("cp", src, dst).CombinedOutput()
 		if err != nil {
-			t.Fatalf("Could not read template from %s: %s", src, err)
-		}
-		dstData := strings.Replace(string(srcTmpl), "github.com/example-inc", filepath.Base(absProjectPath), -1)
-		if err := ioutil.WriteFile(dst, []byte(dstData), fileutil.DefaultFileMode); err != nil {
-			t.Fatalf("Could not write template output to %s: %s", dst, err)
+			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 		}
 	}
 
@@ -218,9 +223,9 @@ func TestMemcached(t *testing.T) {
 	}
 
 	t.Log("Pulling new dependencies with go mod")
-	cmdOut, err = exec.Command("go", "mod", "vendor").CombinedOutput()
+	cmdOut, err = exec.Command("go", "build", "./...").CombinedOutput()
 	if err != nil {
-		t.Fatalf("Command 'go mod vendor' failed: %v\nCommand Output:\n%v", err, string(cmdOut))
+		t.Fatalf("Command \"go build ./...\" failed: %v\nCommand Output:\n%v", err, string(cmdOut))
 	}
 
 	file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
@@ -306,30 +311,21 @@ func getGoModReplace(t *testing.T, localSDKPath string) goModReplace {
 	}
 }
 
-func writeGoModReplace(t *testing.T, repo, path, sha string) {
+func insertGoModReplace(t *testing.T, repo, path, sha string) ([]byte, error) {
 	modBytes, err := ioutil.ReadFile("go.mod")
 	if err != nil {
-		t.Fatalf("Failed to read go.mod: %v", err)
+		return nil, errors.Wrap(err, "failed to read go.mod")
 	}
-	modFile, err := modfile.Parse("go.mod", modBytes, nil)
-	if err != nil {
-		t.Fatalf("Failed to parse go.mod: %v", err)
+	sdkReplace := fmt.Sprintf("replace %s => %s", repo, path)
+	if sha != "" {
+		sdkReplace = fmt.Sprintf("%s %s", sdkReplace, sha)
 	}
-	if err = modFile.AddReplace(repo, "", path, sha); err != nil {
-		s := ""
-		if sha != "" {
-			s = " " + sha
-		}
-		t.Fatalf(`Failed to add "replace %s => %s%s: %v"`, repo, path, s, err)
-	}
-	if modBytes, err = modFile.Format(); err != nil {
-		t.Fatalf("Failed to format go.mod: %v", err)
-	}
+	modBytes = append(modBytes, []byte("\n"+sdkReplace)...)
 	err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
 	if err != nil {
-		t.Fatalf("Failed to write updated go.mod: %v", err)
+		return nil, errors.Wrap(err, "failed to write go.mod before replacing SDK repo")
 	}
-	t.Logf("go.mod: %v", string(modBytes))
+	return modBytes, nil
 }
 
 func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
@@ -431,32 +427,37 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework, labels
 	return nil, fmt.Errorf("did not find operator pod that was referenced by configmap")
 }
 
-func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx, fromReplicas, toReplicas int) error {
+	name := "example-memcached"
+	crYAML := fmt.Sprintf("apiVersion: \"cache.example.com/v1alpha1\"\nkind: \"Memcached\"\nmetadata:\n  name: \"%s\"\nspec:\n  size: %d", name, fromReplicas)
+
 	// create example-memcached yaml file
 	filename := "deploy/cr.yaml"
 	err := ioutil.WriteFile(filename,
 		[]byte(crYAML),
 		fileutil.DefaultFileMode)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not write CR to file: %v", err)
 	}
 
 	// create memcached custom resource
 	framework.Global.NamespacedManPath = &filename
 	err = ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
-		return err
+		return fmt.Errorf("could not initialize cluster resources: %v", err)
 	}
 	t.Log("Created cr")
 
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
-		return err
+		return fmt.Errorf("could not get namespace: %v", err)
 	}
-	// wait for example-memcached to reach 3 replicas
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 3, retryInterval, timeout)
+	key := types.NamespacedName{Name: name, Namespace: namespace}
+
+	// wait for example-memcached to reach `fromReplicas` replicas
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, key.Namespace, key.Name, fromReplicas, retryInterval, timeout)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %v", fromReplicas, key.Name, err)
 	}
 
 	// get fresh copy of memcached object as unstructured
@@ -466,26 +467,34 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		return fmt.Errorf("could not convert yaml file to json: %v", err)
 	}
 	if err := obj.UnmarshalJSON(jsonSpec); err != nil {
-		t.Fatalf("Failed to unmarshal memcached CR: (%v)", err)
+		return fmt.Errorf("failed to unmarshal memcached CR %q: %v", key, err)
 	}
-	obj.SetNamespace(namespace)
-	err = f.Client.Get(context.TODO(), types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}, &obj)
+	obj.SetNamespace(key.Namespace)
+
+	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		err = f.Client.Get(context.TODO(), key, &obj)
+		if err != nil {
+			return fmt.Errorf("could not get memcached CR %q: %v", key, err)
+		}
+
+		// update memcached CR size to `toReplicas` replicas
+		spec, ok := obj.Object["spec"].(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("memcached CR %q missing spec field", key)
+		}
+		spec["size"] = toReplicas
+		t.Logf("Attempting memcached CR %q update, resourceVersion: %s", key, obj.GetResourceVersion())
+		return f.Client.Update(context.TODO(), &obj)
+	})
 	if err != nil {
-		return fmt.Errorf("failed to get memcached object: %s", err)
-	}
-	// update memcached CR size to 4
-	spec, ok := obj.Object["spec"].(map[string]interface{})
-	if !ok {
-		return errors.New("memcached object missing spec field")
-	}
-	spec["size"] = 4
-	err = f.Client.Update(context.TODO(), &obj)
-	if err != nil {
-		return err
+		return fmt.Errorf("could not update memcached CR %q: %v", key, err)
 	}
 
-	// wait for example-memcached to reach 4 replicas
-	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 4, retryInterval, timeout)
+	// wait for example-memcached to reach `toReplicas` replicas
+	if err := e2eutil.WaitForDeployment(t, f.KubeClient, key.Namespace, key.Name, toReplicas, retryInterval, timeout); err != nil {
+		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %v", toReplicas, key.Name, err)
+	}
+	return nil
 }
 
 func MemcachedLocal(t *testing.T) {
@@ -529,7 +538,7 @@ func MemcachedLocal(t *testing.T) {
 		t.Fatalf("Local operator not ready after 100 seconds: %v\n", err)
 	}
 
-	if err = memcachedScaleTest(t, framework.Global, ctx); err != nil {
+	if err = memcachedScaleTest(t, framework.Global, ctx, 3, 4); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -542,9 +551,9 @@ func MemcachedCluster(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Could not read deploy/operator.yaml: %v", err)
 	}
-	local := *e2eImageName == ""
+	local := *args.e2eImageName == ""
 	if local {
-		*e2eImageName = "quay.io/example/memcached-operator:v0.0.1"
+		*args.e2eImageName = "quay.io/example/memcached-operator:v0.0.1"
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -554,20 +563,20 @@ func MemcachedCluster(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	operatorYAML = bytes.Replace(operatorYAML, []byte("REPLACE_IMAGE"), []byte(*e2eImageName), 1)
+	operatorYAML = bytes.Replace(operatorYAML, []byte("REPLACE_IMAGE"), []byte(*args.e2eImageName), 1)
 	err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, os.FileMode(0644))
 	if err != nil {
 		t.Fatalf("Failed to write deploy/operator.yaml: %v", err)
 	}
 	t.Log("Building operator docker image")
-	cmdOut, err := exec.Command("operator-sdk", "build", *e2eImageName).CombinedOutput()
+	cmdOut, err := exec.Command("operator-sdk", "build", *args.e2eImageName).CombinedOutput()
 	if err != nil {
 		t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
 	if !local {
 		t.Log("Pushing docker image to repo")
-		cmdOut, err = exec.Command("docker", "push", *e2eImageName).CombinedOutput()
+		cmdOut, err = exec.Command("docker", "push", *args.e2eImageName).CombinedOutput()
 		if err != nil {
 			t.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 		}
@@ -602,11 +611,15 @@ func MemcachedCluster(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = memcachedScaleTest(t, framework.Global, ctx); err != nil {
+	if err = memcachedScaleTest(t, framework.Global, ctx, 3, 4); err != nil {
 		t.Fatal(err)
 	}
 
 	if err = memcachedMetricsTest(t, framework.Global, ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = memcachedOperatorMetricsTest(t, framework.Global, ctx); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -619,59 +632,19 @@ func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.T
 
 	// Make sure metrics Service exists
 	s := v1.Service{}
-	err = f.Client.Get(context.TODO(), types.NamespacedName{Name: operatorName, Namespace: namespace}, &s)
+	err = f.Client.Get(context.TODO(), types.NamespacedName{Name: fmt.Sprintf("%s-metrics", operatorName), Namespace: namespace}, &s)
 	if err != nil {
 		return fmt.Errorf("could not get metrics Service: (%v)", err)
 	}
-
-	// Get operator pod
-	pods := v1.PodList{}
-	opts := client.InNamespace(namespace)
 	if len(s.Spec.Selector) == 0 {
 		return fmt.Errorf("no labels found in metrics Service")
 	}
 
-	for k, v := range s.Spec.Selector {
-		if err := opts.SetLabelSelector(fmt.Sprintf("%s=%s", k, v)); err != nil {
-			return fmt.Errorf("failed to set list label selector: (%v)", err)
-		}
-	}
-
-	if err := opts.SetFieldSelector("status.phase=Running"); err != nil {
-		return fmt.Errorf("failed to set list field selector: (%v)", err)
-	}
-	err = f.Client.List(context.TODO(), opts, &pods)
+	// TODO(lili): Make port a constant in internal/scaffold/cmd.go.
+	response, err := getMetrics(t, f, s.Spec.Selector, namespace, "8383")
 	if err != nil {
-		return fmt.Errorf("failed to get pods: (%v)", err)
+		return fmt.Errorf("failed to get metrics: %v", err)
 	}
-
-	podName := ""
-	numPods := len(pods.Items)
-	// TODO(lili): Remove below logic when we enable exposing metrics in all pods.
-	if numPods == 0 {
-		podName = pods.Items[0].Name
-	} else if numPods > 1 {
-		// If we got more than one pod, get leader pod name.
-		leader, err := verifyLeader(t, namespace, f, s.Spec.Selector)
-		if err != nil {
-			return err
-		}
-		podName = leader.Name
-	} else {
-		return fmt.Errorf("failed to get operator pod: could not select any pods with Service selector %v", s.Spec.Selector)
-	}
-	// Pod name must be there, otherwise we cannot read metrics data via pod proxy.
-	if podName == "" {
-		return fmt.Errorf("failed to get pod name")
-	}
-
-	// Get metrics data
-	request := proxyViaPod(f.KubeClient, namespace, podName, "8383", "/metrics")
-	response, err := request.DoRaw()
-	if err != nil {
-		return fmt.Errorf("failed to get response from metrics: %v", err)
-	}
-
 	// Make sure metrics are present
 	if len(response) == 0 {
 		return fmt.Errorf("metrics body is empty")
@@ -692,6 +665,127 @@ func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.T
 	}
 
 	return nil
+}
+
+func memcachedOperatorMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		return err
+	}
+
+	// TODO(lili): Make port a constant in internal/scaffold/cmd.go.
+	response, err := getMetrics(t, f, map[string]string{"name": operatorName}, namespace, "8686")
+	if err != nil {
+		return fmt.Errorf("failed to lint metrics: %v", err)
+	}
+	// Make sure metrics are present
+	if len(response) == 0 {
+		return fmt.Errorf("metrics body is empty")
+	}
+
+	// Perform prometheus metrics lint checks
+	l := promlint.New(bytes.NewReader(response))
+	problems, err := l.Lint()
+	if err != nil {
+		return fmt.Errorf("failed to lint metrics: %v", err)
+	}
+	if len(problems) > 0 {
+		return fmt.Errorf("found problems with metrics: %#+v", problems)
+	}
+
+	// Make sure the metrics are the way we expect them.
+	d := expfmt.NewDecoder(bytes.NewReader(response), expfmt.FmtText)
+	var mf dto.MetricFamily
+	for {
+		if err := d.Decode(&mf); err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			return err
+		}
+
+		/*
+			Metric:
+			# HELP memcached_info Information about the Memcached operator replica.
+			# TYPE memcached_info gauge
+			memcached_info{namespace="memcached-memcached-group-cluster-1553683239",memcached="example-memcached"} 1
+		*/
+		if mf.GetName() != "memcached_info" {
+			return fmt.Errorf("metric name was incorrect: expected %s, got %s", "memcached_info", mf.GetName())
+		}
+		if mf.GetType() != dto.MetricType_GAUGE {
+			return fmt.Errorf("metric type was incorrect: expected %v, got %v", dto.MetricType_GAUGE, mf.GetType())
+		}
+
+		mlabels := mf.Metric[0].GetLabel()
+		if mlabels[0].GetName() != "namespace" {
+			return fmt.Errorf("metric label name was incorrect: expected %s, got %s", "namespace", mlabels[0].GetName())
+		}
+		if mlabels[0].GetValue() != namespace {
+			return fmt.Errorf("metric label value was incorrect: expected %s, got %s", namespace, mlabels[0].GetValue())
+		}
+		if mlabels[1].GetName() != "memcached" {
+			return fmt.Errorf("metric label name was incorrect: expected %s, got %s", "memcached", mlabels[1].GetName())
+		}
+		if mlabels[1].GetValue() != "example-memcached" {
+			return fmt.Errorf("metric label value was incorrect: expected %s, got %s", "example-memcached", mlabels[1].GetValue())
+		}
+
+		if mf.Metric[0].GetGauge().GetValue() != float64(1) {
+			return fmt.Errorf("metric counter was incorrect: expected %f, got %f", float64(1), mf.Metric[0].GetGauge().GetValue())
+		}
+	}
+
+	return nil
+}
+
+func getMetrics(t *testing.T, f *framework.Framework, label map[string]string, ns, port string) ([]byte, error) {
+	// Get operator pod
+	pods := v1.PodList{}
+	opts := client.InNamespace(ns)
+	for k, v := range label {
+		if err := opts.SetLabelSelector(fmt.Sprintf("%s=%s", k, v)); err != nil {
+			return nil, fmt.Errorf("failed to set list label selector: (%v)", err)
+		}
+	}
+	if err := opts.SetFieldSelector("status.phase=Running"); err != nil {
+		return nil, fmt.Errorf("failed to set list field selector: (%v)", err)
+	}
+	err := f.Client.List(context.TODO(), opts, &pods)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get pods: (%v)", err)
+	}
+
+	podName := ""
+	numPods := len(pods.Items)
+	// TODO(lili): Remove below logic when we enable exposing metrics in all pods.
+	if numPods == 0 {
+		podName = pods.Items[0].Name
+	} else if numPods > 1 {
+		// If we got more than one pod, get leader pod name.
+		leader, err := verifyLeader(t, ns, f, label)
+		if err != nil {
+			return nil, err
+		}
+		podName = leader.Name
+	} else {
+		return nil, fmt.Errorf("failed to get operator pod: could not select any pods with selector %v", label)
+	}
+	// Pod name must be there, otherwise we cannot read metrics data via pod proxy.
+	if podName == "" {
+		return nil, fmt.Errorf("failed to get pod name")
+	}
+
+	// Get metrics data
+	request := proxyViaPod(f.KubeClient, ns, podName, port, "/metrics")
+	response, err := request.DoRaw()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get response from metrics: %v", err)
+	}
+
+	return response, nil
+
 }
 
 func proxyViaPod(kubeClient kubernetes.Interface, namespace, podName, podPortName, path string) *rest.Request {

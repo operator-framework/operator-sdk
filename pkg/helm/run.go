@@ -26,13 +26,21 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/watches"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
+	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
+	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+)
+
+var (
+	metricsHost       = "0.0.0.0"
+	metricsPort int32 = 8383
 )
 
 var log = logf.Log.WithName("cmd")
@@ -67,7 +75,8 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 		return err
 	}
 	mgr, err := manager.New(cfg, manager.Options{
-		Namespace: namespace,
+		Namespace:          namespace,
+		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
 	})
 	if err != nil {
 		log.Error(err, "Failed to create a new manager.")
@@ -100,11 +109,23 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 		log.Error(err, "Failed to get operator name")
 		return err
 	}
+
+	ctx := context.TODO()
+
 	// Become the leader before proceeding
-	err = leader.Become(context.TODO(), operatorName+"-lock")
+	err = leader.Become(ctx, operatorName+"-lock")
 	if err != nil {
 		log.Error(err, "Failed to become leader.")
 		return err
+	}
+
+	servicePorts := []v1.ServicePort{
+		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
+	}
+	// Create Service object to expose the metrics port(s).
+	_, err = metrics.CreateMetricsService(ctx, servicePorts)
+	if err != nil {
+		log.Info(err.Error())
 	}
 
 	// Start the Cmd

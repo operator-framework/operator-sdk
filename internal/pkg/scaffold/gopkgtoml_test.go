@@ -35,24 +35,8 @@ func TestGopkgtoml(t *testing.T) {
 
 const gopkgtomlExp = `# Force dep to vendor the code generators, which aren't imported just used at dev time.
 required = [
-  "k8s.io/code-generator/cmd/deepcopy-gen",
-  "k8s.io/code-generator/cmd/conversion-gen",
-  "k8s.io/code-generator/cmd/client-gen",
-  "k8s.io/code-generator/cmd/lister-gen",
-  "k8s.io/code-generator/cmd/informer-gen",
-  "k8s.io/kube-openapi/cmd/openapi-gen",
-  "k8s.io/gengo/args",
   "sigs.k8s.io/controller-tools/pkg/crd/generator",
 ]
-
-[[override]]
-  name = "k8s.io/code-generator"
-  # revision for tag "kubernetes-1.13.1"
-  revision = "c2090bec4d9b1fb25de3812f868accc2bc9ecbae"
-
-[[override]]
-  name = "k8s.io/kube-openapi"
-  revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
 
 [[override]]
   name = "github.com/go-openapi/spec"
@@ -87,6 +71,10 @@ required = [
   version = "=v0.29.0"
 
 [[override]]
+  name = "k8s.io/kube-state-metrics"
+  version = "v1.6.0"
+
+[[override]]
   name = "sigs.k8s.io/controller-runtime"
   version = "=v0.1.10"
 
@@ -101,10 +89,7 @@ required = [
   non-go = true
 
   [[prune.project]]
-    name = "k8s.io/code-generator"
-    non-go = false
-
-  [[prune.project]]
-    name = "k8s.io/gengo"
-    non-go = false
+    name = "k8s.io/kube-state-metrics"
+    unused-packages = true
+  
 `

@@ -83,7 +83,7 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 		ProjectName:    filepath.Base(absProjectPath),
 	}
 	if projutil.IsOperatorGo() {
-		cfg.Repo = projutil.CheckAndGetProjectGoPkg()
+		cfg.Repo = projutil.GetGoPkg()
 	}
 
 	log.Infof("Generating CSV manifest version %s", csvVersion)

@@ -81,7 +81,7 @@ func controllerRun(cmd *cobra.Command, args []string) error {
 	}
 
 	cfg := &input.Config{
-		Repo:           projutil.CheckAndGetProjectGoPkg(),
+		Repo:           projutil.GetGoPkg(),
 		AbsProjectPath: projutil.MustGetwd(),
 	}
 	s := &scaffold.Scaffold{}

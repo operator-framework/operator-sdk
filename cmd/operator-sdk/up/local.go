@@ -57,6 +57,7 @@ kubernetes cluster using a kubeconfig file.
 	upLocalCmd.Flags().StringVar(&operatorFlags, "operator-flags", "", "The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
 	upLocalCmd.Flags().StringVar(&namespace, "namespace", "", "The namespace where the operator watches for changes.")
 	upLocalCmd.Flags().StringVar(&ldFlags, "go-ldflags", "", "Set Go linker options")
+	upLocalCmd.Flags().BoolVar(&enableDelve, "enable-delve", false, "Start the operator using the delve debugger")
 	switch projutil.GetOperatorType() {
 	case projutil.OperatorTypeAnsible:
 		ansibleOperatorFlags = aoflags.AddTo(upLocalCmd.Flags(), "(ansible operator)")
@@ -71,6 +72,7 @@ var (
 	operatorFlags        string
 	namespace            string
 	ldFlags              string
+	enableDelve          bool
 	ansibleOperatorFlags *aoflags.AnsibleOperatorFlags
 	helmOperatorFlags    *hoflags.HelmOperatorFlags
 )
@@ -113,7 +115,19 @@ func upLocal() error {
 		extraArgs := strings.Split(operatorFlags, " ")
 		args = append(args, extraArgs...)
 	}
-	dc := exec.Command(outputBinName, args...)
+
+	var dc *exec.Cmd
+
+	if enableDelve {
+		delveArgs := []string{"--listen=:2345", "--headless=true", "--api-version=2", "exec", outputBinName, "--"}
+		delveArgs = append(delveArgs, args...)
+
+		dc = exec.Command("dlv", delveArgs...)
+		log.Infof("Delve debugger enabled with args %s", delveArgs)
+	} else {
+		dc = exec.Command(outputBinName, args...)
+	}
+
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
@@ -130,9 +144,11 @@ func upLocal() error {
 		dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, kubeConfig))
 	}
 	dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, namespace))
+
 	if err := projutil.ExecCmd(dc); err != nil {
 		return fmt.Errorf("failed to run operator locally: (%v)", err)
 	}
+
 	return nil
 }
 
@@ -182,9 +198,12 @@ func buildLocal(outputBinName string) error {
 	if ldFlags != "" {
 		args = []string{"-ldflags", ldFlags}
 	}
+	if enableDelve {
+		args = append(args, "-gcflags=\"all=-N -l\"")
+	}
 	opts := projutil.GoCmdOptions{
 		BinName:     outputBinName,
-		PackagePath: path.Join(projutil.CheckAndGetProjectGoPkg(), filepath.ToSlash(scaffold.ManagerDir)),
+		PackagePath: path.Join(projutil.GetGoPkg(), filepath.ToSlash(scaffold.ManagerDir)),
 		Args:        args,
 		GoMod:       projutil.IsDepManagerGoMod(),
 	}
