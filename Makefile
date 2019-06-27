@@ -100,7 +100,7 @@ test/ci-ansible: test/e2e/ansible test/e2e/ansible-molecule
 
 test/ci-helm: test/e2e/helm
 
-test/sanity:
+test/sanity: tidy
 	./hack/tests/sanity-check.sh
 
 test/unit:
