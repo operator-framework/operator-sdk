@@ -81,11 +81,11 @@ func (s *PackageManifest) CustomRender() ([]byte, error) {
 	} else if err == nil {
 		b, err := ioutil.ReadFile(path)
 		if err != nil {
-			return nil, errors.Wrapf(err, "read package manifest %s", path)
+			return nil, errors.Wrapf(err, "failed to read package manifest %s", path)
 		}
 		if len(b) > 0 {
 			if err = yaml.Unmarshal(b, pm); err != nil {
-				return nil, errors.Wrapf(err, "unmarshal package manifest %s", path)
+				return nil, errors.Wrapf(err, "failed to unmarshal package manifest %s", path)
 			}
 		} else {
 			// File exists but is empty.
@@ -96,7 +96,7 @@ func (s *PackageManifest) CustomRender() ([]byte, error) {
 	}
 
 	if err := validatePackageManifest(pm); err != nil {
-		return nil, errors.Wrapf(err, "validate package manifest %s", pm.PackageName)
+		return nil, errors.Wrapf(err, "failed to validate package manifest %s", pm.PackageName)
 	}
 
 	if err = s.setChannels(pm); err != nil {

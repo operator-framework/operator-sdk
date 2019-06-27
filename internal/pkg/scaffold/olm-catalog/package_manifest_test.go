@@ -81,33 +81,63 @@ func TestValidatePackageManifest(t *testing.T) {
 		PackageName:        "test-package",
 	}
 
-	err := validatePackageManifest(pm)
-	if err == nil || err.Error() != "default channel baz does not exist in channels" {
-		t.Errorf("Expected non-existent default channel validation error, got none")
+	cases := []struct {
+		description string
+		wantErr     bool
+		errMsg      string
+		operation   func(*olmregistry.PackageManifest)
+	}{
+		{
+			"default channel does not exist",
+			true, "default channel baz does not exist in channels", nil,
+		},
+		{
+			"successful validation",
+			false, "",
+			func(pm *olmregistry.PackageManifest) {
+				pm.DefaultChannelName = pm.Channels[0].Name
+			},
+		},
+		{
+			"channels are empty",
+			true, "channels cannot be empty",
+			func(pm *olmregistry.PackageManifest) {
+				pm.Channels = nil
+			},
+		},
+		{
+			"one channel's CSVName is empty",
+			true, "channel foo currentCSV cannot be empty",
+			func(pm *olmregistry.PackageManifest) {
+				pm.Channels = make([]olmregistry.PackageChannel, 1)
+				copy(pm.Channels, channels)
+				pm.Channels[0].CurrentCSVName = ""
+			},
+		},
+		{
+			"duplicate channel name",
+			true, "duplicate package manifest channel name foo; channel names must be unique",
+			func(pm *olmregistry.PackageManifest) {
+				pm.Channels = append(channels, channels...)
+			},
+		},
 	}
 
-	pm.DefaultChannelName = pm.Channels[0].Name
-	if err = validatePackageManifest(pm); err != nil {
-		t.Errorf("Expected no validation error, got an error")
-	}
-
-	pm.Channels = nil
-	err = validatePackageManifest(pm)
-	if err == nil || err.Error() != "channels cannot be empty" {
-		t.Errorf("Expected empty channels validation error, got none")
-	}
-
-	pm.Channels = make([]olmregistry.PackageChannel, 1)
-	copy(pm.Channels, channels)
-	pm.Channels[0].CurrentCSVName = ""
-	err = validatePackageManifest(pm)
-	if err == nil || err.Error() != "channel foo currentCSV cannot be empty" {
-		t.Errorf("Expected empty currentCSV validation error, got none")
-	}
-
-	pm.Channels = append(channels, channels...)
-	err = validatePackageManifest(pm)
-	if err == nil || err.Error() != "duplicate package manifest channel name foo; channel names must be unique" {
-		t.Errorf("Expected duplicate channel name validation error, got none")
+	for _, c := range cases {
+		if c.operation != nil {
+			c.operation(pm)
+		}
+		err := validatePackageManifest(pm)
+		if c.wantErr {
+			if err == nil {
+				t.Errorf(`%s: expected error "%s", got none`, c.description, c.errMsg)
+			} else if err.Error() != c.errMsg {
+				t.Errorf(`%s: expected error message "%s", got "%s"`, c.description, c.errMsg, err)
+			}
+		} else {
+			if err != nil {
+				t.Errorf(`%s: expected no error, got error "%s"`, c.description, err)
+			}
+		}
 	}
 }
