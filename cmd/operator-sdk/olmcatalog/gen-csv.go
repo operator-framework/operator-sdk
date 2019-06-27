@@ -57,7 +57,7 @@ Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config
 
 	genCSVCmd.Flags().StringVar(&csvVersion, "csv-version", "", "Semantic version of the CSV")
 	if err := genCSVCmd.MarkFlagRequired("csv-version"); err != nil {
-		log.Fatalf("Failed to mark `csv-version` flag for `olm-catalog gen-csv` subcommand as required")
+		log.Fatalf("Failed to mark `csv-version` flag for `olm-catalog gen-csv` subcommand as required: %v", err)
 	}
 	genCSVCmd.Flags().StringVar(&fromVersion, "from-version", "", "Semantic version of an existing CSV to use as a base")
 	genCSVCmd.Flags().StringVar(&csvConfigPath, "csv-config", "", "Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml")
