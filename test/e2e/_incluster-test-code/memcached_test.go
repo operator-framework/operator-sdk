@@ -298,7 +298,7 @@ func MemcachedCluster(t *testing.T) {
 	if err := memcachedOperatorMetricsTest(t, f, ctx); err != nil {
 		t.Error(err)
 	}
-	t.Log("Completed memcached-operator metrics test")
+	t.Log("Completed memcached custom resource metrics test")
 }
 
 func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
