@@ -32,7 +32,7 @@
 
 [[constraint]]
   name = "sigs.k8s.io/controller-runtime"
-  version = "=v0.1.10"
+  version = "=v0.1.12"
 
 # This override revision has a fix that allows CRD unit tests to run correctly.
 # Remove once v0.1.11 is released.
