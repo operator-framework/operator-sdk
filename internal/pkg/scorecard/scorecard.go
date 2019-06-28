@@ -50,42 +50,113 @@ var (
 )
 
 var rootDir string
+var scViper *viper.Viper
 
-func getPlugins() []Plugin {
+type pluginConfig struct {
+	Name     string                             `mapstructure:"name"`
+	Disable  bool                               `mapstructure:"disable,omitempty"`
+	Basic    *scplugins.BasicAndOLMPluginConfig `mapstructure:"basic,omitempty"`
+	Olm      *scplugins.BasicAndOLMPluginConfig `mapstructure:"olm,omitempty"`
+	External *externalPluginConfig              `mapstructure:"external,omitempty"`
+}
+
+func getPlugins() ([]Plugin, error) {
+	kubeconfig := ""
+	if scViper.IsSet("kubeconfig") {
+		kubeconfig = scViper.GetString(kubeconfig)
+	}
+	// Make list of plugins that have been configured via the config file
+	basicSet := false
+	olmSet := false
+	var setPaths []string
+	// Add plugins from config
 	var plugins []Plugin
-	// Add internal plugins
-	if viper.GetBool(scplugins.BasicTestsOpt) {
+	configs := []pluginConfig{}
+	if err := scViper.UnmarshalKey("plugins", &configs); err != nil {
+		// should this be fatal?
+		log.Errorf("Could not load plugin configurations")
+	}
+	for _, plugin := range configs {
+		if err := validateConfig(plugin); err != nil {
+			return nil, fmt.Errorf("error validating plugin config: %v", err)
+		}
+		var newPlugin Plugin
+		if plugin.Basic != nil {
+			basicSet = true
+			pluginConfig := plugin.Basic
+			updateConfig(pluginConfig)
+			newPlugin = basicOrOLMPlugin{name: plugin.Name, pluginType: scplugins.BasicOperator, config: *pluginConfig}
+		} else if plugin.Olm != nil {
+			olmSet = true
+			pluginConfig := plugin.Olm
+			updateConfig(pluginConfig)
+			newPlugin = basicOrOLMPlugin{name: plugin.Name, pluginType: scplugins.OLMIntegration, config: *pluginConfig}
+		} else {
+			setPaths = append(setPaths, plugin.External.Command)
+			pluginConfig := plugin.External
+			kubeconfigVal := scViper.GetString(scplugins.KubeconfigOpt)
+			if kubeconfigVal != "" {
+				// put the kubeconfig flag first in case user is overriding it with an env var in config file
+				pluginConfig.Env = append([]externalPluginEnv{{Name: "KUBECONFIG", Value: kubeconfigVal}}, pluginConfig.Env...)
+			}
+			newPlugin = externalPlugin{name: plugin.Name, config: *pluginConfig}
+		}
+		// keep this statement after the previous if statements; otherwise default tests won't be disabled correctly
+		if plugin.Disable {
+			continue
+		}
+		plugins = append(plugins, newPlugin)
+	}
+	// This adds internal plugins without any configs. Since they are missing the cr-manifest option,
+	// they will fail. However, this allows the scorecard to print out a clear error message for why
+	// the internal plugins were not able to run and maintain the old behavior of the scorecard
+	if !basicSet {
 		plugins = append(plugins, basicTestsPlugin)
 	}
-	if viper.GetBool(scplugins.OLMTestsOpt) {
+	if !olmSet {
 		plugins = append(plugins, olmTestsPlugin)
 	}
 	// find external plugins
-	pluginDir := viper.GetString(PluginDirOpt)
+	pluginDir := scViper.GetString(PluginDirOpt)
 	if dir, err := os.Stat(pluginDir); err != nil || !dir.IsDir() {
+		if setPaths != nil {
+			return nil, fmt.Errorf("plugin directory `%s` not found: %v", pluginDir, err)
+		}
 		log.Warnf("Plugin directory not found; skipping external plugins: %v", err)
-		return plugins
+		return plugins, nil
 	}
 	if err := os.Chdir(pluginDir); err != nil {
+		if setPaths != nil {
+			return nil, fmt.Errorf("could not change directory to plugin_dir `%s`: %v", pluginDir, err)
+		}
 		log.Warnf("Failed to chdir into scorecard plugin directory: %v", err)
-		return plugins
+		return plugins, nil
 	}
 	files, err := ioutil.ReadDir("bin")
 	if err != nil {
-		log.Errorf("Failed to list files in %s/bin; skipping external plugin tests: %v", pluginDir, err)
-		return plugins
+		log.Errorf("Failed to list files in %s/bin; skipping automatic external plugin tests: %v", pluginDir, err)
+		return plugins, nil
 	}
 	for _, f := range files {
-		plugins = append(plugins, genericPlugin{filepath.Join("./bin", f.Name())})
+		skip := false
+		for _, path := range setPaths {
+			if filepath.Join("bin", f.Name()) == path {
+				skip = true
+			}
+		}
+		if skip {
+			continue
+		}
+		plugins = append(plugins, externalPlugin{name: f.Name(), config: externalPluginConfig{Command: filepath.Join("bin", f.Name())}})
 	}
-	return plugins
+	return plugins, nil
 }
 
 func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if err := initConfig(); err != nil {
 		return err
 	}
-	if err := validateScorecardFlags(); err != nil {
+	if err := validateScorecardConfig(); err != nil {
 		return err
 	}
 	cmd.SilenceUsage = true
@@ -95,8 +166,12 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get current working directory: %v", err)
 	}
+	plugins, err := getPlugins()
+	if err != nil {
+		return err
+	}
 	var pluginOutputs []scapiv1alpha1.ScorecardOutput
-	for _, plugin := range getPlugins() {
+	for _, plugin := range plugins {
 		pluginOutputs = append(pluginOutputs, plugin.Run())
 	}
 	totalScore := 0.0
@@ -106,7 +181,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 			suite.Results[idx] = schelpers.UpdateSuiteStates(res)
 		}
 	}
-	if viper.GetString(OutputFormatOpt) == HumanReadableOutputFormat {
+	if scViper.GetString(OutputFormatOpt) == HumanReadableOutputFormat {
 		numSuites := 0
 		for _, plugin := range pluginOutputs {
 			for _, suite := range plugin.Results {
@@ -144,7 +219,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
-	if viper.GetString(OutputFormatOpt) == JSONOutputFormat {
+	if scViper.GetString(OutputFormatOpt) == JSONOutputFormat {
 		log, err := ioutil.ReadAll(logReadWriter)
 		if err != nil {
 			return fmt.Errorf("failed to read log buffer: %v", err)
@@ -172,6 +247,7 @@ func initConfig() error {
 	}
 
 	if err := viper.ReadInConfig(); err == nil {
+		makeSCViper()
 		// configure logger output before logging anything
 		err := configureLogger()
 		if err != nil {
@@ -179,32 +255,42 @@ func initConfig() error {
 		}
 		log.Info("Using config file: ", viper.ConfigFileUsed())
 	} else {
-		err := configureLogger()
-		if err != nil {
-			return err
-		}
-		log.Warn("Could not load config file; using flags")
+		return fmt.Errorf("could read config file: %v", err)
 	}
 	return nil
 }
 
 func configureLogger() error {
-	if viper.GetString(OutputFormatOpt) == HumanReadableOutputFormat {
+	if !scViper.IsSet(OutputFormatOpt) {
+		scViper.Set(OutputFormatOpt, HumanReadableOutputFormat)
+	}
+	format := scViper.GetString(OutputFormatOpt)
+	if format == HumanReadableOutputFormat {
 		logReadWriter = os.Stdout
-	} else if viper.GetString(OutputFormatOpt) == JSONOutputFormat {
+	} else if format == JSONOutputFormat {
 		logReadWriter = &bytes.Buffer{}
 	} else {
-		return fmt.Errorf("invalid output format: %s", viper.GetString(OutputFormatOpt))
+		return fmt.Errorf("invalid output format: %s", format)
 	}
 	log.SetOutput(logReadWriter)
 	return nil
 }
 
-func validateScorecardFlags() error {
+func validateScorecardConfig() error {
 	// this is already being checked in configure logger; may be unnecessary
-	outputFormat := viper.GetString(OutputFormatOpt)
+	outputFormat := scViper.GetString(OutputFormatOpt)
 	if outputFormat != HumanReadableOutputFormat && outputFormat != JSONOutputFormat {
 		return fmt.Errorf("invalid output format (%s); valid values: %s, %s", outputFormat, HumanReadableOutputFormat, JSONOutputFormat)
 	}
+	if !scViper.IsSet(PluginDirOpt) {
+		scViper.Set(PluginDirOpt, "scorecard")
+	}
 	return nil
+}
+
+func makeSCViper() {
+	scViper = viper.Sub("scorecard")
+	// this is a workaround for the fact that nested flags don't persist on viper.Sub
+	scViper.Set(OutputFormatOpt, viper.GetString("scorecard."+OutputFormatOpt))
+	scViper.Set(scplugins.KubeconfigOpt, viper.GetString("scorecard."+scplugins.KubeconfigOpt))
 }

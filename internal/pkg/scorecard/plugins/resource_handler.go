@@ -28,7 +28,6 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"github.com/ghodss/yaml"
-	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -47,8 +46,8 @@ type cleanupFn func() error
 
 // waitUntilCRStatusExists waits until the status block of the CR currently being tested exists. If the timeout
 // is reached, it simply continues and assumes there is no status block
-func waitUntilCRStatusExists(cr *unstructured.Unstructured) error {
-	err := wait.Poll(time.Second*1, time.Second*time.Duration(viper.GetInt(InitTimeoutOpt)), func() (bool, error) {
+func waitUntilCRStatusExists(timeout int, cr *unstructured.Unstructured) error {
+	err := wait.Poll(time.Second*1, time.Second*time.Duration(timeout), func() (bool, error) {
 		err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: cr.GetNamespace(), Name: cr.GetName()}, cr)
 		if err != nil {
 			return false, fmt.Errorf("error getting custom resource: %v", err)
@@ -65,7 +64,7 @@ func waitUntilCRStatusExists(cr *unstructured.Unstructured) error {
 }
 
 // yamlToUnstructured decodes a yaml file into an unstructured object
-func yamlToUnstructured(yamlPath string) (*unstructured.Unstructured, error) {
+func yamlToUnstructured(namespace, yamlPath string) (*unstructured.Unstructured, error) {
 	yamlFile, err := ioutil.ReadFile(yamlPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file %s: %v", yamlPath, err)
@@ -82,13 +81,13 @@ func yamlToUnstructured(yamlPath string) (*unstructured.Unstructured, error) {
 		return nil, fmt.Errorf("failed to unmarshal custom resource manifest to unstructured: %s", err)
 	}
 	// set the namespace
-	obj.SetNamespace(viper.GetString(NamespaceOpt))
+	obj.SetNamespace(namespace)
 	return obj, nil
 }
 
 // createFromYAMLFile will take a path to a YAML file and create the resource. If it finds a
 // deployment, it will add the scorecard proxy as a container in the deployments podspec.
-func createFromYAMLFile(yamlPath string) error {
+func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.PullPolicy) error {
 	yamlSpecs, err := ioutil.ReadFile(yamlPath)
 	if err != nil {
 		return fmt.Errorf("failed to read file %s: %v", yamlPath, err)
@@ -103,7 +102,7 @@ func createFromYAMLFile(yamlPath string) error {
 		if err := obj.UnmarshalJSON(jsonSpec); err != nil {
 			return fmt.Errorf("could not unmarshal resource spec: %v", err)
 		}
-		obj.SetNamespace(viper.GetString(NamespaceOpt))
+		obj.SetNamespace(namespace)
 
 		// dirty hack to merge scorecard proxy into operator deployment; lots of serialization and deserialization
 		if obj.GetKind() == "Deployment" {
@@ -116,12 +115,12 @@ func createFromYAMLFile(yamlPath string) error {
 				return fmt.Errorf("failed to convert object to deployment: %v", err)
 			}
 			deploymentName = dep.GetName()
-			err = createKubeconfigSecret()
+			err = createKubeconfigSecret(namespace)
 			if err != nil {
 				return fmt.Errorf("failed to create kubeconfig secret for scorecard-proxy: %v", err)
 			}
 			addMountKubeconfigSecret(dep)
-			addProxyContainer(dep)
+			addProxyContainer(dep, proxyImage, pullPolicy)
 			// go back to unstructured to create
 			obj, err = deploymentToUnstructured(dep)
 			if err != nil {
@@ -151,7 +150,7 @@ func createFromYAMLFile(yamlPath string) error {
 		}
 		addResourceCleanup(obj, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()})
 		if obj.GetKind() == "Deployment" {
-			proxyPodGlobal, err = getPodFromDeployment(deploymentName, viper.GetString(NamespaceOpt))
+			proxyPodGlobal, err = getPodFromDeployment(deploymentName, namespace)
 			if err != nil {
 				return err
 			}
@@ -201,9 +200,9 @@ func getPodFromDeployment(depName, namespace string) (pod *v1.Pod, err error) {
 
 // createKubeconfigSecret creates the secret that will be mounted in the operator's container and contains
 // the kubeconfig for communicating with the proxy
-func createKubeconfigSecret() error {
+func createKubeconfigSecret(namespace string) error {
 	kubeconfigMap := make(map[string][]byte)
-	kc, err := proxyConf.Create(metav1.OwnerReference{Name: "scorecard"}, "http://localhost:8889", viper.GetString(NamespaceOpt))
+	kc, err := proxyConf.Create(metav1.OwnerReference{Name: "scorecard"}, "http://localhost:8889", namespace)
 	if err != nil {
 		return err
 	}
@@ -224,7 +223,7 @@ func createKubeconfigSecret() error {
 	kubeconfigSecret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "scorecard-kubeconfig",
-			Namespace: viper.GetString(NamespaceOpt),
+			Namespace: namespace,
 		},
 		Data: kubeconfigMap,
 	}
@@ -265,23 +264,10 @@ func addMountKubeconfigSecret(dep *appsv1.Deployment) {
 }
 
 // addProxyContainer adds the container spec for the scorecard-proxy to the deployment's podspec
-func addProxyContainer(dep *appsv1.Deployment) {
-	pullPolicyString := viper.GetString(ProxyPullPolicyOpt)
-	var pullPolicy v1.PullPolicy
-	switch pullPolicyString {
-	case "Always":
-		pullPolicy = v1.PullAlways
-	case "Never":
-		pullPolicy = v1.PullNever
-	case "PullIfNotPresent":
-		pullPolicy = v1.PullIfNotPresent
-	default:
-		// this case shouldn't happen since we check the values in scorecard.go, but just in case, we'll default to always to prevent errors
-		pullPolicy = v1.PullAlways
-	}
+func addProxyContainer(dep *appsv1.Deployment, proxyImage string, pullPolicy v1.PullPolicy) {
 	dep.Spec.Template.Spec.Containers = append(dep.Spec.Template.Spec.Containers, v1.Container{
 		Name:            scorecardContainerName,
-		Image:           viper.GetString(ProxyImageOpt),
+		Image:           proxyImage,
 		ImagePullPolicy: pullPolicy,
 		Command:         []string{"scorecard-proxy"},
 		Env: []v1.EnvVar{{

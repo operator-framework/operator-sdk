@@ -1,6 +1,8 @@
 scorecard:
+  output: json
   plugins:
     - name: Basic Tests
+      disable: true
       basic:
         cr-manifest:
           - "deploy/crds/cache_v1alpha1_memcached_cr.yaml"
@@ -19,9 +21,11 @@ scorecard:
         proxy-image: "quay.io/example/scorecard-proxy"
         proxy-pull-policy: "Never"
     - name: Custom Test
+      disable: true
       external:
         command: bin/my-test.sh
     - name: Custom Test v2
+      disable: false
       external:
         command: bin/my-test.sh
         args: ["--version=2"]

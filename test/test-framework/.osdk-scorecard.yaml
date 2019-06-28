@@ -1,4 +1,5 @@
 scorecard:
+  output: json
   plugins:
     - name: Basic Tests
       basic:
