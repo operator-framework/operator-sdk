@@ -195,9 +195,6 @@ func main() {
 	}
 	if *imageName == "" {
 		*imageName = "quay.io/example/memcached-operator:v0.0.1"
-		if err != nil {
-			log.Fatal(err)
-		}
 	}
 	if *noPull {
 		operatorYAML = bytes.Replace(operatorYAML, []byte("imagePullPolicy: Always"), []byte("imagePullPolicy: Never"), 1)
