@@ -282,5 +282,4 @@ func insertGoModReplace(repo, path, sha string) ([]byte, error) {
 		return nil, errors.Wrap(err, "failed to write go.mod before replacing SDK repo")
 	}
 	return modBytes, nil
-
 }
