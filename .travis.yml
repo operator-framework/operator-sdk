@@ -1,3 +1,8 @@
+branches:
+  except:
+    - release-4.2
+    - release-4.3
+
 language: go
 go_import_path: github.com/operator-framework/operator-sdk
 sudo: required
