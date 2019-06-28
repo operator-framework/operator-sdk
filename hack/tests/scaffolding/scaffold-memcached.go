@@ -30,6 +30,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// TODO: Migrate most/all of the cli commands to the bash script instead of keeping them here
+
 const (
 	sdkRepo      = "github.com/operator-framework/operator-sdk"
 	operatorName = "memcached-operator"
