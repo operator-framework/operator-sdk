@@ -669,16 +669,12 @@
   version = "v1.0.0-rc1"
 
 [[projects]]
-  digest = "1:107b57097f7938f4780a48ea24c013f5e4b64157e5828adbcd7e2c28a9297cd5"
+  digest = "1:ce8beba6c7aad8ed5b3b959f6d61a79c557f5b3b18583765779a97b34227ceac"
   name = "github.com/operator-framework/operator-lifecycle-manager"
   packages = [
     "pkg/api/apis/operators",
     "pkg/api/apis/operators/v1alpha1",
     "pkg/api/apis/operators/v1alpha2",
-    "pkg/api/client/clientset/versioned",
-    "pkg/api/client/clientset/versioned/scheme",
-    "pkg/api/client/clientset/versioned/typed/operators/v1alpha1",
-    "pkg/api/client/clientset/versioned/typed/operators/v1alpha2",
     "pkg/api/client/listers/operators/v1alpha1",
     "pkg/api/client/listers/operators/v1alpha2",
     "pkg/api/wrappers",
@@ -687,9 +683,6 @@
     "pkg/lib/operatorclient",
     "pkg/lib/operatorlister",
     "pkg/lib/ownerutil",
-    "pkg/package-server/apis/packagemanifest/v1alpha1",
-    "pkg/package-server/client/clientset/versioned/scheme",
-    "pkg/package-server/client/clientset/versioned/typed/packagemanifest/v1alpha1",
   ]
   pruneopts = "NUT"
   revision = "5eb7ae5bdb7ac36a26d6e34e5d0ec07be128927f"
@@ -1778,12 +1771,8 @@
     "github.com/mattbaird/jsonpatch",
     "github.com/mitchellh/go-homedir",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1",
-    "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha2",
-    "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/registry",
-    "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/packagemanifest/v1alpha1",
-    "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/client/clientset/versioned/typed/packagemanifest/v1alpha1",
     "github.com/pborman/uuid",
     "github.com/pkg/errors",
     "github.com/prometheus/client_golang/prometheus",
