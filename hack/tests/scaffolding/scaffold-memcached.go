@@ -152,7 +152,7 @@ func main() {
 
 	memcachedTypesFile, err := ioutil.ReadFile("pkg/apis/cache/v1alpha1/memcached_types.go")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Could not read pkg/apis/cache/v1alpha1/memcached_types.go: %v", err)
 	}
 	memcachedTypesFileLines := bytes.Split(memcachedTypesFile, []byte("\n"))
 	for lineNum, line := range memcachedTypesFileLines {
@@ -174,7 +174,7 @@ func main() {
 	}
 	err = ioutil.WriteFile("pkg/apis/cache/v1alpha1/memcached_types.go", bytes.Join(memcachedTypesFileLines, []byte("\n")), fileutil.DefaultFileMode)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Could not write to pkg/apis/cache/v1alpha1/memcached_types.go: %v", err)
 	}
 
 	log.Print("Generating k8s")
@@ -202,7 +202,7 @@ func main() {
 	operatorYAML = bytes.Replace(operatorYAML, []byte("REPLACE_IMAGE"), []byte(*imageName), 1)
 	err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, fileutil.DefaultFileMode)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to write to deploy/operator.yaml: %v", err)
 	}
 }
 
