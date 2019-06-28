@@ -22,12 +22,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+	"github.com/pkg/errors"
 
-	"github.com/rogpeppe/go-internal/modfile"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -77,32 +76,22 @@ func main() {
 
 	replace := getGoModReplace(localSDKPath)
 	if replace.repo != sdkRepo {
-		// TODO: Remove when PR 1566 is merged
 		if replace.isLocal {
 			// A hacky way to get local module substitution to work is to write a
 			// stub go.mod into the local SDK repo referred to in
 			// memcached-operator's go.mod, which allows go to recognize
 			// the local SDK repo as a module.
 			sdkModPath := filepath.Join(filepath.FromSlash(replace.repo), "go.mod")
-			err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
-			if err != nil {
-				log.Fatalf("Failed to write main repo go.mod file: %v", err)
+			if _, err = os.Stat(sdkModPath); err != nil && os.IsNotExist(err) {
+				err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
+				if err != nil {
+					log.Fatalf("Failed to write main repo go.mod file: %v", err)
+				}
 			}
 		}
-		modBytes, err := ioutil.ReadFile("go.mod")
+		modBytes, err := insertGoModReplace(sdkRepo, replace.repo, replace.ref)
 		if err != nil {
-			log.Fatalf("Failed to read go.mod: %v", err)
-		}
-		// Remove SDK repo dependency lines so we can parse the modfile.
-		sdkRe := regexp.MustCompile(`.*github\.com/operator-framework/operator-sdk.*`)
-		modBytes = sdkRe.ReplaceAll(modBytes, nil)
-		modBytes, err = insertGoModReplace(modBytes, sdkRepo, replace.repo, replace.ref)
-		if err != nil {
-			log.Fatalf("Failed to insert replace: %v", err)
-		}
-		err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
-		if err != nil {
-			log.Fatalf("Failed to write updated go.mod: %v", err)
+			log.Fatalf("Failed to insert go.mod replace: %v", err)
 		}
 		log.Printf("go.mod: %v", string(modBytes))
 	}
@@ -278,21 +267,20 @@ func getGoModReplace(localSDKPath string) goModReplace {
 	}
 }
 
-func insertGoModReplace(modBytes []byte, repo, path, sha string) ([]byte, error) {
-	modFile, err := modfile.Parse("go.mod", modBytes, nil)
+func insertGoModReplace(repo, path, sha string) ([]byte, error) {
+	modBytes, err := ioutil.ReadFile("go.mod")
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse go.mod: %v", err)
+		return nil, errors.Wrap(err, "failed to read go.mod")
 	}
-	if err = modFile.AddReplace(repo, "", path, sha); err != nil {
-		s := ""
-		if sha != "" {
-			s = " " + sha
-		}
-		return nil, fmt.Errorf(`failed to add "replace %s => %s%s: %v"`, repo, path, s, err)
+	sdkReplace := fmt.Sprintf("replace %s => %s", repo, path)
+	if sha != "" {
+		sdkReplace = fmt.Sprintf("%s %s", sdkReplace, sha)
 	}
-	modFile.Cleanup()
-	if modBytes, err = modFile.Format(); err != nil {
-		return nil, fmt.Errorf("failed to format go.mod: %v", err)
+	modBytes = append(modBytes, []byte("\n"+sdkReplace)...)
+	err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to write go.mod before replacing SDK repo")
 	}
 	return modBytes, nil
+
 }
