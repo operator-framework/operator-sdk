@@ -36,6 +36,7 @@ var (
 	csvChannel     string
 	fromVersion    string
 	csvConfigPath  string
+	operatorName   string
 	updateCRDs     bool
 	defaultChannel bool
 )
@@ -62,6 +63,7 @@ Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config
 	genCSVCmd.Flags().StringVar(&fromVersion, "from-version", "", "Semantic version of an existing CSV to use as a base")
 	genCSVCmd.Flags().StringVar(&csvConfigPath, "csv-config", "", "Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml")
 	genCSVCmd.Flags().BoolVar(&updateCRDs, "update-crds", false, "Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's")
+	genCSVCmd.Flags().StringVar(&operatorName, "operator-name", "", "Operator name to use while generating CSV")
 	genCSVCmd.Flags().StringVar(&csvChannel, "csv-channel", "", "Channel the CSV should be registered under in the package manifest")
 	genCSVCmd.Flags().BoolVar(&defaultChannel, "default-channel", false, "Use the channel passed to --csv-channel as the package manifests' default channel. Only valid when --csv-channel is set")
 
@@ -88,11 +90,16 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 
 	log.Infof("Generating CSV manifest version %s", csvVersion)
 
+	if operatorName == "" {
+		operatorName = filepath.Base(absProjectPath)
+	}
+
 	s := &scaffold.Scaffold{}
 	csv := &catalog.CSV{
 		CSVVersion:     csvVersion,
 		FromVersion:    fromVersion,
 		ConfigFilePath: csvConfigPath,
+		OperatorName:   operatorName,
 	}
 	err := s.Execute(cfg,
 		csv,
