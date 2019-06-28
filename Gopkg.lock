@@ -700,7 +700,7 @@
   version = "v1.0.0-rc1"
 
 [[projects]]
-  digest = "1:61da94cf59726e31000a11390a8ba1e32a41073c62a868fe683cddb5ff439192"
+  digest = "1:87b07fdd2bd001a2dbd42348590ebeb2b8059cf0d4ac1b98a9d6ac97ff212d9f"
   name = "github.com/operator-framework/operator-lifecycle-manager"
   packages = [
     "pkg/api/apis/operators",
@@ -710,6 +710,7 @@
     "pkg/api/client/listers/operators/v1alpha1",
     "pkg/api/wrappers",
     "pkg/controller/install",
+    "pkg/controller/registry",
     "pkg/lib/operatorclient",
     "pkg/lib/operatorlister",
     "pkg/lib/ownerutil",
@@ -1898,6 +1899,7 @@
     "github.com/mitchellh/go-homedir",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install",
+    "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/registry",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/lib/version",
     "github.com/pborman/uuid",
     "github.com/pkg/errors",
