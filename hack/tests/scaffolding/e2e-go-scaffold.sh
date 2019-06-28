@@ -12,7 +12,8 @@ IMAGE_NAME="quay.io/example/memcached-operator:v0.0.1"
 
 rm -rf $BASEPROJECTDIR
 mkdir -p $BASEPROJECTDIR
+go build -o $BASEPROJECTDIR/scaffold-memcached $ROOTDIR/hack/tests/scaffolding/scaffold-memcached.go
 
 pushd "$BASEPROJECTDIR"
-go run "$ROOTDIR/hack/tests/scaffolding/scaffold-memcached.go" --local-repo $ROOTDIR --image-name=$IMAGE_NAME --local-image
+./scaffold-memcached --local-repo $ROOTDIR --image-name=$IMAGE_NAME --local-image
 popd
