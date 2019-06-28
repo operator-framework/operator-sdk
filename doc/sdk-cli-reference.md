@@ -263,7 +263,7 @@ Scaffolds a new operator project.
 * `--header-file` string - Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt
 * `--dep-manager` string - Dependency manager the new project will use (choices: "dep", "modules") (default "modules")
 * `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` with Go modules, and cannot be set if `--dep-manager=dep`
-* `--skip-git-init` - Do not init the directory as a git repository
+* `--git-init` - Initialize the project directory as a git repository (default `false`)
 * `--vendor` - Use a vendor directory for dependencies. This flag only applies when `--dep-manager=modules` (the default)
 * `--skip-validation` - Do not validate the resulting project's structure and dependencies. (Only used for --type go)
 * `-h, --help` - help for new

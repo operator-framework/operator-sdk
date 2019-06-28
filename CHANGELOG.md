@@ -14,10 +14,12 @@
 
 ### Changed
 
-- Remove TypeMeta declaration from the implementation of the objects [#1462](https://github.com/operator-framework/operator-sdk/pull/1462/)
+- Remove TypeMeta declaration from the implementation of the objects ([#1462](https://github.com/operator-framework/operator-sdk/pull/1462/))
 - Relaxed API version format check when parsing `pkg/apis` in code generators. API dir structures can now be of the format `pkg/apis/<group>/<anything>`, where `<anything>` was previously required to be in the Kubernetes version format, ex. `v1alpha1`. ([#1525](https://github.com/operator-framework/operator-sdk/pull/1525))
 - The SDK and operator projects will work outside of `$GOPATH/src` when using [Go modules](https://github.com/golang/go/wiki/Modules). ([#1475](https://github.com/operator-framework/operator-sdk/pull/1475))
 -  `CreateMetricsService()` function from the metrics package accepts an array of ServicePort objects ([]v1.ServicePort) as input to create Service metrics. `CRPortName` constant is added to describe the string of custom resource port name. ([#1560](https://github.com/operator-framework/operator-sdk/pull/1560))
+- Changed the flag `--skip-git-init` to [`--git-init`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#new). This changes the default behavior of `operator-sdk new` to not initialize the new project directory as a git repository with `git init`. This behavior is now opt-in with `--git-init`. ([#1588](https://github.com/operator-framework/operator-sdk/pull/1588))
+- `operator-sdk new` will no longer create the initial commit for a new project, even with `--git-init=true`. ([#1588](https://github.com/operator-framework/operator-sdk/pull/1588))
 
 ### Deprecated
 
