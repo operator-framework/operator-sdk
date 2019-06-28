@@ -21,11 +21,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewInitCmd() *cobra.Command {
+func NewInstallCmd() *cobra.Command {
 	mgr := &olm.Manager{}
 	cmd := &cobra.Command{
-		Use:   "init",
-		Short: "Initialize Operator Lifecycle Manager in your cluster",
+		Use:   "install",
+		Short: "Install Operator Lifecycle Manager in your cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := mgr.Install(); err != nil {
 				log.Fatalf("Failed to install OLM: %s", err)

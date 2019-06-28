@@ -21,11 +21,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewResetCmd() *cobra.Command {
+func NewUninstallCmd() *cobra.Command {
 	mgr := olm.Manager{}
 	cmd := &cobra.Command{
-		Use:   "reset",
-		Short: "Remove Operator Lifecycle Manager from your cluster",
+		Use:   "uninstall",
+		Short: "Uninstall Operator Lifecycle Manager from your cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := mgr.Uninstall(); err != nil {
 				log.Fatalf("Failed to uninstall OLM: %s", err)
