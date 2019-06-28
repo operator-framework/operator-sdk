@@ -95,7 +95,7 @@ func (s *PackageManifest) CustomRender() ([]byte, error) {
 		return nil, errors.Wrapf(err, "package manifest %s", path)
 	}
 
-	if err := validatePackageManifest(pm); err != nil {
+	if err := ValidatePackageManifest(pm); err != nil {
 		return nil, errors.Wrapf(err, "failed to validate package manifest %s", pm.PackageName)
 	}
 
@@ -127,7 +127,7 @@ func (s *PackageManifest) newPackageManifest() *olmregistry.PackageManifest {
 	return pm
 }
 
-func validatePackageManifest(pm *olmregistry.PackageManifest) error {
+func ValidatePackageManifest(pm *olmregistry.PackageManifest) error {
 	if pm.PackageName == "" {
 		return fmt.Errorf("package name cannot be empty")
 	}

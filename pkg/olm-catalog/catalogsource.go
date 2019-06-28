@@ -40,11 +40,22 @@ const (
 // GenCatalogSourceCmd holds arguments used to configure CatalogSource
 // generation.
 type GenCatalogSourceCmd struct {
-	Namespace           string
-	BundleDir           string
+	// Namespace is the cluster namespace set in the CatalogSource metadata.
+	Namespace string
+	// BundleDir contains CRD's, CSV's, and optionally a package manifest.
+	BundleDir string
+	// PackageManifestPath is the path to the package manifest describing
+	// the operator's CSV's.
+	// This field is required if no package manifest exists in BundleDir.
 	PackageManifestPath string
-	CatalogSourcePath   string
-	OutputFormat        string
+	// CatalogSourcePath is the path to a CatalogSource manifest to include
+	// in output data.
+	// This field is optional. Run() will create a CatalogSource using provided
+	// data in BundleDir.
+	CatalogSourcePath string
+	// OutputFormat controls what format data is output in.
+	// Options are: "json", "yaml".
+	OutputFormat string
 	// Write bytes to Writer.
 	Writer io.Writer
 }
@@ -66,7 +77,7 @@ func (c *GenCatalogSourceCmd) Run() error {
 
 	log.Infof("Generating %s CatalogSource and ConfigMap manifest", strings.ToUpper(c.OutputFormat))
 
-	cs := &internal.CatalogSource{
+	cs := &internal.CatalogSourceBundle{
 		ProjectName:         filepath.Base(projutil.MustGetwd()),
 		Namespace:           c.Namespace,
 		BundleDir:           c.BundleDir,
@@ -99,7 +110,10 @@ func (c *GenCatalogSourceCmd) Run() error {
 
 func (c *GenCatalogSourceCmd) verify() error {
 	if c.OutputFormat != OutputFormatJSON && c.OutputFormat != OutputFormatYAML {
-		return fmt.Errorf("output format must be one of: %s, %s", OutputFormatJSON, OutputFormatYAML)
+		return errors.Errorf("output format must be one of: %s, %s", OutputFormatJSON, OutputFormatYAML)
+	}
+	if c.BundleDir == "" {
+		return errors.Errorf("bundle dir must be set")
 	}
 	return nil
 }

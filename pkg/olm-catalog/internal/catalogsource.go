@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	catalog "github.com/operator-framework/operator-sdk/internal/pkg/scaffold/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
@@ -36,14 +37,13 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-// CatalogSource represents the paths of files containing all data needed to
-// construct a CatalogSource object.
-type CatalogSource struct {
+// CatalogSourceBundle represents the paths of files containing all data
+// needed to construct a combined CatalogSource and ConfigMap object.
+type CatalogSourceBundle struct {
 	ProjectName         string
 	Namespace           string
 	BundleDir           string
 	PackageManifestPath string
-
 	// CatalogSourcePath is an existing CatalogSource manifest to be included
 	// in the final combined manifest.
 	CatalogSourcePath string
@@ -53,15 +53,12 @@ type CatalogSource struct {
 }
 
 func wrapBytesErr(err error) error {
-	return errors.Wrap(err, "failed to get CatalogSource bytes")
+	return errors.Wrap(err, "failed to get CatalogSourceBundle bytes")
 }
 
 // ToConfigMapAndCatalogSource reads all files in s.BundleDir and
 // s.PackageManifestPath, combining them into a ConfigMap and CatalogSource.
-func (s *CatalogSource) ToConfigMapAndCatalogSource() (*corev1.ConfigMap, *olmapiv1alpha1.CatalogSource, error) {
-	if s.BundleDir == "" {
-		return nil, nil, fmt.Errorf("bundle dir must be set")
-	}
+func (s *CatalogSourceBundle) ToConfigMapAndCatalogSource() (*corev1.ConfigMap, *olmapiv1alpha1.CatalogSource, error) {
 	if s.scheme == nil {
 		s.scheme = scheme.Scheme
 		if err := addSchemes(s.scheme); err != nil {
@@ -104,7 +101,7 @@ func (s *CatalogSource) ToConfigMapAndCatalogSource() (*corev1.ConfigMap, *olmap
 	}
 	configMap := &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
+			APIVersion: corev1.SchemeGroupVersion.String(),
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -138,13 +135,13 @@ func addSchemes(s *runtime.Scheme) error {
 	return nil
 }
 
-func (s *CatalogSource) getCatalogSource() (cs *olmapiv1alpha1.CatalogSource, err error) {
+func (s *CatalogSourceBundle) getCatalogSource() (cs *olmapiv1alpha1.CatalogSource, err error) {
 	name := strings.ToLower(s.ProjectName)
 	if s.CatalogSourcePath == "" {
 		cs = &olmapiv1alpha1.CatalogSource{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "operators.coreos.com/v1alpha1",
-				Kind:       "CatalogSource",
+				APIVersion: olmapiv1alpha1.SchemeGroupVersion.String(),
+				Kind:       olmapiv1alpha1.CatalogSourceKind,
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: name,
@@ -175,7 +172,7 @@ func (s *CatalogSource) getCatalogSource() (cs *olmapiv1alpha1.CatalogSource, er
 func decodeCatalogSource(dec runtime.Decoder, b []byte) (cs *olmapiv1alpha1.CatalogSource, err error) {
 	obj, _, err := dec.Decode(b, nil, nil)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to decode Catalogsource from manifest")
+		return nil, errors.Wrapf(err, "failed to decode CatalogSource from manifest")
 	}
 	var ok bool
 	if cs, ok = obj.(*olmapiv1alpha1.CatalogSource); !ok {
@@ -212,7 +209,7 @@ func decodeCRD(dec runtime.Decoder, b []byte) (crd *apiextv1beta1.CustomResource
 // CustomResourceDefinitions, and optionally a package manifests in dir.
 // If pkgManPath is not empty, that file's data will be used instead of
 // any package manifest found in dir.
-func (s *CatalogSource) getBundledObjects() (csvs []*olmapiv1alpha1.ClusterServiceVersion, crds []*apiextv1beta1.CustomResourceDefinition, pkg *olmregistry.PackageManifest, err error) {
+func (s *CatalogSourceBundle) getBundledObjects() (csvs []*olmapiv1alpha1.ClusterServiceVersion, crds []*apiextv1beta1.CustomResourceDefinition, pkg *olmregistry.PackageManifest, err error) {
 	infos, err := ioutil.ReadDir(s.BundleDir)
 	if err != nil {
 		return nil, nil, nil, errors.Wrapf(err, "failed to read bundle dir %s", s.BundleDir)
@@ -287,16 +284,25 @@ func readPackageManifest(path string) (*olmregistry.PackageManifest, error) {
 	return pkg, nil
 }
 
+// checkBundleObjects ensures csvs, crds, and pkg, all objects expected to
+// be bundled, exist or have the correct data.
 func checkBundleObjects(csvs []*olmapiv1alpha1.ClusterServiceVersion, crds []*apiextv1beta1.CustomResourceDefinition, pkg *olmregistry.PackageManifest) (err error) {
 	if len(csvs) == 0 {
 		return errors.Errorf("no CSV manifests found in bundle dir")
 	}
+	// Ensure all CRD's referenced in each CSV exist in BundleDir.
 	csvCRDMap := map[string]map[string]struct{}{}
+	hasOwned := false
 	for _, csv := range csvs {
 		csvCRDMap[csv.GetName()] = map[string]struct{}{}
+		hasOwned = len(csv.Spec.CustomResourceDefinitions.Owned) > 0
 		for _, o := range csv.Spec.CustomResourceDefinitions.Owned {
 			csvCRDMap[csv.GetName()][getCRDDescKey(o)] = struct{}{}
 		}
+	}
+	// If at least one CSV has an owned CRD it must be present.
+	if hasOwned && len(crds) == 0 {
+		return errors.Errorf("at least one CSV has an owned CRD but no CRD's are present in bundle dir")
 	}
 	for _, crd := range crds {
 		for _, k := range getCRDKeys(crd) {
@@ -309,6 +315,9 @@ func checkBundleObjects(csvs []*olmapiv1alpha1.ClusterServiceVersion, crds []*ap
 	}
 	if pkg == nil {
 		return errors.Errorf("neither bundle dir nor package manifest path contains a package manifest")
+	}
+	if err := catalog.ValidatePackageManifest(pkg); err != nil {
+		return errors.Wrapf(err, "failed to validate package manifest %s", pkg.PackageName)
 	}
 	return nil
 }

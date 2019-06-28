@@ -127,7 +127,7 @@ func TestValidatePackageManifest(t *testing.T) {
 		if c.operation != nil {
 			c.operation(pm)
 		}
-		err := validatePackageManifest(pm)
+		err := ValidatePackageManifest(pm)
 		if c.wantErr {
 			if err == nil {
 				t.Errorf(`%s: expected error "%s", got none`, c.description, c.errMsg)
