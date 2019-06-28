@@ -37,6 +37,7 @@ import (
 )
 
 const (
+	OLMCatalogDir     = scaffold.DeployDir + string(filepath.Separator) + "olm-catalog"
 	CSVYamlFileExt    = ".clusterserviceversion.yaml"
 	CSVConfigYamlFile = "csv-config.yaml"
 )
@@ -84,14 +85,14 @@ func (s *CSV) GetInput() (input.Input, error) {
 		// Path is what the operator-registry expects:
 		// {manifests -> olm-catalog}/{operator_name}/{semver}/{operator_name}.v{semver}.clusterserviceversion.yaml
 		s.Path = filepath.Join(s.pathPrefix,
-			scaffold.OLMCatalogDir,
+			OLMCatalogDir,
 			operatorName,
 			s.CSVVersion,
 			getCSVFileName(operatorName, s.CSVVersion),
 		)
 	}
 	if s.ConfigFilePath == "" {
-		s.ConfigFilePath = filepath.Join(s.pathPrefix, scaffold.OLMCatalogDir, CSVConfigYamlFile)
+		s.ConfigFilePath = filepath.Join(s.pathPrefix, OLMCatalogDir, CSVConfigYamlFile)
 	}
 	return s.Input, nil
 }
@@ -185,7 +186,7 @@ func getCSVFileName(name, version string) string {
 func (s *CSV) getCSVPath(ver string) string {
 	lowerProjName := strings.ToLower(s.OperatorName)
 	name := getCSVFileName(lowerProjName, ver)
-	return filepath.Join(s.pathPrefix, scaffold.OLMCatalogDir, lowerProjName, ver, name)
+	return filepath.Join(s.pathPrefix, OLMCatalogDir, lowerProjName, ver, name)
 }
 
 // initCSVFields initializes all csv fields that should be populated by a user

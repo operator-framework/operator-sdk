@@ -118,7 +118,7 @@ func TestMemcachedControllerDeploymentCreate(t *testing.T) {
     }
     // Check if deployment has been created and has the correct size.
     dep := &appsv1.Deployment{}
-    err = r.cl.Get(context.TODO(), req.NamespacedName, dep)
+    err = r.client.Get(context.TODO(), req.NamespacedName, dep)
     if err != nil {
         t.Fatalf("get deployment: (%v)", err)
     }
