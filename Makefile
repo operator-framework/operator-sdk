@@ -52,6 +52,11 @@ install:
 		" \
 		$(BUILD_PATH)
 
+ci-build: build/operator-sdk-$(VERSION)-x86_64-linux-gnu ci-install
+
+ci-install:
+	mv build/operator-sdk-$(VERSION)-x86_64-linux-gnu build/operator-sdk
+
 release_x86_64 := \
 	build/operator-sdk-$(VERSION)-x86_64-linux-gnu \
 	build/operator-sdk-$(VERSION)-x86_64-apple-darwin
@@ -122,6 +127,9 @@ test/e2e/go:
 
 test/e2e/ansible: image/build/ansible
 	./hack/tests/e2e-ansible.sh
+
+test/e2e/ansible2:
+	./ci/tests/e2e-ansible.sh
 
 test/e2e/ansible-molecule:
 	./hack/tests/e2e-ansible-molecule.sh
