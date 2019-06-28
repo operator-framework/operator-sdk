@@ -25,7 +25,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
-	"github.com/operator-framework/operator-sdk/pkg/scaffold/olm-catalog/internal"
+	"github.com/operator-framework/operator-sdk/pkg/olm-catalog/internal"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"

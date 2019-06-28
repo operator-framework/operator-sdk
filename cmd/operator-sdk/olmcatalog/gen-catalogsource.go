@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"strings"
 
-	catalogcmd "github.com/operator-framework/operator-sdk/pkg/scaffold/olm-catalog"
+	catalogcmd "github.com/operator-framework/operator-sdk/pkg/olm-catalog"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
