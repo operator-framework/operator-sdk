@@ -275,7 +275,13 @@ func (c Client) doRequest(ctx context.Context, url string) (*http.Response, erro
 		return nil, errors.Wrapf(err, "failed GET '%s'", url)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed GET '%s': unexpected status code %d, expected %d", url, resp.StatusCode, http.StatusOK)
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		msg := fmt.Sprintf("failed GET '%s': unexpected status code %d, expected %d", url, resp.StatusCode, http.StatusOK)
+		if err != nil {
+			return nil, errors.Wrap(err, msg)
+		}
+		return nil, fmt.Errorf("%s: %s", msg, string(body))
 	}
 	return resp, nil
 }
