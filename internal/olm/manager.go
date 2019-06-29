@@ -120,6 +120,6 @@ func (m *Manager) Status() error {
 }
 
 func (m *Manager) AddToFlagSet(fs *pflag.FlagSet) {
-	fs.StringVar(&m.Version, "version", DefaultVersion, "Version of OLM to initialize")
-	fs.DurationVar(&m.Timeout, "timeout", DefaultTimeout, "Timeout duration to wait for OLM for become ready before outputting status")
+	fs.StringVar(&m.Version, "version", DefaultVersion, "version of OLM resources to install, uninstall, or get status about")
+	fs.DurationVar(&m.Timeout, "timeout", DefaultTimeout, "time to wait for the command to complete before failing")
 }

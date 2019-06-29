@@ -558,27 +558,27 @@ $ operator-sdk up local --namespace "testing"
 ### Flags
 
 * `--version` string - version of OLM resources to install, uninstall, or get status about (default: "latest")
-* `--timeout` duration - time to allow the command to attempt to complete the command before failing (default: "2m")
+* `--timeout` duration - time to wait for the command to complete before failing (default: "2m")
 
 ### Available commands
 
-#### init - Installs Operator Lifecycle Manager
+#### install - Installs Operator Lifecycle Manager
 
 ##### Use
 
-The `operator-sdk alpha olm init` command installs OLM in a Kubernetes cluster
+The `operator-sdk alpha olm install` command installs OLM in a Kubernetes cluster
 based on the configured kubeconfig. It works by downloading OLM's release
 manifests at a specific version (default: `latest`), checking to see if any of
 those resources already exist in the cluster (and aborting if they do), and
 then creating all of the necessary resources and waiting for them to become
-healthy. When the installation is complete, `olm init` outputs a status summary
+healthy. When the installation is complete, `olm install` outputs a status summary
 of all of the resources that were installed.
 
-#### reset - Uninstalls Operator Lifecycle Manager
+#### uninstall - Uninstalls Operator Lifecycle Manager
 
 ##### Use
 
-The `operator-sdk alpha olm reset` command uninstalls OLM from a Kubernetes
+The `operator-sdk alpha olm uninstall` command uninstalls OLM from a Kubernetes
 cluster based on the configured kubeconfig. It works by downloading OLM's
 release manifests at a specific version (default: `latest`), checking to see if
 any of those resources exist (if none exist, it aborts with an error since OLM
@@ -587,7 +587,7 @@ downloaded release manifests. It waits until all resources have been fully
 cleaned up before returning.
 
 **NOTE**: It is important to use `--version` with the version number that 
-corresponds to the version that you installed with `olm init`. Not specifying
+corresponds to the version that you installed with `olm install`. Not specifying
 the version (or using an incorrect version) may cause some resources not be
 cleaned up. This can occur if OLM changes its release manifest resources from
 one version of OLM to the next.
@@ -604,7 +604,7 @@ aborts with an error since OLM is not installed), and printing a summary of the
 status of each of those resources as they exist in the cluster.
 
 **NOTE**: It is important to use `--version` with the version number that 
-corresponds to the version that you installed with `olm init`. Not specifying
+corresponds to the version that you installed with `olm install`. Not specifying
 the version (or using an incorrect version) may cause some resources to be
 missing from the summary and others to be listed as "not found". This can occur
 if OLM changes its release manifest resources from one version of OLM to the
