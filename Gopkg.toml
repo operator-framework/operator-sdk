@@ -1,26 +1,26 @@
 [[override]]
   name = "k8s.io/api"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/apiextensions-apiserver"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/apiserver"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/client-go"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/cli-runtime"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/kube-openapi"
@@ -28,7 +28,7 @@
 
 [[override]]
   name = "k8s.io/code-generator"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[constraint]]
   name = "sigs.k8s.io/controller-runtime"
@@ -55,7 +55,7 @@
 [[override]]
   name = "k8s.io/kube-aggregator"
   # Required for operator-lifecycle-manager version compatibility.
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[constraint]]
   name = "github.com/sirupsen/logrus"
