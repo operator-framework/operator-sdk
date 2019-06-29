@@ -28,7 +28,7 @@ func NewInstallCmd() *cobra.Command {
 		Short: "Install Operator Lifecycle Manager in your cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := mgr.Install(); err != nil {
-				log.Fatalf("Failed to install OLM: %s", err)
+				log.Fatalf("Failed to install OLM version %q: %s", mgr.Version, err)
 			}
 			return nil
 		},

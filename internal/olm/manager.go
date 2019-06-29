@@ -73,17 +73,12 @@ func (m *Manager) Install() error {
 	ctx, cancel := context.WithTimeout(context.Background(), m.Timeout)
 	defer cancel()
 
-	version, err := m.Client.GetVersion(ctx, m.Version)
+	status, err := m.Client.InstallVersion(ctx, m.Version)
 	if err != nil {
 		return err
 	}
 
-	status, err := m.Client.InstallVersion(ctx, version)
-	if err != nil {
-		return err
-	}
-
-	log.Infof("Successfully installed OLM version %s", version)
+	log.Infof("Successfully installed OLM version %q", m.Version)
 	fmt.Print("\n")
 	fmt.Println(status)
 	return nil
@@ -97,17 +92,11 @@ func (m *Manager) Uninstall() error {
 	ctx, cancel := context.WithTimeout(context.Background(), m.Timeout)
 	defer cancel()
 
-	version, err := m.Client.GetVersion(ctx, m.Version)
-	if err != nil {
+	if err := m.Client.UninstallVersion(ctx, m.Version); err != nil {
 		return err
 	}
 
-	err = m.Client.UninstallVersion(ctx, version)
-	if err != nil {
-		return err
-	}
-
-	log.Infof("Successfully uninstalled OLM version %s", version)
+	log.Infof("Successfully uninstalled OLM version %q", m.Version)
 	return nil
 }
 
@@ -119,17 +108,12 @@ func (m *Manager) Status() error {
 	ctx, cancel := context.WithTimeout(context.Background(), m.Timeout)
 	defer cancel()
 
-	version, err := m.Client.GetVersion(ctx, m.Version)
+	status, err := m.Client.GetStatus(ctx, m.Version)
 	if err != nil {
 		return err
 	}
 
-	status, err := m.Client.GetStatus(ctx, version)
-	if err != nil {
-		return err
-	}
-
-	log.Infof("Successfully got OLM status for version %s", version)
+	log.Infof("Successfully got OLM status for version %q", m.Version)
 	fmt.Print("\n")
 	fmt.Println(status)
 	return nil

@@ -20,7 +20,6 @@ package olm
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -86,10 +85,9 @@ func ClientForConfig(cfg *rest.Config) (*Client, error) {
 	}
 
 	c := &Client{
-		KubeClient:         cl,
-		HTTPClient:         *http.DefaultClient,
-		BaseDownloadURL:    "https://github.com/operator-framework/operator-lifecycle-manager/releases",
-		BaseReleasesAPIURL: "https://api.github.com/repos/operator-framework/operator-lifecycle-manager/releases",
+		KubeClient:      cl,
+		HTTPClient:      *http.DefaultClient,
+		BaseDownloadURL: "https://github.com/operator-framework/operator-lifecycle-manager/releases",
 	}
 	return c, nil
 }
@@ -112,23 +110,38 @@ func (c Client) InstallVersion(ctx context.Context, version string) (*Status, er
 
 	log.Print("Waiting for deployment/olm-operator rollout to complete")
 	if err := c.doRolloutWait(ctx, olmOperatorKey); err != nil {
-		return nil, errors.Wrapf(err, "deployment %q failed to rollout", olmOperatorKey.Name)
+		return nil, errors.Wrapf(err, "deployment/%s failed to rollout", olmOperatorKey.Name)
 	}
 
 	log.Print("Waiting for deployment/catalog-operator rollout to complete")
 	if err := c.doRolloutWait(ctx, catalogOperatorKey); err != nil {
-		return nil, errors.Wrapf(err, "deployment %q failed to rollout", catalogOperatorKey.Name)
+		return nil, errors.Wrapf(err, "deployment/%s failed to rollout", catalogOperatorKey.Name)
 	}
 
-	packageServerCSV := types.NamespacedName{Namespace: olmNamespace, Name: fmt.Sprintf("packageserver.v%s", version)}
-	log.Printf("Waiting for clusterserviceversion %q to reach 'Succeeded' phase", packageServerCSV.Name)
-	if err := c.doCSVWait(ctx, packageServerCSV); err != nil {
-		return nil, errors.Wrapf(err, "clusterservice version %q failed to reach phase succeeded", packageServerCSV.Name)
+	subscriptions := filterResources(resources, func(r unstructured.Unstructured) bool {
+		return r.GroupVersionKind() == schema.GroupVersionKind{
+			Group:   olmapiv1alpha1.GroupName,
+			Version: olmapiv1alpha1.GroupVersion,
+			Kind:    olmapiv1alpha1.SubscriptionKind,
+		}
+	})
+
+	for _, sub := range subscriptions {
+		subscriptionKey := types.NamespacedName{Namespace: sub.GetNamespace(), Name: sub.GetName()}
+		log.Printf("Waiting for subscription/%s to install CSV", subscriptionKey.Name)
+		csvKey, err := c.getSubscriptionCSV(ctx, subscriptionKey)
+		if err != nil {
+			return nil, errors.Wrapf(err, "subscription/%s failed to install CSV", subscriptionKey.Name)
+		}
+		log.Printf("Waiting for clusterserviceversion/%s to reach 'Succeeded' phase", csvKey.Name)
+		if err := c.doCSVWait(ctx, *csvKey); err != nil {
+			return nil, errors.Wrapf(err, "clusterserviceversion/%s failed to reach 'Succeeded' phase", csvKey.Name)
+		}
 	}
 
-	log.Printf("Waiting for deployment %q rollout to complete", packageServerKey.Name)
+	log.Printf("Waiting for deployment/%s rollout to complete", packageServerKey.Name)
 	if err := c.doRolloutWait(ctx, packageServerKey); err != nil {
-		return nil, errors.Wrapf(err, "deployment %q failed to rollout", packageServerKey.Name)
+		return nil, errors.Wrapf(err, "deployment/%s failed to rollout", packageServerKey.Name)
 	}
 
 	status = c.getStatus(ctx, resources)
@@ -143,24 +156,14 @@ func (c Client) UninstallVersion(ctx context.Context, version string) error {
 
 	status := c.getStatus(ctx, resources)
 	if !status.HasExistingResources() {
-		return fmt.Errorf("failed to delete OLM version %s: no existing installation found", version)
+		return errors.New("no existing installation found")
 	}
 
-	log.Infof("Uninstalling resources for version %s", version)
+	log.Infof("Uninstalling resources for version %q", version)
 	if err := c.doDelete(ctx, resources); err != nil {
-		return errors.Wrapf(err, "failed to delete OLM version %s", version)
+		return err
 	}
 	return nil
-}
-
-func (c Client) GetVersion(ctx context.Context, version string) (string, error) {
-	log.Infof("Resolving version %q", version)
-	version, err := c.resolveVersion(ctx, version)
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to resolve version %s", version)
-	}
-	log.Infof("  Found GitHub release version %s", version)
-	return version, nil
 }
 
 func (c Client) GetStatus(ctx context.Context, version string) (*Status, error) {
@@ -177,13 +180,13 @@ func (c Client) GetStatus(ctx context.Context, version string) (*Status, error) 
 }
 
 func (c Client) getResources(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
-	log.Infof("Fetching CRDs for version %s", version)
+	log.Infof("Fetching CRDs for version %q", version)
 	crdResources, err := c.getCRDs(ctx, version)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch CRDs")
 	}
 
-	log.Infof("Fetching resources for version %s", version)
+	log.Infof("Fetching resources for version %q", version)
 	olmResources, err := c.getOLM(ctx, version)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch resources")
@@ -191,6 +194,79 @@ func (c Client) getResources(ctx context.Context, version string) ([]unstructure
 
 	resources := append(crdResources, olmResources...)
 	return resources, nil
+}
+
+func (c Client) getCRDs(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
+	resp, err := c.doRequest(ctx, c.crdsURL(version))
+	if err != nil {
+		return nil, errors.Wrap(err, "request failed")
+	}
+	defer resp.Body.Close()
+	return decodeResources(resp.Body)
+}
+
+func (c Client) getOLM(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
+	resp, err := c.doRequest(ctx, c.olmURL(version))
+	if err != nil {
+		return nil, errors.Wrap(err, "request failed")
+	}
+	defer resp.Body.Close()
+	return decodeResources(resp.Body)
+}
+
+func (c Client) crdsURL(version string) string {
+	return fmt.Sprintf("%s/crds.yaml", c.getBaseDownloadURL(version))
+}
+
+func (c Client) olmURL(version string) string {
+	return fmt.Sprintf("%s/olm.yaml", c.getBaseDownloadURL(version))
+}
+
+func (c Client) getBaseDownloadURL(version string) string {
+	if version == "latest" {
+		return fmt.Sprintf("%s/%s/download", c.BaseDownloadURL, version)
+	}
+	return fmt.Sprintf("%s/download/%s", c.BaseDownloadURL, version)
+}
+
+func (c Client) doRequest(ctx context.Context, url string) (*http.Response, error) {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "create request")
+	}
+	req = req.WithContext(ctx)
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed GET '%s'", url)
+	}
+	if resp.StatusCode != http.StatusOK {
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		msg := fmt.Sprintf("failed GET '%s': unexpected status code %d, expected %d", url, resp.StatusCode, http.StatusOK)
+		if err != nil {
+			return nil, errors.Wrap(err, msg)
+		}
+		return nil, fmt.Errorf("%s: %s", msg, string(body))
+	}
+	return resp, nil
+}
+
+func decodeResources(rds ...io.Reader) ([]unstructured.Unstructured, error) {
+	var objs []unstructured.Unstructured
+	for _, r := range rds {
+		dec := yaml.NewYAMLOrJSONDecoder(r, 8)
+		for {
+			var u unstructured.Unstructured
+			err := dec.Decode(&u)
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				return nil, err
+			}
+			objs = append(objs, u)
+		}
+	}
+	return objs, nil
 }
 
 func (c Client) getStatus(ctx context.Context, objs []unstructured.Unstructured) Status {
@@ -216,107 +292,6 @@ func (c Client) getStatus(ctx context.Context, objs []unstructured.Unstructured)
 	}
 
 	return Status{Resources: rss}
-}
-
-func (c Client) resolveVersion(ctx context.Context, version string) (string, error) {
-	var url string
-	if version == "latest" {
-		url = fmt.Sprintf("%s/%s", c.BaseReleasesAPIURL, version)
-	} else {
-		url = fmt.Sprintf("%s/tags/%s", c.BaseReleasesAPIURL, version)
-	}
-
-	resp, err := c.doRequest(ctx, url)
-	if err != nil {
-		return version, errors.Wrap(err, "request failed")
-	}
-	defer resp.Body.Close()
-
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return version, errors.Wrap(err, "read response body")
-	}
-
-	var d struct {
-		TagName string `json:"tag_name"`
-	}
-	if err := json.Unmarshal([]byte(data), &d); err != nil {
-		return version, errors.Wrap(err, "unmarshal json")
-	}
-	return d.TagName, nil
-}
-
-func (c Client) getCRDs(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
-	resp, err := c.doRequest(ctx, c.crdsURL(version))
-	if err != nil {
-		return nil, errors.Wrap(err, "request failed")
-	}
-	defer resp.Body.Close()
-	return decodeResources(resp.Body)
-}
-
-func (c Client) getOLM(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
-	resp, err := c.doRequest(ctx, c.olmURL(version))
-	if err != nil {
-		return nil, errors.Wrap(err, "request failed")
-	}
-	defer resp.Body.Close()
-	return decodeResources(resp.Body)
-}
-
-func (c Client) doRequest(ctx context.Context, url string) (*http.Response, error) {
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "create request")
-	}
-	req = req.WithContext(ctx)
-	resp, err := c.HTTPClient.Do(req)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed GET '%s'", url)
-	}
-	if resp.StatusCode != http.StatusOK {
-		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		msg := fmt.Sprintf("failed GET '%s': unexpected status code %d, expected %d", url, resp.StatusCode, http.StatusOK)
-		if err != nil {
-			return nil, errors.Wrap(err, msg)
-		}
-		return nil, fmt.Errorf("%s: %s", msg, string(body))
-	}
-	return resp, nil
-}
-
-func (c Client) getBaseDownloadURL(version string) string {
-	if version == "latest" {
-		return fmt.Sprintf("%s/%s/download", c.BaseDownloadURL, version)
-	}
-	return fmt.Sprintf("%s/download/%s", c.BaseDownloadURL, version)
-}
-
-func (c Client) crdsURL(version string) string {
-	return fmt.Sprintf("%s/crds.yaml", c.getBaseDownloadURL(version))
-}
-
-func (c Client) olmURL(version string) string {
-	return fmt.Sprintf("%s/olm.yaml", c.getBaseDownloadURL(version))
-}
-
-func decodeResources(rds ...io.Reader) ([]unstructured.Unstructured, error) {
-	var objs []unstructured.Unstructured
-	for _, r := range rds {
-		dec := yaml.NewYAMLOrJSONDecoder(r, 8)
-		for {
-			var u unstructured.Unstructured
-			err := dec.Decode(&u)
-			if err == io.EOF {
-				break
-			} else if err != nil {
-				return nil, err
-			}
-			objs = append(objs, u)
-		}
-	}
-	return objs, nil
 }
 
 func (c Client) doCreate(ctx context.Context, objs []unstructured.Unstructured) error {
@@ -402,6 +377,38 @@ func (c Client) doRolloutWait(ctx context.Context, key types.NamespacedName) err
 		return false, nil
 	}
 	return wait.PollImmediateUntil(time.Second, rolloutComplete, ctx.Done())
+}
+
+func filterResources(resources []unstructured.Unstructured, filter func(unstructured.Unstructured) bool) (filtered []unstructured.Unstructured) {
+	for _, r := range resources {
+		if filter(r) {
+			filtered = append(filtered, r)
+		}
+	}
+	return filtered
+}
+
+func (c Client) getSubscriptionCSV(ctx context.Context, subKey types.NamespacedName) (*types.NamespacedName, error) {
+	var csvKey *types.NamespacedName
+	subscriptionInstalledCSV := func() (bool, error) {
+		sub := olmapiv1alpha1.Subscription{}
+		err := c.KubeClient.Get(ctx, subKey, &sub)
+		if err != nil {
+			return false, err
+		}
+		installedCSV := sub.Status.InstalledCSV
+		if installedCSV == "" {
+			return false, nil
+		}
+		csvKey = &types.NamespacedName{
+			Namespace: subKey.Namespace,
+			Name:      installedCSV,
+		}
+		log.Printf("  Found installed CSV %q", installedCSV)
+		return true, nil
+	}
+
+	return csvKey, wait.PollImmediateUntil(time.Second, subscriptionInstalledCSV, ctx.Done())
 }
 
 func (c Client) doCSVWait(ctx context.Context, key types.NamespacedName) error {
