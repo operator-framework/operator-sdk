@@ -669,7 +669,7 @@
   version = "v1.0.0-rc1"
 
 [[projects]]
-  digest = "1:23e2e9001efb9eed6c89b080366f0a483dcc5edbb5b9ed89c0c838258467e6b1"
+  digest = "1:ce8beba6c7aad8ed5b3b959f6d61a79c557f5b3b18583765779a97b34227ceac"
   name = "github.com/operator-framework/operator-lifecycle-manager"
   packages = [
     "pkg/api/apis/operators",
@@ -679,6 +679,7 @@
     "pkg/api/client/listers/operators/v1alpha2",
     "pkg/api/wrappers",
     "pkg/controller/install",
+    "pkg/controller/registry",
     "pkg/lib/operatorclient",
     "pkg/lib/operatorlister",
     "pkg/lib/ownerutil",
@@ -773,14 +774,6 @@
   packages = ["."]
   pruneopts = "NUT"
   revision = "ea9eea63887261e4d8ed8315f4078e88d540c725"
-
-[[projects]]
-  digest = "1:85d173178711fffb3a9d13bbcb7957facbf676bd555ce2632cb17c307daf7828"
-  name = "github.com/prometheus/prometheus"
-  packages = ["util/promlint"]
-  pruneopts = "NUT"
-  revision = "4d60eb36dcbed725fcac5b27018574118f12fffb"
-  version = "v2.8.1"
 
 [[projects]]
   digest = "1:e09ada96a5a41deda4748b1659cc8953961799e798aea557257b56baee4ecaf3"
@@ -1772,12 +1765,10 @@
     "github.com/mitchellh/go-homedir",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install",
+    "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/registry",
     "github.com/pborman/uuid",
     "github.com/pkg/errors",
     "github.com/prometheus/client_golang/prometheus",
-    "github.com/prometheus/client_model/go",
-    "github.com/prometheus/common/expfmt",
-    "github.com/prometheus/prometheus/util/promlint",
     "github.com/rogpeppe/go-internal/modfile",
     "github.com/sergi/go-diff/diffmatchpatch",
     "github.com/sirupsen/logrus",
