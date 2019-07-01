@@ -77,16 +77,17 @@ $ eval $(minikube docker-env)
 
 All the tests are run through the [`Makefile`][makefile]. This is a brief description of all makefile test instructions:
 
-- `test` - Installs `operator-sdk` by running `dep ensure` and `make install`, and then runs all tests. This is intended as a full test for developers.
-- `test/ci-go` - Runs all the tests that the Go job runs in CI (`sanity`, `unit`, `subcommand`, `e2e/go`).
-- `test/ci-ansible` - Runs all the tests that the Ansible job runs in CI (`e2e/ansible`).
-- `test/ci-helm` - Runs all the tests that the Helm job runs in CI (`e2e/helm`).
+- `test` - Runs `test/unit`
+- `test/ci-go` - Runs all the tests that the Go job runs in Travis CI (`test/sanity`, `test/unit`, `test/subcommand`, `test/e2e/go`).
+- `test/ci-ansible` - Runs all the tests that the Ansible job runs in Travis CI (`test/e2e/ansible-molecule`).
+- `test/ci-helm` - Runs all the tests that the Helm job runs in Travis CI (`test/e2e/helm`).
 - `test/sanity` - Runs sanity checks.
 - `test/unit` - Runs unit tests.
 - `test/subcommand` - Runs subcommand tests.
-- `test/e2e` - Runs all E2E tests (`e2e/go`, `e2e/ansible`, and `e2e/helm`).
+- `test/e2e` - Runs all E2E tests (`test/e2e/go`, `test/e2e/ansible`, `test/e2e/ansible-molecule`, and `e2e/helm`).
 - `test/e2e/go` - Runs the go E2E test.
 - `test/e2e/ansible` - Runs the ansible E2E test.
+- `test/e2e/ansible-molecule` - Runs the ansible molecule E2E test.
 - `test/e2e/helm` - Runs the helm E2E test.
 - `test/markdown` - Runs the markdown checks
 
