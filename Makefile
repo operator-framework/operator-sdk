@@ -109,13 +109,16 @@ test/unit:
 	$(Q)go test -count=1 -short ./pkg/...
 	$(Q)go test -count=1 -short ./internal/...
 
-test/subcommand: test/subcommand/test-local test/subcommand/scorecard
+test/subcommand: test/subcommand/test-local test/subcommand/scorecard test/subcommand/alpha-olm
 
 test/subcommand/test-local:
 	./hack/tests/test-subcommand.sh
 
 test/subcommand/scorecard:
 	./hack/tests/scorecard-subcommand.sh
+
+test/subcommand/alpha-olm:
+	./hack/tests/alpha-olm-subcommands.sh
 
 test/e2e: test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm
 
@@ -137,7 +140,7 @@ test/e2e/helm: image/build/helm
 test/markdown:
 	./hack/ci/marker --root=doc
 
-.PHONY: test test-ci test/sanity test/unit test/subcommand test/e2e test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm test/ci-go test/ci-ansible test/ci-helm test/markdown
+.PHONY: test test-ci test/sanity test/unit test/subcommand test/subcommand/test-local test/subcommand/scorecard test/subcommand/alpha-olm test/e2e test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm test/ci-go test/ci-ansible test/ci-helm test/markdown
 
 image: image/build image/push
 

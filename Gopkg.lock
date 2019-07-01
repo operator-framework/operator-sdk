@@ -1851,6 +1851,7 @@
     "k8s.io/kube-state-metrics/pkg/collector",
     "k8s.io/kube-state-metrics/pkg/metric",
     "k8s.io/kube-state-metrics/pkg/metrics_store",
+    "k8s.io/kubernetes/pkg/controller/deployment/util",
     "k8s.io/kubernetes/pkg/kubectl/util",
     "sigs.k8s.io/controller-runtime/pkg/cache",
     "sigs.k8s.io/controller-runtime/pkg/client",
