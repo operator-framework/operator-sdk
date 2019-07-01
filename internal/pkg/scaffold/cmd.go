@@ -18,12 +18,18 @@ import (
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/pkg/metrics"
 )
 
-const CmdFile = "main.go"
+const (
+	CmdFile = "main.go"
+)
 
 type Cmd struct {
 	input.Input
+
+	MetricsPort         int32
+	OperatorMetricsPort int32
 }
 
 func (s *Cmd) GetInput() (input.Input, error) {
@@ -31,6 +37,9 @@ func (s *Cmd) GetInput() (input.Input, error) {
 		s.Path = filepath.Join(ManagerDir, CmdFile)
 	}
 	s.TemplateBody = cmdTmpl
+	s.MetricsPort = metrics.PortNum
+	s.OperatorMetricsPort = metrics.CRPortNum
+
 	return s.Input, nil
 }
 
@@ -69,8 +78,8 @@ import (
 // Change below variables to serve metrics on different host or port.
 var (
 	metricsHost               = "0.0.0.0"
-	metricsPort         int32 = 8383
-	operatorMetricsPort int32 = 8686
+	metricsPort         int32 = {{ .MetricsPort }}
+	operatorMetricsPort int32 = {{ .OperatorMetricsPort }}
 )
 var log = logf.Log.WithName("cmd")
 
