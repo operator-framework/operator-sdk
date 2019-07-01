@@ -22,6 +22,7 @@
 -  `CreateMetricsService()` function from the metrics package accepts an array of ServicePort objects ([]v1.ServicePort) as input to create Service metrics. `CRPortName` constant is added to describe the string of custom resource port name. ([#1560](https://github.com/operator-framework/operator-sdk/pull/1560))
 - Changed the flag `--skip-git-init` to [`--git-init`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#new). This changes the default behavior of `operator-sdk new` to not initialize the new project directory as a git repository with `git init`. This behavior is now opt-in with `--git-init`. ([#1588](https://github.com/operator-framework/operator-sdk/pull/1588))
 - `operator-sdk new` will no longer create the initial commit for a new project, even with `--git-init=true`. ([#1588](https://github.com/operator-framework/operator-sdk/pull/1588))
+- Updated `operator-sdk new --type=helm` to fallback to a default RBAC role (instead of failing) when errors occur setting up the Kubernetes client necessary for role generation. ([#1627](https://github.com/operator-framework/operator-sdk/pull/1627))
 
 ### Deprecated
 
