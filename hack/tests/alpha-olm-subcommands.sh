@@ -10,15 +10,15 @@ test_version() {
     commandoutput=$(operator-sdk alpha olm status --version=${version} 2>&1 || true)
     echo $commandoutput | grep -F "Failed to get OLM status for version \\\"${version}\\\": no existing installation found"
 
-    # Reset should fail with OLM not installed
+    # Uninstall should fail with OLM not installed
     commandoutput=$(operator-sdk alpha olm uninstall --version=${version} 2>&1 || true)
     echo $commandoutput | grep -F "Failed to uninstall OLM version \\\"${version}\\\": no existing installation found"
 
-    # Init should succeed with nothing installed
+    # Install should succeed with nothing installed
     commandoutput=$(operator-sdk alpha olm install --version=${version} 2>&1)
     echo $commandoutput | grep -F "Successfully installed OLM version \\\"${version}\\\""
 
-    # Init should fail with OLM Installed
+    # Install should fail with OLM Installed
     commandoutput=$(operator-sdk alpha olm install --version=${version} 2>&1 || true)
     echo $commandoutput | grep -F "Failed to install OLM version \\\"${version}\\\": detected existing OLM resources: OLM must be completely uninstalled before installation"
 
@@ -32,7 +32,7 @@ test_version() {
     commandoutput=$(operator-sdk alpha olm status --version=${version} 2>&1)
     echo $commandoutput | grep -F "Successfully got OLM status for version \\\"${version}\\\""
 
-    # Reset should succeed with OLM installed
+    # Uninstall should succeed with OLM installed
     commandoutput=$(operator-sdk alpha olm uninstall --version=${version} 2>&1)
     echo $commandoutput | grep -F "Successfully uninstalled OLM version \\\"${version}\\\""
 }
