@@ -19,11 +19,10 @@ import (
 	"reflect"
 	"testing"
 
-	test "github.com/operator-framework/operator-sdk/internal/test"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	tlsutil "github.com/operator-framework/operator-sdk/pkg/tls"
 
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -83,9 +82,6 @@ func init() {
 // and CA TLS assets exist in the k8s cluster for a given cr,
 // the GenerateCert() simply returns those to the caller.
 func TestBothAppAndCATLSAssetsExist(t *testing.T) {
-	if *test.OnlyGenerate {
-		return
-	}
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
 	namespace, err := ctx.GetNamespace()
@@ -131,9 +127,6 @@ func TestBothAppAndCATLSAssetsExist(t *testing.T) {
 // it won't verify the existing application TLS cert. Therefore, CertGenerator can't proceed
 // and returns an error to the caller.
 func TestOnlyAppSecretExist(t *testing.T) {
-	if *test.OnlyGenerate {
-		return
-	}
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
 	namespace, err := ctx.GetNamespace()
@@ -160,9 +153,6 @@ func TestOnlyAppSecretExist(t *testing.T) {
 // TestOnlyCAExist tests the case where only the CA exists in the cluster;
 // GenerateCert can retrieve the CA and uses it to create a new application secret.
 func TestOnlyCAExist(t *testing.T) {
-	if *test.OnlyGenerate {
-		return
-	}
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
 	namespace, err := ctx.GetNamespace()
@@ -192,9 +182,6 @@ func TestOnlyCAExist(t *testing.T) {
 // TestNoneOfCaAndAppSecretExist ensures that when none of the CA and Application TLS assets
 // exist, GenerateCert() creates both and put them into the k8s cluster.
 func TestNoneOfCaAndAppSecretExist(t *testing.T) {
-	if *test.OnlyGenerate {
-		return
-	}
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
 	namespace, err := ctx.GetNamespace()
@@ -217,9 +204,6 @@ func TestNoneOfCaAndAppSecretExist(t *testing.T) {
 // TestCustomCA ensures that if a user provides a custom Key and Cert and the CA and Application TLS assets
 // do not exist, the GenerateCert method can use the custom CA to generate the TLS assest.
 func TestCustomCA(t *testing.T) {
-	if *test.OnlyGenerate {
-		return
-	}
 	ctx := framework.NewTestCtx(t)
 	defer ctx.Cleanup()
 	namespace, err := ctx.GetNamespace()

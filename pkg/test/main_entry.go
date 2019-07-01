@@ -28,7 +28,6 @@ import (
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/test"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
@@ -61,11 +60,8 @@ func MainEntry(m *testing.M) {
 	if err != nil {
 		log.Fatalf("Failed to change directory to project root: %v", err)
 	}
-	// this is a workaround for internal tests
-	if test.OnlyGenerate == nil || *test.OnlyGenerate == false {
-		if err := setup(kubeconfigPath, namespacedManPath, *localOperator); err != nil {
-			log.Fatalf("Failed to set up framework: %v", err)
-		}
+	if err := setup(kubeconfigPath, namespacedManPath, *localOperator); err != nil {
+		log.Fatalf("Failed to set up framework: %v", err)
 	}
 	// setup local operator command, but don't start it yet
 	var localCmd *exec.Cmd
