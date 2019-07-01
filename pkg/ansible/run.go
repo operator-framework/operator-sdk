@@ -38,8 +38,7 @@ import (
 )
 
 var (
-	log               = logf.Log.WithName("cmd")
-	metricsPort int32 = 8383
+	log = logf.Log.WithName("cmd")
 )
 
 func printVersion() {
@@ -71,7 +70,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	// TODO: probably should expose the host & port as an environment variables
 	mgr, err := manager.New(cfg, manager.Options{
 		Namespace:          namespace,
-		MetricsBindAddress: fmt.Sprintf("0.0.0.0:%d", metricsPort),
+		MetricsBindAddress: fmt.Sprintf("0.0.0.0:%d", metrics.PortNum),
 	})
 	if err != nil {
 		log.Error(err, "Failed to create a new manager.")
@@ -92,7 +91,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 
 	// Add to the below struct any other metrics ports you want to expose.
 	servicePorts := []v1.ServicePort{
-		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
+		{Port: metrics.PortNum, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metrics.PortNum}},
 	}
 	// Create Service object to expose the metrics port(s).
 	// TODO: probably should expose the port as an environment variable
