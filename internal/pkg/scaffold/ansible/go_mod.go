@@ -89,18 +89,18 @@ require (
 	k8s.io/klog v0.2.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208 // indirect
 	k8s.io/kubernetes v1.14.1 // indirect
-	sigs.k8s.io/controller-runtime v0.1.10
+	sigs.k8s.io/controller-runtime v0.1.12
 	sigs.k8s.io/controller-tools v0.1.10
 	sigs.k8s.io/testing_frameworks v0.1.1 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
 
-// Pinned to kubernetes-1.13.1
+// Pinned to kubernetes-1.13.4
 replace (
-	k8s.io/api => k8s.io/api v0.0.0-20181213150558-05914d821849
-	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20181127025237-2b1284ed4c93
-	k8s.io/client-go => k8s.io/client-go v0.0.0-20181213151034-8d9ed539ba31
-	k8s.io/kubernetes => k8s.io/kubernetes v1.13.1
+	k8s.io/api => k8s.io/api v0.0.0-20190222131558-5cb15d344471
+	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190221124651-86fb29eff628
+	k8s.io/client-go => k8s.io/client-go v0.0.0-20190228174230-b40b2a5939e4
+	k8s.io/kubernetes => k8s.io/kubernetes v1.13.4
 )
 
 replace github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.29.0

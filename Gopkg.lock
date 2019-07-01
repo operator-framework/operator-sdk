@@ -669,7 +669,7 @@
   version = "v1.0.0-rc1"
 
 [[projects]]
-  digest = "1:23e2e9001efb9eed6c89b080366f0a483dcc5edbb5b9ed89c0c838258467e6b1"
+  digest = "1:ce8beba6c7aad8ed5b3b959f6d61a79c557f5b3b18583765779a97b34227ceac"
   name = "github.com/operator-framework/operator-lifecycle-manager"
   packages = [
     "pkg/api/apis/operators",
@@ -679,6 +679,7 @@
     "pkg/api/client/listers/operators/v1alpha2",
     "pkg/api/wrappers",
     "pkg/controller/install",
+    "pkg/controller/registry",
     "pkg/lib/operatorclient",
     "pkg/lib/operatorlister",
     "pkg/lib/ownerutil",
@@ -773,14 +774,6 @@
   packages = ["."]
   pruneopts = "NUT"
   revision = "ea9eea63887261e4d8ed8315f4078e88d540c725"
-
-[[projects]]
-  digest = "1:85d173178711fffb3a9d13bbcb7957facbf676bd555ce2632cb17c307daf7828"
-  name = "github.com/prometheus/prometheus"
-  packages = ["util/promlint"]
-  pruneopts = "NUT"
-  revision = "4d60eb36dcbed725fcac5b27018574118f12fffb"
-  version = "v2.8.1"
 
 [[projects]]
   digest = "1:e09ada96a5a41deda4748b1659cc8953961799e798aea557257b56baee4ecaf3"
@@ -1194,7 +1187,7 @@
   version = "v2.2.2"
 
 [[projects]]
-  digest = "1:6fa82ea248029bbbdddade20c06ab177ff6e485e5e45e48b045707415b7efd34"
+  digest = "1:18b9b70bdf29da610c0df032cf60ee7526a48756fa44012cc639dcb557335cbc"
   name = "k8s.io/api"
   packages = [
     "admission/v1beta1",
@@ -1233,8 +1226,8 @@
     "storage/v1beta1",
   ]
   pruneopts = "NUT"
-  revision = "05914d821849570fba9eacfb29466f2d8d3cd229"
-  version = "kubernetes-1.13.1"
+  revision = "5cb15d34447165a97c76ed5a60e4e99c8a01ecfe"
+  version = "kubernetes-1.13.4"
 
 [[projects]]
   digest = "1:52eb7b406d7d7b2f8d8a0816021f96f969e801a21a547fe5c1832c4aba3b3cee"
@@ -1249,11 +1242,11 @@
     "pkg/features",
   ]
   pruneopts = "NUT"
-  revision = "0fe22c71c47604641d9aa352c785b7912c200562"
-  version = "kubernetes-1.13.1"
+  revision = "d002e88f6236312f0289d9d1deab106751718ff0"
+  version = "kubernetes-1.13.4"
 
 [[projects]]
-  digest = "1:fecd9730eb412a4bc83db5d0fbba2d328741702494c484479c9f9341abf5af41"
+  digest = "1:f5d50c8382f297b5ac6d6063f0c04fdf67060048a29967f909bb5b67dc348c53"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/equality",
@@ -1313,8 +1306,8 @@
     "third_party/forked/golang/reflect",
   ]
   pruneopts = "NUT"
-  revision = "2b1284ed4c93a43499e781493253e2ac5959c4fd"
-  version = "kubernetes-1.13.1"
+  revision = "86fb29eff6288413d76bd8506874fddd9fccdff0"
+  version = "kubernetes-1.13.4"
 
 [[projects]]
   digest = "1:60980a58a47ddc5616bef02dbe42855e63a718fb6de108cd8fc108afa7d0af84"
@@ -1330,8 +1323,8 @@
     "pkg/util/feature",
   ]
   pruneopts = "NUT"
-  revision = "3ccfe8365421eb08e334b195786a2973460741d8"
-  version = "kubernetes-1.13.1"
+  revision = "79427f02047f9189a75b8cdaadccaf65a126853e"
+  version = "kubernetes-1.13.4"
 
 [[projects]]
   digest = "1:63793246976569a95e534c731e79cc555dabee6f8efa29a0b28ca33f23b7e28b"
@@ -1342,11 +1335,11 @@
     "pkg/genericclioptions/resource",
   ]
   pruneopts = "NUT"
-  revision = "835b10687cb6556f6b113099ef925146a56d5981"
-  version = "kubernetes-1.13.1"
+  revision = "a9e421a7932607ce4623ff45add8274499cca193"
+  version = "kubernetes-1.13.4"
 
 [[projects]]
-  digest = "1:faf9217c7752be77728b0aa84b3d61a893244a154fca97a242453f5c6c51686f"
+  digest = "1:55fa37539f4039a6a2428a68b1e74ee206c5c88a7fcfc86c637645a4a511e6d1"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
@@ -1441,8 +1434,8 @@
     "util/workqueue",
   ]
   pruneopts = "NUT"
-  revision = "8d9ed539ba3134352c586810e749e58df4e94e4f"
-  version = "kubernetes-1.13.1"
+  revision = "b40b2a5939e43f7ffe0028ad67586b7ce50bb675"
+  version = "kubernetes-1.13.4"
 
 [[projects]]
   digest = "1:9cf5396ad425691289c57c8ec922a0ab733b9ec8afdf22044056ee708250c05f"
@@ -1450,7 +1443,7 @@
   packages = ["cmd/deepcopy-gen/args"]
   pruneopts = "NUT"
   revision = "c2090bec4d9b1fb25de3812f868accc2bc9ecbae"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[projects]]
   branch = "master"
@@ -1532,8 +1525,8 @@
     "pkg/client/listers/apiregistration/v1",
   ]
   pruneopts = "NUT"
-  revision = "1e8cd453c47488cff773c5ebcd70ca0b0ce054d9"
-  version = "kubernetes-1.13.1"
+  revision = "3e0149950b0e22a3b8579db52bd50e40d0dac10e"
+  version = "kubernetes-1.13.4"
 
 [[projects]]
   digest = "1:6b1f11445d7962a357d4b5f98324d11d8a543f7fd368f9405eba5bdd9877e743"
@@ -1685,7 +1678,7 @@
   revision = "21c4ce38f2a793ec01e925ddc31216500183b773"
 
 [[projects]]
-  digest = "1:a66a51f9d249201451fd7cf956d69da9a88fb216b2e0d3f8b1ce5d2a7990539e"
+  digest = "1:f467a1933d5cbafd32eb126229e4629a099f4852e26b4be25db96f8f03b4101f"
   name = "sigs.k8s.io/controller-runtime"
   packages = [
     "pkg/cache",
@@ -1700,6 +1693,7 @@
     "pkg/handler",
     "pkg/internal/controller",
     "pkg/internal/controller/metrics",
+    "pkg/internal/objectutil",
     "pkg/internal/recorder",
     "pkg/leaderelection",
     "pkg/manager",
@@ -1720,8 +1714,8 @@
     "pkg/webhook/types",
   ]
   pruneopts = "NUT"
-  revision = "12d98582e72927b6cd0123e2b4e819f9341ce62c"
-  version = "v0.1.10"
+  revision = "f1eaba5087d69cebb154c6a48193e6667f5b512c"
+  version = "v0.1.12"
 
 [[projects]]
   digest = "1:024781b25f1d15e78be60cc44842c092d3cda8d494f6c972e6f35707ac35419a"
@@ -1771,12 +1765,10 @@
     "github.com/mitchellh/go-homedir",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install",
+    "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/registry",
     "github.com/pborman/uuid",
     "github.com/pkg/errors",
     "github.com/prometheus/client_golang/prometheus",
-    "github.com/prometheus/client_model/go",
-    "github.com/prometheus/common/expfmt",
-    "github.com/prometheus/prometheus/util/promlint",
     "github.com/rogpeppe/go-internal/modfile",
     "github.com/sergi/go-diff/diffmatchpatch",
     "github.com/sirupsen/logrus",

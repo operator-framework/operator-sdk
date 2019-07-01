@@ -108,9 +108,18 @@ func (s *CRD) CustomRender() ([]byte, error) {
 		// controller-tools' generators read and make crds for all apis in pkg/apis,
 		// so generate crds in a cached, in-memory fs to extract the data we need.
 		if !cache.fileExists(path) {
+			// This sets domain as empty string when we can't extract it from FullGroup.
+			// In turn this defaults to extracting the domain from project root file
+			// in controller-tools.
+			fg := strings.SplitN(s.Resource.FullGroup, ".", 2)
+			domain := s.Resource.FullGroup
+			if len(fg) > 1 {
+				domain = fg[1]
+			}
+
 			g := &crdgenerator.Generator{
 				RootPath:          s.AbsProjectPath,
-				Domain:            strings.SplitN(s.Resource.FullGroup, ".", 2)[1],
+				Domain:            domain,
 				Repo:              s.Repo,
 				OutputDir:         ".",
 				SkipMapValidation: false,
