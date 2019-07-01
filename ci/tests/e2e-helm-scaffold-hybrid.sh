@@ -10,12 +10,7 @@ mkdir -p $HELMDIR
 
 # create and build the operator
 pushd "$HELMDIR"
-log=$(operator-sdk new nginx-operator --api-version=helm.example.com/v1alpha1 --kind=Nginx --type=helm --no-helm-role 2>&1)
-echo $log
-if echo $log | grep -q "failed to generate RBAC rules"; then
-    echo FAIL expected successful generation of RBAC rules
-    exit 1
-fi
+operator-sdk new nginx-operator --api-version=helm.example.com/v1alpha1 --kind=Nginx --type=helm
 
 pushd nginx-operator
 export GO111MODULE=on
