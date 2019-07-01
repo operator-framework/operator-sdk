@@ -1,0 +1,23 @@
+FROM osdk-builder as builder
+
+RUN hack/tests/scaffolding/e2e-go-scaffold.sh
+
+ENV GO111MODULE=on
+RUN touch /go/src/github.com/operator-framework/operator-sdk/go.mod
+RUN cd /go/src/$(cat /project_path.tmp)/memcached-operator && go build -gcflags "all=-trimpath=${GOPATH}" -asmflags "all=-trimpath=${GOPATH}" -o /memcached-operator $(cat /project_path.tmp)/memcached-operator/cmd/manager
+
+FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
+
+ENV OPERATOR=/usr/local/bin/memcached-operator \
+    USER_UID=1001 \
+    USER_NAME=memcached-operator
+
+# install operator binary
+COPY --from=builder /memcached-operator ${OPERATOR}
+COPY test/test-framework/build/bin /usr/local/bin
+
+RUN  /usr/local/bin/user_setup
+
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
+
+USER ${USER_UID}
