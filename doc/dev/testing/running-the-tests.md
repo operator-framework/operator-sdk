@@ -97,6 +97,15 @@ For more info on what these tests actually do, please see the [Travis Build][tra
 Some of the tests will run using the kube config in `$HOME/.kube/config` (others may check the `KUBECONFIG` env var first)
 and the operator images will be built and stored in you local docker registry.
 
+### Go E2E test flags
+
+The `make test/e2e/go` command accepts an `ARGS` variable containing flags that will be passed to `go test`:
+
+- `-image` string - Sets the operator test image tag to be built and used in testing. Defaults to "quay.io/example/memcached-operator:v0.0.1"
+- `-local-repo` string - Sets the path to the local SDK repo being tested. Defaults to the path of the SDK repo containing e2e tests. This is useful for testing customized e2e code.
+
+An example of using `ARGS` is in the note below.
+
 **NOTE**: Some of these tests, specifically the ansible (`test/e2e/ansible` and `test/ci-ansible`), helm
 (`test/e2e/helm` and `test/ci-helm`), and CI Go (`test/e2e/ci-go`) tests, only work when the cluster shares the local docker
 registry, as is the case with `oc cluster up` and `minikube` after running `eval $(minikube docker-env)`.

@@ -61,10 +61,8 @@ require (
 	github.com/pelletier/go-toml v1.3.0 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829
-	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90
-	github.com/prometheus/common v0.2.0
+	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90 // indirect
 	github.com/prometheus/procfs v0.0.0-20190403104016-ea9eea638872 // indirect
-	github.com/prometheus/prometheus v0.0.0-20190328180107-4d60eb36dcbe
 	github.com/rogpeppe/go-internal v1.3.0
 	github.com/russross/blackfriday v0.0.0-20151117072312-300106c228d5 // indirect
 	github.com/sergi/go-diff v1.0.0
@@ -112,16 +110,16 @@ require (
 	vbom.ml/util v0.0.0-20180919145318-efcd4e0f9787 // indirect
 )
 
-// Pinned to kubernetes-1.13.1
+// Pinned to kubernetes-1.13.4
 replace (
-	k8s.io/api => k8s.io/api v0.0.0-20181213150558-05914d821849
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20181213153335-0fe22c71c476
-	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20181127025237-2b1284ed4c93
-	k8s.io/apiserver => k8s.io/apiserver v0.0.0-20181213151703-3ccfe8365421
-	k8s.io/cli-runtime => k8s.io/cli-runtime v0.0.0-20181213153952-835b10687cb6
-	k8s.io/client-go => k8s.io/client-go v0.0.0-20181213151034-8d9ed539ba31
+	k8s.io/api => k8s.io/api v0.0.0-20190222213804-5cb15d344471
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20190228180357-d002e88f6236
+	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190221213512-86fb29eff628
+	k8s.io/apiserver => k8s.io/apiserver v0.0.0-20190228174905-79427f02047f
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.0.0-20190228180923-a9e421a79326
+	k8s.io/client-go => k8s.io/client-go v0.0.0-20190228174230-b40b2a5939e4
 	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20181117043124-c2090bec4d9b
-	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.0.0-20181213152105-1e8cd453c474
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.0.0-20190228175259-3e0149950b0e
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20180711000925-0cf8f7e6ed1d
-	k8s.io/kubernetes => k8s.io/kubernetes v0.0.0-20190201210629-c6d339953bd4
+	k8s.io/kubernetes => k8s.io/kubernetes v1.13.4
 )

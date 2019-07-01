@@ -212,7 +212,7 @@ Once this tag passes CI, go to step 3. For more info on tagging, see the [releas
 
 ### 3. Create a PR for post-release version and CHANGELOG.md updates
 
-Check out a new branch from master (or use your `release-v1.3.0`) and commit the following changes:
+Check out a new branch from master (or use your `release-v1.3.0` branch) and commit the following changes:
 
 - `version/version.go`: update `Version` to `v1.3.0+git`.
 - `internal/pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
@@ -237,7 +237,9 @@ Check out a new branch from master (or use your `release-v1.3.0`) and commit the
     ### Bug Fixes
     ```
 
-Create a new PR for this branch. Once this PR passes CI and is merged, `master` can be unfrozen.
+Create a new PR for this branch, targetting the `master` branch. Once this PR passes CI and is merged, `master` can be unfrozen.
+
+If the release is for a patch version (e.g. `v1.3.1`), an identical PR should be created, targetting the  `v1.3.x` branch. Once this PR passes CI and is merged, `v1.3.x` can be unfrozen.
 
 ### 4. Releasing binaries, signatures, and release notes
 
