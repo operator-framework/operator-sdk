@@ -58,11 +58,9 @@ var (
 )
 
 type Client struct {
-	KubeClient client.Client
-	HTTPClient http.Client
-
-	BaseDownloadURL    string
-	BaseReleasesAPIURL string
+	KubeClient      client.Client
+	HTTPClient      http.Client
+	BaseDownloadURL string
 }
 
 func ClientForConfig(cfg *rest.Config) (*Client, error) {
