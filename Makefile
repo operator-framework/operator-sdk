@@ -128,7 +128,7 @@ test/e2e/ansible: image/build/ansible
 test/e2e/ansible2:
 	./ci/tests/e2e-ansible.sh
 
-test/e2e/ansible-molecule:
+test/e2e/ansible-molecule: image/build/ansible
 	./hack/tests/e2e-ansible-molecule.sh
 
 test/e2e/helm: image/build/helm
