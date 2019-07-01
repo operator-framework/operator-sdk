@@ -32,11 +32,16 @@
 
 ### Bug Fixes
 
-- Fixes a regression that causes Helm RBAC generation to contain an empty custom ruleset when the chart's default manifest contains only namespaced resources. ([#1456](https://github.com/operator-framework/operator-sdk/pull/1456))
-- Fixes an issue that causes Helm RBAC generation to fail when creating new operators with a Kubernetes context configured to connect to an OpenShift cluster. ([#1461](https://github.com/operator-framework/operator-sdk/pull/1461))
 - Generated CSV's that include a deployment install strategy will be checked for a reference to `metadata.annotations['olm.targetNamespaces']`, and if one is not found a reference will be added to the `WATCH_NAMESPACE` env var for all containers in the deployment. This is a bug because any other value that references the CSV's namespace is incorrect. ([#1396](https://github.com/operator-framework/operator-sdk/pull/1396))
 - Build `-trimpath` was not being respected. `$GOPATH` was not expanding because `exec.Cmd{}` is not executed in a shell environment. ([#1535](https://github.com/operator-framework/operator-sdk/pull/1535))
 - Running the [scorecard](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#up) with `--olm-deployed` will now only use the first CR set in either the `cr-manifest` config option or the CSV's `metadata.annotations['alm-examples']` as was intended, and access manifests correctly from the config. ([#1565](https://github.com/operator-framework/operator-sdk/pull/1565))
+
+## v0.8.1
+
+### Bug Fixes
+
+- Fixes a regression that causes Helm RBAC generation to contain an empty custom ruleset when the chart's default manifest contains only namespaced resources. ([#1456](https://github.com/operator-framework/operator-sdk/pull/1456))
+- Fixes an issue that causes Helm RBAC generation to fail when creating new operators with a Kubernetes context configured to connect to an OpenShift cluster. ([#1461](https://github.com/operator-framework/operator-sdk/pull/1461))
 
 ## v0.8.0
 
@@ -75,6 +80,13 @@
 - In Helm-based operators, when a custom resource with a failing release is reverted back to a working state, the `ReleaseFailed` condition is now correctly removed. ([#1321](https://github.com/operator-framework/operator-sdk/pull/1321))
 - [`operator-sdk generate openapi`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#openapi) no longer overwrites CRD values derived from `+kubebuilder` annotations in Go API code. See issues ([#1212](https://github.com/operator-framework/operator-sdk/issues/1212)) and ([#1323](https://github.com/operator-framework/operator-sdk/issues/1323)) for discussion. ([#1278](https://github.com/operator-framework/operator-sdk/pull/1278))
 - Running [`operator-sdk gen-csv`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#gen-csv) on operators that do not have a CRDs directory, ex. `deploy/crds`, or do not have any [owned CRDs](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md#your-custom-resource-definitions), will not generate a "deploy/crds not found" error.
+
+## v0.7.1
+
+### Bug Fixes
+
+- Pin dependency versions in Ansible build and test framework Dockerfiles to fix broken build and test framework images. ([#1348](https://github.com/operator-framework/operator-sdk/pull/1348))
+- In Helm-based operators, when a custom resource with a failing release is reverted back to a working state, the `ReleaseFailed` condition is now correctly removed. ([#1321](https://github.com/operator-framework/operator-sdk/pull/1321))
 
 ## v0.7.0
 
