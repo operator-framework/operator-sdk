@@ -96,7 +96,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	}
 	// Create Service object to expose the metrics port(s).
 	// TODO: probably should expose the port as an environment variable
-	_, err = metrics.CreateMetricsService(context.TODO(), servicePorts)
+	_, err = metrics.CreateMetricsService(context.TODO(), cfg, servicePorts)
 	if err != nil {
 		log.Error(err, "Exposing metrics port failed.")
 		return err

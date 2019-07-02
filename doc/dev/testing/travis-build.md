@@ -75,18 +75,11 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 
 ### Ansible tests
 
-1. Run [ansible e2e tests][ansible-e2e].
-    1. Create base ansible operator project by running [`hack/image/ansible/scaffold-ansible-image.go`][ansible-base].
-    2. Build base ansible operator image.
-    3. Create and configure a new ansible type memcached-operator.
-    4. Create cluster resources.
-    5. Wait for operator to be ready.
-    6. Create a memcached CR and wait for it to be ready.
-    7. Create a configmap that the memcached-operator is configured to delete using a finalizer.
-    8. Delete memcached CR and verify that the finalizer deleted the configmap.
-    9. Run `operator-sdk migrate` to add go source to the operator (see this [note][deps_mgmt] on dependency management first).
-    10. Run `operator-sdk build` to compile the new binary and build a new image.
-    11. Re-run steps 4-8 to test the migrated operator.
+1. Run [ansible molecule tests][ansible-molecule].
+    1. Create and configure a new ansible type memcached-operator.
+    2. Create cluster resources.
+    3. Run `operator-sdk test local` to run ansible molecule tests
+    4. Change directory to [`test/ansible-inventory`][ansible-inventory] and run `operator-sdk test local`
 
 **NOTE**: All created resources, including the namespace, are deleted using a bash trap when the test finishes
 
@@ -121,8 +114,8 @@ The markdown test does not create a new cluster and runs in a barebones Travis V
 [subcommand]: ../../../hack/tests/test-subcommand.sh
 [go-e2e]: ../../../hack/tests/e2e-go.sh
 [tls-tests]: ../../../test/e2e/tls_util_test.go
-[ansible-e2e]: ../../../hack/tests/e2e-ansible.sh
-[ansible-base]: ../../../hack/image/ansible/scaffold-ansible-image.go
+[ansible-molecule]: ../../../hack/tests/e2e-ansible-molecule.sh
+[ansible-inventory]: ../../../test/ansible-inventory
 [helm-e2e]: ../../../hack/tests/e2e-helm.sh
 [helm-base]: ../../../hack/image/helm/scaffold-helm-image.go
 [marker-github]: https://github.com/crawford/marker
