@@ -23,9 +23,12 @@ The `controller-runtime`'s fake client exposes the same set of operations as a t
 
 ```Go
 import (
+    "context"
     "testing"
+
     cachev1alpha1 "github.com/example-inc/memcached-operator/pkg/apis/cache/v1alpha1"
     "k8s.io/apimachinery/pkg/runtime"
+    "sigs.k8s.io/controller-runtime/pkg/client"
     "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -36,6 +39,9 @@ func TestMemcachedController(t *testing.T) {
         ObjectMeta: metav1.ObjectMeta{
             Name:      "memcached",
             Namespace: "memcached-operator",
+            Labels: map[string]string{
+                "label-key": "label-value",
+            },
         },
     }
 
@@ -44,6 +50,15 @@ func TestMemcachedController(t *testing.T) {
 
     // Create a fake client to mock API calls.
     cl := fake.NewFakeClient(objs...)
+
+    // List Memcached objects filtering by labels
+    memcachedList := &cachev1alpha1.MemcachedList{}
+    err := cl.List(context.TODO(), client.MatchingLabels(map[string]string{
+		"label-key": "label-value",
+    }), memcachedList)
+    if err != nil {
+        t.Fatalf("list memcached: (%v)", err)
+    }
     ...
 }
 ```

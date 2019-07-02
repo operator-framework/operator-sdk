@@ -805,8 +805,8 @@
   name = "github.com/prometheus/prometheus"
   packages = ["util/promlint"]
   pruneopts = "NUT"
-  revision = "4d60eb36dcbed725fcac5b27018574118f12fffb"
-  version = "v2.8.1"
+  revision = "d20e84d0fb64aff2f62a977adc8cfb656da4e286"
+  version = "v2.10.0"
 
 [[projects]]
   digest = "1:e09ada96a5a41deda4748b1659cc8953961799e798aea557257b56baee4ecaf3"
@@ -1987,6 +1987,7 @@
     "k8s.io/kube-state-metrics/pkg/collector",
     "k8s.io/kube-state-metrics/pkg/metric",
     "k8s.io/kube-state-metrics/pkg/metrics_store",
+    "k8s.io/kubernetes/pkg/controller/deployment/util",
     "k8s.io/kubernetes/pkg/kubectl/util",
     "sigs.k8s.io/controller-runtime/pkg/cache",
     "sigs.k8s.io/controller-runtime/pkg/client",

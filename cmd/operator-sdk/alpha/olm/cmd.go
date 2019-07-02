@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,14 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package e2e
+package olm
 
 import (
-	"testing"
-
-	f "github.com/operator-framework/operator-sdk/pkg/test"
+	"github.com/spf13/cobra"
 )
 
-func TestMain(m *testing.M) {
-	f.MainEntry(m)
+func NewCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "olm",
+		Short: "Manage the Operator Lifecycle Manager installation in your cluster",
+	}
+	cmd.AddCommand(
+		NewInstallCmd(),
+		NewUninstallCmd(),
+		NewStatusCmd(),
+	)
+	return cmd
 }
