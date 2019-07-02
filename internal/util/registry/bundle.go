@@ -12,204 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package internal
+package registry
 
 import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
-	"strings"
 
 	catalog "github.com/operator-framework/operator-sdk/internal/pkg/scaffold/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olmregistry "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/registry"
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-// CatalogSourceBundle represents the paths of files containing all data
-// needed to construct a combined CatalogSource and ConfigMap object.
-type CatalogSourceBundle struct {
-	ProjectName         string
-	Namespace           string
+type Bundle struct {
 	BundleDir           string
 	PackageManifestPath string
-	// CatalogSourcePath is an existing CatalogSource manifest to be included
-	// in the final combined manifest.
-	CatalogSourcePath string
-
-	// Used to decode manifests.
-	scheme *runtime.Scheme
 }
 
-func wrapBytesErr(err error) error {
-	return errors.Wrap(err, "failed to get CatalogSourceBundle bytes")
-}
-
-// ToConfigMapAndCatalogSource reads all files in s.BundleDir and
-// s.PackageManifestPath, combining them into a ConfigMap and CatalogSource.
-func (s *CatalogSourceBundle) ToConfigMapAndCatalogSource() (*corev1.ConfigMap, *olmapiv1alpha1.CatalogSource, error) {
-	if s.scheme == nil {
-		s.scheme = scheme.Scheme
-		if err := addSchemes(s.scheme); err != nil {
-			return nil, nil, err
-		}
-	}
-
-	csvs, crds, pkg, err := s.getBundledObjects()
-	if err != nil {
-		return nil, nil, wrapBytesErr(err)
-	}
-	// Users can have all "required" and no "owned" CRD's in their CSV so do not
-	// check if crds is empty.
-	if len(csvs) == 0 {
-		return nil, nil, wrapBytesErr(fmt.Errorf("no CSV's found in bundle dir %s", s.BundleDir))
-	}
-	if pkg == nil {
-		return nil, nil, wrapBytesErr(fmt.Errorf("no package manifest found in bundle dir %s", s.BundleDir))
-	}
-
-	csvBytes := []byte{}
-	for _, csv := range csvs {
-		b, err := yaml.Marshal(csv)
-		if err != nil {
-			return nil, nil, wrapBytesErr(errors.Wrapf(err, "failed to unmarshal CSV %s", csv.GetName()))
-		}
-		csvBytes = yamlutil.CombineManifests(csvBytes, b)
-	}
-	crdBytes := []byte{}
-	for _, crd := range crds {
-		b, err := yaml.Marshal(crd)
-		if err != nil {
-			return nil, nil, wrapBytesErr(errors.Wrapf(err, "failed to unmarshal CRD %s", crd.GetName()))
-		}
-		crdBytes = yamlutil.CombineManifests(crdBytes, b)
-	}
-	pkgBytes, err := yaml.Marshal(pkg)
-	if err != nil {
-		return nil, nil, wrapBytesErr(errors.Wrap(err, "failed to unmarshal package manifest"))
-	}
-	configMap := &corev1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: corev1.SchemeGroupVersion.String(),
-			Kind:       "ConfigMap",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: strings.ToLower(s.ProjectName),
-		},
-		Data: map[string]string{
-			"packages":               string(pkgBytes),
-			"clusterServiceVersions": string(csvBytes),
-		},
-	}
-	if s.Namespace != "" {
-		configMap.SetNamespace(s.Namespace)
-	}
-	if len(crdBytes) != 0 {
-		configMap.Data["customResourceDefinitions"] = string(crdBytes)
-	}
-	cs, err := s.getCatalogSource()
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to get CatalogSource")
-	}
-	return configMap, cs, nil
-}
-
-func addSchemes(s *runtime.Scheme) error {
-	if err := apiextv1beta1.AddToScheme(s); err != nil {
-		return errors.Wrap(err, "failed to add Kubhernetes API extensions v1beta1 types to scheme")
-	}
-	if err := olmapiv1alpha1.AddToScheme(s); err != nil {
-		return errors.Wrap(err, "failed to add OLM operator API v1alpha2 types to scheme")
-	}
-	return nil
-}
-
-func (s *CatalogSourceBundle) getCatalogSource() (cs *olmapiv1alpha1.CatalogSource, err error) {
-	name := strings.ToLower(s.ProjectName)
-	if s.CatalogSourcePath == "" {
-		cs = &olmapiv1alpha1.CatalogSource{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: olmapiv1alpha1.SchemeGroupVersion.String(),
-				Kind:       olmapiv1alpha1.CatalogSourceKind,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: name,
-			},
-			Spec: olmapiv1alpha1.CatalogSourceSpec{
-				SourceType:  olmapiv1alpha1.SourceTypeConfigmap,
-				ConfigMap:   name,
-				DisplayName: k8sutil.GetDisplayName(s.ProjectName),
-			},
-		}
-	} else {
-		b, err := ioutil.ReadFile(s.CatalogSourcePath)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to read CatalogSource manifest %s", s.CatalogSourcePath)
-		}
-		dec := serializer.NewCodecFactory(s.scheme).UniversalDeserializer()
-		cs, err = decodeCatalogSource(dec, b)
-		if err != nil {
-			return nil, errors.Wrapf(err, "CatalogSource manifest %s", s.CatalogSourcePath)
-		}
-	}
-	if s.Namespace != "" {
-		cs.SetNamespace(s.Namespace)
-	}
-	return cs, nil
-}
-
-func decodeCatalogSource(dec runtime.Decoder, b []byte) (cs *olmapiv1alpha1.CatalogSource, err error) {
-	obj, _, err := dec.Decode(b, nil, nil)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to decode CatalogSource from manifest")
-	}
-	var ok bool
-	if cs, ok = obj.(*olmapiv1alpha1.CatalogSource); !ok {
-		return nil, errors.Errorf("object in manifest is not a Catalogsource")
-	}
-	return cs, nil
-}
-
-func decodeCSV(dec runtime.Decoder, b []byte) (csv *olmapiv1alpha1.ClusterServiceVersion, err error) {
-	obj, _, err := dec.Decode(b, nil, nil)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to decode CSV from manifest")
-	}
-	var ok bool
-	if csv, ok = obj.(*olmapiv1alpha1.ClusterServiceVersion); !ok {
-		return nil, errors.Errorf("object in manifest is not a CSV")
-	}
-	return csv, nil
-}
-
-func decodeCRD(dec runtime.Decoder, b []byte) (crd *apiextv1beta1.CustomResourceDefinition, err error) {
-	obj, _, err := dec.Decode(b, nil, nil)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to decode CRD from manifest")
-	}
-	var ok bool
-	if crd, ok = obj.(*apiextv1beta1.CustomResourceDefinition); !ok {
-		return nil, errors.Errorf("object in manifest is not a CRD")
-	}
-	return crd, nil
-}
-
-// getBundledObjects collects all ClusterServiceVersions,
+// GetBundledObjects collects all ClusterServiceVersions,
 // CustomResourceDefinitions, and optionally a package manifests in dir.
 // If pkgManPath is not empty, that file's data will be used instead of
 // any package manifest found in dir.
-func (s *CatalogSourceBundle) getBundledObjects() (csvs []*olmapiv1alpha1.ClusterServiceVersion, crds []*apiextv1beta1.CustomResourceDefinition, pkg *olmregistry.PackageManifest, err error) {
+func (s *Bundle) GetBundledObjects() (csvs []*olmapiv1alpha1.ClusterServiceVersion, crds []*apiextv1beta1.CustomResourceDefinition, pkg *olmregistry.PackageManifest, err error) {
+	scheme := scheme.Scheme
+	if err = addSchemes(scheme); err != nil {
+		return nil, nil, nil, err
+	}
 	infos, err := ioutil.ReadDir(s.BundleDir)
 	if err != nil {
 		return nil, nil, nil, errors.Wrapf(err, "failed to read bundle dir %s", s.BundleDir)
@@ -220,7 +57,7 @@ func (s *CatalogSourceBundle) getBundledObjects() (csvs []*olmapiv1alpha1.Cluste
 			return nil, nil, nil, err
 		}
 	}
-	dec := serializer.NewCodecFactory(s.scheme).UniversalDeserializer()
+	dec := serializer.NewCodecFactory(scheme).UniversalDeserializer()
 	for _, info := range infos {
 		if !info.IsDir() {
 			path := filepath.Join(s.BundleDir, info.Name())
@@ -272,6 +109,16 @@ func (s *CatalogSourceBundle) getBundledObjects() (csvs []*olmapiv1alpha1.Cluste
 	return csvs, crds, pkg, nil
 }
 
+func addSchemes(s *runtime.Scheme) error {
+	if err := apiextv1beta1.AddToScheme(s); err != nil {
+		return errors.Wrap(err, "failed to add Kubhernetes API extensions v1beta1 types to scheme")
+	}
+	if err := olmapiv1alpha1.AddToScheme(s); err != nil {
+		return errors.Wrap(err, "failed to add OLM operator API v1alpha1 types to scheme")
+	}
+	return nil
+}
+
 func readPackageManifest(path string) (*olmregistry.PackageManifest, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -282,6 +129,30 @@ func readPackageManifest(path string) (*olmregistry.PackageManifest, error) {
 		return nil, errors.Wrapf(err, "failed to unmarshal package manifest from manifest %s", path)
 	}
 	return pkg, nil
+}
+
+func decodeCSV(dec runtime.Decoder, b []byte) (csv *olmapiv1alpha1.ClusterServiceVersion, err error) {
+	obj, _, err := dec.Decode(b, nil, nil)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to decode CSV from manifest")
+	}
+	var ok bool
+	if csv, ok = obj.(*olmapiv1alpha1.ClusterServiceVersion); !ok {
+		return nil, errors.Errorf("object in manifest is not a CSV")
+	}
+	return csv, nil
+}
+
+func decodeCRD(dec runtime.Decoder, b []byte) (crd *apiextv1beta1.CustomResourceDefinition, err error) {
+	obj, _, err := dec.Decode(b, nil, nil)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to decode CRD from manifest")
+	}
+	var ok bool
+	if crd, ok = obj.(*apiextv1beta1.CustomResourceDefinition); !ok {
+		return nil, errors.Errorf("object in manifest is not a CRD")
+	}
+	return crd, nil
 }
 
 // checkBundleObjects ensures csvs, crds, and pkg, all objects expected to

@@ -25,7 +25,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
-	"github.com/operator-framework/operator-sdk/pkg/olm-catalog/internal"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -77,7 +76,7 @@ func (c *GenCatalogSourceCmd) Run() error {
 
 	log.Infof("Generating %s CatalogSource and ConfigMap manifest", strings.ToUpper(c.OutputFormat))
 
-	cs := &internal.CatalogSourceBundle{
+	cs := &CatalogSourceBundle{
 		ProjectName:         filepath.Base(projutil.MustGetwd()),
 		Namespace:           c.Namespace,
 		BundleDir:           c.BundleDir,
