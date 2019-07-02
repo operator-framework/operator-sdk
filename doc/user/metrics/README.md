@@ -6,7 +6,7 @@
 
 ### General metrics
 
-The `"CreateMetricsService(ctx context.Context, servicePorts []v1.ServicePort) (*v1.Service, error)` function exposes general metrics about the running program. These metrics are inherited from controller-runtime. To understand which metrics are exposed, read the metrics package doc of [controller-runtime][controller-metrics]. The `ExposeMetricsPort` function creates a [Service][service] object with the metrics port exposed, which can then be accessed by Prometheus. The Service object is [garbage collected][gc] when the leader pod's root owner is deleted.
+The `"CreateMetricsService(ctx context.Context, cfg *rest.Config, servicePorts []v1.ServicePort) (*v1.Service, error)` function exposes general metrics about the running program. These metrics are inherited from controller-runtime. To understand which metrics are exposed, read the metrics package doc of [controller-runtime][controller-metrics]. The `ExposeMetricsPort` function creates a [Service][service] object with the metrics port exposed, which can then be accessed by Prometheus. The Service object is [garbage collected][gc] when the leader pod's root owner is deleted.
 
 By default, the metrics are served on `0.0.0.0:8383/metrics`. To modify the port the metrics are exposed on, change the `var metricsPort int32 = 8383` variable in the `cmd/manager/main.go` file of the generated operator.
 
@@ -44,7 +44,7 @@ By default, the metrics are served on `0.0.0.0:8383/metrics`. To modify the port
 	    }
 
         // Create Service object to expose the metrics port.
-        _, err = metrics.CreateMetricsService(context.TODO(), servicePorts)
+        _, err = metrics.CreateMetricsService(context.TODO(), cfg, servicePorts)
         if err != nil {
             // handle error
         }
