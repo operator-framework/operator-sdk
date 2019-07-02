@@ -38,7 +38,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/recorder"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/inject"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/conversion"
 )
 
 const (
@@ -218,7 +217,6 @@ func (cm *controllerManager) GetWebhookServer() *webhook.Server {
 			Port: cm.port,
 			Host: cm.host,
 		}
-		cm.webhookServer.Register("/convert", &conversion.Webhook{})
 		if err := cm.Add(cm.webhookServer); err != nil {
 			panic("unable to add webhookServer to the controller manager")
 		}

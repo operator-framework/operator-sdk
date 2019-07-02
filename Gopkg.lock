@@ -100,14 +100,6 @@
   revision = "de5bf2ad457846296e2031421a34e2568e304e35"
 
 [[projects]]
-  digest = "1:680b63a131506e668818d630d3ca36123ff290afa0afc9f4be21940adca3f27d"
-  name = "github.com/appscode/jsonpatch"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "7c0e3b262f30165a8ec3d0b4c6059fd92703bfb2"
-  version = "1.0.0"
-
-[[projects]]
   branch = "master"
   digest = "1:707ebe952a8b3d00b343c01536c79c73771d100f63ec6babeaed5c79e2b8a8dd"
   name = "github.com/beorn7/perks"
@@ -1131,6 +1123,14 @@
   revision = "12dd9f86f35064e818f2474523ed0aacba64399f"
 
 [[projects]]
+  digest = "1:8392b5c29adedc5f85c66b48bb53b6c49dd91d8540f3cad5d43ef7277946718f"
+  name = "gomodules.xyz/jsonpatch"
+  packages = ["v2"]
+  pruneopts = "NUT"
+  revision = "e8422f09d27ee2c8cfb2c7f8089eb9eeb0764849"
+  version = "v2.0.0"
+
+[[projects]]
   digest = "1:5f003878aabe31d7f6b842d4de32b41c46c214bb629bb485387dbcce1edf5643"
   name = "google.golang.org/api"
   packages = ["support/bundler"]
@@ -1778,7 +1778,7 @@
   revision = "21c4ce38f2a793ec01e925ddc31216500183b773"
 
 [[projects]]
-  digest = "1:78648085003d4a7d460458a2859a29206227840e980d091e209e535f717e72b2"
+  digest = "1:64f7222abe38cc380491588e8d4adc49208ef06ab4551b975b9f7a5a1ec1a74f"
   name = "sigs.k8s.io/controller-runtime"
   packages = [
     "pkg/cache",
@@ -1789,7 +1789,6 @@
     "pkg/client/fake",
     "pkg/controller",
     "pkg/controller/controllerutil",
-    "pkg/conversion",
     "pkg/event",
     "pkg/handler",
     "pkg/internal/controller",
@@ -1812,12 +1811,12 @@
     "pkg/source/internal",
     "pkg/webhook",
     "pkg/webhook/admission",
-    "pkg/webhook/conversion",
     "pkg/webhook/internal/certwatcher",
     "pkg/webhook/internal/metrics",
   ]
   pruneopts = "NUT"
-  revision = "3bc157084f5327264397261d64023e5f2c6d73f2"
+  revision = "aeaf98d864800cd805f87e49d6fb64d449aaba95"
+  version = "v0.2.0-beta.3"
 
 [[projects]]
   digest = "1:024781b25f1d15e78be60cc44842c092d3cda8d494f6c972e6f35707ac35419a"

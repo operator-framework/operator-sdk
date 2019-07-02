@@ -101,7 +101,6 @@ type DeleteOptions struct {
 // AsDeleteOptions returns these options as a metav1.DeleteOptions.
 // This may mutate the Raw field.
 func (o *DeleteOptions) AsDeleteOptions() *metav1.DeleteOptions {
-
 	if o == nil {
 		return &metav1.DeleteOptions{}
 	}
@@ -309,7 +308,6 @@ type UpdateOptions struct {
 // AsUpdateOptions returns these options as a metav1.UpdateOptions.
 // This may mutate the Raw field.
 func (o *UpdateOptions) AsUpdateOptions() *metav1.UpdateOptions {
-
 	if o == nil {
 		return &metav1.UpdateOptions{}
 	}
