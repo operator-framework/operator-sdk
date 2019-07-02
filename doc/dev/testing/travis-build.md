@@ -58,6 +58,15 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
             3. Run the memcached scale test.
                 1. Create memcached CR specifying a desired cluster size of 3 and wait until memcached cluster is of size 3.
                 2. Increase desired cluster size to 4 and wait until memcached cluster is of size 4.
+            3. Run the memcached metrics test.
+                1. Make sure the metrics Service was created.
+                2. Get metrics via proxy pod and make sure they are present.
+                3. Perform linting of the existing metrics.
+            3. Run the memcached custom resource metrics test.
+                1. Make sure the metrics Service was created.
+                2. Get metrics via proxy pod and make sure they are present.
+                3. Perform linting of the existing metrics.
+                4. Perform checks on each custom resource generated metric and makes sure the name, type, value, labels and metric are correct. 
         2. Run local test (namespace is auto-generated and deleted by test framework).
             1. Start operator using `up local` subcommand.
             2. Run memcached scale test (described in step 4.3.1.3)
