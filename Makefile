@@ -97,7 +97,7 @@ test-ci: test/markdown test/sanity test/unit install test/subcommand test/e2e
 
 test/ci-go: test/subcommand test/e2e/go
 
-test/ci-ansible: test/e2e/ansible test/e2e/ansible-molecule
+test/ci-ansible: test/e2e/ansible-molecule
 
 test/ci-helm: test/e2e/helm
 
@@ -131,7 +131,7 @@ test/e2e/ansible: image/build/ansible
 test/e2e/ansible2:
 	./ci/tests/e2e-ansible.sh
 
-test/e2e/ansible-molecule:
+test/e2e/ansible-molecule: image/build/ansible
 	./hack/tests/e2e-ansible-molecule.sh
 
 test/e2e/helm: image/build/helm
