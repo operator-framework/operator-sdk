@@ -69,7 +69,7 @@ require (
 	k8s.io/client-go v2.0.0-alpha.0.0.20181126152608-d082d5923d3c+incompatible
 	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208 // indirect
 	k8s.io/kube-state-metrics v1.6.0 // indirect
-	sigs.k8s.io/controller-runtime v0.2.0-beta.2
+	sigs.k8s.io/controller-runtime v0.2.0-beta.3
 	sigs.k8s.io/controller-tools v0.1.10
 	sigs.k8s.io/testing_frameworks v0.1.0 // indirect
 )
@@ -84,10 +84,7 @@ replace (
 
 replace (
 	github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.29.0
-	// Uncomment once v0.2.0 is released
-	// sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.2.0-beta.2
-	// Commit containing a fix for metrics naming issue.
-	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime 3bc157084f5327264397261d64023e5f2c6d73f2
+	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.2.0-beta.3
 	sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.1.11-0.20190411181648-9d55346c2bde
 	k8s.io/kube-state-metrics => k8s.io/kube-state-metrics v1.6.0
 )

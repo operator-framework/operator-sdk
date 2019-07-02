@@ -78,10 +78,7 @@ required = [
 
 [[override]]
   name = "sigs.k8s.io/controller-runtime"
-  # Uncomment once v0.2.0 is released
-  # version = "=v0.2.0-beta.2"
-  # Commit containing a fix for metrics naming issue.
-  revision = "3bc157084f5327264397261d64023e5f2c6d73f2"
+  version = "=v0.2.0-beta.3"
 
 # Required when resolving controller-runtime dependencies.
 [[override]]
