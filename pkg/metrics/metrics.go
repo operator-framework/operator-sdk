@@ -40,8 +40,8 @@ const (
 	// CRPortName defines the custom resource specific metrics' port name used in the metrics Service.
 	CRPortName = "cr-metrics"
 
-	PortNum   int32 = 8383
-	CRPortNum int32 = 8686
+	PortNumber   int32 = 8383
+	CRPortNumber int32 = 8686
 )
 
 // CreateMetricsService creates a Kubernetes Service to expose the passed metrics

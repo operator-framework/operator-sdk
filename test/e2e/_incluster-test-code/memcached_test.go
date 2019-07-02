@@ -319,7 +319,7 @@ func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.T
 		return fmt.Errorf("no labels found in metrics Service")
 	}
 
-	response, err := getMetrics(t, f, s.Spec.Selector, namespace, strconv.Itoa(int(metrics.PortNum)))
+	response, err := getMetrics(t, f, s.Spec.Selector, namespace, strconv.Itoa(int(metrics.PortNumber)))
 	if err != nil {
 		return fmt.Errorf("failed to get metrics: %v", err)
 	}
@@ -351,7 +351,7 @@ func memcachedOperatorMetricsTest(t *testing.T, f *framework.Framework, ctx *fra
 		return err
 	}
 
-	response, err := getMetrics(t, f, map[string]string{"name": operatorName}, namespace, strconv.Itoa(int(metrics.CRPortNum)))
+	response, err := getMetrics(t, f, map[string]string{"name": operatorName}, namespace, strconv.Itoa(int(metrics.CRPortNumber)))
 	if err != nil {
 		return fmt.Errorf("failed to lint metrics: %v", err)
 	}

@@ -77,7 +77,7 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 	}
 	mgr, err := manager.New(cfg, manager.Options{
 		Namespace:          namespace,
-		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metrics.PortNum),
+		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metrics.PortNumber),
 	})
 	if err != nil {
 		log.Error(err, "Failed to create a new manager.")
@@ -122,15 +122,15 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 	}
 
 	// Generates operator specific metrics based on the GVKs.
-	// It serves those metrics on "http://metricsHost:CRPortNum".
-	err = kubemetrics.GenerateAndServeCRMetrics(cfg, []string{namespace}, gvks, metricsHost, metrics.CRPortNum)
+	// It serves those metrics on "http://metricsHost:CRPortNumber".
+	err = kubemetrics.GenerateAndServeCRMetrics(cfg, []string{namespace}, gvks, metricsHost, metrics.CRPortNumber)
 	if err != nil {
 		log.Info("Could not generate and serve custom resource metrics: ", err.Error())
 	}
 
 	servicePorts := []v1.ServicePort{
-		{Port: metrics.CRPortNum, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metrics.CRPortNum}},
-		{Port: metrics.PortNum, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metrics.PortNum}},
+		{Port: metrics.CRPortNumber, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metrics.CRPortNumber}},
+		{Port: metrics.PortNumber, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metrics.PortNumber}},
 	}
 	// Create Service object to expose the metrics port(s).
 	_, err = metrics.CreateMetricsService(ctx, cfg, servicePorts)

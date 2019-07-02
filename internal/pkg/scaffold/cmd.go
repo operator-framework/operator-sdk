@@ -21,9 +21,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 )
 
-const (
-	CmdFile = "main.go"
-)
+const CmdFile = "main.go"
 
 type Cmd struct {
 	input.Input
@@ -37,8 +35,8 @@ func (s *Cmd) GetInput() (input.Input, error) {
 		s.Path = filepath.Join(ManagerDir, CmdFile)
 	}
 	s.TemplateBody = cmdTmpl
-	s.MetricsPort = metrics.PortNum
-	s.OperatorMetricsPort = metrics.CRPortNum
+	s.MetricsPort = metrics.PortNumber
+	s.OperatorMetricsPort = metrics.CRPortNumber
 
 	return s.Input, nil
 }
