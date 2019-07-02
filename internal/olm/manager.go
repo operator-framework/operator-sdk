@@ -108,18 +108,23 @@ func (m *Manager) Status() error {
 	ctx, cancel := context.WithTimeout(context.Background(), m.Timeout)
 	defer cancel()
 
-	status, err := m.Client.GetStatus(ctx, m.Version)
+	version, err := m.Client.GetInstalledVersion(ctx)
 	if err != nil {
 		return err
 	}
 
-	log.Infof("Successfully got OLM status for version %q", m.Version)
+	status, err := m.Client.GetStatus(ctx, version)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Successfully got OLM status for version %s", version)
 	fmt.Print("\n")
 	fmt.Println(status)
 	return nil
 }
 
 func (m *Manager) AddToFlagSet(fs *pflag.FlagSet) {
-	fs.StringVar(&m.Version, "version", DefaultVersion, "version of OLM resources to install, uninstall, or get status about")
+	fs.StringVar(&m.Version, "version", DefaultVersion, "version of OLM resources to install or uninstall")
 	fs.DurationVar(&m.Timeout, "timeout", DefaultTimeout, "time to wait for the command to complete before failing")
 }

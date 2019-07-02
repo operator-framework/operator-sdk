@@ -24,6 +24,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"sync"
 	"text/tabwriter"
 	"time"
@@ -35,6 +36,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -56,6 +58,8 @@ var (
 	catalogOperatorKey = types.NamespacedName{Namespace: olmNamespace, Name: "catalog-operator"}
 	packageServerKey   = types.NamespacedName{Namespace: olmNamespace, Name: "packageserver"}
 )
+
+var ErrOLMNotInstalled = errors.New("no existing installation found")
 
 type Client struct {
 	KubeClient      client.Client
@@ -154,7 +158,7 @@ func (c Client) UninstallVersion(ctx context.Context, version string) error {
 
 	status := c.getStatus(ctx, resources)
 	if !status.HasExistingResources() {
-		return errors.New("no existing installation found")
+		return ErrOLMNotInstalled
 	}
 
 	log.Infof("Uninstalling resources for version %q", version)
@@ -162,6 +166,37 @@ func (c Client) UninstallVersion(ctx context.Context, version string) error {
 		return err
 	}
 	return nil
+}
+
+const packageServerCSVNamePrefix = "packageserver."
+
+func (c Client) GetInstalledVersion(ctx context.Context) (string, error) {
+	opts := client.InNamespace(olmNamespace)
+	csvs := &olmapiv1alpha1.ClusterServiceVersionList{}
+	if err := c.KubeClient.List(ctx, opts, csvs); err != nil {
+		if apierrors.IsNotFound(err) || meta.IsNoMatchError(err) {
+			return "", ErrOLMNotInstalled
+		}
+		return "", errors.Wrap(err, "failed to get OLM version from CSVs")
+	}
+	var pkgServerCSV *olmapiv1alpha1.ClusterServiceVersion
+	for _, csv := range csvs.Items {
+		if strings.HasPrefix(csv.GetName(), packageServerCSVNamePrefix) {
+			// There is more than one version of OLM installed in the cluster,
+			// so we can't resolve the version being used.
+			if pkgServerCSV != nil {
+				return "", errors.New("failed to get OLM version: more than one OLM version installed")
+			}
+			pkgServerCSV = &csv
+		}
+	}
+	if pkgServerCSV == nil {
+		return "", ErrOLMNotInstalled
+	}
+	ver := strings.TrimPrefix(pkgServerCSV.GetName(), packageServerCSVNamePrefix)
+	// OLM releases do not have a "v" prefix but CSV versions often do.
+	ver = strings.TrimPrefix(ver, "v")
+	return ver, nil
 }
 
 func (c Client) GetStatus(ctx context.Context, version string) (*Status, error) {
@@ -172,7 +207,7 @@ func (c Client) GetStatus(ctx context.Context, version string) (*Status, error) 
 
 	status := c.getStatus(ctx, resources)
 	if !status.HasExistingResources() {
-		return nil, errors.New("no existing installation found")
+		return nil, ErrOLMNotInstalled
 	}
 	return &status, nil
 }
