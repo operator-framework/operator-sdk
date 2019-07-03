@@ -1,5 +1,5 @@
 // +k8s:deepcopy-gen=package
-
-// Package api is the internal version of the API.
 // +groupName=operators.coreos.com
+
+// Package operators contains all resource types of the operators.coreos.com API group.
 package operators

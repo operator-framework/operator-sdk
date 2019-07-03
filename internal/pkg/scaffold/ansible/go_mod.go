@@ -89,21 +89,19 @@ require (
 	k8s.io/klog v0.2.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208 // indirect
 	k8s.io/kubernetes v1.14.1 // indirect
-	sigs.k8s.io/controller-runtime v0.1.12
+	sigs.k8s.io/controller-runtime v0.2.0-beta.3
 	sigs.k8s.io/controller-tools v0.1.10
 	sigs.k8s.io/testing_frameworks v0.1.1 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
 
-// Pinned to kubernetes-1.13.4
+// Pinned to kubernetes-1.14.1
 replace (
-	k8s.io/api => k8s.io/api v0.0.0-20190222131558-5cb15d344471
-	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190221124651-86fb29eff628
-	k8s.io/client-go => k8s.io/client-go v0.0.0-20190228174230-b40b2a5939e4
-	k8s.io/kubernetes => k8s.io/kubernetes v1.13.4
+	k8s.io/api => k8s.io/api kubernetes-1.14.1
+	k8s.io/apimachinery => k8s.io/apimachinery kubernetes-1.14.1
+	k8s.io/client-go => k8s.io/client-go kubernetes-1.14.1
+	k8s.io/kubernetes => k8s.io/kubernetes v1.14.1
 )
-
-replace github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.29.0
 `
 
 func PrintGoMod(asFile bool) error {

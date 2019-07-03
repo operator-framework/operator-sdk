@@ -41,7 +41,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/client-go/discovery/cached"
+	cached "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/kubernetes"
 	cgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"

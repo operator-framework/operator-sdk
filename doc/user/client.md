@@ -120,7 +120,7 @@ import (
 
 func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	...
-	
+
 	app := &v1alpha1.App{}
 	ctx := context.TODO()
 	err := r.client.Get(ctx, request.NamespacedName, app)
@@ -134,9 +134,11 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 ```Go
 // List retrieves a list of objects for a given namespace and list options
 // and stores the list in obj.
-func (c Client) List(ctx context.Context, opts *ListOptions, obj runtime.Object) error
+func (c Client) List(ctx context.Context, list runtime.Object, opts ...client.ListOptionFunc) error
 ```
-A `client.ListOptions` sets filters and options for a `List` call:
+
+A `client.ListOptionFunc` can be created either by using the provided [functional options](https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#ListOptionFunc) or using `client.ListOptions`:
+
 ```Go
 type ListOptions struct {
     // LabelSelector filters results by label.  Use SetLabelSelector to
@@ -158,7 +160,9 @@ type ListOptions struct {
     Raw *metav1.ListOptions
 }
 ```
+
 Example:
+
 ```Go
 import (
 	"context"
@@ -178,7 +182,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 
 	podList := &v1.PodList{}
 	ctx := context.TODO()
-	err := r.client.List(ctx, opts, podList)
+	err := r.client.List(ctx, podList, client.UseListOptions(listOps))
 
 	...
 }
@@ -231,7 +235,7 @@ import (
 
 func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	...
-	
+
 	dep := &v1.Deployment{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, dep)
 
@@ -268,7 +272,7 @@ import (
 
 func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	...
-	
+
 	mem := &cachev1alpha1.Memcached{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, mem)
 
@@ -330,7 +334,7 @@ import (
 
 func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	...
-	
+
 	pod := &v1.Pod{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, pod)
 
@@ -416,7 +420,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 	podList := &corev1.PodList{}
 	labelSelector := labels.SelectorFromSet(labelsForApp(app.Name))
 	listOps := &client.ListOptions{Namespace: app.Namespace, LabelSelector: labelSelector}
-	if err = r.client.List(context.TODO(), listOps, podList); err != nil {
+	if err = r.client.List(context.TODO(), podList, client.UseListOptions(listOps)); err != nil {
 		return reconcile.Result{}, err
 	}
 

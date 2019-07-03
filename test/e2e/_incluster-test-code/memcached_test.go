@@ -137,17 +137,12 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework, labels
 	owner := owners[0]
 
 	// get operator pods
-	pods := v1.PodList{}
-	opts := client.ListOptions{Namespace: namespace}
-	for k, v := range labels {
-		if err := opts.SetLabelSelector(fmt.Sprintf("%s=%s", k, v)); err != nil {
-			return nil, fmt.Errorf("failed to set list label selector: (%v)", err)
-		}
-	}
-	if err := opts.SetFieldSelector("status.phase=Running"); err != nil {
-		t.Fatalf("Failed to set list field selector: (%v)", err)
-	}
-	err = f.Client.List(goctx.TODO(), &opts, &pods)
+	pods := &v1.PodList{}
+	opts := &client.ListOptions{}
+	opts.InNamespace(namespace)
+	opts.MatchingLabels(labels)
+	opts.MatchingField("status.phase", "Running")
+	err = f.Client.List(goctx.TODO(), pods, client.UseListOptions(opts))
 	if err != nil {
 		return nil, err
 	}
@@ -353,7 +348,7 @@ func memcachedOperatorMetricsTest(t *testing.T, f *framework.Framework, ctx *fra
 	// TODO(lili): Make port a constant in internal/scaffold/cmd.go.
 	response, err := getMetrics(t, f, map[string]string{"name": operatorName}, namespace, "8686")
 	if err != nil {
-		return fmt.Errorf("failed to lint metrics: %v", err)
+		return fmt.Errorf("failed to get metrics: %v", err)
 	}
 	// Make sure metrics are present
 	if len(response) == 0 {
@@ -417,19 +412,14 @@ func memcachedOperatorMetricsTest(t *testing.T, f *framework.Framework, ctx *fra
 	return nil
 }
 
-func getMetrics(t *testing.T, f *framework.Framework, label map[string]string, ns, port string) ([]byte, error) {
+func getMetrics(t *testing.T, f *framework.Framework, labels map[string]string, ns, port string) ([]byte, error) {
 	// Get operator pod
-	pods := v1.PodList{}
-	opts := client.InNamespace(ns)
-	for k, v := range label {
-		if err := opts.SetLabelSelector(fmt.Sprintf("%s=%s", k, v)); err != nil {
-			return nil, fmt.Errorf("failed to set list label selector: (%v)", err)
-		}
-	}
-	if err := opts.SetFieldSelector("status.phase=Running"); err != nil {
-		return nil, fmt.Errorf("failed to set list field selector: (%v)", err)
-	}
-	err := f.Client.List(goctx.TODO(), opts, &pods)
+	pods := &v1.PodList{}
+	opts := &client.ListOptions{}
+	opts.InNamespace(ns)
+	opts.MatchingLabels(labels)
+	opts.MatchingField("status.phase", "Running")
+	err := f.Client.List(goctx.TODO(), pods, client.UseListOptions(opts))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pods: (%v)", err)
 	}
@@ -441,13 +431,13 @@ func getMetrics(t *testing.T, f *framework.Framework, label map[string]string, n
 		podName = pods.Items[0].Name
 	} else if numPods > 1 {
 		// If we got more than one pod, get leader pod name.
-		leader, err := verifyLeader(t, ns, f, label)
+		leader, err := verifyLeader(t, ns, f, labels)
 		if err != nil {
 			return nil, err
 		}
 		podName = leader.Name
 	} else {
-		return nil, fmt.Errorf("failed to get operator pod: could not select any pods with selector %v", label)
+		return nil, fmt.Errorf("failed to get operator pod: could not select any pods with selector %v", labels)
 	}
 	// Pod name must be there, otherwise we cannot read metrics data via pod proxy.
 	if podName == "" {

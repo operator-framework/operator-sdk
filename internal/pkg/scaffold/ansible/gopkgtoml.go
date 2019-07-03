@@ -43,15 +43,15 @@ const gopkgTomlTmpl = `[[constraint]]
 
 [[override]]
   name = "k8s.io/api"
-  version = "kubernetes-1.13.4"
+  version = "kubernetes-1.14.1"
 
 [[override]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.13.4"
+  version = "kubernetes-1.14.1"
 
 [[override]]
   name = "k8s.io/client-go"
-  version = "kubernetes-1.13.4"
+  version = "kubernetes-1.14.1"
 
 [prune]
   go-tests = true

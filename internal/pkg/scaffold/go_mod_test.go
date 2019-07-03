@@ -42,7 +42,7 @@ require (
 	contrib.go.opencensus.io/exporter/ocagent v0.4.9 // indirect
 	github.com/Azure/go-autorest v11.5.2+incompatible // indirect
 	github.com/appscode/jsonpatch v0.0.0-20190108182946-7c0e3b262f30 // indirect
-	github.com/coreos/prometheus-operator v0.26.0 // indirect
+	github.com/coreos/prometheus-operator v0.31.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/emicklei/go-restful v2.8.1+incompatible // indirect
 	github.com/go-logr/logr v0.1.0 // indirect
@@ -70,22 +70,22 @@ require (
 	k8s.io/client-go v2.0.0-alpha.0.0.20181126152608-d082d5923d3c+incompatible
 	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208 // indirect
 	k8s.io/kube-state-metrics v1.6.0 // indirect
-	sigs.k8s.io/controller-runtime v0.1.12
+	sigs.k8s.io/controller-runtime v0.2.0-beta.3
 	sigs.k8s.io/controller-tools v0.1.10
 	sigs.k8s.io/testing_frameworks v0.1.0 // indirect
 )
 
-// Pinned to kubernetes-1.13.4
+// Pinned to kubernetes-1.14.1
 replace (
-	k8s.io/api => k8s.io/api v0.0.0-20190222131558-5cb15d344471
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20190228180357-d002e88f6236
-	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190221124651-86fb29eff628
-	k8s.io/client-go => k8s.io/client-go v0.0.0-20190228174230-b40b2a5939e4
+	k8s.io/api => k8s.io/api kubernetes-1.14.1
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver kubernetes-1.14.1
+	k8s.io/apimachinery => k8s.io/apimachinery kubernetes-1.14.1
+	k8s.io/client-go => k8s.io/client-go kubernetes-1.14.1
 )
 
 replace (
-	github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.29.0
-	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.1.12
+	github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.31.1
+	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.2.0-beta.3
 	sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.1.11-0.20190411181648-9d55346c2bde
 	k8s.io/kube-state-metrics => k8s.io/kube-state-metrics v1.6.0
 )

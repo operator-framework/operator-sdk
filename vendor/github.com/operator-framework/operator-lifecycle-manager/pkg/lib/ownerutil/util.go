@@ -3,8 +3,8 @@ package ownerutil
 import (
 	"fmt"
 
+	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha2"
 
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -18,6 +18,7 @@ import (
 const (
 	OwnerKey          = "olm.owner"
 	OwnerNamespaceKey = "olm.owner.namespace"
+	OwnerKind         = "olm.owner.kind"
 )
 
 var (
@@ -56,6 +57,24 @@ func GetOwnerByKind(object metav1.Object, ownerKind string) *metav1.OwnerReferen
 		}
 	}
 	return nil
+}
+
+func GetOwnerByKindLabel(object metav1.Object, ownerKind string) (name, namespace string, ok bool) {
+	if !IsOwnedByKindLabel(object, ownerKind) {
+		return
+	}
+	if object.GetLabels() == nil {
+		return
+	}
+
+	namespace, ok = object.GetLabels()[OwnerNamespaceKey]
+	if !ok {
+		return
+	}
+	ok = false
+
+	name, ok = object.GetLabels()[OwnerKey]
+	return
 }
 
 // GetOwnersByKind returns all OwnerReferences of the given kind listed by the given object
@@ -129,6 +148,20 @@ func AddNonBlockingOwner(object metav1.Object, owner Owner) {
 	if ownerRefs == nil {
 		ownerRefs = []metav1.OwnerReference{}
 	}
+
+	// Infer TypeMeta for the target
+	if err := InferGroupVersionKind(owner); err != nil {
+		log.Warn(err.Error())
+	}
+	gvk := owner.GetObjectKind().GroupVersionKind()
+
+	for _, item := range ownerRefs {
+		if item.Kind == gvk.Kind {
+			if item.Name == owner.GetName() && item.UID == owner.GetUID() {
+				return
+			}
+		}
+	}
 	ownerRefs = append(ownerRefs, NonBlockingOwner(owner))
 	object.SetOwnerReferences(ownerRefs)
 }
@@ -154,16 +187,65 @@ func NonBlockingOwner(owner Owner) metav1.OwnerReference {
 }
 
 // OwnerLabel returns a label added to generated objects for later querying
-func OwnerLabel(owner metav1.Object) map[string]string {
+func OwnerLabel(owner Owner, kind string) map[string]string {
 	return map[string]string{
 		OwnerKey:          owner.GetName(),
 		OwnerNamespaceKey: owner.GetNamespace(),
+		OwnerKind:         kind,
 	}
 }
 
-// OwnerQuery returns a label selector to find generated objects owned by owner
+// AddOwnerLabels adds ownerref-like labels to an object
+func AddOwnerLabels(object metav1.Object, owner Owner) error {
+	err := InferGroupVersionKind(owner)
+	if err != nil {
+		return err
+	}
+	labels := object.GetLabels()
+	if labels == nil {
+		labels = map[string]string{}
+	}
+	for key, val := range OwnerLabel(owner, owner.GetObjectKind().GroupVersionKind().Kind) {
+		labels[key] = val
+	}
+	object.SetLabels(labels)
+	return nil
+}
+
+// IsOwnedByKindLabel returns whether or not a label exists on the object pointing to an owner of a particular kind
+func IsOwnedByKindLabel(object metav1.Object, ownerKind string) bool {
+	if object.GetLabels() == nil {
+		return false
+	}
+	return object.GetLabels()[OwnerKind] == ownerKind
+}
+
+// AdoptableLabels determines if an OLM managed resource is adoptable by any of the given targets based on its owner labels.
+// The checkName perimeter enables an additional check for name equality with the `olm.owner` label.
+// Generally used for cross-namespace ownership and for Cluster -> Namespace scope.
+func AdoptableLabels(labels map[string]string, checkName bool, targets ...Owner) bool {
+	if len(labels) == 0 {
+		// Resources with no owners are not adoptable
+		return false
+	}
+
+	for _, target := range targets {
+		if err := InferGroupVersionKind(target); err != nil {
+			log.Warn(err.Error())
+		}
+		if labels[OwnerKind] == target.GetObjectKind().GroupVersionKind().Kind &&
+			labels[OwnerNamespaceKey] == target.GetNamespace() &&
+			(!checkName || labels[OwnerKey] == target.GetName()) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// CSVOwnerSelector returns a label selector to find generated objects owned by owner
 func CSVOwnerSelector(owner *v1alpha1.ClusterServiceVersion) labels.Selector {
-	return labels.SelectorFromSet(OwnerLabel(owner))
+	return labels.SelectorFromSet(OwnerLabel(owner, v1alpha1.ClusterServiceVersionKind))
 }
 
 // AddOwner adds an owner to the ownerref list.
@@ -271,10 +353,10 @@ func InferGroupVersionKind(obj runtime.Object) error {
 			Version: v1alpha1.GroupVersion,
 			Kind:    v1alpha1.CatalogSourceKind,
 		})
-	case *v1alpha2.OperatorGroup:
+	case *v1.OperatorGroup:
 		objectKind.SetGroupVersionKind(schema.GroupVersionKind{
-			Group:   v1alpha2.GroupName,
-			Version: v1alpha2.GroupVersion,
+			Group:   v1.GroupName,
+			Version: v1.GroupVersion,
 			Kind:    "OperatorGroup",
 		})
 	default:

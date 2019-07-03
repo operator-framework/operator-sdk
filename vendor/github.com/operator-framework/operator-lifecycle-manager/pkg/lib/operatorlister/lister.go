@@ -7,8 +7,8 @@ import (
 	rbacv1 "k8s.io/client-go/listers/rbac/v1"
 	aregv1 "k8s.io/kube-aggregator/pkg/client/listers/apiregistration/v1"
 
+	v1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/listers/operators/v1"
 	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/listers/operators/v1alpha1"
-	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/listers/operators/v1alpha2"
 )
 
 // OperatorLister is a union of versioned informer listers
@@ -21,7 +21,7 @@ type OperatorLister interface {
 	APIExtensionsV1beta1() APIExtensionsV1beta1Lister
 
 	OperatorsV1alpha1() OperatorsV1alpha1Lister
-	OperatorsV1alpha2() OperatorsV1alpha2Lister
+	OperatorsV1() OperatorsV1Lister
 }
 
 //go:generate counterfeiter . AppsV1Lister
@@ -78,19 +78,21 @@ type APIExtensionsV1beta1Lister interface {
 //go:generate counterfeiter . OperatorsV1alpha1Lister
 type OperatorsV1alpha1Lister interface {
 	RegisterClusterServiceVersionLister(namespace string, lister v1alpha1.ClusterServiceVersionLister)
+	RegisterCatalogSourceLister(namespace string, lister v1alpha1.CatalogSourceLister)
 	RegisterSubscriptionLister(namespace string, lister v1alpha1.SubscriptionLister)
 	RegisterInstallPlanLister(namespace string, lister v1alpha1.InstallPlanLister)
 
 	ClusterServiceVersionLister() v1alpha1.ClusterServiceVersionLister
+	CatalogSourceLister() v1alpha1.CatalogSourceLister
 	SubscriptionLister() v1alpha1.SubscriptionLister
 	InstallPlanLister() v1alpha1.InstallPlanLister
 }
 
-//go:generate counterfeiter . OperatorsV1alpha2Lister
-type OperatorsV1alpha2Lister interface {
-	RegisterOperatorGroupLister(namespace string, lister v1alpha2.OperatorGroupLister)
+//go:generate counterfeiter . OperatorsV1Lister
+type OperatorsV1Lister interface {
+	RegisterOperatorGroupLister(namespace string, lister v1.OperatorGroupLister)
 
-	OperatorGroupLister() v1alpha2.OperatorGroupLister
+	OperatorGroupLister() v1.OperatorGroupLister
 }
 
 type appsV1Lister struct {
@@ -161,6 +163,7 @@ func newAPIExtensionsV1beta1Lister() *apiExtensionsV1beta1Lister {
 
 type operatorsV1alpha1Lister struct {
 	clusterServiceVersionLister *UnionClusterServiceVersionLister
+	catalogSourceLister         *UnionCatalogSourceLister
 	subscriptionLister          *UnionSubscriptionLister
 	installPlanLister           *UnionInstallPlanLister
 }
@@ -168,17 +171,18 @@ type operatorsV1alpha1Lister struct {
 func newOperatorsV1alpha1Lister() *operatorsV1alpha1Lister {
 	return &operatorsV1alpha1Lister{
 		clusterServiceVersionLister: &UnionClusterServiceVersionLister{},
+		catalogSourceLister:         &UnionCatalogSourceLister{},
 		subscriptionLister:          &UnionSubscriptionLister{},
 		installPlanLister:           &UnionInstallPlanLister{},
 	}
 }
 
-type operatorsV1alpha2Lister struct {
+type operatorsV1Lister struct {
 	operatorGroupLister *UnionOperatorGroupLister
 }
 
-func newOperatorsV1alpha2Lister() *operatorsV1alpha2Lister {
-	return &operatorsV1alpha2Lister{
+func newOperatorsV1Lister() *operatorsV1Lister {
+	return &operatorsV1Lister{
 		operatorGroupLister: &UnionOperatorGroupLister{},
 	}
 }
@@ -194,7 +198,7 @@ type lister struct {
 	apiExtensionsV1beta1Lister *apiExtensionsV1beta1Lister
 
 	operatorsV1alpha1Lister *operatorsV1alpha1Lister
-	operatorsV1alpha2Lister *operatorsV1alpha2Lister
+	operatorsV1Lister       *operatorsV1Lister
 }
 
 func (l *lister) AppsV1() AppsV1Lister {
@@ -221,8 +225,8 @@ func (l *lister) OperatorsV1alpha1() OperatorsV1alpha1Lister {
 	return l.operatorsV1alpha1Lister
 }
 
-func (l *lister) OperatorsV1alpha2() OperatorsV1alpha2Lister {
-	return l.operatorsV1alpha2Lister
+func (l *lister) OperatorsV1() OperatorsV1Lister {
+	return l.operatorsV1Lister
 }
 
 func NewLister() OperatorLister {
@@ -235,6 +239,6 @@ func NewLister() OperatorLister {
 		apiExtensionsV1beta1Lister: newAPIExtensionsV1beta1Lister(),
 
 		operatorsV1alpha1Lister: newOperatorsV1alpha1Lister(),
-		operatorsV1alpha2Lister: newOperatorsV1alpha2Lister(),
+		operatorsV1Lister:       newOperatorsV1Lister(),
 	}
 }

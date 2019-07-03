@@ -28,7 +28,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 
 	"github.com/go-logr/logr"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // EventReceiver serves the event API

@@ -18,8 +18,8 @@ import (
 	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 const (

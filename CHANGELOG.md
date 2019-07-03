@@ -22,6 +22,22 @@
 -  `CreateMetricsService()` function from the metrics package accepts a REST config (\*rest.Config) and an array of ServicePort objects ([]v1.ServicePort) as input to create Service metrics. `CRPortName` constant is added to describe the string of custom resource port name. ([#1560](https://github.com/operator-framework/operator-sdk/pull/1560) and [#1626](https://github.com/operator-framework/operator-sdk/pull/1626))
 - Changed the flag `--skip-git-init` to [`--git-init`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#new). This changes the default behavior of `operator-sdk new` to not initialize the new project directory as a git repository with `git init`. This behavior is now opt-in with `--git-init`. ([#1588](https://github.com/operator-framework/operator-sdk/pull/1588))
 - `operator-sdk new` will no longer create the initial commit for a new project, even with `--git-init=true`. ([#1588](https://github.com/operator-framework/operator-sdk/pull/1588))
+- Upgrade [`controller-runtime`](https://github.com/kubernetes-sigs/controller-runtime) version from `v0.1.12` to `v0.2.0-beta.3`
+- Upgrade Kubernetes version from `kubernetes-1.13.4` to `kubernetes-1.14.1`
+- Upgrade `github.com/operator-framework/operator-lifecycle-manager` version from `b8a4faf68e36feb6d99a6aec623b405e587b17b1` to `0.10.1`
+
+### Breaking changes
+
+- The package `sigs.k8s.io/controller-runtime/pkg/runtime/scheme` is deprecated, and contains no code. Replace this import with `sigs.k8s.io/controller-runtime/pkg/scheme` where relevant.
+- The package `sigs.k8s.io/controller-runtime/pkg/runtime/log` is deprecated. Replace this import with `sigs.k8s.io/controller-runtime/pkg/log` where relevant.
+- The package `sigs.k8s.io/controller-runtime/pkg/runtime/signals` is deprecated. Replace this import with `sigs.k8s.io/controller-runtime/pkg/manager/signals` where relevant.
+- [`pkg/client.Client`](https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/interfaces.go#L61)'s `List()` method has been updated: `List(ctx context.Context, opts *client.ListOptions, list runtime.Object) error` is now `List(ctx context.Context, list runtime.Object, opts ...client.ListOptionFunc) error`. To migrate:
+```go
+// Old
+err = r.client.List(context.TODO(), listOps, podList)
+// New
+err = r.client.List(context.TODO(), podList, client.UseListOptions(listOps))
+```
 
 ### Deprecated
 

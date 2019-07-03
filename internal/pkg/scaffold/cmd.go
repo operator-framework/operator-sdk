@@ -61,9 +61,9 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 )
 
 // Change below variables to serve metrics on different host or port.
@@ -115,7 +115,7 @@ func main() {
 		log.Error(err, "")
 		os.Exit(1)
 	}
-	
+
 	ctx := context.TODO()
 	// Become the leader before proceeding
 	err = leader.Become(ctx, "{{ .ProjectName }}-lock")
@@ -129,7 +129,7 @@ func main() {
 		Namespace:          namespace,
 		MapperProvider:     restmapper.NewDynamicRESTMapper,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
-	})	
+	})
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)

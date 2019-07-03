@@ -7,6 +7,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	rbac "k8s.io/api/rbac/v1"
 
+	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/wrappers"
 	"github.com/operator-framework/operator-lifecycle-manager/pkg/lib/ownerutil"
 )
@@ -75,11 +76,9 @@ func (i *StrategyDeploymentInstaller) installDeployments(deps []StrategyDeployme
 		dep.Spec.Template.SetAnnotations(annotations)
 
 		ownerutil.AddNonBlockingOwner(dep, i.owner)
-		if dep.Labels == nil {
-			dep.SetLabels(map[string]string{})
+		if err := ownerutil.AddOwnerLabels(dep, i.owner); err != nil {
+			return err
 		}
-		dep.Labels["olm.owner"] = i.owner.GetName()
-		dep.Labels["olm.owner.namespace"] = i.owner.GetNamespace()
 		if _, err := i.strategyClient.CreateOrUpdateDeployment(dep); err != nil {
 			return err
 		}
@@ -115,14 +114,8 @@ func (i *StrategyDeploymentInstaller) Install(s Strategy) error {
 		return err
 	}
 
-	if i.previousStrategy != nil {
-		previous, ok := i.previousStrategy.(*StrategyDetailsDeployment)
-		if !ok {
-			return fmt.Errorf("couldn't parse old install %s strategy with deployment installer", previous.GetStrategyName())
-		}
-		return i.cleanupPrevious(strategy, previous)
-	}
-	return nil
+	// Clean up orphaned deployments
+	return i.cleanupOrphanedDeployments(strategy.DeploymentSpecs)
 }
 
 // CheckInstalled can return nil (installed), or errors
@@ -146,9 +139,15 @@ func (i *StrategyDeploymentInstaller) checkForDeployments(deploymentSpecs []Stra
 		depNames = append(depNames, dep.Name)
 	}
 
-	existingDeployments, err := i.strategyClient.FindAnyDeploymentsMatchingNames(depNames)
+	// Check the owner is a CSV
+	csv, ok := i.owner.(*v1alpha1.ClusterServiceVersion)
+	if !ok {
+		return StrategyError{Reason: StrategyErrReasonComponentMissing, Message: fmt.Sprintf("owner %s is not a CSV", i.owner.GetName())}
+	}
+
+	existingDeployments, err := i.strategyClient.FindAnyDeploymentsMatchingLabels(ownerutil.CSVOwnerSelector(csv))
 	if err != nil {
-		return StrategyError{Reason: StrategyErrReasonComponentMissing, Message: fmt.Sprintf("error querying for %s: %s", depNames, err)}
+		return StrategyError{Reason: StrategyErrReasonComponentMissing, Message: fmt.Sprintf("error querying existing deployments for CSV %s: %s", csv.GetName(), err)}
 	}
 
 	// compare deployments to see if any need to be created/updated
@@ -181,5 +180,41 @@ func (i *StrategyDeploymentInstaller) checkForDeployments(deploymentSpecs []Stra
 			}
 		}
 	}
+	return nil
+}
+
+// Clean up orphaned deployments after reinstalling deployments process
+func (i *StrategyDeploymentInstaller) cleanupOrphanedDeployments(deploymentSpecs []StrategyDeploymentSpec) error {
+	// Map of deployments
+	depNames := map[string]string{}
+	for _, dep := range deploymentSpecs {
+		depNames[dep.Name] = dep.Name
+	}
+
+	// Check the owner is a CSV
+	csv, ok := i.owner.(*v1alpha1.ClusterServiceVersion)
+	if !ok {
+		return fmt.Errorf("owner %s is not a CSV", i.owner.GetName())
+	}
+
+	// Get existing deployments in CSV's namespace and owned by CSV
+	existingDeployments, err := i.strategyClient.FindAnyDeploymentsMatchingLabels(ownerutil.CSVOwnerSelector(csv))
+	if err != nil {
+		return err
+	}
+
+	// compare existing deployments to deployments in CSV's spec to see if any need to be deleted
+	for _, d := range existingDeployments {
+		if _, exists := depNames[d.GetName()]; !exists {
+			if ownerutil.IsOwnedBy(d, i.owner) {
+				log.Infof("found an orphaned deployment %s in namespace %s", d.GetName(), i.owner.GetNamespace())
+				if err := i.strategyClient.DeleteDeployment(d.GetName()); err != nil {
+					log.Warnf("error cleaning up deployment %s", d.GetName())
+					return err
+				}
+			}
+		}
+	}
+
 	return nil
 }

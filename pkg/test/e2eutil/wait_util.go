@@ -49,7 +49,7 @@ func waitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace,
 		return nil
 	}
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		deployment, err := kubeclient.AppsV1().Deployments(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
+		deployment, err := kubeclient.AppsV1().Deployments(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				t.Logf("Waiting for availability of %s deployment\n", name)

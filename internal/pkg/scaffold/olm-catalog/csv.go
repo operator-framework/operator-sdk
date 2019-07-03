@@ -30,9 +30,10 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
-	"github.com/coreos/go-semver/semver"
+	"github.com/blang/semver"
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	olmversion "github.com/operator-framework/operator-lifecycle-manager/pkg/lib/version"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
@@ -227,7 +228,7 @@ func getDisplayName(name string) string {
 
 // initCSVFields initializes all csv fields that should be populated by a user
 // with sane defaults. initCSVFields should only be called for new csv's.
-func (s *CSV) initCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) {
+func (s *CSV) initCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	// Metadata
 	csv.TypeMeta.APIVersion = olmapiv1alpha1.ClusterServiceVersionAPIVersion
 	csv.TypeMeta.Kind = olmapiv1alpha1.ClusterServiceVersionKind
@@ -236,13 +237,18 @@ func (s *CSV) initCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) {
 	csv.SetAnnotations(map[string]string{"capabilities": "Basic Install"})
 
 	// Spec fields
-	csv.Spec.Version = *semver.New(s.CSVVersion)
+	ver, err := semver.Parse(s.CSVVersion)
+	if err != nil {
+		return err
+	}
+	csv.Spec.Version = olmversion.OperatorVersion{Version: ver}
 	csv.Spec.DisplayName = getDisplayName(s.OperatorName)
 	csv.Spec.Description = "Placeholder description"
 	csv.Spec.Maturity = "alpha"
 	csv.Spec.Provider = olmapiv1alpha1.AppLink{}
 	csv.Spec.Maintainers = make([]olmapiv1alpha1.Maintainer, 0)
 	csv.Spec.Links = make([]olmapiv1alpha1.AppLink, 0)
+	return nil
 }
 
 // setCSVDefaultFields sets default fields on older CSV versions or newly
@@ -340,7 +346,11 @@ func (s *CSV) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error
 		return err
 	}
 
-	csv.Spec.Version = *semver.New(newVer)
+	ver, err := semver.Parse(s.CSVVersion)
+	if err != nil {
+		return err
+	}
+	csv.Spec.Version = olmversion.OperatorVersion{Version: ver}
 	csv.Spec.Replaces = oldCSVName
 	return nil
 }

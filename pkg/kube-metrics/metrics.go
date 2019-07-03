@@ -24,7 +24,7 @@ import (
 	"k8s.io/client-go/rest"
 	kcollector "k8s.io/kube-state-metrics/pkg/collector"
 	ksmetric "k8s.io/kube-state-metrics/pkg/metric"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var log = logf.Log.WithName("kubemetrics")
