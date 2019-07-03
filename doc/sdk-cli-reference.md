@@ -581,6 +581,63 @@ $ operator-sdk up local --namespace "testing"
 
 * `-h, --help` - help for up
 
+## alpha olm
+
+### Flags
+
+* `--version` string - version of OLM resources to install, uninstall, or get status about (default: "latest")
+* `--timeout` duration - time to wait for the command to complete before failing (default: "2m")
+
+### Available commands
+
+#### install - Installs Operator Lifecycle Manager
+
+##### Use
+
+The `operator-sdk alpha olm install` command installs OLM in a Kubernetes cluster
+based on the configured kubeconfig. It works by downloading OLM's release
+manifests at a specific version (default: `latest`), checking to see if any of
+those resources already exist in the cluster (and aborting if they do), and
+then creating all of the necessary resources and waiting for them to become
+healthy. When the installation is complete, `olm install` outputs a status summary
+of all of the resources that were installed.
+
+#### uninstall - Uninstalls Operator Lifecycle Manager
+
+##### Use
+
+The `operator-sdk alpha olm uninstall` command uninstalls OLM from a Kubernetes
+cluster based on the configured kubeconfig. It works by downloading OLM's
+release manifests at a specific version (default: `latest`), checking to see if
+any of those resources exist (if none exist, it aborts with an error since OLM
+is not installed), and then deletes each resource that is listed in the
+downloaded release manifests. It waits until all resources have been fully
+cleaned up before returning.
+
+**NOTE**: It is important to use `--version` with the version number that 
+corresponds to the version that you installed with `olm install`. Not specifying
+the version (or using an incorrect version) may cause some resources not be
+cleaned up. This can occur if OLM changes its release manifest resources from
+one version of OLM to the next.
+
+#### status - Get status of the Operator Lifecycle Manager installation
+
+##### Use
+
+The `operator-sdk alpha olm status` command gets the status of the OLM
+installation in a Kubernetes cluster based on the configured kubeconfig. It
+works by downloading OLM's release manifests at a specific version (default:
+`latest`), checking to see if any of those resources exist (if none exist, it
+aborts with an error since OLM is not installed), and printing a summary of the
+status of each of those resources as they exist in the cluster.
+
+**NOTE**: It is important to use `--version` with the version number that 
+corresponds to the version that you installed with `olm install`. Not specifying
+the version (or using an incorrect version) may cause some resources to be
+missing from the summary and others to be listed as "not found". This can occur
+if OLM changes its release manifest resources from one version of OLM to the
+next.
+
 [utility_link]: https://github.com/operator-framework/operator-sdk/blob/89bf021063d18b6769bdc551ed08fc37027939d5/pkg/util/k8sutil/k8sutil.go#L140
 [k8s-code-generator]: https://github.com/kubernetes/code-generator
 [openapi-code-generator]: https://github.com/kubernetes/kube-openapi
