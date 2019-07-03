@@ -54,6 +54,7 @@ require (
 	github.com/coreos/etcd v3.3.12+incompatible // indirect
 	github.com/coreos/go-semver v0.2.0 // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
+	github.com/coreos/prometheus-operator v0.31.1 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.2 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/docker/distribution v0.0.0-20170726174610-edc3ab29cdff // indirect
@@ -160,6 +161,8 @@ replace (
 	k8s.io/cloud-provider => k8s.io/cloud-provider kubernetes-1.14.1
 	k8s.io/kubernetes => k8s.io/kubernetes v1.14.1
 )
+
+replace github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.31.1
 `
 
 func PrintGoMod(asFile bool) error {

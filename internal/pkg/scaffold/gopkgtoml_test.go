@@ -68,7 +68,7 @@ required = [
 
 [[override]]
   name = "github.com/coreos/prometheus-operator"
-  version = "=v0.29.0"
+  version = "=v0.31.1"
 
 [[override]]
   name = "k8s.io/kube-state-metrics"

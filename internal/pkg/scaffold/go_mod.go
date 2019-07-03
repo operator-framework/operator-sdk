@@ -41,7 +41,7 @@ require (
 	contrib.go.opencensus.io/exporter/ocagent v0.4.9 // indirect
 	github.com/Azure/go-autorest v11.5.2+incompatible // indirect
 	github.com/appscode/jsonpatch v0.0.0-20190108182946-7c0e3b262f30 // indirect
-	github.com/coreos/prometheus-operator v0.26.0 // indirect
+	github.com/coreos/prometheus-operator v0.31.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/emicklei/go-restful v2.8.1+incompatible // indirect
 	github.com/go-logr/logr v0.1.0 // indirect
@@ -83,7 +83,7 @@ replace (
 )
 
 replace (
-	github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.29.0
+	github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.31.1
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.2.0-beta.3
 	sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.1.11-0.20190411181648-9d55346c2bde
 	k8s.io/kube-state-metrics => k8s.io/kube-state-metrics v1.6.0
