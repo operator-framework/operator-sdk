@@ -40,7 +40,7 @@ const (
 	OutputFormatOpt           = "output"
 	PluginDirOpt              = "plugin-dir"
 	JSONOutputFormat          = "json"
-	HumanReadableOutputFormat = "human-readable"
+	HumanReadableOutputFormat = "text"
 )
 
 // make a global logger for scorecard
