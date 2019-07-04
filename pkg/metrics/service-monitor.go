@@ -26,7 +26,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-var ErrServiceMonitorNotPresent = fmt.Errorf("ServiceMonitor is not registered with the API")
+var ErrServiceMonitorNotPresent = fmt.Errorf("no ServiceMonitor registered with the API")
 
 // CreateServiceMonitors creates ServiceMonitors objects based on an array of Service objects.
 // If CR ServiceMonitor is not registered in the Cluster it will not attempt at creating resources.
