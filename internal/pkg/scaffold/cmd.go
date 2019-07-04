@@ -164,8 +164,10 @@ func main() {
 		log.Info("Could not create metrics Service: ", err.Error())
 	}
 
-	// Remove below code if you do not have Prometheus operator running in the cluster.
-	// Populate services with any additional Service(s) for which you want to create ServiceMonitors.
+	// CreateServiceMonitors will automatically create the prometheus-operator ServiceMonitor resources
+	// necessary to configure Prometheus to scrape metrics from this operator.
+	// If this operator is deployed to a cluster without the prometheus-operator running, it will return
+	// ErrServiceMonitorNotPresent,which can be used to safely skip ServiceMonitor creation.
 	services := []*v1.Service{service}
 	_, err = metrics.CreateServiceMonitors(cfg, namespace, services)
 	if err != nil {

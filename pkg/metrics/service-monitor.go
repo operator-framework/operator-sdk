@@ -15,6 +15,8 @@
 package metrics
 
 import (
+	"fmt"
+
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	monclientv1 "github.com/coreos/prometheus-operator/pkg/client/versioned/typed/monitoring/v1"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -23,6 +25,8 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 )
+
+var ErrServiceMonitorNotPresent = fmt.Errorf("ServiceMonitor is not registered with the API")
 
 // CreateServiceMonitors creates ServiceMonitors objects based on an array of Service objects.
 // If CR ServiceMonitor is not registered in the Cluster it will not attempt at creating resources.
@@ -33,9 +37,7 @@ func CreateServiceMonitors(config *rest.Config, ns string, services []*v1.Servic
 		return nil, err
 	}
 	if !exists {
-		log.Info("ServiceMonitor object could not be created as ServiceMonitor is not registered with the API")
-		// ServiceMonitor was not registered, but we don't want to produce more errors just return.
-		return nil, nil
+		return nil, ErrServiceMonitorNotPresent
 	}
 
 	var serviceMonitors []*monitoringv1.ServiceMonitor
