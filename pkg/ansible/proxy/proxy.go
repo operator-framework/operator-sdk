@@ -245,7 +245,7 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 			// Store watch in map
 			err := addWatch(contents.Controller, &source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{OwnerType: u}, dependentPredicate))
 			if err != nil {
-				log.Error(err, "gvk", resource.GroupVersionKind())
+				log.Error(err, "GVK", resource.GroupVersionKind())
 				return err
 			}
 		case (!useOwnerRef && dataNamespaceScoped) || contents.WatchClusterScopedResources:
@@ -259,7 +259,7 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 			log.Info("Watching child resource", "kind", resource.GroupVersionKind(), "enqueue_annotation_type", typeString)
 			err = addWatch(contents.Controller, &source.Kind{Type: resource}, &osdkHandler.EnqueueRequestForAnnotation{Type: typeString}, dependentPredicate)
 			if err != nil {
-				log.Error(err, "gvk", resource.GroupVersionKind())
+				log.Error(err, "GVK", resource.GroupVersionKind())
 				return err
 			}
 		}
