@@ -28,6 +28,8 @@ import (
 
 // CSVConfig is a configuration file for CSV composition. Its fields contain
 // file path information.
+// TODO(estroz): define field for path to write CSV bundle.
+// TODO(estroz): make CSVConfig a viper.Config
 type CSVConfig struct {
 	// The operator manifest file path. Defaults to deploy/operator.yaml.
 	OperatorPath string `json:"operator-path,omitempty"`

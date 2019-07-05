@@ -104,7 +104,6 @@ func (c *typedClient) List(ctx context.Context, opts *ListOptions, obj runtime.O
 	return r.Get().
 		NamespaceIfScoped(namespace, r.isNamespaced()).
 		Resource(r.resource()).
-		Body(obj).
 		VersionedParams(opts.AsListOptions(), c.paramCodec).
 		Context(ctx).
 		Do().
