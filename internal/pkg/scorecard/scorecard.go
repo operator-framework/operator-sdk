@@ -23,10 +23,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/mitchellh/mapstructure"
 	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
 	scplugins "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/plugins"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	"github.com/pkg/errors"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -72,9 +74,9 @@ func getPlugins() ([]Plugin, error) {
 	// Add plugins from config
 	var plugins []Plugin
 	configs := []pluginConfig{}
-	if err := scViper.UnmarshalKey("plugins", &configs); err != nil {
-		// should this be fatal?
-		log.Errorf("Could not load plugin configurations")
+	// set ErrorUnused to true in decoder to fail if an unknown field is set by the user
+	if err := scViper.UnmarshalKey("plugins", &configs, func(c *mapstructure.DecoderConfig) { c.ErrorUnused = true }); err != nil {
+		return nil, errors.Wrap(err, "Could not load plugin configurations")
 	}
 	for _, plugin := range configs {
 		if err := validateConfig(plugin); err != nil {

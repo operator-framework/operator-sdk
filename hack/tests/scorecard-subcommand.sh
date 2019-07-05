@@ -3,10 +3,11 @@
 DEST_IMAGE="quay.io/example/scorecard-proxy"
 CONFIG_PATH=".test-osdk-scorecard.yaml"
 CONFIG_PATH_DISABLE=".osdk-scorecard-disable.yaml"
+CONFIG_PATH_INVALID=".osdk-scorecard-invalid.yaml"
 
 set -ex
 
-# build scorecard-proxy image (and delete intermediate builder image)
+# build scorecard-proxy image
 ./hack/image/build-scorecard-proxy-image.sh "$DEST_IMAGE"
 
 # the test framework directory has all the manifests needed to run the cluster
@@ -62,5 +63,8 @@ fi
 echo $commandoutput4 | grep '^.*"name": "Flags",[[:space:]]"description": "Test plugin with kubeconfig set via flags",[[:space:]]"earnedPoints": 2,[[:space:]]"maximumPoints": 4,.*$'
 # check external env
 echo $commandoutput4 | grep '^.*"name": "Environment",[[:space:]]"description": "Test plugin with kubeconfig set via env var",[[:space:]]"earnedPoints": 2,[[:space:]]"maximumPoints": 5,.*$'
+
+# Test invalid config
+operator-sdk scorecard --config "$CONFIG_PATH_INVALID" |& grep '^.*invalid keys.*$'
 
 popd

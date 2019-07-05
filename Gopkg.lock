@@ -1763,6 +1763,7 @@
     "github.com/martinlindhe/base36",
     "github.com/mattbaird/jsonpatch",
     "github.com/mitchellh/go-homedir",
+    "github.com/mitchellh/mapstructure",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install",
     "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/registry",
