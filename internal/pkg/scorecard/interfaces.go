@@ -137,7 +137,7 @@ func (p basicOrOLMPlugin) Run() scapiv1alpha1.ScorecardOutput {
 }
 
 // updateConfig sets certain viper fields to default values if they are not set
-func updateConfig(config *scplugins.BasicAndOLMPluginConfig) {
+func updateConfig(config *scplugins.BasicAndOLMPluginConfig, kubeconfig string) {
 	if config.InitTimeout == 0 {
 		config.InitTimeout = 60
 	}
@@ -150,7 +150,9 @@ func updateConfig(config *scplugins.BasicAndOLMPluginConfig) {
 	if config.CRDsDir == "" {
 		config.CRDsDir = scaffold.CRDsDir
 	}
-	config.Kubeconfig = scViper.GetString(scplugins.KubeconfigOpt)
+	if config.Kubeconfig == "" {
+		config.Kubeconfig = kubeconfig
+	}
 }
 
 func failedPlugin(name, desc, log string) scapiv1alpha1.ScorecardOutput {

@@ -62,8 +62,8 @@ type pluginConfig struct {
 
 func getPlugins() ([]Plugin, error) {
 	kubeconfig := ""
-	if scViper.IsSet("kubeconfig") {
-		kubeconfig = scViper.GetString(kubeconfig)
+	if scViper.IsSet(scplugins.KubeconfigOpt) {
+		kubeconfig = scViper.GetString(scplugins.KubeconfigOpt)
 	}
 	// Make list of plugins that have been configured via the config file
 	basicSet := false
@@ -84,20 +84,19 @@ func getPlugins() ([]Plugin, error) {
 		if plugin.Basic != nil {
 			basicSet = true
 			pluginConfig := plugin.Basic
-			updateConfig(pluginConfig)
+			updateConfig(pluginConfig, kubeconfig)
 			newPlugin = basicOrOLMPlugin{name: plugin.Name, pluginType: scplugins.BasicOperator, config: *pluginConfig}
 		} else if plugin.Olm != nil {
 			olmSet = true
 			pluginConfig := plugin.Olm
-			updateConfig(pluginConfig)
+			updateConfig(pluginConfig, kubeconfig)
 			newPlugin = basicOrOLMPlugin{name: plugin.Name, pluginType: scplugins.OLMIntegration, config: *pluginConfig}
 		} else {
 			setPaths = append(setPaths, plugin.External.Command)
 			pluginConfig := plugin.External
-			kubeconfigVal := scViper.GetString(scplugins.KubeconfigOpt)
-			if kubeconfigVal != "" {
+			if kubeconfig != "" {
 				// put the kubeconfig flag first in case user is overriding it with an env var in config file
-				pluginConfig.Env = append([]externalPluginEnv{{Name: "KUBECONFIG", Value: kubeconfigVal}}, pluginConfig.Env...)
+				pluginConfig.Env = append([]externalPluginEnv{{Name: "KUBECONFIG", Value: kubeconfig}}, pluginConfig.Env...)
 			}
 			newPlugin = externalPlugin{name: plugin.Name, config: *pluginConfig}
 		}
