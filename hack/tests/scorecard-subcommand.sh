@@ -44,25 +44,10 @@ echo $commandoutput3 | grep '^.*"name": "Different Env and flag",[[:space:]]"des
 # check external env (kubeconfig set in plugin config should override flag)
 echo $commandoutput3 | grep '^.*"name": "Environment",[[:space:]]"description": "Test plugin with kubeconfig set via env var",[[:space:]]"earnedPoints": 2,[[:space:]]"maximumPoints": 5,.*$'
 
-# test disabling plugins
-commandoutput3="$(operator-sdk scorecard --kubeconfig=/kubeconfig 2>&1)"
-# check basic suite
-echo $commandoutput3 | grep '^.*"name": "Failed Plugin: Basic Tests",[[:space:]]"description": "Internal plugin `Basic Tests` failed",[[:space:]]"error": 1,.*$'
-# check olm suite
-echo $commandoutput3 | grep '^.*"name": "Failed Plugin: OLM Tests",[[:space:]]"description": "Internal plugin `OLM Tests` failed",[[:space:]]"error": 1,.*$'
-# check custom json result
-echo $commandoutput3 | grep '^.*"error": 0,[[:space:]]"pass": 1,[[:space:]]"partialPass": 1,[[:space:]]"fail": 0,[[:space:]]"totalTests": 2,[[:space:]]"totalScorePercent": 71,.*$'
-# check external no args
-echo $commandoutput3 | grep '^.*"name": "Different Env",[[:space:]]"description": "Test plugin with /kubeconfig set via env var",[[:space:]]"earnedPoints": 3,[[:space:]]"maximumPoints": 3,.*$'
-# check external flag
-echo $commandoutput3 | grep '^.*"name": "Different Env and flag",[[:space:]]"description": "Test plugin with /kubeconfig set via env var and flag set",[[:space:]]"earnedPoints": 3,[[:space:]]"maximumPoints": 4,.*$'
-# check external env (kubeconfig set in plugin config should override flag)
-echo $commandoutput3 | grep '^.*"name": "Environment",[[:space:]]"description": "Test plugin with kubeconfig set via env var",[[:space:]]"earnedPoints": 2,[[:space:]]"maximumPoints": 5,.*$'
-
 # Test disabling plugins
 commandoutput4="$(operator-sdk scorecard --config "$CONFIG_PATH_DISABLE" 2>&1)"
 # check basic suite (should be disabled)
-if [ echo $commandoutput4 | grep '^.*"error": 0,[[:space:]]"pass": 3,[[:space:]]"partialPass": 0,[[:space:]]"fail": 0,[[:space:]]"totalTests": 3,[[:space:]]"totalScorePercent": 100,.*$' ]; then
+if echo $commandoutput4 | grep '^.*"error": 0,[[:space:]]"pass": 3,[[:space:]]"partialPass": 0,[[:space:]]"fail": 0,[[:space:]]"totalTests": 3,[[:space:]]"totalScorePercent": 100,.*$'; then
   false
 fi
 # check olm suite
@@ -70,7 +55,7 @@ echo $commandoutput4 | grep '^.*"error": 0,[[:space:]]"pass": 2,[[:space:]]"part
 # check custom json result
 echo $commandoutput4 | grep '^.*"error": 0,[[:space:]]"pass": 1,[[:space:]]"partialPass": 1,[[:space:]]"fail": 0,[[:space:]]"totalTests": 2,[[:space:]]"totalScorePercent": 71,.*$'
 # check external no args (should be disabled)
-if [ echo $commandoutput4 | grep '^.*"name": "Empty",[[:space:]]"description": "Test plugin with no args",[[:space:]]"earnedPoints": 2,[[:space:]]"maximumPoints": 3,.*$' ]; then
+if echo $commandoutput4 | grep '^.*"name": "Empty",[[:space:]]"description": "Test plugin with no args",[[:space:]]"earnedPoints": 2,[[:space:]]"maximumPoints": 3,.*$'; then
   false
 fi
 # check external flag
