@@ -106,7 +106,12 @@ After modifying the `*_types.go` file always run the following command to update
 $ operator-sdk generate k8s
 ```
 
-Update the Open API validation section in the CRD at `deploy/crds/cache_v1alpha1_memcached_crd.yaml` so that Kubernetes can validate the properties in a Memcached Custom Resource when it is created or updated.
+To update the Open API validation section in the CRD `deploy/crds/cache_v1alpha1_memcached_crd.yaml`, run the following command. 
+
+```console
+$ operator-sdk generate openapi
+```
+This validation section allows Kubernetes to validate the properties in a Memcached Custom Resource when it is created or updated. An example of the generated YAML is as follows: 
 
 ```YAML
 spec:
@@ -116,6 +121,7 @@ spec:
         spec:
           properties:
             size:
+              format: int32
               type: integer
 ```
 
