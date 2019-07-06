@@ -63,6 +63,8 @@ $ mkdir -p $HOME/projects/example-inc/
 # Create a new app-operator project
 $ cd $HOME/projects/example-inc/
 $ export GO111MODULE=on
+# set gopath
+$ export GOPATH=$HOME/projects/example-inc/
 $ operator-sdk new app-operator
 $ cd app-operator
 
@@ -71,6 +73,8 @@ $ operator-sdk add api --api-version=app.example.com/v1alpha1 --kind=AppService
 
 # Add a new controller that watches for AppService
 $ operator-sdk add controller --api-version=app.example.com/v1alpha1 --kind=AppService
+
+$ go mod vendor
 
 # Build and push the app-operator image to a public registry such as quay.io
 $ operator-sdk build quay.io/example/app-operator
