@@ -11,6 +11,7 @@
 ### Bug Fixes
 
 - Fixes header file content validation when the content contains empty lines or centered text. ([#1544](https://github.com/operator-framework/operator-sdk/pull/1544))
+- Use the correct domain names when generating CRD's instead that of the first CRD to be parsed. ([#1636](https://github.com/operator-framework/operator-sdk/pull/1636))
 
 ## v0.8.1
 
