@@ -44,39 +44,41 @@ type roleDiscoveryInterface interface {
 	ServerResources() ([]*metav1.APIResourceList, error)
 }
 
-// CreateRoleScaffold generates a role scaffold from the provided helm chart. It
+var DefaultRoleScaffold = scaffold.Role{
+	IsClusterScoped:  false,
+	SkipDefaultRules: false,
+	CustomRules: []rbacv1.PolicyRule{
+		// We need this rule so tiller can read namespaces to ensure they exist
+		{
+			APIGroups: []string{""},
+			Resources: []string{"namespaces"},
+			Verbs:     []string{"get"},
+		},
+
+		// We need this rule for leader election and release state storage to work
+		{
+			APIGroups: []string{""},
+			Resources: []string{"configmaps", "secrets"},
+			Verbs:     []string{rbacv1.VerbAll},
+		},
+	},
+}
+
+// GenerateRoleScaffold generates a role scaffold from the provided helm chart. It
 // renders a release manifest using the chart's default values and uses the Kubernetes
 // discovery API to lookup each resource in the resulting manifest.
 // The role scaffold will have IsClusterScoped=true if the chart lists cluster scoped resources
-func CreateRoleScaffold(dc roleDiscoveryInterface, chart *chart.Chart) (*scaffold.Role, error) {
+func GenerateRoleScaffold(dc roleDiscoveryInterface, chart *chart.Chart) scaffold.Role {
 	log.Info("Generating RBAC rules")
 
-	roleScaffold := &scaffold.Role{
-		IsClusterScoped:  false,
-		SkipDefaultRules: true,
-		CustomRules: []rbacv1.PolicyRule{
-			// We need this rule so tiller can read namespaces to ensure they exist
-			{
-				APIGroups: []string{""},
-				Resources: []string{"namespaces"},
-				Verbs:     []string{"get"},
-			},
-
-			// We need this rule for leader election and release state storage to work
-			{
-				APIGroups: []string{""},
-				Resources: []string{"configmaps", "secrets"},
-				Verbs:     []string{rbacv1.VerbAll},
-			},
-		},
-	}
-
+	roleScaffold := DefaultRoleScaffold
 	clusterResourceRules, namespacedResourceRules, err := generateRoleRules(dc, chart)
 	if err != nil {
 		log.Warnf("Using default RBAC rules: failed to generate RBAC rules: %s", err)
-		roleScaffold.SkipDefaultRules = false
-		return roleScaffold, nil
+		return roleScaffold
 	}
+
+	roleScaffold.SkipDefaultRules = true
 
 	// Use a ClusterRole if cluster scoped resources are listed in the chart
 	if len(clusterResourceRules) > 0 {
@@ -90,7 +92,7 @@ func CreateRoleScaffold(dc roleDiscoveryInterface, chart *chart.Chart) (*scaffol
 		" some existing rules may be overly broad. Double check the rules generated in deploy/role.yaml" +
 		" to ensure they meet the operator's permission requirements.")
 
-	return roleScaffold, nil
+	return roleScaffold
 }
 
 func generateRoleRules(dc roleDiscoveryInterface, chart *chart.Chart) ([]rbacv1.PolicyRule, []rbacv1.PolicyRule, error) {
