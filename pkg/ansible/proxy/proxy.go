@@ -47,7 +47,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
+<<<<<<< HEAD
 const AutoSkipCacheREList = "^/api/.*/pods/.*/exec,^/api/.*/pods/.*/attach"
+=======
+// This is the default timeout to wait for the cache to respond
+// TODO: Eventually this should be configurable
+const cacheEstablishmentTimeout = 6 * time.Second
+>>>>>>> adding constant and todo for cache timeout
 
 // RequestLogHandler - log the requests that come through the proxy.
 func RequestLogHandler(h http.Handler) http.Handler {
@@ -279,7 +285,7 @@ func addWatch(c controller.Controller, s source.Source, eh handler.EventHandler,
 	select {
 	case watchErr := <-errChan:
 		return watchErr
-	case <-time.After(3 * time.Second):
+	case <-time.After(cacheEstablishmentTimeout):
 		return fmt.Errorf("timeout establishing watch, commonly permissions of the controller are not sufficent")
 	}
 }
