@@ -46,6 +46,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
+// This is the default timeout to wait for the cache to respond
+// TODO: Eventually this should be configurable
+const cacheEstablishmentTimeout = 6 * time.Second
+
 // RequestLogHandler - log the requests that come through the proxy.
 func RequestLogHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -262,7 +266,7 @@ func addWatch(c controller.Controller, s source.Source, eh handler.EventHandler,
 	select {
 	case watchErr := <-errChan:
 		return watchErr
-	case <-time.After(3 * time.Second):
+	case <-time.After(cacheEstablishmentTimeout):
 		return fmt.Errorf("timeout establishing watch, commonly permissions of the controller are not sufficent")
 	}
 }

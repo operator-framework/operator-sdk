@@ -228,7 +228,7 @@ func (c *cacheResponseHandler) getListFromCache(r *requestfactory.RequestInfo, r
 			log.Info(fmt.Sprintf("cache miss: %v err-%v", k, watchErr))
 			return nil, watchErr
 		}
-	case <-time.After(3 * time.Second):
+	case <-time.After(cacheEscacheEstablishmentTimeout):
 		return nil, fmt.Errorf("timeout establishing watch, commonly permissions of the controller are not sufficent")
 	}
 	return &un, nil
@@ -252,7 +252,7 @@ func (c *cacheResponseHandler) getObjectFromCache(r *requestfactory.RequestInfo,
 			log.Info(fmt.Sprintf("cache miss: %v err-%v", k, watchErr))
 			return nil, watchErr
 		}
-	case <-time.After(3 * time.Second):
+	case <-time.After(cacheEstacacheEstablishmentTimeout):
 		return nil, fmt.Errorf("timeout establishing watch, commonly permissions of the controller are not sufficent")
 	}
 
