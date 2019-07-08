@@ -115,7 +115,7 @@ func main() {
 		log.Error(err, "")
 		os.Exit(1)
 	}
-	
+
 	ctx := context.TODO()
 	// Become the leader before proceeding
 	err = leader.Become(ctx, "{{ .ProjectName }}-lock")
@@ -129,7 +129,7 @@ func main() {
 		Namespace:          namespace,
 		MapperProvider:     restmapper.NewDynamicRESTMapper,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
-	})	
+	})
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
@@ -150,9 +150,9 @@ func main() {
 	}
 
 	if err = serveCRMetrics(cfg); err != nil {
-		log.Info("Could not generate and serve custom resource metrics: ", err.Error())
+		log.Info("Could not generate and serve custom resource metrics", "error", err.Error())
 	}
-	
+
 	// Add to the below struct any other metrics ports you want to expose.
 	servicePorts := []v1.ServicePort{
 		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},

@@ -127,7 +127,7 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 	// It serves those metrics on "http://metricsHost:operatorMetricsPort".
 	err = kubemetrics.GenerateAndServeCRMetrics(cfg, []string{namespace}, gvks, metricsHost, operatorMetricsPort)
 	if err != nil {
-		log.Info("Could not generate and serve custom resource metrics: ", err.Error())
+		log.Info("Could not generate and serve custom resource metrics", "error", err.Error())
 	}
 
 	servicePorts := []v1.ServicePort{
