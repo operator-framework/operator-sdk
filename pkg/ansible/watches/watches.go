@@ -92,9 +92,6 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	// TODO: Failing on invalid ReconcilePeriod is (I believe) new behavior
-	// need to check if that's okay
-	// if it's not reconcilePeriod = ReconcilePeriodDurationDefault
 	reconcilePeriod, err := time.ParseDuration(tmp.ReconcilePeriod)
 	if err != nil {
 		return fmt.Errorf("failed to parse '%s' to time.Duration: %v", tmp.ReconcilePeriod, err)

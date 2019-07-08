@@ -38,10 +38,6 @@ import (
 
 var log = logf.Log.WithName("manager")
 
-const (
-	workerEnvFormat = "WORKER_%s_%s"
-)
-
 // Run - A blocking function which starts a controller-runtime manager
 // It starts an Operator by reading in the values in `./watches.yaml`, adds a controller
 // to the manager, and finally running the manager.
@@ -94,7 +90,7 @@ func Run(done chan error, mgr manager.Manager, f *flags.AnsibleOperatorFlags, cM
 // configuration for the operator.
 func getMaxWorkers(gvk schema.GroupVersionKind, defValue int) int {
 	envVar := strings.ToUpper(strings.Replace(
-		fmt.Sprintf(workerEnvFormat, gvk.Kind, gvk.Group),
+		fmt.Sprintf("WORKER_%s_%s", gvk.Kind, gvk.Group),
 		".",
 		"_",
 		-1,
@@ -103,8 +99,8 @@ func getMaxWorkers(gvk schema.GroupVersionKind, defValue int) int {
 	case maxWorkers <= 1:
 		return 1
 	case err != nil:
-		// we don't care why we couldn't parse it just use one.
-		// maybe we should log that we are defaulting to 1.
+		// we don't care why we couldn't parse it just use default
+		log.Info("Failed to parse %v from environment. Using default %v", envVar, defValue)
 		return defValue
 	default:
 		return maxWorkers
