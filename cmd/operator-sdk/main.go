@@ -23,6 +23,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/add"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
@@ -61,18 +62,19 @@ func main() {
 		},
 	}
 
-	root.AddCommand(new.NewCmd())
 	root.AddCommand(add.NewCmd())
+	root.AddCommand(alpha.NewCmd())
 	root.AddCommand(build.NewCmd())
-	root.AddCommand(generate.NewCmd())
-	root.AddCommand(up.NewCmd())
 	root.AddCommand(completion.NewCmd())
-	root.AddCommand(test.NewCmd())
-	root.AddCommand(scorecard.NewCmd())
-	root.AddCommand(printdeps.NewCmd())
+	root.AddCommand(generate.NewCmd())
 	root.AddCommand(migrate.NewCmd())
-	root.AddCommand(run.NewCmd())
+	root.AddCommand(new.NewCmd())
 	root.AddCommand(olmcatalog.NewCmd())
+	root.AddCommand(printdeps.NewCmd())
+	root.AddCommand(run.NewCmd())
+	root.AddCommand(scorecard.NewCmd())
+	root.AddCommand(test.NewCmd())
+	root.AddCommand(up.NewCmd())
 	root.AddCommand(version.NewCmd())
 
 	root.PersistentFlags().Bool(flags.VerboseOpt, false, "Enable verbose logging")
