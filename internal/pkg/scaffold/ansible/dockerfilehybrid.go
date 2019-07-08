@@ -59,13 +59,16 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
     HOME=/opt/ansible
 
 # Install python dependencies
-RUN yum install -y python-devel gcc \
+
+RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
+ && yum install -y python-devel gcc inotify-tools \
  && easy_install pip \
  && pip install -U --no-cache-dir setuptools pip \
  && pip install --no-cache-dir --ignore-installed ipaddress \
       ansible-runner==1.2 \
       ansible-runner-http==1.0.0 \
       openshift==0.8.9 \
+      ansible==2.8 \
  && yum remove -y gcc python-devel \
  && yum clean all \
  && rm -rf /var/cache/yum
