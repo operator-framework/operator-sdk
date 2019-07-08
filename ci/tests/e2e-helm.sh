@@ -130,7 +130,6 @@ pushd "$GOTMP"
 operator-sdk new nginx-operator --api-version=helm.example.com/v1alpha1 --kind=Nginx --type=helm
 
 pushd nginx-operator
-sed -i "s|Always|Never|g" deploy/operator.yaml
 cp deploy/operator.yaml deploy/operator-copy.yaml
 sed -i "s|REPLACE_IMAGE|$IMAGE|g" deploy/operator.yaml
 
