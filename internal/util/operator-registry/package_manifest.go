@@ -17,18 +17,20 @@ package registry
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	olmregistry "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/registry"
 )
 
 func ValidatePackageManifest(pm *olmregistry.PackageManifest) error {
 	if pm.PackageName == "" {
-		return fmt.Errorf("package name cannot be empty")
+		return errors.New("package name cannot be empty")
 	}
 	if len(pm.Channels) == 0 {
-		return fmt.Errorf("channels cannot be empty")
+		return errors.New("channels cannot be empty")
 	}
 	if pm.DefaultChannelName == "" {
-		return fmt.Errorf("default channel cannot be empty")
+		return errors.New("default channel cannot be empty")
 	}
 
 	seen := map[string]struct{}{}
