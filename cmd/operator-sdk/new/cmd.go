@@ -325,19 +325,13 @@ func doHelmScaffold() error {
 	valuesPath := filepath.Join("<project_dir>", helm.HelmChartsDir, chart.GetMetadata().GetName(), "values.yaml")
 	crSpec := fmt.Sprintf("# Default values copied from %s\n\n%s", valuesPath, chart.GetValues().GetRaw())
 
-	k8sCfg, err := config.GetConfig()
-	if err != nil {
-		return fmt.Errorf("failed to get kubernetes config: %s", err)
-	}
-
-	dc, err := discovery.NewDiscoveryClientForConfig(k8sCfg)
-	if err != nil {
-		return fmt.Errorf("failed to get kubernetes discovery client: %s", err)
-	}
-
-	roleScaffold, err := helm.CreateRoleScaffold(dc, chart)
-	if err != nil {
-		return fmt.Errorf("failed to generate role scaffold: %s", err)
+	roleScaffold := helm.DefaultRoleScaffold
+	if k8sCfg, err := config.GetConfig(); err != nil {
+		log.Warnf("Using default RBAC rules: failed to get Kubernetes config: %s", err)
+	} else if dc, err := discovery.NewDiscoveryClientForConfig(k8sCfg); err != nil {
+		log.Warnf("Using default RBAC rules: failed to create Kubernetes discovery client: %s", err)
+	} else {
+		roleScaffold = helm.GenerateRoleScaffold(dc, chart)
 	}
 
 	s := &scaffold.Scaffold{}
@@ -348,7 +342,7 @@ func doHelmScaffold() error {
 			ChartName: chart.GetMetadata().GetName(),
 		},
 		&scaffold.ServiceAccount{},
-		roleScaffold,
+		&roleScaffold,
 		&scaffold.RoleBinding{IsClusterScoped: roleScaffold.IsClusterScoped},
 		&helm.Operator{},
 		&scaffold.CRD{Resource: resource},

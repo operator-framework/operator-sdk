@@ -75,6 +75,8 @@ By default this will be the namespace that the operator is running in. To watch 
 mgr, err := manager.New(cfg, manager.Options{Namespace: ""})
 ```
 
+By default the main program will set the manager's namespace using the value of `WATCH_NAMESPACE` env defined in `deploy/operator.yaml`.
+
 ## Add a new Custom Resource Definition
 
 Add a new Custom Resource Definition(CRD) API called Memcached, with APIVersion `cache.example.com/v1alpha1` and Kind `Memcached`.
