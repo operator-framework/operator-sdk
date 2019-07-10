@@ -18,7 +18,7 @@ For the Go, Ansible, and Helm tests, the `before_install` and `install` stages a
 
 1. Check if non documentation files have been updated.
     - If only documentation has been updated, skip these tests.
-2. Download dep and run `dep ensure`.
+2. Run `make tidy` to ensure `go.mod` and `go.sum` are up-to-date.
 3. Build and install the sdk using `make install`.
 4. Install ansible using `sudo pip install ansible`.
 5. Run the [`hack/ci/setup-openshift`][script] script, which spins up an openshift cluster by configuring docker and then downloading the `oc` v3.11 binary and running `oc cluster up`.
@@ -31,7 +31,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
     1. Run `go vet`.
     2. Check that all source files have a license.
     3. Check that all error messages start with a lower case alphabetical character and do not end with punctuation, and log messages start with an upper case alphabetical character.
-    4. Make sure the repo is in a clean state (this is particularly useful for making sure the `Gopkg.lock` file up to date after `dep ensure`).
+    4. Make sure the repo is in a clean state (this is particularly useful for making sure `go.mod` and `go.sum` are up-to-date after running `make tidy`).
 2. Run unit tests.
     1. Run `make test`.
 3. Run [subcommand tests][subcommand].
@@ -44,24 +44,32 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
     7. Run `scorecard` subcommand and check that expected score matches actual score.
     8. Run `scorecard` subcommand with json output enabled and verify the output.
 4. Run [go e2e tests][go-e2e].
-    1. Use `operator-sdk` to create and configure a new `memcached-operator` project and install the memcached CRD in the cluster.
-    2. Run cluster test (namespace is auto-generated and deleted by test framework).
-        1. Build `memcached-operator` image with `--enable-tests` flag enabled (used in the in-cluster test later).
-        2. Deploy operator and resources to the cluster.
-        3. Run the leader election test.
-            1. Verify that operator deployment is ready.
-            2. Verify that leader configmap specifies 1 leader and that the memcached operator has 2 pods (configuration for this is done in step 4.1).
-            3. Delete current leader and wait for memcached-operator deployment to become ready again.
-            4. Verify that leader configmap specifies 1 leader and that the memcached-operator has 2 pods.
-            5. Verify that the name of the new leader is different from the name of the old leader.
-        4. Run the memcached scale test.
-            1. Create memcached CR specifying a desired cluster size of 3 and wait until memcached cluster is of size 3.
-            2. Increase desired cluster size to 4 and wait until memcached cluster is of size 4.
-    3. Run local test.
-        1. Create new namespace for the test.
-        2. Start operator using `up local` subcommand.
-        3. Run memcached scale test (described in step 4.2.4)
-        4. Delete the test namespace.
+    1. Scaffold a project using `hack/tests/scaffolding/e2e-go-scaffold.sh`
+    2. Build `memcached-operator` image to be used in tests
+    3. Run scaffolded project e2e tests using `operator-sdk up local`
+        1. Run cluster test (namespace is auto-generated and deleted by test framework).
+            1. Deploy operator and required resources to the cluster.
+            2. Run the leader election test.
+                1. Verify that operator deployment is ready.
+                2. Verify that leader configmap specifies 1 leader and that the memcached operator has 2 pods (configuration for this is done in step 4.1).
+                3. Delete current leader and wait for memcached-operator deployment to become ready again.
+                4. Verify that leader configmap specifies 1 leader and that the memcached-operator has 2 pods.
+                5. Verify that the name of the new leader is different from the name of the old leader.
+            3. Run the memcached scale test.
+                1. Create memcached CR specifying a desired cluster size of 3 and wait until memcached cluster is of size 3.
+                2. Increase desired cluster size to 4 and wait until memcached cluster is of size 4.
+            4. Run the memcached metrics test.
+                1. Make sure the metrics Service was created.
+                2. Get metrics via proxy pod and make sure they are present.
+                3. Perform linting of the existing metrics.
+            5. Run the memcached custom resource metrics test.
+                1. Make sure the metrics Service was created.
+                2. Get metrics via proxy pod and make sure they are present.
+                3. Perform linting of the existing metrics.
+                4. Perform checks on each custom resource generated metric and makes sure the name, type, value, labels and metric are correct. 
+        2. Run local test (namespace is auto-generated and deleted by test framework).
+            1. Start operator using `up local` subcommand.
+            2. Run memcached scale test (described in step 4.3.1.3)
     4. Run [TLS library tests][tls-tests].
         1. This test runs multiple simple tests of the operator-sdk's TLS library. The tests run in parallel and each tests runs in its own namespace.
 
