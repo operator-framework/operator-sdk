@@ -151,9 +151,9 @@ require (
 
 // Pinned to kubernetes-1.13.4
 replace (
-	k8s.io/api => k8s.io/api v0.0.0-20190222131558-5cb15d344471
+	k8s.io/api => k8s.io/api v0.0.0-20190222213804-5cb15d344471
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20190228180357-d002e88f6236
-	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190221124651-86fb29eff628
+	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190221213512-86fb29eff628
 	k8s.io/apiserver => k8s.io/apiserver v0.0.0-20190228174905-79427f02047f
 	k8s.io/cli-runtime => k8s.io/cli-runtime v0.0.0-20190228180923-a9e421a79326
 	k8s.io/client-go => k8s.io/client-go v0.0.0-20190228174230-b40b2a5939e4

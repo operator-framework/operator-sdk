@@ -75,12 +75,23 @@ $ brew install operator-sdk
 
 ## Compile and install from master
 
+### Prerequisites
+
+- [git][git_tool]
+- [mercurial][mercurial_tool] version 3.9+
+- [bazaar][bazaar_tool] version 2.7.0+
+- [go][go_tool] version v1.12+.
+
 ```sh
 $ go get -d github.com/operator-framework/operator-sdk # This will download the git repository and not install it
 $ cd $GOPATH/src/github.com/operator-framework/operator-sdk
 $ git checkout master
-$ make dep
+$ make tidy
 $ make install
 ```
 
 [homebrew_tool]:https://brew.sh/
+[git_tool]:https://git-scm.com/downloads
+[mercurial_tool]:https://www.mercurial-scm.org/downloads
+[bazaar_tool]:http://wiki.bazaar.canonical.com/Download
+[go_tool]:https://golang.org/dl/
