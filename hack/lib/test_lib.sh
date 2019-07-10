@@ -58,16 +58,6 @@ function add_go_mod_replace() {
 		exit 1
 	fi
 
-	# If $to_path is a directory, it needs a `go.mod` file that specifies the
-	# module name to make the go toolchain happy.
-	#
-	# TODO: remove the below if statement once
-	# https://github.com/operator-framework/operator-sdk/pull/1566 is merged,
-	# which updates the SDK to use go modules.
-	if [[ -d "${to_path}" && ! -e "${to_path}/go.mod" ]]; then
-		echo "module ${from_path}" > "${to_path}/go.mod"
-		trap_add "rm ${to_path}/go.mod" EXIT
-	fi
 	# Do not use "go mod edit" so formatting stays the same.
 	local replace="replace ${from_path} => ${to_path}"
 	if [[ -n "$version" ]]; then
