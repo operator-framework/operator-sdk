@@ -7,10 +7,12 @@ language: go
 go_import_path: github.com/operator-framework/operator-sdk
 sudo: required
 
+# go modules require xenial for mercurial TLS 1.2 support
+dist: xenial
+
 cache:
   directories:
     - $HOME/.cache/go-build
-    - $GOPATH/pkg/mod
 
 go:
 - 1.12.x
@@ -22,21 +24,21 @@ x_base_steps:
   # before_install for jobs that require dep
   - &dep_before_install
     before_install:
-      - curl -Lo dep https://github.com/golang/dep/releases/download/v0.5.3/dep-linux-amd64 && chmod +x dep && sudo mv dep /usr/local/bin/
-      - travis_retry dep ensure -v
+      - travis_retry make tidy
+
   # before_install for jobs that require go builds and do not run for doc-only changes
   - &go_before_install
     before_install:
       # hack/ci/check-doc-only-update.sh needs to be sourced so
       # that it can properly exit the test early with success
       - source hack/ci/check-doc-only-update.sh
-      - curl -Lo dep https://github.com/golang/dep/releases/download/v0.5.3/dep-linux-amd64 && chmod +x dep && sudo mv dep /usr/local/bin/
-      - travis_retry dep ensure -v
+      - travis_retry make tidy
 
   # Base go, ansbile, and helm job
   - &test
     stage: test
-    env: CLUSTER=openshift
+    env:
+    - CLUSTER=openshift
     <<: *go_before_install
     install:
       - make install

@@ -77,9 +77,10 @@ $ eval $(minikube docker-env)
 
 All the tests are run through the [`Makefile`][makefile]. This is a brief description of all makefile test instructions:
 
-- `test` - Runs `test/unit`
-- `test/ci-go` - Runs all the tests that the Go job runs in Travis CI (`test/sanity`, `test/unit`, `test/subcommand`, `test/e2e/go`).
-- `test/ci-ansible` - Runs all the tests that the Ansible job runs in Travis CI (`test/e2e/ansible-molecule`).
+- `test` - Runs the unit tests (`test/unit`).
+- `test-ci` - Runs markdown, sanity, and unit tests, installs the SDK binary, and runs the SDK subcommand and all E2E tests.
+- `test/ci-go` - Runs all the tests that the Go job runs in CI (`subcommand` and `e2e/go`).
+- `test/ci-ansible` - Runs all the tests that the Ansible job runs in Travis CI (`e2e/ansible` and `test/e2e/ansible-molecule`).
 - `test/ci-helm` - Runs all the tests that the Helm job runs in Travis CI (`test/e2e/helm`).
 - `test/sanity` - Runs sanity checks.
 - `test/unit` - Runs unit tests.

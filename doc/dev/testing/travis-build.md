@@ -18,7 +18,7 @@ For the Go, Ansible, and Helm tests, the `before_install` and `install` stages a
 
 1. Check if non documentation files have been updated.
     - If only documentation has been updated, skip these tests.
-2. Download dep and run `dep ensure`.
+2. Run `make tidy` to ensure `go.mod` and `go.sum` are up-to-date.
 3. Build and install the sdk using `make install`.
 4. Install ansible using `sudo pip install ansible`.
 5. Run the [`hack/ci/setup-openshift`][script] script, which spins up an openshift cluster by configuring docker and then downloading the `oc` v3.11 binary and running `oc cluster up`.
@@ -31,7 +31,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
     1. Run `go vet`.
     2. Check that all source files have a license.
     3. Check that all error messages start with a lower case alphabetical character and do not end with punctuation, and log messages start with an upper case alphabetical character.
-    4. Make sure the repo is in a clean state (this is particularly useful for making sure the `Gopkg.lock` file up to date after `dep ensure`).
+    4. Make sure the repo is in a clean state (this is particularly useful for making sure `go.mod` and `go.sum` are up-to-date after running `make tidy`).
 2. Run unit tests.
     1. Run `make test`.
 3. Run [subcommand tests][subcommand].

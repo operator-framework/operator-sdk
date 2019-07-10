@@ -1,6 +1,6 @@
 FROM osdk-builder as builder
 
-RUN go run hack/image/ansible/scaffold-ansible-image.go
+RUN make image/scaffold/ansible
 RUN ci/tests/e2e-ansible-scaffold-hybrid.sh
 
 FROM ansible/ansible-runner:1.2
