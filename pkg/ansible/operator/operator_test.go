@@ -26,40 +26,6 @@ import (
 
 // TODO: add a test for the Run method
 
-func TestFormatEnvVar(t *testing.T) {
-	testCases := []struct {
-		name     string
-		kind     string
-		group    string
-		expected string
-	}{
-		{
-			name:     "easy path",
-			kind:     "FooCluster",
-			group:    "cache.example.com",
-			expected: "WORKER_FOOCLUSTER_CACHE_EXAMPLE_COM",
-		},
-		{
-			name:     "missing kind",
-			kind:     "",
-			group:    "cache.example.com",
-			expected: "WORKER__CACHE_EXAMPLE_COM",
-		},
-		{
-			name:     "missing group",
-			kind:     "FooCluster",
-			group:    "",
-			expected: "WORKER_FOOCLUSTER_",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, formatEnvVar(tc.kind, tc.group))
-		})
-	}
-}
-
 func TestMaxWorkers(t *testing.T) {
 	testCases := []struct {
 		name      string
@@ -67,6 +33,7 @@ func TestMaxWorkers(t *testing.T) {
 		defvalue  int
 		expected  int
 		setenvvar bool
+		envvar    string
 	}{
 		{
 			name: "no env, use default value",
@@ -78,6 +45,7 @@ func TestMaxWorkers(t *testing.T) {
 			defvalue:  1,
 			expected:  1,
 			setenvvar: false,
+			envvar:    "WORKER_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
 		},
 		{
 			name: "env set to 3, expect 3",
@@ -89,14 +57,15 @@ func TestMaxWorkers(t *testing.T) {
 			defvalue:  1,
 			expected:  3,
 			setenvvar: true,
+			envvar:    "WORKER_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			os.Unsetenv(formatEnvVar(tc.gvk.Kind, tc.gvk.Group))
+			os.Unsetenv(tc.envvar)
 			if tc.setenvvar {
-				os.Setenv(formatEnvVar(tc.gvk.Kind, tc.gvk.Group), strconv.Itoa(tc.expected))
+				os.Setenv(tc.envvar, strconv.Itoa(tc.expected))
 			}
 			assert.Equal(t, tc.expected, getMaxWorkers(tc.gvk, tc.defvalue))
 		})

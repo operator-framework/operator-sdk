@@ -149,7 +149,7 @@ func main() {
 	}
 
 	if err = serveCRMetrics(cfg); err != nil {
-		log.Info("Could not generate and serve custom resource metrics: ", err.Error())
+		log.Info("Could not generate and serve custom resource metrics", "error", err.Error())
 	}
 
 	// Add to the below struct any other metrics ports you want to expose.
