@@ -1,6 +1,6 @@
 FROM osdk-builder as builder
 
-RUN go run hack/image/helm/scaffold-helm-image.go
+RUN make image/scaffold/helm
 
 FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
 
