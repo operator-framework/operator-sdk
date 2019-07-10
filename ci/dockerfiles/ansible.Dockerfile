@@ -1,6 +1,6 @@
 FROM osdk-builder as builder
 
-RUN go run hack/image/ansible/scaffold-ansible-image.go
+RUN make image/scaffold/ansible
 
 FROM ansible/ansible-runner:1.2
 

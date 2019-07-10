@@ -23,7 +23,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"unicode"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
@@ -139,7 +138,7 @@ func (s *CSV) CustomRender() ([]byte, error) {
 		}
 	}
 
-	return k8sutil.GetObjectBytes(csv)
+	return k8sutil.GetObjectBytes(csv, yaml.Marshal)
 }
 
 func (s *CSV) getBaseCSVIfExists() (*olmapiv1alpha1.ClusterServiceVersion, bool, error) {
@@ -191,41 +190,6 @@ func (s *CSV) getCSVPath(ver string) string {
 	return filepath.Join(s.pathPrefix, OLMCatalogDir, lowerProjName, ver, name)
 }
 
-// getDisplayName turns a project dir name in any of {snake, chain, camel}
-// cases, hierarchical dot structure, or space-delimited into a
-// space-delimited, title'd display name.
-// Ex. "another-_AppOperator_againTwiceThrice More"
-// ->  "Another App Operator Again Twice Thrice More"
-func getDisplayName(name string) string {
-	for _, sep := range ".-_ " {
-		splitName := strings.Split(name, string(sep))
-		for i := 0; i < len(splitName); i++ {
-			if splitName[i] == "" {
-				splitName = append(splitName[:i], splitName[i+1:]...)
-				i--
-			} else {
-				splitName[i] = strings.TrimSpace(splitName[i])
-			}
-		}
-		name = strings.Join(splitName, " ")
-	}
-	splitName := strings.Split(name, " ")
-	for i, word := range splitName {
-		temp := word
-		o := 0
-		for j, r := range word {
-			if unicode.IsUpper(r) {
-				if j > 0 && !unicode.IsUpper(rune(word[j-1])) {
-					temp = temp[0:j+o] + " " + temp[j+o:len(temp)]
-					o++
-				}
-			}
-		}
-		splitName[i] = temp
-	}
-	return strings.TrimSpace(strings.Title(strings.Join(splitName, " ")))
-}
-
 // initCSVFields initializes all csv fields that should be populated by a user
 // with sane defaults. initCSVFields should only be called for new csv's.
 func (s *CSV) initCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) error {
@@ -242,7 +206,7 @@ func (s *CSV) initCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 		return err
 	}
 	csv.Spec.Version = olmversion.OperatorVersion{Version: ver}
-	csv.Spec.DisplayName = getDisplayName(s.OperatorName)
+	csv.Spec.DisplayName = k8sutil.GetDisplayName(s.OperatorName)
 	csv.Spec.Description = "Placeholder description"
 	csv.Spec.Maturity = "alpha"
 	csv.Spec.Provider = olmapiv1alpha1.AppLink{}
@@ -381,7 +345,7 @@ func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.Clu
 		scanner := yamlutil.NewYAMLScanner(yamlData)
 		for scanner.Scan() {
 			yamlSpec := scanner.Bytes()
-			kind, err := getKindfromYAML(yamlSpec)
+			kind, err := k8sutil.GetKindfromYAML(yamlSpec)
 			if err != nil {
 				return fmt.Errorf("%s: %v", f, err)
 			}

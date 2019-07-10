@@ -15,13 +15,14 @@
 package k8sutil
 
 import (
-	yaml "github.com/ghodss/yaml"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-// GetObjectBytes marshalls an object and removes runtime-managed fields:
+type MarshalFunc func(interface{}) ([]byte, error)
+
+// GetObjectBytes marshalls an object with m and removes runtime-managed fields:
 // 'status', 'creationTimestamp'
-func GetObjectBytes(obj interface{}) ([]byte, error) {
+func GetObjectBytes(obj interface{}, m MarshalFunc) ([]byte, error) {
 	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	if err != nil {
 		return nil, err
@@ -30,7 +31,7 @@ func GetObjectBytes(obj interface{}) ([]byte, error) {
 	for _, dk := range deleteKeys {
 		deleteKeyFromUnstructured(u, dk)
 	}
-	return yaml.Marshal(u)
+	return m(u)
 }
 
 func deleteKeyFromUnstructured(u map[string]interface{}, key string) {
