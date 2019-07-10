@@ -149,7 +149,7 @@ func main() {
 	}
 
 	if err = serveCRMetrics(cfg); err != nil {
-		log.Info("Could not generate and serve custom resource metrics: ", err.Error())
+		log.Info("Could not generate and serve custom resource metrics", "error", err.Error())
 	}
 
 	// Add to the below struct any other metrics ports you want to expose.
@@ -158,7 +158,7 @@ func main() {
 		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
 	}
 	// Create Service object to expose the metrics port(s).
-	_, err = metrics.CreateMetricsService(ctx, servicePorts)
+	_, err = metrics.CreateMetricsService(ctx, cfg, servicePorts)
 	if err != nil {
 		log.Info(err.Error())
 	}

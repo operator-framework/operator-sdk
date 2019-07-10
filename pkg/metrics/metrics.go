@@ -25,8 +25,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/rest"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -43,11 +43,11 @@ const (
 
 // CreateMetricsService creates a Kubernetes Service to expose the passed metrics
 // port(s) with the given name(s).
-func CreateMetricsService(ctx context.Context, servicePorts []v1.ServicePort) (*v1.Service, error) {
+func CreateMetricsService(ctx context.Context, cfg *rest.Config, servicePorts []v1.ServicePort) (*v1.Service, error) {
 	if len(servicePorts) < 1 {
 		return nil, fmt.Errorf("failed to create metrics Serice; service ports were empty")
 	}
-	client, err := createClient()
+	client, err := crclient.New(cfg, crclient.Options{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new client: %v", err)
 	}
@@ -170,18 +170,4 @@ func findFinalOwnerRef(ctx context.Context, client crclient.Client, ns string, o
 
 	log.V(1).Info("Pods owner found", "Kind", ownerRef.Kind, "Name", ownerRef.Name, "Namespace", ns)
 	return ownerRef, nil
-}
-
-func createClient() (crclient.Client, error) {
-	config, err := config.GetConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := crclient.New(config, crclient.Options{})
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
 }

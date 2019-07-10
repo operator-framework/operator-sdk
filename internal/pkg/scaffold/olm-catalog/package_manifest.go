@@ -15,7 +15,6 @@
 package catalog
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -24,6 +23,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	registryutil "github.com/operator-framework/operator-sdk/internal/util/operator-registry"
 
 	"github.com/ghodss/yaml"
 	olmregistry "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/registry"
@@ -95,7 +95,7 @@ func (s *PackageManifest) CustomRender() ([]byte, error) {
 		return nil, errors.Wrapf(err, "package manifest %s", path)
 	}
 
-	if err := validatePackageManifest(pm); err != nil {
+	if err := registryutil.ValidatePackageManifest(pm); err != nil {
 		return nil, errors.Wrapf(err, "failed to validate package manifest %s", pm.PackageName)
 	}
 
@@ -125,37 +125,6 @@ func (s *PackageManifest) newPackageManifest() *olmregistry.PackageManifest {
 		DefaultChannelName: channel,
 	}
 	return pm
-}
-
-func validatePackageManifest(pm *olmregistry.PackageManifest) error {
-	if pm.PackageName == "" {
-		return fmt.Errorf("package name cannot be empty")
-	}
-	if len(pm.Channels) == 0 {
-		return fmt.Errorf("channels cannot be empty")
-	}
-	if pm.DefaultChannelName == "" {
-		return fmt.Errorf("default channel cannot be empty")
-	}
-
-	seen := map[string]struct{}{}
-	for i, c := range pm.Channels {
-		if c.Name == "" {
-			return fmt.Errorf("channel %d name cannot be empty", i)
-		}
-		if c.CurrentCSVName == "" {
-			return fmt.Errorf("channel %s currentCSV cannot be empty", c.Name)
-		}
-		if _, ok := seen[c.Name]; ok {
-			return fmt.Errorf("duplicate package manifest channel name %s; channel names must be unique", c.Name)
-		}
-		seen[c.Name] = struct{}{}
-	}
-	if _, ok := seen[pm.DefaultChannelName]; !ok {
-		return fmt.Errorf("default channel %s does not exist in channels", pm.DefaultChannelName)
-	}
-
-	return nil
 }
 
 // setChannels checks for duplicate channels in pm and sets the default
