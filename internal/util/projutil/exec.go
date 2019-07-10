@@ -50,8 +50,8 @@ type GoCmdOptions struct {
 	// Dir is the dir to run "go {cmd}" in; exec.Command.Dir is set to this value.
 	Dir string
 	// GoMod determines whether to set the "-mod=vendor" flag.
-	// If true, "go {cmd}" will use modules.
-	// If false, "go {cmd}" will not use go modules. This is the default.
+	// If true and ./vendor/ exists, "go {cmd}" will use vendored modules.
+	// If false, "go {cmd}" will not use Go modules. This is the default.
 	// This applies to build, clean, get, install, list, run, and test.
 	GoMod bool
 }
@@ -63,41 +63,57 @@ type GoTestOptions struct {
 	TestBinaryArgs []string
 }
 
-const (
-	goBuildCmd = "build"
-	goTestCmd  = "test"
-)
+var validVendorCmds = map[string]struct{}{
+	"build":   struct{}{},
+	"clean":   struct{}{},
+	"get":     struct{}{},
+	"install": struct{}{},
+	"list":    struct{}{},
+	"run":     struct{}{},
+	"test":    struct{}{},
+}
 
 // GoBuild runs "go build" configured with opts.
 func GoBuild(opts GoCmdOptions) error {
-	return goCmd(goBuildCmd, opts)
+	return GoCmd("build", opts)
 }
 
 // GoTest runs "go test" configured with opts.
 func GoTest(opts GoTestOptions) error {
-	bargs, err := getGeneralArgs("test", opts.GoCmdOptions)
+	bargs, err := opts.getGeneralArgsWithCmd("test")
 	if err != nil {
 		return err
 	}
 	bargs = append(bargs, opts.TestBinaryArgs...)
 	c := exec.Command("go", bargs...)
-	setCommandFields(c, opts.GoCmdOptions)
+	opts.setCmdFields(c)
 	return ExecCmd(c)
 }
 
-// goCmd runs "go cmd"..
-func goCmd(cmd string, opts GoCmdOptions) error {
-	bargs, err := getGeneralArgs(cmd, opts)
+// GoCmd runs "go {cmd}".
+func GoCmd(cmd string, opts GoCmdOptions) error {
+	bargs, err := opts.getGeneralArgsWithCmd(cmd)
 	if err != nil {
 		return err
 	}
 	c := exec.Command("go", bargs...)
-	setCommandFields(c, opts)
+	opts.setCmdFields(c)
 	return ExecCmd(c)
 }
 
-func getGeneralArgs(cmd string, opts GoCmdOptions) ([]string, error) {
-	bargs := []string{cmd}
+func (opts GoCmdOptions) getGeneralArgsWithCmd(cmd string) ([]string, error) {
+	// Go subcommands with more than one child command must be passed as
+	// multiple arguments instead of a spaced string, ex. "go mod init".
+	bargs := []string{}
+	for _, c := range strings.Split(cmd, " ") {
+		if ct := strings.TrimSpace(c); ct != "" {
+			bargs = append(bargs, ct)
+		}
+	}
+	if len(bargs) == 0 {
+		return nil, fmt.Errorf("the go binary cannot be run without subcommands")
+	}
+
 	if opts.BinName != "" {
 		bargs = append(bargs, "-o", opts.BinName)
 	}
@@ -106,15 +122,28 @@ func getGeneralArgs(cmd string, opts GoCmdOptions) ([]string, error) {
 		if goModOn, err := GoModOn(); err != nil {
 			return nil, err
 		} else if goModOn {
-			bargs = append(bargs, "-mod=vendor")
+			// Does vendor exist?
+			info, err := os.Stat("vendor")
+			if err != nil && !os.IsNotExist(err) {
+				return nil, err
+			}
+			// Does the first "go" subcommand accept -mod=vendor?
+			_, ok := validVendorCmds[bargs[0]]
+			if err == nil && info.IsDir() && ok {
+				bargs = append(bargs, "-mod=vendor")
+			}
 		}
 	}
-	return append(bargs, opts.PackagePath), nil
+	if opts.PackagePath != "" {
+		bargs = append(bargs, opts.PackagePath)
+	}
+	return bargs, nil
 }
 
-func setCommandFields(c *exec.Cmd, opts GoCmdOptions) {
+func (opts GoCmdOptions) setCmdFields(c *exec.Cmd) {
+	c.Env = append(c.Env, os.Environ()...)
 	if len(opts.Env) != 0 {
-		c.Env = append(os.Environ(), opts.Env...)
+		c.Env = append(c.Env, opts.Env...)
 	}
 	if opts.Dir != "" {
 		c.Dir = opts.Dir
@@ -128,7 +157,7 @@ func setCommandFields(c *exec.Cmd, opts GoCmdOptions) {
 //		the environment variable GO111MODULE unset (or explicitly set to auto).
 //	- Invoke the go command with GO111MODULE=on environment variable set.
 //
-// GoModOn returns true if go modules are on in one of the above two ways.
+// GoModOn returns true if Go modules are on in one of the above two ways.
 func GoModOn() (bool, error) {
 	v, ok := os.LookupEnv(GoModEnv)
 	if v == "off" {
@@ -137,14 +166,14 @@ func GoModOn() (bool, error) {
 	if v == "on" {
 		return true, nil
 	}
-	inSrc, err := wdInGoPathSrc()
+	inSrc, err := WdInGoPathSrc()
 	if err != nil {
 		return false, err
 	}
 	return !inSrc && (!ok || v == "" || v == "auto"), nil
 }
 
-func wdInGoPathSrc() (bool, error) {
+func WdInGoPathSrc() (bool, error) {
 	wd, err := os.Getwd()
 	if err != nil {
 		return false, err

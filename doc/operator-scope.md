@@ -23,3 +23,79 @@ For each CRD that needs to be cluster-scoped, update its manifest to be cluster-
 
 * `deploy/crds/<group>_<version>_<kind>_crd.yaml`
   * Set `spec.scope: Cluster`
+
+To ensure that the CRD is always generated with `scope: Cluster`, add the tag `// +genclient:nonNamespaced` above the CRD's Go type defintion in `pkg/apis/<group>/<version>/<kind>_types.go`.
+
+
+### Example for cluster scoped operator
+
+With the above changes the specified manifests should look as follows:
+
+* `deploy/operator.yaml`:
+    ```YAML
+    apiVersion: apps/v1
+    kind: Deployment
+    ...
+    spec:
+      ...
+      template:
+        ...
+        spec:
+          ...
+          serviceAccountName: memcached-operator
+          containers:
+          - name: memcached-operator
+            ...
+            env:
+              - name: WATCH_NAMESPACE
+              value: ""
+    ```
+* `deploy/role.yaml`:
+    ```YAML
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      name: memcached-operator
+    ...
+    ```
+* `deploy/role_binding.yaml`:
+    ```YAML 
+    kind: ClusterRoleBinding
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: memcached-operator
+    subjects:
+    - kind: ServiceAccount
+      name: memcached-operator
+      namespace: <operator-namespace>
+    roleRef:
+      kind: ClusterRole
+      name: memcached-operator
+      apiGroup: rbac.authorization.k8s.io
+    ```
+* `deploy/crds/cache_v1alpha1_memcached_crd.yaml`
+    ```YAML
+    apiVersion: apiextensions.k8s.io/v1beta1
+    kind: CustomResourceDefinition
+    metadata:
+      name: memcacheds.cache.example.com
+    spec:
+      group: cache.example.com
+      ...
+      scope: Cluster
+    ```
+* `pkg/apis/cache/v1alpha1/memcached_types.go`
+    ```Go
+    // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+    // Memcached is the Schema for the memcacheds API
+    // +k8s:openapi-gen=true
+    // +genclient:nonNamespaced
+    type Memcached struct {
+      metav1.TypeMeta   `json:",inline"`
+      metav1.ObjectMeta `json:"metadata,omitempty"`
+
+      Spec   MemcachedSpec   `json:"spec,omitempty"`
+      Status MemcachedStatus `json:"status,omitempty"`
+    }
+    ```

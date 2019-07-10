@@ -59,12 +59,9 @@ func GenerateServiceMonitor(s *v1.Service) *monitoringv1.ServiceMonitor {
 	for k, v := range s.ObjectMeta.Labels {
 		labels[k] = v
 	}
+	endpoints := populateEndpointsFromServicePorts(s)
 
 	return &monitoringv1.ServiceMonitor{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ServiceMonitor",
-			APIVersion: "monitoring.coreos.com/v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      s.ObjectMeta.Name,
 			Namespace: s.ObjectMeta.Namespace,
@@ -74,13 +71,17 @@ func GenerateServiceMonitor(s *v1.Service) *monitoringv1.ServiceMonitor {
 			Selector: metav1.LabelSelector{
 				MatchLabels: labels,
 			},
-			Endpoints: []monitoringv1.Endpoint{
-				{
-					Port: s.Spec.Ports[0].Name,
-				},
-			},
+			Endpoints: endpoints,
 		},
 	}
+}
+
+func populateEndpointsFromServicePorts(s *v1.Service) []monitoringv1.Endpoint {
+	var endpoints []monitoringv1.Endpoint
+	for _, port := range s.Spec.Ports {
+		endpoints = append(endpoints, monitoringv1.Endpoint{Port: port.Name})
+	}
+	return endpoints
 }
 
 // hasServiceMonitor checks if ServiceMonitor is registered in the cluster.

@@ -52,6 +52,11 @@ install:
 		" \
 		$(BUILD_PATH)
 
+ci-build: build/operator-sdk-$(VERSION)-x86_64-linux-gnu ci-install
+
+ci-install:
+	mv build/operator-sdk-$(VERSION)-x86_64-linux-gnu build/operator-sdk
+
 release_x86_64 := \
 	build/operator-sdk-$(VERSION)-x86_64-linux-gnu \
 	build/operator-sdk-$(VERSION)-x86_64-apple-darwin
@@ -92,7 +97,7 @@ test-ci: test/markdown test/sanity test/unit install test/subcommand test/e2e
 
 test/ci-go: test/subcommand test/e2e/go
 
-test/ci-ansible: test/e2e/ansible test/e2e/ansible-molecule
+test/ci-ansible: test/e2e/ansible-molecule
 
 test/ci-helm: test/e2e/helm
 
@@ -104,13 +109,16 @@ test/unit:
 	$(Q)go test -count=1 -short ./pkg/...
 	$(Q)go test -count=1 -short ./internal/...
 
-test/subcommand: test/subcommand/test-local test/subcommand/scorecard
+test/subcommand: test/subcommand/test-local test/subcommand/scorecard test/subcommand/alpha-olm
 
 test/subcommand/test-local:
 	./hack/tests/test-subcommand.sh
 
 test/subcommand/scorecard:
 	./hack/tests/scorecard-subcommand.sh
+
+test/subcommand/alpha-olm:
+	./hack/tests/alpha-olm-subcommands.sh
 
 test/e2e: test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm
 
@@ -120,7 +128,10 @@ test/e2e/go:
 test/e2e/ansible: image/build/ansible
 	./hack/tests/e2e-ansible.sh
 
-test/e2e/ansible-molecule:
+test/e2e/ansible2:
+	./ci/tests/e2e-ansible.sh
+
+test/e2e/ansible-molecule: image/build/ansible
 	./hack/tests/e2e-ansible-molecule.sh
 
 test/e2e/helm: image/build/helm
@@ -129,7 +140,7 @@ test/e2e/helm: image/build/helm
 test/markdown:
 	./hack/ci/marker --root=doc
 
-.PHONY: test test-ci test/sanity test/unit test/subcommand test/e2e test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm test/ci-go test/ci-ansible test/ci-helm test/markdown
+.PHONY: test test-ci test/sanity test/unit test/subcommand test/subcommand/test-local test/subcommand/scorecard test/subcommand/alpha-olm test/e2e test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm test/ci-go test/ci-ansible test/ci-helm test/markdown
 
 image: image/build image/push
 

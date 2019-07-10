@@ -26,12 +26,14 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	testutil "github.com/operator-framework/operator-sdk/internal/pkg/scaffold/internal/testutil"
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 	"github.com/spf13/afero"
+	appsv1 "k8s.io/api/apps/v1"
 )
 
 const testDataDir = "testdata"
@@ -46,9 +48,10 @@ func TestCSVNew(t *testing.T) {
 		},
 	}
 	csvVer := "0.1.0"
-	projectName := "app-operator"
+	projectName := "app-operator-dir"
+	operatorName := "app-operator"
 
-	sc := &CSV{CSVVersion: csvVer, pathPrefix: testDataDir}
+	sc := &CSV{CSVVersion: csvVer, pathPrefix: testDataDir, OperatorName: operatorName}
 	err := s.Execute(&input.Config{ProjectName: projectName}, sc)
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
@@ -68,7 +71,8 @@ func TestCSVNew(t *testing.T) {
 
 func TestCSVFromOld(t *testing.T) {
 	s := &scaffold.Scaffold{Fs: afero.NewMemMapFs()}
-	projectName := "app-operator"
+	projectName := "app-operator-dir"
+	operatorName := "app-operator"
 	oldCSVVer, newCSVVer := "0.1.0", "0.2.0"
 
 	// Write all files in testdata/deploy to fs so manifests are present when
@@ -78,9 +82,10 @@ func TestCSVFromOld(t *testing.T) {
 	}
 
 	sc := &CSV{
-		CSVVersion:  newCSVVer,
-		FromVersion: oldCSVVer,
-		pathPrefix:  testDataDir,
+		CSVVersion:   newCSVVer,
+		FromVersion:  oldCSVVer,
+		pathPrefix:   testDataDir,
+		OperatorName: operatorName,
 	}
 	err := s.Execute(&input.Config{ProjectName: projectName}, sc)
 	if err != nil {
@@ -97,23 +102,26 @@ func TestCSVFromOld(t *testing.T) {
 		t.Fatalf("New CSV does not exist at %s", newCSVPath)
 	}
 
-	expName := getCSVName(projectName, newCSVVer)
+	expName := getCSVName(operatorName, newCSVVer)
 	if newCSV.ObjectMeta.Name != expName {
 		t.Errorf("Expected CSV metadata.name %s, got %s", expName, newCSV.ObjectMeta.Name)
 	}
-	expReplaces := getCSVName(projectName, oldCSVVer)
+	expReplaces := getCSVName(operatorName, oldCSVVer)
 	if newCSV.Spec.Replaces != expReplaces {
 		t.Errorf("Expected CSV spec.replaces %s, got %s", expReplaces, newCSV.Spec.Replaces)
 	}
 }
 
 func TestUpdateVersion(t *testing.T) {
-	projectName := "app-operator"
+	projectName := "app-operator-dir"
+	operatorName := "app-operator"
+
 	oldCSVVer, newCSVVer := "0.1.0", "0.2.0"
 	sc := &CSV{
-		Input:      input.Input{ProjectName: projectName},
-		CSVVersion: newCSVVer,
-		pathPrefix: testDataDir,
+		Input:        input.Input{ProjectName: projectName},
+		CSVVersion:   newCSVVer,
+		pathPrefix:   testDataDir,
+		OperatorName: operatorName,
 	}
 	csvExpBytes, err := ioutil.ReadFile(sc.getCSVPath(oldCSVVer))
 	if err != nil {
@@ -132,7 +140,7 @@ func TestUpdateVersion(t *testing.T) {
 	if !csv.Spec.Version.Equal(*wantedSemver) {
 		t.Errorf("Wanted csv version %v, got %v", *wantedSemver, csv.Spec.Version)
 	}
-	wantedName := getCSVName(projectName, newCSVVer)
+	wantedName := getCSVName(operatorName, newCSVVer)
 	if csv.ObjectMeta.Name != wantedName {
 		t.Errorf("Wanted csv name %s, got %s", wantedName, csv.ObjectMeta.Name)
 	}
@@ -153,35 +161,50 @@ func TestUpdateVersion(t *testing.T) {
 		t.Errorf("Podspec image changed from %s to %s", wantedImage, csvPodImage)
 	}
 
-	wantedReplaces := getCSVName(projectName, "0.1.0")
+	wantedReplaces := getCSVName(operatorName, "0.1.0")
 	if csv.Spec.Replaces != wantedReplaces {
 		t.Errorf("Wanted csv replaces %s, got %s", wantedReplaces, csv.Spec.Replaces)
 	}
 }
 
-func TestGetDisplayName(t *testing.T) {
-	cases := []struct {
-		input, wanted string
-	}{
-		{"Appoperator", "Appoperator"},
-		{"appoperator", "Appoperator"},
-		{"appoperatoR", "Appoperato R"},
-		{"AppOperator", "App Operator"},
-		{"appOperator", "App Operator"},
-		{"app-operator", "App Operator"},
-		{"app-_operator", "App Operator"},
-		{"App-operator", "App Operator"},
-		{"app-_Operator", "App Operator"},
-		{"app--Operator", "App Operator"},
-		{"app--_Operator", "App Operator"},
-		{"APP", "APP"},
-		{"another-AppOperator_againTwiceThrice More", "Another App Operator Again Twice Thrice More"},
+func TestSetAndCheckOLMNamespaces(t *testing.T) {
+	depBytes, err := ioutil.ReadFile(filepath.Join(testDeployDir, "operator.yaml"))
+	if err != nil {
+		t.Fatalf("Failed to read Deployment bytes: %v", err)
 	}
 
-	for _, c := range cases {
-		dn := getDisplayName(c.input)
-		if dn != c.wanted {
-			t.Errorf("Wanted %s, got %s", c.wanted, dn)
-		}
+	// The test operator.yaml doesn't have "olm.targetNamespaces", so first
+	// check that depHasOLMNamespaces() returns false.
+	dep := &appsv1.Deployment{}
+	if err := yaml.Unmarshal(depBytes, dep); err != nil {
+		t.Fatalf("Failed to unmarshal Deployment bytes: %v", err)
+	}
+	if depHasOLMNamespaces(dep) {
+		t.Error("Expected depHasOLMNamespaces to return false, got true")
+	}
+
+	// Insert "olm.targetNamespaces" into WATCH_NAMESPACE and check that
+	// depHasOLMNamespaces() returns true.
+	setWatchNamespacesEnv(dep)
+	if !depHasOLMNamespaces(dep) {
+		t.Error("Expected depHasOLMNamespaces to return true, got false")
+	}
+
+	// Overwrite WATCH_NAMESPACE and check that depHasOLMNamespaces() returns
+	// false.
+	overwriteContainerEnvVar(dep, k8sutil.WatchNamespaceEnvVar, newEnvVar("FOO", "bar"))
+	if depHasOLMNamespaces(dep) {
+		t.Error("Expected depHasOLMNamespaces to return false, got true")
+	}
+
+	// Insert "olm.targetNamespaces" elsewhere in the deployment pod spec
+	// and check that depHasOLMNamespaces() returns true.
+	dep = &appsv1.Deployment{}
+	if err := yaml.Unmarshal(depBytes, dep); err != nil {
+		t.Fatalf("Failed to unmarshal Deployment bytes: %v", err)
+	}
+	dep.Spec.Template.ObjectMeta.Labels["namespace"] = olmTNMeta
+	if !depHasOLMNamespaces(dep) {
+		t.Error("Expected depHasOLMNamespaces to return true, got false")
 	}
 }

@@ -5,7 +5,7 @@ set -eux
 source hack/lib/test_lib.sh
 
 ROOTDIR="$(pwd)"
-GOTMP="$(mktemp -d -p $GOPATH/src)"
+GOTMP="$(mktemp -d)"
 trap_add 'rm -rf $GOTMP' EXIT
 BASEIMAGEDIR="$GOTMP/helm-operator"
 mkdir -p "$BASEIMAGEDIR"

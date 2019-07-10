@@ -25,14 +25,25 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 	"github.com/operator-framework/operator-sdk/pkg/helm/watches"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
+	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
+	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+)
+
+var (
+	metricsHost               = "0.0.0.0"
+	metricsPort         int32 = 8383
+	operatorMetricsPort int32 = 8686
 )
 
 var log = logf.Log.WithName("cmd")
@@ -67,7 +78,8 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 		return err
 	}
 	mgr, err := manager.New(cfg, manager.Options{
-		Namespace: namespace,
+		Namespace:          namespace,
+		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
 	})
 	if err != nil {
 		log.Error(err, "Failed to create a new manager.")
@@ -79,7 +91,7 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 		log.Error(err, "Failed to create new manager factories.")
 		return err
 	}
-
+	var gvks []schema.GroupVersionKind
 	for _, w := range watches {
 		// Register the controller with the factory.
 		err := controller.Add(mgr, controller.WatchOptions{
@@ -93,6 +105,7 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 			log.Error(err, "Failed to add manager factory to controller.")
 			return err
 		}
+		gvks = append(gvks, w.GroupVersionKind)
 	}
 
 	operatorName, err := k8sutil.GetOperatorName()
@@ -100,11 +113,31 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 		log.Error(err, "Failed to get operator name")
 		return err
 	}
+
+	ctx := context.TODO()
+
 	// Become the leader before proceeding
-	err = leader.Become(context.TODO(), operatorName+"-lock")
+	err = leader.Become(ctx, operatorName+"-lock")
 	if err != nil {
 		log.Error(err, "Failed to become leader.")
 		return err
+	}
+
+	// Generates operator specific metrics based on the GVKs.
+	// It serves those metrics on "http://metricsHost:operatorMetricsPort".
+	err = kubemetrics.GenerateAndServeCRMetrics(cfg, []string{namespace}, gvks, metricsHost, operatorMetricsPort)
+	if err != nil {
+		log.Info("Could not generate and serve custom resource metrics", "error", err.Error())
+	}
+
+	servicePorts := []v1.ServicePort{
+		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
+		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
+	}
+	// Create Service object to expose the metrics port(s).
+	_, err = metrics.CreateMetricsService(ctx, cfg, servicePorts)
+	if err != nil {
+		log.Info(err.Error())
 	}
 
 	// Start the Cmd

@@ -5,7 +5,7 @@ source hack/lib/test_lib.sh
 set -eux
 
 ROOTDIR="$(pwd)"
-GOTMP="$(mktemp -d -p $GOPATH/src)"
+GOTMP="$(mktemp -d)"
 trap_add 'rm -rf $GOTMP' EXIT
 # Needs to be from source until 2.20 comes out
 pip install --user git+https://github.com/ansible/molecule.git
@@ -13,6 +13,7 @@ pip install --user docker openshift jmespath
 
 deploy_prereqs() {
     kubectl create -f "$OPERATORDIR/deploy/service_account.yaml"
+    oc adm policy add-cluster-role-to-user cluster-admin -z memcached-operator || :
     kubectl create -f "$OPERATORDIR/deploy/role.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
     kubectl create -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_memcached_crd.yaml"
@@ -26,7 +27,11 @@ remove_prereqs() {
 }
 
 pushd "$GOTMP"
-operator-sdk new memcached-operator --api-version=ansible.example.com/v1alpha1 --kind=Memcached --type=ansible --generate-playbook
+operator-sdk new memcached-operator \
+  --api-version=ansible.example.com/v1alpha1 \
+  --kind=Memcached \
+  --type=ansible \
+  --generate-playbook
 cp "$ROOTDIR/test/ansible-memcached/tasks.yml" memcached-operator/roles/memcached/tasks/main.yml
 cp "$ROOTDIR/test/ansible-memcached/defaults.yml" memcached-operator/roles/memcached/defaults/main.yml
 cp "$ROOTDIR/test/ansible-memcached/asserts.yml"  memcached-operator/molecule/default/asserts.yml
@@ -37,6 +42,7 @@ cat "$ROOTDIR/test/ansible-memcached/watches-finalizer.yaml" >> memcached-operat
 cat "$ROOTDIR/test/ansible-memcached/prepare-test-image.yml" >> memcached-operator/molecule/test-local/prepare.yml
 # Append v1 kind to watches to test watching already registered GVK
 cat "$ROOTDIR/test/ansible-memcached/watches-v1-kind.yaml" >> memcached-operator/watches.yaml
+
 
 
 # Test local

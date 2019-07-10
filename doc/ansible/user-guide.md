@@ -4,22 +4,22 @@ This guide walks through an example of building a simple memcached-operator powe
 
 ## Prerequisites
 
-- [git][git_tool]
-- [docker][docker_tool] version 17.03+.
-- [kubectl][kubectl_tool] version v1.9.0+.
-- [ansible][ansible_tool] version v2.6.0+
-- [ansible-runner][ansible_runner_tool] version v1.1.0+
-- [ansible-runner-http][ansible_runner_http_plugin] version v1.0.0+
-- [dep][dep_tool] version v0.5.0+. (Optional if you aren't installing from source)
-- [go][go_tool] version v1.12+. (Optional if you aren't installing from source)
+- [git][git-tool]
+- [docker][docker-tool] version 17.03+.
+- [kubectl][kubectl-tool] version v1.9.0+.
+- [ansible][ansible-tool] version v2.6.0+
+- [ansible-runner][ansible-runner-tool] version v1.1.0+
+- [ansible-runner-http][ansible-runner-http-plugin] version v1.0.0+
+- [dep][dep-tool] version v0.5.0+. (Optional if you aren't installing from source)
+- [go][go-tool] version v1.12+. (Optional if you aren't installing from source)
 - Access to a Kubernetes v.1.9.0+ cluster.
 
-**Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the
-local Kubernetes cluster and [quay.io][quay_link] for the public registry.
+**Note**: This guide uses [minikube][minikube-tool] version v0.25.0+ as the
+local Kubernetes cluster and [quay.io][quay-link] for the public registry.
 
 ## Install the Operator SDK CLI
 
-Follow the steps in the [installation guide][install_guide] to learn how to install the Operator SDK CLI tool.
+Follow the steps in the [installation guide][install-guide] to learn how to install the Operator SDK CLI tool.
 
 ## Create a new project
 
@@ -35,11 +35,11 @@ Memcached resource with APIVersion `cache.example.com/v1apha1` and Kind
 `Memcached`.
 
 To learn more about the project directory structure, see [project
-layout][layout_doc] doc.
+layout][layout-doc] doc.
 
 #### Operator scope
 
-Read the [operator scope][operator_scope] documentation on how to run your operator as namespace-scoped vs cluster-scoped.
+Read the [operator scope][operator-scope] documentation on how to run your operator as namespace-scoped vs cluster-scoped.
 
 ### Watches file
 
@@ -247,17 +247,10 @@ The `imagePullPolicy` also requires an update.  To do this run:
 $ sed -i 's|{{ pull_policy\|default('\''Always'\'') }}|Always|g' deploy/operator.yaml
 ```
 
-If you created your operator using `--cluster-scoped=true`, update the service account namespace in the generated `ClusterRoleBinding` to match where you are deploying your operator.
-```
-$ export OPERATOR_NAMESPACE=$(kubectl config view --minify -o jsonpath='{.contexts[0].context.namespace}')
-$ sed -i "s|REPLACE_NAMESPACE|$OPERATOR_NAMESPACE|g" deploy/role_binding.yaml
-```
-
 **Note**
-If you are performing these steps on OSX, use the following commands instead:
+If you are performing these steps on OSX, use the following `sed` commands instead:
 ```
 $ sed -i "" 's|{{ REPLACE_IMAGE }}|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
-$ sed -i "" "s|REPLACE_NAMESPACE|$OPERATOR_NAMESPACE|g" deploy/role_binding.yaml
 $ sed -i "" 's|{{ pull_policy\|default('\''Always'\'') }}|Always|g' deploy/operator.yaml
 ```
 
@@ -282,8 +275,8 @@ memcached-operator       1         1         1            1           1m
 
 This method is preferred during the development cycle to speed up deployment and testing.
 
-**Note**: Ensure that [Ansible Runner][ansible_runner_tool] and [Ansible Runner
-HTTP Plugin][ansible_runner_http_plugin] is installed or else you will see
+**Note**: Ensure that [Ansible Runner][ansible-runner-tool] and [Ansible Runner
+HTTP Plugin][ansible-runner-http-plugin] is installed or else you will see
 unexpected errors from Ansible Runner when a Custom Resource is created.
 
 It is also important that the `role` path referenced in `watches.yaml` exists
@@ -410,17 +403,17 @@ $ kubectl delete -f deploy/service_account.yaml
 $ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
 ```
 
-[operator_scope]:./../operator-scope.md
-[install_guide]: ../user/install-operator-sdk.md
-[layout_doc]:./project_layout.md
-[homebrew_tool]:https://brew.sh/
-[dep_tool]:https://golang.github.io/dep/docs/installation.html
-[git_tool]:https://git-scm.com/downloads
-[go_tool]:https://golang.org/dl/
-[docker_tool]:https://docs.docker.com/install/
-[kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
-[minikube_tool]:https://github.com/kubernetes/minikube#installation
-[ansible_tool]:https://docs.ansible.com/ansible/latest/index.html
-[ansible_runner_tool]:https://ansible-runner.readthedocs.io/en/latest/install.html
-[ansible_runner_http_plugin]:https://github.com/ansible/ansible-runner-http
-[quay_link]:https://quay.io
+[operator-scope]:./../operator-scope.md
+[install-guide]: ../user/install-operator-sdk.md
+[layout-doc]:./project_layout.md
+[homebrew-tool]:https://brew.sh/
+[dep-tool]:https://golang.github.io/dep/docs/installation.html
+[git-tool]:https://git-scm.com/downloads
+[go-tool]:https://golang.org/dl/
+[docker-tool]:https://docs.docker.com/install/
+[kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
+[minikube-tool]:https://github.com/kubernetes/minikube#installation
+[ansible-tool]:https://docs.ansible.com/ansible/latest/index.html
+[ansible-runner-tool]:https://ansible-runner.readthedocs.io/en/latest/install.html
+[ansible-runner-http-plugin]:https://github.com/ansible/ansible-runner-http
+[quay-link]:https://quay.io

@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -31,6 +32,7 @@ import (
 var (
 	imageBuildArgs string
 	imageBuilder   string
+	goBuildArgs    string
 )
 
 func NewCmd() *cobra.Command {
@@ -52,14 +54,15 @@ For example:
 		RunE: buildFunc,
 	}
 	buildCmd.Flags().StringVar(&imageBuildArgs, "image-build-args", "", "Extra image build arguments as one string such as \"--build-arg https_proxy=$https_proxy\"")
-	buildCmd.Flags().StringVar(&imageBuilder, "image-builder", "docker", "Tool to build OCI images. One of: [docker, buildah]")
+	buildCmd.Flags().StringVar(&imageBuilder, "image-builder", "docker", "Tool to build OCI images. One of: [docker, podman, buildah]")
+	buildCmd.Flags().StringVar(&goBuildArgs, "go-build-args", "", "Extra Go build arguments as one string such as \"-ldflags -X=main.xyz=abc\"")
 	return buildCmd
 }
 
 func createBuildCommand(imageBuilder, context, dockerFile, image string, imageBuildArgs ...string) (*exec.Cmd, error) {
 	var args []string
 	switch imageBuilder {
-	case "docker":
+	case "docker", "podman":
 		args = append(args, "build", "-f", dockerFile, "-t", image)
 	case "buildah":
 		args = append(args, "bud", "--format=docker", "-f", dockerFile, "-t", image)
@@ -85,23 +88,36 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	}
 
 	projutil.MustInProjectRoot()
-	goBuildEnv := append(os.Environ(), "GOOS=linux", "GOARCH=amd64")
+	goBuildEnv := append(os.Environ(), "GOOS=linux")
+
+	if value, ok := os.LookupEnv("GOARCH"); ok {
+		goBuildEnv = append(goBuildEnv, "GOARCH="+value)
+	} else {
+		goBuildEnv = append(goBuildEnv, "GOARCH=amd64")
+	}
 
 	// If CGO_ENABLED is not set, set it to '0'.
 	if _, ok := os.LookupEnv("CGO_ENABLED"); !ok {
 		goBuildEnv = append(goBuildEnv, "CGO_ENABLED=0")
 	}
 
-	goTrimFlags := []string{"-gcflags", "all=-trimpath=${GOPATH}", "-asmflags", "all=-trimpath=${GOPATH}"}
 	absProjectPath := projutil.MustGetwd()
 	projectName := filepath.Base(absProjectPath)
 
 	// Don't need to build Go code if a non-Go Operator.
 	if projutil.IsOperatorGo() {
+		trimPath := fmt.Sprintf("all=-trimpath=%s", filepath.Dir(absProjectPath))
+		args := []string{"-gcflags", trimPath, "-asmflags", trimPath}
+
+		if goBuildArgs != "" {
+			splitArgs := strings.Fields(goBuildArgs)
+			args = append(args, splitArgs...)
+		}
+
 		opts := projutil.GoCmdOptions{
 			BinName:     filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName),
-			PackagePath: filepath.Join(projutil.CheckAndGetProjectGoPkg(), scaffold.ManagerDir),
-			Args:        goTrimFlags,
+			PackagePath: path.Join(projutil.GetGoPkg(), filepath.ToSlash(scaffold.ManagerDir)),
+			Args:        args,
 			Env:         goBuildEnv,
 			GoMod:       projutil.IsDepManagerGoMod(),
 		}

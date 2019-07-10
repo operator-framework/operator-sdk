@@ -77,16 +77,17 @@ $ eval $(minikube docker-env)
 
 All the tests are run through the [`Makefile`][makefile]. This is a brief description of all makefile test instructions:
 
-- `test` - Installs `operator-sdk` by running `dep ensure` and `make install`, and then runs all tests. This is intended as a full test for developers.
-- `test/ci-go` - Runs all the tests that the Go job runs in CI (`sanity`, `unit`, `subcommand`, `e2e/go`).
-- `test/ci-ansible` - Runs all the tests that the Ansible job runs in CI (`e2e/ansible`).
-- `test/ci-helm` - Runs all the tests that the Helm job runs in CI (`e2e/helm`).
+- `test` - Runs `test/unit`
+- `test/ci-go` - Runs all the tests that the Go job runs in Travis CI (`test/sanity`, `test/unit`, `test/subcommand`, `test/e2e/go`).
+- `test/ci-ansible` - Runs all the tests that the Ansible job runs in Travis CI (`test/e2e/ansible-molecule`).
+- `test/ci-helm` - Runs all the tests that the Helm job runs in Travis CI (`test/e2e/helm`).
 - `test/sanity` - Runs sanity checks.
 - `test/unit` - Runs unit tests.
 - `test/subcommand` - Runs subcommand tests.
-- `test/e2e` - Runs all E2E tests (`e2e/go`, `e2e/ansible`, and `e2e/helm`).
+- `test/e2e` - Runs all E2E tests (`test/e2e/go`, `test/e2e/ansible`, `test/e2e/ansible-molecule`, and `e2e/helm`).
 - `test/e2e/go` - Runs the go E2E test.
 - `test/e2e/ansible` - Runs the ansible E2E test.
+- `test/e2e/ansible-molecule` - Runs the ansible molecule E2E test.
 - `test/e2e/helm` - Runs the helm E2E test.
 - `test/markdown` - Runs the markdown checks
 
@@ -94,6 +95,15 @@ For more info on what these tests actually do, please see the [Travis Build][tra
 
 Some of the tests will run using the kube config in `$HOME/.kube/config` (others may check the `KUBECONFIG` env var first)
 and the operator images will be built and stored in you local docker registry.
+
+### Go E2E test flags
+
+The `make test/e2e/go` command accepts an `ARGS` variable containing flags that will be passed to `go test`:
+
+- `-image` string - Sets the operator test image tag to be built and used in testing. Defaults to "quay.io/example/memcached-operator:v0.0.1"
+- `-local-repo` string - Sets the path to the local SDK repo being tested. Defaults to the path of the SDK repo containing e2e tests. This is useful for testing customized e2e code.
+
+An example of using `ARGS` is in the note below.
 
 **NOTE**: Some of these tests, specifically the ansible (`test/e2e/ansible` and `test/ci-ansible`), helm
 (`test/e2e/helm` and `test/ci-helm`), and CI Go (`test/e2e/ci-go`) tests, only work when the cluster shares the local docker
@@ -117,8 +127,8 @@ during the go tests can cause these cleanups to fail (the ansible and helm E2E t
 always clean up correctly). For example, if a segfault occurs or a user kills the
 testing process, the cleanup functions for the go tests will not run. To manually clean up a test:
 
-1. Delete the CRD (`kubectl delete -f $GOPATH/src/github.com/example-inc/memcached-operator/deploy/crds/cache_v1alpha1_memcached_crd.yaml`).
-2. Delete the created project in `$GOPATH/src/github.com/example-inc/memcached-operator`
+1. Delete the CRD (`kubectl delete -f $HOME/projects/example.com/memcached-operator/deploy/crds/cache_v1alpha1_memcached_crd.yaml`).
+2. Delete the created project in `$HOME/projects/example.com/memcached-operator`
 3. Delete the namespaces that the tests run in, which also deletes any resources created within the namespaces. The namespaces start with `memcached-memcached-group` or `main` and are appended with a unix timestamp (seconds since Jan 1 1970). The kubectl command can be used to delete namespaces: `kubectl delete namespace $NAMESPACE`.
 
 [travis]: ./travis-build.md

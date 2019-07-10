@@ -1,0 +1,5 @@
+channels:
+- currentCSV: app-operator.v0.1.0
+  name: beta
+defaultChannel: beta
+packageName: app-operator

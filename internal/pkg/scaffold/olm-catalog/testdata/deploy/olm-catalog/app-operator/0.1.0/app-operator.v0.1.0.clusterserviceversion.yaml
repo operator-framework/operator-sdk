@@ -40,7 +40,7 @@ spec:
                 - name: WATCH_NAMESPACE
                   valueFrom:
                     fieldRef:
-                      fieldPath: metadata.namespace
+                      fieldPath: metadata.annotations['olm.targetNamespaces']
                 - name: OPERATOR_NAME
                   value: app-operator
                 image: quay.io/example-inc/operator:v0.1.0

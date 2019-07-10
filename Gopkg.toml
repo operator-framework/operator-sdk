@@ -1,34 +1,38 @@
 [[override]]
   name = "k8s.io/api"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/apiextensions-apiserver"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/apiserver"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/client-go"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/cli-runtime"
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[override]]
   name = "k8s.io/kube-openapi"
   revision = "0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803"
 
+[[override]]
+  name = "k8s.io/code-generator"
+  version = "kubernetes-1.13.4"
+
 [[constraint]]
   name = "sigs.k8s.io/controller-runtime"
-  version = "=v0.1.10"
+  version = "=v0.1.12"
 
 # This override revision has a fix that allows CRD unit tests to run correctly.
 # Remove once v0.1.11 is released.
@@ -51,7 +55,7 @@
 [[override]]
   name = "k8s.io/kube-aggregator"
   # Required for operator-lifecycle-manager version compatibility.
-  version = "kubernetes-1.13.1"
+  version = "kubernetes-1.13.4"
 
 [[constraint]]
   name = "github.com/sirupsen/logrus"
@@ -60,6 +64,10 @@
 [[constraint]]
   name = "github.com/spf13/cobra"
   version = "0.0.3"
+
+[[override]]
+  name = "k8s.io/kube-state-metrics"
+  version = "v1.6.0"
 
 # We need overrides for the following imports because dep can't resolve them
 # correctly. The easiest way to get this right is to use the versions that

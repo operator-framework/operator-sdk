@@ -25,9 +25,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/rest"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -36,19 +35,23 @@ var log = logf.Log.WithName("metrics")
 var trueVar = true
 
 const (
-	// PrometheusPortName defines the port name used in the metrics Service.
-	PrometheusPortName = "metrics"
+	// OperatorPortName defines the default operator metrics port name used in the metrics Service.
+	OperatorPortName = "http-metrics"
+	// CRPortName defines the custom resource specific metrics' port name used in the metrics Service.
+	CRPortName = "cr-metrics"
 )
 
-// ExposeMetricsPort creates a Kubernetes Service to expose the passed metrics port.
-func ExposeMetricsPort(ctx context.Context, port int32) (*v1.Service, error) {
-	client, err := createClient()
+// CreateMetricsService creates a Kubernetes Service to expose the passed metrics
+// port(s) with the given name(s).
+func CreateMetricsService(ctx context.Context, cfg *rest.Config, servicePorts []v1.ServicePort) (*v1.Service, error) {
+	if len(servicePorts) < 1 {
+		return nil, fmt.Errorf("failed to create metrics Serice; service ports were empty")
+	}
+	client, err := crclient.New(cfg, crclient.Options{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new client: %v", err)
 	}
-	// We do not need to check the validity of the port, as controller-runtime
-	// would error out and we would never get to this stage.
-	s, err := initOperatorService(ctx, client, port, PrometheusPortName)
+	s, err := initOperatorService(ctx, client, servicePorts)
 	if err != nil {
 		if err == k8sutil.ErrNoNamespace {
 			log.Info("Skipping metrics Service creation; not running in a cluster.")
@@ -93,8 +96,8 @@ func createOrUpdateService(ctx context.Context, client crclient.Client, s *v1.Se
 	return s, nil
 }
 
-// initOperatorService returns the static service which exposes specified port.
-func initOperatorService(ctx context.Context, client crclient.Client, port int32, portName string) (*v1.Service, error) {
+// initOperatorService returns the static service which exposes specified port(s).
+func initOperatorService(ctx context.Context, client crclient.Client, sp []v1.ServicePort) (*v1.Service, error) {
 	operatorName, err := k8sutil.GetOperatorName()
 	if err != nil {
 		return nil, err
@@ -103,31 +106,16 @@ func initOperatorService(ctx context.Context, client crclient.Client, port int32
 	if err != nil {
 		return nil, err
 	}
-
 	label := map[string]string{"name": operatorName}
 
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      operatorName,
+			Name:      fmt.Sprintf("%s-metrics", operatorName),
 			Namespace: namespace,
 			Labels:    label,
 		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Service",
-			APIVersion: "v1",
-		},
 		Spec: v1.ServiceSpec{
-			Ports: []v1.ServicePort{
-				{
-					Port:     port,
-					Protocol: v1.ProtocolTCP,
-					TargetPort: intstr.IntOrString{
-						Type:   intstr.Int,
-						IntVal: port,
-					},
-					Name: portName,
-				},
-			},
+			Ports:    sp,
 			Selector: label,
 		},
 	}
@@ -182,18 +170,4 @@ func findFinalOwnerRef(ctx context.Context, client crclient.Client, ns string, o
 
 	log.V(1).Info("Pods owner found", "Kind", ownerRef.Kind, "Name", ownerRef.Name, "Namespace", ns)
 	return ownerRef, nil
-}
-
-func createClient() (crclient.Client, error) {
-	config, err := config.GetConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := crclient.New(config, crclient.Options{})
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
 }

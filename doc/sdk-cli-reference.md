@@ -18,7 +18,8 @@ Usage:
 ### Flags
 
 * `--image-build-args` string - extra, optional image build arguments as one string such as `"--build-arg https_proxy=$https_proxy"` (default "")
-* `--image-builder` string - tool to build OCI images. One of: `[docker, buildah]` (default "docker")
+* `--image-builder` string - tool to build OCI images. One of: `[docker, podman, buildah]` (default "docker")
+* `--go-build-args` string - extra Go build arguments as one string such as `"-ldflags -X=main.xyz=abc"`
 * `-h, --help` - help for build
 
 ### Use
@@ -136,10 +137,6 @@ Currently only runs `deepcopy-gen` to generate the required `DeepCopy()` functio
 
 **Note**: This command must be run every time the api (spec and status) for a custom resource type is updated.
 
-### Flags
-
-* `--header-file` string - Path to file containing headers for generated files (optional).
-
 #### Example
 
 ```console
@@ -203,6 +200,8 @@ Writes a Cluster Service Version (CSV) manifest and optionally CRD files to `dep
 * `--from-version` string - Semantic version of CSV manifest to use as a base for a new version.
 * `--csv-config` string - Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml.
 * `--update-crds` Update CRD manifests in deploy/{operator-name}/{csv-version} using the latest CRD manifests.
+* `--csv-channel` string - Channel the CSV should be registered under in the package manifest
+* `--default-channel` - Use the channel passed to --csv-channel as the package manifests' default channel. Only valid when --csv-channel is set.
 
 #### Example
 
@@ -228,6 +227,8 @@ you will need to rename it before running migrate or manually add it to your Doc
 #### Flags
 
 * `--dep-manager` string - Dependency manager the migrated project will use (choices: "dep", "modules") (default "modules")
+* `--header-file` string - Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt
+* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` with Go modules, and cannot be set if `--dep-manager=dep`
 
 ### Example
 
@@ -254,7 +255,6 @@ Scaffolds a new operator project.
 
 ### Flags
 
-* `--skip-git-init` - Do not init the directory as a git repository
 * `--type` string - Type of operator to initialize: "ansible", "helm", or "go" (default "go"). Also requires the following flags if `--type=ansible` or `--type=helm`
 * `--api-version` string - CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
 * `--kind` string - CRD Kind. (e.g AppService)
@@ -262,7 +262,12 @@ Scaffolds a new operator project.
 * `--helm-chart` string - Initialize helm operator with existing helm chart (`<URL>`, `<repo>/<name>`, or local path)
 * `--helm-chart-repo` string - Chart repository URL for the requested helm chart
 * `--helm-chart-version` string - Specific version of the helm chart (default is latest version)
+* `--header-file` string - Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt
 * `--dep-manager` string - Dependency manager the new project will use (choices: "dep", "modules") (default "modules")
+* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` with Go modules, and cannot be set if `--dep-manager=dep`
+* `--git-init` - Initialize the project directory as a git repository (default `false`)
+* `--vendor` - Use a vendor directory for dependencies. This flag only applies when `--dep-manager=modules` (the default)
+* `--skip-validation` - Do not validate the resulting project's structure and dependencies. (Only used for --type go)
 * `-h, --help` - help for new
 
 ### Example
@@ -270,8 +275,8 @@ Scaffolds a new operator project.
 #### Go project
 
 ```console
-$ mkdir $GOPATH/src/github.com/example.com/
-$ cd $GOPATH/src/github.com/example.com/
+$ mkdir $HOME/projects/example.com/
+$ cd $HOME/projects/example.com/
 $ operator-sdk new app-operator
 ```
 
@@ -328,7 +333,6 @@ Adds the API definition for a new custom resource under `pkg/apis` and generates
 
 * `--api-version` string - CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
 * `--kind` string - CRD Kind. (e.g AppService)
-* `--header-file` string - Path to file containing headers for generated files (optional).
 
 #### Example
 
@@ -428,7 +432,9 @@ Run scorecard tests on an operator
 ### Flags
 
 * `basic-tests` - Enable basic operator checks (default true)
+* `config` string - config file (default is '<project_dir>/.osdk-scorecard'; the config file's extension and format can be .yaml, .json, or .toml)
 * `cr-manifest` string - (required) Path to manifest for Custom Resource
+* `crds-dir` string - Directory containing CRDs (all CRD manifest filenames must have the suffix 'crd.yaml') (default "deploy/crds")
 * `csv-path` string - (required if `olm-tests` is set) Path to CSV being tested
 * `global-manifest` string - Path to manifest for Global resources (e.g. CRD manifests)
 * `init-timeout` int - Timeout for status block on CR to be created, in seconds (default 10)
@@ -437,34 +443,28 @@ Run scorecard tests on an operator
 * `namespaced-manifest` string - Path to manifest for namespaced resources (e.g. RBAC and Operator manifest)
 * `olm-deployed` - Only use the CSV at `csv-path` for manifest data, except for those provided to `cr-manifest`
 * `olm-tests` - Enable OLM integration checks (default true)
+* `-o, --output` string - Output format for results. Valid values: `human-readable` or `json` (default `human-readable`)
 * `proxy-image` string - Image name for scorecard proxy (default "quay.io/operator-framework/scorecard-proxy")
 * `proxy-pull-policy` string - Pull policy for scorecard proxy image (default "Always")
-* `verbose` - Enable verbose logging
 * `-h, --help` - help for scorecard
 
 ### Example
 
 ```console
 $ operator-sdk scorecard --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml --csv-path deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml
-Checking for existence of spec and status blocks in CR
-Checking that operator actions are reflected in status
-Checking that writing into CRs has an effect
-Checking for CRD resources
-Checking for existence CR example
-Checking spec descriptors
-Checking status descriptors
 Basic Operator:
         Spec Block Exists: 1/1 points
         Status Block Exist: 1/1 points
         Operator actions are reflected in status: 1/1 points
         Writing into CRs has an effect: 1/1 points
 OLM Integration:
+        Provided APIs have validation: 1/1
         Owned CRDs have resources listed: 1/1 points
         CRs have at least 1 example: 0/1 points
         Spec fields with descriptors: 1/1 points
         Status fields with descriptors: 0/1 points
 
-Total Score: 6/8 points
+Total Score: 84%
 SUGGESTION: Add an alm-examples annotation to your CSV to pass the CRs have at least 1 example test
 SUGGESTION: Add a status descriptor for nodes
 ```
@@ -491,6 +491,7 @@ Runs the tests locally
 * `--go-test-flags` string - Additional flags to pass to go test
 * `--molecule-test-flags` string - Additional flags to pass to molecule test
 * `--up-local` - enable running operator locally with go run instead of as an image in the cluster
+* `--local-operator-flags` string - flags that the operator needs, while using --up-local (e.g. \"--flag1 value1 --flag2=value2\")
 * `--no-setup` - disable test resource creation
 * `--image` string - use a different operator image from the one specified in the namespaced manifest
 * `-h, --help` - help for local
@@ -523,6 +524,7 @@ the operator-sdk binary itself as the operator.
 
 ##### Flags
 
+* `--enable-delve` bool - starts the operator locally and enables the delve debugger listening on port 2345
 * `--go-ldflags` string - Set Go linker options
 * `--kubeconfig` string - The file path to Kubernetes configuration file; defaults to $HOME/.kube/config
 * `--namespace` string - The namespace where the operator watches for changes. (default "default")
@@ -552,6 +554,63 @@ $ operator-sdk up local --namespace "testing"
 ### Flags
 
 * `-h, --help` - help for up
+
+## alpha olm
+
+### Flags
+
+* `--version` string - version of OLM resources to install, uninstall, or get status about (default: "latest")
+* `--timeout` duration - time to wait for the command to complete before failing (default: "2m")
+
+### Available commands
+
+#### install - Installs Operator Lifecycle Manager
+
+##### Use
+
+The `operator-sdk alpha olm install` command installs OLM in a Kubernetes cluster
+based on the configured kubeconfig. It works by downloading OLM's release
+manifests at a specific version (default: `latest`), checking to see if any of
+those resources already exist in the cluster (and aborting if they do), and
+then creating all of the necessary resources and waiting for them to become
+healthy. When the installation is complete, `olm install` outputs a status summary
+of all of the resources that were installed.
+
+#### uninstall - Uninstalls Operator Lifecycle Manager
+
+##### Use
+
+The `operator-sdk alpha olm uninstall` command uninstalls OLM from a Kubernetes
+cluster based on the configured kubeconfig. It works by downloading OLM's
+release manifests at a specific version (default: `latest`), checking to see if
+any of those resources exist (if none exist, it aborts with an error since OLM
+is not installed), and then deletes each resource that is listed in the
+downloaded release manifests. It waits until all resources have been fully
+cleaned up before returning.
+
+**NOTE**: It is important to use `--version` with the version number that 
+corresponds to the version that you installed with `olm install`. Not specifying
+the version (or using an incorrect version) may cause some resources not be
+cleaned up. This can occur if OLM changes its release manifest resources from
+one version of OLM to the next.
+
+#### status - Get status of the Operator Lifecycle Manager installation
+
+##### Use
+
+The `operator-sdk alpha olm status` command gets the status of the OLM
+installation in a Kubernetes cluster based on the configured kubeconfig. It
+works by downloading OLM's release manifests at a specific version (default:
+`latest`), checking to see if any of those resources exist (if none exist, it
+aborts with an error since OLM is not installed), and printing a summary of the
+status of each of those resources as they exist in the cluster.
+
+**NOTE**: It is important to use `--version` with the version number that 
+corresponds to the version that you installed with `olm install`. Not specifying
+the version (or using an incorrect version) may cause some resources to be
+missing from the summary and others to be listed as "not found". This can occur
+if OLM changes its release manifest resources from one version of OLM to the
+next.
 
 [utility_link]: https://github.com/operator-framework/operator-sdk/blob/89bf021063d18b6769bdc551ed08fc37027939d5/pkg/util/k8sutil/k8sutil.go#L140
 [k8s-code-generator]: https://github.com/kubernetes/code-generator

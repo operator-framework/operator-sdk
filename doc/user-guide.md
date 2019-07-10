@@ -23,8 +23,8 @@ Follow the steps in the [installation guide][install_guide] to learn how to inst
 Use the CLI to create a new memcached-operator project:
 
 ```sh
-$ mkdir -p $GOPATH/src/github.com/example-inc/
-$ cd $GOPATH/src/github.com/example-inc/
+$ mkdir -p $HOME/projects/example.com/
+$ cd $HOME/projects/example.com/
 $ operator-sdk new memcached-operator
 $ cd memcached-operator
 ```
@@ -37,7 +37,7 @@ By default, `operator-sdk new` generates a `go.mod` file to be used with [Go mod
 
 ##### Go modules
 
-If using go modules (the default dependency manager) in your project, ensure you activate module support before using the SDK. From the [go modules Wiki][go_mod_wiki]:
+If using Go modules (the default dependency manager) in your project, ensure you activate module support before using the SDK. From the [Go modules Wiki][go_mod_wiki]:
 
 > You can activate module support in one of two ways:
 > - Invoke the go command in a directory outside of the $GOPATH/src tree, with a valid go.mod file in the current directory or any parent of it and the environment variable GO111MODULE unset (or explicitly set to auto).
@@ -53,7 +53,9 @@ $ export GO111MODULE=on
 
 ##### Vendoring
 
-The Operator SDK uses [vendoring][go_vendoring] to supply dependencies to operator projects, regardless of the dependency manager. As with the above module mode constraint, we intend to allow use of dependencies [outside of `vendor`][module_vendoring] for projects in the near future.
+By default, an operator's dependencies are managed with `modules` and `--vendor=false`, so calls to `go {build,clean,get,install,list,run,test}` by `operator-sdk` subcommands will use an external modules directory. Execute `go help modules` for more information.
+
+The Operator SDK can create a [`vendor`][go_vendoring] directory for Go dependencies if the dependency manager is `modules` and the project is initialized with `--vendor=true`, or if the dependency manager is `dep` (which requires vendoring).
 
 #### Operator scope
 
@@ -72,6 +74,8 @@ By default this will be the namespace that the operator is running in. To watch 
 ```Go
 mgr, err := manager.New(cfg, manager.Options{Namespace: ""})
 ```
+
+By default the main program will set the manager's namespace using the value of `WATCH_NAMESPACE` env defined in `deploy/operator.yaml`.
 
 ## Add a new Custom Resource Definition
 
@@ -200,7 +204,7 @@ Once this is done, there are two ways to run the operator:
 
 **Note**: `operator-sdk build` invokes `docker build` by default, and optionally `buildah bud`. If using `buildah`, skip to the `operator-sdk build` invocation instructions below. If using `docker`, make sure your docker daemon is running and that you can run the docker client without sudo. You can check if this is the case by running `docker version`, which should complete without errors. Follow instructions for your OS/distribution on how to start the docker daemon and configure your access permissions, if needed.
 
-**Note**: If using go modules, run
+**Note**: If using Go modules and a `vendor/` directory, run
 ```sh
 $ go mod vendor
 ```
@@ -213,17 +217,10 @@ $ sed -i 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/op
 $ docker push quay.io/example/memcached-operator:v0.0.1
 ```
 
-If you created your operator using `--cluster-scoped=true`, update the service account namespace in the generated `ClusterRoleBinding` to match where you are deploying your operator.
-```sh
-$ export OPERATOR_NAMESPACE=$(kubectl config view --minify -o jsonpath='{.contexts[0].context.namespace}')
-$ sed -i "s|REPLACE_NAMESPACE|$OPERATOR_NAMESPACE|g" deploy/role_binding.yaml
-```
-
 **Note**
-If you are performing these steps on OSX, use the following commands instead:
+If you are performing these steps on OSX, use the following `sed` command instead:
 ```sh
 $ sed -i "" 's|REPLACE_IMAGE|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
-$ sed -i "" "s|REPLACE_NAMESPACE|$OPERATOR_NAMESPACE|g" deploy/role_binding.yaml
 ```
 
 The Deployment manifest is generated at `deploy/operator.yaml`. Be sure to update the deployment image as shown above since the default is just a placeholder.
@@ -416,7 +413,7 @@ func main() {
 
 **NOTES:**
 
-* After adding new import paths to your operator project, run `go mod vendor` (or `dep ensure` if you set `--dep-manager=dep` when initializing your project) in the root of your project directory to fulfill these dependencies.
+* After adding new import paths to your operator project, run `go mod vendor` if using modules and a `vendor/` directory (or `dep ensure` if you set `--dep-manager=dep` when initializing your project) in the root of your project directory to fulfill these dependencies.
 * Your 3rd party resource needs to be added before add the controller in `"Setup all Controllers"`.
 
 ### Handle Cleanup on Deletion
@@ -430,54 +427,103 @@ deleted until you remove the finalizer (ie, after your cleanup logic has success
 The following is a snippet from the controller file under `pkg/controller/memcached/memcached_controller.go`
 
 ```Go
+
+const memcachedFinalizer = "finalizer.cache.example.com"
+
 func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Result, error) {
- 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
- 	reqLogger.Info("Reconciling Memcached")
- 
- 	// Fetch the Memcached instance
- 	memcached := &cachev1alpha1.Memcached{}
- 	err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
- 	...
- 	// Check if the APP CR was marked to be deleted
- 	isMemcachedMarkedToBeDeleted := memcached.GetDeletionTimestamp() != nil
- 	if isMemcachedMarkedToBeDeleted {
- 		// TODO(user): Add the cleanup steps that the operator needs to do before the CR can be deleted
- 		// Update finalizer to allow delete CR
- 		memcached.SetFinalizers(nil)
- 
- 		// Update CR
- 		err := r.client.Update(context.TODO(), memcached)
- 		if err != nil {
- 			return reconcile.Result{}, err
- 		}
- 		return reconcile.Result{}, nil
- 	}
- 	
- 	// Add finalizer for this CR
- 	if err := r.addFinalizer(reqLogger, instance); err != nil {
- 		return reconcile.Result{}, err
- 	}
- 	...
- 
- 	return reconcile.Result{}, nil
- }
- 
-//addFinalizer will add this attribute to the Memcached CR
-func (r *ReconcileMemcached) addFinalizer(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
-    if len(m.GetFinalizers()) < 1 && m.GetDeletionTimestamp() == nil {
-        reqLogger.Info("Adding Finalizer for the Memcached")
-        m.SetFinalizers([]string{"finalizer.cache.example.com"})
-    
-        // Update CR
-        err := r.client.Update(context.TODO(), m)
-        if err != nil {
-            reqLogger.Error(err, "Failed to update Memcached with finalizer")
-            return err
-        }
-    }
-    return nil
+	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
+	reqLogger.Info("Reconciling Memcached")
+
+	// Fetch the Memcached instance
+	memcached := &cachev1alpha1.Memcached{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
+	if err != nil {
+		// If the resource is not found, that means all of
+		// the finalizers have been removed, and the memcached
+		// resource has been deleted, so there is nothing left
+		// to do.
+		if apierrors.IsNotFound(err) {
+			return reconcile.Result{}, nil
+		}
+		return reconcile.Result{}, fmt.Errorf("could not fetch memcached instance: %s", err)
+	}
+
+	...
+
+	// Check if the Memcached instance is marked to be deleted, which is
+	// indicated by the deletion timestamp being set.
+	isMemcachedMarkedToBeDeleted := memcached.GetDeletionTimestamp() != nil
+	if isMemcachedMarkedToBeDeleted {
+		if contains(memcached.GetFinalizers(), memcachedFinalizer) {
+			// Run finalization logic for memcachedFinalizer. If the
+			// finalization logic fails, don't remove the finalizer so
+			// that we can retry during the next reconciliation.
+			if err := r.finalizeMemcached(reqLogger, memcached); err != nil {
+				return reconcile.Result{}, err
+			}
+
+			// Remove memcachedFinalizer. Once all finalizers have been
+			// removed, the object will be deleted.
+			memcached.SetFinalizers(remove(memcached.GetFinalizers(), memcachedFinalizer))
+			err := r.client.Update(context.TODO(), memcached)
+			if err != nil {
+				return reconcile.Result{}, err
+			}
+		}
+		return reconcile.Result{}, nil
+	}
+
+	// Add finalizer for this CR
+	if !contains(memcached.GetFinalizers(), memcachedFinalizer) {
+		if err := r.addFinalizer(reqLogger, memcached); err != nil {
+			return reconcile.Result{}, err
+		}
+	}
+
+	...
+
+	return reconcile.Result{}, nil
 }
 
+func (r *ReconcileMemcached) finalizeMemcached(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
+	// TODO(user): Add the cleanup steps that the operator
+	// needs to do before the CR can be deleted. Examples
+	// of finalizers include performing backups and deleting 
+	// resources that are not owned by this CR, like a PVC.
+	reqLogger.Info("Successfully finalized memcached")
+	return nil
+}
+
+func (r *ReconcileMemcached) addFinalizer(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
+	reqLogger.Info("Adding Finalizer for the Memcached")
+	m.SetFinalizers(append(m.GetFinalizers(), memcachedFinalizer))
+
+	// Update CR
+	err := r.client.Update(context.TODO(), m)
+	if err != nil {
+		reqLogger.Error(err, "Failed to update Memcached with finalizer")
+		return err
+	}
+	return nil
+}
+
+func contains(list []string, s string) bool {
+	for _, v := range list {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
+
+func remove(list []string, s string) []string {
+	for i, v := range list {
+		if v == s {
+			list = append(list[:i], list[i+1:]...)
+		}
+	}
+	return list
+}
 ```
 
 ### Metrics
@@ -559,7 +605,6 @@ When the operator is not running in a cluster, the Manager will return an error 
 [homebrew_tool]:https://brew.sh/
 [go_mod_wiki]: https://github.com/golang/go/wiki/Modules
 [go_vendoring]: https://blog.gopheracademy.com/advent-2015/vendor-folder/
-[module_vendoring]: https://github.com/golang/go/wiki/Modules#how-do-i-use-vendoring-with-modules-is-vendoring-going-away
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/

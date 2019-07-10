@@ -61,7 +61,6 @@ require (
 	github.com/json-iterator/go v1.1.6 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/markbates/inflect v1.0.4 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/operator-framework/operator-sdk master
@@ -86,30 +85,25 @@ require (
 	k8s.io/apiextensions-apiserver v0.0.0-20190328030136-8ada4fd07db4
 	k8s.io/apimachinery v0.0.0-20181127025237-2b1284ed4c93 // indirect
 	k8s.io/client-go v0.0.0-20181213151034-8d9ed539ba31
-	k8s.io/code-generator v0.0.0-20190405172246-9a4d48088f6a
-	k8s.io/gengo v0.0.0-20190327210449-e17681d19d3a
+	k8s.io/gengo v0.0.0-20190327210449-e17681d19d3a // indirect
 	k8s.io/klog v0.2.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20190320154901-5e45bb682580
+	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208 // indirect
 	k8s.io/kubernetes v1.14.1 // indirect
-	sigs.k8s.io/controller-runtime v0.1.10
+	sigs.k8s.io/controller-runtime v0.1.12
 	sigs.k8s.io/controller-tools v0.1.10
 	sigs.k8s.io/testing_frameworks v0.1.1 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
 
-// Pinned to kubernetes-1.13.1
+// Pinned to kubernetes-1.13.4
 replace (
-	k8s.io/api => k8s.io/api v0.0.0-20181213150558-05914d821849
-	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20181127025237-2b1284ed4c93
-	k8s.io/client-go => k8s.io/client-go v0.0.0-20181213151034-8d9ed539ba31
-	k8s.io/kubernetes => k8s.io/kubernetes v1.13.1
+	k8s.io/api => k8s.io/api v0.0.0-20190222131558-5cb15d344471
+	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190221124651-86fb29eff628
+	k8s.io/client-go => k8s.io/client-go v0.0.0-20190228174230-b40b2a5939e4
+	k8s.io/kubernetes => k8s.io/kubernetes v1.13.4
 )
 
-replace (
-	github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.29.0
-	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20181117043124-c2090bec4d9b
-	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20180711000925-0cf8f7e6ed1d
-)
+replace github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.29.0
 `
 
 func PrintGoMod(asFile bool) error {
