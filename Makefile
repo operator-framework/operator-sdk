@@ -25,22 +25,21 @@ HELM_IMAGE ?= $(HELM_BASE_IMAGE)
 SCORECARD_PROXY_IMAGE ?= $(SCORECARD_PROXY_BASE_IMAGE)
 
 export CGO_ENABLED:=0
+export GO111MODULE:=on
+export GOPROXY?=https://proxy.golang.org/
 
 all: format test build/operator-sdk
 
 format:
 	$(Q)go fmt $(PKGS)
 
-dep:
-	$(Q)dep ensure -v
-
-dep-update:
-	$(Q)dep ensure -update -v
+tidy:
+	$(Q)go mod tidy -v
 
 clean:
 	$(Q)rm -rf build
 
-.PHONY: all test format dep clean
+.PHONY: all test format tidy clean
 
 install:
 	$(Q)go install \
@@ -101,7 +100,7 @@ test/ci-ansible: test/e2e/ansible-molecule
 
 test/ci-helm: test/e2e/helm
 
-test/sanity:
+test/sanity: tidy
 	./hack/tests/sanity-check.sh
 
 test/unit:
@@ -144,6 +143,12 @@ test/markdown:
 
 image: image/build image/push
 
+image/scaffold/ansible:
+	go run ./hack/image/ansible/scaffold-ansible-image.go
+
+image/scaffold/helm:
+	go run ./hack/image/helm/scaffold-helm-image.go
+
 image/build: image/build/ansible image/build/helm image/build/scorecard-proxy
 
 image/build/ansible: build/operator-sdk-dev-x86_64-linux-gnu
@@ -166,4 +171,4 @@ image/push/helm:
 image/push/scorecard-proxy:
 	./hack/image/push-image-tags.sh $(SCORECARD_PROXY_BASE_IMAGE):dev $(SCORECARD_PROXY_IMAGE)
 
-.PHONY: image image/build image/build/ansible image/build/helm image/push image/push/ansible image/push/helm
+.PHONY: image image/scaffold/ansible image/scaffold/helm image/build image/build/ansible image/build/helm image/push image/push/ansible image/push/helm
