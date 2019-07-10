@@ -17,7 +17,8 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
     HOME=/opt/ansible
 
 # Install python dependencies
-RUN yum install -y python-devel gcc \
+RUN (yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm || true) \
+ && yum install -y python-devel gcc inotify-tools \
  && easy_install pip \
  && pip install -U --no-cache-dir setuptools pip \
  && pip install --no-cache-dir --ignore-installed ipaddress \
@@ -31,6 +32,7 @@ RUN yum install -y python-devel gcc \
 # install operator binary
 COPY --from=builder /memcached-operator ${OPERATOR}
 COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/library/k8s_status.py /usr/share/ansible/openshift/
+COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/bin/ao-logs /usr/local/bin/ao-logs
 COPY --from=builder /ansible/memcached-operator/watches.yaml ${HOME}/watches.yaml
 COPY --from=builder /ansible/memcached-operator/roles/ ${HOME}/roles/
 
