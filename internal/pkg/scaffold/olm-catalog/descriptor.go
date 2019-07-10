@@ -26,6 +26,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/annotations"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -62,7 +63,7 @@ func setCRDDescriptorForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.G
 	if err != nil {
 		return err
 	}
-	apiPkg := path.Join(projutil.CheckAndGetProjectGoPkg(), apisDir)
+	apiPkg := path.Join(projutil.GetGoPkg(), apisDir)
 	specType, statusType, pkgTypes, err := getSpecStatusPkgTypesForAPI(universe, apiPkg, gvk.Kind)
 	if err != nil {
 		return errors.Wrapf(err, `get spec, status, and package types for "%s"`, gvk)
@@ -318,7 +319,7 @@ func setDescriptorDefaultsIfEmpty(d *descriptor) {
 		d.path = parsePathFromJSONTags(d.member.Tags)
 	}
 	if d.displayName == "" {
-		d.displayName = getDisplayName(d.member.Name)
+		d.displayName = k8sutil.GetDisplayName(d.member.Name)
 	}
 	switch d.descType {
 	case typeSpec:
