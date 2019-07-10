@@ -13,4 +13,4 @@ cat deploy/operator.yaml
 operator-sdk test local ./test/e2e
 popd
 
-go test ./test/e2e/...
+go test ./test/e2e/... -root=. -globalMan=testdata/empty.yaml
