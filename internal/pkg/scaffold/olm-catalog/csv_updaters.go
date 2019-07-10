@@ -264,21 +264,27 @@ func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
 	return nil
 }
 
+// crdDescID produces an opaque, per-CSV unique string identifying
+// a CRDDescription.
+func crdDescID(desc olmapiv1alpha1.CRDDescription) string {
+	return desc.Version + desc.Kind
+}
+
 // Apply updates csv's "owned" CRDDescriptions. "required" CRDDescriptions are
 // left as-is, since they are user-defined values.
 func (u *CustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
-	// Currently this updater does not support actionDescriptor annotations,
+	// Currently this updater does not support ActionDescriptor annotations,
 	// so use those currently set in csv.
 	actionDescriptors := map[string][]olmapiv1alpha1.ActionDescriptor{}
-	for _, crd := range csv.Spec.CustomResourceDefinitions.Owned {
-		actionDescriptors[crd.Kind+crd.Version] = crd.ActionDescriptor
+	for _, desc := range csv.Spec.CustomResourceDefinitions.Owned {
+		actionDescriptors[crdDescID(desc)] = desc.ActionDescriptor
 	}
+	// Copy owned CRDDescriptions while preserving ActionDescriptors.
 	owned := make([]olmapiv1alpha1.CRDDescription, len(u.Owned))
 	copy(owned, u.Owned)
 	csv.Spec.CustomResourceDefinitions.Owned = owned
-	for i := 0; i < len(csv.Spec.CustomResourceDefinitions.Owned); i++ {
-		crd := csv.Spec.CustomResourceDefinitions.Owned[i]
-		if ad, ok := actionDescriptors[crd.Kind+crd.Version]; ok {
+	for i, desc := range csv.Spec.CustomResourceDefinitions.Owned {
+		if ad, ok := actionDescriptors[crdDescID(desc)]; ok {
 			csv.Spec.CustomResourceDefinitions.Owned[i].ActionDescriptor = ad
 		}
 	}

@@ -16,6 +16,12 @@ spec:
     - kind: App
       name: apps2.example.com
       version: v1alpha2
+    required:
+    - description: Represents a cluster of etcd nodes.
+      displayName: etcd Cluster
+      kind: EtcdCluster
+      name: etcdclusters.etcd.database.coreos.com
+      version: v1beta2
   description: Placeholder description
   displayName: App Operator
   install:

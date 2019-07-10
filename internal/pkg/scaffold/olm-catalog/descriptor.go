@@ -15,7 +15,6 @@
 package catalog
 
 import (
-	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -135,9 +134,9 @@ func getSpecStatusPkgTypesForAPI(universe types.Universe, apiPkg, kind string) (
 			if t.Name.Name == kind {
 				for _, m := range t.Members {
 					path := parsePathFromJSONTags(m.Tags)
-					if path == "spec" {
+					if path == typeSpec {
 						spec = m.Type
-					} else if path == "status" {
+					} else if path == typeStatus {
 						status = m.Type
 					}
 					if spec != nil && status != nil {
@@ -148,13 +147,13 @@ func getSpecStatusPkgTypesForAPI(universe types.Universe, apiPkg, kind string) (
 		}
 	}
 	if spec == nil {
-		return nil, nil, nil, fmt.Errorf("no spec found in type %s", kind)
+		return nil, nil, nil, errors.Errorf("no spec found in type %s", kind)
 	}
 	if status == nil {
-		return nil, nil, nil, fmt.Errorf("no status found in type %s", kind)
+		return nil, nil, nil, errors.Errorf("no status found in type %s", kind)
 	}
 	if len(pkgTypes) == 0 {
-		return nil, nil, nil, fmt.Errorf("no package types found in API %s", apiPkg)
+		return nil, nil, nil, errors.Errorf("no package types found in API %s", apiPkg)
 	}
 	return spec, status, pkgTypes, nil
 }
@@ -230,21 +229,21 @@ func parseCSVGenAnnotations(comments []string) (pd parsedCRDDescriptions, err er
 			case "displayName":
 				pd.displayName, err = strconv.Unquote(vals[0])
 				if err != nil {
-					return pd, fmt.Errorf("error unquoting %s: %v", vals[0], err)
+					return pd, errors.Wrapf(err, "error unquoting %s", vals[0])
 				}
 			case "resources":
 				for _, v := range vals {
 					r, err := parseResource(v)
 					if err != nil {
-						return pd, fmt.Errorf("error parsing resource %s: %v", v, err)
+						return pd, errors.Wrapf(err, "error parsing resource %s", v)
 					}
 					pd.resources = append(pd.resources, r)
 				}
 			default:
-				return pd, wrapParseErr(fmt.Errorf(`unsupported %s child path element "%s"`, parentPathElem, childPathElems[0]))
+				return pd, wrapParseErr(errors.Errorf(`unsupported %s child path element "%s"`, parentPathElem, childPathElems[0]))
 			}
 		default:
-			return pd, wrapParseErr(fmt.Errorf(`unsupported path element "%s"`, parentPathElem))
+			return pd, wrapParseErr(errors.Errorf(`unsupported path element "%s"`, parentPathElem))
 		}
 	}
 
@@ -263,26 +262,26 @@ func parseDescriptor(d *descriptor, pathElems []string, val string) (err error) 
 	case 1:
 		d.include, err = strconv.ParseBool(val)
 		if err != nil {
-			return fmt.Errorf("error parsing %s bool val '%s': %v", pathElems[0], val, err)
+			return errors.Wrapf(err, "error parsing %s bool val '%s'", pathElems[0], val)
 		}
 	case 2:
 		switch pathElems[1] {
 		case "displayName":
 			d.displayName, err = strconv.Unquote(val)
 			if err != nil {
-				return fmt.Errorf("error unquoting %s: %v", val, err)
+				return errors.Wrapf(err, "error unquoting %s", val)
 			}
 		case "x-descriptors":
 			xdStr, err := strconv.Unquote(val)
 			if err != nil {
-				return fmt.Errorf("error unquoting %s: %v", val, err)
+				return errors.Wrapf(err, "error unquoting %s", val)
 			}
 			d.xdesc = strings.Split(xdStr, ",")
 		default:
-			return fmt.Errorf(`unsupported descriptor path element "%s"`, pathElems[1])
+			return errors.Errorf(`unsupported descriptor path element "%s"`, pathElems[1])
 		}
 	default:
-		return fmt.Errorf(`unsupported descriptor path "%s"`, annotations.JoinPath(pathElems...))
+		return errors.Errorf(`unsupported descriptor path "%s"`, annotations.JoinPath(pathElems...))
 	}
 	return nil
 }
@@ -296,7 +295,7 @@ func parseResource(rStr string) (r olmapiv1alpha1.APIResourceReference, err erro
 	}
 	rSplit := strings.SplitN(rStr, ",", 3)
 	if len(rSplit) < 2 {
-		return r, fmt.Errorf("resource string %s did not have at least a kind and a version", rStr)
+		return r, errors.Errorf("resource string %s did not have at least a kind and a version", rStr)
 	}
 	r.Kind, r.Version = rSplit[0], rSplit[1]
 	if len(rSplit) == 3 {

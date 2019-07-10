@@ -17,8 +17,6 @@ package catalog
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,6 +30,7 @@ import (
 	"github.com/coreos/go-semver/semver"
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
@@ -169,7 +168,7 @@ func getCSVFromFSIfExists(fs afero.Fs, path string) (*olmapiv1alpha1.ClusterServ
 
 	csv := &olmapiv1alpha1.ClusterServiceVersion{}
 	if err := yaml.Unmarshal(csvBytes, csv); err != nil {
-		return nil, false, fmt.Errorf("%s: %v", path, err)
+		return nil, false, errors.Wrapf(err, "error unmarshalling CSV %s", path)
 	}
 
 	return csv, true, nil
@@ -337,11 +336,11 @@ func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.Clu
 			yamlSpec := scanner.Bytes()
 			kind, err := k8sutil.GetKindfromYAML(yamlSpec)
 			if err != nil {
-				return fmt.Errorf("%s: %v", f, err)
+				return errors.Wrapf(err, "error getting kind from manifest %s", f)
 			}
 			found, err := store.AddToUpdater(yamlSpec, kind)
 			if err != nil {
-				return fmt.Errorf("%s: %v", f, err)
+				return errors.Wrapf(err, "error adding manifest %s to CSV updaters", f)
 			}
 			if !found {
 				if _, ok := otherSpecs[kind]; !ok {
