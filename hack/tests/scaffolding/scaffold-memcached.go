@@ -78,19 +78,6 @@ func main() {
 
 	replace := getGoModReplace(localSDKPath)
 	if replace.repo != sdkRepo {
-		if replace.isLocal {
-			// A hacky way to get local module substitution to work is to write a
-			// stub go.mod into the local SDK repo referred to in
-			// memcached-operator's go.mod, which allows go to recognize
-			// the local SDK repo as a module.
-			sdkModPath := filepath.Join(filepath.FromSlash(replace.repo), "go.mod")
-			if _, err = os.Stat(sdkModPath); err != nil && os.IsNotExist(err) {
-				err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
-				if err != nil {
-					log.Fatalf("Failed to write main repo go.mod file: %v", err)
-				}
-			}
-		}
 		modBytes, err := insertGoModReplace(sdkRepo, replace.repo, replace.ref)
 		if err != nil {
 			log.Fatalf("Failed to insert go.mod replace: %v", err)
@@ -207,9 +194,8 @@ func main() {
 }
 
 type goModReplace struct {
-	repo    string
-	ref     string
-	isLocal bool
+	repo string
+	ref  string
 }
 
 // getGoModReplace returns a go.mod replacement that is appropriate based on the build's
@@ -261,8 +247,7 @@ func getGoModReplace(localSDKPath string) goModReplace {
 
 	// Local environment
 	return goModReplace{
-		repo:    localSDKPath,
-		isLocal: true,
+		repo: localSDKPath,
 	}
 }
 
