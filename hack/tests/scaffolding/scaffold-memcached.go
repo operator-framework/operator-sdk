@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
@@ -256,6 +257,10 @@ func insertGoModReplace(repo, path, sha string) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read go.mod")
 	}
+	// Remove all replace lines in go.mod.
+	replaceRe := regexp.MustCompile(fmt.Sprintf("(replace )?%s =>.+", repo))
+	modBytes = replaceRe.ReplaceAll(modBytes, nil)
+	// Append the desired replace to the end of go.mod's bytes.
 	sdkReplace := fmt.Sprintf("replace %s => %s", repo, path)
 	if sha != "" {
 		sdkReplace = fmt.Sprintf("%s %s", sdkReplace, sha)
