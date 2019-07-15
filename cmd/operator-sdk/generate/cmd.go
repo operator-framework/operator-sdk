@@ -26,5 +26,6 @@ func NewCmd() *cobra.Command {
 	}
 	cmd.AddCommand(newGenerateK8SCmd())
 	cmd.AddCommand(newGenerateOpenAPICmd())
+	cmd.AddCommand(newGenerateOpenshiftCmd())
 	return cmd
 }
