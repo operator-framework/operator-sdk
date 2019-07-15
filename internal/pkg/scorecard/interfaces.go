@@ -47,7 +47,7 @@ type basicOrOLMPlugin struct {
 }
 
 func (p externalPlugin) Name() string {
-	return filepath.Base(p.name)
+	return p.name
 }
 
 func (p externalPlugin) Run() scapiv1alpha1.ScorecardOutput {
