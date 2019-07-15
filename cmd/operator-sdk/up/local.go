@@ -139,7 +139,7 @@ func upLocal() error {
 		os.Exit(0)
 	}()
 	dc.Env = os.Environ()
-	dc.Env = append(dc.Env, fmt.Sprintf("%s=local", k8sutil.ForceRunModeEnv))
+	dc.Env = append(dc.Env, fmt.Sprintf("%s=%s", k8sutil.ForceRunModeEnv, k8sutil.LocalRunMode))
 	// only set env var if user explicitly specified a kubeconfig path
 	if kubeConfig != "" {
 		dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, kubeConfig))

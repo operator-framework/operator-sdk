@@ -210,7 +210,7 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 	}
 	env := append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
 	if tlConfig.upLocal {
-		env = append(env, fmt.Sprintf("%s=local", k8sutil.ForceRunModeEnv))
+		env = append(env, fmt.Sprintf("%s=%s", k8sutil.ForceRunModeEnv, k8sutil.LocalRunMode))
 		testArgs = append(testArgs, "-"+test.LocalOperatorFlag)
 		if tlConfig.localOperatorFlags != "" {
 			testArgs = append(testArgs, "-"+test.LocalOperatorArgs, tlConfig.localOperatorFlags)

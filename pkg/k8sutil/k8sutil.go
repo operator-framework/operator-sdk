@@ -33,6 +33,13 @@ import (
 // or cluster mode (currently only used for local mode)
 var ForceRunModeEnv = "OSDK_FORCE_RUN_MODE"
 
+type RunModeType string
+
+const (
+	LocalRunMode   RunModeType = "local"
+	ClusterRunMode RunModeType = "cluster"
+)
+
 var log = logf.Log.WithName("k8sutil")
 
 // GetWatchNamespace returns the namespace the operator should be watching for changes
@@ -54,7 +61,7 @@ var ErrRunLocal = fmt.Errorf("operator run mode forced to local")
 
 // GetOperatorNamespace returns the namespace the operator should be running in.
 func GetOperatorNamespace() (string, error) {
-	if os.Getenv(ForceRunModeEnv) == "local" {
+	if isRunModeLocal() {
 		return "", ErrRunLocal
 	}
 	nsBytes, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
@@ -71,7 +78,7 @@ func GetOperatorNamespace() (string, error) {
 
 // GetOperatorName return the operator name
 func GetOperatorName() (string, error) {
-	if os.Getenv(ForceRunModeEnv) == "local" {
+	if isRunModeLocal() {
 		return "", ErrRunLocal
 	}
 	operatorName, found := os.LookupEnv(OperatorNameEnvVar)
@@ -107,7 +114,7 @@ func ResourceExists(dc discovery.DiscoveryInterface, apiGroupVersion, kind strin
 // is currently running.
 // It expects the environment variable POD_NAME to be set by the downwards API.
 func GetPod(ctx context.Context, client crclient.Client, ns string) (*corev1.Pod, error) {
-	if os.Getenv(ForceRunModeEnv) == "local" {
+	if isRunModeLocal() {
 		return nil, ErrRunLocal
 	}
 	podName := os.Getenv(PodNameEnvVar)
@@ -172,4 +179,8 @@ func isKubeMetaKind(kind string) bool {
 	}
 
 	return false
+}
+
+func isRunModeLocal() bool {
+	return os.Getenv(ForceRunModeEnv) == string(LocalRunMode)
 }
