@@ -4,6 +4,9 @@ RUN make image/scaffold/ansible
 
 FROM registry.access.redhat.com/ubi7/ubi
 
+# Temporary for CI, reset /etc/passwd
+RUN chmod 0644 /etc/passwd
+
 RUN mkdir -p /etc/ansible \
     && echo "localhost ansible_connection=local" > /etc/ansible/hosts \
     && echo '[defaults]' > /etc/ansible/ansible.cfg \
