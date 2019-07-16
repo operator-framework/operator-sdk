@@ -41,6 +41,22 @@ test_operator() {
         exit 1
     fi
 
+    # verify that metrics service was created
+    if ! timeout 20s bash -c -- "until kubectl get service/memcached-operator-metrics > /dev/null 2>&1; do sleep 1; done";
+    then
+        echo "Failed to get metrics service"
+        kubectl logs deployment/memcached-operator
+        exit 1
+    fi
+
+    # verify that the metrics endpoint exists
+    if ! timeout 1m bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl -sfo /dev/null http://memcached-operator-metrics:8383/metrics; do sleep 1; done";
+    then
+        echo "Failed to verify that metrics endpoint exists"
+        kubectl logs deployment/memcached-operator
+        exit 1
+    fi
+
     # create CR
     kubectl create -f deploy/crds/ansible_v1alpha1_memcached_cr.yaml
     if ! timeout 20s bash -c -- 'until kubectl get deployment -l app=memcached | grep memcached; do sleep 1; done';
