@@ -7,6 +7,7 @@ This guide walks through an example of building a simple memcached-operator usin
 
 - [git][git_tool]
 - [go][go_tool] version v1.12+.
+- [mercurial][mercurial_tool] version 3.9+
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
@@ -609,6 +610,7 @@ When the operator is not running in a cluster, the Manager will return an error 
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
 [docker_tool]:https://docs.docker.com/install/
+[mercurial_tool]:https://www.mercurial-scm.org/downloads
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [minikube_tool]:https://github.com/kubernetes/minikube#installation
 [scheme_package]:https://github.com/kubernetes/client-go/blob/master/kubernetes/scheme/register.go
