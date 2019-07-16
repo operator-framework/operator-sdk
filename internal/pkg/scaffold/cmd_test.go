@@ -160,17 +160,20 @@ func main() {
 	// Create Service object to expose the metrics port(s).
 	service, err := metrics.CreateMetricsService(ctx, cfg, servicePorts)
 	if err != nil {
-		log.Info("Could not create metrics Service", "error:", err.Error())
+		log.Info("Could not create metrics Service", "error", err.Error())
 	}
 
 	// CreateServiceMonitors will automatically create the prometheus-operator ServiceMonitor resources
 	// necessary to configure Prometheus to scrape metrics from this operator.
-	// If this operator is deployed to a cluster without the prometheus-operator running, it will return
-	// ErrServiceMonitorNotPresent,which can be used to safely skip ServiceMonitor creation.
 	services := []*v1.Service{service}
 	_, err = metrics.CreateServiceMonitors(cfg, namespace, services)
 	if err != nil {
-		log.Info("Could not create ServiceMonitor object", "error:", err.Error())
+		log.Info("Could not create ServiceMonitor object", "error", err.Error())
+		// If this operator is deployed to a cluster without the prometheus-operator running, it will return
+		// ErrServiceMonitorNotPresent, which can be used to safely skip ServiceMonitor creation.
+		if err == metrics.ErrServiceMonitorNotPresent {
+			log.Info("Install prometheus-operator in your cluster to create ServiceMonitor objects", "error", err.Error())
+		}
 	}
 
 	log.Info("Starting the Cmd.")
