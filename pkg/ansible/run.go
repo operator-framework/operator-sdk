@@ -90,6 +90,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	watches, err := watches.Load(flags.WatchesFile)
 	if err != nil {
 		log.Error(err, "Failed to load watches.")
+		return err
 	}
 	for _, w := range watches {
 		runner, err := runner.New(w)
