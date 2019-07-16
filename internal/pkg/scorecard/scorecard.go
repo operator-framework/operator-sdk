@@ -23,14 +23,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/mitchellh/mapstructure"
 	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
 	scplugins "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/plugins"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
-	"github.com/pkg/errors"
 
 	"github.com/sirupsen/logrus"
+	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -38,11 +38,11 @@ import (
 const DefaultConfigFile = ".osdk-scorecard"
 
 const (
-	ConfigOpt                 = "config"
-	OutputFormatOpt           = "output"
-	PluginDirOpt              = "plugin-dir"
-	JSONOutputFormat          = "json"
-	HumanReadableOutputFormat = "text"
+	ConfigOpt        = "config"
+	OutputFormatOpt  = "output"
+	PluginDirOpt     = "plugin-dir"
+	JSONOutputFormat = "json"
+	TextOutputFormat = "text"
 )
 
 // make a global logger for scorecard
@@ -86,12 +86,12 @@ func getPlugins() ([]Plugin, error) {
 		if plugin.Basic != nil {
 			basicSet = true
 			pluginConfig := plugin.Basic
-			updateConfig(pluginConfig, kubeconfig)
+			setConfigDefaults(pluginConfig, kubeconfig)
 			newPlugin = basicOrOLMPlugin{name: plugin.Name, pluginType: scplugins.BasicOperator, config: *pluginConfig}
 		} else if plugin.Olm != nil {
 			olmSet = true
 			pluginConfig := plugin.Olm
-			updateConfig(pluginConfig, kubeconfig)
+			setConfigDefaults(pluginConfig, kubeconfig)
 			newPlugin = basicOrOLMPlugin{name: plugin.Name, pluginType: scplugins.OLMIntegration, config: *pluginConfig}
 		} else {
 			setPaths = append(setPaths, plugin.External.Command)
@@ -182,7 +182,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 			suite.Results[idx] = schelpers.UpdateSuiteStates(res)
 		}
 	}
-	if scViper.GetString(OutputFormatOpt) == HumanReadableOutputFormat {
+	if scViper.GetString(OutputFormatOpt) == TextOutputFormat {
 		numSuites := 0
 		for _, plugin := range pluginOutputs {
 			for _, suite := range plugin.Results {
@@ -263,10 +263,10 @@ func initConfig() error {
 
 func configureLogger() error {
 	if !scViper.IsSet(OutputFormatOpt) {
-		scViper.Set(OutputFormatOpt, HumanReadableOutputFormat)
+		scViper.Set(OutputFormatOpt, TextOutputFormat)
 	}
 	format := scViper.GetString(OutputFormatOpt)
-	if format == HumanReadableOutputFormat {
+	if format == TextOutputFormat {
 		logReadWriter = os.Stdout
 	} else if format == JSONOutputFormat {
 		logReadWriter = &bytes.Buffer{}
@@ -280,8 +280,8 @@ func configureLogger() error {
 func validateScorecardConfig() error {
 	// this is already being checked in configure logger; may be unnecessary
 	outputFormat := scViper.GetString(OutputFormatOpt)
-	if outputFormat != HumanReadableOutputFormat && outputFormat != JSONOutputFormat {
-		return fmt.Errorf("invalid output format (%s); valid values: %s, %s", outputFormat, HumanReadableOutputFormat, JSONOutputFormat)
+	if outputFormat != TextOutputFormat && outputFormat != JSONOutputFormat {
+		return fmt.Errorf("invalid output format (%s); valid values: %s, %s", outputFormat, TextOutputFormat, JSONOutputFormat)
 	}
 	if !scViper.IsSet(PluginDirOpt) {
 		scViper.Set(PluginDirOpt, "scorecard")

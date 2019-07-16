@@ -90,7 +90,7 @@ func (p externalPlugin) Run() scapiv1alpha1.ScorecardOutput {
 	}
 	stderrString := string(stderr.Bytes())
 	if len(stderrString) != 0 {
-		log.Warnf(stderrString)
+		log.Warn(stderrString)
 	}
 	return result
 }
@@ -136,8 +136,8 @@ func (p basicOrOLMPlugin) Run() scapiv1alpha1.ScorecardOutput {
 	return res
 }
 
-// updateConfig sets certain config fields to default values if they are not set
-func updateConfig(config *scplugins.BasicAndOLMPluginConfig, kubeconfig string) {
+// setConfigDefaults sets certain config fields to default values if they are not set
+func setConfigDefaults(config *scplugins.BasicAndOLMPluginConfig, kubeconfig string) {
 	if config.InitTimeout == 0 {
 		config.InitTimeout = 60
 	}
