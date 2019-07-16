@@ -106,7 +106,8 @@ After modifying the `*_types.go` file always run the following command to update
 $ operator-sdk generate k8s
 ```
 
-To update the Open API validation section in the CRD `deploy/crds/cache_v1alpha1_memcached_crd.yaml`, run the following command. 
+### OpenAPI validation
+To update the OpenAPI validation section in the CRD `deploy/crds/cache_v1alpha1_memcached_crd.yaml`, run the following command. 
 
 ```console
 $ operator-sdk generate openapi
