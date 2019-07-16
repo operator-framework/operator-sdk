@@ -46,23 +46,15 @@ func setCRDDescriptorForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.G
 	if strings.Contains(gvk.Group, ".") {
 		gvk.Group = strings.Split(gvk.Group, ".")[0]
 	}
-	apisDir := filepath.Join(scaffold.ApisDir, gvk.Group, gvk.Version)
-	if _, err := os.Stat(apisDir); err != nil {
-		if os.IsNotExist(err) {
-			log.Infof(`API "%s" does not exist. Skipping CSV annotation parsing for this API.`, gvk)
-			return nil
-		}
-		return err
-	}
-	p := parser.New()
-	if err := p.AddDirRecursive("./" + apisDir); err != nil {
-		return err
-	}
-	universe, err := p.FindTypes()
+	universe, found, err := getTypesForGVK(scaffold.ApisDir, gvk)
 	if err != nil {
 		return err
 	}
-	apiPkg := path.Join(projutil.GetGoPkg(), apisDir)
+	if !found {
+		return nil
+	}
+	apiPkg := path.Join(projutil.GetGoPkg(), filepath.ToSlash(scaffold.ApisDir),
+		gvk.Group, gvk.Version)
 	specType, statusType, pkgTypes, err := getSpecStatusPkgTypesForAPI(universe, apiPkg, gvk.Kind)
 	if err != nil {
 		return errors.Wrapf(err, `get spec, status, and package types for "%s"`, gvk)
@@ -120,6 +112,26 @@ func setCRDDescriptorForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.G
 		}
 	}
 	return nil
+}
+
+func getTypesForGVK(apisDir string, gvk schema.GroupVersionKind) (types.Universe, bool, error) {
+	apiDir := filepath.Join(apisDir, gvk.Group, gvk.Version)
+	if _, err := os.Stat(apiDir); err != nil {
+		if os.IsNotExist(err) {
+			log.Infof(`API "%s" does not exist. Skipping CSV annotation parsing for this API.`, gvk)
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+	p := parser.New()
+	if err := p.AddDirRecursive("./" + apiDir); err != nil {
+		return nil, false, err
+	}
+	universe, err := p.FindTypes()
+	if err != nil {
+		return nil, false, err
+	}
+	return universe, true, nil
 }
 
 // getSpecStatusPkgTypesForAPI finds and returns types {kind}Spec, {kind}Status,
