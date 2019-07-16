@@ -142,7 +142,7 @@
           name: '{{ custom_resource.metadata.name }}'
         register: cr
         retries: 10
-        delay: 2
+        delay: 6
         until: not cr.resources
         failed_when: cr.resources
 
