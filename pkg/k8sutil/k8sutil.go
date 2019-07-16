@@ -78,9 +78,6 @@ func GetOperatorNamespace() (string, error) {
 
 // GetOperatorName return the operator name
 func GetOperatorName() (string, error) {
-	if isRunModeLocal() {
-		return "", ErrRunLocal
-	}
 	operatorName, found := os.LookupEnv(OperatorNameEnvVar)
 	if !found {
 		return "", fmt.Errorf("%s must be set", OperatorNameEnvVar)
