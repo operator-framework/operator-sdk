@@ -27,6 +27,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
+	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -71,6 +72,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	// TODO: probably should expose the host & port as an environment variables
 	mgr, err := manager.New(cfg, manager.Options{
 		Namespace:          namespace,
+		MapperProvider:     restmapper.NewDynamicRESTMapper,
 		MetricsBindAddress: fmt.Sprintf("0.0.0.0:%d", metricsPort),
 	})
 	if err != nil {

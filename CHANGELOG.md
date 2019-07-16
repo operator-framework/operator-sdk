@@ -2,6 +2,20 @@
 
 ### Added
 
+- Document new compile-time dependency `mercurial` in user-facing documentation. ([#1683](https://github.com/operator-framework/operator-sdk/pull/1683))
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
+## v0.9.0
+
+### Added
+
 - Adds support for building OCI images with [podman](https://podman.io/), e.g. `operator-sdk build --image-builder=podman`. ([#1488](https://github.com/operator-framework/operator-sdk/pull/1488))
 - New option for [`operator-sdk up local --enable-delve`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#up), which can be used to start the operator in remote debug mode with the [delve](https://github.com/go-delve/delve) debugger listening on port 2345. ([#1422](https://github.com/operator-framework/operator-sdk/pull/1422))
 - Enables controller-runtime metrics in Helm operator projects. ([#1482](https://github.com/operator-framework/operator-sdk/pull/1482))

@@ -136,6 +136,9 @@ test/e2e/ansible-molecule: image/build/ansible
 test/e2e/helm: image/build/helm
 	./hack/tests/e2e-helm.sh
 
+test/e2e/helm2:
+	./ci/tests/e2e-helm.sh
+
 test/markdown:
 	./hack/ci/marker --root=doc
 
