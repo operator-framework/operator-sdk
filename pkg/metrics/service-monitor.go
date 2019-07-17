@@ -59,6 +59,9 @@ func CreateServiceMonitors(config *rest.Config, ns string, services []*v1.Servic
 // based on the passed Service object.
 func GenerateServiceMonitor(s *v1.Service) *monitoringv1.ServiceMonitor {
 	labels := make(map[string]string)
+	if s == nil {
+		return nil
+	}
 	for k, v := range s.ObjectMeta.Labels {
 		labels[k] = v
 	}

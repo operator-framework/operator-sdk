@@ -149,7 +149,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = serveCRMetrics(cfg); err != nil {
+	if err = serveCRMetrics(cfg); err != nil && err != k8sutil.ErrRunLocal {
 		log.Info("Could not generate and serve custom resource metrics", "error", err.Error())
 	}
 
@@ -160,7 +160,7 @@ func main() {
 	}
 	// Create Service object to expose the metrics port(s).
 	service, err := metrics.CreateMetricsService(ctx, cfg, servicePorts)
-	if err != nil {
+	if err != nil && err != k8sutil.ErrRunLocal {
 		log.Info("Could not create metrics Service", "error", err.Error())
 	}
 
