@@ -131,17 +131,24 @@ func (s *PackageManifest) newPackageManifest() *olmregistry.PackageManifest {
 // channel if possible.
 func (s *PackageManifest) setChannels(pm *olmregistry.PackageManifest) error {
 	if s.Channel != "" {
-		pm.Channels = append(pm.Channels, olmregistry.PackageChannel{
-			Name:           s.Channel,
-			CurrentCSVName: getCSVName(s.ProjectName, s.CSVVersion),
+		channelIdx := sort.Search(len(pm.Channels), func(i int) bool {
+			return pm.Channels[i].Name == s.Channel
 		})
+		if channelIdx == len(pm.Channels) {
+			pm.Channels = append(pm.Channels, olmregistry.PackageChannel{
+				Name:           s.Channel,
+				CurrentCSVName: getCSVName(s.ProjectName, s.CSVVersion),
+			})
+		} else {
+			pm.Channels[channelIdx].CurrentCSVName = getCSVName(s.ProjectName, s.CSVVersion)
+		}
+		// Use s.Channel as the default channel if caller has specified it as the
+		// default.
+		if s.ChannelIsDefault {
+			pm.DefaultChannelName = s.Channel
+		}
 	}
 
-	// Use s.Channel as the default channel if caller has specified it as the
-	// default.
-	if s.ChannelIsDefault && s.Channel != "" {
-		pm.DefaultChannelName = s.Channel
-	}
 	if pm.DefaultChannelName == "" {
 		log.Warn("Package manifest default channel is empty and should be set to an existing channel.")
 	}
