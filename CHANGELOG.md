@@ -9,7 +9,7 @@
 ### Removed
 
 ### Bug Fixes
-- Fixes an issue that causes `operator-sdk add crd` to fail. ([#1660](https://github.com/operator-framework/operator-sdk/pull/1660))
+- Configure the repo path correctly in `operator-sdk add crd` and prevent the command from running outside of an operator project. ([#1660](https://github.com/operator-framework/operator-sdk/pull/1660))
 
 ## v0.9.0
 
