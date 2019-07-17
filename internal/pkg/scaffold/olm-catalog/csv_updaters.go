@@ -20,11 +20,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -257,8 +259,8 @@ func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
 	store.crds.crKinds[crdDesc.Kind] = struct{}{}
 	// Parse CRD descriptors from source code comments and annotations.
 	gvk := schema.GroupVersionKind{Group: crd.Spec.Group, Version: crdDesc.Version, Kind: crdDesc.Kind}
-	if err := setCRDDescriptorForGVK(&crdDesc, gvk); err != nil {
-		return err
+	if err := setCRDDescriptorForGVK(scaffold.ApisDir, &crdDesc, gvk); err != nil {
+		return errors.Wrapf(err, "failed to set CRD descriptors for %s", gvk)
 	}
 	store.crds.Owned = append(store.crds.Owned, crdDesc)
 	return nil

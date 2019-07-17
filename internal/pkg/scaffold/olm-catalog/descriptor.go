@@ -24,7 +24,6 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/annotations"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
@@ -40,24 +39,24 @@ const csvgenPrefix = annotations.SDKPrefix + ":gen-csv:"
 
 // setCRDDescriptorForGVK parses type and struct field declaration comments on
 // API types to populate a csv's spec.customresourcedefinitions.owned fields
-// for a given API identified by Group, Version, and Kind.
+// for a given API identified by Group, Version, and Kind in apisDir.
 // TODO(estroz): support ActionDescriptors parsing/setting.
-func setCRDDescriptorForGVK(crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.GroupVersionKind) error {
+func setCRDDescriptorForGVK(apisDir string, crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.GroupVersionKind) error {
 	if strings.Contains(gvk.Group, ".") {
 		gvk.Group = strings.Split(gvk.Group, ".")[0]
 	}
-	universe, found, err := getTypesForGVK(scaffold.ApisDir, gvk)
+	universe, found, err := getTypesForGVK(apisDir, gvk)
 	if err != nil {
 		return err
 	}
 	if !found {
 		return nil
 	}
-	apiPkg := path.Join(projutil.GetGoPkg(), filepath.ToSlash(scaffold.ApisDir),
+	apiPkg := path.Join(projutil.GetGoPkg(), filepath.ToSlash(apisDir),
 		gvk.Group, gvk.Version)
 	specType, statusType, pkgTypes, err := getSpecStatusPkgTypesForAPI(universe, apiPkg, gvk.Kind)
 	if err != nil {
-		return errors.Wrapf(err, `get spec, status, and package types for "%s"`, gvk)
+		return errors.Wrapf(err, "failed to parse spec, status, and package types for %s", gvk)
 	}
 
 	var descriptors []descriptor
@@ -118,7 +117,7 @@ func getTypesForGVK(apisDir string, gvk schema.GroupVersionKind) (types.Universe
 	apiDir := filepath.Join(apisDir, gvk.Group, gvk.Version)
 	if _, err := os.Stat(apiDir); err != nil {
 		if os.IsNotExist(err) {
-			log.Infof(`API "%s" does not exist. Skipping CSV annotation parsing for this API.`, gvk)
+			log.Infof("API directory %s does not exist. Skipping CSV annotation parsing for API %s.", apisDir, gvk)
 			return nil, false, nil
 		}
 		return nil, false, err
@@ -217,12 +216,18 @@ func wrapParseErr(err error) error {
 // field Once all comments have been parsed, the entry is added to a
 // parsedCRDDescriptions.
 func parseCSVGenAnnotations(comments []string) (pd parsedCRDDescriptions, err error) {
+	defer func() {
+		if err != nil {
+			err = wrapParseErr(err)
+		}
+	}()
+
 	tags := types.ExtractCommentTags(csvgenPrefix, comments)
 	specd, statusd := descriptor{descType: typeSpec}, descriptor{descType: typeStatus}
 	for path, vals := range tags {
 		pathElems, err := annotations.SplitPath(path)
 		if err != nil {
-			return pd, wrapParseErr(err)
+			return parsedCRDDescriptions{}, err
 		}
 		parentPathElem, childPathElems := pathElems[0], pathElems[1:]
 		switch parentPathElem {
@@ -231,31 +236,31 @@ func parseCSVGenAnnotations(comments []string) (pd parsedCRDDescriptions, err er
 			case "specDescriptors":
 				err = parseDescriptor(&specd, childPathElems, vals[0])
 				if err != nil {
-					return pd, wrapParseErr(err)
+					return parsedCRDDescriptions{}, err
 				}
 			case "statusDescriptors":
 				err = parseDescriptor(&statusd, childPathElems, vals[0])
 				if err != nil {
-					return pd, wrapParseErr(err)
+					return parsedCRDDescriptions{}, err
 				}
 			case "displayName":
 				pd.displayName, err = strconv.Unquote(vals[0])
 				if err != nil {
-					return pd, errors.Wrapf(err, "error unquoting %s", vals[0])
+					return parsedCRDDescriptions{}, errors.Wrapf(err, "error unquoting %s", vals[0])
 				}
 			case "resources":
 				for _, v := range vals {
 					r, err := parseResource(v)
 					if err != nil {
-						return pd, errors.Wrapf(err, "error parsing resource %s", v)
+						return parsedCRDDescriptions{}, errors.Wrapf(err, "error parsing resource %s", v)
 					}
 					pd.resources = append(pd.resources, r)
 				}
 			default:
-				return pd, wrapParseErr(errors.Errorf(`unsupported %s child path element "%s"`, parentPathElem, childPathElems[0]))
+				return parsedCRDDescriptions{}, errors.Errorf("unsupported %s child path element %s", parentPathElem, childPathElems[0])
 			}
 		default:
-			return pd, wrapParseErr(errors.Errorf(`unsupported path element "%s"`, parentPathElem))
+			return parsedCRDDescriptions{}, errors.Errorf("unsupported path element %s", parentPathElem)
 		}
 	}
 
@@ -274,7 +279,7 @@ func parseDescriptor(d *descriptor, pathElems []string, val string) (err error) 
 	case 1:
 		d.include, err = strconv.ParseBool(val)
 		if err != nil {
-			return errors.Wrapf(err, "error parsing %s bool val '%s'", pathElems[0], val)
+			return errors.Wrapf(err, "error parsing %s bool val %s", pathElems[0], val)
 		}
 	case 2:
 		switch pathElems[1] {
@@ -290,10 +295,10 @@ func parseDescriptor(d *descriptor, pathElems []string, val string) (err error) 
 			}
 			d.xdesc = strings.Split(xdStr, ",")
 		default:
-			return errors.Errorf(`unsupported descriptor path element "%s"`, pathElems[1])
+			return errors.Errorf("unsupported descriptor path element %s", pathElems[1])
 		}
 	default:
-		return errors.Errorf(`unsupported descriptor path "%s"`, annotations.JoinPath(pathElems...))
+		return errors.Errorf("unsupported descriptor path %s", annotations.JoinPath(pathElems...))
 	}
 	return nil
 }
