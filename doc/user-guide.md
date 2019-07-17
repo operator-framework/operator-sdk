@@ -7,6 +7,7 @@ This guide walks through an example of building a simple memcached-operator usin
 
 - [git][git_tool]
 - [go][go_tool] version v1.12+.
+- [mercurial][mercurial_tool] version 3.9+
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
@@ -99,6 +100,29 @@ After modifying the `*_types.go` file always run the following command to update
 ```sh
 $ operator-sdk generate k8s
 ```
+
+### OpenAPI validation
+To update the OpenAPI validation section in the CRD `deploy/crds/cache_v1alpha1_memcached_crd.yaml`, run the following command. 
+
+```console
+$ operator-sdk generate openapi
+```
+This validation section allows Kubernetes to validate the properties in a Memcached Custom Resource when it is created or updated. An example of the generated YAML is as follows: 
+
+```YAML
+spec:
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            size:
+              format: int32
+              type: integer
+```
+
+To learn more about OpenAPI v3.0 validation schemas in Custom Resource Definitions, refer to the [Kubernetes Documentation][doc_validation_schema].
+
 
 ## Add a new Controller
 
@@ -609,6 +633,7 @@ When the operator is not running in a cluster, the Manager will return an error 
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
 [docker_tool]:https://docs.docker.com/install/
+[mercurial_tool]:https://www.mercurial-scm.org/downloads
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [minikube_tool]:https://github.com/kubernetes/minikube#installation
 [scheme_package]:https://github.com/kubernetes/client-go/blob/master/kubernetes/scheme/register.go
@@ -621,3 +646,4 @@ When the operator is not running in a cluster, the Manager will return an error 
 [result_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Result
 [metrics_doc]: ./user/metrics/README.md
 [quay_link]: https://quay.io
+[doc_validation_schema]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#specifying-a-structural-schema

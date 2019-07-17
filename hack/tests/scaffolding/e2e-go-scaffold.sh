@@ -5,8 +5,6 @@ set -ex
 source hack/lib/test_lib.sh
 
 ROOTDIR="$(pwd)"
-# TODO: remove once PR 1566 is merged
-trap_add 'rm -f $ROOTDIR/go.mod' EXIT
 BASEPROJECTDIR="$(mktemp -d)"
 IMAGE_NAME="quay.io/example/memcached-operator:v0.0.1"
 

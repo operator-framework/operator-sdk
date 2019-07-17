@@ -2,6 +2,8 @@
 
 ### Added
 
+- Document new compile-time dependency `mercurial` in user-facing documentation. ([#1683](https://github.com/operator-framework/operator-sdk/pull/1683))
+
 ### Changed
 
 ### Deprecated
