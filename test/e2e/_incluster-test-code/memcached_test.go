@@ -255,6 +255,12 @@ func MemcachedLocal(t *testing.T) {
 	}
 
 	if err = memcachedScaleTest(t, framework.Global, ctx, 3, 4); err != nil {
+		file, fileErr := ioutil.ReadFile("stderr.txt")
+		if fileErr != nil {
+			t.Logf("Failed to read operator logs after test failure")
+		} else {
+			t.Logf("Operator Logs: %s", string(file))
+		}
 		t.Fatal(err)
 	}
 }
