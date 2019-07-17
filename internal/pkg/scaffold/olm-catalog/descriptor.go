@@ -42,21 +42,12 @@ const csvgenPrefix = annotations.SDKPrefix + ":gen-csv:"
 // for a given API identified by Group, Version, and Kind in apisDir.
 // TODO(estroz): support ActionDescriptors parsing/setting.
 func setCRDDescriptorForGVK(apisDir string, crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.GroupVersionKind) error {
-	if strings.Contains(gvk.Group, ".") {
-		gvk.Group = strings.Split(gvk.Group, ".")[0]
-	}
-	universe, found, err := getTypesForGVK(apisDir, gvk)
+	specType, statusType, pkgTypes, found, err := findTypesForGVK(apisDir, gvk)
 	if err != nil {
 		return err
 	}
 	if !found {
 		return nil
-	}
-	apiPkg := path.Join(projutil.GetGoPkg(), filepath.ToSlash(apisDir),
-		gvk.Group, gvk.Version)
-	specType, statusType, pkgTypes, err := getSpecStatusPkgTypesForAPI(universe, apiPkg, gvk.Kind)
-	if err != nil {
-		return errors.Wrapf(err, "failed to parse spec, status, and package types for %s", gvk)
 	}
 
 	var descriptors []descriptor
@@ -113,24 +104,41 @@ func setCRDDescriptorForGVK(apisDir string, crdDesc *olmapiv1alpha1.CRDDescripti
 	return nil
 }
 
-func getTypesForGVK(apisDir string, gvk schema.GroupVersionKind) (types.Universe, bool, error) {
-	apiDir := filepath.Join(apisDir, gvk.Group, gvk.Version)
-	if _, err := os.Stat(apiDir); err != nil {
+func findTypesForGVK(apisDir string, gvk schema.GroupVersionKind) (*types.Type, *types.Type, []*types.Type, bool, error) {
+	group := gvk.Group
+	if strings.Contains(group, ".") {
+		group = strings.Split(group, ".")[0]
+	}
+	apiDir := filepath.Join(apisDir, group, gvk.Version)
+	universe, err := getTypesFromDir(apiDir)
+	if err != nil {
 		if os.IsNotExist(err) {
-			log.Infof("API directory %s does not exist. Skipping CSV annotation parsing for API %s.", apisDir, gvk)
-			return nil, false, nil
+			log.Infof("API directory %s does not exist. Skipping CSV annotation parsing for API %s.", apiDir, gvk)
+			return nil, nil, nil, false, nil
 		}
-		return nil, false, err
+		return nil, nil, nil, false, err
+	}
+	apiPkg := path.Join(projutil.GetGoPkg(), filepath.ToSlash(apiDir))
+	spec, status, pkgTypes, err := getSpecStatusPkgTypesForAPI(universe, apiPkg, gvk.Kind)
+	if err != nil {
+		return nil, nil, nil, false, errors.Wrapf(err, "failed to parse spec, status, and package types for %s", gvk)
+	}
+	return spec, status, pkgTypes, true, nil
+}
+
+func getTypesFromDir(apiDir string) (types.Universe, error) {
+	if _, err := os.Stat(apiDir); err != nil {
+		return nil, err
 	}
 	p := parser.New()
 	if err := p.AddDirRecursive("./" + apiDir); err != nil {
-		return nil, false, err
+		return nil, err
 	}
 	universe, err := p.FindTypes()
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
-	return universe, true, nil
+	return universe, nil
 }
 
 // getSpecStatusPkgTypesForAPI finds and returns types {kind}Spec, {kind}Status,

@@ -17,7 +17,6 @@ package catalog
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
@@ -210,7 +209,7 @@ func (u *InstallStrategyUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion)
 		u.updateClusterPermissions(s)
 		u.updateDeploymentSpecs(s)
 	default:
-		return fmt.Errorf("install strategy (%v) of unknown type", strat)
+		return errors.Errorf("install strategy (%v) of unknown type", strat)
 	}
 
 	// Re-serialize permissions into csv strategy.
@@ -243,7 +242,7 @@ func (u *InstallStrategyUpdate) updateDeploymentSpecs(strat *olminstall.Strategy
 
 type CustomResourceDefinitionsUpdate struct {
 	*olmapiv1alpha1.CustomResourceDefinitions
-	crKinds map[string]struct{}
+	crIDs map[string]struct{}
 }
 
 func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
@@ -251,25 +250,65 @@ func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
 	if err := yaml.Unmarshal(yamlDoc, crd); err != nil {
 		return err
 	}
-	crdDesc := olmapiv1alpha1.CRDDescription{
-		Name:    crd.ObjectMeta.Name,
-		Version: crd.Spec.Version,
-		Kind:    crd.Spec.Names.Kind,
+	versions, err := getCRDVersions(crd)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get owned CRD %s versions", crd.GetName())
 	}
-	store.crds.crKinds[crdDesc.Kind] = struct{}{}
-	// Parse CRD descriptors from source code comments and annotations.
-	gvk := schema.GroupVersionKind{Group: crd.Spec.Group, Version: crdDesc.Version, Kind: crdDesc.Kind}
-	if err := setCRDDescriptorForGVK(scaffold.ApisDir, &crdDesc, gvk); err != nil {
-		return errors.Wrapf(err, "failed to set CRD descriptors for %s", gvk)
+	for _, ver := range versions {
+		kind := crd.Spec.Names.Kind
+		crdDesc := olmapiv1alpha1.CRDDescription{
+			Name:    crd.ObjectMeta.Name,
+			Version: ver,
+			Kind:    kind,
+		}
+		store.crds.crIDs[crdID(crd, ver)] = struct{}{}
+		// Parse CRD descriptors from source code comments and annotations.
+		gvk := schema.GroupVersionKind{Group: crd.Spec.Group, Version: ver, Kind: kind}
+		if err := setCRDDescriptorForGVK(scaffold.ApisDir, &crdDesc, gvk); err != nil {
+			return errors.Wrapf(err, "failed to set CRD descriptors for %s", gvk)
+		}
+		store.crds.Owned = append(store.crds.Owned, crdDesc)
 	}
-	store.crds.Owned = append(store.crds.Owned, crdDesc)
 	return nil
 }
 
-// crdDescID produces an opaque, per-CSV unique string identifying
-// a CRDDescription.
+func getCRDVersions(crd *apiextv1beta1.CustomResourceDefinition) (versions []string, err error) {
+	if len(crd.Spec.Versions) != 0 {
+		for _, ver := range crd.Spec.Versions {
+			// Only versions served by the API server are relevant to a CSV.
+			if ver.Served {
+				versions = append(versions, ver.Name)
+			}
+		}
+	} else if crd.Spec.Version != "" {
+		versions = append(versions, crd.Spec.Version)
+	}
+	if len(versions) == 0 {
+		return nil, errors.Errorf("no versions in CRD %s", crd.GetName())
+	}
+	return versions, nil
+}
+
+// crdDescID produces an opaque, unique string identifying a CRDDescription.
 func crdDescID(desc olmapiv1alpha1.CRDDescription) string {
-	return desc.Version + desc.Kind
+	// Name should always be <lower kind>.<group>, so this is effectively a GVK.
+	splitName := strings.Split(desc.Name, ".")
+	return getGVKID(strings.Join(splitName[1:], "."), desc.Version, desc.Kind)
+}
+
+// crdID produces an opaque, unique string identifying a CRD. A version is
+// required because a CRD can have multiple versions.
+func crdID(crd *apiextv1beta1.CustomResourceDefinition, version string) string {
+	return getGVKID(crd.Spec.Group, version, crd.Spec.Names.Kind)
+}
+
+// gvkID produces an opaque, unique string identifying a GVK.
+func gvkID(gvk schema.GroupVersionKind) string {
+	return getGVKID(gvk.Group, gvk.Version, gvk.Kind)
+}
+
+func getGVKID(g, v, k string) string {
+	return g + v + k
 }
 
 // Apply updates csv's "owned" CRDDescriptions. "required" CRDDescriptions are

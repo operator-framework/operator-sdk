@@ -334,19 +334,20 @@ func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.Clu
 		scanner := yamlutil.NewYAMLScanner(yamlData)
 		for scanner.Scan() {
 			yamlSpec := scanner.Bytes()
-			kind, err := k8sutil.GetKindfromYAML(yamlSpec)
+			typemeta, err := k8sutil.GetTypeMetaFromBytes(yamlSpec)
 			if err != nil {
-				return errors.Wrapf(err, "error getting kind from manifest %s", f)
+				return errors.Wrapf(err, "error getting type metadata from manifest %s", f)
 			}
-			found, err := store.AddToUpdater(yamlSpec, kind)
+			found, err := store.AddToUpdater(yamlSpec, typemeta.Kind)
 			if err != nil {
 				return errors.Wrapf(err, "error adding manifest %s to CSV updaters", f)
 			}
 			if !found {
-				if _, ok := otherSpecs[kind]; !ok {
-					otherSpecs[kind] = make([][]byte, 0)
+				id := gvkID(typemeta.GroupVersionKind())
+				if _, ok := otherSpecs[id]; !ok {
+					otherSpecs[id] = make([][]byte, 0)
 				}
-				otherSpecs[kind] = append(otherSpecs[kind], yamlSpec)
+				otherSpecs[id] = append(otherSpecs[id], yamlSpec)
 			}
 		}
 		if err = scanner.Err(); err != nil {
@@ -354,8 +355,8 @@ func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.Clu
 		}
 	}
 
-	for k := range store.crds.crKinds {
-		if crSpecs, ok := otherSpecs[k]; ok {
+	for id := range store.crds.crIDs {
+		if crSpecs, ok := otherSpecs[id]; ok {
 			for _, spec := range crSpecs {
 				if err := store.AddCR(spec); err != nil {
 					return err
