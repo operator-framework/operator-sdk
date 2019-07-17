@@ -110,7 +110,6 @@ func (s *CSV) CustomRender() ([]byte, error) {
 	}
 	if !exists {
 		csv = &olmapiv1alpha1.ClusterServiceVersion{}
-		s.initCSVFields(csv)
 	}
 
 	cfg, err := GetCSVConfig(s.ConfigFilePath)
@@ -118,13 +117,13 @@ func (s *CSV) CustomRender() ([]byte, error) {
 		return nil, err
 	}
 
-	setCSVDefaultFields(csv)
 	if err = s.updateCSVVersions(csv); err != nil {
 		return nil, err
 	}
 	if err = s.updateCSVFromManifestFiles(cfg, csv); err != nil {
 		return nil, err
 	}
+	s.setCSVDefaultFields(csv)
 
 	if fields := getEmptyRequiredCSVFields(csv); len(fields) != 0 {
 		if exists {
@@ -188,29 +187,42 @@ func (s *CSV) getCSVPath(ver string) string {
 	return filepath.Join(s.pathPrefix, OLMCatalogDir, lowerProjName, ver, name)
 }
 
-// initCSVFields initializes all csv fields that should be populated by a user
-// with sane defaults. initCSVFields should only be called for new csv's.
-func (s *CSV) initCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) {
-	// Metadata
+// setCSVDefaultFields initializes all csv fields that should be populated by a user
+// with sane defaults. setCSVDefaultFields should only be called for new csv's.
+func (s *CSV) setCSVDefaultFields(csv *olmapiv1alpha1.ClusterServiceVersion) {
+	// These fields have well-defined required values.
 	csv.TypeMeta.APIVersion = olmapiv1alpha1.ClusterServiceVersionAPIVersion
 	csv.TypeMeta.Kind = olmapiv1alpha1.ClusterServiceVersionKind
 	csv.SetName(getCSVName(strings.ToLower(s.OperatorName), s.CSVVersion))
-	csv.SetNamespace("placeholder")
-	csv.SetAnnotations(map[string]string{"capabilities": "Basic Install"})
 
-	// Spec fields
-	csv.Spec.Version = *semver.New(s.CSVVersion)
-	csv.Spec.DisplayName = k8sutil.GetDisplayName(s.OperatorName)
-	csv.Spec.Description = "Placeholder description"
-	csv.Spec.Maturity = "alpha"
-	csv.Spec.Provider = olmapiv1alpha1.AppLink{}
-	csv.Spec.Maintainers = make([]olmapiv1alpha1.Maintainer, 0)
-	csv.Spec.Links = make([]olmapiv1alpha1.AppLink, 0)
-}
-
-// setCSVDefaultFields sets default fields on older CSV versions or newly
-// initialized CSV's.
-func setCSVDefaultFields(csv *olmapiv1alpha1.ClusterServiceVersion) {
+	// Set if empty.
+	if csv.GetNamespace() == "" {
+		csv.SetNamespace("placeholder")
+	}
+	if csv.GetAnnotations() == nil {
+		csv.SetAnnotations(map[string]string{})
+	}
+	if caps, ok := csv.GetAnnotations()["capabilities"]; !ok || caps == "" {
+		csv.GetAnnotations()["capabilities"] = "Basic Install"
+	}
+	if csv.Spec.Provider == (olmapiv1alpha1.AppLink{}) {
+		csv.Spec.Provider = olmapiv1alpha1.AppLink{}
+	}
+	if len(csv.Spec.Maintainers) == 0 {
+		csv.Spec.Maintainers = []olmapiv1alpha1.Maintainer{}
+	}
+	if len(csv.Spec.Links) == 0 {
+		csv.Spec.Links = []olmapiv1alpha1.AppLink{}
+	}
+	if csv.Spec.DisplayName == "" {
+		csv.Spec.DisplayName = k8sutil.GetDisplayName(s.OperatorName)
+	}
+	if csv.Spec.Description == "" {
+		csv.Spec.Description = "Placeholder description"
+	}
+	if csv.Spec.Maturity == "" {
+		csv.Spec.Maturity = "alpha"
+	}
 	if len(csv.Spec.InstallModes) == 0 {
 		csv.Spec.InstallModes = []olmapiv1alpha1.InstallMode{
 			{Type: olmapiv1alpha1.InstallModeTypeOwnNamespace, Supported: true},
