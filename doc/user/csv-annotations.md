@@ -144,4 +144,4 @@ customresourcedefinitions:
 [sdk_cli_ref]:../sdk-cli-reference.md#gen-csv
 [csv_x_desc]:https://github.com/openshift/console/blob/master/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L5-L27
 [csv_spec]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md
-[csv_x_desc_mappings]:https://github.com/estroz/operator-sdk/blob/csv-customresourcedefinitions/internal/pkg/scaffold/olm-catalog/descriptor.go#L270-L298
+[csv_x_desc_mappings]:https://github.com/estroz/operator-sdk/blob/8750e06060c3d545097846c6bbfaa55e58654fb5/internal/pkg/descriptor/parse.go#L362-L396
