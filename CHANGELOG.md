@@ -6,6 +6,34 @@
 
 ### Changed
 
+- CRD manifest `spec.version` is still supported, but users will see a warning message if `spec.versions` is not present and an error if `spec.versions` is populated but the version in `spec.version` is not in `spec.versions`.
+
+### Breaking changes
+
+- Upgrade Kubernetes version from `kubernetes-1.13.4` to `kubernetes-1.14.1`
+- Upgrade `github.com/operator-framework/operator-lifecycle-manager` version from `b8a4faf68e36feb6d99a6aec623b405e587b17b1` to `0.10.1`
+- Upgrade [`controller-runtime`](https://github.com/kubernetes-sigs/controller-runtime) version from `v0.1.12` to `v0.2.0-beta.3`
+  - The package `sigs.k8s.io/controller-runtime/pkg/runtime/scheme` is deprecated, and contains no code. Replace this import with `sigs.k8s.io/controller-runtime/pkg/scheme` where relevant.
+  - The package `sigs.k8s.io/controller-runtime/pkg/runtime/log` is deprecated. Replace this import with `sigs.k8s.io/controller-runtime/pkg/log` where relevant.
+  - The package `sigs.k8s.io/controller-runtime/pkg/runtime/signals` is deprecated. Replace this import with `sigs.k8s.io/controller-runtime/pkg/manager/signals` where relevant.
+  - [`sigs.k8s.io/controller-runtime/pkg/client.Client`](https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/interfaces.go#L61)'s `List()` method has been updated: `List(ctx context.Context, opts *client.ListOptions, list runtime.Object) error` is now `List(ctx context.Context, list runtime.Object, opts ...client.ListOptionFunc) error`. To migrate:
+      ```go
+      import (
+        "context"
+
+        "sigs.k8s.io/controller-runtime/pkg/client"
+      )
+
+      ...
+
+      listOpts := &client.ListOptions{}
+      // Old
+      err = r.client.List(context.TODO(), listOps, podList)
+      // New
+      err = r.client.List(context.TODO(), podList, client.UseListOptions(listOps))
+      ```
+- CRD file names were previously of the form `<group>_<version>_<kind>_crd.yaml`. Now that CRD manifest `spec.version` is deprecated in favor of `spec.versions`, i.e. multiple versions can be specified in one CRD, CRD file names have the form `<group>_<resource>_crd.yaml`. `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`.
+
 ### Deprecated
 
 ### Removed
@@ -38,22 +66,6 @@
 - Changed the flag `--skip-git-init` to [`--git-init`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#new). This changes the default behavior of `operator-sdk new` to not initialize the new project directory as a git repository with `git init`. This behavior is now opt-in with `--git-init`. ([#1588](https://github.com/operator-framework/operator-sdk/pull/1588))
 - `operator-sdk new` will no longer create the initial commit for a new project, even with `--git-init=true`. ([#1588](https://github.com/operator-framework/operator-sdk/pull/1588))
 - When errors occur setting up the Kubernetes client for RBAC role generation, `operator-sdk new --type=helm` now falls back to a default RBAC role instead of failing. ([#1627](https://github.com/operator-framework/operator-sdk/pull/1627))
-- Upgrade [`controller-runtime`](https://github.com/kubernetes-sigs/controller-runtime) version from `v0.1.12` to `v0.2.0-beta.3`
-- Upgrade Kubernetes version from `kubernetes-1.13.4` to `kubernetes-1.14.1`
-- Upgrade `github.com/operator-framework/operator-lifecycle-manager` version from `b8a4faf68e36feb6d99a6aec623b405e587b17b1` to `0.10.1`
-
-### Breaking changes
-
-- The package `sigs.k8s.io/controller-runtime/pkg/runtime/scheme` is deprecated, and contains no code. Replace this import with `sigs.k8s.io/controller-runtime/pkg/scheme` where relevant.
-- The package `sigs.k8s.io/controller-runtime/pkg/runtime/log` is deprecated. Replace this import with `sigs.k8s.io/controller-runtime/pkg/log` where relevant.
-- The package `sigs.k8s.io/controller-runtime/pkg/runtime/signals` is deprecated. Replace this import with `sigs.k8s.io/controller-runtime/pkg/manager/signals` where relevant.
-- [`pkg/client.Client`](https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/interfaces.go#L61)'s `List()` method has been updated: `List(ctx context.Context, opts *client.ListOptions, list runtime.Object) error` is now `List(ctx context.Context, list runtime.Object, opts ...client.ListOptionFunc) error`. To migrate:
-```go
-// Old
-err = r.client.List(context.TODO(), listOps, podList)
-// New
-err = r.client.List(context.TODO(), podList, client.UseListOptions(listOps))
-```
 
 ### Deprecated
 

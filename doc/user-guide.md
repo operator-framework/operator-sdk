@@ -208,7 +208,7 @@ For a guide on Reconcilers, Clients, and interacting with resource Events, see t
 Before running the operator, the CRD must be registered with the Kubernetes apiserver:
 
 ```sh
-$ kubectl create -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
+$ kubectl create -f deploy/crds/cache_memcacheds_crd.yaml
 ```
 
 Once this is done, there are two ways to run the operator:

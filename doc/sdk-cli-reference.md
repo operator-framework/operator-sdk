@@ -175,7 +175,7 @@ pkg/apis/app/v1alpha1/
 
 $ operator-sdk generate openapi
 INFO[0000] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
-INFO[0001] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
+INFO[0001] Created deploy/crds/app_appservices_crd.yaml
 INFO[0001] Code-generation complete.
 
 $ tree pkg/apis/app/v1alpha1/
@@ -344,11 +344,11 @@ INFO[0000] Created pkg/apis/addtoscheme_app_v1alpha1.go
 INFO[0000] Created pkg/apis/app/v1alpha1/register.go
 INFO[0000] Created pkg/apis/app/v1alpha1/doc.go
 INFO[0000] Created deploy/crds/app_v1alpha1_appservice_cr.yaml
-INFO[0000] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
+INFO[0000] Created deploy/crds/app_appservices_crd.yaml
 INFO[0001] Running deepcopy code-generation for Custom Resource group versions: [app:[v1alpha1], ]
 INFO[0002] Code-generation complete.
 INFO[0002] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
-INFO[0004] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
+INFO[0004] Created deploy/crds/app_appservices_crd.yaml
 INFO[0004] Code-generation complete.
 INFO[0004] API generation complete.
 ```
@@ -385,7 +385,7 @@ Generates the CRD and the CR files for the specified api-version and kind.
 ```console
 $ operator-sdk add crd --api-version app.example.com/v1alpha1 --kind AppService
 Generating custom resource definition (CRD) files
-Created deploy/crds/app_v1alpha1_appservice_crd.yaml
+Created deploy/crds/app_appservices_crd.yaml
 Created deploy/crds/app_v1alpha1_appservice_cr.yaml
 ```
 
