@@ -70,7 +70,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208 // indirect
 	k8s.io/kube-state-metrics v1.6.0 // indirect
 	sigs.k8s.io/controller-runtime v0.2.0-beta.3
-	sigs.k8s.io/controller-tools v0.1.10
+	sigs.k8s.io/controller-tools v0.2.0-beta.3
 	sigs.k8s.io/testing_frameworks v0.1.0 // indirect
 )
 
@@ -80,12 +80,14 @@ replace (
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver kubernetes-1.14.1
 	k8s.io/apimachinery => k8s.io/apimachinery kubernetes-1.14.1
 	k8s.io/client-go => k8s.io/client-go kubernetes-1.14.1
+	k8s.io/cloud-provider => k8s.io/cloud-provider kubernetes-1.14.1
+	k8s.io/kubernetes => k8s.io/kubernetes v1.14.1
 )
 
 replace (
 	github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.31.1
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.2.0-beta.3
-	sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.1.11-0.20190411181648-9d55346c2bde
+	sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.2.0-beta.3
 	k8s.io/kube-state-metrics => k8s.io/kube-state-metrics v1.6.0
 )
 `

@@ -65,47 +65,48 @@ spec:
     plural: memcacheds
     singular: memcached
   scope: Namespaced
-  subresources:
-    status: {}
-  validation:
-    openAPIV3Schema:
-      properties:
-        apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
-          type: string
-        kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
-          type: string
-        metadata:
-          type: object
-        spec:
-          properties:
-            size:
-              description: Size is the size of the memcached deployment
-              format: int32
-              type: integer
-          required:
-          - size
-          type: object
-        status:
-          properties:
-            nodes:
-              description: Nodes are the names of the memcached pods
-              items:
-                type: string
-              type: array
-          required:
-          - nodes
-          type: object
-  version: v1alpha1
   versions:
   - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Memcached is the Schema for the memcacheds API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              size:
+                description: Size is the size of the memcached deployment
+                format: int32
+                type: integer
+            required:
+            - size
+            type: object
+          status:
+            properties:
+              nodes:
+                description: Nodes are the names of the memcached pods
+                items:
+                  type: string
+                type: array
+            required:
+            - nodes
+            type: object
+        type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 `
 
 func TestCRDNonGoProject(t *testing.T) {
@@ -158,31 +159,31 @@ spec:
     plural: appservices
     singular: appservice
   scope: Namespaced
-  subresources:
-    status: {}
-  validation:
-    openAPIV3Schema:
-      properties:
-        spec:
-          properties:
-            size:
-              format: int32
-              type: integer
-          required:
-          - size
-          type: object
-        status:
-          properties:
-            nodes:
-              items:
-                type: string
-              type: array
-          required:
-          - nodes
-          type: object
   version: v1alpha1
   versions:
   - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            properties:
+              size:
+                format: int32
+                type: integer
+            required:
+            - size
+            type: object
+          status:
+            properties:
+              nodes:
+                items:
+                  type: string
+                type: array
+            required:
+            - nodes
+            type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 `

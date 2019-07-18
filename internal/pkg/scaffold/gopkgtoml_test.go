@@ -33,18 +33,13 @@ func TestGopkgtoml(t *testing.T) {
 	}
 }
 
-const gopkgtomlExp = `# Force dep to vendor the code generators, which aren't imported just used at dev time.
-required = [
-  "sigs.k8s.io/controller-tools/pkg/crd/generator",
-]
-
-[[override]]
+const gopkgtomlExp = `[[override]]
   name = "github.com/go-openapi/spec"
   branch = "master"
 
 [[override]]
   name = "sigs.k8s.io/controller-tools"
-  revision = "9d55346c2bde73fb3326ac22eac2e5210a730207"
+  version = "=v0.2.0-beta.3"
 
 [[override]]
   name = "k8s.io/api"
@@ -96,5 +91,4 @@ required = [
   [[prune.project]]
     name = "k8s.io/kube-state-metrics"
     unused-packages = true
-
 `

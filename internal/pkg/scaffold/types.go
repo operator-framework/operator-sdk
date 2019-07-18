@@ -72,6 +72,7 @@ type {{.Resource.Kind}}Status struct {
 // {{.Resource.Kind}} is the Schema for the {{ .Resource.Resource }} API
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:path={{.Resource.Resource}},scope=Namespaced
 type {{.Resource.Kind}} struct {
 	metav1.TypeMeta   ` + "`" + `json:",inline"` + "`" + `
 	metav1.ObjectMeta ` + "`" + `json:"metadata,omitempty"` + "`" + `
