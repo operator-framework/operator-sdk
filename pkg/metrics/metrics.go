@@ -53,7 +53,7 @@ func CreateMetricsService(ctx context.Context, cfg *rest.Config, servicePorts []
 	}
 	s, err := initOperatorService(ctx, client, servicePorts)
 	if err != nil {
-		if err == k8sutil.ErrNoNamespace {
+		if err == k8sutil.ErrNoNamespace || err == k8sutil.ErrRunLocal {
 			log.Info("Skipping metrics Service creation; not running in a cluster.")
 			return nil, nil
 		}
