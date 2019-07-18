@@ -6,6 +6,8 @@
 
 ### Changed
 
+- **Breaking change:** CSV config field `role-path` is now `role-paths` and takes a list of strings. Users can now specify multiple `Role` and `ClusterRole` manifests using `role-paths`. ([#1704](https://github.com/operator-framework/operator-sdk/pull/1704))
+
 ### Deprecated
 
 ### Removed
