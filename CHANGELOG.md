@@ -10,6 +10,8 @@
 
 ### Bug Fixes
 
+- Fixes header file content validation when the content contains empty lines or centered text. ([#1544](https://github.com/operator-framework/operator-sdk/pull/1544))
+
 ## v0.8.1
 
 ### Bug Fixes
