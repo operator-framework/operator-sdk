@@ -2,20 +2,10 @@ FROM osdk-builder as builder
 
 RUN make image/scaffold/ansible
 
-FROM ansible/ansible-runner:1.2
+FROM registry.access.redhat.com/ubi7/ubi
 
-RUN yum remove -y ansible python-idna
-RUN yum install -y inotify-tools && yum clean all
-RUN pip uninstall ansible-runner -y
-
-RUN pip install --upgrade setuptools==41.0.1
-RUN pip install "urllib3>=1.23,<1.25"
-RUN pip install ansible==2.7.10 \
-	ansible-runner==1.2 \
-	ansible-runner-http==1.0.0 \
-	idna==2.7 \
-	"kubernetes>=8.0.0,<9.0.0" \
-	openshift==0.8.8
+# Temporary for CI, reset /etc/passwd
+RUN chmod 0644 /etc/passwd
 
 RUN mkdir -p /etc/ansible \
     && echo "localhost ansible_connection=local" > /etc/ansible/hosts \
@@ -28,14 +18,31 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
     USER_NAME=ansible-operator\
     HOME=/opt/ansible
 
-# install operator binary
+# Install python dependencies
+RUN (yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm || true) \
+ && yum install -y python-devel gcc inotify-tools \
+ && easy_install pip \
+ && pip install -U --no-cache-dir setuptools pip \
+ && pip install --no-cache-dir --ignore-installed ipaddress \
+      ansible-runner==1.2 \
+      ansible-runner-http==1.0.0 \
+      openshift==0.8.9 \
+ && yum remove -y gcc python-devel \
+ && yum clean all \
+ && rm -rf /var/cache/yum
+
 COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/build/operator-sdk ${OPERATOR}
-# install k8s_status Ansible Module
 COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/library/k8s_status.py /usr/share/ansible/openshift/
+COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/bin/ao-logs /usr/local/bin/ao-logs
 
-COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/bin /usr/local/bin
-RUN /usr/local/bin/user_setup
+# Ensure directory permissions are properly set
+RUN mkdir -p ${HOME}/.ansible/tmp \
+ && chown -R ${USER_UID}:0 ${HOME} \
+ && chmod -R ug+rwx ${HOME}
 
-ENTRYPOINT ["/usr/local/bin/entrypoint"]
+ADD https://github.com/krallin/tini/releases/latest/download/tini /tini
+RUN chmod +x /tini
+
+ENTRYPOINT ["/tini", "--", "bash", "-c", "${OPERATOR} run ansible --watches-file=/opt/ansible/watches.yaml $@"]
 
 USER ${USER_UID}
