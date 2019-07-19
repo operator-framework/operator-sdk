@@ -19,9 +19,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	yaml "github.com/ghodss/yaml"
+	"github.com/pkg/errors"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 )
 
@@ -53,8 +53,18 @@ func GetCRDManifestPaths(crdsDir string) (crdPaths []string, err error) {
 		if info == nil {
 			return nil
 		}
-		if !info.IsDir() && strings.HasSuffix(path, "_crd.yaml") {
-			crdPaths = append(crdPaths, path)
+		if !info.IsDir() {
+			b, err := ioutil.ReadFile(path)
+			if err != nil {
+				return errors.Wrapf(err, "error reading manifest %s", path)
+			}
+			kind, err := GetKindfromYAML(b)
+			if err != nil {
+				return errors.Wrapf(err, "error getting kind from manifest %s", path)
+			}
+			if kind == "CustomResourceDefinition" {
+				crdPaths = append(crdPaths, path)
+			}
 		}
 		return nil
 	})

@@ -35,7 +35,7 @@ func newAddCRDCmd() *cobra.Command {
 		Short: "Adds a Custom Resource Definition (CRD) and the Custom Resource (CR) files",
 		Long: `The operator-sdk add crd command will create a Custom Resource Definition (CRD) and the Custom Resource (CR) files for the specified api-version and kind.
 
-Generated CRD filename: <project-name>/deploy/crds/<group>_<version>_<kind>_crd.yaml
+Generated CRD filename: <project-name>/deploy/crds/<group>_<resource>.yaml
 Generated CR  filename: <project-name>/deploy/crds/<group>_<version>_<kind>_cr.yaml
 
 	<project-name>/deploy path must already exist

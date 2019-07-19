@@ -13,7 +13,7 @@ deploy_operator() {
     kubectl create -f "$OPERATORDIR/deploy/service_account.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
-    kubectl create -f "$OPERATORDIR/deploy/crds/helm_nginxes_crd.yaml"
+    kubectl create -f "$OPERATORDIR/deploy/crds/helm.example.com_nginxes.yaml"
     kubectl create -f "$OPERATORDIR/deploy/operator.yaml"
 }
 
@@ -21,7 +21,7 @@ remove_operator() {
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/service_account.yaml"
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/role.yaml"
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/role_binding.yaml"
-    kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/helm_nginxes_crd.yaml"
+    kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/helm.example.com_nginxes.yaml"
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/operator.yaml"
 }
 
@@ -50,8 +50,8 @@ test_operator() {
     fi
 
     # create CR
-    kubectl create -f deploy/crds/helm_v1alpha1_nginx_cr.yaml
-    trap_add 'kubectl delete --ignore-not-found -f ${OPERATORDIR}/deploy/crds/helm_v1alpha1_nginx_cr.yaml' EXIT
+    kubectl create -f deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml
+    trap_add 'kubectl delete --ignore-not-found -f ${OPERATORDIR}/deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml' EXIT
     if ! timeout 1m bash -c -- 'until kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.deployedRelease.name}" | grep "example-nginx"; do sleep 1; done';
     then
         kubectl logs deployment/nginx-operator
@@ -102,7 +102,7 @@ test_operator() {
         exit 1
     fi
 
-    kubectl delete -f deploy/crds/helm_v1alpha1_nginx_cr.yaml --wait=true
+    kubectl delete -f deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml --wait=true
     kubectl logs deployment/nginx-operator | grep "Uninstalled release" | grep "${release_name}"
 }
 

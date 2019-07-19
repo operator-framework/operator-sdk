@@ -43,7 +43,7 @@
   tasks:
   - name: Create Custom Resource Definition
     k8s:
-      definition: "{{ lookup('file', '/'.join([deploy_dir, 'crds/inventory_inventorys_crd.yaml'])) }}"
+      definition: "{{ lookup('file', '/'.join([deploy_dir, 'crds/inventory.apps.fabianism.us_inventorys.yaml'])) }}"
 
   - name: Ensure specified namespace is present
     k8s:

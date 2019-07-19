@@ -35,8 +35,8 @@ deploy_operator() {
     fi
     kubectl create -f "$OPERATORDIR/deploy/role.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
-    kubectl create -f "$OPERATORDIR/deploy/crds/ansible_memcacheds_crd.yaml"
-    kubectl create -f "$OPERATORDIR/deploy/crds/ansible_foos_crd.yaml"
+    kubectl create -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds.yaml"
+    kubectl create -f "$OPERATORDIR/deploy/crds/ansible.example.com_foos.yaml"
     kubectl create -f "$OPERATORDIR/deploy/operator.yaml"
 }
 
@@ -44,8 +44,8 @@ remove_operator() {
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/service_account.yaml"
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/role.yaml"
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/role_binding.yaml"
-    kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/ansible_memcacheds_crd.yaml"
-    kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/ansible_foos_crd.yaml"
+    kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds.yaml"
+    kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/ansible.example.com_foos.yaml"
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/operator.yaml"
 }
 
@@ -60,7 +60,7 @@ test_operator() {
     fi
 
     # create CR
-    kubectl create -f deploy/crds/ansible_v1alpha1_memcached_cr.yaml
+    kubectl create -f deploy/crds/ansible.example.com_v1alpha1_memcached_cr.yaml
     if ! timeout 20s bash -c -- 'until kubectl get deployment -l app=memcached | grep memcached; do sleep 1; done';
     then
         echo FAIL: operator failed to create memcached Deployment
@@ -81,7 +81,7 @@ test_operator() {
     kubectl create configmap deleteme
     trap_add 'kubectl delete --ignore-not-found configmap deleteme' EXIT
 
-    kubectl delete -f ${OPERATORDIR}/deploy/crds/ansible_v1alpha1_memcached_cr.yaml --wait=true
+    kubectl delete -f ${OPERATORDIR}/deploy/crds/ansible.example.com_v1alpha1_memcached_cr.yaml --wait=true
     # if the finalizer did not delete the configmap...
     if kubectl get configmap deleteme 2> /dev/null;
     then

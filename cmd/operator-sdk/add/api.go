@@ -49,7 +49,7 @@ This command runs Kubernetes deepcopy and OpenAPI V3 generators on tagged
 types in all paths under pkg/apis. Go code is generated under
 pkg/apis/<group>/<version>/zz_generated.{deepcopy,openapi}.go. CRD's are
 generated, or updated if they exist for a particular group + version + kind,
-under deploy/crds/<group>_<version>_<kind>_crd.yaml; OpenAPI V3 validation YAML
+under deploy/crds/<group>_<resource>.yaml; OpenAPI V3 validation YAML
 is generated as a 'validation' object.
 
 Example:
@@ -66,8 +66,8 @@ Example:
 			├── zz_generated.deepcopy.go
 			├── zz_generated.openapi.go
 	$ tree deploy/crds
-	├── deploy/crds/app_v1alpha1_appservice_cr.yaml
-	├── deploy/crds/app_appservices_crd.yaml
+	├── deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
+	├── deploy/crds/app.example.com_appservices.yaml
 `,
 		RunE: apiRun,
 	}

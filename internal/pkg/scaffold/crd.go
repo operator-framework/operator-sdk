@@ -37,7 +37,7 @@ import (
 	"sigs.k8s.io/controller-tools/pkg/markers"
 )
 
-// CRD is the input needed to generate a deploy/crds/<group>_<version>_<kind>_crd.yaml file
+// CRD is the input needed to generate a deploy/crds/<group>_<resource>.yaml file
 type CRD struct {
 	input.Input
 
@@ -70,7 +70,7 @@ func (s *CRD) GetInput() (input.Input, error) {
 }
 
 func crdPathForResource(dir string, r *Resource) string {
-	file := fmt.Sprintf("%s_%s_crd.yaml", r.GoImportGroup, r.Resource)
+	file := fmt.Sprintf("%s_%s.yaml", r.FullGroup, r.Resource)
 	return filepath.Join(dir, file)
 }
 

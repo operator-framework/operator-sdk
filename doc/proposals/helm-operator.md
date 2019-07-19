@@ -87,7 +87,7 @@ The resulting structure will be:
 |   |   service_account.yaml
 |   |
 |   |-- crds
-|       |   <gvk>_crd.yaml
+|       |   <group>_<resource>.yaml
 |       |   <gvk>_cr.yaml
 ```
 

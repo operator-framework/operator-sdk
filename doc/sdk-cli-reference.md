@@ -175,7 +175,7 @@ pkg/apis/app/v1alpha1/
 
 $ operator-sdk generate openapi
 INFO[0000] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
-INFO[0001] Created deploy/crds/app_appservices_crd.yaml
+INFO[0001] Created deploy/crds/app.example.com_appservices.yaml
 INFO[0001] Code-generation complete.
 
 $ tree pkg/apis/app/v1alpha1/
@@ -343,12 +343,12 @@ INFO[0000] Created pkg/apis/app/v1alpha1/appservice_types.go
 INFO[0000] Created pkg/apis/addtoscheme_app_v1alpha1.go
 INFO[0000] Created pkg/apis/app/v1alpha1/register.go
 INFO[0000] Created pkg/apis/app/v1alpha1/doc.go
-INFO[0000] Created deploy/crds/app_v1alpha1_appservice_cr.yaml
-INFO[0000] Created deploy/crds/app_appservices_crd.yaml
+INFO[0000] Created deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
+INFO[0000] Created deploy/crds/app.example.com_appservices.yaml
 INFO[0001] Running deepcopy code-generation for Custom Resource group versions: [app:[v1alpha1], ]
 INFO[0002] Code-generation complete.
 INFO[0002] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
-INFO[0004] Created deploy/crds/app_appservices_crd.yaml
+INFO[0004] Created deploy/crds/app.example.com_appservices.yaml
 INFO[0004] Code-generation complete.
 INFO[0004] API generation complete.
 ```
@@ -385,8 +385,8 @@ Generates the CRD and the CR files for the specified api-version and kind.
 ```console
 $ operator-sdk add crd --api-version app.example.com/v1alpha1 --kind AppService
 Generating custom resource definition (CRD) files
-Created deploy/crds/app_appservices_crd.yaml
-Created deploy/crds/app_v1alpha1_appservice_cr.yaml
+Created deploy/crds/app.example.com_appservices.yaml
+Created deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
 ```
 
 ## run
@@ -434,7 +434,7 @@ Run scorecard tests on an operator
 * `basic-tests` - Enable basic operator checks (default true)
 * `config` string - config file (default is '<project_dir>/.osdk-scorecard'; the config file's extension and format can be .yaml, .json, or .toml)
 * `cr-manifest` string - (required) Path to manifest for Custom Resource
-* `crds-dir` string - Directory containing CRDs (all CRD manifest filenames must have the suffix 'crd.yaml') (default "deploy/crds")
+* `crds-dir` string - Directory containing CRD manifests (default "deploy/crds")
 * `csv-path` string - (required if `olm-tests` is set) Path to CSV being tested
 * `global-manifest` string - Path to manifest for Global resources (e.g. CRD manifests)
 * `init-timeout` int - Timeout for status block on CR to be created, in seconds (default 10)
@@ -451,7 +451,7 @@ Run scorecard tests on an operator
 ### Example
 
 ```console
-$ operator-sdk scorecard --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml --csv-path deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml
+$ operator-sdk scorecard --cr-manifest deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml --csv-path deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml
 Basic Operator:
         Spec Block Exists: 1/1 points
         Status Block Exist: 1/1 points
@@ -588,7 +588,7 @@ is not installed), and then deletes each resource that is listed in the
 downloaded release manifests. It waits until all resources have been fully
 cleaned up before returning.
 
-**NOTE**: It is important to use `--version` with the version number that 
+**NOTE**: It is important to use `--version` with the version number that
 corresponds to the version that you installed with `olm install`. Not specifying
 the version (or using an incorrect version) may cause some resources not be
 cleaned up. This can occur if OLM changes its release manifest resources from
@@ -605,7 +605,7 @@ works by downloading OLM's release manifests at a specific version (default:
 aborts with an error since OLM is not installed), and printing a summary of the
 status of each of those resources as they exist in the cluster.
 
-**NOTE**: It is important to use `--version` with the version number that 
+**NOTE**: It is important to use `--version` with the version number that
 corresponds to the version that you installed with `olm install`. Not specifying
 the version (or using an incorrect version) may cause some resources to be
 missing from the summary and others to be listed as "not found". This can occur

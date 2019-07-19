@@ -32,7 +32,8 @@
       // New
       err = r.client.List(context.TODO(), podList, client.UseListOptions(listOps))
       ```
-- CRD file names were previously of the form `<group>_<version>_<kind>_crd.yaml`. Now that CRD manifest `spec.version` is deprecated in favor of `spec.versions`, i.e. multiple versions can be specified in one CRD, CRD file names have the form `<group>_<resource>_crd.yaml`. `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`.
+- CRD file names were previously of the form `<group>_<version>_<kind>_crd.yaml`. Now that CRD manifest `spec.version` is deprecated in favor of `spec.versions`, i.e. multiple versions can be specified in one CRD, CRD file names have the form `<full group>_<resource>.yaml`. `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`.
+- CR file names were previously of the form `<group>_<version>_<kind>_cr.yaml`. This has changed to `<full group>_<version>_<kind>_cr.yaml`.
 
 ### Deprecated
 
