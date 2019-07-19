@@ -17,7 +17,6 @@ package e2e
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -35,8 +34,8 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 
 	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
 	"github.com/prometheus/prometheus/util/promlint"
-	"github.com/rogpeppe/go-internal/modfile"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -114,18 +113,24 @@ func TestMemcached(t *testing.T) {
 			// stub go.mod into the local SDK repo referred to in
 			// memcached-operator's go.mod, which allows go to recognize
 			// the local SDK repo as a module.
-			sdkModPath := filepath.Join(replace.repo, "go.mod")
-			err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
-			if err != nil {
-				t.Fatalf("Failed to write main repo go.mod file: %v", err)
-			}
-			defer func() {
-				if err = os.RemoveAll(sdkModPath); err != nil {
-					t.Fatalf("Failed to remove %s: %v", sdkModPath, err)
+			sdkModPath := filepath.Join(filepath.FromSlash(replace.repo), "go.mod")
+			if _, err = os.Stat(sdkModPath); err != nil && os.IsNotExist(err) {
+				err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
+				if err != nil {
+					t.Fatalf("Failed to write main repo go.mod file: %v", err)
 				}
-			}()
+				defer func() {
+					if err = os.RemoveAll(sdkModPath); err != nil {
+						t.Fatalf("Failed to remove %s: %v", sdkModPath, err)
+					}
+				}()
+			}
 		}
-		writeGoModReplace(t, sdkRepo, replace.repo, replace.ref)
+		modBytes, err := insertGoModReplace(t, sdkRepo, replace.repo, replace.ref)
+		if err != nil {
+			t.Fatalf("Failed to insert go.mod replace: %v", err)
+		}
+		t.Logf("go.mod: %v", string(modBytes))
 	}
 
 	cmdOut, err = exec.Command("go", "mod", "vendor").CombinedOutput()
@@ -306,30 +311,21 @@ func getGoModReplace(t *testing.T, localSDKPath string) goModReplace {
 	}
 }
 
-func writeGoModReplace(t *testing.T, repo, path, sha string) {
+func insertGoModReplace(t *testing.T, repo, path, sha string) ([]byte, error) {
 	modBytes, err := ioutil.ReadFile("go.mod")
 	if err != nil {
-		t.Fatalf("Failed to read go.mod: %v", err)
+		return nil, errors.Wrap(err, "failed to read go.mod")
 	}
-	modFile, err := modfile.Parse("go.mod", modBytes, nil)
-	if err != nil {
-		t.Fatalf("Failed to parse go.mod: %v", err)
+	sdkReplace := fmt.Sprintf("replace %s => %s", repo, path)
+	if sha != "" {
+		sdkReplace = fmt.Sprintf("%s %s", sdkReplace, sha)
 	}
-	if err = modFile.AddReplace(repo, "", path, sha); err != nil {
-		s := ""
-		if sha != "" {
-			s = " " + sha
-		}
-		t.Fatalf(`Failed to add "replace %s => %s%s: %v"`, repo, path, s, err)
-	}
-	if modBytes, err = modFile.Format(); err != nil {
-		t.Fatalf("Failed to format go.mod: %v", err)
-	}
+	modBytes = append(modBytes, []byte("\n"+sdkReplace)...)
 	err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
 	if err != nil {
-		t.Fatalf("Failed to write updated go.mod: %v", err)
+		return nil, errors.Wrap(err, "failed to write go.mod before replacing SDK repo")
 	}
-	t.Logf("go.mod: %v", string(modBytes))
+	return modBytes, nil
 }
 
 func memcachedLeaderTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
