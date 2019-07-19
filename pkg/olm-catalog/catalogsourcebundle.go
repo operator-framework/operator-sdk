@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	registryutil "github.com/operator-framework/operator-sdk/internal/util/registry"
+	registryutil "github.com/operator-framework/operator-sdk/internal/util/operator-registry"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
 	"github.com/ghodss/yaml"
@@ -45,51 +45,52 @@ type CatalogSourceBundle struct {
 	CatalogSourcePath string
 }
 
-func wrapBytesErr(err error) error {
-	return errors.Wrap(err, "failed to get CatalogSourceBundle bytes")
-}
-
 // ToConfigMapAndCatalogSource reads all files in s.BundleDir and
 // s.PackageManifestPath, combining them into a ConfigMap and CatalogSource.
-func (s *CatalogSourceBundle) ToConfigMapAndCatalogSource() (*corev1.ConfigMap, *olmapiv1alpha1.CatalogSource, error) {
+func (s *CatalogSourceBundle) ToConfigMapAndCatalogSource() (cm *corev1.ConfigMap, cs *olmapiv1alpha1.CatalogSource, err error) {
+	defer func() {
+		if err != nil {
+			err = errors.Wrap(err, "failed to get CatalogSourceBundle bytes")
+		}
+	}()
+
 	bundle := registryutil.Bundle{
 		BundleDir:           s.BundleDir,
 		PackageManifestPath: s.PackageManifestPath,
 	}
-	csvs, crds, pkg, err := bundle.GetBundledObjects()
+	csv, crds, pkg, err := bundle.GetBundledObjects()
 	if err != nil {
-		return nil, nil, wrapBytesErr(err)
+		return nil, nil, err
 	}
 	// Users can have all "required" and no "owned" CRD's in their CSV so do not
 	// check if crds is empty.
-	if len(csvs) == 0 {
-		return nil, nil, wrapBytesErr(fmt.Errorf("no CSV's found in bundle dir %s", s.BundleDir))
+	if csv == nil {
+		return nil, nil, fmt.Errorf("no CSV found in bundle dir %s", s.BundleDir)
+	}
+	if len(csv.Spec.CustomResourceDefinitions.Owned) > 0 && len(crds) == 0 {
+		return nil, nil, fmt.Errorf("bundled CSV has owned CRD's but no CRD manifests exist in bundle dir %s", s.BundleDir)
 	}
 	if pkg == nil {
-		return nil, nil, wrapBytesErr(fmt.Errorf("no package manifest found in bundle dir %s", s.BundleDir))
+		return nil, nil, fmt.Errorf("no package manifest found in bundle dir %s", s.BundleDir)
 	}
 
-	csvBytes := []byte{}
-	for _, csv := range csvs {
-		b, err := yaml.Marshal(csv)
-		if err != nil {
-			return nil, nil, wrapBytesErr(errors.Wrapf(err, "failed to unmarshal CSV %s", csv.GetName()))
-		}
-		csvBytes = yamlutil.CombineManifests(csvBytes, b)
+	csvBytes, err := yaml.Marshal(csv)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "failed to unmarshal CSV %s", csv.GetName())
 	}
 	crdBytes := []byte{}
 	for _, crd := range crds {
 		b, err := yaml.Marshal(crd)
 		if err != nil {
-			return nil, nil, wrapBytesErr(errors.Wrapf(err, "failed to unmarshal CRD %s", crd.GetName()))
+			return nil, nil, errors.Wrapf(err, "failed to unmarshal CRD %s", crd.GetName())
 		}
 		crdBytes = yamlutil.CombineManifests(crdBytes, b)
 	}
 	pkgBytes, err := yaml.Marshal(pkg)
 	if err != nil {
-		return nil, nil, wrapBytesErr(errors.Wrap(err, "failed to unmarshal package manifest"))
+		return nil, nil, errors.Wrap(err, "failed to unmarshal package manifest")
 	}
-	configMap := &corev1.ConfigMap{
+	cm = &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: corev1.SchemeGroupVersion.String(),
 			Kind:       "ConfigMap",
@@ -103,16 +104,16 @@ func (s *CatalogSourceBundle) ToConfigMapAndCatalogSource() (*corev1.ConfigMap, 
 		},
 	}
 	if s.Namespace != "" {
-		configMap.SetNamespace(s.Namespace)
+		cm.SetNamespace(s.Namespace)
 	}
 	if len(crdBytes) != 0 {
-		configMap.Data["customResourceDefinitions"] = string(crdBytes)
+		cm.Data["customResourceDefinitions"] = string(crdBytes)
 	}
-	cs, err := s.getCatalogSource()
+	cs, err = s.getCatalogSource()
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to get CatalogSource")
+		return nil, nil, err
 	}
-	return configMap, cs, nil
+	return cm, cs, nil
 }
 
 func (s *CatalogSourceBundle) getCatalogSource() (cs *olmapiv1alpha1.CatalogSource, err error) {
@@ -144,7 +145,7 @@ func (s *CatalogSourceBundle) getCatalogSource() (cs *olmapiv1alpha1.CatalogSour
 		dec := serializer.NewCodecFactory(sch).UniversalDeserializer()
 		cs, err = decodeCatalogSource(dec, b)
 		if err != nil {
-			return nil, errors.Wrapf(err, "CatalogSource manifest %s", s.CatalogSourcePath)
+			return nil, err
 		}
 	}
 	if s.Namespace != "" {

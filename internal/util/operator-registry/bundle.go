@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 
-	catalog "github.com/operator-framework/operator-sdk/internal/pkg/scaffold/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
 	"github.com/ghodss/yaml"
@@ -38,11 +38,11 @@ type Bundle struct {
 	PackageManifestPath string
 }
 
-// GetBundledObjects collects all ClusterServiceVersions,
+// GetBundledObjects collects a ClusterServiceVersion, all
 // CustomResourceDefinitions, and optionally a package manifests in dir.
 // If pkgManPath is not empty, that file's data will be used instead of
 // any package manifest found in dir.
-func (s *Bundle) GetBundledObjects() (csvs []*olmapiv1alpha1.ClusterServiceVersion, crds []*apiextv1beta1.CustomResourceDefinition, pkg *olmregistry.PackageManifest, err error) {
+func (s *Bundle) GetBundledObjects() (csv *olmapiv1alpha1.ClusterServiceVersion, crds []*apiextv1beta1.CustomResourceDefinition, pkg *olmregistry.PackageManifest, err error) {
 	scheme := scheme.Scheme
 	if err = addSchemes(scheme); err != nil {
 		return nil, nil, nil, err
@@ -71,11 +71,10 @@ func (s *Bundle) GetBundledObjects() (csvs []*olmapiv1alpha1.ClusterServiceVersi
 			}
 			switch kind {
 			case "ClusterServiceVersion":
-				csv, err := decodeCSV(dec, b)
+				csv, err = decodeCSV(dec, b)
 				if err != nil {
 					return nil, nil, nil, errors.Wrapf(err, "CSV manifest %s", path)
 				}
-				csvs = append(csvs, csv)
 			case "CustomResourceDefinition":
 				crd, err := decodeCRD(dec, b)
 				if err != nil {
@@ -103,10 +102,10 @@ func (s *Bundle) GetBundledObjects() (csvs []*olmapiv1alpha1.ClusterServiceVersi
 		}
 	}
 
-	if err = checkBundleObjects(csvs, crds, pkg); err != nil {
+	if err = checkBundleObjects(csv, crds, pkg); err != nil {
 		return nil, nil, nil, errors.Wrapf(err, "bundle dir %s", s.BundleDir)
 	}
-	return csvs, crds, pkg, nil
+	return csv, crds, pkg, nil
 }
 
 func addSchemes(s *runtime.Scheme) error {
@@ -155,56 +154,56 @@ func decodeCRD(dec runtime.Decoder, b []byte) (crd *apiextv1beta1.CustomResource
 	return crd, nil
 }
 
-// checkBundleObjects ensures csvs, crds, and pkg, all objects expected to
+// checkBundleObjects ensures csv, crds, and pkg, all objects expected to
 // be bundled, exist or have the correct data.
-func checkBundleObjects(csvs []*olmapiv1alpha1.ClusterServiceVersion, crds []*apiextv1beta1.CustomResourceDefinition, pkg *olmregistry.PackageManifest) (err error) {
-	if len(csvs) == 0 {
+func checkBundleObjects(csv *olmapiv1alpha1.ClusterServiceVersion, crds []*apiextv1beta1.CustomResourceDefinition, pkg *olmregistry.PackageManifest) (err error) {
+	if csv == nil {
 		return errors.Errorf("no CSV manifests found in bundle dir")
 	}
-	// Ensure all CRD's referenced in each CSV exist in BundleDir.
-	csvCRDMap := map[string]map[string]struct{}{}
-	hasOwned := false
-	for _, csv := range csvs {
-		csvCRDMap[csv.GetName()] = map[string]struct{}{}
-		hasOwned = len(csv.Spec.CustomResourceDefinitions.Owned) > 0
-		for _, o := range csv.Spec.CustomResourceDefinitions.Owned {
-			csvCRDMap[csv.GetName()][getCRDDescKey(o)] = struct{}{}
+	crdMap := map[string]struct{}{}
+	for _, crd := range crds {
+		for _, k := range getCRDKeys(crd) {
+			crdMap[k] = struct{}{}
 		}
 	}
 	// If at least one CSV has an owned CRD it must be present.
-	if hasOwned && len(crds) == 0 {
-		return errors.Errorf("at least one CSV has an owned CRD but no CRD's are present in bundle dir")
+	if len(csv.Spec.CustomResourceDefinitions.Owned) > 0 && len(crds) == 0 {
+		return errors.Errorf("bundled CSV has an owned CRD but no CRD's are present in bundle dir")
 	}
-	for _, crd := range crds {
-		for _, k := range getCRDKeys(crd) {
-			for csvName, owned := range csvCRDMap {
-				if _, hasKey := owned[k]; !hasKey {
-					return errors.Errorf("bundle dir does not contain owned CRD %s from CSV %s", crd.Spec.Names.Kind, csvName)
-				}
-			}
+	// Ensure all CRD's referenced in each CSV exist in BundleDir.
+	for _, o := range csv.Spec.CustomResourceDefinitions.Owned {
+		if _, hasCRD := crdMap[getCRDDescKey(o)]; !hasCRD {
+			return errors.Errorf("bundle dir does not contain owned CRD name %s version %s kind %s from CSV %s", o.Name, o.Version, o.Kind, csv.GetName())
 		}
 	}
 	if pkg == nil {
 		return errors.Errorf("neither bundle dir nor package manifest path contains a package manifest")
 	}
-	if err := catalog.ValidatePackageManifest(pkg); err != nil {
+	if err := ValidatePackageManifest(pkg); err != nil {
 		return errors.Wrapf(err, "failed to validate package manifest %s", pkg.PackageName)
 	}
 	return nil
 }
 
 func getCRDDescKey(crd olmapiv1alpha1.CRDDescription) string {
-	return getCRDKey(crd.Version, crd.Kind)
+	nameSplit := strings.SplitN(crd.Name, ".", 2)
+	if len(nameSplit) == 2 {
+		return getCRDKey(nameSplit[1], crd.Version, crd.Kind)
+	}
+	return getCRDKey(crd.Name, crd.Version, crd.Kind)
 }
 
-// Since version is deprecated, only look at crd.Spec.Versions.
+// getCRDKeys assumes at least one of spec.version, spec.versions is non-empty.
 func getCRDKeys(crd *apiextv1beta1.CustomResourceDefinition) (keys []string) {
+	if crd.Spec.Version != "" && len(crd.Spec.Versions) == 0 {
+		return []string{getCRDKey(crd.Spec.Group, crd.Spec.Version, crd.Spec.Names.Kind)}
+	}
 	for _, v := range crd.Spec.Versions {
-		keys = append(keys, getCRDKey(v.Name, crd.Spec.Names.Kind))
+		keys = append(keys, getCRDKey(crd.Spec.Group, v.Name, crd.Spec.Names.Kind))
 	}
 	return keys
 }
 
-func getCRDKey(v, k string) string {
-	return fmt.Sprintf("%s.%s", v, k)
+func getCRDKey(g, v, k string) string {
+	return fmt.Sprintf("%s.%s.%s", g, v, k)
 }
