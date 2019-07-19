@@ -168,8 +168,6 @@ func (c Client) UninstallVersion(ctx context.Context, version string) error {
 	return nil
 }
 
-const packageServerCSVNamePrefix = "packageserver."
-
 func (c Client) GetInstalledVersion(ctx context.Context) (string, error) {
 	opts := client.InNamespace(olmNamespace)
 	csvs := &olmapiv1alpha1.ClusterServiceVersionList{}
@@ -193,10 +191,28 @@ func (c Client) GetInstalledVersion(ctx context.Context) (string, error) {
 	if pkgServerCSV == nil {
 		return "", ErrOLMNotInstalled
 	}
-	ver := strings.TrimPrefix(pkgServerCSV.GetName(), packageServerCSVNamePrefix)
+	return getOLMVersionFromPackageServerCSV(pkgServerCSV), nil
+}
+
+const (
+	packageServerCSVNamePrefix   = "packageserver."
+	packageServerOLMVersionLabel = "olm.version"
+)
+
+func getOLMVersionFromPackageServerCSV(csv *olmapiv1alpha1.ClusterServiceVersion) string {
+	// Package server CSV's from OLM versions > 0.10.1 have a label containing
+	// the OLM version.
+	if labels := csv.GetLabels(); labels != nil {
+		if ver, ok := labels[packageServerOLMVersionLabel]; ok {
+			return ver
+		}
+	}
+	// Fall back to getting OLM version from package server CSV name. Versions
+	// of OLM <= 0.10.1 are not labelled with packageServerOLMVersionLabel.
+	ver := strings.TrimPrefix(csv.GetName(), packageServerCSVNamePrefix)
 	// OLM releases do not have a "v" prefix but CSV versions often do.
 	ver = strings.TrimPrefix(ver, "v")
-	return ver, nil
+	return ver
 }
 
 func (c Client) GetStatus(ctx context.Context, version string) (*Status, error) {
