@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -34,6 +33,7 @@ import (
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -170,37 +170,51 @@ func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
 			return nil, err
 		}
 
-		// Create a temporary CR manifest from metadata if one is not provided.
-		crJSONStr, ok := csv.ObjectMeta.Annotations["alm-examples"]
-		if ok && viper.GetString(CRManifestOpt) == "" {
-			var crs []interface{}
-			if err = json.Unmarshal([]byte(crJSONStr), &crs); err != nil {
-				return nil, err
-			}
-			// TODO: run scorecard against all CR's in CSV.
-			cr := crs[0]
-			crJSONBytes, err := json.Marshal(cr)
-			if err != nil {
-				return nil, err
-			}
-			crYAMLBytes, err := yaml.JSONToYAML(crJSONBytes)
-			if err != nil {
-				return nil, err
-			}
-			crFile, err := ioutil.TempFile("", "cr.yaml")
-			if err != nil {
-				return nil, err
-			}
-			if _, err := crFile.Write(crYAMLBytes); err != nil {
-				return nil, err
-			}
-			viper.Set(CRManifestOpt, crFile.Name())
-			defer func() {
-				err := os.Remove(viper.GetString(CRManifestOpt))
-				if err != nil {
-					log.Errorf("Could not delete temporary CR manifest file: (%v)", err)
+		logCRMsg := false
+		if crMans := viper.GetStringSlice(CRManifestOpt); len(crMans) == 0 {
+			// Create a temporary CR manifest from metadata if one is not provided.
+			if crJSONStr, ok := csv.ObjectMeta.Annotations["alm-examples"]; ok {
+				var crs []interface{}
+				if err = json.Unmarshal([]byte(crJSONStr), &crs); err != nil {
+					return nil, err
 				}
-			}()
+				// TODO: run scorecard against all CR's in CSV.
+				cr := crs[0]
+				logCRMsg = len(crs) > 1
+				crJSONBytes, err := json.Marshal(cr)
+				if err != nil {
+					return nil, err
+				}
+				crYAMLBytes, err := yaml.JSONToYAML(crJSONBytes)
+				if err != nil {
+					return nil, err
+				}
+				crFile, err := ioutil.TempFile("", "*.cr.yaml")
+				if err != nil {
+					return nil, err
+				}
+				if _, err := crFile.Write(crYAMLBytes); err != nil {
+					return nil, err
+				}
+				viper.Set(CRManifestOpt, []string{crFile.Name()})
+				defer func() {
+					for _, f := range viper.GetStringSlice(CRManifestOpt) {
+						if err := os.Remove(f); err != nil {
+							log.Errorf("Could not delete temporary CR manifest file: (%v)", err)
+						}
+					}
+				}()
+			} else {
+				return nil, errors.New("cr-manifest config option must be set if CSV has no metadata.annotations['alm-examples']")
+			}
+		} else {
+			// TODO: run scorecard against all CR's in CSV.
+			viper.Set(CRManifestOpt, []string{crMans[0]})
+			logCRMsg = len(crMans) > 1
+		}
+		// Let users know that only the first CR is being tested.
+		if logCRMsg {
+			log.Infof("The scorecard does not support testing multiple CR's at once when run with --olm-deployed. Testing the first CR %s", viper.GetStringSlice(CRManifestOpt)[0])
 		}
 
 	} else {
@@ -485,7 +499,7 @@ func configureLogger() error {
 }
 
 func validateScorecardFlags() error {
-	if !viper.GetBool(OlmDeployedOpt) && viper.GetStringSlice(CRManifestOpt) == nil {
+	if !viper.GetBool(OlmDeployedOpt) && len(viper.GetStringSlice(CRManifestOpt)) == 0 {
 		return errors.New("cr-manifest config option must be set")
 	}
 	if !viper.GetBool(BasicTestsOpt) && !viper.GetBool(OLMTestsOpt) {
