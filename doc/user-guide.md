@@ -5,12 +5,13 @@ This guide walks through an example of building a simple memcached-operator usin
 
 ## Prerequisites
 
-- [dep][dep_tool] version v0.5.0+.
 - [git][git_tool]
 - [go][go_tool] version v1.12+.
+- [mercurial][mercurial_tool] version 3.9+
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
+- Optional: [dep][dep_tool] version v0.5.0+.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the local Kubernetes cluster and [quay.io][quay_link] for the public registry.
 
@@ -43,14 +44,6 @@ If using Go modules (the default dependency manager) in your project, ensure you
 > - Invoke the go command in a directory outside of the $GOPATH/src tree, with a valid go.mod file in the current directory or any parent of it and the environment variable GO111MODULE unset (or explicitly set to auto).
 > - Invoke the go command with GO111MODULE=on environment variable set.
 
-As of now, the SDK only supports initializing new projects in `$GOPATH/src`. We intend to support all go module modes for projects in the near future.
-
-You can set `GO111MODULE` in your CLI to activate currently supported behavior by running the following command:
-
-```sh
-$ export GO111MODULE=on
-```
-
 ##### Vendoring
 
 By default, an operator's dependencies are managed with `modules` and `--vendor=false`, so calls to `go {build,clean,get,install,list,run,test}` by `operator-sdk` subcommands will use an external modules directory. Execute `go help modules` for more information.
@@ -74,6 +67,8 @@ By default this will be the namespace that the operator is running in. To watch 
 ```Go
 mgr, err := manager.New(cfg, manager.Options{Namespace: ""})
 ```
+
+By default the main program will set the manager's namespace using the value of `WATCH_NAMESPACE` env defined in `deploy/operator.yaml`.
 
 ## Add a new Custom Resource Definition
 
@@ -105,6 +100,29 @@ After modifying the `*_types.go` file always run the following command to update
 ```sh
 $ operator-sdk generate k8s
 ```
+
+### OpenAPI validation
+To update the OpenAPI validation section in the CRD `deploy/crds/cache_v1alpha1_memcached_crd.yaml`, run the following command. 
+
+```console
+$ operator-sdk generate openapi
+```
+This validation section allows Kubernetes to validate the properties in a Memcached Custom Resource when it is created or updated. An example of the generated YAML is as follows: 
+
+```YAML
+spec:
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            size:
+              format: int32
+              type: integer
+```
+
+To learn more about OpenAPI v3.0 validation schemas in Custom Resource Definitions, refer to the [Kubernetes Documentation][doc_validation_schema].
+
 
 ## Add a new Controller
 
@@ -202,10 +220,18 @@ Once this is done, there are two ways to run the operator:
 
 **Note**: `operator-sdk build` invokes `docker build` by default, and optionally `buildah bud`. If using `buildah`, skip to the `operator-sdk build` invocation instructions below. If using `docker`, make sure your docker daemon is running and that you can run the docker client without sudo. You can check if this is the case by running `docker version`, which should complete without errors. Follow instructions for your OS/distribution on how to start the docker daemon and configure your access permissions, if needed.
 
-**Note**: If using Go modules and a `vendor/` directory, run
+**Note**: If a `go.mod` file and a `vendor/` directory are present, run
+
 ```sh
 $ go mod vendor
 ```
+
+or if a `Gopkg.toml` file is present run
+
+```sh
+$ dep ensure
+```
+
 before building the memcached-operator image.
 
 Build the memcached-operator image and push it to a registry:
@@ -411,7 +437,7 @@ func main() {
 
 **NOTES:**
 
-* After adding new import paths to your operator project, run `go mod vendor` if using modules and a `vendor/` directory (or `dep ensure` if you set `--dep-manager=dep` when initializing your project) in the root of your project directory to fulfill these dependencies.
+* After adding new import paths to your operator project, run `go mod vendor` if a `go.mod` file and a `vendor/` directory are present (or `dep ensure` if a `Gopkg.toml` file is present) in the root of your project directory to fulfill these dependencies.
 * Your 3rd party resource needs to be added before add the controller in `"Setup all Controllers"`.
 
 ### Handle Cleanup on Deletion
@@ -486,7 +512,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 func (r *ReconcileMemcached) finalizeMemcached(reqLogger logr.Logger, m *cachev1alpha1.Memcached) error {
 	// TODO(user): Add the cleanup steps that the operator
 	// needs to do before the CR can be deleted. Examples
-	// of finalizers include performing backups and deleting 
+	// of finalizers include performing backups and deleting
 	// resources that are not owned by this CR, like a PVC.
 	reqLogger.Info("Successfully finalized memcached")
 	return nil
@@ -607,6 +633,7 @@ When the operator is not running in a cluster, the Manager will return an error 
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
 [docker_tool]:https://docs.docker.com/install/
+[mercurial_tool]:https://www.mercurial-scm.org/downloads
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [minikube_tool]:https://github.com/kubernetes/minikube#installation
 [scheme_package]:https://github.com/kubernetes/client-go/blob/master/kubernetes/scheme/register.go
@@ -619,3 +646,4 @@ When the operator is not running in a cluster, the Manager will return an error 
 [result_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Result
 [metrics_doc]: ./user/metrics/README.md
 [quay_link]: https://quay.io
+[doc_validation_schema]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#specifying-a-structural-schema
