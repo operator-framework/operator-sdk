@@ -17,8 +17,10 @@ package catalog
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -292,27 +294,22 @@ func (s *CSV) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error
 		return nil
 	}
 
-	// We do not want to update versions in most fields, as these versions are
-	// independent of global csv version and will be updated elsewhere.
-	fieldsToUpdate := []interface{}{
-		&csv.ObjectMeta,
-		&csv.Spec.Labels,
-		&csv.Spec.Selector,
-	}
-	for _, v := range fieldsToUpdate {
-		err := replaceAllBytes(v, []byte(oldVer), []byte(newVer))
-		if err != nil {
-			return err
-		}
-	}
-
-	// Now replace all references to the old operator name.
+	// Replace all references to the old operator name.
 	lowerProjName := strings.ToLower(s.OperatorName)
 	oldCSVName := getCSVName(lowerProjName, oldVer)
-	newCSVName := getCSVName(lowerProjName, newVer)
-	err := replaceAllBytes(csv, []byte(oldCSVName), []byte(newCSVName))
+	oldCSVName = strings.ReplaceAll(oldCSVName, ".", `\.`)
+	oldRe, err := regexp.Compile(fmt.Sprintf("^%s$", oldCSVName))
+	if err != nil {
+		return errors.Wrapf(err, "error compiling CSV name regexp %s", oldCSVName)
+	}
+	b, err := yaml.Marshal(csv)
 	if err != nil {
 		return err
+	}
+	newCSVName := getCSVName(lowerProjName, newVer)
+	b = oldRe.ReplaceAll(b, []byte(newCSVName))
+	if err = json.Unmarshal(b, csv); err != nil {
+		return errors.Wrapf(err, "error unmarshalling CSV %s after replacing old CSV name", csv.GetName())
 	}
 
 	csv.Spec.Version = *semver.New(newVer)
