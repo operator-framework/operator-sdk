@@ -107,6 +107,7 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 			CSVVersion:       csvVersion,
 			Channel:          csvChannel,
 			ChannelIsDefault: defaultChannel,
+			OperatorName:     operatorName,
 		},
 	)
 	if err != nil {

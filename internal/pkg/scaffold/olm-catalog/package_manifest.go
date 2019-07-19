@@ -45,6 +45,8 @@ type PackageManifest struct {
 	// If ChannelIsDefault is true, Channel will be the package manifests'
 	// default channel.
 	ChannelIsDefault bool
+	// OperatorName is the operator's name, ex. app-operator
+	OperatorName string
 }
 
 var _ input.File = &PackageManifest{}
@@ -52,7 +54,7 @@ var _ input.File = &PackageManifest{}
 // GetInput gets s' Input.
 func (s *PackageManifest) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		lowerProjName := strings.ToLower(s.ProjectName)
+		lowerProjName := strings.ToLower(s.OperatorName)
 		// Path is what the operator-registry expects:
 		// {manifests -> olm-catalog}/{operator_name}/{operator_name}.package.yaml
 		s.Path = filepath.Join(OLMCatalogDir, lowerProjName,
@@ -117,10 +119,11 @@ func (s *PackageManifest) newPackageManifest() *olmregistry.PackageManifest {
 	if s.Channel != "" {
 		channel = s.Channel
 	}
+	lowerOperatorName := strings.ToLower(s.OperatorName)
 	pm := &olmregistry.PackageManifest{
-		PackageName: s.ProjectName,
+		PackageName: lowerOperatorName,
 		Channels: []olmregistry.PackageChannel{
-			{Name: channel, CurrentCSVName: getCSVName(s.ProjectName, s.CSVVersion)},
+			{Name: channel, CurrentCSVName: getCSVName(lowerOperatorName, s.CSVVersion)},
 		},
 		DefaultChannelName: channel,
 	}
@@ -134,13 +137,14 @@ func (s *PackageManifest) setChannels(pm *olmregistry.PackageManifest) error {
 		channelIdx := sort.Search(len(pm.Channels), func(i int) bool {
 			return pm.Channels[i].Name == s.Channel
 		})
+		lowerOperatorName := strings.ToLower(s.OperatorName)
 		if channelIdx == len(pm.Channels) {
 			pm.Channels = append(pm.Channels, olmregistry.PackageChannel{
 				Name:           s.Channel,
-				CurrentCSVName: getCSVName(s.ProjectName, s.CSVVersion),
+				CurrentCSVName: getCSVName(lowerOperatorName, s.CSVVersion),
 			})
 		} else {
-			pm.Channels[channelIdx].CurrentCSVName = getCSVName(s.ProjectName, s.CSVVersion)
+			pm.Channels[channelIdx].CurrentCSVName = getCSVName(lowerOperatorName, s.CSVVersion)
 		}
 		// Use s.Channel as the default channel if caller has specified it as the
 		// default.
