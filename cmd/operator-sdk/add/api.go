@@ -31,8 +31,11 @@ import (
 )
 
 var (
-	apiVersion string
-	kind       string
+	apiVersion   string
+	kind         string
+	template     string
+	err          error
+	templateBody string
 )
 
 func newAddApiCmd() *cobra.Command {
@@ -80,6 +83,7 @@ Example:
 	if err := apiCmd.MarkFlagRequired("kind"); err != nil {
 		log.Fatalf("Failed to mark `kind` flag for `add api` subcommand as required")
 	}
+	apiCmd.Flags().StringVar(&template, "template", "", "path to a template file for the type")
 
 	return apiCmd
 }
@@ -92,7 +96,13 @@ func apiRun(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	log.Infof("Generating api version %s for kind %s.", apiVersion, kind)
+	if template != "" {
+		log.Infof("Using type template %s.", template)
+		templateBody, err = GetTemplate(template)
+		if err != nil {
+			return errors.Wrapf(err, "error reading template %s", template)
+		}
+	}
 
 	// Create and validate new resource.
 	r, err := scaffold.NewResource(apiVersion, kind)
@@ -115,8 +125,12 @@ func apiRun(cmd *cobra.Command, args []string) error {
 		return errors.Wrap(err, "scaffold group file")
 	}
 
+	i := input.Input{
+		TemplateBody: templateBody,
+	}
+
 	err = s.Execute(cfg,
-		&scaffold.Types{Resource: r},
+		&scaffold.Types{Input: i, Resource: r},
 		&scaffold.AddToScheme{Resource: r},
 		&scaffold.Register{Resource: r},
 		&scaffold.Doc{Resource: r},

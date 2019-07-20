@@ -60,6 +60,7 @@ Example:
 		log.Fatalf("Failed to mark `kind` flag for `add controller` subcommand as required")
 	}
 	controllerCmd.Flags().StringVar(&customAPIImport, "custom-api-import", "", `External Kubernetes resource import path of the form "host.com/repo/path[=import_identifier]". import_identifier is optional`)
+	controllerCmd.Flags().StringVar(&template, "template", "", "path to a template file for the controller")
 
 	return controllerCmd
 }
@@ -73,7 +74,13 @@ func controllerRun(cmd *cobra.Command, args []string) error {
 	}
 
 	log.Infof("Generating controller version %s for kind %s.", apiVersion, kind)
-
+	if template != "" {
+		log.Infof("Using controller template %s.", template)
+		templateBody, err = GetTemplate(template)
+		if err != nil {
+			return err
+		}
+	}
 	// Create and validate new resource
 	r, err := scaffold.NewResource(apiVersion, kind)
 	if err != nil {
@@ -86,8 +93,12 @@ func controllerRun(cmd *cobra.Command, args []string) error {
 	}
 	s := &scaffold.Scaffold{}
 
+	i := input.Input{
+		TemplateBody: templateBody,
+	}
+
 	err = s.Execute(cfg,
-		&scaffold.ControllerKind{Resource: r, CustomImport: customAPIImport},
+		&scaffold.ControllerKind{Input: i, Resource: r, CustomImport: customAPIImport},
 		&scaffold.AddController{Resource: r},
 	)
 	if err != nil {

@@ -38,7 +38,9 @@ func (s *Types) GetInput() (input.Input, error) {
 	}
 	// Error if this file exists.
 	s.IfExistsAction = input.Error
-	s.TemplateBody = typesTemplate
+	if s.TemplateBody == "" {
+		s.TemplateBody = typesTemplate
+	}
 	return s.Input, nil
 }
 

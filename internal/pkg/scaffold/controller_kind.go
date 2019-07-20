@@ -51,7 +51,9 @@ func (s *ControllerKind) GetInput() (input.Input, error) {
 	}
 	// Error if this file exists.
 	s.IfExistsAction = input.Error
-	s.TemplateBody = controllerKindTemplate
+	if s.TemplateBody == "" {
+		s.TemplateBody = controllerKindTemplate
+	}
 
 	// Set imports.
 	if err := s.setImports(); err != nil {
