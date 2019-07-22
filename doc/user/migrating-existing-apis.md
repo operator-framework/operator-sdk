@@ -308,6 +308,8 @@ Steps to upgrade the above CRD:
 
     If the CRD targets a Kubernetes 1.13+ cluster with the `CustomResourceWebhookConversion` feature enabled, converting between multiple versions can be done using a [conversion webhooks][crd-conv-webhook].
 
+    _TODO:_ document adding and using conversion webhooks to migrate `v1` to `v2` once the SDK `controller-runtime` version is bumped to `v0.2.0` and [#1455](https://github.com/operator-framework/operator-sdk/pull/1455) is implemented.
+
     **Note:** read the [CRD versioning][crd-versions] docs for detailed CRD information, notes on conversion webhooks, and CRD versioning case studies.
 
 1. *Optional:* `spec.versions` elements have a `subresources` field that holds CR subresource information to override the global `spec.subresources` block. `spec.subresources` will be used by the API server to assess subresource requirements of any version in `spec.versions` that does not have a `subresources` block. If all versions have the same requirements, leave `spec.subresources` as-is and skip to the [following section](#golang-api-migrations-types-and-commonalities). If CRD versions differ in subresource requirements, add a `subresources` section in each `spec.versions` entry with differing requirements and add each subresource's spec and status as needed:
