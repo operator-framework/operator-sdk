@@ -325,7 +325,9 @@ func replaceAllBytes(v interface{}, old, new []byte) error {
 func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	store := NewUpdaterStore()
 	otherSpecs := make(map[string][][]byte)
-	for _, f := range append(cfg.CRDCRPaths, cfg.OperatorPath, cfg.RolePath) {
+	paths := append(cfg.CRDCRPaths, cfg.OperatorPath)
+	paths = append(paths, cfg.RolePaths...)
+	for _, f := range paths {
 		yamlData, err := afero.ReadFile(s.getFS(), f)
 		if err != nil {
 			return err
