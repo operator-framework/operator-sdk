@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -126,7 +127,7 @@ func TestMemcached(t *testing.T) {
 				}()
 			}
 		}
-		modBytes, err := insertGoModReplace(t, sdkRepo, replace.repo, replace.ref)
+		modBytes, err := insertGoModReplace(sdkRepo, replace.repo, replace.ref)
 		if err != nil {
 			t.Fatalf("Failed to insert go.mod replace: %v", err)
 		}
@@ -311,11 +312,15 @@ func getGoModReplace(t *testing.T, localSDKPath string) goModReplace {
 	}
 }
 
-func insertGoModReplace(t *testing.T, repo, path, sha string) ([]byte, error) {
+func insertGoModReplace(repo, path, sha string) ([]byte, error) {
 	modBytes, err := ioutil.ReadFile("go.mod")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read go.mod")
 	}
+	// Remove all replace lines in go.mod.
+	replaceRe := regexp.MustCompile(fmt.Sprintf("(replace )?%s =>.+", repo))
+	modBytes = replaceRe.ReplaceAll(modBytes, nil)
+	// Append the desired replace to the end of go.mod's bytes.
 	sdkReplace := fmt.Sprintf("replace %s => %s", repo, path)
 	if sha != "" {
 		sdkReplace = fmt.Sprintf("%s %s", sdkReplace, sha)
