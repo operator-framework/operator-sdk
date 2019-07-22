@@ -17,8 +17,6 @@ package catalog
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,6 +30,7 @@ import (
 	"github.com/coreos/go-semver/semver"
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
@@ -169,7 +168,7 @@ func getCSVFromFSIfExists(fs afero.Fs, path string) (*olmapiv1alpha1.ClusterServ
 
 	csv := &olmapiv1alpha1.ClusterServiceVersion{}
 	if err := yaml.Unmarshal(csvBytes, csv); err != nil {
-		return nil, false, fmt.Errorf("%s: %v", path, err)
+		return nil, false, errors.Wrap(err, path)
 	}
 
 	return csv, true, nil
@@ -326,7 +325,9 @@ func replaceAllBytes(v interface{}, old, new []byte) error {
 func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	store := NewUpdaterStore()
 	otherSpecs := make(map[string][][]byte)
-	for _, f := range append(cfg.CRDCRPaths, cfg.OperatorPath, cfg.RolePath) {
+	paths := append(cfg.CRDCRPaths, cfg.OperatorPath)
+	paths = append(paths, cfg.RolePaths...)
+	for _, f := range paths {
 		yamlData, err := afero.ReadFile(s.getFS(), f)
 		if err != nil {
 			return err
@@ -337,11 +338,11 @@ func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.Clu
 			yamlSpec := scanner.Bytes()
 			kind, err := k8sutil.GetKindfromYAML(yamlSpec)
 			if err != nil {
-				return fmt.Errorf("%s: %v", f, err)
+				return errors.Wrap(err, f)
 			}
 			found, err := store.AddToUpdater(yamlSpec, kind)
 			if err != nil {
-				return fmt.Errorf("%s: %v", f, err)
+				return errors.Wrap(err, f)
 			}
 			if !found {
 				if _, ok := otherSpecs[kind]; !ok {
