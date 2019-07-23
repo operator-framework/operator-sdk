@@ -2,7 +2,7 @@
 
 ## Install from Homebrew (MacOS)
 
-Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
+If you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
 
 ```sh
 $ brew install operator-sdk
