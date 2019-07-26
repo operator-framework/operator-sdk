@@ -1,5 +1,10 @@
 # Install the Operator SDK CLI
 
+- [Install from GitHub release](#install-from-github-release)
+- [Install from Homebrew](#install-from-homebrew)
+- [Compile and install from master](#compile-and-install-from-master)
+
+
 ## Install from GitHub release
 
 ### Download the release binary
