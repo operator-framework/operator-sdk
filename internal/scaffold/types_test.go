@@ -41,6 +41,8 @@ const typesExp = `package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/operator-framework/operator-sdk/pkg/status"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -55,9 +57,15 @@ type AppServiceSpec struct {
 
 // AppServiceStatus defines the observed state of AppService
 type AppServiceStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+	// The status.Conditions type provides helpers for managing status conditions for the custom resource,
+	// such as adding and removing them and checking their status. Conditions are serialized as an array to
+	// align with Kubernetes conventions.
+	Conditions status.Conditions ` + "`" + `json:"conditions"` + "`" + `
+
+	// INSERT ADDITIONAL STATUS FIELDS - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
+	// For status conventions, see https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
