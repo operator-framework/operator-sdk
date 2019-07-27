@@ -1,6 +1,6 @@
 # Install the Operator SDK CLI
 
-- [Install from Homebrew (macOS)](#install-from-homebrew-(macOS))
+- [Install from Homebrew (macOS)](#install-from-homebrew-macos)
 - [Install from GitHub release](#install-from-github-release)
 - [Compile and install from master](#compile-and-install-from-master)
 
