@@ -163,8 +163,6 @@ err := c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequest
   })
 ```
 
-**// TODO:** Doc on eventhandler, arbitrary mapping between watched and reconciled resource.
-
 **// TODO:** Doc on configuring a Controller: number of workers, predicates, watching channels,
 
 ### Reconcile loop
@@ -202,6 +200,8 @@ return reconcile.Result{RequeueAfter: time.Second*5}, nil
 **Note:** Returning `Result` with `RequeueAfter` set is how you can periodically reconcile a CR.
 
 For a guide on Reconcilers, Clients, and interacting with resource Events, see the [Client API doc][doc_client_api].
+
+For a guide on EventHandlers (arbitrary mapping between watched and reconciled resource), see the [EventHandler Doc][doc_eventhandler_api]
 
 ## Build and run the operator
 
@@ -639,6 +639,7 @@ When the operator is not running in a cluster, the Manager will return an error 
 [scheme_package]:https://github.com/kubernetes/client-go/blob/master/kubernetes/scheme/register.go
 [deployments_register]: https://github.com/kubernetes/api/blob/master/apps/v1/register.go#L41
 [doc_client_api]:./user/client.md
+[doc_eventhandler_api]: ./user/event-filtering.md
 [runtime_package]: https://godoc.org/k8s.io/apimachinery/pkg/runtime
 [manager_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Manager
 [controller-go-doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg#hdr-Controller

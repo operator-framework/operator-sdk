@@ -1,6 +1,131 @@
+# Types of EventHandlers
+[Events][doc_event] are produced by [Sources][doc_source] assigned to resources a controller is watching. These events are transformed into Requests by [EventHandlers][doc_eventhandler] and passed to `Reconcile()`.
+
+## EnqueueRequestForObject
+
+This is used in watching primary resource of operator
+
+```Go
+err := c.Watch(
+  &source.Kind{Type: &cachev1alpha1.Memcached{}}, &handler.EnqueueRequestForObject{})
+```
+All the changes in `&cachev1alpha1.Memcached{}` object will be handled by this type of eventHandler and request is sent to `Reconcile()`.
+
+## EnqueueRequestForOwner
+
+This is generally used in handlling secondary resource of the operator. It will map each event to `Reconcile()` request for the owner of deployment.
+
+```Go
+err := c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
+    IsController: true,
+    OwnerType:    &cachev1alpha1.Memcached{},
+  })
+```
+
+## EnqueueRequestsFromMapFunc
+
+It enqueues requests by running transformation function `Map`, that outputs collection of `reconcile.Requests` on each event. Here `reconcile.Requests` may be for an arbitrary set of objects
+defined by some user specified transformation of the source Event.
+
+Say as a part of operator logic, if you want to monitor all the pods in a give namespace, you will need to use this.
+If primary resource is listing one namespace and as a secondary resource you need to monitor all the pods under that namespace, then EnqueueRequestsFromMapFunc can to be used in filtering the events for secondary resources. This is differnet than `EnqueueRequestForOwner` which is used in Memcached exmaple.
+
+In controllers's `add` function
+```Go
+// add adds a new Controller to mgr with r as the reconcile.Reconciler
+func add(mgr manager.Manager, r reconcile.Reconciler) error {
+	// Create a new controller
+	c, err := controller.New("sample-controller", mgr, controller.Options{Reconciler: r})
+	if err != nil {
+		return err
+	}
+
+	// Watch for changes to primary resource Sample
+	err = c.Watch(&source.Kind{Type: &v1.Sample{}}, &handler.EnqueueRequestForObject{})
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &v1.Sample{}}, &handler.EnqueueRequestsFromMapFunc{ToRequests: HandleSampleMapper(mgr.GetClient(), []predicate.Predicate{})})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+```
+
+Example of `mapper.go` for mapping events to Primary resource of operator.
+
+```Go
+type handleLocalInfosMapper struct {
+	client     client.Client
+	predicates []predicate.Predicate
+}
+
+// Sample reconcile loop has secondary resource as corev1.Pod{}.
+// When Pod change happens, we are pusing request to reconcile loop of Sample CR
+// Request will be of this format
+// Name: "sample-" + <PodName>
+func (h *handleSampleMapper) Map(obj handler.MapObject) []reconcile.Request {
+	if obj.Object == nil {
+		return nil
+	}
+
+	pod, ok := obj.Object.(*corev1.Pod)
+	if !ok {
+		return nil
+	}
+
+	// Get all the Sample objects
+	sampleList := &v1.SampleList{}
+	if err := h.client.List(context.TODO(), &client.ListOptions{Namespace: ""}, sampleList); err != nil {
+		return nil
+	}
+
+	requests := FilterPodsPerSample(h.client, sampleList, pod)
+  
+  return requests
+}
+
+func HandleSampleMapper(client client.Client, predicates []predicate.Predicate) handler.Mapper {
+	return &handleLocalInfosMapper{client, predicates}
+}
+```
+
+How to filer the pods to be sent to `Reconcile()`, based on namespace mentioned in `Sample` custom resource object's Spec. Once pod is indentified, it pushes custom request to `Reconcile` loop with `reconcile.Request{}`, with name of this format
+`sample-pod-<name of the pod>`. Now in Sample object's `Reconcile` loop will be called for two distinct events:
+
+* For actual Sample object change
+* For any pod change, which is under namespace specified in Spec of Sample object.
+
+```Go
+/*
+Given a list of Sample CR, this function filters out the Pods
+which are under Sample.Namespace
+*/
+func FilterPodsPerSample(c client.Client, sampleList *v1.SampleList, pod *corev1.Pod) []reconcile.Request {
+	var requests []reconcile.Request
+
+for _, item := range sampleList.Items {
+    if item.Spec.Namespace == pod.ObjectMeta.Namespace {
+      requests = append(requests, reconcile.Request{
+        NamespacedName: types.NamespacedName{
+          Namespace: pod.ObjectMeta.Namespace,
+          Name:      "sample-pod-" + item.ObjectMeta.Name + "-" + pod.ObjectMeta.Name,
+        },
+      })
+    }
+  }
+	return requests
+}
+```
+
+
 # Event filtering with Predicates
 
-[Events][doc_event] are produced by [Sources][doc_source] assigned to resources a controller is watching. These events are transformed into Requests by [EventHandlers][doc_eventhandler] and passed to `Reconcile()`. [Predicates][doc_predicate] allow controllers to filter events before they are provided to EventHandlers. Filtering is useful because your controller may only want to handle specific types of events. Filtering also helps reduce chattiness with the API server, as `Reconcile()` is only called for events transformed by EventHandlers.
+ [Predicates][doc_predicate] allow controllers to filter events before they are provided to EventHandlers. Filtering is useful because your controller may only want to handle specific types of events. Filtering also helps reduce chattiness with the API server, as `Reconcile()` is only called for events transformed by EventHandlers.
 
 ## Predicate types
 
