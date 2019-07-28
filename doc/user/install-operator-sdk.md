@@ -1,9 +1,16 @@
 # Install the Operator SDK CLI
 
+- [Install from Homebrew (macOS)](#install-from-homebrew-macos)
 - [Install from GitHub release](#install-from-github-release)
-- [Install from Homebrew](#install-from-homebrew)
 - [Compile and install from master](#compile-and-install-from-master)
 
+## Install from Homebrew (macOS)
+
+If you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
+
+```sh
+$ brew install operator-sdk
+```
 
 ## Install from GitHub release
 
@@ -68,14 +75,6 @@ Now you should be able to verify the binary.
 $ chmod +x operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu && sudo mkdir -p /usr/local/bin/ && sudo cp operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu /usr/local/bin/operator-sdk && rm operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu
 # macOS
 $ chmod +x operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin && sudo mkdir -p /usr/local/bin/ && sudo cp operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin /usr/local/bin/operator-sdk && rm operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin
-```
-
-## Install from Homebrew
-
-Alternatively, if you are using [Homebrew][homebrew_tool], you can install the SDK CLI tool with the following command:
-
-```sh
-$ brew install operator-sdk
 ```
 
 ## Compile and install from master
