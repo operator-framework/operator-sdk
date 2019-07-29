@@ -22,15 +22,17 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
 	scplugins "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/plugins"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	"github.com/operator-framework/operator-sdk/version"
 
-	"github.com/sirupsen/logrus"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -68,8 +70,6 @@ func getPlugins() ([]Plugin, error) {
 		kubeconfig = scViper.GetString(scplugins.KubeconfigOpt)
 	}
 	// Make list of plugins that have been configured via the config file
-	basicSet := false
-	olmSet := false
 	var setPaths []string
 	// Add plugins from config
 	var plugins []Plugin
@@ -84,12 +84,10 @@ func getPlugins() ([]Plugin, error) {
 		}
 		var newPlugin Plugin
 		if plugin.Basic != nil {
-			basicSet = true
 			pluginConfig := plugin.Basic
 			setConfigDefaults(pluginConfig, kubeconfig)
 			newPlugin = basicOrOLMPlugin{name: plugin.Name, pluginType: scplugins.BasicOperator, config: *pluginConfig}
 		} else if plugin.Olm != nil {
-			olmSet = true
 			pluginConfig := plugin.Olm
 			setConfigDefaults(pluginConfig, kubeconfig)
 			newPlugin = basicOrOLMPlugin{name: plugin.Name, pluginType: scplugins.OLMIntegration, config: *pluginConfig}
@@ -107,15 +105,6 @@ func getPlugins() ([]Plugin, error) {
 			continue
 		}
 		plugins = append(plugins, newPlugin)
-	}
-	// This adds internal plugins without any configs. Since they are missing the cr-manifest option,
-	// they will fail. However, this allows the scorecard to print out a clear error message for why
-	// the internal plugins were not able to run and maintain the old behavior of the scorecard
-	if !basicSet {
-		plugins = append(plugins, basicTestsPlugin)
-	}
-	if !olmSet {
-		plugins = append(plugins, olmTestsPlugin)
 	}
 	// find external plugins
 	pluginDir := scViper.GetString(PluginDirOpt)
@@ -256,7 +245,7 @@ func initConfig() error {
 		}
 		log.Info("Using config file: ", viper.ConfigFileUsed())
 	} else {
-		return fmt.Errorf("could read config file: %v", err)
+		return fmt.Errorf("could not read config file: %v\nSee %s for more information about the scorecard config file", err, configDocLink())
 	}
 	return nil
 }
@@ -294,4 +283,11 @@ func makeSCViper() {
 	// this is a workaround for the fact that nested flags don't persist on viper.Sub
 	scViper.Set(OutputFormatOpt, viper.GetString("scorecard."+OutputFormatOpt))
 	scViper.Set(scplugins.KubeconfigOpt, viper.GetString("scorecard."+scplugins.KubeconfigOpt))
+}
+
+func configDocLink() string {
+	if strings.HasSuffix(version.Version, "+git") {
+		return "https://github.com/operator-framework/operator-sdk/blob/master/doc/test-framework/scorecard.md"
+	}
+	return fmt.Sprintf("https://github.com/operator-framework/operator-sdk/blob/%s/doc/test-framework/scorecard.md", version.Version)
 }
