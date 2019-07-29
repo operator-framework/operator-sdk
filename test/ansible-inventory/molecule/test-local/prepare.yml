@@ -25,12 +25,9 @@
       delegate_to: localhost
 
     - name: Wait for the Kubernetes API to become available (this could take a minute)
-      uri:
-        url: "https://localhost:8443/version"
-        status_code: 200
-        validate_certs: no
+      command: kubectl cluster-info
       register: result
-      until: (result.status|default(-1)) == 200
+      until: result.stdout is regex("Kubernetes master.* is running")
       retries: 60
       delay: 5
 
