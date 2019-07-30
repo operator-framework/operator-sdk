@@ -42,7 +42,7 @@ const maxBackoffInterval = time.Second * 16
 // the same name, so the pod that successfully creates the ConfigMap is the
 // leader. Upon termination of that pod, the garbage collector will delete the
 // ConfigMap, enabling a different pod to become the leader.
-func Become(ctx context.Context, lockName string) error {
+func Become(ctx context.Context, lockName string, labels ...map[string]string) error {
 	log.Info("Trying to become the leader.")
 
 	ns, err := k8sutil.GetOperatorNamespace()
@@ -92,11 +92,18 @@ func Become(ctx context.Context, lockName string) error {
 		return err
 	}
 
+	allLabels := make(map[string]string)
+	for _, label := range labels {
+		for labelKey, labelItem := range label {
+			allLabels[labelKey] = labelItem
+		}
+	}
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            lockName,
 			Namespace:       ns,
 			OwnerReferences: []metav1.OwnerReference{*owner},
+			Labels:          allLabels,
 		},
 	}
 
