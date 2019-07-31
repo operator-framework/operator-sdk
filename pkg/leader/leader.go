@@ -47,7 +47,7 @@ func Become(ctx context.Context, lockName string) error {
 
 	ns, err := k8sutil.GetOperatorNamespace()
 	if err != nil {
-		if err == k8sutil.ErrNoNamespace {
+		if err == k8sutil.ErrNoNamespace || err == k8sutil.ErrRunLocal {
 			log.Info("Skipping leader election; not running in a cluster.")
 			return nil
 		}

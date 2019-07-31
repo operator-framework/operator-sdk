@@ -26,7 +26,7 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
-func TestCreateRoleScaffold(t *testing.T) {
+func TestGenerateRoleScaffold(t *testing.T) {
 	dcs := map[string]*mockRoleDiscoveryClient{
 		"upstream": &mockRoleDiscoveryClient{
 			serverVersion:   func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "11"}, nil },
@@ -66,13 +66,7 @@ func TestCreateRoleScaffold(t *testing.T) {
 		for dcName, dc := range dcs {
 			testName := fmt.Sprintf("%s %s", dcName, tc.name)
 			t.Run(testName, func(t *testing.T) {
-				roleScaffold, err := helm.CreateRoleScaffold(dc, tc.chart)
-				if tc.expectErr {
-					assert.Error(t, err)
-					return
-				} else {
-					assert.NoError(t, err)
-				}
+				roleScaffold := helm.GenerateRoleScaffold(dc, tc.chart)
 				assert.Equal(t, tc.expectSkipDefaultRules, roleScaffold.SkipDefaultRules)
 				assert.Equal(t, tc.expectLenCustomRules, len(roleScaffold.CustomRules))
 				assert.Equal(t, tc.expectIsClusterScoped, roleScaffold.IsClusterScoped)
@@ -120,7 +114,6 @@ type roleScaffoldTestCase struct {
 	expectSkipDefaultRules bool
 	expectIsClusterScoped  bool
 	expectLenCustomRules   int
-	expectErr              bool
 }
 
 func failChart() *chart.Chart {

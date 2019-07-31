@@ -48,9 +48,10 @@ func TestCSVNew(t *testing.T) {
 		},
 	}
 	csvVer := "0.1.0"
-	projectName := "app-operator"
+	projectName := "app-operator-dir"
+	operatorName := "app-operator"
 
-	sc := &CSV{CSVVersion: csvVer, pathPrefix: testDataDir}
+	sc := &CSV{CSVVersion: csvVer, pathPrefix: testDataDir, OperatorName: operatorName}
 	err := s.Execute(&input.Config{ProjectName: projectName}, sc)
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
@@ -70,7 +71,8 @@ func TestCSVNew(t *testing.T) {
 
 func TestCSVFromOld(t *testing.T) {
 	s := &scaffold.Scaffold{Fs: afero.NewMemMapFs()}
-	projectName := "app-operator"
+	projectName := "app-operator-dir"
+	operatorName := "app-operator"
 	oldCSVVer, newCSVVer := "0.1.0", "0.2.0"
 
 	// Write all files in testdata/deploy to fs so manifests are present when
@@ -80,9 +82,10 @@ func TestCSVFromOld(t *testing.T) {
 	}
 
 	sc := &CSV{
-		CSVVersion:  newCSVVer,
-		FromVersion: oldCSVVer,
-		pathPrefix:  testDataDir,
+		CSVVersion:   newCSVVer,
+		FromVersion:  oldCSVVer,
+		pathPrefix:   testDataDir,
+		OperatorName: operatorName,
 	}
 	err := s.Execute(&input.Config{ProjectName: projectName}, sc)
 	if err != nil {
@@ -99,23 +102,26 @@ func TestCSVFromOld(t *testing.T) {
 		t.Fatalf("New CSV does not exist at %s", newCSVPath)
 	}
 
-	expName := getCSVName(projectName, newCSVVer)
+	expName := getCSVName(operatorName, newCSVVer)
 	if newCSV.ObjectMeta.Name != expName {
 		t.Errorf("Expected CSV metadata.name %s, got %s", expName, newCSV.ObjectMeta.Name)
 	}
-	expReplaces := getCSVName(projectName, oldCSVVer)
+	expReplaces := getCSVName(operatorName, oldCSVVer)
 	if newCSV.Spec.Replaces != expReplaces {
 		t.Errorf("Expected CSV spec.replaces %s, got %s", expReplaces, newCSV.Spec.Replaces)
 	}
 }
 
 func TestUpdateVersion(t *testing.T) {
-	projectName := "app-operator"
+	projectName := "app-operator-dir"
+	operatorName := "app-operator"
+
 	oldCSVVer, newCSVVer := "0.1.0", "0.2.0"
 	sc := &CSV{
-		Input:      input.Input{ProjectName: projectName},
-		CSVVersion: newCSVVer,
-		pathPrefix: testDataDir,
+		Input:        input.Input{ProjectName: projectName},
+		CSVVersion:   newCSVVer,
+		pathPrefix:   testDataDir,
+		OperatorName: operatorName,
 	}
 	csvExpBytes, err := ioutil.ReadFile(sc.getCSVPath(oldCSVVer))
 	if err != nil {
@@ -134,7 +140,7 @@ func TestUpdateVersion(t *testing.T) {
 	if !csv.Spec.Version.Equal(*wantedSemver) {
 		t.Errorf("Wanted csv version %v, got %v", *wantedSemver, csv.Spec.Version)
 	}
-	wantedName := getCSVName(projectName, newCSVVer)
+	wantedName := getCSVName(operatorName, newCSVVer)
 	if csv.ObjectMeta.Name != wantedName {
 		t.Errorf("Wanted csv name %s, got %s", wantedName, csv.ObjectMeta.Name)
 	}
@@ -155,36 +161,9 @@ func TestUpdateVersion(t *testing.T) {
 		t.Errorf("Podspec image changed from %s to %s", wantedImage, csvPodImage)
 	}
 
-	wantedReplaces := getCSVName(projectName, "0.1.0")
+	wantedReplaces := getCSVName(operatorName, "0.1.0")
 	if csv.Spec.Replaces != wantedReplaces {
 		t.Errorf("Wanted csv replaces %s, got %s", wantedReplaces, csv.Spec.Replaces)
-	}
-}
-
-func TestGetDisplayName(t *testing.T) {
-	cases := []struct {
-		input, wanted string
-	}{
-		{"Appoperator", "Appoperator"},
-		{"appoperator", "Appoperator"},
-		{"appoperatoR", "Appoperato R"},
-		{"AppOperator", "App Operator"},
-		{"appOperator", "App Operator"},
-		{"app-operator", "App Operator"},
-		{"app-_operator", "App Operator"},
-		{"App-operator", "App Operator"},
-		{"app-_Operator", "App Operator"},
-		{"app--Operator", "App Operator"},
-		{"app--_Operator", "App Operator"},
-		{"APP", "APP"},
-		{"another-AppOperator_againTwiceThrice More", "Another App Operator Again Twice Thrice More"},
-	}
-
-	for _, c := range cases {
-		dn := getDisplayName(c.input)
-		if dn != c.wanted {
-			t.Errorf("Wanted %s, got %s", c.wanted, dn)
-		}
 	}
 }
 

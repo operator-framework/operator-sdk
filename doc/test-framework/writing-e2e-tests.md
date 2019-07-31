@@ -280,14 +280,16 @@ in [MainEntry][main-entry-link] are declared, the tests will run correctly. Runn
 will result in undefined behavior. This is an example `go test` equivalent to the `operator-sdk test local` example above:
 
 ```shell
-# Combine service_account, rbac, operator manifest into namespaced manifest
+# Combine service_account, role, role_binding, and operator manifests into namespaced manifest
 $ cp deploy/service_account.yaml deploy/namespace-init.yaml
 $ echo -e "\n---\n" >> deploy/namespace-init.yaml
-$ cat deploy/rbac.yaml >> deploy/namespace-init.yaml
+$ cat deploy/role.yaml >> deploy/namespace-init.yaml
+$ echo -e "\n---\n" >> deploy/namespace-init.yaml
+$ cat deploy/role_binding.yaml >> deploy/namespace-init.yaml
 $ echo -e "\n---\n" >> deploy/namespace-init.yaml
 $ cat deploy/operator.yaml >> deploy/namespace-init.yaml
 # Run tests
-$ go test ./test/e2e/... -root=$(pwd) -kubeconfig=$HOME/.kube/config -globalMan deploy/crd.yaml -namespacedMan deploy/namespace-init.yaml -v -parallel=2
+$ go test ./test/e2e/... -root=$(pwd) -kubeconfig=$HOME/.kube/config -globalMan deploy/crds/example_v1alpha1_app_crd.yaml -namespacedMan deploy/namespace-init.yaml -v -parallel=2
 ```
 
 ## Manual Cleanup
@@ -325,7 +327,7 @@ $ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
 ```
 
 [memcached-sample]:https://github.com/operator-framework/operator-sdk-samples/tree/master/memcached-operator
-[framework-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/framework.go#L45
+[framework-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/framework.go
 [testctx-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/context.go
 [e2eutil-link]:https://github.com/operator-framework/operator-sdk/tree/master/pkg/test/e2eutil
 [memcached-test-link]:https://github.com/operator-framework/operator-sdk-samples/blob/master/memcached-operator/test/e2e/memcached_test.go

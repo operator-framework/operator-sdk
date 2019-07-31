@@ -2,6 +2,7 @@
 .glide/
 
 # Folders
+vendor
 _obj
 _test
 _output
@@ -105,3 +106,4 @@ images/scorecard-proxy/scorecard-proxy
 
 # Test artifacts
 pkg/ansible/runner/testdata/valid.yaml
+bin/*

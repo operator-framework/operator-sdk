@@ -15,6 +15,8 @@
 package metrics
 
 import (
+	"fmt"
+
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	monclientv1 "github.com/coreos/prometheus-operator/pkg/client/versioned/typed/monitoring/v1"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -23,6 +25,8 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 )
+
+var ErrServiceMonitorNotPresent = fmt.Errorf("no ServiceMonitor registered with the API")
 
 // CreateServiceMonitors creates ServiceMonitors objects based on an array of Service objects.
 // If CR ServiceMonitor is not registered in the Cluster it will not attempt at creating resources.
@@ -33,14 +37,16 @@ func CreateServiceMonitors(config *rest.Config, ns string, services []*v1.Servic
 		return nil, err
 	}
 	if !exists {
-		// ServiceMonitor was not registered, but we don't want to produce more errors just return.
-		return nil, nil
+		return nil, ErrServiceMonitorNotPresent
 	}
 
 	var serviceMonitors []*monitoringv1.ServiceMonitor
 	mclient := monclientv1.NewForConfigOrDie(config)
 
 	for _, s := range services {
+		if s == nil {
+			continue
+		}
 		sm := GenerateServiceMonitor(s)
 		smc, err := mclient.ServiceMonitors(ns).Create(sm)
 		if err != nil {
@@ -60,12 +66,23 @@ func GenerateServiceMonitor(s *v1.Service) *monitoringv1.ServiceMonitor {
 		labels[k] = v
 	}
 	endpoints := populateEndpointsFromServicePorts(s)
+	boolTrue := true
 
 	return &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      s.ObjectMeta.Name,
 			Namespace: s.ObjectMeta.Namespace,
 			Labels:    labels,
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion:         "v1",
+					BlockOwnerDeletion: &boolTrue,
+					Controller:         &boolTrue,
+					Kind:               "Service",
+					Name:               s.Name,
+					UID:                s.UID,
+				},
+			},
 		},
 		Spec: monitoringv1.ServiceMonitorSpec{
 			Selector: metav1.LabelSelector{

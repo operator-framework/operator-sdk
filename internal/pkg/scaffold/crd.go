@@ -64,29 +64,7 @@ func (s *CRD) GetInput() (input.Input, error) {
 			s.Resource.LowerKind)
 		s.Path = filepath.Join(CRDsDir, fileName)
 	}
-	initCache()
 	return s.Input, nil
-}
-
-type fsCache struct {
-	afero.Fs
-}
-
-func (c *fsCache) fileExists(path string) bool {
-	_, err := c.Stat(path)
-	return err == nil
-}
-
-var (
-	// Global cache so users can use new CRD structs.
-	cache *fsCache
-	once  sync.Once
-)
-
-func initCache() {
-	once.Do(func() {
-		cache = &fsCache{Fs: afero.NewMemMapFs()}
-	})
 }
 
 var _ CustomRenderer = &CRD{}
@@ -101,30 +79,34 @@ func (s *CRD) CustomRender() ([]byte, error) {
 
 	crd := &apiextv1beta1.CustomResourceDefinition{}
 	if s.IsOperatorGo {
+		// This sets domain as empty string when we can't extract it from FullGroup.
+		// In turn this defaults to extracting the domain from project root file
+		// in controller-tools.
+		fg := strings.SplitN(s.Resource.FullGroup, ".", 2)
+		domain := s.Resource.FullGroup
+		if len(fg) > 1 {
+			domain = fg[1]
+		}
+		fs := afero.NewMemMapFs()
+		g := &crdgenerator.Generator{
+			RootPath:          s.AbsProjectPath,
+			Domain:            domain,
+			Repo:              s.Repo,
+			OutputDir:         ".",
+			SkipMapValidation: false,
+			OutFs:             fs,
+		}
+		if err := g.ValidateAndInitFields(); err != nil {
+			return nil, err
+		}
+		if err := g.Do(); err != nil {
+			return nil, err
+		}
+
 		// controller-tools generates crd file names with no _crd.yaml suffix:
 		// <group>_<version>_<kind>.yaml.
 		path := strings.Replace(filepath.Base(i.Path), "_crd.yaml", ".yaml", 1)
-
-		// controller-tools' generators read and make crds for all apis in pkg/apis,
-		// so generate crds in a cached, in-memory fs to extract the data we need.
-		if !cache.fileExists(path) {
-			g := &crdgenerator.Generator{
-				RootPath:          s.AbsProjectPath,
-				Domain:            strings.SplitN(s.Resource.FullGroup, ".", 2)[1],
-				Repo:              s.Repo,
-				OutputDir:         ".",
-				SkipMapValidation: false,
-				OutFs:             cache,
-			}
-			if err := g.ValidateAndInitFields(); err != nil {
-				return nil, err
-			}
-			if err := g.Do(); err != nil {
-				return nil, err
-			}
-		}
-
-		b, err := afero.ReadFile(cache, path)
+		b, err := afero.ReadFile(fs, path)
 		if err != nil {
 			if os.IsNotExist(err) {
 				return nil, fmt.Errorf("no API exists for Group %s Version %s Kind %s",
@@ -160,17 +142,17 @@ func (s *CRD) CustomRender() ([]byte, error) {
 	}
 
 	setCRDVersions(crd)
-	return k8sutil.GetObjectBytes(crd)
+	return k8sutil.GetObjectBytes(crd, yaml.Marshal)
 }
 
 func newCRDForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {
 	crd := &apiextv1beta1.CustomResourceDefinition{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "apiextensions.k8s.io/v1beta1",
+			APIVersion: apiextv1beta1.SchemeGroupVersion.String(),
 			Kind:       "CustomResourceDefinition",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: r.Resource + "." + r.FullGroup,
+			Name: fmt.Sprintf("%s.%s", r.Resource, r.FullGroup),
 		},
 		Spec: apiextv1beta1.CustomResourceDefinitionSpec{
 			Group:   r.FullGroup,

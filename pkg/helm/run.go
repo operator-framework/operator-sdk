@@ -25,11 +25,15 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
 	"github.com/operator-framework/operator-sdk/pkg/helm/watches"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
+	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -37,8 +41,9 @@ import (
 )
 
 var (
-	metricsHost       = "0.0.0.0"
-	metricsPort int32 = 8383
+	metricsHost               = "0.0.0.0"
+	metricsPort         int32 = 8383
+	operatorMetricsPort int32 = 8686
 )
 
 var log = logf.Log.WithName("cmd")
@@ -86,7 +91,7 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 		log.Error(err, "Failed to create new manager factories.")
 		return err
 	}
-
+	var gvks []schema.GroupVersionKind
 	for _, w := range watches {
 		// Register the controller with the factory.
 		err := controller.Add(mgr, controller.WatchOptions{
@@ -100,6 +105,7 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 			log.Error(err, "Failed to add manager factory to controller.")
 			return err
 		}
+		gvks = append(gvks, w.GroupVersionKind)
 	}
 
 	operatorName, err := k8sutil.GetOperatorName()
@@ -117,8 +123,19 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 		return err
 	}
 
-	// Create Service object to expose the metrics port.
-	_, err = metrics.ExposeMetricsPort(ctx, metricsPort)
+	// Generates operator specific metrics based on the GVKs.
+	// It serves those metrics on "http://metricsHost:operatorMetricsPort".
+	err = kubemetrics.GenerateAndServeCRMetrics(cfg, []string{namespace}, gvks, metricsHost, operatorMetricsPort)
+	if err != nil {
+		log.Info("Could not generate and serve custom resource metrics", "error", err.Error())
+	}
+
+	servicePorts := []v1.ServicePort{
+		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
+		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
+	}
+	// Create Service object to expose the metrics port(s).
+	_, err = metrics.CreateMetricsService(ctx, cfg, servicePorts)
 	if err != nil {
 		log.Info(err.Error())
 	}
