@@ -101,10 +101,9 @@ func getPlugins() ([]Plugin, error) {
 			newPlugin = externalPlugin{name: plugin.Name, config: *pluginConfig}
 		}
 		// keep this statement after the previous if statements; otherwise default tests won't be disabled correctly
-		if plugin.Disable {
-			continue
+		if !plugin.Disable {
+			plugins = append(plugins, newPlugin)
 		}
-		plugins = append(plugins, newPlugin)
 	}
 	// find external plugins
 	pluginDir := scViper.GetString(PluginDirOpt)
