@@ -51,10 +51,13 @@ const moleculeDefaultPrepareAnsibleTmpl = `---
       delegate_to: localhost
 
     - name: Fetch the kubeconfig
-      fetch:
+      get_url:
+        url: "http://localhost:10080/config"
         dest: '{{ kubeconfig }}'
-        flat: yes
-        src: /root/.kube/config
+        validate_certs: no
+      until: (result.status|default(-1)) == 200
+      retries: 60
+      delay: 5
 
     - name: Change the kubeconfig port to the proper value
       replace:
@@ -65,7 +68,7 @@ const moleculeDefaultPrepareAnsibleTmpl = `---
 
     - name: Wait for the Kubernetes API to become available (this could take a minute)
       uri:
-        url: "https://localhost:8443/version"
+        url: "http://localhost:10080/kubernetes-ready"
         status_code: 200
         validate_certs: no
       register: result
