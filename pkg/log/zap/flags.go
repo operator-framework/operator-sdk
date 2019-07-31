@@ -89,7 +89,7 @@ func newJSONEncoder(ecfs ...encoderConfigFunc) zapcore.Encoder {
 }
 
 func newConsoleEncoder(ecfs ...encoderConfigFunc) zapcore.Encoder {
-	encoderConfig := zap.NewProductionEncoderConfig()
+	encoderConfig := zap.NewDevelopmentEncoderConfig()
 	for _, f := range ecfs {
 		f(&encoderConfig)
 	}

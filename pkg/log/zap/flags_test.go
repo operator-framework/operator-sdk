@@ -209,28 +209,35 @@ func TestTimeEncoder(t *testing.T) {
 		expSet    bool
 	}{
 		{
-			name:   "iso8601",
+			name:   "iso8601 time encoding",
 			input:  "iso8601",
 			expStr: "iso8601",
 			expSet: true,
 		},
 		{
-			name:   "millis",
+			name:   "millis time encoding",
 			input:  "millis",
 			expStr: "millis",
 			expSet: true,
 		},
 		{
-			name:   "nanos",
+			name:   "nanos time encoding",
 			input:  "nanos",
 			expStr: "nanos",
 			expSet: true,
 		},
 		{
-			name:   "epoch",
+			name:   "epoch time encoding",
 			input:  "epoch",
 			expStr: "epoch",
 			expSet: true,
+		},
+		{
+			name:      "invalid time encoding",
+			input:     "invalid",
+			expStr:    "invalid",
+			expSet:    true,
+			shouldErr: true,
 		},
 	}
 	for _, tc := range testCases {

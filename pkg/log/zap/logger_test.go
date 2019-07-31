@@ -15,16 +15,13 @@
 package zap
 
 import (
-	"io"
-	"os"
+	"bytes"
 	"testing"
 	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/go-logr/logr"
-	"github.com/go-logr/zapr"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,12 +29,13 @@ func TestGetConfig(t *testing.T) {
 	var opts []zap.Option
 
 	testCases := []struct {
-		name      string
-		inDevel   bool
-		inEncoder encoderValue
-		inLevel   levelValue
-		inSample  sampleValue
-		expected  config
+		name           string
+		inDevel        bool
+		inEncoder      encoderValue
+		inLevel        levelValue
+		inSample       sampleValue
+		inTimeEncoding timeEncodingValue
+		expected       config
 	}{
 		{
 			name:    "development on",
@@ -49,6 +47,9 @@ func TestGetConfig(t *testing.T) {
 				set: false,
 			},
 			inSample: sampleValue{
+				set: false,
+			},
+			inTimeEncoding: timeEncodingValue{
 				set: false,
 			},
 			expected: config{
@@ -68,6 +69,9 @@ func TestGetConfig(t *testing.T) {
 				set: false,
 			},
 			inSample: sampleValue{
+				set: false,
+			},
+			inTimeEncoding: timeEncodingValue{
 				set: false,
 			},
 			expected: config{
@@ -90,8 +94,11 @@ func TestGetConfig(t *testing.T) {
 			inSample: sampleValue{
 				set: false,
 			},
+			inTimeEncoding: timeEncodingValue{
+				set: false,
+			},
 			expected: config{
-				encoder: newJSONEncoder(),
+				encoder: newConsoleEncoder(),
 				level:   zap.NewAtomicLevelAt(zap.InfoLevel),
 				opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
 				sample:  true,
@@ -108,6 +115,9 @@ func TestGetConfig(t *testing.T) {
 				level: zapcore.ErrorLevel,
 			},
 			inSample: sampleValue{
+				set: false,
+			},
+			inTimeEncoding: timeEncodingValue{
 				set: false,
 			},
 			expected: config{
@@ -130,9 +140,35 @@ func TestGetConfig(t *testing.T) {
 			inSample: sampleValue{
 				set: false,
 			},
+			inTimeEncoding: timeEncodingValue{
+				set: false,
+			},
 			expected: config{
 				encoder: newJSONEncoder(),
 				level:   zap.NewAtomicLevelAt(zapcore.Level(-10)),
+				opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
+				sample:  false,
+			},
+		},
+		{
+			name:    "set sampling",
+			inDevel: false,
+			inEncoder: encoderValue{
+				set: false,
+			},
+			inLevel: levelValue{
+				set: false,
+			},
+			inSample: sampleValue{
+				set:    true,
+				sample: false,
+			},
+			inTimeEncoding: timeEncodingValue{
+				set: false,
+			},
+			expected: config{
+				encoder: newJSONEncoder(),
+				level:   zap.NewAtomicLevelAt(zap.InfoLevel),
 				opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
 				sample:  false,
 			},
@@ -151,6 +187,9 @@ func TestGetConfig(t *testing.T) {
 				set:    true,
 				sample: true,
 			},
+			inTimeEncoding: timeEncodingValue{
+				set: false,
+			},
 			expected: config{
 				encoder: newJSONEncoder(),
 				level:   zap.NewAtomicLevelAt(zapcore.Level(-10)),
@@ -158,6 +197,42 @@ func TestGetConfig(t *testing.T) {
 				sample:  false,
 			},
 		},
+		{
+			name:    "set time encoding",
+			inDevel: false,
+			inEncoder: encoderValue{
+				set: false,
+			},
+			inLevel: levelValue{
+				set: false,
+			},
+			inSample: sampleValue{
+				set: false,
+			},
+			inTimeEncoding: timeEncodingValue{
+				set:         true,
+				timeEncoder: zapcore.EpochMillisTimeEncoder,
+			},
+			expected: config{
+				encoder: newJSONEncoder(withTimeEncoding(zapcore.EpochMillisTimeEncoder)),
+				level:   zap.NewAtomicLevelAt(zap.InfoLevel),
+				opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
+				sample:  true,
+			},
+		},
+	}
+
+	entry := zapcore.Entry{
+		Level:      levelVal.level,
+		Time:       time.Now(),
+		LoggerName: "TestLogger",
+		Message:    "Test message",
+		Caller: zapcore.EntryCaller{
+			Defined: true,
+			File:    "dummy_file.go",
+			Line:    10,
+		},
+		Stack: "Sample stack",
 	}
 
 	for _, tc := range testCases {
@@ -166,27 +241,35 @@ func TestGetConfig(t *testing.T) {
 			encoderVal = tc.inEncoder
 			levelVal = tc.inLevel
 			sampleVal = tc.inSample
+			timeEncodingVal = tc.inTimeEncoding
 
 			cfg := getConfig()
 			assert.Equal(t, tc.expected.level, cfg.level)
 			assert.Equal(t, len(tc.expected.opts), len(cfg.opts))
 			assert.Equal(t, tc.expected.sample, cfg.sample)
 
-			dalog := createLogger(cfg, os.Stderr)
-			dalog.V(10).Info("This should not panic")
+			// Test that the encoder returned by getConfig encodes an entry
+			// the same way that the expected encoder does. In addition to
+			// testing that the correct entry encoding (json vs. console) is
+			// used, this also tests that the correct time encoding is used.
+			expectedEncoderOut, err := tc.expected.encoder.EncodeEntry(entry, []zapcore.Field{{Key: "fieldKey", Type: zapcore.StringType, String: "fieldValue"}})
+			if err != nil {
+				t.Fatalf("Unexpected error encoding entry with expected encoder: %s", err)
+			}
+			actualEncoderOut, err := cfg.encoder.EncodeEntry(entry, []zapcore.Field{{Key: "fieldKey", Type: zapcore.StringType, String: "fieldValue"}})
+			if err != nil {
+				t.Fatalf("Unexpected error encoding entry with actual encoder: %s", err)
+			}
+			assert.Equal(t, expectedEncoderOut.String(), actualEncoderOut.String())
+
+			// This test helps ensure that we disable sampling for verbose log
+			// levels. Logging at V(10) should never panic, which would happen
+			// if sampling is enabled at this level.
+			assert.NotPanics(t, func() {
+				out := &bytes.Buffer{}
+				dalog := createLogger(cfg, out)
+				dalog.V(10).Info("This should not panic")
+			})
 		})
 	}
-}
-
-func createLogger(cfg config, dest io.Writer) logr.Logger {
-	syncer := zapcore.AddSync(dest)
-	if cfg.sample {
-		cfg.opts = append(cfg.opts, zap.WrapCore(func(core zapcore.Core) zapcore.Core {
-			return zapcore.NewSampler(core, time.Second, 100, 100)
-		}))
-	}
-	cfg.opts = append(cfg.opts, zap.AddCallerSkip(1), zap.ErrorOutput(syncer))
-	log := zap.New(zapcore.NewCore(cfg.encoder, syncer, cfg.level))
-	log = log.WithOptions(cfg.opts...)
-	return zapr.NewLogger(log)
 }

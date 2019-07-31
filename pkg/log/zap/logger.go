@@ -31,8 +31,12 @@ func Logger() logr.Logger {
 }
 
 func LoggerTo(destWriter io.Writer) logr.Logger {
-	syncer := zapcore.AddSync(destWriter)
 	conf := getConfig()
+	return createLogger(conf, destWriter)
+}
+
+func createLogger(conf config, destWriter io.Writer) logr.Logger {
+	syncer := zapcore.AddSync(destWriter)
 
 	conf.encoder = &logf.KubeAwareEncoder{Encoder: conf.encoder, Verbose: conf.level.Level() < 0}
 	if conf.sample {
