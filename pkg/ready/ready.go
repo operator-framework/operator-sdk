@@ -18,6 +18,7 @@ import (
 	"os"
 )
 
+// FileName represent the full path to the file for determining ready status
 const FileName = "/tmp/operator-sdk-ready"
 
 // Ready holds state about whether the operator is ready and communicates that
@@ -46,7 +47,7 @@ type fileReady struct{}
 // to determine that the operator is ready.
 func (r fileReady) Set() error {
 	f, err := os.Create(FileName)
-	if err != nil {
+	if err != nil && err != os.ErrExist {
 		return err
 	}
 	return f.Close()
@@ -54,5 +55,12 @@ func (r fileReady) Set() error {
 
 // Unset removes the file on disk that was created by Set().
 func (r fileReady) Unset() error {
-	return os.Remove(FileName)
+	if _, err := os.Stat(FileName); os.IsNotExist(err) {
+		return nil
+	}
+	err := os.Remove(FileName)
+	if err != nil {
+		return err
+	}
+	return nil
 }
