@@ -23,6 +23,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
@@ -278,7 +279,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 		if err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
 		}
-		if err := waitUntilCRStatusExists(config.InitTimeout, obj); err != nil {
+		if err := waitUntilCRStatusExists(time.Second*time.Duration(config.InitTimeout), obj); err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed waiting to check if CR status exists: %v", err)
 		}
 		if pluginType == BasicOperator {

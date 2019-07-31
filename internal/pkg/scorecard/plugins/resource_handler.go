@@ -46,8 +46,8 @@ type cleanupFn func() error
 
 // waitUntilCRStatusExists waits until the status block of the CR currently being tested exists. If the timeout
 // is reached, it simply continues and assumes there is no status block
-func waitUntilCRStatusExists(timeout int, cr *unstructured.Unstructured) error {
-	err := wait.Poll(time.Second*1, time.Second*time.Duration(timeout), func() (bool, error) {
+func waitUntilCRStatusExists(timeout time.Duration, cr *unstructured.Unstructured) error {
+	err := wait.Poll(time.Second*1, timeout, func() (bool, error) {
 		err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: cr.GetNamespace(), Name: cr.GetName()}, cr)
 		if err != nil {
 			return false, fmt.Errorf("error getting custom resource: %v", err)
