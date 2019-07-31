@@ -235,9 +235,9 @@ func TestTimeEncoder(t *testing.T) {
 		{
 			name:      "invalid time encoding",
 			input:     "invalid",
-			expStr:    "invalid",
+			expStr:    "epoch",
 			expSet:    true,
-			shouldErr: true,
+			shouldErr: false,
 		},
 	}
 	for _, tc := range testCases {
@@ -247,8 +247,8 @@ func TestTimeEncoder(t *testing.T) {
 			if err != nil && !tc.shouldErr {
 				t.Fatalf("Unknown error - %v", err)
 			}
-			if err != nil && tc.shouldErr {
-				return
+			if tc.shouldErr {
+				assert.Error(t, err)
 			}
 			assert.Equal(t, tc.expSet, te.set)
 			assert.Equal(t, "timeEncoding", te.Type())

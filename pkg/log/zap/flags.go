@@ -177,9 +177,23 @@ type timeEncodingValue struct {
 
 func (v *timeEncodingValue) Set(s string) error {
 	v.set = true
-	v.timeEncoder.UnmarshalText([]byte(s))
+
+	// As of zap v1.9.1, UnmarshalText does not return an error. Instead, it
+	// uses the epoch time encoding when unknown strings are unmarshalled.
+	//
+	// Set s to "epoch" if it doesn't match one of the known formats, so that
+	// it aligns with the default time encoder function.
+	//
+	// TODO: remove this entire switch statement if UnmarshalText is ever
+	// refactored to return an error.
+	switch s {
+	case "iso8601", "ISO8601", "millis", "nanos":
+	default:
+		s = "epoch"
+	}
+
 	v.str = s
-	return nil
+	return v.timeEncoder.UnmarshalText([]byte(s))
 }
 
 func (v timeEncodingValue) String() string {
