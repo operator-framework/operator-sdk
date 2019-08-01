@@ -47,7 +47,10 @@ type fileReady struct{}
 // to determine that the operator is ready.
 func (r fileReady) Set() error {
 	f, err := os.Create(FileName)
-	if err != nil && err != os.ErrExist {
+	if err != nil {
+		if os.IsExist(err) {
+			return nil
+		}
 		return err
 	}
 	return f.Close()
@@ -58,9 +61,5 @@ func (r fileReady) Unset() error {
 	if _, err := os.Stat(FileName); os.IsNotExist(err) {
 		return nil
 	}
-	err := os.Remove(FileName)
-	if err != nil {
-		return err
-	}
-	return nil
+	return os.Remove(FileName)
 }
