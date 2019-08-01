@@ -97,7 +97,7 @@ func (c Client) InstallVersion(ctx context.Context, version string) (*olmresourc
 		return nil, errors.Wrapf(err, "deployment/%s failed to rollout", catalogOperatorKey.Name)
 	}
 
-	subscriptions := filterResources(resources, func(r *unstructured.Unstructured) bool {
+	subscriptions := filterResources(resources, func(r unstructured.Unstructured) bool {
 		return r.GroupVersionKind() == schema.GroupVersionKind{
 			Group:   olmapiv1alpha1.GroupName,
 			Version: olmapiv1alpha1.GroupVersion,
@@ -160,7 +160,7 @@ func (c Client) GetStatus(ctx context.Context, version string) (*olmresourceclie
 	return &status, nil
 }
 
-func (c Client) getResources(ctx context.Context, version string) ([]*unstructured.Unstructured, error) {
+func (c Client) getResources(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
 	log.Infof("Fetching CRDs for version %q", version)
 	crdResources, err := c.getCRDs(ctx, version)
 	if err != nil {
@@ -177,7 +177,7 @@ func (c Client) getResources(ctx context.Context, version string) ([]*unstructur
 	return resources, nil
 }
 
-func (c Client) getCRDs(ctx context.Context, version string) ([]*unstructured.Unstructured, error) {
+func (c Client) getCRDs(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
 	resp, err := c.doRequest(ctx, c.crdsURL(version))
 	if err != nil {
 		return nil, errors.Wrap(err, "request failed")
@@ -186,7 +186,7 @@ func (c Client) getCRDs(ctx context.Context, version string) ([]*unstructured.Un
 	return decodeResources(resp.Body)
 }
 
-func (c Client) getOLM(ctx context.Context, version string) ([]*unstructured.Unstructured, error) {
+func (c Client) getOLM(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
 	resp, err := c.doRequest(ctx, c.olmURL(version))
 	if err != nil {
 		return nil, errors.Wrap(err, "request failed")
@@ -232,14 +232,14 @@ func (c Client) doRequest(ctx context.Context, url string) (*http.Response, erro
 	return resp, nil
 }
 
-func toObjects(us ...*unstructured.Unstructured) (objs []runtime.Object) {
-	for _, u := range us {
-		objs = append(objs, u)
+func toObjects(us ...unstructured.Unstructured) (objs []runtime.Object) {
+	for i := range us {
+		objs = append(objs, &us[i])
 	}
 	return objs
 }
 
-func decodeResources(rds ...io.Reader) (objs []*unstructured.Unstructured, err error) {
+func decodeResources(rds ...io.Reader) (objs []unstructured.Unstructured, err error) {
 	for _, r := range rds {
 		dec := yaml.NewYAMLOrJSONDecoder(r, 8)
 		for {
@@ -250,13 +250,13 @@ func decodeResources(rds ...io.Reader) (objs []*unstructured.Unstructured, err e
 			} else if err != nil {
 				return nil, err
 			}
-			objs = append(objs, &u)
+			objs = append(objs, u)
 		}
 	}
 	return objs, nil
 }
 
-func filterResources(resources []*unstructured.Unstructured, filter func(*unstructured.Unstructured) bool) (filtered []*unstructured.Unstructured) {
+func filterResources(resources []unstructured.Unstructured, filter func(unstructured.Unstructured) bool) (filtered []unstructured.Unstructured) {
 	for _, r := range resources {
 		if filter(r) {
 			filtered = append(filtered, r)
@@ -266,7 +266,7 @@ func filterResources(resources []*unstructured.Unstructured, filter func(*unstru
 }
 
 func (c Client) getSubscriptionCSV(ctx context.Context, subKey types.NamespacedName) (types.NamespacedName, error) {
-	var csvKey *types.NamespacedName
+	var csvKey types.NamespacedName
 	subscriptionInstalledCSV := func() (bool, error) {
 		sub := olmapiv1alpha1.Subscription{}
 		err := c.KubeClient.Get(ctx, subKey, &sub)
@@ -277,7 +277,7 @@ func (c Client) getSubscriptionCSV(ctx context.Context, subKey types.NamespacedN
 		if installedCSV == "" {
 			return false, nil
 		}
-		csvKey = &types.NamespacedName{
+		csvKey = types.NamespacedName{
 			Namespace: subKey.Namespace,
 			Name:      installedCSV,
 		}
@@ -285,5 +285,5 @@ func (c Client) getSubscriptionCSV(ctx context.Context, subKey types.NamespacedN
 		return true, nil
 	}
 
-	return *csvKey, wait.PollImmediateUntil(time.Second, subscriptionInstalledCSV, ctx.Done())
+	return csvKey, wait.PollImmediateUntil(time.Second, subscriptionInstalledCSV, ctx.Done())
 }
