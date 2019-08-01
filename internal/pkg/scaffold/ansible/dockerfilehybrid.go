@@ -74,8 +74,10 @@ RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.n
  && rm -rf /var/cache/yum
 
 COPY build/_output/bin/[[.ProjectName]] ${OPERATOR}
-COPY bin/ao-logs /usr/local/bin/ao-logs
+COPY bin /usr/local/bin
 COPY library/k8s_status.py /usr/share/ansible/openshift/
+
+RUN /usr/local/bin/user_setup
 
 # Ensure directory permissions are properly set
 RUN mkdir -p ${HOME}/.ansible/tmp \
@@ -92,7 +94,7 @@ COPY roles/ ${HOME}/roles/[[ end ]]
 [[- if .Playbook ]]
 COPY playbook.yml ${HOME}/playbook.yml[[ end ]]
 
-ENTRYPOINT ["/tini", "--", "bash", "-c", "${OPERATOR} run ansible --watches-file=/opt/ansible/watches.yaml $@"]
+ENTRYPOINT ["/tini", "--", "/usr/local/bin/entrypoint"]
 
 USER ${USER_UID}
 `
