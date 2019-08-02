@@ -44,6 +44,9 @@ func CreateServiceMonitors(config *rest.Config, ns string, services []*v1.Servic
 	mclient := monclientv1.NewForConfigOrDie(config)
 
 	for _, s := range services {
+		if s == nil {
+			continue
+		}
 		sm := GenerateServiceMonitor(s)
 		smc, err := mclient.ServiceMonitors(ns).Create(sm)
 		if err != nil {

@@ -202,6 +202,7 @@ Writes a Cluster Service Version (CSV) manifest and optionally CRD files to `dep
 * `--update-crds` Update CRD manifests in deploy/{operator-name}/{csv-version} using the latest CRD manifests.
 * `--csv-channel` string - Channel the CSV should be registered under in the package manifest
 * `--default-channel` - Use the channel passed to --csv-channel as the package manifests' default channel. Only valid when --csv-channel is set.
+* `--operator-name` string - Operator name to use while generating this CSV.
 
 #### Example
 

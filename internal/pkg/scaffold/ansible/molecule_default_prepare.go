@@ -65,7 +65,7 @@ const moleculeDefaultPrepareAnsibleTmpl = `---
 
     - name: Wait for the Kubernetes API to become available (this could take a minute)
       uri:
-        url: "https://localhost:8443/apis"
+        url: "http://localhost:10080/kubernetes-ready"
         status_code: 200
         validate_certs: no
       register: result

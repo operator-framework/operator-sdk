@@ -2,4 +2,5 @@ operator-path: "testdata/deploy/operator.yaml"
 crd-cr-paths:
   - "testdata/deploy/crds"
   - "testdata/deploy/crds/app.example.com_appservices2.yaml"
-role-path: "testdata/deploy/role.yaml"
+role-paths:
+  - "testdata/deploy/role.yaml"

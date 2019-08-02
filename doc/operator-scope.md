@@ -19,6 +19,8 @@ The SDK scaffolds operators to be namespaced by default but with a few modificat
 
 Additionally the CustomResourceDefinition (CRD) scope can also be changed for cluster-scoped operators so that there is only a single instance (for a given name) of the CRD to manage across the cluster.
 
+> **NOTE**: Cluster-scoped CRDs are **NOT** supported with the Helm operator. While Helm releases can create cluster-scoped resources, Helm's design requires the release itself to be created in a specific namespace. Since the Helm operator uses a 1-to-1 mapping between a CR and a Helm release, Helm's namespace-scoped release requirement extends to Helm operator's namespace-scoped CR requirement.
+
 For each CRD that needs to be cluster-scoped, update its manifest to be cluster-scoped.
 
 * `deploy/crds/<group>_<resource>.yaml`
