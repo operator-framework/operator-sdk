@@ -87,9 +87,9 @@ type Modification struct {
 }
 ```
 
-For `Status` and `Resources` fields, we can implement a bit of extra computation instead of simple string checking. For instance,
-in the memcached-operator test, we should expect that the length of the `nodes` field (which is an array) has a certain length. To implement functions like
-these, we can create some functions for these checks that are prepended by `scorecard_function_` and take an array of objects. For instance, in the above
-example, `scorecard_function_length` would check that each field listed under it matches the specified length (like `nodes: 4`). If the yaml key does not
-start with `scorecard_function_`, we do a simple match (like `status/readyReplicas: 4`). Another possible scorecard function would be a regex checker to
-make sure that a string matches an expected pattern.
+For `Status` and `Resources` fields, we may need to do more complex checks instead of simple string checking. For instance,
+in the memcached-operator test, we should expect that the length of the `nodes` field (which is an array) has a certain length. To perform checks like
+these, we will include 2 functions for these checks that are prepended by `scorecard_function_`, `scorecard_function_length` and `scorecard_function_regex`,
+which be able to check the length of an array and if a string matches a regex respectively. The map under the scorecard function is very similar to the standard
+equality checking that the test does. For instance, in the above example, `scorecard_function_length` would check that each field listed under it matches the
+specified length (like `nodes: 4`).
