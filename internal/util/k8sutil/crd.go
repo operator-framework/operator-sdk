@@ -18,11 +18,21 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
+	"regexp"
 
 	yaml "github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+)
+
+var (
+	// VersionRegexp matches Kubernetes API versions.
+	// See https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-versioning
+	VersionRegexp = regexp.MustCompile("^v[1-9][0-9]*((alpha|beta)[1-9][0-9]*)?$")
+	// KindRegexp matches Kubernetes API Kind's.
+	KindRegexp = regexp.MustCompile("^[A-Z]{1}[a-zA-Z0-9]+$")
 )
 
 func GetCRDs(crdsDir string) ([]*apiextv1beta1.CustomResourceDefinition, error) {
@@ -69,4 +79,77 @@ func GetCRDManifestPaths(crdsDir string) (crdPaths []string, err error) {
 		return nil
 	})
 	return crdPaths, err
+}
+
+// ParseGroupSubdirs parses the layout of pkg/apis to return a map of
+// API groups to subdirectories.
+func ParseGroupSubdirs(apisDir string) (map[string][]string, error) {
+	return parseGroupSubdirs(apisDir, false)
+}
+
+// ParseGroupSubdirs parses the layout of pkg/apis to return a map of
+// API groups to versions.
+func ParseGroupVersions(apisDir string) (map[string][]string, error) {
+	return parseGroupSubdirs(apisDir, true)
+}
+
+func parseGroupSubdirs(apisDir string, strict bool) (map[string][]string, error) {
+	gvs := make(map[string][]string)
+	groups, err := ioutil.ReadDir(apisDir)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading directory %q to find API groups", apisDir)
+	}
+
+	for _, g := range groups {
+		if g.IsDir() {
+			groupDir := filepath.Join(apisDir, g.Name())
+			versions, err := ioutil.ReadDir(groupDir)
+			if err != nil {
+				return nil, errors.Wrapf(err, "error reading directory %q to find API versions", groupDir)
+			}
+
+			gvs[g.Name()] = make([]string, 0)
+			for _, v := range versions {
+				if v.IsDir() {
+					// Ignore directories that do not contain any files, so generators
+					// do not get empty directories as arguments.
+					verDir := filepath.Join(groupDir, v.Name())
+					files, err := ioutil.ReadDir(verDir)
+					if err != nil {
+						return nil, errors.Wrapf(err, "error reading directory %q to find API source files", verDir)
+					}
+					for _, f := range files {
+						if !f.IsDir() && filepath.Ext(f.Name()) == ".go" {
+							_, maybeVersion := filepath.Split(v.Name())
+							// Strictly check if maybeVersion is a Kubernetes API version.
+							if strict {
+								if VersionRegexp.MatchString(maybeVersion) {
+									gvs[g.Name()] = append(gvs[g.Name()], maybeVersion)
+								}
+							} else {
+								gvs[g.Name()] = append(gvs[g.Name()], filepath.ToSlash(v.Name()))
+							}
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if len(gvs) == 0 {
+		return nil, fmt.Errorf("no groups or versions found in %s", apisDir)
+	}
+	return gvs, nil
+}
+
+// CreateFQAPIs return a slice of all fully qualified pkg + groups + versions
+// of pkg and gvs in the format "pkg/groupA/v1".
+func CreateFQAPIs(pkg string, gvs map[string][]string) (apis []string) {
+	for g, vs := range gvs {
+		for _, v := range vs {
+			apis = append(apis, path.Join(pkg, g, v))
+		}
+	}
+	return apis
 }
