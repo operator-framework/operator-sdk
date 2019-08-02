@@ -41,7 +41,7 @@ INFO[0000] Created deploy/crds/foo.example.com_foos.yaml
 INFO[0000] Created deploy/crds/foo.example.com_v1alpha1_foo_cr.yaml
 INFO[0000] Created helm-charts/foo/
 INFO[0000] Run git init ...
-Initialized empty Git repository in /home/joe/go/src/github.com/operator-framework/foo-operator/.git/
+Initialized empty Git repository in /home/user/go/src/github.com/operator-framework/foo-operator/.git/
 INFO[0000] Run git init done
 INFO[0000] Project creation complete.
 

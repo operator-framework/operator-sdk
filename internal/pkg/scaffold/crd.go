@@ -127,7 +127,7 @@ func (s *CRD) CustomRender() ([]byte, error) {
 		subCRDValidationMetadata(crd)
 	} else {
 		// There are currently no commands to update CRD manifests for non-Go
-		// operators, so if a CRD manifests already exists for this gvk, this
+		// operators, so if a CRD manifest already exists for this gvk, this
 		// scaffold is a no-op (for now).
 		path := crdPathForResource(CRDsDir, s.Resource)
 		absPath := filepath.Join(s.AbsProjectPath, path)
@@ -250,15 +250,12 @@ func setCRDNamesForResource(crd *apiextv1beta1.CustomResourceDefinition, r *Reso
 // it must match the first item in the versions field.
 func checkCRDVersions(crd *apiextv1beta1.CustomResourceDefinition) error {
 	singleVer := crd.Spec.Version != ""
-	multiVers := len(crd.Spec.Versions) == 0
+	multiVers := len(crd.Spec.Versions) > 0
 	if singleVer {
 		if !multiVers {
 			log.Warnf("CRD %s: spec.version is deprecated and should be migrated to spec.versions", crd.Spec.Names.Kind)
-		}
-		if multiVers {
-			if crd.Spec.Version != crd.Spec.Versions[0].Name {
-				return errors.Errorf("spec.version %s must be the first element in spec.versions for CRD %s", crd.Spec.Version, crd.Spec.Names.Kind)
-			}
+		} else if crd.Spec.Version != crd.Spec.Versions[0].Name {
+			return errors.Errorf("spec.version %s must be the first element in spec.versions for CRD %s", crd.Spec.Version, crd.Spec.Names.Kind)
 		}
 	}
 
