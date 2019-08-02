@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
@@ -78,19 +79,6 @@ func main() {
 
 	replace := getGoModReplace(localSDKPath)
 	if replace.repo != sdkRepo {
-		if replace.isLocal {
-			// A hacky way to get local module substitution to work is to write a
-			// stub go.mod into the local SDK repo referred to in
-			// memcached-operator's go.mod, which allows go to recognize
-			// the local SDK repo as a module.
-			sdkModPath := filepath.Join(filepath.FromSlash(replace.repo), "go.mod")
-			if _, err = os.Stat(sdkModPath); err != nil && os.IsNotExist(err) {
-				err = ioutil.WriteFile(sdkModPath, []byte("module "+sdkRepo), fileutil.DefaultFileMode)
-				if err != nil {
-					log.Fatalf("Failed to write main repo go.mod file: %v", err)
-				}
-			}
-		}
 		modBytes, err := insertGoModReplace(sdkRepo, replace.repo, replace.ref)
 		if err != nil {
 			log.Fatalf("Failed to insert go.mod replace: %v", err)
@@ -207,9 +195,8 @@ func main() {
 }
 
 type goModReplace struct {
-	repo    string
-	ref     string
-	isLocal bool
+	repo string
+	ref  string
 }
 
 // getGoModReplace returns a go.mod replacement that is appropriate based on the build's
@@ -261,8 +248,7 @@ func getGoModReplace(localSDKPath string) goModReplace {
 
 	// Local environment
 	return goModReplace{
-		repo:    localSDKPath,
-		isLocal: true,
+		repo: localSDKPath,
 	}
 }
 
@@ -271,6 +257,10 @@ func insertGoModReplace(repo, path, sha string) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read go.mod")
 	}
+	// Remove all replace lines in go.mod.
+	replaceRe := regexp.MustCompile(fmt.Sprintf("(replace )?%s =>.+", repo))
+	modBytes = replaceRe.ReplaceAll(modBytes, nil)
+	// Append the desired replace to the end of go.mod's bytes.
 	sdkReplace := fmt.Sprintf("replace %s => %s", repo, path)
 	if sha != "" {
 		sdkReplace = fmt.Sprintf("%s %s", sdkReplace, sha)

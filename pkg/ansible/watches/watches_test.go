@@ -46,6 +46,7 @@ func TestLoad(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unable to create valid.yaml: %v", err)
 	}
+	defer os.Remove("testdata/valid.yaml")
 	err = tmpl.Execute(f, validTemplate)
 	if err != nil {
 		t.Fatalf("Unable to create valid.yaml: %v", err)

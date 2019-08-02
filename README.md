@@ -40,6 +40,7 @@ The following workflow is for a new **Helm** operator:
 
 - [git][git_tool]
 - [go][go_tool] version v1.12+.
+- [mercurial][mercurial_tool] version 3.9+
 - [docker][docker_tool] version 17.03+.
   - Alternatively [podman][podman_tool] `v1.2.0+` or [buildah][buildah_tool] `v1.7+`
 - [kubectl][kubectl_tool] version v1.11.3+.
@@ -63,7 +64,7 @@ $ mkdir -p $HOME/projects/example-inc/
 # Create a new app-operator project
 $ cd $HOME/projects/example-inc/
 $ export GO111MODULE=on
-$ operator-sdk new app-operator
+$ operator-sdk new app-operator --repo github.com/example-inc/app-operator
 $ cd app-operator
 
 # Add a new API for the custom resource AppService
@@ -172,6 +173,7 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
+[mercurial_tool]:https://www.mercurial-scm.org/downloads
 [docker_tool]:https://docs.docker.com/install/
 [podman_tool]:https://github.com/containers/libpod/blob/master/install.md
 [buildah_tool]:https://github.com/containers/buildah/blob/master/install.md

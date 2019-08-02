@@ -58,6 +58,10 @@ function add_go_mod_replace() {
 		exit 1
 	fi
 
+	# Check if a replace line already exists. If it does, remove. If not, append.
+	if grep -q "${from_path} =>" go.mod; then
+		sed -E -i 's|^.+'"${from_path} =>"'.+$||g' go.mod
+	fi
 	# Do not use "go mod edit" so formatting stays the same.
 	local replace="replace ${from_path} => ${to_path}"
 	if [[ -n "$version" ]]; then
