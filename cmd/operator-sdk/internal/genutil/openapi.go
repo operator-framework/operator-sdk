@@ -28,7 +28,6 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	gengoargs "k8s.io/gengo/args"
 	generatorargs "k8s.io/kube-openapi/cmd/openapi-gen/args"
 	"k8s.io/kube-openapi/pkg/generators"
 )
@@ -103,16 +102,17 @@ func openAPIGen(hf string, fqApis []string) error {
 		api = filepath.FromSlash(api)
 		// Use relative API path so the generator writes to the correct path.
 		apiPath := "." + string(filepath.Separator) + api[strings.Index(api, scaffold.ApisDir):]
-		args := &gengoargs.GeneratorArgs{
-			InputDirs:          []string{apiPath},
-			OutputFileBaseName: "zz_generated.openapi",
-			OutputPackagePath:  filepath.Join(wd, apiPath),
-			GoHeaderFilePath:   hf,
-			CustomArgs: &generatorargs.CustomArgs{
-				// Print API rule violations to stdout
-				ReportFilename: "-",
-			},
-		}
+		args, cargs := generatorargs.NewDefaults()
+		// Ignore default output base and set our own output path.
+		args.OutputBase = ""
+		// openapi-gen already generates a "do not edit" comment.
+		args.GeneratedByCommentTemplate = ""
+		args.InputDirs = []string{apiPath}
+		args.OutputFileBaseName = "zz_generated.openapi"
+		args.OutputPackagePath = filepath.Join(wd, apiPath)
+		args.GoHeaderFilePath = hf
+		// Print API rule violations to stdout
+		cargs.ReportFilename = "-"
 		if err := generatorargs.Validate(args); err != nil {
 			return errors.Wrap(err, "openapi-gen argument validation error")
 		}

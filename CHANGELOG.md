@@ -8,6 +8,7 @@
 
 ### Breaking changes
 
+- CSV config field `role-path` is now `role-paths` and takes a list of strings. Users can now specify multiple `Role` and `ClusterRole` manifests using `role-paths`. ([#1704](https://github.com/operator-framework/operator-sdk/pull/1704))
 - Upgrade Kubernetes version from `kubernetes-1.13.4` to `kubernetes-1.14.1`
 - Upgrade `github.com/operator-framework/operator-lifecycle-manager` version from `b8a4faf68e36feb6d99a6aec623b405e587b17b1` to `0.10.1`
 - Upgrade [`controller-runtime`](https://github.com/kubernetes-sigs/controller-runtime) version from `v0.1.12` to `v0.2.0-beta.3`
@@ -52,6 +53,7 @@
 - Adds `--go-build-args` flag to `operator-sdk build` for providing additional Go build arguments. ([#1582](https://github.com/operator-framework/operator-sdk/pull/1582))
 - New flags `--csv-channel` and `--default-channel` for subcommand [`gen-csv`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#gen-csv) that add channels to and update the [package manifest](https://github.com/operator-framework/operator-registry/#manifest-format) in `deploy/olm-catalog/<operator-name>` when generating a new CSV or updating an existing one. ([#1364](https://github.com/operator-framework/operator-sdk/pull/1364))
 - Adds `go.mod` and `go.sum` to switch from `dep` to [Go modules](https://github.com/golang/go/wiki/Modules) to manage dependencies for the SDK project itself. ([#1566](https://github.com/operator-framework/operator-sdk/pull/1566))
+- New flag `--operator-name` for [`operator-sdk olm-catalog gen-csv`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#gen-csv) to specify the operator name, ex. `memcached-operator`, to use in CSV generation. The project's name is used (old behavior) if `--operator-name` is not set. ([#1571](https://github.com/operator-framework/operator-sdk/pull/1571))
 
 ### Changed
 
@@ -64,16 +66,17 @@
 - `operator-sdk new` will no longer create the initial commit for a new project, even with `--git-init=true`. ([#1588](https://github.com/operator-framework/operator-sdk/pull/1588))
 - When errors occur setting up the Kubernetes client for RBAC role generation, `operator-sdk new --type=helm` now falls back to a default RBAC role instead of failing. ([#1627](https://github.com/operator-framework/operator-sdk/pull/1627))
 
-### Deprecated
-
 ### Removed
 
 - The SDK no longer depends on a `vendor/` directory to manage dependencies *only if* using [Go modules](https://github.com/golang/go/wiki/Modules). The SDK and operator projects will only use vendoring if using `dep`, or modules and a `vendor/` dir is present. ([#1519](https://github.com/operator-framework/operator-sdk/pull/1519))
 - **Breaking change:** `ExposeMetricsPort` is removed and replaced with `CreateMetricsService()` function. `PrometheusPortName` constant is replaced with `OperatorPortName`. ([#1560](https://github.com/operator-framework/operator-sdk/pull/1560))
 - Removes `Gopkg.toml` and `Gopkg.lock` to drop the use of `dep` in favor of [Go modules](https://github.com/golang/go/wiki/Modules) to manage dependencies for the SDK project itself. ([#1566](https://github.com/operator-framework/operator-sdk/pull/1566))
 
+## v0.8.2
+
 ### Bug Fixes
 
+- Fixes header file content validation when the content contains empty lines or centered text. ([#1544](https://github.com/operator-framework/operator-sdk/pull/1544))
 - Generated CSV's that include a deployment install strategy will be checked for a reference to `metadata.annotations['olm.targetNamespaces']`, and if one is not found a reference will be added to the `WATCH_NAMESPACE` env var for all containers in the deployment. This is a bug because any other value that references the CSV's namespace is incorrect. ([#1396](https://github.com/operator-framework/operator-sdk/pull/1396))
 - Build `-trimpath` was not being respected. `$GOPATH` was not expanding because `exec.Cmd{}` is not executed in a shell environment. ([#1535](https://github.com/operator-framework/operator-sdk/pull/1535))
 - Running the [scorecard](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#up) with `--olm-deployed` will now only use the first CR set in either the `cr-manifest` config option or the CSV's `metadata.annotations['alm-examples']` as was intended, and access manifests correctly from the config. ([#1565](https://github.com/operator-framework/operator-sdk/pull/1565))
@@ -109,8 +112,6 @@
 - Use `registry.access.redhat.com/ubi7/ubi-minimal:latest` base image for the Go and Helm operators and scorecard proxy ([#1376](https://github.com/operator-framework/operator-sdk/pull/1376))
 - Allow "Owned CRDs Have Resources Listed" scorecard test to pass if the resources section exists
 
-### Deprecated
-
 ### Removed
 
 - The SDK will no longer run `defaulter-gen` on running `operator-sdk generate k8s`. Defaulting for CRDs should be handled with mutating admission webhooks. ([#1288](https://github.com/operator-framework/operator-sdk/pull/1288))
@@ -120,7 +121,6 @@
 
 ### Bug Fixes
 
-- In Helm-based operators, when a custom resource with a failing release is reverted back to a working state, the `ReleaseFailed` condition is now correctly removed. ([#1321](https://github.com/operator-framework/operator-sdk/pull/1321))
 - [`operator-sdk generate openapi`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#openapi) no longer overwrites CRD values derived from `+kubebuilder` annotations in Go API code. See issues ([#1212](https://github.com/operator-framework/operator-sdk/issues/1212)) and ([#1323](https://github.com/operator-framework/operator-sdk/issues/1323)) for discussion. ([#1278](https://github.com/operator-framework/operator-sdk/pull/1278))
 - Running [`operator-sdk gen-csv`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#gen-csv) on operators that do not have a CRDs directory, ex. `deploy/crds`, or do not have any [owned CRDs](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md#your-custom-resource-definitions), will not generate a "deploy/crds not found" error.
 
