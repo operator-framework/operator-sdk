@@ -20,19 +20,13 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
+	"strings"
+
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	yaml "github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-)
-
-var (
-	// VersionRegexp matches Kubernetes API versions.
-	// See https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-versioning
-	VersionRegexp = regexp.MustCompile("^v[1-9][0-9]*((alpha|beta)[1-9][0-9]*)?$")
-	// KindRegexp matches Kubernetes API Kind's.
-	KindRegexp = regexp.MustCompile("^[A-Z]{1}[a-zA-Z0-9]+$")
 )
 
 func GetCRDs(crdsDir string) ([]*apiextv1beta1.CustomResourceDefinition, error) {
@@ -81,9 +75,9 @@ func GetCRDManifestPaths(crdsDir string) (crdPaths []string, err error) {
 	return crdPaths, err
 }
 
-// ParseGroupSubdirs parses the layout of pkg/apis to return a map of
-// API groups to subdirectories.
-func ParseGroupSubdirs(apisDir string) (map[string][]string, error) {
+// ParseGroupSubpackages parses the layout of pkg/apis to return a map of
+// API groups to subpackages.
+func ParseGroupSubpackages(apisDir string) (map[string][]string, error) {
 	return parseGroupSubdirs(apisDir, false)
 }
 
@@ -120,10 +114,11 @@ func parseGroupSubdirs(apisDir string, strict bool) (map[string][]string, error)
 					}
 					for _, f := range files {
 						if !f.IsDir() && filepath.Ext(f.Name()) == ".go" {
-							_, maybeVersion := filepath.Split(v.Name())
+							vsplit := strings.Split(v.Name(), string(filepath.Separator))
 							// Strictly check if maybeVersion is a Kubernetes API version.
 							if strict {
-								if VersionRegexp.MatchString(maybeVersion) {
+								maybeVersion := vsplit[0]
+								if k8sutil.VersionRegexp.MatchString(maybeVersion) {
 									gvs[g.Name()] = append(gvs[g.Name()], maybeVersion)
 								}
 							} else {

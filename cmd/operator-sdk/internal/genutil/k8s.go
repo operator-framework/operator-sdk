@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	"github.com/pkg/errors"
@@ -37,7 +38,7 @@ func K8sCodegen() error {
 
 	repoPkg := projutil.GetGoPkg()
 
-	gvMap, err := parseGroupVersions()
+	gvMap, err := k8sutil.ParseGroupSubpackages(scaffold.ApisDir)
 	if err != nil {
 		return fmt.Errorf("failed to parse group versions: (%v)", err)
 	}
@@ -49,7 +50,7 @@ func K8sCodegen() error {
 	log.Infof("Running deepcopy code-generation for Custom Resource group versions: [%v]\n", gvb.String())
 
 	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
-	fqApis := createFQAPIs(apisPkg, gvMap)
+	fqApis := k8sutil.CreateFQAPIs(apisPkg, gvMap)
 	f := func(a string) error { return deepcopyGen(a, fqApis) }
 	if err = generateWithHeaderFile(f); err != nil {
 		return err

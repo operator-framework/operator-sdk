@@ -19,11 +19,11 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	pkgk8sutil "github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -146,8 +146,12 @@ func (s *CRD) CustomRender() ([]byte, error) {
 		}
 	}
 
+	pkgk8sutil.SortVersions(crd.Spec.Versions, pkgk8sutil.GetCRDVersionsName)
 	if err := checkCRDVersions(crd); err != nil {
-		return nil, err
+		if _, ok := err.(ErrCRDNoStorageVersion); !ok {
+			return nil, err
+		}
+		setCRDStorageVersion(crd)
 	}
 	return k8sutil.GetObjectBytes(crd, yaml.Marshal)
 }
@@ -157,7 +161,6 @@ func (s *CRD) runCRDGenerator(fs ...afero.Fs) (err error) {
 	if len(fs) == 1 {
 		crdFS = fs[0]
 	}
-	r := s.Resource
 
 	gctx := &genall.GenerationContext{
 		Collector: &markers.Collector{
@@ -167,18 +170,28 @@ func (s *CRD) runCRDGenerator(fs ...afero.Fs) (err error) {
 		InputRule:  genall.InputFromFileSystem,
 		OutputRule: crdOutputRule{fs: crdFS},
 	}
-	apiDir := filepath.Join(s.AbsProjectPath, ApisDir, r.GoImportGroup, strings.ToLower(r.Version))
-	gctx.Roots, err = loader.LoadRoots(apiDir)
+	gvs, err := k8sutil.ParseGroupVersions(ApisDir)
 	if err != nil {
-		return errors.Wrapf(err, "error loading API root %s", apiDir)
+		return errors.Wrapf(err, "error parsing API group versions from directory %+q", ApisDir)
+	}
+	apiDirs := []string{}
+	for g, vs := range gvs {
+		for _, v := range vs {
+			apiDirs = append(apiDirs, filepath.Join(s.AbsProjectPath, ApisDir, g, v))
+		}
+	}
+
+	gctx.Roots, err = loader.LoadRoots(apiDirs...)
+	if err != nil {
+		return errors.Wrapf(err, "error loading API roots %+q", apiDirs)
 	}
 
 	g := crdgen.Generator{}
 	if err := g.RegisterMarkers(gctx.Collector.Registry); err != nil {
-		return errors.Wrapf(err, "error registering markers for CRD API version %s kind %s", r.APIVersion, r.Kind)
+		return errors.Wrap(err, "error registering markers for CRD API versions")
 	}
 	if err := g.Generate(gctx); err != nil {
-		return errors.Wrapf(err, "error generating a CRD for API version %s kind %s", r.APIVersion, r.Kind)
+		return errors.Wrap(err, "error generating a CRD for API versions")
 	}
 	return nil
 }
@@ -243,6 +256,21 @@ func setCRDNamesForResource(crd *apiextv1beta1.CustomResourceDefinition, r *Reso
 	}
 }
 
+func setCRDStorageVersion(crd *apiextv1beta1.CustomResourceDefinition) {
+	if crd.Spec.Version != "" {
+		for _, ver := range crd.Spec.Versions {
+			if crd.Spec.Version == ver.Name {
+				log.Infof("Setting CRD %q storage version to %s", crd.GetName(), ver.Name)
+				ver.Storage = true
+			}
+		}
+	} else if len(crd.Spec.Versions) != 0 {
+		// Set the first element in spec.versions to storage == true.
+		crd.Spec.Versions[0].Storage = true
+		log.Infof("Setting CRD %q storage version to %s", crd.GetName(), crd.Spec.Versions[0].Name)
+	}
+}
+
 // checkCRDVersions ensures version(s) generated for a CRD are in valid format.
 // From the Kubernetes CRD docs:
 //
@@ -270,7 +298,15 @@ func checkCRDVersions(crd *apiextv1beta1.CustomResourceDefinition) error {
 		}
 	}
 	if multiVers && !hasStorageVer {
-		return errors.Errorf("spec.versions must have exactly one storage version for CRD %s", crd.Spec.Names.Kind)
+		return ErrCRDNoStorageVersion{crd.Spec.Names.Kind}
 	}
 	return nil
+}
+
+type ErrCRDNoStorageVersion struct {
+	Kind string
+}
+
+func (e ErrCRDNoStorageVersion) Error() string {
+	return fmt.Sprintf("spec.versions must have exactly one storage version for CRD %s", e.Kind)
 }
