@@ -60,3 +60,9 @@ func GetCRDManifestPaths(crdsDir string) (crdPaths []string, err error) {
 	})
 	return crdPaths, err
 }
+
+type CRDVersions []apiextv1beta1.CustomResourceDefinitionVersion
+
+func (vs CRDVersions) Len() int           { return len(vs) }
+func (vs CRDVersions) Less(i, j int) bool { return LessVersions(vs[i].Name, vs[j].Name) }
+func (vs CRDVersions) Swap(i, j int)      { vs[i], vs[j] = vs[j], vs[i] }

@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 
@@ -142,6 +143,7 @@ func (s *CRD) CustomRender() ([]byte, error) {
 	}
 
 	setCRDVersions(crd)
+	sort.Sort(k8sutil.CRDVersions(crd.Spec.Versions))
 	return k8sutil.GetObjectBytes(crd, yaml.Marshal)
 }
 
