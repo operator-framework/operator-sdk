@@ -27,7 +27,6 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
@@ -68,10 +67,10 @@ func MainEntry(m *testing.M) {
 	var localCmdOutBuf, localCmdErrBuf bytes.Buffer
 	if *localOperator {
 		projectName := filepath.Base(projutil.MustGetwd())
-		outputBinName := filepath.Join(scaffold.BuildBinDir, projectName+"-local")
+		outputBinName := filepath.Join("build", "_output", "bin", projectName+"-local")
 		opts := projutil.GoCmdOptions{
 			BinName:     outputBinName,
-			PackagePath: filepath.Join(scaffold.ManagerDir, scaffold.CmdFile),
+			PackagePath: filepath.Join("cmd", "manager", "main.go"),
 			GoMod:       projutil.IsDepManagerGoMod(),
 		}
 		if err := projutil.GoBuild(opts); err != nil {
