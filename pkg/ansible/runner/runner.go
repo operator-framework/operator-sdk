@@ -238,6 +238,7 @@ func (r *runner) isFinalizerRun(u *unstructured.Unstructured) bool {
 // { "meta": {
 //      "name": <object_name>,
 //      "namespace": <object_namespace>,
+//      "api_version": <object_api_version>,
 //   },
 //   <cr_spec_fields_as_snake_case>,
 //   ...
@@ -257,7 +258,7 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 	}
 
 	parameters := paramconv.MapToSnake(spec)
-	parameters["meta"] = map[string]string{"namespace": u.GetNamespace(), "name": u.GetName()}
+	parameters["meta"] = map[string]string{"namespace": u.GetNamespace(), "name": u.GetName(), "api_version": r.GVK.Version}
 
 	objKey := fmt.Sprintf("_%v_%v", strings.Replace(r.GVK.Group, ".", "_", -1), strings.ToLower(r.GVK.Kind))
 	parameters[objKey] = u.Object
