@@ -23,7 +23,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	pkgk8sutil "github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -96,8 +95,8 @@ func (s *CRD) CustomRender() ([]byte, error) {
 	crd := &apiextv1beta1.CustomResourceDefinition{}
 	if s.IsOperatorGo {
 		fs := afero.NewMemMapFs()
-		// controller-tools' generator reads and scaffolds a CRD for the API in
-		// {working dir}/pkg/apis/<group>/<version>.
+		// controller-tool's generator reads and scaffolds a CRD for all APIs in
+		// pkg/apis.
 		if err := s.runCRDGenerator(fs); err != nil {
 			return nil, err
 		}
@@ -146,12 +145,9 @@ func (s *CRD) CustomRender() ([]byte, error) {
 		}
 	}
 
-	pkgk8sutil.SortVersions(crd.Spec.Versions, pkgk8sutil.GetCRDVersionsName)
+	setCRDStorageVersion(crd)
 	if err := checkCRDVersions(crd); err != nil {
-		if _, ok := err.(ErrCRDNoStorageVersion); !ok {
-			return nil, err
-		}
-		setCRDStorageVersion(crd)
+		return nil, err
 	}
 	return k8sutil.GetObjectBytes(crd, yaml.Marshal)
 }
@@ -258,18 +254,14 @@ func setCRDNamesForResource(crd *apiextv1beta1.CustomResourceDefinition, r *Reso
 }
 
 func setCRDStorageVersion(crd *apiextv1beta1.CustomResourceDefinition) {
-	if crd.Spec.Version != "" {
-		for _, ver := range crd.Spec.Versions {
-			if crd.Spec.Version == ver.Name {
-				log.Infof("Setting CRD %q storage version to %s", crd.GetName(), ver.Name)
-				ver.Storage = true
-			}
+	for _, ver := range crd.Spec.Versions {
+		if ver.Storage {
+			return
 		}
-	} else if len(crd.Spec.Versions) != 0 {
-		// Set the first element in spec.versions to storage == true.
-		crd.Spec.Versions[0].Storage = true
-		log.Infof("Setting CRD %q storage version to %s", crd.GetName(), crd.Spec.Versions[0].Name)
 	}
+	// Set the first element in spec.versions to be the storage version.
+	log.Infof("Setting CRD %q storage version to %s", crd.GetName(), crd.Spec.Versions[0].Name)
+	crd.Spec.Versions[0].Storage = true
 }
 
 // checkCRDVersions ensures version(s) generated for a CRD are in valid format.
@@ -299,15 +291,7 @@ func checkCRDVersions(crd *apiextv1beta1.CustomResourceDefinition) error {
 		}
 	}
 	if multiVers && !hasStorageVer {
-		return ErrCRDNoStorageVersion{crd.Spec.Names.Kind}
+		return errors.Errorf("spec.versions must have exactly one storage version for CRD %s", crd.Spec.Names.Kind)
 	}
 	return nil
-}
-
-type ErrCRDNoStorageVersion struct {
-	Kind string
-}
-
-func (e ErrCRDNoStorageVersion) Error() string {
-	return fmt.Sprintf("spec.versions must have exactly one storage version for CRD %s", e.Kind)
 }

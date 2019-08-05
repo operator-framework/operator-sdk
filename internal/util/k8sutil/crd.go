@@ -20,9 +20,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
-
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	yaml "github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -87,6 +86,8 @@ func ParseGroupVersions(apisDir string) (map[string][]string, error) {
 	return parseGroupSubdirs(apisDir, true)
 }
 
+var versionRegexp = regexp.MustCompile("^v[1-9][0-9]*((alpha|beta)[1-9][0-9]*)?$")
+
 func parseGroupSubdirs(apisDir string, strict bool) (map[string][]string, error) {
 	gvs := make(map[string][]string)
 	groups, err := ioutil.ReadDir(apisDir)
@@ -118,7 +119,7 @@ func parseGroupSubdirs(apisDir string, strict bool) (map[string][]string, error)
 							// Strictly check if maybeVersion is a Kubernetes API version.
 							if strict {
 								maybeVersion := vsplit[0]
-								if k8sutil.VersionRegexp.MatchString(maybeVersion) {
+								if versionRegexp.MatchString(maybeVersion) {
 									gvs[g.Name()] = append(gvs[g.Name()], maybeVersion)
 								}
 							} else {

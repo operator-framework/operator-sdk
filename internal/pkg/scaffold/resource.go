@@ -19,12 +19,19 @@ package scaffold
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
-
-	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"github.com/markbates/inflect"
 	"k8s.io/apimachinery/pkg/util/validation"
+)
+
+var (
+	// ResourceVersionRegexp matches Kubernetes API versions.
+	// See https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-versioning
+	ResourceVersionRegexp = regexp.MustCompile("^v[1-9][0-9]*((alpha|beta)[1-9][0-9]*)?$")
+	// ResourceKindRegexp matches Kubernetes API Kind's.
+	ResourceKindRegexp = regexp.MustCompile("^[A-Z]{1}[a-zA-Z0-9]+$")
 )
 
 // Resource contains the information required to scaffold files for a resource.
@@ -104,7 +111,7 @@ func (r *Resource) checkAndSetKinds() error {
 	if strings.Title(r.Kind) != r.Kind {
 		return fmt.Errorf("kind must begin with uppercase (was %v)", r.Kind)
 	}
-	if !k8sutil.KindRegexp.MatchString(r.Kind) {
+	if !ResourceKindRegexp.MatchString(r.Kind) {
 		return errors.New("kind should consist of lower and uppercase alphabetical characters")
 	}
 	return nil
@@ -138,7 +145,7 @@ func (r *Resource) checkAndSetVersion() error {
 	}
 	r.Version = api[1]
 
-	if !k8sutil.VersionRegexp.MatchString(r.Version) {
+	if !ResourceVersionRegexp.MatchString(r.Version) {
 		return errors.New("version is not in the correct Kubernetes version format, ex. v1alpha1")
 	}
 	return nil
