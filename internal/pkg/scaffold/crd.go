@@ -170,14 +170,15 @@ func (s *CRD) runCRDGenerator(fs ...afero.Fs) (err error) {
 		InputRule:  genall.InputFromFileSystem,
 		OutputRule: crdOutputRule{fs: crdFS},
 	}
-	gvs, err := k8sutil.ParseGroupVersions(ApisDir)
+	absAPIsDir := filepath.Join(s.AbsProjectPath, ApisDir)
+	gvs, err := k8sutil.ParseGroupVersions(absAPIsDir)
 	if err != nil {
-		return errors.Wrapf(err, "error parsing API group versions from directory %+q", ApisDir)
+		return errors.Wrapf(err, "error parsing API group versions from directory %+q", absAPIsDir)
 	}
 	apiDirs := []string{}
 	for g, vs := range gvs {
 		for _, v := range vs {
-			apiDirs = append(apiDirs, filepath.Join(s.AbsProjectPath, ApisDir, g, v))
+			apiDirs = append(apiDirs, filepath.Join(absAPIsDir, g, v))
 		}
 	}
 
