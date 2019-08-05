@@ -17,7 +17,6 @@ package catalog
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -25,11 +24,13 @@ import (
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // CSVUpdater is an interface for any data that can be in a CSV, which will be
@@ -207,7 +208,7 @@ func (u *InstallStrategyUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion)
 		u.updateClusterPermissions(s)
 		u.updateDeploymentSpecs(s)
 	default:
-		return fmt.Errorf("install strategy (%v) of unknown type", strat)
+		return errors.Errorf("install strategy (%v) of unknown type", strat)
 	}
 
 	// Re-serialize permissions into csv strategy.
@@ -240,7 +241,7 @@ func (u *InstallStrategyUpdate) updateDeploymentSpecs(strat *olminstall.Strategy
 
 type CustomResourceDefinitionsUpdate struct {
 	*olmapiv1alpha1.CustomResourceDefinitions
-	crKinds map[string]struct{}
+	crIDs map[string]struct{}
 }
 
 func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
@@ -248,32 +249,74 @@ func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
 	if err := yaml.Unmarshal(yamlDoc, crd); err != nil {
 		return err
 	}
-	store.crds.Owned = append(store.crds.Owned, olmapiv1alpha1.CRDDescription{
-		Name:    crd.ObjectMeta.Name,
-		Version: crd.Spec.Version,
-		Kind:    crd.Spec.Names.Kind,
-	})
-	store.crds.crKinds[crd.Spec.Names.Kind] = struct{}{}
+	versions, err := getCRDVersions(crd)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get owned CRD %s versions", crd.GetName())
+	}
+	for _, ver := range versions {
+		kind := crd.Spec.Names.Kind
+		crdDesc := olmapiv1alpha1.CRDDescription{
+			Name:    crd.ObjectMeta.Name,
+			Version: ver,
+			Kind:    kind,
+		}
+		store.crds.crIDs[crdDescID(crdDesc)] = struct{}{}
+		store.crds.Owned = append(store.crds.Owned, crdDesc)
+	}
 	return nil
+}
+
+func getCRDVersions(crd *apiextv1beta1.CustomResourceDefinition) (versions []string, err error) {
+	if len(crd.Spec.Versions) != 0 {
+		for _, ver := range crd.Spec.Versions {
+			// Only versions served by the API server are relevant to a CSV.
+			if ver.Served {
+				versions = append(versions, ver.Name)
+			}
+		}
+	} else if crd.Spec.Version != "" {
+		versions = append(versions, crd.Spec.Version)
+	}
+	if len(versions) == 0 {
+		return nil, errors.Errorf("no versions in CRD %s", crd.GetName())
+	}
+	return versions, nil
+}
+
+// crdDescID produces an opaque, unique string identifying a CRDDescription.
+func crdDescID(desc olmapiv1alpha1.CRDDescription) string {
+	// Name should always be <lower kind>.<group>, so this is effectively a GVK.
+	splitName := strings.Split(desc.Name, ".")
+	return getGVKID(strings.Join(splitName[1:], "."), desc.Version, desc.Kind)
+}
+
+// gvkID produces an opaque, unique string identifying a GVK.
+func gvkID(gvk schema.GroupVersionKind) string {
+	return getGVKID(gvk.Group, gvk.Version, gvk.Kind)
+}
+
+func getGVKID(g, v, k string) string {
+	return g + v + k
 }
 
 // Apply updates csv's "owned" CRDDescriptions. "required" CRDDescriptions are
 // left as-is, since they are user-defined values.
+// Apply will only make a new spec.customresourcedefinitions.owned element if
+// the CRD key is not in spec.customresourcedefinitions.owned already.
 func (u *CustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	set := make(map[string]olmapiv1alpha1.CRDDescription)
-	for _, csvDesc := range csv.Spec.CustomResourceDefinitions.Owned {
-		set[csvDesc.Name] = csvDesc
+	for _, uDesc := range u.Owned {
+		set[crdDescID(uDesc)] = uDesc
 	}
-	du := u.DeepCopy()
-	for i, uDesc := range u.Owned {
-		if csvDesc, ok := set[uDesc.Name]; ok {
-			csvDesc.Name = uDesc.Name
-			csvDesc.Version = uDesc.Version
-			csvDesc.Kind = uDesc.Kind
-			du.Owned[i] = csvDesc
+	newDescs := []olmapiv1alpha1.CRDDescription{}
+	for _, csvDesc := range csv.Spec.CustomResourceDefinitions.Owned {
+		if uDesc, ok := set[crdDescID(csvDesc)]; !ok {
+			newDescs = append(newDescs, uDesc)
+		} else {
+			newDescs = append(newDescs, csvDesc)
 		}
 	}
-	csv.Spec.CustomResourceDefinitions.Owned = du.Owned
+	csv.Spec.CustomResourceDefinitions.Owned = newDescs
 	return nil
 }
 
