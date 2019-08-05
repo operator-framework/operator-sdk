@@ -17,7 +17,7 @@
   - The package `sigs.k8s.io/controller-runtime/pkg/runtime/scheme` is deprecated, and contains no code. Replace this import with `sigs.k8s.io/controller-runtime/pkg/scheme` where relevant.
   - The package `sigs.k8s.io/controller-runtime/pkg/runtime/log` is deprecated. Replace this import with `sigs.k8s.io/controller-runtime/pkg/log` where relevant.
   - The package `sigs.k8s.io/controller-runtime/pkg/runtime/signals` is deprecated. Replace this import with `sigs.k8s.io/controller-runtime/pkg/manager/signals` where relevant.
-  - [`sigs.k8s.io/controller-runtime/pkg/client.Client`](https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/interfaces.go#L61)'s `List()` method has been updated: `List(ctx context.Context, opts *client.ListOptions, list runtime.Object) error` is now `List(ctx context.Context, list runtime.Object, opts ...client.ListOptionFunc) error`. To migrate:
+  - [`sigs.k8s.io/controller-runtime/pkg/client.Client`](https://github.com/kubernetes-sigs/controller-runtime/blob/aaddbd9d9a89d8ff329a084aece23be0406e6467/pkg/client/interfaces.go#L101)'s `List()` method signature has been updated: `List(ctx context.Context, opts *client.ListOptions, list runtime.Object) error` is now [`List(ctx context.Context, list runtime.Object, opts ...client.ListOptionFunc) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/aaddbd9d9a89d8ff329a084aece23be0406e6467/pkg/client/interfaces.go#L61). To migrate:
       ```go
       import (
         "context"
