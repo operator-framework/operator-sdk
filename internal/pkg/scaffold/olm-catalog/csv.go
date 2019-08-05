@@ -189,8 +189,8 @@ func (s *CSV) getCSVPath(ver string) string {
 	return filepath.Join(s.pathPrefix, OLMCatalogDir, lowerProjName, ver, name)
 }
 
-// setCSVDefaultFields initializes all csv fields that should be populated by a user
-// with sane defaults. setCSVDefaultFields should only be called for new csv's.
+// setCSVDefaultFields sets all csv fields that should be populated by a user
+// to sane defaults.
 func (s *CSV) setCSVDefaultFields(csv *olmapiv1alpha1.ClusterServiceVersion) {
 	// These fields have well-defined required values.
 	csv.TypeMeta.APIVersion = olmapiv1alpha1.ClusterServiceVersionAPIVersion
