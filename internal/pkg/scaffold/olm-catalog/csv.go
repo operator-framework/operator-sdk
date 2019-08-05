@@ -297,10 +297,9 @@ func (s *CSV) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error
 	// Replace all references to the old operator name.
 	lowerProjName := strings.ToLower(s.OperatorName)
 	oldCSVName := getCSVName(lowerProjName, oldVer)
-	oldCSVName = strings.ReplaceAll(oldCSVName, ".", `\.`)
-	oldRe, err := regexp.Compile(fmt.Sprintf("^%s$", oldCSVName))
+	oldRe, err := regexp.Compile(fmt.Sprintf("\\b%s\\b", regexp.QuoteMeta(oldCSVName)))
 	if err != nil {
-		return errors.Wrapf(err, "error compiling CSV name regexp %s", oldCSVName)
+		return errors.Wrapf(err, "error compiling CSV name regexp %s", oldRe.String())
 	}
 	b, err := yaml.Marshal(csv)
 	if err != nil {
@@ -308,7 +307,8 @@ func (s *CSV) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error
 	}
 	newCSVName := getCSVName(lowerProjName, newVer)
 	b = oldRe.ReplaceAll(b, []byte(newCSVName))
-	if err = json.Unmarshal(b, csv); err != nil {
+	*csv = olmapiv1alpha1.ClusterServiceVersion{}
+	if err = yaml.Unmarshal(b, csv); err != nil {
 		return errors.Wrapf(err, "error unmarshalling CSV %s after replacing old CSV name", csv.GetName())
 	}
 
