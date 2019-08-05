@@ -15,11 +15,16 @@
 package k8sutil
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"strings"
 	"unicode"
 
-	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -55,16 +60,6 @@ func GetKubeconfigAndNamespace(configPath string) (*rest.Config, string, error) 
 	return kubeconfig, namespace, nil
 }
 
-func GetKindfromYAML(yamlData []byte) (string, error) {
-	var temp struct {
-		Kind string
-	}
-	if err := yaml.Unmarshal(yamlData, &temp); err != nil {
-		return "", err
-	}
-	return temp.Kind, nil
-}
-
 // GetDisplayName turns a project dir name in any of {snake, chain, camel}
 // cases, hierarchical dot structure, or space-delimited into a
 // space-delimited, title'd display name.
@@ -98,4 +93,23 @@ func GetDisplayName(name string) string {
 		splitName[i] = temp
 	}
 	return strings.TrimSpace(strings.Title(strings.Join(splitName, " ")))
+}
+
+// GetTypeMetaFromBytes gets the type and object metadata from b. b is assumed
+// to be a single Kubernetes resource manifest.
+func GetTypeMetaFromBytes(b []byte) (t metav1.TypeMeta, err error) {
+	u := unstructured.Unstructured{}
+	r := bytes.NewReader(b)
+	dec := yaml.NewYAMLOrJSONDecoder(r, 8)
+	// There is only one YAML doc if there are no more bytes to be read or EOF
+	// is hit.
+	if err := dec.Decode(&u); err == nil && r.Len() != 0 {
+		return t, errors.New("error getting TypeMeta from bytes: more than one manifest in b")
+	} else if err != nil && err != io.EOF {
+		return t, errors.Wrap(err, "error getting TypeMeta from bytes")
+	}
+	return metav1.TypeMeta{
+		APIVersion: u.GetAPIVersion(),
+		Kind:       u.GetKind(),
+	}, nil
 }
