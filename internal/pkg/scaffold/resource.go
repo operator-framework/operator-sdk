@@ -23,7 +23,6 @@ import (
 	"strings"
 
 	"github.com/markbates/inflect"
-
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 

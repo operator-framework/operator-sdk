@@ -31,7 +31,7 @@ import (
 	crdgenerator "sigs.k8s.io/controller-tools/pkg/crd/generator"
 )
 
-// CRD is the input needed to generate a deploy/crds/<group>_<version>_<kind>_crd.yaml file
+// CRD is the input needed to generate a deploy/crds/<full group>_<resource>_crd.yaml file
 type CRD struct {
 	input.Input
 
@@ -58,13 +58,14 @@ func (s *CRD) getFS() afero.Fs {
 
 func (s *CRD) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		fileName := fmt.Sprintf("%s_%s_%s_crd.yaml",
-			s.Resource.GoImportGroup,
-			strings.ToLower(s.Resource.Version),
-			s.Resource.LowerKind)
-		s.Path = filepath.Join(CRDsDir, fileName)
+		s.Path = crdPathForResource(CRDsDir, s.Resource)
 	}
 	return s.Input, nil
+}
+
+func crdPathForResource(dir string, r *Resource) string {
+	file := fmt.Sprintf("%s_%s_crd.yaml", r.FullGroup, r.Resource)
+	return filepath.Join(dir, file)
 }
 
 var _ CustomRenderer = &CRD{}
@@ -72,11 +73,6 @@ var _ CustomRenderer = &CRD{}
 func (s *CRD) SetFS(fs afero.Fs) { s.initFS(fs) }
 
 func (s *CRD) CustomRender() ([]byte, error) {
-	i, err := s.GetInput()
-	if err != nil {
-		return nil, err
-	}
-
 	crd := &apiextv1beta1.CustomResourceDefinition{}
 	if s.IsOperatorGo {
 		// This sets domain as empty string when we can't extract it from FullGroup.
@@ -105,8 +101,12 @@ func (s *CRD) CustomRender() ([]byte, error) {
 
 		// controller-tools generates crd file names with no _crd.yaml suffix:
 		// <group>_<version>_<kind>.yaml.
-		path := strings.Replace(filepath.Base(i.Path), "_crd.yaml", ".yaml", 1)
-		b, err := afero.ReadFile(fs, path)
+		genPath := fmt.Sprintf("%s_%s_%s.yaml",
+			s.Resource.GoImportGroup,
+			s.Resource.Version,
+			s.Resource.LowerKind,
+		)
+		b, err := afero.ReadFile(fs, genPath)
 		if err != nil {
 			if os.IsNotExist(err) {
 				return nil, fmt.Errorf("no API exists for Group %s Version %s Kind %s",
@@ -125,8 +125,8 @@ func (s *CRD) CustomRender() ([]byte, error) {
 		// There are currently no commands to update CRD manifests for non-Go
 		// operators, so if a CRD manifests already exists for this gvk, this
 		// scaffold is a no-op.
-		path := filepath.Join(s.AbsProjectPath, i.Path)
-		if _, err = s.getFS().Stat(path); err == nil {
+		path := crdPathForResource(filepath.Join(s.AbsProjectPath, CRDsDir), s.Resource)
+		if _, err := s.getFS().Stat(path); err == nil {
 			b, err := afero.ReadFile(s.getFS(), path)
 			if err != nil {
 				return nil, err
