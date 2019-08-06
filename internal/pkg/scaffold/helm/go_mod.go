@@ -160,7 +160,12 @@ replace (
 	k8s.io/kubernetes => k8s.io/kubernetes v1.13.4
 )
 
-replace github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.29.0
+replace (
+	github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.29.0
+	// Pinned to v2.9.2 (kubernetes-1.13.1) so https://proxy.golang.org can
+	// resolve it correctly.
+	github.com/prometheus/prometheus => github.com/prometheus/prometheus d3245f15022551c6fc8281766ea62db4d71e2747
+)
 `
 
 func PrintGoMod(asFile bool) error {

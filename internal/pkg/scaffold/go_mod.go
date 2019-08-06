@@ -87,6 +87,9 @@ replace (
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.1.12
 	sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.1.11-0.20190411181648-9d55346c2bde
 	k8s.io/kube-state-metrics => k8s.io/kube-state-metrics v1.6.0
+	// Pinned to v2.9.2 (kubernetes-1.13.1) so https://proxy.golang.org can
+	// resolve it correctly.
+	github.com/prometheus/prometheus => github.com/prometheus/prometheus d3245f15022551c6fc8281766ea62db4d71e2747
 )
 `
 
