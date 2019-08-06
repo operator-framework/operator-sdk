@@ -175,7 +175,7 @@ There are a number of useful configurations that can be made when initialzing a 
   })
   ```
 - Filter watch events using [predicates][event_filtering]
-- Choose the type of [EventHandler][event_handler_godocs] to change how a watch event will translate to reconcile requests for the reconicle loop. For operator relationships that are more comlpex than primary and secondary resources, the [`EnqueueRequestsFromMapFunc`][enqueue_requests_from_map_func] handler can be used to transform a watch event into an arbitrary set of reconcile requests.
+- Choose the type of [EventHandler][event_handler_godocs] to change how a watch event will translate to reconcile requests for the reconcile loop. For operator relationships that are more complex than primary and secondary resources, the [`EnqueueRequestsFromMapFunc`][enqueue_requests_from_map_func] handler can be used to transform a watch event into an arbitrary set of reconcile requests.
 
 
 ### Reconcile loop
