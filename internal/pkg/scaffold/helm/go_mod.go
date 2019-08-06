@@ -42,7 +42,7 @@ require (
 	github.com/NYTimes/gziphandler v1.0.1 // indirect
 	github.com/coreos/etcd v3.3.12+incompatible // indirect
 	github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc // indirect
-	github.com/operator-framework/operator-sdk v0.9.1-0.20190806200632-6c7039c37324
+	github.com/operator-framework/operator-sdk master
 	github.com/spf13/pflag v1.0.3
 	github.com/ugorji/go/codec v0.0.0-20190320090025-2dc34c0b8780 // indirect
 	k8s.io/apiextensions-apiserver v0.0.0-20190228180357-d002e88f6236

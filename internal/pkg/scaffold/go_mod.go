@@ -39,7 +39,7 @@ const goModTmpl = `module {{ .Repo }}
 
 require (
 	github.com/NYTimes/gziphandler v1.0.1 // indirect
-	github.com/operator-framework/operator-sdk v0.9.1-0.20190806200632-6c7039c37324
+	github.com/operator-framework/operator-sdk master
 	github.com/spf13/pflag v1.0.3
 	k8s.io/api v0.0.0-20190612125737-db0771252981
 	k8s.io/apimachinery v0.0.0-20190612125636-6a5db36e93ad

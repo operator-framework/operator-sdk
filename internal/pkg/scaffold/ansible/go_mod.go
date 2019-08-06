@@ -41,7 +41,7 @@ const goModTmpl = `module {{ .Repo }}
 require (
 	github.com/NYTimes/gziphandler v1.0.1 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc // indirect
-	github.com/operator-framework/operator-sdk v0.9.1-0.20190806200632-6c7039c37324
+	github.com/operator-framework/operator-sdk master
 	github.com/spf13/pflag v1.0.3
 	k8s.io/apiextensions-apiserver v0.0.0-20190328030136-8ada4fd07db4
 	k8s.io/client-go v11.0.0+incompatible
