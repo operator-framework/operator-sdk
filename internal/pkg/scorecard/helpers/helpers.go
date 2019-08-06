@@ -152,7 +152,11 @@ func UpdateState(res scapiv1alpha1.ScorecardTestResult) scapiv1alpha1.ScorecardT
 
 // UpdateSuiteStates update the state of each test in a suite and updates the count to the suite's states to match
 func UpdateSuiteStates(suite scapiv1alpha1.ScorecardSuiteResult) scapiv1alpha1.ScorecardSuiteResult {
-	suite.TotalTests = len(suite.Tests)
+	totalTests := len(suite.Tests)
+	if totalTests == 0 {
+		return suite
+	}
+	suite.TotalTests = totalTests
 	// reset all state values
 	suite.Error = 0
 	suite.Fail = 0

@@ -162,13 +162,6 @@ func failedPlugin(name, desc, log string) scapiv1alpha1.ScorecardOutput {
 			Description: desc,
 			Error:       1,
 			Log:         log,
-			Tests: []scapiv1alpha1.ScorecardTestResult{
-				{
-					State:       scapiv1alpha1.ErrorState,
-					Suggestions: []string{},
-					Errors:      []string{},
-				},
-			},
 		}},
 	}
 }
