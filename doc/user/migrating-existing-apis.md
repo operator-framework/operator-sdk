@@ -4,7 +4,7 @@ Kubernetes APIs are assumed to evolve over time, hence the well-defined API [ver
 
 While examples in this guide follow particular types of API migrations, most of the documented migration steps can be generalized to all migration types. A thorough discussion of migration types for a particular project type (Go, Ansible, Helm) is found at the end of each project type's section.
 
-## Golang: Upgrading one Kind to a new Version from a Version with multiple Kinds
+## Go: Upgrading one Kind to a new Version from a Version with multiple Kinds
 
 **Scenario:** your Go operator test-operator has one API version `v1` for group `operators.example.com`. You would like to migrate (upgrade) one kind `CatalogSourceConfig` to `v2` while keeping the other `v1` kind `OperatorGroup` in `v1`. These kinds will remain in group `operators.example.com`. Your project structure looks like the following:
 
@@ -43,7 +43,7 @@ Relevant files:
 
 ---
 
-### Setting up to upgrade versions
+### Creating a new API Version
 
 Creating the new version `v2` is the first step in upgrading your kind `CatalogSourceConfig`. Use the `operator-sdk` to do so by running the following command:
 
@@ -335,7 +335,7 @@ Steps to upgrade the above CRD:
 
 1. *Optional:* remove `spec.version`, as it is deprecated in favor of `spec.versions`.
 
-### Golang API Migrations: Types and Commonalities
+### Go API Migrations: Types and Commonalities
 
 This version upgrade walkthrough demonstrates only one of several possible migration scenarios:
 
