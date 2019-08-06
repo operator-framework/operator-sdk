@@ -189,7 +189,7 @@ func doGoScaffold() error {
 			return merr
 		} else if !goModOn {
 			return errors.New(`dependency manager "modules" requires working directory to be in $GOPATH/src` +
-				` and GO111MODULE=on, or outside of $GOPATH/src and GO111MODULE="on", "auto", or unset`)
+				` and GO111MODULE=on, or outside of $GOPATH/src and GO111MODULE="on", "auto", or unset. More info: https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#go-modules`)
 		}
 		err = s.Execute(cfg, &scaffold.GoMod{}, &scaffold.Tools{})
 	default:
