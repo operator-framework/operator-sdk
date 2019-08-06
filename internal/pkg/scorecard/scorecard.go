@@ -21,7 +21,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"strings"
 
 	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
@@ -42,7 +41,6 @@ const DefaultConfigFile = ".osdk-scorecard"
 const (
 	ConfigOpt        = "config"
 	OutputFormatOpt  = "output"
-	PluginDirOpt     = "plugin-dir"
 	JSONOutputFormat = "json"
 	TextOutputFormat = "text"
 )
@@ -53,12 +51,10 @@ var (
 	log           = logrus.New()
 )
 
-var rootDir string
 var scViper *viper.Viper
 
 type pluginConfig struct {
 	Name     string                             `mapstructure:"name"`
-	Disable  bool                               `mapstructure:"disable,omitempty"`
 	Basic    *scplugins.BasicAndOLMPluginConfig `mapstructure:"basic,omitempty"`
 	Olm      *scplugins.BasicAndOLMPluginConfig `mapstructure:"olm,omitempty"`
 	External *externalPluginConfig              `mapstructure:"external,omitempty"`
@@ -69,8 +65,6 @@ func getPlugins() ([]Plugin, error) {
 	if scViper.IsSet(scplugins.KubeconfigOpt) {
 		kubeconfig = scViper.GetString(scplugins.KubeconfigOpt)
 	}
-	// Make list of plugins that have been configured via the config file
-	var setPaths []string
 	// Add plugins from config
 	var plugins []Plugin
 	configs := []pluginConfig{}
@@ -92,7 +86,6 @@ func getPlugins() ([]Plugin, error) {
 			setConfigDefaults(pluginConfig, kubeconfig)
 			newPlugin = basicOrOLMPlugin{name: plugin.Name, pluginType: scplugins.OLMIntegration, config: *pluginConfig}
 		} else {
-			setPaths = append(setPaths, plugin.External.Command)
 			pluginConfig := plugin.External
 			if kubeconfig != "" {
 				// put the kubeconfig flag first in case user is overriding it with an env var in config file
@@ -100,43 +93,7 @@ func getPlugins() ([]Plugin, error) {
 			}
 			newPlugin = externalPlugin{name: plugin.Name, config: *pluginConfig}
 		}
-		// keep this statement after the previous if statements; otherwise default tests won't be disabled correctly
-		if !plugin.Disable {
-			plugins = append(plugins, newPlugin)
-		}
-	}
-	// find external plugins
-	pluginDir := scViper.GetString(PluginDirOpt)
-	if dir, err := os.Stat(pluginDir); err != nil || !dir.IsDir() {
-		if setPaths != nil {
-			return nil, fmt.Errorf("plugin directory `%s` not found: %v", pluginDir, err)
-		}
-		log.Warnf("Plugin directory not found; skipping external plugins: %v", err)
-		return plugins, nil
-	}
-	if err := os.Chdir(pluginDir); err != nil {
-		if setPaths != nil {
-			return nil, fmt.Errorf("could not change directory to plugin_dir `%s`: %v", pluginDir, err)
-		}
-		log.Warnf("Failed to chdir into scorecard plugin directory: %v", err)
-		return plugins, nil
-	}
-	files, err := ioutil.ReadDir("bin")
-	if err != nil {
-		log.Errorf("Failed to list files in %s/bin; skipping automatic external plugin tests: %v", pluginDir, err)
-		return plugins, nil
-	}
-	for _, f := range files {
-		skip := false
-		for _, path := range setPaths {
-			if filepath.Join("bin", f.Name()) == path {
-				skip = true
-			}
-		}
-		if skip {
-			continue
-		}
-		plugins = append(plugins, externalPlugin{name: f.Name(), config: externalPluginConfig{Command: filepath.Join("bin", f.Name())}})
+		plugins = append(plugins, newPlugin)
 	}
 	return plugins, nil
 }
@@ -151,10 +108,6 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	// declare err var to prevent redeclaration of global rootDir var
 	var err error
-	rootDir, err = os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get current working directory: %v", err)
-	}
 	plugins, err := getPlugins()
 	if err != nil {
 		return err
@@ -270,9 +223,6 @@ func validateScorecardConfig() error {
 	outputFormat := scViper.GetString(OutputFormatOpt)
 	if outputFormat != TextOutputFormat && outputFormat != JSONOutputFormat {
 		return fmt.Errorf("invalid output format (%s); valid values: %s, %s", outputFormat, TextOutputFormat, JSONOutputFormat)
-	}
-	if !scViper.IsSet(PluginDirOpt) {
-		scViper.Set(PluginDirOpt, "scorecard")
 	}
 	return nil
 }

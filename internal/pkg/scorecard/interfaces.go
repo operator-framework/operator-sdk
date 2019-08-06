@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -51,15 +50,6 @@ func (p externalPlugin) Name() string {
 }
 
 func (p externalPlugin) Run() scapiv1alpha1.ScorecardOutput {
-	// This should never error since we chdir in getPlugins()
-	if err := os.Chdir(filepath.Join(rootDir, scViper.GetString(PluginDirOpt))); err != nil {
-		name := fmt.Sprintf("Failed Plugin: %s", p.name)
-		description := fmt.Sprintf("Plugin with file name `%s` failed", filepath.Base(p.config.Command))
-		logs := fmt.Sprintf("failed to chdir into scorecard plugin directory: %v", err)
-		// output error to main logger as well for human-readable output
-		log.Errorf("Failed to chdir into scorecard plugin directory: %v", err)
-		return failedPlugin(name, description, logs)
-	}
 	cmd := exec.Command(p.config.Command, p.config.Args...)
 	for _, env := range p.config.Env {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", env.Name, env.Value))
@@ -110,15 +100,6 @@ func (p basicOrOLMPlugin) Name() string {
 }
 
 func (p basicOrOLMPlugin) Run() scapiv1alpha1.ScorecardOutput {
-	// This shouldn't error since we started in the rootDir
-	if err := os.Chdir(rootDir); err != nil {
-		name := fmt.Sprintf("Failed Plugin: %s", p.name)
-		description := fmt.Sprintf("Internal plugin `%s` failed", p.name)
-		logs := fmt.Sprintf("failed to chdir into project root directory: %v", err)
-		// output error to main logger as well for human-readable output
-		log.Errorf("Failed to chdir into project root directory: %v", err)
-		return failedPlugin(name, description, logs)
-	}
 	pluginLogs := &bytes.Buffer{}
 	res, err := scplugins.RunInternalPlugin(p.pluginType, p.config, pluginLogs)
 	if err != nil {
