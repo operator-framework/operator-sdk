@@ -1,2 +1,2 @@
 #!/bin/bash
-cat ./assets/output.json
+cat ./scorecard/assets/output.json

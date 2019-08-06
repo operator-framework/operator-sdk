@@ -45,25 +45,6 @@ echo $commandoutput3 | grep '^.*"name": "Different Env and flag",[[:space:]]"des
 # check external env (kubeconfig set in plugin config should override flag)
 echo $commandoutput3 | grep '^.*"name": "Environment",[[:space:]]"description": "Test plugin with kubeconfig set via env var",[[:space:]]"earnedPoints": 2,[[:space:]]"maximumPoints": 5,.*$'
 
-# Test disabling plugins
-commandoutput4="$(operator-sdk scorecard --config "$CONFIG_PATH_DISABLE" 2>&1)"
-# check basic suite (should be disabled)
-if echo $commandoutput4 | grep '^.*"error": 0,[[:space:]]"pass": 3,[[:space:]]"partialPass": 0,[[:space:]]"fail": 0,[[:space:]]"totalTests": 3,[[:space:]]"totalScorePercent": 100,.*$'; then
-  false
-fi
-# check olm suite
-echo $commandoutput4 | grep '^.*"error": 0,[[:space:]]"pass": 2,[[:space:]]"partialPass": 3,[[:space:]]"fail": 0,[[:space:]]"totalTests": 5,[[:space:]]"totalScorePercent": 74,.*$'
-# check custom json result
-echo $commandoutput4 | grep '^.*"error": 0,[[:space:]]"pass": 1,[[:space:]]"partialPass": 1,[[:space:]]"fail": 0,[[:space:]]"totalTests": 2,[[:space:]]"totalScorePercent": 71,.*$'
-# check external no args (should be disabled)
-if echo $commandoutput4 | grep '^.*"name": "Empty",[[:space:]]"description": "Test plugin with no args",[[:space:]]"earnedPoints": 2,[[:space:]]"maximumPoints": 3,.*$'; then
-  false
-fi
-# check external flag
-echo $commandoutput4 | grep '^.*"name": "Flags",[[:space:]]"description": "Test plugin with kubeconfig set via flags",[[:space:]]"earnedPoints": 2,[[:space:]]"maximumPoints": 4,.*$'
-# check external env
-echo $commandoutput4 | grep '^.*"name": "Environment",[[:space:]]"description": "Test plugin with kubeconfig set via env var",[[:space:]]"earnedPoints": 2,[[:space:]]"maximumPoints": 5,.*$'
-
 # Test invalid config
 operator-sdk scorecard --config "$CONFIG_PATH_INVALID" |& grep '^.*invalid keys.*$'
 
