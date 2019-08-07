@@ -15,30 +15,64 @@
 package restmapper
 
 import (
+	"sync"
+	"time"
+
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 )
 
+// TODO(estroz): do we want to return a wait.ErrWaitTimeout if backoff duration
+// reaches a maximum?
+
+var (
+	// BackoffDuration is the initial duration that the DynamicRESTMapper
+	// waits to reload its REST mapping.
+	BackoffDuration time.Duration = time.Millisecond * 10
+	// BackoffDuration is the number of times that the DynamicRESTMapper
+	// will perform an exponential backoff before maxing out.
+	BackoffSteps = 10
+)
+
+// DynamicRESTMapper is a RESTMapper that dynamically discovers resource
+// types at runtime. This is in contrast to controller-manager's default
+// RESTMapper, which only checks resource types at startup, and so can't
+// handle the case of first creating a CRD and then creating an instance
+// of that CRD.
 type DynamicRESTMapper struct {
 	client   discovery.DiscoveryInterface
 	delegate meta.RESTMapper
+	backoff  *backoff
 }
 
-// NewDynamicRESTMapper returns a RESTMapper that dynamically discovers resource
-// types at runtime. This is in contrast to controller-manager's default RESTMapper, which
-// only checks resource types at startup, and so can't handle the case of first creating a
-// CRD and then creating an instance of that CRD.
+// NewDynamicRESTMapper returns a DynamicRESTMapper for cfg.
 func NewDynamicRESTMapper(cfg *rest.Config) (meta.RESTMapper, error) {
 	client, err := discovery.NewDiscoveryClientForConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	drm := &DynamicRESTMapper{client: client}
+	drm := &DynamicRESTMapper{
+		client: client,
+		backoff: &backoff{
+			Backoff: wait.Backoff{
+				Duration: BackoffDuration,
+				Steps:    BackoffSteps,
+				Factor:   2,
+			},
+		},
+	}
+	// Substitute the default backoff error handler for our exponential one.
+	if len(utilruntime.ErrorHandlers) > 1 {
+		utilruntime.ErrorHandlers[1] = func(error) {
+			time.Sleep(drm.backoff.step())
+		}
+	}
 	if err := drm.reload(); err != nil {
 		return nil, err
 	}
@@ -54,14 +88,19 @@ func (drm *DynamicRESTMapper) reload() error {
 	return nil
 }
 
-// reloadOnError checks if an error indicates that the delegated RESTMapper needs to be
-// reloaded, and if so, reloads it and returns true.
+// reloadOnError checks if an error indicates that the delegated RESTMapper
+// needs to be reloaded, and if so, reloads it and returns true.
+// reloadOnError uses an exponential backoff mechanism to rate limit reloads.
 func (drm *DynamicRESTMapper) reloadOnError(err error) bool {
 	if _, matches := err.(*meta.NoKindMatchError); !matches {
+		drm.backoff.reset()
 		return false
 	}
 	err = drm.reload()
 	if err != nil {
+		// TODO(estroz): HandleError uses a rudimentary backoff by default.
+		// Should we remove it completely or substitute the default backoff
+		// for our exponential one, as we do above?
 		utilruntime.HandleError(err)
 	}
 	return err == nil
@@ -121,4 +160,38 @@ func (drm *DynamicRESTMapper) ResourceSingularizer(resource string) (singular st
 		s, err = drm.delegate.ResourceSingularizer(resource)
 	}
 	return s, err
+}
+
+type backoff struct {
+	wait.Backoff
+	mu sync.Mutex
+}
+
+// Copied and pared down from
+// https://github.com/kubernetes/apimachinery/blob/6a84e37a896db9780c75367af8d2ed2bb944022e/pkg/util/wait/wait.go#L227
+// TODO(estroz) call Backoff.Step() once we bump to kubernetes-1.14.1
+func (b *backoff) step() time.Duration {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if b.Steps < 1 {
+		return b.Duration
+	}
+	b.Steps--
+
+	duration := b.Duration
+
+	// calculate the next step
+	if b.Factor != 0 {
+		b.Duration = time.Duration(float64(b.Duration) * b.Factor)
+	}
+
+	return duration
+}
+
+func (b *backoff) reset() {
+	b.mu.Lock()
+	b.Duration = BackoffDuration
+	b.Steps = BackoffSteps
+	b.mu.Unlock()
 }
