@@ -15,28 +15,57 @@
 package restmapper
 
 import (
-	"sync"
+	"fmt"
+	"regexp"
+	"strconv"
 	"time"
 
+	"golang.org/x/time/rate"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 )
 
-// TODO(estroz): do we want to return a wait.ErrWaitTimeout if backoff duration
-// reaches a maximum?
+// ErrRateLimited is returned by a DynamicRESTMapper method if the number
+// of API calls has exceeded a limit within a certain time period.
+type ErrRateLimited struct {
+	// Duration to wait until the next API call can be made.
+	Delay time.Duration
+}
+
+const errRLMsg = "too many API calls to the DynamicRESTMapper within a timeframe"
+
+func (e ErrRateLimited) Error() string {
+	return fmt.Sprintf("%s (%dns)", errRLMsg, int64(e.Delay))
+}
+
+var errRLRe = regexp.MustCompile(fmt.Sprintf(".*%s \\(([0-9]+)ns\\).*", errRLMsg))
+
+func IsRateLimited(err error) (time.Duration, bool) {
+	if e, ok := err.(ErrRateLimited); ok {
+		return e.Delay, true
+	}
+	if matches := errRLRe.FindStringSubmatch(err.Error()); len(matches) > 1 {
+		d, err := strconv.Atoi(matches[1])
+		if err == nil {
+			return time.Duration(d), true
+		}
+	}
+	return 0, false
+}
 
 var (
-	// BackoffDuration is the initial duration that the DynamicRESTMapper
-	// waits to reload its REST mapping.
-	BackoffDuration time.Duration = time.Millisecond * 10
-	// BackoffDuration is the number of times that the DynamicRESTMapper
-	// will perform an exponential backoff before maxing out.
-	BackoffSteps = 10
+	// LimitRate is the number of DynamicRESTMapper API calls allowed per second
+	// assuming the rate of API calls <= LimitRate.
+	// There is likely no need to change the default value.
+	LimitRate = 600
+	// LimitSize is the maximum number of simultaneous DynamicRESTMapper API
+	// calls allowed.
+	// There is likely no need to change the default value.
+	LimitSize = 5
 )
 
 // DynamicRESTMapper is a RESTMapper that dynamically discovers resource
@@ -47,7 +76,7 @@ var (
 type DynamicRESTMapper struct {
 	client   discovery.DiscoveryInterface
 	delegate meta.RESTMapper
-	backoff  *backoff
+	limiter  *limiter
 }
 
 // NewDynamicRESTMapper returns a DynamicRESTMapper for cfg.
@@ -59,27 +88,17 @@ func NewDynamicRESTMapper(cfg *rest.Config) (meta.RESTMapper, error) {
 
 	drm := &DynamicRESTMapper{
 		client: client,
-		backoff: &backoff{
-			Backoff: wait.Backoff{
-				Duration: BackoffDuration,
-				Steps:    BackoffSteps,
-				Factor:   2,
-			},
+		limiter: &limiter{
+			rate.NewLimiter(rate.Limit(LimitRate), LimitSize),
 		},
 	}
-	// Substitute the default backoff error handler for our exponential one.
-	if len(utilruntime.ErrorHandlers) > 1 {
-		utilruntime.ErrorHandlers[1] = func(error) {
-			time.Sleep(drm.backoff.step())
-		}
-	}
-	if err := drm.reload(); err != nil {
+	if err := drm.setDelegate(); err != nil {
 		return nil, err
 	}
 	return drm, nil
 }
 
-func (drm *DynamicRESTMapper) reload() error {
+func (drm *DynamicRESTMapper) setDelegate() error {
 	gr, err := restmapper.GetAPIGroupResources(drm.client)
 	if err != nil {
 		return err
@@ -88,27 +107,29 @@ func (drm *DynamicRESTMapper) reload() error {
 	return nil
 }
 
-// reloadOnError checks if an error indicates that the delegated RESTMapper
-// needs to be reloaded, and if so, reloads it and returns true.
-// reloadOnError uses an exponential backoff mechanism to rate limit reloads.
-func (drm *DynamicRESTMapper) reloadOnError(err error) bool {
-	if _, matches := err.(*meta.NoKindMatchError); !matches {
-		drm.backoff.reset()
-		return false
+func noKindMatchError(err error) bool {
+	_, ok := err.(*meta.NoKindMatchError)
+	return ok
+}
+
+// reload reloads the delegated RESTMapper, and will return an error only
+// if a rate limit has been hit.
+func (drm *DynamicRESTMapper) reload() error {
+	if err := drm.limiter.checkRate(); err != nil {
+		return err
 	}
-	err = drm.reload()
-	if err != nil {
-		// TODO(estroz): HandleError uses a rudimentary backoff by default.
-		// Should we remove it completely or substitute the default backoff
-		// for our exponential one, as we do above?
+	if err := drm.setDelegate(); err != nil {
 		utilruntime.HandleError(err)
 	}
-	return err == nil
+	return nil
 }
 
 func (drm *DynamicRESTMapper) KindFor(resource schema.GroupVersionResource) (schema.GroupVersionKind, error) {
 	gvk, err := drm.delegate.KindFor(resource)
-	if drm.reloadOnError(err) {
+	if noKindMatchError(err) {
+		if rerr := drm.reload(); rerr != nil {
+			return schema.GroupVersionKind{}, rerr
+		}
 		gvk, err = drm.delegate.KindFor(resource)
 	}
 	return gvk, err
@@ -116,7 +137,10 @@ func (drm *DynamicRESTMapper) KindFor(resource schema.GroupVersionResource) (sch
 
 func (drm *DynamicRESTMapper) KindsFor(resource schema.GroupVersionResource) ([]schema.GroupVersionKind, error) {
 	gvks, err := drm.delegate.KindsFor(resource)
-	if drm.reloadOnError(err) {
+	if noKindMatchError(err) {
+		if rerr := drm.reload(); rerr != nil {
+			return nil, rerr
+		}
 		gvks, err = drm.delegate.KindsFor(resource)
 	}
 	return gvks, err
@@ -124,7 +148,10 @@ func (drm *DynamicRESTMapper) KindsFor(resource schema.GroupVersionResource) ([]
 
 func (drm *DynamicRESTMapper) ResourceFor(input schema.GroupVersionResource) (schema.GroupVersionResource, error) {
 	gvr, err := drm.delegate.ResourceFor(input)
-	if drm.reloadOnError(err) {
+	if noKindMatchError(err) {
+		if rerr := drm.reload(); rerr != nil {
+			return schema.GroupVersionResource{}, rerr
+		}
 		gvr, err = drm.delegate.ResourceFor(input)
 	}
 	return gvr, err
@@ -132,7 +159,10 @@ func (drm *DynamicRESTMapper) ResourceFor(input schema.GroupVersionResource) (sc
 
 func (drm *DynamicRESTMapper) ResourcesFor(input schema.GroupVersionResource) ([]schema.GroupVersionResource, error) {
 	gvrs, err := drm.delegate.ResourcesFor(input)
-	if drm.reloadOnError(err) {
+	if noKindMatchError(err) {
+		if rerr := drm.reload(); rerr != nil {
+			return nil, rerr
+		}
 		gvrs, err = drm.delegate.ResourcesFor(input)
 	}
 	return gvrs, err
@@ -140,7 +170,10 @@ func (drm *DynamicRESTMapper) ResourcesFor(input schema.GroupVersionResource) ([
 
 func (drm *DynamicRESTMapper) RESTMapping(gk schema.GroupKind, versions ...string) (*meta.RESTMapping, error) {
 	m, err := drm.delegate.RESTMapping(gk, versions...)
-	if drm.reloadOnError(err) {
+	if noKindMatchError(err) {
+		if rerr := drm.reload(); rerr != nil {
+			return nil, rerr
+		}
 		m, err = drm.delegate.RESTMapping(gk, versions...)
 	}
 	return m, err
@@ -148,7 +181,10 @@ func (drm *DynamicRESTMapper) RESTMapping(gk schema.GroupKind, versions ...strin
 
 func (drm *DynamicRESTMapper) RESTMappings(gk schema.GroupKind, versions ...string) ([]*meta.RESTMapping, error) {
 	ms, err := drm.delegate.RESTMappings(gk, versions...)
-	if drm.reloadOnError(err) {
+	if noKindMatchError(err) {
+		if rerr := drm.reload(); rerr != nil {
+			return nil, rerr
+		}
 		ms, err = drm.delegate.RESTMappings(gk, versions...)
 	}
 	return ms, err
@@ -156,42 +192,23 @@ func (drm *DynamicRESTMapper) RESTMappings(gk schema.GroupKind, versions ...stri
 
 func (drm *DynamicRESTMapper) ResourceSingularizer(resource string) (singular string, err error) {
 	s, err := drm.delegate.ResourceSingularizer(resource)
-	if drm.reloadOnError(err) {
+	if noKindMatchError(err) {
+		if rerr := drm.reload(); rerr != nil {
+			return "", rerr
+		}
 		s, err = drm.delegate.ResourceSingularizer(resource)
 	}
 	return s, err
 }
 
-type backoff struct {
-	wait.Backoff
-	mu sync.Mutex
+type limiter struct {
+	*rate.Limiter
 }
 
-// Copied and pared down from
-// https://github.com/kubernetes/apimachinery/blob/6a84e37a896db9780c75367af8d2ed2bb944022e/pkg/util/wait/wait.go#L227
-// TODO(estroz) call Backoff.Step() once we bump to kubernetes-1.14.1
-func (b *backoff) step() time.Duration {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	if b.Steps < 1 {
-		return b.Duration
+func (b *limiter) checkRate() error {
+	res := b.Reserve()
+	if res.Delay() == 0 {
+		return nil
 	}
-	b.Steps--
-
-	duration := b.Duration
-
-	// calculate the next step
-	if b.Factor != 0 {
-		b.Duration = time.Duration(float64(b.Duration) * b.Factor)
-	}
-
-	return duration
-}
-
-func (b *backoff) reset() {
-	b.mu.Lock()
-	b.Duration = BackoffDuration
-	b.Steps = BackoffSteps
-	b.mu.Unlock()
+	return ErrRateLimited{res.Delay()}
 }
