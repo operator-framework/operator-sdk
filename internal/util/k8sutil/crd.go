@@ -123,13 +123,10 @@ func parseGroupSubdirs(apisDir string, strictVersionMatch bool) (map[string][]st
 					}
 					for _, f := range files {
 						if !f.IsDir() && filepath.Ext(f.Name()) == ".go" {
-							// Strictly check if maybeVersion is a Kubernetes API version.
-							if strictVersionMatch {
-								if versionRegexp.MatchString(v.Name()) {
-									gvs[g.Name()] = append(gvs[g.Name()], v.Name())
-								}
-							} else {
-								gvs[g.Name()] = append(gvs[g.Name()], filepath.ToSlash(v.Name()))
+							// If strictVersionMatch is true, strictly check if v.Name()
+							// is a Kubernetes API version.
+							if !strictVersionMatch || versionRegexp.MatchString(v.Name()) {
+								gvs[g.Name()] = append(gvs[g.Name()], v.Name())
 							}
 							break
 						}
