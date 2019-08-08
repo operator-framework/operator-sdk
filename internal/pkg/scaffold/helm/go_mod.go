@@ -69,6 +69,8 @@ replace (
 	// resolve it correctly.
 	github.com/prometheus/prometheus => github.com/prometheus/prometheus d3245f15022551c6fc8281766ea62db4d71e2747
 )
+
+replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v0.10.0
 `
 
 func PrintGoMod(asFile bool) error {
