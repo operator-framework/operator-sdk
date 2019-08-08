@@ -7,6 +7,8 @@
 
 ### Changed
 
+- Make `ready` package idempotent. Now, a user can call `Set()` or `Unset()` to set the operator's readiness without knowing the current state. ([#1761](https://github.com/operator-framework/operator-sdk/pull/1761))
+
 ### Breaking changes
 
 - CSV config field `role-path` is now `role-paths` and takes a list of strings. Users can now specify multiple `Role` and `ClusterRole` manifests using `role-paths`. ([#1704](https://github.com/operator-framework/operator-sdk/pull/1704))
@@ -39,6 +41,8 @@
 ### Removed
 
 ### Bug Fixes
+
+- Check if `metadata.annotations['alm-examples']` is non-empty before creating contained CR manifests in the scorecard. ([#1789](https://github.com/operator-framework/operator-sdk/pull/1789))
 
 ## v0.9.0
 
