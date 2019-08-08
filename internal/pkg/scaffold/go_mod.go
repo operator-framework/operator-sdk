@@ -60,7 +60,6 @@ replace (
 
 replace (
 	github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.31.1
-	k8s.io/kube-state-metrics => k8s.io/kube-state-metrics v1.6.0
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.2.0-beta.3
 	sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.1.11-0.20190411181648-9d55346c2bde
 	// Pinned to v2.10.0 (kubernetes-1.14.1) so https://proxy.golang.org can

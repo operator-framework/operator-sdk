@@ -73,10 +73,6 @@ required = [
   version = "=v0.31.1"
 
 [[override]]
-  name = "k8s.io/kube-state-metrics"
-  version = "v1.6.0"
-
-[[override]]
   name = "sigs.k8s.io/controller-runtime"
   version = "=v0.2.0-beta.3"
 
@@ -94,11 +90,6 @@ required = [
 [prune]
   go-tests = true
   non-go = true
-
-  [[prune.project]]
-    name = "k8s.io/kube-state-metrics"
-    unused-packages = true
-
 `
 
 func PrintDepGopkgTOML(asFile bool) error {
