@@ -23,6 +23,7 @@ import (
 
 	yaml "github.com/ghodss/yaml"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apimachinery/pkg/version"
 )
 
 func GetCRDs(crdsDir string) ([]*apiextv1beta1.CustomResourceDefinition, error) {
@@ -63,6 +64,8 @@ func GetCRDManifestPaths(crdsDir string) (crdPaths []string, err error) {
 
 type CRDVersions []apiextv1beta1.CustomResourceDefinitionVersion
 
-func (vs CRDVersions) Len() int           { return len(vs) }
-func (vs CRDVersions) Less(i, j int) bool { return LessVersions(vs[i].Name, vs[j].Name) }
-func (vs CRDVersions) Swap(i, j int)      { vs[i], vs[j] = vs[j], vs[i] }
+func (vs CRDVersions) Len() int { return len(vs) }
+func (vs CRDVersions) Less(i, j int) bool {
+	return version.CompareKubeAwareVersionStrings(vs[i].Name, vs[j].Name) > 0
+}
+func (vs CRDVersions) Swap(i, j int) { vs[i], vs[j] = vs[j], vs[i] }
