@@ -3,12 +3,16 @@ source hack/lib/test_lib.sh
 
 set -ex
 
+if [ -z "$KUBECONFIG" ]; then
+  KUBECONFIG=$HOME/.kube/config
+fi
+
 pushd test/test-framework
 # test framework with defaults
 operator-sdk test local ./test/e2e
 
 # test operator-sdk test flags
-operator-sdk test local ./test/e2e --global-manifest deploy/crds/cache_v1alpha1_memcached_crd.yaml --namespaced-manifest deploy/namespace-init.yaml --go-test-flags "-parallel 1" --kubeconfig $HOME/.kube/config --image=quay.io/coreos/operator-sdk-dev:test-framework-operator-runtime
+operator-sdk test local ./test/e2e --global-manifest deploy/crds/cache_v1alpha1_memcached_crd.yaml --namespaced-manifest deploy/namespace-init.yaml --go-test-flags "-parallel 1" --kubeconfig $KUBECONFIG --image=quay.io/coreos/operator-sdk-dev:test-framework-operator-runtime
 
 # we use the test-memcached namespace for all future tests, so we only need to set this trap once
 kubectl create namespace test-memcached
@@ -23,7 +27,7 @@ kubectl delete namespace test-memcached
 
 # test operator in up local mode with kubeconfig
 kubectl create namespace test-memcached
-operator-sdk test local ./test/e2e --up-local --namespace=test-memcached --kubeconfig $HOME/.kube/config
+operator-sdk test local ./test/e2e --up-local --namespace=test-memcached --kubeconfig $KUBECONFIG
 kubectl delete namespace test-memcached
 
 # test operator in no-setup mode
