@@ -40,13 +40,13 @@ const goModTmpl = `module {{ .Repo }}
 
 require (
 	github.com/NYTimes/gziphandler v1.0.1 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc // indirect
 	github.com/operator-framework/operator-sdk master
 	github.com/spf13/pflag v1.0.3
-	k8s.io/apiextensions-apiserver v0.0.0-20190328030136-8ada4fd07db4
-	k8s.io/client-go v11.0.0+incompatible
+	k8s.io/apiextensions-apiserver v0.0.0-20190409022649-727a075fdec8
+	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208 // indirect
-	k8s.io/kubernetes v1.14.1 // indirect
 	sigs.k8s.io/controller-runtime v0.2.0-beta.3
 	sigs.k8s.io/controller-tools v0.1.10
 )
@@ -56,15 +56,13 @@ replace (
 	k8s.io/api => k8s.io/api kubernetes-1.14.1
 	k8s.io/apimachinery => k8s.io/apimachinery kubernetes-1.14.1
 	k8s.io/client-go => k8s.io/client-go kubernetes-1.14.1
+	k8s.io/cloud-provider => k8s.io/cloud-provider kubernetes-1.14.1
 	k8s.io/kubernetes => k8s.io/kubernetes v1.14.1
 )
 
-replace (
-	github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.29.0
-	// Pinned to v2.9.2 (kubernetes-1.13.1) so https://proxy.golang.org can
-	// resolve it correctly.
-	github.com/prometheus/prometheus => github.com/prometheus/prometheus d3245f15022551c6fc8281766ea62db4d71e2747
-)
+// Pinned to v2.10.0 (kubernetes-1.14.1) so https://proxy.golang.org can
+// resolve it correctly.
+replace github.com/prometheus/prometheus => github.com/prometheus/prometheus d20e84d0fb64aff2f62a977adc8cfb656da4e286
 `
 
 func PrintGoMod(asFile bool) error {
