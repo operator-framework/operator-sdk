@@ -16,6 +16,8 @@
 
 ### Bug Fixes
 
+- Check if `metadata.annotations['alm-examples']` is non-empty before creating contained CR manifests in the scorecard. ([#1789](https://github.com/operator-framework/operator-sdk/pull/1789))
+
 ## v0.9.0
 
 ### Added
