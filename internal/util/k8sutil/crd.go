@@ -63,11 +63,11 @@ func GetCRDManifestPaths(crdsDir string) (crdPaths []string, err error) {
 			if err != nil {
 				return errors.Wrapf(err, "error reading manifest %s", path)
 			}
-			typemeta, err := GetTypeMetaFromBytes(b)
+			typeMeta, err := GetTypeMetaFromBytes(b)
 			if err != nil {
 				return errors.Wrapf(err, "error getting kind from manifest %s", path)
 			}
-			if typemeta.Kind == "CustomResourceDefinition" {
+			if typeMeta.Kind == "CustomResourceDefinition" {
 				crdPaths = append(crdPaths, path)
 			}
 		}
