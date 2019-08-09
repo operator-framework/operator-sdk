@@ -128,23 +128,6 @@ These steps describe how to conduct a release of the SDK, upgrading from `v1.2.0
 
 **Note:** `master` should be frozen between steps 1 and 3 so that all commits will be either in the new release or have a pre-release version, ex. `v1.2.0+git`. Otherwise commits might be built into a release that shouldn't or have an incorrect version, which makes debugging user issues difficult.
 
-### (Before beginning) Updating the operator-sdk-samples repo
-
-Many releases change SDK API's and conventions, which are not reflected in the [samples repo][sdk-samples-repo]. The samples repo should be updated and versioned _before_ each SDK release with the same tag, ex. `v1.3.0`, so the SDK release docs reference the correct sample code.
-
-The release process for the samples repo is simple:
-
-1. Make changes to all relevant operators (at least those referenced by SDK docs) based on API changes for the new release.
-1. Ensure the operators build and run as expected (see each operator's docs).
-1. Once all API changes are in `master`, create a release tag locally:
-    ```console
-    $ git checkout master && git pull
-    $ VER="v1.3.0"
-    $ git tag --sign --message "Operator SDK Samples $VER" "$VER"
-    $ git push --tags
-    ```
-1. Reference this release of the samples repo in links in all SDK docs related to the SDK's new release.
-
 ### (Patch release only) Cherry-picking to a release branch
 
 As more than one patch may be created per minor release, branch names of the form `v1.3.x` are created after a minor version is released. Bug fixes will be merged into the release branch only after testing.
@@ -182,7 +165,7 @@ Create a new branch to push release commits:
 $ git checkout -b release-v1.3.0
 ```
 
-Commit the following 9 changes:
+Commit the following changes:
 
 - `version/version.go`: update `Version` to `v1.3.0`.
 - `internal/pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
@@ -227,7 +210,7 @@ Once this tag passes CI, go to step 3. For more info on tagging, see the [releas
 
 ### 3. Create a PR for post-release version and CHANGELOG.md updates
 
-Check out a new branch from master (or use your `release-v1.3.0` branch) and commit the following 8 changes:
+Check out a new branch from master (or use your `release-v1.3.0` branch) and commit the following changes:
 
 - `version/version.go`: update `Version` to `v1.3.0+git`.
 - `internal/pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
@@ -314,7 +297,31 @@ brew bump-formula-pr --strict --url=$OPERATORSDKURL --sha256=$OPERATORSUM operat
 
 Note: If there were any changes made to the CLI commands, make sure to look at the existing tests, in case they need updating.
 
-You've now fully released a new version of the Operator SDK. Good work!
+You've now fully released a new version of the Operator SDK. Good work! Make sure to follow the post-release steps below.
+
+### (Post-release) Updating the operator-sdk-samples repo
+
+Many releases change SDK API's and conventions, which are not reflected in the [operator-sdk-samples repo][sdk-samples-repo]. The samples repo should be updated and versioned after each SDK release with the same tag, ex. `v1.3.0`, so users can refer to the correct operator code for that release.
+
+The release process for the samples repo is simple:
+
+1. Make changes to all relevant operators (at least those referenced by SDK docs) based on API changes for the new SDK release.
+1. Ensure the operators build and run as expected (see each operator's docs).
+1. Once all API changes are in `master`, create a release tag locally:
+    ```console
+    $ git checkout master && git pull
+    $ VER="v1.3.0"
+    $ git tag --sign --message "Operator SDK Samples $VER" "$VER"
+    $ git push --tags
+    ```
+
+### (Post-release) Updating the release notes
+
+Add the following line to the top of the GitHub release notes for `v1.3.0`:
+
+```md
+**NOTE:** ensure the `v1.3.0` tag is referenced when referring to sample code in the [SDK Operator samples repo](https://github.com/operator-framework/operator-sdk-samples/tree/v1.3.0) for this release. Links in SDK documentation are currently set to the samples repo `master` branch.
+```
 
 [install-guide]:../user/install-operator-sdk.md
 [doc-maintainers]:../../MAINTAINERS
