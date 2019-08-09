@@ -17,6 +17,7 @@ package catalog
 import (
 	"bytes"
 	"encoding/json"
+	"sort"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/descriptor"
@@ -33,6 +34,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/version"
 )
 
 // CSVUpdater is an interface for any data that can be in a CSV, which will be
@@ -246,6 +248,20 @@ type CustomResourceDefinitionsUpdate struct {
 	crIDs map[string]struct{}
 }
 
+type descSorter []olmapiv1alpha1.CRDDescription
+
+func (descs descSorter) Len() int { return len(descs) }
+func (descs descSorter) Less(i, j int) bool {
+	if descs[i].Name == descs[j].Name {
+		if descs[i].Kind == descs[j].Kind {
+			return version.CompareKubeAwareVersionStrings(descs[i].Version, descs[j].Version) > 0
+		}
+		return descs[i].Kind < descs[j].Kind
+	}
+	return descs[i].Name < descs[j].Name
+}
+func (descs descSorter) Swap(i, j int) { descs[i], descs[j] = descs[j], descs[i] }
+
 func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
 	crd := &apiextv1beta1.CustomResourceDefinition{}
 	if err := yaml.Unmarshal(yamlDoc, crd); err != nil {
@@ -326,6 +342,8 @@ func (u *CustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterServi
 			csv.Spec.CustomResourceDefinitions.Owned[i].ActionDescriptor = ad
 		}
 	}
+	sort.Sort(descSorter(csv.Spec.CustomResourceDefinitions.Owned))
+	sort.Sort(descSorter(csv.Spec.CustomResourceDefinitions.Required))
 	return nil
 }
 
