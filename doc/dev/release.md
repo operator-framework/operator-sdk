@@ -43,9 +43,35 @@ $ git config [--global] user.signingkey "$GPG_KEY_ID"
 $ git config [--global] user.email "$GPG_EMAIL"
 ```
 
-## Release Notes
+## GitHub release information
 
-Release notes should thoroughly describe changes made to code, documentation, and design of the SDK. PR links should be included wherever possible.
+### Locking down branches
+
+Once a release PR has been made and all tests pass, the SDK's `master` branch should be locked so commits cannot happen between the release PR and release tag push. To lock down `master`:
+
+1. Go to `Settings -> Branches` in the SDK repo.
+1. Under `Branch protection rules`, click `Edit` on the `master` rule.
+1. In section `Protect matching branches` of the `Rule settings` box, increase the number of required approving reviewers to its maximum allowed value.
+
+Now only administrators (maintainers) should be able to force merge PRs. Make sure everyone in the relevant Slack channel is aware of the release so they do not force merge by accident.
+
+Unlock `master` after the release has completed (after step 3 is complete) by changing the number of required approving reviewers back to 1.
+
+### Releasing
+
+The GitHub [`Releases` tab][release-page] in the operator-sdk repo is where all SDK releases live. To create a GitHub release:
+
+1. Go to the SDK [`Releases` tab][release-page] and click the `Draft a new release` button in the top right corner.
+1. Select the tag version `v1.3.0`, and set the title to `v1.3.0`.
+1. Copy and paste any `CHANGELOG.md` under the `v1.3.0` header that have any notes into the description form (see [below](#release-notes)).
+1. Attach all binaries and `.asc` signature files to the release by dragging and dropping them.
+1. Click the `Publish release` button.
+
+**Note:** if this is a pre-release, make sure to check the `This is a pre-release` box under the file attachment frame. If you are not sure what this means, ask another maintainer.
+
+#### Release notes
+
+GitHub release notes should thoroughly describe changes made to code, documentation, and design of the SDK. PR links should be included wherever possible.
 
 The following sections, often directly copied from our [changelog][doc-changelog], are used as release notes:
 
@@ -182,7 +208,9 @@ Commit the following changes:
 - `CHANGELOG.md`: update the `## Unreleased` header to `## v1.3.0`.
 - `doc/user/install-operator-sdk.md`: update the linux and macOS URLs to point to the new release URLs.
 
-Create a new PR for `release-v1.3.0`.
+_(Non-patch releases only)_ Lock down the master branch to prevent further commits between this and step 4. See [this section](#locking-down-branches) for steps to do so.
+
+Create and merge a new PR for `release-v1.3.0`.
 
 ### 2. Create a release tag, binaries, and signatures
 
@@ -244,15 +272,9 @@ If the release is for a patch version (e.g. `v1.3.1`), an identical PR should be
 
 ### 4. Releasing binaries, signatures, and release notes
 
-The final step is to upload binaries, their signature files, and release notes from `CHANGELOG.md`.
+_(Non-patch releases only)_ Unlock the master branch. See [this section](#locking-down-branches) for steps to do so.
 
-**Note:** if this is a pre-release, make sure to check the `This is a pre-release` box under the file attachment frame. If you are not sure what this means, ask another maintainer.
-
-1. Go to the SDK [release page][release-page] and click the `Draft a new release` button in the top right corner.
-1. Select the tag version `v1.3.0`, and set the title to `v1.3.0`.
-1. Copy and paste any `CHANGELOG.md` under the `v1.3.0` header that have any notes into the description form.
-1. Attach all binaries and `.asc` signature files to the release by dragging and dropping them.
-1. Click the `Publish release` button.
+The final step is to upload binaries, their signature files, and release notes from `CHANGELOG.md` for `v1.3.0`. See [this section](#releasing) for steps to do so.
 
 ### 5. Making a new release branch
 
@@ -301,7 +323,7 @@ You've now fully released a new version of the Operator SDK. Good work! Make sur
 
 ### (Post-release) Updating the operator-sdk-samples repo
 
-Many releases change SDK API's and conventions, which are not reflected in the [operator-sdk-samples repo][sdk-samples-repo]. The samples repo should be updated and versioned after each SDK release with the same tag, ex. `v1.3.0`, so users can refer to the correct operator code for that release.
+Many releases change SDK API's and conventions, which are not reflected in the [operator-sdk-samples repo][sdk-samples-repo]. The samples repo should be updated and versioned after each SDK major/minor release with the same tag, ex. `v1.3.0`, so users can refer to the correct operator code for that release.
 
 The release process for the samples repo is simple:
 
