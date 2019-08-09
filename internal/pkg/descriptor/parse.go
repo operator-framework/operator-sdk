@@ -211,7 +211,7 @@ func setDescriptorDefaultsIfEmpty(d *descriptor) {
 func mergeChildDescriptorPaths(specType, statusType *types.Type, descriptors []descriptor) (newDescs []descriptor) {
 	descMap := map[string][]descriptor{}
 	for _, d := range descriptors {
-		n := getTypeName(d.member.Type)
+		n := getUnderlyingTypeName(d.member.Type)
 		descMap[n] = append(descMap[n], d)
 	}
 	bfsJoinDescriptorPaths(specType, typeSpec, descMap)
@@ -222,114 +222,6 @@ func mergeChildDescriptorPaths(specType, statusType *types.Type, descriptors []d
 		}
 	}
 	return newDescs
-}
-
-type memberNode struct {
-	types.Member
-	parentNode *memberNode
-}
-
-type descNodeMapping struct {
-	parentNode *memberNode
-	descriptor descriptor
-}
-
-// bfsJoinDescriptorPaths performs BFS on all struct members in parentType to
-// find members corresponding to descriptors in descMap, which contain the
-// member they were parsed from. pt determines parentType;s descriptor type,
-// ex. "spec", "status".
-func bfsJoinDescriptorPaths(parentType *types.Type, pt descriptorType, descMap map[string][]descriptor) {
-	nextMembers, leaves := []*memberNode{}, []descNodeMapping{}
-	for _, m := range parentType.Members {
-		nextMembers = append(nextMembers, &memberNode{m, nil})
-	}
-	maxLevel := 10
-	level, lenNextMembers := 0, len(nextMembers)
-	// BFS up to maxLevel for qualifying leaves. We must check that both the
-	// parent type and member type, and member names are equal before adding a
-	// leaf. We must loop through all fields in a parent struct type, not just
-	// all members in nextMembers, in order to do so. We could find an incorrect
-	// leaf if we only checked member type/name equality since different structs
-	// can have the same field signatures.
-	for len(nextMembers) > 0 && level < maxLevel {
-		for _, m := range nextMembers {
-			t := getUnderlyingType(m.Type)
-			for _, mm := range t.Members {
-				node := memberNode{mm, m}
-				nextMembers = append(nextMembers, &node)
-				mmn := getTypeName(mm.Type)
-				if ds, ok := descMap[mmn]; ok {
-					newDs := []descriptor{}
-					for _, d := range ds {
-						typesEqual := typeNamesEqual(m.Type, d.parentType)
-						membersEqual := mm.Name == d.member.Name
-						if d.descType == pt && typesEqual && membersEqual {
-							leaves = append(leaves, descNodeMapping{&node, d})
-						} else {
-							newDs = append(newDs, d)
-						}
-					}
-					descMap[mmn] = newDs
-				}
-			}
-		}
-		nextMembers = nextMembers[lenNextMembers:]
-		lenNextMembers = len(nextMembers)
-		level++
-	}
-
-	seenSpec, seenStatus := false, false
-	for _, l := range leaves {
-		segments := []string{}
-		if l.descriptor.path != "" {
-			segments = append(segments, l.descriptor.path)
-		}
-		for parent := l.parentNode; parent != nil; parent = parent.parentNode {
-			pathSeg := ""
-			// Use the field's name if it doesn't have a JSON tag.
-			if parent.Tags == "" {
-				pathSeg = parent.Name
-			} else {
-				pathSeg = parsePathFromJSONTags(parent.Tags)
-			}
-			if pathSeg != "" {
-				// {Kind}Spec and {Kind}Status pathSegs should not be in the resulting
-				// path, as spec/status is implied by specDescriptors/statusDescriptors;
-				// children of these types with "spec"/"status" pathSegs should be
-				// included.
-				if pathSeg == typeSpec && !seenSpec {
-					seenSpec = true
-					continue
-				}
-				if pathSeg == typeStatus && !seenStatus {
-					seenStatus = true
-					continue
-				}
-				segments = append([]string{pathSeg}, segments...)
-			}
-		}
-		l.descriptor.path = strings.Join(segments, ".")
-		n := getTypeName(l.descriptor.member.Type)
-		descMap[n] = append(descMap[n], l.descriptor)
-	}
-}
-
-func getUnderlyingType(t *types.Type) *types.Type {
-	switch t.Kind {
-	case types.Map, types.Slice, types.Pointer, types.Chan:
-		t = t.Elem
-	case types.Alias, types.DeclarationOf:
-		t = t.Underlying
-	}
-	return t
-}
-
-func getTypeName(t *types.Type) string {
-	return getUnderlyingType(t).Name.String()
-}
-
-func typeNamesEqual(t1, t2 *types.Type) bool {
-	return getTypeName(t1) == getTypeName(t2)
 }
 
 // parseDescription joins comment strings into one line, removing any tool
