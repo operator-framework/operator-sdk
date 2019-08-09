@@ -27,7 +27,7 @@ import (
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 )
 
-// GetCRDManifestPaths gets all CRD manifests in crdsDir and subdirs.
+// GetCRDs parses all CRD manifests in the directory crdsDir and all of its subdirectories.
 func GetCRDs(crdsDir string) ([]*apiextv1beta1.CustomResourceDefinition, error) {
 	manifests, err := GetCRDManifestPaths(crdsDir)
 	if err != nil {
