@@ -88,7 +88,7 @@ The resulting structure will be:
 |   |
 |   |-- crds
 |       |   <gvk>_crd.yaml
-|       |   <gvk>_cr.yaml
+|       |   <full group>_<version>_<kind>_cr.yaml
 ```
 
 The SDK CLI will use the presence of the `helm-charts` directory to detect a `helm` type project.

@@ -40,7 +40,7 @@ Example:
 		└── v1alpha1
 			├── zz_generated.openapi.go
 	$ tree deploy/crds
-	├── deploy/crds/app_v1alpha1_appservice_cr.yaml
+	├── deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
 	├── deploy/crds/app_v1alpha1_appservice_crd.yaml
 `,
 		RunE: openAPIFunc,

@@ -344,7 +344,7 @@ INFO[0000] Created pkg/apis/app/v1alpha1/appservice_types.go
 INFO[0000] Created pkg/apis/addtoscheme_app_v1alpha1.go
 INFO[0000] Created pkg/apis/app/v1alpha1/register.go
 INFO[0000] Created pkg/apis/app/v1alpha1/doc.go
-INFO[0000] Created deploy/crds/app_v1alpha1_appservice_cr.yaml
+INFO[0000] Created deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
 INFO[0000] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
 INFO[0001] Running deepcopy code-generation for Custom Resource group versions: [app:[v1alpha1], ]
 INFO[0002] Code-generation complete.
@@ -387,7 +387,7 @@ Generates the CRD and the CR files for the specified api-version and kind.
 $ operator-sdk add crd --api-version app.example.com/v1alpha1 --kind AppService
 Generating custom resource definition (CRD) files
 Created deploy/crds/app_v1alpha1_appservice_crd.yaml
-Created deploy/crds/app_v1alpha1_appservice_cr.yaml
+Created deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
 ```
 
 ## run
@@ -452,7 +452,7 @@ Run scorecard tests on an operator
 ### Example
 
 ```console
-$ operator-sdk scorecard --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml --csv-path deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml
+$ operator-sdk scorecard --cr-manifest deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml --csv-path deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml
 Basic Operator:
         Spec Block Exists: 1/1 points
         Status Block Exist: 1/1 points

@@ -305,10 +305,10 @@ INFO[0000] operator-sdk Version: 0.0.5+git
 
 ### Create a Memcached CR
 
-Modify `deploy/crds/cache_v1alpha1_memcached_cr.yaml` as shown and create a `Memcached` custom resource:
+Modify `deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml` as shown and create a `Memcached` custom resource:
 
 ```sh
-$ cat deploy/crds/cache_v1alpha1_memcached_cr.yaml
+$ cat deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
 apiVersion: "cache.example.com/v1alpha1"
 kind: "Memcached"
 metadata:
@@ -316,7 +316,7 @@ metadata:
 spec:
   size: 3
 
-$ kubectl apply -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
+$ kubectl apply -f deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
 ```
 
 Ensure that the memcached-operator creates the deployment for the CR:
@@ -371,7 +371,7 @@ Change the `spec.size` field in the memcached CR from 3 to 4 and apply the
 change:
 
 ```sh
-$ cat deploy/crds/cache_v1alpha1_memcached_cr.yaml
+$ cat deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
 apiVersion: "cache.example.com/v1alpha1"
 kind: "Memcached"
 metadata:
@@ -379,7 +379,7 @@ metadata:
 spec:
   size: 4
 
-$ kubectl apply -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
+$ kubectl apply -f deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
 ```
 
 Confirm that the operator changes the deployment size:
@@ -395,7 +395,7 @@ example-memcached    4         4         4            4           5m
 Clean up the resources:
 
 ```sh
-$ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
+$ kubectl delete -f deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
 $ kubectl delete -f deploy/operator.yaml
 $ kubectl delete -f deploy/role_binding.yaml
 $ kubectl delete -f deploy/role.yaml

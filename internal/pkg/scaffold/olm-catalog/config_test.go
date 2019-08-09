@@ -42,7 +42,7 @@ func TestConfig(t *testing.T) {
 		t.Errorf("Set fields crd-cr paths dir file mix: (%v)", err)
 	}
 	want := []string{
-		filepath.Join(crdsDir, "app_v1alpha1_app_cr.yaml"),
+		filepath.Join(crdsDir, "app.example.com_v1alpha1_appservice_cr.yaml"),
 		filepath.Join(crdsDir, "app_v1alpha1_app_crd.yaml"),
 		filepath.Join(crdsDir, "app_v1alpha2_app_crd.yaml"),
 	}
