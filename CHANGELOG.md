@@ -2,12 +2,7 @@
 
 ### Added
 
-- Document new compile-time dependency `mercurial` in user-facing documentation. ([#1683](https://github.com/operator-framework/operator-sdk/pull/1683))
-- Adds new flag `--zap-time-encoding` to the flagset provided by `pkg/log/zap`. This flag configures the timestamp format produced by the zap logger. See the [logging doc](https://github.com/operator-framework/operator-sdk/blob/master/doc/user/logging.md) for more information. ([#1529](https://github.com/operator-framework/operator-sdk/pull/1529))
-
 ### Changed
-
-- Make `ready` package idempotent. Now, a user can call `Set()` or `Unset()` to set the operator's readiness without knowing the current state. ([#1761](https://github.com/operator-framework/operator-sdk/pull/1761))
 
 ### Breaking changes
 
@@ -39,6 +34,21 @@
 ### Deprecated
 
 ### Removed
+
+### Bug Fixes
+
+- Configure the repo path correctly in `operator-sdk add crd` and prevent the command from running outside of an operator project. ([#1660](https://github.com/operator-framework/operator-sdk/pull/1660))
+
+## v0.10.0
+
+### Added
+
+- Document new compile-time dependency `mercurial` in user-facing documentation. ([#1683](https://github.com/operator-framework/operator-sdk/pull/1683))
+- Adds new flag `--zap-time-encoding` to the flagset provided by `pkg/log/zap`. This flag configures the timestamp format produced by the zap logger. See the [logging doc](https://github.com/operator-framework/operator-sdk/blob/master/doc/user/logging.md) for more information. ([#1529](https://github.com/operator-framework/operator-sdk/pull/1529))
+
+### Changed
+
+- Make `ready` package idempotent. Now, a user can call `Set()` or `Unset()` to set the operator's readiness without knowing the current state. ([#1761](https://github.com/operator-framework/operator-sdk/pull/1761))
 
 ### Bug Fixes
 
