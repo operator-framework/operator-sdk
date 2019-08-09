@@ -20,11 +20,13 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
+	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -110,19 +112,17 @@ func GenerateCombinedGlobalManifest(crdsDir string) (*os.File, error) {
 		}
 	}()
 
-	files, err := ioutil.ReadDir(crdsDir)
+	crds, err := k8sutil.GetCRDs(crdsDir)
 	if err != nil {
-		return nil, fmt.Errorf("could not read deploy directory: (%v)", err)
+		return nil, errors.Wrapf(err, "error getting CRD's from %s", crdsDir)
 	}
 	combined := []byte{}
-	for _, file := range files {
-		if strings.HasSuffix(file.Name(), "crd.yaml") {
-			fileBytes, err := ioutil.ReadFile(filepath.Join(crdsDir, file.Name()))
-			if err != nil {
-				return nil, fmt.Errorf("could not read file %s: (%v)", filepath.Join(crdsDir, file.Name()), err)
-			}
-			combined = CombineManifests(combined, fileBytes)
+	for _, crd := range crds {
+		b, err := yaml.Marshal(crd)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error marshalling CRD %s bytes", crd.GetName())
 		}
+		combined = CombineManifests(combined, b)
 	}
 
 	if err := file.Chmod(os.FileMode(fileutil.DefaultFileMode)); err != nil {

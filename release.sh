@@ -77,7 +77,7 @@ if [[ "$VER" != "$CURR_VER_HELM_DEP" ]]; then
 	exit 1
 fi
 
-CURR_VER_INSTALL_GUIDE_FILE="$(sed -nr 's/RELEASE_VERSION=(.+)/\1/p' "$INSTALL_GUIDE_FILE" | tr -d ' \t\n')"
+CURR_VER_INSTALL_GUIDE_FILE="$(sed -nr 's/.*RELEASE_VERSION=(.+)/\1/p' "$INSTALL_GUIDE_FILE" | tr -d ' \t\n')"
 if [[ "$VER" != "$CURR_VER_INSTALL_GUIDE_FILE" ]]; then
 	echo "version '$VER' is not set correctly in $INSTALL_GUIDE_FILE"
     exit 1

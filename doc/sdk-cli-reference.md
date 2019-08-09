@@ -202,6 +202,7 @@ Writes a Cluster Service Version (CSV) manifest and optionally CRD files to `dep
 * `--update-crds` Update CRD manifests in deploy/{operator-name}/{csv-version} using the latest CRD manifests.
 * `--csv-channel` string - Channel the CSV should be registered under in the package manifest
 * `--default-channel` - Use the channel passed to --csv-channel as the package manifests' default channel. Only valid when --csv-channel is set.
+* `--operator-name` string - Operator name to use while generating this CSV.
 
 #### Example
 
@@ -228,7 +229,7 @@ you will need to rename it before running migrate or manually add it to your Doc
 
 * `--dep-manager` string - Dependency manager the migrated project will use (choices: "dep", "modules") (default "modules")
 * `--header-file` string - Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt
-* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` with Go modules, and cannot be set if `--dep-manager=dep`
+* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` with Go modules, and cannot be set if `--dep-manager=dep` (e.g. github.com/example-inc/my-opertor)
 
 ### Example
 
@@ -588,7 +589,7 @@ is not installed), and then deletes each resource that is listed in the
 downloaded release manifests. It waits until all resources have been fully
 cleaned up before returning.
 
-**NOTE**: It is important to use `--version` with the version number that 
+**NOTE**: It is important to use `--version` with the version number that
 corresponds to the version that you installed with `olm install`. Not specifying
 the version (or using an incorrect version) may cause some resources not be
 cleaned up. This can occur if OLM changes its release manifest resources from
@@ -605,7 +606,7 @@ works by downloading OLM's release manifests at a specific version (default:
 aborts with an error since OLM is not installed), and printing a summary of the
 status of each of those resources as they exist in the cluster.
 
-**NOTE**: It is important to use `--version` with the version number that 
+**NOTE**: It is important to use `--version` with the version number that
 corresponds to the version that you installed with `olm install`. Not specifying
 the version (or using an incorrect version) may cause some resources to be
 missing from the summary and others to be listed as "not found". This can occur

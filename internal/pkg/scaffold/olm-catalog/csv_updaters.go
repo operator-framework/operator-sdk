@@ -262,7 +262,7 @@ func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
 			Version: ver,
 			Kind:    kind,
 		}
-		store.crds.crIDs[crdID(crd, ver)] = struct{}{}
+		store.crds.crIDs[crdDescID(crdDesc)] = struct{}{}
 		// Parse CRD descriptors from source code comments and annotations.
 		gvk := schema.GroupVersionKind{Group: crd.Spec.Group, Version: ver, Kind: kind}
 		if err := descriptor.GetCRDDescriptorForGVK(scaffold.ApisDir, &crdDesc, gvk); err != nil {
@@ -297,12 +297,6 @@ func crdDescID(desc olmapiv1alpha1.CRDDescription) string {
 	return getGVKID(strings.Join(splitName[1:], "."), desc.Version, desc.Kind)
 }
 
-// crdID produces an opaque, unique string identifying a CRD. A version is
-// required because a CRD can have multiple versions.
-func crdID(crd *apiextv1beta1.CustomResourceDefinition, version string) string {
-	return getGVKID(crd.Spec.Group, version, crd.Spec.Names.Kind)
-}
-
 // gvkID produces an opaque, unique string identifying a GVK.
 func gvkID(gvk schema.GroupVersionKind) string {
 	return getGVKID(gvk.Group, gvk.Version, gvk.Kind)
@@ -314,6 +308,8 @@ func getGVKID(g, v, k string) string {
 
 // Apply updates csv's "owned" CRDDescriptions. "required" CRDDescriptions are
 // left as-is, since they are user-defined values.
+// Apply will only make a new spec.customresourcedefinitions.owned element if
+// the CRD key is not in spec.customresourcedefinitions.owned already.
 func (u *CustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	// Currently this updater does not support ActionDescriptor annotations,
 	// so use those currently set in csv.

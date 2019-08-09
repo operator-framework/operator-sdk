@@ -325,7 +325,9 @@ func replaceAllBytes(v interface{}, old, new []byte) error {
 func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	store := NewUpdaterStore()
 	otherSpecs := make(map[string][][]byte)
-	for _, f := range append(cfg.CRDCRPaths, cfg.OperatorPath, cfg.RolePath) {
+	paths := append(cfg.CRDCRPaths, cfg.OperatorPath)
+	paths = append(paths, cfg.RolePaths...)
+	for _, f := range paths {
 		yamlData, err := afero.ReadFile(s.getFS(), f)
 		if err != nil {
 			return err
@@ -334,16 +336,16 @@ func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.Clu
 		scanner := yamlutil.NewYAMLScanner(yamlData)
 		for scanner.Scan() {
 			yamlSpec := scanner.Bytes()
-			typemeta, err := k8sutil.GetTypeMetaFromBytes(yamlSpec)
+			typeMeta, err := k8sutil.GetTypeMetaFromBytes(yamlSpec)
 			if err != nil {
 				return errors.Wrapf(err, "error getting type metadata from manifest %s", f)
 			}
-			found, err := store.AddToUpdater(yamlSpec, typemeta.Kind)
+			found, err := store.AddToUpdater(yamlSpec, typeMeta.Kind)
 			if err != nil {
 				return errors.Wrapf(err, "error adding manifest %s to CSV updaters", f)
 			}
 			if !found {
-				id := gvkID(typemeta.GroupVersionKind())
+				id := gvkID(typeMeta.GroupVersionKind())
 				if _, ok := otherSpecs[id]; !ok {
 					otherSpecs[id] = make([][]byte, 0)
 				}
