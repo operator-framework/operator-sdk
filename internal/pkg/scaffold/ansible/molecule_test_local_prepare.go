@@ -51,7 +51,7 @@ const moleculeTestLocalPrepareAnsibleTmpl = `---
   tasks:
   - name: Create Custom Resource Definition
     k8s:
-      definition: "{{ lookup('file', '/'.join([deploy_dir, 'crds/[[.Resource.Group]]_[[.Resource.Version]]_[[.Resource.LowerKind]]_crd.yaml'])) }}"
+      definition: "{{ lookup('file', '/'.join([deploy_dir, 'crds/[[.Resource.FullGroup]]_[[.Resource.Resource]]_crd.yaml'])) }}"
 
   - name: Ensure specified namespace is present
     k8s:

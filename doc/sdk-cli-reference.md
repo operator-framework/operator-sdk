@@ -175,7 +175,7 @@ pkg/apis/app/v1alpha1/
 
 $ operator-sdk generate openapi
 INFO[0000] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
-INFO[0001] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
+INFO[0001] Created deploy/crds/app.example.com_appservices_crd.yaml
 INFO[0001] Code-generation complete.
 
 $ tree pkg/apis/app/v1alpha1/
@@ -345,11 +345,11 @@ INFO[0000] Created pkg/apis/addtoscheme_app_v1alpha1.go
 INFO[0000] Created pkg/apis/app/v1alpha1/register.go
 INFO[0000] Created pkg/apis/app/v1alpha1/doc.go
 INFO[0000] Created deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
-INFO[0000] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
+INFO[0000] Created deploy/crds/app.example.com_appservices_crd.yaml
 INFO[0001] Running deepcopy code-generation for Custom Resource group versions: [app:[v1alpha1], ]
 INFO[0002] Code-generation complete.
 INFO[0002] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
-INFO[0004] Created deploy/crds/app_v1alpha1_appservice_crd.yaml
+INFO[0004] Created deploy/crds/app.example.com_appservices_crd.yaml
 INFO[0004] Code-generation complete.
 INFO[0004] API generation complete.
 ```
@@ -386,7 +386,7 @@ Generates the CRD and the CR files for the specified api-version and kind.
 ```console
 $ operator-sdk add crd --api-version app.example.com/v1alpha1 --kind AppService
 Generating custom resource definition (CRD) files
-Created deploy/crds/app_v1alpha1_appservice_crd.yaml
+Created deploy/crds/app.example.com_appservices_crd.yaml
 Created deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
 ```
 
@@ -435,7 +435,7 @@ Run scorecard tests on an operator
 * `basic-tests` - Enable basic operator checks (default true)
 * `config` string - config file (default is '<project_dir>/.osdk-scorecard'; the config file's extension and format can be .yaml, .json, or .toml)
 * `cr-manifest` string - (required) Path to manifest for Custom Resource
-* `crds-dir` string - Directory containing CRDs (all CRD manifest filenames must have the suffix 'crd.yaml') (default "deploy/crds")
+* `crds-dir` string - Directory containing CRD manifests (default "deploy/crds")
 * `csv-path` string - (required if `olm-tests` is set) Path to CSV being tested
 * `global-manifest` string - Path to manifest for Global resources (e.g. CRD manifests)
 * `init-timeout` int - Timeout for status block on CR to be created, in seconds (default 10)

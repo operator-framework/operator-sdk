@@ -102,7 +102,7 @@ $ operator-sdk generate k8s
 ```
 
 ### OpenAPI validation
-To update the OpenAPI validation section in the CRD `deploy/crds/cache_v1alpha1_memcached_crd.yaml`, run the following command.
+To update the OpenAPI validation section in the CRD `deploy/crds/cache.example.com_memcacheds_crd.yaml`, run the following command.
 
 ```console
 $ operator-sdk generate openapi
@@ -208,7 +208,7 @@ For a guide on Reconcilers, Clients, and interacting with resource Events, see t
 Before running the operator, the CRD must be registered with the Kubernetes apiserver:
 
 ```sh
-$ kubectl create -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
+$ kubectl create -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 ```
 
 Once this is done, there are two ways to run the operator:

@@ -28,7 +28,7 @@ cd nginx-operator
 ```
 
 This creates the nginx-operator project specifically for watching the
-Nginx resource with APIVersion `example.com/v1alpha1` and Kind
+Nginx resource with APIVersion `helm.example.com/v1alpha1` and Kind
 `Nginx`.
 
 For Helm-based projects, `operator-sdk new` also generates the RBAC rules
@@ -87,7 +87,7 @@ in `watches.yaml` and executes Helm releases using the specified chart:
 ```yaml
 ---
 - version: v1alpha1
-  group: example.com
+  group: helm.example.com
   kind: Nginx
   chart: /opt/helm/helm-charts/nginx
 ```
@@ -121,7 +121,7 @@ contained `replicaCount: 2`.
 Update `deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml` to look like the following:
 
 ```yaml
-apiVersion: example.com/v1alpha1
+apiVersion: helm.example.com/v1alpha1
 kind: Nginx
 metadata:
   name: example-nginx
@@ -134,7 +134,7 @@ like to use `8080`, so we'll again update `deploy/crds/helm.example.com_v1alpha1
 by adding the service port override:
 
 ```yaml
-apiVersion: example.com/v1alpha1
+apiVersion: helm.example.com/v1alpha1
 kind: Nginx
 metadata:
   name: example-nginx
@@ -156,7 +156,7 @@ resource definition the operator will be watching.
 Deploy the CRD:
 
 ```sh
-kubectl create -f deploy/crds/example_v1alpha1_nginx_crd.yaml
+kubectl create -f deploy/crds/helm.example.com_nginxes_crd.yaml
 ```
 
 Once this is done, there are two ways to run the operator:
@@ -282,7 +282,7 @@ field, and apply the change:
 
 ```sh
 $ cat deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml
-apiVersion: "example.com/v1alpha1"
+apiVersion: "helm.example.com/v1alpha1"
 kind: "Nginx"
 metadata:
   name: "example-nginx"
@@ -318,7 +318,7 @@ kubectl delete -f deploy/operator.yaml
 kubectl delete -f deploy/role_binding.yaml
 kubectl delete -f deploy/role.yaml
 kubectl delete -f deploy/service_account.yaml
-kubectl delete -f deploy/crds/example_v1alpha1_nginx_crd.yaml
+kubectl delete -f deploy/crds/helm.example.com_nginxes_crd.yaml
 ```
 
 [operator-scope]:./../operator-scope.md

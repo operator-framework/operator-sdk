@@ -50,7 +50,7 @@ func NewCmd() *cobra.Command {
 	scorecardCmd.Flags().StringSlice(scplugins.CRManifestOpt, nil, "Path to manifest for Custom Resource (required) (specify flag multiple times for multiple CRs)")
 	scorecardCmd.Flags().String(scplugins.ProxyImageOpt, fmt.Sprintf("quay.io/operator-framework/scorecard-proxy:%s", strings.TrimSuffix(version.Version, "+git")), "Image name for scorecard proxy")
 	scorecardCmd.Flags().String(scplugins.ProxyPullPolicyOpt, "Always", "Pull policy for scorecard proxy image")
-	scorecardCmd.Flags().String(scplugins.CRDsDirOpt, scaffold.CRDsDir, "Directory containing CRDs (all CRD manifest filenames must have the suffix 'crd.yaml')")
+	scorecardCmd.Flags().String(scplugins.CRDsDirOpt, scaffold.CRDsDir, "Directory containing CRD manifests")
 	scorecardCmd.Flags().StringP(scorecard.OutputFormatOpt, "o", scorecard.HumanReadableOutputFormat, fmt.Sprintf("Output format for results. Valid values: %s, %s", scorecard.HumanReadableOutputFormat, scorecard.JSONOutputFormat))
 	scorecardCmd.Flags().String(scorecard.PluginDirOpt, "scorecard", "Scorecard plugin directory (plugin exectuables must be in a \"bin\" subdirectory")
 

@@ -17,6 +17,7 @@ package catalog
 import (
 	"path/filepath"
 	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
@@ -36,17 +37,19 @@ func TestConfig(t *testing.T) {
 	}
 
 	cfg = &CSVConfig{
-		CRDCRPaths: []string{crdsDir, filepath.Join(crdsDir, "app_v1alpha1_app_crd.yaml")},
+		CRDCRPaths: []string{crdsDir, filepath.Join(crdsDir, "app.example.com_appservices_crd.yaml")},
 	}
 	if err := cfg.setFields(); err != nil {
 		t.Errorf("Set fields crd-cr paths dir file mix: (%v)", err)
 	}
 	want := []string{
 		filepath.Join(crdsDir, "app.example.com_v1alpha1_appservice_cr.yaml"),
-		filepath.Join(crdsDir, "app_v1alpha1_app_crd.yaml"),
-		filepath.Join(crdsDir, "app_v1alpha2_app_crd.yaml"),
+		filepath.Join(crdsDir, "app.example.com_appservices_crd.yaml"),
+		filepath.Join(crdsDir, "app.example.com_appservices2_crd.yaml"),
 	}
+	sort.Strings(want)
+	sort.Strings(cfg.CRDCRPaths)
 	if !reflect.DeepEqual(want, cfg.CRDCRPaths) {
-		t.Errorf("Wanted crd/cr files %v, got %v", want, cfg.CRDCRPaths)
+		t.Errorf("Files in crd-cr-paths do not match expected:\nwanted: %+q\ngot:    %+q", want, cfg.CRDCRPaths)
 	}
 }
