@@ -1,0 +1,92 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: esindices.ibmcloud.ibm.com
+spec:
+  group: ibmcloud.ibm.com
+  names:
+    kind: EsIndex
+    plural: esindices
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            bindOnly:
+              description: Bind to an existing index if true, default value false
+              type: boolean
+            bindingFrom:
+              description: Binding resource name that holds the secret for elastic
+                search credentials
+              properties:
+                name:
+                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    TODO: Add other useful fields. apiVersion, kind, uid?'
+                  type: string
+              type: object
+            esURIComposed:
+              description: EsURIComposed is the URI of elasticesearch resource in
+                the format https://<user>:<passwd>@hostname:port. Cannot be used if
+                binding is not empty.
+              properties:
+                configMapKeyRef:
+                  description: Selects a key of a ConfigMap in the local namespace.
+                  type: object
+                secretKeyRef:
+                  description: Selects a key of a secret in the local namespace
+                  type: object
+              type: object
+            indexName:
+              description: Name of Index to be created on elastic search
+              type: string
+            numberOfReplicas:
+              description: Number of replicas, default value 1
+              format: int64
+              type: integer
+            numberOfShards:
+              description: Number of shards, default value 1
+              format: int64
+              type: integer
+          required:
+          - indexName
+          type: object
+        status:
+          properties:
+            generation:
+              description: Generation of the implemented spec
+              format: int64
+              type: integer
+            message:
+              description: Message
+              type: string
+            state:
+              description: State of the resource instance
+              type: string
+          required:
+          - generation
+          type: object
+  version: v1alpha1
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
