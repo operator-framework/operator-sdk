@@ -5,22 +5,23 @@ set -ex
 # the test framework directory has all the manifests needed to run the cluster
 pushd test/test-framework
 
-DEST_IMAGE="quay.io/example/scorecard-proxy"
-CONFIG_PATH="$ROOTDIR/.test-osdk-scorecard.yaml"
-CONFIG_PATH_CI="$ROOTDIR/.test-osdk-scorecard-ci.yaml"
-CONFIG_PATH_INVALID="$ROOTDIR/.osdk-scorecard-invalid.yaml"
 ROOTDIR="$(pwd)"
+CONFIG_PATH="$ROOTDIR/.test-osdk-scorecard-ci.yaml"
+DEFAULT_CONFIG_PATH="$ROOTDIR/.osdk-scorecard.yaml"
+DEFAULT_CONFIG_PATH_CI="$ROOTDIR/.osdk-scorecard-ci.yaml"
+CONFIG_PATH_INVALID="$ROOTDIR/.osdk-scorecard-invalid.yaml"
 component="scorecard-proxy"
 eval IMAGE=$IMAGE_FORMAT
 
 # we need to make the default config path have the CI config, which does not set the proxy pull policy to never
-cp $CONFIG_PATH $ROOTDIR/backup.yaml
-cp $CONFIG_PATH_CI $CONFIG_PATH
-trap_add 'cp $ROOTDIR/backup.yaml $CONFIG_PATH && rm $ROOTDIR/backup.yaml' EXIT
-sed 's/REPLACE_IMAGE;/'$IMAGE'/g' -i $CONFIG_PATH
+cp $DEFAULT_CONFIG_PATH $ROOTDIR/backup.yaml
+cp $DEFAULT_CONFIG_PATH_CI $DEFAULT_CONFIG_PATH
+trap_add 'cp $ROOTDIR/backup.yaml $DEFAULT_CONFIG_PATH && rm $ROOTDIR/backup.yaml' EXIT
+sed 's/REPLACE_IMAGE/'$IMAGE'/g' -i $DEFAULT_CONFIG_PATH
 
-# build scorecard-proxy image
-./hack/image/build-scorecard-proxy-image.sh "$DEST_IMAGE"
+cp $CONFIG_PATH $ROOTDIR/backup2.yaml
+trap_add 'cp $ROOTDIR/backup2.yaml $CONFIG_PATH && rm $ROOTDIR/backup2.yaml' EXIT
+sed 's/REPLACE_IMAGE/'$IMAGE'/g' -i $CONFIG_PATH
 
 # basic test with specified config location
 commandoutput="$(operator-sdk scorecard --config "$CONFIG_PATH" 2>&1)"
