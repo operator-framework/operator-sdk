@@ -18,7 +18,7 @@ $ brew install operator-sdk
 
 ```sh
 # Set the release version variable
-$ RELEASE_VERSION=v0.9.0
+$ RELEASE_VERSION=v0.10.0
 # Linux
 $ curl -OJL https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu
 # macOS
