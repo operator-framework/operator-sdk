@@ -1,6 +1,7 @@
 ## Unreleased
 
 ### Added
+- The `operator-sdk olm-catalog gen-csv` command now produces indented JSON for the `alm-examples` annotation. ([#1793](https://github.com/operator-framework/operator-sdk/pull/1793))
 
 ### Changed
 

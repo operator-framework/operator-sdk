@@ -343,16 +343,26 @@ func (u *ALMExamplesUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) err
 	if csv.GetAnnotations() == nil {
 		csv.SetAnnotations(make(map[string]string))
 	}
-	sb := &strings.Builder{}
-	sb.WriteString(`[`)
+	buf := &bytes.Buffer{}
+	buf.WriteString(`[`)
 	for i, example := range u.crs {
-		sb.WriteString(example)
+		buf.WriteString(example)
 		if i < len(u.crs)-1 {
-			sb.WriteString(`,`)
+			buf.WriteString(`,`)
 		}
 	}
-	sb.WriteString(`]`)
-
-	csv.GetAnnotations()["alm-examples"] = sb.String()
+	buf.WriteString(`]`)
+	examplesJSON, err := prettyJSON(buf.Bytes())
+	if err != nil {
+		return err
+	}
+	csv.GetAnnotations()["alm-examples"] = examplesJSON
 	return nil
+}
+
+// prettyJSON returns a JSON in a pretty format
+func prettyJSON(b []byte) (string, error) {
+	var out bytes.Buffer
+	err := json.Indent(&out, b, "", "  ")
+	return out.String(), err
 }
