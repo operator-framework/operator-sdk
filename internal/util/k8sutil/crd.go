@@ -21,13 +21,13 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"strings"
 
 	yaml "github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 )
 
+// GetCRDs parses all CRD manifests in the directory crdsDir and all of its subdirectories.
 func GetCRDs(crdsDir string) ([]*apiextv1beta1.CustomResourceDefinition, error) {
 	manifests, err := GetCRDManifestPaths(crdsDir)
 	if err != nil {
@@ -48,6 +48,7 @@ func GetCRDs(crdsDir string) ([]*apiextv1beta1.CustomResourceDefinition, error) 
 	return crds, nil
 }
 
+// GetCRDManifestPaths gets all CRD manifest paths in crdsDir and subdirs.
 func GetCRDManifestPaths(crdsDir string) (crdPaths []string, err error) {
 	err = filepath.Walk(crdsDir, func(path string, info os.FileInfo, werr error) error {
 		if werr != nil {
@@ -61,11 +62,11 @@ func GetCRDManifestPaths(crdsDir string) (crdPaths []string, err error) {
 			if err != nil {
 				return errors.Wrapf(err, "error reading manifest %s", path)
 			}
-			kind, err := GetKindfromYAML(b)
+			typeMeta, err := GetTypeMetaFromBytes(b)
 			if err != nil {
 				return errors.Wrapf(err, "error getting kind from manifest %s", path)
 			}
-			if kind == "CustomResourceDefinition" {
+			if typeMeta.Kind == "CustomResourceDefinition" {
 				crdPaths = append(crdPaths, path)
 			}
 		}
@@ -74,21 +75,28 @@ func GetCRDManifestPaths(crdsDir string) (crdPaths []string, err error) {
 	return crdPaths, err
 }
 
-// ParseGroupSubpackages parses the layout of pkg/apis to return a map of
-// API groups to subpackages.
+// ParseGroupSubpackages parses the apisDir directory tree and returns a map of
+// all found API groups to subpackages.
 func ParseGroupSubpackages(apisDir string) (map[string][]string, error) {
 	return parseGroupSubdirs(apisDir, false)
 }
 
-// ParseGroupSubdirs parses the layout of pkg/apis to return a map of
-// API groups to versions.
+// ParseGroupVersions parses the apisDir directory tree and returns a map of
+// all found API groups to versions.
 func ParseGroupVersions(apisDir string) (map[string][]string, error) {
 	return parseGroupSubdirs(apisDir, true)
 }
 
+// versionRegexp defines a kube-like version:
+// https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-versioning
 var versionRegexp = regexp.MustCompile("^v[1-9][0-9]*((alpha|beta)[1-9][0-9]*)?$")
 
-func parseGroupSubdirs(apisDir string, strict bool) (map[string][]string, error) {
+// parseGroupSubdirs searches apisDir for all groups and potential version
+// subdirs directly beneath each group dir, and returns a map of each group
+// dir name to all children version dir names. If strictVersionMatch is true,
+// all potential version dir names must strictly match versionRegexp. If
+// false, all subdir names are considered valid.
+func parseGroupSubdirs(apisDir string, strictVersionMatch bool) (map[string][]string, error) {
 	gvs := make(map[string][]string)
 	groups, err := ioutil.ReadDir(apisDir)
 	if err != nil {
@@ -115,15 +123,10 @@ func parseGroupSubdirs(apisDir string, strict bool) (map[string][]string, error)
 					}
 					for _, f := range files {
 						if !f.IsDir() && filepath.Ext(f.Name()) == ".go" {
-							vsplit := strings.Split(v.Name(), string(filepath.Separator))
-							// Strictly check if maybeVersion is a Kubernetes API version.
-							if strict {
-								maybeVersion := vsplit[0]
-								if versionRegexp.MatchString(maybeVersion) {
-									gvs[g.Name()] = append(gvs[g.Name()], maybeVersion)
-								}
-							} else {
-								gvs[g.Name()] = append(gvs[g.Name()], filepath.ToSlash(v.Name()))
+							// If strictVersionMatch is true, strictly check if v.Name()
+							// is a Kubernetes API version.
+							if !strictVersionMatch || versionRegexp.MatchString(v.Name()) {
+								gvs[g.Name()] = append(gvs[g.Name()], v.Name())
 							}
 							break
 						}

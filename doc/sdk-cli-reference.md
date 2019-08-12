@@ -175,7 +175,7 @@ pkg/apis/app/v1alpha1/
 
 $ operator-sdk generate openapi
 INFO[0000] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
-INFO[0001] Created deploy/crds/app.example.com_appservices.yaml
+INFO[0001] Created deploy/crds/app.example.com_appservices_crd.yaml
 INFO[0001] Code-generation complete.
 
 $ tree pkg/apis/app/v1alpha1/
@@ -229,7 +229,7 @@ you will need to rename it before running migrate or manually add it to your Doc
 
 * `--dep-manager` string - Dependency manager the migrated project will use (choices: "dep", "modules") (default "modules")
 * `--header-file` string - Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt
-* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` with Go modules, and cannot be set if `--dep-manager=dep`
+* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` with Go modules, and cannot be set if `--dep-manager=dep` (e.g. github.com/example-inc/my-opertor)
 
 ### Example
 
@@ -345,11 +345,11 @@ INFO[0000] Created pkg/apis/addtoscheme_app_v1alpha1.go
 INFO[0000] Created pkg/apis/app/v1alpha1/register.go
 INFO[0000] Created pkg/apis/app/v1alpha1/doc.go
 INFO[0000] Created deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
-INFO[0000] Created deploy/crds/app.example.com_appservices.yaml
+INFO[0000] Created deploy/crds/app.example.com_appservices_crd.yaml
 INFO[0001] Running deepcopy code-generation for Custom Resource group versions: [app:[v1alpha1], ]
 INFO[0002] Code-generation complete.
 INFO[0002] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
-INFO[0004] Created deploy/crds/app.example.com_appservices.yaml
+INFO[0004] Created deploy/crds/app.example.com_appservices_crd.yaml
 INFO[0004] Code-generation complete.
 INFO[0004] API generation complete.
 ```
@@ -386,7 +386,7 @@ Generates the CRD and the CR files for the specified api-version and kind.
 ```console
 $ operator-sdk add crd --api-version app.example.com/v1alpha1 --kind AppService
 Generating custom resource definition (CRD) files
-Created deploy/crds/app.example.com_appservices.yaml
+Created deploy/crds/app.example.com_appservices_crd.yaml
 Created deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
 ```
 

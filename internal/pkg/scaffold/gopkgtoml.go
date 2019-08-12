@@ -68,10 +68,6 @@ const gopkgTomlTmpl = `[[override]]
   version = "=v0.31.1"
 
 [[override]]
-  name = "k8s.io/kube-state-metrics"
-  version = "v1.6.0"
-
-[[override]]
   name = "sigs.k8s.io/controller-runtime"
   version = "=v0.2.0-beta.3"
 
@@ -84,15 +80,11 @@ const gopkgTomlTmpl = `[[override]]
   name = "github.com/operator-framework/operator-sdk"
   # The version rule is used for a specific release and the master branch for in between releases.
   branch = "master" #osdk_branch_annotation
-  # version = "=v0.9.0" #osdk_version_annotation
+  # version = "=v0.10.0" #osdk_version_annotation
 
 [prune]
   go-tests = true
   non-go = true
-
-  [[prune.project]]
-    name = "k8s.io/kube-state-metrics"
-    unused-packages = true
 `
 
 func PrintDepGopkgTOML(asFile bool) error {

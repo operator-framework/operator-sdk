@@ -24,9 +24,9 @@ Follow the steps in the [installation guide][install_guide] to learn how to inst
 Use the CLI to create a new memcached-operator project:
 
 ```sh
-$ mkdir -p $HOME/projects/example.com/
-$ cd $HOME/projects/example.com/
-$ operator-sdk new memcached-operator
+$ mkdir -p $HOME/projects
+$ cd $HOME/projects
+$ operator-sdk new memcached-operator --repo=github.com/example-inc/memcached-operator
 $ cd memcached-operator
 ```
 
@@ -34,7 +34,7 @@ To learn about the project directory structure, see [project layout][layout_doc]
 
 #### A note on dependency management
 
-By default, `operator-sdk new` generates a `go.mod` file to be used with [Go modules][go_mod_wiki]. If you'd like to use [`dep`][dep_tool], set `--dep-manager=dep` when initializing your project, which will create a `Gopkg.toml` file with the same dependency information.
+By default, `operator-sdk new` generates a `go.mod` file to be used with [Go modules][go_mod_wiki]. The `--repo=<path>` flag is required when creating a project outside of `$GOPATH/src`, as scaffolded files require a valid module path. If you'd like to use [`dep`][dep_tool], set `--dep-manager=dep` when initializing your project, which will create a `Gopkg.toml` file with the same dependency information.
 
 ##### Go modules
 
@@ -102,7 +102,7 @@ $ operator-sdk generate k8s
 ```
 
 ### OpenAPI validation
-To update the OpenAPI validation section in the CRD `deploy/crds/cache.example.com_v1alpha1_memcached.yaml`, run the following command. 
+To update the OpenAPI validation section in the CRD `deploy/crds/cache.example.com_memcacheds_crd.yaml`, run the following command.
 
 ```console
 $ operator-sdk generate openapi
@@ -208,7 +208,7 @@ For a guide on Reconcilers, Clients, and interacting with resource Events, see t
 Before running the operator, the CRD must be registered with the Kubernetes apiserver:
 
 ```sh
-$ kubectl create -f deploy/crds/cache.example.com_memcacheds.yaml
+$ kubectl create -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 ```
 
 Once this is done, there are two ways to run the operator:

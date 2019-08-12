@@ -36,7 +36,7 @@ import (
 	"sigs.k8s.io/controller-tools/pkg/markers"
 )
 
-// CRD is the input needed to generate a deploy/crds/<group>_<resource>.yaml file
+// CRD is the input needed to generate a deploy/crds/<full group>_<resource>_crd.yaml file
 type CRD struct {
 	input.Input
 
@@ -69,7 +69,7 @@ func (s *CRD) GetInput() (input.Input, error) {
 }
 
 func crdPathForResource(dir string, r *Resource) string {
-	file := fmt.Sprintf("%s_%s.yaml", r.FullGroup, r.Resource)
+	file := fmt.Sprintf("%s_%s_crd.yaml", r.FullGroup, r.Resource)
 	return filepath.Join(dir, file)
 }
 
@@ -128,10 +128,9 @@ func (s *CRD) CustomRender() ([]byte, error) {
 		// There are currently no commands to update CRD manifests for non-Go
 		// operators, so if a CRD manifest already exists for this gvk, this
 		// scaffold is a no-op (for now).
-		path := crdPathForResource(CRDsDir, s.Resource)
-		absPath := filepath.Join(s.AbsProjectPath, path)
-		if _, err := s.getFS().Stat(absPath); err == nil {
-			b, err := afero.ReadFile(s.getFS(), absPath)
+		path := crdPathForResource(filepath.Join(s.AbsProjectPath, CRDsDir), s.Resource)
+		if _, err := s.getFS().Stat(path); err == nil {
+			b, err := afero.ReadFile(s.getFS(), path)
 			if err != nil {
 				return nil, err
 			}

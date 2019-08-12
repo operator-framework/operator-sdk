@@ -23,7 +23,7 @@ Additionally the CustomResourceDefinition (CRD) scope can also be changed for cl
 
 For each CRD that needs to be cluster-scoped, update its manifest to be cluster-scoped.
 
-* `deploy/crds/<group>_<resource>.yaml`
+* `deploy/crds/<full group>_<resource>_crd.yaml`
   * Set `spec.scope: Cluster`
 
 To ensure that the CRD is always generated with `scope: Cluster`, add the tag `// +kubebuilder:resource:path=<resource>,scope=Cluster`, or if already present replace `scope={Namespaced -> Cluster}`, above the CRD's Go type defintion in `pkg/apis/<group>/<version>/<kind>_types.go`. The `<resource>` element must be the lower-case plural of the CRD's Kind, `spec.names.plural`.
@@ -75,7 +75,7 @@ With the above changes the specified manifests should look as follows:
       name: memcached-operator
       apiGroup: rbac.authorization.k8s.io
     ```
-* `deploy/crds/cache.example.com_memcacheds.yaml`
+* `deploy/crds/cache.example.com_memcacheds_crd.yaml`
     ```YAML
     apiVersion: apiextensions.k8s.io/v1beta1
     kind: CustomResourceDefinition

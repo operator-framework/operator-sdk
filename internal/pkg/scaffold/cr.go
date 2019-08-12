@@ -23,7 +23,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 )
 
-// CR is the input needed to generate a deploy/crds/<group>_<version>_<kind>_cr.yaml file
+// CR is the input needed to generate a deploy/crds/<full group>_<version>_<kind>_cr.yaml file
 type CR struct {
 	input.Input
 

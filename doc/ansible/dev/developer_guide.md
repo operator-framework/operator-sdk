@@ -211,7 +211,7 @@ Create a Custom Resource Definition (CRD) and proper Role-Based Access Control
 (RBAC) definitions for resource Foo. `operator-sdk` auto-generates these files
 inside of the `deploy` folder:
 ```bash
-$ kubectl create -f deploy/crds/foo.example.com_foos.yaml
+$ kubectl create -f deploy/crds/foo.example.com_foos_crd.yaml
 $ kubectl create -f deploy/service_account.yaml
 $ kubectl create -f deploy/role.yaml
 $ kubectl create -f deploy/role_binding.yaml
@@ -306,7 +306,7 @@ $ sed -i "" 's|REPLACE_IMAGE|quay.io/example/foo-operator:v0.0.1|g' deploy/opera
 Deploy the foo-operator:
 
 ```sh
-$ kubectl create -f deploy/crds/foo.example.com_foos.yaml # if CRD doesn't exist already
+$ kubectl create -f deploy/crds/foo.example.com_foos_crd.yaml # if CRD doesn't exist already
 $ kubectl create -f deploy/service_account.yaml
 $ kubectl create -f deploy/role.yaml
 $ kubectl create -f deploy/role_binding.yaml

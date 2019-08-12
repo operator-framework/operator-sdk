@@ -35,8 +35,8 @@ func newAddCRDCmd() *cobra.Command {
 		Short: "Adds a Custom Resource Definition (CRD) and the Custom Resource (CR) files",
 		Long: `The operator-sdk add crd command will create a Custom Resource Definition (CRD) and the Custom Resource (CR) files for the specified api-version and kind.
 
-Generated CRD filename: <project-name>/deploy/crds/<group>_<resource>.yaml
-Generated CR  filename: <project-name>/deploy/crds/<group>_<version>_<kind>_cr.yaml
+Generated CRD filename: <project-name>/deploy/crds/<full group>_<resource>_crd.yaml
+Generated CR  filename: <project-name>/deploy/crds/<full group>_<version>_<kind>_cr.yaml
 
 	<project-name>/deploy path must already exist
 	--api-version and --kind are required flags to generate the new operator application.
@@ -55,8 +55,11 @@ Generated CR  filename: <project-name>/deploy/crds/<group>_<version>_<kind>_cr.y
 }
 
 func crdFunc(cmd *cobra.Command, args []string) error {
+	projutil.MustInProjectRoot()
+
 	cfg := &input.Config{
 		AbsProjectPath: projutil.MustGetwd(),
+		Repo:           projutil.GetGoPkg(),
 	}
 	if len(args) != 0 {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())

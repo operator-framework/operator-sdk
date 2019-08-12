@@ -110,11 +110,17 @@ test/unit:
 
 test/subcommand: test/subcommand/test-local test/subcommand/scorecard test/subcommand/alpha-olm
 
+test/subcommand2:
+	./ci/tests/subcommand.sh
+
 test/subcommand/test-local:
 	./hack/tests/test-subcommand.sh
 
 test/subcommand/scorecard:
 	./hack/tests/scorecard-subcommand.sh
+
+test/subcommand/scorecard2:
+	./ci/tests/scorecard-subcommand.sh
 
 test/subcommand/alpha-olm:
 	./hack/tests/alpha-olm-subcommands.sh

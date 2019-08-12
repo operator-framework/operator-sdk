@@ -217,7 +217,7 @@ resource definition the operator will be watching.
 Deploy the CRD:
 
 ```sh
-$ kubectl create -f deploy/crds/cache.example.com_memcacheds.yaml
+$ kubectl create -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 ```
 
 Once this is done, there are two ways to run the operator:
@@ -400,7 +400,7 @@ $ kubectl delete -f deploy/operator.yaml
 $ kubectl delete -f deploy/role_binding.yaml
 $ kubectl delete -f deploy/role.yaml
 $ kubectl delete -f deploy/service_account.yaml
-$ kubectl delete -f deploy/crds/cache.example.com_memcacheds.yaml
+$ kubectl delete -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 ```
 
 [operator-scope]:./../operator-scope.md

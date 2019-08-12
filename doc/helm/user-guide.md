@@ -28,7 +28,7 @@ cd nginx-operator
 ```
 
 This creates the nginx-operator project specifically for watching the
-Nginx resource with APIVersion `example.com/v1alpha1` and Kind
+Nginx resource with APIVersion `helm.example.com/v1alpha1` and Kind
 `Nginx`.
 
 For Helm-based projects, `operator-sdk new` also generates the RBAC rules
@@ -87,7 +87,7 @@ in `watches.yaml` and executes Helm releases using the specified chart:
 ```yaml
 ---
 - version: v1alpha1
-  group: example.com
+  group: helm.example.com
   kind: Nginx
   chart: /opt/helm/helm-charts/nginx
 ```
@@ -118,10 +118,10 @@ value called `replicaCount` and it is set to `1` by default. If we want to have
 2 nginx instances in our deployment, we would need to make sure our CR spec
 contained `replicaCount: 2`.
 
-Update `deploy/crds/example.com_v1alpha1_nginx_cr.yaml` to look like the following:
+Update `deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml` to look like the following:
 
 ```yaml
-apiVersion: example.com/v1alpha1
+apiVersion: helm.example.com/v1alpha1
 kind: Nginx
 metadata:
   name: example-nginx
@@ -130,11 +130,11 @@ spec:
 ```
 
 Similarly, we see that the default service port is set to `80`, but we would
-like to use `8080`, so we'll again update `deploy/crds/example.com_v1alpha1_nginx_cr.yaml`
+like to use `8080`, so we'll again update `deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml`
 by adding the service port override:
 
 ```yaml
-apiVersion: example.com/v1alpha1
+apiVersion: helm.example.com/v1alpha1
 kind: Nginx
 metadata:
   name: example-nginx
@@ -156,7 +156,7 @@ resource definition the operator will be watching.
 Deploy the CRD:
 
 ```sh
-kubectl create -f deploy/crds/example.com_nginxes.yaml
+kubectl create -f deploy/crds/helm.example.com_nginxes_crd.yaml
 ```
 
 Once this is done, there are two ways to run the operator:
@@ -247,7 +247,7 @@ INFO[0000] operator-sdk Version: v0.2.0+git
 Apply the nginx CR that we modified earlier:
 
 ```sh
-kubectl apply -f deploy/crds/example.com_v1alpha1_nginx_cr.yaml
+kubectl apply -f deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml
 ```
 
 Ensure that the nginx-operator creates the deployment for the CR:
@@ -281,15 +281,15 @@ Change the `spec.replicaCount` field from 2 to 3, remove the `spec.service`
 field, and apply the change:
 
 ```sh
-$ cat deploy/crds/example.com_v1alpha1_nginx_cr.yaml
-apiVersion: "example.com/v1alpha1"
+$ cat deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml
+apiVersion: "helm.example.com/v1alpha1"
 kind: "Nginx"
 metadata:
   name: "example-nginx"
 spec:
   replicaCount: 3
 
-$ kubectl apply -f deploy/crds/example.com_v1alpha1_nginx_cr.yaml
+$ kubectl apply -f deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml
 ```
 
 Confirm that the operator changes the deployment size:
@@ -313,12 +313,12 @@ example-nginx-b9phnoz9spckcrua7ihrbkrt1   ClusterIP   10.96.26.3   <none>       
 Clean up the resources:
 
 ```sh
-kubectl delete -f deploy/crds/example.com_v1alpha1_nginx_cr.yaml
+kubectl delete -f deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml
 kubectl delete -f deploy/operator.yaml
 kubectl delete -f deploy/role_binding.yaml
 kubectl delete -f deploy/role.yaml
 kubectl delete -f deploy/service_account.yaml
-kubectl delete -f deploy/crds/example.com_nginxes.yaml
+kubectl delete -f deploy/crds/helm.example.com_nginxes_crd.yaml
 ```
 
 [operator-scope]:./../operator-scope.md
