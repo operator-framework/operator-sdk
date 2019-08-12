@@ -63,7 +63,7 @@ func (p externalPlugin) Run() scapiv1alpha1.ScorecardOutput {
 		name := fmt.Sprintf("%s", filepath.Base(p.config.Command))
 		logs := fmt.Sprintf("%s\nError: %s\nStdout: %s\nStderr: %s", p.config, err, string(stdout.Bytes()), string(stderr.Bytes()))
 		// output error to main logger as well for human-readable output
-		log.Errorf("Plugin `%s` failed\nLogs: %s", p.name, logs)
+		log.Errorf("Plugin `%s` failed\nLogs: %s", filepath.Base(p.config.Command), logs)
 		return failedPlugin(name, logs)
 	}
 	// parse output and add to suites
@@ -73,7 +73,7 @@ func (p externalPlugin) Run() scapiv1alpha1.ScorecardOutput {
 		name := fmt.Sprintf("%s", filepath.Base(p.config.Command))
 		logs := fmt.Sprintf("%s\nError: %s\nStdout: %s\nStderr: %s", p.config, err, string(stdout.Bytes()), string(stderr.Bytes()))
 		// output error to main logger as well for human-readable output
-		log.Errorf("Output from plugin `%s` failed to unmarshal\nLogs: %s", p.name, err, logs)
+		log.Errorf("Output from plugin `%s` failed to unmarshal\nLogs: %s", filepath.Base(p.config.Command), logs)
 		return failedPlugin(name, logs)
 	}
 	stderrString := string(stderr.Bytes())
