@@ -33,9 +33,9 @@ echo $commandoutput2 | grep '^.*"name": "Environment",[[:space:]]"description": 
 # test kubeconfig flag (kubeconfig shouldn't exist so internal plugins should instantly fail)
 commandoutput3="$(operator-sdk scorecard --kubeconfig=/kubeconfig 2>&1)"
 # check basic suite
-echo $commandoutput3 | grep '^.*"name": "Failed Plugin: Basic Tests",[[:space:]]"description": "Internal plugin `Basic Tests` failed",[[:space:]]"error": 1,.*$'
+echo $commandoutput3 | grep '^.*"name": "Basic Tests",[[:space:]]"description": "",[[:space:]]"error": 1,.*$'
 # check olm suite
-echo $commandoutput3 | grep '^.*"name": "Failed Plugin: OLM Tests",[[:space:]]"description": "Internal plugin `OLM Tests` failed",[[:space:]]"error": 1,.*$'
+echo $commandoutput3 | grep '^.*"name": "OLM Integration",[[:space:]]"description": "",[[:space:]]"error": 1,.*$'
 # check custom json result
 echo $commandoutput3 | grep '^.*"error": 0,[[:space:]]"pass": 1,[[:space:]]"partialPass": 1,[[:space:]]"fail": 0,[[:space:]]"totalTests": 2,[[:space:]]"totalScorePercent": 71,.*$'
 # check external no args

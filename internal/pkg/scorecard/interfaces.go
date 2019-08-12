@@ -60,23 +60,21 @@ func (p externalPlugin) Run() scapiv1alpha1.ScorecardOutput {
 	cmd.Stderr = stderr
 	err := cmd.Run()
 	if err != nil {
-		name := fmt.Sprintf("Failed Plugin: %s", p.name)
-		description := fmt.Sprintf("Plugin with file name `%s` failed", filepath.Base(p.config.Command))
-		logs := fmt.Sprintf("%s:\nStdout: %s\nStderr: %s", err, string(stdout.Bytes()), string(stderr.Bytes()))
+		name := fmt.Sprintf("%s", filepath.Base(p.config.Command))
+		logs := fmt.Sprintf("%s\nError: %s\nStdout: %s\nStderr: %s", p.config, err, string(stdout.Bytes()), string(stderr.Bytes()))
 		// output error to main logger as well for human-readable output
-		log.Errorf("Plugin `%s` failed with error (%v)", p.name, err)
-		return failedPlugin(name, description, logs)
+		log.Errorf("Plugin `%s` failed\nLogs: %s", p.name, logs)
+		return failedPlugin(name, logs)
 	}
 	// parse output and add to suites
 	result := scapiv1alpha1.ScorecardOutput{}
 	err = json.Unmarshal(stdout.Bytes(), &result)
 	if err != nil {
-		name := fmt.Sprintf("Plugin output invalid: %s", p.name)
-		description := fmt.Sprintf("Plugin with file name %s did not produce valid ScorecardOutput JSON", filepath.Base(p.config.Command))
-		logs := fmt.Sprintf("%s:\nStdout: %s\nStderr: %s", err, string(stdout.Bytes()), string(stderr.Bytes()))
+		name := fmt.Sprintf("%s", filepath.Base(p.config.Command))
+		logs := fmt.Sprintf("%s\nError: %s\nStdout: %s\nStderr: %s", p.config, err, string(stdout.Bytes()), string(stderr.Bytes()))
 		// output error to main logger as well for human-readable output
-		log.Errorf("Output from plugin `%s` failed to unmarshal with error (%v)", p.name, err)
-		return failedPlugin(name, description, logs)
+		log.Errorf("Output from plugin `%s` failed to unmarshal\nLogs: %s", p.name, err, logs)
+		return failedPlugin(name, logs)
 	}
 	stderrString := string(stderr.Bytes())
 	if len(stderrString) != 0 {
@@ -103,12 +101,16 @@ func (p basicOrOLMPlugin) Run() scapiv1alpha1.ScorecardOutput {
 	pluginLogs := &bytes.Buffer{}
 	res, err := scplugins.RunInternalPlugin(p.pluginType, p.config, pluginLogs)
 	if err != nil {
-		name := fmt.Sprintf("Failed Plugin: %s", p.name)
-		description := fmt.Sprintf("Internal plugin `%s` failed", p.name)
+		var name string
+		if p.pluginType == scplugins.BasicOperator {
+			name = fmt.Sprintf("Basic Tests")
+		} else if p.pluginType == scplugins.OLMIntegration {
+			name = fmt.Sprintf("OLM Integration")
+		}
 		logs := fmt.Sprintf("%s:\nLogs: %s", err, pluginLogs.String())
 		// output error to main logger as well for human-readable output
-		log.Errorf("Plugin `%s` failed with error (%v)", p.name, err)
-		return failedPlugin(name, description, logs)
+		log.Errorf("Plugin `%s` failed with error (%v)", name, err)
+		return failedPlugin(name, logs)
 	}
 	stderrString := pluginLogs.String()
 	if len(stderrString) != 0 {
@@ -136,13 +138,12 @@ func setConfigDefaults(config *scplugins.BasicAndOLMPluginConfig, kubeconfig str
 	}
 }
 
-func failedPlugin(name, desc, log string) scapiv1alpha1.ScorecardOutput {
+func failedPlugin(name, log string) scapiv1alpha1.ScorecardOutput {
 	return scapiv1alpha1.ScorecardOutput{
 		Results: []scapiv1alpha1.ScorecardSuiteResult{{
-			Name:        name,
-			Description: desc,
-			Error:       1,
-			Log:         log,
+			Name:  name,
+			Error: 1,
+			Log:   log,
 		}},
 	}
 }
