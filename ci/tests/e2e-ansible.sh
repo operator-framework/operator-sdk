@@ -61,7 +61,7 @@ test_operator() {
     fi
 
     # create CR
-    kubectl create -f deploy/crds/ansible_v1alpha1_memcached_cr.yaml
+    kubectl create -f deploy/crds/ansible.example.com_v1alpha1_memcached_cr.yaml
     if ! timeout 20s bash -c -- 'until kubectl get deployment -l app=memcached | grep memcached; do sleep 1; done';
     then
         echo FAIL: operator failed to create memcached Deployment
@@ -84,7 +84,7 @@ test_operator() {
     kubectl create configmap deleteme
     trap_add 'kubectl delete --ignore-not-found configmap deleteme' EXIT
 
-    kubectl delete -f ${OPERATORDIR}/deploy/crds/ansible_v1alpha1_memcached_cr.yaml --wait=true
+    kubectl delete -f ${OPERATORDIR}/deploy/crds/ansible.example.com_v1alpha1_memcached_cr.yaml --wait=true
     # if the finalizer did not delete the configmap...
     if kubectl get configmap deleteme 2> /dev/null;
     then

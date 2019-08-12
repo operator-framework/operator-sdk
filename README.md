@@ -94,7 +94,7 @@ $ kubectl create -f deploy/operator.yaml
 
 # Create an AppService CR
 # The default controller will watch for AppService objects and create a pod for each CR
-$ kubectl create -f deploy/crds/app_v1alpha1_appservice_cr.yaml
+$ kubectl create -f deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
 
 # Verify that a pod is created
 $ kubectl get pod -l app=example-appservice
@@ -120,7 +120,7 @@ Spec:
   Size:  3
 
 # Cleanup
-$ kubectl delete -f deploy/crds/app_v1alpha1_appservice_cr.yaml
+$ kubectl delete -f deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
 $ kubectl delete -f deploy/operator.yaml
 $ kubectl delete -f deploy/role.yaml
 $ kubectl delete -f deploy/role_binding.yaml

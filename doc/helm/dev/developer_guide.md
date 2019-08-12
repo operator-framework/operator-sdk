@@ -38,7 +38,7 @@ INFO[0000] Created deploy/role.yaml
 INFO[0000] Created deploy/role_binding.yaml
 INFO[0000] Created deploy/operator.yaml
 INFO[0000] Created deploy/crds/foo.example.com_foos_crd.yaml
-INFO[0000] Created deploy/crds/foo_v1alpha1_foo_cr.yaml
+INFO[0000] Created deploy/crds/foo.example.com_v1alpha1_foo_cr.yaml
 INFO[0000] Created helm-charts/foo/
 INFO[0000] Run git init ...
 Initialized empty Git repository in /home/user/go/src/github.com/operator-framework/foo-operator/.git/
@@ -302,7 +302,7 @@ INFO[0000] operator-sdk Version: v0.2.0+git
 
 Now that the operator is watching resource `Foo` for events, the creation of a
 Custom Resource will trigger our Helm chart to be executed. Take a look at
-`deploy/crds/foo_v1alpha1_foo_cr.yaml`. Our chart does not have a `size` value,
+`deploy/crds/foo.example.com_v1alpha1_foo_cr.yaml`. Our chart does not have a `size` value,
 so let's remove it. Your CR file should look like the following:
 
 ```yaml
@@ -322,7 +322,7 @@ Create a Custom Resource instance of Foo with default var `state` set to
 `present`:
 
 ```sh
-$ kubectl apply -f deploy/crds/foo_v1alpha1_foo_cr.yaml
+$ kubectl apply -f deploy/crds/foo.example.com_v1alpha1_foo_cr.yaml
 foo.foo.example.com/example-foo created
 ```
 
@@ -353,7 +353,7 @@ replicaset.apps/example-foo-4f8ay4vfr99ulx905hax3j6x1-9dfd67fc6   1         1   
 
 ```
 
-Modify `deploy/crds/foo_v1alpha1_foo_cr.yaml` to set `replicaCount` to `2`:
+Modify `deploy/crds/foo.example.com_v1alpha1_foo_cr.yaml` to set `replicaCount` to `2`:
 
 ```yaml
 apiVersion: "foo.example.com/v1alpha1"
@@ -368,7 +368,7 @@ spec:
 Apply the changes to Kubernetes and confirm that the deployment has 2 replicas:
 
 ```sh
-$ kubectl apply -f deploy/crds/foo_v1alpha1_foo_cr.yaml
+$ kubectl apply -f deploy/crds/foo.example.com_v1alpha1_foo_cr.yaml
 foo.foo.example.com/example-foo configured
 
 $ kubectl get deployment -l app.kubernetes.io/instance=${RELEASE_NAME}

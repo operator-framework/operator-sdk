@@ -12,7 +12,7 @@ Operator SDK projects have an expected [project layout][doc-project-layout]. In 
 
 * Roles: `role.yaml`
 * Deployments: `operator.yaml`
-* Custom Resources (CR's): `crds/<group>_<version>_<kind>_cr.yaml`
+* Custom Resources (CR's): `crds/<full group>_<version>_<kind>_cr.yaml`
 * Custom Resource Definitions (CRD's): `crds/<full group>_<resource>_crd.yaml`.
 
 `gen-csv` reads these files and adds their data to a CSV in an alternate form.

@@ -118,7 +118,7 @@ value called `replicaCount` and it is set to `1` by default. If we want to have
 2 nginx instances in our deployment, we would need to make sure our CR spec
 contained `replicaCount: 2`.
 
-Update `deploy/crds/helm_v1alpha1_nginx_cr.yaml` to look like the following:
+Update `deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml` to look like the following:
 
 ```yaml
 apiVersion: helm.example.com/v1alpha1
@@ -130,7 +130,7 @@ spec:
 ```
 
 Similarly, we see that the default service port is set to `80`, but we would
-like to use `8080`, so we'll again update `deploy/crds/helm_v1alpha1_nginx_cr.yaml`
+like to use `8080`, so we'll again update `deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml`
 by adding the service port override:
 
 ```yaml
@@ -247,7 +247,7 @@ INFO[0000] operator-sdk Version: v0.2.0+git
 Apply the nginx CR that we modified earlier:
 
 ```sh
-kubectl apply -f deploy/crds/helm_v1alpha1_nginx_cr.yaml
+kubectl apply -f deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml
 ```
 
 Ensure that the nginx-operator creates the deployment for the CR:
@@ -281,7 +281,7 @@ Change the `spec.replicaCount` field from 2 to 3, remove the `spec.service`
 field, and apply the change:
 
 ```sh
-$ cat deploy/crds/helm_v1alpha1_nginx_cr.yaml
+$ cat deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml
 apiVersion: "helm.example.com/v1alpha1"
 kind: "Nginx"
 metadata:
@@ -289,7 +289,7 @@ metadata:
 spec:
   replicaCount: 3
 
-$ kubectl apply -f deploy/crds/helm_v1alpha1_nginx_cr.yaml
+$ kubectl apply -f deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml
 ```
 
 Confirm that the operator changes the deployment size:
@@ -313,7 +313,7 @@ example-nginx-b9phnoz9spckcrua7ihrbkrt1   ClusterIP   10.96.26.3   <none>       
 Clean up the resources:
 
 ```sh
-kubectl delete -f deploy/crds/helm_v1alpha1_nginx_cr.yaml
+kubectl delete -f deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml
 kubectl delete -f deploy/operator.yaml
 kubectl delete -f deploy/role_binding.yaml
 kubectl delete -f deploy/role.yaml

@@ -66,7 +66,7 @@ Example:
 			├── zz_generated.deepcopy.go
 			├── zz_generated.openapi.go
 	$ tree deploy/crds
-	├── deploy/crds/app_v1alpha1_appservice_cr.yaml
+	├── deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
 	├── deploy/crds/app.example.com_appservices_crd.yaml
 `,
 		RunE: apiRun,

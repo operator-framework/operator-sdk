@@ -10,8 +10,8 @@ set -ex
 # the test framework directory has all the manifests needed to run the cluster
 pushd test/test-framework
 commandoutput="$(operator-sdk scorecard \
-  --cr-manifest deploy/crds/cache_v1alpha1_memcached_cr.yaml \
-  --cr-manifest deploy/crds/cache_v1alpha1_memcachedrs_cr.yaml \
+  --cr-manifest deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml \
+  --cr-manifest deploy/crds/cache.example.com_v1alpha1_memcachedrs_cr.yaml \
   --init-timeout 60 \
   --csv-path "$CSV_PATH" \
   --verbose \

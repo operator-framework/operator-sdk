@@ -23,7 +23,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 )
 
-// CR is the input needed to generate a deploy/crds/<group>_<version>_<kind>_cr.yaml file
+// CR is the input needed to generate a deploy/crds/<full group>_<version>_<kind>_cr.yaml file
 type CR struct {
 	input.Input
 
@@ -37,11 +37,7 @@ type CR struct {
 
 func (s *CR) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		fileName := fmt.Sprintf("%s_%s_%s_cr.yaml",
-			s.Resource.GoImportGroup,
-			strings.ToLower(s.Resource.Version),
-			s.Resource.LowerKind)
-		s.Path = filepath.Join(CRDsDir, fileName)
+		s.Path = crPathForResource(CRDsDir, s.Resource)
 	}
 	s.TemplateBody = crTemplate
 	if s.TemplateFuncs == nil {
@@ -49,6 +45,11 @@ func (s *CR) GetInput() (input.Input, error) {
 	}
 	s.TemplateFuncs["indent"] = indent
 	return s.Input, nil
+}
+
+func crPathForResource(dir string, r *Resource) string {
+	file := fmt.Sprintf("%s_%s_%s_cr.yaml", r.FullGroup, r.Version, r.LowerKind)
+	return filepath.Join(dir, file)
 }
 
 func indent(spaces int, v string) string {

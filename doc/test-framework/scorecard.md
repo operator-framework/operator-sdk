@@ -37,7 +37,7 @@ To run the tests, simply run the `scorecard` subcommand from your project root w
 use. For example:
 
 ```console
-$ operator-sdk scorecard --cr-manifest deploy/crds/app_operator_cr.yaml --csv-path deploy/app_operator-0.0.2.yaml
+$ operator-sdk scorecard --cr-manifest deploy/crds/app.example.com_operator_cr.yaml --csv-path deploy/app_operator-0.0.2.yaml
 ```
 
 ## Config File
@@ -45,12 +45,12 @@ $ operator-sdk scorecard --cr-manifest deploy/crds/app_operator_cr.yaml --csv-pa
 The scorecard supports the use of a config file instead of or in addition to flags for configuration. By default, the scorecard will look
 for a file called `.osdk-scorecard` with either a `.yaml`, `.json`, or `.toml` file extension. You can also
 specify a different config file with the `--config` flag. The configuration options in the config file match the flags.
-For instance, for the flags `--cr-manifest "deploy/crds/cache_v1alpha1_memcached_cr.yaml" --cr-manifest "deploy/crds/cache_v1alpha1_memcached2_cr.yaml" --init-timeout 60 --csv-path "deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml"`, the corresponding yaml config file would contain:
+For instance, for the flags `--cr-manifest "deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml" --cr-manifest "deploy/crds/cache.example.com_v1alpha1_memcached2_cr.yaml" --init-timeout 60 --csv-path "deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml"`, the corresponding yaml config file would contain:
 
 ```yaml
 cr-manifest:
-  - "deploy/crds/cache_v1alpha1_memcached_cr.yaml"
-  - "deploy/crds/cache_v1alpha1_memcached2_cr.yaml"
+  - "deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml"
+  - "deploy/crds/cache.example.com_v1alpha1_memcached2_cr.yaml"
 init-timeout: 60
 csv-path: "deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml"
 ```
