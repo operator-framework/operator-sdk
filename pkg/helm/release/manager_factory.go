@@ -24,7 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	clientset "k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/typed/core/v1"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	helmengine "k8s.io/helm/pkg/engine"
 	"k8s.io/helm/pkg/kube"
 	"k8s.io/helm/pkg/storage"
@@ -66,7 +66,7 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured) (Manager, erro
 	if err != nil {
 		return nil, fmt.Errorf("failed to get client from manager: %s", err)
 	}
-	releaseServer, err := getReleaseServer(cr, storageBackend, tillerKubeClient)
+	releaseServer, err := getReleaseServer(f.mgr, cr, storageBackend, tillerKubeClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get helm release server: %s", err)
 	}
@@ -86,13 +86,13 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured) (Manager, erro
 
 // getReleaseServer creates a ReleaseServer configured with a rendering engine that adds ownerrefs to rendered assets
 // based on the CR.
-func getReleaseServer(cr *unstructured.Unstructured, storageBackend *storage.Storage, tillerKubeClient *kube.Client) (*tiller.ReleaseServer, error) {
+func getReleaseServer(mgr crmanager.Manager, cr *unstructured.Unstructured, storageBackend *storage.Storage, tillerKubeClient *kube.Client) (*tiller.ReleaseServer, error) {
 	controllerRef := metav1.NewControllerRef(cr, cr.GroupVersionKind())
 	ownerRefs := []metav1.OwnerReference{
 		*controllerRef,
 	}
 	baseEngine := helmengine.New()
-	e := engine.NewOwnerRefEngine(baseEngine, ownerRefs)
+	e := engine.NewOwnerRefEngine(baseEngine, mgr.GetRESTMapper(), ownerRefs)
 	var ey environment.EngineYard = map[string]environment.Engine{
 		environment.GoTplEngine: e,
 	}
