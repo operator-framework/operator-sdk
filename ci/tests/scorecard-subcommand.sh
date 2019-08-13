@@ -17,11 +17,11 @@ eval IMAGE=$IMAGE_FORMAT
 cp $DEFAULT_CONFIG_PATH $ROOTDIR/backup.yaml
 cp $DEFAULT_CONFIG_PATH_CI $DEFAULT_CONFIG_PATH
 trap_add 'cp $ROOTDIR/backup.yaml $DEFAULT_CONFIG_PATH && rm $ROOTDIR/backup.yaml' EXIT
-sed 's/REPLACE_IMAGE/'$IMAGE'/g' -i $DEFAULT_CONFIG_PATH
+sed 's|REPLACE_IMAGE|'$IMAGE'|g' -i $DEFAULT_CONFIG_PATH
 
 cp $CONFIG_PATH $ROOTDIR/backup2.yaml
 trap_add 'cp $ROOTDIR/backup2.yaml $CONFIG_PATH && rm $ROOTDIR/backup2.yaml' EXIT
-sed 's/REPLACE_IMAGE/'$IMAGE'/g' -i $CONFIG_PATH
+sed 's|REPLACE_IMAGE|'$IMAGE'|g' -i $CONFIG_PATH
 
 # basic test with specified config location
 commandoutput="$(operator-sdk scorecard --config "$CONFIG_PATH" 2>&1)"
