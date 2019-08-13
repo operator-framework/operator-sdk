@@ -97,7 +97,8 @@ func (s *CRD) CustomRender() ([]byte, error) {
 		fs := afero.NewMemMapFs()
 		// controller-tool's generator reads and scaffolds a CRD for all APIs in
 		// pkg/apis.
-		if err := s.runCRDGenerator(fs); err != nil {
+		err := runCRDGenerator(crdOutputRule{fs: fs}, s.AbsProjectPath)
+		if err != nil {
 			return nil, err
 		}
 		// controller-tools generates CRD file names in the format below, which
@@ -123,7 +124,7 @@ func (s *CRD) CustomRender() ([]byte, error) {
 		//
 		// Relevant issue:
 		// https://github.com/kubernetes-sigs/controller-tools/issues/216
-		subCRDValidationMetadata(crd)
+		setCRDValidationMetadata(crd)
 	} else {
 		// There are currently no commands to update CRD manifests for non-Go
 		// operators, so if a CRD manifest already exists for this gvk, this
@@ -151,21 +152,16 @@ func (s *CRD) CustomRender() ([]byte, error) {
 	return k8sutil.GetObjectBytes(crd, yaml.Marshal)
 }
 
-func (s *CRD) runCRDGenerator(fs ...afero.Fs) (err error) {
-	crdFS := afero.NewOsFs()
-	if len(fs) == 1 {
-		crdFS = fs[0]
-	}
-
+func runCRDGenerator(rule genall.OutputRule, root string) (err error) {
 	gctx := &genall.GenerationContext{
 		Collector: &markers.Collector{
 			Registry: &markers.Registry{},
 		},
 		Checker:    &loader.TypeChecker{},
 		InputRule:  genall.InputFromFileSystem,
-		OutputRule: crdOutputRule{fs: crdFS},
+		OutputRule: rule,
 	}
-	absAPIsDir := filepath.Join(s.AbsProjectPath, ApisDir)
+	absAPIsDir := filepath.Join(root, ApisDir)
 	gvs, err := k8sutil.ParseGroupVersions(absAPIsDir)
 	if err != nil {
 		return errors.Wrapf(err, "error parsing API group versions from directory %+q", absAPIsDir)
@@ -192,9 +188,9 @@ func (s *CRD) runCRDGenerator(fs ...afero.Fs) (err error) {
 	return nil
 }
 
-// subCRDValidationMetadata sets top-level "metadata" validation blocks to
+// setCRDValidationMetadata sets top-level "metadata" validation blocks to
 // "type: object".
-func subCRDValidationMetadata(crd *apiextv1beta1.CustomResourceDefinition) {
+func setCRDValidationMetadata(crd *apiextv1beta1.CustomResourceDefinition) {
 	if crd.Spec.Validation != nil && crd.Spec.Validation.OpenAPIV3Schema != nil {
 		if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["metadata"]; ok {
 			crd.Spec.Validation.OpenAPIV3Schema.Properties["metadata"] = apiextv1beta1.JSONSchemaProps{
@@ -253,6 +249,9 @@ func setCRDNamesForResource(crd *apiextv1beta1.CustomResourceDefinition, r *Reso
 }
 
 func setCRDStorageVersion(crd *apiextv1beta1.CustomResourceDefinition) {
+	if len(crd.Spec.Versions) == 0 {
+		return
+	}
 	for _, ver := range crd.Spec.Versions {
 		if ver.Storage {
 			return
