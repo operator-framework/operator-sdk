@@ -28,6 +28,7 @@ import (
 
 	olmresourceclient "github.com/operator-framework/operator-sdk/internal/olm/client"
 
+	"github.com/blang/semver"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -197,9 +198,12 @@ func getOLMVersionFromPackageServerCSV(csv *olmapiv1alpha1.ClusterServiceVersion
 	// Fall back to getting OLM version from package server CSV name. Versions
 	// of OLM <= 0.10.1 are not labelled with pkgServerOLMVersionLabel.
 	ver := strings.TrimPrefix(csv.GetName(), pkgServerCSVOldNamePrefix)
-	if ver != "" {
-		// OLM releases do not have a "v" prefix but CSV versions do.
-		return strings.TrimPrefix(ver, "v"), nil
+	// OLM releases do not have a "v" prefix but CSV versions do.
+	ver = strings.TrimPrefix(ver, "v")
+	// Check if a valid semver. Ignore non-nil errors as they are not related
+	// to the reason OLM version can't be found.
+	if _, err := semver.Parse(ver); err == nil {
+		return ver, nil
 	}
 	return "", errors.Errorf("no OLM version found in %s CSV spec", csv.GetName())
 }
