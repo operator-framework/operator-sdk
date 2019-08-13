@@ -367,7 +367,7 @@ class KubernetesAnsibleStatusModule(KubernetesAnsibleModule):
 
         for condition in new_conditions:
             idx = self.get_condition_idx(merged, condition['type'])
-            if idx:
+            if idx is not None:
                 merged[idx] = condition
             else:
                 merged.append(condition)
@@ -378,6 +378,7 @@ class KubernetesAnsibleStatusModule(KubernetesAnsibleModule):
         for i, condition in enumerate(conditions):
             if condition.get('type') == name:
                 return i
+        return None
 
     def object_contains(self, obj, subset):
         def dict_is_subset(obj, subset):
