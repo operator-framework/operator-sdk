@@ -19,12 +19,10 @@ import (
 	"strings"
 	"testing"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	"k8s.io/apimachinery/pkg/api/meta"
-
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
