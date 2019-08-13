@@ -1,7 +1,9 @@
 ## Unreleased
 
 ### Added
+
 - The `operator-sdk olm-catalog gen-csv` command now produces indented JSON for the `alm-examples` annotation. ([#1793](https://github.com/operator-framework/operator-sdk/pull/1793))
+- Added flag `--dep-manager` to command [`operator-sdk print-deps`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#print-deps) to specify the type of dependency manager file to print. The choice of dependency manager is inferred from top-level dependency manager files present if `--dep-manager` is not set. ([#1819](https://github.com/operator-framework/operator-sdk/pull/1819))
 
 ### Changed
 
@@ -9,7 +11,10 @@
 
 ### Removed
 
+- Removed flag `--as-file` from command [`operator-sdk print-deps`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#print-deps), which now only prints packages and versions in dependency manager file format. The choice of dependency manager type is set by `--dep-manager` or inferred from top-level dependency manager files present if `--dep-manager` is not set. ([#1819](https://github.com/operator-framework/operator-sdk/pull/1819))
+
 ### Bug Fixes
+
 - Configure the repo path correctly in `operator-sdk add crd` and prevent the command from running outside of an operator project. ([#1660](https://github.com/operator-framework/operator-sdk/pull/1660))
 
 ## v0.10.0
