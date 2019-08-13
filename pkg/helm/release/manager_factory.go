@@ -166,7 +166,7 @@ func getReleaseName(storageBackend *storage.Storage, crChartName string, cr *uns
 	// If a release with the CR name does not exist, return the CR name.
 	releaseName := cr.GetName()
 	history, err := storageBackend.History(releaseName)
-	if notFoundErr(err) || len(history) == 0 {
+	if notFoundErr(err) || (err == nil && len(history) == 0) {
 		return releaseName, nil
 	} else if err != nil {
 		return "", err
