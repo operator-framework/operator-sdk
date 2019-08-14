@@ -11,6 +11,7 @@
 
 ### Bug Fixes
 - Configure the repo path correctly in `operator-sdk add crd` and prevent the command from running outside of an operator project. ([#1660](https://github.com/operator-framework/operator-sdk/pull/1660))
+- In the Helm operator, skip owner reference injection for cluster-scoped resources in release manifests. The Helm operator only supports namespace-scoped CRs, and namespaced resources cannot own cluster-scoped resources. ([#1817](https://github.com/operator-framework/operator-sdk/pull/1817))
 
 ## v0.10.0
 

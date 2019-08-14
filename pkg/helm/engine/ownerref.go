@@ -20,6 +20,7 @@ import (
 	"sort"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,7 +33,9 @@ import (
 // OwnerRefEngine wraps a tiller Render engine, adding ownerrefs to rendered assets
 type OwnerRefEngine struct {
 	environment.Engine
-	refs []metav1.OwnerReference
+
+	restMapper meta.RESTMapper
+	refs       []metav1.OwnerReference
 }
 
 // assert interface
@@ -89,9 +92,28 @@ func (o *OwnerRefEngine) addOwnerRefs(fileContents string) (string, error) {
 		}
 
 		unstructured := &unstructured.Unstructured{Object: unst}
-		unstructured.SetOwnerReferences(o.refs)
 
-		// Write the document with owner ref to the buffer
+		// Get the REST mapping for the GVK to determine its scope.
+		gvk := unstructured.GroupVersionKind()
+		mapping, err := o.restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+		if err != nil {
+			return "", err
+		}
+
+		// If the GVK is namespace-scoped, add owner references to this
+		// resource. We don't do this for cluster-scoped manifest resources
+		// since a namespace-scoped resource (the CR) cannot own a
+		// cluster-scoped resource.
+		//
+		// NOTE: the helm-operator that uses this engine ALSO uses a finalizer
+		// that ensures that the release is uninstalled via the built-in
+		// tiller, so manual cleanup of cluster-scoped dependent resources
+		// should not be necessary.
+		if mapping.Scope == meta.RESTScopeNamespace {
+			unstructured.SetOwnerReferences(o.refs)
+		}
+
+		// Write the document with to the buffer
 		// Also add document start marker
 		_, err = outBuf.WriteString(documentSeparator + chartutil.ToYaml(unstructured.Object))
 		if err != nil {
@@ -103,10 +125,12 @@ func (o *OwnerRefEngine) addOwnerRefs(fileContents string) (string, error) {
 }
 
 // NewOwnerRefEngine creates a new OwnerRef engine with a set of metav1.OwnerReferences to be added to assets
-func NewOwnerRefEngine(baseEngine environment.Engine, refs []metav1.OwnerReference) environment.Engine {
+func NewOwnerRefEngine(baseEngine environment.Engine, restMapper meta.RESTMapper, refs []metav1.OwnerReference) environment.Engine {
 	return &OwnerRefEngine{
 		Engine: baseEngine,
-		refs:   refs,
+
+		restMapper: restMapper,
+		refs:       refs,
 	}
 }
 

@@ -24,7 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	clientset "k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/typed/core/v1"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	helmengine "k8s.io/helm/pkg/engine"
 	"k8s.io/helm/pkg/kube"
 	"k8s.io/helm/pkg/storage"
@@ -92,7 +92,11 @@ func getReleaseServer(cr *unstructured.Unstructured, storageBackend *storage.Sto
 		*controllerRef,
 	}
 	baseEngine := helmengine.New()
-	e := engine.NewOwnerRefEngine(baseEngine, ownerRefs)
+	restMapper, err := tillerKubeClient.Factory.ToRESTMapper()
+	if err != nil {
+		return nil, err
+	}
+	e := engine.NewOwnerRefEngine(baseEngine, restMapper, ownerRefs)
 	var ey environment.EngineYard = map[string]environment.Engine{
 		environment.GoTplEngine: e,
 	}
