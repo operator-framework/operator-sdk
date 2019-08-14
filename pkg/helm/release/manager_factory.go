@@ -66,7 +66,7 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured) (Manager, erro
 	if err != nil {
 		return nil, fmt.Errorf("failed to get client from manager: %s", err)
 	}
-	releaseServer, err := getReleaseServer(f.mgr, cr, storageBackend, tillerKubeClient)
+	releaseServer, err := getReleaseServer(cr, storageBackend, tillerKubeClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get helm release server: %s", err)
 	}
@@ -86,13 +86,17 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured) (Manager, erro
 
 // getReleaseServer creates a ReleaseServer configured with a rendering engine that adds ownerrefs to rendered assets
 // based on the CR.
-func getReleaseServer(mgr crmanager.Manager, cr *unstructured.Unstructured, storageBackend *storage.Storage, tillerKubeClient *kube.Client) (*tiller.ReleaseServer, error) {
+func getReleaseServer(cr *unstructured.Unstructured, storageBackend *storage.Storage, tillerKubeClient *kube.Client) (*tiller.ReleaseServer, error) {
 	controllerRef := metav1.NewControllerRef(cr, cr.GroupVersionKind())
 	ownerRefs := []metav1.OwnerReference{
 		*controllerRef,
 	}
 	baseEngine := helmengine.New()
-	e := engine.NewOwnerRefEngine(baseEngine, mgr.GetRESTMapper(), ownerRefs)
+	restMapper, err := tillerKubeClient.Factory.ToRESTMapper()
+	if err != nil {
+		return nil, err
+	}
+	e := engine.NewOwnerRefEngine(baseEngine, restMapper, ownerRefs)
 	var ey environment.EngineYard = map[string]environment.Engine{
 		environment.GoTplEngine: e,
 	}
