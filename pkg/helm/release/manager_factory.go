@@ -101,7 +101,11 @@ func getReleaseServer(cr *unstructured.Unstructured, storageBackend *storage.Sto
 		*controllerRef,
 	}
 	baseEngine := helmengine.New()
-	e := engine.NewOwnerRefEngine(baseEngine, ownerRefs)
+	restMapper, err := tillerKubeClient.Factory.ToRESTMapper()
+	if err != nil {
+		return nil, err
+	}
+	e := engine.NewOwnerRefEngine(baseEngine, restMapper, ownerRefs)
 	var ey environment.EngineYard = map[string]environment.Engine{
 		environment.GoTplEngine: e,
 	}
