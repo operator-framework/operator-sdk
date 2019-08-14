@@ -52,6 +52,7 @@ type Resource struct {
 	Group string
 
 	// GoImportGroup is the non-hyphenated go import group for this resource
+	// Note that it is used to define the name of the API Group packages
 	GoImportGroup string
 
 	// Version is the API version - e.g. v1alpha1

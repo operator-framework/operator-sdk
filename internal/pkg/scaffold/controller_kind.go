@@ -69,7 +69,7 @@ func (s *ControllerKind) setImports() (err error) {
 			return err
 		}
 	} else {
-		importPath = path.Join(s.Repo, "pkg", "apis", s.Resource.GoImportGroup, s.Resource.Version)
+		importPath = path.Join(s.Repo, "pkg", "apis", s.Resource.Group, s.Resource.Version)
 		s.GoImportIdent = s.Resource.GoImportGroup + s.Resource.Version
 	}
 	// Import identifiers must be unique within a file.
