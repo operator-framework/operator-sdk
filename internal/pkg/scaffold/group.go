@@ -15,9 +15,8 @@
 package scaffold
 
 import (
-	"path/filepath"
-
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"path/filepath"
 )
 
 const GroupFile = "group.go"
@@ -32,7 +31,7 @@ var _ input.File = &Group{}
 
 func (s *Group) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(ApisDir, s.Resource.GoImportGroup, GroupFile)
+		s.Path = filepath.Join(ApisDir, s.Resource.Group, GroupFile)
 	}
 	s.TemplateBody = groupTmpl
 	return s.Input, nil

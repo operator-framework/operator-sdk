@@ -34,7 +34,7 @@ type Register struct {
 func (s *Register) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		s.Path = filepath.Join(ApisDir,
-			s.Resource.GoImportGroup,
+			strings.ToLower(s.Resource.Group),
 			strings.ToLower(s.Resource.Version),
 			RegisterFile)
 	}
