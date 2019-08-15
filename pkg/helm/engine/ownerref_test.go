@@ -15,10 +15,14 @@
 package engine
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
@@ -31,6 +35,35 @@ func (e *mockEngine) Render(chrt *chart.Chart, v chartutil.Values) (map[string]s
 	return e.out, nil
 }
 
+type testCase struct {
+	input    map[string]string
+	expected map[string]string
+}
+
+type restMapping struct {
+	gvk   schema.GroupVersionKind
+	scope meta.RESTScope
+}
+
+func genTemplate(resourceCount int, withLeadingSep bool, gvk schema.GroupVersionKind, ownerRefs []metav1.OwnerReference) string {
+	sb := &strings.Builder{}
+
+	for i := 0; i < resourceCount; i++ {
+		if withLeadingSep || i > 0 {
+			sb.WriteString("---\n")
+		}
+		sb.WriteString(fmt.Sprintf("apiVersion: %s/%s\nkind: %s\nmetadata:\n  name: example-%s-%d\n", gvk.Group, gvk.Version, gvk.Kind, strings.ToLower(gvk.Kind), i))
+		if len(ownerRefs) > 0 {
+			sb.WriteString("  ownerReferences:\n")
+		}
+		for _, or := range ownerRefs {
+			sb.WriteString(fmt.Sprintf("  - apiVersion: %s\n    kind: %s\n    name: %s\n    uid: %q\n", or.APIVersion, or.Kind, or.Name, or.UID))
+		}
+		sb.WriteString(fmt.Sprintf("spec:\n  value: value-%d\n", i))
+	}
+	return sb.String()
+}
+
 func TestOwnerRefEngine(t *testing.T) {
 	ownerRefs := []metav1.OwnerReference{
 		{
@@ -41,98 +74,69 @@ func TestOwnerRefEngine(t *testing.T) {
 		},
 	}
 
-	baseOut := `apiVersion: stable.nicolerenee.io/v1
-kind: Character
-metadata:
-  name: nemo
-spec:
-  Name: Nemo
-`
-
-	expectedOut := `---
-apiVersion: stable.nicolerenee.io/v1
-kind: Character
-metadata:
-  name: nemo
-  ownerReferences:
-  - apiVersion: v1
-    kind: Test
-    name: test
-    uid: "123"
-spec:
-  Name: Nemo
-`
-	expected := map[string]string{"template.yaml": expectedOut, "template2.yaml": expectedOut}
-
-	baseEngineOutput := map[string]string{
-		"template.yaml":  baseOut,
-		"template2.yaml": baseOut,
-		"empty.yaml":     "",
-		"comment.yaml":   "# This is empty",
+	ns := restMapping{
+		gvk: schema.GroupVersionKind{
+			Group:   "app.example.com",
+			Version: "v1",
+			Kind:    "App",
+		},
+		scope: meta.RESTScopeNamespace,
 	}
+	cs := restMapping{
+		gvk: schema.GroupVersionKind{
+			Group:   "app.example.com",
+			Version: "v1",
+			Kind:    "ClusterApp",
+		},
+		scope: meta.RESTScopeRoot,
+	}
+	restMapper := meta.NewDefaultRESTMapper(nil)
+	restMapper.Add(ns.gvk, ns.scope)
+	restMapper.Add(cs.gvk, cs.scope)
 
-	engine := NewOwnerRefEngine(&mockEngine{out: baseEngineOutput}, ownerRefs)
-	out, err := engine.Render(&chart.Chart{}, map[string]interface{}{})
-	require.NoError(t, err)
-	require.EqualValues(t, expected, out)
-}
-
-func TestOwnerRefEngine_MultiDocumentYaml(t *testing.T) {
-	ownerRefs := []metav1.OwnerReference{
+	testCases := []testCase{
 		{
-			APIVersion: "v1",
-			Kind:       "Test",
-			Name:       "test",
-			UID:        "123",
+			input: map[string]string{
+				"template1.yaml": genTemplate(1, false, ns.gvk, nil),
+				"template2.yaml": genTemplate(1, false, cs.gvk, nil),
+				"template3.yaml": genTemplate(2, true, ns.gvk, nil),
+				"template4.yaml": genTemplate(2, true, cs.gvk, nil),
+				"template5.yaml": fmt.Sprintf("%s%s",
+					genTemplate(1, true, ns.gvk, nil),
+					genTemplate(1, true, cs.gvk, nil),
+				),
+				"template6.yaml": fmt.Sprintf("%s%s",
+					genTemplate(1, true, cs.gvk, nil),
+					genTemplate(1, true, ns.gvk, nil),
+				),
+				"empty.yaml":   "",
+				"comment.yaml": "# This is empty",
+			},
+			expected: map[string]string{
+				"template1.yaml": genTemplate(1, true, ns.gvk, ownerRefs),
+				"template2.yaml": genTemplate(1, true, cs.gvk, nil),
+				"template3.yaml": genTemplate(2, true, ns.gvk, ownerRefs),
+				"template4.yaml": genTemplate(2, true, cs.gvk, nil),
+				"template5.yaml": fmt.Sprintf("%s%s",
+					genTemplate(1, true, ns.gvk, ownerRefs),
+					genTemplate(1, true, cs.gvk, nil),
+				),
+				"template6.yaml": fmt.Sprintf("%s%s",
+					genTemplate(1, true, cs.gvk, nil),
+					genTemplate(1, true, ns.gvk, ownerRefs),
+				),
+			},
 		},
 	}
 
-	baseOut := `kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: eighth
-  data:
-    name: value
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: example-test
-`
-
-	expectedOut := `---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  data:
-    name: value
-  name: eighth
-  ownerReferences:
-  - apiVersion: v1
-    kind: Test
-    name: test
-    uid: "123"
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: example-test
-  ownerReferences:
-  - apiVersion: v1
-    kind: Test
-    name: test
-    uid: "123"
-`
-
-	expected := map[string]string{"template.yaml": expectedOut}
-
-	baseEngineOutput := map[string]string{
-		"template.yaml": baseOut,
+	for _, tc := range testCases {
+		engine := NewOwnerRefEngine(&mockEngine{out: tc.input}, restMapper, ownerRefs)
+		out, err := engine.Render(&chart.Chart{}, map[string]interface{}{})
+		require.NoError(t, err)
+		for expectedKey, expectedValue := range tc.expected {
+			actualValue, actualKeyExists := out[expectedKey]
+			require.True(t, actualKeyExists, "Did not find expected template %q in output", expectedKey)
+			require.EqualValues(t, expectedValue, actualValue)
+		}
 	}
-
-	engine := NewOwnerRefEngine(&mockEngine{out: baseEngineOutput}, ownerRefs)
-	out, err := engine.Render(&chart.Chart{}, map[string]interface{}{})
-
-	require.NoError(t, err)
-	require.Equal(t, expected, out)
 }
