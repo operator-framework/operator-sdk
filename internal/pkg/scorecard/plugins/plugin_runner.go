@@ -159,7 +159,10 @@ func RunInternalPlugin(plugin PluginType, config *viper.Viper, logFile io.ReadWr
 			if crJSONStr, ok := csv.ObjectMeta.Annotations["alm-examples"]; ok {
 				var crs []interface{}
 				if err = json.Unmarshal([]byte(crJSONStr), &crs); err != nil {
-					return scapiv1alpha1.ScorecardOutput{}, err
+					return scapiv1alpha1.ScorecardOutput{}, errors.Wrapf(err, "metadata.annotations['alm-examples'] in CSV %s incorrectly formatted", csv.GetName())
+				}
+				if len(crs) == 0 {
+					return scapiv1alpha1.ScorecardOutput{}, errors.Errorf("no CRs found in metadata.annotations['alm-examples'] in CSV %s and cr-manifest config option not set", csv.GetName())
 				}
 				// TODO: run scorecard against all CR's in CSV.
 				cr := crs[0]

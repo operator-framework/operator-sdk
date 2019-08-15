@@ -67,10 +67,10 @@ func setupTestFrameworkConfig() (*input.Config, error) {
 	absPath = absPath[:strings.Index(absPath, "internal/pkg")]
 	tfDir := filepath.Join(absPath, "test", "test-framework")
 
-	// Set the project and repo paths to {abs}/test/test-framework, which
+	// Set the project and repo path suffixes to test/test-framework, which
 	// contains pkg/apis for the memcached-operator.
 	return &input.Config{
-		Repo:           tfDir[strings.Index(absPath, "github.com"):],
+		Repo:           "github.com/operator-framework/operator-sdk/test/test-framework",
 		AbsProjectPath: tfDir,
 		ProjectName:    filepath.Base(tfDir),
 	}, nil

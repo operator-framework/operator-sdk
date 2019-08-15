@@ -23,7 +23,11 @@
       - name: Wait 2 minutes for memcached deployment
         debug:
           var: deploy
-        until: deploy and deploy.status and deploy.status.replicas == deploy.status.get("availableReplicas", 0)
+        until:
+        - deploy is defined
+        - deploy.status is defined
+        - deploy.status.replicas is defined
+        - deploy.status.replicas == deploy.status.get("availableReplicas", 0)
         retries: 12
         delay: 10
         vars:
@@ -83,7 +87,11 @@
         - name: Wait 2 minutes for operator deployment
           debug:
             var: deploy
-          until: deploy and deploy.status and deploy.status.replicas == deploy.status.get("availableReplicas", 0)
+          until:
+          - deploy is defined
+          - deploy.status is defined
+          - deploy.status.replicas is defined
+          - deploy.status.replicas == deploy.status.get("availableReplicas", 0)
           retries: 12
           delay: 10
           vars:
@@ -134,7 +142,7 @@
           name: '{{ custom_resource.metadata.name }}'
         register: cr
         retries: 10
-        delay: 2
+        delay: 6
         until: not cr.resources
         failed_when: cr.resources
 

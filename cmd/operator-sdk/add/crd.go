@@ -55,8 +55,11 @@ Generated CR  filename: <project-name>/deploy/crds/<group>_<version>_<kind>_cr.y
 }
 
 func crdFunc(cmd *cobra.Command, args []string) error {
+	projutil.MustInProjectRoot()
+
 	cfg := &input.Config{
 		AbsProjectPath: projutil.MustGetwd(),
+		Repo:           projutil.GetGoPkg(),
 	}
 	if len(args) != 0 {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())

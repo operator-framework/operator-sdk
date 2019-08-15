@@ -7,8 +7,8 @@ set -eux
 ROOTDIR="$(pwd)"
 GOTMP="$(mktemp -d)"
 trap_add 'rm -rf $GOTMP' EXIT
-# Needs to be from source until 2.20 comes out
-pip install --user git+https://github.com/ansible/molecule.git
+pip install --user pyasn1==0.4.5 pyasn1-modules==0.2.5 idna==2.7 ipaddress==1.0.22
+pip install --user molecule==2.20.2
 pip install --user docker openshift jmespath
 
 deploy_prereqs() {

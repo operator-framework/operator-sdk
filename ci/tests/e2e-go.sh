@@ -9,7 +9,7 @@ set -- "--image-name=$IMAGE --local-image=false"
 source ./hack/tests/scaffolding/e2e-go-scaffold.sh
 
 pushd $BASEPROJECTDIR/memcached-operator
-operator-sdk test local ./test/e2e
+operator-sdk test local ./test/e2e --verbose
 popd
 
 go test ./test/e2e/... -root=. -globalMan=testdata/empty.yaml

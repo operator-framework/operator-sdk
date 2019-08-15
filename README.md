@@ -64,7 +64,7 @@ $ mkdir -p $HOME/projects/example-inc/
 # Create a new app-operator project
 $ cd $HOME/projects/example-inc/
 $ export GO111MODULE=on
-$ operator-sdk new app-operator
+$ operator-sdk new app-operator --repo github.com/example-inc/app-operator
 $ cd app-operator
 
 # Add a new API for the custom resource AppService

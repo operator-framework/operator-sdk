@@ -45,20 +45,7 @@ func (d *DockerfileHybrid) GetInput() (input.Input, error) {
 	return d.Input, nil
 }
 
-const dockerFileHybridAnsibleTmpl = `FROM ansible/ansible-runner:1.2
-
-RUN yum remove -y ansible python-idna
-RUN yum install -y inotify-tools && yum clean all
-RUN pip uninstall ansible-runner -y
-
-RUN pip install --upgrade setuptools==41.0.1
-RUN pip install "urllib3>=1.23,<1.25"
-RUN pip install ansible==2.7.10 \
-	ansible-runner==1.2 \
-	ansible-runner-http==1.0.0 \
-	idna==2.7 \
-	"kubernetes>=8.0.0,<9.0.0" \
-	openshift==0.8.8
+const dockerFileHybridAnsibleTmpl = `FROM registry.access.redhat.com/ubi7/ubi
 
 RUN mkdir -p /etc/ansible \
     && echo "localhost ansible_connection=local" > /etc/ansible/hosts \
@@ -71,23 +58,43 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
     USER_NAME=ansible-operator\
     HOME=/opt/ansible
 
-[[- if .Watches ]]
-COPY watches.yaml ${HOME}/watches.yaml[[ end ]]
+# Install python dependencies
 
-# install operator binary
+RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
+ && yum install -y python-devel gcc inotify-tools \
+ && easy_install pip \
+ && pip install -U --no-cache-dir setuptools pip \
+ && pip install --no-cache-dir --ignore-installed ipaddress \
+      ansible-runner==1.2 \
+      ansible-runner-http==1.0.0 \
+      openshift==0.8.9 \
+      ansible==2.8 \
+ && yum remove -y gcc python-devel \
+ && yum clean all \
+ && rm -rf /var/cache/yum
+
 COPY build/_output/bin/[[.ProjectName]] ${OPERATOR}
-# install k8s_status Ansible Module
+COPY bin /usr/local/bin
 COPY library/k8s_status.py /usr/share/ansible/openshift/
 
-COPY bin /usr/local/bin
-RUN  /usr/local/bin/user_setup
+RUN /usr/local/bin/user_setup
 
+# Ensure directory permissions are properly set
+RUN mkdir -p ${HOME}/.ansible/tmp \
+ && chown -R ${USER_UID}:0 ${HOME} \
+ && chmod -R ug+rwx ${HOME}
+
+ADD https://github.com/krallin/tini/releases/latest/download/tini /tini
+RUN chmod +x /tini
+
+[[- if .Watches ]]
+COPY watches.yaml ${HOME}/watches.yaml[[ end ]]
 [[- if .Roles ]]
 COPY roles/ ${HOME}/roles/[[ end ]]
 [[- if .Playbook ]]
 COPY playbook.yml ${HOME}/playbook.yml[[ end ]]
 
-ENTRYPOINT ["/usr/local/bin/entrypoint"]
+ENTRYPOINT ["/tini", "--", "/usr/local/bin/entrypoint"]
 
 USER ${USER_UID}
 `

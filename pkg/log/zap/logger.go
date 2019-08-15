@@ -31,8 +31,12 @@ func Logger() logr.Logger {
 }
 
 func LoggerTo(destWriter io.Writer) logr.Logger {
-	syncer := zapcore.AddSync(destWriter)
 	conf := getConfig()
+	return createLogger(conf, destWriter)
+}
+
+func createLogger(conf config, destWriter io.Writer) logr.Logger {
+	syncer := zapcore.AddSync(destWriter)
 
 	conf.encoder = &logf.KubeAwareEncoder{Encoder: conf.encoder, Verbose: conf.level.Level() < 0}
 	if conf.sample {
@@ -56,23 +60,32 @@ type config struct {
 func getConfig() config {
 	var c config
 
+	var newEncoder func(...encoderConfigFunc) zapcore.Encoder
+
 	// Set the defaults depending on the log mode (development vs. production)
 	if development {
-		c.encoder = consoleEncoder()
+		newEncoder = newConsoleEncoder
 		c.level = zap.NewAtomicLevelAt(zap.DebugLevel)
 		c.opts = append(c.opts, zap.Development(), zap.AddStacktrace(zap.ErrorLevel))
 		c.sample = false
 	} else {
-		c.encoder = jsonEncoder()
+		newEncoder = newJSONEncoder
 		c.level = zap.NewAtomicLevelAt(zap.InfoLevel)
 		c.opts = append(c.opts, zap.AddStacktrace(zap.WarnLevel))
 		c.sample = true
 	}
 
 	// Override the defaults if the flags were set explicitly on the command line
+	var ecfs []encoderConfigFunc
 	if encoderVal.set {
-		c.encoder = encoderVal.encoder
+		newEncoder = encoderVal.newEncoder
 	}
+	if timeEncodingVal.set {
+		ecfs = append(ecfs, withTimeEncoding(timeEncodingVal.timeEncoder))
+	}
+
+	c.encoder = newEncoder(ecfs...)
+
 	if levelVal.set {
 		c.level = zap.NewAtomicLevelAt(levelVal.level)
 	}
