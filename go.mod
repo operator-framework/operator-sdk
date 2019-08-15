@@ -13,6 +13,7 @@ require (
 	github.com/Masterminds/sprig v0.0.0-20190301161902-9f8fceff796f // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/appscode/jsonpatch v0.0.0-20190108182946-7c0e3b262f30 // indirect
+	github.com/blang/semver v3.5.1+incompatible
 	github.com/chai2010/gettext-go v0.0.0-20170215093142-bf70f2a70fb1 // indirect
 	github.com/coreos/bbolt v1.3.3 // indirect
 	github.com/coreos/go-semver v0.2.0
