@@ -28,6 +28,7 @@ import (
 	"k8s.io/helm/pkg/chartutil"
 	helmengine "k8s.io/helm/pkg/engine"
 	"k8s.io/helm/pkg/kube"
+	rpb "k8s.io/helm/pkg/proto/hapi/release"
 	"k8s.io/helm/pkg/storage"
 	"k8s.io/helm/pkg/storage/driver"
 	"k8s.io/helm/pkg/tiller"
@@ -160,32 +161,44 @@ func getReleaseServer(cr *unstructured.Unstructured, storageBackend *storage.Sto
 func getReleaseName(storageBackend *storage.Storage, crChartName string, cr *unstructured.Unstructured) (string, error) {
 	// If a release with the legacy name exists, return the legacy name.
 	legacyName := fmt.Sprintf("%s-%s", cr.GetName(), shortenUID(cr.GetUID()))
-	_, err := storageBackend.History(legacyName)
-	if err == nil {
-		return legacyName, nil
-	} else if !notFoundErr(err) {
+	_, legacyExists, err := releaseHistory(storageBackend, legacyName)
+	if err != nil {
 		return "", err
+	}
+	if legacyExists {
+		return legacyName, nil
 	}
 
 	// If a release with the CR name does not exist, return the CR name.
 	releaseName := cr.GetName()
-	history, err := storageBackend.History(releaseName)
-	if notFoundErr(err) || (err == nil && len(history) == 0) {
-		return releaseName, nil
-	} else if err != nil {
+	history, exists, err := releaseHistory(storageBackend, releaseName)
+	if err != nil {
 		return "", err
 	}
-
-	// If a release name with the CR name exists, only return the CR name when
-	// the release's chart is the same as the chart managed by this operator.
-	existingChartName := history[0].GetChart().GetMetadata().GetName()
-	if existingChartName == "" || existingChartName == crChartName {
+	if !exists {
 		return releaseName, nil
 	}
 
-	// If another chart created the release, return an error about the duplicate
-	// release name.
-	return "", fmt.Errorf("duplicate release name: found existing release with name %q for chart %q", releaseName, existingChartName)
+	// If a release name with the CR name exists, but the release's chart is
+	// different than the chart managed by this operator, return an error
+	// because something else created the existing release.
+	existingChartName := history[0].GetChart().GetMetadata().GetName()
+	if existingChartName != crChartName {
+		return "", fmt.Errorf("duplicate release name: found existing release with name %q for chart %q", releaseName, existingChartName)
+	}
+
+	return releaseName, nil
+}
+
+func releaseHistory(storageBackend *storage.Storage, releaseName string) ([]*rpb.Release, bool, error) {
+	releaseHistory, err := storageBackend.History(releaseName)
+	if err != nil {
+		if notFoundErr(err) {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+	return releaseHistory, len(releaseHistory) > 0, nil
 }
 
 func shortenUID(uid apitypes.UID) string {
