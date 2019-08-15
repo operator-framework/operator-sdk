@@ -184,9 +184,9 @@ func getCSVFileName(name, version string) string {
 }
 
 func (s *CSV) getCSVPath(ver string) string {
-	lowerProjName := strings.ToLower(s.OperatorName)
-	name := getCSVFileName(lowerProjName, ver)
-	return filepath.Join(s.pathPrefix, OLMCatalogDir, lowerProjName, ver, name)
+	lowerOperatorName := strings.ToLower(s.OperatorName)
+	name := getCSVFileName(lowerOperatorName, ver)
+	return filepath.Join(s.pathPrefix, OLMCatalogDir, lowerOperatorName, ver, name)
 }
 
 // setCSVDefaultFields sets all csv fields that should be populated by a user
@@ -295,8 +295,8 @@ func (s *CSV) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error
 	}
 
 	// Replace all references to the old operator name.
-	lowerProjName := strings.ToLower(s.OperatorName)
-	oldCSVName := getCSVName(lowerProjName, oldVer)
+	lowerOperatorName := strings.ToLower(s.OperatorName)
+	oldCSVName := getCSVName(lowerOperatorName, oldVer)
 	oldRe, err := regexp.Compile(fmt.Sprintf("\\b%s\\b", regexp.QuoteMeta(oldCSVName)))
 	if err != nil {
 		return errors.Wrapf(err, "error compiling CSV name regexp %s", oldRe.String())
@@ -305,7 +305,7 @@ func (s *CSV) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error
 	if err != nil {
 		return err
 	}
-	newCSVName := getCSVName(lowerProjName, newVer)
+	newCSVName := getCSVName(lowerOperatorName, newVer)
 	b = oldRe.ReplaceAll(b, []byte(newCSVName))
 	*csv = olmapiv1alpha1.ClusterServiceVersion{}
 	if err = yaml.Unmarshal(b, csv); err != nil {
