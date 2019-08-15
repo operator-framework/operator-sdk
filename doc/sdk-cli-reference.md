@@ -91,14 +91,14 @@ Prints the most recent Golang packages and versions required by operators. Print
 
 ### Flags
 
-* `--as-file` - Print packages and versions in go.mod or Gopkg.toml format, depending on the dependency manager chosen when initializing or migrating a project.
+* `--dep-manager` string - Dependency manager file type to print (choices: "dep", "modules")
 
 ### Example
 
 With dependency manager `dep`:
 
 ```console
-$ operator-sdk print-deps --as-file
+$ operator-sdk print-deps
 required = [
   "k8s.io/code-generator/cmd/deepcopy-gen",
   "k8s.io/code-generator/cmd/conversion-gen",
@@ -115,10 +115,10 @@ required = [
 ...
 ```
 
-With dependency manager `modules`, i.e. go mod:
+With dependency manager Go `modules`:
 
 ```console
-$ operator-sdk print-deps --as-file
+$ operator-sdk print-deps
 module github.com/example-inc/memcached-operator
 
 require (
