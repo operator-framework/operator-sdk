@@ -54,11 +54,11 @@ var _ input.File = &PackageManifest{}
 // GetInput gets s' Input.
 func (s *PackageManifest) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		lowerProjName := strings.ToLower(s.OperatorName)
+		lowerOperatorName := strings.ToLower(s.OperatorName)
 		// Path is what the operator-registry expects:
 		// {manifests -> olm-catalog}/{operator_name}/{operator_name}.package.yaml
-		s.Path = filepath.Join(OLMCatalogDir, lowerProjName,
-			lowerProjName+PackageManifestFileExt)
+		s.Path = filepath.Join(OLMCatalogDir, lowerOperatorName,
+			lowerOperatorName+PackageManifestFileExt)
 	}
 	return s.Input, nil
 }
