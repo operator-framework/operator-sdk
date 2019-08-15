@@ -69,18 +69,18 @@ func (s *ControllerKind) setImports() (err error) {
 			return err
 		}
 	} else {
-		importPath = path.Join(s.Repo, "pkg", "apis", s.Resource.GoImportGroup, s.Resource.Version)
-		s.GoImportIdent = s.Resource.GoImportGroup + s.Resource.Version
+		importPath = path.Join(s.Repo, "pkg", "apis", s.Resource.Group, s.Resource.Version)
+		s.GoImportIdent =  s.Resource.Group + s.Resource.Version
 	}
 	// Import identifiers must be unique within a file.
 	for p, id := range s.ImportMap {
-		if s.GoImportIdent == id && importPath != p {
+		if  s.Resource.Group == id && importPath != p {
 			// Append "api" to the conflicting import identifier.
-			s.GoImportIdent = s.GoImportIdent + "api"
+			s.GoImportIdent =  s.Resource.Group + "api"
 			break
 		}
 	}
-	s.ImportMap[importPath] = s.GoImportIdent
+	s.ImportMap[importPath] =  s.Resource.Group
 	return nil
 }
 

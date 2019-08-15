@@ -51,9 +51,6 @@ type Resource struct {
 	// Parsed from APIVersion
 	Group string
 
-	// GoImportGroup is the non-hyphenated go import group for this resource
-	GoImportGroup string
-
 	// Version is the API version - e.g. v1alpha1
 	// Parsed from APIVersion
 	Version string
@@ -84,12 +81,14 @@ func (r *Resource) Validate() error {
 		return errors.New("api-version cannot be empty")
 	}
 
-	if err := r.checkAndSetKinds(); err != nil {
-		return err
-	}
 	if err := r.checkAndSetGroups(); err != nil {
 		return err
 	}
+
+	if err := r.checkAndSetKinds(); err != nil {
+		return err
+	}
+
 	if err := r.checkAndSetVersion(); err != nil {
 		return err
 	}
@@ -123,15 +122,23 @@ func (r *Resource) checkAndSetGroups() error {
 	if len(fg) < 2 || len(fg[0]) == 0 {
 		return errors.New("full group cannot be empty")
 	}
+
 	g := strings.Split(fg[0], ".")
 	if len(g) == 0 || len(g[0]) == 0 {
 		return errors.New("group cannot be empty")
 	}
-	r.FullGroup = fg[0]
-	r.Group = g[0]
 
-	s := strings.ToLower(r.Group)
-	r.GoImportGroup = strings.Replace(s, "-", "", -1)
+	if len(g) == 0 || len(g[0]) == 0 {
+		return errors.New("group cannot be empty")
+	}
+
+	groupMatch := regexp.MustCompile("^[a-z]+$")
+	if !groupMatch.MatchString(g[0]) {
+		return fmt.Errorf("group must match ^[a-z]+$ (was %s)", g[0])
+	}
+
+	r.FullGroup = fg[0]
+	r.Group = strings.ToLower(g[0])
 
 	if err := validation.IsDNS1123Subdomain(r.Group); err != nil {
 		return fmt.Errorf("group name is invalid: %v", err)

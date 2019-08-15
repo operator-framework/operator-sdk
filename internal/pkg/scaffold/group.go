@@ -15,9 +15,9 @@
 package scaffold
 
 import (
-	"path/filepath"
-
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"path/filepath"
+	"strings"
 )
 
 const GroupFile = "group.go"
@@ -32,16 +32,16 @@ var _ input.File = &Group{}
 
 func (s *Group) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(ApisDir, s.Resource.GoImportGroup, GroupFile)
+		s.Path = filepath.Join(ApisDir, strings.ToLower(s.Resource.Group), GroupFile)
 	}
 	s.TemplateBody = groupTmpl
 	return s.Input, nil
 }
 
-const groupTmpl = `// Package {{.Resource.GoImportGroup}} contains {{.Resource.GoImportGroup}} API versions.
+const groupTmpl = `// Package {{.Resource.Group}} contains {{ .Resource.Group }} API versions.
 //
-// This file ensures Go source parsers acknowledge the {{.Resource.GoImportGroup}} package
+// This file ensures Go source parsers acknowledge the {{.Resource.Group}} package
 // and any child packages. It can be removed if any other Go source files are
 // added to this package.
-package {{.Resource.GoImportGroup}}
+package {{.Resource.Group}}
 `
