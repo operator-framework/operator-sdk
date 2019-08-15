@@ -5,6 +5,7 @@
 
 ### Changed
 - The Helm operator now uses the CR name for the release name for newly created CRs. Existing CRs will continue to use their existing UID-based release name. When a release name collision occurs (when CRs of different types share the same name), the second CR will fail to install with an error about a duplicate name. ([#1818](https://github.com/operator-framework/operator-sdk/pull/1818))
+- Commands [`olm uninstall`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#uninstall) and [`olm status`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#status) no longer use a `--version` flag to specify OLM version. This information is now retrieved from the running cluster. ([#1634](https://github.com/operator-framework/operator-sdk/pull/1634))
 
 ### Deprecated
 
