@@ -123,7 +123,7 @@ func (m *Manager) Status() error {
 		return err
 	}
 
-	log.Infof("Successfully got OLM status for version %s", version)
+	log.Infof("Successfully got OLM status for version %q", version)
 	fmt.Print("\n")
 	fmt.Println(status)
 	return nil
