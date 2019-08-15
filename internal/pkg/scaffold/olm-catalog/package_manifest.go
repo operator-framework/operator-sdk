@@ -134,11 +134,15 @@ func (s *PackageManifest) newPackageManifest() *olmregistry.PackageManifest {
 // channel if possible.
 func (s *PackageManifest) setChannels(pm *olmregistry.PackageManifest) error {
 	if s.Channel != "" {
-		channelIdx := sort.Search(len(pm.Channels), func(i int) bool {
-			return pm.Channels[i].Name == s.Channel
-		})
+		channelIdx := -1
+		for i, channel := range pm.Channels {
+			if channel.Name == s.Channel {
+				channelIdx = i
+				break
+			}
+		}
 		lowerOperatorName := strings.ToLower(s.OperatorName)
-		if channelIdx == len(pm.Channels) {
+		if channelIdx == -1 {
 			pm.Channels = append(pm.Channels, olmregistry.PackageChannel{
 				Name:           s.Channel,
 				CurrentCSVName: getCSVName(lowerOperatorName, s.CSVVersion),
