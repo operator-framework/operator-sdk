@@ -94,6 +94,15 @@ test_operator() {
         kubectl logs deployment/memcached-operator -c ansible
         exit 1
     fi
+
+    # verify that metrics reflect cr creation
+    if ! bash -c -- 'kubectl run -it --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl http://memcached-operator-metrics:8686/metrics | grep example-memcached';
+    then
+        echo "Failed to verify custom resource metrics"
+        kubectl logs deployment/memcached-operator
+        exit 1
+    fi
+
     memcached_deployment=$(kubectl get deployment -l app=memcached -o jsonpath="{..metadata.name}")
     if ! timeout 1m kubectl rollout status deployment/${memcached_deployment};
     then
