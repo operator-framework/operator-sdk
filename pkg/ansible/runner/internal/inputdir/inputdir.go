@@ -143,6 +143,8 @@ func (i *InputDir) Write() error {
 		hosts := "localhost ansible_connection=local"
 		if venv != "" {
 			hosts = fmt.Sprintf("%s ansible_python_interpreter=%s", hosts, filepath.Join(venv, "bin/python"))
+		} else {
+			hosts = fmt.Sprintf("%s ansible_python_interpreter=%s", hosts, "{{ansible_playbook_python}}")
 		}
 		err = i.addFile("inventory/hosts", []byte(hosts))
 		if err != nil {
