@@ -271,39 +271,13 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 
 ```Go
 // Delete deletes the given obj from Kubernetes cluster.
-func (c Client) Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOptionFunc) error
+func (c Client) Delete(ctx context.Context, obj runtime.Object, opts ...client.DeleteOption) error
 ```
-A `client.DeleteOptionFunc` sets fields of `client.DeleteOptions` to configure a `Delete` call:
-```Go
-// DeleteOptionFunc is a function that mutates a DeleteOptions struct.
-type DeleteOptionFunc func(*DeleteOptions)
 
-type DeleteOptions struct {
-    // GracePeriodSeconds is the duration in seconds before the object should be
-    // deleted. Value must be non-negative integer. The value zero indicates
-    // delete immediately. If this value is nil, the default grace period for the
-    // specified type will be used.
-    GracePeriodSeconds *int64
+A `client.DeleteOption` is an interface that sets [`client.DeleteOptions`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0-rc.0/pkg/client/options.go#L156) fields. A `client.DeleteOption` is created by using one of the provided implementations: [`GracePeriodSeconds`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0-rc.0/pkg/client/options.go#L216), [`Preconditions`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0-rc.0/pkg/client/options.go#L227), [`PropagationPolicy`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0-rc.0/pkg/client/options.go#L238).
 
-    // Preconditions must be fulfilled before a deletion is carried out. If not
-    // possible, a 409 Conflict status will be returned.
-    Preconditions *metav1.Preconditions
-
-    // PropagationPolicy determined whether and how garbage collection will be
-    // performed. Either this field or OrphanDependents may be set, but not both.
-    // The default policy is decided by the existing finalizer set in the
-    // metadata.finalizers and the resource-specific default policy.
-    // Acceptable values are: 'Orphan' - orphan the dependents; 'Background' -
-    // allow the garbage collector to delete the dependents in the background;
-    // 'Foreground' - a cascading policy that deletes all dependents in the
-    // foreground.
-    PropagationPolicy *metav1.DeletionPropagation
-
-    // Raw represents raw DeleteOptions, as passed to the API server.
-    Raw *metav1.DeleteOptions
-}
-```
 Example:
+
 ```Go
 import (
 	"context"
