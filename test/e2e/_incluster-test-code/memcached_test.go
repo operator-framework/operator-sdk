@@ -427,7 +427,7 @@ func getMetrics(t *testing.T, f *framework.Framework, labels map[string]string, 
 		client.MatchingLabels(labels),
 		client.MatchingField("status.phase", "Running"),
 	}
-	err = f.Client.List(goctx.TODO(), pods, opts...)
+	err := f.Client.List(goctx.TODO(), pods, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pods: (%v)", err)
 	}
