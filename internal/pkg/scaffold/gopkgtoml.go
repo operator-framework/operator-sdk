@@ -73,7 +73,7 @@ required = [
 
 [[override]]
   name = "sigs.k8s.io/controller-runtime"
-  version = "=v0.2.0-beta.3"
+  version = "=v0.2.0-rc.0"
 
 # Required when resolving controller-runtime dependencies.
 [[override]]

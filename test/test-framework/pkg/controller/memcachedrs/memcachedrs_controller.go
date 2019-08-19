@@ -152,10 +152,11 @@ func (r *ReconcileMemcachedRS) Reconcile(request reconcile.Request) (reconcile.R
 	// Update the Memcached status with the pod names
 	// List the pods for this memcached's replicaSet
 	podList := &corev1.PodList{}
-	listOps := &client.ListOptions{}
-	listOps.InNamespace(memcachedrs.Namespace)
-	listOps.MatchingLabels(labelsForMemcached(memcachedrs.Name))
-	err = r.client.List(context.TODO(), podList, client.UseListOptions(listOps))
+	listOps := []client.ListOption{
+		client.InNamespace(memcachedrs.Namespace),
+		client.MatchingLabels(labelsForMemcached(memcachedrs.Name)),
+	}
+	err = r.client.List(context.TODO(), podList, listOps...)
 	if err != nil {
 		reqLogger.Error(err, "Failed to list pods", "Memcached.Namespace", memcachedrs.Namespace, "Memcached.Name", memcachedrs.Name)
 		return reconcile.Result{}, err

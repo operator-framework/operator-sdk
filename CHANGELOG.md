@@ -15,11 +15,12 @@
 - CSV config field `role-path` is now `role-paths` and takes a list of strings. Users can now specify multiple `Role` and `ClusterRole` manifests using `role-paths`. ([#1704](https://github.com/operator-framework/operator-sdk/pull/1704))
 - Upgrade Kubernetes version from `kubernetes-1.13.4` to `kubernetes-1.14.1`
 - Upgrade `github.com/operator-framework/operator-lifecycle-manager` version from `b8a4faf68e36feb6d99a6aec623b405e587b17b1` to `0.10.1`
-- Upgrade [`controller-runtime`](https://github.com/kubernetes-sigs/controller-runtime) version from `v0.1.12` to `v0.2.0-beta.3`
+- Upgrade [`controller-runtime`](https://github.com/kubernetes-sigs/controller-runtime) version from `v0.1.12` to `v0.2.0`
   - The package `sigs.k8s.io/controller-runtime/pkg/runtime/scheme` is deprecated, and contains no code. Replace this import with `sigs.k8s.io/controller-runtime/pkg/scheme` where relevant.
   - The package `sigs.k8s.io/controller-runtime/pkg/runtime/log` is deprecated. Replace this import with `sigs.k8s.io/controller-runtime/pkg/log` where relevant.
   - The package `sigs.k8s.io/controller-runtime/pkg/runtime/signals` is deprecated. Replace this import with `sigs.k8s.io/controller-runtime/pkg/manager/signals` where relevant.
-  - [`sigs.k8s.io/controller-runtime/pkg/client.Client`](https://github.com/kubernetes-sigs/controller-runtime/blob/aaddbd9d9a89d8ff329a084aece23be0406e6467/pkg/client/interfaces.go#L101)'s `List()` method signature has been updated: `List(ctx context.Context, opts *client.ListOptions, list runtime.Object) error` is now [`List(ctx context.Context, list runtime.Object, opts ...client.ListOptionFunc) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/aaddbd9d9a89d8ff329a084aece23be0406e6467/pkg/client/interfaces.go#L61). To migrate:
+  <!-- TODO: change link tags when v0.2.0 stable is released -->
+  - [`sigs.k8s.io/controller-runtime/pkg/client.Client`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0-rc.0/pkg/client/interfaces.go#L104)'s `List()` method signature has been updated: `List(ctx context.Context, opts *client.ListOptions, list runtime.Object) error` is now [`List(ctx context.Context, list runtime.Object, opts ...client.ListOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0-rc.0/pkg/client/interfaces.go#L61). To migrate:
       ```go
       import (
         "context"
@@ -29,11 +30,15 @@
 
       ...
 
-      listOpts := &client.ListOptions{}
       // Old
+      listOpts := &client.ListOptions{}
+      listOpts.InNamespace("namespace")
       err = r.client.List(context.TODO(), listOps, podList)
       // New
-      err = r.client.List(context.TODO(), podList, client.UseListOptions(listOps))
+      listOpts := []client.ListOption{
+        client.InNamespace("namespace"),        
+      }
+      err = r.client.List(context.TODO(), podList, listOpts...)
       ```
 - CRD file names were previously of the form `<group>_<version>_<kind>_crd.yaml`. Now that CRD manifest `spec.version` is deprecated in favor of `spec.versions`, i.e. multiple versions can be specified in one CRD, CRD file names have the form `<full group>_<resource>_crd.yaml`. `<full group>` is the full group name of your CRD while `<group>` is the last subdomain of `<full group>`, ex. `foo.bar.com` vs `foo`. `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`.
 

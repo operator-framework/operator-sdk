@@ -64,6 +64,10 @@ const gopkgTomlTmpl = `[[constraint]]
   name = "k8s.io/cli-runtime"
   version = "kubernetes-1.14.1"
 
+[[override]]
+  name = "sigs.k8s.io/controller-runtime"
+  version = "=v0.2.0-rc.0"
+
 # We need overrides for the following imports because dep can't resolve them
 # correctly. The easiest way to get this right is to use the versions that
 # k8s.io/helm uses. See https://github.com/helm/helm/blob/v2.14.1/glide.lock
