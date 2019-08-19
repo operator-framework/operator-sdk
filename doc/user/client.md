@@ -155,12 +155,12 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 
 	// Return all pods in the request namespace with a label of `app=<name>`
 	// and is running.
+	podList := &v1.PodList{}
 	opts := []client.ListOption{
 		client.InNamespace(request.NamespacedName.Namespace),
 		client.MatchingLabels{"app", request.NamespacedName.Name},
 		client.MatchingField("status.phase", "Running"),
 	}
-	podList := &v1.PodList{}
 	ctx := context.TODO()
 	err := r.client.List(ctx, podList, opts...)
 
@@ -371,11 +371,11 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 
 	// Update the App status with the pod names.
 	// List the pods for this app's deployment.
+	podList := &corev1.PodList{}
 	listOpts := []client.ListOption{
 		client.InNamespace(app.Namespace),
 		client.MatchingLabels(labelsForApp(app.Name)),
 	}
-	podList := &corev1.PodList{}
 	if err = r.client.List(context.TODO(), podList, listOpts...); err != nil {
 		return reconcile.Result{}, err
 	}

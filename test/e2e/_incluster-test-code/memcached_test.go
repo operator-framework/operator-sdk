@@ -137,12 +137,12 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework, labels
 	owner := owners[0]
 
 	// get operator pods
+	pods := &v1.PodList{}
 	opts := []client.ListOption{
 		client.InNamespace(namespace),
 		client.MatchingLabels(labels),
 		client.MatchingField("status.phase", "Running"),
 	}
-	pods := &v1.PodList{}
 	err = f.Client.List(goctx.TODO(), pods, opts...)
 	if err != nil {
 		return nil, err
@@ -421,12 +421,12 @@ func memcachedOperatorMetricsTest(t *testing.T, f *framework.Framework, ctx *fra
 
 func getMetrics(t *testing.T, f *framework.Framework, labels map[string]string, ns, port string) ([]byte, error) {
 	// Get operator pod
+	pods := &v1.PodList{}
 	opts := []client.ListOption{
 		client.InNamespace(ns),
 		client.MatchingLabels(labels),
 		client.MatchingField("status.phase", "Running"),
 	}
-	pods := &v1.PodList{}
 	err = f.Client.List(goctx.TODO(), pods, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pods: (%v)", err)
