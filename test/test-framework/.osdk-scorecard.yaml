@@ -1,8 +1,7 @@
 scorecard:
   output: json
   plugins:
-    - name: Basic Tests
-      basic:
+    - basic:
         cr-manifest:
           - "deploy/crds/cache_v1alpha1_memcached_cr.yaml"
           - "deploy/crds/cache_v1alpha1_memcachedrs_cr.yaml"
@@ -10,8 +9,7 @@ scorecard:
         csv-path: "deploy/olm-catalog/memcached-operator/0.0.3/memcached-operator.v0.0.3.clusterserviceversion.yaml"
         proxy-image: "quay.io/example/scorecard-proxy"
         proxy-pull-policy: "Never"
-    - name: OLM Tests
-      olm:
+    - olm:
         cr-manifest:
           - "deploy/crds/cache_v1alpha1_memcached_cr.yaml"
           - "deploy/crds/cache_v1alpha1_memcachedrs_cr.yaml"
@@ -19,18 +17,14 @@ scorecard:
         csv-path: "deploy/olm-catalog/memcached-operator/0.0.3/memcached-operator.v0.0.3.clusterserviceversion.yaml"
         proxy-image: "quay.io/example/scorecard-proxy"
         proxy-pull-policy: "Never"
-    - name: Custom Scorecard
-      external:
+    - external:
         command: scorecard/bin/print-json.sh
-    - name: Custom Test
-      external:
+    - external:
         command: scorecard/bin/my-test.sh
-    - name: Custom Test v2
-      external:
+    - external:
         command: scorecard/bin/my-test.sh
         args: ["--version=2"]
-    - name: Custom Test Cluster 2
-      external:
+    - external:
         command: scorecard/bin/my-test.sh
         env:
           - name: KUBECONFIG

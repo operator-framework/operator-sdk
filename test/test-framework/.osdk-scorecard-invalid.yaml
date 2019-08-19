@@ -1,8 +1,7 @@
 scorecard:
   output: json
   plugins:
-    - name: Basic Tests
-      basic:
+    - basic:
         invalid-option: "this is not correct"
         cr-manifest:
           - "deploy/crds/cache_v1alpha1_memcached_cr.yaml"

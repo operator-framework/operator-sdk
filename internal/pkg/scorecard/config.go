@@ -17,6 +17,8 @@ package scorecard
 import (
 	"fmt"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 )
 
 type externalPluginConfig struct {
@@ -47,10 +49,7 @@ func (e externalPluginEnv) String() string {
 }
 
 // validateConfig takes a viper config for a plugin and returns a nil error if valid or an error explaining why the config is invalid
-func validateConfig(config pluginConfig) error {
-	if config.Name == "" {
-		return fmt.Errorf("plugin name not set in config")
-	}
+func validateConfig(config pluginConfig, idx int) error {
 	// find plugin config type
 	pluginType := ""
 	if config.Basic != nil {
@@ -69,7 +68,11 @@ func validateConfig(config pluginConfig) error {
 		pluginType = "external"
 	}
 	if pluginType == "" {
-		return fmt.Errorf("plugin %s missing type", config.Name)
+		marshalledConfig, err := yaml.Marshal(config)
+		if err != nil {
+			return fmt.Errorf("plugin #%d has a missing or incorrect type", idx)
+		}
+		return fmt.Errorf("plugin #%d has a missing or incorrect type. Invalid plugin config: %s", idx, marshalledConfig)
 	}
 	return nil
 }

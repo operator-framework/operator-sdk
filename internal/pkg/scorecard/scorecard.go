@@ -54,7 +54,6 @@ var (
 var scViper *viper.Viper
 
 type pluginConfig struct {
-	Name     string                             `mapstructure:"name"`
 	Basic    *scplugins.BasicAndOLMPluginConfig `mapstructure:"basic,omitempty"`
 	Olm      *scplugins.BasicAndOLMPluginConfig `mapstructure:"olm,omitempty"`
 	External *externalPluginConfig              `mapstructure:"external,omitempty"`
@@ -72,26 +71,26 @@ func getPlugins() ([]Plugin, error) {
 	if err := scViper.UnmarshalKey("plugins", &configs, func(c *mapstructure.DecoderConfig) { c.ErrorUnused = true }); err != nil {
 		return nil, errors.Wrap(err, "Could not load plugin configurations")
 	}
-	for _, plugin := range configs {
-		if err := validateConfig(plugin); err != nil {
+	for idx, plugin := range configs {
+		if err := validateConfig(plugin, idx); err != nil {
 			return nil, fmt.Errorf("error validating plugin config: %v", err)
 		}
 		var newPlugin Plugin
 		if plugin.Basic != nil {
 			pluginConfig := plugin.Basic
 			setConfigDefaults(pluginConfig, kubeconfig)
-			newPlugin = basicOrOLMPlugin{name: plugin.Name, pluginType: scplugins.BasicOperator, config: *pluginConfig}
+			newPlugin = basicOrOLMPlugin{pluginType: scplugins.BasicOperator, config: *pluginConfig}
 		} else if plugin.Olm != nil {
 			pluginConfig := plugin.Olm
 			setConfigDefaults(pluginConfig, kubeconfig)
-			newPlugin = basicOrOLMPlugin{name: plugin.Name, pluginType: scplugins.OLMIntegration, config: *pluginConfig}
+			newPlugin = basicOrOLMPlugin{pluginType: scplugins.OLMIntegration, config: *pluginConfig}
 		} else {
 			pluginConfig := plugin.External
 			if kubeconfig != "" {
 				// put the kubeconfig flag first in case user is overriding it with an env var in config file
 				pluginConfig.Env = append([]externalPluginEnv{{Name: "KUBECONFIG", Value: kubeconfig}}, pluginConfig.Env...)
 			}
-			newPlugin = externalPlugin{name: plugin.Name, config: *pluginConfig}
+			newPlugin = externalPlugin{config: *pluginConfig}
 		}
 		plugins = append(plugins, newPlugin)
 	}
