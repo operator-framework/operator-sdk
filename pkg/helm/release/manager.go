@@ -144,7 +144,7 @@ func (m *manager) Sync(ctx context.Context) error {
 }
 
 func notFoundErr(err error) bool {
-	return strings.Contains(err.Error(), "not found")
+	return err != nil && strings.Contains(err.Error(), "not found")
 }
 
 func (m manager) loadChartAndConfig() (*cpb.Chart, *cpb.Config, error) {

@@ -23,7 +23,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// generateWithHeaderFile runs f with a header file path as an arguemnt.
+// generateWithHeaderFile runs f with a header file path as an argument.
 // If there is no project boilerplate.go.txt file, an empty header file is
 // created and its path passed as the argument.
 // generateWithHeaderFile is meant to be used with Kubernetes code generators.

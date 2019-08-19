@@ -84,6 +84,8 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "[[.ProjectName]]"
+            - name: ANSIBLE_GATHERING
+              value: explicit
       volumes:
         - name: runner
           emptyDir: {}
