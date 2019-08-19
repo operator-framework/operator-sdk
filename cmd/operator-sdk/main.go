@@ -119,6 +119,7 @@ var commandsToSkip = map[string]struct{}{
 	"help":         struct{}{},
 	"completion":   struct{}{},
 	"version":      struct{}{},
+	"print-deps":   struct{}{}, // Does not require this logic
 }
 
 func skipCheckForCmd(cmd *cobra.Command) (skip bool) {

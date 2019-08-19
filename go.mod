@@ -6,7 +6,6 @@ require (
 	cloud.google.com/go v0.37.2 // indirect
 	contrib.go.opencensus.io/exporter/ocagent v0.4.11 // indirect
 	github.com/Azure/go-autorest v11.7.0+incompatible // indirect
-	github.com/BurntSushi/toml v0.3.1
 	github.com/DATA-DOG/go-sqlmock v1.3.3 // indirect
 	github.com/MakeNowJust/heredoc v0.0.0-20171113091838-e9091a26100e // indirect
 	github.com/Masterminds/goutils v1.1.0 // indirect

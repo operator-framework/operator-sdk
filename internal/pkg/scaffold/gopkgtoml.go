@@ -18,7 +18,6 @@ import (
 	"fmt"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/internal/deps"
 )
 
 const GopkgTomlFile = "Gopkg.toml"
@@ -92,10 +91,7 @@ required = [
   non-go = true
 `
 
-func PrintDepGopkgTOML(asFile bool) error {
-	if asFile {
-		_, err := fmt.Println(gopkgTomlTmpl)
-		return err
-	}
-	return deps.PrintDepGopkgTOML(gopkgTomlTmpl)
+func PrintDepGopkgTOML() error {
+	_, err := fmt.Println(gopkgTomlTmpl)
+	return err
 }

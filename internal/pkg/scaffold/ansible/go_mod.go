@@ -65,14 +65,11 @@ replace (
 replace github.com/prometheus/prometheus => github.com/prometheus/prometheus d20e84d0fb64aff2f62a977adc8cfb656da4e286
 `
 
-func PrintGoMod(asFile bool) error {
+func PrintGoMod() error {
 	b, err := deps.ExecGoModTmpl(goModTmpl)
 	if err != nil {
 		return err
 	}
-	if asFile {
-		fmt.Print(string(b))
-		return nil
-	}
-	return deps.PrintGoMod(b)
+	fmt.Print(string(b))
+	return nil
 }

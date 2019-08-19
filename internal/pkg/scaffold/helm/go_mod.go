@@ -87,14 +87,11 @@ replace (
 )
 `
 
-func PrintGoMod(asFile bool) error {
+func PrintGoMod() error {
 	b, err := deps.ExecGoModTmpl(goModTmpl)
 	if err != nil {
 		return err
 	}
-	if asFile {
-		fmt.Print(string(b))
-		return nil
-	}
-	return deps.PrintGoMod(b)
+	fmt.Print(string(b))
+	return nil
 }
