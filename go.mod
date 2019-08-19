@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	cloud.google.com/go v0.37.2 // indirect
-	contrib.go.opencensus.io/exporter/ocagent v0.4.11 // indirect
+	contrib.go.opencensus.io/exporter/ocagent v0.4.12 // indirect
 	github.com/Azure/go-autorest v11.7.0+incompatible // indirect
 	github.com/DATA-DOG/go-sqlmock v1.3.3 // indirect
 	github.com/MakeNowJust/heredoc v0.0.0-20171113091838-e9091a26100e // indirect
@@ -27,6 +27,7 @@ require (
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1
 	github.com/go-openapi/swag v0.19.0 // indirect
+	github.com/go-sql-driver/mysql v1.4.1 // indirect
 	github.com/gobuffalo/packr v1.30.1 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/google/uuid v1.1.1 // indirect
@@ -50,9 +51,7 @@ require (
 	github.com/pelletier/go-toml v1.3.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.8.1
-	github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829
-	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90 // indirect
-	github.com/prometheus/procfs v0.0.0-20190403104016-ea9eea638872 // indirect
+	github.com/prometheus/client_golang v0.9.3
 	github.com/rogpeppe/go-internal v1.3.0
 	github.com/rubenv/sql-migrate v0.0.0-20190618074426-f4d34eae5a5c // indirect
 	github.com/sergi/go-diff v1.0.0
@@ -72,6 +71,7 @@ require (
 	go.uber.org/zap v1.10.0
 	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a // indirect
 	golang.org/x/tools v0.0.0-20190624180213-70d37148ca0c
+	google.golang.org/api v0.3.2 // indirect
 	google.golang.org/genproto v0.0.0-20190404172233-64821d5d2107 // indirect
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/square/go-jose.v2 v2.3.0 // indirect

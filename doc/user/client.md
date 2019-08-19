@@ -134,32 +134,10 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 ```Go
 // List retrieves a list of objects for a given namespace and list options
 // and stores the list in obj.
-func (c Client) List(ctx context.Context, list runtime.Object, opts ...client.ListOptionFunc) error
+func (c Client) List(ctx context.Context, list runtime.Object, opts ...client.ListOption) error
 ```
 
-A `client.ListOptionFunc` can be created either by using the provided [functional options](https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#ListOptionFunc) or using `client.ListOptions`:
-
-```Go
-type ListOptions struct {
-    // LabelSelector filters results by label.  Use SetLabelSelector to
-    // set from raw string form.
-    LabelSelector labels.Selector
-
-    // FieldSelector filters results by a particular field.  In order
-    // to use this with cache-based implementations, restrict usage to
-    // a single field-value pair that's been added to the indexers.
-    FieldSelector fields.Selector
-
-    // Namespace represents the namespace to list for, or empty for
-    // non-namespaced objects, or to list across all namespaces.
-    Namespace string
-
-    // Raw represents raw ListOptions, as passed to the API server.  Note
-    // that these may not be respected by all implementations of interface,
-    // and the LabelSelector and FieldSelector fields are ignored.
-    Raw *metav1.ListOptions
-}
-```
+A `client.ListOption` is an interface that sets [`client.ListOptions`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0-rc.0/pkg/client/options.go#L257) fields. A `client.ListOption` is created by using one of the provided implementations: [`LableSelector`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0-rc.0/pkg/client/options.go#L304), [`FieldSelector`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0-rc.0/pkg/client/options.go#L326), [`Namespace`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0-rc.0/pkg/client/options.go#L339).
 
 Example:
 
@@ -176,13 +154,15 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 	...
 
 	// Return all pods in the request namespace with a label of `app=<name>`
-	opts := &client.ListOptions{}
-	opts.SetLabelSelector(fmt.Sprintf("app=%s", request.NamespacedName.Name))
-	opts.InNamespace(request.NamespacedName.Namespace)
-
+	// and is running.
+	opts := []client.ListOption{
+		client.InNamespace(request.NamespacedName.Namespace),
+		client.MatchingLabels{"app", request.NamespacedName.Name},
+		client.MatchingField("status.phase", "Running"),
+	}
 	podList := &v1.PodList{}
 	ctx := context.TODO()
-	err := r.client.List(ctx, podList, client.UseListOptions(listOps))
+	err := r.client.List(ctx, podList, opts...)
 
 	...
 }
@@ -417,10 +397,12 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 
 	// Update the App status with the pod names.
 	// List the pods for this app's deployment.
+	listOpts := []client.ListOption{
+		client.InNamespace(app.Namespace),
+		client.MatchingLabels(labelsForApp(app.Name)),
+	}
 	podList := &corev1.PodList{}
-	labelSelector := labels.SelectorFromSet(labelsForApp(app.Name))
-	listOps := &client.ListOptions{Namespace: app.Namespace, LabelSelector: labelSelector}
-	if err = r.client.List(context.TODO(), podList, client.UseListOptions(listOps)); err != nil {
+	if err = r.client.List(context.TODO(), podList, listOpts...); err != nil {
 		return reconcile.Result{}, err
 	}
 

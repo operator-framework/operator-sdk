@@ -26,9 +26,13 @@ type MatchingFields struct {
 	Sel fields.Selector
 }
 
+var _ client.ListOption = MatchingFields{}
+
 func (m MatchingFields) ApplyToList(opts *client.ListOptions) {
 	opts.FieldSelector = m.Sel
 }
+
+var _ client.DeleteAllOfOption = MatchingFields{}
 
 func (m MatchingFields) ApplyToDeleteAllOf(opts *client.DeleteAllOfOptions) {
 	opts.FieldSelector = m.Sel
