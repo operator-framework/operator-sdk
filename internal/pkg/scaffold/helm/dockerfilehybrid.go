@@ -60,6 +60,10 @@ RUN  /usr/local/bin/user_setup
 {{- if .HelmCharts }}
 COPY helm-charts/ ${HOME}/helm-charts/{{ end }}
 
+RUN find ${HOME} -type f -exec chmod -R g+rw {} \; && \
+    find ${HOME} -type d -exec chmod -R g+rwx {} \; && \
+    chmod -R g+rwx /usr/local/bin
+
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
 
 USER ${USER_UID}`
