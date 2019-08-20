@@ -110,11 +110,17 @@ test/unit:
 
 test/subcommand: test/subcommand/test-local test/subcommand/scorecard test/subcommand/alpha-olm
 
+test/subcommand2:
+	./ci/tests/subcommand.sh
+
 test/subcommand/test-local:
 	./hack/tests/test-subcommand.sh
 
 test/subcommand/scorecard:
 	./hack/tests/scorecard-subcommand.sh
+
+test/subcommand/scorecard2:
+	./ci/tests/scorecard-subcommand.sh
 
 test/subcommand/alpha-olm:
 	./hack/tests/alpha-olm-subcommands.sh
@@ -123,6 +129,9 @@ test/e2e: test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm
 
 test/e2e/go:
 	./hack/tests/e2e-go.sh $(ARGS)
+
+test/e2e/go2:
+	./ci/tests/e2e-go.sh $(ARGS)
 
 test/e2e/ansible: image/build/ansible
 	./hack/tests/e2e-ansible.sh
@@ -135,6 +144,9 @@ test/e2e/ansible-molecule: image/build/ansible
 
 test/e2e/helm: image/build/helm
 	./hack/tests/e2e-helm.sh
+
+test/e2e/helm2:
+	./ci/tests/e2e-helm.sh
 
 test/markdown:
 	./hack/ci/marker --root=doc

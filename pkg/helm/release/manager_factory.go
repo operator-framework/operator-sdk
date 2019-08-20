@@ -24,9 +24,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	clientset "k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/typed/core/v1"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/helm/pkg/chartutil"
 	helmengine "k8s.io/helm/pkg/engine"
 	"k8s.io/helm/pkg/kube"
+	rpb "k8s.io/helm/pkg/proto/hapi/release"
 	"k8s.io/helm/pkg/storage"
 	"k8s.io/helm/pkg/storage/driver"
 	"k8s.io/helm/pkg/tiller"
@@ -66,9 +68,17 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured) (Manager, erro
 	if err != nil {
 		return nil, fmt.Errorf("failed to get client from manager: %s", err)
 	}
+	crChart, err := chartutil.LoadDir(f.chartDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load chart dir: %s", err)
+	}
 	releaseServer, err := getReleaseServer(cr, storageBackend, tillerKubeClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get helm release server: %s", err)
+	}
+	releaseName, err := getReleaseName(storageBackend, crChart.GetMetadata().GetName(), cr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get helm release name: %s", err)
 	}
 	return &manager{
 		storageBackend:   storageBackend,
@@ -76,7 +86,7 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured) (Manager, erro
 		chartDir:         f.chartDir,
 
 		tiller:      releaseServer,
-		releaseName: getReleaseName(cr),
+		releaseName: releaseName,
 		namespace:   cr.GetNamespace(),
 
 		spec:   cr.Object["spec"],
@@ -92,7 +102,11 @@ func getReleaseServer(cr *unstructured.Unstructured, storageBackend *storage.Sto
 		*controllerRef,
 	}
 	baseEngine := helmengine.New()
-	e := engine.NewOwnerRefEngine(baseEngine, ownerRefs)
+	restMapper, err := tillerKubeClient.Factory.ToRESTMapper()
+	if err != nil {
+		return nil, err
+	}
+	e := engine.NewOwnerRefEngine(baseEngine, restMapper, ownerRefs)
 	var ey environment.EngineYard = map[string]environment.Engine{
 		environment.GoTplEngine: e,
 	}
@@ -113,8 +127,78 @@ func getReleaseServer(cr *unstructured.Unstructured, storageBackend *storage.Sto
 	return tiller.NewReleaseServer(env, cs, false), nil
 }
 
-func getReleaseName(cr *unstructured.Unstructured) string {
-	return fmt.Sprintf("%s-%s", cr.GetName(), shortenUID(cr.GetUID()))
+// getReleaseName returns a release name for the CR. If a release for the
+// legacy name exists, the legacy name is returned. This ensures
+// backwards-compatibility for pre-existing CRs.
+//
+// If no releases are found with the legacy name, getReleaseName searches for
+// a release using the CR name. If a release cannot be found, or if it is found
+// and was created by the chart managed by this manager, the CR name is
+// returned.
+//
+// If a release is found but it was created by another chart, that means we
+// have a release name collision, so return an error. This case is possible
+// because Kubernetes allows instances of different types to have the same name
+// in the same namespace.
+//
+//     NOTE: The motivation for including the CR's UID was to prevent any
+//     possibility of a collision between release names of CRs of different
+//     types, so we now have to take extra precautions.
+//
+// The reason for this change is based on an interaction between the Kubernetes
+// constraint that limits label values to 63 characters and the Helm convention
+// of including the release name as a label on release resources.
+//
+// Since the legacy release name includes a 25-character value based on the
+// parent CR's UID, it leaves little extra space for the CR name and any other
+// identifying names or characters added by templates.
+//
+// TODO(jlanford): As noted above, using the CR name as the release name raises
+// the possibility of collision. We should move this logic to a validating
+// admission webhook so that the CR owner receives immediate feedback of the
+// collision. As is, the only indication of collision will be in the CR status
+// and operator logs.
+func getReleaseName(storageBackend *storage.Storage, crChartName string, cr *unstructured.Unstructured) (string, error) {
+	// If a release with the legacy name exists, return the legacy name.
+	legacyName := fmt.Sprintf("%s-%s", cr.GetName(), shortenUID(cr.GetUID()))
+	_, legacyExists, err := releaseHistory(storageBackend, legacyName)
+	if err != nil {
+		return "", err
+	}
+	if legacyExists {
+		return legacyName, nil
+	}
+
+	// If a release with the CR name does not exist, return the CR name.
+	releaseName := cr.GetName()
+	history, exists, err := releaseHistory(storageBackend, releaseName)
+	if err != nil {
+		return "", err
+	}
+	if !exists {
+		return releaseName, nil
+	}
+
+	// If a release name with the CR name exists, but the release's chart is
+	// different than the chart managed by this operator, return an error
+	// because something else created the existing release.
+	existingChartName := history[0].GetChart().GetMetadata().GetName()
+	if existingChartName != crChartName {
+		return "", fmt.Errorf("duplicate release name: found existing release with name %q for chart %q", releaseName, existingChartName)
+	}
+
+	return releaseName, nil
+}
+
+func releaseHistory(storageBackend *storage.Storage, releaseName string) ([]*rpb.Release, bool, error) {
+	releaseHistory, err := storageBackend.History(releaseName)
+	if err != nil {
+		if notFoundErr(err) {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+	return releaseHistory, len(releaseHistory) > 0, nil
 }
 
 func shortenUID(uid apitypes.UID) string {

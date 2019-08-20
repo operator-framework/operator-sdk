@@ -91,14 +91,14 @@ Prints the most recent Golang packages and versions required by operators. Print
 
 ### Flags
 
-* `--as-file` - Print packages and versions in go.mod or Gopkg.toml format, depending on the dependency manager chosen when initializing or migrating a project.
+* `--dep-manager` string - Dependency manager file type to print (choices: "dep", "modules")
 
 ### Example
 
 With dependency manager `dep`:
 
 ```console
-$ operator-sdk print-deps --as-file
+$ operator-sdk print-deps
 required = [
   "k8s.io/code-generator/cmd/deepcopy-gen",
   "k8s.io/code-generator/cmd/conversion-gen",
@@ -115,10 +115,10 @@ required = [
 ...
 ```
 
-With dependency manager `modules`, i.e. go mod:
+With dependency manager Go `modules`:
 
 ```console
-$ operator-sdk print-deps --as-file
+$ operator-sdk print-deps
 module github.com/example-inc/memcached-operator
 
 require (
@@ -202,6 +202,7 @@ Writes a Cluster Service Version (CSV) manifest and optionally CRD files to `dep
 * `--update-crds` Update CRD manifests in deploy/{operator-name}/{csv-version} using the latest CRD manifests.
 * `--csv-channel` string - Channel the CSV should be registered under in the package manifest
 * `--default-channel` - Use the channel passed to --csv-channel as the package manifests' default channel. Only valid when --csv-channel is set.
+* `--operator-name` string - Operator name to use while generating this CSV.
 
 #### Example
 
@@ -228,7 +229,7 @@ you will need to rename it before running migrate or manually add it to your Doc
 
 * `--dep-manager` string - Dependency manager the migrated project will use (choices: "dep", "modules") (default "modules")
 * `--header-file` string - Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt
-* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` with Go modules, and cannot be set if `--dep-manager=dep`
+* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` with Go modules, and cannot be set if `--dep-manager=dep` (e.g. github.com/example-inc/my-opertor)
 
 ### Example
 
@@ -559,7 +560,6 @@ $ operator-sdk up local --namespace "testing"
 
 ### Flags
 
-* `--version` string - version of OLM resources to install, uninstall, or get status about (default: "latest")
 * `--timeout` duration - time to wait for the command to complete before failing (default: "2m")
 
 ### Available commands
@@ -576,23 +576,21 @@ then creating all of the necessary resources and waiting for them to become
 healthy. When the installation is complete, `olm install` outputs a status summary
 of all of the resources that were installed.
 
+##### Flags
+
+* `--version` string - version of OLM resources to install, uninstall, or get status about (default: "latest")
+
 #### uninstall - Uninstalls Operator Lifecycle Manager
 
 ##### Use
 
 The `operator-sdk alpha olm uninstall` command uninstalls OLM from a Kubernetes
 cluster based on the configured kubeconfig. It works by downloading OLM's
-release manifests at a specific version (default: `latest`), checking to see if
+release manifests at the version installed in the cluster, checking to see if
 any of those resources exist (if none exist, it aborts with an error since OLM
 is not installed), and then deletes each resource that is listed in the
 downloaded release manifests. It waits until all resources have been fully
 cleaned up before returning.
-
-**NOTE**: It is important to use `--version` with the version number that 
-corresponds to the version that you installed with `olm install`. Not specifying
-the version (or using an incorrect version) may cause some resources not be
-cleaned up. This can occur if OLM changes its release manifest resources from
-one version of OLM to the next.
 
 #### status - Get status of the Operator Lifecycle Manager installation
 
@@ -600,17 +598,10 @@ one version of OLM to the next.
 
 The `operator-sdk alpha olm status` command gets the status of the OLM
 installation in a Kubernetes cluster based on the configured kubeconfig. It
-works by downloading OLM's release manifests at a specific version (default:
-`latest`), checking to see if any of those resources exist (if none exist, it
+works by downloading OLM's release manifests at the version installed in the
+cluster, checking to see if any of those resources exist (if none exist, it
 aborts with an error since OLM is not installed), and printing a summary of the
 status of each of those resources as they exist in the cluster.
-
-**NOTE**: It is important to use `--version` with the version number that 
-corresponds to the version that you installed with `olm install`. Not specifying
-the version (or using an incorrect version) may cause some resources to be
-missing from the summary and others to be listed as "not found". This can occur
-if OLM changes its release manifest resources from one version of OLM to the
-next.
 
 [utility_link]: https://github.com/operator-framework/operator-sdk/blob/89bf021063d18b6769bdc551ed08fc37027939d5/pkg/util/k8sutil/k8sutil.go#L140
 [k8s-code-generator]: https://github.com/kubernetes/code-generator

@@ -57,7 +57,7 @@ generates a skeletal app-operator application in $HOME/projects/example.com/app-
 	newCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. (e.g AppService) - used with \"ansible\" or \"helm\" types")
 	newCmd.Flags().StringVar(&operatorType, "type", "go", "Type of operator to initialize (choices: \"go\", \"ansible\" or \"helm\")")
 	newCmd.Flags().StringVar(&depManager, "dep-manager", "modules", `Dependency manager the new project will use (choices: "dep", "modules")`)
-	newCmd.Flags().StringVar(&repo, "repo", "", "Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of $GOPATH/src with Go modules, and cannot be set if --dep-manager=dep")
+	newCmd.Flags().StringVar(&repo, "repo", "", "Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of $GOPATH/src with Go modules, and cannot be set if --dep-manager=dep (e.g. github.com/example-inc/my-opertor)")
 	newCmd.Flags().BoolVar(&gitInit, "git-init", false, "Initialize the project directory as a git repository (default false)")
 	newCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt")
 	newCmd.Flags().BoolVar(&makeVendor, "vendor", false, "Use a vendor directory for dependencies. This flag only applies when --dep-manager=modules (the default)")
@@ -189,7 +189,7 @@ func doGoScaffold() error {
 			return merr
 		} else if !goModOn {
 			return errors.New(`dependency manager "modules" requires working directory to be in $GOPATH/src` +
-				` and GO111MODULE=on, or outside of $GOPATH/src and GO111MODULE="on", "auto", or unset`)
+				` and GO111MODULE=on, or outside of $GOPATH/src and GO111MODULE="on", "auto", or unset. More info: https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#go-modules`)
 		}
 		err = s.Execute(cfg, &scaffold.GoMod{}, &scaffold.Tools{})
 	default:

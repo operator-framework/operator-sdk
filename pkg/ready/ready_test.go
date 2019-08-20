@@ -31,6 +31,12 @@ func TestFileReady(t *testing.T) {
 		t.Errorf("Did not find expected file at %s: %v", FileName, err)
 	}
 
+	// Should be safe to set multiple times
+	err = r.Set()
+	if err != nil {
+		t.Errorf("Failed to set ready file when it already exists: %v", err)
+	}
+
 	err = r.Unset()
 	if err != nil {
 		t.Errorf("Could not unset ready file: %v", err)
@@ -42,5 +48,10 @@ func TestFileReady(t *testing.T) {
 	}
 	if !os.IsNotExist(err) {
 		t.Errorf("Error determining if file still exists at %s: %v", FileName, err)
+	}
+
+	err = r.Unset()
+	if err != nil {
+		t.Errorf("Could not unset ready file when already removed: %v", err)
 	}
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package operator
+package ansible
 
 import (
 	"os"
@@ -42,8 +42,8 @@ func TestMaxWorkers(t *testing.T) {
 				Version: "v1alpha1",
 				Kind:    "MemCacheService",
 			},
-			defvalue:  1,
-			expected:  1,
+			defvalue:  10,
+			expected:  10,
 			setenvvar: false,
 			envvar:    "WORKER_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
 		},

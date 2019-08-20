@@ -1,3 +1,45 @@
+## Unreleased
+
+### Added
+
+- The `operator-sdk olm-catalog gen-csv` command now produces indented JSON for the `alm-examples` annotation. ([#1793](https://github.com/operator-framework/operator-sdk/pull/1793))
+- Added flag `--dep-manager` to command [`operator-sdk print-deps`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#print-deps) to specify the type of dependency manager file to print. The choice of dependency manager is inferred from top-level dependency manager files present if `--dep-manager` is not set. ([#1819](https://github.com/operator-framework/operator-sdk/pull/1819))
+- Ansible based operators now gather and serve metrics about each custom resource on port 8686 of the metrics service. ([#1723](https://github.com/operator-framework/operator-sdk/pull/1723))
+- Generating and serving info metrics about each custom resource. By default these metrics are exposed on port 8686. ([#1277](https://github.com/operator-framework/operator-sdk/pull/1277))
+
+### Changed
+
+- The Helm operator now uses the CR name for the release name for newly created CRs. Existing CRs will continue to use their existing UID-based release name. When a release name collision occurs (when CRs of different types share the same name), the second CR will fail to install with an error about a duplicate name. ([#1818](https://github.com/operator-framework/operator-sdk/pull/1818))
+- Commands [`olm uninstall`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#uninstall) and [`olm status`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#status) no longer use a `--version` flag to specify OLM version. This information is now retrieved from the running cluster. ([#1634](https://github.com/operator-framework/operator-sdk/pull/1634))
+
+### Deprecated
+
+### Removed
+
+- Removed flag `--as-file` from command [`operator-sdk print-deps`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#print-deps), which now only prints packages and versions in dependency manager file format. The choice of dependency manager type is set by `--dep-manager` or inferred from top-level dependency manager files present if `--dep-manager` is not set. ([#1819](https://github.com/operator-framework/operator-sdk/pull/1819))
+
+### Bug Fixes
+
+- Configure the repo path correctly in `operator-sdk add crd` and prevent the command from running outside of an operator project. ([#1660](https://github.com/operator-framework/operator-sdk/pull/1660))
+- In the Helm operator, skip owner reference injection for cluster-scoped resources in release manifests. The Helm operator only supports namespace-scoped CRs, and namespaced resources cannot own cluster-scoped resources. ([#1817](https://github.com/operator-framework/operator-sdk/pull/1817))
+- Package manifests generated with [`gen-csv`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#gen-csv) respect the `--operator-name` flag, channel names are checked for duplicates before (re-)generation. ([#1693](https://github.com/operator-framework/operator-sdk/pull/1693))
+
+## v0.10.0
+
+### Added
+
+- Document new compile-time dependency `mercurial` in user-facing documentation. ([#1683](https://github.com/operator-framework/operator-sdk/pull/1683))
+- Adds new flag `--zap-time-encoding` to the flagset provided by `pkg/log/zap`. This flag configures the timestamp format produced by the zap logger. See the [logging doc](https://github.com/operator-framework/operator-sdk/blob/master/doc/user/logging.md) for more information. ([#1529](https://github.com/operator-framework/operator-sdk/pull/1529))
+
+### Changed
+
+- **Breaking change:** CSV config field `role-path` is now `role-paths` and takes a list of strings. Users can now specify multiple `Role` and `ClusterRole` manifests using `role-paths`. ([#1704](https://github.com/operator-framework/operator-sdk/pull/1704))
+- Make `ready` package idempotent. Now, a user can call `Set()` or `Unset()` to set the operator's readiness without knowing the current state. ([#1761](https://github.com/operator-framework/operator-sdk/pull/1761))
+
+### Bug Fixes
+
+- Check if `metadata.annotations['alm-examples']` is non-empty before creating contained CR manifests in the scorecard. ([#1789](https://github.com/operator-framework/operator-sdk/pull/1789))
+
 ## v0.9.0
 
 ### Added
@@ -13,6 +55,8 @@
 - Adds `--go-build-args` flag to `operator-sdk build` for providing additional Go build arguments. ([#1582](https://github.com/operator-framework/operator-sdk/pull/1582))
 - New flags `--csv-channel` and `--default-channel` for subcommand [`gen-csv`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#gen-csv) that add channels to and update the [package manifest](https://github.com/operator-framework/operator-registry/#manifest-format) in `deploy/olm-catalog/<operator-name>` when generating a new CSV or updating an existing one. ([#1364](https://github.com/operator-framework/operator-sdk/pull/1364))
 - Adds `go.mod` and `go.sum` to switch from `dep` to [Go modules](https://github.com/golang/go/wiki/Modules) to manage dependencies for the SDK project itself. ([#1566](https://github.com/operator-framework/operator-sdk/pull/1566))
+- New flag `--operator-name` for [`operator-sdk olm-catalog gen-csv`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#gen-csv) to specify the operator name, ex. `memcached-operator`, to use in CSV generation. The project's name is used (old behavior) if `--operator-name` is not set. ([#1571](https://github.com/operator-framework/operator-sdk/pull/1571))
+- New flag `--local-operator-flags` for `operator-sdk test local --up-local` to specify flags to run a local operator with during a test. ([#1509](https://github.com/operator-framework/operator-sdk/pull/1509))
 
 ### Changed
 
@@ -25,16 +69,17 @@
 - `operator-sdk new` will no longer create the initial commit for a new project, even with `--git-init=true`. ([#1588](https://github.com/operator-framework/operator-sdk/pull/1588))
 - When errors occur setting up the Kubernetes client for RBAC role generation, `operator-sdk new --type=helm` now falls back to a default RBAC role instead of failing. ([#1627](https://github.com/operator-framework/operator-sdk/pull/1627))
 
-### Deprecated
-
 ### Removed
 
 - The SDK no longer depends on a `vendor/` directory to manage dependencies *only if* using [Go modules](https://github.com/golang/go/wiki/Modules). The SDK and operator projects will only use vendoring if using `dep`, or modules and a `vendor/` dir is present. ([#1519](https://github.com/operator-framework/operator-sdk/pull/1519))
 - **Breaking change:** `ExposeMetricsPort` is removed and replaced with `CreateMetricsService()` function. `PrometheusPortName` constant is replaced with `OperatorPortName`. ([#1560](https://github.com/operator-framework/operator-sdk/pull/1560))
 - Removes `Gopkg.toml` and `Gopkg.lock` to drop the use of `dep` in favor of [Go modules](https://github.com/golang/go/wiki/Modules) to manage dependencies for the SDK project itself. ([#1566](https://github.com/operator-framework/operator-sdk/pull/1566))
 
+## v0.8.2
+
 ### Bug Fixes
 
+- Fixes header file content validation when the content contains empty lines or centered text. ([#1544](https://github.com/operator-framework/operator-sdk/pull/1544))
 - Generated CSV's that include a deployment install strategy will be checked for a reference to `metadata.annotations['olm.targetNamespaces']`, and if one is not found a reference will be added to the `WATCH_NAMESPACE` env var for all containers in the deployment. This is a bug because any other value that references the CSV's namespace is incorrect. ([#1396](https://github.com/operator-framework/operator-sdk/pull/1396))
 - Build `-trimpath` was not being respected. `$GOPATH` was not expanding because `exec.Cmd{}` is not executed in a shell environment. ([#1535](https://github.com/operator-framework/operator-sdk/pull/1535))
 - Running the [scorecard](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#up) with `--olm-deployed` will now only use the first CR set in either the `cr-manifest` config option or the CSV's `metadata.annotations['alm-examples']` as was intended, and access manifests correctly from the config. ([#1565](https://github.com/operator-framework/operator-sdk/pull/1565))
@@ -70,8 +115,6 @@
 - Use `registry.access.redhat.com/ubi7/ubi-minimal:latest` base image for the Go and Helm operators and scorecard proxy ([#1376](https://github.com/operator-framework/operator-sdk/pull/1376))
 - Allow "Owned CRDs Have Resources Listed" scorecard test to pass if the resources section exists
 
-### Deprecated
-
 ### Removed
 
 - The SDK will no longer run `defaulter-gen` on running `operator-sdk generate k8s`. Defaulting for CRDs should be handled with mutating admission webhooks. ([#1288](https://github.com/operator-framework/operator-sdk/pull/1288))
@@ -81,7 +124,6 @@
 
 ### Bug Fixes
 
-- In Helm-based operators, when a custom resource with a failing release is reverted back to a working state, the `ReleaseFailed` condition is now correctly removed. ([#1321](https://github.com/operator-framework/operator-sdk/pull/1321))
 - [`operator-sdk generate openapi`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#openapi) no longer overwrites CRD values derived from `+kubebuilder` annotations in Go API code. See issues ([#1212](https://github.com/operator-framework/operator-sdk/issues/1212)) and ([#1323](https://github.com/operator-framework/operator-sdk/issues/1323)) for discussion. ([#1278](https://github.com/operator-framework/operator-sdk/pull/1278))
 - Running [`operator-sdk gen-csv`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#gen-csv) on operators that do not have a CRDs directory, ex. `deploy/crds`, or do not have any [owned CRDs](https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md#your-custom-resource-definitions), will not generate a "deploy/crds not found" error.
 

@@ -7,6 +7,7 @@ This guide walks through an example of building a simple memcached-operator usin
 
 - [git][git_tool]
 - [go][go_tool] version v1.12+.
+- [mercurial][mercurial_tool] version 3.9+
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
@@ -23,9 +24,9 @@ Follow the steps in the [installation guide][install_guide] to learn how to inst
 Use the CLI to create a new memcached-operator project:
 
 ```sh
-$ mkdir -p $HOME/projects/example.com/
-$ cd $HOME/projects/example.com/
-$ operator-sdk new memcached-operator
+$ mkdir -p $HOME/projects
+$ cd $HOME/projects
+$ operator-sdk new memcached-operator --repo=github.com/example-inc/memcached-operator
 $ cd memcached-operator
 ```
 
@@ -33,7 +34,7 @@ To learn about the project directory structure, see [project layout][layout_doc]
 
 #### A note on dependency management
 
-By default, `operator-sdk new` generates a `go.mod` file to be used with [Go modules][go_mod_wiki]. If you'd like to use [`dep`][dep_tool], set `--dep-manager=dep` when initializing your project, which will create a `Gopkg.toml` file with the same dependency information.
+By default, `operator-sdk new` generates a `go.mod` file to be used with [Go modules][go_mod_wiki]. The `--repo=<path>` flag is required when creating a project outside of `$GOPATH/src`, as scaffolded files require a valid module path. If you'd like to use [`dep`][dep_tool], set `--dep-manager=dep` when initializing your project, which will create a `Gopkg.toml` file with the same dependency information.
 
 ##### Go modules
 
@@ -100,6 +101,29 @@ After modifying the `*_types.go` file always run the following command to update
 $ operator-sdk generate k8s
 ```
 
+### OpenAPI validation
+To update the OpenAPI validation section in the CRD `deploy/crds/cache_v1alpha1_memcached_crd.yaml`, run the following command.
+
+```console
+$ operator-sdk generate openapi
+```
+This validation section allows Kubernetes to validate the properties in a Memcached Custom Resource when it is created or updated. An example of the generated YAML is as follows:
+
+```YAML
+spec:
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            size:
+              format: int32
+              type: integer
+```
+
+To learn more about OpenAPI v3.0 validation schemas in Custom Resource Definitions, refer to the [Kubernetes Documentation][doc_validation_schema].
+
+
 ## Add a new Controller
 
 Add a new [Controller][controller-go-doc] to the project that will watch and reconcile the Memcached resource:
@@ -139,9 +163,20 @@ err := c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequest
   })
 ```
 
-**// TODO:** Doc on eventhandler, arbitrary mapping between watched and reconciled resource.
+#### Controller configurations
 
-**// TODO:** Doc on configuring a Controller: number of workers, predicates, watching channels,
+There are a number of useful configurations that can be made when initialzing a controller and declaring the watch parameters. For more details on these configurations consult the upstream [controller godocs][controller_godocs]. 
+
+- Set the max number of concurrent Reconciles for the controller via the [`MaxConcurrentReconciles`][controller_options]  option. Defaults to 1.
+  ```Go
+  _, err := controller.New("memcached-controller", mgr, controller.Options{
+	  MaxConcurrentReconciles: 2,
+	  ...
+  })
+  ```
+- Filter watch events using [predicates][event_filtering]
+- Choose the type of [EventHandler][event_handler_godocs] to change how a watch event will translate to reconcile requests for the reconcile loop. For operator relationships that are more complex than primary and secondary resources, the [`EnqueueRequestsFromMapFunc`][enqueue_requests_from_map_func] handler can be used to transform a watch event into an arbitrary set of reconcile requests.
+
 
 ### Reconcile loop
 
@@ -590,6 +625,11 @@ func main() {
 
 When the operator is not running in a cluster, the Manager will return an error on starting since it can't detect the operator's namespace in order to create the configmap for leader election. You can override this namespace by setting the Manager's `LeaderElectionNamespace` option.
 
+[enqueue_requests_from_map_func]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/handler#EnqueueRequestsFromMapFunc
+[event_handler_godocs]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/handler#hdr-EventHandlers
+[event_filtering]:./user/event-filtering.md
+[controller_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/controller#Options
+[controller_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/controller
 [operator_scope]:./operator-scope.md
 [install_guide]: ./user/install-operator-sdk.md
 [pod_eviction_timeout]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options
@@ -609,6 +649,7 @@ When the operator is not running in a cluster, the Manager will return an error 
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
 [docker_tool]:https://docs.docker.com/install/
+[mercurial_tool]:https://www.mercurial-scm.org/downloads
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [minikube_tool]:https://github.com/kubernetes/minikube#installation
 [scheme_package]:https://github.com/kubernetes/client-go/blob/master/kubernetes/scheme/register.go
@@ -621,3 +662,4 @@ When the operator is not running in a cluster, the Manager will return an error 
 [result_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Result
 [metrics_doc]: ./user/metrics/README.md
 [quay_link]: https://quay.io
+[doc_validation_schema]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#specifying-a-structural-schema
