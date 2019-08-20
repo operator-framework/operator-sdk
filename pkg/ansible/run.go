@@ -33,7 +33,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -191,7 +191,7 @@ func getMaxWorkers(gvk schema.GroupVersionKind, defValue int) int {
 	))
 	switch maxWorkers, err := strconv.Atoi(os.Getenv(envVar)); {
 	case maxWorkers <= 1:
-		return 1
+		return defValue
 	case err != nil:
 		// we don't care why we couldn't parse it just use default
 		log.Info("Failed to parse %v from environment. Using default %v", envVar, defValue)
