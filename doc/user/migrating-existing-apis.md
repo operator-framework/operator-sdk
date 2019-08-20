@@ -310,9 +310,18 @@ Steps to upgrade the above CRD:
 
     The API server will validate each version by its own `schema` if the global `spec.validation` block is removed. No validation will be performed if a `schema` does not exist for a version and `spec.validation` does not exist.
 
-    If the CRD targets a Kubernetes 1.13+ cluster with the `CustomResourceWebhookConversion` feature enabled, converting between multiple versions can be done using a [conversion webhooks][crd-conv-webhook].
+    If the CRD targets a Kubernetes 1.13+ cluster with the `CustomResourceWebhookConversion` feature enabled, converting between multiple versions can be done using a [conversion][crd-conv]. The `None` conversion is simple and useful when the CRD spec has not changed; it only updates the `apiVersion` field of custom resources:
 
-    _TODO:_ document adding and using conversion webhooks to migrate `v1` to `v2` once the SDK `controller-runtime` version is bumped to `v0.2.0` and [#1455](https://github.com/operator-framework/operator-sdk/pull/1455) is implemented.
+    ```yaml
+    spec:
+      ...
+      conversion:
+        strategy: None
+    ```
+
+    More complex conversions can be done using [conversion webhooks][crd-conv-webhook].
+
+    _TODO:_ document adding and using conversion webhooks to migrate `v1` to `v2` once the SDK `controller-runtime` version is bumped to `v0.2.0`.
 
     **Note:** read the [CRD versioning][crd-versions] docs for detailed CRD information, notes on conversion webhooks, and CRD versioning case studies.
 
@@ -383,6 +392,7 @@ TODO
 [openapi-gen]:https://github.com/kubernetes/kube-openapi
 [controller-tools]:https://github.com/kubernetes-sigs/controller-tools
 [crd-versions]:https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definition-versioning/
-[crd-conv-webhook]:https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definition-versioning/#webhook-conversion
+[crd-conv]:https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definition-versioning/#webhook-conversion
+[crd-conv-webhook]:https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definition-versioning/#configure-customresourcedefinition-to-use-conversion-webhooks
 [kubebuilder-api-annotations]:https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [crd-version-deprecated]:https://github.com/kubernetes/apiextensions-apiserver/commit/d1c6536f26319513417b12245c6e3aee5ca005ca
