@@ -82,11 +82,11 @@ pkg/apis/
 
 In addition to creating a new API version, the command creates an `addtoscheme_operators_v2.go` file that exposes an `AddToScheme()` function for registering `v2.CatalogSourceConfig` and `v2.CatalogSourceConfigList`.
 
-### Moving shared type definitions and functions to a separate package
+### Copying shared type definitions and functions to a separate package
 
-Now that `v2` and all related project structure exist, we can begin moving types and functions around. First, we must move anything shared between `CatalogSourceConfig` and `OperatorGroup` to a separate package that can be imported by both `v1` and `v2`. We've identified the files containing these types above: `phase.go`, `phase_types.go`, and `shared.go`.
+Now that the `v2` package and related files exist, we can begin moving types and functions around. First, we must copy anything shared between `CatalogSourceConfig` and `OperatorGroup` to a separate package that can be imported by `v1`, `v2`, and future versions. We've identified the files containing these types above: `phase.go`, `phase_types.go`, and `shared.go`.
 
-#### Creating a new 'shared' package
+#### Creating a new `shared` package
 
 Lets create a new package `shared` at `pkg/apis/operators/shared` for these files:
 
@@ -114,58 +114,64 @@ Global annotations necessary for using `shared` types in API type fields:
 - `+k8s:deepcopy-gen=package,register`: directs [`deepcopy-gen`][deepcopy-gen] to generate `DeepCopy()` functions for all types in the `shared` package.
 - `+groupName=operators.example.com`: defines the fully qualified API group name for [`client-gen`][client-gen]. Note: this annotation *must* be on the line above `package shared`.
 
-We recommend adding more comments explaining what types and functions exist in `shared` and how they are intended to be used. If you have any comments in `pkg/apis/operators/v1/doc.go` related to copied source code, ensure they are moved into `pkg/apis/operators/v2/doc.go`.
+Lastly, if you have any comments in `pkg/apis/operators/v1/doc.go` related to copied source code, ensure they are copied into `pkg/apis/operators/shared/doc.go`. Now that `shared` is a standalone library, more comments explaining what types and functions exist in the package and how they are intended to be used should be added.
 
-#### Moving types to package shared
+#### Copying types to package `shared`
 
-The three files containing shared code (`phase.go`, `phase_types.go`, and `shared.go`) can *almost* be copied as-is from `v1` to `shared`. The only changes necessary are:
+The three files containing shared code (`phase.go`, `phase_types.go`, and `shared.go`) can be copied _almost_ as-is from `v1` to `shared`. The only changes necessary are:
 
 - Changing the package statements in each file: `package v1` -> `package shared`.
 - Exporting types, their methods, and functions used by external API types.
 
-This will regenerate deepcopy code for all tagged types in `pkg/apis`.
-
-Additionally, `deepcopy-gen` must be run on the new package to generate `DeepCopy()` and `DeepCopyInto()` methods, which are necessary for all Kubernetes API code. Doing so will also remove deepcopy code for the now `shared` types from `v1`. To do so, run the following command:
+Additionally, `deepcopy-gen` must be run on the new package to generate `DeepCopy()` and `DeepCopyInto()` methods, which are necessary for all Kubernetes API types. To do so, run the following command:
 
 ```console
 $ operator-sdk generate k8s
 ```
 
-Now that shared types and functions have their own package we can update types in package `v1`, and any other package that imports them from `v1`, to use those in `shared`. The source file `catalogsourceconfig_types.go` imports and uses a type defined in `shared`, `ObjectPhase`, as a field in `CatalogSourceConfigSpec`.
+Now that shared types and functions have their own package we can update any package that imports those types from `v1` to use `shared`. The `CatalogSourceConfig` controller source file `pkg/controller/catalogsourceconfig/catalogsourceconfig_controller.go` imports and uses a type defined in `v1`, `PhaseRunning`, in its `Reconcile()` method. `PhaseRunning` should be imported from `shared` as follows:
 
 ```Go
 import (
+  "context"
+
+  operatorsv1 "github.com/test-org/test-operator/pkg/apis/operators/v1"
+  // New import
   "github.com/test-org/test-operator/pkg/apis/operators/shared"
 
-  metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+  "sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 ...
 
-type CatalogSourceConfig struct {
-  metav1.TypeMeta `json:",inline"`
-  metav1.ListMeta `json:"metadata,omitempty"`
-
-  Spec              CatalogSourceConfigSpec   `json:"spec,omitempty"`
-  Status            CatalogSourceConfigStatus `json:"status,omitempty"`
-}
-
-type CatalogSourceConfigSpec struct {
+func (r *ReconcileCatalogSourceConfig) Reconcile(request reconcile.Request) (reconcile.Result, error) {
   ...
-}
 
-type CatalogSourceConfigStatus struct {
-  // The type was previously ObjectPhase, now shared.ObjectPhase.
-  CurrentPhase shared.ObjectPhase `json:"currentPhase,omitempty"`
-  ...
+  config := &operatorsv1.CatalogSourceConfig{}
+  err := r.client.Get(context.TODO(), request.NamespacedName, config)
+  if err != nil {
+    ...
+  }
+  // Old
+  if config.Status.CurrentPhase.Phase.Name != operatorsv1.PhaseRunning {
+    ...
+  }
+  // New
+  if config.Status.CurrentPhase.Phase.Name != shared.PhaseRunning {
+    ...
+  }
 }
 ```
 
-Do this for all instances of types previously in `v1` that are now in `shared`. Once done, remove `phase.go`, `phase_types.go`, and `shared.go` from `pkg/apis/operators/v1`.
+Do this for all instances of types previously in `v1` that are now in `shared`.
 
-### Updating empty v2 types using v1 types
+Following Kubernetes API version upgrade conventions, code moved to `shared` from `v1` should be marked with "Deprecated" comments in `v1` instead of being removed. While leaving these types in `v1` duplicates code, it allows backwards compatibility for API users; deprecation comments direct users to switch to `v2` and `shared` types.
 
-The `CatalogSourceConfig` type and schema code were generated by `operator-sdk add api`, but the types are not populated. We need to move existing type data from `v1` to `v2`. This process is similar to migrating shared code, except we do not need to export any types or functions.
+Alternatively, types and functions migrated to `shared` can be removed in `v1` to de-duplicate code. This breaks backwards compatibility because projects relying on exported types previously in `v1`, now in `shared`, will be forced to update their imports to use `shared` when upgrading VCS versions. If following this upgrade path, note that updating package import paths in your project will likely be the most pervasive change lines-of-code-wise in this process. Luckily the Go compiler will tell you which import path's you have missed once `CatalogSourceConfig` types are removed from `v1`!
+
+### Updating empty `v2` types using `v1` types
+
+The `CatalogSourceConfig` type and schema code were generated by `operator-sdk add api`, but the types are not populated. We need to copy existing type data from `v1` to `v2`. This process is similar to migrating shared code, except we do not need to export any types or functions.
 
 Remove `pkg/apis/operators/v2/catalogsourceconfig_types.go` and copy `catalogsourceconfig.go` and `catalogsourceconfig_types.go` from `pkg/apis/operators/v1` to `pkg/apis/operators/v2`:
 
@@ -177,10 +183,6 @@ $ cp pkg/apis/operators/v1/catalogsourceconfig*.go pkg/apis/operators/v2
 If you have any comments or custom code in `pkg/apis/operators/v1` related to source code in either copied file, ensure that is copied to `doc.go` or `register.go` in `pkg/apis/operators/v2`.
 
 You can now run `operator-sdk generate k8s` to generate deepcopy code for the migrated `v2` types. Once this is done, update all packages that import the migrated `v1` types to use those in `v2`.
-
-The final step is to remove `catalogsourceconfig.go` and `catalogsourceconfig_types.go` and any related comments or custom code in `doc.go` or `register.go` from `pkg/apis/operators/v1`.
-
-**Note:** updating package import paths will likely be the most pervasive change lines-of-code-wise in this process. Luckily the Go compiler will tell you which import path's you have missed once `CatalogSourceConfig` types are removed from `v1`!
 
 ### Updating CustomResourceDefinition manifests and generating OpenAPI code
 
@@ -196,7 +198,9 @@ This command will automatically update all CRD manifests.
 
 #### CRD Versioning
 
-Kubernetes 1.11+ supports CRD [`spec.versions`][crd-versions] and `spec.version` is [deprecated][crd-version-deprecated] as of Kubernetes 1.12. SDK versions `v0.9.x` and below leverage [`controller-tools`][controller-tools]' CRD generator `v0.1.x` which generates a now-deprecated `spec.version` value based on the version contained in an APIs import path. Names of CRD manifest files generated by those SDK versions contain the `spec.version`, i.e. one CRD manifest is created *per version in a group* with the form `<group>_<version>_<kind>_crd.yaml`. The SDK is in the process of upgrading to `controller-tools` `v0.2.x`, which generates `spec.versions` but not `spec.version` by default. Once the upgrade is complete, future SDK versions will place all versions in a group in `spec.versions`. File names will then have the format `<group>_<resource>_crd.yaml`.
+<!-- TODO: change SDK version to the last release before controller-tools v0.2.0 refactor -->
+
+Kubernetes 1.11+ supports CRD [`spec.versions`][crd-versions] and `spec.version` is [deprecated][crd-version-deprecated] as of Kubernetes 1.12. SDK versions `v0.10.x` and below leverage [`controller-tools`][controller-tools]' CRD generator `v0.1.x` which generates a now-deprecated `spec.version` value based on the version contained in an APIs import path. Names of CRD manifest files generated by those SDK versions contain the `spec.version`, i.e. one CRD manifest is created *per version in a group* with the form `<group>_<version>_<kind>_crd.yaml`. The SDK is in the process of upgrading to `controller-tools` `v0.2.x`, which generates `spec.versions` but not `spec.version` by default. Once the upgrade is complete, future SDK versions will place all versions in a group in `spec.versions`. File names will then have the format `<group>_<resource>_crd.yaml`.
 
 **Note:** If your operator does not have custom data manually added to its CRD's, you can skip to the [following section](#golang-api-migrations-types-and-commonalities); `operator-sdk generate openapi` will handle CRD updates in that case.
 
@@ -358,7 +362,7 @@ Each case is different; one may require many more changes than others. However, 
       $ operator-sdk add api --api-version operators.example.com/v1 --kind CatalogSourceConfigurer
       ```
 
-1. Moving code from one Go package to another, ex. from `v1` to `v2` and `shared`.
+1. Copying code from one Go package to another, ex. from `v1` to `v2` and `shared`.
 1. Changing import paths in project Go source files to those of new packages.
 1. Updating CRD manifests.
     - In many cases, having sufficient [code annotations][kubebuilder-api-annotations] and running `operator-sdk generate openapi` will be enough.
