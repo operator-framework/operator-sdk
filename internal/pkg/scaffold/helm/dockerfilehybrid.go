@@ -63,8 +63,8 @@ COPY helm-charts/ ${HOME}/helm-charts/{{ end }}
 
 {{- if or .HelmCharts .Watches }}
 # Corrects file permissions to be fully executable and writable
-RUN find ${HOME} -type f -exec chmod -R g+rw {} \ && \
-    find ${HOME} -type d -exec chmod -R g+rwx {} \{{ end }}
+RUN find ${HOME} -type f -exec 'chmod -R g+rw {}'  && \
+    find ${HOME} -type d -exec 'chmod -R g+rwx {}' {{ end }}
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
 
