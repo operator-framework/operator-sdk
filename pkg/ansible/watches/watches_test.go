@@ -19,11 +19,55 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"testing"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	ansibleflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 )
+
+func TestNew(t *testing.T) {
+	expectedGVK := schema.GroupVersionKind{
+		Version: "v1alpha1",
+		Group:   "app.example.com",
+		Kind:    "Example",
+	}
+	expectedReconcilePeriod, _ := time.ParseDuration(reconcilePeriodDefault)
+
+	watch := New(expectedGVK)
+	if watch.GroupVersionKind != expectedGVK {
+		t.Fatalf("Unexpected GVK %v expected %v", watch.GroupVersionKind, expectedGVK)
+	}
+	if watch.MaxRunnerArtifacts != maxRunnerArtifactsDefault {
+		t.Fatalf("Unexpected maxRunnerArtifacts %v expected %v", watch.MaxRunnerArtifacts, maxRunnerArtifactsDefault)
+	}
+	if watch.MaxWorkers != maxWorkersDefault {
+		t.Fatalf("Unexpected maxWorkers %v expected %v", watch.MaxWorkers, maxWorkersDefault)
+	}
+	if watch.ReconcilePeriod != expectedReconcilePeriod {
+		t.Fatalf("Unexpected reconcilePeriod %v expected %v", watch.ReconcilePeriod, expectedReconcilePeriod)
+	}
+	if watch.ManageStatus != manageStatusDefault {
+		t.Fatalf("Unexpected manageStatus %v expected %v", watch.ManageStatus, manageStatusDefault)
+	}
+	if watch.WatchDependentResources != watchDependentResourcesDefault {
+		t.Fatalf("Unexpected watchDependentResources %v expected %v", watch.WatchDependentResources, watchDependentResourcesDefault)
+	}
+	if watch.WatchClusterScopedResources != watchClusterScopedResourcesDefault {
+		t.Fatalf("Unexpected watchClusterScopedResources %v expected %v", watch.WatchClusterScopedResources, watchClusterScopedResourcesDefault)
+	}
+	if watch.AnsibleVerbosity != ansibleVerbosityDefault {
+		t.Fatalf("Unexpected ansibleVerbosity %v expected %v", watch.AnsibleVerbosity, ansibleVerbosityDefault)
+	}
+
+	// this should fail validate
+	err := watch.Validate()
+	if err == nil {
+		t.Fatalf("Watch %v should have failed validation", watch)
+	}
+}
 
 func TestLoad(t *testing.T) {
 	cwd, err := os.Getwd()
@@ -56,10 +100,15 @@ func TestLoad(t *testing.T) {
 	zeroSeconds := time.Duration(0)
 	twoSeconds := time.Second * 2
 	testCases := []struct {
-		name        string
-		path        string
-		expected    []Watch
-		shouldError bool
+		name             string
+		path             string
+		maxWorkers       int
+		ansibleVerbosity int
+		expected         []Watch
+		setenvvar        bool
+		envvar           string
+		envvarValue      int
+		shouldError      bool
 	}{
 		{
 			name:        "error duplicate GVK",
@@ -112,8 +161,10 @@ func TestLoad(t *testing.T) {
 			shouldError: true,
 		},
 		{
-			name: "valid watches file",
-			path: "testdata/valid.yaml",
+			name:             "valid watches file",
+			path:             "testdata/valid.yaml",
+			maxWorkers:       1,
+			ansibleVerbosity: 2,
 			expected: []Watch{
 				Watch{
 					GroupVersionKind: schema.GroupVersionKind{
@@ -206,18 +257,333 @@ func TestLoad(t *testing.T) {
 						Vars:     map[string]interface{}{"sentinel": "finalizer_running"},
 					},
 				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "FinalizerRole",
+					},
+					Role:         validTemplate.ValidRole,
+					ManageStatus: true,
+					Finalizer: &Finalizer{
+						Name: "finalizer.app.example.com",
+						Vars: map[string]interface{}{"sentinel": "finalizer_running"},
+					},
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "MaxWorkers",
+					},
+					Role:         validTemplate.ValidRole,
+					ManageStatus: true,
+					MaxWorkers:   3,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "AnsibleVerbosity",
+					},
+					Role:             validTemplate.ValidRole,
+					ManageStatus:     true,
+					AnsibleVerbosity: 11,
+				},
+			},
+		},
+		{
+			name:             "valid watches file, worker env wins",
+			path:             "testdata/valid.yaml",
+			maxWorkers:       1,
+			ansibleVerbosity: 2,
+			setenvvar:        true,
+			envvar:           "WORKER_MAXWORKERS_APP_EXAMPLE_COM",
+			envvarValue:      4,
+			expected: []Watch{
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "NoFinalizer",
+					},
+					Playbook:                    validTemplate.ValidPlaybook,
+					ManageStatus:                true,
+					ReconcilePeriod:             twoSeconds,
+					WatchDependentResources:     true,
+					WatchClusterScopedResources: false,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "Playbook",
+					},
+					Playbook:                    validTemplate.ValidPlaybook,
+					ManageStatus:                true,
+					WatchDependentResources:     true,
+					WatchClusterScopedResources: false,
+					Finalizer: &Finalizer{
+						Name: "finalizer.app.example.com",
+						Role: validTemplate.ValidRole,
+						Vars: map[string]interface{}{"sentinel": "finalizer_running"},
+					},
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "WatchClusterScoped",
+					},
+					Playbook:                    validTemplate.ValidPlaybook,
+					ReconcilePeriod:             twoSeconds,
+					ManageStatus:                true,
+					WatchDependentResources:     true,
+					WatchClusterScopedResources: true,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "NoReconcile",
+					},
+					Playbook:        validTemplate.ValidPlaybook,
+					ReconcilePeriod: zeroSeconds,
+					ManageStatus:    true,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "DefaultStatus",
+					},
+					Playbook:     validTemplate.ValidPlaybook,
+					ManageStatus: true,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "DisableStatus",
+					},
+					Playbook:     validTemplate.ValidPlaybook,
+					ManageStatus: false,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "EnableStatus",
+					},
+					Playbook:     validTemplate.ValidPlaybook,
+					ManageStatus: true,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "Role",
+					},
+					Role:         validTemplate.ValidRole,
+					ManageStatus: true,
+					Finalizer: &Finalizer{
+						Name:     "finalizer.app.example.com",
+						Playbook: validTemplate.ValidPlaybook,
+						Vars:     map[string]interface{}{"sentinel": "finalizer_running"},
+					},
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "FinalizerRole",
+					},
+					Role:         validTemplate.ValidRole,
+					ManageStatus: true,
+					Finalizer: &Finalizer{
+						Name: "finalizer.app.example.com",
+						Vars: map[string]interface{}{"sentinel": "finalizer_running"},
+					},
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "MaxWorkers",
+					},
+					Role:         validTemplate.ValidRole,
+					ManageStatus: true,
+					MaxWorkers:   4,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "AnsibleVerbosity",
+					},
+					Role:             validTemplate.ValidRole,
+					ManageStatus:     true,
+					AnsibleVerbosity: 11,
+				},
+			},
+		},
+		{
+			name:             "valid watches file, ansible env wins",
+			path:             "testdata/valid.yaml",
+			maxWorkers:       1,
+			ansibleVerbosity: 2,
+			setenvvar:        true,
+			envvar:           "ANSIBLE_VERBOSITY_ANSIBLEVERBOSITY_APP_EXAMPLE_COM",
+			envvarValue:      4,
+			expected: []Watch{
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "NoFinalizer",
+					},
+					Playbook:                    validTemplate.ValidPlaybook,
+					ManageStatus:                true,
+					ReconcilePeriod:             twoSeconds,
+					WatchDependentResources:     true,
+					WatchClusterScopedResources: false,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "Playbook",
+					},
+					Playbook:                    validTemplate.ValidPlaybook,
+					ManageStatus:                true,
+					WatchDependentResources:     true,
+					WatchClusterScopedResources: false,
+					Finalizer: &Finalizer{
+						Name: "finalizer.app.example.com",
+						Role: validTemplate.ValidRole,
+						Vars: map[string]interface{}{"sentinel": "finalizer_running"},
+					},
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "WatchClusterScoped",
+					},
+					Playbook:                    validTemplate.ValidPlaybook,
+					ReconcilePeriod:             twoSeconds,
+					ManageStatus:                true,
+					WatchDependentResources:     true,
+					WatchClusterScopedResources: true,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "NoReconcile",
+					},
+					Playbook:        validTemplate.ValidPlaybook,
+					ReconcilePeriod: zeroSeconds,
+					ManageStatus:    true,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "DefaultStatus",
+					},
+					Playbook:     validTemplate.ValidPlaybook,
+					ManageStatus: true,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "DisableStatus",
+					},
+					Playbook:     validTemplate.ValidPlaybook,
+					ManageStatus: false,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "EnableStatus",
+					},
+					Playbook:     validTemplate.ValidPlaybook,
+					ManageStatus: true,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "Role",
+					},
+					Role:         validTemplate.ValidRole,
+					ManageStatus: true,
+					Finalizer: &Finalizer{
+						Name:     "finalizer.app.example.com",
+						Playbook: validTemplate.ValidPlaybook,
+						Vars:     map[string]interface{}{"sentinel": "finalizer_running"},
+					},
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "FinalizerRole",
+					},
+					Role:         validTemplate.ValidRole,
+					ManageStatus: true,
+					Finalizer: &Finalizer{
+						Name: "finalizer.app.example.com",
+						Vars: map[string]interface{}{"sentinel": "finalizer_running"},
+					},
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "MaxWorkers",
+					},
+					Role:         validTemplate.ValidRole,
+					ManageStatus: true,
+					MaxWorkers:   3,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "AnsibleVerbosity",
+					},
+					Role:             validTemplate.ValidRole,
+					ManageStatus:     true,
+					AnsibleVerbosity: 4,
+				},
 			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			watchSlice, err := Load(tc.path)
+			if tc.setenvvar {
+				os.Setenv(tc.envvar, strconv.Itoa(tc.envvarValue))
+			}
+			ansibleFlags := &ansibleflags.AnsibleOperatorFlags{
+				MaxWorkers:       tc.maxWorkers,
+				AnsibleVerbosity: tc.ansibleVerbosity,
+			}
+			ansibleFlags.WatchesFile = tc.path
+			watchSlice, err := Load(ansibleFlags)
 			if err != nil && !tc.shouldError {
 				t.Fatalf("Error occurred unexpectedly: %v", err)
 			}
 			if err != nil && tc.shouldError {
 				return
+			}
+			// meant to protect from adding test to valid without corresponding check
+			if len(tc.expected) != len(watchSlice) {
+				t.Fatalf("Unexpected watches length: %v expected: %v", len(watchSlice), len(tc.expected))
 			}
 			for idx, expectedWatch := range tc.expected {
 				gvk := expectedWatch.GroupVersionKind
@@ -225,11 +591,6 @@ func TestLoad(t *testing.T) {
 				if gotWatch.GroupVersionKind != gvk {
 					t.Fatalf("Unexpected GVK: \nunexpected GVK: %#v\nexpected GVK: %#v", gotWatch.GroupVersionKind, gvk)
 				}
-				// TODO: not clear if this is needed or what the corollary would be without a struct behind an interface
-				// run, ok := r.(*runner)
-				// if !ok {
-				// 	t.Fatalf("Here: %#v", r)
-				// }
 				if gotWatch.Role != expectedWatch.Role {
 					t.Fatalf("The GVK: %v unexpected Role: %v expected Role: %v", gvk, gotWatch.Role, expectedWatch.Role)
 				}
@@ -247,6 +608,126 @@ func TestLoad(t *testing.T) {
 				if gotWatch.ReconcilePeriod != expectedWatch.ReconcilePeriod {
 					t.Fatalf("The GVK: %v unexpected reconcile period: %v expected reconcile period: %v", gvk, gotWatch.ReconcilePeriod, expectedWatch.ReconcilePeriod)
 				}
+
+				if expectedWatch.MaxWorkers == 0 {
+					if gotWatch.MaxWorkers != tc.maxWorkers {
+						t.Fatalf("Unexpected max workers: %v expected workers: %v", gotWatch.MaxWorkers, tc.maxWorkers)
+					}
+				} else {
+					if gotWatch.MaxWorkers != expectedWatch.MaxWorkers {
+						t.Fatalf("Unexpected max workers: %v expected workers: %v", gotWatch.MaxWorkers, expectedWatch.MaxWorkers)
+					}
+				}
+				if expectedWatch.AnsibleVerbosity == 0 {
+					if gotWatch.AnsibleVerbosity != tc.ansibleVerbosity {
+						t.Fatalf("Unexpected ansible verbosity: %v ansible verbosity: %v", gotWatch.AnsibleVerbosity, tc.ansibleVerbosity)
+					}
+				} else {
+					if gotWatch.AnsibleVerbosity != expectedWatch.AnsibleVerbosity {
+						t.Fatalf("Unexpected ansible verbosity: %v ansible verbosity: %v", gotWatch.AnsibleVerbosity, expectedWatch.AnsibleVerbosity)
+					}
+				}
+			}
+			if tc.setenvvar {
+				os.Unsetenv(tc.envvar)
+			}
+		})
+	}
+}
+
+func TestMaxWorkers(t *testing.T) {
+	testCases := []struct {
+		name      string
+		gvk       schema.GroupVersionKind
+		defvalue  int
+		expected  int
+		setenvvar bool
+		envvar    string
+	}{
+		{
+			name: "no env, use default value",
+			gvk: schema.GroupVersionKind{
+				Group:   "cache.example.com",
+				Version: "v1alpha1",
+				Kind:    "MemCacheService",
+			},
+			defvalue:  1,
+			expected:  1,
+			setenvvar: false,
+			envvar:    "WORKER_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
+		},
+		{
+			name: "env set to 3, expect 3",
+			gvk: schema.GroupVersionKind{
+				Group:   "cache.example.com",
+				Version: "v1alpha1",
+				Kind:    "MemCacheService",
+			},
+			defvalue:  1,
+			expected:  3,
+			setenvvar: true,
+			envvar:    "WORKER_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			os.Unsetenv(tc.envvar)
+			if tc.setenvvar {
+				os.Setenv(tc.envvar, strconv.Itoa(tc.expected))
+			}
+			workers := getMaxWorkers(tc.gvk, tc.defvalue)
+			if tc.expected != workers {
+				t.Fatalf("Unexpected MaxWorkers: %v expected MaxWorkers: %v", workers, tc.expected)
+			}
+		})
+	}
+}
+
+func TestAnsibleVerbosity(t *testing.T) {
+	testCases := []struct {
+		name      string
+		gvk       schema.GroupVersionKind
+		defvalue  int
+		expected  int
+		setenvvar bool
+		envvar    string
+	}{
+		{
+			name: "no env, use default value",
+			gvk: schema.GroupVersionKind{
+				Group:   "cache.example.com",
+				Version: "v1alpha1",
+				Kind:    "MemCacheService",
+			},
+			defvalue:  1,
+			expected:  1,
+			setenvvar: false,
+			envvar:    "ANSIBLE_VERBOSITY_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
+		},
+		{
+			name: "env set to 3, expect 3",
+			gvk: schema.GroupVersionKind{
+				Group:   "cache.example.com",
+				Version: "v1alpha1",
+				Kind:    "MemCacheService",
+			},
+			defvalue:  1,
+			expected:  3,
+			setenvvar: true,
+			envvar:    "ANSIBLE_VERBOSITY_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			os.Unsetenv(tc.envvar)
+			if tc.setenvvar {
+				os.Setenv(tc.envvar, strconv.Itoa(tc.expected))
+			}
+			verbosity := getAnsibleVerbosity(tc.gvk, tc.defvalue)
+			if tc.expected != verbosity {
+				t.Fatalf("Unexpected Verbosity: %v expected Verbosity: %v", verbosity, tc.expected)
 			}
 		})
 	}
