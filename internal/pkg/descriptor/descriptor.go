@@ -35,12 +35,23 @@ import (
 // for a given API identified by Group, Version, and Kind in apisDir.
 // TODO(estroz): support ActionDescriptors parsing/setting.
 func GetCRDDescriptorForGVK(apisDir string, crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.GroupVersionKind) error {
-	specType, statusType, pkgTypes, found, err := findTypesForGVK(apisDir, gvk)
+	group := gvk.Group
+	if strings.Contains(group, ".") {
+		group = strings.Split(group, ".")[0]
+	}
+	apiDir := filepath.Join(apisDir, group, gvk.Version)
+	universe, err := getTypesFromDir(apiDir)
 	if err != nil {
+		if os.IsNotExist(err) {
+			log.Infof("API directory %s does not exist. Skipping CSV annotation parsing for API %s.", apiDir, gvk)
+			return nil
+		}
 		return err
 	}
-	if !found {
-		return nil
+	apiPkg := path.Join(projutil.GetGoPkg(), filepath.ToSlash(apiDir))
+	specType, statusType, pkgTypes, err := getSpecStatusPkgTypesForAPI(apiPkg, gvk.Kind, universe)
+	if err != nil {
+		return errors.Wrapf(err, "failed to parse spec, status, and package types for %s", gvk)
 	}
 
 	var descriptors []descriptor
@@ -97,34 +108,13 @@ func GetCRDDescriptorForGVK(apisDir string, crdDesc *olmapiv1alpha1.CRDDescripti
 	return nil
 }
 
-func findTypesForGVK(apisDir string, gvk schema.GroupVersionKind) (*types.Type, *types.Type, []*types.Type, bool, error) {
-	group := gvk.Group
-	if strings.Contains(group, ".") {
-		group = strings.Split(group, ".")[0]
-	}
-	apiDir := filepath.Join(apisDir, group, gvk.Version)
-	universe, err := getTypesFromDir(apiDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			log.Infof("API directory %s does not exist. Skipping CSV annotation parsing for API %s.", apiDir, gvk)
-			return nil, nil, nil, false, nil
-		}
-		return nil, nil, nil, false, err
-	}
-	apiPkg := path.Join(projutil.GetGoPkg(), filepath.ToSlash(apiDir))
-	spec, status, pkgTypes, err := getSpecStatusPkgTypesForAPI(universe, apiPkg, gvk.Kind)
-	if err != nil {
-		return nil, nil, nil, false, errors.Wrapf(err, "failed to parse spec, status, and package types for %s", gvk)
-	}
-	return spec, status, pkgTypes, true, nil
-}
-
-func getTypesFromDir(apiDir string) (types.Universe, error) {
-	if _, err := os.Stat(apiDir); err != nil {
+// getTypesFromDir gets all Go types from dir.
+func getTypesFromDir(dir string) (types.Universe, error) {
+	if _, err := os.Stat(dir); err != nil {
 		return nil, err
 	}
 	p := parser.New()
-	if err := p.AddDirRecursive("./" + apiDir); err != nil {
+	if err := p.AddDirRecursive("./" + dir); err != nil {
 		return nil, err
 	}
 	universe, err := p.FindTypes()
@@ -135,13 +125,13 @@ func getTypesFromDir(apiDir string) (types.Universe, error) {
 }
 
 // getSpecStatusPkgTypesForAPI finds and returns types {kind}Spec, {kind}Status,
-// and all types in apiPkg.
-func getSpecStatusPkgTypesForAPI(universe types.Universe, apiPkg, kind string) (spec, status *types.Type, pkgTypes []*types.Type, err error) {
-	for _, pkg := range universe {
-		if pkg.Path != apiPkg && !strings.HasPrefix(pkg.Path, "./") {
+// and all types in pkg.
+func getSpecStatusPkgTypesForAPI(pkg, kind string, universe types.Universe) (spec, status *types.Type, pkgTypes []*types.Type, err error) {
+	for _, upkg := range universe {
+		if upkg.Path != pkg && !strings.HasPrefix(upkg.Path, "./") {
 			continue
 		}
-		for _, t := range pkg.Types {
+		for _, t := range upkg.Types {
 			pkgTypes = append(pkgTypes, t)
 			if t.Name.Name == kind {
 				for _, m := range t.Members {
@@ -165,7 +155,7 @@ func getSpecStatusPkgTypesForAPI(universe types.Universe, apiPkg, kind string) (
 		return nil, nil, nil, errors.Errorf("no status found in type %s", kind)
 	}
 	if len(pkgTypes) == 0 {
-		return nil, nil, nil, errors.Errorf("no package types found in API %s", apiPkg)
+		return nil, nil, nil, errors.Errorf("no package types found in API %s", pkg)
 	}
 	return spec, status, pkgTypes, nil
 }
