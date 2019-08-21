@@ -183,3 +183,22 @@ func TestNew(t *testing.T) {
 		})
 	}
 }
+
+func TestAnsibleVerbosityString(t *testing.T) {
+	testCases := []struct {
+		verbosity      int
+		expectedString string
+	}{
+		{verbosity: -1, expectedString: ""},
+		{verbosity: 0, expectedString: ""},
+		{verbosity: 1, expectedString: "-v"},
+		{verbosity: 2, expectedString: "-vv"},
+	}
+
+	for _, tc := range testCases {
+		gotString := ansibleVerbosityString(tc.verbosity)
+		if tc.expectedString != gotString {
+			t.Fatalf("Unexpected string %v expected %v", gotString, tc.expectedString)
+		}
+	}
+}
