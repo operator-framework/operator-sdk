@@ -48,6 +48,5 @@ COPY watches.yaml ${HOME}/watches.yaml
 COPY {{.HelmChartsDir}}/ ${HOME}/{{.HelmChartsDir}}/
 
 RUN find ${HOME} -type f -exec chmod -R g+rw {} \; && \
-    find ${HOME} -type d -exec chmod -R g+rwx {} \; && \
-    chmod -R g+rwx /usr/local/bin
+    find ${HOME} -type d -exec chmod -R g+rwx {} \
 `
