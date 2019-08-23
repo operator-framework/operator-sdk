@@ -15,126 +15,80 @@
 package release
 
 import (
-	"encoding/json"
 	"testing"
 
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/stretchr/testify/assert"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func newTestDeployment(containers []interface{}) *unstructured.Unstructured {
-	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"kind":       "Deployment",
-			"apiVersion": "apps/v1",
-			"metadata": map[string]interface{}{
-				"name":      "test",
-				"namespace": "ns",
-			},
-			"spec": map[string]interface{}{
-				"template": map[string]interface{}{
-					"spec": map[string]interface{}{
-						"containers": containers,
-					},
+func newTestDeployment(containers []v1.Container) *appsv1.Deployment {
+	return &appsv1.Deployment{
+		TypeMeta:   metav1.TypeMeta{Kind: "Deployment", APIVersion: "apps/v1"},
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "ns"},
+		Spec: appsv1.DeploymentSpec{
+			Template: v1.PodTemplateSpec{
+				Spec: v1.PodSpec{
+					Containers: containers,
 				},
 			},
 		},
 	}
 }
 
-func TestManagerGeneratePatch(t *testing.T) {
+func TestManagerGenerateStrategicMergePatch(t *testing.T) {
 
 	tests := []struct {
-		o1    *unstructured.Unstructured
-		o2    *unstructured.Unstructured
-		patch []map[string]interface{}
+		o1    runtime.Object
+		o2    runtime.Object
+		patch string
 	}{
 		{
-			o1: newTestDeployment([]interface{}{
-				map[string]interface{}{
-					"name": "test1",
-				},
-				map[string]interface{}{
-					"name": "test2",
-				},
+			o1: newTestDeployment([]v1.Container{
+				{Name: "test1"},
+				{Name: "test2"},
 			}),
-			o2: newTestDeployment([]interface{}{
-				map[string]interface{}{
-					"name": "test1",
-				},
+			o2: newTestDeployment([]v1.Container{
+				{Name: "test1"},
 			}),
-			patch: []map[string]interface{}{},
+			patch: `{"spec":{"template":{"spec":{"$setElementOrder/containers":[{"name":"test1"}]}}}}`, //nolint:lll
 		},
 		{
-			o1: newTestDeployment([]interface{}{
-				map[string]interface{}{
-					"name": "test1",
-				},
+			o1: newTestDeployment([]v1.Container{
+				{Name: "test1"},
 			}),
-			o2: newTestDeployment([]interface{}{
-				map[string]interface{}{
-					"name": "test1",
-				},
-				map[string]interface{}{
-					"name": "test2",
-				},
+			o2: newTestDeployment([]v1.Container{
+				{Name: "test1"},
+				{Name: "test2"},
 			}),
-			patch: []map[string]interface{}{
-				{
-					"op":   "add",
-					"path": "/spec/template/spec/containers/1",
-					"value": map[string]interface{}{
-						"name": string("test2"),
-					},
-				},
-			},
+			patch: `{"spec":{"template":{"spec":{"$setElementOrder/containers":[{"name":"test1"},{"name":"test2"}],"containers":[{"name":"test2","resources":{}}]}}}}`, //nolint:lll
 		},
 		{
-			o1: newTestDeployment([]interface{}{
-				map[string]interface{}{
-					"name": "test1",
-				},
+			o1: newTestDeployment([]v1.Container{
+				{Name: "test1"},
 			}),
-			o2: newTestDeployment([]interface{}{
-				map[string]interface{}{
-					"name": "test1",
-					"test": nil,
-				},
+			o2: newTestDeployment([]v1.Container{
+				{Name: "test1", LivenessProbe: nil},
 			}),
-			patch: []map[string]interface{}{},
+			patch: `{}`,
 		},
 		{
-			o1: newTestDeployment([]interface{}{
-				map[string]interface{}{
-					"name": "test1",
-				},
+			o1: newTestDeployment([]v1.Container{
+				{Name: "test1"},
 			}),
-			o2: newTestDeployment([]interface{}{
-				map[string]interface{}{
-					"name": "test2",
-				},
+			o2: newTestDeployment([]v1.Container{
+				{Name: "test2"},
 			}),
-			patch: []map[string]interface{}{
-				{
-					"op":    "replace",
-					"path":  "/spec/template/spec/containers/0/name",
-					"value": "test2",
-				},
-			},
+			patch: `{"spec":{"template":{"spec":{"$setElementOrder/containers":[{"name":"test2"}],"containers":[{"name":"test2","resources":{}}]}}}}`, //nolint:lll
 		},
 	}
 
 	for _, test := range tests {
-		diff, err := generatePatch(test.o1, test.o2)
+		diff, err := generateStrategicMergePatch(test.o1, test.o2)
 		assert.NoError(t, err)
-
-		if len(test.patch) == 0 {
-			assert.Equal(t, 0, len(test.patch))
-		} else {
-			x := []map[string]interface{}{}
-			err = json.Unmarshal(diff, &x)
-			assert.NoError(t, err)
-			assert.Equal(t, test.patch, x)
-		}
+		assert.Equal(t, test.patch, string(diff))
 	}
 }

@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"strings"
 
-	"gomodules.xyz/jsonpatch/v3"
 	"helm.sh/helm/v3/pkg/action"
 	cpb "helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/kube"
@@ -33,7 +32,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	apitypes "k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/cli-runtime/pkg/resource"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 
 	"github.com/operator-framework/operator-sdk/pkg/helm/internal/types"
@@ -241,7 +242,7 @@ func reconcileRelease(ctx context.Context, kubeClient kube.Interface, expectedMa
 	}
 	return expectedInfos.Visit(func(expected *resource.Info, err error) error {
 		if err != nil {
-			return err
+			return fmt.Errorf("visit error: %w", err)
 		}
 
 		expectedClient := resource.NewClientWithOptions(expected.Client, func(r *rest.Request) {
@@ -249,7 +250,7 @@ func reconcileRelease(ctx context.Context, kubeClient kube.Interface, expectedMa
 		})
 		helper := resource.NewHelper(expectedClient, expected.Mapping)
 
-		existing, err := helper.Get(expected.Namespace, expected.Name, false)
+		existing, err := helper.Get(expected.Namespace, expected.Name, expected.Export)
 		if apierrors.IsNotFound(err) {
 			if _, err := helper.Create(expected.Namespace, true, expected.Object,
 				&metav1.CreateOptions{}); err != nil {
@@ -257,19 +258,24 @@ func reconcileRelease(ctx context.Context, kubeClient kube.Interface, expectedMa
 			}
 			return nil
 		} else if err != nil {
-			return err
+			return fmt.Errorf("could not get object: %w", err)
 		}
 
-		patch, err := generatePatch(existing, expected.Object)
+		expectedObj, err := asVersioned(expected)
 		if err != nil {
-			return fmt.Errorf("failed to marshal JSON patch: %w", err)
+			return fmt.Errorf("could not get versioned object: %w", err)
+		}
+		patch, err := generateStrategicMergePatch(existing, expectedObj)
+		if err != nil {
+			return fmt.Errorf("failed to generate strategic merge patch: %s", err)
 		}
 
 		if patch == nil {
 			return nil
 		}
 
-		_, err = helper.Patch(expected.Namespace, expected.Name, apitypes.JSONPatchType, patch, &metav1.PatchOptions{})
+		_, err = helper.Patch(expected.Namespace, expected.Name, apitypes.StrategicMergePatchType, patch,
+			&metav1.PatchOptions{})
 		if err != nil {
 			return fmt.Errorf("patch error: %w", err)
 		}
@@ -277,7 +283,7 @@ func reconcileRelease(ctx context.Context, kubeClient kube.Interface, expectedMa
 	})
 }
 
-func generatePatch(existing, expected runtime.Object) ([]byte, error) {
+func generateStrategicMergePatch(existing, expected runtime.Object) ([]byte, error) {
 	existingJSON, err := json.Marshal(existing)
 	if err != nil {
 		return nil, err
@@ -286,32 +292,27 @@ func generatePatch(existing, expected runtime.Object) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	ops, err := jsonpatch.CreatePatch(existingJSON, expectedJSON)
+	patchMeta, err := strategicpatch.NewPatchMetaFromStruct(expected)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not generate patch metadata: %w", err)
 	}
-
-	// We ignore the "remove" operations from the full patch because they are
-	// fields added by Kubernetes or by the user after the existing release
-	// resource has been applied. The goal for this patch is to make sure that
-	// the fields managed by the Helm chart are applied.
-	// All "add" operations without a value (null) can be ignored
-	patchOps := make([]jsonpatch.JsonPatchOperation, 0)
-	for _, op := range ops {
-		if op.Operation != "remove" && !(op.Operation == "add" && op.Value == nil) {
-			patchOps = append(patchOps, op)
-		}
+	patch, err := strategicpatch.CreateThreeWayMergePatch(expectedJSON, expectedJSON, existingJSON, patchMeta, true)
+	if err != nil {
+		return nil, fmt.Errorf("could not generate patch: %w", err)
 	}
+	return patch, nil
+}
 
-	// If there are no patch operations, return nil. Callers are expected
-	// to check for a nil response and skip the patch operation to avoid
-	// unnecessary chatter with the API server.
-	if len(patchOps) == 0 {
-		return nil, nil
+func asVersioned(info *resource.Info) (runtime.Object, error) {
+	if info.Mapping == nil {
+		return nil, fmt.Errorf("failed to get GroupVersion mapping for resource: %s", info)
 	}
-
-	return json.Marshal(patchOps)
+	gv := info.Mapping.GroupVersionKind.GroupVersion()
+	obj, err := runtime.ObjectConvertor(scheme.Scheme).ConvertToVersion(info.Object, gv)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert to versioned object: %w", err)
+	}
+	return obj, nil
 }
 
 // UninstallRelease performs a Helm release uninstall.
