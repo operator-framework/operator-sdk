@@ -19,6 +19,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// NOTE: use controller-runtime's version of MatchingFields if the following
+// issue is accepted as a feature:
+// https://github.com/kubernetes-sigs/controller-runtime/issues/576
+
 // MatchingFields implements the client.ListOption and client.DeleteAllOfOption
 // interfaces so fields.Selector can be used directly in client.List and
 // client.DeleteAllOf.

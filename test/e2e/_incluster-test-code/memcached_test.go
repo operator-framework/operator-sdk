@@ -141,7 +141,7 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework, labels
 	opts := []client.ListOption{
 		client.InNamespace(namespace),
 		client.MatchingLabels(labels),
-		client.MatchingField("status.phase", "Running"),
+		client.MatchingFields{"status.phase", "Running"},
 	}
 	err = f.Client.List(goctx.TODO(), pods, opts...)
 	if err != nil {
@@ -425,7 +425,7 @@ func getMetrics(t *testing.T, f *framework.Framework, labels map[string]string, 
 	opts := []client.ListOption{
 		client.InNamespace(ns),
 		client.MatchingLabels(labels),
-		client.MatchingField("status.phase", "Running"),
+		client.MatchingFields{"status.phase", "Running"},
 	}
 	err := f.Client.List(goctx.TODO(), pods, opts...)
 	if err != nil {
