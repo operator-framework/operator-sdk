@@ -63,7 +63,7 @@ require (
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	k8s.io/helm v2.14.1+incompatible // indirect
 	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208 // indirect
-	sigs.k8s.io/controller-runtime v0.2.0-beta.3
+	sigs.k8s.io/controller-runtime v0.2.0
 	sigs.k8s.io/controller-tools v0.1.10
 )
 
@@ -80,7 +80,6 @@ replace (
 )
 
 replace (
-	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.2.0
 	github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.31.1
 	// Pinned to v2.10.0 (kubernetes-1.14.1) so https://proxy.golang.org can
 	// resolve it correctly.
