@@ -137,7 +137,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 func (c Client) List(ctx context.Context, list runtime.Object, opts ...client.ListOption) error
 ```
 
-A `client.ListOption` is an interface that sets [`client.ListOptions`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0-rc.0/pkg/client/options.go#L257) fields. A `client.ListOption` is created by using one of the provided implementations: [`LableSelector`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0-rc.0/pkg/client/options.go#L304), [`FieldSelector`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0-rc.0/pkg/client/options.go#L326), [`Namespace`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0-rc.0/pkg/client/options.go#L339).
+A `client.ListOption` is an interface that sets [`client.ListOptions`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/options.go#L257) fields. A `client.ListOption` is created by using one of the provided implementations: [`LableSelector`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/options.go#L304), [`FieldSelector`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/options.go#L326), [`Namespace`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/options.go#L339).
 
 Example:
 
@@ -274,7 +274,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 func (c Client) Delete(ctx context.Context, obj runtime.Object, opts ...client.DeleteOption) error
 ```
 
-A `client.DeleteOption` is an interface that sets [`client.DeleteOptions`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0-rc.0/pkg/client/options.go#L156) fields. A `client.DeleteOption` is created by using one of the provided implementations: [`GracePeriodSeconds`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0-rc.0/pkg/client/options.go#L216), [`Preconditions`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0-rc.0/pkg/client/options.go#L227), [`PropagationPolicy`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0-rc.0/pkg/client/options.go#L238).
+A `client.DeleteOption` is an interface that sets [`client.DeleteOptions`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/options.go#L156) fields. A `client.DeleteOption` is created by using one of the provided implementations: [`GracePeriodSeconds`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/options.go#L216), [`Preconditions`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/options.go#L227), [`PropagationPolicy`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/options.go#L238).
 
 Example:
 

@@ -80,7 +80,7 @@ replace (
 )
 
 replace (
-	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.2.0-rc.0
+	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.2.0
 	github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.31.1
 	// Pinned to v2.10.0 (kubernetes-1.14.1) so https://proxy.golang.org can
 	// resolve it correctly.

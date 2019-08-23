@@ -66,7 +66,7 @@ const gopkgTomlTmpl = `[[constraint]]
 
 [[override]]
   name = "sigs.k8s.io/controller-runtime"
-  version = "=v0.2.0-rc.0"
+  version = "=v0.2.0"
 
 # We need overrides for the following imports because dep can't resolve them
 # correctly. The easiest way to get this right is to use the versions that

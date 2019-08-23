@@ -54,7 +54,7 @@ const gopkgTomlTmpl = `[[constraint]]
 
 [[override]]
   name = "sigs.k8s.io/controller-runtime"
-  version = "=v0.2.0-rc.0"
+  version = "=v0.2.0"
 
 [prune]
   go-tests = true

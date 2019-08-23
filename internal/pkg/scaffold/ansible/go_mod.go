@@ -61,7 +61,7 @@ replace (
 )
 
 replace (
-	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.2.0-rc.0
+	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.2.0
 	// Pinned to v2.10.0 (kubernetes-1.14.1) so https://proxy.golang.org can
 	// resolve it correctly.
 	github.com/prometheus/prometheus => github.com/prometheus/prometheus d20e84d0fb64aff2f62a977adc8cfb656da4e286
