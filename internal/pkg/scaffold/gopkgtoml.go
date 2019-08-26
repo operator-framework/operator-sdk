@@ -39,10 +39,6 @@ const gopkgTomlTmpl = `[[override]]
   branch = "master"
 
 [[override]]
-  name = "sigs.k8s.io/controller-tools"
-  version = "=v0.2.0-beta.3"
-
-[[override]]
   name = "k8s.io/api"
   # revision for tag "kubernetes-1.14.1"
   revision = "6e4e0e4f393bf5e8bbff570acd13217aa5a770cd"

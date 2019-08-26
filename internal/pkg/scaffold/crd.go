@@ -33,7 +33,6 @@ import (
 	crdgen "sigs.k8s.io/controller-tools/pkg/crd"
 	"sigs.k8s.io/controller-tools/pkg/genall"
 	"sigs.k8s.io/controller-tools/pkg/loader"
-	"sigs.k8s.io/controller-tools/pkg/markers"
 )
 
 // CRD is the input needed to generate a deploy/crds/<full group>_<resource>_crd.yaml file
@@ -117,14 +116,6 @@ func (s *CRD) CustomRender() ([]byte, error) {
 		}
 		// controller-tools does not set ListKind or Singular names.
 		setCRDNamesForResource(crd, s.Resource)
-		// As of controller-tools v0.2.0, the CRD generator creates a lengthy
-		// "metadata" validation block from ObjectMeta. The simpler "type: object"
-		// block is preferable for readability and because ObjectMeta validation
-		// is cluster-defined. This block should be overridden as "type: object".
-		//
-		// Relevant issue:
-		// https://github.com/kubernetes-sigs/controller-tools/issues/216
-		setCRDValidationMetadata(crd)
 	} else {
 		// There are currently no commands to update CRD manifests for non-Go
 		// operators, so if a CRD manifest already exists for this gvk, this
@@ -153,14 +144,6 @@ func (s *CRD) CustomRender() ([]byte, error) {
 }
 
 func runCRDGenerator(rule genall.OutputRule, root string) (err error) {
-	gctx := &genall.GenerationContext{
-		Collector: &markers.Collector{
-			Registry: &markers.Registry{},
-		},
-		Checker:    &loader.TypeChecker{},
-		InputRule:  genall.InputFromFileSystem,
-		OutputRule: rule,
-	}
 	absAPIsDir := filepath.Join(root, ApisDir)
 	gvs, err := k8sutil.ParseGroupVersions(absAPIsDir)
 	if err != nil {
@@ -173,40 +156,19 @@ func runCRDGenerator(rule genall.OutputRule, root string) (err error) {
 		}
 	}
 
-	gctx.Roots, err = loader.LoadRoots(apiDirs...)
+	cg := crdgen.Generator{}
+	gens := genall.Generators{cg}
+	r, err := gens.ForRoots(apiDirs...)
 	if err != nil {
 		return errors.Wrapf(err, "error loading API roots %+q", apiDirs)
 	}
-
-	g := crdgen.Generator{}
-	if err := g.RegisterMarkers(gctx.Collector.Registry); err != nil {
-		return errors.Wrap(err, "error registering markers for CRD API versions")
-	}
-	if err := g.Generate(gctx); err != nil {
-		return errors.Wrap(err, "error generating a CRD for API versions")
+	r.OutputRules.ByGenerator = map[genall.Generator]genall.OutputRule{cg: rule}
+	ctx := r.GenerationContext
+	ctx.OutputRule = r.OutputRules.ForGenerator(gens[0])
+	if err := gens[0].Generate(&ctx); err != nil {
+		return errors.Wrapf(err, "error generating CRDs")
 	}
 	return nil
-}
-
-// setCRDValidationMetadata sets top-level "metadata" validation blocks to
-// "type: object".
-func setCRDValidationMetadata(crd *apiextv1beta1.CustomResourceDefinition) {
-	if crd.Spec.Validation != nil && crd.Spec.Validation.OpenAPIV3Schema != nil {
-		if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["metadata"]; ok {
-			crd.Spec.Validation.OpenAPIV3Schema.Properties["metadata"] = apiextv1beta1.JSONSchemaProps{
-				Type: "object",
-			}
-		}
-	}
-	for _, ver := range crd.Spec.Versions {
-		if ver.Schema != nil && ver.Schema.OpenAPIV3Schema != nil {
-			if _, ok := ver.Schema.OpenAPIV3Schema.Properties["metadata"]; ok {
-				ver.Schema.OpenAPIV3Schema.Properties["metadata"] = apiextv1beta1.JSONSchemaProps{
-					Type: "object",
-				}
-			}
-		}
-	}
 }
 
 func newCRDForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {

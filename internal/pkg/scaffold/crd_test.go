@@ -65,6 +65,7 @@ spec:
     plural: memcacheds
     singular: memcached
   scope: Namespaced
+  version: v1alpha1
   versions:
   - name: v1alpha1
     schema:
