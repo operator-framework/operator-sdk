@@ -23,13 +23,17 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	olmresourceclient "github.com/operator-framework/operator-sdk/internal/olm/client"
 
+	"github.com/blang/semver"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -37,6 +41,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -144,6 +149,63 @@ func (c Client) UninstallVersion(ctx context.Context, version string) error {
 		return err
 	}
 	return nil
+}
+
+func (c Client) GetInstalledVersion(ctx context.Context) (string, error) {
+	opts := client.InNamespace(olmNamespace)
+	csvs := &olmapiv1alpha1.ClusterServiceVersionList{}
+	if err := c.KubeClient.List(ctx, opts, csvs); err != nil {
+		if apierrors.IsNotFound(err) || meta.IsNoMatchError(err) {
+			return "", ErrOLMNotInstalled
+		}
+		return "", errors.Wrap(err, "failed to get OLM version from CSVs")
+	}
+	var pkgServerCSV *olmapiv1alpha1.ClusterServiceVersion
+	for _, csv := range csvs.Items {
+		name := csv.GetName()
+		// Check old and new name possibilities.
+		if name == pkgServerCSVNewName || strings.HasPrefix(name, pkgServerCSVOldNamePrefix) {
+			// There is more than one version of OLM installed in the cluster,
+			// so we can't resolve the version being used.
+			if pkgServerCSV != nil {
+				return "", errors.New("failed to get OLM version: more than one OLM version installed")
+			}
+			pkgServerCSV = &csv
+		}
+	}
+	if pkgServerCSV == nil {
+		return "", ErrOLMNotInstalled
+	}
+	return getOLMVersionFromPackageServerCSV(pkgServerCSV)
+}
+
+const (
+	// Versions pre-0.11 have a versioned name.
+	pkgServerCSVOldNamePrefix = "packageserver."
+	// Versions 0.11+ have a fixed name.
+	pkgServerCSVNewName      = "packageserver"
+	pkgServerOLMVersionLabel = "olm.version"
+)
+
+func getOLMVersionFromPackageServerCSV(csv *olmapiv1alpha1.ClusterServiceVersion) (string, error) {
+	// Package server CSV's from OLM versions > 0.10.1 have a label containing
+	// the OLM version.
+	if labels := csv.GetLabels(); labels != nil {
+		if ver, ok := labels[pkgServerOLMVersionLabel]; ok {
+			return ver, nil
+		}
+	}
+	// Fall back to getting OLM version from package server CSV name. Versions
+	// of OLM <= 0.10.1 are not labelled with pkgServerOLMVersionLabel.
+	ver := strings.TrimPrefix(csv.GetName(), pkgServerCSVOldNamePrefix)
+	// OLM releases do not have a "v" prefix but CSV versions do.
+	ver = strings.TrimPrefix(ver, "v")
+	// Check if a valid semver. Ignore non-nil errors as they are not related
+	// to the reason OLM version can't be found.
+	if _, err := semver.Parse(ver); err == nil {
+		return ver, nil
+	}
+	return "", errors.Errorf("no OLM version found in %s CSV spec", csv.GetName())
 }
 
 func (c Client) GetStatus(ctx context.Context, version string) (*olmresourceclient.Status, error) {
