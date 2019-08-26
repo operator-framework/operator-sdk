@@ -159,7 +159,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 	opts := []client.ListOption{
 		client.InNamespace(request.NamespacedName.Namespace),
 		client.MatchingLabels{"app", request.NamespacedName.Name},
-		client.MatchingFields{"status.phase", "Running"},
+		client.MatchingFields{"status.phase": "Running"},
 	}
 	ctx := context.TODO()
 	err := r.client.List(ctx, podList, opts...)
