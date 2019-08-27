@@ -56,7 +56,7 @@ COPY build/_output/bin/{{.ProjectName}} ${OPERATOR}
 
 COPY bin /usr/local/bin
 RUN chmod -R g+rwx /usr/local/bin && \
-	/usr/local/bin/user_setup
+    /usr/local/bin/user_setup
 
 {{- if .HelmCharts }}
 COPY helm-charts/ ${HOME}/helm-charts/{{ end }}
