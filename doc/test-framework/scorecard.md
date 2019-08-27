@@ -29,7 +29,7 @@ options are listed below.
 While most configuration is done via a config file, there are a few important flags that can be used:
 
 - `--config` string - path to config file (default `<project_dir>/.osdk-scorecard`; file type and extension can be any of `.yaml`, `.json`, or `.toml`). If a config file is not provided and a config file is not found at the default location, the scorecard will exit with an error.
-- `--output`, `-o` string - output format. Valid options are: `text` and `json`. The default format is `text`, which is designed to be a simpler human readable format. The `json` format uses the JSON schema output  format used for plugins defined later in this document.
+- `--output`, `-o` string - output format. Valid options are: `text` and `json`. The default format is `text`, which is designed to be a simpler human readable format. The `json` format uses the JSON schema output format used for plugins defined later in this document.
 - `--kubeconfig` string - path to kubeconfig. It sets the kubeconfig internally for internal plugins and sets the `KUBECONFIG` env var to the provided value for external plugins. If an external plugin specifically sets the `KUBECONFIG` env var, the kubeconfig from the specified env var will be used for that plugin instead.
 
 ### Config File
@@ -59,7 +59,7 @@ The `basic` and `olm` internal plugins have the same configuration fields:
 - `kubeconfig` string - path to kubeconfig. If both the global `kubeconfig` and this field are set, this field is used for the plugin.
 - `namespace` string - namespace to run the plugins in. If not set, the default specified by the kubeconfig is used
 - `init-timeout` int - time in seconds until a timeout during initialization of the operator
-- `crds-dir` string - path to directory containing CRDs that must be deployed to the cluster. All CRD manifests must end in `_crd.yaml`
+- `crds-dir` string - path to directory containing CRDs that must be deployed to the cluster.
 - `namespaced-manifest` string - manifest file with all resources that run within a namespace. By default, the scorecard will combine `service_account.yaml`, `role.yaml`, `role_binding.yaml`, and `operator.yaml` from the `deploy` directory into a temporary manifest to use as the namespaced manifest.
 - `global-manifest` string - manifest containing required resources that run globally (not namespaced). By default, the scorecard will combine all CRDs in the `crds-dir` directory into a temporary manifest to use as the global manifest.
 
