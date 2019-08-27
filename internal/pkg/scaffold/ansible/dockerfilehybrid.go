@@ -98,14 +98,10 @@ COPY roles/ ${HOME}/roles/[[ end ]]
 [[- if .Playbook ]]
 COPY playbook.yml ${HOME}/playbook.yml[[ end ]]
 
-[[- if or .Roles .Playbook ]]
+[[- if or (or .Roles .Playbook) .Watches ]]
 # Corrects file permissions to be fully executable and writable
 RUN find ${HOME} -type f -exec chmod -R g+rw {} \; && \
-	find ${HOME} -type d -exec chmod -R g+rwx {} \;
-[[ else if .Watches ]]
-# Corrects file permissions to be fully executable and writable
-RUN find ${HOME} -type f -exec chmod -R g+rw {} \; && \
-    find ${HOME} -type d -exec chmod -R g+rwx {} \;[[ end ]]
+	find ${HOME} -type d -exec chmod -R g+rwx {} \;[[ end ]]
 
 ENTRYPOINT ["/tini", "--", "/usr/local/bin/entrypoint"]
 
