@@ -104,7 +104,7 @@ test_operator() {
     fi
 
     # verify that metrics reflect cr creation
-    if ! bash -c -- "kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl http://memcached-operator-metrics:8686/metrics | grep example-memcached";
+    if ! timeout 1m bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=$metrics_test_image -- curl http://memcached-operator-metrics:8686/metrics | grep example-memcached; do sleep 1; done";
     then
         echo "Failed to verify custom resource metrics"
         kubectl describe pods

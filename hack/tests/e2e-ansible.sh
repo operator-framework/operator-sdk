@@ -57,7 +57,7 @@ test_operator() {
     if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl -sfo /dev/null http://memcached-operator-metrics:8383/metrics; do sleep 1; done";
     then
         echo "Failed to verify that metrics endpoint exists"
-        kubectl logs deployment/memcached-operator
+        kubectl logs deployment/memcached-operator -c operator
         exit 1
     fi
 
@@ -65,7 +65,7 @@ test_operator() {
     if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl -sfo /dev/null http://memcached-operator-metrics:8686/metrics; do sleep 1; done";
     then
         echo "Failed to verify that metrics endpoint exists"
-        kubectl logs deployment/memcached-operator
+        kubectl logs deployment/memcached-operator -c operator
         exit 1
     fi
 
@@ -80,10 +80,10 @@ test_operator() {
     fi
 
     # verify that metrics reflect cr creation
-    if ! bash -c -- "kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl http://memcached-operator-metrics:8686/metrics | grep example-memcached";
+    if ! timeout 1m bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=$metrics_test_image -- curl http://memcached-operator-metrics:8686/metrics | grep example-memcached; do sleep 1; done";
     then
         echo "Failed to verify custom resource metrics"
-        kubectl logs deployment/memcached-operator
+        kubectl logs deployment/memcached-operator -c operator
         exit 1
     fi
     memcached_deployment=$(kubectl get deployment -l app=memcached -o jsonpath="{..metadata.name}")
