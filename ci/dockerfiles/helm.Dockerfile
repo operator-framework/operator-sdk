@@ -13,7 +13,8 @@ ENV OPERATOR=/usr/local/bin/helm-operator \
 COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/build/operator-sdk ${OPERATOR}
 
 COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/bin /usr/local/bin
-RUN /usr/local/bin/user_setup
+RUN chmod -R g+rwx /usr/local/bin && \
+    /usr/local/bin/user_setup
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
 

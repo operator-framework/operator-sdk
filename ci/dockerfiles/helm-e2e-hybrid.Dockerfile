@@ -17,7 +17,8 @@ COPY --from=builder /helm/nginx-operator/helm-charts/ ${HOME}/helm-charts
 COPY --from=builder /nginx-operator ${OPERATOR}
 
 COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/bin /usr/local/bin
-RUN /usr/local/bin/user_setup
+RUN chmod -R g+rwx /usr/local/bin && \
+    /usr/local/bin/user_setup
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
 
