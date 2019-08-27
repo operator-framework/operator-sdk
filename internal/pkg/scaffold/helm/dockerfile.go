@@ -47,6 +47,6 @@ const dockerFileHelmTmpl = `FROM quay.io/operator-framework/helm-operator:{{.Ima
 COPY watches.yaml ${HOME}/watches.yaml
 COPY {{.HelmChartsDir}}/ ${HOME}/{{.HelmChartsDir}}/
 
-RUN find ${HOME} -type f -exec 'chmod -R g+rw {}'  && \
-    find ${HOME} -type d -exec 'chmod -R g+rwx {}' 
+RUN find ${HOME} -type f -exec chmod -R g+rw {} \;  && \
+    find ${HOME} -type d -exec chmod -R g+rwx {} \;
 `
