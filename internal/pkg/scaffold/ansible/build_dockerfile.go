@@ -52,4 +52,7 @@ COPY [[.RolesDir]]/ ${HOME}/[[.RolesDir]]/
 [[- if .GeneratePlaybook ]]
 COPY playbook.yml ${HOME}/playbook.yml
 [[- end ]]
+
+RUN find ${HOME} -type f -exec chmod -R g+rw {} \;  && \
+    find ${HOME} -type d -exec chmod -R g+rwx {} \;
 `

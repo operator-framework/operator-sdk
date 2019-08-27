@@ -12,8 +12,9 @@ ENV OPERATOR=/usr/local/bin/memcached-operator \
 COPY --from=builder /memcached-operator ${OPERATOR}
 COPY test/test-framework/build/bin /usr/local/bin
 
-RUN  /usr/local/bin/user_setup
-
+RUN chmod -R g+rwx /usr/local/bin && \
+    /usr/local/bin/user_setup
+    
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
 
 USER ${USER_UID}
