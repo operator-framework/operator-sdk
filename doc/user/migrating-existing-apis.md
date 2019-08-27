@@ -116,14 +116,24 @@ Global annotations necessary for using `shared` types in API type fields:
 
 Lastly, if you have any comments in `pkg/apis/operators/v1/doc.go` related to copied source code, ensure they are copied into `pkg/apis/operators/shared/doc.go`. Now that `shared` is a standalone library, more comments explaining what types and functions exist in the package and how they are intended to be used should be added.
 
+**Note:** you may have helper functions or types you do not want to publicly expose, but are required by functions or types in `shared`. If so, create a `pkg/apis/operators/internal/shared` package:
+
+```console
+$ pwd
+/home/user/projects/test-operator
+$ mkdir pkg/apis/operators/internal/shared
+```
+
+This package does not need a `doc.go` file as described above.
+
 #### Copying types to package `shared`
 
 The three files containing shared code (`phase.go`, `phase_types.go`, and `shared.go`) can be copied _almost_ as-is from `v1` to `shared`. The only changes necessary are:
 
 - Changing the package statements in each file: `package v1` -> `package shared`.
-- Exporting types, their methods, and functions used by external API types.
+- Moving and exporting currently unexported (private) types, their methods, and functions used by `v1` types to `pkg/apis/operators/internal/shared/shared.go`. Exported them in an internal shared package will keep them private while allowing functions and types in `shared` to use them.
 
-Additionally, `deepcopy-gen` must be run on the new package to generate `DeepCopy()` and `DeepCopyInto()` methods, which are necessary for all Kubernetes API types. To do so, run the following command:
+Additionally, `deepcopy-gen` must be run on the `shared` package to generate `DeepCopy()` and `DeepCopyInto()` methods, which are necessary for all Kubernetes API types. To do so, run the following command:
 
 ```console
 $ operator-sdk generate k8s
@@ -168,6 +178,8 @@ Do this for all instances of types previously in `v1` that are now in `shared`.
 Following Kubernetes API version upgrade conventions, code moved to `shared` from `v1` should be marked with "Deprecated" comments in `v1` instead of being removed. While leaving these types in `v1` duplicates code, it allows backwards compatibility for API users; deprecation comments direct users to switch to `v2` and `shared` types.
 
 Alternatively, types and functions migrated to `shared` can be removed in `v1` to de-duplicate code. This breaks backwards compatibility because projects relying on exported types previously in `v1`, now in `shared`, will be forced to update their imports to use `shared` when upgrading VCS versions. If following this upgrade path, note that updating package import paths in your project will likely be the most pervasive change lines-of-code-wise in this process. Luckily the Go compiler will tell you which import path's you have missed once `CatalogSourceConfig` types are removed from `v1`!
+
+If any functions or types were moved to `pkg/apis/operator/internal/shared`, remove them from files in `pkg/apis/operator/shared` and import them into `shared` from the internal package.
 
 ### Updating empty `v2` types using `v1` types
 
