@@ -275,7 +275,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 
 	ctx := context.TODO()
 	dep.Spec.Selector.MatchLabels["is_running"] = "true"
-	// A marge patch will preserve other fields modified at runtime.
+	// A merge patch will preserve other fields modified at runtime.
 	patch := client.MergeFrom(dep)
 	err := r.client.Patch(ctx, dep, patch)
 
