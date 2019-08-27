@@ -137,7 +137,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 func (c Client) List(ctx context.Context, list runtime.Object, opts ...client.ListOption) error
 ```
 
-A `client.ListOption` is an interface that sets [`client.ListOptions`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/options.go#L257) fields. A `client.ListOption` is created by using one of the provided implementations: [`LableSelector`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/options.go#L304), [`FieldSelector`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/options.go#L326), [`Namespace`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/options.go#L339).
+A `client.ListOption` is an interface that sets [`client.ListOptions`][list-options] fields. A `client.ListOption` is created by using one of the provided implementations: [`MatchingLabels`][matchinglabels], [`MatchingFields`][matchingfields], [`InNamespace`][innamespace].
 
 Example:
 
@@ -168,14 +168,23 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 }
 ```
 
+[list-options]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#ListOptions
+[matchinglabels]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#MatchingLabels
+[matchingfields]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#MatchingFields
+[innamespace]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#InNamespace
+
 #### Create
 
 ```Go
 // Create saves the object obj in the Kubernetes cluster.
 // Returns an error
-func (c Client) Create(ctx context.Context, obj runtime.Object) error
+func (c Client) Create(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error
 ```
+
+A `client.CreateOption` is an interface that sets [`client.CreateOptions`][create-options] fields. A `client.CreateOption` is created by using one of the provided implementations: [`DryRunAll`][dryrunall], [`ForceOwnership`][forceownership]. Generally these options are not needed.
+
 Example:
+
 ```Go
 import (
 	"context"
@@ -196,6 +205,8 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 }
 ```
 
+[create-options]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#CreateOptions
+
 #### Update
 
 ```Go
@@ -203,9 +214,13 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 // struct pointer so that obj can be updated with the content returned
 // by the API server. Update does *not* update the resource's status
 // subresource
-func (c Client) Update(ctx context.Context, obj runtime.Object) error
+func (c Client) Update(ctx context.Context, obj runtime.Object, opts ...client.UpdateOption) error
 ```
+
+A `client.UpdateOption` is an interface that sets [`client.UpdateOptions`][update-options] fields. A `client.UpdateOption` is created by using one of the provided implementations: [`DryRunAll`][dryrunall], [`ForceOwnership`][forceownership]. Generally these options are not needed.
+
 Example:
+
 ```Go
 import (
 	"context"
@@ -229,10 +244,54 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 }
 ```
 
+[update-options]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#UpdateOptions
+
+#### Patch
+
+```Go
+// Patch patches the given obj in the Kubernetes cluster. obj must be a
+// struct pointer so that obj can be updated with the content returned by the Server.
+func (c Client) Patch(ctx context.Context, obj runtime.Object, patch client.Patch, opts ...client.UpdateOption) error
+```
+
+A `client.PatchOption` is an interface that sets [`client.PatchOptions`][patch-options] fields. A `client.PatchOption` is created by using one of the provided implementations: [`DryRunAll`][dryrunall], [`ForceOwnership`][forceownership]. Generally these options are not needed.
+
+Example:
+
+```Go
+import (
+	"context"
+	"k8s.io/api/apps/v1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
+func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	...
+
+	dep := &v1.Deployment{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, dep)
+
+	...
+
+	ctx := context.TODO()
+	dep.Spec.Selector.MatchLabels["is_running"] = "true"
+	// A marge patch will preserve other fields modified at runtime.
+	patch := client.MergeFrom(dep)
+	err := r.client.Patch(ctx, dep, patch)
+
+	...
+}
+```
+
+[patch-options]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#PatchOption
+[dryrunall]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#DryRunAll
+[forceownership]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#ForceOwnership
+
 ##### Updating Status Subresource
 
-When updating the [status subresource][cr-status-subresource] from the client,
-the StatusWriter must be used which can be gotten with `Status()`
+When updating the [status subresource][cr-status-subresource] from the client, the [`StatusWriter`][statuswriter] must be used. The status subresource is retrieved with `Status()` and updated with `Update()` or patched with `Patch()`.
+
+`Update()` takes variadic `client.UpdateOption`'s, and `Patch()` takes variadic `client.PatchOption`'s. See [`Client.Update()`](#update) and [`Client.Patch()`](#patch) for more details. Generally these options are not needed.
 
 ##### Status
 
@@ -253,19 +312,27 @@ import (
 func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	...
 
+	ctx := context.TODO()
 	mem := &cachev1alpha1.Memcached{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, mem)
+	err := r.client.Get(ctx, request.NamespacedName, mem)
 
 	...
 
-	ctx := context.TODO()
+	// Update
 	mem.Status.Nodes = []string{"pod1", "pod2"}
 	err := r.client.Status().Update(ctx, mem)
+
+	...
+
+	// Patch
+	patch := client.MergeFrom(mem)
+	err := r.client.Status().Patch(ctx, mem, patch)
 
 	...
 }
 ```
 
+[statuswriter]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#StatusWriter
 
 #### Delete
 
@@ -274,7 +341,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 func (c Client) Delete(ctx context.Context, obj runtime.Object, opts ...client.DeleteOption) error
 ```
 
-A `client.DeleteOption` is an interface that sets [`client.DeleteOptions`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/options.go#L156) fields. A `client.DeleteOption` is created by using one of the provided implementations: [`GracePeriodSeconds`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/options.go#L216), [`Preconditions`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/options.go#L227), [`PropagationPolicy`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/options.go#L238).
+A `client.DeleteOption` is an interface that sets [`client.DeleteOptions`][delete-opts] fields. A `client.DeleteOption` is created by using one of the provided implementations: [`GracePeriodSeconds`][graceperiodseconds], [`Preconditions`][preconditions], [`PropagationPolicy`][propagationpolicy].
 
 Example:
 
@@ -304,6 +371,22 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 	...
 }
 ```
+
+[delete-opts]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#DeleteOptions
+[graceperiodseconds]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#GracePeriodSeconds
+[preconditions]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#Preconditions
+[propagationpolicy]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#PropagationPolicy
+
+#### Delete
+
+```Go
+// DeleteAllOf deletes all objects of the given type matching the given options.
+func (c Client) Delete(ctx context.Context, obj runtime.Object, opts ...client.DeleteAllOfOption) error
+```
+
+A `client.DeleteAllOfOption` is an interface that sets [`client.DeleteAllOfOptions`][deleteallof-opts] fields. A `client.DeleteAllOfOption` wraps a [`client.ListOption`](#list) and [`client.DeleteOption`](#delete).
+
+[deleteallof-opts]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#DeleteAllOfOptions
 
 ### Example usage
 
