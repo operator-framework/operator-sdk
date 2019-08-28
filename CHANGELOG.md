@@ -34,6 +34,7 @@
 
 ### Changed
 
+- **Breaking Change:** New configuration format for the `operator-sdk scorecard` using config files. See [`doc/test-framework/scorecard`](doc/test-framework/scorecard) for more info ([#1641](https://github.com/operator-framework/operator-sdk/pull/1641))
 - **Breaking change:** CSV config field `role-path` is now `role-paths` and takes a list of strings. Users can now specify multiple `Role` and `ClusterRole` manifests using `role-paths`. ([#1704](https://github.com/operator-framework/operator-sdk/pull/1704))
 - Make `ready` package idempotent. Now, a user can call `Set()` or `Unset()` to set the operator's readiness without knowing the current state. ([#1761](https://github.com/operator-framework/operator-sdk/pull/1761))
 

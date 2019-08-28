@@ -1,0 +1,28 @@
+{
+  "kind": "ScorecardOutput",
+  "apiVersion": "osdk.openshift.io/v1alpha1",
+  "log": "",
+  "results": [
+    {
+      "name": "Different kubeconfig and flag set",
+      "description": "Test plugin with /kubeconfig set via env var and flag set",
+      "error": 0,
+      "pass": 0,
+      "partialPass": 1,
+      "fail": 0,
+      "totalTests": 1,
+      "totalScorePercent": 75,
+      "tests": [
+        {
+          "state": "partial_pass",
+          "name": "Different Env and flag",
+          "description": "Test plugin with /kubeconfig set via env var and flag set",
+          "earnedPoints": 3,
+          "maximumPoints": 4,
+          "suggestions": [],
+          "errors": []
+        }
+      ]
+    }
+  ]
+}
