@@ -40,13 +40,15 @@ type Watch struct {
 	Playbook                    string                  `yaml:"playbook"`
 	Role                        string                  `yaml:"role"`
 	MaxRunnerArtifacts          int                     `yaml:"maxRunnerArtifacts"`
-	MaxWorkers                  int                     `yaml:"maxWorkers"`
 	ReconcilePeriod             time.Duration           `yaml:"reconcilePeriod"`
 	ManageStatus                bool                    `yaml:"manageStatus"`
 	WatchDependentResources     bool                    `yaml:"watchDependentResources"`
 	WatchClusterScopedResources bool                    `yaml:"watchClusterScopedResources"`
-	AnsibleVerbosity            int                     `yaml:"ansibleVerbosity"`
 	Finalizer                   *Finalizer              `yaml:"finalizer"`
+
+	// Not configurable via watches.yaml
+	MaxWorkers       int `yaml:"maxWorkers"`
+	AnsibleVerbosity int `yaml:"ansibleVerbosity"`
 }
 
 // Finalizer - Expose finalizer to be used by a user.
@@ -60,12 +62,14 @@ type Finalizer struct {
 // Default values for optional fields on Watch
 var (
 	maxRunnerArtifactsDefault          = 20
-	maxWorkersDefault                  = 1 //set by flags
 	reconcilePeriodDefault             = "0s"
 	manageStatusDefault                = true
 	watchDependentResourcesDefault     = true
 	watchClusterScopedResourcesDefault = false
-	ansibleVerbosityDefault            = 2 //set by flags
+
+	// these are overridden by cmdline flags
+	maxWorkersDefault       = 1
+	ansibleVerbosityDefault = 2
 )
 
 // UnmarshalYAML - implements the yaml.Unmarshaler interface for Watch
@@ -78,25 +82,21 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		Playbook                    string     `yaml:"playbook"`
 		Role                        string     `yaml:"role"`
 		MaxRunnerArtifacts          int        `yaml:"maxRunnerArtifacts"`
-		MaxWorkers                  int        `yaml:"maxWorkers"`
 		ReconcilePeriod             string     `yaml:"reconcilePeriod"`
 		ManageStatus                bool       `yaml:"manageStatus"`
 		WatchDependentResources     bool       `yaml:"watchDependentResources"`
 		WatchClusterScopedResources bool       `yaml:"watchClusterScopedResources"`
-		AnsibleVerbosity            int        `yaml:"ansibleVerbosity"`
 		Finalizer                   *Finalizer `yaml:"finalizer"`
 	}
 	var tmp alias
 
 	// by default, the operator will manage status and watch dependent resources
-	// The operator will not manage cluster scoped resources by default.
 	tmp.ManageStatus = manageStatusDefault
+	// the operator will not manage cluster scoped resources by default.
 	tmp.WatchDependentResources = watchDependentResourcesDefault
 	tmp.MaxRunnerArtifacts = maxRunnerArtifactsDefault
-	tmp.MaxWorkers = maxWorkersDefault
 	tmp.ReconcilePeriod = reconcilePeriodDefault
 	tmp.WatchClusterScopedResources = watchClusterScopedResourcesDefault
-	tmp.AnsibleVerbosity = ansibleVerbosityDefault
 
 	if err := unmarshal(&tmp); err != nil {
 		return err
@@ -122,13 +122,13 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	w.Playbook = tmp.Playbook
 	w.Role = tmp.Role
 	w.MaxRunnerArtifacts = tmp.MaxRunnerArtifacts
-	w.MaxWorkers = getMaxWorkers(gvk, tmp.MaxWorkers)
+	w.MaxWorkers = getMaxWorkers(gvk, maxWorkersDefault)
 	w.ReconcilePeriod = reconcilePeriod
 	w.ManageStatus = tmp.ManageStatus
 	w.WatchDependentResources = tmp.WatchDependentResources
 	w.WatchClusterScopedResources = tmp.WatchClusterScopedResources
 	w.Finalizer = tmp.Finalizer
-	w.AnsibleVerbosity = getAnsibleVerbosity(gvk, tmp.AnsibleVerbosity)
+	w.AnsibleVerbosity = getAnsibleVerbosity(gvk, ansibleVerbosityDefault)
 
 	return nil
 }
