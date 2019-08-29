@@ -154,7 +154,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 	...
 
 	// Return all pods in the request namespace with a label of `app=<name>`
-	// and is running.
+	// and phase `Running`.
 	podList := &v1.PodList{}
 	opts := []client.ListOption{
 		client.InNamespace(request.NamespacedName.Namespace),
