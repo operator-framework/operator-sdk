@@ -46,6 +46,7 @@ require (
 	github.com/emicklei/go-restful v2.9.3+incompatible // indirect
 	github.com/go-openapi/spec v0.19.0 // indirect
 	github.com/google/btree v1.0.0 // indirect
+	github.com/google/go-cmp v0.3.0 // indirect
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc // indirect
@@ -53,9 +54,12 @@ require (
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/jonboulle/clockwork v0.1.0 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
+	github.com/onsi/ginkgo v1.8.0 // indirect
+	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/operator-framework/operator-sdk master
 	github.com/spf13/pflag v1.0.3
 	github.com/ugorji/go/codec v0.0.0-20190320090025-2dc34c0b8780 // indirect
+	golang.org/x/text v0.3.2 // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	google.golang.org/appengine v1.5.0 // indirect
 	gotest.tools v2.2.0+incompatible // indirect
@@ -64,7 +68,6 @@ require (
 	k8s.io/helm v2.14.1+incompatible // indirect
 	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208 // indirect
 	sigs.k8s.io/controller-runtime v0.2.0-beta.3
-	sigs.k8s.io/controller-tools v0.1.10
 )
 
 // Pinned to kubernetes-1.14.1

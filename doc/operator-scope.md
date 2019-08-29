@@ -26,7 +26,7 @@ For each CRD that needs to be cluster-scoped, update its manifest to be cluster-
 * `deploy/crds/<full group>_<resource>_crd.yaml`
   * Set `spec.scope: Cluster`
 
-To ensure that the CRD is always generated with `scope: Cluster`, add the tag `// +genclient:nonNamespaced` above the CRD's Go type defintion in `pkg/apis/<group>/<version>/<kind>_types.go`.
+To ensure that the CRD is always generated with `scope: Cluster`, add the tag `// +kubebuilder:resource:path=<resource>,scope=Cluster`, or if already present replace `scope={Namespaced -> Cluster}`, above the CRD's Go type defintion in `pkg/apis/<group>/<version>/<kind>_types.go`. The `<resource>` element must be the lower-case plural of the CRD's Kind, `spec.names.plural`.
 
 
 ### Example for cluster scoped operator
@@ -92,7 +92,7 @@ With the above changes the specified manifests should look as follows:
 
     // Memcached is the Schema for the memcacheds API
     // +k8s:openapi-gen=true
-    // +genclient:nonNamespaced
+    // +kubebuilder:resource:path=memcacheds,scope=Cluster
     type Memcached struct {
       metav1.TypeMeta   `json:",inline"`
       metav1.ObjectMeta `json:"metadata,omitempty"`

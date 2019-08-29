@@ -34,18 +34,9 @@ func (s *GopkgToml) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
-const gopkgTomlTmpl = `# Force dep to vendor the code generators, which aren't imported just used at dev time.
-required = [
-  "sigs.k8s.io/controller-tools/pkg/crd/generator",
-]
-
-[[override]]
+const gopkgTomlTmpl = `[[override]]
   name = "github.com/go-openapi/spec"
   branch = "master"
-
-[[override]]
-  name = "sigs.k8s.io/controller-tools"
-  revision = "9d55346c2bde73fb3326ac22eac2e5210a730207"
 
 [[override]]
   name = "k8s.io/api"

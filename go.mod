@@ -90,7 +90,7 @@ require (
 	k8s.io/kube-state-metrics v1.6.0
 	k8s.io/kubernetes v1.14.2
 	sigs.k8s.io/controller-runtime v0.2.0-beta.3
-	sigs.k8s.io/controller-tools v0.0.0-20190411181648-9d55346c2bde
+	sigs.k8s.io/controller-tools v0.2.0
 	sigs.k8s.io/kustomize v2.0.3+incompatible // indirect
 	vbom.ml/util v0.0.0-20180919145318-efcd4e0f9787 // indirect
 )
@@ -115,5 +115,4 @@ replace (
 	k8s.io/helm => k8s.io/helm v2.14.1+incompatible
 	k8s.io/kube-state-metrics => k8s.io/kube-state-metrics v1.6.0
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.2.0-beta.3
-	sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.1.11-0.20190411181648-9d55346c2bde
 )
