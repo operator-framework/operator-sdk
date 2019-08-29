@@ -39,16 +39,12 @@ func (s *GoMod) GetInput() (input.Input, error) {
 const goModTmpl = `module {{ .Repo }}
 
 require (
-	github.com/NYTimes/gziphandler v1.0.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
-	github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc // indirect
 	github.com/operator-framework/operator-sdk master
 	github.com/spf13/pflag v1.0.3
-	k8s.io/apiextensions-apiserver v0.0.0-20190409022649-727a075fdec8
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208 // indirect
 	sigs.k8s.io/controller-runtime v0.2.0
-	sigs.k8s.io/controller-tools v0.1.10
 )
 
 // Pinned to kubernetes-1.14.1

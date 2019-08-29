@@ -64,7 +64,6 @@ require (
 	k8s.io/helm v2.14.1+incompatible // indirect
 	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208 // indirect
 	sigs.k8s.io/controller-runtime v0.2.0
-	sigs.k8s.io/controller-tools v0.1.10
 )
 
 // Pinned to kubernetes-1.14.1
