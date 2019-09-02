@@ -35,6 +35,8 @@ var (
 	ResourceKindRegexp = regexp.MustCompile("^[A-Z]{1}[a-zA-Z0-9]+$")
 )
 
+const GroupMatchRegex = "^[a-z-]+$"
+
 // Resource contains the information required to scaffold files for a resource.
 type Resource struct {
 	// APIVersion is the complete group-subdomain/version e.g app.example.com/v1alpha1
@@ -128,6 +130,11 @@ func (r *Resource) checkAndSetGroups() error {
 	if len(g) == 0 || len(g[0]) == 0 {
 		return errors.New("group cannot be empty")
 	}
+	groupMatch := regexp.MustCompile(GroupMatchRegex)
+	if !groupMatch.MatchString(g[0]) {
+		return fmt.Errorf("group must match %s (was %s)", GroupMatchRegex, g[0])
+	}
+
 	r.FullGroup = fg[0]
 	r.Group = g[0]
 
