@@ -49,7 +49,7 @@ With the above changes the specified manifests should look as follows:
           - name: memcached-operator
             ...
             env:
-              - name: WATCH_NAMESPACE
+            - name: WATCH_NAMESPACE
               value: ""
     ```
 * `deploy/role.yaml`:
