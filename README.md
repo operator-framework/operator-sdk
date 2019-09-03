@@ -1,6 +1,8 @@
 <img src="doc/images/operator_logo_sdk_color.svg" height="125px"></img>
 
 [![Build Status](https://travis-ci.org/operator-framework/operator-sdk.svg?branch=master)](https://travis-ci.org/operator-framework/operator-sdk)
+[![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
+[![Go Report Card](https://goreportcard.com/badge/github.com/operator-framework/operator-sdk)](https://goreportcard.com/report/github.com/operator-framework/operator-sdk)
 
 ## Overview
 
@@ -127,6 +129,9 @@ $ kubectl delete -f deploy/role_binding.yaml
 $ kubectl delete -f deploy/service_account.yaml
 $ kubectl delete -f deploy/crds/app_v1alpha1_appservice_crd.yaml
 ```
+
+**Note:** Following the steps in the [Getting Started Repository][getting_started] to learn how to developer your Operators projects.
+ 
 ## Command Line Interface
 
 To learn more about the SDK CLI, see the [SDK CLI Reference][sdk_cli_ref], or run `operator-sdk [command] -h`.
@@ -182,3 +187,5 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [ansible_user_guide]:./doc/ansible/user-guide.md
 [helm_user_guide]:./doc/helm/user-guide.md
 [faq]: ./doc/faq.md
+[getting_started]: https://github.com/operator-framework/getting-started/blob/master/README.md
+
