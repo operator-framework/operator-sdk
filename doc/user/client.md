@@ -137,7 +137,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 func (c Client) List(ctx context.Context, list runtime.Object, opts ...client.ListOption) error
 ```
 
-A `client.ListOption` is an interface that sets [`client.ListOptions`][list-options] fields. A `client.ListOption` is created by using one of the provided implementations: [`MatchingLabels`][matchinglabels], [`MatchingFields`][matchingfields], [`InNamespace`][innamespace].
+A `client.ListOption` is an interface that sets [`client.ListOptions`][list-options] fields. A `client.ListOption` is created by using one of the provided implementations: [`MatchingLabels`][matching-labels], [`MatchingFields`][matching-fields], [`InNamespace`][in-namespace].
 
 Example:
 
@@ -181,7 +181,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 func (c Client) Create(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error
 ```
 
-A `client.CreateOption` is an interface that sets [`client.CreateOptions`][create-options] fields. A `client.CreateOption` is created by using one of the provided implementations: [`DryRunAll`][dryrunall], [`ForceOwnership`][forceownership]. Generally these options are not needed.
+A `client.CreateOption` is an interface that sets [`client.CreateOptions`][create-options] fields. A `client.CreateOption` is created by using one of the provided implementations: [`DryRunAll`][dry-run-all], [`ForceOwnership`][force-ownership]. Generally these options are not needed.
 
 Example:
 
@@ -262,6 +262,7 @@ Example:
 import (
 	"context"
 	"k8s.io/api/apps/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -332,7 +333,7 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 }
 ```
 
-[statuswriter]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#StatusWriter
+[status-writer]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#StatusWriter
 
 #### Delete
 
@@ -377,11 +378,11 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 [preconditions]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#Preconditions
 [propagationpolicy]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#PropagationPolicy
 
-#### Delete
+#### DeleteAllOf
 
 ```Go
 // DeleteAllOf deletes all objects of the given type matching the given options.
-func (c Client) Delete(ctx context.Context, obj runtime.Object, opts ...client.DeleteAllOfOption) error
+func (c Client) DeleteAllOf(ctx context.Context, obj runtime.Object, opts ...client.DeleteAllOfOption) error
 ```
 
 A `client.DeleteAllOfOption` is an interface that sets [`client.DeleteAllOfOptions`][deleteallof-opts] fields. A `client.DeleteAllOfOption` wraps a [`client.ListOption`](#list) and [`client.DeleteOption`](#delete).
