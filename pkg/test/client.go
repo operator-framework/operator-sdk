@@ -32,9 +32,9 @@ var _ FrameworkClient = &frameworkClient{}
 
 type FrameworkClient interface {
 	Get(gCtx goctx.Context, key dynclient.ObjectKey, obj runtime.Object) error
-	List(gCtx goctx.Context, list runtime.Object, opts ...dynclient.ListOptionFunc) error
+	List(gCtx goctx.Context, list runtime.Object, opts ...dynclient.ListOption) error
 	Create(gCtx goctx.Context, obj runtime.Object, cleanupOptions *CleanupOptions) error
-	Delete(gCtx goctx.Context, obj runtime.Object, opts ...dynclient.DeleteOptionFunc) error
+	Delete(gCtx goctx.Context, obj runtime.Object, opts ...dynclient.DeleteOption) error
 	Update(gCtx goctx.Context, obj runtime.Object) error
 }
 
@@ -93,11 +93,11 @@ func (f *frameworkClient) Get(gCtx goctx.Context, key dynclient.ObjectKey, obj r
 	return f.Client.Get(gCtx, key, obj)
 }
 
-func (f *frameworkClient) List(gCtx goctx.Context, list runtime.Object, opts ...dynclient.ListOptionFunc) error {
+func (f *frameworkClient) List(gCtx goctx.Context, list runtime.Object, opts ...dynclient.ListOption) error {
 	return f.Client.List(gCtx, list, opts...)
 }
 
-func (f *frameworkClient) Delete(gCtx goctx.Context, obj runtime.Object, opts ...dynclient.DeleteOptionFunc) error {
+func (f *frameworkClient) Delete(gCtx goctx.Context, obj runtime.Object, opts ...dynclient.DeleteOption) error {
 	return f.Client.Delete(gCtx, obj, opts...)
 }
 

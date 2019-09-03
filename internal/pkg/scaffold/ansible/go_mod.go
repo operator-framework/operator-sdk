@@ -40,16 +40,11 @@ const goModTmpl = `module {{ .Repo }}
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
-	github.com/google/go-cmp v0.3.0 // indirect
-	github.com/onsi/ginkgo v1.8.0 // indirect
-	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/operator-framework/operator-sdk master
 	github.com/spf13/pflag v1.0.3
-	golang.org/x/net v0.0.0-20190501004415-9ce7a6920f09 // indirect
-	golang.org/x/text v0.3.2 // indirect
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208 // indirect
-	sigs.k8s.io/controller-runtime v0.2.0-beta.3
+	sigs.k8s.io/controller-runtime v0.2.0
 )
 
 // Pinned to kubernetes-1.14.1

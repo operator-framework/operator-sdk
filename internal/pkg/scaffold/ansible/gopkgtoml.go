@@ -52,6 +52,10 @@ const gopkgTomlTmpl = `[[constraint]]
   name = "k8s.io/client-go"
   version = "kubernetes-1.14.1"
 
+[[override]]
+  name = "sigs.k8s.io/controller-runtime"
+  version = "=v0.2.0"
+
 [prune]
   go-tests = true
   unused-packages = true

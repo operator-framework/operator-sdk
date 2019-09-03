@@ -134,32 +134,10 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 ```Go
 // List retrieves a list of objects for a given namespace and list options
 // and stores the list in obj.
-func (c Client) List(ctx context.Context, list runtime.Object, opts ...client.ListOptionFunc) error
+func (c Client) List(ctx context.Context, list runtime.Object, opts ...client.ListOption) error
 ```
 
-A `client.ListOptionFunc` can be created either by using the provided [functional options](https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#ListOptionFunc) or using `client.ListOptions`:
-
-```Go
-type ListOptions struct {
-    // LabelSelector filters results by label.  Use SetLabelSelector to
-    // set from raw string form.
-    LabelSelector labels.Selector
-
-    // FieldSelector filters results by a particular field.  In order
-    // to use this with cache-based implementations, restrict usage to
-    // a single field-value pair that's been added to the indexers.
-    FieldSelector fields.Selector
-
-    // Namespace represents the namespace to list for, or empty for
-    // non-namespaced objects, or to list across all namespaces.
-    Namespace string
-
-    // Raw represents raw ListOptions, as passed to the API server.  Note
-    // that these may not be respected by all implementations of interface,
-    // and the LabelSelector and FieldSelector fields are ignored.
-    Raw *metav1.ListOptions
-}
-```
+A `client.ListOption` is an interface that sets [`client.ListOptions`][list-options] fields. A `client.ListOption` is created by using one of the provided implementations: [`MatchingLabels`][matching-labels], [`MatchingFields`][matching-fields], [`InNamespace`][in-namespace].
 
 Example:
 
@@ -176,26 +154,37 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 	...
 
 	// Return all pods in the request namespace with a label of `app=<name>`
-	opts := &client.ListOptions{}
-	opts.SetLabelSelector(fmt.Sprintf("app=%s", request.NamespacedName.Name))
-	opts.InNamespace(request.NamespacedName.Namespace)
-
+	// and phase `Running`.
 	podList := &v1.PodList{}
+	opts := []client.ListOption{
+		client.InNamespace(request.NamespacedName.Namespace),
+		client.MatchingLabels{"app", request.NamespacedName.Name},
+		client.MatchingFields{"status.phase": "Running"},
+	}
 	ctx := context.TODO()
-	err := r.client.List(ctx, podList, client.UseListOptions(listOps))
+	err := r.client.List(ctx, podList, opts...)
 
 	...
 }
 ```
+
+[list-options]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#ListOptions
+[matching-labels]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#MatchingLabels
+[matching-fields]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#MatchingFields
+[in-namespace]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#InNamespace
 
 #### Create
 
 ```Go
 // Create saves the object obj in the Kubernetes cluster.
 // Returns an error
-func (c Client) Create(ctx context.Context, obj runtime.Object) error
+func (c Client) Create(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error
 ```
+
+A `client.CreateOption` is an interface that sets [`client.CreateOptions`][create-options] fields. A `client.CreateOption` is created by using one of the provided implementations: [`DryRunAll`][dry-run-all], [`ForceOwnership`][force-ownership]. Generally these options are not needed.
+
 Example:
+
 ```Go
 import (
 	"context"
@@ -216,6 +205,8 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 }
 ```
 
+[create-options]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#CreateOptions
+
 #### Update
 
 ```Go
@@ -223,9 +214,13 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 // struct pointer so that obj can be updated with the content returned
 // by the API server. Update does *not* update the resource's status
 // subresource
-func (c Client) Update(ctx context.Context, obj runtime.Object) error
+func (c Client) Update(ctx context.Context, obj runtime.Object, opts ...client.UpdateOption) error
 ```
+
+A `client.UpdateOption` is an interface that sets [`client.UpdateOptions`][update-options] fields. A `client.UpdateOption` is created by using one of the provided implementations: [`DryRunAll`][dry-run-all], [`ForceOwnership`][force-ownership]. Generally these options are not needed.
+
 Example:
+
 ```Go
 import (
 	"context"
@@ -249,10 +244,55 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 }
 ```
 
+[update-options]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#UpdateOptions
+
+#### Patch
+
+```Go
+// Patch patches the given obj in the Kubernetes cluster. obj must be a
+// struct pointer so that obj can be updated with the content returned by the Server.
+func (c Client) Patch(ctx context.Context, obj runtime.Object, patch client.Patch, opts ...client.UpdateOption) error
+```
+
+A `client.PatchOption` is an interface that sets [`client.PatchOptions`][patch-options] fields. A `client.PatchOption` is created by using one of the provided implementations: [`DryRunAll`][dry-run-all], [`ForceOwnership`][force-ownership]. Generally these options are not needed.
+
+Example:
+
+```Go
+import (
+	"context"
+	"k8s.io/api/apps/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
+func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	...
+
+	dep := &v1.Deployment{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, dep)
+
+	...
+
+	ctx := context.TODO()
+	dep.Spec.Selector.MatchLabels["is_running"] = "true"
+	// A merge patch will preserve other fields modified at runtime.
+	patch := client.MergeFrom(dep)
+	err := r.client.Patch(ctx, dep, patch)
+
+	...
+}
+```
+
+[patch-options]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#PatchOption
+[dry-run-all]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#DryRunAll
+[force-ownership]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#ForceOwnership
+
 ##### Updating Status Subresource
 
-When updating the [status subresource][cr-status-subresource] from the client,
-the StatusWriter must be used which can be gotten with `Status()`
+When updating the [status subresource][cr-status-subresource] from the client, the [`StatusWriter`][status-writer] must be used. The status subresource is retrieved with `Status()` and updated with `Update()` or patched with `Patch()`.
+
+`Update()` takes variadic `client.UpdateOption`'s, and `Patch()` takes variadic `client.PatchOption`'s. See [`Client.Update()`](#update) and [`Client.Patch()`](#patch) for more details. Generally these options are not needed.
 
 ##### Status
 
@@ -273,57 +313,39 @@ import (
 func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	...
 
+	ctx := context.TODO()
 	mem := &cachev1alpha1.Memcached{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, mem)
+	err := r.client.Get(ctx, request.NamespacedName, mem)
 
 	...
 
-	ctx := context.TODO()
+	// Update
 	mem.Status.Nodes = []string{"pod1", "pod2"}
 	err := r.client.Status().Update(ctx, mem)
+
+	...
+
+	// Patch
+	patch := client.MergeFrom(mem)
+	err := r.client.Status().Patch(ctx, mem, patch)
 
 	...
 }
 ```
 
+[status-writer]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#StatusWriter
 
 #### Delete
 
 ```Go
 // Delete deletes the given obj from Kubernetes cluster.
-func (c Client) Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOptionFunc) error
+func (c Client) Delete(ctx context.Context, obj runtime.Object, opts ...client.DeleteOption) error
 ```
-A `client.DeleteOptionFunc` sets fields of `client.DeleteOptions` to configure a `Delete` call:
-```Go
-// DeleteOptionFunc is a function that mutates a DeleteOptions struct.
-type DeleteOptionFunc func(*DeleteOptions)
 
-type DeleteOptions struct {
-    // GracePeriodSeconds is the duration in seconds before the object should be
-    // deleted. Value must be non-negative integer. The value zero indicates
-    // delete immediately. If this value is nil, the default grace period for the
-    // specified type will be used.
-    GracePeriodSeconds *int64
+A `client.DeleteOption` is an interface that sets [`client.DeleteOptions`][delete-opts] fields. A `client.DeleteOption` is created by using one of the provided implementations: [`GracePeriodSeconds`][grace-period-seconds], [`Preconditions`][preconditions], [`PropagationPolicy`][propagation-policy].
 
-    // Preconditions must be fulfilled before a deletion is carried out. If not
-    // possible, a 409 Conflict status will be returned.
-    Preconditions *metav1.Preconditions
-
-    // PropagationPolicy determined whether and how garbage collection will be
-    // performed. Either this field or OrphanDependents may be set, but not both.
-    // The default policy is decided by the existing finalizer set in the
-    // metadata.finalizers and the resource-specific default policy.
-    // Acceptable values are: 'Orphan' - orphan the dependents; 'Background' -
-    // allow the garbage collector to delete the dependents in the background;
-    // 'Foreground' - a cascading policy that deletes all dependents in the
-    // foreground.
-    PropagationPolicy *metav1.DeletionPropagation
-
-    // Raw represents raw DeleteOptions, as passed to the API server.
-    Raw *metav1.DeleteOptions
-}
-```
 Example:
+
 ```Go
 import (
 	"context"
@@ -350,6 +372,52 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 	...
 }
 ```
+
+[delete-opts]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#DeleteOptions
+[grace-period-seconds]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#GracePeriodSeconds
+[preconditions]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#Preconditions
+[propagation-policy]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#PropagationPolicy
+
+#### DeleteAllOf
+
+```Go
+// DeleteAllOf deletes all objects of the given type matching the given options.
+func (c Client) DeleteAllOf(ctx context.Context, obj runtime.Object, opts ...client.DeleteAllOfOption) error
+```
+
+A `client.DeleteAllOfOption` is an interface that sets [`client.DeleteAllOfOptions`][deleteallof-opts] fields. A `client.DeleteAllOfOption` wraps a [`client.ListOption`](#list) and [`client.DeleteOption`](#delete).
+
+Example:
+
+```Go
+import (
+	"context"
+	"fmt"
+	"k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
+func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	...
+
+	// Delete all pods in the request namespace with a label of `app=<name>`
+	// and phase `Failed`.
+	pod := &v1.Pod{}
+	opts := []client.DeleteAllOfOption{
+		client.InNamespace(request.NamespacedName.Namespace),
+		client.MatchingLabels{"app", request.NamespacedName.Name},
+		client.MatchingFields{"status.phase": "Failed"},
+		client.GracePeriodSeconds(5),
+	}
+	ctx := context.TODO()
+	err := r.client.DeleteAllOf(ctx, pod, opts...)
+
+	...
+}
+```
+
+[deleteallof-opts]:https://godoc.org/sigs.k8s.io/controller-runtime/pkg/client#DeleteAllOfOptions
 
 ### Example usage
 
@@ -418,9 +486,11 @@ func (r *ReconcileApp) Reconcile(request reconcile.Request) (reconcile.Result, e
 	// Update the App status with the pod names.
 	// List the pods for this app's deployment.
 	podList := &corev1.PodList{}
-	labelSelector := labels.SelectorFromSet(labelsForApp(app.Name))
-	listOps := &client.ListOptions{Namespace: app.Namespace, LabelSelector: labelSelector}
-	if err = r.client.List(context.TODO(), podList, client.UseListOptions(listOps)); err != nil {
+	listOpts := []client.ListOption{
+		client.InNamespace(app.Namespace),
+		client.MatchingLabels(labelsForApp(app.Name)),
+	}
+	if err = r.client.List(context.TODO(), podList, listOpts...); err != nil {
 		return reconcile.Result{}, err
 	}
 
