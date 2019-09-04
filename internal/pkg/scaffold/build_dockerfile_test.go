@@ -43,7 +43,8 @@ ENV OPERATOR=/usr/local/bin/app-operator \
 COPY build/_output/bin/app-operator ${OPERATOR}
 
 COPY build/bin /usr/local/bin
-RUN  /usr/local/bin/user_setup
+RUN chmod -R g+rwx /usr/local/bin && \
+    /usr/local/bin/user_setup
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
 
