@@ -12,8 +12,9 @@ ENV PROXY=/usr/local/bin/scorecard-proxy \
 COPY --from=builder /scorecard/scorecard-proxy ${PROXY}
 
 COPY --from=builder /scorecard/bin /usr/local/bin
-RUN  /usr/local/bin/user_setup
-
+RUN chmod -R g+rwx /usr/local/bin && \
+    /usr/local/bin/user_setup
+    
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
 
 USER ${USER_UID}

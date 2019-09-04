@@ -79,6 +79,7 @@ COPY build/_output/bin/[[.ProjectName]] ${OPERATOR}
 COPY bin /usr/local/bin
 COPY library/k8s_status.py /usr/share/ansible/openshift/
 
+RUN chmod -R g+rwx /usr/share/ansible/openshift/
 RUN chmod -R g+rwx /usr/local/bin && \
     /usr/local/bin/user_setup
 
@@ -101,7 +102,7 @@ COPY playbook.yml ${HOME}/playbook.yml[[ end ]]
 [[- if or (or .Roles .Playbook) .Watches ]]
 # Corrects file permissions to be fully executable and writable
 RUN find ${HOME} -type f -exec chmod -R g+rw {} \; && \
-	find ${HOME} -type d -exec chmod -R g+rwx {} \;[[ end ]]
+    find ${HOME} -type d -exec chmod -R g+rwx {} \;[[ end ]]
 
 ENTRYPOINT ["/tini", "--", "/usr/local/bin/entrypoint"]
 

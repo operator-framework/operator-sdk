@@ -43,6 +43,10 @@ COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/bin/ao-lo
 COPY --from=builder /ansible/memcached-operator/watches.yaml ${HOME}/watches.yaml
 COPY --from=builder /ansible/memcached-operator/roles/ ${HOME}/roles/
 
+
+RUN find ${HOME} -type f -exec chmod -R g+rw {} \;  && \
+    find ${HOME} -type d -exec chmod -R g+rwx {} \;
+
 # Ensure directory permissions are properly set
 RUN mkdir -p ${HOME}/.ansible/tmp \
  && chown -R ${USER_UID}:0 ${HOME} \
