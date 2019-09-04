@@ -33,24 +33,27 @@ import (
 var (
 	apiVersion string
 	kind       string
+	k8sCodegen bool
+	openAPIGen bool
 )
 
 func newAddApiCmd() *cobra.Command {
 	apiCmd := &cobra.Command{
 		Use:   "api",
 		Short: "Adds a new api definition under pkg/apis",
-		Long: `operator-sdk add api --kind=<kind> --api-version=<group/version> creates the
+		Long: `operator-sdk add api --kind=<kind> --api-version=<group/version> --k8s-codegen=<true or false> --openapi-gen=<true or false> creates the
 api definition for a new custom resource under pkg/apis. This command must be
 run from the project root directory. If the api already exists at
 pkg/apis/<group>/<version> then the command will not overwrite and return an
 error.
 
 This command runs Kubernetes deepcopy and OpenAPI V3 generators on tagged
-types in all paths under pkg/apis. Go code is generated under
+types in all paths under pkg/apis by default. Go code is generated under
 pkg/apis/<group>/<version>/zz_generated.{deepcopy,openapi}.go. CRD's are
 generated, or updated if they exist for a particular group + version + kind,
 under deploy/crds/<group>_<version>_<kind>_crd.yaml; OpenAPI V3 validation YAML
-is generated as a 'validation' object.
+is generated as a 'validation' object. But can disable this by setting option 
+'k8s-codegen' and 'openapi-gen'.
 
 Example:
 	$ operator-sdk add api --api-version=app.example.com/v1alpha1 --kind=AppService
@@ -80,6 +83,8 @@ Example:
 	if err := apiCmd.MarkFlagRequired("kind"); err != nil {
 		log.Fatalf("Failed to mark `kind` flag for `add api` subcommand as required")
 	}
+	apiCmd.Flags().BoolVar(&k8sCodegen, "k8s-codegen", true, "Run k8s codegen for deepcopy or not")
+	apiCmd.Flags().BoolVar(&openAPIGen, "openapi-gen", true, "Generate a validation spec for the new CRD or not")
 
 	return apiCmd
 }
@@ -133,13 +138,17 @@ func apiRun(cmd *cobra.Command, args []string) error {
 	}
 
 	// Run k8s codegen for deepcopy
-	if err := genutil.K8sCodegen(); err != nil {
-		return err
+	if k8sCodegen {
+		if err := genutil.K8sCodegen(); err != nil {
+			return err
+		}
 	}
 
 	// Generate a validation spec for the new CRD.
-	if err := genutil.OpenAPIGen(); err != nil {
-		return err
+	if openAPIGen {
+		if err := genutil.OpenAPIGen(); err != nil {
+			return err
+		}
 	}
 
 	log.Info("API generation complete.")
