@@ -85,7 +85,7 @@ require (
 	k8s.io/cloud-provider v0.0.0-00010101000000-000000000000 // indirect
 	k8s.io/code-generator v0.0.0-20190311093542-50b561225d70
 	k8s.io/gengo v0.0.0-20190327210449-e17681d19d3a
-	k8s.io/helm v2.13.1+incompatible
+	k8s.io/helm v2.14.1+incompatible
 	k8s.io/klog v0.3.1
 	k8s.io/kube-openapi v0.0.0-20190401085232-94e1e7b7574c
 	k8s.io/kube-state-metrics v1.6.0
@@ -111,8 +111,4 @@ replace (
 	k8s.io/kubernetes => k8s.io/kubernetes v1.14.1
 )
 
-replace (
-	github.com/operator-framework/operator-lifecycle-manager => github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190605231540-b8a4faf68e36
-	k8s.io/helm => k8s.io/helm v2.14.1+incompatible
-	k8s.io/kube-state-metrics => k8s.io/kube-state-metrics v1.6.0
-)
+replace github.com/operator-framework/operator-lifecycle-manager => github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190605231540-b8a4faf68e36
