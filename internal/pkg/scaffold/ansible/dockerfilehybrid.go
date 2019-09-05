@@ -79,7 +79,7 @@ COPY build/_output/bin/[[.ProjectName]] ${OPERATOR}
 COPY bin /usr/local/bin
 COPY library/k8s_status.py /usr/share/ansible/openshift/
 
-RUN chmod -R g+rwx /usr/share/ansible/openshift/
+RUN chmod -R g+rw /usr/share/ansible/openshift/
 RUN chmod -R g+rwx /usr/local/bin && \
     /usr/local/bin/user_setup
 

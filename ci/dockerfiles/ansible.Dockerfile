@@ -38,7 +38,8 @@ COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/build/ope
 COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/library/k8s_status.py /usr/share/ansible/openshift/
 COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/bin/ao-logs /usr/local/bin/ao-logs
 
-RUN chmod -R g+rwx /usr/local/bin
+RUN chmod -R g+rw /usr/share/ansible/openshift/ && \
+    chmod -R g+rwx /usr/local/bin
 
 # Ensure directory permissions are properly set
 RUN mkdir -p ${HOME}/.ansible/tmp \

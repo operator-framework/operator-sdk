@@ -47,6 +47,9 @@ COPY --from=builder /ansible/memcached-operator/roles/ ${HOME}/roles/
 RUN find ${HOME} -type f -exec chmod -R g+rw {} \;  && \
     find ${HOME} -type d -exec chmod -R g+rwx {} \;
 
+RUN chmod -R g+rw /usr/share/ansible/openshift/ && \
+    chmod -R g+rwx /usr/local/bin
+
 # Ensure directory permissions are properly set
 RUN mkdir -p ${HOME}/.ansible/tmp \
  && chown -R ${USER_UID}:0 ${HOME} \
