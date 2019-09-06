@@ -388,11 +388,11 @@ A few notes:
 
 [cli-reference]: ../sdk-cli-reference.md#scorecard
 [writing-tests]: ./writing-e2e-tests.md
-[owned-crds]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md#owned-crds
-[alm-examples]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md#crd-templates
+[owned-crds]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#owned-crds
+[alm-examples]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#crd-templates
 [viper]: https://github.com/spf13/viper/blob/master/README.md
-[olm-csv]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md
-[olm-csv-alm-examples]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md#crd-templates
+[olm-csv]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md
+[olm-csv-alm-examples]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#crd-templates
 [olm]:https://github.com/operator-framework/operator-lifecycle-manager
 [olm-deploy-operator]:https://github.com/operator-framework/community-operators/blob/master/docs/testing-operators.md
 [okd]:https://www.okd.io/
