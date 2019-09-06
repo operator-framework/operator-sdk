@@ -125,6 +125,6 @@ OLM uses Kubernetes APIs to learn about the set of operators that are available 
 [registry_manifest_format]: https://github.com/operator-framework/operator-registry#manifest-format
 
 [olm_github]: https://github.com/operator-framework/operator-lifecycle-manager
-[olm_arch]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/architecture.md
-[olm_install_modes]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/operatorgroups.md#installmodes-and-supported-operatorgroups
+[olm_arch]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/architecture.md
+[olm_install_modes]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/operatorgroups.md#installmodes-and-supported-operatorgroups
 
