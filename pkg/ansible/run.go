@@ -29,11 +29,12 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/watches"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -45,8 +46,10 @@ import (
 )
 
 var (
-	log               = logf.Log.WithName("cmd")
-	metricsPort int32 = 8383
+	metricsHost               = "0.0.0.0"
+	log                       = logf.Log.WithName("cmd")
+	metricsPort         int32 = 8383
+	operatorMetricsPort int32 = 8686
 )
 
 func printVersion() {
@@ -79,13 +82,14 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	mgr, err := manager.New(cfg, manager.Options{
 		Namespace:          namespace,
 		MapperProvider:     restmapper.NewDynamicRESTMapper,
-		MetricsBindAddress: fmt.Sprintf("0.0.0.0:%d", metricsPort),
+		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
 	})
 	if err != nil {
 		log.Error(err, "Failed to create a new manager.")
 		return err
 	}
 
+	var gvks []schema.GroupVersionKind
 	cMap := controllermap.NewControllerMap()
 	watches, err := watches.Load(flags.WatchesFile)
 	if err != nil {
@@ -116,6 +120,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 			OwnerWatchMap:               controllermap.NewWatchMap(),
 			AnnotationWatchMap:          controllermap.NewWatchMap(),
 		})
+		gvks = append(gvks, w.GroupVersionKind)
 	}
 
 	operatorName, err := k8sutil.GetOperatorName()
@@ -131,8 +136,16 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 		return err
 	}
 
+	// Generates operator specific metrics based on the GVKs.
+	// It serves those metrics on "http://metricsHost:operatorMetricsPort".
+	err = kubemetrics.GenerateAndServeCRMetrics(cfg, []string{namespace}, gvks, metricsHost, operatorMetricsPort)
+	if err != nil {
+		log.Info("Could not generate and serve custom resource metrics", "error", err.Error())
+	}
+
 	// Add to the below struct any other metrics ports you want to expose.
 	servicePorts := []v1.ServicePort{
+		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
 		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
 	}
 	// Create Service object to expose the metrics port(s).
@@ -191,7 +204,7 @@ func getMaxWorkers(gvk schema.GroupVersionKind, defValue int) int {
 	))
 	switch maxWorkers, err := strconv.Atoi(os.Getenv(envVar)); {
 	case maxWorkers <= 1:
-		return 1
+		return defValue
 	case err != nil:
 		// we don't care why we couldn't parse it just use default
 		log.Info("Failed to parse %v from environment. Using default %v", envVar, defValue)

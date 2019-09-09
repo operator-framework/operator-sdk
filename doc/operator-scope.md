@@ -49,7 +49,7 @@ With the above changes the specified manifests should look as follows:
           - name: memcached-operator
             ...
             env:
-              - name: WATCH_NAMESPACE
+            - name: WATCH_NAMESPACE
               value: ""
     ```
 * `deploy/role.yaml`:
@@ -61,7 +61,7 @@ With the above changes the specified manifests should look as follows:
     ...
     ```
 * `deploy/role_binding.yaml`:
-    ```YAML 
+    ```YAML
     kind: ClusterRoleBinding
     apiVersion: rbac.authorization.k8s.io/v1
     metadata:

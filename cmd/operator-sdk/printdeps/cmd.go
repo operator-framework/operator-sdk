@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var asFile bool
+var depManager string
 
 func NewCmd() *cobra.Command {
 	printDepsCmd := &cobra.Command{
@@ -35,14 +35,11 @@ func NewCmd() *cobra.Command {
 by this version of the Operator SDK. Versions for these packages should match
 those in an operators' go.mod or Gopkg.toml file, depending on the dependency
 manager chosen when initializing or migrating a project.
-
-print-deps prints in columnar format by default. Use the --as-file flag to
-print in go.mod or Gopkg.toml file format.
 `,
 		RunE: printDepsFunc,
 	}
 
-	printDepsCmd.Flags().BoolVar(&asFile, "as-file", false, "Print dependencies in go.mod or Gopkg.toml file format, depending on the dependency manager chosen when initializing or migrating a project")
+	printDepsCmd.Flags().StringVar(&depManager, "dep-manager", "", `Dependency manager file type to print (choices: "dep", "modules")`)
 
 	return printDepsCmd
 }
@@ -51,17 +48,23 @@ func printDepsFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 0 {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
+	projutil.MustInProjectRoot()
 
-	if err := printDeps(asFile); err != nil {
-		return fmt.Errorf("print deps failed: (%v)", err)
+	if err := printDeps(depManager); err != nil {
+		return fmt.Errorf("print deps failed: %v", err)
 	}
 	return nil
 }
 
-func printDeps(asFile bool) error {
-	// Make sure the project has a dep manager file.
-	mt, err := projutil.GetDepManagerType()
-	if err != nil {
+func printDeps(depManager string) (err error) {
+	// Use depManager if set. Fall back to the project's current dep manager
+	// type if unset.
+	mt := projutil.DepManagerType(depManager)
+	if mt != "" {
+		if mt != projutil.DepManagerDep && mt != projutil.DepManagerGoMod {
+			return projutil.ErrInvalidDepManager(mt)
+		}
+	} else if mt, err = projutil.GetDepManagerType(); err != nil {
 		return err
 	}
 	isDep := mt == projutil.DepManagerDep
@@ -71,19 +74,19 @@ func printDeps(asFile bool) error {
 	switch {
 	case projutil.IsOperatorAnsible():
 		if isDep {
-			return ansible.PrintDepGopkgTOML(asFile)
+			return ansible.PrintDepGopkgTOML()
 		}
-		return ansible.PrintGoMod(asFile)
+		return ansible.PrintGoMod()
 	case projutil.IsOperatorHelm():
 		if isDep {
-			return helm.PrintDepGopkgTOML(asFile)
+			return helm.PrintDepGopkgTOML()
 		}
-		return helm.PrintGoMod(asFile)
+		return helm.PrintGoMod()
 	case projutil.IsOperatorGo():
 		if isDep {
-			return scaffold.PrintDepGopkgTOML(asFile)
+			return scaffold.PrintDepGopkgTOML()
 		}
-		return scaffold.PrintGoMod(asFile)
+		return scaffold.PrintGoMod()
 	}
 
 	return projutil.ErrUnknownOperatorType{}

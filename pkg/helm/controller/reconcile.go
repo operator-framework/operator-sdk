@@ -139,7 +139,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 			log.Info("Release not found, removing finalizer")
 		} else {
 			log.Info("Uninstalled release")
-			if log.Enabled() {
+			if log.V(0).Enabled() {
 				fmt.Println(diffutil.Diff(uninstalledRelease.GetManifest(), ""))
 			}
 			status.SetCondition(types.HelmAppCondition{
@@ -189,7 +189,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		}
 
 		log.Info("Installed release")
-		if log.Enabled() {
+		if log.V(0).Enabled() {
 			fmt.Println(diffutil.Diff("", installedRelease.GetManifest()))
 		}
 		log.V(1).Info("Config values", "values", installedRelease.GetConfig())
@@ -230,7 +230,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		}
 
 		log.Info("Updated release")
-		if log.Enabled() {
+		if log.V(0).Enabled() {
 			fmt.Println(diffutil.Diff(previousRelease.GetManifest(), updatedRelease.GetManifest()))
 		}
 		log.V(1).Info("Config values", "values", updatedRelease.GetConfig())

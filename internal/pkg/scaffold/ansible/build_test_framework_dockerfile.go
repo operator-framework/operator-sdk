@@ -41,7 +41,10 @@ const buildTestFrameworkDockerfileAnsibleTmpl = `ARG BASEIMAGE
 FROM ${BASEIMAGE}
 USER 0
 
-RUN yum install -y python-devel gcc libffi-devel
+# Ensure fresh metadata rather than cached metadata in the base by running
+# yum clean all && rm -rf /var/yum/cache/* first
+RUN yum clean all && rm -rf /var/cache/yum/* \
+ && yum install -y python-devel gcc libffi-devel
 RUN pip install molecule==2.20.1
 
 ARG NAMESPACEDMAN

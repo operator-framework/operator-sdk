@@ -92,11 +92,16 @@ func (m *Manager) Uninstall() error {
 	ctx, cancel := context.WithTimeout(context.Background(), m.Timeout)
 	defer cancel()
 
-	if err := m.Client.UninstallVersion(ctx, m.Version); err != nil {
+	version, err := m.Client.GetInstalledVersion(ctx)
+	if err != nil {
 		return err
 	}
 
-	log.Infof("Successfully uninstalled OLM version %q", m.Version)
+	if err := m.Client.UninstallVersion(ctx, version); err != nil {
+		return err
+	}
+
+	log.Infof("Successfully uninstalled OLM version %q", version)
 	return nil
 }
 
@@ -108,18 +113,22 @@ func (m *Manager) Status() error {
 	ctx, cancel := context.WithTimeout(context.Background(), m.Timeout)
 	defer cancel()
 
-	status, err := m.Client.GetStatus(ctx, m.Version)
+	version, err := m.Client.GetInstalledVersion(ctx)
 	if err != nil {
 		return err
 	}
 
-	log.Infof("Successfully got OLM status for version %q", m.Version)
+	status, err := m.Client.GetStatus(ctx, version)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Successfully got OLM status for version %q", version)
 	fmt.Print("\n")
 	fmt.Println(status)
 	return nil
 }
 
 func (m *Manager) AddToFlagSet(fs *pflag.FlagSet) {
-	fs.StringVar(&m.Version, "version", DefaultVersion, "version of OLM resources to install, uninstall, or get status about")
 	fs.DurationVar(&m.Timeout, "timeout", DefaultTimeout, "time to wait for the command to complete before failing")
 }
