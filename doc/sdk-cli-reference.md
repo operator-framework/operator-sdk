@@ -332,8 +332,9 @@ Adds the API definition for a new custom resource under `pkg/apis` and generates
 
 #### Flags
 
-* `--api-version` string - CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
-* `--kind` string - CRD Kind. (e.g AppService)
+* `--api-version` string - (required) CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
+* `--kind` string - (required) CRD Kind. (e.g AppService)
+* `--skip-generation` - Skip generation of deepcopy and OpenAPI code and OpenAPI CRD specs.
 
 #### Example
 
