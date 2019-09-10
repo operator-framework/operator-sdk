@@ -351,6 +351,7 @@ github.com/operator-framework/go-appr v0.0.0-20180917210448-f2aef88446f2/go.mod 
 github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190605231540-b8a4faf68e36 h1:zQykXcFkA+wZm5//RKB7BEzEH7Q0Hwvp8+3HJrG5BD0=
 github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190605231540-b8a4faf68e36/go.mod h1:HKV3ZB9aOUxRyfM53shoBRtIMP4lg8QRmkW+dmZy+kI=
 github.com/operator-framework/operator-marketplace v0.0.0-20190216021216-57300a3ef3ba/go.mod h1:msZSL8pXwzQjB+hU+awVrZQw94IwJi3sNZVD3NoESIs=
+github.com/operator-framework/operator-registry v1.1.1 h1:oDIevJvKXFsp7BEb7iJHuLvuhPZYBtIx5oZQ7iSISAs=
 github.com/operator-framework/operator-registry v1.1.1/go.mod h1:7D4WEwL+EKti5npUh4/u64DQhawCBRugp8Ql20duUb4=
 github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c/go.mod h1:VyrYX9gd7irzKovcSS6BIIEwPRkP2Wm2m9ufcdFSJ34=
 github.com/pborman/uuid v1.2.0 h1:J7Q5mO4ysT1dv8hyrUGHb9+ooztCXu1D8MY8DZYsu3g=
