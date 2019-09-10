@@ -212,7 +212,7 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 func (c Client) GetInstalledVersion(ctx context.Context) (string, error) {
 	opts := client.InNamespace(OLMNamespace)
 	csvs := &olmapiv1alpha1.ClusterServiceVersionList{}
-	if err := c.KubeClient.List(ctx, opts, csvs); err != nil {
+	if err := c.KubeClient.List(ctx, csvs, opts); err != nil {
 		if apierrors.IsNotFound(err) || meta.IsNoMatchError(err) {
 			return "", ErrOLMNotInstalled
 		}

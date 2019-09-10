@@ -82,7 +82,7 @@ import (
     "k8s.io/client-go/kubernetes/scheme"
     "sigs.k8s.io/controller-runtime/pkg/client/fake"
     "sigs.k8s.io/controller-runtime/pkg/reconcile"
-    logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+    logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func TestMemcachedControllerDeploymentCreate(t *testing.T) {
@@ -249,7 +249,7 @@ Following is a snippet code as an example to increase the verbosity of the logs 
 ```go
 import (
     ...
-    logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+    logf "sigs.k8s.io/controller-runtime/pkg/log"
     ...
 )
 func TestMemcachedController(t *testing.T) {

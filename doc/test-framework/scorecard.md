@@ -84,13 +84,13 @@ scorecard:
     # `basic` tests configured to test 2 CRs
     - basic:
         cr-manifest:
-          - "deploy/crds/cache_v1alpha1_memcached_cr.yaml"
-          - "deploy/crds/cache_v1alpha1_memcachedrs_cr.yaml"
+          - "deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml"
+          - "deploy/crds/cache.example.com_v1alpha1_memcachedrs_cr.yaml"
     # `olm` tests configured to test 2 CRs
     - olm:
         cr-manifest:
-          - "deploy/crds/cache_v1alpha1_memcached_cr.yaml"
-          - "deploy/crds/cache_v1alpha1_memcachedrs_cr.yaml"
+          - "deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml"
+          - "deploy/crds/cache.example.com_v1alpha1_memcachedrs_cr.yaml"
         csv-path: "deploy/olm-catalog/memcached-operator/0.0.3/memcached-operator.v0.0.3.clusterserviceversion.yaml"
     # Configuring external plugin with no args
     - name: Experimental Plugin

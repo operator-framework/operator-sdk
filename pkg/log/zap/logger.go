@@ -23,7 +23,7 @@ import (
 	"github.com/go-logr/zapr"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	zapf "sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 func Logger() logr.Logger {
@@ -38,7 +38,7 @@ func LoggerTo(destWriter io.Writer) logr.Logger {
 func createLogger(conf config, destWriter io.Writer) logr.Logger {
 	syncer := zapcore.AddSync(destWriter)
 
-	conf.encoder = &logf.KubeAwareEncoder{Encoder: conf.encoder, Verbose: conf.level.Level() < 0}
+	conf.encoder = &zapf.KubeAwareEncoder{Encoder: conf.encoder, Verbose: conf.level.Level() < 0}
 	if conf.sample {
 		conf.opts = append(conf.opts, zap.WrapCore(func(core zapcore.Core) zapcore.Core {
 			return zapcore.NewSampler(core, time.Second, 100, 100)

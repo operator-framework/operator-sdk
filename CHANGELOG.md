@@ -13,6 +13,39 @@
 - The Helm operator now uses the CR name for the release name for newly created CRs. Existing CRs will continue to use their existing UID-based release name. When a release name collision occurs (when CRs of different types share the same name), the second CR will fail to install with an error about a duplicate name. ([#1818](https://github.com/operator-framework/operator-sdk/pull/1818))
 - Commands [`olm uninstall`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#uninstall) and [`olm status`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#status) no longer use a `--version` flag to specify OLM version. This information is now retrieved from the running cluster. ([#1634](https://github.com/operator-framework/operator-sdk/pull/1634))
 - The Helm operator no longer prints manifest diffs in the operator log at verbosity levels lower than INFO ([#1857](https://github.com/operator-framework/operator-sdk/pull/1857))
+- CRD manifest `spec.version` is still supported, but users will see a warning message if `spec.versions` is not present and an error if `spec.versions` is populated but the version in `spec.version` is not in `spec.versions`. ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
+
+### Breaking changes
+
+- Upgrade Kubernetes version from `kubernetes-1.13.4` to `kubernetes-1.14.1` ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
+- Upgrade `github.com/operator-framework/operator-lifecycle-manager` version from `b8a4faf68e36feb6d99a6aec623b405e587b17b1` to `0.10.1` ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
+- Upgrade [`controller-runtime`](https://github.com/kubernetes-sigs/controller-runtime) version from `v0.1.12` to `v0.2.0` ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
+  - The package `sigs.k8s.io/controller-runtime/pkg/runtime/scheme` is deprecated, and contains no code. Replace this import with `sigs.k8s.io/controller-runtime/pkg/scheme` where relevant.
+  - The package `sigs.k8s.io/controller-runtime/pkg/runtime/log` is deprecated. Replace this import with `sigs.k8s.io/controller-runtime/pkg/log` where relevant.
+  - The package `sigs.k8s.io/controller-runtime/pkg/runtime/signals` is deprecated. Replace this import with `sigs.k8s.io/controller-runtime/pkg/manager/signals` where relevant.
+  - All methods on [`sigs.k8s.io/controller-runtime/pkg/client.Client`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L104) (except for `Get()`) have been updated. Instead of each using a `struct`-typed or variadic functional option parameter, or having no option parameter, each now uses a variadic interface option parameter typed for each method. See `List()` below for an example.
+  - [`sigs.k8s.io/controller-runtime/pkg/client.Client`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L104)'s `List()` method signature has been updated: `List(ctx context.Context, opts *client.ListOptions, list runtime.Object) error` is now [`List(ctx context.Context, list runtime.Object, opts ...client.ListOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L61). To migrate:
+      ```go
+      import (
+        "context"
+
+        "sigs.k8s.io/controller-runtime/pkg/client"
+      )
+
+      ...
+
+      // Old
+      listOpts := &client.ListOptions{}
+      listOpts.InNamespace("namespace")
+      err = r.client.List(context.TODO(), listOps, podList)
+      // New
+      listOpts := []client.ListOption{
+        client.InNamespace("namespace"),        
+      }
+      err = r.client.List(context.TODO(), podList, listOpts...)
+      ```
+- [`pkg/test.FrameworkClient`](https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/client.go#L33) methods `List()` and `Delete()` have new signatures corresponding to the homonymous methods of `sigs.k8s.io/controller-runtime/pkg/client.Client`. ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
+- CRD file names were previously of the form `<group>_<version>_<kind>_crd.yaml`. Now that CRD manifest `spec.version` is deprecated in favor of `spec.versions`, i.e. multiple versions can be specified in one CRD, CRD file names have the form `<full group>_<resource>_crd.yaml`. `<full group>` is the full group name of your CRD while `<group>` is the last subdomain of `<full group>`, ex. `foo.bar.com` vs `foo`. `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`. ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
 
 ### Deprecated
 

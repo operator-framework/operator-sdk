@@ -90,13 +90,13 @@ $ kubectl create -f deploy/service_account.yaml
 $ kubectl create -f deploy/role.yaml
 $ kubectl create -f deploy/role_binding.yaml
 # Setup the CRD
-$ kubectl create -f deploy/crds/app_v1alpha1_appservice_crd.yaml
+$ kubectl create -f deploy/crds/app.example.com_appservices_crd.yaml
 # Deploy the app-operator
 $ kubectl create -f deploy/operator.yaml
 
 # Create an AppService CR
 # The default controller will watch for AppService objects and create a pod for each CR
-$ kubectl create -f deploy/crds/app_v1alpha1_appservice_cr.yaml
+$ kubectl create -f deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
 
 # Verify that a pod is created
 $ kubectl get pod -l app=example-appservice
@@ -122,12 +122,12 @@ Spec:
   Size:  3
 
 # Cleanup
-$ kubectl delete -f deploy/crds/app_v1alpha1_appservice_cr.yaml
+$ kubectl delete -f deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
 $ kubectl delete -f deploy/operator.yaml
 $ kubectl delete -f deploy/role.yaml
 $ kubectl delete -f deploy/role_binding.yaml
 $ kubectl delete -f deploy/service_account.yaml
-$ kubectl delete -f deploy/crds/app_v1alpha1_appservice_crd.yaml
+$ kubectl delete -f deploy/crds/app.example.com_appservices_crd.yaml
 ```
 
 **Note:** Following the steps in the [Getting Started Repository][getting_started] to learn how to developer your Operators projects.

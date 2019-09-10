@@ -29,9 +29,10 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
-	"github.com/coreos/go-semver/semver"
+	"github.com/blang/semver"
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	olmversion "github.com/operator-framework/operator-lifecycle-manager/pkg/lib/version"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
@@ -312,7 +313,11 @@ func (s *CSV) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error
 		return errors.Wrapf(err, "error unmarshalling CSV %s after replacing old CSV name", csv.GetName())
 	}
 
-	csv.Spec.Version = *semver.New(newVer)
+	ver, err := semver.Parse(s.CSVVersion)
+	if err != nil {
+		return err
+	}
+	csv.Spec.Version = olmversion.OperatorVersion{Version: ver}
 	csv.Spec.Replaces = oldCSVName
 	return nil
 }

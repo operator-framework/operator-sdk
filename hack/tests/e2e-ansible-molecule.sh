@@ -16,14 +16,14 @@ deploy_prereqs() {
     oc adm policy add-cluster-role-to-user cluster-admin -z memcached-operator || :
     kubectl create -f "$OPERATORDIR/deploy/role.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
-    kubectl create -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_memcached_crd.yaml"
+    kubectl create -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds_crd.yaml"
 }
 
 remove_prereqs() {
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/service_account.yaml"
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/role.yaml"
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/role_binding.yaml"
-    kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_memcached_crd.yaml"
+    kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds_crd.yaml"
 }
 
 pushd "$GOTMP"
