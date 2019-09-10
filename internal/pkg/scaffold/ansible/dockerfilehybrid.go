@@ -45,7 +45,7 @@ func (d *DockerfileHybrid) GetInput() (input.Input, error) {
 	return d.Input, nil
 }
 
-const dockerFileHybridAnsibleTmpl = `FROM registry.access.redhat.com/ubi8/ubi
+const dockerFileHybridAnsibleTmpl = `FROM registry.access.redhat.com/ubi8/ubi:latest
 
 RUN mkdir -p /etc/ansible \
     && echo "localhost ansible_connection=local" > /etc/ansible/hosts \
@@ -60,10 +60,10 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
 
 # Install python dependencies
 # Ensure fresh metadata rather than cached metadata in the base by running
-# yum clean all && rm -rf /var/yum/cache/* first
-RUN yum clean all && rm -rf /var/cache/yum/* \
+# sed -i 's|enabled=1|enabled=0|g' /etc/yum/pluginconf.d/product-id.conf && rm -rf /var/yum/cache/* first
+RUN sed -i 's|enabled=1|enabled=0|g' /etc/yum/pluginconf.d/product-id.conf && rm -rf /var/cache/yum/* \
  && yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
- && yum install -y python-devel gcc inotify-tools \
+ && yum install -y python36-devel.x86_64 gcc inotify-tools \
  && easy_install pip \
  && pip install -U --no-cache-dir setuptools pip \
  && pip install --no-cache-dir --ignore-installed ipaddress \
@@ -71,7 +71,7 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
       ansible-runner-http==1.0.0 \
       openshift==0.8.9 \
       ansible==2.8 \
- && yum remove -y gcc python-devel \
+ && yum remove -y gcc python36-devel.x86_64 \
  && yum clean all \
  && rm -rf /var/cache/yum
 
