@@ -38,6 +38,8 @@ func (s *GoMod) GetInput() (input.Input, error) {
 
 const goModTmpl = `module {{ .Repo }}
 
+go 1.13
+
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/operator-framework/operator-sdk master

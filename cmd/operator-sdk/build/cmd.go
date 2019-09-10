@@ -119,7 +119,6 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 			PackagePath: path.Join(projutil.GetGoPkg(), filepath.ToSlash(scaffold.ManagerDir)),
 			Args:        args,
 			Env:         goBuildEnv,
-			GoMod:       projutil.IsDepManagerGoMod(),
 		}
 		if err := projutil.GoBuild(opts); err != nil {
 			return fmt.Errorf("failed to build operator binary: (%v)", err)

@@ -83,7 +83,7 @@ $ chmod +x operator-sdk-${RELEASE_VERSION}-x86_64-apple-darwin && sudo mkdir -p 
 - [git][git_tool]
 - [mercurial][mercurial_tool] version 3.9+
 - [bazaar][bazaar_tool] version 2.7.0+
-- [go][go_tool] version v1.12+.
+- [go][go_tool] version v1.13+.
 
 ```sh
 $ go get -d github.com/operator-framework/operator-sdk # This will download the git repository and not install it

@@ -38,6 +38,8 @@ func (s *GoMod) GetInput() (input.Input, error) {
 
 const goModTmpl = `module {{ .Repo }}
 
+go 1.13
+
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
