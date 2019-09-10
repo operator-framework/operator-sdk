@@ -20,7 +20,7 @@ For the Go, Ansible, and Helm tests, the `before_install` and `install` stages a
     - If only documentation has been updated, skip these tests.
 2. Run `make tidy` to ensure `go.mod` and `go.sum` are up-to-date.
 3. Build and install the sdk using `make install`.
-4. Install ansible using `sudo pip install ansible`.
+4. Install ansible using `pip3 install ansible`.
 5. Run the [`hack/ci/setup-openshift`][script] script, which spins up an openshift cluster by configuring docker and then downloading the `oc` v3.11 binary and running `oc cluster up`.
 
 The Go, Ansible, and Helm tests then differ in what tests they run.

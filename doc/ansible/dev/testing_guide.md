@@ -7,7 +7,7 @@ To begin, you sould have:
 - The latest version of the [operator-sdk](https://github.com/operator-framework/operator-sdk) installed.
 - Docker installed and running
 - [Molecule](https://github.com/ansible/molecule) >= v2.20
-- [Ansible](https://github.com/ansible/ansible) >= v2.7
+- [Ansible](https://github.com/ansible/ansible) >= v3
 - [jmespath](https://pypi.org/project/jmespath/)
 - [The OpenShift Python client](https://github.com/openshift/openshift-restclient-python) >= v0.8
 - An initialized Ansible Operator project, with the molecule directory present. If you initialized a project with a previous

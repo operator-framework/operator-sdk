@@ -28,7 +28,7 @@ $ sudo dnf install ansible
 In addition to Ansible, a user must install the [OpenShift Restclient
 Python][openshift_restclient_python] package. This can be installed from pip:
 ```bash
-$ pip install openshift
+$ pip3 install openshift
 ```
 
 ### Testing the k8s Ansible modules locally

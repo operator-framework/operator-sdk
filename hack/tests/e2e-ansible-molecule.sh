@@ -7,9 +7,9 @@ set -eux
 ROOTDIR="$(pwd)"
 GOTMP="$(mktemp -d)"
 trap_add 'rm -rf $GOTMP' EXIT
-pip install --user pyasn1==0.4.5 pyasn1-modules==0.2.5 idna==2.7 ipaddress==1.0.22
-pip install --user molecule==2.20.2
-pip install --user docker openshift jmespath
+pip3 install --user pyasn1==0.4.5 pyasn1-modules==0.2.5 idna==2.7 ipaddress==1.0.22
+pip3 install --user molecule==2.20.2
+pip3 install --user docker openshift jmespath
 
 deploy_prereqs() {
     kubectl create -f "$OPERATORDIR/deploy/service_account.yaml"

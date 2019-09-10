@@ -35,8 +35,10 @@ func (t *Travis) GetInput() (input.Input, error) {
 const travisAnsibleTmpl = `sudo: required
 services: docker
 language: python
+python:
+  - "3.6.7"
 install:
-  - pip install docker molecule openshift
+  - pip3 install docker molecule openshift
 script:
   - molecule test -s test-local
 `

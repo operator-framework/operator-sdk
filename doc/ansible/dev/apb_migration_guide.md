@@ -189,7 +189,7 @@ The `k8s` module takes normal kubernetes manifests, so if you currently rely on 
 # convert.py
 The `convert.py` script should be run from inside the APB directory, next to the `apb.yml`
 ```python
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import yaml
 

@@ -42,10 +42,10 @@ FROM ${BASEIMAGE}
 USER 0
 
 # Ensure fresh metadata rather than cached metadata in the base by running
-# yum clean all && rm -rf /var/yum/cache/* first
-RUN yum clean all && rm -rf /var/cache/yum/* \
- && yum install -y python-devel gcc libffi-devel
-RUN pip install molecule==2.20.1
+# sed -i 's|enabled=1|enabled=0|g' /etc/yum/pluginconf.d/product-id.conf && rm -rf /var/yum/cache/* first
+RUN sed -i 's|enabled=1|enabled=0|g' /etc/yum/pluginconf.d/product-id.conf && rm -rf /var/cache/yum/* \
+ && yum install -y python36-devel.x86_64 gcc inotify-tools gcc libffi-devel
+RUN pip3 install molecule==2.20.1
 
 ARG NAMESPACEDMAN
 ADD $NAMESPACEDMAN /namespaced.yaml
