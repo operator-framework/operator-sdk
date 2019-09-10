@@ -20,8 +20,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/internal/pkg/descriptor"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/olm-catalog/descriptor"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"github.com/ghodss/yaml"

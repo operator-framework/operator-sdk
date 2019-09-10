@@ -15,6 +15,7 @@
 package descriptor
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -62,7 +63,7 @@ func GetCRDDescriptorForGVK(apisDir string, crdDesc *olmapiv1alpha1.CRDDescripti
 				comments := append(t.SecondClosestCommentLines, t.CommentLines...)
 				pd, err := parseCSVGenAnnotations(comments)
 				if err != nil {
-					return err
+					return errors.Wrapf(err, "error parsing CSV type %s annotations", t.Name.Name)
 				}
 				crdDesc.Description = parseDescription(comments)
 				crdDesc.DisplayName = pd.displayName
@@ -71,7 +72,7 @@ func GetCRDDescriptorForGVK(apisDir string, crdDesc *olmapiv1alpha1.CRDDescripti
 			for _, m := range t.Members {
 				pd, err := parseCSVGenAnnotations(m.CommentLines)
 				if err != nil {
-					return err
+					return errors.Wrapf(err, "error parsing CSV type %s member %s annotations", t.Name.Name, m.Name)
 				}
 				for _, d := range pd.descriptors {
 					d.parentType, d.member = t, m
@@ -94,14 +95,14 @@ func GetCRDDescriptorForGVK(apisDir string, crdDesc *olmapiv1alpha1.CRDDescripti
 				Description:  d.description,
 				DisplayName:  d.displayName,
 				Path:         d.path,
-				XDescriptors: d.xdesc,
+				XDescriptors: d.xdescs,
 			})
 		case typeStatus:
 			crdDesc.StatusDescriptors = append(crdDesc.StatusDescriptors, olmapiv1alpha1.StatusDescriptor{
 				Description:  d.description,
 				DisplayName:  d.displayName,
 				Path:         d.path,
-				XDescriptors: d.xdesc,
+				XDescriptors: d.xdescs,
 			})
 		}
 	}
@@ -113,8 +114,11 @@ func getTypesFromDir(dir string) (types.Universe, error) {
 	if _, err := os.Stat(dir); err != nil {
 		return nil, err
 	}
+	if !filepath.IsAbs(dir) && !strings.HasPrefix(dir, ".") {
+		dir = fmt.Sprintf("./%s", dir)
+	}
 	p := parser.New()
-	if err := p.AddDirRecursive("./" + dir); err != nil {
+	if err := p.AddDirRecursive(dir); err != nil {
 		return nil, err
 	}
 	universe, err := p.FindTypes()
@@ -128,7 +132,7 @@ func getTypesFromDir(dir string) (types.Universe, error) {
 // and all types in pkg.
 func getSpecStatusPkgTypesForAPI(pkg, kind string, universe types.Universe) (spec, status *types.Type, pkgTypes []*types.Type, err error) {
 	for _, upkg := range universe {
-		if upkg.Path != pkg && !strings.HasPrefix(upkg.Path, "./") {
+		if upkg.Path == "" || !strings.HasPrefix(upkg.Path, pkg) {
 			continue
 		}
 		for _, t := range upkg.Types {

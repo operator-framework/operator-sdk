@@ -45,7 +45,7 @@ type descriptor struct {
 	description string
 	displayName string
 	path        string
-	xdesc       []string
+	xdescs      []string
 }
 
 func sortDescriptors(ds []descriptor) []descriptor {
@@ -77,12 +77,6 @@ func wrapParseErr(err error) error {
 // field Once all comments have been parsed, the entry is added to a
 // parsedCRDDescriptions.
 func parseCSVGenAnnotations(comments []string) (pd parsedCRDDescriptions, err error) {
-	defer func() {
-		if err != nil {
-			err = wrapParseErr(err)
-		}
-	}()
-
 	tags := types.ExtractCommentTags(csvgenPrefix, comments)
 	specd, statusd := descriptor{descType: typeSpec}, descriptor{descType: typeStatus}
 	for path, vals := range tags {
@@ -154,7 +148,7 @@ func parseDescriptor(d *descriptor, pathElems []string, val string) (err error) 
 			if err != nil {
 				return errors.Wrapf(err, "error unquoting %s", val)
 			}
-			d.xdesc = strings.Split(xdStr, ",")
+			d.xdescs = strings.Split(xdStr, ",")
 		default:
 			return errors.Errorf("unsupported descriptor path element %s", pathElems[1])
 		}
@@ -175,12 +169,13 @@ func parseResource(rStr string) (r olmapiv1alpha1.APIResourceReference, err erro
 	if len(rSplit) < 2 {
 		return r, errors.Errorf("resource string %s did not have at least a kind and a version", rStr)
 	}
-	r.Kind, r.Version = rSplit[0], rSplit[1]
+	r.Kind, r.Version = strings.TrimSpace(rSplit[0]), strings.TrimSpace(rSplit[1])
 	if len(rSplit) == 3 {
 		r.Name, err = strconv.Unquote(rSplit[2])
 		if err != nil {
 			return r, err
 		}
+		r.Name = strings.TrimSpace(r.Name)
 	}
 	return r, nil
 }
@@ -200,9 +195,9 @@ func setDescriptorDefaultsIfEmpty(d *descriptor) {
 	}
 	switch d.descType {
 	case typeSpec:
-		d.xdesc = getSpecXDescriptorsByPath(d.xdesc, d.path)
+		d.xdescs = getSpecXDescriptorsByPath(d.xdescs, d.path)
 	case typeStatus:
-		d.xdesc = getStatusXDescriptorsByPath(d.xdesc, d.path)
+		d.xdescs = getStatusXDescriptorsByPath(d.xdescs, d.path)
 	}
 }
 
