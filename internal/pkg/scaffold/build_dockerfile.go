@@ -34,19 +34,42 @@ func (s *Dockerfile) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
-const dockerfileTmpl = `FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
+const dockerfileTmpl = `
+#############################################
+# Temp image to build the prerequisites 
+#############################################
+FROM registry.access.redhat.com/ubi8/ubi:latest AS builder
 
+RUN groupadd -g 1001 {{.ProjectName}} && \
+    useradd -m -s /sbin/nologin -u 1001 -g {{.ProjectName}} {{.ProjectName}}
+
+#############################################
+# Container Image
+#############################################
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+
+# Set EnvVars
 ENV OPERATOR=/usr/local/bin/{{.ProjectName}} \
     USER_UID=1001 \
     USER_NAME={{.ProjectName}}
 
-# install operator binary
-COPY build/_output/bin/{{.ProjectName}} ${OPERATOR}
+# Copy group and user from builder image
+COPY --from=builder /etc/passwd /tmp
+COPY --from=builder /etc/group /tmp
 
-COPY build/bin /usr/local/bin
-RUN  /usr/local/bin/user_setup
-
-ENTRYPOINT ["/usr/local/bin/entrypoint"]
+# Create user and add permissions
+RUN cat /tmp/passwd | grep {{.ProjectName}} >> /etc/passwd \
+    && cat /tmp/group | grep {{.ProjectName}} >> /etc/group \
+    && mkdir -p /home/{{.ProjectName}} \
+    && chown -R {{.ProjectName}}:{{.ProjectName}} /home/{{.ProjectName}} \
+    && chmod ug+rwx /home/{{.ProjectName}} \
+	&& rm -rf /tmp/passwd \
+    && rm -rf /tmp/group
 
 USER ${USER_UID}
-`
+
+# Install operator binary
+COPY build/_output/bin/{{.ProjectName}} ${OPERATOR}
+COPY build/bin /usr/local/bin
+
+ENTRYPOINT ["/usr/local/bin/entrypoint"]`
