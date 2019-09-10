@@ -24,6 +24,7 @@ import (
 	"text/tabwriter"
 
 	log "github.com/sirupsen/logrus"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -45,24 +46,23 @@ type ResourceStatus struct {
 func (c Client) GetObjectsStatus(ctx context.Context, objs ...runtime.Object) Status {
 	var rss []ResourceStatus
 	for _, obj := range objs {
+		gvk := obj.GetObjectKind().GroupVersionKind()
 		a, aerr := meta.Accessor(obj)
 		if aerr != nil {
-			log.Fatalf("Object %s: %v", obj.GetObjectKind().GroupVersionKind(), aerr)
+			log.Fatalf("Object %s: %v", gvk, aerr)
 		}
 		nn := types.NamespacedName{
 			Namespace: a.GetNamespace(),
 			Name:      a.GetName(),
 		}
-		u := unstructured.Unstructured{}
-		u.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
-		err := c.KubeClient.Get(ctx, nn, &u)
 		rs := ResourceStatus{
 			NamespacedName: nn,
-			GVK:            obj.GetObjectKind().GroupVersionKind(),
+			GVK:            gvk,
 		}
-		if err != nil {
-			rs.Error = err
-		} else {
+		u := unstructured.Unstructured{}
+		u.SetGroupVersionKind(gvk)
+		rs.Error = c.KubeClient.Get(ctx, nn, &u)
+		if rs.Error == nil {
 			rs.Resource = &u
 		}
 		rss = append(rss, rs)
@@ -73,7 +73,9 @@ func (c Client) GetObjectsStatus(ctx context.Context, objs ...runtime.Object) St
 
 func (s Status) HasExistingResources() bool {
 	for _, r := range s.Resources {
-		if r.Resource != nil {
+		// Either the resource was found and returned without error or returned
+		// an existence error.
+		if r.Resource != nil || (r.Error != nil && !apierrors.IsNotFound(r.Error)) {
 			return true
 		}
 	}
@@ -88,10 +90,10 @@ func (s Status) String() string {
 		nn := r.NamespacedName
 		kind := r.GVK.Kind
 		var status string
-		if r.Resource != nil {
-			status = "Installed"
-		} else if r.Error != nil {
+		if r.Error != nil {
 			status = r.Error.Error()
+		} else if r.Resource != nil {
+			status = "Installed"
 		} else {
 			status = "Unknown"
 		}

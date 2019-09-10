@@ -152,27 +152,27 @@ func (c Client) DoRolloutWait(ctx context.Context, key types.NamespacedName) err
 			}
 			if deployment.Spec.Replicas != nil && deployment.Status.UpdatedReplicas < *deployment.Spec.Replicas {
 				onceReplicasUpdated.Do(func() {
-					log.Printf("  Waiting for deployment %q to rollout: %d out of %d new replicas have been updated", deployment.Name, deployment.Status.UpdatedReplicas, *deployment.Spec.Replicas)
+					log.Printf("  Waiting for Deployment %q to rollout: %d out of %d new replicas have been updated", key, deployment.Status.UpdatedReplicas, *deployment.Spec.Replicas)
 				})
 				return false, nil
 			}
 			if deployment.Status.Replicas > deployment.Status.UpdatedReplicas {
 				oncePendingTermination.Do(func() {
-					log.Printf("  Waiting for deployment %q to rollout: %d old replicas are pending termination", deployment.Name, deployment.Status.Replicas-deployment.Status.UpdatedReplicas)
+					log.Printf("  Waiting for Deployment %q to rollout: %d old replicas are pending termination", key, deployment.Status.Replicas-deployment.Status.UpdatedReplicas)
 				})
 				return false, nil
 			}
 			if deployment.Status.AvailableReplicas < deployment.Status.UpdatedReplicas {
 				onceNotAvailable.Do(func() {
-					log.Printf("  Waiting for deployment %q to rollout: %d of %d updated replicas are available", deployment.Name, deployment.Status.AvailableReplicas, deployment.Status.UpdatedReplicas)
+					log.Printf("  Waiting for Deployment %q to rollout: %d of %d updated replicas are available", key, deployment.Status.AvailableReplicas, deployment.Status.UpdatedReplicas)
 				})
 				return false, nil
 			}
-			log.Printf("  Deployment %q successfully rolled out", deployment.Name)
+			log.Printf("  Deployment %q successfully rolled out", key)
 			return true, nil
 		}
 		onceSpecUpdate.Do(func() {
-			log.Printf("  Waiting for deployment %q to rollout: waiting for deployment spec update to be observed", deployment.Name)
+			log.Printf("  Waiting for Deployment %q to rollout: waiting for deployment spec update to be observed", key)
 		})
 		return false, nil
 	}
@@ -192,7 +192,7 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				once.Do(func() {
-					log.Printf("  Waiting for clusterserviceversion %q to appear", key.Name)
+					log.Printf("  Waiting for ClusterServiceVersion %q to appear", key)
 				})
 				return false, nil
 			}
@@ -201,7 +201,7 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 		newPhase = csv.Status.Phase
 		if newPhase != curPhase {
 			curPhase = newPhase
-			log.Printf("  Found clusterserviceversion %q phase: %s", key.Name, curPhase)
+			log.Printf("  Found ClusterServiceVersion %q phase: %s", key, curPhase)
 		}
 		return curPhase == olmapiv1alpha1.CSVPhaseSucceeded, nil
 	}
