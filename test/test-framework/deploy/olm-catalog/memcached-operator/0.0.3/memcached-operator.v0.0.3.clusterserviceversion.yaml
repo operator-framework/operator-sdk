@@ -15,8 +15,8 @@ metadata:
           }
         }
       ]
-  capabilities: Basic Install
-  name: memcachedoperator.v0.0.3
+    capabilities: Basic Install
+  name: memcached-operator.v0.0.3
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -54,7 +54,9 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes.phase:reason
       version: v1alpha1
-    - kind: MemcachedRS
+    - description: Represents a cluster of MemcachedRS apps
+      displayName: MemcachedRS App
+      kind: MemcachedRS
       name: memcachedrs.cache.example.com
       version: v1alpha1
       statusDescriptors:
