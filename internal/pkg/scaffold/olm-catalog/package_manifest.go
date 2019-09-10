@@ -26,7 +26,7 @@ import (
 	registryutil "github.com/operator-framework/operator-sdk/internal/util/operator-registry"
 
 	"github.com/ghodss/yaml"
-	olmregistry "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/registry"
+	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
@@ -77,7 +77,7 @@ func (s *PackageManifest) CustomRender() ([]byte, error) {
 	}
 	path := filepath.Join(s.AbsProjectPath, i.Path)
 
-	pm := &olmregistry.PackageManifest{}
+	pm := &registry.PackageManifest{}
 	if _, err := os.Stat(path); err != nil && os.IsNotExist(err) {
 		pm = s.newPackageManifest()
 	} else if err == nil {
@@ -112,7 +112,7 @@ func (s *PackageManifest) CustomRender() ([]byte, error) {
 	return yaml.Marshal(pm)
 }
 
-func (s *PackageManifest) newPackageManifest() *olmregistry.PackageManifest {
+func (s *PackageManifest) newPackageManifest() *registry.PackageManifest {
 	// Take the current CSV version to be the "alpha" channel, as an operator
 	// should only be designated anything more stable than "alpha" by a human.
 	channel := "alpha"
@@ -120,9 +120,9 @@ func (s *PackageManifest) newPackageManifest() *olmregistry.PackageManifest {
 		channel = s.Channel
 	}
 	lowerOperatorName := strings.ToLower(s.OperatorName)
-	pm := &olmregistry.PackageManifest{
+	pm := &registry.PackageManifest{
 		PackageName: lowerOperatorName,
-		Channels: []olmregistry.PackageChannel{
+		Channels: []registry.PackageChannel{
 			{Name: channel, CurrentCSVName: getCSVName(lowerOperatorName, s.CSVVersion)},
 		},
 		DefaultChannelName: channel,
@@ -132,7 +132,7 @@ func (s *PackageManifest) newPackageManifest() *olmregistry.PackageManifest {
 
 // setChannels checks for duplicate channels in pm and sets the default
 // channel if possible.
-func (s *PackageManifest) setChannels(pm *olmregistry.PackageManifest) error {
+func (s *PackageManifest) setChannels(pm *registry.PackageManifest) error {
 	if s.Channel != "" {
 		channelIdx := -1
 		for i, channel := range pm.Channels {
@@ -143,7 +143,7 @@ func (s *PackageManifest) setChannels(pm *olmregistry.PackageManifest) error {
 		}
 		lowerOperatorName := strings.ToLower(s.OperatorName)
 		if channelIdx == -1 {
-			pm.Channels = append(pm.Channels, olmregistry.PackageChannel{
+			pm.Channels = append(pm.Channels, registry.PackageChannel{
 				Name:           s.Channel,
 				CurrentCSVName: getCSVName(lowerOperatorName, s.CSVVersion),
 			})
