@@ -46,6 +46,4 @@ if ! whoami &>/dev/null; then
     echo "${USER_NAME:-{{.ProjectName}}}:x:$(id -u):$(id -g):${USER_NAME:-{{.ProjectName}}} user:${HOME}:/sbin/nologin" >> /etc/passwd
   fi
 fi
-
-exec ${OPERATOR} $@
 `
