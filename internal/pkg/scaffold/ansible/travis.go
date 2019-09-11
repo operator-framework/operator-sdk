@@ -36,7 +36,7 @@ const travisAnsibleTmpl = `sudo: required
 services: docker
 language: python
 python:
-  - "3.6.7"
+  - "3.6"
 install:
   - pip3 install docker molecule openshift
 script:

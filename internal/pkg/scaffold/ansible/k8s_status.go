@@ -36,7 +36,7 @@ func (k *K8sStatus) GetInput() (input.Input, error) {
 	return k.Input, nil
 }
 
-const k8sStatusTmpl = `#!/usr/bin/python3
+const k8sStatusTmpl = `#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import, division, print_function
@@ -65,7 +65,7 @@ module: k8s_status
 
 short_description: Update the status for a Kubernetes API resource
 
-version_added: "3.6.7"
+version_added: "3.6"
 
 author: "Fabian von Feilitzsch (@fabianvf)"
 
@@ -163,7 +163,7 @@ options:
     type: bool
 
 requirements:
-    - "python >= 3.6.7"
+    - "python >= 3.6"
     - "openshift >= 0.8.1"
     - "PyYAML >= 3.11"
 '''
