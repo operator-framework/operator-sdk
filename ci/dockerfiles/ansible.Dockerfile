@@ -21,8 +21,8 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
 # Ensure fresh metadata rather than cached metadata in the base by running
 # sed -i 's|enabled=1|enabled=0|g' /etc/yum/pluginconf.d/product-id.conf && rm -rf /var/yum/cache/* first
 RUN sed -i 's|enabled=1|enabled=0|g' /etc/yum/pluginconf.d/product-id.conf && rm -rf /var/cache/yum/* \
- && (yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm || true) \
- && yum install -y python36-devel.x86_64 gcc inotify-tools \
+ && (yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm || true) \
+ && yum install -y python36-devel.x86_64 gcc \
  && pip3 install --user --no-cache-dir --ignore-installed ipaddress \
       ansible-runner==1.2 \
       ansible-runner-http==1.0.0 \
