@@ -64,7 +64,8 @@ that were successful back to the end user.  This story is to
 change the scorecard output to show a *pass* or *fail* for each
 test that is run in the output instead of a success percentage.  The
 exit code of scorecard would be 0 if all tests passed.  The exit
-code would be non-zero if tests failed.
+code would be non-zero if tests failed.  With this change
+scores are essentially replaced with a list of pass/fail(s).
 
 #### Story 2 - Change Scorecard Test Selection
 
@@ -75,9 +76,15 @@ would change how users determine which tests are executed by scorecard.
 This story would introduce labels for each test and then allow the
 scorecard CLI to filter which tests it runs based on label selectors.
 
+Tests can fall into 2 groups: *required*, or *optional*.  Tests
+can also be categorized as *static* or *runtime*.  Labels for
+these groups and categories would allow a test to be more precisely
+specified by an end user.
+
 Possible examples of specifying what tests to run are as follows:
- * operator-sdk scorecard --selector="static,required"
- * operator-sdk scorecard --selector="static,runtime,required"
+ * operator-sdk scorecard --selector="required,runtime"
+ * operator-sdk scorecard --selector="required,runtime,static"
+ * operator-sdk scorecard --selector="optional,static"
 
 A scheme for applying labels to the actual tests would need to
 be developed.
@@ -87,13 +94,19 @@ be developed.
 The scorecard would use a common validation codebase
 to verify bundle contents.   This story supports a single
 source of truth and avoids duplication or variance of validation
-logic.
+logic.  The scorecard user would be able to specify a bundle
+on the command line, that bundle would then be validated.
 
 
 ### Implementation Details/Notes/Constraints [optional]
 
 A scheme for applying the labels to the tests would need to
 be developed.
+
+The source of truth for validation would need to be established.
+
+If no runtime tests are specified, then the scorecard would only
+run the static tests and not depend on a running cluster.
 
 ### Risks and Mitigations
 
