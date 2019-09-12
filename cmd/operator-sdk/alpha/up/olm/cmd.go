@@ -12,26 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package alpha
+package olm
 
 import (
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/down"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/olm"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/up"
+	"fmt"
+
+	olmoperator "github.com/operator-framework/operator-sdk/internal/olm/operator"
 
 	"github.com/spf13/cobra"
 )
 
-func NewCmd() *cobra.Command {
+func NewOLMCmd() *cobra.Command {
+	c := &olmoperator.OLMCmd{}
 	cmd := &cobra.Command{
-		Use:   "alpha",
-		Short: "Run an alpha subcommand",
+		Use:   "olm",
+		Short: "Deploy your operator with the Operator Lifecycle Manager",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 {
+				return fmt.Errorf("command %q requires exactly one argument", cmd.CommandPath())
+			}
+			c.ManifestsDir = args[0]
+			return c.Up()
+		},
 	}
-
-	cmd.AddCommand(
-		olm.NewCmd(),
-		up.NewCmd(),
-		down.NewCmd(),
-	)
+	c.AddToFlagSet(cmd.Flags())
 	return cmd
 }

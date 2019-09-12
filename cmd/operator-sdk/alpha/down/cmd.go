@@ -12,26 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package alpha
+package down
 
 import (
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/down"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/olm"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/up"
+	downolm "github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/down/olm"
 
 	"github.com/spf13/cobra"
 )
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "alpha",
-		Short: "Run an alpha subcommand",
+		Use:   "down",
+		Short: "Tear down your operator in a Kubernetes cluster",
 	}
-
-	cmd.AddCommand(
-		olm.NewCmd(),
-		up.NewCmd(),
-		down.NewCmd(),
-	)
+	cmd.AddCommand(downolm.NewOLMCmd())
 	return cmd
 }

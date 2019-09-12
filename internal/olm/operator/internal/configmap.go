@@ -1,0 +1,135 @@
+// Copyright 2019 The Operator-SDK Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package olm
+
+import (
+	"crypto/md5"
+	"encoding/base32"
+	"fmt"
+	"path"
+	"strings"
+
+	"github.com/ghodss/yaml"
+	"github.com/operator-framework/operator-registry/pkg/registry"
+	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
+)
+
+func getPackageFileName(name string) string {
+	return fmt.Sprintf("%s.package.yaml", name)
+}
+
+// hashContents creates a base32-encoded md5 digest of b's bytes.
+func hashContents(b []byte) string {
+	h := md5.New()
+	h.Write(b)
+	enc := base32.StdEncoding.WithPadding(base32.NoPadding)
+	return enc.EncodeToString(h.Sum(nil))
+}
+
+// getObjectFileName opaquely creates a unique file name based on data in u.
+func getObjectFileName(b []byte, name, kind string) string {
+	digest := hashContents(b)
+	return fmt.Sprintf("%s.%s.%s.yaml", digest, name, strings.ToLower(kind))
+}
+
+// createConfigMapBinaryData opaquely creates a set of paths using data in pkg
+// and each bundle in bundles, unique by path. These paths are intended to
+// be keys in a ConfigMap.
+func createConfigMapBinaryData(pkg registry.PackageManifest, bundles []*registry.Bundle) (map[string][]byte, error) {
+	binaryKeyValues := map[string][]byte{}
+	pkgBytes, err := yaml.Marshal(pkg)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error marshalling bundled package manifest %s", pkg.PackageName)
+	}
+	binaryKeyValues[getPackageFileName(pkg.PackageName)] = pkgBytes
+	for _, bundle := range bundles {
+		for _, o := range bundle.Objects {
+			ob, err := yaml.Marshal(o)
+			if err != nil {
+				return nil, errors.Wrapf(err, "error marshalling object %s %q", o.GroupVersionKind(), o.GetName())
+			}
+			binaryKeyValues[getObjectFileName(ob, o.GetName(), o.GetKind())] = ob
+		}
+	}
+	return binaryKeyValues, nil
+}
+
+const (
+	// The directory containing all manifests for an operator, with the
+	// package manifest being top-level.
+	containerManifestsDir = "/registry/manifests"
+	// The directory containing a flat set of all files from all bundles.
+	containerOperatorDir = containerManifestsDir + "/operator"
+)
+
+// createVolumeMountPaths opaquely creates a set of paths using data in pkg
+// and each bundle in bundles, unique by path. These paths are intended to
+// be read by binaries in getDBContainerCmd().
+func createVolumeMountPaths(pkg registry.PackageManifest, bundles []*registry.Bundle) ([]string, error) {
+	keySet := sets.NewString()
+	keySet.Insert(path.Join(containerManifestsDir, getPackageFileName(pkg.PackageName)))
+	for _, bundle := range bundles {
+		for _, o := range bundle.Objects {
+			ob, err := yaml.Marshal(o)
+			if err != nil {
+				return nil, errors.Wrapf(err, "error marshalling object %s %q", o.GroupVersionKind(), o.GetName())
+			}
+			name := getObjectFileName(ob, o.GetName(), o.GetKind())
+			keySet.Insert(path.Join(containerOperatorDir, name))
+		}
+	}
+	return keySet.List(), nil
+}
+
+func getRegistryConfigMapName(pkgName string) string {
+	name := formatOperatorNameDNS1123(pkgName)
+	return fmt.Sprintf("%s-registry-bundles", name)
+}
+
+// withBinaryData returns a function that creates entries in the ConfigMap
+// argument's binaryData for each key and []byte value in kvs.
+func withBinaryData(kvs map[string][]byte) func(*corev1.ConfigMap) {
+	return func(cm *corev1.ConfigMap) {
+		if cm.BinaryData == nil {
+			cm.BinaryData = map[string][]byte{}
+		}
+		for k, v := range kvs {
+			cm.BinaryData[k] = v
+		}
+	}
+}
+
+// newRegistryConfigMap creates a new ConfigMap with a name derived from
+// pkgName, the package manifest's packageName, in namespace. opts will
+// be applied to the ConfigMap object.
+func newRegistryConfigMap(pkgName, namespace string, opts ...func(*corev1.ConfigMap)) *corev1.ConfigMap {
+	cm := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      getRegistryConfigMapName(pkgName),
+			Namespace: namespace,
+		},
+	}
+	for _, opt := range opts {
+		opt(cm)
+	}
+	return cm
+}
