@@ -21,16 +21,21 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
 
 # Install python dependencies
 # Ensure fresh metadata rather than cached metadata in the base by running
-# sed -i 's|enabled=1|enabled=0|g' /etc/yum/pluginconf.d/product-id.conf && rm -rf /var/yum/cache/* first
-RUN sed -i 's|enabled=1|enabled=0|g' /etc/yum/pluginconf.d/product-id.conf && rm -rf /var/cache/yum/* \
+# yum clean all && rm -rf /var/yum/cache/* first
+RUN yum clean all && rm -rf /var/cache/yum/* \
  && (yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm || true) \
  && yum install -y python36-devel.x86_64 gcc \
- && pip3 install --user --no-cache-dir --ignore-installed ipaddress \
-      ansible-runner==1.2 \
-      ansible-runner-http==1.0.0 \
-      openshift==0.8.9 \
-      ansible==2.8 \
- && yum remove -y gcc python36-devel.x86_64 \
+ # Install inotify-tools
+ && yum install -y epel-release && yum update \
+ && curl -O https://rpmfind.net/linux/fedora/linux/releases/30/Everything/x86_64/os/Packages/i/inotify-tools-3.14-16.fc30.x86_64.rpm \
+ && rpm -i inotify-tools-3.14-16.fc30.x86_64.rpm \
+ && yum --enablerepo=epel install inotify-tools.x86_64 \
+ && pip3 install --no-cache-dir --ignore-installed ipaddress \
+           ansible-runner==1.3.4 \
+           ansible-runner-http==1.0.0 \
+           openshift==0.8.9 \
+           ansible==2.8 \
+ && yum remove -y gcc \
  && yum clean all \
  && rm -rf /var/cache/yum
 
