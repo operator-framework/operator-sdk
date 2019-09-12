@@ -50,13 +50,13 @@ function test_operator() {
 
   # down when no operator is up (should fail).
   commandoutput=$(operator-sdk alpha down olm "$manifests_dir" --operator-version "$operator_version" 2>&1 || true)
-  echo $commandoutput | grep -F "Failed to uninstall operator: no operator with name \\\"${csv_name}\\\" is running"
+  echo $commandoutput | grep -F "Failed to uninstall operator: no operator with name \\\"${operator_name}\\\" is running"
   # up with manifests dir and version.
   commandoutput=$(operator-sdk alpha up olm "$manifests_dir" --operator-version "$operator_version" 2>&1)
   echo $commandoutput | grep -F "Successfully installed \\\"${csv_name}\\\""
   # up when the operator is already up (should fail).
   commandoutput=$(operator-sdk alpha up olm "$manifests_dir" --operator-version "$operator_version" 2>&1 || true)
-  echo $commandoutput | grep -F "Failed to install operator: an operator with name \\\"${csv_name}\\\" is already running"
+  echo $commandoutput | grep -F "Failed to install operator: an operator with name \\\"${operator_name}\\\" is already running"
   # down with manifests dir and version.
   commandoutput=$(operator-sdk alpha down olm "$manifests_dir" --operator-version "$operator_version" 2>&1)
   echo $commandoutput | grep -F "Successfully uninstalled \\\"${csv_name}\\\""

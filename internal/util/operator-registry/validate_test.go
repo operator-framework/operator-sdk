@@ -38,7 +38,7 @@ func TestValidatePackageManifest(t *testing.T) {
 	}{
 		{
 			"default channel does not exist",
-			true, "default channel baz does not exist in channels", nil,
+			true, `default channel "baz" does not exist in channels`, nil,
 		},
 		{
 			"successful validation",
@@ -56,7 +56,7 @@ func TestValidatePackageManifest(t *testing.T) {
 		},
 		{
 			"one channel's CSVName is empty",
-			true, "channel foo currentCSV cannot be empty",
+			true, `channel "foo" currentCSV cannot be empty`,
 			func(pm *registry.PackageManifest) {
 				pm.Channels = make([]registry.PackageChannel, 1)
 				copy(pm.Channels, channels)
@@ -65,7 +65,7 @@ func TestValidatePackageManifest(t *testing.T) {
 		},
 		{
 			"duplicate channel name",
-			true, "duplicate package manifest channel name foo; channel names must be unique",
+			true, `duplicate package manifest channel name "foo"; channel names must be unique`,
 			func(pm *registry.PackageManifest) {
 				pm.Channels = append(channels, channels...)
 			},
