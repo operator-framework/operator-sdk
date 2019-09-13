@@ -25,7 +25,7 @@ see-also:
 - [x] Design details are appropriately documented from clear requirements
 - [ ] Test plan is defined
 - [ ] Graduation criteria for dev preview, tech preview, GA
-- [ ] User-facing documentation is created in [openshift/docs]
+- [ ] User-facing documentation is created in openshift/docs
 
 ## Summary
 
@@ -56,7 +56,9 @@ OLM is an incredibly useful cluster management tool. There is currently no integ
 
 ## Proposal
 
-### User Stories [optional]
+### User Stories
+
+**TODO**
 
 Detail the things that people will be able to do if this is implemented.
 Include as much detail as possible so that people can understand the "how" of
@@ -65,13 +67,13 @@ bogged down.
 
 #### Story 1
 
-### Implementation Details/Notes/Constraints [optional]
+### Implementation Details/Notes/Constraints
 
 Initial PR: https://github.com/operator-framework/operator-sdk/pull/1912
 
 #### Use of operator-registry
 
-The SDK's approach to deployment should be as general and reliant on existing mechanisms as possible. To that end, [`operator-registry`][operator-registry] should be used since it defines what a bundle contains and how one is structured. `operator-registry` libraries should be used to create and serve bundles, and interact with package manifests.
+The SDK's approach to deployment should be as general and reliant on existing mechanisms as possible. To that end, [`operator-registry`][registry] should be used since it defines what a bundle contains and how one is structured. `operator-registry` libraries should be used to create and serve bundles, and interact with package manifests.
 
 The idea is to create a `Deployment` containing the latest `operator-registry` [image][registry-image] to initialize a bundle database and run a registry server serving that database using binaries contained in the image. The `Deployment` will contain volume mounts from a `ConfigMap` containing bundle files and a package manifest for an operator. Using manifest data in the `ConfigMap` volume source, the registry initializer can build a local database and serve that database through the `Service`. OLM-specific resources created by the SDK or supplied by a user, described below, will establish communication between this registry server and OLM.
 
@@ -128,7 +130,7 @@ Clearly define what graduation means.
 #### Examples
 
 These are generalized examples to consider, in addition to the aforementioned
-[maturity levels][maturity-levels].
+maturity levels.
 
 ##### Dev Preview -> Tech Preview
 
@@ -192,10 +194,19 @@ Similar to the `Drawbacks` section the `Alternatives` section is used to
 highlight and record other possible approaches to delivering the value proposed
 by an enhancement.
 
-## Infrastructure Needed [optional]
+## Infrastructure Needed
 
 Use this section if you need things from the project. Examples include a new
 subproject, repos requested, github details, and/or testing infrastructure.
 
 Listing these here allows the community to get the process for these resources
 started right away.
+
+[olm]:https://github.com/operator-framework/operator-lifecycle-manager/
+[olm-operatorgroup]:https://github.com/operator-framework/operator-lifecycle-manager/blob/1cb0681/doc/design/operatorgroups.md
+[olm-subscription]:https://github.com/operator-framework/community-operators/blob/master/docs/testing-operators.md#7-create-a-subscription
+[olm-catalogsource]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/philosophy.md#catalogsource
+[registry]:https://github.com/operator-framework/operator-registry/
+[bundle]:https://github.com/operator-framework/operator-registry/#manifest-format
+[registry-image]:https://quay.io/organization/openshift/origin-operator-registry
+[of-api]:https://github.com/operator-framework/api
