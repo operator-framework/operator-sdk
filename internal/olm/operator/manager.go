@@ -81,7 +81,7 @@ func (c OLMCmd) newManager() (*operatorManager, error) {
 			return nil, errors.Wrap(err, "failed to create SDK OLM client")
 		}
 	}
-	for _, path := range c.OLMResourcePaths {
+	for _, path := range c.IncludePaths {
 		if path != "" {
 			objs, err := readObjectsFromFile(path)
 			if err != nil {
