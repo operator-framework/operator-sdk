@@ -28,7 +28,7 @@ superseded-by:
 - \[ \] Design details are appropriately documented from clear requirements
 - \[ \] Test plan is defined
 - \[ \] Graduation criteria for dev preview, tech preview, GA
-- \[ \] User-facing documentation is created in [openshift/docs]
+- \[ \] User-facing documentation is created.
 
 ## Summary
 
@@ -167,7 +167,7 @@ Clearly define what graduation means.
 #### Examples
 
 These are generalized examples to consider, in addition to the aforementioned
-[maturity levels][maturity-levels].
+maturity levels.
 
 ##### Dev Preview -> Tech Preview
 
@@ -231,7 +231,7 @@ Similar to the `Drawbacks` section the `Alternatives` section is used to
 highlight and record other possible approaches to delivering the value proposed
 by an enhancement.
 
-## Infrastructure Needed [optional]
+## Infrastructure Needed
 
 Use this section if you need things from the project. Examples include a new
 subproject, repos requested, github details, and/or testing infrastructure.
