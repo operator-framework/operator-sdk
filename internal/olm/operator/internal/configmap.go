@@ -15,6 +15,7 @@
 package olm
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/base32"
 	"fmt"
@@ -27,10 +28,40 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
-func getPackageFileName(name string) string {
-	return fmt.Sprintf("%s.package.yaml", name)
+// RegistryDataStale checks if manifest data stored in the registry is stale
+// by comparing it to manifest data currently managed by m.
+func (m *RegistryResources) RegistryDataStale(ctx context.Context, namespace string) (bool, error) {
+	pkg := m.Manifests.GetPackageManifest()
+	pkgName := pkg.PackageName
+	nn := types.NamespacedName{
+		Name:      getRegistryConfigMapName(pkgName),
+		Namespace: namespace,
+	}
+	configmap := corev1.ConfigMap{}
+	err := m.Client.KubeClient.Get(ctx, nn, &configmap)
+	if err != nil {
+		return false, err
+	}
+	// Collect digests of manifests submitted to m.
+	newData, err := createConfigMapBinaryData(pkg, m.Manifests.GetBundles())
+	if err != nil {
+		return false, errors.Wrap(err, "error creating binary data")
+	}
+	// If lengths don't match we have added or removed a file.
+	if len(newData) != len(configmap.BinaryData) {
+		return true, nil
+	}
+	// Check each binary value's key, which contains a base32-encoded md5 digest
+	// component, against the new set of manifest keys.
+	for fileKey := range configmap.BinaryData {
+		if _, match := newData[fileKey]; !match {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // hashContents creates a base32-encoded md5 digest of b's bytes.
@@ -47,16 +78,22 @@ func getObjectFileName(b []byte, name, kind string) string {
 	return fmt.Sprintf("%s.%s.%s.yaml", digest, name, strings.ToLower(kind))
 }
 
+func getPackageFileName(b []byte, name string) string {
+	digest := hashContents(b)
+	return fmt.Sprintf("%s.%s.package.yaml", digest, name)
+}
+
 // createConfigMapBinaryData opaquely creates a set of paths using data in pkg
 // and each bundle in bundles, unique by path. These paths are intended to
 // be keys in a ConfigMap.
 func createConfigMapBinaryData(pkg registry.PackageManifest, bundles []*registry.Bundle) (map[string][]byte, error) {
+	pkgName := pkg.PackageName
 	binaryKeyValues := map[string][]byte{}
-	pkgBytes, err := yaml.Marshal(pkg)
+	pb, err := yaml.Marshal(pkg)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error marshalling bundled package manifest %s", pkg.PackageName)
+		return nil, errors.Wrapf(err, "error marshalling package manifest %s", pkgName)
 	}
-	binaryKeyValues[getPackageFileName(pkg.PackageName)] = pkgBytes
+	binaryKeyValues[getPackageFileName(pb, pkgName)] = pb
 	for _, bundle := range bundles {
 		for _, o := range bundle.Objects {
 			ob, err := yaml.Marshal(o)

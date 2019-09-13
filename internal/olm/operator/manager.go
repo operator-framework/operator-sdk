@@ -30,17 +30,12 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/types"
 )
-
-// FEAT(estroz): an operator registry only needs to be created once. Only
-// a new subscription needs to be created for operator manifests that exist
-// in the registry. Add a --save-registry flag to avoid deleting registry.
-// FEAT(estroz): save hash of bundle in registry ConfigMap (or elsewhere?)
-// and reload the registry if the hash of on-disk bundle data changes.
 
 // TODO(estroz): ensure OLM errors are percolated up to the user.
 
@@ -174,12 +169,8 @@ func (m *operatorManager) up(ctx context.Context) (err error) {
 	}
 
 	log.Info("Creating resources")
-	rr := opinternal.RegistryResources{
-		Client:    m.client,
-		Manifests: m.manifests,
-	}
-	if err = rr.CreateRegistryManifests(ctx, olmresourceclient.OLMNamespace); err != nil {
-		return errors.Wrap(err, "error registering bundle")
+	if err = m.registryUp(ctx, olmresourceclient.OLMNamespace); err != nil {
+		return err
 	}
 	if !m.hasCatalogSource() {
 		registryGRPCAddr := opinternal.GetRegistryServiceAddr(pkgName, olmresourceclient.OLMNamespace)
@@ -235,6 +226,40 @@ func (m *operatorManager) up(ctx context.Context) (err error) {
 	return nil
 }
 
+func (m *operatorManager) registryUp(ctx context.Context, namespace string) error {
+	rr := opinternal.RegistryResources{
+		Client:    m.client,
+		Manifests: m.manifests,
+	}
+	registryStale, err := rr.RegistryDataStale(ctx, namespace)
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			return errors.Wrap(err, "error checking registry data")
+		}
+		// ConfigMap doesn't exist yet, so create it as usual.
+		if err = rr.CreateRegistryManifests(ctx, namespace); err != nil {
+			return errors.Wrap(err, "error registering bundle")
+		}
+		return nil
+	}
+	if !registryStale && !m.force {
+		log.Printf("Registry data is current")
+		return nil
+	}
+	if m.force {
+		log.Printf("Forcefully recreating registry")
+	} else {
+		log.Printf("Registry data stale. Recreating registry")
+	}
+	if err = rr.DeleteRegistryManifests(ctx, namespace); err != nil {
+		return errors.Wrap(err, "error deleting registered bundle")
+	}
+	if err = rr.CreateRegistryManifests(ctx, namespace); err != nil {
+		return errors.Wrap(err, "error registering bundle")
+	}
+	return nil
+}
+
 func (m *operatorManager) down(ctx context.Context) (err error) {
 	// Ensure OLM is installed.
 	olmVer, err := m.client.GetInstalledVersion(ctx)
@@ -258,12 +283,8 @@ func (m *operatorManager) down(ctx context.Context) (err error) {
 	}
 
 	log.Info("Deleting resources")
-	rr := opinternal.RegistryResources{
-		Client:    m.client,
-		Manifests: m.manifests,
-	}
-	if err = rr.DeleteRegistryManifests(ctx, olmresourceclient.OLMNamespace); err != nil {
-		return errors.Wrap(err, "error deleting registered bundle")
+	if err = m.registryDown(ctx, olmresourceclient.OLMNamespace); err != nil {
+		return err
 	}
 	if !m.hasCatalogSource() {
 		m.olmObjects = append(m.olmObjects, newCatalogSource(pkgName, m.namespace))
@@ -291,6 +312,20 @@ func (m *operatorManager) down(ctx context.Context) (err error) {
 	}
 	log.Infof("Successfully uninstalled %q on OLM version %q", csv.GetName(), olmVer)
 
+	return nil
+}
+
+func (m *operatorManager) registryDown(ctx context.Context, namespace string) error {
+	rr := opinternal.RegistryResources{
+		Client:    m.client,
+		Manifests: m.manifests,
+	}
+	if m.force {
+		log.Printf("Forcefully deleting registry")
+		if err := rr.DeleteRegistryManifests(ctx, namespace); err != nil {
+			return errors.Wrap(err, "error deleting registered bundle")
+		}
+	}
 	return nil
 }
 
