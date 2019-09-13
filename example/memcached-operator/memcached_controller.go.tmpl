@@ -3,6 +3,7 @@ package memcached
 import (
 	"context"
 	"reflect"
+	"k8s.io/apimachinery/pkg/labels"
 
 	cachev1alpha1 "github.com/example-inc/memcached-operator/pkg/apis/cache/v1alpha1"
 
@@ -16,7 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -141,11 +142,12 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 	// Update the Memcached status with the pod names
 	// List the pods for this memcached's deployment
 	podList := &corev1.PodList{}
-	listOpts := []client.ListOption{
-		client.InNamespace(memcached.Namespace),
-		client.MatchingLabels(labelsForMemcached(memcached.Name)),
+	labelSelector := labels.SelectorFromSet(labelsForMemcached(memcached.Name))
+	listOpts := &client.ListOptions{
+		Namespace:     memcached.Namespace,
+		LabelSelector: labelSelector,
 	}
-	if err = r.client.List(context.TODO(), podList, listOpts...); err != nil {
+	if err = r.client.List(context.TODO(), listOpts, podList); err != nil {
 		reqLogger.Error(err, "Failed to list pods", "Memcached.Namespace", memcached.Namespace, "Memcached.Name", memcached.Name)
 		return reconcile.Result{}, err
 	}
