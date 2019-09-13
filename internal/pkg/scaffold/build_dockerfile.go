@@ -41,9 +41,9 @@ ENV OPERATOR=/usr/local/bin/{{.ProjectName}} \
     USER_NAME={{.ProjectName}}
 
 # install operator binary
-COPY build/_output/bin/{{.ProjectName}} ${OPERATOR}
+COPY --chown=1001:0 build/_output/bin/{{.ProjectName}} ${OPERATOR}
 
-COPY build/bin /usr/local/bin
+COPY --chown=1001:0 build/bin /usr/local/bin
 RUN chmod -R g+rwx /usr/local/bin && \
     /usr/local/bin/user_setup
 

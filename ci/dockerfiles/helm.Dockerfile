@@ -10,9 +10,9 @@ ENV OPERATOR=/usr/local/bin/helm-operator \
     HOME=/opt/helm
 
 # install operator binary
-COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/build/operator-sdk ${OPERATOR}
+COPY --from=builder --chown=1001:0 /go/src/github.com/operator-framework/operator-sdk/build/operator-sdk ${OPERATOR}
 
-COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/bin /usr/local/bin
+COPY --from=builder --chown=1001:0 /go/src/github.com/operator-framework/operator-sdk/bin /usr/local/bin
 RUN chmod -R g+rwx /usr/local/bin && \
     /usr/local/bin/user_setup
 

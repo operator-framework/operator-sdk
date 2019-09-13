@@ -44,8 +44,8 @@ func (d *Dockerfile) GetInput() (input.Input, error) {
 
 const dockerFileHelmTmpl = `FROM quay.io/operator-framework/helm-operator:{{.ImageTag}}
 
-COPY watches.yaml ${HOME}/watches.yaml
-COPY {{.HelmChartsDir}}/ ${HOME}/{{.HelmChartsDir}}/
+COPY --chown=1001:0 watches.yaml ${HOME}/watches.yaml
+COPY --chown=1001:0 {{.HelmChartsDir}}/ ${HOME}/{{.HelmChartsDir}}/
 
 RUN find ${HOME} -type f -exec chmod -R g+rw {} \;  && \
     find ${HOME} -type d -exec chmod -R g+rwx {} \;

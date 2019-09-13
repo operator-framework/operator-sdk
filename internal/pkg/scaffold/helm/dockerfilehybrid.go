@@ -54,12 +54,12 @@ COPY watches.yaml ${HOME}/watches.yaml{{ end }}
 # install operator binary
 COPY build/_output/bin/{{.ProjectName}} ${OPERATOR}
 
-COPY bin /usr/local/bin
+COPY --chown=1001:0 bin /usr/local/bin
 RUN chmod -R g+rwx /usr/local/bin && \
     /usr/local/bin/user_setup
 
 {{- if .HelmCharts }}
-COPY helm-charts/ ${HOME}/helm-charts/{{ end }}
+COPY --chown=1001:0 helm-charts/ ${HOME}/helm-charts/{{ end }}
 
 
 {{- if or .HelmCharts .Watches }}
