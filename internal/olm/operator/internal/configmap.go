@@ -18,7 +18,6 @@ import (
 	"crypto/md5"
 	"encoding/base32"
 	"fmt"
-	"path"
 	"strings"
 
 	"github.com/ghodss/yaml"
@@ -26,7 +25,6 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 func getPackageFileName(name string) string {
@@ -76,25 +74,6 @@ const (
 	// The directory containing a flat set of all files from all bundles.
 	containerOperatorDir = containerManifestsDir + "/operator"
 )
-
-// createVolumeMountPaths opaquely creates a set of paths using data in pkg
-// and each bundle in bundles, unique by path. These paths are intended to
-// be read by binaries in getDBContainerCmd().
-func createVolumeMountPaths(pkg registry.PackageManifest, bundles []*registry.Bundle) ([]string, error) {
-	keySet := sets.NewString()
-	keySet.Insert(path.Join(containerManifestsDir, getPackageFileName(pkg.PackageName)))
-	for _, bundle := range bundles {
-		for _, o := range bundle.Objects {
-			ob, err := yaml.Marshal(o)
-			if err != nil {
-				return nil, errors.Wrapf(err, "error marshalling object %s %q", o.GroupVersionKind(), o.GetName())
-			}
-			name := getObjectFileName(ob, o.GetName(), o.GetKind())
-			keySet.Insert(path.Join(containerOperatorDir, name))
-		}
-	}
-	return keySet.List(), nil
-}
 
 func getRegistryConfigMapName(pkgName string) string {
 	name := formatOperatorNameDNS1123(pkgName)

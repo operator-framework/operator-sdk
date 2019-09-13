@@ -16,7 +16,6 @@ package olm
 
 import (
 	"fmt"
-	"path"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -80,14 +79,13 @@ func withVolumeConfigMap(volName, cmName string) func(*appsv1.Deployment) {
 // withRegistryGRPCContainer returns a function that appends volumeMounts
 // to each container in the Deployment argument's pod template spec. One
 // volumeMount is appended for each path in paths from volume with name
-// volName, with subPath being the file name of the path.
+// volName.
 func withContainerVolumeMounts(volName string, paths []string) func(*appsv1.Deployment) {
 	volumeMounts := []corev1.VolumeMount{}
 	for _, p := range paths {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      volName,
 			MountPath: p,
-			SubPath:   path.Base(p),
 		})
 	}
 	return func(dep *appsv1.Deployment) {

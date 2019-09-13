@@ -50,14 +50,10 @@ func (m *RegistryResources) CreateRegistryManifests(ctx context.Context, namespa
 		withBinaryData(binaryKeyValues),
 	)
 	volName := getRegistryVolumeName(pkgName)
-	volumeMountPaths, err := createVolumeMountPaths(pkg, bundles)
-	if err != nil {
-		return errors.Wrap(err, "error creating registry Deployment mount paths")
-	}
 	dep := newRegistryDeployment(pkgName, namespace,
 		withRegistryGRPCContainer(pkgName),
 		withVolumeConfigMap(volName, cm.GetName()),
-		withContainerVolumeMounts(volName, volumeMountPaths),
+		withContainerVolumeMounts(volName, []string{containerManifestsDir}),
 	)
 	service := newRegistryService(pkgName, namespace,
 		withTCPPort("grpc", registryGRPCPort),
