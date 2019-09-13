@@ -17,14 +17,13 @@ package olm
 import (
 	"context"
 	"fmt"
-	"regexp"
 
 	olmresourceclient "github.com/operator-framework/operator-sdk/internal/olm/client"
 	registryutil "github.com/operator-framework/operator-sdk/internal/util/operator-registry"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 // RegistryResources configures creation/deletion of internal registry-related
@@ -91,14 +90,4 @@ func (m *RegistryResources) DeleteRegistryManifests(ctx context.Context, namespa
 func GetRegistryServiceAddr(pkgName, namespace string) string {
 	name := getRegistryServerName(pkgName)
 	return fmt.Sprintf("%s.%s.svc.cluster.local:%d", name, namespace, registryGRPCPort)
-}
-
-// formatOperatorNameDNS1123 ensures name is DNS1123 label-compliant by
-// replacing all non-compliant UTF-8 characters with "-".
-func formatOperatorNameDNS1123(name string) string {
-	if len(validation.IsDNS1123Label(name)) != 0 {
-		replacer := regexp.MustCompile("[^a-zA-Z0-9]+")
-		return replacer.ReplaceAllString(name, "-")
-	}
-	return name
 }

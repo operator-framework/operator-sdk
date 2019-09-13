@@ -17,6 +17,8 @@ package olm
 import (
 	"fmt"
 
+	registryutil "github.com/operator-framework/operator-sdk/internal/util/operator-registry"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,12 +34,12 @@ const (
 )
 
 func getRegistryServerName(pkgName string) string {
-	name := formatOperatorNameDNS1123(pkgName)
+	name := registryutil.FormatOperatorNameDNS1123(pkgName)
 	return fmt.Sprintf("%s-registry-server", name)
 }
 
 func getRegistryVolumeName(pkgName string) string {
-	name := formatOperatorNameDNS1123(pkgName)
+	name := registryutil.FormatOperatorNameDNS1123(pkgName)
 	return fmt.Sprintf("%s-bundle-db", name)
 }
 

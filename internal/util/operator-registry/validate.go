@@ -16,12 +16,14 @@ package registry
 
 import (
 	"fmt"
+	"regexp"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/appregistry"
 	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/pkg/errors"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 // ValidatePackageManifest ensures each datum in pkg is valid relative to other
@@ -55,6 +57,18 @@ func ValidatePackageManifest(pkg *registry.PackageManifest) error {
 	}
 
 	return nil
+}
+
+// dns1123LabelRegexp defines the character set allowed in a DNS 1123 label.
+var dns1123LabelRegexp = regexp.MustCompile("[^a-zA-Z0-9]+")
+
+// FormatOperatorNameDNS1123 ensures name is DNS1123 label-compliant by
+// replacing all non-compliant UTF-8 characters with "-".
+func FormatOperatorNameDNS1123(name string) string {
+	if len(validation.IsDNS1123Label(name)) != 0 {
+		return dns1123LabelRegexp.ReplaceAllString(name, "-")
+	}
+	return name
 }
 
 // validateBundle ensures all objects in bundle have the correct data.

@@ -21,12 +21,12 @@ import (
 
 	olmresourceclient "github.com/operator-framework/operator-sdk/internal/olm/client"
 	opinternal "github.com/operator-framework/operator-sdk/internal/olm/operator/internal"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	registryutil "github.com/operator-framework/operator-sdk/internal/util/operator-registry"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
 	olmapiv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
