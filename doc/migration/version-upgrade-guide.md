@@ -220,6 +220,45 @@ replace github.com/operator-framework/operator-sdk => github.com/operator-framew
 - Ensure that you can build the project with `operator-sdk build`
 - Finally remove `Gopkg.lock`, `Gopkg.toml` and the vendor directory.
 
+### Breaking changes
+
+Upon updating the project to `v0.8.2` the following breaking changes apply:
+
+- On running the command `operator-sdk generate openapi`, the CRD manifests at `deploy/crds/<group>_<version>_<kind>.crd` for all API types will now be regenerated based on their source files `pkg/apis/..._types.go`. So if you have made any manual edits to the default generated CRD manifest, e.g manually written the validation block or specified the naming (`spec.names`), then that information be overwritten when the CRD is regenerated. 
+
+  The correct way to specify CRD fields like naming, validation, subresources etc is by using `// +kubebuilder` marker comments. Consult the [legacy kubebuilder documentation][legacy-kubebuilder-doc-crd] to see what CRD fields can be generated via `// +kubebuilder` marker comments.
+
+  **Note:** The version of controller-tools tied to this release does not support settting the `spec.scope` field of the CRD. Use the marker comment `+genclient:nonNamespaced` to set `spec.scope=Cluster` if necessary. See the example below:
+  ```Go
+  // MemcachedSpec defines the desired state of Memcached
+  type MemcachedSpec struct {
+    // +kubebuilder:validation:Maximum=5
+    // +kubebuilder:validation:Minimum=1
+    Size int32 `json:"size"`
+  }
+
+  // MemcachedStatus defines the observed state of Memcached
+  type MemcachedStatus struct {
+    // +kubebuilder:validation:MaxItems=5
+    // +kubebuilder:validation:MinItems=1
+    Nodes []string `json:"nodes"`
+  }
+
+  // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+  // Memcached is the Schema for the memcacheds API
+  // +kubebuilder:subresource:status
+  // +kubebuilder:resource:shortName="mc"
+  // +genclient:nonNamespaced
+  type Memcached struct {
+    metav1.TypeMeta   `json:",inline"`
+    metav1.ObjectMeta `json:"metadata,omitempty"`
+
+    Spec   MemcachedSpec   `json:"spec,omitempty"`
+    Status MemcachedStatus `json:"status,omitempty"`
+  }
+  ```
+
 ## `v0.9.x`
 
 - The function `ExposeMetricsPort()` has been replaced with `CreateMetricsService()` [#1560](https://github.com/operator-framework/operator-sdk/pull/1560). 
@@ -296,6 +335,7 @@ replace github.com/operator-framework/operator-sdk => github.com/operator-framew
   replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v0.9.0
   ```
 
+[legacy-kubebuilder-doc-crd]: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [v0.8.2-go-mod]: https://github.com/operator-framework/operator-sdk/blob/28bd2b0d4fd25aa68e15d928ae09d3c18c3b51da/internal/pkg/scaffold/go_mod.go#L40-L94
 [activating-modules]: https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support
 [mercurial]: https://www.mercurial-scm.org/downloads
