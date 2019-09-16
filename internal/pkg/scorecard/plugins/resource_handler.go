@@ -179,6 +179,13 @@ func getPodFromDeployment(depName, namespace string) (pod *v1.Pod, err error) {
 		}
 		// Make sure the pods exist. There should only be 1 pod per deployment.
 		if len(pods.Items) == 1 {
+			//make sure both containers are Running
+			for _, containerStatus := range pods.Items[0].Status.ContainerStatuses {
+				if containerStatus.State.Running == nil {
+					return false, nil
+				}
+			}
+
 			// If the pod has a deletion timestamp, it is the old pod; wait for
 			// pod with no deletion timestamp
 			if pods.Items[0].GetDeletionTimestamp() == nil {
