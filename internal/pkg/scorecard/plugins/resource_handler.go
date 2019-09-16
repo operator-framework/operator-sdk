@@ -177,25 +177,33 @@ func getPodFromDeployment(depName, namespace string) (pod *v1.Pod, err error) {
 		if err != nil {
 			return false, fmt.Errorf("failed to get list of pods in deployment: %v", err)
 		}
-		// Make sure the pods exist. There should only be 1 pod per deployment.
-		if len(pods.Items) == 1 {
-			//make sure both containers are Running
-			for _, containerStatus := range pods.Items[0].Status.ContainerStatuses {
-				if containerStatus.State.Running == nil {
-					return false, nil
-				}
-			}
 
-			// If the pod has a deletion timestamp, it is the old pod; wait for
-			// pod with no deletion timestamp
-			if pods.Items[0].GetDeletionTimestamp() == nil {
-				pod = &pods.Items[0]
-				return true, nil
-			}
-		} else {
-			log.Debug("Operator deployment has more than 1 pod")
+		// Make sure the pod exist.
+		if len(pods.Items) == 0 {
+			return false, nil
 		}
-		return false, nil
+
+		// There should only be 1 pod per deployment.
+		if len(pods.Items) > 1 {
+			log.Debug("Operator deployment has more than 1 pod")
+			return false, nil
+		}
+
+		// If the pod has a deletion timestamp, it is the old pod; wait for
+		// pod with no deletion timestamp
+		if pods.Items[0].GetDeletionTimestamp() != nil {
+			return false, nil
+		}
+
+		// Make sure all containers are Running
+		for _, containerStatus := range pods.Items[0].Status.ContainerStatuses {
+			if containerStatus.State.Running == nil {
+				return false, nil
+			}
+		}
+
+		pod = &pods.Items[0]
+		return true, nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get proxyPod: %s", err)
