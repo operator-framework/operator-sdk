@@ -53,8 +53,8 @@ func (p externalPlugin) Run() scapiv1alpha1.ScorecardOutput {
 	cmd.Stderr = stderr
 	err := cmd.Run()
 	if err != nil {
-		name := fmt.Sprintf("%s", filepath.Base(p.config.Command))
-		logs := fmt.Sprintf("%s\nError: %s\nStdout: %s\nStderr: %s", p.config, err, string(stdout.Bytes()), string(stderr.Bytes()))
+		name := filepath.Base(p.config.Command)
+		logs := fmt.Sprintf("%s\nError: %s\nStdout: %s\nStderr: %s", p.config, err, stdout.String(), stderr.String())
 		// output error to main logger as well for human-readable output
 		log.Errorf("Plugin `%s` failed\nLogs: %s", filepath.Base(p.config.Command), logs)
 		return failedPlugin(name, logs)
@@ -63,13 +63,13 @@ func (p externalPlugin) Run() scapiv1alpha1.ScorecardOutput {
 	result := scapiv1alpha1.ScorecardOutput{}
 	err = json.Unmarshal(stdout.Bytes(), &result)
 	if err != nil {
-		name := fmt.Sprintf("%s", filepath.Base(p.config.Command))
-		logs := fmt.Sprintf("%s\nError: %s\nStdout: %s\nStderr: %s", p.config, err, string(stdout.Bytes()), string(stderr.Bytes()))
+		name := filepath.Base(p.config.Command)
+		logs := fmt.Sprintf("%s\nError: %s\nStdout: %s\nStderr: %s", p.config, err, stdout.String(), stderr.String())
 		// output error to main logger as well for human-readable output
 		log.Errorf("Output from plugin `%s` failed to unmarshal\nLogs: %s", filepath.Base(p.config.Command), logs)
 		return failedPlugin(name, logs)
 	}
-	stderrString := string(stderr.Bytes())
+	stderrString := stderr.String()
 	if len(stderrString) != 0 {
 		log.Warn(stderrString)
 	}
