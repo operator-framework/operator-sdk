@@ -16,6 +16,7 @@ package olm
 
 import (
 	"fmt"
+	"log"
 
 	olmoperator "github.com/operator-framework/operator-sdk/internal/olm/operator"
 
@@ -32,7 +33,10 @@ func NewOLMCmd() *cobra.Command {
 				return fmt.Errorf("command %q requires exactly one argument", cmd.CommandPath())
 			}
 			c.ManifestsDir = args[0]
-			return c.Up()
+			if err := c.Up(); err != nil {
+				log.Fatalf("Failed to install operator: %v", err)
+			}
+			return nil
 		},
 	}
 	c.AddToFlagSet(cmd.Flags())

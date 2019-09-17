@@ -46,10 +46,13 @@ func getRegistryVolumeName(pkgName string) string {
 // getRegistryDeploymentLabels creates a set of labels to identify
 // operator-registry Deployment objects.
 func getRegistryDeploymentLabels(pkgName string) map[string]string {
-	return map[string]string{
-		"name":  getRegistryServerName(pkgName),
-		"owner": "operator-sdk",
+	labels := map[string]string{
+		"name": getRegistryServerName(pkgName),
 	}
+	for k, v := range SDKLabels {
+		labels[k] = v
+	}
+	return labels
 }
 
 // applyToDeploymentPodSpec applies f to dep's pod template spec.

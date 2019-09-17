@@ -78,10 +78,7 @@ func validateBundle(bundle *registry.Bundle) (err error) {
 	if err != nil {
 		return err
 	}
-	csv, err := BundleCSVToCSV(bcsv)
-	if err != nil {
-		return err
-	}
+	csv := MustBundleCSVToCSV(bcsv)
 	crds, err := bundle.CustomResourceDefinitions()
 	if err != nil {
 		return err

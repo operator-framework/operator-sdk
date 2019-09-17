@@ -39,7 +39,11 @@ import (
 
 // TODO(estroz): ensure OLM errors are percolated up to the user.
 
-var Scheme = olmresourceclient.Scheme
+var (
+	Scheme = olmresourceclient.Scheme
+
+	defaultNamespace = "default"
+)
 
 func init() {
 	if err := apiextv1beta1.AddToScheme(Scheme); err != nil {
@@ -56,17 +60,21 @@ type operatorManager struct {
 	namespace string
 	force     bool
 
-	olmObjects []runtime.Object
-	manifests  registryutil.ManifestsStore
+	installMode           olmapiv1alpha1.InstallModeType
+	installModeNamespaces []string
+	olmObjects            []runtime.Object
+	manifests             registryutil.ManifestsStore
 }
 
-func (c OLMCmd) newManager() (*operatorManager, error) {
-	m := &operatorManager{}
+func (c *OLMCmd) newManager() (*operatorManager, error) {
+	m := &operatorManager{
+		force:   c.Force,
+		version: c.OperatorVersion,
+	}
 	rc, ns, err := k8sutil.GetKubeconfigAndNamespace(c.KubeconfigPath)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get namespace from kubeconfig %s", c.KubeconfigPath)
 	}
-	// TODO(estroz): create ns if ns does not exist (ex. defaultNamespace)
 	if ns == "" {
 		ns = defaultNamespace
 	}
@@ -92,12 +100,29 @@ func (c OLMCmd) newManager() (*operatorManager, error) {
 			}
 		}
 	}
+	// Since a Subscription refers to a CatalogSource, supplying one but
+	// not the other is an error.
+	hasSub, hasCatSrc := m.hasSubscription(), m.hasCatalogSource()
+	if hasSub || hasCatSrc && !(hasSub && hasCatSrc) {
+		return nil, errors.New("both a CatalogSource and Subscription must be supplied if one is supplied")
+	}
 	m.manifests, err = registryutil.ManifestsStoreForDir(c.ManifestsDir)
 	if err != nil {
 		return nil, err
 	}
-	m.version = c.OperatorVersion
-	m.force = c.Force
+	if c.InstallMode == "" {
+		// Default to OwnNamespace.
+		m.installMode = olmapiv1alpha1.InstallModeTypeOwnNamespace
+		m.installModeNamespaces = []string{m.namespace}
+	} else {
+		m.installMode, m.installModeNamespaces, err = parseInstallModeKV(c.InstallMode)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if err := m.installModeCompatible(m.installMode); err != nil {
+		return nil, err
+	}
 	return m, nil
 }
 
@@ -163,7 +188,14 @@ func (m *operatorManager) up(ctx context.Context) (err error) {
 		return err
 	}
 	if !m.force {
-		if status := m.status(ctx, bundle.Objects...); status.HasExistingResources() {
+		// Only check CSV here, since other deployed operators/versions may be
+		// running with shared CRDs.
+		obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(csv)
+		if err != nil {
+			return err
+		}
+		u := unstructured.Unstructured{Object: obj}
+		if status := m.status(ctx, &u); status.HasExistingResources() {
 			return errors.Errorf("an operator with name %q is already running\n%s", pkgName, status)
 		}
 	}
@@ -178,33 +210,33 @@ func (m *operatorManager) up(ctx context.Context) (err error) {
 		m.olmObjects = append(m.olmObjects, catsrc)
 	}
 	if !m.hasSubscription() {
-		channel, err := getChannelNameForCSVName(pkg, csv.GetName())
+		channel, err := getChannelForCSVName(pkg, csv.GetName())
 		if err != nil {
 			return err
 		}
-		sub := newSubscription(pkgName, m.namespace, withChannel(channel),
+		sub := newSubscription(csv.GetName(), m.namespace,
+			withPackageChannel(pkgName, channel),
 			withCatalogSource(getCatalogSourceName(pkgName), m.namespace))
 		m.olmObjects = append(m.olmObjects, sub)
 	}
 	if !m.hasOperatorGroup() {
-		// TODO(estroz): check if OG needs to be created in m.namespace first. If
-		// there is, CSV creation will fail with reason TooManyOperatorGroups. If
-		// the CSV's installModes don't support the target namespace selection of
-		// the OG, the CSV will fail with UnsupportedOperatorGroup. Might need to
-		// check these conditions before creating.
-		// https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/operatorgroups.md
-		olmCSV, err := registryutil.BundleCSVToCSV(csv)
-		if err != nil {
+		if err = m.operatorGroupUp(ctx); err != nil {
 			return err
 		}
-		targetNamespaces := []string{}
-		if csvSingleNamespace(olmCSV) || csvOwnNamespace(olmCSV) {
-			targetNamespaces = append(targetNamespaces, m.namespace)
-		}
-		og := newOperatorGroup(pkgName, m.namespace, targetNamespaces...)
-		m.olmObjects = append(m.olmObjects, og)
 	}
-	if err = m.client.DoCreate(ctx, m.olmObjects...); err != nil {
+	// Check for Namespace objects and create those first.
+	namespaces, objects := []runtime.Object{}, []runtime.Object{}
+	for _, obj := range m.olmObjects {
+		if obj.GetObjectKind().GroupVersionKind().Kind == "Namespace" {
+			namespaces = append(namespaces, obj)
+		} else {
+			objects = append(objects, obj)
+		}
+	}
+	if err = m.client.DoCreate(ctx, namespaces...); err != nil {
+		return err
+	}
+	if err = m.client.DoCreate(ctx, objects...); err != nil {
 		return err
 	}
 	nn := types.NamespacedName{
@@ -226,7 +258,7 @@ func (m *operatorManager) up(ctx context.Context) (err error) {
 	return nil
 }
 
-func (m *operatorManager) registryUp(ctx context.Context, namespace string) error {
+func (m operatorManager) registryUp(ctx context.Context, namespace string) error {
 	rr := opinternal.RegistryResources{
 		Client:    m.client,
 		Manifests: m.manifests,
@@ -290,17 +322,19 @@ func (m *operatorManager) down(ctx context.Context) (err error) {
 		m.olmObjects = append(m.olmObjects, newCatalogSource(pkgName, m.namespace))
 	}
 	if !m.hasSubscription() {
-		m.olmObjects = append(m.olmObjects, newSubscription(pkgName, m.namespace))
+		m.olmObjects = append(m.olmObjects, newSubscription(csv.GetName(), m.namespace))
 	}
 	if !m.hasOperatorGroup() {
-		// TODO(estroz): check if OG was created in m.namespace before deleting.
-		m.olmObjects = append(m.olmObjects, newOperatorGroup(pkgName, m.namespace))
+		if err = m.operatorGroupDown(ctx); err != nil {
+			return err
+		}
 	}
 	toDelete := make([]runtime.Object, len(m.olmObjects))
 	copy(toDelete, m.olmObjects)
 	for _, o := range bundle.Objects {
-		o.SetNamespace(m.namespace)
-		toDelete = append(toDelete, o)
+		oc := o.DeepCopy()
+		oc.SetNamespace(m.namespace)
+		toDelete = append(toDelete, oc)
 	}
 	if err = m.client.DoDelete(ctx, toDelete...); err != nil {
 		return err
@@ -329,6 +363,8 @@ func (m *operatorManager) registryDown(ctx context.Context, namespace string) er
 	return nil
 }
 
+// TODO(estroz): "status" subcommand
+// TODO(estroz): check registry health on each "status" subcommand invokation
 func (m *operatorManager) status(ctx context.Context, us ...*unstructured.Unstructured) olmresourceclient.Status {
 	objs := []runtime.Object{}
 	for _, u := range us {

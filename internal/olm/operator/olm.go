@@ -17,6 +17,8 @@ package olm
 import (
 	"fmt"
 
+	registryutil "github.com/operator-framework/operator-sdk/internal/util/operator-registry"
+
 	olmapiv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/registry"
@@ -24,14 +26,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func getSubscriptionName(pkgName string) string {
-	return fmt.Sprintf("%s-sub", pkgName)
+func getSubscriptionName(csvName string) string {
+	name := registryutil.FormatOperatorNameDNS1123(csvName)
+	return fmt.Sprintf("%s-sub", name)
 }
 
-// getChannelNameForCSVName returns the channel for a given csvName. csvName
-// usually has the format "{operator-name}.v{X.Y.Z}". An error is returned if
+// getChannelForCSVName returns the channel for a given csvName. csvName
+// has the format "{operator-name}.(v)?{X.Y.Z}". An error is returned if
 // no channel with current CSV name csvName is found.
-func getChannelNameForCSVName(pkg registry.PackageManifest, csvName string) (registry.PackageChannel, error) {
+func getChannelForCSVName(pkg registry.PackageManifest, csvName string) (registry.PackageChannel, error) {
 	for _, c := range pkg.Channels {
 		if c.CurrentCSVName == csvName {
 			return c, nil
@@ -49,30 +52,31 @@ func withCatalogSource(csName, csNamespace string) func(*olmapiv1alpha1.Subscrip
 	}
 }
 
-// withChannel returns a function that sets the Subscription argument's
-// target package channel and starting CSV to those in channel.
-func withChannel(channel registry.PackageChannel) func(*olmapiv1alpha1.Subscription) {
+// withPackageChannel returns a function that sets the Subscription argument's
+// target package, channel, and starting CSV to those in channel.
+func withPackageChannel(pkgName string, channel registry.PackageChannel) func(*olmapiv1alpha1.Subscription) {
 	return func(sub *olmapiv1alpha1.Subscription) {
+		if sub.Spec == nil {
+			sub.Spec = &olmapiv1alpha1.SubscriptionSpec{}
+		}
+		sub.Spec.Package = pkgName
 		sub.Spec.Channel = channel.Name
 		sub.Spec.StartingCSV = channel.CurrentCSVName
 	}
 }
 
-// newSubscription creates a new Subscription with a name derived from
-// pkgName, the package manifest's packageName, in namespace. opts will
-// be applied to the Subscription object.
-func newSubscription(pkgName, namespace string, opts ...func(*olmapiv1alpha1.Subscription)) *olmapiv1alpha1.Subscription {
+// newSubscription creates a new Subscription for a CSV with a name derived
+// from csvName, the CSV's objectmeta.name, in namespace. opts will be applied
+// to the Subscription object.
+func newSubscription(csvName, namespace string, opts ...func(*olmapiv1alpha1.Subscription)) *olmapiv1alpha1.Subscription {
 	sub := &olmapiv1alpha1.Subscription{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: olmapiv1alpha1.SchemeGroupVersion.String(),
 			Kind:       olmapiv1alpha1.SubscriptionKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      getSubscriptionName(pkgName),
+			Name:      getSubscriptionName(csvName),
 			Namespace: namespace,
-		},
-		Spec: &olmapiv1alpha1.SubscriptionSpec{
-			Package: pkgName,
 		},
 	}
 	for _, opt := range opts {
@@ -82,7 +86,8 @@ func newSubscription(pkgName, namespace string, opts ...func(*olmapiv1alpha1.Sub
 }
 
 func getCatalogSourceName(pkgName string) string {
-	return fmt.Sprintf("%s-ocs", pkgName)
+	name := registryutil.FormatOperatorNameDNS1123(pkgName)
+	return fmt.Sprintf("%s-ocs", name)
 }
 
 // withGRPC returns a function that sets the CatalogSource argument's
@@ -118,50 +123,41 @@ func newCatalogSource(pkgName, namespace string, opts ...func(*olmapiv1alpha1.Ca
 	return cs
 }
 
-func getOperatorGroupName(pkgName string) string {
-	return fmt.Sprintf("%s-og", pkgName)
-}
+// General OperatorGroup for operators created with the SDK.
+const sdkOperatorGroupName = "operator-sdk-og"
 
-// csvOwnNamespace returns true if the "SingleNamespace" installMode is
-// supported.
-func csvSingleNamespace(csv *olmapiv1alpha1.ClusterServiceVersion) bool {
-	for _, mode := range csv.Spec.InstallModes {
-		if mode.Type == olmapiv1alpha1.InstallModeTypeSingleNamespace && mode.Supported {
-			return true
+// withGRPC returns a function that sets the OperatorGroup argument's
+// targetNamespaces to namespaces. namespaces can be length 0..N; if
+// namespaces length is 0, targetNamespaces is set to an empty string,
+// indicating a global scope.
+func withTargetNamespaces(namespaces ...string) func(*olmapiv1.OperatorGroup) {
+	return func(og *olmapiv1.OperatorGroup) {
+		if len(namespaces) == 0 {
+			// Supports all namespaces.
+			og.Spec.TargetNamespaces = []string{""}
+		} else {
+			og.Spec.TargetNamespaces = namespaces
 		}
 	}
-	return false
 }
 
-// csvOwnNamespace returns true if the "OwnNamespace" installMode is supported.
-func csvOwnNamespace(csv *olmapiv1alpha1.ClusterServiceVersion) bool {
-	for _, mode := range csv.Spec.InstallModes {
-		if mode.Type == olmapiv1alpha1.InstallModeTypeOwnNamespace && mode.Supported {
-			return true
-		}
-	}
-	return false
-}
-
-// newOperatorGroup creates a new OperatorGroup with a name derived from
-// pkgName, the package manifest's packageName, in namespace. targetNamespaces
-// can be length 0..N.
-func newOperatorGroup(pkgName, namespace string, targetNamespaces ...string) *olmapiv1.OperatorGroup {
+// newSDKOperatorGroup creates a new OperatorGroup with name
+// sdkOperatorGroupName in namespace. opts will be applied to the
+// OperatorGroup object. Note that the default OperatorGroup has a global
+// scope.
+func newSDKOperatorGroup(namespace string, opts ...func(*olmapiv1.OperatorGroup)) *olmapiv1.OperatorGroup {
 	og := &olmapiv1.OperatorGroup{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: olmapiv1.SchemeGroupVersion.String(),
-			Kind:       "OperatorGroup",
+			Kind:       olmapiv1.OperatorGroupKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      getOperatorGroupName(pkgName),
+			Name:      sdkOperatorGroupName,
 			Namespace: namespace,
 		},
 	}
-	// Supports all namespaces.
-	if len(targetNamespaces) == 0 {
-		return og
+	for _, opt := range opts {
+		opt(og)
 	}
-	// Single namespace.
-	og.Spec.TargetNamespaces = targetNamespaces
 	return og
 }

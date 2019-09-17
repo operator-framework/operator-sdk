@@ -26,6 +26,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+// SDKLabels are used to identify certain operator-sdk resources.
+var SDKLabels = map[string]string{
+	"owner": "operator-sdk",
+}
+
 // RegistryResources configures creation/deletion of internal registry-related
 // resources.
 type RegistryResources struct {

@@ -22,6 +22,7 @@ import (
 	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/operator-framework/operator-registry/pkg/sqlite"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 // manifestsLoad loads a manifests directory from disk.
@@ -136,17 +137,19 @@ func (l manifests) GetBundleForVersion(version string) (*registry.Bundle, error)
 	return bundle, nil
 }
 
-// BundleCSVToCSV converts a registry.ClusterServiceVersion to a
+// MustBundleCSVToCSV converts a registry.ClusterServiceVersion bcsv to a
 // v1alpha1.ClusterServiceVersion. The returned type will not have a status.
-func BundleCSVToCSV(bcsv *registry.ClusterServiceVersion) (*olmapiv1alpha1.ClusterServiceVersion, error) {
+// MustBundleCSVToCSV will exit if bcsv's Spec is incorrectly formatted,
+// since operator-registry should have not been able to parse the CSV
+// if it were not.
+func MustBundleCSVToCSV(bcsv *registry.ClusterServiceVersion) *olmapiv1alpha1.ClusterServiceVersion {
 	spec := olmapiv1alpha1.ClusterServiceVersionSpec{}
 	if err := json.Unmarshal(bcsv.Spec, &spec); err != nil {
-		return nil, errors.Wrapf(err, "error converting bundle CSV %q type", bcsv.GetName())
+		log.Fatalf("Error converting bundle CSV %q type: %v", bcsv.GetName(), err)
 	}
-	csv := olmapiv1alpha1.ClusterServiceVersion{
+	return &olmapiv1alpha1.ClusterServiceVersion{
 		TypeMeta:   bcsv.TypeMeta,
 		ObjectMeta: bcsv.ObjectMeta,
 		Spec:       spec,
 	}
-	return &csv, nil
 }
