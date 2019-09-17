@@ -36,7 +36,7 @@ func (k *K8sStatus) GetInput() (input.Input, error) {
 	return k.Input, nil
 }
 
-const k8sStatusTmpl = `#!/usr/bin/python
+const k8sStatusTmpl = `#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import, division, print_function
@@ -65,7 +65,7 @@ module: k8s_status
 
 short_description: Update the status for a Kubernetes API resource
 
-version_added: "2.7"
+version_added: "3.6"
 
 author: "Fabian von Feilitzsch (@fabianvf)"
 

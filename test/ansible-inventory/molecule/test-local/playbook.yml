@@ -3,6 +3,7 @@
 - name: Build Operator in Kubernetes docker container
   hosts: k8s
   vars:
+    ansible_python_interpreter: '{{ ansible_playbook_python }}'
     image_name: inventory.apps.fabianism.us/inventory:testing
   tasks:
   # using command so we don't need to install any dependencies
@@ -59,7 +60,7 @@
       namespace: '{{ namespace }}'
       definition: "{{ custom_resource }}"
 
-  - name: Wait 30s for reconciliation to run
+  - name: Wait 60s for reconciliation to run
     k8s_facts:
       api_version: '{{ custom_resource.apiVersion }}'
       kind: '{{ custom_resource.kind }}'
@@ -68,7 +69,7 @@
     register: cr
     until:
     - "'Successful' in (cr | json_query('resources[].status.conditions[].reason'))"
-    delay: 3
+    delay: 6
     retries: 10
 
 - import_playbook: asserts.yml

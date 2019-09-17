@@ -110,7 +110,7 @@ const moleculeTestLocalPlaybookAnsibleTmpl = `---
       register: cr
       until:
       - "'Successful' in (cr | json_query('resources[].status.conditions[].reason'))"
-      delay: 6
+      delay: s
       retries: 10
     rescue:
     - name: debug cr

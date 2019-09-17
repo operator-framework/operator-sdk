@@ -44,8 +44,8 @@ USER 0
 # Ensure fresh metadata rather than cached metadata in the base by running
 # yum clean all && rm -rf /var/yum/cache/* first
 RUN yum clean all && rm -rf /var/cache/yum/* \
- && yum install -y python-devel gcc libffi-devel
-RUN pip install molecule==2.20.1
+ && yum install -y python36-devel python36-pip gcc libffi-devel
+RUN pip3 install --user molecule==2.22
 
 ARG NAMESPACEDMAN
 ADD $NAMESPACEDMAN /namespaced.yaml
