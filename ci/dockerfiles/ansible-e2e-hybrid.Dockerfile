@@ -24,7 +24,12 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
 # yum clean all && rm -rf /var/yum/cache/* first
 RUN yum clean all && rm -rf /var/cache/yum/* \
  && (yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm || true) \
- && yum install -y python-devel gcc inotify-tools \
+ && yum install -y python-devel gcc \
+ # Install inotify-tools
+ && yum install -y epel-release && yum update \
+ && curl -O https://rpmfind.net/linux/fedora/linux/releases/30/Everything/x86_64/os/Packages/i/inotify-tools-3.14-16.fc30.x86_64.rpm \
+ && rpm -i inotify-tools-3.14-16.fc30.x86_64.rpm \
+ && yum --enablerepo=epel install inotify-tools.x86_64 \
  && easy_install pip \
  && pip install -U --no-cache-dir setuptools pip \
  && pip install --no-cache-dir --ignore-installed ipaddress \
