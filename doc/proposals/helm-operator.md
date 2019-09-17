@@ -1,4 +1,4 @@
-## Helm Operator Proposal
+## Helm based-Operator Proposal for Operator SDK
 
 ### Background
 

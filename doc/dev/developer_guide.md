@@ -1,4 +1,4 @@
-# Operator SDK Developer guide
+# Developer guide for Operator SDK
 
 This document explains how to setup your dev environment.
 

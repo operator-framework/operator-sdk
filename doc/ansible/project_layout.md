@@ -1,4 +1,4 @@
-# Project Scaffolding Layout
+# Ansible Project Scaffolding Layout with Operator SDK
 
 After creating a new operator project using
 `operator-sdk new --type ansible`, the project directory has numerous generated folders and files. The following table describes a basic rundown of each generated file/directory.

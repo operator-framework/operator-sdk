@@ -1,4 +1,4 @@
-# Information Flow for Ansible Operator
+# Information Flow for Ansible based-operator with Operator SDK
 
 ![Ansible Operator Flow](ao-flow.png)
 

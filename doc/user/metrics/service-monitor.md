@@ -1,4 +1,4 @@
-## Using the ServiceMonitor prometheus-operator CRD
+## Using the ServiceMonitor prometheus-operator CRD for Operator SDK
 
 [prometheus-operator][prom-operator] is an operator that creates, configures, and manages Prometheus clusters atop Kubernetes.
 

@@ -1,4 +1,4 @@
-# SDK Code Annotations
+# Code Annotations Proposal for Operator SDK
 
 Implementation Owner: @estroz
 

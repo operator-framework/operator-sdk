@@ -1,4 +1,4 @@
-# User Experience CLI Improvements | Phase 1
+# User Experience CLI Improvements | Phase 1 Proposal for Operator SDK
 
 Implementation Owner: @joelanford
 

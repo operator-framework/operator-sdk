@@ -1,4 +1,4 @@
-# Operator-SDK: Controller Runtime Client API
+# Controller Runtime Client API with Operator SDK
 
 ## Overview
 

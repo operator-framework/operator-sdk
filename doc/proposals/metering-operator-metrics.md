@@ -1,4 +1,4 @@
-## Auto register operator specific metrics as part of operator-metering
+## Auto register operator specific metrics as part of operator-metering Proposal for Operator SDK
 
 ### Motivation and goal
 

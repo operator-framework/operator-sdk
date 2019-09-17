@@ -1,4 +1,4 @@
-## Advanced Options
+## Ansible Advanced Options for Operator SDK
 
 This document shows the advanced options available to a developer of an ansible operator.
 

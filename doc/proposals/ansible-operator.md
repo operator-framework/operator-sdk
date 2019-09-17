@@ -1,4 +1,4 @@
-## Ansible Operator Proposal
+## Ansible based-Operator Proposal for Operator SDK
 
 > Status: **completed**
 > 

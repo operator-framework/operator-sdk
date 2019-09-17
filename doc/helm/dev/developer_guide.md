@@ -1,4 +1,4 @@
-# Developer guide
+# Helm Developer guide for Operator SDK
 
 This document provides some useful information and tips for a developer
 creating an operator powered by Helm.

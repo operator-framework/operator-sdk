@@ -1,4 +1,4 @@
-# CLI Guide
+# CLI Guide for Operator SDK
 
 ```bash
 Usage:
