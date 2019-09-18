@@ -30,8 +30,12 @@ import (
 )
 
 const (
-	// TODO(estroz): don't rely on prior tests building this (works in CI).
-	defaultTestImageTag = "quay.io/example/memcached-operator:v0.0.1"
+	imageEnvVar = "OSDK_INTEGRATION_IMAGE"
+)
+
+var (
+	// Set with OSDK_INTEGRATION_IMAGE in CI.
+	defaultTestImageTag = "memcached-operator"
 )
 
 type DefinitionKey struct {

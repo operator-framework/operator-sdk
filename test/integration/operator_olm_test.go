@@ -36,6 +36,9 @@ var (
 )
 
 func TestOLMIntegration(t *testing.T) {
+	if image, ok := os.LookupEnv(imageEnvVar); ok && image != "" {
+		defaultTestImageTag = image
+	}
 	t.Run("Operator", func(t *testing.T) {
 		t.Run("Single", SingleOperator)
 	})

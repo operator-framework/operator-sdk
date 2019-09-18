@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-source hack/lib/test_lib.sh
+set -ex
+
 
 test_version() {
     local version="$1"
@@ -35,19 +36,5 @@ test_version() {
     echo $commandoutput | grep -F "Successfully uninstalled OLM"
 }
 
-set -ex
-
-# olm install/uninstall
 test_version "latest"
 test_version "0.10.1"
-
-# olm up/down
-if ! operator-sdk alpha olm install; then
-  echo "Failed to install OLM latest before 'olm up/down' test"
-  exit 1
-fi
-go test -v ./test/integration/...
-if ! operator-sdk alpha olm uninstall; then
-  echo "Failed to uninstall OLM latest after 'olm up/down' test"
-  exit 1
-fi

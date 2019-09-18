@@ -125,6 +125,10 @@ test/subcommand/scorecard2:
 test/subcommand/alpha-olm:
 	./hack/tests/alpha-olm-subcommands.sh
 
+.PHONY: test/integration
+test/integration:
+	./hack/tests/integration.sh
+
 test/e2e: test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm
 
 test/e2e/go:
