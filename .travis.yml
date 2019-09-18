@@ -9,9 +9,6 @@ sudo: required
 
 # go modules require xenial for mercurial TLS 1.2 support
 dist: xenial
-python:
-  - "3.6"
-
 env:
   global:
     - PATH=/opt/python/3.6.7/bin:$PATH
