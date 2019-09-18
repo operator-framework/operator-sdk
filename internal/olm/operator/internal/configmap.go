@@ -110,8 +110,6 @@ const (
 	// The directory containing all manifests for an operator, with the
 	// package manifest being top-level.
 	containerManifestsDir = "/registry/manifests"
-	// The directory containing a flat set of all files from all bundles.
-	containerOperatorDir = containerManifestsDir + "/operator"
 )
 
 func getRegistryConfigMapName(pkgName string) string {
