@@ -23,26 +23,22 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
-	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	opv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/registry"
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
 	// TODO(estroz): don't rely on prior tests building this (works in CI).
-	defaultTestImageTag = "quay.io/example/memcached-operator:0.0.1"
-)
-
-var (
-	KubeconfigPath = os.Getenv("KUBECONFIG")
+	defaultTestImageTag = "quay.io/example/memcached-operator:v0.0.1"
 )
 
 type DefinitionKey struct {
 	Kind     string
 	Name     string
 	Group    string
-	Versions []v1beta1.CustomResourceDefinitionVersion
+	Versions []apiextv1beta1.CustomResourceDefinitionVersion
 }
 
 type CSVTemplateConfig struct {
@@ -52,7 +48,7 @@ type CSVTemplateConfig struct {
 	Maturity        string
 	ReplacesCSVName string
 	CRDKeys         []DefinitionKey
-	InstallModes    []v1alpha1.InstallMode
+	InstallModes    []opv1alpha1.InstallMode
 }
 
 const csvTmpl = `apiVersion: operators.coreos.com/v1alpha1
@@ -214,14 +210,14 @@ func writeOperatorManifests(root, operatorName, defaultChannel string, csvConfig
 		})
 		bundleDir := filepath.Join(manifestsDir, csvConfig.OperatorVersion)
 		for _, key := range csvConfig.CRDKeys {
-			crd := v1beta1.CustomResourceDefinition{
+			crd := apiextv1beta1.CustomResourceDefinition{
 				TypeMeta: v1.TypeMeta{
-					APIVersion: v1beta1.SchemeGroupVersion.String(),
+					APIVersion: apiextv1beta1.SchemeGroupVersion.String(),
 					Kind:       "CustomResourceDefinition",
 				},
 				ObjectMeta: v1.ObjectMeta{Name: key.Name},
-				Spec: v1beta1.CustomResourceDefinitionSpec{
-					Names: v1beta1.CustomResourceDefinitionNames{
+				Spec: apiextv1beta1.CustomResourceDefinitionSpec{
+					Names: apiextv1beta1.CustomResourceDefinitionNames{
 						Kind:     key.Kind,
 						ListKind: key.Kind + "List",
 						Singular: strings.ToLower(key.Kind),

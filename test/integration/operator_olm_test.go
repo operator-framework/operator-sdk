@@ -18,11 +18,21 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	operator "github.com/operator-framework/operator-sdk/internal/olm/operator"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
-	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	opv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+)
+
+const (
+	defaultTimeout = 4 * time.Minute
+)
+
+var (
+	kubeconfigPath = os.Getenv(k8sutil.KubeConfigEnvVar)
 )
 
 func TestOLMIntegration(t *testing.T) {
@@ -43,34 +53,35 @@ func SingleOperator(t *testing.T) {
 				Kind:  "Memcached",
 				Name:  "memcacheds.cache.example.com",
 				Group: "cache.example.com",
-				Versions: []v1beta1.CustomResourceDefinitionVersion{
+				Versions: []apiextv1beta1.CustomResourceDefinitionVersion{
 					{Name: "v1alpha1", Storage: true, Served: true},
 				},
 			},
 		},
-		InstallModes: []v1alpha1.InstallMode{
-			{Type: v1alpha1.InstallModeTypeOwnNamespace, Supported: true},
-			{Type: v1alpha1.InstallModeTypeSingleNamespace, Supported: true},
-			{Type: v1alpha1.InstallModeTypeMultiNamespace, Supported: false},
-			{Type: v1alpha1.InstallModeTypeAllNamespaces, Supported: true},
+		InstallModes: []opv1alpha1.InstallMode{
+			{Type: opv1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+			{Type: opv1alpha1.InstallModeTypeSingleNamespace, Supported: true},
+			{Type: opv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
+			{Type: opv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
 		},
 	}
 	tmp, err := ioutil.TempDir("", "sdk-integration.")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmp)
 	defaultChannel := "alpha"
 	operatorName := "memcached-operator"
 	operatorVersion := "0.0.2"
 	manifestsDir, err := writeOperatorManifests(tmp, operatorName, defaultChannel, csvConfig)
 	if err != nil {
+		os.RemoveAll(tmp)
 		t.Fatal(err)
 	}
 	opcmd := operator.OLMCmd{
 		ManifestsDir:    manifestsDir,
 		OperatorVersion: operatorVersion,
-		KubeconfigPath:  KubeconfigPath,
+		KubeconfigPath:  kubeconfigPath,
+		Timeout:         defaultTimeout,
 	}
 	cases := []struct {
 		description string
@@ -86,7 +97,11 @@ func SingleOperator(t *testing.T) {
 		{"Remove operator after removal", opcmd.Down, false, true},
 		{"Remove operator after removal with force", opcmd.Down, true, false},
 	}
-
+	defer func() {
+		opcmd.Force = true
+		opcmd.Down()
+		os.RemoveAll(tmp)
+	}()
 	for _, c := range cases {
 		opcmd.Force = c.force
 		err := c.op()
