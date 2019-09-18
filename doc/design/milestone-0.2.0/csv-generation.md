@@ -132,9 +132,9 @@ func (us *CSVInstallStrategyUpdate) Apply(csv *v1alpha1.ClusterServiceVersion) e
 }
 ```
 
-[olm_csv_definition]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md#what-is-a-cluster-service-version-csv
+[olm_csv_definition]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#what-is-a-cluster-service-version-csv
 [olm_description]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/README.md
-[catalog_description]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/architecture.md#catalog-registry-design
+[catalog_description]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/architecture.md#catalog-registry-design
 [olm_csv_struct_code]:https://github.com/operator-framework/operator-lifecycle-manager/blob/8799f39ef342dc1ff7430eba7a88c1c3c70cbdcc/pkg/api/apis/operators/v1alpha1/clusterserviceversion_types.go#L261
 [olm_csv_spec_code]:https://github.com/operator-framework/operator-lifecycle-manager/blob/8799f39ef342dc1ff7430eba7a88c1c3c70cbdcc/pkg/api/apis/operators/v1alpha1/clusterserviceversion_types.go
 [olm_csv_spec_doc]:https://github.com/operator-framework/operator-lifecycle-manager/blob/16ff8f983b50503c4d8b8015bd0c14b5c7d6786a/Documentation/design/building-your-csv.md#building-a-cluster-service-version-csv-for-the-operator-framework

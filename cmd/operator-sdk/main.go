@@ -119,6 +119,7 @@ var commandsToSkip = map[string]struct{}{
 	"help":         struct{}{},
 	"completion":   struct{}{},
 	"version":      struct{}{},
+	"print-deps":   struct{}{}, // Does not require this logic
 }
 
 func skipCheckForCmd(cmd *cobra.Command) (skip bool) {
@@ -145,7 +146,7 @@ func checkDepManager(dm projutil.DepManagerType) error {
 		}
 		if !goModOn {
 			return fmt.Errorf(`dependency manager "modules" requires working directory to be in $GOPATH/src` +
-				` and GO111MODULE=on, or outside of $GOPATH/src and GO111MODULE="on", "auto", or unset`)
+				` and GO111MODULE=on, or outside of $GOPATH/src and GO111MODULE="on", "auto", or unset. More info: https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#go-modules`)
 		}
 	case projutil.DepManagerDep:
 		inGopathSrc, err := projutil.WdInGoPathSrc()

@@ -7,8 +7,8 @@ set -eux
 ROOTDIR="$(pwd)"
 GOTMP="$(mktemp -d)"
 trap_add 'rm -rf $GOTMP' EXIT
-# Needs to be from source until 2.20 comes out
-pip install --user git+https://github.com/ansible/molecule.git
+pip install --user pyasn1==0.4.5 pyasn1-modules==0.2.5 idna==2.7 ipaddress==1.0.22
+pip install --user molecule==2.20.2
 pip install --user docker openshift jmespath
 
 deploy_prereqs() {
@@ -16,14 +16,14 @@ deploy_prereqs() {
     oc adm policy add-cluster-role-to-user cluster-admin -z memcached-operator || :
     kubectl create -f "$OPERATORDIR/deploy/role.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
-    kubectl create -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_memcached_crd.yaml"
+    kubectl create -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds_crd.yaml"
 }
 
 remove_prereqs() {
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/service_account.yaml"
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/role.yaml"
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/role_binding.yaml"
-    kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_memcached_crd.yaml"
+    kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds_crd.yaml"
 }
 
 pushd "$GOTMP"
@@ -47,6 +47,10 @@ cat "$ROOTDIR/test/ansible-memcached/watches-v1-kind.yaml" >> memcached-operator
 
 # Test local
 pushd memcached-operator
+# Use the following sed command to check it on macOsX.
+# More info: https://www.mkyong.com/mac/sed-command-hits-undefined-label-error-on-mac-os-x/
+# sed -i "" 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
+# The following code is the default used (Not valid for MacOSX)
 sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
 OPERATORDIR="$(pwd)"
 TEST_CLUSTER_PORT=24443 operator-sdk test local --namespace default
@@ -57,7 +61,10 @@ popd
 popd
 
 pushd "${ROOTDIR}/test/ansible-inventory"
-
+# Use the following sed command to check it on macOsX.
+# More info: https://www.mkyong.com/mac/sed-command-hits-undefined-label-error-on-mac-os-x/
+# sed -i "" 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
+# The following code is the default used (Not valid for MacOSX)
 sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
 TEST_CLUSTER_PORT=24443 operator-sdk test local --namespace default
 

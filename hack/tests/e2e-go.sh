@@ -9,4 +9,4 @@ operator-sdk build $IMAGE_NAME
 operator-sdk test local ./test/e2e
 popd
 
-go test ./test/e2e/... -root=. -globalMan=testdata/empty.yaml $1
+go test ./test/e2e/... -root=. -globalMan=testdata/empty.yaml

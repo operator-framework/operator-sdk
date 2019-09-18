@@ -1,6 +1,8 @@
 <img src="doc/images/operator_logo_sdk_color.svg" height="125px"></img>
 
 [![Build Status](https://travis-ci.org/operator-framework/operator-sdk.svg?branch=master)](https://travis-ci.org/operator-framework/operator-sdk)
+[![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
+[![Go Report Card](https://goreportcard.com/badge/github.com/operator-framework/operator-sdk)](https://goreportcard.com/report/github.com/operator-framework/operator-sdk)
 
 ## Overview
 
@@ -38,14 +40,15 @@ The following workflow is for a new **Helm** operator:
 
 ## Prerequisites
 
-- [dep][dep_tool] version v0.5.0+.
 - [git][git_tool]
 - [go][go_tool] version v1.12+.
+- [mercurial][mercurial_tool] version 3.9+
 - [docker][docker_tool] version 17.03+.
   - Alternatively [podman][podman_tool] `v1.2.0+` or [buildah][buildah_tool] `v1.7+`
 - [kubectl][kubectl_tool] version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
-- Optional: [`delve`](https://github.com/go-delve/delve/tree/master/Documentation/installation) version 1.2.0+ (for `up local --enable-delve`).
+- Optional: [dep][dep_tool] version v0.5.0+.
+- Optional: [delve](https://github.com/go-delve/delve/tree/master/Documentation/installation) version 1.2.0+ (for `up local --enable-delve`).
 
 ## Quick Start
 
@@ -63,9 +66,10 @@ $ mkdir -p $HOME/projects/example-inc/
 # Create a new app-operator project
 $ cd $HOME/projects/example-inc/
 $ export GO111MODULE=on
+
 # set gopath
 $ export GOPATH=$HOME/projects/example-inc/
-$ operator-sdk new app-operator
+$ operator-sdk new app-operator --repo github.com/example-inc/app-operator
 $ cd app-operator
 
 # Add a new API for the custom resource AppService
@@ -91,13 +95,13 @@ $ kubectl create -f deploy/service_account.yaml
 $ kubectl create -f deploy/role.yaml
 $ kubectl create -f deploy/role_binding.yaml
 # Setup the CRD
-$ kubectl create -f deploy/crds/app_v1alpha1_appservice_crd.yaml
+$ kubectl create -f deploy/crds/app.example.com_appservices_crd.yaml
 # Deploy the app-operator
 $ kubectl create -f deploy/operator.yaml
 
 # Create an AppService CR
 # The default controller will watch for AppService objects and create a pod for each CR
-$ kubectl create -f deploy/crds/app_v1alpha1_appservice_cr.yaml
+$ kubectl create -f deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
 
 # Verify that a pod is created
 $ kubectl get pod -l app=example-appservice
@@ -123,13 +127,16 @@ Spec:
   Size:  3
 
 # Cleanup
-$ kubectl delete -f deploy/crds/app_v1alpha1_appservice_cr.yaml
+$ kubectl delete -f deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
 $ kubectl delete -f deploy/operator.yaml
 $ kubectl delete -f deploy/role.yaml
 $ kubectl delete -f deploy/role_binding.yaml
 $ kubectl delete -f deploy/service_account.yaml
-$ kubectl delete -f deploy/crds/app_v1alpha1_appservice_crd.yaml
+$ kubectl delete -f deploy/crds/app.example.com_appservices_crd.yaml
 ```
+
+**Note:** Following the steps in the [Getting Started Repository][getting_started] to learn how to developer your Operators projects.
+ 
 ## Command Line Interface
 
 To learn more about the SDK CLI, see the [SDK CLI Reference][sdk_cli_ref], or run `operator-sdk [command] -h`.
@@ -176,6 +183,7 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
+[mercurial_tool]:https://www.mercurial-scm.org/downloads
 [docker_tool]:https://docs.docker.com/install/
 [podman_tool]:https://github.com/containers/libpod/blob/master/install.md
 [buildah_tool]:https://github.com/containers/buildah/blob/master/install.md
@@ -184,3 +192,5 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [ansible_user_guide]:./doc/ansible/user-guide.md
 [helm_user_guide]:./doc/helm/user-guide.md
 [faq]: ./doc/faq.md
+[getting_started]: https://github.com/operator-framework/getting-started/blob/master/README.md
+

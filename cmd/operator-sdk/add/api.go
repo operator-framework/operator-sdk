@@ -31,8 +31,9 @@ import (
 )
 
 var (
-	apiVersion string
-	kind       string
+	apiVersion     string
+	kind           string
+	skipGeneration bool
 )
 
 func newAddApiCmd() *cobra.Command {
@@ -45,12 +46,13 @@ run from the project root directory. If the api already exists at
 pkg/apis/<group>/<version> then the command will not overwrite and return an
 error.
 
-This command runs Kubernetes deepcopy and OpenAPI V3 generators on tagged
-types in all paths under pkg/apis. Go code is generated under
+By default, this command runs Kubernetes deepcopy and OpenAPI V3 generators on
+tagged types in all paths under pkg/apis. Go code is generated under
 pkg/apis/<group>/<version>/zz_generated.{deepcopy,openapi}.go. CRD's are
 generated, or updated if they exist for a particular group + version + kind,
-under deploy/crds/<group>_<version>_<kind>_crd.yaml; OpenAPI V3 validation YAML
-is generated as a 'validation' object.
+under deploy/crds/<full group>_<resource>_crd.yaml; OpenAPI V3 validation YAML
+is generated as a 'validation' object. Generation can be disabled with the
+--skip-generation flag.
 
 Example:
 	$ operator-sdk add api --api-version=app.example.com/v1alpha1 --kind=AppService
@@ -66,8 +68,8 @@ Example:
 			├── zz_generated.deepcopy.go
 			├── zz_generated.openapi.go
 	$ tree deploy/crds
-	├── deploy/crds/app_v1alpha1_appservice_cr.yaml
-	├── deploy/crds/app_v1alpha1_appservice_crd.yaml
+	├── deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
+	├── deploy/crds/app.example.com_appservices_crd.yaml
 `,
 		RunE: apiRun,
 	}
@@ -80,6 +82,7 @@ Example:
 	if err := apiCmd.MarkFlagRequired("kind"); err != nil {
 		log.Fatalf("Failed to mark `kind` flag for `add api` subcommand as required")
 	}
+	apiCmd.Flags().BoolVar(&skipGeneration, "skip-generation", false, "Skip generation of deepcopy and OpenAPI code and OpenAPI CRD specs")
 
 	return apiCmd
 }
@@ -132,14 +135,16 @@ func apiRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to update the RBAC manifest for the resource (%v, %v): (%v)", r.APIVersion, r.Kind, err)
 	}
 
-	// Run k8s codegen for deepcopy
-	if err := genutil.K8sCodegen(); err != nil {
-		return err
-	}
+	if !skipGeneration {
+		// Run k8s codegen for deepcopy
+		if err := genutil.K8sCodegen(); err != nil {
+			return err
+		}
 
-	// Generate a validation spec for the new CRD.
-	if err := genutil.OpenAPIGen(); err != nil {
-		return err
+		// Generate a validation spec for the new CRD.
+		if err := genutil.OpenAPIGen(); err != nil {
+			return err
+		}
 	}
 
 	log.Info("API generation complete.")

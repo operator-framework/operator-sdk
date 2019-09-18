@@ -23,6 +23,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
@@ -35,13 +36,12 @@ import (
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	v1 "k8s.io/api/core/v1"
 	extscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/client-go/discovery/cached"
+	cached "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/kubernetes"
 	cgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -73,12 +73,12 @@ const (
 
 var log *logrus.Logger
 
-func RunInternalPlugin(plugin PluginType, config *viper.Viper, logFile io.ReadWriter) (scapiv1alpha1.ScorecardOutput, error) {
+func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, logFile io.ReadWriter) (scapiv1alpha1.ScorecardOutput, error) {
 	log = logrus.New()
 	log.SetFormatter(&logrus.TextFormatter{DisableColors: true})
 	log.SetOutput(logFile)
 	// use stderr for logging not related to a single suite
-	if err := validateScorecardPluginFlags(config); err != nil {
+	if err := validateScorecardPluginFlags(config, pluginType); err != nil {
 		return scapiv1alpha1.ScorecardOutput{}, err
 	}
 	defer func() {
@@ -92,12 +92,12 @@ func RunInternalPlugin(plugin PluginType, config *viper.Viper, logFile io.ReadWr
 		tmpNamespaceVar string
 		err             error
 	)
-	kubeconfig, tmpNamespaceVar, err = k8sInternal.GetKubeconfigAndNamespace(config.GetString(KubeconfigOpt))
+	kubeconfig, tmpNamespaceVar, err = k8sInternal.GetKubeconfigAndNamespace(config.Kubeconfig)
 	if err != nil {
 		return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to build the kubeconfig: %v", err)
 	}
-	if config.GetString(NamespaceOpt) == "" {
-		config.Set(NamespaceOpt, tmpNamespaceVar)
+	if config.Namespace == "" {
+		config.Namespace = tmpNamespaceVar
 	}
 	scheme := runtime.NewScheme()
 	// scheme for client go
@@ -125,8 +125,8 @@ func RunInternalPlugin(plugin PluginType, config *viper.Viper, logFile io.ReadWr
 	runtimeClient, _ = client.New(kubeconfig, client.Options{Scheme: scheme, Mapper: restMapper})
 
 	csv := &olmapiv1alpha1.ClusterServiceVersion{}
-	if config.GetBool(OLMTestsOpt) {
-		yamlSpec, err := ioutil.ReadFile(config.GetString(CSVPathOpt))
+	if pluginType == OLMIntegration {
+		yamlSpec, err := ioutil.ReadFile(config.CSVManifest)
 		if err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to read csv: %v", err)
 		}
@@ -136,7 +136,7 @@ func RunInternalPlugin(plugin PluginType, config *viper.Viper, logFile io.ReadWr
 	}
 
 	// Extract operator manifests from the CSV if olm-deployed is set.
-	if config.GetBool(OlmDeployedOpt) {
+	if config.OLMDeployed {
 		// Get deploymentName from the deployment manifest within the CSV.
 		strat, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
 		if err != nil {
@@ -148,18 +148,21 @@ func RunInternalPlugin(plugin PluginType, config *viper.Viper, logFile io.ReadWr
 		}
 		deploymentName = stratDep.DeploymentSpecs[0].Name
 		// Get the proxy pod, which should have been created with the CSV.
-		proxyPodGlobal, err = getPodFromDeployment(deploymentName, config.GetString(NamespaceOpt))
+		proxyPodGlobal, err = getPodFromDeployment(deploymentName, config.Namespace)
 		if err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, err
 		}
 
 		logCRMsg := false
-		if crMans := config.GetStringSlice(CRManifestOpt); len(crMans) == 0 {
+		if crMans := config.CRManifest; len(crMans) == 0 {
 			// Create a temporary CR manifest from metadata if one is not provided.
 			if crJSONStr, ok := csv.ObjectMeta.Annotations["alm-examples"]; ok {
 				var crs []interface{}
 				if err = json.Unmarshal([]byte(crJSONStr), &crs); err != nil {
-					return scapiv1alpha1.ScorecardOutput{}, err
+					return scapiv1alpha1.ScorecardOutput{}, errors.Wrapf(err, "metadata.annotations['alm-examples'] in CSV %s incorrectly formatted", csv.GetName())
+				}
+				if len(crs) == 0 {
+					return scapiv1alpha1.ScorecardOutput{}, errors.Errorf("no CRs found in metadata.annotations['alm-examples'] in CSV %s and cr-manifest config option not set", csv.GetName())
 				}
 				// TODO: run scorecard against all CR's in CSV.
 				cr := crs[0]
@@ -179,9 +182,9 @@ func RunInternalPlugin(plugin PluginType, config *viper.Viper, logFile io.ReadWr
 				if _, err := crFile.Write(crYAMLBytes); err != nil {
 					return scapiv1alpha1.ScorecardOutput{}, err
 				}
-				config.Set(CRManifestOpt, []string{crFile.Name()})
+				config.CRManifest = []string{crFile.Name()}
 				defer func() {
-					for _, f := range config.GetStringSlice(CRManifestOpt) {
+					for _, f := range config.CRManifest {
 						if err := os.Remove(f); err != nil {
 							log.Errorf("Could not delete temporary CR manifest file: (%v)", err)
 						}
@@ -192,52 +195,52 @@ func RunInternalPlugin(plugin PluginType, config *viper.Viper, logFile io.ReadWr
 			}
 		} else {
 			// TODO: run scorecard against all CR's in CSV.
-			config.Set(CRManifestOpt, []string{crMans[0]})
+			config.CRManifest = []string{crMans[0]}
 			logCRMsg = len(crMans) > 1
 		}
 		// Let users know that only the first CR is being tested.
 		if logCRMsg {
-			log.Infof("The scorecard does not support testing multiple CR's at once when run with --olm-deployed. Testing the first CR %s", config.GetStringSlice(CRManifestOpt)[0])
+			log.Infof("The scorecard does not support testing multiple CR's at once when run with --olm-deployed. Testing the first CR %s", config.CRManifest[0])
 		}
 
 	} else {
 		// If no namespaced manifest path is given, combine
 		// deploy/{service_account,role.yaml,role_binding,operator}.yaml.
-		if config.GetString(NamespacedManifestOpt) == "" {
+		if config.NamespacedManifest == "" {
 			file, err := yamlutil.GenerateCombinedNamespacedManifest(scaffold.DeployDir)
 			if err != nil {
 				return scapiv1alpha1.ScorecardOutput{}, err
 			}
-			config.Set(NamespacedManifestOpt, file.Name())
+			config.NamespacedManifest = file.Name()
 			defer func() {
-				err := os.Remove(config.GetString(NamespacedManifestOpt))
+				err := os.Remove(config.NamespacedManifest)
 				if err != nil {
 					log.Errorf("Could not delete temporary namespace manifest file: (%v)", err)
 				}
-				config.Set(NamespacedManifestOpt, "")
+				config.NamespacedManifest = ""
 			}()
 		}
 		// If no global manifest is given, combine all CRD's in the given CRD's dir.
-		if config.GetString(GlobalManifestOpt) == "" {
-			if config.GetString(CRDsDirOpt) == "" {
-				config.Set(CRDsDirOpt, filepath.Join(scaffold.DeployDir, "crds"))
+		if config.GlobalManifest == "" {
+			if config.CRDsDir == "" {
+				config.CRDsDir = filepath.Join(scaffold.DeployDir, "crds")
 			}
-			gMan, err := yamlutil.GenerateCombinedGlobalManifest(config.GetString(CRDsDirOpt))
+			gMan, err := yamlutil.GenerateCombinedGlobalManifest(config.CRDsDir)
 			if err != nil {
 				return scapiv1alpha1.ScorecardOutput{}, err
 			}
-			config.Set(GlobalManifestOpt, gMan.Name())
+			config.GlobalManifest = gMan.Name()
 			defer func() {
-				err := os.Remove(config.GetString(GlobalManifestOpt))
+				err := os.Remove(config.GlobalManifest)
 				if err != nil {
 					log.Errorf("Could not delete global manifest file: (%v)", err)
 				}
-				config.Set(GlobalManifestOpt, "")
+				config.GlobalManifest = ""
 			}()
 		}
 	}
 
-	crs := config.GetStringSlice(CRManifestOpt)
+	crs := config.CRManifest
 	// check if there are duplicate CRs
 	gvks := []schema.GroupVersionKind{}
 	for _, cr := range crs {
@@ -264,25 +267,25 @@ func RunInternalPlugin(plugin PluginType, config *viper.Viper, logFile io.ReadWr
 		logReadWriter := &bytes.Buffer{}
 		log.SetOutput(logReadWriter)
 		log.Printf("Running for cr: %s", cr)
-		if !config.GetBool(OlmDeployedOpt) {
-			if err := createFromYAMLFile(config.GetString(GlobalManifestOpt)); err != nil {
+		if !config.OLMDeployed {
+			if err := createFromYAMLFile(config.Namespace, config.GlobalManifest, config.ProxyImage, config.ProxyPullPolicy); err != nil {
 				return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to create global resources: %v", err)
 			}
-			if err := createFromYAMLFile(config.GetString(NamespacedManifestOpt)); err != nil {
+			if err := createFromYAMLFile(config.Namespace, config.NamespacedManifest, config.ProxyImage, config.ProxyPullPolicy); err != nil {
 				return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to create namespaced resources: %v", err)
 			}
 		}
-		if err := createFromYAMLFile(cr); err != nil {
+		if err := createFromYAMLFile(config.Namespace, cr, config.ProxyImage, config.ProxyPullPolicy); err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to create cr resource: %v", err)
 		}
-		obj, err := yamlToUnstructured(cr)
+		obj, err := yamlToUnstructured(config.Namespace, cr)
 		if err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
 		}
-		if err := waitUntilCRStatusExists(obj); err != nil {
+		if err := waitUntilCRStatusExists(time.Second*time.Duration(config.InitTimeout), obj); err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed waiting to check if CR status exists: %v", err)
 		}
-		if plugin == BasicOperator {
+		if pluginType == BasicOperator {
 			conf := BasicTestConfig{
 				Client:   runtimeClient,
 				CR:       obj,
@@ -298,12 +301,12 @@ func RunInternalPlugin(plugin PluginType, config *viper.Viper, logFile io.ReadWr
 			}
 			suites = append(suites, *basicTests)
 		}
-		if plugin == OLMIntegration {
+		if pluginType == OLMIntegration {
 			conf := OLMTestConfig{
 				Client:   runtimeClient,
 				CR:       obj,
 				CSV:      csv,
-				CRDsDir:  config.GetString(CRDsDirOpt),
+				CRDsDir:  config.CRDsDir,
 				ProxyPod: proxyPodGlobal,
 			}
 			olmTests := NewOLMTestSuite(conf)

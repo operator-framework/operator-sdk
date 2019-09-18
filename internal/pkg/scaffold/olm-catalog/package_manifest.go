@@ -15,7 +15,6 @@
 package catalog
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -24,9 +23,10 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	registryutil "github.com/operator-framework/operator-sdk/internal/util/operator-registry"
 
 	"github.com/ghodss/yaml"
-	olmregistry "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/registry"
+	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
@@ -45,6 +45,8 @@ type PackageManifest struct {
 	// If ChannelIsDefault is true, Channel will be the package manifests'
 	// default channel.
 	ChannelIsDefault bool
+	// OperatorName is the operator's name, ex. app-operator
+	OperatorName string
 }
 
 var _ input.File = &PackageManifest{}
@@ -52,11 +54,11 @@ var _ input.File = &PackageManifest{}
 // GetInput gets s' Input.
 func (s *PackageManifest) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		lowerProjName := strings.ToLower(s.ProjectName)
+		lowerOperatorName := strings.ToLower(s.OperatorName)
 		// Path is what the operator-registry expects:
 		// {manifests -> olm-catalog}/{operator_name}/{operator_name}.package.yaml
-		s.Path = filepath.Join(OLMCatalogDir, lowerProjName,
-			lowerProjName+PackageManifestFileExt)
+		s.Path = filepath.Join(OLMCatalogDir, lowerOperatorName,
+			lowerOperatorName+PackageManifestFileExt)
 	}
 	return s.Input, nil
 }
@@ -75,7 +77,7 @@ func (s *PackageManifest) CustomRender() ([]byte, error) {
 	}
 	path := filepath.Join(s.AbsProjectPath, i.Path)
 
-	pm := &olmregistry.PackageManifest{}
+	pm := &registry.PackageManifest{}
 	if _, err := os.Stat(path); err != nil && os.IsNotExist(err) {
 		pm = s.newPackageManifest()
 	} else if err == nil {
@@ -95,7 +97,7 @@ func (s *PackageManifest) CustomRender() ([]byte, error) {
 		return nil, errors.Wrapf(err, "package manifest %s", path)
 	}
 
-	if err := validatePackageManifest(pm); err != nil {
+	if err := registryutil.ValidatePackageManifest(pm); err != nil {
 		return nil, errors.Wrapf(err, "failed to validate package manifest %s", pm.PackageName)
 	}
 
@@ -110,69 +112,51 @@ func (s *PackageManifest) CustomRender() ([]byte, error) {
 	return yaml.Marshal(pm)
 }
 
-func (s *PackageManifest) newPackageManifest() *olmregistry.PackageManifest {
+func (s *PackageManifest) newPackageManifest() *registry.PackageManifest {
 	// Take the current CSV version to be the "alpha" channel, as an operator
 	// should only be designated anything more stable than "alpha" by a human.
 	channel := "alpha"
 	if s.Channel != "" {
 		channel = s.Channel
 	}
-	pm := &olmregistry.PackageManifest{
-		PackageName: s.ProjectName,
-		Channels: []olmregistry.PackageChannel{
-			{Name: channel, CurrentCSVName: getCSVName(s.ProjectName, s.CSVVersion)},
+	lowerOperatorName := strings.ToLower(s.OperatorName)
+	pm := &registry.PackageManifest{
+		PackageName: lowerOperatorName,
+		Channels: []registry.PackageChannel{
+			{Name: channel, CurrentCSVName: getCSVName(lowerOperatorName, s.CSVVersion)},
 		},
 		DefaultChannelName: channel,
 	}
 	return pm
 }
 
-func validatePackageManifest(pm *olmregistry.PackageManifest) error {
-	if pm.PackageName == "" {
-		return fmt.Errorf("package name cannot be empty")
-	}
-	if len(pm.Channels) == 0 {
-		return fmt.Errorf("channels cannot be empty")
-	}
-	if pm.DefaultChannelName == "" {
-		return fmt.Errorf("default channel cannot be empty")
-	}
-
-	seen := map[string]struct{}{}
-	for i, c := range pm.Channels {
-		if c.Name == "" {
-			return fmt.Errorf("channel %d name cannot be empty", i)
-		}
-		if c.CurrentCSVName == "" {
-			return fmt.Errorf("channel %s currentCSV cannot be empty", c.Name)
-		}
-		if _, ok := seen[c.Name]; ok {
-			return fmt.Errorf("duplicate package manifest channel name %s; channel names must be unique", c.Name)
-		}
-		seen[c.Name] = struct{}{}
-	}
-	if _, ok := seen[pm.DefaultChannelName]; !ok {
-		return fmt.Errorf("default channel %s does not exist in channels", pm.DefaultChannelName)
-	}
-
-	return nil
-}
-
 // setChannels checks for duplicate channels in pm and sets the default
 // channel if possible.
-func (s *PackageManifest) setChannels(pm *olmregistry.PackageManifest) error {
+func (s *PackageManifest) setChannels(pm *registry.PackageManifest) error {
 	if s.Channel != "" {
-		pm.Channels = append(pm.Channels, olmregistry.PackageChannel{
-			Name:           s.Channel,
-			CurrentCSVName: getCSVName(s.ProjectName, s.CSVVersion),
-		})
+		channelIdx := -1
+		for i, channel := range pm.Channels {
+			if channel.Name == s.Channel {
+				channelIdx = i
+				break
+			}
+		}
+		lowerOperatorName := strings.ToLower(s.OperatorName)
+		if channelIdx == -1 {
+			pm.Channels = append(pm.Channels, registry.PackageChannel{
+				Name:           s.Channel,
+				CurrentCSVName: getCSVName(lowerOperatorName, s.CSVVersion),
+			})
+		} else {
+			pm.Channels[channelIdx].CurrentCSVName = getCSVName(lowerOperatorName, s.CSVVersion)
+		}
+		// Use s.Channel as the default channel if caller has specified it as the
+		// default.
+		if s.ChannelIsDefault {
+			pm.DefaultChannelName = s.Channel
+		}
 	}
 
-	// Use s.Channel as the default channel if caller has specified it as the
-	// default.
-	if s.ChannelIsDefault && s.Channel != "" {
-		pm.DefaultChannelName = s.Channel
-	}
 	if pm.DefaultChannelName == "" {
 		log.Warn("Package manifest default channel is empty and should be set to an existing channel.")
 	}

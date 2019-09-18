@@ -28,7 +28,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
-	"github.com/coreos/go-semver/semver"
+	"github.com/blang/semver"
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
@@ -136,9 +136,12 @@ func TestUpdateVersion(t *testing.T) {
 		t.Fatalf("Failed to update csv with version %s: (%v)", newCSVVer, err)
 	}
 
-	wantedSemver := semver.New(newCSVVer)
-	if !csv.Spec.Version.Equal(*wantedSemver) {
-		t.Errorf("Wanted csv version %v, got %v", *wantedSemver, csv.Spec.Version)
+	wantedSemver, err := semver.Parse(newCSVVer)
+	if err != nil {
+		t.Errorf("Failed to parse %s: %v", newCSVVer, err)
+	}
+	if !csv.Spec.Version.Equals(wantedSemver) {
+		t.Errorf("Wanted csv version %v, got %v", wantedSemver, csv.Spec.Version)
 	}
 	wantedName := getCSVName(operatorName, newCSVVer)
 	if csv.ObjectMeta.Name != wantedName {
@@ -164,33 +167,6 @@ func TestUpdateVersion(t *testing.T) {
 	wantedReplaces := getCSVName(operatorName, "0.1.0")
 	if csv.Spec.Replaces != wantedReplaces {
 		t.Errorf("Wanted csv replaces %s, got %s", wantedReplaces, csv.Spec.Replaces)
-	}
-}
-
-func TestGetDisplayName(t *testing.T) {
-	cases := []struct {
-		input, wanted string
-	}{
-		{"Appoperator", "Appoperator"},
-		{"appoperator", "Appoperator"},
-		{"appoperatoR", "Appoperato R"},
-		{"AppOperator", "App Operator"},
-		{"appOperator", "App Operator"},
-		{"app-operator", "App Operator"},
-		{"app-_operator", "App Operator"},
-		{"App-operator", "App Operator"},
-		{"app-_Operator", "App Operator"},
-		{"app--Operator", "App Operator"},
-		{"app--_Operator", "App Operator"},
-		{"APP", "APP"},
-		{"another-AppOperator_againTwiceThrice More", "Another App Operator Again Twice Thrice More"},
-	}
-
-	for _, c := range cases {
-		dn := getDisplayName(c.input)
-		if dn != c.wanted {
-			t.Errorf("Wanted %s, got %s", c.wanted, dn)
-		}
 	}
 }
 

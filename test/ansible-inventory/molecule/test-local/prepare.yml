@@ -26,7 +26,7 @@
 
     - name: Wait for the Kubernetes API to become available (this could take a minute)
       uri:
-        url: "https://localhost:8443/apis"
+        url: "http://localhost:10080/kubernetes-ready"
         status_code: 200
         validate_certs: no
       register: result
@@ -43,7 +43,7 @@
   tasks:
   - name: Create Custom Resource Definition
     k8s:
-      definition: "{{ lookup('file', '/'.join([deploy_dir, 'crds/inventory_v1alpha1_inventory_crd.yaml'])) }}"
+      definition: "{{ lookup('file', '/'.join([deploy_dir, 'crds/inventory.apps.fabianism.us_inventorys_crd.yaml'])) }}"
 
   - name: Ensure specified namespace is present
     k8s:
