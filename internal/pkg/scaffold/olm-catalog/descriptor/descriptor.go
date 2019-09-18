@@ -50,43 +50,34 @@ func GetCRDDescriptorForGVK(apisDir string, crdDesc *olmapiv1alpha1.CRDDescripti
 		return err
 	}
 	apiPkg := path.Join(projutil.GetGoPkg(), filepath.ToSlash(apiDir))
-	specType, statusType, pkgTypes, err := getSpecStatusPkgTypesForAPI(apiPkg, gvk.Kind, universe)
+	pkgTypes, err := getTypesForPkg(apiPkg, universe)
 	if err != nil {
-		return errors.Wrapf(err, "failed to parse spec, status, and package types for %s", gvk)
+		return err
+	}
+	kindType := findKindType(gvk.Kind, pkgTypes)
+	if kindType == nil {
+		log.Infof("No type %s found. Skipping CSV annotation parsing for API %s.", gvk.Kind, gvk)
+		return nil
+	}
+	comments := append(kindType.SecondClosestCommentLines, kindType.CommentLines...)
+	kindDescriptors, err := parseCSVGenAnnotations(comments)
+	if err != nil {
+		return errors.Wrapf(err, "error parsing CSV type %s annotations", kindType.Name.Name)
+	}
+	if description := parseDescription(comments); description != "" {
+		crdDesc.Description = description
+	}
+	if kindDescriptors.displayName != "" {
+		crdDesc.DisplayName = kindDescriptors.displayName
+	}
+	if len(kindDescriptors.resources) != 0 {
+		crdDesc.Resources = sortResources(kindDescriptors.resources)
 	}
 
-	var descriptors []descriptor
-	for _, t := range pkgTypes {
-		switch t.Kind {
-		case types.Struct:
-			if t.Name.Name == gvk.Kind {
-				comments := append(t.SecondClosestCommentLines, t.CommentLines...)
-				pd, err := parseCSVGenAnnotations(comments)
-				if err != nil {
-					return errors.Wrapf(err, "error parsing CSV type %s annotations", t.Name.Name)
-				}
-				crdDesc.Description = parseDescription(comments)
-				crdDesc.DisplayName = pd.displayName
-				crdDesc.Resources = append(crdDesc.Resources, pd.resources...)
-			}
-			for _, m := range t.Members {
-				pd, err := parseCSVGenAnnotations(m.CommentLines)
-				if err != nil {
-					return errors.Wrapf(err, "error parsing CSV type %s member %s annotations", t.Name.Name, m.Name)
-				}
-				for _, d := range pd.descriptors {
-					d.parentType, d.member = t, m
-					descriptors = append(descriptors, d)
-				}
-			}
-		}
-	}
-
-	crdDesc.Resources = sortResources(crdDesc.Resources)
-	descriptors = mergeChildDescriptorPaths(specType, statusType, descriptors)
-	// Now that we've merged child paths, ensure all fields not set are added.
-	for i := 0; i < len(descriptors); i++ {
-		setDescriptorDefaultsIfEmpty(&descriptors[i])
+	tree := newTypeTreeFromRoot(kindType)
+	descriptors, err := tree.getDescriptors()
+	if err != nil {
+		return err
 	}
 	for _, d := range sortDescriptors(descriptors) {
 		switch d.descType {
@@ -128,38 +119,28 @@ func getTypesFromDir(dir string) (types.Universe, error) {
 	return universe, nil
 }
 
-// getSpecStatusPkgTypesForAPI finds and returns types {kind}Spec, {kind}Status,
-// and all types in pkg.
-func getSpecStatusPkgTypesForAPI(pkg, kind string, universe types.Universe) (spec, status *types.Type, pkgTypes []*types.Type, err error) {
+func getTypesForPkg(pkgPath string, universe types.Universe) (pkgTypes []*types.Type, err error) {
+	var pkg *types.Package
 	for _, upkg := range universe {
-		if upkg.Path == "" || !strings.HasPrefix(upkg.Path, pkg) {
-			continue
-		}
-		for _, t := range upkg.Types {
-			pkgTypes = append(pkgTypes, t)
-			if t.Name.Name == kind {
-				for _, m := range t.Members {
-					path := parsePathFromJSONTags(m.Tags)
-					if path == typeSpec {
-						spec = m.Type
-					} else if path == typeStatus {
-						status = m.Type
-					}
-					if spec != nil && status != nil {
-						break
-					}
-				}
-			}
+		if strings.HasPrefix(upkg.Path, pkgPath) {
+			pkg = upkg
+			break
 		}
 	}
-	if spec == nil {
-		return nil, nil, nil, errors.Errorf("no spec found in type %s", kind)
+	if pkg == nil {
+		return nil, errors.Errorf("no package found for API %s", pkgPath)
 	}
-	if status == nil {
-		return nil, nil, nil, errors.Errorf("no status found in type %s", kind)
+	for _, t := range pkg.Types {
+		pkgTypes = append(pkgTypes, t)
 	}
-	if len(pkgTypes) == 0 {
-		return nil, nil, nil, errors.Errorf("no package types found in API %s", pkg)
+	return pkgTypes, nil
+}
+
+func findKindType(kind string, pkgTypes []*types.Type) *types.Type {
+	for _, t := range pkgTypes {
+		if t.Name.Name == kind {
+			return t
+		}
 	}
-	return spec, status, pkgTypes, nil
+	return nil
 }

@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/annotations"
-	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/pkg/errors"
@@ -39,8 +38,6 @@ const (
 
 type descriptor struct {
 	include     bool
-	parentType  *types.Type
-	member      types.Member
 	descType    descriptorType
 	description string
 	displayName string
@@ -178,45 +175,6 @@ func parseResource(rStr string) (r olmapiv1alpha1.APIResourceReference, err erro
 		r.Name = strings.TrimSpace(r.Name)
 	}
 	return r, nil
-}
-
-// setDescriptorDefaultsIfEmpty sets d's fields by parsing values from their
-// typical locations in data contained in d, ex. d.member, but only if those
-// fields are empty or should be overwritten.
-func setDescriptorDefaultsIfEmpty(d *descriptor) {
-	if d.description == "" {
-		d.description = parseDescription(d.member.CommentLines)
-	}
-	if d.path == "" {
-		d.path = parsePathFromJSONTags(d.member.Tags)
-	}
-	if d.displayName == "" {
-		d.displayName = k8sutil.GetDisplayName(d.member.Name)
-	}
-	switch d.descType {
-	case typeSpec:
-		d.xdescs = getSpecXDescriptorsByPath(d.xdescs, d.path)
-	case typeStatus:
-		d.xdescs = getStatusXDescriptorsByPath(d.xdescs, d.path)
-	}
-}
-
-// mergeChildDescriptorPaths joins all child descriptor paths with their
-// parents, and returns the updated descriptors.
-func mergeChildDescriptorPaths(specType, statusType *types.Type, descriptors []descriptor) (newDescs []descriptor) {
-	descMap := map[string][]descriptor{}
-	for _, d := range descriptors {
-		n := getUnderlyingTypeName(d.member.Type)
-		descMap[n] = append(descMap[n], d)
-	}
-	bfsJoinDescriptorPaths(specType, typeSpec, descMap)
-	bfsJoinDescriptorPaths(statusType, typeStatus, descMap)
-	for _, ds := range descMap {
-		for _, d := range ds {
-			newDescs = append(newDescs, d)
-		}
-	}
-	return newDescs
 }
 
 // parseDescription joins comment strings into one line, removing any tool

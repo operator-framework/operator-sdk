@@ -15,7 +15,6 @@
 package descriptor
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,12 +40,12 @@ func getTestFrameworkDir(t *testing.T) string {
 	return relPath
 }
 
-func TestGetSpecStatusPkgTypesForAPI(t *testing.T) {
+func TestGetKindTypeForAPI(t *testing.T) {
 	cases := []struct {
 		description string
 		pkg, kind   string
 		numPkgTypes int
-		wantErr     bool
+		wantNil     bool
 	}{
 		{
 			"Find types successfully",
@@ -54,7 +53,7 @@ func TestGetSpecStatusPkgTypesForAPI(t *testing.T) {
 		},
 		{
 			"Find types wtih error from wrong kind",
-			testFrameworkPackage, "NotFound", 0, true,
+			testFrameworkPackage, "NotFound", 8, true,
 		},
 	}
 	tfDir := filepath.Join(getTestFrameworkDir(t), "pkg", "apis", "cache", "v1alpha1")
@@ -64,29 +63,22 @@ func TestGetSpecStatusPkgTypesForAPI(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		spec, status, pkgTypes, err := getSpecStatusPkgTypesForAPI(c.pkg, c.kind, universe)
+		pkgTypes, err := getTypesForPkg(c.pkg, universe)
 		if err != nil {
-			if !c.wantErr {
-				t.Errorf("%s: expected nil error, got %q", c.description, err)
-			}
-			continue
-		} else if c.wantErr {
-			t.Errorf("%s: expected non-nil error, got nil error", c.description)
-			continue
+			t.Fatal(err)
 		}
-
-		if !c.wantErr {
-			expSpec := fmt.Sprintf("%sSpec", c.kind)
-			if getUnderlyingType(spec).Name.Name != expSpec {
-				t.Errorf("%s: expected type %q to have type name %q", c.description, spec.Name, expSpec)
-			}
-			expStatus := fmt.Sprintf("%sStatus", c.kind)
-			if getUnderlyingType(status).Name.Name != expStatus {
-				t.Errorf("%s: expected type %q to have type name %q", c.description, spec.Name, expStatus)
-			}
-			if n := len(pkgTypes); n != c.numPkgTypes {
-				t.Errorf("%s: expected %d package types, got %d: %v", c.description, c.numPkgTypes, n, pkgTypes)
-			}
+		if n := len(pkgTypes); n != c.numPkgTypes {
+			t.Errorf("%s: expected %d package types, got %d: %v", c.description, c.numPkgTypes, n, pkgTypes)
+		}
+		kindType := findKindType(c.kind, pkgTypes)
+		if c.wantNil && kindType != nil {
+			t.Errorf("%s: expected type %q to not be found", c.description, kindType.Name)
+		}
+		if !c.wantNil && kindType == nil {
+			t.Errorf("%s: expected type %q to be found", c.description, c.kind)
+		}
+		if !c.wantNil && kindType != nil && kindType.Name.Name != c.kind {
+			t.Errorf("%s: expected type %q to have type name %q", c.description, kindType.Name, c.kind)
 		}
 	}
 }
