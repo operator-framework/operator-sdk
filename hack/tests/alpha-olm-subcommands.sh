@@ -35,33 +35,6 @@ test_version() {
     echo $commandoutput | grep -F "Successfully uninstalled OLM"
 }
 
-function test_operator() {
-  local tmp="$(mktemp -d)"
-  trap_add "rm -rf $tmp" EXIT
-  local operator_name="memcached-operator"
-  local operator_version="0.0.3"
-  local tf_deploy_dir="test/test-framework/deploy"
-  cp -a "test/test-framework/deploy/olm-catalog/${operator_name}" "${tmp}/"
-  find "${tmp}/${operator_name}/" -mindepth 1 -type d \
-    -exec cp test/test-framework/deploy/crds/*_crd.yaml {} \;
-  local manifests_dir="${tmp}/${operator_name}"
-  local csv_name="${operator_name}.v${operator_version}"
-  local commandoutput
-
-  # down when no operator is up (should fail).
-  commandoutput=$(operator-sdk alpha down olm "$manifests_dir" --timeout 3m --operator-version "$operator_version" 2>&1 || true)
-  echo $commandoutput | grep -F "Failed to uninstall operator: no operator with name \\\"${operator_name}\\\" is running"
-  # up with manifests dir and version.
-  commandoutput=$(operator-sdk alpha up olm "$manifests_dir" --timeout 3m --operator-version "$operator_version" 2>&1)
-  echo $commandoutput | grep -F "Successfully installed \\\"${csv_name}\\\""
-  # up when the operator is already up (should fail).
-  commandoutput=$(operator-sdk alpha up olm "$manifests_dir" --timeout 3m --operator-version "$operator_version" 2>&1 || true)
-  echo $commandoutput | grep -F "Failed to install operator: an operator with name \\\"${operator_name}\\\" is already running"
-  # down with manifests dir and version.
-  commandoutput=$(operator-sdk alpha down olm "$manifests_dir" --timeout 3m --operator-version "$operator_version" 2>&1)
-  echo $commandoutput | grep -F "Successfully uninstalled \\\"${csv_name}\\\""
-}
-
 set -ex
 
 # olm install/uninstall
@@ -73,7 +46,7 @@ if ! operator-sdk alpha olm install; then
   echo "Failed to install OLM latest before 'olm up/down' test"
   exit 1
 fi
-test_operator
+go test -v ./test/integration/...
 if ! operator-sdk alpha olm uninstall; then
   echo "Failed to uninstall OLM latest after 'olm up/down' test"
   exit 1
