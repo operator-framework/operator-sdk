@@ -1,4 +1,4 @@
-# Developer guide
+# Operator SDK Developer guide
 
 This document explains how to setup your dev environment.
 
@@ -9,16 +9,6 @@ This document explains how to setup your dev environment.
 ## Download Operator SDK
 
 Go to the [Operator SDK repo][repo-sdk] and follow the [fork guide][fork-guide] to fork, clone, and setup the local operator-sdk repository.
-
-## Vendor dependencies
-
-Run the following in the project root directory to update the vendored dependencies:
-
-```sh
-$ cd $GOPATH/src/github.com/operator-framework/operator-sdk
-$ make dep
-```
-
 ## Build the Operator SDK CLI
 
 Build the Operator SDK CLI `operator-sdk` binary:

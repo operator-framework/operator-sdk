@@ -59,8 +59,10 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
     HOME=/opt/ansible
 
 # Install python dependencies
-
-RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
+# Ensure fresh metadata rather than cached metadata in the base by running
+# yum clean all && rm -rf /var/yum/cache/* first
+RUN yum clean all && rm -rf /var/cache/yum/* \
+ && yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
  && yum install -y python-devel gcc inotify-tools \
  && easy_install pip \
  && pip install -U --no-cache-dir setuptools pip \

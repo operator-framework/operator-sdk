@@ -263,7 +263,7 @@ $ operator-sdk test local ./test/e2e --namespace operator-test --up-local
 If you would prefer to create the resources yourself and skip resource creation, you can use the `--no-setup` flag:
 ```shell
 $ kubectl create namespace operator-test
-$ kubectl create -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
+$ kubectl create -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 $ kubectl create -f deploy/service_account.yaml --namespace operator-test
 $ kubectl create -f deploy/role.yaml --namespace operator-test
 $ kubectl create -f deploy/role_binding.yaml --namespace operator-test
@@ -289,7 +289,7 @@ $ cat deploy/role_binding.yaml >> deploy/namespace-init.yaml
 $ echo -e "\n---\n" >> deploy/namespace-init.yaml
 $ cat deploy/operator.yaml >> deploy/namespace-init.yaml
 # Run tests
-$ go test ./test/e2e/... -root=$(pwd) -kubeconfig=$HOME/.kube/config -globalMan deploy/crds/example_v1alpha1_app_crd.yaml -namespacedMan deploy/namespace-init.yaml -v -parallel=2
+$ go test ./test/e2e/... -root=$(pwd) -kubeconfig=$HOME/.kube/config -globalMan deploy/crds/cache.example.com_apps_crd.yaml -namespacedMan deploy/namespace-init.yaml -v -parallel=2
 ```
 
 ## Manual Cleanup
@@ -323,7 +323,7 @@ $ kubectl delete namespace main-153428703
 Since the CRD is not namespaced, it must be deleted separately. Clean up the CRD created by the tests using the CRD manifest `deploy/crd.yaml`:
 
 ```shell
-$ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
+$ kubectl delete -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 ```
 
 [memcached-sample]:https://github.com/operator-framework/operator-sdk-samples/tree/master/memcached-operator

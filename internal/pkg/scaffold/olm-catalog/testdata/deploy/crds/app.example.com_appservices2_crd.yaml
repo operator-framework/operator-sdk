@@ -1,0 +1,17 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: appservice2.example.com
+spec:
+  group: app.example.com
+  names:
+    kind: AppService2
+    listKind: AppService2List
+    plural: appservices2
+    singular: appservice2
+  scope: Namespaced
+  version: v1alpha2
+  versions:
+  - name: v1alpha2
+    served: true
+    storage: true

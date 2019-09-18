@@ -1,4 +1,4 @@
-# User Guide
+# Operator SDK User Guide
 
 This guide walks through an example of building a simple memcached-operator using the operator-sdk CLI tool and controller-runtime library API. To learn how to use Ansible or Helm to create an operator, see the [Ansible Operator User Guide][ansible_user_guide] or the [Helm Operator User Guide][helm_user_guide]. The rest of this document will show how to program an operator in Go.
 
@@ -102,7 +102,7 @@ $ operator-sdk generate k8s
 ```
 
 ### OpenAPI validation
-To update the OpenAPI validation section in the CRD `deploy/crds/cache_v1alpha1_memcached_crd.yaml`, run the following command.
+To update the OpenAPI validation section in the CRD `deploy/crds/cache.example.com_memcacheds_crd.yaml`, run the following command.
 
 ```console
 $ operator-sdk generate openapi
@@ -163,9 +163,20 @@ err := c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequest
   })
 ```
 
-**// TODO:** Doc on eventhandler, arbitrary mapping between watched and reconciled resource.
+#### Controller configurations
 
-**// TODO:** Doc on configuring a Controller: number of workers, predicates, watching channels,
+There are a number of useful configurations that can be made when initialzing a controller and declaring the watch parameters. For more details on these configurations consult the upstream [controller godocs][controller_godocs]. 
+
+- Set the max number of concurrent Reconciles for the controller via the [`MaxConcurrentReconciles`][controller_options]  option. Defaults to 1.
+  ```Go
+  _, err := controller.New("memcached-controller", mgr, controller.Options{
+	  MaxConcurrentReconciles: 2,
+	  ...
+  })
+  ```
+- Filter watch events using [predicates][event_filtering]
+- Choose the type of [EventHandler][event_handler_godocs] to change how a watch event will translate to reconcile requests for the reconcile loop. For operator relationships that are more complex than primary and secondary resources, the [`EnqueueRequestsFromMapFunc`][enqueue_requests_from_map_func] handler can be used to transform a watch event into an arbitrary set of reconcile requests.
+
 
 ### Reconcile loop
 
@@ -208,7 +219,7 @@ For a guide on Reconcilers, Clients, and interacting with resource Events, see t
 Before running the operator, the CRD must be registered with the Kubernetes apiserver:
 
 ```sh
-$ kubectl create -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
+$ kubectl create -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 ```
 
 Once this is done, there are two ways to run the operator:
@@ -291,10 +302,10 @@ You can use a specific kubeconfig via the flag `--kubeconfig=<path/to/kubeconfig
 
 ## Create a Memcached CR
 
-Create the example `Memcached` CR that was generated at `deploy/crds/cache_v1alpha1_memcached_cr.yaml`:
+Create the example `Memcached` CR that was generated at `deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml`:
 
 ```sh
-$ cat deploy/crds/cache_v1alpha1_memcached_cr.yaml
+$ cat deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
 apiVersion: "cache.example.com/v1alpha1"
 kind: "Memcached"
 metadata:
@@ -302,7 +313,7 @@ metadata:
 spec:
   size: 3
 
-$ kubectl apply -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
+$ kubectl apply -f deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
 ```
 
 Ensure that the memcached-operator creates the deployment for the CR:
@@ -352,7 +363,7 @@ status:
 Change the `spec.size` field in the memcached CR from 3 to 4 and apply the change:
 
 ```sh
-$ cat deploy/crds/cache_v1alpha1_memcached_cr.yaml
+$ cat deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
 apiVersion: "cache.example.com/v1alpha1"
 kind: "Memcached"
 metadata:
@@ -360,7 +371,7 @@ metadata:
 spec:
   size: 4
 
-$ kubectl apply -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
+$ kubectl apply -f deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
 ```
 
 Confirm that the operator changes the deployment size:
@@ -376,7 +387,7 @@ example-memcached    4         4         4            4           5m
 Clean up the resources:
 
 ```sh
-$ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
+$ kubectl delete -f deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml
 $ kubectl delete -f deploy/operator.yaml
 $ kubectl delete -f deploy/role_binding.yaml
 $ kubectl delete -f deploy/role.yaml
@@ -561,7 +572,7 @@ In such a scenario it is necessary to avoid contention between multiple operator
 
 There are two different leader election implementations to choose from, each with its own tradeoff.
 
-- [Leader-for-life][leader_for_life]: The leader pod only gives up leadership (via garbage collection) when it is deleted. This implementation precludes the possibility of 2 instances mistakenly running as leaders (split brain). However, this method can be subject to a delay in electing a new leader. For instance when the leader pod is on an unresponsive or partitioned node, the [`pod-eviction-timeout`][pod_eviction_timeout] dictates how it takes for the leader pod to be deleted from the node and step down (default 5m).
+- [Leader-for-life][leader_for_life]: The leader pod only gives up leadership (via garbage collection) when it is deleted. This implementation precludes the possibility of 2 instances mistakenly running as leaders (split brain). However, this method can be subject to a delay in electing a new leader. For instance when the leader pod is on an unresponsive or partitioned node, the [`pod-eviction-timeout`][pod_eviction_timeout] dictates how long it takes for the leader pod to be deleted from the node and step down (default 5m).
 - [Leader-with-lease][leader_with_lease]: The leader pod periodically renews the leader lease and gives up leadership when it can't renew the lease. This implementation allows for a faster transition to a new leader when the existing leader is isolated, but there is a possibility of split brain in [certain situations][lease_split_brain].
 
 By default the SDK enables the leader-for-life implementation. However you should consult the docs above for both approaches to consider the tradeoffs that make sense for your use case.
@@ -614,6 +625,11 @@ func main() {
 
 When the operator is not running in a cluster, the Manager will return an error on starting since it can't detect the operator's namespace in order to create the configmap for leader election. You can override this namespace by setting the Manager's `LeaderElectionNamespace` option.
 
+[enqueue_requests_from_map_func]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/handler#EnqueueRequestsFromMapFunc
+[event_handler_godocs]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/handler#hdr-EventHandlers
+[event_filtering]:./user/event-filtering.md
+[controller_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/controller#Options
+[controller_godocs]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/controller
 [operator_scope]:./operator-scope.md
 [install_guide]: ./user/install-operator-sdk.md
 [pod_eviction_timeout]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options

@@ -22,14 +22,18 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	osdkHandler "github.com/operator-framework/operator-sdk/pkg/handler"
+
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -194,26 +198,34 @@ func (c *cacheResponseHandler) recoverDependentWatches(req *http.Request, un *un
 }
 
 func (c *cacheResponseHandler) getListFromCache(r *requestfactory.RequestInfo, req *http.Request, k schema.GroupVersionKind) (marshaler, error) {
-	listOptions := &metav1.ListOptions{}
-	if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion, listOptions); err != nil {
+	k8sListOpts := &metav1.ListOptions{}
+	if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion, k8sListOpts); err != nil {
 		log.Error(err, "Unable to decode list options from request")
 		return nil, err
 	}
-	lo := client.InNamespace(r.Namespace)
-	if err := lo.SetLabelSelector(listOptions.LabelSelector); err != nil {
-		log.Error(err, "Unable to set label selectors for the client")
-		return nil, err
+	clientListOpts := []client.ListOption{
+		client.InNamespace(r.Namespace),
 	}
-	if listOptions.FieldSelector != "" {
-		if err := lo.SetFieldSelector(listOptions.FieldSelector); err != nil {
-			log.Error(err, "Unable to set field selectors for the client")
+	if k8sListOpts.LabelSelector != "" {
+		sel, err := labels.ConvertSelectorToLabelsMap(k8sListOpts.LabelSelector)
+		if err != nil {
+			log.Error(err, "Unable to convert label selectors for the client")
 			return nil, err
 		}
+		clientListOpts = append(clientListOpts, client.MatchingLabels(sel))
+	}
+	if k8sListOpts.FieldSelector != "" {
+		sel, err := fields.ParseSelector(k8sListOpts.FieldSelector)
+		if err != nil {
+			log.Error(err, "Unable to parse field selectors for the client")
+			return nil, err
+		}
+		clientListOpts = append(clientListOpts, k8sutil.MatchingFields{Sel: sel})
 	}
 	k.Kind = k.Kind + "List"
 	un := unstructured.UnstructuredList{}
 	un.SetGroupVersionKind(k)
-	err := c.informerCache.List(context.Background(), lo, &un)
+	err := c.informerCache.List(context.Background(), &un, clientListOpts...)
 	if err != nil {
 		// break here in case resource doesn't exist in cache but exists on APIserver
 		// This is very unlikely but provides user with expected 404

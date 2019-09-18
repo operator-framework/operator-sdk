@@ -35,6 +35,7 @@ type MemcachedStatus struct {
 // Memcached is the Schema for the memcacheds API
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:path=memcacheds,scope=Namespaced
 type Memcached struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

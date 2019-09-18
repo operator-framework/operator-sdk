@@ -1,5 +1,9 @@
 ## Ansible Operator Proposal
 
+> Status: **completed**
+> 
+> This proposal has been completed, please see the [Ansible User Guide for Operator SDK](../ansible/user-guide.md) for current documentation.
+
 ### Background
 
 Not everyone is a golang developer, and therefore gaining adoption for the operator-sdk is capped by the number of golang developers. Also, tooling for Kubernetes in other languages is lacking support for things such as informers, caches, and listers.

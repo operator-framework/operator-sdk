@@ -35,8 +35,8 @@ deploy_operator() {
     fi
     kubectl create -f "$OPERATORDIR/deploy/role.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
-    kubectl create -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_memcached_crd.yaml"
-    kubectl create -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_foo_crd.yaml"
+    kubectl create -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds_crd.yaml"
+    kubectl create -f "$OPERATORDIR/deploy/crds/ansible.example.com_foos_crd.yaml"
     kubectl create -f "$OPERATORDIR/deploy/operator.yaml"
 }
 
@@ -44,8 +44,8 @@ remove_operator() {
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/service_account.yaml"
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/role.yaml"
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/role_binding.yaml"
-    kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_memcached_crd.yaml"
-    kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/ansible_v1alpha1_foo_crd.yaml"
+    kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds_crd.yaml"
+    kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/ansible.example.com_foos_crd.yaml"
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/operator.yaml"
 }
 
@@ -60,8 +60,38 @@ test_operator() {
         exit 1
     fi
 
+    # verify that metrics service was created
+    if ! timeout 20s bash -c -- "until kubectl get service/memcached-operator-metrics > /dev/null 2>&1; do sleep 1; done";
+    then
+        echo "Failed to get metrics service"
+        kubectl describe pods
+        kubectl logs deployment/memcached-operator -c operator
+        kubectl logs deployment/memcached-operator -c ansible
+        exit 1
+    fi
+
+    # verify that the metrics endpoint exists
+    if ! timeout 1m bash -c -- "until kubectl run -i --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl -sfo /dev/null http://memcached-operator-metrics:8383/metrics; do sleep 1; done";
+    then
+        echo "Failed to verify that metrics endpoint exists"
+        kubectl describe pods
+        kubectl logs deployment/memcached-operator -c operator
+        kubectl logs deployment/memcached-operator -c ansible
+        exit 1
+    fi
+
+    # verify that the operator metrics endpoint exists
+    if ! timeout 1m bash -c -- "until kubectl run -i --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl -sfo /dev/null http://memcached-operator-metrics:8686/metrics; do sleep 1; done";
+    then
+        echo "Failed to verify that metrics endpoint exists"
+        kubectl describe pods
+        kubectl logs deployment/memcached-operator -c operator
+        kubectl logs deployment/memcached-operator -c ansible
+        exit 1
+    fi
+
     # create CR
-    kubectl create -f deploy/crds/ansible_v1alpha1_memcached_cr.yaml
+    kubectl create -f deploy/crds/ansible.example.com_v1alpha1_memcached_cr.yaml
     if ! timeout 20s bash -c -- 'until kubectl get deployment -l app=memcached | grep memcached; do sleep 1; done';
     then
         echo FAIL: operator failed to create memcached Deployment
@@ -70,6 +100,17 @@ test_operator() {
         kubectl logs deployment/memcached-operator -c ansible
         exit 1
     fi
+
+    # verify that metrics reflect cr creation
+    if ! bash -c -- 'kubectl run -i --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl http://memcached-operator-metrics:8686/metrics | grep example-memcached';
+    then
+        echo "Failed to verify custom resource metrics"
+        kubectl describe pods
+        kubectl logs deployment/memcached-operator -c operator
+        kubectl logs deployment/memcached-operator -c ansible
+        exit 1
+    fi
+
     memcached_deployment=$(kubectl get deployment -l app=memcached -o jsonpath="{..metadata.name}")
     if ! timeout 1m kubectl rollout status deployment/${memcached_deployment};
     then
@@ -84,7 +125,7 @@ test_operator() {
     kubectl create configmap deleteme
     trap_add 'kubectl delete --ignore-not-found configmap deleteme' EXIT
 
-    kubectl delete -f ${OPERATORDIR}/deploy/crds/ansible_v1alpha1_memcached_cr.yaml --wait=true
+    kubectl delete -f ${OPERATORDIR}/deploy/crds/ansible.example.com_v1alpha1_memcached_cr.yaml --wait=true
     # if the finalizer did not delete the configmap...
     if kubectl get configmap deleteme 2> /dev/null;
     then

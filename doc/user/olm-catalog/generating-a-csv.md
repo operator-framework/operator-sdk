@@ -12,8 +12,8 @@ Operator SDK projects have an expected [project layout][doc-project-layout]. In 
 
 * Roles: `role.yaml`
 * Deployments: `operator.yaml`
-* Custom Resources (CR's): `crds/<group>_<version>_<kind>_cr.yaml`
-* Custom Resource Definitions (CRD's): `crds/<group>_<version>_<kind>_crd.yaml`.
+* Custom Resources (CR's): `crds/<full group>_<version>_<kind>_cr.yaml`
+* Custom Resource Definitions (CRD's): `crds/<full group>_<resource>_crd.yaml`.
 
 `gen-csv` reads these files and adds their data to a CSV in an alternate form.
 
@@ -64,14 +64,11 @@ INFO[0000] Created deploy/olm-catalog/app-operator/0.0.1/app-operator.v0.0.1.clu
 
 When running `gen-csv` with a version that already exists, the `Required csv fields...` info statement will become a warning, as these fields are useful for displaying your Operator in Operator Hub.
 
-A note on `specDescriptors` and `statusDescriptors` fields in `spec.customresourcedefinitions.owned`:
-* Code comments are parsed to create `description`'s for each item in `specDescriptors` and `statusDescriptors`, so these comments should be kept up-to-date with Operator semantics.
-* `displayName` is guessed from type names, but will not overwrite values already present.
-* `path` and `x-descriptors` are guessed from JSON tags and their corresponding UI element from [this list][x-desc-list]. These values are presented as suggestions by `gen-csv` if they are not filled.
+**Note:** `description`, `displayName`, `resources`, `specDescriptors`, `statusDescriptors`, `actionDescriptors` fields in each `spec.customresourcedefinitions.owned` element will not be filled by the CSV generator. These fields must be added manually. The SDK plans on using [code annotations][code-annotations] to populate these fields in the near future.
 
 ## Updating your CSV
 
-Let's say you added a new CRD `deploy/crds/group_v1beta1_yourkind_crd.yaml` to your Operator project, and added a port to your Deployment manifest `operator.yaml`. Assuming you're using the same version as above, updating your CSV is as simple as running `operator-sdk olm-catalog gen-csv --csv-version 0.0.1`. `gen-csv` will append your new CRD to `spec.customresourcedefinitions.owned`, replace the old data at `spec.install.spec.deployments` with your updated Deployment, and write an updated CSV to the same location.
+Let's say you added a new CRD `deploy/crds/group.domain.com_resource_crd.yaml` to your Operator project, and added a port to your Deployment manifest `operator.yaml`. Assuming you're using the same version as above, updating your CSV is as simple as running `operator-sdk olm-catalog gen-csv --csv-version 0.0.1`. `gen-csv` will append your new CRD to `spec.customresourcedefinitions.owned`, replace the old data at `spec.install.spec.deployments` with your updated Deployment, and write an updated CSV to the same location.
 
 The SDK will not overwrite user-defined fields like `spec.maintainers` or descriptions of CSV elements, with the exception of `specDescriptors[].displayName` and `statusDescriptors[].displayName` in `spec.customresourcedefinitions.owned`, as mentioned [above](#first-generation).
 
@@ -87,33 +84,38 @@ Be sure to include the `--update-crds` flag if you want to add CRD's to your bun
 
 Below are two lists of fields: the first is a list of all fields the SDK and OLM expect in a CSV, and the second are optional.
 
-Several fields require user input. The set of fields with this requirement may change as the SDK becomes better at generating CSV's. For now, those are marked with a `(user)` qualifier.
+Several fields require user input. The set of fields with this requirement may change as the SDK becomes better at generating CSV's. For now, those are marked with a _(user)_ qualifier.
 
 Required:
 
 * `metadata.name`: a *unique* name for this CSV. Operator version should be included in the name to ensure uniqueness, ex. `app-operator.v0.1.1`.
-* `spec.description` (user): a thorough description of the Operator's functionality.
-* `spec.displayName` (user): a name to display for the Operator in Operator Hub.
-* `spec.keywords`: (user) a list of keywords describing the Operator.
-* `spec.maintainers`: (user) a list of human or organizational entities maintaining the Operator, with a `name` and `email`.
-* `spec.provider`: (user) the Operator provider, with a `name`; usually an organization.
-* `spec.labels`: (user) a list of `key:value` pairs to be used by Operator internals.
+* `spec.description` _(user)_ : a thorough description of the Operator's functionality.
+* `spec.displayName` _(user)_ : a name to display for the Operator in Operator Hub.
+* `spec.keywords` _(user)_ : a list of keywords describing the Operator.
+* `spec.maintainers` _(user)_ : a list of human or organizational entities maintaining the Operator, with a `name` and `email`.
+* `spec.provider` _(user)_ : the Operator provider, with a `name`; usually an organization.
+* `spec.labels` _(user)_ : a list of `key:value` pairs to be used by Operator internals.
 * `spec.version`: semantic version of the Operator, ex. `0.1.1`.
 * `spec.installModes`: what mode of [installation namespacing][install-modes] OLM should use. Currently all but `MultiNamespace` are supported by SDK Operators.
-* `spec.customresourcedefinitions`: any CRD's the Operator uses. This field will be filled by the SDK if any CRD manifests pointed to by `crd-cr-paths` in your config.
-  * `description`: description of the CRD.
-  * `resources`: any Kubernetes resources used by the CRD, ex. `Pod`'s and `ConfigMap`'s.
-  * `specDescriptors`: UI hints for inputs and outputs of the Operator's spec.
-  * `statusDescriptors`: UI hints for inputs and outputs of the Operator's status.
+* `spec.customresourcedefinitions`: any CRDs the Operator uses. Certain fields in elements of `owned` will be filled by the SDK.
+    * `owned`: all CRDs the Operator deploys itself from it's bundle.
+        * `name`: CRD's `metadata.name`.
+        * `kind`: CRD's `metadata.spec.names.kind`.
+        * `version`: CRD's `metadata.spec.version`.
+        * `description` _(user)_ : description of the CRD.
+        * `resources` _(user)_ : any Kubernetes resources used by the CRD, ex. `Pod`'s and `ConfigMap`'s.
+        * `specDescriptors` _(user)_ : UI hints for inputs and outputs of the Operator's spec.
+        * `statusDescriptors` _(user)_ : UI hints for inputs and outputs of the Operator's status.
+    * `required` _(user)_ : all CRDs the Operator expects to be present in-cluster, if any. All `required` element fields must be populated manually.
 
 Optional:
 
 * `metadata.annotations.alm-examples`: CR examples, in JSON string literal format, for your CRD's. Ideally one per CRD.
 * `metadata.annotations.capabilities`: level of Operator capability. See the [Operator maturity model][olm-capabilities] for a list of valid values.
 * `spec.replaces`: the name of the CSV being replaced by this CSV.
-* `spec.links`: (user) a list of URL's to websites, documentation, etc. pertaining to the Operator or application being managed, each with a `name` and `url`.
-* `spec.selector`: (user) selectors by which the Operator can pair resources in a cluster.
-* `spec.icon`: (user) a base64-encoded icon unique to the Operator, set in a `base64data` field with a `mediatype`.
+* `spec.links` _(user)_ : a list of URL's to websites, documentation, etc. pertaining to the Operator or application being managed, each with a `name` and `url`.
+* `spec.selector` _(user)_ : selectors by which the Operator can pair resources in a cluster.
+* `spec.icon` _(user)_ : a base64-encoded icon unique to the Operator, set in a `base64data` field with a `mediatype`.
 * `spec.maturity`: the Operator's maturity, ex. `alpha`.
 
 ## Further Reading
@@ -130,3 +132,4 @@ Optional:
 [x-desc-list]:https://github.com/openshift/console/blob/70bccfe/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L3-L35
 [install-modes]:https://github.com/operator-framework/operator-lifecycle-manager/blob/4197455/Documentation/design/building-your-csv.md#operator-metadata
 [olm-capabilities]:../../images/operator-capability-level.png
+[code-annotations]:../../proposals/sdk-code-annotations.md

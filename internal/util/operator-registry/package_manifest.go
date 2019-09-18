@@ -17,12 +17,11 @@ package registry
 import (
 	"fmt"
 
+	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/pkg/errors"
-
-	olmregistry "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/registry"
 )
 
-func ValidatePackageManifest(pm *olmregistry.PackageManifest) error {
+func ValidatePackageManifest(pm *registry.PackageManifest) error {
 	if pm.PackageName == "" {
 		return errors.New("package name cannot be empty")
 	}
