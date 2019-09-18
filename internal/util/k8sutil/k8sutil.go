@@ -18,12 +18,14 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 	"unicode"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -112,4 +114,16 @@ func GetTypeMetaFromBytes(b []byte) (t metav1.TypeMeta, err error) {
 		APIVersion: u.GetAPIVersion(),
 		Kind:       u.GetKind(),
 	}, nil
+}
+
+// dns1123LabelRegexp defines the character set allowed in a DNS 1123 label.
+var dns1123LabelRegexp = regexp.MustCompile("[^a-zA-Z0-9]+")
+
+// FormatOperatorNameDNS1123 ensures name is DNS1123 label-compliant by
+// replacing all non-compliant UTF-8 characters with "-".
+func FormatOperatorNameDNS1123(name string) string {
+	if len(validation.IsDNS1123Label(name)) != 0 {
+		return dns1123LabelRegexp.ReplaceAllString(name, "-")
+	}
+	return name
 }

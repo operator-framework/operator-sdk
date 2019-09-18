@@ -17,7 +17,7 @@ package olm
 import (
 	"fmt"
 
-	registryutil "github.com/operator-framework/operator-sdk/internal/util/operator-registry"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
 	olmapiv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -27,7 +27,7 @@ import (
 )
 
 func getSubscriptionName(csvName string) string {
-	name := registryutil.FormatOperatorNameDNS1123(csvName)
+	name := k8sutil.FormatOperatorNameDNS1123(csvName)
 	return fmt.Sprintf("%s-sub", name)
 }
 
@@ -86,7 +86,7 @@ func newSubscription(csvName, namespace string, opts ...func(*olmapiv1alpha1.Sub
 }
 
 func getCatalogSourceName(pkgName string) string {
-	name := registryutil.FormatOperatorNameDNS1123(pkgName)
+	name := k8sutil.FormatOperatorNameDNS1123(pkgName)
 	return fmt.Sprintf("%s-ocs", name)
 }
 

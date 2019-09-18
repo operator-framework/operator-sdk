@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"strings"
 
-	registryutil "github.com/operator-framework/operator-sdk/internal/util/operator-registry"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
 	"github.com/ghodss/yaml"
 	"github.com/operator-framework/operator-registry/pkg/registry"
@@ -113,7 +113,7 @@ const (
 )
 
 func getRegistryConfigMapName(pkgName string) string {
-	name := registryutil.FormatOperatorNameDNS1123(pkgName)
+	name := k8sutil.FormatOperatorNameDNS1123(pkgName)
 	return fmt.Sprintf("%s-registry-bundles", name)
 }
 
