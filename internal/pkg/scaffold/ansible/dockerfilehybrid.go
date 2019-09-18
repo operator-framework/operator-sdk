@@ -63,7 +63,7 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
 # yum clean all && rm -rf /var/yum/cache/* first
 RUN yum clean all && rm -rf /var/cache/yum/* \
  && (yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm || true) \
- && yum install -y python36-devel.x86_64 gcc \
+ && yum install -y python36-devel gcc \
  # Installing inotify-tools since it is no longer added in the rhel by default ...
  && yum install -y epel-release \
  && (yum update || true) \
@@ -76,7 +76,7 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
            ansible-runner-http==1.0.0 \
            openshift==0.8.9 \
            ansible==2.8 \
- && yum remove -y python36-devel.x86_64 gcc \
+ && yum remove -y python36-devel gcc \
  && yum clean all \
  && rm -rf /var/cache/yum
 
