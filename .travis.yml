@@ -11,9 +11,11 @@ sudo: required
 dist: xenial
 python:
   - "3.6"
+
 env:
   global:
     - PATH=/opt/python/3.6.7/bin:$PATH
+
 
 # Install python userspace utilities dependencies
 addons:
