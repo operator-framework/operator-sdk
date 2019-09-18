@@ -36,7 +36,7 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
            ansible-runner-http==1.0.0 \
            openshift==0.8.9 \
            ansible==2.8 \
- && yum remove -y gcc \
+ && yum remove -y python36-devel.x86_64 gcc \
  && yum clean all \
  && rm -rf /var/cache/yum
 

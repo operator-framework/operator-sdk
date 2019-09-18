@@ -68,15 +68,15 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
  && yum install -y epel-release \
  && (yum update || true) \
  && curl -O https://rpmfind.net/linux/fedora/linux/releases/30/Everything/x86_64/os/Packages/i/inotify-tools-3.14-16.fc30.x86_64.rpm \
- && rpm -i inotify-tools-3.14-16.fc30.x86_64.rpm \ # -> it installs the rpm to be used by the yum 
- && yum --enablerepo=epel install inotify-tools.x86_64 \ # -> it will install the inotify-tools.x86_64 in the SO 
+ && rpm -i inotify-tools-3.14-16.fc30.x86_64.rpm \ # -> it installs the rpm to be used by the yum
+ && yum --enablerepo=epel install inotify-tools.x86_64 \ # -> it will install the inotify-tools.x86_64 in the SO
  && (yum install python3-setuptools || true) \
  && pip3 install --no-cache-dir --ignore-installed ipaddress \
            ansible-runner==1.3.4 \
            ansible-runner-http==1.0.0 \
            openshift==0.8.9 \
            ansible==2.8 \
- && yum remove -y gcc \
+ && yum remove -y python36-devel.x86_64 gcc \
  && yum clean all \
  && rm -rf /var/cache/yum
 
