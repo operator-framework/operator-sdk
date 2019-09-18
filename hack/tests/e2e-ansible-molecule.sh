@@ -7,7 +7,7 @@ set -eux
 ROOTDIR="$(pwd)"
 GOTMP="$(mktemp -d)"
 trap_add 'rm -rf $GOTMP' EXIT
-pip3 install --user pyasn1==0.4.5 pyasn1-modules==0.2.6 idna==2.7 ipaddress==1.0.22
+pip3 install --user pyasn1==0.4.7 pyasn1-modules==0.2.6 idna==2.7 ipaddress==1.0.22
 pip3 install -U git+https://github.com/ansible/molecule
 pip3 install --user docker openshift jmespath
 
