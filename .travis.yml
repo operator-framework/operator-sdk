@@ -94,8 +94,7 @@ jobs:
     # Build and test ansible
     - <<: *test
       name: Ansible on OpenShift
-      <<: *pip3_before_install
-      before_script: pip3 install --user ansible
+      before_script: pip3 install --upgrade pip && pip3 install --user ansible
       script: make test/ci-ansible
 
     # Build and test helm
