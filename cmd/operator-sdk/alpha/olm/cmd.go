@@ -21,12 +21,14 @@ import (
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "olm",
-		Short: "Manage the Operator Lifecycle Manager installation in your cluster",
+		Short: "Manage the Operator Lifecycle Manager installation and Operators in your cluster",
 	}
 	cmd.AddCommand(
 		NewInstallCmd(),
 		NewUninstallCmd(),
 		NewStatusCmd(),
+		NewUpCmd(),
+		NewDownCmd(),
 	)
 	return cmd
 }

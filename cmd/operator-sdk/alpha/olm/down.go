@@ -23,18 +23,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewOLMCmd() *cobra.Command {
+func NewDownCmd() *cobra.Command {
 	c := &olmoperator.OLMCmd{}
 	cmd := &cobra.Command{
-		Use:   "olm",
-		Short: "Deploy your operator with the Operator Lifecycle Manager",
+		Use:   "down",
+		Short: "Tear down your operator with Operator Lifecycle Manager",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return fmt.Errorf("command %q requires exactly one argument", cmd.CommandPath())
 			}
 			c.ManifestsDir = args[0]
-			if err := c.Up(); err != nil {
-				log.Fatalf("Failed to install operator: %v", err)
+			if err := c.Down(); err != nil {
+				log.Fatalf("Failed to uninstall operator: %v", err)
 			}
 			return nil
 		},

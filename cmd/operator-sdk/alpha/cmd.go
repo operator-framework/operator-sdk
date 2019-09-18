@@ -15,9 +15,7 @@
 package alpha
 
 import (
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/down"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/olm"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/up"
 
 	"github.com/spf13/cobra"
 )
@@ -28,10 +26,6 @@ func NewCmd() *cobra.Command {
 		Short: "Run an alpha subcommand",
 	}
 
-	cmd.AddCommand(
-		olm.NewCmd(),
-		up.NewCmd(),
-		down.NewCmd(),
-	)
+	cmd.AddCommand(olm.NewCmd())
 	return cmd
 }

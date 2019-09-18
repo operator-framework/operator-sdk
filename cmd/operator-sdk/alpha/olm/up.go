@@ -12,19 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package down
+package olm
 
 import (
-	downolm "github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/down/olm"
+	"fmt"
+	"log"
+
+	olmoperator "github.com/operator-framework/operator-sdk/internal/olm/operator"
 
 	"github.com/spf13/cobra"
 )
 
-func NewCmd() *cobra.Command {
+func NewUpCmd() *cobra.Command {
+	c := &olmoperator.OLMCmd{}
 	cmd := &cobra.Command{
-		Use:   "down",
-		Short: "Tear down your operator in a Kubernetes cluster",
+		Use:   "up",
+		Short: "Deploy your operator with Operator Lifecycle Manager",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 {
+				return fmt.Errorf("command %q requires exactly one argument", cmd.CommandPath())
+			}
+			c.ManifestsDir = args[0]
+			if err := c.Up(); err != nil {
+				log.Fatalf("Failed to install operator: %v", err)
+			}
+			return nil
+		},
 	}
-	cmd.AddCommand(downolm.NewOLMCmd())
+	c.AddToFlagSet(cmd.Flags())
 	return cmd
 }
