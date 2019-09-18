@@ -112,8 +112,8 @@ const (
 
 // getDBContainerCmd returns a command string that, when run, does two things:
 // 1. Runs a database initializer on the manifests in the current working
-//		directory.
-// 2.	Runs an operator-registry server serving the bundle database.
+//    directory.
+// 2. Runs an operator-registry server serving the bundle database.
 // The database must be in the current working directory.
 func getDBContainerCmd(dbPath, logPath string) string {
 	initCmd := fmt.Sprintf("/usr/bin/initializer -o %s", dbPath)

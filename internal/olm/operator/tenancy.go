@@ -215,6 +215,14 @@ func (m operatorManager) installModeCompatible(installMode olmapiv1alpha1.Instal
 	return nil
 }
 
+// Mapping of installMode string values to types, for validation.
+var installModeStrings = map[string]olmapiv1alpha1.InstallModeType{
+	string(olmapiv1alpha1.InstallModeTypeOwnNamespace):    olmapiv1alpha1.InstallModeTypeOwnNamespace,
+	string(olmapiv1alpha1.InstallModeTypeSingleNamespace): olmapiv1alpha1.InstallModeTypeSingleNamespace,
+	string(olmapiv1alpha1.InstallModeTypeMultiNamespace):  olmapiv1alpha1.InstallModeTypeMultiNamespace,
+	string(olmapiv1alpha1.InstallModeTypeAllNamespaces):   olmapiv1alpha1.InstallModeTypeAllNamespaces,
+}
+
 // parseInstallModeKV parses an installMode string of the format
 // installModeFormat.
 func parseInstallModeKV(raw string) (olmapiv1alpha1.InstallModeType, []string, error) {
@@ -232,14 +240,6 @@ func parseInstallModeKV(raw string) (olmapiv1alpha1.InstallModeType, []string, e
 		namespaces = append(namespaces, namespace)
 	}
 	return mode, namespaces, nil
-}
-
-// Mapping of installMode string values to types, for validation.
-var installModeStrings = map[string]olmapiv1alpha1.InstallModeType{
-	string(olmapiv1alpha1.InstallModeTypeOwnNamespace):    olmapiv1alpha1.InstallModeTypeOwnNamespace,
-	string(olmapiv1alpha1.InstallModeTypeSingleNamespace): olmapiv1alpha1.InstallModeTypeSingleNamespace,
-	string(olmapiv1alpha1.InstallModeTypeMultiNamespace):  olmapiv1alpha1.InstallModeTypeMultiNamespace,
-	string(olmapiv1alpha1.InstallModeTypeAllNamespaces):   olmapiv1alpha1.InstallModeTypeAllNamespaces,
 }
 
 // validateInstallModeWithNamespaces ensures namespaces are valid given mode.
