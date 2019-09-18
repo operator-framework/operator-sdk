@@ -72,7 +72,7 @@ func hashContents(b []byte) string {
 	return enc.EncodeToString(h.Sum(nil))
 }
 
-// getObjectFileName opaquely creates a unique file name based on data in u.
+// getObjectFileName opaquely creates a unique file name based on data in b.
 func getObjectFileName(b []byte, name, kind string) string {
 	digest := hashContents(b)
 	return fmt.Sprintf("%s.%s.%s.yaml", digest, name, strings.ToLower(kind))

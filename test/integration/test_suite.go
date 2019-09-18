@@ -21,7 +21,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -31,8 +30,8 @@ import (
 )
 
 const (
-	defaultTimeout      = 2 * time.Minute
-	defaultTestImageTag = "quay.io/example/test:latest"
+	// TODO(estroz): don't rely on prior tests building this (works in CI).
+	defaultTestImageTag = "quay.io/example/memcached-operator:0.0.1"
 )
 
 var (

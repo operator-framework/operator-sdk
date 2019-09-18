@@ -60,9 +60,9 @@ func applyToDeploymentPodSpec(dep *appsv1.Deployment, f func(*corev1.PodSpec)) {
 	f(&dep.Spec.Template.Spec)
 }
 
-// withRegistryGRPCContainer returns a function that appends a volume with
-// name volName containing a reference to a ConfigMap with name cmName to
-// the Deployment argument's pod template spec.
+// withVolumeConfigMap returns a function that appends a volume with name
+// volName containing a reference to a ConfigMap with name cmName to the
+// Deployment argument's pod template spec.
 func withVolumeConfigMap(volName, cmName string) func(*appsv1.Deployment) {
 	volume := corev1.Volume{
 		Name: volName,
@@ -81,7 +81,7 @@ func withVolumeConfigMap(volName, cmName string) func(*appsv1.Deployment) {
 	}
 }
 
-// withRegistryGRPCContainer returns a function that appends volumeMounts
+// withContainerVolumeMounts returns a function that appends volumeMounts
 // to each container in the Deployment argument's pod template spec. One
 // volumeMount is appended for each path in paths from volume with name
 // volName.
