@@ -162,6 +162,13 @@ func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *schelpers.TestRe
 			break
 		}
 	}
+
+	if schelpers.IsV1alpha2() {
+		fmt.Println("jeff version is v1alpha2 in basic tests")
+	} else {
+		fmt.Println("jeff version is NOT v1alpha2 in basic tests")
+	}
+
 	if res.EarnedPoints != 1 {
 		res.Suggestions = append(res.Suggestions, "The operator should write into objects to update state. No PUT or POST requests from the operator were recorded by the scorecard.")
 	}
