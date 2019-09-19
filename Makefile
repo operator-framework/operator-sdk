@@ -24,6 +24,8 @@ ANSIBLE_IMAGE ?= $(ANSIBLE_BASE_IMAGE)
 HELM_IMAGE ?= $(HELM_BASE_IMAGE)
 SCORECARD_PROXY_IMAGE ?= $(SCORECARD_PROXY_BASE_IMAGE)
 
+HELM_ARCHES:="amd64" "ppc64le"
+
 export CGO_ENABLED:=0
 export GO111MODULE:=on
 export GOPROXY?=https://proxy.golang.org/
@@ -51,19 +53,22 @@ install:
 		" \
 		$(BUILD_PATH)
 
-ci-build: build/operator-sdk-$(VERSION)-x86_64-linux-gnu ci-install
+ci-build: build/operator-sdk-$(VERSION) ci-install
 
 ci-install:
-	mv build/operator-sdk-$(VERSION)-x86_64-linux-gnu build/operator-sdk
+	mv build/operator-sdk-$(VERSION) build/operator-sdk
 
-release_x86_64 := \
+release_builds := \
 	build/operator-sdk-$(VERSION)-x86_64-linux-gnu \
-	build/operator-sdk-$(VERSION)-x86_64-apple-darwin
+	build/operator-sdk-$(VERSION)-x86_64-apple-darwin \
+	build/operator-sdk-$(VERSION)-ppc64le-linux-gnu
 
-release: clean $(release_x86_64) $(release_x86_64:=.asc)
+release: clean $(release_builds) $(release_builds:=.asc)
 
 build/operator-sdk-%-x86_64-linux-gnu: GOARGS = GOOS=linux GOARCH=amd64
 build/operator-sdk-%-x86_64-apple-darwin: GOARGS = GOOS=darwin GOARCH=amd64
+build/operator-sdk-%-ppc64le-linux-gnu: GOARGS = GOOS=linux GOARCH=ppc64le
+
 
 build/%: $(SOURCES)
 	$(Q)$(GOARGS) go build \
@@ -88,7 +93,7 @@ build/%.asc:
 	fi; \
 	}
 
-.PHONY: install release_x86_64 release
+.PHONY: install release_builds release
 
 test: test/unit
 
@@ -166,7 +171,7 @@ image/build: image/build/ansible image/build/helm image/build/scorecard-proxy
 image/build/ansible: build/operator-sdk-dev-x86_64-linux-gnu
 	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
 
-image/build/helm: build/operator-sdk-dev-x86_64-linux-gnu
+image/build/helm: build/operator-sdk-dev
 	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE):dev
 
 image/build/scorecard-proxy:
@@ -178,7 +183,10 @@ image/push/ansible:
 	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE):dev $(ANSIBLE_IMAGE)
 
 image/push/helm:
-	./hack/image/push-image-tags.sh $(HELM_BASE_IMAGE):dev $(HELM_IMAGE)
+	./hack/image/push-image-tags.sh $(HELM_BASE_IMAGE):dev $(HELM_IMAGE)-$(shell go env GOARCH)
+
+image/push/helm-multiarch:
+	./hack/image/push-manifest-list.sh $(HELM_IMAGE) ${HELM_ARCHES}
 
 image/push/scorecard-proxy:
 	./hack/image/push-image-tags.sh $(SCORECARD_PROXY_BASE_IMAGE):dev $(SCORECARD_PROXY_IMAGE)
