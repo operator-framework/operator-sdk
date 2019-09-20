@@ -1,3 +1,4 @@
+Test change do not merge
 <img src="doc/images/operator_logo_sdk_color.svg" height="125px"></img>
 
 [![Build Status](https://travis-ci.org/operator-framework/operator-sdk.svg?branch=master)](https://travis-ci.org/operator-framework/operator-sdk)
