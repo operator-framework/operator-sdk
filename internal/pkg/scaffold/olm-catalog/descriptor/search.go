@@ -23,43 +23,33 @@ import (
 )
 
 type typeTree interface {
-	getDescriptors() ([]descriptor, error)
+	getDescriptorsFor(descriptorType) ([]descriptor, error)
 }
 
-type atree struct {
+type ttree struct {
 	root      *types.Type
-	children  []*anode
-	annotated []*anode
+	children  []*tnode
+	annotated []*tnode
 }
 
-var _ typeTree = &atree{}
-
-type anode struct {
+type tnode struct {
 	member       types.Member
-	children     []*anode
+	children     []*tnode
 	pathSegments []string
 }
 
 // newTypeTreeFromRoot collects all struct members in root and stores them in
-// an atree, along with any members that have annotations.
+// an ttree, along with any members that have annotations.
 func newTypeTreeFromRoot(root *types.Type) typeTree {
-	tree := atree{root: root}
-	for _, m := range root.Members {
-		if !isMetadata(m) {
-			tree.children = append(tree.children, &anode{member: m})
-		}
-	}
-	if len(tree.children) == 0 {
-		return &tree
-	}
-	nextChildren := make([]*anode, len(tree.children))
-	copy(nextChildren, tree.children)
+	tree := ttree{root: root}
+	nextChildren := []*tnode{{member: types.Member{Type: root}}}
 	lenNextChildren := len(nextChildren)
 	for len(nextChildren) > 0 {
 		for _, child := range nextChildren {
 			ct := getUnderlyingType(child.member.Type)
 			for _, cm := range ct.Members {
-				node := &anode{member: cm}
+				node := &tnode{member: cm}
+				// Parse path here so we can re-construct the path hierarchy later.
 				path := parsePathFromJSONTags(cm.Tags)
 				node.pathSegments = append(child.pathSegments, path)
 				if hasAnnotations(cm) {
@@ -75,23 +65,29 @@ func newTypeTreeFromRoot(root *types.Type) typeTree {
 	return &tree
 }
 
-func (tree *atree) getDescriptors() (descriptors []descriptor, err error) {
+// getDescriptorsFor returns descriptors for each annotated type in tree
+// for a given descriptorType by parsing annotations on each type member.
+func (tree *ttree) getDescriptorsFor(descType descriptorType) (descriptors []descriptor, err error) {
 	for _, node := range tree.annotated {
 		parsedDescriptors, err := parseCSVGenAnnotations(node.member.CommentLines)
 		if err != nil {
 			return nil, err
 		}
 		for _, d := range parsedDescriptors.descriptors {
-			d.description = parseDescription(node.member.CommentLines)
-			d.displayName = k8sutil.GetDisplayName(node.member.Name)
-			d.path = strings.Join(node.pathSegments, ".")
-			switch d.descType {
-			case typeSpec:
-				d.xdescs = getSpecXDescriptorsByPath(d.xdescs, d.path)
-			case typeStatus:
-				d.xdescs = getStatusXDescriptorsByPath(d.xdescs, d.path)
+			if d.include && d.descType == descType {
+				if d.displayName == "" {
+					d.displayName = k8sutil.GetDisplayName(node.member.Name)
+				}
+				d.description = parseDescription(node.member.CommentLines)
+				d.path = strings.Join(node.pathSegments, ".")
+				switch d.descType {
+				case typeSpec:
+					d.xdescs = getSpecXDescriptorsByPath(d.xdescs, d.path)
+				case typeStatus:
+					d.xdescs = getStatusXDescriptorsByPath(d.xdescs, d.path)
+				}
+				descriptors = append(descriptors, d)
 			}
-			descriptors = append(descriptors, d)
 		}
 	}
 	return sortDescriptors(descriptors), nil
@@ -106,11 +102,6 @@ func getUnderlyingType(t *types.Type) *types.Type {
 		t = t.Underlying
 	}
 	return t
-}
-
-func isMetadata(m types.Member) bool {
-	typeName := m.Type.Name.Name
-	return strings.HasSuffix(typeName, "ObjectMeta") || strings.HasSuffix(typeName, "TypeMeta")
 }
 
 func hasAnnotations(m types.Member) bool {

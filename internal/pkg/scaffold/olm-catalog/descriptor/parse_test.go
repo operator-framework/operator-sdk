@@ -151,7 +151,7 @@ func TestParseDescriptor(t *testing.T) {
 
 	for _, c := range cases {
 		output := descriptor{}
-		err := parseDescriptor(&output, c.pathElems, c.val)
+		err := parseMemberAnnotation(&output, c.pathElems, c.val)
 		if err != nil {
 			if !c.wantErr {
 				t.Errorf("%s: expected nil error, got %q", c.description, err)

@@ -86,12 +86,12 @@ func parseCSVGenAnnotations(comments []string) (pd parsedCRDDescriptions, err er
 		case "customresourcedefinitions":
 			switch childPathElems[0] {
 			case "specDescriptors":
-				err = parseDescriptor(&specd, childPathElems, vals[0])
+				err = parseMemberAnnotation(&specd, childPathElems, vals[0])
 				if err != nil {
 					return parsedCRDDescriptions{}, err
 				}
 			case "statusDescriptors":
-				err = parseDescriptor(&statusd, childPathElems, vals[0])
+				err = parseMemberAnnotation(&statusd, childPathElems, vals[0])
 				if err != nil {
 					return parsedCRDDescriptions{}, err
 				}
@@ -115,20 +115,16 @@ func parseCSVGenAnnotations(comments []string) (pd parsedCRDDescriptions, err er
 			return parsedCRDDescriptions{}, errors.Errorf("unsupported path element %s", parentPathElem)
 		}
 	}
-
-	for _, d := range []descriptor{specd, statusd} {
-		if d.include {
-			pd.descriptors = append(pd.descriptors, d)
-		}
-	}
+	pd.descriptors = append(pd.descriptors, specd, statusd)
 	return pd, nil
 }
 
-// parseDescriptor determines which descriptor annotation was passed from
+// parseMemberAnnotation determines which descriptor annotation was passed from
 // pathElems and sets val to the corresponding field in d.
-func parseDescriptor(d *descriptor, pathElems []string, val string) (err error) {
+func parseMemberAnnotation(d *descriptor, pathElems []string, val string) (err error) {
 	switch len(pathElems) {
 	case 1:
+		// If this case is never entered, d will not be included.
 		d.include, err = strconv.ParseBool(val)
 		if err != nil {
 			return errors.Wrapf(err, "error parsing %s bool val %s", pathElems[0], val)
