@@ -112,13 +112,6 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if schelpers.IsV1alpha2() {
-		fmt.Println("jeff in scorecard.go with v1alpha2")
-	}
-	if schelpers.IsLatestVersion() {
-		fmt.Println("jeff in scorecard.go with latest scorecard version")
-	}
-
 	var pluginOutputs []scapiv1alpha1.ScorecardOutput
 	for _, plugin := range plugins {
 		pluginOutputs = append(pluginOutputs, plugin.Run())

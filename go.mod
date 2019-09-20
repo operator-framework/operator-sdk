@@ -113,5 +113,3 @@ replace (
 )
 
 replace github.com/operator-framework/operator-lifecycle-manager => github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190605231540-b8a4faf68e36
-
-replace git.apache.org/thrift.git => github.com/apache/thrift v0.12.0

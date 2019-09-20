@@ -23,7 +23,6 @@ import (
 	"os"
 	"time"
 
-	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	proxyConf "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -169,12 +168,6 @@ func getPodFromDeployment(depName, namespace string) (pod *v1.Pod, err error) {
 	err = runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: depName}, dep)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get newly created deployment: %v", err)
-	}
-
-	if schelpers.IsV1alpha2() {
-		fmt.Println("jeff version is v1alpha2 in resource handler")
-	} else {
-		fmt.Println("jeff version is NOT v1alpha2 in resource handler")
 	}
 
 	// In some cases, the pod from the old deployment will be picked up
