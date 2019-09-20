@@ -75,16 +75,16 @@ func (tree *ttree) getDescriptorsFor(descType descriptorType) (descriptors []des
 		}
 		for _, d := range parsedDescriptors.descriptors {
 			if d.include && d.descType == descType {
-				if d.displayName == "" {
-					d.displayName = k8sutil.GetDisplayName(node.member.Name)
+				if d.DisplayName == "" {
+					d.DisplayName = k8sutil.GetDisplayName(node.member.Name)
 				}
-				d.description = parseDescription(node.member.CommentLines)
-				d.path = strings.Join(node.pathSegments, ".")
+				d.Description = parseDescription(node.member.CommentLines)
+				d.Path = strings.Join(node.pathSegments, ".")
 				switch d.descType {
 				case typeSpec:
-					d.xdescs = getSpecXDescriptorsByPath(d.xdescs, d.path)
+					d.XDescriptors = getSpecXDescriptorsByPath(d.XDescriptors, d.Path)
 				case typeStatus:
-					d.xdescs = getStatusXDescriptorsByPath(d.xdescs, d.path)
+					d.XDescriptors = getStatusXDescriptorsByPath(d.XDescriptors, d.Path)
 				}
 				descriptors = append(descriptors, d)
 			}

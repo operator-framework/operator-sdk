@@ -15,11 +15,12 @@
 package descriptor
 
 import (
-	"sort"
+	"reflect"
 	"testing"
 
-	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/operator-framework/operator-sdk/internal/annotations"
+
+	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 )
 
 func TestParseResource(t *testing.T) {
@@ -79,22 +80,6 @@ func TestParseResource(t *testing.T) {
 	}
 }
 
-func cmpDescriptors(a, b descriptor) bool {
-	if len(a.xdescs) != len(b.xdescs) {
-		return false
-	}
-	sort.Strings(a.xdescs)
-	sort.Strings(b.xdescs)
-	for i := range a.xdescs {
-		if a.xdescs[i] != b.xdescs[i] {
-			return false
-		}
-	}
-	return a.descType == b.descType && a.description == b.description &&
-		a.displayName == b.displayName && a.include == b.include &&
-		a.path == b.path
-}
-
 func TestParseDescriptor(t *testing.T) {
 	cases := []struct {
 		description string
@@ -118,13 +103,13 @@ func TestParseDescriptor(t *testing.T) {
 		{
 			"Descriptor with displayName",
 			[]string{"specDescriptors", "displayName"}, `"Some display name"`,
-			descriptor{displayName: "Some display name"},
+			descriptor{SpecDescriptor: v1alpha1.SpecDescriptor{DisplayName: "Some display name"}},
 			false,
 		},
 		{
 			"Descriptor with x-descriptors",
 			[]string{"specDescriptors", "x-descriptors"}, `"x:descriptor:ui:hint"`,
-			descriptor{xdescs: []string{"x:descriptor:ui:hint"}},
+			descriptor{SpecDescriptor: v1alpha1.SpecDescriptor{XDescriptors: []string{"x:descriptor:ui:hint"}}},
 			false,
 		},
 		{
@@ -163,33 +148,11 @@ func TestParseDescriptor(t *testing.T) {
 		}
 
 		if !c.wantErr {
-			if !cmpDescriptors(c.exp, output) {
+			if !reflect.DeepEqual(c.exp, output) {
 				t.Errorf("%s: expected %v, got %v", c.description, c.exp, output)
 			}
 		}
 	}
-}
-
-func cmpParsedDescriptions(a, b parsedCRDDescriptions) bool {
-	if len(a.descriptors) != len(b.descriptors) {
-		return false
-	}
-	ad, bd := sortDescriptors(a.descriptors), sortDescriptors(b.descriptors)
-	for i := range ad {
-		if !cmpDescriptors(ad[i], bd[i]) {
-			return false
-		}
-	}
-	if len(a.resources) != len(b.resources) {
-		return false
-	}
-	ar, br := sortResources(a.resources), sortResources(b.resources)
-	for i := range ar {
-		if ar[i] != br[i] {
-			return false
-		}
-	}
-	return a.displayName == b.displayName
 }
 
 func TestParseCSVGenAnnotations(t *testing.T) {
@@ -198,6 +161,8 @@ func TestParseCSVGenAnnotations(t *testing.T) {
 	statusDescPath := annotations.JoinPath(crdPath, "statusDescriptors")
 	displayNamePath := annotations.JoinPath(crdPath, "displayName")
 	resourcesPath := annotations.JoinPath(crdPath, "resources")
+	emptyDescriptors := []descriptor{{descType: typeSpec}, {descType: typeStatus}}
+
 	cases := []struct {
 		description string
 		comments    []string
@@ -209,7 +174,7 @@ func TestParseCSVGenAnnotations(t *testing.T) {
 			[]string{
 				annotations.JoinAnnotation(displayNamePath, `"foo"`),
 			},
-			parsedCRDDescriptions{displayName: "foo"},
+			parsedCRDDescriptions{displayName: "foo", descriptors: emptyDescriptors},
 			false,
 		},
 		{
@@ -227,6 +192,7 @@ func TestParseCSVGenAnnotations(t *testing.T) {
 					{Kind: "Deployment", Version: "v1"},
 					{Kind: "Service", Version: "v1", Name: "some.example.service.com"},
 				},
+				descriptors: emptyDescriptors,
 			},
 			false,
 		},
@@ -236,7 +202,7 @@ func TestParseCSVGenAnnotations(t *testing.T) {
 				annotations.JoinAnnotation(specDescPath, "true"),
 			},
 			parsedCRDDescriptions{
-				descriptors: []descriptor{{include: true, descType: typeSpec}},
+				descriptors: []descriptor{{include: true, descType: typeSpec}, {descType: typeStatus}},
 			},
 			false,
 		},
@@ -245,7 +211,12 @@ func TestParseCSVGenAnnotations(t *testing.T) {
 			[]string{
 				annotations.JoinAnnotation(annotations.JoinPath(specDescPath, "displayName"), `"foo"`),
 			},
-			parsedCRDDescriptions{},
+			parsedCRDDescriptions{
+				descriptors: []descriptor{
+					{SpecDescriptor: v1alpha1.SpecDescriptor{DisplayName: "foo"}, descType: typeSpec},
+					{include: false, descType: typeStatus},
+				},
+			},
 			false,
 		},
 		{
@@ -256,7 +227,10 @@ func TestParseCSVGenAnnotations(t *testing.T) {
 				annotations.JoinAnnotation(annotations.JoinPath(statusDescPath, "displayName"), `"foo"`),
 			},
 			parsedCRDDescriptions{
-				descriptors: []descriptor{{include: true, descType: typeSpec, displayName: "foo"}},
+				descriptors: []descriptor{
+					{include: true, descType: typeSpec, SpecDescriptor: v1alpha1.SpecDescriptor{DisplayName: "foo"}},
+					{include: false, descType: typeStatus, SpecDescriptor: v1alpha1.SpecDescriptor{DisplayName: "foo"}},
+				},
 			},
 			false,
 		},
@@ -272,8 +246,8 @@ func TestParseCSVGenAnnotations(t *testing.T) {
 			},
 			parsedCRDDescriptions{
 				descriptors: []descriptor{
-					{include: true, descType: typeSpec, displayName: "foo", xdescs: []string{"some:ui:hint"}},
-					{include: true, descType: typeStatus, displayName: "foo", xdescs: []string{"some:ui:hint"}},
+					{include: true, descType: typeSpec, SpecDescriptor: v1alpha1.SpecDescriptor{DisplayName: "foo", XDescriptors: []string{"some:ui:hint"}}},
+					{include: true, descType: typeStatus, SpecDescriptor: v1alpha1.SpecDescriptor{DisplayName: "foo", XDescriptors: []string{"some:ui:hint"}}},
 				},
 			},
 			false,
@@ -306,19 +280,13 @@ func TestParseCSVGenAnnotations(t *testing.T) {
 
 	for _, c := range cases {
 		output, err := parseCSVGenAnnotations(c.comments)
-		if err != nil {
-			if !c.wantErr {
-				t.Errorf("%s: expected nil error, got %q", c.description, err)
-			}
-			continue
-		} else if c.wantErr {
+		if !c.wantErr && err != nil {
+			t.Errorf("%s: expected nil error, got %q", c.description, err)
+		} else if c.wantErr && err == nil {
 			t.Errorf("%s: expected non-nil error, got nil error", c.description)
-			continue
-		}
-
-		if !c.wantErr {
-			if !cmpParsedDescriptions(c.exp, output) {
-				t.Errorf("%s: expected %v, got %v", c.description, c.exp, output)
+		} else if !c.wantErr && err == nil {
+			if !reflect.DeepEqual(c.exp, output) {
+				t.Errorf("%s:\nexpected\n\t%v\ngot\n\t%v", c.description, c.exp, output)
 			}
 		}
 	}

@@ -37,17 +37,15 @@ const (
 )
 
 type descriptor struct {
-	include     bool
-	descType    descriptorType
-	description string
-	displayName string
-	path        string
-	xdescs      []string
+	// Use a SpecDescriptor since it has the same fields as a StatusDescriptor.
+	olmapiv1alpha1.SpecDescriptor
+	include  bool
+	descType descriptorType
 }
 
 func sortDescriptors(ds []descriptor) []descriptor {
 	sort.Slice(ds, func(i, j int) bool {
-		return ds[i].path < ds[j].path
+		return ds[i].Path < ds[j].Path
 	})
 	return ds
 }
@@ -132,7 +130,7 @@ func parseMemberAnnotation(d *descriptor, pathElems []string, val string) (err e
 	case 2:
 		switch pathElems[1] {
 		case "displayName":
-			d.displayName, err = strconv.Unquote(val)
+			d.DisplayName, err = strconv.Unquote(val)
 			if err != nil {
 				return errors.Wrapf(err, "error unquoting %s", val)
 			}
@@ -141,7 +139,7 @@ func parseMemberAnnotation(d *descriptor, pathElems []string, val string) (err e
 			if err != nil {
 				return errors.Wrapf(err, "error unquoting %s", val)
 			}
-			d.xdescs = strings.Split(xdStr, ",")
+			d.XDescriptors = strings.Split(xdStr, ",")
 		default:
 			return errors.Errorf("unsupported descriptor path element %s", pathElems[1])
 		}

@@ -75,30 +75,26 @@ func GetCRDDescriptorForGVK(apisDir string, crdDesc *olmapiv1alpha1.CRDDescripti
 	}
 	for _, member := range kindType.Members {
 		descType := parsePathFromJSONTags(member.Tags)
-		if descType == typeSpec || descType == typeStatus {
-			tree := newTypeTreeFromRoot(member.Type)
-			descriptors, err := tree.getDescriptorsFor(descType)
-			if err != nil {
-				return err
+		if descType != typeSpec && descType != typeStatus {
+			continue
+		}
+		tree := newTypeTreeFromRoot(member.Type)
+		descriptors, err := tree.getDescriptorsFor(descType)
+		if err != nil {
+			return err
+		}
+		if descType == typeSpec {
+			for _, d := range sortDescriptors(descriptors) {
+				crdDesc.SpecDescriptors = append(crdDesc.SpecDescriptors, d.SpecDescriptor)
 			}
-			if descType == typeSpec {
-				for _, d := range sortDescriptors(descriptors) {
-					crdDesc.SpecDescriptors = append(crdDesc.SpecDescriptors, olmapiv1alpha1.SpecDescriptor{
-						Description:  d.description,
-						DisplayName:  d.displayName,
-						Path:         d.path,
-						XDescriptors: d.xdescs,
-					})
-				}
-			} else {
-				for _, d := range sortDescriptors(descriptors) {
-					crdDesc.StatusDescriptors = append(crdDesc.StatusDescriptors, olmapiv1alpha1.StatusDescriptor{
-						Description:  d.description,
-						DisplayName:  d.displayName,
-						Path:         d.path,
-						XDescriptors: d.xdescs,
-					})
-				}
+		} else {
+			for _, d := range sortDescriptors(descriptors) {
+				crdDesc.StatusDescriptors = append(crdDesc.StatusDescriptors, olmapiv1alpha1.StatusDescriptor{
+					Description:  d.Description,
+					DisplayName:  d.DisplayName,
+					Path:         d.Path,
+					XDescriptors: d.XDescriptors,
+				})
 			}
 		}
 	}
