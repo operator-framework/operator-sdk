@@ -33,21 +33,17 @@ func (ctx *TestCtx) GetNamespace() (string, error) {
 	if ctx.namespace != "" {
 		return ctx.namespace, nil
 	}
-	if *singleNamespace {
-		ctx.namespace = Global.Namespace
-		return ctx.namespace, nil
-	}
 	// create namespace
 	ctx.namespace = ctx.GetID()
 	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ctx.namespace}}
-	_, err := Global.KubeClient.CoreV1().Namespaces().Create(namespaceObj)
+	_, err := ctx.kubeclient.CoreV1().Namespaces().Create(namespaceObj)
 	if apierrors.IsAlreadyExists(err) {
 		return "", fmt.Errorf("namespace %s already exists: %v", ctx.namespace, err)
 	} else if err != nil {
 		return "", err
 	}
 	ctx.AddCleanupFn(func() error {
-		return Global.KubeClient.CoreV1().Namespaces().Delete(ctx.namespace, metav1.NewDeleteOptions(0))
+		return ctx.kubeclient.CoreV1().Namespaces().Delete(ctx.namespace, metav1.NewDeleteOptions(0))
 	})
 	return ctx.namespace, nil
 }
@@ -70,26 +66,26 @@ func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOp
 			return fmt.Errorf("failed to unmarshal object spec: (%v)", err)
 		}
 		obj.SetNamespace(namespace)
-		err = Global.Client.Create(goctx.TODO(), obj, cleanupOptions)
+		err = ctx.client.Create(goctx.TODO(), obj, cleanupOptions)
 		if skipIfExists && apierrors.IsAlreadyExists(err) {
 			continue
 		}
 		if err != nil {
-			_, restErr := restMapper.RESTMappings(obj.GetObjectKind().GroupVersionKind().GroupKind())
+			_, restErr := ctx.restMapper.RESTMappings(obj.GetObjectKind().GroupVersionKind().GroupKind())
 			if restErr == nil {
 				return err
 			}
 			// don't store error, as only error will be timeout. Error from runtime client will be easier for
 			// the user to understand than the timeout error, so just use that if we fail
 			_ = wait.PollImmediate(time.Second*1, time.Second*10, func() (bool, error) {
-				restMapper.Reset()
-				_, err := restMapper.RESTMappings(obj.GetObjectKind().GroupVersionKind().GroupKind())
+				ctx.restMapper.Reset()
+				_, err := ctx.restMapper.RESTMappings(obj.GetObjectKind().GroupVersionKind().GroupKind())
 				if err != nil {
 					return false, nil
 				}
 				return true, nil
 			})
-			err = Global.Client.Create(goctx.TODO(), obj, cleanupOptions)
+			err = ctx.client.Create(goctx.TODO(), obj, cleanupOptions)
 			if skipIfExists && apierrors.IsAlreadyExists(err) {
 				continue
 			}
@@ -107,7 +103,7 @@ func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOp
 
 func (ctx *TestCtx) InitializeClusterResources(cleanupOptions *CleanupOptions) error {
 	// create namespaced resources
-	namespacedYAML, err := ioutil.ReadFile(*Global.NamespacedManPath)
+	namespacedYAML, err := ioutil.ReadFile(ctx.namespacedManPath)
 	if err != nil {
 		return fmt.Errorf("failed to read namespaced manifest: %v", err)
 	}

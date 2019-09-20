@@ -225,6 +225,10 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 		TestBinaryArgs: testArgs,
 	}
 	if err := projutil.GoTest(opts); err != nil {
+		osErr, ok := err.(*exec.ExitError)
+		if ok {
+			os.Exit(osErr.ExitCode())
+		}
 		return fmt.Errorf("failed to build test binary: (%v)", err)
 	}
 	log.Info("Local operator test successfully completed.")

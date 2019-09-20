@@ -82,7 +82,17 @@ func GoTest(opts GoTestOptions) error {
 	bargs = append(bargs, opts.TestBinaryArgs...)
 	c := exec.Command("go", bargs...)
 	opts.setCmdFields(c)
-	return ExecCmd(c)
+
+	// TODO(joelanford): Don't use ExecCmd because it
+	// wraps the error, making os.ExitError unrecoverable.
+	// ExecCmd can be updated in Go 1.13 to wrap the error
+	// with %w, at which point we can use it again.
+	c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
+	if err := c.Run(); err != nil {
+		return err
+	}
+	return nil
 }
 
 // GoCmd runs "go {cmd}".
