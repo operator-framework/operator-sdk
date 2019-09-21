@@ -1,4 +1,4 @@
-# Running the Tests with Operator SDK
+# Running the Operator SDK Tests
 
 The operator-sdk is automatically tested with a variety of tests anytime
 a pull request is made. The E2E tests ensure that the operator-sdk acts as intended by

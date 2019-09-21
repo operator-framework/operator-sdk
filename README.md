@@ -136,7 +136,7 @@ $ kubectl delete -f deploy/crds/app.example.com_appservices_crd.yaml
 
 To learn more about the SDK CLI, see the [SDK CLI Reference][sdk_cli_ref], or run `operator-sdk [command] -h`.
 
-## User Guides for Operator SDK
+## User Guides
 
 To learn more about the writing an operator in Go, see the [user guide][guide].
 

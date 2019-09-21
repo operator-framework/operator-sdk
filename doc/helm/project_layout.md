@@ -1,4 +1,4 @@
-# Helm Project Scaffolding Layout with Operator SDK
+# Project Scaffolding Layout for Operator SDK Helm-based Operators
 
 After creating a new operator project using `operator-sdk new --type helm`,
 the project directory has numerous generated folders and files. The following

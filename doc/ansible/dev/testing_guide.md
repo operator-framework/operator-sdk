@@ -1,4 +1,4 @@
-# Ansible Testing Ansible based-Operators with Molecule for Operator SDK
+# Testing Operator SDK Ansible-based Operators with Molecule
 
 ## Getting started
 

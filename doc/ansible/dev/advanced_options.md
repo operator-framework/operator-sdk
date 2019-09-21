@@ -1,8 +1,8 @@
-## Ansible Advanced Options for Operator SDK
+# Advanced Options for Operator SDK Ansible-based Operators
 
 This document shows the advanced options available to a developer of an ansible operator.
 
-### Watches File Options
+## Watches File Options
 
 The advanced features can be enabled by adding them to your watches file per GVK.
 They can go below the `group`, `version`, `kind` and `playbook` or `role`.
