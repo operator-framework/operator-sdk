@@ -32,6 +32,8 @@ var (
 	ResourceVersionRegexp = regexp.MustCompile("^v[1-9][0-9]*((alpha|beta)[1-9][0-9]*)?$")
 	// ResourceKindRegexp matches Kubernetes API Kind's.
 	ResourceKindRegexp = regexp.MustCompile("^[A-Z]{1}[a-zA-Z0-9]+$")
+	// GroupRegexp matches Kubernetes API Kind's.
+	ResourceGroupRegexp = regexp.MustCompile("^[a-z-]+$")
 )
 
 // Resource contains the information required to scaffold files for a resource.
@@ -126,6 +128,10 @@ func (r *Resource) checkAndSetGroups() error {
 	if len(g) == 0 || len(g[0]) == 0 {
 		return errors.New("group cannot be empty")
 	}
+	if !ResourceGroupRegexp.MatchString(g[0]) {
+		return fmt.Errorf("group must match %s (was %s)", ResourceGroupRegexp, g[0])
+	}
+
 	r.FullGroup = fg[0]
 	r.Group = g[0]
 
