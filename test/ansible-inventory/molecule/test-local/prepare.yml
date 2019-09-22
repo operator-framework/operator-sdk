@@ -1,5 +1,5 @@
 ---
-- name: Prepare
+- name: Prepare for Molecule Test
   hosts: k8s
   gather_facts: no
   vars:
@@ -34,7 +34,7 @@
       retries: 60
       delay: 5
 
-- name: Prepare operator resources
+- name: Prepare operator resources for Molecule Test
   hosts: localhost
   connection: local
   vars:
@@ -66,14 +66,14 @@
   - name: Copy the image to the kind container
     command: docker cp /tmp/dev-operator.tar kind-test-local:/dev-operator.tar
 
-- name: Make dev operator image available
+- name: Make dev operator image available for Molecule Test
   hosts: k8s
   gather_facts: no
   tasks:
   - name: Make dev operator available
     command: docker load -i /dev-operator.tar
 
-- name: Clean up
+- name: Clean up for Molecule Test
   hosts: localhost
   connection: local
   gather_facts: no

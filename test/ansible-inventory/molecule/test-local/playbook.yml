@@ -1,6 +1,6 @@
 ---
 
-- name: Build Operator in Kubernetes docker container
+- name: Build Operator in Kubernetes docker container for Molecule Test
   hosts: k8s
   vars:
     image_name: inventory.apps.fabianism.us/inventory:testing
@@ -16,7 +16,7 @@
     register: build_cmd
     changed_when: not prev_hash.stdout or (prev_hash.stdout and prev_hash.stdout not in ''.join(build_cmd.stdout_lines[-2:]))
 
-- name: Converge
+- name: Converge for Molecule Test
   hosts: localhost
   connection: local
   vars:
