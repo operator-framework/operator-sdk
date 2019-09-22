@@ -11,3 +11,4 @@
         data:
           sentinel: '{{ sentinel }}'
           groups: '{{ groups | to_nice_yaml }}'
+

@@ -163,7 +163,7 @@ options:
     type: bool
 
 requirements:
-    - "python >= 2.7"
+    - "python >= 3.7"
     - "openshift >= 0.8.1"
     - "PyYAML >= 3.11"
 '''
