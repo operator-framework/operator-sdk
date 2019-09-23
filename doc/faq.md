@@ -4,7 +4,7 @@
 
 You should not have separate logic. Instead design your reconciler to be idempotent. See the [controller-runtime FAQ][controller-runtime_faq] for more details.
 
-### When my Custom Resource is deleted, I need to know it's contents or perform cleanup tasks. How can I do that?
+### When my Custom Resource is deleted, I need to know its contents or perform cleanup tasks. How can I do that?
 
 Use a [finalizer].
 
