@@ -27,8 +27,8 @@ func TestValidateVersions(t *testing.T) {
 	}{
 		{"empty", "", nil, true},
 		{"invalidVersion", "invalidVersion", nil, true},
-		{"v1alpha1", V1alpha1, nil, false},
-		{"v1alpha2", V1alpha2, nil, false},
+		{"v1alpha1", v1alpha1, nil, false},
+		{"v1alpha2", v1alpha2, nil, false},
 	}
 
 	for _, c := range cases {
