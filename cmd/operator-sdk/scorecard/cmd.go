@@ -37,7 +37,7 @@ func NewCmd() *cobra.Command {
 	scorecardCmd.Flags().String(scorecard.ConfigOpt, "", fmt.Sprintf("config file (default is '<project_dir>/%s'; the config file's extension and format can be .yaml, .json, or .toml)", scorecard.DefaultConfigFile))
 	scorecardCmd.Flags().String(scplugins.KubeconfigOpt, "", "Path to kubeconfig of custom resource created in cluster")
 	scorecardCmd.Flags().StringP(scorecard.OutputFormatOpt, "o", scorecard.TextOutputFormat, fmt.Sprintf("Output format for results. Valid values: %s, %s", scorecard.TextOutputFormat, scorecard.JSONOutputFormat))
-	scorecardCmd.Flags().String(schelpers.VersionOpt, schelpers.DefaultScorecardVersion, fmt.Sprintf("scorecard version (experimental version is '%s'", schelpers.LatestScorecardVersion))
+	scorecardCmd.Flags().String(schelpers.VersionOpt, schelpers.DefaultScorecardVersion, fmt.Sprintf("scorecard version (tech preview version is '%s'", schelpers.LatestScorecardVersion))
 
 	// TODO: make config file global and make this a top level flag
 	viper.BindPFlag(scorecard.ConfigOpt, scorecardCmd.Flags().Lookup(scorecard.ConfigOpt))
