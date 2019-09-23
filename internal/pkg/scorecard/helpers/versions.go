@@ -20,31 +20,26 @@ import (
 	"strings"
 )
 
-const V1alpha1 = "v1alpha1"
-const V1alpha2 = "v1alpha2"
-const DefaultScorecardVersion = V1alpha1
-const LatestScorecardVersion = V1alpha2
+const v1alpha1 = "v1alpha1"
+const v1alpha2 = "v1alpha2"
+const DefaultScorecardVersion = v1alpha1
+const LatestScorecardVersion = v1alpha2
 const VersionOpt = "version"
 
 var ScorecardVersions = []string{DefaultScorecardVersion, LatestScorecardVersion}
 
 func ValidateVersion(version string) error {
-	validVersion := false
 	for _, a := range ScorecardVersions {
 		if a == version {
-			validVersion = true
-			break
+			return nil
 		}
 	}
-	if !validVersion {
-		return fmt.Errorf("invalid scorecard version (%s); valid values: %s", version, strings.Join(ScorecardVersions, ", "))
-	}
-	return nil
+	return fmt.Errorf("invalid scorecard version (%s); valid values: %s", version, strings.Join(ScorecardVersions, ", "))
 
 }
 
 func IsV1alpha2() bool {
-	if viper.Sub("scorecard").GetString(VersionOpt) == V1alpha2 {
+	if viper.Sub("scorecard").GetString(VersionOpt) == v1alpha2 {
 		return true
 	}
 	return false
