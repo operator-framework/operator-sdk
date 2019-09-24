@@ -96,7 +96,7 @@ func GenerateServiceMonitor(s *v1.Service) *monitoringv1.ServiceMonitor {
 func populateEndpointsFromServicePorts(s *v1.Service) []monitoringv1.Endpoint {
 	var endpoints []monitoringv1.Endpoint
 	for _, port := range s.Spec.Ports {
-		endpoints = append(endpoints, monitoringv1.Endpoint{Port: port.Name})
+		endpoints = append(endpoints, monitoringv1.Endpoint{Port: port.Name, Path: "/metrics"})
 	}
 	return endpoints
 }
