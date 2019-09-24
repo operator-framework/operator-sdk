@@ -168,6 +168,12 @@ func main() {
 		log.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
+	log.Print("Generating openapi")
+	cmdOut, err = exec.Command("operator-sdk", "generate", "openapi").CombinedOutput()
+	if err != nil {
+		log.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+	}
+
 	log.Print("Pulling new dependencies with go mod")
 	cmdOut, err = exec.Command("go", "build", "./...").CombinedOutput()
 	if err != nil {
