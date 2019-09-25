@@ -88,8 +88,8 @@ func createOrUpdateService(ctx context.Context, client crclient.Client, s *v1.Se
 		if err != nil {
 			return nil, err
 		}
-		log.V(1).Info("Metrics Service object updated", "Service.Name", s.Name, "Service.Namespace", s.Namespace)
-		return existingService, nil
+		log.Info("Metrics Service object updated", "Service.Name", s.Name, "Service.Namespace", s.Namespace)
+		return s, nil
 	}
 
 	log.Info("Metrics Service object created", "Service.Name", s.Name, "Service.Namespace", s.Namespace)
