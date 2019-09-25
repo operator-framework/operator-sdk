@@ -62,7 +62,7 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 
 	client, err := client.New(config.GetConfigOrDie(), client.Options{})
 	if err != nil {
-		log.Error(err, "error getting new client")
+		log.Error(err, "Error getting new client")
 		os.Exit(1)
 	}
 
