@@ -220,7 +220,6 @@ func removeTypeFromCRDValidation() {
 		log.Fatalf("Failed to unmarshal CRD: %v", err)
 	}
 
-	log.Infof("Current type: %v", crd.Spec.Validation.OpenAPIV3Schema.Type)
 	crd.Spec.Validation.OpenAPIV3Schema.Type = ""
 
 	crdYaml, err := k8sutil.GetObjectBytes(crd, yaml.Marshal)
