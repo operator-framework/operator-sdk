@@ -209,7 +209,7 @@ func main() {
 // This serves as a workaround for the following bug on a k8s 1.11 cluster:
 // https://github.com/kubernetes/kubernetes/issues/65293
 func removeTypeFromCRDValidation() {
-	crdPath := "deploy/cache.example.com_memcacheds_crd.yaml"
+	crdPath := "deploy/crds/cache.example.com_memcacheds_crd.yaml"
 	b, err := ioutil.ReadFile(crdPath)
 	if err != nil {
 		log.Fatalf("Failed to read CRD manifest %s: %v", crdPath, err)
