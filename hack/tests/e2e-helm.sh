@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
-source hack/lib/test_lib.sh
-
 set -eux
+
+source hack/lib/test_lib.sh
+source hack/lib/image_lib.sh
 
 DEST_IMAGE="quay.io/example/nginx-operator:v0.0.2"
 ROOTDIR="$(pwd)"
@@ -26,6 +27,10 @@ remove_operator() {
 }
 
 test_operator() {
+    # kind has an issue with certain image registries (ex. redhat's), so use a
+    # different test pod image.
+    local metrics_test_image="fedora:latest"
+
     # wait for operator pod to run
     if ! timeout 1m kubectl rollout status deployment/nginx-operator;
     then
@@ -42,7 +47,7 @@ test_operator() {
     fi
 
     # verify that the metrics endpoint exists
-    if ! timeout 1m bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl -sfo /dev/null http://nginx-operator-metrics:8383/metrics; do sleep 1; done";
+    if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl -sfo /dev/null http://nginx-operator-metrics:8383/metrics; do sleep 1; done";
     then
         echo "Failed to verify that metrics endpoint exists"
         kubectl logs deployment/nginx-operator
@@ -59,7 +64,7 @@ test_operator() {
     fi
 
     # verify that the custom resource metrics endpoint exists
-    if ! timeout 1m bash -c -- "until kubectl run -it --rm --restart=Never test-cr-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl -sfo /dev/null http://nginx-operator-metrics:8686/metrics; do sleep 1; done";
+    if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never test-cr-metrics --image=$metrics_test_image -- curl -sfo /dev/null http://nginx-operator-metrics:8686/metrics; do sleep 1; done";
     then
         echo "Failed to verify that custom resource metrics endpoint exists"
         kubectl logs deployment/nginx-operator
@@ -132,8 +137,16 @@ fi
 pushd nginx-operator
 sed -i 's|\(FROM quay.io/operator-framework/helm-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
 operator-sdk build "$DEST_IMAGE"
+# If using a kind cluster, load the image into all nodes.
+load_image_if_kind "$DEST_IMAGE"
 sed -i "s|REPLACE_IMAGE|$DEST_IMAGE|g" deploy/operator.yaml
 sed -i 's|Always|Never|g' deploy/operator.yaml
+# kind has an issue with certain image registries (ex. redhat's), so use a
+# different test pod image.
+METRICS_TEST_IMAGE="fedora:latest"
+docker pull "$METRICS_TEST_IMAGE"
+# If using a kind cluster, load the metrics test image into all nodes.
+load_image_if_kind "$METRICS_TEST_IMAGE"
 
 OPERATORDIR="$(pwd)"
 
@@ -161,6 +174,8 @@ add_go_mod_replace "github.com/operator-framework/operator-sdk" "$ROOTDIR"
 go build ./...
 
 operator-sdk build "$DEST_IMAGE"
+# If using a kind cluster, load the image into all nodes.
+load_image_if_kind "$DEST_IMAGE"
 
 deploy_operator
 test_operator

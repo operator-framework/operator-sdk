@@ -23,8 +23,7 @@ tests will not run on remote clusters. See [Running the Tests](#running-the-test
 
 One way to run the tests is with an OpenShift 3.11 cluster and `oc cluster up` on a Linux system.
 
-For the first run configuration, either you can either run the `hack/ci/setup-openshift.sh` script, or download
-and install the [oc binary][oc-binary] and run these commands:
+For the first run configuration, download and install the [oc binary][oc-binary] and run these commands:
 
 ```sh
 $ sudo service docker stop
@@ -60,17 +59,36 @@ $ sudo rm -rf $HOME/oscluster
 and the tests will be updated in the future to support openshift 4.0.
 
 
-### Local Minikube
+### Local minikube or kind
 
-Another option for testing is using minikube. This is not advised as it uses vanilla Kubernetes, which has less
-strict security and may allow some tests to pass when they would not under openshift. Minikube is faster than
-openshift and uses less RAM though. To start the minikube cluster, download and install the proper [binary][minikube-binary]
-for your system and run these commands.
+Two other options for testing are [minikube][minikube] and [kind][kind]. This is not advised as it uses vanilla Kubernetes, which has less
+strict security and may allow some tests to pass when they would not under openshift. However Minikube/kind are faster than
+openshift and uses less RAM.
+
+#### minikube
+
+To start the minikube cluster, download and install the proper [binary][minikube-binary] for your system and run these commands:
 
 ```sh
-# The latest version of minikube at the time of writing (v0.31.0) defaults to k8s v1.10.0, so we must explicitly specify the latest k8s v1.11
-$ minikube start --kubernetes-version v1.11.6
+# K8S_VERSION determines which Kubernetes cluster version minikube will provision.
+$ minikube start --kubernetes-version ${K8S_VERSION}
 $ eval $(minikube docker-env)
+```
+
+#### kind
+
+To start the kind cluster, either run [`hack/ci/setup-k8s.sh`][k8s-script] then:
+
+```sh
+$ export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
+```
+
+Or you can download and install the proper [binary][kind-binary] for your system and run these commands:
+
+```sh
+# K8S_VERSION determines which Kubernetes image version kind will use to provision the cluster.
+$ kind create cluster --image="docker.io/kindest/node:${K8S_VERSION}"
+$ export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 ```
 
 ## Running the tests
@@ -128,5 +146,9 @@ testing process, the cleanup functions for the go tests will not run. To manuall
 [quay]: https://quay.io
 [oc-docs]: https://github.com/openshift/origin/blob/v3.11.0/docs/cluster_up_down.md
 [oc-binary]: https://github.com/openshift/origin/releases/v3.11.0
+[minikube]: https://github.com/kubernetes/minikube
 [minikube-binary]: https://github.com/kubernetes/minikube/releases
+[kind]: https://github.com/kubernetes-sigs/kind
+[kind-binary]: https://github.com/kubernetes-sigs/kind/releases
+[k8s-script]: ../../../hack/ci/setup-k8s.sh
 [makefile]: ../../../Makefile

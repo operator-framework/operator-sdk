@@ -21,7 +21,7 @@ For the Go, Ansible, and Helm tests, the `before_install` and `install` stages a
 2. Run `make tidy` to ensure `go.mod` and `go.sum` are up-to-date.
 3. Build and install the sdk using `make install`.
 4. Install ansible using `sudo pip install ansible`.
-5. Run the [`hack/ci/setup-openshift`][script] script, which spins up an openshift cluster by configuring docker and then downloading the `oc` v3.11 binary and running `oc cluster up`.
+5. Run the [`hack/ci/setup-k8s`][k8s-script] script, which spins up a [kind][kind] Kubernetes cluster by configuring docker and then downloading the `oc` v3.11 binary and running `oc cluster up`.
 
 The Go, Ansible, and Helm tests then differ in what tests they run.
 
@@ -66,7 +66,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
                 1. Make sure the metrics Service was created.
                 2. Get metrics via proxy pod and make sure they are present.
                 3. Perform linting of the existing metrics.
-                4. Perform checks on each custom resource generated metric and makes sure the name, type, value, labels and metric are correct. 
+                4. Perform checks on each custom resource generated metric and makes sure the name, type, value, labels and metric are correct.
         2. Run local test (namespace is auto-generated and deleted by test framework).
             1. Start operator using `up local` subcommand.
             2. Run memcached scale test (described in step 4.3.1.3)
@@ -83,10 +83,10 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 
 **NOTE**: All created resources, including the namespace, are deleted using a bash trap when the test finishes
 
-**NOTE** If you are using a MacOSX SO then will be required replace the sed command in the `hack/tests/e2e-ansible-molecule.sh` as the following example. 
+**NOTE** If you are using a MacOSX SO then will be required replace the sed command in the `hack/tests/e2e-ansible-molecule.sh` as the following example.
 
 ```sh
-# Use the following sed command to check it on macOsX. 
+# Use the following sed command to check it on macOsX.
 # More info: https://www.mkyong.com/mac/sed-command-hits-undefined-label-error-on-mac-os-x/
 sed -i "" 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
 # The following code is the default used (Not valid for MacOSX)
@@ -119,7 +119,8 @@ The markdown test does not create a new cluster and runs in a barebones Travis V
 
 [branches]: https://travis-ci.org/operator-framework/operator-sdk/branches
 [pr-builds]: https://travis-ci.org/operator-framework/operator-sdk/pull_requests
-[script]: ../../../hack/ci/setup-openshift.sh
+[k8s-script]: ../../../hack/ci/setup-k8s.sh
+[kind]: https://kind.sigs.k8s.io/
 [sanity]: ../../../hack/tests/sanity-check.sh
 [subcommand]: ../../../hack/tests/test-subcommand.sh
 [go-e2e]: ../../../hack/tests/e2e-go.sh
