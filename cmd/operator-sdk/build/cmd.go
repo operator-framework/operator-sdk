@@ -39,8 +39,8 @@ func NewCmd() *cobra.Command {
 	buildCmd := &cobra.Command{
 		Use:   "build <image>",
 		Short: "Compiles code and builds artifacts",
-		Long: `The operator-sdk build command compiles the code, builds the executables,
-and generates Kubernetes manifests.
+		Long: `The operator-sdk build command compiles the Operator code into an executable binary
+and generates the Dockerfile manifest.
 
 <image> is the container image to be built, e.g. "quay.io/example/operator:v0.0.1".
 This image will be automatically set in the deployment manifests.
