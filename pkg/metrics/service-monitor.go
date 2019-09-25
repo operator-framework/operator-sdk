@@ -29,8 +29,15 @@ import (
 var ErrServiceMonitorNotPresent = fmt.Errorf("no ServiceMonitor registered with the API")
 
 // CreateServiceMonitors creates ServiceMonitors objects based on an array of Service objects.
-// If CR ServiceMonitor is not registered in the Cluster it will not attempt at creating resources.
+// If the ServiceMonitor CRD is not registered in the Cluster, it will not attempt to create resources.
 func CreateServiceMonitors(config *rest.Config, ns string, services []*v1.Service) ([]*monitoringv1.ServiceMonitor, error) {
+	return CreateServiceMonitorsWithLabels(config, ns, services, make(map[string]string))
+}
+
+// CreateServiceMonitorsWithLabels creates ServiceMonitors objects based on an array of Service objects,
+// and adds any labels in "labels" to them.
+// If the ServiceMonitor CRD is not registered in the Cluster, it will not attempt to create resources.
+func CreateServiceMonitorsWithLabels(config *rest.Config, ns string, services []*v1.Service, labels map[string]string) ([]*monitoringv1.ServiceMonitor, error) {
 	// check if we can even create ServiceMonitors
 	exists, err := hasServiceMonitor(config)
 	if err != nil {
@@ -38,6 +45,10 @@ func CreateServiceMonitors(config *rest.Config, ns string, services []*v1.Servic
 	}
 	if !exists {
 		return nil, ErrServiceMonitorNotPresent
+	}
+
+	if labels == nil {
+		labels = make(map[string]string)
 	}
 
 	var serviceMonitors []*monitoringv1.ServiceMonitor
@@ -48,6 +59,11 @@ func CreateServiceMonitors(config *rest.Config, ns string, services []*v1.Servic
 			continue
 		}
 		sm := GenerateServiceMonitor(s)
+		for k, v := range sm.ObjectMeta.Labels {
+			labels[k] = v
+		}
+		sm.ObjectMeta.Labels = labels
+
 		smc, err := mclient.ServiceMonitors(ns).Create(sm)
 		if err != nil {
 			return serviceMonitors, err
