@@ -60,7 +60,11 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 	}
 	eventHandlers := append(options.EventHandlers, events.NewLoggingEventHandler(options.LoggingLevel))
 
-	client, _ := client.New(config.GetConfigOrDie(), client.Options{})
+	client, err := client.New(config.GetConfigOrDie(), client.Options{})
+	if err != nil {
+		log.Error(err, "error getting new client")
+		os.Exit(1)
+	}
 
 	aor := &AnsibleOperatorReconciler{
 		Client:          mgr.GetClient(),
@@ -73,7 +77,7 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 	}
 
 	scheme := mgr.GetScheme()
-	_, err := scheme.New(options.GVK)
+	_, err = scheme.New(options.GVK)
 	if runtime.IsNotRegisteredError(err) {
 		// Register the GVK with the schema
 		scheme.AddKnownTypeWithName(options.GVK, &unstructured.Unstructured{})
