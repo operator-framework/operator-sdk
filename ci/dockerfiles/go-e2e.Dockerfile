@@ -1,6 +1,6 @@
 FROM osdk-builder as builder
 
-RUN ci/tests/e2e-go-scaffold.sh
+RUN ci/tests/scaffolding/e2e-go-scaffold.sh
 
 FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
 

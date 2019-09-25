@@ -1,7 +1,7 @@
 FROM osdk-builder as builder
 
 RUN make image/scaffold/helm
-RUN ci/tests/e2e-helm-scaffold-hybrid.sh
+RUN ci/tests/scaffolding/e2e-helm-scaffold-hybrid.sh
 
 FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
 
