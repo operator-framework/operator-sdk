@@ -139,6 +139,15 @@ func UpdateState(res scapiv1alpha1.ScorecardTestResult) scapiv1alpha1.ScorecardT
 	if res.State == scapiv1alpha1.ErrorState {
 		return res
 	}
+
+	if IsV1alpha2() {
+		res.State = scapiv1alpha1.FailState
+		if res.EarnedPoints == res.MaximumPoints {
+			res.State = scapiv1alpha1.PassState
+		}
+		return res
+	}
+
 	if res.EarnedPoints == 0 {
 		res.State = scapiv1alpha1.FailState
 	} else if res.EarnedPoints < res.MaximumPoints {
