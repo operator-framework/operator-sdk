@@ -26,9 +26,12 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
-	"github.com/pkg/errors"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
+	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 )
 
 // TODO: Migrate most/all of the cli commands to the bash script instead of keeping them here
@@ -168,6 +171,15 @@ func main() {
 		log.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
+	log.Print("Generating openapi")
+	cmdOut, err = exec.Command("operator-sdk", "generate", "openapi").CombinedOutput()
+	if err != nil {
+		log.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+	}
+
+	// TODO(haseeb): Remove this when this test no longer runs on a k8s v1.11 cluster in CI
+	removeTypeFromCRDValidation()
+
 	log.Print("Pulling new dependencies with go mod")
 	cmdOut, err = exec.Command("go", "build", "./...").CombinedOutput()
 	if err != nil {
@@ -188,6 +200,36 @@ func main() {
 	err = ioutil.WriteFile("deploy/operator.yaml", operatorYAML, fileutil.DefaultFileMode)
 	if err != nil {
 		log.Fatalf("Failed to write to deploy/operator.yaml: %v", err)
+	}
+}
+
+// TODO(haseeb): Remove this when this test no longer runs on a k8s v1.11 cluster in CI
+// removeTypeFromCRDValidation will edit the memcached CRD manifest to remove
+// the "type: object" field from root of the CRD validation block.
+// This serves as a workaround for the following bug on a k8s 1.11 cluster:
+// https://github.com/kubernetes/kubernetes/issues/65293
+func removeTypeFromCRDValidation() {
+	crdPath := "deploy/crds/cache.example.com_memcacheds_crd.yaml"
+	b, err := ioutil.ReadFile(crdPath)
+	if err != nil {
+		log.Fatalf("Failed to read CRD manifest %s: %v", crdPath, err)
+	}
+
+	crd := &apiextv1beta1.CustomResourceDefinition{}
+	if err = yaml.Unmarshal(b, crd); err != nil {
+		log.Fatalf("Failed to unmarshal CRD: %v", err)
+	}
+
+	crd.Spec.Validation.OpenAPIV3Schema.Type = ""
+
+	crdYaml, err := k8sutil.GetObjectBytes(crd, yaml.Marshal)
+	if err != nil {
+		log.Fatalf("Failed to marshal CRD: %v", err)
+	}
+
+	err = ioutil.WriteFile(crdPath, crdYaml, fileutil.DefaultFileMode)
+	if err != nil {
+		log.Fatalf("Failed to write out CRD manifest %s: %v", crdPath, err)
 	}
 }
 

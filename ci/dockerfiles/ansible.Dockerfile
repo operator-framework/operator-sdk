@@ -36,16 +36,13 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
 
 COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/build/operator-sdk ${OPERATOR}
 COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/library/k8s_status.py /usr/share/ansible/openshift/
-COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/bin/ao-logs /usr/local/bin/ao-logs
+COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/bin/* /usr/local/bin/
 
-# Ensure directory permissions are properly set
-RUN mkdir -p ${HOME}/.ansible/tmp \
- && chown -R ${USER_UID}:0 ${HOME} \
- && chmod -R ug+rwx ${HOME}
+RUN /usr/local/bin/user_setup
 
 ADD https://github.com/krallin/tini/releases/latest/download/tini /tini
 RUN chmod +x /tini
 
-ENTRYPOINT ["/tini", "--", "bash", "-c", "${OPERATOR} run ansible --watches-file=/opt/ansible/watches.yaml $@"]
+ENTRYPOINT ["/tini", "--", "/usr/local/bin/entrypoint"]
 
 USER ${USER_UID}
