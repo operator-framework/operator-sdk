@@ -44,6 +44,7 @@ USER 0
 # Ensure fresh metadata rather than cached metadata in the base by running
 # yum clean all && rm -rf /var/yum/cache/* first
 RUN yum clean all && rm -rf /var/cache/yum/* \
+ && yum -y update \ 
  && yum install -y python36-devel python36-pip gcc libffi-devel
 RUN pip3 install --user molecule==2.22
 
