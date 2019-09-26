@@ -1,5 +1,9 @@
 # Ansible Operator Testing
 
+> Status: **completed**
+> 
+> Ansible-based operators can be tested with Molecule. Please see the testing documentation: [Testing Ansible Operators with Molecule](../ansible/dev/testing_guide.md).
+
 ## Background
 All operators should fit into the e2e testing framework used by operator-sdk, including Ansible Operator.
 

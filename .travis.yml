@@ -39,6 +39,7 @@ x_base_steps:
     stage: test
     env:
     - CLUSTER=openshift
+    os: linux
     <<: *go_before_install
     install:
       - make install
@@ -65,6 +66,24 @@ x_base_steps:
       - echo "Image build succeeded, and docker image tagged and pushed to repository"
     after_failure:
       - echo "Image build, docker image tagging, or docker image pushing to repository failed"
+    services:
+      - docker
+
+  # Manifest list deploy job
+  - &manifest-deploy
+    stage: "Deploy multi-arch manifest lists"
+    if: type != pull_request AND ( tag IS present OR branch = master OR commit_message =~ /\[travis deploy\]/ )
+    before_script:
+      - git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
+      - git fetch --unshallow --tags
+      # TODO: remove the chmod command when docker-ce on travis is upgraded to 18.09.0+.
+      # We need /etc/docker to be accessible to non-root users.
+      # See https://github.com/moby/moby/pull/37847.
+      - sudo chmod 0755 /etc/docker
+    after_success:
+      - echo "Manifest list push to registry succeeded"
+    after_failure:
+      - echo "Manifest list creation or push to registry failed"
     services:
       - docker
 
@@ -103,9 +122,18 @@ jobs:
         - make image/build/ansible
         - make image/push/ansible
 
-    # Build and deploy helm-operator docker image
+    # Build and deploy amd64 helm-operator docker image
     - <<: *deploy
-      name: Docker image for helm-operator
+      name: Docker image for helm-operator (amd64)
+      os: linux
+      script:
+        - make image/build/helm
+        - make image/push/helm
+
+    # Build and deploy ppc64le helm-operator docker image
+    - <<: *deploy
+      name: Docker image for helm-operator (ppc64le)
+      os: linux-ppc64le
       script:
         - make image/build/helm
         - make image/push/helm
@@ -116,3 +144,9 @@ jobs:
       script:
         - make image/build/scorecard-proxy
         - make image/push/scorecard-proxy
+
+    # Build and deploy helm multi-arch manifest list
+    - <<: *manifest-deploy
+      name: Manifest list for helm-operator
+      script:
+        - make image/push/helm-multiarch

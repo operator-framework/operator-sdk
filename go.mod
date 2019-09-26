@@ -85,9 +85,9 @@ require (
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/square/go-jose.v2 v2.3.0 // indirect
 	gopkg.in/yaml.v2 v2.2.2
-	k8s.io/api v0.0.0-20190612125737-db0771252981
-	k8s.io/apiextensions-apiserver v0.0.0-20190409022649-727a075fdec8
-	k8s.io/apimachinery v0.0.0-20190612125636-6a5db36e93ad
+	k8s.io/api v0.0.0-20190918155943-95b840bb6a1f
+	k8s.io/apiextensions-apiserver v0.0.0-20190918161926-8f644eb6e783
+	k8s.io/apimachinery v0.0.0-20190913080033-27d36303b655
 	k8s.io/cli-runtime v0.0.0-20181213153952-835b10687cb6
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	k8s.io/cloud-provider v0.0.0-00010101000000-000000000000 // indirect
@@ -120,6 +120,10 @@ replace (
 )
 
 replace github.com/operator-framework/operator-lifecycle-manager => github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190605231540-b8a4faf68e36
+
+// Remove when controller-tools v0.2.2 is released
+// Required for the bugfix https://github.com/kubernetes-sigs/controller-tools/pull/322
+replace sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.2.2-0.20190919011008-6ed4ff330711
 
 // TODO(estroz): change this to point to the main repo once
 // https://github.com/operator-framework/operator-registry/pull/86
