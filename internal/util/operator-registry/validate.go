@@ -30,11 +30,12 @@ func ValidatePackageManifest(pkg *registry.PackageManifest) error {
 	if pkg.PackageName == "" {
 		return errors.New("package name cannot be empty")
 	}
-	if len(pkg.Channels) == 0 {
+	numChannels := len(pkg.Channels)
+	if numChannels == 0 {
 		return errors.New("channels cannot be empty")
 	}
-	if pkg.DefaultChannelName == "" {
-		return errors.New("default channel cannot be empty")
+	if pkg.DefaultChannelName == "" && numChannels > 1 {
+		return errors.New("default channel cannot be empty if more than one channel exists")
 	}
 
 	seen := map[string]struct{}{}
@@ -50,7 +51,7 @@ func ValidatePackageManifest(pkg *registry.PackageManifest) error {
 		}
 		seen[c.Name] = struct{}{}
 	}
-	if _, ok := seen[pkg.DefaultChannelName]; !ok {
+	if _, found := seen[pkg.DefaultChannelName]; pkg.DefaultChannelName != "" && !found {
 		return fmt.Errorf("default channel %q does not exist in channels", pkg.DefaultChannelName)
 	}
 
