@@ -21,6 +21,7 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
 # Ensure fresh metadata rather than cached metadata in the base by running
 # yum clean all && rm -rf /var/yum/cache/* first
 RUN yum clean all && rm -rf /var/cache/yum/* \
+ && yum -y update \
  && (yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm || true) \
  && yum install -y python-devel gcc inotify-tools \
  && easy_install pip \
