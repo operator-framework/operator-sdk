@@ -3,7 +3,7 @@ FROM osdk-builder as builder
 RUN make image/scaffold/ansible
 RUN ci/tests/e2e-ansible-scaffold-hybrid.sh
 
-FROM registry.access.redhat.com/ubi8/ubi
+FROM registry.access.redhat.com/ubi7/ubi
 
 # Temporary for CI, reset /etc/passwd
 RUN chmod 0644 /etc/passwd

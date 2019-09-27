@@ -45,7 +45,7 @@ func (d *DockerfileHybrid) GetInput() (input.Input, error) {
 	return d.Input, nil
 }
 
-const dockerFileHybridAnsibleTmpl = `FROM registry.access.redhat.com/ubi8/ubi
+const dockerFileHybridAnsibleTmpl = `FROM registry.access.redhat.com/ubi7/ubi
 
 RUN mkdir -p /etc/ansible \
     && echo "localhost ansible_connection=local" > /etc/ansible/hosts \
