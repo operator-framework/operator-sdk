@@ -130,7 +130,7 @@ $ kubectl delete -f deploy/service_account.yaml
 $ kubectl delete -f deploy/crds/app.example.com_appservices_crd.yaml
 ```
 
-**Note:** Following the steps in the [Getting Started Repository][getting_started] to learn how to developer your Operators projects.
+**Note:** Follow the steps in the [Getting Started Repository][getting_started] to learn how to develop your Operator projects.
  
 ## Command Line Interface
 
