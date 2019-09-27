@@ -111,16 +111,6 @@ test_operator() {
     kubectl logs deployment/nginx-operator | grep "Uninstalled release" | grep "${release_name}"
 }
 
-# if on openshift switch to the "default" namespace
-# and allow containers to run as root (necessary for
-# default nginx image)
-if which oc 2>/dev/null;
-then
-    oc project default
-    oc adm policy add-scc-to-user anyuid -z default
-fi
-
-
 # create and build the operator
 pushd "$GOTMP"
 log=$(operator-sdk new nginx-operator \

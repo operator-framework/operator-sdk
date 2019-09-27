@@ -15,9 +15,6 @@ trap_add 'rm -rf $GOTMP' EXIT
 
 deploy_operator() {
     kubectl create -f "$OPERATORDIR/deploy/service_account.yaml"
-    if which oc 2>/dev/null; then
-      oc adm policy add-cluster-role-to-user cluster-admin -z memcached-operator || :
-    fi
     kubectl create -f "$OPERATORDIR/deploy/role.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
     kubectl create -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds_crd.yaml"
@@ -130,9 +127,6 @@ test_operator() {
         exit 1
     fi
 }
-
-# switch to the "default" namespace if on openshift, to match the minikube/kind test
-if which oc 2>/dev/null; then oc project default; fi
 
 # create and build the operator
 pushd "$GOTMP"

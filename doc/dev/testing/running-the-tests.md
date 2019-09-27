@@ -19,51 +19,9 @@ running Kubernetes 1.11.3 or higher as well as a docker image repo to push the o
 such as [`quay.io`][quay]. Your kubeconfig must be located at `$HOME/.kube/config` and certain
 tests will not run on remote clusters. See [Running the Tests](#running-the-tests) for more details.
 
-### Local OpenShift Cluster
-
-One way to run the tests is with an OpenShift 3.11 cluster and `oc cluster up` on a Linux system.
-
-For the first run configuration, download and install the [oc binary][oc-binary] and run these commands:
-
-```sh
-$ sudo service docker stop
-$ sudo sed -i 's/DOCKER_OPTS=\"/DOCKER_OPTS=\"--insecure-registry 172.30.0.0\/16 /' /etc/default/docker
-$ sudo service docker start
-```
-
-Depending on the system you are on, you may also need to configure your firewall before running the cluster.
-Refer to the [official docs][oc-docs] for more information.
-
-After the initial configuration, you can use this command to start the cluster and login as admin:
-
-```sh
-$ oc cluster up --base-dir=$HOME/oscluster
-$ oc login -u system:admin
-```
-
-You can use this command to stop the cluster:
-
-```sh
-$ oc cluster down
-```
-
-To fully delete the cluster, you must run these commands:
-
-```sh
-$ oc cluster down
-$ sudo umount $(grep $HOME/oscluster /proc/mounts | cut -f2 -d" " | sort -r)
-$ sudo rm -rf $HOME/oscluster
-```
-
-**NOTE**: Starting with openshift 4.0, the `oc cluster up` command will not be available. This document
-and the tests will be updated in the future to support openshift 4.0.
-
-
 ### Local minikube or kind
 
-Two other options for testing are [minikube][minikube] and [kind][kind]. This is not advised as it uses vanilla Kubernetes, which has less
-strict security and may allow some tests to pass when they would not under openshift. However Minikube/kind are faster than
-openshift and uses less RAM.
+Two other options for testing are [minikube][minikube] and [kind][kind].
 
 #### minikube
 
@@ -126,7 +84,13 @@ An example of using `ARGS` is in the note below.
 
 **NOTE**: Some of these tests, specifically the ansible (`test/e2e/ansible` and `test/ci-ansible`), helm
 (`test/e2e/helm` and `test/ci-helm`), and Go (`test/e2e/go` and `test/e2e/ci-go`) tests, only work when the cluster shares the local docker
-registry, as is the case with `oc cluster up` and `minikube` after running `eval $(minikube docker-env)`.
+registry, as is the case with minikube after running `eval $(minikube docker-env)`. When using kind you must run
+
+```sh
+$ kind load docker-image <image-tag>
+```
+
+For each image built or used by the kind cluster.
 
 All other tests will run correctly on a remote cluster if `$HOME/.kube/config` points to the remote cluster and your
 `KUBECONFIG` env var is either empty or is set to the path of a kubeconfig for the remote cluster.
@@ -144,8 +108,6 @@ testing process, the cleanup functions for the go tests will not run. To manuall
 
 [travis]: ./travis-build.md
 [quay]: https://quay.io
-[oc-docs]: https://github.com/openshift/origin/blob/v3.11.0/docs/cluster_up_down.md
-[oc-binary]: https://github.com/openshift/origin/releases/v3.11.0
 [minikube]: https://github.com/kubernetes/minikube
 [minikube-binary]: https://github.com/kubernetes/minikube/releases
 [kind]: https://github.com/kubernetes-sigs/kind

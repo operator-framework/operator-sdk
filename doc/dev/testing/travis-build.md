@@ -21,7 +21,7 @@ For the Go, Ansible, and Helm tests, the `before_install` and `install` stages a
 2. Run `make tidy` to ensure `go.mod` and `go.sum` are up-to-date.
 3. Build and install the sdk using `make install`.
 4. Install ansible using `sudo pip install ansible`.
-5. Run the [`hack/ci/setup-k8s`][k8s-script] script, which spins up a [kind][kind] Kubernetes cluster by configuring docker and then downloading the `oc` v3.11 binary and running `oc cluster up`.
+5. Run the [`hack/ci/setup-k8s.sh`][k8s-script] script, which spins up a [kind][kind] Kubernetes cluster of a particular version by configuring docker, and downloads the `kubectl` of the same version.
 
 The Go, Ansible, and Helm tests then differ in what tests they run.
 

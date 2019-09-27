@@ -107,12 +107,12 @@ jobs:
   include:
     # Build and test go
     - <<: *test
-      name: Go on OpenShift
+      name: Go on Kubernetes
       script: make test/ci-go
 
     # Build and test ansible
     - <<: *test
-      name: Ansible on OpenShift
+      name: Ansible on Kubernetes
       before_script:
         - pip3 install --upgrade setuptools pip
         - pip install --user ansible
@@ -120,7 +120,7 @@ jobs:
 
     # Build and test helm
     - <<: *test
-      name: Helm on OpenShift
+      name: Helm on Kubernetes
       script: make test/ci-helm
 
     # Run the unit, sanity, and markdown tests
