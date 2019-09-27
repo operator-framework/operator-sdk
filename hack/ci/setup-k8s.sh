@@ -6,7 +6,10 @@ set -eux
 # images at:
 # https://hub.docker.com/r/kindest/node/tags
 K8S_VERSION="v1.14.6"
-KIND_IMAGE="docker.io/kindest/node:${K8S_VERSION}"
+KIND_IMAGE="quay.io/estroz/node:${K8S_VERSION}"
+# TODO: use the below image once it is rebuilt with the following base image:
+# kindest/base:v20190926-e6b6f7f0@sha256:1ec92b2910f2bfb8a4814cc90e15974a499f0c93d203b879277fa4bdb3762ce2
+# KIND_IMAGE="docker.io/kindest/node:${K8S_VERSION}"
 
 # Download the latest version of kind, which supports all versions of
 # Kubernetes v1.11+.
