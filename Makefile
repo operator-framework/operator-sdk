@@ -29,6 +29,7 @@ HELM_ARCHES:="amd64" "ppc64le"
 export CGO_ENABLED:=0
 export GO111MODULE:=on
 export GOPROXY?=https://proxy.golang.org/
+.DEFAULT_GOAL:=help
 
 all: format test build/operator-sdk ## Test and Build the Operator SDK
 
