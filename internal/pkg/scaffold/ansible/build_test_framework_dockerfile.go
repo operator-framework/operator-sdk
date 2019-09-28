@@ -45,7 +45,7 @@ USER 0
 # yum clean all && rm -rf /var/yum/cache/* first
 RUN yum clean all && rm -rf /var/cache/yum/* \
  && yum -y update \ 
- && yum install -y python36-devel gcc libffi-devel
+ && yum install -y python36-devel python3-pip gcc libffi-devel
 RUN pip3 install --user molecule==2.22
 
 ARG NAMESPACEDMAN
