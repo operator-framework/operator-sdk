@@ -71,7 +71,7 @@ test_operator() {
     fi
 
     # verify that the metrics endpoint exists
-    if ! timeout 1m bash -c -- "until kubectl run -i --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl -sfo /dev/null http://memcached-operator-metrics:8383/metrics; do sleep 1; done";
+    if ! timeout 1m bash -c -- "until kubectl run -i --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi8/ubi-minimal:latest -- curl -sfo /dev/null http://memcached-operator-metrics:8383/metrics; do sleep 1; done";
     then
         echo "Failed to verify that metrics endpoint exists"
         kubectl describe pods
@@ -81,7 +81,7 @@ test_operator() {
     fi
 
     # verify that the operator metrics endpoint exists
-    if ! timeout 1m bash -c -- "until kubectl run -i --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl -sfo /dev/null http://memcached-operator-metrics:8686/metrics; do sleep 1; done";
+    if ! timeout 1m bash -c -- "until kubectl run -i --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi8/ubi-minimal:latest -- curl -sfo /dev/null http://memcached-operator-metrics:8686/metrics; do sleep 1; done";
     then
         echo "Failed to verify that metrics endpoint exists"
         kubectl describe pods
@@ -102,7 +102,7 @@ test_operator() {
     fi
 
     # verify that metrics reflect cr creation
-    if ! bash -c -- 'kubectl run -i --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl http://memcached-operator-metrics:8686/metrics | grep example-memcached';
+    if ! bash -c -- 'kubectl run -i --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi8/ubi-minimal:latest -- curl http://memcached-operator-metrics:8686/metrics | grep example-memcached';
     then
         echo "Failed to verify custom resource metrics"
         kubectl describe pods
