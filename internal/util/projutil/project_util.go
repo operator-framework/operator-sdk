@@ -82,7 +82,7 @@ func (e ErrInvalidDepManager) Error() string {
 	return fmt.Sprintf(`"%s" is not a valid dep manager; dep manager must be one of ["%v", "%v"]`, string(e), DepManagerDep, DepManagerGoMod)
 }
 
-var ErrNoDepManager = fmt.Errorf(`no valid dependency manager file found; dep manager must be one of ["%v", "%v"]`, DepManagerDep, DepManagerGoMod)
+var ErrNoDepManager = fmt.Errorf(`no valid dependency manager file was found; dep manager must be one of ["%v", "%v"]`, DepManagerDep, DepManagerGoMod)
 
 func GetDepManagerType() (DepManagerType, error) {
 	if IsDepManagerDep() {
