@@ -22,9 +22,9 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
 # Ensure fresh metadata rather than cached metadata in the base by running
 # yum clean all && rm -rf /var/yum/cache/* first
 RUN yum clean all && rm -rf /var/cache/yum/* \
- && (yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm || true) \
+ && (yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm || true) \
  && yum -y update \
- && yum install -y python36-devel python36-pip gcc \
+ && yum install -y python36-devel gcc \
  # Install inotify-tools. Note: rpm -i will install the rpm in the registry for allow yum install it.
  && curl -O https://rpmfind.net/linux/fedora/linux/releases/30/Everything/x86_64/os/Packages/i/inotify-tools-3.14-16.fc30.x86_64.rpm \
  && rpm -i inotify-tools-3.14-16.fc30.x86_64.rpm \
