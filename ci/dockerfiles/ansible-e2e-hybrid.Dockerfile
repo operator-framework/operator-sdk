@@ -24,33 +24,34 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
 # yum clean all && rm -rf /var/yum/cache/* first
 RUN yum clean all && rm -rf /var/cache/yum/* \
  && (yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm || true) \
- && yum install -y python-devel gcc inotify-tools \
- && easy_install pip \
- && pip install -U --no-cache-dir setuptools pip \
+ && yum -y update \
+ && yum install -y python36-devel python36-pip gcc \
+ # Install inotify-tools. Note: rpm -i will install the rpm in the registry for allow yum install it.
+ && curl -O https://rpmfind.net/linux/fedora/linux/releases/30/Everything/x86_64/os/Packages/i/inotify-tools-3.14-16.fc30.x86_64.rpm \
+ && rpm -i inotify-tools-3.14-16.fc30.x86_64.rpm \
+ && yum install inotify-tools \
+ && pip3 install --upgrade setuptools pip \
  && pip install --no-cache-dir --ignore-installed ipaddress \
-      ansible-runner==1.2 \
+      ansible-runner==1.3.4 \
       ansible-runner-http==1.0.0 \
       openshift==0.8.9 \
-      ansible==2.8 \
- && yum remove -y gcc python-devel \
+      ansible~=2.8 \
+ && yum remove -y gcc python36-devel \
  && yum clean all \
  && rm -rf /var/cache/yum
 
 # install operator binary
 COPY --from=builder /memcached-operator ${OPERATOR}
 COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/library/k8s_status.py /usr/share/ansible/openshift/
-COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/bin/ao-logs /usr/local/bin/ao-logs
+COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/bin/* /usr/local/bin/
 COPY --from=builder /ansible/memcached-operator/watches.yaml ${HOME}/watches.yaml
 COPY --from=builder /ansible/memcached-operator/roles/ ${HOME}/roles/
 
-# Ensure directory permissions are properly set
-RUN mkdir -p ${HOME}/.ansible/tmp \
- && chown -R ${USER_UID}:0 ${HOME} \
- && chmod -R ug+rwx ${HOME}
+RUN /usr/local/bin/user_setup
 
 ADD https://github.com/krallin/tini/releases/latest/download/tini /tini
 RUN chmod +x /tini
 
-ENTRYPOINT ["/tini", "--", "bash", "-c", "${OPERATOR} run ansible --watches-file=/opt/ansible/watches.yaml $@"]
+ENTRYPOINT ["/tini", "--", "/usr/local/bin/entrypoint"]
 
 USER ${USER_UID}

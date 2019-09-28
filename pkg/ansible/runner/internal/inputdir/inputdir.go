@@ -142,7 +142,7 @@ func (i *InputDir) Write() error {
 		venv := os.Getenv("VIRTUAL_ENV")
 		hosts := "localhost ansible_connection=local"
 		if venv != "" {
-			hosts = fmt.Sprintf("%s ansible_python_interpreter=%s", hosts, filepath.Join(venv, "bin/python"))
+			hosts = fmt.Sprintf("%s ansible_python_interpreter=%s", hosts, filepath.Join(venv, "bin", "python3"))
 		} else {
 			hosts = fmt.Sprintf("%s ansible_python_interpreter=%s", hosts, "{{ansible_playbook_python}}")
 		}
