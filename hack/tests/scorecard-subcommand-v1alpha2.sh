@@ -12,10 +12,9 @@ set -ex
 pushd test/test-framework
 commandoutput="$(operator-sdk scorecard --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
 failCount=`echo $commandoutput | grep -o "fail" | wc -l`
-echo $failCount is fail count
-if [ $failCount -ne 3 ]
+if [ $failCount -ne 4 ]
 then
-	echo "fail count is not equal to 3"
+	echo "expected fail count not equal to output"
 	exit 1
 fi
 
