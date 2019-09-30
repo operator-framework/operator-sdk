@@ -82,6 +82,10 @@ type ScorecardOutput struct {
 	Log string `json:"log"`
 	// Results is an array of ScorecardResult for each suite of the current scorecard run.
 	Results []ScorecardSuiteResult `json:"results"`
+	// FailedRequiredTests is the number of required tests run that failed
+	FailedRequiredTests int `json:"failedRequiredTests"`
+	// RequiredTestStatus is a description of the required tests status
+	RequiredTestStatus string `json:"requiredTestStatus"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
