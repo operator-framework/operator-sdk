@@ -24,8 +24,8 @@ import (
 )
 
 const (
-	failRequiredMessage = "Required tests failed."
-	passRequiredMessage = "Required tests passed."
+	failRequiredMessage = "A required test has failed."
+	passRequiredMessage = "All required tests passed."
 	failColor           = "\033[1;31m%s\033[0m\n"
 	passColor           = "\033[1;32m%s\033[0m\n"
 )
