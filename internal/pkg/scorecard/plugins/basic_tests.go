@@ -114,12 +114,12 @@ func (t *CheckSpecTest) Run(ctx context.Context) *schelpers.TestResult {
 		res.Errors = append(res.Errors, fmt.Errorf("error getting custom resource: %v", err))
 		return res
 	}
-	if t.CR.Object["spec"] != nil {
-		res.EarnedPoints++
-	}
-	if res.EarnedPoints != 1 {
+
+	if t.CR.Object["spec"] == nil {
 		res.Suggestions = append(res.Suggestions, "Add a 'spec' field to your Custom Resource")
+		return res
 	}
+	res.EarnedPoints++
 	return res
 }
 
@@ -131,12 +131,11 @@ func (t *CheckStatusTest) Run(ctx context.Context) *schelpers.TestResult {
 		res.Errors = append(res.Errors, fmt.Errorf("error getting custom resource: %v", err))
 		return res
 	}
-	if t.CR.Object["status"] != nil {
-		res.EarnedPoints++
-	}
-	if res.EarnedPoints != 1 {
+	if t.CR.Object["status"] == nil {
 		res.Suggestions = append(res.Suggestions, "Add a 'status' field to your Custom Resource")
+		return res
 	}
+	res.EarnedPoints++
 	return res
 }
 
