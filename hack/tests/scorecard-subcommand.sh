@@ -4,7 +4,6 @@ DEST_IMAGE="quay.io/example/scorecard-proxy"
 CONFIG_PATH=".test-osdk-scorecard.yaml"
 CONFIG_PATH_DISABLE=".osdk-scorecard-disable.yaml"
 CONFIG_PATH_INVALID=".osdk-scorecard-invalid.yaml"
-CONFIG_PATH_V1ALPHA2=".osdk-scorecard-v1alpha2.yaml"
 
 set -ex
 
@@ -47,9 +46,6 @@ echo $commandoutput3 | grep '^.*"name": "Different Env and flag",[[:space:]]"des
 echo $commandoutput3 | grep '^.*"name": "Environment",[[:space:]]"description": "Test plugin with kubeconfig set via env var",[[:space:]]"earnedPoints": 2,[[:space:]]"maximumPoints": 5,.*$'
 
 # Test invalid config
-operator-sdk scorecard --config "$CONFIG_PATH_INVALID" |& grep '^.*invalid keys.*$'
-
-# Test v1alpha2
 operator-sdk scorecard --config "$CONFIG_PATH_INVALID" |& grep '^.*invalid keys.*$'
 
 popd
