@@ -1,6 +1,27 @@
 # Helm based-Operator Proposal for Operator SDK
 
+<<<<<<< HEAD
 ## Background
+=======
+> Status: **implemented**
+> 
+> See user documentation in the [User Guide][helm_user_guide] and developer documentation in the [Developer Guide][helm_dev_guide].
+
+- [Background](#background)
+- [Goals](#goals)
+- [New Operator Type](#new-operator-type)
+- [Package Structure](#package-structure)
+- [Commands](#commands)
+  - [New](#new)
+  - [Add](#add)
+  - [Up](#up)
+  - [Build](#build)
+  - [Test](#test)
+- [Base Image](#base-image)
+- [Observations and open questions](#observations-and-open-questions)
+
+### Background
+>>>>>>> improve/fix in doc proposals
 
 As was mentioned in the [Ansible Operator Proposal](./ansible-operator.md), not everyone is a golang developer, so the SDK needs to support other types of operators to gain adoption across a wider community of users.
 
@@ -145,3 +166,6 @@ The base image repository will be `quay.io/water-hole/helm-operator`.
 * There will be a large amount of overlap in the `operator-sdk` commands for the Ansible and Helm operators. We should take care to extract the reusable features of the Ansible operator commands into a shared library, usable by both Helm and Ansible commands.
 
 * There is a moderate amount of complexity already related to how operator types are handled between the `go` and `ansible` types. With the addition of a third type, there may need to be a larger design proposal for operator types. For example, do we need to define an `Operator` interface that each of the operator types can implement for flag verification, scaffolding, project detection, etc.?
+
+[helm_user_guide]:./../helm/user-guide.md
+[helm_dev_guide]:./../helm/dev/developer_guide.md

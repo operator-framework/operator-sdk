@@ -2,13 +2,13 @@
 
 Implementation Owner: @estroz
 
-Status: Done
+> Status: **implemented**
+> 
+> This proposal has been implemented. See the PR [#1162](https://github.com/operator-framework/operator-sdk/pull/1162).
 
-[Background](#Background)
-
-[Goals](#Goals)
-
-[Design overview](#Design_overview)
+- [Background](#background)
+- [Goals](#goals)
+- [Design Overview](#design-overview)
 
 ## Background
 

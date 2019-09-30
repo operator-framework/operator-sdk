@@ -1,8 +1,14 @@
 # Ansible based-Operator Proposal for Operator SDK
 
-> Status: **completed**
+> Status: **implemented**
 > 
-> This proposal has been completed, please see the [Ansible User Guide for Operator SDK](../ansible/user-guide.md) for current documentation.
+> This proposal has been implemented, please see the [Ansible User Guide for Operator SDK](../ansible/user-guide.md) for current documentation.
+
+- [Background](#background)
+- [Goals](#goals)
+- [New Operator Type](#new-operator-type)
+- [Package Structure](#package-structure)
+- [Commands](#commands)
 
 ## Background
 
