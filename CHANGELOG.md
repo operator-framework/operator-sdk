@@ -7,6 +7,7 @@
 - Added flag `--dep-manager` to command [`operator-sdk print-deps`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#print-deps) to specify the type of dependency manager file to print. The choice of dependency manager is inferred from top-level dependency manager files present if `--dep-manager` is not set. ([#1819](https://github.com/operator-framework/operator-sdk/pull/1819))
 - Ansible based operators now gather and serve metrics about each custom resource on port 8686 of the metrics service. ([#1723](https://github.com/operator-framework/operator-sdk/pull/1723))
 - Added the Go version, OS, and architecture to the output of `operator-sdk version` ([#1863](https://github.com/operator-framework/operator-sdk/pull/1863))
+- Added new `--version` flag to the `operator-sdk scorecard` command to support a new output format for the scorecard. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
 
 ### Changed
 
