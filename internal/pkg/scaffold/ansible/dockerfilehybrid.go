@@ -45,7 +45,7 @@ func (d *DockerfileHybrid) GetInput() (input.Input, error) {
 	return d.Input, nil
 }
 
-const dockerFileHybridAnsibleTmpl = `FROM registry.access.redhat.com/ubi8/ubi
+const dockerFileHybridAnsibleTmpl = `FROM registry.access.redhat.com/ubi7/ubi
 
 RUN mkdir -p /etc/ansible \
     && echo "localhost ansible_connection=local" > /etc/ansible/hosts \
@@ -61,12 +61,24 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
 # Install python dependencies
 # Ensure fresh metadata rather than cached metadata in the base by running
 # yum clean all && rm -rf /var/yum/cache/* first
-RUN yum clean all && rm -rf /var/cache/yum/* \
- && (yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm || true) \
- && yum -y update \
- && yum install -y python36-devel python3-pip gcc \
- # Install inotify-tools. Note: rpm -i will install the rpm in the registry for allow yum install it.
- && curl -O https://rpmfind.net/linux/fedora/linux/releases/30/Everything/x86_64/os/Packages/i/inotify-tools-3.14-16.fc30.x86_64.rpm \
+RUN yum clean all && rm -rf /var/cache/yum/*
+
+# todo; remove ubi7 after CI be updated with images
+# ubi7
+RUN if $(cat /etc/redhat-release | grep --quiet 'release 7'); then (yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm || true); fi
+# ubi8
+RUN if $(cat /etc/redhat-release | grep --quiet 'release 8'); then (yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm || true); fi
+
+RUN yum -y update \
+ && yum install -y python36-devel gcc
+
+# ubi7
+RUN if $(cat /etc/redhat-release | grep --quiet 'release 7'); then (yum install -y python36-pip || true); fi
+# ubi8
+RUN if $(cat /etc/redhat-release | grep --quiet 'release 8'); then (yum install -y python3-pip || true); fi
+
+# Install inotify-tools. Note: rpm -i will install the rpm in the registry for allow yum install it.
+RUN curl -O https://rpmfind.net/linux/fedora/linux/releases/30/Everything/x86_64/os/Packages/i/inotify-tools-3.14-16.fc30.x86_64.rpm \
  && rpm -i inotify-tools-3.14-16.fc30.x86_64.rpm \
  && yum install inotify-tools \
  && pip3 install --upgrade setuptools pip \
