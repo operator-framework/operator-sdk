@@ -24,14 +24,33 @@ import (
 )
 
 const (
-	FailColor = "\033[1;31mfail\033[0m\n"
-	PassColor = "\033[1;32mpass\033[0m\n"
+	failRequiredMessage = "Required tests failed."
+	passRequiredMessage = "Required tests passed."
+	failColor           = "\033[1;31m%s\033[0m\n"
+	passColor           = "\033[1;32m%s\033[0m\n"
 )
 
 func printPluginOutputs(pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
 
 	totalScore := 0.0
+	failedRequiredTests := 0
+	requiredTestStatus := fmt.Sprintf(passColor, passRequiredMessage)
 
+	// calculate failed required tests and status
+	for _, plugin := range pluginOutputs {
+		for _, suite := range plugin.Results {
+			for _, result := range suite.Tests {
+				if schelpers.IsV1alpha2() {
+					if result.State != scapiv1alpha1.PassState {
+						failedRequiredTests++
+						requiredTestStatus = fmt.Sprintf(failColor, failRequiredMessage)
+					}
+				}
+			}
+		}
+	}
+
+	// produce text output
 	if scViper.GetString(OutputFormatOpt) == TextOutputFormat {
 		numSuites := 0
 		for _, plugin := range pluginOutputs {
@@ -39,7 +58,13 @@ func printPluginOutputs(pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
 				fmt.Printf("%s:\n", suite.Name)
 				for _, result := range suite.Tests {
 					if schelpers.IsV1alpha2() {
-						printPassFail(result.Name, result.State)
+						fmt.Printf("\t%-35s: ", result.Name)
+
+						if result.State == scapiv1alpha1.PassState {
+							fmt.Printf(passColor, scapiv1alpha1.PassState)
+						} else {
+							fmt.Printf(failColor, scapiv1alpha1.FailState)
+						}
 						continue
 					}
 
@@ -51,7 +76,9 @@ func printPluginOutputs(pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
 			}
 		}
 
-		if !schelpers.IsV1alpha2() {
+		if schelpers.IsV1alpha2() {
+			fmt.Printf(requiredTestStatus)
+		} else {
 			totalScore = totalScore / float64(numSuites)
 			fmt.Printf("\nTotal Score: %.0f%%\n", totalScore)
 		}
@@ -81,6 +108,7 @@ func printPluginOutputs(pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
 		}
 	}
 
+	// produce json output
 	if scViper.GetString(OutputFormatOpt) == JSONOutputFormat {
 		log, err := ioutil.ReadAll(logReadWriter)
 		if err != nil {
@@ -89,6 +117,8 @@ func printPluginOutputs(pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
 		scTest := schelpers.CombineScorecardOutput(pluginOutputs, string(log))
 		if schelpers.IsV1alpha2() {
 			scV2Test := schelpers.ConvertScorecardOutputV1ToV2(scTest)
+			scV2Test.FailedRequiredTests = failedRequiredTests
+			scV2Test.RequiredTestStatus = requiredTestStatus
 			bytes, err := json.MarshalIndent(scV2Test, "", "  ")
 			if err != nil {
 				return err
@@ -105,14 +135,4 @@ func printPluginOutputs(pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
 		fmt.Printf("%s\n", string(bytes))
 	}
 	return nil
-}
-
-func printPassFail(name string, state scapiv1alpha1.State) {
-	fmt.Printf("\t%-35s: ", name)
-
-	if state == scapiv1alpha1.PassState {
-		fmt.Printf(PassColor)
-	} else {
-		fmt.Printf(FailColor)
-	}
 }
