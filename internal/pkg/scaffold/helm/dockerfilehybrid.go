@@ -41,7 +41,7 @@ func (d *DockerfileHybrid) GetInput() (input.Input, error) {
 	return d.Input, nil
 }
 
-const dockerFileHybridHelmTmpl = `FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
+const dockerFileHybridHelmTmpl = `FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
 ENV OPERATOR=/usr/local/bin/helm-operator \
     USER_UID=1001 \

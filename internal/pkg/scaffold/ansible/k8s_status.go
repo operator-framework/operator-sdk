@@ -36,7 +36,7 @@ func (k *K8sStatus) GetInput() (input.Input, error) {
 	return k.Input, nil
 }
 
-const k8sStatusTmpl = `#!/usr/bin/python
+const k8sStatusTmpl = `#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import, division, print_function
@@ -163,7 +163,7 @@ options:
     type: bool
 
 requirements:
-    - "python >= 2.7"
+    - "python >= 3.7"
     - "openshift >= 0.8.1"
     - "PyYAML >= 3.11"
 '''

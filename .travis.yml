@@ -10,6 +10,21 @@ sudo: required
 # go modules require xenial for mercurial TLS 1.2 support
 dist: xenial
 
+# Python 3.6 is the default Python when language: python.
+# But when not language: python, Python 3 can not be used by default.
+# There is pip (/usr/bin/pip), but not pip3.
+# Because of it the global env is required.
+env:
+  global:
+    - PATH=/opt/python/3.6.7/bin:$PATH
+
+# Install python3 and utilities dependencies
+addons:
+  apt:
+    packages:
+      - "python3"
+      - "python3-pip"
+
 cache:
   directories:
     - $HOME/.cache/go-build
@@ -99,8 +114,12 @@ jobs:
     - if: tag IS present OR branch != master
       <<: *test
       name: Ansible on OpenShift
-      before_script: sudo pip install ansible
-      script: make test/ci-ansible test/ci-ansible-molecule
+      before_script:
+        - pip3 install --upgrade setuptools pip
+        - pip install --user ansible
+      script:
+        - make test/ci-ansible
+        - make test/ci-ansible-molecule
 
     # Build and test helm in non-master PRs
     - if: tag IS present OR branch != master
