@@ -120,17 +120,9 @@ test/unit: ## Run the unit tests
 	$(Q)go test -count=1 -short ./internal/...
 
 # CI tests.
-.PHONY: test/ci test/ci-go test/ci-ansible test/ci-helm
+.PHONY: test/ci
 
 test/ci: test/markdown test/sanity test/unit install test/subcommand test/e2e ## Run the CI test suite
-
-test/ci-go: test/e2e/go
-
-test/ci-ansible: test/e2e/ansible
-
-test/ci-ansible-molecule: test/e2e/ansible-molecule
-
-test/ci-helm: test/e2e/helm
 
 # Subcommand tests.
 .PHONY: test/subcommand test/subcommand/test-local test/subcommand/scorecard test/subcommand/olm-install

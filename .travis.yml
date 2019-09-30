@@ -108,7 +108,7 @@ jobs:
     - if: tag IS present OR branch != master
       <<: *test
       name: Go on OpenShift
-      script: make test/ci-go
+      script: make test/e2e/go
 
     # Build and test ansible and test ansible using molecule in non-master PRs
     - if: tag IS present OR branch != master
@@ -118,14 +118,14 @@ jobs:
         - pip3 install --upgrade setuptools pip
         - pip install --user ansible
       script:
-        - make test/ci-ansible
-        - make test/ci-ansible-molecule
+        - make test/e2e/ansible
+        - make test/e2e/ansible-molecule
 
     # Build and test helm in non-master PRs
     - if: tag IS present OR branch != master
       <<: *test
       name: Helm on OpenShift
-      script: make test/ci-helm
+      script: make test/e2e/helm
 
     # Test subcommands in non-master PRs
     - if: tag IS present OR branch != master
@@ -143,7 +143,7 @@ jobs:
     - if: tag IS NOT present AND branch = master
       <<: *test
       name: Ansible Molecule on OpenShift
-      script: make test/ci-ansible-molecule
+      script: make test/e2e/ansible-molecule
 
     # Run the unit, sanity, and markdown tests
     - stage: test

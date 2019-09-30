@@ -79,9 +79,6 @@ All the tests are run through the [`Makefile`][makefile]. This is a brief descri
 
 - `test` - Runs the unit tests (`test/unit`).
 - `test/ci` - Runs markdown, sanity, and unit tests, installs the SDK binary, and runs the SDK subcommand and all E2E tests.
-- `test/ci-go` - Runs all the tests that the Go job runs in CI (`subcommand` and `e2e/go`).
-- `test/ci-ansible` - Runs all the tests that the Ansible job runs in Travis CI (`e2e/ansible` and `test/e2e/ansible-molecule`).
-- `test/ci-helm` - Runs all the tests that the Helm job runs in Travis CI (`test/e2e/helm`).
 - `test/sanity` - Runs sanity checks.
 - `test/unit` - Runs unit tests.
 - `test/subcommand` - Runs subcommand tests.
@@ -106,9 +103,8 @@ The `make test/e2e/go` command accepts an `ARGS` variable containing flags that 
 
 An example of using `ARGS` is in the note below.
 
-**NOTE**: Some of these tests, specifically the ansible (`test/e2e/ansible` and `test/ci-ansible`), helm
-(`test/e2e/helm` and `test/ci-helm`), and Go (`test/e2e/go` and `test/e2e/ci-go`) tests, only work when the cluster shares the local docker
-registry, as is the case with `oc cluster up` and `minikube` after running `eval $(minikube docker-env)`.
+**NOTE**: Some of these tests, specifically the ansible (`test/e2e/ansible`), helm (`test/e2e/helm`), and Go (`test/e2e/go`) tests,
+only work when the cluster shares the local docker registry, as is the case with `oc cluster up` and `minikube` after running `eval $(minikube docker-env)`.
 
 All other tests will run correctly on a remote cluster if `$HOME/.kube/config` points to the remote cluster and your
 `KUBECONFIG` env var is either empty or is set to the path of a kubeconfig for the remote cluster.
