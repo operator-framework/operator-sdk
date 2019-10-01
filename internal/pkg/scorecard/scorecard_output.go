@@ -17,9 +17,13 @@ package scorecard
 import (
 	"encoding/json"
 	"fmt"
+<<<<<<< HEAD
 	"github.com/mattn/go-isatty"
 	"io/ioutil"
 	"os"
+=======
+	"io/ioutil"
+>>>>>>> 477b53ff11b352a745d8930ff78af40ff2731d5d
 
 	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
@@ -28,12 +32,18 @@ import (
 const (
 	failRequiredMessage = "A required test has failed."
 	passRequiredMessage = "All required tests passed."
+<<<<<<< HEAD
 	redColor            = "31"
 	greenColor          = "32"
+=======
+	failColor           = "\033[1;31m%s\033[0m\n"
+	passColor           = "\033[1;32m%s\033[0m\n"
+>>>>>>> 477b53ff11b352a745d8930ff78af40ff2731d5d
 )
 
 func printPluginOutputs(pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
 
+<<<<<<< HEAD
 	failColor := "\033[1;" + redColor + "m%s\033[0m\n"
 	passColor := "\033[1;" + greenColor + "m%s\033[0m\n"
 	noColor := "%s\n"
@@ -48,6 +58,10 @@ func printPluginOutputs(pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
 		failColor = noColor
 	}
 
+=======
+	totalScore := 0.0
+	failedRequiredTests := 0
+>>>>>>> 477b53ff11b352a745d8930ff78af40ff2731d5d
 	requiredTestStatus := fmt.Sprintf(passColor, passRequiredMessage)
 
 	// calculate failed required tests and status
