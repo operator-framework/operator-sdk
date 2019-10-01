@@ -370,46 +370,6 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
 
 **NOTE:** this version uses Kubernetes v1.14.x and controller-runtime v0.2.x, both of which have breaking API changes. See the [changelog][changelog] for more details.
 
-### Import updates
-
-- Replace import `sigs.k8s.io/controller-runtime/pkg/runtime/scheme` with `sigs.k8s.io/controller-runtime/pkg/scheme` in:
-  - `./pkg/apis/<group>/<version>/register.go`
-- Replace import `sigs.k8s.io/controller-runtime/pkg/runtime/log` with `sigs.k8s.io/controller-runtime/pkg/log` in:
-  - `cmd/manager/main.go`
-  - `./pkg/controller/<kind>/<kind>_controller.go`
-- Replace import `sigs.k8s.io/controller-runtime/pkg/runtime/signals` with `sigs.k8s.io/controller-runtime/pkg/manager/signals` in:
-  - `cmd/manager/main.go`
-
-### controller-runtime API updates
-
-All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L104) and [`sigs.k8s.io/controller-runtime/pkg/client.StatusWriter`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L91) (except for `Client.Get()`) have been updated. Each now uses a variadic option interface parameter typed for each method.
-- `Client.List(ctx context.Context, opts *client.ListOptions, list runtime.Object) error` is now [`Client.List(ctx context.Context, list runtime.Object, opts ...client.ListOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L61).
-    Replace:
-    ```go
-    listOpts := &client.ListOptions{}
-    listOpts.InNamespace("namespace")
-    err = r.client.List(context.TODO(), listOps, podList)
-    ```
-    with:
-    ```go
-    listOpts := []client.ListOption{
-      client.InNamespace("namespace"),        
-    }
-    err = r.client.List(context.TODO(), podList, listOpts...)
-    ```
-- `Client.Create(ctx context.Context, obj runtime.Object) error` is now [`Client.Create(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L67). No updates need to be made. See the [client doc][client-doc] for a discussion of `client.CreateOption`.
-- `Client.Update(ctx context.Context, obj runtime.Object) error` is now [`Client.Update(ctx context.Context, obj runtime.Object, opts ...client.UpdateOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L74). No updates need to be made. See the [client doc][client-doc] for a discussion of `client.UpdateOption`.
-- `Client.Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOptionFunc) error` is now [`Client.Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L70). Although the option interface has changed, the way each `client.DeleteOption` is created is the same as before. No updates need to be made. See the [client doc][client-doc] for a discussion of `client.DeleteOption`.
-- `StatusWriter.Update(ctx context.Context, obj runtime.Object) error` is now [`Update(ctx context.Context, obj runtime.Object, opts ...UpdateOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L95). No updates need to be made. See the [client doc][client-doc] for a discussion of `client.UpdateOption`.
-
-### Operator SDK updates
-
-- [`pkg/test.FrameworkClient`](https://github.com/operator-framework/operator-sdk/blob/947a464/pkg/test/client.go#L33) `List()` and `Delete()` method invocations should be updated to match those of `Client.List()` and `Client.Delete()`, described above.
-- CRD file names now have the form `<full group>_<resource>_crd.yaml`, and CRD file names now have the form `<full group>_<version>_<kind>_cr.yaml`. `<full group>` is the full group name of your CRD found at `spec.group`, and `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`. To migrate:
-    - Run `operator-sdk generate openapi`. CRD manifest files with new names containing versioned validation and subresource blocks will be generated.
-    - Delete the old CRD manifest files.
-    - Rename CR manifest file names from `<group>_<version>_<kind>_cr.yaml` to `<full group>_<version>_<kind>_cr.yaml`.
-
 ### dep
 
 - Remove the `required = [ ... ]` section and comment from the top of your `Gopkg.toml` file.
@@ -472,6 +432,50 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 
     replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v0.11.0
     ```
+
+### Import updates
+
+- Replace import `sigs.k8s.io/controller-runtime/pkg/runtime/scheme` with `sigs.k8s.io/controller-runtime/pkg/scheme` in:
+  - `./pkg/apis/<group>/<version>/register.go`
+- Replace import `sigs.k8s.io/controller-runtime/pkg/runtime/log` with `sigs.k8s.io/controller-runtime/pkg/log` in:
+  - `cmd/manager/main.go`
+  - `./pkg/controller/<kind>/<kind>_controller.go`
+- Replace import `sigs.k8s.io/controller-runtime/pkg/runtime/signals` with `sigs.k8s.io/controller-runtime/pkg/manager/signals` in:
+  - `cmd/manager/main.go`
+
+### controller-runtime API updates
+
+All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L104) and [`sigs.k8s.io/controller-runtime/pkg/client.StatusWriter`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L91) (except for `Client.Get()`) have been updated. Each now uses a variadic option interface parameter typed for each method.
+- `Client.List(ctx context.Context, opts *client.ListOptions, list runtime.Object) error` is now [`Client.List(ctx context.Context, list runtime.Object, opts ...client.ListOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L61).
+    Replace:
+    ```go
+    listOpts := &client.ListOptions{}
+    listOpts.InNamespace("namespace")
+    err = r.client.List(context.TODO(), listOps, podList)
+    ```
+    with:
+    ```go
+    listOpts := []client.ListOption{
+      client.InNamespace("namespace"),        
+    }
+    err = r.client.List(context.TODO(), podList, listOpts...)
+    ```
+- `Client.Create(ctx context.Context, obj runtime.Object) error` is now [`Client.Create(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L67). No updates need to be made. See the [client doc][client-doc] for a discussion of `client.CreateOption`.
+- `Client.Update(ctx context.Context, obj runtime.Object) error` is now [`Client.Update(ctx context.Context, obj runtime.Object, opts ...client.UpdateOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L74). No updates need to be made. See the [client doc][client-doc] for a discussion of `client.UpdateOption`.
+- `Client.Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOptionFunc) error` is now [`Client.Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L70). Although the option interface has changed, the way each `client.DeleteOption` is created is the same as before. No updates need to be made. See the [client doc][client-doc] for a discussion of `client.DeleteOption`.
+- `StatusWriter.Update(ctx context.Context, obj runtime.Object) error` is now [`Update(ctx context.Context, obj runtime.Object, opts ...UpdateOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L95). No updates need to be made. See the [client doc][client-doc] for a discussion of `client.UpdateOption`.
+
+### Operator SDK updates
+
+- [`pkg/test.FrameworkClient`](https://github.com/operator-framework/operator-sdk/blob/947a464/pkg/test/client.go#L33) `List()` and `Delete()` method invocations should be updated to match those of `Client.List()` and `Client.Delete()`, described above.
+- The annotation to assign a scope to your CRD has changed. For the following changes, note that `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`.
+    - For `Namespaced`-scoped operators, add a `+kubebuilder:resource:path=<resource>,scope=Namespaced` comment above your kind type in `pkg/apis/<group>/<version>/<kind>_types.go`.
+    - For `Cluster`-scoped operators, replace the `+genclient:nonNamespaced` comment above your kind type in `pkg/apis/<group>/<version>/<kind>_types.go` with `+kubebuilder:resource:path=<resource>,scope=Cluster`.
+- CRD file names now have the form `<full group>_<resource>_crd.yaml`, and CRD file names now have the form `<full group>_<version>_<kind>_cr.yaml`. `<full group>` is the full group name of your CRD found at `spec.group`, and `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`. To migrate:
+    - Run `operator-sdk generate openapi`. CRD manifest files with new names containing versioned validation and subresource blocks will be generated.
+    - Delete the old CRD manifest files.
+    - Rename CR manifest file names from `<group>_<version>_<kind>_cr.yaml` to `<full group>_<version>_<kind>_cr.yaml`.
+
 
 [legacy-kubebuilder-doc-crd]: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [v0.8.2-go-mod]: https://github.com/operator-framework/operator-sdk/blob/28bd2b0d4fd25aa68e15d928ae09d3c18c3b51da/internal/pkg/scaffold/go_mod.go#L40-L94
