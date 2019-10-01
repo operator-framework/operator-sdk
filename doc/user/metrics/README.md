@@ -89,7 +89,7 @@ The operator uses [Prometheus][prometheus] to expose a number of metrics by defa
     import(
         "github.com/prometheus/client_golang/prometheus"
         "github.com/prometheus/client_golang/prometheus/promauto"
-        "sigs.k8s.io/controller-runtime/pkg/metrics"
+        crmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
     )
 
     var (
@@ -103,7 +103,7 @@ The operator uses [Prometheus][prometheus] to expose a number of metrics by defa
 
         ...
 
-        metrics.Registry.MustRegister(opsProcessed)
+        crmetrics.Registry.MustRegister(opsProcessed)
 
         ...
 
