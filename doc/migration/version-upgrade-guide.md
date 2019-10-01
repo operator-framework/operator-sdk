@@ -338,11 +338,13 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
 ## `v0.10.x`
 
 - The scorecard configuration format for the `operator-sdk scorecard` command has changed. See [`doc/test-framework/scorecard`](../test-framework/scorecard.md) for more info.
-- The CSV config field `role-path` is now `role-paths` and takes a list of strings. To migrate:
+- The CSV config field `role-path` is now `role-paths` and takes a list of strings.
+    Replace:
     ```yaml
-    # Old
     role-path: path/to/role.yaml
-    # New
+    ```
+    with:
+    ```yaml
     role-paths:
     - path/to/role.yaml
     ```
@@ -368,6 +370,8 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
 
 **NOTE:** this version uses Kubernetes v1.14.x and controller-runtime v0.2.x, both of which have breaking API changes. See the [changelog][changelog] for more details.
 
+### Import updates
+
 - Replace import `sigs.k8s.io/controller-runtime/pkg/runtime/scheme` with `sigs.k8s.io/controller-runtime/pkg/scheme` in:
   - `./pkg/apis/<group>/<version>/register.go`
 - Replace import `sigs.k8s.io/controller-runtime/pkg/runtime/log` with `sigs.k8s.io/controller-runtime/pkg/log` in:
@@ -376,16 +380,18 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
 - Replace import `sigs.k8s.io/controller-runtime/pkg/runtime/signals` with `sigs.k8s.io/controller-runtime/pkg/manager/signals` in:
   - `cmd/manager/main.go`
 
-### controller-runtime API changes
+### controller-runtime API updates
 
 All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L104) and [`sigs.k8s.io/controller-runtime/pkg/client.StatusWriter`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L91) (except for `Client.Get()`) have been updated. Each now uses a variadic option interface parameter typed for each method.
-- `Client.List(ctx context.Context, opts *client.ListOptions, list runtime.Object) error` is now [`Client.List(ctx context.Context, list runtime.Object, opts ...client.ListOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L61):
+- `Client.List(ctx context.Context, opts *client.ListOptions, list runtime.Object) error` is now [`Client.List(ctx context.Context, list runtime.Object, opts ...client.ListOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L61).
+    Replace:
     ```go
-    // Old
     listOpts := &client.ListOptions{}
     listOpts.InNamespace("namespace")
     err = r.client.List(context.TODO(), listOps, podList)
-    // New
+    ```
+    with:
+    ```go
     listOpts := []client.ListOption{
       client.InNamespace("namespace"),        
     }
@@ -396,7 +402,7 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 - `Client.Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOptionFunc) error` is now [`Client.Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L70). Although the option interface has changed, the way each `client.DeleteOption` is created is the same as before. No updates need to be made. See the [client doc][client-doc] for a discussion of `client.DeleteOption`.
 - `StatusWriter.Update(ctx context.Context, obj runtime.Object) error` is now [`Update(ctx context.Context, obj runtime.Object, opts ...UpdateOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L95). No updates need to be made. See the [client doc][client-doc] for a discussion of `client.UpdateOption`.
 
-### SDK changes
+### Operator SDK updates
 
 - [`pkg/test.FrameworkClient`](https://github.com/operator-framework/operator-sdk/blob/947a464/pkg/test/client.go#L33) `List()` and `Delete()` method invocations should be updated to match those of `Client.List()` and `Client.Delete()`, described above.
 - CRD file names now have the form `<full group>_<resource>_crd.yaml`, and CRD file names now have the form `<full group>_<version>_<kind>_cr.yaml`. `<full group>` is the full group name of your CRD found at `spec.group`, and `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`. To migrate:
