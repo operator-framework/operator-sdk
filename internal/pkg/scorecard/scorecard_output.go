@@ -17,7 +17,9 @@ package scorecard
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/mattn/go-isatty"
 	"io/ioutil"
+	"os"
 
 	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
@@ -26,14 +28,26 @@ import (
 const (
 	failRequiredMessage = "A required test has failed."
 	passRequiredMessage = "All required tests passed."
-	failColor           = "\033[1;31m%s\033[0m\n"
-	passColor           = "\033[1;32m%s\033[0m\n"
+	redColor            = "31"
+	greenColor          = "32"
 )
 
 func printPluginOutputs(pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
 
+	failColor := "\033[1;" + redColor + "m%s\033[0m\n"
+	passColor := "\033[1;" + greenColor + "m%s\033[0m\n"
+	noColor := "%s\n"
+
 	totalScore := 0.0
 	failedRequiredTests := 0
+
+	// turn off colorization if not in a terminal
+	if !isatty.IsTerminal(os.Stdout.Fd()) &&
+		!isatty.IsCygwinTerminal(os.Stdout.Fd()) {
+		passColor = noColor
+		failColor = noColor
+	}
+
 	requiredTestStatus := fmt.Sprintf(passColor, passRequiredMessage)
 
 	// calculate failed required tests and status

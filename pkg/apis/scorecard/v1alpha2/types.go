@@ -22,8 +22,6 @@ import (
 type State string
 
 const (
-	// UnsetState is the default state for a TestResult. It must be updated by UpdateState or by the Test.
-	UnsetState State = "unset"
 	// PassState occurs when a Test's ExpectedPoints == MaximumPoints.
 	PassState State = "pass"
 	// FailState occurs when a Test's ExpectedPoints == 0.

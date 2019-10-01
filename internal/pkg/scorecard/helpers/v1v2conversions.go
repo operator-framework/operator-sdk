@@ -54,9 +54,13 @@ func ConvertSuiteResultV1ToV2(v1SuiteResult scapiv1alpha1.ScorecardSuiteResult) 
 
 func ConvertTestResultV1ToV2(v1TestResult scapiv1alpha1.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
 	output := scapiv1alpha2.ScorecardTestResult{
-		State:       scapiv1alpha2.State(string(v1TestResult.State)),
+		State:       scapiv1alpha2.FailState,
 		Name:        v1TestResult.Name,
 		Description: v1TestResult.Description,
+	}
+
+	if v1TestResult.EarnedPoints == v1TestResult.MaximumPoints {
+		output.State = scapiv1alpha2.PassState
 	}
 
 	output.Suggestions = make([]string, len(v1TestResult.Suggestions))
