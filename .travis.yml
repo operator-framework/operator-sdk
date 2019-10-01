@@ -125,25 +125,25 @@ jobs:
     # Build and test helm in non-master PRs
     - if: tag IS present OR branch != master
       <<: *test
-      name: Helm on Ansible
+      name: Helm on Kubernetes
       script: make test/e2e/helm
 
     # Test subcommands in non-master PRs
     - if: tag IS present OR branch != master
       <<: *test
-      name: Subcommands on Ansible
+      name: Subcommands on Kubernetes
       script: make test/subcommand
 
     # Test olm install/uninstall subcommands on master, as these cannot be tested in prow/api-ci.
     - if: tag IS NOT present AND branch = master
       <<: *test
-      name: OLM Install/Uninstall on Ansible
+      name: OLM Install/Uninstall on Kubernetes
       script: make test/subcommand/olm-install
 
     # Build and test ansible using molecule, as this cannot be tested in prow/api-ci.
     - if: tag IS NOT present AND branch = master
       <<: *test
-      name: Ansible Molecule on Ansible
+      name: Ansible Molecule on Kubernetes
       script: make test/e2e/ansible-molecule
 
     # Run the unit, sanity, and markdown tests
