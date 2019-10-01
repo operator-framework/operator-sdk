@@ -54,6 +54,7 @@ replace (
 	k8s.io/client-go => k8s.io/client-go kubernetes-1.14.1
 	k8s.io/cloud-provider => k8s.io/cloud-provider kubernetes-1.14.1
 	k8s.io/kubernetes => k8s.io/kubernetes v1.14.1
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver kubernetes-1.14.1
 )
 
 // Pinned to v2.10.0 (kubernetes-1.14.1) so https://proxy.golang.org can

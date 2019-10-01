@@ -58,7 +58,7 @@ const moleculeDefaultPrepareAnsibleTmpl = `---
 
     - name: Change the kubeconfig port to the proper value
       replace:
-        regexp: 8443
+        regexp: '8443' 
         replace: "{{ lookup('env', 'KIND_PORT') }}"
         path: '{{ kubeconfig }}'
       delegate_to: localhost

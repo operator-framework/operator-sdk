@@ -111,6 +111,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	var pluginOutputs []scapiv1alpha1.ScorecardOutput
 	for _, plugin := range plugins {
 		pluginOutputs = append(pluginOutputs, plugin.Run())
@@ -223,7 +224,9 @@ func validateScorecardConfig() error {
 	if outputFormat != TextOutputFormat && outputFormat != JSONOutputFormat {
 		return fmt.Errorf("invalid output format (%s); valid values: %s, %s", outputFormat, TextOutputFormat, JSONOutputFormat)
 	}
-	return nil
+
+	return schelpers.ValidateVersion(scViper.GetString(schelpers.VersionOpt))
+
 }
 
 func makeSCViper() {
@@ -231,6 +234,8 @@ func makeSCViper() {
 	// this is a workaround for the fact that nested flags don't persist on viper.Sub
 	scViper.Set(OutputFormatOpt, viper.GetString("scorecard."+OutputFormatOpt))
 	scViper.Set(scplugins.KubeconfigOpt, viper.GetString("scorecard."+scplugins.KubeconfigOpt))
+	scViper.Set(schelpers.VersionOpt, viper.GetString("scorecard."+schelpers.VersionOpt))
+
 }
 
 func configDocLink() string {

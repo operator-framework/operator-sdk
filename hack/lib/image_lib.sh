@@ -112,3 +112,16 @@ function is_latest_tag() {
   latest="$(latest_git_version)"
   [[ -z "$latest" || "$candidate" == "$latest" ]]
 }
+
+#
+# load_image_if_kind <image tag>
+#
+# load_image_if_kind loads an image into all nodes in a kind cluster.
+#
+function load_image_if_kind() {
+  if [[ "$(kubectl config current-context)" == "kubernetes-admin@kind" ]]; then
+    if which kind 2>/dev/null; then
+      kind load docker-image "$1"
+    fi
+  fi
+}

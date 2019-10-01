@@ -169,6 +169,7 @@ func getPodFromDeployment(depName, namespace string) (pod *v1.Pod, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get newly created deployment: %v", err)
 	}
+
 	// In some cases, the pod from the old deployment will be picked up
 	// instead of the new one.
 	err = wait.PollImmediate(time.Second*1, time.Second*60, func() (bool, error) {

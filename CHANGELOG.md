@@ -7,6 +7,7 @@
 - Added flag `--dep-manager` to command [`operator-sdk print-deps`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#print-deps) to specify the type of dependency manager file to print. The choice of dependency manager is inferred from top-level dependency manager files present if `--dep-manager` is not set. ([#1819](https://github.com/operator-framework/operator-sdk/pull/1819))
 - Ansible based operators now gather and serve metrics about each custom resource on port 8686 of the metrics service. ([#1723](https://github.com/operator-framework/operator-sdk/pull/1723))
 - Added the Go version, OS, and architecture to the output of `operator-sdk version` ([#1863](https://github.com/operator-framework/operator-sdk/pull/1863))
+- Added support for `ppc64le-linux` for the `operator-sdk` binary and the Helm operator base image. ([#1533](https://github.com/operator-framework/operator-sdk/pull/1533))
 
 ### Changed
 
@@ -14,6 +15,7 @@
 - Commands [`olm uninstall`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#uninstall) and [`olm status`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#status) no longer use a `--version` flag to specify OLM version. This information is now retrieved from the running cluster. ([#1634](https://github.com/operator-framework/operator-sdk/pull/1634))
 - The Helm operator no longer prints manifest diffs in the operator log at verbosity levels lower than INFO ([#1857](https://github.com/operator-framework/operator-sdk/pull/1857))
 - CRD manifest `spec.version` is still supported, but users will see a warning message if `spec.versions` is not present and an error if `spec.versions` is populated but the version in `spec.version` is not in `spec.versions`. ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
+- Upgrade base image for Go, Helm, and scorecard proxy from `registry.access.redhat.com/ubi7/ubi-minimal:latest` to `registry.access.redhat.com/ubi8/ubi-minimal:latest`. ([#1952](https://github.com/operator-framework/operator-sdk/pull/1952))
 
 ### Breaking changes
 
@@ -46,6 +48,7 @@
       ```
 - [`pkg/test.FrameworkClient`](https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/client.go#L33) methods `List()` and `Delete()` have new signatures corresponding to the homonymous methods of `sigs.k8s.io/controller-runtime/pkg/client.Client`. ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
 - CRD file names were previously of the form `<group>_<version>_<kind>_crd.yaml`. Now that CRD manifest `spec.version` is deprecated in favor of `spec.versions`, i.e. multiple versions can be specified in one CRD, CRD file names have the form `<full group>_<resource>_crd.yaml`. `<full group>` is the full group name of your CRD while `<group>` is the last subdomain of `<full group>`, ex. `foo.bar.com` vs `foo`. `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`. ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
+- Upgrade Python version from `2.7` to `3.6`, Ansible version from `2.8.0` to `~=2.8` and ansible-runner from `1.2` to `1.3.4` in the Ansible based images. ([#1947](https://github.com/operator-framework/operator-sdk/pull/1947)) 
 
 ### Deprecated
 
@@ -58,6 +61,7 @@
 - Configure the repo path correctly in `operator-sdk add crd` and prevent the command from running outside of an operator project. ([#1660](https://github.com/operator-framework/operator-sdk/pull/1660))
 - In the Helm operator, skip owner reference injection for cluster-scoped resources in release manifests. The Helm operator only supports namespace-scoped CRs, and namespaced resources cannot own cluster-scoped resources. ([#1817](https://github.com/operator-framework/operator-sdk/pull/1817))
 - Package manifests generated with [`gen-csv`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#gen-csv) respect the `--operator-name` flag, channel names are checked for duplicates before (re-)generation. ([#1693](https://github.com/operator-framework/operator-sdk/pull/1693))
+- Generated inventory for Ansible-based Operators now sets the localhost's `ansible_python_interpreter` to `{{ ansible_playbook_python }}`, to properly match the [implicit localhost](https://docs.ansible.com/ansible/latest/inventory/implicit_localhost.html). ([#1952](https://github.com/operator-framework/operator-sdk/pull/1952))
 
 ## v0.10.0
 
@@ -147,7 +151,7 @@
 - Renamed `--docker-build-args` option to `--image-build-args` option for `build` subcommand, because this option can now be shared with other image build tools than docker when `--image-builder` option is specified. ([#1311](https://github.com/operator-framework/operator-sdk/pull/1311))
 - Reduces Helm release information in CR status to only the release name and manifest and moves it from `status.conditions` to a new top-level `deployedRelease` field. ([#1309](https://github.com/operator-framework/operator-sdk/pull/1309))
   - **WARNING**: Users with active CRs and releases who are upgrading their helm-based operator should upgrade to one based on v0.7.0 before upgrading further. Helm operators based on v0.8.0+ will not seamlessly transition release state to the persistent backend, and will instead uninstall and reinstall all managed releases.
-- Go operator CRDs are overwritten when being regenerated by [`operator-sdk generate openapi`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#openapi). Users can now rely on `+kubebuilder` annotations in their API code, which provide access to most OpenAPIv3 [validation properties](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md#schema-object) (the full set will be supported in the near future, see [this PR](https://github.com/kubernetes-sigs/controller-tools/pull/190)) and [other CRD fields](https://book.kubebuilder.io/beyond_basics/generating_crd.html). ([#1278](https://github.com/operator-framework/operator-sdk/pull/1278))
+- Go operator CRDs are overwritten when being regenerated by [`operator-sdk generate openapi`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#openapi). Users can now rely on `+kubebuilder` annotations in their API code, which provide access to most OpenAPIv3 [validation properties](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md#schema-object) (the full set will be supported in the near future, see [this PR](https://github.com/kubernetes-sigs/controller-tools/pull/190)) and [other CRD fields](https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html). ([#1278](https://github.com/operator-framework/operator-sdk/pull/1278))
 - Use `registry.access.redhat.com/ubi7/ubi-minimal:latest` base image for the Go and Helm operators and scorecard proxy ([#1376](https://github.com/operator-framework/operator-sdk/pull/1376))
 - Allow "Owned CRDs Have Resources Listed" scorecard test to pass if the resources section exists
 
