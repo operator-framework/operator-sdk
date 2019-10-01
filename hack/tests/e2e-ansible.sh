@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
-source hack/lib/test_lib.sh
-
 set -eux
+
+source hack/lib/test_lib.sh
+source hack/lib/image_lib.sh
 
 # ansible proxy test require a running cluster; run during e2e instead
 go test -count=1 ./pkg/ansible/proxy/...
@@ -14,7 +15,6 @@ trap_add 'rm -rf $GOTMP' EXIT
 
 deploy_operator() {
     kubectl create -f "$OPERATORDIR/deploy/service_account.yaml"
-    oc adm policy add-cluster-role-to-user cluster-admin -z memcached-operator || :
     kubectl create -f "$OPERATORDIR/deploy/role.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
     kubectl create -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds_crd.yaml"
@@ -32,6 +32,10 @@ remove_operator() {
 }
 
 test_operator() {
+    # kind has an issue with certain image registries (ex. redhat's), so use a
+    # different test pod image.
+    local metrics_test_image="fedora:latest"
+
     # wait for operator pod to run
     if ! timeout 1m kubectl rollout status deployment/memcached-operator;
     then
@@ -50,7 +54,7 @@ test_operator() {
     fi
 
     # verify that the metrics endpoint exists
-    if ! timeout 1m bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl -sfo /dev/null http://memcached-operator-metrics:8383/metrics; do sleep 1; done";
+    if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl -sfo /dev/null http://memcached-operator-metrics:8383/metrics; do sleep 1; done";
     then
         echo "Failed to verify that metrics endpoint exists"
         kubectl logs deployment/memcached-operator
@@ -58,7 +62,7 @@ test_operator() {
     fi
 
     # verify that the operator metrics endpoint exists
-    if ! timeout 1m bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl -sfo /dev/null http://memcached-operator-metrics:8686/metrics; do sleep 1; done";
+    if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl -sfo /dev/null http://memcached-operator-metrics:8686/metrics; do sleep 1; done";
     then
         echo "Failed to verify that metrics endpoint exists"
         kubectl logs deployment/memcached-operator
@@ -76,7 +80,7 @@ test_operator() {
     fi
 
     # verify that metrics reflect cr creation
-    if ! bash -c -- 'kubectl run -it --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl http://memcached-operator-metrics:8686/metrics | grep example-memcached';
+    if ! bash -c -- "kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl http://memcached-operator-metrics:8686/metrics | grep example-memcached";
     then
         echo "Failed to verify custom resource metrics"
         kubectl logs deployment/memcached-operator
@@ -124,9 +128,6 @@ test_operator() {
     fi
 }
 
-# switch to the "default" namespace if on openshift, to match the minikube test
-if which oc 2>/dev/null; then oc project default; fi
-
 # create and build the operator
 pushd "$GOTMP"
 operator-sdk new memcached-operator \
@@ -145,8 +146,16 @@ pushd memcached-operator
 operator-sdk add crd --kind=Foo --api-version=ansible.example.com/v1alpha1
 sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
 operator-sdk build "$DEST_IMAGE"
+# If using a kind cluster, load the image into all nodes.
+load_image_if_kind "$DEST_IMAGE"
 sed -i "s|{{ REPLACE_IMAGE }}|$DEST_IMAGE|g" deploy/operator.yaml
 sed -i 's|{{ pull_policy.default..Always.. }}|Never|g' deploy/operator.yaml
+# kind has an issue with certain image registries (ex. redhat's), so use a
+# different test pod image.
+METRICS_TEST_IMAGE="fedora:latest"
+docker pull "$METRICS_TEST_IMAGE"
+# If using a kind cluster, load the metrics test image into all nodes.
+load_image_if_kind "$METRICS_TEST_IMAGE"
 
 OPERATORDIR="$(pwd)"
 
@@ -174,6 +183,8 @@ add_go_mod_replace "github.com/operator-framework/operator-sdk" "$ROOTDIR"
 go build ./...
 
 operator-sdk build "$DEST_IMAGE"
+# If using a kind cluster, load the image into all nodes.
+load_image_if_kind "$DEST_IMAGE"
 
 deploy_operator
 test_operator

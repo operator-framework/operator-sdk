@@ -53,12 +53,13 @@ x_base_steps:
   - &test
     stage: test
     env:
-    - CLUSTER=openshift
+    - CLUSTER=k8s
     os: linux
     <<: *go_before_install
     install:
       - make install
-      - hack/ci/setup-openshift.sh
+      - hack/ci/setup-${CLUSTER}.sh
+      - export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
     after_success:
       - echo "Build succeeded, operator was generated, memcached operator is running on $CLUSTER, and unit/integration tests pass"
     after_failure:
@@ -106,12 +107,12 @@ jobs:
   include:
     # Build and test go
     - <<: *test
-      name: Go on OpenShift
+      name: Go on Kubernetes
       script: make test/ci-go
 
     # Build and test ansible
     - <<: *test
-      name: Ansible on OpenShift
+      name: Ansible on Kubernetes
       before_script:
         - pip3 install --upgrade setuptools pip
         - pip install --user ansible
@@ -119,7 +120,7 @@ jobs:
 
     # Build and test helm
     - <<: *test
-      name: Helm on OpenShift
+      name: Helm on Kubernetes
       script: make test/ci-helm
 
     # Run the unit, sanity, and markdown tests
