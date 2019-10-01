@@ -13,7 +13,6 @@ pip3 install --user docker openshift jmespath
 
 deploy_prereqs() {
     kubectl create -f "$OPERATORDIR/deploy/service_account.yaml"
-    oc adm policy add-cluster-role-to-user cluster-admin -z memcached-operator || :
     kubectl create -f "$OPERATORDIR/deploy/role.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
     kubectl create -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds_crd.yaml"
