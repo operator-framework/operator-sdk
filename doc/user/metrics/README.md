@@ -79,6 +79,36 @@ In Kubernetes clusters where [OwnerReferencesPermissionEnforcement][ownerref-per
 
 By default operator will expose info metrics based on the number of the current instances of an operator's custom resources in the cluster. It leverages [kube-state-metrics][ksm] as a library to generate those metrics. Metrics initialization lives in the `cmd/manager/main.go` file of the operator in the `serveCRMetrics` function. Its arguments are a custom resource's group, version, and kind to generate the metrics. The metrics are served on `0.0.0.0:8686/metrics` by default. To modify the exposed metrics port number, change the `operatorMetricsPort` variable at the top of the `cmd/manager/main.go` file in the generated operator.
 
+### Expose custom metrics
+
+The operator uses [Prometheus][prometheus] to expose a number of metrics by default. In order to expose custom metrics they have to be registered with the `Registry` object.
+
+#### Usage:
+
+```go
+    import(
+        "github.com/prometheus/client_golang/prometheus"
+        "github.com/prometheus/client_golang/prometheus/promauto"
+        "sigs.k8s.io/controller-runtime/pkg/metrics"
+    )
+
+    var (
+        opsProcessed = promauto.NewCounter(prometheus.CounterOpts{
+                Name: "myapp_processed_ops_total",
+                Help: "The total number of processed events",
+        })
+    )
+
+    func main() {
+
+        ...
+
+        metrics.Registry.MustRegister(opsProcessed)
+
+        ...
+
+    }
+```
 
 [prometheus]: https://prometheus.io/
 [service]: https://kubernetes.io/docs/concepts/services-networking/service/
