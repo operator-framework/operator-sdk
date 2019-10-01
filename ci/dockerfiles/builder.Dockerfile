@@ -5,4 +5,4 @@ ENV GOPATH=/go PATH=/go/src/github.com/operator-framework/operator-sdk/build:$PA
 
 COPY . .
 
-RUN make ci-build
+RUN make -f ci/prow.Makefile build

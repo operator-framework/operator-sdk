@@ -1,12 +1,12 @@
 # kernel-style V=1 build verbosity
 ifeq ("$(origin V)", "command line")
-       BUILD_VERBOSE = $(V)
+  BUILD_VERBOSE = $(V)
 endif
 
 ifeq ($(BUILD_VERBOSE),1)
-       Q =
+  Q =
 else
-       Q = @
+  Q = @
 endif
 
 VERSION = $(shell git describe --dirty --tags --always)
@@ -31,7 +31,21 @@ export GO111MODULE:=on
 export GOPROXY?=https://proxy.golang.org/
 .DEFAULT_GOAL:=help
 
+.PHONY: help
+help: ## Show this help screen
+	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
+	@echo ''
+	@echo 'Available targets are:'
+	@echo ''
+	@grep -E '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ''
+
+.PHONY: all
 all: format test build/operator-sdk ## Test and Build the Operator SDK
+
+# Code management.
+.PHONY: test format tidy clean
 
 format: ## Format the source code
 	$(Q)go fmt $(PKGS)
@@ -42,16 +56,8 @@ tidy: ## Update dependencies
 clean: ## Clean up the build artifacts
 	$(Q)rm -rf build
 
-help: ## Show this help screen
-	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
-	@echo ''
-	@echo 'Available targets are:'
-	@echo ''
-	@grep -E '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
-	@echo ''
-
-.PHONY: all test format tidy clean help
+# Build/install/release the SDK.
+.PHONY: install release_builds release
 
 install: ## Build & install the Operator SDK CLI binary
 	$(Q)go install \
@@ -63,11 +69,6 @@ install: ## Build & install the Operator SDK CLI binary
 		" \
 		$(BUILD_PATH)
 
-ci-build: build/operator-sdk-$(VERSION) ci-install
-
-ci-install:
-	mv build/operator-sdk-$(VERSION) build/operator-sdk
-
 release_builds := \
 	build/operator-sdk-$(VERSION)-x86_64-linux-gnu \
 	build/operator-sdk-$(VERSION)-x86_64-apple-darwin \
@@ -78,7 +79,6 @@ release: clean $(release_builds) $(release_builds:=.asc) ## Release the Operator
 build/operator-sdk-%-x86_64-linux-gnu: GOARGS = GOOS=linux GOARCH=amd64
 build/operator-sdk-%-x86_64-apple-darwin: GOARGS = GOOS=darwin GOARCH=amd64
 build/operator-sdk-%-ppc64le-linux-gnu: GOARGS = GOOS=linux GOARCH=ppc64le
-
 
 build/%: $(SOURCES)
 	$(Q)$(GOARGS) go build \
@@ -103,17 +103,13 @@ build/%.asc:
 	fi; \
 	}
 
-.PHONY: install release_builds release
+# Static tests.
+.PHONY: test test/markdown test/sanity test/unit
 
 test: test/unit ## Run the tests
 
-test-ci: test/markdown test/sanity test/unit install test/subcommand test/e2e ## Run the CI test suite
-
-test/ci-go: test/subcommand test/e2e/go
-
-test/ci-ansible: test/e2e/ansible-molecule
-
-test/ci-helm: test/e2e/helm
+test/markdown:
+	./hack/ci/marker --root=doc
 
 test/sanity: tidy
 	./hack/tests/sanity-check.sh
@@ -123,16 +119,21 @@ test/unit: ## Run the unit tests
 	$(Q)go test -count=1 -short ./pkg/...
 	$(Q)go test -count=1 -short ./internal/...
 
-test/subcommand: test/subcommand/test-local test/subcommand/scorecard test/subcommand/alpha-olm
+# CI tests.
+.PHONY: test/ci
 
-test/subcommand2:
-	./ci/tests/subcommand.sh
+test/ci: test/markdown test/sanity test/unit install test/subcommand test/e2e ## Run the CI test suite
+
+# Subcommand tests.
+.PHONY: test/subcommand test/subcommand/test-local test/subcommand/scorecard test/subcommand/olm-install
+
+test/subcommand: test/subcommand/test-local test/subcommand/scorecard test/subcommand/olm-install
 
 test/subcommand/test-local:
-	./hack/tests/test-subcommand.sh
+	./hack/tests/subcommand.sh
 
 test/subcommand/scorecard:
-	./hack/tests/scorecard-subcommand.sh
+	./hack/tests/subcommand-scorecard.sh
 
 test/subcommand/scorecard-v1alpha2:
 	./hack/tests/scorecard-subcommand-v1alpha2.sh
@@ -140,22 +141,19 @@ test/subcommand/scorecard-v1alpha2:
 test/subcommand/scorecard2:
 	./ci/tests/scorecard-subcommand.sh
 
-test/subcommand/alpha-olm:
-	./hack/tests/alpha-olm-subcommands.sh
+test/subcommand/olm-install:
+	./hack/tests/subcommand-olm-install.sh
+
+# E2E tests.
+.PHONY: test/e2e test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm
 
 test/e2e: test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm ## Run the e2e tests
 
 test/e2e/go:
 	./hack/tests/e2e-go.sh $(ARGS)
 
-test/e2e/go2:
-	./ci/tests/e2e-go.sh $(ARGS)
-
 test/e2e/ansible: image/build/ansible
 	./hack/tests/e2e-ansible.sh
-
-test/e2e/ansible2:
-	./ci/tests/e2e-ansible.sh
 
 test/e2e/ansible-molecule: image/build/ansible
 	./hack/tests/e2e-ansible-molecule.sh
@@ -163,13 +161,8 @@ test/e2e/ansible-molecule: image/build/ansible
 test/e2e/helm: image/build/helm
 	./hack/tests/e2e-helm.sh
 
-test/e2e/helm2:
-	./ci/tests/e2e-helm.sh
-
-test/markdown:
-	./hack/ci/marker --root=doc
-
-.PHONY: test test-ci test/sanity test/unit test/subcommand test/subcommand/test-local test/subcommand/scorecard test/subcommand/alpha-olm test/e2e test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm test/ci-go test/ci-ansible test/ci-helm test/markdown
+# Image scaffold/build/push.
+.PHONY: image image/scaffold/ansible image/scaffold/helm image/build image/build/ansible image/build/helm image/push image/push/ansible image/push/helm
 
 image: image/build image/push ## Build and push all images
 
@@ -203,5 +196,3 @@ image/push/helm-multiarch:
 
 image/push/scorecard-proxy:
 	./hack/image/push-image-tags.sh $(SCORECARD_PROXY_BASE_IMAGE):dev $(SCORECARD_PROXY_IMAGE)
-
-.PHONY: image image/scaffold/ansible image/scaffold/helm image/build image/build/ansible image/build/helm image/push image/push/ansible image/push/helm

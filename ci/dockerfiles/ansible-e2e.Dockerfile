@@ -1,6 +1,6 @@
 FROM osdk-builder as builder
 
-RUN ci/tests/e2e-ansible-scaffold.sh
+RUN ci/tests/scaffolding/e2e-ansible-scaffold.sh
 
 FROM osdk-ansible
 

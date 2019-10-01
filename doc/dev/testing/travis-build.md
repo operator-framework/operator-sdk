@@ -122,7 +122,7 @@ The markdown test does not create a new cluster and runs in a barebones Travis V
 [k8s-script]: ../../../hack/ci/setup-k8s.sh
 [kind]: https://kind.sigs.k8s.io/
 [sanity]: ../../../hack/tests/sanity-check.sh
-[subcommand]: ../../../hack/tests/test-subcommand.sh
+[subcommand]: ../../../hack/tests/subcommand.sh
 [go-e2e]: ../../../hack/tests/e2e-go.sh
 [tls-tests]: ../../../test/e2e/tls_util_test.go
 [ansible-molecule]: ../../../hack/tests/e2e-ansible-molecule.sh
