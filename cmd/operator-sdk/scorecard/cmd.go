@@ -17,9 +17,9 @@ package scorecard
 import (
 	"fmt"
 
-	"github.com/operator-framework/operator-sdk/internal/pkg/scorecard"
-	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
-	scplugins "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/plugins"
+	"github.com/operator-framework/operator-sdk/internal/scorecard"
+	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
+	scplugins "github.com/operator-framework/operator-sdk/internal/scorecard/plugins"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

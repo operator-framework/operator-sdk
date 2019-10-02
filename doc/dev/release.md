@@ -196,17 +196,17 @@ $ git checkout -b release-v1.3.0
 Commit the following changes:
 
 - `version/version.go`: update `Version` to `v1.3.0`.
-- `internal/pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
+- `internal/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
   - Comment out `branch = "master"`
   - Un-comment `version = "v1.2.0"`
   - Change `v1.2.0` to `v1.3.0`
-- `internal/pkg/scaffold/ansible/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
-- `internal/pkg/scaffold/helm/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
-- `internal/pkg/scaffold/go_mod.go`, in the `replace` block for `github.com/operator-framework/operator-sdk`:
+- `internal/scaffold/ansible/gopkgtoml.go`: same as for `internal/scaffold/gopkgtoml.go`.
+- `internal/scaffold/helm/gopkgtoml.go`: same as for `internal/scaffold/gopkgtoml.go`.
+- `internal/scaffold/go_mod.go`, in the `replace` block for `github.com/operator-framework/operator-sdk`:
   - Add the following `replace` line to the bottom of `go.mod`: `replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v1.3.0`.
   - If a `replace` line already exists, change the version to `v1.3.0`.
-- `internal/pkg/scaffold/helm/go_mod.go`: same as for `internal/pkg/scaffold/go_mod.go`.
-- `internal/pkg/scaffold/ansible/go_mod.go`: same as for `internal/pkg/scaffold/go_mod.go`.
+- `internal/scaffold/helm/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
+- `internal/scaffold/ansible/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
 - `CHANGELOG.md`: update the `## Unreleased` header to `## v1.3.0`.
 - `doc/user/install-operator-sdk.md`: update the linux and macOS URLs to point to the new release URLs.
 
@@ -243,15 +243,15 @@ Once this tag passes CI, go to step 3. For more info on tagging, see the [releas
 Check out a new branch from master (or use your `release-v1.3.0` branch) and commit the following changes:
 
 - `version/version.go`: update `Version` to `v1.3.0+git`.
-- `internal/pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
+- `internal/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
   - Comment out `version = "v1.3.0"`
   - Un-comment `branch = "master"`
-- `internal/pkg/scaffold/ansible/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
-- `internal/pkg/scaffold/helm/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
-- `internal/pkg/scaffold/go_mod.go`, in the `replace` block for `github.com/operator-framework/operator-sdk`:
+- `internal/scaffold/ansible/gopkgtoml.go`: same as for `internal/scaffold/gopkgtoml.go`.
+- `internal/scaffold/helm/gopkgtoml.go`: same as for `internal/scaffold/gopkgtoml.go`.
+- `internal/scaffold/go_mod.go`, in the `replace` block for `github.com/operator-framework/operator-sdk`:
   - Remove the `replace` line at the bottom of `go.mod`: `replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v1.3.0`.
-- `internal/pkg/scaffold/helm/go_mod.go`: same as for `internal/pkg/scaffold/go_mod.go`.
-- `internal/pkg/scaffold/ansible/go_mod.go`: same as for `internal/pkg/scaffold/go_mod.go`.
+- `internal/scaffold/helm/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
+- `internal/scaffold/ansible/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
 - `CHANGELOG.md`: add the following as a new set of headers above `## v1.3.0`:
 
     ```markdown
