@@ -31,3 +31,62 @@ This is an example of a watches file with the `watchDependentResources` field se
   watchDependentResources: True
 
 ```
+
+### Add Dependent Watches for existing resources
+
+If you cahnge `watchDependentResources` to `True` after resources (TODO
+what resource) have been created, those resources will not have owner
+reference annotations, but they can be added manually.
+
+Following the memcached example, we can edit or patch deployment
+resources with CR data.
+
+`kubectl get memcacheds.cache.example.com -o yaml`
+
+```yaml
+- apiVersion: cache.example.com/v1alpha1
+  kind: Memcached
+  metadata:
+    ...(snip)
+    name: example-memcached
+    uid: ad834522-d9a5-4841-beac-991ff3798c00
+```
+
+Using edit
+
+`kubectl edit deployment memcached-operator`
+
+```yaml
+
+metadata:
+  ...(snip)
+  ownerReferences:
+    - apiVersion: cache.example.com/v1alpha1
+      kind: Memcached
+      name: example-memcached
+      uid: ad834522-d9a5-4841-beac-991ff3798c00
+```
+
+Using patch
+
+```bash
+kubectl patch deployment memcached-operator -p '{"metadata":{"ownerReferences":[{"apiVersion":"cache.example.com/v1alpha1", "kind":"Memcached", "name":"example-memcached", "uid":"ad834522-d9a5-4841-beac-991ff3798c00"}]}}'
+```
+
+If you have many deployments to update, you can use a script similar to the following::
+
+```bash
+#!/usr/bin/env bash
+# This script uses the jq tool to parse JSON.
+# https://stedolan.github.io/jq/
+
+# FIXME: Set these variables to fit your needs
+declare -a operators_to_be_owned=("memcached-operator")
+local owning_cr_name="memcacheds.cache.example.com"
+
+payload=$(kubectl get $owning_cr_name -o json | jq '.items[0] | {metadata: {ownerReferences: [{apiVersion: .apiVersion, kind: .kind, name: .metadata.name, uid: .metadata.uid}]}}')
+for name in "${operators_to_be_owned[@]}"
+do
+    kubectl patch deployment $name -p "$(< migration/payload.json)"
+done
+```
