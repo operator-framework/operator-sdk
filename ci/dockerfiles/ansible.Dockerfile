@@ -26,22 +26,16 @@ RUN yum clean all && rm -rf /var/cache/yum/*
 # todo; remove ubi7 after CI be updated with images
 # ubi7
 RUN if $(cat /etc/redhat-release | grep --quiet 'release 7'); then (yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm || true); fi
-# ubi8
-RUN if $(cat /etc/redhat-release | grep --quiet 'release 8'); then (yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm || true); fi
 
 RUN yum -y update \
  && yum install -y python36-devel gcc
 
 # ubi7
-RUN if $(cat /etc/redhat-release | grep --quiet 'release 7'); then (yum install -y python36-pip || true); fi
+RUN if $(cat /etc/redhat-release | grep --quiet 'release 7'); then (yum install -y python36-pip inotify-tools || true); fi
 # ubi8
-RUN if $(cat /etc/redhat-release | grep --quiet 'release 8'); then (yum install -y python3-pip || true); fi
+RUN if $(cat /etc/redhat-release | grep --quiet 'release 8'); then (yum install -y python3-pip inotify3-tools || true); fi
 
-# Install inotify-tools. Note: rpm -i will install the rpm in the registry for allow yum install it.
-RUN curl -O https://rpmfind.net/linux/fedora/linux/releases/30/Everything/x86_64/os/Packages/i/inotify-tools-3.14-16.fc30.x86_64.rpm \
- && rpm -i inotify-tools-3.14-16.fc30.x86_64.rpm \
- && yum install inotify-tools \
- && pip3 install --upgrade setuptools pip \
+RUN pip3 install --upgrade setuptools pip \
  && pip install --no-cache-dir --ignore-installed ipaddress \
       ansible-runner==1.3.4 \
       ansible-runner-http==1.0.0 \
