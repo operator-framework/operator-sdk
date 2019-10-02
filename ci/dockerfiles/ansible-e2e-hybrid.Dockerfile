@@ -3,7 +3,7 @@ FROM osdk-builder as builder
 RUN make image/scaffold/ansible
 RUN ci/tests/scaffolding/e2e-ansible-scaffold-hybrid.sh
 
-FROM registry.access.redhat.com/ubi7/ubi
+FROM registry.access.redhat.com/ubi8/ubi
 
 # Temporary for CI, reset /etc/passwd
 RUN chmod 0644 /etc/passwd
@@ -22,21 +22,10 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
 # Install python dependencies
 # Ensure fresh metadata rather than cached metadata in the base by running
 # yum clean all && rm -rf /var/yum/cache/* first
-RUN yum clean all && rm -rf /var/cache/yum/*
-
-# todo; remove ubi7 after CI be updated with images
-# ubi7
-RUN if $(cat /etc/redhat-release | grep --quiet 'release 7'); then (yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm || true); fi
-
-RUN yum -y update \
- && yum install -y python36-devel gcc
-
-# ubi7
-RUN if $(cat /etc/redhat-release | grep --quiet 'release 7'); then (yum install -y python36-pip inotify-tools || true); fi
-# ubi8
-RUN if $(cat /etc/redhat-release | grep --quiet 'release 8'); then (yum install -y python3-pip inotify3-tools || true); fi
-
-RUN pip3 install --upgrade setuptools pip \
+RUN yum clean all && rm -rf /var/cache/yum/* \
+ && yum -y update \
+ && yum install -y python36-devel gcc python3-pip python3-inotify \
+ && pip3 install --upgrade setuptools pip \
  && pip install --no-cache-dir --ignore-installed ipaddress \
       ansible-runner==1.3.4 \
       ansible-runner-http==1.0.0 \
