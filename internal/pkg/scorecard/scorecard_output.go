@@ -46,7 +46,7 @@ func printPluginOutputs(pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
 
 	// produce json output
 	if scViper.GetString(OutputFormatOpt) == JSONOutputFormat {
-		bytes, err := list.MarshalJSON(logReadWriter)
+		bytes, err := list.MarshalJSONOutput(logReadWriter)
 		if err != nil {
 			return err
 		}

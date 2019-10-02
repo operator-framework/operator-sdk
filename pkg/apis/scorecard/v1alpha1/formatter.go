@@ -71,7 +71,7 @@ func (s ScorecardOutputList) MarshalText() (string, error) {
 	return sb.String(), nil
 }
 
-func (s ScorecardOutputList) MarshalJSON(logReadWriter io.ReadWriter) ([]byte, error) {
+func (s ScorecardOutputList) MarshalJSONOutput(logReadWriter io.ReadWriter) ([]byte, error) {
 
 	pluginOutputs := s.Items
 	var buff []byte

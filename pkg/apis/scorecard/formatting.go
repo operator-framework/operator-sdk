@@ -20,5 +20,5 @@ import (
 
 type ScorecardFormatter interface {
 	MarshalText() (string, error)
-	MarshalJSON(io.ReadWriter) ([]byte, error)
+	MarshalJSONOutput(logReadWriter io.ReadWriter) ([]byte, error)
 }
