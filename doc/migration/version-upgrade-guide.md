@@ -336,7 +336,7 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
   ```
 
 [legacy-kubebuilder-doc-crd]: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-[v0.8.2-go-mod]: https://github.com/operator-framework/operator-sdk/blob/28bd2b0d4fd25aa68e15d928ae09d3c18c3b51da/internal/scaffold/go_mod.go#L40-L94
+[v0.8.2-go-mod]: https://github.com/operator-framework/operator-sdk/blob/28bd2b0d4fd25aa68e15d928ae09d3c18c3b51da/internal/pkg/scaffold/go_mod.go#L40-L94
 [activating-modules]: https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support
 [mercurial]: https://www.mercurial-scm.org/downloads
 [migrating-to-modules]: https://github.com/golang/go/wiki/Modules#migrating-to-modules
