@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package schelpers
+package scorecard
 
 import (
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
@@ -20,19 +20,35 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func ConvertScorecardOutputV1ToV2(v1ScorecardOutput scapiv1alpha1.ScorecardOutput) scapiv1alpha2.ScorecardOutput {
-	output := scapiv1alpha2.ScorecardOutput{
+func ConvertScorecardOutputV1ToV2(v1ScorecardOutput []scapiv1alpha1.ScorecardOutput) scapiv1alpha2.ScorecardOutputList {
+
+	list := scapiv1alpha2.ScorecardOutputList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ScorecardOutput",
 			APIVersion: "osdk.openshift.io/v1alpha2",
 		},
-		Log: v1ScorecardOutput.Log,
 	}
-	for _, v1SuiteResult := range v1ScorecardOutput.Results {
-		v2SuiteResult := ConvertSuiteResultV1ToV2(v1SuiteResult)
-		output.Results = append(output.Results, v2SuiteResult)
+
+	items := make([]scapiv1alpha2.ScorecardOutput, 0)
+	for _, o := range v1ScorecardOutput {
+		output := scapiv1alpha2.ScorecardOutput{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "ScorecardOutput",
+				APIVersion: "osdk.openshift.io/v1alpha2",
+			},
+			Log: o.Log,
+		}
+		output.Results = make([]scapiv1alpha2.ScorecardSuiteResult, 0)
+		for _, v1SuiteResult := range o.Results {
+			v2SuiteResult := ConvertSuiteResultV1ToV2(v1SuiteResult)
+			output.Results = append(output.Results, v2SuiteResult)
+		}
+		items = append(items, output)
 	}
-	return output
+
+	list.Items = items
+
+	return list
 }
 
 func ConvertSuiteResultV1ToV2(v1SuiteResult scapiv1alpha1.ScorecardSuiteResult) scapiv1alpha2.ScorecardSuiteResult {
