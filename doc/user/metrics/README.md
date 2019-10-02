@@ -81,35 +81,10 @@ By default operator will expose info metrics based on the number of the current 
 
 ### Expose custom metrics
 
-The operator uses [Prometheus][prometheus] to expose a number of metrics by default. In order to expose custom metrics they have to be registered with the `Registry` object.
+The operator uses [Prometheus][prometheus] to expose a number of metrics by default. In order to expose custom metrics they have to be registered with the `Registry` object. An example can be found in the [kubebuilder book][kubebuilder].
 
-#### Usage:
 
-```go
-    import(
-        "github.com/prometheus/client_golang/prometheus"
-        "github.com/prometheus/client_golang/prometheus/promauto"
-        crmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
-    )
-
-    var (
-        opsProcessed = promauto.NewCounter(prometheus.CounterOpts{
-                Name: "myapp_processed_ops_total",
-                Help: "The total number of processed events",
-        })
-    )
-
-    func main() {
-
-        ...
-
-        crmetrics.Registry.MustRegister(opsProcessed)
-
-        ...
-
-    }
-```
-
+[kubebuilder]: https://book.kubebuilder.io/reference/metrics.html
 [prometheus]: https://prometheus.io/
 [service]: https://kubernetes.io/docs/concepts/services-networking/service/
 [gc]: https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/#owners-and-dependents
