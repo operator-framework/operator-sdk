@@ -1,21 +1,29 @@
 ## Using the ServiceMonitor prometheus-operator CRD
 
+- [Overview](#overview)
+- [Prerequisites:](#prerequisites)
+- [Usage example:](#usage-example)
+
+## Overview 
+
 [prometheus-operator][prom-operator] is an operator that creates, configures, and manages Prometheus clusters atop Kubernetes.
 
 `ServiceMonitor` is a CustomResource of the prometheus-operator, which discovers the `Endpoints` in `Service` objects and configures Prometheus to monitor those pods. See the prometheus-operator [documentation][service-monitor] to learn more about `ServiceMonitor`.
 
 The `CreateServiceMonitors` function takes `Service` objects and generates `ServiceMonitor` resources based on the endpoints. To add `Service` target discovery of your created monitoring `Service` you can use the `metrics.CreateServiceMonitors()` helper function, which accepts the newly created `Service`.
 
-### Prerequisites:
+## Prerequisites:
 
 - [prometheus-operator][prom-quickstart] needs to be deployed in the cluster.
 
-### Usage example:
+## Usage example:
 
 ```go
     import(
+        ... 
         "k8s.io/api/core/v1"
         "github.com/operator-framework/operator-sdk/pkg/metrics"
+        ...
     )
 
     func main() {
@@ -36,6 +44,30 @@ The `CreateServiceMonitors` function takes `Service` objects and generates `Serv
         }
 
         ...
+    }
+
+    // serveCRMetrics gets the Operator/CustomResource GVKs and generates metrics based on those types.
+    // It serves those metrics on "http://metricsHost:operatorMetricsPort".
+    func serveCRMetrics(cfg *rest.Config) error {
+        // Below function returns filtered operator/CustomResource specific GVKs.
+        // For more control override the below GVK list with your own custom logic.
+        filteredGVK, err := k8sutil.GetGVKsFromAddToScheme(apis.AddToScheme)
+        if err != nil {
+            return err
+        }
+        // Get the namespace the operator is currently deployed in.
+        operatorNs, err := k8sutil.GetOperatorNamespace()
+        if err != nil {
+            return err
+        }
+        // To generate metrics in other namespaces, add the values below.
+        ns := []string{operatorNs}
+        // Generate and serve custom resource specific metrics.
+        err = kubemetrics.GenerateAndServeCRMetrics(cfg, ns, filteredGVK, metricsHost, operatorMetricsPort)
+        if err != nil {
+            return err
+        }
+        return nil
     }
 ```
 
