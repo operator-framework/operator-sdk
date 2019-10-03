@@ -20,35 +20,36 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func ConvertScorecardOutputV1ToV2(v1ScorecardOutput []scapiv1alpha1.ScorecardOutput) scapiv1alpha2.ScorecardOutputList {
+func ConvertScorecardOutputV1ToV2(v1ScorecardOutput scapiv1alpha1.ScorecardOutput) scapiv1alpha2.ScorecardOutput {
 
-	list := scapiv1alpha2.ScorecardOutputList{
+	output := scapiv1alpha2.ScorecardOutput{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ScorecardOutput",
 			APIVersion: "osdk.openshift.io/v1alpha2",
 		},
 	}
+	output.Results = make([]scapiv1alpha2.ScorecardSuiteResult, 0)
+	for _, v1SuiteResult := range v1ScorecardOutput.Results {
+		v2SuiteResult := ConvertSuiteResultV1ToV2(v1SuiteResult)
+		output.Results = append(output.Results, v2SuiteResult)
+	}
+	output.Log = v1ScorecardOutput.Log
 
-	items := make([]scapiv1alpha2.ScorecardOutput, 0)
-	for _, o := range v1ScorecardOutput {
-		output := scapiv1alpha2.ScorecardOutput{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "ScorecardOutput",
-				APIVersion: "osdk.openshift.io/v1alpha2",
-			},
-			Log: o.Log,
+	// calculate failed required tests
+	for _, suite := range output.Results {
+		for _, result := range suite.Tests {
+			if result.State != scapiv1alpha2.PassState {
+				output.FailedRequiredTests++
+			}
 		}
-		output.Results = make([]scapiv1alpha2.ScorecardSuiteResult, 0)
-		for _, v1SuiteResult := range o.Results {
-			v2SuiteResult := ConvertSuiteResultV1ToV2(v1SuiteResult)
-			output.Results = append(output.Results, v2SuiteResult)
-		}
-		items = append(items, output)
 	}
 
-	list.Items = items
+	output.RequiredTestStatus = scapiv1alpha2.PassRequiredMessage
+	if output.FailedRequiredTests > 0 {
+		output.RequiredTestStatus = scapiv1alpha2.FailRequiredMessage
+	}
 
-	return list
+	return output
 }
 
 func ConvertSuiteResultV1ToV2(v1SuiteResult scapiv1alpha1.ScorecardSuiteResult) scapiv1alpha2.ScorecardSuiteResult {

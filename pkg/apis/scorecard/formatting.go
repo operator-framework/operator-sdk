@@ -14,11 +14,6 @@
 
 package scorecard
 
-import (
-	"io"
-)
-
 type ScorecardFormatter interface {
 	MarshalText() (string, error)
-	MarshalJSONOutput(logReadWriter io.ReadWriter) ([]byte, error)
 }

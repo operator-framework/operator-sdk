@@ -15,22 +15,22 @@
 package scorecard
 
 import (
+	"encoding/json"
 	"fmt"
 	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
 	scapi "github.com/operator-framework/operator-sdk/pkg/apis/scorecard"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+	"io/ioutil"
 )
 
 func printPluginOutputs(pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
 
 	var list scapi.ScorecardFormatter
+	list = combinePluginOutput(pluginOutputs)
+
 	if schelpers.IsV1alpha2() {
-		//list = schelpers.ConvertScorecardOutputV1ToV2(pluginOutputs)
-		list = scapi.ConvertScorecardOutputV1ToV2(pluginOutputs)
-	} else {
-		v1list := scapiv1alpha1.ScorecardOutputList{}
-		v1list.Items = pluginOutputs
-		list = v1list
+		list = scapi.ConvertScorecardOutputV1ToV2(list.(scapiv1alpha1.ScorecardOutput))
 	}
 
 	// produce text output
@@ -46,13 +46,44 @@ func printPluginOutputs(pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
 
 	// produce json output
 	if scViper.GetString(OutputFormatOpt) == JSONOutputFormat {
-		bytes, err := list.MarshalJSONOutput(logReadWriter)
+
+		log, err := ioutil.ReadAll(logReadWriter)
+		if err != nil {
+			return fmt.Errorf("failed to read log buffer: %v", err)
+		}
+		if schelpers.IsV1alpha2() {
+			temp := list.(scapiv1alpha2.ScorecardOutput)
+			temp.Log = string(log)
+			bytes, err := json.MarshalIndent(temp, "", "  ")
+			if err != nil {
+				return err
+			}
+			fmt.Printf("%s\n", string(bytes))
+			return nil
+		}
+
+		temp := list.(scapiv1alpha1.ScorecardOutput)
+		temp.Log = string(log)
+		bytes, err := json.MarshalIndent(temp, "", "  ")
 		if err != nil {
 			return err
 		}
 		fmt.Printf("%s\n", string(bytes))
 		return nil
+
 	}
 
 	return nil
+}
+
+func combinePluginOutput(pluginOutputs []scapiv1alpha1.ScorecardOutput) scapiv1alpha1.ScorecardOutput {
+	output := scapiv1alpha1.ScorecardOutput{}
+	output.Results = make([]scapiv1alpha1.ScorecardSuiteResult, 0)
+	for _, v := range pluginOutputs {
+		for _, r := range v.Results {
+			output.Results = append(output.Results, r)
+		}
+	}
+
+	return output
 }

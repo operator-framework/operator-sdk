@@ -86,15 +86,6 @@ type ScorecardOutput struct {
 	RequiredTestStatus string `json:"requiredTestStatus"`
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// ScorecardOutputList contains a list of ScorecardTest
-type ScorecardOutputList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []ScorecardOutput `json:"items"`
-}
-
 func init() {
-	SchemeBuilder.Register(&ScorecardOutput{}, &ScorecardOutputList{})
+	SchemeBuilder.Register(&ScorecardOutput{})
 }
