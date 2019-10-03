@@ -26,10 +26,7 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
  && yum -y update \
  && yum install -y python36-devel gcc python3-pip \
  # todo: remove inotify-tools. More info: See https://github.com/operator-framework/operator-sdk/issues/2007
- # Install inotify-tools. Note: rpm -i will install the rpm in the registry for allow the yum install it.
- && curl -O https://rpmfind.net/linux/fedora/linux/releases/30/Everything/x86_64/os/Packages/i/inotify-tools-3.14-16.fc30.x86_64.rpm \
- && rpm -i inotify-tools-3.14-16.fc30.x86_64.rpm \
- && yum install inotify-tools \
+ && yum install -y https://rpmfind.net/linux/fedora/linux/releases/30/Everything/x86_64/os/Packages/i/inotify-tools-3.14-16.fc30.x86_64.rpm \
  && pip3 install --upgrade setuptools pip \
  && pip install --no-cache-dir --ignore-installed ipaddress \
       ansible-runner==1.3.4 \
