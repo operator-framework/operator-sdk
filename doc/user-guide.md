@@ -61,11 +61,32 @@ The Manager will automatically register the scheme for all custom resources defi
 
 The Manager can restrict the namespace that all controllers will watch for resources:
 ```Go
-mgr, err := manager.New(cfg, manager.Options{Namespace: namespace})
+// Create a new Cmd to provide shared dependencies and start components
+mgr, err := manager.New(cfg, manager.Options{
+   Namespace: namespace,
+   MapperProvider:     restmapper.NewDynamicRESTMapper,
+   MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+})
 ```
 By default this will be the namespace that the operator is running in. To watch all namespaces leave the namespace option empty:
 ```Go
-mgr, err := manager.New(cfg, manager.Options{Namespace: ""})
+// Create a new Cmd to provide shared dependencies and start components
+mgr, err := manager.New(cfg, manager.Options{
+   Namespace: "",
+   MapperProvider:     restmapper.NewDynamicRESTMapper,
+   MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+})
+```
+Also, it can restrict a list of namespaces that all controllers will watch for resources:
+```Go
+var namespaces []string // List of Namespaces
+
+// Create a new Cmd to provide shared dependencies and start components
+mgr, err := manager.New(cfg, manager.Options{
+   NewCache: cache.MultiNamespacedCacheBuilder(namespaces),
+   MapperProvider:     restmapper.NewDynamicRESTMapper,
+   MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+})
 ```
 
 By default the main program will set the manager's namespace using the value of `WATCH_NAMESPACE` env defined in `deploy/operator.yaml`.
