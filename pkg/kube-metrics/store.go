@@ -23,26 +23,24 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/tools/cache"
-	kcollector "k8s.io/kube-state-metrics/pkg/collector"
 	"k8s.io/kube-state-metrics/pkg/metric"
 	metricsstore "k8s.io/kube-state-metrics/pkg/metrics_store"
 )
 
-// NewCollectors returns collections of metrics in the namespaces provided, per the api/kind resource.
-// The metrics are registered in the custom generateStore function that needs to be defined.
-func NewCollectors(dclient dynamic.NamespaceableResourceInterface, namespaces []string, api string, kind string, metricFamily []metric.FamilyGenerator) []kcollector.Collector {
+// NewMetricsStores returns collections of metrics in the namespaces provided, per the api/kind resource.
+// The metrics are registered in the custom metrics.FamilyGenerator that needs to be defined.
+func NewMetricsStores(dclient dynamic.NamespaceableResourceInterface, namespaces []string, api string, kind string, metricFamily []metric.FamilyGenerator) []*metricsstore.MetricsStore {
 	namespaces = deduplicateNamespaces(namespaces)
-	var collectors []kcollector.Collector
+	var stores []*metricsstore.MetricsStore
 	// Generate collector per namespace.
 	for _, ns := range namespaces {
 		composedMetricGenFuncs := metric.ComposeMetricGenFuncs(metricFamily)
 		headers := metric.ExtractMetricFamilyHeaders(metricFamily)
 		store := metricsstore.NewMetricsStore(headers, composedMetricGenFuncs)
 		reflectorPerNamespace(context.TODO(), dclient, &unstructured.Unstructured{}, store, ns)
-		collector := kcollector.NewCollector(store)
-		collectors = append(collectors, *collector)
+		stores = append(stores, store)
 	}
-	return collectors
+	return stores
 }
 
 func deduplicateNamespaces(ns []string) (list []string) {

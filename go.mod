@@ -31,7 +31,6 @@ require (
 	github.com/gobuffalo/packr v1.30.1 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/google/uuid v1.1.1 // indirect
-	github.com/gophercloud/gophercloud v0.0.0-20190408160324-6c7ac67f8855 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/huandu/xstrings v1.2.0 // indirect
@@ -54,7 +53,7 @@ require (
 	github.com/pelletier/go-toml v1.3.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.8.1
-	github.com/prometheus/client_golang v0.9.3
+	github.com/prometheus/client_golang v1.0.0
 	github.com/rogpeppe/go-internal v1.3.0
 	github.com/rubenv/sql-migrate v0.0.0-20190618074426-f4d34eae5a5c // indirect
 	github.com/sergi/go-diff v1.0.0
@@ -72,7 +71,6 @@ require (
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	go.etcd.io/bbolt v1.3.3 // indirect
 	go.uber.org/zap v1.10.0
-	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a // indirect
 	golang.org/x/tools v0.0.0-20190624180213-70d37148ca0c
 	google.golang.org/api v0.3.2 // indirect
 	google.golang.org/genproto v0.0.0-20190404172233-64821d5d2107 // indirect
@@ -88,9 +86,9 @@ require (
 	k8s.io/code-generator v0.0.0-20190311093542-50b561225d70
 	k8s.io/gengo v0.0.0-20190327210449-e17681d19d3a
 	k8s.io/helm v2.14.1+incompatible
-	k8s.io/klog v0.3.1
+	k8s.io/klog v0.3.3
 	k8s.io/kube-openapi v0.0.0-20190401085232-94e1e7b7574c
-	k8s.io/kube-state-metrics v1.6.0
+	k8s.io/kube-state-metrics v1.7.2
 	k8s.io/kubernetes v1.14.2
 	sigs.k8s.io/controller-runtime v0.2.0
 	sigs.k8s.io/controller-tools v0.2.0

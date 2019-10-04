@@ -2,7 +2,7 @@ FROM osdk-builder as builder
 
 RUN make image/scaffold/ansible
 
-FROM registry.access.redhat.com/ubi7/ubi
+FROM registry.access.redhat.com/ubi8/ubi
 
 # Temporary for CI, reset /etc/passwd
 RUN chmod 0644 /etc/passwd
@@ -22,15 +22,11 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
 # Ensure fresh metadata rather than cached metadata in the base by running
 # yum clean all && rm -rf /var/yum/cache/* first
 RUN yum clean all && rm -rf /var/cache/yum/* \
- && (yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm || true) \
  && yum -y update \
- && yum install -y python36-devel python36-pip gcc \
- # Install inotify-tools. Note: rpm -i will install the rpm in the registry for allow yum install it.
- && curl -O https://rpmfind.net/linux/fedora/linux/releases/30/Everything/x86_64/os/Packages/i/inotify-tools-3.14-16.fc30.x86_64.rpm \
- && rpm -i inotify-tools-3.14-16.fc30.x86_64.rpm \
- && yum install inotify-tools \
- && pip3 install --upgrade setuptools pip \
- && pip install --no-cache-dir --ignore-installed ipaddress \
+ && yum install -y python36-devel gcc python3-pip python3-setuptools \
+ # todo: remove inotify-tools. More info: See https://github.com/operator-framework/operator-sdk/issues/2007
+ && yum install -y https://rpmfind.net/linux/fedora/linux/releases/30/Everything/x86_64/os/Packages/i/inotify-tools-3.14-16.fc30.x86_64.rpm \
+ && pip3 install --no-cache-dir --ignore-installed ipaddress \
       ansible-runner==1.3.4 \
       ansible-runner-http==1.0.0 \
       openshift==0.8.9 \
