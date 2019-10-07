@@ -39,9 +39,9 @@ By default, the metrics are served on `0.0.0.0:8383/metrics`. To modify the port
         ...
 
         // Add to the below struct any other metrics ports you want to expose.
-	    servicePorts := []v1.ServicePort{
-		    {Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
-	    }
+	servicePorts := []v1.ServicePort{
+		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
+	}
 
         // Create Service object to expose the metrics port.
         _, err = metrics.CreateMetricsService(context.TODO(), cfg, servicePorts)
@@ -74,20 +74,100 @@ In Kubernetes clusters where [OwnerReferencesPermissionEnforcement][ownerref-per
   - update
 ...
 ```
-
 ### Custom resource specific metrics
 
 By default operator will expose info metrics based on the number of the current instances of an operator's custom resources in the cluster. It leverages [kube-state-metrics][ksm] as a library to generate those metrics. Metrics initialization lives in the `cmd/manager/main.go` file of the operator in the `serveCRMetrics` function. Its arguments are a custom resource's group, version, and kind to generate the metrics. The metrics are served on `0.0.0.0:8686/metrics` by default. To modify the exposed metrics port number, change the `operatorMetricsPort` variable at the top of the `cmd/manager/main.go` file in the generated operator.
 
-### Expose custom metrics
+### Custom Metrics using Operator-SDK
+Following are the steps and requirements to implement a custom metric collection using the `metrics package` provided by SDK.
+1. Custom metric collection: Implement the logic for custom metric variables defined for your operator and register the specific metrics with prometheus. 
+2. Expose metrics: Utilize the functions provided by SDK to expose metrics and start the metrics server.
 
-The operator uses [Prometheus][prometheus] to expose a number of metrics by default. In order to expose custom metrics they have to be registered with the `Registry` object. An example can be found in the [kubebuilder book][kubebuilder].
+#### Custom metric collection
 
+Implement the logic to collect specific custom metrics inside the operator code base. For example, the following is a snippet from `Marketplace` operator which implements custom metric collection:
 
-[kubebuilder]: https://book.kubebuilder.io/reference/metrics.html
+```Go
+// Metric variables and metric list that are used to report error. 
+var (
+	errorMetric = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "error_count",
+			Help: "Describes the monotonic count of the error",
+		},
+		[]string{errorName, errorValue},
+	)
+    metricsList = []prometheus.Collector{
+		errorMetric,
+	}
+)
+```
+Register the metrics created above with Prometheus:
+
+```Go
+// registerMetrics registers the metrics with prometheus.
+func registerMetrics() error {
+	for _, metric := range metricsList {
+		err := prometheus.Register(metric)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+```
+#### Exposing customized metrics
+The steps provided previously for creating a service and service monitor resource can be followed to expose custom metrics. Additionally, the metrics server has to be manually started instead of providing it as an argument to the controller-runtime manager.
+Usage:
+
+```Go
+import(
+        "context"
+        "github.com/operator-framework/operator-sdk/pkg/metrics"
+)
+
+func main() {
+
+        ...
+
+        // Change the below variables to serve metrics on different host or port.
+        const(
+            metricsHost = "0.0.0.0"
+            metricsPort = 8383
+        )
+
+        // Pass metrics address to controller-runtime manager.
+        mgr, err := manager.New(cfg, manager.Options{
+            Namespace:          namespace,
+        })
+
+        ...
+
+        // Add to the below struct any other metrics ports you want to expose.
+	    servicePorts := []v1.ServicePort{
+		    {Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
+	    }
+
+        // Create Service object to expose the metrics port.
+        _, err = metrics.CreateMetricsService(context.TODO(), cfg, servicePorts)
+        if err != nil {
+            log.Error(err,"")
+        }
+
+        // Start the metrics server. The default path where metrics are exposed is "/metrics". It can be modified
+        // by changing the value of the variable "MetricsPath".
+        http.Handle(MetricsPath, promhttp.Handler())
+	    port := fmt.Sprintf(":%d", metricsPort)
+	    go http.ListenAndServe(port, nil)
+        ...
+}
+
+```
+
 [prometheus]: https://prometheus.io/
 [service]: https://kubernetes.io/docs/concepts/services-networking/service/
 [gc]: https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/#owners-and-dependents
 [ownerref-permission]: https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
 [ksm]: https://github.com/kubernetes/kube-state-metrics
 [controller-metrics]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/internal/controller/metrics
+
