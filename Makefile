@@ -135,9 +135,6 @@ test/subcommand/test-local:
 test/subcommand/scorecard:
 	./hack/tests/subcommand-scorecard.sh
 
-test/subcommand/scorecard2:
-	./ci/tests/scorecard-subcommand.sh
-
 test/subcommand/olm-install:
 	./hack/tests/subcommand-olm-install.sh
 
