@@ -35,6 +35,8 @@ func (a *AoLogs) GetInput() (input.Input, error) {
 	return a.Input, nil
 }
 
+//TODO: Change this implementation for no longer use inotifywait.
+// More Info: https://github.com/operator-framework/operator-sdk/issues/2007
 const aoLogsTmpl = `#!/bin/bash
 
 watch_dir=${1:-/tmp/ansible-operator/runner}
