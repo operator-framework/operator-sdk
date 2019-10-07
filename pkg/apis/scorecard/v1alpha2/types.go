@@ -28,6 +28,10 @@ const (
 	FailState State = "fail"
 	// ErrorState occurs when a Test encounters a fatal error and the reported points should not be considered.
 	ErrorState State = "error"
+	// RequiredTestsPassed occurs when all required tests pass
+	RequiredTestsPassedState State = "All required tests passed."
+	// RequiredTestsFailed occurs when one of the required tests fails
+	RequiredTestsFailedState State = "A required test has failed."
 )
 
 // ScorecardSuiteResult contains the combined results of a suite of tests.
@@ -83,7 +87,7 @@ type ScorecardOutput struct {
 	// FailedRequiredTests is the number of required tests run that failed
 	FailedRequiredTests int `json:"failedRequiredTests"`
 	// RequiredTestStatus is a description of the required tests status
-	RequiredTestStatus string `json:"requiredTestStatus"`
+	RequiredTestStatus State `json:"requiredTestStatus"`
 }
 
 func init() {

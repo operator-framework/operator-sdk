@@ -44,9 +44,9 @@ func ConvertScorecardOutputV1ToV2(v1ScorecardOutput scapiv1alpha1.ScorecardOutpu
 		}
 	}
 
-	output.RequiredTestStatus = scapiv1alpha2.PassRequiredMessage
+	output.RequiredTestStatus = scapiv1alpha2.RequiredTestsPassedState
 	if output.FailedRequiredTests > 0 {
-		output.RequiredTestStatus = scapiv1alpha2.FailRequiredMessage
+		output.RequiredTestStatus = scapiv1alpha2.RequiredTestsFailedState
 	}
 
 	return output

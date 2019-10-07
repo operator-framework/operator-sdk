@@ -122,7 +122,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if err := printPluginOutputs(pluginOutputs); err != nil {
+	if err := printPluginOutputs(scViper.GetString(schelpers.VersionOpt), pluginOutputs); err != nil {
 		return err
 	}
 

@@ -20,16 +20,19 @@ import (
 	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
 	scapi "github.com/operator-framework/operator-sdk/pkg/apis/scorecard"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
-	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	"io/ioutil"
 )
 
-func printPluginOutputs(pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
+func printPluginOutputs(version string, pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
 
 	var list scapi.ScorecardFormatter
-	list = combinePluginOutput(pluginOutputs)
+	var err error
+	list, err = combinePluginOutput(pluginOutputs)
+	if err != nil {
+		return err
+	}
 
-	if schelpers.IsV1alpha2() {
+	if schelpers.IsV1alpha2(version) {
 		list = scapi.ConvertScorecardOutputV1ToV2(list.(scapiv1alpha1.ScorecardOutput))
 	}
 
@@ -46,25 +49,7 @@ func printPluginOutputs(pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
 
 	// produce json output
 	if scViper.GetString(OutputFormatOpt) == JSONOutputFormat {
-
-		log, err := ioutil.ReadAll(logReadWriter)
-		if err != nil {
-			return fmt.Errorf("failed to read log buffer: %v", err)
-		}
-		if schelpers.IsV1alpha2() {
-			temp := list.(scapiv1alpha2.ScorecardOutput)
-			temp.Log = string(log)
-			bytes, err := json.MarshalIndent(temp, "", "  ")
-			if err != nil {
-				return err
-			}
-			fmt.Printf("%s\n", string(bytes))
-			return nil
-		}
-
-		temp := list.(scapiv1alpha1.ScorecardOutput)
-		temp.Log = string(log)
-		bytes, err := json.MarshalIndent(temp, "", "  ")
+		bytes, err := json.MarshalIndent(list, "", "  ")
 		if err != nil {
 			return err
 		}
@@ -76,7 +61,7 @@ func printPluginOutputs(pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
 	return nil
 }
 
-func combinePluginOutput(pluginOutputs []scapiv1alpha1.ScorecardOutput) scapiv1alpha1.ScorecardOutput {
+func combinePluginOutput(pluginOutputs []scapiv1alpha1.ScorecardOutput) (scapiv1alpha1.ScorecardOutput, error) {
 	output := scapiv1alpha1.ScorecardOutput{}
 	output.Results = make([]scapiv1alpha1.ScorecardSuiteResult, 0)
 	for _, v := range pluginOutputs {
@@ -85,5 +70,13 @@ func combinePluginOutput(pluginOutputs []scapiv1alpha1.ScorecardOutput) scapiv1a
 		}
 	}
 
-	return output
+	if scViper.GetString(OutputFormatOpt) == JSONOutputFormat {
+		log, err := ioutil.ReadAll(logReadWriter)
+		if err != nil {
+			return output, fmt.Errorf("failed to read log buffer: %v", err)
+		}
+		output.Log = string(log)
+	}
+
+	return output, nil
 }

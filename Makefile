@@ -135,9 +135,6 @@ test/subcommand/test-local:
 test/subcommand/scorecard:
 	./hack/tests/subcommand-scorecard.sh
 
-test/subcommand/scorecard-v1alpha2:
-	./hack/tests/scorecard-subcommand-v1alpha2.sh
-
 test/subcommand/scorecard2:
 	./ci/tests/scorecard-subcommand.sh
 

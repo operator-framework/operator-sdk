@@ -22,11 +22,9 @@ import (
 )
 
 const (
-	FailRequiredMessage = "A required test has failed."
-	PassRequiredMessage = "All required tests passed."
-	redColor            = "31"
-	greenColor          = "32"
-	noColor             = "%s\n"
+	redColor   = "31"
+	greenColor = "32"
+	noColor    = "%s\n"
 )
 
 func (s ScorecardOutput) MarshalText() (string, error) {
@@ -42,10 +40,10 @@ func (s ScorecardOutput) MarshalText() (string, error) {
 		failColor = noColor
 	}
 
-	requiredTestStatus := fmt.Sprintf(passColor, PassRequiredMessage)
+	requiredTestStatus := fmt.Sprintf(passColor, RequiredTestsPassedState)
 
 	if s.FailedRequiredTests > 0 {
-		requiredTestStatus = fmt.Sprintf(failColor, FailRequiredMessage)
+		requiredTestStatus = fmt.Sprintf(failColor, RequiredTestsFailedState)
 	}
 
 	for _, suite := range s.Results {

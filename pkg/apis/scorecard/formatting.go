@@ -14,6 +14,14 @@
 
 package scorecard
 
+import (
+	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+)
+
+var _ ScorecardFormatter = &scapiv1alpha1.ScorecardOutput{}
+var _ ScorecardFormatter = &scapiv1alpha2.ScorecardOutput{}
+
 type ScorecardFormatter interface {
 	MarshalText() (string, error)
 }
