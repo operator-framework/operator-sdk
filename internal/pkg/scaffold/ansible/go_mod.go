@@ -57,9 +57,15 @@ replace (
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver kubernetes-1.14.1
 )
 
-// Pinned to v2.10.0 (kubernetes-1.14.1) so https://proxy.golang.org can
-// resolve it correctly.
-replace github.com/prometheus/prometheus => github.com/prometheus/prometheus d20e84d0fb64aff2f62a977adc8cfb656da4e286
+replace (
+	// Indirect operator-sdk dependencies use git.apache.org, which is frequently
+	// down. The github mirror should be used instead.
+	// Locking to a specific version (from 'go mod graph'):
+	git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
+	// Pinned to v2.10.0 (kubernetes-1.14.1) so https://proxy.golang.org can
+	// resolve it correctly.
+	github.com/prometheus/prometheus => github.com/prometheus/prometheus d20e84d0fb64aff2f62a977adc8cfb656da4e286
+)
 `
 
 func PrintGoMod() error {
