@@ -156,9 +156,9 @@ test-e2e-helm: image-build-helm
 	./hack/tests/e2e-helm.sh
 
 # Image scaffold/build/push.
-.PHONY: image image-scaffold-ansible image-scaffold-helm image-build image-build-ansible image-build-helm image/push image/push/ansible image/push/helm
+.PHONY: image image-scaffold-ansible image-scaffold-helm image-build image-build-ansible image-build-helm image-push image-push-ansible image-push-helm
 
-image: image-build image/push ## Build and push all images
+image: image-build image-push ## Build and push all images
 
 image-scaffold-ansible:
 	go run ./hack/image/ansible/scaffold-ansible-image.go
@@ -177,16 +177,16 @@ image-build-helm: build/operator-sdk-dev
 image-build-scorecard-proxy:
 	./hack/image/build-scorecard-proxy-image.sh $(SCORECARD_PROXY_BASE_IMAGE):dev
 
-image/push: image/push/ansible image/push/helm image/push/scorecard-proxy ## Push all images
+image-push: image-push-ansible image-push-helm image-push-scorecard-proxy ## Push all images
 
-image/push/ansible:
+image-push-ansible:
 	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE):dev $(ANSIBLE_IMAGE)
 
-image/push/helm:
+image-push-helm:
 	./hack/image/push-image-tags.sh $(HELM_BASE_IMAGE):dev $(HELM_IMAGE)-$(shell go env GOARCH)
 
-image/push/helm-multiarch:
+image-push-helm-multiarch:
 	./hack/image/push-manifest-list.sh $(HELM_IMAGE) ${HELM_ARCHES}
 
-image/push/scorecard-proxy:
+image-push-scorecard-proxy:
 	./hack/image/push-image-tags.sh $(SCORECARD_PROXY_BASE_IMAGE):dev $(SCORECARD_PROXY_IMAGE)
