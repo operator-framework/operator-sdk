@@ -55,7 +55,7 @@ All the tests are run through the [`Makefile`][makefile]. This is a brief descri
 
 - `test` - Runs the unit tests (`test-unit`).
 - `test/ci` - Runs markdown, sanity, and unit tests, installs the SDK binary, and runs the SDK subcommand and all E2E tests.
-- `test/sanity` - Runs sanity checks.
+- `test-sanity` - Runs sanity checks.
 - `test-unit` - Runs unit tests.
 - `test/subcommand` - Runs subcommand tests.
 - `test/e2e` - Runs all E2E tests (`test/e2e/go`, `test/e2e/ansible`, `test/e2e/ansible-molecule`, and `e2e/helm`).
