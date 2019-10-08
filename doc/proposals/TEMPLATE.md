@@ -65,9 +65,9 @@ around the enhancement process.
 - [ ] Design details are appropriately documented from clear requirements
 - [ ] Test plan is defined
 - [ ] Graduation criteria for dev preview, tech preview, GA
-- [ ] User-facing documentation is created in [openshift/docs]
+- [ ] User-facing documentation is created in [operator-sdk][operator-sdk]
 
-## Open Questions [optional]
+## Open Questions (optional)
 
 This is where to call out areas of the design that require closure before deciding
 to implement the design.  For instance, 
@@ -102,7 +102,7 @@ and make progress.
 
 This is where we get down to the nitty gritty of what the proposal actually is.
 
-### User Stories [optional]
+### User Stories (optional)
 
 Detail the things that people will be able to do if this is implemented.
 Include as much detail as possible so that people can understand the "how" of
@@ -113,7 +113,7 @@ bogged down.
 
 #### Story 2
 
-### Implementation Details/Notes/Constraints [optional]
+### Implementation Details/Notes/Constraints (optional)
 
 What are the caveats to the implementation? What are some important details that
 didn't come across above. Go in to as much detail as necessary here. This might
@@ -165,8 +165,7 @@ Clearly define what graduation means.
 
 #### Examples
 
-These are generalized examples to consider, in addition to the aforementioned
-[maturity levels][maturity-levels].
+These are generalized examples to consider, in addition to the aforementioned maturity levels(`Dev Preview`, `Tech Preview`, `GA`).
 
 ##### Dev Preview -> Tech Preview
 
@@ -238,7 +237,7 @@ highlight and record other possible approaches to delivering the value proposed
 by an enhancement.
 >>>>>>> improve/fix in doc proposals
 
-## Infrastructure Needed [optional]
+## Infrastructure Needed (optional)
 
 <<<<<<< HEAD
 ## Observations and open questions
@@ -249,3 +248,5 @@ subproject, repos requested, github details, and/or testing infrastructure.
 
 Listing these here allows the community to get the process for these resources
 started right away.
+
+[operator-sdk]: https://github.com/operator-framework/operator-sdk
