@@ -53,10 +53,10 @@ $ export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
 All the tests are run through the [`Makefile`][makefile]. This is a brief description of all makefile test instructions:
 
-- `test` - Runs the unit tests (`test/unit`).
+- `test` - Runs the unit tests (`test-unit`).
 - `test/ci` - Runs markdown, sanity, and unit tests, installs the SDK binary, and runs the SDK subcommand and all E2E tests.
 - `test/sanity` - Runs sanity checks.
-- `test/unit` - Runs unit tests.
+- `test-unit` - Runs unit tests.
 - `test/subcommand` - Runs subcommand tests.
 - `test/e2e` - Runs all E2E tests (`test/e2e/go`, `test/e2e/ansible`, `test/e2e/ansible-molecule`, and `e2e/helm`).
 - `test/e2e/go` - Runs the go E2E test.

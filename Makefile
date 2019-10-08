@@ -104,9 +104,9 @@ build/%.asc:
 	}
 
 # Static tests.
-.PHONY: test test/markdown test/sanity test/unit
+.PHONY: test test/markdown test/sanity test-unit
 
-test: test/unit ## Run the tests
+test: test-unit ## Run the tests
 
 test/markdown:
 	./hack/ci/marker --root=doc
@@ -114,7 +114,7 @@ test/markdown:
 test/sanity: tidy
 	./hack/tests/sanity-check.sh
 
-test/unit: ## Run the unit tests
+test-unit: ## Run the unit tests
 	$(Q)go test -count=1 -short ./cmd/...
 	$(Q)go test -count=1 -short ./pkg/...
 	$(Q)go test -count=1 -short ./internal/...
@@ -122,7 +122,7 @@ test/unit: ## Run the unit tests
 # CI tests.
 .PHONY: test/ci
 
-test/ci: test/markdown test/sanity test/unit install test/subcommand test/e2e ## Run the CI test suite
+test/ci: test/markdown test/sanity test-unit install test/subcommand test/e2e ## Run the CI test suite
 
 # Subcommand tests.
 .PHONY: test/subcommand test/subcommand/test-local test/subcommand/scorecard test/subcommand/olm-install
