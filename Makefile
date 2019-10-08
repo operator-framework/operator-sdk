@@ -146,19 +146,19 @@ test-e2e: test-e2e-go test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm #
 test-e2e-go:
 	./hack/tests/e2e-go.sh $(ARGS)
 
-test-e2e-ansible: image/build/ansible
+test-e2e-ansible: image-build-ansible
 	./hack/tests/e2e-ansible.sh
 
-test-e2e-ansible-molecule: image/build/ansible
+test-e2e-ansible-molecule: image-build-ansible
 	./hack/tests/e2e-ansible-molecule.sh
 
-test-e2e-helm: image/build/helm
+test-e2e-helm: image-build-helm
 	./hack/tests/e2e-helm.sh
 
 # Image scaffold/build/push.
-.PHONY: image image/scaffold/ansible image/scaffold/helm image/build image/build/ansible image/build/helm image/push image/push/ansible image/push/helm
+.PHONY: image image/scaffold/ansible image/scaffold/helm image-build image-build-ansible image-build-helm image/push image/push/ansible image/push/helm
 
-image: image/build image/push ## Build and push all images
+image: image-build image/push ## Build and push all images
 
 image/scaffold/ansible:
 	go run ./hack/image/ansible/scaffold-ansible-image.go
@@ -166,15 +166,15 @@ image/scaffold/ansible:
 image/scaffold/helm:
 	go run ./hack/image/helm/scaffold-helm-image.go
 
-image/build: image/build/ansible image/build/helm image/build/scorecard-proxy ## Build all images
+image-build: image-build-ansible image-build-helm image-build-scorecard-proxy ## Build all images
 
-image/build/ansible: build/operator-sdk-dev-x86_64-linux-gnu
+image-build-ansible: build/operator-sdk-dev-x86_64-linux-gnu
 	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
 
-image/build/helm: build/operator-sdk-dev
+image-build-helm: build/operator-sdk-dev
 	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE):dev
 
-image/build/scorecard-proxy:
+image-build-scorecard-proxy:
 	./hack/image/build-scorecard-proxy-image.sh $(SCORECARD_PROXY_BASE_IMAGE):dev
 
 image/push: image/push/ansible image/push/helm image/push/scorecard-proxy ## Push all images

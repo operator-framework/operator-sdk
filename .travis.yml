@@ -160,7 +160,7 @@ jobs:
     - <<: *deploy
       name: Docker image for ansible-operator
       script:
-        - make image/build/ansible
+        - make image-build-ansible
         - make image/push/ansible
 
     # Build and deploy amd64 helm-operator docker image
@@ -168,7 +168,7 @@ jobs:
       name: Docker image for helm-operator (amd64)
       os: linux
       script:
-        - make image/build/helm
+        - make image-build-helm
         - make image/push/helm
 
     # Build and deploy ppc64le helm-operator docker image
@@ -176,14 +176,14 @@ jobs:
       name: Docker image for helm-operator (ppc64le)
       os: linux-ppc64le
       script:
-        - make image/build/helm
+        - make image-build-helm
         - make image/push/helm
 
     # Build and deploy scorecard-proxy docker image
     - <<: *deploy
       name: Docker image for scorecard-proxy
       script:
-        - make image/build/scorecard-proxy
+        - make image-build-scorecard-proxy
         - make image/push/scorecard-proxy
 
     # Build and deploy helm multi-arch manifest list
