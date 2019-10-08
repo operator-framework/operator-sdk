@@ -16,5 +16,5 @@ test/e2e/ansible:
 test/e2e/helm:
 	./ci/tests/e2e-helm.sh
 
-test/subcommand:
+test-subcommand:
 	./ci/tests/subcommand.sh

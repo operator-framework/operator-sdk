@@ -122,20 +122,20 @@ test-unit: ## Run the unit tests
 # CI tests.
 .PHONY: test-ci
 
-test-ci: test-markdown test-sanity test-unit install test/subcommand test/e2e ## Run the CI test suite
+test-ci: test-markdown test-sanity test-unit install test-subcommand test/e2e ## Run the CI test suite
 
 # Subcommand tests.
-.PHONY: test/subcommand test/subcommand/test-local test/subcommand/scorecard test/subcommand/olm-install
+.PHONY: test-subcommand test-subcommand-local test-subcommand-scorecard test-subcommand-olm-install
 
-test/subcommand: test/subcommand/test-local test/subcommand/scorecard test/subcommand/olm-install
+test-subcommand: test-subcommand-local test-subcommand-scorecard test-subcommand-olm-install
 
-test/subcommand/test-local:
+test-subcommand-local:
 	./hack/tests/subcommand.sh
 
-test/subcommand/scorecard:
+test-subcommand-scorecard:
 	./hack/tests/subcommand-scorecard.sh
 
-test/subcommand/olm-install:
+test-subcommand-olm-install:
 	./hack/tests/subcommand-olm-install.sh
 
 # E2E tests.
