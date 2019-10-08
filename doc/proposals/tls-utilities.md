@@ -1,4 +1,4 @@
-# TLS Utilities proposal
+# TLS Utilities Proposal for Operator SDK
 
 ## Background:
 

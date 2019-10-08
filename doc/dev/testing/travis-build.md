@@ -1,4 +1,4 @@
-# TravisCI Build Information
+# TravisCI Build Information for Operator SDK
 
 Travis is set to run one every push to a branch or PR.
 The results of the builds can be found [here][branches] for branches and [here][pr-builds] for PRs.

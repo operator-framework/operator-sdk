@@ -1,4 +1,4 @@
-## Operator scope
+# Operator SDK: Operator Scope
 
 A namespace-scoped operator watches and manages resources in a single namespace, whereas a cluster-scoped operator watches and manages resources cluster-wide. Namespace-scoped operators are preferred because of their flexibility. They enable decoupled upgrades, namespace isolation for failures and monitoring, and differing API definitions.
 
@@ -15,7 +15,7 @@ The SDK scaffolds operators to be namespaced by default but with a few modificat
   * Use `ClusterRole` instead of `Role` for `roleRef`
   * Set the subject namespace to the namespace in which the operator is deployed.
 
-### CRD scope
+## CRD scope
 
 Additionally the CustomResourceDefinition (CRD) scope can also be changed for cluster-scoped operators so that there is only a single instance (for a given name) of the CRD to manage across the cluster.
 
@@ -29,7 +29,7 @@ For each CRD that needs to be cluster-scoped, update its manifest to be cluster-
 To ensure that the CRD is always generated with `scope: Cluster`, add the tag `// +kubebuilder:resource:path=<resource>,scope=Cluster`, or if already present replace `scope={Namespaced -> Cluster}`, above the CRD's Go type defintion in `pkg/apis/<group>/<version>/<kind>_types.go`. The `<resource>` element must be the lower-case plural of the CRD's Kind, `spec.names.plural`.
 
 
-### Example for cluster scoped operator
+## Example for cluster scoped operator
 
 With the above changes the specified manifests should look as follows:
 

@@ -1,4 +1,4 @@
-# Leader for Life
+# Leader for Life Proposal for Operator SDK
 
 ## Background
 
