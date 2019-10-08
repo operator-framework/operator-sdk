@@ -69,6 +69,8 @@ type ScorecardTestResult struct {
 	Suggestions []string `json:"suggestions"`
 	// Errors is a list of the errors that occured during the test (this can include both fatal and non-fatal errors)
 	Errors []string `json:"errors"`
+	// Labels that further describe the test and enable selection
+	Labels map[string]string
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

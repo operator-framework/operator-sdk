@@ -91,6 +91,12 @@ func (in *ScorecardTestResult) DeepCopyInto(out *ScorecardTestResult) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.Labels != nil {
+		out.Labels = make(map[string]string)
+		for key, value := range in.Labels {
+			out.Labels[key] = value
+		}
+	}
 	return
 }
 
