@@ -63,7 +63,7 @@ All the tests are run through the [`Makefile`][makefile]. This is a brief descri
 - `test/e2e/ansible` - Runs the ansible E2E test.
 - `test/e2e/ansible-molecule` - Runs the ansible molecule E2E test.
 - `test/e2e/helm` - Runs the helm E2E test.
-- `test/markdown` - Runs the markdown checks
+- `test-markdown` - Runs the markdown checks
 
 For more info on what these tests actually do, please see the [Travis Build][travis] doc.
 

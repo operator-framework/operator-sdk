@@ -104,11 +104,11 @@ build/%.asc:
 	}
 
 # Static tests.
-.PHONY: test test/markdown test/sanity test-unit
+.PHONY: test test-markdown test/sanity test-unit
 
 test: test-unit ## Run the tests
 
-test/markdown:
+test-markdown:
 	./hack/ci/marker --root=doc
 
 test/sanity: tidy
@@ -122,7 +122,7 @@ test-unit: ## Run the unit tests
 # CI tests.
 .PHONY: test/ci
 
-test/ci: test/markdown test/sanity test-unit install test/subcommand test/e2e ## Run the CI test suite
+test/ci: test-markdown test/sanity test-unit install test/subcommand test/e2e ## Run the CI test suite
 
 # Subcommand tests.
 .PHONY: test/subcommand test/subcommand/test-local test/subcommand/scorecard test/subcommand/olm-install
