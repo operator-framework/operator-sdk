@@ -305,12 +305,12 @@ func getGVKID(g, v, k string) string {
 // the CRD key is not in spec.customresourcedefinitions.owned already.
 func (u *CustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	set := make(map[string]olmapiv1alpha1.CRDDescription)
-	for _, uDesc := range u.Owned {
-		set[crdDescID(uDesc)] = uDesc
+	for _, csvDesc := range csv.Spec.CustomResourceDefinitions.Owned {
+		set[crdDescID(csvDesc)] = csvDesc
 	}
 	newDescs := []olmapiv1alpha1.CRDDescription{}
-	for _, csvDesc := range csv.Spec.CustomResourceDefinitions.Owned {
-		if uDesc, ok := set[crdDescID(csvDesc)]; !ok {
+	for _, uDesc := range u.Owned {
+		if csvDesc, ok := set[crdDescID(uDesc)]; !ok {
 			newDescs = append(newDescs, uDesc)
 		} else {
 			newDescs = append(newDescs, csvDesc)
