@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-# <Title of Proposal> 
-=======
 ---
 title: Neat-Enhancement-Idea
 authors:
@@ -21,20 +18,12 @@ replaces:
 superseded-by:
   - "/enhancements/our-past-effort.md"
 ---
->>>>>>> improve/fix in doc proposals
 
 # Title
 
 This is the title of the enhancement. Keep it simple and descriptive. A good
 title can help communicate what the enhancement is and should be considered as
 part of any review.
-
-<<<<<<< HEAD
-## Background
-=======
-The title should be lowercased and spaces/punctuation should be replaced with
-`-`.
->>>>>>> improve/fix in doc proposals
 
 To get started with this template:
 1. **Pick a domain.** Find the appropriate domain to discuss your enhancement.
@@ -221,30 +210,18 @@ History`.
 
 ## Drawbacks
 
-<<<<<<< HEAD
-## Design overview
-=======
 The idea is to find the best form of an argument why this enhancement should _not_ be implemented.
->>>>>>> improve/fix in doc proposals
 
 ## Alternatives
 
-<<<<<<< HEAD
-## User facing usage (if needed)
-=======
 Similar to the `Drawbacks` section the `Alternatives` section is used to
 highlight and record other possible approaches to delivering the value proposed
 by an enhancement.
->>>>>>> improve/fix in doc proposals
 
 ## Infrastructure Needed (optional)
 
-<<<<<<< HEAD
-## Observations and open questions
-=======
 Use this section if you need things from the project. Examples include a new
 subproject, repos requested, github details, and/or testing infrastructure.
->>>>>>> improve/fix in doc proposals
 
 Listing these here allows the community to get the process for these resources
 started right away.

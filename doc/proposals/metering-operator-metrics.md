@@ -1,8 +1,5 @@
 # Auto register operator specific metrics as part of operator-metering Proposal for Operator SDK
 
-<<<<<<< HEAD
-## Motivation and goal
-=======
 Implementation Owner:
 
 > Status: **implemented**
@@ -16,7 +13,6 @@ Implementation Owner:
 - [Related work](#related-work)
 
 ### Motivation and goal
->>>>>>> improve/fix in doc proposals
 
 We want to be able to generate the metering reports based on the operator specific Prometheus metrics. In order to be able to do that, operators must be instrumented to expose those metrics, and the operator-sdk should make this as easy as possible. The goal is to have the metering happen based on the usage of each individual operator. Metrics will be based on objects managed by the particular operator.
 

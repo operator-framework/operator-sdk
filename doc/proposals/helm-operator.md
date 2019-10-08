@@ -1,8 +1,5 @@
 # Helm based-Operator Proposal for Operator SDK
 
-<<<<<<< HEAD
-## Background
-=======
 > Status: **implemented**
 > 
 > See user documentation in the [User Guide][helm_user_guide] and developer documentation in the [Developer Guide][helm_dev_guide].
@@ -21,7 +18,6 @@
 - [Observations and open questions](#observations-and-open-questions)
 
 ### Background
->>>>>>> improve/fix in doc proposals
 
 As was mentioned in the [Ansible Operator Proposal](./ansible-operator.md), not everyone is a golang developer, so the SDK needs to support other types of operators to gain adoption across a wider community of users.
 
