@@ -61,11 +61,11 @@ around the enhancement process.
 
 ## Release Signoff Checklist
 
-- [ ] Enhancement is `implementable`
-- [ ] Design details are appropriately documented from clear requirements
-- [ ] Test plan is defined
-- [ ] Graduation criteria for dev preview, tech preview, GA
-- [ ] User-facing documentation is created in [operator-sdk][operator-sdk]
+- Enhancement is `implementable`
+- Design details are appropriately documented from clear requirements
+- Test plan is defined
+- Graduation criteria for dev preview, tech preview, GA
+- User-facing documentation is created in [operator-sdk][operator-sdk]
 
 ## Open Questions (optional)
 
