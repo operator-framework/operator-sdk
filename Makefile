@@ -122,7 +122,7 @@ test-unit: ## Run the unit tests
 # CI tests.
 .PHONY: test-ci
 
-test-ci: test-markdown test-sanity test-unit install test-subcommand test/e2e ## Run the CI test suite
+test-ci: test-markdown test-sanity test-unit install test-subcommand test-e2e ## Run the CI test suite
 
 # Subcommand tests.
 .PHONY: test-subcommand test-subcommand-local test-subcommand-scorecard test-subcommand-olm-install
@@ -139,20 +139,20 @@ test-subcommand-olm-install:
 	./hack/tests/subcommand-olm-install.sh
 
 # E2E tests.
-.PHONY: test/e2e test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm
+.PHONY: test-e2e test-e2e-go test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm
 
-test/e2e: test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm ## Run the e2e tests
+test-e2e: test-e2e-go test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm ## Run the e2e tests
 
-test/e2e/go:
+test-e2e-go:
 	./hack/tests/e2e-go.sh $(ARGS)
 
-test/e2e/ansible: image/build/ansible
+test-e2e-ansible: image/build/ansible
 	./hack/tests/e2e-ansible.sh
 
-test/e2e/ansible-molecule: image/build/ansible
+test-e2e-ansible-molecule: image/build/ansible
 	./hack/tests/e2e-ansible-molecule.sh
 
-test/e2e/helm: image/build/helm
+test-e2e-helm: image/build/helm
 	./hack/tests/e2e-helm.sh
 
 # Image scaffold/build/push.

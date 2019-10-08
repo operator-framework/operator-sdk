@@ -75,7 +75,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 
 ### Ansible tests
 
-1. Run [ansible molecule tests][ansible-molecule]. (`make test/e2e/ansible-molecule)
+1. Run [ansible molecule tests][ansible-molecule]. (`make test-e2e-ansible-molecule)
     1. Create and configure a new ansible type memcached-operator.
     2. Create cluster resources.
     3. Run `operator-sdk test local` to run ansible molecule tests
