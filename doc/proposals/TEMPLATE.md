@@ -1,4 +1,4 @@
-# <Title of Proposal> + Proposal for Operator SDK
+# <Title of Proposal> 
 
 Implementation Owner: < github username >
 Status: Draft
