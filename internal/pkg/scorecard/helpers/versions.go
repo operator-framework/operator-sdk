@@ -39,8 +39,5 @@ func ValidateVersion(version string) error {
 }
 
 func IsV1alpha2(version string) bool {
-	if version == v1alpha2 {
-		return true
-	}
-	return false
+	return version == v1alpha2
 }

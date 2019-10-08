@@ -17,9 +17,10 @@ pushd test/test-framework
 # test to see if v1alpha2 is used from the command line
 commandoutput="$(operator-sdk scorecard --version v1alpha2 --config "$CONFIG_PATH" 2>&1)"
 failCount=`echo $commandoutput | grep -o ": fail" | wc -l`
-if [ $failCount -ne 7 ]
+expectedFailCount=7
+if [ $failCount -ne $expectedFailCount ]
 then
-	echo "expected fail count not equal to output"
+	echo "expected fail count $expectedFailCount, got $failCount"
 	exit 1
 fi
 
