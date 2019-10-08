@@ -120,9 +120,9 @@ test-unit: ## Run the unit tests
 	$(Q)go test -count=1 -short ./internal/...
 
 # CI tests.
-.PHONY: test/ci
+.PHONY: test-ci
 
-test/ci: test-markdown test-sanity test-unit install test/subcommand test/e2e ## Run the CI test suite
+test-ci: test-markdown test-sanity test-unit install test/subcommand test/e2e ## Run the CI test suite
 
 # Subcommand tests.
 .PHONY: test/subcommand test/subcommand/test-local test/subcommand/scorecard test/subcommand/olm-install
