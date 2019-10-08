@@ -156,14 +156,14 @@ test-e2e-helm: image-build-helm
 	./hack/tests/e2e-helm.sh
 
 # Image scaffold/build/push.
-.PHONY: image image/scaffold/ansible image/scaffold/helm image-build image-build-ansible image-build-helm image/push image/push/ansible image/push/helm
+.PHONY: image image-scaffold-ansible image-scaffold-helm image-build image-build-ansible image-build-helm image/push image/push/ansible image/push/helm
 
 image: image-build image/push ## Build and push all images
 
-image/scaffold/ansible:
+image-scaffold-ansible:
 	go run ./hack/image/ansible/scaffold-ansible-image.go
 
-image/scaffold/helm:
+image-scaffold-helm:
 	go run ./hack/image/helm/scaffold-helm-image.go
 
 image-build: image-build-ansible image-build-helm image-build-scorecard-proxy ## Build all images
