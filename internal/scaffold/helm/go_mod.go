@@ -61,7 +61,6 @@ require (
 	gotest.tools v2.2.0+incompatible // indirect
 	k8s.io/apiserver v0.0.0-20181213151703-3ccfe8365421 // indirect
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
-	k8s.io/helm v2.14.1+incompatible // indirect
 	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208 // indirect
 	sigs.k8s.io/controller-runtime v0.2.0
 )
@@ -79,6 +78,10 @@ replace (
 )
 
 replace (
+	// Indirect operator-sdk dependencies use git.apache.org, which is frequently
+	// down. The github mirror should be used instead.
+	// Locking to a specific version (from 'go mod graph'):
+	git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
 	github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.31.1
 	// Pinned to v2.10.0 (kubernetes-1.14.1) so https://proxy.golang.org can
 	// resolve it correctly.

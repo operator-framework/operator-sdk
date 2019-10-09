@@ -1,11 +1,11 @@
-# CLI Guide
+# Operator SDK Command Line Interface (CLI) Reference
 
 ```bash
 Usage:
   operator-sdk [command]
 ```
 
-### Global Flags
+## Global Flags
 
 * `--verbose` - enable debug logging
 

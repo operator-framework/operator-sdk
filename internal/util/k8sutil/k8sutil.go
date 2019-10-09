@@ -104,7 +104,7 @@ func GetTypeMetaFromBytes(b []byte) (t metav1.TypeMeta, err error) {
 	// There is only one YAML doc if there are no more bytes to be read or EOF
 	// is hit.
 	if err := dec.Decode(&u); err == nil && r.Len() != 0 {
-		return t, errors.New("error getting TypeMeta from bytes: more than one manifest in b")
+		return t, errors.New("error getting TypeMeta from bytes: more than one manifest in file")
 	} else if err != nil && err != io.EOF {
 		return t, errors.Wrap(err, "error getting TypeMeta from bytes")
 	}

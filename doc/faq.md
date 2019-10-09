@@ -1,14 +1,14 @@
-# FAQ
+# Operator SDK FAQ
 
-### How can I have separate logic for Create, Update, and Delete events? When reconciling an object can I access its previous state?
+## How can I have separate logic for Create, Update, and Delete events? When reconciling an object can I access its previous state?
 
 You should not have separate logic. Instead design your reconciler to be idempotent. See the [controller-runtime FAQ][controller-runtime_faq] for more details.
 
-### When my Custom Resource is deleted, I need to know its contents or perform cleanup tasks. How can I do that?
+## When my Custom Resource is deleted, I need to know its contents or perform cleanup tasks. How can I do that?
 
 Use a [finalizer].
 
-### I keep seeing the following intermittent warning in my Operator's logs: `The resourceVersion for the provided watch is too old.` What's wrong?
+## I keep seeing the following intermittent warning in my Operator's logs: `The resourceVersion for the provided watch is too old.` What's wrong?
 
 This is completely normal and expected behavior.
 
@@ -21,7 +21,7 @@ Never seeing this warning may suggest that your watch or cache is not healthy. I
 For more information on `kube-apiserver` request timeout options, see the [Kubernetes API Server Command Line Tool Reference][kube-apiserver_options]
 
 
-### I keep seeing errors like "Failed to create metrics Service", how do I fix this?
+## I keep seeing errors like "Failed to create metrics Service", how do I fix this?
 
 If you run into the following error message:
 

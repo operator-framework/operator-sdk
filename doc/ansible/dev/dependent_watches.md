@@ -1,4 +1,4 @@
-# Dependent Watches
+# Dependent Watches in Operator SDK Ansible-based Operators
 This document describes the `watchDependentResources` option in [`watches.yaml`](#Example) file. It delves into what dependent resources are, why the option is required, how it is achieved and finally gives an example.
 
 ### What are dependent resources?

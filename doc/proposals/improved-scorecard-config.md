@@ -1,12 +1,14 @@
-# Improved Scorecard Config
+# Improved Scorecard Config Proposal for Operator SDK
 
 Implementation Owner: AlexNPavel
-Status: Draft
+> Status: **implemented**
+>
+> See the [scorecard documentation](../test-framework/scorecard.md) for up-to-date information.
 
-- [Background](#Background)
-- [Goals](#Goals)
-- [Design overview](#Design-overview)
-- [User facing usage](#User-facing-usage)
+- [Background](#background)
+- [Goals](#goals)
+- [Design overview](#design-overview)
+- [User facing usage](#user-facing-usage)
 
 ## Background
 
