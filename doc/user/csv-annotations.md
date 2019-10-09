@@ -21,7 +21,7 @@ Example: `+operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displa
 	- `resources`: quoted string, in the format `"kind,version,\"name\""`, where `kind`, `version`, and `name` are fields in each CSV `resources` entry
 	- `specDescriptors`, `statusDescriptors`: bool, or child path token
 		- `displayName`: quoted string
-		- `x-descriptors`: quoted string comma-separated list of [`x-descriptor`][csv_x_desc] UI hints.
+		- `x-descriptors`: quoted string comma-separated list of [`x-descriptor`][csv_x_desc_mappings] UI hints.
 
 Notes:
 - `specDescriptors` and `statusDescriptors` with a value of `true` is required for each field to be included in their respective `customresourcedefinitions` CSV fields. See the examples below.
@@ -140,8 +140,7 @@ customresourcedefinitions:
       - 'urn:alm:descriptor:com.tectonic.ui:podCount'
 ```
 
-[code_annotations_design]:../proposals/sdk-code-annotations.md
-[sdk_cli_ref]:../sdk-cli-reference.md#gen-csv
-[csv_x_desc]:https://github.com/openshift/console/blob/master/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L5-L27
-[csv_spec]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md
-[csv_x_desc_mappings]:https://github.com/estroz/operator-sdk/blob/8750e06060c3d545097846c6bbfaa55e58654fb5/internal/pkg/descriptor/parse.go#L362-L396
+[code_annotations_design]: ../proposals/sdk-code-annotations.md
+[sdk_cli_ref] :../sdk-cli-reference.md#gen-csv
+[csv_spec]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md
+[csv_x_desc_mappings]: https://github.com/operator-framework/operator-sdk/blob/8750e06060c3d545097846c6bbfaa55e58654fb5/internal/pkg/descriptor/parse.go#L362-L396
