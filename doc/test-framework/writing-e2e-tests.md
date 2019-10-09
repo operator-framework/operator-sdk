@@ -251,7 +251,7 @@ $ operator-sdk test local ./test/e2e --namespace operator-test
 To run the operator itself locally during the tests instead of starting a deployment in the cluster, you can use the
 `--up-local` flag. This mode will still create global resources, but by default will not create any in-cluster namespaced
 resources unless the user specifies one through the `--namespaced-manifest` flag. (Note: the `--up-local` flag requires
-the `--namespace` flag):
+the `--namespace` flag, be sure to specify the existing namespace that it should watch for changes in):
 
 ```shell
 $ kubectl create namespace operator-test
