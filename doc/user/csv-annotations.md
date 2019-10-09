@@ -142,5 +142,5 @@ customresourcedefinitions:
 
 [code_annotations_design]: ../proposals/sdk-code-annotations.md
 [sdk_cli_ref]: ../sdk-cli-reference.md#gen-csv
-[csv_spec]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md
+[csv_spec]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md
 [csv_x_desc_mappings]: https://github.com/operator-framework/operator-sdk/blob/8750e06060c3d545097846c6bbfaa55e58654fb5/internal/pkg/descriptor/parse.go#L362-L396
