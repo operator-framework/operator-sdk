@@ -14,7 +14,7 @@ status: provisional|implementable|implemented|deferred|rejected|withdrawn|replac
 see-also:
   - "/proposals/this-other-neat-thing.md"  
 replaces:
-  - "/enhancements/that-less-than-great-idea.md"
+  - "/proposals/that-less-than-great-idea.md"
 superseded-by:
   - "/proposals/our-past-effort.md"
 ---
