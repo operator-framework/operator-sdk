@@ -68,13 +68,13 @@ scorecard:
     # `basic` tests configured to test 2 CRs
     - basic:
         cr-manifest:
-          - "deploy/crds/cache_v1alpha1_memcached_cr.yaml"
-          - "deploy/crds/cache_v1alpha1_memcachedrs_cr.yaml"
+          - "deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml"
+          - "deploy/crds/cache.example.com_v1alpha1_memcachedrs_cr.yaml"
     # `olm` tests configured to test 2 CRs
     - olm:
         cr-manifest:
-          - "deploy/crds/cache_v1alpha1_memcached_cr.yaml"
-          - "deploy/crds/cache_v1alpha1_memcachedrs_cr.yaml"
+          - "deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml"
+          - "deploy/crds/cache.example.com_v1alpha1_memcachedrs_cr.yaml"
         csv-path: "deploy/olm-catalog/memcached-operator/0.0.3/memcached-operator.v0.0.3.clusterserviceversion.yaml"
     # Configuring external plugin with no args
     - name: Experimental Plugin
@@ -390,7 +390,7 @@ To add logs to the main `ScorecardOuput.Log` field, a plugin can output the logs
 
 The scorecard can be run using only a [Cluster Service Version (CSV)][olm-csv], providing a way to test cluster-ready and non-SDK operators.
 
-Running with a CSV alone requires both the `--csv-path=<CSV manifest path>` and `--olm-deployed` args to be set. The scorecard assumes your CSV and relevant CRD's have been deployed onto the cluster using the OLM when using `--olm-deployed`. This [document][olm-deploy-operator] walks through bundling your CSV and CRD's, deploying the OLM on minikube or [OKD][okd], and deploying your operator. Once these steps have been completed, run the scorecard with both the `--csv-path=<CSV manifest path>` and `--olm-deployed` args.
+Running with a CSV alone requires both the `--csv-path=<CSV manifest path>` and `--olm-deployed` flags to be set. The scorecard assumes your CSV and relevant CRD's have been deployed onto the cluster using the OLM when using `--olm-deployed`. This [document][olm-deploy-operator] walks through bundling your CSV and CRD's, deploying the OLM on minikube or [OKD][okd], and deploying your operator. Once these steps have been completed, run the scorecard with both the `--csv-path=<CSV manifest path>` and `--olm-deployed` flags.
 
 **NOTES:**
 

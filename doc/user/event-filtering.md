@@ -1,4 +1,4 @@
-# Event filtering with Predicates
+# Using Predicates for Event Filtering with Operator SDK
 
 [Events][doc_event] are produced by [Sources][doc_source] assigned to resources a controller is watching. These events are transformed into Requests by [EventHandlers][doc_eventhandler] and passed to `Reconcile()`. [Predicates][doc_predicate] allow controllers to filter events before they are provided to EventHandlers. Filtering is useful because your controller may only want to handle specific types of events. Filtering also helps reduce chattiness with the API server, as `Reconcile()` is only called for events transformed by EventHandlers.
 

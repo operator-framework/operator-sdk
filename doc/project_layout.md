@@ -1,4 +1,4 @@
-# Project Scaffolding Layout
+# Project Scaffolding Layout for Operator SDK
 
 The `operator-sdk` CLI generates a number of packages for each project. The following table describes a basic rundown of each generated file/directory.
 

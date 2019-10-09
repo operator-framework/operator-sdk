@@ -1,4 +1,17 @@
-# Leader for Life
+# Leader for Life Proposal for Operator SDK
+
+Implementation Owner:
+
+> Status: **implemented**
+>
+> See [leader election documentation](../user-guide.md#leader-election).
+
+- [Background](#background)
+- [Goals](#goals)
+- [Non-Goals](#non-goals)
+- [Solution](#solution)
+  - [Usage](#usage)
+- [Future](#future)
 
 ## Background
 
