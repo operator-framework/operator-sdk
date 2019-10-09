@@ -34,28 +34,6 @@ const (
 	RequiredTestsFailedState State = "A required test has failed."
 )
 
-// ScorecardSuiteResult contains the combined results of a suite of tests.
-// +k8s:openapi-gen=true
-type ScorecardSuiteResult struct {
-	// Name is the name of the test suite
-	Name string `json:"name"`
-	// Description is a description of the test suite
-	Description string `json:"description"`
-	// Error is the number of tests that ended in the Error state
-	Error int `json:"error"`
-	// Pass is the number of tests that ended in the Pass state
-	Pass int `json:"pass"`
-	// Fail is the number of tests that ended in the Fail state
-	Fail int `json:"fail"`
-	// TotalTests is the total number of tests run in this suite
-	TotalTests int `json:"totalTests"`
-	// Tests is an array containing a json-ified version of the TestResults for the suite
-	Tests []ScorecardTestResult `json:"tests"`
-	// Log is extra logging information from the scorecard suite/plugin.
-	// +optional
-	Log string `json:"log"`
-}
-
 // ScorecardTestResult contains the results of an individual scorecard test.
 // +k8s:openapi-gen=true
 type ScorecardTestResult struct {
@@ -84,8 +62,8 @@ type ScorecardOutput struct {
 
 	// Log contains the scorecard's log.
 	Log string `json:"log"`
-	// Results is an array of ScorecardResult for each suite of the current scorecard run.
-	Results []ScorecardSuiteResult `json:"results"`
+	// Results is an array of ScorecardTestResult for the current scorecard run.
+	Results []ScorecardTestResult `json:"results"`
 	// FailedRequiredTests is the number of required tests run that failed
 	FailedRequiredTests int `json:"failedRequiredTests"`
 	// RequiredTestStatus is a description of the required tests status

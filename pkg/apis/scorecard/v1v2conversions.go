@@ -28,19 +28,19 @@ func ConvertScorecardOutputV1ToV2(v1ScorecardOutput scapiv1alpha1.ScorecardOutpu
 			APIVersion: "osdk.openshift.io/v1alpha2",
 		},
 	}
-	output.Results = make([]scapiv1alpha2.ScorecardSuiteResult, 0)
+
+	// convert v1 suite into v2 test results
+	output.Results = make([]scapiv1alpha2.ScorecardTestResult, 0)
 	for _, v1SuiteResult := range v1ScorecardOutput.Results {
-		v2SuiteResult := ConvertSuiteResultV1ToV2(v1SuiteResult)
-		output.Results = append(output.Results, v2SuiteResult)
+		v2TestResults := ConvertSuiteResultV1ToV2TestResults(v1SuiteResult)
+		output.Results = append(output.Results, v2TestResults...)
 	}
 	output.Log = v1ScorecardOutput.Log
 
 	// calculate failed required tests
-	for _, suite := range output.Results {
-		for _, result := range suite.Tests {
-			if result.State != scapiv1alpha2.PassState {
-				output.FailedRequiredTests++
-			}
+	for _, result := range output.Results {
+		if result.State != scapiv1alpha2.PassState {
+			output.FailedRequiredTests++
 		}
 	}
 
@@ -52,24 +52,18 @@ func ConvertScorecardOutputV1ToV2(v1ScorecardOutput scapiv1alpha1.ScorecardOutpu
 	return output
 }
 
-func ConvertSuiteResultV1ToV2(v1SuiteResult scapiv1alpha1.ScorecardSuiteResult) scapiv1alpha2.ScorecardSuiteResult {
-	output := scapiv1alpha2.ScorecardSuiteResult{
-		Name:        v1SuiteResult.Name,
-		Description: v1SuiteResult.Description,
-		Error:       v1SuiteResult.Error,
-		Pass:        v1SuiteResult.Pass,
-		Fail:        v1SuiteResult.Fail,
-		TotalTests:  v1SuiteResult.TotalTests,
-		Log:         v1SuiteResult.Log,
-	}
+func ConvertSuiteResultV1ToV2TestResults(v1SuiteResult scapiv1alpha1.ScorecardSuiteResult) []scapiv1alpha2.ScorecardTestResult {
+
+	var output []scapiv1alpha2.ScorecardTestResult
+	output = make([]scapiv1alpha2.ScorecardTestResult, 0)
 
 	for _, v1TestResult := range v1SuiteResult.Tests {
-		output.Tests = append(output.Tests, ConvertTestResultV1ToV2(v1TestResult))
+		output = append(output, ConvertTestResultV1ToV2(v1SuiteResult.Name, v1TestResult))
 	}
 	return output
 }
 
-func ConvertTestResultV1ToV2(v1TestResult scapiv1alpha1.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
+func ConvertTestResultV1ToV2(v1SuiteName string, v1TestResult scapiv1alpha1.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
 	output := scapiv1alpha2.ScorecardTestResult{
 		State:       scapiv1alpha2.FailState,
 		Name:        v1TestResult.Name,
@@ -84,5 +78,9 @@ func ConvertTestResultV1ToV2(v1TestResult scapiv1alpha1.ScorecardTestResult) sca
 	copy(output.Suggestions, v1TestResult.Suggestions)
 	output.Errors = make([]string, len(v1TestResult.Errors))
 	copy(output.Errors, v1TestResult.Errors)
+
+	output.Labels = make(map[string]string)
+	output.Labels["suite"] = v1SuiteName
+
 	return output
 }

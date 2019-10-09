@@ -46,36 +46,34 @@ func (s ScorecardOutput) MarshalText() (string, error) {
 		requiredTestStatus = fmt.Sprintf(failColor, RequiredTestsFailedState)
 	}
 
-	for _, suite := range s.Results {
-		sb.WriteString(fmt.Sprintf("%s:\n", suite.Name))
-		for _, result := range suite.Tests {
-			sb.WriteString(fmt.Sprintf("\t%-35s: ", result.Name))
+	var currentSuite string
+	for _, result := range s.Results {
+		if currentSuite != result.Labels["suite"] {
+			sb.WriteString(fmt.Sprintf("%s:\n", result.Labels["suite"]))
+			currentSuite = result.Labels["suite"]
+		}
+		sb.WriteString(fmt.Sprintf("\t%-35s: ", result.Name))
 
-			if result.State == PassState {
-				sb.WriteString(fmt.Sprintf(passColor, PassState))
-			} else {
-				sb.WriteString(fmt.Sprintf(failColor, FailState))
-			}
+		if result.State == PassState {
+			sb.WriteString(fmt.Sprintf(passColor, PassState))
+		} else {
+			sb.WriteString(fmt.Sprintf(failColor, FailState))
 		}
 	}
 
 	sb.WriteString(fmt.Sprintf(requiredTestStatus))
 
-	for _, suite := range s.Results {
-		for _, result := range suite.Tests {
-			for _, suggestion := range result.Suggestions {
-				// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
-				sb.WriteString(fmt.Sprintf("\x1b[%dmSUGGESTION:\x1b[0m %s\n", 33, suggestion))
-			}
+	for _, result := range s.Results {
+		for _, suggestion := range result.Suggestions {
+			// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
+			sb.WriteString(fmt.Sprintf("\x1b[%dmSUGGESTION:\x1b[0m %s\n", 33, suggestion))
 		}
 	}
 
-	for _, suite := range s.Results {
-		for _, result := range suite.Tests {
-			for _, err := range result.Errors {
-				// 31 is red (specifically, the same shade of red that logrus uses for errors)
-				sb.WriteString(fmt.Sprintf("\x1b[%dmERROR:\x1b[0m %s\n", 31, err))
-			}
+	for _, result := range s.Results {
+		for _, err := range result.Errors {
+			// 31 is red (specifically, the same shade of red that logrus uses for errors)
+			sb.WriteString(fmt.Sprintf("\x1b[%dmERROR:\x1b[0m %s\n", 31, err))
 		}
 	}
 
