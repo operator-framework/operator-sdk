@@ -82,7 +82,7 @@ func (e ErrInvalidDepManager) Error() string {
 	return fmt.Sprintf(`"%s" is not a valid dep manager; dep manager must be one of ["%v", "%v"]`, string(e), DepManagerDep, DepManagerGoMod)
 }
 
-var ErrNoDepManager = fmt.Errorf(`no valid dependency manager file was found; dep manager must be one of ["%v", "%v"]`, DepManagerDep, DepManagerGoMod)
+var ErrNoDepManager = fmt.Errorf(`no valid dependency manager file found; dep manager must be one of ["%v", "%v"]`, DepManagerDep, DepManagerGoMod)
 
 func GetDepManagerType() (DepManagerType, error) {
 	if IsDepManagerDep() {
@@ -129,7 +129,7 @@ func CheckGoProjectCmd(cmd *cobra.Command) error {
 	if IsOperatorGo() {
 		return nil
 	}
-	return fmt.Errorf("'%s' can only be run for Go operators; %s or %s or %s does not exist", cmd.CommandPath(), goModFile, gopkgTOMLFile, pkgApiDir)
+	return fmt.Errorf("'%s' can only be run for Go operators; %s, %s or %s does not exist", cmd.CommandPath(), goModFile, gopkgTOMLFile, pkgApiDir)
 }
 
 func MustGetwd() string {
@@ -217,13 +217,10 @@ func GetOperatorType() OperatorType {
 func IsOperatorGo() bool {
 	_, errGoMod := os.Stat(goModFile)
 	_, errGopkgTOMLFile := os.Stat(gopkgTOMLFile)
-	_, errPkgApiDir:= os.Stat(pkgApiDir)
+	_, errPkgApiDir := os.Stat(pkgApiDir)
 
-	// check fif has go modules or dep files or pkg/api
-	if errGoMod == nil || errGopkgTOMLFile == nil || errPkgApiDir == nil {
-		return true
-	}
-	return false
+	// check if has go modules or dep files or pkg/api
+	return errGoMod == nil || errGopkgTOMLFile == nil || errPkgApiDir == nil
 }
 
 func IsOperatorAnsible() bool {

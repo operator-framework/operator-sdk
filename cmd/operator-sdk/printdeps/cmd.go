@@ -51,8 +51,7 @@ func printDepsFunc(cmd *cobra.Command, args []string) error {
 
 	// Allow the cases of some sub-commands might not require check the deps files.
 	if projutil.GetOperatorType() == projutil.OperatorTypeUnknown {
-		err := fmt.Errorf("unable to print the deps because was not possible to identify the type of the project")
-		log.Fatal(err)
+		log.Fatal(fmt.Errorf("unknown project type, we were unable to print the deps"))
 	}
 
 	if err := printDeps(depManager); err != nil {
