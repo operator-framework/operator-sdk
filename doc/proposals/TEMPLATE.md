@@ -1,5 +1,5 @@
 ---
-title: Neat-Enhancement-Idea
+title: Neat-proposals-Idea
 authors:
   - "@janedoe"
 reviewers:
