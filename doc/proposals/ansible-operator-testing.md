@@ -1,8 +1,14 @@
 # Ansible based-Operator Testing Proposal for Operator SDK
 
-> Status: **completed**
+> Status: **implemented**
 > 
 > Ansible-based operators can be tested with Molecule. Please see the testing documentation: [Testing Ansible Operators with Molecule](../ansible/dev/testing_guide.md).
+
+- [Background](#background)
+- [Goals](#goals)
+- [Non-Goals](#non-goals)
+- [Solution](#solution)
+- [Discussion / Further Investigation](#discussion--further-investigation)
 
 ## Background
 All operators should fit into the e2e testing framework used by operator-sdk, including Ansible Operator.

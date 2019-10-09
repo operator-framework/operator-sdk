@@ -1,6 +1,18 @@
 # Auto register operator specific metrics as part of operator-metering Proposal for Operator SDK
 
-## Motivation and goal
+Implementation Owner:
+
+> Status: **implemented**
+>
+> See [metrics documentation](../user/metrics/README.md).
+
+- [Motivation and goal](#motivation-and-goal)
+- [Overview of the metrics](#overview-of-the-metrics)
+- [kube-state-metrics based solution](#kube-state-metrics-based-solution)
+- [User facing architecture](#user-facing-architecture)
+- [Related work](#related-work)
+
+### Motivation and goal
 
 We want to be able to generate the metering reports based on the operator specific Prometheus metrics. In order to be able to do that, operators must be instrumented to expose those metrics, and the operator-sdk should make this as easy as possible. The goal is to have the metering happen based on the usage of each individual operator. Metrics will be based on objects managed by the particular operator.
 
