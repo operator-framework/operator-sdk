@@ -226,4 +226,4 @@ subproject, repos requested, github details, and/or testing infrastructure.
 Listing these here allows the community to get the process for these resources
 started right away.
 
-[operator-sdk]: https://github.com/operator-framework/operator-sdk
+[operator-sdk-doc]:  ../../doc
