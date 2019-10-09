@@ -12,7 +12,7 @@ creation-date: yyyy-mm-dd
 last-updated: yyyy-mm-dd
 status: provisional|implementable|implemented|deferred|rejected|withdrawn|replaced
 see-also:
-  - "/enhancements/this-other-neat-thing.md"  
+  - "/proposals/this-other-neat-thing.md"  
 replaces:
   - "/enhancements/that-less-than-great-idea.md"
 superseded-by:
