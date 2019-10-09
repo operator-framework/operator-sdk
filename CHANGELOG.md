@@ -67,6 +67,7 @@
 - Generated inventory for Ansible-based Operators now sets the localhost's `ansible_python_interpreter` to `{{ ansible_playbook_python }}`, to properly match the [implicit localhost](https://docs.ansible.com/ansible/latest/inventory/implicit_localhost.html). ([#1952](https://github.com/operator-framework/operator-sdk/pull/1952))
 - Fixed an issue in `operator-sdk olm-catalog gen-csv` where the generated CSV is missing the expected set of owned CRDs. ([#2017](https://github.com/operator-framework/operator-sdk/pull/2017))
 - The command `operator-sdk olm-catalog gen-csv --csv-version=<version> --update-crds` would fail to copy over CRD manifests into `deploy/olm-catalog` for manifests whose name didn't end with a `_crd.yaml` suffix. This has been fixed so `gen-csv` now copies all CRD manifests specified by `deploy/olm-catalog/csv_config.yaml` by checking the type of the manifest rather than the filename suffix. ([#2015](https://github.com/operator-framework/operator-sdk/pull/2015))
+- Added missing `jmespath` dependency to Ansible-based Operator .travis.yml file template. ([#2027](https://github.com/operator-framework/operator-sdk/pull/2027))
 
 ## v0.10.0
 
