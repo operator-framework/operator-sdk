@@ -252,7 +252,7 @@ To run the operator itself locally during the tests instead of starting a deploy
 `--up-local` flag. This mode will still create global resources, but by default will not create any in-cluster namespaced
 resources unless the user specifies one through the `--namespaced-manifest` flag.
 
-**NOTE**: The --up-local flag requires the `--namespace` flag and the command will NOT create the namespace. Then, be sure that you are specifying a valid namespace.
+**NOTE**: The `--up-local` flag requires the `--namespace` flag and the command will NOT create the namespace. Then, be sure that you are specifying a valid namespace.
 
 ```shell
 $ kubectl create namespace operator-test
