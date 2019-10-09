@@ -16,7 +16,7 @@ see-also:
 replaces:
   - "/enhancements/that-less-than-great-idea.md"
 superseded-by:
-  - "/enhancements/our-past-effort.md"
+  - "/proposals/our-past-effort.md"
 ---
 
 # Title
