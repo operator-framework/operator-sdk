@@ -292,5 +292,9 @@ func getAnsibleVerbosity(gvk schema.GroupVersionKind, defValue int) int {
 	if ansibleVerbosity <= 0 {
 		return 0
 	}
+	// verbosity > 7 doesn't make sense
+	if ansibleVerbosity > 7 {
+		return 7
+	}
 	return ansibleVerbosity
 }
