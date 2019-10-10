@@ -64,13 +64,6 @@ type AnsibleOperatorReconciler struct {
 func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(r.GVK)
-	err := r.Client.Get(context.TODO(), request.NamespacedName, u)
-	if apierrors.IsNotFound(err) {
-		return reconcile.Result{}, nil
-	}
-	if err != nil {
-		return reconcile.Result{}, err
-	}
 
 	ident := strconv.Itoa(rand.Int())
 	logger := logf.Log.WithName("reconciler").WithValues(
@@ -78,6 +71,20 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		"name", u.GetName(),
 		"namespace", u.GetNamespace(),
 	)
+
+	err := r.Client.Get(context.TODO(), request.NamespacedName, u)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			// Request object not found, could have been deleted after reconcile request.
+			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+			// Return and don't requeue
+			logger.Info("Resource not found, assuming it was deleted", "namespace", request.NamespacedName, "resource", u)
+			return reconcile.Result{}, nil
+		}
+		// Error reading the object - requeue the request.
+		logger.Error(err, "Failed to get Resource.")
+		return reconcile.Result{}, err
+	}
 
 	reconcileResult := reconcile.Result{RequeueAfter: r.ReconcilePeriod}
 	if ds, ok := u.GetAnnotations()[ReconcilePeriodAnnotation]; ok {
@@ -190,10 +197,16 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	// Need to get the unstructured object after ansible
 	// this needs to hit the API
 	err = r.Client.Get(context.TODO(), request.NamespacedName, u)
-	if apierrors.IsNotFound(err) {
-		return reconcile.Result{}, nil
-	}
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			// Request object not found, could have been deleted after reconcile request.
+			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+			// Return and don't requeue
+			logger.Info("Resource not found, assuming it was deleted", "namespace", request.NamespacedName, "resource", u)
+			return reconcile.Result{}, nil
+		}
+		// Error reading the object - requeue the request.
+		logger.Error(err, "Failed to get Resource.")
 		return reconcile.Result{}, err
 	}
 
@@ -233,6 +246,7 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, na
 	if err != nil {
 		return err
 	}
+
 	statusInterface := u.Object["status"]
 	statusMap, _ := statusInterface.(map[string]interface{})
 	crStatus := ansiblestatus.CreateFromMap(statusMap)
@@ -270,13 +284,11 @@ func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, name
 	metrics.ReconcileFailed(r.GVK.String())
 	// Get the latest resource to prevent updating a stale status
 	err := r.Client.Get(context.TODO(), namespacedName, u)
-	if apierrors.IsNotFound(err) {
-		logger.Info("Resource not found, assuming it was deleted", err)
-		return nil
-	}
 	if err != nil {
+		logger.Error(err,"Resource not found")
 		return err
 	}
+
 	statusInterface := u.Object["status"]
 	statusMap, ok := statusInterface.(map[string]interface{})
 	// If the map is not available create one.
@@ -306,16 +318,12 @@ func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, name
 }
 
 func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, namespacedName types.NamespacedName, statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) error {
-	logger := logf.Log.WithName("markDone")
 	// Get the latest resource to prevent updating a stale status
 	err := r.Client.Get(context.TODO(), namespacedName, u)
-	if apierrors.IsNotFound(err) {
-		logger.Info("Resource not found, assuming it was deleted", err)
-		return nil
-	}
 	if err != nil {
 		return err
 	}
+
 	statusInterface := u.Object["status"]
 	statusMap, _ := statusInterface.(map[string]interface{})
 	crStatus := ansiblestatus.CreateFromMap(statusMap)
