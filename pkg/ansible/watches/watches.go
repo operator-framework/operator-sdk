@@ -72,7 +72,10 @@ var (
 	ansibleVerbosityDefault = 2
 )
 
-// UnmarshalYAML - implements the yaml.Unmarshaler interface for Watch
+// UnmarshalYAML - implements the yaml.Unmarshaler interface for Watch.
+// This makes it possible to verify, when loading, that the GroupVersionKind
+// specified for a given watch is valid as well as provide sensible defaults
+// for values that were ommitted.
 func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// Use an alias struct to handle complex types
 	type alias struct {
@@ -162,7 +165,7 @@ func (w *Watch) Validate() error {
 }
 
 // New - returns a Watch with sensible defaults.
-// There is no guarantee that the returned Watch is valid (that Validate() will not return an error).
+// The returned Watch is not valid as it does not include a role or playbook.
 func New(gvk schema.GroupVersionKind) *Watch {
 	reconcilePeriod, _ := time.ParseDuration(reconcilePeriodDefault)
 	return &Watch{
@@ -177,7 +180,7 @@ func New(gvk schema.GroupVersionKind) *Watch {
 	}
 }
 
-// Load - loads a slice of Watches from the watch file at `path`.
+// Load - loads a slice of Watches from the watches file from the CLI
 func Load(flags *ansibleflags.AnsibleOperatorFlags) ([]Watch, error) {
 	// set the defaults used when unmarshalling
 	maxWorkersDefault = flags.MaxWorkers
@@ -214,10 +217,11 @@ func Load(flags *ansibleflags.AnsibleOperatorFlags) ([]Watch, error) {
 	return watches, nil
 }
 
+// verify that a given GroupVersionKind has a Version and Kind
+// A GVK without a group is valid. Certain scenarios may cause a GVK
+// without a group to fail in other ways later in the initialization
+// process.
 func verifyGVK(gvk schema.GroupVersionKind) error {
-	// A GVK without a group is valid. Certain scenarios may cause a GVK
-	// without a group to fail in other ways later in the initialization
-	// process.
 	if gvk.Version == "" {
 		return errors.New("version must not be empty")
 	}
@@ -227,6 +231,7 @@ func verifyGVK(gvk schema.GroupVersionKind) error {
 	return nil
 }
 
+// verify that a valid path is specified for a given role or playbook
 func verifyAnsiblePath(playbook string, role string) error {
 	switch {
 	case playbook != "":
@@ -275,7 +280,8 @@ func getMaxWorkers(gvk schema.GroupVersionKind, defValue int) int {
 	return maxWorkers
 }
 
-// this behaves sim
+// if the WORKER_* environment variable is set, use that value.
+// Otherwise, use the value from the CLI.
 func getAnsibleVerbosity(gvk schema.GroupVersionKind, defValue int) int {
 	envVar := strings.ToUpper(strings.Replace(
 		fmt.Sprintf("ANSIBLE_VERBOSITY_%s_%s", gvk.Kind, gvk.Group),

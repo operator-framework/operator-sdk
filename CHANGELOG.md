@@ -8,6 +8,7 @@
 - Ansible based operators now gather and serve metrics about each custom resource on port 8686 of the metrics service. ([#1723](https://github.com/operator-framework/operator-sdk/pull/1723))
 - Added the Go version, OS, and architecture to the output of `operator-sdk version` ([#1863](https://github.com/operator-framework/operator-sdk/pull/1863))
 - Added support for `ppc64le-linux` for the `operator-sdk` binary and the Helm operator base image. ([#1533](https://github.com/operator-framework/operator-sdk/pull/1533))
+- Ansible based operators now support verbosity configuration via the `ansible-verbosity` flag at the command line. ([#1852](https://github.com/operator-framework/operator-sdk/pull/1852))
 
 ### Changed
 
