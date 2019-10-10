@@ -10,6 +10,8 @@
 
 ### Bug Fixes
 
+- OLM internal manager is not returning errors in the initialization. ([#1976](https://github.com/operator-framework/operator-sdk/pull/1976))
+
 ## v0.11.0
 
 ### Added
