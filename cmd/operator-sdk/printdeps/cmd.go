@@ -21,7 +21,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -50,6 +50,11 @@ func printDepsFunc(cmd *cobra.Command, args []string) error {
 	}
 	projutil.MustInProjectRoot()
 
+	// Allow the cases of some sub-commands might not require check the deps files.
+	if projutil.GetOperatorType() == projutil.OperatorTypeUnknown {
+		log.Fatal(fmt.Errorf("unknown project type, we were unable to print the deps"))
+	}
+
 	if err := printDeps(depManager); err != nil {
 		return fmt.Errorf("print deps failed: %v", err)
 	}
@@ -57,6 +62,7 @@ func printDepsFunc(cmd *cobra.Command, args []string) error {
 }
 
 func printDeps(depManager string) (err error) {
+
 	// Use depManager if set. Fall back to the project's current dep manager
 	// type if unset.
 	mt := projutil.DepManagerType(depManager)

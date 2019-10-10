@@ -35,13 +35,13 @@ const (
 	GoModEnv   = "GO111MODULE"
 	SrcDir     = "src"
 
-	fsep            = string(filepath.Separator)
-	mainFile        = "cmd" + fsep + "manager" + fsep + "main.go"
-	buildDockerfile = "build" + fsep + "Dockerfile"
-	rolesDir        = "roles"
-	helmChartsDir   = "helm-charts"
-	goModFile       = "go.mod"
-	gopkgTOMLFile   = "Gopkg.toml"
+	fsep          = string(filepath.Separator)
+	buildDir      = "build" + fsep
+	rolesDir      = "roles"
+	pkgApiDir      = "pkg" + fsep + "apis" + fsep
+	helmChartsDir = "helm-charts"
+	goModFile     = "go.mod"
+	gopkgTOMLFile = "Gopkg.toml"
 )
 
 // OperatorType - the type of operator
@@ -114,11 +114,11 @@ func MustInProjectRoot() {
 // CheckProjectRoot checks if the current dir is the project root, and returns
 // an error if not.
 func CheckProjectRoot() error {
-	// If the current directory has a "build/Dockerfile", then it is safe to say
+	// If the current directory has a "build/", then it is safe to say
 	// we are at the project root.
-	if _, err := os.Stat(buildDockerfile); err != nil {
+	if _, err := os.Stat(buildDir); err != nil {
 		if os.IsNotExist(err) {
-			return fmt.Errorf("must run command in project root dir: project structure requires %s", buildDockerfile)
+			return fmt.Errorf("must run command in project root dir: project structure requires %s", buildDir)
 		}
 		return errors.Wrap(err, "error while checking if current directory is the project root")
 	}
@@ -129,7 +129,7 @@ func CheckGoProjectCmd(cmd *cobra.Command) error {
 	if IsOperatorGo() {
 		return nil
 	}
-	return fmt.Errorf("'%s' can only be run for Go operators; %s does not exist", cmd.CommandPath(), mainFile)
+	return fmt.Errorf("'%s' can only be run for Go operators; %s, %s or %s does not exist", cmd.CommandPath(), goModFile, gopkgTOMLFile, pkgApiDir)
 }
 
 func MustGetwd() string {
@@ -215,8 +215,12 @@ func GetOperatorType() OperatorType {
 }
 
 func IsOperatorGo() bool {
-	_, err := os.Stat(mainFile)
-	return err == nil
+	_, errGoMod := os.Stat(goModFile)
+	_, errGopkgTOMLFile := os.Stat(gopkgTOMLFile)
+	_, errPkgApiDir := os.Stat(pkgApiDir)
+
+	// check if has go modules or dep files or pkg/api
+	return errGoMod == nil || errGopkgTOMLFile == nil || errPkgApiDir == nil
 }
 
 func IsOperatorAnsible() bool {
