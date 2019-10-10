@@ -36,7 +36,7 @@ func (k *K8sStatus) GetInput() (input.Input, error) {
 	return k.Input, nil
 }
 
-const k8sStatusTmpl = `#!/usr/bin/python
+const k8sStatusTmpl = `#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import, division, print_function
@@ -163,7 +163,7 @@ options:
     type: bool
 
 requirements:
-    - "python >= 2.7"
+    - "python >= 3.7"
     - "openshift >= 0.8.1"
     - "PyYAML >= 3.11"
 '''
@@ -343,8 +343,36 @@ class KubernetesAnsibleStatusModule(KubernetesAnsibleModule):
             'changed': True
         }
 
+    def clean_last_transition_time(self, status):
+        '''clean_last_transition_time removes lastTransitionTime attribute from each status.conditions[*] (from old conditions). 
+        It returns copy of status with updated conditions. Copy of status is returned, because if new conditions 
+        are subset of old conditions, then module would return conditions without lastTransitionTime. Updated status 
+        should be used only for check in object_contains function, not for next updates, because otherwise it can create 
+        a mess with lastTransitionTime attribute.
+
+        If new conditions don't contain lastTransitionTime and they are different from old conditions 
+        (e.g. they have different status), conditions are updated and kubernetes should sets lastTransitionTime 
+        field during update. If new conditions contain lastTransitionTime, then conditions are updated.
+       
+        Parameters:
+          status (dict): dictionary, which contains conditions list
+        
+        Returns:
+          dict: copy of status with updated conditions
+        '''
+        updated_old_status = copy.deepcopy(status)
+
+        for item in updated_old_status.get('conditions', []):
+            if 'lastTransitionTime' in item:
+                del item['lastTransitionTime']
+
+        return updated_old_status
+
     def patch(self, resource, instance):
-        if self.object_contains(instance['status'], self.status):
+        # Remove lastTransitionTime from status.conditions[*] and use updated_old_status only for check in object_contains function.
+        # Updates of conditions should be done only with original data not with updated_old_status.
+        updated_old_status = self.clean_last_transition_time(instance['status'])
+        if self.object_contains(updated_old_status, self.status):
             return {'result': instance, 'changed': False}
         instance['status'] = self.merge_status(instance['status'], self.status)
         try:
@@ -367,7 +395,7 @@ class KubernetesAnsibleStatusModule(KubernetesAnsibleModule):
 
         for condition in new_conditions:
             idx = self.get_condition_idx(merged, condition['type'])
-            if idx:
+            if idx is not None:
                 merged[idx] = condition
             else:
                 merged.append(condition)
@@ -378,6 +406,7 @@ class KubernetesAnsibleStatusModule(KubernetesAnsibleModule):
         for i, condition in enumerate(conditions):
             if condition.get('type') == name:
                 return i
+        return None
 
     def object_contains(self, obj, subset):
         def dict_is_subset(obj, subset):

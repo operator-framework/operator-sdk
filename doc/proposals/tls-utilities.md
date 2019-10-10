@@ -1,6 +1,18 @@
-# TLS Utilities proposal
+# TLS Utilities Proposal for Operator SDK
 
-## Background:
+Implementation Owner:
+
+> Status: **deferred**
+
+- [Background](#background)
+- [Goals](#goals)
+- [Details](#details)
+- [Implementation](#implementation)
+- [Workflow](#workflow)
+- [Q&A](#qa)
+- [Future Plans](#future-plans)
+
+## Background
 
 A typical workflow of an operator that is written using the Operator-SDK involves watching a Custom Resource (CR), which specifies the desired state of the cluster, and making changes to the current state of the cluster to achieve the desired state.
 
@@ -8,11 +20,11 @@ Each user specified CR represents a self contained system. Based on this, we can
 
 Based on the above assumption, we want to design a TLS utility pkg that helps generate TLS assets and ties them to a specific CR.
 
-## Goals:
+## Goals
 
 To provide TLS utilities for operator developers to create self signed Certificate Authority (CA) and the TLS encryption keys along with the signed certs. This will enable the operator to setup TLS assets for the application so that all the communication within it is secure.
 
-## Details:
+## Details
 
 We will break down the TLS workflow into the following steps:
 
@@ -86,7 +98,7 @@ We will break down the TLS workflow into the following steps:
 
 5. Use CA configmap and TLS secret in the necessary deployment/pod object.
 
-## Implementation:
+## Implementation
 
 Have a certificate configuration object which will contain all the input arguments required to generate a server/client certificate.
 
@@ -137,7 +149,7 @@ func (h *Handler) Handle(ctx types.Context, event types.Event) error {
 	}
 }
 ```
-## Workflow:
+## Workflow
 
 To understand the implementation details more clearly let us run through an example operator and how it can make use of the TLS utility package:
 
@@ -149,12 +161,12 @@ Let us take the Vault Operator as an example. The Vault operator deploys and man
 	2. Call the `GenerateCert` method which will generate and return a secret that contains a newly created TLS Private key and Certificate for the Vault server. This Certificate will be signed by a custom CA or a newly generated CA depending on the configuration in `CertConfig`.
 3. The operator is responsible for creating a service and deployment manifests for the application the user wishes to run. The deployment manifests will contain the TLS assets generated in step 2 as Volume mounts.
 
-## Q&A:
+## Q&A
 
 1. What happens after the CA certificate expires?
    Once the CA certificate expires, all certificates signed by the CA become invalid.
 
-## Future Plans:
+## Future Plans
 
 1. Maintenance and rotation of these TLS certificates: Setting a certificate rotation policy from the start will protect you against the usual key mismanagement or leaking that is bound to happen over long periods of time. This is often overlooked and never-expiring tokens are shared between administrators for convenience reasons. To start off simple, we can provide a simple command line tool `--rotate-certificates` that will perform a rotation for a specific certificate.
 

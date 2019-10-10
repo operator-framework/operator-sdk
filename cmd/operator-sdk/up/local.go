@@ -38,7 +38,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // newLocalCmd - up local command to run an operator loccally
@@ -139,6 +139,7 @@ func upLocal() error {
 		os.Exit(0)
 	}()
 	dc.Env = os.Environ()
+	dc.Env = append(dc.Env, fmt.Sprintf("%s=%s", k8sutil.ForceRunModeEnv, k8sutil.LocalRunMode))
 	// only set env var if user explicitly specified a kubeconfig path
 	if kubeConfig != "" {
 		dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, kubeConfig))

@@ -1,5 +1,5 @@
 ---
-- name: Prepare
+- name: Prepare for Molecule Test
   hosts: k8s
   gather_facts: no
   vars:
@@ -19,14 +19,14 @@
 
     - name: Change the kubeconfig port to the proper value
       replace:
-        regexp: 8443
+        regexp: '8443'
         replace: "{{ lookup('env', 'KIND_PORT') }}"
         path: '{{ kubeconfig }}'
       delegate_to: localhost
 
     - name: Wait for the Kubernetes API to become available (this could take a minute)
       uri:
-        url: "https://localhost:8443/apis"
+        url: "http://localhost:10080/kubernetes-ready"
         status_code: 200
         validate_certs: no
       register: result
@@ -34,7 +34,7 @@
       retries: 60
       delay: 5
 
-- name: Prepare operator resources
+- name: Prepare operator resources for Molecule Test
   hosts: localhost
   connection: local
   vars:
@@ -43,7 +43,7 @@
   tasks:
   - name: Create Custom Resource Definition
     k8s:
-      definition: "{{ lookup('file', '/'.join([deploy_dir, 'crds/inventory_v1alpha1_inventory_crd.yaml'])) }}"
+      definition: "{{ lookup('file', '/'.join([deploy_dir, 'crds/inventory.apps.fabianism.us_inventorys_crd.yaml'])) }}"
 
   - name: Ensure specified namespace is present
     k8s:
@@ -66,14 +66,14 @@
   - name: Copy the image to the kind container
     command: docker cp /tmp/dev-operator.tar kind-test-local:/dev-operator.tar
 
-- name: Make dev operator image available
+- name: Make dev operator image available for Molecule Test
   hosts: k8s
   gather_facts: no
   tasks:
   - name: Make dev operator available
     command: docker load -i /dev-operator.tar
 
-- name: Clean up
+- name: Clean up for Molecule Test
   hosts: localhost
   connection: local
   gather_facts: no

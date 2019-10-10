@@ -1,5 +1,17 @@
 # Auto register operator specific metrics as part of operator-metering
 
+Implementation Owner:
+
+> Status: **implemented**
+>
+> See [metrics documentation](../user/metrics/README.md).
+
+- [Motivation and goal](#motivation-and-goal)
+- [Overview of the metrics](#overview-of-the-metrics)
+- [kube-state-metrics based solution](#kube-state-metrics-based-solution)
+- [User facing architecture](#user-facing-architecture)
+- [Related work](#related-work)
+
 Implementation Owner: @lilic
 
 Status: Finished
@@ -10,7 +22,7 @@ We want to be able to generate the metering reports based on the operator specif
 
 ## Overview of the metrics
 
-To follow both the Prometheus instrumentation [best practices](https://prometheus.io/docs/practices/naming/) as well as the official Kubernetes instrumentation [guide](https://github.com/kubernetes/community/blob/master/contributors/devel/instrumentation.md), the metrics will have the following format:
+To follow both the Prometheus instrumentation [best practices](https://prometheus.io/docs/practices/naming/) as well as the official Kubernetes instrumentation [guide](https://github.com/kubernetes/community/blob/cbe9c8ac5f71a99179d7ffe4a008b9018830af72/contributors/devel/sig-instrumentation/instrumentation.md), the metrics will have the following format:
 
 ```
 crd_kind_info{namespace="namespace",crdkind="instance-name"} 1

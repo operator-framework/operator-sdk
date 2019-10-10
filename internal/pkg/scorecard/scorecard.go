@@ -16,81 +16,33 @@ package scorecard
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
-	"os/exec"
+	"strings"
 
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
-	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
+	scplugins "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/plugins"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	"github.com/operator-framework/operator-sdk/version"
 
-	"github.com/ghodss/yaml"
-	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
+	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	v1 "k8s.io/api/core/v1"
-	extscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/client-go/discovery/cached"
-	"k8s.io/client-go/kubernetes"
-	cgoscheme "k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/restmapper"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+const DefaultConfigFile = ".osdk-scorecard"
 
 const (
-	ConfigOpt                 = "config"
-	NamespaceOpt              = "namespace"
-	KubeconfigOpt             = "kubeconfig"
-	InitTimeoutOpt            = "init-timeout"
-	OlmDeployedOpt            = "olm-deployed"
-	CSVPathOpt                = "csv-path"
-	BasicTestsOpt             = "basic-tests"
-	OLMTestsOpt               = "olm-tests"
-	NamespacedManifestOpt     = "namespaced-manifest"
-	GlobalManifestOpt         = "global-manifest"
-	CRManifestOpt             = "cr-manifest"
-	ProxyImageOpt             = "proxy-image"
-	ProxyPullPolicyOpt        = "proxy-pull-policy"
-	CRDsDirOpt                = "crds-dir"
-	OutputFormatOpt           = "output"
-	PluginDirOpt              = "plugin-dir"
-	JSONOutputFormat          = "json"
-	HumanReadableOutputFormat = "human-readable"
-	DefaultConfigFile         = ".osdk-scorecard"
-)
-
-const (
-	basicOperator  = "Basic Operator"
-	olmIntegration = "OLM Integration"
-)
-
-var (
-	kubeconfig     *rest.Config
-	dynamicDecoder runtime.Decoder
-	runtimeClient  client.Client
-	restMapper     *restmapper.DeferredDiscoveryRESTMapper
-	deploymentName string
-	proxyPodGlobal *v1.Pod
-	cleanupFns     []cleanupFn
-)
-
-const (
-	scorecardPodName       = "operator-scorecard-test"
-	scorecardContainerName = "scorecard-proxy"
+	ConfigOpt        = "config"
+	OutputFormatOpt  = "output"
+	JSONOutputFormat = "json"
+	TextOutputFormat = "text"
 )
 
 // make a global logger for scorecard
@@ -99,313 +51,79 @@ var (
 	log           = logrus.New()
 )
 
-func runTests() ([]scapiv1alpha1.ScorecardOutput, error) {
-	defer func() {
-		if err := cleanupScorecard(); err != nil {
-			log.Errorf("Failed to cleanup resources: (%v)", err)
-		}
-	}()
+var scViper *viper.Viper
 
-	var (
-		tmpNamespaceVar string
-		err             error
-	)
-	kubeconfig, tmpNamespaceVar, err = k8sInternal.GetKubeconfigAndNamespace(viper.GetString(KubeconfigOpt))
-	if err != nil {
-		return nil, fmt.Errorf("failed to build the kubeconfig: %v", err)
-	}
-	if viper.GetString(NamespaceOpt) == "" {
-		viper.Set(NamespaceOpt, tmpNamespaceVar)
-	}
-	scheme := runtime.NewScheme()
-	// scheme for client go
-	if err := cgoscheme.AddToScheme(scheme); err != nil {
-		return nil, fmt.Errorf("failed to add client-go scheme to client: (%v)", err)
-	}
-	// api extensions scheme (CRDs)
-	if err := extscheme.AddToScheme(scheme); err != nil {
-		return nil, fmt.Errorf("failed to add failed to add extensions api scheme to client: (%v)", err)
-	}
-	// olm api (CS
-	if err := olmapiv1alpha1.AddToScheme(scheme); err != nil {
-		return nil, fmt.Errorf("failed to add failed to add oml api scheme (CSVs) to client: (%v)", err)
-	}
-	dynamicDecoder = serializer.NewCodecFactory(scheme).UniversalDeserializer()
-	// if a user creates a new CRD, we need to be able to reset the rest mapper
-	// temporary kubeclient to get a cached discovery
-	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get a kubeclient: %v", err)
-	}
-	cachedDiscoveryClient := cached.NewMemCacheClient(kubeclient.Discovery())
-	restMapper = restmapper.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient)
-	restMapper.Reset()
-	runtimeClient, _ = client.New(kubeconfig, client.Options{Scheme: scheme, Mapper: restMapper})
+type pluginConfig struct {
+	Basic    *scplugins.BasicAndOLMPluginConfig `mapstructure:"basic,omitempty"`
+	Olm      *scplugins.BasicAndOLMPluginConfig `mapstructure:"olm,omitempty"`
+	External *externalPluginConfig              `mapstructure:"external,omitempty"`
+}
 
-	csv := &olmapiv1alpha1.ClusterServiceVersion{}
-	if viper.GetBool(OLMTestsOpt) {
-		yamlSpec, err := ioutil.ReadFile(viper.GetString(CSVPathOpt))
-		if err != nil {
-			return nil, fmt.Errorf("failed to read csv: %v", err)
-		}
-		if err = yaml.Unmarshal(yamlSpec, csv); err != nil {
-			return nil, fmt.Errorf("error getting ClusterServiceVersion: %v", err)
-		}
+func getPlugins() ([]Plugin, error) {
+	kubeconfig := ""
+	if scViper.IsSet(scplugins.KubeconfigOpt) {
+		kubeconfig = scViper.GetString(scplugins.KubeconfigOpt)
 	}
-
-	// Extract operator manifests from the CSV if olm-deployed is set.
-	if viper.GetBool(OlmDeployedOpt) {
-		// Get deploymentName from the deployment manifest within the CSV.
-		strat, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
-		if err != nil {
-			return nil, err
+	// Add plugins from config
+	var plugins []Plugin
+	configs := []pluginConfig{}
+	// set ErrorUnused to true in decoder to fail if an unknown field is set by the user
+	if err := scViper.UnmarshalKey("plugins", &configs, func(c *mapstructure.DecoderConfig) { c.ErrorUnused = true }); err != nil {
+		return nil, errors.Wrap(err, "Could not load plugin configurations")
+	}
+	for idx, plugin := range configs {
+		if err := validateConfig(plugin, idx); err != nil {
+			return nil, fmt.Errorf("error validating plugin config: %v", err)
 		}
-		stratDep, ok := strat.(*olminstall.StrategyDetailsDeployment)
-		if !ok {
-			return nil, fmt.Errorf("expected StrategyDetailsDeployment, got strategy of type %T", strat)
-		}
-		deploymentName = stratDep.DeploymentSpecs[0].Name
-		// Get the proxy pod, which should have been created with the CSV.
-		proxyPodGlobal, err = getPodFromDeployment(deploymentName, viper.GetString(NamespaceOpt))
-		if err != nil {
-			return nil, err
-		}
-
-		logCRMsg := false
-		if crMans := viper.GetStringSlice(CRManifestOpt); len(crMans) == 0 {
-			// Create a temporary CR manifest from metadata if one is not provided.
-			if crJSONStr, ok := csv.ObjectMeta.Annotations["alm-examples"]; ok {
-				var crs []interface{}
-				if err = json.Unmarshal([]byte(crJSONStr), &crs); err != nil {
-					return nil, err
-				}
-				// TODO: run scorecard against all CR's in CSV.
-				cr := crs[0]
-				logCRMsg = len(crs) > 1
-				crJSONBytes, err := json.Marshal(cr)
-				if err != nil {
-					return nil, err
-				}
-				crYAMLBytes, err := yaml.JSONToYAML(crJSONBytes)
-				if err != nil {
-					return nil, err
-				}
-				crFile, err := ioutil.TempFile("", "*.cr.yaml")
-				if err != nil {
-					return nil, err
-				}
-				if _, err := crFile.Write(crYAMLBytes); err != nil {
-					return nil, err
-				}
-				viper.Set(CRManifestOpt, []string{crFile.Name()})
-				defer func() {
-					for _, f := range viper.GetStringSlice(CRManifestOpt) {
-						if err := os.Remove(f); err != nil {
-							log.Errorf("Could not delete temporary CR manifest file: (%v)", err)
-						}
-					}
-				}()
-			} else {
-				return nil, errors.New("cr-manifest config option must be set if CSV has no metadata.annotations['alm-examples']")
-			}
+		var newPlugin Plugin
+		if plugin.Basic != nil {
+			pluginConfig := plugin.Basic
+			setConfigDefaults(pluginConfig, kubeconfig)
+			newPlugin = basicOrOLMPlugin{pluginType: scplugins.BasicOperator, config: *pluginConfig}
+		} else if plugin.Olm != nil {
+			pluginConfig := plugin.Olm
+			setConfigDefaults(pluginConfig, kubeconfig)
+			newPlugin = basicOrOLMPlugin{pluginType: scplugins.OLMIntegration, config: *pluginConfig}
 		} else {
-			// TODO: run scorecard against all CR's in CSV.
-			viper.Set(CRManifestOpt, []string{crMans[0]})
-			logCRMsg = len(crMans) > 1
-		}
-		// Let users know that only the first CR is being tested.
-		if logCRMsg {
-			log.Infof("The scorecard does not support testing multiple CR's at once when run with --olm-deployed. Testing the first CR %s", viper.GetStringSlice(CRManifestOpt)[0])
-		}
-
-	} else {
-		// If no namespaced manifest path is given, combine
-		// deploy/{service_account,role.yaml,role_binding,operator}.yaml.
-		if viper.GetString(NamespacedManifestOpt) == "" {
-			file, err := yamlutil.GenerateCombinedNamespacedManifest(scaffold.DeployDir)
-			if err != nil {
-				return nil, err
+			pluginConfig := plugin.External
+			if kubeconfig != "" {
+				// put the kubeconfig flag first in case user is overriding it with an env var in config file
+				pluginConfig.Env = append([]externalPluginEnv{{Name: "KUBECONFIG", Value: kubeconfig}}, pluginConfig.Env...)
 			}
-			viper.Set(NamespacedManifestOpt, file.Name())
-			defer func() {
-				err := os.Remove(viper.GetString(NamespacedManifestOpt))
-				if err != nil {
-					log.Errorf("Could not delete temporary namespace manifest file: (%v)", err)
-				}
-			}()
+			newPlugin = externalPlugin{config: *pluginConfig}
 		}
-		// If no global manifest is given, combine all CRD's in the given CRD's dir.
-		if viper.GetString(GlobalManifestOpt) == "" {
-			gMan, err := yamlutil.GenerateCombinedGlobalManifest(viper.GetString(CRDsDirOpt))
-			if err != nil {
-				return nil, err
-			}
-			viper.Set(GlobalManifestOpt, gMan.Name())
-			defer func() {
-				err := os.Remove(viper.GetString(GlobalManifestOpt))
-				if err != nil {
-					log.Errorf("Could not delete global manifest file: (%v)", err)
-				}
-			}()
-		}
+		plugins = append(plugins, newPlugin)
 	}
-
-	crs := viper.GetStringSlice(CRManifestOpt)
-	// check if there are duplicate CRs
-	gvks := []schema.GroupVersionKind{}
-	for _, cr := range crs {
-		file, err := ioutil.ReadFile(cr)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read file: %s", cr)
-		}
-		newGVKs, err := getGVKs(file)
-		if err != nil {
-			return nil, fmt.Errorf("could not get GVKs for resource(s) in file: %s, due to error: (%v)", cr, err)
-		}
-		gvks = append(gvks, newGVKs...)
-	}
-	dupMap := make(map[schema.GroupVersionKind]bool)
-	for _, gvk := range gvks {
-		if _, ok := dupMap[gvk]; ok {
-			log.Warnf("Duplicate gvks in CR list detected (%s); results may be inaccurate", gvk)
-		}
-		dupMap[gvk] = true
-	}
-
-	var pluginResults []scapiv1alpha1.ScorecardOutput
-	var suites []TestSuite
-	for _, cr := range crs {
-		// TODO: Change built-in tests into plugins
-		// Run built-in tests.
-		fmt.Printf("Running for cr: %s\n", cr)
-		if !viper.GetBool(OlmDeployedOpt) {
-			if err := createFromYAMLFile(viper.GetString(GlobalManifestOpt)); err != nil {
-				return nil, fmt.Errorf("failed to create global resources: %v", err)
-			}
-			if err := createFromYAMLFile(viper.GetString(NamespacedManifestOpt)); err != nil {
-				return nil, fmt.Errorf("failed to create namespaced resources: %v", err)
-			}
-		}
-		if err := createFromYAMLFile(cr); err != nil {
-			return nil, fmt.Errorf("failed to create cr resource: %v", err)
-		}
-		obj, err := yamlToUnstructured(cr)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
-		}
-		if err := waitUntilCRStatusExists(obj); err != nil {
-			return nil, fmt.Errorf("failed waiting to check if CR status exists: %v", err)
-		}
-		if viper.GetBool(BasicTestsOpt) {
-			conf := BasicTestConfig{
-				Client:   runtimeClient,
-				CR:       obj,
-				ProxyPod: proxyPodGlobal,
-			}
-			basicTests := NewBasicTestSuite(conf)
-			basicTests.Run(context.TODO())
-			suites = append(suites, *basicTests)
-		}
-		if viper.GetBool(OLMTestsOpt) {
-			conf := OLMTestConfig{
-				Client:   runtimeClient,
-				CR:       obj,
-				CSV:      csv,
-				CRDsDir:  viper.GetString(CRDsDirOpt),
-				ProxyPod: proxyPodGlobal,
-			}
-			olmTests := NewOLMTestSuite(conf)
-			olmTests.Run(context.TODO())
-			suites = append(suites, *olmTests)
-		}
-		// set up clean environment for every CR
-		if err := cleanupScorecard(); err != nil {
-			log.Errorf("Failed to cleanup resources: (%v)", err)
-		}
-		// reset cleanup functions
-		cleanupFns = []cleanupFn{}
-		// clear name of operator deployment
-		deploymentName = ""
-	}
-	suites, err = MergeSuites(suites)
-	if err != nil {
-		return nil, fmt.Errorf("failed to merge test suite results: %v", err)
-	}
-	for _, suite := range suites {
-		// convert to ScorecardOutput format
-		// will add log when basic and olm tests are separated into plugins
-		pluginResults = append(pluginResults, TestSuitesToScorecardOutput([]TestSuite{suite}, ""))
-	}
-	// Run plugins
-	pluginDir := viper.GetString(PluginDirOpt)
-	if dir, err := os.Stat(pluginDir); err != nil || !dir.IsDir() {
-		log.Warnf("Plugin directory not found; skipping plugin tests: %v", err)
-		return pluginResults, nil
-	}
-	if err := os.Chdir(pluginDir); err != nil {
-		return nil, fmt.Errorf("failed to chdir into scorecard plugin directory: %v", err)
-	}
-	// executable files must be in "bin" subdirectory
-	files, err := ioutil.ReadDir("bin")
-	if err != nil {
-		return nil, fmt.Errorf("failed to list files in %s/bin: %v", pluginDir, err)
-	}
-	for _, file := range files {
-		cmd := exec.Command("./bin/" + file.Name())
-		stdout := &bytes.Buffer{}
-		cmd.Stdout = stdout
-		stderr := &bytes.Buffer{}
-		cmd.Stderr = stderr
-		err := cmd.Run()
-		if err != nil {
-			name := fmt.Sprintf("Failed Plugin: %s", file.Name())
-			description := fmt.Sprintf("Plugin with file name `%s` failed", file.Name())
-			logs := fmt.Sprintf("%s:\nStdout: %s\nStderr: %s", err, string(stdout.Bytes()), string(stderr.Bytes()))
-			pluginResults = append(pluginResults, failedPlugin(name, description, logs))
-			// output error to main logger as well for human-readable output
-			log.Errorf("Plugin `%s` failed with error (%v)", file.Name(), err)
-			continue
-		}
-		// parse output and add to suites
-		result := scapiv1alpha1.ScorecardOutput{}
-		err = json.Unmarshal(stdout.Bytes(), &result)
-		if err != nil {
-			name := fmt.Sprintf("Plugin output invalid: %s", file.Name())
-			description := fmt.Sprintf("Plugin with file name %s did not produce valid ScorecardOutput JSON", file.Name())
-			logs := fmt.Sprintf("Stdout: %s\nStderr: %s", string(stdout.Bytes()), string(stderr.Bytes()))
-			pluginResults = append(pluginResults, failedPlugin(name, description, logs))
-			log.Errorf("Output from plugin `%s` failed to unmarshal with error (%v)", file.Name(), err)
-			continue
-		}
-		stderrString := string(stderr.Bytes())
-		if len(stderrString) != 0 {
-			log.Warn(stderrString)
-		}
-		pluginResults = append(pluginResults, result)
-	}
-	return pluginResults, nil
+	return plugins, nil
 }
 
 func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if err := initConfig(); err != nil {
 		return err
 	}
-	if err := validateScorecardFlags(); err != nil {
+	if err := validateScorecardConfig(); err != nil {
 		return err
 	}
 	cmd.SilenceUsage = true
-	pluginOutputs, err := runTests()
+	// declare err var to prevent redeclaration of global rootDir var
+	var err error
+	plugins, err := getPlugins()
 	if err != nil {
 		return err
+	}
+
+	var pluginOutputs []scapiv1alpha1.ScorecardOutput
+	for _, plugin := range plugins {
+		pluginOutputs = append(pluginOutputs, plugin.Run())
 	}
 	totalScore := 0.0
 	// Update the state for the tests
 	for _, suite := range pluginOutputs {
 		for idx, res := range suite.Results {
-			suite.Results[idx] = UpdateSuiteStates(res)
+			suite.Results[idx] = schelpers.UpdateSuiteStates(res)
 		}
 	}
-	if viper.GetString(OutputFormatOpt) == HumanReadableOutputFormat {
+	if scViper.GetString(OutputFormatOpt) == TextOutputFormat {
 		numSuites := 0
 		for _, plugin := range pluginOutputs {
 			for _, suite := range plugin.Results {
@@ -443,12 +161,12 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
-	if viper.GetString(OutputFormatOpt) == JSONOutputFormat {
+	if scViper.GetString(OutputFormatOpt) == JSONOutputFormat {
 		log, err := ioutil.ReadAll(logReadWriter)
 		if err != nil {
 			return fmt.Errorf("failed to read log buffer: %v", err)
 		}
-		scTest := CombineScorecardOutput(pluginOutputs, string(log))
+		scTest := schelpers.CombineScorecardOutput(pluginOutputs, string(log))
 		// Pretty print so users can also read the json output
 		bytes, err := json.MarshalIndent(scTest, "", "  ")
 		if err != nil {
@@ -471,6 +189,7 @@ func initConfig() error {
 	}
 
 	if err := viper.ReadInConfig(); err == nil {
+		makeSCViper()
 		// configure logger output before logging anything
 		err := configureLogger()
 		if err != nil {
@@ -478,80 +197,50 @@ func initConfig() error {
 		}
 		log.Info("Using config file: ", viper.ConfigFileUsed())
 	} else {
-		err := configureLogger()
-		if err != nil {
-			return err
-		}
-		log.Warn("Could not load config file; using flags")
+		return fmt.Errorf("could not read config file: %v\nSee %s for more information about the scorecard config file", err, configDocLink())
 	}
 	return nil
 }
 
 func configureLogger() error {
-	if viper.GetString(OutputFormatOpt) == HumanReadableOutputFormat {
+	if !scViper.IsSet(OutputFormatOpt) {
+		scViper.Set(OutputFormatOpt, TextOutputFormat)
+	}
+	format := scViper.GetString(OutputFormatOpt)
+	if format == TextOutputFormat {
 		logReadWriter = os.Stdout
-	} else if viper.GetString(OutputFormatOpt) == JSONOutputFormat {
+	} else if format == JSONOutputFormat {
 		logReadWriter = &bytes.Buffer{}
 	} else {
-		return fmt.Errorf("invalid output format: %s", viper.GetString(OutputFormatOpt))
+		return fmt.Errorf("invalid output format: %s", format)
 	}
 	log.SetOutput(logReadWriter)
 	return nil
 }
 
-func validateScorecardFlags() error {
-	if !viper.GetBool(OlmDeployedOpt) && len(viper.GetStringSlice(CRManifestOpt)) == 0 {
-		return errors.New("cr-manifest config option must be set")
-	}
-	if !viper.GetBool(BasicTestsOpt) && !viper.GetBool(OLMTestsOpt) {
-		return errors.New("at least one test type must be set")
-	}
-	if viper.GetBool(OLMTestsOpt) && viper.GetString(CSVPathOpt) == "" {
-		return fmt.Errorf("csv-path must be set if olm-tests is enabled")
-	}
-	if viper.GetBool(OlmDeployedOpt) && viper.GetString(CSVPathOpt) == "" {
-		return fmt.Errorf("csv-path must be set if olm-deployed is enabled")
-	}
-	pullPolicy := viper.GetString(ProxyPullPolicyOpt)
-	if pullPolicy != "Always" && pullPolicy != "Never" && pullPolicy != "PullIfNotPresent" {
-		return fmt.Errorf("invalid proxy pull policy: (%s); valid values: Always, Never, PullIfNotPresent", pullPolicy)
-	}
+func validateScorecardConfig() error {
 	// this is already being checked in configure logger; may be unnecessary
-	outputFormat := viper.GetString(OutputFormatOpt)
-	if outputFormat != HumanReadableOutputFormat && outputFormat != JSONOutputFormat {
-		return fmt.Errorf("invalid output format (%s); valid values: %s, %s", outputFormat, HumanReadableOutputFormat, JSONOutputFormat)
+	outputFormat := scViper.GetString(OutputFormatOpt)
+	if outputFormat != TextOutputFormat && outputFormat != JSONOutputFormat {
+		return fmt.Errorf("invalid output format (%s); valid values: %s, %s", outputFormat, TextOutputFormat, JSONOutputFormat)
 	}
-	return nil
+
+	return schelpers.ValidateVersion(scViper.GetString(schelpers.VersionOpt))
+
 }
 
-func getGVKs(yamlFile []byte) ([]schema.GroupVersionKind, error) {
-	var gvks []schema.GroupVersionKind
+func makeSCViper() {
+	scViper = viper.Sub("scorecard")
+	// this is a workaround for the fact that nested flags don't persist on viper.Sub
+	scViper.Set(OutputFormatOpt, viper.GetString("scorecard."+OutputFormatOpt))
+	scViper.Set(scplugins.KubeconfigOpt, viper.GetString("scorecard."+scplugins.KubeconfigOpt))
+	scViper.Set(schelpers.VersionOpt, viper.GetString("scorecard."+schelpers.VersionOpt))
 
-	scanner := yamlutil.NewYAMLScanner(yamlFile)
-	for scanner.Scan() {
-		yamlSpec := scanner.Bytes()
-
-		obj := &unstructured.Unstructured{}
-		jsonSpec, err := yaml.YAMLToJSON(yamlSpec)
-		if err != nil {
-			return nil, fmt.Errorf("could not convert yaml file to json: %v", err)
-		}
-		if err := obj.UnmarshalJSON(jsonSpec); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal object spec: (%v)", err)
-		}
-		gvks = append(gvks, obj.GroupVersionKind())
-	}
-	return gvks, nil
 }
 
-func failedPlugin(name, desc, log string) scapiv1alpha1.ScorecardOutput {
-	return scapiv1alpha1.ScorecardOutput{
-		Results: []scapiv1alpha1.ScorecardSuiteResult{{
-			Name:        name,
-			Description: desc,
-			Error:       1,
-			Log:         log,
-		},
-		},
+func configDocLink() string {
+	if strings.HasSuffix(version.Version, "+git") {
+		return "https://github.com/operator-framework/operator-sdk/blob/master/doc/test-framework/scorecard.md"
 	}
+	return fmt.Sprintf("https://github.com/operator-framework/operator-sdk/blob/%s/doc/test-framework/scorecard.md", version.Version)
 }

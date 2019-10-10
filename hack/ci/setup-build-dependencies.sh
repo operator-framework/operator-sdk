@@ -2,8 +2,11 @@
 
 set -e
 
-# Install dep
-curl -Lo dep https://github.com/golang/dep/releases/download/v0.5.3/dep-linux-amd64 && chmod +x dep && mv dep /usr/local/bin/
+# No-op since the release:golang-1.12 base image currently has all required
+# depedencies to build and test operator-sdk.
+#
+# TODO: pre-fetch modules here with `make tidy` and figure out permissions
+#       issues in unit and sanity tests
+# make tidy
 
-# Ensure vendor directory is up-to-date
-make dep
+

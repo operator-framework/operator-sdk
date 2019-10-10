@@ -1,4 +1,4 @@
-# Unit testing
+# Unit testing with Operator SDK
 ------------
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -23,9 +23,12 @@ The `controller-runtime`'s fake client exposes the same set of operations as a t
 
 ```Go
 import (
+    "context"
     "testing"
+
     cachev1alpha1 "github.com/example-inc/memcached-operator/pkg/apis/cache/v1alpha1"
     "k8s.io/apimachinery/pkg/runtime"
+    "sigs.k8s.io/controller-runtime/pkg/client"
     "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -36,6 +39,9 @@ func TestMemcachedController(t *testing.T) {
         ObjectMeta: metav1.ObjectMeta{
             Name:      "memcached",
             Namespace: "memcached-operator",
+            Labels: map[string]string{
+                "label-key": "label-value",
+            },
         },
     }
 
@@ -44,6 +50,15 @@ func TestMemcachedController(t *testing.T) {
 
     // Create a fake client to mock API calls.
     cl := fake.NewFakeClient(objs...)
+
+    // List Memcached objects filtering by labels
+    memcachedList := &cachev1alpha1.MemcachedList{}
+    err := cl.List(context.TODO(), client.MatchingLabels(map[string]string{
+		"label-key": "label-value",
+    }), memcachedList)
+    if err != nil {
+        t.Fatalf("list memcached: (%v)", err)
+    }
     ...
 }
 ```
@@ -67,7 +82,7 @@ import (
     "k8s.io/client-go/kubernetes/scheme"
     "sigs.k8s.io/controller-runtime/pkg/client/fake"
     "sigs.k8s.io/controller-runtime/pkg/reconcile"
-    logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+    logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func TestMemcachedControllerDeploymentCreate(t *testing.T) {
@@ -118,7 +133,7 @@ func TestMemcachedControllerDeploymentCreate(t *testing.T) {
     }
     // Check if deployment has been created and has the correct size.
     dep := &appsv1.Deployment{}
-    err = r.cl.Get(context.TODO(), req.NamespacedName, dep)
+    err = r.client.Get(context.TODO(), req.NamespacedName, dep)
     if err != nil {
         t.Fatalf("get deployment: (%v)", err)
     }
@@ -234,7 +249,7 @@ Following is a snippet code as an example to increase the verbosity of the logs 
 ```go
 import (
     ...
-    logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+    logf "sigs.k8s.io/controller-runtime/pkg/log"
     ...
 )
 func TestMemcachedController(t *testing.T) {

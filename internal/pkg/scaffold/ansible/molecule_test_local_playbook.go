@@ -65,7 +65,7 @@ const moleculeTestLocalPlaybookAnsibleTmpl = `---
     deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
     pull_policy: Never
     REPLACE_IMAGE: [[.Resource.FullGroup]]/[[.ProjectName]]:testing
-    custom_resource: "{{ lookup('file', '/'.join([deploy_dir, 'crds/[[.Resource.Group]]_[[.Resource.Version]]_[[.Resource.LowerKind]]_cr.yaml'])) | from_yaml }}"
+    custom_resource: "{{ lookup('file', '/'.join([deploy_dir, 'crds/[[.Resource.FullGroup]]_[[.Resource.Version]]_[[.Resource.LowerKind]]_cr.yaml'])) | from_yaml }}"
   tasks:
   - block:
     - name: Delete the Operator Deployment
@@ -101,7 +101,7 @@ const moleculeTestLocalPlaybookAnsibleTmpl = `---
         namespace: '{{ namespace }}'
         definition: '{{ custom_resource }}'
 
-    - name: Wait 60s for reconciliation to run
+    - name: Wait 2m for reconciliation to run
       k8s_facts:
         api_version: '{{ custom_resource.apiVersion }}'
         kind: '{{ custom_resource.kind }}'
@@ -110,7 +110,7 @@ const moleculeTestLocalPlaybookAnsibleTmpl = `---
       register: cr
       until:
       - "'Successful' in (cr | json_query('resources[].status.conditions[].reason'))"
-      delay: 6
+      delay: 12
       retries: 10
     rescue:
     - name: debug cr

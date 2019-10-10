@@ -1,6 +1,6 @@
 ---
 
-- name: Build Operator in Kubernetes docker container
+- name: Build Operator in Kubernetes docker container for Molecule Test
   hosts: k8s
   vars:
     image_name: inventory.apps.fabianism.us/inventory:testing
@@ -16,7 +16,7 @@
     register: build_cmd
     changed_when: not prev_hash.stdout or (prev_hash.stdout and prev_hash.stdout not in ''.join(build_cmd.stdout_lines[-2:]))
 
-- name: Converge
+- name: Converge for Molecule Test
   hosts: localhost
   connection: local
   vars:
@@ -24,7 +24,7 @@
     deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
     pull_policy: Never
     REPLACE_IMAGE: inventory.apps.fabianism.us/inventory:testing
-    custom_resource: "{{ lookup('file', '/'.join([deploy_dir, 'crds/inventory_v1alpha1_inventory_cr.yaml'])) | from_yaml }}"
+    custom_resource: "{{ lookup('file', '/'.join([deploy_dir, 'crds/inventory.apps.fabianism.us_v1alpha1_inventory_cr.yaml'])) | from_yaml }}"
   tasks:
   - name: Delete the Operator Deployment
     k8s:
@@ -59,7 +59,7 @@
       namespace: '{{ namespace }}'
       definition: "{{ custom_resource }}"
 
-  - name: Wait 30s for reconciliation to run
+  - name: Wait 2m for reconciliation to run
     k8s_facts:
       api_version: '{{ custom_resource.apiVersion }}'
       kind: '{{ custom_resource.kind }}'
@@ -68,7 +68,7 @@
     register: cr
     until:
     - "'Successful' in (cr | json_query('resources[].status.conditions[].reason'))"
-    delay: 3
+    delay: 12
     retries: 10
 
 - import_playbook: asserts.yml

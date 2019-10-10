@@ -1,25 +1,14 @@
-# Developer guide
+# Operator SDK Developer guide
 
 This document explains how to setup your dev environment.
 
 ## Prerequisites
-- [dep][dep-tool] version v0.5.0+
 - [git][git-tool]
 - [go][go-tool] version v1.12+
 
 ## Download Operator SDK
 
 Go to the [Operator SDK repo][repo-sdk] and follow the [fork guide][fork-guide] to fork, clone, and setup the local operator-sdk repository.
-
-## Vendor dependencies
-
-Run the following in the project root directory to update the vendored dependencies:
-
-```sh
-$ cd $GOPATH/src/github.com/operator-framework/operator-sdk
-$ make dep
-```
-
 ## Build the Operator SDK CLI
 
 Build the Operator SDK CLI `operator-sdk` binary:
@@ -35,7 +24,7 @@ To build the binary and run all tests (assuming you have a correctly configured 
 you can simple run:
 
 ```sh
-$ make test-ci
+$ make test/ci
 ```
 
 If you simply want to run the unit tests, you can run:
@@ -49,7 +38,6 @@ refer to the [`Running the Tests Locally`][running-the-tests] document.
 
 See the project [README][sdk-readme] for more details.
 
-[dep-tool]:https://golang.github.io/dep/docs/installation.html
 [git-tool]:https://git-scm.com/downloads
 [go-tool]:https://golang.org/dl/
 [repo-sdk]:https://github.com/operator-framework/operator-sdk

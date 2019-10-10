@@ -32,14 +32,15 @@ import (
 var (
 	imageBuildArgs string
 	imageBuilder   string
+	goBuildArgs    string
 )
 
 func NewCmd() *cobra.Command {
 	buildCmd := &cobra.Command{
 		Use:   "build <image>",
 		Short: "Compiles code and builds artifacts",
-		Long: `The operator-sdk build command compiles the code, builds the executables,
-and generates Kubernetes manifests.
+		Long: `The operator-sdk build command compiles the Operator code into an executable binary
+and generates the Dockerfile manifest.
 
 <image> is the container image to be built, e.g. "quay.io/example/operator:v0.0.1".
 This image will be automatically set in the deployment manifests.
@@ -54,6 +55,7 @@ For example:
 	}
 	buildCmd.Flags().StringVar(&imageBuildArgs, "image-build-args", "", "Extra image build arguments as one string such as \"--build-arg https_proxy=$https_proxy\"")
 	buildCmd.Flags().StringVar(&imageBuilder, "image-builder", "docker", "Tool to build OCI images. One of: [docker, podman, buildah]")
+	buildCmd.Flags().StringVar(&goBuildArgs, "go-build-args", "", "Extra Go build arguments as one string such as \"-ldflags -X=main.xyz=abc\"")
 	return buildCmd
 }
 
@@ -86,7 +88,13 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	}
 
 	projutil.MustInProjectRoot()
-	goBuildEnv := append(os.Environ(), "GOOS=linux", "GOARCH=amd64")
+	goBuildEnv := append(os.Environ(), "GOOS=linux")
+
+	if value, ok := os.LookupEnv("GOARCH"); ok {
+		goBuildEnv = append(goBuildEnv, "GOARCH="+value)
+	} else {
+		goBuildEnv = append(goBuildEnv, "GOARCH=amd64")
+	}
 
 	// If CGO_ENABLED is not set, set it to '0'.
 	if _, ok := os.LookupEnv("CGO_ENABLED"); !ok {
@@ -99,10 +107,17 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	// Don't need to build Go code if a non-Go Operator.
 	if projutil.IsOperatorGo() {
 		trimPath := fmt.Sprintf("all=-trimpath=%s", filepath.Dir(absProjectPath))
+		args := []string{"-gcflags", trimPath, "-asmflags", trimPath}
+
+		if goBuildArgs != "" {
+			splitArgs := strings.Fields(goBuildArgs)
+			args = append(args, splitArgs...)
+		}
+
 		opts := projutil.GoCmdOptions{
 			BinName:     filepath.Join(absProjectPath, scaffold.BuildBinDir, projectName),
 			PackagePath: path.Join(projutil.GetGoPkg(), filepath.ToSlash(scaffold.ManagerDir)),
-			Args:        []string{"-gcflags", trimPath, "-asmflags", trimPath},
+			Args:        args,
 			Env:         goBuildEnv,
 			GoMod:       projutil.IsDepManagerGoMod(),
 		}

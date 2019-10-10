@@ -250,8 +250,9 @@ $ operator-sdk test local ./test/e2e --namespace operator-test
 
 To run the operator itself locally during the tests instead of starting a deployment in the cluster, you can use the
 `--up-local` flag. This mode will still create global resources, but by default will not create any in-cluster namespaced
-resources unless the user specifies one through the `--namespaced-manifest` flag. (Note: the `--up-local` flag requires
-the `--namespace` flag):
+resources unless the user specifies one through the `--namespaced-manifest` flag.
+
+**NOTE**: The `--up-local` flag requires the `--namespace` flag and the command will NOT create the namespace. Then, be sure that you are specifying a valid namespace.
 
 ```shell
 $ kubectl create namespace operator-test
@@ -263,7 +264,7 @@ $ operator-sdk test local ./test/e2e --namespace operator-test --up-local
 If you would prefer to create the resources yourself and skip resource creation, you can use the `--no-setup` flag:
 ```shell
 $ kubectl create namespace operator-test
-$ kubectl create -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
+$ kubectl create -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 $ kubectl create -f deploy/service_account.yaml --namespace operator-test
 $ kubectl create -f deploy/role.yaml --namespace operator-test
 $ kubectl create -f deploy/role_binding.yaml --namespace operator-test
@@ -280,14 +281,16 @@ in [MainEntry][main-entry-link] are declared, the tests will run correctly. Runn
 will result in undefined behavior. This is an example `go test` equivalent to the `operator-sdk test local` example above:
 
 ```shell
-# Combine service_account, rbac, operator manifest into namespaced manifest
+# Combine service_account, role, role_binding, and operator manifests into namespaced manifest
 $ cp deploy/service_account.yaml deploy/namespace-init.yaml
 $ echo -e "\n---\n" >> deploy/namespace-init.yaml
-$ cat deploy/rbac.yaml >> deploy/namespace-init.yaml
+$ cat deploy/role.yaml >> deploy/namespace-init.yaml
+$ echo -e "\n---\n" >> deploy/namespace-init.yaml
+$ cat deploy/role_binding.yaml >> deploy/namespace-init.yaml
 $ echo -e "\n---\n" >> deploy/namespace-init.yaml
 $ cat deploy/operator.yaml >> deploy/namespace-init.yaml
 # Run tests
-$ go test ./test/e2e/... -root=$(pwd) -kubeconfig=$HOME/.kube/config -globalMan deploy/crd.yaml -namespacedMan deploy/namespace-init.yaml -v -parallel=2
+$ go test ./test/e2e/... -root=$(pwd) -kubeconfig=$HOME/.kube/config -globalMan deploy/crds/cache.example.com_apps_crd.yaml -namespacedMan deploy/namespace-init.yaml -v -parallel=2
 ```
 
 ## Manual Cleanup
@@ -321,11 +324,11 @@ $ kubectl delete namespace main-153428703
 Since the CRD is not namespaced, it must be deleted separately. Clean up the CRD created by the tests using the CRD manifest `deploy/crd.yaml`:
 
 ```shell
-$ kubectl delete -f deploy/crds/cache_v1alpha1_memcached_crd.yaml
+$ kubectl delete -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 ```
 
 [memcached-sample]:https://github.com/operator-framework/operator-sdk-samples/tree/master/memcached-operator
-[framework-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/framework.go#L45
+[framework-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/framework.go
 [testctx-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/context.go
 [e2eutil-link]:https://github.com/operator-framework/operator-sdk/tree/master/pkg/test/e2eutil
 [memcached-test-link]:https://github.com/operator-framework/operator-sdk-samples/blob/master/memcached-operator/test/e2e/memcached_test.go

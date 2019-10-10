@@ -2,7 +2,7 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
   annotations:
-    alm-examples: '[{"apiVersion":"app.example.com/v1alpha1","kind":"App","metadata":{"name":"example-app"},"spec":{"size":3}}]'
+    alm-examples: '[{"apiVersion":"app.example.com/v1alpha1","kind":"AppService","metadata":{"name":"example-app"},"spec":{"size":3}}]'
     capabilities: Basic Install
   name: app-operator.v0.1.0
   namespace: placeholder
@@ -11,13 +11,13 @@ spec:
   customresourcedefinitions:
     owned:
     - displayName: some display name
-      kind: App
-      name: apps1.example.com
-      version: v1alpha1
-    - description: some description
-      kind: App
-      name: apps2.example.com
+      kind: AppService2
+      name: appservice2.example.com
       version: v1alpha2
+    - description: some description
+      kind: AppService
+      name: appservice.example.com
+      version: v1alpha1
     required:
     - description: Represents a cluster of etcd nodes.
       displayName: etcd Cluster

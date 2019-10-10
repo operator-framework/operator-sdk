@@ -1,16 +1,16 @@
-## Using the ServiceMonitor prometheus-operator CRD
+# Using the ServiceMonitor prometheus-operator CRD with Operator SDK
 
 [prometheus-operator][prom-operator] is an operator that creates, configures, and manages Prometheus clusters atop Kubernetes.
 
 `ServiceMonitor` is a CustomResource of the prometheus-operator, which discovers the `Endpoints` in `Service` objects and configures Prometheus to monitor those pods. See the prometheus-operator [documentation][service-monitor] to learn more about `ServiceMonitor`.
 
-The `GenerateServiceMonitor` function takes a `Service` object and generates a `ServiceMonitor` resource based on it. To add `Service` target discovery of your created monitoring `Service` you can use the `metrics.CreateServiceMonitor()` helper function, which accepts the newly created `Service`.
+The `CreateServiceMonitors` function takes `Service` objects and generates `ServiceMonitor` resources based on the endpoints. To add `Service` target discovery of your created monitoring `Service` you can use the `metrics.CreateServiceMonitors()` helper function, which accepts the newly created `Service`.
 
-### Prerequisites:
+## Prerequisites:
 
 - [prometheus-operator][prom-quickstart] needs to be deployed in the cluster.
 
-### Usage example:
+## Usage example:
 
 ```go
     import(

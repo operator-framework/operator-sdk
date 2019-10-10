@@ -1,20 +1,30 @@
-## Ansible Operator Proposal
+# Ansible based-Operator Proposal for Operator SDK
 
-### Background
+> Status: **implemented**
+> 
+> This proposal has been implemented, please see the [Ansible User Guide for Operator SDK](../ansible/user-guide.md) for current documentation.
+
+- [Background](#background)
+- [Goals](#goals)
+- [New Operator Type](#new-operator-type)
+- [Package Structure](#package-structure)
+- [Commands](#commands)
+
+## Background
 
 Not everyone is a golang developer, and therefore gaining adoption for the operator-sdk is capped by the number of golang developers. Also, tooling for Kubernetes in other languages is lacking support for things such as informers, caches, and listers.
 
 Operators purpose is to codify the operations of an application on Kubernetes. [Ansible](https://www.ansible.com/) is already an industry standard tool for automation and is a good fit for the kind of work that Kubernetes operators need to do. Adding the ability for users of the SDK to choose which between ansible and golang to follow will increase the number of potential users, and will grant existing users even more behavior.
 
-### Goals
+## Goals
 
 The goal of the Ansible Operator will be to create a fully functional framework for Ansible developers to create operators. It will also expose a library for golang users to use ansible in their operator if they so choose. These two goals in conjunction will allow users to select the best technology for their project or skillset.
 
-### New Operator Type
+## New Operator Type
 
 This proposal creates a new type of operator called `ansible`.  The new type is used to tell the tooling to act on that type of operator.
 
-### Package Structure
+## Package Structure
 Packages will be added to the operator-sdk. These packages are designed to be usable by the end user if they choose to and should have a well documented public API. The proposed packages are:
 * /operator-sdk/pkg/ansible/controller
   * Will contain the ansible operator controller.
@@ -38,7 +48,7 @@ Packages will be added to the operator-sdk. These packages are designed to be us
   * Default has only the event logger.
 
 
-### Commands
+## Commands
 We are adding and updating existing commands to accommodate the ansible operator.  Changes to the `cmd` package as well as changes to the generator are needed.
 
 `operator-sdk new <project-name> --type ansible --kind <kind> --api-version <group/version>`  This will be a new generation command under the hood. We will:

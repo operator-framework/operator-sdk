@@ -29,10 +29,11 @@ import (
 var (
 	zapFlagSet *pflag.FlagSet
 
-	development bool
-	encoderVal  encoderValue
-	levelVal    levelValue
-	sampleVal   sampleValue
+	development     bool
+	encoderVal      encoderValue
+	levelVal        levelValue
+	sampleVal       sampleValue
+	timeEncodingVal timeEncodingValue
 )
 
 func init() {
@@ -41,6 +42,7 @@ func init() {
 	zapFlagSet.Var(&encoderVal, "zap-encoder", "Zap log encoding ('json' or 'console')")
 	zapFlagSet.Var(&levelVal, "zap-level", "Zap log level (one of 'debug', 'info', 'error' or any integer value > 0)")
 	zapFlagSet.Var(&sampleVal, "zap-sample", "Enable zap log sampling. Sampling will be disabled for integer log levels > 1")
+	zapFlagSet.Var(&timeEncodingVal, "zap-time-encoding", "Sets the zap time format ('epoch', 'millis', 'nano', or 'iso8601')")
 }
 
 // FlagSet - The zap logging flagset.
@@ -48,19 +50,21 @@ func FlagSet() *pflag.FlagSet {
 	return zapFlagSet
 }
 
+type encoderConfigFunc func(*zapcore.EncoderConfig)
+
 type encoderValue struct {
-	set     bool
-	encoder zapcore.Encoder
-	str     string
+	set        bool
+	newEncoder func(...encoderConfigFunc) zapcore.Encoder
+	str        string
 }
 
 func (v *encoderValue) Set(e string) error {
 	v.set = true
 	switch e {
 	case "json":
-		v.encoder = jsonEncoder()
+		v.newEncoder = newJSONEncoder
 	case "console":
-		v.encoder = consoleEncoder()
+		v.newEncoder = newConsoleEncoder
 	default:
 		return fmt.Errorf("unknown encoder \"%s\"", e)
 	}
@@ -76,13 +80,19 @@ func (v encoderValue) Type() string {
 	return "encoder"
 }
 
-func jsonEncoder() zapcore.Encoder {
+func newJSONEncoder(ecfs ...encoderConfigFunc) zapcore.Encoder {
 	encoderConfig := zap.NewProductionEncoderConfig()
+	for _, f := range ecfs {
+		f(&encoderConfig)
+	}
 	return zapcore.NewJSONEncoder(encoderConfig)
 }
 
-func consoleEncoder() zapcore.Encoder {
+func newConsoleEncoder(ecfs ...encoderConfigFunc) zapcore.Encoder {
 	encoderConfig := zap.NewDevelopmentEncoderConfig()
+	for _, f := range ecfs {
+		f(&encoderConfig)
+	}
 	return zapcore.NewConsoleEncoder(encoderConfig)
 }
 
@@ -157,4 +167,49 @@ func (v sampleValue) IsBoolFlag() bool {
 
 func (v sampleValue) Type() string {
 	return "sample"
+}
+
+type timeEncodingValue struct {
+	set         bool
+	timeEncoder zapcore.TimeEncoder
+	str         string
+}
+
+func (v *timeEncodingValue) Set(s string) error {
+	v.set = true
+
+	// As of zap v1.9.1, UnmarshalText does not return an error. Instead, it
+	// uses the epoch time encoding when unknown strings are unmarshalled.
+	//
+	// Set s to "epoch" if it doesn't match one of the known formats, so that
+	// it aligns with the default time encoder function.
+	//
+	// TODO: remove this entire switch statement if UnmarshalText is ever
+	// refactored to return an error.
+	switch s {
+	case "iso8601", "ISO8601", "millis", "nanos":
+	default:
+		s = "epoch"
+	}
+
+	v.str = s
+	return v.timeEncoder.UnmarshalText([]byte(s))
+}
+
+func (v timeEncodingValue) String() string {
+	return v.str
+}
+
+func (v timeEncodingValue) IsBoolFlag() bool {
+	return false
+}
+
+func (v timeEncodingValue) Type() string {
+	return "timeEncoding"
+}
+
+func withTimeEncoding(te zapcore.TimeEncoder) encoderConfigFunc {
+	return func(ec *zapcore.EncoderConfig) {
+		ec.EncodeTime = te
+	}
 }

@@ -26,7 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var log = logf.Log.WithName("leader")
@@ -47,7 +47,7 @@ func Become(ctx context.Context, lockName string) error {
 
 	ns, err := k8sutil.GetOperatorNamespace()
 	if err != nil {
-		if err == k8sutil.ErrNoNamespace {
+		if err == k8sutil.ErrNoNamespace || err == k8sutil.ErrRunLocal {
 			log.Info("Skipping leader election; not running in a cluster.")
 			return nil
 		}

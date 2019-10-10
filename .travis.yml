@@ -1,11 +1,33 @@
+branches:
+  except:
+    - release-4.2
+    - release-4.3
+
 language: go
 go_import_path: github.com/operator-framework/operator-sdk
 sudo: required
 
+# go modules require xenial for mercurial TLS 1.2 support
+dist: xenial
+
+# Python 3.6 is the default Python when language: python.
+# But when not language: python, Python 3 can not be used by default.
+# There is pip (/usr/bin/pip), but not pip3.
+# Because of it the global env is required.
+env:
+  global:
+    - PATH=/opt/python/3.6.7/bin:$PATH
+
+# Install python3 and utilities dependencies
+addons:
+  apt:
+    packages:
+      - "python3"
+      - "python3-pip"
+
 cache:
   directories:
     - $HOME/.cache/go-build
-    - $GOPATH/pkg/mod
 
 go:
 - 1.12.x
@@ -17,25 +39,27 @@ x_base_steps:
   # before_install for jobs that require dep
   - &dep_before_install
     before_install:
-      - curl -Lo dep https://github.com/golang/dep/releases/download/v0.5.3/dep-linux-amd64 && chmod +x dep && sudo mv dep /usr/local/bin/
-      - travis_retry dep ensure -v
+      - travis_retry make tidy
+
   # before_install for jobs that require go builds and do not run for doc-only changes
   - &go_before_install
     before_install:
       # hack/ci/check-doc-only-update.sh needs to be sourced so
       # that it can properly exit the test early with success
       - source hack/ci/check-doc-only-update.sh
-      - curl -Lo dep https://github.com/golang/dep/releases/download/v0.5.3/dep-linux-amd64 && chmod +x dep && sudo mv dep /usr/local/bin/
-      - travis_retry dep ensure -v
+      - travis_retry make tidy
 
   # Base go, ansbile, and helm job
   - &test
     stage: test
-    env: CLUSTER=openshift
+    env:
+    - CLUSTER=k8s
+    os: linux
     <<: *go_before_install
     install:
       - make install
-      - hack/ci/setup-openshift.sh
+      - hack/ci/setup-${CLUSTER}.sh
+      - export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
     after_success:
       - echo "Build succeeded, operator was generated, memcached operator is running on $CLUSTER, and unit/integration tests pass"
     after_failure:
@@ -61,23 +85,66 @@ x_base_steps:
     services:
       - docker
 
+  # Manifest list deploy job
+  - &manifest-deploy
+    stage: "Deploy multi-arch manifest lists"
+    if: type != pull_request AND ( tag IS present OR branch = master OR commit_message =~ /\[travis deploy\]/ )
+    before_script:
+      - git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
+      - git fetch --unshallow --tags
+      # TODO: remove the chmod command when docker-ce on travis is upgraded to 18.09.0+.
+      # We need /etc/docker to be accessible to non-root users.
+      # See https://github.com/moby/moby/pull/37847.
+      - sudo chmod 0755 /etc/docker
+    after_success:
+      - echo "Manifest list push to registry succeeded"
+    after_failure:
+      - echo "Manifest list creation or push to registry failed"
+    services:
+      - docker
+
 jobs:
   include:
-    # Build and test go
-    - <<: *test
-      name: Go on OpenShift
-      script: make test/ci-go ARGS="-v"
+    # Build and test go in non-master PRs
+    - if: tag IS present OR branch != master
+      <<: *test
+      name: Go on Kubernetes
+      script: make test/e2e/go
 
-    # Build and test ansible
-    - <<: *test
-      name: Ansible on OpenShift
-      before_script: sudo pip install ansible
-      script: make test/ci-ansible
+    # Build and test ansible and test ansible using molecule in non-master PRs
+    - if: tag IS present OR branch != master
+      <<: *test
+      name: Ansible on Kubernetes
+      before_script:
+        - pip3 install --upgrade setuptools pip
+        - pip install --user ansible
+      script:
+        - make test/e2e/ansible
+        - make test/e2e/ansible-molecule
 
-    # Build and test helm
-    - <<: *test
-      name: Helm on OpenShift
-      script: make test/ci-helm
+    # Build and test helm in non-master PRs
+    - if: tag IS present OR branch != master
+      <<: *test
+      name: Helm on Kubernetes
+      script: make test/e2e/helm
+
+    # Test subcommands in non-master PRs
+    - if: tag IS present OR branch != master
+      <<: *test
+      name: Subcommands on Kubernetes
+      script: make test/subcommand
+
+    # Test olm install/uninstall subcommands on master, as these cannot be tested in prow/api-ci.
+    - if: tag IS NOT present AND branch = master
+      <<: *test
+      name: OLM Install/Uninstall on Kubernetes
+      script: make test/subcommand/olm-install
+
+    # Build and test ansible using molecule, as this cannot be tested in prow/api-ci.
+    - if: tag IS NOT present AND branch = master
+      <<: *test
+      name: Ansible Molecule on Kubernetes
+      script: make test/e2e/ansible-molecule
 
     # Run the unit, sanity, and markdown tests
     - stage: test
@@ -96,9 +163,18 @@ jobs:
         - make image/build/ansible
         - make image/push/ansible
 
-    # Build and deploy helm-operator docker image
+    # Build and deploy amd64 helm-operator docker image
     - <<: *deploy
-      name: Docker image for helm-operator
+      name: Docker image for helm-operator (amd64)
+      os: linux
+      script:
+        - make image/build/helm
+        - make image/push/helm
+
+    # Build and deploy ppc64le helm-operator docker image
+    - <<: *deploy
+      name: Docker image for helm-operator (ppc64le)
+      os: linux-ppc64le
       script:
         - make image/build/helm
         - make image/push/helm
@@ -109,3 +185,9 @@ jobs:
       script:
         - make image/build/scorecard-proxy
         - make image/push/scorecard-proxy
+
+    # Build and deploy helm multi-arch manifest list
+    - <<: *manifest-deploy
+      name: Manifest list for helm-operator
+      script:
+        - make image/push/helm-multiarch

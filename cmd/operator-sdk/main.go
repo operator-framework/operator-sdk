@@ -23,6 +23,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/add"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
@@ -61,18 +62,19 @@ func main() {
 		},
 	}
 
-	root.AddCommand(new.NewCmd())
 	root.AddCommand(add.NewCmd())
+	root.AddCommand(alpha.NewCmd())
 	root.AddCommand(build.NewCmd())
-	root.AddCommand(generate.NewCmd())
-	root.AddCommand(up.NewCmd())
 	root.AddCommand(completion.NewCmd())
-	root.AddCommand(test.NewCmd())
-	root.AddCommand(scorecard.NewCmd())
-	root.AddCommand(printdeps.NewCmd())
+	root.AddCommand(generate.NewCmd())
 	root.AddCommand(migrate.NewCmd())
-	root.AddCommand(run.NewCmd())
+	root.AddCommand(new.NewCmd())
 	root.AddCommand(olmcatalog.NewCmd())
+	root.AddCommand(printdeps.NewCmd())
+	root.AddCommand(run.NewCmd())
+	root.AddCommand(scorecard.NewCmd())
+	root.AddCommand(test.NewCmd())
+	root.AddCommand(up.NewCmd())
 	root.AddCommand(version.NewCmd())
 
 	root.PersistentFlags().Bool(flags.VerboseOpt, false, "Enable verbose logging")
@@ -117,6 +119,7 @@ var commandsToSkip = map[string]struct{}{
 	"help":         struct{}{},
 	"completion":   struct{}{},
 	"version":      struct{}{},
+	"print-deps":   struct{}{}, // Does not require this logic
 }
 
 func skipCheckForCmd(cmd *cobra.Command) (skip bool) {
@@ -143,7 +146,7 @@ func checkDepManager(dm projutil.DepManagerType) error {
 		}
 		if !goModOn {
 			return fmt.Errorf(`dependency manager "modules" requires working directory to be in $GOPATH/src` +
-				` and GO111MODULE=on, or outside of $GOPATH/src and GO111MODULE="on", "auto", or unset`)
+				` and GO111MODULE=on, or outside of $GOPATH/src and GO111MODULE="on", "auto", or unset. More info: https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#go-modules`)
 		}
 	case projutil.DepManagerDep:
 		inGopathSrc, err := projutil.WdInGoPathSrc()

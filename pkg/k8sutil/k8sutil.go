@@ -26,7 +26,18 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	discovery "k8s.io/client-go/discovery"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+)
+
+// ForceRunModeEnv indicates if the operator should be forced to run in either local
+// or cluster mode (currently only used for local mode)
+var ForceRunModeEnv = "OSDK_FORCE_RUN_MODE"
+
+type RunModeType string
+
+const (
+	LocalRunMode   RunModeType = "local"
+	ClusterRunMode RunModeType = "cluster"
 )
 
 var log = logf.Log.WithName("k8sutil")
@@ -40,12 +51,19 @@ func GetWatchNamespace() (string, error) {
 	return ns, nil
 }
 
-// errNoNS indicates that a namespace could not be found for the current
+// ErrNoNamespace indicates that a namespace could not be found for the current
 // environment
 var ErrNoNamespace = fmt.Errorf("namespace not found for current environment")
 
+// ErrRunLocal indicates that the operator is set to run in local mode (this error
+// is returned by functions that only work on operators running in cluster mode)
+var ErrRunLocal = fmt.Errorf("operator run mode forced to local")
+
 // GetOperatorNamespace returns the namespace the operator should be running in.
 func GetOperatorNamespace() (string, error) {
+	if isRunModeLocal() {
+		return "", ErrRunLocal
+	}
 	nsBytes, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -93,6 +111,9 @@ func ResourceExists(dc discovery.DiscoveryInterface, apiGroupVersion, kind strin
 // is currently running.
 // It expects the environment variable POD_NAME to be set by the downwards API.
 func GetPod(ctx context.Context, client crclient.Client, ns string) (*corev1.Pod, error) {
+	if isRunModeLocal() {
+		return nil, ErrRunLocal
+	}
 	podName := os.Getenv(PodNameEnvVar)
 	if podName == "" {
 		return nil, fmt.Errorf("required env %s not set, please configure downward API", PodNameEnvVar)
@@ -139,6 +160,7 @@ func GetGVKsFromAddToScheme(addToSchemeFunc func(*runtime.Scheme) error) ([]sche
 
 func isKubeMetaKind(kind string) bool {
 	if strings.HasSuffix(kind, "List") ||
+		kind == "PatchOptions" ||
 		kind == "GetOptions" ||
 		kind == "DeleteOptions" ||
 		kind == "ExportOptions" ||
@@ -155,4 +177,8 @@ func isKubeMetaKind(kind string) bool {
 	}
 
 	return false
+}
+
+func isRunModeLocal() bool {
+	return os.Getenv(ForceRunModeEnv) == string(LocalRunMode)
 }

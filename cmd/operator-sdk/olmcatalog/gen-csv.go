@@ -18,12 +18,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
-	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	catalog "github.com/operator-framework/operator-sdk/internal/pkg/scaffold/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	"github.com/coreos/go-semver/semver"
@@ -32,10 +32,13 @@ import (
 )
 
 var (
-	csvVersion    string
-	fromVersion   string
-	csvConfigPath string
-	updateCRDs    bool
+	csvVersion     string
+	csvChannel     string
+	fromVersion    string
+	csvConfigPath  string
+	operatorName   string
+	updateCRDs     bool
+	defaultChannel bool
 )
 
 func newGenCSVCmd() *cobra.Command {
@@ -54,10 +57,15 @@ Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config
 	}
 
 	genCSVCmd.Flags().StringVar(&csvVersion, "csv-version", "", "Semantic version of the CSV")
-	genCSVCmd.MarkFlagRequired("csv-version")
+	if err := genCSVCmd.MarkFlagRequired("csv-version"); err != nil {
+		log.Fatalf("Failed to mark `csv-version` flag for `olm-catalog gen-csv` subcommand as required: %v", err)
+	}
 	genCSVCmd.Flags().StringVar(&fromVersion, "from-version", "", "Semantic version of an existing CSV to use as a base")
 	genCSVCmd.Flags().StringVar(&csvConfigPath, "csv-config", "", "Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml")
 	genCSVCmd.Flags().BoolVar(&updateCRDs, "update-crds", false, "Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's")
+	genCSVCmd.Flags().StringVar(&operatorName, "operator-name", "", "Operator name to use while generating CSV")
+	genCSVCmd.Flags().StringVar(&csvChannel, "csv-channel", "", "Channel the CSV should be registered under in the package manifest")
+	genCSVCmd.Flags().BoolVar(&defaultChannel, "default-channel", false, "Use the channel passed to --csv-channel as the package manifests' default channel. Only valid when --csv-channel is set")
 
 	return genCSVCmd
 }
@@ -82,13 +90,27 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 
 	log.Infof("Generating CSV manifest version %s", csvVersion)
 
+	if operatorName == "" {
+		operatorName = filepath.Base(absProjectPath)
+	}
+
 	s := &scaffold.Scaffold{}
 	csv := &catalog.CSV{
 		CSVVersion:     csvVersion,
 		FromVersion:    fromVersion,
 		ConfigFilePath: csvConfigPath,
+		OperatorName:   operatorName,
 	}
-	if err := s.Execute(cfg, csv); err != nil {
+	err := s.Execute(cfg,
+		csv,
+		&catalog.PackageManifest{
+			CSVVersion:       csvVersion,
+			Channel:          csvChannel,
+			ChannelIsDefault: defaultChannel,
+			OperatorName:     operatorName,
+		},
+	)
+	if err != nil {
 		return fmt.Errorf("catalog scaffold failed: (%v)", err)
 	}
 
@@ -123,6 +145,11 @@ func verifyGenCSVFlags() error {
 	if fromVersion != "" && csvVersion == fromVersion {
 		return fmt.Errorf("from-version (%s) cannot equal csv-version; set only csv-version instead", fromVersion)
 	}
+
+	if defaultChannel && csvChannel == "" {
+		return fmt.Errorf("default-channel can only be used if csv-channel is set")
+	}
+
 	return nil
 }
 
@@ -141,13 +168,18 @@ func verifyCSVVersion(version string) error {
 
 func writeCRDsToDir(crdPaths []string, toDir string) error {
 	for _, p := range crdPaths {
-		if !strings.HasSuffix(p, "crd.yaml") {
-			continue
-		}
 		b, err := ioutil.ReadFile(p)
 		if err != nil {
 			return err
 		}
+		typeMeta, err := k8sutil.GetTypeMetaFromBytes(b)
+		if err != nil {
+			return err
+		}
+		if typeMeta.Kind != "CustomResourceDefinition" {
+			continue
+		}
+
 		path := filepath.Join(toDir, filepath.Base(p))
 		err = ioutil.WriteFile(path, b, fileutil.DefaultFileMode)
 		if err != nil {

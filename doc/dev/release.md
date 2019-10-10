@@ -1,4 +1,4 @@
-# Releases
+# Operator SDK Release guide
 
 Making an Operator SDK release involves:
 
@@ -22,9 +22,11 @@ As the Operator SDK interacts directly with the Kubernetes API, certain API feat
 
 ### Operating systems and architectures
 
-Release binaries will be built for the `x86_64` architecture for both GNU Linux and MacOS Darwin platforms.
+Release binaries will be built for the `x86_64` architecture for both GNU Linux and MacOS Darwin platforms and for the `ppc64le` architecture for GNU Linux.
 
-Support for the Windows platform or any architecture other than `x86_64` is not on the roadmap at this time.
+Base images for ansible-operator, helm-operator, and scorecard-proxy will be built for the `x86_64` architecture for GNU Linux. Base images for the `ppc64le` architecture for GNU Linux are a work-in-progress.
+
+Support for the Windows platform is not on the roadmap at this time.
 
 ## Binaries and signatures
 
@@ -43,9 +45,35 @@ $ git config [--global] user.signingkey "$GPG_KEY_ID"
 $ git config [--global] user.email "$GPG_EMAIL"
 ```
 
-## Release Notes
+## GitHub release information
 
-Release notes should thoroughly describe changes made to code, documentation, and design of the SDK. PR links should be included wherever possible.
+### Locking down branches
+
+Once a release PR has been made and all tests pass, the SDK's `master` branch should be locked so commits cannot happen between the release PR and release tag push. To lock down `master`:
+
+1. Go to `Settings -> Branches` in the SDK repo.
+1. Under `Branch protection rules`, click `Edit` on the `master` rule.
+1. In section `Protect matching branches` of the `Rule settings` box, increase the number of required approving reviewers to its maximum allowed value.
+
+Now only administrators (maintainers) should be able to force merge PRs. Make sure everyone in the relevant Slack channel is aware of the release so they do not force merge by accident.
+
+Unlock `master` after the release has completed (after step 3 is complete) by changing the number of required approving reviewers back to 1.
+
+### Releasing
+
+The GitHub [`Releases` tab][release-page] in the operator-sdk repo is where all SDK releases live. To create a GitHub release:
+
+1. Go to the SDK [`Releases` tab][release-page] and click the `Draft a new release` button in the top right corner.
+1. Select the tag version `v1.3.0`, and set the title to `v1.3.0`.
+1. Copy and paste any `CHANGELOG.md` under the `v1.3.0` header that have any notes into the description form (see [below](#release-notes)).
+1. Attach all binaries and `.asc` signature files to the release by dragging and dropping them.
+1. Click the `Publish release` button.
+
+**Note:** if this is a pre-release, make sure to check the `This is a pre-release` box under the file attachment frame. If you are not sure what this means, ask another maintainer.
+
+#### Release notes
+
+GitHub release notes should thoroughly describe changes made to code, documentation, and design of the SDK. PR links should be included wherever possible.
 
 The following sections, often directly copied from our [changelog][doc-changelog], are used as release notes:
 
@@ -165,26 +193,26 @@ Create a new branch to push release commits:
 $ git checkout -b release-v1.3.0
 ```
 
-Commit changes to the following files:
+Commit the following changes:
 
 - `version/version.go`: update `Version` to `v1.3.0`.
 - `internal/pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
   - Comment out `branch = "master"`
   - Un-comment `version = "v1.2.0"`
   - Change `v1.2.0` to `v1.3.0`
-- `internal/pkg/scaffold/gopkgtoml_test.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
 - `internal/pkg/scaffold/ansible/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
 - `internal/pkg/scaffold/helm/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
 - `internal/pkg/scaffold/go_mod.go`, in the `replace` block for `github.com/operator-framework/operator-sdk`:
-  - Add the following `replace` entry: `github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v1.3.0`.
-  - If an entry already exists, change the version to `v1.3.0`.
-- `internal/pkg/scaffold/go_mod_test.go`: same as for `internal/pkg/scaffold/go_mod.go`.
+  - Add the following `replace` line to the bottom of `go.mod`: `replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v1.3.0`.
+  - If a `replace` line already exists, change the version to `v1.3.0`.
 - `internal/pkg/scaffold/helm/go_mod.go`: same as for `internal/pkg/scaffold/go_mod.go`.
 - `internal/pkg/scaffold/ansible/go_mod.go`: same as for `internal/pkg/scaffold/go_mod.go`.
 - `CHANGELOG.md`: update the `## Unreleased` header to `## v1.3.0`.
 - `doc/user/install-operator-sdk.md`: update the linux and macOS URLs to point to the new release URLs.
 
-Create a new PR for `release-v1.3.0`.
+_(Non-patch releases only)_ Lock down the master branch to prevent further commits between this and step 4. See [this section](#locking-down-branches) for steps to do so.
+
+Create and merge a new PR for `release-v1.3.0`.
 
 ### 2. Create a release tag, binaries, and signatures
 
@@ -212,15 +240,18 @@ Once this tag passes CI, go to step 3. For more info on tagging, see the [releas
 
 ### 3. Create a PR for post-release version and CHANGELOG.md updates
 
-Check out a new branch from master (or use your `release-v1.3.0`) and commit the following changes:
+Check out a new branch from master (or use your `release-v1.3.0` branch) and commit the following changes:
 
 - `version/version.go`: update `Version` to `v1.3.0+git`.
 - `internal/pkg/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
   - Comment out `version = "v1.3.0"`
   - Un-comment `branch = "master"`
-- `internal/pkg/scaffold/gopkgtoml_test.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
 - `internal/pkg/scaffold/ansible/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
 - `internal/pkg/scaffold/helm/gopkgtoml.go`: same as for `internal/pkg/scaffold/gopkgtoml.go`.
+- `internal/pkg/scaffold/go_mod.go`, in the `replace` block for `github.com/operator-framework/operator-sdk`:
+  - Remove the `replace` line at the bottom of `go.mod`: `replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v1.3.0`.
+- `internal/pkg/scaffold/helm/go_mod.go`: same as for `internal/pkg/scaffold/go_mod.go`.
+- `internal/pkg/scaffold/ansible/go_mod.go`: same as for `internal/pkg/scaffold/go_mod.go`.
 - `CHANGELOG.md`: add the following as a new set of headers above `## v1.3.0`:
 
     ```markdown
@@ -237,21 +268,15 @@ Check out a new branch from master (or use your `release-v1.3.0`) and commit the
     ### Bug Fixes
     ```
 
-Create a new PR for this branch. Once this PR passes CI and is merged, `master` can be unfrozen.
+Create a new PR for this branch, targetting the `master` branch. Once this PR passes CI and is merged, `master` can be unfrozen.
+
+If the release is for a patch version (e.g. `v1.3.1`), an identical PR should be created, targetting the  `v1.3.x` branch. Once this PR passes CI and is merged, `v1.3.x` can be unfrozen.
 
 ### 4. Releasing binaries, signatures, and release notes
 
-The final step is to upload binaries, their signature files, and release notes from `CHANGELOG.md`.
+_(Non-patch releases only)_ Unlock the master branch. See [this section](#locking-down-branches) for steps to do so.
 
-**Note:** if this is a pre-release, make sure to check the `This is a pre-release` box under the file attachment frame. If you are not sure what this means, ask another maintainer.
-
-1. Go to the SDK [release page][release-page] and click the `Draft a new release` button in the top right corner.
-1. Select the tag version `v1.3.0`, and set the title to `v1.3.0`.
-1. Copy and paste any `CHANGELOG.md` under the `v1.3.0` header that have any notes into the description form.
-1. Attach all binaries and `.asc` signature files to the release by dragging and dropping them.
-1. Click the `Publish release` button.
-
-You've now fully released a new version of the Operator SDK. Good work! However, there is one more step that needs to be completed: making a release branch to allow us to make patch fixes for this release.
+The final step is to upload binaries, their signature files, and release notes from `CHANGELOG.md` for `v1.3.0`. See [this section](#releasing) for steps to do so.
 
 ### 5. Making a new release branch
 
@@ -296,6 +321,32 @@ brew bump-formula-pr --strict --url=$OPERATORSDKURL --sha256=$OPERATORSUM operat
 
 Note: If there were any changes made to the CLI commands, make sure to look at the existing tests, in case they need updating.
 
+You've now fully released a new version of the Operator SDK. Good work! Make sure to follow the post-release steps below.
+
+### (Post-release) Updating the operator-sdk-samples repo
+
+Many releases change SDK API's and conventions, which are not reflected in the [operator-sdk-samples repo][sdk-samples-repo]. The samples repo should be updated and versioned after each SDK major/minor release with the same tag, ex. `v1.3.0`, so users can refer to the correct operator code for that release.
+
+The release process for the samples repo is simple:
+
+1. Make changes to all relevant operators (at least those referenced by SDK docs) based on API changes for the new SDK release.
+1. Ensure the operators build and run as expected (see each operator's docs).
+1. Once all API changes are in `master`, create a release tag locally:
+    ```console
+    $ git checkout master && git pull
+    $ VER="v1.3.0"
+    $ git tag --sign --message "Operator SDK Samples $VER" "$VER"
+    $ git push --tags
+    ```
+
+### (Post-release) Updating the release notes
+
+Add the following line to the top of the GitHub release notes for `v1.3.0`:
+
+```md
+**NOTE:** ensure the `v1.3.0` tag is referenced when referring to sample code in the [SDK Operator samples repo](https://github.com/operator-framework/operator-sdk-samples/tree/v1.3.0) for this release. Links in SDK documentation are currently set to the samples repo `master` branch.
+```
+
 [install-guide]:../user/install-operator-sdk.md
 [doc-maintainers]:../../MAINTAINERS
 [doc-readme-prereqs]:../../README.md#prerequisites
@@ -309,3 +360,4 @@ Note: If there were any changes made to the CLI commands, make sure to look at t
 [homebrew-formula]:https://github.com/Homebrew/homebrew-core/blob/master/Formula/operator-sdk.rb
 [homebrew-readme]:https://github.com/Homebrew/homebrew-core/blob/master/CONTRIBUTING.md#to-submit-a-version-upgrade-for-the-foo-formula
 [homebrew-repo]:https://github.com/Homebrew/homebrew-core
+[sdk-samples-repo]:https://github.com/operator-framework/operator-sdk-samples

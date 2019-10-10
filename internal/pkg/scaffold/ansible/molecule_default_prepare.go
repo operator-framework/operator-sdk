@@ -58,14 +58,14 @@ const moleculeDefaultPrepareAnsibleTmpl = `---
 
     - name: Change the kubeconfig port to the proper value
       replace:
-        regexp: 8443
+        regexp: '8443' 
         replace: "{{ lookup('env', 'KIND_PORT') }}"
         path: '{{ kubeconfig }}'
       delegate_to: localhost
 
     - name: Wait for the Kubernetes API to become available (this could take a minute)
       uri:
-        url: "https://localhost:8443/apis"
+        url: "http://localhost:10080/kubernetes-ready"
         status_code: 200
         validate_certs: no
       register: result

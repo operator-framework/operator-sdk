@@ -69,6 +69,7 @@ spec:
     status: {}
   validation:
     openAPIV3Schema:
+      description: Memcached is the Schema for the memcacheds API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -101,6 +102,7 @@ spec:
           required:
           - nodes
           type: object
+      type: object
   version: v1alpha1
   versions:
   - name: v1alpha1
@@ -158,31 +160,31 @@ spec:
     plural: appservices
     singular: appservice
   scope: Namespaced
-  subresources:
-    status: {}
-  validation:
-    openAPIV3Schema:
-      properties:
-        spec:
-          properties:
-            size:
-              format: int32
-              type: integer
-          required:
-          - size
-          type: object
-        status:
-          properties:
-            nodes:
-              items:
-                type: string
-              type: array
-          required:
-          - nodes
-          type: object
   version: v1alpha1
   versions:
   - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            properties:
+              size:
+                format: int32
+                type: integer
+            required:
+            - size
+            type: object
+          status:
+            properties:
+              nodes:
+                items:
+                  type: string
+                type: array
+            required:
+            - nodes
+            type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 `

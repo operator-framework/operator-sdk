@@ -1,4 +1,4 @@
-# Logging in operators
+# Operator SDK Logging
 
 Operator SDK-generated operators use the [`logr`][godoc_logr] interface to log. This log interface has several backends such as [`zap`][repo_zapr], which the SDK uses in generated code by default. [`logr.Logger`][godoc_logr_logger] exposes [structured logging][site_struct_logging] methods that help create machine-readable logs and adding a wealth of information to log records.
 
@@ -14,6 +14,7 @@ By default, `zap.Logger()` will return a logger that is ready for production use
 * `--zap-encoder` string - Sets the zap log encoding (`json` or `console`)
 * `--zap-level` string or integer - Sets the zap log level (`debug`, `info`, `error`, or an integer value greater than 0). If 4 or greater the verbosity of client-go will be set to this level.
 * `--zap-sample` - Enables zap's sampling mode. Sampling will be disabled for integer log levels greater than 1.
+* `--zap-time-encoding` string - Sets the zap time format (`epoch`, `millis`, `nano`, or `iso8601`)
 
 ### A simple example
 
@@ -25,7 +26,7 @@ package main
 import (
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/spf13/pflag"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var globalLog = logf.Log.WithName("global")
@@ -59,7 +60,7 @@ $ go run main.go --zap-level=1
 {"level":"debug","ts":1559866310.065123,"logger":"scoped","msg":"Printing at DEBUG level"}
 ```
 
-By using `controller-runtime/pkg/runtime/log`, your logger is propagated through `controller-runtime`. Any logs produced by `controller-runtime` code will be through your logger, and therefore have the same formatting and destination.
+By using `sigs.k8s.io/controller-runtime/pkg/log`, your logger is propagated through `controller-runtime`. Any logs produced by `controller-runtime` code will be through your logger, and therefore have the same formatting and destination.
 
 ### Setting flags when running locally
 
@@ -122,7 +123,7 @@ An example from [`memcached_controller.go`][code_memcached_controller]:
 package memcached
 
 import (
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // Set a global logger for the memcached package. Each log record produced
