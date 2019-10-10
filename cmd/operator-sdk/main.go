@@ -57,8 +57,7 @@ func main() {
 				log.Debug("Debug logging is set")
 			}
 			if err := checkDepManagerForCmd(cmd); err != nil {
-				// Allow cases where subcommands do not require deps files
-				log.Warnf("Operator type %s and the %s. Please, review the structure of your project.", projutil.GetOperatorType(), err)
+				log.Fatal(err)
 			}
 		},
 	}

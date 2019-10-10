@@ -18,7 +18,6 @@
 - Upgrade base image for Go, Helm, and scorecard proxy from `registry.access.redhat.com/ubi7/ubi-minimal:latest` to `registry.access.redhat.com/ubi8/ubi-minimal:latest`. ([#1952](https://github.com/operator-framework/operator-sdk/pull/1952))
 - Upgrade base image for Ansible from `registry.access.redhat.com/ubi7/ubi:latest` to `registry.access.redhat.com/ubi8/ubi:latest`. ([#1990](https://github.com/operator-framework/operator-sdk/pull/1990) and [#2004](https://github.com/operator-framework/operator-sdk/pull/2004))
 - Updated kube-state-metrics dependency from `v1.6.0` to `v1.7.2`. ([#1943](https://github.com/operator-framework/operator-sdk/pull/1943))
-- Change the structure used by sub-commands to check the type and the root dir of the projects for no longer relay in the `Dockerfile` and `main.go` files. ([#1966](https://github.com/operator-framework/operator-sdk/pull/1966)) 
 
 ### Breaking changes
 
