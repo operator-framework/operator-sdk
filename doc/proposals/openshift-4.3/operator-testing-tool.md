@@ -143,6 +143,25 @@ The scorecard would implement a version flag in the CLI to allow users to migrat
 
 ## Design Details
 
+### Exit Codes
+
+If you want to know if some arbitrary set of tests fail (e.g. necessity=required), you would either use label selection to run only that set of tests, or you would run some superset with -o json, and if the pass/fail exit code indicates a failure, you could use jq fu for your own custom exit code logic.
+
+For example, the following jq command would exit with a failure if any required tests fail or error:
+
+    jq --exit-status '[.[] | select(.labels.necessity == "required" and (.status == "fail" or .status == "error"))] | length == 0'
+
+Two separate meanings for exit codes would be produced by the scorecard:
+ * One, to handle the case where the scorecard subcommand itself fails for some reason (e.g. couldn't read the kubernetes config, couldn't connect to the apiserver, etc.)
+ * Second, to handle the pass/fail case where a test that was expected to pass did not pass. In this case, the output would be guaranteed to be valid text or JSON.
+
+For pipelines, the test tool can be run twice:
+
+ * with the required tests and then bail if the exit code is non-zero.
+ * with the recommended tests and then bail of the exit code is 1 or bail or not bail if the exit code is 2.
+
+To drive better reports the JSON structure allows for proper querying using JSONPath.
+
 ### Test Plan
 
 **Note:** *Section not required until targeted at a release.*
