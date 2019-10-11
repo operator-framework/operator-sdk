@@ -1,4 +1,4 @@
-## v0.11.0
+## Unreleased
 
 ### Added
 
@@ -52,6 +52,8 @@
 - CRD file names were previously of the form `<group>_<version>_<kind>_crd.yaml`. Now that CRD manifest `spec.version` is deprecated in favor of `spec.versions`, i.e. multiple versions can be specified in one CRD, CRD file names have the form `<full group>_<resource>_crd.yaml`. `<full group>` is the full group name of your CRD while `<group>` is the last subdomain of `<full group>`, ex. `foo.bar.com` vs `foo`. `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`. ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
 - Upgrade Python version from `2.7` to `3.6`, Ansible version from `2.8.0` to `~=2.8` and ansible-runner from `1.2` to `1.3.4` in the Ansible based images. ([#1947](https://github.com/operator-framework/operator-sdk/pull/1947)) 
 - Replaced `pkg/kube-metrics.NewCollectors()` with `pkg/kube-metrics.NewMetricsStores()` and changed exported function signature for `pkg/kube-metrics.ServeMetrics()` due to a [breaking change in kube-state-metrics](https://github.com/kubernetes/kube-state-metrics/pull/786). ([#1943](https://github.com/operator-framework/operator-sdk/pull/1943))
+
+### Deprecated
 
 ### Removed
 
