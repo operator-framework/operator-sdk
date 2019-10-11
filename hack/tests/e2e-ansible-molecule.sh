@@ -5,8 +5,8 @@ source hack/lib/test_lib.sh
 set -eux
 
 ROOTDIR="$(pwd)"
-GOTMP="$(mktemp -d)"
-trap_add 'rm -rf $GOTMP' EXIT
+TMPDIR="$(mktemp -d)"
+trap_add 'rm -rf $TMPDIR' EXIT
 pip3 install --user pyasn1==0.4.7 pyasn1-modules==0.2.6 idna==2.8 ipaddress==1.0.22
 pip3 install --user molecule==2.22
 pip3 install --user docker openshift jmespath
@@ -25,7 +25,7 @@ remove_prereqs() {
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds_crd.yaml"
 }
 
-pushd "$GOTMP"
+pushd "$TMPDIR"
 operator-sdk new memcached-operator \
   --api-version=ansible.example.com/v1alpha1 \
   --kind=Memcached \
