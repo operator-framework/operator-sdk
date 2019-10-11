@@ -21,7 +21,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
