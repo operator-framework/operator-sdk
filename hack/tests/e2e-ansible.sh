@@ -10,8 +10,8 @@ go test -count=1 ./pkg/ansible/proxy/...
 
 DEST_IMAGE="quay.io/example/memcached-operator:v0.0.2"
 ROOTDIR="$(pwd)"
-GOTMP="$(mktemp -d)"
-trap_add 'rm -rf $GOTMP' EXIT
+TMPDIR="$(mktemp -d)"
+trap_add 'rm -rf $TMPDIR' EXIT
 
 deploy_operator() {
     kubectl create -f "$OPERATORDIR/deploy/service_account.yaml"
@@ -129,7 +129,7 @@ test_operator() {
 }
 
 # create and build the operator
-pushd "$GOTMP"
+pushd "$TMPDIR"
 operator-sdk new memcached-operator \
   --api-version=ansible.example.com/v1alpha1 \
   --kind=Memcached \
