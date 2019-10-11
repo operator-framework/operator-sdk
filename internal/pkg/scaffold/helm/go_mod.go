@@ -53,7 +53,7 @@ require (
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/jonboulle/clockwork v0.1.0 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
-	github.com/operator-framework/operator-sdk master
+	github.com/operator-framework/operator-sdk v0.11.x
 	github.com/spf13/pflag v1.0.3
 	github.com/ugorji/go/codec v0.0.0-20190320090025-2dc34c0b8780 // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
@@ -87,8 +87,6 @@ replace (
 	// resolve it correctly.
 	github.com/prometheus/prometheus => github.com/prometheus/prometheus d20e84d0fb64aff2f62a977adc8cfb656da4e286
 )
-
-replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v0.11.0
 `
 
 func PrintGoMod() error {
