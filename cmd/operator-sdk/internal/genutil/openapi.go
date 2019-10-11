@@ -59,8 +59,8 @@ func OpenAPIGen() error {
 	return nil
 }
 
-// OpenAPIGenWithIgnoreFlag generates OpenAPI validation specs for all CRD's in dirs.
-func OpenAPIGenWithIgnoreFlag(ignoreGVK []string) error {
+// OpenAPIGenWithSkipFlag skips generation OpenAPI validation specs for specified CRD's.
+func OpenAPIGenWithSkipFlag(ignoreGVK []string) error {
 	s := &scaffold.Scaffold{}
 	if len(ignoreGVK) < 1 {
 		return fmt.Errorf("must specify --group flag to use --skip-generation")

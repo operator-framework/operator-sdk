@@ -62,7 +62,7 @@ func openAPIFunc(cmd *cobra.Command, args []string) error {
 	}
 
 	if skipGeneration {
-		return genutil.OpenAPIGenWithIgnoreFlag(group)
+		return genutil.OpenAPIGenWithSkipFlag(group)
 	}
 	if len(group) > 0 {
 		return fmt.Errorf("can not use --group flag without --skip-generation flag")
