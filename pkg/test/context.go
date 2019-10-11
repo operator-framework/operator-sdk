@@ -74,6 +74,7 @@ func (f *Framework) newTestCtx(t *testing.T) *TestCtx {
 		namespace:         namespace,
 		namespacedManPath: *f.NamespacedManPath,
 		client:            f.Client,
+		kubeclient:        f.KubeClient,
 		restMapper:        f.restMapper,
 	}
 }
