@@ -21,8 +21,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	skipGeneration bool
+	group          []string
+)
+
 func newGenerateOpenAPICmd() *cobra.Command {
-	return &cobra.Command{
+	apiCmd := &cobra.Command{
 		Use:   "openapi",
 		Short: "Generates OpenAPI specs for API's",
 		Long: `generate openapi generates OpenAPI validation specs in Go from tagged types
@@ -45,6 +50,10 @@ Example:
 `,
 		RunE: openAPIFunc,
 	}
+
+	apiCmd.Flags().BoolVar(&skipGeneration, "skip-generation", false, "Skips creating scafold for specified GKV")
+	apiCmd.Flags().StringSliceVar(&group, "group", nil, "Specify group to ignore genrating openapis")
+	return apiCmd
 }
 
 func openAPIFunc(cmd *cobra.Command, args []string) error {
@@ -52,5 +61,11 @@ func openAPIFunc(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 
+	if skipGeneration {
+		return genutil.OpenAPIGenWithIgnoreFlag(group)
+	}
+	if len(group) > 0 {
+		return fmt.Errorf("can not use --group flag without --skip-generation flag")
+	}
 	return genutil.OpenAPIGen()
 }

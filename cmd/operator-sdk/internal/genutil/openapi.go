@@ -28,42 +28,15 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	generatorargs "k8s.io/kube-openapi/cmd/openapi-gen/args"
 	"k8s.io/kube-openapi/pkg/generators"
 )
 
 // OpenAPIGen generates OpenAPI validation specs for all CRD's in dirs.
 func OpenAPIGen() error {
-	projutil.MustInProjectRoot()
-
-	absProjectPath := projutil.MustGetwd()
-	repoPkg := projutil.GetGoPkg()
-
-	gvMap, err := k8sutil.ParseGroupSubpackages(scaffold.ApisDir)
-	if err != nil {
-		return fmt.Errorf("failed to parse group versions: (%v)", err)
-	}
-	gvb := &strings.Builder{}
-	for g, vs := range gvMap {
-		gvb.WriteString(fmt.Sprintf("%s:%v, ", g, vs))
-	}
-
-	log.Infof("Running OpenAPI code-generation for Custom Resource group versions: [%v]\n", gvb.String())
-
-	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
-	fqApis := k8sutil.CreateFQAPIs(apisPkg, gvMap)
-	f := func(a string) error { return openAPIGen(a, fqApis) }
-	if err = generateWithHeaderFile(f); err != nil {
-		return err
-	}
-
 	s := &scaffold.Scaffold{}
-	cfg := &input.Config{
-		Repo:           repoPkg,
-		AbsProjectPath: absProjectPath,
-		ProjectName:    filepath.Base(absProjectPath),
-	}
-	crds, err := k8sutil.GetCRDs(scaffold.CRDsDir)
+	cfg, crds, err := preScaffoldSetup()
 	if err != nil {
 		return err
 	}
@@ -76,19 +49,103 @@ func OpenAPIGen() error {
 				return fmt.Errorf("crd of group %s kind %s has no version", g, k)
 			}
 		}
-		r, err := scaffold.NewResource(g+"/"+v, k)
-		if err != nil {
-			return err
-		}
-		err = s.Execute(cfg,
-			&scaffold.CRD{Resource: r, IsOperatorGo: projutil.IsOperatorGo()},
-		)
+		err := doScffolding(g, v, k, s, cfg)
 		if err != nil {
 			return err
 		}
 	}
 
 	log.Info("Code-generation complete.")
+	return nil
+}
+
+// OpenAPIGenWithIgnoreFlag generates OpenAPI validation specs for all CRD's in dirs.
+func OpenAPIGenWithIgnoreFlag(ignoreGVK []string) error {
+	s := &scaffold.Scaffold{}
+	if len(ignoreGVK) < 1 {
+		return fmt.Errorf("must specify --group flag to use --skip-generation")
+	}
+	cfg, crds, err := preScaffoldSetup()
+	if err != nil {
+		return err
+	}
+	for _, crd := range crds {
+		g, v, k := crd.Spec.Group, crd.Spec.Version, crd.Spec.Names.Kind
+		doScffold := searchGroupIgnoreList(g, ignoreGVK)
+		if v == "" {
+			if len(crd.Spec.Versions) != 0 {
+				v = crd.Spec.Versions[0].Name
+			} else {
+				return fmt.Errorf("crd of group %s kind %s has no version", g, k)
+			}
+		}
+		if !doScffold {
+			err := doScffolding(g, v, k, s, cfg)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	log.Info("Code-generation complete.")
+	return nil
+}
+
+func searchGroupIgnoreList(value string, ignore []string) bool {
+	for _, g := range ignore {
+		if g == value {
+			return true
+		}
+	}
+	return false
+}
+
+func preScaffoldSetup() (*input.Config, []*v1beta1.CustomResourceDefinition, error) {
+	projutil.MustInProjectRoot()
+
+	absProjectPath := projutil.MustGetwd()
+	repoPkg := projutil.GetGoPkg()
+
+	gvMap, err := k8sutil.ParseGroupSubpackages(scaffold.ApisDir)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse group versions: (%v)", err)
+	}
+	gvb := &strings.Builder{}
+	for g, vs := range gvMap {
+		gvb.WriteString(fmt.Sprintf("%s:%v, ", g, vs))
+	}
+
+	log.Infof("Running OpenAPI code-generation for Custom Resource group versions: [%v]\n", gvb.String())
+
+	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
+	fqApis := k8sutil.CreateFQAPIs(apisPkg, gvMap)
+	f := func(a string) error { return openAPIGen(a, fqApis) }
+	if err = generateWithHeaderFile(f); err != nil {
+		return nil, nil, err
+	}
+
+	cfg := &input.Config{
+		Repo:           repoPkg,
+		AbsProjectPath: absProjectPath,
+		ProjectName:    filepath.Base(absProjectPath),
+	}
+	crds, err := k8sutil.GetCRDs(scaffold.CRDsDir)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return cfg, crds, nil
+}
+
+func doScffolding(g, v, k string, s *scaffold.Scaffold, cfg *input.Config) error {
+	r, err := scaffold.NewResource(g+"/"+v, k)
+	if err != nil {
+		return err
+	}
+	err = s.Execute(cfg, &scaffold.CRD{Resource: r, IsOperatorGo: projutil.IsOperatorGo()})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
