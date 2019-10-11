@@ -9,7 +9,7 @@ eval IMAGE=$IMAGE_FORMAT
 component="osdk-ansible-e2e-hybrid"
 eval IMAGE2=$IMAGE_FORMAT
 ROOTDIR="$(pwd)"
-GOTMP="$(mktemp -d -p $GOPATH/src)"
+GOTMP="$(mktemp -d)"
 trap_add 'rm -rf $GOTMP' EXIT
 
 mkdir -p $ROOTDIR/bin
