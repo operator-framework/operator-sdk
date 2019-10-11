@@ -44,8 +44,8 @@ remove_operator() {
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/service_account.yaml"
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/role.yaml"
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/role_binding.yaml"
-    timeout 60s bash -c -- "kubectl delete --wait=true --ignore-not-found=true -f \"$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds_crd.yaml\""
-    timeout 60s bash -c -- "kubectl delete --wait=true --ignore-not-found=true -f \"$OPERATORDIR/deploy/crds/ansible.example.com_foos_crd.yaml\""
+    kubectl delete --wait=true --ignore-not-found=true --timeout=60s -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds_crd.yaml"
+    kubectl delete --wait=true --ignore-not-found=true --timeout=60s -f "$OPERATORDIR/deploy/crds/ansible.example.com_foos_crd.yaml"
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/operator.yaml"
 }
 
