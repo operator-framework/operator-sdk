@@ -55,3 +55,29 @@ ENTRYPOINT ["/usr/local/bin/entrypoint", "--inject-owner-ref=false"]
 If you have created resources without owner reference injection, it is
 possible to manually to update resources following [this
 guide.](./retroactively-owned-resources.md)
+
+## Max Workers
+
+Worker maximums can be set in two ways. Ansible-based operator **authors**
+can set the default by including extra args to the operator container
+in `operator.yaml`. (Otherwise, the default is 1 worker.)
+
+``` yaml
+- name: operator
+  image: "quay.io/asmacdo/memcached-operator:v0.0.0"
+  imagePullPolicy: "Always"
+  args:
+    - "--max-workers"
+    - "3"
+```
+
+Anible-based operator **admins** can override the value by setting an
+environment variable in the format `WORKER_<kind>_<group>`. This
+variable must be all uppercase, and periods are replaced with
+underscores.
+
+Example:
+
+``` bash
+export WORKER_MEMCACHED_CACHE_EXAMPLE_COM=4
+```
