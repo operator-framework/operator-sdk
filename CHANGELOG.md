@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Change sub-commands for no longer relay in the `Dockerfile` and `main.go` files. ([#2054](https://github.com/operator-framework/operator-sdk/pull/2054)) 
+
 ### Deprecated
 
 ### Removed
