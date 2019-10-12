@@ -116,6 +116,8 @@ replace (
 	// Locking to a specific version (from 'go mod graph'):
 	git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
 	github.com/operator-framework/operator-lifecycle-manager => github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190605231540-b8a4faf68e36
+	// Workaround to solve https://github.com/gin-gonic/gin/issues/1673
+	github.com/ugorji/go v1.1.1 => github.com/ugorji/go/codec v0.0.0-20190204201341-e444a5086c43
 )
 
 // Remove when controller-tools v0.2.2 is released
