@@ -62,9 +62,6 @@ func OpenAPIGen() error {
 // OpenAPIGenWithSkipFlag skips generation OpenAPI validation specs for specified CRD's.
 func OpenAPIGenWithSkipFlag(ignoreGVK []string) error {
 	s := &scaffold.Scaffold{}
-	if len(ignoreGVK) < 1 {
-		return fmt.Errorf("must specify --group flag to use --skip-generation")
-	}
 	cfg, crds, err := preScaffoldSetup()
 	if err != nil {
 		return err

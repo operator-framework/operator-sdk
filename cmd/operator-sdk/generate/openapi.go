@@ -22,8 +22,7 @@ import (
 )
 
 var (
-	skipGeneration bool
-	group          []string
+	skipGroup []string
 )
 
 func newGenerateOpenAPICmd() *cobra.Command {
@@ -35,7 +34,8 @@ in all pkg/apis/<group>/<version> directories. Go code is generated under
 pkg/apis/<group>/<version>/zz_generated.openapi.go. CRD's are generated, or
 updated if they exist for a particular group + version + kind, under
 deploy/crds/<full group>_<resource>_crd.yaml; OpenAPI V3 validation YAML
-is generated as a 'validation' object.
+is generated as a 'validation' object. 
+--skip-groups flag can be used to ignore genrating openapis for specific groups.
 
 Example:
 	$ operator-sdk generate openapi
@@ -51,8 +51,7 @@ Example:
 		RunE: openAPIFunc,
 	}
 
-	apiCmd.Flags().BoolVar(&skipGeneration, "skip-generation", false, "Skips creating scafold for specified GKV")
-	apiCmd.Flags().StringSliceVar(&group, "group", nil, "Specify group to ignore genrating openapis")
+	apiCmd.Flags().StringSliceVar(&skipGroup, "skip-groups", nil, "Specify group/groups to ignore genrating openapis")
 	return apiCmd
 }
 
@@ -61,11 +60,8 @@ func openAPIFunc(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 
-	if skipGeneration {
-		return genutil.OpenAPIGenWithSkipFlag(group)
-	}
-	if len(group) > 0 {
-		return fmt.Errorf("can not use --group flag without --skip-generation flag")
+	if len(skipGroup) > 0 {
+		return genutil.OpenAPIGenWithSkipFlag(skipGroup)
 	}
 	return genutil.OpenAPIGen()
 }
