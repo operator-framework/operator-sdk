@@ -58,14 +58,8 @@ not in scope: Operator Developers can use the same tool to run custom, functiona
 #### Story 1 - Show pass/fail in Scorecard Output
 Today, the scorecard output shows a percentage of tests that were successful to the end user. This story is to change the scorecard output to show a pass or fail for each test that is run in the output instead of a success percentage. 
 
-The exit code of scorecard would be 0 if all required tests passed. The exit code would be non-zero if any of the required tests failed. With this change scores are essentially replaced with a list of pass/fail(s).
-
-A message produced by the scorecard will show whether or not the required
-tests fully passed or not.  Tests will be labeled in such a way as to 
-specify them as required or not.
-
 The scorecard would by default run all tests regardless if a single test fails.  Using a CLI flag such as below would cause the test execution to stop on a failure:
- * operator-sdk scorecard -l ‘testgroup=required’ --fail-fast
+ * operator-sdk scorecard -l ‘necessity=required’ --fail-fast
 
 Tasks for this story include:
  * change scorecard by removing earnedPoints and maximumPoints from each test
