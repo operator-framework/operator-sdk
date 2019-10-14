@@ -1,17 +1,35 @@
-# Owner References for Existing Resources
+# Adding Owner References for Existing Resources
 
-Owner references are automatically injected *only during creation of
-resources*. Enabling owner reference injection *will not update objects*
+Owner references are automatically injected `only during creation of
+resources`. Enabling owner reference injection `will not update objects`
 created while [owner reference injection is
 disabled](./advanced_options.md#turning-off-dependent-watches-and-owner-reference-injection)
-.
 
 This guide will demonstrate how to retroactively set owner references
 for existing resources.
 
-### Owner References and Annotations
+A GET request to the owning resource will provide the necessary data to
+construct an `ownerReference` or an `annotation`.
 
-Dependent resources *within the same namespace as the owning CR* are
+`$ kubectl get memcacheds.cache.example.com -o yaml`
+
+**Example Response (Abbreviated):**
+
+```yaml
+apiVersion: cache.example.com/v1alpha1
+kind: Memcached
+metadata:
+  name: example-memcached
+  namespace: default
+  uid: 2a94ff2b-84e0-40ce-8b5e-2b7e4d2bc0e2
+```
+
+`kubectl edit` can be used to update the resources by hand. See below
+for example `ownerReference` and `annotations`.
+
+## For objects in the same namespace as the Owner (CRD)
+
+Dependent resources `within the same namespace as the owning CR` are
 tracked with the `ownerReference` field.
 
 `ownerReference` structure:
@@ -20,10 +38,9 @@ tracked with the `ownerReference` field.
   * name: {metadata.name}
   * uid: {metadata.uid}
 
-**Example:**
+**Example ownerReference:**
 
 ```yaml
-
 metadata:
   ...(snip)
   ownerReferences:
@@ -33,38 +50,50 @@ metadata:
       uid: ad834522-d9a5-4841-beac-991ff3798c00
 ```
 
+## For objects which are NOT in the same namespace as the Owner (CRD)
+
 An `annotation` is used instead of an `ownerReference` if the dependent
-resource is in a different namespace than the CR or the dependent
+resource is in a different namespace than the CR, or the dependent
 resource is a cluster level resource.
 
 `annotation` structure:
-  * operator-sdk/primary-resource: {metadata.namepace}/{metadata.name}
+  * operator-sdk/primary-resource: {metadata.namespace}/{metadata.name}
   * operator-sdk/primary-resource-type: {kind}.{group}
 
-*Note: <group> must be determined by splitting the apiVersion field at the "/"*
+**NOTE**: The {group} can be found by splitting the `apiVersion`
+metadata of the CR, into `group` and `version`. As an example, 
+[this apiVersion field](https://github.com/operator-framework/operator-sdk-samples/blob/master/ansible/memcached-operator/deploy/crds/cache_v1alpha1_memcached_cr.yaml#L1)
+gives us the group `cache.example.com`.
+
+**Example Annotation:**
 
 ```yaml
 metadata:
+  ...(snip)
   annotations:
     operator-sdk/primary-resource: default/example-memcached
     operator-sdk/primary-resource-type: Memcached.cache.example.com
 ```
 
-A GET request to the owning resource will provide the necessary data to
-construct an `ownerReference` or an `annotation`.
-
-`$ kubectl get memcacheds.cache.example.com -o yaml`
-
-`kubectl edit` can be used to update the resources by hand.
-
-### Migration Playbook
+## Migration using Ansible assets 
 
 If you have many resources to update, it may be easier to use the
-following (unsupported) playbook.
+following Ansible assets, which **should be considered an example rather
+than an officially supported workflow**.
 
-#### vars.yml
+To use these assets, create a `vars.yml` as specified below and copy
+`playbook.yml` and `each_resource.yml` into the same directory. Execute
+the playbook with:
 
-Users will configure the playbook by providing a `vars.yml` file which will specify:
+``` bash
+$ ansible-playbook -i localhost playbook.yml
+```
+
+### vars.yml
+
+This file should be created by the user to configure the playbook, and
+needs to contain:
+
   * owning_resource
       * apiVersion
       * kind
@@ -75,8 +104,6 @@ Users will configure the playbook by providing a `vars.yml` file which will spec
       * namespace (if applicable)
       * apiVersion
       * kind
-
-**Example File:**
 
 ```yaml
 owning_resource:
@@ -94,7 +121,10 @@ resources_to_own:
     apiVersion: v1
     kind: Namespace
 ```
-#### playbook.yml
+
+### playbook.yml
+
+This file can be used as-is without user adjustments.
 
 ```yaml
 - hosts: localhost
@@ -127,7 +157,9 @@ resources_to_own:
           uid: "{{ extra_owner_data.resources[0].metadata.uid }}"
 ```
 
-#### `each_resource.yml`
+### `each_resource.yml`
+
+This file can be used as-is without user adjustments.
 
 ``` yaml
 - name: Patch resource with owner reference
