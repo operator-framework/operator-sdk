@@ -58,9 +58,15 @@ guide.](./retroactively-owned-resources.md)
 
 ## Max Workers
 
-Worker maximums can be set in two ways. Ansible-based operator **authors**
-can set the default by including extra args to the operator container
-in `operator.yaml`. (Otherwise, the default is 1 worker.)
+Increasing the number of workers allows events to be processed
+concurrently, which can improve reconciliation performance.
+
+Worker maximums can be set in two ways. Operator **authors and admins**
+can set the max workers default by including extra args to the operator
+container in `operator.yaml`. (Otherwise, the default is 1 worker.)
+
+**NOTE:** Admins using OLM should use the environment variable instead
+of the extra args.
 
 ``` yaml
 - name: operator
@@ -71,13 +77,23 @@ in `operator.yaml`. (Otherwise, the default is 1 worker.)
     - "3"
 ```
 
-Anible-based operator **admins** can override the value by setting an
-environment variable in the format `WORKER_<kind>_<group>`. This
-variable must be all uppercase, and periods are replaced with
-underscores.
+Operator **admins** can override the value by setting an environment
+variable in the format `WORKER_<kind>_<group>`. This variable must be
+all uppercase, and periods are replaced with underscores.
 
 Example:
 
-``` bash
-export WORKER_MEMCACHED_CACHE_EXAMPLE_COM=4
+
+``` yaml
+- name: operator
+  image: "quay.io/asmacdo/memcached-operator:v0.0.0"
+  imagePullPolicy: "Always"
+  args:
+    # This default is overridden.
+    - "--max-workers"
+    - "3"
+  env:
+    # This value is used
+    - name: WORKER_MEMCACHED_CACHE_EXAMPLE_COM
+      value: "6"
 ```
