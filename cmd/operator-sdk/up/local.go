@@ -80,6 +80,9 @@ var (
 func upLocalFunc(cmd *cobra.Command, args []string) error {
 	log.Info("Running the operator locally.")
 
+	// set env variable for operator to assess up-local
+	os.Setenv("OPERATOR_UP_LOCAL", "true")
+
 	// get default namespace to watch if unset
 	if !cmd.Flags().Changed("namespace") {
 		_, defaultNamespace, err := k8sInternal.GetKubeconfigAndNamespace(kubeConfig)
