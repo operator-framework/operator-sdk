@@ -117,8 +117,17 @@ replace (
 	git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
 	github.com/operator-framework/operator-lifecycle-manager => github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190605231540-b8a4faf68e36
 
-	// github.com/ugorji/go/codec: ambiguous import: found github.com/ugorji/go/codec in multiple modules
-	github.com/ugorji/go v1.1.1 => github.com/ugorji/go v0.0.0-20181204163529-d75b2dcb6bc8
+	// These replacements are required because various SDK dependencies
+	// depend on different versions of github.com/ugorji/go and
+	// github.com/ugorji/go/codec that conflict and break Go tooling due to the
+	// go.mod changes that have occurred recently in github.com/ugorji/go
+	// and github.com/ugorji/go/codec.
+	// See: https://github.com/ugorji/go/issues/299
+	//
+	// TODO: these replacements can be removed once the SDK
+	// dependencies have been updated to require at least v1.1.7
+	github.com/ugorji/go => github.com/ugorji/go v1.1.7
+	github.com/ugorji/go/codec => github.com/ugorji/go/codec v1.1.7
 
 	// Remove when controller-tools v0.2.2 is released
 	// Required for the bugfix https://github.com/kubernetes-sigs/controller-tools/pull/322
