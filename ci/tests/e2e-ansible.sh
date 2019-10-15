@@ -9,8 +9,8 @@ eval IMAGE=$IMAGE_FORMAT
 component="osdk-ansible-e2e-hybrid"
 eval IMAGE2=$IMAGE_FORMAT
 ROOTDIR="$(pwd)"
-GOTMP="$(mktemp -d -p $GOPATH/src)"
-trap_add 'rm -rf $GOTMP' EXIT
+TMPDIR="$(mktemp -d)"
+trap_add 'rm -rf $TMPDIR' EXIT
 
 mkdir -p $ROOTDIR/bin
 export PATH=$ROOTDIR/bin:$PATH
@@ -44,8 +44,9 @@ remove_operator() {
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/service_account.yaml"
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/role.yaml"
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/role_binding.yaml"
-    kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds_crd.yaml"
-    kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/ansible.example.com_foos_crd.yaml"
+    # TODO: Investigate root cause of failure. CI has 4 hour timeouts on failed CRD deletions, inputting 60s as a stop gap measure
+    kubectl delete --wait=true --ignore-not-found=true --timeout=60s -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds_crd.yaml"
+    kubectl delete --wait=true --ignore-not-found=true --timeout=60s -f "$OPERATORDIR/deploy/crds/ansible.example.com_foos_crd.yaml"
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/operator.yaml"
 }
 
@@ -163,7 +164,7 @@ test_operator() {
 oc project default
 
 # create and build the operator
-pushd "$GOTMP"
+pushd "$TMPDIR"
 operator-sdk new memcached-operator --api-version=ansible.example.com/v1alpha1 --kind=Memcached --type=ansible
 
 pushd memcached-operator

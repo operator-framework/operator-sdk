@@ -9,8 +9,8 @@ eval IMAGE=$IMAGE_FORMAT
 component="osdk-helm-e2e-hybrid"
 eval IMAGE2=$IMAGE_FORMAT
 ROOTDIR="$(pwd)"
-GOTMP="$(mktemp -d -p $GOPATH/src)"
-trap_add 'rm -rf $GOTMP' EXIT
+TMPDIR="$(mktemp -d)"
+trap_add 'rm -rf $TMPDIR' EXIT
 
 mkdir -p $ROOTDIR/bin
 export PATH=$ROOTDIR/bin:$PATH
@@ -136,7 +136,7 @@ if oc api-versions | grep openshift; then
 fi
 
 # create and build the operator
-pushd "$GOTMP"
+pushd "$TMPDIR"
 operator-sdk new nginx-operator --api-version=helm.example.com/v1alpha1 --kind=Nginx --type=helm
 
 pushd nginx-operator

@@ -52,10 +52,9 @@ func TestMemcachedController(t *testing.T) {
     cl := fake.NewFakeClient(objs...)
 
     // List Memcached objects filtering by labels
+    opt := client.MatchingLabels(map[string]string{"label-key": "label-value"})
     memcachedList := &cachev1alpha1.MemcachedList{}
-    err := cl.List(context.TODO(), client.MatchingLabels(map[string]string{
-		"label-key": "label-value",
-    }), memcachedList)
+    err := cl.List(context.TODO(), memcachedList, opt)
     if err != nil {
         t.Fatalf("list memcached: (%v)", err)
     }

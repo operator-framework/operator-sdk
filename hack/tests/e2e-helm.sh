@@ -7,8 +7,8 @@ source hack/lib/image_lib.sh
 
 DEST_IMAGE="quay.io/example/nginx-operator:v0.0.2"
 ROOTDIR="$(pwd)"
-GOTMP="$(mktemp -d)"
-trap_add 'rm -rf $GOTMP' EXIT
+TMPDIR="$(mktemp -d)"
+trap_add 'rm -rf $TMPDIR' EXIT
 
 deploy_operator() {
     kubectl create -f "$OPERATORDIR/deploy/service_account.yaml"
@@ -112,7 +112,7 @@ test_operator() {
 }
 
 # create and build the operator
-pushd "$GOTMP"
+pushd "$TMPDIR"
 log=$(operator-sdk new nginx-operator \
   --api-version=helm.example.com/v1alpha1 \
   --kind=Nginx \
