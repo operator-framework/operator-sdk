@@ -46,7 +46,12 @@ The ansible runner will keep information about the ansible run in the container.
 You may want to manage what your operator watches and the owner references. This means that your operator will need to understand how to clean up after itself when your CR is deleted. To disable these features you will need to edit your `build/Dockerfile` to include the line below.
 
 **NOTE**: That if you use this feature there will be a warning that dependent watches is turned off but there will be no error.
+**WARNING**: Once a CR is deployed without owner reference injection, there is no automatic way to add those references.
 
 ```
 ENTRYPOINT ["/usr/local/bin/entrypoint", "--inject-owner-ref=false"]
 ```
+
+If you have created resources without owner reference injection, it is
+possible to manually to update resources following [this
+guide.](./retroactively-owned-resources.md)
