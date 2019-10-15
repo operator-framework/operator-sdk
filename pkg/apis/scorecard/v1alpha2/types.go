@@ -28,27 +28,23 @@ const (
 	FailState State = "fail"
 	// ErrorState occurs when a Test encounters a fatal error and the reported points should not be considered.
 	ErrorState State = "error"
-	// RequiredTestsPassed occurs when all required tests pass
-	RequiredTestsPassedState State = "All required tests passed."
-	// RequiredTestsFailed occurs when one of the required tests fails
-	RequiredTestsFailedState State = "A required test has failed."
 )
 
 // ScorecardTestResult contains the results of an individual scorecard test.
 // +k8s:openapi-gen=true
 type ScorecardTestResult struct {
-	// State is the final state of the test
-	State State `json:"state"`
 	// Name is the name of the test
 	Name string `json:"name"`
 	// Description describes what the test does
 	Description string `json:"description"`
-	// Suggestions is a list of suggestions for the user to improve their score (if applicable)
-	Suggestions []string `json:"suggestions"`
-	// Errors is a list of the errors that occured during the test (this can include both fatal and non-fatal errors)
-	Errors []string `json:"errors"`
 	// Labels that further describe the test and enable selection
-	Labels map[string]string
+	Labels map[string]string `json:"labels,omitempty"`
+	// State is the final state of the test
+	State State `json:"state,omitempty"`
+	// Errors is a list of the errors that occured during the test (this can include both fatal and non-fatal errors)
+	Errors []string `json:"errors,omitempty"`
+	// Suggestions is a list of suggestions for the user to improve their score (if applicable)
+	Suggestions []string `json:"suggestions,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -64,10 +60,6 @@ type ScorecardOutput struct {
 	Log string `json:"log"`
 	// Results is an array of ScorecardTestResult for the current scorecard run.
 	Results []ScorecardTestResult `json:"results"`
-	// FailedRequiredTests is the number of required tests run that failed
-	FailedRequiredTests int `json:"failedRequiredTests"`
-	// RequiredTestStatus is a description of the required tests status
-	RequiredTestStatus State `json:"requiredTestStatus"`
 }
 
 func init() {

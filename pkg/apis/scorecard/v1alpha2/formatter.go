@@ -40,12 +40,6 @@ func (s ScorecardOutput) MarshalText() (string, error) {
 		failColor = noColor
 	}
 
-	requiredTestStatus := fmt.Sprintf(passColor, RequiredTestsPassedState)
-
-	if s.FailedRequiredTests > 0 {
-		requiredTestStatus = fmt.Sprintf(failColor, RequiredTestsFailedState)
-	}
-
 	var currentSuite string
 	for _, result := range s.Results {
 		if currentSuite != result.Labels["suite"] {
@@ -60,8 +54,6 @@ func (s ScorecardOutput) MarshalText() (string, error) {
 			sb.WriteString(fmt.Sprintf(failColor, FailState))
 		}
 	}
-
-	sb.WriteString(fmt.Sprintf(requiredTestStatus))
 
 	for _, result := range s.Results {
 		for _, suggestion := range result.Suggestions {

@@ -37,18 +37,6 @@ func ConvertScorecardOutputV1ToV2(v1ScorecardOutput scapiv1alpha1.ScorecardOutpu
 	}
 	output.Log = v1ScorecardOutput.Log
 
-	// calculate failed required tests
-	for _, result := range output.Results {
-		if result.State != scapiv1alpha2.PassState {
-			output.FailedRequiredTests++
-		}
-	}
-
-	output.RequiredTestStatus = scapiv1alpha2.RequiredTestsPassedState
-	if output.FailedRequiredTests > 0 {
-		output.RequiredTestStatus = scapiv1alpha2.RequiredTestsFailedState
-	}
-
 	return output
 }
 
