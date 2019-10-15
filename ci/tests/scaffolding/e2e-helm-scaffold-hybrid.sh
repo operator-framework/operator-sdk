@@ -13,7 +13,7 @@ pushd "$HELMDIR"
 operator-sdk new nginx-operator --api-version=helm.example.com/v1alpha1 --kind=Nginx --type=helm
 
 pushd nginx-operator
-export GO111MODULE=on
+export GOPROXY=https://proxy.golang.org
 operator-sdk migrate
 
 if [[ ! -e build/Dockerfile.sdkold ]];

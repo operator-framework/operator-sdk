@@ -169,7 +169,7 @@ echo "### Base image testing passed"
 echo "### Now testing migrate to hybrid operator"
 echo "###"
 
-export GO111MODULE=on
+export GOPROXY=https://proxy.golang.org
 operator-sdk migrate --repo=github.com/example-inc/memcached-operator
 
 if [[ ! -e build/Dockerfile.sdkold ]];

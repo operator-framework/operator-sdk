@@ -1,7 +1,6 @@
 # Makefile specifically intended for use in prow/api-ci only.
 
 export CGO_ENABLED := 0
-export GO111MODULE := on
 export GOPROXY ?= https://proxy.golang.org/
 
 build:
