@@ -4,6 +4,7 @@ export CGO_ENABLED := 0
 export GOPROXY ?= https://proxy.golang.org/
 
 build:
+	go get ./...
 	$(MAKE) -f Makefile build/operator-sdk
 
 test/e2e/go:
