@@ -48,7 +48,7 @@ USER 1001
 ```
 
 If you aren't sure what dependencies are required, start up a container using the image in the `FROM` line as root. That's probably look something like this.
-`docker run -u 0 -it --rm --entrypoint /bin/bash quay.io/operator-framework/ansible-operator:v0.11.0`
+`docker run -u 0 -it --rm --entrypoint /bin/bash quay.io/operator-framework/ansible-operator:<sdk-tag-version>`
 
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
 [controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my-reconciler-for-different-types-of-events-eg-create-update-delete
