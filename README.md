@@ -50,10 +50,6 @@ The following workflow is for a new **Helm** operator:
 - Optional: [dep][dep_tool] version v0.5.0+.
 - Optional: [delve](https://github.com/go-delve/delve/tree/master/Documentation/installation) version 1.2.0+ (for `up local --enable-delve`).
 
-## Operator capability level
-
-![operator-capability-level](./doc/images/operator-capability-level.png)
-
 ## Quick Start
 
 ### Install the Operator SDK CLI
@@ -145,6 +141,10 @@ To learn more about the SDK CLI, see the [SDK CLI Reference][sdk_cli_ref], or ru
 To learn more about the writing an operator in Go, see the [user guide][guide].
 
 The SDK also supports developing an operator using Ansible or Helm. See the [Ansible][ansible_user_guide] and [Helm][helm_user_guide] operator user guides.
+
+Note that each operator type has a different set of capabilities. When choosing what type to use for your project, it is important to understand the features and limitations of each of the project types and the use cases for your operator.
+
+![operator-capability-level](./doc/images/operator-capability-level.png)
 
 ## Samples
 
