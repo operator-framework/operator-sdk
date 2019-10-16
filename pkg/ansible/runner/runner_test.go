@@ -140,10 +140,7 @@ func TestNew(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			testWatch := watches.New(tc.gvk)
-			testWatch.Playbook = tc.playbook
-			testWatch.Role = tc.role
-			testWatch.Finalizer = tc.finalizer
+			testWatch := watches.New(tc.gvk, tc.role, tc.playbook, tc.finalizer)
 
 			testRunner, err := New(*testWatch)
 			if err != nil {

@@ -28,7 +28,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	ansibleflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	yaml "gopkg.in/yaml.v2"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -49,7 +48,7 @@ type Watch struct {
 	Finalizer                   *Finalizer              `yaml:"finalizer"`
 
 	// Not configurable via watches.yaml
-	MaxWorkers       int `yaml:"maxWorkers"`
+	MaxWorkers int `yaml:"maxWorkers"`
 }
 
 // Finalizer - Expose finalizer to be used by a user.
@@ -69,7 +68,7 @@ var (
 	watchClusterScopedResourcesDefault = false
 
 	// these are overridden by cmdline flags
-	maxWorkersDefault       = 1
+	maxWorkersDefault = 1
 )
 
 // UnmarshalYAML - implements the yaml.Unmarshaler interface for Watch.
@@ -164,26 +163,25 @@ func (w *Watch) Validate() error {
 }
 
 // New - returns a Watch with sensible defaults.
-// The returned Watch is not valid as it does not include a role or playbook.
-func New(gvk schema.GroupVersionKind) *Watch {
+func New(gvk schema.GroupVersionKind, role, playbook string, finalizer *Finalizer) *Watch {
 	reconcilePeriod, _ := time.ParseDuration(reconcilePeriodDefault)
 	return &Watch{
 		GroupVersionKind:            gvk,
+		Playbook:                    playbook,
+		Role:                        role,
 		MaxRunnerArtifacts:          maxRunnerArtifactsDefault,
 		MaxWorkers:                  maxWorkersDefault,
 		ReconcilePeriod:             reconcilePeriod,
 		ManageStatus:                manageStatusDefault,
 		WatchDependentResources:     watchDependentResourcesDefault,
 		WatchClusterScopedResources: watchClusterScopedResourcesDefault,
+		Finalizer:                   finalizer,
 	}
 }
 
 // Load - loads a slice of Watches from the watches file from the CLI
-func Load(flags *ansibleflags.AnsibleOperatorFlags) ([]Watch, error) {
-	// set the defaults used when unmarshalling
-	maxWorkersDefault = flags.MaxWorkers
-
-	b, err := ioutil.ReadFile(flags.WatchesFile)
+func Load(path string, maxWorkersDefault int) ([]Watch, error) {
+	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Error(err, "Failed to get config file")
 		return nil, err

@@ -24,45 +24,63 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	ansibleflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 )
 
 func TestNew(t *testing.T) {
-	expectedGVK := schema.GroupVersionKind{
+	basicGVK := schema.GroupVersionKind{
 		Version: "v1alpha1",
 		Group:   "app.example.com",
 		Kind:    "Example",
 	}
+	testCases := []struct {
+		name           string
+		gvk            schema.GroupVersionKind
+		role           string
+		playbook       string
+		finalizer      *Finalizer
+		shouldValidate bool
+	}{
+		{
+			name:           "default invalid watch",
+			gvk:            basicGVK,
+			shouldValidate: false,
+		},
+	}
 	expectedReconcilePeriod, _ := time.ParseDuration(reconcilePeriodDefault)
 
-	watch := New(expectedGVK)
-	if watch.GroupVersionKind != expectedGVK {
-		t.Fatalf("Unexpected GVK %v expected %v", watch.GroupVersionKind, expectedGVK)
-	}
-	if watch.MaxRunnerArtifacts != maxRunnerArtifactsDefault {
-		t.Fatalf("Unexpected maxRunnerArtifacts %v expected %v", watch.MaxRunnerArtifacts, maxRunnerArtifactsDefault)
-	}
-	if watch.MaxWorkers != maxWorkersDefault {
-		t.Fatalf("Unexpected maxWorkers %v expected %v", watch.MaxWorkers, maxWorkersDefault)
-	}
-	if watch.ReconcilePeriod != expectedReconcilePeriod {
-		t.Fatalf("Unexpected reconcilePeriod %v expected %v", watch.ReconcilePeriod, expectedReconcilePeriod)
-	}
-	if watch.ManageStatus != manageStatusDefault {
-		t.Fatalf("Unexpected manageStatus %v expected %v", watch.ManageStatus, manageStatusDefault)
-	}
-	if watch.WatchDependentResources != watchDependentResourcesDefault {
-		t.Fatalf("Unexpected watchDependentResources %v expected %v", watch.WatchDependentResources, watchDependentResourcesDefault)
-	}
-	if watch.WatchClusterScopedResources != watchClusterScopedResourcesDefault {
-		t.Fatalf("Unexpected watchClusterScopedResources %v expected %v", watch.WatchClusterScopedResources, watchClusterScopedResourcesDefault)
-	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			watch := New(tc.gvk, tc.role, tc.playbook, tc.finalizer)
+			if watch.GroupVersionKind != tc.gvk {
+				t.Fatalf("Unexpected GVK %v expected %v", watch.GroupVersionKind, tc.gvk)
+			}
+			if watch.MaxRunnerArtifacts != maxRunnerArtifactsDefault {
+				t.Fatalf("Unexpected maxRunnerArtifacts %v expected %v", watch.MaxRunnerArtifacts, maxRunnerArtifactsDefault)
+			}
+			if watch.MaxWorkers != maxWorkersDefault {
+				t.Fatalf("Unexpected maxWorkers %v expected %v", watch.MaxWorkers, maxWorkersDefault)
+			}
+			if watch.ReconcilePeriod != expectedReconcilePeriod {
+				t.Fatalf("Unexpected reconcilePeriod %v expected %v", watch.ReconcilePeriod, expectedReconcilePeriod)
+			}
+			if watch.ManageStatus != manageStatusDefault {
+				t.Fatalf("Unexpected manageStatus %v expected %v", watch.ManageStatus, manageStatusDefault)
+			}
+			if watch.WatchDependentResources != watchDependentResourcesDefault {
+				t.Fatalf("Unexpected watchDependentResources %v expected %v", watch.WatchDependentResources, watchDependentResourcesDefault)
+			}
+			if watch.WatchClusterScopedResources != watchClusterScopedResourcesDefault {
+				t.Fatalf("Unexpected watchClusterScopedResources %v expected %v", watch.WatchClusterScopedResources, watchClusterScopedResourcesDefault)
+			}
 
-	// this should fail validate
-	err := watch.Validate()
-	if err == nil {
-		t.Fatalf("Watch %v should have failed validation", watch)
+			err := watch.Validate()
+			if err != nil && tc.shouldValidate {
+				t.Fatalf("Watch %v failed validation", watch)
+			}
+			if err == nil && !tc.shouldValidate {
+				t.Fatalf("Watch %v should have failed validation", watch)
+			}
+		})
 	}
 }
 
@@ -97,14 +115,14 @@ func TestLoad(t *testing.T) {
 	zeroSeconds := time.Duration(0)
 	twoSeconds := time.Second * 2
 	testCases := []struct {
-		name             string
-		path             string
-		maxWorkers       int
-		expected         []Watch
-		setenvvar        bool
-		envvar           string
-		envvarValue      int
-		shouldError      bool
+		name        string
+		path        string
+		maxWorkers  int
+		expected    []Watch
+		setenvvar   bool
+		envvar      string
+		envvarValue int
+		shouldError bool
 	}{
 		{
 			name:        "error duplicate GVK",
@@ -157,9 +175,9 @@ func TestLoad(t *testing.T) {
 			shouldError: true,
 		},
 		{
-			name:             "valid watches file",
-			path:             "testdata/valid.yaml",
-			maxWorkers:       1,
+			name:       "valid watches file",
+			path:       "testdata/valid.yaml",
+			maxWorkers: 1,
 			expected: []Watch{
 				Watch{
 					GroupVersionKind: schema.GroupVersionKind{
@@ -304,11 +322,7 @@ func TestLoad(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ansibleFlags := &ansibleflags.AnsibleOperatorFlags{
-				MaxWorkers:       tc.maxWorkers,
-			}
-			ansibleFlags.WatchesFile = tc.path
-			watchSlice, err := Load(ansibleFlags)
+			watchSlice, err := Load(tc.path, tc.maxWorkers)
 			if err != nil && !tc.shouldError {
 				t.Fatalf("Error occurred unexpectedly: %v", err)
 			}
