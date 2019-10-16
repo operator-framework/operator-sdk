@@ -50,6 +50,10 @@ The following workflow is for a new **Helm** operator:
 - Optional: [dep][dep_tool] version v0.5.0+.
 - Optional: [delve](https://github.com/go-delve/delve/tree/master/Documentation/installation) version 1.2.0+ (for `up local --enable-delve`).
 
+## Operator capability level
+
+![operator-capability-level](./doc/images/operator-capability-level.png)
+
 ## Quick Start
 
 ### Install the Operator SDK CLI
