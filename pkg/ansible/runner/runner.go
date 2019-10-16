@@ -58,6 +58,12 @@ func New(watch watches.Watch) (Runner, error) {
 	var path string
 	var cmdFunc func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd
 
+	err := watch.Validate()
+	if err != nil {
+		log.Error(err, "Failed to validate watch")
+		return nil, err
+	}
+
 	switch {
 	case watch.Playbook != "":
 		path = watch.Playbook
@@ -119,7 +125,6 @@ type runner struct {
 }
 
 func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig string) (RunResult, error) {
-
 	timer := metrics.ReconcileTimer(r.GVK.String())
 	defer timer.ObserveDuration()
 
