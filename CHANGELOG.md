@@ -2,6 +2,8 @@
 
 ### Added
 
+- Added `Operator Version: X.Y.Z` information in the operator logs.([#1953](https://github.com/operator-framework/operator-sdk/pull/1953))
+
 ### Changed
 
 ### Deprecated
