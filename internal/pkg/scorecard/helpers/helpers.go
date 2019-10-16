@@ -139,6 +139,7 @@ func UpdateState(res scapiv1alpha1.ScorecardTestResult) scapiv1alpha1.ScorecardT
 	if res.State == scapiv1alpha1.ErrorState {
 		return res
 	}
+
 	if res.EarnedPoints == 0 {
 		res.State = scapiv1alpha1.FailState
 	} else if res.EarnedPoints < res.MaximumPoints {
@@ -176,14 +177,4 @@ func UpdateSuiteStates(suite scapiv1alpha1.ScorecardSuiteResult) scapiv1alpha1.S
 		}
 	}
 	return suite
-}
-
-func CombineScorecardOutput(outputs []scapiv1alpha1.ScorecardOutput, log string) scapiv1alpha1.ScorecardOutput {
-	output := scapiv1alpha1.ScorecardOutput{
-		Log: log,
-	}
-	for _, item := range outputs {
-		output.Results = append(output.Results, item.Results...)
-	}
-	return output
 }

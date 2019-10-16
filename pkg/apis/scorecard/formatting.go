@@ -12,32 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package schelpers
+package scorecard
 
 import (
-	"fmt"
-	"strings"
+	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
 
-const v1alpha1 = "v1alpha1"
-const v1alpha2 = "v1alpha2"
+var _ ScorecardFormatter = &scapiv1alpha1.ScorecardOutput{}
+var _ ScorecardFormatter = &scapiv1alpha2.ScorecardOutput{}
 
-const DefaultScorecardVersion = v1alpha2
-const LatestScorecardVersion = v1alpha2
-const VersionOpt = "version"
-
-var ScorecardVersions = []string{v1alpha1, v1alpha2}
-
-func ValidateVersion(version string) error {
-	for _, a := range ScorecardVersions {
-		if a == version {
-			return nil
-		}
-	}
-	return fmt.Errorf("invalid scorecard version (%s); valid values: %s", version, strings.Join(ScorecardVersions, ", "))
-
-}
-
-func IsV1alpha2(version string) bool {
-	return version == v1alpha2
+type ScorecardFormatter interface {
+	MarshalText() (string, error)
 }

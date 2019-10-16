@@ -449,6 +449,7 @@ Run scorecard tests on an operator
 * `proxy-image` string - Image name for scorecard proxy (default "quay.io/operator-framework/scorecard-proxy")
 * `proxy-pull-policy` string - Pull policy for scorecard proxy image (default "Always")
 * `-h, --help` - help for scorecard
+* `version` string - The scorecard version to run (default v1alpha1), the tech preview version is v1alpha2.
 
 ### Example
 
