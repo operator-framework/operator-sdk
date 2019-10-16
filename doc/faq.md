@@ -36,6 +36,19 @@ Add the following to your `deploy/role.yaml` file to grant the operator permissi
   - deployments/finalizers
 ```
 
+## My Ansible module is missing a dependency. How do I add it to the image? 
+
+Unfortunately, adding the entire dependency tree for all Ansible modules would be excessive. Fortunately, you can add it easily. Simply edit your build/Dockerfile. You'll want to change to root for the install command, just be sure to swap back using a series of commands like the following right after the `FROM` line.
+
+```
+USER 0
+RUN yum -y install my-dependency
+RUN pip3 install my-python-dependency
+USER 1001
+```
+
+If you aren't sure what dependencies are required, start up a container using the image in the `FROM` line as root. That's probably look something like this.
+`docker run -u 0 -it --rm --entrypoint /bin/bash quay.io/operator-framework/ansible-operator:v0.11.0`
 
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
 [controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my-reconciler-for-different-types-of-events-eg-create-update-delete
