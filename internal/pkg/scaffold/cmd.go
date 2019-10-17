@@ -198,7 +198,7 @@ func serveCRMetrics(cfg *rest.Config) error {
 	    return err
 	}
 	// Get the namespace the operator is currently deployed in.
-	operatorNs, err := k8sutil.GetOperatorNamespace()
+	operatorNs, err := k8sutil.GetWatchNamespace()
 	if err != nil {
 		return err
 	}
