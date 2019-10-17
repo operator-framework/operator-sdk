@@ -51,6 +51,7 @@ func NewCheckSpecTest(conf BasicTestConfig) *CheckSpecTest {
 			Name:        "Spec Block Exists",
 			Description: "Custom Resource has a Spec Block",
 			Cumulative:  false,
+			Labels:      map[string]string{"required": "true", "suite": "basic"},
 		},
 	}
 }
@@ -69,6 +70,7 @@ func NewCheckStatusTest(conf BasicTestConfig) *CheckStatusTest {
 			Name:        "Status Block Exists",
 			Description: "Custom Resource has a Status Block",
 			Cumulative:  false,
+			Labels:      map[string]string{"required": "true", "suite": "basic"},
 		},
 	}
 }
@@ -87,6 +89,7 @@ func NewWritingIntoCRsHasEffectTest(conf BasicTestConfig) *WritingIntoCRsHasEffe
 			Name:        "Writing into CRs has an effect",
 			Description: "A CR sends PUT/POST requests to the API server to modify resources in response to spec block changes",
 			Cumulative:  false,
+			Labels:      map[string]string{"required": "true", "suite": "basic"},
 		},
 	}
 }

@@ -67,8 +67,7 @@ func ConvertTestResultV1ToV2(v1SuiteName string, v1TestResult scapiv1alpha1.Scor
 	output.Errors = make([]string, len(v1TestResult.Errors))
 	copy(output.Errors, v1TestResult.Errors)
 
-	output.Labels = make(map[string]string)
-	output.Labels["suite"] = v1SuiteName
+	output.Labels = v1TestResult.Labels
 
 	return output
 }
