@@ -47,7 +47,7 @@ RUN pip3 install my-python-dependency
 USER 1001
 ```
 
-If you aren't sure what dependencies are required, start up a container using the image in the `FROM` line as root. That's probably look something like this.
+If you aren't sure what dependencies are required, start up a container using the image in the `FROM` line as root. That will look something like this.
 `docker run -u 0 -it --rm --entrypoint /bin/bash quay.io/operator-framework/ansible-operator:<sdk-tag-version>`
 
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
