@@ -180,7 +180,8 @@ func New(gvk schema.GroupVersionKind, role, playbook string, finalizer *Finalize
 }
 
 // Load - loads a slice of Watches from the watches file from the CLI
-func Load(path string, maxWorkersDefault int) ([]Watch, error) {
+func Load(path string, maxWorkers int) ([]Watch, error) {
+	maxWorkersDefault = maxWorkers
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Error(err, "Failed to get config file")
@@ -269,8 +270,9 @@ func getMaxWorkers(gvk schema.GroupVersionKind, defValue int) int {
 		return defValue
 	}
 
-	if maxWorkers <= 1 {
-		return 1
+	if maxWorkers <= 0 {
+		log.Info("Value %v not valid. Using default %v", maxWorkers, defValue)
+		return defValue
 	}
 	return maxWorkers
 }
