@@ -16,27 +16,29 @@ package helm_test
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/helm/pkg/chartutil"
-	"k8s.io/helm/pkg/proto/hapi/chart"
-	"k8s.io/helm/pkg/repo"
-)
-
-const (
-	repoServerAddr = "127.0.0.1:8879"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/repo/repotest"
 )
 
 func TestCreateChart(t *testing.T) {
+	srv, err := repotest.NewTempServer("testdata/testcharts/*.tgz")
+	if err != nil {
+		t.Fatalf("Failed to create new temp server: %s", err)
+	}
+	defer srv.Stop()
+
+	if err := srv.LinkIndices(); err != nil {
+		t.Fatalf("Failed to link server indices: %s", err)
+	}
+
 	const (
 		chartName          = "test-chart"
 		latestVersion      = "1.2.3"
@@ -47,42 +49,6 @@ func TestCreateChart(t *testing.T) {
 		customExpectName   = "myapp"
 		expectDerivedKind  = "TestChart"
 	)
-
-	testDir, err := ioutil.TempDir("", "osdk-test")
-	if err != nil {
-		t.Fatalf("Failed to create temp test directory: %s", err)
-	}
-	defer os.RemoveAll(testDir)
-
-	helmHomeDir := filepath.Join(testDir, "helmhome")
-	if err := os.Mkdir(helmHomeDir, 0755); err != nil {
-		t.Fatalf("Failed to create temp helm home directory: %s", err)
-	}
-
-	latest, previous, localDir, err := createLocalChartRepo(helmHomeDir, chartName, latestVersion, previousVersion)
-	if err != nil {
-		t.Fatalf("Failed to create local chart repo: %s", err)
-	}
-
-	if err := chartutil.SaveDir(latest.chart, localDir); err != nil {
-		t.Fatalf("Failed to save latest chart as directory: %s", err)
-	}
-	latestDirectory := filepath.Join(localDir, latest.chart.GetMetadata().GetName())
-
-	testRepo := http.Server{
-		Addr:    repoServerAddr,
-		Handler: &repo.RepositoryServer{RepoPath: localDir},
-	}
-
-	var (
-		repoURL       = fmt.Sprintf("http://%s/", testRepo.Addr)
-		repoURLCharts = fmt.Sprintf("http://%s/charts/", testRepo.Addr)
-	)
-
-	testRepoServerErrChan := make(chan error)
-	go func() {
-		testRepoServerErrChan <- testRepo.ListenAndServe()
-	}()
 
 	testCases := []createChartTestCase{
 		{
@@ -100,12 +66,12 @@ func TestCreateChart(t *testing.T) {
 		},
 		{
 			name:          "repo without helm chart",
-			helmChartRepo: repoURL,
+			helmChartRepo: srv.URL(),
 			expectErr:     true,
 		},
 		{
 			name:             "non-existent version",
-			helmChart:        latest.repoAndName,
+			helmChart:        "test/" + chartName,
 			helmChartVersion: nonExistentVersion,
 			expectErr:        true,
 		},
@@ -119,43 +85,43 @@ func TestCreateChart(t *testing.T) {
 		},
 		{
 			name:               "from directory",
-			helmChart:          latestDirectory,
+			helmChart:          "./testdata/testcharts/" + chartName,
 			expectResource:     mustNewResource(t, helm.DefaultAPIVersion, expectDerivedKind),
 			expectChartName:    chartName,
 			expectChartVersion: latestVersion,
 		},
 		{
 			name:               "from archive",
-			helmChart:          latest.archive,
+			helmChart:          fmt.Sprintf("./testdata/testcharts/%s-%s.tgz", chartName, latestVersion),
 			expectResource:     mustNewResource(t, helm.DefaultAPIVersion, expectDerivedKind),
 			expectChartName:    chartName,
 			expectChartVersion: latestVersion,
 		},
 		{
 			name:               "from url",
-			helmChart:          latest.url,
+			helmChart:          fmt.Sprintf("%s/%s-%s.tgz", srv.URL(), chartName, latestVersion),
 			expectResource:     mustNewResource(t, helm.DefaultAPIVersion, expectDerivedKind),
 			expectChartName:    chartName,
 			expectChartVersion: latestVersion,
 		},
 		{
 			name:               "from repo and name implicit latest",
-			helmChart:          latest.repoAndName,
+			helmChart:          "test/" + chartName,
 			expectResource:     mustNewResource(t, helm.DefaultAPIVersion, expectDerivedKind),
 			expectChartName:    chartName,
 			expectChartVersion: latestVersion,
 		},
 		{
 			name:               "from repo and name implicit latest with apiVersion",
-			helmChart:          latest.repoAndName,
+			helmChart:          "test/" + chartName,
 			apiVersion:         customAPIVersion,
-			expectResource:     mustNewResource(t, customAPIVersion, expectDerivedKind),
+			expectResource:     mustNewResource(t, customApiVersion, expectDerivedKind),
 			expectChartName:    chartName,
 			expectChartVersion: latestVersion,
 		},
 		{
 			name:               "from repo and name implicit latest with kind",
-			helmChart:          latest.repoAndName,
+			helmChart:          "test/" + chartName,
 			kind:               customKind,
 			expectResource:     mustNewResource(t, helm.DefaultAPIVersion, customKind),
 			expectChartName:    chartName,
@@ -163,7 +129,7 @@ func TestCreateChart(t *testing.T) {
 		},
 		{
 			name:               "from repo and name implicit latest with apiVersion and kind",
-			helmChart:          latest.repoAndName,
+			helmChart:          "test/" + chartName,
 			apiVersion:         customAPIVersion,
 			kind:               customKind,
 			expectResource:     mustNewResource(t, customAPIVersion, customKind),
@@ -172,7 +138,7 @@ func TestCreateChart(t *testing.T) {
 		},
 		{
 			name:               "from repo and name explicit latest",
-			helmChart:          latest.repoAndName,
+			helmChart:          "test/" + chartName,
 			helmChartVersion:   latestVersion,
 			expectResource:     mustNewResource(t, helm.DefaultAPIVersion, expectDerivedKind),
 			expectChartName:    chartName,
@@ -180,7 +146,7 @@ func TestCreateChart(t *testing.T) {
 		},
 		{
 			name:               "from repo and name explicit previous",
-			helmChart:          previous.repoAndName,
+			helmChart:          "test/" + chartName,
 			helmChartVersion:   previousVersion,
 			expectResource:     mustNewResource(t, helm.DefaultAPIVersion, expectDerivedKind),
 			expectChartName:    chartName,
@@ -189,7 +155,7 @@ func TestCreateChart(t *testing.T) {
 		{
 			name:               "from name and repo url implicit latest",
 			helmChart:          chartName,
-			helmChartRepo:      repoURL,
+			helmChartRepo:      srv.URL(),
 			expectResource:     mustNewResource(t, helm.DefaultAPIVersion, expectDerivedKind),
 			expectChartName:    chartName,
 			expectChartVersion: latestVersion,
@@ -197,7 +163,7 @@ func TestCreateChart(t *testing.T) {
 		{
 			name:               "from name and repo url explicit latest",
 			helmChart:          chartName,
-			helmChartRepo:      repoURL,
+			helmChartRepo:      srv.URL(),
 			helmChartVersion:   latestVersion,
 			expectResource:     mustNewResource(t, helm.DefaultAPIVersion, expectDerivedKind),
 			expectChartName:    chartName,
@@ -206,33 +172,7 @@ func TestCreateChart(t *testing.T) {
 		{
 			name:               "from name and repo url explicit previous",
 			helmChart:          chartName,
-			helmChartRepo:      repoURL,
-			helmChartVersion:   previousVersion,
-			expectResource:     mustNewResource(t, helm.DefaultAPIVersion, expectDerivedKind),
-			expectChartName:    chartName,
-			expectChartVersion: previousVersion,
-		},
-		{
-			name:               "from name and charts repo url implicit latest",
-			helmChart:          chartName,
-			helmChartRepo:      repoURLCharts,
-			expectResource:     mustNewResource(t, helm.DefaultAPIVersion, expectDerivedKind),
-			expectChartName:    chartName,
-			expectChartVersion: latestVersion,
-		},
-		{
-			name:               "from name and charts repo url explicit latest",
-			helmChart:          chartName,
-			helmChartRepo:      repoURLCharts,
-			helmChartVersion:   latestVersion,
-			expectResource:     mustNewResource(t, helm.DefaultAPIVersion, expectDerivedKind),
-			expectChartName:    chartName,
-			expectChartVersion: latestVersion,
-		},
-		{
-			name:               "from name and charts repo url explicit previous",
-			helmChart:          chartName,
-			helmChartRepo:      repoURLCharts,
+			helmChartRepo:      srv.URL(),
 			helmChartVersion:   previousVersion,
 			expectResource:     mustNewResource(t, helm.DefaultAPIVersion, expectDerivedKind),
 			expectChartName:    chartName,
@@ -242,24 +182,9 @@ func TestCreateChart(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			runTestCase(t, testDir, tc)
+			runTestCase(t, srv.Root(), tc)
 		})
 	}
-
-	if err := testRepo.Close(); err != nil {
-		t.Fatalf("Failed to close test repo server: %s", err)
-	}
-
-	if err := <-testRepoServerErrChan; err != nil && err != http.ErrServerClosed {
-		t.Fatalf("Failed to run test repo server: %s", err)
-	}
-}
-
-type testChart struct {
-	chart       *chart.Chart
-	archive     string
-	repoAndName string
-	url         string
 }
 
 type createChartTestCase struct {
@@ -290,6 +215,15 @@ func runTestCase(t *testing.T, testDir string, tc createChartTestCase) {
 	assert.NoError(t, os.Mkdir(outputDir, 0755))
 	defer os.RemoveAll(outputDir)
 
+	os.Setenv("XDG_CONFIG_HOME", filepath.Join(testDir, ".config"))
+	os.Setenv("XDG_CACHE_HOME", filepath.Join(testDir, ".cache"))
+	os.Setenv("HELM_REPOSITORY_CONFIG", filepath.Join(testDir, "repositories.yaml"))
+	os.Setenv("HELM_REPOSITORY_CACHE", filepath.Join(testDir))
+	defer os.Unsetenv("XDG_CONFIG_HOME")
+	defer os.Unsetenv("XDG_CACHE_HOME")
+	defer os.Unsetenv("HELM_REPOSITORY_CONFIG")
+	defer os.Unsetenv("HELM_REPOSITORY_CACHE")
+
 	opts := helm.CreateChartOptions{
 		ResourceAPIVersion: tc.apiVersion,
 		ResourceKind:       tc.kind,
@@ -303,107 +237,17 @@ func runTestCase(t *testing.T, testDir string, tc createChartTestCase) {
 		return
 	}
 
-	assert.NoError(t, err)
+	if !assert.NoError(t, err) {
+		return
+	}
 	assert.Equal(t, tc.expectResource, resource)
-	assert.Equal(t, tc.expectChartName, chart.GetMetadata().GetName())
-	assert.Equal(t, tc.expectChartVersion, chart.GetMetadata().GetVersion())
+	assert.Equal(t, tc.expectChartName, chart.Name())
+	assert.Equal(t, tc.expectChartVersion, chart.Metadata.Version)
 
-	loadedChart, err := chartutil.Load(filepath.Join(outputDir, helm.HelmChartsDir, chart.GetMetadata().GetName()))
+	loadedChart, err := loader.Load(filepath.Join(outputDir, helm.HelmChartsDir, chart.Name()))
 	if err != nil {
 		t.Fatalf("Could not load chart from expected location: %s", err)
 	}
 
 	assert.Equal(t, loadedChart, chart)
-}
-
-func createLocalChartRepo(helmHomeDir, chartName, latestVersion, previousVersion string) (*testChart, *testChart, string, error) {
-	if err := os.Setenv("HELM_HOME", helmHomeDir); err != nil {
-		return nil, nil, "", err
-	}
-
-	var (
-		localURL = fmt.Sprintf("http://%s", repoServerAddr)
-
-		repoDir  = filepath.Join(helmHomeDir, "repository")
-		cacheDir = filepath.Join(helmHomeDir, "repository", "cache")
-		localDir = filepath.Join(helmHomeDir, "repository", "local")
-
-		cacheFilePath  = filepath.Join(helmHomeDir, "repository", "cache", "local-index.yaml")
-		localIndexPath = filepath.Join(helmHomeDir, "repository", "local", "index.yaml")
-		repoFilePath   = filepath.Join(helmHomeDir, "repository", "repositories.yaml")
-	)
-
-	if err := os.MkdirAll(repoDir, 0755); err != nil {
-		return nil, nil, "", err
-	}
-	if err := os.MkdirAll(cacheDir, 0755); err != nil {
-		return nil, nil, "", err
-	}
-	if err := os.MkdirAll(localDir, 0755); err != nil {
-		return nil, nil, "", err
-	}
-	repoFile := repo.RepoFile{
-		APIVersion: "v1",
-		Generated:  time.Now(),
-		Repositories: []*repo.Entry{
-			{
-				Name:  "local",
-				Cache: cacheFilePath,
-				URL:   localURL,
-			},
-		},
-	}
-	if err := repoFile.WriteFile(repoFilePath, 0644); err != nil {
-		return nil, nil, "", err
-	}
-
-	latest, err := createTestChart(localDir, chartName, latestVersion)
-	if err != nil {
-		return nil, nil, "", err
-	}
-
-	previous, err := createTestChart(localDir, chartName, previousVersion)
-	if err != nil {
-		return nil, nil, "", err
-	}
-
-	localIndex, err := repo.IndexDirectory(localDir, localURL+"/charts")
-	if err != nil {
-		return nil, nil, "", err
-	}
-	if err := localIndex.WriteFile(cacheFilePath, 0644); err != nil {
-		return nil, nil, "", err
-	}
-	if err := localIndex.WriteFile(localIndexPath, 0644); err != nil {
-		return nil, nil, "", err
-	}
-	return latest, previous, localDir, nil
-}
-
-func createTestChart(chartsDir, name, version string) (*testChart, error) {
-	dir, err := chartutil.Create(&chart.Metadata{
-		Name:    name,
-		Version: version,
-	}, chartsDir)
-	if err != nil {
-		return nil, fmt.Errorf("could not create test chart directory: %s", err)
-	}
-	defer os.RemoveAll(dir)
-
-	chart, err := chartutil.LoadDir(dir)
-	if err != nil {
-		return nil, fmt.Errorf("could not load chart from directory: %s", err)
-	}
-
-	archive, err := chartutil.Save(chart, chartsDir)
-	if err != nil {
-		return nil, fmt.Errorf("could not save chart archive: %s", err)
-	}
-
-	return &testChart{
-		chart:       chart,
-		archive:     archive,
-		repoAndName: "local/" + chart.GetMetadata().GetName(),
-		url:         fmt.Sprintf("http://%s/charts/%s", repoServerAddr, filepath.Base(archive)),
-	}, nil
 }

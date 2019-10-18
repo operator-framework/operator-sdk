@@ -14,20 +14,21 @@
 
 package engine
 
+/*
 import (
 	"bytes"
 	"fmt"
 	"sort"
 	"strings"
 
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chartutil"
+	"helm.sh/helm/v3/pkg/releaseutil"
+	"helm.sh/helm/v3/pkg/tiller/environment"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/helm/pkg/chartutil"
-	"k8s.io/helm/pkg/proto/hapi/chart"
-	"k8s.io/helm/pkg/releaseutil"
-	"k8s.io/helm/pkg/tiller/environment"
 )
 
 // OwnerRefEngine wraps a tiller Render engine, adding ownerrefs to rendered assets
@@ -147,3 +148,4 @@ func sortManifests(in map[string]string) []string {
 	}
 	return manifests
 }
+*/

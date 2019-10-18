@@ -15,48 +15,51 @@
 package client
 
 import (
+	"helm.sh/helm/v3/pkg/kube"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/discovery"
 	cached "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/helm/pkg/kube"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 // NewFromManager returns a Kubernetes client that can be used with
 // a Tiller server.
 func NewFromManager(mgr manager.Manager) (*kube.Client, error) {
-	c, err := newClientGetter(mgr)
+	c, err := NewRESTClientGetter(mgr)
 	if err != nil {
 		return nil, err
 	}
 	return kube.New(c), nil
 }
 
-type clientGetter struct {
+var _ genericclioptions.RESTClientGetter = &restClientGetter{}
+
+type restClientGetter struct {
 	restConfig      *rest.Config
 	discoveryClient discovery.CachedDiscoveryInterface
 	restMapper      meta.RESTMapper
 }
 
-func (c *clientGetter) ToRESTConfig() (*rest.Config, error) {
+func (c *restClientGetter) ToRESTConfig() (*rest.Config, error) {
 	return c.restConfig, nil
 }
 
-func (c *clientGetter) ToDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
+func (c *restClientGetter) ToDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
 	return c.discoveryClient, nil
 }
 
-func (c *clientGetter) ToRESTMapper() (meta.RESTMapper, error) {
+func (c *restClientGetter) ToRESTMapper() (meta.RESTMapper, error) {
 	return c.restMapper, nil
 }
 
-func (c *clientGetter) ToRawKubeConfigLoader() clientcmd.ClientConfig {
+func (c *restClientGetter) ToRawKubeConfigLoader() clientcmd.ClientConfig {
 	return nil
 }
 
-func newClientGetter(mgr manager.Manager) (*clientGetter, error) {
+func NewRESTClientGetter(mgr manager.Manager) (*restClientGetter, error) {
 	cfg := mgr.GetConfig()
 	dc, err := discovery.NewDiscoveryClientForConfig(cfg)
 	if err != nil {
@@ -65,7 +68,7 @@ func newClientGetter(mgr manager.Manager) (*clientGetter, error) {
 	cdc := cached.NewMemCacheClient(dc)
 	rm := mgr.GetRESTMapper()
 
-	return &clientGetter{
+	return &restClientGetter{
 		restConfig:      cfg,
 		discoveryClient: cdc,
 		restMapper:      rm,

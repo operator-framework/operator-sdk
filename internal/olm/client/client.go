@@ -37,7 +37,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	deploymentutil "k8s.io/kubernetes/pkg/controller/deployment/util"
+	deploymentutil "k8s.io/kubectl/pkg/util/deployment"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )

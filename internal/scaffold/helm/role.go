@@ -24,16 +24,15 @@ import (
 
 	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chartutil"
+	"helm.sh/helm/v3/pkg/releaseutil"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery"
-	"k8s.io/helm/pkg/chartutil"
-	"k8s.io/helm/pkg/manifest"
-	"k8s.io/helm/pkg/proto/hapi/chart"
-	"k8s.io/helm/pkg/renderutil"
-	"k8s.io/helm/pkg/tiller"
 )
 
 // roleDiscoveryInterface is an interface that contains just the discovery
@@ -186,21 +185,34 @@ func getServerVersionAndResources(dc roleDiscoveryInterface) (*version.Info, []*
 	return kubeVersion, serverResources, nil
 }
 
-func getDefaultManifests(c *chart.Chart, kubeVersion *version.Info) ([]tiller.Manifest, error) {
-	v := strings.TrimSuffix(fmt.Sprintf("%s.%s", kubeVersion.Major, kubeVersion.Minor), "+")
-	renderOpts := renderutil.Options{
-		ReleaseOptions: chartutil.ReleaseOptions{
-			IsInstall: true,
-			IsUpgrade: false,
-		},
-		KubeVersion: v,
-	}
-
-	renderedTemplates, err := renderutil.Render(c, &chart.Config{}, renderOpts)
+func getDefaultManifests(c *chart.Chart, kubeVersion *version.Info) ([]releaseutil.Manifest, error) {
+	install := action.NewInstall(&action.Configuration{})
+	install.DryRun = true
+	install.ReleaseName = "RELEASE-NAME"
+	install.Replace = true
+	install.ClientOnly = true
+	rel, err := install.Run(c, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render chart templates: %s", err)
 	}
-	return tiller.SortByKind(manifest.SplitManifests(renderedTemplates)), nil
+	_, manifests, err := releaseutil.SortManifests(releaseutil.SplitManifests(rel.Manifest), chartutil.DefaultVersionSet, releaseutil.InstallOrder)
+	return manifests, err
+	/*
+		v := strings.TrimSuffix(fmt.Sprintf("%s.%s", kubeVersion.Major, kubeVersion.Minor), "+")
+		renderOpts := renderutil.Options{
+			ReleaseOptions: chartutil.ReleaseOptions{
+				IsInstall: true,
+				IsUpgrade: false,
+			},
+			KubeVersion: v,
+		}
+
+		renderedTemplates, err := renderutil.Render(c, &chart.Config{}, renderOpts)
+		if err != nil {
+			return nil, fmt.Errorf("failed to render chart templates: %s", err)
+		}
+		return tiller.SortByKind(releaseutil.SplitManifests(renderedTemplates)), nil
+	*/
 }
 
 func getResource(namespacedResourceList []*metav1.APIResourceList, groupVersion, kind string) (string, bool, bool) {

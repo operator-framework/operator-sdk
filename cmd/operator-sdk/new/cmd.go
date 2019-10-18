@@ -28,6 +28,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
+	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -314,8 +315,13 @@ func doHelmScaffold() error {
 		return fmt.Errorf("failed to create helm chart: %s", err)
 	}
 
-	valuesPath := filepath.Join("<project_dir>", helm.HelmChartsDir, chart.GetMetadata().GetName(), "values.yaml")
-	crSpec := fmt.Sprintf("# Default values copied from %s\n\n%s", valuesPath, chart.GetValues().GetRaw())
+	valuesPath := filepath.Join("<project_dir>", helm.HelmChartsDir, chart.Name(), "values.yaml")
+
+	rawValues, err := yaml.Marshal(chart.Values)
+	if err != nil {
+		return fmt.Errorf("failed to get raw chart values: %s", err)
+	}
+	crSpec := fmt.Sprintf("# Default values copied from %s\n\n%s", valuesPath, rawValues)
 
 	roleScaffold := helm.DefaultRoleScaffold
 	if k8sCfg, err := config.GetConfig(); err != nil {
@@ -331,7 +337,7 @@ func doHelmScaffold() error {
 		&helm.Dockerfile{},
 		&helm.WatchesYAML{
 			Resource:  resource,
-			ChartName: chart.GetMetadata().GetName(),
+			ChartName: chart.Name(),
 		},
 		&scaffold.ServiceAccount{},
 		&roleScaffold,

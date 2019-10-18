@@ -21,9 +21,9 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 
 	"github.com/stretchr/testify/assert"
+	"helm.sh/helm/v3/pkg/chart"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
-	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
 func TestGenerateRoleScaffold(t *testing.T) {
@@ -40,11 +40,18 @@ func TestGenerateRoleScaffold(t *testing.T) {
 
 	testCases := []roleScaffoldTestCase{
 		{
-			name:                   "fallback to default",
+			name:                   "fallback to default with unparsable template",
 			chart:                  failChart(),
 			expectSkipDefaultRules: false,
 			expectIsClusterScoped:  false,
 			expectLenCustomRules:   2,
+		},
+		{
+			name:                   "skip rule for unknown API",
+			chart:                  unknownAPIChart(),
+			expectSkipDefaultRules: true,
+			expectIsClusterScoped:  false,
+			expectLenCustomRules:   3,
 		},
 		{
 			name:                   "namespaced manifest",
@@ -119,10 +126,22 @@ type roleScaffoldTestCase struct {
 func failChart() *chart.Chart {
 	return &chart.Chart{
 		Metadata: &chart.Metadata{
+			Name: "broken",
+		},
+		Templates: []*chart.File{
+			{Name: "broken1.yaml", Data: []byte(`invalid {{ template`)},
+		},
+	}
+}
+
+func unknownAPIChart() *chart.Chart {
+	return &chart.Chart{
+		Metadata: &chart.Metadata{
 			Name: "unknown",
 		},
-		Templates: []*chart.Template{
-			{Name: "broken1.yaml", Data: []byte(`invalid {{ template`)},
+		Templates: []*chart.File{
+			{Name: "unknown1.yaml", Data: testUnknownData("unknown1")},
+			{Name: "pod1.yaml", Data: testPodData("pod1")},
 		},
 	}
 }
@@ -132,8 +151,7 @@ func namespacedChart() *chart.Chart {
 		Metadata: &chart.Metadata{
 			Name: "namespaced",
 		},
-		Templates: []*chart.Template{
-			{Name: "unknown1.yaml", Data: testUnknownData("unknown1")},
+		Templates: []*chart.File{
 			{Name: "pod1.yaml", Data: testPodData("pod1")},
 			{Name: "pod2.yaml", Data: testPodData("pod2")},
 		},
@@ -145,8 +163,7 @@ func clusterScopedChart() *chart.Chart {
 		Metadata: &chart.Metadata{
 			Name: "clusterscoped",
 		},
-		Templates: []*chart.Template{
-			{Name: "unknown1.yaml", Data: testUnknownData("unknown1")},
+		Templates: []*chart.File{
 			{Name: "pod1.yaml", Data: testPodData("pod1")},
 			{Name: "pod2.yaml", Data: testPodData("pod2")},
 			{Name: "ns1.yaml", Data: testNamespaceData("ns1")},
