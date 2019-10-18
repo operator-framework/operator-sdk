@@ -19,9 +19,9 @@ status: implementable
 
 ## Release Signoff Checklist
 
-- [ ] Enhancement is `implementable`
-- [ ] Design details are appropriately documented from clear requirements
-- [ ] Test plan is defined
+- Enhancement is `implementable`
+- Design details are appropriately documented from clear requirements
+- Test plan is defined
 
 
 ## Summary
