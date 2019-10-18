@@ -131,6 +131,7 @@ func TestResultToScorecardTestResult(tr TestResult) scapiv1alpha1.ScorecardTestR
 		stringErrors = append(stringErrors, err.Error())
 	}
 	sctr.Errors = stringErrors
+	sctr.Labels = tr.Test.GetLabels()
 	return sctr
 }
 

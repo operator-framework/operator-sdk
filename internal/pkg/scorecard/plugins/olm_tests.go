@@ -58,6 +58,7 @@ func NewCRDsHaveValidationTest(conf OLMTestConfig) *CRDsHaveValidationTest {
 			Name:        "Provided APIs have validation",
 			Description: "All CRDs have an OpenAPI validation subsection",
 			Cumulative:  true,
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName},
 		},
 	}
 }
@@ -76,6 +77,7 @@ func NewCRDsHaveResourcesTest(conf OLMTestConfig) *CRDsHaveResourcesTest {
 			Name:        "Owned CRDs have resources listed",
 			Description: "All Owned CRDs contain a resources subsection",
 			Cumulative:  true,
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName},
 		},
 	}
 }
@@ -94,6 +96,7 @@ func NewAnnotationsContainExamplesTest(conf OLMTestConfig) *AnnotationsContainEx
 			Name:        "CRs have at least 1 example",
 			Description: "The CSV's metadata contains an alm-examples section",
 			Cumulative:  true,
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName},
 		},
 	}
 }
@@ -112,6 +115,7 @@ func NewSpecDescriptorsTest(conf OLMTestConfig) *SpecDescriptorsTest {
 			Name:        "Spec fields with descriptors",
 			Description: "All spec fields have matching descriptors in the CSV",
 			Cumulative:  true,
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName},
 		},
 	}
 }
@@ -130,6 +134,7 @@ func NewStatusDescriptorsTest(conf OLMTestConfig) *StatusDescriptorsTest {
 			Name:        "Status fields with descriptors",
 			Description: "All status fields have matching descriptors in the CSV",
 			Cumulative:  true,
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName},
 		},
 	}
 }
