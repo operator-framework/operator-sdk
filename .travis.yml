@@ -36,11 +36,6 @@ go:
 # so we can use it to create a bunch of common build step
 # YAML anchors which we use in our build jobs.
 x_base_steps:
-  # before_install for jobs that require dep
-  - &dep_before_install
-    before_install:
-      - travis_retry make tidy
-
   # before_install for jobs that require go builds and do not run for doc-only changes
   - &go_before_install
     before_install:
@@ -151,7 +146,6 @@ jobs:
       name: Unit, Sanity, and Markdown Tests
       # Currently, prow/api-ci tests all PRs that target master; use travis for post merge testing and non-master PRs
       if: type != pull_request OR branch != master
-      <<: *dep_before_install
       script: make test/sanity test/unit test/markdown
       after_success: echo 'Tests Passed'
       after_failure: echo 'Failure in unit, sanity, or markdown test'

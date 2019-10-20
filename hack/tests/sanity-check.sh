@@ -4,6 +4,7 @@ set -ex
 # Make sure repo is in clean state before running go vet
 git diff --exit-code
 
+go mod tidy
 go vet ./...
 go fmt ./...
 
