@@ -59,9 +59,7 @@ require (
 	k8s.io/kube-state-metrics v1.7.2
 	k8s.io/kubernetes v1.15.4
 	sigs.k8s.io/controller-runtime v0.3.0
-	// Bump to v0.2.2 when controller-tools v0.2.2 is released
-	// Required for the bugfix https://github.com/kubernetes-sigs/controller-tools/pull/322
-	sigs.k8s.io/controller-tools v0.2.2-0.20190919011008-6ed4ff330711
+	sigs.k8s.io/controller-tools v0.2.2
 )
 
 // Pin to kubernetes-1.15.4
