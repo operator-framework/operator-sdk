@@ -20,7 +20,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"sync"
 	"testing"
 	"time"
 
@@ -80,13 +79,9 @@ func TestCreateChart(t *testing.T) {
 		repoURLCharts = fmt.Sprintf("http://%s/charts/", testRepo.Addr)
 	)
 
-	var wg sync.WaitGroup
-	wg.Add(1)
+	testRepoServerErrChan := make(chan error)
 	go func() {
-		if err := testRepo.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			t.Fatalf("Failed to run test repo server: %s", err)
-		}
-		wg.Done()
+		testRepoServerErrChan <- testRepo.ListenAndServe()
 	}()
 
 	testCases := []createChartTestCase{
@@ -254,7 +249,10 @@ func TestCreateChart(t *testing.T) {
 	if err := testRepo.Close(); err != nil {
 		t.Fatalf("Failed to close test repo server: %s", err)
 	}
-	wg.Wait()
+
+	if err := <-testRepoServerErrChan; err != nil && err != http.ErrServerClosed {
+		t.Fatalf("Failed to run test repo server: %s", err)
+	}
 }
 
 type testChart struct {

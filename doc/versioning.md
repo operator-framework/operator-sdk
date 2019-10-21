@@ -1,4 +1,4 @@
-# Versioning
+# Versioning for Operator SDK
 
 The following is a concise explanation of how Operator SDK versions are determined. The Operator SDK versioning follows [semantic versioning][link-semver] standards.
 

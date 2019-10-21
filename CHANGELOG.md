@@ -1,8 +1,18 @@
 ## Unreleased
 
+### Added
+
+- Added `Operator Version: X.Y.Z` information in the operator logs.([#1953](https://github.com/operator-framework/operator-sdk/pull/1953))
+
+### Changed
+
+### Deprecated
+
+### Removed
+
 ### Bug Fixes
 
-- The command `operator-sdk olm-catalog gen-csv --csv-version=<version> --update-crds` would fail to copy over CRD manifests into `deploy/olm-catalog` for manifests whose name didn't end with a `_crd.yaml` suffix. This has been fixed so `gen-csv` now copies all CRD manifests specified by `deploy/olm-catalog/csv_config.yaml` by checking the type of the manifest rather than the filename suffix. ([#2015](https://github.com/operator-framework/operator-sdk/pull/2015))
+## v0.11.0
 
 ### Added
 
@@ -12,6 +22,7 @@
 - Ansible based operators now gather and serve metrics about each custom resource on port 8686 of the metrics service. ([#1723](https://github.com/operator-framework/operator-sdk/pull/1723))
 - Added the Go version, OS, and architecture to the output of `operator-sdk version` ([#1863](https://github.com/operator-framework/operator-sdk/pull/1863))
 - Added support for `ppc64le-linux` for the `operator-sdk` binary and the Helm operator base image. ([#1533](https://github.com/operator-framework/operator-sdk/pull/1533))
+- Added new `--version` flag to the `operator-sdk scorecard` command to support a new output format for the scorecard. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
 
 ### Changed
 
@@ -55,6 +66,7 @@
 - [`pkg/test.FrameworkClient`](https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/client.go#L33) methods `List()` and `Delete()` have new signatures corresponding to the homonymous methods of `sigs.k8s.io/controller-runtime/pkg/client.Client`. ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
 - CRD file names were previously of the form `<group>_<version>_<kind>_crd.yaml`. Now that CRD manifest `spec.version` is deprecated in favor of `spec.versions`, i.e. multiple versions can be specified in one CRD, CRD file names have the form `<full group>_<resource>_crd.yaml`. `<full group>` is the full group name of your CRD while `<group>` is the last subdomain of `<full group>`, ex. `foo.bar.com` vs `foo`. `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`. ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
 - Upgrade Python version from `2.7` to `3.6`, Ansible version from `2.8.0` to `~=2.8` and ansible-runner from `1.2` to `1.3.4` in the Ansible based images. ([#1947](https://github.com/operator-framework/operator-sdk/pull/1947)) 
+- Made the default scorecard version `v1alpha2` which is new for this release and could break users that were parsing the older scorecard output (`v1alpha1`).  Users can still specify version `v1alpha1` on the scorecard configuration to use the older style for some period of time until `v1alpha1` is removed.
 - Replaced `pkg/kube-metrics.NewCollectors()` with `pkg/kube-metrics.NewMetricsStores()` and changed exported function signature for `pkg/kube-metrics.ServeMetrics()` due to a [breaking change in kube-state-metrics](https://github.com/kubernetes/kube-state-metrics/pull/786). ([#1943](https://github.com/operator-framework/operator-sdk/pull/1943))
 
 ### Deprecated
@@ -69,6 +81,10 @@
 - In the Helm operator, skip owner reference injection for cluster-scoped resources in release manifests. The Helm operator only supports namespace-scoped CRs, and namespaced resources cannot own cluster-scoped resources. ([#1817](https://github.com/operator-framework/operator-sdk/pull/1817))
 - Package manifests generated with [`gen-csv`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#gen-csv) respect the `--operator-name` flag, channel names are checked for duplicates before (re-)generation. ([#1693](https://github.com/operator-framework/operator-sdk/pull/1693))
 - Generated inventory for Ansible-based Operators now sets the localhost's `ansible_python_interpreter` to `{{ ansible_playbook_python }}`, to properly match the [implicit localhost](https://docs.ansible.com/ansible/latest/inventory/implicit_localhost.html). ([#1952](https://github.com/operator-framework/operator-sdk/pull/1952))
+- Fixed an issue in `operator-sdk olm-catalog gen-csv` where the generated CSV is missing the expected set of owned CRDs. ([#2017](https://github.com/operator-framework/operator-sdk/pull/2017))
+- The command `operator-sdk olm-catalog gen-csv --csv-version=<version> --update-crds` would fail to copy over CRD manifests into `deploy/olm-catalog` for manifests whose name didn't end with a `_crd.yaml` suffix. This has been fixed so `gen-csv` now copies all CRD manifests specified by `deploy/olm-catalog/csv_config.yaml` by checking the type of the manifest rather than the filename suffix. ([#2015](https://github.com/operator-framework/operator-sdk/pull/2015))
+- Added missing `jmespath` dependency to Ansible-based Operator .travis.yml file template. ([#2027](https://github.com/operator-framework/operator-sdk/pull/2027))
+- Fixed invalid usage of `logr.Logger.Info()` in the Ansible-based operator implementation, which caused unnecessary operator panics. ([#2031](https://github.com/operator-framework/operator-sdk/pull/2031))
 
 ## v0.10.0
 

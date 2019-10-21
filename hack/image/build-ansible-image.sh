@@ -6,9 +6,9 @@ source hack/lib/test_lib.sh
 source hack/lib/image_lib.sh
 
 ROOTDIR="$(pwd)"
-GOTMP="$(mktemp -d)"
-trap_add 'rm -rf $GOTMP' EXIT
-BASEIMAGEDIR="$GOTMP/ansible-operator"
+TMPDIR="$(mktemp -d)"
+trap_add 'rm -rf $TMPDIR' EXIT
+BASEIMAGEDIR="$TMPDIR/ansible-operator"
 mkdir -p "$BASEIMAGEDIR"
 go build -o $BASEIMAGEDIR/scaffold-ansible-image ./hack/image/ansible/scaffold-ansible-image.go
 

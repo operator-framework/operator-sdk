@@ -142,6 +142,12 @@ To learn more about the writing an operator in Go, see the [user guide][guide].
 
 The SDK also supports developing an operator using Ansible or Helm. See the [Ansible][ansible_user_guide] and [Helm][helm_user_guide] operator user guides.
 
+### Operator capability level
+
+Note that each operator type has a different set of capabilities. When choosing what type to use for your project, it is important to understand the features and limitations of each of the project types and the use cases for your operator.
+
+![operator-capability-level](./doc/images/operator-capability-level.png)
+
 ## Samples
 
 To explore any operator samples built using the operator-sdk, see the [operator-sdk-samples][samples].

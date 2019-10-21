@@ -16,17 +16,17 @@ package schelpers
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"strings"
 )
 
 const v1alpha1 = "v1alpha1"
 const v1alpha2 = "v1alpha2"
-const DefaultScorecardVersion = v1alpha1
+
+const DefaultScorecardVersion = v1alpha2
 const LatestScorecardVersion = v1alpha2
 const VersionOpt = "version"
 
-var ScorecardVersions = []string{DefaultScorecardVersion, LatestScorecardVersion}
+var ScorecardVersions = []string{v1alpha1, v1alpha2}
 
 func ValidateVersion(version string) error {
 	for _, a := range ScorecardVersions {
@@ -38,16 +38,6 @@ func ValidateVersion(version string) error {
 
 }
 
-func IsV1alpha2() bool {
-	if viper.Sub("scorecard").GetString(VersionOpt) == v1alpha2 {
-		return true
-	}
-	return false
-}
-
-func IsLatestVersion() bool {
-	if viper.Sub("scorecard").GetString(VersionOpt) == LatestScorecardVersion {
-		return true
-	}
-	return false
+func IsV1alpha2(version string) bool {
+	return version == v1alpha2
 }

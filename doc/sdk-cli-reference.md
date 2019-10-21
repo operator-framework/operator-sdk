@@ -1,11 +1,11 @@
-# CLI Guide
+# Operator SDK Command Line Interface (CLI) Reference
 
 ```bash
 Usage:
   operator-sdk [command]
 ```
 
-### Global Flags
+## Global Flags
 
 * `--verbose` - enable debug logging
 
@@ -229,7 +229,7 @@ you will need to rename it before running migrate or manually add it to your Doc
 
 * `--dep-manager` string - Dependency manager the migrated project will use (choices: "dep", "modules") (default "modules")
 * `--header-file` string - Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt
-* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` with Go modules, and cannot be set if `--dep-manager=dep` (e.g. github.com/example-inc/my-opertor)
+* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` with Go modules, and cannot be set if `--dep-manager=dep` (e.g. github.com/example-inc/my-operator)
 
 ### Example
 
@@ -449,6 +449,7 @@ Run scorecard tests on an operator
 * `proxy-image` string - Image name for scorecard proxy (default "quay.io/operator-framework/scorecard-proxy")
 * `proxy-pull-policy` string - Pull policy for scorecard proxy image (default "Always")
 * `-h, --help` - help for scorecard
+* `version` string - The scorecard version to run (default v1alpha1), the tech preview version is v1alpha2.
 
 ### Example
 
