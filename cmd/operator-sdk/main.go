@@ -15,7 +15,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -93,8 +92,8 @@ func checkGoModulesForCmd(cmd *cobra.Command) (err error) {
 	if skipCheckForCmd(cmd) {
 		return nil
 	}
-	// Do not perform this check if the project is non-Go, as they will be
-	// using go modules.
+	// Do not perform this check if the project is non-Go, as they will not
+	// be using go modules.
 	if !projutil.IsOperatorGo() {
 		return nil
 	}
@@ -105,7 +104,7 @@ func checkGoModulesForCmd(cmd *cobra.Command) (err error) {
 		return nil
 	}
 
-	return checkGoModules()
+	return projutil.CheckGoModules()
 }
 
 var commandsToSkip = map[string]struct{}{
@@ -131,16 +130,4 @@ func skipCheckForCmd(cmd *cobra.Command) (skip bool) {
 		}
 	})
 	return skip
-}
-
-func checkGoModules() error {
-	goModOn, err := projutil.GoModOn()
-	if err != nil {
-		return err
-	}
-	if !goModOn {
-		return fmt.Errorf(`using go modules requires GO111MODULE="on", "auto", or unset.` +
-			` More info: https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#go-modules`)
-	}
-	return nil
 }

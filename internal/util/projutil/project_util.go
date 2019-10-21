@@ -256,3 +256,16 @@ func CheckRepo(repo string) error {
 	}
 	return nil
 }
+
+// CheckGoModules ensures that go modules are enabled.
+func CheckGoModules() error {
+	goModOn, err := GoModOn()
+	if err != nil {
+		return err
+	}
+	if !goModOn {
+		return fmt.Errorf(`using go modules requires GO111MODULE="on", "auto", or unset.` +
+			` More info: https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#go-modules`)
+	}
+	return nil
+}

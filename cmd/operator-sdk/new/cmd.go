@@ -178,11 +178,8 @@ func doGoScaffold() error {
 		s.BoilerplatePath = headerFile
 	}
 
-	if goModOn, merr := projutil.GoModOn(); merr != nil {
-		return merr
-	} else if !goModOn {
-		return errors.New(`using go modules requires GO111MODULE="on", "auto", or unset.` +
-			` More info: https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#go-modules`)
+	if err := projutil.CheckGoModules(); err != nil {
+		return err
 	}
 
 	err := s.Execute(cfg,
