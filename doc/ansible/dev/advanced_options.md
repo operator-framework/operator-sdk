@@ -63,7 +63,7 @@ concurrently, which can improve reconciliation performance.
 
 Worker maximums can be set in two ways. Operator **authors and admins**
 can set the max workers default by including extra args to the operator
-container in `operator.yaml`. (Otherwise, the default is 1 worker.)
+container in `deploy/operator.yaml`. (Otherwise, the default is 1 worker.)
 
 **NOTE:** Admins using OLM should use the environment variable instead
 of the extra args.
@@ -79,7 +79,7 @@ of the extra args.
 
 Operator **admins** can override the value by setting an environment
 variable in the format `WORKER_<kind>_<group>`. This variable must be
-all uppercase, and periods are replaced with underscores.
+all uppercase, and periods (e.g. in the group name) are replaced with underscores.
 
 For the memcached operator example, the component parts are retrieved
 with a GET on the operator:
