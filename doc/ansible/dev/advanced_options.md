@@ -55,3 +55,59 @@ ENTRYPOINT ["/usr/local/bin/entrypoint", "--inject-owner-ref=false"]
 If you have created resources without owner reference injection, it is
 possible to manually to update resources following [this
 guide.](./retroactively-owned-resources.md)
+
+## Max Workers
+
+Increasing the number of workers allows events to be processed
+concurrently, which can improve reconciliation performance.
+
+Worker maximums can be set in two ways. Operator **authors and admins**
+can set the max workers default by including extra args to the operator
+container in `deploy/operator.yaml`. (Otherwise, the default is 1 worker.)
+
+**NOTE:** Admins using OLM should use the environment variable instead
+of the extra args.
+
+``` yaml
+- name: operator
+  image: "quay.io/asmacdo/memcached-operator:v0.0.0"
+  imagePullPolicy: "Always"
+  args:
+    - "--max-workers"
+    - "3"
+```
+
+Operator **admins** can override the value by setting an environment
+variable in the format `WORKER_<kind>_<group>`. This variable must be
+all uppercase, and periods (e.g. in the group name) are replaced with underscores.
+
+For the memcached operator example, the component parts are retrieved
+with a GET on the operator:
+
+```bash
+$ kubectl get memcacheds example-memcached -o yaml
+
+apiVersion: cache.example.com/v1alpha1
+kind: Memcached
+metadata:
+  name: example-memcached
+  namespace: default
+```
+
+From this data, we can see that the environment variable will be
+`WORKER_MEMCACHED_CACHE_EXAMPLE_COM`, which we can then add to
+`deploy/operator.yaml`:
+
+``` yaml
+- name: operator
+  image: "quay.io/asmacdo/memcached-operator:v0.0.0"
+  imagePullPolicy: "Always"
+  args:
+    # This default is overridden.
+    - "--max-workers"
+    - "3"
+  env:
+    # This value is used
+    - name: WORKER_MEMCACHED_CACHE_EXAMPLE_COM
+      value: "6"
+```
