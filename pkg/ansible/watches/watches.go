@@ -48,7 +48,8 @@ type Watch struct {
 	Finalizer                   *Finalizer              `yaml:"finalizer"`
 
 	// Not configurable via watches.yaml
-	MaxWorkers int `yaml:"maxWorkers"`
+	MaxWorkers       int `yaml:"maxWorkers"`
+	AnsibleVerbosity int `yaml:"ansibleVerbosity"`
 }
 
 // Finalizer - Expose finalizer to be used by a user.
@@ -68,7 +69,8 @@ var (
 	watchClusterScopedResourcesDefault = false
 
 	// these are overridden by cmdline flags
-	maxWorkersDefault = 1
+	maxWorkersDefault       = 1
+	ansibleVerbosityDefault = 2
 )
 
 // UnmarshalYAML - implements the yaml.Unmarshaler interface for Watch.
@@ -130,6 +132,7 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	w.WatchDependentResources = tmp.WatchDependentResources
 	w.WatchClusterScopedResources = tmp.WatchClusterScopedResources
 	w.Finalizer = tmp.Finalizer
+	w.AnsibleVerbosity = getAnsibleVerbosity(gvk, ansibleVerbosityDefault)
 
 	return nil
 }
@@ -176,12 +179,14 @@ func New(gvk schema.GroupVersionKind, role, playbook string, finalizer *Finalize
 		WatchDependentResources:     watchDependentResourcesDefault,
 		WatchClusterScopedResources: watchClusterScopedResourcesDefault,
 		Finalizer:                   finalizer,
+		AnsibleVerbosity:            ansibleVerbosityDefault,
 	}
 }
 
 // Load - loads a slice of Watches from the watches file from the CLI
-func Load(path string, maxWorkers int) ([]Watch, error) {
+func Load(path string, maxWorkers, ansibleVerbosity int) ([]Watch, error) {
 	maxWorkersDefault = maxWorkers
+	ansibleVerbosityDefault = ansibleVerbosity
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Error(err, "Failed to get config file")
@@ -275,4 +280,31 @@ func getMaxWorkers(gvk schema.GroupVersionKind, defValue int) int {
 		return defValue
 	}
 	return maxWorkers
+}
+
+// if the WORKER_* environment variable is set, use that value.
+// Otherwise, use the value from the CLI.
+func getAnsibleVerbosity(gvk schema.GroupVersionKind, defValue int) int {
+	envVar := strings.ToUpper(strings.Replace(
+		fmt.Sprintf("ANSIBLE_VERBOSITY_%s_%s", gvk.Kind, gvk.Group),
+		".",
+		"_",
+		-1,
+	))
+	ansibleVerbosity, err := strconv.Atoi(os.Getenv(envVar))
+	if err != nil {
+		log.Info("Failed to parse %v from environment. Using default %v", envVar, defValue)
+		return defValue
+	}
+
+	// Use default value when value doesn't make sense
+	if ansibleVerbosity < 0 {
+		log.Info("Value %v not valid. Using default %v", ansibleVerbosity, defValue)
+		return defValue
+	}
+	if ansibleVerbosity > 7 {
+		log.Info("Value %v not valid. Using default %v", ansibleVerbosity, defValue)
+		return defValue
+	}
+	return ansibleVerbosity
 }
