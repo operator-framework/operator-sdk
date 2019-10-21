@@ -1,14 +1,14 @@
-# SDK Code Annotations
+# Code Annotations Proposal for Operator SDK
 
 Implementation Owner: @estroz
 
-Status: Draft
+> Status: **implemented**
+> 
+> This proposal has been implemented. See the PR [#1162](https://github.com/operator-framework/operator-sdk/pull/1162).
 
-[Background](#Background)
-
-[Goals](#Goals)
-
-[Design overview](#Design_overview)
+- [Background](#background)
+- [Goals](#goals)
+- [Design Overview](#design-overview)
 
 ## Background
 
@@ -70,6 +70,6 @@ For an annotation set to be user-friendly, these elements must be kept as simple
 
 [go_build_tags]:https://golang.org/pkg/go/build/#hdr-Build_Constraints
 [k8s_code_gen]:https://blog.openshift.com/kubernetes-deep-dive-code-generation-customresources/
-[olm_csv]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/building-your-csv.md
+[olm_csv]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md
 [sdk_cli_ref_gen_csv]:https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#gen-csv
 [etcd_operator_api]:https://github.com/coreos/etcd-operator/blob/387ece1ca4e9af764c9eb569ff995a21b10ba5ee/pkg/apis/etcd/v1beta2/cluster.go

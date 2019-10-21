@@ -1,5 +1,5 @@
 apiVersion: app.example.com/v1alpha1
-kind: App
+kind: AppService
 metadata:
   name: example-app
 spec:

@@ -18,12 +18,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
-	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
 	catalog "github.com/operator-framework/operator-sdk/internal/pkg/scaffold/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	"github.com/coreos/go-semver/semver"
@@ -107,6 +107,7 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 			CSVVersion:       csvVersion,
 			Channel:          csvChannel,
 			ChannelIsDefault: defaultChannel,
+			OperatorName:     operatorName,
 		},
 	)
 	if err != nil {
@@ -167,13 +168,18 @@ func verifyCSVVersion(version string) error {
 
 func writeCRDsToDir(crdPaths []string, toDir string) error {
 	for _, p := range crdPaths {
-		if !strings.HasSuffix(p, "crd.yaml") {
-			continue
-		}
 		b, err := ioutil.ReadFile(p)
 		if err != nil {
 			return err
 		}
+		typeMeta, err := k8sutil.GetTypeMetaFromBytes(b)
+		if err != nil {
+			return err
+		}
+		if typeMeta.Kind != "CustomResourceDefinition" {
+			continue
+		}
+
 		path := filepath.Join(toDir, filepath.Base(p))
 		err = ioutil.WriteFile(path, b, fileutil.DefaultFileMode)
 		if err != nil {

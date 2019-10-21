@@ -48,6 +48,7 @@ func TestPackageManifest(t *testing.T) {
 		CSVVersion:       csvVer,
 		Channel:          "stable",
 		ChannelIsDefault: true,
+		OperatorName:     projectName,
 	}
 	err = s.Execute(cfg, pm)
 	if err != nil {

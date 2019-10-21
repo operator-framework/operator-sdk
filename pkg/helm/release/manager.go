@@ -27,7 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	apitypes "k8s.io/apimachinery/pkg/types"
-	"k8s.io/cli-runtime/pkg/genericclioptions/resource"
+	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/rest"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/kube"
@@ -144,7 +144,7 @@ func (m *manager) Sync(ctx context.Context) error {
 }
 
 func notFoundErr(err error) bool {
-	return strings.Contains(err.Error(), "not found")
+	return err != nil && strings.Contains(err.Error(), "not found")
 }
 
 func (m manager) loadChartAndConfig() (*cpb.Chart, *cpb.Config, error) {
@@ -326,7 +326,7 @@ func reconcileRelease(ctx context.Context, tillerKubeClient *kube.Client, namesp
 			return nil
 		}
 
-		_, err = helper.Patch(expected.Namespace, expected.Name, apitypes.JSONPatchType, patch, &metav1.UpdateOptions{})
+		_, err = helper.Patch(expected.Namespace, expected.Name, apitypes.JSONPatchType, patch, &metav1.PatchOptions{})
 		if err != nil {
 			return fmt.Errorf("patch error: %s", err)
 		}

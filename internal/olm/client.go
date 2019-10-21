@@ -39,17 +39,11 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-const (
-	olmNamespace = "olm"
-)
-
 var (
-	olmOperatorKey     = types.NamespacedName{Namespace: olmNamespace, Name: "olm-operator"}
-	catalogOperatorKey = types.NamespacedName{Namespace: olmNamespace, Name: "catalog-operator"}
-	packageServerKey   = types.NamespacedName{Namespace: olmNamespace, Name: "packageserver"}
+	olmOperatorKey     = types.NamespacedName{Namespace: olmresourceclient.OLMNamespace, Name: "olm-operator"}
+	catalogOperatorKey = types.NamespacedName{Namespace: olmresourceclient.OLMNamespace, Name: "catalog-operator"}
+	packageServerKey   = types.NamespacedName{Namespace: olmresourceclient.OLMNamespace, Name: "packageserver"}
 )
-
-var ErrOLMNotInstalled = errors.New("no existing installation found")
 
 type Client struct {
 	*olmresourceclient.Client
@@ -136,7 +130,7 @@ func (c Client) UninstallVersion(ctx context.Context, version string) error {
 
 	status := c.GetObjectsStatus(ctx, objs...)
 	if !status.HasExistingResources() {
-		return ErrOLMNotInstalled
+		return olmresourceclient.ErrOLMNotInstalled
 	}
 
 	log.Infof("Uninstalling resources for version %q", version)
@@ -155,7 +149,7 @@ func (c Client) GetStatus(ctx context.Context, version string) (*olmresourceclie
 
 	status := c.GetObjectsStatus(ctx, objs...)
 	if !status.HasExistingResources() {
-		return nil, ErrOLMNotInstalled
+		return nil, olmresourceclient.ErrOLMNotInstalled
 	}
 	return &status, nil
 }

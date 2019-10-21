@@ -1,18 +1,26 @@
-# User Experience CLI Improvements | Phase 1
+# User Experience CLI Improvements | Phase 1 Proposal for Operator SDK
 
 Implementation Owner: @joelanford
 
-Status: Draft
+> Status: **implementable**
 
-[Background](#Background)
-
-[Goal](#Goal)
-
-[Use cases](#Use_cases)
-
-[Proposed CLI commands](#Proposed_CLI_commands)
-
-[References](#References)
+- [Background](#background)
+- [Goal](#goal)
+- [Use cases](#use-cases)
+- [Proposed CLI commands](#proposed-cli-commands)
+  - [`operator-sdk alpha`](#operator-sdk-alpha)
+  - [`operator-sdk alpha olm init`](#operator-sdk-alpha-olm-init)
+    - [OCP/OKD](#ocpokd)
+    - [Upstream Kubernetes](#upstream-kubernetes)
+    - [Flags for `olm init`](#flags-for-olm-init)
+  - [`operator-sdk alpha olm up`](#operator-sdk-alpha-olm-up)
+    - [Prerequisites](#prerequisites)
+    - [Flags for `olm up`](#flags-for-olm-up)
+    - [Resources](#resources)
+- [References](#references)
+  - [Operator SDK](#operator-sdk)
+  - [Operator Registry](#operator-registry)
+  - [Operator Lifecycle Manager](#operator-lifecycle-manager)
 
 ## Background
 
@@ -125,6 +133,6 @@ OLM uses Kubernetes APIs to learn about the set of operators that are available 
 [registry_manifest_format]: https://github.com/operator-framework/operator-registry#manifest-format
 
 [olm_github]: https://github.com/operator-framework/operator-lifecycle-manager
-[olm_arch]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/architecture.md
-[olm_install_modes]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/Documentation/design/operatorgroups.md#installmodes-and-supported-operatorgroups
+[olm_arch]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/architecture.md
+[olm_install_modes]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/operatorgroups.md#installmodes-and-supported-operatorgroups
 

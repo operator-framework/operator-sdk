@@ -26,7 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	discovery "k8s.io/client-go/discovery"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // ForceRunModeEnv indicates if the operator should be forced to run in either local
@@ -160,6 +160,7 @@ func GetGVKsFromAddToScheme(addToSchemeFunc func(*runtime.Scheme) error) ([]sche
 
 func isKubeMetaKind(kind string) bool {
 	if strings.HasSuffix(kind, "List") ||
+		kind == "PatchOptions" ||
 		kind == "GetOptions" ||
 		kind == "DeleteOptions" ||
 		kind == "ExportOptions" ||

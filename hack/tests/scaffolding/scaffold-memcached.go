@@ -26,8 +26,8 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
-	"github.com/pkg/errors"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -77,15 +77,12 @@ func main() {
 		log.Fatalf("Failed to change to %s directory: (%v)", operatorName, err)
 	}
 
-	replace := getGoModReplace(localSDKPath)
-	if replace.repo != sdkRepo {
-		modBytes, err := insertGoModReplace(sdkRepo, replace.repo, replace.ref)
-		if err != nil {
-			log.Fatalf("Failed to insert go.mod replace: %v", err)
-		}
-		log.Printf("go.mod: %v", string(modBytes))
+	// Always use the local SDK path in the go.mod "replace" line.
+	modBytes, err := insertGoModReplaceDir(sdkRepo, localSDKPath)
+	if err != nil {
+		log.Fatalf("Failed to insert go.mod replace: %v", err)
 	}
-
+	log.Printf("go.mod: %v", string(modBytes))
 	cmdOut, err = exec.Command("go", "build", "./...").CombinedOutput()
 	if err != nil {
 		log.Fatalf("Command \"go build ./...\" failed after modifying go.mod: %v\nCommand Output:\n%v", err, string(cmdOut))
@@ -171,6 +168,12 @@ func main() {
 		log.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
+	log.Print("Generating openapi")
+	cmdOut, err = exec.Command("operator-sdk", "generate", "openapi").CombinedOutput()
+	if err != nil {
+		log.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+	}
+
 	log.Print("Pulling new dependencies with go mod")
 	cmdOut, err = exec.Command("go", "build", "./...").CombinedOutput()
 	if err != nil {
@@ -194,65 +197,7 @@ func main() {
 	}
 }
 
-type goModReplace struct {
-	repo string
-	ref  string
-}
-
-// getGoModReplace returns a go.mod replacement that is appropriate based on the build's
-// environment to support PR, fork/branch, and local builds.
-//
-//   PR:
-//     1. Activate when TRAVIS_PULL_REQUEST_SLUG and TRAVIS_PULL_REQUEST_SHA are set
-//     2. Modify go.mod to replace osdk import with github.com/${TRAVIS_PULL_REQUEST_SLUG} ${TRAVIS_PULL_REQUEST_SHA}
-//
-//   Fork/branch:
-//     1. Activate when TRAVIS_REPO_SLUG and TRAVIS_COMMIT are set
-//     2. Modify go.mod to replace osdk import with github.com/${TRAVIS_REPO_SLUG} ${TRAVIS_COMMIT}
-//
-//   Local:
-//     1. Activate when none of the above TRAVIS_* variables are set.
-//     2. Modify go.mod to replace osdk import with local filesystem path.
-//
-func getGoModReplace(localSDKPath string) goModReplace {
-	// PR environment
-	prSlug, prSlugOk := os.LookupEnv("TRAVIS_PULL_REQUEST_SLUG")
-	prSha, prShaOk := os.LookupEnv("TRAVIS_PULL_REQUEST_SHA")
-	if prSlugOk && prSlug != "" && prShaOk && prSha != "" {
-		return goModReplace{
-			repo: fmt.Sprintf("github.com/%s", prSlug),
-			ref:  prSha,
-		}
-	}
-
-	// Fork/branch environment
-	slug, slugOk := os.LookupEnv("TRAVIS_REPO_SLUG")
-	sha, shaOk := os.LookupEnv("TRAVIS_COMMIT")
-	if slugOk && slug != "" && shaOk && sha != "" {
-		return goModReplace{
-			repo: fmt.Sprintf("github.com/%s", slug),
-			ref:  sha,
-		}
-	}
-
-	// If neither of the above cases is applicable, but one of the TRAVIS_*
-	// variables is nonetheless set, something unexpected is going on. Log
-	// the vars and exit.
-	if prSlugOk || prShaOk || slugOk || shaOk {
-		log.Printf("TRAVIS_PULL_REQUEST_SLUG='%s', set: %t", prSlug, prSlugOk)
-		log.Printf("TRAVIS_PULL_REQUEST_SHA='%s', set: %t", prSha, prShaOk)
-		log.Printf("TRAVIS_REPO_SLUG='%s', set: %t", slug, slugOk)
-		log.Printf("TRAVIS_COMMIT='%s', set: %t", sha, shaOk)
-		log.Fatal("Invalid travis environment")
-	}
-
-	// Local environment
-	return goModReplace{
-		repo: localSDKPath,
-	}
-}
-
-func insertGoModReplace(repo, path, sha string) ([]byte, error) {
+func insertGoModReplaceDir(repo, path string) ([]byte, error) {
 	modBytes, err := ioutil.ReadFile("go.mod")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read go.mod")
@@ -262,9 +207,6 @@ func insertGoModReplace(repo, path, sha string) ([]byte, error) {
 	modBytes = replaceRe.ReplaceAll(modBytes, nil)
 	// Append the desired replace to the end of go.mod's bytes.
 	sdkReplace := fmt.Sprintf("replace %s => %s", repo, path)
-	if sha != "" {
-		sdkReplace = fmt.Sprintf("%s %s", sdkReplace, sha)
-	}
 	modBytes = append(modBytes, []byte("\n"+sdkReplace)...)
 	err = ioutil.WriteFile("go.mod", modBytes, fileutil.DefaultFileMode)
 	if err != nil {

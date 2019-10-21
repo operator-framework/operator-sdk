@@ -16,14 +16,11 @@ package scorecard
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/pkg/scorecard"
+	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
 	scplugins "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/plugins"
-	"github.com/operator-framework/operator-sdk/version"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -38,25 +35,16 @@ func NewCmd() *cobra.Command {
 	}
 
 	scorecardCmd.Flags().String(scorecard.ConfigOpt, "", fmt.Sprintf("config file (default is '<project_dir>/%s'; the config file's extension and format can be .yaml, .json, or .toml)", scorecard.DefaultConfigFile))
-	scorecardCmd.Flags().String(scplugins.NamespaceOpt, "", "Namespace of custom resource created in cluster")
 	scorecardCmd.Flags().String(scplugins.KubeconfigOpt, "", "Path to kubeconfig of custom resource created in cluster")
-	scorecardCmd.Flags().Int(scplugins.InitTimeoutOpt, 60, "Timeout for status block on CR to be created in seconds")
-	scorecardCmd.Flags().Bool(scplugins.OlmDeployedOpt, false, "The OLM has deployed the operator. Use only the CSV for test data")
-	scorecardCmd.Flags().String(scplugins.CSVPathOpt, "", "Path to CSV being tested")
-	scorecardCmd.Flags().Bool(scplugins.BasicTestsOpt, true, "Enable basic operator checks")
-	scorecardCmd.Flags().Bool(scplugins.OLMTestsOpt, true, "Enable OLM integration checks")
-	scorecardCmd.Flags().String(scplugins.NamespacedManifestOpt, "", "Path to manifest for namespaced resources (e.g. RBAC and Operator manifest)")
-	scorecardCmd.Flags().String(scplugins.GlobalManifestOpt, "", "Path to manifest for Global resources (e.g. CRD manifests)")
-	scorecardCmd.Flags().StringSlice(scplugins.CRManifestOpt, nil, "Path to manifest for Custom Resource (required) (specify flag multiple times for multiple CRs)")
-	scorecardCmd.Flags().String(scplugins.ProxyImageOpt, fmt.Sprintf("quay.io/operator-framework/scorecard-proxy:%s", strings.TrimSuffix(version.Version, "+git")), "Image name for scorecard proxy")
-	scorecardCmd.Flags().String(scplugins.ProxyPullPolicyOpt, "Always", "Pull policy for scorecard proxy image")
-	scorecardCmd.Flags().String(scplugins.CRDsDirOpt, scaffold.CRDsDir, "Directory containing CRDs (all CRD manifest filenames must have the suffix 'crd.yaml')")
-	scorecardCmd.Flags().StringP(scorecard.OutputFormatOpt, "o", scorecard.HumanReadableOutputFormat, fmt.Sprintf("Output format for results. Valid values: %s, %s", scorecard.HumanReadableOutputFormat, scorecard.JSONOutputFormat))
-	scorecardCmd.Flags().String(scorecard.PluginDirOpt, "scorecard", "Scorecard plugin directory (plugin exectuables must be in a \"bin\" subdirectory")
+	scorecardCmd.Flags().StringP(scorecard.OutputFormatOpt, "o", scorecard.TextOutputFormat, fmt.Sprintf("Output format for results. Valid values: %s, %s", scorecard.TextOutputFormat, scorecard.JSONOutputFormat))
+	scorecardCmd.Flags().String(schelpers.VersionOpt, schelpers.DefaultScorecardVersion, fmt.Sprintf("scorecard version (tech preview version is '%s'", schelpers.LatestScorecardVersion))
 
-	if err := viper.BindPFlags(scorecardCmd.Flags()); err != nil {
-		log.Fatalf("Failed to bind scorecard flags to viper: %v", err)
-	}
+	// TODO: make config file global and make this a top level flag
+	viper.BindPFlag(scorecard.ConfigOpt, scorecardCmd.Flags().Lookup(scorecard.ConfigOpt))
+
+	viper.BindPFlag("scorecard."+scplugins.KubeconfigOpt, scorecardCmd.Flags().Lookup(scplugins.KubeconfigOpt))
+	viper.BindPFlag("scorecard."+scorecard.OutputFormatOpt, scorecardCmd.Flags().Lookup(scorecard.OutputFormatOpt))
+	viper.BindPFlag("scorecard."+schelpers.VersionOpt, scorecardCmd.Flags().Lookup(schelpers.VersionOpt))
 
 	return scorecardCmd
 }

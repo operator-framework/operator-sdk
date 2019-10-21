@@ -2,9 +2,21 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
   annotations:
-    alm-examples: '[{"apiVersion":"cache.example.com/v1alpha1","kind":"Memcached","metadata":{"name":"example-memcached"},"spec":{"size":3}}]'
+    alm-examples: |-
+      [
+        {
+          "apiVersion": "cache.example.com/v1alpha1",
+          "kind": "Memcached",
+          "metadata": {
+            "name": "example-memcached"
+          },
+          "spec": {
+            "size": 3
+          }
+        }
+      ]
     capabilities: Basic Install
-  name: memcachedoperator.v0.0.3
+  name: memcached-operator.v0.0.3
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -42,7 +54,9 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes.phase:reason
       version: v1alpha1
-    - kind: MemcachedRS
+    - description: Represents a cluster of MemcachedRS apps
+      displayName: MemcachedRS App
+      kind: MemcachedRS
       name: memcachedrs.cache.example.com
       version: v1alpha1
       statusDescriptors:

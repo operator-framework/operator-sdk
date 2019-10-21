@@ -321,12 +321,12 @@ func getGVKID(g, v, k string) string {
 // the CRD key is not in spec.customresourcedefinitions.owned already.
 func (u *CustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	set := make(map[string]olmapiv1alpha1.CRDDescription)
-	for _, uDesc := range u.Owned {
-		set[crdDescID(uDesc)] = uDesc
+	for _, csvDesc := range csv.Spec.CustomResourceDefinitions.Owned {
+		set[crdDescID(csvDesc)] = csvDesc
 	}
 	newDescs := []olmapiv1alpha1.CRDDescription{}
-	for _, csvDesc := range csv.Spec.CustomResourceDefinitions.Owned {
-		if uDesc, ok := set[crdDescID(csvDesc)]; !ok {
+	for _, uDesc := range u.Owned {
+		if csvDesc, ok := set[crdDescID(uDesc)]; !ok {
 			newDescs = append(newDescs, uDesc)
 		} else {
 			newDescs = append(newDescs, csvDesc)
@@ -361,16 +361,26 @@ func (u *ALMExamplesUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) err
 	if csv.GetAnnotations() == nil {
 		csv.SetAnnotations(make(map[string]string))
 	}
-	sb := &strings.Builder{}
-	sb.WriteString(`[`)
+	buf := &bytes.Buffer{}
+	buf.WriteString(`[`)
 	for i, example := range u.crs {
-		sb.WriteString(example)
+		buf.WriteString(example)
 		if i < len(u.crs)-1 {
-			sb.WriteString(`,`)
+			buf.WriteString(`,`)
 		}
 	}
-	sb.WriteString(`]`)
-
-	csv.GetAnnotations()["alm-examples"] = sb.String()
+	buf.WriteString(`]`)
+	examplesJSON, err := prettyJSON(buf.Bytes())
+	if err != nil {
+		return err
+	}
+	csv.GetAnnotations()["alm-examples"] = examplesJSON
 	return nil
+}
+
+// prettyJSON returns a JSON in a pretty format
+func prettyJSON(b []byte) (string, error) {
+	var out bytes.Buffer
+	err := json.Indent(&out, b, "", "  ")
+	return out.String(), err
 }

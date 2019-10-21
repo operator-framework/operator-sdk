@@ -18,7 +18,6 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"github.com/spf13/viper"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -39,21 +38,33 @@ const (
 	OLMTestsOpt           = "olm-tests"
 )
 
-func validateScorecardPluginFlags(config *viper.Viper) error {
-	if !config.GetBool(OlmDeployedOpt) && len(config.GetStringSlice(CRManifestOpt)) == 0 {
+type BasicAndOLMPluginConfig struct {
+	Namespace          string        `mapstructure:"namespace"`
+	Kubeconfig         string        `mapstructure:"kubeconfig"`
+	InitTimeout        int           `mapstructure:"init-timeout"`
+	OLMDeployed        bool          `mapstructure:"olm-deployed"`
+	NamespacedManifest string        `mapstructure:"namespaced-manifest"`
+	GlobalManifest     string        `mapstructure:"global-manifest"`
+	CRManifest         []string      `mapstructure:"cr-manifest"`
+	CSVManifest        string        `mapstructure:"csv-path"`
+	ProxyImage         string        `mapstructure:"proxy-image"`
+	ProxyPullPolicy    v1.PullPolicy `mapstructure:"proxy-pull-policy"`
+	CRDsDir            string        `mapstructure:"crds-dir"`
+	DeployDir          string        `mapstructure:"deploy-dir"`
+}
+
+func validateScorecardPluginFlags(config BasicAndOLMPluginConfig, pluginType PluginType) error {
+	if !config.OLMDeployed && len(config.CRManifest) == 0 {
 		return errors.New("cr-manifest config option must be set")
 	}
-	if !config.GetBool(BasicTestsOpt) && !config.GetBool(OLMTestsOpt) {
-		return errors.New("at least one test type must be set")
-	}
-	if config.GetBool(OLMTestsOpt) && config.GetString(CSVPathOpt) == "" {
+	if pluginType == OLMIntegration && config.CSVManifest == "" {
 		return fmt.Errorf("csv-path must be set if olm-tests is enabled")
 	}
-	if config.GetBool(OlmDeployedOpt) && config.GetString(CSVPathOpt) == "" {
+	if config.OLMDeployed && config.CSVManifest == "" {
 		return fmt.Errorf("csv-path must be set if olm-deployed is enabled")
 	}
-	pullPolicy := config.GetString(ProxyPullPolicyOpt)
-	if pullPolicy != string(v1.PullAlways) && pullPolicy != string(v1.PullNever) && pullPolicy != string(v1.PullIfNotPresent) {
+	pullPolicy := config.ProxyPullPolicy
+	if pullPolicy != v1.PullAlways && pullPolicy != v1.PullNever && pullPolicy != v1.PullIfNotPresent {
 		return fmt.Errorf("invalid proxy pull policy: (%s); valid values: %s, %s, %s", pullPolicy, v1.PullAlways, v1.PullNever, v1.PullIfNotPresent)
 	}
 	return nil

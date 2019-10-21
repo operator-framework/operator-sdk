@@ -9,8 +9,8 @@ eval IMAGE=$IMAGE_FORMAT
 component="osdk-helm-e2e-hybrid"
 eval IMAGE2=$IMAGE_FORMAT
 ROOTDIR="$(pwd)"
-GOTMP="$(mktemp -d -p $GOPATH/src)"
-trap_add 'rm -rf $GOTMP' EXIT
+TMPDIR="$(mktemp -d)"
+trap_add 'rm -rf $TMPDIR' EXIT
 
 mkdir -p $ROOTDIR/bin
 export PATH=$ROOTDIR/bin:$PATH
@@ -32,7 +32,7 @@ deploy_operator() {
     kubectl create -f "$OPERATORDIR/deploy/service_account.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
-    kubectl create -f "$OPERATORDIR/deploy/crds/helm_v1alpha1_nginx_crd.yaml"
+    kubectl create -f "$OPERATORDIR/deploy/crds/helm.example.com_nginxes_crd.yaml"
     kubectl create -f "$OPERATORDIR/deploy/operator.yaml"
 }
 
@@ -40,11 +40,13 @@ remove_operator() {
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/service_account.yaml"
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/role.yaml"
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/role_binding.yaml"
-    kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/helm_v1alpha1_nginx_crd.yaml"
+    kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/helm.example.com_nginxes_crd.yaml"
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/operator.yaml"
 }
 
 test_operator() {
+    local metrics_test_image="registry.access.redhat.com/ubi8/ubi-minimal:latest"
+
     # wait for operator pod to run
     if ! timeout 1m kubectl rollout status deployment/nginx-operator;
     then
@@ -61,7 +63,7 @@ test_operator() {
     fi
 
     # verify that the metrics endpoint exists
-    if ! timeout 1m bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=registry.access.redhat.com/ubi7/ubi-minimal:latest -- curl -sfo /dev/null http://nginx-operator-metrics:8383/metrics; do sleep 1; done";
+    if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl -sfo /dev/null http://nginx-operator-metrics:8383/metrics; do sleep 1; done";
     then
         echo "Failed to verify that metrics endpoint exists"
         kubectl logs deployment/nginx-operator
@@ -69,10 +71,18 @@ test_operator() {
     fi
 
     # create CR
-    kubectl create -f deploy/crds/helm_v1alpha1_nginx_cr.yaml
-    trap_add 'kubectl delete --ignore-not-found -f ${OPERATORDIR}/deploy/crds/helm_v1alpha1_nginx_cr.yaml' EXIT
+    kubectl create -f deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml
+    trap_add 'kubectl delete --ignore-not-found -f ${OPERATORDIR}/deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml' EXIT
     if ! timeout 1m bash -c -- 'until kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.deployedRelease.name}" | grep "example-nginx"; do sleep 1; done';
     then
+        kubectl logs deployment/nginx-operator
+        exit 1
+    fi
+
+    # verify that the custom resource metrics endpoint exists
+    if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never test-cr-metrics --image=$metrics_test_image -- curl -sfo /dev/null http://nginx-operator-metrics:8686/metrics; do sleep 1; done";
+    then
+        echo "Failed to verify that custom resource metrics endpoint exists"
         kubectl logs deployment/nginx-operator
         exit 1
     fi
@@ -113,7 +123,7 @@ test_operator() {
         exit 1
     fi
 
-    kubectl delete -f deploy/crds/helm_v1alpha1_nginx_cr.yaml --wait=true
+    kubectl delete -f deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml --wait=true
     kubectl logs deployment/nginx-operator | grep "Uninstalled release" | grep "${release_name}"
 }
 
@@ -126,7 +136,7 @@ if oc api-versions | grep openshift; then
 fi
 
 # create and build the operator
-pushd "$GOTMP"
+pushd "$TMPDIR"
 operator-sdk new nginx-operator --api-version=helm.example.com/v1alpha1 --kind=Nginx --type=helm
 
 pushd nginx-operator

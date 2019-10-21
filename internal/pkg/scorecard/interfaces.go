@@ -18,110 +18,86 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
+	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
 	scplugins "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/plugins"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
-
-	"github.com/spf13/viper"
+	"github.com/operator-framework/operator-sdk/version"
+	v1 "k8s.io/api/core/v1"
 )
 
 type Plugin interface {
-	Name() string
 	Run() scapiv1alpha1.ScorecardOutput
 }
 
-type genericPlugin struct {
-	binPath string
+type externalPlugin struct {
+	config externalPluginConfig
 }
 
-type internalPlugin struct {
-	name       string
+type basicOrOLMPlugin struct {
 	pluginType scplugins.PluginType
+	config     scplugins.BasicAndOLMPluginConfig
 }
 
-func (p genericPlugin) Name() string {
-	return filepath.Base(p.binPath)
-}
-
-func (p genericPlugin) Run() scapiv1alpha1.ScorecardOutput {
-	// This should never error since we chdir in getPlugins()
-	if err := os.Chdir(viper.GetString(PluginDirOpt)); err != nil {
-		name := fmt.Sprintf("Failed Plugin: %s", filepath.Base(p.binPath))
-		description := fmt.Sprintf("Plugin with file name `%s` failed", filepath.Base(p.binPath))
-		logs := fmt.Sprintf("failed to chdir into scorecard plugin directory: %v", err)
-		// output error to main logger as well for human-readable output
-		log.Errorf("Failed to chdir into scorecard plugin directory: %v", err)
-		return failedPlugin(name, description, logs)
+func (p externalPlugin) Run() scapiv1alpha1.ScorecardOutput {
+	cmd := exec.Command(p.config.Command, p.config.Args...)
+	for _, env := range p.config.Env {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", env.Name, env.Value))
 	}
-	cmd := exec.Command(p.binPath)
 	stdout := &bytes.Buffer{}
 	cmd.Stdout = stdout
 	stderr := &bytes.Buffer{}
 	cmd.Stderr = stderr
 	err := cmd.Run()
 	if err != nil {
-		name := fmt.Sprintf("Failed Plugin: %s", filepath.Base(p.binPath))
-		description := fmt.Sprintf("Plugin with file name `%s` failed", filepath.Base(p.binPath))
-		logs := fmt.Sprintf("%s:\nStdout: %s\nStderr: %s", err, string(stdout.Bytes()), string(stderr.Bytes()))
+		name := filepath.Base(p.config.Command)
+		logs := fmt.Sprintf("%s\nError: %s\nStdout: %s\nStderr: %s", p.config, err, stdout.String(), stderr.String())
 		// output error to main logger as well for human-readable output
-		log.Errorf("Plugin `%s` failed with error (%v)", filepath.Base(p.binPath), err)
-		return failedPlugin(name, description, logs)
+		log.Errorf("Plugin `%s` failed\nLogs: %s", filepath.Base(p.config.Command), logs)
+		return failedPlugin(name, logs)
 	}
 	// parse output and add to suites
 	result := scapiv1alpha1.ScorecardOutput{}
 	err = json.Unmarshal(stdout.Bytes(), &result)
 	if err != nil {
-		name := fmt.Sprintf("Plugin output invalid: %s", filepath.Base(p.binPath))
-		description := fmt.Sprintf("Plugin with file name %s did not produce valid ScorecardOutput JSON", filepath.Base(p.binPath))
-		logs := fmt.Sprintf("%s:\nStdout: %s\nStderr: %s", err, string(stdout.Bytes()), string(stderr.Bytes()))
+		name := filepath.Base(p.config.Command)
+		logs := fmt.Sprintf("%s\nError: %s\nStdout: %s\nStderr: %s", p.config, err, stdout.String(), stderr.String())
 		// output error to main logger as well for human-readable output
-		log.Errorf("Output from plugin `%s` failed to unmarshal with error (%v)", filepath.Base(p.binPath), err)
-		return failedPlugin(name, description, logs)
+		log.Errorf("Output from plugin `%s` failed to unmarshal\nLogs: %s", filepath.Base(p.config.Command), logs)
+		return failedPlugin(name, logs)
 	}
-	stderrString := string(stderr.Bytes())
+	stderrString := stderr.String()
 	if len(stderrString) != 0 {
 		log.Warn(stderrString)
 	}
 	return result
 }
 
-var basicTestsPlugin = internalPlugin{
-	name:       scplugins.BasicTestsOpt,
+var basicTestsPlugin = basicOrOLMPlugin{
 	pluginType: scplugins.BasicOperator,
 }
 
-var olmTestsPlugin = internalPlugin{
-	name:       scplugins.OLMTestsOpt,
+var olmTestsPlugin = basicOrOLMPlugin{
 	pluginType: scplugins.OLMIntegration,
 }
 
-func (p internalPlugin) Name() string {
-	return p.name
-}
-
-func (p internalPlugin) Run() scapiv1alpha1.ScorecardOutput {
-	// This shouldn't error since we started in the rootDir
-	if err := os.Chdir(rootDir); err != nil {
-		name := fmt.Sprintf("Failed Plugin: %s", p.name)
-		description := fmt.Sprintf("Internal plugin `%s` failed", p.name)
-		logs := fmt.Sprintf("failed to chdir into project root directory: %v", err)
-		// output error to main logger as well for human-readable output
-		log.Errorf("Failed to chdir into project root directory: %v", err)
-		return failedPlugin(name, description, logs)
-	}
-	// TODO: make individual viper configs
+func (p basicOrOLMPlugin) Run() scapiv1alpha1.ScorecardOutput {
 	pluginLogs := &bytes.Buffer{}
-	res, err := scplugins.RunInternalPlugin(p.pluginType, viper.GetViper(), pluginLogs)
+	res, err := scplugins.RunInternalPlugin(p.pluginType, p.config, pluginLogs)
 	if err != nil {
-		name := fmt.Sprintf("Failed Plugin: %s", p.name)
-		description := fmt.Sprintf("Internal plugin `%s` failed", p.name)
+		var name string
+		if p.pluginType == scplugins.BasicOperator {
+			name = fmt.Sprintf("Basic Tests")
+		} else if p.pluginType == scplugins.OLMIntegration {
+			name = fmt.Sprintf("OLM Integration")
+		}
 		logs := fmt.Sprintf("%s:\nLogs: %s", err, pluginLogs.String())
 		// output error to main logger as well for human-readable output
-		log.Errorf("Plugin `%s` failed with error (%v)", p.name, err)
-		return failedPlugin(name, description, logs)
+		log.Errorf("Plugin `%s` failed with error (%v)", name, err)
+		return failedPlugin(name, logs)
 	}
 	stderrString := pluginLogs.String()
 	if len(stderrString) != 0 {
@@ -130,14 +106,31 @@ func (p internalPlugin) Run() scapiv1alpha1.ScorecardOutput {
 	return res
 }
 
-func failedPlugin(name, desc, log string) scapiv1alpha1.ScorecardOutput {
+// setConfigDefaults sets certain config fields to default values if they are not set
+func setConfigDefaults(config *scplugins.BasicAndOLMPluginConfig, kubeconfig string) {
+	if config.InitTimeout == 0 {
+		config.InitTimeout = 60
+	}
+	if config.ProxyImage == "" {
+		config.ProxyImage = fmt.Sprintf("quay.io/operator-framework/scorecard-proxy:%s", strings.TrimSuffix(version.Version, "+git"))
+	}
+	if config.ProxyPullPolicy == "" {
+		config.ProxyPullPolicy = v1.PullAlways
+	}
+	if config.CRDsDir == "" {
+		config.CRDsDir = scaffold.CRDsDir
+	}
+	if config.Kubeconfig == "" {
+		config.Kubeconfig = kubeconfig
+	}
+}
+
+func failedPlugin(name, log string) scapiv1alpha1.ScorecardOutput {
 	return scapiv1alpha1.ScorecardOutput{
 		Results: []scapiv1alpha1.ScorecardSuiteResult{{
-			Name:        name,
-			Description: desc,
-			Error:       1,
-			Log:         log,
-		},
-		},
+			Name:  name,
+			Error: 1,
+			Log:   log,
+		}},
 	}
 }

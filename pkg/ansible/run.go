@@ -19,12 +19,8 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"strconv"
-	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/controller"
-	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
-	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/watches"
@@ -32,21 +28,26 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	"github.com/operator-framework/operator-sdk/pkg/restmapper"
-	sdkVersion "github.com/operator-framework/operator-sdk/version"
-	"k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
-
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+
+	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
+	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
+	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
+	sdkVersion "github.com/operator-framework/operator-sdk/version"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var (
-	log               = logf.Log.WithName("cmd")
-	metricsPort int32 = 8383
+	metricsHost               = "0.0.0.0"
+	log                       = logf.Log.WithName("cmd")
+	metricsPort         int32 = 8383
+	operatorMetricsPort int32 = 8686
 )
 
 func printVersion() {
@@ -79,15 +80,16 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	mgr, err := manager.New(cfg, manager.Options{
 		Namespace:          namespace,
 		MapperProvider:     restmapper.NewDynamicRESTMapper,
-		MetricsBindAddress: fmt.Sprintf("0.0.0.0:%d", metricsPort),
+		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
 	})
 	if err != nil {
 		log.Error(err, "Failed to create a new manager.")
 		return err
 	}
 
+	var gvks []schema.GroupVersionKind
 	cMap := controllermap.NewControllerMap()
-	watches, err := watches.Load(flags.WatchesFile)
+	watches, err := watches.Load(flags.WatchesFile, flags.MaxWorkers)
 	if err != nil {
 		log.Error(err, "Failed to load watches.")
 		return err
@@ -103,7 +105,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 			GVK:             w.GroupVersionKind,
 			Runner:          runner,
 			ManageStatus:    w.ManageStatus,
-			MaxWorkers:      getMaxWorkers(w.GroupVersionKind, flags.MaxWorkers),
+			MaxWorkers:      w.MaxWorkers,
 			ReconcilePeriod: w.ReconcilePeriod,
 		})
 		if ctr == nil {
@@ -116,6 +118,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 			OwnerWatchMap:               controllermap.NewWatchMap(),
 			AnnotationWatchMap:          controllermap.NewWatchMap(),
 		})
+		gvks = append(gvks, w.GroupVersionKind)
 	}
 
 	operatorName, err := k8sutil.GetOperatorName()
@@ -131,8 +134,16 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 		return err
 	}
 
+	// Generates operator specific metrics based on the GVKs.
+	// It serves those metrics on "http://metricsHost:operatorMetricsPort".
+	err = kubemetrics.GenerateAndServeCRMetrics(cfg, []string{namespace}, gvks, metricsHost, operatorMetricsPort)
+	if err != nil {
+		log.Info("Could not generate and serve custom resource metrics", "error", err.Error())
+	}
+
 	// Add to the below struct any other metrics ports you want to expose.
 	servicePorts := []v1.ServicePort{
+		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
 		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
 	}
 	// Create Service object to expose the metrics port(s).
@@ -174,29 +185,4 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	}
 	log.Info("Exiting.")
 	return nil
-}
-
-// if the WORKER_* environment variable is set, use that value.
-// Otherwise, use the value from the CLI. This is definitely
-// counter-intuitive but it allows the operator admin adjust the
-// number of workers based on their cluster resources. While the
-// author may use the CLI option to specify a suggested
-// configuration for the operator.
-func getMaxWorkers(gvk schema.GroupVersionKind, defValue int) int {
-	envVar := strings.ToUpper(strings.Replace(
-		fmt.Sprintf("WORKER_%s_%s", gvk.Kind, gvk.Group),
-		".",
-		"_",
-		-1,
-	))
-	switch maxWorkers, err := strconv.Atoi(os.Getenv(envVar)); {
-	case maxWorkers <= 1:
-		return 1
-	case err != nil:
-		// we don't care why we couldn't parse it just use default
-		log.Info("Failed to parse %v from environment. Using default %v", envVar, defValue)
-		return defValue
-	default:
-		return maxWorkers
-	}
 }

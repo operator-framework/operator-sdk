@@ -32,7 +32,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var log = logf.Log.WithName("runner")
@@ -57,6 +57,12 @@ func New(watch watches.Watch) (Runner, error) {
 	// handle role or playbook
 	var path string
 	var cmdFunc func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd
+
+	err := watch.Validate()
+	if err != nil {
+		log.Error(err, "Failed to validate watch")
+		return nil, err
+	}
 
 	switch {
 	case watch.Playbook != "":
@@ -119,7 +125,6 @@ type runner struct {
 }
 
 func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig string) (RunResult, error) {
-
 	timer := metrics.ReconcileTimer(r.GVK.String())
 	defer timer.ObserveDuration()
 

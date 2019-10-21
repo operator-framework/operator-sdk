@@ -1,14 +1,13 @@
-# Plugin System for the Operator Scorecard
+# Plugin System for the `operator-sdk scorecard` feature Proposal for Operator SDK 
 
 Implementation Owner: AlexNPavel
 
-Status: Draft
+> Status: **implementable**
 
-[Background](#Background)
-
-[Goals](#Goals)
-
-[Design overview](#Design_overview)
+- [Background](#background)
+- [Goals](#goals)
+- [Design Overview](#design-overview)
+  - [Plugin System](#plugin-system)
 
 ## Background
 

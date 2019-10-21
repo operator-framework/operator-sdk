@@ -28,6 +28,7 @@ import (
 type Test interface {
 	GetName() string
 	GetDescription() string
+	GetLabels() map[string]string
 	IsCumulative() bool
 	Run(context.Context) *TestResult
 }
@@ -49,6 +50,7 @@ type TestInfo struct {
 	// If a test is set to cumulative, the scores of multiple runs of the same test on separate CRs are added together for the total score.
 	// If cumulative is false, if any test failed, the total score is 0/1. Otherwise 1/1.
 	Cumulative bool
+	Labels     map[string]string
 }
 
 // GetName return the test name
@@ -56,6 +58,9 @@ func (i TestInfo) GetName() string { return i.Name }
 
 // GetDescription returns the test description
 func (i TestInfo) GetDescription() string { return i.Description }
+
+// GetLabels returns the labels for this test
+func (i TestInfo) GetLabels() map[string]string { return i.Labels }
 
 // IsCumulative returns true if the test's scores are intended to be cumulative
 func (i TestInfo) IsCumulative() bool { return i.Cumulative }

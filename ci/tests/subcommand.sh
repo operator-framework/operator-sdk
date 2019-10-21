@@ -20,7 +20,5 @@ oc version
 
 make install
 
-./hack/tests/test-subcommand.sh
-./ci/tests/scorecard-subcommand.sh
-# This can't run in openshift-ci because the test cluster already has OLM installed.
-#./hack/tests/alpha-olm-subcommands.sh
+./hack/tests/subcommand.sh
+./ci/tests/subcommand-scorecard.sh
