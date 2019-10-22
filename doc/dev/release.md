@@ -196,12 +196,6 @@ $ git checkout -b release-v1.3.0
 Commit the following changes:
 
 - `version/version.go`: update `Version` to `v1.3.0`.
-- `internal/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
-  - Comment out `branch = "master"`
-  - Un-comment `version = "v1.2.0"`
-  - Change `v1.2.0` to `v1.3.0`
-- `internal/scaffold/ansible/gopkgtoml.go`: same as for `internal/scaffold/gopkgtoml.go`.
-- `internal/scaffold/helm/gopkgtoml.go`: same as for `internal/scaffold/gopkgtoml.go`.
 - `internal/scaffold/go_mod.go`, in the `replace` block for `github.com/operator-framework/operator-sdk`:
   - Add the following `replace` line to the bottom of `go.mod`: `replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v1.3.0`.
   - If a `replace` line already exists, change the version to `v1.3.0`.
@@ -243,11 +237,6 @@ Once this tag passes CI, go to step 3. For more info on tagging, see the [releas
 Check out a new branch from master (or use your `release-v1.3.0` branch) and commit the following changes:
 
 - `version/version.go`: update `Version` to `v1.3.0+git`.
-- `internal/scaffold/gopkgtoml.go`, under the `[[constraint]]` for `github.com/operator-framework/operator-sdk`:
-  - Comment out `version = "v1.3.0"`
-  - Un-comment `branch = "master"`
-- `internal/scaffold/ansible/gopkgtoml.go`: same as for `internal/scaffold/gopkgtoml.go`.
-- `internal/scaffold/helm/gopkgtoml.go`: same as for `internal/scaffold/gopkgtoml.go`.
 - `internal/scaffold/go_mod.go`, in the `replace` block for `github.com/operator-framework/operator-sdk`:
   - Remove the `replace` line at the bottom of `go.mod`: `replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v1.3.0`.
 - `internal/scaffold/helm/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
@@ -298,7 +287,7 @@ To github.com:operator-framework/operator-sdk.git
  * [new branch]      v1.3.x -> v1.3.x
 ```
 
-Now that the branch exists, you need to make the post-release PR for the new release branch. To do this, simply follow the same steps as in [step 3](#3-create-a-pr-for-post-release-version-and-changelogmd-updates) with the addition of changing the branch name in the `gopkgtoml` scaffold from `master` to the new branch (for example, `v1.3.x`). Then, make the PR against the new branch.
+Now that the branch exists, you need to make the post-release PR for the new release branch. To do this, simply follow the same steps as in [step 3](#3-create-a-pr-for-post-release-version-and-changelogmd-updates) with the addition of changing the branch name in the `go.mod` scaffold from `master` to the new branch (for example, `v1.3.x`). Then, make the PR against the new branch.
 
 ### 6. Updating the Homebrew formula
 
