@@ -256,7 +256,7 @@ func verifyAnsiblePath(playbook string, role string) error {
 }
 
 // if the WORKER_* environment variable is set, use that value.
-// Otherwise, use the value from the CLI. This is definitely
+// Otherwise, use defValue. This is definitely
 // counter-intuitive but it allows the operator admin adjust the
 // number of workers based on their cluster resources. While the
 // author may use the CLI option to specify a suggested
@@ -282,8 +282,8 @@ func getMaxWorkers(gvk schema.GroupVersionKind, defValue int) int {
 	return maxWorkers
 }
 
-// if the WORKER_* environment variable is set, use that value.
-// Otherwise, use the value from the CLI.
+// if the ANSIBLE_VERBOSITY_* environment variable is set, use that value.
+// Otherwise, use defValue.
 func getAnsibleVerbosity(gvk schema.GroupVersionKind, defValue int) int {
 	envVar := strings.ToUpper(strings.Replace(
 		fmt.Sprintf("ANSIBLE_VERBOSITY_%s_%s", gvk.Kind, gvk.Group),

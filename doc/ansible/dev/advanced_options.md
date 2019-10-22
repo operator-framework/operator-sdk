@@ -115,8 +115,8 @@ From this data, we can see that the environment variable will be
 ## Ansible Verbosity
 
 Setting the verbosity at which `ansible-runner` is run controls how verbose the
-output of `ansible-playbook` will be. The normal rules for verbosity apply here
-where higher values means more verbose output. Acceptable values range from 0
+output of `ansible-playbook` will be. The normal rules for verbosity apply
+here, where higher values mean more output. Acceptable values range from 0
 (only the most severe messages are output) to 7 (all debugging messages are
 output).
 
