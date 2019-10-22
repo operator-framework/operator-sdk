@@ -17,7 +17,7 @@ package scorecard
 import (
 	"encoding/json"
 	"fmt"
-	schelpers "github.com/operator-framework/operator-sdk/internal/pkg/scorecard/helpers"
+	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	scapi "github.com/operator-framework/operator-sdk/pkg/apis/scorecard"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
 	"io/ioutil"
