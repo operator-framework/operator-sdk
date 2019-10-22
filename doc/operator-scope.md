@@ -1,12 +1,13 @@
+
 # Operators and CRD scope with Operator SDK
 
 - [Namespace-scoped operator usage](#namespace-scoped-operator-usage)
 - [Cluster-scoped operator usage](#cluster-scoped-operator-usage)
-  - [Changes required in the scaffold project for the cluster-scoped operator](#changes-required-in-the-scaffold-project-for-the-cluster-scoped-operator)
-  - [Example for cluster scoped operator](#example-for-cluster-scoped-operator)
+  - [Changed required for a cluster-scoped operator](#changed-required-for-a-cluster-scoped-operator)
+  - [Example for cluster-scoped operator](#example-for-cluster-scoped-operator)
 - [CRD scope](#crd-scope)
   - [CRD cluster-scoped usage](#crd-cluster-scoped-usage)
-  - [Example for change the CRD scope from namespace to cluster](#example-for-change-the-crd-scope-from-namespace-to-cluster)
+  - [Example for changing the CRD scope from namespace to cluster](#example-for-changing-the-crd-scope-from-namespace-to-cluster)
 
 ## Overview
 
@@ -16,15 +17,15 @@ However, there are use cases where a cluster-scoped operator may make sense. For
 
 ## Namespace-scoped operator usage
 
-This scope is ideal for operators projects which will control resources just in one namespace, which is where the operator is deployed.
+This scope is ideal for operator projects which will control resources just in one namespace, which is where the operator is deployed.
 
-> **NOTE**: It is the default configuration for the initial projects created by operator-sdk which means that it will NOT have a `Cluster Role` defined in the `deploy/role_binding.yaml`.  
+> **NOTE:** Initial projects created by `operator-sdk` are namespace-scoped by default which means that it will NOT have a `ClusterRole` defined in the `deploy/role_binding.yaml`.
 
 ## Cluster-scoped operator usage
 
-This scope is ideal for operators projects which will control resources in more than one namespace.
+This scope is ideal for operator projects which will control resources in more than one namespace.
 
-### Changes required in the scaffold project for the cluster-scoped operator
+### Changed required for a cluster-scoped operator
 
 The SDK scaffolds operators to be namespaced by default but with a few modifications to the default manifests the operator can be run as cluster-scoped.
 
@@ -37,7 +38,7 @@ The SDK scaffolds operators to be namespaced by default but with a few modificat
   * Use `ClusterRole` instead of `Role` for `roleRef`
   * Set the subject namespace to the namespace in which the operator is deployed.
 
-### Example for cluster scoped operator
+### Example for cluster-scoped operator
 
 With the above changes the specified manifests should look as follows:
 
@@ -99,13 +100,13 @@ To ensure that the CRD is always generated with `scope: Cluster`, add the tag `/
 
 ### CRD cluster-scoped usage 
 
-It is ideal for the cases where an instance(CR) of some Kind(CRD) will be used in more than one namespace instead of an specific one. 
+This scope is ideal for the cases where an instance(CR) of some Kind(CRD) will be used in more than one namespace instead of a specific one. 
 
-> **NOTE**: When an instance of the Manager is created in the `main.go` file it receives as Options the namespace(s) which should be watched and cached for the Client which is provided by it in the Controllers. So, only clients provided by cluster-scoped project where the `Namespace` attribute is equals `""` will able to manager cluster-scoped CRD's. For further information see the [Manager][manager_user_guide] topic in the user guide and the [Manager Options][manager_options].  
+> **NOTE**: When a `Manager` instance is created in the `main.go` file, it receives the namespace(s) as Options. These namespace(s) should be watched and cached for the Client which is provided by the Controllers. Only clients provided by cluster-scoped projects where the `Namespace` attribute is `""` will be able to manage cluster-scoped CRD's. For more information see the [Manager][manager_user_guide] topic in the user guide and the [Manager Options][manager_options].
 
-### Example for change the CRD scope from namespace to cluster 
+### Example for changing the CRD scope from namespace to cluster 
 
-- Check the `spec.names.plural` in the  CRD's Kind YMAL file
+- Check the `spec.names.plural` in the  CRD's Kind YAML file
 
 * `deploy/crds/cache_v1alpha1_memcached_crd.yaml`
     ```YAML
@@ -140,7 +141,7 @@ It is ideal for the cases where an instance(CR) of some Kind(CRD) will be used i
       Status MemcachedStatus `json:"status,omitempty"`
     }
     ``` 
-- Execute the command `operator-sdk generate openapi` then you should be able to check the CRD updated with the cluster scope such as the following example. 
+- Execute the command `operator-sdk generate openapi`, then you should be able to check that the CRD was updated with the cluster scope as in the following example:
   
 * `deploy/crds/cache.example.com_memcacheds_crd.yaml`
     ```YAML
