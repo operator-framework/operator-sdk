@@ -1,4 +1,4 @@
-package main
+package bundle
 
 import (
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
@@ -6,37 +6,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	defaultPermission = 0644
-	registryV1Type    = "registry+v1"
-	plainType         = "plain"
-	helmType          = "helm"
-	manifestsMetadata = "manifests+metadata"
-	annotationsFile   = "annotations.yaml"
-	dockerFile        = "Dockerfile"
-	resourcesLabel    = "operators.operatorframework.io.bundle.resources"
-	mediatypeLabel    = "operators.operatorframework.io.bundle.mediatype"
-)
-
-type AnnotationMetadata struct {
-	Annotations AnnotationType `yaml:"annotations"`
-}
-
-type AnnotationType struct {
-	Resources string `yaml:"operators.operatorframework.io.bundle.resources"`
-	MediaType string `yaml:"operators.operatorframework.io.bundle.mediatype"`
-}
-
 // newBundleGenerateCmd returns a command that will generate operator bundle
 // annotations.yaml metadata
 func newBundleGenerateCmd() *cobra.Command {
 	bundleGenerateCmd := &cobra.Command{
 		Use:   "generate",
 		Short: "Generate operator bundle metadata and Dockerfile",
-		Long: `The opm buindle generate command will generate operator
+		Long: `The "operator-sdk bundle generate" command will generate operator
         bundle metadata if needed and a Dockerfile to build Operator bundle image.
 
-        $ operator-sdk bundle generate -d /test/0.1.0/
+        $ operator-sdk bundle generate --directory /test/ --package test-operator \
+		--channels stable,beta --default stable
         `,
 		RunE: generateFunc,
 	}
@@ -46,11 +26,23 @@ func newBundleGenerateCmd() *cobra.Command {
 		log.Fatalf("Failed to mark `directory` flag for `generate` subcommand as required")
 	}
 
+	bundleGenerateCmd.Flags().StringVarP(&packageNameArgs, "package", "p", "", "The name of the package that bundle image belongs to")
+	if err := bundleGenerateCmd.MarkFlagRequired("package"); err != nil {
+		log.Fatalf("Failed to mark `package` flag for `generate` subcommand as required")
+	}
+
+	bundleGenerateCmd.Flags().StringVarP(&channelsArgs, "channels", "c", "", "The list of channels that bundle image belongs to")
+	if err := bundleGenerateCmd.MarkFlagRequired("channels"); err != nil {
+		log.Fatalf("Failed to mark `channels` flag for `generate` subcommand as required")
+	}
+
+	bundleGenerateCmd.Flags().StringVarP(&channelDefaultArgs, "default", "e", "", "The default channel for the bundle image")
+
 	return bundleGenerateCmd
 }
 
 func generateFunc(cmd *cobra.Command, args []string) error {
-	err := bundle.GenerateFunc(dirBuildArgs)
+	err := bundle.GenerateFunc(dirBuildArgs, packageNameArgs, channelsArgs, channelDefaultArgs, true)
 	if err != nil {
 		return err
 	}
