@@ -1,6 +1,6 @@
 FROM osdk-builder as builder
 
-RUN make image/scaffold/ansible
+RUN make image-scaffold-ansible
 
 FROM registry.access.redhat.com/ubi8/ubi
 
