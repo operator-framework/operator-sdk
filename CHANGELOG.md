@@ -3,6 +3,7 @@
 ### Added
 
 - Added `Operator Version: X.Y.Z` information in the operator logs.([#1953](https://github.com/operator-framework/operator-sdk/pull/1953))
+- Make Ansible verbosity configurable via the `ansible-verbosity` flag. ([#2087](https://github.com/operator-framework/operator-sdk/pull/2087))
 
 ### Changed
 
@@ -25,7 +26,6 @@
 - Added the Go version, OS, and architecture to the output of `operator-sdk version` ([#1863](https://github.com/operator-framework/operator-sdk/pull/1863))
 - Added support for `ppc64le-linux` for the `operator-sdk` binary and the Helm operator base image. ([#1533](https://github.com/operator-framework/operator-sdk/pull/1533))
 - Added new `--version` flag to the `operator-sdk scorecard` command to support a new output format for the scorecard. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
-- Make Ansible verbosity configurable via the `ansible-verbosity` flag. ([#2087](https://github.com/operator-framework/operator-sdk/pull/2087))
 
 ### Changed
 
