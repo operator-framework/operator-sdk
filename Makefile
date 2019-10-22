@@ -18,10 +18,12 @@ SOURCES = $(shell find . -name '*.go' -not -path "*/vendor/*")
 
 ANSIBLE_BASE_IMAGE = quay.io/operator-framework/ansible-operator
 HELM_BASE_IMAGE = quay.io/operator-framework/helm-operator
+HELM_BASE_MEMCACHED_IMAGE = quay.io/operator-framework/memcached-operator
 SCORECARD_PROXY_BASE_IMAGE = quay.io/operator-framework/scorecard-proxy
 
 ANSIBLE_IMAGE ?= $(ANSIBLE_BASE_IMAGE)
 HELM_IMAGE ?= $(HELM_BASE_IMAGE)
+HELM_MEMCACHED_IMAGE ?= $(HELM_BASE_MEMCACHED_IMAGE)
 SCORECARD_PROXY_IMAGE ?= $(SCORECARD_PROXY_BASE_IMAGE)
 
 HELM_ARCHES:="amd64" "ppc64le"
@@ -154,6 +156,8 @@ test-e2e-ansible-molecule: image-build-ansible
 
 test-e2e-helm: image-build-helm
 	./hack/tests/e2e-helm.sh
+	image-build-helm-memcached
+	./hack/tests/e2e-helm-memcached.sh
 
 # Image scaffold/build/push.
 .PHONY: image image-scaffold-ansible image-scaffold-helm image-build image-build-ansible image-build-helm image-push image-push-ansible image-push-helm
@@ -174,8 +178,12 @@ image-build-ansible: build/operator-sdk-dev-x86_64-linux-gnu
 image-build-helm: build/operator-sdk-dev
 	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE):dev
 
+image-build-helm-memcached: build/operator-sdk-dev
+    ./hack/image/build-helm-memcached-image.sh $(HELM_BASE_MEMCACHED_IMAGE):dev
+
+
 image-build-scorecard-proxy:
-	./hack/image/build-scorecard-proxy-image.sh $(SCORECARD_PROXY_BASE_IMAGE):dev
+	./hack/image/build-scorecard-proxy-image.sh $(SCORECARD_PROXY_BASE_IMAGE):de
 
 image-push: image-push-ansible image-push-helm image-push-scorecard-proxy ## Push all images
 
@@ -184,6 +192,9 @@ image-push-ansible:
 
 image-push-helm:
 	./hack/image/push-image-tags.sh $(HELM_BASE_IMAGE):dev $(HELM_IMAGE)-$(shell go env GOARCH)
+
+image-push-helm-memcached:
+    ./hack/image/push-image-tags.sh $(HELM_BASE_MEMCACHED_IMAGE):dev $(HELM_MEMCACHED_IMAGE)-$(shell go env GOARCH)
 
 image-push-helm-multiarch:
 	./hack/image/push-manifest-list.sh $(HELM_IMAGE) ${HELM_ARCHES}
