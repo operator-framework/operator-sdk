@@ -13,6 +13,7 @@
 ### Bug Fixes
 
 - OLM internal manager is not returning errors in the initialization. ([#1976](https://github.com/operator-framework/operator-sdk/pull/1976))
+- Fixed missing default role "deployments" which is required to create the metrics Service for the operator project. ([#1976](https://github.com/operator-framework/operator-sdk/pull/2090)) 
 
 ## v0.11.0
 
