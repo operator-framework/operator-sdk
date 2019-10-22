@@ -109,7 +109,7 @@ jobs:
     - if: tag IS present OR branch != master
       <<: *test
       name: Go on Kubernetes
-      script: make test/e2e/go
+      script: make test-e2e-go
 
     # Build and test ansible and test ansible using molecule in non-master PRs
     - if: tag IS present OR branch != master
@@ -119,32 +119,32 @@ jobs:
         - pip3 install --upgrade setuptools pip
         - pip install --user ansible
       script:
-        - make test/e2e/ansible
-        - make test/e2e/ansible-molecule
+        - make test-e2e-ansible
+        - make test-e2e-ansible-molecule
 
     # Build and test helm in non-master PRs
     - if: tag IS present OR branch != master
       <<: *test
       name: Helm on Kubernetes
-      script: make test/e2e/helm
+      script: make test-e2e-helm
 
     # Test subcommands in non-master PRs
     - if: tag IS present OR branch != master
       <<: *test
       name: Subcommands on Kubernetes
-      script: make test/subcommand
+      script: make test-subcommand
 
     # Test olm install/uninstall subcommands on master, as these cannot be tested in prow/api-ci.
     - if: tag IS NOT present AND branch = master
       <<: *test
       name: OLM Install/Uninstall on Kubernetes
-      script: make test/subcommand/olm-install
+      script: make test-subcommand-olm-install
 
     # Build and test ansible using molecule, as this cannot be tested in prow/api-ci.
     - if: tag IS NOT present AND branch = master
       <<: *test
       name: Ansible Molecule on Kubernetes
-      script: make test/e2e/ansible-molecule
+      script: make test-e2e-ansible-molecule
 
     # Run the unit, sanity, and markdown tests
     - stage: test
@@ -152,7 +152,7 @@ jobs:
       # Currently, prow/api-ci tests all PRs that target master; use travis for post merge testing and non-master PRs
       if: type != pull_request OR branch != master
       <<: *dep_before_install
-      script: make test/sanity test/unit test/markdown
+      script: make test-sanity test-unit test-markdown
       after_success: echo 'Tests Passed'
       after_failure: echo 'Failure in unit, sanity, or markdown test'
 
@@ -160,34 +160,34 @@ jobs:
     - <<: *deploy
       name: Docker image for ansible-operator
       script:
-        - make image/build/ansible
-        - make image/push/ansible
+        - make image-build-ansible
+        - make image-push-ansible
 
     # Build and deploy amd64 helm-operator docker image
     - <<: *deploy
       name: Docker image for helm-operator (amd64)
       os: linux
       script:
-        - make image/build/helm
-        - make image/push/helm
+        - make image-build-helm
+        - make image-push-helm
 
     # Build and deploy ppc64le helm-operator docker image
     - <<: *deploy
       name: Docker image for helm-operator (ppc64le)
       os: linux-ppc64le
       script:
-        - make image/build/helm
-        - make image/push/helm
+        - make image-build-helm
+        - make image-push-helm
 
     # Build and deploy scorecard-proxy docker image
     - <<: *deploy
       name: Docker image for scorecard-proxy
       script:
-        - make image/build/scorecard-proxy
-        - make image/push/scorecard-proxy
+        - make image-build-scorecard-proxy
+        - make image-push-scorecard-proxy
 
     # Build and deploy helm multi-arch manifest list
     - <<: *manifest-deploy
       name: Manifest list for helm-operator
       script:
-        - make image/push/helm-multiarch
+        - make image-push-helm-multiarch

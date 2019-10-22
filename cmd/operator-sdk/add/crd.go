@@ -59,8 +59,11 @@ func crdFunc(cmd *cobra.Command, args []string) error {
 
 	cfg := &input.Config{
 		AbsProjectPath: projutil.MustGetwd(),
-		Repo:           projutil.GetGoPkg(),
 	}
+	if projutil.IsOperatorGo() {
+		cfg.Repo = projutil.GetGoPkg()
+	}
+
 	if len(args) != 0 {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}

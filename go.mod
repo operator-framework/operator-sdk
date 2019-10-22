@@ -41,6 +41,7 @@ require (
 	github.com/markbates/inflect v1.0.4
 	github.com/martinlindhe/base36 v0.0.0-20180729042928-5cda0030da17
 	github.com/mattbaird/jsonpatch v0.0.0-20171005235357-81af80346b1a
+	github.com/mattn/go-isatty v0.0.8
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.1.2

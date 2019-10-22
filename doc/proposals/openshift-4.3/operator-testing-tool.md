@@ -1,5 +1,5 @@
 ---
-title: operator-testing-tool
+title: Tooling for Testing Operators
 authors:
   - "@jmccormick2001"
   - "@joelanford"
@@ -19,7 +19,7 @@ superseded-by:
   - "/enhancements/our-past-effort.md"
 ---
 
-# operator-testing-tool
+# Tooling for Testing Operators
 
 
 ## Release Signoff Checklist
@@ -58,10 +58,8 @@ not in scope: Operator Developers can use the same tool to run custom, functiona
 #### Story 1 - Show pass/fail in Scorecard Output
 Today, the scorecard output shows a percentage of tests that were successful to the end user. This story is to change the scorecard output to show a pass or fail for each test that is run in the output instead of a success percentage. 
 
-The exit code of scorecard would be 0 if all tests passed. The exit code would be non-zero if tests failed. With this change scores are essentially replaced with a list of pass/fail(s).
-
 The scorecard would by default run all tests regardless if a single test fails.  Using a CLI flag such as below would cause the test execution to stop on a failure:
- * operator-sdk scorecard -l ‘testgroup=required’ --fail-fast
+ * operator-sdk scorecard -l ‘necessity=required’ --fail-fast
 
 Tasks for this story include:
  * change scorecard by removing earnedPoints and maximumPoints from each test
@@ -112,7 +110,8 @@ Tasks:
  * Document changes to CLI
  * Document new output formats
  * Document changes to configuration
- * Document breaking changes and removals
+ * Update the CHANGELOG and Migration files with breaking changes and removals
+
 
 
 
@@ -124,6 +123,12 @@ The “source of truth” for validation would need to be established such as wh
 
 If no runtime tests are specified, then the scorecard would only run the static tests and not depend on a running cluster.
 
+Allow tests to declare a set of labels that can be introspected by the scorecard at runtime.
+
+Allow users to filter the set of tests to run based on a label selector string.
+
+Reuse apimachinery for parsing and matching.
+
 ### Risks and Mitigations
 
 The scorecard would implement a version flag in the CLI to allow users to migrate from current functionality to the proposed functionality (e.g. v1alpha2):
@@ -131,6 +136,25 @@ The scorecard would implement a version flag in the CLI to allow users to migrat
 
 
 ## Design Details
+
+### Exit Codes
+
+If you want to know if some arbitrary set of tests fail (e.g. necessity=required), you would either use label selection to run only that set of tests, or you would run some superset with -o json, and if the pass/fail exit code indicates a failure, you could use jq fu for your own custom exit code logic.
+
+For example, the following jq command would exit with a failure if any required tests fail or error:
+
+    jq --exit-status '[.[] | select(.labels.necessity == "required" and (.status == "fail" or .status == "error"))] | length == 0'
+
+Two separate meanings for exit codes would be produced by the scorecard:
+ * One, to handle the case where the scorecard subcommand itself fails for some reason (e.g. couldn't read the kubernetes config, couldn't connect to the apiserver, etc.)
+ * Second, to handle the pass/fail case where a test that was expected to pass did not pass. In this case, the output would be guaranteed to be valid text or JSON.
+
+For pipelines, the test tool can be run twice:
+
+ * with the required tests and then bail if the exit code is non-zero.
+ * with the recommended tests and then bail of the exit code is 1 or bail or not bail if the exit code is 2.
+
+To drive better reports the JSON structure allows for proper querying using JSONPath.
 
 ### Test Plan
 
@@ -187,8 +211,14 @@ end to end tests.**
 
 ##### Removing a deprecated feature
 
-- Announce deprecation and support policy of the existing feature
-- Deprecate the feature
+- We are adding a new --version flag to allow users to switch between
+v1alpha1 and the proposed v1alpha2 or vice-versa for backward compatiblity
+- The output spec for v1alpha2 is added and the v1alpha1 spec is
+retained to support the existing output format
+- The default spec version will be v1alpha2, users will need to modify
+their usage to specify --version v1alpha1 to retain the older output
+- In a subsequent release, the v1alpha1 support will be removed.
+
 
 ### Upgrade / Downgrade Strategy
 
