@@ -181,11 +181,10 @@ image-build-helm: build/operator-sdk-dev
 image-build-helm-memcached: build/operator-sdk-dev
     ./hack/image/build-helm-memcached-image.sh $(HELM_BASE_MEMCACHED_IMAGE):dev
 
-
 image-build-scorecard-proxy:
 	./hack/image/build-scorecard-proxy-image.sh $(SCORECARD_PROXY_BASE_IMAGE):de
 
-image-push: image-push-ansible image-push-helm image-push-scorecard-proxy ## Push all images
+image-push: image-push-ansible image-push-helm image-push-helm-memcached image-push-scorecard-proxy ## Push all images
 
 image-push-ansible:
 	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE):dev $(ANSIBLE_IMAGE)
