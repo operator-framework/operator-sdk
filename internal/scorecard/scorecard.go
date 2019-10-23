@@ -102,9 +102,13 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if err := validateScorecardConfig(); err != nil {
 		return err
 	}
+
+	_, err := schelpers.ValidateSelector(scViper.GetString(schelpers.SelectorOpt))
+	if err != nil {
+		return err
+	}
+
 	cmd.SilenceUsage = true
-	// declare err var to prevent redeclaration of global rootDir var
-	var err error
 	plugins, err := getPlugins()
 	if err != nil {
 		return err
@@ -187,6 +191,8 @@ func makeSCViper() {
 	scViper.Set(OutputFormatOpt, viper.GetString("scorecard."+OutputFormatOpt))
 	scViper.Set(scplugins.KubeconfigOpt, viper.GetString("scorecard."+scplugins.KubeconfigOpt))
 	scViper.Set(schelpers.VersionOpt, viper.GetString("scorecard."+schelpers.VersionOpt))
+	scViper.Set(schelpers.SelectorOpt, viper.GetString("scorecard."+schelpers.SelectorOpt))
+	scViper.Set(schelpers.DryRunOpt, viper.GetBool("scorecard."+schelpers.DryRunOpt))
 
 }
 

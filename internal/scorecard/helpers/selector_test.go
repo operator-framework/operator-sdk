@@ -12,20 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scplugins
+package schelpers
 
 import (
-	"k8s.io/apimachinery/pkg/selection"
+	"testing"
 )
 
-const (
-	necessityKey      = "necessity"
-	requiredNecessity = "required"
-	optionalNecessity = "optional"
+func TestValidateSelector(t *testing.T) {
+	cases := []struct {
+		name      string
+		selector  string
+		result    []string
+		wantError bool
+	}{
+		{"empty", "", nil, false},
+		{"invalidSelector", "x===", nil, true},
+	}
 
-	suiteKey       = "suite"
-	basicSuiteName = "basic"
-	olmSuiteName   = "olm"
-
-	DefaultSelector = necessityKey + string(selection.Equals) + requiredNecessity
-)
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			_, err := ValidateSelector(c.selector)
+			if err != nil && !c.wantError {
+				t.Errorf("Wanted result %+q, got error: %v", c.result, err)
+			} else if err == nil && c.wantError {
+				t.Errorf("Wanted error, got nil")
+			}
+		})
+	}
+}

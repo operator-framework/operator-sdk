@@ -12,20 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scplugins
+package schelpers
 
 import (
-	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
-const (
-	necessityKey      = "necessity"
-	requiredNecessity = "required"
-	optionalNecessity = "optional"
+const SelectorOpt = "selector"
+const DryRunOpt = "dry-run"
 
-	suiteKey       = "suite"
-	basicSuiteName = "basic"
-	olmSuiteName   = "olm"
-
-	DefaultSelector = necessityKey + string(selection.Equals) + requiredNecessity
-)
+func ValidateSelector(selector string) (labels.Selector, error) {
+	sel, err := labels.Parse(selector)
+	return sel, err
+}
