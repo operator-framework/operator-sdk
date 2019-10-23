@@ -1,4 +1,4 @@
-# User Guide
+# Helm User Guide for Operator SDK
 
 This guide walks through an example of building a simple nginx-operator powered by Helm using tools and libraries provided by the Operator SDK.
 
@@ -7,8 +7,7 @@ This guide walks through an example of building a simple nginx-operator powered 
 - [git][git-tool]
 - [docker][docker-tool] version 17.03+.
 - [kubectl][kubectl-tool] version v1.11.3+.
-- [dep][dep-tool] version v0.5.0+. (Optional if you aren't installing from source)
-- [go][go-tool] version v1.12+. (Optional if you aren't installing from source)
+- [go][go-tool] version v1.13+. (Optional if you aren't installing from source)
 - Access to a Kubernetes v1.11.3+ cluster.
 
 **Note**: This guide uses [minikube][minikube-tool] version v0.25.0+ as the
@@ -325,7 +324,6 @@ kubectl delete -f deploy/crds/helm.example.com_nginxes_crd.yaml
 [install-guide]: ../user/install-operator-sdk.md
 [layout-doc]:./project_layout.md
 [homebrew-tool]:https://brew.sh/
-[dep-tool]:https://golang.github.io/dep/docs/installation.html
 [git-tool]:https://git-scm.com/downloads
 [go-tool]:https://golang.org/dl/
 [docker-tool]:https://docs.docker.com/install/

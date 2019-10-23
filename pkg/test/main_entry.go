@@ -27,7 +27,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
@@ -72,7 +72,6 @@ func MainEntry(m *testing.M) {
 		opts := projutil.GoCmdOptions{
 			BinName:     outputBinName,
 			PackagePath: filepath.Join(scaffold.ManagerDir, scaffold.CmdFile),
-			GoMod:       projutil.IsDepManagerGoMod(),
 		}
 		if err := projutil.GoBuild(opts); err != nil {
 			log.Fatalf("Failed to build local operator binary: %s", err)

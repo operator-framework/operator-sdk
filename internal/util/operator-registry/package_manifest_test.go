@@ -17,14 +17,14 @@ package registry
 import (
 	"testing"
 
-	olmregistry "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/registry"
+	"github.com/operator-framework/operator-registry/pkg/registry"
 )
 
 func TestValidatePackageManifest(t *testing.T) {
-	channels := []olmregistry.PackageChannel{
+	channels := []registry.PackageChannel{
 		{Name: "foo", CurrentCSVName: "bar"},
 	}
-	pm := &olmregistry.PackageManifest{
+	pm := &registry.PackageManifest{
 		Channels:           channels,
 		DefaultChannelName: "baz",
 		PackageName:        "test-package",
@@ -34,7 +34,7 @@ func TestValidatePackageManifest(t *testing.T) {
 		description string
 		wantErr     bool
 		errMsg      string
-		operation   func(*olmregistry.PackageManifest)
+		operation   func(*registry.PackageManifest)
 	}{
 		{
 			"default channel does not exist",
@@ -43,22 +43,22 @@ func TestValidatePackageManifest(t *testing.T) {
 		{
 			"successful validation",
 			false, "",
-			func(pm *olmregistry.PackageManifest) {
+			func(pm *registry.PackageManifest) {
 				pm.DefaultChannelName = pm.Channels[0].Name
 			},
 		},
 		{
 			"channels are empty",
 			true, "channels cannot be empty",
-			func(pm *olmregistry.PackageManifest) {
+			func(pm *registry.PackageManifest) {
 				pm.Channels = nil
 			},
 		},
 		{
 			"one channel's CSVName is empty",
 			true, "channel foo currentCSV cannot be empty",
-			func(pm *olmregistry.PackageManifest) {
-				pm.Channels = make([]olmregistry.PackageChannel, 1)
+			func(pm *registry.PackageManifest) {
+				pm.Channels = make([]registry.PackageChannel, 1)
 				copy(pm.Channels, channels)
 				pm.Channels[0].CurrentCSVName = ""
 			},
@@ -66,7 +66,7 @@ func TestValidatePackageManifest(t *testing.T) {
 		{
 			"duplicate channel name",
 			true, "duplicate package manifest channel name foo; channel names must be unique",
-			func(pm *olmregistry.PackageManifest) {
+			func(pm *registry.PackageManifest) {
 				pm.Channels = append(channels, channels...)
 			},
 		},

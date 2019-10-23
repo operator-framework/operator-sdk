@@ -1,6 +1,6 @@
 module github.com/operator-framework/operator-sdk
 
-go 1.12
+go 1.13
 
 require (
 	cloud.google.com/go v0.37.2 // indirect
@@ -31,8 +31,6 @@ require (
 	github.com/gobuffalo/packr v1.30.1 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/google/uuid v1.1.1 // indirect
-	github.com/gophercloud/gophercloud v0.0.0-20190408160324-6c7ac67f8855 // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/iancoleman/strcase v0.0.0-20180726023541-3605ed457bf7
@@ -42,17 +40,19 @@ require (
 	github.com/markbates/inflect v1.0.4
 	github.com/martinlindhe/base36 v0.0.0-20180729042928-5cda0030da17
 	github.com/mattbaird/jsonpatch v0.0.0-20171005235357-81af80346b1a
+	github.com/mattn/go-isatty v0.0.8
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190128024246-5eb7ae5bdb7a
+	github.com/operator-framework/operator-registry v1.1.1
 	github.com/pborman/uuid v1.2.0
 	github.com/pelletier/go-toml v1.3.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.8.1
-	github.com/prometheus/client_golang v0.9.3
+	github.com/prometheus/client_golang v1.0.0
 	github.com/rogpeppe/go-internal v1.3.0
 	github.com/rubenv/sql-migrate v0.0.0-20190618074426-f4d34eae5a5c // indirect
 	github.com/sergi/go-diff v1.0.0
@@ -61,34 +61,31 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.3
-	github.com/spf13/viper v1.3.2
+	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.3.0
 	github.com/technosophos/moniker v0.0.0-20180509230615-a5dbd03a2245 // indirect
-	github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5 // indirect
-	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	github.com/xlab/handysort v0.0.0-20150421192137-fb3537ed64a1 // indirect
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	go.etcd.io/bbolt v1.3.3 // indirect
 	go.uber.org/zap v1.10.0
-	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a // indirect
 	golang.org/x/tools v0.0.0-20190624180213-70d37148ca0c
 	google.golang.org/api v0.3.2 // indirect
 	google.golang.org/genproto v0.0.0-20190404172233-64821d5d2107 // indirect
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/square/go-jose.v2 v2.3.0 // indirect
 	gopkg.in/yaml.v2 v2.2.2
-	k8s.io/api v0.0.0-20190612125737-db0771252981
-	k8s.io/apiextensions-apiserver v0.0.0-20190409022649-727a075fdec8
-	k8s.io/apimachinery v0.0.0-20190612125636-6a5db36e93ad
+	k8s.io/api v0.0.0-20190918155943-95b840bb6a1f
+	k8s.io/apiextensions-apiserver v0.0.0-20190918161926-8f644eb6e783
+	k8s.io/apimachinery v0.0.0-20190913080033-27d36303b655
 	k8s.io/cli-runtime v0.0.0-20181213153952-835b10687cb6
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	k8s.io/cloud-provider v0.0.0-00010101000000-000000000000 // indirect
 	k8s.io/code-generator v0.0.0-20190311093542-50b561225d70
 	k8s.io/gengo v0.0.0-20190327210449-e17681d19d3a
 	k8s.io/helm v2.14.1+incompatible
-	k8s.io/klog v0.3.1
+	k8s.io/klog v0.3.3
 	k8s.io/kube-openapi v0.0.0-20190401085232-94e1e7b7574c
-	k8s.io/kube-state-metrics v1.6.0
+	k8s.io/kube-state-metrics v1.7.2
 	k8s.io/kubernetes v1.14.2
 	sigs.k8s.io/controller-runtime v0.2.0
 	sigs.k8s.io/controller-tools v0.2.0
@@ -111,4 +108,23 @@ replace (
 	k8s.io/kubernetes => k8s.io/kubernetes v1.14.1
 )
 
-replace github.com/operator-framework/operator-lifecycle-manager => github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190605231540-b8a4faf68e36
+replace (
+	// Indirect operator-sdk dependencies use git.apache.org, which is frequently
+	// down. The github mirror should be used instead.
+	// Locking to a specific version (from 'go mod graph'):
+	git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
+	github.com/operator-framework/operator-lifecycle-manager => github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190605231540-b8a4faf68e36
+
+	// This replacement is required because various SDK dependencies
+	// depend on different versions of github.com/ugorji/go and
+	// github.com/ugorji/go/codec that conflict and break Go tooling
+	// due to the go.mod changes that have occurred recently in
+	// github.com/ugorji/go and github.com/ugorji/go/codec.
+	// See: https://github.com/ugorji/go/issues/299
+	github.com/ugorji/go => github.com/ugorji/go v1.1.7
+	github.com/ugorji/go/codec => github.com/ugorji/go/codec v1.1.7
+)
+
+// Remove when controller-tools v0.2.2 is released
+// Required for the bugfix https://github.com/kubernetes-sigs/controller-tools/pull/322
+replace sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.2.2-0.20190919011008-6ed4ff330711

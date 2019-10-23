@@ -26,8 +26,8 @@ import (
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
-	"github.com/pkg/errors"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -164,6 +164,12 @@ func main() {
 
 	log.Print("Generating k8s")
 	cmdOut, err = exec.Command("operator-sdk", "generate", "k8s").CombinedOutput()
+	if err != nil {
+		log.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
+	}
+
+	log.Print("Generating openapi")
+	cmdOut, err = exec.Command("operator-sdk", "generate", "openapi").CombinedOutput()
 	if err != nil {
 		log.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
