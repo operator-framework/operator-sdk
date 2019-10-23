@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package watches provides the structures and functions for mapping a
+// GroupVersionKind to an Ansible playbook or role.
 package watches
 
 import (
@@ -20,6 +22,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -42,6 +46,10 @@ type Watch struct {
 	WatchDependentResources     bool                    `yaml:"watchDependentResources"`
 	WatchClusterScopedResources bool                    `yaml:"watchClusterScopedResources"`
 	Finalizer                   *Finalizer              `yaml:"finalizer"`
+
+	// Not configurable via watches.yaml
+	MaxWorkers       int `yaml:"maxWorkers"`
+	AnsibleVerbosity int `yaml:"ansibleVerbosity"`
 }
 
 // Finalizer - Expose finalizer to be used by a user.
@@ -53,16 +61,22 @@ type Finalizer struct {
 }
 
 // Default values for optional fields on Watch
-const (
-	ManageStatusDefault                bool          = true
-	WatchDependentResourcesDefault     bool          = true
-	MaxRunnerArtifactsDefault          int           = 20
-	ReconcilePeriodDefault             string        = "0s"
-	ReconcilePeriodDurationDefault     time.Duration = time.Duration(0)
-	WatchClusterScopedResourcesDefault bool          = false
+var (
+	maxRunnerArtifactsDefault          = 20
+	reconcilePeriodDefault             = "0s"
+	manageStatusDefault                = true
+	watchDependentResourcesDefault     = true
+	watchClusterScopedResourcesDefault = false
+
+	// these are overridden by cmdline flags
+	maxWorkersDefault       = 1
+	ansibleVerbosityDefault = 2
 )
 
-// UnmarshalYAML - implements the yaml.Unmarshaler interface for Watch
+// UnmarshalYAML - implements the yaml.Unmarshaler interface for Watch.
+// This makes it possible to verify, when loading, that the GroupVersionKind
+// specified for a given watch is valid as well as provide sensible defaults
+// for values that were ommitted.
 func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// Use an alias struct to handle complex types
 	type alias struct {
@@ -81,12 +95,12 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var tmp alias
 
 	// by default, the operator will manage status and watch dependent resources
-	// The operator will not manage cluster scoped resources by default.
-	tmp.ManageStatus = ManageStatusDefault
-	tmp.WatchDependentResources = WatchDependentResourcesDefault
-	tmp.MaxRunnerArtifacts = MaxRunnerArtifactsDefault
-	tmp.ReconcilePeriod = ReconcilePeriodDefault
-	tmp.WatchClusterScopedResources = WatchClusterScopedResourcesDefault
+	tmp.ManageStatus = manageStatusDefault
+	// the operator will not manage cluster scoped resources by default.
+	tmp.WatchDependentResources = watchDependentResourcesDefault
+	tmp.MaxRunnerArtifacts = maxRunnerArtifactsDefault
+	tmp.ReconcilePeriod = reconcilePeriodDefault
+	tmp.WatchClusterScopedResources = watchClusterScopedResourcesDefault
 
 	if err := unmarshal(&tmp); err != nil {
 		return err
@@ -112,17 +126,67 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	w.Playbook = tmp.Playbook
 	w.Role = tmp.Role
 	w.MaxRunnerArtifacts = tmp.MaxRunnerArtifacts
+	w.MaxWorkers = getMaxWorkers(gvk, maxWorkersDefault)
 	w.ReconcilePeriod = reconcilePeriod
 	w.ManageStatus = tmp.ManageStatus
 	w.WatchDependentResources = tmp.WatchDependentResources
 	w.WatchClusterScopedResources = tmp.WatchClusterScopedResources
 	w.Finalizer = tmp.Finalizer
+	w.AnsibleVerbosity = getAnsibleVerbosity(gvk, ansibleVerbosityDefault)
 
 	return nil
 }
 
-// Load - loads a slice of Watches from the watch file at `path`.
-func Load(path string) ([]Watch, error) {
+// Validate - ensures that a Watch is valid
+// A Watch is considered valid if it:
+// - Specifies a valid path to a Role||Playbook
+// - If a Finalizer is non-nil, it must have a name + valid path to a Role||Playbook or Vars
+func (w *Watch) Validate() error {
+	err := verifyAnsiblePath(w.Playbook, w.Role)
+	if err != nil {
+		log.Error(err, fmt.Sprintf("Invalid ansible path for GVK: %v", w.GroupVersionKind.String()))
+		return err
+	}
+
+	if w.Finalizer != nil {
+		if w.Finalizer.Name == "" {
+			err = fmt.Errorf("finalizer must have name")
+			log.Error(err, fmt.Sprintf("Invalid finalizer for GVK: %v", w.GroupVersionKind.String()))
+			return err
+		}
+		// only fail if Vars not set
+		err = verifyAnsiblePath(w.Finalizer.Playbook, w.Finalizer.Role)
+		if err != nil && len(w.Finalizer.Vars) == 0 {
+			log.Error(err, fmt.Sprintf("Invalid ansible path on Finalizer for GVK: %v", w.GroupVersionKind.String()))
+			return err
+		}
+	}
+
+	return nil
+}
+
+// New - returns a Watch with sensible defaults.
+func New(gvk schema.GroupVersionKind, role, playbook string, finalizer *Finalizer) *Watch {
+	reconcilePeriod, _ := time.ParseDuration(reconcilePeriodDefault)
+	return &Watch{
+		GroupVersionKind:            gvk,
+		Playbook:                    playbook,
+		Role:                        role,
+		MaxRunnerArtifacts:          maxRunnerArtifactsDefault,
+		MaxWorkers:                  maxWorkersDefault,
+		ReconcilePeriod:             reconcilePeriod,
+		ManageStatus:                manageStatusDefault,
+		WatchDependentResources:     watchDependentResourcesDefault,
+		WatchClusterScopedResources: watchClusterScopedResourcesDefault,
+		Finalizer:                   finalizer,
+		AnsibleVerbosity:            ansibleVerbosityDefault,
+	}
+}
+
+// Load - loads a slice of Watches from the watches file from the CLI
+func Load(path string, maxWorkers, ansibleVerbosity int) ([]Watch, error) {
+	maxWorkersDefault = maxWorkers
+	ansibleVerbosityDefault = ansibleVerbosity
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Error(err, "Failed to get config file")
@@ -138,42 +202,27 @@ func Load(path string) ([]Watch, error) {
 
 	watchesMap := make(map[schema.GroupVersionKind]bool)
 	for _, watch := range watches {
-
 		// prevent dupes
 		if _, ok := watchesMap[watch.GroupVersionKind]; ok {
 			return nil, fmt.Errorf("duplicate GVK: %v", watch.GroupVersionKind.String())
 		}
 		watchesMap[watch.GroupVersionKind] = true
 
-		err = verifyAnsiblePath(watch.Playbook, watch.Role)
+		err = watch.Validate()
 		if err != nil {
-			log.Error(err, fmt.Sprintf("Invalid ansible path for GVK: %v", watch.GroupVersionKind.String()))
+			log.Error(err, fmt.Sprintf("Watch with GVK %v failed validation", watch.GroupVersionKind.String()))
 			return nil, err
 		}
-
-		if watch.Finalizer != nil {
-			if watch.Finalizer.Name == "" {
-				err = fmt.Errorf("finalizer must have name")
-				log.Error(err, fmt.Sprintf("Invalid finalizer for GVK: %v", watch.GroupVersionKind.String()))
-				return nil, err
-			}
-			// only fail if Vars not set
-			err = verifyAnsiblePath(watch.Finalizer.Playbook, watch.Finalizer.Role)
-			if err != nil && len(watch.Finalizer.Vars) == 0 {
-				log.Error(err, fmt.Sprintf("Invalid ansible path on Finalizer for GVK: %v", watch.GroupVersionKind.String()))
-				return nil, err
-			}
-		}
-
 	}
 
 	return watches, nil
 }
 
+// verify that a given GroupVersionKind has a Version and Kind
+// A GVK without a group is valid. Certain scenarios may cause a GVK
+// without a group to fail in other ways later in the initialization
+// process.
 func verifyGVK(gvk schema.GroupVersionKind) error {
-	// A GVK without a group is valid. Certain scenarios may cause a GVK
-	// without a group to fail in other ways later in the initialization
-	// process.
 	if gvk.Version == "" {
 		return errors.New("version must not be empty")
 	}
@@ -183,6 +232,7 @@ func verifyGVK(gvk schema.GroupVersionKind) error {
 	return nil
 }
 
+// verify that a valid path is specified for a given role or playbook
 func verifyAnsiblePath(playbook string, role string) error {
 	switch {
 	case playbook != "":
@@ -203,4 +253,58 @@ func verifyAnsiblePath(playbook string, role string) error {
 		return fmt.Errorf("must specify Role or Playbook")
 	}
 	return nil
+}
+
+// if the WORKER_* environment variable is set, use that value.
+// Otherwise, use defValue. This is definitely
+// counter-intuitive but it allows the operator admin adjust the
+// number of workers based on their cluster resources. While the
+// author may use the CLI option to specify a suggested
+// configuration for the operator.
+func getMaxWorkers(gvk schema.GroupVersionKind, defValue int) int {
+	envVar := strings.ToUpper(strings.Replace(
+		fmt.Sprintf("WORKER_%s_%s", gvk.Kind, gvk.Group),
+		".",
+		"_",
+		-1,
+	))
+	maxWorkers, err := strconv.Atoi(os.Getenv(envVar))
+	if err != nil {
+		// we don't care why we couldn't parse it just use default
+		log.Info("Failed to parse %v from environment. Using default %v", envVar, defValue)
+		return defValue
+	}
+
+	if maxWorkers <= 0 {
+		log.Info("Value %v not valid. Using default %v", maxWorkers, defValue)
+		return defValue
+	}
+	return maxWorkers
+}
+
+// if the ANSIBLE_VERBOSITY_* environment variable is set, use that value.
+// Otherwise, use defValue.
+func getAnsibleVerbosity(gvk schema.GroupVersionKind, defValue int) int {
+	envVar := strings.ToUpper(strings.Replace(
+		fmt.Sprintf("ANSIBLE_VERBOSITY_%s_%s", gvk.Kind, gvk.Group),
+		".",
+		"_",
+		-1,
+	))
+	ansibleVerbosity, err := strconv.Atoi(os.Getenv(envVar))
+	if err != nil {
+		log.Info("Failed to parse %v from environment. Using default %v", envVar, defValue)
+		return defValue
+	}
+
+	// Use default value when value doesn't make sense
+	if ansibleVerbosity < 0 {
+		log.Info("Value %v not valid. Using default %v", ansibleVerbosity, defValue)
+		return defValue
+	}
+	if ansibleVerbosity > 7 {
+		log.Info("Value %v not valid. Using default %v", ansibleVerbosity, defValue)
+		return defValue
+	}
+	return ansibleVerbosity
 }

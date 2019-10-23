@@ -10,4 +10,4 @@
           namespace: '{{ meta.namespace }}'
         data:
           sentinel: '{{ sentinel }}'
-          groups: '{{ groups | to_nice_yaml }}'
+          groups: '{{ groups | to_nice_yaml }}' 

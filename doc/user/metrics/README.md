@@ -1,4 +1,4 @@
-# Monitoring with Prometheus
+#  Operator SDK Monitoring with Prometheus
 
 [Prometheus][prometheus] is an open-source systems monitoring and alerting toolkit. Below is the overview of the different helpers that exist in Operator SDK to help setup metrics in the generated operator.
 
@@ -79,7 +79,12 @@ In Kubernetes clusters where [OwnerReferencesPermissionEnforcement][ownerref-per
 
 By default operator will expose info metrics based on the number of the current instances of an operator's custom resources in the cluster. It leverages [kube-state-metrics][ksm] as a library to generate those metrics. Metrics initialization lives in the `cmd/manager/main.go` file of the operator in the `serveCRMetrics` function. Its arguments are a custom resource's group, version, and kind to generate the metrics. The metrics are served on `0.0.0.0:8686/metrics` by default. To modify the exposed metrics port number, change the `operatorMetricsPort` variable at the top of the `cmd/manager/main.go` file in the generated operator.
 
+### Expose custom metrics
 
+The operator uses [Prometheus][prometheus] to expose a number of metrics by default. In order to expose custom metrics they have to be registered with the `Registry` object. An example can be found in the [kubebuilder book][kubebuilder].
+
+
+[kubebuilder]: https://book.kubebuilder.io/reference/metrics.html
 [prometheus]: https://prometheus.io/
 [service]: https://kubernetes.io/docs/concepts/services-networking/service/
 [gc]: https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/#owners-and-dependents

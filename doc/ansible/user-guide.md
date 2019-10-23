@@ -10,8 +10,7 @@ This guide walks through an example of building a simple memcached-operator powe
 - [ansible][ansible-tool] version v2.6.0+
 - [ansible-runner][ansible-runner-tool] version v1.1.0+
 - [ansible-runner-http][ansible-runner-http-plugin] version v1.0.0+
-- [dep][dep-tool] version v0.5.0+. (Optional if you aren't installing from source)
-- [go][go-tool] version v1.12+. (Optional if you aren't installing from source)
+- [go][go-tool] version v1.13+. (Optional if you aren't installing from source)
 - Access to a Kubernetes v.1.9.0+ cluster.
 
 **Note**: This guide uses [minikube][minikube-tool] version v0.25.0+ as the
@@ -407,7 +406,6 @@ $ kubectl delete -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 [install-guide]: ../user/install-operator-sdk.md
 [layout-doc]:./project_layout.md
 [homebrew-tool]:https://brew.sh/
-[dep-tool]:https://golang.github.io/dep/docs/installation.html
 [git-tool]:https://git-scm.com/downloads
 [go-tool]:https://golang.org/dl/
 [docker-tool]:https://docs.docker.com/install/

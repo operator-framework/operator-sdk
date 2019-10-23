@@ -41,7 +41,6 @@ const (
 	rolesDir        = "roles"
 	helmChartsDir   = "helm-charts"
 	goModFile       = "go.mod"
-	gopkgTOMLFile   = "Gopkg.toml"
 )
 
 // OperatorType - the type of operator
@@ -67,40 +66,6 @@ func (e ErrUnknownOperatorType) Error() string {
 		return "unknown operator type"
 	}
 	return fmt.Sprintf(`unknown operator type "%v"`, e.Type)
-}
-
-type DepManagerType string
-
-const (
-	DepManagerGoMod DepManagerType = "modules"
-	DepManagerDep   DepManagerType = "dep"
-)
-
-type ErrInvalidDepManager string
-
-func (e ErrInvalidDepManager) Error() string {
-	return fmt.Sprintf(`"%s" is not a valid dep manager; dep manager must be one of ["%v", "%v"]`, string(e), DepManagerDep, DepManagerGoMod)
-}
-
-var ErrNoDepManager = fmt.Errorf(`no valid dependency manager file found; dep manager must be one of ["%v", "%v"]`, DepManagerDep, DepManagerGoMod)
-
-func GetDepManagerType() (DepManagerType, error) {
-	if IsDepManagerDep() {
-		return DepManagerDep, nil
-	} else if IsDepManagerGoMod() {
-		return DepManagerGoMod, nil
-	}
-	return "", ErrNoDepManager
-}
-
-func IsDepManagerDep() bool {
-	_, err := os.Stat(gopkgTOMLFile)
-	return err == nil || os.IsExist(err)
-}
-
-func IsDepManagerGoMod() bool {
-	_, err := os.Stat(goModFile)
-	return err == nil || os.IsExist(err)
 }
 
 // MustInProjectRoot checks if the current dir is the project root, and exits
@@ -278,31 +243,29 @@ func SetGoVerbose() error {
 	return nil
 }
 
-// CheckDepManagerWithRepo ensures dependency manager type and repo are being used in combination
+// CheckRepo ensures dependency manager type and repo are being used in combination
 // correctly, as different dependency managers have different Go environment
 // requirements.
-func CheckDepManagerWithRepo(dm DepManagerType, repo string) error {
+func CheckRepo(repo string) error {
 	inGopathSrc, err := WdInGoPathSrc()
 	if err != nil {
 		return err
 	}
-	switch dm {
-	case DepManagerDep:
-		// dep assumes the project's path under $GOPATH/src is the project's
-		// repo path.
-		if repo != "" {
-			return fmt.Errorf(`The flag --repo cannot be set with dependency manager "dep", as dep always infers the repo path`)
-		}
-		if !inGopathSrc {
-			return fmt.Errorf(`dependency manager "dep" requires working directory to be in $GOPATH/src`)
-		}
-	case DepManagerGoMod:
-		if !inGopathSrc && repo == "" {
-			return fmt.Errorf(`dependency manager "modules" requires the flag --repo to be set if the working directory is not in $GOPATH/src. See "operator-sdk new -h"`)
-		}
-	default:
-		return ErrInvalidDepManager(dm)
+	if !inGopathSrc && repo == "" {
+		return fmt.Errorf(`flag --repo must be set if the working directory is not in $GOPATH/src. See "operator-sdk new -h"`)
 	}
+	return nil
+}
 
+// CheckGoModules ensures that go modules are enabled.
+func CheckGoModules() error {
+	goModOn, err := GoModOn()
+	if err != nil {
+		return err
+	}
+	if !goModOn {
+		return fmt.Errorf(`using go modules requires GO111MODULE="on", "auto", or unset.` +
+			` More info: https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#go-modules`)
+	}
 	return nil
 }

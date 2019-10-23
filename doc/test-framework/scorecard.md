@@ -1,80 +1,64 @@
-# Operator Scorecard
+# operator-sdk scorecard 
 
-The Operator Scorecard is a testing utility included in the `operator-sdk` binary that guides users towards operator best practices
-by checking the correctness of their operators and CSVs. While the Scorecard is in an early
-stage of development, it will gain more functionality and stabilize over time.
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<!-- **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)* -->
 
-## How It Works
+- [Overview](#overview)
+- [Requirements](#requirements)
+- [Running the Scorecard](#running-the-scorecard)
+- [Configuration](#configuration)
+  - [Config File](#config-file)
+  - [Command Args](#command-args)
+  - [Config File Options](#config-file-options)
+  - [Plugins](#plugins)
+    - [Basic and OLM](#basic-and-olm)
+    - [External Plugins](#external-plugins)
+- [Tests Performed](#tests-performed)
+  - [Basic Operator](#basic-operator)
+  - [OLM Integration](#olm-integration)
+- [Extending the Scorecard with Plugins](#extending-the-scorecard-with-plugins)
+  - [JSON format](#json-format)
+- [Running the scorecard with a deployed CSV](#running-the-scorecard-with-a-deployed-csv)
 
-The scorecard works by creating all resources required by CRs and the operator. For the operator
-deployment, it also adds another container to the operator's pod that is used to record calls to the API server,
-which are analyzed by the scorecard for various tests. The scorecard will also look at some of the fields in the
-CR object itself for some of the tests.
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-As of `v0.8.0` scorecard also supports plugins. This allows external developers to extend the functionality of the scorecard and add additional tests.
+## Overview
 
-## Requirements
+The scorecard works by creating all resources required by CRs and the operator. 
 
-- An operator made using the `operator-sdk` or an operator that uses a config getter that supports reading from the `KUBECONFIG` environment variable (such as the `clientcmd` or `controller-runtime` config getters). This is required for the scorecard proxy to work correctly.
-- Resource manifests for installing/configuring the operator and custom resources (see the [Writing E2E Tests][writing-tests] doc for more information on the global and namespaced manifests).
-- (OLM Integration tests or Basic tests with the `olm-deployed` option set only) A CSV file for your operator.
+The scorecard will create another container in the operator deployment which is used to record calls to the API server and run a lot of the tests. The tests performed will also examine some of the fields in the CRs.
 
-## Running the tests
+The scorecard also supports plugins which allows to extend the functionality of the scorecard and add additional tests on it. 
 
-The scorecard is configured by a config file that allows configuring both internal and external plugins as well as a few global configuration options. The configuration
-options are listed below.
+## Requirements 
 
-### Flags
+Following are some requirements for the operator project which would be  checked by the scorecard. 
 
-While most configuration is done via a config file, there are a few important flags that can be used:
+- Access to a Kubernetes v1.11.3+ cluster
 
-- `--config` string - path to config file (default `<project_dir>/.osdk-scorecard`; file type and extension can be any of `.yaml`, `.json`, or `.toml`). If a config file is not provided and a config file is not found at the default location, the scorecard will exit with an error.
-- `--output`, `-o` string - output format. Valid options are: `text` and `json`. The default format is `text`, which is designed to be a simpler human readable format. The `json` format uses the JSON schema output format used for plugins defined later in this document.
-- `--kubeconfig` string - path to kubeconfig. It sets the kubeconfig internally for internal plugins and sets the `KUBECONFIG` env var to the provided value for external plugins. If an external plugin specifically sets the `KUBECONFIG` env var, the kubeconfig from the specified env var will be used for that plugin instead.
+**For non-SDK operators:**
+
+- Resource manifests for installing/configuring the operator and custom resources. (see the [Writing E2E Tests][writing-tests] doc for more information on the global and namespaced manifests)
+- Config getter that supports reading from the `KUBECONFIG` environment variable (such as the `clientcmd` or `controller-runtime` config getters). This is required for the scorecard proxy to work correctly.
+
+**NOTE:** If you would like to use it to check the integration of your operator project with [OLM][olm] then also the [Cluster Service Version (CSV)][olm-csv] file will be required. This is a requirement when the `olm-deployed` option is used
+
+## Running the Scorecard
+
+1. Setup the `.osdk-scorecard.yaml` configuration file in your project.. See [Config file](#config-file)
+2. Create the namespace defined in the RBAC files(`role_bindinding`)
+3. Then, run the scorecard, for example `$ operator-sdk scorecard`. See the [Command args](#command-args) to check its options. 
+
+**NOTE:** If your operator is non-SDK then some steps will be required in order to meet its requirements. 
+
+## Configuration
+
+The scorecard is configured by a config file that allows configuring both internal and external plugins as well as a few global configuration options.
 
 ### Config File
 
-The config file can be in any of the `json`, `yaml`, or `toml` formats as long as the file has the correct extension. As the config file may be extended to allow configuration
-of all `operator-sdk` subcommands in the future, the scorecard's configuration must be under a `scorecard` subsection. See [Example Config File](#example-config-file) for a YAML formatted example.
-
-### Global options
-
-- `output` string - equivalent of the `--output` flag. If this option is defined by both the config file and the flag, the flag's value takes priority
-- `kubeconfig` string - equivalent of the `--kubeconfig` flag. If this option is defined by both the config file and the flag, the flag's value takes priority
-- `plugins` array - this is an array of `plugin` objects as defined below
-
-### Plugin Struct
-
-A plugin object is used to configure plugins. These are the fields of the plugin object:
-
-- `basic`, `olm`, or `external` - the configuration object for the plugin. As different types of plugins have different configuration options, they are named differently in the config. Only one of these fields can be set per plugin.
-
-### Basic and OLM Internal Plugins
-
-The `basic` and `olm` internal plugins have the same configuration fields:
-
-- `cr-manifest` \[\]string - (required if `olm-deployed` is not set or false) path(s) to CRs being tested.
-- `csv-path` string - (required for OLM tests or if `olm-deployed` is set to true) path to CSV for the operator
-- `olm-deployed` bool - indicates that the CSV and relevant CRD's have been deployed onto the cluster by the [Operator Lifecycle Manager (OLM)][olm]. This flag cannot be used in conjunction with `--namespaced-manifest` or `--global-manifest`. See the [CSV-only tests](#running-the-scorecard-with-a-deployed-csv) section below for more details.
-- `kubeconfig` string - path to kubeconfig. If both the global `kubeconfig` and this field are set, this field is used for the plugin.
-- `namespace` string - namespace to run the plugins in. If not set, the default specified by the kubeconfig is used
-- `init-timeout` int - time in seconds until a timeout during initialization of the operator
-- `crds-dir` string - path to directory containing CRDs that must be deployed to the cluster.
-- `namespaced-manifest` string - manifest file with all resources that run within a namespace. By default, the scorecard will combine `service_account.yaml`, `role.yaml`, `role_binding.yaml`, and `operator.yaml` from the `deploy` directory into a temporary manifest to use as the namespaced manifest.
-- `global-manifest` string - manifest containing required resources that run globally (not namespaced). By default, the scorecard will combine all CRDs in the `crds-dir` directory into a temporary manifest to use as the global manifest.
-
-### External Plugins
-
-The scorecard allows developers to write their own plugins for the scorecard that can be run via an executable binary or script. For more information on developing external plugins,
-please see the [Extending the Scorecard with Plugins](#extending-the-scorecard-with-plugins) section. These are the options available to configure external plugins:
-
-- `command` string - (required) path to the plugin binary or script. The path can either be absolute or relative to the operator project's root directory. All external plugins are run from the operator project's root directory
-- `args` \[\]string - arguments to pass to the plugin
-- `env` - array of `env` object, which consist of a `name` and `value` field. If a `KUBECONFIG` env var is declared in this array as well as via the top-level `kubeconfig` option, the `KUBECONFIG` from the env array for the plugin is used
-
-## Example Config File
-
-This is an example of what a YAML formatted config file may look like:
+To use scorecard you need create a config file which by defualt will be `<project_dir>/.osdk-scorecard.*`. Following an example of what a YAML formatted config file may look like:
 
 ```yaml
 scorecard:
@@ -110,54 +94,82 @@ The hierarchy of config methods for the global options that are also configurabl
 
 The config file support is provided by the `viper` package. For more info on how viper configuration works, see [`viper`'s README][viper].
 
-## What Each Internal Plugin Test Does
+**NOTE:** The config file can be in any of the `json`, `yaml`, or `toml` formats as long as the file has the correct extension. As the config file may be extended to allow configuration
+of all `operator-sdk` subcommands in the future, the scorecard's configuration must be under a `scorecard` subsection. 
 
-There are 8 internal tests across 2 internal plugins that the scorecard can run. If multiple CRs are specified for a plugin, the test environment is fully cleaned up after each CR so each CR gets a clean testing environment.
+### Command Args
+
+While most configuration is done via a config file, there are a few important args that can be used as follows. 
+
+| Flag        | Type   | Description   | 
+| --------    | -------- | -------- |
+| `--config`  | string | Path to config file (default `<project_dir>/.osdk-scorecard`; file type and extension can be any of `.yaml`, `.json`, or `.toml`). If a config file is not provided and a config file is not found at the default location, the scorecard will exit with an error. |
+| `--output`, `-o`  | string | Output format. Valid options are: `text` and `json`. The default format is `text`, which is designed to be a simpler human readable format. The `json` format uses the JSON schema output format used for plugins defined later in this document. |
+| `--kubeconfig`, `-o`  | string |  path to kubeconfig. It sets the kubeconfig internally for internal plugins and sets the `KUBECONFIG` env var to the provided value for external plugins. If an external plugin specifically sets the `KUBECONFIG` env var, the kubeconfig from the specified env var will be used for that plugin instead. |
+| `--version`  | string |  The version of scorecard to run, v1alpha1 is the default, whereas v1alpha2 is the tech preview. |
+
+### Config File Options
+
+| Option        | Type   | Description   | 
+| --------    | -------- | -------- |
+| `output` | string | equivalent of the `--output` flag. If this option is defined by both the config file and the flag, the flag's value takes priority |
+| `kubeconfig` | string | equivalent of the `--kubeconfig` flag. If this option is defined by both the config file and the flag, the flag's value takes priority |
+| `plugins` | array | this is an array of [Plugins](#plugins).|
+
+### Plugins
+
+A plugin object is used to configure plugins. The possible values for the plugin object are `basic`, `olm`, or `external`.
+
+Note that each Plugin type has different configuration options and they are named differently in the config. Only one of these fields can be set per plugin.
+
+#### Basic and OLM 
+
+The `basic` and `olm` internal plugins have the same configuration fields:
+
+| Option        | Type   | Description   | 
+| --------    | -------- | -------- |
+| `cr-manifest` | [\]string | path(s) for CRs being tested.(required if `olm-deployed` is not set or false) |
+| `csv-path` | string | path to CSV for the operator (required for OLM tests or if `olm-deployed` is set to true) |
+| `olm-deployed` | bool | indicates that the CSV and relevant CRD's have been deployed onto the cluster by the [Operator Lifecycle Manager (OLM)][olm] |
+| `kubeconfig` | string | path to kubeconfig. If both the global `kubeconfig` and this field are set, this field is used for the plugin |
+| `namespace` | string | namespace to run the plugins in. If not set, the default specified by the kubeconfig is used |
+| `init-timeout` | int | time in seconds until a timeout during initialization of the operator |
+| `crds-dir` | string | path to directory containing CRDs that must be deployed to the cluster |
+| `namespaced-manifest` | string | manifest file with all resources that run within a namespace. By default, the scorecard will combine `service_account.yaml`, `role.yaml`, `role_binding.yaml`, and `operator.yaml` from the `deploy` directory into a temporary manifest to use as the namespaced manifest |
+| `global-manifest` | string | manifest containing required resources that run globally (not namespaced). By default, the scorecard will combine all CRDs in the `crds-dir` directory into a temporary manifest to use as the global manifest |
+
+#### External Plugins
+
+The scorecard allows developers to write their own plugins for the scorecard that can be run via an executable binary or script. For more information on developing external plugins,
+please see the [Extending the Scorecard with Plugins](#extending-the-scorecard-with-plugins) section. These are the options available to configure external plugins:
+
+| Option        | Type   | Description   | 
+| --------    | -------- | -------- |
+| `command` | string | (required) path to the plugin binary or script. The path can either be absolute or relative to the operator project's root directory. All external plugins are run from the operator project's root directory |
+| `args` | \[\]string | arguments to pass to the plugin |
+| `env` | array | `env var` objects, which consist of a `name` and `value` field. If a `KUBECONFIG` env var is declared in this array as well as via the top-level `kubeconfig` option, the `KUBECONFIG` from the env array for the plugin is used |
+
+## Tests Performed 
+
+Following the description of each internal [Plugin](#plugins). Note that are 8 internal tests across 2 internal plugins that the scorecard can run. If multiple CRs are specified for a plugin, the test environment is fully cleaned up after each CR so each CR gets a clean testing environment.
 
 ### Basic Operator
 
-#### Spec Block Exists
-
-This test checks the Custom Resource(s) created in the cluster to make sure that all CRs have a spec block. This test
-has a maximum score of 1.
-
-#### Status Block Exists
-
-This test checks the Custom Resource(s) created in the cluster to make sure that all CRs have a status block. This
-test has a maximum score of 1.
-
-#### Writing Into CRs Has An Effect
-
-This test reads the scorecard proxy's logs to verify that the operator is making `PUT` and/or `POST` requests to the
-API server, indicating that it is modifying resources. This test has a maximum score of 1.
+| Test        | Description   | 
+| --------    | -------- |
+| Spec Block Exists | This test checks the Custom Resource(s) created in the cluster to make sure that all CRs have a spec block. This test has a maximum score of 1 |
+| Status Block Exists | This test checks the Custom Resource(s) created in the cluster to make sure that all CRs have a status block. This test has a maximum score of 1 |
+| Writing Into CRs Has An Effect | This test reads the scorecard proxy's logs to verify that the operator is making `PUT` and/or `POST` requests to the API server, indicating that it is modifying resources. This test has a maximum score of 1 |
 
 ### OLM Integration
 
-#### Provided APIs have validation
-
-This test verifies that the CRDs for the provided CRs contain a validation section and that there is validation for each
-spec and status field detected in the CR. This test has a maximum score equal to the number of CRs provided via the `cr-manifest` option.
-
-#### Owned CRDs Have Resources Listed
-
-This test makes sure that the CRDs for each CR provided via the `cr-manifest` option have a `resources` subsection in the [`owned` CRDs section][owned-crds] of the CSV. If the
-test detects used resources that are not listed in the resources section, it will list them in the suggestions at the end of the test.
-This test has a maximum score equal to the number of CRs provided via the `cr-manifest option.
-
-#### CRs Have At Least 1 Example
-
-This test checks that the CSV has an [`alm-examples` annotation][alm-examples] for each CR passed to the `cr-manifest` option in its metadata. This test has a maximum score
-equal to the number of CRs provided via the `cr-manifest option.
-
-#### Spec Fields With Descriptors
-
-This test verifies that every field in the Custom Resources' spec sections have a corresponding descriptor listed in
-the CSV. This test has a maximum score equal to the total number of fields in the spec sections of each custom resource passed in via the `cr-manifest` option.
-
-#### Status Fields With Descriptors
-
-This test verifies that every field in the Custom Resources' status sections have a corresponding descriptor listed in
-the CSV. This test has a maximum score equal to the total number of fields in the status sections of each custom resource passed in via the `cr-manifest` option.
+| Test        | Description   | 
+| --------    | -------- |
+| Provided APIs have validation |This test verifies that the CRDs for the provided CRs contain a validation section and that there is validation for each spec and status field detected in the CR. This test has a maximum score equal to the number of CRs provided via the `cr-manifest` option. |
+| Owned CRDs Have Resources Listed | This test makes sure that the CRDs for each CR provided via the `cr-manifest` option have a `resources` subsection in the [`owned` CRDs section][owned-crds] of the CSV. If the test detects used resources that are not listed in the resources section, it will list them in the suggestions at the end of the test. This test has a maximum score equal to the number of CRs provided via the `cr-manifest` option. |
+| CRs Have At Least 1 Example | This test checks that the CSV has an [`alm-examples` annotation][alm-examples] for each CR passed to the `cr-manifest` option in its metadata. This test has a maximum score equal to the number of CRs provided via the `cr-manifest` option. |
+| Spec Fields With Descriptors | This test verifies that every field in the Custom Resources' spec sections have a corresponding descriptor listed in the CSV. This test has a maximum score equal to the total number of fields in the spec sections of each custom resource passed in via the `cr-manifest` option. |
+| Status Fields With Descriptors | This test verifies that every field in the Custom Resources' status sections have a corresponding descriptor listed in the CSV. This test has a maximum score equal to the total number of fields in the status sections of each custom resource passed in via the `cr-manifest` option. |
 
 ## Extending the Scorecard with Plugins
 
@@ -172,8 +184,7 @@ to the console if the scorecard is being run in with `output` unset or set to `t
 
 ### JSON format
 
-The JSON output is formatted in the same way that a Kubernetes API would be, which allows for updates to the schema as well as the use of various
-Kubernetes helpers. The Golang structs are defined in `pkg/apis/scorecard/v1alpha1/types.go` and can be easily implemented by plugins written in Golang. Below is the JSON Schema:
+The JSON output is formatted in the same way that a Kubernetes API would be, which allows for updates to the schema as well as the use of various Kubernetes helpers. The Golang structs are defined in `pkg/apis/scorecard/v1alpha1/types.go` and can be easily implemented by plugins written in Golang. Below is the JSON Schema:
 
 ```json
 {
@@ -381,7 +392,7 @@ The scorecard can be run using only a [Cluster Service Version (CSV)][olm-csv], 
 
 Running with a CSV alone requires both the `--csv-path=<CSV manifest path>` and `--olm-deployed` flags to be set. The scorecard assumes your CSV and relevant CRD's have been deployed onto the cluster using the OLM when using `--olm-deployed`. This [document][olm-deploy-operator] walks through bundling your CSV and CRD's, deploying the OLM on minikube or [OKD][okd], and deploying your operator. Once these steps have been completed, run the scorecard with both the `--csv-path=<CSV manifest path>` and `--olm-deployed` flags.
 
-A few notes:
+**NOTES:**
 
 - As of now, using the scorecard with a CSV does not permit multiple CR manifests to be set through the CLI/config/CSV annotations. You will have to tear down your operator in the cluster, re-deploy, and re-run the scorecard for each CR being tested. In the future the scorecard will fully support testing multiple CR's without requiring users to teardown/standup each time.
 - You can either use `--cr-manifest` or your CSV's [`metadata.annotations['alm-examples']`][olm-csv-alm-examples] to provide CR's to the scorecard, but not both.

@@ -52,56 +52,65 @@ type Runner interface {
 	GetFinalizer() (string, bool)
 }
 
+func ansibleVerbosityString(verbosity int) string {
+	if verbosity > 0 {
+		return fmt.Sprintf("-%v", strings.Repeat("v", verbosity))
+	}
+	return ""
+}
+
+type cmdFuncType func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd
+
+func playbookCmdFunc(verbosity, path string) cmdFuncType {
+	return func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd {
+		return exec.Command("ansible-runner", verbosity, "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "-p", path, "-i", ident, "run", inputDirPath)
+	}
+}
+
+func roleCmdFunc(verbosity, path string) cmdFuncType {
+	rolePath, roleName := filepath.Split(path)
+	return func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd {
+		return exec.Command("ansible-runner", verbosity, "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath, "--hosts", "localhost", "-i", ident, "run", inputDirPath)
+	}
+}
+
 // New - creates a Runner from a Watch struct
 func New(watch watches.Watch) (Runner, error) {
-	// handle role or playbook
 	var path string
-	var cmdFunc func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd
+	var cmdFunc, finalizerCmdFunc cmdFuncType
+
+	err := watch.Validate()
+	if err != nil {
+		log.Error(err, "Failed to validate watch")
+		return nil, err
+	}
+	verbosityString := ansibleVerbosityString(watch.AnsibleVerbosity)
 
 	switch {
 	case watch.Playbook != "":
 		path = watch.Playbook
-		cmdFunc = func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd {
-			return exec.Command("ansible-runner", "-vv", "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "-p", path, "-i", ident, "run", inputDirPath)
-		}
+		cmdFunc = playbookCmdFunc(verbosityString, path)
 	case watch.Role != "":
 		path = watch.Role
-		cmdFunc = func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd {
-			rolePath, roleName := filepath.Split(path)
-			return exec.Command("ansible-runner", "-vv", "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath, "--hosts", "localhost", "-i", ident, "run", inputDirPath)
-		}
-	default:
-		return nil, fmt.Errorf("must specify Role or Path")
+		cmdFunc = roleCmdFunc(verbosityString, path)
 	}
 
 	// handle finalizer
-	var finalizer *watches.Finalizer
-	var finalizerCmdFunc func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd
 	switch {
 	case watch.Finalizer == nil:
-		finalizer = nil
 		finalizerCmdFunc = nil
 	case watch.Finalizer.Playbook != "":
-		finalizer = watch.Finalizer
-		finalizerCmdFunc = func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd {
-			return exec.Command("ansible-runner", "-vv", "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "-p", finalizer.Playbook, "-i", ident, "run", inputDirPath)
-		}
+		finalizerCmdFunc = playbookCmdFunc(verbosityString, watch.Finalizer.Playbook)
 	case watch.Finalizer.Role != "":
-		finalizer = watch.Finalizer
-		finalizerCmdFunc = func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd {
-			path := strings.TrimRight(finalizer.Role, "/")
-			rolePath, roleName := filepath.Split(path)
-			return exec.Command("ansible-runner", "-vv", "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath, "--hosts", "localhost", "-i", ident, "run", inputDirPath)
-		}
+		finalizerCmdFunc = roleCmdFunc(verbosityString, watch.Finalizer.Role)
 	case len(watch.Finalizer.Vars) != 0:
-		finalizer = watch.Finalizer
 		finalizerCmdFunc = cmdFunc
 	}
 
 	return &runner{
 		Path:               path,
 		cmdFunc:            cmdFunc,
-		Finalizer:          finalizer,
+		Finalizer:          watch.Finalizer,
 		finalizerCmdFunc:   finalizerCmdFunc,
 		GVK:                watch.GroupVersionKind,
 		maxRunnerArtifacts: watch.MaxRunnerArtifacts,
@@ -119,7 +128,6 @@ type runner struct {
 }
 
 func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig string) (RunResult, error) {
-
 	timer := metrics.ReconcileTimer(r.GVK.String())
 	defer timer.ObserveDuration()
 
