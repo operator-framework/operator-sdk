@@ -38,7 +38,7 @@ func NewCmd() *cobra.Command {
 	scorecardCmd.Flags().String(scplugins.KubeconfigOpt, "", "Path to kubeconfig of custom resource created in cluster")
 	scorecardCmd.Flags().StringP(scorecard.OutputFormatOpt, "o", scorecard.TextOutputFormat, fmt.Sprintf("Output format for results. Valid values: %s, %s", scorecard.TextOutputFormat, scorecard.JSONOutputFormat))
 	scorecardCmd.Flags().String(schelpers.VersionOpt, schelpers.DefaultScorecardVersion, "scorecard version. Valid values: v1alpha1, v1alpha2")
-	scorecardCmd.Flags().StringP(schelpers.SelectorOpt, "l", scplugins.DefaultSelector, "selector (label query) to filter tests on (only valid when version is v1alpha2)")
+	scorecardCmd.Flags().StringP(schelpers.SelectorOpt, "l", "", "selector (label query) to filter tests on (only valid when version is v1alpha2)")
 	scorecardCmd.Flags().Bool(schelpers.DryRunOpt, false, "If true, only print the tests that would be run.")
 
 	// TODO: make config file global and make this a top level flag

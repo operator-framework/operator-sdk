@@ -14,10 +14,6 @@
 
 package scplugins
 
-import (
-	"k8s.io/apimachinery/pkg/selection"
-)
-
 const (
 	necessityKey      = "necessity"
 	requiredNecessity = "required"
@@ -26,6 +22,4 @@ const (
 	suiteKey       = "suite"
 	basicSuiteName = "basic"
 	olmSuiteName   = "olm"
-
-	DefaultSelector = necessityKey + string(selection.Equals) + requiredNecessity
 )
