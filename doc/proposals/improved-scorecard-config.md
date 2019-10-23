@@ -1,12 +1,14 @@
-# Improved Scorecard Config
+# Improved Scorecard Config Proposal for Operator SDK
 
 Implementation Owner: AlexNPavel
-Status: Draft
+> Status: **implemented**
+>
+> See the [scorecard documentation](../test-framework/scorecard.md) for up-to-date information.
 
-- [Background](#Background)
-- [Goals](#Goals)
-- [Design overview](#Design-overview)
-- [User facing usage](#User-facing-usage)
+- [Background](#background)
+- [Goals](#goals)
+- [Design overview](#design-overview)
+- [User facing usage](#user-facing-usage)
 
 ## Background
 
@@ -70,8 +72,8 @@ scorecard:
     - name: Basic Tests
       basic:
         cr-manifest:
-          - "deploy/crds/cache_v1alpha1_memcached_cr.yaml"
-          - "deploy/crds/cache_v1alpha1_memcachedrs_cr.yaml"
+          - "deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml"
+          - "deploy/crds/cache.example.com_v1alpha1_memcachedrs_cr.yaml"
         init-timeout: 60
         csv-path: "deploy/olm-catalog/memcached-operator/0.0.3/memcached-operator.v0.0.3.clusterserviceversion.yaml"
         proxy-image: "scorecard-proxy"
@@ -79,8 +81,8 @@ scorecard:
     - name: OLM Tests
       olm:
         cr-manifest:
-          - "deploy/crds/cache_v1alpha1_memcached_cr.yaml"
-          - "deploy/crds/cache_v1alpha1_memcachedrs_cr.yaml"
+          - "deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml"
+          - "deploy/crds/cache.example.com_v1alpha1_memcachedrs_cr.yaml"
         init-timeout: 60
         csv-path: "deploy/olm-catalog/memcached-operator/0.0.3/memcached-operator.v0.0.3.clusterserviceversion.yaml"
         proxy-image: "scorecard-proxy"

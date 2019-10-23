@@ -1,4 +1,4 @@
-# Developer guide
+# Ansible Developer Guide for Operator SDK
 
 This document provides some useful information and tips for a developer
 creating an operator powered by Ansible.
@@ -28,7 +28,7 @@ $ sudo dnf install ansible
 In addition to Ansible, a user must install the [OpenShift Restclient
 Python][openshift_restclient_python] package. This can be installed from pip:
 ```bash
-$ pip install openshift
+$ pip3 install openshift
 ```
 
 ### Testing the k8s Ansible modules locally
@@ -211,7 +211,7 @@ Create a Custom Resource Definition (CRD) and proper Role-Based Access Control
 (RBAC) definitions for resource Foo. `operator-sdk` auto-generates these files
 inside of the `deploy` folder:
 ```bash
-$ kubectl create -f deploy/crds/foo_v1alpha1_foo_crd.yaml
+$ kubectl create -f deploy/crds/foo.example.com_foos_crd.yaml
 $ kubectl create -f deploy/service_account.yaml
 $ kubectl create -f deploy/role.yaml
 $ kubectl create -f deploy/role_binding.yaml
@@ -306,7 +306,7 @@ $ sed -i "" 's|REPLACE_IMAGE|quay.io/example/foo-operator:v0.0.1|g' deploy/opera
 Deploy the foo-operator:
 
 ```sh
-$ kubectl create -f deploy/crds/foo_v1alpha1_foo_crd.yaml # if CRD doesn't exist already
+$ kubectl create -f deploy/crds/foo.example.com_foos_crd.yaml # if CRD doesn't exist already
 $ kubectl create -f deploy/service_account.yaml
 $ kubectl create -f deploy/role.yaml
 $ kubectl create -f deploy/role_binding.yaml

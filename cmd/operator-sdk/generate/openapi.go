@@ -29,7 +29,7 @@ func newGenerateOpenAPICmd() *cobra.Command {
 in all pkg/apis/<group>/<version> directories. Go code is generated under
 pkg/apis/<group>/<version>/zz_generated.openapi.go. CRD's are generated, or
 updated if they exist for a particular group + version + kind, under
-deploy/crds/<group>_<version>_<kind>_crd.yaml; OpenAPI V3 validation YAML
+deploy/crds/<full group>_<resource>_crd.yaml; OpenAPI V3 validation YAML
 is generated as a 'validation' object.
 
 Example:
@@ -40,8 +40,8 @@ Example:
 		└── v1alpha1
 			├── zz_generated.openapi.go
 	$ tree deploy/crds
-	├── deploy/crds/app_v1alpha1_appservice_cr.yaml
-	├── deploy/crds/app_v1alpha1_appservice_crd.yaml
+	├── deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
+	├── deploy/crds/app.example.com_appservices_crd.yaml
 `,
 		RunE: openAPIFunc,
 	}

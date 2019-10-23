@@ -1,18 +1,26 @@
-# User Experience CLI Improvements | Phase 1
+# User Experience CLI Improvements | Phase 1 Proposal for Operator SDK
 
 Implementation Owner: @joelanford
 
-Status: Draft
+> Status: **implementable**
 
-[Background](#Background)
-
-[Goal](#Goal)
-
-[Use cases](#Use_cases)
-
-[Proposed CLI commands](#Proposed_CLI_commands)
-
-[References](#References)
+- [Background](#background)
+- [Goal](#goal)
+- [Use cases](#use-cases)
+- [Proposed CLI commands](#proposed-cli-commands)
+  - [`operator-sdk alpha`](#operator-sdk-alpha)
+  - [`operator-sdk alpha olm init`](#operator-sdk-alpha-olm-init)
+    - [OCP/OKD](#ocpokd)
+    - [Upstream Kubernetes](#upstream-kubernetes)
+    - [Flags for `olm init`](#flags-for-olm-init)
+  - [`operator-sdk alpha olm up`](#operator-sdk-alpha-olm-up)
+    - [Prerequisites](#prerequisites)
+    - [Flags for `olm up`](#flags-for-olm-up)
+    - [Resources](#resources)
+- [References](#references)
+  - [Operator SDK](#operator-sdk)
+  - [Operator Registry](#operator-registry)
+  - [Operator Lifecycle Manager](#operator-lifecycle-manager)
 
 ## Background
 

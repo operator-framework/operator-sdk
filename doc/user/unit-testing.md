@@ -1,4 +1,4 @@
-# Unit testing
+# Unit testing with Operator SDK
 ------------
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -52,10 +52,9 @@ func TestMemcachedController(t *testing.T) {
     cl := fake.NewFakeClient(objs...)
 
     // List Memcached objects filtering by labels
+    opt := client.MatchingLabels(map[string]string{"label-key": "label-value"})
     memcachedList := &cachev1alpha1.MemcachedList{}
-    err := cl.List(context.TODO(), client.MatchingLabels(map[string]string{
-		"label-key": "label-value",
-    }), memcachedList)
+    err := cl.List(context.TODO(), memcachedList, opt)
     if err != nil {
         t.Fatalf("list memcached: (%v)", err)
     }
@@ -82,7 +81,7 @@ import (
     "k8s.io/client-go/kubernetes/scheme"
     "sigs.k8s.io/controller-runtime/pkg/client/fake"
     "sigs.k8s.io/controller-runtime/pkg/reconcile"
-    logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+    logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func TestMemcachedControllerDeploymentCreate(t *testing.T) {
@@ -249,7 +248,7 @@ Following is a snippet code as an example to increase the verbosity of the logs 
 ```go
 import (
     ...
-    logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+    logf "sigs.k8s.io/controller-runtime/pkg/log"
     ...
 )
 func TestMemcachedController(t *testing.T) {

@@ -25,7 +25,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/ansible"
@@ -38,7 +38,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // newLocalCmd - up local command to run an operator loccally
@@ -206,7 +206,6 @@ func buildLocal(outputBinName string) error {
 		BinName:     outputBinName,
 		PackagePath: path.Join(projutil.GetGoPkg(), filepath.ToSlash(scaffold.ManagerDir)),
 		Args:        args,
-		GoMod:       projutil.IsDepManagerGoMod(),
 	}
 	return projutil.GoBuild(opts)
 }

@@ -1,4 +1,4 @@
-# Generating a Cluster Service Version (CSV)
+# Generating a Cluster Service Version (CSV) with Operator SDK
 
 This document describes how to manage the following lifecycle for your Operator using the SDK's [`operator-sdk olm-catalog gen-csv`][doc-gen-csv] command:
 
@@ -12,8 +12,8 @@ Operator SDK projects have an expected [project layout][doc-project-layout]. In 
 
 * Roles: `role.yaml`
 * Deployments: `operator.yaml`
-* Custom Resources (CR's): `crds/<group>_<version>_<kind>_cr.yaml`
-* Custom Resource Definitions (CRD's): `crds/<group>_<version>_<kind>_crd.yaml`.
+* Custom Resources (CR's): `crds/<full group>_<version>_<kind>_cr.yaml`
+* Custom Resource Definitions (CRD's): `crds/<full group>_<resource>_crd.yaml`.
 
 `gen-csv` reads these files and adds their data to a CSV in an alternate form.
 
@@ -68,7 +68,7 @@ When running `gen-csv` with a version that already exists, the `Required csv fie
 
 ## Updating your CSV
 
-Let's say you added a new CRD `deploy/crds/group_v1beta1_yourkind_crd.yaml` to your Operator project, and added a port to your Deployment manifest `operator.yaml`. Assuming you're using the same version as above, updating your CSV is as simple as running `operator-sdk olm-catalog gen-csv --csv-version 0.0.1`. `gen-csv` will append your new CRD to `spec.customresourcedefinitions.owned`, replace the old data at `spec.install.spec.deployments` with your updated Deployment, and write an updated CSV to the same location.
+Let's say you added a new CRD `deploy/crds/group.domain.com_resource_crd.yaml` to your Operator project, and added a port to your Deployment manifest `operator.yaml`. Assuming you're using the same version as above, updating your CSV is as simple as running `operator-sdk olm-catalog gen-csv --csv-version 0.0.1`. `gen-csv` will append your new CRD to `spec.customresourcedefinitions.owned`, replace the old data at `spec.install.spec.deployments` with your updated Deployment, and write an updated CSV to the same location.
 
 The SDK will not overwrite user-defined fields like `spec.maintainers` or descriptions of CSV elements, with the exception of `specDescriptors[].displayName` and `statusDescriptors[].displayName` in `spec.customresourcedefinitions.owned`, as mentioned [above](#first-generation).
 

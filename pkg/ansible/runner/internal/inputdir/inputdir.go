@@ -25,7 +25,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/spf13/afero"
 
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var log = logf.Log.WithName("inputdir")
@@ -142,7 +142,9 @@ func (i *InputDir) Write() error {
 		venv := os.Getenv("VIRTUAL_ENV")
 		hosts := "localhost ansible_connection=local"
 		if venv != "" {
-			hosts = fmt.Sprintf("%s ansible_python_interpreter=%s", hosts, filepath.Join(venv, "bin/python"))
+			hosts = fmt.Sprintf("%s ansible_python_interpreter=%s", hosts, filepath.Join(venv, "bin", "python3"))
+		} else {
+			hosts = fmt.Sprintf("%s ansible_python_interpreter=%s", hosts, "{{ansible_playbook_python}}")
 		}
 		err = i.addFile("inventory/hosts", []byte(hosts))
 		if err != nil {

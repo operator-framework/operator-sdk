@@ -25,8 +25,9 @@ import (
 // AnsibleOperatorFlags - Options to be used by an ansible operator
 type AnsibleOperatorFlags struct {
 	watch.WatchFlags
-	InjectOwnerRef bool
-	MaxWorkers     int
+	InjectOwnerRef   bool
+	MaxWorkers       int
+	AnsibleVerbosity int
 }
 
 // AddTo - Add the ansible operator flags to the the flagset
@@ -45,6 +46,13 @@ func AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) *AnsibleOperatorFla
 		1,
 		strings.Join(append(helpTextPrefix,
 			"Maximum number of workers to use. Overridden by environment variable."),
+			" "),
+	)
+	flagSet.IntVar(&aof.AnsibleVerbosity,
+		"ansible-verbosity",
+		2,
+		strings.Join(append(helpTextPrefix,
+			"Ansible verbosity. Overridden by environment variable."),
 			" "),
 	)
 	return aof

@@ -39,8 +39,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 const (
@@ -271,7 +271,7 @@ func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, name
 	// Get the latest resource to prevent updating a stale status
 	err := r.Client.Get(context.TODO(), namespacedName, u)
 	if apierrors.IsNotFound(err) {
-		logger.Info("Resource not found, assuming it was deleted", err)
+		logger.Info("Resource not found, assuming it was deleted")
 		return nil
 	}
 	if err != nil {
@@ -310,7 +310,7 @@ func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, names
 	// Get the latest resource to prevent updating a stale status
 	err := r.Client.Get(context.TODO(), namespacedName, u)
 	if apierrors.IsNotFound(err) {
-		logger.Info("Resource not found, assuming it was deleted", err)
+		logger.Info("Resource not found, assuming it was deleted")
 		return nil
 	}
 	if err != nil {
