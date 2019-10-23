@@ -50,6 +50,9 @@ all: format test build/operator-sdk ## Test and Build the Operator SDK
 format: ## Format the source code
 	$(Q)go fmt $(PKGS)
 
+vet: ## Vet the source code
+	$(Q)go vet $(PKGS)
+
 tidy: ## Update dependencies
 	$(Q)go mod tidy -v
 
