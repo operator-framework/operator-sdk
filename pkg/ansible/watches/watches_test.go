@@ -72,6 +72,9 @@ func TestNew(t *testing.T) {
 			if watch.WatchClusterScopedResources != watchClusterScopedResourcesDefault {
 				t.Fatalf("Unexpected watchClusterScopedResources %v expected %v", watch.WatchClusterScopedResources, watchClusterScopedResourcesDefault)
 			}
+			if watch.AnsibleVerbosity != ansibleVerbosityDefault {
+				t.Fatalf("Unexpected ansibleVerbosity %v expected %v", watch.AnsibleVerbosity, ansibleVerbosityDefault)
+			}
 
 			err := watch.Validate()
 			if err != nil && tc.shouldValidate {
@@ -115,14 +118,15 @@ func TestLoad(t *testing.T) {
 	zeroSeconds := time.Duration(0)
 	twoSeconds := time.Second * 2
 	testCases := []struct {
-		name        string
-		path        string
-		maxWorkers  int
-		expected    []Watch
-		setenvvar   bool
-		envvar      string
-		envvarValue int
-		shouldError bool
+		name             string
+		path             string
+		maxWorkers       int
+		ansibleVerbosity int
+		expected         []Watch
+		setenvvar        bool
+		envvar           string
+		envvarValue      int
+		shouldError      bool
 	}{
 		{
 			name:        "error duplicate GVK",
@@ -175,9 +179,10 @@ func TestLoad(t *testing.T) {
 			shouldError: true,
 		},
 		{
-			name:       "valid watches file",
-			path:       "testdata/valid.yaml",
-			maxWorkers: 1,
+			name:             "valid watches file",
+			path:             "testdata/valid.yaml",
+			maxWorkers:       1,
+			ansibleVerbosity: 2,
 			expected: []Watch{
 				Watch{
 					GroupVersionKind: schema.GroupVersionKind{
@@ -313,16 +318,48 @@ func TestLoad(t *testing.T) {
 					ManageStatus: true,
 					MaxWorkers:   4,
 				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "AnsibleVerbosityDefault",
+					},
+					Role:             validTemplate.ValidRole,
+					ManageStatus:     true,
+					AnsibleVerbosity: 2,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "AnsibleVerbosityIgnored",
+					},
+					Role:             validTemplate.ValidRole,
+					ManageStatus:     true,
+					AnsibleVerbosity: 2,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "AnsibleVerbosityEnv",
+					},
+					Role:             validTemplate.ValidRole,
+					ManageStatus:     true,
+					AnsibleVerbosity: 4,
+				},
 			},
 		},
 	}
 
 	os.Setenv("WORKER_MAXWORKERSENV_APP_EXAMPLE_COM", "4")
 	defer os.Unsetenv("WORKER_MAXWORKERSENV_APP_EXAMPLE_COM")
+	os.Setenv("ANSIBLE_VERBOSITY_ANSIBLEVERBOSITYENV_APP_EXAMPLE_COM", "4")
+	defer os.Unsetenv("ANSIBLE_VERBOSITY_ANSIBLEVERBOSITYENV_APP_EXAMPLE_COM")
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			watchSlice, err := Load(tc.path, tc.maxWorkers)
+			watchSlice, err := Load(tc.path, tc.maxWorkers, tc.ansibleVerbosity)
 			if err != nil && !tc.shouldError {
 				t.Fatalf("Error occurred unexpectedly: %v", err)
 			}
@@ -373,12 +410,13 @@ func TestLoad(t *testing.T) {
 
 func TestMaxWorkers(t *testing.T) {
 	testCases := []struct {
-		name      string
-		gvk       schema.GroupVersionKind
-		defvalue  int
-		expected  int
-		setenvvar bool
-		envvar    string
+		name          string
+		gvk           schema.GroupVersionKind
+		defValue      int
+		expectedValue int
+		setEnv        bool
+		envKey        string
+		envValue      int
 	}{
 		{
 			name: "no env, use default value",
@@ -387,10 +425,23 @@ func TestMaxWorkers(t *testing.T) {
 				Version: "v1alpha1",
 				Kind:    "MemCacheService",
 			},
-			defvalue:  1,
-			expected:  1,
-			setenvvar: false,
-			envvar:    "WORKER_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
+			defValue:      1,
+			expectedValue: 1,
+			setEnv:        false,
+			envKey:        "WORKER_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
+		},
+		{
+			name: "invalid env, use default value",
+			gvk: schema.GroupVersionKind{
+				Group:   "cache.example.com",
+				Version: "v1alpha1",
+				Kind:    "MemCacheService",
+			},
+			defValue:      1,
+			expectedValue: 1,
+			setEnv:        true,
+			envKey:        "WORKER_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
+			envValue:      0,
 		},
 		{
 			name: "env set to 3, expect 3",
@@ -399,22 +450,126 @@ func TestMaxWorkers(t *testing.T) {
 				Version: "v1alpha1",
 				Kind:    "MemCacheService",
 			},
-			defvalue:  1,
-			expected:  3,
-			setenvvar: true,
-			envvar:    "WORKER_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
+			defValue:      1,
+			expectedValue: 3,
+			setEnv:        true,
+			envKey:        "WORKER_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
+			envValue:      3,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			os.Unsetenv(tc.envvar)
-			if tc.setenvvar {
-				os.Setenv(tc.envvar, strconv.Itoa(tc.expected))
+			os.Unsetenv(tc.envKey)
+			if tc.setEnv {
+				os.Setenv(tc.envKey, strconv.Itoa(tc.envValue))
 			}
-			workers := getMaxWorkers(tc.gvk, tc.defvalue)
-			if tc.expected != workers {
-				t.Fatalf("Unexpected MaxWorkers: %v expected MaxWorkers: %v", workers, tc.expected)
+			workers := getMaxWorkers(tc.gvk, tc.defValue)
+			if tc.expectedValue != workers {
+				t.Fatalf("Unexpected MaxWorkers: %v expected MaxWorkers: %v", workers, tc.expectedValue)
+			}
+		})
+	}
+}
+
+func TestAnsibleVerbosity(t *testing.T) {
+	testCases := []struct {
+		name          string
+		gvk           schema.GroupVersionKind
+		defValue      int
+		expectedValue int
+		setEnv        bool
+		envKey        string
+		envValue      int
+	}{
+		{
+			name: "no env, use default value",
+			gvk: schema.GroupVersionKind{
+				Group:   "cache.example.com",
+				Version: "v1alpha1",
+				Kind:    "MemCacheService",
+			},
+			defValue:      1,
+			expectedValue: 1,
+			setEnv:        false,
+			envKey:        "ANSIBLE_VERBOSITY_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
+		},
+		{
+			name: "invalid env, lt 0, use default value",
+			gvk: schema.GroupVersionKind{
+				Group:   "cache.example.com",
+				Version: "v1alpha1",
+				Kind:    "MemCacheService",
+			},
+			defValue:      1,
+			expectedValue: 1,
+			setEnv:        true,
+			envKey:        "ANSIBLE_VERBOSITY_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
+			envValue:      -1,
+		},
+		{
+			name: "invalid env, gt 7, use default value",
+			gvk: schema.GroupVersionKind{
+				Group:   "cache.example.com",
+				Version: "v1alpha1",
+				Kind:    "MemCacheService",
+			},
+			defValue:      1,
+			expectedValue: 1,
+			setEnv:        true,
+			envKey:        "ANSIBLE_VERBOSITY_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
+			envValue:      8,
+		},
+		{
+			name: "env set to 3, expect 3",
+			gvk: schema.GroupVersionKind{
+				Group:   "cache.example.com",
+				Version: "v1alpha1",
+				Kind:    "MemCacheService",
+			},
+			defValue:      1,
+			expectedValue: 3,
+			setEnv:        true,
+			envKey:        "ANSIBLE_VERBOSITY_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
+			envValue:      3,
+		},
+		{
+			name: "boundary test 0",
+			gvk: schema.GroupVersionKind{
+				Group:   "cache.example.com",
+				Version: "v1alpha1",
+				Kind:    "MemCacheService",
+			},
+			defValue:      1,
+			expectedValue: 0,
+			setEnv:        true,
+			envKey:        "ANSIBLE_VERBOSITY_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
+			envValue:      0,
+		},
+		{
+			name: "boundary test 7",
+			gvk: schema.GroupVersionKind{
+				Group:   "cache.example.com",
+				Version: "v1alpha1",
+				Kind:    "MemCacheService",
+			},
+			defValue:      1,
+			expectedValue: 7,
+			setEnv:        true,
+			envKey:        "ANSIBLE_VERBOSITY_MEMCACHESERVICE_CACHE_EXAMPLE_COM",
+			envValue:      7,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			os.Unsetenv(tc.envKey)
+			if tc.setEnv {
+				os.Setenv(tc.envKey, strconv.Itoa(tc.envValue))
+			}
+			verbosity := getAnsibleVerbosity(tc.gvk, tc.defValue)
+			if tc.expectedValue != verbosity {
+				t.Fatalf("Unexpected Verbosity: %v expected Verbosity: %v", verbosity, tc.expectedValue)
 			}
 		})
 	}
