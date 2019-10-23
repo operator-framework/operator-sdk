@@ -15,6 +15,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cli"
 
 	"github.com/spf13/cobra/doc"
@@ -24,8 +26,11 @@ import (
 
 func main() {
 	root := cli.GetCLIRoot()
-
-	err := doc.GenMarkdownTree(root, "../../doc")
+	currentDir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Failed to get current directory, (%v)", err)
+	}
+	err = doc.GenMarkdownTree(root, currentDir+"/doc/cli-docs")
 	if err != nil {
 		log.Fatalf("Failed to generate documenation, (%v)", err)
 	}
