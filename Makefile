@@ -45,7 +45,7 @@ help: ## Show this help screen
 all: format test build/operator-sdk ## Test and Build the Operator SDK
 
 # Code management.
-.PHONY: test format tidy clean
+.PHONY: format tidy clean doc
 
 format: ## Format the source code
 	$(Q)go fmt $(PKGS)
@@ -55,6 +55,9 @@ tidy: ## Update dependencies
 
 clean: ## Clean up the build artifacts
 	$(Q)rm -rf build
+
+doc: ## Generate CLI Documentation
+	go run ./hack/doc/gen-cli-doc.go
 
 # Build/install/release the SDK.
 .PHONY: install release_builds release

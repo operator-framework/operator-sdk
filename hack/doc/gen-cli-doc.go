@@ -15,7 +15,7 @@
 package main
 
 import (
-	cmd "github.com/operator-framework/operator-sdk/cmd/operator-sdk"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cli"
 
 	"github.com/spf13/cobra/doc"
 
@@ -23,7 +23,7 @@ import (
 )
 
 func main() {
-	root := cmd.GetCLIRoot()
+	root := cli.GetCLIRoot()
 
 	err := doc.GenMarkdownTree(root, "../../doc")
 	if err != nil {
