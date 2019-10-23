@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"
@@ -39,8 +39,8 @@ func NewCmd() *cobra.Command {
 	buildCmd := &cobra.Command{
 		Use:   "build <image>",
 		Short: "Compiles code and builds artifacts",
-		Long: `The operator-sdk build command compiles the code, builds the executables,
-and generates Kubernetes manifests.
+		Long: `The operator-sdk build command compiles the Operator code into an executable binary
+and generates the Dockerfile manifest.
 
 <image> is the container image to be built, e.g. "quay.io/example/operator:v0.0.1".
 This image will be automatically set in the deployment manifests.
@@ -119,7 +119,6 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 			PackagePath: path.Join(projutil.GetGoPkg(), filepath.ToSlash(scaffold.ManagerDir)),
 			Args:        args,
 			Env:         goBuildEnv,
-			GoMod:       projutil.IsDepManagerGoMod(),
 		}
 		if err := projutil.GoBuild(opts); err != nil {
 			return fmt.Errorf("failed to build operator binary: (%v)", err)
