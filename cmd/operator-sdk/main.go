@@ -44,6 +44,20 @@ import (
 )
 
 func main() {
+	root := GetCLIRoot()
+
+	root.PersistentFlags().Bool(flags.VerboseOpt, false, "Enable verbose logging")
+	if err := viper.BindPFlags(root.PersistentFlags()); err != nil {
+		log.Fatalf("Failed to bind root flags: %v", err)
+	}
+
+	if err := root.Execute(); err != nil {
+		os.Exit(1)
+	}
+}
+
+// GetCLIRoot is intended to creeate the base command structure for the OSDK for use in CLI and documentation
+func GetCLIRoot() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "operator-sdk",
 		Short: "An SDK for building operators with ease",
@@ -76,14 +90,7 @@ func main() {
 	root.AddCommand(up.NewCmd())
 	root.AddCommand(version.NewCmd())
 
-	root.PersistentFlags().Bool(flags.VerboseOpt, false, "Enable verbose logging")
-	if err := viper.BindPFlags(root.PersistentFlags()); err != nil {
-		log.Fatalf("Failed to bind root flags: %v", err)
-	}
-
-	if err := root.Execute(); err != nil {
-		os.Exit(1)
-	}
+	return root
 }
 
 func checkGoModulesForCmd(cmd *cobra.Command) (err error) {
