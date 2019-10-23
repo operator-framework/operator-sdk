@@ -37,6 +37,8 @@ func (s *GoMod) GetInput() (input.Input, error) {
 
 const goModTmpl = `module {{ .Repo }}
 
+go 1.13
+
 require (
 	github.com/operator-framework/operator-sdk master
 	github.com/spf13/pflag v1.0.3

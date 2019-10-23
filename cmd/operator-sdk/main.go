@@ -15,7 +15,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -56,7 +55,7 @@ func main() {
 				log.SetLevel(log.DebugLevel)
 				log.Debug("Debug logging is set")
 			}
-			if err := checkDepManagerForCmd(cmd); err != nil {
+			if err := checkGoModulesForCmd(cmd); err != nil {
 				log.Fatal(err)
 			}
 		},
@@ -87,29 +86,25 @@ func main() {
 	}
 }
 
-func checkDepManagerForCmd(cmd *cobra.Command) (err error) {
+func checkGoModulesForCmd(cmd *cobra.Command) (err error) {
 	// Certain commands are able to be run anywhere or handle this check
 	// differently in their CLI code.
 	if skipCheckForCmd(cmd) {
 		return nil
 	}
-	// Do not perform this check if the project is non-Go, as they will not have
-	// a (Go) dep manager.
+	// Do not perform this check if the project is non-Go, as they will not
+	// be using go modules.
 	if !projutil.IsOperatorGo() {
 		return nil
 	}
-	// Do not perform a dep manager check if the working directory is not in
+	// Do not perform a go modules check if the working directory is not in
 	// the project root, as some sub-commands might not require project root.
 	// Individual subcommands will perform this check as needed.
 	if err := projutil.CheckProjectRoot(); err != nil {
 		return nil
 	}
 
-	dm, err := projutil.GetDepManagerType()
-	if err != nil {
-		return err
-	}
-	return checkDepManager(dm)
+	return projutil.CheckGoModules()
 }
 
 var commandsToSkip = map[string]struct{}{
@@ -135,29 +130,4 @@ func skipCheckForCmd(cmd *cobra.Command) (skip bool) {
 		}
 	})
 	return skip
-}
-
-func checkDepManager(dm projutil.DepManagerType) error {
-	switch dm {
-	case projutil.DepManagerGoMod:
-		goModOn, err := projutil.GoModOn()
-		if err != nil {
-			return err
-		}
-		if !goModOn {
-			return fmt.Errorf(`dependency manager "modules" requires working directory to be in $GOPATH/src` +
-				` and GO111MODULE=on, or outside of $GOPATH/src and GO111MODULE="on", "auto", or unset. More info: https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#go-modules`)
-		}
-	case projutil.DepManagerDep:
-		inGopathSrc, err := projutil.WdInGoPathSrc()
-		if err != nil {
-			return err
-		}
-		if !inGopathSrc {
-			return fmt.Errorf(`dependency manager "dep" requires working directory to be in $GOPATH/src`)
-		}
-	default:
-		return projutil.ErrInvalidDepManager(dm)
-	}
-	return nil
 }

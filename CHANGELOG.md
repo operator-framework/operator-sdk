@@ -7,9 +7,13 @@
 
 ### Changed
 
+- **Breaking change:** Changed required Go version from `1.12` to `1.13`. This change applies to the SDK project itself and Go projects scaffolded by the SDK. Projects that import this version of the SDK require Go 1.13 to compile. ([#1949](https://github.com/operator-framework/operator-sdk/pull/1949))
+
 ### Deprecated
 
 ### Removed
+
+- Removed `--dep-manager` flag and support for `dep`-based projects. Projects will be scaffolded to use Go modules. ([#1949](https://github.com/operator-framework/operator-sdk/pull/1949))
 
 ### Bug Fixes
 

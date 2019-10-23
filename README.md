@@ -41,13 +41,12 @@ The following workflow is for a new **Helm** operator:
 ## Prerequisites
 
 - [git][git_tool]
-- [go][go_tool] version v1.12+.
+- [go][go_tool] version v1.13+.
 - [mercurial][mercurial_tool] version 3.9+
 - [docker][docker_tool] version 17.03+.
   - Alternatively [podman][podman_tool] `v1.2.0+` or [buildah][buildah_tool] `v1.7+`
 - [kubectl][kubectl_tool] version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
-- Optional: [dep][dep_tool] version v0.5.0+.
 - Optional: [delve](https://github.com/go-delve/delve/tree/master/Documentation/installation) version 1.2.0+ (for `up local --enable-delve`).
 
 ## Quick Start
@@ -181,7 +180,6 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [contrib]: ./CONTRIBUTING.MD
 [bug_guide]:./doc/dev/reporting_bugs.md
 [license_file]:./LICENSE
-[dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
 [mercurial_tool]:https://www.mercurial-scm.org/downloads

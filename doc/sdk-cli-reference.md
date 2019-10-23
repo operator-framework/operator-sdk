@@ -89,33 +89,7 @@ $ operator-sdk completion bash
 
 Prints the most recent Golang packages and versions required by operators. Prints in columnar format by default.
 
-### Flags
-
-* `--dep-manager` string - Dependency manager file type to print (choices: "dep", "modules")
-
 ### Example
-
-With dependency manager `dep`:
-
-```console
-$ operator-sdk print-deps
-required = [
-  "k8s.io/code-generator/cmd/deepcopy-gen",
-  "k8s.io/code-generator/cmd/conversion-gen",
-  "k8s.io/code-generator/cmd/client-gen",
-  "k8s.io/code-generator/cmd/lister-gen",
-  "k8s.io/code-generator/cmd/informer-gen",
-  "k8s.io/code-generator/cmd/openapi-gen",
-  "k8s.io/gengo/args",
-]
-
-[[override]]
-  name = "k8s.io/code-generator"
-  revision = "6702109cc68eb6fe6350b83e14407c8d7309fd1a"
-...
-```
-
-With dependency manager Go `modules`:
 
 ```console
 $ operator-sdk print-deps
@@ -227,9 +201,8 @@ you will need to rename it before running migrate or manually add it to your Doc
 
 #### Flags
 
-* `--dep-manager` string - Dependency manager the migrated project will use (choices: "dep", "modules") (default "modules")
 * `--header-file` string - Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt
-* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` with Go modules, and cannot be set if `--dep-manager=dep` (e.g. github.com/example-inc/my-operator)
+* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` (e.g. github.com/example-inc/my-operator)
 
 ### Example
 
@@ -264,10 +237,9 @@ Scaffolds a new operator project.
 * `--helm-chart-repo` string - Chart repository URL for the requested helm chart
 * `--helm-chart-version` string - Specific version of the helm chart (default is latest version)
 * `--header-file` string - Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt
-* `--dep-manager` string - Dependency manager the new project will use (choices: "dep", "modules") (default "modules")
-* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` with Go modules, and cannot be set if `--dep-manager=dep`
+* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` (e.g. github.com/example-inc/my-operator)
 * `--git-init` - Initialize the project directory as a git repository (default `false`)
-* `--vendor` - Use a vendor directory for dependencies. This flag only applies when `--dep-manager=modules` (the default)
+* `--vendor` - Use a vendor directory for dependencies
 * `--skip-validation` - Do not validate the resulting project's structure and dependencies. (Only used for --type go)
 * `-h, --help` - help for new
 

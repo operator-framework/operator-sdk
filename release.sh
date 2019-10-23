@@ -23,7 +23,7 @@ if ! $(git diff-index --quiet HEAD --); then
 	exit 1
 fi
 
-GO_VER="1.12"
+GO_VER="1.13"
 if ! go version | cut -d" " -f3 | grep -q "$GO_VER"; then
 	echo "must compile binaries with Go compiler version v${GO_VER}"
 	exit 1
@@ -56,27 +56,7 @@ if [[ "$VER" != "$CURR_VER_HELM_GOMOD" ]]; then
 	exit 1
 fi
 
-GO_DEP="internal/scaffold/gopkgtoml.go"
-ANS_DEP="internal/scaffold/ansible/gopkgtoml.go"
-HELM_DEP="internal/scaffold/helm/gopkgtoml.go"
 INSTALL_GUIDE_FILE="doc/user/install-operator-sdk.md"
-CURR_VER_GO_DEP="$(sed -nr 's/.*".*v(.+)".*#osdk_version_annotation/v\1/p' "$GO_DEP" | tr -d ' \t\n')"
-if [[ "$VER" != "$CURR_VER_GO_DEP" ]]; then
-	echo "Gopkg.toml 'constraint' version is not set correctly in $GO_DEP"
-	exit 1
-fi
-CURR_VER_ANS_DEP="$(sed -nr 's/.*".*v(.+)".*#osdk_version_annotation/v\1/p' "$ANS_DEP" | tr -d ' \t\n')"
-if [[ "$VER" != "$CURR_VER_ANS_DEP" ]]; then
-	echo "Gopkg.toml 'constraint' version is not set correctly in $ANS_DEP"
-	exit 1
-fi
-
-CURR_VER_HELM_DEP="$(sed -nr 's/.*".*v(.+)".*#osdk_version_annotation/v\1/p' "$HELM_DEP" | tr -d ' \t\n')"
-if [[ "$VER" != "$CURR_VER_HELM_DEP" ]]; then
-	echo "Gopkg.toml 'constraint' version is not set correctly in $HELM_DEP"
-	exit 1
-fi
-
 CURR_VER_INSTALL_GUIDE_FILE="$(sed -nr 's/.*RELEASE_VERSION=(.+)/\1/p' "$INSTALL_GUIDE_FILE" | tr -d ' \t\n')"
 if [[ "$VER" != "$CURR_VER_INSTALL_GUIDE_FILE" ]]; then
 	echo "version '$VER' is not set correctly in $INSTALL_GUIDE_FILE"
