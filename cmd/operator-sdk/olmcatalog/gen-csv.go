@@ -19,9 +19,9 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
-	catalog "github.com/operator-framework/operator-sdk/internal/pkg/scaffold/olm-catalog"
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
+	catalog "github.com/operator-framework/operator-sdk/internal/scaffold/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"

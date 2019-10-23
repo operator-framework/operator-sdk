@@ -37,9 +37,9 @@ if [[ "$VER" != "$CURR_VER" ]]; then
 	exit 1
 fi
 
-GO_GOMOD="internal/pkg/scaffold/go_mod.go"
-ANS_GOMOD="internal/pkg/scaffold/ansible/go_mod.go"
-HELM_GOMOD="internal/pkg/scaffold/helm/go_mod.go"
+GO_GOMOD="internal/scaffold/go_mod.go"
+ANS_GOMOD="internal/scaffold/ansible/go_mod.go"
+HELM_GOMOD="internal/scaffold/helm/go_mod.go"
 CURR_VER_GO_GOMOD="$(sed -E -n -r 's|.*operator-sdk ([^ \t\n]+).*|\1|p' "$GO_GOMOD" | tail -1 | tr -d ' \t\n')"
 if [[ "$VER" != "$CURR_VER_GO_GOMOD" ]]; then
 	echo "go.mod 'replace' entry version is not set correctly in $GO_GOMOD"
@@ -56,9 +56,9 @@ if [[ "$VER" != "$CURR_VER_HELM_GOMOD" ]]; then
 	exit 1
 fi
 
-GO_DEP="internal/pkg/scaffold/gopkgtoml.go"
-ANS_DEP="internal/pkg/scaffold/ansible/gopkgtoml.go"
-HELM_DEP="internal/pkg/scaffold/helm/gopkgtoml.go"
+GO_DEP="internal/scaffold/gopkgtoml.go"
+ANS_DEP="internal/scaffold/ansible/gopkgtoml.go"
+HELM_DEP="internal/scaffold/helm/gopkgtoml.go"
 INSTALL_GUIDE_FILE="doc/user/install-operator-sdk.md"
 CURR_VER_GO_DEP="$(sed -nr 's/.*".*v(.+)".*#osdk_version_annotation/v\1/p' "$GO_DEP" | tr -d ' \t\n')"
 if [[ "$VER" != "$CURR_VER_GO_DEP" ]]; then
