@@ -89,7 +89,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 
 	var gvks []schema.GroupVersionKind
 	cMap := controllermap.NewControllerMap()
-	watches, err := watches.Load(flags.WatchesFile, flags.MaxWorkers)
+	watches, err := watches.Load(flags.WatchesFile, flags.MaxWorkers, flags.AnsibleVerbosity)
 	if err != nil {
 		log.Error(err, "Failed to load watches.")
 		return err

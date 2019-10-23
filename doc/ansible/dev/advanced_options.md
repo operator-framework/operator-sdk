@@ -11,7 +11,7 @@ Some features can be overridden per resource via an annotation on that CR. The o
 
 | Feature | Yaml Key | Description| Annotation for override | default | Documentation |
 |---------|----------|------------|-------------------------|---------|---------------|
-| Reconcile Period | `reconcilePeriod`  | time between reconcile runs for a particular CR  | ansbile.operator-sdk/reconcile-period  | 1m | |
+| Reconcile Period | `reconcilePeriod`  | time between reconcile runs for a particular CR  | ansible.operator-sdk/reconcile-period  | 1m | |
 | Manage Status | `manageStatus` | Allows the ansible operator to manage the conditions section of each resource's status section. | | true | |
 | Watching Dependent Resources | `watchDependentResources` | Allows the ansible operator to dynamically watch resources that are created by ansible | | true | [dependent_watches.md](dependent_watches.md) |
 | Watching Cluster-Scoped Resources | `watchClusterScopedResources` | Allows the ansible operator to watch cluster-scoped resources that are created by ansible | | false | |
@@ -55,3 +55,100 @@ ENTRYPOINT ["/usr/local/bin/entrypoint", "--inject-owner-ref=false"]
 If you have created resources without owner reference injection, it is
 possible to manually to update resources following [this
 guide.](./retroactively-owned-resources.md)
+
+## Max Workers
+
+Increasing the number of workers allows events to be processed
+concurrently, which can improve reconciliation performance.
+
+Worker maximums can be set in two ways. Operator **authors and admins**
+can set the max workers default by including extra args to the operator
+container in `deploy/operator.yaml`. (Otherwise, the default is 1 worker.)
+
+**NOTE:** Admins using OLM should use the environment variable instead
+of the extra args.
+
+``` yaml
+- name: operator
+  image: "quay.io/asmacdo/memcached-operator:v0.0.0"
+  imagePullPolicy: "Always"
+  args:
+    - "--max-workers"
+    - "3"
+```
+
+Operator **admins** can override the value by setting an environment
+variable in the format `WORKER_<kind>_<group>`. This variable must be
+all uppercase, and periods (e.g. in the group name) are replaced with underscores.
+
+For the memcached operator example, the component parts are retrieved
+with a GET on the operator:
+
+```bash
+$ kubectl get memcacheds example-memcached -o yaml
+
+apiVersion: cache.example.com/v1alpha1
+kind: Memcached
+metadata:
+  name: example-memcached
+  namespace: default
+```
+
+From this data, we can see that the environment variable will be
+`WORKER_MEMCACHED_CACHE_EXAMPLE_COM`, which we can then add to
+`deploy/operator.yaml`:
+
+``` yaml
+- name: operator
+  image: "quay.io/asmacdo/memcached-operator:v0.0.0"
+  imagePullPolicy: "Always"
+  args:
+    # This default is overridden.
+    - "--max-workers"
+    - "3"
+  env:
+    # This value is used
+    - name: WORKER_MEMCACHED_CACHE_EXAMPLE_COM
+      value: "6"
+```
+
+## Ansible Verbosity
+
+Setting the verbosity at which `ansible-runner` is run controls how verbose the
+output of `ansible-playbook` will be. The normal rules for verbosity apply
+here, where higher values mean more output. Acceptable values range from 0
+(only the most severe messages are output) to 7 (all debugging messages are
+output).
+
+There are two ways to configure the verbosity argument to the `ansible-runner`
+command:
+
+1. Operator **authors and admins** can set the Ansible verbosity by including
+   extra args to the operator container in the operator deployment.
+1. Operator **admins** can set Ansible verbosity by setting an environment
+   variable in the format `ANSIBLE_VERBOSITY_<kind>_<group>`. This variable must
+   be all uppercase and all periods (e.g. in the group name) are replaced with
+   underscore.
+
+### Example
+
+For demonstration purposes, let us assume that we have a database operator that
+supports two Kinds -- `MongoDB` and `PostgreSQL` -- in the `db.example.com`
+Group. We have only recently implemented the support for the `MongoDB` Kind so
+we want reconciles for this Kind to be more verbose. Our operator container's
+spec in our `deploy/operator.yaml` might look something like:
+
+```yaml
+- name: operator
+  image: "quay.io/example/database-operator:v1.0.0"
+  imagePullPolicy: "Always"
+  args:
+    # This value applies to all GVKs specified in watches.yaml
+    # that are not overriden by environment variables.
+    - "--ansible-verbosity"
+    - "1"
+  env:
+    # Override the verbosity for the MongoDB kind
+    - name: ANSIBLE_VERBOSITY_MONGODB_DB_EXAMPLE_COM
+      value: "4"
+```

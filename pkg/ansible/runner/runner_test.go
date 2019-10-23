@@ -15,7 +15,6 @@
 package runner
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -27,32 +26,20 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/ansible/watches"
 )
 
-func playbookCmd(path string, ident string, inputDirPath string, maxArtifacts int) *exec.Cmd {
-	return exec.Command("ansible-runner", "-vv", "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "-p", path, "-i", ident, "run", inputDirPath)
-}
-
-func roleCmd(path string, ident string, inputDirPath string, maxArtifacts int) *exec.Cmd {
-	rolePath, roleName := filepath.Split(path)
-	return exec.Command("ansible-runner", "-vv", "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath, "--hosts", "localhost", "-i", ident, "run", inputDirPath)
-}
-
-type cmdFuncType func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd
-
-func checkCmdFunc(t *testing.T, cmdFunc cmdFuncType, role, playbook string, watchesMaxArtifacts, runnerMaxArtifacts int) {
+func checkCmdFunc(t *testing.T, cmdFunc cmdFuncType, playbook, role string, verbosity int) {
 	ident := "test"
 	inputDirPath := "/test/path"
-	var path string
+	maxArtifacts := 1
 	var expectedCmd, gotCmd *exec.Cmd
+	verbosityString := ansibleVerbosityString(verbosity)
 	switch {
 	case playbook != "":
-		path = playbook
-		expectedCmd = playbookCmd(path, ident, inputDirPath, watchesMaxArtifacts)
+		expectedCmd = playbookCmdFunc(verbosityString, playbook)(ident, inputDirPath, maxArtifacts)
 	case role != "":
-		path = role
-		expectedCmd = roleCmd(path, ident, inputDirPath, watchesMaxArtifacts)
+		expectedCmd = roleCmdFunc(verbosityString, role)(ident, inputDirPath, maxArtifacts)
 	}
 
-	gotCmd = cmdFunc(ident, inputDirPath, runnerMaxArtifacts)
+	gotCmd = cmdFunc(ident, inputDirPath, maxArtifacts)
 
 	if expectedCmd.Path != gotCmd.Path {
 		t.Fatalf("Unexpected cmd path %v expected cmd path %v", gotCmd.Path, expectedCmd.Path)
@@ -171,7 +158,7 @@ func TestNew(t *testing.T) {
 			}
 
 			// Check the cmdFunc
-			checkCmdFunc(t, testRunnerStruct.cmdFunc, testWatch.Role, testWatch.Playbook, testWatch.MaxRunnerArtifacts, testRunnerStruct.maxRunnerArtifacts)
+			checkCmdFunc(t, testRunnerStruct.cmdFunc, testWatch.Playbook, testWatch.Role, testWatch.AnsibleVerbosity)
 
 			// Check finalizer
 			if testRunnerStruct.Finalizer != testWatch.Finalizer {
@@ -184,12 +171,32 @@ func TestNew(t *testing.T) {
 				}
 
 				if len(testWatch.Finalizer.Vars) == 0 {
-					checkCmdFunc(t, testRunnerStruct.finalizerCmdFunc, testWatch.Finalizer.Role, testWatch.Finalizer.Playbook, testWatch.MaxRunnerArtifacts, testRunnerStruct.maxRunnerArtifacts)
+					checkCmdFunc(t, testRunnerStruct.cmdFunc, testWatch.Finalizer.Playbook, testWatch.Finalizer.Role, testWatch.AnsibleVerbosity)
 				} else {
 					// when finalizer vars is set the finalizerCmdFunc should be the same as the cmdFunc
-					checkCmdFunc(t, testRunnerStruct.finalizerCmdFunc, testWatch.Role, testWatch.Playbook, testWatch.MaxRunnerArtifacts, testRunnerStruct.maxRunnerArtifacts)
+					checkCmdFunc(t, testRunnerStruct.finalizerCmdFunc, testWatch.Playbook, testWatch.Role, testWatch.AnsibleVerbosity)
 				}
 			}
 		})
+	}
+}
+
+func TestAnsibleVerbosityString(t *testing.T) {
+	testCases := []struct {
+		verbosity      int
+		expectedString string
+	}{
+		{verbosity: -1, expectedString: ""},
+		{verbosity: 0, expectedString: ""},
+		{verbosity: 1, expectedString: "-v"},
+		{verbosity: 2, expectedString: "-vv"},
+		{verbosity: 7, expectedString: "-vvvvvvv"},
+	}
+
+	for _, tc := range testCases {
+		gotString := ansibleVerbosityString(tc.verbosity)
+		if tc.expectedString != gotString {
+			t.Fatalf("Unexpected string %v expected %v", gotString, tc.expectedString)
+		}
 	}
 }

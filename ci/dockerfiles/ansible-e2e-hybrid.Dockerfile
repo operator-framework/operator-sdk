@@ -1,6 +1,6 @@
 FROM osdk-builder as builder
 
-RUN make image/scaffold/ansible
+RUN make image-scaffold-ansible
 RUN ci/tests/scaffolding/e2e-ansible-scaffold-hybrid.sh
 
 FROM registry.access.redhat.com/ubi8/ubi
