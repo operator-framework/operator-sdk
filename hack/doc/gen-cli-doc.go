@@ -30,7 +30,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to get current directory, (%v)", err)
 	}
-	err = doc.GenMarkdownTree(root, currentDir+"/doc/cli-docs")
+	err = doc.GenMarkdownTree(root, currentDir+"/doc/cli")
 	if err != nil {
 		log.Fatalf("Failed to generate documenation, (%v)", err)
 	}
