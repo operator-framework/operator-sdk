@@ -139,7 +139,7 @@ func (s *CRD) CustomRender() ([]byte, error) {
 	}
 
 	setCRDStorageVersion(crd)
-  if err := checkCRDVersions(crd); err != nil {
+	if err := checkCRDVersions(crd); err != nil {
 		return nil, err
 	}
 	sort.Sort(k8sutil.CRDVersions(crd.Spec.Versions))
