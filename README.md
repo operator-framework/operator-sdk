@@ -46,7 +46,7 @@ The following workflow is for a new **Helm** operator:
 - [docker][docker_tool] version 17.03+.
   - Alternatively [podman][podman_tool] `v1.2.0+` or [buildah][buildah_tool] `v1.7+`
 - [kubectl][kubectl_tool] version v1.11.3+.
-- Access to a Kubernetes v1.11.3+ cluster.
+- Access to a Kubernetes v1.14.1+ cluster.
 - Optional: [delve](https://github.com/go-delve/delve/tree/master/Documentation/installation) version 1.2.0+ (for `up local --enable-delve`).
 
 ## Quick Start
@@ -65,6 +65,7 @@ $ mkdir -p $HOME/projects/example-inc/
 # Create a new app-operator project
 $ cd $HOME/projects/example-inc/
 $ export GO111MODULE=on
+$ export GOPROXY=https://proxy.golang.org/
 $ operator-sdk new app-operator --repo github.com/example-inc/app-operator
 $ cd app-operator
 
