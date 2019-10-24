@@ -31,7 +31,6 @@
 - Added support for `ppc64le-linux` for the `operator-sdk` binary and the Helm operator base image. ([#1533](https://github.com/operator-framework/operator-sdk/pull/1533))
 - Added new `--version` flag to the `operator-sdk scorecard` command to support a new output format for the scorecard. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
 - Added new `--selector` flag to the `operator-sdk scorecard` command to support filtering scorecard tests based on labels added to each test. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
-- Added new `--dry-run` flag to the `operator-sdk scorecard` command that shows tests that would be run with the given selector. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
 
 ### Changed
 
