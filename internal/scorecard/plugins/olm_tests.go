@@ -28,6 +28,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -40,6 +41,8 @@ type OLMTestConfig struct {
 	CSV      *olmapiv1alpha1.ClusterServiceVersion
 	CRDsDir  string
 	ProxyPod *v1.Pod
+	Selector labels.Selector
+	Version  string
 }
 
 // Test Defintions
@@ -159,6 +162,9 @@ func NewOLMTestSuite(conf OLMTestConfig) *schelpers.TestSuite {
 		"OLM Tests",
 		"Test suite checks if an operator's CSV follows best practices",
 	)
+
+	ts.Selector = conf.Selector
+	ts.Version = conf.Version
 
 	ts.AddTest(NewCRDsHaveValidationTest(conf), 1.25)
 	ts.AddTest(NewCRDsHaveResourcesTest(conf), 1)

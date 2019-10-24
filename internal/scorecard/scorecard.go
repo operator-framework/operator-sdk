@@ -26,6 +26,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
 	"github.com/operator-framework/operator-sdk/version"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
@@ -41,6 +42,7 @@ const (
 	OutputFormatOpt  = "output"
 	JSONOutputFormat = "json"
 	TextOutputFormat = "text"
+	SelectorOpt      = "selector"
 )
 
 // make a global logger for scorecard
@@ -57,7 +59,7 @@ type pluginConfig struct {
 	External *externalPluginConfig              `mapstructure:"external,omitempty"`
 }
 
-func getPlugins() ([]Plugin, error) {
+func getPlugins(version string, selector labels.Selector) ([]Plugin, error) {
 	kubeconfig := ""
 	if scViper.IsSet(scplugins.KubeconfigOpt) {
 		kubeconfig = scViper.GetString(scplugins.KubeconfigOpt)
@@ -76,10 +78,14 @@ func getPlugins() ([]Plugin, error) {
 		var newPlugin Plugin
 		if plugin.Basic != nil {
 			pluginConfig := plugin.Basic
+			pluginConfig.Version = version
+			pluginConfig.Selector = selector
 			setConfigDefaults(pluginConfig, kubeconfig)
 			newPlugin = basicOrOLMPlugin{pluginType: scplugins.BasicOperator, config: *pluginConfig}
 		} else if plugin.Olm != nil {
 			pluginConfig := plugin.Olm
+			pluginConfig.Version = version
+			pluginConfig.Selector = selector
 			setConfigDefaults(pluginConfig, kubeconfig)
 			newPlugin = basicOrOLMPlugin{pluginType: scplugins.OLMIntegration, config: *pluginConfig}
 		} else {
@@ -103,13 +109,13 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	_, err := schelpers.ValidateSelector(scViper.GetString(schelpers.SelectorOpt))
+	selector, err := labels.Parse(scViper.GetString(SelectorOpt))
 	if err != nil {
 		return err
 	}
 
 	cmd.SilenceUsage = true
-	plugins, err := getPlugins()
+	plugins, err := getPlugins(scViper.GetString(schelpers.VersionOpt), selector)
 	if err != nil {
 		return err
 	}
@@ -191,8 +197,7 @@ func makeSCViper() {
 	scViper.Set(OutputFormatOpt, viper.GetString("scorecard."+OutputFormatOpt))
 	scViper.Set(scplugins.KubeconfigOpt, viper.GetString("scorecard."+scplugins.KubeconfigOpt))
 	scViper.Set(schelpers.VersionOpt, viper.GetString("scorecard."+schelpers.VersionOpt))
-	scViper.Set(schelpers.SelectorOpt, viper.GetString("scorecard."+schelpers.SelectorOpt))
-	scViper.Set(schelpers.DryRunOpt, viper.GetBool("scorecard."+schelpers.DryRunOpt))
+	scViper.Set(SelectorOpt, viper.GetString("scorecard."+SelectorOpt))
 
 }
 

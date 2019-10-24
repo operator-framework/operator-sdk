@@ -290,6 +290,8 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 				Client:   runtimeClient,
 				CR:       obj,
 				ProxyPod: proxyPodGlobal,
+				Selector: config.Selector,
+				Version:  config.Version,
 			}
 			basicTests := NewBasicTestSuite(conf)
 			basicTests.Run(context.TODO())
@@ -308,6 +310,8 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 				CSV:      csv,
 				CRDsDir:  config.CRDsDir,
 				ProxyPod: proxyPodGlobal,
+				Selector: config.Selector,
+				Version:  config.Version,
 			}
 			olmTests := NewOLMTestSuite(conf)
 			olmTests.Run(context.TODO())

@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 // Type Definitions
@@ -71,6 +72,8 @@ type TestSuite struct {
 	Tests       []Test
 	TestResults []TestResult
 	Weights     map[string]float64
+	Selector    labels.Selector
+	Version     string
 	Log         string
 }
 
@@ -105,7 +108,14 @@ func (ts *TestSuite) TotalScore() (score int) {
 // Run runs all Tests in a TestSuite
 func (ts *TestSuite) Run(ctx context.Context) {
 	for _, test := range ts.Tests {
-		ts.TestResults = append(ts.TestResults, *test.Run(ctx))
+		if IsV1alpha2(ts.Version) {
+			if ts.Selector.String() == "" || ts.Selector.Matches(labels.Set(test.GetLabels())) {
+				ts.TestResults = append(ts.TestResults, *test.Run(ctx))
+			}
+		} else {
+
+			ts.TestResults = append(ts.TestResults, *test.Run(ctx))
+		}
 	}
 }
 
