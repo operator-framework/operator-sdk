@@ -56,7 +56,7 @@ const rolesMetaMainAnsibleTmpl = `galaxy_info:
   # - CC-BY
   license: license (GPLv2, CC-BY, etc)
 
-  min_ansible_version: 2.4
+  min_ansible_version: 2.6
 
   # If this a Container Enabled role, provide the minimum Ansible Container version.
   # min_ansible_container_version:
