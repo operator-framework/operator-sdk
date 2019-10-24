@@ -335,11 +335,7 @@ func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.T
 	if err != nil {
 		return fmt.Errorf("failed to lint metrics: %v", err)
 	}
-	// TODO(lili): Change to 0, when we upgrade to 1.14.
-	// currently there is a problem with one of the metrics in upstream Kubernetes:
-	// `workqueue_longest_running_processor_microseconds`.
-	// This has been fixed in 1.14 release.
-	if len(problems) > 1 {
+	if len(problems) > 0 {
 		return fmt.Errorf("found problems with metrics: %#+v", problems)
 	}
 
