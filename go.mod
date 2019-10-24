@@ -32,7 +32,7 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v1.0.0
 	github.com/rogpeppe/go-internal v1.5.0
-	github.com/rubenv/sql-migrate v0.0.0-20190902133344-8926f37f0bc1 // indirect
+	github.com/rubenv/sql-migrate v0.0.0-20191022111038-5cdff0d8cc42 // indirect
 	github.com/sergi/go-diff v1.0.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/afero v1.2.2
@@ -62,7 +62,7 @@ require (
 	sigs.k8s.io/controller-tools v0.2.2
 )
 
-// Pin to kubernetes-1.15.4
+// Pinned to kubernetes-1.15.4
 replace (
 	k8s.io/api => k8s.io/api v0.0.0-20190918195907-bd6ac527cfd2
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20190918201827-3de75813f604
@@ -76,17 +76,11 @@ replace (
 	k8s.io/component-base => k8s.io/component-base v0.0.0-20190918200425-ed2f0867c778
 	k8s.io/cri-api => k8s.io/cri-api v0.0.0-20190817025403-3ae76f584e79
 	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.0.0-20190918203248-97c07dcbb623
-	k8s.io/gengo => k8s.io/gengo v0.0.0-20191010091904-7fa3014cb28f
-	k8s.io/helm => k8s.io/helm v2.15.0+incompatible
-	k8s.io/klog => k8s.io/klog v0.3.3
 	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.0.0-20190918201136-c3a845f1fbb2
 	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.0.0-20190918202837-c54ce30c680e
-	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20190918143330-0270cf2f1c1d
 	k8s.io/kube-proxy => k8s.io/kube-proxy v0.0.0-20190918202429-08c8357f8e2d
 	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.0.0-20190918202713-c34a54b3ec8e
-	k8s.io/kube-state-metrics => k8s.io/kube-state-metrics v1.7.2
 	k8s.io/kubelet => k8s.io/kubelet v0.0.0-20190918202550-958285cf3eef
-	k8s.io/kubernetes => k8s.io/kubernetes v1.15.4
 	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.0.0-20190918203421-225f0541b3ea
 	k8s.io/metrics => k8s.io/metrics v0.0.0-20190918202012-3c1ca76f5bda
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.0.0-20190918201353-5cc279503896
