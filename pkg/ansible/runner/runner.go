@@ -177,8 +177,9 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 		i, err := strconv.Atoi(ma)
 		if err != nil {
 			log.Info("Invalid max runner artifact annotation", "err", err, "value", ma)
+		} else {
+			maxArtifacts = i
 		}
-		maxArtifacts = i
 	}
 
 	go func() {

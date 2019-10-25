@@ -114,8 +114,21 @@ func (s *CRD) CustomRender() ([]byte, error) {
 		if err = yaml.Unmarshal(b, crd); err != nil {
 			return nil, err
 		}
-		// controller-tools does not set ListKind or Singular names.
-		setCRDNamesForResource(crd, s.Resource)
+
+		// controller-tools inserts an annotation and assumes that the binary
+		// that creates the CRD is controller-gen. In this case, we don't use
+		// controller-gen. Instead, we vendor and use the same library that
+		// controller-gen does.
+		//
+		// The value that gets populated in the annotation is based on the
+		// build info of the compiled binary, not on the version of the
+		// vendored controller-tools library.
+		//
+		// See: https://github.com/kubernetes-sigs/controller-tools/issues/348
+		//
+		// TODO(joelanford): Sort out what to do with this. Until then, let's
+		// just remove it.
+		delete(crd.Annotations, "controller-gen.kubebuilder.io/version")
 	} else {
 		// There are currently no commands to update CRD manifests for non-Go
 		// operators, so if a CRD manifest already exists for this gvk, this
