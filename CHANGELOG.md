@@ -22,8 +22,9 @@
 ### Bug Fixes
 
 - OLM internal manager is not returning errors in the initialization. ([#1976](https://github.com/operator-framework/operator-sdk/pull/1976))
-- Added missing default role permission for `deployments`, which is required to create the metrics service for the operator. ([#2090](https://github.com/operator-framework/operator-sdk/pull/2090)) 
+- Added missing default role permission for `deployments`, which is required to create the metrics service for the operator. ([#2090](https://github.com/operator-framework/operator-sdk/pull/2090))
 - Handle invalid maxArtifacts annotation on CRs for Ansible based operators. ([2093](https://github.com/operator-framework/operator-sdk/pull/2093))
+- When validating package manifests, only return an error if default channel is not set and more than one channel is available. ([#2116](https://github.com/operator-framework/operator-sdk/pull/2116))
 
 ## v0.11.0
 
@@ -78,7 +79,7 @@
       ```
 - [`pkg/test.FrameworkClient`](https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/client.go#L33) methods `List()` and `Delete()` have new signatures corresponding to the homonymous methods of `sigs.k8s.io/controller-runtime/pkg/client.Client`. ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
 - CRD file names were previously of the form `<group>_<version>_<kind>_crd.yaml`. Now that CRD manifest `spec.version` is deprecated in favor of `spec.versions`, i.e. multiple versions can be specified in one CRD, CRD file names have the form `<full group>_<resource>_crd.yaml`. `<full group>` is the full group name of your CRD while `<group>` is the last subdomain of `<full group>`, ex. `foo.bar.com` vs `foo`. `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`. ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
-- Upgrade Python version from `2.7` to `3.6`, Ansible version from `2.8.0` to `~=2.8` and ansible-runner from `1.2` to `1.3.4` in the Ansible based images. ([#1947](https://github.com/operator-framework/operator-sdk/pull/1947)) 
+- Upgrade Python version from `2.7` to `3.6`, Ansible version from `2.8.0` to `~=2.8` and ansible-runner from `1.2` to `1.3.4` in the Ansible based images. ([#1947](https://github.com/operator-framework/operator-sdk/pull/1947))
 - Made the default scorecard version `v1alpha2` which is new for this release and could break users that were parsing the older scorecard output (`v1alpha1`).  Users can still specify version `v1alpha1` on the scorecard configuration to use the older style for some period of time until `v1alpha1` is removed.
 - Replaced `pkg/kube-metrics.NewCollectors()` with `pkg/kube-metrics.NewMetricsStores()` and changed exported function signature for `pkg/kube-metrics.ServeMetrics()` due to a [breaking change in kube-state-metrics](https://github.com/kubernetes/kube-state-metrics/pull/786). ([#1943](https://github.com/operator-framework/operator-sdk/pull/1943))
 
