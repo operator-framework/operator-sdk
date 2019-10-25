@@ -465,6 +465,12 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 - `Client.Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOptionFunc) error` is now [`Client.Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L70). Although the option interface has changed, the way each `client.DeleteOption` is created is the same as before. No updates need to be made. See the [client doc][client-doc] for a discussion of `client.DeleteOption`.
 - `StatusWriter.Update(ctx context.Context, obj runtime.Object) error` is now [`Update(ctx context.Context, obj runtime.Object, opts ...UpdateOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L95). No updates need to be made. See the [client doc][client-doc] for a discussion of `client.UpdateOption`.
 
+### open API updates
+
+- Run the command `operator-sdk generation openapi` and ensure that no errors as `API rule violation` will be raised. For further information see the [Api Rules][api-roles] documentation. 
+ 
+**NOTE:** Also, you may need change some mark syntax used to fix this issue. So, you may might find helpful give a look in the [custom validations using kubebuilder][generating-crd] and in the [markers][markers].  
+   
 ### Operator SDK updates
 
 - [`pkg/test.FrameworkClient`](https://github.com/operator-framework/operator-sdk/blob/947a464/pkg/test/client.go#L33) `List()` and `Delete()` method invocations should be updated to match those of `Client.List()` and `Client.Delete()`, described above.
@@ -475,7 +481,6 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
     - Run `operator-sdk generate openapi`. CRD manifest files with new names containing versioned validation and subresource blocks will be generated.
     - Delete the old CRD manifest files.
     - Rename CR manifest file names from `<group>_<version>_<kind>_cr.yaml` to `<full group>_<version>_<kind>_cr.yaml`.
-
 
 [legacy-kubebuilder-doc-crd]: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [v0.8.2-go-mod]: https://github.com/operator-framework/operator-sdk/blob/28bd2b0d4fd25aa68e15d928ae09d3c18c3b51da/internal/pkg/scaffold/go_mod.go#L40-L94
@@ -489,3 +494,6 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 [v0.1.0-migration-guide]: ./v0.1.0-migration-guide.md
 [manifest-format]: https://github.com/operator-framework/operator-registry#manifest-format
 [client-doc]: ../user/client.md
+[api-roles]: https://github.com/kubernetes/kubernetes/tree/36981002246682ed7dc4de54ccc2a96c1a0cbbdb/api/api-rules
+[generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
+[markers]: https://book.kubebuilder.io/reference/markers.html
