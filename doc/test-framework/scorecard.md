@@ -19,7 +19,7 @@
   - [OLM Integration](#olm-integration)
 - [Extending the Scorecard with Plugins](#extending-the-scorecard-with-plugins)
   - [JSON format](#json-format)
-- [Running the scorecard with a deployed CSV](#running-the-scorecard-with-a-deployed-csv)
+- [Running the scorecard with an OLM-managed operator](#running-the-scorecard-with-an-olm-managed-operator)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
