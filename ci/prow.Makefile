@@ -18,3 +18,6 @@ test-e2e-helm test/e2e/helm:
 
 test-subcommand test/subcommand:
 	./ci/tests/subcommand.sh
+
+test-integration:
+	./ci/tests/integration.sh
