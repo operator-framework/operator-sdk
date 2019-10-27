@@ -72,8 +72,6 @@ type TestSuite struct {
 	Tests       []Test
 	TestResults []TestResult
 	Weights     map[string]float64
-	Selector    labels.Selector
-	Version     string
 	Log         string
 }
 
@@ -105,17 +103,21 @@ func (ts *TestSuite) TotalScore() (score int) {
 	return int(floatScore * (100 / addedWeights))
 }
 
+// Apply label selectors removing tests that do not match
+func (ts *TestSuite) ApplySelector(selector labels.Selector) {
+	for i := 0; i < len(ts.Tests); i++ {
+		if !selector.Matches(labels.Set(ts.Tests[i].GetLabels())) {
+			// Remove the test
+			ts.Tests = append(ts.Tests[:i], ts.Tests[i+1:]...)
+			i--
+		}
+	}
+}
+
 // Run runs all Tests in a TestSuite
 func (ts *TestSuite) Run(ctx context.Context) {
 	for _, test := range ts.Tests {
-		if IsV1alpha2(ts.Version) {
-			if ts.Selector.String() == "" || ts.Selector.Matches(labels.Set(test.GetLabels())) {
-				ts.TestResults = append(ts.TestResults, *test.Run(ctx))
-			}
-		} else {
-
-			ts.TestResults = append(ts.TestResults, *test.Run(ctx))
-		}
+		ts.TestResults = append(ts.TestResults, *test.Run(ctx))
 	}
 }
 

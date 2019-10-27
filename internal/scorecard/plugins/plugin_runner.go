@@ -290,10 +290,11 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 				Client:   runtimeClient,
 				CR:       obj,
 				ProxyPod: proxyPodGlobal,
-				Selector: config.Selector,
-				Version:  config.Version,
 			}
 			basicTests := NewBasicTestSuite(conf)
+			if schelpers.IsV1alpha2(config.Version) {
+				basicTests.ApplySelector(config.Selector)
+			}
 			basicTests.Run(context.TODO())
 			logs, err := ioutil.ReadAll(logReadWriter)
 			if err != nil {
@@ -310,10 +311,11 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 				CSV:      csv,
 				CRDsDir:  config.CRDsDir,
 				ProxyPod: proxyPodGlobal,
-				Selector: config.Selector,
-				Version:  config.Version,
 			}
 			olmTests := NewOLMTestSuite(conf)
+			if schelpers.IsV1alpha2(config.Version) {
+				olmTests.ApplySelector(config.Selector)
+			}
 			olmTests.Run(context.TODO())
 			logs, err := ioutil.ReadAll(logReadWriter)
 			if err != nil {
