@@ -37,7 +37,7 @@ func getTestFrameworkDir(t *testing.T) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	sdkPath := absPath[:strings.Index(absPath, filepath.Join("internal", "pkg"))]
+	sdkPath := absPath[:strings.Index(absPath, "internal")]
 	tfDir := filepath.Join(sdkPath, "test", "test-framework")
 	// parser.AddDirRecursive doesn't like absolute paths.
 	relPath, err := filepath.Rel(absPath, tfDir)
