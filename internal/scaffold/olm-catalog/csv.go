@@ -272,6 +272,9 @@ func getEmptyRequiredCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) (field
 	if csv.Spec.Maturity == "" {
 		fields = append(fields, "spec.maturity")
 	}
+	if len(csv.Spec.Icon) == 0 {
+		fields = append(fields, "spec.icon")
+	}
 
 	return fields
 }
