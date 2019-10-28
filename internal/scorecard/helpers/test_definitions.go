@@ -103,12 +103,14 @@ func (ts *TestSuite) TotalScore() (score int) {
 	return int(floatScore * (100 / addedWeights))
 }
 
-// Apply label selectors removing tests that do not match
+// ApplySelector apply label selectors removing tests that do not match
 func (ts *TestSuite) ApplySelector(selector labels.Selector) {
 	for i := 0; i < len(ts.Tests); i++ {
-		if !selector.Matches(labels.Set(ts.Tests[i].GetLabels())) {
+		t := ts.Tests[i]
+		if !selector.Matches(labels.Set(t.GetLabels())) {
 			// Remove the test
 			ts.Tests = append(ts.Tests[:i], ts.Tests[i+1:]...)
+			delete(ts.Weights, t.GetName())
 			i--
 		}
 	}
