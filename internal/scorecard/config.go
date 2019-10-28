@@ -68,7 +68,7 @@ func validateConfig(config pluginConfig, idx int, version string) error {
 		}
 		pluginType = "external"
 		if schelpers.IsV1alpha2(version) {
-			return fmt.Errorf("external plugins are not allowed in v1alpha2 currently")
+			return fmt.Errorf("revert to v1alpha1 to use external plugins: external plugins are not currently supported with v1alpha2")
 		}
 	}
 	if pluginType == "" {
