@@ -29,7 +29,7 @@ func ExecCmd(cmd *exec.Cmd) error {
 	cmd.Stderr = os.Stderr
 	log.Debugf("Running %#v", cmd.Args)
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to exec %#v: %v", cmd.Args, err)
+		return fmt.Errorf("failed to exec %#v: %w", cmd.Args, err)
 	}
 	return nil
 }
@@ -82,17 +82,7 @@ func GoTest(opts GoTestOptions) error {
 	bargs = append(bargs, opts.TestBinaryArgs...)
 	c := exec.Command("go", bargs...)
 	opts.setCmdFields(c)
-
-	// TODO(joelanford): Don't use ExecCmd because it
-	// wraps the error, making os.ExitError unrecoverable.
-	// ExecCmd can be updated in Go 1.13 to wrap the error
-	// with %w, at which point we can use it again.
-	c.Stdout = os.Stdout
-	c.Stderr = os.Stderr
-	if err := c.Run(); err != nil {
-		return err
-	}
-	return nil
+	return ExecCmd(c)
 }
 
 // GoCmd runs "go {cmd}".
