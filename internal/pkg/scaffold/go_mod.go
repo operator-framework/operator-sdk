@@ -38,7 +38,7 @@ func (s *GoMod) GetInput() (input.Input, error) {
 const goModTmpl = `module {{ .Repo }}
 
 require (
-	github.com/operator-framework/operator-sdk master
+	github.com/operator-framework/operator-sdk v0.11.0
 	github.com/spf13/pflag v1.0.3
 	k8s.io/api v0.0.0-20190612125737-db0771252981
 	k8s.io/apimachinery v0.0.0-20190612125636-6a5db36e93ad
@@ -66,7 +66,7 @@ replace (
 	github.com/prometheus/prometheus => github.com/prometheus/prometheus d20e84d0fb64aff2f62a977adc8cfb656da4e286
 )
 
-replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v0.11.0
+replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v0.11.x
 `
 
 func PrintGoMod() error {
