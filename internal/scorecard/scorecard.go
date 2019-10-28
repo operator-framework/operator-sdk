@@ -72,7 +72,7 @@ func getPlugins(version string, selector labels.Selector) ([]Plugin, error) {
 		return nil, errors.Wrap(err, "Could not load plugin configurations")
 	}
 	for idx, plugin := range configs {
-		if err := validateConfig(plugin, idx); err != nil {
+		if err := validateConfig(plugin, idx, version); err != nil {
 			return nil, fmt.Errorf("error validating plugin config: %v", err)
 		}
 		var newPlugin Plugin
