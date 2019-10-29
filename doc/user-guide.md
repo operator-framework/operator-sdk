@@ -85,10 +85,13 @@ type MemcachedSpec struct {
 	Size int32 `json:"size"`
 }
 type MemcachedStatus struct {
-	// Nodes are the names of the memcached pods
+	// Nodes are the names of the memcached pods 
+	// +listType=set  
 	Nodes []string `json:"nodes"`
 }
 ```
+
+**NOTE** To know more about `+listType=set` see : https://godoc.org/k8s.io/kube-openapi/pkg/idl 
 
 After modifying the `*_types.go` file always run the following command to update the generated code for that resource type:
 
