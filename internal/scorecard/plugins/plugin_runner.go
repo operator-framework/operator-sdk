@@ -292,6 +292,9 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 				ProxyPod: proxyPodGlobal,
 			}
 			basicTests := NewBasicTestSuite(conf)
+			if schelpers.IsV1alpha2(config.Version) {
+				basicTests.ApplySelector(config.Selector)
+			}
 			basicTests.Run(context.TODO())
 			logs, err := ioutil.ReadAll(logReadWriter)
 			if err != nil {
@@ -310,6 +313,9 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 				ProxyPod: proxyPodGlobal,
 			}
 			olmTests := NewOLMTestSuite(conf)
+			if schelpers.IsV1alpha2(config.Version) {
+				olmTests.ApplySelector(config.Selector)
+			}
 			olmTests.Run(context.TODO())
 			logs, err := ioutil.ReadAll(logReadWriter)
 			if err != nil {

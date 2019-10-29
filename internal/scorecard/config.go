@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"strings"
 
+	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	"gopkg.in/yaml.v2"
 )
 
@@ -49,7 +50,7 @@ func (e externalPluginEnv) String() string {
 }
 
 // validateConfig takes a viper config for a plugin and returns a nil error if valid or an error explaining why the config is invalid
-func validateConfig(config pluginConfig, idx int) error {
+func validateConfig(config pluginConfig, idx int, version string) error {
 	// find plugin config type
 	pluginType := ""
 	if config.Basic != nil {
@@ -66,6 +67,9 @@ func validateConfig(config pluginConfig, idx int) error {
 			return fmt.Errorf("plugin config can only contain one of: basic, olm, external")
 		}
 		pluginType = "external"
+		if schelpers.IsV1alpha2(version) {
+			return fmt.Errorf("revert to v1alpha1 to use external plugins: external plugins are not currently supported with v1alpha2")
+		}
 	}
 	if pluginType == "" {
 		marshalledConfig, err := yaml.Marshal(config)
