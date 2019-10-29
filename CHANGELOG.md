@@ -1,4 +1,4 @@
-## Unreleased
+## v0.12.0
 
 ### Added
 
@@ -12,8 +12,6 @@
 - Upgrade Helm version from `v2.14.1` to `v2.15.0`. ([#2083](https://github.com/operator-framework/operator-sdk/pull/2083))
 - Upgrade [`controller-runtime`](https://github.com/kubernetes-sigs/controller-runtime) version from `v0.2.0` to [`v0.3.0`](https://github.com/kubernetes-sigs/controller-runtime/releases/tag/v0.3.0). ([#2083](https://github.com/operator-framework/operator-sdk/pull/2083))
 - Upgrade [`controller-tools`](https://github.com/kubernetes-sigs/controller-tools) version from `v0.2.1+git` to [`v0.2.2`](https://github.com/kubernetes-sigs/controller-tools/releases/tag/v0.2.2). ([#2083](https://github.com/operator-framework/operator-sdk/pull/2083))
-
-### Deprecated
 
 ### Removed
 
