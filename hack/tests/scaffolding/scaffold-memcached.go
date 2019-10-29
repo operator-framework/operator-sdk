@@ -58,10 +58,6 @@ func main() {
 	if localSDKPath == "" {
 		localSDKPath = sdkTestE2EDir
 	}
-	// For go commands in operator projects.
-	if err = os.Setenv("GO111MODULE", "on"); err != nil {
-		log.Fatal(err)
-	}
 
 	log.Print("Creating new operator project")
 	cmdOut, err := exec.Command("operator-sdk",
