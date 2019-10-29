@@ -23,8 +23,6 @@ pushd memcached-operator
 # Add a second Kind to test watching multiple GVKs
 operator-sdk add crd --kind=Foo --api-version=ansible.example.com/v1alpha1
 
-export GO111MODULE=on
-export GOPROXY=https://proxy.golang.org
 operator-sdk migrate
 
 if [[ ! -e build/Dockerfile.sdkold ]];
