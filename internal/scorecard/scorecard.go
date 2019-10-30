@@ -201,7 +201,7 @@ func validateScorecardConfig() error {
 		return err
 	}
 
-	if !schelpers.IsV1alpha2(version) && scViper.IsSet(ListOpt) {
+	if !schelpers.IsV1alpha2(version) && scViper.GetBool(ListOpt) {
 		return fmt.Errorf("list flag is not supported on v1alpha1")
 	}
 
