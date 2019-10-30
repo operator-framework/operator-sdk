@@ -43,6 +43,7 @@ const (
 	JSONOutputFormat = "json"
 	TextOutputFormat = "text"
 	SelectorOpt      = "selector"
+	ListOpt          = "list"
 )
 
 // make a global logger for scorecard
@@ -64,6 +65,7 @@ func getPlugins(version string, selector labels.Selector) ([]Plugin, error) {
 	if scViper.IsSet(scplugins.KubeconfigOpt) {
 		kubeconfig = scViper.GetString(scplugins.KubeconfigOpt)
 	}
+
 	// Add plugins from config
 	var plugins []Plugin
 	configs := []pluginConfig{}
@@ -80,12 +82,14 @@ func getPlugins(version string, selector labels.Selector) ([]Plugin, error) {
 			pluginConfig := plugin.Basic
 			pluginConfig.Version = version
 			pluginConfig.Selector = selector
+			pluginConfig.ListOpt = scViper.GetBool(ListOpt)
 			setConfigDefaults(pluginConfig, kubeconfig)
 			newPlugin = basicOrOLMPlugin{pluginType: scplugins.BasicOperator, config: *pluginConfig}
 		} else if plugin.Olm != nil {
 			pluginConfig := plugin.Olm
 			pluginConfig.Version = version
 			pluginConfig.Selector = selector
+			pluginConfig.ListOpt = scViper.GetBool(ListOpt)
 			setConfigDefaults(pluginConfig, kubeconfig)
 			newPlugin = basicOrOLMPlugin{pluginType: scplugins.OLMIntegration, config: *pluginConfig}
 		} else {
@@ -112,6 +116,10 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	selector, err := labels.Parse(scViper.GetString(SelectorOpt))
 	if err != nil {
 		return err
+	}
+
+	if scViper.GetBool(ListOpt) {
+		fmt.Printf("\nTests that would be executed include:\n")
 	}
 
 	cmd.SilenceUsage = true
@@ -187,7 +195,17 @@ func validateScorecardConfig() error {
 		return fmt.Errorf("invalid output format (%s); valid values: %s, %s", outputFormat, TextOutputFormat, JSONOutputFormat)
 	}
 
-	return schelpers.ValidateVersion(scViper.GetString(schelpers.VersionOpt))
+	version := scViper.GetString(schelpers.VersionOpt)
+	err := schelpers.ValidateVersion(version)
+	if err != nil {
+		return err
+	}
+
+	if !schelpers.IsV1alpha2(version) && scViper.IsSet(ListOpt) {
+		return fmt.Errorf("list flag is not supported on v1alpha1")
+	}
+
+	return nil
 
 }
 
@@ -198,6 +216,7 @@ func makeSCViper() {
 	scViper.Set(scplugins.KubeconfigOpt, viper.GetString("scorecard."+scplugins.KubeconfigOpt))
 	scViper.Set(schelpers.VersionOpt, viper.GetString("scorecard."+schelpers.VersionOpt))
 	scViper.Set(SelectorOpt, viper.GetString("scorecard."+SelectorOpt))
+	scViper.Set(ListOpt, viper.GetString("scorecard."+ListOpt))
 
 }
 

@@ -38,6 +38,7 @@ import (
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	extscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -267,23 +268,26 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 		logReadWriter := &bytes.Buffer{}
 		log.SetOutput(logReadWriter)
 		log.Printf("Running for cr: %s", cr)
-		if !config.OLMDeployed {
-			if err := createFromYAMLFile(config.Namespace, config.GlobalManifest, config.ProxyImage, config.ProxyPullPolicy); err != nil {
-				return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to create global resources: %v", err)
+		var obj *unstructured.Unstructured
+		if !config.ListOpt {
+			if !config.OLMDeployed {
+				if err := createFromYAMLFile(config.Namespace, config.GlobalManifest, config.ProxyImage, config.ProxyPullPolicy); err != nil {
+					return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to create global resources: %v", err)
+				}
+				if err := createFromYAMLFile(config.Namespace, config.NamespacedManifest, config.ProxyImage, config.ProxyPullPolicy); err != nil {
+					return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to create namespaced resources: %v", err)
+				}
 			}
-			if err := createFromYAMLFile(config.Namespace, config.NamespacedManifest, config.ProxyImage, config.ProxyPullPolicy); err != nil {
-				return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to create namespaced resources: %v", err)
+			if err := createFromYAMLFile(config.Namespace, cr, config.ProxyImage, config.ProxyPullPolicy); err != nil {
+				return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to create cr resource: %v", err)
 			}
-		}
-		if err := createFromYAMLFile(config.Namespace, cr, config.ProxyImage, config.ProxyPullPolicy); err != nil {
-			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to create cr resource: %v", err)
-		}
-		obj, err := yamlToUnstructured(config.Namespace, cr)
-		if err != nil {
-			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
-		}
-		if err := waitUntilCRStatusExists(time.Second*time.Duration(config.InitTimeout), obj); err != nil {
-			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed waiting to check if CR status exists: %v", err)
+			obj, err = yamlToUnstructured(config.Namespace, cr)
+			if err != nil {
+				return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
+			}
+			if err := waitUntilCRStatusExists(time.Second*time.Duration(config.InitTimeout), obj); err != nil {
+				return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed waiting to check if CR status exists: %v", err)
+			}
 		}
 		if pluginType == BasicOperator {
 			conf := BasicTestConfig{
@@ -295,14 +299,18 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 			if schelpers.IsV1alpha2(config.Version) {
 				basicTests.ApplySelector(config.Selector)
 			}
-			basicTests.Run(context.TODO())
-			logs, err := ioutil.ReadAll(logReadWriter)
-			if err != nil {
-				basicTests.Log = fmt.Sprintf("failed to read log buffer: %v", err)
+			if config.ListOpt {
+				basicTests.List()
 			} else {
-				basicTests.Log = string(logs)
+				basicTests.Run(context.TODO())
+				logs, err := ioutil.ReadAll(logReadWriter)
+				if err != nil {
+					basicTests.Log = fmt.Sprintf("failed to read log buffer: %v", err)
+				} else {
+					basicTests.Log = string(logs)
+				}
+				suites = append(suites, *basicTests)
 			}
-			suites = append(suites, *basicTests)
 		}
 		if pluginType == OLMIntegration {
 			conf := OLMTestConfig{
@@ -316,14 +324,18 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 			if schelpers.IsV1alpha2(config.Version) {
 				olmTests.ApplySelector(config.Selector)
 			}
-			olmTests.Run(context.TODO())
-			logs, err := ioutil.ReadAll(logReadWriter)
-			if err != nil {
-				olmTests.Log = fmt.Sprintf("failed to read log buffer: %v", err)
+			if config.ListOpt {
+				olmTests.List()
 			} else {
-				olmTests.Log = string(logs)
+				olmTests.Run(context.TODO())
+				logs, err := ioutil.ReadAll(logReadWriter)
+				if err != nil {
+					olmTests.Log = fmt.Sprintf("failed to read log buffer: %v", err)
+				} else {
+					olmTests.Log = string(logs)
+				}
+				suites = append(suites, *olmTests)
 			}
-			suites = append(suites, *olmTests)
 		}
 		// change logging back to main log
 		log.SetOutput(logFile)

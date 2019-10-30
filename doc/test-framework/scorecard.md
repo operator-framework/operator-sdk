@@ -108,6 +108,7 @@ While most configuration is done via a config file, there are a few important ar
 | `--kubeconfig`, `-o`  | string |  path to kubeconfig. It sets the kubeconfig internally for internal plugins and sets the `KUBECONFIG` env var to the provided value for external plugins. If an external plugin specifically sets the `KUBECONFIG` env var, the kubeconfig from the specified env var will be used for that plugin instead. |
 | `--version`  | string |  The version of scorecard to run, v1alpha2 is the default, valid values are v1alpha and v1alpha2. |
 | `--selector`, `-l`  | string |  The label selector to filter tests on, only valid in version v1alpha2. |
+| `--list`, `-L`  | bool |  If true, only print the test names that would be run based on selector filtering, only valid in version v1alpha2. |
 
 ### Config File Options
 

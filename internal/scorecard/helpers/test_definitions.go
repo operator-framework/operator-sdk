@@ -116,6 +116,13 @@ func (ts *TestSuite) ApplySelector(selector labels.Selector) {
 	}
 }
 
+// List prints out tests and removes the test from being executed
+func (ts *TestSuite) List() {
+	for i := 0; i < len(ts.Tests); i++ {
+		fmt.Printf("%s\n", ts.Tests[i].GetName())
+	}
+}
+
 // Run runs all Tests in a TestSuite
 func (ts *TestSuite) Run(ctx context.Context) {
 	for _, test := range ts.Tests {
