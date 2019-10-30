@@ -79,7 +79,7 @@ type OtherDummyStatus struct {
 // Dummy is the Schema for the dummy API
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:path=memcacheds,scope=Namespaced
+// +kubebuilder:resource:path=dummys,scope=Namespaced
 // +operator-sdk:gen-csv:customresourcedefinitions.displayName="Dummy App"
 // +operator-sdk:gen-csv:customresourcedefinitions.resources="Deployment,v1,\"dummy-deployment\""
 // +operator-sdk:gen-csv:customresourcedefinitions.resources="ReplicaSet,v1beta2,\"dummy-replicaset\""
