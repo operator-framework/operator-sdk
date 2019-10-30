@@ -494,6 +494,6 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 [v0.1.0-migration-guide]: ./v0.1.0-migration-guide.md
 [manifest-format]: https://github.com/operator-framework/operator-registry#manifest-format
 [client-doc]: ../user/client.md
-[api-roles]: https://github.com/kubernetes/kubernetes/tree/36981002246682ed7dc4de54ccc2a96c1a0cbbdb/api/api-rules
+[api-rules]: https://github.com/kubernetes/kubernetes/tree/36981002246682ed7dc4de54ccc2a96c1a0cbbdb/api/api-rules
 [generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
 [markers]: https://book.kubebuilder.io/reference/markers.html
