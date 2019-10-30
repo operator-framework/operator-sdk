@@ -467,7 +467,7 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 
 ### open API updates
 
-- Run the command `operator-sdk generation openapi` and ensure that no errors as `API rule violation` will be raised. For further information see the [Api Rules][api-roles] documentation. 
+- Run the command `operator-sdk generation openapi` and ensure that no errors such as `API rule violation` are raised. For further information see the [API rules][api-rules] documentation. 
  
 **NOTE:** Also, you may need change some mark syntax used to fix this issue. So, you may might find helpful give a look in the [custom validations using kubebuilder][generating-crd] and in the [markers][markers].  
    
