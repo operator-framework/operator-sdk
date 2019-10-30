@@ -5,6 +5,7 @@ CONFIG_PATH=".test-osdk-scorecard.yaml"
 CONFIG_PATH_V1ALPHA1=".test-osdk-scorecard-v1alpha1.yaml"
 CONFIG_PATH_DISABLE=".osdk-scorecard-disable.yaml"
 CONFIG_PATH_INVALID=".osdk-scorecard-invalid.yaml"
+CONFIG_PATH_V1ALPHA2=".osdk-scorecard-v1alpha2.yaml"
 
 set -ex
 
@@ -14,10 +15,13 @@ set -ex
 # the test framework directory has all the manifests needed to run the cluster
 pushd test/test-framework
 
+# test to see if scorecard fails when version is v1alpha2 and when external plugins are configured
+operator-sdk scorecard --version v1alpha2 --config "$CONFIG_PATH" |& grep '^.*error validating plugin config.*$'
+
 # test to see if v1alpha2 is used from the command line
-commandoutput="$(operator-sdk scorecard --version v1alpha2 --config "$CONFIG_PATH" 2>&1)"
+commandoutput="$(operator-sdk scorecard --version v1alpha2 --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
 failCount=`echo $commandoutput | grep -o ": fail" | wc -l`
-expectedFailCount=7
+expectedFailCount=3
 if [ $failCount -ne $expectedFailCount ]
 then
 	echo "expected fail count $expectedFailCount, got $failCount"
