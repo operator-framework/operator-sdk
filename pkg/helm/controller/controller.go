@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -30,14 +29,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	rpb "k8s.io/helm/pkg/proto/hapi/release"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	crthandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	crtpredicate "sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/operator-framework/operator-sdk/pkg/helm/release"
+	"github.com/operator-framework/operator-sdk/pkg/internal/predicates"
 	"github.com/operator-framework/operator-sdk/pkg/predicate"
 )
 
@@ -92,44 +90,8 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 	owner := &unstructured.Unstructured{}
 	owner.SetGroupVersionKind(r.GVK)
 
-	dependentPredicate := crtpredicate.Funcs{
-		// We don't need to reconcile dependent resource creation events
-		// because dependent resources are only ever created during
-		// reconciliation. Another reconcile would be redundant.
-		CreateFunc: func(e event.CreateEvent) bool {
-			o := e.Object.(*unstructured.Unstructured)
-			log.V(1).Info("Skipping reconciliation for dependent resource creation", "name", o.GetName(), "namespace", o.GetNamespace(), "apiVersion", o.GroupVersionKind().GroupVersion(), "kind", o.GroupVersionKind().Kind)
-			return false
-		},
-
-		// Reconcile when a dependent resource is deleted so that it can be
-		// recreated.
-		DeleteFunc: func(e event.DeleteEvent) bool {
-			o := e.Object.(*unstructured.Unstructured)
-			log.V(1).Info("Reconciling due to dependent resource deletion", "name", o.GetName(), "namespace", o.GetNamespace(), "apiVersion", o.GroupVersionKind().GroupVersion(), "kind", o.GroupVersionKind().Kind)
-			return true
-		},
-
-		// Reconcile when a dependent resource is updated, so that it can
-		// be patched back to the resource managed by the Helm release, if
-		// necessary. Ignore updates that only change the status and
-		// resourceVersion.
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			old := e.ObjectOld.(*unstructured.Unstructured).DeepCopy()
-			new := e.ObjectNew.(*unstructured.Unstructured).DeepCopy()
-
-			delete(old.Object, "status")
-			delete(new.Object, "status")
-			old.SetResourceVersion("")
-			new.SetResourceVersion("")
-
-			if reflect.DeepEqual(old.Object, new.Object) {
-				return false
-			}
-			log.V(1).Info("Reconciling due to dependent resource update", "name", new.GetName(), "namespace", new.GetNamespace(), "apiVersion", new.GroupVersionKind().GroupVersion(), "kind", new.GroupVersionKind().Kind)
-			return true
-		},
-	}
+	// using predefined functions for filtering events
+	dependentPredicate := predicates.DependentPredicateFuncs()
 
 	var m sync.RWMutex
 	watches := map[schema.GroupVersionKind]struct{}{}

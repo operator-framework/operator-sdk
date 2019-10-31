@@ -19,6 +19,7 @@ import (
 
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 const (
@@ -39,18 +40,20 @@ const (
 )
 
 type BasicAndOLMPluginConfig struct {
-	Namespace          string        `mapstructure:"namespace"`
-	Kubeconfig         string        `mapstructure:"kubeconfig"`
-	InitTimeout        int           `mapstructure:"init-timeout"`
-	OLMDeployed        bool          `mapstructure:"olm-deployed"`
-	NamespacedManifest string        `mapstructure:"namespaced-manifest"`
-	GlobalManifest     string        `mapstructure:"global-manifest"`
-	CRManifest         []string      `mapstructure:"cr-manifest"`
-	CSVManifest        string        `mapstructure:"csv-path"`
-	ProxyImage         string        `mapstructure:"proxy-image"`
-	ProxyPullPolicy    v1.PullPolicy `mapstructure:"proxy-pull-policy"`
-	CRDsDir            string        `mapstructure:"crds-dir"`
-	DeployDir          string        `mapstructure:"deploy-dir"`
+	Namespace          string          `mapstructure:"namespace"`
+	Kubeconfig         string          `mapstructure:"kubeconfig"`
+	InitTimeout        int             `mapstructure:"init-timeout"`
+	OLMDeployed        bool            `mapstructure:"olm-deployed"`
+	NamespacedManifest string          `mapstructure:"namespaced-manifest"`
+	GlobalManifest     string          `mapstructure:"global-manifest"`
+	CRManifest         []string        `mapstructure:"cr-manifest"`
+	CSVManifest        string          `mapstructure:"csv-path"`
+	ProxyImage         string          `mapstructure:"proxy-image"`
+	ProxyPullPolicy    v1.PullPolicy   `mapstructure:"proxy-pull-policy"`
+	CRDsDir            string          `mapstructure:"crds-dir"`
+	DeployDir          string          `mapstructure:"deploy-dir"`
+	Selector           labels.Selector `mapstructure:"selector"`
+	Version            string          `mapstructure:"version"`
 }
 
 func validateScorecardPluginFlags(config BasicAndOLMPluginConfig, pluginType PluginType) error {

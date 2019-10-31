@@ -64,7 +64,6 @@ Follow the steps in the [installation guide][install_guide] to learn how to inst
 $ mkdir -p $HOME/projects/example-inc/
 # Create a new app-operator project
 $ cd $HOME/projects/example-inc/
-$ export GO111MODULE=on
 $ operator-sdk new app-operator --repo github.com/example-inc/app-operator
 $ cd app-operator
 
