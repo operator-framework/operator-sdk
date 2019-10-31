@@ -74,7 +74,9 @@ Hugo can use themes to lower the barrier to entry.
 designed for medium to large technical documentation sets, and supports
 multiple content types (tutorials, reference docs, blog posts, and so
 on). Docsy is used by other projects in the Kubernetes community,
-including Knative and Kubeflow. 
+including Knative and Kubeflow.
+[kubernetes.io](https://github.com/kubernetes/website) is planning to
+switch to docsy as well.
 
 Key features:
  - Auto-generated Navigation
