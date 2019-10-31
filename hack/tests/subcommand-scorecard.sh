@@ -20,7 +20,7 @@ operator-sdk scorecard --version v1alpha2 --config "$CONFIG_PATH" |& grep '^.*er
 
 # test to see if v1alpha2 is used from the command line
 commandoutput="$(operator-sdk scorecard --version v1alpha2 --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
-failCount=`echo $commandoutput | grep -o ": fail" | wc -l`
+failCount=`echo $commandoutput | grep -o "fail" | wc -l`
 expectedFailCount=3
 if [ $failCount -ne $expectedFailCount ]
 then

@@ -118,10 +118,6 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if scViper.GetBool(ListOpt) {
-		fmt.Printf("\nTests that would be executed include:\n")
-	}
-
 	cmd.SilenceUsage = true
 	plugins, err := getPlugins(scViper.GetString(schelpers.VersionOpt), selector)
 	if err != nil {
@@ -130,7 +126,11 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 
 	var pluginOutputs []scapiv1alpha1.ScorecardOutput
 	for _, plugin := range plugins {
-		pluginOutputs = append(pluginOutputs, plugin.Run())
+		if scViper.GetBool(ListOpt) {
+			pluginOutputs = append(pluginOutputs, plugin.List())
+		} else {
+			pluginOutputs = append(pluginOutputs, plugin.Run())
+		}
 	}
 
 	// Update the state for the tests
