@@ -98,7 +98,7 @@ $ operator-sdk generate k8s
 
 ### OpenAPI validation
 
-OpenAPIv3 schemas are added to CRD manifests in the `spec.validation` block when the manifests are generated. This validation block allows Kubernetes to validate the properties in a Memcached Custom Resource when it is created or updated. Additionally a `pkg/apis/<group>/<version>/zz_generated.openapi.go` file is generated containing the Go representation of this validation block if the `+k8s:openapi-gen=true` annotation is present above the kind type declaration (present by default). This auto-generated code is useful if your operator programmatically interacts with CRD's.
+OpenAPIv3 schemas are added to CRD manifests in the `spec.validation` block when the manifests are generated. This validation block allows Kubernetes to validate the properties in a Memcached Custom Resource when it is created or updated. Additionally a `pkg/apis/<group>/<version>/zz_generated.openapi.go` file is generated containing the Go representation of this validation block if the `+k8s:openapi-gen=true` annotation is present above the kind type declaration (present by default). This auto-generated code is your Go kind type's OpenAPI model, from which you can create a full OpenAPI spec and generate a client. Check out [this issue comment][openapi-details] for steps on how to do so.
 
 Markers (annotations) are available to configure validations for your API. These markers will always have a `+kubebuilder:validation` prefix. For example, adding an enum type specification can be done by adding the following marker:
 
@@ -133,6 +133,7 @@ spec:
 
 To learn more about OpenAPI v3.0 validation schemas in Custom Resource Definitions, refer to the [Kubernetes Documentation][doc-validation-schema].
 
+[openapi-details]: https://github.com/kubernetes/kube-openapi/issues/13#issuecomment-337719430
 [doc-validation-schema]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#specifying-a-structural-schema
 [generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
 [markers]: https://book.kubebuilder.io/reference/markers.html
