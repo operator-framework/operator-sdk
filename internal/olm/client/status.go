@@ -71,22 +71,15 @@ func (c Client) GetObjectsStatus(ctx context.Context, objs ...runtime.Object) St
 	return Status{Resources: rss}
 }
 
-func (s Status) HasInstalledResources() bool {
+func (s Status) HasInstalledResources() (bool, error) {
 	for _, r := range s.Resources {
-		if r.Resource != nil && r.Error == nil {
-			return true
+		if r.Resource != nil {
+			return true, nil
+		} else if r.Error != nil && !apierrors.IsNotFound(r.Error) {
+			return false, r.Error
 		}
 	}
-	return false
-}
-
-func (s Status) NoExistingResources() bool {
-	for _, r := range s.Resources {
-		if r.Resource != nil || r.Error != nil && !apierrors.IsNotFound(r.Error) {
-			return false
-		}
-	}
-	return true
+	return false, nil
 }
 
 func (s Status) String() string {

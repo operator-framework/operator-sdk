@@ -120,7 +120,8 @@ func (c Client) DoDelete(ctx context.Context, objs ...runtime.Object) error {
 	log.Infof("  Waiting for deleted resources to disappear")
 	return wait.PollImmediateUntil(time.Second, func() (bool, error) {
 		s := c.GetObjectsStatus(ctx, objs...)
-		return s.NoExistingResources(), nil
+		installed, err := s.HasInstalledResources()
+		return !installed, err
 	}, ctx.Done())
 }
 

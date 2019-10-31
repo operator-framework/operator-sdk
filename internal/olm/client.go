@@ -72,8 +72,12 @@ func (c Client) InstallVersion(ctx context.Context, version string) (*olmresourc
 	objs := toObjects(resources...)
 
 	status := c.GetObjectsStatus(ctx, objs...)
-	if status.HasInstalledResources() {
-		return nil, errors.New("detected existing or errored OLM resources: OLM must be completely uninstalled before installation" +
+	installed, err := status.HasInstalledResources()
+	if installed {
+		return nil, errors.New("detected existing OLM resources: OLM must be completely uninstalled before installation" +
+			fmt.Sprintf("\nResources:\n%s", status.String()))
+	} else if err != nil {
+		return nil, errors.New("detected errored OLM resources:" +
 			fmt.Sprintf("\nResources:\n%s", status.String()))
 	}
 
@@ -130,7 +134,8 @@ func (c Client) UninstallVersion(ctx context.Context, version string) error {
 	objs := toObjects(resources...)
 
 	status := c.GetObjectsStatus(ctx, objs...)
-	if status.NoExistingResources() {
+	installed, err := status.HasInstalledResources()
+	if !installed && err == nil {
 		return olmresourceclient.ErrOLMNotInstalled
 	}
 
@@ -149,7 +154,8 @@ func (c Client) GetStatus(ctx context.Context, version string) (*olmresourceclie
 	objs := toObjects(resources...)
 
 	status := c.GetObjectsStatus(ctx, objs...)
-	if status.NoExistingResources() {
+	installed, err := status.HasInstalledResources()
+	if !installed && err == nil {
 		return nil, olmresourceclient.ErrOLMNotInstalled
 	}
 	return &status, nil

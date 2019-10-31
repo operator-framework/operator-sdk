@@ -25,7 +25,7 @@ test_version() {
 
     # Install should fail with OLM Installed
     commandoutput=$(operator-sdk alpha olm install $ver_flag 2>&1 || true)
-    echo $commandoutput | grep -F "Failed to install OLM version \\\"${version}\\\": detected existing or errored OLM resources: OLM must be completely uninstalled before installation"
+    echo $commandoutput | grep -F "Failed to install OLM version \\\"${version}\\\": detected existing OLM resources: OLM must be completely uninstalled before installation"
 
     # Status should succeed with OLM installed
     commandoutput=$(operator-sdk alpha olm status 2>&1)
