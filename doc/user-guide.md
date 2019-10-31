@@ -91,7 +91,7 @@ type MemcachedStatus struct {
 }
 ```
 
-**NOTE** To know more about `+listType=set` see : https://godoc.org/k8s.io/kube-openapi/pkg/idl 
+**NOTE:** Comment directives, such as +listType=set, are necessary for certain situations to avoid API rule violations when generating OpenAPI files. See https://godoc.org/k8s.io/kube-openapi/pkg/idl learn more.
 
 After modifying the `*_types.go` file always run the following command to update the generated code for that resource type:
 
