@@ -18,6 +18,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// +k8s:deepcopy-gen=false
+// +k8s:openapi-gen=false
 type NoKindSpec struct {
 	// Not included in anything, no kind type
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
@@ -26,6 +28,9 @@ type NoKindSpec struct {
 	// Not included in anything, no kind type
 	Boss Hog `json:"hog"`
 }
+
+// +k8s:deepcopy-gen=false
+// +k8s:openapi-gen=false
 type NoKindStatus struct {
 	// Not included in anything, no kind type
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
@@ -33,6 +38,8 @@ type NoKindStatus struct {
 	Nodes []string `json:"nodes"`
 }
 
+// +k8s:deepcopy-gen=false
+// +k8s:openapi-gen=false
 type DummySpec struct {
 	// Should be in spec
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
@@ -40,6 +47,9 @@ type DummySpec struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:podCount"
 	Size int32 `json:"size"`
 }
+
+// +k8s:deepcopy-gen=false
+// +k8s:openapi-gen=false
 type DummyStatus struct {
 	// Should be in status but not spec, since DummyStatus isn't in DummySpec
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
@@ -49,6 +59,8 @@ type DummyStatus struct {
 	Boss Hog `json:"hog"`
 }
 
+// +k8s:deepcopy-gen=false
+// +k8s:openapi-gen=false
 type Hog struct {
 	// Should be in status but not spec, since Hog isn't in DummySpec
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
@@ -62,11 +74,15 @@ type Hog struct {
 	Helmet string `json:"helmet"`
 }
 
+// +k8s:deepcopy-gen=false
+// +k8s:openapi-gen=false
 type Engine struct {
 	// Should not be included, no annotations.
 	Pistons []string `json:"pistons"`
 }
 
+// +k8s:deepcopy-gen=false
+// +k8s:openapi-gen=false
 type OtherDummyStatus struct {
 	// Should be in status but not spec, since this isn't a spec type
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
@@ -74,10 +90,9 @@ type OtherDummyStatus struct {
 	Nothing string `json:"nothing"`
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 // Dummy is the Schema for the dummy API
-// +k8s:openapi-gen=true
+// +k8s:deepcopy-gen=false
+// +k8s:openapi-gen=false
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=dummys,scope=Namespaced
 // +operator-sdk:gen-csv:customresourcedefinitions.displayName="Dummy App"
@@ -93,6 +108,8 @@ type Dummy struct {
 }
 
 // OtherDummy is the Schema for the other dummy API
+// +k8s:deepcopy-gen=false
+// +k8s:openapi-gen=false
 // +operator-sdk:gen-csv:customresourcedefinitions.displayName="Other Dummy App"
 // +operator-sdk:gen-csv:customresourcedefinitions.resources="Service,v1,\"other-dummy-service\""
 // +operator-sdk:gen-csv:customresourcedefinitions.resources="Pod,v1,\"other-dummy-pod\""
@@ -104,9 +121,9 @@ type OtherDummy struct {
 	Status OtherDummyStatus `json:"status,omitempty"`
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 // DummyList contains a list of Dummy
+// +k8s:deepcopy-gen=false
+// +k8s:openapi-gen=false
 type DummyList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
