@@ -117,7 +117,12 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 	}
 
 	if tlConfig.upLocal && tlConfig.namespace == "" {
-		return fmt.Errorf("must specify a namespace to run in when -up-local flag is set")
+		// Allows namespace == "" with --up-local in order to support cluster-scoped operators.
+		// Then, it will allow users to execute the command operator-sdk test local --up-local with the flag --namespace="" (allowed only with --no-setup).
+		// More Info: https://github.com/operator-framework/operator-sdk/blob/master/doc/operator-scope.md#cluster-scoped-operator-usage
+		if !(cmd.Flags().Changed("namespace") && tlConfig.noSetup) {
+			return fmt.Errorf("must specify a namespace to run in when -up-local flag is set without setting -no-setup flag")
+		}
 	}
 
 	log.Info("Testing operator locally.")
@@ -206,7 +211,11 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 		testArgs = append(testArgs, strings.Split(tlConfig.goTestFlags, " ")...)
 	}
 	if tlConfig.namespace != "" || tlConfig.noSetup {
-		testArgs = append(testArgs, "-"+test.SingleNamespaceFlag, "-parallel=1")
+		// check for WATCH_NAMESPACE="" in --up-local
+		// so that operator can watch All-Namespaces in localRunMode
+		if !(tlConfig.upLocal && tlConfig.namespace == "" && cmd.Flags().Changed("namespace")) {
+			testArgs = append(testArgs, "-"+test.SingleNamespaceFlag, "-parallel=1")
+		}
 	}
 	env := append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
 	if tlConfig.upLocal {

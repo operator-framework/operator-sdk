@@ -2,6 +2,8 @@
 
 ### Added
 
+- Add support to test locally cluster-scoped operators by running the command operator-sdk test local --up-local with the flag --namespace="". ([#2100](https://github.com/operator-framework/operator-sdk/pull/2100))
+
 ### Changed
 - Upgrade minimal Ansible version in the init projects from `2.4` to `2.6`. ([#2107](https://github.com/operator-framework/operator-sdk/pull/2107))
 

@@ -30,14 +30,28 @@ kubectl create namespace test-memcached
 operator-sdk test local ./test/e2e --up-local --namespace=test-memcached --kubeconfig $KUBECONFIG
 kubectl delete namespace test-memcached
 
+# test operator in up local mode with namespace set to ""
+# --namespace="" is allowed in local mode only when --no-setup is set
+kubectl create namespace test-memcached
+kubectl create -f deploy/crds/cache.example.com_memcacheds_crd.yaml
+# this runs after the popd at the end (trap_add popd), so it needs the path from the project root
+trap_add 'kubectl delete --ignore-not-found test/test-framework/deploy/crds/cache.example.com_memcacheds_crd.yaml' EXIT
+kubectl create -f deploy/crds/cache.example.com_memcachedrs_crd.yaml
+# this runs after the popd at the end (trap_add popd), so it needs the path from the project root
+trap_add 'kubectl delete --ignore-not-found test/test-framework/deploy/crds/cache.example.com_memcachedrs_crd.yaml' EXIT
+operator-sdk test local ./test/e2e --up-local --namespace="" --no-setup --debug
+kubectl delete -f deploy/crds/cache.example.com_memcacheds_crd.yaml
+kubectl delete -f deploy/crds/cache.example.com_memcachedrs_crd.yaml
+kubectl delete namespace test-memcached
+
 # test operator in no-setup mode
 kubectl create namespace test-memcached
 kubectl create -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 # this runs after the popd at the end, so it needs the path from the project root
-trap_add 'kubectl delete -f test/test-framework/deploy/crds/cache.example.com_memcacheds_crd.yaml' EXIT
+trap_add 'kubectl delete --ignore-not-found -f test/test-framework/deploy/crds/cache.example.com_memcacheds_crd.yaml' EXIT
 kubectl create -f deploy/crds/cache.example.com_memcachedrs_crd.yaml
 # this runs after the popd at the end, so it needs the path from the project root
-trap_add 'kubectl delete -f test/test-framework/deploy/crds/cache.example.com_memcachedrs_crd.yaml' EXIT
+trap_add 'kubectl delete --ignore-not-found -f test/test-framework/deploy/crds/cache.example.com_memcachedrs_crd.yaml' EXIT
 kubectl create -f deploy/service_account.yaml --namespace test-memcached
 kubectl create -f deploy/role.yaml --namespace test-memcached
 kubectl create -f deploy/role_binding.yaml --namespace test-memcached
