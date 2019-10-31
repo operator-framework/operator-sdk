@@ -20,7 +20,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 	"sync"
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
