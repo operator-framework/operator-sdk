@@ -97,12 +97,27 @@ $ operator-sdk generate k8s
 ```
 
 ### OpenAPI validation
-To update the OpenAPI validation section in the CRD `deploy/crds/cache.example.com_memcacheds_crd.yaml`, run the following command.
+
+OpenAPIv3 schemas are added to CRD manifests in the `spec.validation` block when the manifests are generated. This validation block allows Kubernetes to validate the properties in a Memcached Custom Resource when it is created or updated. Additionally a `pkg/apis/<group>/<version>/zz_generated.openapi.go` file is generated containing the Go representation of this validation block if the `+k8s:openapi-gen=true` annotation is present above the kind type declaration (present by default). This auto-generated code is your Go kind type's OpenAPI model, from which you can create a full OpenAPI spec and generate a client. Check out [this issue comment][openapi-details] for steps on how to do so.
+
+Markers (annotations) are available to configure validations for your API. These markers will always have a `+kubebuilder:validation` prefix. For example, adding an enum type specification can be done by adding the following marker:
+
+```go
+// +kubebuilder:validation:Enum=Lion;Wolf;Dragon
+type Alias string
+```
+
+Usage of markers in API code is discussed in the kubebuilder [CRD generation][generating-crd] and [marker][markers] documentation. A full list of OpenAPIv3 validation markers can be found [here][crd-markers].
+
+To update the OpenAPI validation section in the CRD `deploy/crds/cache.example.com_memcacheds_crd.yaml`, run the following command:
 
 ```console
 $ operator-sdk generate openapi
 ```
-This validation section allows Kubernetes to validate the properties in a Memcached Custom Resource when it is created or updated. An example of the generated YAML is as follows:
+
+**Note:** You may see errors like "API rule violation" when running the above command. For information on these errors see the [API rules][api-rules] documentation
+
+An example of the generated YAML is as follows:
 
 ```YAML
 spec:
@@ -116,8 +131,14 @@ spec:
               type: integer
 ```
 
-To learn more about OpenAPI v3.0 validation schemas in Custom Resource Definitions, refer to the [Kubernetes Documentation][doc_validation_schema].
+To learn more about OpenAPI v3.0 validation schemas in Custom Resource Definitions, refer to the [Kubernetes Documentation][doc-validation-schema].
 
+[openapi-details]: https://github.com/kubernetes/kube-openapi/issues/13#issuecomment-337719430
+[doc-validation-schema]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#specifying-a-structural-schema
+[generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
+[markers]: https://book.kubebuilder.io/reference/markers.html
+[crd-markers]: https://book.kubebuilder.io/reference/markers/crd-validation.html
+[api-rules]: https://github.com/kubernetes/kubernetes/tree/36981002246682ed7dc4de54ccc2a96c1a0cbbdb/api/api-rules
 
 ## Add a new Controller
 
@@ -160,7 +181,7 @@ err := c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequest
 
 #### Controller configurations
 
-There are a number of useful configurations that can be made when initialzing a controller and declaring the watch parameters. For more details on these configurations consult the upstream [controller godocs][controller_godocs]. 
+There are a number of useful configurations that can be made when initialzing a controller and declaring the watch parameters. For more details on these configurations consult the upstream [controller godocs][controller_godocs].
 
 - Set the max number of concurrent Reconciles for the controller via the [`MaxConcurrentReconciles`][controller_options]  option. Defaults to 1.
   ```Go
@@ -650,4 +671,3 @@ When the operator is not running in a cluster, the Manager will return an error 
 [result_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Result
 [metrics_doc]: ./user/metrics/README.md
 [quay_link]: https://quay.io
-[doc_validation_schema]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#specifying-a-structural-schema
