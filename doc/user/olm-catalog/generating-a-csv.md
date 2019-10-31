@@ -59,7 +59,7 @@ INFO[0000] Required csv fields not filled in file deploy/olm-catalog/app-operato
 	spec.keywords
 	spec.maintainers
 	spec.provider
-    spec.icon
+	spec.icon
 INFO[0000] Created deploy/olm-catalog/app-operator/0.0.1/app-operator.v0.0.1.clusterserviceversion.yaml
 ```
 
