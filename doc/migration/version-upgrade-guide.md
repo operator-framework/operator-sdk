@@ -473,6 +473,7 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 **TIPS**
 - If the `+kubebuilder:validation:Pattern` has commas, then surround the expressions in backticks.
 - If you are using `+kubebuilder:validation:Enum` they need to be enclosed in curly braces or separated using semicolons
+
 ### Operator SDK updates
 
 - [`pkg/test.FrameworkClient`](https://github.com/operator-framework/operator-sdk/blob/947a464/pkg/test/client.go#L33) `List()` and `Delete()` method invocations should be updated to match those of `Client.List()` and `Client.Delete()`, described above.
