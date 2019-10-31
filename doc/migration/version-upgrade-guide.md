@@ -473,7 +473,7 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 
 **TIPS:**
 - If the `+kubebuilder:validation:Pattern` has commas, then surround the expressions in backticks.
-- If you are using `+kubebuilder:validation:Enum` they need to be enclosed in curly braces or separated using semicolons
+- If you are using `+kubebuilder:validation:Enum` then, they need to be enclosed in curly braces or separated using semicolons.
 
 ### Operator SDK updates
 
