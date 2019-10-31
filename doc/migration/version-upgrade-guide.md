@@ -470,7 +470,8 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 - Run the command `operator-sdk generate openapi` and ensure that no errors such as `API rule violation` are raised. For further information see the [API rules][api-rules] documentation. 
  
 **NOTE:** You may need to add or remove markers (code annotations) to fix issues found when running `generate openapi`. Usage of markers in API code is discussed in the kubebuilder CRD generation [documentation][generating-crd] and in marker [documentation][markers]. A full list of OpenAPIv3 validation markers can be found [here](https://book.kubebuilder.io/reference/markers/crd-validation.html).
-**TIPS**
+
+**TIPS:**
 - If the `+kubebuilder:validation:Pattern` has commas, then surround the expressions in backticks.
 - If you are using `+kubebuilder:validation:Enum` they need to be enclosed in curly braces or separated using semicolons
 
