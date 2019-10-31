@@ -100,6 +100,7 @@ func NewBasicTestSuite(conf BasicTestConfig) *schelpers.TestSuite {
 		"Basic Tests",
 		"Test suite that runs basic, functional operator tests",
 	)
+
 	ts.AddTest(NewCheckSpecTest(conf), 1.5)
 	ts.AddTest(NewCheckStatusTest(conf), 1)
 	ts.AddTest(NewWritingIntoCRsHasEffectTest(conf), 1)

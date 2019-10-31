@@ -21,19 +21,20 @@ import (
 	"github.com/pkg/errors"
 )
 
-func ValidatePackageManifest(pm *registry.PackageManifest) error {
-	if pm.PackageName == "" {
+func ValidatePackageManifest(pkg *registry.PackageManifest) error {
+	if pkg.PackageName == "" {
 		return errors.New("package name cannot be empty")
 	}
-	if len(pm.Channels) == 0 {
+	numChannels := len(pkg.Channels)
+	if numChannels == 0 {
 		return errors.New("channels cannot be empty")
 	}
-	if pm.DefaultChannelName == "" {
+	if pkg.DefaultChannelName == "" && numChannels > 1 {
 		return errors.New("default channel cannot be empty")
 	}
 
 	seen := map[string]struct{}{}
-	for i, c := range pm.Channels {
+	for i, c := range pkg.Channels {
 		if c.Name == "" {
 			return fmt.Errorf("channel %d name cannot be empty", i)
 		}
@@ -45,8 +46,8 @@ func ValidatePackageManifest(pm *registry.PackageManifest) error {
 		}
 		seen[c.Name] = struct{}{}
 	}
-	if _, ok := seen[pm.DefaultChannelName]; !ok {
-		return fmt.Errorf("default channel %s does not exist in channels", pm.DefaultChannelName)
+	if _, found := seen[pkg.DefaultChannelName]; pkg.DefaultChannelName != "" && !found {
+		return fmt.Errorf("default channel %s does not exist in channels", pkg.DefaultChannelName)
 	}
 
 	return nil
