@@ -34,7 +34,7 @@ Explanation of all config fields:
 - `role-paths`: list of strings - Role and ClusterRole manifest file paths. Defaults to `[deploy/role.yaml]`.
 - `operator-name`: string - the name used to create the CSV and manifest file names. Defaults to the project's name.
 
-**Note**: The [design doc][doc-csv-design] has outdated field information which should not be referenced.
+**NOTE**: The [design doc][doc-csv-design] has outdated field information which should not be referenced.
 
 Fields in this config file can be modified to point towards alternate manifest locations, and passed to `gen-csv --csv-config=<path>` to configure CSV generation. For example, if I have one set of production CR/CRD manifests under `deploy/crds/production`, and a set of test manifests under `deploy/crds/test`, and I only want to include production manifests in my CSV, I can set `crd-cr-paths: [deploy/crds/production]`. `gen-csv` will then ignore `deploy/crds/test` when getting CR/CRD data.
 
@@ -59,12 +59,13 @@ INFO[0000] Required csv fields not filled in file deploy/olm-catalog/app-operato
 	spec.keywords
 	spec.maintainers
 	spec.provider
+    spec.icon
 INFO[0000] Created deploy/olm-catalog/app-operator/0.0.1/app-operator.v0.0.1.clusterserviceversion.yaml
 ```
 
 When running `gen-csv` with a version that already exists, the `Required csv fields...` info statement will become a warning, as these fields are useful for displaying your Operator in Operator Hub.
 
-**Note:** `description`, `displayName`, `resources`, `specDescriptors`, `statusDescriptors`, `actionDescriptors` fields in each `spec.customresourcedefinitions.owned` element will not be filled by the CSV generator. These fields must be added manually. The SDK plans on using [code annotations][code-annotations] to populate these fields in the near future.
+**NOTE:** `description`, `displayName`, `resources`, `specDescriptors`, `statusDescriptors`, `actionDescriptors` fields in each `spec.customresourcedefinitions.owned` element will not be filled by the CSV generator. These fields must be added manually. The SDK plans on using [code annotations][code-annotations] to populate these fields in the near future.
 
 ## Updating your CSV
 
@@ -72,7 +73,7 @@ Let's say you added a new CRD `deploy/crds/group.domain.com_resource_crd.yaml` t
 
 The SDK will not overwrite user-defined fields like `spec.maintainers` or descriptions of CSV elements, with the exception of `specDescriptors[].displayName` and `statusDescriptors[].displayName` in `spec.customresourcedefinitions.owned`, as mentioned [above](#first-generation).
 
-Including the `--update-crds` flag will update the CRD's in your Operator bundle.
+**NOTE:** Including the `--update-crds` flag will update the CRD's in your Operator bundle.
 
 ## Upgrading your CSV
 
@@ -93,6 +94,7 @@ Required:
 * `spec.displayName` _(user)_ : a name to display for the Operator in Operator Hub.
 * `spec.keywords` _(user)_ : a list of keywords describing the Operator.
 * `spec.maintainers` _(user)_ : a list of human or organizational entities maintaining the Operator, with a `name` and `email`.
+* `spec.icon` _(user)_ : a Base64 encoded image. E.g `cat image.png | base64` or `base64 -w 0 image.jpg`. 
 * `spec.provider` _(user)_ : the Operator provider, with a `name`; usually an organization.
 * `spec.labels` _(user)_ : a list of `key:value` pairs to be used by Operator internals.
 * `spec.version`: semantic version of the Operator, ex. `0.1.1`.
