@@ -179,6 +179,10 @@ func main() {
 		log.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
+	// TODO(camilamacedo86) Move this test to a unit test in
+	// `cmd/operator-sdk/internal/genutil/`. Unit tests are
+	// faster and are run more often during development, so it
+	// would be an improvement to implement this test there.
 	log.Print("Checking API rule violations")
 	if strings.Contains(string(cmdOut), "API rule violation") {
 		log.Fatalf("Error: %v\nCommand Output: %s\n", "API rule violations :", string(cmdOut))
