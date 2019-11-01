@@ -4,7 +4,7 @@
 
 - Added `Operator Version: X.Y.Z` information in the operator logs.([#1953](https://github.com/operator-framework/operator-sdk/pull/1953))
 - Make Ansible verbosity configurable via the `ansible-verbosity` flag. ([#2087](https://github.com/operator-framework/operator-sdk/pull/2087))
-- Added warn for spec.icon OLM field when the CSV file is generated. ([#2095](https://github.com/operator-framework/operator-sdk/pull/2095))
+- Added a check for `spec.icon` when generating CSVs with `operator-sdk olm-catalog gen-csv`. ([#2095](https://github.com/operator-framework/operator-sdk/pull/2095))
 
 ### Changed
 
