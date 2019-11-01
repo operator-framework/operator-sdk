@@ -23,7 +23,7 @@ type State string
 
 const (
 	// NotRun occurs when a user specifies the --list flag
-	NotRunState State = "not run"
+	NotRunState State = ""
 	// PassState occurs when a Test's ExpectedPoints == MaximumPoints.
 	PassState State = "pass"
 	// FailState occurs when a Test's ExpectedPoints == 0.
