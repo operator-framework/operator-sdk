@@ -292,10 +292,11 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 				Client:   runtimeClient,
 				CR:       obj,
 				ProxyPod: proxyPodGlobal,
-				Version:  config.Version,
-				Selector: config.Selector,
 			}
 			basicTests := NewBasicTestSuite(conf)
+			if schelpers.IsV1alpha2(config.Version) {
+				basicTests.ApplySelector(config.Selector)
+			}
 
 			basicTests.Run(context.TODO())
 			logs, err := ioutil.ReadAll(logReadWriter)
@@ -313,10 +314,11 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 				CSV:      csv,
 				CRDsDir:  config.CRDsDir,
 				ProxyPod: proxyPodGlobal,
-				Version:  config.Version,
-				Selector: config.Selector,
 			}
 			olmTests := NewOLMTestSuite(conf)
+			if schelpers.IsV1alpha2(config.Version) {
+				olmTests.ApplySelector(config.Selector)
+			}
 
 			olmTests.Run(context.TODO())
 			logs, err := ioutil.ReadAll(logReadWriter)
@@ -354,11 +356,12 @@ func ListInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig) (
 
 	switch pluginType {
 	case BasicOperator:
-		conf := BasicTestConfig{
-			Version:  config.Version,
-			Selector: config.Selector,
-		}
+		conf := BasicTestConfig{}
 		basicTests := NewBasicTestSuite(conf)
+
+		if schelpers.IsV1alpha2(config.Version) {
+			basicTests.ApplySelector(config.Selector)
+		}
 
 		basicTests.TestResults = make([]schelpers.TestResult, 0)
 		for i := 0; i < len(basicTests.Tests); i++ {
@@ -370,11 +373,12 @@ func ListInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig) (
 		}
 		suites = append(suites, *basicTests)
 	case OLMIntegration:
-		conf := OLMTestConfig{
-			Version:  config.Version,
-			Selector: config.Selector,
-		}
+		conf := OLMTestConfig{}
 		olmTests := NewOLMTestSuite(conf)
+
+		if schelpers.IsV1alpha2(config.Version) {
+			olmTests.ApplySelector(config.Selector)
+		}
 
 		olmTests.TestResults = make([]schelpers.TestResult, 0)
 		for i := 0; i < len(olmTests.Tests); i++ {

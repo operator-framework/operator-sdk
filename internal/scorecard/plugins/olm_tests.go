@@ -28,7 +28,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -41,8 +40,6 @@ type OLMTestConfig struct {
 	CSV      *olmapiv1alpha1.ClusterServiceVersion
 	CRDsDir  string
 	ProxyPod *v1.Pod
-	Selector labels.Selector
-	Version  string
 }
 
 // Test Defintions
@@ -168,10 +165,6 @@ func NewOLMTestSuite(conf OLMTestConfig) *schelpers.TestSuite {
 	ts.AddTest(NewAnnotationsContainExamplesTest(conf), 1)
 	ts.AddTest(NewSpecDescriptorsTest(conf), 1)
 	ts.AddTest(NewStatusDescriptorsTest(conf), 1)
-
-	if schelpers.IsV1alpha2(conf.Version) {
-		ts.ApplySelector(conf.Selector)
-	}
 
 	return ts
 }
