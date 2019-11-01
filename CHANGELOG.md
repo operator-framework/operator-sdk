@@ -21,7 +21,7 @@
 ### Changed
 
 - **Breaking change:** Changed required Go version from `1.12` to `1.13`. This change applies to the SDK project itself and Go projects scaffolded by the SDK. Projects that import this version of the SDK require Go 1.13 to compile. ([#1949](https://github.com/operator-framework/operator-sdk/pull/1949))
-  
+
 ### Deprecated
 - Upgrade Kubernetes version from `kubernetes-1.14.1` to `kubernetes-1.15.4`. ([#2083](https://github.com/operator-framework/operator-sdk/pull/2083))
 - Upgrade Helm version from `v2.14.1` to `v2.15.0`. ([#2083](https://github.com/operator-framework/operator-sdk/pull/2083))
@@ -88,7 +88,7 @@
       err = r.client.List(context.TODO(), listOps, podList)
       // New
       listOpts := []client.ListOption{
-        client.InNamespace("namespace"),        
+        client.InNamespace("namespace"),
       }
       err = r.client.List(context.TODO(), podList, listOpts...)
       ```
@@ -124,7 +124,7 @@
 
 ### Changed
 
-- **Breaking Change:** New configuration format for the `operator-sdk scorecard` using config files. See [`doc/test-framework/scorecard`](doc/test-framework/scorecard) for more info ([#1641](https://github.com/operator-framework/operator-sdk/pull/1641))
+- **Breaking Change:** New configuration format for the `operator-sdk scorecard` using config files. See [`doc/test-framework/scorecard`](doc/test-framework/scorecard.md) for more info ([#1641](https://github.com/operator-framework/operator-sdk/pull/1641))
 - **Breaking change:** CSV config field `role-path` is now `role-paths` and takes a list of strings. Users can now specify multiple `Role` and `ClusterRole` manifests using `role-paths`. ([#1704](https://github.com/operator-framework/operator-sdk/pull/1704))
 - Make `ready` package idempotent. Now, a user can call `Set()` or `Unset()` to set the operator's readiness without knowing the current state. ([#1761](https://github.com/operator-framework/operator-sdk/pull/1761))
 
@@ -350,7 +350,7 @@
 ### Changed
 
 - The SDK now uses logr as the default logger to unify the logging output with the controller-runtime logs. Users can still use a logger of their own choice. See the [logging doc](https://github.com/operator-framework/operator-sdk/blob/master/doc/user/logging.md) on how the SDK initializes and uses logr.
-- Ansible Operator CR status better aligns with [conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#typical-status-properties). ([#639](https://github.com/operator-framework/operator-sdk/pull/639))
+- Ansible Operator CR status better aligns with [conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties). ([#639](https://github.com/operator-framework/operator-sdk/pull/639))
 
 ### Added
 

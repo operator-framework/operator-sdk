@@ -107,7 +107,7 @@ build/%.asc:
 test: test-unit ## Run the tests
 
 test-markdown test/markdown:
-	./hack/ci/marker --root=doc
+	./hack/ci/marker
 
 test-sanity test/sanity: tidy
 	./hack/tests/sanity-check.sh
