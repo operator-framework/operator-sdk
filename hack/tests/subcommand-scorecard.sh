@@ -28,6 +28,26 @@ then
 	exit 1
 fi
 
+# test to see if list flag work
+commandoutput="$(operator-sdk scorecard --version v1alpha2 --list --selector=necessity=required --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
+labelCount=`echo $commandoutput | grep -o "Label" | wc -l`
+expectedLabelCount=8
+if [ $labelCount -ne $expectedLabelCount ]
+then
+	echo "expected label count $expectedLabelCount, got $labelCount"
+	exit 1
+fi
+
+# test to see if selector flags work
+commandoutput="$(operator-sdk scorecard --version v1alpha2 --selector=necessity=required --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
+labelCount=`echo $commandoutput | grep -o "Label" | wc -l`
+expectedLabelCount=8
+if [ $labelCount -ne $expectedLabelCount ]
+then
+	echo "expected label count $expectedLabelCount, got $labelCount"
+	exit 1
+fi
+
 # test to see if version in config file allows v1alpha1 to be specified
 commandoutput="$(operator-sdk scorecard --config "$CONFIG_PATH_V1ALPHA1" 2>&1)"
 echo $commandoutput | grep "Total Score: 67%"
