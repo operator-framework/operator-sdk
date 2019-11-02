@@ -103,13 +103,14 @@ func New(watch watches.Watch) (Runner, error) {
 		finalizerCmdFunc = playbookCmdFunc(verbosityString, watch.Finalizer.Playbook)
 	case watch.Finalizer.Role != "":
 		finalizerCmdFunc = roleCmdFunc(verbosityString, watch.Finalizer.Role)
-	case len(watch.Finalizer.Vars) != 0:
+	default:
 		finalizerCmdFunc = cmdFunc
 	}
 
 	return &runner{
 		Path:               path,
 		cmdFunc:            cmdFunc,
+		Vars:               watch.Vars,
 		Finalizer:          watch.Finalizer,
 		finalizerCmdFunc:   finalizerCmdFunc,
 		GVK:                watch.GroupVersionKind,
@@ -123,6 +124,7 @@ type runner struct {
 	GVK                schema.GroupVersionKind // GVK being watched that corresponds to the Path
 	Finalizer          *watches.Finalizer
 	cmdFunc            func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd // returns a Cmd that runs ansible-runner
+	Vars               map[string]interface{}
 	finalizerCmdFunc   func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd
 	maxRunnerArtifacts int
 }
@@ -249,7 +251,8 @@ func (r *runner) isFinalizerRun(u *unstructured.Unstructured) bool {
 //      "namespace": <object_namespace>,
 //   },
 //   <cr_spec_fields_as_snake_case>,
-//   ...
+//   <watch vars>,
+//   <finalizer vars>,
 //   _<group_as_snake>_<kind>: {
 //       <cr_object> as is
 //   }
@@ -274,6 +277,9 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 	specKey := fmt.Sprintf("%s_spec", objKey)
 	parameters[specKey] = spec
 
+	for k, v := range r.Vars {
+		parameters[k] = v
+	}
 	if r.isFinalizerRun(u) {
 		for k, v := range r.Finalizer.Vars {
 			parameters[k] = v
