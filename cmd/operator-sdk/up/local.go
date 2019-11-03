@@ -55,7 +55,7 @@ kubernetes cluster using a kubeconfig file.
 
 	upLocalCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "The file path to kubernetes configuration file; defaults to location specified by $KUBECONFIG with a fallback to $HOME/.kube/config if not set")
 	upLocalCmd.Flags().StringVar(&operatorFlags, "operator-flags", "", "The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
-	upLocalCmd.Flags().StringVar(&namespace, "namespace", "", "The namespace where the operator watches for changes.")
+	upLocalCmd.Flags().StringVar(&watchNamespace, "watch-namespace", "", "The namespace where the operator watches for changes.")
 	upLocalCmd.Flags().StringVar(&ldFlags, "go-ldflags", "", "Set Go linker options")
 	upLocalCmd.Flags().BoolVar(&enableDelve, "enable-delve", false, "Start the operator using the delve debugger")
 	switch projutil.GetOperatorType() {
@@ -70,7 +70,7 @@ kubernetes cluster using a kubeconfig file.
 var (
 	kubeConfig           string
 	operatorFlags        string
-	namespace            string
+	watchNamespace       string
 	ldFlags              string
 	enableDelve          bool
 	ansibleOperatorFlags *aoflags.AnsibleOperatorFlags
@@ -81,14 +81,14 @@ func upLocalFunc(cmd *cobra.Command, args []string) error {
 	log.Info("Running the operator locally.")
 
 	// get default namespace to watch if unset
-	if !cmd.Flags().Changed("namespace") {
+	if !cmd.Flags().Changed("watch-namespace") {
 		_, defaultNamespace, err := k8sInternal.GetKubeconfigAndNamespace(kubeConfig)
 		if err != nil {
 			return fmt.Errorf("failed to get kubeconfig and default namespace: %v", err)
 		}
-		namespace = defaultNamespace
+		watchNamespace = defaultNamespace
 	}
-	log.Infof("Using namespace %s.", namespace)
+	log.Infof("Using namespace %s.", watchNamespace)
 
 	switch t := projutil.GetOperatorType(); t {
 	case projutil.OperatorTypeGo:
@@ -144,7 +144,7 @@ func upLocal() error {
 	if kubeConfig != "" {
 		dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, kubeConfig))
 	}
-	dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, namespace))
+	dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, watchNamespace))
 
 	if err := projutil.ExecCmd(dc); err != nil {
 		return fmt.Errorf("failed to run operator locally: (%v)", err)
@@ -178,8 +178,8 @@ func setupOperatorEnv() error {
 		}
 	}
 	// Set the namespace that the manager will be able to grab
-	if namespace != "" {
-		if err := os.Setenv(k8sutil.WatchNamespaceEnvVar, namespace); err != nil {
+	if watchNamespace != "" {
+		if err := os.Setenv(k8sutil.WatchNamespaceEnvVar, watchNamespace); err != nil {
 			return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
 		}
 	}
