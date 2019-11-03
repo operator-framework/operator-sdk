@@ -47,7 +47,7 @@ type testLocalConfig struct {
 	namespacedManPath  string
 	goTestFlags        string
 	moleculeTestFlags  string
-	namespace          string
+	deployNamespace    string
 	upLocal            bool
 	noSetup            bool
 	debug              bool
@@ -68,7 +68,7 @@ func newTestLocalCmd() *cobra.Command {
 	testCmd.Flags().StringVar(&tlConfig.namespacedManPath, "namespaced-manifest", "", "Path to manifest for per-test, namespaced resources (e.g. RBAC and Operator manifest)")
 	testCmd.Flags().StringVar(&tlConfig.goTestFlags, "go-test-flags", "", "Additional flags to pass to go test")
 	testCmd.Flags().StringVar(&tlConfig.moleculeTestFlags, "molecule-test-flags", "", "Additional flags to pass to molecule test")
-	testCmd.Flags().StringVar(&tlConfig.namespace, "namespace", "", "If non-empty, single namespace to run tests in")
+	testCmd.Flags().StringVar(&tlConfig.deployNamespace, "deploy-namespace", "", "If non-empty, single namespace to run tests in (deploys namespaced resources here)")
 	testCmd.Flags().BoolVar(&tlConfig.upLocal, "up-local", false, "Enable running operator locally with go run instead of as an image in the cluster")
 	testCmd.Flags().BoolVar(&tlConfig.noSetup, "no-setup", false, "Disable test resource creation")
 	testCmd.Flags().BoolVar(&tlConfig.debug, "debug", false, "Enable debug-level logging")
@@ -103,7 +103,7 @@ func testLocalAnsibleFunc(cmd *cobra.Command, args []string) error {
 	}
 
 	dc := exec.Command("molecule", testArgs...)
-	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
+	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.deployNamespace))
 	dc.Dir = projutil.MustGetwd()
 	return projutil.ExecCmd(dc)
 }
@@ -117,7 +117,7 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("the global-manifest and namespaced-manifest flags cannot be enabled at the same time as the no-setup flag")
 	}
 
-	if tlConfig.upLocal && tlConfig.namespace == "" {
+	if tlConfig.upLocal && tlConfig.deployNamespace == "" {
 		return fmt.Errorf("must specify a namespace to run in when -up-local flag is set")
 	}
 
@@ -206,10 +206,10 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 	if tlConfig.goTestFlags != "" {
 		testArgs = append(testArgs, strings.Split(tlConfig.goTestFlags, " ")...)
 	}
-	if tlConfig.namespace != "" || tlConfig.noSetup {
+	if tlConfig.deployNamespace != "" || tlConfig.noSetup {
 		testArgs = append(testArgs, "-"+test.SingleNamespaceFlag, "-parallel=1")
 	}
-	env := append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
+	env := append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.deployNamespace))
 	if tlConfig.upLocal {
 		env = append(env, fmt.Sprintf("%s=%s", k8sutil.ForceRunModeEnv, k8sutil.LocalRunMode))
 		testArgs = append(testArgs, "-"+test.LocalOperatorFlag)
