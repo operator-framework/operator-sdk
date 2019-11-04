@@ -29,9 +29,9 @@ then
 fi
 
 # test to see if list flag work
-commandoutput="$(operator-sdk scorecard --version v1alpha2 --list --selector=necessity=required --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
+commandoutput="$(operator-sdk scorecard --version v1alpha2 --list --selector=suite=basic --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
 labelCount=`echo $commandoutput | grep -o "Label" | wc -l`
-expectedLabelCount=8
+expectedLabelCount=3
 if [ $labelCount -ne $expectedLabelCount ]
 then
 	echo "expected label count $expectedLabelCount, got $labelCount"
@@ -39,9 +39,9 @@ then
 fi
 
 # test to see if selector flags work
-commandoutput="$(operator-sdk scorecard --version v1alpha2 --selector=necessity=required --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
+commandoutput="$(operator-sdk scorecard --version v1alpha2 --selector=suite=basic --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
 labelCount=`echo $commandoutput | grep -o "Label" | wc -l`
-expectedLabelCount=8
+expectedLabelCount=3
 if [ $labelCount -ne $expectedLabelCount ]
 then
 	echo "expected label count $expectedLabelCount, got $labelCount"
