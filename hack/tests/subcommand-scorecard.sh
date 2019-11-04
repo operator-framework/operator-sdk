@@ -20,11 +20,31 @@ operator-sdk scorecard --version v1alpha2 --config "$CONFIG_PATH" |& grep '^.*er
 
 # test to see if v1alpha2 is used from the command line
 commandoutput="$(operator-sdk scorecard --version v1alpha2 --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
-failCount=`echo $commandoutput | grep -o ": fail" | wc -l`
+failCount=`echo $commandoutput | grep -o "fail" | wc -l`
 expectedFailCount=3
 if [ $failCount -ne $expectedFailCount ]
 then
 	echo "expected fail count $expectedFailCount, got $failCount"
+	exit 1
+fi
+
+# test to see if list flag work
+commandoutput="$(operator-sdk scorecard --version v1alpha2 --list --selector=suite=basic --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
+labelCount=`echo $commandoutput | grep -o "Label" | wc -l`
+expectedLabelCount=3
+if [ $labelCount -ne $expectedLabelCount ]
+then
+	echo "expected label count $expectedLabelCount, got $labelCount"
+	exit 1
+fi
+
+# test to see if selector flags work
+commandoutput="$(operator-sdk scorecard --version v1alpha2 --selector=suite=basic --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
+labelCount=`echo $commandoutput | grep -o "Label" | wc -l`
+expectedLabelCount=3
+if [ $labelCount -ne $expectedLabelCount ]
+then
+	echo "expected label count $expectedLabelCount, got $labelCount"
 	exit 1
 fi
 

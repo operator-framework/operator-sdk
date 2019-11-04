@@ -20,6 +20,7 @@ import (
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	scapi "github.com/operator-framework/operator-sdk/pkg/apis/scorecard"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	"io/ioutil"
 )
 
@@ -34,6 +35,12 @@ func printPluginOutputs(version string, pluginOutputs []scapiv1alpha1.ScorecardO
 
 	if schelpers.IsV1alpha2(version) {
 		list = scapi.ConvertScorecardOutputV1ToV2(list.(scapiv1alpha1.ScorecardOutput))
+		if scViper.GetBool(ListOpt) {
+			scorecardOutput := list.(scapiv1alpha2.ScorecardOutput)
+			for i := 0; i < len(scorecardOutput.Results); i++ {
+				scorecardOutput.Results[i].State = scapiv1alpha2.NotRunState
+			}
+		}
 	}
 
 	// produce text output

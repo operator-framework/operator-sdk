@@ -38,6 +38,7 @@ import (
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	extscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -267,6 +268,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 		logReadWriter := &bytes.Buffer{}
 		log.SetOutput(logReadWriter)
 		log.Printf("Running for cr: %s", cr)
+		var obj *unstructured.Unstructured
 		if !config.OLMDeployed {
 			if err := createFromYAMLFile(config.Namespace, config.GlobalManifest, config.ProxyImage, config.ProxyPullPolicy); err != nil {
 				return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to create global resources: %v", err)
@@ -278,7 +280,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 		if err := createFromYAMLFile(config.Namespace, cr, config.ProxyImage, config.ProxyPullPolicy); err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to create cr resource: %v", err)
 		}
-		obj, err := yamlToUnstructured(config.Namespace, cr)
+		obj, err = yamlToUnstructured(config.Namespace, cr)
 		if err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
 		}
@@ -295,6 +297,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 			if schelpers.IsV1alpha2(config.Version) {
 				basicTests.ApplySelector(config.Selector)
 			}
+
 			basicTests.Run(context.TODO())
 			logs, err := ioutil.ReadAll(logReadWriter)
 			if err != nil {
@@ -316,6 +319,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 			if schelpers.IsV1alpha2(config.Version) {
 				olmTests.ApplySelector(config.Selector)
 			}
+
 			olmTests.Run(context.TODO())
 			logs, err := ioutil.ReadAll(logReadWriter)
 			if err != nil {
@@ -344,5 +348,52 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 	for idx, suite := range output.Results {
 		output.Results[idx] = schelpers.UpdateSuiteStates(suite)
 	}
+	return output, nil
+}
+
+func ListInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig) (scapiv1alpha1.ScorecardOutput, error) {
+	var suites []schelpers.TestSuite
+
+	switch pluginType {
+	case BasicOperator:
+		conf := BasicTestConfig{}
+		basicTests := NewBasicTestSuite(conf)
+
+		if schelpers.IsV1alpha2(config.Version) {
+			basicTests.ApplySelector(config.Selector)
+		}
+
+		basicTests.TestResults = make([]schelpers.TestResult, 0)
+		for i := 0; i < len(basicTests.Tests); i++ {
+			result := schelpers.TestResult{}
+			result.Test = basicTests.Tests[i]
+			result.Suggestions = make([]string, 0)
+			result.Errors = make([]error, 0)
+			basicTests.TestResults = append(basicTests.TestResults, result)
+		}
+		suites = append(suites, *basicTests)
+	case OLMIntegration:
+		conf := OLMTestConfig{}
+		olmTests := NewOLMTestSuite(conf)
+
+		if schelpers.IsV1alpha2(config.Version) {
+			olmTests.ApplySelector(config.Selector)
+		}
+
+		olmTests.TestResults = make([]schelpers.TestResult, 0)
+		for i := 0; i < len(olmTests.Tests); i++ {
+			result := schelpers.TestResult{}
+			result.Test = olmTests.Tests[i]
+			result.Suggestions = make([]string, 0)
+			result.Errors = make([]error, 0)
+			olmTests.TestResults = append(olmTests.TestResults, result)
+		}
+		suites = append(suites, *olmTests)
+	}
+	suites, err := schelpers.MergeSuites(suites)
+	if err != nil {
+		return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to merge test suite results: %v", err)
+	}
+	output := schelpers.TestSuitesToScorecardOutput(suites, "")
 	return output, nil
 }

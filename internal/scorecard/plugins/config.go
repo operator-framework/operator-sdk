@@ -54,6 +54,7 @@ type BasicAndOLMPluginConfig struct {
 	DeployDir          string          `mapstructure:"deploy-dir"`
 	Selector           labels.Selector `mapstructure:"selector"`
 	Version            string          `mapstructure:"version"`
+	ListOpt            bool            `mapstructure:"list"`
 }
 
 func validateScorecardPluginFlags(config BasicAndOLMPluginConfig, pluginType PluginType) error {
