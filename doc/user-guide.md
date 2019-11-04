@@ -85,10 +85,13 @@ type MemcachedSpec struct {
 	Size int32 `json:"size"`
 }
 type MemcachedStatus struct {
-	// Nodes are the names of the memcached pods
+	// Nodes are the names of the memcached pods 
+	// +listType=set  
 	Nodes []string `json:"nodes"`
 }
 ```
+
+**NOTE:** Comment directives, such as +listType=set, are necessary in certain situations to avoid API rule violations when generating OpenAPI files. See https://godoc.org/k8s.io/kube-openapi/pkg/idl to learn more.
 
 After modifying the `*_types.go` file always run the following command to update the generated code for that resource type:
 
