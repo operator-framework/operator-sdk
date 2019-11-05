@@ -468,10 +468,10 @@ The structure passed to Ansible as extra vars is:
   "message": "Hello world 2",
   "new_parameter": "newParam",
   "_app_example_com_database": {
-     <Full CRD>
+     <Full CR>
    },
   "_app_example_com_database_spec": {
-     <Full CRD .spec>
+     <Full CR .spec>
    },
 }
 ```

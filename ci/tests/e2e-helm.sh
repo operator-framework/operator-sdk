@@ -16,7 +16,7 @@ mkdir -p $ROOTDIR/bin
 export PATH=$ROOTDIR/bin:$PATH
 
 if ! [ -x "$(command -v kubectl)" ]; then
-    curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.14.2/bin/linux/amd64/kubectl && chmod +x kubectl && mv kubectl bin/
+    curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.15.4/bin/linux/amd64/kubectl && chmod +x kubectl && mv kubectl bin/
 fi
 
 if ! [ -x "$(command -v oc)" ]; then

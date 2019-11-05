@@ -30,6 +30,7 @@ type MemcachedRSSpec struct {
 // MemcachedRSStatus defines the observed state of MemcachedRS
 // +k8s:openapi-gen=true
 type MemcachedRSStatus struct {
+	// +listType=set
 	NodeList []string `json:"nodeList"`
 	Test     bool     `json:"test"`
 }

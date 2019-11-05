@@ -21,12 +21,18 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+// MemcachedSpec defines the desired state of Memcached
+// +k8s:openapi-gen=true
 type MemcachedSpec struct {
 	// Size is the size of the memcached deployment
 	Size int32 `json:"size"`
 }
+
+// MemcachedStatus defines the observed state of Memcached
+// +k8s:openapi-gen=true
 type MemcachedStatus struct {
 	// Nodes are the names of the memcached pods
+	// +listType=set
 	Nodes []string `json:"nodes"`
 }
 

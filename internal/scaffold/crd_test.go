@@ -84,6 +84,7 @@ spec:
         metadata:
           type: object
         spec:
+          description: MemcachedSpec defines the desired state of Memcached
           properties:
             size:
               description: Size is the size of the memcached deployment
@@ -93,6 +94,7 @@ spec:
           - size
           type: object
         status:
+          description: MemcachedStatus defines the observed state of Memcached
           properties:
             nodes:
               description: Nodes are the names of the memcached pods

@@ -27,9 +27,9 @@ metadata:
 `kubectl edit` can be used to update the resources by hand. See below
 for example `ownerReference` and `annotations`.
 
-## For objects in the same namespace as the Owner (CRD)
+## For objects in the same namespace as the Owner (CR)
 
-Dependent resources `within the same namespace as the owning CR` are
+Dependent resources *within the same namespace as the owning CR* are
 tracked with the `ownerReference` field.
 
 `ownerReference` structure:
@@ -50,7 +50,7 @@ metadata:
       uid: ad834522-d9a5-4841-beac-991ff3798c00
 ```
 
-## For objects which are NOT in the same namespace as the Owner (CRD)
+## For objects which are NOT in the same namespace as the Owner (CR)
 
 An `annotation` is used instead of an `ownerReference` if the dependent
 resource is in a different namespace than the CR, or the dependent
