@@ -43,7 +43,7 @@ help: ## Show this help screen
 all: format test build/operator-sdk ## Test and Build the Operator SDK
 
 # Code management.
-.PHONY: format tidy clean doc
+.PHONY: format tidy clean cli-doc
 
 format: ## Format the source code
 	$(Q)go fmt $(PKGS)
