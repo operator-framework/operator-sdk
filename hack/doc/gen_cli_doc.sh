@@ -1,3 +1,3 @@
 #!/bin/bash
 
-go run ./gen-cli-doc.go
+go run ./hack/doc/gen-cli-doc.go
