@@ -54,7 +54,7 @@ tidy: ## Update dependencies
 clean: ## Clean up the build artifacts
 	$(Q)rm -rf build
 
-doc: ## Generate CLI Documentation
+cli-doc: ## Generate CLI Documentation
 	go run ./hack/doc/gen-cli-doc.go
 
 # Build/install/release the SDK.
