@@ -15,6 +15,7 @@
 package test
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -225,6 +226,10 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 		TestBinaryArgs: testArgs,
 	}
 	if err := projutil.GoTest(opts); err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			os.Exit(exitErr.ExitCode())
+		}
 		return fmt.Errorf("failed to build test binary: (%v)", err)
 	}
 	log.Info("Local operator test successfully completed.")

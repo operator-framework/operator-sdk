@@ -29,7 +29,7 @@ func ExecCmd(cmd *exec.Cmd) error {
 	cmd.Stderr = os.Stderr
 	log.Debugf("Running %#v", cmd.Args)
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to exec %#v: %v", cmd.Args, err)
+		return fmt.Errorf("failed to exec %#v: %w", cmd.Args, err)
 	}
 	return nil
 }
