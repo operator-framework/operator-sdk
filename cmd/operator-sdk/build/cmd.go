@@ -48,6 +48,7 @@ This image will be automatically set in the deployment manifests.
 After build completes, the image would be built locally in docker. Then it needs to
 be pushed to remote registry.
 For example:
+
 	$ operator-sdk build quay.io/example/operator:v0.0.1
 	$ docker push quay.io/example/operator:v0.0.1
 `,

@@ -1,5 +1,5 @@
 ---
-date: 2019-11-05T08:15:45-08:00
+date: 2019-11-05T08:34:17-08:00
 title: "operator-sdk generate k8s"
 ---
 ## operator-sdk generate k8s
@@ -13,6 +13,7 @@ specs in pkg/apis/<group>/<version> directories to comply with kube-API
 requirements. Go code is generated under
 pkg/apis/<group>/<version>/zz_generated.deepcopy.go.
 Example:
+
 	$ operator-sdk generate k8s
 	$ tree pkg/apis
 	pkg/apis/

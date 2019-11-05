@@ -1,5 +1,5 @@
 ---
-date: 2019-11-05T08:15:45-08:00
+date: 2019-11-05T08:34:17-08:00
 title: "operator-sdk add controller"
 ---
 ## operator-sdk add controller
@@ -16,6 +16,7 @@ This command must be run from the project root directory.
 If the controller pkg for that Kind already exists at pkg/controller/<kind> then the command will not overwrite and return an error.
 
 Example:
+
 	$ operator-sdk add controller --api-version=app.example.com/v1alpha1 --kind=AppService
 	$ tree pkg/controller
 	pkg/controller/

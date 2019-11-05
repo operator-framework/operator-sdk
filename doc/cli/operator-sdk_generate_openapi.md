@@ -1,5 +1,5 @@
 ---
-date: 2019-11-05T08:15:45-08:00
+date: 2019-11-05T08:34:17-08:00
 title: "operator-sdk generate openapi"
 ---
 ## operator-sdk generate openapi
@@ -16,6 +16,7 @@ deploy/crds/<full group>_<resource>_crd.yaml; OpenAPI V3 validation YAML
 is generated as a 'validation' object.
 
 Example:
+
 	$ operator-sdk generate openapi
 	$ tree pkg/apis
 	pkg/apis/

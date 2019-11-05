@@ -32,6 +32,7 @@ specs in pkg/apis/<group>/<version> directories to comply with kube-API
 requirements. Go code is generated under
 pkg/apis/<group>/<version>/zz_generated.deepcopy.go.
 Example:
+
 	$ operator-sdk generate k8s
 	$ tree pkg/apis
 	pkg/apis/

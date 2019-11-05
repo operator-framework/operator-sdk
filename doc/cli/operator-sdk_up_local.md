@@ -1,5 +1,5 @@
 ---
-date: 2019-11-05T08:15:45-08:00
+date: 2019-11-05T08:34:17-08:00
 title: "operator-sdk up local"
 ---
 ## operator-sdk up local

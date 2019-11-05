@@ -1,5 +1,5 @@
 ---
-date: 2019-11-05T08:15:45-08:00
+date: 2019-11-05T08:34:17-08:00
 title: "operator-sdk new"
 ---
 ## operator-sdk new
@@ -14,6 +14,7 @@ generates a default directory layout based on the input <project-name>.
 <project-name> is the project name of the new operator. (e.g app-operator)
 
 For example:
+
 	$ mkdir $HOME/projects/example.com/
 	$ cd $HOME/projects/example.com/
 	$ operator-sdk new app-operator

@@ -1,5 +1,5 @@
 ---
-date: 2019-11-05T08:15:45-08:00
+date: 2019-11-05T08:34:17-08:00
 title: "operator-sdk scorecard"
 ---
 ## operator-sdk scorecard
@@ -21,8 +21,10 @@ operator-sdk scorecard [flags]
       --config string       config file (default is '<project_dir>/.osdk-scorecard'; the config file's extension and format can be .yaml, .json, or .toml)
   -h, --help                help for scorecard
       --kubeconfig string   Path to kubeconfig of custom resource created in cluster
+  -L, --list                If true, only print the test names that would be run based on selector filtering (only valid when version is v1alpha2)
   -o, --output string       Output format for results. Valid values: text, json (default "text")
-      --version string      scorecard version (tech preview version is 'v1alpha2' (default "v1alpha2")
+  -l, --selector string     selector (label query) to filter tests on (only valid when version is v1alpha2)
+      --version string      scorecard version. Valid values: v1alpha1, v1alpha2 (default "v1alpha2")
 ```
 
 ### SEE ALSO
