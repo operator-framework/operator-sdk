@@ -249,8 +249,8 @@ $ sed -i 's|{{ pull_policy\|default('\''Always'\'') }}|Always|g' deploy/operator
 **Note**
 If you are performing these steps on OSX, use the following `sed` commands instead:
 ```
-$ sed -i "" 's|{{ REPLACE_IMAGE }}|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
-$ sed -i "" 's|{{ pull_policy\|default('\''Always'\'') }}|Always|g' deploy/operator.yaml
+$ sed -i 's|{{ REPLACE_IMAGE }}|quay.io/example/memcached-operator:v0.0.1|g' deploy/operator.yaml
+$ sed -i 's|{{ pull_policy\|default('\''Always'\'') }}|Always|g' deploy/operator.yaml
 ```
 
 Deploy the memcached-operator:
