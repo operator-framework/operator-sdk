@@ -19,6 +19,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
@@ -153,6 +154,7 @@ func (s *CRD) CustomRender() ([]byte, error) {
 	if err := checkCRDVersions(crd); err != nil {
 		return nil, err
 	}
+	sort.Sort(k8sutil.CRDVersions(crd.Spec.Versions))
 	return k8sutil.GetObjectBytes(crd, yaml.Marshal)
 }
 
