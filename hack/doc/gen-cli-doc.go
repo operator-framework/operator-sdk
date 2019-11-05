@@ -15,7 +15,12 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"path"
+	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cli"
 
@@ -30,7 +35,25 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to get current directory, (%v)", err)
 	}
-	err = doc.GenMarkdownTree(root, currentDir+"/doc/cli")
+	const fmTemplate = `---
+date: %s
+title: "%s"
+---
+`
+
+	filePrepender := func(filename string) string {
+		now := time.Now().Format(time.RFC3339)
+		name := filepath.Base(filename)
+		base := strings.TrimSuffix(name, path.Ext(name))
+		return fmt.Sprintf(fmTemplate, now, strings.Replace(base, "_", " ", -1))
+	}
+
+	linkHandler := func(name string) string {
+		base := strings.TrimSuffix(name, path.Ext(name))
+		return base
+	}
+
+	err = doc.GenMarkdownTreeCustom(root, currentDir+"/doc/cli", filePrepender, linkHandler)
 	if err != nil {
 		log.Fatalf("Failed to generate documenation, (%v)", err)
 	}
