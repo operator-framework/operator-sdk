@@ -55,7 +55,7 @@ clean: ## Clean up the build artifacts
 	$(Q)rm -rf build
 
 cli-doc: ## Generate CLI Documentation
-	go run ./hack/doc/gen-cli-doc.go
+	./hack/doc/gen_cli_doc.sh
 
 # Build/install/release the SDK.
 .PHONY: install release_builds release
