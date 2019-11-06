@@ -128,9 +128,9 @@ func (r *Resource) checkAndSetGroups() error {
 	}
 	r.FullGroup = fg[0]
 	r.Group = g[0]
+	r.Group = strings.ToLower(r.Group)
 
-	s := strings.ToLower(r.Group)
-	r.GoImportGroup = strings.Replace(s, "-", "", -1)
+	r.GoImportGroup = strings.Replace(r.Group, "-", "", -1)
 
 	if err := validation.IsDNS1123Subdomain(r.Group); err != nil {
 		return fmt.Errorf("group name is invalid: %v", err)
@@ -143,7 +143,7 @@ func (r *Resource) checkAndSetVersion() error {
 	if len(api) < 2 || len(api[1]) == 0 {
 		return errors.New("version cannot be empty")
 	}
-	r.Version = api[1]
+	r.Version = strings.ToLower(api[1])
 
 	if !ResourceVersionRegexp.MatchString(r.Version) {
 		return errors.New("version is not in the correct Kubernetes version format, ex. v1alpha1")

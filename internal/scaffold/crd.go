@@ -69,7 +69,7 @@ func (s *CRD) GetInput() (input.Input, error) {
 }
 
 func crdPathForResource(dir string, r *Resource) string {
-	file := fmt.Sprintf("%s_%s_crd.yaml", r.FullGroup, r.Resource)
+	file := fmt.Sprintf("%s_%s_crd.yaml", r.Group, r.Resource)
 	return filepath.Join(dir, file)
 }
 

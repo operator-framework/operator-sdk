@@ -23,7 +23,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 )
 
-// CR is the input needed to generate a deploy/crds/<full group>_<version>_<kind>_cr.yaml file
+// CR is the input needed to generate a deploy/crds/<group>_<version>_<kind>_cr.yaml file
 type CR struct {
 	input.Input
 
@@ -48,7 +48,7 @@ func (s *CR) GetInput() (input.Input, error) {
 }
 
 func crPathForResource(dir string, r *Resource) string {
-	file := fmt.Sprintf("%s_%s_%s_cr.yaml", r.FullGroup, r.Version, r.LowerKind)
+	file := fmt.Sprintf("%s_%s_%s_cr.yaml", r.Group, r.Version, r.LowerKind)
 	return filepath.Join(dir, file)
 }
 
