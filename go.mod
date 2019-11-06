@@ -31,7 +31,6 @@ require (
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190605231540-b8a4faf68e36
 	github.com/operator-framework/operator-registry v1.1.1
 	github.com/pborman/uuid v1.2.0
@@ -50,7 +49,6 @@ require (
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	go.uber.org/zap v1.10.0
 	golang.org/x/tools v0.0.0-20191018212557-ed542cd5b28a
-	google.golang.org/genproto v0.0.0-20181016170114-94acd270e44e // indirect
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 	k8s.io/api v0.0.0
