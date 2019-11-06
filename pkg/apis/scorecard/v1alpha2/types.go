@@ -64,6 +64,16 @@ type ScorecardOutput struct {
 	Results []ScorecardTestResult `json:"results"`
 }
 
+func NewScorecardOutput() *ScorecardOutput {
+	return &ScorecardOutput{
+		// The TypeMeta is mandatory because it is used to distinguish the versions (v1alpha1 and v1alpha2)
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ScorecardOutput",
+			APIVersion: "osdk.openshift.io/v1alpha2",
+		},
+	}
+}
+
 func init() {
 	SchemeBuilder.Register(&ScorecardOutput{})
 }
