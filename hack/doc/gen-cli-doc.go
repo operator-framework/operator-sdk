@@ -20,7 +20,6 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cli"
 
 	"github.com/spf13/cobra/doc"
-
 	log "github.com/sirupsen/logrus"
 )
 
