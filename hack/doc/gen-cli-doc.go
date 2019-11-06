@@ -20,7 +20,6 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cli"
 
 	"github.com/spf13/cobra/doc"
-
 	log "github.com/sirupsen/logrus"
 )
 
@@ -28,11 +27,11 @@ func main() {
 	root := cli.GetCLIRoot()
 	currentDir, err := os.Getwd()
 	if err != nil {
-		log.Fatalf("Failed to get current directory, (%v)", err)
+		log.Fatalf("Failed to get current directory: %v", err)
 	}
 
 	err = doc.GenMarkdownTree(root, currentDir+"/doc/cli")
 	if err != nil {
-		log.Fatalf("Failed to generate documenation, (%v)", err)
+		log.Fatalf("Failed to generate documenation: %v", err)
 	}
 }
