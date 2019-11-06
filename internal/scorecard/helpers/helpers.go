@@ -18,8 +18,6 @@ import (
 	"fmt"
 
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // These functions should be in the public test definitions file, but they are not complete/stable,
@@ -91,10 +89,6 @@ func CalculateResult(tests []scapiv1alpha1.ScorecardTestResult) scapiv1alpha1.Sc
 // provided suites and log
 func TestSuitesToScorecardOutput(suites []TestSuite, log string) scapiv1alpha1.ScorecardOutput {
 	test := scapiv1alpha1.ScorecardOutput{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ScorecardOutput",
-			APIVersion: "osdk.openshift.io/v1alpha1",
-		},
 		Log: log,
 	}
 	scorecardSuiteResults := []scapiv1alpha1.ScorecardSuiteResult{}
