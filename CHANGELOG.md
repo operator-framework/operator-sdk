@@ -10,6 +10,7 @@
 ### Removed
 
 ### Bug Fixes
+- Do no replace  hyphens `-` into the group names to generated CR/CRD file names. ([#2163](https://github.com/operator-framework/operator-sdk/pull/2163))
 
 ## v0.12.0
 
