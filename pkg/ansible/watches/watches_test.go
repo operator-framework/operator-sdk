@@ -37,6 +37,7 @@ func TestNew(t *testing.T) {
 		gvk            schema.GroupVersionKind
 		role           string
 		playbook       string
+		vars           map[string]interface{}
 		finalizer      *Finalizer
 		shouldValidate bool
 	}{
@@ -50,7 +51,7 @@ func TestNew(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			watch := New(tc.gvk, tc.role, tc.playbook, tc.finalizer)
+			watch := New(tc.gvk, tc.role, tc.playbook, tc.vars, tc.finalizer)
 			if watch.GroupVersionKind != tc.gvk {
 				t.Fatalf("Unexpected GVK %v expected %v", watch.GroupVersionKind, tc.gvk)
 			}
@@ -347,6 +348,16 @@ func TestLoad(t *testing.T) {
 					Role:             validTemplate.ValidRole,
 					ManageStatus:     true,
 					AnsibleVerbosity: 4,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "WatchWithVars",
+					},
+					Role:         validTemplate.ValidRole,
+					ManageStatus: true,
+					Vars:         map[string]interface{}{"sentinel": "reconciling"},
 				},
 			},
 		},
