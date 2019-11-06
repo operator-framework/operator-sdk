@@ -88,9 +88,9 @@ func CalculateResult(tests []scapiv1alpha1.ScorecardTestResult) scapiv1alpha1.Sc
 // TestSuitesToScorecardOutput takes an array of test suites and generates a v1alpha1 ScorecardOutput object with the
 // provided suites and log
 func TestSuitesToScorecardOutput(suites []TestSuite, log string) scapiv1alpha1.ScorecardOutput {
-	test := scapiv1alpha1.ScorecardOutput{
-		Log: log,
-	}
+	test := scapiv1alpha1.NewScorecardOutput()
+	test.Log = log
+
 	scorecardSuiteResults := []scapiv1alpha1.ScorecardSuiteResult{}
 	for _, suite := range suites {
 		results := []scapiv1alpha1.ScorecardTestResult{}
@@ -105,7 +105,7 @@ func TestSuitesToScorecardOutput(suites []TestSuite, log string) scapiv1alpha1.S
 		scorecardSuiteResults = append(scorecardSuiteResults, scorecardSuiteResult)
 	}
 	test.Results = scorecardSuiteResults
-	return test
+	return *test
 }
 
 // TestResultToScorecardTestResult is a helper function for converting from the TestResult type to the ScorecardTestResult type
