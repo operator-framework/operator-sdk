@@ -17,7 +17,7 @@
 
 - Added `Operator Version: X.Y.Z` information in the operator logs.([#1953](https://github.com/operator-framework/operator-sdk/pull/1953))
 - Make Ansible verbosity configurable via the `ansible-verbosity` flag. ([#2087](https://github.com/operator-framework/operator-sdk/pull/2087))
-- Autogenerate CLI documentation via `make doc` ([#2099](https://github.com/operator-framework/operator-sdk/pull/2099))
+- Autogenerate CLI documentation via `make cli-doc` ([#2099](https://github.com/operator-framework/operator-sdk/pull/2099))
 
 ### Changed
 
