@@ -27,7 +27,7 @@ func main() {
 	root := cli.GetCLIRoot()
 	currentDir, err := os.Getwd()
 	if err != nil {
-		log.Fatalf("Failed to get current directory, (%v)", err)
+		log.Fatalf("Failed to get current directory: %v", err)
 	}
 
 	err = doc.GenMarkdownTree(root, currentDir+"/doc/cli")
