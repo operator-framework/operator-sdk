@@ -43,26 +43,28 @@ func printPluginOutputs(version string, pluginOutputs []scapiv1alpha1.ScorecardO
 		}
 	}
 
-	// produce text output
-	if scViper.GetString(OutputFormatOpt) == TextOutputFormat {
+	switch format := scViper.GetString(OutputFormatOpt); format {
+	case TextOutputFormat:
 		output, err := list.MarshalText()
 		if err != nil {
 			return err
 		}
 		fmt.Printf("%s\n", output)
-
-		return nil
-	}
-
-	// produce json output
-	if scViper.GetString(OutputFormatOpt) == JSONOutputFormat {
+	case JSONOutputFormat:
 		bytes, err := json.MarshalIndent(list, "", "  ")
 		if err != nil {
 			return err
 		}
 		fmt.Printf("%s\n", string(bytes))
-		return nil
+	}
 
+	if schelpers.IsV1alpha2(version) {
+		testOutput := list.(scapiv1alpha2.ScorecardOutput)
+		for _, result := range testOutput.Results {
+			if result.State == scapiv1alpha2.FailState {
+				return fmt.Errorf("test %s, did not pass", result.Name)
+			}
+		}
 	}
 
 	return nil

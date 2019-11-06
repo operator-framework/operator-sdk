@@ -49,6 +49,7 @@ Following are some requirements for the operator project which would be  checked
 1. Setup the `.osdk-scorecard.yaml` configuration file in your project.. See [Config file](#config-file)
 2. Create the namespace defined in the RBAC files(`role_bindinding`)
 3. Then, run the scorecard, for example `$ operator-sdk scorecard`. See the [Command args](#command-args) to check its options.
+4. Note, starting with version v1alpha2, the scorecard return code is 1 if any of the tests executed did not pass and 0 if all selected tests pass.
 
 **NOTE:** If your operator is non-SDK then some steps will be required in order to meet its requirements.
 

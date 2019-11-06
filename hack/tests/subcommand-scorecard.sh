@@ -16,10 +16,13 @@ set -ex
 pushd test/test-framework
 
 # test to see if scorecard fails when version is v1alpha2 and when external plugins are configured
-operator-sdk scorecard --version v1alpha2 --config "$CONFIG_PATH" |& grep '^.*error validating plugin config.*$'
+!(operator-sdk scorecard --version v1alpha2 --config "$CONFIG_PATH" |& grep '^.*error validating plugin config.*$')
+
+set +ex
 
 # test to see if v1alpha2 is used from the command line
 commandoutput="$(operator-sdk scorecard --version v1alpha2 --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
+echo $commandoutput
 failCount=`echo $commandoutput | grep -o "fail" | wc -l`
 expectedFailCount=3
 if [ $failCount -ne $expectedFailCount ]
@@ -47,6 +50,8 @@ then
 	echo "expected label count $expectedLabelCount, got $labelCount"
 	exit 1
 fi
+
+set -xe 
 
 # test to see if version in config file allows v1alpha1 to be specified
 commandoutput="$(operator-sdk scorecard --config "$CONFIG_PATH_V1ALPHA1" 2>&1)"
