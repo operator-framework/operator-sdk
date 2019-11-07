@@ -24,13 +24,13 @@ import (
 	"io/ioutil"
 )
 
-func printPluginOutputs(version string, pluginOutputs []scapiv1alpha1.ScorecardOutput) (scapi.ScorecardFormatter, error) {
+func printPluginOutputs(version string, pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
 
 	var list scapi.ScorecardFormatter
 	var err error
 	list, err = combinePluginOutput(pluginOutputs)
 	if err != nil {
-		return list, err
+		return err
 	}
 
 	if schelpers.IsV1alpha2(version) {
@@ -47,18 +47,18 @@ func printPluginOutputs(version string, pluginOutputs []scapiv1alpha1.ScorecardO
 	case TextOutputFormat:
 		output, err := list.MarshalText()
 		if err != nil {
-			return list, err
+			return err
 		}
 		fmt.Printf("%s\n", output)
 	case JSONOutputFormat:
 		bytes, err := json.MarshalIndent(list, "", "  ")
 		if err != nil {
-			return list, err
+			return err
 		}
 		fmt.Printf("%s\n", string(bytes))
 	}
 
-	return list, nil
+	return nil
 }
 
 func combinePluginOutput(pluginOutputs []scapiv1alpha1.ScorecardOutput) (scapiv1alpha1.ScorecardOutput, error) {

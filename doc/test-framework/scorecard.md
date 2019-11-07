@@ -17,6 +17,7 @@
 - [Tests Performed](#tests-performed)
   - [Basic Operator](#basic-operator)
   - [OLM Integration](#olm-integration)
+- [Exit Status](#exit-status)
 - [Extending the Scorecard with Plugins](#extending-the-scorecard-with-plugins)
   - [JSON format](#json-format)
 - [Running the scorecard with an OLM-managed operator](#running-the-scorecard-with-an-olm-managed-operator)
@@ -51,10 +52,6 @@ Following are some requirements for the operator project which would be  checked
 3. Then, run the scorecard, for example `$ operator-sdk scorecard`. See the [Command args](#command-args) to check its options.
 
 **NOTE:** If your operator is non-SDK then some steps will be required in order to meet its requirements.
-
-## Exit Status
-
-Starting with version v1alpha2, the scorecard return code is 1 if any of the tests executed did not pass and 0 if all selected tests pass.
 
 ## Configuration
 
@@ -176,6 +173,10 @@ Following the description of each internal [Plugin](#plugins). Note that are 8 i
 | CRs Have At Least 1 Example | This test checks that the CSV has an [`alm-examples` annotation][alm-examples] for each CR passed to the `cr-manifest` option in its metadata. This test has a maximum score equal to the number of CRs provided via the `cr-manifest` option. |
 | Spec Fields With Descriptors | This test verifies that every field in the Custom Resources' spec sections have a corresponding descriptor listed in the CSV. This test has a maximum score equal to the total number of fields in the spec sections of each custom resource passed in via the `cr-manifest` option. |
 | Status Fields With Descriptors | This test verifies that every field in the Custom Resources' status sections have a corresponding descriptor listed in the CSV. This test has a maximum score equal to the total number of fields in the status sections of each custom resource passed in via the `cr-manifest` option. |
+
+## Exit Status
+
+In version v1alpha2, the scorecard return code is 1 if any of the tests executed did not pass and 0 if all selected tests pass.
 
 ## Extending the Scorecard with Plugins
 
