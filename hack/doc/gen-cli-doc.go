@@ -25,6 +25,8 @@ import (
 
 func main() {
 	root := cli.GetCLIRoot()
+	root.DisableAutoGenTag = true
+
 	currentDir, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("Failed to get current directory: %v", err)
