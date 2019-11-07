@@ -24,13 +24,13 @@ import (
 	"io/ioutil"
 )
 
-func printPluginOutputs(version string, pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
+func printPluginOutputs(version string, pluginOutputs []scapiv1alpha1.ScorecardOutput) (scapi.ScorecardFormatter, error) {
 
 	var list scapi.ScorecardFormatter
 	var err error
 	list, err = combinePluginOutput(pluginOutputs)
 	if err != nil {
-		return err
+		return list, err
 	}
 
 	if schelpers.IsV1alpha2(version) {
@@ -47,27 +47,18 @@ func printPluginOutputs(version string, pluginOutputs []scapiv1alpha1.ScorecardO
 	case TextOutputFormat:
 		output, err := list.MarshalText()
 		if err != nil {
-			return err
+			return list, err
 		}
 		fmt.Printf("%s\n", output)
 	case JSONOutputFormat:
 		bytes, err := json.MarshalIndent(list, "", "  ")
 		if err != nil {
-			return err
+			return list, err
 		}
 		fmt.Printf("%s\n", string(bytes))
 	}
 
-	if schelpers.IsV1alpha2(version) {
-		testOutput := list.(scapiv1alpha2.ScorecardOutput)
-		for _, result := range testOutput.Results {
-			if result.State == scapiv1alpha2.FailState {
-				return fmt.Errorf("test %s, did not pass", result.Name)
-			}
-		}
-	}
-
-	return nil
+	return list, nil
 }
 
 func combinePluginOutput(pluginOutputs []scapiv1alpha1.ScorecardOutput) (scapiv1alpha1.ScorecardOutput, error) {

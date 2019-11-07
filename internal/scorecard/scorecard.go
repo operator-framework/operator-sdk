@@ -25,6 +25,7 @@ import (
 	scplugins "github.com/operator-framework/operator-sdk/internal/scorecard/plugins"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 	"github.com/operator-framework/operator-sdk/version"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -140,8 +141,19 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if err := printPluginOutputs(scViper.GetString(schelpers.VersionOpt), pluginOutputs); err != nil {
+	output, err := printPluginOutputs(scViper.GetString(schelpers.VersionOpt), pluginOutputs)
+	if err != nil {
 		return err
+	}
+
+	apiVersion := scViper.GetString(schelpers.VersionOpt)
+	if schelpers.IsV1alpha2(apiVersion) {
+		testOutput := output.(scapiv1alpha2.ScorecardOutput)
+		for _, result := range testOutput.Results {
+			if result.State == scapiv1alpha2.FailState {
+				os.Exit(1)
+			}
+		}
 	}
 
 	return nil
