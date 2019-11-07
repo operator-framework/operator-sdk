@@ -97,6 +97,6 @@ func setConfigDefaults(groupVersion string, config *rest.Config) error {
 	if config.GroupVersion.Group == "" && config.GroupVersion.Version == "v1" {
 		config.APIPath = "/api"
 	}
-	config.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: scheme.Codecs}
+	config.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
 	return nil
 }
