@@ -10,6 +10,11 @@ require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/coreos/go-semver v0.2.0
 	github.com/coreos/prometheus-operator v0.29.0
+	github.com/cyphar/filepath-securejoin v0.2.2 // indirect
+	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
+	github.com/elazarl/goproxy v0.0.0-20190421051319-9d40249d3c2f // indirect
+	github.com/elazarl/goproxy/ext v0.0.0-20190421051319-9d40249d3c2f // indirect
+	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20180820084758-c7ce16629ff4
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1

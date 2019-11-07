@@ -17,26 +17,21 @@ package main
 import (
 	"os"
 
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that `run` and `up local` can make use of them.
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cli"
-	"github.com/operator-framework/operator-sdk/internal/flags"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
+	"github.com/spf13/cobra/doc"
 )
 
 func main() {
 	root := cli.GetCLIRoot()
-
-	root.PersistentFlags().Bool(flags.VerboseOpt, false, "Enable verbose logging")
-	if err := viper.BindPFlags(root.PersistentFlags()); err != nil {
-		log.Fatalf("Failed to bind root flags: %v", err)
+	currentDir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Failed to get current directory: %v", err)
 	}
 
-	if err := root.Execute(); err != nil {
-		os.Exit(1)
+	err = doc.GenMarkdownTree(root, currentDir+"/doc/cli")
+	if err != nil {
+		log.Fatalf("Failed to generate documenation: %v", err)
 	}
 }
