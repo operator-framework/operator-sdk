@@ -9,6 +9,10 @@ approvers:
 creation-date: 2019-11-04
 last-updated: 2019-11-05
 status: provisional
+help-from:
+  - '@camilamacedo86'
+  - '@kevinrizza'
+  - '@shawn-hurley'
 see-also:
   - 'https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/contributors/design-proposals/related-images.md'
 ---
@@ -21,16 +25,27 @@ see-also:
 - \[ \] Design details are appropriately documented from clear requirements
 - \[ \] Test plan is defined
 - \[ \] Graduation criteria for dev preview, tech preview, GA
-- \[ \] User-facing documentation is created in [operator-sdk/doc][operator-sdk-doc]
+- \[ \] User-facing documentation is created in
+  [operator-sdk/doc][operator-sdk-doc]
+
+## Tag Line
+
+> Who likes hard coding image locations anyways?
 
 ## Summary
 
 When an operator is installed, the images that the operator installs as operands in the
 form of pods, deployments or other kubernetes resources is not always clearly
-defined. This proposal would require that images would be exposed and
-overridable on the operator custom resource definitions (CRDs). This allows a user of a deployed
-operator to override the images needed at deployment of the custom resource
-(CR).
+defined and editable by a user of an operator. This proposal would define
+an operator-sdk ImageSpec and ImagesListSpec object structs that operator developers
+could use to enhance the creation of operator CRDs or improve existing
+operators. The spec objects would let operator users override image locations
+for that custom resource.
+
+Additionally, the proposal would provide tooling to generate scaffold code for
+creating new operators. When creating a new operator, an operator developer
+would be able to pass flags that would create a base spec object that includes
+the ImagesListSpec.
 
 ## Motivation
 
@@ -42,19 +57,20 @@ This proposal is driven by a few motivations:
 - Allows for out of band updates of the underlying images.
 - Registry information for the images can easily be overridden to point at
   private registries.
-- Provides some standardization to the operator CRD pattern.
+- Provides some (potential) standardization to the CRD.
 
 ## Goals
 
 - Provide an easy mechanism of defining and overriding images and related image
   information (like pull secrets).
-- Ensure the operators respect overridden images.
 - Increase transparency with what operators are installing.
+- Simple, reusable specs to build operators; similar to PodSpec in Kubernetes.
 
 ### Non-Goals
 
 - OLM management of the images spec is not in this proposal.
 - Mapping/re-mapping other container values (ports, etc.).
+- Additional pod information, like env vars.
 
 ## Proposal
 
@@ -84,12 +100,35 @@ Implementing the proposal would include:
 
 ### User Stories
 
-#### Add a spec section named images under CRD properties.
+#### Create a common ImageListSpec and ImageSpec Interface.
 
-Create a custom spec interface that the generated spec objects will extend.
-The spec interface includes a new list of objects called `images`. These images follows the
-OpenAPIV3 spec listed below. Additionally add APIs that transform images rows to
-Kubernetes API resources to help developers onboard.
+Follow a kubernetes api pattern and provide an ImageSpec and ImageListSpec structs that
+operator CRDs can reuse. I imagine operator-sdk would publish these like the
+[PodSpec](https://github.com/kubernetes/api/blob/master/core/v1/types.go#L2831) found for kubernetes.
+
+OpenAPIv3 Def for ImageSpec:
+
+```yaml
+type: Object
+properties:
+  name:
+    type: string
+    description: Name of image used for lookup.
+  image:
+    type: string
+    description: Location of the image.
+  pullPolicy:
+    type: string
+    description: Pull Policy for the image.
+  pullSecrets:
+    type: array
+    description: Array of pull secret names to use.
+    items:
+      types: string
+required: ['name', 'image']
+```
+
+OpenAPIv3 Def for ImageListSpec:
 
 ```yaml
 images:
@@ -111,38 +150,68 @@ images:
         description: Array of pull secret names to use.
         items:
           types: string
-    required: ['name', 'image']
+  required: ['name', 'image']
 ```
 
-#### Add a scorecard test to verify changes to image locations.
+#### Add an image flag to sdk add api
 
-Scorecard would have a default check for images similar to the writing into CRs
-check. Ideally the scorecard test would create a new version of the image in the
-internal docker registry that points to the old images and updates the CR. The
-newly deployed images would be using the local paths.
+Add a flag to preset images for operator-sdk add api command.
 
-#### Create an operator migration tool for clients.
+```bash
+operator-sdk add api --api-version=app.example.com/v1alpha1 \
+  --kind=AppService --image=ngnix:latest
+operator-sdk add api --api-version=app.example.com/v1alpha1 \
+  --kind=AppService \
+  --image=ngnix:latest \
+  --image=redis:latest
+```
 
-A tool could reasonably look through code and generate the images subspec for
-the operator developers. May also be able to modify code in place. Goal would be
-to ease onboarding.
+This flag will create an AppServiceSpec struct with prefilled data.
 
-#### Add Images Spec support for operator-sdk golang client.
+```golang
+type AppServiceSpec struct {
 
-Newly generated golang operators should use the new Images Spec and provide
-documentation for the new feature.
+  // Object map of image to name to an image location, pull
+  // secret names, and pull policy for the image.
+  Images operatorsdk.ImagesSpec
 
-Modify the `operator-sdk add crd` command to add a type of crd that has images.
+	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
+	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 
-#### Add Images Spec support for operator-sdk ansible client.
+}
+```
 
-Newly generated ansible operators should use the new Images Spec and provide
-documentation for the new feature.
+#### Add a generate flag for operator-sdk specs
 
-#### Add Images Spec support for operator-sdk helm client.
+Generate flag added to operator-sdk add controller.
 
-Newly generated helm operators should use the new Images Spec and provide
-documentation for the new feature.
+**Blanket generate:**
+```bash
+ operator-sdk add controller --api-version=app.example.com/v1alpha1 \
+   --kind=AppService  \
+   --generate
+```
+
+The generate flag will create the controller with scaffolding using the Images
+property to create resources to be deployed. The generate command could be a
+global flag that enables any type of operatorsdk features that generate
+controller code. And we can include an option to subselect a generation.
+
+**Subselecting a generation:**
+```bash
+ operator-sdk add controller --api-version=app.example.com/v1alpha1 \
+   --kind=AppService  \
+   --generate=images
+```
+
+### Future Work
+
+#### Validation
+
+Operator score card and linters could perform validation of the use of
+ImageSpecs in the controllers.
+
 
 ### Risks and Mitigations
 
@@ -154,8 +223,6 @@ documentation for the new feature.
   the openapi v3 schema is in beta. Using enum is another method of providing a
   default value but requires input by the creator of the CR. Mutating webhooks
   is another method.
-- If a scorecard check is not practical, then validation becomes a concern.
-- Separating a CRD for deployable resource like a mongo db vs a mongo user.
 
 ### Upgrade / Downgrade Strategy
 
