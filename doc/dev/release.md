@@ -1,5 +1,7 @@
 # Operator SDK Release guide
 
+## Overview
+
 Making an Operator SDK release involves:
 
 - Updating `CHANGELOG.md` and migration guide.
@@ -264,7 +266,7 @@ Once this tag passes CI, go to step 3. For more info on tagging, see the [releas
 
 ### 3. Create a PR for post-release version updates
 
-Check out a new branch from master (or use your `release-v1.3.0` branch) and commit the following changes:
+1. Check out a new branch from master (or use your `release-v1.3.0` branch) and commit the following changes:
 
 - `version/version.go`: update `Version` to `v1.3.0+git`.
 - `internal/scaffold/go_mod.go`, change the `require` line version for `github.com/operator-framework/operator-sdk` from `v1.3.0` to `master`.
@@ -274,6 +276,14 @@ Check out a new branch from master (or use your `release-v1.3.0` branch) and com
 Create a new PR for this branch, targetting the `master` branch. Once this PR passes CI and is merged, `master` can be unfrozen.
 
 If the release is for a patch version (e.g. `v1.3.1`), an identical PR should be created, targetting the  `v1.3.x` branch. Once this PR passes CI and is merged, `v1.3.x` can be unfrozen.
+
+2. A new section for upgrading operator projects to v1.3.0 should be added to the [version upgrade guide][version-upgrade-guide]. This section should contain steps directing users to upgrade dependency versions in `go.mod`, update function signatures, etc.
+
+3. Then, update the GitHub Release Notes as:
+
+```
+**Note:** See how to upgrade your project to the version v1.3.0 by checking the [Version Upgrade Guide](../migration/version-upgrade-guide.md#v1.3.0)
+```
 
 ### 4. Releasing binaries, signatures, and release notes
 
@@ -307,7 +317,6 @@ Now that the branch exists, you need to make the post-release PR for the new rel
 
 We support installing via [Homebrew][homebrew], so we need to update the operator-sdk [Homebrew formula][homebrew-formula] once the release is cut. Follow the instructions below, or for more detailed ones on the Homebrew contribution [README][homebrew-readme], to open a PR against the [repository][homebrew-repo].
 
-
 ```
 docker run -t -d linuxbrew/brew:latest
 docker exec -it <CONTAINER_ID> /bin/bash`
@@ -322,11 +331,15 @@ OPERATORSUM="$(sha256sum operator-sdk | cut -d ' ' -f 1)"
 brew bump-formula-pr --strict --url=$OPERATORSDKURL --sha256=$OPERATORSUM operator-sdk
 ```
 
-Note: If there were any changes made to the CLI commands, make sure to look at the existing tests, in case they need updating.
+**Note:**  If there were any changes made to the CLI commands, make sure to look at the existing tests, in case they need updating.
 
 You've now fully released a new version of the Operator SDK. Good work! Make sure to follow the post-release steps below.
 
-### (Post-release) Updating the operator-sdk-samples repo
+## Post-release steps
+
+For the following step should create an JIRA ticket assigned to either yourself or another team member.
+
+### 1. Update and tag the samples repo
 
 Many releases change SDK API's and conventions, which are not reflected in the [operator-sdk-samples repo][sdk-samples-repo]. The samples repo should be updated and versioned after each SDK major/minor release with the same tag, ex. `v1.3.0`, so users can refer to the correct operator code for that release.
 
@@ -342,7 +355,7 @@ The release process for the samples repo is simple:
     $ git push --tags
     ```
 
-### (Post-release) Updating the release notes
+### 2. Updating the release notes
 
 Add the following line to the top of the GitHub release notes for `v1.3.0`:
 
@@ -364,3 +377,5 @@ Add the following line to the top of the GitHub release notes for `v1.3.0`:
 [homebrew-readme]:https://github.com/Homebrew/homebrew-core/blob/master/CONTRIBUTING.md#to-submit-a-version-upgrade-for-the-foo-formula
 [homebrew-repo]:https://github.com/Homebrew/homebrew-core
 [sdk-samples-repo]:https://github.com/operator-framework/operator-sdk-samples
+[version-upgrade-guide]:../migration/version-upgrade-guide.md
+[go-memcached-sample]:https://github.com/operator-framework/operator-sdk-samples/tree/master/memcached-operator
