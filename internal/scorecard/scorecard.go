@@ -148,7 +148,7 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 	if schelpers.IsV1alpha2(apiVersion) {
 		for _, scorecardOutput := range pluginOutputs {
 			for _, result := range scorecardOutput.Results {
-				if result.Fail > 0 {
+				if result.Fail > 0 || result.PartialPass > 0 {
 					os.Exit(1)
 				}
 			}

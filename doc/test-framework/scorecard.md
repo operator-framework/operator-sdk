@@ -176,7 +176,7 @@ Following the description of each internal [Plugin](#plugins). Note that are 8 i
 
 ## Exit Status
 
-In version v1alpha2, the scorecard return code is 1 if any of the tests executed did not pass and 0 if all selected tests pass.
+In version v1alpha2, the scorecard return code is 1 if any of the tests executed did not pass and 0 if all selected tests pass.  Version v1alpha1 returns exit code of 0 regardless if tests fail.
 
 ## Extending the Scorecard with Plugins
 
