@@ -20,17 +20,30 @@ package olm
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"text/tabwriter"
 
 	log "github.com/sirupsen/logrus"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/install"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/client-go/kubernetes/scheme"
 )
+
+var sch = scheme.Scheme
+
+func init() {
+	install.Install(sch)
+}
 
 type Status struct {
 	Resources []ResourceStatus
@@ -41,6 +54,8 @@ type ResourceStatus struct {
 	Resource       *unstructured.Unstructured
 	GVK            schema.GroupVersionKind
 	Error          error
+
+	requestObject runtime.Object // Needed for context on errors from requests on an object.
 }
 
 func (c Client) GetObjectsStatus(ctx context.Context, objs ...runtime.Object) Status {
@@ -58,6 +73,7 @@ func (c Client) GetObjectsStatus(ctx context.Context, objs ...runtime.Object) St
 		rs := ResourceStatus{
 			NamespacedName: nn,
 			GVK:            gvk,
+			requestObject:  obj,
 		}
 		u := unstructured.Unstructured{}
 		u.SetGroupVersionKind(gvk)
@@ -71,15 +87,74 @@ func (c Client) GetObjectsStatus(ctx context.Context, objs ...runtime.Object) St
 	return Status{Resources: rss}
 }
 
+// HasInstalledResources only returns true if at least one resource in s
+// was returned successfully by the API server. A resource error status
+// containing any error except "not found", or "no kind match" errors
+// for Custom Resources, will result in HasInstalledResources returning
+// false and the error.
 func (s Status) HasInstalledResources() (bool, error) {
+	crdKindSet, err := s.getCRDKindSet()
+	if err != nil {
+		return false, fmt.Errorf("error getting set of CRD kinds in resources: %w", err)
+	}
 	for _, r := range s.Resources {
 		if r.Resource != nil {
 			return true, nil
 		} else if r.Error != nil && !apierrors.IsNotFound(r.Error) {
-			return false, r.Error
+			nkmerr := &meta.NoKindMatchError{}
+			if !errors.As(r.Error, &nkmerr) || !crdKindSet.Has(r.GVK.Kind) {
+				return false, r.Error
+			}
 		}
 	}
 	return false, nil
+}
+
+// getCRDKindSet returns the set of all kinds specified by all CRDs in s.
+func (s Status) getCRDKindSet() (sets.String, error) {
+	crdKindSet := sets.NewString()
+	dec := serializer.NewCodecFactory(sch).UniversalDeserializer()
+	for _, r := range s.Resources {
+		if r.GVK.Kind == "CustomResourceDefinition" {
+			switch v := r.requestObject.(type) {
+			case *unstructured.Unstructured:
+				vb, err := v.MarshalJSON()
+				if err != nil {
+					return nil, err
+				}
+				// Use unversioned CustomResourceDefinition to avoid implementing cast
+				// for all versions.
+				obj, _, err := dec.Decode(vb, nil, nil)
+				if err != nil {
+					return nil, err
+				}
+				kind, err := getVersionedCRDKind(obj)
+				if err != nil {
+					return nil, err
+				}
+				crdKindSet.Insert(kind)
+			default:
+				kind, err := getVersionedCRDKind(v)
+				if err != nil {
+					return nil, err
+				}
+				crdKindSet.Insert(kind)
+			}
+		}
+	}
+	return crdKindSet, nil
+}
+
+// getVersionedCRDKind returns the kind of a CRD if its version is known,
+// otherwise an error.
+func getVersionedCRDKind(obj runtime.Object) (string, error) {
+	switch crd := obj.(type) {
+	case *apiextensions.CustomResourceDefinition:
+		return crd.Spec.Names.Kind, nil
+	case *v1beta1.CustomResourceDefinition:
+		return crd.Spec.Names.Kind, nil
+	}
+	return "", fmt.Errorf("error getting CRD kind: gvk %q unknown", obj.GetObjectKind().GroupVersionKind())
 }
 
 func (s Status) String() string {
