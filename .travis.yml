@@ -129,11 +129,13 @@ jobs:
       name: Subcommands on Kubernetes
       script: make test-subcommand
 
-    # Test olm install/uninstall subcommands on master, as these cannot be tested in prow/api-ci.
+    # Test olm subcommands on master.
     - if: tag IS NOT present AND branch = master
       <<: *test
-      name: OLM Install/Uninstall on Kubernetes
-      script: make test-subcommand-olm-install
+      name: OLM Integration on Kubernetes
+      script:
+      - make test-subcommand-olm-install
+      - make test-integration
 
     # Build and test ansible using molecule, as this cannot be tested in prow/api-ci.
     - if: tag IS NOT present AND branch = master
