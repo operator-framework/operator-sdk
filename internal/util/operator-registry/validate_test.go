@@ -50,7 +50,7 @@ func TestValidatePackageManifest(t *testing.T) {
 		},
 		{
 			"no default channel and more than one channel",
-			true, "default channel cannot be empty",
+			true, "default channel cannot be empty if more than one channel exists",
 			&registry.PackageManifest{
 				Channels: []registry.PackageChannel{
 					{Name: "foo", CurrentCSVName: "bar"},
@@ -61,7 +61,7 @@ func TestValidatePackageManifest(t *testing.T) {
 		},
 		{
 			"default channel does not exist",
-			true, "default channel baz does not exist in channels",
+			true, "default channel \"baz\" does not exist in channels",
 			&registry.PackageManifest{
 				Channels: []registry.PackageChannel{
 					{Name: "foo", CurrentCSVName: "bar"},
@@ -81,7 +81,7 @@ func TestValidatePackageManifest(t *testing.T) {
 		},
 		{
 			"one channel's CSVName is empty",
-			true, "channel foo currentCSV cannot be empty",
+			true, "channel \"foo\" currentCSV cannot be empty",
 			&registry.PackageManifest{
 				Channels:           []registry.PackageChannel{{Name: "foo"}},
 				DefaultChannelName: "baz",
@@ -90,7 +90,7 @@ func TestValidatePackageManifest(t *testing.T) {
 		},
 		{
 			"duplicate channel name",
-			true, "duplicate package manifest channel name foo; channel names must be unique",
+			true, "duplicate package manifest channel name \"foo\"; channel names must be unique",
 			&registry.PackageManifest{
 				Channels: []registry.PackageChannel{
 					{Name: "foo", CurrentCSVName: "bar"},
