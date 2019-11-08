@@ -33,6 +33,7 @@ deploy/crds/<full group>_<resource>_crd.yaml; OpenAPI V3 validation YAML
 is generated as a 'validation' object.
 
 Example:
+
 	$ operator-sdk generate openapi
 	$ tree pkg/apis
 	pkg/apis/

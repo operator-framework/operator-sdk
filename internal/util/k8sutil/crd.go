@@ -25,6 +25,7 @@ import (
 	yaml "github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apimachinery/pkg/version"
 )
 
 // GetCRDs parses all CRD manifests in the directory crdsDir and all of its subdirectories.
@@ -152,3 +153,11 @@ func CreateFQAPIs(pkg string, gvs map[string][]string) (apis []string) {
 	}
 	return apis
 }
+
+type CRDVersions []apiextv1beta1.CustomResourceDefinitionVersion
+
+func (vs CRDVersions) Len() int { return len(vs) }
+func (vs CRDVersions) Less(i, j int) bool {
+	return version.CompareKubeAwareVersionStrings(vs[i].Name, vs[j].Name) > 0
+}
+func (vs CRDVersions) Swap(i, j int) { vs[i], vs[j] = vs[j], vs[i] }

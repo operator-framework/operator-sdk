@@ -48,7 +48,7 @@ platforms:
 - name: kind-default
   groups:
   - k8s
-  image: bsycorp/kind:latest-1.14
+  image: bsycorp/kind:latest-1.15
   privileged: True
   override_command: no
   exposed_ports:

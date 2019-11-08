@@ -21,62 +21,89 @@ import (
 )
 
 func TestValidatePackageManifest(t *testing.T) {
-	channels := []registry.PackageChannel{
-		{Name: "foo", CurrentCSVName: "bar"},
-	}
-	pm := &registry.PackageManifest{
-		Channels:           channels,
-		DefaultChannelName: "baz",
-		PackageName:        "test-package",
-	}
-
 	cases := []struct {
 		description string
 		wantErr     bool
 		errMsg      string
-		operation   func(*registry.PackageManifest)
+		pkg         *registry.PackageManifest
 	}{
-		{
-			"default channel does not exist",
-			true, `default channel "baz" does not exist in channels`, nil,
-		},
 		{
 			"successful validation",
 			false, "",
-			func(pm *registry.PackageManifest) {
-				pm.DefaultChannelName = pm.Channels[0].Name
+			&registry.PackageManifest{
+				Channels: []registry.PackageChannel{
+					{Name: "foo", CurrentCSVName: "bar"},
+				},
+				DefaultChannelName: "foo",
+				PackageName:        "test-package",
+			},
+		},
+		{
+			"successful validation no default channel with only one channel",
+			false, "",
+			&registry.PackageManifest{
+				Channels: []registry.PackageChannel{
+					{Name: "foo", CurrentCSVName: "bar"},
+				},
+				PackageName: "test-package",
+			},
+		},
+		{
+			"no default channel and more than one channel",
+			true, "default channel cannot be empty",
+			&registry.PackageManifest{
+				Channels: []registry.PackageChannel{
+					{Name: "foo", CurrentCSVName: "bar"},
+					{Name: "foo2", CurrentCSVName: "baz"},
+				},
+				PackageName: "test-package",
+			},
+		},
+		{
+			"default channel does not exist",
+			true, "default channel baz does not exist in channels",
+			&registry.PackageManifest{
+				Channels: []registry.PackageChannel{
+					{Name: "foo", CurrentCSVName: "bar"},
+				},
+				DefaultChannelName: "baz",
+				PackageName:        "test-package",
 			},
 		},
 		{
 			"channels are empty",
 			true, "channels cannot be empty",
-			func(pm *registry.PackageManifest) {
-				pm.Channels = nil
+			&registry.PackageManifest{
+				Channels:           nil,
+				DefaultChannelName: "baz",
+				PackageName:        "test-package",
 			},
 		},
 		{
 			"one channel's CSVName is empty",
-			true, `channel "foo" currentCSV cannot be empty`,
-			func(pm *registry.PackageManifest) {
-				pm.Channels = make([]registry.PackageChannel, 1)
-				copy(pm.Channels, channels)
-				pm.Channels[0].CurrentCSVName = ""
+			true, "channel foo currentCSV cannot be empty",
+			&registry.PackageManifest{
+				Channels:           []registry.PackageChannel{{Name: "foo"}},
+				DefaultChannelName: "baz",
+				PackageName:        "test-package",
 			},
 		},
 		{
 			"duplicate channel name",
-			true, `duplicate package manifest channel name "foo"; channel names must be unique`,
-			func(pm *registry.PackageManifest) {
-				pm.Channels = append(channels, channels...)
+			true, "duplicate package manifest channel name foo; channel names must be unique",
+			&registry.PackageManifest{
+				Channels: []registry.PackageChannel{
+					{Name: "foo", CurrentCSVName: "bar"},
+					{Name: "foo", CurrentCSVName: "baz"},
+				},
+				DefaultChannelName: "baz",
+				PackageName:        "test-package",
 			},
 		},
 	}
 
 	for _, c := range cases {
-		if c.operation != nil {
-			c.operation(pm)
-		}
-		err := ValidatePackageManifest(pm)
+		err := ValidatePackageManifest(c.pkg)
 		if c.wantErr {
 			if err == nil {
 				t.Errorf(`%s: expected error "%s", got none`, c.description, c.errMsg)

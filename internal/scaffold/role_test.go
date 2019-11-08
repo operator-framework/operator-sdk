@@ -126,6 +126,7 @@ rules:
   - apps
   resources:
   - replicasets
+  - deployments
   verbs:
   - get
 `
@@ -182,6 +183,7 @@ rules:
   - apps
   resources:
   - replicasets
+  - deployments
   verbs:
   - get
 `
@@ -231,6 +233,7 @@ rules:
   - apps
   resources:
   - replicasets
+  - deployments
   verbs:
   - get
 `

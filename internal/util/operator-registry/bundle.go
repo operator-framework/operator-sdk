@@ -39,8 +39,8 @@ var _ registry.Load = &manifestsLoad{}
 // l.dir's manifests. Note that this method does not call any functions that
 // use SQL drivers.
 func (l *manifestsLoad) populate() error {
-	dl := sqlite.NewSQLLoaderForDirectory(l, l.dir)
-	if err := dl.Populate(); err != nil {
+	loader := sqlite.NewSQLLoaderForDirectory(l, l.dir)
+	if err := loader.Populate(); err != nil {
 		return errors.Wrapf(err, "error getting bundles from manifests dir %q", l.dir)
 	}
 	return nil
@@ -56,6 +56,7 @@ func (l *manifestsLoad) AddOperatorBundle(bundle *registry.Bundle) error {
 	if err := json.Unmarshal(csvRaw.Spec, &csvSpec); err != nil {
 		return errors.Wrap(err, "error unmarshaling CSV spec")
 	}
+	bundle.Name = csvSpec.Version.String()
 	l.bundles[csvSpec.Version.String()] = bundle
 	return nil
 }
@@ -63,6 +64,21 @@ func (l *manifestsLoad) AddOperatorBundle(bundle *registry.Bundle) error {
 // AddOperatorBundle adds the package manifest to l.
 func (l *manifestsLoad) AddPackageChannels(pkg registry.PackageManifest) error {
 	l.pkg = pkg
+	return nil
+}
+
+// AddBundlePackageChannels is a no-op to implement the registry.Load interface.
+func (l *manifestsLoad) AddBundlePackageChannels(manifest registry.PackageManifest, bundle registry.Bundle) error {
+	return nil
+}
+
+// RmPackageName is a no-op to implement the registry.Load interface.
+func (l *manifestsLoad) RmPackageName(packageName string) error {
+	return nil
+}
+
+// ClearNonDefaultBundles is a no-op to implement the registry.Load interface.
+func (l *manifestsLoad) ClearNonDefaultBundles(packageName string) error {
 	return nil
 }
 
@@ -94,24 +110,16 @@ type manifests struct {
 // Each bundle and the package manifest are statically validated, and will
 // return an error if any are not valid.
 func ManifestsStoreForDir(dir string) (ManifestsStore, error) {
-	l := &manifestsLoad{
+	load := &manifestsLoad{
 		dir:     dir,
 		bundles: map[string]*registry.Bundle{},
 	}
-	if err := l.populate(); err != nil {
+	if err := load.populate(); err != nil {
 		return nil, err
 	}
-	if err := ValidatePackageManifest(&l.pkg); err != nil {
-		return nil, errors.Wrap(err, "error validating package manifest")
-	}
-	for _, bundle := range l.bundles {
-		if err := validateBundle(bundle); err != nil {
-			return nil, errors.Wrap(err, "error validating bundle")
-		}
-	}
 	return &manifests{
-		pkg:     l.pkg,
-		bundles: l.bundles,
+		pkg:     load.pkg,
+		bundles: load.bundles,
 	}, nil
 }
 

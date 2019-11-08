@@ -28,3 +28,5 @@ go test -v ./test/integration
 if eval "(( $is_installed ))"; then
   operator-sdk alpha olm uninstall
 fi
+
+echo -e "\n=== Integration tests succeeded ===\n"

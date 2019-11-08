@@ -55,6 +55,7 @@ is generated as a 'validation' object. Generation can be disabled with the
 --skip-generation flag.
 
 Example:
+
 	$ operator-sdk add api --api-version=app.example.com/v1alpha1 --kind=AppService
 	$ tree pkg/apis
 	pkg/apis/

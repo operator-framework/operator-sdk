@@ -465,17 +465,26 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 - `Client.Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOptionFunc) error` is now [`Client.Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L70). Although the option interface has changed, the way each `client.DeleteOption` is created is the same as before. No updates need to be made. See the [client doc][client-doc] for a discussion of `client.DeleteOption`.
 - `StatusWriter.Update(ctx context.Context, obj runtime.Object) error` is now [`Update(ctx context.Context, obj runtime.Object, opts ...UpdateOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L95). No updates need to be made. See the [client doc][client-doc] for a discussion of `client.UpdateOption`.
 
+### OpenAPI updates
+
+- Run the command `operator-sdk generate openapi` and ensure that no errors such as `API rule violation` are raised. For further information see the [API rules][api-rules] documentation. 
+ 
+**NOTE:** You may need to add or remove markers (code annotations) to fix issues found when running `generate openapi`. Usage of markers in API code is discussed in the kubebuilder CRD generation [documentation][generating-crd] and in marker [documentation][markers]. A full list of OpenAPIv3 validation markers can be found [here](https://book.kubebuilder.io/reference/markers/crd-validation.html).
+
+**TIPS:**
+- If the `+kubebuilder:validation:Pattern` has commas, then surround the expressions in backticks.
+- If you are using `+kubebuilder:validation:Enum` then either surround the expression list in curly braces and quote each expression, or separate each expression using semicolons.
+
 ### Operator SDK updates
 
 - [`pkg/test.FrameworkClient`](https://github.com/operator-framework/operator-sdk/blob/947a464/pkg/test/client.go#L33) `List()` and `Delete()` method invocations should be updated to match those of `Client.List()` and `Client.Delete()`, described above.
 - The annotation to assign a scope to your CRD has changed. For the following changes, note that `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`.
     - For `Namespaced`-scoped operators, add a `+kubebuilder:resource:path=<resource>,scope=Namespaced` comment above your kind type in `pkg/apis/<group>/<version>/<kind>_types.go`.
     - For `Cluster`-scoped operators, replace the `+genclient:nonNamespaced` comment above your kind type in `pkg/apis/<group>/<version>/<kind>_types.go` with `+kubebuilder:resource:path=<resource>,scope=Cluster`.
-- CRD file names now have the form `<full group>_<resource>_crd.yaml`, and CRD file names now have the form `<full group>_<version>_<kind>_cr.yaml`. `<full group>` is the full group name of your CRD found at `spec.group`, and `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`. To migrate:
+- CRD file names now have the form `<full group>_<resource>_crd.yaml`, and CR file names now have the form `<full group>_<version>_<kind>_cr.yaml`. `<full group>` is the full group name of your CRD found at `spec.group`, and `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`. To migrate:
     - Run `operator-sdk generate openapi`. CRD manifest files with new names containing versioned validation and subresource blocks will be generated.
     - Delete the old CRD manifest files.
     - Rename CR manifest file names from `<group>_<version>_<kind>_cr.yaml` to `<full group>_<version>_<kind>_cr.yaml`.
-
 
 [legacy-kubebuilder-doc-crd]: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [v0.8.2-go-mod]: https://github.com/operator-framework/operator-sdk/blob/28bd2b0d4fd25aa68e15d928ae09d3c18c3b51da/internal/pkg/scaffold/go_mod.go#L40-L94
@@ -489,3 +498,6 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 [v0.1.0-migration-guide]: ./v0.1.0-migration-guide.md
 [manifest-format]: https://github.com/operator-framework/operator-registry#manifest-format
 [client-doc]: ../user/client.md
+[api-rules]: https://github.com/kubernetes/kubernetes/tree/36981002246682ed7dc4de54ccc2a96c1a0cbbdb/api/api-rules
+[generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
+[markers]: https://book.kubebuilder.io/reference/markers.html

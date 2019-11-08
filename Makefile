@@ -27,8 +27,6 @@ SCORECARD_PROXY_IMAGE ?= $(SCORECARD_PROXY_BASE_IMAGE)
 HELM_ARCHES:="amd64" "ppc64le"
 
 export CGO_ENABLED:=0
-export GO111MODULE:=on
-export GOPROXY?=https://proxy.golang.org/
 .DEFAULT_GOAL:=help
 
 .PHONY: help
@@ -45,7 +43,7 @@ help: ## Show this help screen
 all: format test build/operator-sdk ## Test and Build the Operator SDK
 
 # Code management.
-.PHONY: test format tidy clean
+.PHONY: format tidy clean cli-doc
 
 format: ## Format the source code
 	$(Q)go fmt $(PKGS)
@@ -55,6 +53,9 @@ tidy: ## Update dependencies
 
 clean: ## Clean up the build artifacts
 	$(Q)rm -rf build
+
+cli-doc: ## Generate CLI Documentation
+	./hack/doc/gen_cli_doc.sh
 
 # Build/install/release the SDK.
 .PHONY: install release_builds release
@@ -109,7 +110,7 @@ build/%.asc:
 test: test-unit ## Run the tests
 
 test-markdown test/markdown:
-	./hack/ci/marker --root=doc
+	./hack/ci/marker
 
 test-sanity test/sanity: tidy
 	./hack/tests/sanity-check.sh
