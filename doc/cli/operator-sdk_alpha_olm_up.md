@@ -1,10 +1,10 @@
 ## operator-sdk alpha olm up
 
-Deploy your operator with Operator Lifecycle Manager
+Launches the operator with Operator Lifecycle Manager
 
 ### Synopsis
 
-Deploy your operator with Operator Lifecycle Manager
+Launches the operator with Operator Lifecycle Manager
 
 ```
 operator-sdk alpha olm up [flags]

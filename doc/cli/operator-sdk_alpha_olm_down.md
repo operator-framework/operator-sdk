@@ -1,10 +1,10 @@
 ## operator-sdk alpha olm down
 
-Tear down your operator with Operator Lifecycle Manager
+Tears down the operator with Operator Lifecycle Manager
 
 ### Synopsis
 
-Tear down your operator with Operator Lifecycle Manager
+Tears down the operator with Operator Lifecycle Manager
 
 ```
 operator-sdk alpha olm down [flags]
