@@ -116,20 +116,29 @@ Tasks:
  * Update the CHANGELOG and Migration files with breaking changes and removals
 
 
-#### Story 5 - Support Custom Tests
+#### Story 5 - Design Custom Tests
+Tasks:
+ * Design the custom test format (e.g. bash, golang, other)
+ * Design the custom test interface (e.g. naming, labels, exit codes, output)
+ * Design how a custom test is packaged (e.g. container image, source directory, other)
+ * Design the custom test configuration (e.g. config file, command line flag, image path, other)
+ * Document the custom test design for end-users
+
+
+#### Story 6 - Support Custom Tests
 Tasks:
  * Document how a custom test is developed, providing an example
  * Add support for custom tests in the v1alpha2 API
  * Update tests to include execution of a custom test using v1alpha2
 
 
-#### Story 6 - Support User-Defined Labels on Custom Tests
+#### Story 7 - Support User-Defined Labels on Custom Tests
 Tasks:
  * Document rules for adding labels onto custom tests
  * Add support for handling user-defined labels on custom tests in the v1alpha2 API
  * Add test to include handling user-defined labels on custom tests using v1alpha2
 
-#### Story 7 - Support Testing Operator Upgrades with OLM
+#### Story 8 - Support Testing Operator Upgrades with OLM
 Tasks:
  * Add support for testing an operator upgrade with OLM
  * Document and provide an example of how to test an operator upgrade
