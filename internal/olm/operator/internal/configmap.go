@@ -31,9 +31,15 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// RegistryDataStale checks if manifest data stored in the registry is stale
+const (
+	// The directory containing all manifests for an operator, with the
+	// package manifest being top-level.
+	containerManifestsDir = "/registry/manifests"
+)
+
+// IsManifestDataStale checks if manifest data stored in the registry is stale
 // by comparing it to manifest data currently managed by m.
-func (m *RegistryResources) RegistryDataStale(ctx context.Context, namespace string) (bool, error) {
+func (m *RegistryResources) IsManifestDataStale(ctx context.Context, namespace string) (bool, error) {
 	pkg := m.Manifests.GetPackageManifest()
 	pkgName := pkg.PackageName
 	nn := types.NamespacedName{
@@ -105,12 +111,6 @@ func createConfigMapBinaryData(pkg registry.PackageManifest, bundles []*registry
 	}
 	return binaryKeyValues, nil
 }
-
-const (
-	// The directory containing all manifests for an operator, with the
-	// package manifest being top-level.
-	containerManifestsDir = "/registry/manifests"
-)
 
 func getRegistryConfigMapName(pkgName string) string {
 	name := k8sutil.FormatOperatorNameDNS1123(pkgName)

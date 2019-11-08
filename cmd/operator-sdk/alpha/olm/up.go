@@ -27,7 +27,7 @@ func NewUpCmd() *cobra.Command {
 	c := &olmoperator.OLMCmd{}
 	cmd := &cobra.Command{
 		Use:   "up",
-		Short: "Deploy your operator with Operator Lifecycle Manager",
+		Short: "Launches the operator with Operator Lifecycle Manager",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return fmt.Errorf("command %q requires exactly one argument", cmd.CommandPath())

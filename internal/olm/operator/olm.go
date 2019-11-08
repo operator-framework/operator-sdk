@@ -26,6 +26,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// General OperatorGroup for operators created with the SDK.
+const sdkOperatorGroupName = "operator-sdk-og"
+
 func getSubscriptionName(csvName string) string {
 	name := k8sutil.FormatOperatorNameDNS1123(csvName)
 	return fmt.Sprintf("%s-sub", name)
@@ -122,9 +125,6 @@ func newCatalogSource(pkgName, namespace string, opts ...func(*olmapiv1alpha1.Ca
 	}
 	return cs
 }
-
-// General OperatorGroup for operators created with the SDK.
-const sdkOperatorGroupName = "operator-sdk-og"
 
 // withGRPC returns a function that sets the OperatorGroup argument's
 // targetNamespaces to namespaces. namespaces can be length 0..N; if

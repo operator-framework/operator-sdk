@@ -35,6 +35,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	// Annotation containing a CSV's member OperatorGroup's name.
+	olmOperatorGroupAnnotation = "olm.operatorGroup"
+	// Annotation containing a CSV's member OperatorGroup's namespace.
+	olmOperatorGroupNamespaceAnnotation = "olm.operatorNamespace"
+)
+
 // operatorGroupDown handles logic to decide whether the SDK-managed
 // OperatorGroup can be created.
 //
@@ -154,13 +161,6 @@ func (m *operatorManager) operatorGroupDown(ctx context.Context) error {
 	}
 	return nil
 }
-
-const (
-	// Annotation containing a CSV's member OperatorGroup's name.
-	olmOperatorGroupAnnotation = "olm.operatorGroup"
-	// Annotation containing a CSV's member OperatorGroup's namespace.
-	olmOperatorGroupNamespaceAnnotation = "olm.operatorNamespace"
-)
 
 // getCSVsInOperatorGroup gets all CSVs that are members of the OperatorGroup
 // in namespace with name ogName. If ogCSVs is empty, no CSVs are members.

@@ -263,7 +263,7 @@ func (m operatorManager) registryUp(ctx context.Context, namespace string) error
 		Client:    m.client,
 		Manifests: m.manifests,
 	}
-	registryStale, err := rr.RegistryDataStale(ctx, namespace)
+	registryStale, err := rr.IsManifestDataStale(ctx, namespace)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			return errors.Wrap(err, "error checking registry data")
