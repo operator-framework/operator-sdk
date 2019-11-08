@@ -144,6 +144,17 @@ func ScorecardTests(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	apiVersion := scViper.GetString(schelpers.VersionOpt)
+	if schelpers.IsV1alpha2(apiVersion) {
+		for _, scorecardOutput := range pluginOutputs {
+			for _, result := range scorecardOutput.Results {
+				if result.Fail > 0 || result.PartialPass > 0 {
+					os.Exit(1)
+				}
+			}
+		}
+	}
+
 	return nil
 }
 

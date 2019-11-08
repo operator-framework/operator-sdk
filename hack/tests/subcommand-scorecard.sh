@@ -15,20 +15,36 @@ set -ex
 # the test framework directory has all the manifests needed to run the cluster
 pushd test/test-framework
 
-# test to see if scorecard fails when version is v1alpha2 and when external plugins are configured
-operator-sdk scorecard --version v1alpha2 --config "$CONFIG_PATH" |& grep '^.*error validating plugin config.*$'
-
-# test to see if v1alpha2 is used from the command line
-commandoutput="$(operator-sdk scorecard --version v1alpha2 --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
-failCount=`echo $commandoutput | grep -o "fail" | wc -l`
-expectedFailCount=3
-if [ $failCount -ne $expectedFailCount ]
-then
-	echo "expected fail count $expectedFailCount, got $failCount"
+# test to see if scorecard fails when version is v1alpha2 
+# when external plugins are configured which should cause return code 1 
+# to be returned
+if ! commandoutput="$(operator-sdk scorecard --version v1alpha2 --config "$CONFIG_PATH" 2>&1)"; then
+       	if ! (echo $commandoutput | grep -q '^.*error validating plugin config.*$'); then
+		echo "expected scorecard to fail when version is v1alpha2 and when external plugins are configured"
+		exit 1
+	fi
+else
+	echo "test failed: expected return code 1"
 	exit 1
 fi
 
-# test to see if list flag work
+# test to see if v1alpha2 is used from the command line, this test should have
+# failures which cause return code 1 to be returned
+if ! commandoutput="$(operator-sdk scorecard --version v1alpha2 --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"; then 
+	echo $commandoutput
+	failCount=`echo $commandoutput | grep -o "fail" | wc -l`
+	expectedFailCount=3
+	if [ $failCount -ne $expectedFailCount ]
+	then
+		echo "expected fail count $expectedFailCount, got $failCount"
+		exit 1
+	fi
+else
+	echo "test failed: expected return code 1"
+	exit 1
+fi
+
+# test to see if list flag work which should cause return code 0 to be returned
 commandoutput="$(operator-sdk scorecard --version v1alpha2 --list --selector=suite=basic --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
 labelCount=`echo $commandoutput | grep -o "Label" | wc -l`
 expectedLabelCount=3
@@ -38,7 +54,8 @@ then
 	exit 1
 fi
 
-# test to see if selector flags work
+# test to see if selector flags work, this test should have no failures which
+# should cause return code 0 to be returned
 commandoutput="$(operator-sdk scorecard --version v1alpha2 --selector=suite=basic --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
 labelCount=`echo $commandoutput | grep -o "Label" | wc -l`
 expectedLabelCount=3
