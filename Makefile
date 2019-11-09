@@ -54,8 +54,14 @@ tidy: ## Update dependencies
 clean: ## Clean up the build artifacts
 	$(Q)rm -rf build
 
-cli-doc: ## Generate CLI Documentation
-	./hack/doc/gen_cli_doc.sh
+gen-cli-doc: ## Generate CLI Documentation
+	./hack/generate/gen-cli-doc.sh
+
+gen-test-framework: install ## Run sdk gen commands to upddate the mock data in the test-framework
+	./hack/generate/gen-test-framework.sh
+
+generate: gen-cli-doc gen-test-framework  ## Run gen commands to update the project artefacts
+.PHONY: generate gen-cli-doc gen-test-framework
 
 # Build/install/release the SDK.
 .PHONY: install release_builds release
@@ -112,7 +118,7 @@ test: test-unit ## Run the tests
 test-markdown test/markdown:
 	./hack/ci/marker
 
-test-sanity test/sanity: tidy
+test-sanity test/sanity: tidy install
 	./hack/tests/sanity-check.sh
 
 test-unit test/unit: ## Run the unit tests
