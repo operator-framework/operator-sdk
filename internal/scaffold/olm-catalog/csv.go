@@ -231,7 +231,7 @@ func (s *CSV) setCSVDefaultFields(csv *olmapiv1alpha1.ClusterServiceVersion) {
 			{Type: olmapiv1alpha1.InstallModeTypeOwnNamespace, Supported: true},
 			{Type: olmapiv1alpha1.InstallModeTypeSingleNamespace, Supported: true},
 			{Type: olmapiv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
-			{Type: olmapiv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
+			{Type: olmapiv1alpha1.InstallModeTypeAllNamespaces, Supported: false},
 		}
 	}
 }
