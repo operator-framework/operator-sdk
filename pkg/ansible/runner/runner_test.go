@@ -62,6 +62,7 @@ func TestNew(t *testing.T) {
 		gvk       schema.GroupVersionKind
 		playbook  string
 		role      string
+		vars      map[string]interface{}
 		finalizer *watches.Finalizer
 	}{
 		{
@@ -123,11 +124,29 @@ func TestNew(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "basic runner with playbook, vars + finalizer vars",
+			gvk: schema.GroupVersionKind{
+				Group:   "operator.example.com",
+				Version: "v1alpha1",
+				Kind:    "Example",
+			},
+			playbook: validPlaybook,
+			vars: map[string]interface{}{
+				"type": "this",
+			},
+			finalizer: &watches.Finalizer{
+				Name: "example.finalizer.com",
+				Vars: map[string]interface{}{
+					"state": "absent",
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			testWatch := watches.New(tc.gvk, tc.role, tc.playbook, tc.finalizer)
+			testWatch := watches.New(tc.gvk, tc.role, tc.playbook, tc.vars, tc.finalizer)
 
 			testRunner, err := New(*testWatch)
 			if err != nil {

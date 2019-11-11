@@ -335,7 +335,7 @@ Adds a new controller under `pkg/controller/<kind>/...` that, by default, reconc
 
 * `--api-version` string - CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
 * `--kind` string - CRD Kind. (e.g AppService)
-* `--custom-api-import` string - External Kubernetes resource import path of the form "host.com/repo/path[=import_identifier]". import_identifier is optional
+* `--custom-api-import` string - External Kubernetes resource import path of the form "host.com/repo/path\[=import_identifier\]". import_identifier is optional
 
 #### Example
 
@@ -420,28 +420,26 @@ Run scorecard tests on an operator
 * `-o, --output` string - Output format for results. Valid values: `human-readable` or `json` (default `human-readable`)
 * `proxy-image` string - Image name for scorecard proxy (default "quay.io/operator-framework/scorecard-proxy")
 * `proxy-pull-policy` string - Pull policy for scorecard proxy image (default "Always")
+* `selector` string - Selector (label query) to filter tests on (only valid when version is v1alpha2)
 * `-h, --help` - help for scorecard
 * `version` string - The scorecard version to run (default v1alpha1), the tech preview version is v1alpha2.
 
 ### Example
 
 ```console
-$ operator-sdk scorecard --cr-manifest deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml --csv-path deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml
-Basic Operator:
-        Spec Block Exists: 1/1 points
-        Status Block Exist: 1/1 points
-        Operator actions are reflected in status: 1/1 points
-        Writing into CRs has an effect: 1/1 points
-OLM Integration:
-        Provided APIs have validation: 1/1
-        Owned CRDs have resources listed: 1/1 points
-        CRs have at least 1 example: 0/1 points
-        Spec fields with descriptors: 1/1 points
-        Status fields with descriptors: 0/1 points
-
-Total Score: 84%
-SUGGESTION: Add an alm-examples annotation to your CSV to pass the CRs have at least 1 example test
-SUGGESTION: Add a status descriptor for nodes
+$ operator-sdk scorecard --cr-manifest deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml --csv-path deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml -o text
+basic:
+	Writing into CRs has an effect     : pass
+	Spec Block Exists                  : pass
+	Status Block Exists                : pass
+olm:
+	Spec fields with descriptors       : pass
+	Status fields with descriptors     : pass
+	Provided APIs have validation      : fail
+	Owned CRDs have resources listed   : pass
+	CRs have at least 1 example        : pass
+SUGGESTION: Add CRD validation for Memcached/v1alpha1
+SUGGESTION: If it would be helpful to an end-user to understand or troubleshoot your CR, consider adding resources [deployments/v1 services/v1 configmaps/v1 memcacheds/v1alpha1 replicasets/v1] to the resources section for owned CRD Memcached
 ```
 
 ## test

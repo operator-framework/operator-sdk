@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 // Type Definitions
@@ -100,6 +101,19 @@ func (ts *TestSuite) TotalScore() (score int) {
 		return 0
 	}
 	return int(floatScore * (100 / addedWeights))
+}
+
+// ApplySelector apply label selectors removing tests that do not match
+func (ts *TestSuite) ApplySelector(selector labels.Selector) {
+	for i := 0; i < len(ts.Tests); i++ {
+		t := ts.Tests[i]
+		if !selector.Matches(labels.Set(t.GetLabels())) {
+			// Remove the test
+			ts.Tests = append(ts.Tests[:i], ts.Tests[i+1:]...)
+			delete(ts.Weights, t.GetName())
+			i--
+		}
+	}
 }
 
 // Run runs all Tests in a TestSuite

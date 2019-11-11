@@ -18,8 +18,6 @@ import (
 	"fmt"
 
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // These functions should be in the public test definitions file, but they are not complete/stable,
@@ -90,13 +88,9 @@ func CalculateResult(tests []scapiv1alpha1.ScorecardTestResult) scapiv1alpha1.Sc
 // TestSuitesToScorecardOutput takes an array of test suites and generates a v1alpha1 ScorecardOutput object with the
 // provided suites and log
 func TestSuitesToScorecardOutput(suites []TestSuite, log string) scapiv1alpha1.ScorecardOutput {
-	test := scapiv1alpha1.ScorecardOutput{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ScorecardOutput",
-			APIVersion: "osdk.openshift.io/v1alpha1",
-		},
-		Log: log,
-	}
+	test := scapiv1alpha1.NewScorecardOutput()
+	test.Log = log
+
 	scorecardSuiteResults := []scapiv1alpha1.ScorecardSuiteResult{}
 	for _, suite := range suites {
 		results := []scapiv1alpha1.ScorecardTestResult{}
@@ -111,7 +105,7 @@ func TestSuitesToScorecardOutput(suites []TestSuite, log string) scapiv1alpha1.S
 		scorecardSuiteResults = append(scorecardSuiteResults, scorecardSuiteResult)
 	}
 	test.Results = scorecardSuiteResults
-	return test
+	return *test
 }
 
 // TestResultToScorecardTestResult is a helper function for converting from the TestResult type to the ScorecardTestResult type
