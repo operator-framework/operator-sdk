@@ -45,7 +45,7 @@ The following workflow is for a new **Helm** operator:
 - [mercurial][mercurial_tool] version 3.9+
 - [docker][docker_tool] version 17.03+.
   - Alternatively [podman][podman_tool] `v1.2.0+` or [buildah][buildah_tool] `v1.7+`
-- [kubectl][kubectl_tool] version v1.15.4+.
+- [kubectl][kubectl_tool] version v1.12.0+.
 - Access to a Kubernetes v1.15.4+ cluster.
 - Optional: [delve](https://github.com/go-delve/delve/tree/master/Documentation/installation) version 1.2.0+ (for `up local --enable-delve`).
 
