@@ -17,16 +17,16 @@ Example: `+operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displa
 #### customresourcedefinitions
 
 - `customresourcedefinitions`: child path token
-	-	`displayName`: quoted string
+	- `displayName`: quoted string
 	- `resources`: quoted string, in the format `"kind,version,\"name\""`, where `kind`, `version`, and `name` are fields in each CSV `resources` entry
 	- `specDescriptors`, `statusDescriptors`: bool, or child path token
 		- `displayName`: quoted string
 		- `x-descriptors`: quoted string comma-separated list of [`x-descriptor`][csv-x-desc] UI hints.
 
-Notes:
+**NOTES**
 - `specDescriptors` and `statusDescriptors` with a value of `true` is required for each field to be included in their respective `customresourcedefinitions` CSV fields. See the examples below.
 - `customresourcedefinitions` top-level `kind`, `name`, and `version` fields are parsed from API code.
-- All `description`'s are parsed from type declaration and `struct` type field comments.
+- All `description` fields are parsed from type declaration and `struct` type field comments.
 - `path` is parsed out of a field's JSON tag and merged with parent field path's in dot-hierarchy notation.
 
 ### Examples
@@ -176,5 +176,5 @@ customresourcedefinitions:
 
 [code-annotations-design]:../../proposals/sdk-code-annotations.md
 [sdk-cli-ref]:../../sdk-cli-reference.md#gen-csv
-[csv-x-desc]:https://github.com/openshift/console/blob/682ed3c/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L3-L39
-[csv-spec]:https://github.com/operator-framework/operator-lifecycle-manager/blob/1c37172/doc/design/building-your-csv.md
+[csv-x-desc]:https://github.com/openshift/console/blob/feabd61/frontend/packages/operator-lifecycle-manager/src/components/descriptors/types.ts#L3-L39
+[csv-spec]:https://github.com/operator-framework/operator-lifecycle-manager/blob/e0eea22/doc/design/building-your-csv.md

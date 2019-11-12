@@ -44,7 +44,7 @@ func TestParseResource(t *testing.T) {
 		},
 		{
 			"Empty resource string without quotes",
-			"", v1alpha1.APIResourceReference{}, true,
+			``, v1alpha1.APIResourceReference{}, true,
 		},
 		{
 			"Empty resource string with quotes",
@@ -128,7 +128,7 @@ func TestParseDescriptor(t *testing.T) {
 			true,
 		},
 		{
-			"Descriptor string with uknown path element",
+			"Descriptor string with unknown path element",
 			[]string{"specDescriptors", "bar"}, "", descriptor{},
 			true,
 		},

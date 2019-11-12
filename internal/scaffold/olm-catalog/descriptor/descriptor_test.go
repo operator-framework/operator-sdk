@@ -59,7 +59,7 @@ func TestGetKindTypeForAPI(t *testing.T) {
 			testFrameworkPackage, "Dummy", 18, false,
 		},
 		{
-			"Find types wtih error from wrong kind",
+			"Find types with error from wrong kind",
 			testFrameworkPackage, "NotFound", 18, true,
 		},
 	}
