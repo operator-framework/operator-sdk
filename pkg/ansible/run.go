@@ -162,10 +162,23 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	}
 	// Create Service object to expose the metrics port(s).
 	// TODO: probably should expose the port as an environment variable
-	_, err = metrics.CreateMetricsService(context.TODO(), cfg, servicePorts)
+	service, err := metrics.CreateMetricsService(context.TODO(), cfg, servicePorts)
 	if err != nil {
 		log.Error(err, "Exposing metrics port failed.")
 		return err
+	}
+
+	// CreateServiceMonitors will automatically create the prometheus-operator ServiceMonitor resources
+	// necessary to configure Prometheus to scrape metrics from this operator.
+	services := []*v1.Service{service}
+	_, err = metrics.CreateServiceMonitors(cfg, namespace, services)
+	if err == metrics.ErrServiceMonitorNotPresent {
+		log.Info("Could not create ServiceMonitor object", "reason", err.Error())
+		// If this operator is deployed to a cluster without the prometheus-operator running, it will return
+		// ErrServiceMonitorNotPresent, which can be used to safely skip ServiceMonitor creation.
+		if err == metrics.ErrServiceMonitorNotPresent {
+			log.Info("Install prometheus-operator in your cluster to create ServiceMonitor objects", "reason", err.Error())
+		}
 	}
 
 	done := make(chan error)

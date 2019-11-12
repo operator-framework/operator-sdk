@@ -72,6 +72,7 @@
 - Added scorecard test short names to each scorecard test to allow users to run a specific scorecard test using the selector flag. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
 - Improve Ansible logs in the Operator container for Ansible-based Operators. ([#2321](https://github.com/operator-framework/operator-sdk/pull/2321))
 - Added support for override values with environment variable expansion in the `watches.yaml` file for Helm-based operators. ([#2325](https://github.com/operator-framework/operator-sdk/pull/2325))
+- Ansible based operators now creates prometheus service monitor, if available. ([#2179](https://github.com/operator-framework/operator-sdk/pull/2179))
 
 ### Changed
 - Replace usage of `github.com/operator-framework/operator-sdk/pkg/restmapper.DynamicRESTMapper` with `sigs.k8s.io/controller-runtime/pkg/client/apiutil.DynamicRESTMapper`. ([#2309](https://github.com/operator-framework/operator-sdk/pull/2309))
