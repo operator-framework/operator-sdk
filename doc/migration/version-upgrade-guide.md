@@ -486,6 +486,75 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
     - Delete the old CRD manifest files.
     - Rename CR manifest file names from `<group>_<version>_<kind>_cr.yaml` to `<full group>_<version>_<kind>_cr.yaml`.
 
+## `v0.12.x`
+
+### Go version
+
+- Ensure that you are using a go version 1.13+
+
+### modules
+
+- Replace your `go.mod` file for:
+
+```
+go 1.13
+
+require (
+	github.com/go-openapi/spec v0.19.0
+	github.com/operator-framework/operator-sdk v0.12.1-0.20191112211508-82fc57de5e5b
+	github.com/spf13/pflag v1.0.3
+	k8s.io/api v0.0.0
+	k8s.io/apimachinery v0.0.0
+	k8s.io/client-go v11.0.0+incompatible
+	k8s.io/kube-openapi v0.0.0-20190918143330-0270cf2f1c1d
+	sigs.k8s.io/controller-runtime v0.3.0
+)
+
+// Pinned to kubernetes-1.15.4
+replace (
+	k8s.io/api => k8s.io/api v0.0.0-20190918195907-bd6ac527cfd2
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20190918201827-3de75813f604
+	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190817020851-f2f3a405f61d
+	k8s.io/apiserver => k8s.io/apiserver v0.0.0-20190918200908-1e17798da8c1
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.0.0-20190918202139-0b14c719ca62
+	k8s.io/client-go => k8s.io/client-go v0.0.0-20190918200256-06eb1244587a
+	k8s.io/cloud-provider => k8s.io/cloud-provider v0.0.0-20190918203125-ae665f80358a
+	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.0.0-20190918202959-c340507a5d48
+	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20190612205613-18da4a14b22b
+	k8s.io/component-base => k8s.io/component-base v0.0.0-20190918200425-ed2f0867c778
+	k8s.io/cri-api => k8s.io/cri-api v0.0.0-20190817025403-3ae76f584e79
+	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.0.0-20190918203248-97c07dcbb623
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.0.0-20190918201136-c3a845f1fbb2
+	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.0.0-20190918202837-c54ce30c680e
+	k8s.io/kube-proxy => k8s.io/kube-proxy v0.0.0-20190918202429-08c8357f8e2d
+	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.0.0-20190918202713-c34a54b3ec8e
+	k8s.io/kubelet => k8s.io/kubelet v0.0.0-20190918202550-958285cf3eef
+	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.0.0-20190918203421-225f0541b3ea
+	k8s.io/metrics => k8s.io/metrics v0.0.0-20190918202012-3c1ca76f5bda
+	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.0.0-20190918201353-5cc279503896
+)
+```
+- Run `go mod tidy` to update the project modules
+- Run the command `operator-sdk generate k8s` to ensure that your resources will be updatedd
+- Run the command `operator-sdk generate openapi` and ensure that no errors such as `API rule violation` are raised. For further information see the [API rules][api-rules] documentation. 
+
+### Main Go updates (Optional)
+
+The following change is to get the feature : Added `Operator Version: X.Y.Z` information in the operator logs.([#1953](https://github.com/operator-framework/operator-sdk/pull/1953))
+
+In the `<project>/cmd/manager/main.go` file, add the follow lines.
+
+```go
+    ...
+    "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis"
+	"github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/controller"
+	"github.com/operator-framework/operator-sdk-samples/memcached-operator/version" //This line
+    ...
+    func printVersion() {
+        log.Info(fmt.Sprintf("Operator Version: %s", version.Version)) //This line
+        log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
+```
+
 [legacy-kubebuilder-doc-crd]: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [v0.8.2-go-mod]: https://github.com/operator-framework/operator-sdk/blob/28bd2b0d4fd25aa68e15d928ae09d3c18c3b51da/internal/pkg/scaffold/go_mod.go#L40-L94
 [activating-modules]: https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support
