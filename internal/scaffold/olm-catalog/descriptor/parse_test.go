@@ -15,6 +15,7 @@
 package descriptor
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -43,6 +44,12 @@ func TestParseResource(t *testing.T) {
 			false,
 		},
 		{
+			"Resource string literal with name",
+			"`Memcached,v1,\"memcached.example.com\"`",
+			v1alpha1.APIResourceReference{Kind: "Memcached", Version: "v1", Name: "memcached.example.com"},
+			false,
+		},
+		{
 			"Empty resource string without quotes",
 			``, v1alpha1.APIResourceReference{}, true,
 		},
@@ -58,11 +65,16 @@ func TestParseResource(t *testing.T) {
 			"Resource string with unquoted name",
 			`"Memcached,v1,memcached.example.com"`, v1alpha1.APIResourceReference{}, true,
 		},
+		{
+			"Resource string literal with unquoted name",
+			"`Memcached,v1,memcached.example.com`", v1alpha1.APIResourceReference{}, true,
+		},
 	}
 
 	for _, c := range cases {
 		output, err := parseResource(c.input)
 		if err != nil {
+			fmt.Printf("%s: %v\n", c.description, err)
 			if !c.wantErr {
 				t.Errorf("%s: expected nil error, got %q", c.description, err)
 			}

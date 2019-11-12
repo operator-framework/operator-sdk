@@ -27,6 +27,8 @@ const (
 	valueSep  = "="
 )
 
+// joinWithTrim is like strings.Join() but trims sep from each element in elems
+// prior to joining elems. Code modified from strings.Join().
 func joinWithTrim(sep string, elems ...string) string {
 	switch len(elems) {
 	case 0:

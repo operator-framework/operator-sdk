@@ -324,8 +324,8 @@ func getGVKID(g, v, k string) string {
 
 // Apply updates csv's "owned" CRDDescriptions. "required" CRDDescriptions are
 // left as-is, since they are user-defined values.
-// Apply will only make a new spec.customresourcedefinitions.owned element if
-// the CRD key is not in spec.customresourcedefinitions.owned already.
+// Apply will only make a new spec.customresourcedefinitions.owned element for
+// a type if an annotation is present on that type's declaration.
 func (u *CustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	// Currently this updater does not support ActionDescriptor annotations,
 	// so use those currently set in csv.

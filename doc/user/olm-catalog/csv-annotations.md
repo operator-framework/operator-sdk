@@ -17,11 +17,11 @@ Example: `+operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displa
 #### customresourcedefinitions
 
 - `customresourcedefinitions`: child path token
-	- `displayName`: quoted string
-	- `resources`: quoted string, in the format `"kind,version,\"name\""`, where `kind`, `version`, and `name` are fields in each CSV `resources` entry
+	- `displayName`: quoted string or string literal
+	- `resources`: quoted string or string literal, in the format `"kind,version,\"name\""` or `` `kind,version,"name"` ``, where `kind`, `version`, and `name` are fields in each CSV `resources` entry
 	- `specDescriptors`, `statusDescriptors`: bool, or child path token
-		- `displayName`: quoted string
-		- `x-descriptors`: quoted string comma-separated list of [`x-descriptor`][csv-x-desc] UI hints.
+		- `displayName`: quoted string or string literal
+		- `x-descriptors`: quoted string or string literal comma-separated list of [`x-descriptor`][csv-x-desc] UI hints.
 
 **NOTES**
 - `specDescriptors` and `statusDescriptors` with a value of `true` is required for each field to be included in their respective `customresourcedefinitions` CSV fields. See the examples below.
@@ -76,34 +76,50 @@ The SDK also checks `path` elements against a list of well-known path to x-descr
 
 | PATH | X-DESCRIPTOR |
 | --- | --- |
-| `size` | urn:alm:descriptor:com.tectonic.ui:podCount |
-| `podCount` | urn:alm:descriptor:com.tectonic.ui:podCount |
-| `endpoints` | urn:alm:descriptor:com.tectonic.ui:endpointList |
-| `endpointList` | urn:alm:descriptor:com.tectonic.ui:endpointList |
-| `label` | urn:alm:descriptor:com.tectonic.ui:label |
-| `resources` | urn:alm:descriptor:com.tectonic.ui:resourceRequirements |
-| `resourceRequirements` | urn:alm:descriptor:com.tectonic.ui:resourceRequirements |
-| `selector` | urn:alm:descriptor:com.tectonic.ui:selector: |
-| `namespaceSelector` | urn:alm:descriptor:com.tectonic.ui:namespaceSelector |
-| `booleanSwitch` | urn:alm:descriptor:com.tectonic.ui:booleanSwitch |
+| `size` | `urn:alm:descriptor:com.tectonic.ui:podCount` |
+| `podCount` | `urn:alm:descriptor:com.tectonic.ui:podCount` |
+| `endpoints` | `urn:alm:descriptor:com.tectonic.ui:endpointList` |
+| `endpointList` | `urn:alm:descriptor:com.tectonic.ui:endpointList` |
+| `label` | `urn:alm:descriptor:com.tectonic.ui:label` |
+| `resources` | `urn:alm:descriptor:com.tectonic.ui:resourceRequirements` |
+| `resourceRequirements` | `urn:alm:descriptor:com.tectonic.ui:resourceRequirements` |
+| `selector` | `urn:alm:descriptor:com.tectonic.ui:selector:` |
+| `namespaceSelector` | `urn:alm:descriptor:com.tectonic.ui:namespaceSelector` |
+| none | `urn:alm:descriptor:io.kubernetes:` |
+| `booleanSwitch` | `urn:alm:descriptor:com.tectonic.ui:booleanSwitch` |
+| `password` | `urn:alm:descriptor:com.tectonic.ui:password` |
+| `checkbox` | `urn:alm:descriptor:com.tectonic.ui:checkbox` |
+| `imagePullPolicy` | `urn:alm:descriptor:com.tectonic.ui:imagePullPolicy` |
+| `updateStrategy` | `urn:alm:descriptor:com.tectonic.ui:updateStrategy` |
+| `text` | `urn:alm:descriptor:com.tectonic.ui:text` |
+| `number` | `urn:alm:descriptor:com.tectonic.ui:number` |
+| `nodeAffinity` | `urn:alm:descriptor:com.tectonic.ui:nodeAffinity` |
+| `podAffinity` | `urn:alm:descriptor:com.tectonic.ui:podAffinity` |
+| `podAntiAffinity` | `urn:alm:descriptor:com.tectonic.ui:podAntiAffinity` |
+| none | `urn:alm:descriptor:com.tectonic.ui:fieldGroup:` |
+| none | `urn:alm:descriptor:com.tectonic.ui:arrayFieldGroup:` |
+| none | `urn:alm:descriptor:com.tectonic.ui:select:` |
+| `advanced` | `urn:alm:descriptor:com.tectonic.ui:advanced` |
 
 #### Status x-descriptors
 
 | PATH | X-DESCRIPTOR |
 | --- | --- |
-| `podStatuses` | urn:alm:descriptor:com.tectonic.ui:podStatuses |
-| `size` | urn:alm:descriptor:com.tectonic.ui:podCount |
-| `podCount` | urn:alm:descriptor:com.tectonic.ui:podCount |
-| `link` | urn:alm:descriptor:org.w3:link |
-| `w3link` | urn:alm:descriptor:org.w3:link |
-| `conditions` | urn:alm:descriptor:io.kubernetes.conditions |
-| `text` | urn:alm:descriptor:text |
-| `prometheusEndpoint` | urn:alm:descriptor:prometheusEndpoint |
-| `phase` | urn:alm:descriptor:io.kubernetes.phase |
-| `k8sPhase` | urn:alm:descriptor:io.kubernetes.phase |
-| `reason` | urn:alm:descriptor:io.kubernetes.phase:reason |
-| `k8sReason` | urn:alm:descriptor:io.kubernetes.phase:reason |
+| `podStatuses` | `urn:alm:descriptor:com.tectonic.ui:podStatuses` |
+| `size` | `urn:alm:descriptor:com.tectonic.ui:podCount` |
+| `podCount` | `urn:alm:descriptor:com.tectonic.ui:podCount` |
+| `link` | `urn:alm:descriptor:org.w3:link` |
+| `w3link` | `urn:alm:descriptor:org.w3:link` |
+| `conditions` | `urn:alm:descriptor:io.kubernetes.conditions` |
+| `text` | `urn:alm:descriptor:text` |
+| `prometheusEndpoint` | `urn:alm:descriptor:prometheusEndpoint` |
+| `phase` | `urn:alm:descriptor:io.kubernetes.phase` |
+| `k8sPhase` | `urn:alm:descriptor:io.kubernetes.phase` |
+| `reason` | `urn:alm:descriptor:io.kubernetes.phase:reason` |
+| `k8sReason` | `urn:alm:descriptor:io.kubernetes.phase:reason` |
+| none | `urn:alm:descriptor:io.kubernetes:` |
 
+**NOTE:** any x-descriptor that ends in `:` will not be inferred by `path` element, ex. `urn:alm:descriptor:io.kubernetes:`. Use the `x-descriptors` annotation if you want to enable one for your type.
 
 4. A comprehensive example:
 - Infer `path`, `description`, `displayName`, and `x-descriptors` for `specDescriptors` and `statusDescriptors` entries.
@@ -112,9 +128,8 @@ The SDK also checks `path` elements against a list of well-known path to x-descr
 ```go
 // Represents a cluster of Memcached apps
 // +operator-sdk:gen-csv:customresourcedefinitions.displayName="Memcached App"
-// +operator-sdk:gen-csv:customresourcedefinitions.resources="Deployment,v1,\"A Kubernetes Deployment\""
-// +operator-sdk:gen-csv:customresourcedefinitions.resources="ReplicaSet,v1beta2,\"A Kubernetes ReplicaSet\""
-// +operator-sdk:gen-csv:customresourcedefinitions.resources="Pod,v1,\"A Kubernetes Pod\""
+// +operator-sdk:gen-csv:customresourcedefinitions.resources="Deployment,v1,\"memcached-operator\""
+// +operator-sdk:gen-csv:customresourcedefinitions.resources=`Service,v1,"memcached-operator"`
 type Memcached struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

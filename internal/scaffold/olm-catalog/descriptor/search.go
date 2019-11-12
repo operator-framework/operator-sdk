@@ -28,7 +28,6 @@ type typeTree interface {
 
 type ttree struct {
 	root      *types.Type
-	children  []*tnode
 	annotated []*tnode
 }
 

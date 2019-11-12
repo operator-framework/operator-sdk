@@ -96,7 +96,7 @@ func parseCSVGenAnnotations(comments []string) (pd parsedCRDDescriptions, err er
 			case "displayName":
 				pd.displayName, err = strconv.Unquote(vals[0])
 				if err != nil {
-					return parsedCRDDescriptions{}, errors.Wrapf(err, "error unquoting %s", vals[0])
+					return parsedCRDDescriptions{}, errors.Wrapf(err, "error unquoting displayName %s", vals[0])
 				}
 			case "resources":
 				for _, v := range vals {
@@ -132,12 +132,12 @@ func parseMemberAnnotation(d *descriptor, pathElems []string, val string) (err e
 		case "displayName":
 			d.DisplayName, err = strconv.Unquote(val)
 			if err != nil {
-				return errors.Wrapf(err, "error unquoting %s", val)
+				return errors.Wrapf(err, "error unquoting field displayName %s", val)
 			}
 		case "x-descriptors":
 			xdStr, err := strconv.Unquote(val)
 			if err != nil {
-				return errors.Wrapf(err, "error unquoting %s", val)
+				return errors.Wrapf(err, "error unquoting field x-descriptors %s", val)
 			}
 			d.XDescriptors = strings.Split(xdStr, ",")
 		default:
@@ -154,7 +154,7 @@ func parseMemberAnnotation(d *descriptor, pathElems []string, val string) (err e
 func parseResource(rStr string) (r olmapiv1alpha1.APIResourceReference, err error) {
 	rStr, err = strconv.Unquote(rStr)
 	if err != nil {
-		return r, err
+		return r, errors.Wrapf(err, "error unquoting resource %s", rStr)
 	}
 	rSplit := strings.SplitN(rStr, ",", 3)
 	if len(rSplit) < 2 {
@@ -164,7 +164,7 @@ func parseResource(rStr string) (r olmapiv1alpha1.APIResourceReference, err erro
 	if len(rSplit) == 3 {
 		r.Name, err = strconv.Unquote(rSplit[2])
 		if err != nil {
-			return r, err
+			return r, errors.Wrapf(err, "error unquoting resource name %s", rSplit[2])
 		}
 		r.Name = strings.TrimSpace(r.Name)
 	}
@@ -198,7 +198,7 @@ func parsePathFromJSONTags(tags string) string {
 	return ""
 }
 
-// From https://github.com/openshift/console/blob/master/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L5-L14
+// From https://github.com/openshift/console/blob/feabd61/frontend/packages/operator-lifecycle-manager/src/components/descriptors/types.ts#L3-L26
 var specXDescriptors = map[string]string{
 	"size":                 "urn:alm:descriptor:com.tectonic.ui:podCount",
 	"podCount":             "urn:alm:descriptor:com.tectonic.ui:podCount",
@@ -210,6 +210,17 @@ var specXDescriptors = map[string]string{
 	"selector":             "urn:alm:descriptor:com.tectonic.ui:selector:",
 	"namespaceSelector":    "urn:alm:descriptor:com.tectonic.ui:namespaceSelector",
 	"booleanSwitch":        "urn:alm:descriptor:com.tectonic.ui:booleanSwitch",
+
+	"password":        "urn:alm:descriptor:com.tectonic.ui:password",
+	"checkbox":        "urn:alm:descriptor:com.tectonic.ui:checkbox",
+	"imagePullPolicy": "urn:alm:descriptor:com.tectonic.ui:imagePullPolicy",
+	"updateStrategy":  "urn:alm:descriptor:com.tectonic.ui:updateStrategy",
+	"text":            "urn:alm:descriptor:com.tectonic.ui:text",
+	"number":          "urn:alm:descriptor:com.tectonic.ui:number",
+	"nodeAffinity":    "urn:alm:descriptor:com.tectonic.ui:nodeAffinity",
+	"podAffinity":     "urn:alm:descriptor:com.tectonic.ui:podAffinity",
+	"podAntiAffinity": "urn:alm:descriptor:com.tectonic.ui:podAntiAffinity",
+	"advanced":        "urn:alm:descriptor:com.tectonic.ui:advanced",
 }
 
 // getSpecXDescriptorsByPath uses path's elements to get x-descriptors a CRD
@@ -218,7 +229,7 @@ func getSpecXDescriptorsByPath(existingXDescs []string, path string) []string {
 	return getXDescriptorsByPath(specXDescriptors, existingXDescs, path)
 }
 
-// From https://github.com/openshift/console/blob/master/frontend/public/components/operator-lifecycle-manager/descriptors/types.ts#L16-L27
+// From https://github.com/openshift/console/blob/feabd61/frontend/packages/operator-lifecycle-manager/src/components/descriptors/types.ts#L28-L39
 var statusXDescriptors = map[string]string{
 	"podStatuses":        "urn:alm:descriptor:com.tectonic.ui:podStatuses",
 	"size":               "urn:alm:descriptor:com.tectonic.ui:podCount",
