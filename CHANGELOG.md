@@ -15,10 +15,12 @@
 - Upgrade the Ansible version from `2.8` to `2.9` on the Ansible based operators image. ([#2168](https://github.com/operator-framework/operator-sdk/issues/2168))
 - Updated CRD generation for non-Go operators to use valid structural schema. ([#2275](https://github.com/operator-framework/operator-sdk/issues/2275))
 - Replace Role verb `"*"` with list of verb strings in generated files so the Role is compatible with OpenShift and Kubernetes. ([#2175](https://github.com/operator-framework/operator-sdk/pull/2175))
+- **Breaking change:** Renamed `operator-sdk generate openapi` to `operator-sdk generate crds`. ([#2276](https://github.com/operator-framework/operator-sdk/pull/2276))
 
 ### Deprecated
 
 ### Removed
+- Removed generation of `zz_generated.openapi.go` files during `operator-sdk generate openapi`. ([#2276](https://github.com/operator-framework/operator-sdk/pull/2276))
 
 ### Bug Fixes
 - Fix issue faced in the Ansible based operators when `jmespath` queries are used because it was not installed. ([#2252](https://github.com/operator-framework/operator-sdk/pull/2252))

@@ -15,9 +15,7 @@
 package genutil
 
 import (
-	"flag"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -26,14 +24,11 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	generatorargs "k8s.io/kube-openapi/cmd/openapi-gen/args"
-	"k8s.io/kube-openapi/pkg/generators"
 )
 
-// OpenAPIGen generates OpenAPI validation specs for all CRD's in dirs.
-func OpenAPIGen() error {
+// CRDGen generates CRDs for all APIs in pkg/apis.
+func CRDGen() error {
 	projutil.MustInProjectRoot()
 
 	absProjectPath := projutil.MustGetwd()
@@ -48,14 +43,7 @@ func OpenAPIGen() error {
 		gvb.WriteString(fmt.Sprintf("%s:%v, ", g, vs))
 	}
 
-	log.Infof("Running OpenAPI code-generation for Custom Resource group versions: [%v]\n", gvb.String())
-
-	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
-	fqApis := k8sutil.CreateFQAPIs(apisPkg, gvMap)
-	f := func(a string) error { return openAPIGen(a, fqApis) }
-	if err = generateWithHeaderFile(f); err != nil {
-		return err
-	}
+	log.Infof("Running CRD generation for Custom Resource group versions: [%v]\n", gvb.String())
 
 	s := &scaffold.Scaffold{}
 	cfg := &input.Config{
@@ -88,45 +76,6 @@ func OpenAPIGen() error {
 		}
 	}
 
-	log.Info("Code-generation complete.")
-	return nil
-}
-
-func openAPIGen(hf string, fqApis []string) error {
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	if err := flag.Set("logtostderr", "true"); err != nil {
-		return err
-	}
-	for _, api := range fqApis {
-		api = filepath.FromSlash(api)
-		// Use relative API path so the generator writes to the correct path.
-		apiPath := "." + string(filepath.Separator) + api[strings.Index(api, scaffold.ApisDir):]
-		args, cargs := generatorargs.NewDefaults()
-		// Ignore default output base and set our own output path.
-		args.OutputBase = ""
-		// openapi-gen already generates a "do not edit" comment.
-		args.GeneratedByCommentTemplate = ""
-		args.InputDirs = []string{apiPath}
-		args.OutputFileBaseName = "zz_generated.openapi"
-		args.OutputPackagePath = filepath.Join(wd, apiPath)
-		args.GoHeaderFilePath = hf
-		// Print API rule violations to stdout
-		cargs.ReportFilename = "-"
-		if err := generatorargs.Validate(args); err != nil {
-			return errors.Wrap(err, "openapi-gen argument validation error")
-		}
-
-		err := args.Execute(
-			generators.NameSystems(),
-			generators.DefaultNameSystem(),
-			generators.Packages,
-		)
-		if err != nil {
-			return errors.Wrap(err, "openapi-gen generator error")
-		}
-	}
+	log.Info("CRD generation complete.")
 	return nil
 }

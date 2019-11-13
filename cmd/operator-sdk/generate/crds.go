@@ -21,37 +21,29 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newGenerateOpenAPICmd() *cobra.Command {
+func newGenerateCRDsCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "openapi",
-		Short: "Generates OpenAPI specs for API's",
-		Long: `generate openapi generates OpenAPI validation specs in Go from tagged types
-in all pkg/apis/<group>/<version> directories. Go code is generated under
-pkg/apis/<group>/<version>/zz_generated.openapi.go. CRD's are generated, or
-updated if they exist for a particular group + version + kind, under
-deploy/crds/<full group>_<resource>_crd.yaml; OpenAPI V3 validation YAML
-is generated as a 'validation' object.
+		Use:   "crds",
+		Short: "Generates CRDs for API's",
+		Long: `generate crds generates CRDs or updates them if they exist,
+under deploy/crds/<full group>_<resource>_crd.yaml; OpenAPI
+V3 validation YAML is generated as a 'validation' object.
 
 Example:
 
-	$ operator-sdk generate openapi
-	$ tree pkg/apis
-	pkg/apis/
-	└── app
-		└── v1alpha1
-			├── zz_generated.openapi.go
+	$ operator-sdk generate crds
 	$ tree deploy/crds
 	├── deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
 	├── deploy/crds/app.example.com_appservices_crd.yaml
 `,
-		RunE: openAPIFunc,
+		RunE: crdsFunc,
 	}
 }
 
-func openAPIFunc(cmd *cobra.Command, args []string) error {
+func crdsFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 0 {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 
-	return genutil.OpenAPIGen()
+	return genutil.CRDGen()
 }
