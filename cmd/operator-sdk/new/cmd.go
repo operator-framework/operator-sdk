@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
@@ -224,7 +225,6 @@ func doAnsibleScaffold() error {
 		&scaffold.ServiceAccount{},
 		&scaffold.Role{},
 		&scaffold.RoleBinding{},
-		&scaffold.CRD{Resource: resource},
 		&scaffold.CR{Resource: resource},
 		&ansible.BuildDockerfile{GeneratePlaybook: generatePlaybook},
 		&ansible.RolesReadme{Resource: *resource},
@@ -259,6 +259,13 @@ func doAnsibleScaffold() error {
 	if err != nil {
 		return fmt.Errorf("new ansible scaffold failed: (%v)", err)
 	}
+
+	crdsDir := filepath.Join(projectName, scaffold.CRDsDir)
+	crd := gencrd.NewNonGo(crdsDir, crdsDir, *resource)
+	if err := crd.Generate(); err != nil {
+		return errors.Wrapf(err, "error generating CRD for %s", resource)
+	}
+	log.Info("Generated CustomResourceDefinition manifests.")
 
 	// Remove placeholders from empty directories
 	err = os.Remove(filepath.Join(s.AbsProjectPath, roleFiles.Path))
@@ -331,7 +338,6 @@ func doHelmScaffold() error {
 		&roleScaffold,
 		&scaffold.RoleBinding{IsClusterScoped: roleScaffold.IsClusterScoped},
 		&helm.Operator{},
-		&scaffold.CRD{Resource: resource},
 		&scaffold.CR{
 			Resource: resource,
 			Spec:     crSpec,
@@ -340,6 +346,13 @@ func doHelmScaffold() error {
 	if err != nil {
 		return fmt.Errorf("new helm scaffold failed: (%v)", err)
 	}
+
+	crdsDir := filepath.Join(projectName, scaffold.CRDsDir)
+	crd := gencrd.NewNonGo(crdsDir, crdsDir, *resource)
+	if err := crd.Generate(); err != nil {
+		return errors.Wrapf(err, "error generating CRD for %s", resource)
+	}
+	log.Info("Generated CustomResourceDefinition manifests.")
 
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
 		return fmt.Errorf("failed to update the RBAC manifest for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)

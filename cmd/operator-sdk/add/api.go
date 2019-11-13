@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
+	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -125,11 +126,17 @@ func apiRun(cmd *cobra.Command, args []string) error {
 		&scaffold.Register{Resource: r},
 		&scaffold.Doc{Resource: r},
 		&scaffold.CR{Resource: r},
-		&scaffold.CRD{Resource: r, IsOperatorGo: projutil.IsOperatorGo()},
 	)
 	if err != nil {
 		return fmt.Errorf("api scaffold failed: (%v)", err)
 	}
+
+	crd := gencrd.NewGo(scaffold.ApisDir, scaffold.CRDsDir)
+	if err := crd.Generate(); err != nil {
+		return errors.Wrapf(err, "error generating CRDs from APIs in %s", scaffold.ApisDir)
+	}
+
+	log.Info("Generated CustomResourceDefinition manifests.")
 
 	// update deploy/role.yaml for the given resource r.
 	if err := scaffold.UpdateRoleForResource(r, absProjectPath); err != nil {

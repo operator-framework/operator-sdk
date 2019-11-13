@@ -20,10 +20,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -74,7 +76,7 @@ func crdFunc(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	log.Infof("Generating Custom Resource Definition (CRD) version %s for kind %s.", apiVersion, kind)
+	log.Infof("Generating CustomResourceDefinition (CRD) version %s for kind %s.", apiVersion, kind)
 
 	// generate CR/CRD file
 	resource, err := scaffold.NewResource(apiVersion, kind)
@@ -84,11 +86,6 @@ func crdFunc(cmd *cobra.Command, args []string) error {
 
 	s := scaffold.Scaffold{}
 	err = s.Execute(cfg,
-		&scaffold.CRD{
-			Input:        input.Input{IfExistsAction: input.Skip},
-			Resource:     resource,
-			IsOperatorGo: projutil.IsOperatorGo(),
-		},
 		&scaffold.CR{
 			Input:    input.Input{IfExistsAction: input.Skip},
 			Resource: resource,
@@ -96,6 +93,13 @@ func crdFunc(cmd *cobra.Command, args []string) error {
 	)
 	if err != nil {
 		return fmt.Errorf("crd scaffold failed: (%v)", err)
+	}
+
+	// This command does not consider an APIs dir. Instead it adds a plain CRD
+	// for the provided resource. We can use NewNonGo to get this behavior.
+	crd := gencrd.NewNonGo(scaffold.CRDsDir, scaffold.CRDsDir, *resource)
+	if err := crd.Generate(); err != nil {
+		return errors.Wrapf(err, "error generating CRD for %s", resource)
 	}
 
 	// update deploy/role.yaml for the given resource r.

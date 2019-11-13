@@ -21,8 +21,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
@@ -36,9 +36,7 @@ import (
 func OpenAPIGen() error {
 	projutil.MustInProjectRoot()
 
-	absProjectPath := projutil.MustGetwd()
 	repoPkg := projutil.GetGoPkg()
-
 	gvMap, err := k8sutil.ParseGroupSubpackages(scaffold.ApisDir)
 	if err != nil {
 		return fmt.Errorf("failed to parse group versions: (%v)", err)
@@ -57,36 +55,11 @@ func OpenAPIGen() error {
 		return err
 	}
 
-	s := &scaffold.Scaffold{}
-	cfg := &input.Config{
-		Repo:           repoPkg,
-		AbsProjectPath: absProjectPath,
-		ProjectName:    filepath.Base(absProjectPath),
+	crd := gencrd.NewGo(scaffold.ApisDir, scaffold.CRDsDir)
+	if err := crd.Generate(); err != nil {
+		return errors.Wrapf(err, "error generating CRDs from APIs in %s", scaffold.ApisDir)
 	}
-	crds, err := k8sutil.GetCRDs(scaffold.CRDsDir)
-	if err != nil {
-		return err
-	}
-	for _, crd := range crds {
-		g, v, k := crd.Spec.Group, crd.Spec.Version, crd.Spec.Names.Kind
-		if v == "" {
-			if len(crd.Spec.Versions) != 0 {
-				v = crd.Spec.Versions[0].Name
-			} else {
-				return fmt.Errorf("crd of group %s kind %s has no version", g, k)
-			}
-		}
-		r, err := scaffold.NewResource(g+"/"+v, k)
-		if err != nil {
-			return err
-		}
-		err = s.Execute(cfg,
-			&scaffold.CRD{Resource: r, IsOperatorGo: projutil.IsOperatorGo()},
-		)
-		if err != nil {
-			return err
-		}
-	}
+	log.Info("Generated CustomResourceDefinition manifests.")
 
 	log.Info("Code-generation complete.")
 	return nil

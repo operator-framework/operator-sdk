@@ -21,6 +21,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -105,4 +106,14 @@ func IsClosedError(e error) bool {
 		return true
 	}
 	return false
+}
+
+// DotPath appends a current working directory dot, ex. "./" in Unix,
+// to paths that do not already have one or are not absolute.
+func DotPath(path string) string {
+	dotPrefix := "." + string(filepath.Separator)
+	if strings.HasPrefix(path, dotPrefix) || filepath.IsAbs(path) {
+		return path
+	}
+	return dotPrefix + path
 }

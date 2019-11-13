@@ -12,48 +12,64 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package scaffold
+package crd
 
 import (
+	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
-	testutil "github.com/operator-framework/operator-sdk/internal/scaffold/internal/testutil"
-	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
-	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
 
-	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestCRDGoProject(t *testing.T) {
-	r, err := NewResource("cache.example.com/v1alpha1", "Memcached")
+func TestCRDGo(t *testing.T) {
+	r, err := scaffold.NewResource("cache.example.com/v1alpha1", "Memcached")
 	if err != nil {
 		t.Fatal(err)
 	}
-	s, buf := setupScaffoldAndWriter()
-	s.Fs = afero.NewMemMapFs()
-	cfg, err := setupTestFrameworkConfig()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = testutil.WriteOSPathToFS(afero.NewOsFs(), s.Fs, cfg.AbsProjectPath)
+	tfDir, err := getTestFrameworkPath()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = s.Execute(cfg, &CRD{Resource: r, IsOperatorGo: true})
+	g := NewGo(filepath.Join(tfDir, "pkg", "apis"), "")
+	fileMap, err := g.(crdGenerator).generateGo()
 	if err != nil {
-		t.Fatalf("Failed to execute the scaffold: (%v)", err)
+		t.Fatalf("Failed to execute CRD generator: %v", err)
 	}
-
-	if crdGoExp != buf.String() {
-		diffs := diffutil.Diff(crdGoExp, buf.String())
-		t.Fatalf("Expected vs actual differs.\n%v", diffs)
+	if b, ok := fileMap[getFileNameForResource(*r)]; !ok {
+		t.Errorf("Failed to generate CRD for %s", r)
+	} else {
+		assert.Equal(t, crdExp, string(b))
 	}
 }
 
-const crdGoExp = `apiVersion: apiextensions.k8s.io/v1beta1
+func TestCRDNonGo(t *testing.T) {
+	r, err := scaffold.NewResource("cache.example.com/v1alpha1", "Memcached")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tfDir, err := getTestFrameworkPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	g := NewNonGo(filepath.Join(tfDir, "deploy", "crds"), "", *r)
+	fileMap, err := g.(crdGenerator).generateNonGo()
+	if err != nil {
+		t.Fatalf("Failed to execute CRD generator: %v", err)
+	}
+	if b, ok := fileMap[getFileNameForResource(*r)]; !ok {
+		t.Errorf("Failed to generate CRD for %s", r)
+	} else {
+		assert.Equal(t, crdExp, string(b))
+	}
+}
+
+const crdExp = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   name: memcacheds.cache.example.com
@@ -112,81 +128,14 @@ spec:
     storage: true
 `
 
-func TestCRDNonGoProject(t *testing.T) {
-	s, buf := setupScaffoldAndWriter()
-	s.Fs = afero.NewMemMapFs()
-
-	r, err := NewResource(appApiVersion, appKind)
+// getTestFrameworkPath constructs the path to the SDK's test-framework,
+// which containsa  mock operator for testing, from the working directory path.
+func getTestFrameworkPath() (string, error) {
+	absPath, err := os.Getwd()
 	if err != nil {
-		t.Fatal(err)
+		return "", err
 	}
-
-	crd := &CRD{Resource: r}
-	i, err := crd.GetInput()
-	if err != nil {
-		t.Fatal(err)
-	}
-	cfg, err := setupTestFrameworkConfig()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	path := filepath.Join(cfg.AbsProjectPath, i.Path)
-	err = afero.WriteFile(s.Fs, path, []byte(crdNonGoExp), fileutil.DefaultFileMode)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err = s.Execute(cfg, crd); err != nil {
-		t.Fatalf("Failed to execute the scaffold: (%v)", err)
-	}
-
-	if crdNonGoExp != buf.String() {
-		diffs := diffutil.Diff(crdNonGoExp, buf.String())
-		t.Fatalf("Expected vs actual differs.\n%v", diffs)
-	}
+	absPath = absPath[:strings.Index(absPath, "internal")]
+	tfDir := filepath.Join(absPath, "test", "test-framework")
+	return tfDir, nil
 }
-
-// crdNonGoExp contains a simple validation block to make sure manually-added
-// validation is not overwritten. Non-go projects don't have the luxury of
-// kubebuilder annotations.
-const crdNonGoExp = `apiVersion: apiextensions.k8s.io/v1beta1
-kind: CustomResourceDefinition
-metadata:
-  name: appservices.app.example.com
-spec:
-  group: app.example.com
-  names:
-    kind: AppService
-    listKind: AppServiceList
-    plural: appservices
-    singular: appservice
-  scope: Namespaced
-  version: v1alpha1
-  versions:
-  - name: v1alpha1
-    schema:
-      openAPIV3Schema:
-        properties:
-          spec:
-            properties:
-              size:
-                format: int32
-                type: integer
-            required:
-            - size
-            type: object
-          status:
-            properties:
-              nodes:
-                items:
-                  type: string
-                type: array
-            required:
-            - nodes
-            type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
-`
