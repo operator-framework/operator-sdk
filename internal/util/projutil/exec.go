@@ -49,6 +49,8 @@ type GoCmdOptions struct {
 	Env []string
 	// Dir is the dir to run "go {cmd}" in; exec.Command.Dir is set to this value.
 	Dir string
+	// Race is to add the -race flag when compiling the operator
+	Race bool
 }
 
 // GoTestOptions is the set of options for "go test".
@@ -127,6 +129,10 @@ func (opts GoCmdOptions) getGeneralArgsWithCmd(cmd string) ([]string, error) {
 		if err == nil && info.IsDir() && ok {
 			bargs = append(bargs, "-mod=vendor")
 		}
+	}
+
+	if opts.Race {
+		bargs = append(bargs, "-race")
 	}
 
 	if opts.PackagePath != "" {
