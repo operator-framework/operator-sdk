@@ -67,7 +67,7 @@ generate: gen-cli-doc gen-test-framework  ## Run all generate targets
 .PHONY: install release_builds release
 
 install: ## Build & install the Operator SDK CLI binary
-	$(Q)go install \
+	$(Q)go1.13.4 install \
 		-gcflags "all=-trimpath=${GOPATH}" \
 		-asmflags "all=-trimpath=${GOPATH}" \
 		-ldflags " \

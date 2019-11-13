@@ -109,7 +109,33 @@ func Become(ctx context.Context, lockName string) error {
 			log.Info("Became the leader.")
 			return nil
 		case apierrors.IsAlreadyExists(err):
-			log.Info("Not the leader. Waiting.")
+			existing := &corev1.ConfigMap{}
+			key := crclient.ObjectKey{Namespace: ns, Name: lockName}
+			err := client.Get(ctx, key, existing)
+			if err != nil {
+				return err
+			}
+			leaderPod := &corev1.Pod{}
+			key = crclient.ObjectKey{Namespace: ns, Name: existing.ObjectMeta.OwnerReferences[0].Name}
+			err = client.Get(ctx, key, leaderPod)
+			if err != nil {
+				return err
+			}
+
+			podFailed := leaderPod.Status.Phase == corev1.PodFailed
+			podEvicted := leaderPod.Status.Reason == "Evicted"
+			if podFailed && podEvicted {
+				log.Info("Operator pod with leader lock has been evicted.", "Leader pod", leaderPod.Name)
+				// TODO Should this behavior be configurable?
+				err := client.Delete(ctx, leaderPod)
+				if err == nil {
+					log.Info("Evicted leader pod has been deleted.")
+				} else {
+					log.Info("Evicted leader pod could not be deleted.")
+				}
+			} else {
+				log.Info("Not the leader. Waiting.")
+			}
 			select {
 			case <-time.After(wait.Jitter(backoff, .2)):
 				if backoff < maxBackoffInterval {
