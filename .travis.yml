@@ -101,14 +101,12 @@ x_base_steps:
 jobs:
   include:
     # Build and test go in non-master PRs
-    - if: tag IS present OR branch != master
-      <<: *test
+    - <<: *test
       name: Go on Kubernetes
       script: make test-e2e-go
 
     # Build and test ansible and test ansible using molecule in non-master PRs
-    - if: tag IS present OR branch != master
-      <<: *test
+    - <<: *test
       name: Ansible on Kubernetes
       before_script:
         - pip3 install --upgrade setuptools pip
@@ -118,34 +116,19 @@ jobs:
         - make test-e2e-ansible-molecule
 
     # Build and test helm in non-master PRs
-    - if: tag IS present OR branch != master
-      <<: *test
+    - <<: *test
       name: Helm on Kubernetes
       script: make test-e2e-helm
 
     # Test subcommands in non-master PRs
-    - if: tag IS present OR branch != master
-      <<: *test
+    - <<: *test
       name: Subcommands on Kubernetes
       script: make test-subcommand
-
-    # Test olm install/uninstall subcommands on master, as these cannot be tested in prow/api-ci.
-    - if: tag IS NOT present AND branch = master
-      <<: *test
-      name: OLM Install/Uninstall on Kubernetes
-      script: make test-subcommand-olm-install
-
-    # Build and test ansible using molecule, as this cannot be tested in prow/api-ci.
-    - if: tag IS NOT present AND branch = master
-      <<: *test
-      name: Ansible Molecule on Kubernetes
-      script: make test-e2e-ansible-molecule
 
     # Run the unit, sanity, and markdown tests
     - stage: test
       name: Unit, Sanity, and Markdown Tests
       # Currently, prow/api-ci tests all PRs that target master; use travis for post merge testing and non-master PRs
-      if: type != pull_request OR branch != master
       script: make test-sanity test-unit test-markdown
       after_success: echo 'Tests Passed'
       after_failure: echo 'Failure in unit, sanity, or markdown test'
