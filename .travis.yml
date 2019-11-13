@@ -48,12 +48,15 @@ x_base_steps:
   - &test
     stage: test
     env:
-    - CLUSTER=k8s
+      - CLUSTER=k8s
+      matrix:
+        - K8S_VERSION="v1.15.4"
+        - K8S_VERSION="v1.14.6"
     os: linux
     <<: *go_before_install
     install:
       - make install
-      - hack/ci/setup-${CLUSTER}.sh
+      - hack/ci/setup-${CLUSTER}.sh $K8S_VERSION
       - export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
     after_success:
       - echo "Build succeeded, operator was generated, memcached operator is running on $CLUSTER, and unit/integration tests pass"
@@ -103,7 +106,9 @@ jobs:
     # Build and test go
     - <<: *test
       name: Go on Kubernetes
-      script: make test-e2e-go
+      script:
+        - echo $K8S_VERSION
+        - make test-e2e-go
 
     # Build and test ansible and test ansible using molecule
     - <<: *test
@@ -112,23 +117,53 @@ jobs:
         - pip3 install --upgrade setuptools pip
         - pip install --user ansible
       script:
+        - echo $K8S_VERSION
         - make test-e2e-ansible
         - make test-e2e-ansible-molecule
 
     # Build and test helm
     - <<: *test
       name: Helm on Kubernetes
-      script: make test-e2e-helm
+      script:
+        - echo $K8S_VERSION
+        - make test-e2e-helm
 
     # Test subcommands
     - <<: *test
       name: Subcommands on Kubernetes
-      script: make test-subcommand
+      script:
+        - echo $K8S_VERSION
+        - make test-subcommand
 
     # Run the unit, sanity, markdown and linter tests
     - stage: test
       name: Unit, Sanity, Markdown and Linter Tests
       script: make test-sanity test-unit test-markdown test-linter
+    
+    # Test olm install/uninstall subcommands on master, as these cannot be tested in prow/api-ci.
+    - if: tag IS NOT present AND branch = master
+      <<: *test
+      name: OLM Install/Uninstall on Kubernetes
+      script:
+        - echo $K8S_VERSION
+        - make test-subcommand-olm-install
+
+    # Build and test ansible using molecule, as this cannot be tested in prow/api-ci.
+    - if: tag IS NOT present AND branch = master
+      <<: *test
+      name: Ansible Molecule on Kubernetes
+      script:
+        - echo $K8S_VERSION
+        - make test-e2e-ansible-molecule
+
+    # Run the unit, sanity, and markdown tests
+    - stage: test
+      name: Unit, Sanity, and Markdown Tests
+      # Currently, prow/api-ci tests all PRs that target master; use travis for post merge testing and non-master PRs
+      if: type != pull_request OR branch != master
+      script:
+        - echo $K8S_VERSION
+        - make test-sanity test-unit test-markdown
       after_success: echo 'Tests Passed'
       after_failure: echo 'Failure in unit, sanity, markdown or linter test'
 
