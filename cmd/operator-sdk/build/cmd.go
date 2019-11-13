@@ -20,6 +20,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
@@ -94,7 +95,7 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	if value, ok := os.LookupEnv("GOARCH"); ok {
 		goBuildEnv = append(goBuildEnv, "GOARCH="+value)
 	} else {
-		goBuildEnv = append(goBuildEnv, "GOARCH=amd64")
+		goBuildEnv = append(goBuildEnv, "GOARCH="+runtime.GOARCH)
 	}
 
 	// If CGO_ENABLED is not set, set it to '0'.
