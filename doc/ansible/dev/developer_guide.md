@@ -64,6 +64,7 @@ we will create and delete a namespace with the switch of a variable:
   k8s:
     api_version: v1
     kind: Namespace
+    name: test
     state: "{{ state }}"
   ignore_errors: true
 ```
