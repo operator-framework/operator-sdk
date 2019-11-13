@@ -22,8 +22,9 @@ go mod init test-framework
 trap_add 'rm -rf $DOCKERFILE go.mod go.sum' EXIT
 
 # Run gen commands
-operator-sdk generate k8s
-operator-sdk generate openapi
+../../build/operator-sdk generate k8s
+../../build/operator-sdk generate openapi
 
-# The following file is gen by openapi but it has not been commited in order to allow we clone and call the test locally in any path. 
-trap_add 'rm -rf pkg/apis/cache/v1alpha1/zz_generated.openapi.go' EXIT
+# TODO(camilamacedo86): remove this when the openapi gen be set to false and it no longer is generated
+# The following file is gen by openapi but it has not been committed in order to allow we clone and call the test locally in any path.
+trap_add 'rm pkg/apis/cache/v1alpha1/zz_generated.openapi.go' EXIT
