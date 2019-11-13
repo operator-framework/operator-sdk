@@ -19,6 +19,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
+	"github.com/pkg/errors"
 	"k8s.io/gengo/types"
 )
 
@@ -39,7 +40,7 @@ type tnode struct {
 
 // newTypeTreeFromRoot collects all struct members in root and stores them in
 // an ttree, along with any members that have annotations.
-func newTypeTreeFromRoot(root *types.Type) typeTree {
+func newTypeTreeFromRoot(root *types.Type) (typeTree, error) {
 	tree := ttree{root: root}
 	nextChildren := []*tnode{{member: types.Member{Type: root}}}
 	lenNextChildren := len(nextChildren)
@@ -49,7 +50,10 @@ func newTypeTreeFromRoot(root *types.Type) typeTree {
 			for _, cm := range ct.Members {
 				node := &tnode{member: cm}
 				// Parse path here so we can re-construct the path hierarchy later.
-				path := parsePathFromJSONTags(cm.Tags)
+				path, err := parsePathFromJSONTags(cm.Tags)
+				if err != nil {
+					return nil, errors.Wrapf(err, "error parsing %s type member %s JSON tags", child.member.Type.Name, cm.Name)
+				}
 				node.pathSegments = append(child.pathSegments, path)
 				if hasAnnotations(cm) {
 					tree.annotated = append(tree.annotated, node)
@@ -61,7 +65,7 @@ func newTypeTreeFromRoot(root *types.Type) typeTree {
 		nextChildren = nextChildren[lenNextChildren:]
 		lenNextChildren = len(nextChildren)
 	}
-	return &tree
+	return &tree, nil
 }
 
 // getDescriptorsFor returns descriptors for each annotated type in tree
@@ -74,11 +78,35 @@ func (tree *ttree) getDescriptorsFor(descType descriptorType) (descriptors []des
 		}
 		for _, d := range parsedDescriptors.descriptors {
 			if d.include && d.descType == descType {
+				pathBuilder := &strings.Builder{}
+				var hasIgnore, hasInline, includeInlined bool
+				lastIdx := len(node.pathSegments) - 1
+				for segmentIdx, segment := range node.pathSegments {
+					// Ignored members are not serialized and therefore its own tag and
+					// all children should not be included in the final path.
+					if isPathIgnore(segment) {
+						hasIgnore = true
+						break
+					}
+					// Inlined members move their fields into the parent if the inlined
+					// member is not a leaf. This condition prevents inlined annotated
+					// members from having incorrect paths.
+					if isPathInline(segment) {
+						hasInline = true
+						includeInlined = segmentIdx < lastIdx || includeInlined
+						continue
+					}
+					pathBuilder.WriteString(segment)
+					pathBuilder.WriteString(".")
+				}
+				if hasIgnore || (hasInline && !includeInlined) {
+					continue
+				}
+				d.Path = strings.Trim(pathBuilder.String(), ".")
 				if d.DisplayName == "" {
 					d.DisplayName = k8sutil.GetDisplayName(node.member.Name)
 				}
 				d.Description = parseDescription(node.member.CommentLines)
-				d.Path = strings.Join(node.pathSegments, ".")
 				switch d.descType {
 				case typeSpec:
 					d.XDescriptors = getSpecXDescriptorsByPath(d.XDescriptors, d.Path)

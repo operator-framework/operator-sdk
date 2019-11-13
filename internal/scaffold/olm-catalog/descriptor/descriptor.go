@@ -74,16 +74,22 @@ func GetCRDDescriptorForGVK(apisDir string, crdDesc *olmapiv1alpha1.CRDDescripti
 		crdDesc.Resources = sortResources(kindDescriptors.resources)
 	}
 	for _, member := range kindType.Members {
-		descType := parsePathFromJSONTags(member.Tags)
-		if descType != typeSpec && descType != typeStatus {
+		path, err := parsePathFromJSONTags(member.Tags)
+		if err != nil {
+			return errors.Wrapf(err, "error parsing %s type member %s JSON tags", gvk.Kind, member.Name)
+		}
+		if path != typeSpec && path != typeStatus {
 			continue
 		}
-		tree := newTypeTreeFromRoot(member.Type)
-		descriptors, err := tree.getDescriptorsFor(descType)
+		tree, err := newTypeTreeFromRoot(member.Type)
+		if err != nil {
+			return errors.Wrapf(err, "error creating type tree for member type %s", member.Type.Name)
+		}
+		descriptors, err := tree.getDescriptorsFor(path)
 		if err != nil {
 			return err
 		}
-		if descType == typeSpec {
+		if path == typeSpec {
 			for _, d := range sortDescriptors(descriptors) {
 				crdDesc.SpecDescriptors = append(crdDesc.SpecDescriptors, d.SpecDescriptor)
 			}

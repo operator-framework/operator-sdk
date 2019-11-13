@@ -72,6 +72,14 @@ type Hog struct {
 	Brand string `json:"brand"`
 	// Not in spec or status
 	Helmet string `json:"helmet"`
+	// Fields should be inlined
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
+	Inlined InlinedComponent `json:",inline"`
+	// Should be ignored
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
+	Ignored IgnoredComponent `json:"-"`
 }
 
 // +k8s:deepcopy-gen=false
@@ -79,6 +87,22 @@ type Hog struct {
 type Engine struct {
 	// Should not be included, no annotations.
 	Pistons []string `json:"pistons"`
+}
+
+// +k8s:deepcopy-gen=false
+// +k8s:openapi-gen=false
+type InlinedComponent struct {
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
+	SeatMaterial string `json:"seatMaterial"`
+}
+
+// +k8s:deepcopy-gen=false
+// +k8s:openapi-gen=false
+type IgnoredComponent struct {
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
+	TrunkSpace string `json:"trunkSpace"`
 }
 
 // +k8s:deepcopy-gen=false

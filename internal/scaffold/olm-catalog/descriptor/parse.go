@@ -15,6 +15,7 @@
 package descriptor
 
 import (
+	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
@@ -185,17 +186,35 @@ func parseDescription(comments []string) string {
 	return strings.Join(lines, " ")
 }
 
-var jsonTagRe = regexp.MustCompile(`json:"([a-zA-Z0-9,]+)"`)
+var jsonTagRe = regexp.MustCompile(`json:"([a-zA-Z0-9,]+|-)"`)
 
-func parsePathFromJSONTags(tags string) string {
+const (
+	inlinedTag = "##inline##"
+	ignoredTag = "##ignore##"
+)
+
+func parsePathFromJSONTags(tags string) (string, error) {
 	tagMatches := jsonTagRe.FindStringSubmatch(tags)
 	if len(tagMatches) > 1 {
 		ts := strings.Split(tagMatches[1], ",")
-		if len(ts) != 0 && ts[0] != "" {
-			return ts[0]
+		switch {
+		case len(ts) == 2 && ts[1] == "inline":
+			return inlinedTag, nil
+		case len(ts) == 1 && ts[0] == "-":
+			return ignoredTag, nil
+		case (len(ts) == 1 || len(ts) == 2) && ts[0] != "":
+			return ts[0], nil
 		}
 	}
-	return ""
+	return "", fmt.Errorf("invalid JSON tag: %s", tags)
+}
+
+func isPathInline(path string) bool {
+	return path == inlinedTag
+}
+
+func isPathIgnore(path string) bool {
+	return path == ignoredTag
 }
 
 // From https://github.com/openshift/console/blob/feabd61/frontend/packages/operator-lifecycle-manager/src/components/descriptors/types.ts#L3-L26

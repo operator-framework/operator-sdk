@@ -56,11 +56,11 @@ func TestGetKindTypeForAPI(t *testing.T) {
 	}{
 		{
 			"Find types successfully",
-			testFrameworkPackage, "Dummy", 18, false,
+			testFrameworkPackage, "Dummy", 20, false,
 		},
 		{
 			"Find types with error from wrong kind",
-			testFrameworkPackage, "NotFound", 18, true,
+			testFrameworkPackage, "NotFound", 20, true,
 		},
 	}
 	tfAPIDir := filepath.Join(getTestFrameworkDir(t), "pkg", "apis", "cache", "v1alpha1")
@@ -131,7 +131,8 @@ func TestGetCRDDescriptorForGVK(t *testing.T) {
 				},
 				StatusDescriptors: []olmapiv1alpha1.StatusDescriptor{
 					{Path: "hog.engine", DisplayName: "boss-hog-engine", Description: "Should be in status but not spec, since Hog isn't in DummySpec"},
-					{Path: "nodes", DisplayName: "Nodes", Description: "Should be in status but not spec, since DummyStatus isn't in DummySpec", XDescriptors: xdescsFor("nodes")},
+					{Path: "hog.seatMaterial", DisplayName: "Seat Material"},
+					{Path: "nodes", DisplayName: "Nodes", Description: "Should be in status but not spec, since DummyStatus isn't in DummySpec"},
 				},
 			},
 			false,
@@ -149,6 +150,7 @@ func TestGetCRDDescriptorForGVK(t *testing.T) {
 				},
 				SpecDescriptors: []olmapiv1alpha1.SpecDescriptor{
 					{Path: "engine", DisplayName: "Engine", Description: "Should be in status but not spec, since Hog isn't in DummySpec"},
+					{Path: "seatMaterial", DisplayName: "Seat Material"},
 				},
 				StatusDescriptors: []olmapiv1alpha1.StatusDescriptor{
 					{Path: "nothing", DisplayName: "Nothing", Description: "Should be in status but not spec, since this isn't a spec type"},
