@@ -100,12 +100,12 @@ x_base_steps:
 
 jobs:
   include:
-    # Build and test go in non-master PRs
+    # Build and test go
     - <<: *test
       name: Go on Kubernetes
       script: make test-e2e-go
 
-    # Build and test ansible and test ansible using molecule in non-master PRs
+    # Build and test ansible and test ansible using molecule
     - <<: *test
       name: Ansible on Kubernetes
       before_script:
@@ -115,12 +115,12 @@ jobs:
         - make test-e2e-ansible
         - make test-e2e-ansible-molecule
 
-    # Build and test helm in non-master PRs
+    # Build and test helm
     - <<: *test
       name: Helm on Kubernetes
       script: make test-e2e-helm
 
-    # Test subcommands in non-master PRs
+    # Test subcommands
     - <<: *test
       name: Subcommands on Kubernetes
       script: make test-subcommand
