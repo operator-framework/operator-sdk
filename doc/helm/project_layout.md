@@ -11,4 +11,4 @@ table describes a basic rundown of each generated file/directory.
 | build | Contains scripts that the operator-sdk uses for build and initialization. |
 | watches.yaml | Contains Group, Version, Kind, and Helm chart location. |
 
-[docs_helm_create]:https://helm.sh/docs/helm/#helm-create
+[docs_helm_create]:https://v2.helm.sh/docs/helm/#helm-create
