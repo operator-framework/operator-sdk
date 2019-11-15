@@ -85,7 +85,7 @@ type MemcachedSpec struct {
 	Size int32 `json:"size"`
 }
 type MemcachedStatus struct {
-	// Nodes are the names of the memcached pods 
+	// Nodes are the names of the memcached pods
 	// +listType=set  
 	Nodes []string `json:"nodes"`
 }
@@ -99,7 +99,23 @@ After modifying the `*_types.go` file always run the following command to update
 $ operator-sdk generate k8s
 ```
 
-### OpenAPI validation
+### Updating CRD manifests
+
+Now that `MemcachedSpec` and `MemcachedStatus` have fields and possibly annotations, the CRD corresponding to the API's group and kind must be updated. To do so, run the following command:
+
+```console
+$ operator-sdk generate openapi
+```
+
+**Notes:**
+- - Your CRD *must* specify exactly one [storage version][crd-storage-version]. Use the `+kubebuilder:storageversion` [marker][crd-markers] to indicate the GVK that should be used to store data by the API server. This marker should be in a comment above your `Memcached` type.
+- You may see errors like "API rule violation" when running the above command. For information on these errors, read the below section and see the [API rules][api-rules] documentation.
+
+[crd-storage-version]:https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definition-versioning/#writing-reading-and-updating-versioned-customresourcedefinition-objects
+[crd-markers]:https://book.kubebuilder.io/reference/markers/crd.html
+[api-rules]: https://github.com/kubernetes/kubernetes/tree/36981002246682ed7dc4de54ccc2a96c1a0cbbdb/api/api-rules
+
+#### OpenAPI validation
 
 OpenAPIv3 schemas are added to CRD manifests in the `spec.validation` block when the manifests are generated. This validation block allows Kubernetes to validate the properties in a Memcached Custom Resource when it is created or updated. Additionally a `pkg/apis/<group>/<version>/zz_generated.openapi.go` file is generated containing the Go representation of this validation block if the `+k8s:openapi-gen=true` annotation is present above the kind type declaration (present by default). This auto-generated code is your Go kind type's OpenAPI model, from which you can create a full OpenAPI spec and generate a client. Check out [this issue comment][openapi-details] for steps on how to do so.
 
@@ -112,15 +128,7 @@ type Alias string
 
 Usage of markers in API code is discussed in the kubebuilder [CRD generation][generating-crd] and [marker][markers] documentation. A full list of OpenAPIv3 validation markers can be found [here][crd-markers].
 
-To update the OpenAPI validation section in the CRD `deploy/crds/cache.example.com_memcacheds_crd.yaml`, run the following command:
-
-```console
-$ operator-sdk generate openapi
-```
-
-**Note:** You may see errors like "API rule violation" when running the above command. For information on these errors see the [API rules][api-rules] documentation
-
-An example of the generated YAML is as follows:
+An example of generated validation YAML is as follows:
 
 ```YAML
 spec:
@@ -141,7 +149,6 @@ To learn more about OpenAPI v3.0 validation schemas in Custom Resource Definitio
 [generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
 [markers]: https://book.kubebuilder.io/reference/markers.html
 [crd-markers]: https://book.kubebuilder.io/reference/markers/crd-validation.html
-[api-rules]: https://github.com/kubernetes/kubernetes/tree/36981002246682ed7dc4de54ccc2a96c1a0cbbdb/api/api-rules
 
 ## Add a new Controller
 
