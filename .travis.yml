@@ -128,7 +128,6 @@ jobs:
     # Run the unit, sanity, and markdown tests
     - stage: test
       name: Unit, Sanity, and Markdown Tests
-      # Currently, prow/api-ci tests all PRs that target master; use travis for post merge testing and non-master PRs
       script: make test-sanity test-unit test-markdown
       after_success: echo 'Tests Passed'
       after_failure: echo 'Failure in unit, sanity, or markdown test'
