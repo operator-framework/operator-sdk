@@ -30,11 +30,11 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/sys/unix"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	k8sproxy "k8s.io/apimachinery/pkg/util/proxy"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
-	"k8s.io/kubernetes/pkg/kubectl/util"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -240,9 +240,9 @@ func (s *server) ListenUnix(path string) (net.Listener, error) {
 		}
 	}
 	// Default to only user accessible socket, caller can open up later if desired
-	oldmask, _ := util.Umask(0077)
+	oldmask, _ := Umask(0077)
 	l, err := net.Listen("unix", path)
-	util.Umask(oldmask)
+	Umask(oldmask)
 	return l, err
 }
 
@@ -269,4 +269,14 @@ func stripLeaveSlash(prefix string, h http.Handler) http.Handler {
 		req.URL.Path = p
 		h.ServeHTTP(w, req)
 	})
+}
+
+// Umask function has been copied from https://github.com/kubernetes/kubernetes/blob/v1.15.4/pkg/kubectl/util/umask.go
+// since https://github.com/kubernetes/kubernetes/blob/v1.15.4/pkg/kubectl/util/BUILD defined go_default_library is only
+// visible for pkg_kubectl_util_CONSUMERS, which means only visible for codes in kubernetes
+// we should not import "k8s.io/kubernetes/pkg/kubectl/util" as go packages outside kubernetes
+
+// Umask is a wrapper for `unix.Umask()` on non-Windows platforms
+func Umask(mask int) (old int, err error) {
+	return unix.Umask(mask), nil
 }
