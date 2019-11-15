@@ -10,6 +10,7 @@
 - Upgrade Helm version from `v2.15.0` to `v2.16.1`. ([#2145](https://github.com/operator-framework/operator-sdk/pull/2145))
 - Upgrade [`controller-runtime`](https://github.com/kubernetes-sigs/controller-runtime) version from `v0.3.0` to [`v0.4.0`](https://github.com/kubernetes-sigs/controller-runtime/releases/tag/v0.4.0). ([#2145](https://github.com/operator-framework/operator-sdk/pull/2145))
 - Updated `pkg/test/e2eutil.WaitForDeployment()` and `pkg/test/e2eutil.WaitForOperatorDeployment()` to successfully complete waiting when the available replica count is _at least_ (rather than exactly) the minimum replica count required. ([#2248](https://github.com/operator-framework/operator-sdk/pull/2248))
+- Use `k8s_info` module instead of deprecated `k8s_facts` module in molecule test scaffold. ([#2168](https://github.com/operator-framework/operator-sdk/issues/2168))
 
 ### Deprecated
 
