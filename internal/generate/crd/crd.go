@@ -139,7 +139,7 @@ func getFileNameForResource(r scaffold.Resource) string {
 func (g crdGenerator) generateGo() (map[string][]byte, error) {
 	fileMap := map[string][]byte{}
 	// Generate files in the generator's cache so we can modify the file name
-	// and annotations, and perform some version checks.
+	// and annotations.
 	defName := "output:crd:cache"
 	cacheOutputDir := string(filepath.Separator) + filepath.Clean(g.outputDir)
 	rawOpts := []string{
