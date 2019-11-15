@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -209,9 +209,6 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 }
 
 // generateNonGo generates a CRD for non-Go projects using a resource.
-// There are currently no commands to update CRD manifests for non-Go
-// operators, so if a CRD manifest already exists for a resource, this
-// generator only checks and sorts CRD versions (for now).
 func (g crdGenerator) generateNonGo() (map[string][]byte, error) {
 	crd := &apiextv1beta1.CustomResourceDefinition{}
 	fileMap := map[string][]byte{}
