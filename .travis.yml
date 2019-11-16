@@ -125,12 +125,12 @@ jobs:
       name: Subcommands on Kubernetes
       script: make test-subcommand
 
-    # Run the unit, sanity, and markdown tests
+    # Run the unit, sanity, markdown and linter tests
     - stage: test
-      name: Unit, Sanity, and Markdown Tests
-      script: make test-sanity test-unit test-markdown
+      name: Unit, Sanity, Markdown and Linter Tests
+      script: make test-sanity test-unit test-markdown test-linter
       after_success: echo 'Tests Passed'
-      after_failure: echo 'Failure in unit, sanity, or markdown test'
+      after_failure: echo 'Failure in unit, sanity, markdown or linter test'
 
     # Build and deploy ansible-operator docker image
     - <<: *deploy

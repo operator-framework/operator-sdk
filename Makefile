@@ -111,9 +111,12 @@ build/%.asc:
 	}
 
 # Static tests.
-.PHONY: test test-markdown test-sanity test-unit
+.PHONY: test test-markdown test-sanity test-unit test-linter
 
 test: test-unit ## Run the tests
+
+test-linter:  ## Run golangci-lint for the project
+	./hack/go-linter.sh
 
 test-markdown test/markdown:
 	./hack/ci/marker
