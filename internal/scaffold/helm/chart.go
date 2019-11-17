@@ -185,13 +185,12 @@ func scaffoldChart(destDir, apiVersion, kind string) (*scaffold.Resource, *chart
 
 func fetchChart(destDir string, opts CreateChartOptions) (*scaffold.Resource, *chart.Chart, error) {
 	var (
-		stat  os.FileInfo
 		chart *chart.Chart
 		err   error
 	)
 
-	if stat, err = os.Stat(opts.Chart); err == nil {
-		chart, err = createChartFromDisk(destDir, opts.Chart, stat.IsDir())
+	if _, err = os.Stat(opts.Chart); err == nil {
+		chart, err = createChartFromDisk(destDir, opts.Chart)
 	} else {
 		chart, err = createChartFromRemote(destDir, opts)
 	}
@@ -214,7 +213,7 @@ func fetchChart(destDir string, opts CreateChartOptions) (*scaffold.Resource, *c
 	return r, chart, nil
 }
 
-func createChartFromDisk(destDir, source string, isDir bool) (*chart.Chart, error) {
+func createChartFromDisk(destDir, source string) (*chart.Chart, error) {
 	chart, err := chartutil.Load(source)
 	if err != nil {
 		return nil, err
@@ -270,7 +269,7 @@ func createChartFromRemote(destDir string, opts CreateChartOptions) (*chart.Char
 		return nil, err
 	}
 
-	return createChartFromDisk(destDir, chartArchive, false)
+	return createChartFromDisk(destDir, chartArchive)
 }
 
 func fetchChartDependencies(chartPath string) error {
