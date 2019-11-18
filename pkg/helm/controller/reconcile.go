@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -286,7 +288,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 	return reconcile.Result{RequeueAfter: r.ReconcilePeriod}, err
 }
 
-func (r HelmOperatorReconciler) updateResource(o *unstructured.Unstructured) error {
+func (r HelmOperatorReconciler) updateResource(o runtime.Object) error {
 	return r.Client.Update(context.TODO(), o)
 }
 
