@@ -20,8 +20,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
+	k8sgenutil "github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
 	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
+	genutil "github.com/operator-framework/operator-sdk/internal/generate/util"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -131,7 +132,8 @@ func apiRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("api scaffold failed: (%v)", err)
 	}
 
-	crd := gencrd.NewGo(scaffold.ApisDir, scaffold.CRDsDir)
+	gcfg := genutil.Config{InputDir: scaffold.ApisDir, OutputDir: scaffold.CRDsDir}
+	crd := gencrd.NewGo(gcfg)
 	if err := crd.Generate(); err != nil {
 		return errors.Wrapf(err, "error generating CRDs from APIs in %s", scaffold.ApisDir)
 	}
@@ -145,12 +147,12 @@ func apiRun(cmd *cobra.Command, args []string) error {
 
 	if !skipGeneration {
 		// Run k8s codegen for deepcopy
-		if err := genutil.K8sCodegen(); err != nil {
+		if err := k8sgenutil.K8sCodegen(); err != nil {
 			return err
 		}
 
 		// Generate a validation spec for the new CRD.
-		if err := genutil.OpenAPIGen(); err != nil {
+		if err := k8sgenutil.OpenAPIGen(); err != nil {
 			return err
 		}
 	}

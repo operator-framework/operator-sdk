@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
+	genutil "github.com/operator-framework/operator-sdk/internal/generate/util"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
@@ -261,7 +262,8 @@ func doAnsibleScaffold() error {
 	}
 
 	crdsDir := filepath.Join(projectName, scaffold.CRDsDir)
-	crd := gencrd.NewNonGo(crdsDir, crdsDir, *resource)
+	gcfg := genutil.Config{InputDir: crdsDir, OutputDir: crdsDir}
+	crd := gencrd.NewNonGo(gcfg, *resource)
 	if err := crd.Generate(); err != nil {
 		return errors.Wrapf(err, "error generating CRD for %s", resource)
 	}
@@ -348,7 +350,8 @@ func doHelmScaffold() error {
 	}
 
 	crdsDir := filepath.Join(projectName, scaffold.CRDsDir)
-	crd := gencrd.NewNonGo(crdsDir, crdsDir, *resource)
+	gcfg := genutil.Config{InputDir: crdsDir, OutputDir: crdsDir}
+	crd := gencrd.NewNonGo(gcfg, *resource)
 	if err := crd.Generate(); err != nil {
 		return errors.Wrapf(err, "error generating CRD for %s", resource)
 	}

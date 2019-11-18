@@ -20,6 +20,7 @@ import (
 	"strings"
 	"testing"
 
+	genutil "github.com/operator-framework/operator-sdk/internal/generate/util"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 
 	"github.com/stretchr/testify/assert"
@@ -35,7 +36,8 @@ func TestCRDGo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	g := NewGo(filepath.Join(tfDir, "pkg", "apis"), "")
+	cfg := genutil.Config{InputDir: filepath.Join(tfDir, "pkg", "apis")}
+	g := NewGo(cfg)
 	fileMap, err := g.(crdGenerator).generateGo()
 	if err != nil {
 		t.Fatalf("Failed to execute CRD generator: %v", err)
@@ -57,7 +59,8 @@ func TestCRDNonGo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	g := NewNonGo(filepath.Join(tfDir, "deploy", "crds"), "", *r)
+	cfg := genutil.Config{InputDir: filepath.Join(tfDir, "deploy", "crds")}
+	g := NewNonGo(cfg, *r)
 	fileMap, err := g.(crdGenerator).generateNonGo()
 	if err != nil {
 		t.Fatalf("Failed to execute CRD generator: %v", err)

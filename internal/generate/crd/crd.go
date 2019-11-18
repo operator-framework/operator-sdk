@@ -39,10 +39,7 @@ import (
 // crdGenerator configures the CustomResourceDefintion manifest generator
 // for Go and non-Go projects.
 type crdGenerator struct {
-	// Dir containing relevant input files.
-	inputDir string
-	// Dir in which to generate output files.
-	outputDir string
+	genutil.Config
 	// isOperatorGo is true when the operator is written in Go.
 	isOperatorGo bool
 	// resource contains API information used to configure single-CRD generation.
@@ -52,48 +49,42 @@ type crdGenerator struct {
 
 // NewGo returns a CRD generator configured to generate CustomResourceDefintion
 // manifests from Go API files.
-func NewGo(inputDir, outputDir string) genutil.Generator {
+func NewGo(cfg genutil.Config) genutil.Generator {
 	g := crdGenerator{
-		inputDir:     inputDir,
-		outputDir:    outputDir,
+		Config:       cfg,
 		isOperatorGo: true,
 	}
-	if g.inputDir == "" {
-		g.inputDir = scaffold.ApisDir
+	if g.InputDir == "" {
+		g.InputDir = scaffold.ApisDir
 	}
-	if g.outputDir == "" {
-		g.outputDir = scaffold.CRDsDir
+	if g.OutputDir == "" {
+		g.OutputDir = scaffold.CRDsDir
 	}
-	g.inputDir = fileutil.DotPath(g.inputDir)
-	g.outputDir = fileutil.DotPath(g.outputDir)
 	return g
 }
 
 // NewGo returns a CRD generator configured to generate a
 // CustomResourceDefintion manifest from scratch using data in resource.
-func NewNonGo(inputDir, outputDir string, resource scaffold.Resource) genutil.Generator {
+func NewNonGo(cfg genutil.Config, resource scaffold.Resource) genutil.Generator {
 	g := crdGenerator{
-		inputDir:     inputDir,
-		outputDir:    outputDir,
+		Config:       cfg,
 		resource:     resource,
 		isOperatorGo: false,
 	}
-	if g.inputDir == "" {
-		g.inputDir = scaffold.CRDsDir
+	if g.InputDir == "" {
+		g.InputDir = scaffold.CRDsDir
 	}
-	if g.outputDir == "" {
-		g.outputDir = scaffold.CRDsDir
+	if g.OutputDir == "" {
+		g.OutputDir = scaffold.CRDsDir
 	}
-	g.inputDir = fileutil.DotPath(g.inputDir)
-	g.outputDir = fileutil.DotPath(g.outputDir)
 	return g
 }
 
 func (g crdGenerator) validate() error {
-	if g.inputDir == "" {
+	if g.InputDir == "" {
 		return errors.New("input dir cannot be empty")
 	}
-	if g.inputDir == "" {
+	if g.InputDir == "" {
 		return errors.New("output dir cannot be empty")
 	}
 	if !g.isOperatorGo && g.resource == (scaffold.Resource{}) {
@@ -102,7 +93,7 @@ func (g crdGenerator) validate() error {
 	return nil
 }
 
-// Generate generates CRD manifests and writes them to g.outputDir.
+// Generate generates CRD manifests and writes them to g.OutputDir.
 func (g crdGenerator) Generate() (err error) {
 	if err = g.validate(); err != nil {
 		return errors.Wrap(err, "validation error")
@@ -119,11 +110,11 @@ func (g crdGenerator) Generate() (err error) {
 	if len(fileMap) == 0 {
 		return errors.New("error generating CRD manifests: no generated files found")
 	}
-	if err = os.MkdirAll(g.outputDir, fileutil.DefaultDirFileMode); err != nil {
-		return errors.Wrapf(err, "error mkdir %s", g.outputDir)
+	if err = os.MkdirAll(g.OutputDir, fileutil.DefaultDirFileMode); err != nil {
+		return errors.Wrapf(err, "error mkdir %s", g.OutputDir)
 	}
 	for fileName, b := range fileMap {
-		path := filepath.Join(g.outputDir, fileName)
+		path := filepath.Join(g.OutputDir, fileName)
 		if err := ioutil.WriteFile(path, b, fileutil.DefaultFileMode); err != nil {
 			return errors.Wrap(err, "error writing CRD manifests")
 		}
@@ -141,10 +132,10 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 	// Generate files in the generator's cache so we can modify the file name
 	// and annotations.
 	defName := "output:crd:cache"
-	cacheOutputDir := string(filepath.Separator) + filepath.Clean(g.outputDir)
+	cacheOutputDir := string(filepath.Separator) + filepath.Clean(g.OutputDir)
 	rawOpts := []string{
 		"crd",
-		fmt.Sprintf("paths=%s/...", g.inputDir),
+		fmt.Sprintf("paths=%s/...", fileutil.DotPath(g.InputDir)),
 		fmt.Sprintf("%s:dir=%s", defName, cacheOutputDir),
 	}
 	cachedGen := genutil.NewCachedGenerator()
@@ -200,6 +191,9 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 			}
 			modifiedCRD = yamlutil.CombineManifests(modifiedCRD, sb)
 		}
+		if err = scanner.Err(); err != nil {
+			return nil, err
+		}
 		if len(modifiedCRD) != 0 {
 			fileNameNoExt := strings.TrimSuffix(info.Name(), filepath.Ext(info.Name()))
 			fileMap[fileNameNoExt+"_crd.yaml"] = modifiedCRD
@@ -213,7 +207,7 @@ func (g crdGenerator) generateNonGo() (map[string][]byte, error) {
 	crd := &apiextv1beta1.CustomResourceDefinition{}
 	fileMap := map[string][]byte{}
 	fileName := getFileNameForResource(g.resource)
-	path := filepath.Join(g.inputDir, fileName)
+	path := filepath.Join(g.InputDir, fileName)
 	if _, err := os.Stat(path); err == nil {
 		b, err := ioutil.ReadFile(path)
 		if err != nil {

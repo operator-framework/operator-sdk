@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
+	genutil "github.com/operator-framework/operator-sdk/internal/generate/util"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -55,7 +56,8 @@ func OpenAPIGen() error {
 		return err
 	}
 
-	crd := gencrd.NewGo(scaffold.ApisDir, scaffold.CRDsDir)
+	cfg := genutil.Config{InputDir: scaffold.ApisDir, OutputDir: scaffold.CRDsDir}
+	crd := gencrd.NewGo(cfg)
 	if err := crd.Generate(); err != nil {
 		return errors.Wrapf(err, "error generating CRDs from APIs in %s", scaffold.ApisDir)
 	}
