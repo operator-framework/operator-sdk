@@ -126,12 +126,12 @@ func Become(ctx context.Context, lockName string) error {
 			podEvicted := leaderPod.Status.Reason == "Evicted"
 			if podFailed && podEvicted {
 				log.Info("Operator pod with leader lock has been evicted.", "Leader pod", leaderPod.Name)
-				// TODO Should this behavior be configurable?
 				err := client.Delete(ctx, leaderPod)
 				if err == nil {
 					log.Info("Evicted leader pod has been deleted.")
 				} else {
-					log.Info("Evicted leader pod could not be deleted.")
+					log.Error(err, "Evicted leader pod could not be deleted")
+
 				}
 			} else {
 				log.Info("Not the leader. Waiting.")
