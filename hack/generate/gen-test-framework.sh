@@ -8,9 +8,6 @@ set -ex
 
 source hack/lib/test_lib.sh
 
-# Define vars
-DOCKERFILE="build/Dockerfile"
-
 # Go inside of the mock data test project
 cd test/test-framework
 
@@ -20,4 +17,6 @@ cd test/test-framework
 
 # TODO(camilamacedo86): remove this when the openapi gen be set to false and it no longer is generated
 # The following file is gen by openapi but it has not been committed in order to allow we clone and call the test locally in any path.
-trap_add 'rm pkg/apis/cache/v1alpha1/zz_generated.openapi.go' EXIT
+rm pkg/apis/cache/v1alpha1/zz_generated.openapi.go
+
+go mod tidy

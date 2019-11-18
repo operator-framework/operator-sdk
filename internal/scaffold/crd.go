@@ -15,6 +15,7 @@
 package scaffold
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -112,6 +113,15 @@ func (s *CRD) CustomRender() ([]byte, error) {
 			}
 			return nil, err
 		}
+		// Until we bump dependencies to Kubernetes v1.16, generated validation
+		// descriptions for kind and apiVersion will contain an invalid link.
+		// Manually replace them here.
+		//
+		// TODO(estroz): remove on k8s v1.16 bump.
+		b = bytes.ReplaceAll(b,
+			[]byte("https://git.k8s.io/community/contributors/devel/api-conventions.md"),
+			[]byte("https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md"),
+		)
 		if err = yaml.Unmarshal(b, crd); err != nil {
 			return nil, err
 		}
