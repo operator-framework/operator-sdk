@@ -87,8 +87,10 @@ func (g crdGenerator) validate() error {
 	if g.InputDir == "" {
 		return errors.New("output dir cannot be empty")
 	}
-	if !g.isOperatorGo && g.resource == (scaffold.Resource{}) {
-		return errors.New("resource cannot be empty")
+	if !g.isOperatorGo {
+		if err := g.resource.Validate(); err != nil {
+			return errors.Wrap(err, "resource is invalid:")
+		}
 	}
 	return nil
 }
