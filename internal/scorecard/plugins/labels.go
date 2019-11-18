@@ -17,7 +17,7 @@ package scplugins
 const (
 	necessityKey      = "necessity"
 	requiredNecessity = "required"
-	suiteKey       = "suite"
-	basicSuiteName = "basic"
-	olmSuiteName   = "olm"
+	suiteKey          = "suite"
+	basicSuiteName    = "basic"
+	olmSuiteName      = "olm"
 )

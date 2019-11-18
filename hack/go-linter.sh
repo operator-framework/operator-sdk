@@ -10,6 +10,7 @@ golangci-lint run --disable-all \
     --deadline 5m \
     --enable=nakedret \
     --enable=varcheck \
+    --enable=deadcode \
 
 
 ##todo(camilamacedo86): The following checks requires fixes in the code
@@ -20,7 +21,6 @@ golangci-lint run --disable-all \
 # --enable=goconst
 # --enable=gosec
 # --enable=maligned
-# --enable=deadcode \
 # --enable=misspell \
 # --enable=errcheck \
 # --enable=dupl \

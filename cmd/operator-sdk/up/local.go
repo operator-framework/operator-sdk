@@ -21,7 +21,6 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"syscall"
 
@@ -34,8 +33,6 @@ import (
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
-	sdkVersion "github.com/operator-framework/operator-sdk/version"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -208,10 +205,4 @@ func buildLocal(outputBinName string) error {
 		Args:        args,
 	}
 	return projutil.GoBuild(opts)
-}
-
-func printVersion() {
-	log.Infof("Go Version: %s", runtime.Version())
-	log.Infof("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH)
-	log.Infof("Version of operator-sdk: %v", sdkVersion.Version)
 }
