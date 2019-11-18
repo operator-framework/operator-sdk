@@ -22,8 +22,9 @@ golangci-lint run --disable-all \
 # --enable=gocyclo
 # --enable=lll
 # --enable=gosec
-# --enable=misspell \
-# --enable=interfacer \
-# --enable=misspell \
-# --enable=varcheck \
-# --enable=structcheck \
+# --enable=deadcode
+# --enable=misspell
+# --enable=interfacer
+# --enable=misspell
+# --enable=varcheck
+# --enable=structcheck
