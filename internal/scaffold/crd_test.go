@@ -15,6 +15,7 @@
 package scaffold
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -42,6 +43,15 @@ func TestCRDGoProject(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Must change directories since the test framework dir is a sub-module.
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { os.Chdir(wd) }()
+	if err = os.Chdir(cfg.AbsProjectPath); err != nil {
+		t.Fatal(err)
+	}
 	err = s.Execute(cfg, &CRD{Resource: r, IsOperatorGo: true})
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)

@@ -11,11 +11,15 @@ source hack/lib/test_lib.sh
 # Go inside of the mock data test project
 cd test/test-framework
 
-# Create temporary modfile for generators.
-trap_add 'rm -f go.mod go.sum' EXIT
+# Ensure test-framework is up-to-date with current Go project dependencies.
+# NOTE: the SDK dependency version still needs updating on a new release.
+sdk_version="$(go list -m -f '{{.Version}}' github.com/operator-framework/operator-sdk)"
 ../../build/operator-sdk print-deps > go.mod
+sed -i 's|github.com/operator-framework/operator-sdk\s*master||g' go.mod
 echo -e "\nreplace github.com/operator-framework/operator-sdk => ../../" >> go.mod
+go mod edit -require "github.com/operator-framework/operator-sdk@${sdk_version}"
 go build ./...
+go mod tidy
 
 # Run gen commands
 ../../build/operator-sdk generate k8s
