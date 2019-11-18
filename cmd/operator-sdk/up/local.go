@@ -57,7 +57,7 @@ kubernetes cluster using a kubeconfig file.
 	upLocalCmd.Flags().StringVar(&operatorFlags, "operator-flags", "", "The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
 	upLocalCmd.Flags().StringVar(&namespace, "namespace", "", "The namespace where the operator watches for changes.")
 	upLocalCmd.Flags().StringVar(&ldFlags, "go-ldflags", "", "Set Go linker options")
-	upLocalCmd.Flags().BoolVar(&enableRaceDetector, "enable-race-detector", false, "Enables the go runtime's race detector when compiling the operator")
+	upLocalCmd.Flags().BoolVar(&enableRaceDetector, "race", false, "Enables the go runtime's race detector when compiling the operator")
 	upLocalCmd.Flags().BoolVar(&enableDelve, "enable-delve", false, "Start the operator using the delve debugger")
 	switch projutil.GetOperatorType() {
 	case projutil.OperatorTypeAnsible:
