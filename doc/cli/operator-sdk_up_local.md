@@ -22,6 +22,7 @@ operator-sdk up local [flags]
       --kubeconfig string       The file path to kubernetes configuration file; defaults to location specified by $KUBECONFIG with a fallback to $HOME/.kube/config if not set
       --namespace string        The namespace where the operator watches for changes.
       --operator-flags string   The flags that the operator needs. Example: "--flag1 value1 --flag2=value2"
+      --race                    Enables the go runtime's race detector when compiling the operator
 ```
 
 ### SEE ALSO
