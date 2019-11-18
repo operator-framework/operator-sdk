@@ -57,7 +57,7 @@ func OpenAPIGen() error {
 	}
 
 	cfg := genutil.Config{InputDir: scaffold.ApisDir, OutputDir: scaffold.CRDsDir}
-	crd := gencrd.NewGo(cfg)
+	crd := gencrd.NewCRDGo(cfg)
 	if err := crd.Generate(); err != nil {
 		return errors.Wrapf(err, "error generating CRDs from APIs in %s", scaffold.ApisDir)
 	}

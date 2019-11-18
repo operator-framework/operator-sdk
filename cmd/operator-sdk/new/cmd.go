@@ -261,13 +261,9 @@ func doAnsibleScaffold() error {
 		return fmt.Errorf("new ansible scaffold failed: (%v)", err)
 	}
 
-	crdsDir := filepath.Join(projectName, scaffold.CRDsDir)
-	gcfg := genutil.Config{InputDir: crdsDir, OutputDir: crdsDir}
-	crd := gencrd.NewNonGo(gcfg, *resource)
-	if err := crd.Generate(); err != nil {
-		return errors.Wrapf(err, "error generating CRD for %s", resource)
+	if err = generateCRDNonGo(projectName, *resource); err != nil {
+		return err
 	}
-	log.Info("Generated CustomResourceDefinition manifests.")
 
 	// Remove placeholders from empty directories
 	err = os.Remove(filepath.Join(s.AbsProjectPath, roleFiles.Path))
@@ -349,17 +345,24 @@ func doHelmScaffold() error {
 		return fmt.Errorf("new helm scaffold failed: (%v)", err)
 	}
 
-	crdsDir := filepath.Join(projectName, scaffold.CRDsDir)
-	gcfg := genutil.Config{InputDir: crdsDir, OutputDir: crdsDir}
-	crd := gencrd.NewNonGo(gcfg, *resource)
-	if err := crd.Generate(); err != nil {
-		return errors.Wrapf(err, "error generating CRD for %s", resource)
+	if err = generateCRDNonGo(projectName, *resource); err != nil {
+		return err
 	}
-	log.Info("Generated CustomResourceDefinition manifests.")
 
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
 		return fmt.Errorf("failed to update the RBAC manifest for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
 	}
+	return nil
+}
+
+func generateCRDNonGo(projectName string, resource scaffold.Resource) error {
+	crdsDir := filepath.Join(projectName, scaffold.CRDsDir)
+	gcfg := genutil.Config{InputDir: crdsDir, OutputDir: crdsDir}
+	crd := gencrd.NewCRDNonGo(gcfg, resource)
+	if err := crd.Generate(); err != nil {
+		return errors.Wrapf(err, "error generating CRD for %s", resource)
+	}
+	log.Info("Generated CustomResourceDefinition manifests.")
 	return nil
 }
 

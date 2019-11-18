@@ -97,9 +97,9 @@ func crdFunc(cmd *cobra.Command, args []string) error {
 	}
 
 	// This command does not consider an APIs dir. Instead it adds a plain CRD
-	// for the provided resource. We can use NewNonGo to get this behavior.
+	// for the provided resource. We can use NewCRDNonGo to get this behavior.
 	gcfg := genutil.Config{InputDir: scaffold.ApisDir, OutputDir: scaffold.CRDsDir}
-	crd := gencrd.NewNonGo(gcfg, *resource)
+	crd := gencrd.NewCRDNonGo(gcfg, *resource)
 	if err := crd.Generate(); err != nil {
 		return errors.Wrapf(err, "error generating CRD for %s", resource)
 	}

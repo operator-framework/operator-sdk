@@ -47,9 +47,9 @@ type crdGenerator struct {
 	resource scaffold.Resource
 }
 
-// NewGo returns a CRD generator configured to generate CustomResourceDefintion
+// NewCRDGo returns a CRD generator configured to generate CustomResourceDefintion
 // manifests from Go API files.
-func NewGo(cfg genutil.Config) genutil.Generator {
+func NewCRDGo(cfg genutil.Config) genutil.Generator {
 	g := crdGenerator{
 		Config:       cfg,
 		isOperatorGo: true,
@@ -63,9 +63,9 @@ func NewGo(cfg genutil.Config) genutil.Generator {
 	return g
 }
 
-// NewGo returns a CRD generator configured to generate a
+// NewCRDGo returns a CRD generator configured to generate a
 // CustomResourceDefintion manifest from scratch using data in resource.
-func NewNonGo(cfg genutil.Config, resource scaffold.Resource) genutil.Generator {
+func NewCRDNonGo(cfg genutil.Config, resource scaffold.Resource) genutil.Generator {
 	g := crdGenerator{
 		Config:       cfg,
 		resource:     resource,
@@ -106,9 +106,6 @@ func (g crdGenerator) Generate() (err error) {
 	}
 	if err != nil {
 		return errors.Wrap(err, "error generating CRD manifests")
-	}
-	if len(fileMap) == 0 {
-		return errors.New("error generating CRD manifests: no generated files found")
 	}
 	if err = os.MkdirAll(g.OutputDir, fileutil.DefaultDirFileMode); err != nil {
 		return errors.Wrapf(err, "error mkdir %s", g.OutputDir)
@@ -199,6 +196,9 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 			fileMap[fileNameNoExt+"_crd.yaml"] = modifiedCRD
 		}
 	}
+	if len(fileMap) == 0 {
+		return nil, errors.New("no generated files found")
+	}
 	return fileMap, nil
 }
 
@@ -254,7 +254,7 @@ func (g crdGenerator) generateNonGo() (map[string][]byte, error) {
 
 // newCRDForResource constructs a barebones CRD using data in resource.
 func newCRDForResource(r scaffold.Resource) *apiextv1beta1.CustomResourceDefinition {
-	crd := &apiextv1beta1.CustomResourceDefinition{
+	return &apiextv1beta1.CustomResourceDefinition{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: apiextv1beta1.SchemeGroupVersion.String(),
 			Kind:       "CustomResourceDefinition",
@@ -268,28 +268,16 @@ func newCRDForResource(r scaffold.Resource) *apiextv1beta1.CustomResourceDefinit
 			Versions: []apiextv1beta1.CustomResourceDefinitionVersion{
 				{Name: r.Version, Served: true, Storage: true},
 			},
+			Names: apiextv1beta1.CustomResourceDefinitionNames{
+				Kind:     r.Kind,
+				ListKind: r.Kind + "List",
+				Plural:   r.Resource,
+				Singular: r.LowerKind,
+			},
 			Subresources: &apiextv1beta1.CustomResourceSubresources{
 				Status: &apiextv1beta1.CustomResourceSubresourceStatus{},
 			},
 		},
-	}
-	setCRDNamesForResource(crd, r)
-	return crd
-}
-
-// setCRDNamesForResource creates a full set of CRD names using data in resource.
-func setCRDNamesForResource(crd *apiextv1beta1.CustomResourceDefinition, r scaffold.Resource) {
-	if crd.Spec.Names.Kind == "" {
-		crd.Spec.Names.Kind = r.Kind
-	}
-	if crd.Spec.Names.ListKind == "" {
-		crd.Spec.Names.ListKind = r.Kind + "List"
-	}
-	if crd.Spec.Names.Plural == "" {
-		crd.Spec.Names.Plural = r.Resource
-	}
-	if crd.Spec.Names.Singular == "" {
-		crd.Spec.Names.Singular = r.LowerKind
 	}
 }
 

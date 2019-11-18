@@ -133,7 +133,7 @@ func apiRun(cmd *cobra.Command, args []string) error {
 	}
 
 	gcfg := genutil.Config{InputDir: scaffold.ApisDir, OutputDir: scaffold.CRDsDir}
-	crd := gencrd.NewGo(gcfg)
+	crd := gencrd.NewCRDGo(gcfg)
 	if err := crd.Generate(); err != nil {
 		return errors.Wrapf(err, "error generating CRDs from APIs in %s", scaffold.ApisDir)
 	}

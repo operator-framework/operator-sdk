@@ -37,7 +37,7 @@ func TestCRDGo(t *testing.T) {
 	}
 
 	cfg := genutil.Config{InputDir: filepath.Join(tfDir, "pkg", "apis")}
-	g := NewGo(cfg)
+	g := NewCRDGo(cfg)
 	fileMap, err := g.(crdGenerator).generateGo()
 	if err != nil {
 		t.Fatalf("Failed to execute CRD generator: %v", err)
@@ -60,7 +60,7 @@ func TestCRDNonGo(t *testing.T) {
 	}
 
 	cfg := genutil.Config{InputDir: filepath.Join(tfDir, "deploy", "crds")}
-	g := NewNonGo(cfg, *r)
+	g := NewCRDNonGo(cfg, *r)
 	fileMap, err := g.(crdGenerator).generateNonGo()
 	if err != nil {
 		t.Fatalf("Failed to execute CRD generator: %v", err)
