@@ -78,7 +78,6 @@ type frameworkOpts struct {
 	kubeconfigPath      string
 	globalManPath       string
 	namespacedManPath   string
-	localOperator       bool
 	singleNamespaceMode bool
 	isLocalOperator     bool
 	localOperatorArgs   string
