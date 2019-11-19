@@ -11,7 +11,6 @@ This guide walks through an example of building a simple memcached-operator usin
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
-- Optional: [dep][dep_tool] version v0.5.0+.
 
 **Note**: This guide uses [minikube][minikube_tool] version v0.25.0+ as the local Kubernetes cluster and [quay.io][quay_link] for the public registry.
 
@@ -34,21 +33,17 @@ To learn about the project directory structure, see [project layout][layout_doc]
 
 #### A note on dependency management
 
-By default, `operator-sdk new` generates a `go.mod` file to be used with [Go modules][go_mod_wiki]. The `--repo=<path>` flag is required when creating a project outside of `$GOPATH/src`, as scaffolded files require a valid module path. If you'd like to use [`dep`][dep_tool], set `--dep-manager=dep` when initializing your project, which will create a `Gopkg.toml` file with the same dependency information.
-
-##### Go modules
-
-If using Go modules (the default dependency manager) in your project, ensure you activate module support before using the SDK. From the [Go modules Wiki][go_mod_wiki]:
+`operator-sdk new` generates a `go.mod` file to be used with [Go modules][go_mod_wiki]. The `--repo=<path>` flag is required when creating a project outside of `$GOPATH/src`, as scaffolded files require a valid module path. Ensure you activate module support before using the SDK. From the [Go modules Wiki][go_mod_wiki]:
 
 > You can activate module support in one of two ways:
-> - Invoke the go command in a directory outside of the $GOPATH/src tree, with a valid go.mod file in the current directory or any parent of it and the environment variable GO111MODULE unset (or explicitly set to auto).
+> - Invoke the go command in a directory with a valid go.mod file in the current directory or any parent of it and the environment variable GO111MODULE unset (or explicitly set to auto).
 > - Invoke the go command with GO111MODULE=on environment variable set.
 
 ##### Vendoring
 
-By default, an operator's dependencies are managed with `modules` and `--vendor=false`, so calls to `go {build,clean,get,install,list,run,test}` by `operator-sdk` subcommands will use an external modules directory. Execute `go help modules` for more information.
+By default `--vendor=false`, so an operator's dependencies are downloaded and cached in the Go modules cache. Calls to `go {build,clean,get,install,list,run,test}` by `operator-sdk` subcommands will use an external modules directory. Execute `go help modules` for more information.
 
-The Operator SDK can create a [`vendor`][go_vendoring] directory for Go dependencies if the dependency manager is `modules` and the project is initialized with `--vendor=true`, or if the dependency manager is `dep` (which requires vendoring).
+The Operator SDK can create a [`vendor`][go_vendoring] directory for Go dependencies if the project is initialized with `--vendor=true`.
 
 #### Operator scope
 
@@ -90,10 +85,13 @@ type MemcachedSpec struct {
 	Size int32 `json:"size"`
 }
 type MemcachedStatus struct {
-	// Nodes are the names of the memcached pods
+	// Nodes are the names of the memcached pods 
+	// +listType=set  
 	Nodes []string `json:"nodes"`
 }
 ```
+
+**NOTE:** Comment directives, such as +listType=set, are necessary in certain situations to avoid API rule violations when generating OpenAPI files. See https://godoc.org/k8s.io/kube-openapi/pkg/idl to learn more.
 
 After modifying the `*_types.go` file always run the following command to update the generated code for that resource type:
 
@@ -102,12 +100,27 @@ $ operator-sdk generate k8s
 ```
 
 ### OpenAPI validation
-To update the OpenAPI validation section in the CRD `deploy/crds/cache.example.com_memcacheds_crd.yaml`, run the following command.
+
+OpenAPIv3 schemas are added to CRD manifests in the `spec.validation` block when the manifests are generated. This validation block allows Kubernetes to validate the properties in a Memcached Custom Resource when it is created or updated. Additionally a `pkg/apis/<group>/<version>/zz_generated.openapi.go` file is generated containing the Go representation of this validation block if the `+k8s:openapi-gen=true` annotation is present above the kind type declaration (present by default). This auto-generated code is your Go kind type's OpenAPI model, from which you can create a full OpenAPI spec and generate a client. Check out [this issue comment][openapi-details] for steps on how to do so.
+
+Markers (annotations) are available to configure validations for your API. These markers will always have a `+kubebuilder:validation` prefix. For example, adding an enum type specification can be done by adding the following marker:
+
+```go
+// +kubebuilder:validation:Enum=Lion;Wolf;Dragon
+type Alias string
+```
+
+Usage of markers in API code is discussed in the kubebuilder [CRD generation][generating-crd] and [marker][markers] documentation. A full list of OpenAPIv3 validation markers can be found [here][crd-markers].
+
+To update the OpenAPI validation section in the CRD `deploy/crds/cache.example.com_memcacheds_crd.yaml`, run the following command:
 
 ```console
 $ operator-sdk generate openapi
 ```
-This validation section allows Kubernetes to validate the properties in a Memcached Custom Resource when it is created or updated. An example of the generated YAML is as follows:
+
+**Note:** You may see errors like "API rule violation" when running the above command. For information on these errors see the [API rules][api-rules] documentation
+
+An example of the generated YAML is as follows:
 
 ```YAML
 spec:
@@ -121,8 +134,14 @@ spec:
               type: integer
 ```
 
-To learn more about OpenAPI v3.0 validation schemas in Custom Resource Definitions, refer to the [Kubernetes Documentation][doc_validation_schema].
+To learn more about OpenAPI v3.0 validation schemas in Custom Resource Definitions, refer to the [Kubernetes Documentation][doc-validation-schema].
 
+[openapi-details]: https://github.com/kubernetes/kube-openapi/issues/13#issuecomment-337719430
+[doc-validation-schema]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#specifying-a-structural-schema
+[generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
+[markers]: https://book.kubebuilder.io/reference/markers.html
+[crd-markers]: https://book.kubebuilder.io/reference/markers/crd-validation.html
+[api-rules]: https://github.com/kubernetes/kubernetes/tree/36981002246682ed7dc4de54ccc2a96c1a0cbbdb/api/api-rules
 
 ## Add a new Controller
 
@@ -165,7 +184,7 @@ err := c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequest
 
 #### Controller configurations
 
-There are a number of useful configurations that can be made when initialzing a controller and declaring the watch parameters. For more details on these configurations consult the upstream [controller godocs][controller_godocs]. 
+There are a number of useful configurations that can be made when initialzing a controller and declaring the watch parameters. For more details on these configurations consult the upstream [controller godocs][controller_godocs].
 
 - Set the max number of concurrent Reconciles for the controller via the [`MaxConcurrentReconciles`][controller_options]  option. Defaults to 1.
   ```Go
@@ -231,16 +250,10 @@ Once this is done, there are two ways to run the operator:
 
 **Note**: `operator-sdk build` invokes `docker build` by default, and optionally `buildah bud`. If using `buildah`, skip to the `operator-sdk build` invocation instructions below. If using `docker`, make sure your docker daemon is running and that you can run the docker client without sudo. You can check if this is the case by running `docker version`, which should complete without errors. Follow instructions for your OS/distribution on how to start the docker daemon and configure your access permissions, if needed.
 
-**Note**: If a `go.mod` file and a `vendor/` directory are present, run
+**Note**: If a `vendor/` directory is present, run
 
 ```sh
 $ go mod vendor
-```
-
-or if a `Gopkg.toml` file is present run
-
-```sh
-$ dep ensure
 ```
 
 before building the memcached-operator image.
@@ -448,7 +461,7 @@ func main() {
 
 **NOTES:**
 
-* After adding new import paths to your operator project, run `go mod vendor` if a `go.mod` file and a `vendor/` directory are present (or `dep ensure` if a `Gopkg.toml` file is present) in the root of your project directory to fulfill these dependencies.
+* After adding new import paths to your operator project, run `go mod vendor` if a `vendor/` directory is present in the root of your project directory to fulfill these dependencies.
 * Your 3rd party resource needs to be added before add the controller in `"Setup all Controllers"`.
 
 ### Handle Cleanup on Deletion
@@ -645,7 +658,6 @@ When the operator is not running in a cluster, the Manager will return an error 
 [homebrew_tool]:https://brew.sh/
 [go_mod_wiki]: https://github.com/golang/go/wiki/Modules
 [go_vendoring]: https://blog.gopheracademy.com/advent-2015/vendor-folder/
-[dep_tool]:https://golang.github.io/dep/docs/installation.html
 [git_tool]:https://git-scm.com/downloads
 [go_tool]:https://golang.org/dl/
 [docker_tool]:https://docs.docker.com/install/
@@ -662,4 +674,3 @@ When the operator is not running in a cluster, the Manager will return an error 
 [result_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Result
 [metrics_doc]: ./user/metrics/README.md
 [quay_link]: https://quay.io
-[doc_validation_schema]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#specifying-a-structural-schema

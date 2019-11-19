@@ -52,56 +52,66 @@ type Runner interface {
 	GetFinalizer() (string, bool)
 }
 
+func ansibleVerbosityString(verbosity int) string {
+	if verbosity > 0 {
+		return fmt.Sprintf("-%v", strings.Repeat("v", verbosity))
+	}
+	return ""
+}
+
+type cmdFuncType func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd
+
+func playbookCmdFunc(verbosity, path string) cmdFuncType {
+	return func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd {
+		return exec.Command("ansible-runner", verbosity, "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "-p", path, "-i", ident, "run", inputDirPath)
+	}
+}
+
+func roleCmdFunc(verbosity, path string) cmdFuncType {
+	rolePath, roleName := filepath.Split(path)
+	return func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd {
+		return exec.Command("ansible-runner", verbosity, "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath, "--hosts", "localhost", "-i", ident, "run", inputDirPath)
+	}
+}
+
 // New - creates a Runner from a Watch struct
 func New(watch watches.Watch) (Runner, error) {
-	// handle role or playbook
 	var path string
-	var cmdFunc func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd
+	var cmdFunc, finalizerCmdFunc cmdFuncType
+
+	err := watch.Validate()
+	if err != nil {
+		log.Error(err, "Failed to validate watch")
+		return nil, err
+	}
+	verbosityString := ansibleVerbosityString(watch.AnsibleVerbosity)
 
 	switch {
 	case watch.Playbook != "":
 		path = watch.Playbook
-		cmdFunc = func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd {
-			return exec.Command("ansible-runner", "-vv", "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "-p", path, "-i", ident, "run", inputDirPath)
-		}
+		cmdFunc = playbookCmdFunc(verbosityString, path)
 	case watch.Role != "":
 		path = watch.Role
-		cmdFunc = func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd {
-			rolePath, roleName := filepath.Split(path)
-			return exec.Command("ansible-runner", "-vv", "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath, "--hosts", "localhost", "-i", ident, "run", inputDirPath)
-		}
-	default:
-		return nil, fmt.Errorf("must specify Role or Path")
+		cmdFunc = roleCmdFunc(verbosityString, path)
 	}
 
 	// handle finalizer
-	var finalizer *watches.Finalizer
-	var finalizerCmdFunc func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd
 	switch {
 	case watch.Finalizer == nil:
-		finalizer = nil
 		finalizerCmdFunc = nil
 	case watch.Finalizer.Playbook != "":
-		finalizer = watch.Finalizer
-		finalizerCmdFunc = func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd {
-			return exec.Command("ansible-runner", "-vv", "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "-p", finalizer.Playbook, "-i", ident, "run", inputDirPath)
-		}
+		finalizerCmdFunc = playbookCmdFunc(verbosityString, watch.Finalizer.Playbook)
 	case watch.Finalizer.Role != "":
-		finalizer = watch.Finalizer
-		finalizerCmdFunc = func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd {
-			path := strings.TrimRight(finalizer.Role, "/")
-			rolePath, roleName := filepath.Split(path)
-			return exec.Command("ansible-runner", "-vv", "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath, "--hosts", "localhost", "-i", ident, "run", inputDirPath)
-		}
-	case len(watch.Finalizer.Vars) != 0:
-		finalizer = watch.Finalizer
+		finalizerCmdFunc = roleCmdFunc(verbosityString, watch.Finalizer.Role)
+	default:
 		finalizerCmdFunc = cmdFunc
 	}
 
 	return &runner{
 		Path:               path,
 		cmdFunc:            cmdFunc,
-		Finalizer:          finalizer,
+		Vars:               watch.Vars,
+		Finalizer:          watch.Finalizer,
 		finalizerCmdFunc:   finalizerCmdFunc,
 		GVK:                watch.GroupVersionKind,
 		maxRunnerArtifacts: watch.MaxRunnerArtifacts,
@@ -114,12 +124,12 @@ type runner struct {
 	GVK                schema.GroupVersionKind // GVK being watched that corresponds to the Path
 	Finalizer          *watches.Finalizer
 	cmdFunc            func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd // returns a Cmd that runs ansible-runner
+	Vars               map[string]interface{}
 	finalizerCmdFunc   func(ident, inputDirPath string, maxArtifacts int) *exec.Cmd
 	maxRunnerArtifacts int
 }
 
 func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig string) (RunResult, error) {
-
 	timer := metrics.ReconcileTimer(r.GVK.String())
 	defer timer.ObserveDuration()
 
@@ -169,8 +179,9 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 		i, err := strconv.Atoi(ma)
 		if err != nil {
 			log.Info("Invalid max runner artifact annotation", "err", err, "value", ma)
+		} else {
+			maxArtifacts = i
 		}
-		maxArtifacts = i
 	}
 
 	go func() {
@@ -240,7 +251,8 @@ func (r *runner) isFinalizerRun(u *unstructured.Unstructured) bool {
 //      "namespace": <object_namespace>,
 //   },
 //   <cr_spec_fields_as_snake_case>,
-//   ...
+//   <watch vars>,
+//   <finalizer vars>,
 //   _<group_as_snake>_<kind>: {
 //       <cr_object> as is
 //   }
@@ -265,6 +277,9 @@ func (r *runner) makeParameters(u *unstructured.Unstructured) map[string]interfa
 	specKey := fmt.Sprintf("%s_spec", objKey)
 	parameters[specKey] = spec
 
+	for k, v := range r.Vars {
+		parameters[k] = v
+	}
 	if r.isFinalizerRun(u) {
 		for k, v := range r.Finalizer.Vars {
 			parameters[k] = v

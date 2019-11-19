@@ -1,14 +1,14 @@
-# FAQ
+# Operator SDK FAQ
 
-### How can I have separate logic for Create, Update, and Delete events? When reconciling an object can I access its previous state?
+## How can I have separate logic for Create, Update, and Delete events? When reconciling an object can I access its previous state?
 
 You should not have separate logic. Instead design your reconciler to be idempotent. See the [controller-runtime FAQ][controller-runtime_faq] for more details.
 
-### When my Custom Resource is deleted, I need to know it's contents or perform cleanup tasks. How can I do that?
+## When my Custom Resource is deleted, I need to know its contents or perform cleanup tasks. How can I do that?
 
 Use a [finalizer].
 
-### I keep seeing the following intermittent warning in my Operator's logs: `The resourceVersion for the provided watch is too old.` What's wrong?
+## I keep seeing the following intermittent warning in my Operator's logs: `The resourceVersion for the provided watch is too old.` What's wrong?
 
 This is completely normal and expected behavior.
 
@@ -21,7 +21,7 @@ Never seeing this warning may suggest that your watch or cache is not healthy. I
 For more information on `kube-apiserver` request timeout options, see the [Kubernetes API Server Command Line Tool Reference][kube-apiserver_options]
 
 
-### I keep seeing errors like "Failed to create metrics Service", how do I fix this?
+## I keep seeing errors like "Failed to create metrics Service", how do I fix this?
 
 If you run into the following error message:
 
@@ -36,6 +36,19 @@ Add the following to your `deploy/role.yaml` file to grant the operator permissi
   - deployments/finalizers
 ```
 
+## My Ansible module is missing a dependency. How do I add it to the image? 
+
+Unfortunately, adding the entire dependency tree for all Ansible modules would be excessive. Fortunately, you can add it easily. Simply edit your build/Dockerfile. You'll want to change to root for the install command, just be sure to swap back using a series of commands like the following right after the `FROM` line.
+
+```
+USER 0
+RUN yum -y install my-dependency
+RUN pip3 install my-python-dependency
+USER 1001
+```
+
+If you aren't sure what dependencies are required, start up a container using the image in the `FROM` line as root. That will look something like this.
+`docker run -u 0 -it --rm --entrypoint /bin/bash quay.io/operator-framework/ansible-operator:<sdk-tag-version>`
 
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
 [controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my-reconciler-for-different-types-of-events-eg-create-update-delete

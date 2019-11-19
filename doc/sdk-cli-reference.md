@@ -1,11 +1,11 @@
-# CLI Guide
+# Operator SDK Command Line Interface (CLI) Reference
 
 ```bash
 Usage:
   operator-sdk [command]
 ```
 
-### Global Flags
+## Global Flags
 
 * `--verbose` - enable debug logging
 
@@ -36,7 +36,7 @@ building example-operator...
 
 building container quay.io/example/operator:v0.0.1...
 Sending build context to Docker daemon  163.9MB
-Step 1/4 : FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
+Step 1/4 : FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
  ---> 77144d8c6bdc
 Step 2/4 : ADD tmp/_output/bin/example-operator /usr/local/bin/example-operator
  ---> 2ada0d6ca93c
@@ -89,33 +89,7 @@ $ operator-sdk completion bash
 
 Prints the most recent Golang packages and versions required by operators. Prints in columnar format by default.
 
-### Flags
-
-* `--dep-manager` string - Dependency manager file type to print (choices: "dep", "modules")
-
 ### Example
-
-With dependency manager `dep`:
-
-```console
-$ operator-sdk print-deps
-required = [
-  "k8s.io/code-generator/cmd/deepcopy-gen",
-  "k8s.io/code-generator/cmd/conversion-gen",
-  "k8s.io/code-generator/cmd/client-gen",
-  "k8s.io/code-generator/cmd/lister-gen",
-  "k8s.io/code-generator/cmd/informer-gen",
-  "k8s.io/code-generator/cmd/openapi-gen",
-  "k8s.io/gengo/args",
-]
-
-[[override]]
-  name = "k8s.io/code-generator"
-  revision = "6702109cc68eb6fe6350b83e14407c8d7309fd1a"
-...
-```
-
-With dependency manager Go `modules`:
 
 ```console
 $ operator-sdk print-deps
@@ -227,9 +201,8 @@ you will need to rename it before running migrate or manually add it to your Doc
 
 #### Flags
 
-* `--dep-manager` string - Dependency manager the migrated project will use (choices: "dep", "modules") (default "modules")
 * `--header-file` string - Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt
-* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` with Go modules, and cannot be set if `--dep-manager=dep` (e.g. github.com/example-inc/my-opertor)
+* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` (e.g. github.com/example-inc/my-operator)
 
 ### Example
 
@@ -264,10 +237,9 @@ Scaffolds a new operator project.
 * `--helm-chart-repo` string - Chart repository URL for the requested helm chart
 * `--helm-chart-version` string - Specific version of the helm chart (default is latest version)
 * `--header-file` string - Path to file containing headers for generated Go files. Copied to hack/boilerplate.go.txt
-* `--dep-manager` string - Dependency manager the new project will use (choices: "dep", "modules") (default "modules")
-* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` with Go modules, and cannot be set if `--dep-manager=dep`
+* `--repo` string - Project repository path for Go operators. Used as the project's Go import path. This must be set if outside of `$GOPATH/src` (e.g. github.com/example-inc/my-operator)
 * `--git-init` - Initialize the project directory as a git repository (default `false`)
-* `--vendor` - Use a vendor directory for dependencies. This flag only applies when `--dep-manager=modules` (the default)
+* `--vendor` - Use a vendor directory for dependencies
 * `--skip-validation` - Do not validate the resulting project's structure and dependencies. (Only used for --type go)
 * `-h, --help` - help for new
 
@@ -363,7 +335,7 @@ Adds a new controller under `pkg/controller/<kind>/...` that, by default, reconc
 
 * `--api-version` string - CRD APIVersion in the format `$GROUP_NAME/$VERSION` (e.g app.example.com/v1alpha1)
 * `--kind` string - CRD Kind. (e.g AppService)
-* `--custom-api-import` string - External Kubernetes resource import path of the form "host.com/repo/path[=import_identifier]". import_identifier is optional
+* `--custom-api-import` string - External Kubernetes resource import path of the form "host.com/repo/path\[=import_identifier\]". import_identifier is optional
 
 #### Example
 
@@ -448,27 +420,26 @@ Run scorecard tests on an operator
 * `-o, --output` string - Output format for results. Valid values: `human-readable` or `json` (default `human-readable`)
 * `proxy-image` string - Image name for scorecard proxy (default "quay.io/operator-framework/scorecard-proxy")
 * `proxy-pull-policy` string - Pull policy for scorecard proxy image (default "Always")
+* `selector` string - Selector (label query) to filter tests on (only valid when version is v1alpha2)
 * `-h, --help` - help for scorecard
+* `version` string - The scorecard version to run (default v1alpha1), the tech preview version is v1alpha2.
 
 ### Example
 
 ```console
-$ operator-sdk scorecard --cr-manifest deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml --csv-path deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml
-Basic Operator:
-        Spec Block Exists: 1/1 points
-        Status Block Exist: 1/1 points
-        Operator actions are reflected in status: 1/1 points
-        Writing into CRs has an effect: 1/1 points
-OLM Integration:
-        Provided APIs have validation: 1/1
-        Owned CRDs have resources listed: 1/1 points
-        CRs have at least 1 example: 0/1 points
-        Spec fields with descriptors: 1/1 points
-        Status fields with descriptors: 0/1 points
-
-Total Score: 84%
-SUGGESTION: Add an alm-examples annotation to your CSV to pass the CRs have at least 1 example test
-SUGGESTION: Add a status descriptor for nodes
+$ operator-sdk scorecard --cr-manifest deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml --csv-path deploy/olm-catalog/memcached-operator/0.0.2/memcached-operator.v0.0.2.clusterserviceversion.yaml -o text
+basic:
+	Writing into CRs has an effect     : pass
+	Spec Block Exists                  : pass
+	Status Block Exists                : pass
+olm:
+	Spec fields with descriptors       : pass
+	Status fields with descriptors     : pass
+	Provided APIs have validation      : fail
+	Owned CRDs have resources listed   : pass
+	CRs have at least 1 example        : pass
+SUGGESTION: Add CRD validation for Memcached/v1alpha1
+SUGGESTION: If it would be helpful to an end-user to understand or troubleshoot your CR, consider adding resources [deployments/v1 services/v1 configmaps/v1 memcacheds/v1alpha1 replicasets/v1] to the resources section for owned CRD Memcached
 ```
 
 ## test

@@ -20,8 +20,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"
@@ -59,8 +59,11 @@ func crdFunc(cmd *cobra.Command, args []string) error {
 
 	cfg := &input.Config{
 		AbsProjectPath: projutil.MustGetwd(),
-		Repo:           projutil.GetGoPkg(),
 	}
+	if projutil.IsOperatorGo() {
+		cfg.Repo = projutil.GetGoPkg()
+	}
+
 	if len(args) != 0 {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}

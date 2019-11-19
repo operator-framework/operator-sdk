@@ -17,8 +17,8 @@ package add
 import (
 	"fmt"
 
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	log "github.com/sirupsen/logrus"
@@ -39,6 +39,7 @@ This command must be run from the project root directory.
 If the controller pkg for that Kind already exists at pkg/controller/<kind> then the command will not overwrite and return an error.
 
 Example:
+
 	$ operator-sdk add controller --api-version=app.example.com/v1alpha1 --kind=AppService
 	$ tree pkg/controller
 	pkg/controller/

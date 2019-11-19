@@ -1,12 +1,12 @@
 # kernel-style V=1 build verbosity
 ifeq ("$(origin V)", "command line")
-       BUILD_VERBOSE = $(V)
+  BUILD_VERBOSE = $(V)
 endif
 
 ifeq ($(BUILD_VERBOSE),1)
-       Q =
+  Q =
 else
-       Q = @
+  Q = @
 endif
 
 VERSION = $(shell git describe --dirty --tags --always)
@@ -27,11 +27,23 @@ SCORECARD_PROXY_IMAGE ?= $(SCORECARD_PROXY_BASE_IMAGE)
 HELM_ARCHES:="amd64" "ppc64le"
 
 export CGO_ENABLED:=0
-export GO111MODULE:=on
-export GOPROXY?=https://proxy.golang.org/
 .DEFAULT_GOAL:=help
 
+.PHONY: help
+help: ## Show this help screen
+	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
+	@echo ''
+	@echo 'Available targets are:'
+	@echo ''
+	@grep -E '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ''
+
+.PHONY: all
 all: format test build/operator-sdk ## Test and Build the Operator SDK
+
+# Code management.
+.PHONY: format tidy clean cli-doc
 
 format: ## Format the source code
 	$(Q)go fmt $(PKGS)
@@ -42,16 +54,17 @@ tidy: ## Update dependencies
 clean: ## Clean up the build artifacts
 	$(Q)rm -rf build
 
-help: ## Show this help screen
-	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
-	@echo ''
-	@echo 'Available targets are:'
-	@echo ''
-	@grep -E '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
-	@echo ''
+gen-cli-doc: ## Generate CLI documentation
+	./hack/generate/gen-cli-doc.sh
 
-.PHONY: all test format tidy clean help
+gen-test-framework: install ## Run generate commands to update test/test-framework
+	./hack/generate/gen-test-framework.sh
+
+generate: gen-cli-doc gen-test-framework  ## Run all generate targets
+.PHONY: generate gen-cli-doc gen-test-framework
+
+# Build/install/release the SDK.
+.PHONY: install release_builds release
 
 install: ## Build & install the Operator SDK CLI binary
 	$(Q)go install \
@@ -63,11 +76,6 @@ install: ## Build & install the Operator SDK CLI binary
 		" \
 		$(BUILD_PATH)
 
-ci-build: build/operator-sdk-$(VERSION) ci-install
-
-ci-install:
-	mv build/operator-sdk-$(VERSION) build/operator-sdk
-
 release_builds := \
 	build/operator-sdk-$(VERSION)-x86_64-linux-gnu \
 	build/operator-sdk-$(VERSION)-x86_64-apple-darwin \
@@ -78,7 +86,6 @@ release: clean $(release_builds) $(release_builds:=.asc) ## Release the Operator
 build/operator-sdk-%-x86_64-linux-gnu: GOARGS = GOOS=linux GOARCH=amd64
 build/operator-sdk-%-x86_64-apple-darwin: GOARGS = GOOS=darwin GOARCH=amd64
 build/operator-sdk-%-ppc64le-linux-gnu: GOARGS = GOOS=linux GOARCH=ppc64le
-
 
 build/%: $(SOURCES)
 	$(Q)$(GOARGS) go build \
@@ -103,102 +110,93 @@ build/%.asc:
 	fi; \
 	}
 
-.PHONY: install release_builds release
+# Static tests.
+.PHONY: test test-markdown test-sanity test-unit test-linter
 
-test: test/unit ## Run the tests
+test: test-unit ## Run the tests
 
-test-ci: test/markdown test/sanity test/unit install test/subcommand test/e2e ## Run the CI test suite
+test-linter:  ## Run golangci-lint for the project
+	./hack/go-linter.sh
 
-test/ci-go: test/subcommand test/e2e/go
+test-markdown test/markdown:
+	./hack/ci/marker
 
-test/ci-ansible: test/e2e/ansible-molecule
-
-test/ci-helm: test/e2e/helm
-
-test/sanity: tidy
+test-sanity test/sanity: tidy build/operator-sdk
 	./hack/tests/sanity-check.sh
 
-test/unit: ## Run the unit tests
+test-unit test/unit: ## Run the unit tests
 	$(Q)go test -count=1 -short ./cmd/...
 	$(Q)go test -count=1 -short ./pkg/...
 	$(Q)go test -count=1 -short ./internal/...
 
-test/subcommand: test/subcommand/test-local test/subcommand/scorecard test/subcommand/alpha-olm
+# CI tests.
+.PHONY: test-ci
 
-test/subcommand2:
-	./ci/tests/subcommand.sh
+test-ci: test-markdown test-sanity test-unit install test-subcommand test-e2e ## Run the CI test suite
 
-test/subcommand/test-local:
-	./hack/tests/test-subcommand.sh
+# Subcommand tests.
+.PHONY: test-subcommand test-subcommand-local test-subcommand-scorecard test-subcommand-olm-install
 
-test/subcommand/scorecard:
-	./hack/tests/scorecard-subcommand.sh
+test-subcommand: test-subcommand-local test-subcommand-scorecard test-subcommand-olm-install
 
-test/subcommand/scorecard2:
-	./ci/tests/scorecard-subcommand.sh
+test-subcommand-local:
+	./hack/tests/subcommand.sh
 
-test/subcommand/alpha-olm:
-	./hack/tests/alpha-olm-subcommands.sh
+test-subcommand-scorecard:
+	./hack/tests/subcommand-scorecard.sh
 
-test/e2e: test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm ## Run the e2e tests
+test-subcommand-olm-install:
+	./hack/tests/subcommand-olm-install.sh
 
-test/e2e/go:
+# E2E tests.
+.PHONY: test-e2e test-e2e-go test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm
+
+test-e2e: test-e2e-go test-e2e-ansible test-e2e-ansible-molecule test-e2e-helm ## Run the e2e tests
+
+test-e2e-go:
 	./hack/tests/e2e-go.sh $(ARGS)
 
-test/e2e/go2:
-	./ci/tests/e2e-go.sh $(ARGS)
-
-test/e2e/ansible: image/build/ansible
+test-e2e-ansible: image-build-ansible
 	./hack/tests/e2e-ansible.sh
 
-test/e2e/ansible2:
-	./ci/tests/e2e-ansible.sh
-
-test/e2e/ansible-molecule: image/build/ansible
+test-e2e-ansible-molecule: image-build-ansible
 	./hack/tests/e2e-ansible-molecule.sh
 
-test/e2e/helm: image/build/helm
+test-e2e-helm: image-build-helm
 	./hack/tests/e2e-helm.sh
 
-test/e2e/helm2:
-	./ci/tests/e2e-helm.sh
+# Image scaffold/build/push.
+.PHONY: image image-scaffold-ansible image-scaffold-helm image-build image-build-ansible image-build-helm image-push image-push-ansible image-push-helm
 
-test/markdown:
-	./hack/ci/marker --root=doc
+image: image-build image-push ## Build and push all images
 
-.PHONY: test test-ci test/sanity test/unit test/subcommand test/subcommand/test-local test/subcommand/scorecard test/subcommand/alpha-olm test/e2e test/e2e/go test/e2e/ansible test/e2e/ansible-molecule test/e2e/helm test/ci-go test/ci-ansible test/ci-helm test/markdown
-
-image: image/build image/push ## Build and push all images
-
-image/scaffold/ansible:
+image-scaffold-ansible:
 	go run ./hack/image/ansible/scaffold-ansible-image.go
 
-image/scaffold/helm:
+image-scaffold-helm:
 	go run ./hack/image/helm/scaffold-helm-image.go
 
-image/build: image/build/ansible image/build/helm image/build/scorecard-proxy ## Build all images
+image-build: image-build-ansible image-build-helm image-build-scorecard-proxy ## Build all images
 
-image/build/ansible: build/operator-sdk-dev-x86_64-linux-gnu
+image-build-ansible: build/operator-sdk-dev-x86_64-linux-gnu
 	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
 
-image/build/helm: build/operator-sdk-dev
+image-build-helm: build/operator-sdk-dev
 	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE):dev
 
-image/build/scorecard-proxy:
+image-build-scorecard-proxy:
 	./hack/image/build-scorecard-proxy-image.sh $(SCORECARD_PROXY_BASE_IMAGE):dev
 
-image/push: image/push/ansible image/push/helm image/push/scorecard-proxy ## Push all images
+image-push: image-push-ansible image-push-helm image-push-scorecard-proxy ## Push all images
 
-image/push/ansible:
+image-push-ansible:
 	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE):dev $(ANSIBLE_IMAGE)
 
-image/push/helm:
+image-push-helm:
 	./hack/image/push-image-tags.sh $(HELM_BASE_IMAGE):dev $(HELM_IMAGE)-$(shell go env GOARCH)
 
-image/push/helm-multiarch:
+image-push-helm-multiarch:
 	./hack/image/push-manifest-list.sh $(HELM_IMAGE) ${HELM_ARCHES}
 
-image/push/scorecard-proxy:
+image-push-scorecard-proxy:
 	./hack/image/push-image-tags.sh $(SCORECARD_PROXY_BASE_IMAGE):dev $(SCORECARD_PROXY_IMAGE)
-
-.PHONY: image image/scaffold/ansible image/scaffold/helm image/build image/build/ansible image/build/helm image/push image/push/ansible image/push/helm

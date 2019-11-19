@@ -1,6 +1,3 @@
-# Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
-.glide/
-
 # Folders
 vendor
 _obj
@@ -72,9 +69,6 @@ flycheck_*.el
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-### Go Patch ###
-/Godeps/
-
 ### Vim ###
 # Swap
 [._]*.s[a-v][a-z]
@@ -99,11 +93,11 @@ tags
 # End of https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
 
 # Build artifacts
-build/*
+/build
 test/ansible-operator/ansible-operator
 test/helm-operator/helm-operator
 images/scorecard-proxy/scorecard-proxy
 
 # Test artifacts
 pkg/ansible/runner/testdata/valid.yaml
-bin/*
+/bin

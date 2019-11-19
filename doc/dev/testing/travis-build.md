@@ -1,4 +1,4 @@
-# TravisCI Build Information
+# TravisCI Build Information for Operator SDK
 
 Travis is set to run one every push to a branch or PR.
 The results of the builds can be found [here][branches] for branches and [here][pr-builds] for PRs.
@@ -75,7 +75,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 
 ### Ansible tests
 
-1. Run [ansible molecule tests][ansible-molecule]. (`make test/e2e/ansible-molecule)
+1. Run [ansible molecule tests][ansible-molecule]. (`make test-e2e-ansible-molecule)
     1. Create and configure a new ansible type memcached-operator.
     2. Create cluster resources.
     3. Run `operator-sdk test local` to run ansible molecule tests
@@ -122,7 +122,7 @@ The markdown test does not create a new cluster and runs in a barebones Travis V
 [k8s-script]: ../../../hack/ci/setup-k8s.sh
 [kind]: https://kind.sigs.k8s.io/
 [sanity]: ../../../hack/tests/sanity-check.sh
-[subcommand]: ../../../hack/tests/test-subcommand.sh
+[subcommand]: ../../../hack/tests/subcommand.sh
 [go-e2e]: ../../../hack/tests/e2e-go.sh
 [tls-tests]: ../../../test/e2e/tls_util_test.go
 [ansible-molecule]: ../../../hack/tests/e2e-ansible-molecule.sh

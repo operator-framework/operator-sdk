@@ -1,13 +1,61 @@
 ## Unreleased
 
 ### Added
+- Support for vars in top level ansible watches. ([#2147](https://github.com/operator-framework/operator-sdk/pull/2147))
 
+### Changed
+- Upgrade minimal Ansible version in the init projects from `2.4` to `2.6`. ([#2107](https://github.com/operator-framework/operator-sdk/pull/2107))
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
+## v0.12.0
+
+### Added
+
+- Added `Operator Version: X.Y.Z` information in the operator logs.([#1953](https://github.com/operator-framework/operator-sdk/pull/1953))
+- Make Ansible verbosity configurable via the `ansible-verbosity` flag. ([#2087](https://github.com/operator-framework/operator-sdk/pull/2087))
+- Autogenerate CLI documentation via `make cli-doc` ([#2099](https://github.com/operator-framework/operator-sdk/pull/2099))
+
+### Changed
+
+- **Breaking change:** Changed required Go version from `1.12` to `1.13`. This change applies to the SDK project itself and Go projects scaffolded by the SDK. Projects that import this version of the SDK require Go 1.13 to compile. ([#1949](https://github.com/operator-framework/operator-sdk/pull/1949))
+
+### Deprecated
+- Upgrade Kubernetes version from `kubernetes-1.14.1` to `kubernetes-1.15.4`. ([#2083](https://github.com/operator-framework/operator-sdk/pull/2083))
+- Upgrade Helm version from `v2.14.1` to `v2.15.0`. ([#2083](https://github.com/operator-framework/operator-sdk/pull/2083))
+- Upgrade [`controller-runtime`](https://github.com/kubernetes-sigs/controller-runtime) version from `v0.2.0` to [`v0.3.0`](https://github.com/kubernetes-sigs/controller-runtime/releases/tag/v0.3.0). ([#2083](https://github.com/operator-framework/operator-sdk/pull/2083))
+- Upgrade [`controller-tools`](https://github.com/kubernetes-sigs/controller-tools) version from `v0.2.1+git` to [`v0.2.2`](https://github.com/kubernetes-sigs/controller-tools/releases/tag/v0.2.2). ([#2083](https://github.com/operator-framework/operator-sdk/pull/2083))
+
+### Removed
+
+- Removed `--dep-manager` flag and support for `dep`-based projects. Projects will be scaffolded to use Go modules. ([#1949](https://github.com/operator-framework/operator-sdk/pull/1949))
+
+### Bug Fixes
+
+- OLM internal manager is not returning errors in the initialization. ([#1976](https://github.com/operator-framework/operator-sdk/pull/1976))
+- Added missing default role permission for `deployments`, which is required to create the metrics service for the operator. ([#2090](https://github.com/operator-framework/operator-sdk/pull/2090))
+- Handle invalid maxArtifacts annotation on CRs for Ansible based operators. ([2093](https://github.com/operator-framework/operator-sdk/pull/2093))
+- When validating package manifests, only return an error if default channel is not set and more than one channel is available. ([#2116](https://github.com/operator-framework/operator-sdk/pull/2116))
+
+## v0.11.0
+
+### Added
+
+- Added support for event filtering for ansible operator. ([#1968](https://github.com/operator-framework/operator-sdk/issues/1968))
 - Added new `--skip-generation` flag to the `operator-sdk add api` command to support skipping generation of deepcopy and OpenAPI code and OpenAPI CRD specs. ([#1890](https://github.com/operator-framework/operator-sdk/pull/1890))
 - The `operator-sdk olm-catalog gen-csv` command now produces indented JSON for the `alm-examples` annotation. ([#1793](https://github.com/operator-framework/operator-sdk/pull/1793))
 - Added flag `--dep-manager` to command [`operator-sdk print-deps`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#print-deps) to specify the type of dependency manager file to print. The choice of dependency manager is inferred from top-level dependency manager files present if `--dep-manager` is not set. ([#1819](https://github.com/operator-framework/operator-sdk/pull/1819))
 - Ansible based operators now gather and serve metrics about each custom resource on port 8686 of the metrics service. ([#1723](https://github.com/operator-framework/operator-sdk/pull/1723))
 - Added the Go version, OS, and architecture to the output of `operator-sdk version` ([#1863](https://github.com/operator-framework/operator-sdk/pull/1863))
 - Added support for `ppc64le-linux` for the `operator-sdk` binary and the Helm operator base image. ([#1533](https://github.com/operator-framework/operator-sdk/pull/1533))
+- Added new `--version` flag to the `operator-sdk scorecard` command to support a new output format for the scorecard. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
+- Added new `--selector` flag to the `operator-sdk scorecard` command to support filtering scorecard tests based on labels added to each test. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
+- Added new `--list` flag to the `operator-sdk scorecard` command to support listing scorecard tests that would be executed based on selector filters. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
+- For scorecard version v1alpha2 only, return code logic was added to return 1 if any of the selected scorecard tests fail.  A return code of 0 is returned if all selected tests pass. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
 
 ### Changed
 
@@ -16,6 +64,8 @@
 - The Helm operator no longer prints manifest diffs in the operator log at verbosity levels lower than INFO ([#1857](https://github.com/operator-framework/operator-sdk/pull/1857))
 - CRD manifest `spec.version` is still supported, but users will see a warning message if `spec.versions` is not present and an error if `spec.versions` is populated but the version in `spec.version` is not in `spec.versions`. ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
 - Upgrade base image for Go, Helm, and scorecard proxy from `registry.access.redhat.com/ubi7/ubi-minimal:latest` to `registry.access.redhat.com/ubi8/ubi-minimal:latest`. ([#1952](https://github.com/operator-framework/operator-sdk/pull/1952))
+- Upgrade base image for Ansible from `registry.access.redhat.com/ubi7/ubi:latest` to `registry.access.redhat.com/ubi8/ubi:latest`. ([#1990](https://github.com/operator-framework/operator-sdk/pull/1990) and [#2004](https://github.com/operator-framework/operator-sdk/pull/2004))
+- Updated kube-state-metrics dependency from `v1.6.0` to `v1.7.2`. ([#1943](https://github.com/operator-framework/operator-sdk/pull/1943))
 
 ### Breaking changes
 
@@ -42,13 +92,15 @@
       err = r.client.List(context.TODO(), listOps, podList)
       // New
       listOpts := []client.ListOption{
-        client.InNamespace("namespace"),        
+        client.InNamespace("namespace"),
       }
       err = r.client.List(context.TODO(), podList, listOpts...)
       ```
 - [`pkg/test.FrameworkClient`](https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/client.go#L33) methods `List()` and `Delete()` have new signatures corresponding to the homonymous methods of `sigs.k8s.io/controller-runtime/pkg/client.Client`. ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
 - CRD file names were previously of the form `<group>_<version>_<kind>_crd.yaml`. Now that CRD manifest `spec.version` is deprecated in favor of `spec.versions`, i.e. multiple versions can be specified in one CRD, CRD file names have the form `<full group>_<resource>_crd.yaml`. `<full group>` is the full group name of your CRD while `<group>` is the last subdomain of `<full group>`, ex. `foo.bar.com` vs `foo`. `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`. ([#1876](https://github.com/operator-framework/operator-sdk/pull/1876))
-- Upgrade Python version from `2.7` to `3.6`, Ansible version from `2.8.0` to `~=2.8` and ansible-runner from `1.2` to `1.3.4` in the Ansible based images. ([#1947](https://github.com/operator-framework/operator-sdk/pull/1947)) 
+- Upgrade Python version from `2.7` to `3.6`, Ansible version from `2.8.0` to `~=2.8` and ansible-runner from `1.2` to `1.3.4` in the Ansible based images. ([#1947](https://github.com/operator-framework/operator-sdk/pull/1947))
+- Made the default scorecard version `v1alpha2` which is new for this release and could break users that were parsing the older scorecard output (`v1alpha1`).  Users can still specify version `v1alpha1` on the scorecard configuration to use the older style for some period of time until `v1alpha1` is removed.
+- Replaced `pkg/kube-metrics.NewCollectors()` with `pkg/kube-metrics.NewMetricsStores()` and changed exported function signature for `pkg/kube-metrics.ServeMetrics()` due to a [breaking change in kube-state-metrics](https://github.com/kubernetes/kube-state-metrics/pull/786). ([#1943](https://github.com/operator-framework/operator-sdk/pull/1943))
 
 ### Deprecated
 
@@ -62,6 +114,10 @@
 - In the Helm operator, skip owner reference injection for cluster-scoped resources in release manifests. The Helm operator only supports namespace-scoped CRs, and namespaced resources cannot own cluster-scoped resources. ([#1817](https://github.com/operator-framework/operator-sdk/pull/1817))
 - Package manifests generated with [`gen-csv`](https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#gen-csv) respect the `--operator-name` flag, channel names are checked for duplicates before (re-)generation. ([#1693](https://github.com/operator-framework/operator-sdk/pull/1693))
 - Generated inventory for Ansible-based Operators now sets the localhost's `ansible_python_interpreter` to `{{ ansible_playbook_python }}`, to properly match the [implicit localhost](https://docs.ansible.com/ansible/latest/inventory/implicit_localhost.html). ([#1952](https://github.com/operator-framework/operator-sdk/pull/1952))
+- Fixed an issue in `operator-sdk olm-catalog gen-csv` where the generated CSV is missing the expected set of owned CRDs. ([#2017](https://github.com/operator-framework/operator-sdk/pull/2017))
+- The command `operator-sdk olm-catalog gen-csv --csv-version=<version> --update-crds` would fail to copy over CRD manifests into `deploy/olm-catalog` for manifests whose name didn't end with a `_crd.yaml` suffix. This has been fixed so `gen-csv` now copies all CRD manifests specified by `deploy/olm-catalog/csv_config.yaml` by checking the type of the manifest rather than the filename suffix. ([#2015](https://github.com/operator-framework/operator-sdk/pull/2015))
+- Added missing `jmespath` dependency to Ansible-based Operator .travis.yml file template. ([#2027](https://github.com/operator-framework/operator-sdk/pull/2027))
+- Fixed invalid usage of `logr.Logger.Info()` in the Ansible-based operator implementation, which caused unnecessary operator panics. ([#2031](https://github.com/operator-framework/operator-sdk/pull/2031))
 
 ## v0.10.0
 
@@ -72,7 +128,7 @@
 
 ### Changed
 
-- **Breaking Change:** New configuration format for the `operator-sdk scorecard` using config files. See [`doc/test-framework/scorecard`](doc/test-framework/scorecard) for more info ([#1641](https://github.com/operator-framework/operator-sdk/pull/1641))
+- **Breaking Change:** New configuration format for the `operator-sdk scorecard` using config files. See [`doc/test-framework/scorecard`](doc/test-framework/scorecard.md) for more info ([#1641](https://github.com/operator-framework/operator-sdk/pull/1641))
 - **Breaking change:** CSV config field `role-path` is now `role-paths` and takes a list of strings. Users can now specify multiple `Role` and `ClusterRole` manifests using `role-paths`. ([#1704](https://github.com/operator-framework/operator-sdk/pull/1704))
 - Make `ready` package idempotent. Now, a user can call `Set()` or `Unset()` to set the operator's readiness without knowing the current state. ([#1761](https://github.com/operator-framework/operator-sdk/pull/1761))
 
@@ -298,7 +354,7 @@
 ### Changed
 
 - The SDK now uses logr as the default logger to unify the logging output with the controller-runtime logs. Users can still use a logger of their own choice. See the [logging doc](https://github.com/operator-framework/operator-sdk/blob/master/doc/user/logging.md) on how the SDK initializes and uses logr.
-- Ansible Operator CR status better aligns with [conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#typical-status-properties). ([#639](https://github.com/operator-framework/operator-sdk/pull/639))
+- Ansible Operator CR status better aligns with [conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties). ([#639](https://github.com/operator-framework/operator-sdk/pull/639))
 
 ### Added
 

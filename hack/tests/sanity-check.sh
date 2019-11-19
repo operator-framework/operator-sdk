@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 set -ex
 
+go mod tidy
 go vet ./...
-./hack/check_license.sh
-./hack/check_error_log_msg_format.sh
+go fmt ./...
 
-# Make sure repo is in clean state
+./hack/check-license.sh
+./hack/check-error-log-msg-format.sh
+./hack/generate/gen-cli-doc.sh
+./hack/generate/gen-test-framework.sh
+
+# Make sure repo is still in a clean state.
 git diff --exit-code

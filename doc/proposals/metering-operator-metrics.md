@@ -1,10 +1,22 @@
-## Auto register operator specific metrics as part of operator-metering
+# Auto register operator specific metrics as part of operator-metering Proposal for Operator SDK
+
+Implementation Owner:
+
+> Status: **implemented**
+>
+> See [metrics documentation](../user/metrics/README.md).
+
+- [Motivation and goal](#motivation-and-goal)
+- [Overview of the metrics](#overview-of-the-metrics)
+- [kube-state-metrics based solution](#kube-state-metrics-based-solution)
+- [User facing architecture](#user-facing-architecture)
+- [Related work](#related-work)
 
 ### Motivation and goal
 
 We want to be able to generate the metering reports based on the operator specific Prometheus metrics. In order to be able to do that, operators must be instrumented to expose those metrics, and the operator-sdk should make this as easy as possible. The goal is to have the metering happen based on the usage of each individual operator. Metrics will be based on objects managed by the particular operator.
 
-### Overview of the metrics
+## Overview of the metrics
 
 To follow both the Prometheus instrumentation [best practices](https://prometheus.io/docs/practices/naming/) as well as the official Kubernetes instrumentation [guide](https://github.com/kubernetes/community/blob/cbe9c8ac5f71a99179d7ffe4a008b9018830af72/contributors/devel/sig-instrumentation/instrumentation.md), the metrics will have the following format:
 
@@ -18,7 +30,7 @@ example metric for the memchached-operator would look like this:
 memcached_info{namespace="default",memcached="example-memcached"} 1
 ```
 
-### kube-state-metrics based solution
+## kube-state-metrics based solution
 
 The solution makes use of Kubernetes list/watch to populate a Prometheus metrics registry, kube-state-metrics implements its own registry for performance reasons. [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics#overview) is used because it solves exactly the same problem we are facing but it does it for upstream known resources. The operator-sdk can re-use its functionality to perform the same thing but with custom resources. The kube-state-metrics library can only be used for constant (/static) metrics, metrics that are immutable and thereby entirely regenerated on change. This is perfect for our above mentioned use-case. It is not meant to do e.g. counting in performance critical code paths. Thereby an operator would need kube-state-metrics library for exposing the amount of custom resources that it manages and its details and Prometheus client_golang to expose metrics of its own internals e.g. count of reconciliation loops.
 
@@ -81,6 +93,6 @@ var (
 }
 ```
 
-### Related work
+## Related work
 
 In the future if the agreed on kube-state-metrics restructure happens (see https://github.com/kubernetes/kube-state-metrics/issues/579) we can get rid of some of the duplicated functions. But that will probably take a few months and our user facing interface should not change as a result.

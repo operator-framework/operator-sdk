@@ -22,8 +22,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
-	kcollector "k8s.io/kube-state-metrics/pkg/collector"
 	ksmetric "k8s.io/kube-state-metrics/pkg/metric"
+	metricsstore "k8s.io/kube-state-metrics/pkg/metrics_store"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -42,7 +42,7 @@ func GenerateAndServeCRMetrics(cfg *rest.Config,
 		return errors.New("namespaces were empty; pass at least one namespace to generate custom resource metrics")
 	}
 	// Create new unstructured client.
-	var collectors [][]kcollector.Collector
+	var allStores [][]*metricsstore.MetricsStore
 	log.V(1).Info("Starting collecting operator types")
 	// Loop through all the possible operator/custom resource specific types.
 	for _, gvk := range operatorGVKs {
@@ -56,12 +56,12 @@ func GenerateAndServeCRMetrics(cfg *rest.Config,
 			return err
 		}
 		// Generate collector based on the group/version, kind and the metric families.
-		c := NewCollectors(dclient, ns, apiVersion, kind, metricFamilies)
-		collectors = append(collectors, c)
+		gvkStores := NewMetricsStores(dclient, ns, apiVersion, kind, metricFamilies)
+		allStores = append(allStores, gvkStores)
 	}
 	// Start serving metrics.
 	log.V(1).Info("Starting serving custom resource metrics")
-	go ServeMetrics(collectors, host, port)
+	go ServeMetrics(allStores, host, port)
 
 	return nil
 }

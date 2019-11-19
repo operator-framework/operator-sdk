@@ -8,7 +8,7 @@ mkdir -p $ROOTDIR/bin
 export PATH=$ROOTDIR/bin:$PATH
 
 if ! [ -x "$(command -v kubectl)" ]; then
-    curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.14.2/bin/linux/amd64/kubectl && chmod +x kubectl && mv kubectl bin/
+    curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.15.4/bin/linux/amd64/kubectl && chmod +x kubectl && mv kubectl bin/
 fi
 
 if ! [ -x "$(command -v oc)" ]; then
@@ -20,7 +20,5 @@ oc version
 
 make install
 
-./hack/tests/test-subcommand.sh
-./ci/tests/scorecard-subcommand.sh
-# This can't run in openshift-ci because the test cluster already has OLM installed.
-#./hack/tests/alpha-olm-subcommands.sh
+./hack/tests/subcommand.sh
+./ci/tests/subcommand-scorecard.sh

@@ -1,4 +1,4 @@
-# Information Flow for Ansible Operator
+# Information Flow for Operator SDK Ansible-based Operators
 
 ![Ansible Operator Flow](ao-flow.png)
 
@@ -24,8 +24,9 @@
 
 ### The Proxy
  * Every request to the k8s api goes through the proxy.
- * The owner reference is injected into the object that is being created.
- * The proxy then adds dependent watches for the correct controller if we have not started watching the type already
+ * The owner reference is injected into the object that is being created in the same namespace as the CR.
+ * The operator-sdk annotations are injected into the object that is being created outside of namepsace of the CR.
+ * The proxy then adds dependent watches for the correct controller if we have not started watching the type already.
  * On a GET, we attempt to use the informer cache to get the resource. This will also attempt to re-add dependent watches if we find a type with an owner reference.
 
 ### Ansible Runner

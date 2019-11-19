@@ -1,4 +1,4 @@
-# Version upgrade guide
+# Operator SDK Version upgrade guide
 
 This document aims to facilitate the process of upgrading the Operator SDK version for an existing operator project.
 
@@ -215,7 +215,7 @@ replace (
 
 replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v0.8.2
 ```
-- Run `go mod tidy` to clean up the `go.mod` file. 
+- Run `go mod tidy` to clean up the `go.mod` file.
   - In case of any go module loading errors, consult the default [`v0.8.2` go.mod dependencies][v0.8.2-go-mod] scaffolded by the operator-sdk to resolve any differences. You can also view this file by scaffolding a new project with operator-sdk `v0.8.2`.
 - Ensure that you can build the project with `operator-sdk build`
 - Finally remove `Gopkg.lock`, `Gopkg.toml` and the vendor directory.
@@ -224,7 +224,7 @@ replace github.com/operator-framework/operator-sdk => github.com/operator-framew
 
 Upon updating the project to `v0.8.2` the following breaking changes apply:
 
-- On running the command `operator-sdk generate openapi`, the CRD manifests at `deploy/crds/<group>_<version>_<kind>.crd` for all API types will now be regenerated based on their source files `pkg/apis/..._types.go`. So if you have made any manual edits to the default generated CRD manifest, e.g manually written the validation block or specified the naming (`spec.names`), then that information be overwritten when the CRD is regenerated. 
+- On running the command `operator-sdk generate openapi`, the CRD manifests at `deploy/crds/<group>_<version>_<kind>.crd` for all API types will now be regenerated based on their source files `pkg/apis/..._types.go`. So if you have made any manual edits to the default generated CRD manifest, e.g manually written the validation block or specified the naming (`spec.names`), then that information be overwritten when the CRD is regenerated.
 
   The correct way to specify CRD fields like naming, validation, subresources etc is by using `// +kubebuilder` marker comments. Consult the [legacy kubebuilder documentation][legacy-kubebuilder-doc-crd] to see what CRD fields can be generated via `// +kubebuilder` marker comments.
 
@@ -261,8 +261,8 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
 
 ## `v0.9.x`
 
-- The function `ExposeMetricsPort()` has been replaced with `CreateMetricsService()` [#1560](https://github.com/operator-framework/operator-sdk/pull/1560). 
-  
+- The function `ExposeMetricsPort()` has been replaced with `CreateMetricsService()` [#1560](https://github.com/operator-framework/operator-sdk/pull/1560).
+
   Replace the following line in `cmd/manager/main.go`
   ```Go
     _, err = metrics.ExposeMetricsPort(ctx, metricsPort)
@@ -335,6 +335,157 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
   replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v0.9.0
   ```
 
+## `v0.10.x`
+
+- The scorecard configuration format for the `operator-sdk scorecard` command has changed. See [`doc/test-framework/scorecard`](../test-framework/scorecard.md) for more info.
+- The CSV config field `role-path` is now `role-paths` and takes a list of strings.
+    Replace:
+    ```yaml
+    role-path: path/to/role.yaml
+    ```
+    with:
+    ```yaml
+    role-paths:
+    - path/to/role.yaml
+    ```
+
+### modules
+
+- Ensure the the following `replace` directives are present in your `go.mod` file:
+    ```
+    replace (
+            github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.29.0
+            // Pinned to v2.9.2 (kubernetes-1.13.1) so https://proxy.golang.org can
+            // resolve it correctly.
+            github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.0.0-20190424153033-d3245f150225
+            k8s.io/kube-state-metrics => k8s.io/kube-state-metrics v1.6.0
+            sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.1.12
+            sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.1.11-0.20190411181648-9d55346c2bde
+    )
+
+    replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v0.10.0
+    ```
+
+## `v0.11.x`
+
+**NOTE:** this version uses Kubernetes v1.14.x and controller-runtime v0.2.x, both of which have breaking API changes. See the [changelog][changelog] for more details.
+
+### dep
+
+- Remove the `required = [ ... ]` section and comment from the top of your `Gopkg.toml` file.
+- Update the following overrides in `Gopkg.toml`:
+    ```TOML
+    [[override]]
+      name = "k8s.io/api"
+      # revision for tag "kubernetes-1.14.1"
+      revision = "6e4e0e4f393bf5e8bbff570acd13217aa5a770cd"
+    [[override]]
+      name = "k8s.io/apiextensions-apiserver"
+      # revision for tag "kubernetes-1.14.1"
+      revision = "727a075fdec8319bf095330e344b3ccc668abc73"
+    [[override]]
+      name = "k8s.io/apimachinery"
+      # revision for tag "kubernetes-1.14.1"
+      revision = "6a84e37a896db9780c75367af8d2ed2bb944022e"
+    [[override]]
+      name = "k8s.io/client-go"
+      # revision for tag "kubernetes-1.14.1"
+      revision = "1a26190bd76a9017e289958b9fba936430aa3704"
+    [[override]]
+      name = "github.com/coreos/prometheus-operator"
+      version = "=v0.31.1"
+    [[override]]
+      name = "sigs.k8s.io/controller-runtime"
+      version = "=v0.2.2"
+    [[constraint]]
+      name = "github.com/operator-framework/operator-sdk"
+      version = "=v0.11.0"
+    ```
+- Append an override for `gopkg.in/fsnotify.v1`, which is required when resolving controller-runtime dependencies:
+    ```TOML
+    [[override]]
+      name = "gopkg.in/fsnotify.v1"
+      source = "https://github.com/fsnotify/fsnotify.git"
+    ```
+- Remove the `k8s.io/kube-state-metrics` override.
+- Run `dep ensure` to update the vendor directory.
+
+### modules
+
+- Ensure the the following `replace` directives are present in your `go.mod` file:
+    ```
+    // Pinned to kubernetes-1.14.1
+    replace (
+    	k8s.io/api => k8s.io/api kubernetes-1.14.1
+    	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver kubernetes-1.14.1
+    	k8s.io/apimachinery => k8s.io/apimachinery kubernetes-1.14.1
+    	k8s.io/client-go => k8s.io/client-go kubernetes-1.14.1
+    	k8s.io/cloud-provider => k8s.io/cloud-provider kubernetes-1.14.1
+    )
+
+    replace (
+    	github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.31.1
+    	// Pinned to v2.10.0 (kubernetes-1.14.1) so https://proxy.golang.org can
+    	// resolve it correctly.
+    	github.com/prometheus/prometheus => github.com/prometheus/prometheus d20e84d0fb64aff2f62a977adc8cfb656da4e286
+    )
+
+    replace github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v0.11.0
+    ```
+
+### Import updates
+
+- Replace import `sigs.k8s.io/controller-runtime/pkg/runtime/scheme` with `sigs.k8s.io/controller-runtime/pkg/scheme` in:
+  - `./pkg/apis/<group>/<version>/register.go`
+- Replace import `sigs.k8s.io/controller-runtime/pkg/runtime/log` with `sigs.k8s.io/controller-runtime/pkg/log` in:
+  - `cmd/manager/main.go`
+  - `./pkg/controller/<kind>/<kind>_controller.go`
+- Replace import `sigs.k8s.io/controller-runtime/pkg/runtime/signals` with `sigs.k8s.io/controller-runtime/pkg/manager/signals` in:
+  - `cmd/manager/main.go`
+
+### controller-runtime API updates
+
+All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L104) and [`sigs.k8s.io/controller-runtime/pkg/client.StatusWriter`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L91) (except for `Client.Get()`) have been updated. Each now uses a variadic option interface parameter typed for each method.
+- `Client.List(ctx context.Context, opts *client.ListOptions, list runtime.Object) error` is now [`Client.List(ctx context.Context, list runtime.Object, opts ...client.ListOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L61).
+    Replace:
+    ```go
+    listOpts := &client.ListOptions{}
+    listOpts.InNamespace("namespace")
+    err = r.client.List(context.TODO(), listOps, podList)
+    ```
+    with:
+    ```go
+    listOpts := []client.ListOption{
+      client.InNamespace("namespace"),        
+    }
+    err = r.client.List(context.TODO(), podList, listOpts...)
+    ```
+- `Client.Create(ctx context.Context, obj runtime.Object) error` is now [`Client.Create(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L67). No updates need to be made. See the [client doc][client-doc] for a discussion of `client.CreateOption`.
+- `Client.Update(ctx context.Context, obj runtime.Object) error` is now [`Client.Update(ctx context.Context, obj runtime.Object, opts ...client.UpdateOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L74). No updates need to be made. See the [client doc][client-doc] for a discussion of `client.UpdateOption`.
+- `Client.Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOptionFunc) error` is now [`Client.Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L70). Although the option interface has changed, the way each `client.DeleteOption` is created is the same as before. No updates need to be made. See the [client doc][client-doc] for a discussion of `client.DeleteOption`.
+- `StatusWriter.Update(ctx context.Context, obj runtime.Object) error` is now [`Update(ctx context.Context, obj runtime.Object, opts ...UpdateOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L95). No updates need to be made. See the [client doc][client-doc] for a discussion of `client.UpdateOption`.
+
+### OpenAPI updates
+
+- Run the command `operator-sdk generate openapi` and ensure that no errors such as `API rule violation` are raised. For further information see the [API rules][api-rules] documentation. 
+ 
+**NOTE:** You may need to add or remove markers (code annotations) to fix issues found when running `generate openapi`. Usage of markers in API code is discussed in the kubebuilder CRD generation [documentation][generating-crd] and in marker [documentation][markers]. A full list of OpenAPIv3 validation markers can be found [here](https://book.kubebuilder.io/reference/markers/crd-validation.html).
+
+**TIPS:**
+- If the `+kubebuilder:validation:Pattern` has commas, then surround the expressions in backticks.
+- If you are using `+kubebuilder:validation:Enum` then either surround the expression list in curly braces and quote each expression, or separate each expression using semicolons.
+
+### Operator SDK updates
+
+- [`pkg/test.FrameworkClient`](https://github.com/operator-framework/operator-sdk/blob/947a464/pkg/test/client.go#L33) `List()` and `Delete()` method invocations should be updated to match those of `Client.List()` and `Client.Delete()`, described above.
+- The annotation to assign a scope to your CRD has changed. For the following changes, note that `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`.
+    - For `Namespaced`-scoped operators, add a `+kubebuilder:resource:path=<resource>,scope=Namespaced` comment above your kind type in `pkg/apis/<group>/<version>/<kind>_types.go`.
+    - For `Cluster`-scoped operators, replace the `+genclient:nonNamespaced` comment above your kind type in `pkg/apis/<group>/<version>/<kind>_types.go` with `+kubebuilder:resource:path=<resource>,scope=Cluster`.
+- CRD file names now have the form `<full group>_<resource>_crd.yaml`, and CR file names now have the form `<full group>_<version>_<kind>_cr.yaml`. `<full group>` is the full group name of your CRD found at `spec.group`, and `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`. To migrate:
+    - Run `operator-sdk generate openapi`. CRD manifest files with new names containing versioned validation and subresource blocks will be generated.
+    - Delete the old CRD manifest files.
+    - Rename CR manifest file names from `<group>_<version>_<kind>_cr.yaml` to `<full group>_<version>_<kind>_cr.yaml`.
+
 [legacy-kubebuilder-doc-crd]: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [v0.8.2-go-mod]: https://github.com/operator-framework/operator-sdk/blob/28bd2b0d4fd25aa68e15d928ae09d3c18c3b51da/internal/pkg/scaffold/go_mod.go#L40-L94
 [activating-modules]: https://github.com/golang/go/wiki/Modules#how-to-install-and-activate-module-support
@@ -346,3 +497,7 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
 [release-notes]: https://github.com/operator-framework/operator-sdk/releases
 [v0.1.0-migration-guide]: ./v0.1.0-migration-guide.md
 [manifest-format]: https://github.com/operator-framework/operator-registry#manifest-format
+[client-doc]: ../user/client.md
+[api-rules]: https://github.com/kubernetes/kubernetes/tree/36981002246682ed7dc4de54ccc2a96c1a0cbbdb/api/api-rules
+[generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
+[markers]: https://book.kubebuilder.io/reference/markers.html

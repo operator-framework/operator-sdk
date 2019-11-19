@@ -21,8 +21,8 @@ import (
 	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	"github.com/pkg/errors"
@@ -55,6 +55,7 @@ is generated as a 'validation' object. Generation can be disabled with the
 --skip-generation flag.
 
 Example:
+
 	$ operator-sdk add api --api-version=app.example.com/v1alpha1 --kind=AppService
 	$ tree pkg/apis
 	pkg/apis/

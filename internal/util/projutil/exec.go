@@ -29,7 +29,7 @@ func ExecCmd(cmd *exec.Cmd) error {
 	cmd.Stderr = os.Stderr
 	log.Debugf("Running %#v", cmd.Args)
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to exec %#v: %v", cmd.Args, err)
+		return fmt.Errorf("failed to exec %#v: %w", cmd.Args, err)
 	}
 	return nil
 }
@@ -49,11 +49,6 @@ type GoCmdOptions struct {
 	Env []string
 	// Dir is the dir to run "go {cmd}" in; exec.Command.Dir is set to this value.
 	Dir string
-	// GoMod determines whether to set the "-mod=vendor" flag.
-	// If true and ./vendor/ exists, "go {cmd}" will use vendored modules.
-	// If false, "go {cmd}" will not use Go modules. This is the default.
-	// This applies to build, clean, get, install, list, run, and test.
-	GoMod bool
 }
 
 // GoTestOptions is the set of options for "go test".
@@ -118,22 +113,22 @@ func (opts GoCmdOptions) getGeneralArgsWithCmd(cmd string) ([]string, error) {
 		bargs = append(bargs, "-o", opts.BinName)
 	}
 	bargs = append(bargs, opts.Args...)
-	if opts.GoMod {
-		if goModOn, err := GoModOn(); err != nil {
+
+	if goModOn, err := GoModOn(); err != nil {
+		return nil, err
+	} else if goModOn {
+		// Does vendor exist?
+		info, err := os.Stat("vendor")
+		if err != nil && !os.IsNotExist(err) {
 			return nil, err
-		} else if goModOn {
-			// Does vendor exist?
-			info, err := os.Stat("vendor")
-			if err != nil && !os.IsNotExist(err) {
-				return nil, err
-			}
-			// Does the first "go" subcommand accept -mod=vendor?
-			_, ok := validVendorCmds[bargs[0]]
-			if err == nil && info.IsDir() && ok {
-				bargs = append(bargs, "-mod=vendor")
-			}
+		}
+		// Does the first "go" subcommand accept -mod=vendor?
+		_, ok := validVendorCmds[bargs[0]]
+		if err == nil && info.IsDir() && ok {
+			bargs = append(bargs, "-mod=vendor")
 		}
 	}
+
 	if opts.PackagePath != "" {
 		bargs = append(bargs, opts.PackagePath)
 	}
@@ -152,25 +147,25 @@ func (opts GoCmdOptions) setCmdFields(c *exec.Cmd) {
 
 // From https://github.com/golang/go/wiki/Modules:
 //	You can activate module support in one of two ways:
-//	- Invoke the go command in a directory outside of the $GOPATH/src tree,
-//		with a valid go.mod file in the current directory or any parent of it and
-//		the environment variable GO111MODULE unset (or explicitly set to auto).
+//	- Invoke the go command in a directory with a valid go.mod file in the
+//      current directory or any parent of it and the environment variable
+//      GO111MODULE unset (or explicitly set to auto).
 //	- Invoke the go command with GO111MODULE=on environment variable set.
 //
 // GoModOn returns true if Go modules are on in one of the above two ways.
 func GoModOn() (bool, error) {
 	v, ok := os.LookupEnv(GoModEnv)
-	if v == "off" {
-		return false, nil
-	}
-	if v == "on" {
+	if !ok {
 		return true, nil
 	}
-	inSrc, err := WdInGoPathSrc()
-	if err != nil {
-		return false, err
+	switch v {
+	case "", "auto", "on":
+		return true, nil
+	case "off":
+		return false, nil
+	default:
+		return false, fmt.Errorf("unknown environment setting GO111MODULE=%s", v)
 	}
-	return !inSrc && (!ok || v == "" || v == "auto"), nil
 }
 
 func WdInGoPathSrc() (bool, error) {
