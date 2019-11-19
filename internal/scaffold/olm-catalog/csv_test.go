@@ -149,15 +149,15 @@ func TestUpdateVersion(t *testing.T) {
 	}
 
 	var resolver *olminstall.StrategyResolver
-	stratInterface, err := resolver.UnmarshalStrategy(csv.Spec.InstallStrategy)
+	strategyInterface, err := resolver.UnmarshalStrategy(csv.Spec.InstallStrategy)
 	if err != nil {
 		t.Fatal(err)
 	}
-	strat, ok := stratInterface.(*olminstall.StrategyDetailsDeployment)
+	strategy, ok := strategyInterface.(*olminstall.StrategyDetailsDeployment)
 	if !ok {
-		t.Fatalf("Strategy of type %T was not StrategyDetailsDeployment", stratInterface)
+		t.Fatalf("Strategy of type %T was not StrategyDetailsDeployment", strategyInterface)
 	}
-	csvPodImage := strat.DeploymentSpecs[0].Spec.Template.Spec.Containers[0].Image
+	csvPodImage := strategy.DeploymentSpecs[0].Spec.Template.Spec.Containers[0].Image
 	// updateCSVVersions should not update podspec image.
 	wantedImage := "quay.io/example-inc/operator:v0.1.0"
 	if csvPodImage != wantedImage {
