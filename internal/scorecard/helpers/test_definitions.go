@@ -19,7 +19,9 @@ import (
 	"fmt"
 	"strings"
 
+	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -42,6 +44,23 @@ type TestResult struct {
 	MaximumPoints int
 	Suggestions   []string
 	Errors        []error
+}
+
+func (t *TestResult) AddError(err error) {
+	t.Errors = append(t.Errors, err)
+	t.State = scapiv1alpha1.ErrorState
+}
+
+func (t *TestResult) AddEarnedPointsForBlock(specBlock map[string]interface{}, crd *olmapiv1alpha1.CRDDescription) {
+	for key := range specBlock {
+		for _, statDesc := range crd.SpecDescriptors {
+			if statDesc.Path == key {
+				t.EarnedPoints++
+				delete(specBlock, key)
+				break
+			}
+		}
+	}
 }
 
 // TestInfo contains information about the scorecard test

@@ -20,11 +20,9 @@ import (
 	"fmt"
 	"strings"
 
+	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
-	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
-
-	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -190,14 +188,12 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *schelpers.TestResult 
 	res := &schelpers.TestResult{Test: t}
 	crds, err := k8sutil.GetCRDs(t.CRDsDir)
 	if err != nil {
-		res.Errors = append(res.Errors, fmt.Errorf("failed to get CRDs in %s directory: %v", t.CRDsDir, err))
-		res.State = scapiv1alpha1.ErrorState
+		res.AddError(fmt.Errorf("failed to get CRDs in %s directory: %v", t.CRDsDir, err))
 		return res
 	}
 	err = t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
-		res.Errors = append(res.Errors, err)
-		res.State = scapiv1alpha1.ErrorState
+		res.AddError(err)
 		return res
 	}
 	for _, crd := range crds {
@@ -384,8 +380,7 @@ func (t *StatusDescriptorsTest) Run(ctx context.Context) *schelpers.TestResult {
 	res := &schelpers.TestResult{Test: t}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
-		res.Errors = append(res.Errors, err)
-		res.State = scapiv1alpha1.ErrorState
+		res.AddError(err)
 		return res
 	}
 	if t.CR.Object["status"] == nil {
@@ -393,25 +388,11 @@ func (t *StatusDescriptorsTest) Run(ctx context.Context) *schelpers.TestResult {
 	}
 	statusBlock := t.CR.Object["status"].(map[string]interface{})
 	res.MaximumPoints = len(statusBlock)
-	var crd *olmapiv1alpha1.CRDDescription
-	for _, owned := range t.CSV.Spec.CustomResourceDefinitions.Owned {
-		if owned.Kind == t.CR.GetKind() {
-			crd = &owned
-			break
-		}
-	}
+	crd := getOwned(t.CSV, t.CR)
 	if crd == nil {
 		return res
 	}
-	for key := range statusBlock {
-		for _, statDesc := range crd.StatusDescriptors {
-			if statDesc.Path == key {
-				res.EarnedPoints++
-				delete(statusBlock, key)
-				break
-			}
-		}
-	}
+	res.AddEarnedPointsForBlock(statusBlock, crd)
 	for key := range statusBlock {
 		res.Suggestions = append(res.Suggestions, "Add a status descriptor for "+key)
 	}
@@ -423,8 +404,7 @@ func (t *SpecDescriptorsTest) Run(ctx context.Context) *schelpers.TestResult {
 	res := &schelpers.TestResult{Test: t}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
-		res.Errors = append(res.Errors, err)
-		res.State = scapiv1alpha1.ErrorState
+		res.AddError(err)
 		return res
 	}
 	if t.CR.Object["spec"] == nil {
@@ -432,27 +412,22 @@ func (t *SpecDescriptorsTest) Run(ctx context.Context) *schelpers.TestResult {
 	}
 	specBlock := t.CR.Object["spec"].(map[string]interface{})
 	res.MaximumPoints = len(specBlock)
-	var crd *olmapiv1alpha1.CRDDescription
-	for _, owned := range t.CSV.Spec.CustomResourceDefinitions.Owned {
-		if owned.Kind == t.CR.GetKind() {
-			crd = &owned
-			break
-		}
-	}
+	crd := getOwned(t.CSV, t.CR)
 	if crd == nil {
 		return res
 	}
-	for key := range specBlock {
-		for _, statDesc := range crd.SpecDescriptors {
-			if statDesc.Path == key {
-				res.EarnedPoints++
-				delete(specBlock, key)
-				break
-			}
-		}
-	}
+	res.AddEarnedPointsForBlock(specBlock, crd)
 	for key := range specBlock {
 		res.Suggestions = append(res.Suggestions, "Add a spec descriptor for "+key)
 	}
 	return res
+}
+
+func getOwned(csv *olmapiv1alpha1.ClusterServiceVersion, cr *unstructured.Unstructured) *olmapiv1alpha1.CRDDescription {
+	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
+		if owned.Kind == cr.GetKind() {
+			return &owned
+		}
+	}
+	return nil
 }
