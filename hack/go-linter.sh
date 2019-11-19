@@ -12,11 +12,11 @@ golangci-lint run --disable-all \
     --enable=maligned \
     --enable=ineffassign \
     --enable=goconst \
+    --enable=goimports \
 
 ##todo(camilamacedo86): The following checks requires fixes in the code
 # --enable=golint
 # --enable=gocyclo
-# --enable=goimports
 # --enable=lll
 # --enable=gosec
 # --enable=misspell \
