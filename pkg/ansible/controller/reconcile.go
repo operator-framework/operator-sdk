@@ -72,7 +72,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		return reconcile.Result{}, err
 	}
 
-	ident := strconv.Itoa(rand.Int())
+	ident := strconv.Itoa(rand.Int()) // #nosec - suppressing "G404: Use of weak random number generator (math/rand instead of crypto/rand)"
 	logger := logf.Log.WithName("reconciler").WithValues(
 		"job", ident,
 		"name", u.GetName(),

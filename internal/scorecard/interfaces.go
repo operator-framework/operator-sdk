@@ -48,7 +48,7 @@ func (p externalPlugin) List() scapiv1alpha1.ScorecardOutput {
 }
 
 func (p externalPlugin) Run() scapiv1alpha1.ScorecardOutput {
-	cmd := exec.Command(p.config.Command, p.config.Args...)
+	cmd := exec.Command(p.config.Command, p.config.Args...) // #nosec - suppressing "G204: Subprocess launched with function call as argument or cmd arguments (gosec)"
 	for _, env := range p.config.Env {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", env.Name, env.Value))
 	}
