@@ -62,7 +62,7 @@ resource is a cluster level resource.
 
 **NOTE**: The {group} can be found by splitting the `apiVersion`
 metadata of the CR, into `group` and `version`. As an example, 
-[this apiVersion field](https://github.com/operator-framework/operator-sdk-samples/blob/master/ansible/memcached-operator/deploy/crds/cache_v1alpha1_memcached_cr.yaml#L1)
+[this apiVersion field](https://github.com/operator-framework/operator-sdk-samples/blob/master/ansible/memcached-operator/deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml#L1)
 gives us the group `cache.example.com`.
 
 **Example Annotation:**
