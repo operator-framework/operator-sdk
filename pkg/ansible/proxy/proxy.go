@@ -276,7 +276,6 @@ func getRequestOwnerRef(req *http.Request) (kubeconfig.NamespacedOwnerReference,
 	// as a subset along with the Namespace of the owner. Please see the
 	// kubeconfig.NamespacedOwnerReference type for more information. The
 	// namespace is required when creating the reconcile requests.
-	json.Unmarshal(authString, &owner)
 	if err := json.Unmarshal(authString, &owner); err != nil {
 		m := "Could not unmarshal auth string"
 		log.Error(err, m)

@@ -122,8 +122,11 @@ func (r *ReconcileMemcachedRS) Reconcile(request reconcile.Request) (reconcile.R
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: memcachedrs.Name, Namespace: memcachedrs.Namespace}, found)
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new replicaSet
-		dep := r.replicaSetForMemcached(memcachedrs)
-		reqLogger.Info("Creating a new ReplicaSet", "ReplicaSet.Namespace", dep.Namespace, "ReplicaSet.Name", dep.Name)
+		dep, err := r.replicaSetForMemcached(memcachedrs)
+		if err != nil {
+			reqLogger.Info("Creating a new ReplicaSet", "ReplicaSet.Namespace", dep.Namespace, "ReplicaSet.Name", dep.Name)
+			return reconcile.Result{}, err
+		}
 		err = r.client.Create(context.TODO(), dep)
 		if err != nil {
 			reqLogger.Error(err, "Failed to create new ReplicaSet", "ReplicaSet.Namespace", dep.Namespace, "ReplicaSet.Name", dep.Name)
@@ -189,7 +192,7 @@ func (r *ReconcileMemcachedRS) Reconcile(request reconcile.Request) (reconcile.R
 }
 
 // rsForMemcached returns a memcached ReplicaSet object
-func (r *ReconcileMemcachedRS) replicaSetForMemcached(m *cachev1alpha1.MemcachedRS) *appsv1.ReplicaSet {
+func (r *ReconcileMemcachedRS) replicaSetForMemcached(m *cachev1alpha1.MemcachedRS) (*appsv1.ReplicaSet, error) {
 	ls := labelsForMemcached(m.Name)
 	replicas := m.Spec.NumNodes
 
@@ -222,8 +225,10 @@ func (r *ReconcileMemcachedRS) replicaSetForMemcached(m *cachev1alpha1.Memcached
 		},
 	}
 	// Set Memcached instance as the owner and controller
-	controllerutil.SetControllerReference(m, replicaSet, r.scheme)
-	return replicaSet
+	if err := controllerutil.SetControllerReference(m, replicaSet, r.scheme); err != nil {
+		return nil, err
+	}
+	return replicaSet, nil
 }
 
 // labelsForMemcached returns the labels for selecting the resources
