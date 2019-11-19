@@ -15,6 +15,7 @@
 package crd
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -194,6 +195,15 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 			return nil, err
 		}
 		if len(modifiedCRD) != 0 {
+			// Until we bump dependencies to Kubernetes v1.16, generated validation
+			// descriptions for kind and apiVersion will contain an invalid link.
+			// Manually replace them here.
+			//
+			// TODO(estroz): remove on k8s v1.16 bump.
+			modifiedCRD = bytes.ReplaceAll(modifiedCRD,
+				[]byte("https://git.k8s.io/community/contributors/devel/api-conventions.md"),
+				[]byte("https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md"),
+			)
 			fileNameNoExt := strings.TrimSuffix(info.Name(), filepath.Ext(info.Name()))
 			fileMap[fileNameNoExt+"_crd.yaml"] = modifiedCRD
 		}

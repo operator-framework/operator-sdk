@@ -27,11 +27,21 @@ import (
 )
 
 func TestCRDGo(t *testing.T) {
-	r, err := scaffold.NewResource("cache.example.com/v1alpha1", "Memcached")
+	tfDir, err := getTestFrameworkPath()
 	if err != nil {
 		t.Fatal(err)
 	}
-	tfDir, err := getTestFrameworkPath()
+	// Must change directories since the test framework dir is a sub-module.
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { os.Chdir(wd) }()
+	if err = os.Chdir(tfDir); err != nil {
+		t.Fatal(err)
+	}
+
+	r, err := scaffold.NewResource("cache.example.com/v1alpha1", "Memcached")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,15 +60,15 @@ func TestCRDGo(t *testing.T) {
 }
 
 func TestCRDNonGo(t *testing.T) {
-	r, err := scaffold.NewResource("cache.example.com/v1alpha1", "Memcached")
-	if err != nil {
-		t.Fatal(err)
-	}
 	tfDir, err := getTestFrameworkPath()
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	r, err := scaffold.NewResource("cache.example.com/v1alpha1", "Memcached")
+	if err != nil {
+		t.Fatal(err)
+	}
 	cfg := genutil.Config{InputDir: filepath.Join(tfDir, "deploy", "crds")}
 	g := NewCRDNonGo(cfg, *r)
 	fileMap, err := g.(crdGenerator).generateNonGo()
@@ -93,12 +103,12 @@ spec:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
             of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
           type: string
         kind:
           description: 'Kind is a string value representing the REST resource this
             object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
           type: object
