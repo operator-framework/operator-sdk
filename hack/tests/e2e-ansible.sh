@@ -127,8 +127,6 @@ test_operator() {
         operator_logs
         exit 1
     fi
-    # If there are errors, that is ok. We just need to handle this correctly,
-    # by having the correct outcomes
 }
 
 # create and build the operator
