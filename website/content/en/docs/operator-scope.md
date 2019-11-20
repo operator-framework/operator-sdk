@@ -159,5 +159,5 @@ This scope is ideal for the cases where an instance(CR) of some Kind(CRD) will b
     ```
   
 [RBAC]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
-[manager_user_guide]: ./user-guide.md#manager
+[manager_user_guide]: ../user-guide/#manager
 [manager_options]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/manager#Options

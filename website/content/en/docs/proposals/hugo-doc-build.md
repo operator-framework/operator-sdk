@@ -36,7 +36,7 @@ Highlights:
 
   - Files will remain markdown, few syntax changes necessary.
   - Stack is aligned with current Golang/Kubernetes community.
-  - Proof of concept: https://operator-sdk.netlify.com/
+  - Proof of concept: operator-sdk.netlify.com
 
 ## Open Questions (optional)
 

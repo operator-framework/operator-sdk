@@ -24,8 +24,7 @@ $ git submodule update --init --recursive
 
 ## Build and Serve
 
-You can build and serve your docs to
-[localhost:1313](http://localhost:1313) with:
+You can build and serve your docs to localhost:1313 with:
 
 ```
 hugo server
