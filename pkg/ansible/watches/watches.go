@@ -275,7 +275,8 @@ func getMaxWorkers(gvk schema.GroupVersionKind, defValue int) int {
 	maxWorkers, err := strconv.Atoi(os.Getenv(envVar))
 	if err != nil {
 		// we don't care why we couldn't parse it just use default
-		log.Info("Failed to parse %v from environment. Using default %v", envVar, defValue)
+		//log.Info("Failed to parse %v from environment. Using default %v", envVar, defValue)
+		log.Info(fmt.Sprintf("Using default value for workers %d", defValue))
 		return defValue
 	}
 
@@ -297,7 +298,9 @@ func getAnsibleVerbosity(gvk schema.GroupVersionKind, defValue int) int {
 	))
 	ansibleVerbosity, err := strconv.Atoi(os.Getenv(envVar))
 	if err != nil {
-		log.Info("Failed to parse %v from environment. Using default %v", envVar, defValue)
+		//log.Info("Failed to parse %v from environment. Using default %v", envVar, defValue)
+		log.Info(fmt.Sprintf("Using default value for ansible verbosity %d", defValue))
+
 		return defValue
 	}
 
