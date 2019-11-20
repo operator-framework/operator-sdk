@@ -1,0 +1,7 @@
+apiVersion: scratch.fabianism.us/v1alpha1
+kind: WebhookAnsibleTest
+metadata:
+  name: example-webhookansibletest
+spec:
+  # Add fields here
+  size: 3

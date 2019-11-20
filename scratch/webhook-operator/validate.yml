@@ -1,0 +1,9 @@
+---
+
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+  - when: fail_message is defined and fail_message
+    fail:
+      msg: '{{ meta.name }} set failMessage to "{{ fail_message }}"'

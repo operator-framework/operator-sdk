@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webhook-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: webhook-operator
+  template:
+    metadata:
+      labels:
+        name: webhook-operator
+    spec:
+      serviceAccountName: webhook-operator
+      containers:
+        - name: ansible
+          command:
+          - /usr/local/bin/ao-logs
+          - /tmp/ansible-operator/runner
+          - stdout
+          # Replace this with the built image name
+          image: "{{ REPLACE_IMAGE }}"
+          imagePullPolicy: "{{ pull_policy|default('Always') }}"
+          volumeMounts:
+          - mountPath: /tmp/ansible-operator/runner
+            name: runner
+            readOnly: true
+        - name: operator
+          # Replace this with the built image name
+          command: null
+          image: "{{ REPLACE_IMAGE }}"
+          imagePullPolicy: "{{ pull_policy|default('Always') }}"
+          volumeMounts:
+          - mountPath: /tmp/ansible-operator/runner
+            name: runner
+          - mountPath: /tmp/k8s-webhook-server/serving-certs
+            name: webhook-cert
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "webhook-operator"
+            - name: ANSIBLE_GATHERING
+              value: explicit
+      volumes:
+        - name: runner
+          emptyDir: {}
+        - name: webhook-cert
+          secret:
+            defaultMode: 420
+            secretName: webhook-testing-cert
+

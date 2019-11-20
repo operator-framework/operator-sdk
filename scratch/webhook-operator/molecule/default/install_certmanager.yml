@@ -1,0 +1,112 @@
+---
+
+- name: Create cert-manager namespace
+  k8s:
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: cert-manager
+        labels:
+          certmanager.k8s.io/disable-validation: "true"
+
+- name: Install cert-manager
+  k8s:
+    definition: '{{ item }}'
+    namespace: cert-manager
+  with_items: '{{ lookup("url", "https://github.com/jetstack/cert-manager/releases/download/v0.10.1/cert-manager.yaml", split_lines=False) | from_yaml_all | list }}'
+  when: item is not none
+
+- name: Create ClusterIssuer
+  k8s:
+    namespace: cert-manager
+    definition:
+      apiVersion: certmanager.k8s.io/v1alpha1
+      kind: ClusterIssuer
+      metadata:
+        name: selfsigning-issuer
+      spec:
+        selfSigned: {}
+  register: result
+  until: result is succeeded
+  retries: 5
+
+- name: Create self-signed certificate
+  k8s:
+    definition:
+      apiVersion: certmanager.k8s.io/v1alpha1
+      kind: Certificate
+      metadata:
+        name: webhook-testing
+        namespace: '{{ namespace }}'
+      spec:
+        secretName: webhook-testing-cert
+        commonName: "webhook-testing-root-ca"
+        dnsNames:
+        - webhooks.default.svc
+        isCA: true
+        issuerRef:
+          name: selfsigning-issuer
+          kind: ClusterIssuer
+
+- name: Create webhooks and services
+  k8s:
+    definition: '{{ item }}'
+  with_items:
+  - apiVersion: admissionregistration.k8s.io/v1beta1
+    kind: MutatingWebhookConfiguration
+    metadata:
+      name: mutating-scratch.fabianism.us
+      annotations:
+        certmanager.k8s.io/inject-ca-from: '{{ namespace }}/webhook-testing'
+    webhooks:
+    - name: "mutating-scratch.fabianism.us"
+      rules:
+      - apiGroups:   ["scratch.fabianism.us"]
+        apiVersions: ["*"]
+        operations:  ["CREATE"]
+        resources:   ["webhookansibletests"]
+        scope:       "Namespaced"
+      clientConfig:
+        service:
+          namespace: "{{ namespace }}"
+          name: webhooks
+          path: /mutating
+      admissionReviewVersions: ["v1beta1"]
+      timeoutSeconds: 5
+
+  - apiVersion: admissionregistration.k8s.io/v1beta1
+    kind: ValidatingWebhookConfiguration
+    metadata:
+      name: validating-scratch.fabianism.us
+      annotations:
+        certmanager.k8s.io/inject-ca-from: '{{ namespace }}/webhook-testing'
+    webhooks:
+    - name: validating-scratch.fabianism.us
+      rules:
+      - apiGroups:   ["scratch.fabianism.us"]
+        apiVersions: ["*"]
+        operations:  ["CREATE"]
+        resources:   ["webhookansibletests"]
+        scope:       "Namespaced"
+      clientConfig:
+        service:
+          namespace: "{{ namespace }}"
+          name: webhooks
+          path: /validating
+      failurePolicy: Fail
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: webhooks
+      namespace: '{{ namespace }}'
+    spec:
+      ports:
+      - name: webhook
+        port: 443
+        protocol: TCP
+        targetPort: 24445
+      selector:
+        name: webhook-operator
+      type: ClusterIP
+

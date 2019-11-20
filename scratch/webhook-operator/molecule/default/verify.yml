@@ -1,0 +1,64 @@
+
+- name: verify
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    failure_message: oof that hurt
+  tasks:
+  - name: Attempt to create the invalid scratch.fabianism.us/v1alpha1.WebhookAnsibleTest
+    k8s:
+      state: present
+      definition:
+        apiVersion: scratch.fabianism.us/v1alpha1
+        kind: WebhookAnsibleTest
+        metadata:
+          name: failme
+          namespace: '{{ namespace }}'
+        spec:
+          failMessage: '{{ failure_message }}'
+      wait: yes
+      wait_timeout: 60
+      wait_condition:
+        type: Running
+        reason: Successful
+        status: "True"
+    ignore_errors: yes
+    register: failed
+
+  - debug:
+      var: failed
+
+  - name: Ensure the error message is reported on failure
+    assert:
+      that:
+      - failed.status == 403
+      - failed.reason == "Forbidden"
+      - failure_message in failed.msg
+
+  - name: Create the valid scratch.fabianism.us/v1alpha1.WebhookAnsibleTest
+    k8s:
+      state: present
+      definition:
+        apiVersion: scratch.fabianism.us/v1alpha1
+        kind: WebhookAnsibleTest
+        metadata:
+          name: thinkpositive
+          namespace: '{{ namespace }}'
+        spec: {}
+      wait: yes
+      wait_timeout: 60
+      wait_condition:
+        type: Running
+        reason: Successful
+        status: "True"
+    register: successful
+
+  - name: Delete the scratch.fabianism.us/v1alpha1.WebhookAnsibleTest
+    k8s:
+      state: absent
+      api_version: scratch.fabianism.us/v1alpha1
+      kind: WebhookAnsibleTest
+      name: thinkpositive
+      namespace: '{{ namespace }}'
+      wait: yes

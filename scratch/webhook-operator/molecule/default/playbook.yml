@@ -1,0 +1,57 @@
+---
+
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  become: yes
+  tasks:
+  - command: make install
+    args:
+      chdir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/../../"
+  - copy:
+      src: /home/fabian/Go/bin/operator-sdk
+      dest: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/operator-sdk"
+      mode: 0755
+
+- name: Build Operator in Kubernetes docker container
+  hosts: k8s
+  gather_facts: no
+  vars:
+    image_name: scratch.fabianism.us/webhook-operator:testing
+  tasks:
+  # using command so we don't need to install any dependencies
+  - name: Get existing image hash
+    command: docker images -q {{ image_name }}
+    register: prev_hash
+    changed_when: false
+
+  - name: Build Operator Image
+    command: docker build -f /build/build/Dockerfile -t {{ image_name }} /build
+    register: build_cmd
+    changed_when: not prev_hash.stdout or (prev_hash.stdout and prev_hash.stdout not in ''.join(build_cmd.stdout_lines[-2:]))
+
+- name: Converge
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  vars:
+    ansible_python_interpreter: '{{ ansible_playbook_python }}'
+    deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
+    pull_policy: Never
+    REPLACE_IMAGE: scratch.fabianism.us/webhook-operator:testing
+    custom_resource: "{{ lookup('file', '/'.join([deploy_dir, 'crds/scratch.fabianism.us_v1alpha1_webhookansibletest_cr.yaml'])) | from_yaml }}"
+  tasks:
+  - name: Delete the Operator Deployment
+    k8s:
+      state: absent
+      namespace: '{{ namespace }}'
+      definition: "{{ lookup('template', '/'.join([deploy_dir, 'operator.yaml'])) }}"
+      wait: yes
+    when: hostvars[groups.k8s.0].build_cmd.changed
+
+  - name: Create the Operator Deployment
+    k8s:
+      namespace: '{{ namespace }}'
+      definition: "{{ lookup('template', '/'.join([deploy_dir, 'operator.yaml'])) }}"
+      wait: yes
+      merge_type: merge

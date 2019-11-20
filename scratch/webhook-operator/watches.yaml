@@ -1,0 +1,9 @@
+---
+- version: v1alpha1
+  group: scratch.fabianism.us
+  kind: WebhookAnsibleTest
+  role: /opt/ansible/roles/webhookansibletest
+  webhooks:
+    validating:
+    - playbook: /opt/ansible/validate.yml
+      path: /validating
