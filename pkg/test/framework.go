@@ -60,7 +60,8 @@ type Framework struct {
 	KubeClient        kubernetes.Interface
 	Scheme            *runtime.Scheme
 	NamespacedManPath *string
-	Namespace         string
+	DeployNamespace   string
+	WatchNamespace    string
 	LocalOperator     bool
 
 	projectRoot         string
@@ -74,26 +75,29 @@ type Framework struct {
 }
 
 type frameworkOpts struct {
-	projectRoot         string
-	kubeconfigPath      string
-	globalManPath       string
-	namespacedManPath   string
-	localOperator       bool
-	singleNamespaceMode bool
-	isLocalOperator     bool
-	localOperatorArgs   string
+	projectRoot          string
+	kubeconfigPath       string
+	globalManPath        string
+	namespacedManPath    string
+	localOperator        bool
+	singleNamespaceMode  bool
+	watchDeployNamespace bool
+	isLocalOperator      bool
+	localOperatorArgs    string
 }
 
 const (
-	ProjRootFlag          = "root"
-	KubeConfigFlag        = "kubeconfig"
-	NamespacedManPathFlag = "namespacedMan"
-	GlobalManPathFlag     = "globalMan"
-	SingleNamespaceFlag   = "singleNamespace"
-	LocalOperatorFlag     = "localOperator"
-	LocalOperatorArgs     = "localOperatorArgs"
+	ProjRootFlag             = "root"
+	KubeConfigFlag           = "kubeconfig"
+	NamespacedManPathFlag    = "namespacedMan"
+	GlobalManPathFlag        = "globalMan"
+	SingleNamespaceFlag      = "singleNamespace"
+	WatchDeployNamespaceFlag = "watchDeployNamespace"
+	LocalOperatorFlag        = "localOperator"
+	LocalOperatorArgs        = "localOperatorArgs"
 
-	TestNamespaceEnv = "TEST_NAMESPACE"
+	TestDeployNamespaceEnv = "TEST_DEPLOY_NAMESPACE"
+	TestWatchNamespaceEnv  = "TEST_WATCH_NAMESPACE"
 )
 
 func (opts *frameworkOpts) addToFlagSet(flagset *flag.FlagSet) {
@@ -103,6 +107,7 @@ func (opts *frameworkOpts) addToFlagSet(flagset *flag.FlagSet) {
 	flagset.StringVar(&opts.kubeconfigPath, KubeConfigFlag, "", "path to kubeconfig")
 	flagset.StringVar(&opts.globalManPath, GlobalManPathFlag, "", "path to operator manifest")
 	flagset.BoolVar(&opts.singleNamespaceMode, SingleNamespaceFlag, false, "enable single namespace mode")
+	flagset.BoolVar(&opts.watchDeployNamespace, WatchDeployNamespaceFlag, false, "set watch namespace to deploy namespace")
 	flagset.StringVar(&opts.localOperatorArgs, LocalOperatorArgs, "", "flags that the operator needs (while using --up-local). example: \"--flag1 value1 --flag2=value2\"")
 }
 
@@ -112,12 +117,17 @@ func newFramework(opts *frameworkOpts) (*Framework, error) {
 		return nil, fmt.Errorf("failed to build the kubeconfig: %v", err)
 	}
 
-	namespace := kcNamespace
+	deployNamespace := kcNamespace
 	if opts.singleNamespaceMode {
-		testNamespace := os.Getenv(TestNamespaceEnv)
-		if testNamespace != "" {
-			namespace = testNamespace
+		testDeployNamespace := os.Getenv(TestDeployNamespaceEnv)
+		if testDeployNamespace != "" {
+			deployNamespace = testDeployNamespace
 		}
+	}
+
+	watchNamespace := os.Getenv(TestWatchNamespaceEnv)
+	if watchNamespace == "" && opts.watchDeployNamespace {
+		watchNamespace = deployNamespace
 	}
 
 	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
@@ -147,7 +157,8 @@ func newFramework(opts *frameworkOpts) (*Framework, error) {
 		KubeClient:        kubeclient,
 		Scheme:            scheme,
 		NamespacedManPath: &opts.namespacedManPath,
-		Namespace:         namespace,
+		DeployNamespace:   deployNamespace,
+		WatchNamespace:    watchNamespace,
 		LocalOperator:     opts.isLocalOperator,
 
 		projectRoot:         opts.projectRoot,
@@ -190,7 +201,7 @@ func (f *Framework) addToScheme(addToScheme addToSchemeFunc, obj runtime.Object)
 	}
 	err = wait.PollImmediate(time.Second, time.Second*10, func() (done bool, err error) {
 		if f.singleNamespaceMode {
-			err = dynClient.List(goctx.TODO(), obj, dynclient.InNamespace(f.Namespace))
+			err = dynClient.List(goctx.TODO(), obj, dynclient.InNamespace(f.DeployNamespace))
 		} else {
 			err = dynClient.List(goctx.TODO(), obj, dynclient.InNamespace("default"))
 		}
@@ -284,6 +295,6 @@ func (f *Framework) setupLocalCommand() (*exec.Cmd, error) {
 		// be populated by NewDefaultClientConfigLoadingRules()
 		localCmd.Env = append(os.Environ(), fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, clientcmd.NewDefaultClientConfigLoadingRules().Precedence[0]))
 	}
-	localCmd.Env = append(localCmd.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, f.Namespace))
+	localCmd.Env = append(localCmd.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, f.WatchNamespace))
 	return localCmd, nil
 }

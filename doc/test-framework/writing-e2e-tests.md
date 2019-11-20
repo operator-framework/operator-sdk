@@ -239,11 +239,11 @@ $ operator-sdk test local ./test/e2e --image quay.io/example/my-operator:v0.0.2
 
 ### Namespace Flag
 
-If you wish to run all the tests in 1 namespace (which also forces `-parallel=1`), you can use the `--namespace` flag:
+If you wish to run all the tests in 1 namespace (which also forces `-parallel=1`), you can use the `--deploy-namespace` flag:
 
 ```shell
 $ kubectl create namespace operator-test
-$ operator-sdk test local ./test/e2e --namespace operator-test
+$ operator-sdk test local ./test/e2e --deploy-namespace operator-test
 ```
 
 ### Up-Local Flag
@@ -252,11 +252,11 @@ To run the operator itself locally during the tests instead of starting a deploy
 `--up-local` flag. This mode will still create global resources, but by default will not create any in-cluster namespaced
 resources unless the user specifies one through the `--namespaced-manifest` flag.
 
-**NOTE**: The `--up-local` flag requires the `--namespace` flag and the command will NOT create the namespace. Then, be sure that you are specifying a valid namespace.
+**NOTE**: The `--up-local` flag requires the `--deploy-namespace` flag and the command will NOT create the namespace. Then, be sure that you are specifying a valid namespace.
 
 ```shell
 $ kubectl create namespace operator-test
-$ operator-sdk test local ./test/e2e --namespace operator-test --up-local
+$ operator-sdk test local ./test/e2e --deploy-namespace operator-test --up-local
 ```
 
 ### No-Setup Flag
@@ -269,7 +269,7 @@ $ kubectl create -f deploy/service_account.yaml --namespace operator-test
 $ kubectl create -f deploy/role.yaml --namespace operator-test
 $ kubectl create -f deploy/role_binding.yaml --namespace operator-test
 $ kubectl create -f deploy/operator.yaml --namespace operator-test
-$ operator-sdk test local ./test/e2e --namespace operator-test --no-setup
+$ operator-sdk test local ./test/e2e --deploy-namespace operator-test --no-setup
 ```
 
 For more documentation on the `operator-sdk test local` command, see the [SDK CLI Reference][sdk-cli-ref] doc.

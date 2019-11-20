@@ -217,7 +217,7 @@ func MemcachedLocal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command("operator-sdk", "up", "local", "--namespace="+namespace)
+	cmd := exec.Command("operator-sdk", "up", "local", "--watch-namespace="+namespace)
 	stderr, err := os.Create("stderr.txt")
 	if err != nil {
 		t.Fatalf("Failed to create stderr.txt: %v", err)

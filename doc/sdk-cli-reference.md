@@ -460,7 +460,8 @@ Runs the tests locally
 * `--kubeconfig` string - location of kubeconfig for Kubernetes cluster (default "~/.kube/config")
 * `--global-manifest` string - path to manifest for global resources (default "deploy/crd.yaml)
 * `--namespaced-manifest` string - path to manifest for per-test, namespaced resources (default: combines deploy/service_account.yaml, deploy/rbac.yaml, and deploy/operator.yaml)
-* `--namespace` string - if non-empty, single namespace to run tests in (e.g. "operator-test") (default: "")
+* `--deploy-namespace` string - if non-empty, single namespace to run tests in (e.g. "operator-test") (default: "")
+* `--watch-namespace` string - if set, namespace which operator watches while testing with `--up-local`.  if set to "", operator watches AllNamespaces. if not set while testing with `--up-local` operator watches deploy-namespace
 * `--go-test-flags` string - Additional flags to pass to go test
 * `--molecule-test-flags` string - Additional flags to pass to molecule test
 * `--up-local` - enable running operator locally with go run instead of as an image in the cluster
@@ -500,7 +501,7 @@ the operator-sdk binary itself as the operator.
 * `--enable-delve` bool - starts the operator locally and enables the delve debugger listening on port 2345
 * `--go-ldflags` string - Set Go linker options
 * `--kubeconfig` string - The file path to Kubernetes configuration file; defaults to $HOME/.kube/config
-* `--namespace` string - The namespace where the operator watches for changes. (default "default")
+* `--watch-namespace` string - The namespace where the operator watches for changes. (default "default"). set to `""` to watch All-Namepsaces
 * `--operator-flags` string - Flags that the local operator may need.
 * `-h, --help` - help for local
 

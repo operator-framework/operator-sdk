@@ -16,12 +16,12 @@ operator-sdk up local [flags]
 ### Options
 
 ```
-      --enable-delve            Start the operator using the delve debugger
-      --go-ldflags string       Set Go linker options
-  -h, --help                    help for local
-      --kubeconfig string       The file path to kubernetes configuration file; defaults to location specified by $KUBECONFIG with a fallback to $HOME/.kube/config if not set
-      --namespace string        The namespace where the operator watches for changes.
-      --operator-flags string   The flags that the operator needs. Example: "--flag1 value1 --flag2=value2"
+      --enable-delve             Start the operator using the delve debugger
+      --go-ldflags string        Set Go linker options
+  -h, --help                     help for local
+      --kubeconfig string        The file path to kubernetes configuration file; defaults to location specified by $KUBECONFIG with a fallback to $HOME/.kube/config if not set
+      --operator-flags string    The flags that the operator needs. Example: "--flag1 value1 --flag2=value2"
+      --watch-namespace string   The namespace where the operator watches for changes.
 ```
 
 ### SEE ALSO

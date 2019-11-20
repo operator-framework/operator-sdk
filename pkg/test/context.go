@@ -66,7 +66,7 @@ func (f *Framework) newTestCtx(t *testing.T) *TestCtx {
 
 	var namespace string
 	if f.singleNamespaceMode {
-		namespace = f.Namespace
+		namespace = f.DeployNamespace
 	}
 	return &TestCtx{
 		id:                id,

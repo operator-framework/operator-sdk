@@ -48,6 +48,7 @@ type testLocalConfig struct {
 	goTestFlags        string
 	moleculeTestFlags  string
 	deployNamespace    string
+	watchNamespace     string
 	upLocal            bool
 	noSetup            bool
 	debug              bool
@@ -68,7 +69,8 @@ func newTestLocalCmd() *cobra.Command {
 	testCmd.Flags().StringVar(&tlConfig.namespacedManPath, "namespaced-manifest", "", "Path to manifest for per-test, namespaced resources (e.g. RBAC and Operator manifest)")
 	testCmd.Flags().StringVar(&tlConfig.goTestFlags, "go-test-flags", "", "Additional flags to pass to go test")
 	testCmd.Flags().StringVar(&tlConfig.moleculeTestFlags, "molecule-test-flags", "", "Additional flags to pass to molecule test")
-	testCmd.Flags().StringVar(&tlConfig.deployNamespace, "deploy-namespace", "", "If non-empty, single namespace to run tests in (deploys namespaced resources here)")
+	testCmd.Flags().StringVar(&tlConfig.deployNamespace, "deploy-namespace", "", "If non-empty, single namespace to run tests in (deploys namespaced resources here); default: \"\" which resolves to namespace from kubeconfig")
+	testCmd.Flags().StringVar(&tlConfig.watchNamespace, "watch-namespace", "", "The namespace where the operator watches for changes (only valid with --up-local). Explicitly set to empty string to watch all namespaces (defaults to the deploy namespace).")
 	testCmd.Flags().BoolVar(&tlConfig.upLocal, "up-local", false, "Enable running operator locally with go run instead of as an image in the cluster")
 	testCmd.Flags().BoolVar(&tlConfig.noSetup, "no-setup", false, "Disable test resource creation")
 	testCmd.Flags().BoolVar(&tlConfig.debug, "debug", false, "Enable debug-level logging")
@@ -103,7 +105,7 @@ func testLocalAnsibleFunc(cmd *cobra.Command, args []string) error {
 	}
 
 	dc := exec.Command("molecule", testArgs...)
-	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.deployNamespace))
+	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestDeployNamespaceEnv, tlConfig.deployNamespace))
 	dc.Dir = projutil.MustGetwd()
 	return projutil.ExecCmd(dc)
 }
@@ -209,7 +211,7 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 	if tlConfig.deployNamespace != "" || tlConfig.noSetup {
 		testArgs = append(testArgs, "-"+test.SingleNamespaceFlag, "-parallel=1")
 	}
-	env := append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.deployNamespace))
+	env := append(os.Environ(), fmt.Sprintf("%v=%v", test.TestDeployNamespaceEnv, tlConfig.deployNamespace))
 	if tlConfig.upLocal {
 		env = append(env, fmt.Sprintf("%s=%s", k8sutil.ForceRunModeEnv, k8sutil.LocalRunMode))
 		testArgs = append(testArgs, "-"+test.LocalOperatorFlag)
@@ -217,6 +219,13 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 			testArgs = append(testArgs, "-"+test.LocalOperatorArgs, tlConfig.localOperatorFlags)
 		}
 	}
+	// if watch-namespace is not explicitly set
+	// then set test.WatchDeployNamespaceFlag
+	// so that watchNamespace == deployNamespace in --up-local mode
+	if tlConfig.upLocal && !cmd.Flags().Changed("watch-namespace") {
+		testArgs = append(testArgs, "-"+test.WatchDeployNamespaceFlag)
+	}
+	env = append(env, fmt.Sprintf("%v=%v", test.TestWatchNamespaceEnv, tlConfig.watchNamespace))
 	opts := projutil.GoTestOptions{
 		GoCmdOptions: projutil.GoCmdOptions{
 			PackagePath: args[0] + "/...",

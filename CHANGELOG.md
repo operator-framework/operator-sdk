@@ -3,11 +3,16 @@
 ### Added
 - Support for vars in top level ansible watches. ([#2147](https://github.com/operator-framework/operator-sdk/pull/2147))
 
+- Added `--watch-namespace` flag to `operator-sdk test local <test-dir> --up-local` command. ([#2149](https://github.com/operator-framework/operator-sdk/pull/2149))
+
 ### Changed
+
 - Upgrade minimal Ansible version in the init projects from `2.4` to `2.6`. ([#2107](https://github.com/operator-framework/operator-sdk/pull/2107))
 - Upgrade Kubernetes version from `kubernetes-1.15.4` to `kubernetes-1.16.2`. ([#2145](https://github.com/operator-framework/operator-sdk/pull/2145))
 - Upgrade Helm version from `v2.15.0` to `v2.16.1`. ([#2145](https://github.com/operator-framework/operator-sdk/pull/2145))
 - Upgrade [`controller-runtime`](https://github.com/kubernetes-sigs/controller-runtime) version from `v0.3.0` to [`v0.4.0`](https://github.com/kubernetes-sigs/controller-runtime/releases/tag/v0.4.0). ([#2145](https://github.com/operator-framework/operator-sdk/pull/2145))
+- **Breaking Change:** Renamed `--namespace` flag as `--watch-namespace` in `operator-sdk up local` command. ([#2149](https://github.com/operator-framework/operator-sdk/pull/2149))
+- **Breaking Change:** Renamed `--namespace` flag as `--deploy-namespace` in `operator-sdk test local <test-dir> --up-local` command. ([#2149](https://github.com/operator-framework/operator-sdk/pull/2149))
 
 ### Deprecated
 

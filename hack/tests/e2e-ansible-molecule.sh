@@ -52,7 +52,7 @@ pushd memcached-operator
 # The following code is the default used (Not valid for MacOSX)
 sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
 OPERATORDIR="$(pwd)"
-TEST_CLUSTER_PORT=24443 operator-sdk test local --namespace default
+TEST_CLUSTER_PORT=24443 operator-sdk test local --deploy-namespace default
 
 remove_prereqs
 
@@ -65,6 +65,6 @@ pushd "${ROOTDIR}/test/ansible-inventory"
 # sed -i "" 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
 # The following code is the default used (Not valid for MacOSX)
 sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
-TEST_CLUSTER_PORT=24443 operator-sdk test local --namespace default
+TEST_CLUSTER_PORT=24443 operator-sdk test local --deploy-namespace default
 
 popd

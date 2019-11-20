@@ -14,6 +14,7 @@ operator-sdk test local <path to tests directory> [flags]
 
 ```
       --debug                         Enable debug-level logging
+      --deploy-namespace string       If non-empty, single namespace to run tests in (deploys namespaced resources here); default: "" which resolves to namespace from kubeconfig
       --global-manifest string        Path to manifest for Global resources (e.g. CRD manifests)
       --go-test-flags string          Additional flags to pass to go test
   -h, --help                          help for local
@@ -21,10 +22,10 @@ operator-sdk test local <path to tests directory> [flags]
       --kubeconfig string             Kubeconfig path
       --local-operator-flags string   The flags that the operator needs (while using --up-local). Example: "--flag1 value1 --flag2=value2"
       --molecule-test-flags string    Additional flags to pass to molecule test
-      --namespace string              If non-empty, single namespace to run tests in
       --namespaced-manifest string    Path to manifest for per-test, namespaced resources (e.g. RBAC and Operator manifest)
       --no-setup                      Disable test resource creation
       --up-local                      Enable running operator locally with go run instead of as an image in the cluster
+      --watch-namespace string        The namespace where the operator watches for changes (with --up-local, if not set, watches deployNamespace
 ```
 
 ### SEE ALSO
