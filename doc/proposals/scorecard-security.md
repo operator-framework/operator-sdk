@@ -25,7 +25,7 @@ see-also:
 
 ## Open Questions (optional)
 
-- Would have more security checks which may are important for the Operators and are not mapped here? 
+- Would have more security checks which may are important to the Operators and are not mapped here? 
 
 ## Summary
 
@@ -60,6 +60,8 @@ I as an operator dev user, I'd like to check the quality of my operator by verif
 
 ### Implementation Details/Notes/Constraints
 
+#### Details 
+
 For the following checks is possible to verify the Operator.YAML file:
 
 - Check if Operator has resources limits defined (memory/CPU)
@@ -87,3 +89,37 @@ To ensure that all resources created by the operator will have a label:
 - (suggestion/possible solution) Then, make mandatory the `labels` field be filled in the CSV file.   E.g [cvs](https://github.com/dev4devs-com/postgresql-operator/blob/master/deploy/olm-catalog/postgresql-operator/0.1.1/postgresql-operator.v0.1.1.clusterserviceversion.yaml#L661)
 
 [operator-sdk-doc]:  ../../doc
+
+#### Notes
+
+Following some explanations and references over these checks. 
+
+**Resources limits defined (memory/CPU)**
+
+A good explanation can be found [here](https://kubesec.io/basics/containers-resources-limits-cpu/) as some reference links. 
+
+**SYS_ADMIN and CAP_SYS_ADMIN**
+
+Note that malicious users with this privileged capability as `CAP_SYS_ADMIN` can have access to the `/proc/` which allows access to the host and, in this way, compromise not only the container.
+
+See:
+
+> Don't choose CAP_SYS_ADMIN if you can possibly avoid it! A vast
+proportion of existing capability checks are associated with this
+capability (see the partial list above). It can plausibly be
+called "the new root", since on the one hand, it confers a wide
+range of powers, and on the other hand, its broad scope means that
+this is the capability that is required by many privileged
+programs. Don't make the problem worse. The only new features
+that should be associated with CAP_SYS_ADMIN are ones that closely
+match existing uses in that silo.
+
+Reference: http://man7.org/linux/man-pages/man7/capabilities.7.html
+
+**Containers are using user ID > 10000**
+
+A good explanation can be found [here](https://kubesec.io/basics/containers-securitycontext-runasuser/) as some reference links. 
+
+**Containers are using root as user** 
+
+Malicious users with full as as root can compromise not just the container but the host as well. 
