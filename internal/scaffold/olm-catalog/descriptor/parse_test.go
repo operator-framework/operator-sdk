@@ -15,7 +15,6 @@
 package descriptor
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -74,7 +73,6 @@ func TestParseResource(t *testing.T) {
 	for _, c := range cases {
 		output, err := parseResource(c.input)
 		if err != nil {
-			fmt.Printf("%s: %v\n", c.description, err)
 			if !c.wantErr {
 				t.Errorf("%s: expected nil error, got %q", c.description, err)
 			}
