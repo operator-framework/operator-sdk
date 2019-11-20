@@ -28,11 +28,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-const (
-	testFrameworkPackage = "github.com/operator-framework/operator-sdk/test/test-framework"
-)
+const testFrameworkPackage = "github.com/operator-framework/operator-sdk/test/test-framework"
 
 func getTestFrameworkDir(t *testing.T) string {
+	t.Helper()
 	absPath, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
@@ -63,7 +62,16 @@ func TestGetKindTypeForAPI(t *testing.T) {
 			testFrameworkPackage, "NotFound", 20, true,
 		},
 	}
-	tfAPIDir := filepath.Join(getTestFrameworkDir(t), "pkg", "apis", "cache", "v1alpha1")
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	tfDir := getTestFrameworkDir(t)
+	if err := os.Chdir(tfDir); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chdir(wd)
+	tfAPIDir := filepath.Join("pkg", "apis", "cache", "v1alpha1")
 	universe, err := getTypesFromDir(tfAPIDir)
 	if err != nil {
 		t.Fatal(err)

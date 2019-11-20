@@ -113,7 +113,7 @@ func getTypesFromDir(dir string) (types.Universe, error) {
 		return nil, err
 	}
 	if !filepath.IsAbs(dir) && !strings.HasPrefix(dir, ".") {
-		dir = fmt.Sprintf("./%s", dir)
+		dir = fmt.Sprintf(".%s%s", string(filepath.Separator), dir)
 	}
 	p := parser.New()
 	if err := p.AddDirRecursive(dir); err != nil {
@@ -129,7 +129,7 @@ func getTypesFromDir(dir string) (types.Universe, error) {
 func getTypesForPkg(pkgPath string, universe types.Universe) (pkgTypes []*types.Type, err error) {
 	var pkg *types.Package
 	for _, upkg := range universe {
-		if strings.HasPrefix(upkg.Path, pkgPath) {
+		if strings.HasPrefix(upkg.Path, pkgPath) || strings.HasPrefix(upkg.Path, "."+string(filepath.Separator)) {
 			pkg = upkg
 			break
 		}
