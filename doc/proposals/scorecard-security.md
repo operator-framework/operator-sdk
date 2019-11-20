@@ -120,6 +120,8 @@ Reference: http://man7.org/linux/man-pages/man7/capabilities.7.html
 
 A good explanation can be found [here](https://kubesec.io/basics/containers-securitycontext-runasuser/) as some reference links. 
 
+> NOTE: Regards OCP the users attribute to the containers will be by default > 10000. The OCP installation will use `"openshift.io/sa.scc.uid-range": "1000000000/10000"`. See [here](https://github.com/openshift/openshift-tools/search?q=openshift.io%2Fsa.scc.uid-range&unscoped_q=openshift.io%2Fsa.scc.uid-range). 
+
 **Containers are using root as user** 
 
 Malicious users with full as as root can compromise not just the container but the host as well. 
