@@ -47,10 +47,23 @@ type Watch struct {
 	WatchDependentResources     bool                    `yaml:"watchDependentResources"`
 	WatchClusterScopedResources bool                    `yaml:"watchClusterScopedResources"`
 	Finalizer                   *Finalizer              `yaml:"finalizer"`
+	Webhooks                    *Webhooks               `yaml:"webhooks"`
 
 	// Not configurable via watches.yaml
 	MaxWorkers       int `yaml:"maxWorkers"`
 	AnsibleVerbosity int `yaml:"ansibleVerbosity"`
+}
+
+type Webhooks struct {
+	Mutating   []WebhookConfig `yaml:"mutating"`
+	Validating []WebhookConfig `yaml:"validating"`
+	Conversion []WebhookConfig `yaml:"conversion"`
+}
+
+type WebhookConfig struct {
+	Playbook string `yaml:"playbook"`
+	Role     string `yaml:"role"`
+	Path     string `yaml:"path"`
 }
 
 // Finalizer - Expose finalizer to be used by a user.
@@ -93,6 +106,7 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		WatchDependentResources     bool                   `yaml:"watchDependentResources"`
 		WatchClusterScopedResources bool                   `yaml:"watchClusterScopedResources"`
 		Finalizer                   *Finalizer             `yaml:"finalizer"`
+		Webhooks                    *Webhooks              `yaml:"webhooks"`
 	}
 	var tmp alias
 
@@ -136,6 +150,7 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	w.WatchClusterScopedResources = tmp.WatchClusterScopedResources
 	w.Finalizer = tmp.Finalizer
 	w.AnsibleVerbosity = getAnsibleVerbosity(gvk, ansibleVerbosityDefault)
+	w.Webhooks = tmp.Webhooks
 
 	return nil
 }

@@ -24,6 +24,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/watches"
+	"github.com/operator-framework/operator-sdk/pkg/ansible/webhook"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
@@ -33,6 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+	crwebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
@@ -56,8 +58,8 @@ func printVersion() {
 	log.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
 }
 
-// Run will start the ansible operator and proxy, blocking until one of them
-// returns.
+// Run will start the ansible operator, webhooks, and proxy,
+// blocking until one of them returns.
 func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	printVersion()
 
@@ -94,6 +96,13 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 		log.Error(err, "Failed to load watches.")
 		return err
 	}
+	// Create a webhook server.
+	hookServer := &crwebhook.Server{
+		Port: 24445,
+	}
+	if err := mgr.Add(hookServer); err != nil {
+		panic(err)
+	}
 	for _, w := range watches {
 		runner, err := runner.New(w)
 		if err != nil {
@@ -119,6 +128,24 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 			AnnotationWatchMap:          controllermap.NewWatchMap(),
 		})
 		gvks = append(gvks, w.GroupVersionKind)
+
+		if w.Webhooks != nil {
+			if w.Webhooks.Validating != nil {
+				for _, hookConfig := range w.Webhooks.Validating {
+					hookServer.Register(hookConfig.Path, webhook.CreateValidatingHook(hookConfig, w))
+				}
+			}
+			if w.Webhooks.Conversion != nil {
+				for _, hookConfig := range w.Webhooks.Conversion {
+					hookServer.Register(hookConfig.Path, webhook.CreateConversionHook(hookConfig, w))
+				}
+			}
+			if w.Webhooks.Mutating != nil {
+				for _, hookConfig := range w.Webhooks.Mutating {
+					hookServer.Register(hookConfig.Path, webhook.CreateMutatingHook(hookConfig, w))
+				}
+			}
+		}
 	}
 
 	operatorName, err := k8sutil.GetOperatorName()
