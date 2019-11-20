@@ -54,8 +54,14 @@ tidy: ## Update dependencies
 clean: ## Clean up the build artifacts
 	$(Q)rm -rf build
 
-cli-doc: ## Generate CLI Documentation
-	./hack/doc/gen_cli_doc.sh
+gen-cli-doc: ## Generate CLI documentation
+	./hack/generate/gen-cli-doc.sh
+
+gen-test-framework: install ## Run generate commands to update test/test-framework
+	./hack/generate/gen-test-framework.sh
+
+generate: gen-cli-doc gen-test-framework  ## Run all generate targets
+.PHONY: generate gen-cli-doc gen-test-framework
 
 # Build/install/release the SDK.
 .PHONY: install release_builds release
@@ -105,14 +111,17 @@ build/%.asc:
 	}
 
 # Static tests.
-.PHONY: test test-markdown test-sanity test-unit
+.PHONY: test test-markdown test-sanity test-unit test-linter
 
 test: test-unit ## Run the tests
+
+test-linter:  ## Run golangci-lint for the project
+	./hack/go-linter.sh
 
 test-markdown test/markdown:
 	./hack/ci/marker
 
-test-sanity test/sanity: tidy
+test-sanity test/sanity: tidy build/operator-sdk
 	./hack/tests/sanity-check.sh
 
 test-unit test/unit: ## Run the unit tests
