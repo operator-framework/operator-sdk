@@ -124,4 +124,4 @@ A good explanation can be found [here](https://kubesec.io/basics/containers-secu
 
 **Containers are using root as user** 
 
-Malicious users with full as as root can compromise not just the container but the host as well. 
+Malicious users with full access as root can compromise not just the container but the host as well. 
