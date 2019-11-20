@@ -26,10 +26,10 @@ func TestLevel(t *testing.T) {
 	testCases := []struct {
 		name      string
 		input     string
-		shouldErr bool
 		expStr    string
 		expSet    bool
 		expLevel  zapcore.Level
+		shouldErr bool
 	}{
 		{
 			name:     "debug level set",
@@ -95,10 +95,10 @@ func TestSample(t *testing.T) {
 	testCases := []struct {
 		name      string
 		input     string
-		shouldErr bool
 		expStr    string
 		expSet    bool
 		expValue  bool
+		shouldErr bool
 	}{
 		{
 			name:     "enable sampling",
@@ -157,10 +157,10 @@ func TestEncoder(t *testing.T) {
 	testCases := []struct {
 		name       string
 		input      string
-		shouldErr  bool
+		expEncoder zapcore.Encoder
 		expStr     string
 		expSet     bool
-		expEncoder zapcore.Encoder
+		shouldErr  bool
 	}{
 		{
 			name:       "json encoder",
@@ -204,9 +204,9 @@ func TestTimeEncoder(t *testing.T) {
 	testCases := []struct {
 		name      string
 		input     string
-		shouldErr bool
 		expStr    string
 		expSet    bool
+		shouldErr bool
 	}{
 		{
 			name:   "iso8601 time encoding",

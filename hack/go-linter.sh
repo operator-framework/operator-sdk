@@ -9,6 +9,7 @@ header_text "Running golangci-lint"
 golangci-lint run --disable-all \
     --deadline 5m \
     --enable=nakedret \
+    --enable=maligned \
 
 ##todo(camilamacedo86): The following checks requires fixes in the code
 # --enable=golint
@@ -17,7 +18,6 @@ golangci-lint run --disable-all \
 # --enable=lll
 # --enable=goconst
 # --enable=gosec
-# --enable=maligned
 # --enable=deadcode \
 # --enable=misspell \
 # --enable=errcheck \
