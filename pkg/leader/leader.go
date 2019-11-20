@@ -124,11 +124,15 @@ func Become(ctx context.Context, lockName string) error {
 					log.Info("Leader pod has been deleted, waiting for garbage collection do remove the lock.")
 				case err != nil:
 					return err
-				case isPodEvicted(*leaderPod):
+				case isPodEvicted(*leaderPod) && leaderPod.GetDeletionTimestamp() == nil:
 					log.Info("Operator pod with leader lock has been evicted.", "leader", leaderPod.Name)
 					log.Info("Deleting evicted leader.")
 					// Pod may not delete immediately, continue with backoff
-					client.Delete(ctx, leaderPod)
+					err := client.Delete(ctx, leaderPod)
+					if err != nil {
+						log.Error(err, "Leader pod could not be deleted.")
+					}
+
 				default:
 					log.Info("Not the leader. Waiting.")
 				}
