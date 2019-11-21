@@ -50,7 +50,7 @@ func newTypeTreeFromRoot(root *types.Type) (typeTree, error) {
 			for _, cm := range ct.Members {
 				node := &tnode{member: cm}
 				// Parse path here so we can re-construct the path hierarchy later.
-				path, err := parsePathFromJSONTags(cm.Tags)
+				path, err := getPathFromMember(cm)
 				if err != nil {
 					return nil, errors.Wrapf(err, "error parsing %s type member %s JSON tags", child.member.Type.Name, cm.Name)
 				}

@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/internal/annotations"
+	"k8s.io/gengo/types"
 
 	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 )
@@ -296,6 +297,41 @@ func TestParseCSVGenAnnotations(t *testing.T) {
 			t.Errorf("%s: expected non-nil error, got nil error", c.description)
 		} else if !c.wantErr && err == nil {
 			if !reflect.DeepEqual(c.exp, output) {
+				t.Errorf("%s:\nexpected\n\t%v\ngot\n\t%v", c.description, c.exp, output)
+			}
+		}
+	}
+}
+
+func TestParsePathFromMember(t *testing.T) {
+	cases := []struct {
+		description string
+		member      types.Member
+		exp         string
+		wantErr     bool
+	}{
+		{"empty tag", types.Member{}, "Foo", false},
+		{"valid single tag", types.Member{Tags: `json:"foo"`}, "foo", false},
+		{"valid single with omitempty tag", types.Member{Tags: `json:"foo,omitempty"`}, "foo", false},
+		{"valid empty with omitempty tag", types.Member{Tags: `json:",omitempty"`}, "Foo", false},
+		{"valid single with inline tag", types.Member{Tags: `json:"foo,inline"`}, inlinedTag, false},
+		{"valid empty with inline tag", types.Member{Tags: `json:",inline"`}, inlinedTag, false},
+		{"valid ignore tag", types.Member{Tags: `json:"-"`}, ignoredTag, false},
+		{"valid ignore tag with name", types.Member{Tags: `json:"foo,-"`}, ignoredTag, false},
+		{"JSON tag in multiple tags", types.Member{Tags: `json:"foo" protobuf:"bar"`}, "foo", false},
+		{"no JSON tag in tags", types.Member{Tags: `protobuf:"foo"`}, "Foo", false},
+		{"invalid tags", types.Member{Tags: `blahblah`}, "", true},
+	}
+
+	for _, c := range cases {
+		c.member.Name = "Foo"
+		output, err := getPathFromMember(c.member)
+		if !c.wantErr && err != nil {
+			t.Errorf("%s: expected nil error, got %q", c.description, err)
+		} else if c.wantErr && err == nil {
+			t.Errorf("%s: expected non-nil error, got nil error", c.description)
+		} else if !c.wantErr && err == nil {
+			if c.exp != output {
 				t.Errorf("%s:\nexpected\n\t%v\ngot\n\t%v", c.description, c.exp, output)
 			}
 		}

@@ -74,7 +74,7 @@ func GetCRDDescriptorForGVK(apisDir string, crdDesc *olmapiv1alpha1.CRDDescripti
 		crdDesc.Resources = sortResources(kindDescriptors.resources)
 	}
 	for _, member := range kindType.Members {
-		path, err := parsePathFromJSONTags(member.Tags)
+		path, err := getPathFromMember(member)
 		if err != nil {
 			return errors.Wrapf(err, "error parsing %s type member %s JSON tags", gvk.Kind, member.Name)
 		}

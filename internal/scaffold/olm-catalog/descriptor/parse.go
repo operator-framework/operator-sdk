@@ -15,14 +15,14 @@
 package descriptor
 
 import (
-	"fmt"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/operator-framework/operator-sdk/internal/annotations"
 
+	"github.com/fatih/structtag"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/pkg/errors"
 	"k8s.io/gengo/types"
@@ -186,27 +186,55 @@ func parseDescription(comments []string) string {
 	return strings.Join(lines, " ")
 }
 
-var jsonTagRe = regexp.MustCompile(`json:"([a-zA-Z0-9,]+|-)"`)
-
 const (
 	inlinedTag = "##inline##"
 	ignoredTag = "##ignore##"
 )
 
-func parsePathFromJSONTags(tags string) (string, error) {
-	tagMatches := jsonTagRe.FindStringSubmatch(tags)
-	if len(tagMatches) > 1 {
-		ts := strings.Split(tagMatches[1], ",")
+// getPathFromMember constructs a path from data in member, either from
+// its struct tags or name.
+func getPathFromMember(member types.Member) (string, error) {
+	// Unexported fields should be ignored in downstream processing.
+	if isNotExported(member.Name) {
+		return ignoredTag, nil
+	}
+	tags, err := structtag.Parse(member.Tags)
+	if err != nil {
+		return "", err
+	}
+	jsonTag, err := tags.Get("json")
+	if err == nil {
+		// Parse returns an error if no JSON tag is in tags, at which point we'll
+		// use another method to get path.
 		switch {
-		case len(ts) == 2 && ts[1] == "inline":
+		case contains(jsonTag.Options, "inline"):
 			return inlinedTag, nil
-		case len(ts) == 1 && ts[0] == "-":
+		case jsonTag.Name == "-" || contains(jsonTag.Options, "-"):
 			return ignoredTag, nil
-		case (len(ts) == 1 || len(ts) == 2) && ts[0] != "":
-			return ts[0], nil
+		case jsonTag.Name != "":
+			return jsonTag.Name, nil
 		}
 	}
-	return "", fmt.Errorf("invalid JSON tag: %s", tags)
+	// There is no JSON tag in tags or tag name is empty.
+	// Use member name as path as json.Marshal does.
+	return member.Name, nil
+}
+
+// isNotExported returns true if name is not an exported struct field name.
+func isNotExported(name string) bool {
+	if len(name) == 0 {
+		return true
+	}
+	return unicode.IsLower(rune(name[0]))
+}
+
+func contains(options []string, key string) bool {
+	for _, opt := range options {
+		if opt == key {
+			return true
+		}
+	}
+	return false
 }
 
 func isPathInline(path string) bool {
