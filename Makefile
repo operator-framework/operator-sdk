@@ -43,7 +43,8 @@ help: ## Show this help screen
 
 ##@ Development
 
-.PHONY: all
+.PHONY: all install
+
 all: format test build/operator-sdk ## Test and Build the Operator SDK
 
 install: ## Build & install the Operator SDK CLI binary
@@ -69,7 +70,7 @@ clean: ## Clean up the build artifacts
 	$(Q)rm -rf build
 
 ##############################
-# Generate Artefacts         #
+# Generate Artifacts         #
 ##############################
 
 ##@ Generate
@@ -90,7 +91,7 @@ generate: gen-cli-doc gen-test-framework  ## Run all generate targets
 ##@ Release
 
 # Build/install/release the SDK.
-.PHONY: install release_builds release
+.PHONY: release_builds release
 
 release_builds := \
 	build/operator-sdk-$(VERSION)-x86_64-linux-gnu \
