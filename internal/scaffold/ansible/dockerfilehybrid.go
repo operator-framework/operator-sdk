@@ -72,7 +72,6 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
       openshift==0.8.9 \
       ansible~=2.9 \
       jmespath \
->>>>>>> Update Ansible minimum version to 2.9 in various Dockerfiles (#2203)
  && yum remove -y gcc python36-devel \
  && yum clean all \
  && rm -rf /var/cache/yum
