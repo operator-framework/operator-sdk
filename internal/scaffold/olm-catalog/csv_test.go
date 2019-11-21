@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	genutil "github.com/operator-framework/operator-sdk/internal/generate/util"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	testutil "github.com/operator-framework/operator-sdk/internal/scaffold/internal/testutil"
@@ -51,7 +52,13 @@ func TestCSVNew(t *testing.T) {
 	projectName := "app-operator-dir"
 	operatorName := "app-operator"
 
-	sc := &CSV{CSVVersion: csvVer, pathPrefix: testDataDir, OperatorName: operatorName}
+	sc := &CSV{
+		Config: genutil.Config{
+			OperatorName: operatorName,
+		},
+		CSVVersion: csvVer,
+		pathPrefix: testDataDir,
+	}
 	err := s.Execute(&input.Config{ProjectName: projectName}, sc)
 	if err != nil {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
@@ -82,10 +89,12 @@ func TestCSVFromOld(t *testing.T) {
 	}
 
 	sc := &CSV{
-		CSVVersion:   newCSVVer,
-		FromVersion:  oldCSVVer,
-		pathPrefix:   testDataDir,
-		OperatorName: operatorName,
+		Config: genutil.Config{
+			OperatorName: operatorName,
+		},
+		CSVVersion:  newCSVVer,
+		FromVersion: oldCSVVer,
+		pathPrefix:  testDataDir,
 	}
 	err := s.Execute(&input.Config{ProjectName: projectName}, sc)
 	if err != nil {
@@ -118,10 +127,14 @@ func TestUpdateVersion(t *testing.T) {
 
 	oldCSVVer, newCSVVer := "0.1.0", "0.2.0"
 	sc := &CSV{
-		Input:        input.Input{ProjectName: projectName},
-		CSVVersion:   newCSVVer,
-		pathPrefix:   testDataDir,
-		OperatorName: operatorName,
+		Input: input.Input{
+			ProjectName: projectName,
+		},
+		Config: genutil.Config{
+			OperatorName: operatorName,
+		},
+		CSVVersion: newCSVVer,
+		pathPrefix: testDataDir,
 	}
 	csvExpBytes, err := ioutil.ReadFile(sc.getCSVPath(oldCSVVer))
 	if err != nil {

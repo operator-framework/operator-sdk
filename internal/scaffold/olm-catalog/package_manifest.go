@@ -21,6 +21,7 @@ import (
 	"sort"
 	"strings"
 
+	genutil "github.com/operator-framework/operator-sdk/internal/generate/util"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	registryutil "github.com/operator-framework/operator-sdk/internal/util/operator-registry"
@@ -36,6 +37,7 @@ const PackageManifestFileExt = ".package.yaml"
 
 type PackageManifest struct {
 	input.Input
+	genutil.Config
 
 	// CSVVersion is the version of the CSV being updated.
 	CSVVersion string
@@ -45,8 +47,6 @@ type PackageManifest struct {
 	// If ChannelIsDefault is true, Channel will be the package manifests'
 	// default channel.
 	ChannelIsDefault bool
-	// OperatorName is the operator's name, ex. app-operator
-	OperatorName string
 }
 
 var _ input.File = &PackageManifest{}

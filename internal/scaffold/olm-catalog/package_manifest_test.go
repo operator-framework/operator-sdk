@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	genutil "github.com/operator-framework/operator-sdk/internal/generate/util"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
@@ -45,10 +46,12 @@ func TestPackageManifest(t *testing.T) {
 	}
 
 	pm := &PackageManifest{
+		Config: genutil.Config{
+			OperatorName: projectName,
+		},
 		CSVVersion:       csvVer,
 		Channel:          "stable",
 		ChannelIsDefault: true,
-		OperatorName:     projectName,
 	}
 	err = s.Execute(cfg, pm)
 	if err != nil {

@@ -24,6 +24,7 @@ import (
 	"strings"
 	"sync"
 
+	genutil "github.com/operator-framework/operator-sdk/internal/generate/util"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -48,18 +49,14 @@ var ErrNoCSVVersion = errors.New("no CSV version supplied")
 
 type CSV struct {
 	input.Input
+	genutil.Config
 
-	// ConfigFilePath is the location of a configuration file path for this
-	// projects' CSV file.
-	ConfigFilePath string
 	// CSVVersion is the CSV current version.
 	CSVVersion string
 	// FromVersion is the CSV version from which to build a new CSV. A CSV
 	// manifest with this version should exist at:
 	// deploy/olm-catalog/{from_version}/operator-name.v{from_version}.{CSVYamlFileExt}
 	FromVersion string
-	// OperatorName is the operator's name, ex. app-operator
-	OperatorName string
 
 	once       sync.Once
 	fs         afero.Fs // For testing, ex. afero.NewMemMapFs()
@@ -93,9 +90,6 @@ func (s *CSV) GetInput() (input.Input, error) {
 			getCSVFileName(operatorName, s.CSVVersion),
 		)
 	}
-	if s.ConfigFilePath == "" {
-		s.ConfigFilePath = filepath.Join(s.pathPrefix, OLMCatalogDir, CSVConfigYamlFile)
-	}
 	return s.Input, nil
 }
 
@@ -115,15 +109,10 @@ func (s *CSV) CustomRender() ([]byte, error) {
 		csv = &olmapiv1alpha1.ClusterServiceVersion{}
 	}
 
-	cfg, err := GetCSVConfig(s.ConfigFilePath)
-	if err != nil {
-		return nil, err
-	}
-
 	if err = s.updateCSVVersions(csv); err != nil {
 		return nil, err
 	}
-	if err = s.updateCSVFromManifestFiles(cfg, csv); err != nil {
+	if err = s.updateCSVFromManifestFiles(csv); err != nil {
 		return nil, err
 	}
 	s.setCSVDefaultFields(csv)
@@ -336,27 +325,38 @@ func replaceAllBytes(v interface{}, old, new []byte) error {
 
 // updateCSVFromManifestFiles gathers relevant data from generated and
 // user-defined manifests and updates csv.
-func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.ClusterServiceVersion) error {
+func (s *CSV) updateCSVFromManifestFiles(csv *olmapiv1alpha1.ClusterServiceVersion) error {
+	// Exclude deploy/olm-catalog to avoid parsing unnecessary files.
+	olmExclude := genutil.MakeExcludeFuncs(filepath.Join(s.pathPrefix, OLMCatalogDir))
+	excludeFuncs := append(s.ExcludeFuncs, olmExclude...)
 	store := NewUpdaterStore()
 	otherSpecs := make(map[string][][]byte)
-	paths := append(cfg.CRDCRPaths, cfg.OperatorPath)
-	paths = append(paths, cfg.RolePaths...)
-	for _, f := range paths {
-		yamlData, err := afero.ReadFile(s.getFS(), f)
+	root := filepath.Join(s.pathPrefix, scaffold.DeployDir)
+	err := afero.Walk(s.getFS(), root, func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			return err
+		}
+		for _, exclude := range excludeFuncs {
+			if exclude(path) {
+				return nil
+			}
+		}
+
+		yamlData, err := afero.ReadFile(s.getFS(), path)
 		if err != nil {
 			return err
 		}
-
 		scanner := yamlutil.NewYAMLScanner(yamlData)
 		for scanner.Scan() {
 			yamlSpec := scanner.Bytes()
 			typeMeta, err := k8sutil.GetTypeMetaFromBytes(yamlSpec)
 			if err != nil {
-				return errors.Wrapf(err, "error getting type metadata from manifest %s", f)
+				log.Printf("Skipping non-object manifest %s", path)
+				continue
 			}
 			found, err := store.AddToUpdater(yamlSpec, typeMeta.Kind)
 			if err != nil {
-				return errors.Wrapf(err, "error adding manifest %s to CSV updaters", f)
+				return errors.Wrapf(err, "error adding manifest %s to CSV updaters", path)
 			}
 			if !found {
 				id := gvkID(typeMeta.GroupVersionKind())
@@ -366,9 +366,10 @@ func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.Clu
 				otherSpecs[id] = append(otherSpecs[id], yamlSpec)
 			}
 		}
-		if err = scanner.Err(); err != nil {
-			return err
-		}
+		return scanner.Err()
+	})
+	if err != nil {
+		return err
 	}
 
 	for id := range store.crds.crIDs {

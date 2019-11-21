@@ -17,8 +17,10 @@ package olmcatalog
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 
+	genutil "github.com/operator-framework/operator-sdk/internal/generate/util"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	catalog "github.com/operator-framework/operator-sdk/internal/scaffold/olm-catalog"
@@ -35,7 +37,7 @@ var (
 	csvVersion     string
 	csvChannel     string
 	fromVersion    string
-	csvConfigPath  string
+	excludePaths   []string
 	operatorName   string
 	updateCRDs     bool
 	defaultChannel bool
@@ -50,9 +52,7 @@ for the operator. This file is used to publish the operator to the OLM Catalog.
 
 A CSV semantic version is supplied via the --csv-version flag. If your operator
 has already generated a CSV manifest you want to use as a base, supply its
-version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.
-
-Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config.yaml`,
+version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.`,
 		RunE: genCSVFunc,
 	}
 
@@ -61,7 +61,7 @@ Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config
 		log.Fatalf("Failed to mark `csv-version` flag for `olm-catalog gen-csv` subcommand as required: %v", err)
 	}
 	genCSVCmd.Flags().StringVar(&fromVersion, "from-version", "", "Semantic version of an existing CSV to use as a base")
-	genCSVCmd.Flags().StringVar(&csvConfigPath, "csv-config", "", "Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml")
+	genCSVCmd.Flags().StringSliceVar(&excludePaths, "exclude", nil, "Paths to exclude from CSV generation")
 	genCSVCmd.Flags().BoolVar(&updateCRDs, "update-crds", false, "Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's")
 	genCSVCmd.Flags().StringVar(&operatorName, "operator-name", "", "Operator name to use while generating CSV")
 	genCSVCmd.Flags().StringVar(&csvChannel, "csv-channel", "", "Channel the CSV should be registered under in the package manifest")
@@ -91,23 +91,26 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 	log.Infof("Generating CSV manifest version %s", csvVersion)
 
 	if operatorName == "" {
-		operatorName = filepath.Base(absProjectPath)
+		operatorName = filepath.Base(projutil.MustGetwd())
+	}
+	gcfg := genutil.Config{
+		OperatorName: operatorName,
+		ExcludeFuncs: genutil.MakeExcludeFuncs(excludePaths...),
 	}
 
 	s := &scaffold.Scaffold{}
 	csv := &catalog.CSV{
-		CSVVersion:     csvVersion,
-		FromVersion:    fromVersion,
-		ConfigFilePath: csvConfigPath,
-		OperatorName:   operatorName,
+		Config:      gcfg,
+		CSVVersion:  csvVersion,
+		FromVersion: fromVersion,
 	}
 	err := s.Execute(cfg,
 		csv,
 		&catalog.PackageManifest{
+			Config:           gcfg,
 			CSVVersion:       csvVersion,
 			Channel:          csvChannel,
 			ChannelIsDefault: defaultChannel,
-			OperatorName:     operatorName,
 		},
 	)
 	if err != nil {
@@ -115,16 +118,9 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 	}
 
 	// Write CRD's to the new or updated CSV package dir.
+	bundleDir := filepath.Join(catalog.OLMCatalogDir, operatorName, csvVersion)
 	if updateCRDs {
-		input, err := csv.GetInput()
-		if err != nil {
-			return err
-		}
-		cfg, err := catalog.GetCSVConfig(csvConfigPath)
-		if err != nil {
-			return err
-		}
-		err = writeCRDsToDir(cfg.CRDCRPaths, filepath.Dir(input.Path))
+		err = writeCRDsToDir(scaffold.CRDsDir, bundleDir, gcfg.ExcludeFuncs)
 		if err != nil {
 			return err
 		}
@@ -166,9 +162,17 @@ func verifyCSVVersion(version string) error {
 	return nil
 }
 
-func writeCRDsToDir(crdPaths []string, toDir string) error {
-	for _, p := range crdPaths {
-		b, err := ioutil.ReadFile(p)
+func writeCRDsToDir(fromDir, toDir string, excludeFuncs []func(string) bool) error {
+	return filepath.Walk(fromDir, func(path string, info os.FileInfo, werr error) error {
+		if werr != nil || info.IsDir() {
+			return werr
+		}
+		for _, exclude := range excludeFuncs {
+			if exclude(path) {
+				return nil
+			}
+		}
+		b, err := ioutil.ReadFile(path)
 		if err != nil {
 			return err
 		}
@@ -176,15 +180,9 @@ func writeCRDsToDir(crdPaths []string, toDir string) error {
 		if err != nil {
 			return err
 		}
-		if typeMeta.Kind != "CustomResourceDefinition" {
-			continue
+		if typeMeta.Kind == "CustomResourceDefinition" {
+			return ioutil.WriteFile(path, b, fileutil.DefaultFileMode)
 		}
-
-		path := filepath.Join(toDir, filepath.Base(p))
-		err = ioutil.WriteFile(path, b, fileutil.DefaultFileMode)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+		return nil
+	})
 }
