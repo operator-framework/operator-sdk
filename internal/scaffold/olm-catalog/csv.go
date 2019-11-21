@@ -370,7 +370,7 @@ func (g *CSV) updateCSVFromManifests(cfg *CSVConfig, csv *olmapiv1alpha1.Cluster
 			switch typeMeta.Kind {
 			case "CustomResourceDefinition":
 				// Collect CRD kinds to filter them out from unsupported manifest types.
-				// The CRD version type doesn't matter as long as it has a group, kind,
+				// The CRD type version doesn't matter as long as it has a group, kind,
 				// and versions in the expected fields.
 				crd := apiextv1beta1.CustomResourceDefinition{}
 				if err = yaml.Unmarshal(manifest, &crd); err != nil {
