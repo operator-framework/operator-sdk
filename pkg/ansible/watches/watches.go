@@ -272,23 +272,10 @@ func getMaxWorkers(gvk schema.GroupVersionKind, defValue int) int {
 		"_",
 		-1,
 	))
-	/*maxWorkers, err := strconv.Atoi(os.Getenv(envVar))
-	if err != nil {
-		// we don't care why we couldn't parse it just use default
-		//log.Info("Failed to parse %v from environment. Using default %v", envVar, defValue)
-		log.Info(fmt.Sprintf("Using default value for workers %d", defValue))
-		return defValue
-	}
-
-	if maxWorkers <= 0 {
-		log.Info("Value %v not valid. Using default %v", maxWorkers, defValue)
-		return defValue
-	}*/
 	maxWorkers := defValue
 	if val, ok := os.LookupEnv(envVar); ok {
 		if i, err := strconv.Atoi(val); err != nil {
 			log.Info(fmt.Sprintf("Unable to find a value for %v. Using default value for maxWorkers %d", envVar, defValue))
-
 		} else {
 			maxWorkers = i
 		}
