@@ -272,7 +272,7 @@ func getMaxWorkers(gvk schema.GroupVersionKind, defValue int) int {
 		"_",
 		-1,
 	))
-	maxWorkers, err := strconv.Atoi(os.Getenv(envVar))
+	/*maxWorkers, err := strconv.Atoi(os.Getenv(envVar))
 	if err != nil {
 		// we don't care why we couldn't parse it just use default
 		//log.Info("Failed to parse %v from environment. Using default %v", envVar, defValue)
@@ -283,6 +283,15 @@ func getMaxWorkers(gvk schema.GroupVersionKind, defValue int) int {
 	if maxWorkers <= 0 {
 		log.Info("Value %v not valid. Using default %v", maxWorkers, defValue)
 		return defValue
+	}*/
+	maxWorkers := defValue
+	if val, ok := os.LookupEnv(envVar); ok {
+		if i, err := strconv.Atoi(val); err != nil {
+			log.Info(fmt.Sprintf("Unable to find a value for %v. Using default value for maxWorkers %d", envVar, defValue))
+
+		} else {
+			maxWorkers = i
+		}
 	}
 	return maxWorkers
 }
@@ -298,9 +307,7 @@ func getAnsibleVerbosity(gvk schema.GroupVersionKind, defValue int) int {
 	))
 	ansibleVerbosity, err := strconv.Atoi(os.Getenv(envVar))
 	if err != nil {
-		//log.Info("Failed to parse %v from environment. Using default %v", envVar, defValue)
-		log.Info(fmt.Sprintf("Using default value for ansible verbosity %d", defValue))
-
+		log.Info(fmt.Sprintf("Unable to find a value for %v. Using default value for the ansible verbosity %d", envVar, defValue))
 		return defValue
 	}
 
