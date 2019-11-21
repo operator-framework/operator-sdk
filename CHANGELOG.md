@@ -11,6 +11,7 @@
 ### Removed
 
 ### Bug Fixes
+- Fix issue faced in the Ansible based operators when `jmespath` queries are used because it was not installed. ([#2252](https://github.com/operator-framework/operator-sdk/pull/2252))
 
 ## v0.12.0
 
