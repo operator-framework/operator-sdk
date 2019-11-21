@@ -57,7 +57,7 @@ clean: ## Clean up the build artifacts
 gen-cli-doc: ## Generate CLI documentation
 	./hack/generate/gen-cli-doc.sh
 
-gen-test-framework: install ## Run generate commands to update test/test-framework
+gen-test-framework: build/operator-sdk ## Run generate commands to update test/test-framework
 	./hack/generate/gen-test-framework.sh
 
 generate: gen-cli-doc gen-test-framework  ## Run all generate targets
