@@ -12,12 +12,10 @@ source hack/lib/test_lib.sh
 cd test/test-framework
 
 # Ensure test-framework is up-to-date with current Go project dependencies.
-# NOTE: the SDK dependency version still needs updating on a new release.
-sdk_version="$(go list -m -f '{{.Version}}' github.com/operator-framework/operator-sdk)"
-../../build/operator-sdk print-deps > go.mod
-sed -i 's|github.com/operator-framework/operator-sdk\s*master||g' go.mod
+echo "$(../../build/operator-sdk print-deps)" > go.mod
+sed -i 's|github.com/operator-framework/operator-sdk\s\+master||g' go.mod
 echo -e "\nreplace github.com/operator-framework/operator-sdk => ../../" >> go.mod
-go mod edit -require "github.com/operator-framework/operator-sdk@${sdk_version}"
+go mod edit -require "github.com/operator-framework/operator-sdk@v0.0.0"
 go build ./...
 go mod tidy
 
