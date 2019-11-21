@@ -343,7 +343,7 @@ func replaceAllBytes(v interface{}, old, new []byte) error {
 func (g *CSV) updateCSVFromManifests(cfg *CSVConfig, csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	paths := append(cfg.CRDCRPaths, cfg.OperatorPath)
 	paths = append(paths, cfg.RolePaths...)
-	kindManifestMap := map[schema.GroupVersionKind][][]byte{}
+	manifestGVKMap := map[schema.GroupVersionKind][][]byte{}
 	crGVKSet := map[schema.GroupVersionKind]struct{}{}
 	for _, path := range paths {
 		info, err := g.getFS().Stat(path)
@@ -366,7 +366,7 @@ func (g *CSV) updateCSVFromManifests(cfg *CSVConfig, csv *olmapiv1alpha1.Cluster
 				continue
 			}
 			gvk := typeMeta.GroupVersionKind()
-			kindManifestMap[gvk] = append(kindManifestMap[gvk], manifest)
+			manifestGVKMap[gvk] = append(manifestGVKMap[gvk], manifest)
 			switch typeMeta.Kind {
 			case "CustomResourceDefinition":
 				// Collect CRD kinds to filter them out from unsupported manifest types.
@@ -392,7 +392,7 @@ func (g *CSV) updateCSVFromManifests(cfg *CSVConfig, csv *olmapiv1alpha1.Cluster
 	}
 
 	crUpdaters := crs{}
-	for gvk, manifests := range kindManifestMap {
+	for gvk, manifests := range manifestGVKMap {
 		// We don't necessarily care about sorting by a field value, more about
 		// consistent ordering.
 		sort.Slice(manifests, func(i int, j int) bool {
