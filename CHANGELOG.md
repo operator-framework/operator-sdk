@@ -11,6 +11,7 @@
 ### Removed
 
 ### Bug Fixes
+- Changed watches.go to fix log.Info to modify message,and maxWorkers logic ([#2246](https://github.com/operator-framework/operator-sdk/pull/2246/files))
 
 ## v0.12.0
 
