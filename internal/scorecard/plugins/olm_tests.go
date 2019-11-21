@@ -274,6 +274,8 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *schelpers.TestResult {
 }
 
 func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
+	const api = "api"
+	const apis = "apis"
 	logs, err := getProxyLogs(proxyPod)
 	if err != nil {
 		return nil, err
@@ -322,38 +324,42 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 		splitURI = splitURI[1:]
 		switch len(splitURI) {
 		case 3:
-			if splitURI[0] == "api" {
+			if splitURI[0] == api {
 				resources[schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[2]}] = true
 				break
-			} else if splitURI[0] == "apis" {
+			}
+			if splitURI[0] == apis {
 				// this situation happens when the client enumerates the available resources of the server
 				// Example: "/apis/apps/v1?timeout=32s"
 				break
 			}
 			log.Warnf("Invalid URI: \"%s\"", uri)
 		case 4:
-			if splitURI[0] == "api" {
+			if splitURI[0] == api {
 				resources[schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[2]}] = true
 				break
-			} else if splitURI[0] == "apis" {
+			}
+			if splitURI[0] == apis {
 				resources[schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[3]}] = true
 				break
 			}
 			log.Warnf("Invalid URI: \"%s\"", uri)
 		case 5:
-			if splitURI[0] == "api" {
+			if splitURI[0] == api {
 				resources[schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[4]}] = true
 				break
-			} else if splitURI[0] == "apis" {
+			}
+			if splitURI[0] == apis {
 				resources[schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[3]}] = true
 				break
 			}
 			log.Warnf("Invalid URI: \"%s\"", uri)
 		case 6, 7:
-			if splitURI[0] == "api" {
+			if splitURI[0] == api {
 				resources[schema.GroupVersionKind{Version: splitURI[1], Kind: splitURI[4]}] = true
 				break
-			} else if splitURI[0] == "apis" {
+			}
+			if splitURI[0] == apis {
 				resources[schema.GroupVersionKind{Group: splitURI[1], Version: splitURI[2], Kind: splitURI[5]}] = true
 				break
 			}
