@@ -32,7 +32,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190605231540-b8a4faf68e36
-	github.com/operator-framework/operator-registry v1.1.1
+	github.com/operator-framework/operator-registry v1.5.3
 	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v1.0.0
@@ -59,7 +59,7 @@ require (
 	k8s.io/code-generator v0.0.0
 	k8s.io/gengo v0.0.0-20191010091904-7fa3014cb28f
 	k8s.io/helm v2.15.0+incompatible
-	k8s.io/klog v0.3.3
+	k8s.io/klog v0.4.0
 	k8s.io/kube-openapi v0.0.0-20190918143330-0270cf2f1c1d
 	k8s.io/kube-state-metrics v1.7.2
 	k8s.io/kubernetes v1.15.4
