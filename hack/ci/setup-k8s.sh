@@ -18,7 +18,7 @@ sudo mv kind /usr/local/bin/
 kind create cluster --image="$KIND_IMAGE"
 
 # Run this command externally after installation:
-export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
+kind export kubeconfig
 
 # kubectl is needed for the single namespace local test and the ansible tests.
 curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl
