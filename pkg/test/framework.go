@@ -75,26 +75,24 @@ type Framework struct {
 }
 
 type frameworkOpts struct {
-	projectRoot          string
-	kubeconfigPath       string
-	globalManPath        string
-	namespacedManPath    string
-	localOperator        bool
-	singleNamespaceMode  bool
-	watchDeployNamespace bool
-	isLocalOperator      bool
-	localOperatorArgs    string
+	projectRoot         string
+	kubeconfigPath      string
+	globalManPath       string
+	namespacedManPath   string
+	localOperator       bool
+	singleNamespaceMode bool
+	isLocalOperator     bool
+	localOperatorArgs   string
 }
 
 const (
-	ProjRootFlag             = "root"
-	KubeConfigFlag           = "kubeconfig"
-	NamespacedManPathFlag    = "namespacedMan"
-	GlobalManPathFlag        = "globalMan"
-	SingleNamespaceFlag      = "singleNamespace"
-	WatchDeployNamespaceFlag = "watchDeployNamespace"
-	LocalOperatorFlag        = "localOperator"
-	LocalOperatorArgs        = "localOperatorArgs"
+	ProjRootFlag          = "root"
+	KubeConfigFlag        = "kubeconfig"
+	NamespacedManPathFlag = "namespacedMan"
+	GlobalManPathFlag     = "globalMan"
+	SingleNamespaceFlag   = "singleNamespace"
+	LocalOperatorFlag     = "localOperator"
+	LocalOperatorArgs     = "localOperatorArgs"
 
 	TestDeployNamespaceEnv = "TEST_DEPLOY_NAMESPACE"
 	TestWatchNamespaceEnv  = "TEST_WATCH_NAMESPACE"
@@ -107,7 +105,6 @@ func (opts *frameworkOpts) addToFlagSet(flagset *flag.FlagSet) {
 	flagset.StringVar(&opts.kubeconfigPath, KubeConfigFlag, "", "path to kubeconfig")
 	flagset.StringVar(&opts.globalManPath, GlobalManPathFlag, "", "path to operator manifest")
 	flagset.BoolVar(&opts.singleNamespaceMode, SingleNamespaceFlag, false, "enable single namespace mode")
-	flagset.BoolVar(&opts.watchDeployNamespace, WatchDeployNamespaceFlag, false, "set watch namespace to deploy namespace")
 	flagset.StringVar(&opts.localOperatorArgs, LocalOperatorArgs, "", "flags that the operator needs (while using --up-local). example: \"--flag1 value1 --flag2=value2\"")
 }
 
@@ -126,9 +123,6 @@ func newFramework(opts *frameworkOpts) (*Framework, error) {
 	}
 
 	watchNamespace := os.Getenv(TestWatchNamespaceEnv)
-	if watchNamespace == "" && opts.watchDeployNamespace {
-		watchNamespace = deployNamespace
-	}
 
 	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
 	if err != nil {

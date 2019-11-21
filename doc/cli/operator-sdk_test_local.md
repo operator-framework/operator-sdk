@@ -25,7 +25,7 @@ operator-sdk test local <path to tests directory> [flags]
       --namespaced-manifest string    Path to manifest for per-test, namespaced resources (e.g. RBAC and Operator manifest)
       --no-setup                      Disable test resource creation
       --up-local                      Enable running operator locally with go run instead of as an image in the cluster
-      --watch-namespace string        The namespace where the operator watches for changes (with --up-local, if not set, watches deployNamespace
+      --watch-namespace string        The namespace where the operator watches for changes (only valid with --up-local). Explicitly set to empty string to watch all namespaces (defaults to the deploy namespace).
 ```
 
 ### SEE ALSO

@@ -120,7 +120,17 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 	}
 
 	if tlConfig.upLocal && tlConfig.deployNamespace == "" {
-		return fmt.Errorf("must specify a namespace to run in when -up-local flag is set")
+		return fmt.Errorf("must specify a deploy-namespace to run in when -up-local flag is set")
+	}
+
+	if !tlConfig.upLocal && cmd.Flags().Changed("watch-namespace") {
+		return fmt.Errorf("--watch-namespace not valid without -up-local flag")
+	}
+
+	// if watch-namespace is not explicitly set
+	// then set to deployNamespace in --up-local mode
+	if tlConfig.upLocal && !cmd.Flags().Changed("watch-namespace") {
+		tlConfig.watchNamespace = tlConfig.deployNamespace
 	}
 
 	log.Info("Testing operator locally.")
@@ -211,7 +221,11 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 	if tlConfig.deployNamespace != "" || tlConfig.noSetup {
 		testArgs = append(testArgs, "-"+test.SingleNamespaceFlag, "-parallel=1")
 	}
-	env := append(os.Environ(), fmt.Sprintf("%v=%v", test.TestDeployNamespaceEnv, tlConfig.deployNamespace))
+	env := append(
+		os.Environ(),
+		fmt.Sprintf("%v=%v", test.TestDeployNamespaceEnv, tlConfig.deployNamespace),
+		fmt.Sprintf("%v=%v", test.TestWatchNamespaceEnv, tlConfig.watchNamespace),
+	)
 	if tlConfig.upLocal {
 		env = append(env, fmt.Sprintf("%s=%s", k8sutil.ForceRunModeEnv, k8sutil.LocalRunMode))
 		testArgs = append(testArgs, "-"+test.LocalOperatorFlag)
@@ -219,13 +233,6 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 			testArgs = append(testArgs, "-"+test.LocalOperatorArgs, tlConfig.localOperatorFlags)
 		}
 	}
-	// if watch-namespace is not explicitly set
-	// then set test.WatchDeployNamespaceFlag
-	// so that watchNamespace == deployNamespace in --up-local mode
-	if tlConfig.upLocal && !cmd.Flags().Changed("watch-namespace") {
-		testArgs = append(testArgs, "-"+test.WatchDeployNamespaceFlag)
-	}
-	env = append(env, fmt.Sprintf("%v=%v", test.TestWatchNamespaceEnv, tlConfig.watchNamespace))
 	opts := projutil.GoTestOptions{
 		GoCmdOptions: projutil.GoCmdOptions{
 			PackagePath: args[0] + "/...",

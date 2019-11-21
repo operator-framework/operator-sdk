@@ -2,7 +2,6 @@
 
 ### Added
 - Support for vars in top level ansible watches. ([#2147](https://github.com/operator-framework/operator-sdk/pull/2147))
-
 - Added `--watch-namespace` flag to `operator-sdk test local <test-dir> --up-local` command. ([#2149](https://github.com/operator-framework/operator-sdk/pull/2149))
 
 ### Changed
