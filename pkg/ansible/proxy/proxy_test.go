@@ -57,7 +57,7 @@ func TestHandler(t *testing.T) {
 
 	cl, err := client.New(mgr.GetConfig(), client.Options{})
 	if err != nil {
-		t.Fatalf("Error to create the client: %v", err)
+		t.Fatalf("Failed to create the client: %v", err)
 	}
 
 	po, err := createPod("test", "default", cl)
