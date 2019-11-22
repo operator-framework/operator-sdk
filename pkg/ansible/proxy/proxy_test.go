@@ -94,7 +94,7 @@ func TestHandler(t *testing.T) {
 		t.Fatalf("Got unexpected pod name: %#v", data.Name)
 	}
 	if err := cl.Delete(context.Background(), po); err != nil {
-		t.Fatalf("Got unexpected error to delete the pod: %v", err)
+		t.Fatalf("Failed to delete the pod: %v", err)
 	}
 }
 
