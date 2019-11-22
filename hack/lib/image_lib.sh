@@ -119,7 +119,7 @@ function is_latest_tag() {
 # load_image_if_kind loads an image into all nodes in a kind cluster.
 #
 function load_image_if_kind() {
-  if [[ "$(kubectl config current-context)" == "kubernetes-admin@kind" ]]; then
+  if [[ "$(kubectl config current-context)" == "kind-kind" ]]; then
     if which kind 2>/dev/null; then
       kind load docker-image "$1"
     fi

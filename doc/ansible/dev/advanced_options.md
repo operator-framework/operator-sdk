@@ -124,7 +124,7 @@ here, where higher values mean more output. Acceptable values range from 0
 (only the most severe messages are output) to 7 (all debugging messages are
 output).
 
-There are two ways to configure the verbosity argument to the `ansible-runner`
+There are three ways to configure the verbosity argument to the `ansible-runner`
 command:
 
 1. Operator **authors and admins** can set the Ansible verbosity by including
@@ -133,8 +133,11 @@ command:
    variable in the format `ANSIBLE_VERBOSITY_<kind>_<group>`. This variable must
    be all uppercase and all periods (e.g. in the group name) are replaced with
    underscore.
+1. Operator **users, authors, and admins** can set the Ansible verbosity by
+   setting the `"ansible.operator-sdk/verbosity"` annotation on the Custom
+   Resource.
 
-### Example
+### Examples
 
 For demonstration purposes, let us assume that we have a database operator that
 supports two Kinds -- `MongoDB` and `PostgreSQL` -- in the `db.example.com`
@@ -155,4 +158,18 @@ spec in our `deploy/operator.yaml` might look something like:
     # Override the verbosity for the MongoDB kind
     - name: ANSIBLE_VERBOSITY_MONGODB_DB_EXAMPLE_COM
       value: "4"
+```
+
+Once the Operator is deployed, the only way to change the verbosity is via the
+`"ansible.operator-sdk/verbosity"` annotation. Continuing with our example, our
+CR may look like:
+
+```yaml
+apiVersion: "db.example.com/v1"
+kind: "PostgreSQL"
+metadata:
+  name: "example-db"
+  annotations:
+    "ansible.operator-sdk/verbosity": 5
+spec: {}
 ```

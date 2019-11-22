@@ -9,6 +9,7 @@ header_text "Running golangci-lint"
 golangci-lint run --disable-all \
     --deadline 5m \
     --enable=nakedret \
+    --enable=ineffassign \
     --enable=goconst \
 
 ##todo(camilamacedo86): The following checks requires fixes in the code
