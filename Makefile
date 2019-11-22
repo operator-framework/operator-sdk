@@ -35,12 +35,27 @@ help: ## Show this help screen
 	@echo ''
 	@echo 'Available targets are:'
 	@echo ''
-	@grep -E '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
-	@echo ''
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-.PHONY: all
+##############################
+# Development                #
+##############################
+
+##@ Development
+
+.PHONY: all install
+
 all: format test build/operator-sdk ## Test and Build the Operator SDK
+
+install: ## Build & install the Operator SDK CLI binary
+	$(Q)go install \
+		-gcflags "all=-trimpath=${GOPATH}" \
+		-asmflags "all=-trimpath=${GOPATH}" \
+		-ldflags " \
+			-X '${REPO}/version.GitVersion=${VERSION}' \
+			-X '${REPO}/version.GitCommit=${GIT_COMMIT}' \
+		" \
+		$(BUILD_PATH)
 
 # Code management.
 .PHONY: format tidy clean cli-doc
@@ -54,27 +69,29 @@ tidy: ## Update dependencies
 clean: ## Clean up the build artifacts
 	$(Q)rm -rf build
 
+##############################
+# Generate Artifacts         #
+##############################
+
+##@ Generate
+
 gen-cli-doc: ## Generate CLI documentation
 	./hack/generate/gen-cli-doc.sh
 
-gen-test-framework: install ## Run generate commands to update test/test-framework
+gen-test-framework: build/operator-sdk ## Run generate commands to update test/test-framework
 	./hack/generate/gen-test-framework.sh
 
 generate: gen-cli-doc gen-test-framework  ## Run all generate targets
 .PHONY: generate gen-cli-doc gen-test-framework
 
-# Build/install/release the SDK.
-.PHONY: install release_builds release
+##############################
+# Release                    #
+##############################
 
-install: ## Build & install the Operator SDK CLI binary
-	$(Q)go install \
-		-gcflags "all=-trimpath=${GOPATH}" \
-		-asmflags "all=-trimpath=${GOPATH}" \
-		-ldflags " \
-			-X '${REPO}/version.GitVersion=${VERSION}' \
-			-X '${REPO}/version.GitCommit=${GIT_COMMIT}' \
-		" \
-		$(BUILD_PATH)
+##@ Release
+
+# Build/install/release the SDK.
+.PHONY: release_builds release
 
 release_builds := \
 	build/operator-sdk-$(VERSION)-x86_64-linux-gnu \
@@ -109,6 +126,48 @@ build/%.asc:
 		exit 1; \
 	fi; \
 	}
+
+# Image scaffold/build/push.
+.PHONY: image image-scaffold-ansible image-scaffold-helm image-build image-build-ansible image-build-helm image-push image-push-ansible image-push-helm
+
+image: image-build image-push ## Build and push all images
+
+image-scaffold-ansible:
+	go run ./hack/image/ansible/scaffold-ansible-image.go
+
+image-scaffold-helm:
+	go run ./hack/image/helm/scaffold-helm-image.go
+
+image-build: image-build-ansible image-build-helm image-build-scorecard-proxy ## Build all images
+
+image-build-ansible: build/operator-sdk-dev-x86_64-linux-gnu
+	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
+
+image-build-helm: build/operator-sdk-dev
+	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE):dev
+
+image-build-scorecard-proxy:
+	./hack/image/build-scorecard-proxy-image.sh $(SCORECARD_PROXY_BASE_IMAGE):dev
+
+image-push: image-push-ansible image-push-helm image-push-scorecard-proxy ## Push all images
+
+image-push-ansible:
+	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE):dev $(ANSIBLE_IMAGE)
+
+image-push-helm:
+	./hack/image/push-image-tags.sh $(HELM_BASE_IMAGE):dev $(HELM_IMAGE)-$(shell go env GOARCH)
+
+image-push-helm-multiarch:
+	./hack/image/push-manifest-list.sh $(HELM_IMAGE) ${HELM_ARCHES}
+
+image-push-scorecard-proxy:
+	./hack/image/push-image-tags.sh $(SCORECARD_PROXY_BASE_IMAGE):dev $(SCORECARD_PROXY_IMAGE)
+
+##############################
+# Tests                      #
+##############################
+
+##@ Tests
 
 # Static tests.
 .PHONY: test test-markdown test-sanity test-unit test-linter
@@ -164,39 +223,3 @@ test-e2e-ansible-molecule: image-build-ansible
 
 test-e2e-helm: image-build-helm
 	./hack/tests/e2e-helm.sh
-
-# Image scaffold/build/push.
-.PHONY: image image-scaffold-ansible image-scaffold-helm image-build image-build-ansible image-build-helm image-push image-push-ansible image-push-helm
-
-image: image-build image-push ## Build and push all images
-
-image-scaffold-ansible:
-	go run ./hack/image/ansible/scaffold-ansible-image.go
-
-image-scaffold-helm:
-	go run ./hack/image/helm/scaffold-helm-image.go
-
-image-build: image-build-ansible image-build-helm image-build-scorecard-proxy ## Build all images
-
-image-build-ansible: build/operator-sdk-dev-x86_64-linux-gnu
-	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
-
-image-build-helm: build/operator-sdk-dev
-	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE):dev
-
-image-build-scorecard-proxy:
-	./hack/image/build-scorecard-proxy-image.sh $(SCORECARD_PROXY_BASE_IMAGE):dev
-
-image-push: image-push-ansible image-push-helm image-push-scorecard-proxy ## Push all images
-
-image-push-ansible:
-	./hack/image/push-image-tags.sh $(ANSIBLE_BASE_IMAGE):dev $(ANSIBLE_IMAGE)
-
-image-push-helm:
-	./hack/image/push-image-tags.sh $(HELM_BASE_IMAGE):dev $(HELM_IMAGE)-$(shell go env GOARCH)
-
-image-push-helm-multiarch:
-	./hack/image/push-manifest-list.sh $(HELM_IMAGE) ${HELM_ARCHES}
-
-image-push-scorecard-proxy:
-	./hack/image/push-image-tags.sh $(SCORECARD_PROXY_BASE_IMAGE):dev $(SCORECARD_PROXY_IMAGE)

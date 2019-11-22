@@ -196,10 +196,10 @@ $ git checkout -b release-v1.3.0
 Commit the following changes:
 
 - `version/version.go`: update `Version` to `v1.3.0`.
-- `internal/scaffold/go_mod.go`, in the `require` block for `github.com/operator-framework/operator-sdk`:
-  - Change the version for `github.com/operator-framework/operator-sdk` from `master` to `v1.3.0`.
+- `internal/scaffold/go_mod.go`, change the `require` line version for `github.com/operator-framework/operator-sdk` from `master` to `v1.3.0`.
 - `internal/scaffold/helm/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
 - `internal/scaffold/ansible/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
+- `test/test-framework/go.mod`: change the `require` line version for `github.com/operator-framework/operator-sdk` from its current version to `v1.3.0`.
 - `CHANGELOG.md`: update the `## Unreleased` header to `## v1.3.0`.
 - `doc/user/install-operator-sdk.md`: update the linux and macOS URLs to point to the new release URLs.
 
@@ -236,8 +236,7 @@ Once this tag passes CI, go to step 3. For more info on tagging, see the [releas
 Check out a new branch from master (or use your `release-v1.3.0` branch) and commit the following changes:
 
 - `version/version.go`: update `Version` to `v1.3.0+git`.
-- `internal/scaffold/go_mod.go`, in the `require` block for `github.com/operator-framework/operator-sdk`:
-  - Change the version for `github.com/operator-framework/operator-sdk` from `v1.3.0` to `master`.
+- `internal/scaffold/go_mod.go`, change the `require` line version for `github.com/operator-framework/operator-sdk` from `v1.3.0` to `master`.
 - `internal/scaffold/helm/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
 - `internal/scaffold/ansible/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
 - `CHANGELOG.md`: add the following as a new set of headers above `## v1.3.0`:

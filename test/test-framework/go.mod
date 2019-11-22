@@ -1,47 +1,13 @@
-// Copyright 2019 The Operator-SDK Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-package helm
-
-import (
-	"fmt"
-
-	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/internal/deps"
-)
-
-const GoModFile = "go.mod"
-
-// GoMod - the go.mod file for a Helm hybrid operator.
-type GoMod struct {
-	input.Input
-}
-
-func (s *GoMod) GetInput() (input.Input, error) {
-	if s.Path == "" {
-		s.Path = GoModFile
-	}
-	s.TemplateBody = goModTmpl
-	return s.Input, nil
-}
-
-const goModTmpl = `module {{ .Repo }}
+module github.com/operator-framework/operator-sdk/test/test-framework
 
 go 1.13
 
 require (
-	github.com/operator-framework/operator-sdk master
+	github.com/operator-framework/operator-sdk v0.0.0
+	github.com/spf13/pflag v1.0.5
+	k8s.io/api v0.0.0
+	k8s.io/apimachinery v0.0.0
+	k8s.io/client-go v12.0.0+incompatible
 	sigs.k8s.io/controller-runtime v0.4.0
 )
 
@@ -69,13 +35,5 @@ replace (
 	k8s.io/metrics => k8s.io/metrics v0.0.0-20191016113814-3b1a734dba6e
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.0.0-20191016112829-06bb3c9d77c9
 )
-`
 
-func PrintGoMod() error {
-	b, err := deps.ExecGoModTmpl(goModTmpl)
-	if err != nil {
-		return err
-	}
-	fmt.Print(string(b))
-	return nil
-}
+replace github.com/operator-framework/operator-sdk => ../../
