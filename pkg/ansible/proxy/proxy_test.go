@@ -62,7 +62,7 @@ func TestHandler(t *testing.T) {
 
 	po, err := createPod("test", "default", cl)
 	if err != nil {
-		t.Fatalf("Error to create the pod: %v", err)
+		t.Fatalf("Failed to create pod: %v", err)
 	}
 
 	resp, err := http.Get("http://localhost:8888/api/v1/namespaces/default/pods/test")
