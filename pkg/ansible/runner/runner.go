@@ -68,14 +68,18 @@ type cmdFuncType func(ident, inputDirPath string, maxArtifacts, verbosity int) *
 
 func playbookCmdFunc(path string) cmdFuncType {
 	return func(ident, inputDirPath string, maxArtifacts, verbosity int) *exec.Cmd {
-		return exec.Command("ansible-runner", ansibleVerbosityString(verbosity), "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "-p", path, "-i", ident, "run", inputDirPath)
+		ansibleVerbosity := ansibleVerbosityString(verbosity)
+		rotateArtifacts := fmt.Sprintf("%v", maxArtifacts)
+		return exec.Command("ansible-runner", ansibleVerbosity, "--rotate-artifacts", rotateArtifacts, "-p", path, "-i", ident, "run", inputDirPath)
 	}
 }
 
 func roleCmdFunc(path string) cmdFuncType {
 	rolePath, roleName := filepath.Split(path)
 	return func(ident, inputDirPath string, maxArtifacts, verbosity int) *exec.Cmd {
-		return exec.Command("ansible-runner", ansibleVerbosityString(verbosity), "--rotate-artifacts", fmt.Sprintf("%v", maxArtifacts), "--role", roleName, "--roles-path", rolePath, "--hosts", "localhost", "-i", ident, "run", inputDirPath)
+		ansibleVerbosity := ansibleVerbosityString(verbosity)
+		rotateArtifacts := fmt.Sprintf("%v", maxArtifacts)
+		return exec.Command("ansible-runner", ansibleVerbosity, "--rotate-artifacts", rotateArtifacts, "--role", roleName, "--roles-path", rolePath, "--hosts", "localhost", "-i", ident, "run", inputDirPath)
 	}
 }
 
