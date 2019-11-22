@@ -89,11 +89,10 @@ func (c Client) DoCreate(ctx context.Context, objs ...runtime.Object) error {
 		log.Infof("  Creating %s %q", kind, getName(a.GetNamespace(), a.GetName()))
 		err = c.KubeClient.Create(ctx, obj)
 		if err != nil {
-			if apierrors.IsAlreadyExists(err) {
-				log.Infof("    %s %q already exists", kind, getName(a.GetNamespace(), a.GetName()))
-				return nil
+			if !apierrors.IsAlreadyExists(err) {
+				return err
 			}
-			return err
+			log.Infof("    %s %q already exists", kind, getName(a.GetNamespace(), a.GetName()))
 		}
 	}
 	return nil
@@ -109,11 +108,10 @@ func (c Client) DoDelete(ctx context.Context, objs ...runtime.Object) error {
 		log.Infof("  Deleting %s %q", kind, getName(a.GetNamespace(), a.GetName()))
 		err = c.KubeClient.Delete(ctx, obj, client.PropagationPolicy(metav1.DeletePropagationForeground))
 		if err != nil {
-			if apierrors.IsNotFound(err) {
-				log.Infof("    %s %q does not exist", kind, getName(a.GetNamespace(), a.GetName()))
-				continue
+			if !apierrors.IsNotFound(err) {
+				return err
 			}
-			return err
+			log.Infof("    %s %q does not exist", kind, getName(a.GetNamespace(), a.GetName()))
 		}
 	}
 
