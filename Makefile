@@ -58,7 +58,7 @@ install: ## Build & install the Operator SDK CLI binary
 		$(BUILD_PATH)
 
 # Code management.
-.PHONY: format tidy clean cli-doc
+.PHONY: format tidy clean cli-doc lint
 
 format: ## Format the source code
 	$(Q)go fmt $(PKGS)
@@ -68,6 +68,9 @@ tidy: ## Update dependencies
 
 clean: ## Clean up the build artifacts
 	$(Q)rm -rf build
+
+lint:  ## Run golangci-lint with all checks enabled (development purpose only)
+	./hack/tests/check-lint.sh dev
 
 ##############################
 # Generate Artifacts         #
@@ -170,18 +173,16 @@ image-push-scorecard-proxy:
 ##@ Tests
 
 # Static tests.
-.PHONY: test test-markdown test-sanity test-unit test-linter
+.PHONY: test test-markdown test-sanity test-unit
 
 test: test-unit ## Run the tests
-
-test-linter:  ## Run golangci-lint for the project
-	./hack/go-linter.sh
 
 test-markdown test/markdown:
 	./hack/ci/marker
 
 test-sanity test/sanity: tidy build/operator-sdk
 	./hack/tests/sanity-check.sh
+	./hack/tests/check-lint.sh ci
 
 TEST_PKGS:=$(shell go list ./... | grep -v -P 'github.com/operator-framework/operator-sdk/(hack|test/e2e)')
 test-unit test/unit: ## Run the unit tests
