@@ -357,16 +357,22 @@ kubectl logs deployment/memcached-operator -c operator
 The `ansible` logs contain all of the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks,
 whereas the `operator` logs will contain much more detailed information about the Ansible Operator's internals and interface with Kubernetes.
 
-### Additional Ansible debug
+### Additional Ansible Debug
 
-Occasionally while developing additional debug in the Operator logs is nice to have. To enable Ansible debug output, ie `-vvvv`.
-Add the following to the `operator.yaml` manifest.
+Occasionally while developing additional debug in the Operator logs is nice to have.
+Using the memcached operator as an example, we can simply add the
+`"ansible.operator-sdk/verbosity"` annotation to the Custom
+Resource with the desired verbosity.
 
 ```yaml
-          env:
-           ...
-           - name: ANSIBLE_VERBOSITY
-             value: "4"
+apiVersion: "cache.example.com/v1alpha1"
+kind: "Memcached"
+metadata:
+  name: "example-memcached"
+  annotations:
+    "ansible.operator-sdk/verbosity": 4
+spec:
+  size: 4
 ```
 
 ### Update the size

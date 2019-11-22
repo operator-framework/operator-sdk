@@ -34,7 +34,7 @@ import (
 	k8sproxy "k8s.io/apimachinery/pkg/util/proxy"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
-	"k8s.io/kubernetes/pkg/kubectl/util"
+	"k8s.io/kubectl/pkg/util"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 

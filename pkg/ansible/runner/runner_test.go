@@ -31,15 +31,14 @@ func checkCmdFunc(t *testing.T, cmdFunc cmdFuncType, playbook, role string, verb
 	inputDirPath := "/test/path"
 	maxArtifacts := 1
 	var expectedCmd, gotCmd *exec.Cmd
-	verbosityString := ansibleVerbosityString(verbosity)
 	switch {
 	case playbook != "":
-		expectedCmd = playbookCmdFunc(verbosityString, playbook)(ident, inputDirPath, maxArtifacts)
+		expectedCmd = playbookCmdFunc(playbook)(ident, inputDirPath, maxArtifacts, verbosity)
 	case role != "":
-		expectedCmd = roleCmdFunc(verbosityString, role)(ident, inputDirPath, maxArtifacts)
+		expectedCmd = roleCmdFunc(role)(ident, inputDirPath, maxArtifacts, verbosity)
 	}
 
-	gotCmd = cmdFunc(ident, inputDirPath, maxArtifacts)
+	gotCmd = cmdFunc(ident, inputDirPath, maxArtifacts, verbosity)
 
 	if expectedCmd.Path != gotCmd.Path {
 		t.Fatalf("Unexpected cmd path %v expected cmd path %v", gotCmd.Path, expectedCmd.Path)

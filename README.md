@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/operator-framework/operator-sdk.svg?branch=master)](https://travis-ci.org/operator-framework/operator-sdk)
 [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 [![Go Report Card](https://goreportcard.com/badge/github.com/operator-framework/operator-sdk)](https://goreportcard.com/report/github.com/operator-framework/operator-sdk)
+[![Coverage Status](https://coveralls.io/repos/github/operator-framework/operator-sdk/badge.svg?branch=master)](https://coveralls.io/github/operator-framework/operator-sdk?branch=master)
 
 ## Overview
 
