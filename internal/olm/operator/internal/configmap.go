@@ -56,7 +56,8 @@ func (m *RegistryResources) IsManifestDataStale(ctx context.Context, namespace s
 	if err != nil {
 		return false, errors.Wrap(err, "error creating binary data")
 	}
-	// If lengths don't match we have added or removed a file.
+	// If the number of files to be added to the registry don't match the number
+	// of files currently in the registry, we have added or removed a file.
 	if len(newData) != len(configmap.BinaryData) {
 		return true, nil
 	}

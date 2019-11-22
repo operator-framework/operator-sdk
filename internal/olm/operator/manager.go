@@ -29,7 +29,7 @@ import (
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	apiextinstall "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/install"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -46,9 +46,7 @@ var (
 )
 
 func init() {
-	if err := apiextv1beta1.AddToScheme(Scheme); err != nil {
-		log.Fatalf("Failed to add Kubhernetes API extensions v1beta1 types to scheme: %v", err)
-	}
+	apiextinstall.Install(Scheme)
 	if err := olmapiv1.AddToScheme(Scheme); err != nil {
 		log.Fatalf("Failed to add OLM operator API v1 types to scheme: %v", err)
 	}
