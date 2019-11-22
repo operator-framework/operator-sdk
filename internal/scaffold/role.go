@@ -95,7 +95,7 @@ func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 			return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
 		}
 		m := &map[string]interface{}{}
-		if err = yaml.Unmarshal(d, m); err != nil {
+		if err := yaml.Unmarshal(d, m); err != nil {
 			return fmt.Errorf("failed to unmarshal role(%+v): %v", role, err)
 		}
 		data, err := yaml.Marshal(m)
@@ -139,7 +139,10 @@ func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 			return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
 		}
 		m := &map[string]interface{}{}
-		err = yaml.Unmarshal(d, m)
+		if err = yaml.Unmarshal(d, m); err != nil {
+			return fmt.Errorf("failed to unmarshal role(%+v): %v", role, err)
+		}
+
 		data, err := yaml.Marshal(m)
 		if err != nil {
 			return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
