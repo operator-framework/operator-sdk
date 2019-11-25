@@ -183,12 +183,9 @@ test-markdown test/markdown:
 test-sanity test/sanity: tidy build/operator-sdk
 	./hack/tests/sanity-check.sh
 
+TEST_PKGS:=$(shell go list ./... | grep -v -P 'github.com/operator-framework/operator-sdk/(hack|test/e2e)')
 test-unit test/unit: ## Run the unit tests
-	- rm -f coverage-all.out
-	- echo 'mode: count' > coverage-all.out
-	$(Q)go test -coverprofile=coverage.out -covermode=count -count=1 -short ./cmd/... && tail -n +2 coverage.out >> coverage-all.out;
-	$(Q)go test -coverprofile=coverage.out -covermode=count -count=1 -short ./pkg/... && tail -n +2 coverage.out >> coverage-all.out;
-	$(Q)go test -coverprofile=coverage.out -covermode=count -count=1 -short ./internal/... && tail -n +2 coverage.out >> coverage-all.out;
+	$(Q)go test -coverprofile=coverage.out -covermode=count -count=1 -short ${TEST_PKGS}
 
 # CI tests.
 .PHONY: test-ci
