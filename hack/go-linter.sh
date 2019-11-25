@@ -11,6 +11,7 @@ golangci-lint run --disable-all \
     --enable=nakedret \
     --enable=varcheck \
     --enable=deadcode \
+    --enable=ineffassign \
     --enable=goconst \
 
 ##todo(camilamacedo86): The following checks requires fixes in the code
@@ -20,11 +21,9 @@ golangci-lint run --disable-all \
 # --enable=lll
 # --enable=gosec
 # --enable=maligned
-# --enable=misspell \
 # --enable=errcheck \
 # --enable=dupl \
 # --enable=interfacer \
 # --enable=misspell \
-# --enable=ineffassign \
 # --enable=structcheck \
 # --enable=unparam \
