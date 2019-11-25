@@ -95,6 +95,17 @@ This proposal is over some suggestions for we improve the quality of the Samples
 - The project should have an small section over how to test and with links for reference
 - The project should have a makefile target to call the tests
 
+#### tests for Helm Memcached Sample
+
+- I as a Helm dev operator user, I'd like to how to cover the projects with tests
+
+**Acceptance Criteria** 
+- The Helm project should have a few tests as using shell as it done [here](https://github.com/operator-framework/operator-sdk/blob/master/hack/tests/e2e-helm.sh).
+- The tests should be working successfully
+- The project should have an small section over how to test and with links for reference
+- The project should have a makefile target to call the tests
+
+
 #### e2e tests for Ansible Memcached Sample
 
 - I as a Ansible dev operator user, I'd like to how to cover the projects with integration tests using molecule
@@ -111,7 +122,7 @@ This proposal is over some suggestions for we improve the quality of the Samples
 - I as a dev operator user, I'd like to know how to call the tests in the CI and integrate them with Travis
 
 **Acceptance Criteria** 
-- The Ansible and Go project should be integrated with Travis
+- The Ansible, Helm and Go project should be integrated with Travis
 - All PR's made against the master should trigger th CI 
 - The unit and integration tests should be checked in the CI
 - The CI should fail if one of the tests do not pass
@@ -127,9 +138,5 @@ This proposal is over some suggestions for we improve the quality of the Samples
 ### Risks and Mitigations
 
 May [Coveralls](https://coveralls.io/) do not work well with [molecule](https://github.com/operator-framework/operator-sdk-samples/tree/master/ansible/memcached-operator/molecule) and then, we can just not integrate it with or find another similar tool.
-
-## Open Questions 
-
-How to do the same for Helm operators? 
 
 [operator-sdk-doc]:  ../../doc
