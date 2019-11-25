@@ -280,26 +280,26 @@ func (s *CSV) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error
 
 	// Old csv version to replace, and updated csv version.
 	oldVer, newVer := csv.Spec.Version.String(), s.CSVVersion
-	if oldVer == newVer {
-		return nil
-	}
-
-	// Replace all references to the old operator name.
-	lowerOperatorName := strings.ToLower(s.OperatorName)
-	oldCSVName := getCSVName(lowerOperatorName, oldVer)
-	oldRe, err := regexp.Compile(fmt.Sprintf("\\b%s\\b", regexp.QuoteMeta(oldCSVName)))
-	if err != nil {
-		return errors.Wrapf(err, "error compiling CSV name regexp %s", oldRe.String())
-	}
-	b, err := yaml.Marshal(csv)
-	if err != nil {
-		return err
-	}
-	newCSVName := getCSVName(lowerOperatorName, newVer)
-	b = oldRe.ReplaceAll(b, []byte(newCSVName))
-	*csv = olmapiv1alpha1.ClusterServiceVersion{}
-	if err = yaml.Unmarshal(b, csv); err != nil {
-		return errors.Wrapf(err, "error unmarshalling CSV %s after replacing old CSV name", csv.GetName())
+	// Same version replacement is unnecessary.
+	if oldVer != newVer {
+		// Replace all references to the old operator name.
+		lowerOperatorName := strings.ToLower(s.OperatorName)
+		oldCSVName := getCSVName(lowerOperatorName, oldVer)
+		oldRe, err := regexp.Compile(fmt.Sprintf("\\b%s\\b", regexp.QuoteMeta(oldCSVName)))
+		if err != nil {
+			return errors.Wrapf(err, "error compiling CSV name regexp %s", oldRe.String())
+		}
+		b, err := yaml.Marshal(csv)
+		if err != nil {
+			return err
+		}
+		newCSVName := getCSVName(lowerOperatorName, newVer)
+		b = oldRe.ReplaceAll(b, []byte(newCSVName))
+		*csv = olmapiv1alpha1.ClusterServiceVersion{}
+		if err = yaml.Unmarshal(b, csv); err != nil {
+			return errors.Wrapf(err, "error unmarshalling CSV %s after replacing old CSV name", csv.GetName())
+		}
+		csv.Spec.Replaces = oldCSVName
 	}
 
 	ver, err := semver.Parse(s.CSVVersion)
@@ -307,7 +307,6 @@ func (s *CSV) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error
 		return err
 	}
 	csv.Spec.Version = olmversion.OperatorVersion{Version: ver}
-	csv.Spec.Replaces = oldCSVName
 	return nil
 }
 

@@ -47,10 +47,13 @@ func MakeExcludeFuncs(paths ...string) (excludes []func(string) bool) {
 	}
 	wd := projutil.MustGetwd() + string(filepath.Separator)
 	for path := range pathSet {
+		// Copy the string for the closure.
+		pb := strings.Builder{}
+		pb.WriteString(path)
 		excludes = append(excludes, func(p string) bool {
 			// Handle absolute paths referencing the project directory.
 			p = strings.TrimPrefix(p, wd)
-			return strings.HasPrefix(filepath.Clean(p), path)
+			return strings.HasPrefix(filepath.Clean(p), pb.String())
 		})
 	}
 	return excludes
