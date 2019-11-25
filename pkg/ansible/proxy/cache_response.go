@@ -19,16 +19,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"regexp"
-	"strings"
-	"time"
-
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/controllermap"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	osdkHandler "github.com/operator-framework/operator-sdk/pkg/handler"
+	"net/http"
+	"regexp"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalscheme "k8s.io/apimachinery/pkg/apis/meta/internalversion/scheme"
@@ -273,22 +271,15 @@ func (c *cacheResponseHandler) getListFromCache(r *requestfactory.RequestInfo, r
 	k.Kind = k.Kind + "List"
 	un := unstructured.UnstructuredList{}
 	un.SetGroupVersionKind(k)
-	errChan := make(chan error, 1)
-	go func() {
-		err := c.informerCache.List(context.Background(), &un, clientListOpts...)
-		errChan <- err
-	}()
 
-	select {
-	case watchErr := <-errChan:
-		if watchErr != nil {
-			// break here in case resource doesn't exist in cache but exists on APIserver
-			// This is very unlikely but provides user with expected 404
-			log.Info(fmt.Sprintf("cache miss: %v err-%v", k, watchErr))
-			return nil, watchErr
-		}
-	case <-time.After(cacheEscacheEstablishmentTimeout):
-		return nil, fmt.Errorf("timeout establishing watch, commonly permissions of the controller are not sufficent")
+	ctx, cancel := context.WithTimeout(context.Background(), cacheEscacheEstablishmentTimeout)
+	defer cancel()
+	err := c.informerCache.List(ctx, &un, clientListOpts...)
+	if err != nil {
+		// break here in case resource doesn't exist in cache but exists on APIserver
+		// This is very unlikely but provides user with expected 404
+		log.Info(fmt.Sprintf("cache miss: %v err-%v", k, err))
+		return nil, err
 	}
 	return &un, nil
 }
@@ -298,24 +289,15 @@ func (c *cacheResponseHandler) getObjectFromCache(r *requestfactory.RequestInfo,
 	un := &unstructured.Unstructured{}
 	un.SetGroupVersionKind(k)
 	obj := client.ObjectKey{Namespace: r.Namespace, Name: r.Name}
-	errChan := make(chan error, 1)
-	go func() {
-		err := c.informerCache.Get(context.Background(), obj, un)
-		errChan <- err
-	}()
-
-	select {
-	case watchErr := <-errChan:
-		if watchErr != nil {
-			// break here in case resource doesn't exist in cache but exists on APIserver
-			// This is very unlikely but provides user with expected 404
-			log.Info(fmt.Sprintf("cache miss: %v err-%v", k, watchErr))
-			return nil, watchErr
-		}
-	case <-time.After(cacheEstacacheEstablishmentTimeout):
-		return nil, fmt.Errorf("timeout establishing watch, commonly permissions of the controller are not sufficent")
+	ctx, cancel := context.WithTimeout(context.Background(), cacheEscacheEstablishmentTimeout)
+	defer cancel()
+	err := c.informerCache.Get(ctx, obj, un)
+	if err != nil {
+		// break here in case resource doesn't exist in cache but exists on APIserver
+		// This is very unlikely but provides user with expected 404
+		log.Info(fmt.Sprintf("Cache miss: %v, %v", k, obj))
+		return nil, err
 	}
-
 	// Once we get the resource, we are going to attempt to recover the dependent watches here,
 	// This will happen in the background, and log errors.
 	if c.injectOwnerRef {
