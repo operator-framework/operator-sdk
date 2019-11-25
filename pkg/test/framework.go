@@ -61,16 +61,16 @@ type Framework struct {
 	Scheme            *runtime.Scheme
 	NamespacedManPath *string
 	Namespace         string
-	LocalOperator     bool
+
+	restMapper *restmapper.DeferredDiscoveryRESTMapper
 
 	projectRoot         string
-	singleNamespaceMode bool
 	globalManPath       string
 	localOperatorArgs   string
 	kubeconfigPath      string
-	restMapper          *restmapper.DeferredDiscoveryRESTMapper
-
-	schemeMutex sync.Mutex
+	schemeMutex         sync.Mutex
+	LocalOperator       bool
+	singleNamespaceMode bool
 }
 
 type frameworkOpts struct {
