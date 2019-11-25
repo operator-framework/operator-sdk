@@ -72,14 +72,14 @@ type Options struct {
 	Address           string
 	Port              int
 	Handler           HandlerChain
-	OwnerInjection    bool
-	LogRequests       bool
 	KubeConfig        *rest.Config
 	Cache             cache.Cache
 	RESTMapper        meta.RESTMapper
 	ControllerMap     *controllermap.ControllerMap
 	WatchedNamespaces []string
 	DisableCache      bool
+	OwnerInjection    bool
+	LogRequests       bool
 }
 
 // Run will start a proxy server in a go routine that returns on the error
