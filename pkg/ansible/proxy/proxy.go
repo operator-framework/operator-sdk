@@ -246,6 +246,7 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 				"enqueue_kind", u.GroupVersionKind())
 			err := contents.Controller.Watch(&source.Kind{Type: resource},
 				&handler.EnqueueRequestForOwner{OwnerType: u}, dependentPredicate)
+			
 			// Store watch in map
 			if err != nil {
 				log.Error(err, "GVK", resource.GroupVersionKind())
