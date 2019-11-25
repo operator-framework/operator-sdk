@@ -184,9 +184,11 @@ test-sanity test/sanity: tidy build/operator-sdk
 	./hack/tests/sanity-check.sh
 
 test-unit test/unit: ## Run the unit tests
-	$(Q)go test -count=1 -short ./cmd/...
-	$(Q)go test -count=1 -short ./pkg/...
-	$(Q)go test -count=1 -short ./internal/...
+	- rm -f coverage-all.out
+	- echo 'mode: count' > coverage-all.out
+	$(Q)go test -coverprofile=coverage.out -covermode=count -count=1 -short ./cmd/... && tail -n +2 coverage.out >> coverage-all.out;
+	$(Q)go test -coverprofile=coverage.out -covermode=count -count=1 -short ./pkg/... && tail -n +2 coverage.out >> coverage-all.out;
+	$(Q)go test -coverprofile=coverage.out -covermode=count -count=1 -short ./internal/... && tail -n +2 coverage.out >> coverage-all.out;
 
 # CI tests.
 .PHONY: test-ci

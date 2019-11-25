@@ -10,6 +10,7 @@ golangci-lint run --disable-all \
     --deadline 5m \
     --enable=nakedret \
     --enable=misspell \
+    --enable=ineffassign \
     --enable=goconst \
 
 ##todo(camilamacedo86): The following checks requires fixes in the code
@@ -23,8 +24,6 @@ golangci-lint run --disable-all \
 # --enable=errcheck \
 # --enable=dupl \
 # --enable=interfacer \
-# --enable=misspell \
-# --enable=ineffassign \
 # --enable=varcheck \
 # --enable=structcheck \
 # --enable=unparam \
