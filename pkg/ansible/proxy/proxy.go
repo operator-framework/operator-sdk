@@ -41,19 +41,14 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-<<<<<<< HEAD
-const AutoSkipCacheREList = "^/api/.*/pods/.*/exec,^/api/.*/pods/.*/attach"
-=======
 // This is the default timeout to wait for the cache to respond
-// TODO: Eventually this should be configurable
-const cacheEstablishmentTimeout = 6 * time.Second
->>>>>>> adding constant and todo for cache timeout
+// todo(shawn-hurley): Eventually this should be configurable
+const cacheEscacheEstablishmentTimeout = 6 * time.Second
+const AutoSkipCacheREList = "^/api/.*/pods/.*/exec,^/api/.*/pods/.*/attach"
 
 // RequestLogHandler - log the requests that come through the proxy.
 func RequestLogHandler(h http.Handler) http.Handler {
@@ -247,9 +242,11 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 			}
 
 			owMap.Store(resource.GroupVersionKind())
-			log.Info("Watching child resource", "kind", resource.GroupVersionKind(), "enqueue_kind", u.GroupVersionKind())
+			log.Info("Watching child resource", "kind", resource.GroupVersionKind(),
+				"enqueue_kind", u.GroupVersionKind())
+			err := contents.Controller.Watch(&source.Kind{Type: resource},
+				&handler.EnqueueRequestForOwner{OwnerType: u}, dependentPredicate)
 			// Store watch in map
-			err := addWatch(contents.Controller, &source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{OwnerType: u}, dependentPredicate))
 			if err != nil {
 				log.Error(err, "GVK", resource.GroupVersionKind())
 				return err
@@ -262,8 +259,10 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 			}
 			awMap.Store(resource.GroupVersionKind())
 			typeString := fmt.Sprintf("%v.%v", owner.Kind, ownerGV.Group)
-			log.Info("Watching child resource", "kind", resource.GroupVersionKind(), "enqueue_annotation_type", typeString)
-			err = addWatch(contents.Controller, &source.Kind{Type: resource}, &osdkHandler.EnqueueRequestForAnnotation{Type: typeString}, dependentPredicate)
+			log.Info("Watching child resource", "kind", resource.GroupVersionKind(),
+				"enqueue_annotation_type", typeString)
+			err = contents.Controller.Watch(&source.Kind{Type: resource},
+				&osdkHandler.EnqueueRequestForAnnotation{Type: typeString}, dependentPredicate)
 			if err != nil {
 				log.Error(err, "GVK", resource.GroupVersionKind())
 				return err
@@ -273,21 +272,6 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 		log.Info("Resource will not be watched/cached.", "GVK", resource.GroupVersionKind())
 	}
 	return nil
-}
-
-func addWatch(c controller.Controller, s source.Source, eh handler.EventHandler, predicates ...predicate.Predicate) error {
-	errChan := make(chan error, 1)
-	go func() {
-		err := c.Watch(s, eh, predicates...)
-		errChan <- err
-	}()
-
-	select {
-	case watchErr := <-errChan:
-		return watchErr
-	case <-time.After(cacheEstablishmentTimeout):
-		return fmt.Errorf("timeout establishing watch, commonly permissions of the controller are not sufficent")
-	}
 }
 
 func removeAuthorizationHeader(h http.Handler) http.Handler {
