@@ -447,8 +447,8 @@ func checkCRConfiguration(cr *unstructured.Unstructured, csv *olmapiv1alpha1.Clu
 	}
 	if descriptor == specDescriptor {
 		for key := range block {
-			for _, statDesc := range crd.SpecDescriptors {
-				if statDesc.Path == key {
+			for _, specDesc := range crd.SpecDescriptors {
+				if specDesc.Path == key {
 					res.EarnedPoints++
 					delete(block, key)
 					break
