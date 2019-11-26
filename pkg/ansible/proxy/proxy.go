@@ -182,7 +182,7 @@ func Run(done chan error, o Options) error {
 
 // Helper function used by cache response and owner injection
 func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *controllermap.ControllerMap,
-	resource *unstructured.Unstructured, restMapper meta.RESTMapper, useOwnerRef bool) error {
+		resource *unstructured.Unstructured, restMapper meta.RESTMapper, useOwnerRef bool) error {
 	dataMapping, err := restMapper.RESTMapping(resource.GroupVersionKind().GroupKind(),
 		resource.GroupVersionKind().Version)
 	if err != nil {

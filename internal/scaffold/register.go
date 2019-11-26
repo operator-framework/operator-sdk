@@ -46,7 +46,7 @@ func (s *Register) GetInput() (input.Input, error) {
 
 const registerTemplate = `// NOTE: Boilerplate only.  Ignore this file.
 
-// Package {{.Resource.Version}} contains API Schema definitions for the {{ .Resource.Group }}
+// Package {{.Resource.Version}} contains API Schema definitions for the {{ .Resource.Group }} 
 // {{.Resource.Version}} API group
 // +k8s:deepcopy-gen=package,register
 // +groupName={{ .Resource.FullGroup }}

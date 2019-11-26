@@ -288,7 +288,7 @@ func (f *Framework) setupLocalCommand() (*exec.Cmd, error) {
 		// be populated by NewDefaultClientConfigLoadingRules()
 		localCmd.Env = append(os.Environ(),
 			fmt.Sprintf("%v=%v", k8sutil.KubeConfigEnvVar, clientcmd.NewDefaultClientConfigLoadingRules().
-				Precedence[0]))
+			Precedence[0]))
 	}
 	localCmd.Env = append(localCmd.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, f.Namespace))
 	return localCmd, nil

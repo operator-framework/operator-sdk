@@ -195,7 +195,7 @@ func TestNew(t *testing.T) {
 				if len(testWatch.Finalizer.Vars) == 0 {
 					checkCmdFunc(
 						t, testRunnerStruct.cmdFunc, testWatch.Finalizer.Playbook, testWatch.Finalizer.Role,
-						testWatch.AnsibleVerbosity)
+							testWatch.AnsibleVerbosity)
 				} else {
 					// when finalizer vars is set the finalizerCmdFunc should be the same as the cmdFunc
 					checkCmdFunc(t, testRunnerStruct.finalizerCmdFunc, testWatch.Playbook, testWatch.Role,

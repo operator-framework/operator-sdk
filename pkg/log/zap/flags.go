@@ -38,7 +38,7 @@ var (
 
 func init() {
 	zapFlagSet = pflag.NewFlagSet("zap", pflag.ExitOnError)
-	zapFlagSet.BoolVar(&development, "zap-devel", false, "Enable zap development mode"+
+	zapFlagSet.BoolVar(&development, "zap-devel", false, "Enable zap development mode" +
 		" (changes defaults to console encoder, debug log level, and disables sampling)")
 	zapFlagSet.Var(&encoderVal, "zap-encoder", "Zap log encoding ('json' or 'console')")
 	zapFlagSet.Var(&levelVal, "zap-level",

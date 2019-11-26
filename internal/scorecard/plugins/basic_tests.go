@@ -170,7 +170,7 @@ func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *schelpers.TestRe
 	if res.EarnedPoints != 1 {
 		res.Suggestions = append(
 			res.Suggestions,
-			"The operator should write into objects to update state. "+
+			"The operator should write into objects to update state. " +
 				"No PUT or POST requests from the operator were recorded by the scorecard.")
 	}
 	return res

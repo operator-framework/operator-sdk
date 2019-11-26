@@ -12,14 +12,13 @@ golangci-lint run --disable-all \
     --enable=nakedret \
     --enable=ineffassign \
     --enable=goconst \
-    --enable=lll  \
-    --exclude [a-z] \
-    --enable=goimports \
-
+    --enable=lll \
 
 ##todo(camilamacedo86): The following checks requires fixes in the code
 # --enable=golint
 # --enable=gocyclo
+# --enable=goimports
+# --enable=lll
 # --enable=gosec
 # --enable=maligned
 # --enable=deadcode \

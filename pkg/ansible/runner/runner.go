@@ -159,7 +159,7 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 		return nil, err
 	}
 	inputDir := inputdir.InputDir{
-		Path: filepath.
+		Path:       filepath.
 			Join("/tmp/ansible-operator/runner/", r.GVK.Group, r.GVK.Version, r.GVK.Kind, u.GetNamespace(),
 				u.GetName()),
 		Parameters: r.makeParameters(u),
