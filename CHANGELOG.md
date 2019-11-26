@@ -2,15 +2,20 @@
 
 ### Added
 - Support for vars in top level ansible watches. ([#2147](https://github.com/operator-framework/operator-sdk/pull/2147))
+- Support for `"ansible.operator-sdk/verbosity"` annotation on Custom Resources watched by Ansible based operators to override verbosity on an individual resource. ([#2102](https://github.com/operator-framework/operator-sdk/pull/2102))
 
 ### Changed
 - Upgrade minimal Ansible version in the init projects from `2.4` to `2.6`. ([#2107](https://github.com/operator-framework/operator-sdk/pull/2107))
+- Upgrade Kubernetes version from `kubernetes-1.15.4` to `kubernetes-1.16.2`. ([#2145](https://github.com/operator-framework/operator-sdk/pull/2145))
+- Upgrade Helm version from `v2.15.0` to `v2.16.1`. ([#2145](https://github.com/operator-framework/operator-sdk/pull/2145))
+- Upgrade [`controller-runtime`](https://github.com/kubernetes-sigs/controller-runtime) version from `v0.3.0` to [`v0.4.0`](https://github.com/kubernetes-sigs/controller-runtime/releases/tag/v0.4.0). ([#2145](https://github.com/operator-framework/operator-sdk/pull/2145))
 
 ### Deprecated
 
 ### Removed
 
 ### Bug Fixes
+- Fix issue faced in the Ansible based operators when `jmespath` queries are used because it was not installed. ([#2252](https://github.com/operator-framework/operator-sdk/pull/2252))
 
 ## v0.12.0
 
@@ -23,8 +28,6 @@
 ### Changed
 
 - **Breaking change:** Changed required Go version from `1.12` to `1.13`. This change applies to the SDK project itself and Go projects scaffolded by the SDK. Projects that import this version of the SDK require Go 1.13 to compile. ([#1949](https://github.com/operator-framework/operator-sdk/pull/1949))
-
-### Deprecated
 - Upgrade Kubernetes version from `kubernetes-1.14.1` to `kubernetes-1.15.4`. ([#2083](https://github.com/operator-framework/operator-sdk/pull/2083))
 - Upgrade Helm version from `v2.14.1` to `v2.15.0`. ([#2083](https://github.com/operator-framework/operator-sdk/pull/2083))
 - Upgrade [`controller-runtime`](https://github.com/kubernetes-sigs/controller-runtime) version from `v0.2.0` to [`v0.3.0`](https://github.com/kubernetes-sigs/controller-runtime/releases/tag/v0.3.0). ([#2083](https://github.com/operator-framework/operator-sdk/pull/2083))
