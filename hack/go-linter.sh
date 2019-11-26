@@ -14,13 +14,13 @@ golangci-lint run --disable-all \
     --enable=goconst \
     --enable=goimports \
     --enable=errcheck \
+    --enable=dupl \
 
 ##todo(camilamacedo86): The following checks requires fixes in the code
 # --enable=golint
 # --enable=gocyclo
 # --enable=lll
 # --enable=gosec
-# --enable=dupl \
 # --enable=interfacer \
 # --enable=misspell \
 # --enable=varcheck \

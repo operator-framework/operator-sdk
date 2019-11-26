@@ -33,6 +33,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	statusDescriptor string = "status"
+	specDescriptor   string = "spec"
+)
+
 // OLMTestConfig contains all variables required by the OLMTest schelpers.TestSuite
 type OLMTestConfig struct {
 	Client   client.Client
@@ -394,34 +399,8 @@ func (t *StatusDescriptorsTest) Run(ctx context.Context) *schelpers.TestResult {
 		res.State = scapiv1alpha1.ErrorState
 		return res
 	}
-	if t.CR.Object["status"] == nil {
-		return res
-	}
-	statusBlock := t.CR.Object["status"].(map[string]interface{})
-	res.MaximumPoints = len(statusBlock)
-	var crd *olmapiv1alpha1.CRDDescription
-	for _, owned := range t.CSV.Spec.CustomResourceDefinitions.Owned {
-		if owned.Kind == t.CR.GetKind() {
-			crd = &owned
-			break
-		}
-	}
-	if crd == nil {
-		return res
-	}
-	for key := range statusBlock {
-		for _, statDesc := range crd.StatusDescriptors {
-			if statDesc.Path == key {
-				res.EarnedPoints++
-				delete(statusBlock, key)
-				break
-			}
-		}
-	}
-	for key := range statusBlock {
-		res.Suggestions = append(res.Suggestions, "Add a status descriptor for "+key)
-	}
-	return res
+
+	return checkCRConfiguration(t.CR, t.CSV, statusDescriptor, res)
 }
 
 // Run - implements Test interface
@@ -433,32 +412,53 @@ func (t *SpecDescriptorsTest) Run(ctx context.Context) *schelpers.TestResult {
 		res.State = scapiv1alpha1.ErrorState
 		return res
 	}
-	if t.CR.Object["spec"] == nil {
+
+	return checkCRConfiguration(t.CR, t.CSV, specDescriptor, res)
+}
+
+func checkCRConfiguration(cr *unstructured.Unstructured, csv *olmapiv1alpha1.ClusterServiceVersion, descriptor string, res *schelpers.TestResult) *schelpers.TestResult {
+	if cr.Object[descriptor] == nil {
 		return res
 	}
-	specBlock := t.CR.Object["spec"].(map[string]interface{})
-	res.MaximumPoints = len(specBlock)
+	block := cr.Object[descriptor].(map[string]interface{})
+	res.MaximumPoints = len(block)
 	var crd *olmapiv1alpha1.CRDDescription
-	for _, owned := range t.CSV.Spec.CustomResourceDefinitions.Owned {
-		if owned.Kind == t.CR.GetKind() {
+	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
+		if owned.Kind == cr.GetKind() {
 			crd = &owned
 			break
 		}
 	}
+
 	if crd == nil {
 		return res
 	}
-	for key := range specBlock {
-		for _, statDesc := range crd.SpecDescriptors {
-			if statDesc.Path == key {
-				res.EarnedPoints++
-				delete(specBlock, key)
-				break
+
+	if descriptor == statusDescriptor {
+		for key := range block {
+			for _, statDesc := range crd.StatusDescriptors {
+				if statDesc.Path == key {
+					res.EarnedPoints++
+					delete(block, key)
+					break
+				}
 			}
 		}
 	}
-	for key := range specBlock {
-		res.Suggestions = append(res.Suggestions, "Add a spec descriptor for "+key)
+	if descriptor == specDescriptor {
+		for key := range block {
+			for _, statDesc := range crd.SpecDescriptors {
+				if statDesc.Path == key {
+					res.EarnedPoints++
+					delete(block, key)
+					break
+				}
+			}
+		}
+	}
+
+	for key := range block {
+		res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add a %s descriptor for %s", descriptor, key))
 	}
 	return res
 }
