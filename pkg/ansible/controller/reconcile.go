@@ -191,10 +191,10 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	// Need to get the unstructured object after ansible
 	// this needs to hit the API
 	err = r.APIReader.Get(context.TODO(), request.NamespacedName, u)
-	if apierrors.IsNotFound(err) {
-		return reconcile.Result{}, nil
-	}
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return reconcile.Result{}, nil
+		}
 		return reconcile.Result{}, err
 	}
 
@@ -220,11 +220,16 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		}
 	}
 	if r.ManageStatus {
-		err = r.markDone(u, request.NamespacedName, statusEvent, failureMessages)
-		if apierrors.IsNotFound(err) {
-			logger.Info("Resource not found, assuming it was deleted")
-			return reconcile.Result{}, nil
+		// Get the latest resource to prevent updating a stale status.
+		err := r.Client.Get(context.TODO(), request.NamespacedName, u)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				logger.Info("Resource not found, assuming it was deleted")
+				return reconcile.Result{}, nil
+			}
+			return reconcile.Result{}, err
 		}
+		err = r.markDone(u, request.NamespacedName, statusEvent, failureMessages)
 		if err != nil {
 			logger.Error(err, "Failed to mark status done")
 		}
@@ -260,6 +265,7 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, na
 // markError - used to alert the user to the issues during the validation of a reconcile run.
 // i.e Annotations that could be incorrect
 func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, namespacedName types.NamespacedName, failureMessage string) error {
+	metrics.ReconcileFailed(r.GVK.String())
 	crStatus := getStatus(u)
 
 	sc := ansiblestatus.GetCondition(crStatus, ansiblestatus.RunningConditionType)
