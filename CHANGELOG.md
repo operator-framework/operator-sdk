@@ -1,10 +1,13 @@
 ## Unreleased
 
 ### Added
+
 - Support for vars in top level ansible watches. ([#2147](https://github.com/operator-framework/operator-sdk/pull/2147))
 - Support for `"ansible.operator-sdk/verbosity"` annotation on Custom Resources watched by Ansible based operators to override verbosity on an individual resource. ([#2102](https://github.com/operator-framework/operator-sdk/pull/2102))
+- Added the [`olm-catalog gen-csv --exclude`](doc/cli/operator-sdk_olm-catalog_gen-csv.md#options) option to exclude files from input to generator in lieu of a config. ([#2249](https://github.com/operator-framework/operator-sdk/pull/2249))
 
 ### Changed
+
 - Upgrade minimal Ansible version in the init projects from `2.4` to `2.6`. ([#2107](https://github.com/operator-framework/operator-sdk/pull/2107))
 - Upgrade Kubernetes version from `kubernetes-1.15.4` to `kubernetes-1.16.2`. ([#2145](https://github.com/operator-framework/operator-sdk/pull/2145))
 - Upgrade Helm version from `v2.15.0` to `v2.16.1`. ([#2145](https://github.com/operator-framework/operator-sdk/pull/2145))
@@ -13,6 +16,8 @@
 ### Deprecated
 
 ### Removed
+
+- Removed CSV configuration file support in favor of including all files in the default dir `deploy` and using [`gen-csv --exclude`](doc/cli/operator-sdk_olm-catalog_gen-csv.md#options) to exclude files from input to generator. ([#2249](https://github.com/operator-framework/operator-sdk/pull/2249))
 
 ### Bug Fixes
 - Fix issue faced in the Ansible based operators when `jmespath` queries are used because it was not installed. ([#2252](https://github.com/operator-framework/operator-sdk/pull/2252))
