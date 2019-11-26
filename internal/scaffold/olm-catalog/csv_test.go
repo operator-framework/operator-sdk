@@ -16,6 +16,7 @@ package catalog
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"os"
@@ -27,14 +28,17 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	testutil "github.com/operator-framework/operator-sdk/internal/scaffold/internal/testutil"
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
+	internalk8sutil "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"github.com/blang/semver"
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
+	olmversion "github.com/operator-framework/operator-lifecycle-manager/pkg/lib/version"
 	"github.com/spf13/afero"
 	appsv1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const testDataDir = "testdata"
@@ -66,6 +70,79 @@ func TestCSVNew(t *testing.T) {
 
 	// Get the expected CSV manifest from test data dir.
 	csvExpBytes, err := afero.ReadFile(s.Fs, sc.getCSVPath(csvVer))
+	if err != nil {
+		t.Fatal(err)
+	}
+	csvExp := string(csvExpBytes)
+	if csvExp != buf.String() {
+		diffs := diffutil.Diff(csvExp, buf.String())
+		t.Errorf("Expected vs actual differs.\n%v", diffs)
+	}
+}
+
+func TestCSVExclude(t *testing.T) {
+	buf := &bytes.Buffer{}
+	s := &scaffold.Scaffold{
+		GetWriter: func(_ string, _ os.FileMode) (io.Writer, error) {
+			return buf, nil
+		},
+	}
+	csvVer := "1.0.0"
+	projectName := "app-operator-dir"
+	operatorName := "app-operator"
+
+	sc := &CSV{
+		Config: genutil.Config{
+			OperatorName: operatorName,
+			// Exclude the whole deploy dir, which should produce an empty CSV.
+			ExcludeFuncs: genutil.MakeExcludeFuncs(testDeployDir),
+		},
+		CSVVersion: csvVer,
+		pathPrefix: testDataDir,
+	}
+	err := s.Execute(&input.Config{ProjectName: projectName}, sc)
+	if err != nil {
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
+	}
+
+	// Create an empty CSV.
+	ver, err := semver.Parse(csvVer)
+	if err != nil {
+		t.Fatal(err)
+	}
+	csv := &olmapiv1alpha1.ClusterServiceVersion{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: olmapiv1alpha1.ClusterServiceVersionAPIVersion,
+			Kind:       olmapiv1alpha1.ClusterServiceVersionKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      getCSVName(operatorName, csvVer),
+			Namespace: "placeholder",
+			Annotations: map[string]string{
+				"capabilities": "Basic Install",
+			},
+		},
+		Spec: olmapiv1alpha1.ClusterServiceVersionSpec{
+			DisplayName: internalk8sutil.GetDisplayName(operatorName),
+			Description: "Placeholder description",
+			Provider:    olmapiv1alpha1.AppLink{},
+			Maintainers: []olmapiv1alpha1.Maintainer{},
+			Links:       []olmapiv1alpha1.AppLink{},
+			Maturity:    "alpha",
+			Version:     olmversion.OperatorVersion{Version: ver},
+			InstallModes: []olmapiv1alpha1.InstallMode{
+				{Type: olmapiv1alpha1.InstallModeTypeOwnNamespace, Supported: true},
+				{Type: olmapiv1alpha1.InstallModeTypeSingleNamespace, Supported: true},
+				{Type: olmapiv1alpha1.InstallModeTypeMultiNamespace, Supported: false},
+				{Type: olmapiv1alpha1.InstallModeTypeAllNamespaces, Supported: true},
+			},
+			InstallStrategy: olmapiv1alpha1.NamedInstallStrategy{
+				StrategyName:    olminstall.InstallStrategyNameDeployment,
+				StrategySpecRaw: json.RawMessage(`{"deployments": null}`),
+			},
+		},
+	}
+	csvExpBytes, err := internalk8sutil.GetObjectBytes(csv, yaml.Marshal)
 	if err != nil {
 		t.Fatal(err)
 	}

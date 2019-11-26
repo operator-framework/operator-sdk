@@ -61,7 +61,7 @@ version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.`,
 		log.Fatalf("Failed to mark `csv-version` flag for `olm-catalog gen-csv` subcommand as required: %v", err)
 	}
 	genCSVCmd.Flags().StringVar(&fromVersion, "from-version", "", "Semantic version of an existing CSV to use as a base")
-	genCSVCmd.Flags().StringSliceVar(&excludePaths, "exclude", nil, "Paths to exclude from CSV generation")
+	genCSVCmd.Flags().StringSliceVar(&excludePaths, "exclude", nil, "Paths to exclude from CSV generation, ex. \"deploy/prod,deploy/test\"")
 	genCSVCmd.Flags().BoolVar(&updateCRDs, "update-crds", false, "Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's")
 	genCSVCmd.Flags().StringVar(&operatorName, "operator-name", "", "Operator name to use while generating CSV")
 	genCSVCmd.Flags().StringVar(&csvChannel, "csv-channel", "", "Channel the CSV should be registered under in the package manifest")

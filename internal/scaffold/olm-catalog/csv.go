@@ -280,8 +280,9 @@ func (s *CSV) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error
 
 	// Old csv version to replace, and updated csv version.
 	oldVer, newVer := csv.Spec.Version.String(), s.CSVVersion
-	// Same version replacement is unnecessary.
-	if oldVer != newVer {
+	// Empty and same version replacement is unnecessary.
+	emptyVer := olmversion.OperatorVersion{}
+	if oldVer != emptyVer.String() && oldVer != newVer {
 		// Replace all references to the old operator name.
 		lowerOperatorName := strings.ToLower(s.OperatorName)
 		oldCSVName := getCSVName(lowerOperatorName, oldVer)

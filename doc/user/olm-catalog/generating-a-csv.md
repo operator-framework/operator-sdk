@@ -16,7 +16,7 @@ Operator SDK projects have an expected [project layout][doc-project-layout]. In 
 * Custom Resources (CR's): `crds/<full group>_<version>_<kind>_cr.yaml`
 * CustomResourceDefinitions (CRD's): `crds/<full group>_<resource>_crd.yaml`.
 
-`gen-csv` extracts manifests from files in `deploy` that match the kinds above and adds them to the CSV. If any manifests are present that match one of the above kinds that you do _not_ want in your CSV, you can exclude them from the generator by setting `--exclude=[list of paths]`.
+`gen-csv` extracts manifests from files in `deploy` that match the kinds above and adds them to the CSV. If any manifests are present that match one of the above kinds that you do _not_ want in your CSV, you can exclude them from the generator by setting `--exclude=[list of paths]`, ex. `--exlude="deploy/prod,deploy/test"`.
 
 ## Versioning
 
