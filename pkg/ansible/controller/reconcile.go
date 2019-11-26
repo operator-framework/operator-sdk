@@ -123,11 +123,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	}
 
 	if r.ManageStatus {
-		err = r.markRunning(u, request.NamespacedName)
-		if err != nil {
-			logger.Error(err, "Unable to update the status to mark cr as running")
-			return reconcileResult, err
-		}
+		r.markRunning(u, request.NamespacedName)
 	}
 
 	ownerRef := metav1.OwnerReference{
@@ -221,28 +217,26 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	}
 	if r.ManageStatus {
 		// Get the latest resource to prevent updating a stale status.
-		err := r.Client.Get(context.TODO(), request.NamespacedName, u)
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				logger.Info("Resource not found, assuming it was deleted")
-				return reconcile.Result{}, nil
-			}
-			return reconcile.Result{}, err
-		}
-		err = r.markDone(u, request.NamespacedName, statusEvent, failureMessages)
-		if err != nil {
-			logger.Error(err, "Failed to mark status done")
-		}
+		r.markDone(u, request.NamespacedName, statusEvent, failureMessages)
 	}
 	return reconcileResult, err
 }
 
-func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, namespacedName types.NamespacedName) error {
+func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, namespacedName types.NamespacedName) {
+	logger := logf.Log.WithName("markRunning")
+	err := r.APIReader.Get(context.TODO(), namespacedName, u)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("Resource not found, assuming it was deleted")
+		} else {
+			logger.Error(err, "Failed to get resource in running CR status update")
+		}
+		return
+	}
 	crStatus := getStatus(u)
 
 	// If there is no current status add that we are working on this resource.
 	errCond := ansiblestatus.GetCondition(crStatus, ansiblestatus.FailureConditionType)
-
 	if errCond != nil {
 		errCond.Status = v1.ConditionFalse
 		ansiblestatus.SetCondition(&crStatus, *errCond)
@@ -259,12 +253,25 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, na
 	)
 	ansiblestatus.SetCondition(&crStatus, *c)
 	u.Object["status"] = crStatus.GetJSONMap()
-	return r.Client.Status().Update(context.TODO(), u)
+
+	if err = r.Client.Status().Update(context.TODO(), u); err != nil {
+		logger.Error(err, "Failed to update CR status to running")
+	}
 }
 
 // markError - used to alert the user to the issues during the validation of a reconcile run.
 // i.e Annotations that could be incorrect
-func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, namespacedName types.NamespacedName, failureMessage string) error {
+func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, namespacedName types.NamespacedName, failureMessage string) {
+	logger := logf.Log.WithName("markError")
+	err := r.APIReader.Get(context.TODO(), namespacedName, u)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("Resource not found, assuming it was deleted")
+		} else {
+			logger.Error(err, "Failed to get resource in errored CR status update")
+		}
+		return
+	}
 	metrics.ReconcileFailed(r.GVK.String())
 	crStatus := getStatus(u)
 
@@ -285,10 +292,22 @@ func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, name
 	// This needs the status subresource to be enabled by default.
 	u.Object["status"] = crStatus.GetJSONMap()
 
-	return r.Client.Status().Update(context.TODO(), u)
+	if err = r.Client.Status().Update(context.TODO(), u); err != nil {
+		logger.Error(err, "Failed to update CR status to error")
+	}
 }
 
-func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, namespacedName types.NamespacedName, statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) error {
+func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, namespacedName types.NamespacedName, statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) {
+	logger := logf.Log.WithName("markDone")
+	err := r.APIReader.Get(context.TODO(), namespacedName, u)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("Resource not found, assuming it was deleted")
+		} else {
+			logger.Error(err, "Failed to get resource in done CR status update")
+		}
+		return
+	}
 	crStatus := getStatus(u)
 
 	runSuccessful := len(failureMessages) == 0
@@ -297,8 +316,10 @@ func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, names
 	if !runSuccessful {
 		metrics.ReconcileFailed(r.GVK.String())
 		sc := ansiblestatus.GetCondition(crStatus, ansiblestatus.RunningConditionType)
-		sc.Status = v1.ConditionFalse
-		ansiblestatus.SetCondition(&crStatus, *sc)
+		if sc != nil {
+			sc.Status = v1.ConditionFalse
+			ansiblestatus.SetCondition(&crStatus, *sc)
+		}
 		c := ansiblestatus.NewCondition(
 			ansiblestatus.FailureConditionType,
 			v1.ConditionTrue,
@@ -323,7 +344,9 @@ func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, names
 	// This needs the status subresource to be enabled by default.
 	u.Object["status"] = crStatus.GetJSONMap()
 
-	return r.Client.Status().Update(context.TODO(), u)
+	if err = r.Client.Status().Update(context.TODO(), u); err != nil {
+		logger.Error(err, "Failed to update CR status to done")
+	}
 }
 
 func contains(l []string, s string) bool {
