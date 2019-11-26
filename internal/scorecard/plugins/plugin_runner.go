@@ -126,7 +126,10 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 	runtimeClient, _ = client.New(kubeconfig, client.Options{Scheme: scheme, Mapper: restMapper})
 
 	csv := &olmapiv1alpha1.ClusterServiceVersion{}
-	if pluginType == OLMIntegration {
+
+	// Extract operator manifests from the CSV if olm-deployed is set.
+	if config.OLMDeployed {
+
 		yamlSpec, err := ioutil.ReadFile(config.CSVManifest)
 		if err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to read csv: %v", err)
@@ -134,10 +137,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 		if err = yaml.Unmarshal(yamlSpec, csv); err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("error getting ClusterServiceVersion: %v", err)
 		}
-	}
 
-	// Extract operator manifests from the CSV if olm-deployed is set.
-	if config.OLMDeployed {
 		// Get deploymentName from the deployment manifest within the CSV.
 		strat, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
 		if err != nil {
