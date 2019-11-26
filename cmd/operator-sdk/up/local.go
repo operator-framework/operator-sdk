@@ -50,11 +50,16 @@ kubernetes cluster using a kubeconfig file.
 		RunE: upLocalFunc,
 	}
 
-	upLocalCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "The file path to kubernetes configuration file; defaults to location specified by $KUBECONFIG with a fallback to $HOME/.kube/config if not set")
-	upLocalCmd.Flags().StringVar(&operatorFlags, "operator-flags", "", "The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
-	upLocalCmd.Flags().StringVar(&namespace, "namespace", "", "The namespace where the operator watches for changes.")
+	upLocalCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "",
+		"The file path to kubernetes configuration file; defaults to location specified by $KUBECONFIG with" +
+		" a fallback to $HOME/.kube/config if not set")
+	upLocalCmd.Flags().StringVar(&operatorFlags, "operator-flags", "",
+		"The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")
+	upLocalCmd.Flags().StringVar(&namespace, "namespace", "",
+		"The namespace where the operator watches for changes.")
 	upLocalCmd.Flags().StringVar(&ldFlags, "go-ldflags", "", "Set Go linker options")
-	upLocalCmd.Flags().BoolVar(&enableDelve, "enable-delve", false, "Start the operator using the delve debugger")
+	upLocalCmd.Flags().BoolVar(&enableDelve, "enable-delve", false,
+		"Start the operator using the delve debugger")
 	switch projutil.GetOperatorType() {
 	case projutil.OperatorTypeAnsible:
 		ansibleOperatorFlags = aoflags.AddTo(upLocalCmd.Flags(), "(ansible operator)")

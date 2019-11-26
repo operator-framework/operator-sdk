@@ -71,7 +71,8 @@ func getPlugins(version string, selector labels.Selector) ([]Plugin, error) {
 	var plugins []Plugin
 	configs := []pluginConfig{}
 	// set ErrorUnused to true in decoder to fail if an unknown field is set by the user
-	if err := scViper.UnmarshalKey("plugins", &configs, func(c *mapstructure.DecoderConfig) { c.ErrorUnused = true }); err != nil {
+	if err := scViper.UnmarshalKey(
+		"plugins", &configs, func(c *mapstructure.DecoderConfig) { c.ErrorUnused = true }); err != nil {
 		return nil, errors.Wrap(err, "Could not load plugin configurations")
 	}
 	for idx, plugin := range configs {
@@ -99,7 +100,8 @@ func getPlugins(version string, selector labels.Selector) ([]Plugin, error) {
 			pluginConfig := plugin.External
 			if kubeconfig != "" {
 				// put the kubeconfig flag first in case user is overriding it with an env var in config file
-				pluginConfig.Env = append([]externalPluginEnv{{Name: "KUBECONFIG", Value: kubeconfig}}, pluginConfig.Env...)
+				pluginConfig.Env =
+					append([]externalPluginEnv{{Name: "KUBECONFIG", Value: kubeconfig}}, pluginConfig.Env...)
 			}
 			newPlugin = externalPlugin{config: *pluginConfig}
 		}
@@ -181,7 +183,8 @@ func initConfig() error {
 		}
 		log.Info("Using config file: ", viper.ConfigFileUsed())
 	} else {
-		return fmt.Errorf("could not read config file: %v\nSee %s for more information about the scorecard config file", err, configDocLink())
+		return fmt.Errorf("could not read config file: %v\nSee %s for more " +
+			"information about the scorecard config file", err, configDocLink())
 	}
 	return nil
 }
@@ -206,7 +209,8 @@ func validateScorecardConfig() error {
 	// this is already being checked in configure logger; may be unnecessary
 	outputFormat := scViper.GetString(OutputFormatOpt)
 	if outputFormat != TextOutputFormat && outputFormat != JSONOutputFormat {
-		return fmt.Errorf("invalid output format (%s); valid values: %s, %s", outputFormat, TextOutputFormat, JSONOutputFormat)
+		return fmt.Errorf(
+			"invalid output format (%s); valid values: %s, %s", outputFormat, TextOutputFormat, JSONOutputFormat)
 	}
 
 	version := scViper.GetString(schelpers.VersionOpt)
@@ -239,5 +243,7 @@ func configDocLink() string {
 	if strings.HasSuffix(version.Version, "+git") {
 		return "https://github.com/operator-framework/operator-sdk/blob/master/doc/test-framework/scorecard.md"
 	}
-	return fmt.Sprintf("https://github.com/operator-framework/operator-sdk/blob/%s/doc/test-framework/scorecard.md", version.Version)
+	return fmt.Sprintf(
+		"https://github.com/operator-framework/operator-sdk/blob/%s/doc/test-framework/scorecard.md",
+		version.Version)
 }

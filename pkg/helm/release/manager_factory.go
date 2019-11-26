@@ -224,7 +224,8 @@ func getReleaseName(storageBackend *storagev3.Storage, crChartName string, cr *u
 	}
 	existingChartName := history[0].Chart.Name()
 	if existingChartName != crChartName {
-		return "", fmt.Errorf("duplicate release name: found existing release with name %q for chart %q", releaseName, existingChartName)
+		return "", fmt.Errorf("duplicate release name: found existing release with name %q for chart %q",
+			releaseName, existingChartName)
 	}
 
 	return releaseName, nil

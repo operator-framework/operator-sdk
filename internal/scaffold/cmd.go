@@ -155,8 +155,10 @@ func main() {
 
 	// Add to the below struct any other metrics ports you want to expose.
 	servicePorts := []v1.ServicePort{
-		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
-		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
+		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, 
+			TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
+		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP, 
+			TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
 	}
 	// Create Service object to expose the metrics port(s).
 	service, err := metrics.CreateMetricsService(ctx, cfg, servicePorts)
@@ -173,7 +175,8 @@ func main() {
         // If this operator is deployed to a cluster without the prometheus-operator running, it will return
         // ErrServiceMonitorNotPresent, which can be used to safely skip ServiceMonitor creation.
         if err == metrics.ErrServiceMonitorNotPresent {
-            log.Info("Install prometheus-operator in your cluster to create ServiceMonitor objects", "error", err.Error())
+            log.Info("Install prometheus-operator in your cluster to create ServiceMonitor objects", 
+				"error", err.Error())
         }
     }
 

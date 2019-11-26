@@ -212,11 +212,13 @@ func TestGetCustomAPIImportPathAndIdentifier(t *testing.T) {
 	for _, c := range cases {
 		gotPath, gotIdent, err := getCustomAPIImportPathAndIdent(c.inputImport)
 		if err != nil && !c.wantErr {
-			t.Errorf(`wanted import path "%s" and identifier "%s" from "%s", got error %v`, c.wantImportPath, c.wantImportIdent, c.inputImport, err)
+			t.Errorf(`wanted import path "%s" and identifier "%s" from "%s", got error %v`, c.wantImportPath,
+				c.wantImportIdent, c.inputImport, err)
 			continue
 		}
 		if err == nil && c.wantErr {
-			t.Errorf(`wanted error from "%s", got import path "%s" and identifier "%s"`, c.inputImport, c.wantImportPath, c.wantImportIdent)
+			t.Errorf(`wanted error from "%s", got import path "%s" and identifier "%s"`, c.inputImport,
+				c.wantImportPath, c.wantImportIdent)
 			continue
 		}
 		if gotPath != c.wantImportPath {

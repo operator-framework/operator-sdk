@@ -81,7 +81,8 @@ func GenerateRoleScaffold(dc roleDiscoveryInterface, chart *chart.Chart) scaffol
 		log.Info("Scaffolding ClusterRole and ClusterRolebinding for cluster scoped resources in the helm chart")
 		roleScaffold.IsClusterScoped = true
 	}
-	roleScaffold.CustomRules = append(roleScaffold.CustomRules, append(clusterResourceRules, namespacedResourceRules...)...)
+	roleScaffold.CustomRules = append(roleScaffold.CustomRules,
+		append(clusterResourceRules, namespacedResourceRules...)...)
 
 	log.Warn("The RBAC rules generated in deploy/role.yaml are based on the chart's default manifest." +
 		" Some rules may be missing for resources that are only enabled with custom values, and" +
@@ -158,7 +159,8 @@ func generateRoleRules(dc roleDiscoveryInterface, chart *chart.Chart) ([]rbacv1.
 				namespacedGroups[group][resourceName] = struct{}{}
 			}
 		} else {
-			log.Warnf("Skipping rule generation for %s. Failed to determine resource scope for %s.", name, resource.GroupVersionKind())
+			log.Warnf("Skipping rule generation for %s. Failed to determine resource scope for %s.",
+				name, resource.GroupVersionKind())
 			continue
 		}
 	}

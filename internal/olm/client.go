@@ -111,7 +111,8 @@ func (c Client) InstallVersion(ctx context.Context, version string) (*olmresourc
 		}
 		log.Printf("Waiting for clusterserviceversion/%s to reach 'Succeeded' phase", csvKey.Name)
 		if err := c.DoCSVWait(ctx, csvKey); err != nil {
-			return nil, errors.Wrapf(err, "clusterserviceversion/%s failed to reach 'Succeeded' phase", csvKey.Name)
+			return nil, errors.Wrapf(err,
+				"clusterserviceversion/%s failed to reach 'Succeeded' phase", csvKey.Name)
 		}
 	}
 
@@ -222,7 +223,8 @@ func (c Client) doRequest(ctx context.Context, url string) (*http.Response, erro
 	if resp.StatusCode != http.StatusOK {
 		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
-		msg := fmt.Sprintf("failed GET '%s': unexpected status code %d, expected %d", url, resp.StatusCode, http.StatusOK)
+		msg := fmt.Sprintf(
+			"failed GET '%s': unexpected status code %d, expected %d", url, resp.StatusCode, http.StatusOK)
 		if err != nil {
 			return nil, errors.Wrap(err, msg)
 		}
@@ -255,7 +257,8 @@ func decodeResources(rds ...io.Reader) (objs []unstructured.Unstructured, err er
 	return objs, nil
 }
 
-func filterResources(resources []unstructured.Unstructured, filter func(unstructured.Unstructured) bool) (filtered []unstructured.Unstructured) {
+func filterResources(resources []unstructured.Unstructured,
+		filter func(unstructured.Unstructured) bool) (filtered []unstructured.Unstructured) {
 	for _, r := range resources {
 		if filter(r) {
 			filtered = append(filtered, r)

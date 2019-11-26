@@ -255,7 +255,8 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *schelpers.TestResult 
 		}
 		res.MaximumPoints++
 		if crd.Spec.Validation == nil {
-			res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for %s/%s", crd.Spec.Names.Kind, crd.Spec.Version))
+			res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for %s/%s",
+				crd.Spec.Names.Kind, crd.Spec.Version))
 			continue
 		}
 		failed := false
@@ -264,7 +265,9 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *schelpers.TestResult 
 			for key := range spec {
 				if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["spec"].Properties[key]; !ok {
 					failed = true
-					res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for spec field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
+					res.Suggestions = append(
+						res.Suggestions, fmt.Sprintf("Add CRD validation for spec field `%s` in %s/%s",
+							key, gvk.Kind, gvk.Version))
 				}
 			}
 		}
@@ -273,7 +276,9 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *schelpers.TestResult 
 			for key := range status {
 				if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["status"].Properties[key]; !ok {
 					failed = true
-					res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for status field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
+					res.Suggestions =
+						append(res.Suggestions, fmt.Sprintf("Add CRD validation for status field `%s` in %s/%s",
+							key, gvk.Kind, gvk.Version))
 				}
 			}
 		}
@@ -302,19 +307,24 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *schelpers.TestResult {
 			for _, resource := range resources {
 				foundResource := false
 				for _, listedResource := range crd.Resources {
-					if matchKind(resource.Kind, listedResource.Kind) && strings.EqualFold(resource.Version, listedResource.Version) {
+					if matchKind(resource.Kind, listedResource.Kind) &&
+						strings.EqualFold(resource.Version, listedResource.Version) {
 						foundResource = true
 						break
 					}
 				}
 				if foundResource == false {
-					missingResources = append(missingResources, fmt.Sprintf("%s/%s", resource.Kind, resource.Version))
+					missingResources =
+						append(missingResources, fmt.Sprintf("%s/%s", resource.Kind, resource.Version))
 				}
 			}
 		}
 	}
 	if len(missingResources) > 0 {
-		res.Suggestions = append(res.Suggestions, fmt.Sprintf("If it would be helpful to an end-user to understand or troubleshoot your CR, consider adding resources %v to the resources section for owned CRD %s", missingResources, t.CR.GroupVersionKind().Kind))
+		res.Suggestions = append(
+			res.Suggestions, fmt.Sprintf("If it would be helpful to an end-user to understand or troubleshoot" +
+				" your CR, consider adding resources %v to the resources section for owned CRD %s", missingResources,
+				t.CR.GroupVersionKind().Kind))
 	}
 	return res
 }
