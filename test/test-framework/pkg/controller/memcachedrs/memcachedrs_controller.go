@@ -123,8 +123,8 @@ func (r *ReconcileMemcachedRS) Reconcile(request reconcile.Request) (reconcile.R
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new replicaSet
 		dep, err := r.replicaSetForMemcached(memcachedrs)
+		reqLogger.Info("Creating a new ReplicaSet", "ReplicaSet.Namespace", dep.Namespace, "ReplicaSet.Name", dep.Name)
 		if err != nil {
-			reqLogger.Info("Creating a new ReplicaSet", "ReplicaSet.Namespace", dep.Namespace, "ReplicaSet.Name", dep.Name)
 			return reconcile.Result{}, err
 		}
 		err = r.client.Create(context.TODO(), dep)
