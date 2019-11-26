@@ -46,7 +46,7 @@ const moleculeDefaultAssertsAnsibleTmpl = `---
     ansible_python_interpreter: '{{ ansible_playbook_python }}'
   tasks:
     - name: Get all pods in {{ namespace }}
-      k8s_facts:
+      k8s_info:
         api_version: v1
         kind: Pod
         namespace: '{{ namespace }}'
