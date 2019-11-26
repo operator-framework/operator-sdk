@@ -172,7 +172,9 @@ func TestNew(t *testing.T) {
 			}
 
 			if testRunnerStruct.maxRunnerArtifacts != testWatch.MaxRunnerArtifacts {
-				t.Fatalf("Unexpected maxRunnerArtifacts %v expected maxRunnerArtifacts %v", testRunnerStruct.maxRunnerArtifacts, testWatch.MaxRunnerArtifacts)
+				t.Fatalf(
+					"Unexpected maxRunnerArtifacts %v expected maxRunnerArtifacts %v",
+					testRunnerStruct.maxRunnerArtifacts, testWatch.MaxRunnerArtifacts)
 			}
 
 			// Check the cmdFunc
@@ -180,19 +182,24 @@ func TestNew(t *testing.T) {
 
 			// Check finalizer
 			if testRunnerStruct.Finalizer != testWatch.Finalizer {
-				t.Fatalf("Unexpected finalizer %v expected finalizer %v", testRunnerStruct.Finalizer, testWatch.Finalizer)
+				t.Fatalf("Unexpected finalizer %v expected finalizer %v", testRunnerStruct.Finalizer,
+					testWatch.Finalizer)
 			}
 
 			if testWatch.Finalizer != nil {
 				if testRunnerStruct.Finalizer.Name != testWatch.Finalizer.Name {
-					t.Fatalf("Unexpected finalizer name %v expected finalizer name %v", testRunnerStruct.Finalizer.Name, testWatch.Finalizer.Name)
+					t.Fatalf("Unexpected finalizer name %v expected finalizer name %v",
+						testRunnerStruct.Finalizer.Name, testWatch.Finalizer.Name)
 				}
 
 				if len(testWatch.Finalizer.Vars) == 0 {
-					checkCmdFunc(t, testRunnerStruct.cmdFunc, testWatch.Finalizer.Playbook, testWatch.Finalizer.Role, testWatch.AnsibleVerbosity)
+					checkCmdFunc(
+						t, testRunnerStruct.cmdFunc, testWatch.Finalizer.Playbook, testWatch.Finalizer.Role,
+							testWatch.AnsibleVerbosity)
 				} else {
 					// when finalizer vars is set the finalizerCmdFunc should be the same as the cmdFunc
-					checkCmdFunc(t, testRunnerStruct.finalizerCmdFunc, testWatch.Playbook, testWatch.Role, testWatch.AnsibleVerbosity)
+					checkCmdFunc(t, testRunnerStruct.finalizerCmdFunc, testWatch.Playbook, testWatch.Role,
+						testWatch.AnsibleVerbosity)
 				}
 			}
 		})

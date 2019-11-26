@@ -223,7 +223,8 @@ func (c Client) GetInstalledVersion(ctx context.Context) (string, error) {
 			// There is more than one version of OLM installed in the cluster,
 			// so we can't resolve the version being used.
 			if pkgServerCSV != nil {
-				return "", errors.Errorf("more than one OLM (package server) version installed: %q and %q", pkgServerCSV.GetName(), name)
+				return "", errors.Errorf("more than one OLM (package server) version installed: %q and %q",
+					pkgServerCSV.GetName(), name)
 			}
 			pkgServerCSV = &csv
 		}

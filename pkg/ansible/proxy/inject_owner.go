@@ -50,7 +50,8 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 	case http.MethodPost:
 		dump, _ := httputil.DumpRequest(req, false)
 		log.V(2).Info("Dumping request", "RequestDump", string(dump))
-		rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.NewString("api", "apis"), GrouplessAPIPrefixes: sets.NewString("api")}
+		rf := k8sRequest.RequestInfoFactory{
+			APIPrefixes: sets.NewString("api", "apis"), GrouplessAPIPrefixes: sets.NewString("api")}
 		r, err := rf.NewRequestInfo(req)
 		if err != nil {
 			m := "Could not convert request"
@@ -173,7 +174,8 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 	i.next.ServeHTTP(w, req)
 }
 
-func shouldAddOwnerRef(data *unstructured.Unstructured, owner kubeconfig.NamespacedOwnerReference, restMapper meta.RESTMapper) (bool, error) {
+func shouldAddOwnerRef(data *unstructured.Unstructured, owner kubeconfig.NamespacedOwnerReference,
+		restMapper meta.RESTMapper) (bool, error) {
 	dataMapping, err := restMapper.RESTMapping(data.GroupVersionKind().GroupKind(), data.GroupVersionKind().Version)
 	if err != nil {
 		m := fmt.Sprintf("Could not get rest mapping for: %v", data.GroupVersionKind())
@@ -190,7 +192,8 @@ func shouldAddOwnerRef(data *unstructured.Unstructured, owner kubeconfig.Namespa
 		log.Error(err, m)
 		return false, err
 	}
-	ownerMapping, err := restMapper.RESTMapping(schema.GroupKind{Kind: owner.Kind, Group: ownerGV.Group}, ownerGV.Version)
+	ownerMapping, err :=
+		restMapper.RESTMapping(schema.GroupKind{Kind: owner.Kind, Group: ownerGV.Group}, ownerGV.Version)
 	if err != nil {
 		m := fmt.Sprintf("could not get rest mapping for: %v", owner)
 		log.Error(err, m)

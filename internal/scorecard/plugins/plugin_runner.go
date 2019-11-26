@@ -76,7 +76,12 @@ const (
 
 var log *logrus.Logger
 
+<<<<<<< HEAD
 func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, logFile io.Writer) (scapiv1alpha1.ScorecardOutput, error) {
+=======
+func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
+	logFile io.ReadWriter) (scapiv1alpha1.ScorecardOutput, error) {
+>>>>>>> --enable= lll
 	log = logrus.New()
 	log.SetFormatter(&logrus.TextFormatter{DisableColors: true})
 	log.SetOutput(logFile)
@@ -105,15 +110,18 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 	scheme := runtime.NewScheme()
 	// scheme for client go
 	if err := cgoscheme.AddToScheme(scheme); err != nil {
-		return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to add client-go scheme to client: (%v)", err)
+		return scapiv1alpha1.ScorecardOutput{},
+			fmt.Errorf("failed to add client-go scheme to client: (%v)", err)
 	}
 	// api extensions scheme (CRDs)
 	if err := extscheme.AddToScheme(scheme); err != nil {
-		return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to add failed to add extensions api scheme to client: (%v)", err)
+		return scapiv1alpha1.ScorecardOutput{},
+			fmt.Errorf("failed to add failed to add extensions api scheme to client: (%v)", err)
 	}
 	// olm api (CSVs)
 	if err := olmapiv1alpha1.AddToScheme(scheme); err != nil {
-		return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to add failed to add oml api scheme (CSVs) to client: (%v)", err)
+		return scapiv1alpha1.ScorecardOutput{},
+			fmt.Errorf("failed to add failed to add oml api scheme (CSVs) to client: (%v)", err)
 	}
 	dynamicDecoder = serializer.NewCodecFactory(scheme).UniversalDeserializer()
 	// if a user creates a new CRD, we need to be able to reset the rest mapper
@@ -177,10 +185,13 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 			if crJSONStr, ok := csv.ObjectMeta.Annotations["alm-examples"]; ok {
 				var crs []interface{}
 				if err = json.Unmarshal([]byte(crJSONStr), &crs); err != nil {
-					return scapiv1alpha1.ScorecardOutput{}, errors.Wrapf(err, "metadata.annotations['alm-examples'] in CSV %s incorrectly formatted", csv.GetName())
+					return scapiv1alpha1.ScorecardOutput{}, errors.Wrapf(err,
+						"metadata.annotations['alm-examples'] in CSV %s incorrectly formatted", csv.GetName())
 				}
 				if len(crs) == 0 {
-					return scapiv1alpha1.ScorecardOutput{}, errors.Errorf("no CRs found in metadata.annotations['alm-examples'] in CSV %s and cr-manifest config option not set", csv.GetName())
+					return scapiv1alpha1.ScorecardOutput{}, errors.Errorf(
+						"no CRs found in metadata.annotations['alm-examples'] in CSV %s and cr-manifest config" +
+							" option not set", csv.GetName())
 				}
 				// TODO: run scorecard against all CR's in CSV.
 				cr := crs[0]
@@ -209,7 +220,8 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 					}
 				}()
 			} else {
-				return scapiv1alpha1.ScorecardOutput{}, errors.New("cr-manifest config option must be set if CSV has no metadata.annotations['alm-examples']")
+				return scapiv1alpha1.ScorecardOutput{}, errors.New(
+					"cr-manifest config option must be set if CSV has no metadata.annotations['alm-examples']")
 			}
 		} else {
 			// TODO: run scorecard against all CR's in CSV.
@@ -218,7 +230,9 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 		}
 		// Let users know that only the first CR is being tested.
 		if logCRMsg {
-			log.Infof("The scorecard does not support testing multiple CR's at once when run with --olm-deployed. Testing the first CR %s", config.CRManifest[0])
+			log.Infof(
+				"The scorecard does not support testing multiple CR's at once when run with --olm-deployed." +
+					" Testing the first CR %s", config.CRManifest[0])
 		}
 
 	} else {
@@ -268,7 +282,8 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 		}
 		newGVKs, err := getGVKs(file)
 		if err != nil {
-			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("could not get GVKs for resource(s) in file: %s, due to error: (%v)", cr, err)
+			return scapiv1alpha1.ScorecardOutput{},
+			fmt.Errorf("could not get GVKs for resource(s) in file: %s, due to error: (%v)", cr, err)
 		}
 		gvks = append(gvks, newGVKs...)
 	}
@@ -287,11 +302,14 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 		log.Printf("Running for cr: %s", cr)
 		var obj *unstructured.Unstructured
 		if !config.OLMDeployed {
-			if err := createFromYAMLFile(config.Namespace, config.GlobalManifest, config.ProxyImage, config.ProxyPullPolicy); err != nil {
+			if err := createFromYAMLFile(
+				config.Namespace, config.GlobalManifest, config.ProxyImage, config.ProxyPullPolicy); err != nil {
 				return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to create global resources: %v", err)
 			}
-			if err := createFromYAMLFile(config.Namespace, config.NamespacedManifest, config.ProxyImage, config.ProxyPullPolicy); err != nil {
-				return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to create namespaced resources: %v", err)
+			if err := createFromYAMLFile(
+				config.Namespace, config.NamespacedManifest, config.ProxyImage, config.ProxyPullPolicy); err != nil {
+				return scapiv1alpha1.ScorecardOutput{},
+					fmt.Errorf("failed to create namespaced resources: %v", err)
 			}
 		}
 		if err := createFromYAMLFile(config.Namespace, cr, config.ProxyImage, config.ProxyPullPolicy); err != nil {
@@ -299,10 +317,12 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 		}
 		obj, err = yamlToUnstructured(config.Namespace, cr)
 		if err != nil {
-			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
+			return scapiv1alpha1.ScorecardOutput{},
+				fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
 		}
 		if err := waitUntilCRStatusExists(time.Second*time.Duration(config.InitTimeout), obj); err != nil {
-			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed waiting to check if CR status exists: %v", err)
+			return scapiv1alpha1.ScorecardOutput{},
+				fmt.Errorf("failed waiting to check if CR status exists: %v", err)
 		}
 		if pluginType == BasicOperator {
 			conf := BasicTestConfig{

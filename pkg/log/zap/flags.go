@@ -38,11 +38,15 @@ var (
 
 func init() {
 	zapFlagSet = pflag.NewFlagSet("zap", pflag.ExitOnError)
-	zapFlagSet.BoolVar(&development, "zap-devel", false, "Enable zap development mode (changes defaults to console encoder, debug log level, and disables sampling)")
+	zapFlagSet.BoolVar(&development, "zap-devel", false, "Enable zap development mode" +
+		" (changes defaults to console encoder, debug log level, and disables sampling)")
 	zapFlagSet.Var(&encoderVal, "zap-encoder", "Zap log encoding ('json' or 'console')")
-	zapFlagSet.Var(&levelVal, "zap-level", "Zap log level (one of 'debug', 'info', 'error' or any integer value > 0)")
-	zapFlagSet.Var(&sampleVal, "zap-sample", "Enable zap log sampling. Sampling will be disabled for integer log levels > 1")
-	zapFlagSet.Var(&timeEncodingVal, "zap-time-encoding", "Sets the zap time format ('epoch', 'millis', 'nano', or 'iso8601')")
+	zapFlagSet.Var(&levelVal, "zap-level",
+		"Zap log level (one of 'debug', 'info', 'error' or any integer value > 0)")
+	zapFlagSet.Var(&sampleVal, "zap-sample",
+		"Enable zap log sampling. Sampling will be disabled for integer log levels > 1")
+	zapFlagSet.Var(&timeEncodingVal, "zap-time-encoding",
+		"Sets the zap time format ('epoch', 'millis', 'nano', or 'iso8601')")
 }
 
 // FlagSet - The zap logging flagset.
