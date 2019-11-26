@@ -125,7 +125,8 @@ func (o *OwnerRefEngine) addOwnerRefs(fileContents string) (string, error) {
 }
 
 // NewOwnerRefEngine creates a new OwnerRef engine with a set of metav1.OwnerReferences to be added to assets
-func NewOwnerRefEngine(baseEngine environment.Engine, restMapper meta.RESTMapper, refs []metav1.OwnerReference) environment.Engine {
+func NewOwnerRefEngine(baseEngine environment.Engine, restMapper meta.RESTMapper,
+		refs []metav1.OwnerReference) environment.Engine {
 	return &OwnerRefEngine{
 		Engine: baseEngine,
 

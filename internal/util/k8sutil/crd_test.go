@@ -40,8 +40,10 @@ func TestSortVersions(t *testing.T) {
 			[]string{"v1alpha2000", "v1alpha300", "v1alpha10", "v1alpha3", "v1alpha2", "v1alpha1"},
 		},
 		{
-			[]string{"v3beta1", "v12alpha1", "v12alpha2", "v10beta3", "v1", "v11alpha2", "foo1", "v10", "v2", "foo10", "v11beta2"},
-			[]string{"v10", "v2", "v1", "v11beta2", "v10beta3", "v3beta1", "v12alpha2", "v12alpha1", "v11alpha2", "foo1", "foo10"},
+			[]string{"v3beta1", "v12alpha1", "v12alpha2", "v10beta3", "v1", "v11alpha2", "foo1", "v10",
+				"v2", "foo10", "v11beta2"},
+			[]string{"v10", "v2", "v1", "v11beta2", "v10beta3", "v3beta1", "v12alpha2", "v12alpha1",
+				"v11alpha2", "foo1", "foo10"},
 		},
 	}
 

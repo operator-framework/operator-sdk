@@ -75,7 +75,8 @@ func NewCheckStatusTest(conf BasicTestConfig) *CheckStatusTest {
 	}
 }
 
-// WritingIntoCRsHasEffectTest is a scorecard test that verifies that the operator is making PUT and/or POST requests to the API server
+// WritingIntoCRsHasEffectTest is a scorecard test that verifies that the operator is making
+// PUT and/or POST requests to the API server
 type WritingIntoCRsHasEffectTest struct {
 	schelpers.TestInfo
 	BasicTestConfig
@@ -167,7 +168,10 @@ func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *schelpers.TestRe
 	}
 
 	if res.EarnedPoints != 1 {
-		res.Suggestions = append(res.Suggestions, "The operator should write into objects to update state. No PUT or POST requests from the operator were recorded by the scorecard.")
+		res.Suggestions = append(
+			res.Suggestions,
+			"The operator should write into objects to update state. " +
+				"No PUT or POST requests from the operator were recorded by the scorecard.")
 	}
 	return res
 }

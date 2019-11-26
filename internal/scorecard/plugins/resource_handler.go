@@ -47,7 +47,8 @@ type cleanupFn func() error
 // is reached, it simply continues and assumes there is no status block
 func waitUntilCRStatusExists(timeout time.Duration, cr *unstructured.Unstructured) error {
 	err := wait.Poll(time.Second*1, timeout, func() (bool, error) {
-		err := runtimeClient.Get(context.TODO(), types.NamespacedName{Namespace: cr.GetNamespace(), Name: cr.GetName()}, cr)
+		err := runtimeClient.Get(context.TODO(),
+			types.NamespacedName{Namespace: cr.GetNamespace(), Name: cr.GetName()}, cr)
 		if err != nil {
 			return false, fmt.Errorf("error getting custom resource: %v", err)
 		}
@@ -245,7 +246,8 @@ func createKubeconfigSecret(namespace string) error {
 	if err != nil {
 		return err
 	}
-	addResourceCleanup(kubeconfigSecret, types.NamespacedName{Namespace: kubeconfigSecret.GetNamespace(), Name: kubeconfigSecret.GetName()})
+	addResourceCleanup(kubeconfigSecret,
+		types.NamespacedName{Namespace: kubeconfigSecret.GetNamespace(), Name: kubeconfigSecret.GetName()})
 	return nil
 }
 
@@ -265,7 +267,8 @@ func addMountKubeconfigSecret(dep *appsv1.Deployment) {
 	})
 	for index := range dep.Spec.Template.Spec.Containers {
 		// mount the volume
-		dep.Spec.Template.Spec.Containers[index].VolumeMounts = append(dep.Spec.Template.Spec.Containers[index].VolumeMounts, v1.VolumeMount{
+		dep.Spec.Template.Spec.Containers[index].VolumeMounts =
+			append(dep.Spec.Template.Spec.Containers[index].VolumeMounts, v1.VolumeMount{
 			Name:      "scorecard-kubeconfig",
 			MountPath: "/scorecard-secret",
 		})
@@ -305,7 +308,8 @@ func unstructuredToDeployment(obj *unstructured.Unstructured) (*appsv1.Deploymen
 	case *appsv1.Deployment:
 		return o, nil
 	default:
-		return nil, fmt.Errorf("conversion of runtime object to deployment failed (resulting runtime object not deployment type)")
+		return nil, fmt.Errorf(
+			"conversion of runtime object to deployment failed (resulting runtime object not deployment type)")
 	}
 }
 
@@ -354,7 +358,9 @@ func addResourceCleanup(obj runtime.Object, key types.NamespacedName) {
 				if apierrors.IsNotFound(err) {
 					return true, nil
 				}
-				return false, fmt.Errorf("error encountered during deletion of resource type %v with namespace/name (%+v): %v", objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
+				return false,
+				fmt.Errorf("error encountered during deletion of resource type %v with namespace/name (%+v): %v",
+					objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
 			}
 			return false, nil
 		})

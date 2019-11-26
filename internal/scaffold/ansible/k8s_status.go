@@ -83,9 +83,11 @@ options:
     type: list
     description:
     - A list of condition objects that will be set on the status.conditions field of the specified resource.
-    - Unless I(force) is C(true) the specified conditions will be merged with the conditions already set on the status field of the specified resource.
+    - Unless I(force) is C(true) the specified conditions will be merged with the 
+		conditions already set on the status field of the specified resource.
     - Each element in the list will be validated according to the conventions specified in the
-      [Kubernetes API conventions document](https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#spec-and-status).
+      [Kubernetes API conventions document]
+		(https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#spec-and-status).
     - 'The fields supported for each condition are:
       ` + "`type`" + ` (required),
       ` + "`status`" + ` (required, one of "True", "False", "Unknown"),
@@ -118,7 +120,8 @@ options:
       to identify a specific object.
   force:
     description:
-    - If set to C(True), the status will be set using ` + "`PUT`" + ` rather than ` + "`PATCH`" + `, replacing the full status object.
+    - If set to C(True), the status will be set using ` + "`PUT`" + ` rather than ` + "`PATCH`" + `,
+	  replacing the full status object.
     default: false
     type: bool
   host:
@@ -250,13 +253,15 @@ def condition_array(conditions):
 
         for key in condition.keys():
             if key not in VALID_KEYS:
-                raise ValueError('{} is not a valid field for a condition, accepted fields are {}'.format(key, VALID_KEYS))
+                raise ValueError('{} is not a valid field for a condition, accepted fields are {}'
+					.format(key, VALID_KEYS))
         for key in REQUIRED:
             if not condition.get(key):
                 raise ValueError('Condition ` + "`{}`" + ` must be set'.format(key))
 
         if condition['status'] not in ['True', 'False', 'Unknown']:
-            raise ValueError('Condition ` + "`status`" + ` must be one of ["True", "False", "Unknown"], not {}'.format(condition['status']))
+            raise ValueError('Condition ` + "`status`" + ` must be one of ["True", "False", "Unknown"], not {}'
+				.format(condition['status']))
 
         if condition.get('reason') and not re.match(CAMEL_CASE, condition['reason']):
             raise ValueError('Condition ` + "`reason`" + ` must be a single, CamelCase word')
@@ -304,7 +309,8 @@ class KubernetesAnsibleStatusModule(KubernetesAnsibleModule):
         self.conditions = self.params.get('conditions') or []
 
         if self.conditions and self.status and self.status.get('conditions'):
-            raise ValueError("You cannot specify conditions in both the ` + "`status`" + ` and ` + "`conditions`" + ` parameters")
+            raise ValueError("You cannot specify conditions in both the ` + "`status`" + ` and ` +
+				 "`conditions`" + ` parameters")
 
         if self.conditions:
             self.status['conditions'] = self.conditions
@@ -314,7 +320,8 @@ class KubernetesAnsibleStatusModule(KubernetesAnsibleModule):
 
         resource = self.find_resource(self.kind, self.api_version, fail=True)
         if 'status' not in resource.subresources:
-            self.fail_json(msg='Resource {}.{} does not support the status subresource'.format(resource.api_version, resource.kind))
+            self.fail_json(msg='Resource {}.{} does not support the status subresource'
+				.format(resource.api_version, resource.kind))
 
         try:
             instance = resource.get(name=self.name, namespace=self.namespace).to_dict()
@@ -344,11 +351,12 @@ class KubernetesAnsibleStatusModule(KubernetesAnsibleModule):
         }
 
     def clean_last_transition_time(self, status):
-        '''clean_last_transition_time removes lastTransitionTime attribute from each status.conditions[*] (from old conditions). 
+        '''clean_last_transition_time removes lastTransitionTime attribute from each status.conditions[*] 
+			(from old conditions). 
         It returns copy of status with updated conditions. Copy of status is returned, because if new conditions 
         are subset of old conditions, then module would return conditions without lastTransitionTime. Updated status 
-        should be used only for check in object_contains function, not for next updates, because otherwise it can create 
-        a mess with lastTransitionTime attribute.
+        should be used only for check in object_contains function, not for next updates, because otherwise it can 
+		create a mess with lastTransitionTime attribute.
 
         If new conditions don't contain lastTransitionTime and they are different from old conditions 
         (e.g. they have different status), conditions are updated and kubernetes should sets lastTransitionTime 
@@ -369,7 +377,8 @@ class KubernetesAnsibleStatusModule(KubernetesAnsibleModule):
         return updated_old_status
 
     def patch(self, resource, instance):
-        # Remove lastTransitionTime from status.conditions[*] and use updated_old_status only for check in object_contains function.
+        # Remove lastTransitionTime from status.conditions[*] and use updated_old_status 
+        # only for check in object_contains function.
         # Updates of conditions should be done only with original data not with updated_old_status.
         updated_old_status = self.clean_last_transition_time(instance['status'])
         if self.object_contains(updated_old_status, self.status):

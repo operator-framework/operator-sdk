@@ -45,19 +45,23 @@ type restMapping struct {
 	scope meta.RESTScope
 }
 
-func genTemplate(resourceCount int, withLeadingSep bool, gvk schema.GroupVersionKind, ownerRefs []metav1.OwnerReference) string {
+func genTemplate(resourceCount int, withLeadingSep bool, gvk schema.GroupVersionKind,
+		ownerRefs []metav1.OwnerReference) string {
 	sb := &strings.Builder{}
 
 	for i := 0; i < resourceCount; i++ {
 		if withLeadingSep || i > 0 {
 			sb.WriteString("---\n")
 		}
-		sb.WriteString(fmt.Sprintf("apiVersion: %s/%s\nkind: %s\nmetadata:\n  name: example-%s-%d\n", gvk.Group, gvk.Version, gvk.Kind, strings.ToLower(gvk.Kind), i))
+		sb.WriteString(fmt.Sprintf(
+			"apiVersion: %s/%s\nkind: %s\nmetadata:\n  name: example-%s-%d\n", gvk.Group, gvk.Version, gvk.Kind,
+			strings.ToLower(gvk.Kind), i))
 		if len(ownerRefs) > 0 {
 			sb.WriteString("  ownerReferences:\n")
 		}
 		for _, or := range ownerRefs {
-			sb.WriteString(fmt.Sprintf("  - apiVersion: %s\n    kind: %s\n    name: %s\n    uid: %q\n", or.APIVersion, or.Kind, or.Name, or.UID))
+			sb.WriteString(fmt.Sprintf(
+				"  - apiVersion: %s\n    kind: %s\n    name: %s\n    uid: %q\n", or.APIVersion, or.Kind, or.Name, or.UID))
 		}
 		sb.WriteString(fmt.Sprintf("spec:\n  value: value-%d\n", i))
 	}

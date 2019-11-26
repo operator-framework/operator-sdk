@@ -74,7 +74,8 @@ func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 		// check if the resource already exists
 		for _, resource := range pr.Resources {
 			if resource == r.Resource {
-				log.Infof("RBAC rules in deploy/role.yaml already up to date for the resource (%v, %v)", r.APIVersion, r.Kind)
+				log.Infof("RBAC rules in deploy/role.yaml already up to date for the resource (%v, %v)",
+					r.APIVersion, r.Kind)
 				return nil
 			}
 		}
@@ -83,8 +84,10 @@ func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 		// create a new apiGroup if not found.
 		if !apiGroupFound {
 			pr.APIGroups = []string{r.FullGroup}
-			// Using "*" to allow access to the resource and all its subresources e.g "memcacheds" and "memcacheds/finalizers"
-			// https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
+			// Using "*" to allow access to the resource and all its subresources e.g
+			// "memcacheds" and "memcacheds/finalizers"
+			// " https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/" +
+			// " #ownerreferencespermissionenforcement"
 			pr.Resources = []string{"*"}
 			pr.Verbs = []string{
 				"create",
@@ -112,7 +115,8 @@ func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 		// check if the resource already exists
 		for _, resource := range pr.Resources {
 			if resource == r.Resource {
-				log.Infof("RBAC rules in deploy/role.yaml already up to date for the resource (%v, %v)", r.APIVersion, r.Kind)
+				log.Infof("RBAC rules in deploy/role.yaml already up to date for the resource (%v, %v)",
+					r.APIVersion, r.Kind)
 				return nil
 			}
 		}
@@ -121,8 +125,10 @@ func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 		// create a new apiGroup if not found.
 		if !apiGroupFound {
 			pr.APIGroups = []string{r.FullGroup}
-			// Using "*" to allow access to the resource and all its subresources e.g "memcacheds" and "memcacheds/finalizers"
-			// https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
+			// Using "*" to allow access to the resource and all its subresources e.g
+			// "memcacheds" and "memcacheds/finalizers"
+			// " https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/" +
+			// " #ownerreferencespermissionenforcement"
 			pr.Resources = []string{"*"}
 			pr.Verbs = []string{
 				"create",

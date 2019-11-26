@@ -77,7 +77,8 @@ func ResultsCumulative(results []TestResult) (TestResult, error) {
 	return finalResult, nil
 }
 
-// CalculateResult returns a ScorecardSuiteResult with the state and Tests fields set based on a slice of ScorecardTestResults
+// CalculateResult returns a ScorecardSuiteResult with the state and Tests fields set based
+// on a slice of ScorecardTestResults
 func CalculateResult(tests []scapiv1alpha1.ScorecardTestResult) scapiv1alpha1.ScorecardSuiteResult {
 	scorecardSuiteResult := scapiv1alpha1.ScorecardSuiteResult{}
 	scorecardSuiteResult.Tests = tests
@@ -108,7 +109,8 @@ func TestSuitesToScorecardOutput(suites []TestSuite, log string) scapiv1alpha1.S
 	return *test
 }
 
-// TestResultToScorecardTestResult is a helper function for converting from the TestResult type to the ScorecardTestResult type
+// TestResultToScorecardTestResult is a helper function for converting from the TestResult type
+// to the ScorecardTestResult type
 func TestResultToScorecardTestResult(tr TestResult) scapiv1alpha1.ScorecardTestResult {
 	sctr := scapiv1alpha1.ScorecardTestResult{}
 	sctr.State = tr.State

@@ -194,7 +194,8 @@ func (m manager) getDeployedRelease() (*rpb.Release, error) {
 	return deployedRelease, nil
 }
 
-func (m manager) getCandidateRelease(ctx context.Context, tiller *tiller.ReleaseServer, name string, chart *cpb.Chart, config *cpb.Config) (*rpb.Release, error) {
+func (m manager) getCandidateRelease(ctx context.Context, tiller *tiller.ReleaseServer, name string, chart *cpb.Chart,
+		config *cpb.Config) (*rpb.Release, error) {
 	dryRunReq := &services.UpdateReleaseRequest{
 		Name:   name,
 		Chart:  chart,
@@ -213,7 +214,8 @@ func (m manager) InstallRelease(ctx context.Context) (*rpb.Release, error) {
 	return installRelease(ctx, m.tiller, m.namespace, m.releaseName, m.chart, m.config)
 }
 
-func installRelease(ctx context.Context, tiller *tiller.ReleaseServer, namespace, name string, chart *cpb.Chart, config *cpb.Config) (*rpb.Release, error) {
+func installRelease(ctx context.Context, tiller *tiller.ReleaseServer, namespace, name string, chart *cpb.Chart,
+		config *cpb.Config) (*rpb.Release, error) {
 	installReq := &services.InstallReleaseRequest{
 		Namespace: namespace,
 		Name:      name,
@@ -254,7 +256,8 @@ func (m manager) UpdateRelease(ctx context.Context) (*rpb.Release, *rpb.Release,
 	return m.deployedRelease, updatedRelease, err
 }
 
-func updateRelease(ctx context.Context, tiller *tiller.ReleaseServer, name string, chart *cpb.Chart, config *cpb.Config) (*rpb.Release, error) {
+func updateRelease(ctx context.Context, tiller *tiller.ReleaseServer, name string,
+		chart *cpb.Chart, config *cpb.Config) (*rpb.Release, error) {
 	updateReq := &services.UpdateReleaseRequest{
 		Name:   name,
 		Chart:  chart,
@@ -292,7 +295,8 @@ func (m manager) ReconcileRelease(ctx context.Context) (*rpb.Release, error) {
 	return m.deployedRelease, err
 }
 
-func reconcileRelease(ctx context.Context, tillerKubeClient *kube.Client, namespace string, expectedManifest string) error {
+func reconcileRelease(ctx context.Context, tillerKubeClient *kube.Client,
+		namespace string, expectedManifest string) error {
 	expectedInfos, err := tillerKubeClient.BuildUnstructured(namespace, bytes.NewBufferString(expectedManifest))
 	if err != nil {
 		return err
@@ -309,7 +313,8 @@ func reconcileRelease(ctx context.Context, tillerKubeClient *kube.Client, namesp
 
 		existing, err := helper.Get(expected.Namespace, expected.Name, false)
 		if apierrors.IsNotFound(err) {
-			if _, err := helper.Create(expected.Namespace, true, expected.Object, &metav1.CreateOptions{}); err != nil {
+			if _, err := helper.Create(expected.Namespace, true, expected.Object,
+					&metav1.CreateOptions{}); err != nil {
 				return fmt.Errorf("create error: %s", err)
 			}
 			return nil
@@ -375,7 +380,8 @@ func (m manager) UninstallRelease(ctx context.Context) (*rpb.Release, error) {
 	return uninstallRelease(ctx, m.storageBackend, m.tiller, m.releaseName)
 }
 
-func uninstallRelease(ctx context.Context, storageBackend *storage.Storage, tiller *tiller.ReleaseServer, releaseName string) (*rpb.Release, error) {
+func uninstallRelease(ctx context.Context, storageBackend *storage.Storage,
+		tiller *tiller.ReleaseServer, releaseName string) (*rpb.Release, error) {
 	// Get history of this release
 	h, err := storageBackend.History(releaseName)
 	if err != nil {

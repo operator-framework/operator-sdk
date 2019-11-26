@@ -40,7 +40,8 @@ const entrypointExp = `#!/bin/sh -e
 
 if ! whoami &>/dev/null; then
   if [ -w /etc/passwd ]; then
-    echo "${USER_NAME:-app-operator}:x:$(id -u):$(id -g):${USER_NAME:-app-operator} user:${HOME}:/sbin/nologin" >> /etc/passwd
+    echo "${USER_NAME:-app-operator}:x:$(id -u):$(id -g):${USER_NAME:-app-operator} 
+	user:${HOME}:/sbin/nologin" >> /etc/passwd
   fi
 fi
 

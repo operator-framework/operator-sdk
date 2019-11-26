@@ -35,12 +35,21 @@ func NewCmd() *cobra.Command {
 		RunE: scorecard.Tests,
 	}
 
-	scorecardCmd.Flags().String(scorecard.ConfigOpt, "", fmt.Sprintf("config file (default is '<project_dir>/%s'; the config file's extension and format can be .yaml, .json, or .toml)", scorecard.DefaultConfigFile))
-	scorecardCmd.Flags().String(scplugins.KubeconfigOpt, "", "Path to kubeconfig of custom resource created in cluster")
-	scorecardCmd.Flags().StringP(scorecard.OutputFormatOpt, "o", scorecard.TextOutputFormat, fmt.Sprintf("Output format for results. Valid values: %s, %s", scorecard.TextOutputFormat, scorecard.JSONOutputFormat))
-	scorecardCmd.Flags().String(schelpers.VersionOpt, schelpers.DefaultScorecardVersion, "scorecard version. Valid values: v1alpha1, v1alpha2")
-	scorecardCmd.Flags().StringP(scorecard.SelectorOpt, "l", "", "selector (label query) to filter tests on (only valid when version is v1alpha2)")
-	scorecardCmd.Flags().BoolP(scorecard.ListOpt, "L", false, "If true, only print the test names that would be run based on selector filtering (only valid when version is v1alpha2)")
+	scorecardCmd.Flags().String(scorecard.ConfigOpt, "",
+		fmt.Sprintf("config file (default is '<project_dir>/%s'; the config file's extension and format can be" +
+			" .yaml, .json, or .toml)", scorecard.DefaultConfigFile))
+	scorecardCmd.Flags().String(scplugins.KubeconfigOpt, "",
+		"Path to kubeconfig of custom resource created in cluster")
+	scorecardCmd.Flags().StringP(scorecard.OutputFormatOpt, "o", scorecard.TextOutputFormat,
+		fmt.Sprintf("Output format for results. Valid values: %s, %s", scorecard.TextOutputFormat,
+			scorecard.JSONOutputFormat))
+	scorecardCmd.Flags().String(schelpers.VersionOpt, schelpers.DefaultScorecardVersion,
+		"scorecard version. Valid values: v1alpha1, v1alpha2")
+	scorecardCmd.Flags().StringP(scorecard.SelectorOpt, "l", "",
+		"selector (label query) to filter tests on (only valid when version is v1alpha2)")
+	scorecardCmd.Flags().BoolP(scorecard.ListOpt, "L", false,
+		"If true, only print the test names that would be run based on selector filtering " +
+		"(only valid when version is v1alpha2)")
 
 	// TODO: make config file global and make this a top level flag
 	if err := viper.BindPFlag(scorecard.ConfigOpt, scorecardCmd.Flags().Lookup(scorecard.ConfigOpt)); err != nil {
