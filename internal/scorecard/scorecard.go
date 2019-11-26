@@ -105,7 +105,7 @@ func getPlugins(version string, selector labels.Selector) ([]Plugin, error) {
 	return plugins, nil
 }
 
-func ScorecardTests(cmd *cobra.Command, args []string) error {
+func Tests(cmd *cobra.Command, args []string) error {
 	if err := initConfig(); err != nil {
 		return err
 	}

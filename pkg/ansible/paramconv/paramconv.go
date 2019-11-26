@@ -83,10 +83,10 @@ func ToSnake(s string) string {
 	}
 	bits := []string{}
 	n := ""
-	real_i := -1
+	iReal := -1
 
 	for i, v := range s {
-		real_i += 1
+		iReal++
 		// treat acronyms as words, eg for JSONData -> JSON is a whole word
 		nextCaseIsChanged := false
 		if i+1 < len(s) {
@@ -96,22 +96,22 @@ func ToSnake(s string) string {
 			}
 		}
 
-		if real_i > 0 && n[len(n)-1] != '_' && nextCaseIsChanged {
+		if iReal > 0 && n[len(n)-1] != '_' && nextCaseIsChanged {
 			// add underscore if next letter case type is changed
 			if v >= 'A' && v <= 'Z' {
 				bits = append(bits, strings.ToLower(n))
 				n = string(v)
-				real_i = 0
+				iReal = 0
 			} else if v >= 'a' && v <= 'z' {
 				bits = append(bits, strings.ToLower(n+string(v)))
 				n = ""
-				real_i = -1
+				iReal = -1
 			}
 		} else if v == ' ' || v == '_' || v == '-' {
 			// replace spaces/underscores with delimiters
 			bits = append(bits, strings.ToLower(n))
 			n = ""
-			real_i = -1
+			iReal = -1
 		} else {
 			n = n + string(v)
 		}

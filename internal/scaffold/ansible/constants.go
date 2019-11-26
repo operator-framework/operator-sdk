@@ -28,4 +28,6 @@ const (
 )
 
 // Arrays can't be constants but this should be a constant
-var AnsibleDelims = [2]string{"[[", "]]"}
+var (
+	AnsibleDelims = [2]string{"[[", "]]"}
+)
