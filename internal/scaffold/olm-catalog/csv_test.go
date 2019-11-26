@@ -41,7 +41,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const testDataDir = "testdata"
+const (
+	testDataDir  = "testdata"
+	projectName  = "app-operator-dir"
+	operatorName = "app-operator"
+	oldCSVVer    = "0.1.0"
+	newCSVVer    = "0.2.0"
+	csvVer       = "0.1.0"
+)
 
 var testDeployDir = filepath.Join(testDataDir, scaffold.DeployDir)
 
@@ -52,9 +59,6 @@ func TestCSVNew(t *testing.T) {
 			return buf, nil
 		},
 	}
-	csvVer := "0.1.0"
-	projectName := "app-operator-dir"
-	operatorName := "app-operator"
 
 	sc := &CSV{
 		Config: genutil.Config{
@@ -155,9 +159,6 @@ func TestCSVExclude(t *testing.T) {
 
 func TestCSVFromOld(t *testing.T) {
 	s := &scaffold.Scaffold{Fs: afero.NewMemMapFs()}
-	projectName := "app-operator-dir"
-	operatorName := "app-operator"
-	oldCSVVer, newCSVVer := "0.1.0", "0.2.0"
 
 	// Write all files in testdata/deploy to fs so manifests are present when
 	// writing a new CSV.
@@ -199,10 +200,6 @@ func TestCSVFromOld(t *testing.T) {
 }
 
 func TestUpdateVersion(t *testing.T) {
-	projectName := "app-operator-dir"
-	operatorName := "app-operator"
-
-	oldCSVVer, newCSVVer := "0.1.0", "0.2.0"
 	sc := &CSV{
 		Input: input.Input{
 			ProjectName: projectName,
