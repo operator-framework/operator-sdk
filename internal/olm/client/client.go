@@ -116,12 +116,11 @@ func (c Client) DoDelete(ctx context.Context, objs ...runtime.Object) error {
 	}
 
 	log.Infof("  Waiting for deleted resources to disappear")
-	wait.PollImmediateUntil(time.Second, func() (bool, error) {
+
+	return wait.PollImmediateUntil(time.Second, func() (bool, error) {
 		s := c.GetObjectsStatus(ctx, objs...)
 		return !s.HasExistingResources(), nil
 	}, ctx.Done())
-
-	return nil
 }
 
 func getName(namespace, name string) string {

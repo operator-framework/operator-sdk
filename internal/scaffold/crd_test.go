@@ -48,7 +48,7 @@ func TestCRDGoProject(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer func() { os.Chdir(wd) }()
+	defer func() { _ = os.Chdir(wd) }()
 	if err = os.Chdir(cfg.AbsProjectPath); err != nil {
 		t.Fatal(err)
 	}

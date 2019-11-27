@@ -124,9 +124,6 @@ func TestLoad(t *testing.T) {
 		maxWorkers       int
 		ansibleVerbosity int
 		expected         []Watch
-		setenvvar        bool
-		envvar           string
-		envvarValue      int
 		shouldError      bool
 	}{
 		{
