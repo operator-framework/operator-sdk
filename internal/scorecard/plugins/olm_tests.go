@@ -400,7 +400,7 @@ func (t *StatusDescriptorsTest) Run(ctx context.Context) *schelpers.TestResult {
 		return res
 	}
 
-	return checkCRConfiguration(t.CR, t.CSV, statusDescriptor, res)
+	return checkOwnedCSVDescriptors(t.CR, t.CSV, statusDescriptor, res)
 }
 
 // Run - implements Test interface
@@ -413,10 +413,10 @@ func (t *SpecDescriptorsTest) Run(ctx context.Context) *schelpers.TestResult {
 		return res
 	}
 
-	return checkCRConfiguration(t.CR, t.CSV, specDescriptor, res)
+	return checkOwnedCSVDescriptors(t.CR, t.CSV, specDescriptor, res)
 }
 
-func checkCRConfiguration(cr *unstructured.Unstructured, csv *olmapiv1alpha1.ClusterServiceVersion, descriptor string, res *schelpers.TestResult) *schelpers.TestResult {
+func checkOwnedCSVDescriptors(cr *unstructured.Unstructured, csv *olmapiv1alpha1.ClusterServiceVersion, descriptor string, res *schelpers.TestResult) *schelpers.TestResult {
 	if cr.Object[descriptor] == nil {
 		return res
 	}
