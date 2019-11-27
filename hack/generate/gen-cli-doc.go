@@ -16,11 +16,12 @@ package main
 
 import (
 	"os"
-
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cli"
+	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra/doc"
+
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cli"
 )
 
 func main() {
@@ -32,7 +33,19 @@ func main() {
 		log.Fatalf("Failed to get current directory: %v", err)
 	}
 
-	err = doc.GenMarkdownTree(root, currentDir+"/doc/cli")
+	docPath := filepath.Join(currentDir, "doc", "cli")
+
+	// Remove and recreate the CLI doc directory to ensure that
+	// stale files (e.g. from renamed or removed CLI subcommands)
+	// are removed.
+	if err := os.RemoveAll(docPath); err != nil {
+		log.Fatalf("Failed to remove existing generated docs: %v", err)
+	}
+	if err := os.MkdirAll(docPath, 0755); err != nil {
+		log.Fatalf("Failed to re-create docs directory: %v", err)
+	}
+
+	err = doc.GenMarkdownTree(root, docPath)
 	if err != nil {
 		log.Fatalf("Failed to generate documenation: %v", err)
 	}
