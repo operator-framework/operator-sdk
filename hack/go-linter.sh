@@ -21,11 +21,7 @@ golangci-lint run --disable-all \
 # --enable=gocyclo
 # --enable=lll
 # --enable=gosec
-<<<<<<< HEAD
-=======
 # --enable=misspell \
-# --enable=errcheck \
->>>>>>> 64f6f0f8... feat(linter): remove linter comment
 # --enable=interfacer \
 # --enable=misspell \
 # --enable=varcheck \
