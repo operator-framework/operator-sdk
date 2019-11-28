@@ -19,7 +19,8 @@ spec:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
             of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            internal value, and may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
           type: string
         kind:
           description: 'Kind is a string value representing the REST resource this
@@ -36,7 +37,7 @@ spec:
               format: int32
               type: integer
           required:
-          - size
+            - size
           type: object
         status:
           description: MemcachedStatus defines the observed state of Memcached
@@ -47,11 +48,11 @@ spec:
                 type: string
               type: array
           required:
-          - nodes
+            - nodes
           type: object
       type: object
   version: v1alpha1
   versions:
-  - name: v1alpha1
-    served: true
-    storage: true
+    - name: v1alpha1
+      served: true
+      storage: true

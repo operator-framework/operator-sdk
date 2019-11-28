@@ -531,7 +531,7 @@ func TestReconcile(t *testing.T) {
 				for _, c := range expectedStatus.Conditions {
 					actualCond := ansiblestatus.GetCondition(actualStatus, c.Type)
 					if c.Reason != actualCond.Reason || c.Message != actualCond.Message ||
-							c.Status != actualCond.Status {
+						c.Status != actualCond.Status {
 						t.Fatalf("Message or reason did not match\nexpected: %v\nactual: %v", c, actualCond)
 					}
 					if c.AnsibleResult == nil && actualCond.AnsibleResult != nil {

@@ -154,9 +154,8 @@ var log = logf.Log.WithName("controller_{{ .Resource.LowerKind }}")
 * business logic.  Delete these comments after modifying this file.*
  */
 
-// Add creates a new {{ .Resource.Kind }} Controller and adds it to the Manager. 
-//The Manager will set fields on the Controller
-// and Start it when the Manager is Started.
+// Add creates a new {{ .Resource.Kind }} Controller and adds it to the Manager.
+// The Manager will set fields on the Controller and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
 	return add(mgr, newReconciler(mgr))
 }
