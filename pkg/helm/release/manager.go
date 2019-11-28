@@ -234,7 +234,7 @@ func reconcileRelease(ctx context.Context, kubeClient kube.Interface, expectedMa
 		existing, err := helper.Get(expected.Namespace, expected.Name, false)
 		if apierrors.IsNotFound(err) {
 			if _, err := helper.Create(expected.Namespace, true, expected.Object,
-					&metav1.CreateOptions{}); err != nil {
+				&metav1.CreateOptions{}); err != nil {
 				return fmt.Errorf("create error: %s", err)
 			}
 			return nil

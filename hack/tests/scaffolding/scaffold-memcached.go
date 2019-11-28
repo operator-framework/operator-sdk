@@ -40,7 +40,7 @@ const (
 )
 
 func main() {
-	localRepo := flag.String("local-repo", "", "Path to local SDK repository being tested. " +
+	localRepo := flag.String("local-repo", "", "Path to local SDK repository being tested. "+
 		"Only use when running e2e tests locally")
 	imageName := flag.String("image-name", "", "Name of image being used for tests")
 	noPull := flag.Bool("local-image", false, "Disable pulling images as image is local")
