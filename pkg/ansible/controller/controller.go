@@ -86,10 +86,10 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 
 	//Create new controller runtime controller and set the controller to watch GVK.
 	c, err := controller.New(fmt.Sprintf("%v-controller", strings.ToLower(options.GVK.Kind)),
-			mgr, controller.Options{
-		Reconciler:              aor,
-		MaxConcurrentReconciles: options.MaxWorkers,
-	})
+		mgr, controller.Options{
+			Reconciler:              aor,
+			MaxConcurrentReconciles: options.MaxWorkers,
+		})
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)

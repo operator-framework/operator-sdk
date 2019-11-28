@@ -40,7 +40,7 @@ const (
 )
 
 func main() {
-	localRepo := flag.String("local-repo", "", "Path to local SDK repository being tested. " +
+	localRepo := flag.String("local-repo", "", "Path to local SDK repository being tested. "+
 		"Only use when running e2e tests locally")
 	imageName := flag.String("image-name", "", "Name of image being used for tests")
 	noPull := flag.Bool("local-image", false, "Disable pulling images as image is local")
@@ -141,8 +141,10 @@ func main() {
 	memcachedTypesFileLines := bytes.Split(memcachedTypesFile, []byte("\n"))
 	for lineNum, line := range memcachedTypesFileLines {
 		if strings.Contains(string(line), "type MemcachedSpec struct {") {
-			memcachedTypesFileLinesIntermediate := append(memcachedTypesFileLines[:lineNum+1], []byte("\tSize int32 `json:\"size\"`"))
-			memcachedTypesFileLines = append(memcachedTypesFileLinesIntermediate, memcachedTypesFileLines[lineNum+3:]...)
+			memcachedTypesFileLinesIntermediate :=
+				append(memcachedTypesFileLines[:lineNum+1], []byte("\tSize int32 `json:\"size\"`"))
+			memcachedTypesFileLines =
+				append(memcachedTypesFileLinesIntermediate, memcachedTypesFileLines[lineNum+3:]...)
 			break
 		}
 	}

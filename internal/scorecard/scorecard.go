@@ -183,7 +183,7 @@ func initConfig() error {
 		}
 		log.Info("Using config file: ", viper.ConfigFileUsed())
 	} else {
-		return fmt.Errorf("could not read config file: %v\nSee %s for more " +
+		return fmt.Errorf("could not read config file: %v\nSee %s for more "+
 			"information about the scorecard config file", err, configDocLink())
 	}
 	return nil

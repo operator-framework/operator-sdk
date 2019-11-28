@@ -134,7 +134,7 @@ func watchDependentResources(mgr manager.Manager, r *HelmOperatorReconciler, c c
 				m.Lock()
 				watches[gvk] = struct{}{}
 				m.Unlock()
-				log.Info("Cannot watch cluster-scoped dependent resource for namespace-scoped owner. Changes " +
+				log.Info("Cannot watch cluster-scoped dependent resource for namespace-scoped owner. Changes "+
 					"to this dependent resource type will not be reconciled",
 					"ownerApiVersion", r.GVK.GroupVersion(), "ownerKind", r.GVK.Kind, "apiVersion",
 					gvk.GroupVersion(), "kind", gvk.Kind)

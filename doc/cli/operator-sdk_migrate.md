@@ -4,7 +4,8 @@ Adds source code to an operator
 
 ### Synopsis
 
-operator-sdk migrate adds a main.go source file and any associated source files for an operator that is not of the "go" type.
+operator-sdk migrate adds a main.go source file and any associated source files for an operator that
+				is not of the "go" type.
 
 ```
 operator-sdk migrate [flags]

@@ -73,8 +73,8 @@ Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config
 	genCSVCmd.Flags().StringVar(&csvChannel, "csv-channel", "",
 		"Channel the CSV should be registered under in the package manifest")
 	genCSVCmd.Flags().BoolVar(&defaultChannel, "default-channel", false,
-		"Use the channel passed to --csv-channel as the package manifests' default channel. " +
-		"Only valid when --csv-channel is set")
+		"Use the channel passed to --csv-channel as the package manifests' default channel. "+
+			"Only valid when --csv-channel is set")
 
 	return genCSVCmd
 }

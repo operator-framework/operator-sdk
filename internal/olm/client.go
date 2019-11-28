@@ -258,7 +258,7 @@ func decodeResources(rds ...io.Reader) (objs []unstructured.Unstructured, err er
 }
 
 func filterResources(resources []unstructured.Unstructured,
-		filter func(unstructured.Unstructured) bool) (filtered []unstructured.Unstructured) {
+	filter func(unstructured.Unstructured) bool) (filtered []unstructured.Unstructured) {
 	for _, r := range resources {
 		if filter(r) {
 			filtered = append(filtered, r)
