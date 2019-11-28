@@ -260,8 +260,8 @@ func TestGetConfig(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Unexpected error encoding entry with expected encoder: %s", err)
 			}
-			actualEncoderOut, err := cfg.encoder.EncodeEntry(entry, []zapcore.Field{{Key: "fieldKey",
-				Type: zapcore.StringType, String: "fieldValue"}})
+			actualEncoderOut, err :=
+				cfg.encoder.EncodeEntry(entry, []zapcore.Field{{Key: "fieldKey", Type: zapcore.StringType, String: "fieldValue"}})
 			if err != nil {
 				t.Fatalf("Unexpected error encoding entry with actual encoder: %s", err)
 			}

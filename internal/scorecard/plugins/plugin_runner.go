@@ -172,7 +172,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
 				}
 				if len(crs) == 0 {
 					return scapiv1alpha1.ScorecardOutput{}, errors.Errorf(
-						"no CRs found in metadata.annotations['alm-examples'] in CSV %s and cr-manifest config" +
+						"no CRs found in metadata.annotations['alm-examples'] in CSV %s and cr-manifest config"+
 							" option not set", csv.GetName())
 				}
 				// TODO: run scorecard against all CR's in CSV.
@@ -213,7 +213,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
 		// Let users know that only the first CR is being tested.
 		if logCRMsg {
 			log.Infof(
-				"The scorecard does not support testing multiple CR's at once when run with --olm-deployed." +
+				"The scorecard does not support testing multiple CR's at once when run with --olm-deployed."+
 					" Testing the first CR %s", config.CRManifest[0])
 		}
 
@@ -265,7 +265,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
 		newGVKs, err := getGVKs(file)
 		if err != nil {
 			return scapiv1alpha1.ScorecardOutput{},
-			fmt.Errorf("could not get GVKs for resource(s) in file: %s, due to error: (%v)", cr, err)
+				fmt.Errorf("could not get GVKs for resource(s) in file: %s, due to error: (%v)", cr, err)
 		}
 		gvks = append(gvks, newGVKs...)
 	}

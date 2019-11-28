@@ -234,7 +234,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 }
 
 func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured,
-		namespacedName types.NamespacedName) error {
+	namespacedName types.NamespacedName) error {
 	// Get the latest resource to prevent updating a stale status
 	err := r.Client.Get(context.TODO(), namespacedName, u)
 	if err != nil {
@@ -273,7 +273,7 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured,
 // markError - used to alert the user to the issues during the validation of a reconcile run.
 // i.e Annotations that could be incorrect
 func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, namespacedName types.NamespacedName,
-		failureMessage string) error {
+	failureMessage string) error {
 	logger := logf.Log.WithName("markError")
 	metrics.ReconcileFailed(r.GVK.String())
 	// Get the latest resource to prevent updating a stale status
@@ -314,7 +314,7 @@ func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, name
 }
 
 func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, namespacedName types.NamespacedName,
-		statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) error {
+	statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) error {
 	logger := logf.Log.WithName("markDone")
 	// Get the latest resource to prevent updating a stale status
 	err := r.Client.Get(context.TODO(), namespacedName, u)

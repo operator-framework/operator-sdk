@@ -317,7 +317,7 @@ func runTestCase(t *testing.T, testDir string, tc createChartTestCase) {
 }
 
 func createLocalChartRepo(helmHomeDir, chartName, latestVersion,
-		previousVersion string) (*testChart, *testChart, string, error) {
+	previousVersion string) (*testChart, *testChart, string, error) {
 	if err := os.Setenv("HELM_HOME", helmHomeDir); err != nil {
 		return nil, nil, "", err
 	}

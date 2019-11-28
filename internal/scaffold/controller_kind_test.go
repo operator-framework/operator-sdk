@@ -65,8 +65,8 @@ var log = logf.Log.WithName("controller_appservice")
 * business logic.  Delete these comments after modifying this file.*
  */
 
-// Add creates a new AppService Controller and adds it to the Manager. The Manager will set fields on the Controller
-// and Start it when the Manager is Started.
+// Add creates a new AppService Controller and adds it to the Manager.
+// The Manager will set fields on the Controller and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
 	return add(mgr, newReconciler(mgr))
 }
@@ -199,14 +199,21 @@ func TestGetCustomAPIImportPathAndIdentifier(t *testing.T) {
 	}{
 		{"", "", "", true},
 		{"=rbacv1", "", "", true},
-		{"k8s.io/api/rbac-2/v1", "k8s.io/api/rbac-2/v1", "rbac2v1", false},
-		{"k8s.io/api/rbac/v1=rbacv1", "k8s.io/api/rbac/v1", "rbacv1", false},
-		{"k8s.io/api/rbac/v1=rbac-v1", "k8s.io/api/rbac/v1", "rbacv1", false},
-		{"k8s.io/api/rb_ac/v1", "k8s.io/api/rb_ac/v1", "rb_acv1", false},
-		{"k8s.io/api/rbac/v1=rbaC_v1", "k8s.io/api/rbac/v1", "rbaC_v1", false},
+		{"k8s.io/api/rbac-2/v1", "k8s.io/api/rbac-2/v1", "rbac2v1",
+			false},
+		{"k8s.io/api/rbac/v1=rbacv1", "k8s.io/api/rbac/v1", "rbacv1",
+			false},
+		{"k8s.io/api/rbac/v1=rbac-v1", "k8s.io/api/rbac/v1", "rbacv1",
+			false},
+		{"k8s.io/api/rb_ac/v1", "k8s.io/api/rb_ac/v1", "rb_acv1",
+			false},
+		{"k8s.io/api/rbac/v1=rbaC_v1", "k8s.io/api/rbac/v1", "rbaC_v1",
+			false},
 		{"k8s.io/api/rbac/v1=", "", "", true},
-		{"k8s.io/api/rbac/v1=rbacv1=", "k8s.io/api/rbac/v1", "rbacv1", false},
-		{"k8s.io/api/rbac/v1=Rbacv1", "k8s.io/api/rbac/v1", "Rbacv1", false},
+		{"k8s.io/api/rbac/v1=rbacv1=", "k8s.io/api/rbac/v1", "rbacv1",
+			false},
+		{"k8s.io/api/rbac/v1=Rbacv1", "k8s.io/api/rbac/v1", "Rbacv1",
+			false},
 	}
 
 	for _, c := range cases {
@@ -225,7 +232,8 @@ func TestGetCustomAPIImportPathAndIdentifier(t *testing.T) {
 			t.Errorf(`wanted import path "%s" from "%s", got "%s"`, c.wantImportPath, c.inputImport, gotPath)
 		}
 		if gotIdent != c.wantImportIdent {
-			t.Errorf(`wanted import identifier "%s" from "%s", got "%s"`, c.wantImportIdent, c.inputImport, gotIdent)
+			t.Errorf(`wanted import identifier "%s" from "%s", got "%s"`, c.wantImportIdent, c.inputImport,
+				gotIdent)
 		}
 	}
 }

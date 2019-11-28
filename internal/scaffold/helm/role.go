@@ -97,7 +97,7 @@ func GenerateRoleScaffold(dc roleDiscoveryInterface, chart *chart.Chart) scaffol
 }
 
 func generateRoleRules(dc roleDiscoveryInterface, chart *chart.Chart) ([]rbacv1.PolicyRule,
-		[]rbacv1.PolicyRule, error) {
+	[]rbacv1.PolicyRule, error) {
 	kubeVersion, serverResources, err := getServerVersionAndResources(dc)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get server info: %s", err)

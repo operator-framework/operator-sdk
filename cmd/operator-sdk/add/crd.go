@@ -44,12 +44,12 @@ Generated CR  filename: <project-name>/deploy/crds/<full group>_<version>_<kind>
 `,
 		RunE: crdFunc,
 	}
-	crdCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes apiVersion and has " +
-			"a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
+	crdCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes apiVersion and has "+
+		"a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
 	if err := crdCmd.MarkFlagRequired("api-version"); err != nil {
 		log.Fatalf("Failed to mark `api-version` flag for `add crd` subcommand as required")
 	}
-	crdCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. " +
+	crdCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. "+
 		"(e.g AppService)")
 	if err := crdCmd.MarkFlagRequired("kind"); err != nil {
 		log.Fatalf("Failed to mark `kind` flag for `add crd` subcommand as required")
@@ -123,7 +123,7 @@ func verifyCRDFlags() error {
 		return fmt.Errorf("value of --kind must start with an uppercase letter")
 	}
 	if strings.Count(apiVersion, "/") != 1 {
-		return fmt.Errorf("value of --api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION " +
+		return fmt.Errorf("value of --api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION "+
 			"(e.g app.example.com/v1alpha1)", apiVersion)
 	}
 	return nil

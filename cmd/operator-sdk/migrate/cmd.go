@@ -39,14 +39,14 @@ func NewCmd() *cobra.Command {
 	newCmd := &cobra.Command{
 		Use:   "migrate",
 		Short: "Adds source code to an operator",
-		Long:  `operator-sdk migrate adds a main.go source file and any associated source files for an operator that
+		Long: `operator-sdk migrate adds a main.go source file and any associated source files for an operator that
 				is not of the "go" type.`,
-		RunE:  migrateRun,
+		RunE: migrateRun,
 	}
 
-	newCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for" +
+	newCmd.Flags().StringVar(&headerFile, "header-file", "", "Path to file containing headers for"+
 		" generated Go files. Copied to hack/boilerplate.go.txt")
-	newCmd.Flags().StringVar(&repo, "repo", "", "Project repository path. Used as the project's" +
+	newCmd.Flags().StringVar(&repo, "repo", "", "Project repository path. Used as the project's"+
 		" Go import path. This must be set if outside of $GOPATH/src (e.g. github.com/example-inc/my-operator)")
 
 	return newCmd
@@ -182,7 +182,7 @@ func renameDockerfile() error {
 	if err != nil {
 		return fmt.Errorf("failed to rename Dockerfile: (%v)", err)
 	}
-	log.Infof("Renamed Dockerfile to %s and replaced with newer version. Compare the new Dockerfile " +
+	log.Infof("Renamed Dockerfile to %s and replaced with newer version. Compare the new Dockerfile "+
 		"to your old one and manually migrate any customizations", newDockerfilePath)
 	return nil
 }

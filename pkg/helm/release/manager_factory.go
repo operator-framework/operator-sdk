@@ -97,7 +97,7 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured) (Manager, erro
 // getReleaseServer creates a ReleaseServer configured with a rendering engine that adds ownerrefs to rendered assets
 // based on the CR.
 func getReleaseServer(cr *unstructured.Unstructured, storageBackend *storage.Storage,
-		tillerKubeClient *kube.Client) (*tiller.ReleaseServer, error) {
+	tillerKubeClient *kube.Client) (*tiller.ReleaseServer, error) {
 	controllerRef := metav1.NewControllerRef(cr, cr.GroupVersionKind())
 	ownerRefs := []metav1.OwnerReference{
 		*controllerRef,
@@ -160,7 +160,7 @@ func getReleaseServer(cr *unstructured.Unstructured, storageBackend *storage.Sto
 // collision. As is, the only indication of collision will be in the CR status
 // and operator logs.
 func getReleaseName(storageBackend *storage.Storage, crChartName string,
-		cr *unstructured.Unstructured) (string, error) {
+	cr *unstructured.Unstructured) (string, error) {
 	// If a release with the legacy name exists, return the legacy name.
 	legacyName := fmt.Sprintf("%s-%s", cr.GetName(), shortenUID(cr.GetUID()))
 	_, legacyExists, err := releaseHistory(storageBackend, legacyName)

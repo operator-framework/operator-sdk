@@ -31,7 +31,7 @@ import (
 // The metrics are registered in the custom metrics.FamilyGenerator that needs to be defined.
 func NewMetricsStores(
 	dclient dynamic.NamespaceableResourceInterface, namespaces []string, api string, kind string,
-		metricFamily []metric.FamilyGenerator) []*metricsstore.MetricsStore {
+	metricFamily []metric.FamilyGenerator) []*metricsstore.MetricsStore {
 	namespaces = deduplicateNamespaces(namespaces)
 	var stores []*metricsstore.MetricsStore
 	// Generate collector per namespace.

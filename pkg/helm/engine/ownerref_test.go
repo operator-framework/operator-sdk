@@ -46,7 +46,7 @@ type restMapping struct {
 }
 
 func genTemplate(resourceCount int, withLeadingSep bool, gvk schema.GroupVersionKind,
-		ownerRefs []metav1.OwnerReference) string {
+	ownerRefs []metav1.OwnerReference) string {
 	sb := &strings.Builder{}
 
 	for i := 0; i < resourceCount; i++ {
