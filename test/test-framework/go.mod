@@ -3,7 +3,10 @@ module github.com/operator-framework/operator-sdk/test/test-framework
 go 1.13
 
 require (
-	github.com/operator-framework/operator-sdk v0.12.1-0.20191126235616-856569493549
+	github.com/operator-framework/operator-sdk v0.12.1-0.20191128051623-c134fd65eca8
+	k8s.io/api v0.0.0
+	k8s.io/apimachinery v0.0.0
+	k8s.io/client-go v12.0.0+incompatible
 	sigs.k8s.io/controller-runtime v0.4.0
 )
 
