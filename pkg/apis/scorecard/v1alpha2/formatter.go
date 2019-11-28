@@ -16,9 +16,10 @@ package v1alpha2
 
 import (
 	"fmt"
-	"github.com/mattn/go-isatty"
 	"os"
 	"strings"
+
+	"github.com/mattn/go-isatty"
 )
 
 const (
