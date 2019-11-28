@@ -11,7 +11,9 @@ golangci-lint run --disable-all \
     --enable=nakedret \
     --enable=ineffassign \
     --enable=goconst \
-    --enable=lll \
+    --enable=lll -e "internal value || yum "\
+    --enable=goimports \
+
 
 ##todo(camilamacedo86): The following checks requires fixes in the code
 # --enable=golint
