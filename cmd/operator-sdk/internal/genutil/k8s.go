@@ -65,7 +65,9 @@ func deepcopyGen(hf string, fqApis []string) error {
 	if err != nil {
 		return err
 	}
-	flag.Set("logtostderr", "true")
+	if err := flag.Set("logtostderr", "true"); err != nil {
+		return err
+	}
 	for _, api := range fqApis {
 		api = filepath.FromSlash(api)
 		// Use relative API path so the generator writes to the correct path.
