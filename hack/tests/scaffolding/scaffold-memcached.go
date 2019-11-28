@@ -118,9 +118,12 @@ func main() {
 	}
 
 	tmplFiles := map[string]string{
-		filepath.Join(localSDKPath, "example/memcached-operator/memcached_controller.go.tmpl"): "pkg/controller/memcached/memcached_controller.go",
-		filepath.Join(localSDKPath, "test/e2e/_incluster-test-code/main_test.go"):              "test/e2e/main_test.go",
-		filepath.Join(localSDKPath, "test/e2e/_incluster-test-code/memcached_test.go"):         "test/e2e/memcached_test.go",
+		filepath.Join(localSDKPath, "example/memcached-operator/memcached_controller.go.tmpl"):
+			"pkg/controller/memcached/memcached_controller.go",
+		filepath.Join(localSDKPath, "test/e2e/_incluster-test-code/main_test.go"):
+			"test/e2e/main_test.go",
+		filepath.Join(localSDKPath, "test/e2e/_incluster-test-code/memcached_test.go"):
+			"test/e2e/memcached_test.go",
 	}
 
 	for src, dst := range tmplFiles {
