@@ -12,6 +12,7 @@
 - Updated `pkg/test/e2eutil.WaitForDeployment()` and `pkg/test/e2eutil.WaitForOperatorDeployment()` to successfully complete waiting when the available replica count is _at least_ (rather than exactly) the minimum replica count required. ([#2248](https://github.com/operator-framework/operator-sdk/pull/2248))
 - Replace in the Ansible based operators module tests `k8s_info` for `k8s_facts` which is deprecated. ([#2168](https://github.com/operator-framework/operator-sdk/issues/2168))
 - Upgrade the Ansible version from `2.8` to `2.9` on the Ansible based operators image. ([#2168](https://github.com/operator-framework/operator-sdk/issues/2168))
+- Updated CRD generation for non-Go operators to use valid structural schema. ([#2275](https://github.com/operator-framework/operator-sdk/issues/2275))
 
 ### Deprecated
 
