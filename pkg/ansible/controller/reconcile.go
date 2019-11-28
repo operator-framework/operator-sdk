@@ -84,7 +84,9 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		duration, err := time.ParseDuration(ds)
 		if err != nil {
 			// Should attempt to update to a failed condition
-			r.markError(u, request.NamespacedName, fmt.Sprintf("Unable to parse reconcile period annotation: %v", err))
+			if errmark := r.markError(u, request.NamespacedName, fmt.Sprintf("Unable to parse reconcile period annotation: %v", err)); errmark != nil {
+				logger.Error(errmark, "Unable to mark error annotation")
+			}
 			logger.Error(err, "Unable to parse reconcile period annotation")
 			return reconcileResult, err
 		}
@@ -138,7 +140,9 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 
 	kc, err := kubeconfig.Create(ownerRef, "http://localhost:8888", u.GetNamespace())
 	if err != nil {
-		r.markError(u, request.NamespacedName, "Unable to run reconciliation")
+		if errmark := r.markError(u, request.NamespacedName, "Unable to run reconciliation"); errmark != nil {
+			logger.Error(errmark, "Unable to mark error to run reconciliation")
+		}
 		logger.Error(err, "Unable to generate kubeconfig")
 		return reconcileResult, err
 	}
@@ -149,7 +153,9 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	}()
 	result, err := r.Runner.Run(ident, u, kc.Name())
 	if err != nil {
-		r.markError(u, request.NamespacedName, "Unable to run reconciliation")
+		if errmark := r.markError(u, request.NamespacedName, "Unable to run reconciliation"); errmark != nil {
+			logger.Error(errmark, "Unable to mark error to run reconciliation")
+		}
 		logger.Error(err, "Unable to run ansible runner")
 		return reconcileResult, err
 	}
