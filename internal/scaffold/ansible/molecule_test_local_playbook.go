@@ -55,8 +55,7 @@ const moleculeTestLocalPlaybookAnsibleTmpl = `---
   - name: Build Operator Image
     command: docker build -f /build/build/Dockerfile -t {{ image_name }} /build
     register: build_cmd
-    changed_when: not prev_hash.stdout or 
-		(prev_hash.stdout and prev_hash.stdout not in ''.join(build_cmd.stdout_lines[-2:]))
+    changed_when: not prev_hash.stdout or (prev_hash.stdout and prev_hash.stdout not in ''.join(build_cmd.stdout_lines[-2:]))
 
 - name: Converge
   hosts: localhost
