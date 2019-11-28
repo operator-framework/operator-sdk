@@ -5,14 +5,14 @@ source ./hack/common.sh
 
 fetch_go_linter
     # The following arg ` -e "internal value || yum "` was added to ignore any line
-    # which has the text `internal value`  or `yum`. More info: https://github.com/golangci/golangci-lint#command-line-options
+    # which has the text `internal value`  or `yum`. More info: https://github.com/walle/lll/blob/master/README.md
 header_text "Running golangci-lint"
 golangci-lint run --disable-all \
     --deadline 5m \
     --enable=nakedret \
     --enable=ineffassign \
     --enable=goconst \
-    --enable=lll -e "internal value || yum "\
+    --enable=lll --exclude "internal || yum" \
     --enable=goimports \
 
 
