@@ -84,7 +84,8 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		duration, err := time.ParseDuration(ds)
 		if err != nil {
 			// Should attempt to update to a failed condition
-			if errmark := r.markError(u, request.NamespacedName, fmt.Sprintf("Unable to parse reconcile period annotation: %v", err)); errmark != nil {
+			if errmark := r.markError(u, request.NamespacedName,
+				fmt.Sprintf("Unable to parse reconcile period annotation: %v", err)); errmark != nil {
 				logger.Error(errmark, "Unable to mark error annotation")
 			}
 			logger.Error(err, "Unable to parse reconcile period annotation")
