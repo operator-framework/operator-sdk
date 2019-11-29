@@ -39,7 +39,7 @@ test_operator() {
     fi
 
     # verify that metrics service was created
-    if ! timeout 20s bash -c -- "until kubectl get service/nginx-operator-metrics > /dev/null 2>&1; do sleep 1; done";
+    if ! timeout 60s bash -c -- "until kubectl get service/nginx-operator-metrics > /dev/null 2>&1; do sleep 1; done";
     then
         echo "Failed to get metrics service"
         kubectl logs deployment/nginx-operator
