@@ -143,15 +143,15 @@ func (t *BundleValidationTest) Run(ctx context.Context) *schelpers.TestResult {
 		return res
 	}
 
-	logOutput := new(bytes.Buffer)
-	logrus.SetOutput(logOutput)
+	validationLogOutput := new(bytes.Buffer)
+	logrus.SetOutput(validationLogOutput)
 	_, _, validationResults := manifests.GetManifestsDir(t.BasicTestConfig.Bundle)
-	fmt.Printf("log output from bundle val logic is [%s]\n", logOutput.String())
 	for _, result := range validationResults {
 		if result.HasError() {
 			for _, e := range result.Errors {
 				res.Errors = append(res.Errors, fmt.Errorf("%s", e.Error()))
 			}
+			res.Log = validationLogOutput.String()
 		}
 
 		if result.HasWarn() {
