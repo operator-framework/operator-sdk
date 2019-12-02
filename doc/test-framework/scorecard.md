@@ -104,6 +104,7 @@ While most configuration is done via a config file, there are a few important ar
 
 | Flag        | Type   | Description   |
 | --------    | -------- | -------- |
+| `--bundle`, `-b`  | string |  The path to a bundle directory used for the bundle validation test. |
 | `--config`  | string | Path to config file (default `<project_dir>/.osdk-scorecard`; file type and extension can be any of `.yaml`, `.json`, or `.toml`). If a config file is not provided and a config file is not found at the default location, the scorecard will exit with an error. |
 | `--output`, `-o`  | string | Output format. Valid options are: `text` and `json`. The default format is `text`, which is designed to be a simpler human readable format. The `json` format uses the JSON schema output format used for plugins defined later in this document. |
 | `--kubeconfig`, `-o`  | string |  path to kubeconfig. It sets the kubeconfig internally for internal plugins and sets the `KUBECONFIG` env var to the provided value for external plugins. If an external plugin specifically sets the `KUBECONFIG` env var, the kubeconfig from the specified env var will be used for that plugin instead. |
@@ -115,6 +116,7 @@ While most configuration is done via a config file, there are a few important ar
 
 | Option        | Type   | Description   |
 | --------    | -------- | -------- |
+ `bundle` | string | equivalent of the `--bundle` flag. If this option is defined by both the config file and the flag, the flag's value takes priority |
 | `output` | string | equivalent of the `--output` flag. If this option is defined by both the config file and the flag, the flag's value takes priority |
 | `kubeconfig` | string | equivalent of the `--kubeconfig` flag. If this option is defined by both the config file and the flag, the flag's value takes priority |
 | `plugins` | array | this is an array of [Plugins](#plugins).|
@@ -160,6 +162,7 @@ Following the description of each internal [Plugin](#plugins). Note that are 8 i
 
 | Test        | Description   |
 | --------    | -------- |
+| Bundle Validation | This test validates the bundle manifests found in the bundle directory as specifed by the bundle flag. This test has a maximum score of 1 |
 | Spec Block Exists | This test checks the Custom Resource(s) created in the cluster to make sure that all CRs have a spec block. This test has a maximum score of 1 |
 | Status Block Exists | This test checks the Custom Resource(s) created in the cluster to make sure that all CRs have a status block. This test has a maximum score of 1 |
 | Writing Into CRs Has An Effect | This test reads the scorecard proxy's logs to verify that the operator is making `PUT` and/or `POST` requests to the API server, indicating that it is modifying resources. This test has a maximum score of 1 |

@@ -15,12 +15,14 @@
 package scplugins
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
-
+	"github.com/operator-framework/api/pkg/manifests"
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
+	"github.com/sirupsen/logrus"
+	"strings"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -33,9 +35,29 @@ type BasicTestConfig struct {
 	Client   client.Client
 	CR       *unstructured.Unstructured
 	ProxyPod *v1.Pod
+	Bundle   string
 }
 
 // Test Defintions
+
+// BundleValidationTest is a scorecard test that validates a bundle
+type BundleValidationTest struct {
+	schelpers.TestInfo
+	BasicTestConfig
+}
+
+// NewBundleValidationTest returns a new BundleValidationTest object
+func NewBundleValidationTest(conf BasicTestConfig) *BundleValidationTest {
+	return &BundleValidationTest{
+		BasicTestConfig: conf,
+		TestInfo: schelpers.TestInfo{
+			Name:        "Bundle Validation Test",
+			Description: "Validates bundle contents",
+			Cumulative:  false,
+			Labels:      map[string]string{necessityKey: optionalNecessity, suiteKey: basicSuiteName, testKey: "bundlevalidation"},
+		},
+	}
+}
 
 // CheckSpecTest is a scorecard test that verifies that the CR has a spec block
 type CheckSpecTest struct {
@@ -101,6 +123,7 @@ func NewBasicTestSuite(conf BasicTestConfig) *schelpers.TestSuite {
 		"Test suite that runs basic, functional operator tests",
 	)
 
+	ts.AddTest(NewBundleValidationTest(conf), 1)
 	ts.AddTest(NewCheckSpecTest(conf), 1.5)
 	ts.AddTest(NewCheckStatusTest(conf), 1)
 	ts.AddTest(NewWritingIntoCRsHasEffectTest(conf), 1)
@@ -109,6 +132,39 @@ func NewBasicTestSuite(conf BasicTestConfig) *schelpers.TestSuite {
 }
 
 // Test Implementations
+
+// Run - implements Test interface
+func (t *BundleValidationTest) Run(ctx context.Context) *schelpers.TestResult {
+	res := &schelpers.TestResult{Test: t, MaximumPoints: 1}
+
+	if t.BasicTestConfig.Bundle == "" {
+		res.EarnedPoints++
+		res.Suggestions = append(res.Suggestions, "Add a 'bundle' directory which is required for this test")
+		return res
+	}
+
+	logOutput := new(bytes.Buffer)
+	logrus.SetOutput(logOutput)
+	_, _, validationResults := manifests.GetManifestsDir(t.BasicTestConfig.Bundle)
+	fmt.Printf("log output from bundle val logic is [%s]\n", logOutput.String())
+	for _, result := range validationResults {
+		if result.HasError() {
+			for _, e := range result.Errors {
+				res.Errors = append(res.Errors, fmt.Errorf("%s", e.Error()))
+			}
+		}
+
+		if result.HasWarn() {
+			for _, w := range result.Warnings {
+				res.Suggestions = append(res.Suggestions, w.Error())
+			}
+		}
+	}
+	if len(res.Errors) == 0 && len(res.Suggestions) == 0 {
+		res.EarnedPoints++
+	}
+	return res
+}
 
 // Run - implements Test interface
 func (t *CheckSpecTest) Run(ctx context.Context) *schelpers.TestResult {
