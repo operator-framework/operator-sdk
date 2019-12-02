@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eux
+set -eu
 
 source hack/lib/image_lib.sh
 
@@ -14,10 +14,10 @@ load_image_if_kind "$OSDK_INTEGRATION_IMAGE"
 popd
 
 # Install OLM on the cluster if not installed.
-is_installed=0
+olm_latest_exists=0
 if ! operator-sdk alpha olm status > /dev/null 2>&1; then
   operator-sdk alpha olm install
-  is_installed=1
+  olm_latest_exists=1
 fi
 
 # Integration tests will use default loading rules for the kubeconfig if
@@ -25,7 +25,7 @@ fi
 go test -v ./test/integration
 
 # Uninstall OLM if it was installed for test purposes.
-if eval "(( $is_installed ))"; then
+if eval "(( $olm_latest_exists ))"; then
   operator-sdk alpha olm uninstall
 fi
 
