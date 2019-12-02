@@ -11,6 +11,8 @@ require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/coreos/go-semver v0.3.0
 	github.com/coreos/prometheus-operator v0.34.0
+	github.com/elazarl/go-bindata-assetfs v1.0.0 // indirect
+	github.com/emicklei/go-restful-swagger12 v0.0.0-20170926063155-7524189396c6 // indirect
 	github.com/fatih/structtag v1.1.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-logr/logr v0.1.0
