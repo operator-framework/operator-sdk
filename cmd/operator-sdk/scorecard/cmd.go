@@ -41,6 +41,7 @@ func NewCmd() *cobra.Command {
 	scorecardCmd.Flags().String(schelpers.VersionOpt, schelpers.DefaultScorecardVersion, "scorecard version. Valid values: v1alpha1, v1alpha2")
 	scorecardCmd.Flags().StringP(scorecard.SelectorOpt, "l", "", "selector (label query) to filter tests on (only valid when version is v1alpha2)")
 	scorecardCmd.Flags().BoolP(scorecard.ListOpt, "L", false, "If true, only print the test names that would be run based on selector filtering (only valid when version is v1alpha2)")
+	scorecardCmd.Flags().StringP(scorecard.BundleOpt, "b", "", "bundle directory path, when specified runs bundle validation")
 
 	// TODO: make config file global and make this a top level flag
 	if err := viper.BindPFlag(scorecard.ConfigOpt, scorecardCmd.Flags().Lookup(scorecard.ConfigOpt)); err != nil {
@@ -60,6 +61,9 @@ func NewCmd() *cobra.Command {
 	}
 	if err := viper.BindPFlag("scorecard."+scorecard.ListOpt, scorecardCmd.Flags().Lookup(scorecard.ListOpt)); err != nil {
 		log.Fatalf("Unable to add list :%v", err)
+	}
+	if err := viper.BindPFlag("scorecard."+scorecard.BundleOpt, scorecardCmd.Flags().Lookup(scorecard.BundleOpt)); err != nil {
+		log.Fatalf("Unable to add bundle :%v", err)
 	}
 	return scorecardCmd
 }
