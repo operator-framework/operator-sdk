@@ -63,7 +63,16 @@ By default this will be the namespace that the operator is running in. To watch 
 mgr, err := manager.New(cfg, manager.Options{Namespace: ""})
 ```
 
-**NOTE:** See [here](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder) that for some scenarios is possible to inform a list of namespaces as well. 
+It is also possible to use the [MultiNamespacedCacheBuilder](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder) to watch a specific set of namespaces:
+```Go
+var namespaces []string // List of Namepsaces
+// Create a new Cmd to provide shared dependencies and start components
+mgr, err := manager.New(cfg, manager.Options{
+   NewCache: cache.MultiNamespacedCacheBuilder(namespaces),
+   MapperProvider:     restmapper.NewDynamicRESTMapper,
+   MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+})
+```
 
 By default the main program will set the manager's namespace using the value of `WATCH_NAMESPACE` env defined in `deploy/operator.yaml`.
 
