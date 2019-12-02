@@ -133,7 +133,7 @@ This file can be used as-is without user adjustments.
     - name: Import user variables
       include_vars: vars.yml
     - name: Retrieve owning resource
-      k8s_facts:
+      k8s_info:
         api_version: "{{ owning_resource.apiVersion }}"
         kind: "{{ owning_resource.kind }}"
         name: "{{ owning_resource.name }}"

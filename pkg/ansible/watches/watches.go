@@ -77,7 +77,7 @@ var (
 // UnmarshalYAML - implements the yaml.Unmarshaler interface for Watch.
 // This makes it possible to verify, when loading, that the GroupVersionKind
 // specified for a given watch is valid as well as provide sensible defaults
-// for values that were ommitted.
+// for values that were omitted.
 func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// Use an alias struct to handle complex types
 	type alias struct {
