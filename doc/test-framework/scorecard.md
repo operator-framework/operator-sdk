@@ -162,6 +162,7 @@ Following the description of each internal [Plugin](#plugins). Note that are 8 i
 
 | Test        | Description   |
 | --------    | -------- |
+| Bundle Validation | This test validates the bundle manifests found in the bundle directory as specifed by the bundle flag. This test has a maximum score of 1 |
 | Spec Block Exists | This test checks the Custom Resource(s) created in the cluster to make sure that all CRs have a spec block. This test has a maximum score of 1 |
 | Status Block Exists | This test checks the Custom Resource(s) created in the cluster to make sure that all CRs have a status block. This test has a maximum score of 1 |
 | Writing Into CRs Has An Effect | This test reads the scorecard proxy's logs to verify that the operator is making `PUT` and/or `POST` requests to the API server, indicating that it is modifying resources. This test has a maximum score of 1 |
