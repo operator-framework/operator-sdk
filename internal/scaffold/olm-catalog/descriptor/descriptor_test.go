@@ -139,6 +139,8 @@ func TestGetCRDDescriptorForGVK(t *testing.T) {
 				},
 				StatusDescriptors: []olmapiv1alpha1.StatusDescriptor{
 					{Path: "hog.engine", DisplayName: "boss-hog-engine", Description: "Should be in status but not spec, since Hog isn't in DummySpec"},
+					{Path: "hog.foo", DisplayName: "Public"},
+					{Path: "hog.seatMaterial", DisplayName: "Seat Material"},
 					{Path: "hog.seatMaterial", DisplayName: "Seat Material"},
 					{Path: "nodes", DisplayName: "Nodes", Description: "Should be in status but not spec, since DummyStatus isn't in DummySpec"},
 				},
@@ -158,6 +160,8 @@ func TestGetCRDDescriptorForGVK(t *testing.T) {
 				},
 				SpecDescriptors: []olmapiv1alpha1.SpecDescriptor{
 					{Path: "engine", DisplayName: "Engine", Description: "Should be in status but not spec, since Hog isn't in DummySpec"},
+					{Path: "foo", DisplayName: "Public"},
+					{Path: "seatMaterial", DisplayName: "Seat Material"},
 					{Path: "seatMaterial", DisplayName: "Seat Material"},
 				},
 				StatusDescriptors: []olmapiv1alpha1.StatusDescriptor{

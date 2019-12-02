@@ -194,6 +194,10 @@ const (
 // getPathFromMember constructs a path from data in member, either from
 // its struct tags or name.
 func getPathFromMember(member types.Member) (string, error) {
+	// Embedded fields are inlined and children may be included.
+	if member.Embedded {
+		return inlinedTag, nil
+	}
 	// Unexported fields should be ignored in downstream processing.
 	if isNotExported(member.Name) {
 		return ignoredTag, nil
@@ -209,8 +213,11 @@ func getPathFromMember(member types.Member) (string, error) {
 		switch {
 		case contains(jsonTag.Options, "inline"):
 			return inlinedTag, nil
-		case jsonTag.Name == "-" || contains(jsonTag.Options, "-"):
-			return ignoredTag, nil
+		case jsonTag.Name == "-":
+			if len(jsonTag.Options) == 0 {
+				return ignoredTag, nil
+			}
+			return member.Name, nil
 		case jsonTag.Name != "":
 			return jsonTag.Name, nil
 		}
