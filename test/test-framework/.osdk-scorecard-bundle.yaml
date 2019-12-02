@@ -2,7 +2,11 @@ scorecard:
   version: v1alpha2
   bundle: deploy/olm-catalog/memcached-operator
   plugins:
+<<<<<<< HEAD
     - olm:
+=======
+    - basic:
+>>>>>>> add bundle flag test in e2e tests, update docs to include description of validation test output, add ability to store a scorecard test log into its test result for display when an error occurs
         cr-manifest:
           - "deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml"
         init-timeout: 60
