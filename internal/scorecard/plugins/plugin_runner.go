@@ -291,7 +291,6 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 			conf := BasicTestConfig{
 				Client:   runtimeClient,
 				CR:       obj,
-				Bundle:   config.Bundle,
 				ProxyPod: proxyPodGlobal,
 			}
 			basicTests := NewBasicTestSuite(conf)
@@ -315,6 +314,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 				CSV:      csv,
 				CRDsDir:  config.CRDsDir,
 				ProxyPod: proxyPodGlobal,
+				Bundle:   config.Bundle,
 			}
 			olmTests := NewOLMTestSuite(conf)
 			if schelpers.IsV1alpha2(config.Version) {
