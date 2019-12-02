@@ -10,6 +10,7 @@ golangci-lint run --disable-all \
     --deadline 5m \
     --enable=nakedret \
     --enable=structcheck \
+    --enable=misspell \
     --enable=maligned \
     --enable=ineffassign \
     --enable=goconst \
@@ -22,8 +23,6 @@ golangci-lint run --disable-all \
 # --enable=gocyclo
 # --enable=lll
 # --enable=gosec
-# --enable=misspell \
 # --enable=interfacer \
-# --enable=misspell \
 # --enable=varcheck \
 # --enable=unparam \
