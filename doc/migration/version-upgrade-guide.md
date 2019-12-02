@@ -153,9 +153,9 @@ The following sections outline the upgrade steps for each SDK version along with
   deploy/olm-catalog/
   └── memcached-operator
       ├── 0.1.0
-      │   └── memcached-operator.v0.1.0.clusterserviceversion.yaml
+      │   └── memcached-operator.v0.1.0.clusterserviceversion.yaml
       ├── 0.2.0
-      │   └── memcached-operator.v0.2.0.clusterserviceversion.yaml
+      │   └── memcached-operator.v0.2.0.clusterserviceversion.yaml
       └── memcached-operator.package.yaml
   ```
 
@@ -494,7 +494,7 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 
 ### dep
 
-It is no longer supported. See [here](https://blog.golang.org/migrating-to-go-modules) how to migrate your project to use modules instead of. 
+Using `dep` is no longer supported. Follow [Go's official blog post about migrating to modules](https://blog.golang.org/migrating-to-go-modules) to learn how to migrate your project.
 
 ### modules
 
