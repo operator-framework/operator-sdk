@@ -19,10 +19,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/operator-framework/api/pkg/manifests"
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	"github.com/sirupsen/logrus"
-	"strings"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
