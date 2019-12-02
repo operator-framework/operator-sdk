@@ -6,6 +6,7 @@ CONFIG_PATH_V1ALPHA1=".test-osdk-scorecard-v1alpha1.yaml"
 CONFIG_PATH_DISABLE=".osdk-scorecard-disable.yaml"
 CONFIG_PATH_INVALID=".osdk-scorecard-invalid.yaml"
 CONFIG_PATH_V1ALPHA2=".osdk-scorecard-v1alpha2.yaml"
+CONFIG_PATH_BUNDLE=".osdk-scorecard-bundle.yaml"
 
 set -ex
 
@@ -27,6 +28,23 @@ else
 	echo "test failed: expected return code 1"
 	exit 1
 fi
+
+# test to see if bundle flag works correctly
+if ! commandoutput="$(operator-sdk scorecard --config "$CONFIG_PATH_BUNDLE" 2>&1)"; then 
+	echo $commandoutput
+	failCount=`echo $commandoutput | grep -o "fail" | wc -l`
+	expectedFailCount=1
+	if [ $failCount -ne $expectedFailCount ]
+	then
+		echo "expected fail count $expectedFailCount, got $failCount"
+		exit 1
+	fi
+else
+	echo "test failed: expected return code 1"
+	exit 1
+fi
+
+exit
 
 # test to see if v1alpha2 is used from the command line, this test should have
 # failures which cause return code 1 to be returned
