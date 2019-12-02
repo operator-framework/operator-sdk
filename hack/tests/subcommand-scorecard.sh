@@ -47,7 +47,7 @@ fi
 # test to see if list flag work which should cause return code 0 to be returned
 commandoutput="$(operator-sdk scorecard --version v1alpha2 --list --selector=suite=basic --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
 labelCount=`echo $commandoutput | grep -o "Label" | wc -l`
-expectedLabelCount=3
+expectedLabelCount=4
 if [ $labelCount -ne $expectedLabelCount ]
 then
 	echo "expected label count $expectedLabelCount, got $labelCount"
@@ -58,7 +58,7 @@ fi
 # should cause return code 0 to be returned
 commandoutput="$(operator-sdk scorecard --version v1alpha2 --selector=suite=basic --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
 labelCount=`echo $commandoutput | grep -o "Label" | wc -l`
-expectedLabelCount=3
+expectedLabelCount=4
 if [ $labelCount -ne $expectedLabelCount ]
 then
 	echo "expected label count $expectedLabelCount, got $labelCount"
@@ -75,7 +75,7 @@ echo $commandoutput | grep "Total Score: 67%"
 # test json output and default config path
 commandoutput2="$(operator-sdk scorecard --version v1alpha1 2>&1)"
 # check basic suite
-echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 3,[[:space:]]"partialPass": 0,[[:space:]]"fail": 0,[[:space:]]"totalTests": 3,[[:space:]]"totalScorePercent": 100,.*$'
+echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 4,[[:space:]]"partialPass": 0,[[:space:]]"fail": 0,[[:space:]]"totalTests": 4,[[:space:]]"totalScorePercent": 100,.*$'
 # check olm suite
 echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 2,[[:space:]]"partialPass": 3,[[:space:]]"fail": 0,[[:space:]]"totalTests": 5,[[:space:]]"totalScorePercent": 74,.*$'
 # check custom json result

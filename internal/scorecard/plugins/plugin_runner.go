@@ -290,6 +290,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 			conf := BasicTestConfig{
 				Client:   runtimeClient,
 				CR:       obj,
+				Bundle:   config.Bundle,
 				ProxyPod: proxyPodGlobal,
 			}
 			basicTests := NewBasicTestSuite(conf)
