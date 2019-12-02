@@ -55,7 +55,7 @@ func TestCRDGo(t *testing.T) {
 	if b, ok := fileMap[getFileNameForResource(*r)]; !ok {
 		t.Errorf("Failed to generate CRD for %s", r)
 	} else {
-		assert.Equal(t, crdExp, string(b))
+		assert.Equal(t, crdCustomExp, string(b))
 	}
 }
 
@@ -64,25 +64,73 @@ func TestCRDNonGo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	tfDeployDir := filepath.Join(tfDir, "deploy", "crds")
 
-	r, err := scaffold.NewResource("cache.example.com/v1alpha1", "Memcached")
-	if err != nil {
-		t.Fatal(err)
+	cases := []struct {
+		description      string
+		apiVersion, kind string
+		inputDir         string
+		expCRD           string
+		wantErr          bool
+	}{
+		{
+			"non-existent CRD with default structural schema",
+			"cache.example.com/v1alpha1", "Memcached", filepath.Join("not", "exist"), crdNonGoDefaultExp, false,
+		},
+		{
+			"existing CRD with custom structural schema",
+			"cache.example.com/v1alpha1", "Memcached", tfDeployDir, crdCustomExp, false,
+		},
 	}
-	cfg := genutil.Config{InputDir: filepath.Join(tfDir, "deploy", "crds")}
-	g := NewCRDNonGo(cfg, *r)
-	fileMap, err := g.(crdGenerator).generateNonGo()
-	if err != nil {
-		t.Fatalf("Failed to execute CRD generator: %v", err)
-	}
-	if b, ok := fileMap[getFileNameForResource(*r)]; !ok {
-		t.Errorf("Failed to generate CRD for %s", r)
-	} else {
-		assert.Equal(t, crdExp, string(b))
+
+	for _, c := range cases {
+		r, err := scaffold.NewResource(c.apiVersion, c.kind)
+		if err != nil {
+			t.Fatal(err)
+		}
+		cfg := genutil.Config{InputDir: c.inputDir}
+		g := NewCRDNonGo(cfg, *r)
+		fileMap, err := g.(crdGenerator).generateNonGo()
+		if err != nil {
+			t.Fatalf("%s: failed to execute CRD generator: %v", c.description, err)
+		}
+		if b, ok := fileMap[getFileNameForResource(*r)]; !ok {
+			t.Errorf("%s: failed to generate CRD for %s", c.description, r)
+		} else {
+			assert.Equal(t, c.expCRD, string(b))
+		}
 	}
 }
 
-const crdExp = `apiVersion: apiextensions.k8s.io/v1beta1
+// crdNonGoDefaultExp is the default non-go CRD. Non-go projects don't have the
+// luxury of kubebuilder annotations.
+const crdNonGoDefaultExp = `apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: memcacheds.cache.example.com
+spec:
+  group: cache.example.com
+  names:
+    kind: Memcached
+    listKind: MemcachedList
+    plural: memcacheds
+    singular: memcached
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      type: object
+      x-kubernetes-preserve-unknown-fields: true
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+`
+
+// crdCustomExp is a CRD with custom validation, either created manually or
+// with Go API code annotations.
+const crdCustomExp = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   name: memcacheds.cache.example.com

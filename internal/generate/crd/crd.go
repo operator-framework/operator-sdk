@@ -34,6 +34,7 @@ import (
 	"github.com/spf13/afero"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // crdGenerator configures the CustomResourceDefintion manifest generator
@@ -125,7 +126,7 @@ func getFileNameForResource(r scaffold.Resource) string {
 	return fmt.Sprintf("%s_%s_crd.yaml", r.FullGroup, r.Resource)
 }
 
-// generateNonGo generates CRDs for Go projects using Go API files.
+// generateGo generates CRDs for Go projects using Go API files.
 func (g crdGenerator) generateGo() (map[string][]byte, error) {
 	fileMap := map[string][]byte{}
 	// Generate files in the generator's cache so we can modify the file name
@@ -159,16 +160,8 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 		scanner := yamlutil.NewYAMLScanner(b)
 		modifiedCRD := []byte{}
 		for scanner.Scan() {
-			sb := scanner.Bytes()
-			typeMeta, err := k8sutil.GetTypeMetaFromBytes(sb)
-			if err != nil {
-				return nil, err
-			}
-			if typeMeta.Kind != "CustomResourceDefinition" {
-				continue
-			}
-			crd := &apiextv1beta1.CustomResourceDefinition{}
-			if err = yaml.Unmarshal(sb, crd); err != nil {
+			crd := unstructured.Unstructured{}
+			if err = yaml.Unmarshal(scanner.Bytes(), &crd); err != nil {
 				return nil, err
 			}
 			// controller-tools inserts an annotation and assumes that the binary
@@ -184,8 +177,14 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 			//
 			// TODO(joelanford): Sort out what to do with this. Until then, let's
 			// just remove it.
-			delete(crd.Annotations, "controller-gen.kubebuilder.io/version")
-			if sb, err = k8sutil.GetObjectBytes(crd, yaml.Marshal); err != nil {
+			annotations := crd.GetAnnotations()
+			delete(annotations, "controller-gen.kubebuilder.io/version")
+			if len(annotations) == 0 {
+				annotations = nil
+			}
+			crd.SetAnnotations(annotations)
+			sb, err := k8sutil.GetObjectBytes(&crd, yaml.Marshal)
+			if err != nil {
 				return nil, err
 			}
 			modifiedCRD = yamlutil.CombineManifests(modifiedCRD, sb)
@@ -210,7 +209,12 @@ func (g crdGenerator) generateNonGo() (map[string][]byte, error) {
 	fileMap := map[string][]byte{}
 	fileName := getFileNameForResource(g.resource)
 	path := filepath.Join(g.InputDir, fileName)
-	if _, err := os.Stat(path); err == nil {
+	if _, err := os.Stat(path); err != nil {
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+		crd = newCRDForResource(g.resource)
+	} else {
 		b, err := ioutil.ReadFile(path)
 		if err != nil {
 			return nil, err
@@ -235,10 +239,6 @@ func (g crdGenerator) generateNonGo() (map[string][]byte, error) {
 				Served:  true,
 			})
 		}
-	} else if os.IsNotExist(err) {
-		crd = newCRDForResource(g.resource)
-	} else {
-		return nil, err
 	}
 
 	sort.Sort(k8sutil.CRDVersions(crd.Spec.Versions))
@@ -256,6 +256,7 @@ func (g crdGenerator) generateNonGo() (map[string][]byte, error) {
 
 // newCRDForResource constructs a barebones CRD using data in resource.
 func newCRDForResource(r scaffold.Resource) *apiextv1beta1.CustomResourceDefinition {
+	trueVal := true
 	return &apiextv1beta1.CustomResourceDefinition{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: apiextv1beta1.SchemeGroupVersion.String(),
@@ -278,6 +279,12 @@ func newCRDForResource(r scaffold.Resource) *apiextv1beta1.CustomResourceDefinit
 			},
 			Subresources: &apiextv1beta1.CustomResourceSubresources{
 				Status: &apiextv1beta1.CustomResourceSubresourceStatus{},
+			},
+			Validation: &apiextv1beta1.CustomResourceValidation{
+				OpenAPIV3Schema: &apiextv1beta1.JSONSchemaProps{
+					Type:                   "object",
+					XPreserveUnknownFields: &trueVal,
+				},
 			},
 		},
 	}
