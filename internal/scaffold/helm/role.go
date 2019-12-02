@@ -197,22 +197,6 @@ func getDefaultManifests(c *chart.Chart, kubeVersion *version.Info) ([]releaseut
 	}
 	_, manifests, err := releaseutil.SortManifests(releaseutil.SplitManifests(rel.Manifest), chartutil.DefaultVersionSet, releaseutil.InstallOrder)
 	return manifests, err
-	/*
-		v := strings.TrimSuffix(fmt.Sprintf("%s.%s", kubeVersion.Major, kubeVersion.Minor), "+")
-		renderOpts := renderutil.Options{
-			ReleaseOptions: chartutil.ReleaseOptions{
-				IsInstall: true,
-				IsUpgrade: false,
-			},
-			KubeVersion: v,
-		}
-
-		renderedTemplates, err := renderutil.Render(c, &chart.Config{}, renderOpts)
-		if err != nil {
-			return nil, fmt.Errorf("failed to render chart templates: %s", err)
-		}
-		return tiller.SortByKind(releaseutil.SplitManifests(renderedTemplates)), nil
-	*/
 }
 
 func getResource(namespacedResourceList []*metav1.APIResourceList, groupVersion, kind string) (string, bool, bool) {
