@@ -22,4 +22,6 @@ const (
 	suiteKey       = "suite"
 	basicSuiteName = "basic"
 	olmSuiteName   = "olm"
+
+	testKey = "test"
 )
