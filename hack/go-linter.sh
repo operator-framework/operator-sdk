@@ -9,6 +9,7 @@ header_text "Running golangci-lint"
 golangci-lint run --disable-all \
     --deadline 5m \
     --enable=nakedret \
+    --enable=structcheck \
     --enable=misspell \
     --enable=maligned \
     --enable=ineffassign \
@@ -24,5 +25,4 @@ golangci-lint run --disable-all \
 # --enable=gosec
 # --enable=interfacer \
 # --enable=varcheck \
-# --enable=structcheck \
 # --enable=unparam \
