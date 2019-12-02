@@ -46,11 +46,7 @@ cat "$ROOTDIR/test/ansible-memcached/watches-v1-kind.yaml" >> memcached-operator
 
 # Test local
 pushd memcached-operator
-# Use the following sed command to check it on macOsX.
-# More info: https://www.mkyong.com/mac/sed-command-hits-undefined-label-error-on-mac-os-x/
-# sed -i "" 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
-# The following code is the default used (Not valid for MacOSX)
-sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
+sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?/\1:dev/g' build/Dockerfile; rm -f build/Dockerfile.bak
 OPERATORDIR="$(pwd)"
 TEST_CLUSTER_PORT=24443 operator-sdk test local --namespace default
 
@@ -60,11 +56,7 @@ popd
 popd
 
 pushd "${ROOTDIR}/test/ansible-inventory"
-# Use the following sed command to check it on macOsX.
-# More info: https://www.mkyong.com/mac/sed-command-hits-undefined-label-error-on-mac-os-x/
-# sed -i "" 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
-# The following code is the default used (Not valid for MacOSX)
-sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
+sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?/\1:dev/g' build/Dockerfile; rm -f build/Dockerfile.bak
 TEST_CLUSTER_PORT=24443 operator-sdk test local --namespace default
 
 popd

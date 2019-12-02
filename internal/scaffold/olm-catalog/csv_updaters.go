@@ -191,30 +191,30 @@ func depHasOLMNamespaces(dep *appsv1.Deployment) bool {
 
 func (u *InstallStrategyUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	// Get install strategy from csv. Default to a deployment strategy if none found.
-	var strat olminstall.Strategy
+	var strategy olminstall.Strategy
 	if csv.Spec.InstallStrategy.StrategyName == "" {
 		csv.Spec.InstallStrategy.StrategyName = olminstall.InstallStrategyNameDeployment
-		strat = &olminstall.StrategyDetailsDeployment{}
+		strategy = &olminstall.StrategyDetailsDeployment{}
 	} else {
 		var resolver *olminstall.StrategyResolver
-		strat, err = resolver.UnmarshalStrategy(csv.Spec.InstallStrategy)
+		strategy, err = resolver.UnmarshalStrategy(csv.Spec.InstallStrategy)
 		if err != nil {
 			return err
 		}
 	}
 
-	switch s := strat.(type) {
+	switch s := strategy.(type) {
 	case *olminstall.StrategyDetailsDeployment:
 		// Update permissions and deployments.
 		u.updatePermissions(s)
 		u.updateClusterPermissions(s)
 		u.updateDeploymentSpecs(s)
 	default:
-		return errors.Errorf("install strategy (%v) of unknown type", strat)
+		return errors.Errorf("install strategy (%v) of unknown type", strategy)
 	}
 
 	// Re-serialize permissions into csv strategy.
-	updatedStrat, err := json.Marshal(strat)
+	updatedStrat, err := json.Marshal(strategy)
 	if err != nil {
 		return err
 	}
@@ -223,21 +223,21 @@ func (u *InstallStrategyUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion)
 	return nil
 }
 
-func (u *InstallStrategyUpdate) updatePermissions(strat *olminstall.StrategyDetailsDeployment) {
+func (u *InstallStrategyUpdate) updatePermissions(strategy *olminstall.StrategyDetailsDeployment) {
 	if len(u.Permissions) != 0 {
-		strat.Permissions = u.Permissions
+		strategy.Permissions = u.Permissions
 	}
 }
 
-func (u *InstallStrategyUpdate) updateClusterPermissions(strat *olminstall.StrategyDetailsDeployment) {
+func (u *InstallStrategyUpdate) updateClusterPermissions(strategy *olminstall.StrategyDetailsDeployment) {
 	if len(u.ClusterPermissions) != 0 {
-		strat.ClusterPermissions = u.ClusterPermissions
+		strategy.ClusterPermissions = u.ClusterPermissions
 	}
 }
 
-func (u *InstallStrategyUpdate) updateDeploymentSpecs(strat *olminstall.StrategyDetailsDeployment) {
+func (u *InstallStrategyUpdate) updateDeploymentSpecs(strategy *olminstall.StrategyDetailsDeployment) {
 	if len(u.DeploymentSpecs) != 0 {
-		strat.DeploymentSpecs = u.DeploymentSpecs
+		strategy.DeploymentSpecs = u.DeploymentSpecs
 	}
 }
 
