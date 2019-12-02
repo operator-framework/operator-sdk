@@ -41,7 +41,11 @@ Some features can be overridden per resource via an annotation on that CR. The o
 
 The ansible runner will keep information about the ansible run in the container.  This is located `/tmp/ansible-operator/runner/<group>/<version>/<kind>/<namespace>/<name>`. To learn more  about the runner directory you can read the [ansible-runner docs](https://ansible-runner.readthedocs.io/en/latest/index.html).
 
-## Turning off Dependent Watches and Owner Reference Injection
+## Owner Reference Injection
+
+Owner references enable [Kubernetes Garbage Collection](https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/) to clean up after a CR is deleted. Owner references are injected by ansible operators by default by the proxy.
+
+Owner references only apply to resources in the same namespace as the CR. Resources outside the namespace of the CR will automatically be annotated with `operator-sdk/primary-resource` and `operator-sdk/primary-resource-type` to track creation. These resources will not be automatically garbage collected. To handle deletion of these resources, use a [finalizer](finalizers.md).
 
 You may want to manage what your operator watches and the owner references. This means that your operator will need to understand how to clean up after itself when your CR is deleted. To disable these features you will need to edit your `build/Dockerfile` to include the line below.
 
@@ -120,7 +124,7 @@ here, where higher values mean more output. Acceptable values range from 0
 (only the most severe messages are output) to 7 (all debugging messages are
 output).
 
-There are two ways to configure the verbosity argument to the `ansible-runner`
+There are three ways to configure the verbosity argument to the `ansible-runner`
 command:
 
 1. Operator **authors and admins** can set the Ansible verbosity by including
@@ -129,8 +133,11 @@ command:
    variable in the format `ANSIBLE_VERBOSITY_<kind>_<group>`. This variable must
    be all uppercase and all periods (e.g. in the group name) are replaced with
    underscore.
+1. Operator **users, authors, and admins** can set the Ansible verbosity by
+   setting the `"ansible.operator-sdk/verbosity"` annotation on the Custom
+   Resource.
 
-### Example
+### Examples
 
 For demonstration purposes, let us assume that we have a database operator that
 supports two Kinds -- `MongoDB` and `PostgreSQL` -- in the `db.example.com`
@@ -151,4 +158,18 @@ spec in our `deploy/operator.yaml` might look something like:
     # Override the verbosity for the MongoDB kind
     - name: ANSIBLE_VERBOSITY_MONGODB_DB_EXAMPLE_COM
       value: "4"
+```
+
+Once the Operator is deployed, the only way to change the verbosity is via the
+`"ansible.operator-sdk/verbosity"` annotation. Continuing with our example, our
+CR may look like:
+
+```yaml
+apiVersion: "db.example.com/v1"
+kind: "PostgreSQL"
+metadata:
+  name: "example-db"
+  annotations:
+    "ansible.operator-sdk/verbosity": 5
+spec: {}
 ```

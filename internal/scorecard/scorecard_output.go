@@ -17,11 +17,12 @@ package scorecard
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	scapi "github.com/operator-framework/operator-sdk/pkg/apis/scorecard"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
-	"io/ioutil"
 )
 
 func printPluginOutputs(version string, pluginOutputs []scapiv1alpha1.ScorecardOutput) error {

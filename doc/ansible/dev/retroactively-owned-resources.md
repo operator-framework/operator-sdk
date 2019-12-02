@@ -62,7 +62,7 @@ resource is a cluster level resource.
 
 **NOTE**: The {group} can be found by splitting the `apiVersion`
 metadata of the CR, into `group` and `version`. As an example, 
-[this apiVersion field](https://github.com/operator-framework/operator-sdk-samples/blob/master/ansible/memcached-operator/deploy/crds/cache_v1alpha1_memcached_cr.yaml#L1)
+[this apiVersion field](https://github.com/operator-framework/operator-sdk-samples/blob/master/ansible/memcached-operator/deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml#L1)
 gives us the group `cache.example.com`.
 
 **Example Annotation:**
@@ -133,7 +133,7 @@ This file can be used as-is without user adjustments.
     - name: Import user variables
       include_vars: vars.yml
     - name: Retrieve owning resource
-      k8s_facts:
+      k8s_info:
         api_version: "{{ owning_resource.apiVersion }}"
         kind: "{{ owning_resource.kind }}"
         name: "{{ owning_resource.name }}"

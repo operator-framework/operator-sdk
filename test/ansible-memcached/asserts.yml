@@ -135,7 +135,7 @@
           definition: '{{ custom_resource }}'
 
       - name: Wait for the custom resource to be deleted
-        k8s_facts:
+        k8s_info:
           api_version: '{{ custom_resource.apiVersion }}'
           kind: '{{ custom_resource.kind }}'
           namespace: '{{ namespace }}'

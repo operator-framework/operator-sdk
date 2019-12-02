@@ -97,22 +97,8 @@ func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 			}
 			role.Rules = append(role.Rules, *pr)
 		}
-		// update role.yaml
-		d, err := json.Marshal(&role)
-		if err != nil {
-			return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
-		}
-		m := &map[string]interface{}{}
-		if err = yaml.Unmarshal(d, m); err != nil {
-			return fmt.Errorf("failed to unmarshal role(%+v): %v", role, err)
-		}
-		data, err := yaml.Marshal(m)
-		if err != nil {
-			return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
-		}
-		if err := ioutil.WriteFile(roleFilePath, data, fileutil.DefaultFileMode); err != nil {
-			return fmt.Errorf("failed to update %v: %v", roleFilePath, err)
-		}
+
+		return updateRoleFile(&role, roleFilePath)
 	case *rbacv1.ClusterRole:
 		pr := &rbacv1.PolicyRule{}
 		apiGroupFound := false
@@ -149,24 +135,30 @@ func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 			}
 			role.Rules = append(role.Rules, *pr)
 		}
-		// update role.yaml
-		d, err := json.Marshal(&role)
-		if err != nil {
-			return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
-		}
-		m := &map[string]interface{}{}
-		err = yaml.Unmarshal(d, m)
-		data, err := yaml.Marshal(m)
-		if err != nil {
-			return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
-		}
-		if err := ioutil.WriteFile(roleFilePath, data, fileutil.DefaultFileMode); err != nil {
-			return fmt.Errorf("failed to update %v: %v", roleFilePath, err)
-		}
+
+		return updateRoleFile(&role, roleFilePath)
 	default:
 		return errors.New("failed to parse role.yaml as a role")
 	}
-	// not reachable
+}
+
+func updateRoleFile(role interface{}, roleFilePath string) error {
+	d, err := json.Marshal(&role)
+	if err != nil {
+		return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
+	}
+	m := &map[string]interface{}{}
+	if err := yaml.Unmarshal(d, m); err != nil {
+		return fmt.Errorf("failed to unmarshal role(%+v): %v", role, err)
+	}
+	data, err := yaml.Marshal(m)
+	if err != nil {
+		return fmt.Errorf("failed to marshal role(%+v): %v", role, err)
+	}
+	if err := ioutil.WriteFile(roleFilePath, data, fileutil.DefaultFileMode); err != nil {
+		return fmt.Errorf("failed to update %v: %v", roleFilePath, err)
+	}
+
 	return nil
 }
 
