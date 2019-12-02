@@ -33,7 +33,7 @@ fi
 if ! commandoutput="$(operator-sdk scorecard --config "$CONFIG_PATH_BUNDLE" 2>&1)"; then 
 	echo $commandoutput
 	failCount=`echo $commandoutput | grep -o "fail" | wc -l`
-	expectedFailCount=1
+	expectedFailCount=2
 	if [ $failCount -ne $expectedFailCount ]
 	then
 		echo "expected fail count $expectedFailCount, got $failCount"
@@ -43,8 +43,6 @@ else
 	echo "test failed: expected return code 1"
 	exit 1
 fi
-
-exit
 
 # test to see if v1alpha2 is used from the command line, this test should have
 # failures which cause return code 1 to be returned
@@ -65,7 +63,7 @@ fi
 # test to see if list flag work which should cause return code 0 to be returned
 commandoutput="$(operator-sdk scorecard --version v1alpha2 --list --selector=suite=basic --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
 labelCount=`echo $commandoutput | grep -o "Label" | wc -l`
-expectedLabelCount=4
+expectedLabelCount=3
 if [ $labelCount -ne $expectedLabelCount ]
 then
 	echo "expected label count $expectedLabelCount, got $labelCount"
@@ -76,7 +74,7 @@ fi
 # should cause return code 0 to be returned
 commandoutput="$(operator-sdk scorecard --version v1alpha2 --selector=suite=basic --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
 labelCount=`echo $commandoutput | grep -o "Label" | wc -l`
-expectedLabelCount=4
+expectedLabelCount=3
 if [ $labelCount -ne $expectedLabelCount ]
 then
 	echo "expected label count $expectedLabelCount, got $labelCount"
@@ -85,17 +83,17 @@ fi
 
 # test to see if version in config file allows v1alpha1 to be specified
 commandoutput="$(operator-sdk scorecard --config "$CONFIG_PATH_V1ALPHA1" 2>&1)"
-echo $commandoutput | grep "Total Score: 67%"
+echo $commandoutput | grep "Total Score: 68%"
 
 commandoutput="$(operator-sdk scorecard --version v1alpha1 --config "$CONFIG_PATH" 2>&1)"
-echo $commandoutput | grep "Total Score: 67%"
+echo $commandoutput | grep "Total Score: 68%"
 
 # test json output and default config path
 commandoutput2="$(operator-sdk scorecard --version v1alpha1 2>&1)"
 # check basic suite
-echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 4,[[:space:]]"partialPass": 0,[[:space:]]"fail": 0,[[:space:]]"totalTests": 4,[[:space:]]"totalScorePercent": 100,.*$'
+echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 3,[[:space:]]"partialPass": 0,[[:space:]]"fail": 0,[[:space:]]"totalTests": 3,[[:space:]]"totalScorePercent": 100,.*$'
 # check olm suite
-echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 2,[[:space:]]"partialPass": 3,[[:space:]]"fail": 0,[[:space:]]"totalTests": 5,[[:space:]]"totalScorePercent": 74,.*$'
+echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 3,[[:space:]]"partialPass": 3,[[:space:]]"fail": 0,[[:space:]]"totalTests": 6,[[:space:]]"totalScorePercent": 78,.*$'
 # check custom json result
 echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 1,[[:space:]]"partialPass": 1,[[:space:]]"fail": 0,[[:space:]]"totalTests": 2,[[:space:]]"totalScorePercent": 71,.*$'
 # check external no args

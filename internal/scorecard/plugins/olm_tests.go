@@ -15,14 +15,17 @@
 package scplugins
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 
+	"github.com/operator-framework/api/pkg/manifests"
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	"github.com/sirupsen/logrus"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	v1 "k8s.io/api/core/v1"
@@ -45,9 +48,29 @@ type OLMTestConfig struct {
 	CSV      *olmapiv1alpha1.ClusterServiceVersion
 	CRDsDir  string
 	ProxyPod *v1.Pod
+	Bundle   string
 }
 
 // Test Defintions
+
+// BundleValidationTest is a scorecard test that validates a bundle
+type BundleValidationTest struct {
+	schelpers.TestInfo
+	OLMTestConfig
+}
+
+// NewBundleValidationTest returns a new BundleValidationTest object
+func NewBundleValidationTest(conf OLMTestConfig) *BundleValidationTest {
+	return &BundleValidationTest{
+		OLMTestConfig: conf,
+		TestInfo: schelpers.TestInfo{
+			Name:        "Bundle Validation Test",
+			Description: "Validates bundle contents",
+			Cumulative:  false,
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName},
+		},
+	}
+}
 
 // CRDsHaveValidationTest is a scorecard test that verifies that all CRDs have a validation section
 type CRDsHaveValidationTest struct {
@@ -165,6 +188,7 @@ func NewOLMTestSuite(conf OLMTestConfig) *schelpers.TestSuite {
 		"Test suite checks if an operator's CSV follows best practices",
 	)
 
+	ts.AddTest(NewBundleValidationTest(conf), 1)
 	ts.AddTest(NewCRDsHaveValidationTest(conf), 1.25)
 	ts.AddTest(NewCRDsHaveResourcesTest(conf), 1)
 	ts.AddTest(NewAnnotationsContainExamplesTest(conf), 1)
@@ -174,7 +198,40 @@ func NewOLMTestSuite(conf OLMTestConfig) *schelpers.TestSuite {
 	return ts
 }
 
-// Test Implentations
+// Test Implementations
+
+// Run - implements Test interface
+func (t *BundleValidationTest) Run(ctx context.Context) *schelpers.TestResult {
+	res := &schelpers.TestResult{Test: t, MaximumPoints: 1}
+
+	if t.OLMTestConfig.Bundle == "" {
+		res.EarnedPoints++
+		res.Suggestions = append(res.Suggestions, "Add a 'bundle' directory which is required for this test")
+		return res
+	}
+
+	validationLogOutput := new(bytes.Buffer)
+	logrus.SetOutput(validationLogOutput)
+	_, _, validationResults := manifests.GetManifestsDir(t.OLMTestConfig.Bundle)
+	for _, result := range validationResults {
+		if result.HasError() {
+			for _, e := range result.Errors {
+				res.Errors = append(res.Errors, fmt.Errorf("%s", e.Error()))
+			}
+			res.Log = validationLogOutput.String()
+		}
+
+		if result.HasWarn() {
+			for _, w := range result.Warnings {
+				res.Suggestions = append(res.Suggestions, w.Error())
+			}
+		}
+	}
+	if len(res.Errors) == 0 && len(res.Suggestions) == 0 {
+		res.EarnedPoints++
+	}
+	return res
+}
 
 // matchVersion checks if a CRD contains a specified version in a case insensitive manner
 func matchVersion(version string, crd *apiextv1beta1.CustomResourceDefinition) bool {
