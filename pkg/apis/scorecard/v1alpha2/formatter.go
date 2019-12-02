@@ -77,6 +77,12 @@ func (s ScorecardOutput) MarshalText() (string, error) {
 		for _, err := range result.Errors {
 			sb.WriteString(fmt.Sprintf("\t\t%s\n", err))
 		}
+
+		if result.Log != "" {
+			sb.WriteString(fmt.Sprintf("\tLog:\n"))
+			sb.WriteString(fmt.Sprintf("\t\t%s\n", result.Log))
+		}
+
 		sb.WriteString(fmt.Sprintf("\n"))
 	}
 
