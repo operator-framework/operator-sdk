@@ -47,6 +47,6 @@ func main() {
 
 	err = doc.GenMarkdownTree(root, docPath)
 	if err != nil {
-		log.Fatalf("Failed to generate documenation: %v", err)
+		log.Fatalf("Failed to generate documentation: %v", err)
 	}
 }

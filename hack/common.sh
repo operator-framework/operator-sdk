@@ -20,7 +20,7 @@ function fetch_go_linter {
   header_text "Checking if golangci-lint is installed"
   if ! is_installed golangci-lint; then
     header_text "Installing golangci-lint"
-    go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.21.0
+    curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.21.0
   fi
 }
 
