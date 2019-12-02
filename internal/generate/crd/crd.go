@@ -183,11 +183,11 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 				annotations = nil
 			}
 			crd.SetAnnotations(annotations)
-			sb, err := k8sutil.GetObjectBytes(&crd, yaml.Marshal)
+			b, err := k8sutil.GetObjectBytes(&crd, yaml.Marshal)
 			if err != nil {
 				return nil, err
 			}
-			modifiedCRD = yamlutil.CombineManifests(modifiedCRD, sb)
+			modifiedCRD = yamlutil.CombineManifests(modifiedCRD, b)
 		}
 		if err = scanner.Err(); err != nil {
 			return nil, err
