@@ -75,7 +75,7 @@ type ScorecardTestResult struct {
 	MaximumPoints int `json:"maximumPoints"`
 	// Suggestions is a list of suggestions for the user to improve their score (if applicable)
 	Suggestions []string `json:"suggestions"`
-	// Errors is a list of the errors that occured during the test (this can include both fatal and non-fatal errors)
+	// Errors is a list of the errors that occurred during the test (this can include both fatal and non-fatal errors)
 	Errors []string `json:"errors"`
 	// Labels used for v1alpha2, not included in v1alpha1 JSON output
 	Labels map[string]string `json:"-"`
