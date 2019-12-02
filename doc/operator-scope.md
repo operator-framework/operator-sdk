@@ -25,7 +25,7 @@ This scope is ideal for operator projects which will control resources just in o
 
 This scope is ideal for operator projects which will control resources in more than one namespace.
 
-### Changed required for a cluster-scoped operator
+### Changes required for a cluster-scoped operator
 
 The SDK scaffolds operators to be namespaced by default but with a few modifications to the default manifests the operator can be run as cluster-scoped.
 

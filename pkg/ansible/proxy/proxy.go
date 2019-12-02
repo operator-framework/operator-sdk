@@ -72,14 +72,14 @@ type Options struct {
 	Address           string
 	Port              int
 	Handler           HandlerChain
-	OwnerInjection    bool
-	LogRequests       bool
 	KubeConfig        *rest.Config
 	Cache             cache.Cache
 	RESTMapper        meta.RESTMapper
 	ControllerMap     *controllermap.ControllerMap
 	WatchedNamespaces []string
 	DisableCache      bool
+	OwnerInjection    bool
+	LogRequests       bool
 }
 
 // Run will start a proxy server in a go routine that returns on the error
@@ -276,7 +276,6 @@ func getRequestOwnerRef(req *http.Request) (kubeconfig.NamespacedOwnerReference,
 	// as a subset along with the Namespace of the owner. Please see the
 	// kubeconfig.NamespacedOwnerReference type for more information. The
 	// namespace is required when creating the reconcile requests.
-	json.Unmarshal(authString, &owner)
 	if err := json.Unmarshal(authString, &owner); err != nil {
 		m := "Could not unmarshal auth string"
 		log.Error(err, m)
