@@ -68,7 +68,6 @@ var (
 )
 
 const (
-	scorecardPodName       = "operator-scorecard-test"
 	scorecardContainerName = "scorecard-proxy"
 )
 
