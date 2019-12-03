@@ -4,6 +4,7 @@
 - Support for vars in top level ansible watches. ([#2147](https://github.com/operator-framework/operator-sdk/pull/2147))
 - Support for `"ansible.operator-sdk/verbosity"` annotation on Custom Resources watched by Ansible based operators to override verbosity on an individual resource. ([#2102](https://github.com/operator-framework/operator-sdk/pull/2102))
 - Support for relative helm chart paths in the Helm operator's watches.yaml file. ([#2287](https://github.com/operator-framework/operator-sdk/pull/2287))
+- New `operator-sdk generate crds` subcommand, which generates CRDs from Go types. ([#2276](https://github.com/operator-framework/operator-sdk/pull/2276))
 
 ### Changed
 - Upgrade minimal Ansible version in the init projects from `2.4` to `2.6`. ([#2107](https://github.com/operator-framework/operator-sdk/pull/2107))
@@ -18,9 +19,7 @@
 - **Breaking change:** Renamed `operator-sdk generate openapi` to `operator-sdk generate crds`. ([#2276](https://github.com/operator-framework/operator-sdk/pull/2276))
 
 ### Deprecated
-
-### Removed
-- Removed generation of `zz_generated.openapi.go` files during `operator-sdk generate openapi`. ([#2276](https://github.com/operator-framework/operator-sdk/pull/2276))
+- Deprecated the `operator-sdk generate openapi` command. CRD generation is still supported with `operator-sdk generate crds`. It is now recommended to use [openapi-gen](https://github.com/kubernetes/kube-openapi/tree/master/cmd/openapi-gen) directly for OpenAPI code generation. The `generate openapi` subcommand will be removed in a future release. ([#2276](https://github.com/operator-framework/operator-sdk/pull/2276))
 
 ### Bug Fixes
 - Fix issue faced in the Ansible based operators when `jmespath` queries are used because it was not installed. ([#2252](https://github.com/operator-framework/operator-sdk/pull/2252))
