@@ -23,6 +23,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
@@ -140,14 +141,18 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 		results := csvValidator.Validate(csv)
 		for _, r := range results {
 			if r.HasError() {
+				var errorMsgs strings.Builder
 				for _, e := range r.Errors {
-					return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("error validating ClusterServiceVersion: %s", e.Error())
+					errorMsgs.WriteString(e.Error())
 				}
+				return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("error validating ClusterServiceVersion: %s", errorMsgs.String())
 			}
 			if r.HasWarn() {
+				var warningMsgs strings.Builder
 				for _, w := range r.Warnings {
-					fmt.Printf("csv validation: %s\n", w.Error())
+					warningMsgs.WriteString(w.Error())
 				}
+				log.Warnf("csv validation: [%s]\n", warningMsgs.String())
 			}
 		}
 	}
