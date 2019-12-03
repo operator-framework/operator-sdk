@@ -86,7 +86,15 @@ func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 			// Using "*" to allow access to the resource and all its subresources e.g "memcacheds" and "memcacheds/finalizers"
 			// https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
 			pr.Resources = []string{"*"}
-			pr.Verbs = []string{"*"}
+			pr.Verbs = []string{
+				"create",
+				"delete",
+				"get",
+				"list",
+				"patch",
+				"update",
+				"watch",
+			}
 			role.Rules = append(role.Rules, *pr)
 		}
 
@@ -116,7 +124,15 @@ func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 			// Using "*" to allow access to the resource and all its subresources e.g "memcacheds" and "memcacheds/finalizers"
 			// https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement
 			pr.Resources = []string{"*"}
-			pr.Verbs = []string{"*"}
+			pr.Verbs = []string{
+				"create",
+				"delete",
+				"get",
+				"list",
+				"patch",
+				"update",
+				"watch",
+			}
 			role.Rules = append(role.Rules, *pr)
 		}
 
@@ -164,7 +180,13 @@ rules:
   - configmaps
   - secrets
   verbs:
-  - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - apps
   resources:
@@ -173,7 +195,13 @@ rules:
   - replicasets
   - statefulsets
   verbs:
-  - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 {{- end }}
 {{- range .CustomRules }}
 - verbs:
