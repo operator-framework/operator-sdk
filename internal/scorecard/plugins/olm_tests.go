@@ -91,7 +91,7 @@ func NewCRDsHaveValidationTest(conf OLMTestConfig) *CRDsHaveValidationTest {
 	}
 }
 
-// CRDsHaveResourcesTest is a scorecard test that verifies that the CSV lists used resources in its owned CRDs secyion
+// CRDsHaveResourcesTest is a scorecard test that verifies that the CSV lists used resources in its owned CRDs section
 type CRDsHaveResourcesTest struct {
 	schelpers.TestInfo
 	OLMTestConfig
