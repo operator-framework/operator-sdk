@@ -194,98 +194,172 @@ to the console if the scorecard is being run in with `output` unset or set to `t
 
 ### JSON format
 
-The JSON output is formatted in the same way that a Kubernetes API would be, which allows for updates to the schema as well as the use of various Kubernetes helpers. The Golang structs are defined in `pkg/apis/scorecard/v1alpha1/types.go` and can be easily implemented by plugins written in Golang. Below is the JSON Schema:
+The JSON output is formatted in the same way that a Kubernetes API would be, which allows for updates to the schema as well as the use of various Kubernetes helpers. The Golang structs are defined in `pkg/apis/scorecard/v1alpha2/types.go` and can be easily implemented by plugins written in Golang. Below is the JSON Schema:
 
 ```json
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "$ref": "#/definitions/ScorecardOutput",
   "definitions": {
-    "ScorecardOutput": {
-      "required": [
-        "apiVersion",
-        "kind",
-        "results"
-      ],
+    "FieldsV1": {
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ManagedFieldsEntry": {
       "properties": {
         "apiVersion": {
-          "type": "string",
-          "description": "Version of the object. Ex: osdk.openshift.io/v1alpha1"
+          "type": "string"
         },
-        "kind": {
-          "type": "string",
-          "description": "This should be set to ScorecardOutput"
+        "fieldsType": {
+          "type": "string"
         },
-        "log": {
-          "type": "string",
-          "description": "Log contains the scorecard's log."
+        "fieldsV1": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/FieldsV1"
         },
-        "results": {
-          "items": {
-            "$schema": "http://json-schema.org/draft-04/schema#",
-            "$ref": "#/definitions/ScorecardSuiteResult"
-          },
-          "type": "array",
-          "description": "Results is an array of ScorecardSuiteResult for each suite of the current scorecard run."
+        "manager": {
+          "type": "string"
+        },
+        "operation": {
+          "type": "string"
+        },
+        "time": {
+          "$ref": "#/definitions/Time"
         }
       },
       "additionalProperties": false,
       "type": "object"
     },
-    "ScorecardSuiteResult": {
+    "ObjectMeta": {
+      "properties": {
+        "annotations": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "clusterName": {
+          "type": "string"
+        },
+        "creationTimestamp": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/Time"
+        },
+        "deletionGracePeriodSeconds": {
+          "type": "integer"
+        },
+        "deletionTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "finalizers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "generateName": {
+          "type": "string"
+        },
+        "generation": {
+          "type": "integer"
+        },
+        "labels": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "managedFields": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/ManagedFieldsEntry"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "ownerReferences": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/OwnerReference"
+          },
+          "type": "array"
+        },
+        "resourceVersion": {
+          "type": "string"
+        },
+        "selfLink": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "OwnerReference": {
       "required": [
+        "apiVersion",
+        "kind",
         "name",
-        "description",
-        "error",
-        "pass",
-        "partialPass",
-        "fail",
-        "totalTests",
-        "totalScorePercent",
-        "tests"
+        "uid"
       ],
       "properties": {
+        "apiVersion": {
+          "type": "string"
+        },
+        "blockOwnerDeletion": {
+          "type": "boolean"
+        },
+        "controller": {
+          "type": "boolean"
+        },
+        "kind": {
+          "type": "string"
+        },
         "name": {
-          "type": "string",
-          "description": "Name is the name of the test suite"
+          "type": "string"
         },
-        "description": {
-          "type": "string",
-          "description": "Description is a description of the test suite"
+        "uid": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ScorecardOutput": {
+      "required": [
+        "TypeMeta",
+        "log",
+        "results"
+      ],
+      "properties": {
+        "TypeMeta": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/TypeMeta"
         },
-        "error": {
-          "type": "integer",
-          "description": "Error is the number of tests that ended in the Error state"
+        "log": {
+          "type": "string"
         },
-        "pass": {
-          "type": "integer",
-          "description": "Pass is the number of tests that ended in the Pass state"
+        "metadata": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/ObjectMeta"
         },
-        "partialPass": {
-          "type": "integer",
-          "description": "PartialPass is the number of tests that ended in the PartialPass state"
-        },
-        "fail": {
-          "type": "integer",
-          "description": "Fail is the number of tests that ended in the Fail state"
-        },
-        "totalTests": {
-          "type": "integer",
-          "description": "TotalTests is the total number of tests run in this suite"
-        },
-        "totalScorePercent": {
-          "type": "integer",
-          "description": "TotalScorePercent is the total score of this suite as a percentage"
-        },
-        "tests": {
+        "results": {
           "items": {
             "$schema": "http://json-schema.org/draft-04/schema#",
             "$ref": "#/definitions/ScorecardTestResult"
           },
           "type": "array"
-        },
-        "log": {
-          "type": "string"
         }
       },
       "additionalProperties": false,
@@ -293,48 +367,57 @@ The JSON output is formatted in the same way that a Kubernetes API would be, whi
     },
     "ScorecardTestResult": {
       "required": [
-        "state",
         "name",
-        "description",
-        "earnedPoints",
-        "maximumPoints",
-        "suggestions",
-        "errors"
+        "description"
       ],
       "properties": {
-        "state": {
-          "type": "string",
-          "description": "State is the final state of the test. Valid values are: pass, partial_pass, fail, error"
-        },
-        "name": {
-          "type": "string",
-          "description": "Name is the name of the test"
-        },
         "description": {
-          "type": "string",
-          "description": "Description describes what the test does"
-        },
-        "earnedPoints": {
-          "type": "integer",
-          "description": "EarnedPoints is how many points the test received after running"
-        },
-        "maximumPoints": {
-          "type": "integer",
-          "description": "MaximumPoints is the maximum number of points possible for the test"
-        },
-        "suggestions": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "Suggestions is a list of suggestions for the user to improve their score (if applicable)"
+          "type": "string"
         },
         "errors": {
           "items": {
             "type": "string"
           },
-          "type": "array",
-          "description": "Errors is a list of the errors that occured during the test (this can include both fatal and non-fatal errors)"
+          "type": "array"
+        },
+        "labels": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "log": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "suggestions": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Time": {
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "TypeMeta": {
+      "properties": {
+        "apiVersion": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
         }
       },
       "additionalProperties": false,
