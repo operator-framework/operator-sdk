@@ -48,7 +48,7 @@ Following are some requirements for the operator project which would be  checked
 ## Running the Scorecard
 
 1. Setup the `.osdk-scorecard.yaml` configuration file in your project.. See [Config file](#config-file)
-2. Create the namespace defined in the RBAC files(`role_bindinding`)
+2. Create the namespace defined in the RBAC files(`role_binding`)
 3. Then, run the scorecard, for example `$ operator-sdk scorecard`. See the [Command args](#command-args) to check its options.
 
 **NOTE:** If your operator is non-SDK then some steps will be required in order to meet its requirements.
@@ -59,7 +59,7 @@ The scorecard is configured by a config file that allows configuring both intern
 
 ### Config File
 
-To use scorecard you need create a config file which by defualt will be `<project_dir>/.osdk-scorecard.*`. Following an example of what a YAML formatted config file may look like:
+To use scorecard you need to create a config file which by defualt will be `<project_dir>/.osdk-scorecard.*`. Following an example of what a YAML formatted config file may look like:
 
 ```yaml
 scorecard:
@@ -162,7 +162,6 @@ Following the description of each internal [Plugin](#plugins). Note that are 8 i
 
 | Test        | Description   |
 | --------    | -------- |
-| Bundle Validation | This test validates the bundle manifests found in the bundle directory as specifed by the bundle flag. This test has a maximum score of 1 |
 | Spec Block Exists | This test checks the Custom Resource(s) created in the cluster to make sure that all CRs have a spec block. This test has a maximum score of 1 |
 | Status Block Exists | This test checks the Custom Resource(s) created in the cluster to make sure that all CRs have a status block. This test has a maximum score of 1 |
 | Writing Into CRs Has An Effect | This test reads the scorecard proxy's logs to verify that the operator is making `PUT` and/or `POST` requests to the API server, indicating that it is modifying resources. This test has a maximum score of 1 |
@@ -171,6 +170,9 @@ Following the description of each internal [Plugin](#plugins). Note that are 8 i
 
 | Test        | Description   |
 | --------    | -------- |
+| Bundle Validation | This test validates the bundle manifests found in the bundle directory as specifed by the bundle flag.  If the bundle contents contain
+errors, then the test result output will include the validator log as well as
+error messages from the validation library.|
 | Provided APIs have validation |This test verifies that the CRDs for the provided CRs contain a validation section and that there is validation for each spec and status field detected in the CR. This test has a maximum score equal to the number of CRs provided via the `cr-manifest` option. |
 | Owned CRDs Have Resources Listed | This test makes sure that the CRDs for each CR provided via the `cr-manifest` option have a `resources` subsection in the [`owned` CRDs section][owned-crds] of the CSV. If the test detects used resources that are not listed in the resources section, it will list them in the suggestions at the end of the test. This test has a maximum score equal to the number of CRs provided via the `cr-manifest` option. |
 | CRs Have At Least 1 Example | This test checks that the CSV has an [`alm-examples` annotation][alm-examples] for each CR passed to the `cr-manifest` option in its metadata. This test has a maximum score equal to the number of CRs provided via the `cr-manifest` option. |
@@ -393,34 +395,9 @@ Example of a valid JSON output:
 }
 ```
 
-The Bundle Validation Test examines an operator's bundle contents
-if you specify a bundle flag.  If the bundle contents contain
-errors, then the test result output will include the validator log as well as
-error messages from the validation library. Test results can contain
-a per-test log in version v1alpha2.
-
-Example of a JSON output when running the bundle validation test:
-
-```json
-    {
-      "name": "Bundle Validation Test",
-      "description": "Validates bundle contents",
-      "labels": {
-        "necessity": "optional",
-        "suite": "basic",
-        "test": "bundlevalidation"
-      },
-      "state": "fail",
-      "errors": [
-        "Error: Value error getting bundles from manifests dir \"deploy/olm-catalog/memcached-operator\": [could not decode contents of file deploy/olm-catalog/memcached-operator/0.0.1/cache.example.com_memcacheds_crd.yaml into package: error converting YAML to JSON: yaml: line 4: mapping values are not allowed in this context, could not decode contents of file deploy/olm-catalog/memcached-operator/0.0.1/memcached-operator.v0.0.1.clusterserviceversion.yaml into package: error converting YAML to JSON: yaml: line 3: mapping values are not allowed in this context, could not decode contents of file deploy/olm-catalog/memcached-operator/memcached-operator.package.yaml into package: error converting YAML to JSON: yaml: line 3: mapping values are not allowed in this context]: parse manifests from \"deploy/olm-catalog/memcached-operator\""
-      ],
-      "log": "time=\"2019-12-02T12:55:29-06:00\" level=info msg=\"loading Bundles\" dir=deploy/olm-catalog/memcached-operator\ntime=\"2019-12-02T12:55:29-06:00\" level=info msg=directory dir=deploy/olm-catalog/memcached-operator file=memcached-operator load=bundles\ntime=\"2019-12-02T12:55:29-06:00\" level=info msg=directory dir=deploy/olm-catalog/memcached-operator file=0.0.1 load=bundles\ntime=\"2019-12-02T12:55:29-06:00\" level=info msg=\"loading Packages and Entries\" dir=deploy/olm-catalog/memcached-operator\ntime=\"2019-12-02T12:55:29-06:00\" level=info msg=directory dir=deploy/olm-catalog/memcached-operator file=memcached-operator load=package\ntime=\"2019-12-02T12:55:29-06:00\" level=info msg=directory dir=deploy/olm-catalog/memcached-operator file=0.0.1 load=package\n"
-    },
-```
-
-
 **NOTE:** The `ScorecardOutput.Log` field is only intended to be used to log the scorecard's output and the scorecard will ignore that field if a plugin provides it.
 To add logs to the main `ScorecardOuput.Log` field, a plugin can output the logs to `stderr`.
+
 
 ## Running the scorecard with an OLM-managed operator
 
