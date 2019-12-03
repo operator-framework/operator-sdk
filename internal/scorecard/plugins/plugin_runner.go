@@ -32,6 +32,7 @@ import (
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
 
 	"github.com/ghodss/yaml"
+	"github.com/operator-framework/api/pkg/validation"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 	"github.com/pkg/errors"
@@ -131,8 +132,24 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 		if err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to read csv: %v", err)
 		}
+
 		if err = yaml.Unmarshal(yamlSpec, csv); err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("error getting ClusterServiceVersion: %v", err)
+		}
+
+		csvValidator := validation.ClusterServiceVersionValidator
+		results := csvValidator.Validate(csv)
+		for _, r := range results {
+			if r.HasError() {
+				for _, e := range r.Errors {
+					return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("error validating ClusterServiceVersion: %s", e.Error())
+				}
+			}
+			if r.HasWarn() {
+				for _, w := range r.Warnings {
+					fmt.Printf("csv validation: %s\n", w.Error())
+				}
+			}
 		}
 	}
 
