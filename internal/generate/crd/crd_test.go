@@ -36,7 +36,11 @@ func TestCRDGo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer func() { os.Chdir(wd) }()
+	defer func() {
+		if err = os.Chdir(wd); err != nil {
+			t.Fatal(err)
+		}
+	}()
 	if err = os.Chdir(tfDir); err != nil {
 		t.Fatal(err)
 	}
