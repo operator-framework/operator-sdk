@@ -263,7 +263,7 @@ func validateInstallModeWithNamespaces(mode olmapiv1alpha1.InstallModeType, name
 	return nil
 }
 
-// getOperatorGroupInNamespace gets the OperatorGroup in namespace. Becuase
+// getOperatorGroupInNamespace gets the OperatorGroup in namespace. Because
 // there must only be one OperatorGroup per namespace, an error is returned
 // if more than one is found. nil is returned if no OperatorGroup exists in
 // namespace.
