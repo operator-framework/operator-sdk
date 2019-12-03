@@ -32,8 +32,6 @@ import (
 
 var log = logf.Log.WithName("metrics")
 
-var trueVar = true
-
 const (
 	// OperatorPortName defines the default operator metrics port name used in the metrics Service.
 	OperatorPortName = "http-metrics"
