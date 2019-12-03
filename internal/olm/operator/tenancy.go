@@ -258,7 +258,7 @@ func validateInstallModeWithNamespaces(mode olmapiv1alpha1.InstallModeType, name
 			return errors.Errorf("installMode %s must be passed with exactly one empty namespace, have: %+q", mode, namespaces)
 		}
 	default:
-		errors.Errorf("installMode %q is not a valid installMode type", mode)
+		return errors.Errorf("installMode %q is not a valid installMode type", mode)
 	}
 	return nil
 }

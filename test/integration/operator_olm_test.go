@@ -102,7 +102,7 @@ func SingleOperator(t *testing.T) {
 	}
 	defer func() {
 		opcmd.Force = true
-		opcmd.Down()
+		_ = opcmd.Down()
 		os.RemoveAll(tmp)
 	}()
 	for _, c := range cases {

@@ -74,7 +74,7 @@ func (m *RegistryResources) IsManifestDataStale(ctx context.Context, namespace s
 // hashContents creates a base32-encoded md5 digest of b's bytes.
 func hashContents(b []byte) string {
 	h := md5.New()
-	h.Write(b)
+	_, _ = h.Write(b)
 	enc := base32.StdEncoding.WithPadding(base32.NoPadding)
 	return enc.EncodeToString(h.Sum(nil))
 }
