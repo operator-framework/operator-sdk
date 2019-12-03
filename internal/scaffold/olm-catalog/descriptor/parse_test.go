@@ -317,7 +317,7 @@ func TestParsePathFromMember(t *testing.T) {
 		{"valid single with inline tag", types.Member{Tags: `json:"foo,inline"`}, inlinedTag, false},
 		{"valid empty with inline tag", types.Member{Tags: `json:",inline"`}, inlinedTag, false},
 		{"valid ignore tag", types.Member{Tags: `json:"-"`}, ignoredTag, false},
-		{"valid ignore tag with name", types.Member{Tags: `json:"foo,-"`}, ignoredTag, false},
+		{"valid hyphen as name", types.Member{Tags: `json:"-,"`}, "-", false},
 		{"JSON tag in multiple tags", types.Member{Tags: `json:"foo" protobuf:"bar"`}, "foo", false},
 		{"no JSON tag in tags", types.Member{Tags: `protobuf:"foo"`}, "Foo", false},
 		{"invalid tags", types.Member{Tags: `blahblah`}, "", true},

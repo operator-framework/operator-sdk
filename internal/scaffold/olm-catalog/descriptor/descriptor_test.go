@@ -55,11 +55,11 @@ func TestGetKindTypeForAPI(t *testing.T) {
 	}{
 		{
 			"Find types successfully",
-			testFrameworkPackage, "Dummy", 20, false,
+			testFrameworkPackage, "Dummy", 21, false,
 		},
 		{
 			"Find types with error from wrong kind",
-			testFrameworkPackage, "NotFound", 20, true,
+			testFrameworkPackage, "NotFound", 21, true,
 		},
 	}
 	wd, err := os.Getwd()

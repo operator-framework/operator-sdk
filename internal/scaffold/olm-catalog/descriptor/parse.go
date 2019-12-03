@@ -217,7 +217,7 @@ func getPathFromMember(member types.Member) (string, error) {
 			if len(jsonTag.Options) == 0 {
 				return ignoredTag, nil
 			}
-			return member.Name, nil
+			return jsonTag.Name, nil
 		case jsonTag.Name != "":
 			return jsonTag.Name, nil
 		}
