@@ -73,7 +73,7 @@ const (
 
 var log *logrus.Logger
 
-func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, logFile io.ReadWriter) (scapiv1alpha1.ScorecardOutput, error) {
+func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, logFile io.Writer) (scapiv1alpha1.ScorecardOutput, error) {
 	log = logrus.New()
 	log.SetFormatter(&logrus.TextFormatter{DisableColors: true})
 	log.SetOutput(logFile)
