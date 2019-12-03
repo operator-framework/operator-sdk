@@ -23,10 +23,10 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
-	opv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	operatorsv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/operator-framework/operator-registry/pkg/registry"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -52,7 +52,7 @@ type CSVTemplateConfig struct {
 	Maturity        string
 	ReplacesCSVName string
 	CRDKeys         []DefinitionKey
-	InstallModes    []opv1alpha1.InstallMode
+	InstallModes    []operatorsv1alpha1.InstallMode
 }
 
 const csvTmpl = `apiVersion: operators.coreos.com/v1alpha1
@@ -215,11 +215,11 @@ func writeOperatorManifests(root, operatorName, defaultChannel string, csvConfig
 		bundleDir := filepath.Join(manifestsDir, csvConfig.OperatorVersion)
 		for _, key := range csvConfig.CRDKeys {
 			crd := apiextv1beta1.CustomResourceDefinition{
-				TypeMeta: v1.TypeMeta{
+				TypeMeta: metav1.TypeMeta{
 					APIVersion: apiextv1beta1.SchemeGroupVersion.String(),
 					Kind:       "CustomResourceDefinition",
 				},
-				ObjectMeta: v1.ObjectMeta{Name: key.Name},
+				ObjectMeta: metav1.ObjectMeta{Name: key.Name},
 				Spec: apiextv1beta1.CustomResourceDefinitionSpec{
 					Names: apiextv1beta1.CustomResourceDefinitionNames{
 						Kind:     key.Kind,
