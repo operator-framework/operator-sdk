@@ -45,7 +45,6 @@ require (
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	go.uber.org/zap v1.10.0
 	golang.org/x/tools v0.0.0-20191018212557-ed542cd5b28a
-	google.golang.org/genproto v0.0.0-20181016170114-94acd270e44e // indirect
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/yaml.v2 v2.2.4
 	k8s.io/api v0.0.0
