@@ -56,7 +56,15 @@ func TestRoleCustomRules(t *testing.T) {
 			{
 				APIGroups: []string{"policy"},
 				Resources: []string{"poddisruptionbudgets"},
-				Verbs:     []string{rbacv1.VerbAll},
+				Verbs: []string{
+					"create",
+					"delete",
+					"get",
+					"list",
+					"patch",
+					"update",
+					"watch",
+				},
 			},
 			{
 				APIGroups: []string{"rbac.authorization.k8s.io"},
@@ -91,7 +99,13 @@ rules:
   - configmaps
   - secrets
   verbs:
-  - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - apps
   resources:
@@ -100,7 +114,13 @@ rules:
   - replicasets
   - statefulsets
   verbs:
-  - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - monitoring.coreos.com
   resources:
@@ -148,7 +168,13 @@ rules:
   - configmaps
   - secrets
   verbs:
-  - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - apps
   resources:
@@ -157,7 +183,13 @@ rules:
   - replicasets
   - statefulsets
   verbs:
-  - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - monitoring.coreos.com
   resources:
@@ -194,7 +226,13 @@ metadata:
   name: app-operator
 rules:
 - verbs:
-  - "*"
+  - "create"
+  - "delete"
+  - "get"
+  - "list"
+  - "patch"
+  - "update"
+  - "watch"
   apiGroups:
   - "policy"
   resources:
