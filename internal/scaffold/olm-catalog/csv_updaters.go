@@ -44,8 +44,8 @@ type csvUpdater interface {
 	apply(*olmapiv1alpha1.ClusterServiceVersion) error
 }
 
-func setCSVInstallStrategy(csv *olmapiv1alpha1.ClusterServiceVersion, strat olminstall.Strategy) error {
-	sb, err := json.Marshal(strat)
+func setCSVInstallStrategy(csv *olmapiv1alpha1.ClusterServiceVersion, strategy olminstall.Strategy) error {
+	sb, err := json.Marshal(strategy)
 	if err != nil {
 		return err
 	}
@@ -55,14 +55,16 @@ func setCSVInstallStrategy(csv *olmapiv1alpha1.ClusterServiceVersion, strat olmi
 
 type roles [][]byte
 
+var _ csvUpdater = roles{}
+
 func (us roles) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	// Get install strategy from csv. Default to a deployment strategy if none found.
-	strat, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
+	strategy, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
 	if err != nil {
 		return err
 	}
 
-	switch s := strat.(type) {
+	switch s := strategy.(type) {
 	case *olminstall.StrategyDetailsDeployment:
 		perms := []olminstall.StrategyDeploymentPermissions{}
 		for _, u := range us {
@@ -77,7 +79,7 @@ func (us roles) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 		}
 		s.Permissions = perms
 	}
-	if err = setCSVInstallStrategy(csv, strat); err != nil {
+	if err = setCSVInstallStrategy(csv, strategy); err != nil {
 		return err
 	}
 	return nil
@@ -85,14 +87,16 @@ func (us roles) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 
 type clusterRoles [][]byte
 
+var _ csvUpdater = clusterRoles{}
+
 func (us clusterRoles) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	// Get install strategy from csv. Default to a deployment strategy if none found.
-	strat, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
+	strategy, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
 	if err != nil {
 		return err
 	}
 
-	switch s := strat.(type) {
+	switch s := strategy.(type) {
 	case *olminstall.StrategyDetailsDeployment:
 		perms := []olminstall.StrategyDeploymentPermissions{}
 		for _, u := range us {
@@ -107,7 +111,7 @@ func (us clusterRoles) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err err
 		}
 		s.ClusterPermissions = perms
 	}
-	if err = setCSVInstallStrategy(csv, strat); err != nil {
+	if err = setCSVInstallStrategy(csv, strategy); err != nil {
 		return err
 	}
 	return nil
@@ -115,13 +119,15 @@ func (us clusterRoles) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err err
 
 type deployments [][]byte
 
+var _ csvUpdater = deployments{}
+
 func (us deployments) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	// Get install strategy from csv. Default to a deployment strategy if none found.
-	strat, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
+	strategy, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
 	if err != nil {
 		return err
 	}
-	switch s := strat.(type) {
+	switch s := strategy.(type) {
 	case *olminstall.StrategyDetailsDeployment:
 		depSpecs := []olminstall.StrategyDeploymentSpec{}
 		for _, u := range us {
@@ -144,7 +150,7 @@ func (us deployments) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err erro
 		}
 		s.DeploymentSpecs = depSpecs
 	}
-	if err = setCSVInstallStrategy(csv, strat); err != nil {
+	if err = setCSVInstallStrategy(csv, strategy); err != nil {
 		return err
 	}
 	return nil
@@ -210,6 +216,8 @@ func (descs descSorter) Swap(i, j int) { descs[i], descs[j] = descs[j], descs[i]
 
 type crds [][]byte
 
+var _ csvUpdater = crds{}
+
 // apply updates csv's "owned" CRDDescriptions. "required" CRDDescriptions are
 // left as-is, since they are user-defined values.
 // apply will only make a new spec.customresourcedefinitions.owned element for
@@ -251,6 +259,8 @@ func (us crds) apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 }
 
 type crs [][]byte
+
+var _ csvUpdater = crs{}
 
 func (us crs) apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	examples := []json.RawMessage{}
