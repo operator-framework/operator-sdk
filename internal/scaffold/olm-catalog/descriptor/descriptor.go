@@ -25,17 +25,28 @@ import (
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/gengo/parser"
 	"k8s.io/gengo/types"
+)
+
+var (
+	// ErrAPIDirNotExist is returned if an API directory does not exist.
+	ErrAPIDirNotExist = errors.New("directory for API does not exist")
+	// ErrAPITypeNotFound is returned if no type with a name matching the kind
+	// of an API is found.
+	ErrAPITypeNotFound = errors.New("kind type for API not found")
 )
 
 // GetCRDDescriptorForGVK parses type and struct field declaration comments on
 // API types to populate a csv's spec.customresourcedefinitions.owned fields
 // for a given API identified by Group, Version, and Kind in apisDir.
 // TODO(estroz): support ActionDescriptors parsing/setting.
-func GetCRDDescriptorForGVK(apisDir string, crdDesc *olmapiv1alpha1.CRDDescription, gvk schema.GroupVersionKind) error {
+func GetCRDDescriptorForGVK(apisDir string, gvk schema.GroupVersionKind) (olmapiv1alpha1.CRDDescription, error) {
+	crdDesc := olmapiv1alpha1.CRDDescription{
+		Version: gvk.Version,
+		Kind:    gvk.Kind,
+	}
 	group := gvk.Group
 	if strings.Contains(group, ".") {
 		group = strings.Split(group, ".")[0]
@@ -44,25 +55,23 @@ func GetCRDDescriptorForGVK(apisDir string, crdDesc *olmapiv1alpha1.CRDDescripti
 	universe, err := getTypesFromDir(apiDir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Infof("API directory %s does not exist. Skipping CSV annotation parsing for API %s.", apiDir, gvk)
-			return nil
+			return olmapiv1alpha1.CRDDescription{}, ErrAPIDirNotExist
 		}
-		return err
+		return olmapiv1alpha1.CRDDescription{}, err
 	}
 	apiPkg := path.Join(projutil.GetGoPkg(), filepath.ToSlash(apiDir))
 	pkgTypes, err := getTypesForPkg(apiPkg, universe)
 	if err != nil {
-		return err
+		return olmapiv1alpha1.CRDDescription{}, err
 	}
 	kindType := findKindType(gvk.Kind, pkgTypes)
 	if kindType == nil {
-		log.Infof("No type %s found. Skipping CSV annotation parsing for API %s.", gvk.Kind, gvk)
-		return nil
+		return olmapiv1alpha1.CRDDescription{}, ErrAPITypeNotFound
 	}
 	comments := append(kindType.SecondClosestCommentLines, kindType.CommentLines...)
 	kindDescriptors, err := parseCSVGenAnnotations(comments)
 	if err != nil {
-		return errors.Wrapf(err, "error parsing CSV type %s annotations", kindType.Name.Name)
+		return olmapiv1alpha1.CRDDescription{}, errors.Wrapf(err, "error parsing CSV type %s annotations", kindType.Name.Name)
 	}
 	if description := parseDescription(comments); description != "" {
 		crdDesc.Description = description
@@ -76,18 +85,18 @@ func GetCRDDescriptorForGVK(apisDir string, crdDesc *olmapiv1alpha1.CRDDescripti
 	for _, member := range kindType.Members {
 		path, err := getPathFromMember(member)
 		if err != nil {
-			return errors.Wrapf(err, "error parsing %s type member %s JSON tags", gvk.Kind, member.Name)
+			return olmapiv1alpha1.CRDDescription{}, errors.Wrapf(err, "error parsing %s type member %s JSON tags", gvk.Kind, member.Name)
 		}
 		if path != typeSpec && path != typeStatus {
 			continue
 		}
 		tree, err := newTypeTreeFromRoot(member.Type)
 		if err != nil {
-			return errors.Wrapf(err, "error creating type tree for member type %s", member.Type.Name)
+			return olmapiv1alpha1.CRDDescription{}, errors.Wrapf(err, "error creating type tree for member type %s", member.Type.Name)
 		}
 		descriptors, err := tree.getDescriptorsFor(path)
 		if err != nil {
-			return err
+			return olmapiv1alpha1.CRDDescription{}, err
 		}
 		if path == typeSpec {
 			for _, d := range sortDescriptors(descriptors) {
@@ -104,7 +113,7 @@ func GetCRDDescriptorForGVK(apisDir string, crdDesc *olmapiv1alpha1.CRDDescripti
 			}
 		}
 	}
-	return nil
+	return crdDesc, nil
 }
 
 // getTypesFromDir gets all Go types from dir.

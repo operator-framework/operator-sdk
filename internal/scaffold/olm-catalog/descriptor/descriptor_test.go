@@ -129,12 +129,15 @@ func TestGetCRDDescriptorForGVK(t *testing.T) {
 		gvk         schema.GroupVersionKind
 		expected    olmapiv1alpha1.CRDDescription
 		wantErr     bool
+		expErr      error
 	}{
 		{
 			"Populate CRDDescription successfully",
 			filepath.Join("pkg", "apis"),
 			schema.GroupVersionKind{Group: "cache.example.com", Version: "v1alpha1", Kind: "Dummy"},
 			olmapiv1alpha1.CRDDescription{
+				Kind:        "Dummy",
+				Version:     "v1alpha1",
 				DisplayName: "Dummy App",
 				Description: "Dummy is the Schema for the dummy API",
 				Resources: []olmapiv1alpha1.APIResourceReference{
@@ -154,12 +157,15 @@ func TestGetCRDDescriptorForGVK(t *testing.T) {
 				},
 			},
 			false,
+			nil,
 		},
 		{
 			"Populate CRDDescription with non-standard spec type successfully",
 			filepath.Join("pkg", "apis"),
 			schema.GroupVersionKind{Group: "cache.example.com", Version: "v1alpha1", Kind: "OtherDummy"},
 			olmapiv1alpha1.CRDDescription{
+				Kind:        "OtherDummy",
+				Version:     "v1alpha1",
 				DisplayName: "Other Dummy App",
 				Description: "OtherDummy is the Schema for the other dummy API",
 				Resources: []olmapiv1alpha1.APIResourceReference{
@@ -177,26 +183,28 @@ func TestGetCRDDescriptorForGVK(t *testing.T) {
 				},
 			},
 			false,
+			nil,
 		},
 		{
 			"Fail to populate CRDDescription with skip on dir not exist",
 			filepath.Join("pkg", "notexist"),
 			schema.GroupVersionKind{Group: "cache.example.com", Version: "v1alpha1", Kind: "Dummy"},
 			olmapiv1alpha1.CRDDescription{},
-			false,
+			true,
+			ErrAPIDirNotExist,
 		},
 		{
 			"Fail to populate CRDDescription with skip on type",
 			filepath.Join("pkg", "apis"),
 			schema.GroupVersionKind{Group: "cache.example.com", Version: "v1alpha1", Kind: "NoKind"},
 			olmapiv1alpha1.CRDDescription{},
-			false,
+			true,
+			ErrAPITypeNotFound,
 		},
 	}
 
 	for _, c := range cases {
-		description := olmapiv1alpha1.CRDDescription{}
-		err := GetCRDDescriptorForGVK(c.apisDir, &description, c.gvk)
+		description, err := GetCRDDescriptorForGVK(c.apisDir, c.gvk)
 		if !c.wantErr && err != nil {
 			t.Errorf("%s: expected nil error, got %q", c.description, err)
 		} else if c.wantErr && err == nil {

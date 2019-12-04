@@ -17,6 +17,7 @@ package catalog
 import (
 	"bytes"
 	"encoding/json"
+	goerrors "errors"
 	"sort"
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
@@ -227,15 +228,19 @@ func (us crds) apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 				Version: ver.Name,
 				Kind:    crd.Spec.Names.Kind,
 			}
-			newCRDDesc := olmapiv1alpha1.CRDDescription{
-				Name:    crd.GetName(),
-				Version: ver.Name,
-				Kind:    crd.Spec.Names.Kind,
-			}
-			err := descriptor.GetCRDDescriptorForGVK(scaffold.ApisDir, &newCRDDesc, gvk)
+			newCRDDesc, err := descriptor.GetCRDDescriptorForGVK(scaffold.ApisDir, gvk)
 			if err != nil {
-				return errors.Wrapf(err, "failed to set CRD descriptors for %s", gvk)
+				if goerrors.Is(err, descriptor.ErrAPIDirNotExist) {
+					log.Infof("Directory for API %s does not exist. Skipping CSV annotation parsing for API.", gvk)
+				} else if goerrors.Is(err, descriptor.ErrAPITypeNotFound) {
+					log.Infof("No kind type found for API %s. Skipping CSV annotation parsing for API.", gvk)
+				} else {
+					return errors.Wrapf(err, "failed to set CRD descriptors for %s", gvk)
+				}
+				continue
 			}
+			// Only set the name if no error was returned.
+			newCRDDesc.Name = crd.GetName()
 			ownedCRDs = append(ownedCRDs, newCRDDesc)
 		}
 	}
