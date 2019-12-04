@@ -84,7 +84,7 @@ func TestCSVNew(t *testing.T) {
 	}
 }
 
-func TestCSVExclude(t *testing.T) {
+func TestCSVInclude(t *testing.T) {
 	buf := &bytes.Buffer{}
 	s := &scaffold.Scaffold{
 		GetWriter: func(_ string, _ os.FileMode) (io.Writer, error) {
@@ -98,8 +98,7 @@ func TestCSVExclude(t *testing.T) {
 	sc := &CSV{
 		Config: genutil.Config{
 			OperatorName: operatorName,
-			// Exclude the whole deploy dir, which should produce an empty CSV.
-			ExcludeFuncs: genutil.MakeExcludeFuncs(testDeployDir),
+			// Include no directories, which should produce an empty CSV.
 		},
 		CSVVersion: csvVer,
 		pathPrefix: testDataDir,

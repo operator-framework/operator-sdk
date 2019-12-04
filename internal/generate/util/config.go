@@ -31,16 +31,20 @@ type Config struct {
 	// OutputDir is a dir in which to generate output files. If not set, a
 	// default is used on a per-generator basis.
 	OutputDir string
-	// ExcludeFuncs contains a set of filters for paths that a generator
-	// may encounter while gathering data for generation. If a func returns
-	// true, that path will be excluded by the generator.
-	ExcludeFuncs []func(string) bool
+	// IncludeFuncs contains a set of filters for paths that a generator
+	// may encounter while gathering data for generation. If any func returns
+	// true, that path will be included by the generator.
+	IncludeFuncs IncludeFuncs
 }
 
-// MakeExcludeFuncs creates a set of closures around each path in paths
-// to populate Config.ExcludeFuncs. If the argument to the closure has
+// IncludeFuncs is a slice of filter funcs. A string passing any func in
+// IncludeFuncs satisfies the filter.
+type IncludeFuncs []func(string) bool
+
+// MakeIncludeFuncs creates a set of closures around each path in paths
+// to populate Config.IncludeFuncs. If the argument to the closure has
 // a prefix of path, it returns true.
-func MakeExcludeFuncs(paths ...string) (excludes []func(string) bool) {
+func MakeIncludeFuncs(paths ...string) (includes IncludeFuncs) {
 	pathSet := map[string]struct{}{}
 	for _, path := range paths {
 		pathSet[filepath.Clean(path)] = struct{}{}
@@ -50,11 +54,21 @@ func MakeExcludeFuncs(paths ...string) (excludes []func(string) bool) {
 		// Copy the string for the closure.
 		pb := strings.Builder{}
 		pb.WriteString(path)
-		excludes = append(excludes, func(p string) bool {
+		includes = append(includes, func(p string) bool {
 			// Handle absolute paths referencing the project directory.
 			p = strings.TrimPrefix(p, wd)
 			return strings.HasPrefix(filepath.Clean(p), pb.String())
 		})
 	}
-	return excludes
+	return includes
+}
+
+// IsInclude checks if path passes any filter in funcs.
+func (funcs IncludeFuncs) IsInclude(path string) bool {
+	for _, f := range funcs {
+		if f(path) {
+			return true
+		}
+	}
+	return false
 }

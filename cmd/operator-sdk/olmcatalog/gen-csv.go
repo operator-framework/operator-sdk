@@ -37,7 +37,7 @@ var (
 	csvVersion     string
 	csvChannel     string
 	fromVersion    string
-	excludePaths   []string
+	includePaths   []string
 	operatorName   string
 	updateCRDs     bool
 	defaultChannel bool
@@ -61,7 +61,7 @@ version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.`,
 		log.Fatalf("Failed to mark `csv-version` flag for `olm-catalog gen-csv` subcommand as required: %v", err)
 	}
 	genCSVCmd.Flags().StringVar(&fromVersion, "from-version", "", "Semantic version of an existing CSV to use as a base")
-	genCSVCmd.Flags().StringSliceVar(&excludePaths, "exclude", nil, "Paths to exclude from CSV generation, ex. \"deploy/prod,deploy/test\"")
+	genCSVCmd.Flags().StringSliceVar(&includePaths, "include", []string{scaffold.DeployDir}, "Paths to include in CSV generation, ex. \"deploy/prod,deploy/test\". If this flag is set and you want to enable default behavior, you must include \"deploy/\" in the argument list")
 	genCSVCmd.Flags().BoolVar(&updateCRDs, "update-crds", false, "Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's")
 	genCSVCmd.Flags().StringVar(&operatorName, "operator-name", "", "Operator name to use while generating CSV")
 	genCSVCmd.Flags().StringVar(&csvChannel, "csv-channel", "", "Channel the CSV should be registered under in the package manifest")
@@ -95,7 +95,7 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 	}
 	gcfg := genutil.Config{
 		OperatorName: operatorName,
-		ExcludeFuncs: genutil.MakeExcludeFuncs(excludePaths...),
+		IncludeFuncs: genutil.MakeIncludeFuncs(includePaths...),
 	}
 
 	s := &scaffold.Scaffold{}
@@ -120,7 +120,7 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 	// Write CRD's to the new or updated CSV package dir.
 	bundleDir := filepath.Join(catalog.OLMCatalogDir, operatorName, csvVersion)
 	if updateCRDs {
-		err = writeCRDsToDir(scaffold.CRDsDir, bundleDir, gcfg.ExcludeFuncs)
+		err = writeCRDsToDir(scaffold.CRDsDir, bundleDir, gcfg.IncludeFuncs)
 		if err != nil {
 			return err
 		}
@@ -162,15 +162,13 @@ func verifyCSVVersion(version string) error {
 	return nil
 }
 
-func writeCRDsToDir(fromDir, toDir string, excludeFuncs []func(string) bool) error {
-	return filepath.Walk(fromDir, func(path string, info os.FileInfo, werr error) error {
-		if werr != nil || info.IsDir() {
-			return werr
+func writeCRDsToDir(fromDir, toDir string, includeFuncs genutil.IncludeFuncs) error {
+	return filepath.Walk(fromDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			return err
 		}
-		for _, exclude := range excludeFuncs {
-			if exclude(path) {
-				return nil
-			}
+		if !includeFuncs.IsInclude(path) {
+			return nil
 		}
 		b, err := ioutil.ReadFile(path)
 		if err != nil {

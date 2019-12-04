@@ -313,8 +313,8 @@ func (s *CSV) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error
 // user-defined manifests and updates csv.
 func (s *CSV) updateCSVFromManifestFiles(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	// Exclude deploy/olm-catalog to avoid parsing unnecessary files.
-	olmExclude := genutil.MakeExcludeFuncs(filepath.Join(s.pathPrefix, OLMCatalogDir))
-	excludeFuncs := append(s.ExcludeFuncs, olmExclude...)
+	olmExclude := genutil.MakeIncludeFuncs(filepath.Join(s.pathPrefix, OLMCatalogDir))
+	includeFuncs := append(s.IncludeFuncs, olmExclude...)
 	store := NewUpdaterStore()
 	otherSpecs := make(map[string][][]byte)
 	root := filepath.Join(s.pathPrefix, scaffold.DeployDir)
@@ -322,10 +322,8 @@ func (s *CSV) updateCSVFromManifestFiles(csv *olmapiv1alpha1.ClusterServiceVersi
 		if err != nil || info.IsDir() {
 			return err
 		}
-		for _, exclude := range excludeFuncs {
-			if exclude(path) {
-				return nil
-			}
+		if !includeFuncs.IsInclude(path) {
+			return nil
 		}
 
 		yamlData, err := afero.ReadFile(s.getFS(), path)

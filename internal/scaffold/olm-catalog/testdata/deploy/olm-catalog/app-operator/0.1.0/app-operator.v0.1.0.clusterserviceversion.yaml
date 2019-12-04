@@ -9,13 +9,6 @@ metadata:
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
-    owned:
-    - kind: AppService
-      name: appservice.example.com
-      version: v1alpha1
-    - kind: AppService2
-      name: appservice2.example.com
-      version: v1alpha2
     required:
     - description: Represents a cluster of etcd nodes.
       displayName: etcd Cluster
