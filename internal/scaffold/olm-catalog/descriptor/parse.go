@@ -64,10 +64,6 @@ func sortResources(rs []olmapiv1alpha1.APIResourceReference) []olmapiv1alpha1.AP
 	return rs
 }
 
-func wrapParseErr(err error) error {
-	return errors.Wrap(err, "error parsing csv-gen annotation")
-}
-
 // parseCSVGenAnnotations parses all descriptor annotations from comments,
 // each of which should contain one spec.customresourcedefinitions.owned entry.
 // field Once all comments have been parsed, the entry is added to a

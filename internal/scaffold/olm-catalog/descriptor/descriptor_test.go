@@ -70,7 +70,11 @@ func TestGetKindTypeForAPI(t *testing.T) {
 	if err := os.Chdir(tfDir); err != nil {
 		t.Fatal(err)
 	}
-	defer os.Chdir(wd)
+	defer func() {
+		if err = os.Chdir(wd); err != nil {
+			t.Fatal(err)
+		}
+	}()
 	tfAPIDir := filepath.Join("pkg", "apis", "cache", "v1alpha1")
 	universe, err := getTypesFromDir(tfAPIDir)
 	if err != nil {
@@ -107,7 +111,11 @@ func TestGetCRDDescriptorForGVK(t *testing.T) {
 	if err := os.Chdir(tfDir); err != nil {
 		t.Fatal(err)
 	}
-	defer os.Chdir(wd)
+	defer func() {
+		if err = os.Chdir(wd); err != nil {
+			t.Fatal(err)
+		}
+	}()
 	xdescsFor := func(paths ...string) (xdescs []string) {
 		for _, p := range paths {
 			xdescs = append(xdescs, getSpecXDescriptorsByPath(nil, p)...)
