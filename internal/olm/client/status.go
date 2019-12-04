@@ -27,24 +27,14 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/install"
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/client-go/kubernetes/scheme"
 )
-
-var sch = scheme.Scheme
-
-func init() {
-	install.Install(sch)
-}
 
 type Status struct {
 	Resources []ResourceStatus
@@ -125,48 +115,31 @@ func (s Status) HasInstalledResources() (bool, error) {
 // getCRDKindSet returns the set of all kinds specified by all CRDs in s.
 func (s Status) getCRDKindSet() (sets.String, error) {
 	crdKindSet := sets.NewString()
-	dec := serializer.NewCodecFactory(sch).UniversalDeserializer()
 	for _, r := range s.Resources {
 		if r.GVK.Kind == "CustomResourceDefinition" {
+			u := &unstructured.Unstructured{}
 			switch v := r.requestObject.(type) {
 			case *unstructured.Unstructured:
-				vb, err := v.MarshalJSON()
-				if err != nil {
-					return nil, err
-				}
-				// Use unversioned CustomResourceDefinition to avoid implementing cast
-				// for all versions.
-				obj, _, err := dec.Decode(vb, nil, nil)
-				if err != nil {
-					return nil, err
-				}
-				kind, err := getVersionedCRDKind(obj)
-				if err != nil {
-					return nil, err
-				}
-				crdKindSet.Insert(kind)
+				u = v
 			default:
-				kind, err := getVersionedCRDKind(v)
+				uObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&v)
 				if err != nil {
 					return nil, err
 				}
-				crdKindSet.Insert(kind)
+				// Other fields are not important, just the CRD kind.
+				u.Object = uObj
 			}
+			// Use unversioned CustomResourceDefinition to avoid implementing cast
+			// for all versions.
+			crd := &apiextensions.CustomResourceDefinition{}
+			err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &crd)
+			if err != nil {
+				return nil, err
+			}
+			crdKindSet.Insert(crd.Spec.Names.Kind)
 		}
 	}
 	return crdKindSet, nil
-}
-
-// getVersionedCRDKind returns the kind of a CRD if its version is known,
-// otherwise an error.
-func getVersionedCRDKind(obj runtime.Object) (string, error) {
-	switch crd := obj.(type) {
-	case *apiextensions.CustomResourceDefinition:
-		return crd.Spec.Names.Kind, nil
-	case *v1beta1.CustomResourceDefinition:
-		return crd.Spec.Names.Kind, nil
-	}
-	return "", fmt.Errorf("error getting CRD kind: gvk %q unknown", obj.GetObjectKind().GroupVersionKind())
 }
 
 func (s Status) String() string {
