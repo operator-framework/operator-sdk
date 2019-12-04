@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"text/tabwriter"
 
 	log "github.com/sirupsen/logrus"
@@ -97,10 +98,21 @@ func (s Status) HasInstalledResources() (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("error getting set of CRD kinds in resources: %w", err)
 	}
+	// Sort resources by whether they're installed or not to get consistent
+	// return values.
+	sort.Slice(s.Resources, func(i int, j int) bool {
+		return s.Resources[i].Resource != nil
+	})
 	for _, r := range s.Resources {
 		if r.Resource != nil {
 			return true, nil
 		} else if r.Error != nil && !apierrors.IsNotFound(r.Error) {
+			// We know the error is not a "resource not found" error at this point.
+			// It still may be the equivalent for a CR, "no kind match", if its
+			// corresponding CRD has been deleted already. We want to make sure
+			// we're only allowing "no kind match" errors to be skipped for CR's
+			// since we do not know if a kind is a CR kind, hence checking
+			// crdKindSet for existence of a resource's kind.
 			nkmerr := &meta.NoKindMatchError{}
 			if !errors.As(r.Error, &nkmerr) || !crdKindSet.Has(r.GVK.Kind) {
 				return false, r.Error

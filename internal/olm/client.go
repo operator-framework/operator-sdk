@@ -74,11 +74,9 @@ func (c Client) InstallVersion(ctx context.Context, version string) (*olmresourc
 	status := c.GetObjectsStatus(ctx, objs...)
 	installed, err := status.HasInstalledResources()
 	if installed {
-		return nil, errors.New("detected existing OLM resources: OLM must be completely uninstalled before installation" +
-			fmt.Sprintf("\nResources:\n%s", status.String()))
+		return nil, errors.New("detected existing OLM resources: OLM must be completely uninstalled before installation")
 	} else if err != nil {
-		return nil, errors.New("detected errored OLM resources:" +
-			fmt.Sprintf("\nResources:\n%s", status.String()))
+		return nil, errors.New("detected errored OLM resources, see resource statuses for more details")
 	}
 
 	log.Print("Creating CRDs and resources")
