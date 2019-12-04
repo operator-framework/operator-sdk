@@ -10,7 +10,7 @@ TMPDIR="$(mktemp -d)"
 trap_add 'rm -rf $TMPDIR' EXIT
 BASEIMAGEDIR="$TMPDIR/helm-operator"
 mkdir -p "$BASEIMAGEDIR"
-go build -o $BASEIMAGEDIR/scaffold-helm-image ./hack/image/helm/scaffold-helm-image.go
+env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o $BASEIMAGEDIR/scaffold-helm-image ./hack/image/helm/scaffold-helm-image.go
 
 # build operator binary and base image
 pushd "$BASEIMAGEDIR"
