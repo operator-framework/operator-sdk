@@ -17,8 +17,11 @@ package catalog
 import (
 	"bytes"
 	"encoding/json"
+	"sort"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/scaffold/olm-catalog/descriptor"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"github.com/ghodss/yaml"
@@ -31,6 +34,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/version"
 )
 
 // CSVUpdater is an interface for any data that can be in a CSV, which will be
@@ -189,30 +193,30 @@ func depHasOLMNamespaces(dep *appsv1.Deployment) bool {
 
 func (u *InstallStrategyUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	// Get install strategy from csv. Default to a deployment strategy if none found.
-	var strat olminstall.Strategy
+	var strategy olminstall.Strategy
 	if csv.Spec.InstallStrategy.StrategyName == "" {
 		csv.Spec.InstallStrategy.StrategyName = olminstall.InstallStrategyNameDeployment
-		strat = &olminstall.StrategyDetailsDeployment{}
+		strategy = &olminstall.StrategyDetailsDeployment{}
 	} else {
 		var resolver *olminstall.StrategyResolver
-		strat, err = resolver.UnmarshalStrategy(csv.Spec.InstallStrategy)
+		strategy, err = resolver.UnmarshalStrategy(csv.Spec.InstallStrategy)
 		if err != nil {
 			return err
 		}
 	}
 
-	switch s := strat.(type) {
+	switch s := strategy.(type) {
 	case *olminstall.StrategyDetailsDeployment:
 		// Update permissions and deployments.
 		u.updatePermissions(s)
 		u.updateClusterPermissions(s)
 		u.updateDeploymentSpecs(s)
 	default:
-		return errors.Errorf("install strategy (%v) of unknown type", strat)
+		return errors.Errorf("install strategy (%v) of unknown type", strategy)
 	}
 
 	// Re-serialize permissions into csv strategy.
-	updatedStrat, err := json.Marshal(strat)
+	updatedStrat, err := json.Marshal(strategy)
 	if err != nil {
 		return err
 	}
@@ -221,21 +225,21 @@ func (u *InstallStrategyUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion)
 	return nil
 }
 
-func (u *InstallStrategyUpdate) updatePermissions(strat *olminstall.StrategyDetailsDeployment) {
+func (u *InstallStrategyUpdate) updatePermissions(strategy *olminstall.StrategyDetailsDeployment) {
 	if len(u.Permissions) != 0 {
-		strat.Permissions = u.Permissions
+		strategy.Permissions = u.Permissions
 	}
 }
 
-func (u *InstallStrategyUpdate) updateClusterPermissions(strat *olminstall.StrategyDetailsDeployment) {
+func (u *InstallStrategyUpdate) updateClusterPermissions(strategy *olminstall.StrategyDetailsDeployment) {
 	if len(u.ClusterPermissions) != 0 {
-		strat.ClusterPermissions = u.ClusterPermissions
+		strategy.ClusterPermissions = u.ClusterPermissions
 	}
 }
 
-func (u *InstallStrategyUpdate) updateDeploymentSpecs(strat *olminstall.StrategyDetailsDeployment) {
+func (u *InstallStrategyUpdate) updateDeploymentSpecs(strategy *olminstall.StrategyDetailsDeployment) {
 	if len(u.DeploymentSpecs) != 0 {
-		strat.DeploymentSpecs = u.DeploymentSpecs
+		strategy.DeploymentSpecs = u.DeploymentSpecs
 	}
 }
 
@@ -243,6 +247,20 @@ type CustomResourceDefinitionsUpdate struct {
 	*olmapiv1alpha1.CustomResourceDefinitions
 	crIDs map[string]struct{}
 }
+
+type descSorter []olmapiv1alpha1.CRDDescription
+
+func (descs descSorter) Len() int { return len(descs) }
+func (descs descSorter) Less(i, j int) bool {
+	if descs[i].Name == descs[j].Name {
+		if descs[i].Kind == descs[j].Kind {
+			return version.CompareKubeAwareVersionStrings(descs[i].Version, descs[j].Version) > 0
+		}
+		return descs[i].Kind < descs[j].Kind
+	}
+	return descs[i].Name < descs[j].Name
+}
+func (descs descSorter) Swap(i, j int) { descs[i], descs[j] = descs[j], descs[i] }
 
 func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
 	crd := &apiextv1beta1.CustomResourceDefinition{}
@@ -261,6 +279,11 @@ func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
 			Kind:    kind,
 		}
 		store.crds.crIDs[crdDescID(crdDesc)] = struct{}{}
+		// Parse CRD descriptors from source code comments and annotations.
+		gvk := schema.GroupVersionKind{Group: crd.Spec.Group, Version: ver, Kind: kind}
+		if err := descriptor.GetCRDDescriptorForGVK(scaffold.ApisDir, &crdDesc, gvk); err != nil {
+			return errors.Wrapf(err, "failed to set CRD descriptors for %s", gvk)
+		}
 		store.crds.Owned = append(store.crds.Owned, crdDesc)
 	}
 	return nil
@@ -301,22 +324,26 @@ func getGVKID(g, v, k string) string {
 
 // Apply updates csv's "owned" CRDDescriptions. "required" CRDDescriptions are
 // left as-is, since they are user-defined values.
-// Apply will only make a new spec.customresourcedefinitions.owned element if
-// the CRD key is not in spec.customresourcedefinitions.owned already.
+// Apply will only make a new spec.customresourcedefinitions.owned element for
+// a type if an annotation is present on that type's declaration.
 func (u *CustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
-	set := make(map[string]olmapiv1alpha1.CRDDescription)
-	for _, csvDesc := range csv.Spec.CustomResourceDefinitions.Owned {
-		set[crdDescID(csvDesc)] = csvDesc
+	// Currently this updater does not support ActionDescriptor annotations,
+	// so use those currently set in csv.
+	actionDescriptors := map[string][]olmapiv1alpha1.ActionDescriptor{}
+	for _, desc := range csv.Spec.CustomResourceDefinitions.Owned {
+		actionDescriptors[crdDescID(desc)] = desc.ActionDescriptor
 	}
-	newDescs := []olmapiv1alpha1.CRDDescription{}
-	for _, uDesc := range u.Owned {
-		if csvDesc, ok := set[crdDescID(uDesc)]; !ok {
-			newDescs = append(newDescs, uDesc)
-		} else {
-			newDescs = append(newDescs, csvDesc)
+	// Copy owned CRDDescriptions while preserving ActionDescriptors.
+	owned := make([]olmapiv1alpha1.CRDDescription, len(u.Owned))
+	copy(owned, u.Owned)
+	csv.Spec.CustomResourceDefinitions.Owned = owned
+	for i, desc := range csv.Spec.CustomResourceDefinitions.Owned {
+		if ad, ok := actionDescriptors[crdDescID(desc)]; ok {
+			csv.Spec.CustomResourceDefinitions.Owned[i].ActionDescriptor = ad
 		}
 	}
-	csv.Spec.CustomResourceDefinitions.Owned = newDescs
+	sort.Sort(descSorter(csv.Spec.CustomResourceDefinitions.Owned))
+	sort.Sort(descSorter(csv.Spec.CustomResourceDefinitions.Required))
 	return nil
 }
 

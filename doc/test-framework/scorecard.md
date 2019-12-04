@@ -17,6 +17,7 @@
 - [Tests Performed](#tests-performed)
   - [Basic Operator](#basic-operator)
   - [OLM Integration](#olm-integration)
+- [Exit Status](#exit-status)
 - [Extending the Scorecard with Plugins](#extending-the-scorecard-with-plugins)
   - [JSON format](#json-format)
 - [Running the scorecard with an OLM-managed operator](#running-the-scorecard-with-an-olm-managed-operator)
@@ -108,6 +109,7 @@ While most configuration is done via a config file, there are a few important ar
 | `--kubeconfig`, `-o`  | string |  path to kubeconfig. It sets the kubeconfig internally for internal plugins and sets the `KUBECONFIG` env var to the provided value for external plugins. If an external plugin specifically sets the `KUBECONFIG` env var, the kubeconfig from the specified env var will be used for that plugin instead. |
 | `--version`  | string |  The version of scorecard to run, v1alpha2 is the default, valid values are v1alpha and v1alpha2. |
 | `--selector`, `-l`  | string |  The label selector to filter tests on, only valid in version v1alpha2. |
+| `--list`, `-L`  | bool |  If true, only print the test names that would be run based on selector filtering, only valid in version v1alpha2. |
 
 ### Config File Options
 
@@ -171,6 +173,10 @@ Following the description of each internal [Plugin](#plugins). Note that are 8 i
 | CRs Have At Least 1 Example | This test checks that the CSV has an [`alm-examples` annotation][alm-examples] for each CR passed to the `cr-manifest` option in its metadata. This test has a maximum score equal to the number of CRs provided via the `cr-manifest` option. |
 | Spec Fields With Descriptors | This test verifies that every field in the Custom Resources' spec sections have a corresponding descriptor listed in the CSV. This test has a maximum score equal to the total number of fields in the spec sections of each custom resource passed in via the `cr-manifest` option. |
 | Status Fields With Descriptors | This test verifies that every field in the Custom Resources' status sections have a corresponding descriptor listed in the CSV. This test has a maximum score equal to the total number of fields in the status sections of each custom resource passed in via the `cr-manifest` option. |
+
+## Exit Status
+
+In version v1alpha2, the scorecard return code is 1 if any of the tests executed did not pass and 0 if all selected tests pass.  Version v1alpha1 returns exit code of 0 regardless if tests fail.
 
 ## Extending the Scorecard with Plugins
 

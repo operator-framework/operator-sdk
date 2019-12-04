@@ -30,6 +30,7 @@ import (
 )
 
 type Plugin interface {
+	List() scapiv1alpha1.ScorecardOutput
 	Run() scapiv1alpha1.ScorecardOutput
 }
 
@@ -40,6 +41,10 @@ type externalPlugin struct {
 type basicOrOLMPlugin struct {
 	pluginType scplugins.PluginType
 	config     scplugins.BasicAndOLMPluginConfig
+}
+
+func (p externalPlugin) List() scapiv1alpha1.ScorecardOutput {
+	return scapiv1alpha1.ScorecardOutput{}
 }
 
 func (p externalPlugin) Run() scapiv1alpha1.ScorecardOutput {
@@ -76,12 +81,13 @@ func (p externalPlugin) Run() scapiv1alpha1.ScorecardOutput {
 	return result
 }
 
-var basicTestsPlugin = basicOrOLMPlugin{
-	pluginType: scplugins.BasicOperator,
-}
-
-var olmTestsPlugin = basicOrOLMPlugin{
-	pluginType: scplugins.OLMIntegration,
+func (p basicOrOLMPlugin) List() scapiv1alpha1.ScorecardOutput {
+	res, err := scplugins.ListInternalPlugin(p.pluginType, p.config)
+	if err != nil {
+		log.Errorf("%v", err)
+		return scapiv1alpha1.ScorecardOutput{}
+	}
+	return res
 }
 
 func (p basicOrOLMPlugin) Run() scapiv1alpha1.ScorecardOutput {

@@ -17,10 +17,12 @@ package scorecard
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	scapi "github.com/operator-framework/operator-sdk/pkg/apis/scorecard"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
-	"io/ioutil"
+	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
 
 func printPluginOutputs(version string, pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
@@ -34,28 +36,27 @@ func printPluginOutputs(version string, pluginOutputs []scapiv1alpha1.ScorecardO
 
 	if schelpers.IsV1alpha2(version) {
 		list = scapi.ConvertScorecardOutputV1ToV2(list.(scapiv1alpha1.ScorecardOutput))
+		if scViper.GetBool(ListOpt) {
+			scorecardOutput := list.(scapiv1alpha2.ScorecardOutput)
+			for i := 0; i < len(scorecardOutput.Results); i++ {
+				scorecardOutput.Results[i].State = scapiv1alpha2.NotRunState
+			}
+		}
 	}
 
-	// produce text output
-	if scViper.GetString(OutputFormatOpt) == TextOutputFormat {
+	switch format := scViper.GetString(OutputFormatOpt); format {
+	case TextOutputFormat:
 		output, err := list.MarshalText()
 		if err != nil {
 			return err
 		}
 		fmt.Printf("%s\n", output)
-
-		return nil
-	}
-
-	// produce json output
-	if scViper.GetString(OutputFormatOpt) == JSONOutputFormat {
+	case JSONOutputFormat:
 		bytes, err := json.MarshalIndent(list, "", "  ")
 		if err != nil {
 			return err
 		}
 		fmt.Printf("%s\n", string(bytes))
-		return nil
-
 	}
 
 	return nil

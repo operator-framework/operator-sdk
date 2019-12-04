@@ -40,6 +40,7 @@ type Watch struct {
 	GroupVersionKind            schema.GroupVersionKind `yaml:",inline"`
 	Playbook                    string                  `yaml:"playbook"`
 	Role                        string                  `yaml:"role"`
+	Vars                        map[string]interface{}  `yaml:"vars"`
 	MaxRunnerArtifacts          int                     `yaml:"maxRunnerArtifacts"`
 	ReconcilePeriod             time.Duration           `yaml:"reconcilePeriod"`
 	ManageStatus                bool                    `yaml:"manageStatus"`
@@ -76,21 +77,22 @@ var (
 // UnmarshalYAML - implements the yaml.Unmarshaler interface for Watch.
 // This makes it possible to verify, when loading, that the GroupVersionKind
 // specified for a given watch is valid as well as provide sensible defaults
-// for values that were ommitted.
+// for values that were omitted.
 func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// Use an alias struct to handle complex types
 	type alias struct {
-		Group                       string     `yaml:"group"`
-		Version                     string     `yaml:"version"`
-		Kind                        string     `yaml:"kind"`
-		Playbook                    string     `yaml:"playbook"`
-		Role                        string     `yaml:"role"`
-		MaxRunnerArtifacts          int        `yaml:"maxRunnerArtifacts"`
-		ReconcilePeriod             string     `yaml:"reconcilePeriod"`
-		ManageStatus                bool       `yaml:"manageStatus"`
-		WatchDependentResources     bool       `yaml:"watchDependentResources"`
-		WatchClusterScopedResources bool       `yaml:"watchClusterScopedResources"`
-		Finalizer                   *Finalizer `yaml:"finalizer"`
+		Group                       string                 `yaml:"group"`
+		Version                     string                 `yaml:"version"`
+		Kind                        string                 `yaml:"kind"`
+		Playbook                    string                 `yaml:"playbook"`
+		Role                        string                 `yaml:"role"`
+		Vars                        map[string]interface{} `yaml:"vars"`
+		MaxRunnerArtifacts          int                    `yaml:"maxRunnerArtifacts"`
+		ReconcilePeriod             string                 `yaml:"reconcilePeriod"`
+		ManageStatus                bool                   `yaml:"manageStatus"`
+		WatchDependentResources     bool                   `yaml:"watchDependentResources"`
+		WatchClusterScopedResources bool                   `yaml:"watchClusterScopedResources"`
+		Finalizer                   *Finalizer             `yaml:"finalizer"`
 	}
 	var tmp alias
 
@@ -125,6 +127,7 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	w.GroupVersionKind = gvk
 	w.Playbook = tmp.Playbook
 	w.Role = tmp.Role
+	w.Vars = tmp.Vars
 	w.MaxRunnerArtifacts = tmp.MaxRunnerArtifacts
 	w.MaxWorkers = getMaxWorkers(gvk, maxWorkersDefault)
 	w.ReconcilePeriod = reconcilePeriod
@@ -166,12 +169,13 @@ func (w *Watch) Validate() error {
 }
 
 // New - returns a Watch with sensible defaults.
-func New(gvk schema.GroupVersionKind, role, playbook string, finalizer *Finalizer) *Watch {
+func New(gvk schema.GroupVersionKind, role, playbook string, vars map[string]interface{}, finalizer *Finalizer) *Watch {
 	reconcilePeriod, _ := time.ParseDuration(reconcilePeriodDefault)
 	return &Watch{
 		GroupVersionKind:            gvk,
 		Playbook:                    playbook,
 		Role:                        role,
+		Vars:                        vars,
 		MaxRunnerArtifacts:          maxRunnerArtifactsDefault,
 		MaxWorkers:                  maxWorkersDefault,
 		ReconcilePeriod:             reconcilePeriod,

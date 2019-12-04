@@ -32,8 +32,6 @@ import (
 
 var log = logf.Log.WithName("metrics")
 
-var trueVar = true
-
 const (
 	// OperatorPortName defines the default operator metrics port name used in the metrics Service.
 	OperatorPortName = "http-metrics"
@@ -79,6 +77,9 @@ func createOrUpdateService(ctx context.Context, client crclient.Client, s *v1.Se
 			Name:      s.Name,
 			Namespace: s.Namespace,
 		}, existingService)
+		if err != nil {
+			return nil, err
+		}
 
 		s.ResourceVersion = existingService.ResourceVersion
 		if existingService.Spec.Type == v1.ServiceTypeClusterIP {

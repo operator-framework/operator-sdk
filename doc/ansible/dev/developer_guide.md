@@ -60,10 +60,11 @@ Modify `roles/Foo/tasks/main.yml` with desired Ansible logic. For this example
 we will create and delete a namespace with the switch of a variable:
 ```yaml
 ---
-- name: set test namespace to {{ state }}
+- name: set example-memcached namespace to {{ state }}
   k8s:
     api_version: v1
     kind: Namespace
+    name: example-memcached
     state: "{{ state }}"
   ignore_errors: true
 ```
@@ -96,7 +97,7 @@ PLAY [localhost] ***************************************************************
 TASK [Gathering Facts] *********************************************************************
 ok: [localhost]
 
-Task [Foo : set test namespace to present]
+Task [Foo : set example-memcached namespace to present]
 changed: [localhost]
 
 PLAY RECAP *********************************************************************************
@@ -107,11 +108,11 @@ localhost                  : ok=2    changed=1    unreachable=0    failed=0
 Check that the namespace was created:
 ```bash
 $ kubectl get namespace
-NAME          STATUS    AGE
-default       Active    28d
-kube-public   Active    28d
-kube-system   Active    28d
-test          Active    3s
+NAME          	           STATUS    AGE
+default       	           Active    28d
+kube-public   		   Active    28d
+kube-system   	           Active    28d
+example-memcached          Active    3s
 ```
 
 Rerun the playbook setting `state` to `absent`:
@@ -125,7 +126,7 @@ PLAY [localhost] ***************************************************************
 TASK [Gathering Facts] *********************************************************************
 ok: [localhost]
 
-Task [Foo : set test namespace to absent]
+Task [Foo : set example-memcached namespace to absent]
 changed: [localhost]
 
 PLAY RECAP *********************************************************************************
@@ -248,14 +249,14 @@ Create a Custom Resource instance of Foo with default var `state` set to
 $ kubectl create -f deploy/cr.yaml
 ```
 
-Check that namespace `test` was created:
+Check that namespace `example-memcached` was created:
 ```bash
 $ kubectl get namespace
-NAME          STATUS    AGE
-default       Active    28d
-kube-public   Active    28d
-kube-system   Active    28d
-test          Active    3s
+NAME          	           STATUS    AGE
+default       		   Active    28d
+kube-public   		   Active    28d
+kube-system   		   Active    28d
+example-memcached          Active    3s
 ```
 
 Modify `deploy/cr.yaml` to set `state` to `absent`:
@@ -468,10 +469,10 @@ The structure passed to Ansible as extra vars is:
   "message": "Hello world 2",
   "new_parameter": "newParam",
   "_app_example_com_database": {
-     <Full CRD>
+     <Full CR>
    },
   "_app_example_com_database_spec": {
-     <Full CRD .spec>
+     <Full CR .spec>
    },
 }
 ```

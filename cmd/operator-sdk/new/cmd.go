@@ -45,6 +45,7 @@ generates a default directory layout based on the input <project-name>.
 <project-name> is the project name of the new operator. (e.g app-operator)
 
 For example:
+
 	$ mkdir $HOME/projects/example.com/
 	$ cd $HOME/projects/example.com/
 	$ operator-sdk new app-operator

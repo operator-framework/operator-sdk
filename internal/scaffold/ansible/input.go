@@ -19,7 +19,7 @@ import (
 )
 
 // StaticInput is the input for scaffolding a static file with
-// no parameteres
+// no parameters
 type StaticInput struct {
 	input.Input
 }

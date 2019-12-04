@@ -75,7 +75,7 @@ type ScorecardTestResult struct {
 	MaximumPoints int `json:"maximumPoints"`
 	// Suggestions is a list of suggestions for the user to improve their score (if applicable)
 	Suggestions []string `json:"suggestions"`
-	// Errors is a list of the errors that occured during the test (this can include both fatal and non-fatal errors)
+	// Errors is a list of the errors that occurred during the test (this can include both fatal and non-fatal errors)
 	Errors []string `json:"errors"`
 	// Labels used for v1alpha2, not included in v1alpha1 JSON output
 	Labels map[string]string `json:"-"`
@@ -103,6 +103,16 @@ type ScorecardOutputList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []ScorecardOutput `json:"items"`
+}
+
+func NewScorecardOutput() *ScorecardOutput {
+	return &ScorecardOutput{
+		// The TypeMeta is mandatory because it is used to distinguish the versions (v1alpha1 and v1alpha2)
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ScorecardOutput",
+			APIVersion: "osdk.openshift.io/v1alpha1",
+		},
+	}
 }
 
 func init() {

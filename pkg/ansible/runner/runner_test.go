@@ -31,15 +31,14 @@ func checkCmdFunc(t *testing.T, cmdFunc cmdFuncType, playbook, role string, verb
 	inputDirPath := "/test/path"
 	maxArtifacts := 1
 	var expectedCmd, gotCmd *exec.Cmd
-	verbosityString := ansibleVerbosityString(verbosity)
 	switch {
 	case playbook != "":
-		expectedCmd = playbookCmdFunc(verbosityString, playbook)(ident, inputDirPath, maxArtifacts)
+		expectedCmd = playbookCmdFunc(playbook)(ident, inputDirPath, maxArtifacts, verbosity)
 	case role != "":
-		expectedCmd = roleCmdFunc(verbosityString, role)(ident, inputDirPath, maxArtifacts)
+		expectedCmd = roleCmdFunc(role)(ident, inputDirPath, maxArtifacts, verbosity)
 	}
 
-	gotCmd = cmdFunc(ident, inputDirPath, maxArtifacts)
+	gotCmd = cmdFunc(ident, inputDirPath, maxArtifacts, verbosity)
 
 	if expectedCmd.Path != gotCmd.Path {
 		t.Fatalf("Unexpected cmd path %v expected cmd path %v", gotCmd.Path, expectedCmd.Path)
@@ -62,6 +61,7 @@ func TestNew(t *testing.T) {
 		gvk       schema.GroupVersionKind
 		playbook  string
 		role      string
+		vars      map[string]interface{}
 		finalizer *watches.Finalizer
 	}{
 		{
@@ -123,11 +123,29 @@ func TestNew(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "basic runner with playbook, vars + finalizer vars",
+			gvk: schema.GroupVersionKind{
+				Group:   "operator.example.com",
+				Version: "v1alpha1",
+				Kind:    "Example",
+			},
+			playbook: validPlaybook,
+			vars: map[string]interface{}{
+				"type": "this",
+			},
+			finalizer: &watches.Finalizer{
+				Name: "example.finalizer.com",
+				Vars: map[string]interface{}{
+					"state": "absent",
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			testWatch := watches.New(tc.gvk, tc.role, tc.playbook, tc.finalizer)
+			testWatch := watches.New(tc.gvk, tc.role, tc.playbook, tc.vars, tc.finalizer)
 
 			testRunner, err := New(*testWatch)
 			if err != nil {

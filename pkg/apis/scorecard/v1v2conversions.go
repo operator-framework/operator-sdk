@@ -17,17 +17,11 @@ package scorecard
 import (
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func ConvertScorecardOutputV1ToV2(v1ScorecardOutput scapiv1alpha1.ScorecardOutput) scapiv1alpha2.ScorecardOutput {
 
-	output := scapiv1alpha2.ScorecardOutput{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ScorecardOutput",
-			APIVersion: "osdk.openshift.io/v1alpha2",
-		},
-	}
+	output := scapiv1alpha2.NewScorecardOutput()
 
 	// convert v1 suite into v2 test results
 	output.Results = make([]scapiv1alpha2.ScorecardTestResult, 0)
@@ -37,7 +31,7 @@ func ConvertScorecardOutputV1ToV2(v1ScorecardOutput scapiv1alpha1.ScorecardOutpu
 	}
 	output.Log = v1ScorecardOutput.Log
 
-	return output
+	return *output
 }
 
 func ConvertSuiteResultV1ToV2TestResults(v1SuiteResult scapiv1alpha1.ScorecardSuiteResult) []scapiv1alpha2.ScorecardTestResult {

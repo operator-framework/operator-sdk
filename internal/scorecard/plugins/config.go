@@ -43,7 +43,6 @@ type BasicAndOLMPluginConfig struct {
 	Namespace          string          `mapstructure:"namespace"`
 	Kubeconfig         string          `mapstructure:"kubeconfig"`
 	InitTimeout        int             `mapstructure:"init-timeout"`
-	OLMDeployed        bool            `mapstructure:"olm-deployed"`
 	NamespacedManifest string          `mapstructure:"namespaced-manifest"`
 	GlobalManifest     string          `mapstructure:"global-manifest"`
 	CRManifest         []string        `mapstructure:"cr-manifest"`
@@ -54,6 +53,8 @@ type BasicAndOLMPluginConfig struct {
 	DeployDir          string          `mapstructure:"deploy-dir"`
 	Selector           labels.Selector `mapstructure:"selector"`
 	Version            string          `mapstructure:"version"`
+	ListOpt            bool            `mapstructure:"list"`
+	OLMDeployed        bool            `mapstructure:"olm-deployed"`
 }
 
 func validateScorecardPluginFlags(config BasicAndOLMPluginConfig, pluginType PluginType) error {

@@ -36,7 +36,14 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 )
 
-const testDataDir = "testdata"
+const (
+	testDataDir  = "testdata"
+	projectName  = "app-operator-dir"
+	operatorName = "app-operator"
+	oldCSVVer    = "0.1.0"
+	newCSVVer    = "0.2.0"
+	csvVer       = "0.1.0"
+)
 
 var testDeployDir = filepath.Join(testDataDir, scaffold.DeployDir)
 
@@ -47,9 +54,6 @@ func TestCSVNew(t *testing.T) {
 			return buf, nil
 		},
 	}
-	csvVer := "0.1.0"
-	projectName := "app-operator-dir"
-	operatorName := "app-operator"
 
 	sc := &CSV{CSVVersion: csvVer, pathPrefix: testDataDir, OperatorName: operatorName}
 	err := s.Execute(&input.Config{ProjectName: projectName}, sc)
@@ -71,9 +75,6 @@ func TestCSVNew(t *testing.T) {
 
 func TestCSVFromOld(t *testing.T) {
 	s := &scaffold.Scaffold{Fs: afero.NewMemMapFs()}
-	projectName := "app-operator-dir"
-	operatorName := "app-operator"
-	oldCSVVer, newCSVVer := "0.1.0", "0.2.0"
 
 	// Write all files in testdata/deploy to fs so manifests are present when
 	// writing a new CSV.
@@ -113,10 +114,6 @@ func TestCSVFromOld(t *testing.T) {
 }
 
 func TestUpdateVersion(t *testing.T) {
-	projectName := "app-operator-dir"
-	operatorName := "app-operator"
-
-	oldCSVVer, newCSVVer := "0.1.0", "0.2.0"
 	sc := &CSV{
 		Input:        input.Input{ProjectName: projectName},
 		CSVVersion:   newCSVVer,
@@ -149,15 +146,15 @@ func TestUpdateVersion(t *testing.T) {
 	}
 
 	var resolver *olminstall.StrategyResolver
-	stratInterface, err := resolver.UnmarshalStrategy(csv.Spec.InstallStrategy)
+	strategyInterface, err := resolver.UnmarshalStrategy(csv.Spec.InstallStrategy)
 	if err != nil {
 		t.Fatal(err)
 	}
-	strat, ok := stratInterface.(*olminstall.StrategyDetailsDeployment)
+	strategy, ok := strategyInterface.(*olminstall.StrategyDetailsDeployment)
 	if !ok {
-		t.Fatalf("Strategy of type %T was not StrategyDetailsDeployment", stratInterface)
+		t.Fatalf("Strategy of type %T was not StrategyDetailsDeployment", strategyInterface)
 	}
-	csvPodImage := strat.DeploymentSpecs[0].Spec.Template.Spec.Containers[0].Image
+	csvPodImage := strategy.DeploymentSpecs[0].Spec.Template.Spec.Containers[0].Image
 	// updateCSVVersions should not update podspec image.
 	wantedImage := "quay.io/example-inc/operator:v0.1.0"
 	if csvPodImage != wantedImage {

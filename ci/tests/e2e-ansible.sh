@@ -68,7 +68,7 @@ test_operator() {
     fi
 
     # verify that metrics service was created
-    if ! timeout 20s bash -c -- "until kubectl get service/memcached-operator-metrics > /dev/null 2>&1; do sleep 1; done";
+    if ! timeout 60s bash -c -- "until kubectl get service/memcached-operator-metrics > /dev/null 2>&1; do sleep 1; done";
     then
         echo "Failed to get metrics service"
         operator_logs
@@ -93,7 +93,7 @@ test_operator() {
 
     # create CR
     kubectl create -f deploy/crds/ansible.example.com_v1alpha1_memcached_cr.yaml
-    if ! timeout 20s bash -c -- 'until kubectl get deployment -l app=memcached | grep memcached; do sleep 1; done';
+    if ! timeout 60s bash -c -- 'until kubectl get deployment -l app=memcached | grep memcached; do sleep 1; done';
     then
         echo FAIL: operator failed to create memcached Deployment
         operator_logs
@@ -132,7 +132,7 @@ test_operator() {
     fi
 
     # The deployment should get garbage collected, so we expect to fail getting the deployment.
-    if ! timeout 20s bash -c -- "while kubectl get deployment ${memcached_deployment} 2> /dev/null; do sleep 1; done";
+    if ! timeout 60s bash -c -- "while kubectl get deployment ${memcached_deployment} 2> /dev/null; do sleep 1; done";
     then
         echo FAIL: memcached Deployment did not get garbage collected
         operator_logs

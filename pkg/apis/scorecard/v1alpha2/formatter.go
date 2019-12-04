@@ -16,9 +16,10 @@ package v1alpha2
 
 import (
 	"fmt"
-	"github.com/mattn/go-isatty"
 	"os"
 	"strings"
+
+	"github.com/mattn/go-isatty"
 )
 
 const (
@@ -30,8 +31,8 @@ const (
 func (s ScorecardOutput) MarshalText() (string, error) {
 	var sb strings.Builder
 
-	failColor := "\033[1;" + redColor + "m%s\033[0m\n"
-	passColor := "\033[1;" + greenColor + "m%s\033[0m\n"
+	failColor := ": \033[1;" + redColor + "m%s\033[0m\n"
+	passColor := ": \033[1;" + greenColor + "m%s\033[0m\n"
 
 	// turn off colorization if not in a terminal
 	if !isatty.IsTerminal(os.Stdout.Fd()) &&
@@ -46,27 +47,37 @@ func (s ScorecardOutput) MarshalText() (string, error) {
 			sb.WriteString(fmt.Sprintf("%s:\n", result.Labels["suite"]))
 			currentSuite = result.Labels["suite"]
 		}
-		sb.WriteString(fmt.Sprintf("\t%-35s: ", result.Name))
+		sb.WriteString(fmt.Sprintf("\t%-35s ", result.Name))
 
 		if result.State == PassState {
 			sb.WriteString(fmt.Sprintf(passColor, PassState))
-		} else {
+		} else if result.State == FailState {
 			sb.WriteString(fmt.Sprintf(failColor, FailState))
+		} else {
+			sb.WriteString(fmt.Sprintf("\n"))
 		}
-	}
 
-	for _, result := range s.Results {
-		for _, suggestion := range result.Suggestions {
+		sb.WriteString("\tLabels: \n")
+		for labelKey, labelValue := range result.Labels {
+			sb.WriteString(fmt.Sprintf("\t\t%q:%q\n", labelKey, labelValue))
+		}
+
+		if len(result.Suggestions) > 0 {
 			// 33 is yellow (specifically, the same shade of yellow that logrus uses for warnings)
-			sb.WriteString(fmt.Sprintf("\x1b[%dmSUGGESTION:\x1b[0m %s\n", 33, suggestion))
+			sb.WriteString(fmt.Sprintf("\t\x1b[%dmSuggestions:\x1b[0m \n", 33))
 		}
-	}
+		for _, suggestion := range result.Suggestions {
+			sb.WriteString(fmt.Sprintf("\t\t%s\n", suggestion))
+		}
 
-	for _, result := range s.Results {
-		for _, err := range result.Errors {
+		if len(result.Errors) > 0 {
 			// 31 is red (specifically, the same shade of red that logrus uses for errors)
-			sb.WriteString(fmt.Sprintf("\x1b[%dmERROR:\x1b[0m %s\n", 31, err))
+			sb.WriteString(fmt.Sprintf("\t\x1b[%dmErrors:\x1b[0m \n", 31))
 		}
+		for _, err := range result.Errors {
+			sb.WriteString(fmt.Sprintf("\t\t%s\n", err))
+		}
+		sb.WriteString(fmt.Sprintf("\n"))
 	}
 
 	return sb.String(), nil

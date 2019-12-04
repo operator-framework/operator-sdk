@@ -27,7 +27,6 @@ import (
 	kcorev1 "k8s.io/api/core/v1"
 	kmetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -56,7 +55,15 @@ func TestHandler(t *testing.T) {
 		t.Fatalf("Error starting proxy: %v", err)
 	}
 
-	po := createPod("test", "default", mgr.GetConfig())
+	cl, err := client.New(mgr.GetConfig(), client.Options{})
+	if err != nil {
+		t.Fatalf("Failed to create the client: %v", err)
+	}
+
+	po, err := createPod("test", "default", cl)
+	if err != nil {
+		t.Fatalf("Failed to create the pod: %v", err)
+	}
 
 	resp, err := http.Get("http://localhost:8888/api/v1/namespaces/default/pods/test")
 	if err != nil {
@@ -80,13 +87,18 @@ func TestHandler(t *testing.T) {
 	}
 	data := kcorev1.Pod{}
 	err = json.Unmarshal(body, &data)
+	if err != nil {
+		t.Fatalf("Error parsing response: %v", err)
+	}
 	if data.Name != "test" {
 		t.Fatalf("Got unexpected pod name: %#v", data.Name)
 	}
-	deletePod(po, mgr.GetConfig())
+	if err := cl.Delete(context.Background(), po); err != nil {
+		t.Fatalf("Failed to delete the pod: %v", err)
+	}
 }
 
-func createPod(name, namespace string, cfg *rest.Config) runtime.Object {
+func createPod(name, namespace string, cl client.Client) (runtime.Object, error) {
 	three := int64(3)
 	pod := &kcorev1.Pod{
 		ObjectMeta: kmetav1.ObjectMeta{
@@ -102,18 +114,8 @@ func createPod(name, namespace string, cfg *rest.Config) runtime.Object {
 			ActiveDeadlineSeconds: &three,
 		},
 	}
-	cl, err := client.New(cfg, client.Options{})
-	err = cl.Create(context.Background(), pod)
-	if err != nil {
-		return nil
+	if err := cl.Create(context.Background(), pod); err != nil {
+		return nil, err
 	}
-	return pod
-}
-
-func deletePod(pod runtime.Object, cfg *rest.Config) {
-	cl, err := client.New(cfg, client.Options{})
-	err = cl.Delete(context.Background(), pod)
-	if err != nil {
-		return
-	}
+	return pod, nil
 }

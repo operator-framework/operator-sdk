@@ -22,6 +22,8 @@ import (
 type State string
 
 const (
+	// NotRun occurs when a user specifies the --list flag
+	NotRunState State = ""
 	// PassState occurs when a Test's ExpectedPoints == MaximumPoints.
 	PassState State = "pass"
 	// FailState occurs when a Test's ExpectedPoints == 0.
@@ -41,7 +43,7 @@ type ScorecardTestResult struct {
 	Labels map[string]string `json:"labels,omitempty"`
 	// State is the final state of the test
 	State State `json:"state,omitempty"`
-	// Errors is a list of the errors that occured during the test (this can include both fatal and non-fatal errors)
+	// Errors is a list of the errors that occurred during the test (this can include both fatal and non-fatal errors)
 	Errors []string `json:"errors,omitempty"`
 	// Suggestions is a list of suggestions for the user to improve their score (if applicable)
 	Suggestions []string `json:"suggestions,omitempty"`
@@ -60,6 +62,16 @@ type ScorecardOutput struct {
 	Log string `json:"log"`
 	// Results is an array of ScorecardTestResult for the current scorecard run.
 	Results []ScorecardTestResult `json:"results"`
+}
+
+func NewScorecardOutput() *ScorecardOutput {
+	return &ScorecardOutput{
+		// The TypeMeta is mandatory because it is used to distinguish the versions (v1alpha1 and v1alpha2)
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ScorecardOutput",
+			APIVersion: "osdk.openshift.io/v1alpha2",
+		},
+	}
 }
 
 func init() {

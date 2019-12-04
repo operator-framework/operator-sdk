@@ -34,7 +34,7 @@ import (
 	k8sproxy "k8s.io/apimachinery/pkg/util/proxy"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
-	"k8s.io/kubernetes/pkg/kubectl/util"
+	"k8s.io/kubectl/pkg/util"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -242,7 +242,12 @@ func (s *server) ListenUnix(path string) (net.Listener, error) {
 	// Default to only user accessible socket, caller can open up later if desired
 	oldmask, _ := util.Umask(0077)
 	l, err := net.Listen("unix", path)
-	util.Umask(oldmask)
+	if err != nil {
+		return l, err
+	}
+	if _, err = util.Umask(oldmask); err != nil {
+		return l, err
+	}
 	return l, err
 }
 

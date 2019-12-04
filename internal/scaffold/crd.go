@@ -15,10 +15,12 @@
 package scaffold
 
 import (
+	goerrors "errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
@@ -146,6 +148,10 @@ func (s *CRD) CustomRender() ([]byte, error) {
 					return nil, err
 				}
 			}
+		} else if goerrors.Is(err, afero.ErrFileNotFound) {
+			crd = newCRDForResource(s.Resource)
+		} else {
+			return nil, err
 		}
 	}
 
@@ -153,6 +159,7 @@ func (s *CRD) CustomRender() ([]byte, error) {
 	if err := checkCRDVersions(crd); err != nil {
 		return nil, err
 	}
+	sort.Sort(k8sutil.CRDVersions(crd.Spec.Versions))
 	return k8sutil.GetObjectBytes(crd, yaml.Marshal)
 }
 
@@ -185,6 +192,7 @@ func runCRDGenerator(rule genall.OutputRule, root string) (err error) {
 }
 
 func newCRDForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {
+	trueVal := true
 	crd := &apiextv1beta1.CustomResourceDefinition{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: apiextv1beta1.SchemeGroupVersion.String(),
@@ -201,6 +209,12 @@ func newCRDForResource(r *Resource) *apiextv1beta1.CustomResourceDefinition {
 			},
 			Subresources: &apiextv1beta1.CustomResourceSubresources{
 				Status: &apiextv1beta1.CustomResourceSubresourceStatus{},
+			},
+			Validation: &apiextv1beta1.CustomResourceValidation{
+				OpenAPIV3Schema: &apiextv1beta1.JSONSchemaProps{
+					Type:                   "object",
+					XPreserveUnknownFields: &trueVal,
+				},
 			},
 		},
 	}
