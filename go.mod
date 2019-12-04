@@ -13,7 +13,10 @@ require (
 	github.com/coreos/prometheus-operator v0.34.0
 	github.com/elazarl/go-bindata-assetfs v1.0.0 // indirect
 	github.com/emicklei/go-restful-swagger12 v0.0.0-20170926063155-7524189396c6 // indirect
+<<<<<<< HEAD
 	github.com/fatih/structtag v1.1.0
+=======
+>>>>>>> 4e7b73abd757b60c1cf3f460a14c0e1d4c49a258
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1

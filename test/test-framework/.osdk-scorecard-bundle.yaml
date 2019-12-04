@@ -2,7 +2,6 @@ scorecard:
   version: v1alpha2
   bundle: deploy/olm-catalog/memcached-operator
   plugins:
-    - basic:
     - olm:
         cr-manifest:
           - "deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml"
