@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/operator-framework/api/pkg/manifests"
+	"github.com/operator-framework/api/pkg/validation"
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
@@ -110,19 +111,19 @@ func NewCRDsHaveResourcesTest(conf OLMTestConfig) *CRDsHaveResourcesTest {
 	}
 }
 
-// AnnotationsContainExamplesTest is a scorecard test that verifies that the CSV contains examples via the alm-examples annotation
-type AnnotationsContainExamplesTest struct {
+// CSVValidationTest is a scorecard test that validates a CSV
+type CSVValidationTest struct {
 	schelpers.TestInfo
 	OLMTestConfig
 }
 
-// NewAnnotationsContainExamplesTest returns a new AnnotationsContainExamplesTest object
-func NewAnnotationsContainExamplesTest(conf OLMTestConfig) *AnnotationsContainExamplesTest {
-	return &AnnotationsContainExamplesTest{
+// CSVValidationTest returns a new ValidationTest object
+func NewCSVValidationTest(conf OLMTestConfig) *CSVValidationTest {
+	return &CSVValidationTest{
 		OLMTestConfig: conf,
 		TestInfo: schelpers.TestInfo{
-			Name:        "CRs have at least 1 example",
-			Description: "The CSV's metadata contains an alm-examples section",
+			Name:        "CSV validates",
+			Description: "Validate the CSV",
 			Cumulative:  true,
 			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName},
 		},
@@ -191,7 +192,7 @@ func NewOLMTestSuite(conf OLMTestConfig) *schelpers.TestSuite {
 	ts.AddTest(NewBundleValidationTest(conf), 1)
 	ts.AddTest(NewCRDsHaveValidationTest(conf), 1.25)
 	ts.AddTest(NewCRDsHaveResourcesTest(conf), 1)
-	ts.AddTest(NewAnnotationsContainExamplesTest(conf), 1)
+	ts.AddTest(NewCSVValidationTest(conf), 1)
 	ts.AddTest(NewSpecDescriptorsTest(conf), 1)
 	ts.AddTest(NewStatusDescriptorsTest(conf), 1)
 
@@ -436,14 +437,27 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 }
 
 // Run - implements Test interface
-func (t *AnnotationsContainExamplesTest) Run(ctx context.Context) *schelpers.TestResult {
+func (t *CSVValidationTest) Run(ctx context.Context) *schelpers.TestResult {
 	res := &schelpers.TestResult{Test: t, MaximumPoints: 1}
-	if t.CSV.Annotations != nil && t.CSV.Annotations["alm-examples"] != "" {
-		res.EarnedPoints = 1
+	res.EarnedPoints = 1
+
+	csvValidator := validation.ClusterServiceVersionValidator
+	results := csvValidator.Validate(t.CSV)
+	for _, r := range results {
+		if r.HasError() {
+			res.EarnedPoints = 0
+			for _, e := range r.Errors {
+				res.Errors = append(res.Errors, e)
+			}
+		}
+		if r.HasWarn() {
+			res.EarnedPoints = 0
+			for _, w := range r.Warnings {
+				res.Suggestions = append(res.Suggestions, fmt.Sprintf("CSV validation warning: [%s] %s", w.Type, w.Detail))
+			}
+		}
 	}
-	if res.EarnedPoints == 0 {
-		res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add an alm-examples annotation to your CSV to pass the %s test", t.GetName()))
-	}
+
 	return res
 }
 
