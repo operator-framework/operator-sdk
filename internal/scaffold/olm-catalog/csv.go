@@ -15,8 +15,6 @@
 package catalog
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -308,18 +306,6 @@ func (s *CSV) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error
 		return err
 	}
 	csv.Spec.Version = olmversion.OperatorVersion{Version: ver}
-	return nil
-}
-
-func replaceAllBytes(v interface{}, old, new []byte) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-	b = bytes.Replace(b, old, new, -1)
-	if err = json.Unmarshal(b, v); err != nil {
-		return err
-	}
 	return nil
 }
 

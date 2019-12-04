@@ -4,7 +4,8 @@
 
 - Support for vars in top level ansible watches. ([#2147](https://github.com/operator-framework/operator-sdk/pull/2147))
 - Support for `"ansible.operator-sdk/verbosity"` annotation on Custom Resources watched by Ansible based operators to override verbosity on an individual resource. ([#2102](https://github.com/operator-framework/operator-sdk/pull/2102))
-- Added the [`olm-catalog gen-csv --exclude`](doc/cli/operator-sdk_olm-catalog_gen-csv.md#options) option to exclude files from input to generator in lieu of a config. ([#2249](https://github.com/operator-framework/operator-sdk/pull/2249))
+- Support for relative helm chart paths in the Helm operator's watches.yaml file. ([#2287](https://github.com/operator-framework/operator-sdk/pull/2287))
+- Added the [`olm-catalog gen-csv --include`](doc/cli/operator-sdk_olm-catalog_gen-csv.md#options) option to include files as input to the CSV generator in lieu of a config. ([#2249](https://github.com/operator-framework/operator-sdk/pull/2249))
 
 ### Changed
 
@@ -12,6 +13,11 @@
 - Upgrade Kubernetes version from `kubernetes-1.15.4` to `kubernetes-1.16.2`. ([#2145](https://github.com/operator-framework/operator-sdk/pull/2145))
 - Upgrade Helm version from `v2.15.0` to `v2.16.1`. ([#2145](https://github.com/operator-framework/operator-sdk/pull/2145))
 - Upgrade [`controller-runtime`](https://github.com/kubernetes-sigs/controller-runtime) version from `v0.3.0` to [`v0.4.0`](https://github.com/kubernetes-sigs/controller-runtime/releases/tag/v0.4.0). ([#2145](https://github.com/operator-framework/operator-sdk/pull/2145))
+- Updated `pkg/test/e2eutil.WaitForDeployment()` and `pkg/test/e2eutil.WaitForOperatorDeployment()` to successfully complete waiting when the available replica count is _at least_ (rather than exactly) the minimum replica count required. ([#2248](https://github.com/operator-framework/operator-sdk/pull/2248))
+- Replace in the Ansible based operators module tests `k8s_info` for `k8s_facts` which is deprecated. ([#2168](https://github.com/operator-framework/operator-sdk/issues/2168))
+- Upgrade the Ansible version from `2.8` to `2.9` on the Ansible based operators image. ([#2168](https://github.com/operator-framework/operator-sdk/issues/2168))
+- Updated CRD generation for non-Go operators to use valid structural schema. ([#2275](https://github.com/operator-framework/operator-sdk/issues/2275))
+- Replace Role verb `"*"` with list of verb strings in generated files so the Role is compatible with OpenShift and Kubernetes. ([#2175](https://github.com/operator-framework/operator-sdk/pull/2175))
 
 ### Deprecated
 
@@ -21,6 +27,7 @@
 
 ### Bug Fixes
 - Fix issue faced in the Ansible based operators when `jmespath` queries are used because it was not installed. ([#2252](https://github.com/operator-framework/operator-sdk/pull/2252))
+- Fix scorecard behavior such that a CSV file is read correctly when `olm-deployed` is set to `true`. ([#2274](https://github.com/operator-framework/operator-sdk/pull/2274))
 
 ## v0.12.0
 

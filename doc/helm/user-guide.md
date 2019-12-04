@@ -88,7 +88,7 @@ in `watches.yaml` and executes Helm releases using the specified chart:
 - version: v1alpha1
   group: example.com
   kind: Nginx
-  chart: /opt/helm/helm-charts/nginx
+  chart: helm-charts/nginx
 ```
 
 ### Reviewing the Nginx Helm Chart
@@ -209,18 +209,6 @@ nginx-operator       1         1         1            1           1m
 ### 2. Run outside the cluster
 
 This method is preferred during the development cycle to speed up deployment and testing.
-
-It is important that the `chart` path referenced in `watches.yaml` exists
-on your machine. By default, the `watches.yaml` file is scaffolded to work with
-an operator image built with `operator-sdk build`. When developing and
-testing your operator with `operator-sdk up local`, the SDK will look in your
-local filesystem for this path. The SDK team recommends creating a symlink at
-this location to point to your helm chart's path:
-
-```sh
-sudo mkdir -p /opt/helm/helm-charts
-sudo ln -s $PWD/helm-charts/nginx /opt/helm/helm-charts/nginx
-```
 
 Run the operator locally with the default Kubernetes config file present at
 `$HOME/.kube/config`:

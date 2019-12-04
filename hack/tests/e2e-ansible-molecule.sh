@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
 source hack/lib/test_lib.sh
+source ./hack/common.sh
 
-set -eux
+set -eu
+
+header_text "Running tests to check ansible molecule"
 
 ROOTDIR="$(pwd)"
 TMPDIR="$(mktemp -d)"
@@ -12,6 +15,7 @@ pip3 install --user molecule==2.22
 pip3 install --user docker openshift jmespath
 
 deploy_prereqs() {
+    header_text "Deploying resources"
     kubectl create -f "$OPERATORDIR/deploy/service_account.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role.yaml"
     kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
@@ -19,6 +23,7 @@ deploy_prereqs() {
 }
 
 remove_prereqs() {
+    header_text "Deleting resources"
     kubectl delete --wait=true --ignore-not-found=true --timeout=60s -f "$OPERATORDIR/deploy/crds/ansible.example.com_memcacheds_crd.yaml"
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/service_account.yaml"
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/role.yaml"
@@ -26,11 +31,14 @@ remove_prereqs() {
 }
 
 pushd "$TMPDIR"
+
+header_text "Creating memcached-operator"
 operator-sdk new memcached-operator \
   --api-version=ansible.example.com/v1alpha1 \
   --kind=Memcached \
   --type=ansible \
   --generate-playbook
+header_text "Replacing operator contents"
 cp "$ROOTDIR/test/ansible-memcached/tasks.yml" memcached-operator/roles/memcached/tasks/main.yml
 cp "$ROOTDIR/test/ansible-memcached/defaults.yml" memcached-operator/roles/memcached/defaults/main.yml
 cp "$ROOTDIR/test/ansible-memcached/asserts.yml"  memcached-operator/molecule/default/asserts.yml
@@ -39,18 +47,12 @@ cp -a "$ROOTDIR/test/ansible-memcached/memfin" memcached-operator/roles/
 cp -a "$ROOTDIR/test/ansible-memcached/secret" memcached-operator/roles/
 cat "$ROOTDIR/test/ansible-memcached/watches-finalizer.yaml" >> memcached-operator/watches.yaml
 cat "$ROOTDIR/test/ansible-memcached/prepare-test-image.yml" >> memcached-operator/molecule/test-local/prepare.yml
-# Append v1 kind to watches to test watching already registered GVK
+header_text "Append v1 kind to watches to test watching already registered GVK"
 cat "$ROOTDIR/test/ansible-memcached/watches-v1-kind.yaml" >> memcached-operator/watches.yaml
 
-
-
-# Test local
+header_text "Test local"
 pushd memcached-operator
-# Use the following sed command to check it on macOsX.
-# More info: https://www.mkyong.com/mac/sed-command-hits-undefined-label-error-on-mac-os-x/
-# sed -i "" 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
-# The following code is the default used (Not valid for MacOSX)
-sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
+sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?/\1:dev/g' build/Dockerfile; rm -f build/Dockerfile.bak
 OPERATORDIR="$(pwd)"
 TEST_CLUSTER_PORT=24443 operator-sdk test local --namespace default
 
@@ -59,12 +61,9 @@ remove_prereqs
 popd
 popd
 
+header_text "Test Ansible Inventory"
 pushd "${ROOTDIR}/test/ansible-inventory"
-# Use the following sed command to check it on macOsX.
-# More info: https://www.mkyong.com/mac/sed-command-hits-undefined-label-error-on-mac-os-x/
-# sed -i "" 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
-# The following code is the default used (Not valid for MacOSX)
-sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
+sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?/\1:dev/g' build/Dockerfile; rm -f build/Dockerfile.bak
 TEST_CLUSTER_PORT=24443 operator-sdk test local --namespace default
 
 popd
