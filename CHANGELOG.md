@@ -15,7 +15,7 @@
 ### Removed
 
 ### Bug Fixes
-- Changed watches.go to fix log.Info to modify message,and maxWorkers logic ([#2246](https://github.com/operator-framework/operator-sdk/pull/2246/files))
+- Fixed log formatting issue that occurred while loading the configuration for Ansible-based operators. ([#2246](https://github.com/operator-framework/operator-sdk/pull/2246))
 - Fix issue faced in the Ansible based operators when `jmespath` queries are used because it was not installed. ([#2252](https://github.com/operator-framework/operator-sdk/pull/2252))
 
 ## v0.12.0
