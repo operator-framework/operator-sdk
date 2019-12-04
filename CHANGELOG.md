@@ -23,7 +23,7 @@
 
 ### Removed
 
-- Removed CSV configuration file support in favor of including all files in the default dir `deploy` and using [`gen-csv --exclude`](doc/cli/operator-sdk_olm-catalog_gen-csv.md#options) to exclude files from input to generator. ([#2249](https://github.com/operator-framework/operator-sdk/pull/2249))
+- Removed CSV configuration file support in favor of including all files in the default dir `deploy` and using [`gen-csv --include`](doc/cli/operator-sdk_olm-catalog_gen-csv.md#options) to include files as input to generator. ([#2249](https://github.com/operator-framework/operator-sdk/pull/2249))
 
 ### Bug Fixes
 - Fix issue faced in the Ansible based operators when `jmespath` queries are used because it was not installed. ([#2252](https://github.com/operator-framework/operator-sdk/pull/2252))
