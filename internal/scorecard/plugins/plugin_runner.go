@@ -149,7 +149,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 			}
 			if r.HasWarn() {
 				for _, w := range r.Warnings {
-					log.Warnf("csv validation: type [%s] detail [%s]\n", w.Type, w.Detail)
+					log.Warnf("CSV validation warning: type [%s] %s", w.Type, w.Detail)
 				}
 			}
 		}
