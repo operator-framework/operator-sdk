@@ -20,6 +20,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/scaffold/olm-catalog/descriptor"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"github.com/ghodss/yaml"
@@ -277,6 +279,11 @@ func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
 			Kind:    kind,
 		}
 		store.crds.crIDs[crdDescID(crdDesc)] = struct{}{}
+		// Parse CRD descriptors from source code comments and annotations.
+		gvk := schema.GroupVersionKind{Group: crd.Spec.Group, Version: ver, Kind: kind}
+		if err := descriptor.GetCRDDescriptorForGVK(scaffold.ApisDir, &crdDesc, gvk); err != nil {
+			return errors.Wrapf(err, "failed to set CRD descriptors for %s", gvk)
+		}
 		store.crds.Owned = append(store.crds.Owned, crdDesc)
 	}
 	return nil
@@ -317,22 +324,24 @@ func getGVKID(g, v, k string) string {
 
 // Apply updates csv's "owned" CRDDescriptions. "required" CRDDescriptions are
 // left as-is, since they are user-defined values.
-// Apply will only make a new spec.customresourcedefinitions.owned element if
-// the CRD key is not in spec.customresourcedefinitions.owned already.
+// Apply will only make a new spec.customresourcedefinitions.owned element for
+// a type if an annotation is present on that type's declaration.
 func (u *CustomResourceDefinitionsUpdate) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
-	set := make(map[string]olmapiv1alpha1.CRDDescription)
-	for _, csvDesc := range csv.Spec.CustomResourceDefinitions.Owned {
-		set[crdDescID(csvDesc)] = csvDesc
+	// Currently this updater does not support ActionDescriptor annotations,
+	// so use those currently set in csv.
+	actionDescriptors := map[string][]olmapiv1alpha1.ActionDescriptor{}
+	for _, desc := range csv.Spec.CustomResourceDefinitions.Owned {
+		actionDescriptors[crdDescID(desc)] = desc.ActionDescriptor
 	}
-	newDescs := []olmapiv1alpha1.CRDDescription{}
-	for _, uDesc := range u.Owned {
-		if csvDesc, ok := set[crdDescID(uDesc)]; !ok {
-			newDescs = append(newDescs, uDesc)
-		} else {
-			newDescs = append(newDescs, csvDesc)
+	// Copy owned CRDDescriptions while preserving ActionDescriptors.
+	owned := make([]olmapiv1alpha1.CRDDescription, len(u.Owned))
+	copy(owned, u.Owned)
+	csv.Spec.CustomResourceDefinitions.Owned = owned
+	for i, desc := range csv.Spec.CustomResourceDefinitions.Owned {
+		if ad, ok := actionDescriptors[crdDescID(desc)]; ok {
+			csv.Spec.CustomResourceDefinitions.Owned[i].ActionDescriptor = ad
 		}
 	}
-	csv.Spec.CustomResourceDefinitions.Owned = newDescs
 	sort.Sort(descSorter(csv.Spec.CustomResourceDefinitions.Owned))
 	sort.Sort(descSorter(csv.Spec.CustomResourceDefinitions.Required))
 	return nil
