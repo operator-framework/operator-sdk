@@ -15,6 +15,7 @@
 package helm_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -27,7 +28,7 @@ import (
 )
 
 func TestGenerateRoleScaffold(t *testing.T) {
-	dcs := map[string]*mockRoleDiscoveryClient{
+	workingDcs := map[string]*mockRoleDiscoveryClient{
 		"upstream": &mockRoleDiscoveryClient{
 			serverVersion:   func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "11"}, nil },
 			serverResources: func() ([]*metav1.APIResourceList, error) { return simpleResourcesList(), nil },
@@ -35,6 +36,16 @@ func TestGenerateRoleScaffold(t *testing.T) {
 		"openshift": &mockRoleDiscoveryClient{
 			serverVersion:   func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "11+"}, nil },
 			serverResources: func() ([]*metav1.APIResourceList, error) { return simpleResourcesList(), nil },
+		},
+	}
+	brokenDcs := map[string]*mockRoleDiscoveryClient{
+		"no server version": &mockRoleDiscoveryClient{
+			serverVersion:   func() (*version.Info, error) { return nil, errors.New("no server version") },
+			serverResources: func() ([]*metav1.APIResourceList, error) { return simpleResourcesList(), nil },
+		},
+		"no server resources": &mockRoleDiscoveryClient{
+			serverVersion:   func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "11"}, nil },
+			serverResources: func() ([]*metav1.APIResourceList, error) { return nil, errors.New("no server resources") },
 		},
 	}
 
@@ -70,13 +81,22 @@ func TestGenerateRoleScaffold(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		for dcName, dc := range dcs {
+		for dcName, dc := range workingDcs {
 			testName := fmt.Sprintf("%s %s", dcName, tc.name)
 			t.Run(testName, func(t *testing.T) {
 				roleScaffold := helm.GenerateRoleScaffold(dc, tc.chart)
 				assert.Equal(t, tc.expectSkipDefaultRules, roleScaffold.SkipDefaultRules)
 				assert.Equal(t, tc.expectLenCustomRules, len(roleScaffold.CustomRules))
 				assert.Equal(t, tc.expectIsClusterScoped, roleScaffold.IsClusterScoped)
+			})
+		}
+		for dcName, dc := range brokenDcs {
+			testName := fmt.Sprintf("%s %s", dcName, tc.name)
+			t.Run(testName, func(t *testing.T) {
+				roleScaffold := helm.GenerateRoleScaffold(dc, tc.chart)
+				assert.Equal(t, false, roleScaffold.SkipDefaultRules)
+				assert.Equal(t, 2, len(roleScaffold.CustomRules))
+				assert.Equal(t, false, roleScaffold.IsClusterScoped)
 			})
 		}
 	}
