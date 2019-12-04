@@ -38,11 +38,11 @@ var (
 	ErrAPITypeNotFound = errors.New("kind type for API not found")
 )
 
-// GetCRDDescriptorForGVK parses type and struct field declaration comments on
+// GetCRDDescriptionForGVK parses type and struct field declaration comments on
 // API types to populate a csv's spec.customresourcedefinitions.owned fields
 // for a given API identified by Group, Version, and Kind in apisDir.
 // TODO(estroz): support ActionDescriptors parsing/setting.
-func GetCRDDescriptorForGVK(apisDir string, gvk schema.GroupVersionKind) (olmapiv1alpha1.CRDDescription, error) {
+func GetCRDDescriptionForGVK(apisDir string, gvk schema.GroupVersionKind) (olmapiv1alpha1.CRDDescription, error) {
 	crdDesc := olmapiv1alpha1.CRDDescription{
 		Version: gvk.Version,
 		Kind:    gvk.Kind,

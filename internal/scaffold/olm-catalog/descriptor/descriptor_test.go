@@ -102,7 +102,7 @@ func TestGetKindTypeForAPI(t *testing.T) {
 	}
 }
 
-func TestGetCRDDescriptorForGVK(t *testing.T) {
+func TestGetCRDDescriptionForGVK(t *testing.T) {
 	wd, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
@@ -204,7 +204,7 @@ func TestGetCRDDescriptorForGVK(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		description, err := GetCRDDescriptorForGVK(c.apisDir, c.gvk)
+		description, err := GetCRDDescriptionForGVK(c.apisDir, c.gvk)
 		if !c.wantErr && err != nil {
 			t.Errorf("%s: expected nil error, got %q", c.description, err)
 		} else if c.wantErr && err == nil {

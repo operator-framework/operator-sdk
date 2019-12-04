@@ -236,7 +236,7 @@ func (us crds) apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 				Version: ver.Name,
 				Kind:    crd.Spec.Names.Kind,
 			}
-			newCRDDesc, err := descriptor.GetCRDDescriptorForGVK(scaffold.ApisDir, gvk)
+			newCRDDesc, err := descriptor.GetCRDDescriptionForGVK(scaffold.ApisDir, gvk)
 			if err != nil {
 				if goerrors.Is(err, descriptor.ErrAPIDirNotExist) {
 					log.Infof("Directory for API %s does not exist. Skipping CSV annotation parsing for API.", gvk)
