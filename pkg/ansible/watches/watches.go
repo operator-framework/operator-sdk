@@ -272,14 +272,7 @@ func getMaxWorkers(gvk schema.GroupVersionKind, defValue int) int {
 		"_",
 		-1,
 	))
-	maxWorkers := defValue
-	if val, ok := os.LookupEnv(envVar); ok {
-		if i, err := strconv.Atoi(val); err != nil {
-			log.Info(fmt.Sprintf("Unable to find a value for %v. Using default value for maxWorkers %d", envVar, defValue))
-		} else {
-			maxWorkers = i
-		}
-	}
+	maxWorkers := getIntegerEnvWithDefault(envVar, defValue)
 	return maxWorkers
 }
 
@@ -292,11 +285,8 @@ func getAnsibleVerbosity(gvk schema.GroupVersionKind, defValue int) int {
 		"_",
 		-1,
 	))
-	ansibleVerbosity, err := strconv.Atoi(os.Getenv(envVar))
-	if err != nil {
-		log.Info(fmt.Sprintf("Unable to find a value for %v. Using default value for the ansible verbosity %d", envVar, defValue))
-		return defValue
-	}
+
+	ansibleVerbosity := getIntegerEnvWithDefault(envVar, defValue)
 
 	// Use default value when value doesn't make sense
 	if ansibleVerbosity < 0 {
@@ -308,4 +298,20 @@ func getAnsibleVerbosity(gvk schema.GroupVersionKind, defValue int) int {
 		return defValue
 	}
 	return ansibleVerbosity
+}
+
+// Returns value for MaxWorkers/Ansibleverbosity based on if envVar is set or a defvalue is used.
+func getIntegerEnvWithDefault(envVar string, defValue int) int {
+	val := defValue
+	if envVal, ok := os.LookupEnv(envVar); ok {
+		if i, err := strconv.Atoi(envVal); err != nil {
+			log.Info("could not parse environment variable as an integer; using default value", "envVar", envVar, "default", defValue)
+
+		} else {
+			val = i
+		}
+	} else if ok==false {
+ 		log.Info("environment variable not set; using default value", "envVar", envVar, "default", defValue)
+	}
+	return val 		
 }
