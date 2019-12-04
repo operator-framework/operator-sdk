@@ -58,7 +58,7 @@ func waitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace,
 			return false, err
 		}
 
-		if int(deployment.Status.AvailableReplicas) == replicas {
+		if int(deployment.Status.AvailableReplicas) >= replicas {
 			return true, nil
 		}
 		t.Logf("Waiting for full availability of %s deployment (%d/%d)\n", name, deployment.Status.AvailableReplicas, replicas)

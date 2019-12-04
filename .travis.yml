@@ -125,12 +125,16 @@ jobs:
       name: Subcommands on Kubernetes
       script: make test-subcommand
 
-    # Run the unit, sanity, markdown and linter tests
+    # Run the unit, sanity, markdown, coverage and linter tests
     - stage: test
-      name: Unit, Sanity, Markdown and Linter Tests
-      script: make test-sanity test-unit test-markdown test-linter
+      name: Unit, Sanity, and Markdown Tests
+      before_install:
+        - go get github.com/mattn/goveralls
+      script:
+        - make test-sanity test-unit test-markdown test-linter
+        - $GOPATH/bin/goveralls -service=travis-ci -coverprofile=coverage.out -repotoken=$COVERALLS_TOKEN
       after_success: echo 'Tests Passed'
-      after_failure: echo 'Failure in unit, sanity, markdown or linter test'
+      after_failure: echo 'Failure in unit, sanity, markdown, coverage or linter test'
 
     # Build and deploy ansible-operator docker image
     - <<: *deploy
@@ -167,3 +171,4 @@ jobs:
       name: Manifest list for helm-operator
       script:
         - make image-push-helm-multiarch
+

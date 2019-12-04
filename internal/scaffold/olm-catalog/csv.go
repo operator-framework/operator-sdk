@@ -15,8 +15,6 @@
 package catalog
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -326,19 +324,7 @@ func (s *CSV) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error
 	return nil
 }
 
-func replaceAllBytes(v interface{}, old, new []byte) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-	b = bytes.Replace(b, old, new, -1)
-	if err = json.Unmarshal(b, v); err != nil {
-		return err
-	}
-	return nil
-}
-
-// updateCSVFromManifests gathers relevant data from generated and
+// updateCSVFromManifestFiles gathers relevant data from generated and
 // user-defined manifests and updates csv.
 func (g *CSV) updateCSVFromManifests(cfg *CSVConfig, csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	paths := append(cfg.CRDCRPaths, cfg.OperatorPath)

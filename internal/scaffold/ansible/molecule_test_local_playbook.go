@@ -77,7 +77,7 @@ const moleculeTestLocalPlaybookAnsibleTmpl = `---
       when: hostvars[groups.k8s.0].build_cmd.changed
 
     - name: Wait 30s for Operator Deployment to terminate
-      k8s_facts:
+      k8s_info:
         api_version: '{{ definition.apiVersion }}'
         kind: '{{ definition.kind }}'
         namespace: '{{ namespace }}'
@@ -102,7 +102,7 @@ const moleculeTestLocalPlaybookAnsibleTmpl = `---
         definition: '{{ custom_resource }}'
 
     - name: Wait 2m for reconciliation to run
-      k8s_facts:
+      k8s_info:
         api_version: '{{ custom_resource.apiVersion }}'
         kind: '{{ custom_resource.kind }}'
         namespace: '{{ namespace }}'

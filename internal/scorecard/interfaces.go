@@ -81,14 +81,6 @@ func (p externalPlugin) Run() scapiv1alpha1.ScorecardOutput {
 	return result
 }
 
-var basicTestsPlugin = basicOrOLMPlugin{
-	pluginType: scplugins.BasicOperator,
-}
-
-var olmTestsPlugin = basicOrOLMPlugin{
-	pluginType: scplugins.OLMIntegration,
-}
-
 func (p basicOrOLMPlugin) List() scapiv1alpha1.ScorecardOutput {
 	res, err := scplugins.ListInternalPlugin(p.pluginType, p.config)
 	if err != nil {

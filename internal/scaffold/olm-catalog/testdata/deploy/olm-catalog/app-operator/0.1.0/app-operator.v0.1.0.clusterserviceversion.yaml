@@ -22,12 +22,10 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-    - description: some description
-      kind: AppService
+    - kind: AppService
       name: appservice.example.com
       version: v1alpha1
-    - displayName: some display name
-      kind: AppService2
+    - kind: AppService2
       name: appservice2.example.com
       version: v1alpha2
     required:

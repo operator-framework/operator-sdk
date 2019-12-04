@@ -19,17 +19,20 @@ import (
 	"encoding/json"
 	"sort"
 
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/scaffold/olm-catalog/descriptor"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/pkg/errors"
 
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
-	"github.com/operator-framework/operator-registry/pkg/registry"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/version"
 )
 
@@ -208,19 +211,9 @@ type crds [][]byte
 
 // apply updates csv's "owned" CRDDescriptions. "required" CRDDescriptions are
 // left as-is, since they are user-defined values.
-// apply will only make a new spec.customresourcedefinitions.owned element if
-// the CRD key is not in spec.customresourcedefinitions.owned already.
+// apply will only make a new spec.customresourcedefinitions.owned element for
+// a type if an annotation is present on that type's declaration.
 func (us crds) apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
-	currOwnedCRDSet := map[registry.DefinitionKey]olmapiv1alpha1.CRDDescription{}
-	for _, csvDesc := range csv.Spec.CustomResourceDefinitions.Owned {
-		defKey := registry.DefinitionKey{
-			Name:    csvDesc.Name,
-			Version: csvDesc.Version,
-			Kind:    csvDesc.Kind,
-		}
-		currOwnedCRDSet[defKey] = csvDesc
-	}
-
 	ownedCRDs := []olmapiv1alpha1.CRDDescription{}
 	for _, u := range us {
 		crd := apiextv1beta1.CustomResourceDefinition{}
@@ -228,20 +221,22 @@ func (us crds) apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 			return err
 		}
 		for _, ver := range crd.Spec.Versions {
-			defKey := registry.DefinitionKey{
+			// Parse CRD descriptors from source code comments and annotations.
+			gvk := schema.GroupVersionKind{
+				Group:   crd.Spec.Group,
+				Version: ver.Name,
+				Kind:    crd.Spec.Names.Kind,
+			}
+			newCRDDesc := olmapiv1alpha1.CRDDescription{
 				Name:    crd.GetName(),
 				Version: ver.Name,
 				Kind:    crd.Spec.Names.Kind,
 			}
-			if currCRDDesc, ok := currOwnedCRDSet[defKey]; !ok {
-				ownedCRDs = append(ownedCRDs, olmapiv1alpha1.CRDDescription{
-					Name:    defKey.Name,
-					Version: defKey.Version,
-					Kind:    defKey.Kind,
-				})
-			} else {
-				ownedCRDs = append(ownedCRDs, currCRDDesc)
+			err := descriptor.GetCRDDescriptorForGVK(scaffold.ApisDir, &newCRDDesc, gvk)
+			if err != nil {
+				return errors.Wrapf(err, "failed to set CRD descriptors for %s", gvk)
 			}
+			ownedCRDs = append(ownedCRDs, newCRDDesc)
 		}
 	}
 	csv.Spec.CustomResourceDefinitions.Owned = ownedCRDs
