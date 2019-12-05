@@ -33,7 +33,6 @@ const (
 )
 
 // ScorecardTestResult contains the results of an individual scorecard test.
-// +k8s:openapi-gen=true
 type ScorecardTestResult struct {
 	// Name is the name of the test
 	Name string `json:"name"`
@@ -54,7 +53,6 @@ type ScorecardTestResult struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // ScorecardOutput is the schema for the scorecard API
-// +k8s:openapi-gen=true
 type ScorecardOutput struct {
 	metav1.TypeMeta `json:",inline"`
 	// +optional

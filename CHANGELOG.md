@@ -8,6 +8,7 @@
 - Added new `log` field to the `operator-sdk scorecard` v1alpha2 output to support tests that produce logging. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
 - Added new `bundle validation` test to the `operator-sdk scorecard` OLM tests. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
 - Added new `CSV validation` test to the `operator-sdk scorecard` OLM tests.  This test uses a new operator-framework/api validation API to perform a more comprehensive test on the CSV. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
+- New `operator-sdk generate crds` subcommand, which generates CRDs from Go types. ([#2276](https://github.com/operator-framework/operator-sdk/pull/2276))
 
 ### Changed
 - Upgrade minimal Ansible version in the init projects from `2.4` to `2.6`. ([#2107](https://github.com/operator-framework/operator-sdk/pull/2107))
@@ -21,6 +22,7 @@
 - Replace Role verb `"*"` with list of verb strings in generated files so the Role is compatible with OpenShift and Kubernetes. ([#2175](https://github.com/operator-framework/operator-sdk/pull/2175))
 
 ### Deprecated
+- Deprecated the `operator-sdk generate openapi` command. CRD generation is still supported with `operator-sdk generate crds`. It is now recommended to use [openapi-gen](https://github.com/kubernetes/kube-openapi/tree/master/cmd/openapi-gen) directly for OpenAPI code generation. The `generate openapi` subcommand will be removed in a future release. ([#2276](https://github.com/operator-framework/operator-sdk/pull/2276))
 
 ### Removed
 - Removed `CRs Have At Least 1 Example` scorecard OLM test.  This test was replaced by a new `CSV validation` test. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)

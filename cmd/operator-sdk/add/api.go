@@ -40,17 +40,17 @@ func newAddApiCmd() *cobra.Command {
 	apiCmd := &cobra.Command{
 		Use:   "api",
 		Short: "Adds a new api definition under pkg/apis",
-		Long: `operator-sdk add api --kind=<kind> --api-version=<group/version> creates the
-api definition for a new custom resource under pkg/apis. This command must be
-run from the project root directory. If the api already exists at
-pkg/apis/<group>/<version> then the command will not overwrite and return an
-error.
+		Long: `operator-sdk add api --kind=<kind> --api-version=<group/version> creates
+the api definition for a new custom resource under pkg/apis. This command
+must be run from the project root directory. If the api already exists at
+pkg/apis/<group>/<version> then the command will not overwrite and return
+an error.
 
-By default, this command runs Kubernetes deepcopy and OpenAPI V3 generators on
+By default, this command runs Kubernetes deepcopy and CRD generators on
 tagged types in all paths under pkg/apis. Go code is generated under
-pkg/apis/<group>/<version>/zz_generated.{deepcopy,openapi}.go. CRD's are
-generated, or updated if they exist for a particular group + version + kind,
-under deploy/crds/<full group>_<resource>_crd.yaml; OpenAPI V3 validation YAML
+pkg/apis/<group>/<version>/zz_generated.deepcopy.go. CRD's are generated,
+or updated if they exist for a particular group + version + kind, under
+deploy/crds/<full group>_<resource>_crd.yaml; OpenAPI V3 validation YAML
 is generated as a 'validation' object. Generation can be disabled with the
 --skip-generation flag.
 
@@ -67,7 +67,6 @@ Example:
 			├── register.go
 			├── appservice_types.go
 			├── zz_generated.deepcopy.go
-			├── zz_generated.openapi.go
 	$ tree deploy/crds
 	├── deploy/crds/app.example.com_v1alpha1_appservice_cr.yaml
 	├── deploy/crds/app.example.com_appservices_crd.yaml
@@ -143,7 +142,7 @@ func apiRun(cmd *cobra.Command, args []string) error {
 		}
 
 		// Generate a validation spec for the new CRD.
-		if err := genutil.OpenAPIGen(); err != nil {
+		if err := genutil.CRDGen(); err != nil {
 			return err
 		}
 	}
