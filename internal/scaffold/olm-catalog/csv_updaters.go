@@ -37,7 +37,6 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 )
 
-<<<<<<< HEAD
 // csvUpdater is an interface for any data that can be in a CSV, which will be
 // set to the corresponding field on apply().
 type csvUpdater interface {
@@ -49,53 +48,11 @@ func setCSVInstallStrategy(csv *olmapiv1alpha1.ClusterServiceVersion, strategy o
 	sb, err := json.Marshal(strategy)
 	if err != nil {
 		return err
-=======
-// CSVUpdater is an interface for any data that can be in a CSV, which will be
-// set to the corresponding field on Apply().
-type CSVUpdater interface {
-	// Apply applies a data update to a CSV argument.
-	Apply(*olmapiv1alpha1.ClusterServiceVersion) error
-}
-
-type updaterStore struct {
-	installStrategy *InstallStrategyUpdate
-	crds            *CustomResourceDefinitionsUpdate
-	almExamples     *ALMExamplesUpdate
-}
-
-func NewUpdaterStore() *updaterStore { //nolint:golint
-
-	/*
-		* todo(camilamacedo86): issue `exported func NewUpdaterStore returns unexported type *catalog.updaterStore, which can be annoying to use (golint)`
-		The updaterStore is used out of this place then should be in upper case. It need to fixed at some point.
-	*/
-
-	return &updaterStore{
-		installStrategy: &InstallStrategyUpdate{
-			&olminstall.StrategyDetailsDeployment{},
-		},
-		crds: &CustomResourceDefinitionsUpdate{
-			&olmapiv1alpha1.CustomResourceDefinitions{},
-			make(map[string]struct{}),
-		},
-		almExamples: &ALMExamplesUpdate{},
-	}
-}
-
-// Apply iteratively calls each stored CSVUpdater's Apply() method.
-func (store *updaterStore) Apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
-	updaters := []CSVUpdater{store.installStrategy, store.crds, store.almExamples}
-	for _, updater := range updaters {
-		if err := updater.Apply(csv); err != nil {
-			return err
-		}
->>>>>>> changes made in the review
 	}
 	csv.Spec.InstallStrategy.StrategySpecRaw = json.RawMessage(sb)
 	return nil
 }
 
-<<<<<<< HEAD
 type roles [][]byte
 
 var _ csvUpdater = roles{}
@@ -104,34 +61,6 @@ func (us roles) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	// Get install strategy from csv. Default to a deployment strategy if none found.
 	strategy, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
 	if err != nil {
-=======
-func (store *updaterStore) AddToUpdater(yamlSpec []byte, kind string) (found bool, err error) {
-	found = true
-	switch kind {
-	case "Role":
-		err = store.AddRole(yamlSpec)
-	case "ClusterRole":
-		err = store.AddClusterRole(yamlSpec)
-	case "Deployment":
-		err = store.AddDeploymentSpec(yamlSpec)
-	case "CustomResourceDefinition":
-		// All CRD'store present will be 'owned'.
-		err = store.AddOwnedCRD(yamlSpec)
-	default:
-		found = false
-	}
-	return found, err
-}
-
-type InstallStrategyUpdate struct {
-	*olminstall.StrategyDetailsDeployment
-}
-
-func (store *updaterStore) AddRole(yamlDoc []byte) error {
-
-	role := &rbacv1.Role{}
-	if err := yaml.Unmarshal(yamlDoc, role); err != nil {
->>>>>>> changes made in the review
 		return err
 	}
 
@@ -156,13 +85,9 @@ func (store *updaterStore) AddRole(yamlDoc []byte) error {
 	return nil
 }
 
-<<<<<<< HEAD
 type clusterRoles [][]byte
 
 var _ csvUpdater = clusterRoles{}
-=======
-func (store *updaterStore) AddClusterRole(yamlDoc []byte) error {
->>>>>>> changes made in the review
 
 func (us clusterRoles) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	// Get install strategy from csv. Default to a deployment strategy if none found.
@@ -192,15 +117,9 @@ func (us clusterRoles) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err err
 	return nil
 }
 
-<<<<<<< HEAD
 type deployments [][]byte
 
 var _ csvUpdater = deployments{}
-=======
-const olmTNMeta = "metadata.annotations['olm.targetNamespaces']"
-
-func (store *updaterStore) AddDeploymentSpec(yamlDoc []byte) error {
->>>>>>> changes made in the review
 
 func (us deployments) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	// Get install strategy from csv. Default to a deployment strategy if none found.
@@ -295,13 +214,9 @@ func (descs descSorter) Less(i, j int) bool {
 }
 func (descs descSorter) Swap(i, j int) { descs[i], descs[j] = descs[j], descs[i] }
 
-<<<<<<< HEAD
 type crds [][]byte
 
 var _ csvUpdater = crds{}
-=======
-func (store *updaterStore) AddOwnedCRD(yamlDoc []byte) error {
->>>>>>> changes made in the review
 
 // apply updates csv's "owned" CRDDescriptions. "required" CRDDescriptions are
 // left as-is, since they are user-defined values.
@@ -343,17 +258,9 @@ func (us crds) apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	return nil
 }
 
-<<<<<<< HEAD
 type crs [][]byte
 
 var _ csvUpdater = crs{}
-=======
-type ALMExamplesUpdate struct {
-	crs []string
-}
-
-func (store *updaterStore) AddCR(yamlDoc []byte) error {
->>>>>>> changes made in the review
 
 func (us crs) apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 	examples := []json.RawMessage{}
