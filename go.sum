@@ -968,6 +968,8 @@ gotest.tools v2.2.0+incompatible/go.mod h1:DsYFclhRJ6vuDpmuTbkuFWG+y2sxOXAzmJt81
 gotest.tools/gotestsum v0.3.5/go.mod h1:Mnf3e5FUzXbkCfynWBGOwLssY7gTQgCHObK9tMpAriY=
 helm.sh/helm/v3 v3.0.0 h1:or/9cs1GgfcTQeEnR2CVJNw893/rmqIG1KsNHmUiSFw=
 helm.sh/helm/v3 v3.0.0/go.mod h1:sI7B9yfvMgxtTPMWdk1jSKJ2aa59UyP9qhPydqW6mgo=
+helm.sh/helm/v3 v3.0.1 h1:gEs30kweCOnLFK9Diq2S8b+VHmWQ2oi465GhqTc3ZxI=
+helm.sh/helm/v3 v3.0.1/go.mod h1:sI7B9yfvMgxtTPMWdk1jSKJ2aa59UyP9qhPydqW6mgo=
 honnef.co/go/tools v0.0.0-20180728063816-88497007e858/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
 honnef.co/go/tools v0.0.0-20190102054323-c2f93a96b099/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
 honnef.co/go/tools v0.0.0-20190106161140-3f1c8253044a/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
