@@ -10,7 +10,6 @@ DEV_LINTERS=(
     "--enable=gocyclo"
     "--enable=lll"
     "--enable=gosec"  # NOT add this one to CI since was defined that it should be optional for now at least.
-    "--enable=unparam"
 )
 
 subcommand=$1
@@ -45,4 +44,5 @@ golangci-lint run --disable-all \
     --enable=goimports \
     --enable=errcheck \
     --enable=dupl \
+    --enable=unparam \
     ${LINTERS[@]}
