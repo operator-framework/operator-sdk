@@ -14,6 +14,7 @@ operator-sdk scorecard [flags]
 ### Options
 
 ```
+  -b, --bundle string       bundle directory path, when specified runs bundle validation
       --config string       config file (default is '<project_dir>/.osdk-scorecard'; the config file's extension and format can be .yaml, .json, or .toml)
   -h, --help                help for scorecard
       --kubeconfig string   Path to kubeconfig of custom resource created in cluster
