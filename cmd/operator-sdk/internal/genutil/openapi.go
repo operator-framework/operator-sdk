@@ -36,6 +36,7 @@ func OpenAPIGen() error {
 	projutil.MustInProjectRoot()
 
 	repoPkg := projutil.GetGoPkg()
+
 	gvMap, err := k8sutil.ParseGroupSubpackages(scaffold.ApisDir)
 	if err != nil {
 		return fmt.Errorf("failed to parse group versions: (%v)", err)
