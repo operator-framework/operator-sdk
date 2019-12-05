@@ -20,10 +20,10 @@ golangci-lint run --disable-all \
     --enable=goimports \
     --enable=errcheck \
     --enable=dupl \
+    --enable=unparam \
 
 ##todo(camilamacedo86): The following checks requires fixes in the code
 # --enable=golint
 # --enable=gocyclo
 # --enable=lll
 # --enable=gosec
-# --enable=unparam \
