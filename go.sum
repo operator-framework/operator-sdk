@@ -537,8 +537,8 @@ github.com/opencontainers/image-spec v1.0.1/go.mod h1:BtxoFyWECRxE4U/7sNtV5W15zM
 github.com/opencontainers/runc v1.0.0-rc2.0.20190611121236-6cc515888830/go.mod h1:qT5XzbpPznkRYVz/mWwUaVBUv2rmF59PVA73FjuZG0U=
 github.com/opencontainers/runtime-spec v1.0.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/opencontainers/selinux v1.2.2/go.mod h1:+BLncwf63G4dgOzykXAxcmnFlUaOlkDdmw/CqsW6pjs=
-github.com/openshift/api v3.9.1-0.20190717200738-0390d1e77d64+incompatible/go.mod h1:dh9o4Fs58gpFXGSYfnVxGR9PnV53I8TW84pQaJDdGiY=
-github.com/openshift/client-go v0.0.0-20190627172412-c44a8b61b9f4/go.mod h1:6rzn+JTr7+WYS2E1TExP4gByoABxMznR6y2SnUIkmxk=
+github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible/go.mod h1:dh9o4Fs58gpFXGSYfnVxGR9PnV53I8TW84pQaJDdGiY=
+github.com/openshift/client-go v0.0.0-20190923180330-3b6373338c9b/go.mod h1:6rzn+JTr7+WYS2E1TExP4gByoABxMznR6y2SnUIkmxk=
 github.com/openshift/origin v0.0.0-20160503220234-8f127d736703/go.mod h1:0Rox5r9C8aQn6j1oAOQ0c1uC86mYbUFObzjBRvUKHII=
 github.com/openshift/prom-label-proxy v0.1.1-0.20191016113035-b8153a7f39f1/go.mod h1:p5MuxzsYP1JPsNGwtjtcgRHHlGziCJJfztff91nNixw=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
