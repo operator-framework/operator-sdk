@@ -285,9 +285,7 @@ func getAnsibleVerbosity(gvk schema.GroupVersionKind, defValue int) int {
 		"_",
 		-1,
 	))
-
 	ansibleVerbosity := getIntegerEnvWithDefault(envVar, defValue)
-
 	// Use default value when value doesn't make sense
 	if ansibleVerbosity < 0 {
 		log.Info("Value %v not valid. Using default %v", ansibleVerbosity, defValue)
@@ -306,11 +304,10 @@ func getIntegerEnvWithDefault(envVar string, defValue int) int {
 	if envVal, ok := os.LookupEnv(envVar); ok {
 		if i, err := strconv.Atoi(envVal); err != nil {
 			log.Info("could not parse environment variable as an integer; using default value", "envVar", envVar, "default", defValue)
-
 		} else {
 			val = i
 		}
-	} else if ok==false {
+	} else if !ok {
  		log.Info("environment variable not set; using default value", "envVar", envVar, "default", defValue)
 	}
 	return val 		
