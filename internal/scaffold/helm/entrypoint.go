@@ -45,5 +45,6 @@ if ! whoami &>/dev/null; then
   fi
 fi
 
-exec ${OPERATOR} run helm --watches-file=/opt/helm/watches.yaml $@
+cd $HOME
+exec ${OPERATOR} run helm --watches-file=$HOME/watches.yaml $@
 `
