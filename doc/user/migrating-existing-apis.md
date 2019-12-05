@@ -25,7 +25,6 @@ pkg/apis/
         ├── register.go
         ├── shared.go
         ├── zz_generated.deepcopy.go
-        ├── zz_generated.openapi.go
 ```
 
 Relevant files:
@@ -71,13 +70,11 @@ pkg/apis/
     |   ├── register.go
     |   ├── shared.go
     |   ├── zz_generated.deepcopy.go
-    |   ├── zz_generated.openapi.go
     └── v2                                # new version dir with source files for v2
         ├── catalogsourceconfig_types.go
         ├── doc.go
         ├── register.go
         ├── zz_generated.deepcopy.go
-        ├── zz_generated.openapi.go
 ```
 
 In addition to creating a new API version, the command creates an `addtoscheme_operators_v2.go` file that exposes an `AddToScheme()` function for registering `v2.CatalogSourceConfig` and `v2.CatalogSourceConfigList`.
@@ -198,12 +195,12 @@ You can now run `operator-sdk generate k8s` to generate deepcopy code for the mi
 
 ### Updating CustomResourceDefinition manifests and generating OpenAPI code
 
-Now that we've migrated all Go types to their destination packages, we must update the corresponding CustomResourceDefinition (CRD) manifests in `deploy/crds` and generate [OpenAPI][openapi-gen] validation source.
+Now that we've migrated all Go types to their destination packages, we must update the corresponding CustomResourceDefinition (CRD) manifests in `deploy/crds`.
 
 Doing so can be as simple as running the following command:
 
 ```console
-$ operator-sdk generate openapi
+$ operator-sdk generate crds
 ```
 
 This command will automatically update all CRD manifests.
@@ -215,7 +212,7 @@ Kubernetes 1.11+ supports CRD [`spec.versions`][crd-versions] and `spec.version`
 **Notes:**
 - `<full group>` is the full group name of your CRD while `<group>` is the last subdomain of `<full group>`, ex. `foo.bar.com` vs `foo`. `<resource>` is the plural lower-case of CRD `Kind` specified at `spec.names.plural`.
 - Your CRD *must* specify exactly one [storage version][crd-storage-version]. Use the `+kubebuilder:storageversion` [marker][crd-markers] to indicate the GVK that should be used to store data by the API server. This marker should be in a comment above your `CatalogSourceConfig` type.
-- If your operator does not have custom data manually added to its CRD's, you can skip to the [following section](#golang-api-migrations-types-and-commonalities); `operator-sdk generate openapi` will handle CRD updates in that case.
+- If your operator does not have custom data manually added to its CRD's, you can skip to the [following section](#golang-api-migrations-types-and-commonalities); `operator-sdk generate crds` will handle CRD updates in that case.
 
 Upgrading from `spec.version` to `spec.versions` will be demonstrated using the following CRD manifest example:
 
@@ -387,7 +384,7 @@ Each case is different; one may require many more changes than others. However, 
 1. Copying code from one Go package to another, ex. from `v1` to `v2` and `shared`.
 1. Changing import paths in project Go source files to those of new packages.
 1. Updating CRD manifests.
-    - In many cases, having sufficient [code annotations][kubebuilder-api-annotations] and running `operator-sdk generate openapi` will be enough.
+    - In many cases, having sufficient [code annotations][kubebuilder-api-annotations] and running `operator-sdk generate crds` will be enough.
 
 The Go toolchain can be your friend here too. Running `go vet ./...` can tell you what import paths require changing and what type instantiations are using fields incorrectly.
 
@@ -402,7 +399,6 @@ TODO
 [k8s-versioning]:https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-versioning
 [deepcopy-gen]:https://godoc.org/k8s.io/gengo/examples/deepcopy-gen
 [client-gen]:https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/generating-clientset.md
-[openapi-gen]:https://github.com/kubernetes/kube-openapi
 [crd-storage-version]:https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definition-versioning/#writing-reading-and-updating-versioned-customresourcedefinition-objects
 [crd-markers]:https://book.kubebuilder.io/reference/markers/crd.html
 [controller-tools]:https://github.com/kubernetes-sigs/controller-tools

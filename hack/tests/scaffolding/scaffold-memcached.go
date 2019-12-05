@@ -148,8 +148,7 @@ func main() {
 
 	for lineNum, line := range memcachedTypesFileLines {
 		if strings.Contains(string(line), "type MemcachedStatus struct {") {
-			memcachedTypesFileLinesIntermediate := append(memcachedTypesFileLines[:lineNum+1], []byte("\t// +listType=set"))
-			memcachedTypesFileLinesIntermediate = append(memcachedTypesFileLinesIntermediate, []byte("\tNodes []string `json:\"nodes\"`"))
+			memcachedTypesFileLinesIntermediate := append(memcachedTypesFileLines[:lineNum+1], []byte("\tNodes []string `json:\"nodes\"`"))
 			memcachedTypesFileLines = append(memcachedTypesFileLinesIntermediate, memcachedTypesFileLines[lineNum+3:]...)
 			break
 		}
@@ -169,19 +168,10 @@ func main() {
 		log.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
-	log.Print("Generating openapi")
-	cmdOut, err = exec.Command("operator-sdk", "generate", "openapi").CombinedOutput()
+	log.Print("Generating CRDs")
+	cmdOut, err = exec.Command("operator-sdk", "generate", "crds").CombinedOutput()
 	if err != nil {
 		log.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
-	}
-
-	// TODO(camilamacedo86) Move this test to a unit test in
-	// `cmd/operator-sdk/internal/genutil/`. Unit tests are
-	// faster and are run more often during development, so it
-	// would be an improvement to implement this test there.
-	log.Print("Checking API rule violations")
-	if strings.Contains(string(cmdOut), "API rule violation") {
-		log.Fatalf("Error: %v\nCommand Output: %s\n", "API rule violations :", string(cmdOut))
 	}
 
 	log.Print("Pulling new dependencies with go mod")

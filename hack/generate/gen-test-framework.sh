@@ -21,7 +21,4 @@ go mod tidy
 
 # Run gen commands
 ../../build/operator-sdk generate k8s
-# TODO(camilamacedo86): remove this when the openapi gen be set to false and it no longer is generated
-# The following file is gen by openapi but it has not been committed in order to allow we clone and call the test locally in any path.
-trap_add 'rm pkg/apis/cache/v1alpha1/zz_generated.openapi.go' EXIT
-../../build/operator-sdk generate openapi
+../../build/operator-sdk generate crds

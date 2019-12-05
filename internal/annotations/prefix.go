@@ -27,8 +27,28 @@ const (
 	valueSep  = "="
 )
 
+// joinWithTrim is like strings.Join() but trims sep from each element in elems
+// prior to joining elems. Code modified from strings.Join().
+func joinWithTrim(sep string, elems ...string) string {
+	switch len(elems) {
+	case 0:
+		return ""
+	case 1:
+		return elems[0]
+	}
+	b := strings.Builder{}
+	b.WriteString(strings.Trim(elems[0], sep))
+	for _, e := range elems[1:] {
+		if e = strings.Trim(e, sep); e != "" {
+			b.WriteString(sep)
+			b.WriteString(e)
+		}
+	}
+	return b.String()
+}
+
 func JoinPrefix(tokens ...string) string {
-	return strings.Join(tokens, prefixSep)
+	return joinWithTrim(prefixSep, tokens...)
 }
 
 func SplitPrefix(prefix string) ([]string, error) {
@@ -51,7 +71,7 @@ func SplitPrefix(prefix string) ([]string, error) {
 }
 
 func JoinPath(elements ...string) string {
-	return strings.Join(elements, pathSep)
+	return joinWithTrim(pathSep, elements...)
 }
 
 func SplitPath(path string) ([]string, error) {
@@ -71,7 +91,7 @@ func SplitPath(path string) ([]string, error) {
 }
 
 func JoinAnnotation(prefixedPath, value string) string {
-	return prefixedPath + valueSep + value
+	return strings.Trim(prefixedPath, valueSep) + valueSep + strings.Trim(value, valueSep)
 }
 
 func SplitAnnotation(annotation string) (prefixedPath, val string, err error) {
