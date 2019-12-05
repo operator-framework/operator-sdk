@@ -170,7 +170,7 @@ Following the description of each internal [Plugin](#plugins). Note that are 8 i
 
 | Test        | Description   |
 | --------    | -------- |
-| Bundle Validation | This test validates the bundle manifests found in the bundle directory as specifed by the bundle flag.  If the bundle contents contain errors, then the test result output will include the validator log as well as error messages from the validation library.|
+| OLM Bundle Validation | This test validates the OLM bundle manifests found in the bundle directory as specifed by the bundle flag.  If the bundle contents contain errors, then the test result output will include the validator log as well as error messages from the validation library.  See this [document][olm-bundle] for details on OLM bundles.|
 | Provided APIs have validation |This test verifies that the CRDs for the provided CRs contain a validation section and that there is validation for each spec and status field detected in the CR. This test has a maximum score equal to the number of CRs provided via the `cr-manifest` option. |
 | Owned CRDs Have Resources Listed | This test makes sure that the CRDs for each CR provided via the `cr-manifest` option have a `resources` subsection in the [`owned` CRDs section][owned-crds] of the CSV. If the test detects used resources that are not listed in the resources section, it will list them in the suggestions at the end of the test. This test has a maximum score equal to the number of CRs provided via the `cr-manifest` option. |
 | CSV Validation | This test checks that the validity of a CSV. |
@@ -642,6 +642,7 @@ Once done, follow the steps in this [document][olm-deploy-operator] to bundle yo
 [owned-crds]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#owned-crds
 [alm-examples]: https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#crd-templates
 [viper]: https://github.com/spf13/viper/blob/master/README.md
+[olm-bundle]:https://github.com/operator-framework/operator-registry#manifest-format
 [olm-csv]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md
 [olm-csv-alm-examples]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/building-your-csv.md#crd-templates
 [olm]:https://github.com/operator-framework/operator-lifecycle-manager
