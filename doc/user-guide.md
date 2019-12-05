@@ -63,9 +63,9 @@ By default this will be the namespace that the operator is running in. To watch 
 mgr, err := manager.New(cfg, manager.Options{Namespace: ""})
 ```
 
-It is also possible to use the [MultiNamespacedCacheBuilder](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder) to watch a specific set of namespaces:
+It is also possible to use the [MultiNamespacedCacheBuilder][multi-namespaced-cache-builder] to watch a specific set of namespaces:
 ```Go
-var namespaces []string // List of Namepsaces
+var namespaces []string // List of Namespaces
 // Create a new Cmd to provide shared dependencies and start components
 mgr, err := manager.New(cfg, manager.Options{
    NewCache: cache.MultiNamespacedCacheBuilder(namespaces),
@@ -685,3 +685,4 @@ When the operator is not running in a cluster, the Manager will return an error 
 [result_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Result
 [metrics_doc]: ./user/metrics/README.md
 [quay_link]: https://quay.io
+[multi-namespaced-cache-builder]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
