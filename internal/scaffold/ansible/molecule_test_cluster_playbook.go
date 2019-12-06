@@ -49,13 +49,13 @@ const moleculeTestClusterPlaybookAnsibleTmpl = `---
     deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
     image_name: [[.Resource.FullGroup]]/[[.ProjectName]]:testing
     custom_resource: "{{ lookup('file', '/'.join([deploy_dir, 
-		'crds/[[.Resource.FullGroup]]_[[.Resource.Version]]_[[.Resource.LowerKind]]_cr.yaml'])) | from_yaml }}"
+    'crds/[[.Resource.FullGroup]]_[[.Resource.Version]]_[[.Resource.LowerKind]]_cr.yaml'])) | from_yaml }}"
   tasks:
   - name: Create the [[.Resource.FullGroup]]/[[.Resource.Version]].[[.Resource.Kind]]
     k8s:
       namespace: '{{ namespace }}'
       definition: "{{ lookup('file', '/'.join([deploy_dir,
-		'crds/[[.Resource.FullGroup]]_[[.Resource.Version]]_[[.Resource.LowerKind]]_cr.yaml'])) }}"
+      'crds/[[.Resource.FullGroup]]_[[.Resource.Version]]_[[.Resource.LowerKind]]_cr.yaml'])) }}"
 
   - name: Get the newly created Custom Resource
     debug:
