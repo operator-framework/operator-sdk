@@ -24,7 +24,6 @@ import (
 
 const (
 	testNamespaceName = "helm-test"
-	testReleaseName   = "helm-test-dory"
 )
 
 var now = metav1.Now()

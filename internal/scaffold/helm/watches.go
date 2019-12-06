@@ -47,5 +47,5 @@ const watchesYAMLTmpl = `---
 - version: {{.Resource.Version}}
   group: {{.Resource.FullGroup}}
   kind: {{.Resource.Kind}}
-  chart: /opt/helm/{{.HelmChartsDir}}/{{.ChartName}}
+  chart: {{.HelmChartsDir}}/{{.ChartName}}
 `

@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	testutil "github.com/operator-framework/operator-sdk/internal/scaffold/internal/testutil"
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
@@ -48,7 +49,7 @@ func TestCRDGoProject(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer func() { os.Chdir(wd) }()
+	defer func() { _ = os.Chdir(wd) }()
 	if err = os.Chdir(cfg.AbsProjectPath); err != nil {
 		t.Fatal(err)
 	}
@@ -122,11 +123,58 @@ spec:
     storage: true
 `
 
-func TestCRDNonGoProject(t *testing.T) {
+func TestCRDNonGoProjectDefault(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	s.Fs = afero.NewMemMapFs()
 
-	r, err := NewResource(appApiVersion, appKind)
+	r, err := NewResource(appAPIVersion, appKind)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	crd := &CRD{Resource: r}
+	cfg := &input.Config{}
+	if err = s.Execute(cfg, crd); err != nil {
+		t.Fatalf("Failed to execute the scaffold: (%v)", err)
+	}
+
+	if crdNonGoDefaultExp != buf.String() {
+		diffs := diffutil.Diff(crdNonGoDefaultExp, buf.String())
+		t.Fatalf("Expected vs actual differs.\n%v", diffs)
+	}
+}
+
+// crdNonGoDefaultExp is the default non-go CRD. Non-go projects don't have the
+// luxury of kubebuilder annotations.
+const crdNonGoDefaultExp = `apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: appservices.app.example.com
+spec:
+  group: app.example.com
+  names:
+    kind: AppService
+    listKind: AppServiceList
+    plural: appservices
+    singular: appservice
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      type: object
+      x-kubernetes-preserve-unknown-fields: true
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+`
+
+func TestCRDNonGoProjectCustom(t *testing.T) {
+	s, buf := setupScaffoldAndWriter()
+	s.Fs = afero.NewMemMapFs()
+
+	r, err := NewResource(appAPIVersion, appKind)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,7 +190,7 @@ func TestCRDNonGoProject(t *testing.T) {
 	}
 
 	path := filepath.Join(cfg.AbsProjectPath, i.Path)
-	err = afero.WriteFile(s.Fs, path, []byte(crdNonGoExp), fileutil.DefaultFileMode)
+	err = afero.WriteFile(s.Fs, path, []byte(crdNonGoCustomExp), fileutil.DefaultFileMode)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -151,16 +199,16 @@ func TestCRDNonGoProject(t *testing.T) {
 		t.Fatalf("Failed to execute the scaffold: (%v)", err)
 	}
 
-	if crdNonGoExp != buf.String() {
-		diffs := diffutil.Diff(crdNonGoExp, buf.String())
+	if crdNonGoCustomExp != buf.String() {
+		diffs := diffutil.Diff(crdNonGoCustomExp, buf.String())
 		t.Fatalf("Expected vs actual differs.\n%v", diffs)
 	}
 }
 
-// crdNonGoExp contains a simple validation block to make sure manually-added
+// crdNonGoCustomExp contains a simple validation block to make sure manually-added
 // validation is not overwritten. Non-go projects don't have the luxury of
 // kubebuilder annotations.
-const crdNonGoExp = `apiVersion: apiextensions.k8s.io/v1beta1
+const crdNonGoCustomExp = `apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   name: appservices.app.example.com

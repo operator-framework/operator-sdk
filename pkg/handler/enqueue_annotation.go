@@ -17,7 +17,6 @@ package handler
 import (
 	"strings"
 
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
@@ -45,8 +44,6 @@ const (
 // 3. namespaced primary object and dependent namespaced scoped but in a different namespace object.
 type EnqueueRequestForAnnotation struct {
 	Type string
-
-	mapper meta.RESTMapper
 }
 
 var _ crtHandler.EventHandler = &EnqueueRequestForAnnotation{}

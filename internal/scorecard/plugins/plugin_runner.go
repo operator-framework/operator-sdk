@@ -68,13 +68,12 @@ var (
 )
 
 const (
-	scorecardPodName       = "operator-scorecard-test"
 	scorecardContainerName = "scorecard-proxy"
 )
 
 var log *logrus.Logger
 
-func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, logFile io.ReadWriter) (scapiv1alpha1.ScorecardOutput, error) {
+func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, logFile io.Writer) (scapiv1alpha1.ScorecardOutput, error) {
 	log = logrus.New()
 	log.SetFormatter(&logrus.TextFormatter{DisableColors: true})
 	log.SetOutput(logFile)
@@ -126,7 +125,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 	runtimeClient, _ = client.New(kubeconfig, client.Options{Scheme: scheme, Mapper: restMapper})
 
 	csv := &olmapiv1alpha1.ClusterServiceVersion{}
-	if pluginType == OLMIntegration {
+	if pluginType == OLMIntegration || config.OLMDeployed {
 		yamlSpec, err := ioutil.ReadFile(config.CSVManifest)
 		if err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to read csv: %v", err)
@@ -139,13 +138,13 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 	// Extract operator manifests from the CSV if olm-deployed is set.
 	if config.OLMDeployed {
 		// Get deploymentName from the deployment manifest within the CSV.
-		strat, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
+		strategy, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
 		if err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, err
 		}
-		stratDep, ok := strat.(*olminstall.StrategyDetailsDeployment)
+		stratDep, ok := strategy.(*olminstall.StrategyDetailsDeployment)
 		if !ok {
-			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("expected StrategyDetailsDeployment, got strategy of type %T", strat)
+			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("expected StrategyDetailsDeployment, got strategy of type %T", strategy)
 		}
 		deploymentName = stratDep.DeploymentSpecs[0].Name
 		// Get the proxy pod, which should have been created with the CSV.
