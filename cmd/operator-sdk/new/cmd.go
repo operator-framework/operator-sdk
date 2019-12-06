@@ -37,7 +37,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
-func NewCmd() *cobra.Command {
+func NewCmd() *cobra.Command { //nolint:golint
+	/*
+		The nolint here is used to hide the warning
+		"func name will be used as new.NewCmd by other packages,
+		and that stutters; consider calling this Cmd"
+		which is a false positive.
+	*/
 	newCmd := &cobra.Command{
 		Use:   "new <project-name>",
 		Short: "Creates a new operator application",

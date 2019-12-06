@@ -326,13 +326,13 @@ func (s *CSV) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error
 
 // updateCSVFromManifestFiles gathers relevant data from generated and
 // user-defined manifests and updates csv.
-func (g *CSV) updateCSVFromManifests(cfg *CSVConfig, csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
+func (s *CSV) updateCSVFromManifests(cfg *CSVConfig, csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	paths := append(cfg.CRDCRPaths, cfg.OperatorPath)
 	paths = append(paths, cfg.RolePaths...)
 	manifestGVKMap := map[schema.GroupVersionKind][][]byte{}
 	crGVKSet := map[schema.GroupVersionKind]struct{}{}
 	for _, path := range paths {
-		info, err := g.getFS().Stat(path)
+		info, err := s.getFS().Stat(path)
 		if err != nil {
 			return err
 		}

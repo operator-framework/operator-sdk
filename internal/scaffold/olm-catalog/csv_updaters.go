@@ -44,6 +44,17 @@ type csvUpdater interface {
 	apply(*olmapiv1alpha1.ClusterServiceVersion) error
 }
 
+// Get install strategy from csv.
+func getCSVInstallStrategy(csv *olmapiv1alpha1.ClusterServiceVersion) (strategy olminstall.Strategy, err error) {
+	// Default to a deployment strategy if none found.
+	if len(csv.Spec.InstallStrategy.StrategySpecRaw) == 0 || csv.Spec.InstallStrategy.StrategyName == "" {
+		csv.Spec.InstallStrategy.StrategyName = olminstall.InstallStrategyNameDeployment
+		return &olminstall.StrategyDetailsDeployment{}, nil
+	}
+	return (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
+}
+
+// Set csv's spec.install to strategy.
 func setCSVInstallStrategy(csv *olmapiv1alpha1.ClusterServiceVersion, strategy olminstall.Strategy) error {
 	sb, err := json.Marshal(strategy)
 	if err != nil {
@@ -58,12 +69,10 @@ type roles [][]byte
 var _ csvUpdater = roles{}
 
 func (us roles) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
-	// Get install strategy from csv. Default to a deployment strategy if none found.
-	strategy, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
+	strategy, err := getCSVInstallStrategy(csv)
 	if err != nil {
 		return err
 	}
-
 	switch s := strategy.(type) {
 	case *olminstall.StrategyDetailsDeployment:
 		perms := []olminstall.StrategyDeploymentPermissions{}
@@ -90,12 +99,10 @@ type clusterRoles [][]byte
 var _ csvUpdater = clusterRoles{}
 
 func (us clusterRoles) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
-	// Get install strategy from csv. Default to a deployment strategy if none found.
-	strategy, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
+	strategy, err := getCSVInstallStrategy(csv)
 	if err != nil {
 		return err
 	}
-
 	switch s := strategy.(type) {
 	case *olminstall.StrategyDetailsDeployment:
 		perms := []olminstall.StrategyDeploymentPermissions{}
@@ -122,8 +129,7 @@ type deployments [][]byte
 var _ csvUpdater = deployments{}
 
 func (us deployments) apply(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
-	// Get install strategy from csv. Default to a deployment strategy if none found.
-	strategy, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
+	strategy, err := getCSVInstallStrategy(csv)
 	if err != nil {
 		return err
 	}

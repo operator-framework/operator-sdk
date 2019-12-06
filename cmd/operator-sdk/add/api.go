@@ -36,7 +36,7 @@ var (
 	skipGeneration bool
 )
 
-func newAddApiCmd() *cobra.Command {
+func newAddAPICmd() *cobra.Command {
 	apiCmd := &cobra.Command{
 		Use:   "api",
 		Short: "Adds a new api definition under pkg/apis",

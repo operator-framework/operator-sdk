@@ -6,7 +6,6 @@ source ./hack/common.sh
 DEV_LINTERS=(
     ##todo(camilamacedo86): The following checks requires fixes in the code.
     ##todo(camilamacedo86): they should be enabled and added in the CI
-    "--enable=golint"
     "--enable=gocyclo"
     "--enable=lll"
     "--enable=gosec"  # NOT add this one to CI since was defined that it should be optional for now at least.
@@ -45,4 +44,5 @@ golangci-lint run --disable-all \
     --enable=errcheck \
     --enable=dupl \
     --enable=unparam \
+    --enable=golint \
     ${LINTERS[@]}
