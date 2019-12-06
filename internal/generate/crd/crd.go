@@ -205,7 +205,7 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 
 // generateNonGo generates a CRD for non-Go projects using a resource.
 func (g crdGenerator) generateNonGo() (map[string][]byte, error) {
-	crd := &apiextv1beta1.CustomResourceDefinition{}
+	crd := apiextv1beta1.CustomResourceDefinition{}
 	fileMap := map[string][]byte{}
 	fileName := getFileNameForResource(g.resource)
 	path := filepath.Join(g.InputDir, fileName)
@@ -242,11 +242,11 @@ func (g crdGenerator) generateNonGo() (map[string][]byte, error) {
 	}
 
 	sort.Sort(k8sutil.CRDVersions(crd.Spec.Versions))
-	setCRDStorageVersion(crd)
+	setCRDStorageVersion(&crd)
 	if err := checkCRDVersions(crd); err != nil {
 		return nil, err
 	}
-	b, err := k8sutil.GetObjectBytes(crd, yaml.Marshal)
+	b, err := k8sutil.GetObjectBytes(&crd, yaml.Marshal)
 	if err != nil {
 		return nil, err
 	}
@@ -255,9 +255,9 @@ func (g crdGenerator) generateNonGo() (map[string][]byte, error) {
 }
 
 // newCRDForResource constructs a barebones CRD using data in resource.
-func newCRDForResource(r scaffold.Resource) *apiextv1beta1.CustomResourceDefinition {
+func newCRDForResource(r scaffold.Resource) apiextv1beta1.CustomResourceDefinition {
 	trueVal := true
-	return &apiextv1beta1.CustomResourceDefinition{
+	return apiextv1beta1.CustomResourceDefinition{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: apiextv1beta1.SchemeGroupVersion.String(),
 			Kind:       "CustomResourceDefinition",
@@ -311,7 +311,7 @@ func setCRDStorageVersion(crd *apiextv1beta1.CustomResourceDefinition) {
 //
 // The version field is deprecated and optional, but if it is not empty,
 // it must match the first item in the versions field.
-func checkCRDVersions(crd *apiextv1beta1.CustomResourceDefinition) error {
+func checkCRDVersions(crd apiextv1beta1.CustomResourceDefinition) error {
 	singleVer := crd.Spec.Version != ""
 	multiVers := len(crd.Spec.Versions) > 0
 	if singleVer {
@@ -327,13 +327,13 @@ func checkCRDVersions(crd *apiextv1beta1.CustomResourceDefinition) error {
 		// There must be exactly one version flagged as a storage version.
 		if ver.Storage {
 			if hasStorageVer {
-				return fmt.Errorf("spec.versions cannot have more than one storage version for CRD %s", crd.Spec.Names.Kind)
+				return fmt.Errorf("%s CRD has more than one storage version", crd.GetName())
 			}
 			hasStorageVer = true
 		}
 	}
 	if multiVers && !hasStorageVer {
-		return fmt.Errorf("spec.versions must have exactly one storage version for CRD %s", crd.Spec.Names.Kind)
+		return fmt.Errorf("%s CRD has no storage version", crd.GetName())
 	}
 	return nil
 }
