@@ -33,7 +33,7 @@ header_text 'scorecard test to see if bundle flag works correctly'
 if ! commandoutput="$(operator-sdk scorecard --config "$CONFIG_PATH_BUNDLE" 2>&1)"; then 
 	echo $commandoutput
 	failCount=`echo $commandoutput | grep -o "fail" | wc -l`
-	expectedFailCount=3
+	expectedFailCount=2
 	if [ $failCount -ne $expectedFailCount ]
 	then
 		echo "expected fail count $expectedFailCount, got $failCount"
