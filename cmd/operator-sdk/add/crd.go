@@ -26,7 +26,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -98,10 +97,10 @@ func crdFunc(cmd *cobra.Command, args []string) error {
 
 	// This command does not consider an APIs dir. Instead it adds a plain CRD
 	// for the provided resource. We can use NewCRDNonGo to get this behavior.
-	gcfg := genutil.Config{InputDir: scaffold.ApisDir, OutputDir: scaffold.CRDsDir}
+	gcfg := genutil.Config{}
 	crd := gencrd.NewCRDNonGo(gcfg, *resource)
 	if err := crd.Generate(); err != nil {
-		return errors.Wrapf(err, "error generating CRD for %s", resource)
+		return fmt.Errorf("error generating CRD for %s: %w", resource, err)
 	}
 
 	// update deploy/role.yaml for the given resource r.

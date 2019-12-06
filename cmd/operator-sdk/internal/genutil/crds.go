@@ -15,11 +15,12 @@
 package genutil
 
 import (
+	"fmt"
+
 	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
 	genutil "github.com/operator-framework/operator-sdk/internal/generate/util"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
-	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -30,10 +31,10 @@ func CRDGen() error {
 
 	log.Info("Running CRD generator.")
 
-	cfg := genutil.Config{InputDir: scaffold.ApisDir, OutputDir: scaffold.CRDsDir}
+	cfg := genutil.Config{}
 	crd := gencrd.NewCRDGo(cfg)
 	if err := crd.Generate(); err != nil {
-		return errors.Wrapf(err, "error generating CRDs from APIs in %s", scaffold.ApisDir)
+		return fmt.Errorf("error generating CRDs from APIs in %s: %w", scaffold.ApisDir, err)
 	}
 
 	log.Info("CRD generation complete.")

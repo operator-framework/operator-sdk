@@ -15,6 +15,7 @@
 package crd
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -29,7 +30,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
 	"github.com/ghodss/yaml"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -90,7 +90,7 @@ func (g crdGenerator) validate() error {
 	}
 	if !g.isOperatorGo {
 		if err := g.resource.Validate(); err != nil {
-			return errors.Wrap(err, "resource is invalid:")
+			return fmt.Errorf("resource is invalid: %w", err)
 		}
 	}
 	return nil
@@ -99,7 +99,7 @@ func (g crdGenerator) validate() error {
 // Generate generates CRD manifests and writes them to g.OutputDir.
 func (g crdGenerator) Generate() (err error) {
 	if err = g.validate(); err != nil {
-		return errors.Wrap(err, "validation error")
+		return fmt.Errorf("error validating generator configuration: %w", err)
 	}
 	var fileMap map[string][]byte
 	if g.isOperatorGo {
@@ -108,15 +108,15 @@ func (g crdGenerator) Generate() (err error) {
 		fileMap, err = g.generateNonGo()
 	}
 	if err != nil {
-		return errors.Wrap(err, "error generating CRD manifests")
+		return fmt.Errorf("error generating CRD manifests: %w", err)
 	}
 	if err = os.MkdirAll(g.OutputDir, fileutil.DefaultDirFileMode); err != nil {
-		return errors.Wrapf(err, "error mkdir %s", g.OutputDir)
+		return fmt.Errorf("error mkdir %s: %w", g.OutputDir, err)
 	}
 	for fileName, b := range fileMap {
 		path := filepath.Join(g.OutputDir, fileName)
 		if err := ioutil.WriteFile(path, b, fileutil.DefaultFileMode); err != nil {
-			return errors.Wrap(err, "error writing CRD manifests")
+			return fmt.Errorf("error writing CRD manifests: %w", err)
 		}
 	}
 	return nil
@@ -318,7 +318,7 @@ func checkCRDVersions(crd *apiextv1beta1.CustomResourceDefinition) error {
 		if !multiVers {
 			log.Warnf("CRD %s: spec.version is deprecated and should be migrated to spec.versions", crd.Spec.Names.Kind)
 		} else if crd.Spec.Version != crd.Spec.Versions[0].Name {
-			return errors.Errorf("spec.version %s must be the first element in spec.versions for CRD %s", crd.Spec.Version, crd.Spec.Names.Kind)
+			return fmt.Errorf("spec.version %s must be the first element in spec.versions for CRD %s", crd.Spec.Version, crd.Spec.Names.Kind)
 		}
 	}
 
@@ -327,13 +327,13 @@ func checkCRDVersions(crd *apiextv1beta1.CustomResourceDefinition) error {
 		// There must be exactly one version flagged as a storage version.
 		if ver.Storage {
 			if hasStorageVer {
-				return errors.Errorf("spec.versions cannot have more than one storage version for CRD %s", crd.Spec.Names.Kind)
+				return fmt.Errorf("spec.versions cannot have more than one storage version for CRD %s", crd.Spec.Names.Kind)
 			}
 			hasStorageVer = true
 		}
 	}
 	if multiVers && !hasStorageVer {
-		return errors.Errorf("spec.versions must have exactly one storage version for CRD %s", crd.Spec.Names.Kind)
+		return fmt.Errorf("spec.versions must have exactly one storage version for CRD %s", crd.Spec.Names.Kind)
 	}
 	return nil
 }

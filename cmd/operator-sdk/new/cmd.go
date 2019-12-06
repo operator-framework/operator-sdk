@@ -366,7 +366,7 @@ func generateCRDNonGo(projectName string, resource scaffold.Resource) error {
 	gcfg := genutil.Config{InputDir: crdsDir, OutputDir: crdsDir}
 	crd := gencrd.NewCRDNonGo(gcfg, resource)
 	if err := crd.Generate(); err != nil {
-		return errors.Wrapf(err, "error generating CRD for %s", resource)
+		return fmt.Errorf("error generating CRD for %s: %w", resource, err)
 	}
 	log.Info("Generated CustomResourceDefinition manifests.")
 	return nil

@@ -117,7 +117,6 @@ $ operator-sdk generate crds
 
 **Notes:**
 - - Your CRD *must* specify exactly one [storage version][crd-storage-version]. Use the `+kubebuilder:storageversion` [marker][crd-markers] to indicate the GVK that should be used to store data by the API server. This marker should be in a comment above your `Memcached` type.
-- You may see errors like "API rule violation" when running the above command. For information on these errors, read the below section and see the [API rules][api-rules] documentation.
 
 [crd-storage-version]:https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definition-versioning/#writing-reading-and-updating-versioned-customresourcedefinition-objects
 [crd-markers]:https://book.kubebuilder.io/reference/markers/crd.html

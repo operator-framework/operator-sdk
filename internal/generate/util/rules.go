@@ -15,11 +15,11 @@
 package genutil
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
-	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-tools/pkg/genall"
 	"sigs.k8s.io/controller-tools/pkg/loader"
 )
@@ -42,15 +42,15 @@ var _ genall.OutputRule = OutputToCachedDirectory{}
 // Open is used to generate a CRD manifest in cache at path.
 func (o OutputToCachedDirectory) Open(_ *loader.Package, path string) (io.WriteCloser, error) {
 	if cache == nil {
-		return nil, errors.Errorf("error opening %s in output rule: cache must be set", path)
+		return nil, fmt.Errorf("error opening %s in output rule: cache must be set", path)
 	}
 	if err := cache.MkdirAll(o.Dir, os.ModePerm); err != nil {
-		return nil, errors.Wrapf(err, "error mkdir %s in output rule", o.Dir)
+		return nil, fmt.Errorf("error mkdir %s in output rule: %w", o.Dir, err)
 	}
 	dirPath := filepath.Join(o.Dir, path)
 	wc, err := cache.Create(dirPath)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error creating %s in output rule", dirPath)
+		return nil, fmt.Errorf("error creating %s in output rule: %w", dirPath, err)
 	}
 	return wc, nil
 }
