@@ -308,7 +308,7 @@ func getIntegerEnvWithDefault(envVar string, defValue int) int {
 			val = i
 		}
 	} else if !ok {
- 		log.Info("Environment variable not set; using default value", "envVar", envVar, "default", defValue)
+		log.Info("Environment variable not set; using default value", "envVar", envVar, "default", defValue)
 	}
-	return val 		
+	return val
 }
