@@ -42,7 +42,7 @@ func TestCreateChart(t *testing.T) {
 		latestVersion      = "1.2.3"
 		previousVersion    = "1.2.0"
 		nonExistentVersion = "0.0.1"
-		customApiVersion   = "example.com/v1"
+		customAPIVersion   = "example.com/v1"
 		customKind         = "MyApp"
 		customExpectName   = "myapp"
 		expectDerivedKind  = "TestChart"
@@ -111,9 +111,9 @@ func TestCreateChart(t *testing.T) {
 		},
 		{
 			name:               "from scaffold with apiVersion and kind",
-			apiVersion:         customApiVersion,
+			apiVersion:         customAPIVersion,
 			kind:               customKind,
-			expectResource:     mustNewResource(t, customApiVersion, customKind),
+			expectResource:     mustNewResource(t, customAPIVersion, customKind),
 			expectChartName:    customExpectName,
 			expectChartVersion: "0.1.0",
 		},
@@ -148,8 +148,8 @@ func TestCreateChart(t *testing.T) {
 		{
 			name:               "from repo and name implicit latest with apiVersion",
 			helmChart:          latest.repoAndName,
-			apiVersion:         customApiVersion,
-			expectResource:     mustNewResource(t, customApiVersion, expectDerivedKind),
+			apiVersion:         customAPIVersion,
+			expectResource:     mustNewResource(t, customAPIVersion, expectDerivedKind),
 			expectChartName:    chartName,
 			expectChartVersion: latestVersion,
 		},
@@ -164,9 +164,9 @@ func TestCreateChart(t *testing.T) {
 		{
 			name:               "from repo and name implicit latest with apiVersion and kind",
 			helmChart:          latest.repoAndName,
-			apiVersion:         customApiVersion,
+			apiVersion:         customAPIVersion,
 			kind:               customKind,
-			expectResource:     mustNewResource(t, customApiVersion, customKind),
+			expectResource:     mustNewResource(t, customAPIVersion, customKind),
 			expectChartName:    chartName,
 			expectChartVersion: latestVersion,
 		},
@@ -301,10 +301,9 @@ func runTestCase(t *testing.T, testDir string, tc createChartTestCase) {
 	if tc.expectErr {
 		assert.Error(t, err)
 		return
-	} else {
-		assert.NoError(t, err)
 	}
 
+	assert.NoError(t, err)
 	assert.Equal(t, tc.expectResource, resource)
 	assert.Equal(t, tc.expectChartName, chart.GetMetadata().GetName())
 	assert.Equal(t, tc.expectChartVersion, chart.GetMetadata().GetVersion())

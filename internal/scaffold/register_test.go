@@ -21,7 +21,7 @@ import (
 )
 
 func TestRegister(t *testing.T) {
-	r, err := NewResource(appApiVersion, appKind)
+	r, err := NewResource(appAPIVersion, appKind)
 	if err != nil {
 		t.Fatal(err)
 	}

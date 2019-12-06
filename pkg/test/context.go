@@ -25,7 +25,9 @@ import (
 	"k8s.io/client-go/restmapper"
 )
 
-type TestCtx struct {
+type TestCtx struct { //nolint:golint
+	// todo(camilamacedo86): The no lint here is for type name will be used as test.TestCtx by other packages, and that stutters; consider calling this Ctx (golint)
+	// However, was decided to not move forward with it now in order to not introduce breakchanges with the task to add the linter. We should to do it after.
 	id         string
 	cleanupFns []cleanupFn
 	namespace  string
