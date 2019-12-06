@@ -155,6 +155,12 @@ func upLocalAnsible() error {
 	if err := setupOperatorEnv(); err != nil {
 		return err
 	}
+	// Set the AnsibleRolesPathEnvVar which will be used by Ansible to find the roles
+	if len(ansibleOperatorFlags.AnsibleRolesPath) > 0 {
+		if err := os.Setenv(aoflags.AnsibleRolesPathEnvVar, ansibleOperatorFlags.AnsibleRolesPath); err != nil {
+			return fmt.Errorf("failed to set %s environment variable: (%v)", aoflags.AnsibleRolesPathEnvVar, err)
+		}
+	}
 	return ansible.Run(ansibleOperatorFlags)
 }
 

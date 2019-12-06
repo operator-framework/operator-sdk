@@ -49,14 +49,16 @@ expects this mapping file in a predefined location: `/opt/ansible/watches.yaml`
 * **group**:  The group of the Custom Resource that you will be watching.
 * **version**:  The version of the Custom Resource that you will be watching.
 * **kind**:  The kind of the Custom Resource that you will be watching.
-* **role** (default):  This is the path to the role that you have added to the
-  container.  For example if your roles directory is at `/opt/ansible/roles/`
-  and your role is named `busybox`, this value will be
-  `/opt/ansible/roles/busybox`. This field is mutually exclusive with the
-  "playbook" field.
-* **playbook**:  This is the path to the playbook that you have added to the
+* **role** (default): This is the name of the role that you have added to the
+  container. This field is mutually exclusive with the
+  "playbook" field. If the path is relative, it is relative to the `roles` directory in the current working directory 
+  which in the image by default is `/opt/ansible/roles`. Also, when it is running locally it is by default the directory 
+  `roles` in the current project directory in the local machine. Note that it can be customized by using the flag 
+  `ansible-roles-path` or the envinroment variable `ANSIBLE_ROLES_PATH`. 
+* **playbook**: This is the playbook name that you have added to the
   container. This playbook is expected to be simply a way to call roles. This
-  field is mutually exclusive with the "role" field.
+  field is mutually exclusive with the "role" field. Also, when it is running locally it looking for the playbook in the 
+  current project directory in the local machine.
 * **vars**: This is an arbitrary map of key-value pairs. The contents will be
   passed as `extra_vars` to the playbook or role specified for this watch.
 * **reconcilePeriod** (optional): The reconciliation interval, how often the
@@ -73,13 +75,13 @@ An example Watches file:
 - version: v1alpha1
   group: foo.example.com
   kind: Foo
-  role: /opt/ansible/roles/Foo
+  role: Foo
 
 # Simple example mapping Bar to a playbook
 - version: v1alpha1
   group: bar.example.com
   kind: Bar
-  playbook: /opt/ansible/playbook.yml
+  playbook: playbook.yml
 
 # More complex example for our Baz kind
 # Here we will disable requeuing and be managing the CR status in the playbook,
@@ -87,7 +89,7 @@ An example Watches file:
 - version: v1alpha1
   group: baz.example.com
   kind: Baz
-  playbook: /opt/ansible/baz.yml
+  playbook: baz.yml
   reconcilePeriod: 0
   manageStatus: false
   vars:
@@ -125,7 +127,7 @@ should go.
 - version: v1alpha1
   group: cache.example.com
   kind: Memcached
-  role: /opt/ansible/roles/memcached
+  role: memcached
 ```
 
 **Playbook**
@@ -137,7 +139,7 @@ Playbook
 - version: v1alpha1
   group: cache.example.com
   kind: Memcached
-  playbook: /opt/ansible/playbook.yaml
+  playbook: playbook.yaml
 ```
 
 ## Building the Memcached Ansible Role
