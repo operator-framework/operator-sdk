@@ -145,7 +145,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 				for _, e := range r.Errors {
 					errorMsgs.WriteString(e.Error())
 				}
-				return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("error validating ClusterServiceVersion: %s", errorMsgs.String())
+				return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("error validating ClusterServiceVersion: %s", errorMsgs)
 			}
 			if r.HasWarn() {
 				for _, w := range r.Warnings {
