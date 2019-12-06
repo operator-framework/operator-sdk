@@ -116,7 +116,7 @@ While most configuration is done via a config file, there are a few important ar
 
 | Option        | Type   | Description   |
 | --------    | -------- | -------- |
- `bundle` | string | equivalent of the `--bundle` flag. If this option is defined by both the config file and the flag, the flag's value takes priority |
+ `bundle` | string | equivalent of the `--bundle` flag. OLM bundle directory path, when specified runs bundle validation |
 | `output` | string | equivalent of the `--output` flag. If this option is defined by both the config file and the flag, the flag's value takes priority |
 | `kubeconfig` | string | equivalent of the `--kubeconfig` flag. If this option is defined by both the config file and the flag, the flag's value takes priority |
 | `plugins` | array | this is an array of [Plugins](#plugins).|
