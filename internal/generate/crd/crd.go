@@ -64,7 +64,7 @@ func NewCRDGo(cfg genutil.Config) genutil.Generator {
 	return g
 }
 
-// NewCRDGo returns a CRD generator configured to generate a
+// NewCRDNonGo returns a CRD generator configured to generate a
 // CustomResourceDefintion manifest from scratch using data in resource.
 func NewCRDNonGo(cfg genutil.Config, resource scaffold.Resource) genutil.Generator {
 	g := crdGenerator{
@@ -85,7 +85,7 @@ func (g crdGenerator) validate() error {
 	if g.InputDir == "" {
 		return errors.New("input dir cannot be empty")
 	}
-	if g.InputDir == "" {
+	if g.OutputDir == "" {
 		return errors.New("output dir cannot be empty")
 	}
 	if !g.isOperatorGo {

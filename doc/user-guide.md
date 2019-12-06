@@ -112,7 +112,7 @@ $ operator-sdk generate k8s
 Now that `MemcachedSpec` and `MemcachedStatus` have fields and possibly annotations, the CRD corresponding to the API's group and kind must be updated. To do so, run the following command:
 
 ```console
-$ operator-sdk generate openapi
+$ operator-sdk generate crds
 ```
 
 **Notes:**
