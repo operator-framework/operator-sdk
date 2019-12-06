@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -206,8 +207,7 @@ func (t *BundleValidationTest) Run(ctx context.Context) *schelpers.TestResult {
 	res := &schelpers.TestResult{Test: t, MaximumPoints: 1}
 
 	if t.OLMTestConfig.Bundle == "" {
-		res.EarnedPoints++
-		res.Suggestions = append(res.Suggestions, "Add a 'bundle' directory which is required for this test")
+		res.Errors = append(res.Errors, errors.New("add a 'bundle' directory which is required for this test"))
 		return res
 	}
 
@@ -451,7 +451,6 @@ func (t *CSVValidationTest) Run(ctx context.Context) *schelpers.TestResult {
 			}
 		}
 		if r.HasWarn() {
-			res.EarnedPoints = 0
 			for _, w := range r.Warnings {
 				res.Suggestions = append(res.Suggestions, fmt.Sprintf("CSV validation warning: [%s] %s", w.Type, w.Detail))
 			}
