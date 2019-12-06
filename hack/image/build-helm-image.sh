@@ -17,7 +17,7 @@ pushd "$BASEIMAGEDIR"
 ./scaffold-helm-image
 
 mkdir -p build/_output/bin/
-cp $ROOTDIR/build/operator-sdk-dev build/_output/bin/helm-operator
+cp $ROOTDIR/build/operator-sdk-dev-linux-gnu build/_output/bin/helm-operator
 operator-sdk build $1
 # If using a kind cluster, load the image into all nodes.
 load_image_if_kind "$1"

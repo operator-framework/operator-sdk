@@ -106,6 +106,7 @@ release: clean $(release_builds) $(release_builds:=.asc) ## Release the Operator
 build/operator-sdk-%-x86_64-linux-gnu: GOARGS = GOOS=linux GOARCH=amd64
 build/operator-sdk-%-x86_64-apple-darwin: GOARGS = GOOS=darwin GOARCH=amd64
 build/operator-sdk-%-ppc64le-linux-gnu: GOARGS = GOOS=linux GOARCH=ppc64le
+build/operator-sdk-%-linux-gnu: GOARGS = GOOS=linux
 
 build/%: $(SOURCES)
 	$(Q)$(GOARGS) go build \
@@ -146,7 +147,7 @@ image-build: image-build-ansible image-build-helm image-build-scorecard-proxy ##
 image-build-ansible: build/operator-sdk-dev-x86_64-linux-gnu
 	./hack/image/build-ansible-image.sh $(ANSIBLE_BASE_IMAGE):dev
 
-image-build-helm: build/operator-sdk-dev
+image-build-helm: build/operator-sdk-dev-linux-gnu
 	./hack/image/build-helm-image.sh $(HELM_BASE_IMAGE):dev
 
 image-build-scorecard-proxy:
