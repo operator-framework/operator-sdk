@@ -15,12 +15,12 @@
 package catalog
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 
@@ -36,6 +36,8 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
+	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const (
@@ -123,7 +125,7 @@ func (s *CSV) CustomRender() ([]byte, error) {
 	if err = s.updateCSVVersions(csv); err != nil {
 		return nil, err
 	}
-	if err = s.updateCSVFromManifestFiles(cfg, csv); err != nil {
+	if err = s.updateCSVFromManifests(cfg, csv); err != nil {
 		return nil, err
 	}
 	s.setCSVDefaultFields(csv)
@@ -322,48 +324,52 @@ func (s *CSV) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error
 	return nil
 }
 
-func replaceAllBytes(v interface{}, old, new []byte) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-	b = bytes.Replace(b, old, new, -1)
-	if err = json.Unmarshal(b, v); err != nil {
-		return err
-	}
-	return nil
-}
-
 // updateCSVFromManifestFiles gathers relevant data from generated and
 // user-defined manifests and updates csv.
-func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.ClusterServiceVersion) error {
-	store := NewUpdaterStore()
-	otherSpecs := make(map[string][][]byte)
+func (s *CSV) updateCSVFromManifests(cfg *CSVConfig, csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	paths := append(cfg.CRDCRPaths, cfg.OperatorPath)
 	paths = append(paths, cfg.RolePaths...)
-	for _, f := range paths {
-		yamlData, err := afero.ReadFile(s.getFS(), f)
+	manifestGVKMap := map[schema.GroupVersionKind][][]byte{}
+	crGVKSet := map[schema.GroupVersionKind]struct{}{}
+	for _, path := range paths {
+		info, err := s.getFS().Stat(path)
 		if err != nil {
 			return err
 		}
-
-		scanner := yamlutil.NewYAMLScanner(yamlData)
+		if info.IsDir() {
+			continue
+		}
+		b, err := ioutil.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		scanner := yamlutil.NewYAMLScanner(b)
 		for scanner.Scan() {
-			yamlSpec := scanner.Bytes()
-			typeMeta, err := k8sutil.GetTypeMetaFromBytes(yamlSpec)
+			manifest := scanner.Bytes()
+			typeMeta, err := k8sutil.GetTypeMetaFromBytes(manifest)
 			if err != nil {
-				return errors.Wrapf(err, "error getting type metadata from manifest %s", f)
+				log.Infof("No TypeMeta in %s, skipping file", path)
+				continue
 			}
-			found, err := store.AddToUpdater(yamlSpec, typeMeta.Kind)
-			if err != nil {
-				return errors.Wrapf(err, "error adding manifest %s to CSV updaters", f)
-			}
-			if !found {
-				id := gvkID(typeMeta.GroupVersionKind())
-				if _, ok := otherSpecs[id]; !ok {
-					otherSpecs[id] = make([][]byte, 0)
+			gvk := typeMeta.GroupVersionKind()
+			manifestGVKMap[gvk] = append(manifestGVKMap[gvk], manifest)
+			switch typeMeta.Kind {
+			case "CustomResourceDefinition":
+				// Collect CRD kinds to filter them out from unsupported manifest types.
+				// The CRD type version doesn't matter as long as it has a group, kind,
+				// and versions in the expected fields.
+				crd := apiextv1beta1.CustomResourceDefinition{}
+				if err = yaml.Unmarshal(manifest, &crd); err != nil {
+					return err
 				}
-				otherSpecs[id] = append(otherSpecs[id], yamlSpec)
+				for _, ver := range crd.Spec.Versions {
+					crGVK := schema.GroupVersionKind{
+						Group:   crd.Spec.Group,
+						Version: ver.Name,
+						Kind:    crd.Spec.Names.Kind,
+					}
+					crGVKSet[crGVK] = struct{}{}
+				}
 			}
 		}
 		if err = scanner.Err(); err != nil {
@@ -371,15 +377,39 @@ func (s *CSV) updateCSVFromManifestFiles(cfg *CSVConfig, csv *olmapiv1alpha1.Clu
 		}
 	}
 
-	for id := range store.crds.crIDs {
-		if crSpecs, ok := otherSpecs[id]; ok {
-			for _, spec := range crSpecs {
-				if err := store.AddCR(spec); err != nil {
-					return err
-				}
+	crUpdaters := crs{}
+	for gvk, manifests := range manifestGVKMap {
+		// We don't necessarily care about sorting by a field value, more about
+		// consistent ordering.
+		sort.Slice(manifests, func(i int, j int) bool {
+			return string(manifests[i]) < string(manifests[j])
+		})
+		switch gvk.Kind {
+		case "Role":
+			err = roles(manifests).apply(csv)
+		case "ClusterRole":
+			err = clusterRoles(manifests).apply(csv)
+		case "Deployment":
+			err = deployments(manifests).apply(csv)
+		case "CustomResourceDefinition":
+			err = crds(manifests).apply(csv)
+		default:
+			if _, ok := crGVKSet[gvk]; ok {
+				crUpdaters = append(crUpdaters, manifests...)
+			} else {
+				log.Infof("Skipping manifest %s", gvk)
 			}
 		}
+		if err != nil {
+			return err
+		}
 	}
-
-	return store.Apply(csv)
+	// Re-sort CR's since they are appended in random order.
+	sort.Slice(crUpdaters, func(i int, j int) bool {
+		return string(crUpdaters[i]) < string(crUpdaters[j])
+	})
+	if err = crUpdaters.apply(csv); err != nil {
+		return err
+	}
+	return nil
 }

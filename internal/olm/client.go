@@ -72,8 +72,11 @@ func (c Client) InstallVersion(ctx context.Context, version string) (*olmresourc
 	objs := toObjects(resources...)
 
 	status := c.GetObjectsStatus(ctx, objs...)
-	if status.HasExistingResources() {
+	installed, err := status.HasInstalledResources()
+	if installed {
 		return nil, errors.New("detected existing OLM resources: OLM must be completely uninstalled before installation")
+	} else if err != nil {
+		return nil, errors.New("detected errored OLM resources, see resource statuses for more details")
 	}
 
 	log.Print("Creating CRDs and resources")
@@ -129,7 +132,8 @@ func (c Client) UninstallVersion(ctx context.Context, version string) error {
 	objs := toObjects(resources...)
 
 	status := c.GetObjectsStatus(ctx, objs...)
-	if !status.HasExistingResources() {
+	installed, err := status.HasInstalledResources()
+	if !installed && err == nil {
 		return olmresourceclient.ErrOLMNotInstalled
 	}
 
@@ -148,7 +152,8 @@ func (c Client) GetStatus(ctx context.Context, version string) (*olmresourceclie
 	objs := toObjects(resources...)
 
 	status := c.GetObjectsStatus(ctx, objs...)
-	if !status.HasExistingResources() {
+	installed, err := status.HasInstalledResources()
+	if !installed && err == nil {
 		return nil, olmresourceclient.ErrOLMNotInstalled
 	}
 	return &status, nil
@@ -278,6 +283,5 @@ func (c Client) getSubscriptionCSV(ctx context.Context, subKey types.NamespacedN
 		log.Printf("  Found installed CSV %q", installedCSV)
 		return true, nil
 	}
-
 	return csvKey, wait.PollImmediateUntil(time.Second, subscriptionInstalledCSV, ctx.Done())
 }

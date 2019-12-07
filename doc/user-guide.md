@@ -63,6 +63,17 @@ By default this will be the namespace that the operator is running in. To watch 
 mgr, err := manager.New(cfg, manager.Options{Namespace: ""})
 ```
 
+It is also possible to use the [MultiNamespacedCacheBuilder][multi-namespaced-cache-builder] to watch a specific set of namespaces:
+```Go
+var namespaces []string // List of Namespaces
+// Create a new Cmd to provide shared dependencies and start components
+mgr, err := manager.New(cfg, manager.Options{
+   NewCache: cache.MultiNamespacedCacheBuilder(namespaces),
+   MapperProvider:     restmapper.NewDynamicRESTMapper,
+   MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+})
+```
+
 By default the main program will set the manager's namespace using the value of `WATCH_NAMESPACE` env defined in `deploy/operator.yaml`.
 
 ## Add a new Custom Resource Definition
@@ -86,12 +97,9 @@ type MemcachedSpec struct {
 }
 type MemcachedStatus struct {
 	// Nodes are the names of the memcached pods 
-	// +listType=set  
 	Nodes []string `json:"nodes"`
 }
 ```
-
-**NOTE:** Comment directives, such as +listType=set, are necessary in certain situations to avoid API rule violations when generating OpenAPI files. See https://godoc.org/k8s.io/kube-openapi/pkg/idl to learn more.
 
 After modifying the `*_types.go` file always run the following command to update the generated code for that resource type:
 
@@ -101,7 +109,7 @@ $ operator-sdk generate k8s
 
 ### OpenAPI validation
 
-OpenAPIv3 schemas are added to CRD manifests in the `spec.validation` block when the manifests are generated. This validation block allows Kubernetes to validate the properties in a Memcached Custom Resource when it is created or updated. Additionally a `pkg/apis/<group>/<version>/zz_generated.openapi.go` file is generated containing the Go representation of this validation block if the `+k8s:openapi-gen=true` annotation is present above the kind type declaration (present by default). This auto-generated code is your Go kind type's OpenAPI model, from which you can create a full OpenAPI spec and generate a client. Check out [this issue comment][openapi-details] for steps on how to do so.
+OpenAPIv3 schemas are added to CRD manifests in the `spec.validation` block when the manifests are generated. This validation block allows Kubernetes to validate the properties in a Memcached Custom Resource when it is created or updated.
 
 Markers (annotations) are available to configure validations for your API. These markers will always have a `+kubebuilder:validation` prefix. For example, adding an enum type specification can be done by adding the following marker:
 
@@ -112,13 +120,11 @@ type Alias string
 
 Usage of markers in API code is discussed in the kubebuilder [CRD generation][generating-crd] and [marker][markers] documentation. A full list of OpenAPIv3 validation markers can be found [here][crd-markers].
 
-To update the OpenAPI validation section in the CRD `deploy/crds/cache.example.com_memcacheds_crd.yaml`, run the following command:
+To update the CRD `deploy/crds/cache.example.com_memcacheds_crd.yaml`, run the following command:
 
 ```console
-$ operator-sdk generate openapi
+$ operator-sdk generate crds
 ```
-
-**Note:** You may see errors like "API rule violation" when running the above command. For information on these errors see the [API rules][api-rules] documentation
 
 An example of the generated YAML is as follows:
 
@@ -136,7 +142,6 @@ spec:
 
 To learn more about OpenAPI v3.0 validation schemas in Custom Resource Definitions, refer to the [Kubernetes Documentation][doc-validation-schema].
 
-[openapi-details]: https://github.com/kubernetes/kube-openapi/issues/13#issuecomment-337719430
 [doc-validation-schema]: https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#specifying-a-structural-schema
 [generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
 [markers]: https://book.kubebuilder.io/reference/markers.html
@@ -674,3 +679,4 @@ When the operator is not running in a cluster, the Manager will return an error 
 [result_go_doc]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/reconcile#Result
 [metrics_doc]: ./user/metrics/README.md
 [quay_link]: https://quay.io
+[multi-namespaced-cache-builder]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder

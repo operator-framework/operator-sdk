@@ -13,7 +13,7 @@ cd test/test-framework
 
 # Ensure test-framework is up-to-date with current Go project dependencies.
 echo "$(../../build/operator-sdk print-deps)" > go.mod
-sed -i 's|github.com/operator-framework/operator-sdk\s\+master||g' go.mod
+sed -i".bak" -E -e "s|github.com/operator-framework/operator-sdk[[:blank:]]+master||g" go.mod; rm -f go.mod.bak
 echo -e "\nreplace github.com/operator-framework/operator-sdk => ../../" >> go.mod
 go mod edit -require "github.com/operator-framework/operator-sdk@v0.0.0"
 go build ./...
@@ -21,7 +21,4 @@ go mod tidy
 
 # Run gen commands
 ../../build/operator-sdk generate k8s
-# TODO(camilamacedo86): remove this when the openapi gen be set to false and it no longer is generated
-# The following file is gen by openapi but it has not been committed in order to allow we clone and call the test locally in any path.
-trap_add 'rm pkg/apis/cache/v1alpha1/zz_generated.openapi.go' EXIT
-../../build/operator-sdk generate openapi
+../../build/operator-sdk generate crds

@@ -134,6 +134,21 @@ pkg/apis/app/v1alpha1/
 
 ### openapi
 
+> **DEPRECATED**
+>
+> The `operator-sdk generate openapi` command is deprecated
+>  - To generate CRDs, use 'operator-sdk generate crds'.
+>  - To generate Go OpenAPI code, use 'openapi-gen'. For example:
+>
+>    ```console  
+>    # Build the latest openapi-gen from source
+>    which ./bin/openapi-gen > /dev/null || go build -o ./bin/openapi-gen k8s.io/kube-openapi/cmd/openapi-gen
+>    
+>    # Run openapi-gen for each of your API group/version packages
+>    ./bin/openapi-gen --logtostderr=true -o "" -i ./pkg/apis/<group>/<version> -O zz_generated.openapi -p ./pkg/apis/<group>/<version> -h ./hack/boilerplate.go.txt -r "-"
+>    ```
+
+
 Runs the [kube-openapi][openapi-code-generator] OpenAPIv3 code generator for all Custom Resource Definition (CRD) API tagged fields under `pkg/apis/...`.
 
 **Note**: This command must be run every time a tagged API struct or struct field for a custom resource type is updated.
@@ -145,7 +160,7 @@ $ tree pkg/apis/app/v1alpha1/
 pkg/apis/app/v1alpha1/
 ├── appservice_types.go
 ├── doc.go
-├── register.go
+└── register.go
 
 $ operator-sdk generate openapi
 INFO[0000] Running OpenAPI code-generation for Custom Resource group versions: [app:[v1alpha1], ]
@@ -158,6 +173,31 @@ pkg/apis/app/v1alpha1/
 ├── doc.go
 ├── register.go
 └── zz_generated.openapi.go
+```
+
+### crds
+
+Runs CRD generation (based on controller-tools) for APIs under `pkg/apis/...`.
+
+**Note**: This command must be run every time a tagged API struct or struct field for a custom resource type is updated.
+
+#### Example
+
+```console
+$ tree pkg/apis/app/v1alpha1/
+pkg/apis/app/v1alpha1/
+├── appservice_types.go
+├── doc.go
+└── register.go
+
+$ operator-sdk generate crds
+INFO[0000] Running CRD generation for Custom Resource group versions: [app:[v1alpha1], ]
+INFO[0001] Created deploy/crds/app.example.com_appservices_crd.yaml
+INFO[0001] CRD generation complete.
+
+$ tree deploy/crds/
+deploy/crds
+└── app.example.com_appservices_crd.yaml
 ```
 
 ## olm-catalog
