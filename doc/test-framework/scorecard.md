@@ -59,7 +59,7 @@ The scorecard is configured by a config file that allows configuring both intern
 
 ### Config File
 
-To use scorecard you need to create a config file which by defualt will be `<project_dir>/.osdk-scorecard.*`. Following an example of what a YAML formatted config file may look like:
+To use scorecard, you need to create a config file which by default will be `<project_dir>/.osdk-scorecard.*`. The following is an example of what a YAML formatted config file may look like:
 
 ```yaml
 scorecard:
