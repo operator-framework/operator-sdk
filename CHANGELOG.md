@@ -25,6 +25,7 @@
 ### Removed
 
 ### Bug Fixes
+- Fixed log formatting issue that occurred while loading the configuration for Ansible-based operators. ([#2246](https://github.com/operator-framework/operator-sdk/pull/2246))
 - Fix issue faced in the Ansible based operators when `jmespath` queries are used because it was not installed. ([#2252](https://github.com/operator-framework/operator-sdk/pull/2252))
 - Updates `operator-sdk build` for go operators to compile the operator binary based on Go's built-in GOARCH detection. This fixes an issue that caused an `amd64` binary to be built into non-`amd64` base images when using operator-sdk on non-`amd64` architectures. ([#2268](https://github.com/operator-framework/operator-sdk/pull/2268))
 - Fix scorecard behavior such that a CSV file is read correctly when `olm-deployed` is set to `true`. ([#2274](https://github.com/operator-framework/operator-sdk/pull/2274))
