@@ -211,15 +211,19 @@ func (t *BundleValidationTest) Run(ctx context.Context) *schelpers.TestResult {
 		return res
 	}
 
+	// Get the validation API log because it contains
+	// validation output that we include into the scorecard test output.
 	validationLogOutput := new(bytes.Buffer)
+	origOutput := logrus.StandardLogger().Out
 	logrus.SetOutput(validationLogOutput)
+	defer logrus.SetOutput(origOutput)
+
 	_, _, validationResults := manifests.GetManifestsDir(t.OLMTestConfig.Bundle)
 	for _, result := range validationResults {
 		if result.HasError() {
 			for _, e := range result.Errors {
 				res.Errors = append(res.Errors, fmt.Errorf("%s", e.Error()))
 			}
-			res.Log = validationLogOutput.String()
 		}
 
 		if result.HasWarn() {
@@ -228,9 +232,13 @@ func (t *BundleValidationTest) Run(ctx context.Context) *schelpers.TestResult {
 			}
 		}
 	}
+
+	res.Log = validationLogOutput.String()
+
 	if len(res.Errors) == 0 && len(res.Suggestions) == 0 {
 		res.EarnedPoints++
 	}
+
 	return res
 }
 
