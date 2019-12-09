@@ -28,8 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	crthandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -60,12 +58,6 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 	}
 	eventHandlers := append(options.EventHandlers, events.NewLoggingEventHandler(options.LoggingLevel))
 
-	client, err := client.New(config.GetConfigOrDie(), client.Options{})
-	if err != nil {
-		log.Error(err, "Error getting new client")
-		os.Exit(1)
-	}
-
 	aor := &AnsibleOperatorReconciler{
 		Client:          mgr.GetClient(),
 		GVK:             options.GVK,
@@ -73,11 +65,11 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 		EventHandlers:   eventHandlers,
 		ReconcilePeriod: options.ReconcilePeriod,
 		ManageStatus:    options.ManageStatus,
-		APIReader:       client,
+		APIReader:       mgr.GetAPIReader(),
 	}
 
 	scheme := mgr.GetScheme()
-	_, err = scheme.New(options.GVK)
+	_, err := scheme.New(options.GVK)
 	if runtime.IsNotRegisteredError(err) {
 		// Register the GVK with the schema
 		scheme.AddKnownTypeWithName(options.GVK, &unstructured.Unstructured{})
