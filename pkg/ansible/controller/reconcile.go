@@ -32,6 +32,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner/eventapi"
 
+	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -224,15 +225,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 
 func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, namespacedName types.NamespacedName) {
 	logger := logf.Log.WithName("markRunning")
-	err := r.APIReader.Get(context.TODO(), namespacedName, u)
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			logger.Info("Resource not found, assuming it was deleted")
-		} else {
-			logger.Error(err, "Failed to get resource in running CR status update")
-		}
-		return
-	}
+	r.refreshObjectStatus(context.TODO(), namespacedName, u, logger)
 	crStatus := getStatus(u)
 
 	// If there is no current status add that we are working on this resource.
@@ -254,7 +247,7 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, na
 	ansiblestatus.SetCondition(&crStatus, *c)
 	u.Object["status"] = crStatus.GetJSONMap()
 
-	if err = r.Client.Status().Update(context.TODO(), u); err != nil {
+	if err := r.Client.Status().Update(context.TODO(), u); err != nil {
 		logger.Error(err, "Failed to update CR status to running")
 	}
 }
@@ -263,15 +256,7 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, na
 // i.e Annotations that could be incorrect
 func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, namespacedName types.NamespacedName, failureMessage string) {
 	logger := logf.Log.WithName("markError")
-	err := r.APIReader.Get(context.TODO(), namespacedName, u)
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			logger.Info("Resource not found, assuming it was deleted")
-		} else {
-			logger.Error(err, "Failed to get resource in errored CR status update")
-		}
-		return
-	}
+	r.refreshObjectStatus(context.TODO(), namespacedName, u, logger)
 	metrics.ReconcileFailed(r.GVK.String())
 	crStatus := getStatus(u)
 
@@ -292,22 +277,14 @@ func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, name
 	// This needs the status subresource to be enabled by default.
 	u.Object["status"] = crStatus.GetJSONMap()
 
-	if err = r.Client.Status().Update(context.TODO(), u); err != nil {
+	if err := r.Client.Status().Update(context.TODO(), u); err != nil {
 		logger.Error(err, "Failed to update CR status to error")
 	}
 }
 
 func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, namespacedName types.NamespacedName, statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) {
 	logger := logf.Log.WithName("markDone")
-	err := r.APIReader.Get(context.TODO(), namespacedName, u)
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			logger.Info("Resource not found, assuming it was deleted")
-		} else {
-			logger.Error(err, "Failed to get resource in done CR status update")
-		}
-		return
-	}
+	r.refreshObjectStatus(context.TODO(), namespacedName, u, logger)
 	crStatus := getStatus(u)
 
 	runSuccessful := len(failureMessages) == 0
@@ -344,7 +321,7 @@ func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, names
 	// This needs the status subresource to be enabled by default.
 	u.Object["status"] = crStatus.GetJSONMap()
 
-	if err = r.Client.Status().Update(context.TODO(), u); err != nil {
+	if err := r.Client.Status().Update(context.TODO(), u); err != nil {
 		logger.Error(err, "Failed to update CR status to done")
 	}
 }
@@ -367,4 +344,22 @@ func getStatus(u *unstructured.Unstructured) ansiblestatus.Status {
 		statusMap = map[string]interface{}{}
 	}
 	return ansiblestatus.CreateFromMap(statusMap)
+}
+
+// refreshObjectStatus retrieves u directly from the API server, circumventing
+// the cache, to refresh u's status. refreshObjectStatus logs errors instead
+// of returning them. Meant to be used for status updates.
+func (r *AnsibleOperatorReconciler) refreshObjectStatus(ctx context.Context, nn types.NamespacedName, u *unstructured.Unstructured, l ...logr.Logger) {
+	var logger logr.Logger = logf.Log
+	if len(l) != 0 {
+		logger = l[0]
+	}
+	err := r.APIReader.Get(ctx, nn, u)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("Resource not found, assuming it was deleted")
+		} else {
+			logger.Error(err, "Failed to get resource while updating CR status")
+		}
+	}
 }
