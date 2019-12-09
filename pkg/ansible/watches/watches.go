@@ -273,6 +273,10 @@ func getMaxWorkers(gvk schema.GroupVersionKind, defValue int) int {
 		-1,
 	))
 	maxWorkers := getIntegerEnvWithDefault(envVar, defValue)
+	if maxWorkers <= 0 {
+		log.Info("Value %v not valid. Using default %v", maxWorkers, defValue)
+		return defValue
+	}
 	return maxWorkers
 }
 
