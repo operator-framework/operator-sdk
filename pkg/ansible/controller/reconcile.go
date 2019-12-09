@@ -230,6 +230,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 }
 
 func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, namespacedName types.NamespacedName) error {
+	// Get the latest resource to prevent updating a stale status.
 	if err := r.APIReader.Get(context.TODO(), namespacedName, u); err != nil {
 		return err
 	}
@@ -260,10 +261,13 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, na
 // markError - used to alert the user to the issues during the validation of a reconcile run.
 // i.e Annotations that could be incorrect
 func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, namespacedName types.NamespacedName, failureMessage string) error {
+	// Immediately update metrics with failed reconciliation, since Get()
+	// may fail.
+	metrics.ReconcileFailed(r.GVK.String())
+	// Get the latest resource to prevent updating a stale status.
 	if err := r.APIReader.Get(context.TODO(), namespacedName, u); err != nil {
 		return err
 	}
-	metrics.ReconcileFailed(r.GVK.String())
 	crStatus := getStatus(u)
 
 	sc := ansiblestatus.GetCondition(crStatus, ansiblestatus.RunningConditionType)
@@ -287,6 +291,7 @@ func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, name
 }
 
 func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, namespacedName types.NamespacedName, statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) error {
+	// Get the latest resource to prevent updating a stale status.
 	if err := r.APIReader.Get(context.TODO(), namespacedName, u); err != nil {
 		return err
 	}
