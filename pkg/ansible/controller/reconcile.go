@@ -86,7 +86,8 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		duration, err := time.ParseDuration(ds)
 		if err != nil {
 			// Should attempt to update to a failed condition
-			r.markError(u, request.NamespacedName, fmt.Sprintf("Unable to parse reconcile period annotation: %v", err))
+			merr := r.markError(u, request.NamespacedName, fmt.Sprintf("Unable to parse reconcile period annotation: %v", err))
+			checkAPIErr(merr, logger)
 			logger.Error(err, "Unable to parse reconcile period annotation")
 			return reconcileResult, err
 		}
@@ -124,7 +125,10 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	}
 
 	if r.ManageStatus {
-		r.markRunning(u, request.NamespacedName)
+		merr := r.markRunning(u, request.NamespacedName)
+		if checkAPIErr(merr, logger) {
+			return reconcile.Result{}, merr
+		}
 	}
 
 	ownerRef := metav1.OwnerReference{
@@ -136,7 +140,8 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 
 	kc, err := kubeconfig.Create(ownerRef, "http://localhost:8888", u.GetNamespace())
 	if err != nil {
-		r.markError(u, request.NamespacedName, "Unable to run reconciliation")
+		merr := r.markError(u, request.NamespacedName, "Unable to run reconciliation")
+		checkAPIErr(merr, logger)
 		logger.Error(err, "Unable to generate kubeconfig")
 		return reconcileResult, err
 	}
@@ -147,7 +152,8 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	}()
 	result, err := r.Runner.Run(ident, u, kc.Name())
 	if err != nil {
-		r.markError(u, request.NamespacedName, "Unable to run reconciliation")
+		merr := r.markError(u, request.NamespacedName, "Unable to run reconciliation")
+		checkAPIErr(merr, logger)
 		logger.Error(err, "Unable to run ansible runner")
 		return reconcileResult, err
 	}
@@ -217,14 +223,16 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		}
 	}
 	if r.ManageStatus {
-		r.markDone(u, request.NamespacedName, statusEvent, failureMessages)
+		merr := r.markDone(u, request.NamespacedName, statusEvent, failureMessages)
+		checkAPIErr(merr, logger)
 	}
-	return reconcileResult, err
+	return reconcileResult, nil
 }
 
-func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, namespacedName types.NamespacedName) {
-	logger := logf.Log.WithName("markRunning")
-	r.refreshObjectStatus(context.TODO(), namespacedName, u, logger)
+func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, namespacedName types.NamespacedName) error {
+	if err := r.APIReader.Get(context.TODO(), namespacedName, u); err != nil {
+		return err
+	}
 	crStatus := getStatus(u)
 
 	// If there is no current status add that we are working on this resource.
@@ -246,16 +254,15 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, na
 	ansiblestatus.SetCondition(&crStatus, *c)
 	u.Object["status"] = crStatus.GetJSONMap()
 
-	if err := r.Client.Status().Update(context.TODO(), u); err != nil {
-		logger.Error(err, "Failed to update CR status to running")
-	}
+	return r.Client.Status().Update(context.TODO(), u)
 }
 
 // markError - used to alert the user to the issues during the validation of a reconcile run.
 // i.e Annotations that could be incorrect
-func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, namespacedName types.NamespacedName, failureMessage string) {
-	logger := logf.Log.WithName("markError")
-	r.refreshObjectStatus(context.TODO(), namespacedName, u, logger)
+func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, namespacedName types.NamespacedName, failureMessage string) error {
+	if err := r.APIReader.Get(context.TODO(), namespacedName, u); err != nil {
+		return err
+	}
 	metrics.ReconcileFailed(r.GVK.String())
 	crStatus := getStatus(u)
 
@@ -276,14 +283,13 @@ func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, name
 	// This needs the status subresource to be enabled by default.
 	u.Object["status"] = crStatus.GetJSONMap()
 
-	if err := r.Client.Status().Update(context.TODO(), u); err != nil {
-		logger.Error(err, "Failed to update CR status to error")
-	}
+	return r.Client.Status().Update(context.TODO(), u)
 }
 
-func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, namespacedName types.NamespacedName, statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) {
-	logger := logf.Log.WithName("markDone")
-	r.refreshObjectStatus(context.TODO(), namespacedName, u, logger)
+func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, namespacedName types.NamespacedName, statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) error {
+	if err := r.APIReader.Get(context.TODO(), namespacedName, u); err != nil {
+		return err
+	}
 	crStatus := getStatus(u)
 
 	runSuccessful := len(failureMessages) == 0
@@ -320,9 +326,7 @@ func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, names
 	// This needs the status subresource to be enabled by default.
 	u.Object["status"] = crStatus.GetJSONMap()
 
-	if err := r.Client.Status().Update(context.TODO(), u); err != nil {
-		logger.Error(err, "Failed to update CR status to done")
-	}
+	return r.Client.Status().Update(context.TODO(), u)
 }
 
 func contains(l []string, s string) bool {
@@ -345,20 +349,15 @@ func getStatus(u *unstructured.Unstructured) ansiblestatus.Status {
 	return ansiblestatus.CreateFromMap(statusMap)
 }
 
-// refreshObjectStatus retrieves u directly from the API server, circumventing
-// the cache, to refresh u's status. refreshObjectStatus logs errors instead
-// of returning them. Meant to be used for status updates.
-func (r *AnsibleOperatorReconciler) refreshObjectStatus(ctx context.Context, nn types.NamespacedName, u *unstructured.Unstructured, l ...logr.Logger) {
-	var logger logr.Logger = logf.Log
-	if len(l) != 0 {
-		logger = l[0]
-	}
-	err := r.APIReader.Get(ctx, nn, u)
+// checkAPIErr returns true if err cannot be ignored.
+func checkAPIErr(err error, logger logr.Logger) bool {
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("Resource not found, assuming it was deleted")
 		} else {
-			logger.Error(err, "Failed to get resource while updating CR status")
+			logger.Error(err, "Error while updating CR status")
+			return true
 		}
 	}
+	return false
 }
