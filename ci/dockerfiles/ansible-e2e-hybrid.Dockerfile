@@ -36,10 +36,10 @@ RUN yum clean all && rm -rf /var/cache/yum/* \
  && yum remove -y gcc python36-devel \
  && yum clean all \
  && rm -rf /var/cache/yum
+ && ansible-galaxy collection install operator_sdk.util
 
 # install operator binary
 COPY --from=builder /memcached-operator ${OPERATOR}
-COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/library/k8s_status.py /usr/share/ansible/openshift/
 COPY --from=builder /go/src/github.com/operator-framework/operator-sdk/bin/* /usr/local/bin/
 COPY --from=builder /ansible/memcached-operator/watches.yaml ${HOME}/watches.yaml
 COPY --from=builder /ansible/memcached-operator/roles/ ${HOME}/roles/
