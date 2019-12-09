@@ -185,8 +185,8 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		return reconcileResult, eventErr
 	}
 
-	// Need to get the unstructured object after ansible
-	// this needs to hit the API
+	// Need to get the unstructured object after the Ansible runner finishes.
+	// This needs to hit the API server to retrieve updates.
 	err = r.APIReader.Get(context.TODO(), request.NamespacedName, u)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -217,7 +217,6 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		}
 	}
 	if r.ManageStatus {
-		// Get the latest resource to prevent updating a stale status.
 		r.markDone(u, request.NamespacedName, statusEvent, failureMessages)
 	}
 	return reconcileResult, err
