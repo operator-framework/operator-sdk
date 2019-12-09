@@ -118,7 +118,7 @@ type CSVValidationTest struct {
 	OLMTestConfig
 }
 
-// CSVValidationTest returns a new ValidationTest object
+// CSVValidationTest returns a new CSVValidationTest object
 func NewCSVValidationTest(conf OLMTestConfig) *CSVValidationTest {
 	return &CSVValidationTest{
 		OLMTestConfig: conf,
