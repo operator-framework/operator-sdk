@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	Version    = "v0.13.0"
+	Version    = "v0.13.0+git"
 	GitVersion = "unknown"
 	GitCommit  = "unknown"
 	GoVersion  = fmt.Sprintf("%s %s/%s", runtime.Version(), runtime.GOOS, runtime.GOARCH)
