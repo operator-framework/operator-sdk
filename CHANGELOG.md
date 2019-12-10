@@ -18,9 +18,11 @@
 - Updated CRD generation for non-Go operators to use valid structural schema. ([#2275](https://github.com/operator-framework/operator-sdk/issues/2275))
 - Replace Role verb `"*"` with list of verb strings in generated files so the Role is compatible with OpenShift and Kubernetes. ([#2175](https://github.com/operator-framework/operator-sdk/pull/2175))
 - **Breaking change:** An existing CSV's `spec.customresourcedefinitions.owned` is now always overwritten except for each `name`, `version`, and `kind` on invoking [`olm-catalog gen-csv`](https://github.com/operator-framework/operator-sdk/blob/d147bb3/doc/cli/operator-sdk_olm-catalog_gen-csv.md) when Go API code [annotations](https://github.com/operator-framework/operator-sdk/blob/d147bb3/doc/user/olm-catalog/csv-annotations.md) are present. ([#1162](https://github.com/operator-framework/operator-sdk/pull/1162))
+- Replace usage of `NewDynamicRESTMapper` from `github.com/operator-framework/operator-sdk/pkg/restmapper` for `NewDynamicRESTMapper` from "sigs.k8s.io/controller-runtime/pkg/client/apiutil"`. ([#2309](https://github.com/operator-framework/operator-sdk/pull/2309))
 
 ### Deprecated
 - Deprecated the `operator-sdk generate openapi` command. CRD generation is still supported with `operator-sdk generate crds`. It is now recommended to use [openapi-gen](https://github.com/kubernetes/kube-openapi/tree/master/cmd/openapi-gen) directly for OpenAPI code generation. The `generate openapi` subcommand will be removed in a future release. ([#2276](https://github.com/operator-framework/operator-sdk/pull/2276))
+- Deprecated the `github.com/operator-framework/operator-sdk/pkg/restmapper` since it was added to the [controller-runtime](https://github.com/operator-framework/operator-sdk/issues/2299) which is now recommended to be used instead of. ([#2309](https://github.com/operator-framework/operator-sdk/pull/2309))
 
 ### Removed
 
