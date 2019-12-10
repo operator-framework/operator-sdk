@@ -22,15 +22,12 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // MemcachedRSSpec defines the desired state of MemcachedRS
-// +k8s:openapi-gen=true
 type MemcachedRSSpec struct {
 	NumNodes int32 `json:"numNodes"`
 }
 
 // MemcachedRSStatus defines the observed state of MemcachedRS
-// +k8s:openapi-gen=true
 type MemcachedRSStatus struct {
-	// +listType=set
 	NodeList []string `json:"nodeList"`
 	Test     bool     `json:"test"`
 }
@@ -38,7 +35,6 @@ type MemcachedRSStatus struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // MemcachedRS is the Schema for the memcachedrs API
-// +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=memcachedrs,scope=Namespaced
 type MemcachedRS struct {

@@ -27,5 +27,5 @@ const (
 	MoleculeTestLocalDir   = MoleculeDir + filePathSep + "test-local"
 )
 
-// Arrays can't be constants but this should be a constant
+// AnsibleDelims is a slice of two strings representing the left and right delimiters for ansible templates. Arrays can't be constants but this should be a constant.
 var AnsibleDelims = [2]string{"[[", "]]"}

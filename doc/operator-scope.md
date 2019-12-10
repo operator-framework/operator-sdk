@@ -131,7 +131,6 @@ This scope is ideal for the cases where an instance(CR) of some Kind(CRD) will b
     // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
     // Memcached is the Schema for the memcacheds API
-    // +k8s:openapi-gen=true
     // +kubebuilder:resource:path=memcacheds,scope=Cluster
     type Memcached struct {
       metav1.TypeMeta   `json:",inline"`
@@ -141,7 +140,7 @@ This scope is ideal for the cases where an instance(CR) of some Kind(CRD) will b
       Status MemcachedStatus `json:"status,omitempty"`
     }
     ``` 
-- Execute the command `operator-sdk generate openapi`, then you should be able to check that the CRD was updated with the cluster scope as in the following example:
+- Execute the command `operator-sdk generate crds`, then you should be able to check that the CRD was updated with the cluster scope as in the following example:
   
 * `deploy/crds/cache.example.com_memcacheds_crd.yaml`
     ```YAML

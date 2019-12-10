@@ -21,7 +21,7 @@ import (
 )
 
 func TestTypes(t *testing.T) {
-	r, err := NewResource(appApiVersion, appKind)
+	r, err := NewResource(appAPIVersion, appKind)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,7 +47,6 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // AppServiceSpec defines the desired state of AppService
-// +k8s:openapi-gen=true
 type AppServiceSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
@@ -55,7 +54,6 @@ type AppServiceSpec struct {
 }
 
 // AppServiceStatus defines the observed state of AppService
-// +k8s:openapi-gen=true
 type AppServiceStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
@@ -65,7 +63,6 @@ type AppServiceStatus struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // AppService is the Schema for the appservices API
-// +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=appservices,scope=Namespaced
 type AppService struct {

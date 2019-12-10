@@ -149,7 +149,7 @@ func GetGVKsFromAddToScheme(addToSchemeFunc func(*runtime.Scheme) error) ([]sche
 	}
 	schemeAllKnownTypes := s.AllKnownTypes()
 	ownGVKs := []schema.GroupVersionKind{}
-	for gvk, _ := range schemeAllKnownTypes {
+	for gvk := range schemeAllKnownTypes {
 		if !isKubeMetaKind(gvk.Kind) {
 			ownGVKs = append(ownGVKs, gvk)
 		}

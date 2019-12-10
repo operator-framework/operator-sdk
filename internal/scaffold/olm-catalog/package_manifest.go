@@ -101,9 +101,7 @@ func (s *PackageManifest) CustomRender() ([]byte, error) {
 		return nil, errors.Wrapf(err, "failed to validate package manifest %s", pm.PackageName)
 	}
 
-	if err = s.setChannels(pm); err != nil {
-		return nil, err
-	}
+	s.setChannels(pm)
 
 	sort.Slice(pm.Channels, func(i int, j int) bool {
 		return pm.Channels[i].Name < pm.Channels[j].Name
@@ -132,7 +130,7 @@ func (s *PackageManifest) newPackageManifest() *registry.PackageManifest {
 
 // setChannels checks for duplicate channels in pm and sets the default
 // channel if possible.
-func (s *PackageManifest) setChannels(pm *registry.PackageManifest) error {
+func (s *PackageManifest) setChannels(pm *registry.PackageManifest) {
 	if s.Channel != "" {
 		channelIdx := -1
 		for i, channel := range pm.Channels {
@@ -169,6 +167,4 @@ func (s *PackageManifest) setChannels(pm *registry.PackageManifest) error {
 	if !defaultExists {
 		log.Warnf("Package manifest default channel %s does not exist in channels.", pm.DefaultChannelName)
 	}
-
-	return nil
 }

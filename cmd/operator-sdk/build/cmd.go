@@ -91,12 +91,6 @@ func buildFunc(cmd *cobra.Command, args []string) error {
 	projutil.MustInProjectRoot()
 	goBuildEnv := append(os.Environ(), "GOOS=linux")
 
-	if value, ok := os.LookupEnv("GOARCH"); ok {
-		goBuildEnv = append(goBuildEnv, "GOARCH="+value)
-	} else {
-		goBuildEnv = append(goBuildEnv, "GOARCH=amd64")
-	}
-
 	// If CGO_ENABLED is not set, set it to '0'.
 	if _, ok := os.LookupEnv("CGO_ENABLED"); !ok {
 		goBuildEnv = append(goBuildEnv, "CGO_ENABLED=0")

@@ -228,7 +228,8 @@ mandatory fields:
 **chart**:  This is the path to the Helm chart that you have added to the
 container. For example, if your Helm charts directory is at
 `/opt/helm/helm-charts/` and your Helm chart is named `busybox`, this value
-will be `/opt/helm/helm-charts/busybox`.
+will be `/opt/helm/helm-charts/busybox`. If the path is relative, it is
+relative to the current working directory.
 
 Example specifying a Helm chart watch:
 
@@ -266,18 +267,6 @@ communicate with a Kubernetes cluster just as the `kubectl apply` commands did
 when we were testing our Helm chart locally. This section assumes the developer
 has read the [Helm Operator user guide][helm_operator_user_guide] and has the
 proper dependencies installed.
-
-Since `up local` reads from `./watches.yaml`, there are a couple options
-available to the developer. If `chart` is left alone (by default
-`/opt/helm/helm-charts/<name>`) the Helm chart must exist at that location in
-the filesystem. It is recommended that the developer create a symlink at this
-location, pointed to the Helm chart in the project directory, so that changes
-to the Helm chart are reflected where necessary.
-
-```sh
-sudo mkdir -p /opt/helm/helm-charts
-sudo ln -s $PWD/helm-charts/<name> /opt/helm/helm-charts/<name>
-```
 
 Create a Custom Resource Definition (CRD) for resource Foo. `operator-sdk` autogenerates this file
 inside of the `deploy` folder:

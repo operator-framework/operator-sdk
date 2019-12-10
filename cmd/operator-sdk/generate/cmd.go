@@ -25,6 +25,7 @@ func NewCmd() *cobra.Command {
 		Long:  `The operator-sdk generate command invokes specific generator to generate code as needed.`,
 	}
 	cmd.AddCommand(newGenerateK8SCmd())
+	cmd.AddCommand(newGenerateCRDsCmd())
 	cmd.AddCommand(newGenerateOpenAPICmd())
 	return cmd
 }

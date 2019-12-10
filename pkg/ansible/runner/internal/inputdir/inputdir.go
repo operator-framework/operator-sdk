@@ -135,8 +135,8 @@ func (i *InputDir) Write() error {
 	// ANSIBLE_INVENTORY takes precedence over our generated hosts file
 	// so if the envvar is set we don't bother making it, we just copy
 	// the inventory into our runner directory
-	ansible_inventory := os.Getenv("ANSIBLE_INVENTORY")
-	if ansible_inventory == "" {
+	ansibleInventory := os.Getenv("ANSIBLE_INVENTORY")
+	if ansibleInventory == "" {
 		// If ansible-runner is running in a python virtual environment, propagate
 		// that to ansible.
 		venv := os.Getenv("VIRTUAL_ENV")
@@ -151,18 +151,18 @@ func (i *InputDir) Write() error {
 			return err
 		}
 	} else {
-		fi, err := os.Stat(ansible_inventory)
+		fi, err := os.Stat(ansibleInventory)
 		if err != nil {
 			return err
 		}
 		switch mode := fi.Mode(); {
 		case mode.IsDir():
-			err = i.copyInventory(ansible_inventory, filepath.Join(i.Path, "inventory"))
+			err = i.copyInventory(ansibleInventory, filepath.Join(i.Path, "inventory"))
 			if err != nil {
 				return err
 			}
 		case mode.IsRegular():
-			err = i.copyInventory(ansible_inventory, filepath.Join(i.Path, "inventory/hosts"))
+			err = i.copyInventory(ansibleInventory, filepath.Join(i.Path, "inventory/hosts"))
 			if err != nil {
 				return err
 			}

@@ -125,7 +125,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 	runtimeClient, _ = client.New(kubeconfig, client.Options{Scheme: scheme, Mapper: restMapper})
 
 	csv := &olmapiv1alpha1.ClusterServiceVersion{}
-	if pluginType == OLMIntegration {
+	if pluginType == OLMIntegration || config.OLMDeployed {
 		yamlSpec, err := ioutil.ReadFile(config.CSVManifest)
 		if err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to read csv: %v", err)

@@ -22,24 +22,20 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // MemcachedSpec defines the desired state of Memcached
-// +k8s:openapi-gen=true
 type MemcachedSpec struct {
 	// Size is the size of the memcached deployment
 	Size int32 `json:"size"`
 }
 
 // MemcachedStatus defines the observed state of Memcached
-// +k8s:openapi-gen=true
 type MemcachedStatus struct {
 	// Nodes are the names of the memcached pods
-	// +listType=set
 	Nodes []string `json:"nodes"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Memcached is the Schema for the memcacheds API
-// +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=memcacheds,scope=Namespaced
 type Memcached struct {

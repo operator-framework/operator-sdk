@@ -127,7 +127,7 @@ func TestCRDNonGoProjectDefault(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	s.Fs = afero.NewMemMapFs()
 
-	r, err := NewResource(appApiVersion, appKind)
+	r, err := NewResource(appAPIVersion, appKind)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,7 +174,7 @@ func TestCRDNonGoProjectCustom(t *testing.T) {
 	s, buf := setupScaffoldAndWriter()
 	s.Fs = afero.NewMemMapFs()
 
-	r, err := NewResource(appApiVersion, appKind)
+	r, err := NewResource(appAPIVersion, appKind)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -25,7 +25,7 @@ func NewCmd() *cobra.Command {
 		Long:  "",
 	}
 
-	cmd.AddCommand(newAddApiCmd())
+	cmd.AddCommand(newAddAPICmd())
 	cmd.AddCommand(newAddControllerCmd())
 	cmd.AddCommand(newAddCRDCmd())
 	return cmd
