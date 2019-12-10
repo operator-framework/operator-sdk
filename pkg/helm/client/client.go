@@ -59,7 +59,7 @@ func (c *restClientGetter) ToRawKubeConfigLoader() clientcmd.ClientConfig {
 	return nil
 }
 
-func NewRESTClientGetter(mgr manager.Manager) (*restClientGetter, error) {
+func NewRESTClientGetter(mgr manager.Manager) (genericclioptions.RESTClientGetter, error) {
 	cfg := mgr.GetConfig()
 	dc, err := discovery.NewDiscoveryClientForConfig(cfg)
 	if err != nil {

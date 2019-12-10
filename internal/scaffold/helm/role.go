@@ -31,15 +31,12 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/version"
-	"k8s.io/client-go/discovery"
 )
 
 // roleDiscoveryInterface is an interface that contains just the discovery
 // methods needed by the Helm role scaffold generator. Requiring just this
 // interface simplifies testing.
 type roleDiscoveryInterface interface {
-	discovery.ServerVersionInterface
 	ServerResources() ([]*metav1.APIResourceList, error)
 }
 
@@ -95,12 +92,12 @@ func GenerateRoleScaffold(dc roleDiscoveryInterface, chart *chart.Chart) scaffol
 }
 
 func generateRoleRules(dc roleDiscoveryInterface, chart *chart.Chart) ([]rbacv1.PolicyRule, []rbacv1.PolicyRule, error) {
-	kubeVersion, serverResources, err := getServerVersionAndResources(dc)
+	serverResources, err := dc.ServerResources()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get server info: %s", err)
+		return nil, nil, fmt.Errorf("failed to get server resources: %s", err)
 	}
 
-	manifests, err := getDefaultManifests(chart, kubeVersion)
+	manifests, err := getDefaultManifests(chart)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get default manifest: %s", err)
 	}
@@ -173,19 +170,7 @@ func generateRoleRules(dc roleDiscoveryInterface, chart *chart.Chart) ([]rbacv1.
 	return clusterRules, namespacedRules, nil
 }
 
-func getServerVersionAndResources(dc roleDiscoveryInterface) (*version.Info, []*metav1.APIResourceList, error) {
-	kubeVersion, err := dc.ServerVersion()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get kubernetes server version: %s", err)
-	}
-	serverResources, err := dc.ServerResources()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get kubernetes server resources: %s", err)
-	}
-	return kubeVersion, serverResources, nil
-}
-
-func getDefaultManifests(c *chart.Chart, kubeVersion *version.Info) ([]releaseutil.Manifest, error) {
+func getDefaultManifests(c *chart.Chart) ([]releaseutil.Manifest, error) {
 	install := action.NewInstall(&action.Configuration{})
 	install.DryRun = true
 	install.ReleaseName = "RELEASE-NAME"

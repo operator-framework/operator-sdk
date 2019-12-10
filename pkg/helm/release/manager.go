@@ -119,7 +119,7 @@ func (m *manager) Sync(ctx context.Context) error {
 	m.isInstalled = true
 
 	// Get the next candidate release to determine if an update is necessary.
-	candidateRelease, err := m.getCandidateRelease(ctx, m.namespace, m.releaseName, m.chart, m.values)
+	candidateRelease, err := m.getCandidateRelease(m.namespace, m.releaseName, m.chart, m.values)
 	if err != nil {
 		return fmt.Errorf("failed to get candidate release: %s", err)
 	}
@@ -145,7 +145,7 @@ func (m manager) getDeployedRelease() (*rpb.Release, error) {
 	return deployedRelease, nil
 }
 
-func (m manager) getCandidateRelease(ctx context.Context, namespace, name string, chart *cpb.Chart, values map[string]interface{}) (*rpb.Release, error) {
+func (m manager) getCandidateRelease(namespace, name string, chart *cpb.Chart, values map[string]interface{}) (*rpb.Release, error) {
 	upgrade := action.NewUpgrade(m.actionConfig)
 	upgrade.Namespace = namespace
 	upgrade.DryRun = true
@@ -212,11 +212,11 @@ func (m manager) UpdateRelease(ctx context.Context) (*rpb.Release, *rpb.Release,
 // ReconcileRelease creates or patches resources as necessary to match the
 // deployed release's manifest.
 func (m manager) ReconcileRelease(ctx context.Context) (*rpb.Release, error) {
-	err := reconcileRelease(ctx, m.kubeClient, m.namespace, m.deployedRelease.Manifest)
+	err := reconcileRelease(ctx, m.kubeClient, m.deployedRelease.Manifest)
 	return m.deployedRelease, err
 }
 
-func reconcileRelease(ctx context.Context, kubeClient kube.Interface, namespace string, expectedManifest string) error {
+func reconcileRelease(ctx context.Context, kubeClient kube.Interface, expectedManifest string) error {
 	expectedInfos, err := kubeClient.Build(bytes.NewBufferString(expectedManifest), false)
 	if err != nil {
 		return err
