@@ -8,6 +8,9 @@ if [ -z "$KUBECONFIG" ]; then
 fi
 
 pushd test/test-framework
+# test building image with image-build-args having a space within quotes
+operator-sdk build operator-sdk-dev --image-build-args="--label some.name=\"First Last\""
+
 # test framework with defaults
 operator-sdk test local ./test/e2e
 
