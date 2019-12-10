@@ -245,11 +245,6 @@ func createChartFromRemote(destDir string, opts CreateChartOptions) (*chart.Char
 
 	chartArchive, _, err := c.DownloadTo(opts.Chart, opts.Version, tmpDir)
 	if err != nil {
-		// One of Helm's error messages directs users to run `helm init`, which
-		// installs tiller in a remote cluster. Since that's unnecessary and
-		// unhelpful, modify the error message to be relevant for operator-sdk.
-
-		// TODO(joelanford): Is there anything to initialize in helm v3
 		return nil, err
 	}
 

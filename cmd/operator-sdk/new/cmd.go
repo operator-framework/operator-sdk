@@ -312,14 +312,14 @@ func doHelmScaffold() error {
 
 	resource, chart, err := helm.CreateChart(cfg.AbsProjectPath, createOpts)
 	if err != nil {
-		return fmt.Errorf("failed to create helm chart: %s", err)
+		return fmt.Errorf("failed to create helm chart: %w", err)
 	}
 
 	valuesPath := filepath.Join("<project_dir>", helm.HelmChartsDir, chart.Name(), "values.yaml")
 
 	rawValues, err := yaml.Marshal(chart.Values)
 	if err != nil {
-		return fmt.Errorf("failed to get raw chart values: %s", err)
+		return fmt.Errorf("failed to get raw chart values: %w", err)
 	}
 	crSpec := fmt.Sprintf("# Default values copied from %s\n\n%s", valuesPath, rawValues)
 
@@ -350,11 +350,11 @@ func doHelmScaffold() error {
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("new helm scaffold failed: (%v)", err)
+		return fmt.Errorf("new helm scaffold failed: %w", err)
 	}
 
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-		return fmt.Errorf("failed to update the RBAC manifest for resource (%v, %v): (%v)", resource.APIVersion, resource.Kind, err)
+		return fmt.Errorf("failed to update the RBAC manifest for resource (%v, %v): %w", resource.APIVersion, resource.Kind, err)
 	}
 	return nil
 }
