@@ -103,6 +103,7 @@ Required:
         * `kind`: CRD's `metadata.spec.names.kind`.
         * `version`: CRD's `metadata.spec.version`.
         * `description` _(user)_ : description of the CRD.
+        * `displayName` _(user)_ : display name of the CRD.
         * `resources` _(user)_ : any Kubernetes resources used by the CRD, ex. `Pod`'s and `ConfigMap`'s.
         * `specDescriptors` _(user)_ : UI hints for inputs and outputs of the Operator's spec.
         * `statusDescriptors` _(user)_ : UI hints for inputs and outputs of the Operator's status.

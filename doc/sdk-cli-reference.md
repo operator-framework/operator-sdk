@@ -517,7 +517,7 @@ The operator-sdk test command runs go tests built using the Operator SDK's test 
 
 ```console
 $ operator-sdk test local ./test/e2e/
-ok    github.com/operator-framework/operator-sdk-samples/memcached-operator/test/e2e  20.410s
+ok    github.com/operator-framework/operator-sdk-samples/go/memcached-operator/test/e2e  20.410s
 ```
 
 ## up
