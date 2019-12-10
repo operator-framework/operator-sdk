@@ -129,7 +129,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		errmark := r.markRunning(u, request.NamespacedName)
 		if errmark != nil {
 			logger.Error(errmark, "Unable to update the status to mark cr as running")
-			return reconcile.Result{}, errmark
+			return reconcileResult, errmark
 		}
 	}
 
@@ -233,7 +233,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		if errmark != nil {
 			logger.Error(errmark, "Failed to mark status done")
 		}
-		return reconcile.Result{}, errmark
+		return reconcileResult, errmark
 	}
 	return reconcileResult, nil
 }
