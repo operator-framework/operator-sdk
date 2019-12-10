@@ -219,7 +219,7 @@ func (g crdGenerator) generateNonGo() (map[string][]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		if err = yaml.Unmarshal(b, crd); err != nil {
+		if err = yaml.Unmarshal(b, &crd); err != nil {
 			return nil, err
 		}
 		// If version is new, append it to spec.versions.
