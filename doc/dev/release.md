@@ -199,7 +199,6 @@ Commit the following changes:
 - `internal/scaffold/go_mod.go`, change the `require` line version for `github.com/operator-framework/operator-sdk` from `master` to `v1.3.0`.
 - `internal/scaffold/helm/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
 - `internal/scaffold/ansible/go_mod.go`: same as for `internal/scaffold/go_mod.go`.
-- `test/test-framework/go.mod`: change the `require` line version for `github.com/operator-framework/operator-sdk` from its current version to `v1.3.0`.
 - `CHANGELOG.md`: update the `## Unreleased` header to `## v1.3.0`.
 - `doc/user/install-operator-sdk.md`: update the linux and macOS URLs to point to the new release URLs.
 
