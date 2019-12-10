@@ -193,8 +193,11 @@ func (m *operatorManager) up(ctx context.Context) (err error) {
 			return err
 		}
 		u := unstructured.Unstructured{Object: obj}
-		if status := m.status(ctx, &u); status.HasExistingResources() {
+		status := m.status(ctx, &u)
+		if installed, err := status.HasInstalledResources(); installed {
 			return errors.Errorf("an operator with name %q is already running\n%s", pkgName, status)
+		} else if err != nil {
+			return errors.Errorf("an operator with name %q is present and has resource errors\n%s", pkgName, status)
 		}
 	}
 
@@ -307,8 +310,11 @@ func (m *operatorManager) down(ctx context.Context) (err error) {
 		return err
 	}
 	if !m.force {
-		if status := m.status(ctx, bundle.Objects...); !status.HasExistingResources() {
+		status := m.status(ctx, bundle.Objects...)
+		if installed, err := status.HasInstalledResources(); !installed {
 			return errors.Errorf("no operator with name %q is running", pkgName)
+		} else if err != nil {
+			return errors.Errorf("an operator with name %q is present and has resource errors\n%s", pkgName, status)
 		}
 	}
 
@@ -339,8 +345,10 @@ func (m *operatorManager) down(ctx context.Context) (err error) {
 	}
 
 	status := m.status(ctx, bundle.Objects...)
-	if status.HasExistingResources() {
-		return errors.Errorf("operator %q resources still exist\n%s", csv.GetName(), status)
+	if installed, err := status.HasInstalledResources(); installed {
+		return errors.Errorf("an operator with name %q still exists", pkgName)
+	} else if err != nil {
+		return errors.Errorf("an operator with name %q is present and has resource errors\n%s", pkgName, status)
 	}
 	log.Infof("Successfully uninstalled %q on OLM version %q", csv.GetName(), olmVer)
 
