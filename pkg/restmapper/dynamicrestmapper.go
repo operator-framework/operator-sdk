@@ -23,7 +23,6 @@ import (
 	"k8s.io/client-go/restmapper"
 )
 
-
 // Deprecated: DynamicRESTMapper exists for historical compatibility
 // and should not be used. See that it was implemented in the controller-runtime.
 // More info: https://github.com/kubernetes-sigs/controller-runtime/pull/554
