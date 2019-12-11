@@ -147,10 +147,8 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 				}
 				return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("error validating ClusterServiceVersion: %s", errorMsgs.String())
 			}
-			if r.HasWarn() {
-				for _, w := range r.Warnings {
-					log.Warnf("CSV validation warning: type [%s] %s", w.Type, w.Detail)
-				}
+			for _, w := range r.Warnings {
+				log.Warnf("CSV validation warning: type [%s] %s", w.Type, w.Detail)
 			}
 		}
 	}
