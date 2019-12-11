@@ -23,7 +23,6 @@ import (
 	"strings"
 
 	"github.com/operator-framework/api/pkg/manifests"
-	"github.com/operator-framework/api/pkg/validation"
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
@@ -112,25 +111,6 @@ func NewCRDsHaveResourcesTest(conf OLMTestConfig) *CRDsHaveResourcesTest {
 	}
 }
 
-// CSVValidationTest is a scorecard test that validates a CSV
-type CSVValidationTest struct {
-	schelpers.TestInfo
-	OLMTestConfig
-}
-
-// CSVValidationTest returns a new CSVValidationTest object
-func NewCSVValidationTest(conf OLMTestConfig) *CSVValidationTest {
-	return &CSVValidationTest{
-		OLMTestConfig: conf,
-		TestInfo: schelpers.TestInfo{
-			Name:        "CSV validates",
-			Description: "Validate the CSV",
-			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName},
-		},
-	}
-}
-
 // SpecDescriptorsTest is a scorecard test that verifies that all spec fields have descriptors
 type SpecDescriptorsTest struct {
 	schelpers.TestInfo
@@ -193,7 +173,6 @@ func NewOLMTestSuite(conf OLMTestConfig) *schelpers.TestSuite {
 	ts.AddTest(NewBundleValidationTest(conf), 1)
 	ts.AddTest(NewCRDsHaveValidationTest(conf), 1.25)
 	ts.AddTest(NewCRDsHaveResourcesTest(conf), 1)
-	ts.AddTest(NewCSVValidationTest(conf), 1)
 	ts.AddTest(NewSpecDescriptorsTest(conf), 1)
 	ts.AddTest(NewStatusDescriptorsTest(conf), 1)
 
@@ -220,22 +199,18 @@ func (t *BundleValidationTest) Run(ctx context.Context) *schelpers.TestResult {
 
 	_, _, validationResults := manifests.GetManifestsDir(t.OLMTestConfig.Bundle)
 	for _, result := range validationResults {
-		if result.HasError() {
-			for _, e := range result.Errors {
-				res.Errors = append(res.Errors, fmt.Errorf("%s", e.Error()))
-			}
+		for _, e := range result.Errors {
+			res.Errors = append(res.Errors, &e)
 		}
 
-		if result.HasWarn() {
-			for _, w := range result.Warnings {
-				res.Suggestions = append(res.Suggestions, w.Error())
-			}
+		for _, w := range result.Warnings {
+			res.Suggestions = append(res.Suggestions, w.Error())
 		}
 	}
 
 	res.Log = validationLogOutput.String()
 
-	if len(res.Errors) == 0 && len(res.Suggestions) == 0 {
+	if len(res.Errors) == 0 {
 		res.EarnedPoints++
 	}
 
@@ -442,30 +417,6 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 		resourcesArr = append(resourcesArr, gvk)
 	}
 	return resourcesArr, nil
-}
-
-// Run - implements Test interface
-func (t *CSVValidationTest) Run(ctx context.Context) *schelpers.TestResult {
-	res := &schelpers.TestResult{Test: t, MaximumPoints: 1}
-	res.EarnedPoints = 1
-
-	csvValidator := validation.ClusterServiceVersionValidator
-	results := csvValidator.Validate(t.CSV)
-	for _, r := range results {
-		if r.HasError() {
-			res.EarnedPoints = 0
-			for _, e := range r.Errors {
-				res.Errors = append(res.Errors, e)
-			}
-		}
-		if r.HasWarn() {
-			for _, w := range r.Warnings {
-				res.Suggestions = append(res.Suggestions, fmt.Sprintf("CSV validation warning: [%s] %s", w.Type, w.Detail))
-			}
-		}
-	}
-
-	return res
 }
 
 // Run - implements Test interface

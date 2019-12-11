@@ -81,11 +81,11 @@ fi
 
 header_text 'scorecard test to see if version in config file allows v1alpha2 to be specified'
 commandoutput="$(operator-sdk scorecard --config "$CONFIG_PATH_V1ALPHA1" 2>&1)"
-echo $commandoutput | grep "Total Score: 65%"
+echo $commandoutput | grep "Total Score: 64%"
 
 header_text 'scorecard test to see if total score matches expected value'
 commandoutput="$(operator-sdk scorecard --version v1alpha1 --config "$CONFIG_PATH" 2>&1)"
-echo $commandoutput | grep "Total Score: 65%"
+echo $commandoutput | grep "Total Score: 64%"
 
 # test json output and default config path
 commandoutput2="$(operator-sdk scorecard --version v1alpha1 2>&1)"
@@ -95,7 +95,7 @@ header_text 'scorecard test to check basic suite expected scores'
 echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 3,[[:space:]]"partialPass": 0,[[:space:]]"fail": 0,[[:space:]]"totalTests": 3,[[:space:]]"totalScorePercent": 100,.*$'
 
 header_text 'scorecard test to check olm suite expected scores'
-echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 2,[[:space:]]"partialPass": 3,[[:space:]]"fail": 1,[[:space:]]"totalTests": 6,[[:space:]]"totalScorePercent": 62,.*$'
+echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 1,[[:space:]]"partialPass": 3,[[:space:]]"fail": 1,[[:space:]]"totalTests": 5,[[:space:]]"totalScorePercent": 55,.*$'
 
 header_text 'scorecard test to check custom json result'
 echo $commandoutput2 | grep '^.*"error": 0,[[:space:]]"pass": 1,[[:space:]]"partialPass": 1,[[:space:]]"fail": 0,[[:space:]]"totalTests": 2,[[:space:]]"totalScorePercent": 71,.*$'
