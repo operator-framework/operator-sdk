@@ -6,9 +6,11 @@
 
 ### Changed
 
+- Replace usage of `github.com/operator-framework/operator-sdk/pkg/restmapper.DynamicRESTMapper` with `sigs.k8s.io/controller-runtime/pkg/client/apiutil.DynamicRESTMapper`. ([#2309](https://github.com/operator-framework/operator-sdk/pull/2309))
 
 ### Deprecated
 
+- Deprecated `github.com/operator-framework/operator-sdk/pkg/restmapper` in favor of the `DynamicRESTMapper` implementation in [controller-runtime](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/apiutil#NewDiscoveryRESTMapper). ([#2309](https://github.com/operator-framework/operator-sdk/pull/2309))
 
 ### Removed
 
