@@ -18,10 +18,9 @@ import (
 	"context"
 	"fmt"
 
-	olmresourceclient "github.com/operator-framework/operator-sdk/internal/olm/client"
-	registryutil "github.com/operator-framework/operator-sdk/internal/util/operator-registry"
+	olmclient "github.com/operator-framework/operator-sdk/internal/olm/client"
 
-	"github.com/pkg/errors"
+	"github.com/operator-framework/operator-registry/pkg/registry"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -34,8 +33,9 @@ var SDKLabels = map[string]string{
 // RegistryResources configures creation/deletion of internal registry-related
 // resources.
 type RegistryResources struct {
-	Client    *olmresourceclient.Client
-	Manifests registryutil.ManifestsStore
+	Client  *olmclient.Client
+	Pkg     registry.PackageManifest
+	Bundles []*registry.Bundle
 }
 
 // FEAT(estroz): allow users to specify labels for registry objects.
@@ -43,12 +43,10 @@ type RegistryResources struct {
 // CreateRegistryManifests creates all registry objects required to serve
 // manifests from m.manifests in namespace.
 func (m *RegistryResources) CreateRegistryManifests(ctx context.Context, namespace string) error {
-	pkg := m.Manifests.GetPackageManifest()
-	pkgName := pkg.PackageName
-	bundles := m.Manifests.GetBundles()
-	binaryKeyValues, err := createConfigMapBinaryData(pkg, bundles)
+	pkgName := m.Pkg.PackageName
+	binaryKeyValues, err := createConfigMapBinaryData(m.Pkg, m.Bundles)
 	if err != nil {
-		return errors.Wrap(err, "error creating registry ConfigMap binary data")
+		return fmt.Errorf("error creating registry ConfigMap binary data: %w", err)
 	}
 	cm := newRegistryConfigMap(pkgName, namespace,
 		withBinaryData(binaryKeyValues),
@@ -63,7 +61,7 @@ func (m *RegistryResources) CreateRegistryManifests(ctx context.Context, namespa
 		withTCPPort("grpc", registryGRPCPort),
 	)
 	if err = m.Client.DoCreate(ctx, cm, dep, service); err != nil {
-		return errors.Wrapf(err, "error creating operator %q registry-server objects", pkgName)
+		return fmt.Errorf("error creating operator %q registry-server objects: %w", pkgName, err)
 	}
 	depKey := types.NamespacedName{
 		Name:      dep.GetName(),
@@ -71,7 +69,7 @@ func (m *RegistryResources) CreateRegistryManifests(ctx context.Context, namespa
 	}
 	log.Infof("Waiting for Deployment %q rollout to complete", depKey)
 	if err = m.Client.DoRolloutWait(ctx, depKey); err != nil {
-		return errors.Wrapf(err, "error waiting for Deployment %q to roll out", depKey)
+		return fmt.Errorf("error waiting for Deployment %q to roll out: %w", depKey, err)
 	}
 	return nil
 }
@@ -79,13 +77,13 @@ func (m *RegistryResources) CreateRegistryManifests(ctx context.Context, namespa
 // DeleteRegistryManifests deletes all registry objects serving manifests
 // from m.manifests in namespace.
 func (m *RegistryResources) DeleteRegistryManifests(ctx context.Context, namespace string) error {
-	pkgName := m.Manifests.GetPackageManifest().PackageName
+	pkgName := m.Pkg.PackageName
 	cm := newRegistryConfigMap(pkgName, namespace)
 	dep := newRegistryDeployment(pkgName, namespace)
 	service := newRegistryService(pkgName, namespace)
 	err := m.Client.DoDelete(ctx, dep, cm, service)
 	if err != nil {
-		return errors.Wrapf(err, "error deleting operator %q registry-server objects", pkgName)
+		return fmt.Errorf("error deleting operator %q registry-server objects: %w", pkgName, err)
 	}
 	return nil
 }

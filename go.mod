@@ -16,7 +16,9 @@ require (
 	github.com/go-logr/zapr v0.1.1
 	github.com/gobuffalo/packr v1.30.1 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
+	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190203031600-7a902570cb17 // indirect
+	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/iancoleman/strcase v0.0.0-20190422225806-e506e3ef7365
 	github.com/jmoiron/sqlx v1.2.0 // indirect
@@ -29,7 +31,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20191115003340-16619cd27fa5
-	github.com/operator-framework/operator-registry v1.5.1
+	github.com/operator-framework/operator-registry v1.5.3
 	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v1.1.0

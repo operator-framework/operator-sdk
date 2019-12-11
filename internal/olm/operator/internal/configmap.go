@@ -40,8 +40,7 @@ const (
 // IsManifestDataStale checks if manifest data stored in the registry is stale
 // by comparing it to manifest data currently managed by m.
 func (m *RegistryResources) IsManifestDataStale(ctx context.Context, namespace string) (bool, error) {
-	pkg := m.Manifests.GetPackageManifest()
-	pkgName := pkg.PackageName
+	pkgName := m.Pkg.PackageName
 	nn := types.NamespacedName{
 		Name:      getRegistryConfigMapName(pkgName),
 		Namespace: namespace,
@@ -52,7 +51,7 @@ func (m *RegistryResources) IsManifestDataStale(ctx context.Context, namespace s
 		return false, err
 	}
 	// Collect digests of manifests submitted to m.
-	newData, err := createConfigMapBinaryData(pkg, m.Manifests.GetBundles())
+	newData, err := createConfigMapBinaryData(m.Pkg, m.Bundles)
 	if err != nil {
 		return false, errors.Wrap(err, "error creating binary data")
 	}
