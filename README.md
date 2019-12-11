@@ -74,13 +74,18 @@ $ operator-sdk add api --api-version=app.example.com/v1alpha1 --kind=AppService
 $ operator-sdk add controller --api-version=app.example.com/v1alpha1 --kind=AppService
 
 # Build and push the app-operator image to a public registry such as quay.io
-$ operator-sdk build quay.io/example/app-operator
-$ docker push quay.io/example/app-operator
+$ operator-sdk build quay.io/<username>/app-operator
+
+# Login to public registry such as quay.io
+$ docker login quay.io
+
+# Push image
+$ docker push quay.io/<username>/app-operator
 
 # Update the operator manifest to use the built image name (if you are performing these steps on OSX, see note below)
-$ sed -i 's|REPLACE_IMAGE|quay.io/example/app-operator|g' deploy/operator.yaml
+$ sed -i 's|REPLACE_IMAGE|quay.io/<username>/app-operator|g' deploy/operator.yaml
 # On OSX use:
-$ sed -i "" 's|REPLACE_IMAGE|quay.io/example/app-operator|g' deploy/operator.yaml
+$ sed -i "" 's|REPLACE_IMAGE|quay.io/<username>/app-operator|g' deploy/operator.yaml
 
 # Setup Service Account
 $ kubectl create -f deploy/service_account.yaml
