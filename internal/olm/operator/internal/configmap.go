@@ -85,8 +85,7 @@ func getObjectFileName(b []byte, name, kind string) string {
 }
 
 func getPackageFileName(b []byte, name string) string {
-	digest := hashContents(b)
-	return fmt.Sprintf("%s.%s.package.yaml", digest, name)
+	return getObjectFileName(b, name, "package")
 }
 
 // createConfigMapBinaryData opaquely creates a set of paths using data in pkg
