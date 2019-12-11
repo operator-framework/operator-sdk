@@ -25,7 +25,6 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/operator-framework/operator-registry/pkg/registry"
-	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -53,7 +52,7 @@ func (m *RegistryResources) IsManifestDataStale(ctx context.Context, namespace s
 	// Collect digests of manifests submitted to m.
 	newData, err := createConfigMapBinaryData(m.Pkg, m.Bundles)
 	if err != nil {
-		return false, errors.Wrap(err, "error creating binary data")
+		return false, fmt.Errorf("error creating binary data: %w", err)
 	}
 	// If the number of files to be added to the registry don't match the number
 	// of files currently in the registry, we have added or removed a file.
@@ -96,14 +95,14 @@ func createConfigMapBinaryData(pkg registry.PackageManifest, bundles []*registry
 	binaryKeyValues := map[string][]byte{}
 	pb, err := yaml.Marshal(pkg)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error marshalling package manifest %s", pkgName)
+		return nil, fmt.Errorf("error marshalling package manifest %s: %w", pkgName, err)
 	}
 	binaryKeyValues[getPackageFileName(pb, pkgName)] = pb
 	for _, bundle := range bundles {
 		for _, o := range bundle.Objects {
 			ob, err := yaml.Marshal(o)
 			if err != nil {
-				return nil, errors.Wrapf(err, "error marshalling object %s %q", o.GroupVersionKind(), o.GetName())
+				return nil, fmt.Errorf("error marshalling object %s %q: %w", o.GroupVersionKind(), o.GetName(), err)
 			}
 			binaryKeyValues[getObjectFileName(ob, o.GetName(), o.GetKind())] = ob
 		}
