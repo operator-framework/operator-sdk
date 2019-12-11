@@ -16,7 +16,6 @@ package release
 
 import (
 	"fmt"
-	"io"
 	"strings"
 
 	helm2to3 "github.com/helm/helm-2to3/pkg/v3"
@@ -28,12 +27,9 @@ import (
 	helmreleasev3 "helm.sh/helm/v3/pkg/release"
 	storagev3 "helm.sh/helm/v3/pkg/storage"
 	driverv3 "helm.sh/helm/v3/pkg/storage/driver"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	apitypes "k8s.io/apimachinery/pkg/types"
-	"k8s.io/cli-runtime/pkg/resource"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	helmreleasev2 "k8s.io/helm/pkg/proto/hapi/release"
 	storagev2 "k8s.io/helm/pkg/storage"
@@ -63,46 +59,53 @@ func NewManagerFactory(mgr crmanager.Manager, chartDir string) ManagerFactory {
 }
 
 func (f managerFactory) NewManager(cr *unstructured.Unstructured) (Manager, error) {
+	// Get both v2 and v3 storage backends
 	clientv1, err := v1.NewForConfig(f.mgr.GetConfig())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get core/v1 client: %w", err)
 	}
-
 	storageBackendV2 := storagev2.Init(driverv2.NewSecrets(clientv1.Secrets(cr.GetNamespace())))
 	storageBackendV3 := storagev3.Init(driverv3.NewSecrets(clientv1.Secrets(cr.GetNamespace())))
 
+	// Automatically convert V2 releases to V3 releases. This is required to
+	// maintain backward compatibility with old releases now that the
+	// operator reconciliation loop expects Helm V3 releases.
 	if err := convertV2ToV3(storageBackendV2, storageBackendV3, cr); err != nil {
 		return nil, fmt.Errorf("failed to convert releases from v2 to v3: %w", err)
 	}
 
+	// Get the necessary clients and client getters. Use a client that injects the CR
+	// as an owner reference into all resources templated by the chart.
 	rcg, err := client.NewRESTClientGetter(f.mgr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get REST client getter from manager: %w", err)
 	}
 	kubeClient := kube.New(nil)
+	ownerRef := metav1.NewControllerRef(cr, cr.GroupVersionKind())
+	ownerRefClient := client.NewOwnerRefInjectingClient(*kubeClient, *ownerRef)
+
 	crChart, err := loader.LoadDir(f.chartDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load chart dir: %w", err)
 	}
+
 	releaseName, err := getReleaseName(storageBackendV3, crChart.Name(), cr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get helm release name: %w", err)
 	}
+
 	values, ok := cr.Object["spec"].(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("failed to get spec: expected map[string]interface{}")
 	}
-	controllerRef := metav1.NewControllerRef(cr, cr.GroupVersionKind())
-	ownerRefClient := &ownerRefInjectingClient{
-		refs:   []metav1.OwnerReference{*controllerRef},
-		Client: *kubeClient,
-	}
+
 	actionConfig := &action.Configuration{
 		RESTClientGetter: rcg,
 		Releases:         storageBackendV3,
 		KubeClient:       ownerRefClient,
 		Log:              func(_ string, _ ...interface{}) {},
 	}
+
 	return &manager{
 		actionConfig:   actionConfig,
 		storageBackend: storageBackendV3,
@@ -115,36 +118,6 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured) (Manager, erro
 		values: values,
 		status: types.StatusFor(cr),
 	}, nil
-}
-
-type ownerRefInjectingClient struct {
-	refs []metav1.OwnerReference
-	kube.Client
-}
-
-func (c *ownerRefInjectingClient) Build(reader io.Reader, validate bool) (kube.ResourceList, error) {
-	resourceList, err := c.Client.Build(reader, validate)
-	if err != nil {
-		return resourceList, err
-	}
-	err = resourceList.Visit(func(r *resource.Info, err error) error {
-		if err != nil {
-			return err
-		}
-		objMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(r.Object)
-		if err != nil {
-			return err
-		}
-		u := &unstructured.Unstructured{Object: objMap}
-		if r.ResourceMapping().Scope == meta.RESTScopeNamespace {
-			u.SetOwnerReferences(c.refs)
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return resourceList, nil
 }
 
 func convertV2ToV3(storageBackendV2 *storagev2.Storage, storageBackendV3 *storagev3.Storage, cr *unstructured.Unstructured) error {
@@ -217,10 +190,10 @@ func getLegacyName(cr *unstructured.Unstructured) string {
 // identifying names or characters added by templates.
 //
 // TODO(jlanford): As noted above, using the CR name as the release name raises
-// the possibility of collision. We should move this logic to a validating
-// admission webhook so that the CR owner receives immediate feedback of the
-// collision. As is, the only indication of collision will be in the CR status
-// and operator logs.
+//   the possibility of collision. We should move this logic to a validating
+//   admission webhook so that the CR owner receives immediate feedback of the
+//   collision. As is, the only indication of collision will be in the CR status
+//   and operator logs.
 func getReleaseName(storageBackend *storagev3.Storage, crChartName string, cr *unstructured.Unstructured) (string, error) {
 	// If a release with the legacy name exists as a v3 release,
 	// return the legacy name.
