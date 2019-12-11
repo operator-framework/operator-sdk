@@ -308,6 +308,70 @@ kubectl delete -f deploy/service_account.yaml
 kubectl delete -f deploy/crds/example.com_nginxes_crd.yaml
 ```
 
+## Advanced features
+
+### Override Helm chart values
+
+As an operator developer, it is sometimes necessary to enforce that certain values
+provided by the chart's default `values.yaml` or by a CR spec are always overridden
+when templating the chart. An example of when this is useful is when your operator
+is being deployed in a disconnected environment where access to the chart's default
+image references is unavailable.
+
+To configure your operator with override values, add an `overrideValues` map to your
+`watches.yaml` file for the GVK and chart you need to override. For example, to change
+the repository used by the nginx chart, you would update your `watches.yaml` to the
+following:
+
+```yaml
+---
+- version: v1alpha1
+  group: example.com
+  kind: Nginx
+  chart: helm-charts/nginx
+  overrideValues:
+    image.repository: quay.io/mycustomrepo
+```
+
+By setting `image.repository` to `quay.io/mycustomrepo` you are ensuring that
+`quay.io/mycustomrepo` will always be used instead of the chart's default repository
+(`nginx`). If the CR attempts to set this value, it will be ignored.
+
+It is also possible to reference environment variables in the `overrideValues` section:
+
+```yaml
+  overrideValues:
+    image.repository: $IMAGE_REPOSITORY # or ${IMAGE_REPOSITORY}
+```
+
+By using an environment variable reference in `overrideValues` you make it possible to
+set these override values at runtime by setting the environment variable on the
+operator deployment. For example, in `deploy/operator.yaml` you could add the
+following snippet to the container spec:
+
+```yaml
+env:
+  - name: IMAGE_REPOSITORY
+    value: quay.io/mycustomrepo
+```
+
+If an environment variable reference is listed in `overrideValues`, but is not present
+in the environment when the operator runs, it will resolve to an empty string and
+override all other values. Therefore, these environment variables should _always_ be
+set. It is suggested to update the Dockerfile to set these environment variables to
+the same defaults that are defined by the chart.
+
+To warn users that their CR settings may be ignored, the Helm operator creates events on
+the CR that include the name and value of each overridden value. For example:
+
+```
+Events:
+  Type     Reason               Age   From              Message
+  ----     ------               ----  ----              -------
+  Warning  OverrideValuesInUse  1m    nginx-controller  Chart value "image.repository" overridden to "quay.io/mycustomrepo" by operator's watches.yaml
+```
+
+
 [operator-scope]:./../operator-scope.md
 [install-guide]: ../user/install-operator-sdk.md
 [layout-doc]:./project_layout.md
