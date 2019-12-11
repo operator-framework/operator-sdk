@@ -3,6 +3,7 @@
 
 ### Added
 
+- Improve Ansible logs in the Operator container for Ansible-based Operators. ([#2321](https://github.com/operator-framework/operator-sdk/pull/2321))
 
 ### Changed
 
