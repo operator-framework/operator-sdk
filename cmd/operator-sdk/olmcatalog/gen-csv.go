@@ -90,8 +90,17 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 
 	log.Infof("Generating CSV manifest version %s", csvVersion)
 
+	csvCfg, err := catalog.GetCSVConfig(csvConfigPath)
+	if err != nil {
+		return err
+	}
 	if operatorName == "" {
-		operatorName = filepath.Base(absProjectPath)
+		// Use config operator name if not set by CLI, i.e. prefer CLI value over
+		// config value.
+		if operatorName = csvCfg.OperatorName; operatorName == "" {
+			// Default to using project name if both are empty.
+			operatorName = filepath.Base(absProjectPath)
+		}
 	}
 
 	s := &scaffold.Scaffold{}
@@ -101,7 +110,7 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 		ConfigFilePath: csvConfigPath,
 		OperatorName:   operatorName,
 	}
-	err := s.Execute(cfg,
+	err = s.Execute(cfg,
 		csv,
 		&catalog.PackageManifest{
 			CSVVersion:       csvVersion,
@@ -120,11 +129,7 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		cfg, err := catalog.GetCSVConfig(csvConfigPath)
-		if err != nil {
-			return err
-		}
-		err = writeCRDsToDir(cfg.CRDCRPaths, filepath.Dir(input.Path))
+		err = writeCRDsToDir(csvCfg.CRDCRPaths, filepath.Dir(input.Path))
 		if err != nil {
 			return err
 		}

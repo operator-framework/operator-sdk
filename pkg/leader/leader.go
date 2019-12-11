@@ -81,9 +81,8 @@ func Become(ctx context.Context, lockName string) error {
 				log.Info("Found existing lock with my name. I was likely restarted.")
 				log.Info("Continuing as the leader.")
 				return nil
-			} else {
-				log.Info("Found existing lock", "LockOwner", existingOwner.Name)
 			}
+			log.Info("Found existing lock", "LockOwner", existingOwner.Name)
 		}
 	case apierrors.IsNotFound(err):
 		log.Info("No pre-existing lock was found.")

@@ -32,7 +32,7 @@ func NewCmd() *cobra.Command {
 		Short: "Run scorecard tests",
 		Long: `Runs blackbox scorecard tests on an operator
 `,
-		RunE: scorecard.ScorecardTests,
+		RunE: scorecard.Tests,
 	}
 
 	scorecardCmd.Flags().String(scorecard.ConfigOpt, "", fmt.Sprintf("config file (default is '<project_dir>/%s'; the config file's extension and format can be .yaml, .json, or .toml)", scorecard.DefaultConfigFile))
