@@ -479,7 +479,6 @@ Example of a valid JSON output:
 **NOTE:** The `ScorecardOutput.Log` field is only intended to be used to log the scorecard's output and the scorecard will ignore that field if a plugin provides it.
 To add logs to the main `ScorecardOuput.Log` field, a plugin can output the logs to `stderr`.
 
-
 ## Running the scorecard with an OLM-managed operator
 
 The scorecard can be run using a [Cluster Service Version (CSV)][olm-csv], providing a way to test cluster-ready and non-SDK operators.
