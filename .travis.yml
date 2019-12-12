@@ -154,7 +154,17 @@ jobs:
     # Build and deploy ppc64le helm-operator docker image
     - <<: *deploy
       name: Docker image for helm-operator (ppc64le)
-      os: linux-ppc64le
+      os: linux
+      arch: ppc64le
+      script:
+        - make image-build-helm
+        - make image-push-helm
+
+    # Build and deploy s390x helm-operator docker image
+    - <<: *deploy
+      name: Docker image for helm-operator (s390x)
+      os: linux
+      arch: s390x
       script:
         - make image-build-helm
         - make image-push-helm
