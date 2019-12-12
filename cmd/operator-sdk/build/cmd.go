@@ -25,6 +25,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
+	"github.com/google/shlex"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -73,7 +74,10 @@ func createBuildCommand(imageBuilder, context, dockerFile, image string, imageBu
 
 	for _, bargs := range imageBuildArgs {
 		if bargs != "" {
-			splitArgs := strings.Fields(bargs)
+			splitArgs, err := shlex.Split(bargs)
+			if err != nil {
+				return nil, fmt.Errorf("image-build-args is not parseable: %w", err)
+			}
 			args = append(args, splitArgs...)
 		}
 	}
