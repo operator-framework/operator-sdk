@@ -3,15 +3,13 @@ title: Neat-Enhancement-Idea
 authors:
   - "@estroz"
 reviewers:
-  - TBD
   - "@joelanford"
   - "@dmesser"
 approvers:
-  - TBD
   - "@joelanford"
   - "@dmesser"
 creation-date: 2019-09-12
-last-updated: 2019-09-12
+last-updated: 2019-12-11
 status: implementable
 see-also:
   - "./cli-ux-phase1.md"  
@@ -39,33 +37,48 @@ OLM is an incredibly useful cluster management tool. There is currently no integ
 
 #### General
 
-* Operator developers can use `operator-sdk` to quickly deploy OLM on a given Kubernetes cluster
-* Operator developers can use `operator-sdk` to run their Operator under OLM
-* Operator developers can use `operator-sdk` to build a catalog/bundle containing their Operator for use with OLM
+- Operator developers can use `operator-sdk` to quickly deploy OLM on a given Kubernetes cluster
+- Operator developers can use `operator-sdk` to run their Operator under OLM
+- Operator developers can use `operator-sdk` to build a catalog/bundle containing their Operator for use with OLM
 
 #### Specific
 
-* `operator-sdk` creates a [bundle][bundle] from an Operator project to deploy with OLM
-* `operator-sdk` has a CLI interface to interact with OLM
-* `operator-sdk` installs a specific version of OLM onto Kubernetes cluster
-* `operator-sdk` uninstalls a specific version of OLM onto Kubernetes cluster
-* `operator-sdk` accepts a bundle and deploys that operator onto an OLM-enabled Kubernetes cluster
-* `operator-sdk` accepts a bundle and removes that operator onto an OLM-enabled Kubernetes cluster
+- `operator-sdk` creates a [bundle][bundle] from an Operator project to deploy with OLM
+- `operator-sdk` has a CLI interface to interact with OLM
+- `operator-sdk` installs a specific version of OLM onto Kubernetes cluster
+- `operator-sdk` uninstalls a specific version of OLM onto Kubernetes cluster
+- `operator-sdk` accepts a bundle and deploys that operator onto an OLM-enabled Kubernetes cluster
+- `operator-sdk` accepts a bundle and removes that operator from an OLM-enabled Kubernetes cluster
 
 ### Non-Goals
+
+- Replicate mechanisms and abilities of OLM in `operator-sdk`.
 
 ## Proposal
 
 ### User Stories
 
-**TODO**
-
-Detail the things that people will be able to do if this is implemented.
-Include as much detail as possible so that people can understand the "how" of
-the system. The goal here is to make this feel real for users without getting
-bogged down.
+The following stories pertain to both upstream Kubernetes and OpenShift cluster types.
 
 #### Story 1
+
+I should be able to install a specific version of OLM onto a cluster
+
+#### Story 2
+
+I should be able to uninstall a specific version of OLM from a cluster
+
+#### Story 3
+
+I should be able to deploy a specific version of an Operator using OLM and a bundle director.
+
+#### Story 4
+
+I should be able to remove a specific version of an Operator deployed using `operator-sdk` via OLM from a cluster.
+
+#### Story 5
+
+I should be able to specify one or more [required manifests](#olm-resources) saved locally or have `operator-sdk` generate them from bundled data during deployment.
 
 ### Implementation Details/Notes/Constraints
 
@@ -75,13 +88,79 @@ Initial PR: https://github.com/operator-framework/operator-sdk/pull/1912
 
 The SDK's approach to deployment should be as general and reliant on existing mechanisms as possible. To that end, [`operator-registry`][registry] should be used since it defines what a bundle contains and how one is structured. `operator-registry` libraries should be used to create and serve bundles, and interact with package manifests.
 
-The idea is to create a `Deployment` containing the latest `operator-registry` [image][registry-image] to initialize a bundle database and run a registry server serving that database using binaries contained in the image. The `Deployment` will contain volume mounts from a `ConfigMap` containing bundle files and a package manifest for an operator. Using manifest data in the `ConfigMap` volume source, the registry initializer can build a local database and serve that database through the `Service`. OLM-specific resources created by the SDK or supplied by a user, described below, will establish communication between this registry server and OLM.
+The idea is to create a `Deployment` containing the latest `operator-registry` [image][registry-image] to initialize a bundle database and run a registry server serving that database using binaries contained in the image. The `Deployment` will contain volume mounts from a `ConfigMap` containing bundle files and a package manifest for an Operator. Using manifest data in the `ConfigMap` volume source, the registry initializer can build a local database and serve that database through the `Service`. OLM-specific resources created by the SDK or supplied by a user, described below, will establish communication between this registry server and OLM.
 
 #### OLM resources
 
-OLM understands `operator-registry` servers and served data through several objects. A [`CatalogSource`][olm-catalogsource] specifies how to communicate with a registry server. A [`Subscription`][olm-subscription] links a particular CSV channel to a `CatalogSource`, indicating from which `CatalogSource` OLM should pull an Operator. Another OLM resource that _may_ be required is an [`OperatorGroup`][olm-operatorgroup], which provides Operator namespacing information to OLM; OLM creates two `OperatorGroup`'s by default, one of which can be used for globally scoped Operators.
+OLM understands `operator-registry` servers and served data through several objects. A [`CatalogSource`][olm-catalogsource] specifies how to communicate with a registry server. A [`Subscription`][olm-subscription] links a particular CSV channel to a `CatalogSource`, indicating from which `CatalogSource` OLM should pull an Operator. Another OLM resource that _may_ be required is an [`OperatorGroup`][olm-operatorgroup], which provides Operator namespacing information to OLM. OLM creates a globally-scoped `OperatorGroup` by default, which can be used for globally-scoped Operators.
 
 These resources can be created from bundle data with minimal user input. They can also be created from manifests defined by the user; however, the SDK cannot make guarantees that user-defined manifests will work as expected.
+
+#### OperatorGroups and tenancy requirements
+
+[`OperatorGroup`][olm-operatorgroup]'s configure CSV tenancy in multiple namespaces in a cluster. Each Operator must be a [member][olm-operatorgroup-membership] with one `OperatorGroup` resource in the cluster, which defines a set of namespaces the CSV can exist in. A CSV's `installModes` determine what [type of `OperatorGroup`][olm-operatorgroup-installmodes] it is permitted to be a member of.
+
+No two `OperatorGroup`'s can exist in the same namespace, and a CSV with membership in an `OperatorGroup` of a type it does not support (determined by `installModes`) will transition to a failure state.
+
+Given these rules and constraints, Operator developers may have a tough time writing an `OperatorGroup` for their Operator initially. To assist them, `operator-sdk` should automate `OperatorGroup` "compilation" if one is not supplied.
+
+To perform compilation, the user can optionally supply the desired install mode type by which to install the CSV, and the set of namespaces (may be all namespaces, `""`) in which the CSV will be installed. The compilation algorithm is as follows:
+
+1. If an `OperatorGroup` manifest is supplied:
+    1. Use the one supplied and return.
+1. If an `OperatorGroup` manifest is not supplied, compile an `OperatorGroup` `g`:
+    1. If no `installMode` and set of namespaces is supplied:
+        1. Default to `OwnNamespace` by setting `g`'s `targetNamespaces` to the Operator's namespace, and return.
+    1. If an `installMode` and set of namespaces is supplied:
+        1. Validate the set of namespaces against the install mode's constraints and the Operator's namespace.
+        1. Initialize `g` as the desired type with the set of namespaces and return.
+
+Managing `OperatorGroup` resources for multiple Operators _before_ deployment is attempted is a more complex problem, but prevents annoying-to-debug deployment issues that will occur in the following scenarios:
+
+- A user wants to deploy two or more Operators with CSV install modes incompatible for one `OperatorGroup` to handle in the name namespace.
+- A user wants to create an `OperatorGroup` in a namespace that already has an `OperatorGroup`.
+    - The new and existing `OperatorGroup` namespace intersection is:
+        - Equivalent to the set of new and existing namespaces (they have the same set).
+        - The empty set (not intersecting).
+        - A strict subset of either namespace set.
+
+A solution to these types of conflicts is the following two algorithms:
+
+Algorithm for creating an `OperatorGroup`:
+1. Follow the compilation algorithm above to create an `OperatorGroup` `g`.
+1. Determine whether an `OperatorGroup` exists in a given namespace `n`.
+1. If one does not exist in `n`.
+    1. If `h` was not compiled by `operator-sdk`:
+        1. Label `g` with a static label to signify `g` was not created by `operator-sdk`.
+    1. If `h` was created by `operator-sdk`:
+        1. Label `g` with a static label to signify `g` was created by `operator-sdk`.
+    1. Create `g` in `n` and return.
+1. If an `OperatorGroup` `h` exists in `n`:
+    1. If `h` was not compiled by `operator-sdk`, return
+    1. If `h` was compiled by `operator-sdk`:
+        1. Determine which CSV's are members of `h`, `h`'s `targetNamespaces` `hn`, and `g`'s `targetNamespaces` `gn`.
+        1. If `gn` is equivalent to `hn`, return.
+        1. If the intersection of `gn` and `hn` is the empty set or a subset of either:
+            1. Label `g` with a static label to signify `g` was created by `operator-sdk`.
+            1. Create `g` in another namespace `m` and return.
+
+Algorithm for deleting an `OperatorGroup`:
+1. Determine whether an `OperatorGroup` exists in a given namespace `n`.
+1. If one does not exist in `n`, return.
+1. If an `OperatorGroup` `g` exists in `n`:
+    1. If `g` is not labeled with an `operator-sdk` static label, return.
+    1. If `g` is labeled with an `operator-sdk` static label:
+        1. Determine the set of CSV's `cs` that are members of `g`.
+        1. If `cs` is the empty set:
+            1. Delete `g` and return.
+        1. If `cs` is not the empty set, return.
+
+Notes on these algorithms:
+- Labeling allows `operator-sdk` to determine whether an `OperatorGroup` can be deleted; `OperatorGroup`'s not compiled by `operator-sdk` should not be deleted in any case.
+- An `OperatorGroup` not compiled by `operator-sdk` is considered a user-managed resource. All conflicts must be resolved by the user, so an error is returned if a non-compiled `OperatorGroup` is already present in a namespace.
+
+[olm-operatorgroup-membership]: https://github.com/operator-framework/operator-lifecycle-manager/blob/1cb0681/doc/design/operatorgroups.md
+[olm-operatorgroup-installmodes]: https://github.com/operator-framework/operator-lifecycle-manager/blob/1cb0681/doc/design/operatorgroups.md
 
 #### Use of operator-framework/api validation
 
