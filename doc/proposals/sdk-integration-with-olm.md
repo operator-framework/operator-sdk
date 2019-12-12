@@ -98,13 +98,26 @@ These resources can be created from bundle data with minimal user input. They ca
 
 #### OperatorGroups and tenancy requirements
 
-[`OperatorGroup`][olm-operatorgroup]'s configure CSV tenancy in multiple namespaces in a cluster. Each Operator must be a [member][olm-operatorgroup-membership] with one `OperatorGroup` resource in the cluster, which defines a set of namespaces the CSV can exist in. A CSV's `installModes` determine what [type of `OperatorGroup`][olm-operatorgroup-installmodes] it is permitted to be a member of.
+[`OperatorGroup`][olm-operatorgroup]'s configure CSV tenancy in multiple
+namespaces in a cluster. Each Operator must be a
+[member][olm-operatorgroup-membership] with one `OperatorGroup` resource in
+the cluster, which defines a set of namespaces the CSV can exist in. A CSV's
+`installModes` determine what [type][olm-operatorgroup-installmodes] of
+`OperatorGroup` it can be a member of.
 
-No two `OperatorGroup`'s can exist in the same namespace, and a CSV with membership in an `OperatorGroup` of a type it does not support (determined by `installModes`) will transition to a failure state.
+No two `OperatorGroup`'s can exist in the same namespace, and a CSV with
+membership in an `OperatorGroup` of a type it does not support (determined
+by `installModes`) will transition to a failure state.
 
-Given these rules and constraints, Operator developers may have a tough time writing an `OperatorGroup` for their Operator initially. To assist them, `operator-sdk` should automate `OperatorGroup` "compilation" if one is not supplied.
+Given these rules and constraints, Operator developers may have a tough time
+writing an `OperatorGroup` for their Operator initially. To assist them,
+`operator-sdk` should automate `OperatorGroup` "compilation" if one is not
+supplied.
 
-To perform compilation, the user can optionally supply the desired install mode type by which to install the CSV, and the set of namespaces (may be all namespaces, `""`) in which the CSV will be installed. The compilation algorithm is as follows:
+To perform compilation, the user can optionally supply the desired install
+mode type by which the CSV is installed, and the set of namespaces (may be all
+namespaces, `""`) in which the CSV will be installed. The compilation
+algorithm is as follows:
 
 ```
 1. If an OperatorGroup manifest is supplied:
@@ -126,7 +139,8 @@ incompatible for one `OperatorGroup` to handle in the name namespace.
 - A user wants to create an `OperatorGroup` in a namespace that already has
 an `OperatorGroup`.
     - The new and existing `OperatorGroup` namespace intersection is:
-        - Equivalent to the set of new and existing namespaces (they have the same set).
+        - Equivalent to the set of new and existing namespaces (they have the
+          same set).
         - The empty set (not intersecting).
         - A strict subset of either namespace set.
 
@@ -166,8 +180,12 @@ Algorithm for deleting an `OperatorGroup`:
 ```
 
 Notes on these algorithms:
-- Labeling allows `operator-sdk` to determine whether an `OperatorGroup` can be deleted; `OperatorGroup`'s not compiled by `operator-sdk` should not be deleted in any case.
-- An `OperatorGroup` not compiled by `operator-sdk` is considered a user-managed resource. All conflicts must be resolved by the user, so an error is returned if a non-compiled `OperatorGroup` is already present in a namespace.
+- Labeling allows `operator-sdk` to determine whether an `OperatorGroup` can
+be deleted; `OperatorGroup`'s not compiled by `operator-sdk` should not be
+deleted in any case.
+- An `OperatorGroup` not compiled by `operator-sdk` is considered a user-
+managed resource. All conflicts must be resolved by the user, so an error
+is returned if a non-compiled `OperatorGroup` is already present in a namespace.
 
 [olm-operatorgroup-membership]: https://github.com/operator-framework/operator-lifecycle-manager/blob/1cb0681/doc/design/operatorgroups.md
 [olm-operatorgroup-installmodes]: https://github.com/operator-framework/operator-lifecycle-manager/blob/1cb0681/doc/design/operatorgroups.md
