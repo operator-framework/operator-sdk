@@ -27,6 +27,7 @@
 ### Bug Fixes
 - Fix `operator-sdk build`'s `--image-build-args` to support spaces within quotes like `--label some.name="First Last"`. ([#2312](https://github.com/operator-framework/operator-sdk/pull/2312))
 
+- Skip metrics creation when running the operator locally. ([#2190](https://github.com/operator-framework/operator-sdk/pull/2190))
 
 ## v0.13.0
 
