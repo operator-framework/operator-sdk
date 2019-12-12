@@ -19,12 +19,11 @@ import (
 	"fmt"
 	"time"
 
-	"k8s.io/apimachinery/pkg/runtime"
-
+	rpb "helm.sh/helm/v3/pkg/release"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	rpb "k8s.io/helm/pkg/proto/hapi/release"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -142,7 +141,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		} else {
 			log.Info("Uninstalled release")
 			if log.V(0).Enabled() {
-				fmt.Println(diffutil.Diff(uninstalledRelease.GetManifest(), ""))
+				fmt.Println(diffutil.Diff(uninstalledRelease.Manifest, ""))
 			}
 			status.SetCondition(types.HelmAppCondition{
 				Type:   types.ConditionDeployed,
@@ -192,14 +191,18 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 
 		log.Info("Installed release")
 		if log.V(0).Enabled() {
-			fmt.Println(diffutil.Diff("", installedRelease.GetManifest()))
+			fmt.Println(diffutil.Diff("", installedRelease.Manifest))
 		}
-		log.V(1).Info("Config values", "values", installedRelease.GetConfig())
+		log.V(1).Info("Config values", "values", installedRelease.Config)
+		message := ""
+		if installedRelease.Info != nil {
+			message = installedRelease.Info.Notes
+		}
 		status.SetCondition(types.HelmAppCondition{
 			Type:    types.ConditionDeployed,
 			Status:  types.StatusTrue,
 			Reason:  types.ReasonInstallSuccessful,
-			Message: installedRelease.GetInfo().GetStatus().GetNotes(),
+			Message: message,
 		})
 		status.DeployedRelease = &types.HelmAppRelease{
 			Name:     installedRelease.Name,
@@ -233,14 +236,18 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 
 		log.Info("Updated release")
 		if log.V(0).Enabled() {
-			fmt.Println(diffutil.Diff(previousRelease.GetManifest(), updatedRelease.GetManifest()))
+			fmt.Println(diffutil.Diff(previousRelease.Manifest, updatedRelease.Manifest))
 		}
-		log.V(1).Info("Config values", "values", updatedRelease.GetConfig())
+		log.V(1).Info("Config values", "values", updatedRelease.Config)
+		message := ""
+		if updatedRelease.Info != nil {
+			message = updatedRelease.Info.Notes
+		}
 		status.SetCondition(types.HelmAppCondition{
 			Type:    types.ConditionDeployed,
 			Status:  types.StatusTrue,
 			Reason:  types.ReasonUpdateSuccessful,
-			Message: updatedRelease.GetInfo().GetStatus().GetNotes(),
+			Message: message,
 		})
 		status.DeployedRelease = &types.HelmAppRelease{
 			Name:     updatedRelease.Name,
