@@ -2,7 +2,7 @@
 
 
 ### Added
-
+- Add new functionality to print the Cluster version when the operator is running. ([#2327](https://github.com/operator-framework/operator-sdk/pull/2327)) 
 
 ### Changed
 
