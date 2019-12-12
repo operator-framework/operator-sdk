@@ -158,24 +158,29 @@ please see the [Extending the Scorecard with Plugins](#extending-the-scorecard-w
 
 Following the description of each internal [Plugin](#plugins). Note that are 8 internal tests across 2 internal plugins that the scorecard can run. If multiple CRs are specified for a plugin, the test environment is fully cleaned up after each CR so each CR gets a clean testing environment.
 
+Each test has a `short name` that uniquely identifies the test.  This is useful for selecting a specific test or tests to run as follows:
+```sh
+operator-sdk scorecard -o text --selector=test=specblockexists
+operator-sdk scorecard -o text --selector='test in (crdvalidationsection,writeintocr)'
+```
+
 ### Basic Operator
 
-| Test        | Description   |
-| --------    | -------- |
-| Spec Block Exists | This test checks the Custom Resource(s) created in the cluster to make sure that all CRs have a spec block. This test has a maximum score of 1 |
-| Status Block Exists | This test checks the Custom Resource(s) created in the cluster to make sure that all CRs have a status block. This test has a maximum score of 1 |
-| Writing Into CRs Has An Effect | This test reads the scorecard proxy's logs to verify that the operator is making `PUT` and/or `POST` requests to the API server, indicating that it is modifying resources. This test has a maximum score of 1 |
+| Test        | Description   | Short Name |
+| --------    | -------- | -------- |
+| Spec Block Exists | This test checks the Custom Resource(s) created in the cluster to make sure that all CRs have a spec block. This test has a maximum score of 1 | specblockexists |
+| Status Block Exists | This test checks the Custom Resource(s) created in the cluster to make sure that all CRs have a status block. This test has a maximum score of 1 | statusblockexists |
+| Writing Into CRs Has An Effect | This test reads the scorecard proxy's logs to verify that the operator is making `PUT` and/or `POST` requests to the API server, indicating that it is modifying resources. This test has a maximum score of 1 | writeintocr |
 
 ### OLM Integration
 
-| Test        | Description   |
-| --------    | -------- |
-| OLM Bundle Validation | This test validates the OLM bundle manifests found in the bundle directory as specifed by the bundle flag.  If the bundle contents contain errors, then the test result output will include the validator log as well as error messages from the validation library.  See this [document][olm-bundle] for details on OLM bundles.|
-| Provided APIs have validation |This test verifies that the CRDs for the provided CRs contain a validation section and that there is validation for each spec and status field detected in the CR. This test has a maximum score equal to the number of CRs provided via the `cr-manifest` option. |
-| Owned CRDs Have Resources Listed | This test makes sure that the CRDs for each CR provided via the `cr-manifest` option have a `resources` subsection in the [`owned` CRDs section][owned-crds] of the CSV. If the test detects used resources that are not listed in the resources section, it will list them in the suggestions at the end of the test. This test has a maximum score equal to the number of CRs provided via the `cr-manifest` option. |
-| CSV Validation | This test checks the validity of a CSV. |
-| Spec Fields With Descriptors | This test verifies that every field in the Custom Resources' spec sections have a corresponding descriptor listed in the CSV. This test has a maximum score equal to the total number of fields in the spec sections of each custom resource passed in via the `cr-manifest` option. |
-| Status Fields With Descriptors | This test verifies that every field in the Custom Resources' status sections have a corresponding descriptor listed in the CSV. This test has a maximum score equal to the total number of fields in the status sections of each custom resource passed in via the `cr-manifest` option. |
+| Test        | Description   | Short Name |
+| --------    | -------- | -------- |
+| OLM Bundle Validation | This test validates the OLM bundle manifests found in the bundle directory as specifed by the bundle flag.  If the bundle contents contain errors, then the test result output will include the validator log as well as error messages from the validation library.  See this [document][olm-bundle] for details on OLM bundles.| bundlevalidation |
+| Provided APIs have validation |This test verifies that the CRDs for the provided CRs contain a validation section and that there is validation for each spec and status field detected in the CR. This test has a maximum score equal to the number of CRs provided via the `cr-manifest` option. | crdvalidationsection |
+| Owned CRDs Have Resources Listed | This test makes sure that the CRDs for each CR provided via the `cr-manifest` option have a `resources` subsection in the [`owned` CRDs section][owned-crds] of the CSV. If the test detects used resources that are not listed in the resources section, it will list them in the suggestions at the end of the test. This test has a maximum score equal to the number of CRs provided via the `cr-manifest` option. | crdhasresources |
+| Spec Fields With Descriptors | This test verifies that every field in the Custom Resources' spec sections have a corresponding descriptor listed in the CSV. This test has a maximum score equal to the total number of fields in the spec sections of each custom resource passed in via the `cr-manifest` option. | specdescriptors |
+| Status Fields With Descriptors | This test verifies that every field in the Custom Resources' status sections have a corresponding descriptor listed in the CSV. This test has a maximum score equal to the total number of fields in the status sections of each custom resource passed in via the `cr-manifest` option. | statusdescriptors |
 
 ## Exit Status
 
