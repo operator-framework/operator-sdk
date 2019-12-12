@@ -106,19 +106,25 @@ Given these rules and constraints, Operator developers may have a tough time wri
 
 To perform compilation, the user can optionally supply the desired install mode type by which to install the CSV, and the set of namespaces (may be all namespaces, `""`) in which the CSV will be installed. The compilation algorithm is as follows:
 
-1. If an `OperatorGroup` manifest is supplied:
+```
+1. If an OperatorGroup manifest is supplied:
     1. Use the one supplied and return.
-1. If an `OperatorGroup` manifest is not supplied, compile an `OperatorGroup` `g`:
-    1. If no `installMode` and set of namespaces is supplied:
-        1. Default to `OwnNamespace` by setting `g`'s `targetNamespaces` to the Operator's namespace, and return.
-    1. If an `installMode` and set of namespaces is supplied:
+2. Else if an OperatorGroup manifest is not supplied, compile an OperatorGroup g:
+    1. If no installMode and set of namespaces is supplied:
+        1. Initialize g as type OwnNamespace by setting g's targetNamespaces to the Operator's namespace, and return.
+    2. Else if an installMode and set of namespaces is supplied:
         1. Validate the set of namespaces against the install mode's constraints and the Operator's namespace.
-        1. Initialize `g` as the desired type with the set of namespaces and return.
+        2. Initialize g as the desired type with the set of namespaces and return.
+```
 
-Managing `OperatorGroup` resources for multiple Operators _before_ deployment is attempted is a more complex problem, but prevents annoying-to-debug deployment issues that will occur in the following scenarios:
+Managing `OperatorGroup` resources for multiple Operators _before_ deployment
+is attempted is a more complex problem, but prevents annoying-to-debug
+deployment issues that will occur in the following scenarios:
 
-- A user wants to deploy two or more Operators with CSV install modes incompatible for one `OperatorGroup` to handle in the name namespace.
-- A user wants to create an `OperatorGroup` in a namespace that already has an `OperatorGroup`.
+- A user wants to deploy two or more Operators with CSV install modes
+incompatible for one `OperatorGroup` to handle in the name namespace.
+- A user wants to create an `OperatorGroup` in a namespace that already has
+an `OperatorGroup`.
     - The new and existing `OperatorGroup` namespace intersection is:
         - Equivalent to the set of new and existing namespaces (they have the same set).
         - The empty set (not intersecting).
@@ -127,33 +133,37 @@ Managing `OperatorGroup` resources for multiple Operators _before_ deployment is
 A solution to these types of conflicts is the following two algorithms:
 
 Algorithm for creating an `OperatorGroup`:
-1. Follow the compilation algorithm above to create an `OperatorGroup` `g`.
-1. Determine whether an `OperatorGroup` exists in a given namespace `n`.
-1. If one does not exist in `n`.
-    1. If `h` was not compiled by `operator-sdk`:
-        1. Label `g` with a static label to signify `g` was not created by `operator-sdk`.
-    1. If `h` was created by `operator-sdk`:
-        1. Label `g` with a static label to signify `g` was created by `operator-sdk`.
-    1. Create `g` in `n` and return.
-1. If an `OperatorGroup` `h` exists in `n`:
-    1. If `h` was not compiled by `operator-sdk`, return
-    1. If `h` was compiled by `operator-sdk`:
-        1. Determine which CSV's are members of `h`, `h`'s `targetNamespaces` `hn`, and `g`'s `targetNamespaces` `gn`.
-        1. If `gn` is equivalent to `hn`, return.
-        1. If the intersection of `gn` and `hn` is the empty set or a subset of either:
-            1. Label `g` with a static label to signify `g` was created by `operator-sdk`.
-            1. Create `g` in another namespace `m` and return.
+```
+1. Follow the compilation algorithm above to create an OperatorGroup g.
+2. Determine whether an OperatorGroup exists in a given namespace n.
+3. If no OperatorGroup exists in n:
+    1. If h was not compiled by operator-sdk:
+        1. Label g with a static label to signify g was not created by operator-sdk.
+    2. Else if h was created by operator-sdk:
+        1. Label g with a static label to signify g was created by operator-sdk.
+    3. Create g in n and return.
+4. Else if an OperatorGroup h exists in n:
+    1. If h was not compiled by operator-sdk, return
+    2. Else if h was compiled by operator-sdk:
+        1. Determine which CSV's are members of h, h's targetNamespaces hn, and g's targetNamespaces gn.
+        2. If gn is equivalent to hn, return.
+        3. Else if the intersection of gn and hn is the empty set or a subset of either:
+            1. Label g with a static label to signify g was created by operator-sdk.
+            2. Create g in another namespace m and return.
+```
 
 Algorithm for deleting an `OperatorGroup`:
-1. Determine whether an `OperatorGroup` exists in a given namespace `n`.
-1. If one does not exist in `n`, return.
-1. If an `OperatorGroup` `g` exists in `n`:
-    1. If `g` is not labeled with an `operator-sdk` static label, return.
-    1. If `g` is labeled with an `operator-sdk` static label:
-        1. Determine the set of CSV's `cs` that are members of `g`.
-        1. If `cs` is the empty set:
-            1. Delete `g` and return.
-        1. If `cs` is not the empty set, return.
+```
+1. Determine whether an OperatorGroup exists in a given namespace n.
+2. If no OperatorGroup exists in n, return.
+3. Else if an OperatorGroup g exists in n:
+    1. If g is not labeled with an operator-sdk static label, return.
+    2. Else if g is labeled with an operator-sdk static label:
+        1. Determine the set of CSV's cs that are members of g.
+        2. If cs is the empty set:
+            1. Delete g and return.
+        3. Else if cs is not the empty set, return.
+```
 
 Notes on these algorithms:
 - Labeling allows `operator-sdk` to determine whether an `OperatorGroup` can be deleted; `OperatorGroup`'s not compiled by `operator-sdk` should not be deleted in any case.
