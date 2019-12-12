@@ -157,7 +157,7 @@ Algorithm for creating an `OperatorGroup`:
         1. Label g with a static label to signify g was created by operator-sdk.
     3. Create g in n and return.
 4. Else if an OperatorGroup h exists in n:
-    1. If h was not compiled by operator-sdk, return
+    1. If h was not compiled by operator-sdk, return an error.
     2. Else if h was compiled by operator-sdk:
         1. Determine which CSV's are members of h, h's targetNamespaces hn, and g's targetNamespaces gn.
         2. If gn is equivalent to hn, return.
@@ -186,6 +186,8 @@ deleted in any case.
 - An `OperatorGroup` not compiled by `operator-sdk` is considered a user-
 managed resource. All conflicts must be resolved by the user, so an error
 is returned if a non-compiled `OperatorGroup` is already present in a namespace.
+- Deleting an `OperatorGroup` associated with 1..N CSVs will cause those CSVs
+to transition to a failure state, so we should not delete if this is the case.
 
 [olm-operatorgroup-membership]: https://github.com/operator-framework/operator-lifecycle-manager/blob/1cb0681/doc/design/operatorgroups.md
 [olm-operatorgroup-installmodes]: https://github.com/operator-framework/operator-lifecycle-manager/blob/1cb0681/doc/design/operatorgroups.md
