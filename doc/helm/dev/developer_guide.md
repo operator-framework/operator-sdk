@@ -27,18 +27,18 @@ time. To do this, initialize a new project:
 
 ```sh
 $ operator-sdk new --type helm --kind Foo --api-version foo.example.com/v1alpha1 foo-operator
-INFO[0000] Creating new Helm operator 'foo-operator'.   
-INFO[0000] Created helm-charts/foo                      
-INFO[0000] Generating RBAC rules                        
-WARN[0000] The RBAC rules generated in deploy/role.yaml are based on the chart's default manifest. Some rules may be missing for resources that are only enabled with custom values, and some existing rules may be overly broad. Double check the rules generated in deploy/role.yaml to ensure they meet the operator's permission requirements. 
-INFO[0000] Created build/Dockerfile                     
-INFO[0000] Created watches.yaml                         
-INFO[0000] Created deploy/service_account.yaml          
-INFO[0000] Created deploy/role.yaml                     
-INFO[0000] Created deploy/role_binding.yaml             
-INFO[0000] Created deploy/operator.yaml                 
-INFO[0000] Created deploy/crds/foo.example.com_foos_crd.yaml 
-INFO[0000] Created deploy/crds/foo.example.com_v1alpha1_foo_cr.yaml 
+INFO[0000] Creating new Helm operator 'foo-operator'.
+INFO[0000] Created helm-charts/foo
+INFO[0000] Generating RBAC rules
+WARN[0000] The RBAC rules generated in deploy/role.yaml are based on the chart's default manifest. Some rules may be missing for resources that are only enabled with custom values, and some existing rules may be overly broad. Double check the rules generated in deploy/role.yaml to ensure they meet the operator's permission requirements.
+INFO[0000] Created build/Dockerfile
+INFO[0000] Created watches.yaml
+INFO[0000] Created deploy/service_account.yaml
+INFO[0000] Created deploy/role.yaml
+INFO[0000] Created deploy/role_binding.yaml
+INFO[0000] Created deploy/operator.yaml
+INFO[0000] Created deploy/crds/foo.example.com_foos_crd.yaml
+INFO[0000] Created deploy/crds/foo.example.com_v1alpha1_foo_cr.yaml
 INFO[0000] Project creation complete.
 
 $ cd foo-operator
@@ -49,7 +49,7 @@ For this example we will use the default Nginx helm chart scaffolded by
 release manifests are:
 
 ```sh
-$ helm install --dry-run test-release helm-charts/foo 
+$ helm install --dry-run test-release helm-charts/foo
 NAME: test-release
 LAST DEPLOYED: Wed Nov 27 15:41:10 2019
 NAMESPACE: default
@@ -361,7 +361,7 @@ metadata:
   name: example-foo
 spec:
   # Default values copied from <project_dir>/helm-charts/foo/values.yaml
-  
+
   affinity: {}
   fullnameOverride: ""
   image:
@@ -506,7 +506,7 @@ NAME               DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
 foo-operator       1         1         1            1           1m
 ```
 
-Apply the CR to Kubernetes and confirm that the release resources have been 
+Apply the CR to Kubernetes and confirm that the release resources have been
 created:
 
 ```sh
