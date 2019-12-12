@@ -43,6 +43,7 @@ const (
 	JSONOutputFormat = "json"
 	TextOutputFormat = "text"
 	SelectorOpt      = "selector"
+	BundleOpt        = "bundle"
 	ListOpt          = "list"
 )
 
@@ -83,6 +84,7 @@ func getPlugins(version string, selector labels.Selector) ([]Plugin, error) {
 			pluginConfig.Version = version
 			pluginConfig.Selector = selector
 			pluginConfig.ListOpt = scViper.GetBool(ListOpt)
+			pluginConfig.Bundle = scViper.GetString(BundleOpt)
 			setConfigDefaults(pluginConfig, kubeconfig)
 			newPlugin = basicOrOLMPlugin{pluginType: scplugins.BasicOperator, config: *pluginConfig}
 		} else if plugin.Olm != nil {
@@ -90,6 +92,7 @@ func getPlugins(version string, selector labels.Selector) ([]Plugin, error) {
 			pluginConfig.Version = version
 			pluginConfig.Selector = selector
 			pluginConfig.ListOpt = scViper.GetBool(ListOpt)
+			pluginConfig.Bundle = scViper.GetString(BundleOpt)
 			setConfigDefaults(pluginConfig, kubeconfig)
 			newPlugin = basicOrOLMPlugin{pluginType: scplugins.OLMIntegration, config: *pluginConfig}
 		} else {
@@ -227,6 +230,7 @@ func makeSCViper() {
 	scViper.Set(scplugins.KubeconfigOpt, viper.GetString("scorecard."+scplugins.KubeconfigOpt))
 	scViper.Set(schelpers.VersionOpt, viper.GetString("scorecard."+schelpers.VersionOpt))
 	scViper.Set(SelectorOpt, viper.GetString("scorecard."+SelectorOpt))
+	scViper.Set(BundleOpt, viper.GetString("scorecard."+BundleOpt))
 	scViper.Set(ListOpt, viper.GetString("scorecard."+ListOpt))
 
 }

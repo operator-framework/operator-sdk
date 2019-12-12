@@ -23,8 +23,10 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/operator-framework/api/pkg/validation"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -132,6 +134,21 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 		}
 		if err = yaml.Unmarshal(yamlSpec, csv); err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("error getting ClusterServiceVersion: %v", err)
+		}
+
+		csvValidator := validation.ClusterServiceVersionValidator
+		results := csvValidator.Validate(csv)
+		for _, r := range results {
+			if len(r.Errors) > 0 {
+				var errorMsgs strings.Builder
+				for _, e := range r.Errors {
+					errorMsgs.WriteString(e.Error())
+				}
+				return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("error validating ClusterServiceVersion: %s", errorMsgs.String())
+			}
+			for _, w := range r.Warnings {
+				log.Warnf("CSV validation warning: type [%s] %s", w.Type, w.Detail)
+			}
 		}
 	}
 
@@ -313,6 +330,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 				CSV:      csv,
 				CRDsDir:  config.CRDsDir,
 				ProxyPod: proxyPodGlobal,
+				Bundle:   config.Bundle,
 			}
 			olmTests := NewOLMTestSuite(conf)
 			if schelpers.IsV1alpha2(config.Version) {
