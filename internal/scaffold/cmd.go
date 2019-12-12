@@ -64,6 +64,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+	"k8s.io/client-go/discovery"
 )
 
 // Change below variables to serve metrics on different host or port.
@@ -74,11 +75,12 @@ var (
 )
 var log = logf.Log.WithName("cmd")
 
-func printVersion() {
+func printVersion(cfg *rest.Config) {
 	log.Info(fmt.Sprintf("Operator Version: %s", version.Version))
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
 	log.Info(fmt.Sprintf("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH))
 	log.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
+	log.Info(fmt.Sprintf("Cluster version: %v", getClusterVersion(cfg)))
 }
 
 func main() {
@@ -102,8 +104,6 @@ func main() {
 	// uniform and structured logs.
 	logf.SetLogger(zap.Logger())
 
-	printVersion()
-
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
 		log.Error(err, "Failed to get watch namespace")
@@ -116,6 +116,8 @@ func main() {
 		log.Error(err, "")
 		os.Exit(1)
 	}
+
+	printVersion(cfg)
 
 	ctx := context.TODO()
 	// Become the leader before proceeding
@@ -208,5 +210,22 @@ func serveCRMetrics(cfg *rest.Config) error {
 	    return err
 	}
 	return nil
+}
+
+// getClusterVersion will create and use an DiscoveryClient
+// to return the cluster version.
+// More info: https://godoc.org/k8s.io/client-go/discovery#DiscoveryClient
+func getClusterVersion(cfg *rest.Config) string {
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(cfg)
+	if err != nil {
+		log.Error(err, "Unable to create discovery client")
+		os.Exit(1)
+	}
+	sv, err := discoveryClient.ServerVersion()
+	if err != nil {
+		log.Error(err, "Unable to get server version")
+		os.Exit(1)
+	}
+	return sv.String()
 }
 `
