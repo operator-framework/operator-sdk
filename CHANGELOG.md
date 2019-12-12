@@ -60,6 +60,7 @@
 - Fix scorecard behavior such that a CSV file is read correctly when `olm-deployed` is set to `true`. ([#2274](https://github.com/operator-framework/operator-sdk/pull/2274))
 - A CSV config's `operator-name` field will be used if `--operator-name` is not set. ([#2297](https://github.com/operator-framework/operator-sdk/pull/2297))
 - Populates a CSV's `spec.install` strategy if either name or strategy body are missing with a deployment-type strategy. ([#2298](https://github.com/operator-framework/operator-sdk/pull/2298))
+- When the current leader pod has been hard evicted but not deleted, another pod is able to delete the evicted pod, triggering garbage collection and allowing leader election to continue. ([#2210](https://github.com/operator-framework/operator-sdk/pull/2210))
 
 ## v0.12.0
 
