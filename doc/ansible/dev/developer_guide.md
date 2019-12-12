@@ -451,8 +451,8 @@ If your operator takes advantage of the `k8s_status` Ansible module and you are
 interested in testing the operator with `operator-sdk up local`, then
 you will need to install the collection locally.
 
-``` bash
- ansible-galaxy collection install operator_sdk.util
+```sh
+$ ansible-galaxy collection install operator_sdk.util
  ```
 ## Extra vars sent to Ansible
 The extra vars that are sent to Ansible are managed by the operator. The `spec`
