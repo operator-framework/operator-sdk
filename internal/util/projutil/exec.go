@@ -124,7 +124,7 @@ func (opts GoCmdOptions) getGeneralArgsWithCmd(cmd string) ([]string, error) {
 		}
 		// Does the first "go" subcommand accept -mod=vendor?
 		_, ok := validVendorCmds[bargs[0]]
-		if err == nil && info.IsDir() && ok {
+		if err == nil && info.IsDir() && ok && needsModVendor() {
 			bargs = append(bargs, "-mod=vendor")
 		}
 	}
@@ -133,6 +133,10 @@ func (opts GoCmdOptions) getGeneralArgsWithCmd(cmd string) ([]string, error) {
 		bargs = append(bargs, opts.PackagePath)
 	}
 	return bargs, nil
+}
+
+func needsModVendor() bool {
+	return !strings.Contains(os.Getenv("GOFLAGS"), "-mod=vendor")
 }
 
 func (opts GoCmdOptions) setCmdFields(c *exec.Cmd) {
