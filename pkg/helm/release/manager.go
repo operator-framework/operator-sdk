@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"strings"
 
+	"helm.sh/helm/v3/pkg/storage/driver"
+
 	"helm.sh/helm/v3/pkg/action"
 	cpb "helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/kube"
@@ -299,13 +301,13 @@ func (m manager) UninstallRelease(ctx context.Context) (*rpb.Release, error) {
 	// Get history of this release
 	h, err := m.storageBackend.History(m.releaseName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get release history: %s", err)
+		return nil, fmt.Errorf("failed to get release history: %w", err)
 	}
 
 	// If there is no history, the release has already been uninstalled,
-	// so return ErrNotFound.
+	// so return ErrReleaseNotFound.
 	if len(h) == 0 {
-		return nil, ErrNotFound
+		return nil, driver.ErrReleaseNotFound
 	}
 
 	uninstall := action.NewUninstall(m.actionConfig)

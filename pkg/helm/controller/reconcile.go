@@ -16,10 +16,13 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"math/rand"
 	"time"
 
 	rpb "helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -68,6 +71,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		"name", o.GetName(),
 		"apiVersion", o.GetAPIVersion(),
 		"kind", o.GetKind(),
+		"id", rand.Int(),
 	)
 	log.V(1).Info("Reconciling")
 
@@ -126,7 +130,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		}
 
 		uninstalledRelease, err := manager.UninstallRelease(context.TODO())
-		if err != nil && err != release.ErrNotFound {
+		if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
 			log.Error(err, "Failed to uninstall release")
 			status.SetCondition(types.HelmAppCondition{
 				Type:    types.ConditionReleaseFailed,
@@ -139,7 +143,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		}
 		status.RemoveCondition(types.ConditionReleaseFailed)
 
-		if err == release.ErrNotFound {
+		if errors.Is(err, driver.ErrReleaseNotFound) {
 			log.Info("Release not found, removing finalizer")
 		} else {
 			log.Info("Uninstalled release")
@@ -154,6 +158,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 			status.DeployedRelease = nil
 		}
 		if err := r.updateResourceStatus(o, status); err != nil {
+			log.Info("Failed to update CR status")
 			return reconcile.Result{}, err
 		}
 
@@ -165,9 +170,12 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		}
 		o.SetFinalizers(finalizers)
 		err = r.updateResource(o)
+		if err != nil {
+			log.Info("Failed to remove CR uninstall finalizer")
+		}
 
 		// Need to requeue because finalizer update does not change metadata.generation
-		return reconcile.Result{Requeue: true}, err
+		return reconcile.Result{}, err
 	}
 
 	if !manager.IsInstalled() {
