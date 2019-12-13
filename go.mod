@@ -41,7 +41,7 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	go.uber.org/zap v1.10.0
-	golang.org/x/tools v0.0.0-20191213032237-7093a17b0467
+	golang.org/x/tools v0.0.0-20191018212557-ed542cd5b28a
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/yaml.v2 v2.2.4
 	helm.sh/helm/v3 v3.0.1
