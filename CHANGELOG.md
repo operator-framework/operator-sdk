@@ -5,6 +5,7 @@
 - Added new `--bundle` flag to the `operator-sdk scorecard` command to support bundle validation testing using the validation API (https://github.com/operator-framework/api). ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
 - Added new `log` field to the `operator-sdk scorecard` v1alpha2 output to support tests that produce logging. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
 - Added new `bundle validation` test to the `operator-sdk scorecard` OLM tests. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
+- Added scorecard test short names to each scorecard test to allow users to run a specific scorecard test using the selector flag. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
 - Improve Ansible logs in the Operator container for Ansible-based Operators. ([#2321](https://github.com/operator-framework/operator-sdk/pull/2321))
 
 ### Changed
