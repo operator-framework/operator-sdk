@@ -21,6 +21,10 @@ import (
 )
 
 func TestBasicShortNames(t *testing.T) {
+	specBlockExists := getStructShortName(CheckSpecTest{})
+	statusBlockExists := getStructShortName(CheckStatusTest{})
+	writeIntoCR := getStructShortName(WritingIntoCRsHasEffectTest{})
+
 	cases := []struct {
 		selectorValue string
 		testsSelected int
@@ -59,6 +63,12 @@ func TestBasicShortNames(t *testing.T) {
 }
 
 func TestOLMShortNames(t *testing.T) {
+	bundleValidation := getStructShortName(BundleValidationTest{})
+	crdValidationSection := getStructShortName(CRDsHaveValidationTest{})
+	crdHasResources := getStructShortName(CRDsHaveResourcesTest{})
+	specDescriptors := getStructShortName(SpecDescriptorsTest{})
+	statusDescriptors := getStructShortName(StatusDescriptorsTest{})
+
 	cases := []struct {
 		selectorValue string
 		testsSelected int

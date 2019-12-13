@@ -40,13 +40,6 @@ import (
 const (
 	statusDescriptor string = "status"
 	specDescriptor   string = "spec"
-
-	// OLM test short names
-	bundleValidation     = "bundlevalidation"
-	crdHasResources      = "crdhasresources"
-	crdValidationSection = "crdvalidationsection"
-	specDescriptors      = "specdescriptors"
-	statusDescriptors    = "statusdescriptors"
 )
 
 // OLMTestConfig contains all variables required by the OLMTest schelpers.TestSuite
@@ -75,7 +68,7 @@ func NewBundleValidationTest(conf OLMTestConfig) *BundleValidationTest {
 			Name:        "Bundle Validation Test",
 			Description: "Validates bundle contents",
 			Cumulative:  false,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: bundleValidation},
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(BundleValidationTest{})},
 		},
 	}
 }
@@ -94,7 +87,7 @@ func NewCRDsHaveValidationTest(conf OLMTestConfig) *CRDsHaveValidationTest {
 			Name:        "Provided APIs have validation",
 			Description: "All CRDs have an OpenAPI validation subsection",
 			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: crdValidationSection},
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(CRDsHaveValidationTest{})},
 		},
 	}
 }
@@ -113,7 +106,7 @@ func NewCRDsHaveResourcesTest(conf OLMTestConfig) *CRDsHaveResourcesTest {
 			Name:        "Owned CRDs have resources listed",
 			Description: "All Owned CRDs contain a resources subsection",
 			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: crdHasResources},
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(CRDsHaveResourcesTest{})},
 		},
 	}
 }
@@ -132,7 +125,7 @@ func NewSpecDescriptorsTest(conf OLMTestConfig) *SpecDescriptorsTest {
 			Name:        "Spec fields with descriptors",
 			Description: "All spec fields have matching descriptors in the CSV",
 			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: specDescriptors},
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(SpecDescriptorsTest{})},
 		},
 	}
 }
@@ -151,7 +144,7 @@ func NewStatusDescriptorsTest(conf OLMTestConfig) *StatusDescriptorsTest {
 			Name:        "Status fields with descriptors",
 			Description: "All status fields have matching descriptors in the CSV",
 			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: statusDescriptors},
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(StatusDescriptorsTest{})},
 		},
 	}
 }

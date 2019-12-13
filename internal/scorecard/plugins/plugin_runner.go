@@ -23,6 +23,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 
@@ -413,4 +414,9 @@ func ListInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig) (
 	}
 	output := schelpers.TestSuitesToScorecardOutput(suites, "")
 	return output, nil
+}
+
+func getStructShortName(obj interface{}) string {
+	t := reflect.TypeOf(obj)
+	return strings.ToLower(t.Name())
 }
