@@ -15,13 +15,14 @@
 package scplugins
 
 import (
-	"k8s.io/apimachinery/pkg/labels"
 	"testing"
+
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 func TestBasicShortNames(t *testing.T) {
 	cases := []struct {
-		name          string
+		selectorValue string
 		testsSelected int
 		wantError     bool
 	}{
@@ -35,9 +36,9 @@ func TestBasicShortNames(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
+		t.Run(c.selectorValue, func(t *testing.T) {
 			var selector labels.Selector
-			selector, err := labels.Parse(c.name)
+			selector, err := labels.Parse(c.selectorValue)
 			if err != nil && c.wantError {
 				t.Logf("Wanted error and got error : %v", err)
 				return
@@ -59,7 +60,7 @@ func TestBasicShortNames(t *testing.T) {
 
 func TestOLMShortNames(t *testing.T) {
 	cases := []struct {
-		name          string
+		selectorValue string
 		testsSelected int
 		wantError     bool
 	}{
@@ -73,13 +74,14 @@ func TestOLMShortNames(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
+		t.Run(c.selectorValue, func(t *testing.T) {
 			var selector labels.Selector
-			selector, err := labels.Parse(c.name)
+			selector, err := labels.Parse(c.selectorValue)
 			if err != nil && c.wantError {
 				t.Logf("Wanted error and got error : %v", err)
 				return
-			} else if err != nil && !c.wantError {
+			}
+			if err != nil && !c.wantError {
 				t.Errorf("Wanted result but got error: %v", err)
 				return
 			}
