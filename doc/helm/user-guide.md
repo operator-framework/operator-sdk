@@ -317,6 +317,6 @@ kubectl delete -f deploy/crds/example.com_nginxes_crd.yaml
 [docker-tool]:https://docs.docker.com/install/
 [kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [minikube-tool]:https://github.com/kubernetes/minikube#installation
-[helm-charts]:https://v2.helm.sh/docs/developing_charts/
-[helm-values]:https://helm.sh/docs/using_helm/#customizing-the-chart-before-installing
+[helm-charts]:https://helm.sh/docs/topics/charts/
+[helm-values]:https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing
 [quay-link]:https://quay.io

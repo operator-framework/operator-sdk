@@ -15,36 +15,40 @@
 package helm_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
 
 	"github.com/stretchr/testify/assert"
+	"helm.sh/helm/v3/pkg/chart"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/version"
-	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
 func TestGenerateRoleScaffold(t *testing.T) {
-	dcs := map[string]*mockRoleDiscoveryClient{
-		"upstream": &mockRoleDiscoveryClient{
-			serverVersion:   func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "11"}, nil },
-			serverResources: func() ([]*metav1.APIResourceList, error) { return simpleResourcesList(), nil },
-		},
-		"openshift": &mockRoleDiscoveryClient{
-			serverVersion:   func() (*version.Info, error) { return &version.Info{Major: "1", Minor: "11+"}, nil },
-			serverResources: func() ([]*metav1.APIResourceList, error) { return simpleResourcesList(), nil },
-		},
+	validDiscoveryClient := &mockRoleDiscoveryClient{
+		serverResources: func() ([]*metav1.APIResourceList, error) { return simpleResourcesList(), nil },
+	}
+
+	brokenDiscoveryClient := &mockRoleDiscoveryClient{
+		serverResources: func() ([]*metav1.APIResourceList, error) { return nil, errors.New("no server resources") },
 	}
 
 	testCases := []roleScaffoldTestCase{
 		{
-			name:                   "fallback to default",
+			name:                   "fallback to default with unparsable template",
 			chart:                  failChart(),
 			expectSkipDefaultRules: false,
 			expectIsClusterScoped:  false,
 			expectLenCustomRules:   2,
+		},
+		{
+			name:                   "skip rule for unknown API",
+			chart:                  unknownAPIChart(),
+			expectSkipDefaultRules: true,
+			expectIsClusterScoped:  false,
+			expectLenCustomRules:   3,
 		},
 		{
 			name:                   "namespaced manifest",
@@ -63,25 +67,24 @@ func TestGenerateRoleScaffold(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		for dcName, dc := range dcs {
-			testName := fmt.Sprintf("%s %s", dcName, tc.name)
-			t.Run(testName, func(t *testing.T) {
-				roleScaffold := helm.GenerateRoleScaffold(dc, tc.chart)
-				assert.Equal(t, tc.expectSkipDefaultRules, roleScaffold.SkipDefaultRules)
-				assert.Equal(t, tc.expectLenCustomRules, len(roleScaffold.CustomRules))
-				assert.Equal(t, tc.expectIsClusterScoped, roleScaffold.IsClusterScoped)
-			})
-		}
+		t.Run(fmt.Sprintf("%s with valid discovery client", tc.name), func(t *testing.T) {
+			roleScaffold := helm.GenerateRoleScaffold(validDiscoveryClient, tc.chart)
+			assert.Equal(t, tc.expectSkipDefaultRules, roleScaffold.SkipDefaultRules)
+			assert.Equal(t, tc.expectLenCustomRules, len(roleScaffold.CustomRules))
+			assert.Equal(t, tc.expectIsClusterScoped, roleScaffold.IsClusterScoped)
+		})
+
+		t.Run(fmt.Sprintf("%s with broken discovery client", tc.name), func(t *testing.T) {
+			roleScaffold := helm.GenerateRoleScaffold(brokenDiscoveryClient, tc.chart)
+			assert.Equal(t, false, roleScaffold.SkipDefaultRules)
+			assert.Equal(t, 2, len(roleScaffold.CustomRules))
+			assert.Equal(t, false, roleScaffold.IsClusterScoped)
+		})
 	}
 }
 
 type mockRoleDiscoveryClient struct {
-	serverVersion   func() (*version.Info, error)
 	serverResources func() ([]*metav1.APIResourceList, error)
-}
-
-func (dc *mockRoleDiscoveryClient) ServerVersion() (*version.Info, error) {
-	return dc.serverVersion()
 }
 
 func (dc *mockRoleDiscoveryClient) ServerResources() ([]*metav1.APIResourceList, error) {
@@ -119,10 +122,22 @@ type roleScaffoldTestCase struct {
 func failChart() *chart.Chart {
 	return &chart.Chart{
 		Metadata: &chart.Metadata{
+			Name: "broken",
+		},
+		Templates: []*chart.File{
+			{Name: "broken1.yaml", Data: []byte(`invalid {{ template`)},
+		},
+	}
+}
+
+func unknownAPIChart() *chart.Chart {
+	return &chart.Chart{
+		Metadata: &chart.Metadata{
 			Name: "unknown",
 		},
-		Templates: []*chart.Template{
-			{Name: "broken1.yaml", Data: []byte(`invalid {{ template`)},
+		Templates: []*chart.File{
+			{Name: "unknown1.yaml", Data: testUnknownData("unknown1")},
+			{Name: "pod1.yaml", Data: testPodData("pod1")},
 		},
 	}
 }
@@ -132,8 +147,7 @@ func namespacedChart() *chart.Chart {
 		Metadata: &chart.Metadata{
 			Name: "namespaced",
 		},
-		Templates: []*chart.Template{
-			{Name: "unknown1.yaml", Data: testUnknownData("unknown1")},
+		Templates: []*chart.File{
 			{Name: "pod1.yaml", Data: testPodData("pod1")},
 			{Name: "pod2.yaml", Data: testPodData("pod2")},
 		},
@@ -145,8 +159,7 @@ func clusterScopedChart() *chart.Chart {
 		Metadata: &chart.Metadata{
 			Name: "clusterscoped",
 		},
-		Templates: []*chart.Template{
-			{Name: "unknown1.yaml", Data: testUnknownData("unknown1")},
+		Templates: []*chart.File{
 			{Name: "pod1.yaml", Data: testPodData("pod1")},
 			{Name: "pod2.yaml", Data: testPodData("pod2")},
 			{Name: "ns1.yaml", Data: testNamespaceData("ns1")},

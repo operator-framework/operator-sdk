@@ -18,25 +18,25 @@ import (
 	"fmt"
 	"strings"
 
+	helm2to3 "github.com/helm/helm-2to3/pkg/v3"
 	"github.com/martinlindhe/base36"
 	"github.com/pborman/uuid"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/kube"
+	helmreleasev3 "helm.sh/helm/v3/pkg/release"
+	storagev3 "helm.sh/helm/v3/pkg/storage"
+	driverv3 "helm.sh/helm/v3/pkg/storage/driver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apitypes "k8s.io/apimachinery/pkg/types"
-	clientset "k8s.io/client-go/kubernetes"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/helm/pkg/chartutil"
-	helmengine "k8s.io/helm/pkg/engine"
-	"k8s.io/helm/pkg/kube"
-	rpb "k8s.io/helm/pkg/proto/hapi/release"
-	"k8s.io/helm/pkg/storage"
-	"k8s.io/helm/pkg/storage/driver"
-	"k8s.io/helm/pkg/tiller"
-	"k8s.io/helm/pkg/tiller/environment"
+	helmreleasev2 "k8s.io/helm/pkg/proto/hapi/release"
+	storagev2 "k8s.io/helm/pkg/storage"
+	driverv2 "k8s.io/helm/pkg/storage/driver"
 	crmanager "sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/operator-framework/operator-sdk/pkg/helm/client"
-	"github.com/operator-framework/operator-sdk/pkg/helm/engine"
 	"github.com/operator-framework/operator-sdk/pkg/helm/internal/types"
 )
 
@@ -59,72 +59,108 @@ func NewManagerFactory(mgr crmanager.Manager, chartDir string) ManagerFactory {
 }
 
 func (f managerFactory) NewManager(cr *unstructured.Unstructured) (Manager, error) {
+	// Get both v2 and v3 storage backends
 	clientv1, err := v1.NewForConfig(f.mgr.GetConfig())
 	if err != nil {
-		return nil, fmt.Errorf("failed to get core/v1 client: %s", err)
+		return nil, fmt.Errorf("failed to get core/v1 client: %w", err)
 	}
-	storageBackend := storage.Init(driver.NewSecrets(clientv1.Secrets(cr.GetNamespace())))
-	tillerKubeClient, err := client.NewFromManager(f.mgr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get client from manager: %s", err)
-	}
-	crChart, err := chartutil.LoadDir(f.chartDir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load chart dir: %s", err)
-	}
-	releaseServer, err := getReleaseServer(cr, storageBackend, tillerKubeClient)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get helm release server: %s", err)
-	}
-	releaseName, err := getReleaseName(storageBackend, crChart.GetMetadata().GetName(), cr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get helm release name: %s", err)
-	}
-	return &manager{
-		storageBackend:   storageBackend,
-		tillerKubeClient: tillerKubeClient,
-		chartDir:         f.chartDir,
+	storageBackendV2 := storagev2.Init(driverv2.NewSecrets(clientv1.Secrets(cr.GetNamespace())))
+	storageBackendV3 := storagev3.Init(driverv3.NewSecrets(clientv1.Secrets(cr.GetNamespace())))
 
-		tiller:      releaseServer,
+	// Automatically convert V2 releases to V3 releases. This is required to
+	// maintain backward compatibility with old releases now that the
+	// operator reconciliation loop expects Helm V3 releases.
+	if err := convertV2ToV3(storageBackendV2, storageBackendV3, cr); err != nil {
+		return nil, fmt.Errorf("failed to convert releases from v2 to v3: %w", err)
+	}
+
+	// Get the necessary clients and client getters. Use a client that injects the CR
+	// as an owner reference into all resources templated by the chart.
+	rcg, err := client.NewRESTClientGetter(f.mgr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get REST client getter from manager: %w", err)
+	}
+	kubeClient := kube.New(nil)
+	ownerRef := metav1.NewControllerRef(cr, cr.GroupVersionKind())
+	ownerRefClient := client.NewOwnerRefInjectingClient(*kubeClient, *ownerRef)
+
+	crChart, err := loader.LoadDir(f.chartDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load chart dir: %w", err)
+	}
+
+	releaseName, err := getReleaseName(storageBackendV3, crChart.Name(), cr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get helm release name: %w", err)
+	}
+
+	values, ok := cr.Object["spec"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("failed to get spec: expected map[string]interface{}")
+	}
+
+	actionConfig := &action.Configuration{
+		RESTClientGetter: rcg,
+		Releases:         storageBackendV3,
+		KubeClient:       ownerRefClient,
+		Log:              func(_ string, _ ...interface{}) {},
+	}
+
+	return &manager{
+		actionConfig:   actionConfig,
+		storageBackend: storageBackendV3,
+		kubeClient:     ownerRefClient,
+
 		releaseName: releaseName,
 		namespace:   cr.GetNamespace(),
 
-		spec:   cr.Object["spec"],
+		chart:  crChart,
+		values: values,
 		status: types.StatusFor(cr),
 	}, nil
 }
 
-// getReleaseServer creates a ReleaseServer configured with a rendering engine that adds ownerrefs to rendered assets
-// based on the CR.
-func getReleaseServer(cr *unstructured.Unstructured, storageBackend *storage.Storage, tillerKubeClient *kube.Client) (*tiller.ReleaseServer, error) {
-	controllerRef := metav1.NewControllerRef(cr, cr.GroupVersionKind())
-	ownerRefs := []metav1.OwnerReference{
-		*controllerRef,
-	}
-	baseEngine := helmengine.New()
-	restMapper, err := tillerKubeClient.Factory.ToRESTMapper()
+func convertV2ToV3(storageBackendV2 *storagev2.Storage, storageBackendV3 *storagev3.Storage, cr *unstructured.Unstructured) error {
+	// If a v2 release with the legacy name exists, convert it to v3.
+	legacyName := getLegacyName(cr)
+	legacyHistoryV2, legacyExistsV2, err := releaseHistoryV2(storageBackendV2, legacyName)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	e := engine.NewOwnerRefEngine(baseEngine, restMapper, ownerRefs)
-	var ey environment.EngineYard = map[string]environment.Engine{
-		environment.GoTplEngine: e,
-	}
-	env := &environment.Environment{
-		EngineYard: ey,
-		Releases:   storageBackend,
-		KubeClient: tillerKubeClient,
-	}
-	kubeconfig, err := tillerKubeClient.ToRESTConfig()
-	if err != nil {
-		return nil, err
-	}
-	cs, err := clientset.NewForConfig(kubeconfig)
-	if err != nil {
-		return nil, err
+	if legacyExistsV2 {
+		return convertHistoryToV3(legacyHistoryV2, storageBackendV2, storageBackendV3)
 	}
 
-	return tiller.NewReleaseServer(env, cs, false), nil
+	// If a v2 release with the CR name exists, convert it to v3.
+	releaseName := cr.GetName()
+	historyV2, existsV2, err := releaseHistoryV2(storageBackendV2, releaseName)
+	if err != nil {
+		return err
+	}
+	if existsV2 {
+		return convertHistoryToV3(historyV2, storageBackendV2, storageBackendV3)
+	}
+	return nil
+}
+
+func convertHistoryToV3(history []*helmreleasev2.Release, storageBackendV2 *storagev2.Storage, storageBackendV3 *storagev3.Storage) error {
+	for _, relV2 := range history {
+		relV3, err := helm2to3.CreateRelease(relV2)
+		if err != nil {
+			return fmt.Errorf("generate v3 release: %w", err)
+		}
+		if err := storageBackendV3.Create(relV3); err != nil {
+			return fmt.Errorf("create v3 release: %w", err)
+		}
+		if _, err := storageBackendV2.Delete(relV2.GetName(), relV2.GetVersion()); err != nil {
+			return fmt.Errorf("delete v2 release: %w", err)
+		}
+	}
+	return nil
+}
+
+func getLegacyName(cr *unstructured.Unstructured) string {
+	return fmt.Sprintf("%s-%s", cr.GetName(), shortenUID(cr.GetUID()))
 }
 
 // getReleaseName returns a release name for the CR. If a release for the
@@ -154,14 +190,15 @@ func getReleaseServer(cr *unstructured.Unstructured, storageBackend *storage.Sto
 // identifying names or characters added by templates.
 //
 // TODO(jlanford): As noted above, using the CR name as the release name raises
-// the possibility of collision. We should move this logic to a validating
-// admission webhook so that the CR owner receives immediate feedback of the
-// collision. As is, the only indication of collision will be in the CR status
-// and operator logs.
-func getReleaseName(storageBackend *storage.Storage, crChartName string, cr *unstructured.Unstructured) (string, error) {
-	// If a release with the legacy name exists, return the legacy name.
-	legacyName := fmt.Sprintf("%s-%s", cr.GetName(), shortenUID(cr.GetUID()))
-	_, legacyExists, err := releaseHistory(storageBackend, legacyName)
+//   the possibility of collision. We should move this logic to a validating
+//   admission webhook so that the CR owner receives immediate feedback of the
+//   collision. As is, the only indication of collision will be in the CR status
+//   and operator logs.
+func getReleaseName(storageBackend *storagev3.Storage, crChartName string, cr *unstructured.Unstructured) (string, error) {
+	// If a release with the legacy name exists as a v3 release,
+	// return the legacy name.
+	legacyName := getLegacyName(cr)
+	_, legacyExists, err := releaseHistoryV3(storageBackend, legacyName)
 	if err != nil {
 		return "", err
 	}
@@ -171,7 +208,7 @@ func getReleaseName(storageBackend *storage.Storage, crChartName string, cr *uns
 
 	// If a release with the CR name does not exist, return the CR name.
 	releaseName := cr.GetName()
-	history, exists, err := releaseHistory(storageBackend, releaseName)
+	history, exists, err := releaseHistoryV3(storageBackend, releaseName)
 	if err != nil {
 		return "", err
 	}
@@ -182,7 +219,10 @@ func getReleaseName(storageBackend *storage.Storage, crChartName string, cr *uns
 	// If a release name with the CR name exists, but the release's chart is
 	// different than the chart managed by this operator, return an error
 	// because something else created the existing release.
-	existingChartName := history[0].GetChart().GetMetadata().GetName()
+	if history[0].Chart == nil {
+		return "", fmt.Errorf("could not find chart metadata in release with name %q", releaseName)
+	}
+	existingChartName := history[0].Chart.Name()
 	if existingChartName != crChartName {
 		return "", fmt.Errorf("duplicate release name: found existing release with name %q for chart %q", releaseName, existingChartName)
 	}
@@ -190,7 +230,18 @@ func getReleaseName(storageBackend *storage.Storage, crChartName string, cr *uns
 	return releaseName, nil
 }
 
-func releaseHistory(storageBackend *storage.Storage, releaseName string) ([]*rpb.Release, bool, error) {
+func releaseHistoryV2(storageBackend *storagev2.Storage, releaseName string) ([]*helmreleasev2.Release, bool, error) {
+	releaseHistory, err := storageBackend.History(releaseName)
+	if err != nil {
+		if notFoundErr(err) {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+	return releaseHistory, len(releaseHistory) > 0, nil
+}
+
+func releaseHistoryV3(storageBackend *storagev3.Storage, releaseName string) ([]*helmreleasev3.Release, bool, error) {
 	releaseHistory, err := storageBackend.History(releaseName)
 	if err != nil {
 		if notFoundErr(err) {
