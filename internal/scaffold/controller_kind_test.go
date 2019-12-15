@@ -37,7 +37,7 @@ func TestControllerKind(t *testing.T) {
 	}
 }
 
-const controllerKindExp = `package appservice
+const controllerKindExp = `package v1alpha1
 
 import (
 	"context"
@@ -58,7 +58,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logf.Log.WithName("controller_appservice")
+var log = logf.Log.WithName("controller_appservice_v1alpha1")
 
 /**
 * USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
@@ -79,7 +79,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
-	c, err := controller.New("appservice-controller", mgr, controller.Options{Reconciler: r})
+	c, err := controller.New("appservice-v1alpha1-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
 		return err
 	}

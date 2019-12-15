@@ -30,8 +30,9 @@ type AddController struct {
 
 func (s *AddController) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		fileName := "add_" + s.Resource.LowerKind + ".go"
+		fileName := "add_" + s.Resource.Version + "_" + s.Resource.LowerKind + ".go"
 		s.Path = filepath.Join(ControllerDir, fileName)
+
 	}
 	s.TemplateBody = addControllerTemplate
 	return s.Input, nil
@@ -40,11 +41,11 @@ func (s *AddController) GetInput() (input.Input, error) {
 const addControllerTemplate = `package controller
 
 import (
-	"{{ .Repo }}/pkg/controller/{{ .Resource.LowerKind }}"
+	"{{ .Repo }}/pkg/controller/{{ .Resource.LowerKind }}/{{ .Resource.Version }}"
 )
 
 func init() {
 	// AddToManagerFuncs is a list of functions to create controllers and add them to a manager.
-	AddToManagerFuncs = append(AddToManagerFuncs, {{ .Resource.LowerKind }}.Add)
+    AddToManagerFuncs = append(AddToManagerFuncs, {{ .Resource.Version }}.Add)
 }
 `

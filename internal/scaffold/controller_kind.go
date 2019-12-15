@@ -47,7 +47,7 @@ type ControllerKind struct {
 func (s *ControllerKind) GetInput() (input.Input, error) {
 	if s.Path == "" {
 		fileName := s.Resource.LowerKind + "_controller.go"
-		s.Path = filepath.Join(ControllerDir, s.Resource.LowerKind, fileName)
+		s.Path = filepath.Join(ControllerDir, s.Resource.LowerKind, s.Resource.Version, fileName)
 	}
 	// Error if this file exists.
 	s.IfExistsAction = input.Error
@@ -137,7 +137,7 @@ var controllerKindImports = map[string]string{
 	"sigs.k8s.io/controller-runtime/pkg/source":                    "",
 }
 
-const controllerKindTemplate = `package {{ .Resource.LowerKind }}
+const controllerKindTemplate = `package {{ .Resource.Version }}
 
 import (
 	"context"
@@ -147,7 +147,7 @@ import (
 	{{end}}
 )
 
-var log = logf.Log.WithName("controller_{{ .Resource.LowerKind }}")
+var log = logf.Log.WithName("controller_{{ .Resource.LowerKind }}_{{ .Resource.Version }}")
 
 /**
 * USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
@@ -168,7 +168,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
-	c, err := controller.New("{{ .Resource.LowerKind }}-controller", mgr, controller.Options{Reconciler: r})
+	c, err := controller.New("{{ .Resource.LowerKind }}-{{ .Resource.Version }}-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
 		return err
 	}

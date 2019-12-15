@@ -40,11 +40,11 @@ func TestAddController(t *testing.T) {
 const addControllerExp = `package controller
 
 import (
-	"github.com/example-inc/app-operator/pkg/controller/appservice"
+	"github.com/example-inc/app-operator/pkg/controller/appservice/v1alpha1"
 )
 
 func init() {
 	// AddToManagerFuncs is a list of functions to create controllers and add them to a manager.
-	AddToManagerFuncs = append(AddToManagerFuncs, appservice.Add)
+	AddToManagerFuncs = append(AddToManagerFuncs, v1alpha1.Add)
 }
 `
