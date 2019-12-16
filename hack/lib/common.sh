@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function log() { printf '%s\n' "$*"; }
-function error() { log "ERROR: $*" >&2; }
+function error() { error_text "ERROR:" $* >&2; }
 function fatal() { error "$@"; exit 1; }
 
 # Turn colors in this script off by setting the NO_COLOR variable in your
