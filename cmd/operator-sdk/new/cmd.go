@@ -368,7 +368,8 @@ func doHelmScaffold() error {
 	}
 
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-		return fmt.Errorf("failed to update the RBAC manifest for resource (%v, %v): %w", resource.APIVersion, resource.Kind, err)
+		return fmt.Errorf("failed to update the RBAC manifest for resource (%v, %v): (%v)",
+			resource.APIVersion, resource.Kind, err)
 	}
 	return nil
 }

@@ -216,8 +216,9 @@ func (m manager) ReconcileRelease(ctx context.Context) (*rpb.Release, error) {
 	return m.deployedRelease, err
 }
 
-func reconcileRelease(ctx context.Context, kubeClient kube.Interface, expectedManifest string) error {
-	expectedInfos, err := kubeClient.Build(bytes.NewBufferString(expectedManifest), false)
+func reconcileRelease(ctx context.Context, tillerKubeClient *kube.Client,
+	namespace string, expectedManifest string) error {
+	expectedInfos, err := tillerKubeClient.BuildUnstructured(namespace, bytes.NewBufferString(expectedManifest))
 	if err != nil {
 		return err
 	}
