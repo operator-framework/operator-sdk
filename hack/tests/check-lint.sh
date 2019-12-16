@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-source ./hack/common.sh
+source ./hack/lib/common.sh
 
 DEV_LINTERS=(
     ##todo(camilamacedo86): The following checks requires fixes in the code.

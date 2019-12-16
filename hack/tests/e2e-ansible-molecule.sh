@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 source hack/lib/test_lib.sh
-source ./hack/common.sh
+source ./hack/lib/common.sh
 
 set -eu
 
