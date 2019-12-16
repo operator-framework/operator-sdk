@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
-
 function log() { printf '%s\n' "$*"; }
 function error() { log "ERROR: $*" >&2; }
 function fatal() { error "$@"; exit 1; }
@@ -25,14 +23,6 @@ function header_text {
 
 function error_text {
   echo "$error_color$*$reset_color"
-}
-
-function fetch_go_linter {
-  header_text "Checking if golangci-lint is installed"
-  if ! is_installed golangci-lint; then
-    header_text "Installing golangci-lint"
-    curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.21.0
-  fi
 }
 
 function is_installed {
