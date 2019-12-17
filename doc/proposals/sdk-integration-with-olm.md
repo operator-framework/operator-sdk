@@ -203,7 +203,7 @@ Listing these here allows the community to get the process for these resources
 started right away.
 
 [olm]:https://github.com/operator-framework/operator-lifecycle-manager/
-[olm-operatorgroup]:https://github.com/operator-framework/operator-lifecycle-manager/blob/1cb0681/doc/design/operatorgroups.md
+[olm-operatorgroup]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/operatorgroups.md
 [olm-subscription]:https://github.com/operator-framework/community-operators/blob/master/docs/testing-operators.md#7-create-a-subscription
 [olm-catalogsource]:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/philosophy.md#catalogsource
 [registry]:https://github.com/operator-framework/operator-registry/
