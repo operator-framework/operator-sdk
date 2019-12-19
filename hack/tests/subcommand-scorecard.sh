@@ -10,7 +10,7 @@ CONFIG_PATH_BUNDLE=".osdk-scorecard-bundle.yaml"
 
 set -ex
 
-source ./hack/common.sh
+source ./hack/lib/common.sh
 
 # build scorecard-proxy image
 ./hack/image/build-scorecard-proxy-image.sh "$DEST_IMAGE"
