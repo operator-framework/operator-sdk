@@ -48,6 +48,11 @@ type crdGenerator struct {
 	resource scaffold.Resource
 }
 
+const (
+	APIsDirKey = "apis"
+	CRDsDirKey = "crds"
+)
+
 // NewCRDGo returns a CRD generator configured to generate CustomResourceDefintion
 // manifests from Go API files.
 func NewCRDGo(cfg gen.Config) gen.Generator {
@@ -55,11 +60,17 @@ func NewCRDGo(cfg gen.Config) gen.Generator {
 		Config:       cfg,
 		isOperatorGo: true,
 	}
-	if g.InputDir == "" {
-		g.InputDir = scaffold.ApisDir
+	if g.Inputs == nil {
+		g.Inputs = map[string]string{}
+	}
+	if crdsDir, ok := g.Inputs[CRDsDirKey]; !ok || crdsDir == "" {
+		g.Inputs[CRDsDirKey] = scaffold.CRDsDir
+	}
+	if APIsDir, ok := g.Inputs[APIsDirKey]; !ok || APIsDir == "" {
+		g.Inputs[APIsDirKey] = scaffold.ApisDir
 	}
 	if g.OutputDir == "" {
-		g.OutputDir = scaffold.CRDsDir
+		g.OutputDir = g.Inputs[CRDsDirKey]
 	}
 	return g
 }
@@ -72,18 +83,29 @@ func NewCRDNonGo(cfg gen.Config, resource scaffold.Resource) gen.Generator {
 		resource:     resource,
 		isOperatorGo: false,
 	}
-	if g.InputDir == "" {
-		g.InputDir = scaffold.CRDsDir
+	if g.Inputs == nil {
+		g.Inputs = map[string]string{}
+	}
+	if crdsDir, ok := g.Inputs[CRDsDirKey]; !ok || crdsDir == "" {
+		g.Inputs[CRDsDirKey] = scaffold.CRDsDir
 	}
 	if g.OutputDir == "" {
-		g.OutputDir = scaffold.CRDsDir
+		g.OutputDir = g.Inputs[CRDsDirKey]
 	}
 	return g
 }
 
 func (g crdGenerator) validate() error {
-	if g.InputDir == "" {
-		return errors.New("input dir cannot be empty")
+	if len(g.Inputs) == 0 {
+		return errors.New("inputs cannot be empty")
+	}
+	if _, ok := g.Inputs[CRDsDirKey]; !ok {
+		return errors.New("input CRDs dir cannot be empty")
+	}
+	if g.isOperatorGo {
+		if _, ok := g.Inputs[APIsDirKey]; !ok {
+			return errors.New("input APIs dir cannot be empty")
+		}
 	}
 	if g.OutputDir == "" {
 		return errors.New("output dir cannot be empty")
@@ -135,18 +157,18 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 	cacheOutputDir := string(filepath.Separator) + filepath.Clean(g.OutputDir)
 	rawOpts := []string{
 		"crd",
-		fmt.Sprintf("paths=%s/...", fileutil.DotPath(g.InputDir)),
+		fmt.Sprintf("paths=%s/...", fileutil.DotPath(g.Inputs[APIsDirKey])),
 		fmt.Sprintf("%s:dir=%s", defName, cacheOutputDir),
 	}
 	runner := gen.NewCachedRunner()
 	runner.AddOutputRule(defName, gen.OutputToCachedDirectory{})
 	if err := runner.Run(rawOpts); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error running CRD generator: %w", err)
 	}
 	cache := gen.GetCache()
 	infos, err := afero.ReadDir(cache, cacheOutputDir)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading CRD cache dir %s: %w", cacheOutputDir, err)
 	}
 	for _, info := range infos {
 		if info.IsDir() {
@@ -155,14 +177,14 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 		path := filepath.Join(cacheOutputDir, info.Name())
 		b, err := afero.ReadFile(cache, path)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error reading cached CRD file %s: %w", path, err)
 		}
 		scanner := yamlutil.NewYAMLScanner(b)
 		modifiedCRD := []byte{}
 		for scanner.Scan() {
 			crd := unstructured.Unstructured{}
 			if err = yaml.Unmarshal(scanner.Bytes(), &crd); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error unmarshalling CRD manifest %s: %w", path, err)
 			}
 			// controller-tools inserts an annotation and assumes that the binary
 			// that creates the CRD is controller-gen. In this case, we don't use
@@ -185,12 +207,12 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 			crd.SetAnnotations(annotations)
 			b, err := k8sutil.GetObjectBytes(&crd, yaml.Marshal)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error marshalling CRD %s: %w", crd.GetName(), err)
 			}
 			modifiedCRD = yamlutil.CombineManifests(modifiedCRD, b)
 		}
 		if err = scanner.Err(); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error scanning CRD manifest %s: %w", path, err)
 		}
 		if len(modifiedCRD) != 0 {
 			fileNameNoExt := strings.TrimSuffix(info.Name(), filepath.Ext(info.Name()))
@@ -198,7 +220,7 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 		}
 	}
 	if len(fileMap) == 0 {
-		return nil, errors.New("no generated files found")
+		return nil, errors.New("no generated CRD files found")
 	}
 	return fileMap, nil
 }
@@ -208,19 +230,19 @@ func (g crdGenerator) generateNonGo() (map[string][]byte, error) {
 	crd := apiextv1beta1.CustomResourceDefinition{}
 	fileMap := map[string][]byte{}
 	fileName := getFileNameForResource(g.resource)
-	path := filepath.Join(g.InputDir, fileName)
+	path := filepath.Join(g.Inputs[CRDsDirKey], fileName)
 	if _, err := os.Stat(path); err != nil {
 		if !os.IsNotExist(err) {
-			return nil, err
+			return nil, fmt.Errorf("error stating CRD file %s: %w", path, err)
 		}
 		crd = newCRDForResource(g.resource)
 	} else {
 		b, err := ioutil.ReadFile(path)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error reading CRD file %s: %w", path, err)
 		}
 		if err = yaml.Unmarshal(b, &crd); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error unmarshalling CRD manifest %s: %w", path, err)
 		}
 		// If version is new, append it to spec.versions.
 		hasVersion := false
@@ -244,11 +266,11 @@ func (g crdGenerator) generateNonGo() (map[string][]byte, error) {
 	sort.Sort(k8sutil.CRDVersions(crd.Spec.Versions))
 	setCRDStorageVersion(&crd)
 	if err := checkCRDVersions(crd); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error checking CRD %s versions: %w", crd.GetName(), err)
 	}
 	b, err := k8sutil.GetObjectBytes(&crd, yaml.Marshal)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error marshalling CRD %s: %w", crd.GetName(), err)
 	}
 	fileMap[fileName] = b
 	return fileMap, nil

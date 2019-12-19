@@ -369,7 +369,10 @@ func doHelmScaffold() error {
 
 func generateCRDNonGo(projectName string, resource scaffold.Resource) error {
 	crdsDir := filepath.Join(projectName, scaffold.CRDsDir)
-	gcfg := gen.Config{InputDir: crdsDir, OutputDir: crdsDir}
+	gcfg := gen.Config{
+		Inputs:    map[string]string{gencrd.CRDsDirKey: crdsDir},
+		OutputDir: crdsDir,
+	}
 	crd := gencrd.NewCRDNonGo(gcfg, resource)
 	if err := crd.Generate(); err != nil {
 		return fmt.Errorf("error generating CRD for %s: %w", resource, err)

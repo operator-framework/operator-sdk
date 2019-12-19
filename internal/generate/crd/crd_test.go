@@ -50,7 +50,11 @@ func TestCRDGo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cfg := gen.Config{InputDir: filepath.Join(tfDir, "pkg", "apis")}
+	cfg := gen.Config{
+		Inputs: map[string]string{
+			APIsDirKey: filepath.Join(tfDir, "pkg", "apis"),
+		},
+	}
 	g := NewCRDGo(cfg)
 	fileMap, err := g.(crdGenerator).generateGo()
 	if err != nil {
@@ -68,12 +72,12 @@ func TestCRDNonGo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tfDeployDir := filepath.Join(tfDir, "deploy", "crds")
+	tfCRDsDir := filepath.Join(tfDir, "deploy", "crds")
 
 	cases := []struct {
 		description      string
 		apiVersion, kind string
-		inputDir         string
+		crdsDir          string
 		expCRD           string
 		wantErr          bool
 	}{
@@ -83,26 +87,32 @@ func TestCRDNonGo(t *testing.T) {
 		},
 		{
 			"existing CRD with custom structural schema",
-			"cache.example.com/v1alpha1", "Memcached", tfDeployDir, crdCustomExp, false,
+			"cache.example.com/v1alpha1", "Memcached", tfCRDsDir, crdCustomExp, false,
 		},
 	}
 
 	for _, c := range cases {
-		r, err := scaffold.NewResource(c.apiVersion, c.kind)
-		if err != nil {
-			t.Fatal(err)
-		}
-		cfg := gen.Config{InputDir: c.inputDir}
-		g := NewCRDNonGo(cfg, *r)
-		fileMap, err := g.(crdGenerator).generateNonGo()
-		if err != nil {
-			t.Fatalf("%s: failed to execute CRD generator: %v", c.description, err)
-		}
-		if b, ok := fileMap[getFileNameForResource(*r)]; !ok {
-			t.Errorf("%s: failed to generate CRD for %s", c.description, r)
-		} else {
-			assert.Equal(t, c.expCRD, string(b))
-		}
+		t.Run(c.description, func(t *testing.T) {
+			r, err := scaffold.NewResource(c.apiVersion, c.kind)
+			if err != nil {
+				t.Fatal(err)
+			}
+			cfg := gen.Config{
+				Inputs: map[string]string{
+					CRDsDirKey: c.crdsDir,
+				},
+			}
+			g := NewCRDNonGo(cfg, *r)
+			fileMap, err := g.(crdGenerator).generateNonGo()
+			if err != nil {
+				t.Fatalf("Error executing CRD generator: %v", err)
+			}
+			if b, ok := fileMap[getFileNameForResource(*r)]; !ok {
+				t.Errorf("Failed to generate CRD for %s", r)
+			} else {
+				assert.Equal(t, c.expCRD, string(b))
+			}
+		})
 	}
 }
 
