@@ -77,6 +77,8 @@ type ScorecardTestResult struct {
 	Errors []string `json:"errors"`
 	// Labels used for v1alpha2, not included in v1alpha1 JSON output
 	Labels map[string]string `json:"-"`
+	// Log used for v1alpha2, not included in v1alpha1 JSON output
+	Log string `json:"-"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

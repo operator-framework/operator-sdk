@@ -62,6 +62,7 @@ func ConvertTestResultV1ToV2(v1SuiteName string, v1TestResult scapiv1alpha1.Scor
 	copy(output.Errors, v1TestResult.Errors)
 
 	output.Labels = v1TestResult.Labels
+	output.Log = v1TestResult.Log
 
 	return output
 }

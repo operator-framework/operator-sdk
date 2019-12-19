@@ -24,8 +24,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/operator-framework/operator-sdk/pkg/restmapper"
-
 	"github.com/blang/semver"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/pkg/errors"
@@ -39,8 +37,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	deploymentutil "k8s.io/kubernetes/pkg/controller/deployment/util"
+	deploymentutil "k8s.io/kubectl/pkg/util/deployment"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
 const OLMNamespace = "olm"
@@ -60,7 +59,7 @@ type Client struct {
 }
 
 func ClientForConfig(cfg *rest.Config) (*Client, error) {
-	rm, err := restmapper.NewDynamicRESTMapper(cfg)
+	rm, err := apiutil.NewDynamicRESTMapper(cfg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create dynamic rest mapper")
 	}

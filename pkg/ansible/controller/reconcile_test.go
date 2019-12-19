@@ -487,6 +487,7 @@ func TestReconcile(t *testing.T) {
 				GVK:             tc.GVK,
 				Runner:          tc.Runner,
 				Client:          tc.Client,
+				APIReader:       tc.Client,
 				EventHandlers:   tc.EventHandlers,
 				ReconcilePeriod: tc.ReconcilePeriod,
 				ManageStatus:    tc.ManageStatus,

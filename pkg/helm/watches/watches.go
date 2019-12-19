@@ -20,8 +20,8 @@ import (
 	"io/ioutil"
 
 	yaml "gopkg.in/yaml.v2"
+	"helm.sh/helm/v3/pkg/chartutil"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/helm/pkg/chartutil"
 )
 
 // Watch defines options for configuring a watch for a Helm-based

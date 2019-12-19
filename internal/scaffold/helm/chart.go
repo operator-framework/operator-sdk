@@ -20,19 +20,18 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 
 	"github.com/iancoleman/strcase"
 	log "github.com/sirupsen/logrus"
-	"k8s.io/helm/pkg/chartutil"
-	"k8s.io/helm/pkg/downloader"
-	"k8s.io/helm/pkg/getter"
-	"k8s.io/helm/pkg/helm/environment"
-	"k8s.io/helm/pkg/helm/helmpath"
-	"k8s.io/helm/pkg/proto/hapi/chart"
-	"k8s.io/helm/pkg/repo"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/chartutil"
+	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/downloader"
+	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/repo"
 )
 
 const (
@@ -139,14 +138,14 @@ func CreateChart(projectDir string, opts CreateChartOptions) (*scaffold.Resource
 		}
 	}
 
-	relChartPath := filepath.Join(HelmChartsDir, c.GetMetadata().GetName())
+	relChartPath := filepath.Join(HelmChartsDir, c.Name())
 	absChartPath := filepath.Join(projectDir, relChartPath)
 	if err := fetchChartDependencies(absChartPath); err != nil {
 		return nil, nil, fmt.Errorf("failed to fetch chart dependencies: %s", err)
 	}
 
 	// Reload chart in case dependencies changed
-	c, err = chartutil.Load(absChartPath)
+	c, err = loader.Load(absChartPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load chart: %s", err)
 	}
@@ -161,22 +160,12 @@ func scaffoldChart(destDir, apiVersion, kind string) (*scaffold.Resource, *chart
 		return nil, nil, err
 	}
 
-	chartfile := &chart.Metadata{
-		// Many helm charts use hyphenated names, but we chose not to because
-		// of the issues related to how hyphens are interpreted in templates.
-		// See https://github.com/helm/helm/issues/2192
-		Name:        r.LowerKind,
-		Description: "A Helm chart for Kubernetes",
-		Version:     "0.1.0",
-		AppVersion:  "1.0",
-		ApiVersion:  chartutil.ApiVersionV1,
-	}
-	chartPath, err := chartutil.Create(chartfile, destDir)
+	chartPath, err := chartutil.Create(r.LowerKind, destDir)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	chart, err := chartutil.Load(chartPath)
+	chart, err := loader.Load(chartPath)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -198,7 +187,7 @@ func fetchChart(destDir string, opts CreateChartOptions) (*scaffold.Resource, *c
 		return nil, nil, err
 	}
 
-	chartName := chart.GetMetadata().GetName()
+	chartName := chart.Name()
 	if len(opts.ResourceAPIVersion) == 0 {
 		opts.ResourceAPIVersion = DefaultAPIVersion
 	}
@@ -214,7 +203,7 @@ func fetchChart(destDir string, opts CreateChartOptions) (*scaffold.Resource, *c
 }
 
 func createChartFromDisk(destDir, source string) (*chart.Chart, error) {
-	chart, err := chartutil.Load(source)
+	chart, err := loader.Load(source)
 	if err != nil {
 		return nil, err
 	}
@@ -227,15 +216,13 @@ func createChartFromDisk(destDir, source string) (*chart.Chart, error) {
 }
 
 func createChartFromRemote(destDir string, opts CreateChartOptions) (*chart.Chart, error) {
-	helmHome, ok := os.LookupEnv(environment.HomeEnvVar)
-	if !ok {
-		helmHome = environment.DefaultHelmHome
-	}
-	getters := getter.All(environment.EnvSettings{})
+	settings := cli.New()
+	getters := getter.All(settings)
 	c := downloader.ChartDownloader{
-		HelmHome: helmpath.Home(helmHome),
-		Out:      os.Stderr,
-		Getters:  getters,
+		Out:              os.Stderr,
+		Getters:          getters,
+		RepositoryConfig: settings.RepositoryConfig,
+		RepositoryCache:  settings.RepositoryCache,
 	}
 
 	if opts.Repo != "" {
@@ -258,14 +245,6 @@ func createChartFromRemote(destDir string, opts CreateChartOptions) (*chart.Char
 
 	chartArchive, _, err := c.DownloadTo(opts.Chart, opts.Version, tmpDir)
 	if err != nil {
-		// One of Helm's error messages directs users to run `helm init`, which
-		// installs tiller in a remote cluster. Since that's unnecessary and
-		// unhelpful, modify the error message to be relevant for operator-sdk.
-		if strings.Contains(err.Error(), "Couldn't load repositories file") {
-			return nil, fmt.Errorf("failed to load repositories file %s "+
-				"(you might need to run `helm init --client-only` "+
-				"to create and initialize it)", c.HelmHome.RepositoryFile())
-		}
 		return nil, err
 	}
 
@@ -273,18 +252,16 @@ func createChartFromRemote(destDir string, opts CreateChartOptions) (*chart.Char
 }
 
 func fetchChartDependencies(chartPath string) error {
-	helmHome, ok := os.LookupEnv(environment.HomeEnvVar)
-	if !ok {
-		helmHome = environment.DefaultHelmHome
-	}
-	getters := getter.All(environment.EnvSettings{})
+	settings := cli.New()
+	getters := getter.All(settings)
 
 	out := &bytes.Buffer{}
 	man := &downloader.Manager{
-		Out:       out,
-		ChartPath: chartPath,
-		HelmHome:  helmpath.Home(helmHome),
-		Getters:   getters,
+		Out:              out,
+		ChartPath:        chartPath,
+		Getters:          getters,
+		RepositoryConfig: settings.RepositoryConfig,
+		RepositoryCache:  settings.RepositoryCache,
 	}
 	if err := man.Build(); err != nil {
 		fmt.Println(out.String())

@@ -1,6 +1,36 @@
 ## Unreleased
 
 ### Added
+
+- Added new `--bundle` flag to the `operator-sdk scorecard` command to support bundle validation testing using the validation API (https://github.com/operator-framework/api). ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
+- Added new `log` field to the `operator-sdk scorecard` v1alpha2 output to support tests that produce logging. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
+- Added new `bundle validation` test to the `operator-sdk scorecard` OLM tests. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
+- Added scorecard test short names to each scorecard test to allow users to run a specific scorecard test using the selector flag. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
+- Improve Ansible logs in the Operator container for Ansible-based Operators. ([#2321](https://github.com/operator-framework/operator-sdk/pull/2321))
+
+### Changed
+
+- Replace usage of `github.com/operator-framework/operator-sdk/pkg/restmapper.DynamicRESTMapper` with `sigs.k8s.io/controller-runtime/pkg/client/apiutil.DynamicRESTMapper`. ([#2309](https://github.com/operator-framework/operator-sdk/pull/2309))
+- Upgraded Helm operator packages and base image from Helm v2 to Helm v3. Cluster state for pre-existing CRs using Helm v2-based operators will be automatically migrated to Helm v3's new release storage format, and existing releases may be upgraded due to changes in Helm v3's label injection. ([#2080](https://github.com/operator-framework/operator-sdk/pull/2080))
+- Fail `operator-sdk olm-catalog gen-csv` if it is not run from a project's root, which the command already assumes is the case. ([#2322](https://github.com/operator-framework/operator-sdk/pull/2322))
+- **Breaking Change:** Extract custom Ansible module `k8s_status`, which is now provided by the `operator_sdk.util` Ansible collection. See [developer_guide](https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/dev/developer_guide.md#custom-resource-status-management) for new usage. ([#2310](https://github.com/operator-framework/operator-sdk/pull/2310))
+- Upgrade minimal Ansible version in the init projects from `2.6` to `2.9` for collections support. ([#2310](https://github.com/operator-framework/operator-sdk/pull/2310))
+
+### Deprecated
+
+- Deprecated `github.com/operator-framework/operator-sdk/pkg/restmapper` in favor of the `DynamicRESTMapper` implementation in [controller-runtime](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/apiutil#NewDiscoveryRESTMapper). ([#2309](https://github.com/operator-framework/operator-sdk/pull/2309))
+
+### Removed
+
+
+### Bug Fixes
+- Fix `operator-sdk build`'s `--image-build-args` to support spaces within quotes like `--label some.name="First Last"`. ([#2312](https://github.com/operator-framework/operator-sdk/pull/2312))
+
+
+## v0.13.0
+
+### Added
+
 - Support for vars in top level ansible watches. ([#2147](https://github.com/operator-framework/operator-sdk/pull/2147))
 - Support for `"ansible.operator-sdk/verbosity"` annotation on Custom Resources watched by Ansible based operators to override verbosity on an individual resource. ([#2102](https://github.com/operator-framework/operator-sdk/pull/2102))
 - Support for relative helm chart paths in the Helm operator's watches.yaml file. ([#2287](https://github.com/operator-framework/operator-sdk/pull/2287))
@@ -8,6 +38,7 @@
 - Go API code can now be [annotated](https://github.com/operator-framework/operator-sdk/blob/d147bb3/doc/user/olm-catalog/csv-annotations.md) to populate a CSV's `spec.customresourcedefinitions.owned` field on invoking [`olm-catalog gen-csv`](https://github.com/operator-framework/operator-sdk/blob/d147bb3/doc/cli/operator-sdk_olm-catalog_gen-csv.md). ([#1162](https://github.com/operator-framework/operator-sdk/pull/1162))
 
 ### Changed
+
 - Upgrade minimal Ansible version in the init projects from `2.4` to `2.6`. ([#2107](https://github.com/operator-framework/operator-sdk/pull/2107))
 - Upgrade Kubernetes version from `kubernetes-1.15.4` to `kubernetes-1.16.2`. ([#2145](https://github.com/operator-framework/operator-sdk/pull/2145))
 - Upgrade Helm version from `v2.15.0` to `v2.16.1`. ([#2145](https://github.com/operator-framework/operator-sdk/pull/2145))
@@ -18,19 +49,21 @@
 - Updated CRD generation for non-Go operators to use valid structural schema. ([#2275](https://github.com/operator-framework/operator-sdk/issues/2275))
 - Replace Role verb `"*"` with list of verb strings in generated files so the Role is compatible with OpenShift and Kubernetes. ([#2175](https://github.com/operator-framework/operator-sdk/pull/2175))
 - **Breaking change:** An existing CSV's `spec.customresourcedefinitions.owned` is now always overwritten except for each `name`, `version`, and `kind` on invoking [`olm-catalog gen-csv`](https://github.com/operator-framework/operator-sdk/blob/d147bb3/doc/cli/operator-sdk_olm-catalog_gen-csv.md) when Go API code [annotations](https://github.com/operator-framework/operator-sdk/blob/d147bb3/doc/user/olm-catalog/csv-annotations.md) are present. ([#1162](https://github.com/operator-framework/operator-sdk/pull/1162))
+- Ansible and Helm operator reconcilers use a cached client for reads instead of the default unstructured client. ([#1047](https://github.com/operator-framework/operator-sdk/pull/1047))
 
 ### Deprecated
+
 - Deprecated the `operator-sdk generate openapi` command. CRD generation is still supported with `operator-sdk generate crds`. It is now recommended to use [openapi-gen](https://github.com/kubernetes/kube-openapi/tree/master/cmd/openapi-gen) directly for OpenAPI code generation. The `generate openapi` subcommand will be removed in a future release. ([#2276](https://github.com/operator-framework/operator-sdk/pull/2276))
 
-### Removed
-
 ### Bug Fixes
+
 - Fixed log formatting issue that occurred while loading the configuration for Ansible-based operators. ([#2246](https://github.com/operator-framework/operator-sdk/pull/2246))
 - Fix issue faced in the Ansible based operators when `jmespath` queries are used because it was not installed. ([#2252](https://github.com/operator-framework/operator-sdk/pull/2252))
 - Updates `operator-sdk build` for go operators to compile the operator binary based on Go's built-in GOARCH detection. This fixes an issue that caused an `amd64` binary to be built into non-`amd64` base images when using operator-sdk on non-`amd64` architectures. ([#2268](https://github.com/operator-framework/operator-sdk/pull/2268))
 - Fix scorecard behavior such that a CSV file is read correctly when `olm-deployed` is set to `true`. ([#2274](https://github.com/operator-framework/operator-sdk/pull/2274))
 - A CSV config's `operator-name` field will be used if `--operator-name` is not set. ([#2297](https://github.com/operator-framework/operator-sdk/pull/2297))
 - Populates a CSV's `spec.install` strategy if either name or strategy body are missing with a deployment-type strategy. ([#2298](https://github.com/operator-framework/operator-sdk/pull/2298))
+- When the current leader pod has been hard evicted but not deleted, another pod is able to delete the evicted pod, triggering garbage collection and allowing leader election to continue. ([#2210](https://github.com/operator-framework/operator-sdk/pull/2210))
 
 ## v0.12.0
 

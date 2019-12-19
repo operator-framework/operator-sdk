@@ -23,6 +23,9 @@ import (
 	"k8s.io/client-go/restmapper"
 )
 
+// Deprecated: DynamicRESTMapper exists for historical compatibility
+// and should not be used. See that it was implemented in the controller-runtime.
+// More info: https://github.com/kubernetes-sigs/controller-runtime/pull/554
 type DynamicRESTMapper struct {
 	client   discovery.DiscoveryInterface
 	delegate meta.RESTMapper
@@ -32,6 +35,10 @@ type DynamicRESTMapper struct {
 // types at runtime. This is in contrast to controller-manager's default RESTMapper, which
 // only checks resource types at startup, and so can't handle the case of first creating a
 // CRD and then creating an instance of that CRD.
+//
+// Deprecated: NewDynamicRESTMapper exists for historical compatibility
+// and should not be used. See that it was implemented in the controller-runtime.
+// More info: https://github.com/kubernetes-sigs/controller-runtime/pull/554
 func NewDynamicRESTMapper(cfg *rest.Config) (meta.RESTMapper, error) {
 	client, err := discovery.NewDiscoveryClientForConfig(cfg)
 	if err != nil {
@@ -67,6 +74,9 @@ func (drm *DynamicRESTMapper) reloadOnError(err error) bool {
 	return err == nil
 }
 
+// Deprecated: KindFor exists for historical compatibility
+// and should not be used. See that it was implemented in the controller-runtime.
+// More info: https://github.com/kubernetes-sigs/controller-runtime/pull/554
 func (drm *DynamicRESTMapper) KindFor(resource schema.GroupVersionResource) (schema.GroupVersionKind, error) {
 	gvk, err := drm.delegate.KindFor(resource)
 	if drm.reloadOnError(err) {
@@ -75,6 +85,9 @@ func (drm *DynamicRESTMapper) KindFor(resource schema.GroupVersionResource) (sch
 	return gvk, err
 }
 
+// Deprecated: KindsFor exists for historical compatibility
+// and should not be used. See that it was implemented in the controller-runtime.
+// More info: https://github.com/kubernetes-sigs/controller-runtime/pull/554
 func (drm *DynamicRESTMapper) KindsFor(resource schema.GroupVersionResource) ([]schema.GroupVersionKind, error) {
 	gvks, err := drm.delegate.KindsFor(resource)
 	if drm.reloadOnError(err) {
@@ -83,6 +96,9 @@ func (drm *DynamicRESTMapper) KindsFor(resource schema.GroupVersionResource) ([]
 	return gvks, err
 }
 
+// Deprecated: ResourceFor exists for historical compatibility
+// and should not be used. See that it was implemented in the controller-runtime.
+// More info: https://github.com/kubernetes-sigs/controller-runtime/pull/554
 func (drm *DynamicRESTMapper) ResourceFor(input schema.GroupVersionResource) (schema.GroupVersionResource, error) {
 	gvr, err := drm.delegate.ResourceFor(input)
 	if drm.reloadOnError(err) {
@@ -91,6 +107,9 @@ func (drm *DynamicRESTMapper) ResourceFor(input schema.GroupVersionResource) (sc
 	return gvr, err
 }
 
+// Deprecated: ResourcesFor exists for historical compatibility
+// and should not be used. See that it was implemented in the controller-runtime.
+// More info: https://github.com/kubernetes-sigs/controller-runtime/pull/554
 func (drm *DynamicRESTMapper) ResourcesFor(input schema.GroupVersionResource) ([]schema.GroupVersionResource, error) {
 	gvrs, err := drm.delegate.ResourcesFor(input)
 	if drm.reloadOnError(err) {
@@ -99,6 +118,9 @@ func (drm *DynamicRESTMapper) ResourcesFor(input schema.GroupVersionResource) ([
 	return gvrs, err
 }
 
+// Deprecated: RESTMapping exists for historical compatibility
+// and should not be used. See that it was implemented in the controller-runtime.
+// More info: https://github.com/kubernetes-sigs/controller-runtime/pull/554
 func (drm *DynamicRESTMapper) RESTMapping(gk schema.GroupKind, versions ...string) (*meta.RESTMapping, error) {
 	m, err := drm.delegate.RESTMapping(gk, versions...)
 	if drm.reloadOnError(err) {
@@ -107,6 +129,9 @@ func (drm *DynamicRESTMapper) RESTMapping(gk schema.GroupKind, versions ...strin
 	return m, err
 }
 
+// Deprecated: RESTMappings exists for historical compatibility
+// and should not be used. See that it was implemented in the controller-runtime.
+// More info: https://github.com/kubernetes-sigs/controller-runtime/pull/554
 func (drm *DynamicRESTMapper) RESTMappings(gk schema.GroupKind, versions ...string) ([]*meta.RESTMapping, error) {
 	ms, err := drm.delegate.RESTMappings(gk, versions...)
 	if drm.reloadOnError(err) {
@@ -115,6 +140,9 @@ func (drm *DynamicRESTMapper) RESTMappings(gk schema.GroupKind, versions ...stri
 	return ms, err
 }
 
+// Deprecated: ResourceSingularizer exists for historical compatibility
+// and should not be used. See that it was implemented in the controller-runtime.
+// More info: https://github.com/kubernetes-sigs/controller-runtime/pull/554
 func (drm *DynamicRESTMapper) ResourceSingularizer(resource string) (singular string, err error) {
 	s, err := drm.delegate.ResourceSingularizer(resource)
 	if drm.reloadOnError(err) {

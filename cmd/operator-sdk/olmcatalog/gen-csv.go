@@ -71,6 +71,10 @@ Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config
 }
 
 func genCSVFunc(cmd *cobra.Command, args []string) error {
+	// The CSV generator assumes that the deploy and pkg directories are present
+	// at runtime, so this command must be run in a project's root.
+	projutil.MustInProjectRoot()
+
 	if len(args) != 0 {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}

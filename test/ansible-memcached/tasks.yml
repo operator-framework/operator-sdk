@@ -36,7 +36,7 @@
                 initialDelaySeconds: 3
                 periodSeconds: 3
 
-- k8s_status:
+- operator_sdk.util.k8s_status:
     api_version: ansible.example.com/v1alpha1
     kind: Memcached
     name: "{{ meta.name }}"

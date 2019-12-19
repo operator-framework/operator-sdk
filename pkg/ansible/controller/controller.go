@@ -65,6 +65,7 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 		EventHandlers:   eventHandlers,
 		ReconcilePeriod: options.ReconcilePeriod,
 		ManageStatus:    options.ManageStatus,
+		APIReader:       mgr.GetAPIReader(),
 	}
 
 	scheme := mgr.GetScheme()
