@@ -158,6 +158,6 @@ None
 
 N/A
 
-[operator-sdk-doc]:  ../../doc
+[operator-sdk-doc]:  ../../../doc
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [helm]: https://github.com/helm/helm
