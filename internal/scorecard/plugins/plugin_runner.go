@@ -77,10 +77,12 @@ const (
 var log *logrus.Logger
 
 func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, logFile io.Writer) (scapiv1alpha1.ScorecardOutput, error) {
+
+	// use stderr for logging not related to a single suite
 	log = logrus.New()
 	log.SetFormatter(&logrus.TextFormatter{DisableColors: true})
 	log.SetOutput(logFile)
-	// use stderr for logging not related to a single suite
+
 	if err := validateScorecardPluginFlags(config, pluginType); err != nil {
 		return scapiv1alpha1.ScorecardOutput{}, err
 	}
@@ -91,134 +93,47 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 		}
 	}()
 
-	var (
-		tmpNamespaceVar string
-		err             error
-	)
+	var tmpNamespaceVar string
+	var err error
 	kubeconfig, tmpNamespaceVar, err = k8sInternal.GetKubeconfigAndNamespace(config.Kubeconfig)
 	if err != nil {
 		return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to build the kubeconfig: %v", err)
 	}
+
 	if config.Namespace == "" {
 		config.Namespace = tmpNamespaceVar
 	}
-	scheme := runtime.NewScheme()
-	// scheme for client go
-	if err := cgoscheme.AddToScheme(scheme); err != nil {
-		return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to add client-go scheme to client: (%v)", err)
-	}
-	// api extensions scheme (CRDs)
-	if err := extscheme.AddToScheme(scheme); err != nil {
-		return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to add failed to add extensions api scheme to client: (%v)", err)
-	}
-	// olm api (CSVs)
-	if err := olmapiv1alpha1.AddToScheme(scheme); err != nil {
-		return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to add failed to add oml api scheme (CSVs) to client: (%v)", err)
-	}
-	dynamicDecoder = serializer.NewCodecFactory(scheme).UniversalDeserializer()
-	// if a user creates a new CRD, we need to be able to reset the rest mapper
-	// temporary kubeclient to get a cached discovery
-	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
+
+	err = setupRuntimeClient()
 	if err != nil {
-		return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to get a kubeclient: %v", err)
+		return scapiv1alpha1.ScorecardOutput{}, err
 	}
-	cachedDiscoveryClient := cached.NewMemCacheClient(kubeclient.Discovery())
-	restMapper = restmapper.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient)
-	restMapper.Reset()
-	runtimeClient, _ = client.New(kubeconfig, client.Options{Scheme: scheme, Mapper: restMapper})
 
 	csv := &olmapiv1alpha1.ClusterServiceVersion{}
 	if pluginType == OLMIntegration || config.OLMDeployed {
-		yamlSpec, err := ioutil.ReadFile(config.CSVManifest)
+		err := getCSV(config.CSVManifest, csv)
 		if err != nil {
-			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to read csv: %v", err)
-		}
-		if err = yaml.Unmarshal(yamlSpec, csv); err != nil {
-			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("error getting ClusterServiceVersion: %v", err)
-		}
-
-		csvValidator := validation.ClusterServiceVersionValidator
-		results := csvValidator.Validate(csv)
-		for _, r := range results {
-			if len(r.Errors) > 0 {
-				var errorMsgs strings.Builder
-				for _, e := range r.Errors {
-					errorMsgs.WriteString(fmt.Sprintf("%s\n", e.Error()))
-				}
-				return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("error validating ClusterServiceVersion: %s", errorMsgs.String())
-			}
-			for _, w := range r.Warnings {
-				log.Warnf("CSV validation warning: type [%s] %s", w.Type, w.Detail)
-			}
+			return scapiv1alpha1.ScorecardOutput{}, err
 		}
 	}
 
 	// Extract operator manifests from the CSV if olm-deployed is set.
 	if config.OLMDeployed {
 		// Get deploymentName from the deployment manifest within the CSV.
-		strategy, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(csv.Spec.InstallStrategy)
+		var err error
+		deploymentName, err = getDeploymentName(csv.Spec.InstallStrategy)
 		if err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, err
 		}
-		stratDep, ok := strategy.(*olminstall.StrategyDetailsDeployment)
-		if !ok {
-			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("expected StrategyDetailsDeployment, got strategy of type %T", strategy)
-		}
-		deploymentName = stratDep.DeploymentSpecs[0].Name
 		// Get the proxy pod, which should have been created with the CSV.
 		proxyPodGlobal, err = getPodFromDeployment(deploymentName, config.Namespace)
 		if err != nil {
 			return scapiv1alpha1.ScorecardOutput{}, err
 		}
 
-		logCRMsg := false
-		if crMans := config.CRManifest; len(crMans) == 0 {
-			// Create a temporary CR manifest from metadata if one is not provided.
-			if crJSONStr, ok := csv.ObjectMeta.Annotations["alm-examples"]; ok {
-				var crs []interface{}
-				if err = json.Unmarshal([]byte(crJSONStr), &crs); err != nil {
-					return scapiv1alpha1.ScorecardOutput{}, errors.Wrapf(err, "metadata.annotations['alm-examples'] in CSV %s incorrectly formatted", csv.GetName())
-				}
-				if len(crs) == 0 {
-					return scapiv1alpha1.ScorecardOutput{}, errors.Errorf("no CRs found in metadata.annotations['alm-examples'] in CSV %s and cr-manifest config option not set", csv.GetName())
-				}
-				// TODO: run scorecard against all CR's in CSV.
-				cr := crs[0]
-				logCRMsg = len(crs) > 1
-				crJSONBytes, err := json.Marshal(cr)
-				if err != nil {
-					return scapiv1alpha1.ScorecardOutput{}, err
-				}
-				crYAMLBytes, err := yaml.JSONToYAML(crJSONBytes)
-				if err != nil {
-					return scapiv1alpha1.ScorecardOutput{}, err
-				}
-				crFile, err := ioutil.TempFile("", "*.cr.yaml")
-				if err != nil {
-					return scapiv1alpha1.ScorecardOutput{}, err
-				}
-				if _, err := crFile.Write(crYAMLBytes); err != nil {
-					return scapiv1alpha1.ScorecardOutput{}, err
-				}
-				config.CRManifest = []string{crFile.Name()}
-				defer func() {
-					for _, f := range config.CRManifest {
-						if err := os.Remove(f); err != nil {
-							log.Errorf("Could not delete temporary CR manifest file: (%v)", err)
-						}
-					}
-				}()
-			} else {
-				return scapiv1alpha1.ScorecardOutput{}, errors.New("cr-manifest config option must be set if CSV has no metadata.annotations['alm-examples']")
-			}
-		} else {
-			// TODO: run scorecard against all CR's in CSV.
-			config.CRManifest = []string{crMans[0]}
-			logCRMsg = len(crMans) > 1
-		}
-		// Let users know that only the first CR is being tested.
-		if logCRMsg {
-			log.Infof("The scorecard does not support testing multiple CR's at once when run with --olm-deployed. Testing the first CR %s", config.CRManifest[0])
+		config.CRManifest, err = getCRFromCSV(config.CRManifest, csv.ObjectMeta.Annotations["alm-examples"], csv.GetName())
+		if err != nil {
+			return scapiv1alpha1.ScorecardOutput{}, err
 		}
 
 	} else {
@@ -258,30 +173,14 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 		}
 	}
 
-	crs := config.CRManifest
 	// check if there are duplicate CRs
-	gvks := []schema.GroupVersionKind{}
-	for _, cr := range crs {
-		file, err := ioutil.ReadFile(cr)
-		if err != nil {
-			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to read file: %s", cr)
-		}
-		newGVKs, err := getGVKs(file)
-		if err != nil {
-			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("could not get GVKs for resource(s) in file: %s, due to error: (%v)", cr, err)
-		}
-		gvks = append(gvks, newGVKs...)
-	}
-	dupMap := make(map[schema.GroupVersionKind]bool)
-	for _, gvk := range gvks {
-		if _, ok := dupMap[gvk]; ok {
-			log.Warnf("Duplicate gvks in CR list detected (%s); results may be inaccurate", gvk)
-		}
-		dupMap[gvk] = true
+	err = dupCRCheck(config.CRManifest)
+	if err != nil {
+		return scapiv1alpha1.ScorecardOutput{}, err
 	}
 
 	var suites []schelpers.TestSuite
-	for _, cr := range crs {
+	for _, cr := range config.CRManifest {
 		logReadWriter := &bytes.Buffer{}
 		log.SetOutput(logReadWriter)
 		log.Printf("Running for cr: %s", cr)
@@ -419,4 +318,149 @@ func ListInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig) (
 func getStructShortName(obj interface{}) string {
 	t := reflect.TypeOf(obj)
 	return strings.ToLower(t.Name())
+}
+
+func setupRuntimeClient() error {
+	scheme := runtime.NewScheme()
+	// scheme for client go
+	if err := cgoscheme.AddToScheme(scheme); err != nil {
+		return fmt.Errorf("failed to add client-go scheme to client: (%v)", err)
+	}
+	// api extensions scheme (CRDs)
+	if err := extscheme.AddToScheme(scheme); err != nil {
+		return fmt.Errorf("failed to add failed to add extensions api scheme to client: (%v)", err)
+	}
+	// olm api (CSVs)
+	if err := olmapiv1alpha1.AddToScheme(scheme); err != nil {
+		return fmt.Errorf("failed to add failed to add oml api scheme (CSVs) to client: (%v)", err)
+	}
+	dynamicDecoder = serializer.NewCodecFactory(scheme).UniversalDeserializer()
+	// if a user creates a new CRD, we need to be able to reset the rest mapper
+	// temporary kubeclient to get a cached discovery
+	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
+	if err != nil {
+		return fmt.Errorf("failed to get a kubeclient: %v", err)
+	}
+	cachedDiscoveryClient := cached.NewMemCacheClient(kubeclient.Discovery())
+	restMapper = restmapper.NewDeferredDiscoveryRESTMapper(cachedDiscoveryClient)
+	restMapper.Reset()
+	runtimeClient, _ = client.New(kubeconfig, client.Options{Scheme: scheme, Mapper: restMapper})
+	return nil
+}
+
+func getCSV(csvManifest string, csv *olmapiv1alpha1.ClusterServiceVersion) error {
+	yamlSpec, err := ioutil.ReadFile(csvManifest)
+	if err != nil {
+		return fmt.Errorf("failed to read csv: %v", err)
+	}
+	if err = yaml.Unmarshal(yamlSpec, csv); err != nil {
+		return fmt.Errorf("error getting ClusterServiceVersion: %v", err)
+	}
+
+	csvValidator := validation.ClusterServiceVersionValidator
+	results := csvValidator.Validate(csv)
+	for _, r := range results {
+		if len(r.Errors) > 0 {
+			var errorMsgs strings.Builder
+			for _, e := range r.Errors {
+				errorMsgs.WriteString(fmt.Sprintf("%s\n", e.Error()))
+			}
+			return fmt.Errorf("error validating ClusterServiceVersion: %s", errorMsgs.String())
+		}
+		for _, w := range r.Warnings {
+			log.Warnf("CSV validation warning: type [%s] %s", w.Type, w.Detail)
+		}
+	}
+
+	return nil
+}
+
+func getDeploymentName(installStrategy olmapiv1alpha1.NamedInstallStrategy) (string, error) {
+	strategy, err := (&olminstall.StrategyResolver{}).UnmarshalStrategy(installStrategy)
+	if err != nil {
+		return "", err
+	}
+	stratDep, ok := strategy.(*olminstall.StrategyDetailsDeployment)
+	if !ok {
+		return "", fmt.Errorf("expected StrategyDetailsDeployment, got strategy of type %T", strategy)
+	}
+	return stratDep.DeploymentSpecs[0].Name, nil
+}
+
+func getCRFromCSV(currentCRMans []string, crJSONStr string, csvName string) ([]string, error) {
+	finalCR := make([]string, 0)
+	logCRMsg := false
+	if crMans := currentCRMans; len(crMans) == 0 {
+		// Create a temporary CR manifest from metadata if one is not provided.
+		if crJSONStr != "" {
+			var crs []interface{}
+			if err := json.Unmarshal([]byte(crJSONStr), &crs); err != nil {
+				return finalCR, errors.Wrapf(err, "metadata.annotations['alm-examples'] in CSV %s incorrectly formatted", csvName)
+			}
+			if len(crs) == 0 {
+				return finalCR, errors.Errorf("no CRs found in metadata.annotations['alm-examples'] in CSV %s and cr-manifest config option not set", csvName)
+			}
+			// TODO: run scorecard against all CR's in CSV.
+			cr := crs[0]
+			logCRMsg = len(crs) > 1
+			crJSONBytes, err := json.Marshal(cr)
+			if err != nil {
+				return finalCR, err
+			}
+			crYAMLBytes, err := yaml.JSONToYAML(crJSONBytes)
+			if err != nil {
+				return finalCR, err
+			}
+			crFile, err := ioutil.TempFile("", "*.cr.yaml")
+			if err != nil {
+				return finalCR, err
+			}
+			if _, err := crFile.Write(crYAMLBytes); err != nil {
+				return finalCR, err
+			}
+			finalCR = []string{crFile.Name()}
+			defer func() {
+				for _, f := range finalCR {
+					if err := os.Remove(f); err != nil {
+						log.Errorf("Could not delete temporary CR manifest file: (%v)", err)
+					}
+				}
+			}()
+		} else {
+			return finalCR, errors.New("cr-manifest config option must be set if CSV has no metadata.annotations['alm-examples']")
+		}
+	} else {
+		// TODO: run scorecard against all CR's in CSV.
+		finalCR = []string{crMans[0]}
+		logCRMsg = len(crMans) > 1
+	}
+	// Let users know that only the first CR is being tested.
+	if logCRMsg {
+		log.Infof("The scorecard does not support testing multiple CR's at once when run with --olm-deployed. Testing the first CR %s", finalCR[0])
+	}
+	return finalCR, nil
+}
+
+// Check if there are duplicate CRs
+func dupCRCheck(crs []string) error {
+	gvks := []schema.GroupVersionKind{}
+	for _, cr := range crs {
+		file, err := ioutil.ReadFile(cr)
+		if err != nil {
+			return fmt.Errorf("failed to read file: %s", cr)
+		}
+		newGVKs, err := getGVKs(file)
+		if err != nil {
+			return fmt.Errorf("could not get GVKs for resource(s) in file: %s, due to error: (%v)", cr, err)
+		}
+		gvks = append(gvks, newGVKs...)
+	}
+	dupMap := make(map[schema.GroupVersionKind]bool)
+	for _, gvk := range gvks {
+		if _, ok := dupMap[gvk]; ok {
+			log.Warnf("Duplicate gvks in CR list detected (%s); results may be inaccurate", gvk)
+		}
+		dupMap[gvk] = true
+	}
+	return nil
 }
