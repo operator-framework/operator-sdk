@@ -70,7 +70,7 @@ I should be able to uninstall a specific version of OLM from a cluster
 
 #### Story 3
 
-I should be able to deploy a specific version of an Operator using OLM and a bundle director.
+I should be able to deploy a specific version of an Operator using OLM and a bundle directory.
 
 #### Story 4
 
@@ -115,9 +115,25 @@ writing an `OperatorGroup` for their Operator initially. To assist them,
 supplied.
 
 To perform compilation, the user can optionally supply the desired install
-mode type by which the CSV is installed, and the set of namespaces (may be all
-namespaces, `""`) in which the CSV will be installed. The compilation
-algorithm is as follows:
+mode type by which the CSV is installed through an `--install-mode` flag, and
+the set of namespaces (may be all namespaces, `""`) in which the CSV will be
+installed. For example, `--install-mode=MultiNamespace=[ns1,ns2]` will create
+this `OperatorGroup`:
+```yaml
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: my-group
+  namespace: my-namespace
+  labels:
+    operator-sdk: true
+spec:
+  targetNamespaces:
+  - ns1
+  - ns2
+```
+
+The compilation algorithm is as follows:
 
 ```
 1. If an OperatorGroup manifest is supplied:
@@ -135,7 +151,7 @@ is attempted is a more complex problem, but prevents annoying-to-debug
 deployment issues that will occur in the following scenarios:
 
 - A user wants to deploy two or more Operators with CSV install modes
-incompatible for one `OperatorGroup` to handle in the name namespace.
+incompatible for one `OperatorGroup` to handle in the same namespace.
 - A user wants to create an `OperatorGroup` in a namespace that already has
 an `OperatorGroup`.
     - The new and existing `OperatorGroup` namespace intersection is:
@@ -151,9 +167,9 @@ Algorithm for creating an `OperatorGroup`:
 1. Follow the compilation algorithm above to create an OperatorGroup g.
 2. Determine whether an OperatorGroup exists in a given namespace n.
 3. If no OperatorGroup exists in n:
-    1. If h was not compiled by operator-sdk:
+    1. If g was not compiled by operator-sdk:
         1. Label g with a static label to signify g was not created by operator-sdk.
-    2. Else if h was created by operator-sdk:
+    2. Else if g was created by operator-sdk:
         1. Label g with a static label to signify g was created by operator-sdk.
     3. Create g in n and return.
 4. Else if an OperatorGroup h exists in n:
