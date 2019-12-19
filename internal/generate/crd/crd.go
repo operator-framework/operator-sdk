@@ -23,7 +23,7 @@ import (
 	"sort"
 	"strings"
 
-	genutil "github.com/operator-framework/operator-sdk/internal/generate/util"
+	gen "github.com/operator-framework/operator-sdk/internal/generate/gen"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -40,7 +40,7 @@ import (
 // crdGenerator configures the CustomResourceDefintion manifest generator
 // for Go and non-Go projects.
 type crdGenerator struct {
-	genutil.Config
+	gen.Config
 	// isOperatorGo is true when the operator is written in Go.
 	isOperatorGo bool
 	// resource contains API information used to configure single-CRD generation.
@@ -50,7 +50,7 @@ type crdGenerator struct {
 
 // NewCRDGo returns a CRD generator configured to generate CustomResourceDefintion
 // manifests from Go API files.
-func NewCRDGo(cfg genutil.Config) genutil.Generator {
+func NewCRDGo(cfg gen.Config) gen.Generator {
 	g := crdGenerator{
 		Config:       cfg,
 		isOperatorGo: true,
@@ -66,7 +66,7 @@ func NewCRDGo(cfg genutil.Config) genutil.Generator {
 
 // NewCRDNonGo returns a CRD generator configured to generate a
 // CustomResourceDefintion manifest from scratch using data in resource.
-func NewCRDNonGo(cfg genutil.Config, resource scaffold.Resource) genutil.Generator {
+func NewCRDNonGo(cfg gen.Config, resource scaffold.Resource) gen.Generator {
 	g := crdGenerator{
 		Config:       cfg,
 		resource:     resource,
@@ -138,12 +138,12 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 		fmt.Sprintf("paths=%s/...", fileutil.DotPath(g.InputDir)),
 		fmt.Sprintf("%s:dir=%s", defName, cacheOutputDir),
 	}
-	cachedGen := genutil.NewCachedGenerator()
-	cachedGen.AddOutputRule(defName, genutil.OutputToCachedDirectory{})
-	if err := cachedGen.Run(rawOpts); err != nil {
+	runner := gen.NewCachedRunner()
+	runner.AddOutputRule(defName, gen.OutputToCachedDirectory{})
+	if err := runner.Run(rawOpts); err != nil {
 		return nil, err
 	}
-	cache := genutil.GetCache()
+	cache := gen.GetCache()
 	infos, err := afero.ReadDir(cache, cacheOutputDir)
 	if err != nil {
 		return nil, err
