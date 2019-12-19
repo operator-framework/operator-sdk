@@ -67,6 +67,10 @@ $ cd $HOME/projects/example-inc/
 $ operator-sdk new app-operator --repo github.com/example-inc/app-operator
 $ cd app-operator
 
+# Check GOROOT environment variable
+$ env | grep GOROOT
+GOROOT=<your goroot path>
+
 # Add a new API for the custom resource AppService
 $ operator-sdk add api --api-version=app.example.com/v1alpha1 --kind=AppService
 
