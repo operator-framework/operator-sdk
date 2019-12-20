@@ -56,7 +56,7 @@ By adopting the same workflow and layout as Kubebuilder, the SDK gains better
 alignment with the upstream community for writing Go operators. This allows the 
 SDK to be used interchangeably with Kubebuilder projects, which unifies the 
 experience of writing Go operators and resolves confusion on why the Operator SDK 
-and Kubebuilder differ in their UX to achieve the same goals. This let’s the SDK 
+and Kubebuilder differ in their UX to achieve the same goals. This lets the SDK 
 focus more on features that are outside the scope of Kubebuilder, such as 
 Operator Lifecycle Manager (OLM) integration and Scorecard.
 
@@ -69,7 +69,7 @@ with the Kubebuilder maintainers on the upstream controller-runtime and controll
 
 - Operator SDK projects should have the same project layout as Kubebuilder projects for Go operators
 - The Operator SDK CLI and workflow for extending (adding APIs and webhooks) and managing the lifecycle (generate manifests, build and run) of a project should be the same as Kubebuilder
-  - This ensures the Operator SDK binary should be compatible for use on existing Kubebuilder projects.
+  - This ensures Operator SDK binary compatiblity with existing Kubebuilder projects.
 - Operator SDK specific features such as CSV generation, scorecard and test-framework should work the same in the new project layout.
 - Operator SDK developers can use cert-manager to generate TLS certificates for their webhook servers
 
@@ -85,12 +85,12 @@ with the Kubebuilder maintainers on the upstream controller-runtime and controll
 
 ### User Stories
 
-#### Story 1 - Design a Kubebuilder plugin interface that let’s the SDK reuse and extend the CLI
+#### Story 1 - Design a Kubebuilder plugin interface that lets the SDK reuse and extend the CLI
 
 After upstream discussions with the Kubebuilder maintainers there is consensus 
 that Kubebuilder should support an interface to register plugins that would be 
 used to provide the implementation of CLI commands. This way Kubebuilder would 
-not have to directly expose its cobra CLI for the SDK’s consumption, and the SDK 
+not have to directly expose its [cobra][cobra] CLI for the SDK’s consumption, and the SDK 
 could still reuse Kubebuilder’s plugins to scaffold new projects (init and create) 
 while also being able to register its own plugins to extend the CLI for SDK specific 
 subcommands (csv-gen, scorecard).
@@ -104,6 +104,7 @@ The aim of this story is to address all reviewer comments to achieve consensus
 on the plugin architecture and merge the proposal.
 
 [plugin-proposal]: https://github.com/kubernetes-sigs/kubebuilder/pull/1250
+[cobra]: https://github.com/spf13/cobra
 
 
 #### Story 2 - Implement the Kubebuilder plugin interface and CLI pkg
@@ -122,7 +123,7 @@ The goal of this story is to ensure a release of Kubebuilder that supports the
 new plugin interface that the SDK can integrate downstream into its own CLI.
 
 
-#### Story 3 - Integrate the Kubebuilder CLI with the SDK CLI to achieve the same workflow and project layout for Go operators
+#### Story 3 - Integrate the Kubebuilder CLI into the SDK CLI to achieve the same workflow and project layout for Go operators
 
 Once Kubebuilder supports plugin registration, the SDK CLI should be modified 
 to reuse Kubebuilder’s CLI and plugins so that the SDK workflow for developing 
@@ -153,9 +154,9 @@ for it in the new Kubebuilder workflow.
 Since features like the scorecard, CSV generation and test-framework have no 
 equivalent in the Kubebuilder workflow, those subcommands would be unchanged on the CLI.
 
-- operator-sdk gen-csv
-- operator-sdk scorecard
-- operator-sdk test
+- `operator-sdk gen-csv`
+- `operator-sdk scorecard`
+- `operator-sdk test`
  
 Where necessary the above commands should be adjusted to reflect the changes to 
 their expected input and output manifest paths that is consistent with the new project layout.
@@ -176,7 +177,7 @@ project layout, etc will need to be updated according to the new CLI and layout.
 ### Implementation Details/Notes/Constraints
 The integration work for the Go Operator CLI workflow can be done in the master 
 branch to avoid issues with merge conflicts from rebasing a separate branch at a later time.
-The new CLI can be worked on behind a hidden subcommand until it is ready to 
+The new CLI can be worked on behind a hidden subcommand, `operator-sdk alpha`, until it is ready to 
 replace the existing workflow. This would help avoid exposing it too early while 
 still providing the ability to test it on the master branch. 
 
