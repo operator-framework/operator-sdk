@@ -26,10 +26,10 @@ type Config struct {
 	// OperatorName is the operator's name, ex. app-operator
 	OperatorName string
 	// Inputs is an arbitrary map of keys to paths that an individual generator
-	// understands. Keys are either exported by the generator's package, or the
-	// global "" key can be used if none are exported. Inputs is meant to be
-	// flexible in the case that multiple on-disk input files are required.
-	// If not set, a default is used on a per-generator basis.
+	// understands. Keys are exported by the generator's package if any inputs
+	// are required. Inputs is meant to be flexible in the case that multiple
+	// on-disk inputs are required. If not set, a default is used on a
+	// per-generator basis.
 	Inputs map[string]string
 	// OutputDir is a dir in which to generate output files. If not set, a
 	// default is used on a per-generator basis.
@@ -42,14 +42,10 @@ type Config struct {
 	IncludeFuncs IncludeFuncs
 }
 
-// GetInputPaths returns all paths in c.Inputs for a set of keys. If the global
-// key "" is set, only that path will be returned.
+// GetInputPaths returns all paths in c.Inputs for a set of keys.
 func (c Config) GetInputPaths(keys ...string) (paths []string) {
 	if len(c.Inputs) == 0 {
 		return
-	}
-	if global, ok := c.Inputs[""]; ok {
-		return []string{global}
 	}
 	for _, key := range keys {
 		if path, ok := c.Inputs[key]; ok {
