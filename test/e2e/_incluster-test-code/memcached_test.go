@@ -126,7 +126,7 @@ func verifyLeader(t *testing.T, namespace string, f *framework.Framework, labels
 		return true, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error getting leader lock configmap: %v", err)
+		return nil, fmt.Errorf("error getting leader lock configmap: %w", err)
 	}
 	t.Logf("Found leader lock configmap %s\n", lockName)
 
@@ -164,7 +164,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 	name := "example-memcached"
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
-		return fmt.Errorf("could not get namespace: %v", err)
+		return fmt.Errorf("could not get namespace: %w", err)
 	}
 	key := types.NamespacedName{Name: name, Namespace: namespace}
 	// create memcached custom resource
@@ -180,18 +180,18 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 	// use TestCtx's create helper to create the object and add a cleanup function for the new object
 	err = f.Client.Create(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
-		return fmt.Errorf("could no create CR: %v", err)
+		return fmt.Errorf("could no create CR: %w", err)
 	}
 	// wait for example-memcached to reach `fromReplicas` replicas
 	err = e2eutil.WaitForDeployment(t, f.KubeClient, key.Namespace, key.Name, fromReplicas, retryInterval, timeout)
 	if err != nil {
-		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %v", fromReplicas, key.Name, err)
+		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %w", fromReplicas, key.Name, err)
 	}
 
 	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		err = f.Client.Get(goctx.TODO(), key, exampleMemcached)
 		if err != nil {
-			return fmt.Errorf("could not get memcached CR %q: %v", key, err)
+			return fmt.Errorf("could not get memcached CR %q: %w", key, err)
 		}
 		// update memcached CR size to `toReplicas` replicas
 		exampleMemcached.Spec.Size = int32(toReplicas)
@@ -199,12 +199,12 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		return f.Client.Update(goctx.TODO(), exampleMemcached)
 	})
 	if err != nil {
-		return fmt.Errorf("could not update memcached CR %q: %v", key, err)
+		return fmt.Errorf("could not update memcached CR %q: %w", key, err)
 	}
 
 	// wait for example-memcached to reach `toReplicas` replicas
 	if err := e2eutil.WaitForDeployment(t, f.KubeClient, key.Namespace, key.Name, toReplicas, retryInterval, timeout); err != nil {
-		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %v", toReplicas, key.Name, err)
+		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %w", toReplicas, key.Name, err)
 	}
 	return nil
 }
@@ -313,7 +313,7 @@ func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.T
 	s := v1.Service{}
 	err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: fmt.Sprintf("%s-metrics", operatorName), Namespace: namespace}, &s)
 	if err != nil {
-		return fmt.Errorf("could not get metrics Service: (%v)", err)
+		return fmt.Errorf("could not get metrics Service: %w", err)
 	}
 	if len(s.Spec.Selector) == 0 {
 		return fmt.Errorf("no labels found in metrics Service")
@@ -322,7 +322,7 @@ func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.T
 	// TODO(lili): Make port a constant in internal/scaffold/cmd.go.
 	response, err := getMetrics(t, f, s.Spec.Selector, namespace, "8383")
 	if err != nil {
-		return fmt.Errorf("failed to get metrics: %v", err)
+		return fmt.Errorf("failed to get metrics: %w", err)
 	}
 	// Make sure metrics are present
 	if len(response) == 0 {
@@ -333,7 +333,7 @@ func memcachedMetricsTest(t *testing.T, f *framework.Framework, ctx *framework.T
 	l := promlint.New(bytes.NewReader(response))
 	problems, err := l.Lint()
 	if err != nil {
-		return fmt.Errorf("failed to lint metrics: %v", err)
+		return fmt.Errorf("failed to lint metrics: %w", err)
 	}
 
 	// TODO(joelanford): Change to 0, when we upgrade from kubernetes-1.15.
@@ -354,7 +354,7 @@ func memcachedOperatorMetricsTest(t *testing.T, f *framework.Framework, ctx *fra
 	// TODO(lili): Make port a constant in internal/scaffold/cmd.go.
 	response, err := getMetrics(t, f, map[string]string{"name": operatorName}, namespace, "8686")
 	if err != nil {
-		return fmt.Errorf("failed to get metrics: %v", err)
+		return fmt.Errorf("failed to get metrics: %w", err)
 	}
 	// Make sure metrics are present
 	if len(response) == 0 {
@@ -365,7 +365,7 @@ func memcachedOperatorMetricsTest(t *testing.T, f *framework.Framework, ctx *fra
 	l := promlint.New(bytes.NewReader(response))
 	problems, err := l.Lint()
 	if err != nil {
-		return fmt.Errorf("failed to lint metrics: %v", err)
+		return fmt.Errorf("failed to lint metrics: %w", err)
 	}
 	if len(problems) > 0 {
 		return fmt.Errorf("found problems with metrics: %#+v", problems)
@@ -428,7 +428,7 @@ func getMetrics(t *testing.T, f *framework.Framework, labels map[string]string, 
 	}
 	err := f.Client.List(goctx.TODO(), pods, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get pods: (%v)", err)
+		return nil, fmt.Errorf("failed to get pods: %w", err)
 	}
 
 	podName := ""
@@ -455,7 +455,7 @@ func getMetrics(t *testing.T, f *framework.Framework, labels map[string]string, 
 	request := proxyViaPod(f.KubeClient, ns, podName, port, "/metrics")
 	response, err := request.DoRaw()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get response from metrics: %v", err)
+		return nil, fmt.Errorf("failed to get response from metrics: %w", err)
 	}
 
 	return response, nil

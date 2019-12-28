@@ -108,7 +108,7 @@ func GetTypeMetaFromBytes(b []byte) (t metav1.TypeMeta, err error) {
 	if err := dec.Decode(&u); err == nil && r.Len() != 0 {
 		return t, errors.New("error getting TypeMeta from bytes: more than one manifest in file")
 	} else if err != nil && err != io.EOF {
-		return t, errors.Wrap(err, "error getting TypeMeta from bytes")
+		return t, fmt.Errorf("error getting TypeMeta from bytes: %v", err)
 	}
 	return metav1.TypeMeta{
 		APIVersion: u.GetAPIVersion(),

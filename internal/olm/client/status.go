@@ -86,7 +86,7 @@ func (c Client) GetObjectsStatus(ctx context.Context, objs ...runtime.Object) St
 func (s Status) HasInstalledResources() (bool, error) {
 	crdKindSet, err := s.getCRDKindSet()
 	if err != nil {
-		return false, fmt.Errorf("error getting set of CRD kinds in resources: %w", err)
+		return false, fmt.Errorf("error getting set of CRD kinds in resources: %v", err)
 	}
 	// Sort resources by whether they're installed or not to get consistent
 	// return values.

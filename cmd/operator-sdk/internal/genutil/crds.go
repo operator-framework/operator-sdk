@@ -31,10 +31,46 @@ func CRDGen() error {
 
 	log.Info("Running CRD generator.")
 
-	cfg := gen.Config{}
-	crd := gencrd.NewCRDGo(cfg)
-	if err := crd.Generate(); err != nil {
-		return fmt.Errorf("error generating CRDs from APIs in %s: %w", scaffold.ApisDir, err)
+	gvMap, err := k8sutil.ParseGroupSubpackages(scaffold.ApisDir)
+	if err != nil {
+		return fmt.Errorf("failed to parse group versions: %v", err)
+	}
+	gvb := &strings.Builder{}
+	for g, vs := range gvMap {
+		gvb.WriteString(fmt.Sprintf("%s:%v, ", g, vs))
+	}
+
+	log.Infof("Running CRD generation for Custom Resource group versions: [%v]\n", gvb.String())
+
+	s := &scaffold.Scaffold{}
+	cfg := &input.Config{
+		Repo:           repoPkg,
+		AbsProjectPath: absProjectPath,
+		ProjectName:    filepath.Base(absProjectPath),
+	}
+	crds, err := k8sutil.GetCRDs(scaffold.CRDsDir)
+	if err != nil {
+		return err
+	}
+	for _, crd := range crds {
+		g, v, k := crd.Spec.Group, crd.Spec.Version, crd.Spec.Names.Kind
+		if v == "" {
+			if len(crd.Spec.Versions) != 0 {
+				v = crd.Spec.Versions[0].Name
+			} else {
+				return fmt.Errorf("crd of group %s kind %s has no version", g, k)
+			}
+		}
+		r, err := scaffold.NewResource(g+"/"+v, k)
+		if err != nil {
+			return err
+		}
+		err = s.Execute(cfg,
+			&scaffold.CRD{Resource: r, IsOperatorGo: projutil.IsOperatorGo()},
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	log.Info("CRD generation complete.")

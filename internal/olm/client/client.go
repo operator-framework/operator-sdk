@@ -61,7 +61,7 @@ type Client struct {
 func ClientForConfig(cfg *rest.Config) (*Client, error) {
 	rm, err := apiutil.NewDynamicRESTMapper(cfg)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create dynamic rest mapper")
+		return nil, fmt.Errorf("failed to create dynamic rest mapper: %v", err)
 	}
 
 	cl, err := client.New(cfg, client.Options{
@@ -69,7 +69,7 @@ func ClientForConfig(cfg *rest.Config) (*Client, error) {
 		Mapper: rm,
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create client")
+		return nil, fmt.Errorf("failed to create client: %v", err)
 	}
 
 	c := &Client{
@@ -213,7 +213,7 @@ func (c Client) GetInstalledVersion(ctx context.Context) (string, error) {
 		if apierrors.IsNotFound(err) || meta.IsNoMatchError(err) {
 			return "", ErrOLMNotInstalled
 		}
-		return "", errors.Wrapf(err, "failed to list CSVs in namespace %q", OLMNamespace)
+		return "", fmt.Errorf("failed to list CSVs in namespace %q: %v", OLMNamespace, err)
 	}
 	var pkgServerCSV *olmapiv1alpha1.ClusterServiceVersion
 	for _, csv := range csvs.Items {

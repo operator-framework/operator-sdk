@@ -92,7 +92,7 @@ func controllerRun(cmd *cobra.Command, args []string) error {
 		&scaffold.AddController{Resource: r},
 	)
 	if err != nil {
-		return fmt.Errorf("controller scaffold failed: (%v)", err)
+		return fmt.Errorf("controller scaffold failed: %v", err)
 	}
 
 	log.Info("Controller generation complete.")

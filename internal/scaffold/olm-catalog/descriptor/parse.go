@@ -15,6 +15,7 @@
 package descriptor
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -93,13 +94,13 @@ func parseCSVGenAnnotations(comments []string) (pd parsedCRDDescriptions, err er
 			case "displayName":
 				pd.displayName, err = strconv.Unquote(vals[0])
 				if err != nil {
-					return parsedCRDDescriptions{}, errors.Wrapf(err, "error unquoting displayName %s", vals[0])
+					return parsedCRDDescriptions{}, fmt.Errorf("error unquoting displayName %s: %v", vals[0], err)
 				}
 			case "resources":
 				for _, v := range vals {
 					r, err := parseResource(v)
 					if err != nil {
-						return parsedCRDDescriptions{}, errors.Wrapf(err, "error parsing resource %s", v)
+						return parsedCRDDescriptions{}, fmt.Errorf("error parsing resource %s: %v", v, err)
 					}
 					pd.resources = append(pd.resources, r)
 				}
@@ -122,19 +123,19 @@ func parseMemberAnnotation(d *descriptor, pathElems []string, val string) (err e
 		// If this case is never entered, d will not be included.
 		d.include, err = strconv.ParseBool(val)
 		if err != nil {
-			return errors.Wrapf(err, "error parsing %s bool val %s", pathElems[0], val)
+			return fmt.Errorf("error parsing %s bool val %s: %v", pathElems[0], val, err)
 		}
 	case 2:
 		switch pathElems[1] {
 		case "displayName":
 			d.DisplayName, err = strconv.Unquote(val)
 			if err != nil {
-				return errors.Wrapf(err, "error unquoting field displayName %s", val)
+				return fmt.Errorf("error unquoting field displayName %s: %v", val, err)
 			}
 		case "x-descriptors":
 			xdStr, err := strconv.Unquote(val)
 			if err != nil {
-				return errors.Wrapf(err, "error unquoting field x-descriptors %s", val)
+				return fmt.Errorf("error unquoting field x-descriptors %s: %v", val, err)
 			}
 			d.XDescriptors = strings.Split(xdStr, ",")
 		default:
@@ -151,7 +152,7 @@ func parseMemberAnnotation(d *descriptor, pathElems []string, val string) (err e
 func parseResource(rStr string) (r olmapiv1alpha1.APIResourceReference, err error) {
 	rStr, err = strconv.Unquote(rStr)
 	if err != nil {
-		return r, errors.Wrapf(err, "error unquoting resource %s", rStr)
+		return r, fmt.Errorf("error unquoting resource %s: %v", rStr, err)
 	}
 	rSplit := strings.SplitN(rStr, ",", 3)
 	if len(rSplit) < 2 {
@@ -161,7 +162,7 @@ func parseResource(rStr string) (r olmapiv1alpha1.APIResourceReference, err erro
 	if len(rSplit) == 3 {
 		r.Name, err = strconv.Unquote(rSplit[2])
 		if err != nil {
-			return r, errors.Wrapf(err, "error unquoting resource name %s", rSplit[2])
+			return r, fmt.Errorf("error unquoting resource name %s: %v", rSplit[2], err)
 		}
 		r.Name = strings.TrimSpace(r.Name)
 	}

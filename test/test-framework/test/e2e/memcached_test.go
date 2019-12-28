@@ -53,7 +53,7 @@ func TestMemcached(t *testing.T) {
 func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx, fromReplicas, toReplicas int) error {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
-		return fmt.Errorf("could not get namespace: %v", err)
+		return fmt.Errorf("could not get namespace: %w", err)
 	}
 	// create memcached custom resource
 	exampleMemcached := &operator.Memcached{
@@ -69,18 +69,18 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 	// use TestCtx's create helper to create the object and add a cleanup function for the new object
 	err = f.Client.Create(goctx.TODO(), exampleMemcached, &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
-		return fmt.Errorf("could not create %q: %v", key, err)
+		return fmt.Errorf("could not create %q: %w", key, err)
 	}
 	// wait for example-memcached to reach `fromReplicas` replicas
 	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", fromReplicas, retryInterval, timeout)
 	if err != nil {
-		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %v", fromReplicas, key.Name, err)
+		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %w", fromReplicas, key.Name, err)
 	}
 
 	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		err = f.Client.Get(goctx.TODO(), key, exampleMemcached)
 		if err != nil {
-			return fmt.Errorf("could not get memcached CR %q: %v", key, err)
+			return fmt.Errorf("could not get memcached CR %q: %w", key, err)
 		}
 
 		exampleMemcached.Spec.Size = int32(toReplicas)
@@ -88,12 +88,12 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		return f.Client.Update(goctx.TODO(), exampleMemcached)
 	})
 	if err != nil {
-		return fmt.Errorf("could not update memcached CR %q: %v", key, err)
+		return fmt.Errorf("could not update memcached CR %q: %w", key, err)
 	}
 
 	// wait for example-memcached to reach `toReplicas` replicas
 	if err := e2eutil.WaitForDeployment(t, f.KubeClient, key.Namespace, key.Name, toReplicas, retryInterval, timeout); err != nil {
-		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %v", toReplicas, key.Name, err)
+		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %w", toReplicas, key.Name, err)
 	}
 	return nil
 }

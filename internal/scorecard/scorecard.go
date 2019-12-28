@@ -29,7 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -72,7 +71,7 @@ func getPlugins(version string, selector labels.Selector) ([]Plugin, error) {
 	configs := []pluginConfig{}
 	// set ErrorUnused to true in decoder to fail if an unknown field is set by the user
 	if err := scViper.UnmarshalKey("plugins", &configs, func(c *mapstructure.DecoderConfig) { c.ErrorUnused = true }); err != nil {
-		return nil, errors.Wrap(err, "Could not load plugin configurations")
+		return nil, fmt.Errorf("could not load plugin configurations: %v", err)
 	}
 	for idx, plugin := range configs {
 		if err := validateConfig(plugin, idx, version); err != nil {

@@ -134,15 +134,15 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 		} else {
 			file, err := ioutil.TempFile("", "empty.yaml")
 			if err != nil {
-				return fmt.Errorf("could not create empty manifest file: (%v)", err)
+				return fmt.Errorf("could not create empty manifest file: %v", err)
 			}
 			tlConfig.namespacedManPath = file.Name()
 			emptyBytes := []byte{}
 			if err := file.Chmod(os.FileMode(fileutil.DefaultFileMode)); err != nil {
-				return fmt.Errorf("could not chown temporary namespaced manifest file: (%v)", err)
+				return fmt.Errorf("could not chown temporary namespaced manifest file: %v", err)
 			}
 			if _, err := file.Write(emptyBytes); err != nil {
-				return fmt.Errorf("could not write temporary namespaced manifest file: (%v)", err)
+				return fmt.Errorf("could not write temporary namespaced manifest file: %v", err)
 			}
 			if err := file.Close(); err != nil {
 				return err
@@ -171,14 +171,14 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 	if tlConfig.noSetup {
 		err := os.MkdirAll(deployTestDir, os.FileMode(fileutil.DefaultDirFileMode))
 		if err != nil {
-			return fmt.Errorf("could not create %s: (%v)", deployTestDir, err)
+			return fmt.Errorf("could not create %s: %v", deployTestDir, err)
 		}
 		tlConfig.namespacedManPath = filepath.Join(deployTestDir, "empty.yaml")
 		tlConfig.globalManPath = filepath.Join(deployTestDir, "empty.yaml")
 		emptyBytes := []byte{}
 		err = ioutil.WriteFile(tlConfig.globalManPath, emptyBytes, os.FileMode(fileutil.DefaultFileMode))
 		if err != nil {
-			return fmt.Errorf("could not create empty manifest file: (%v)", err)
+			return fmt.Errorf("could not create empty manifest file: %v", err)
 		}
 		defer func() {
 			err := os.Remove(tlConfig.globalManPath)
@@ -230,7 +230,7 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 		if errors.As(err, &exitErr) {
 			os.Exit(exitErr.ExitCode())
 		}
-		return fmt.Errorf("failed to build test binary: (%v)", err)
+		return fmt.Errorf("failed to build test binary: %v", err)
 	}
 	log.Info("Local operator test successfully completed.")
 	return nil
@@ -297,7 +297,7 @@ func replaceImage(manifestPath, image string) error {
 		newManifest = yamlutil.CombineManifests(newManifest, updatedYamlSpec)
 	}
 	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("failed to scan %s: (%v)", manifestPath, err)
+		return fmt.Errorf("failed to scan %s: %v", manifestPath, err)
 	}
 
 	return ioutil.WriteFile(manifestPath, newManifest, fileutil.DefaultFileMode)

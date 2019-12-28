@@ -27,11 +27,11 @@ func ExecGoModTmpl(tmpl string) ([]byte, error) {
 	repo := projutil.GetGoPkg()
 	t, err := template.New("").Parse(tmpl)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse go mod template: (%v)", err)
+		return nil, fmt.Errorf("failed to parse go mod template: %v", err)
 	}
 	buf := &bytes.Buffer{}
 	if err := t.Execute(buf, struct{ Repo string }{Repo: repo}); err != nil {
-		return nil, fmt.Errorf("failed to execute go mod template: (%v)", err)
+		return nil, fmt.Errorf("failed to execute go mod template: %v", err)
 	}
 	return buf.Bytes(), nil
 }

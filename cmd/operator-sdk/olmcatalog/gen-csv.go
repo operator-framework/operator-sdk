@@ -118,7 +118,7 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 	}
 	err = s.Execute(cfg, csv)
 	if err != nil {
-		return fmt.Errorf("catalog scaffold failed: (%v)", err)
+		return fmt.Errorf("catalog scaffold failed: %v", err)
 	}
 
 	gcfg := gen.Config{
@@ -168,7 +168,7 @@ func verifyGenCSVFlags() error {
 func verifyCSVVersion(version string) error {
 	v, err := semver.NewVersion(version)
 	if err != nil {
-		return fmt.Errorf("%s is not a valid semantic version: (%v)", version, err)
+		return fmt.Errorf("%s is not a valid semantic version: %v", version, err)
 	}
 	// Ensures numerical values composing csvVersion don't contain leading 0's,
 	// ex. 01.01.01
