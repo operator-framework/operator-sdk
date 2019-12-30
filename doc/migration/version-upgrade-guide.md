@@ -193,7 +193,7 @@ The SDK version `v0.8.x` supports scaffolding projects to use Go modules by defa
 To get familiar with Go modules read the [modules wiki][modules-wiki]. In particular the section on [migrating to modules][migrating-to-modules].
 
 - Ensure that you have Go 1.12+ and [Mercurial][mercurial] 3.9+ installed.
-- Activate Go modules support for your project in `$GOPATH/src` by setting the env `GO111MODULES=on`. See [activating modules][activating-modules] for more details.
+- Activate Go modules support for your project in `$GOPATH/src` by setting the env `GO111MODULE=on`. See [activating modules][activating-modules] for more details.
 - Initialize a new `go.mod` file by running `go mod init`.
 - Append the following to the end of your `go.mod` file to pin the operator-sdk and other upstream dependencies to the required versions.
 ```
@@ -424,6 +424,10 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
     )
 
     replace (
+    	// Indirect operator-sdk dependencies use git.apache.org, which is frequently
+    	// down. The github mirror should be used instead.
+    	// Locking to a specific version (from 'go mod graph'):
+    	git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
     	github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.31.1
     	// Pinned to v2.10.0 (kubernetes-1.14.1) so https://proxy.golang.org can
     	// resolve it correctly.
