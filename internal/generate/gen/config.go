@@ -1,4 +1,4 @@
-// Copyright 2019 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package genutil
+package gen
 
 import (
 	"path/filepath"
@@ -26,30 +26,25 @@ type Config struct {
 	// OperatorName is the operator's name, ex. app-operator
 	OperatorName string
 	// Inputs is an arbitrary map of keys to paths that an individual generator
-	// understands. Keys are either exported by the generator's package, or the
-	// global "" key can be used if none are exported. Inputs is meant to be
-	// flexible in the case that multiple on-disk input files are required.
-	// If not set, a default is used on a per-generator basis.
+	// understands. Keys are exported by the generator's package if any inputs
+	// are required. Inputs is meant to be flexible in the case that multiple
+	// on-disk inputs are required. If not set, a default is used on a
+	// per-generator basis.
 	Inputs map[string]string
 	// OutputDir is a dir in which to generate output files. If not set, a
 	// default is used on a per-generator basis.
 	OutputDir string
-	// IncludeFuncs contains a set of filters for paths that a generator
-	// may encounter while gathering data for generation. If any func returns
-	// true, that path will be included by the generator. IncludeFuncs provides
+	// Filters is a set of functional filters for paths that a generator may
+	// encounter while gathering data for generation. Filters provides
 	// fine-grained control over Inputs, since often those paths are often
 	// top-level directories.
-	IncludeFuncs IncludeFuncs
+	Filters FilterFuncs
 }
 
-// GetInputPaths returns all paths in c.Inputs for a set of keys. If the global
-// key "" is set, only that path will be returned.
+// GetInputPaths returns all paths in c.Inputs for a set of keys.
 func (c Config) GetInputPaths(keys ...string) (paths []string) {
 	if len(c.Inputs) == 0 {
 		return
-	}
-	if global, ok := c.Inputs[""]; ok {
-		return []string{global}
 	}
 	for _, key := range keys {
 		if path, ok := c.Inputs[key]; ok {
@@ -59,14 +54,12 @@ func (c Config) GetInputPaths(keys ...string) (paths []string) {
 	return paths
 }
 
-// IncludeFuncs is a slice of filter funcs. A string passing any func in
-// IncludeFuncs satisfies the filter.
-type IncludeFuncs []func(string) bool
+// FilterFuncs is a slice of filter funcs.
+type FilterFuncs []func(string) bool
 
-// MakeIncludeFuncs creates a set of closures around each path in paths
-// to populate Config.IncludeFuncs. If the argument to the closure has
-// a prefix of path, it returns true.
-func MakeIncludeFuncs(paths ...string) (includes IncludeFuncs) {
+// MakeFilters creates a set of closures around each path in paths.
+// If the argument to a closure has a prefix of path, it returns true.
+func MakeFilters(paths ...string) (filters FilterFuncs) {
 	pathSet := map[string]struct{}{}
 	for _, path := range paths {
 		pathSet[filepath.Clean(path)] = struct{}{}
@@ -76,17 +69,17 @@ func MakeIncludeFuncs(paths ...string) (includes IncludeFuncs) {
 		// Copy the string for the closure.
 		pb := strings.Builder{}
 		pb.WriteString(path)
-		includes = append(includes, func(p string) bool {
+		filters = append(filters, func(p string) bool {
 			// Handle absolute paths referencing the project directory.
 			p = strings.TrimPrefix(p, wd)
 			return strings.HasPrefix(filepath.Clean(p), pb.String())
 		})
 	}
-	return includes
+	return filters
 }
 
-// IsInclude checks if path passes any filter in funcs.
-func (funcs IncludeFuncs) IsInclude(path string) bool {
+// SatisfiesAny returns true if path passes any filter in funcs.
+func (funcs FilterFuncs) SatisfiesAny(path string) bool {
 	for _, f := range funcs {
 		if f(path) {
 			return true

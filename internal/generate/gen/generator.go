@@ -14,7 +14,7 @@
 
 // Code adapted from:
 // https://github.com/kubernetes-sigs/controller-tools/blob/6eef398/cmd/controller-gen/main.go
-package genutil
+package gen
 
 import (
 	"fmt"
