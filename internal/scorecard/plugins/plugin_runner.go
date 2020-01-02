@@ -41,7 +41,6 @@ import (
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	extscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -173,90 +172,20 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 		}
 	}
 
-	// check if there are duplicate CRs
-	err = dupCRCheck(config.CRManifest)
+	err = duplicateCRCheck(config.CRManifest)
 	if err != nil {
 		return scapiv1alpha1.ScorecardOutput{}, err
 	}
 
 	var suites []schelpers.TestSuite
 	for _, cr := range config.CRManifest {
-		logReadWriter := &bytes.Buffer{}
-		log.SetOutput(logReadWriter)
-		log.Printf("Running for cr: %s", cr)
-		var obj *unstructured.Unstructured
-		if !config.OLMDeployed {
-			if err := createFromYAMLFile(config.Namespace, config.GlobalManifest, config.ProxyImage, config.ProxyPullPolicy); err != nil {
-				return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to create global resources: %v", err)
-			}
-			if err := createFromYAMLFile(config.Namespace, config.NamespacedManifest, config.ProxyImage, config.ProxyPullPolicy); err != nil {
-				return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to create namespaced resources: %v", err)
-			}
-		}
-		if err := createFromYAMLFile(config.Namespace, cr, config.ProxyImage, config.ProxyPullPolicy); err != nil {
-			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to create cr resource: %v", err)
-		}
-		obj, err = yamlToUnstructured(config.Namespace, cr)
+		crSuites, err := runTests(csv, pluginType, config, cr, logFile)
 		if err != nil {
-			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
+			return scapiv1alpha1.ScorecardOutput{}, err
 		}
-		if err := waitUntilCRStatusExists(time.Second*time.Duration(config.InitTimeout), obj); err != nil {
-			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed waiting to check if CR status exists: %v", err)
-		}
-		if pluginType == BasicOperator {
-			conf := BasicTestConfig{
-				Client:   runtimeClient,
-				CR:       obj,
-				ProxyPod: proxyPodGlobal,
-			}
-			basicTests := NewBasicTestSuite(conf)
-			if schelpers.IsV1alpha2(config.Version) {
-				basicTests.ApplySelector(config.Selector)
-			}
-
-			basicTests.Run(context.TODO())
-			logs, err := ioutil.ReadAll(logReadWriter)
-			if err != nil {
-				basicTests.Log = fmt.Sprintf("failed to read log buffer: %v", err)
-			} else {
-				basicTests.Log = string(logs)
-			}
-			suites = append(suites, *basicTests)
-		}
-		if pluginType == OLMIntegration {
-			conf := OLMTestConfig{
-				Client:   runtimeClient,
-				CR:       obj,
-				CSV:      csv,
-				CRDsDir:  config.CRDsDir,
-				ProxyPod: proxyPodGlobal,
-				Bundle:   config.Bundle,
-			}
-			olmTests := NewOLMTestSuite(conf)
-			if schelpers.IsV1alpha2(config.Version) {
-				olmTests.ApplySelector(config.Selector)
-			}
-
-			olmTests.Run(context.TODO())
-			logs, err := ioutil.ReadAll(logReadWriter)
-			if err != nil {
-				olmTests.Log = fmt.Sprintf("failed to read log buffer: %v", err)
-			} else {
-				olmTests.Log = string(logs)
-			}
-			suites = append(suites, *olmTests)
-		}
-		// change logging back to main log
-		log.SetOutput(logFile)
-		// set up clean environment for every CR
-		if err := cleanupScorecard(); err != nil {
-			log.Errorf("Failed to cleanup resources: (%v)", err)
-		}
-		// reset cleanup functions
-		cleanupFns = []cleanupFn{}
-		// clear name of operator deployment
-		deploymentName = ""
+		suites = append(suites, crSuites...)
 	}
+
 	suites, err = schelpers.MergeSuites(suites)
 	if err != nil {
 		return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to merge test suite results: %v", err)
@@ -442,7 +371,7 @@ func getCRFromCSV(currentCRMans []string, crJSONStr string, csvName string) ([]s
 }
 
 // Check if there are duplicate CRs
-func dupCRCheck(crs []string) error {
+func duplicateCRCheck(crs []string) error {
 	gvks := []schema.GroupVersionKind{}
 	for _, cr := range crs {
 		file, err := ioutil.ReadFile(cr)
@@ -463,4 +392,91 @@ func dupCRCheck(crs []string) error {
 		dupMap[gvk] = true
 	}
 	return nil
+}
+
+func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, config BasicAndOLMPluginConfig, cr string, logFile io.Writer) ([]schelpers.TestSuite, error) {
+	suites := make([]schelpers.TestSuite, 0)
+
+	logReadWriter := &bytes.Buffer{}
+	log.SetOutput(logReadWriter)
+	log.Printf("Running for cr: %s", cr)
+
+	if !config.OLMDeployed {
+		if err := createFromYAMLFile(config.Namespace, config.GlobalManifest, config.ProxyImage, config.ProxyPullPolicy); err != nil {
+			return suites, fmt.Errorf("failed to create global resources: %v", err)
+		}
+		if err := createFromYAMLFile(config.Namespace, config.NamespacedManifest, config.ProxyImage, config.ProxyPullPolicy); err != nil {
+			return suites, fmt.Errorf("failed to create namespaced resources: %v", err)
+		}
+	}
+
+	if err := createFromYAMLFile(config.Namespace, cr, config.ProxyImage, config.ProxyPullPolicy); err != nil {
+		return suites, fmt.Errorf("failed to create cr resource: %v", err)
+	}
+
+	obj, err := yamlToUnstructured(config.Namespace, cr)
+	if err != nil {
+		return suites, fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
+	}
+
+	if err := waitUntilCRStatusExists(time.Second*time.Duration(config.InitTimeout), obj); err != nil {
+		return suites, fmt.Errorf("failed waiting to check if CR status exists: %v", err)
+	}
+
+	switch pluginType {
+	case BasicOperator:
+		conf := BasicTestConfig{
+			Client:   runtimeClient,
+			CR:       obj,
+			ProxyPod: proxyPodGlobal,
+		}
+		basicTests := NewBasicTestSuite(conf)
+		if schelpers.IsV1alpha2(config.Version) {
+			basicTests.ApplySelector(config.Selector)
+		}
+
+		basicTests.Run(context.TODO())
+		logs, err := ioutil.ReadAll(logReadWriter)
+		if err != nil {
+			basicTests.Log = fmt.Sprintf("failed to read log buffer: %v", err)
+		} else {
+			basicTests.Log = string(logs)
+		}
+		suites = append(suites, *basicTests)
+	case OLMIntegration:
+		conf := OLMTestConfig{
+			Client:   runtimeClient,
+			CR:       obj,
+			CSV:      csv,
+			CRDsDir:  config.CRDsDir,
+			ProxyPod: proxyPodGlobal,
+			Bundle:   config.Bundle,
+		}
+		olmTests := NewOLMTestSuite(conf)
+		if schelpers.IsV1alpha2(config.Version) {
+			olmTests.ApplySelector(config.Selector)
+		}
+
+		olmTests.Run(context.TODO())
+		logs, err := ioutil.ReadAll(logReadWriter)
+		if err != nil {
+			olmTests.Log = fmt.Sprintf("failed to read log buffer: %v", err)
+		} else {
+			olmTests.Log = string(logs)
+		}
+		suites = append(suites, *olmTests)
+	}
+
+	// change logging back to main log
+	log.SetOutput(logFile)
+	// set up clean environment for every CR
+	if err := cleanupScorecard(); err != nil {
+		log.Errorf("Failed to cleanup resources: (%v)", err)
+	}
+	// reset cleanup functions
+	cleanupFns = []cleanupFn{}
+	// clear name of operator deployment
+	deploymentName = ""
+
+	return suites, nil
 }
