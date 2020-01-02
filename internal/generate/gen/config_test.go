@@ -20,46 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetInputPaths(t *testing.T) {
-	cases := []struct {
-		name        string
-		inputs      map[string]string
-		keys        []string
-		wantedPaths []string
-	}{
-		{"empty inputs", nil, nil, nil},
-		{
-			"one input with matching key",
-			map[string]string{"key": "path"},
-			[]string{"key"}, []string{"path"},
-		},
-		{
-			"empty inputs with no matching key",
-			nil,
-			[]string{"notexist"}, nil,
-		},
-		{
-			"one input with no matching key",
-			map[string]string{"key": "path"},
-			[]string{"notexist"}, nil,
-		},
-		{
-			"multiple inputs with subset of matching keys",
-			map[string]string{"key1": "path1", "key2": "path2"},
-			[]string{"key1"},
-			[]string{"path1"},
-		},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			cfg := Config{
-				Inputs: c.inputs,
-			}
-			assert.Equal(t, cfg.GetInputPaths(c.keys...), c.wantedPaths)
-		})
-	}
-}
-
 func TestFilterFuncs(t *testing.T) {
 	cases := []struct {
 		name           string

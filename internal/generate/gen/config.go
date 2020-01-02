@@ -41,19 +41,6 @@ type Config struct {
 	Filters FilterFuncs
 }
 
-// GetInputPaths returns all paths in c.Inputs for a set of keys.
-func (c Config) GetInputPaths(keys ...string) (paths []string) {
-	if len(c.Inputs) == 0 {
-		return
-	}
-	for _, key := range keys {
-		if path, ok := c.Inputs[key]; ok {
-			paths = append(paths, path)
-		}
-	}
-	return paths
-}
-
 // FilterFuncs is a slice of filter funcs.
 type FilterFuncs []func(string) bool
 
