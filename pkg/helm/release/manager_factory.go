@@ -27,6 +27,7 @@ import (
 	helmreleasev3 "helm.sh/helm/v3/pkg/release"
 	storagev3 "helm.sh/helm/v3/pkg/storage"
 	driverv3 "helm.sh/helm/v3/pkg/storage/driver"
+	"helm.sh/helm/v3/pkg/strvals"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apitypes "k8s.io/apimachinery/pkg/types"
@@ -45,7 +46,7 @@ import (
 // improves decoupling between reconciliation logic and the Helm backend
 // components used to manage releases.
 type ManagerFactory interface {
-	NewManager(r *unstructured.Unstructured) (Manager, error)
+	NewManager(r *unstructured.Unstructured, overrideValues map[string]string) (Manager, error)
 }
 
 type managerFactory struct {
@@ -58,7 +59,7 @@ func NewManagerFactory(mgr crmanager.Manager, chartDir string) ManagerFactory {
 	return &managerFactory{mgr, chartDir}
 }
 
-func (f managerFactory) NewManager(cr *unstructured.Unstructured) (Manager, error) {
+func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues map[string]string) (Manager, error) {
 	// Get both v2 and v3 storage backends
 	clientv1, err := v1.NewForConfig(f.mgr.GetConfig())
 	if err != nil {
@@ -94,10 +95,16 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured) (Manager, erro
 		return nil, fmt.Errorf("failed to get helm release name: %w", err)
 	}
 
-	values, ok := cr.Object["spec"].(map[string]interface{})
+	crValues, ok := cr.Object["spec"].(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("failed to get spec: expected map[string]interface{}")
 	}
+
+	expOverrides, err := parseOverrides(overrideValues)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse override values: %w", err)
+	}
+	values := mergeMaps(crValues, expOverrides)
 
 	actionConfig := &action.Configuration{
 		RESTClientGetter: rcg,
@@ -259,4 +266,34 @@ func shortenUID(uid apitypes.UID) string {
 		return strings.Replace(string(uid), "-", "", -1)
 	}
 	return strings.ToLower(base36.EncodeBytes(uidBytes))
+}
+
+func parseOverrides(in map[string]string) (map[string]interface{}, error) {
+	out := make(map[string]interface{})
+	for k, v := range in {
+		val := fmt.Sprintf("%s=%s", k, v)
+		if err := strvals.ParseIntoString(val, out); err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
+}
+
+func mergeMaps(a, b map[string]interface{}) map[string]interface{} {
+	out := make(map[string]interface{}, len(a))
+	for k, v := range a {
+		out[k] = v
+	}
+	for k, v := range b {
+		if v, ok := v.(map[string]interface{}); ok {
+			if bv, ok := out[k]; ok {
+				if bv, ok := bv.(map[string]interface{}); ok {
+					out[k] = mergeMaps(bv, v)
+					continue
+				}
+			}
+		}
+		out[k] = v
+	}
+	return out
 }

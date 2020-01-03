@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -41,9 +42,11 @@ type ReleaseHookFunc func(*rpb.Release) error
 // HelmOperatorReconciler reconciles custom resources as Helm releases.
 type HelmOperatorReconciler struct {
 	Client          client.Client
+	EventRecorder   record.EventRecorder
 	GVK             schema.GroupVersionKind
 	ManagerFactory  release.ManagerFactory
 	ReconcilePeriod time.Duration
+	OverrideValues  map[string]string
 	releaseHook     ReleaseHookFunc
 }
 
@@ -77,7 +80,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		return reconcile.Result{}, err
 	}
 
-	manager, err := r.ManagerFactory.NewManager(o)
+	manager, err := r.ManagerFactory.NewManager(o, r.OverrideValues)
 	if err != nil {
 		log.Error(err, "Failed to get release manager")
 		return reconcile.Result{}, err
@@ -168,6 +171,9 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 	}
 
 	if !manager.IsInstalled() {
+		for k, v := range r.OverrideValues {
+			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse", "Chart value %q overridden to %q by operator's watches.yaml", k, v)
+		}
 		installedRelease, err := manager.InstallRelease(context.TODO())
 		if err != nil {
 			log.Error(err, "Release failed")
@@ -213,6 +219,9 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 	}
 
 	if manager.IsUpdateRequired() {
+		for k, v := range r.OverrideValues {
+			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse", "Chart value %q overridden to %q by operator's watches.yaml", k, v)
+		}
 		previousRelease, updatedRelease, err := manager.UpdateRelease(context.TODO())
 		if err != nil {
 			log.Error(err, "Release failed")

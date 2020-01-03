@@ -49,22 +49,26 @@ type WatchOptions struct {
 	ManagerFactory          release.ManagerFactory
 	ReconcilePeriod         time.Duration
 	WatchDependentResources bool
+	OverrideValues          map[string]string
 }
 
 // Add creates a new helm operator controller and adds it to the manager
 func Add(mgr manager.Manager, options WatchOptions) error {
+	controllerName := fmt.Sprintf("%v-controller", strings.ToLower(options.GVK.Kind))
+
 	r := &HelmOperatorReconciler{
 		Client:          mgr.GetClient(),
+		EventRecorder:   mgr.GetEventRecorderFor(controllerName),
 		GVK:             options.GVK,
 		ManagerFactory:  options.ManagerFactory,
 		ReconcilePeriod: options.ReconcilePeriod,
+		OverrideValues:  options.OverrideValues,
 	}
 
 	// Register the GVK with the schema
 	mgr.GetScheme().AddKnownTypeWithName(options.GVK, &unstructured.Unstructured{})
 	metav1.AddToGroupVersion(mgr.GetScheme(), options.GVK.GroupVersion())
 
-	controllerName := fmt.Sprintf("%v-controller", strings.ToLower(options.GVK.Kind))
 	c, err := controller.New(controllerName, mgr, controller.Options{Reconciler: r})
 	if err != nil {
 		return err
