@@ -15,8 +15,11 @@
 package crd
 
 import (
+	"io/ioutil"
+	"math/rand"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -26,11 +29,66 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCRDGo(t *testing.T) {
-	tfDir, err := getTestFrameworkPath()
+const (
+	testAPIVersion = "cache.example.com/v1alpha1"
+	testKind       = "Memcached"
+)
+
+func TestGenerate(t *testing.T) {
+	tfDir := getTestFrameworkPath(t)
+	// Must change directories since the test framework dir is a sub-module.
+	wd, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer func() {
+		if err = os.Chdir(wd); err != nil {
+			t.Fatal(err)
+		}
+	}()
+	if err = os.Chdir(tfDir); err != nil {
+		t.Fatal(err)
+	}
+	tmp, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err = os.RemoveAll(tmp); err != nil {
+			t.Fatal(err)
+		}
+	}()
+	r, err := scaffold.NewResource(testAPIVersion, testKind)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cases := []struct {
+		description string
+		generator   gen.Generator
+	}{
+		{
+			"Generate Go CRD",
+			NewCRDGo(gen.Config{OutputDir: filepath.Join(tmp, strconv.Itoa(rand.Int()))}),
+		},
+		{
+			"Generate non-Go CRD",
+			NewCRDNonGo(gen.Config{OutputDir: filepath.Join(tmp, strconv.Itoa(rand.Int()))}, *r),
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.description, func(t *testing.T) {
+			err = c.generator.Generate()
+			if err != nil {
+				t.Errorf("Wanted nil error, got: %v", err)
+			}
+		})
+	}
+}
+
+func TestCRDGo(t *testing.T) {
+	tfDir := getTestFrameworkPath(t)
 	// Must change directories since the test framework dir is a sub-module.
 	wd, err := os.Getwd()
 	if err != nil {
@@ -45,20 +103,15 @@ func TestCRDGo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r, err := scaffold.NewResource("cache.example.com/v1alpha1", "Memcached")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	cfg := gen.Config{
-		Inputs: map[string]string{
-			APIsDirKey: filepath.Join(tfDir, "pkg", "apis"),
-		},
-	}
+	cfg := gen.Config{}
 	g := NewCRDGo(cfg)
 	fileMap, err := g.(crdGenerator).generateGo()
 	if err != nil {
 		t.Fatalf("Failed to execute CRD generator: %v", err)
+	}
+	r, err := scaffold.NewResource(testAPIVersion, testKind)
+	if err != nil {
+		t.Fatal(err)
 	}
 	if b, ok := fileMap[getFileNameForResource(*r)]; !ok {
 		t.Errorf("Failed to generate CRD for %s", r)
@@ -68,10 +121,7 @@ func TestCRDGo(t *testing.T) {
 }
 
 func TestCRDNonGo(t *testing.T) {
-	tfDir, err := getTestFrameworkPath()
-	if err != nil {
-		t.Fatal(err)
-	}
+	tfDir := getTestFrameworkPath(t)
 	tfCRDsDir := filepath.Join(tfDir, "deploy", "crds")
 
 	cases := []struct {
@@ -205,12 +255,13 @@ spec:
 
 // getTestFrameworkPath constructs the path to the SDK's test-framework,
 // which containsa  mock operator for testing, from the working directory path.
-func getTestFrameworkPath() (string, error) {
+func getTestFrameworkPath(t *testing.T) string {
+	t.Helper()
 	absPath, err := os.Getwd()
 	if err != nil {
-		return "", err
+		t.Fatal(err)
 	}
 	absPath = absPath[:strings.Index(absPath, "internal")]
 	tfDir := filepath.Join(absPath, "test", "test-framework")
-	return tfDir, nil
+	return tfDir
 }

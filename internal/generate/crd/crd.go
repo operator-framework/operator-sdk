@@ -66,7 +66,7 @@ func NewCRDGo(cfg gen.Config) gen.Generator {
 	if crdsDir, ok := g.Inputs[CRDsDirKey]; !ok || crdsDir == "" {
 		g.Inputs[CRDsDirKey] = scaffold.CRDsDir
 	}
-	if APIsDir, ok := g.Inputs[APIsDirKey]; !ok || APIsDir == "" {
+	if apisDir, ok := g.Inputs[APIsDirKey]; !ok || apisDir == "" {
 		g.Inputs[APIsDirKey] = scaffold.ApisDir
 	}
 	if g.OutputDir == "" {
