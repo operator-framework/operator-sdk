@@ -41,28 +41,28 @@ func TestGenerateRoleScaffold(t *testing.T) {
 			chart:                  failChart(),
 			expectSkipDefaultRules: false,
 			expectIsClusterScoped:  false,
-			expectLenCustomRules:   2,
+			expectLenCustomRules:   3,
 		},
 		{
 			name:                   "skip rule for unknown API",
 			chart:                  unknownAPIChart(),
 			expectSkipDefaultRules: true,
 			expectIsClusterScoped:  false,
-			expectLenCustomRules:   3,
+			expectLenCustomRules:   4,
 		},
 		{
 			name:                   "namespaced manifest",
 			chart:                  namespacedChart(),
 			expectSkipDefaultRules: true,
 			expectIsClusterScoped:  false,
-			expectLenCustomRules:   3,
+			expectLenCustomRules:   4,
 		},
 		{
 			name:                   "cluster scoped manifest",
 			chart:                  clusterScopedChart(),
 			expectSkipDefaultRules: true,
 			expectIsClusterScoped:  true,
-			expectLenCustomRules:   4,
+			expectLenCustomRules:   5,
 		},
 	}
 
@@ -77,7 +77,7 @@ func TestGenerateRoleScaffold(t *testing.T) {
 		t.Run(fmt.Sprintf("%s with broken discovery client", tc.name), func(t *testing.T) {
 			roleScaffold := helm.GenerateRoleScaffold(brokenDiscoveryClient, tc.chart)
 			assert.Equal(t, false, roleScaffold.SkipDefaultRules)
-			assert.Equal(t, 2, len(roleScaffold.CustomRules))
+			assert.Equal(t, 3, len(roleScaffold.CustomRules))
 			assert.Equal(t, false, roleScaffold.IsClusterScoped)
 		})
 	}
