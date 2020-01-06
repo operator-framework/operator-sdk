@@ -16,6 +16,7 @@
 - Fail `operator-sdk olm-catalog gen-csv` if it is not run from a project's root, which the command already assumes is the case. ([#2322](https://github.com/operator-framework/operator-sdk/pull/2322))
 - **Breaking Change:** Extract custom Ansible module `k8s_status`, which is now provided by the `operator_sdk.util` Ansible collection. See [developer_guide](https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/dev/developer_guide.md#custom-resource-status-management) for new usage. ([#2310](https://github.com/operator-framework/operator-sdk/pull/2310))
 - Upgrade minimal Ansible version in the init projects from `2.6` to `2.9` for collections support. ([#2310](https://github.com/operator-framework/operator-sdk/pull/2310))
+- Improve skip metrics logs when running the operator locally in order to make clear the information. ([#2190](https://github.com/operator-framework/operator-sdk/pull/2190))
 
 ### Deprecated
 
@@ -23,10 +24,8 @@
 
 ### Removed
 
-
 ### Bug Fixes
 - Fix `operator-sdk build`'s `--image-build-args` to support spaces within quotes like `--label some.name="First Last"`. ([#2312](https://github.com/operator-framework/operator-sdk/pull/2312))
-
 
 ## v0.13.0
 
