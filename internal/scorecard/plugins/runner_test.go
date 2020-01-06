@@ -129,6 +129,9 @@ func TestDuplicateCR(t *testing.T) {
 
 func createCRFile(contents string) (*os.File, error) {
 	tmpFile0, err := ioutil.TempFile(os.TempDir(), "runnerTest-")
+	if err != nil {
+		return nil, err
+	}
 
 	fmt.Println("Created file: " + tmpFile0.Name())
 
