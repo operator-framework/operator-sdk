@@ -103,8 +103,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 		config.Namespace = tmpNamespaceVar
 	}
 
-	err = setupRuntimeClient()
-	if err != nil {
+	if err := setupRuntimeClient(); err != nil {
 		return scapiv1alpha1.ScorecardOutput{}, err
 	}
 
