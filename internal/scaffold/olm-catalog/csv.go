@@ -27,6 +27,7 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
 
 	"github.com/blang/semver"
@@ -392,7 +393,11 @@ func (s *CSV) updateCSVFromManifests(cfg *CSVConfig, csv *olmapiv1alpha1.Cluster
 		case "Deployment":
 			err = deployments(manifests).apply(csv)
 		case "CustomResourceDefinition":
-			err = crds(manifests).apply(csv)
+			// TODO(estroz): customresourcedefinition should not be updated for
+			// Ansible and Helm CSV's until annotated updates are implemented.
+			if projutil.IsOperatorGo() {
+				err = crds(manifests).apply(csv)
+			}
 		default:
 			if _, ok := crGVKSet[gvk]; ok {
 				crUpdaters = append(crUpdaters, manifests...)
