@@ -18,6 +18,8 @@ import (
 	"fmt"
 
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/internal/genutil"
+
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -45,5 +47,10 @@ func crdsFunc(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 
-	return genutil.CRDGen()
+	// Skip usage printing on error, since this command will never fail from
+	// improper CLI usage.
+	if err := genutil.CRDGen(); err != nil {
+		log.Fatal(err)
+	}
+	return nil
 }

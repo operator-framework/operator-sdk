@@ -96,7 +96,7 @@ type MemcachedSpec struct {
 	Size int32 `json:"size"`
 }
 type MemcachedStatus struct {
-	// Nodes are the names of the memcached pods 
+	// Nodes are the names of the memcached pods
 	Nodes []string `json:"nodes"`
 }
 ```
@@ -107,7 +107,22 @@ After modifying the `*_types.go` file always run the following command to update
 $ operator-sdk generate k8s
 ```
 
-### OpenAPI validation
+### Updating CRD manifests
+
+Now that `MemcachedSpec` and `MemcachedStatus` have fields and possibly annotations, the CRD corresponding to the API's group and kind must be updated. To do so, run the following command:
+
+```console
+$ operator-sdk generate crds
+```
+
+**Notes:**
+- - Your CRD *must* specify exactly one [storage version][crd-storage-version]. Use the `+kubebuilder:storageversion` [marker][crd-markers] to indicate the GVK that should be used to store data by the API server. This marker should be in a comment above your `Memcached` type.
+
+[crd-storage-version]:https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definition-versioning/#writing-reading-and-updating-versioned-customresourcedefinition-objects
+[crd-markers]:https://book.kubebuilder.io/reference/markers/crd.html
+[api-rules]: https://github.com/kubernetes/kubernetes/tree/36981002246682ed7dc4de54ccc2a96c1a0cbbdb/api/api-rules
+
+#### OpenAPI validation
 
 OpenAPIv3 schemas are added to CRD manifests in the `spec.validation` block when the manifests are generated. This validation block allows Kubernetes to validate the properties in a Memcached Custom Resource when it is created or updated.
 
@@ -146,7 +161,6 @@ To learn more about OpenAPI v3.0 validation schemas in Custom Resource Definitio
 [generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
 [markers]: https://book.kubebuilder.io/reference/markers.html
 [crd-markers]: https://book.kubebuilder.io/reference/markers/crd-validation.html
-[api-rules]: https://github.com/kubernetes/kubernetes/tree/36981002246682ed7dc4de54ccc2a96c1a0cbbdb/api/api-rules
 
 ## Add a new Controller
 
