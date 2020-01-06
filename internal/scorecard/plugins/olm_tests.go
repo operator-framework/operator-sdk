@@ -15,14 +15,18 @@
 package scplugins
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/operator-framework/api/pkg/manifests"
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	"github.com/sirupsen/logrus"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	v1 "k8s.io/api/core/v1"
@@ -45,9 +49,29 @@ type OLMTestConfig struct {
 	CSV      *olmapiv1alpha1.ClusterServiceVersion
 	CRDsDir  string
 	ProxyPod *v1.Pod
+	Bundle   string
 }
 
 // Test Defintions
+
+// BundleValidationTest is a scorecard test that validates a bundle
+type BundleValidationTest struct {
+	schelpers.TestInfo
+	OLMTestConfig
+}
+
+// NewBundleValidationTest returns a new BundleValidationTest object
+func NewBundleValidationTest(conf OLMTestConfig) *BundleValidationTest {
+	return &BundleValidationTest{
+		OLMTestConfig: conf,
+		TestInfo: schelpers.TestInfo{
+			Name:        "Bundle Validation Test",
+			Description: "Validates bundle contents",
+			Cumulative:  false,
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(BundleValidationTest{})},
+		},
+	}
+}
 
 // CRDsHaveValidationTest is a scorecard test that verifies that all CRDs have a validation section
 type CRDsHaveValidationTest struct {
@@ -63,12 +87,12 @@ func NewCRDsHaveValidationTest(conf OLMTestConfig) *CRDsHaveValidationTest {
 			Name:        "Provided APIs have validation",
 			Description: "All CRDs have an OpenAPI validation subsection",
 			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName},
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(CRDsHaveValidationTest{})},
 		},
 	}
 }
 
-// CRDsHaveResourcesTest is a scorecard test that verifies that the CSV lists used resources in its owned CRDs secyion
+// CRDsHaveResourcesTest is a scorecard test that verifies that the CSV lists used resources in its owned CRDs section
 type CRDsHaveResourcesTest struct {
 	schelpers.TestInfo
 	OLMTestConfig
@@ -82,26 +106,7 @@ func NewCRDsHaveResourcesTest(conf OLMTestConfig) *CRDsHaveResourcesTest {
 			Name:        "Owned CRDs have resources listed",
 			Description: "All Owned CRDs contain a resources subsection",
 			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName},
-		},
-	}
-}
-
-// AnnotationsContainExamplesTest is a scorecard test that verifies that the CSV contains examples via the alm-examples annotation
-type AnnotationsContainExamplesTest struct {
-	schelpers.TestInfo
-	OLMTestConfig
-}
-
-// NewAnnotationsContainExamplesTest returns a new AnnotationsContainExamplesTest object
-func NewAnnotationsContainExamplesTest(conf OLMTestConfig) *AnnotationsContainExamplesTest {
-	return &AnnotationsContainExamplesTest{
-		OLMTestConfig: conf,
-		TestInfo: schelpers.TestInfo{
-			Name:        "CRs have at least 1 example",
-			Description: "The CSV's metadata contains an alm-examples section",
-			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName},
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(CRDsHaveResourcesTest{})},
 		},
 	}
 }
@@ -120,7 +125,7 @@ func NewSpecDescriptorsTest(conf OLMTestConfig) *SpecDescriptorsTest {
 			Name:        "Spec fields with descriptors",
 			Description: "All spec fields have matching descriptors in the CSV",
 			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName},
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(SpecDescriptorsTest{})},
 		},
 	}
 }
@@ -139,7 +144,7 @@ func NewStatusDescriptorsTest(conf OLMTestConfig) *StatusDescriptorsTest {
 			Name:        "Status fields with descriptors",
 			Description: "All status fields have matching descriptors in the CSV",
 			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName},
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(StatusDescriptorsTest{})},
 		},
 	}
 }
@@ -165,9 +170,9 @@ func NewOLMTestSuite(conf OLMTestConfig) *schelpers.TestSuite {
 		"Test suite checks if an operator's CSV follows best practices",
 	)
 
+	ts.AddTest(NewBundleValidationTest(conf), 1)
 	ts.AddTest(NewCRDsHaveValidationTest(conf), 1.25)
 	ts.AddTest(NewCRDsHaveResourcesTest(conf), 1)
-	ts.AddTest(NewAnnotationsContainExamplesTest(conf), 1)
 	ts.AddTest(NewSpecDescriptorsTest(conf), 1)
 	ts.AddTest(NewStatusDescriptorsTest(conf), 1)
 
@@ -175,6 +180,42 @@ func NewOLMTestSuite(conf OLMTestConfig) *schelpers.TestSuite {
 }
 
 // Test Implentations
+
+// Run - implements Test interface
+func (t *BundleValidationTest) Run(ctx context.Context) *schelpers.TestResult {
+	res := &schelpers.TestResult{Test: t, MaximumPoints: 1}
+
+	if t.OLMTestConfig.Bundle == "" {
+		res.Errors = append(res.Errors, errors.New("unable to find the OLM 'bundle' directory which is required for this test"))
+		return res
+	}
+
+	// Get the validation API log because it contains
+	// validation output that we include into the scorecard test output.
+	validationLogOutput := new(bytes.Buffer)
+	origOutput := logrus.StandardLogger().Out
+	logrus.SetOutput(validationLogOutput)
+	defer logrus.SetOutput(origOutput)
+
+	_, _, validationResults := manifests.GetManifestsDir(t.OLMTestConfig.Bundle)
+	for _, result := range validationResults {
+		for _, e := range result.Errors {
+			res.Errors = append(res.Errors, &e)
+		}
+
+		for _, w := range result.Warnings {
+			res.Suggestions = append(res.Suggestions, w.Error())
+		}
+	}
+
+	res.Log = validationLogOutput.String()
+
+	if len(res.Errors) == 0 {
+		res.EarnedPoints++
+	}
+
+	return res
+}
 
 // matchVersion checks if a CRD contains a specified version in a case insensitive manner
 func matchVersion(version string, crd *apiextv1beta1.CustomResourceDefinition) bool {
@@ -376,18 +417,6 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 		resourcesArr = append(resourcesArr, gvk)
 	}
 	return resourcesArr, nil
-}
-
-// Run - implements Test interface
-func (t *AnnotationsContainExamplesTest) Run(ctx context.Context) *schelpers.TestResult {
-	res := &schelpers.TestResult{Test: t, MaximumPoints: 1}
-	if t.CSV.Annotations != nil && t.CSV.Annotations["alm-examples"] != "" {
-		res.EarnedPoints = 1
-	}
-	if res.EarnedPoints == 0 {
-		res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add an alm-examples annotation to your CSV to pass the %s test", t.GetName()))
-	}
-	return res
 }
 
 // Run - implements Test interface

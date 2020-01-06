@@ -114,6 +114,7 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 			ManagerFactory:          release.NewManagerFactory(mgr, w.ChartDir),
 			ReconcilePeriod:         flags.ReconcilePeriod,
 			WatchDependentResources: w.WatchDependentResources,
+			OverrideValues:          w.OverrideValues,
 		})
 		if err != nil {
 			log.Error(err, "Failed to add manager factory to controller.")

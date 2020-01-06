@@ -42,6 +42,7 @@ type TestResult struct {
 	MaximumPoints int
 	Suggestions   []string
 	Errors        []error
+	Log           string
 }
 
 // TestInfo contains information about the scorecard test

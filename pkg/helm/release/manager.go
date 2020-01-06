@@ -27,6 +27,7 @@ import (
 	"helm.sh/helm/v3/pkg/kube"
 	rpb "helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,11 +37,6 @@ import (
 
 	"github.com/mattbaird/jsonpatch"
 	"github.com/operator-framework/operator-sdk/pkg/helm/internal/types"
-)
-
-var (
-	// ErrNotFound indicates the release was not found.
-	ErrNotFound = errors.New("release not found")
 )
 
 // Manager manages a Helm release. It can install, update, reconcile,
@@ -109,7 +105,7 @@ func (m *manager) Sync(ctx context.Context) error {
 
 	// Load the most recently deployed release from the storage backend.
 	deployedRelease, err := m.getDeployedRelease()
-	if err == ErrNotFound {
+	if errors.Is(err, driver.ErrReleaseNotFound) {
 		return nil
 	}
 	if err != nil {
@@ -138,7 +134,7 @@ func (m manager) getDeployedRelease() (*rpb.Release, error) {
 	deployedRelease, err := m.storageBackend.Deployed(m.releaseName)
 	if err != nil {
 		if strings.Contains(err.Error(), "has no deployed releases") {
-			return nil, ErrNotFound
+			return nil, driver.ErrReleaseNotFound
 		}
 		return nil, err
 	}
@@ -299,13 +295,13 @@ func (m manager) UninstallRelease(ctx context.Context) (*rpb.Release, error) {
 	// Get history of this release
 	h, err := m.storageBackend.History(m.releaseName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get release history: %s", err)
+		return nil, fmt.Errorf("failed to get release history: %w", err)
 	}
 
 	// If there is no history, the release has already been uninstalled,
-	// so return ErrNotFound.
+	// so return ErrReleaseNotFound.
 	if len(h) == 0 {
-		return nil, ErrNotFound
+		return nil, driver.ErrReleaseNotFound
 	}
 
 	uninstall := action.NewUninstall(m.actionConfig)

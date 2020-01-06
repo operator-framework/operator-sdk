@@ -46,6 +46,8 @@ type ScorecardTestResult struct {
 	Errors []string `json:"errors,omitempty"`
 	// Suggestions is a list of suggestions for the user to improve their score (if applicable)
 	Suggestions []string `json:"suggestions,omitempty"`
+	// Log holds a log produced from the test (if applicable)
+	Log string `json:"log,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

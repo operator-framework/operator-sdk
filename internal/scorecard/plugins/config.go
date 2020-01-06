@@ -37,6 +37,7 @@ const (
 	DeployDirOpt          = "deploy-dir"
 	BasicTestsOpt         = "basic-tests"
 	OLMTestsOpt           = "olm-tests"
+	BundleOpt             = "bundle"
 )
 
 type BasicAndOLMPluginConfig struct {
@@ -51,6 +52,7 @@ type BasicAndOLMPluginConfig struct {
 	ProxyPullPolicy    v1.PullPolicy   `mapstructure:"proxy-pull-policy"`
 	CRDsDir            string          `mapstructure:"crds-dir"`
 	DeployDir          string          `mapstructure:"deploy-dir"`
+	Bundle             string          `mapstructure:"bundle"`
 	Selector           labels.Selector `mapstructure:"selector"`
 	Version            string          `mapstructure:"version"`
 	ListOpt            bool            `mapstructure:"list"`

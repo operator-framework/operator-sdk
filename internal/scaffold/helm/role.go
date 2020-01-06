@@ -57,6 +57,13 @@ var DefaultRoleScaffold = scaffold.Role{
 			Resources: []string{"configmaps", "secrets"},
 			Verbs:     []string{rbacv1.VerbAll},
 		},
+
+		// We need this rule for creating Kubernetes events
+		{
+			APIGroups: []string{""},
+			Resources: []string{"events"},
+			Verbs:     []string{"create"},
+		},
 	},
 }
 

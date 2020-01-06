@@ -4,6 +4,8 @@
 
 This document describes the semantics of Cluster Service Version (CSV) [code annotations][code-annotations-design] and lists all possible annotations.
 
+**Note:** CSV annotations can only be used in Go Operator projects. Annotations for Ansible and Helm Operator projects will be added in the future.
+
 ## Usage
 
 All annotations have a `+operator-sdk:gen-csv` prefix, denoting that they're parsed while executing [`operator-sdk olm-catalog gen-csv`][sdk-cli-ref].
