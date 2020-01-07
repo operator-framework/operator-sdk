@@ -49,7 +49,8 @@ func (e externalPluginEnv) String() string {
 	return fmt.Sprintf("%s=%s", e.Name, e.Value)
 }
 
-// validateConfig takes a viper config for a plugin and returns a nil error if valid or an error explaining why the config is invalid
+// validateConfig takes a viper config for a plugin and returns a nil error if valid or an error
+// explaining why the config is invalid
 func validateConfig(config pluginConfig, idx int, version string) error {
 	// find plugin config type
 	pluginType := ""
@@ -68,7 +69,9 @@ func validateConfig(config pluginConfig, idx int, version string) error {
 		}
 		pluginType = "external"
 		if schelpers.IsV1alpha2(version) {
-			return fmt.Errorf("revert to v1alpha1 to use external plugins: external plugins are not currently supported with v1alpha2")
+			return fmt.Errorf(
+				"revert to v1alpha1 to use external plugins: external plugins are not currently supported" +
+					" with v1alpha2")
 		}
 	}
 	if pluginType == "" {
@@ -76,7 +79,8 @@ func validateConfig(config pluginConfig, idx int, version string) error {
 		if err != nil {
 			return fmt.Errorf("plugin #%d has a missing or incorrect type", idx)
 		}
-		return fmt.Errorf("plugin #%d has a missing or incorrect type. Invalid plugin config: %s", idx, marshalledConfig)
+		return fmt.Errorf("plugin #%d has a missing or incorrect type. Invalid plugin config: %s",
+			idx, marshalledConfig)
 	}
 	return nil
 }

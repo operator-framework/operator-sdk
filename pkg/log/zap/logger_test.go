@@ -256,11 +256,13 @@ func TestGetConfig(t *testing.T) {
 			// the same way that the expected encoder does. In addition to
 			// testing that the correct entry encoding (json vs. console) is
 			// used, this also tests that the correct time encoding is used.
-			expectedEncoderOut, err := tc.fields.expected.encoder.EncodeEntry(entry, []zapcore.Field{{Key: "fieldKey", Type: zapcore.StringType, String: "fieldValue"}})
+			expectedEncoderOut, err := tc.fields.expected.encoder.EncodeEntry(entry, []zapcore.Field{{Key: "fieldKey",
+				Type: zapcore.StringType, String: "fieldValue"}})
 			if err != nil {
 				t.Fatalf("Unexpected error encoding entry with expected encoder: %s", err)
 			}
-			actualEncoderOut, err := cfg.encoder.EncodeEntry(entry, []zapcore.Field{{Key: "fieldKey", Type: zapcore.StringType, String: "fieldValue"}})
+			actualEncoderOut, err := cfg.encoder.EncodeEntry(entry, []zapcore.Field{{Key: "fieldKey",
+				Type: zapcore.StringType, String: "fieldValue"}})
 			if err != nil {
 				t.Fatalf("Unexpected error encoding entry with actual encoder: %s", err)
 			}

@@ -34,7 +34,8 @@ func ValidateVersion(version string) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("invalid scorecard version (%s); valid values: %s", version, strings.Join(ScorecardVersions, ", "))
+	return fmt.Errorf("invalid scorecard version (%s); valid values: %s", version,
+		strings.Join(ScorecardVersions, ", "))
 
 }
 

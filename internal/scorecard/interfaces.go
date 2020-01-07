@@ -59,7 +59,8 @@ func (p externalPlugin) Run() scapiv1alpha1.ScorecardOutput {
 	err := cmd.Run()
 	if err != nil {
 		name := filepath.Base(p.config.Command)
-		logs := fmt.Sprintf("%s\nError: %s\nStdout: %s\nStderr: %s", p.config, err, stdout.String(), stderr.String())
+		logs := fmt.Sprintf("%s\nError: %s\nStdout: %s\nStderr: %s", p.config, err, stdout.String(),
+			stderr.String())
 		// output error to main logger as well for human-readable output
 		log.Errorf("Plugin `%s` failed\nLogs: %s", filepath.Base(p.config.Command), logs)
 		return failedPlugin(name, logs)
@@ -69,9 +70,11 @@ func (p externalPlugin) Run() scapiv1alpha1.ScorecardOutput {
 	err = json.Unmarshal(stdout.Bytes(), &result)
 	if err != nil {
 		name := filepath.Base(p.config.Command)
-		logs := fmt.Sprintf("%s\nError: %s\nStdout: %s\nStderr: %s", p.config, err, stdout.String(), stderr.String())
+		logs := fmt.Sprintf("%s\nError: %s\nStdout: %s\nStderr: %s", p.config, err, stdout.String(),
+			stderr.String())
 		// output error to main logger as well for human-readable output
-		log.Errorf("Output from plugin `%s` failed to unmarshal\nLogs: %s", filepath.Base(p.config.Command), logs)
+		log.Errorf("Output from plugin `%s` failed to unmarshal\nLogs: %s",
+			filepath.Base(p.config.Command), logs)
 		return failedPlugin(name, logs)
 	}
 	stderrString := stderr.String()
@@ -118,7 +121,8 @@ func setConfigDefaults(config *scplugins.BasicAndOLMPluginConfig, kubeconfig str
 		config.InitTimeout = 60
 	}
 	if config.ProxyImage == "" {
-		config.ProxyImage = fmt.Sprintf("quay.io/operator-framework/scorecard-proxy:%s", strings.TrimSuffix(version.Version, "+git"))
+		config.ProxyImage = fmt.Sprintf("quay.io/operator-framework/scorecard-proxy:%s",
+			strings.TrimSuffix(version.Version, "+git"))
 	}
 	if config.ProxyPullPolicy == "" {
 		config.ProxyPullPolicy = v1.PullAlways

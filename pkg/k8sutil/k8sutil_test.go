@@ -68,7 +68,8 @@ func TestGetOperatorName(t *testing.T) {
 		_ = os.Setenv(test.envVarKey, test.envVarValue)
 		operatorName, err := GetOperatorName()
 		if !(operatorName == test.expectedOutput.operatorName && reflect.DeepEqual(err, test.expectedOutput.err)) {
-			t.Errorf("Test %s failed, expected output: %s,%v; got: %s,%v", test.name, test.expectedOutput.operatorName, test.expectedOutput.err, operatorName, err)
+			t.Errorf("Test %s failed, expected output: %s,%v; got: %s,%v", test.name,
+				test.expectedOutput.operatorName, test.expectedOutput.err, operatorName, err)
 		}
 		_ = os.Unsetenv(test.envVarKey)
 	}

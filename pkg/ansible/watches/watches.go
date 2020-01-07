@@ -160,7 +160,8 @@ func (w *Watch) Validate() error {
 		// only fail if Vars not set
 		err = verifyAnsiblePath(w.Finalizer.Playbook, w.Finalizer.Role)
 		if err != nil && len(w.Finalizer.Vars) == 0 {
-			log.Error(err, fmt.Sprintf("Invalid ansible path on Finalizer for GVK: %v", w.GroupVersionKind.String()))
+			log.Error(err, fmt.Sprintf("Invalid ansible path on Finalizer for GVK: %v",
+				w.GroupVersionKind.String()))
 			return err
 		}
 	}
@@ -302,17 +303,20 @@ func getAnsibleVerbosity(gvk schema.GroupVersionKind, defValue int) int {
 	return ansibleVerbosity
 }
 
-// getIntegerEnvWithDefault returns value for MaxWorkers/Ansibleverbosity based on if envVar is set or a defvalue is used.
+// getIntegerEnvWithDefault returns value for MaxWorkers/Ansibleverbosity based on if envVar is set
+// sor a defvalue is used.
 func getIntegerEnvWithDefault(envVar string, defValue int) int {
 	val := defValue
 	if envVal, ok := os.LookupEnv(envVar); ok {
 		if i, err := strconv.Atoi(envVal); err != nil {
-			log.Info("Could not parse environment variable as an integer; using default value", "envVar", envVar, "default", defValue)
+			log.Info("Could not parse environment variable as an integer; using default value",
+				"envVar", envVar, "default", defValue)
 		} else {
 			val = i
 		}
 	} else if !ok {
-		log.Info("Environment variable not set; using default value", "envVar", envVar, "default", defValue)
+		log.Info("Environment variable not set; using default value", "envVar", envVar,
+			"default", defValue)
 	}
 	return val
 }

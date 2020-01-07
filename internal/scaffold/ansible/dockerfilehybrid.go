@@ -100,4 +100,4 @@ COPY playbook.yml ${HOME}/playbook.yml[[ end ]]
 ENTRYPOINT ["/tini", "--", "/usr/local/bin/entrypoint"]
 
 USER ${USER_UID}
-`
+` // nolint:golint

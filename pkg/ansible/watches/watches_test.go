@@ -56,25 +56,30 @@ func TestNew(t *testing.T) {
 				t.Fatalf("Unexpected GVK %v expected %v", watch.GroupVersionKind, tc.gvk)
 			}
 			if watch.MaxRunnerArtifacts != maxRunnerArtifactsDefault {
-				t.Fatalf("Unexpected maxRunnerArtifacts %v expected %v", watch.MaxRunnerArtifacts, maxRunnerArtifactsDefault)
+				t.Fatalf("Unexpected maxRunnerArtifacts %v expected %v", watch.MaxRunnerArtifacts,
+					maxRunnerArtifactsDefault)
 			}
 			if watch.MaxWorkers != maxWorkersDefault {
 				t.Fatalf("Unexpected maxWorkers %v expected %v", watch.MaxWorkers, maxWorkersDefault)
 			}
 			if watch.ReconcilePeriod != expectedReconcilePeriod {
-				t.Fatalf("Unexpected reconcilePeriod %v expected %v", watch.ReconcilePeriod, expectedReconcilePeriod)
+				t.Fatalf("Unexpected reconcilePeriod %v expected %v", watch.ReconcilePeriod,
+					expectedReconcilePeriod)
 			}
 			if watch.ManageStatus != manageStatusDefault {
 				t.Fatalf("Unexpected manageStatus %v expected %v", watch.ManageStatus, manageStatusDefault)
 			}
 			if watch.WatchDependentResources != watchDependentResourcesDefault {
-				t.Fatalf("Unexpected watchDependentResources %v expected %v", watch.WatchDependentResources, watchDependentResourcesDefault)
+				t.Fatalf("Unexpected watchDependentResources %v expected %v", watch.WatchDependentResources,
+					watchDependentResourcesDefault)
 			}
 			if watch.WatchClusterScopedResources != watchClusterScopedResourcesDefault {
-				t.Fatalf("Unexpected watchClusterScopedResources %v expected %v", watch.WatchClusterScopedResources, watchClusterScopedResourcesDefault)
+				t.Fatalf("Unexpected watchClusterScopedResources %v expected %v",
+					watch.WatchClusterScopedResources, watchClusterScopedResourcesDefault)
 			}
 			if watch.AnsibleVerbosity != ansibleVerbosityDefault {
-				t.Fatalf("Unexpected ansibleVerbosity %v expected %v", watch.AnsibleVerbosity, ansibleVerbosityDefault)
+				t.Fatalf("Unexpected ansibleVerbosity %v expected %v", watch.AnsibleVerbosity,
+					ansibleVerbosityDefault)
 			}
 
 			err := watch.Validate()
@@ -382,33 +387,44 @@ func TestLoad(t *testing.T) {
 				gvk := expectedWatch.GroupVersionKind
 				gotWatch := watchSlice[idx]
 				if gotWatch.GroupVersionKind != gvk {
-					t.Fatalf("Unexpected GVK: \nunexpected GVK: %#v\nexpected GVK: %#v", gotWatch.GroupVersionKind, gvk)
+					t.Fatalf("Unexpected GVK: \nunexpected GVK: %#v\nexpected GVK: %#v",
+						gotWatch.GroupVersionKind, gvk)
 				}
 				if gotWatch.Role != expectedWatch.Role {
-					t.Fatalf("The GVK: %v unexpected Role: %v expected Role: %v", gvk, gotWatch.Role, expectedWatch.Role)
+					t.Fatalf("The GVK: %v unexpected Role: %v expected Role: %v", gvk, gotWatch.Role,
+						expectedWatch.Role)
 				}
 				if gotWatch.Playbook != expectedWatch.Playbook {
-					t.Fatalf("The GVK: %v unexpected Playbook: %v expected Playbook: %v", gvk, gotWatch.Playbook, expectedWatch.Playbook)
+					t.Fatalf("The GVK: %v unexpected Playbook: %v expected Playbook: %v", gvk, gotWatch.Playbook,
+						expectedWatch.Playbook)
 				}
 				if gotWatch.ManageStatus != expectedWatch.ManageStatus {
-					t.Fatalf("The GVK: %v\nunexpected manageStatus:%#v\nexpected manageStatus: %#v", gvk, gotWatch.ManageStatus, expectedWatch.ManageStatus)
+					t.Fatalf("The GVK: %v\nunexpected manageStatus:%#v\nexpected manageStatus: %#v", gvk,
+						gotWatch.ManageStatus, expectedWatch.ManageStatus)
 				}
 				if gotWatch.Finalizer != expectedWatch.Finalizer {
-					if gotWatch.Finalizer.Name != expectedWatch.Finalizer.Name || gotWatch.Finalizer.Playbook != expectedWatch.Finalizer.Playbook || gotWatch.Finalizer.Role != expectedWatch.Finalizer.Role || reflect.DeepEqual(gotWatch.Finalizer.Vars["sentinel"], expectedWatch.Finalizer.Vars["sentininel"]) {
-						t.Fatalf("The GVK: %v\nunexpected finalizer: %#v\nexpected finalizer: %#v", gvk, gotWatch.Finalizer, expectedWatch.Finalizer)
+					if gotWatch.Finalizer.Name != expectedWatch.Finalizer.Name || gotWatch.Finalizer.Playbook !=
+						expectedWatch.Finalizer.Playbook || gotWatch.Finalizer.Role !=
+						expectedWatch.Finalizer.Role || reflect.DeepEqual(gotWatch.Finalizer.Vars["sentinel"],
+							expectedWatch.Finalizer.Vars["sentininel"]) {
+						t.Fatalf("The GVK: %v\nunexpected finalizer: %#v\nexpected finalizer: %#v", gvk,
+							gotWatch.Finalizer, expectedWatch.Finalizer)
 					}
 				}
 				if gotWatch.ReconcilePeriod != expectedWatch.ReconcilePeriod {
-					t.Fatalf("The GVK: %v unexpected reconcile period: %v expected reconcile period: %v", gvk, gotWatch.ReconcilePeriod, expectedWatch.ReconcilePeriod)
+					t.Fatalf("The GVK: %v unexpected reconcile period: %v expected reconcile period: %v", gvk,
+						gotWatch.ReconcilePeriod, expectedWatch.ReconcilePeriod)
 				}
 
 				if expectedWatch.MaxWorkers == 0 {
 					if gotWatch.MaxWorkers != tc.maxWorkers {
-						t.Fatalf("Unexpected max workers: %v expected workers: %v", gotWatch.MaxWorkers, tc.maxWorkers)
+						t.Fatalf("Unexpected max workers: %v expected workers: %v", gotWatch.MaxWorkers,
+							tc.maxWorkers)
 					}
 				} else {
 					if gotWatch.MaxWorkers != expectedWatch.MaxWorkers {
-						t.Fatalf("Unexpected max workers: %v expected workers: %v", gotWatch.MaxWorkers, expectedWatch.MaxWorkers)
+						t.Fatalf("Unexpected max workers: %v expected workers: %v", gotWatch.MaxWorkers,
+							expectedWatch.MaxWorkers)
 					}
 				}
 			}

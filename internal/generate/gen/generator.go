@@ -90,7 +90,8 @@ func (g *cachedRunner) init() {
 			}
 			// make per-generation output rule markers
 			for ruleName, rule := range g.allOutputRules {
-				ruleMarker := markers.Must(markers.MakeDefinition(fmt.Sprintf("output:%s:%s", genName, ruleName), markers.DescribesPackage, rule))
+				ruleMarker := markers.Must(markers.MakeDefinition(fmt.Sprintf("output:%s:%s", genName,
+					ruleName), markers.DescribesPackage, rule))
 				if err := g.optionsRegistry.Register(ruleMarker); err != nil {
 					panic(err)
 				}

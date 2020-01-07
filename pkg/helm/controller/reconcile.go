@@ -187,7 +187,8 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 
 	if !manager.IsInstalled() {
 		for k, v := range r.OverrideValues {
-			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse", "Chart value %q overridden to %q by operator's watches.yaml", k, v)
+			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse",
+				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
 		}
 		installedRelease, err := manager.InstallRelease(context.TODO())
 		if err != nil {
@@ -235,7 +236,8 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 
 	if manager.IsUpdateRequired() {
 		for k, v := range r.OverrideValues {
-			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse", "Chart value %q overridden to %q by operator's watches.yaml", k, v)
+			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse",
+				"Chart value %q overridden to %q by operator's watches.yaml", k, v)
 		}
 		previousRelease, updatedRelease, err := manager.UpdateRelease(context.TODO())
 		if err != nil {

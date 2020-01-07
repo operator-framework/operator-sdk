@@ -34,7 +34,8 @@ func ConvertScorecardOutputV1ToV2(v1ScorecardOutput scapiv1alpha1.ScorecardOutpu
 	return *output
 }
 
-func ConvertSuiteResultV1ToV2TestResults(v1SuiteResult scapiv1alpha1.ScorecardSuiteResult) []scapiv1alpha2.ScorecardTestResult {
+func ConvertSuiteResultV1ToV2TestResults(v1SuiteResult scapiv1alpha1.ScorecardSuiteResult) []scapiv1alpha2.
+		ScorecardTestResult {
 
 	var output []scapiv1alpha2.ScorecardTestResult
 	output = make([]scapiv1alpha2.ScorecardTestResult, 0)
@@ -45,7 +46,8 @@ func ConvertSuiteResultV1ToV2TestResults(v1SuiteResult scapiv1alpha1.ScorecardSu
 	return output
 }
 
-func ConvertTestResultV1ToV2(v1SuiteName string, v1TestResult scapiv1alpha1.ScorecardTestResult) scapiv1alpha2.ScorecardTestResult {
+func ConvertTestResultV1ToV2(v1SuiteName string, v1TestResult scapiv1alpha1.ScorecardTestResult) scapiv1alpha2.
+		ScorecardTestResult {
 	output := scapiv1alpha2.ScorecardTestResult{
 		State:       scapiv1alpha2.FailState,
 		Name:        v1TestResult.Name,

@@ -52,7 +52,8 @@ type Options struct {
 
 // Add - Creates a new ansible operator controller and adds it to the manager
 func Add(mgr manager.Manager, options Options) *controller.Controller {
-	log.Info("Watching resource", "Options.Group", options.GVK.Group, "Options.Version", options.GVK.Version, "Options.Kind", options.GVK.Kind)
+	log.Info("Watching resource", "Options.Group", options.GVK.Group, "Options.Version",
+		options.GVK.Version, "Options.Kind", options.GVK.Kind)
 	if options.EventHandlers == nil {
 		options.EventHandlers = []events.EventHandler{}
 	}
@@ -83,7 +84,8 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 	}
 
 	//Create new controller runtime controller and set the controller to watch GVK.
-	c, err := controller.New(fmt.Sprintf("%v-controller", strings.ToLower(options.GVK.Kind)), mgr, controller.Options{
+	c, err := controller.New(fmt.Sprintf("%v-controller", strings.ToLower(options.GVK.Kind)), mgr,
+		controller.Options{
 		Reconciler:              aor,
 		MaxConcurrentReconciles: options.MaxWorkers,
 	})
@@ -93,7 +95,8 @@ func Add(mgr manager.Manager, options Options) *controller.Controller {
 	}
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(options.GVK)
-	if err := c.Watch(&source.Kind{Type: u}, &crthandler.EnqueueRequestForObject{}, predicate.GenerationChangedPredicate{}); err != nil {
+	if err := c.Watch(&source.Kind{Type: u}, &crthandler.EnqueueRequestForObject{},
+			predicate.GenerationChangedPredicate{}); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}

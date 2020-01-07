@@ -51,7 +51,8 @@ func NewCheckSpecTest(conf BasicTestConfig) *CheckSpecTest {
 			Name:        "Spec Block Exists",
 			Description: "Custom Resource has a Spec Block",
 			Cumulative:  false,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: basicSuiteName, testKey: getStructShortName(CheckSpecTest{})},
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: basicSuiteName,
+				testKey: getStructShortName(CheckSpecTest{})},
 		},
 	}
 }
@@ -70,12 +71,14 @@ func NewCheckStatusTest(conf BasicTestConfig) *CheckStatusTest {
 			Name:        "Status Block Exists",
 			Description: "Custom Resource has a Status Block",
 			Cumulative:  false,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: basicSuiteName, testKey: getStructShortName(CheckStatusTest{})},
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: basicSuiteName,
+				testKey: getStructShortName(CheckStatusTest{})},
 		},
 	}
 }
 
-// WritingIntoCRsHasEffectTest is a scorecard test that verifies that the operator is making PUT and/or POST requests to the API server
+// WritingIntoCRsHasEffectTest is a scorecard test that verifies that the operator is making PUT and/or POST
+// requests to the API server
 type WritingIntoCRsHasEffectTest struct {
 	schelpers.TestInfo
 	BasicTestConfig
@@ -87,9 +90,11 @@ func NewWritingIntoCRsHasEffectTest(conf BasicTestConfig) *WritingIntoCRsHasEffe
 		BasicTestConfig: conf,
 		TestInfo: schelpers.TestInfo{
 			Name:        "Writing into CRs has an effect",
-			Description: "A CR sends PUT/POST requests to the API server to modify resources in response to spec block changes",
+			Description: "A CR sends PUT/POST requests to the API server to modify resources in" +
+				" response to spec block changes",
 			Cumulative:  false,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: basicSuiteName, testKey: getStructShortName(WritingIntoCRsHasEffectTest{})},
+			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: basicSuiteName,
+				testKey: getStructShortName(WritingIntoCRsHasEffectTest{})},
 		},
 	}
 }
@@ -167,7 +172,8 @@ func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *schelpers.TestRe
 	}
 
 	if res.EarnedPoints != 1 {
-		res.Suggestions = append(res.Suggestions, "The operator should write into objects to update state. No PUT or POST requests from the operator were recorded by the scorecard.")
+		res.Suggestions = append(res.Suggestions, "The operator should write into objects to update state." +
+			" No PUT or POST requests from the operator were recorded by the scorecard.")
 	}
 	return res
 }

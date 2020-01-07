@@ -78,7 +78,8 @@ func TestNewCondition(t *testing.T) {
 			ac := NewCondition(tc.condType, tc.status, tc.ansibleResult, tc.reason, tc.message)
 			tc.expectedCondtion.LastTransitionTime = ac.LastTransitionTime
 			if !reflect.DeepEqual(*ac, tc.expectedCondtion) {
-				t.Fatalf("Condition did no match expected:\nActual: %#v\nExpected: %#v", *ac, tc.expectedCondtion)
+				t.Fatalf(
+					"Condition did no match expected:\nActual: %#v\nExpected: %#v", *ac, tc.expectedCondtion)
 			}
 		})
 	}
@@ -149,7 +150,8 @@ func TestGetCondition(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ac := GetCondition(tc.status, tc.condType)
 			if !reflect.DeepEqual(ac, tc.expectedCondition) {
-				t.Fatalf("Condition did no match expected:\nActual: %#v\nExpected: %#v", ac, tc.expectedCondition)
+				t.Fatalf(
+					"Condition did no match expected:\nActual: %#v\nExpected: %#v", ac, tc.expectedCondition)
 			}
 		})
 	}
@@ -216,7 +218,8 @@ func TestRemoveCondition(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			RemoveCondition(&tc.status, tc.condType)
 			if tc.expectedSize != len(tc.status.Conditions) {
-				t.Fatalf("Conditions  did no match expected size:\nActual: %#v\nExpected: %#v", len(tc.status.Conditions), tc.expectedSize)
+				t.Fatalf("Conditions  did no match expected size:\nActual: %#v\nExpected: %#v",
+					len(tc.status.Conditions), tc.expectedSize)
 			}
 		})
 	}
@@ -283,7 +286,8 @@ func TestSetCondition(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			SetCondition(tc.status, *tc.condition)
 			if tc.expectedNewSize != len(tc.status.Conditions) {
-				t.Fatalf("New size of conditions did not match expected\nActual: %v\nExpected: %v", len(tc.status.Conditions), tc.expectedNewSize)
+				t.Fatalf("New size of conditions did not match expected\nActual: %v\nExpected: %v",
+					len(tc.status.Conditions), tc.expectedNewSize)
 			}
 			if tc.keepLastTransitionTime {
 				tc.condition.LastTransitionTime = lastTransitionTime
