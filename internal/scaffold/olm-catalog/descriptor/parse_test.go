@@ -257,8 +257,10 @@ func TestParseCSVGenAnnotations(t *testing.T) {
 			},
 			parsedCRDDescriptions{
 				descriptors: []descriptor{
-					{include: true, descType: typeSpec, SpecDescriptor: v1alpha1.SpecDescriptor{DisplayName: "foo", XDescriptors: []string{"some:ui:hint"}}},
-					{include: true, descType: typeStatus, SpecDescriptor: v1alpha1.SpecDescriptor{DisplayName: "foo", XDescriptors: []string{"some:ui:hint"}}},
+					{include: true, descType: typeSpec, SpecDescriptor: v1alpha1.SpecDescriptor{DisplayName: "foo",
+						XDescriptors: []string{"some:ui:hint"}}},
+					{include: true, descType: typeStatus, SpecDescriptor: v1alpha1.SpecDescriptor{DisplayName: "foo",
+						XDescriptors: []string{"some:ui:hint"}}},
 				},
 			},
 			false,
@@ -266,7 +268,8 @@ func TestParseCSVGenAnnotations(t *testing.T) {
 		{
 			"Comment on type with unknown path element",
 			[]string{
-				annotations.JoinAnnotation(annotations.JoinPath(annotations.JoinPrefix(csvgenPrefix, "unknown"), "resources"), `"Deployment,v1"`),
+				annotations.JoinAnnotation(annotations.JoinPath(annotations.JoinPrefix(csvgenPrefix, "unknown"),
+					"resources"), `"Deployment,v1"`),
 			},
 			parsedCRDDescriptions{},
 			true,

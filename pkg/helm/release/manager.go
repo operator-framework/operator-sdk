@@ -145,7 +145,8 @@ func (m manager) getDeployedRelease() (*rpb.Release, error) {
 	return deployedRelease, nil
 }
 
-func (m manager) getCandidateRelease(namespace, name string, chart *cpb.Chart, values map[string]interface{}) (*rpb.Release, error) {
+func (m manager) getCandidateRelease(namespace, name string, chart *cpb.Chart,
+	values map[string]interface{}) (*rpb.Release, error) {
 	upgrade := action.NewUpgrade(m.actionConfig)
 	upgrade.Namespace = namespace
 	upgrade.DryRun = true
@@ -216,9 +217,8 @@ func (m manager) ReconcileRelease(ctx context.Context) (*rpb.Release, error) {
 	return m.deployedRelease, err
 }
 
-func reconcileRelease(ctx context.Context, tillerKubeClient *kube.Client,
-	namespace string, expectedManifest string) error {
-	expectedInfos, err := tillerKubeClient.BuildUnstructured(namespace, bytes.NewBufferString(expectedManifest))
+func reconcileRelease(ctx context.Context, kubeClient kube.Interface, expectedManifest string) error {
+	expectedInfos, err := kubeClient.Build(bytes.NewBufferString(expectedManifest), false)
 	if err != nil {
 		return err
 	}

@@ -92,7 +92,9 @@ func GenerateRoleScaffold(dc roleDiscoveryInterface, chart *chart.Chart) scaffol
 	return roleScaffold
 }
 
-func generateRoleRules(dc roleDiscoveryInterface, chart *chart.Chart) ([]rbacv1.PolicyRule, []rbacv1.PolicyRule, error) {
+func generateRoleRules(dc roleDiscoveryInterface, chart *chart.Chart) ([]rbacv1.PolicyRule,
+	[]rbacv1.PolicyRule, error) {
+
 	serverResources, err := dc.ServerResources()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get server resources: %s", err)
@@ -182,7 +184,8 @@ func getDefaultManifests(c *chart.Chart) ([]releaseutil.Manifest, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to render chart templates: %s", err)
 	}
-	_, manifests, err := releaseutil.SortManifests(releaseutil.SplitManifests(rel.Manifest), chartutil.DefaultVersionSet, releaseutil.InstallOrder)
+	_, manifests, err := releaseutil.SortManifests(releaseutil.SplitManifests(rel.Manifest),
+		chartutil.DefaultVersionSet, releaseutil.InstallOrder)
 	return manifests, err
 }
 

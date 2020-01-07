@@ -68,7 +68,8 @@ func NewBundleValidationTest(conf OLMTestConfig) *BundleValidationTest {
 			Name:        "Bundle Validation Test",
 			Description: "Validates bundle contents",
 			Cumulative:  false,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(BundleValidationTest{})},
+			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName,
+				testKey: getStructShortName(BundleValidationTest{})},
 		},
 	}
 }
@@ -87,7 +88,8 @@ func NewCRDsHaveValidationTest(conf OLMTestConfig) *CRDsHaveValidationTest {
 			Name:        "Provided APIs have validation",
 			Description: "All CRDs have an OpenAPI validation subsection",
 			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(CRDsHaveValidationTest{})},
+			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName,
+				testKey: getStructShortName(CRDsHaveValidationTest{})},
 		},
 	}
 }
@@ -106,7 +108,8 @@ func NewCRDsHaveResourcesTest(conf OLMTestConfig) *CRDsHaveResourcesTest {
 			Name:        "Owned CRDs have resources listed",
 			Description: "All Owned CRDs contain a resources subsection",
 			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(CRDsHaveResourcesTest{})},
+			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName,
+				testKey: getStructShortName(CRDsHaveResourcesTest{})},
 		},
 	}
 }
@@ -125,7 +128,8 @@ func NewSpecDescriptorsTest(conf OLMTestConfig) *SpecDescriptorsTest {
 			Name:        "Spec fields with descriptors",
 			Description: "All spec fields have matching descriptors in the CSV",
 			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(SpecDescriptorsTest{})},
+			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName,
+				testKey: getStructShortName(SpecDescriptorsTest{})},
 		},
 	}
 }
@@ -144,7 +148,8 @@ func NewStatusDescriptorsTest(conf OLMTestConfig) *StatusDescriptorsTest {
 			Name:        "Status fields with descriptors",
 			Description: "All status fields have matching descriptors in the CSV",
 			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(StatusDescriptorsTest{})},
+			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName,
+				testKey: getStructShortName(StatusDescriptorsTest{})},
 		},
 	}
 }
@@ -186,7 +191,8 @@ func (t *BundleValidationTest) Run(ctx context.Context) *schelpers.TestResult {
 	res := &schelpers.TestResult{Test: t, MaximumPoints: 1}
 
 	if t.OLMTestConfig.Bundle == "" {
-		res.Errors = append(res.Errors, errors.New("unable to find the OLM 'bundle' directory which is required for this test"))
+		res.Errors = append(res.Errors,
+			errors.New("unable to find the OLM 'bundle' directory which is required for this test"))
 		return res
 	}
 
@@ -455,7 +461,8 @@ func (t *SpecDescriptorsTest) Run(ctx context.Context) *schelpers.TestResult {
 	return checkOwnedCSVDescriptors(t.CR, t.CSV, specDescriptor, res)
 }
 
-func checkOwnedCSVDescriptors(cr *unstructured.Unstructured, csv *olmapiv1alpha1.ClusterServiceVersion, descriptor string, res *schelpers.TestResult) *schelpers.TestResult {
+func checkOwnedCSVDescriptors(cr *unstructured.Unstructured, csv *olmapiv1alpha1.ClusterServiceVersion,
+	descriptor string, res *schelpers.TestResult) *schelpers.TestResult {
 	if cr.Object[descriptor] == nil {
 		return res
 	}
