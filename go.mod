@@ -59,7 +59,7 @@ require (
 	k8s.io/kubectl v0.0.0
 	k8s.io/kubernetes v1.16.2 // indirect
 	sigs.k8s.io/controller-runtime v0.4.0
-	sigs.k8s.io/controller-tools v0.2.2
+	sigs.k8s.io/controller-tools v0.2.4
 )
 
 // Pinned to kubernetes-1.16.2
