@@ -175,7 +175,8 @@ func getPodFromDeployment(depName, namespace string) (pod *v1.Pod, err error) {
 	// instead of the new one.
 	err = wait.PollImmediate(time.Second*1, time.Second*60, func() (bool, error) {
 		pods := &v1.PodList{}
-		err = runtimeClient.List(context.TODO(), pods, client.InNamespace(namespace), client.MatchingLabels(dep.Spec.Selector.MatchLabels))
+		err = runtimeClient.List(context.TODO(), pods, client.InNamespace(namespace),
+			client.MatchingLabels(dep.Spec.Selector.MatchLabels))
 		if err != nil {
 			return false, fmt.Errorf("failed to get list of pods in deployment: %v", err)
 		}
@@ -359,8 +360,8 @@ func addResourceCleanup(obj runtime.Object, key types.NamespacedName) {
 					return true, nil
 				}
 				return false,
-					fmt.Errorf("error encountered during deletion of resource type %v with namespace/name (%+v): %v",
-						objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
+					fmt.Errorf("error encountered during deletion of resource type %v with namespace/name "+
+						"(%+v): %v", objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
 			}
 			return false, nil
 		})

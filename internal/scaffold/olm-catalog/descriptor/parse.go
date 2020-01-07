@@ -104,7 +104,8 @@ func parseCSVGenAnnotations(comments []string) (pd parsedCRDDescriptions, err er
 					pd.resources = append(pd.resources, r)
 				}
 			default:
-				return parsedCRDDescriptions{}, errors.Errorf("unsupported %s child path element %s", parentPathElem, childPathElems[0])
+				return parsedCRDDescriptions{},
+					errors.Errorf("unsupported %s child path element %s", parentPathElem, childPathElems[0])
 			}
 		default:
 			return parsedCRDDescriptions{}, errors.Errorf("unsupported path element %s", parentPathElem)

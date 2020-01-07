@@ -77,7 +77,7 @@ const (
 var log *logrus.Logger
 
 func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
-	logFile io.ReadWriter) (scapiv1alpha1.ScorecardOutput, error) {
+	logFile io.Writer) (scapiv1alpha1.ScorecardOutput, error) {
 	log = logrus.New()
 	log.SetFormatter(&logrus.TextFormatter{DisableColors: true})
 	log.SetOutput(logFile)
@@ -166,7 +166,8 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
 		}
 		stratDep, ok := strategy.(*olminstall.StrategyDetailsDeployment)
 		if !ok {
-			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("expected StrategyDetailsDeployment, got strategy of type %T", strategy)
+			return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("expected StrategyDetailsDeployment, got "+
+				"strategy of type %T", strategy)
 		}
 		deploymentName = stratDep.DeploymentSpecs[0].Name
 		// Get the proxy pod, which should have been created with the CSV.

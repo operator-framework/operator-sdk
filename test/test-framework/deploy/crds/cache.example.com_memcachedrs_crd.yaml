@@ -35,7 +35,7 @@ spec:
               format: int32
               type: integer
           required:
-            - numNodes
+          - numNodes
           type: object
         status:
           description: MemcachedRSStatus defines the observed state of MemcachedRS
@@ -47,12 +47,12 @@ spec:
             test:
               type: boolean
           required:
-            - nodeList
-            - test
+          - nodeList
+          - test
           type: object
       type: object
   version: v1alpha1
   versions:
-    - name: v1alpha1
-      served: true
-      storage: true
+  - name: v1alpha1
+    served: true
+    storage: true
