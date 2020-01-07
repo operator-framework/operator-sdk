@@ -22,6 +22,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	gencrd "github.com/operator-framework/operator-sdk/internal/generate/crd"
+	gen "github.com/operator-framework/operator-sdk/internal/generate/gen"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/helm"
@@ -231,7 +233,6 @@ func doAnsibleScaffold() error {
 		&scaffold.ServiceAccount{},
 		&scaffold.Role{},
 		&scaffold.RoleBinding{},
-		&scaffold.CRD{Resource: resource},
 		&scaffold.CR{Resource: resource},
 		&ansible.BuildDockerfile{GeneratePlaybook: generatePlaybook},
 		&ansible.RolesReadme{Resource: *resource},
@@ -265,6 +266,10 @@ func doAnsibleScaffold() error {
 	)
 	if err != nil {
 		return fmt.Errorf("new ansible scaffold failed: (%v)", err)
+	}
+
+	if err = generateCRDNonGo(projectName, *resource); err != nil {
+		return err
 	}
 
 	// Remove placeholders from empty directories
@@ -343,7 +348,6 @@ func doHelmScaffold() error {
 		&roleScaffold,
 		&scaffold.RoleBinding{IsClusterScoped: roleScaffold.IsClusterScoped},
 		&helm.Operator{},
-		&scaffold.CRD{Resource: resource},
 		&scaffold.CR{
 			Resource: resource,
 			Spec:     crSpec,
@@ -353,9 +357,27 @@ func doHelmScaffold() error {
 		return fmt.Errorf("new helm scaffold failed: %w", err)
 	}
 
+	if err = generateCRDNonGo(projectName, *resource); err != nil {
+		return err
+	}
+
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
 		return fmt.Errorf("failed to update the RBAC manifest for resource (%v, %v): %w", resource.APIVersion, resource.Kind, err)
 	}
+	return nil
+}
+
+func generateCRDNonGo(projectName string, resource scaffold.Resource) error {
+	crdsDir := filepath.Join(projectName, scaffold.CRDsDir)
+	gcfg := gen.Config{
+		Inputs:    map[string]string{gencrd.CRDsDirKey: crdsDir},
+		OutputDir: crdsDir,
+	}
+	crd := gencrd.NewCRDNonGo(gcfg, resource)
+	if err := crd.Generate(); err != nil {
+		return fmt.Errorf("error generating CRD for %s: %w", resource, err)
+	}
+	log.Info("Generated CustomResourceDefinition manifests.")
 	return nil
 }
 

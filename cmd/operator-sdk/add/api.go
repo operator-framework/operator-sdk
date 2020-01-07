@@ -124,7 +124,6 @@ func apiRun(cmd *cobra.Command, args []string) error {
 		&scaffold.Register{Resource: r},
 		&scaffold.Doc{Resource: r},
 		&scaffold.CR{Resource: r},
-		&scaffold.CRD{Resource: r, IsOperatorGo: projutil.IsOperatorGo()},
 	)
 	if err != nil {
 		return fmt.Errorf("api scaffold failed: (%v)", err)

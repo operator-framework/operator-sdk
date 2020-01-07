@@ -77,13 +77,13 @@ type Hog struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
 	Inlined InlinedComponent `json:",inline"`
 	// Fields should be inlined
-	InlinedComponent
+	InlinedComponent `json:",inline"`
 	// Should be ignored
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
 	Ignored IgnoredComponent `json:"-"`
 	// Should be ignored, but exported children should not be
-	notExported
+	notExported `json:",inline"`
 }
 
 type notExported struct {
@@ -92,7 +92,7 @@ type notExported struct {
 	Public string `json:"foo"`
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
-	private string
+	private string `json:"-"`
 }
 
 // +k8s:deepcopy-gen=false
