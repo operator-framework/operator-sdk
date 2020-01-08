@@ -15,6 +15,7 @@
 package catalog
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -34,7 +35,6 @@ import (
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olmversion "github.com/operator-framework/operator-lifecycle-manager/pkg/lib/version"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"

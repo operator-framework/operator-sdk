@@ -15,6 +15,7 @@
 package descriptor
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -24,7 +25,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/gengo/parser"
 	"k8s.io/gengo/types"

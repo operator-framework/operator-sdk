@@ -16,13 +16,13 @@ package k8sutil
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"regexp"
 	"strings"
 	"unicode"
 
-	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/validation"

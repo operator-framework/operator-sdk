@@ -19,6 +19,7 @@ package olm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -28,7 +29,6 @@ import (
 	olmresourceclient "github.com/operator-framework/operator-sdk/internal/olm/client"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
