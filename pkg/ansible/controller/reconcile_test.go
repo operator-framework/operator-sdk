@@ -135,7 +135,6 @@ func TestReconcile(t *testing.T) {
 		{
 			Name:            "Failure message reconcile",
 			GVK:             gvk,
-			ReconcilePeriod: 5 * time.Second,
 			ManageStatus:    true,
 			Runner: &fake.Runner{
 				JobEvents: []eventapi.JobEvent{

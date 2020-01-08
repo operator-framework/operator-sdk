@@ -166,7 +166,6 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 
 	// iterate events from ansible, looking for the final one
 	statusEvent := eventapi.StatusJobEvent{}
-	failureMessages := eventapi.FailureMessages{}
 	for event := range result.Events() {
 		for _, eHandler := range r.EventHandlers {
 			go eHandler.Handle(ident, u, event)
@@ -183,7 +182,8 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 			}
 		}
 		if event.Event == eventapi.EventRunnerOnFailed && !event.IgnoreError() {
-			failureMessages = append(failureMessages, event.GetFailedPlaybookMessage())
+			eventErr := errors.New("event runner on failed : " + event.GetFailedPlaybookMessage())
+			return reconcile.Result{}, eventErr
 		}
 	}
 	if statusEvent.Event == "" {
@@ -210,11 +210,8 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	// try to get the updated finalizers
 	pendingFinalizers = u.GetFinalizers()
 
-	// We only want to update the CustomResource once, so we'll track changes
-	// and do it at the end
-	runSuccessful := len(failureMessages) == 0
 	// The finalizer has run successfully, time to remove it
-	if deleted && finalizerExists && runSuccessful {
+	if deleted && finalizerExists {
 		finalizers := []string{}
 		for _, pendingFinalizer := range pendingFinalizers {
 			if pendingFinalizer != finalizer {
@@ -229,7 +226,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		}
 	}
 	if r.ManageStatus {
-		errmark := r.markDone(u, request.NamespacedName, statusEvent, failureMessages)
+		errmark := r.markDone(u, request.NamespacedName, statusEvent, nil)
 		if errmark != nil {
 			logger.Error(errmark, "Failed to mark status done")
 		}
