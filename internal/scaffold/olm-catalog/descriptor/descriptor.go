@@ -144,7 +144,7 @@ func getTypesForPkg(pkgPath string, universe types.Universe) (pkgTypes []*types.
 		}
 	}
 	if pkg == nil {
-		return nil, errors.Errorf("no package found for API %s", pkgPath)
+		return nil, fmt.Errorf("no package found for API %s", pkgPath)
 	}
 	for _, t := range pkg.Types {
 		pkgTypes = append(pkgTypes, t)
