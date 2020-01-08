@@ -68,7 +68,7 @@ test_operator() {
     fi
 
     header_text "verify that the metrics endpoint exists (Port 8383)"
-    if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl -sfo /dev/null http://memcached-operator-metrics:8383/metrics; do sleep 1; done";
+    if ! timeout 90s bash -c -- "until kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl -sfo /dev/null http://memcached-operator-metrics:8383/metrics; do sleep 1; done";
     then
         error_text "FAIL: Failed to verify that metrics endpoint exists"
         operator_logs
@@ -85,15 +85,32 @@ test_operator() {
 
     header_text "create custom resource (Memcached CR)"
     kubectl create -f deploy/crds/ansible.example.com_v1alpha1_memcached_cr.yaml
-    if ! timeout 60s bash -c -- 'until kubectl get deployment -l app=memcached | grep memcached; do sleep 1; done';
+    if ! timeout 90s bash -c -- 'until kubectl get deployment -l app=memcached | grep memcached; do sleep 1; done';
     then
         error_text "FAIL: Failed to verify to create memcached Deployment"
         operator_logs
         exit 1
     fi
 
+    header_text "Verify that a config map owned by the CR has been created."
+    if ! timeout 90s bash -c -- "until kubectl get configmap test-blacklist-watches > /dev/null 2>&1; do sleep 1; done";
+    then
+        error_text "FAIL: Unable to retrieve config map test-blacklist-watches."
+        operator_logs
+        exit 1
+    fi
+
+    header_text "Verify that config map requests skip the cache."
+    if ! kubectl logs deployment/memcached-operator -c operator | grep -e "Skipping cache lookup\".*"Path\":\"\/api\/v1\/namespaces\/default\/configmaps\/test-blacklist-watches\";
+    then
+        error_text "FAIL: test-blacklist-watches should not be accessible with the cache."
+        operator_logs
+        exit 1
+    fi
+
+
     header_text "verify that metrics reflect cr creation"
-    if ! timeout 1m bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=$metrics_test_image -- curl http://memcached-operator-metrics:8686/metrics | grep example-memcached; do sleep 1; done";
+    if ! timeout 90s bash -c -- "until kubectl run -it --rm --restart=Never test-metrics --image=$metrics_test_image -- curl http://memcached-operator-metrics:8686/metrics | grep example-memcached; do sleep 1; done";
     then
         error_text "FAIL: Failed to verify custom resource metrics"
         operator_logs

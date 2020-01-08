@@ -65,3 +65,16 @@
       metadata:
         name: testing-foo
   when: "'project.openshift.io' in api_groups"
+
+- name: Create ConfigMap to test blacklisted watches
+  k8s:
+    definition:
+      kind: ConfigMap
+      apiVersion: v1
+      metadata:
+        name: test-blacklist-watches
+        namespace: "{{ meta.namespace }}"
+      data:
+        arbitrary: afdasdfsajsafj
+        # namespace: default
+    state: present

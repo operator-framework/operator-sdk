@@ -40,6 +40,7 @@ type Contents struct {
 	WatchClusterScopedResources bool
 	OwnerWatchMap               *WatchMap
 	AnnotationWatchMap          *WatchMap
+	Blacklist                   []schema.GroupVersionKind
 }
 
 // NewControllerMap returns a new object that contains a mapping between GVK
