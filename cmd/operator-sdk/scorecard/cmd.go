@@ -35,7 +35,7 @@ func NewCmd() *cobra.Command {
 		RunE: scorecard.Tests,
 	}
 
-	scorecardCmd.Flags().String(scorecard.ConfigOpt, "", fmt.Sprintf("config file " +
+	scorecardCmd.Flags().String(scorecard.ConfigOpt, "", fmt.Sprintf("config file "+
 		"(default is '<project_dir>/%s'; the config file's extension and format can be .yaml, .json, or .toml)",
 		scorecard.DefaultConfigFile))
 	scorecardCmd.Flags().String(scplugins.KubeconfigOpt, "",
@@ -48,8 +48,8 @@ func NewCmd() *cobra.Command {
 	scorecardCmd.Flags().StringP(scorecard.SelectorOpt, "l", "",
 		"selector (label query) to filter tests on (only valid when version is v1alpha2)")
 	scorecardCmd.Flags().BoolP(scorecard.ListOpt, "L", false,
-		"If true, only print the test names that would be run based on selector filtering " +
-		"(only valid when version is v1alpha2)")
+		"If true, only print the test names that would be run based on selector filtering "+
+			"(only valid when version is v1alpha2)")
 	scorecardCmd.Flags().StringP(scorecard.BundleOpt, "b", "",
 		"OLM bundle directory path, when specified runs bundle validation")
 
@@ -58,27 +58,27 @@ func NewCmd() *cobra.Command {
 		log.Fatalf("Unable to add config :%v", err)
 	}
 	if err := viper.BindPFlag("scorecard."+scplugins.KubeconfigOpt,
-			scorecardCmd.Flags().Lookup(scplugins.KubeconfigOpt)); err != nil {
+		scorecardCmd.Flags().Lookup(scplugins.KubeconfigOpt)); err != nil {
 		log.Fatalf("Unable to add kubeconfig :%v", err)
 	}
 	if err := viper.BindPFlag("scorecard."+scorecard.OutputFormatOpt,
-			scorecardCmd.Flags().Lookup(scorecard.OutputFormatOpt)); err != nil {
+		scorecardCmd.Flags().Lookup(scorecard.OutputFormatOpt)); err != nil {
 		log.Fatalf("Unable to add output format :%v", err)
 	}
 	if err := viper.BindPFlag("scorecard."+schelpers.VersionOpt,
-			scorecardCmd.Flags().Lookup(schelpers.VersionOpt)); err != nil {
+		scorecardCmd.Flags().Lookup(schelpers.VersionOpt)); err != nil {
 		log.Fatalf("Unable to add version :%v", err)
 	}
 	if err := viper.BindPFlag("scorecard."+scorecard.SelectorOpt,
-			scorecardCmd.Flags().Lookup(scorecard.SelectorOpt)); err != nil {
+		scorecardCmd.Flags().Lookup(scorecard.SelectorOpt)); err != nil {
 		log.Fatalf("Unable to add selector :%v", err)
 	}
 	if err := viper.BindPFlag("scorecard."+scorecard.ListOpt,
-			scorecardCmd.Flags().Lookup(scorecard.ListOpt)); err != nil {
+		scorecardCmd.Flags().Lookup(scorecard.ListOpt)); err != nil {
 		log.Fatalf("Unable to add list :%v", err)
 	}
 	if err := viper.BindPFlag("scorecard."+scorecard.BundleOpt,
-			scorecardCmd.Flags().Lookup(scorecard.BundleOpt)); err != nil {
+		scorecardCmd.Flags().Lookup(scorecard.BundleOpt)); err != nil {
 		log.Fatalf("Unable to add bundle :%v", err)
 	}
 	return scorecardCmd

@@ -50,8 +50,8 @@ kubernetes cluster using a kubeconfig file.
 		RunE: upLocalFunc,
 	}
 
-	upLocalCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "The file path to kubernetes" +
-		" configuration file; defaults to location specified by $KUBECONFIG with a fallback to " +
+	upLocalCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "The file path to kubernetes"+
+		" configuration file; defaults to location specified by $KUBECONFIG with a fallback to "+
 		"$HOME/.kube/config if not set")
 	upLocalCmd.Flags().StringVar(&operatorFlags, "operator-flags", "",
 		"The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")

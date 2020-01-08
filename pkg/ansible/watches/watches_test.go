@@ -406,7 +406,7 @@ func TestLoad(t *testing.T) {
 					if gotWatch.Finalizer.Name != expectedWatch.Finalizer.Name || gotWatch.Finalizer.Playbook !=
 						expectedWatch.Finalizer.Playbook || gotWatch.Finalizer.Role !=
 						expectedWatch.Finalizer.Role || reflect.DeepEqual(gotWatch.Finalizer.Vars["sentinel"],
-							expectedWatch.Finalizer.Vars["sentininel"]) {
+						expectedWatch.Finalizer.Vars["sentininel"]) {
 						t.Fatalf("The GVK: %v\nunexpected finalizer: %#v\nexpected finalizer: %#v", gvk,
 							gotWatch.Finalizer, expectedWatch.Finalizer)
 					}

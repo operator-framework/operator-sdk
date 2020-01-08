@@ -34,19 +34,19 @@ import (
 // the function returns an error. This can be used in multiple ways, like verifying that a required resource is ready
 // before trying to use it, or to test. Failure handling, like simulated in SimulatePodFail.
 func WaitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int,
-		retryInterval, timeout time.Duration) error {
+	retryInterval, timeout time.Duration) error {
 	return waitForDeployment(t, kubeclient, namespace, name, replicas, retryInterval, timeout, false)
 }
 
 // WaitForOperatorDeployment has the same functionality as WaitForDeployment but will no wait for the deployment if the
 // test was run with a locally run operator (--up-local flag)
 func WaitForOperatorDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int,
-		retryInterval, timeout time.Duration) error {
+	retryInterval, timeout time.Duration) error {
 	return waitForDeployment(t, kubeclient, namespace, name, replicas, retryInterval, timeout, true)
 }
 
 func waitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int,
-		retryInterval, timeout time.Duration, isOperator bool) error {
+	retryInterval, timeout time.Duration, isOperator bool) error {
 	if isOperator && test.Global.LocalOperator {
 		t.Log("Operator is running locally; skip waitForDeployment")
 		return nil
@@ -76,7 +76,7 @@ func waitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace,
 }
 
 func WaitForDeletion(t *testing.T, dynclient client.Client, obj runtime.Object, retryInterval,
-		timeout time.Duration) error {
+	timeout time.Duration) error {
 	key, err := client.ObjectKeyFromObject(obj)
 	if err != nil {
 		return err

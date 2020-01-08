@@ -73,16 +73,16 @@ func (f *frameworkClient) Create(gCtx goctx.Context, obj runtime.Object, cleanup
 				if err != nil {
 					if apierrors.IsNotFound(err) {
 						if cleanupOptions.TestContext.t != nil {
-							cleanupOptions.TestContext.t.Logf("resource type %+v with namespace/name (%+v)" +
+							cleanupOptions.TestContext.t.Logf("resource type %+v with namespace/name (%+v)"+
 								" successfully deleted\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
 						}
 						return true, nil
 					}
-					return false, fmt.Errorf("error encountered during deletion of resource type %v with" +
+					return false, fmt.Errorf("error encountered during deletion of resource type %v with"+
 						" namespace/name (%+v): %v", objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
 				}
 				if cleanupOptions.TestContext.t != nil {
-					cleanupOptions.TestContext.t.Logf("waiting for deletion of resource type %+v with" +
+					cleanupOptions.TestContext.t.Logf("waiting for deletion of resource type %+v with"+
 						" namespace/name (%+v)\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
 				}
 				return false, nil

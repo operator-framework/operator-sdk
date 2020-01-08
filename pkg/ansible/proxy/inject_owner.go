@@ -175,7 +175,7 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 }
 
 func shouldAddOwnerRef(data *unstructured.Unstructured, owner kubeconfig.NamespacedOwnerReference,
-		restMapper meta.RESTMapper) (bool, error) {
+	restMapper meta.RESTMapper) (bool, error) {
 	dataMapping, err := restMapper.RESTMapping(data.GroupVersionKind().GroupKind(), data.GroupVersionKind().Version)
 	if err != nil {
 		m := fmt.Sprintf("Could not get rest mapping for: %v", data.GroupVersionKind())

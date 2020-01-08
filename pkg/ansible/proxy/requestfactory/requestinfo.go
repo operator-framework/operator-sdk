@@ -227,7 +227,7 @@ func (r *RequestInfoFactory) NewRequestInfo(req *http.Request) (*RequestInfo, er
 	if len(requestInfo.Name) == 0 && requestInfo.Verb == "get" {
 		opts := metainternalversion.ListOptions{}
 		if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion,
-				&opts); err != nil {
+			&opts); err != nil {
 			// An error in parsing request will result in default to "list" and not
 			// setting "name" field.
 			log.Error(err, "Could not parse request")

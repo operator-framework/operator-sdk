@@ -63,15 +63,15 @@ generates a skeletal app-operator application in $HOME/projects/example.com/app-
 		RunE: newFunc,
 	}
 
-	newCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes apiVersion and has" +
+	newCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes apiVersion and has"+
 		" a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1) - used with \"ansible\" or \"helm\" types")
 	newCmd.Flags().StringVar(&kind, "kind", "",
 		"Kubernetes CustomResourceDefintion kind. (e.g AppService) - used with \"ansible\" or \"helm\" types")
 	newCmd.Flags().StringVar(&operatorType, "type", "go",
 		"Type of operator to initialize (choices: \"go\", \"ansible\" or \"helm\")")
 	newCmd.Flags().StringVar(&repo, "repo", "",
-		"Project repository path for Go operators. Used as the project's Go import path. This must be set if" +
-		" outside of $GOPATH/src (e.g. github.com/example-inc/my-operator)")
+		"Project repository path for Go operators. Used as the project's Go import path. This must be set if"+
+			" outside of $GOPATH/src (e.g. github.com/example-inc/my-operator)")
 	newCmd.Flags().BoolVar(&gitInit, "git-init", false,
 		"Initialize the project directory as a git repository (default false)")
 	newCmd.Flags().StringVar(&headerFile, "header-file", "",
@@ -179,7 +179,7 @@ func mustBeNewProject() {
 		log.Fatalf("Failed to determine if project (%v) exists", projectName)
 	}
 	if stat.IsDir() {
-		log.Fatalf("Project (%v) in (%v) path already exists. Please use a different project name or delete " +
+		log.Fatalf("Project (%v) in (%v) path already exists. Please use a different project name or delete "+
 			"the existing one", projectName, fp)
 	}
 }
@@ -397,8 +397,8 @@ func generateCRDNonGo(projectName string, resource scaffold.Resource) error {
 
 func verifyFlags() error {
 	if operatorType != projutil.OperatorTypeGo && operatorType != projutil.OperatorTypeAnsible && operatorType !=
-			projutil.OperatorTypeHelm {
-		return errors.Wrap(projutil.ErrUnknownOperatorType{Type: operatorType}, "value of --type can only" +
+		projutil.OperatorTypeHelm {
+		return errors.Wrap(projutil.ErrUnknownOperatorType{Type: operatorType}, "value of --type can only"+
 			" be `go`, `ansible`, or `helm`")
 	}
 	if operatorType != projutil.OperatorTypeAnsible && generatePlaybook {
@@ -430,7 +430,7 @@ func verifyFlags() error {
 	// If --type=helm and --helm-chart is set, --api-version and --kind are optional. If left unset,
 	// sane defaults are used when the specified helm chart is created.
 	if operatorType == projutil.OperatorTypeAnsible || operatorType == projutil.OperatorTypeHelm &&
-			len(helmChartRef) == 0 {
+		len(helmChartRef) == 0 {
 		if len(apiVersion) == 0 {
 			return fmt.Errorf("value of --api-version must not have empty value")
 		}
@@ -442,7 +442,7 @@ func verifyFlags() error {
 			return fmt.Errorf("value of --kind must start with an uppercase letter")
 		}
 		if strings.Count(apiVersion, "/") != 1 {
-			return fmt.Errorf("value of --api-version has wrong format (%v); format must be " +
+			return fmt.Errorf("value of --api-version has wrong format (%v); format must be "+
 				"$GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion)
 		}
 	}

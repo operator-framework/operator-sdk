@@ -202,7 +202,7 @@ func (c *cacheResponseHandler) getListFromCache(r *requestfactory.RequestInfo, r
 	k schema.GroupVersionKind) (marshaler, error) {
 	k8sListOpts := &metav1.ListOptions{}
 	if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion,
-			k8sListOpts); err != nil {
+		k8sListOpts); err != nil {
 		log.Error(err, "Unable to decode list options from request")
 		return nil, err
 	}
@@ -239,7 +239,7 @@ func (c *cacheResponseHandler) getListFromCache(r *requestfactory.RequestInfo, r
 }
 
 func (c *cacheResponseHandler) getObjectFromCache(r *requestfactory.RequestInfo, req *http.Request,
-		k schema.GroupVersionKind) (marshaler, error) {
+	k schema.GroupVersionKind) (marshaler, error) {
 	un := &unstructured.Unstructured{}
 	un.SetGroupVersionKind(k)
 	obj := client.ObjectKey{Namespace: r.Namespace, Name: r.Name}

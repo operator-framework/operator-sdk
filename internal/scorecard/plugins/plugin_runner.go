@@ -76,7 +76,7 @@ const (
 var log *logrus.Logger
 
 func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
-		logFile io.Writer) (scapiv1alpha1.ScorecardOutput, error) {
+	logFile io.Writer) (scapiv1alpha1.ScorecardOutput, error) {
 
 	// use stderr for logging not related to a single suite
 	log = logrus.New()
@@ -325,11 +325,11 @@ func getCRFromCSV(currentCRMans []string, crJSONStr string, csvName string) ([]s
 		if crJSONStr != "" {
 			var crs []interface{}
 			if err := json.Unmarshal([]byte(crJSONStr), &crs); err != nil {
-				return finalCR, errors.Wrapf(err, "metadata.annotations['alm-examples'] in CSV %s" +
+				return finalCR, errors.Wrapf(err, "metadata.annotations['alm-examples'] in CSV %s"+
 					" incorrectly formatted", csvName)
 			}
 			if len(crs) == 0 {
-				return finalCR, errors.Errorf("no CRs found in metadata.annotations['alm-examples'] in CSV" +
+				return finalCR, errors.Errorf("no CRs found in metadata.annotations['alm-examples'] in CSV"+
 					" %s and cr-manifest config option not set", csvName)
 			}
 			// TODO: run scorecard against all CR's in CSV.
@@ -369,7 +369,7 @@ func getCRFromCSV(currentCRMans []string, crJSONStr string, csvName string) ([]s
 	}
 	// Let users know that only the first CR is being tested.
 	if logCRMsg {
-		log.Infof("The scorecard does not support testing multiple CR's at once when run with --olm-deployed." +
+		log.Infof("The scorecard does not support testing multiple CR's at once when run with --olm-deployed."+
 			" Testing the first CR %s", finalCR[0])
 	}
 	return finalCR, nil

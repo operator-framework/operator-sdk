@@ -272,7 +272,7 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured,
 // markError - used to alert the user to the issues during the validation of a reconcile run.
 // i.e Annotations that could be incorrect
 func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, namespacedName types.NamespacedName,
-		failureMessage string) error {
+	failureMessage string) error {
 	logger := logf.Log.WithName("markError")
 	// Immediately update metrics with failed reconciliation, since Get()
 	// may fail.
@@ -308,7 +308,7 @@ func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, name
 }
 
 func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, namespacedName types.NamespacedName,
-		statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) error {
+	statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) error {
 	logger := logf.Log.WithName("markDone")
 	// Get the latest resource to prevent updating a stale status.
 	if err := r.APIReader.Get(context.TODO(), namespacedName, u); err != nil {

@@ -155,7 +155,7 @@ func getPodOwnerRef(ctx context.Context, client crclient.Client, ns string) (*me
 
 // findFinalOwnerRef tries to locate the final controller/owner based on the owner reference provided.
 func findFinalOwnerRef(ctx context.Context, client crclient.Client, ns string,
-		ownerRef *metav1.OwnerReference) (*metav1.OwnerReference, error) {
+	ownerRef *metav1.OwnerReference) (*metav1.OwnerReference, error) {
 	if ownerRef == nil {
 		return nil, nil
 	}

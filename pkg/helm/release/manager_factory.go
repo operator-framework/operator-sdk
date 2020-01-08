@@ -128,7 +128,7 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues
 }
 
 func convertV2ToV3(storageBackendV2 *storagev2.Storage, storageBackendV3 *storagev3.Storage,
-		cr *unstructured.Unstructured) error {
+	cr *unstructured.Unstructured) error {
 	// If a v2 release with the legacy name exists, convert it to v3.
 	legacyName := getLegacyName(cr)
 	legacyHistoryV2, legacyExistsV2, err := releaseHistoryV2(storageBackendV2, legacyName)
@@ -152,7 +152,7 @@ func convertV2ToV3(storageBackendV2 *storagev2.Storage, storageBackendV3 *storag
 }
 
 func convertHistoryToV3(history []*helmreleasev2.Release, storageBackendV2 *storagev2.Storage,
-		storageBackendV3 *storagev3.Storage) error {
+	storageBackendV3 *storagev3.Storage) error {
 	for _, relV2 := range history {
 		relV3, err := helm2to3.CreateRelease(relV2)
 		if err != nil {
@@ -204,7 +204,7 @@ func getLegacyName(cr *unstructured.Unstructured) string {
 //   collision. As is, the only indication of collision will be in the CR status
 //   and operator logs.
 func getReleaseName(storageBackend *storagev3.Storage, crChartName string,
-		cr *unstructured.Unstructured) (string, error) {
+	cr *unstructured.Unstructured) (string, error) {
 	// If a release with the legacy name exists as a v3 release,
 	// return the legacy name.
 	legacyName := getLegacyName(cr)

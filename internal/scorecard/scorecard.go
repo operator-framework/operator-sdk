@@ -72,7 +72,7 @@ func getPlugins(version string, selector labels.Selector) ([]Plugin, error) {
 	configs := []pluginConfig{}
 	// set ErrorUnused to true in decoder to fail if an unknown field is set by the user
 	if err := scViper.UnmarshalKey("plugins", &configs,
-			func(c *mapstructure.DecoderConfig) { c.ErrorUnused = true }); err != nil {
+		func(c *mapstructure.DecoderConfig) { c.ErrorUnused = true }); err != nil {
 		return nil, errors.Wrap(err, "Could not load plugin configurations")
 	}
 	for idx, plugin := range configs {

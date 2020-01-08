@@ -269,10 +269,10 @@ func addMountKubeconfigSecret(dep *appsv1.Deployment) {
 	for index := range dep.Spec.Template.Spec.Containers {
 		// mount the volume
 		dep.Spec.Template.Spec.Containers[index].VolumeMounts =
-				append(dep.Spec.Template.Spec.Containers[index].VolumeMounts, v1.VolumeMount{
-			Name:      "scorecard-kubeconfig",
-			MountPath: "/scorecard-secret",
-		})
+			append(dep.Spec.Template.Spec.Containers[index].VolumeMounts, v1.VolumeMount{
+				Name:      "scorecard-kubeconfig",
+				MountPath: "/scorecard-secret",
+			})
 		// specify the path via KUBECONFIG env var
 		dep.Spec.Template.Spec.Containers[index].Env = append(dep.Spec.Template.Spec.Containers[index].Env, v1.EnvVar{
 			Name:  "KUBECONFIG",
@@ -359,7 +359,7 @@ func addResourceCleanup(obj runtime.Object, key types.NamespacedName) {
 				if apierrors.IsNotFound(err) {
 					return true, nil
 				}
-				return false, fmt.Errorf("error encountered during deletion of resource type %v with" +
+				return false, fmt.Errorf("error encountered during deletion of resource type %v with"+
 					" namespace/name (%+v): %v", objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
 			}
 			return false, nil

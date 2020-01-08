@@ -144,7 +144,7 @@ type SDKCertGenerator struct {
 // a ConfigMap containing the CA Certificate and a Secret containing the CA key or it
 // returns a error incase something goes wrong.
 func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service, config *CertConfig) (*v1.Secret,
-		*v1.ConfigMap, *v1.Secret, error) {
+	*v1.ConfigMap, *v1.Secret, error) {
 	if err := verifyConfig(config); err != nil {
 		return nil, nil, nil, err
 	}
@@ -306,7 +306,7 @@ func getAppSecretInCluster(kubeClient kubernetes.Interface, name, namespace stri
 // NOTE: both the CA secret and configmap have the same name with template `<cr-kind>-<cr-name>-ca` which is what the
 // input parameter `name` refers to.
 func getCASecretAndConfigMapInCluster(kubeClient kubernetes.Interface, name,
-		namespace string) (*v1.Secret, *v1.ConfigMap, error) {
+	namespace string) (*v1.Secret, *v1.ConfigMap, error) {
 	hasConfigMap := true
 	cm, err := kubeClient.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
 	if err != nil && !apiErrors.IsNotFound(err) {
@@ -328,7 +328,7 @@ func getCASecretAndConfigMapInCluster(kubeClient kubernetes.Interface, name,
 	if hasConfigMap != hasSecret {
 		// TODO: this case can happen if creating CA configmap succeeds and creating CA secret failed.
 		//  We need to handle this case properly.
-		return nil, nil, fmt.Errorf("expect either both ca configmap and secret both exist or not exist," +
+		return nil, nil, fmt.Errorf("expect either both ca configmap and secret both exist or not exist,"+
 			" but got hasCAConfigmap==%v and hasCASecret==%v", hasConfigMap, hasSecret)
 	}
 	if hasConfigMap == false {
