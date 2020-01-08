@@ -53,4 +53,5 @@ golangci-lint run --disable-all \
     --enable=dupl \
     --enable=unparam \
     --enable=golint \
+    --exclude [a-z] \
     ${LINTERS[@]}

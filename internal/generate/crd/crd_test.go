@@ -133,13 +133,11 @@ func TestCRDNonGo(t *testing.T) {
 	}{
 		{
 			"non-existent CRD with default structural schema",
-			"cache.example.com/v1alpha1", "Memcached", filepath.Join("not", "exist"),
-			crdNonGoDefaultExp, false,
+			"cache.example.com/v1alpha1", "Memcached", filepath.Join("not", "exist"), crdNonGoDefaultExp, false,
 		},
 		{
 			"existing CRD with custom structural schema",
-			"cache.example.com/v1alpha1", "Memcached", tfCRDsDir,
-			crdCustomExp, false,
+			"cache.example.com/v1alpha1", "Memcached", tfCRDsDir, crdCustomExp, false,
 		},
 	}
 

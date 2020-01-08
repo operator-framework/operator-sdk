@@ -71,7 +71,8 @@ func GetCRDDescriptionForGVK(apisDir string, gvk schema.GroupVersionKind) (olmap
 	comments := append(kindType.SecondClosestCommentLines, kindType.CommentLines...)
 	kindDescriptors, err := parseCSVGenAnnotations(comments)
 	if err != nil {
-		return olmapiv1alpha1.CRDDescription{}, errors.Wrapf(err, "error parsing CSV type %s annotations", kindType.Name.Name)
+		return olmapiv1alpha1.CRDDescription{}, errors.Wrapf(err, "error parsing CSV type %s annotations",
+			kindType.Name.Name)
 	}
 	if description := parseDescription(comments); description != "" {
 		crdDesc.Description = description
@@ -85,14 +86,16 @@ func GetCRDDescriptionForGVK(apisDir string, gvk schema.GroupVersionKind) (olmap
 	for _, member := range kindType.Members {
 		path, err := getPathFromMember(member)
 		if err != nil {
-			return olmapiv1alpha1.CRDDescription{}, errors.Wrapf(err, "error parsing %s type member %s JSON tags", gvk.Kind, member.Name)
+			return olmapiv1alpha1.CRDDescription{}, errors.Wrapf(err,
+				"error parsing %s type member %s JSON tags", gvk.Kind, member.Name)
 		}
 		if path != typeSpec && path != typeStatus {
 			continue
 		}
 		tree, err := newTypeTreeFromRoot(member.Type)
 		if err != nil {
-			return olmapiv1alpha1.CRDDescription{}, errors.Wrapf(err, "error creating type tree for member type %s", member.Type.Name)
+			return olmapiv1alpha1.CRDDescription{}, errors.Wrapf(err,
+				"error creating type tree for member type %s", member.Type.Name)
 		}
 		descriptors, err := tree.getDescriptorsFor(path)
 		if err != nil {
