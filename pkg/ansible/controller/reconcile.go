@@ -182,7 +182,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 			}
 		}
 		if event.Event == eventapi.EventRunnerOnFailed && !event.IgnoreError() {
-			eventErr := errors.New("event runner on failed : " + event.GetFailedPlaybookMessage())
+			eventErr := errors.New("event runner on failed")
 			return reconcile.Result{}, eventErr
 		}
 	}

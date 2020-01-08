@@ -133,7 +133,7 @@ func TestReconcile(t *testing.T) {
 			},
 		},
 		{
-			Name:            "Failure message reconcile",
+			Name:            "Failure event runner on failed",
 			GVK:             gvk,
 			ManageStatus:    true,
 			Runner: &fake.Runner{
@@ -164,15 +164,13 @@ func TestReconcile(t *testing.T) {
 					"spec":       map[string]interface{}{},
 				},
 			}),
-			Result: reconcile.Result{
-				RequeueAfter: 5 * time.Second,
-			},
 			Request: reconcile.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "reconcile",
 					Namespace: "default",
 				},
 			},
+			// Since face an event error needs re-trigger the reconcile
 			ExpectedObject: &unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"metadata": map[string]interface{}{
@@ -182,23 +180,10 @@ func TestReconcile(t *testing.T) {
 					"apiVersion": "operator-sdk/v1beta1",
 					"kind":       "Testing",
 					"spec":       map[string]interface{}{},
-					"status": map[string]interface{}{
+					"status":     map[string]interface{}{
 						"conditions": []interface{}{
 							map[string]interface{}{
-								"status": "True",
-								"type":   "Failure",
-								"ansibleResult": map[string]interface{}{
-									"changed":    int64(0),
-									"failures":   int64(0),
-									"ok":         int64(0),
-									"skipped":    int64(0),
-									"completion": eventTime.Format("2006-01-02T15:04:05.99999999"),
-								},
-								"message": "new failure message",
-								"reason":  "Failed",
-							},
-							map[string]interface{}{
-								"status":  "False",
+								"status":  "True",
 								"type":    "Running",
 								"message": "Running reconciliation",
 								"reason":  "Running",
@@ -207,6 +192,7 @@ func TestReconcile(t *testing.T) {
 					},
 				},
 			},
+			ShouldError: true,
 		},
 		{
 			Name:            "Finalizer successful reconcile",
