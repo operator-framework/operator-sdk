@@ -62,7 +62,6 @@ const (
 // release changes are necessary, Reconcile will create or patch the underlying
 // resources to match the expected release manifest.
 
-//nolint:gocyclo
 func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	o := &unstructured.Unstructured{}
 	o.SetGroupVersionKind(r.GVK)

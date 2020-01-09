@@ -144,7 +144,6 @@ type SDKCertGenerator struct {
 // a ConfigMap containing the CA Certificate and a Secret containing the CA key or it
 // returns a error incase something goes wrong.
 
-//nolint:gocyclo
 func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service, config *CertConfig) (*v1.Secret,
 	*v1.ConfigMap, *v1.Secret, error) {
 	if err := verifyConfig(config); err != nil {

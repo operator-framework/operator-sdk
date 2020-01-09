@@ -33,7 +33,7 @@ func EntrypointTest(t *testing.T) {
 	}
 }
 
-//nolint:llls
+//nolint:lll
 const entrypointExp = `#!/bin/sh -e
 
 # This is documented here:
