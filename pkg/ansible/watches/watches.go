@@ -49,8 +49,9 @@ type Watch struct {
 	Finalizer                   *Finalizer              `yaml:"finalizer"`
 
 	// Not configurable via watches.yaml
-	MaxWorkers       int `yaml:"maxWorkers"`
-	AnsibleVerbosity int `yaml:"ansibleVerbosity"`
+	MaxWorkers       int    `yaml:"maxWorkers"`
+	AnsibleVerbosity int    `yaml:"ansibleVerbosity"`
+	AnsibleRolesPath string `yaml:"AnsibleRolesPath"`
 }
 
 // Finalizer - Expose finalizer to be used by a user.
@@ -136,6 +137,7 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	w.WatchClusterScopedResources = tmp.WatchClusterScopedResources
 	w.Finalizer = tmp.Finalizer
 	w.AnsibleVerbosity = getAnsibleVerbosity(gvk, ansibleVerbosityDefault)
+	w.AnsibleRolesPath = getAnsibleRolesPathEnvVar()
 	w.addRolePlaybookPaths()
 
 	return nil
@@ -145,10 +147,6 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 // based on the current dir
 func (w *Watch) addRolePlaybookPaths() {
 	w.Playbook = getFullPath(w.Playbook)
-	w.Role = getFullRolePath(w.Role)
-	if w.Finalizer != nil && len(w.Finalizer.Role) > 0 {
-		w.Finalizer.Role = getFullRolePath(w.Finalizer.Role)
-	}
 	if w.Finalizer != nil && len(w.Finalizer.Playbook) > 0 {
 		w.Finalizer.Playbook = getFullPath(w.Finalizer.Playbook)
 	}
@@ -162,15 +160,11 @@ func getFullPath(path string) string {
 	return path
 }
 
-// getFullRolePath will return a valid full path for the role
-func getFullRolePath(path string) string {
+// getRoleFullPath will return a valid full path for the playbook
+func getRoleFullPath(path string) string {
 	if len(path) > 0 && !filepath.IsAbs(path) {
-		if len(os.Getenv("ANSIBLE_ROLES_PATH")) > 0 {
-			return filepath.Join(os.Getenv("ANSIBLE_ROLES_PATH"), path)
-		}
-		// If the flag and/or env var ANSIBLE_ROLES_PATH was not set then, it will
-		// be the current directory concat with roles.
-		return getFullPath(filepath.Join("roles", path))
+		df := filepath.Join(projutil.MustGetwd(), "roles")
+		return filepath.Join(df, path)
 	}
 	return path
 }
@@ -279,9 +273,14 @@ func verifyAnsiblePath(playbook string, role string) error {
 			return fmt.Errorf("playbook: %v was not found", playbook)
 		}
 	case role != "":
-		if _, err := os.Stat(role); err != nil {
-			return fmt.Errorf("role path: %v was not found", role)
-		}
+		//// Check if the role exists
+		//rolePath := getAnsibleRolesPathEnvVar()
+		//if len(rolePath) < 1 {
+		//	rolePath = getRoleFullPath(role)
+		//}
+		//if _, err := os.Stat(rolePath); err != nil {
+		//	return fmt.Errorf("role path: %v was not found", role)
+		//}
 	default:
 		return fmt.Errorf("must specify Role or Playbook")
 	}
@@ -329,6 +328,15 @@ func getAnsibleVerbosity(gvk schema.GroupVersionKind, defValue int) int {
 		return defValue
 	}
 	return ansibleVerbosity
+}
+
+func getAnsibleRolesPathEnvVar() string {
+	if envVal, ok := os.LookupEnv("ANSIBLE_ROLES_PATH"); ok {
+		if len(envVal) > 0 {
+			return envVal
+		}
+	}
+	return ""
 }
 
 // getIntegerEnvWithDefault returns value for MaxWorkers/Ansibleverbosity based on if envVar is set or a defvalue is used.

@@ -120,6 +120,7 @@ func New(watch watches.Watch) (Runner, error) {
 		GVK:                watch.GroupVersionKind,
 		maxRunnerArtifacts: watch.MaxRunnerArtifacts,
 		ansibleVerbosity:   watch.AnsibleVerbosity,
+		AnsibleRolesPath:   watch.AnsibleRolesPath,
 	}, nil
 }
 
@@ -133,6 +134,7 @@ type runner struct {
 	finalizerCmdFunc   cmdFuncType
 	maxRunnerArtifacts int
 	ansibleVerbosity   int
+	AnsibleRolesPath   string
 }
 
 func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig string) (RunResult, error) {
@@ -211,7 +213,9 @@ func (r *runner) Run(ident string, u *unstructured.Unstructured, kubeconfig stri
 		// Append current environment since setting dc.Env to anything other than nil overwrites current env
 		dc.Env = append(dc.Env, os.Environ()...)
 		dc.Env = append(dc.Env, fmt.Sprintf("K8S_AUTH_KUBECONFIG=%s", kubeconfig), fmt.Sprintf("KUBECONFIG=%s", kubeconfig))
-
+		if len(r.AnsibleRolesPath) > 0 {
+			dc.Env = append(dc.Env, fmt.Sprintf("ANSIBLE_ROLES_PATH=%s", r.AnsibleRolesPath), fmt.Sprintf("ANSIBLE_ROLES_PATH=%s", r.AnsibleRolesPath))
+		}
 		output, err := dc.CombinedOutput()
 		if err != nil {
 			logger.Error(err, string(output))
