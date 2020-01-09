@@ -183,6 +183,7 @@ func (g pkgGenerator) setChannels(pkg *registry.PackageManifest) {
 		for _, c := range pkg.Channels {
 			if pkg.DefaultChannelName == c.Name {
 				defaultExists = true
+				break
 			}
 		}
 		if !defaultExists {
