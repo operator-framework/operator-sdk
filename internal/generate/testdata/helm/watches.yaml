@@ -1,0 +1,9 @@
+---
+- version: v1alpha1
+  group: cache.example.com
+  kind: Memcached
+  chart: helm-charts/memcached
+- version: v1alpha1
+  group: cache.example.com
+  kind: MemcachedRS
+  chart: helm-charts/memcachedrs

@@ -17,11 +17,12 @@ package olmcatalog
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 
+	gen "github.com/operator-framework/operator-sdk/internal/generate/gen"
+	gencatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
-	catalog "github.com/operator-framework/operator-sdk/internal/scaffold/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -35,7 +36,8 @@ var (
 	csvVersion     string
 	csvChannel     string
 	fromVersion    string
-	csvConfigPath  string
+	outputDir      string
+	includePaths   []string
 	operatorName   string
 	updateCRDs     bool
 	defaultChannel bool
@@ -50,9 +52,7 @@ for the operator. This file is used to publish the operator to the OLM Catalog.
 
 A CSV semantic version is supplied via the --csv-version flag. If your operator
 has already generated a CSV manifest you want to use as a base, supply its
-version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.
-
-Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config.yaml`,
+version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.`,
 		RunE: genCSVFunc,
 	}
 
@@ -61,7 +61,8 @@ Configure CSV generation by writing a config file 'deploy/olm-catalog/csv-config
 		log.Fatalf("Failed to mark `csv-version` flag for `olm-catalog gen-csv` subcommand as required: %v", err)
 	}
 	genCSVCmd.Flags().StringVar(&fromVersion, "from-version", "", "Semantic version of an existing CSV to use as a base")
-	genCSVCmd.Flags().StringVar(&csvConfigPath, "csv-config", "", "Path to CSV config file. Defaults to deploy/olm-catalog/csv-config.yaml")
+	genCSVCmd.Flags().StringSliceVar(&includePaths, "include", []string{scaffold.DeployDir}, "Paths to include in CSV generation, ex. \"deploy/prod,deploy/test\". If this flag is set and you want to enable default behavior, you must include \"deploy/\" in the argument list")
+	genCSVCmd.Flags().StringVar(&outputDir, "output-dir", scaffold.DeployDir, "Base directory to output generated CSV. The resulting CSV bundle directory will be \"<output-dir>/olm-catalog/<operator-name>/<csv-version>\"")
 	genCSVCmd.Flags().BoolVar(&updateCRDs, "update-crds", false, "Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's")
 	genCSVCmd.Flags().StringVar(&operatorName, "operator-name", "", "Operator name to use while generating CSV")
 	genCSVCmd.Flags().StringVar(&csvChannel, "csv-channel", "", "Channel the CSV should be registered under in the package manifest")
@@ -83,59 +84,42 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	absProjectPath := projutil.MustGetwd()
-	cfg := &input.Config{
-		AbsProjectPath: absProjectPath,
-		ProjectName:    filepath.Base(absProjectPath),
-	}
-	if projutil.IsOperatorGo() {
-		cfg.Repo = projutil.GetGoPkg()
-	}
-
 	log.Infof("Generating CSV manifest version %s", csvVersion)
 
-	csvCfg, err := catalog.GetCSVConfig(csvConfigPath)
-	if err != nil {
-		return err
-	}
 	if operatorName == "" {
-		// Use config operator name if not set by CLI, i.e. prefer CLI value over
-		// config value.
-		if operatorName = csvCfg.OperatorName; operatorName == "" {
-			// Default to using project name if both are empty.
-			operatorName = filepath.Base(absProjectPath)
-		}
+		operatorName = filepath.Base(projutil.MustGetwd())
+	}
+	cfg := gen.Config{
+		OperatorName: operatorName,
+		OutputDir:    outputDir,
+		Filters:      gen.MakeFilters(includePaths...),
 	}
 
-	s := &scaffold.Scaffold{}
-	csv := &catalog.CSV{
-		CSVVersion:     csvVersion,
-		FromVersion:    fromVersion,
-		ConfigFilePath: csvConfigPath,
-		OperatorName:   operatorName,
+	csv := gencatalog.NewCSV(cfg, csvVersion, fromVersion)
+	if err := csv.Generate(); err != nil {
+		return fmt.Errorf("error generating CSV: %v", err)
 	}
-	err = s.Execute(cfg,
-		csv,
-		&catalog.PackageManifest{
-			CSVVersion:       csvVersion,
-			Channel:          csvChannel,
-			ChannelIsDefault: defaultChannel,
-			OperatorName:     operatorName,
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("catalog scaffold failed: (%v)", err)
+	pkg := gencatalog.NewPackageManifest(cfg, csvVersion, csvChannel, defaultChannel)
+	if err := pkg.Generate(); err != nil {
+		return fmt.Errorf("error generating package manifest: %v", err)
 	}
 
 	// Write CRD's to the new or updated CSV package dir.
 	if updateCRDs {
-		input, err := csv.GetInput()
+		crdManifestSet, err := findCRDs(includePaths...)
 		if err != nil {
 			return err
 		}
-		err = writeCRDsToDir(csvCfg.CRDCRPaths, filepath.Dir(input.Path))
-		if err != nil {
-			return err
+		baseDir := outputDir
+		if baseDir == "" {
+			baseDir = gencatalog.OLMCatalogDir
+		}
+		bundleDir := filepath.Join(baseDir, operatorName, csvVersion)
+		for path, b := range crdManifestSet {
+			path = filepath.Join(bundleDir, path)
+			if err = ioutil.WriteFile(path, b, fileutil.DefaultFileMode); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -175,25 +159,41 @@ func verifyCSVVersion(version string) error {
 	return nil
 }
 
-func writeCRDsToDir(crdPaths []string, toDir string) error {
-	for _, p := range crdPaths {
-		b, err := ioutil.ReadFile(p)
+// findCRDs searches directories and files in paths for CRD manifest paths,
+// returning a map of paths to file contents.
+func findCRDs(paths ...string) (map[string][]byte, error) {
+	crdPathSet := map[string][]byte{}
+	for _, path := range paths {
+		info, err := os.Stat(path)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		typeMeta, err := k8sutil.GetTypeMetaFromBytes(b)
-		if err != nil {
-			return err
-		}
-		if typeMeta.Kind != "CustomResourceDefinition" {
-			continue
-		}
-
-		path := filepath.Join(toDir, filepath.Base(p))
-		err = ioutil.WriteFile(path, b, fileutil.DefaultFileMode)
-		if err != nil {
-			return err
+		if info.IsDir() {
+			subsetPaths, err := k8sutil.GetCRDManifestPaths(path)
+			if err != nil {
+				return nil, err
+			}
+			for _, crdPath := range subsetPaths {
+				b, err := ioutil.ReadFile(crdPath)
+				if err != nil {
+					return nil, err
+				}
+				crdPathSet[filepath.Clean(crdPath)] = b
+			}
+		} else {
+			b, err := ioutil.ReadFile(path)
+			if err != nil {
+				return nil, err
+			}
+			typeMeta, err := k8sutil.GetTypeMetaFromBytes(b)
+			if err != nil {
+				log.Infof("Skipping non-manifest file %s", path)
+				continue
+			}
+			if typeMeta.Kind == "CustomResourceDefinition" {
+				crdPathSet[filepath.Clean(path)] = b
+			}
 		}
 	}
-	return nil
+	return crdPathSet, nil
 }

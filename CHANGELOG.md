@@ -39,6 +39,7 @@
 - Support for relative helm chart paths in the Helm operator's watches.yaml file. ([#2287](https://github.com/operator-framework/operator-sdk/pull/2287))
 - New `operator-sdk generate crds` subcommand, which generates CRDs from Go types. ([#2276](https://github.com/operator-framework/operator-sdk/pull/2276))
 - Go API code can now be [annotated](https://github.com/operator-framework/operator-sdk/blob/d147bb3/doc/user/olm-catalog/csv-annotations.md) to populate a CSV's `spec.customresourcedefinitions.owned` field on invoking [`olm-catalog gen-csv`](https://github.com/operator-framework/operator-sdk/blob/d147bb3/doc/cli/operator-sdk_olm-catalog_gen-csv.md). ([#1162](https://github.com/operator-framework/operator-sdk/pull/1162))
+- Added the [`olm-catalog gen-csv --include`](doc/cli/operator-sdk_olm-catalog_gen-csv.md#options) option to include files as input to the CSV generator in lieu of a config. ([#2249](https://github.com/operator-framework/operator-sdk/pull/2249))
 
 ### Changed
 
@@ -57,6 +58,8 @@
 ### Deprecated
 
 - Deprecated the `operator-sdk generate openapi` command. CRD generation is still supported with `operator-sdk generate crds`. It is now recommended to use [openapi-gen](https://github.com/kubernetes/kube-openapi/tree/master/cmd/openapi-gen) directly for OpenAPI code generation. The `generate openapi` subcommand will be removed in a future release. ([#2276](https://github.com/operator-framework/operator-sdk/pull/2276))
+
+- Removed CSV configuration file support in favor of including all files in the default dir `deploy` and using [`gen-csv --include`](doc/cli/operator-sdk_olm-catalog_gen-csv.md#options) to include files as input to generator. ([#2249](https://github.com/operator-framework/operator-sdk/pull/2249))
 
 ### Bug Fixes
 

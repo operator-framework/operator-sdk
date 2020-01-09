@@ -11,7 +11,28 @@ metadata:
             "name": "example-memcached"
           },
           "spec": {
-            "size": 3
+            "image": {
+              "pullPolicy": "IfNotPresent",
+              "repository": "nginx"
+            },
+            "ingress": {
+              "enabled": false,
+              "hosts": [
+                {
+                  "host": "chart-example.local",
+                  "paths": []
+                }
+              ]
+            },
+            "replicaCount": 1,
+            "service": {
+              "port": 80,
+              "type": "ClusterIP"
+            },
+            "serviceAccount": {
+              "create": true,
+              "name": "memcached-operator"
+            }
           }
         },
         {
@@ -21,51 +42,42 @@ metadata:
             "name": "example-memcachedrs"
           },
           "spec": {
-            "numNodes": 4
+            "size": 3
           }
         }
       ]
     capabilities: Basic Install
-  name: memcached-operator.v0.0.2
+  name: memcached-operator.v0.0.3
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-    - kind: MemcachedRS
+    - description: MemcachedRS is the Schema for the memcachedrs API
+      displayName: MemcachedRS App
+      kind: MemcachedRS
       name: memcachedrs.cache.example.com
+      specDescriptors:
+      - displayName: Num Nodes
+        path: numNodes
+      statusDescriptors:
+      - displayName: Node List
+        path: nodeList
       version: v1alpha1
-    - description: Represents a cluster of Memcached apps
+    - description: Memcached is the Schema for the memcacheds API
       displayName: Memcached App
       kind: Memcached
       name: memcacheds.cache.example.com
-      resources:
-      - kind: Deployment
-        name: ""
-        version: v1
-      - kind: ReplicaSet
-        name: ""
-        version: v1
-      - kind: Pod
-        name: ""
-        version: v1
       specDescriptors:
-      - description: The desired number of member Pods for the deployment.
+      - description: Size is the size of the memcached deployment
         displayName: Size
         path: size
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:podCount
       statusDescriptors:
-      - description: The current status of the application.
-        displayName: Status
-        path: phase
-        x-descriptors:
-        - urn:alm:descriptor:io.kubernetes.phase
-      - description: Explanation for the current status of the application.
-        displayName: Status Details
-        path: reason
-        x-descriptors:
-        - urn:alm:descriptor:io.kubernetes.phase:reason
+      - description: Nodes are the names of the memcached pods
+        displayName: Nodes
+        path: nodes
       version: v1alpha1
   description: Main enterprise application providing business critical features with
     high availability and no manual intervention.
@@ -73,21 +85,20 @@ spec:
   install:
     spec:
       deployments:
-      - name: memcached-operator
+      - name: helm1
         spec:
           replicas: 1
           selector:
             matchLabels:
-              name: memcached-operator
+              name: helm1
+          strategy: {}
           template:
             metadata:
               labels:
-                name: memcached-operator
+                name: helm1
             spec:
               containers:
-              - command:
-                - memcached-operator
-                env:
+              - env:
                 - name: WATCH_NAMESPACE
                   valueFrom:
                     fieldRef:
@@ -97,11 +108,12 @@ spec:
                     fieldRef:
                       fieldPath: metadata.name
                 - name: OPERATOR_NAME
-                  value: memcached-operator
-              image: quay.io/coreos/operator-sdk-dev:test-framework-operator
-              imagePullPolicy: Always
-              name: memcached-operator
-              serviceAccountName: memcached-operator
+                  value: helm1
+                image: quay.io/example/memcached-operator:v0.0.3
+                imagePullPolicy: Always
+                name: helm1
+                resources: {}
+              serviceAccountName: helm1
       permissions:
       - rules:
         - apiGroups:
@@ -109,14 +121,20 @@ spec:
           resources:
           - pods
           - services
+          - services/finalizers
           - endpoints
           - persistentvolumeclaims
           - events
           - configmaps
           - secrets
-          - namespaces
           verbs:
-          - '*'
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
         - apiGroups:
           - apps
           resources:
@@ -125,22 +143,68 @@ spec:
           - replicasets
           - statefulsets
           verbs:
-          - '*'
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
         - apiGroups:
-          - cache.example.com
+          - ""
           resources:
-          - '*'
+          - namespaces
+          verbs:
+          - get
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          - secrets
           verbs:
           - '*'
         - apiGroups:
+          - monitoring.coreos.com
+          resources:
+          - servicemonitors
+          verbs:
+          - get
+          - create
+        - apiGroups:
           - apps
           resourceNames:
-          - memcached-operator
+          - helm1
           resources:
           - deployments/finalizers
           verbs:
           - update
-        serviceAccountName: memcached-operator
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          verbs:
+          - get
+        - apiGroups:
+          - apps
+          resources:
+          - replicasets
+          - deployments
+          verbs:
+          - get
+        - apiGroups:
+          - cache.example.com
+          resources:
+          - '*'
+          - memcachedrs
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        serviceAccountName: helm1
     strategy: deployment
   installModes:
   - supported: true
@@ -161,4 +225,5 @@ spec:
   provider:
     name: Example
     url: www.example.com
-  version: 0.0.2
+  replaces: memcached-operator.v0.0.2
+  version: 0.0.3

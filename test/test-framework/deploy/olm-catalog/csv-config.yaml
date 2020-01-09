@@ -1,0 +1,5 @@
+operator-path: "deploy/operator.yaml"
+crd-cr-paths:
+  - "deploy/crds"
+role-paths:
+  - "deploy/role.yaml"

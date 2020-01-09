@@ -1,0 +1,23 @@
+apiVersion: cache.example.com/v1alpha1
+kind: Memcached
+metadata:
+  name: example-memcached
+spec:
+  # Default values copied from <project_dir>/helm-charts/memcached/values.yaml
+
+  image:
+    pullPolicy: IfNotPresent
+    repository: nginx
+  ingress:
+    enabled: false
+    hosts:
+    - host: chart-example.local
+      paths: []
+  replicaCount: 1
+  service:
+    port: 80
+    type: ClusterIP
+  serviceAccount:
+    create: true
+    name: memcached-operator
+  
