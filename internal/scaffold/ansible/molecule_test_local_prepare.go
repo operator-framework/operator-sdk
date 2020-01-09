@@ -68,4 +68,4 @@ const moleculeTestLocalPrepareAnsibleTmpl = `---
       - role.yaml
       - role_binding.yaml
       - service_account.yaml
-` //nolint:golint
+`
