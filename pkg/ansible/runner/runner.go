@@ -66,7 +66,6 @@ func ansibleVerbosityString(verbosity int) string {
 
 type cmdFuncType func(ident, inputDirPath string, maxArtifacts, verbosity int) *exec.Cmd
 
-//nolint:gosec //to be done later
 func playbookCmdFunc(path string) cmdFuncType {
 	return func(ident, inputDirPath string, maxArtifacts, verbosity int) *exec.Cmd {
 		return exec.Command("ansible-runner", ansibleVerbosityString(verbosity), "--rotate-artifacts",
@@ -74,7 +73,6 @@ func playbookCmdFunc(path string) cmdFuncType {
 	}
 }
 
-//nolint:gosec //to be done later
 func roleCmdFunc(path string) cmdFuncType {
 	rolePath, roleName := filepath.Split(path)
 	return func(ident, inputDirPath string, maxArtifacts, verbosity int) *exec.Cmd {

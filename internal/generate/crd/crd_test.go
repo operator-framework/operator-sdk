@@ -35,7 +35,6 @@ const (
 	testKind       = "Memcached"
 )
 
-//nolint:gosec //to be done later
 func TestGenerate(t *testing.T) {
 	tfDir := getTestFrameworkPath(t)
 	// Must change directories since the test framework dir is a sub-module.
