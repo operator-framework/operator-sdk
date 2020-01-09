@@ -2,7 +2,7 @@
 
 source hack/lib/test_lib.sh
 
-set -eu
+set -eux
 
 header_text "Running tests to check ansible molecule"
 

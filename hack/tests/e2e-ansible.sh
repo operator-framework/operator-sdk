@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eu
+set -eux
 
 source hack/lib/test_lib.sh
 source hack/lib/image_lib.sh
