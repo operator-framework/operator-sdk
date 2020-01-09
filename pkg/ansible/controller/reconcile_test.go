@@ -133,9 +133,9 @@ func TestReconcile(t *testing.T) {
 			},
 		},
 		{
-			Name:            "Failure event runner on failed",
-			GVK:             gvk,
-			ManageStatus:    true,
+			Name:         "Failure event runner on failed",
+			GVK:          gvk,
+			ManageStatus: true,
 			Runner: &fake.Runner{
 				JobEvents: []eventapi.JobEvent{
 					eventapi.JobEvent{
@@ -180,7 +180,7 @@ func TestReconcile(t *testing.T) {
 					"apiVersion": "operator-sdk/v1beta1",
 					"kind":       "Testing",
 					"spec":       map[string]interface{}{},
-					"status":     map[string]interface{}{
+					"status": map[string]interface{}{
 						"conditions": []interface{}{
 							map[string]interface{}{
 								"status":  "True",
