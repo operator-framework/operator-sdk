@@ -449,7 +449,8 @@ To add a 3rd party resource to an operator, you must add it to the Manager's sch
 
 #### Register with the Manager's scheme
 
-Call the `AddToScheme()` function for your 3rd party resource and pass it the Manager's scheme via `mgr.GetScheme()`.
+Call the `AddToScheme()` function for your 3rd party resource and pass it the Manager's scheme via `mgr.GetScheme()`
+in `cmd/manager/main.go`.
 
 Example:
 ```go
@@ -477,6 +478,47 @@ func main() {
   }
 }
 ```
+
+##### If 3rd party resource does not have `AddToScheme()` function
+
+Use the [SchemeBuilder][scheme_builder] package from controller-runtime to initialize a new scheme builder that can be used to register the 3rd party resource with the manager's scheme.
+
+Example of registering `DNSEndpoints` 3rd party resource from `external-dns`:
+
+```go
+import (
+  ...
+    "k8s.io/apimachinery/pkg/runtime/schema"
+    "sigs.k8s.io/controller-runtime/pkg/scheme"
+  ...
+   // DNSEndoints
+   externaldns "github.com/kubernetes-incubator/external-dns/endpoint"
+   metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+ )
+
+func main() {
+  ....
+
+  log.Info("Registering Components.")
+
+  schemeBuilder := &scheme.Builder{GroupVersion: schema.GroupVersion{Group: "externaldns.k8s.io", Version: "v1alpha1"}}
+  schemeBuilder.Register(&externaldns.DNSEndpoint{}, &externaldns.DNSEndpointList{})
+  if err := schemeBuilder.AddToScheme(mgr.GetScheme()); err != nil {
+    log.Error(err, "")
+    os.Exit(1)
+  }
+
+  ....
+
+  // Setup all Controllers
+  if err := controller.AddToManager(mgr); err != nil {
+    log.Error(err, "")
+    os.Exit(1)
+  }
+}
+```
+
+
 
 **NOTES:**
 
@@ -694,3 +736,4 @@ When the operator is not running in a cluster, the Manager will return an error 
 [metrics_doc]: ./user/metrics/README.md
 [quay_link]: https://quay.io
 [multi-namespaced-cache-builder]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
+[scheme_builder]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/scheme#Builder
