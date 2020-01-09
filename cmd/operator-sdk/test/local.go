@@ -116,6 +116,7 @@ func testLocalAnsibleFunc() error {
 	return projutil.ExecCmd(dc)
 }
 
+//nolint:gocyclo
 func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())

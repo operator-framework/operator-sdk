@@ -125,7 +125,8 @@ type RequestInfoFactory struct {
 // /api/{version}
 // /api
 // /healthz
-// /
+
+//nolint:gocyclo
 func (r *RequestInfoFactory) NewRequestInfo(req *http.Request) (*RequestInfo, error) {
 	// start with a non-resource request until proven otherwise
 	requestInfo := RequestInfo{

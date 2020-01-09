@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//nolint:lll
 package crd
 
 import (
@@ -34,6 +35,7 @@ const (
 	testKind       = "Memcached"
 )
 
+//nolint:gosec //to be done later
 func TestGenerate(t *testing.T) {
 	tfDir := getTestFrameworkPath(t)
 	// Must change directories since the test framework dir is a sub-module.

@@ -48,6 +48,7 @@ func (s *Role) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
+//nolint:lll
 func UpdateRoleForResource(r *Resource, absProjectPath string) error {
 	// append rbac rule to deploy/role.yaml
 	roleFilePath := filepath.Join(absProjectPath, DeployDir, RoleYamlFile)

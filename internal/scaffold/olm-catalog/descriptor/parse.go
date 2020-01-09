@@ -249,6 +249,7 @@ func isPathIgnore(path string) bool {
 	return path == ignoredTag
 }
 
+//nolint:lll
 // From https://github.com/openshift/console/blob/feabd61/frontend/packages/operator-lifecycle-manager/src/components/descriptors/types.ts#L3-L26
 var specXDescriptors = map[string]string{
 	"size":                 "urn:alm:descriptor:com.tectonic.ui:podCount",

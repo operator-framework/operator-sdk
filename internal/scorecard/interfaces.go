@@ -47,6 +47,7 @@ func (p externalPlugin) List() scapiv1alpha1.ScorecardOutput {
 	return scapiv1alpha1.ScorecardOutput{}
 }
 
+//nolint:gosec //to be done later
 func (p externalPlugin) Run() scapiv1alpha1.ScorecardOutput {
 	cmd := exec.Command(p.config.Command, p.config.Args...)
 	for _, env := range p.config.Env {

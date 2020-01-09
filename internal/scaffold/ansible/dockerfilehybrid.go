@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//nolint:lll
 package ansible
 
 import (
@@ -100,4 +101,4 @@ COPY playbook.yml ${HOME}/playbook.yml[[ end ]]
 ENTRYPOINT ["/tini", "--", "/usr/local/bin/entrypoint"]
 
 USER ${USER_UID}
-` // nolint:golint
+`
