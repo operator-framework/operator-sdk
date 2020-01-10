@@ -78,8 +78,7 @@ func TestNewCondition(t *testing.T) {
 			ac := NewCondition(tc.condType, tc.status, tc.ansibleResult, tc.reason, tc.message)
 			tc.expectedCondtion.LastTransitionTime = ac.LastTransitionTime
 			if !reflect.DeepEqual(*ac, tc.expectedCondtion) {
-				t.Fatalf(
-					"Condition did no match expected:\nActual: %#v\nExpected: %#v", *ac, tc.expectedCondtion)
+				t.Fatalf("Condition did no match expected:\nActual: %#v\nExpected: %#v", *ac, tc.expectedCondtion)
 			}
 		})
 	}
@@ -150,8 +149,7 @@ func TestGetCondition(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ac := GetCondition(tc.status, tc.condType)
 			if !reflect.DeepEqual(ac, tc.expectedCondition) {
-				t.Fatalf(
-					"Condition did no match expected:\nActual: %#v\nExpected: %#v", ac, tc.expectedCondition)
+				t.Fatalf("Condition did no match expected:\nActual: %#v\nExpected: %#v", ac, tc.expectedCondition)
 			}
 		})
 	}
