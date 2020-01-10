@@ -1,4 +1,4 @@
-## Unreleased
+## v0.14.0
 
 ### Added
 
@@ -22,8 +22,6 @@
 ### Deprecated
 
 - Deprecated `github.com/operator-framework/operator-sdk/pkg/restmapper` in favor of the `DynamicRESTMapper` implementation in [controller-runtime](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/apiutil#NewDiscoveryRESTMapper). ([#2309](https://github.com/operator-framework/operator-sdk/pull/2309))
-
-### Removed
 
 ### Bug Fixes
 
