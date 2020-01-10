@@ -133,7 +133,7 @@ func TestReconcile(t *testing.T) {
 			},
 		},
 		{
-			Name:         "Failure event runner on failed",
+			Name:         "Failure event runner on failed with manageStatus == true",
 			GVK:          gvk,
 			ManageStatus: true,
 			Runner: &fake.Runner{
@@ -170,7 +170,6 @@ func TestReconcile(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			// Since face an event error needs re-trigger the reconcile
 			ExpectedObject: &unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"metadata": map[string]interface{}{
@@ -183,13 +182,66 @@ func TestReconcile(t *testing.T) {
 					"status": map[string]interface{}{
 						"conditions": []interface{}{
 							map[string]interface{}{
-								"status":  "True",
+								"status":  "False",
 								"type":    "Running",
 								"message": "Running reconciliation",
 								"reason":  "Running",
 							},
+							map[string]interface{}{
+								"status": "True",
+								"type":   "Failure",
+								"ansibleResult": map[string]interface{}{
+									"changed":    int64(0),
+									"failures":   int64(0),
+									"ok":         int64(0),
+									"skipped":    int64(0),
+									"completion": eventTime.Format("2006-01-02T15:04:05.99999999"),
+								},
+								"message": "new failure message",
+								"reason":  "Failed",
+							},
 						},
 					},
+				},
+			},
+			ShouldError: true,
+		},
+		{
+			Name:         "Failure event runner on failed",
+			GVK:          gvk,
+			ManageStatus: false,
+			Runner: &fake.Runner{
+				JobEvents: []eventapi.JobEvent{
+					eventapi.JobEvent{
+						Event:   eventapi.EventRunnerOnFailed,
+						Created: eventapi.EventTime{Time: eventTime},
+						EventData: map[string]interface{}{
+							"res": map[string]interface{}{
+								"msg": "new failure message",
+							},
+						},
+					},
+					eventapi.JobEvent{
+						Event:   eventapi.EventPlaybookOnStats,
+						Created: eventapi.EventTime{Time: eventTime},
+					},
+				},
+			},
+			Client: fakeclient.NewFakeClient(&unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name":      "reconcile",
+						"namespace": "default",
+					},
+					"apiVersion": "operator-sdk/v1beta1",
+					"kind":       "Testing",
+					"spec":       map[string]interface{}{},
+				},
+			}),
+			Request: reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      "reconcile",
+					Namespace: "default",
 				},
 			},
 			ShouldError: true,
