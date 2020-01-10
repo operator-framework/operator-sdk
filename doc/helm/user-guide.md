@@ -314,7 +314,7 @@ kubectl delete -f deploy/crds/example.com_nginxes_crd.yaml
 
 Sometimes it is useful to pass down environment variables from the Operators `Deployment`
 all the way to the helm charts templates. This allows the Operator to be configured at a global
-level at runtime. This is new compared to dealing with helm charts manually
+level at runtime. This is new compared to dealing with the helm CLI
 as they usually don't have access to any environment variables in the context of Tiller
 for security reasons.
 
