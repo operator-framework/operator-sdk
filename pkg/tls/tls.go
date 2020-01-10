@@ -329,9 +329,8 @@ func getCASecretAndConfigMapInCluster(kubeClient kubernetes.Interface, name,
 	if hasConfigMap != hasSecret {
 		// TODO: this case can happen if creating CA configmap succeeds and creating CA secret failed.
 		//  We need to handle this case properly.
-		return nil, nil, fmt.Errorf(
-			"expect either both ca configmap and secret both exist or not exist, but got hasCAConfigmap==%v" +
-				" and hasCASecret==%v", hasConfigMap, hasSecret)
+		return nil, nil, fmt.Errorf("expect either both ca configmap and secret both exist or not exist, "+
+			" but got hasCAConfigmap==%v and hasCASecret==%v", hasConfigMap, hasSecret)
 	}
 	if hasConfigMap == false {
 		return nil, nil, nil

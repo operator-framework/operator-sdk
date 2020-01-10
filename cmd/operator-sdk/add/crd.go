@@ -129,7 +129,7 @@ func verifyCRDFlags() error {
 	}
 	if strings.Count(apiVersion, "/") != 1 {
 		return fmt.Errorf("value of --api-version has wrong format (%v);" +
-		 	"format must be $GROUP_NAME/$VERSION(e.g app.example.com/v1alpha1)", apiVersion)
+			"format must be $GROUP_NAME/$VERSION(e.g app.example.com/v1alpha1)", apiVersion)
 	}
 	return nil
 }
