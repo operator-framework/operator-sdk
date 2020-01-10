@@ -323,7 +323,7 @@ chart's default `values.yaml` or by a CR spec are always set when rendering the 
 set by a CR it gets overridden by the global override value.
 The override value can be static but can also refer to an environment variable.
 
-An example use case of this is when your helm charts references container images by chart variables,
+An example use case of this is when your helm chart references container images by chart variables,
 which is a good practice.
 If your Operator is deployed in a disconnected environment (no network access to the default images
 location) you can use this mechanism to set them globally at the Operator level using environment variables
