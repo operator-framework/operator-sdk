@@ -103,7 +103,9 @@ jobs:
     # Build and test go
     - <<: *test
       name: Go on Kubernetes
-      script: make test-e2e-go
+      script:
+      - make test-e2e-go
+      - make test-integration
 
     # Build and test ansible and test ansible using molecule
     - <<: *test
