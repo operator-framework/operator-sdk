@@ -128,8 +128,8 @@ func verifyCRDFlags() error {
 		return fmt.Errorf("value of --kind must start with an uppercase letter")
 	}
 	if strings.Count(apiVersion, "/") != 1 {
-		return fmt.Errorf("value of --api-version has wrong format (%v); format must be $GROUP_NAME/$VERSION"+
-			" (e.g app.example.com/v1alpha1)", apiVersion)
+		return fmt.Errorf("value of --api-version has wrong format (%v);" +
+		 	"format must be $GROUP_NAME/$VERSION(e.g app.example.com/v1alpha1)", apiVersion)
 	}
 	return nil
 }
