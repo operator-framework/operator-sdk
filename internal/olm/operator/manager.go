@@ -198,7 +198,7 @@ func (m *operatorManager) up(ctx context.Context) (err error) {
 	if err = m.client.DoCreate(ctx, objects...); err != nil {
 		return fmt.Errorf("error creating operator resources: %w", err)
 	}
-	// TODO(estroz): if m.namespace is not contained in m.installModeNamespaces,
+	// BUG(estroz): if m.namespace is not contained in m.installModeNamespaces,
 	// DoCSVWait will fail.
 	nn := types.NamespacedName{
 		Name:      csv.GetName(),
