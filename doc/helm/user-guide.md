@@ -315,13 +315,14 @@ kubectl delete -f deploy/crds/example.com_nginxes_crd.yaml
 Sometimes it is useful to pass down environment variables from the Operators `Deployment`
 all the way to the helm charts templates. This allows the Operator to be configured at a global
 level at runtime. This is new compared to dealing with the helm CLI
-as they usually don't have access to any environment variables in the context of Tiller
-for security reasons.
+as they usually don't have access to any environment variables in the context of Tiller (helm v2)
+or the helm binary (helm v3) for security reasons.
 
-With the helm Operator this becomes possible by enforcing that certain template values provided by the
-chart's default `values.yaml` or by a CR spec are always set when rendering the chart. If the value is
-set by a CR it gets overridden by the global override value.
-The override value can be static but can also refer to an environment variable.
+With the helm Operator this becomes possible by override values. This enforces that certain
+template values provided by the chart's default `values.yaml` or by a CR spec are always set
+when rendering the chart. If the value is set by a CR it gets overridden by the global override value.
+The override value can be static but can also refer to an environment variable. To pass down environment
+variables to the chart override values is currently the only way.
 
 An example use case of this is when your helm chart references container images by chart variables,
 which is a good practice.
