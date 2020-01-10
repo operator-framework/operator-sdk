@@ -124,7 +124,9 @@ func (opts GoCmdOptions) getGeneralArgsWithCmd(cmd string) ([]string, error) {
 		}
 		// Does the first "go" subcommand accept -mod=vendor?
 		_, ok := validVendorCmds[bargs[0]]
-		if err == nil && info.IsDir() && ok {
+		// TODO: remove needsModVendor when
+		// https://github.com/golang/go/issues/32471 is resolved.
+		if err == nil && info.IsDir() && ok && needsModVendor() {
 			bargs = append(bargs, "-mod=vendor")
 		}
 	}
@@ -133,6 +135,14 @@ func (opts GoCmdOptions) getGeneralArgsWithCmd(cmd string) ([]string, error) {
 		bargs = append(bargs, opts.PackagePath)
 	}
 	return bargs, nil
+}
+
+// needsModVendor resolves https://github.com/golang/go/issues/32471,
+// where any flags in GOFLAGS that are also set in the CLI are
+// duplicated, causing 'go' invocation errors.
+// TODO: remove once the issue is resolved.
+func needsModVendor() bool {
+	return !strings.Contains(os.Getenv("GOFLAGS"), "-mod=vendor")
 }
 
 func (opts GoCmdOptions) setCmdFields(c *exec.Cmd) {
