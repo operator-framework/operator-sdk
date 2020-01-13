@@ -15,5 +15,5 @@ Run an alpha subcommand
 ### SEE ALSO
 
 * [operator-sdk](operator-sdk.md)	 - An SDK for building operators with ease
-* [operator-sdk alpha olm](operator-sdk_alpha_olm.md)	 - Manage the Operator Lifecycle Manager installation in your cluster
+* [operator-sdk alpha olm](operator-sdk_alpha_olm.md)	 - Manage the Operator Lifecycle Manager installation and Operators in your cluster
 

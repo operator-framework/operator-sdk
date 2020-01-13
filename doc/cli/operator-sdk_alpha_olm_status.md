@@ -19,5 +19,5 @@ operator-sdk alpha olm status [flags]
 
 ### SEE ALSO
 
-* [operator-sdk alpha olm](operator-sdk_alpha_olm.md)	 - Manage the Operator Lifecycle Manager installation in your cluster
+* [operator-sdk alpha olm](operator-sdk_alpha_olm.md)	 - Manage the Operator Lifecycle Manager installation and Operators in your cluster
 

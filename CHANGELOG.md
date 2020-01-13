@@ -2,6 +2,8 @@
 
 ### Added
 
+- Added [`olm up`](./doc/cli/operator-sdk_alpha_olm_up.md) amd [`olm down`](./doc/cli/operator-sdk_alpha_olm_down.md) subcommands (under the `alpha` subcommand) to manage deployment/deletion of operators. These commands currently interact with OLM via an in-cluster registry-server created using an operator's on-disk manifests and managed by `operator-sdk`. ([#2402](ttps://github.com/operator-framework/operator-sdk/pull/2402))
+
 ### Changed
 
 ### Deprecated
