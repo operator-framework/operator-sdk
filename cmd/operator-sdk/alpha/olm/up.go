@@ -1,4 +1,4 @@
-// Copyright 2019 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,20 +15,30 @@
 package olm
 
 import (
+	"fmt"
+	"log"
+
+	olmoperator "github.com/operator-framework/operator-sdk/internal/olm/operator"
+
 	"github.com/spf13/cobra"
 )
 
-func NewCmd() *cobra.Command {
+func NewUpCmd() *cobra.Command {
+	c := &olmoperator.OLMCmd{}
 	cmd := &cobra.Command{
-		Use:   "olm",
-		Short: "Manage the Operator Lifecycle Manager installation and Operators in your cluster",
+		Use:   "up",
+		Short: "Deploy an operator using the Operator Lifecycle Manager",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 {
+				return fmt.Errorf("command %q requires exactly one argument", cmd.CommandPath())
+			}
+			c.ManifestsDir = args[0]
+			if err := c.Up(); err != nil {
+				log.Fatalf("Failed to deploy operator: %v", err)
+			}
+			return nil
+		},
 	}
-	cmd.AddCommand(
-		NewInstallCmd(),
-		NewUninstallCmd(),
-		NewStatusCmd(),
-		NewUpCmd(),
-		NewDownCmd(),
-	)
+	c.AddToFlagSet(cmd.Flags())
 	return cmd
 }
