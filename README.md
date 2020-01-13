@@ -134,7 +134,19 @@ $ kubectl delete -f deploy/crds/app.example.com_appservices_crd.yaml
 ```
 
 **Note:** Follow the steps in the [Getting Started Repository][getting_started] to learn how to develop your Operator projects.
- 
+
+### Add another API and Controller
+
+If your operator want to manage multiple CRs, then you may want to add another API and controller as follows:
+
+```sh
+# Add a new API for the custom resource AppDeploy
+$ operator-sdk add api --api-version=app.example.com/v1alpha1 --kind=AppDeploy
+
+# Add a new controller that watches for AppDeploy
+$ operator-sdk add controller --api-version=app.example.com/v1alpha1 --kind=AppDeploy
+```
+
 ## Command Line Interface
 
 To learn more about the SDK CLI, see the [SDK CLI Reference][sdk_cli_ref], or run `operator-sdk [command] -h`.
