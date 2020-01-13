@@ -65,8 +65,8 @@ sure to import `testing`, the operator-sdk test framework (`pkg/test`) as well a
 import (
     "testing"
 
-    cachev1alpha1 "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1"
-    "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis"
+    cachev1alpha1 "github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis/cache/v1alpha1"
+    "github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis"
 
     framework "github.com/operator-framework/operator-sdk/pkg/test"
 )
@@ -327,11 +327,11 @@ Since the CRD is not namespaced, it must be deleted separately. Clean up the CRD
 $ kubectl delete -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 ```
 
-[memcached-sample]:https://github.com/operator-framework/operator-sdk-samples/tree/master/memcached-operator
+[memcached-sample]:https://github.com/operator-framework/operator-sdk-samples/tree/master/go/memcached-operator
 [framework-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/framework.go
 [testctx-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/context.go
 [e2eutil-link]:https://github.com/operator-framework/operator-sdk/tree/master/pkg/test/e2eutil
-[memcached-test-link]:https://github.com/operator-framework/operator-sdk-samples/blob/master/memcached-operator/test/e2e/memcached_test.go
+[memcached-test-link]:https://github.com/operator-framework/operator-sdk-samples/blob/master/go/memcached-operator/test/e2e/memcached_test.go
 [scheme-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/framework.go#L109
 [sdk-cli-ref]:https://github.com/operator-framework/operator-sdk/blob/master/doc/sdk-cli-reference.md#test
 [main-entry-link]:https://github.com/operator-framework/operator-sdk/blob/master/pkg/test/main_entry.go#L25

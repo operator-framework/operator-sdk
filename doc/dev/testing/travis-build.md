@@ -75,23 +75,13 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 
 ### Ansible tests
 
-1. Run [ansible molecule tests][ansible-molecule]. (`make test/e2e/ansible-molecule)
+1. Run [ansible molecule tests][ansible-molecule]. (`make test-e2e-ansible-molecule)
     1. Create and configure a new ansible type memcached-operator.
     2. Create cluster resources.
     3. Run `operator-sdk test local` to run ansible molecule tests
     4. Change directory to [`test/ansible-inventory`][ansible-inventory] and run `operator-sdk test local`
 
 **NOTE**: All created resources, including the namespace, are deleted using a bash trap when the test finishes
-
-**NOTE** If you are using a MacOSX SO then will be required replace the sed command in the `hack/tests/e2e-ansible-molecule.sh` as the following example.
-
-```sh
-# Use the following sed command to check it on macOsX.
-# More info: https://www.mkyong.com/mac/sed-command-hits-undefined-label-error-on-mac-os-x/
-sed -i "" 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
-# The following code is the default used (Not valid for MacOSX)
-# sed -i 's|\(FROM quay.io/operator-framework/ansible-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
-```
 
 ### Helm Tests
 

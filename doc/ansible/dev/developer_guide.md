@@ -60,10 +60,11 @@ Modify `roles/Foo/tasks/main.yml` with desired Ansible logic. For this example
 we will create and delete a namespace with the switch of a variable:
 ```yaml
 ---
-- name: set test namespace to {{ state }}
+- name: set example-memcached namespace to {{ state }}
   k8s:
     api_version: v1
     kind: Namespace
+    name: example-memcached
     state: "{{ state }}"
   ignore_errors: true
 ```
@@ -96,7 +97,7 @@ PLAY [localhost] ***************************************************************
 TASK [Gathering Facts] *********************************************************************
 ok: [localhost]
 
-Task [Foo : set test namespace to present]
+Task [Foo : set example-memcached namespace to present]
 changed: [localhost]
 
 PLAY RECAP *********************************************************************************
@@ -107,11 +108,11 @@ localhost                  : ok=2    changed=1    unreachable=0    failed=0
 Check that the namespace was created:
 ```bash
 $ kubectl get namespace
-NAME          STATUS    AGE
-default       Active    28d
-kube-public   Active    28d
-kube-system   Active    28d
-test          Active    3s
+NAME          	           STATUS    AGE
+default       	           Active    28d
+kube-public   		   Active    28d
+kube-system   	           Active    28d
+example-memcached          Active    3s
 ```
 
 Rerun the playbook setting `state` to `absent`:
@@ -125,7 +126,7 @@ PLAY [localhost] ***************************************************************
 TASK [Gathering Facts] *********************************************************************
 ok: [localhost]
 
-Task [Foo : set test namespace to absent]
+Task [Foo : set example-memcached namespace to absent]
 changed: [localhost]
 
 PLAY RECAP *********************************************************************************
@@ -248,14 +249,14 @@ Create a Custom Resource instance of Foo with default var `state` set to
 $ kubectl create -f deploy/cr.yaml
 ```
 
-Check that namespace `test` was created:
+Check that namespace `example-memcached` was created:
 ```bash
 $ kubectl get namespace
-NAME          STATUS    AGE
-default       Active    28d
-kube-public   Active    28d
-kube-system   Active    28d
-test          Active    3s
+NAME          	           STATUS    AGE
+default       		   Active    28d
+kube-public   		   Active    28d
+kube-system   		   Active    28d
+example-memcached          Active    3s
 ```
 
 Modify `deploy/cr.yaml` to set `state` to `absent`:
@@ -363,13 +364,17 @@ status:
     type: Running
 ```
 
-Ansible Operator also allows you as the developer to supply custom status
-values with the [k8s_status][k8s_status_module] Ansible Module. This allows the
-developer to update the `status` from within Ansible with any key/value pair as
-desired. By default, Ansible Operator will always include the generic Ansible
-run output as shown above. If you would prefer your application *not* update
-the status with Ansible output and would prefer to track the status manually
-from your application, then simply update the watches file with `manageStatus`:
+Ansible Operator also allows you as the developer to supply custom
+status values with the `k8s_status` Ansible Module, which is included in
+[operator_sdk util collection](https://galaxy.ansible.com/operator_sdk/util).
+
+This allows the developer to update the `status` from within Ansible
+with any key/value pair as desired. By default, Ansible Operator will
+always include the generic Ansible run output as shown above. If you
+would prefer your application *not* update the status with Ansible
+output and would prefer to track the status manually from your
+application, then simply update the watches file with `manageStatus`:
+
 ```yaml
 - version: v1
   group: api.example.com
@@ -378,14 +383,35 @@ from your application, then simply update the watches file with `manageStatus`:
   manageStatus: false
 ```
 
-To update the `status` subresource with key `foo` and value `bar`, `k8s_status`
-can be used as shown:
+The simplest way to invoke the `k8s_status` module is to
+use its fully qualified collection name (fqcn). To update the
+`status` subresource with key `foo` and value `bar`, `k8s_status` can be
+used as shown:
+
 ```yaml
-- k8s_status:
+- operator_sdk.util.k8s_status:
     api_version: app.example.com/v1
     kind: Foo
     name: "{{ meta.name }}"
     namespace: "{{ meta.namespace }}"
+    status:
+      foo: bar
+```
+
+Collections can also be declared in the role's `meta/main.yml`, which is
+included for new scaffolded ansible operators.
+
+```yaml
+collections:
+  - operator_sdk.util
+```
+
+Declaring collections in the role meta allows you to invoke the
+`k8s_status` module directly.
+
+```yaml
+- k8s_status:
+    <snip>
     status:
       foo: bar
 ```
@@ -422,23 +448,12 @@ the Ansible Operator, see the [proposal for user-driven status
 management][manage_status_proposal].
 
 If your operator takes advantage of the `k8s_status` Ansible module and you are
-interested in testing the operator with `operator-sdk up local`, then it is
-imperative that the module is installed in a location that Ansible expects.
-This is done with the `library` configuration option for Ansible. For our
-example, we will assume the user is placing third-party Ansible modules in
-`/usr/share/ansible/library`.
+interested in testing the operator with `operator-sdk up local`, then
+you will need to install the collection locally.
 
-To install the `k8s_status` module, first set `ansible.cfg` to search in
-`/usr/share/ansible/library` for installed Ansible modules:
-```bash
-$ echo "library=/usr/share/ansible/library/" >> /etc/ansible/ansible.cfg
-```
-
-Add `k8s_status.py` to `/usr/share/ansible/library/`:
-```bash
-$ wget https://raw.githubusercontent.com/fabianvf/ansible-k8s-status-module/master/k8s_status.py -O /usr/share/ansible/library/k8s_status.py
-```
-
+```sh
+$ ansible-galaxy collection install operator_sdk.util
+ ```
 ## Extra vars sent to Ansible
 The extra vars that are sent to Ansible are managed by the operator. The `spec`
 section will pass along the key-value pairs as extra vars.  This is equivalent
@@ -468,10 +483,10 @@ The structure passed to Ansible as extra vars is:
   "message": "Hello world 2",
   "new_parameter": "newParam",
   "_app_example_com_database": {
-     <Full CRD>
+     <Full CR>
    },
   "_app_example_com_database_spec": {
-     <Full CRD .spec>
+     <Full CR .spec>
    },
 }
 ```
@@ -485,7 +500,6 @@ operator. The `meta` fields can be accesses via dot notation in Ansible as so:
 ```
 
 [k8s_ansible_module]:https://docs.ansible.com/ansible/2.6/modules/k8s_module.html
-[k8s_status_module]:https://github.com/fabianvf/ansible-k8s-status-module
 [openshift_restclient_python]:https://github.com/openshift/openshift-restclient-python
 [ansible_operator_user_guide]:../user-guide.md
 [manage_status_proposal]:../../proposals/ansible-operator-status.md

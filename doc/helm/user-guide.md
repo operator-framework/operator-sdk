@@ -7,8 +7,7 @@ This guide walks through an example of building a simple nginx-operator powered 
 - [git][git-tool]
 - [docker][docker-tool] version 17.03+.
 - [kubectl][kubectl-tool] version v1.11.3+.
-- [dep][dep-tool] version v0.5.0+. (Optional if you aren't installing from source)
-- [go][go-tool] version v1.12+. (Optional if you aren't installing from source)
+- [go][go-tool] version v1.13+. (Optional if you aren't installing from source)
 - Access to a Kubernetes v1.11.3+ cluster.
 
 **Note**: This guide uses [minikube][minikube-tool] version v0.25.0+ as the
@@ -28,7 +27,7 @@ cd nginx-operator
 ```
 
 This creates the nginx-operator project specifically for watching the
-Nginx resource with APIVersion `helm.example.com/v1alpha1` and Kind
+Nginx resource with APIVersion `example.com/v1alpha1` and Kind
 `Nginx`.
 
 For Helm-based projects, `operator-sdk new` also generates the RBAC rules
@@ -87,9 +86,9 @@ in `watches.yaml` and executes Helm releases using the specified chart:
 ```yaml
 ---
 - version: v1alpha1
-  group: helm.example.com
+  group: example.com
   kind: Nginx
-  chart: /opt/helm/helm-charts/nginx
+  chart: helm-charts/nginx
 ```
 
 ### Reviewing the Nginx Helm Chart
@@ -118,10 +117,10 @@ value called `replicaCount` and it is set to `1` by default. If we want to have
 2 nginx instances in our deployment, we would need to make sure our CR spec
 contained `replicaCount: 2`.
 
-Update `deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml` to look like the following:
+Update `deploy/crds/example.com_v1alpha1_nginx_cr.yaml` to look like the following:
 
 ```yaml
-apiVersion: helm.example.com/v1alpha1
+apiVersion: example.com/v1alpha1
 kind: Nginx
 metadata:
   name: example-nginx
@@ -130,11 +129,11 @@ spec:
 ```
 
 Similarly, we see that the default service port is set to `80`, but we would
-like to use `8080`, so we'll again update `deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml`
+like to use `8080`, so we'll again update `deploy/crds/example.com_v1alpha1_nginx_cr.yaml`
 by adding the service port override:
 
 ```yaml
-apiVersion: helm.example.com/v1alpha1
+apiVersion: example.com/v1alpha1
 kind: Nginx
 metadata:
   name: example-nginx
@@ -156,7 +155,7 @@ resource definition the operator will be watching.
 Deploy the CRD:
 
 ```sh
-kubectl create -f deploy/crds/helm.example.com_nginxes_crd.yaml
+kubectl create -f deploy/crds/example.com_nginxes_crd.yaml
 ```
 
 Once this is done, there are two ways to run the operator:
@@ -211,18 +210,6 @@ nginx-operator       1         1         1            1           1m
 
 This method is preferred during the development cycle to speed up deployment and testing.
 
-It is important that the `chart` path referenced in `watches.yaml` exists
-on your machine. By default, the `watches.yaml` file is scaffolded to work with
-an operator image built with `operator-sdk build`. When developing and
-testing your operator with `operator-sdk up local`, the SDK will look in your
-local filesystem for this path. The SDK team recommends creating a symlink at
-this location to point to your helm chart's path:
-
-```sh
-sudo mkdir -p /opt/helm/helm-charts
-sudo ln -s $PWD/helm-charts/nginx /opt/helm/helm-charts/nginx
-```
-
 Run the operator locally with the default Kubernetes config file present at
 `$HOME/.kube/config`:
 
@@ -247,7 +234,7 @@ INFO[0000] operator-sdk Version: v0.2.0+git
 Apply the nginx CR that we modified earlier:
 
 ```sh
-kubectl apply -f deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml
+kubectl apply -f deploy/crds/example.com_v1alpha1_nginx_cr.yaml
 ```
 
 Ensure that the nginx-operator creates the deployment for the CR:
@@ -281,15 +268,15 @@ Change the `spec.replicaCount` field from 2 to 3, remove the `spec.service`
 field, and apply the change:
 
 ```sh
-$ cat deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml
-apiVersion: "helm.example.com/v1alpha1"
+$ cat deploy/crds/example.com_v1alpha1_nginx_cr.yaml
+apiVersion: "example.com/v1alpha1"
 kind: "Nginx"
 metadata:
   name: "example-nginx"
 spec:
   replicaCount: 3
 
-$ kubectl apply -f deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml
+$ kubectl apply -f deploy/crds/example.com_v1alpha1_nginx_cr.yaml
 ```
 
 Confirm that the operator changes the deployment size:
@@ -313,24 +300,103 @@ example-nginx-b9phnoz9spckcrua7ihrbkrt1   ClusterIP   10.96.26.3   <none>       
 Clean up the resources:
 
 ```sh
-kubectl delete -f deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml
+kubectl delete -f deploy/crds/example.com_v1alpha1_nginx_cr.yaml
 kubectl delete -f deploy/operator.yaml
 kubectl delete -f deploy/role_binding.yaml
 kubectl delete -f deploy/role.yaml
 kubectl delete -f deploy/service_account.yaml
-kubectl delete -f deploy/crds/helm.example.com_nginxes_crd.yaml
+kubectl delete -f deploy/crds/example.com_nginxes_crd.yaml
 ```
+
+## Advanced features
+
+## Passing environment variables to the Helm chart
+
+Sometimes it is useful to pass down environment variables from the Operators `Deployment`
+all the way to the helm charts templates. This allows the Operator to be configured at a global
+level at runtime. This is new compared to dealing with the helm CLI
+as they usually don't have access to any environment variables in the context of Tiller (helm v2)
+or the helm binary (helm v3) for security reasons.
+
+With the helm Operator this becomes possible by override values. This enforces that certain
+template values provided by the chart's default `values.yaml` or by a CR spec are always set
+when rendering the chart. If the value is set by a CR it gets overridden by the global override value.
+The override value can be static but can also refer to an environment variable. To pass down environment
+variables to the chart override values is currently the only way.
+
+An example use case of this is when your helm chart references container images by chart variables,
+which is a good practice.
+If your Operator is deployed in a disconnected environment (no network access to the default images
+location) you can use this mechanism to set them globally at the Operator level using environment variables
+versus individually per CR / chart release.
+
+> Note that it is strongly recommended to reference container images in your chart by helm variables
+> and then also associate these with an environment variable of your Operator like shown below.
+> This allows your Operator to be mirrored for offline usage when packaged for OLM.
+
+To configure your operator with override values, add an `overrideValues` map to your
+`watches.yaml` file for the GVK and chart you need to override. For example, to change
+the repository used by the nginx chart, you would update your `watches.yaml` to the
+following:
+
+```yaml
+---
+- version: v1alpha1
+  group: example.com
+  kind: Nginx
+  chart: helm-charts/nginx
+  overrideValues:
+    image.repository: quay.io/mycustomrepo
+```
+
+By setting `image.repository` to `quay.io/mycustomrepo` you are ensuring that
+`quay.io/mycustomrepo` will always be used instead of the chart's default repository
+(`nginx`). If the CR attempts to set this value, it will be ignored.
+
+It is now possible to reference environment variables in the `overrideValues` section:
+
+```yaml
+  overrideValues:
+    image.repository: $IMAGE_REPOSITORY # or ${IMAGE_REPOSITORY}
+```
+
+By using an environment variable reference in `overrideValues` you enable these override
+values to be set at runtime by configuring the environment variable on the
+operator deployment. For example, in `deploy/operator.yaml` you could add the
+following snippet to the container spec:
+
+```yaml
+env:
+  - name: IMAGE_REPOSITORY
+    value: quay.io/mycustomrepo
+```
+
+If an environment variable reference is listed in `overrideValues`, but is not present
+in the environment when the operator runs, it will resolve to an empty string and
+override all other values. Therefore, these environment variables should _always_ be
+set. It is suggested to update the Dockerfile to set these environment variables to
+the same defaults that are defined by the chart.
+
+To warn users that their CR settings may be ignored, the Helm operator creates events on
+the CR that include the name and value of each overridden value. For example:
+
+```
+Events:
+  Type     Reason               Age   From              Message
+  ----     ------               ----  ----              -------
+  Warning  OverrideValuesInUse  1m    nginx-controller  Chart value "image.repository" overridden to "quay.io/mycustomrepo" by operator's watches.yaml
+```
+
 
 [operator-scope]:./../operator-scope.md
 [install-guide]: ../user/install-operator-sdk.md
 [layout-doc]:./project_layout.md
 [homebrew-tool]:https://brew.sh/
-[dep-tool]:https://golang.github.io/dep/docs/installation.html
 [git-tool]:https://git-scm.com/downloads
 [go-tool]:https://golang.org/dl/
 [docker-tool]:https://docs.docker.com/install/
 [kubectl-tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [minikube-tool]:https://github.com/kubernetes/minikube#installation
-[helm-charts]:https://helm.sh/docs/developing_charts/
-[helm-values]:https://helm.sh/docs/using_helm/#customizing-the-chart-before-installing
+[helm-charts]:https://helm.sh/docs/topics/charts/
+[helm-values]:https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing
 [quay-link]:https://quay.io

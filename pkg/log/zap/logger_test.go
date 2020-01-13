@@ -27,198 +27,202 @@ import (
 
 func TestGetConfig(t *testing.T) {
 	var opts []zap.Option
-
-	testCases := []struct {
+	type fields struct {
 		name           string
+		inEncoder      *encoderValue
+		inLevel        *levelValue
+		inSample       *sampleValue
+		inTimeEncoding *timeEncodingValue
+		expected       *config
 		inDevel        bool
-		inEncoder      encoderValue
-		inLevel        levelValue
-		inSample       sampleValue
-		inTimeEncoding timeEncodingValue
-		expected       config
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
 	}{
 		{
-			name:    "development on",
-			inDevel: true,
-			inEncoder: encoderValue{
-				set: false,
-			},
-			inLevel: levelValue{
-				set: false,
-			},
-			inSample: sampleValue{
-				set: false,
-			},
-			inTimeEncoding: timeEncodingValue{
-				set: false,
-			},
-			expected: config{
-				encoder: newConsoleEncoder(),
-				level:   zap.NewAtomicLevelAt(zap.DebugLevel),
-				opts:    append(opts, zap.Development(), zap.AddStacktrace(zap.ErrorLevel)),
-				sample:  false,
-			},
+			name: "development on",
+			fields: fields{inDevel: true,
+				inEncoder: &encoderValue{
+					set: false,
+				},
+				inLevel: &levelValue{
+					set: false,
+				},
+				inSample: &sampleValue{
+					set: false,
+				},
+				inTimeEncoding: &timeEncodingValue{
+					set: false,
+				},
+				expected: &config{
+					encoder: newConsoleEncoder(),
+					level:   zap.NewAtomicLevelAt(zap.DebugLevel),
+					opts:    append(opts, zap.Development(), zap.AddStacktrace(zap.ErrorLevel)),
+					sample:  false,
+				}},
 		},
 		{
-			name:    "development off",
-			inDevel: false,
-			inEncoder: encoderValue{
-				set: false,
-			},
-			inLevel: levelValue{
-				set: false,
-			},
-			inSample: sampleValue{
-				set: false,
-			},
-			inTimeEncoding: timeEncodingValue{
-				set: false,
-			},
-			expected: config{
-				encoder: newJSONEncoder(),
-				level:   zap.NewAtomicLevelAt(zap.InfoLevel),
-				opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
-				sample:  true,
-			},
+			name: "development off",
+			fields: fields{inDevel: false,
+				inEncoder: &encoderValue{
+					set: false,
+				},
+				inLevel: &levelValue{
+					set: false,
+				},
+				inSample: &sampleValue{
+					set: false,
+				},
+				inTimeEncoding: &timeEncodingValue{
+					set: false,
+				},
+				expected: &config{
+					encoder: newJSONEncoder(),
+					level:   zap.NewAtomicLevelAt(zap.InfoLevel),
+					opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
+					sample:  true,
+				}},
 		},
 		{
-			name:    "set encoder",
-			inDevel: false,
-			inEncoder: encoderValue{
-				set:        true,
-				newEncoder: newConsoleEncoder,
-			},
-			inLevel: levelValue{
-				set: false,
-			},
-			inSample: sampleValue{
-				set: false,
-			},
-			inTimeEncoding: timeEncodingValue{
-				set: false,
-			},
-			expected: config{
-				encoder: newConsoleEncoder(),
-				level:   zap.NewAtomicLevelAt(zap.InfoLevel),
-				opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
-				sample:  true,
-			},
+			name: "set encoder",
+			fields: fields{inDevel: false,
+				inEncoder: &encoderValue{
+					set:        true,
+					newEncoder: newConsoleEncoder,
+				},
+				inLevel: &levelValue{
+					set: false,
+				},
+				inSample: &sampleValue{
+					set: false,
+				},
+				inTimeEncoding: &timeEncodingValue{
+					set: false,
+				},
+				expected: &config{
+					encoder: newConsoleEncoder(),
+					level:   zap.NewAtomicLevelAt(zap.InfoLevel),
+					opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
+					sample:  true,
+				}},
 		},
 		{
-			name:    "set level using level constant",
-			inDevel: false,
-			inEncoder: encoderValue{
-				set: false,
-			},
-			inLevel: levelValue{
-				set:   true,
-				level: zapcore.ErrorLevel,
-			},
-			inSample: sampleValue{
-				set: false,
-			},
-			inTimeEncoding: timeEncodingValue{
-				set: false,
-			},
-			expected: config{
-				encoder: newJSONEncoder(),
-				level:   zap.NewAtomicLevelAt(zap.ErrorLevel),
-				opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
-				sample:  true,
-			},
+			fields: fields{name: "set level using level constant",
+				inDevel: false,
+				inEncoder: &encoderValue{
+					set: false,
+				},
+				inLevel: &levelValue{
+					set:   true,
+					level: zapcore.ErrorLevel,
+				},
+				inSample: &sampleValue{
+					set: false,
+				},
+				inTimeEncoding: &timeEncodingValue{
+					set: false,
+				},
+				expected: &config{
+					encoder: newJSONEncoder(),
+					level:   zap.NewAtomicLevelAt(zap.ErrorLevel),
+					opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
+					sample:  true,
+				}},
 		},
 		{
-			name:    "set level using custom level",
-			inDevel: false,
-			inEncoder: encoderValue{
-				set: false,
-			},
-			inLevel: levelValue{
-				set:   true,
-				level: zapcore.Level(-10),
-			},
-			inSample: sampleValue{
-				set: false,
-			},
-			inTimeEncoding: timeEncodingValue{
-				set: false,
-			},
-			expected: config{
-				encoder: newJSONEncoder(),
-				level:   zap.NewAtomicLevelAt(zapcore.Level(-10)),
-				opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
-				sample:  false,
-			},
+			name: "set level using custom level",
+			fields: fields{inDevel: false,
+				inEncoder: &encoderValue{
+					set: false,
+				},
+				inLevel: &levelValue{
+					set:   true,
+					level: zapcore.Level(-10),
+				},
+				inSample: &sampleValue{
+					set: false,
+				},
+				inTimeEncoding: &timeEncodingValue{
+					set: false,
+				},
+				expected: &config{
+					encoder: newJSONEncoder(),
+					level:   zap.NewAtomicLevelAt(zapcore.Level(-10)),
+					opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
+					sample:  false,
+				}},
 		},
 		{
-			name:    "set sampling",
-			inDevel: false,
-			inEncoder: encoderValue{
-				set: false,
-			},
-			inLevel: levelValue{
-				set: false,
-			},
-			inSample: sampleValue{
-				set:    true,
-				sample: false,
-			},
-			inTimeEncoding: timeEncodingValue{
-				set: false,
-			},
-			expected: config{
-				encoder: newJSONEncoder(),
-				level:   zap.NewAtomicLevelAt(zap.InfoLevel),
-				opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
-				sample:  false,
-			},
+			name: "set sampling",
+			fields: fields{inDevel: false,
+				inEncoder: &encoderValue{
+					set: false,
+				},
+				inLevel: &levelValue{
+					set: false,
+				},
+				inSample: &sampleValue{
+					set:    true,
+					sample: false,
+				},
+				inTimeEncoding: &timeEncodingValue{
+					set: false,
+				},
+				expected: &config{
+					encoder: newJSONEncoder(),
+					level:   zap.NewAtomicLevelAt(zap.InfoLevel),
+					opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
+					sample:  false,
+				}},
 		},
 		{
-			name:    "set level using custom level, sample override not possible",
-			inDevel: false,
-			inEncoder: encoderValue{
-				set: false,
-			},
-			inLevel: levelValue{
-				set:   true,
-				level: zapcore.Level(-10),
-			},
-			inSample: sampleValue{
-				set:    true,
-				sample: true,
-			},
-			inTimeEncoding: timeEncodingValue{
-				set: false,
-			},
-			expected: config{
-				encoder: newJSONEncoder(),
-				level:   zap.NewAtomicLevelAt(zapcore.Level(-10)),
-				opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
-				sample:  false,
-			},
+			name: "set level using custom level, sample override not possible",
+			fields: fields{inDevel: false,
+				inEncoder: &encoderValue{
+					set: false,
+				},
+				inLevel: &levelValue{
+					set:   true,
+					level: zapcore.Level(-10),
+				},
+				inSample: &sampleValue{
+					set:    true,
+					sample: true,
+				},
+				inTimeEncoding: &timeEncodingValue{
+					set: false,
+				},
+				expected: &config{
+					encoder: newJSONEncoder(),
+					level:   zap.NewAtomicLevelAt(zapcore.Level(-10)),
+					opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
+					sample:  false,
+				}},
 		},
 		{
-			name:    "set time encoding",
-			inDevel: false,
-			inEncoder: encoderValue{
-				set: false,
-			},
-			inLevel: levelValue{
-				set: false,
-			},
-			inSample: sampleValue{
-				set: false,
-			},
-			inTimeEncoding: timeEncodingValue{
-				set:         true,
-				timeEncoder: zapcore.EpochMillisTimeEncoder,
-			},
-			expected: config{
-				encoder: newJSONEncoder(withTimeEncoding(zapcore.EpochMillisTimeEncoder)),
-				level:   zap.NewAtomicLevelAt(zap.InfoLevel),
-				opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
-				sample:  true,
-			},
+			fields: fields{name: "set time encoding",
+				inDevel: false,
+				inEncoder: &encoderValue{
+					set: false,
+				},
+				inLevel: &levelValue{
+					set: false,
+				},
+				inSample: &sampleValue{
+					set: false,
+				},
+				inTimeEncoding: &timeEncodingValue{
+					set:         true,
+					timeEncoder: zapcore.EpochMillisTimeEncoder,
+				},
+				expected: &config{
+					encoder: newJSONEncoder(withTimeEncoding(zapcore.EpochMillisTimeEncoder)),
+					level:   zap.NewAtomicLevelAt(zap.InfoLevel),
+					opts:    append(opts, zap.AddStacktrace(zap.WarnLevel)),
+					sample:  true,
+				}},
 		},
 	}
 
@@ -235,24 +239,24 @@ func TestGetConfig(t *testing.T) {
 		Stack: "Sample stack",
 	}
 
-	for _, tc := range testCases {
+	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			development = tc.inDevel
-			encoderVal = tc.inEncoder
-			levelVal = tc.inLevel
-			sampleVal = tc.inSample
-			timeEncodingVal = tc.inTimeEncoding
+			development = tc.fields.inDevel
+			encoderVal = *tc.fields.inEncoder
+			levelVal = *tc.fields.inLevel
+			sampleVal = *tc.fields.inSample
+			timeEncodingVal = *tc.fields.inTimeEncoding
 
 			cfg := getConfig()
-			assert.Equal(t, tc.expected.level, cfg.level)
-			assert.Equal(t, len(tc.expected.opts), len(cfg.opts))
-			assert.Equal(t, tc.expected.sample, cfg.sample)
+			assert.Equal(t, tc.fields.expected.level, cfg.level)
+			assert.Equal(t, len(tc.fields.expected.opts), len(cfg.opts))
+			assert.Equal(t, tc.fields.expected.sample, cfg.sample)
 
 			// Test that the encoder returned by getConfig encodes an entry
 			// the same way that the expected encoder does. In addition to
 			// testing that the correct entry encoding (json vs. console) is
 			// used, this also tests that the correct time encoding is used.
-			expectedEncoderOut, err := tc.expected.encoder.EncodeEntry(entry, []zapcore.Field{{Key: "fieldKey", Type: zapcore.StringType, String: "fieldValue"}})
+			expectedEncoderOut, err := tc.fields.expected.encoder.EncodeEntry(entry, []zapcore.Field{{Key: "fieldKey", Type: zapcore.StringType, String: "fieldValue"}})
 			if err != nil {
 				t.Fatalf("Unexpected error encoding entry with expected encoder: %s", err)
 			}

@@ -55,6 +55,7 @@ type AnsibleOperatorReconciler struct {
 	GVK             schema.GroupVersionKind
 	Runner          runner.Runner
 	Client          client.Client
+	APIReader       client.Reader
 	EventHandlers   []events.EventHandler
 	ReconcilePeriod time.Duration
 	ManageStatus    bool
@@ -84,7 +85,10 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		duration, err := time.ParseDuration(ds)
 		if err != nil {
 			// Should attempt to update to a failed condition
-			r.markError(u, request.NamespacedName, fmt.Sprintf("Unable to parse reconcile period annotation: %v", err))
+			errmark := r.markError(u, request.NamespacedName, fmt.Sprintf("Unable to parse reconcile period annotation: %v", err))
+			if errmark != nil {
+				logger.Error(errmark, "Unable to mark error annotation")
+			}
 			logger.Error(err, "Unable to parse reconcile period annotation")
 			return reconcileResult, err
 		}
@@ -122,10 +126,10 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	}
 
 	if r.ManageStatus {
-		err = r.markRunning(u, request.NamespacedName)
-		if err != nil {
-			logger.Error(err, "Unable to update the status to mark cr as running")
-			return reconcileResult, err
+		errmark := r.markRunning(u, request.NamespacedName)
+		if errmark != nil {
+			logger.Error(errmark, "Unable to update the status to mark cr as running")
+			return reconcileResult, errmark
 		}
 	}
 
@@ -138,7 +142,10 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 
 	kc, err := kubeconfig.Create(ownerRef, "http://localhost:8888", u.GetNamespace())
 	if err != nil {
-		r.markError(u, request.NamespacedName, "Unable to run reconciliation")
+		errmark := r.markError(u, request.NamespacedName, "Unable to run reconciliation")
+		if errmark != nil {
+			logger.Error(errmark, "Unable to mark error to run reconciliation")
+		}
 		logger.Error(err, "Unable to generate kubeconfig")
 		return reconcileResult, err
 	}
@@ -149,7 +156,10 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	}()
 	result, err := r.Runner.Run(ident, u, kc.Name())
 	if err != nil {
-		r.markError(u, request.NamespacedName, "Unable to run reconciliation")
+		errmark := r.markError(u, request.NamespacedName, "Unable to run reconciliation")
+		if errmark != nil {
+			logger.Error(errmark, "Unable to mark error to run reconciliation")
+		}
 		logger.Error(err, "Unable to run ansible runner")
 		return reconcileResult, err
 	}
@@ -187,13 +197,13 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		return reconcileResult, eventErr
 	}
 
-	// Need to get the unstructured object after ansible
-	// this needs to hit the API
-	err = r.Client.Get(context.TODO(), request.NamespacedName, u)
-	if apierrors.IsNotFound(err) {
-		return reconcile.Result{}, nil
-	}
+	// Need to get the unstructured object after the Ansible runner finishes.
+	// This needs to hit the API server to retrieve updates.
+	err = r.APIReader.Get(context.TODO(), request.NamespacedName, u)
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return reconcile.Result{}, nil
+		}
 		return reconcile.Result{}, err
 	}
 
@@ -219,27 +229,24 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		}
 	}
 	if r.ManageStatus {
-		err = r.markDone(u, request.NamespacedName, statusEvent, failureMessages)
-		if err != nil {
-			logger.Error(err, "Failed to mark status done")
+		errmark := r.markDone(u, request.NamespacedName, statusEvent, failureMessages)
+		if errmark != nil {
+			logger.Error(errmark, "Failed to mark status done")
 		}
+		return reconcileResult, errmark
 	}
-	return reconcileResult, err
+	return reconcileResult, nil
 }
 
 func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, namespacedName types.NamespacedName) error {
-	// Get the latest resource to prevent updating a stale status
-	err := r.Client.Get(context.TODO(), namespacedName, u)
-	if err != nil {
+	// Get the latest resource to prevent updating a stale status.
+	if err := r.APIReader.Get(context.TODO(), namespacedName, u); err != nil {
 		return err
 	}
-	statusInterface := u.Object["status"]
-	statusMap, _ := statusInterface.(map[string]interface{})
-	crStatus := ansiblestatus.CreateFromMap(statusMap)
+	crStatus := getStatus(u)
 
 	// If there is no current status add that we are working on this resource.
 	errCond := ansiblestatus.GetCondition(crStatus, ansiblestatus.FailureConditionType)
-
 	if errCond != nil {
 		errCond.Status = v1.ConditionFalse
 		ansiblestatus.SetCondition(&crStatus, *errCond)
@@ -256,34 +263,26 @@ func (r *AnsibleOperatorReconciler) markRunning(u *unstructured.Unstructured, na
 	)
 	ansiblestatus.SetCondition(&crStatus, *c)
 	u.Object["status"] = crStatus.GetJSONMap()
-	err = r.Client.Status().Update(context.TODO(), u)
-	if err != nil {
-		return err
-	}
-	return nil
+
+	return r.Client.Status().Update(context.TODO(), u)
 }
 
 // markError - used to alert the user to the issues during the validation of a reconcile run.
 // i.e Annotations that could be incorrect
 func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, namespacedName types.NamespacedName, failureMessage string) error {
 	logger := logf.Log.WithName("markError")
+	// Immediately update metrics with failed reconciliation, since Get()
+	// may fail.
 	metrics.ReconcileFailed(r.GVK.String())
-	// Get the latest resource to prevent updating a stale status
-	err := r.Client.Get(context.TODO(), namespacedName, u)
-	if apierrors.IsNotFound(err) {
-		logger.Info("Resource not found, assuming it was deleted")
-		return nil
-	}
-	if err != nil {
+	// Get the latest resource to prevent updating a stale status.
+	if err := r.APIReader.Get(context.TODO(), namespacedName, u); err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("Resource not found, assuming it was deleted")
+			return nil
+		}
 		return err
 	}
-	statusInterface := u.Object["status"]
-	statusMap, ok := statusInterface.(map[string]interface{})
-	// If the map is not available create one.
-	if !ok {
-		statusMap = map[string]interface{}{}
-	}
-	crStatus := ansiblestatus.CreateFromMap(statusMap)
+	crStatus := getStatus(u)
 
 	sc := ansiblestatus.GetCondition(crStatus, ansiblestatus.RunningConditionType)
 	if sc != nil {
@@ -307,18 +306,15 @@ func (r *AnsibleOperatorReconciler) markError(u *unstructured.Unstructured, name
 
 func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, namespacedName types.NamespacedName, statusEvent eventapi.StatusJobEvent, failureMessages eventapi.FailureMessages) error {
 	logger := logf.Log.WithName("markDone")
-	// Get the latest resource to prevent updating a stale status
-	err := r.Client.Get(context.TODO(), namespacedName, u)
-	if apierrors.IsNotFound(err) {
-		logger.Info("Resource not found, assuming it was deleted")
-		return nil
-	}
-	if err != nil {
+	// Get the latest resource to prevent updating a stale status.
+	if err := r.APIReader.Get(context.TODO(), namespacedName, u); err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("Resource not found, assuming it was deleted")
+			return nil
+		}
 		return err
 	}
-	statusInterface := u.Object["status"]
-	statusMap, _ := statusInterface.(map[string]interface{})
-	crStatus := ansiblestatus.CreateFromMap(statusMap)
+	crStatus := getStatus(u)
 
 	runSuccessful := len(failureMessages) == 0
 	ansibleStatus := ansiblestatus.NewAnsibleResultFromStatusJobEvent(statusEvent)
@@ -326,8 +322,10 @@ func (r *AnsibleOperatorReconciler) markDone(u *unstructured.Unstructured, names
 	if !runSuccessful {
 		metrics.ReconcileFailed(r.GVK.String())
 		sc := ansiblestatus.GetCondition(crStatus, ansiblestatus.RunningConditionType)
-		sc.Status = v1.ConditionFalse
-		ansiblestatus.SetCondition(&crStatus, *sc)
+		if sc != nil {
+			sc.Status = v1.ConditionFalse
+			ansiblestatus.SetCondition(&crStatus, *sc)
+		}
 		c := ansiblestatus.NewCondition(
 			ansiblestatus.FailureConditionType,
 			v1.ConditionTrue,
@@ -362,4 +360,15 @@ func contains(l []string, s string) bool {
 		}
 	}
 	return false
+}
+
+// getStatus returns u's "status" block as a status.Status.
+func getStatus(u *unstructured.Unstructured) ansiblestatus.Status {
+	statusInterface := u.Object["status"]
+	statusMap, ok := statusInterface.(map[string]interface{})
+	// If the map is not available create one.
+	if !ok {
+		statusMap = map[string]interface{}{}
+	}
+	return ansiblestatus.CreateFromMap(statusMap)
 }

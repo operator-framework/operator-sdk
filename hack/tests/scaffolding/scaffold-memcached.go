@@ -58,10 +58,6 @@ func main() {
 	if localSDKPath == "" {
 		localSDKPath = sdkTestE2EDir
 	}
-	// For go commands in operator projects.
-	if err = os.Setenv("GO111MODULE", "on"); err != nil {
-		log.Fatal(err)
-	}
 
 	log.Print("Creating new operator project")
 	cmdOut, err := exec.Command("operator-sdk",
@@ -125,6 +121,7 @@ func main() {
 		filepath.Join(localSDKPath, "test/e2e/_incluster-test-code/main_test.go"):              "test/e2e/main_test.go",
 		filepath.Join(localSDKPath, "test/e2e/_incluster-test-code/memcached_test.go"):         "test/e2e/memcached_test.go",
 	}
+
 	for src, dst := range tmplFiles {
 		if err := os.MkdirAll(filepath.Dir(dst), fileutil.DefaultDirFileMode); err != nil {
 			log.Fatalf("Could not create template destination directory: %s", err)
@@ -139,6 +136,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not read pkg/apis/cache/v1alpha1/memcached_types.go: %v", err)
 	}
+
 	memcachedTypesFileLines := bytes.Split(memcachedTypesFile, []byte("\n"))
 	for lineNum, line := range memcachedTypesFileLines {
 		if strings.Contains(string(line), "type MemcachedSpec struct {") {
@@ -147,6 +145,7 @@ func main() {
 			break
 		}
 	}
+
 	for lineNum, line := range memcachedTypesFileLines {
 		if strings.Contains(string(line), "type MemcachedStatus struct {") {
 			memcachedTypesFileLinesIntermediate := append(memcachedTypesFileLines[:lineNum+1], []byte("\tNodes []string `json:\"nodes\"`"))
@@ -154,6 +153,7 @@ func main() {
 			break
 		}
 	}
+
 	if err := os.Remove("pkg/apis/cache/v1alpha1/memcached_types.go"); err != nil {
 		log.Fatalf("Failed to remove old memcached_type.go file: (%v)", err)
 	}
@@ -168,8 +168,8 @@ func main() {
 		log.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}
 
-	log.Print("Generating openapi")
-	cmdOut, err = exec.Command("operator-sdk", "generate", "openapi").CombinedOutput()
+	log.Print("Generating CRDs")
+	cmdOut, err = exec.Command("operator-sdk", "generate", "crds").CombinedOutput()
 	if err != nil {
 		log.Fatalf("Error: %v\nCommand Output: %s\n", err, string(cmdOut))
 	}

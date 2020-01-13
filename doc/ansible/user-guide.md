@@ -10,8 +10,7 @@ This guide walks through an example of building a simple memcached-operator powe
 - [ansible][ansible-tool] version v2.6.0+
 - [ansible-runner][ansible-runner-tool] version v1.1.0+
 - [ansible-runner-http][ansible-runner-http-plugin] version v1.0.0+
-- [dep][dep-tool] version v0.5.0+. (Optional if you aren't installing from source)
-- [go][go-tool] version v1.12+. (Optional if you aren't installing from source)
+- [go][go-tool] version v1.13+. (Optional if you aren't installing from source)
 - Access to a Kubernetes v.1.9.0+ cluster.
 
 **Note**: This guide uses [minikube][minikube-tool] version v0.25.0+ as the
@@ -58,6 +57,8 @@ expects this mapping file in a predefined location: `/opt/ansible/watches.yaml`
 * **playbook**:  This is the path to the playbook that you have added to the
   container. This playbook is expected to be simply a way to call roles. This
   field is mutually exclusive with the "role" field.
+* **vars**: This is an arbitrary map of key-value pairs. The contents will be
+  passed as `extra_vars` to the playbook or role specified for this watch.
 * **reconcilePeriod** (optional): The reconciliation interval, how often the
   role/playbook is run, for a given CR.
 * **manageStatus** (optional): When true (default), the operator will manage
@@ -81,13 +82,16 @@ An example Watches file:
   playbook: /opt/ansible/playbook.yml
 
 # More complex example for our Baz kind
-# Here we will disable requeuing and be managing the CR status in the playbook
+# Here we will disable requeuing and be managing the CR status in the playbook,
+# and specify additional variables.
 - version: v1alpha1
   group: baz.example.com
   kind: Baz
   playbook: /opt/ansible/baz.yml
   reconcilePeriod: 0
   manageStatus: false
+  vars:
+    foo: bar
 ```
 
 ## Customize the operator logic
@@ -146,7 +150,7 @@ resource is modified.
 
 Defining the spec for an Ansible Operator can be done entirely in Ansible. The
 Ansible Operator will simply pass all key value pairs listed in the Custom
-Resource spec field along to Ansible as
+Resource spec field along to Ansible as extra
 [variables](https://docs.ansible.com/ansible/2.5/user_guide/playbooks_variables.html#passing-variables-on-the-command-line).
 The names of all variables in the spec field are converted to snake_case
 by the operator before running ansible. For example, `serviceAccount` in
@@ -353,16 +357,22 @@ kubectl logs deployment/memcached-operator -c operator
 The `ansible` logs contain all of the information about the Ansible run and will make it much easier to debug issues within your Ansible tasks,
 whereas the `operator` logs will contain much more detailed information about the Ansible Operator's internals and interface with Kubernetes.
 
-### Additional Ansible debug
+### Additional Ansible Debug
 
-Occasionally while developing additional debug in the Operator logs is nice to have. To enable Ansible debug output, ie `-vvvv`.
-Add the following to the `operator.yaml` manifest.
+Occasionally while developing additional debug in the Operator logs is nice to have.
+Using the memcached operator as an example, we can simply add the
+`"ansible.operator-sdk/verbosity"` annotation to the Custom
+Resource with the desired verbosity.
 
 ```yaml
-          env:
-           ...
-           - name: ANSIBLE_VERBOSITY
-             value: "4"
+apiVersion: "cache.example.com/v1alpha1"
+kind: "Memcached"
+metadata:
+  name: "example-memcached"
+  annotations:
+    "ansible.operator-sdk/verbosity": 4
+spec:
+  size: 4
 ```
 
 ### Update the size
@@ -407,7 +417,6 @@ $ kubectl delete -f deploy/crds/cache.example.com_memcacheds_crd.yaml
 [install-guide]: ../user/install-operator-sdk.md
 [layout-doc]:./project_layout.md
 [homebrew-tool]:https://brew.sh/
-[dep-tool]:https://golang.github.io/dep/docs/installation.html
 [git-tool]:https://git-scm.com/downloads
 [go-tool]:https://golang.org/dl/
 [docker-tool]:https://docs.docker.com/install/

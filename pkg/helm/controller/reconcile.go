@@ -16,13 +16,18 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
+	rpb "helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	rpb "k8s.io/helm/pkg/proto/hapi/release"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -40,9 +45,11 @@ type ReleaseHookFunc func(*rpb.Release) error
 // HelmOperatorReconciler reconciles custom resources as Helm releases.
 type HelmOperatorReconciler struct {
 	Client          client.Client
+	EventRecorder   record.EventRecorder
 	GVK             schema.GroupVersionKind
 	ManagerFactory  release.ManagerFactory
 	ReconcilePeriod time.Duration
+	OverrideValues  map[string]string
 	releaseHook     ReleaseHookFunc
 }
 
@@ -76,7 +83,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		return reconcile.Result{}, err
 	}
 
-	manager, err := r.ManagerFactory.NewManager(o)
+	manager, err := r.ManagerFactory.NewManager(o, r.OverrideValues)
 	if err != nil {
 		log.Error(err, "Failed to get release manager")
 		return reconcile.Result{}, err
@@ -122,7 +129,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		}
 
 		uninstalledRelease, err := manager.UninstallRelease(context.TODO())
-		if err != nil && err != release.ErrNotFound {
+		if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
 			log.Error(err, "Failed to uninstall release")
 			status.SetCondition(types.HelmAppCondition{
 				Type:    types.ConditionReleaseFailed,
@@ -135,12 +142,12 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 		}
 		status.RemoveCondition(types.ConditionReleaseFailed)
 
-		if err == release.ErrNotFound {
+		if errors.Is(err, driver.ErrReleaseNotFound) {
 			log.Info("Release not found, removing finalizer")
 		} else {
 			log.Info("Uninstalled release")
 			if log.V(0).Enabled() {
-				fmt.Println(diffutil.Diff(uninstalledRelease.GetManifest(), ""))
+				fmt.Println(diffutil.Diff(uninstalledRelease.Manifest, ""))
 			}
 			status.SetCondition(types.HelmAppCondition{
 				Type:   types.ConditionDeployed,
@@ -150,6 +157,7 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 			status.DeployedRelease = nil
 		}
 		if err := r.updateResourceStatus(o, status); err != nil {
+			log.Info("Failed to update CR status")
 			return reconcile.Result{}, err
 		}
 
@@ -160,13 +168,27 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 			}
 		}
 		o.SetFinalizers(finalizers)
-		err = r.updateResource(o)
+		if err := r.updateResource(o); err != nil {
+			log.Info("Failed to remove CR uninstall finalizer")
+			return reconcile.Result{}, err
+		}
 
-		// Need to requeue because finalizer update does not change metadata.generation
-		return reconcile.Result{Requeue: true}, err
+		// Since the client is hitting a cache, waiting for the
+		// deletion here will guarantee that the next reconciliation
+		// will see that the CR has been deleted and that there's
+		// nothing left to do.
+		if err := r.waitForDeletion(o); err != nil {
+			log.Info("Failed waiting for CR deletion")
+			return reconcile.Result{}, err
+		}
+
+		return reconcile.Result{}, nil
 	}
 
 	if !manager.IsInstalled() {
+		for k, v := range r.OverrideValues {
+			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse", "Chart value %q overridden to %q by operator's watches.yaml", k, v)
+		}
 		installedRelease, err := manager.InstallRelease(context.TODO())
 		if err != nil {
 			log.Error(err, "Release failed")
@@ -190,14 +212,18 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 
 		log.Info("Installed release")
 		if log.V(0).Enabled() {
-			fmt.Println(diffutil.Diff("", installedRelease.GetManifest()))
+			fmt.Println(diffutil.Diff("", installedRelease.Manifest))
 		}
-		log.V(1).Info("Config values", "values", installedRelease.GetConfig())
+		log.V(1).Info("Config values", "values", installedRelease.Config)
+		message := ""
+		if installedRelease.Info != nil {
+			message = installedRelease.Info.Notes
+		}
 		status.SetCondition(types.HelmAppCondition{
 			Type:    types.ConditionDeployed,
 			Status:  types.StatusTrue,
 			Reason:  types.ReasonInstallSuccessful,
-			Message: installedRelease.GetInfo().GetStatus().GetNotes(),
+			Message: message,
 		})
 		status.DeployedRelease = &types.HelmAppRelease{
 			Name:     installedRelease.Name,
@@ -208,6 +234,9 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 	}
 
 	if manager.IsUpdateRequired() {
+		for k, v := range r.OverrideValues {
+			r.EventRecorder.Eventf(o, "Warning", "OverrideValuesInUse", "Chart value %q overridden to %q by operator's watches.yaml", k, v)
+		}
 		previousRelease, updatedRelease, err := manager.UpdateRelease(context.TODO())
 		if err != nil {
 			log.Error(err, "Release failed")
@@ -231,14 +260,18 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 
 		log.Info("Updated release")
 		if log.V(0).Enabled() {
-			fmt.Println(diffutil.Diff(previousRelease.GetManifest(), updatedRelease.GetManifest()))
+			fmt.Println(diffutil.Diff(previousRelease.Manifest, updatedRelease.Manifest))
 		}
-		log.V(1).Info("Config values", "values", updatedRelease.GetConfig())
+		log.V(1).Info("Config values", "values", updatedRelease.Config)
+		message := ""
+		if updatedRelease.Info != nil {
+			message = updatedRelease.Info.Notes
+		}
 		status.SetCondition(types.HelmAppCondition{
 			Type:    types.ConditionDeployed,
 			Status:  types.StatusTrue,
 			Reason:  types.ReasonUpdateSuccessful,
-			Message: updatedRelease.GetInfo().GetStatus().GetNotes(),
+			Message: message,
 		})
 		status.DeployedRelease = &types.HelmAppRelease{
 			Name:     updatedRelease.Name,
@@ -286,13 +319,33 @@ func (r HelmOperatorReconciler) Reconcile(request reconcile.Request) (reconcile.
 	return reconcile.Result{RequeueAfter: r.ReconcilePeriod}, err
 }
 
-func (r HelmOperatorReconciler) updateResource(o *unstructured.Unstructured) error {
+func (r HelmOperatorReconciler) updateResource(o runtime.Object) error {
 	return r.Client.Update(context.TODO(), o)
 }
 
 func (r HelmOperatorReconciler) updateResourceStatus(o *unstructured.Unstructured, status *types.HelmAppStatus) error {
 	o.Object["status"] = status
 	return r.Client.Status().Update(context.TODO(), o)
+}
+
+func (r HelmOperatorReconciler) waitForDeletion(o runtime.Object) error {
+	key, err := client.ObjectKeyFromObject(o)
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	return wait.PollImmediateUntil(time.Millisecond*10, func() (bool, error) {
+		err := r.Client.Get(ctx, key, o)
+		if apierrors.IsNotFound(err) {
+			return true, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		return false, nil
+	}, ctx.Done())
 }
 
 func contains(l []string, s string) bool {

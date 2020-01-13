@@ -24,8 +24,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/operator-framework/operator-sdk/pkg/restmapper"
-
 	"github.com/blang/semver"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/pkg/errors"
@@ -39,8 +37,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	deploymentutil "k8s.io/kubernetes/pkg/controller/deployment/util"
+	deploymentutil "k8s.io/kubectl/pkg/util/deployment"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
 const OLMNamespace = "olm"
@@ -60,7 +59,7 @@ type Client struct {
 }
 
 func ClientForConfig(cfg *rest.Config) (*Client, error) {
-	rm, err := restmapper.NewDynamicRESTMapper(cfg)
+	rm, err := apiutil.NewDynamicRESTMapper(cfg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create dynamic rest mapper")
 	}
@@ -89,11 +88,10 @@ func (c Client) DoCreate(ctx context.Context, objs ...runtime.Object) error {
 		log.Infof("  Creating %s %q", kind, getName(a.GetNamespace(), a.GetName()))
 		err = c.KubeClient.Create(ctx, obj)
 		if err != nil {
-			if apierrors.IsAlreadyExists(err) {
-				log.Infof("    %s %q already exists", kind, getName(a.GetNamespace(), a.GetName()))
-				return nil
+			if !apierrors.IsAlreadyExists(err) {
+				return err
 			}
-			return err
+			log.Infof("    %s %q already exists", kind, getName(a.GetNamespace(), a.GetName()))
 		}
 	}
 	return nil
@@ -109,21 +107,20 @@ func (c Client) DoDelete(ctx context.Context, objs ...runtime.Object) error {
 		log.Infof("  Deleting %s %q", kind, getName(a.GetNamespace(), a.GetName()))
 		err = c.KubeClient.Delete(ctx, obj, client.PropagationPolicy(metav1.DeletePropagationForeground))
 		if err != nil {
-			if apierrors.IsNotFound(err) {
-				log.Infof("    %s %q does not exist", kind, getName(a.GetNamespace(), a.GetName()))
-				continue
+			if !apierrors.IsNotFound(err) {
+				return err
 			}
-			return err
+			log.Infof("    %s %q does not exist", kind, getName(a.GetNamespace(), a.GetName()))
 		}
 	}
 
 	log.Infof("  Waiting for deleted resources to disappear")
-	wait.PollImmediateUntil(time.Second, func() (bool, error) {
-		s := c.GetObjectsStatus(ctx, objs...)
-		return !s.HasExistingResources(), nil
-	}, ctx.Done())
 
-	return nil
+	return wait.PollImmediateUntil(time.Second, func() (bool, error) {
+		s := c.GetObjectsStatus(ctx, objs...)
+		installed, err := s.HasInstalledResources()
+		return !installed, err
+	}, ctx.Done())
 }
 
 func getName(namespace, name string) string {
@@ -152,27 +149,27 @@ func (c Client) DoRolloutWait(ctx context.Context, key types.NamespacedName) err
 			}
 			if deployment.Spec.Replicas != nil && deployment.Status.UpdatedReplicas < *deployment.Spec.Replicas {
 				onceReplicasUpdated.Do(func() {
-					log.Printf("  Waiting for deployment %q to rollout: %d out of %d new replicas have been updated", deployment.Name, deployment.Status.UpdatedReplicas, *deployment.Spec.Replicas)
+					log.Printf("  Waiting for Deployment %q to rollout: %d out of %d new replicas have been updated", key, deployment.Status.UpdatedReplicas, *deployment.Spec.Replicas)
 				})
 				return false, nil
 			}
 			if deployment.Status.Replicas > deployment.Status.UpdatedReplicas {
 				oncePendingTermination.Do(func() {
-					log.Printf("  Waiting for deployment %q to rollout: %d old replicas are pending termination", deployment.Name, deployment.Status.Replicas-deployment.Status.UpdatedReplicas)
+					log.Printf("  Waiting for Deployment %q to rollout: %d old replicas are pending termination", key, deployment.Status.Replicas-deployment.Status.UpdatedReplicas)
 				})
 				return false, nil
 			}
 			if deployment.Status.AvailableReplicas < deployment.Status.UpdatedReplicas {
 				onceNotAvailable.Do(func() {
-					log.Printf("  Waiting for deployment %q to rollout: %d of %d updated replicas are available", deployment.Name, deployment.Status.AvailableReplicas, deployment.Status.UpdatedReplicas)
+					log.Printf("  Waiting for Deployment %q to rollout: %d of %d updated replicas are available", key, deployment.Status.AvailableReplicas, deployment.Status.UpdatedReplicas)
 				})
 				return false, nil
 			}
-			log.Printf("  Deployment %q successfully rolled out", deployment.Name)
+			log.Printf("  Deployment %q successfully rolled out", key)
 			return true, nil
 		}
 		onceSpecUpdate.Do(func() {
-			log.Printf("  Waiting for deployment %q to rollout: waiting for deployment spec update to be observed", deployment.Name)
+			log.Printf("  Waiting for Deployment %q to rollout: waiting for deployment spec update to be observed", key)
 		})
 		return false, nil
 	}
@@ -192,7 +189,7 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				once.Do(func() {
-					log.Printf("  Waiting for clusterserviceversion %q to appear", key.Name)
+					log.Printf("  Waiting for ClusterServiceVersion %q to appear", key)
 				})
 				return false, nil
 			}
@@ -201,7 +198,7 @@ func (c Client) DoCSVWait(ctx context.Context, key types.NamespacedName) error {
 		newPhase = csv.Status.Phase
 		if newPhase != curPhase {
 			curPhase = newPhase
-			log.Printf("  Found clusterserviceversion %q phase: %s", key.Name, curPhase)
+			log.Printf("  Found ClusterServiceVersion %q phase: %s", key, curPhase)
 		}
 		return curPhase == olmapiv1alpha1.CSVPhaseSucceeded, nil
 	}

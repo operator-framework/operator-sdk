@@ -39,7 +39,7 @@ test_operator() {
     fi
 
     # verify that metrics service was created
-    if ! timeout 20s bash -c -- "until kubectl get service/nginx-operator-metrics > /dev/null 2>&1; do sleep 1; done";
+    if ! timeout 60s bash -c -- "until kubectl get service/nginx-operator-metrics > /dev/null 2>&1; do sleep 1; done";
     then
         echo "Failed to get metrics service"
         kubectl logs deployment/nginx-operator
@@ -125,12 +125,12 @@ if echo $log | grep -q "failed to generate RBAC rules"; then
 fi
 
 pushd nginx-operator
-sed -i 's|\(FROM quay.io/operator-framework/helm-operator\)\(:.*\)\?|\1:dev|g' build/Dockerfile
+sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/helm-operator)(:.*)?/\1:dev/g' build/Dockerfile; rm -f build/Dockerfile.bak
 operator-sdk build "$DEST_IMAGE"
 # If using a kind cluster, load the image into all nodes.
 load_image_if_kind "$DEST_IMAGE"
-sed -i "s|REPLACE_IMAGE|$DEST_IMAGE|g" deploy/operator.yaml
-sed -i 's|Always|Never|g' deploy/operator.yaml
+sed -i".bak" -E -e "s|REPLACE_IMAGE|$DEST_IMAGE|g" deploy/operator.yaml; rm -f deploy/operator.yaml.bak
+sed -i".bak" -E -e 's|Always|Never|g' deploy/operator.yaml; rm -f deploy/operator.yaml.bak
 # kind has an issue with certain image registries (ex. redhat's), so use a
 # different test pod image.
 METRICS_TEST_IMAGE="fedora:latest"
@@ -150,7 +150,6 @@ echo "### Base image testing passed"
 echo "### Now testing migrate to hybrid operator"
 echo "###"
 
-export GO111MODULE=on
 operator-sdk migrate --repo=github.com/example-inc/nginx-operator
 
 if [[ ! -e build/Dockerfile.sdkold ]];

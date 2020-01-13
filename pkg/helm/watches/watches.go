@@ -18,10 +18,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	yaml "gopkg.in/yaml.v2"
+	"helm.sh/helm/v3/pkg/chartutil"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/helm/pkg/chartutil"
 )
 
 // Watch defines options for configuring a watch for a Helm-based
@@ -30,14 +31,16 @@ type Watch struct {
 	GroupVersionKind        schema.GroupVersionKind
 	ChartDir                string
 	WatchDependentResources bool
+	OverrideValues          map[string]string
 }
 
 type yamlWatch struct {
-	Group                   string `yaml:"group"`
-	Version                 string `yaml:"version"`
-	Kind                    string `yaml:"kind"`
-	Chart                   string `yaml:"chart"`
-	WatchDependentResources bool   `yaml:"watchDependentResources"`
+	Group                   string            `yaml:"group"`
+	Version                 string            `yaml:"version"`
+	Kind                    string            `yaml:"kind"`
+	Chart                   string            `yaml:"chart"`
+	WatchDependentResources bool              `yaml:"watchDependentResources"`
+	OverrideValues          map[string]string `yaml:"overrideValues"`
 }
 
 func (w *yamlWatch) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -87,15 +90,25 @@ func Load(path string) ([]Watch, error) {
 		if _, ok := watchesMap[gvk]; ok {
 			return nil, fmt.Errorf("duplicate GVK: %s", gvk)
 		}
+
 		watch := Watch{
 			GroupVersionKind:        gvk,
 			ChartDir:                w.Chart,
 			WatchDependentResources: w.WatchDependentResources,
+			OverrideValues:          expandOverrideEnvs(w.OverrideValues),
 		}
 		watchesMap[gvk] = watch
 		watches = append(watches, watch)
 	}
 	return watches, nil
+}
+
+func expandOverrideEnvs(in map[string]string) map[string]string {
+	out := make(map[string]string)
+	for k, v := range in {
+		out[k] = os.ExpandEnv(v)
+	}
+	return out
 }
 
 func verifyGVK(gvk schema.GroupVersionKind) error {

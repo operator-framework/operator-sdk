@@ -15,6 +15,7 @@
 package test
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -22,7 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/operator-framework/operator-sdk/internal/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
@@ -82,14 +83,14 @@ func testLocalFunc(cmd *cobra.Command, args []string) error {
 	case projutil.OperatorTypeGo:
 		return testLocalGoFunc(cmd, args)
 	case projutil.OperatorTypeAnsible:
-		return testLocalAnsibleFunc(cmd, args)
+		return testLocalAnsibleFunc()
 	case projutil.OperatorTypeHelm:
 		return fmt.Errorf("`test local` for Helm operators is not implemented")
 	}
 	return projutil.ErrUnknownOperatorType{}
 }
 
-func testLocalAnsibleFunc(cmd *cobra.Command, args []string) error {
+func testLocalAnsibleFunc() error {
 	projutil.MustInProjectRoot()
 	testArgs := []string{}
 	if tlConfig.debug {
@@ -221,11 +222,14 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 			PackagePath: args[0] + "/...",
 			Env:         env,
 			Dir:         projutil.MustGetwd(),
-			GoMod:       projutil.IsDepManagerGoMod(),
 		},
 		TestBinaryArgs: testArgs,
 	}
 	if err := projutil.GoTest(opts); err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			os.Exit(exitErr.ExitCode())
+		}
 		return fmt.Errorf("failed to build test binary: (%v)", err)
 	}
 	log.Info("Local operator test successfully completed.")

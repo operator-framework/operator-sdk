@@ -30,17 +30,12 @@ cache:
     - $HOME/.cache/go-build
 
 go:
-- 1.12.x
+- 1.13.x
 
 # The `x_base_steps` top-level key is unknown to travis,
 # so we can use it to create a bunch of common build step
 # YAML anchors which we use in our build jobs.
 x_base_steps:
-  # before_install for jobs that require dep
-  - &dep_before_install
-    before_install:
-      - travis_retry make tidy
-
   # before_install for jobs that require go builds and do not run for doc-only changes
   - &go_before_install
     before_install:
@@ -105,89 +100,77 @@ x_base_steps:
 
 jobs:
   include:
-    # Build and test go in non-master PRs
-    - if: tag IS present OR branch != master
-      <<: *test
+    # Build and test go
+    - <<: *test
       name: Go on Kubernetes
-      script: make test/e2e/go
+      script:
+      - make test-e2e-go
+      - make test-integration
 
-    # Build and test ansible and test ansible using molecule in non-master PRs
-    - if: tag IS present OR branch != master
-      <<: *test
+    # Build and test ansible and test ansible using molecule
+    - <<: *test
       name: Ansible on Kubernetes
       before_script:
         - pip3 install --upgrade setuptools pip
         - pip install --user ansible
       script:
-        - make test/e2e/ansible
-        - make test/e2e/ansible-molecule
+        - make test-e2e-ansible
+        - make test-e2e-ansible-molecule
 
-    # Build and test helm in non-master PRs
-    - if: tag IS present OR branch != master
-      <<: *test
+    # Build and test helm
+    - <<: *test
       name: Helm on Kubernetes
-      script: make test/e2e/helm
+      script: make test-e2e-helm
 
-    # Test subcommands in non-master PRs
-    - if: tag IS present OR branch != master
-      <<: *test
+    # Test subcommands
+    - <<: *test
       name: Subcommands on Kubernetes
-      script: make test/subcommand
+      script: make test-subcommand
 
-    # Test olm install/uninstall subcommands on master, as these cannot be tested in prow/api-ci.
-    - if: tag IS NOT present AND branch = master
-      <<: *test
-      name: OLM Install/Uninstall on Kubernetes
-      script: make test/subcommand/olm-install
-
-    # Build and test ansible using molecule, as this cannot be tested in prow/api-ci.
-    - if: tag IS NOT present AND branch = master
-      <<: *test
-      name: Ansible Molecule on Kubernetes
-      script: make test/e2e/ansible-molecule
-
-    # Run the unit, sanity, and markdown tests
+    # Run the unit, sanity and markdown tests
     - stage: test
       name: Unit, Sanity, and Markdown Tests
-      # Currently, prow/api-ci tests all PRs that target master; use travis for post merge testing and non-master PRs
-      if: type != pull_request OR branch != master
-      <<: *dep_before_install
-      script: make test/sanity test/unit test/markdown
+      before_install:
+        - go get github.com/mattn/goveralls
+      script:
+        - make test-sanity test-unit test-markdown
+        - $GOPATH/bin/goveralls -service=travis-ci -coverprofile=coverage.out -repotoken=$COVERALLS_TOKEN
       after_success: echo 'Tests Passed'
-      after_failure: echo 'Failure in unit, sanity, or markdown test'
+      after_failure: echo 'Failure in unit, sanity and markdown tests'
 
     # Build and deploy ansible-operator docker image
     - <<: *deploy
       name: Docker image for ansible-operator
       script:
-        - make image/build/ansible
-        - make image/push/ansible
+        - make image-build-ansible
+        - make image-push-ansible
 
     # Build and deploy amd64 helm-operator docker image
     - <<: *deploy
       name: Docker image for helm-operator (amd64)
       os: linux
       script:
-        - make image/build/helm
-        - make image/push/helm
+        - make image-build-helm
+        - make image-push-helm
 
     # Build and deploy ppc64le helm-operator docker image
     - <<: *deploy
       name: Docker image for helm-operator (ppc64le)
       os: linux-ppc64le
       script:
-        - make image/build/helm
-        - make image/push/helm
+        - make image-build-helm
+        - make image-push-helm
 
     # Build and deploy scorecard-proxy docker image
     - <<: *deploy
       name: Docker image for scorecard-proxy
       script:
-        - make image/build/scorecard-proxy
-        - make image/push/scorecard-proxy
+        - make image-build-scorecard-proxy
+        - make image-push-scorecard-proxy
 
     # Build and deploy helm multi-arch manifest list
     - <<: *manifest-deploy
       name: Manifest list for helm-operator
       script:
-        - make image/push/helm-multiarch
+        - make image-push-helm-multiarch
+

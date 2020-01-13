@@ -46,7 +46,6 @@ func TestReconcile(t *testing.T) {
 		Name            string
 		GVK             schema.GroupVersionKind
 		ReconcilePeriod time.Duration
-		ManageStatus    bool
 		Runner          runner.Runner
 		EventHandlers   []events.EventHandler
 		Client          client.Client
@@ -54,6 +53,7 @@ func TestReconcile(t *testing.T) {
 		Result          reconcile.Result
 		Request         reconcile.Request
 		ShouldError     bool
+		ManageStatus    bool
 	}{
 		{
 			Name:            "cr not found",
@@ -487,6 +487,7 @@ func TestReconcile(t *testing.T) {
 				GVK:             tc.GVK,
 				Runner:          tc.Runner,
 				Client:          tc.Client,
+				APIReader:       tc.Client,
 				EventHandlers:   tc.EventHandlers,
 				ReconcilePeriod: tc.ReconcilePeriod,
 				ManageStatus:    tc.ManageStatus,

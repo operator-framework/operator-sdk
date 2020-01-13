@@ -32,6 +32,7 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/ansible/proxy/kubeconfig"
 	k8sRequest "github.com/operator-framework/operator-sdk/pkg/ansible/proxy/requestfactory"
 	osdkHandler "github.com/operator-framework/operator-sdk/pkg/handler"
+	"github.com/operator-framework/operator-sdk/pkg/internal/predicates"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -71,14 +72,14 @@ type Options struct {
 	Address           string
 	Port              int
 	Handler           HandlerChain
-	OwnerInjection    bool
-	LogRequests       bool
 	KubeConfig        *rest.Config
 	Cache             cache.Cache
 	RESTMapper        meta.RESTMapper
 	ControllerMap     *controllermap.ControllerMap
 	WatchedNamespaces []string
 	DisableCache      bool
+	OwnerInjection    bool
+	LogRequests       bool
 }
 
 // Run will start a proxy server in a go routine that returns on the error
@@ -210,6 +211,10 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 	awMap := contents.AnnotationWatchMap
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(ownerMapping.GroupVersionKind)
+
+	// Adding dependentPredicate for avoiding reconciles when dependent objects are not changed by user
+	dependentPredicate := predicates.DependentPredicateFuncs()
+
 	// Add a watch to controller
 	if contents.WatchDependentResources {
 		// Store watch in map
@@ -224,8 +229,8 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 
 			owMap.Store(resource.GroupVersionKind())
 			log.Info("Watching child resource", "kind", resource.GroupVersionKind(), "enqueue_kind", u.GroupVersionKind())
+			err := contents.Controller.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{OwnerType: u}, dependentPredicate)
 			// Store watch in map
-			err := contents.Controller.Watch(&source.Kind{Type: resource}, &handler.EnqueueRequestForOwner{OwnerType: u})
 			if err != nil {
 				return err
 			}
@@ -238,7 +243,7 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 			awMap.Store(resource.GroupVersionKind())
 			typeString := fmt.Sprintf("%v.%v", owner.Kind, ownerGV.Group)
 			log.Info("Watching child resource", "kind", resource.GroupVersionKind(), "enqueue_annotation_type", typeString)
-			err = contents.Controller.Watch(&source.Kind{Type: resource}, &osdkHandler.EnqueueRequestForAnnotation{Type: typeString})
+			err = contents.Controller.Watch(&source.Kind{Type: resource}, &osdkHandler.EnqueueRequestForAnnotation{Type: typeString}, dependentPredicate)
 			if err != nil {
 				return err
 			}
@@ -271,7 +276,6 @@ func getRequestOwnerRef(req *http.Request) (kubeconfig.NamespacedOwnerReference,
 	// as a subset along with the Namespace of the owner. Please see the
 	// kubeconfig.NamespacedOwnerReference type for more information. The
 	// namespace is required when creating the reconcile requests.
-	json.Unmarshal(authString, &owner)
 	if err := json.Unmarshal(authString, &owner); err != nil {
 		m := "Could not unmarshal auth string"
 		log.Error(err, m)

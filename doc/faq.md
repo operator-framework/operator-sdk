@@ -32,10 +32,29 @@ time="2019-06-05T12:29:54Z" level=fatal msg="failed to create or get service for
 Add the following to your `deploy/role.yaml` file to grant the operator permissions to set owner references to the metrics Service resource. This is needed so that the metrics Service will get deleted as soon as you delete the operators Deployment. If you are using another way of deploying your operator, have a look at [this guide][gc-metrics] for more information.
 
 ```
+- apiGroups:
+  - apps
   resources:
   - deployments/finalizers
+  resourceNames:
+  - <operator-name>
+  verbs:
+  - "update"
 ```
 
+## My Ansible module is missing a dependency. How do I add it to the image? 
+
+Unfortunately, adding the entire dependency tree for all Ansible modules would be excessive. Fortunately, you can add it easily. Simply edit your build/Dockerfile. You'll want to change to root for the install command, just be sure to swap back using a series of commands like the following right after the `FROM` line.
+
+```
+USER 0
+RUN yum -y install my-dependency
+RUN pip3 install my-python-dependency
+USER 1001
+```
+
+If you aren't sure what dependencies are required, start up a container using the image in the `FROM` line as root. That will look something like this.
+`docker run -u 0 -it --rm --entrypoint /bin/bash quay.io/operator-framework/ansible-operator:<sdk-tag-version>`
 
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
 [controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my-reconciler-for-different-types-of-events-eg-create-update-delete

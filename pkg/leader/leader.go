@@ -81,9 +81,8 @@ func Become(ctx context.Context, lockName string) error {
 				log.Info("Found existing lock with my name. I was likely restarted.")
 				log.Info("Continuing as the leader.")
 				return nil
-			} else {
-				log.Info("Found existing lock", "LockOwner", existingOwner.Name)
 			}
+			log.Info("Found existing lock", "LockOwner", existingOwner.Name)
 		}
 	case apierrors.IsNotFound(err):
 		log.Info("No pre-existing lock was found.")
@@ -109,7 +108,35 @@ func Become(ctx context.Context, lockName string) error {
 			log.Info("Became the leader.")
 			return nil
 		case apierrors.IsAlreadyExists(err):
-			log.Info("Not the leader. Waiting.")
+			existingOwners := existing.GetOwnerReferences()
+			switch {
+			case len(existingOwners) != 1:
+				log.Info("Leader lock configmap must have exactly one owner reference.", "ConfigMap", existing)
+			case existingOwners[0].Kind != "Pod":
+				log.Info("Leader lock configmap owner reference must be a pod.", "OwnerReference", existingOwners[0])
+			default:
+				leaderPod := &corev1.Pod{}
+				key = crclient.ObjectKey{Namespace: ns, Name: existingOwners[0].Name}
+				err = client.Get(ctx, key, leaderPod)
+				switch {
+				case apierrors.IsNotFound(err):
+					log.Info("Leader pod has been deleted, waiting for garbage collection do remove the lock.")
+				case err != nil:
+					return err
+				case isPodEvicted(*leaderPod) && leaderPod.GetDeletionTimestamp() == nil:
+					log.Info("Operator pod with leader lock has been evicted.", "leader", leaderPod.Name)
+					log.Info("Deleting evicted leader.")
+					// Pod may not delete immediately, continue with backoff
+					err := client.Delete(ctx, leaderPod)
+					if err != nil {
+						log.Error(err, "Leader pod could not be deleted.")
+					}
+
+				default:
+					log.Info("Not the leader. Waiting.")
+				}
+			}
+
 			select {
 			case <-time.After(wait.Jitter(backoff, .2)):
 				if backoff < maxBackoffInterval {
@@ -142,4 +169,10 @@ func myOwnerRef(ctx context.Context, client crclient.Client, ns string) (*metav1
 		UID:        myPod.ObjectMeta.UID,
 	}
 	return owner, nil
+}
+
+func isPodEvicted(pod corev1.Pod) bool {
+	podFailed := pod.Status.Phase == corev1.PodFailed
+	podEvicted := pod.Status.Reason == "Evicted"
+	return podFailed && podEvicted
 }

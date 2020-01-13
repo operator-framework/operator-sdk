@@ -16,7 +16,7 @@ mkdir -p $ROOTDIR/bin
 export PATH=$ROOTDIR/bin:$PATH
 
 if ! [ -x "$(command -v kubectl)" ]; then
-    curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.14.2/bin/linux/amd64/kubectl && chmod +x kubectl && mv kubectl bin/
+    curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.15.4/bin/linux/amd64/kubectl && chmod +x kubectl && mv kubectl bin/
 fi
 
 if ! [ -x "$(command -v oc)" ]; then
@@ -55,7 +55,7 @@ test_operator() {
     fi
 
     # verify that metrics service was created
-    if ! timeout 20s bash -c -- "until kubectl get service/nginx-operator-metrics > /dev/null 2>&1; do sleep 1; done";
+    if ! timeout 60s bash -c -- "until kubectl get service/nginx-operator-metrics > /dev/null 2>&1; do sleep 1; done";
     then
         echo "Failed to get metrics service"
         kubectl logs deployment/nginx-operator

@@ -23,8 +23,9 @@ import (
 
 func newGenerateOpenAPICmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "openapi",
-		Short: "Generates OpenAPI specs for API's",
+		Hidden: true,
+		Use:    "openapi",
+		Short:  "Generates OpenAPI specs for API's",
 		Long: `generate openapi generates OpenAPI validation specs in Go from tagged types
 in all pkg/apis/<group>/<version> directories. Go code is generated under
 pkg/apis/<group>/<version>/zz_generated.openapi.go. CRD's are generated, or
@@ -33,6 +34,7 @@ deploy/crds/<full group>_<resource>_crd.yaml; OpenAPI V3 validation YAML
 is generated as a 'validation' object.
 
 Example:
+
 	$ operator-sdk generate openapi
 	$ tree pkg/apis
 	pkg/apis/
@@ -47,10 +49,34 @@ Example:
 	}
 }
 
+const deprecationTemplate = "\033[1;36m%s\033[0m"
+
 func openAPIFunc(cmd *cobra.Command, args []string) error {
+	fmt.Printf(deprecationTemplate, `[Deprecation notice] The 'operator-sdk generate openapi' command is deprecated!
+
+ - To generate CRDs, use 'operator-sdk generate crds'.
+ - To generate Go OpenAPI code, use 'openapi-gen'. For example:
+
+      # Build the latest openapi-gen from source
+      which ./bin/openapi-gen > /dev/null || go build -o ./bin/openapi-gen k8s.io/kube-openapi/cmd/openapi-gen
+
+      # Run openapi-gen for each of your API group/version packages
+      ./bin/openapi-gen --logtostderr=true -o "" -i ./pkg/apis/<group>/<version> -O zz_generated.openapi -p ./pkg/apis/<group>/<version> -h ./hack/boilerplate.go.txt -r "-"
+
+`)
+
 	if len(args) != 0 {
 		return fmt.Errorf("command %s doesn't accept any arguments", cmd.CommandPath())
 	}
 
-	return genutil.OpenAPIGen()
+	fs := []func() error{
+		genutil.OpenAPIGen,
+		genutil.CRDGen,
+	}
+	for _, f := range fs {
+		if err := f(); err != nil {
+			return err
+		}
+	}
+	return nil
 }

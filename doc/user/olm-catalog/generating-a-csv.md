@@ -6,6 +6,8 @@ This document describes how to manage the following lifecycle for your Operator 
 - **Upgrade your Operator** - Carry over any customizations you have made and ensure a rolling update to the next version of your Operator.
 - **Refresh your CRDs** - If a new version has updated CRDs, refresh those definitions within the CSV automatically.
 
+**Note:** `operator-sdk olm-catalog gen-csv` only officially supports Go Operators. Ansible and Helm Operators will be fully supported in the future. However, `gen-csv` _may_ work with Ansible and Helm Operators if their project structure aligns with that described below.
+
 ## Configuration
 
 Operator SDK projects have an expected [project layout][doc-project-layout]. In particular, a few manifests are expected to be present in the `deploy` directory:
@@ -103,6 +105,7 @@ Required:
         * `kind`: CRD's `metadata.spec.names.kind`.
         * `version`: CRD's `metadata.spec.version`.
         * `description` _(user)_ : description of the CRD.
+        * `displayName` _(user)_ : display name of the CRD.
         * `resources` _(user)_ : any Kubernetes resources used by the CRD, ex. `Pod`'s and `ConfigMap`'s.
         * `specDescriptors` _(user)_ : UI hints for inputs and outputs of the Operator's spec.
         * `statusDescriptors` _(user)_ : UI hints for inputs and outputs of the Operator's status.

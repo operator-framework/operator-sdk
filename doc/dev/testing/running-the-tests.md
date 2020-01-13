@@ -53,17 +53,17 @@ $ export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
 
 All the tests are run through the [`Makefile`][makefile]. This is a brief description of all makefile test instructions:
 
-- `test` - Runs the unit tests (`test/unit`).
-- `test/ci` - Runs markdown, sanity, and unit tests, installs the SDK binary, and runs the SDK subcommand and all E2E tests.
-- `test/sanity` - Runs sanity checks.
-- `test/unit` - Runs unit tests.
-- `test/subcommand` - Runs subcommand tests.
-- `test/e2e` - Runs all E2E tests (`test/e2e/go`, `test/e2e/ansible`, `test/e2e/ansible-molecule`, and `e2e/helm`).
-- `test/e2e/go` - Runs the go E2E test.
-- `test/e2e/ansible` - Runs the ansible E2E test.
-- `test/e2e/ansible-molecule` - Runs the ansible molecule E2E test.
-- `test/e2e/helm` - Runs the helm E2E test.
-- `test/markdown` - Runs the markdown checks
+- `test` - Runs the unit tests (`test-unit`).
+- `test-ci` - Runs markdown, sanity, and unit tests, installs the SDK binary, and runs the SDK subcommand and all E2E tests.
+- `test-sanity` - Runs sanity checks.
+- `test-unit` - Runs unit tests.
+- `test-subcommand` - Runs subcommand tests.
+- `test-e2e` - Runs all E2E tests (`test-e2e-go`, `test-e2e-ansible`, `test-e2e-ansible-molecule`, and `test-e2e-helm`).
+- `test-e2e-go` - Runs the go E2E test.
+- `test-e2e-ansible` - Runs the ansible E2E test.
+- `test-e2e-ansible-molecule` - Runs the ansible molecule E2E test.
+- `test-e2e-helm` - Runs the helm E2E test.
+- `test-markdown` - Runs the markdown checks
 
 For more info on what these tests actually do, please see the [Travis Build][travis] doc.
 
@@ -72,14 +72,14 @@ and the operator images will be built and stored in you local docker registry.
 
 ### Go E2E test flags
 
-The `make test/e2e/go` command accepts an `ARGS` variable containing flags that will be passed to `go test`:
+The `make test-e2e-go` command accepts an `ARGS` variable containing flags that will be passed to `go test`:
 
 - `-image-name` string - Sets the operator test image tag to be built and used in testing. Defaults to "quay.io/example/memcached-operator:v0.0.1"
 - `-local-repo` string - Sets the path to the local SDK repo being tested. Defaults to the path of the SDK repo containing e2e tests. This is useful for testing customized e2e code.
 
 An example of using `ARGS` is in the note below.
 
-**NOTE**: Some of these tests, specifically the ansible (`test/e2e/ansible`), helm (`test/e2e/helm`), and Go (`test/e2e/go`) tests,
+**NOTE**: Some of these tests, specifically the ansible (`test-e2e-ansible`), helm (`test-e2e-helm`), and Go (`test-e2e-go`) tests,
 only work when the cluster shares the local docker registry, as is the case with `oc cluster up` and `minikube` after running `eval $(minikube docker-env)`.
 
 ```sh

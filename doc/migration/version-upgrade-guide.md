@@ -193,7 +193,7 @@ The SDK version `v0.8.x` supports scaffolding projects to use Go modules by defa
 To get familiar with Go modules read the [modules wiki][modules-wiki]. In particular the section on [migrating to modules][migrating-to-modules].
 
 - Ensure that you have Go 1.12+ and [Mercurial][mercurial] 3.9+ installed.
-- Activate Go modules support for your project in `$GOPATH/src` by setting the env `GO111MODULES=on`. See [activating modules][activating-modules] for more details.
+- Activate Go modules support for your project in `$GOPATH/src` by setting the env `GO111MODULE=on`. See [activating modules][activating-modules] for more details.
 - Initialize a new `go.mod` file by running `go mod init`.
 - Append the following to the end of your `go.mod` file to pin the operator-sdk and other upstream dependencies to the required versions.
 ```
@@ -424,6 +424,10 @@ Upon updating the project to `v0.8.2` the following breaking changes apply:
     )
 
     replace (
+    	// Indirect operator-sdk dependencies use git.apache.org, which is frequently
+    	// down. The github mirror should be used instead.
+    	// Locking to a specific version (from 'go mod graph'):
+    	git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
     	github.com/coreos/prometheus-operator => github.com/coreos/prometheus-operator v0.31.1
     	// Pinned to v2.10.0 (kubernetes-1.14.1) so https://proxy.golang.org can
     	// resolve it correctly.
@@ -465,17 +469,102 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 - `Client.Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOptionFunc) error` is now [`Client.Delete(ctx context.Context, obj runtime.Object, opts ...DeleteOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L70). Although the option interface has changed, the way each `client.DeleteOption` is created is the same as before. No updates need to be made. See the [client doc][client-doc] for a discussion of `client.DeleteOption`.
 - `StatusWriter.Update(ctx context.Context, obj runtime.Object) error` is now [`Update(ctx context.Context, obj runtime.Object, opts ...UpdateOption) error`](https://github.com/kubernetes-sigs/controller-runtime/blob/v0.2.0/pkg/client/interfaces.go#L95). No updates need to be made. See the [client doc][client-doc] for a discussion of `client.UpdateOption`.
 
+### OpenAPI updates
+
+- Run the command `operator-sdk generate openapi` and ensure that no errors such as `API rule violation` are raised. For further information see the [API rules][api-rules] documentation. 
+ 
+**NOTE:** You may need to add or remove markers (code annotations) to fix issues found when running `generate openapi`. Usage of markers in API code is discussed in the kubebuilder CRD generation [documentation][generating-crd] and in marker [documentation][markers]. A full list of OpenAPIv3 validation markers can be found [here](https://book.kubebuilder.io/reference/markers/crd-validation.html).
+
+**TIPS:**
+- If the `+kubebuilder:validation:Pattern` has commas, then surround the expressions in backticks.
+- If you are using `+kubebuilder:validation:Enum` then either surround the expression list in curly braces and quote each expression, or separate each expression using semicolons.
+
 ### Operator SDK updates
 
 - [`pkg/test.FrameworkClient`](https://github.com/operator-framework/operator-sdk/blob/947a464/pkg/test/client.go#L33) `List()` and `Delete()` method invocations should be updated to match those of `Client.List()` and `Client.Delete()`, described above.
 - The annotation to assign a scope to your CRD has changed. For the following changes, note that `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`.
     - For `Namespaced`-scoped operators, add a `+kubebuilder:resource:path=<resource>,scope=Namespaced` comment above your kind type in `pkg/apis/<group>/<version>/<kind>_types.go`.
     - For `Cluster`-scoped operators, replace the `+genclient:nonNamespaced` comment above your kind type in `pkg/apis/<group>/<version>/<kind>_types.go` with `+kubebuilder:resource:path=<resource>,scope=Cluster`.
-- CRD file names now have the form `<full group>_<resource>_crd.yaml`, and CRD file names now have the form `<full group>_<version>_<kind>_cr.yaml`. `<full group>` is the full group name of your CRD found at `spec.group`, and `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`. To migrate:
+- CRD file names now have the form `<full group>_<resource>_crd.yaml`, and CR file names now have the form `<full group>_<version>_<kind>_cr.yaml`. `<full group>` is the full group name of your CRD found at `spec.group`, and `<resource>` is the plural lower-case CRD Kind found at `spec.names.plural`. To migrate:
     - Run `operator-sdk generate openapi`. CRD manifest files with new names containing versioned validation and subresource blocks will be generated.
     - Delete the old CRD manifest files.
     - Rename CR manifest file names from `<group>_<version>_<kind>_cr.yaml` to `<full group>_<version>_<kind>_cr.yaml`.
 
+## `v0.12.x`
+
+### Go version
+
+- Ensure that you are using a go version 1.13+
+
+### dep
+
+Using `dep` is no longer supported. Follow [Go's official blog post about migrating to modules](https://blog.golang.org/migrating-to-go-modules) to learn how to migrate your project.
+
+### modules
+
+- Ensure the the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
+
+```
+require (
+    github.com/go-openapi/spec v0.19.0
+    github.com/operator-framework/operator-sdk v0.12.1-0.20191112211508-82fc57de5e5b
+    github.com/spf13/pflag v1.0.3
+    k8s.io/api v0.0.0
+    k8s.io/apimachinery v0.0.0
+    k8s.io/client-go v11.0.0+incompatible
+    k8s.io/kube-openapi v0.0.0-20190918143330-0270cf2f1c1d
+    sigs.k8s.io/controller-runtime v0.3.0
+)
+
+// Pinned to kubernetes-1.15.4
+replace (
+    k8s.io/api => k8s.io/api v0.0.0-20190918195907-bd6ac527cfd2
+    k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20190918201827-3de75813f604
+    k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190817020851-f2f3a405f61d
+    k8s.io/apiserver => k8s.io/apiserver v0.0.0-20190918200908-1e17798da8c1
+    k8s.io/cli-runtime => k8s.io/cli-runtime v0.0.0-20190918202139-0b14c719ca62
+    k8s.io/client-go => k8s.io/client-go v0.0.0-20190918200256-06eb1244587a
+    k8s.io/cloud-provider => k8s.io/cloud-provider v0.0.0-20190918203125-ae665f80358a
+    k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.0.0-20190918202959-c340507a5d48
+    k8s.io/code-generator => k8s.io/code-generator v0.0.0-20190612205613-18da4a14b22b
+    k8s.io/component-base => k8s.io/component-base v0.0.0-20190918200425-ed2f0867c778
+    k8s.io/cri-api => k8s.io/cri-api v0.0.0-20190817025403-3ae76f584e79
+    k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.0.0-20190918203248-97c07dcbb623
+    k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.0.0-20190918201136-c3a845f1fbb2
+    k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.0.0-20190918202837-c54ce30c680e
+    k8s.io/kube-proxy => k8s.io/kube-proxy v0.0.0-20190918202429-08c8357f8e2d
+    k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.0.0-20190918202713-c34a54b3ec8e
+    k8s.io/kubelet => k8s.io/kubelet v0.0.0-20190918202550-958285cf3eef
+    k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.0.0-20190918203421-225f0541b3ea
+    k8s.io/metrics => k8s.io/metrics v0.0.0-20190918202012-3c1ca76f5bda
+    k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.0.0-20190918201353-5cc279503896
+)
+```
+
+**NOTE**: Check [here](https://github.com/operator-framework/operator-sdk-samples/pull/90/files#diff-e15cac8b95d260726ca9db9fb25d9230) an example of this upgrade to see the changes from the version `0.11.0` to `0.12.0`.
+
+- Run `go mod tidy` to update the project modules
+- Run the command `operator-sdk generate k8s` to ensure that your resources will be updated
+- Run the command `operator-sdk generate openapi` and ensure that no errors such as `API rule violation` are raised. For further information see the [API rules][api-rules] documentation. 
+
+### (Optional) Update your operator to print its version
+
+In v0.12.0, the SDK team updated the scaffold for `cmd/manager/main.go` to include the operator's version in the output produced by the `printVersion()` function. See [#1953](https://github.com/operator-framework/operator-sdk/pull/1953)
+
+To add this feature to your operator, add the following lines in `<project>/cmd/manager/main.go`:
+
+```go
+import (
+	...
+	"<your_module_path>/version"
+	...
+)
+
+func printVersion() {
+	log.Info(fmt.Sprintf("Operator Version: %s", version.Version))
+	...
+}
+```
 
 [legacy-kubebuilder-doc-crd]: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 [v0.8.2-go-mod]: https://github.com/operator-framework/operator-sdk/blob/28bd2b0d4fd25aa68e15d928ae09d3c18c3b51da/internal/pkg/scaffold/go_mod.go#L40-L94
@@ -489,3 +578,6 @@ All method signatures for [`sigs.k8s.io/controller-runtime/pkg/client.Client`](h
 [v0.1.0-migration-guide]: ./v0.1.0-migration-guide.md
 [manifest-format]: https://github.com/operator-framework/operator-registry#manifest-format
 [client-doc]: ../user/client.md
+[api-rules]: https://github.com/kubernetes/kubernetes/tree/36981002246682ed7dc4de54ccc2a96c1a0cbbdb/api/api-rules
+[generating-crd]: https://book.kubebuilder.io/reference/generating-crd.html
+[markers]: https://book.kubebuilder.io/reference/markers.html

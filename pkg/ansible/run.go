@@ -19,8 +19,6 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"strconv"
-	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/controller"
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
@@ -32,13 +30,15 @@ import (
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
-	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
+
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
-
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -81,8 +81,18 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	// TODO: probably should expose the host & port as an environment variables
 	mgr, err := manager.New(cfg, manager.Options{
 		Namespace:          namespace,
-		MapperProvider:     restmapper.NewDynamicRESTMapper,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+		NewClient: func(cache cache.Cache, config *rest.Config, options client.Options) (client.Client, error) {
+			c, err := client.New(config, options)
+			if err != nil {
+				return nil, err
+			}
+			return &client.DelegatingClient{
+				Reader:       cache,
+				Writer:       c,
+				StatusClient: c,
+			}, nil
+		},
 	})
 	if err != nil {
 		log.Error(err, "Failed to create a new manager.")
@@ -91,7 +101,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 
 	var gvks []schema.GroupVersionKind
 	cMap := controllermap.NewControllerMap()
-	watches, err := watches.Load(flags.WatchesFile)
+	watches, err := watches.Load(flags.WatchesFile, flags.MaxWorkers, flags.AnsibleVerbosity)
 	if err != nil {
 		log.Error(err, "Failed to load watches.")
 		return err
@@ -107,7 +117,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 			GVK:             w.GroupVersionKind,
 			Runner:          runner,
 			ManageStatus:    w.ManageStatus,
-			MaxWorkers:      getMaxWorkers(w.GroupVersionKind, flags.MaxWorkers),
+			MaxWorkers:      w.MaxWorkers,
 			ReconcilePeriod: w.ReconcilePeriod,
 		})
 		if ctr == nil {
@@ -187,29 +197,4 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	}
 	log.Info("Exiting.")
 	return nil
-}
-
-// if the WORKER_* environment variable is set, use that value.
-// Otherwise, use the value from the CLI. This is definitely
-// counter-intuitive but it allows the operator admin adjust the
-// number of workers based on their cluster resources. While the
-// author may use the CLI option to specify a suggested
-// configuration for the operator.
-func getMaxWorkers(gvk schema.GroupVersionKind, defValue int) int {
-	envVar := strings.ToUpper(strings.Replace(
-		fmt.Sprintf("WORKER_%s_%s", gvk.Kind, gvk.Group),
-		".",
-		"_",
-		-1,
-	))
-	switch maxWorkers, err := strconv.Atoi(os.Getenv(envVar)); {
-	case maxWorkers <= 1:
-		return defValue
-	case err != nil:
-		// we don't care why we couldn't parse it just use default
-		log.Info("Failed to parse %v from environment. Using default %v", envVar, defValue)
-		return defValue
-	default:
-		return maxWorkers
-	}
 }

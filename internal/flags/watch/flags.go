@@ -23,7 +23,13 @@ import (
 
 // WatchFlags provides flag for configuration of a controller's reconcile period and for a
 // watches.yaml file, which is used to configure dynamic operators (e.g. Ansible and Helm).
-type WatchFlags struct {
+type WatchFlags struct { //nolint:golint
+	/*
+		The nolint is regards to: type name will be used as watch.WatchFlags by other packages, and that stutters; consider calling this Flags (golint)
+		todo(camilamacedo86): Note that we decided to not introduce breakchanges to add the linters and it should be done after.
+		From @joelanford: Even though watch.WatchFlags is an internal type, it is embedded in exported types, which means that changing it to watch.Flags is a breaking change.
+	*/
+
 	ReconcilePeriod time.Duration
 	WatchesFile     string
 }

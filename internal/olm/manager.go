@@ -42,15 +42,15 @@ type Manager struct {
 func (m *Manager) initialize() (err error) {
 	m.once.Do(func() {
 		if m.Client == nil {
-			cfg, err := config.GetConfig()
-			if err != nil {
-				err = errors.Wrapf(err, "failed to get Kubernetes config")
+			cfg, cerr := config.GetConfig()
+			if cerr != nil {
+				err = errors.Wrapf(cerr, "failed to get Kubernetes config")
 				return
 			}
 
-			client, err := ClientForConfig(cfg)
-			if err != nil {
-				err = errors.Wrapf(err, "failed to create manager client")
+			client, cerr := ClientForConfig(cfg)
+			if cerr != nil {
+				err = errors.Wrapf(cerr, "failed to create manager client")
 				return
 			}
 			m.Client = client
