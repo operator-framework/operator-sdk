@@ -1,4 +1,4 @@
-// Copyright 2019 The Operator-SDK Authors
+// Copyright 2018 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,21 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package alpha
+package olmcatalog
 
 import (
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/kubebuilder"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/olm"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "alpha",
-		Short: "Run an alpha subcommand",
+		Use:   "olm-catalog <olm-catalog-command>",
+		Short: "Invokes a olm-catalog command",
+		Long: `The operator-sdk olm-catalog command invokes a command to perform
+Catalog related actions.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			log.Info("TODO")
+		},
 	}
-
-	cmd.AddCommand(olm.NewCmd())
-	cmd.AddCommand(kubebuilder.NewCmd())
+	// cmd.AddCommand(newGenCSVCmd())
 	return cmd
 }
