@@ -32,8 +32,14 @@ time="2019-06-05T12:29:54Z" level=fatal msg="failed to create or get service for
 Add the following to your `deploy/role.yaml` file to grant the operator permissions to set owner references to the metrics Service resource. This is needed so that the metrics Service will get deleted as soon as you delete the operators Deployment. If you are using another way of deploying your operator, have a look at [this guide][gc-metrics] for more information.
 
 ```
+- apiGroups:
+  - apps
   resources:
   - deployments/finalizers
+  resourceNames:
+  - <operator-name>
+  verbs:
+  - "update"
 ```
 
 ## My Ansible module is missing a dependency. How do I add it to the image? 

@@ -2,6 +2,18 @@
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
+## v0.14.0
+
+### Added
+
 - Added new `--bundle` flag to the `operator-sdk scorecard` command to support bundle validation testing using the validation API (https://github.com/operator-framework/api). ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
 - Added new `log` field to the `operator-sdk scorecard` v1alpha2 output to support tests that produce logging. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
 - Added new `bundle validation` test to the `operator-sdk scorecard` OLM tests. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
@@ -22,8 +34,6 @@
 ### Deprecated
 
 - Deprecated `github.com/operator-framework/operator-sdk/pkg/restmapper` in favor of the `DynamicRESTMapper` implementation in [controller-runtime](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/apiutil#NewDiscoveryRESTMapper). ([#2309](https://github.com/operator-framework/operator-sdk/pull/2309))
-
-### Removed
 
 ### Bug Fixes
 
