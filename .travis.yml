@@ -131,7 +131,7 @@ jobs:
     - stage: test
       name: Unit, Sanity, and Markdown Tests
       before_install:
-        - go get github.com/mattn/goveralls
+        - (cd / && go get github.com/mattn/goveralls)
       script:
         - make test-sanity test-unit test-markdown
         - $GOPATH/bin/goveralls -service=travis-ci -coverprofile=coverage.out -repotoken=$COVERALLS_TOKEN
