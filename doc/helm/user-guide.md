@@ -63,6 +63,10 @@ If a custom repository URL is specified by `--helm-chart-repo`, the only support
 
 If `--helm-chart-version` is not set, the SDK will fetch the latest available version of the helm chart. Otherwise, it will fetch the specified version. `--helm-chart-version` is not used when `--helm-chart` itself refers to a specific version, for example when it is a local path or a URL.
 
+Example 
+
+`operator-sdk new cassandra-helm-operator --type=helm --helm-chart=cassandra --helm-chart-repo=https://charts.bitnami.com/bitnami --verbose`
+
 ### Operator scope
 
 Read the [operator scope][operator-scope] documentation on how to run your operator as namespace-scoped vs cluster-scoped.
