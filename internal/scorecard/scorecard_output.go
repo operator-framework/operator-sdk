@@ -25,18 +25,18 @@ import (
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
 
-func printPluginOutputs(version string, pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
+func printPluginOutputs(cfg Config, pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
 
 	var list scapi.ScorecardFormatter
 	var err error
-	list, err = combinePluginOutput(pluginOutputs)
+	list, err = combinePluginOutput(cfg, pluginOutputs)
 	if err != nil {
 		return err
 	}
 
-	if schelpers.IsV1alpha2(version) {
+	if schelpers.IsV1alpha2(cfg.VersionOpt) {
 		list = scapi.ConvertScorecardOutputV1ToV2(list.(scapiv1alpha1.ScorecardOutput))
-		if scViper.GetBool(ListOpt) {
+		if cfg.ListOpt {
 			scorecardOutput := list.(scapiv1alpha2.ScorecardOutput)
 			for i := 0; i < len(scorecardOutput.Results); i++ {
 				scorecardOutput.Results[i].State = scapiv1alpha2.NotRunState
@@ -44,7 +44,7 @@ func printPluginOutputs(version string, pluginOutputs []scapiv1alpha1.ScorecardO
 		}
 	}
 
-	switch format := scViper.GetString(OutputFormatOpt); format {
+	switch format := cfg.OutputFormatOpt; format {
 	case TextOutputFormat:
 		output, err := list.MarshalText()
 		if err != nil {
@@ -62,7 +62,7 @@ func printPluginOutputs(version string, pluginOutputs []scapiv1alpha1.ScorecardO
 	return nil
 }
 
-func combinePluginOutput(pluginOutputs []scapiv1alpha1.ScorecardOutput) (scapiv1alpha1.ScorecardOutput, error) {
+func combinePluginOutput(cfg Config, pluginOutputs []scapiv1alpha1.ScorecardOutput) (scapiv1alpha1.ScorecardOutput, error) {
 	output := scapiv1alpha1.ScorecardOutput{}
 	output.Results = make([]scapiv1alpha1.ScorecardSuiteResult, 0)
 	for _, v := range pluginOutputs {
@@ -71,7 +71,7 @@ func combinePluginOutput(pluginOutputs []scapiv1alpha1.ScorecardOutput) (scapiv1
 		}
 	}
 
-	if scViper.GetString(OutputFormatOpt) == JSONOutputFormat {
+	if cfg.OutputFormatOpt == JSONOutputFormat {
 		log, err := ioutil.ReadAll(logReadWriter)
 		if err != nil {
 			return output, fmt.Errorf("failed to read log buffer: %v", err)

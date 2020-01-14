@@ -53,7 +53,16 @@ var (
 	log           = logrus.New()
 )
 
-var scViper *viper.Viper
+type Config struct {
+	ListOpt         bool
+	OutputFormatOpt string
+	VersionOpt      string
+	SelectorOpt     string
+	Selector        labels.Selector
+	BundleOpt       string
+	Kubeconfig      string
+	Plugins         []Plugin
+}
 
 type pluginConfig struct {
 	Basic    *scplugins.BasicAndOLMPluginConfig `mapstructure:"basic,omitempty"`
@@ -61,11 +70,7 @@ type pluginConfig struct {
 	External *externalPluginConfig              `mapstructure:"external,omitempty"`
 }
 
-func getPlugins(version string, selector labels.Selector) ([]Plugin, error) {
-	kubeconfig := ""
-	if scViper.IsSet(scplugins.KubeconfigOpt) {
-		kubeconfig = scViper.GetString(scplugins.KubeconfigOpt)
-	}
+func (s Config) getPlugins(scViper *viper.Viper) ([]Plugin, error) {
 
 	// Add plugins from config
 	var plugins []Plugin
@@ -75,31 +80,31 @@ func getPlugins(version string, selector labels.Selector) ([]Plugin, error) {
 		return nil, errors.Wrap(err, "Could not load plugin configurations")
 	}
 	for idx, plugin := range configs {
-		if err := validateConfig(plugin, idx, version); err != nil {
+		if err := validateConfig(plugin, idx, s.VersionOpt); err != nil {
 			return nil, fmt.Errorf("error validating plugin config: %v", err)
 		}
 		var newPlugin Plugin
 		if plugin.Basic != nil {
 			pluginConfig := plugin.Basic
-			pluginConfig.Version = version
-			pluginConfig.Selector = selector
-			pluginConfig.ListOpt = scViper.GetBool(ListOpt)
-			pluginConfig.Bundle = scViper.GetString(BundleOpt)
-			setConfigDefaults(pluginConfig, kubeconfig)
+			pluginConfig.Version = s.VersionOpt
+			pluginConfig.Selector = s.Selector
+			pluginConfig.ListOpt = s.ListOpt
+			pluginConfig.Bundle = s.BundleOpt
+			setConfigDefaults(pluginConfig, s.Kubeconfig)
 			newPlugin = basicOrOLMPlugin{pluginType: scplugins.BasicOperator, config: *pluginConfig}
 		} else if plugin.Olm != nil {
 			pluginConfig := plugin.Olm
-			pluginConfig.Version = version
-			pluginConfig.Selector = selector
-			pluginConfig.ListOpt = scViper.GetBool(ListOpt)
-			pluginConfig.Bundle = scViper.GetString(BundleOpt)
-			setConfigDefaults(pluginConfig, kubeconfig)
+			pluginConfig.Version = s.VersionOpt
+			pluginConfig.Selector = s.Selector
+			pluginConfig.ListOpt = s.ListOpt
+			pluginConfig.Bundle = s.BundleOpt
+			setConfigDefaults(pluginConfig, s.Kubeconfig)
 			newPlugin = basicOrOLMPlugin{pluginType: scplugins.OLMIntegration, config: *pluginConfig}
 		} else {
 			pluginConfig := plugin.External
-			if kubeconfig != "" {
+			if s.Kubeconfig != "" {
 				// put the kubeconfig flag first in case user is overriding it with an env var in config file
-				pluginConfig.Env = append([]externalPluginEnv{{Name: "KUBECONFIG", Value: kubeconfig}}, pluginConfig.Env...)
+				pluginConfig.Env = append([]externalPluginEnv{{Name: "KUBECONFIG", Value: s.Kubeconfig}}, pluginConfig.Env...)
 			}
 			newPlugin = externalPlugin{config: *pluginConfig}
 		}
@@ -109,27 +114,59 @@ func getPlugins(version string, selector labels.Selector) ([]Plugin, error) {
 }
 
 func Tests(cmd *cobra.Command, args []string) error {
-	if err := initConfig(); err != nil {
-		return err
-	}
-	if err := validateScorecardConfig(); err != nil {
+
+	scViper, err := initConfig()
+	if err != nil {
 		return err
 	}
 
-	selector, err := labels.Parse(scViper.GetString(SelectorOpt))
+	outputFormat := scViper.GetString(OutputFormatOpt)
+	if outputFormat != TextOutputFormat && outputFormat != JSONOutputFormat {
+		return fmt.Errorf("invalid output format (%s); valid values: %s, %s", outputFormat, TextOutputFormat, JSONOutputFormat)
+	}
+
+	version := scViper.GetString(schelpers.VersionOpt)
+	err = schelpers.ValidateVersion(version)
+	if err != nil {
+		return err
+	}
+
+	if !schelpers.IsV1alpha2(version) && scViper.GetBool(ListOpt) {
+		return fmt.Errorf("list flag is not supported on v1alpha1")
+	}
+
+	c := Config{}
+	c.ListOpt = scViper.GetBool(ListOpt)
+	c.OutputFormatOpt = scViper.GetString(OutputFormatOpt)
+	c.VersionOpt = scViper.GetString(schelpers.VersionOpt)
+	c.SelectorOpt = scViper.GetString(SelectorOpt)
+	c.BundleOpt = scViper.GetString(BundleOpt)
+
+	c.Kubeconfig = ""
+	if scViper.IsSet(scplugins.KubeconfigOpt) {
+		c.Kubeconfig = scViper.GetString(scplugins.KubeconfigOpt)
+	}
+
+	c.Selector, err = labels.Parse(c.SelectorOpt)
 	if err != nil {
 		return err
 	}
 
 	cmd.SilenceUsage = true
-	plugins, err := getPlugins(scViper.GetString(schelpers.VersionOpt), selector)
+	c.Plugins, err = c.getPlugins(scViper)
 	if err != nil {
 		return err
 	}
 
+	return c.RunTests()
+
+}
+
+func (s Config) RunTests() error {
+
 	var pluginOutputs []scapiv1alpha1.ScorecardOutput
-	for _, plugin := range plugins {
-		if scViper.GetBool(ListOpt) {
+	for _, plugin := range s.Plugins {
+		if s.ListOpt {
 			pluginOutputs = append(pluginOutputs, plugin.List())
 		} else {
 			pluginOutputs = append(pluginOutputs, plugin.Run())
@@ -143,12 +180,11 @@ func Tests(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if err := printPluginOutputs(scViper.GetString(schelpers.VersionOpt), pluginOutputs); err != nil {
+	if err := printPluginOutputs(s, pluginOutputs); err != nil {
 		return err
 	}
 
-	apiVersion := scViper.GetString(schelpers.VersionOpt)
-	if schelpers.IsV1alpha2(apiVersion) {
+	if schelpers.IsV1alpha2(s.VersionOpt) {
 		for _, scorecardOutput := range pluginOutputs {
 			for _, result := range scorecardOutput.Results {
 				if result.Fail > 0 || result.PartialPass > 0 {
@@ -161,7 +197,7 @@ func Tests(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func initConfig() error {
+func initConfig() (*viper.Viper, error) {
 	// viper/cobra already has flags parsed at this point; we can check if a config file flag is set
 	if viper.GetString(ConfigOpt) != "" {
 		// Use config file from the flag.
@@ -172,67 +208,38 @@ func initConfig() error {
 		viper.SetConfigName(DefaultConfigFile)
 	}
 
+	var scViper *viper.Viper
 	if err := viper.ReadInConfig(); err == nil {
-		makeSCViper()
+		scViper = viper.Sub("scorecard")
+		// this is a workaround for the fact that nested flags don't persist on viper.Sub
+		scViper.Set(OutputFormatOpt, viper.GetString("scorecard."+OutputFormatOpt))
+		scViper.Set(scplugins.KubeconfigOpt, viper.GetString("scorecard."+scplugins.KubeconfigOpt))
+		scViper.Set(schelpers.VersionOpt, viper.GetString("scorecard."+schelpers.VersionOpt))
+		scViper.Set(SelectorOpt, viper.GetString("scorecard."+SelectorOpt))
+		scViper.Set(BundleOpt, viper.GetString("scorecard."+BundleOpt))
+		scViper.Set(ListOpt, viper.GetString("scorecard."+ListOpt))
+
 		// configure logger output before logging anything
-		err := configureLogger()
+		if !scViper.IsSet(OutputFormatOpt) {
+			scViper.Set(OutputFormatOpt, TextOutputFormat)
+		}
+		format := scViper.GetString(OutputFormatOpt)
+		if format == TextOutputFormat {
+			logReadWriter = os.Stdout
+		} else if format == JSONOutputFormat {
+			logReadWriter = &bytes.Buffer{}
+		} else {
+			return nil, fmt.Errorf("invalid output format: %s", format)
+		}
+		log.SetOutput(logReadWriter)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		log.Info("Using config file: ", viper.ConfigFileUsed())
 	} else {
-		return fmt.Errorf("could not read config file: %v\nSee %s for more information about the scorecard config file", err, configDocLink())
+		return nil, fmt.Errorf("could not read config file: %v\nSee %s for more information about the scorecard config file", err, configDocLink())
 	}
-	return nil
-}
-
-func configureLogger() error {
-	if !scViper.IsSet(OutputFormatOpt) {
-		scViper.Set(OutputFormatOpt, TextOutputFormat)
-	}
-	format := scViper.GetString(OutputFormatOpt)
-	if format == TextOutputFormat {
-		logReadWriter = os.Stdout
-	} else if format == JSONOutputFormat {
-		logReadWriter = &bytes.Buffer{}
-	} else {
-		return fmt.Errorf("invalid output format: %s", format)
-	}
-	log.SetOutput(logReadWriter)
-	return nil
-}
-
-func validateScorecardConfig() error {
-	// this is already being checked in configure logger; may be unnecessary
-	outputFormat := scViper.GetString(OutputFormatOpt)
-	if outputFormat != TextOutputFormat && outputFormat != JSONOutputFormat {
-		return fmt.Errorf("invalid output format (%s); valid values: %s, %s", outputFormat, TextOutputFormat, JSONOutputFormat)
-	}
-
-	version := scViper.GetString(schelpers.VersionOpt)
-	err := schelpers.ValidateVersion(version)
-	if err != nil {
-		return err
-	}
-
-	if !schelpers.IsV1alpha2(version) && scViper.GetBool(ListOpt) {
-		return fmt.Errorf("list flag is not supported on v1alpha1")
-	}
-
-	return nil
-
-}
-
-func makeSCViper() {
-	scViper = viper.Sub("scorecard")
-	// this is a workaround for the fact that nested flags don't persist on viper.Sub
-	scViper.Set(OutputFormatOpt, viper.GetString("scorecard."+OutputFormatOpt))
-	scViper.Set(scplugins.KubeconfigOpt, viper.GetString("scorecard."+scplugins.KubeconfigOpt))
-	scViper.Set(schelpers.VersionOpt, viper.GetString("scorecard."+schelpers.VersionOpt))
-	scViper.Set(SelectorOpt, viper.GetString("scorecard."+SelectorOpt))
-	scViper.Set(BundleOpt, viper.GetString("scorecard."+BundleOpt))
-	scViper.Set(ListOpt, viper.GetString("scorecard."+ListOpt))
-
+	return scViper, nil
 }
 
 func configDocLink() string {
