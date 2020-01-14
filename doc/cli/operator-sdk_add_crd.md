@@ -5,7 +5,7 @@ Adds a Custom Resource Definition (CRD) and the Custom Resource (CR) files
 ### Synopsis
 
 The operator-sdk add crd command will create a Custom Resource Definition (CRD) 
-				and the Custom Resource (CR) files for the specified api-version and kind.
+and the Custom Resource (CR) files for the specified api-version and kind.
 
 Generated CRD filename: <project-name>/deploy/crds/<full group>_<resource>_crd.yaml
 Generated CR  filename: <project-name>/deploy/crds/<full group>_<version>_<kind>_cr.yaml
@@ -29,4 +29,3 @@ operator-sdk add crd [flags]
 ### SEE ALSO
 
 * [operator-sdk add](operator-sdk_add.md)	 - Adds a controller or resource to the project
-
