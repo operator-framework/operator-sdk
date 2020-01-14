@@ -16,6 +16,7 @@ package olmcatalog
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -24,7 +25,7 @@ import (
 	"sort"
 	"strings"
 
-	gen "github.com/operator-framework/operator-sdk/internal/generate/gen"
+	"github.com/operator-framework/operator-sdk/internal/generate/gen"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
@@ -36,7 +37,6 @@ import (
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
 	olmversion "github.com/operator-framework/operator-lifecycle-manager/pkg/lib/version"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,7 +53,6 @@ const (
 
 type csvGenerator struct {
 	gen.Config
-
 	// csvVersion is the CSV current version.
 	csvVersion string
 	// fromVersion is the CSV version from which to build a new CSV. A CSV
@@ -114,7 +113,7 @@ func (g csvGenerator) Generate() error {
 		return errors.New("error generating CSV manifest: no generated file found")
 	}
 	if err = os.MkdirAll(g.OutputDir, fileutil.DefaultDirFileMode); err != nil {
-		return errors.Wrapf(err, "error mkdir %s", g.OutputDir)
+		return fmt.Errorf("error mkdir %s: %v", g.OutputDir, err)
 	}
 	for fileName, b := range fileMap {
 		path := filepath.Join(g.OutputDir, fileName)
@@ -193,7 +192,7 @@ func getCSVFromDir(dir string) (*olmapiv1alpha1.ClusterServiceVersion, error) {
 		}
 		csv := &olmapiv1alpha1.ClusterServiceVersion{}
 		if err := yaml.Unmarshal(b, csv); err != nil {
-			return nil, errors.Wrapf(err, "error unmarshalling CSV %s", path)
+			return nil, fmt.Errorf("error unmarshalling CSV %s: %v", path, err)
 		}
 		return csv, nil
 	}
@@ -302,7 +301,7 @@ func (g csvGenerator) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersio
 	oldCSVName := getCSVName(g.OperatorName, oldVer)
 	oldRe, err := regexp.Compile(fmt.Sprintf("\\b%s\\b", regexp.QuoteMeta(oldCSVName)))
 	if err != nil {
-		return errors.Wrapf(err, "error compiling CSV name regexp %s", oldRe.String())
+		return fmt.Errorf("error compiling CSV name regexp %s: %v", oldRe.String(), err)
 	}
 	b, err := yaml.Marshal(csv)
 	if err != nil {
@@ -312,7 +311,7 @@ func (g csvGenerator) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersio
 	b = oldRe.ReplaceAll(b, []byte(newCSVName))
 	*csv = olmapiv1alpha1.ClusterServiceVersion{}
 	if err = yaml.Unmarshal(b, csv); err != nil {
-		return errors.Wrapf(err, "error unmarshalling CSV %s after replacing old CSV name", csv.GetName())
+		return fmt.Errorf("error unmarshalling CSV %s after replacing old CSV name: %v", csv.GetName(), err)
 	}
 
 	ver, err := semver.Parse(g.csvVersion)

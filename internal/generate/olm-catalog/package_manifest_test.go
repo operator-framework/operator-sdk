@@ -18,7 +18,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	gen "github.com/operator-framework/operator-sdk/internal/generate/gen"
+	"github.com/operator-framework/operator-sdk/internal/generate/gen"
 
 	"github.com/stretchr/testify/assert"
 )

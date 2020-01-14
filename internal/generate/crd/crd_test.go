@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"testing"
 
-	gen "github.com/operator-framework/operator-sdk/internal/generate/gen"
+	"github.com/operator-framework/operator-sdk/internal/generate/gen"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 
 	"github.com/stretchr/testify/assert"
@@ -137,7 +137,9 @@ func TestCRDNonGo(t *testing.T) {
 				t.Fatal(err)
 			}
 			cfg := gen.Config{
-				Inputs: map[string]string{CRDsDirKey: c.crdsDir},
+				Inputs: map[string]string{
+					CRDsDirKey: c.crdsDir,
+				},
 			}
 			g := NewCRDNonGo(cfg, *r)
 			fileMap, err := g.(crdGenerator).generateNonGo()

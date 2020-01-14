@@ -17,7 +17,8 @@ package olmcatalog
 import (
 	"bytes"
 	"encoding/json"
-	goerrors "errors"
+	"errors"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -29,7 +30,6 @@ import (
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -288,12 +288,12 @@ func updateDescriptions(csv *olmapiv1alpha1.ClusterServiceVersion, searchDir str
 		case projutil.OperatorTypeGo:
 			ownedCRD, err = descriptor.GetCRDDescriptionForGVK(searchDir, gvk)
 			if err != nil {
-				if goerrors.Is(err, descriptor.ErrAPIDirNotExist) {
+				if errors.Is(err, descriptor.ErrAPIDirNotExist) {
 					log.Infof("Directory for API %s does not exist. Skipping CSV annotation parsing for API.", gvk)
-				} else if goerrors.Is(err, descriptor.ErrAPITypeNotFound) {
+				} else if errors.Is(err, descriptor.ErrAPITypeNotFound) {
 					log.Infof("No kind type found for API %s. Skipping CSV annotation parsing for API.", gvk)
 				} else {
-					return errors.Wrapf(err, "failed to set CRD descriptors for %s", gvk)
+					return fmt.Errorf("failed to set CRD descriptors for %s: %v", gvk, err)
 				}
 				continue
 			}

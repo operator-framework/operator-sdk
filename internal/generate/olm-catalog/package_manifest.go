@@ -23,7 +23,7 @@ import (
 	"sort"
 	"strings"
 
-	gen "github.com/operator-framework/operator-sdk/internal/generate/gen"
+	"github.com/operator-framework/operator-sdk/internal/generate/gen"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	registryutil "github.com/operator-framework/operator-sdk/internal/util/operator-registry"
 
