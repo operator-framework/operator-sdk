@@ -20,7 +20,7 @@ import (
 	"os"
 	"path/filepath"
 
-	gen "github.com/operator-framework/operator-sdk/internal/generate/gen"
+	"github.com/operator-framework/operator-sdk/internal/generate/gen"
 	gencatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"

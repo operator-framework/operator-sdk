@@ -12,16 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package version
+package olmcatalog
 
 import (
-	"fmt"
-	"runtime"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
-var (
-	Version    = "v0.14.0+git"
-	GitVersion = "unknown"
-	GitCommit  = "unknown"
-	GoVersion  = fmt.Sprintf("%s %s/%s", runtime.Version(), runtime.GOOS, runtime.GOARCH)
-)
+func NewCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "olm-catalog <olm-catalog-command>",
+		Short: "Invokes a olm-catalog command",
+		Long: `The operator-sdk olm-catalog command invokes a command to perform
+Catalog related actions.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			log.Info("TODO")
+		},
+	}
+	// cmd.AddCommand(newGenCSVCmd())
+	return cmd
+}

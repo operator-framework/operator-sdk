@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -46,6 +46,9 @@ import (
 const (
 	OLMCatalogDir  = scaffold.DeployDir + string(filepath.Separator) + "olm-catalog"
 	CSVYamlFileExt = ".clusterserviceversion.yaml"
+
+	BundleDirKey = "bundle"
+	GoAPIsDirKey = "apis"
 )
 
 type csvGenerator struct {
@@ -58,11 +61,6 @@ type csvGenerator struct {
 	// deploy/olm-catalog/{from_version}/operator-name.v{from_version}.{CSVYamlFileExt}
 	fromVersion string
 }
-
-const (
-	BundleDirKey = "bundle"
-	GoAPIsDirKey = "apis"
-)
 
 func NewCSV(cfg gen.Config, csvVersion, fromVersion string) gen.Generator {
 	g := csvGenerator{

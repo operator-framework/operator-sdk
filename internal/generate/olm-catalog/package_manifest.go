@@ -1,4 +1,4 @@
-// Copyright 2019 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
 package olmcatalog
 
 import (
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -27,11 +29,14 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/operator-framework/operator-registry/pkg/registry"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
-const PackageManifestFileExt = ".package.yaml"
+const (
+	PackageManifestFileExt = ".package.yaml"
+
+	ManifestsDirKey = "manifests"
+)
 
 type pkgGenerator struct {
 	gen.Config
@@ -45,8 +50,6 @@ type pkgGenerator struct {
 	channelIsDefault bool
 }
 
-const ManifestsDir = "manifests"
-
 func NewPackageManifest(cfg gen.Config, csvVersion, channel string, isDefault bool) gen.Generator {
 	g := pkgGenerator{
 		Config:           cfg,
@@ -57,8 +60,8 @@ func NewPackageManifest(cfg gen.Config, csvVersion, channel string, isDefault bo
 	if g.Inputs == nil {
 		g.Inputs = map[string]string{}
 	}
-	if manifests, ok := g.Inputs[ManifestsDir]; !ok || manifests == "" {
-		g.Inputs[ManifestsDir] = filepath.Join(OLMCatalogDir, g.OperatorName)
+	if manifests, ok := g.Inputs[ManifestsDirKey]; !ok || manifests == "" {
+		g.Inputs[ManifestsDirKey] = filepath.Join(OLMCatalogDir, g.OperatorName)
 	}
 	if g.OutputDir == "" {
 		g.OutputDir = filepath.Join(OLMCatalogDir, g.OperatorName)
@@ -79,7 +82,7 @@ func (g pkgGenerator) Generate() error {
 		return errors.New("error generating package manifest: no generated file found")
 	}
 	if err = os.MkdirAll(g.OutputDir, fileutil.DefaultDirFileMode); err != nil {
-		return errors.Wrapf(err, "error mkdir %s", g.OutputDir)
+		return fmt.Errorf("error mkdir %s: %v", g.OutputDir, err)
 	}
 	for fileName, b := range fileMap {
 		path := filepath.Join(g.OutputDir, fileName)
@@ -94,23 +97,23 @@ func (g pkgGenerator) Generate() error {
 // manifest and modifies it based on values set in s.
 func (g pkgGenerator) generate() (map[string][]byte, error) {
 	fileName := getPkgFileName(g.OperatorName)
-	path := filepath.Join(g.Inputs[ManifestsDir], fileName)
+	path := filepath.Join(g.Inputs[ManifestsDirKey], fileName)
 	pkg := registry.PackageManifest{}
 	if _, err := os.Stat(path); err == nil {
 		b, err := ioutil.ReadFile(path)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to read package manifest %s", path)
+			return nil, fmt.Errorf("failed to read package manifest %s: %v", path, err)
 		}
 		if err = yaml.Unmarshal(b, &pkg); err != nil {
-			return nil, errors.Wrapf(err, "failed to unmarshal package manifest %s", path)
+			return nil, fmt.Errorf("failed to unmarshal package manifest %s: %v", path, err)
 		}
 		if err := registryutil.ValidatePackageManifest(&pkg); err != nil {
-			return nil, errors.Wrapf(err, "error validating package manifest %s", pkg.PackageName)
+			return nil, fmt.Errorf("error validating package manifest %s: %v", pkg.PackageName, err)
 		}
 	} else if os.IsNotExist(err) {
 		pkg = newPackageManifest(g.OperatorName, g.channel, g.csvVersion)
 	} else {
-		return nil, errors.Wrapf(err, "error reading package manifest %s", path)
+		return nil, fmt.Errorf("error reading package manifest %s: %v", path, err)
 	}
 
 	g.setChannels(&pkg)
@@ -180,6 +183,7 @@ func (g pkgGenerator) setChannels(pkg *registry.PackageManifest) {
 		for _, c := range pkg.Channels {
 			if pkg.DefaultChannelName == c.Name {
 				defaultExists = true
+				break
 			}
 		}
 		if !defaultExists {

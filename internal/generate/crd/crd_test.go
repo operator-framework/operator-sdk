@@ -92,7 +92,9 @@ func TestGenerate(t *testing.T) {
 
 func TestCRDGo(t *testing.T) {
 	cfg := gen.Config{
-		Inputs: map[string]string{APIsDirKey: filepath.Join(testGoDataDir, scaffold.ApisDir)},
+		Inputs: map[string]string{
+			APIsDirKey: filepath.Join(testGoDataDir, scaffold.ApisDir),
+		},
 	}
 	g := NewCRDGo(cfg)
 	fileMap, err := g.(crdGenerator).generateGo()

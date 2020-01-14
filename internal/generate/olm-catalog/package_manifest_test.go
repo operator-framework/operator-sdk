@@ -1,4 +1,4 @@
-// Copyright 2019 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,12 +24,10 @@ import (
 )
 
 func TestPackageManifest(t *testing.T) {
-	operatorName := "memcached-operator"
-	csvVersion := "0.0.3"
-	inputDir := filepath.Join(testGoDataDir, OLMCatalogDir, operatorName)
+	inputDir := filepath.Join(testGoDataDir, OLMCatalogDir, testProjectName)
 	cfg := gen.Config{
-		OperatorName: operatorName,
-		Inputs:       map[string]string{ManifestsDir: inputDir},
+		OperatorName: testProjectName,
+		Inputs:       map[string]string{ManifestsDirKey: inputDir},
 	}
 	g := NewPackageManifest(cfg, csvVersion, "stable", true)
 	fileMap, err := g.(pkgGenerator).generate()
@@ -37,7 +35,7 @@ func TestPackageManifest(t *testing.T) {
 		t.Fatalf("Failed to execute package manifest generator: %v", err)
 	}
 
-	pkgExpFile := getPkgFileName(operatorName)
+	pkgExpFile := getPkgFileName(testProjectName)
 	if b, ok := fileMap[pkgExpFile]; !ok {
 		t.Error("Failed to generate package manifest")
 	} else {
