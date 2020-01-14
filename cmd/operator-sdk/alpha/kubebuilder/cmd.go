@@ -27,6 +27,7 @@ import (
 
 var kbFlags string
 
+//nolint:lll
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "kubebuilder [init/create cmds]",
