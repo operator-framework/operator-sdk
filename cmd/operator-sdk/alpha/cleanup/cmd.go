@@ -12,33 +12,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package olm
+package cleanup
 
 import (
-	"fmt"
-	"log"
-
 	olmoperator "github.com/operator-framework/operator-sdk/internal/olm/operator"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-func NewDownCmd() *cobra.Command {
+type cleanupArgs struct {
+	olm bool
+}
+
+func NewCmd() *cobra.Command {
+	cargs := &cleanupArgs{}
 	c := &olmoperator.OLMCmd{}
 	cmd := &cobra.Command{
-		Use:   "down",
-		Short: "Delete a running operator using the Operator Lifecycle Manager",
+		Use:   "cleanup",
+		Short: "Delete and clean up after a running Operator",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 1 {
-				return fmt.Errorf("command %q requires exactly one argument", cmd.CommandPath())
-			}
-			c.ManifestsDir = args[0]
-			if err := c.Down(); err != nil {
-				log.Fatalf("Failed to delete operator: %v", err)
+			switch {
+			case cargs.olm:
+				if err := c.Cleanup(); err != nil {
+					log.Fatalf("Failed to clean up operator: %v", err)
+				}
 			}
 			return nil
 		},
 	}
+	// OLM is the default.
+	cmd.Flags().BoolVar(&cargs.olm, "olm", true, "The operator to be deleted is managed by OLM in a cluster.")
+	// TODO(estroz): refactor flag setting when new run mode options are added.
 	c.AddToFlagSet(cmd.Flags())
 	return cmd
 }

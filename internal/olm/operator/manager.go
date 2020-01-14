@@ -130,7 +130,7 @@ func (c *OLMCmd) newManager() (*operatorManager, error) {
 	return m, nil
 }
 
-func (m *operatorManager) up(ctx context.Context) (err error) {
+func (m *operatorManager) run(ctx context.Context) (err error) {
 	// Ensure OLM is installed.
 	olmVer, err := m.client.GetInstalledVersion(ctx)
 	if err != nil {
@@ -221,7 +221,7 @@ func (m *operatorManager) up(ctx context.Context) (err error) {
 	return nil
 }
 
-func (m *operatorManager) down(ctx context.Context) (err error) {
+func (m *operatorManager) cleanup(ctx context.Context) (err error) {
 	// Ensure OLM is installed.
 	olmVer, err := m.client.GetInstalledVersion(ctx)
 	if err != nil {
