@@ -9,9 +9,10 @@ type bundleCmd struct {
 	imageTag       string
 	imageBuilder   string
 	packageName    string
-	channels       string
+	channels       []string
 	channelDefault string
 	overwrite      bool
+	generateOnly   bool
 }
 
 func NewCmd() *cobra.Command {
@@ -21,9 +22,6 @@ func NewCmd() *cobra.Command {
 		Long:  `Generate operator bundle metadata and build bundle image.`,
 	}
 
-	runCmd.AddCommand(
-		newBundleBuildCmd(),
-		newBundleGenerateCmd(),
-	)
+	runCmd.AddCommand(newBundleBuildCmd())
 	return runCmd
 }
