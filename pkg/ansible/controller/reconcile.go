@@ -183,12 +183,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 			}
 		}
 		if event.Event == eventapi.EventRunnerOnFailed && !event.IgnoreError() {
-			if len(event.GetFailedPlaybookMessage()) < 1 {
-				eventErr := fmt.Errorf("event runner on failed (%v)", event.EventData["Task"])
-				failureMessages = append(failureMessages, eventErr.Error())
-			} else {
-				failureMessages = append(failureMessages, event.GetFailedPlaybookMessage())
-			}
+			failureMessages = append(failureMessages, event.GetFailedPlaybookMessage())
 		}
 	}
 	if statusEvent.Event == "" {
@@ -248,7 +243,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 
 	// re-trigger reconcile because of failures
 	if !runSuccessful {
-		return reconcileResult, errors.New("event runner on failed")
+		return reconcileResult, errors.New("received failed task event")
 	}
 	return reconcileResult, nil
 }
