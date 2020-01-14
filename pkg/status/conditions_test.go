@@ -69,6 +69,26 @@ func withLastTransitionTime(c Condition, t time.Time) Condition {
 	return c
 }
 
+func TestConditionDeepCopy(t *testing.T) {
+	var n *Condition
+	assert.Nil(t, n.DeepCopy())
+
+	a := generateCondition("A", corev1.ConditionTrue)
+	aCopy := a.DeepCopy()
+	if &a == aCopy {
+		t.Errorf("Expected and actual point to the same object: %p %#v", &a, &a)
+	}
+	if &a.Status == &aCopy.Status {
+		t.Errorf("Expected and actual point to the same object: %p %#v", &a.Status, &a.Status)
+	}
+	if &a.Reason == &aCopy.Reason {
+		t.Errorf("Expected and actual point to the same object: %p %#v", &a.Reason, &a.Reason)
+	}
+	if &a.Message == &aCopy.Message {
+		t.Errorf("Expected and actual point to the same object: %p %#v", &a.Message, &a.Message)
+	}
+}
+
 func TestConditionsSetEmpty(t *testing.T) {
 	conditions := initConditions()
 
