@@ -39,8 +39,8 @@ func NewCmd() *cobra.Command {
 	newCmd := &cobra.Command{
 		Use:   "migrate",
 		Short: "Adds source code to an operator",
-		Long: `operator-sdk migrate adds a main.go source file and any associated source files
-				for an operator that is not of the "go" type.`,
+		Long: `operator-sdk migrate adds a main.go source file and any associated source files` +
+			`for an operator that is not of the "go" type.`,
 		RunE: migrateRun,
 	}
 
