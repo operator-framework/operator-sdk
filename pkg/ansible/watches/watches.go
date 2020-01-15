@@ -26,9 +26,10 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	yaml "gopkg.in/yaml.v2"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -136,8 +137,44 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	w.WatchClusterScopedResources = tmp.WatchClusterScopedResources
 	w.Finalizer = tmp.Finalizer
 	w.AnsibleVerbosity = getAnsibleVerbosity(gvk, ansibleVerbosityDefault)
+	w.addRolePlaybookPaths()
 
 	return nil
+}
+
+// addRolePlaybookPaths will add the full path
+// based on the current dir
+func (w *Watch) addRolePlaybookPaths() {
+	w.Playbook = getFullPath(w.Playbook)
+	w.Role = getFullRolePath(w.Role)
+	if w.Finalizer != nil && len(w.Finalizer.Role) > 0 {
+		w.Finalizer.Role = getFullRolePath(w.Finalizer.Role)
+	}
+	if w.Finalizer != nil && len(w.Finalizer.Playbook) > 0 {
+		w.Finalizer.Playbook = getFullPath(w.Finalizer.Playbook)
+	}
+}
+
+// getFullPath will return a valid full path for the playbook
+func getFullPath(path string) string {
+	if len(path) > 0 && !filepath.IsAbs(path) {
+		return filepath.Join(projutil.MustGetwd(), path)
+	}
+	return path
+}
+
+// getFullRolePath will return a valid full path for the role
+func getFullRolePath(path string) string {
+	if len(path) > 0 && !filepath.IsAbs(path) {
+		envVar, ok := os.LookupEnv("ANSIBLE_ROLES_PATH")
+		if ok && len(envVar) > 0 {
+			return filepath.Join(envVar, path)
+		}
+		// If the flag and/or env var ANSIBLE_ROLES_PATH was not set then, it will
+		// be the current directory concat with roles.
+		return getFullPath(filepath.Join("roles", path))
+	}
+	return path
 }
 
 // Validate - ensures that a Watch is valid
@@ -240,18 +277,16 @@ func verifyGVK(gvk schema.GroupVersionKind) error {
 func verifyAnsiblePath(playbook string, role string) error {
 	switch {
 	case playbook != "":
-		if !filepath.IsAbs(playbook) {
-			return fmt.Errorf("playbook path must be absolute")
-		}
-		if _, err := os.Stat(playbook); err != nil {
-			return fmt.Errorf("playbook: %v was not found", playbook)
+		if filepath.IsAbs(playbook) {
+			if _, err := os.Stat(playbook); err != nil {
+				return fmt.Errorf("playbook: %v was not found", playbook)
+			}
 		}
 	case role != "":
-		if !filepath.IsAbs(role) {
-			return fmt.Errorf("role path must be absolute")
-		}
-		if _, err := os.Stat(role); err != nil {
-			return fmt.Errorf("role path: %v was not found", role)
+		if filepath.IsAbs(playbook) {
+			if _, err := os.Stat(role); err != nil {
+				return fmt.Errorf("role path: %v was not found", role)
+			}
 		}
 	default:
 		return fmt.Errorf("must specify Role or Playbook")

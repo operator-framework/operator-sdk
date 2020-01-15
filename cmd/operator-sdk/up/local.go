@@ -143,6 +143,16 @@ func upLocal() error {
 	}
 	dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, namespace))
 
+	// Set the ANSIBLE_ROLES_PATH
+	rolesPath := absProjectPath
+	if ansibleOperatorFlags != nil && len(ansibleOperatorFlags.AnsibleRolesPath) > 0 {
+		rolesPath = absProjectPath
+	}
+	log.Info(fmt.Sprintf("set the value %v for environment variable %v.", rolesPath,
+		aoflags.AnsibleRolesPathEnvVar))
+
+	dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", aoflags.AnsibleRolesPathEnvVar, namespace))
+
 	if err := projutil.ExecCmd(dc); err != nil {
 		return fmt.Errorf("failed to run operator locally: %v", err)
 	}

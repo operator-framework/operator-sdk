@@ -23,6 +23,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -149,16 +151,6 @@ func TestLoad(t *testing.T) {
 		{
 			name:        "error invalid playbook finalizer path",
 			path:        "testdata/invalid_finalizer_playbook_path.yaml",
-			shouldError: true,
-		},
-		{
-			name:        "error invalid role path",
-			path:        "testdata/invalid_role_path.yaml",
-			shouldError: true,
-		},
-		{
-			name:        "error invalid role finalizer path",
-			path:        "testdata/invalid_finalizer_role_path.yaml",
 			shouldError: true,
 		},
 		{
@@ -578,6 +570,101 @@ func TestAnsibleVerbosity(t *testing.T) {
 			verbosity := getAnsibleVerbosity(tc.gvk, tc.defValue)
 			if tc.expectedValue != verbosity {
 				t.Fatalf("Unexpected Verbosity: %v expected Verbosity: %v", verbosity, tc.expectedValue)
+			}
+		})
+	}
+}
+
+// Test the func getFullRolePath when no envVar is set.
+func Test_getFullRolePath(t *testing.T) {
+	// Mock default Full Path based in the current directory
+	rolesPath := filepath.Join(projutil.MustGetwd(), "roles")
+
+	type args struct {
+		path string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "Should work with default values",
+			args: args{
+				path: "Foo",
+			},
+			want: filepath.Join(rolesPath, "Foo"),
+		},
+		{
+			name: "Should work with full path",
+			args: args{
+				path: filepath.Join(rolesPath, "Foo"),
+			},
+			want: filepath.Join(rolesPath, "Foo"),
+		},
+		{
+			name: "Should work with relative path",
+			args: args{
+				path: "relative/Foo",
+			},
+			want: filepath.Join(rolesPath, "relative/Foo"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := getFullRolePath(tt.args.path); got != tt.want {
+				t.Errorf("Error to check getFullRolePath() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// Test the func getFullRolePath when the custom flag and/or env var was set.
+func Test_getFullRolePathWithEnvVarSet(t *testing.T) {
+	// Mock customized Path
+	customPath := "customized/myroles"
+	os.Setenv("ANSIBLE_ROLES_PATH", customPath)
+
+	// set another ENV VAR just to ensure that it worked with more than one
+	os.Setenv("OTHER_ENV", "test")
+
+	// Mock default Full Path based in the current directory
+	rolesPath := filepath.Join(projutil.MustGetwd(), "roles")
+
+	type args struct {
+		path string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "Should work with default values",
+			args: args{
+				path: "Foo",
+			},
+			want: filepath.Join(customPath, "Foo"),
+		},
+		{
+			name: "Should work with full path",
+			args: args{
+				path: filepath.Join(rolesPath, "Foo"),
+			},
+			want: filepath.Join(rolesPath, "Foo"),
+		},
+		{
+			name: "Should work with relative path",
+			args: args{
+				path: "relative/Foo",
+			},
+			want: filepath.Join(customPath, "relative/Foo"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := getFullRolePath(tt.args.path); got != tt.want {
+				t.Errorf("Error to check getFullRolePath() = %v, want %v", got, tt.want)
 			}
 		})
 	}

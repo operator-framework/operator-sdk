@@ -15,6 +15,7 @@ operator-sdk run ansible [flags]
 ### Options
 
 ```
+      --ansible-roles-path string        Ansible path roles ($ANSIBLE_ROLES_PATH). By default it will be /roles in the current directory
       --ansible-verbosity int            Ansible verbosity. Overridden by environment variable. (default 2)
   -h, --help                             help for ansible
       --inject-owner-ref                 The ansible operator will inject owner references unless this flag is false (default true)

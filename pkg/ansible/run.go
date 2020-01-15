@@ -20,6 +20,7 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/controller"
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
 	proxy "github.com/operator-framework/operator-sdk/pkg/ansible/proxy"
@@ -97,6 +98,12 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	if err != nil {
 		log.Error(err, "Failed to create a new manager.")
 		return err
+	}
+
+	// Set the default role path
+	e := setAnsibleRolePathEnvVar(flags)
+	if e != nil {
+		return e
 	}
 
 	var gvks []schema.GroupVersionKind
@@ -196,5 +203,19 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 		os.Exit(1)
 	}
 	log.Info("Exiting.")
+	return nil
+}
+
+// setAnsibleRolePathEnvVar will set the default role path for the ANSIBLE_ROLES_PATH
+func setAnsibleRolePathEnvVar(flags *aoflags.AnsibleOperatorFlags) error {
+	rolesPath := projutil.MustGetwd()
+	if len(flags.AnsibleRolesPath) > 0 {
+		rolesPath = flags.AnsibleRolesPath
+	}
+	if err := os.Setenv(aoflags.AnsibleRolesPathEnvVar, flags.AnsibleRolesPath); err != nil {
+		return fmt.Errorf("failed to set %s environment variable: (%v)", aoflags.AnsibleRolesPathEnvVar, err)
+	}
+	log.Info(fmt.Sprintf("set the value %v for environment variable %v.", rolesPath,
+		aoflags.AnsibleRolesPathEnvVar))
 	return nil
 }
