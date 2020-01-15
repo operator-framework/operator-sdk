@@ -72,7 +72,7 @@ func combinePluginOutput(cfg Config, pluginOutputs []scapiv1alpha1.ScorecardOutp
 	}
 
 	if cfg.OutputFormatOpt == JSONOutputFormat {
-		log, err := ioutil.ReadAll(logReadWriter)
+		log, err := ioutil.ReadAll(LogReadWriter)
 		if err != nil {
 			return output, fmt.Errorf("failed to read log buffer: %v", err)
 		}

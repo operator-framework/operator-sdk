@@ -15,26 +15,40 @@
 package scorecard
 
 import (
+	"bytes"
 	"fmt"
 	"log"
+	"os"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	scplugins "github.com/operator-framework/operator-sdk/internal/scorecard/plugins"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 func NewCmd() *cobra.Command {
+
+	c := scorecard.Config{}
+
 	scorecardCmd := &cobra.Command{
 		Use:   "scorecard",
 		Short: "Run scorecard tests",
 		Long: `Runs blackbox scorecard tests on an operator
 `,
-		RunE: scorecard.Tests,
+		//RunE: scorecard.Tests,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
+			buildScorecardConfig(&c)
+			err := c.RunTests()
+			return err
+		},
 	}
-
 	scorecardCmd.Flags().String(scorecard.ConfigOpt, "", fmt.Sprintf("config file (default is '<project_dir>/%s'; the config file's extension and format can be .yaml, .json, or .toml)", scorecard.DefaultConfigFile))
 	scorecardCmd.Flags().String(scplugins.KubeconfigOpt, "", "Path to kubeconfig of custom resource created in cluster")
 	scorecardCmd.Flags().StringP(scorecard.OutputFormatOpt, "o", scorecard.TextOutputFormat, fmt.Sprintf("Output format for results. Valid values: %s, %s", scorecard.TextOutputFormat, scorecard.JSONOutputFormat))
@@ -43,7 +57,6 @@ func NewCmd() *cobra.Command {
 	scorecardCmd.Flags().BoolP(scorecard.ListOpt, "L", false, "If true, only print the test names that would be run based on selector filtering (only valid when version is v1alpha2)")
 	scorecardCmd.Flags().StringP(scorecard.BundleOpt, "b", "", "OLM bundle directory path, when specified runs bundle validation")
 
-	// TODO: make config file global and make this a top level flag
 	if err := viper.BindPFlag(scorecard.ConfigOpt, scorecardCmd.Flags().Lookup(scorecard.ConfigOpt)); err != nil {
 		log.Fatalf("Unable to add config :%v", err)
 	}
@@ -65,5 +78,107 @@ func NewCmd() *cobra.Command {
 	if err := viper.BindPFlag("scorecard."+scorecard.BundleOpt, scorecardCmd.Flags().Lookup(scorecard.BundleOpt)); err != nil {
 		log.Fatalf("Unable to add bundle :%v", err)
 	}
+
 	return scorecardCmd
+}
+
+func initConfig() (*viper.Viper, error) {
+	// viper/cobra already has flags parsed at this point; we can check if a config file flag is set
+	if viper.GetString(scorecard.ConfigOpt) != "" {
+		// Use config file from the flag.
+		viper.SetConfigFile(viper.GetString(scorecard.ConfigOpt))
+	} else {
+		viper.AddConfigPath(projutil.MustGetwd())
+		// using SetConfigName allows users to use a .yaml, .json, or .toml file
+		viper.SetConfigName(scorecard.DefaultConfigFile)
+	}
+
+	var scViper *viper.Viper
+	if err := viper.ReadInConfig(); err == nil {
+		scViper = viper.Sub("scorecard")
+		// this is a workaround for the fact that nested flags don't persist on viper.Sub
+		scViper.Set(scorecard.OutputFormatOpt, viper.GetString("scorecard."+scorecard.OutputFormatOpt))
+		scViper.Set(scplugins.KubeconfigOpt, viper.GetString("scorecard."+scplugins.KubeconfigOpt))
+		scViper.Set(schelpers.VersionOpt, viper.GetString("scorecard."+schelpers.VersionOpt))
+		scViper.Set(scorecard.SelectorOpt, viper.GetString("scorecard."+scorecard.SelectorOpt))
+		scViper.Set(scorecard.BundleOpt, viper.GetString("scorecard."+scorecard.BundleOpt))
+		scViper.Set(scorecard.ListOpt, viper.GetString("scorecard."+scorecard.ListOpt))
+		// configure logger output before logging anything
+		if !scViper.IsSet(scorecard.OutputFormatOpt) {
+			scViper.Set(scorecard.OutputFormatOpt, scorecard.TextOutputFormat)
+		}
+		format := scViper.GetString(scorecard.OutputFormatOpt)
+		if format == scorecard.TextOutputFormat {
+			scorecard.LogReadWriter = os.Stdout
+		} else if format == scorecard.JSONOutputFormat {
+			scorecard.LogReadWriter = &bytes.Buffer{}
+		} else {
+			return nil, fmt.Errorf("invalid output format: %s", format)
+		}
+		scorecard.Log.SetOutput(scorecard.LogReadWriter)
+		if err != nil {
+			return nil, err
+		}
+		scorecard.Log.Info("Using config file: ", viper.ConfigFileUsed())
+	} else {
+		return nil, fmt.Errorf("could not read config file: %v\nSee %s for more information about the scorecard config file", err, scorecard.ConfigDocLink())
+	}
+	return scViper, nil
+}
+
+func buildScorecardConfig(c *scorecard.Config) {
+
+	scViper, err := initConfig()
+	if err != nil {
+		log.Printf("%v", err.Error())
+		os.Exit(1)
+	}
+
+	outputFormat := scViper.GetString(scorecard.OutputFormatOpt)
+	if outputFormat != scorecard.TextOutputFormat && outputFormat != scorecard.JSONOutputFormat {
+		log.Printf("%v", fmt.Errorf("invalid output format (%s); valid values: %s, %s", outputFormat, scorecard.TextOutputFormat, scorecard.JSONOutputFormat))
+		os.Exit(1)
+	}
+
+	version := scViper.GetString(schelpers.VersionOpt)
+	err = schelpers.ValidateVersion(version)
+	if err != nil {
+		log.Printf("%v", err)
+		os.Exit(1)
+	}
+	if !schelpers.IsV1alpha2(version) && scViper.GetBool(scorecard.ListOpt) {
+		log.Printf("%v", fmt.Errorf("list flag is not supported on v1alpha1"))
+		os.Exit(1)
+	}
+
+	c.ListOpt = scViper.GetBool(scorecard.ListOpt)
+	c.OutputFormatOpt = scViper.GetString(scorecard.OutputFormatOpt)
+	c.ConfigOpt = viper.GetString(scorecard.ConfigOpt)
+	c.VersionOpt = scViper.GetString(schelpers.VersionOpt)
+	c.SelectorOpt = scViper.GetString(scorecard.SelectorOpt)
+	c.BundleOpt = scViper.GetString(scorecard.BundleOpt)
+
+	c.Kubeconfig = ""
+	if scViper.IsSet(scplugins.KubeconfigOpt) {
+		c.Kubeconfig = scViper.GetString(scplugins.KubeconfigOpt)
+	}
+
+	c.Selector, err = labels.Parse(c.SelectorOpt)
+	if err != nil {
+		log.Printf("%v", err)
+		os.Exit(1)
+	}
+
+	c.Configs = []scorecard.PluginConfig{}
+	if err := scViper.UnmarshalKey("plugins", &c.Configs, func(c *mapstructure.DecoderConfig) { c.ErrorUnused = true }); err != nil {
+		log.Printf("%v", errors.Wrap(err, "Could not load plugin configurations"))
+		os.Exit(1)
+	}
+
+	c.Plugins, err = c.GetPlugins(c.Configs)
+	if err != nil {
+		log.Printf("%v", err)
+		os.Exit(1)
+	}
+
 }

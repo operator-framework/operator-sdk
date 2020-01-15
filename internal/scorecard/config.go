@@ -49,8 +49,8 @@ func (e externalPluginEnv) String() string {
 	return fmt.Sprintf("%s=%s", e.Name, e.Value)
 }
 
-// validateConfig takes a viper config for a plugin and returns a nil error if valid or an error explaining why the config is invalid
-func validateConfig(config pluginConfig, idx int, version string) error {
+// validateConfig takes a config for a plugin and returns a nil error if valid or an error explaining why the config is invalid
+func validateConfig(config PluginConfig, idx int, version string) error {
 	// find plugin config type
 	pluginType := ""
 	if config.Basic != nil {
