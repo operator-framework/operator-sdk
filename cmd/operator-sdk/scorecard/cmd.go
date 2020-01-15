@@ -133,7 +133,7 @@ func buildScorecardConfig(c *scorecard.Config) {
 
 	outputFormat := scViper.GetString(scorecard.OutputFormatOpt)
 	if outputFormat != scorecard.TextOutputFormat && outputFormat != scorecard.JSONOutputFormat {
-		log.Fatalf("invalid output format (%s); valid values: %s, %s", outputFormat, scorecard.TextOutputFormat, scorecard.JSONOutputFormat)
+		log.Fatalf("Invalid output format (%s); valid values: %s, %s", outputFormat, scorecard.TextOutputFormat, scorecard.JSONOutputFormat)
 	}
 
 	version := scViper.GetString(schelpers.VersionOpt)
@@ -142,7 +142,7 @@ func buildScorecardConfig(c *scorecard.Config) {
 		log.Fatalf("%v", err)
 	}
 	if !schelpers.IsV1alpha2(version) && scViper.GetBool(scorecard.ListOpt) {
-		log.Fatal("list flag is not supported on v1alpha1")
+		log.Fatal("List flag is not supported on v1alpha1")
 	}
 
 	c.ListOpt = scViper.GetBool(scorecard.ListOpt)
