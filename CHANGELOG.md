@@ -39,6 +39,7 @@
 
 - Fix `operator-sdk build`'s `--image-build-args` to support spaces within quotes like `--label some.name="First Last"`. ([#2312](https://github.com/operator-framework/operator-sdk/pull/2312))
 - Fix misleading Helm operator "release not found" errors during CR deletion. ([#2359](https://github.com/operator-framework/operator-sdk/pull/2359))
+- Fix Ansible based image in order to re-trigger reconcile when playbooks are runner with error. ([#2375](https://github.com/operator-framework/operator-sdk/pull/2375))
 
 ## v0.13.0
 

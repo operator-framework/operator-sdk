@@ -214,6 +214,7 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 	// We only want to update the CustomResource once, so we'll track changes
 	// and do it at the end
 	runSuccessful := len(failureMessages) == 0
+
 	// The finalizer has run successfully, time to remove it
 	if deleted && finalizerExists && runSuccessful {
 		finalizers := []string{}
@@ -234,7 +235,16 @@ func (r *AnsibleOperatorReconciler) Reconcile(request reconcile.Request) (reconc
 		if errmark != nil {
 			logger.Error(errmark, "Failed to mark status done")
 		}
+		// re-trigger reconcile because of failures
+		if !runSuccessful {
+			return reconcileResult, errors.New("event runner on failed")
+		}
 		return reconcileResult, errmark
+	}
+
+	// re-trigger reconcile because of failures
+	if !runSuccessful {
+		return reconcileResult, errors.New("received failed task event")
 	}
 	return reconcileResult, nil
 }
