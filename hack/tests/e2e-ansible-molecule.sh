@@ -40,7 +40,7 @@ operator-sdk new memcached-operator \
 header_text "Replacing operator contents"
 cp "$ROOTDIR/test/ansible-memcached/tasks.yml" memcached-operator/roles/memcached/tasks/main.yml
 cp "$ROOTDIR/test/ansible-memcached/defaults.yml" memcached-operator/roles/memcached/defaults/main.yml
-cp "$ROOTDIR/test/ansible-memcached/asserts.yml"  memcached-operator/molecule/default/asserts.yml
+cp "$ROOTDIR/test/ansible-memcached/verify.yml"  memcached-operator/molecule/default/verify.yml
 cp "$ROOTDIR/test/ansible-memcached/molecule.yml"  memcached-operator/molecule/test-local/molecule.yml
 cp -a "$ROOTDIR/test/ansible-memcached/memfin" memcached-operator/roles/
 cp -a "$ROOTDIR/test/ansible-memcached/secret" memcached-operator/roles/

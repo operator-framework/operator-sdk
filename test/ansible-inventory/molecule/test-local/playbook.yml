@@ -70,5 +70,3 @@
     - "'Successful' in (cr | json_query('resources[].status.conditions[].reason'))"
     delay: 12
     retries: 10
-
-- import_playbook: asserts.yml
