@@ -19,7 +19,6 @@ https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-
 
 NOTE: bundle images are not runnable.
 
-
 ```
 operator-sdk alpha bundle build [flags]
 ```
@@ -27,7 +26,7 @@ operator-sdk alpha bundle build [flags]
 ### Examples
 
 ```
-The following command will build a test-operator bundle image using Docker.
+The following invocation will build a test-operator bundle image using Docker.
 This image will contain manifests for package channels 'stable' and 'beta':
 
 $ operator-sdk bundle build \
@@ -38,6 +37,15 @@ $ operator-sdk bundle build \
     --default-channel stable \
     --overwrite
 
+The following invocation will generate test-operator bundle metadata and
+Dockerfile without building the image:
+
+$ operator-sdk bundle build \
+    --generate-only \
+    --directory ./deploy/olm-catalog/test-operator \
+    --package test-operator \
+    --channels stable,beta \
+    --default-channel stable
 ```
 
 ### Options

@@ -44,9 +44,8 @@ bundle image manually.
 More information on operator bundle images and metadata:
 https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-bundle.md#docker
 
-NOTE: bundle images are not runnable.
-`,
-		Example: `The following command will build a test-operator bundle image using Docker.
+NOTE: bundle images are not runnable.`,
+		Example: `The following invocation will build a test-operator bundle image using Docker.
 This image will contain manifests for package channels 'stable' and 'beta':
 
 $ operator-sdk bundle build \
@@ -56,7 +55,16 @@ $ operator-sdk bundle build \
     --channels stable,beta \
     --default-channel stable \
     --overwrite
-`,
+
+The following invocation will generate test-operator bundle metadata and
+Dockerfile without building the image:
+
+$ operator-sdk bundle build \
+    --generate-only \
+    --directory ./deploy/olm-catalog/test-operator \
+    --package test-operator \
+    --channels stable,beta \
+    --default-channel stable`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			channels := strings.Join(c.channels, ",")
 			if c.generateOnly {
