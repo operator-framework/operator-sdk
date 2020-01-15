@@ -35,8 +35,6 @@ import (
 )
 
 const (
-	sdkCmd = "operator-sdk"
-
 	testProjectName  = "memcached-operator"
 	csvVersion       = "0.0.3"
 	fromVersion      = "0.0.2"
