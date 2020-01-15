@@ -2,6 +2,7 @@
 
 ### Added
 
+- Added [`run`](./doc/cli/operator-sdk_alpha_run.md) and [`cleanup`](./doc/cli/operator-sdk_alpha_cleanup.md) subcommands (under the `alpha` subcommand) to manage deployment/deletion of operators. These commands currently interact with OLM via an in-cluster registry-server created using an operator's on-disk manifests and managed by `operator-sdk`. ([#2402](ttps://github.com/operator-framework/operator-sdk/pull/2402))
 - Added [`bundle build`](./doc/cli/operator-sdk_alpha_bundle_build.md) (under the `alpha` subcommand) which builds, and optionally generates metadata for, [operator bundle images](https://github.com/openshift/enhancements/blob/ec2cf96/enhancements/olm/operator-registry.md). ([#2076](https://github.com/operator-framework/operator-sdk/pull/2076))
 
 ### Changed
@@ -41,6 +42,7 @@
 
 - Fix `operator-sdk build`'s `--image-build-args` to support spaces within quotes like `--label some.name="First Last"`. ([#2312](https://github.com/operator-framework/operator-sdk/pull/2312))
 - Fix misleading Helm operator "release not found" errors during CR deletion. ([#2359](https://github.com/operator-framework/operator-sdk/pull/2359))
+- Fix Ansible based image in order to re-trigger reconcile when playbooks are runner with error. ([#2375](https://github.com/operator-framework/operator-sdk/pull/2375))
 
 ## v0.13.0
 

@@ -18,9 +18,9 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"testing"
 
 	gen "github.com/operator-framework/operator-sdk/internal/generate/gen"
@@ -30,25 +30,18 @@ import (
 )
 
 const (
-	testAPIVersion = "cache.example.com/v1alpha1"
-	testKind       = "Memcached"
+	testGroup   = "cache.example.com"
+	testVersion = "v1alpha1"
+	testKind    = "Memcached"
+)
+
+var (
+	testDataDir    = filepath.Join("..", "testdata")
+	testGoDataDir  = filepath.Join(testDataDir, "go")
+	testAPIVersion = path.Join(testGroup, testVersion)
 )
 
 func TestGenerate(t *testing.T) {
-	tfDir := getTestFrameworkPath(t)
-	// Must change directories since the test framework dir is a sub-module.
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() {
-		if err = os.Chdir(wd); err != nil {
-			t.Fatal(err)
-		}
-	}()
-	if err = os.Chdir(tfDir); err != nil {
-		t.Fatal(err)
-	}
 	tmp, err := ioutil.TempDir("", "")
 	if err != nil {
 		t.Fatal(err)
@@ -69,11 +62,21 @@ func TestGenerate(t *testing.T) {
 	}{
 		{
 			"Generate Go CRD",
-			NewCRDGo(gen.Config{OutputDir: filepath.Join(tmp, strconv.Itoa(rand.Int()))}),
+			NewCRDGo(gen.Config{
+				Inputs: map[string]string{
+					APIsDirKey: filepath.Join(testGoDataDir, scaffold.ApisDir),
+				},
+				OutputDir: filepath.Join(tmp, strconv.Itoa(rand.Int())),
+			}),
 		},
 		{
 			"Generate non-Go CRD",
-			NewCRDNonGo(gen.Config{OutputDir: filepath.Join(tmp, strconv.Itoa(rand.Int()))}, *r),
+			NewCRDNonGo(gen.Config{
+				Inputs: map[string]string{
+					APIsDirKey: filepath.Join(testGoDataDir, scaffold.ApisDir),
+				},
+				OutputDir: filepath.Join(tmp, strconv.Itoa(rand.Int())),
+			}, *r),
 		},
 	}
 
@@ -88,22 +91,11 @@ func TestGenerate(t *testing.T) {
 }
 
 func TestCRDGo(t *testing.T) {
-	tfDir := getTestFrameworkPath(t)
-	// Must change directories since the test framework dir is a sub-module.
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
+	cfg := gen.Config{
+		Inputs: map[string]string{
+			APIsDirKey: filepath.Join(testGoDataDir, scaffold.ApisDir),
+		},
 	}
-	defer func() {
-		if err = os.Chdir(wd); err != nil {
-			t.Fatal(err)
-		}
-	}()
-	if err = os.Chdir(tfDir); err != nil {
-		t.Fatal(err)
-	}
-
-	cfg := gen.Config{}
 	g := NewCRDGo(cfg)
 	fileMap, err := g.(crdGenerator).generateGo()
 	if err != nil {
@@ -121,9 +113,6 @@ func TestCRDGo(t *testing.T) {
 }
 
 func TestCRDNonGo(t *testing.T) {
-	tfDir := getTestFrameworkPath(t)
-	tfCRDsDir := filepath.Join(tfDir, "deploy", "crds")
-
 	cases := []struct {
 		description      string
 		apiVersion, kind string
@@ -133,11 +122,11 @@ func TestCRDNonGo(t *testing.T) {
 	}{
 		{
 			"non-existent CRD with default structural schema",
-			"cache.example.com/v1alpha1", "Memcached", filepath.Join("not", "exist"), crdNonGoDefaultExp, false,
+			testAPIVersion, testKind, filepath.Join("not", "exist"), crdNonGoDefaultExp, false,
 		},
 		{
 			"existing CRD with custom structural schema",
-			"cache.example.com/v1alpha1", "Memcached", tfCRDsDir, crdCustomExp, false,
+			testAPIVersion, testKind, filepath.Join(testGoDataDir, scaffold.CRDsDir), crdCustomExp, false,
 		},
 	}
 
@@ -252,16 +241,3 @@ spec:
     served: true
     storage: true
 `
-
-// getTestFrameworkPath constructs the path to the SDK's test-framework,
-// which containsa  mock operator for testing, from the working directory path.
-func getTestFrameworkPath(t *testing.T) string {
-	t.Helper()
-	absPath, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	absPath = absPath[:strings.Index(absPath, "internal")]
-	tfDir := filepath.Join(absPath, "test", "test-framework")
-	return tfDir
-}
