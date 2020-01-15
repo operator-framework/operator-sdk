@@ -17,8 +17,9 @@ package scorecard
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
@@ -116,9 +117,6 @@ func initConfig() (*viper.Viper, error) {
 			return nil, fmt.Errorf("invalid output format: %s", format)
 		}
 		scorecard.Log.SetOutput(scorecard.LogReadWriter)
-		if err != nil {
-			return nil, err
-		}
 		scorecard.Log.Info("Using config file: ", viper.ConfigFileUsed())
 	} else {
 		return nil, fmt.Errorf("could not read config file: %v\nSee %s for more information about the scorecard config file", err, scorecard.ConfigDocLink())
@@ -130,25 +128,21 @@ func buildScorecardConfig(c *scorecard.Config) {
 
 	scViper, err := initConfig()
 	if err != nil {
-		log.Printf("%v", err.Error())
-		os.Exit(1)
+		log.Fatalf("%v", err.Error())
 	}
 
 	outputFormat := scViper.GetString(scorecard.OutputFormatOpt)
 	if outputFormat != scorecard.TextOutputFormat && outputFormat != scorecard.JSONOutputFormat {
-		log.Printf("%v", fmt.Errorf("invalid output format (%s); valid values: %s, %s", outputFormat, scorecard.TextOutputFormat, scorecard.JSONOutputFormat))
-		os.Exit(1)
+		log.Fatalf("invalid output format (%s); valid values: %s, %s", outputFormat, scorecard.TextOutputFormat, scorecard.JSONOutputFormat)
 	}
 
 	version := scViper.GetString(schelpers.VersionOpt)
 	err = schelpers.ValidateVersion(version)
 	if err != nil {
-		log.Printf("%v", err)
-		os.Exit(1)
+		log.Fatalf("%v", err)
 	}
 	if !schelpers.IsV1alpha2(version) && scViper.GetBool(scorecard.ListOpt) {
-		log.Printf("%v", fmt.Errorf("list flag is not supported on v1alpha1"))
-		os.Exit(1)
+		log.Fatal("list flag is not supported on v1alpha1")
 	}
 
 	c.ListOpt = scViper.GetBool(scorecard.ListOpt)
@@ -158,27 +152,23 @@ func buildScorecardConfig(c *scorecard.Config) {
 	c.SelectorOpt = scViper.GetString(scorecard.SelectorOpt)
 	c.BundleOpt = scViper.GetString(scorecard.BundleOpt)
 
-	c.Kubeconfig = ""
 	if scViper.IsSet(scplugins.KubeconfigOpt) {
 		c.Kubeconfig = scViper.GetString(scplugins.KubeconfigOpt)
 	}
 
 	c.Selector, err = labels.Parse(c.SelectorOpt)
 	if err != nil {
-		log.Printf("%v", err)
-		os.Exit(1)
+		log.Fatalf("%v", err)
 	}
 
-	c.Configs = []scorecard.PluginConfig{}
-	if err := scViper.UnmarshalKey("plugins", &c.Configs, func(c *mapstructure.DecoderConfig) { c.ErrorUnused = true }); err != nil {
-		log.Printf("%v", errors.Wrap(err, "Could not load plugin configurations"))
-		os.Exit(1)
+	c.PluginConfigs = []scorecard.PluginConfig{}
+	if err := scViper.UnmarshalKey("plugins", &c.PluginConfigs, func(c *mapstructure.DecoderConfig) { c.ErrorUnused = true }); err != nil {
+		log.Fatalf("%v", errors.Wrap(err, "Could not load plugin configurations"))
 	}
 
-	c.Plugins, err = c.GetPlugins(c.Configs)
+	c.Plugins, err = c.GetPlugins(c.PluginConfigs)
 	if err != nil {
-		log.Printf("%v", err)
-		os.Exit(1)
+		log.Fatalf("%v", err)
 	}
 
 }

@@ -58,7 +58,7 @@ type Config struct {
 	Kubeconfig      string
 	Something       string
 	Plugins         []Plugin
-	Configs         []PluginConfig
+	PluginConfigs   []PluginConfig
 }
 
 type PluginConfig struct {
@@ -72,11 +72,6 @@ func (s Config) GetPlugins(configs []PluginConfig) ([]Plugin, error) {
 	// Add plugins from config
 	var plugins []Plugin
 	for _, plugin := range configs {
-		/**
-		if err := validateConfig(plugin, idx, s.VersionOpt); err != nil {
-			return nil, fmt.Errorf("error validating plugin config: %v", err)
-		}
-		*/
 		var newPlugin Plugin
 		if plugin.Basic != nil {
 			pluginConfig := plugin.Basic
@@ -108,7 +103,7 @@ func (s Config) GetPlugins(configs []PluginConfig) ([]Plugin, error) {
 }
 
 func (s Config) RunTests() error {
-	for idx, plugin := range s.Configs {
+	for idx, plugin := range s.PluginConfigs {
 		if err := validateConfig(plugin, idx, s.VersionOpt); err != nil {
 			return fmt.Errorf("error validating plugin config: %v", err)
 		}
@@ -130,7 +125,7 @@ func (s Config) RunTests() error {
 		}
 	}
 
-	if err := printPluginOutputs(s, pluginOutputs); err != nil {
+	if err := s.printPluginOutputs(pluginOutputs); err != nil {
 		return err
 	}
 

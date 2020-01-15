@@ -25,11 +25,11 @@ import (
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
 
-func printPluginOutputs(cfg Config, pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
+func (cfg Config) printPluginOutputs(pluginOutputs []scapiv1alpha1.ScorecardOutput) error {
 
 	var list scapi.ScorecardFormatter
 	var err error
-	list, err = combinePluginOutput(cfg, pluginOutputs)
+	list, err = cfg.combinePluginOutput(pluginOutputs)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func printPluginOutputs(cfg Config, pluginOutputs []scapiv1alpha1.ScorecardOutpu
 	return nil
 }
 
-func combinePluginOutput(cfg Config, pluginOutputs []scapiv1alpha1.ScorecardOutput) (scapiv1alpha1.ScorecardOutput, error) {
+func (cfg Config) combinePluginOutput(pluginOutputs []scapiv1alpha1.ScorecardOutput) (scapiv1alpha1.ScorecardOutput, error) {
 	output := scapiv1alpha1.ScorecardOutput{}
 	output.Results = make([]scapiv1alpha1.ScorecardSuiteResult, 0)
 	for _, v := range pluginOutputs {
