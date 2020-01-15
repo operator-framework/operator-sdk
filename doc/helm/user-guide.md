@@ -61,9 +61,7 @@ If a custom repository URL is specified by `--helm-chart-repo`, the only support
 - `<chartName>`: Fetch the helm chart named `chartName` in the helm chart repository
                  specified by the `--helm-chart-repo` URL.
 
-If `--helm-chart-version` is not set, the SDK will fetch the latest available version of the helm chart. Otherwise, it will fetch the specified version. `--helm-chart-version` is not used when `--helm-chart` itself refers to a specific version, for example when it is a local path or a URL. See an example:
-
-
+If `--helm-chart-version` is not set, the SDK will fetch the latest available version of the helm chart. Otherwise, it will fetch the specified version. The option `--helm-chart-version` is not used when `--helm-chart` itself refers to a specific version, for example when it is a local path or a URL. See an example:
 
 ```shell
 `operator-sdk new cassandra-helm-operator --type=helm --helm-chart=cassandra --helm-chart-repo=https://charts.bitnami.com/bitnami`
