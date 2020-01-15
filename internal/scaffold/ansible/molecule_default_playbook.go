@@ -54,6 +54,4 @@ const moleculeDefaultPlaybookAnsibleTmpl = `---
   roles:
     - [[.Resource.LowerKind]]
   [[- end ]]
-
-- import_playbook: '{{ playbook_dir }}/asserts.yml'
 `

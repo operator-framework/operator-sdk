@@ -43,12 +43,11 @@ driver:
   name: docker
 lint:
   name: yamllint
-  enabled: False
 platforms:
 - name: kind-test-local
   groups:
   - k8s
-  image: bsycorp/kind:latest-1.15
+  image: bsycorp/kind:latest-1.16
   privileged: True
   override_command: no
   exposed_ports:
@@ -64,7 +63,6 @@ provisioner:
   log: True
   lint:
     name: ansible-lint
-    enabled: False
   inventory:
     group_vars:
       all:
@@ -74,21 +72,8 @@ provisioner:
     KUBECONFIG: /tmp/molecule/kind-test-local/kubeconfig
     ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/roles
     KIND_PORT: '${TEST_CLUSTER_PORT:-10443}'
-scenario:
-  name: test-local
-  test_sequence:
-    - lint
-    - destroy
-    - dependency
-    - syntax
-    - create
-    - prepare
-    - converge
-    - side_effect
-    - verify
-    - destroy
 verifier:
-  name: testinfra
+  name: ansible
   lint:
-    name: flake8
+    name: ansible-lint
 `

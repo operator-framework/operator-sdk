@@ -154,6 +154,4 @@ const moleculeTestLocalPlaybookAnsibleTmpl = `---
 
     - fail:
         msg: "Failed on action: converge"
-
-- import_playbook: '{{ playbook_dir }}/../default/asserts.yml'
 `

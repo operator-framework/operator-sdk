@@ -260,7 +260,7 @@ func doAnsibleScaffold() error {
 			GeneratePlaybook: generatePlaybook,
 			Resource:         *resource,
 		},
-		&ansible.MoleculeDefaultAsserts{},
+		&ansible.MoleculeDefaultVerify{},
 		&ansible.RolesHandlersMain{Resource: *resource},
 		&ansible.Watches{
 			GeneratePlaybook: generatePlaybook,

@@ -20,24 +20,24 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 )
 
-const MoleculeDefaultAssertsFile = "asserts.yml"
+const MoleculeDefaultVerifyFile = "verify.yml"
 
-type MoleculeDefaultAsserts struct {
+type MoleculeDefaultVerify struct {
 	input.Input
 }
 
 // GetInput - gets the input
-func (m *MoleculeDefaultAsserts) GetInput() (input.Input, error) {
+func (m *MoleculeDefaultVerify) GetInput() (input.Input, error) {
 	if m.Path == "" {
-		m.Path = filepath.Join(MoleculeDefaultDir, MoleculeDefaultAssertsFile)
+		m.Path = filepath.Join(MoleculeDefaultDir, MoleculeDefaultVerifyFile)
 	}
-	m.TemplateBody = moleculeDefaultAssertsAnsibleTmpl
+	m.TemplateBody = moleculeDefaultVerifyAnsibleTmpl
 	m.Delims = AnsibleDelims
 
 	return m.Input, nil
 }
 
-const moleculeDefaultAssertsAnsibleTmpl = `---
+const moleculeDefaultVerifyAnsibleTmpl = `---
 
 - name: Verify
   hosts: localhost
