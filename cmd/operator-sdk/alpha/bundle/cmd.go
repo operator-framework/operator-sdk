@@ -30,7 +30,7 @@ type bundleCmd struct {
 }
 
 func NewCmd() *cobra.Command {
-	runCmd := &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "bundle",
 		Short: "Work with operator bundle metadata and bundle images",
 		Long: `Generate operator bundle metadata and build operator bundle images, which
@@ -40,6 +40,6 @@ More information on operator bundle images and metadata:
 https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-bundle.md#docker`,
 	}
 
-	runCmd.AddCommand(newBundleBuildCmd())
-	return runCmd
+	cmd.AddCommand(newBundleBuildCmd())
+	return cmd
 }

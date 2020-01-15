@@ -2,7 +2,7 @@
 
 ### Added
 
-- Added [`bundle build`](https://github.com/operator-framework/operator-sdk/blob/master/doc/cli/operator-sdk_alpha_bundle_build.md) and [`bundle generate`](https://github.com/operator-framework/operator-sdk/blob/master/doc/cli/operator-sdk_alpha_bundle_generate.md) (under the `alpha` subcommand) which build and generate metadata for [operator bundle images](https://github.com/openshift/enhancements/blob/ec2cf96/enhancements/olm/operator-registry.md), respectively. ([#2076](https://github.com/operator-framework/operator-sdk/pull/2076))
+- Added [`bundle build`](./doc/cli/operator-sdk_alpha_bundle_build.md) (under the `alpha` subcommand) which builds, and optionally generates metadata for, [operator bundle images](https://github.com/openshift/enhancements/blob/ec2cf96/enhancements/olm/operator-registry.md). ([#2076](https://github.com/operator-framework/operator-sdk/pull/2076))
 
 ### Changed
 
