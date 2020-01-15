@@ -19,12 +19,11 @@ import (
 )
 
 const (
-	filePathSep            = string(filepath.Separator)
-	RolesDir               = "roles"
-	MoleculeDir            = "molecule"
-	MoleculeTestClusterDir = MoleculeDir + filePathSep + "test-cluster"
-	MoleculeDefaultDir     = MoleculeDir + filePathSep + "default"
-	MoleculeTestLocalDir   = MoleculeDir + filePathSep + "test-local"
+	filePathSep          = string(filepath.Separator)
+	RolesDir             = "roles"
+	MoleculeDir          = "molecule"
+	MoleculeDefaultDir   = MoleculeDir + filePathSep + "default"
+	MoleculeTestLocalDir = MoleculeDir + filePathSep + "test-local"
 )
 
 // AnsibleDelims is a slice of two strings representing the left and right delimiters for ansible templates.

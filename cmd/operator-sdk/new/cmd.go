@@ -255,14 +255,12 @@ func doAnsibleScaffold() error {
 		&ansible.RolesDefaultsMain{Resource: *resource},
 		&ansible.RolesTasksMain{Resource: *resource},
 		&ansible.MoleculeDefaultMolecule{},
-		&ansible.MoleculeTestClusterMolecule{},
 		&ansible.MoleculeDefaultPrepare{},
 		&ansible.MoleculeDefaultPlaybook{
 			GeneratePlaybook: generatePlaybook,
 			Resource:         *resource,
 		},
 		&ansible.MoleculeDefaultAsserts{},
-		&ansible.MoleculeTestClusterPlaybook{Resource: *resource},
 		&ansible.RolesHandlersMain{Resource: *resource},
 		&ansible.Watches{
 			GeneratePlaybook: generatePlaybook,
