@@ -2,7 +2,7 @@
 
 ### Added
 
-- Added [`run`](./doc/cli/operator-sdk_alpha_run.md) amd [`cleanup`](./doc/cli/operator-sdk_alpha_cleanup.md) subcommands (under the `alpha` subcommand) to manage deployment/deletion of operators. These commands currently interact with OLM via an in-cluster registry-server created using an operator's on-disk manifests and managed by `operator-sdk`. ([#2402](ttps://github.com/operator-framework/operator-sdk/pull/2402))
+- Added [`run`](./doc/cli/operator-sdk_alpha_run.md) and [`cleanup`](./doc/cli/operator-sdk_alpha_cleanup.md) subcommands (under the `alpha` subcommand) to manage deployment/deletion of operators. These commands currently interact with OLM via an in-cluster registry-server created using an operator's on-disk manifests and managed by `operator-sdk`. ([#2402](ttps://github.com/operator-framework/operator-sdk/pull/2402))
 
 ### Changed
 
