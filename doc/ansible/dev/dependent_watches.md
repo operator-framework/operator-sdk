@@ -24,7 +24,7 @@ This is an example of a watches file with the `watchDependentResources` field se
 - version: v1alpha1
   group: app.example.com
   kind: AppService
-  playbook: /opt/ansible/playbook.yml
+  playbook: playbook.yml
   maxRunnerArtifacts: 30
   reconcilePeriod: 5s
   manageStatus: False
