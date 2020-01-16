@@ -80,7 +80,7 @@ be enabled in CI.
 
 #### Story 2 - Instrument unit tests with code coverage
 
-Test coverage will be tracked by running unit tests with code coverage enabled and 
+Test coverage will be tracked by running unit tests with code coverage enabled and
 submitting results to coveralls.io during CI. This integration will highlight code
 coverage improvements or regressions in each PR, which will incentivize contributors
 and reviewers to improve code coverage over time.
@@ -107,7 +107,7 @@ directly.
 ### Risks and Mitigations
 
 Only risk is that deprecation of `generate openapi` will break a small subset of SDK
-users. The mitigation is that the SDK will include instructions for running code 
+users. The mitigation is that the SDK will include instructions for running code
 generation tools directly, which will be a 1-to-1 replacement of the deprecated
 functionality in Operator SDK.
 
@@ -116,7 +116,7 @@ functionality in Operator SDK.
 ### Test Plan
 
 All unit tests will gain coverage metrics, which will increase visibility on the areas
-of the codebase that do not have adequete testing. 
+of the codebase that do not have adequete testing.
 
 The `generate` subcommand changes will also result in refactored unit and e2e tests,
 which will no longer need to check for the existence of generated Go OpenAPI code.
@@ -150,4 +150,4 @@ None
 
 None
 
-[operator-sdk-doc]:  ../../../doc
+[operator-sdk-doc]:  ../../doc
