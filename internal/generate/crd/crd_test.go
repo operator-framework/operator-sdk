@@ -15,13 +15,14 @@
 package crd
 
 import (
-	"io/ioutil"
+	"encoding/base32"
 	"math/rand"
 	"os"
 	"path"
 	"path/filepath"
 	"strconv"
 	"testing"
+	"time"
 
 	gen "github.com/operator-framework/operator-sdk/internal/generate/gen"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
@@ -41,13 +42,24 @@ var (
 	testAPIVersion = path.Join(testGroup, testVersion)
 )
 
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
+// randomString returns a base32-encoded random string, reasonably sized for
+// directory creation.
+func randomString() string {
+	rb := []byte(strconv.Itoa(rand.Int() % (2 << 20)))
+	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(rb)
+}
+
 func TestGenerate(t *testing.T) {
-	tmp, err := ioutil.TempDir("", "")
-	if err != nil {
+	tmp := filepath.Join(os.TempDir(), randomString())
+	if err := os.MkdirAll(tmp, 0755); err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
-		if err = os.RemoveAll(tmp); err != nil {
+		if err := os.RemoveAll(tmp); err != nil {
 			t.Fatal(err)
 		}
 	}()
@@ -66,7 +78,7 @@ func TestGenerate(t *testing.T) {
 				Inputs: map[string]string{
 					APIsDirKey: filepath.Join(testGoDataDir, scaffold.ApisDir),
 				},
-				OutputDir: filepath.Join(tmp, strconv.Itoa(rand.Int())),
+				OutputDir: filepath.Join(tmp, randomString()),
 			}),
 		},
 		{
@@ -75,7 +87,7 @@ func TestGenerate(t *testing.T) {
 				Inputs: map[string]string{
 					APIsDirKey: filepath.Join(testGoDataDir, scaffold.ApisDir),
 				},
-				OutputDir: filepath.Join(tmp, strconv.Itoa(rand.Int())),
+				OutputDir: filepath.Join(tmp, randomString()),
 			}, *r),
 		},
 	}
