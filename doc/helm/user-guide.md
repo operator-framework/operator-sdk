@@ -63,7 +63,7 @@ If a custom repository URL is specified by `--helm-chart-repo`, the only support
 
 If `--helm-chart-version` is not set, the SDK will fetch the latest available version of the helm chart. Otherwise, it will fetch the specified version. The option `--helm-chart-version` is not used when `--helm-chart` itself refers to a specific version, for example when it is a local path or a URL. 
 
-For more details and examples see the [Helm CLI reference doc][helm-reference-cli-doc]
+**Note:** For more details and examples see the [Helm CLI reference doc][helm-reference-cli-doc].
 
 ```shell
 
