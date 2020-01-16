@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package version
+package olmcatalog
 
 import (
-	"fmt"
-	"runtime"
+	"path/filepath"
+
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
 )
 
-var (
-	Version    = "v0.14.0+git"
-	GitVersion = "unknown"
-	GitCommit  = "unknown"
-	GoVersion  = fmt.Sprintf("%s %s/%s", runtime.Version(), runtime.GOOS, runtime.GOARCH)
+const (
+	OLMCatalogDir = scaffold.DeployDir + string(filepath.Separator) + "olm-catalog"
 )
+
+func getCSVName(name, version string) string {
+	return name + ".v" + version
+}
