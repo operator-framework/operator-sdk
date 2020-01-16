@@ -65,7 +65,6 @@ If `--helm-chart-version` is not set, the SDK will fetch the latest available ve
 
 
 ```shell
-`operator-sdk new cassandra-helm-operator --type=helm --helm-chart=cassandra --helm-chart-repo=https://charts.bitnami.com/bitnami`
 
 **For more details and examples see the [Helm CLI reference doc][helm-reference-cli-doc]**
 
