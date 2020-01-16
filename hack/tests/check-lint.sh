@@ -62,4 +62,8 @@ golangci-lint run --disable-all \
     --enable=unparam \
     --enable=golint \
     --enable=lll \
+    --enable=staticcheck \
+    --enable=unused \
+    --enable=gosimple \
     ${LINTERS[@]}
+

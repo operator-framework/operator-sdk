@@ -107,9 +107,7 @@ func TestLoad(t *testing.T) {
 		ValidRole:     filepath.Join(cwd, "testdata", "roles", "role"),
 	}
 
-	tmpl, err := template.ParseFiles("testdata/valid.yaml.tmpl")
-	if err != nil {
-	}
+	tmpl, _ := template.ParseFiles("testdata/valid.yaml.tmpl")
 	f, err := os.Create("testdata/valid.yaml")
 	if err != nil {
 		t.Fatalf("Unable to create valid.yaml: %v", err)

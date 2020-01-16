@@ -203,7 +203,7 @@ func depHasOLMNamespaces(dep appsv1.Deployment) bool {
 		// Something is wrong with the deployment manifest, not with CLI inputs.
 		log.Fatalf("Marshal Deployment spec: %v", err)
 	}
-	return bytes.Index(b, []byte(olmTNMeta)) != -1
+	return bytes.Contains(b, []byte(olmTNMeta))
 }
 
 type descSorter []olmapiv1alpha1.CRDDescription

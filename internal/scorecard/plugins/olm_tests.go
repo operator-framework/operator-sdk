@@ -313,7 +313,7 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *schelpers.TestResult {
 						break
 					}
 				}
-				if foundResource == false {
+				if !foundResource {
 					missingResources = append(missingResources, fmt.Sprintf("%s/%s",
 						resource.Kind, resource.Version))
 				}

@@ -311,6 +311,8 @@ type apiResources struct {
 func (a *apiResources) resetResources() error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	// nolint:staticcheck
+	// SA1019: a.discoveryClient.ServerResources is deprecated: use ServerGroupsAndResources instead.
 	apisResourceList, err := a.discoveryClient.ServerResources()
 	if err != nil {
 		return err

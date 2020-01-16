@@ -289,10 +289,10 @@ func replaceImage(manifestPath, image string) error {
 		if err != nil {
 			return err
 		}
-		dep := &appsv1.Deployment{}
+		var dep appsv1.Deployment
 		switch o := obj.(type) {
 		case *appsv1.Deployment:
-			dep = o
+			dep = *o
 		default:
 			return fmt.Errorf("error in replaceImage switch case; could not convert runtime.Object" +
 				" to deployment")

@@ -87,7 +87,8 @@ func GetDisplayName(name string) string {
 		for j, r := range word {
 			if unicode.IsUpper(r) {
 				if j > 0 && !unicode.IsUpper(rune(word[j-1])) {
-					temp = temp[0:j+o] + " " + temp[j+o:len(temp)]
+					index := j + o
+					temp = temp[0:index] + " " + temp[index:]
 					o++
 				}
 			}
