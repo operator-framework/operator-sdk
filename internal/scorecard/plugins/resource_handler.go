@@ -77,7 +77,7 @@ func yamlToUnstructured(namespace, yamlPath string) (*unstructured.Unstructured,
 		return nil, fmt.Errorf("could not convert yaml file to json: %v", err)
 	}
 	if err := obj.UnmarshalJSON(jsonSpec); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal custom resource manifest to unstructured: %s", err)
+		return nil, fmt.Errorf("failed to unmarshal custom resource manifest to unstructured: %v", err)
 	}
 	// set the namespace
 	obj.SetNamespace(namespace)
@@ -156,7 +156,7 @@ func createFromYAMLFile(namespace, yamlPath, proxyImage string, pullPolicy v1.Pu
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("failed to scan %s: (%v)", yamlPath, err)
+		return fmt.Errorf("failed to scan %s: %v", yamlPath, err)
 	}
 
 	return nil
@@ -207,7 +207,7 @@ func getPodFromDeployment(depName, namespace string) (pod *v1.Pod, err error) {
 		return true, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get proxyPod: %s", err)
+		return nil, fmt.Errorf("failed to get proxyPod: %v", err)
 	}
 	return pod, nil
 }
@@ -399,7 +399,7 @@ func getGVKs(yamlFile []byte) ([]schema.GroupVersionKind, error) {
 			return nil, fmt.Errorf("could not convert yaml file to json: %v", err)
 		}
 		if err := obj.UnmarshalJSON(jsonSpec); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal object spec: (%v)", err)
+			return nil, fmt.Errorf("failed to unmarshal object spec: %v", err)
 		}
 		gvks = append(gvks, obj.GroupVersionKind())
 	}

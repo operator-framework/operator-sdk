@@ -45,12 +45,12 @@ func (o OutputToCachedDirectory) Open(_ *loader.Package, path string) (io.WriteC
 		return nil, fmt.Errorf("error opening %s in output rule: cache must be set", path)
 	}
 	if err := cache.MkdirAll(o.Dir, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error mkdir %s in output rule: %w", o.Dir, err)
+		return nil, fmt.Errorf("error mkdir %v in output rule: %v", o.Dir, err)
 	}
 	dirPath := filepath.Join(o.Dir, path)
 	wc, err := cache.Create(dirPath)
 	if err != nil {
-		return nil, fmt.Errorf("error creating %s in output rule: %w", dirPath, err)
+		return nil, fmt.Errorf("error creating %v in output rule: %v", dirPath, err)
 	}
 	return wc, nil
 }

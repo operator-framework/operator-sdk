@@ -80,11 +80,11 @@ func Load(path string) ([]Watch, error) {
 		}
 
 		if err := verifyGVK(gvk); err != nil {
-			return nil, fmt.Errorf("invalid GVK: %s: %s", gvk, err)
+			return nil, fmt.Errorf("invalid GVK: %s: %w", gvk, err)
 		}
 
 		if _, err := chartutil.IsChartDir(w.Chart); err != nil {
-			return nil, fmt.Errorf("invalid chart directory %s: %s", w.Chart, err)
+			return nil, fmt.Errorf("invalid chart directory %s: %w", w.Chart, err)
 		}
 
 		if _, ok := watchesMap[gvk]; ok {

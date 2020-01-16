@@ -15,6 +15,7 @@
 package descriptor
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -24,7 +25,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/gengo/parser"
 	"k8s.io/gengo/types"
@@ -71,7 +71,7 @@ func GetCRDDescriptionForGVK(apisDir string, gvk schema.GroupVersionKind) (olmap
 	comments := append(kindType.SecondClosestCommentLines, kindType.CommentLines...)
 	kindDescriptors, err := parseCSVGenAnnotations(comments)
 	if err != nil {
-		return olmapiv1alpha1.CRDDescription{}, errors.Wrapf(err, "error parsing CSV type %s annotations", kindType.Name.Name)
+		return olmapiv1alpha1.CRDDescription{}, fmt.Errorf("error parsing CSV type %s annotations: %v", kindType.Name.Name, err)
 	}
 	if description := parseDescription(comments); description != "" {
 		crdDesc.Description = description
@@ -85,14 +85,14 @@ func GetCRDDescriptionForGVK(apisDir string, gvk schema.GroupVersionKind) (olmap
 	for _, member := range kindType.Members {
 		path, err := getPathFromMember(member)
 		if err != nil {
-			return olmapiv1alpha1.CRDDescription{}, errors.Wrapf(err, "error parsing %s type member %s JSON tags", gvk.Kind, member.Name)
+			return olmapiv1alpha1.CRDDescription{}, fmt.Errorf("error parsing %s type member %s JSON tags: %v", gvk.Kind, member.Name, err)
 		}
 		if path != typeSpec && path != typeStatus {
 			continue
 		}
 		tree, err := newTypeTreeFromRoot(member.Type)
 		if err != nil {
-			return olmapiv1alpha1.CRDDescription{}, errors.Wrapf(err, "error creating type tree for member type %s", member.Type.Name)
+			return olmapiv1alpha1.CRDDescription{}, fmt.Errorf("error creating type tree for member type %s: %v", member.Type.Name, err)
 		}
 		descriptors, err := tree.getDescriptorsFor(path)
 		if err != nil {
@@ -144,7 +144,7 @@ func getTypesForPkg(pkgPath string, universe types.Universe) (pkgTypes []*types.
 		}
 	}
 	if pkg == nil {
-		return nil, errors.Errorf("no package found for API %s", pkgPath)
+		return nil, fmt.Errorf("no package found for API %s", pkgPath)
 	}
 	for _, t := range pkg.Types {
 		pkgTypes = append(pkgTypes, t)

@@ -15,6 +15,7 @@
 package catalog
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -34,7 +35,6 @@ import (
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olmversion "github.com/operator-framework/operator-lifecycle-manager/pkg/lib/version"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -173,7 +173,7 @@ func getCSVFromFSIfExists(fs afero.Fs, path string) (*olmapiv1alpha1.ClusterServ
 
 	csv := &olmapiv1alpha1.ClusterServiceVersion{}
 	if err := yaml.Unmarshal(csvBytes, csv); err != nil {
-		return nil, false, errors.Wrapf(err, "error unmarshalling CSV %s", path)
+		return nil, false, fmt.Errorf("error unmarshalling CSV %s: %v", path, err)
 	}
 
 	return csv, true, nil
@@ -303,7 +303,7 @@ func (s *CSV) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error
 	oldCSVName := getCSVName(lowerOperatorName, oldVer)
 	oldRe, err := regexp.Compile(fmt.Sprintf("\\b%s\\b", regexp.QuoteMeta(oldCSVName)))
 	if err != nil {
-		return errors.Wrapf(err, "error compiling CSV name regexp %s", oldRe.String())
+		return fmt.Errorf("error compiling CSV name regexp %s: %v", oldRe.String(), err)
 	}
 	b, err := yaml.Marshal(csv)
 	if err != nil {
@@ -313,7 +313,7 @@ func (s *CSV) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersion) error
 	b = oldRe.ReplaceAll(b, []byte(newCSVName))
 	*csv = olmapiv1alpha1.ClusterServiceVersion{}
 	if err = yaml.Unmarshal(b, csv); err != nil {
-		return errors.Wrapf(err, "error unmarshalling CSV %s after replacing old CSV name", csv.GetName())
+		return fmt.Errorf("error unmarshalling CSV %s after replacing old CSV name: %v", csv.GetName(), err)
 	}
 
 	ver, err := semver.Parse(s.CSVVersion)

@@ -15,11 +15,11 @@
 package descriptor
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 
-	"github.com/pkg/errors"
 	"k8s.io/gengo/types"
 )
 
@@ -52,7 +52,7 @@ func newTypeTreeFromRoot(root *types.Type) (typeTree, error) {
 				// Parse path here so we can re-construct the path hierarchy later.
 				path, err := getPathFromMember(cm)
 				if err != nil {
-					return nil, errors.Wrapf(err, "error parsing %s type member %s JSON tags", child.member.Type.Name, cm.Name)
+					return nil, fmt.Errorf("error parsing %s type member %s JSON tags: %v", child.member.Type.Name, cm.Name, err)
 				}
 				node.pathSegments = append(child.pathSegments, path)
 				if hasAnnotations(cm) {
