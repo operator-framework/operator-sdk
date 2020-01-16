@@ -38,7 +38,7 @@ func (ctx *TestCtx) GetNamespace() (string, error) {
 	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ctx.namespace}}
 	_, err := ctx.kubeclient.CoreV1().Namespaces().Create(namespaceObj)
 	if apierrors.IsAlreadyExists(err) {
-		return "", fmt.Errorf("namespace %s already exists: %v", ctx.namespace, err)
+		return "", fmt.Errorf("namespace %s already exists: %w", ctx.namespace, err)
 	} else if err != nil {
 		return "", err
 	}
@@ -60,10 +60,10 @@ func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOp
 		obj := &unstructured.Unstructured{}
 		jsonSpec, err := yaml.YAMLToJSON(yamlSpec)
 		if err != nil {
-			return fmt.Errorf("could not convert yaml file to json: %v", err)
+			return fmt.Errorf("could not convert yaml file to json: %w", err)
 		}
 		if err := obj.UnmarshalJSON(jsonSpec); err != nil {
-			return fmt.Errorf("failed to unmarshal object spec: (%v)", err)
+			return fmt.Errorf("failed to unmarshal object spec: %w", err)
 		}
 		obj.SetNamespace(namespace)
 		err = ctx.client.Create(goctx.TODO(), obj, cleanupOptions)
@@ -96,7 +96,7 @@ func (ctx *TestCtx) createFromYAML(yamlFile []byte, skipIfExists bool, cleanupOp
 	}
 
 	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("failed to scan manifest: (%v)", err)
+		return fmt.Errorf("failed to scan manifest: %w", err)
 	}
 	return nil
 }
@@ -105,7 +105,7 @@ func (ctx *TestCtx) InitializeClusterResources(cleanupOptions *CleanupOptions) e
 	// create namespaced resources
 	namespacedYAML, err := ioutil.ReadFile(ctx.namespacedManPath)
 	if err != nil {
-		return fmt.Errorf("failed to read namespaced manifest: %v", err)
+		return fmt.Errorf("failed to read namespaced manifest: %w", err)
 	}
 	return ctx.createFromYAML(namespacedYAML, false, cleanupOptions)
 }

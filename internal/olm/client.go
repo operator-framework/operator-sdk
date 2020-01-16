@@ -19,6 +19,7 @@ package olm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -28,7 +29,6 @@ import (
 	olmresourceclient "github.com/operator-framework/operator-sdk/internal/olm/client"
 
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -54,7 +54,7 @@ type Client struct {
 func ClientForConfig(cfg *rest.Config) (*Client, error) {
 	cl, err := olmresourceclient.ClientForConfig(cfg)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get OLM resource client")
+		return nil, fmt.Errorf("failed to get OLM resource client: %v", err)
 	}
 	c := &Client{
 		Client:          cl,
@@ -67,7 +67,7 @@ func ClientForConfig(cfg *rest.Config) (*Client, error) {
 func (c Client) InstallVersion(ctx context.Context, version string) (*olmresourceclient.Status, error) {
 	resources, err := c.getResources(ctx, version)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get resources")
+		return nil, fmt.Errorf("failed to get resources: %v", err)
 	}
 	objs := toObjects(resources...)
 
@@ -81,17 +81,17 @@ func (c Client) InstallVersion(ctx context.Context, version string) (*olmresourc
 
 	log.Print("Creating CRDs and resources")
 	if err := c.DoCreate(ctx, objs...); err != nil {
-		return nil, errors.Wrap(err, "failed to create CRDs and resources")
+		return nil, fmt.Errorf("failed to create CRDs and resources: %v", err)
 	}
 
 	log.Print("Waiting for deployment/olm-operator rollout to complete")
 	if err := c.DoRolloutWait(ctx, olmOperatorKey); err != nil {
-		return nil, errors.Wrapf(err, "deployment/%s failed to rollout", olmOperatorKey.Name)
+		return nil, fmt.Errorf("deployment/%s failed to rollout: %v", olmOperatorKey.Name, err)
 	}
 
 	log.Print("Waiting for deployment/catalog-operator rollout to complete")
 	if err := c.DoRolloutWait(ctx, catalogOperatorKey); err != nil {
-		return nil, errors.Wrapf(err, "deployment/%s failed to rollout", catalogOperatorKey.Name)
+		return nil, fmt.Errorf("deployment/%s failed to rollout: %v", catalogOperatorKey.Name, err)
 	}
 
 	subscriptions := filterResources(resources, func(r unstructured.Unstructured) bool {
@@ -107,17 +107,17 @@ func (c Client) InstallVersion(ctx context.Context, version string) (*olmresourc
 		log.Printf("Waiting for subscription/%s to install CSV", subscriptionKey.Name)
 		csvKey, err := c.getSubscriptionCSV(ctx, subscriptionKey)
 		if err != nil {
-			return nil, errors.Wrapf(err, "subscription/%s failed to install CSV", subscriptionKey.Name)
+			return nil, fmt.Errorf("subscription/%s failed to install CSV: %v", subscriptionKey.Name, err)
 		}
 		log.Printf("Waiting for clusterserviceversion/%s to reach 'Succeeded' phase", csvKey.Name)
 		if err := c.DoCSVWait(ctx, csvKey); err != nil {
-			return nil, errors.Wrapf(err, "clusterserviceversion/%s failed to reach 'Succeeded' phase", csvKey.Name)
+			return nil, fmt.Errorf("clusterserviceversion/%s failed to reach 'Succeeded' phase: %v", csvKey.Name, err)
 		}
 	}
 
 	log.Printf("Waiting for deployment/%s rollout to complete", packageServerKey.Name)
 	if err := c.DoRolloutWait(ctx, packageServerKey); err != nil {
-		return nil, errors.Wrapf(err, "deployment/%s failed to rollout", packageServerKey.Name)
+		return nil, fmt.Errorf("deployment/%s failed to rollout: %v", packageServerKey.Name, err)
 	}
 
 	status = c.GetObjectsStatus(ctx, objs...)
@@ -127,7 +127,7 @@ func (c Client) InstallVersion(ctx context.Context, version string) (*olmresourc
 func (c Client) UninstallVersion(ctx context.Context, version string) error {
 	resources, err := c.getResources(ctx, version)
 	if err != nil {
-		return errors.Wrap(err, "failed to get resources")
+		return fmt.Errorf("failed to get resources: %v", err)
 	}
 	objs := toObjects(resources...)
 
@@ -147,7 +147,7 @@ func (c Client) UninstallVersion(ctx context.Context, version string) error {
 func (c Client) GetStatus(ctx context.Context, version string) (*olmresourceclient.Status, error) {
 	resources, err := c.getResources(ctx, version)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get resources")
+		return nil, fmt.Errorf("failed to get resources: %v", err)
 	}
 	objs := toObjects(resources...)
 
@@ -163,13 +163,13 @@ func (c Client) getResources(ctx context.Context, version string) ([]unstructure
 	log.Infof("Fetching CRDs for version %q", version)
 	crdResources, err := c.getCRDs(ctx, version)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch CRDs")
+		return nil, fmt.Errorf("failed to fetch CRDs: %v", err)
 	}
 
 	log.Infof("Fetching resources for version %q", version)
 	olmResources, err := c.getOLM(ctx, version)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch resources")
+		return nil, fmt.Errorf("failed to fetch resources: %v", err)
 	}
 
 	resources := append(crdResources, olmResources...)
@@ -179,7 +179,7 @@ func (c Client) getResources(ctx context.Context, version string) ([]unstructure
 func (c Client) getCRDs(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
 	resp, err := c.doRequest(ctx, c.crdsURL(version))
 	if err != nil {
-		return nil, errors.Wrap(err, "request failed")
+		return nil, fmt.Errorf("request failed: %v", err)
 	}
 	defer resp.Body.Close()
 	return decodeResources(resp.Body)
@@ -188,7 +188,7 @@ func (c Client) getCRDs(ctx context.Context, version string) ([]unstructured.Uns
 func (c Client) getOLM(ctx context.Context, version string) ([]unstructured.Unstructured, error) {
 	resp, err := c.doRequest(ctx, c.olmURL(version))
 	if err != nil {
-		return nil, errors.Wrap(err, "request failed")
+		return nil, fmt.Errorf("request failed: %v", err)
 	}
 	defer resp.Body.Close()
 	return decodeResources(resp.Body)
@@ -212,19 +212,19 @@ func (c Client) getBaseDownloadURL(version string) string {
 func (c Client) doRequest(ctx context.Context, url string) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "create request")
+		return nil, fmt.Errorf("create request: %v", err)
 	}
 	req = req.WithContext(ctx)
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed GET '%s'", url)
+		return nil, fmt.Errorf("failed GET '%s': %v", url, err)
 	}
 	if resp.StatusCode != http.StatusOK {
 		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
 		msg := fmt.Sprintf("failed GET '%s': unexpected status code %d, expected %d", url, resp.StatusCode, http.StatusOK)
 		if err != nil {
-			return nil, errors.Wrap(err, msg)
+			return nil, fmt.Errorf("%s: %v", msg, err)
 		}
 		return nil, fmt.Errorf("%s: %s", msg, string(body))
 	}

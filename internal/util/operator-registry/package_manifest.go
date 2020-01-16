@@ -15,10 +15,10 @@
 package registry
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/operator-framework/operator-registry/pkg/registry"
-	"github.com/pkg/errors"
 )
 
 func ValidatePackageManifest(pkg *registry.PackageManifest) error {

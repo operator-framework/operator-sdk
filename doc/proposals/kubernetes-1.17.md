@@ -120,7 +120,7 @@ History`.
 
 The only drawback is the potential for breaking changes in client code due to breaking
 changes introduced by the Kubernetes 1.17 version update. However, this is unavoidable
-since Kubernetes minor versions almost always contain breaking changes that impact 
+since Kubernetes minor versions almost always contain breaking changes that impact
 controller-runtime and Operator SDK.
 
 ## Alternatives
@@ -131,6 +131,6 @@ None
 
 N/A
 
-[operator-sdk-doc]:  ../../../doc
+[operator-sdk-doc]:  ../../doc
 [controller-runtime]: https://github.com/kubernetes-sigs/controller-runtime
 [helm]: https://github.com/helm/helm

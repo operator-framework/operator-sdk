@@ -28,9 +28,9 @@ superseded-by: []
 ## Open Questions (optional)
 
 This is where to call out areas of the design that require closure before deciding
-to implement the design.  For instance, 
+to implement the design.  For instance,
  > 1. This requires exposing previously private resources which contain sensitive
-  information.  Can we do this? 
+  information.  Can we do this?
 
 ## Summary
 
@@ -58,7 +58,7 @@ Kubernetes/OpenShift API inconsistencies or operator-sdk bugs/behaviors.
 2. Update Ansible scaffolding, test scenarios, and examples to make use of newer
     Ansible features and best practices, including support for collections and
     simpler and more flexible test scenarios.
-3. Readable logs without additional dependencies, and ideally without a sidecar 
+3. Readable logs without additional dependencies, and ideally without a sidecar
     container.
 
 ### Non-Goals
@@ -80,7 +80,7 @@ This is where we get down to the nitty gritty of what the proposal actually is.
 #### Story 1 - Use operator-sdk up local to run the Ansible-based Operator
 
 As a user, I would like to be able to run `operator-sdk up local` to run my
-Ansible-based Operator without requiring additional work or options. Although 
+Ansible-based Operator without requiring additional work or options. Although
 it is currently possible to use `up local`, there are a variety of limitations
 that make the experience inferior to deploying the operator to a real cluster.
 
@@ -93,7 +93,7 @@ that make the experience inferior to deploying the operator to a real cluster.
 
 #### Story 2 - Use the molecule scenarios to test in a variety of environments
 
-As a user, I would like to be able to use the scaffolded molecule scenarios to 
+As a user, I would like to be able to use the scaffolded molecule scenarios to
 run the same set of tests against Kubernetes clusters in the following scenarios:
 
 1. An ephemeral cluster provisioned by molecule
@@ -109,7 +109,7 @@ As a user, if there are issues in the way the proxy/cache handles a certain reso
 I should be able to work around those issues without needing to wait for bugfixes or
 features in the operator-sdk, by preventing those resources from being passed through
 the cache at all. For example, if I need to access an OpenShift Project resource (which
-is not cacheable, because it is not watchable), I should be able to specify that the 
+is not cacheable, because it is not watchable), I should be able to specify that the
 Project resource skips the cache in my watches.yaml.
 
 
@@ -132,7 +132,7 @@ marginally higher maintenance burden when changing Ansible versions.
 
 ### Test Plan
 
-1. We will add at least one test for each molecule scenario (when possible). 
+1. We will add at least one test for each molecule scenario (when possible).
 1. We will add tests that make Ansible emit messages of each type that it supports,
     to help ensure that we can easily catch changes to the messag format.
 1. We will add a test scenario that uses `up local`.
@@ -162,4 +162,4 @@ None
 
 None
 
-[operator-sdk-doc]:  ../../../doc
+[operator-sdk-doc]:  ../../doc

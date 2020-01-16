@@ -23,7 +23,6 @@ import (
 	"strings"
 
 	homedir "github.com/mitchellh/go-homedir"
-	"github.com/pkg/errors"
 	"github.com/rogpeppe/go-internal/modfile"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -85,7 +84,7 @@ func CheckProjectRoot() error {
 		if os.IsNotExist(err) {
 			return fmt.Errorf("must run command in project root dir: project structure requires %s", buildDockerfile)
 		}
-		return errors.Wrap(err, "error while checking if current directory is the project root")
+		return fmt.Errorf("error while checking if current directory is the project root: %v", err)
 	}
 	return nil
 }

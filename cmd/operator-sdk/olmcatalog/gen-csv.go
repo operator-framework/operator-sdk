@@ -19,6 +19,8 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/operator-framework/operator-sdk/internal/generate/gen"
+	gencatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
 	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	catalog "github.com/operator-framework/operator-sdk/internal/scaffold/olm-catalog"
@@ -114,17 +116,18 @@ func genCSVFunc(cmd *cobra.Command, args []string) error {
 		ConfigFilePath: csvConfigPath,
 		OperatorName:   operatorName,
 	}
-	err = s.Execute(cfg,
-		csv,
-		&catalog.PackageManifest{
-			CSVVersion:       csvVersion,
-			Channel:          csvChannel,
-			ChannelIsDefault: defaultChannel,
-			OperatorName:     operatorName,
-		},
-	)
+	err = s.Execute(cfg, csv)
 	if err != nil {
-		return fmt.Errorf("catalog scaffold failed: (%v)", err)
+		return fmt.Errorf("catalog scaffold failed: %v", err)
+	}
+
+	gcfg := gen.Config{
+		OperatorName: operatorName,
+		OutputDir:    filepath.Join(gencatalog.OLMCatalogDir, operatorName),
+	}
+	pkg := gencatalog.NewPackageManifest(gcfg, csvVersion, csvChannel, defaultChannel)
+	if err := pkg.Generate(); err != nil {
+		return fmt.Errorf("error generating package manifest: %v", err)
 	}
 
 	// Write CRD's to the new or updated CSV package dir.
@@ -165,7 +168,7 @@ func verifyGenCSVFlags() error {
 func verifyCSVVersion(version string) error {
 	v, err := semver.NewVersion(version)
 	if err != nil {
-		return fmt.Errorf("%s is not a valid semantic version: (%v)", version, err)
+		return fmt.Errorf("%s is not a valid semantic version: %v", version, err)
 	}
 	// Ensures numerical values composing csvVersion don't contain leading 0's,
 	// ex. 01.01.01

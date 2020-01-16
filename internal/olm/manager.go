@@ -20,7 +20,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -44,13 +43,13 @@ func (m *Manager) initialize() (err error) {
 		if m.Client == nil {
 			cfg, cerr := config.GetConfig()
 			if cerr != nil {
-				err = errors.Wrapf(cerr, "failed to get Kubernetes config")
+				err = fmt.Errorf("failed to get Kubernetes config: %v", err)
 				return
 			}
 
 			client, cerr := ClientForConfig(cfg)
 			if cerr != nil {
-				err = errors.Wrapf(cerr, "failed to create manager client")
+				err = fmt.Errorf("failed to create manager client: %v", err)
 				return
 			}
 			m.Client = client

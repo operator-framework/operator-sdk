@@ -76,7 +76,7 @@ func (f *frameworkClient) Create(gCtx goctx.Context, obj runtime.Object, cleanup
 						}
 						return true, nil
 					}
-					return false, fmt.Errorf("error encountered during deletion of resource type %v with namespace/name (%+v): %v", objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
+					return false, fmt.Errorf("error encountered during deletion of resource type %v with namespace/name (%+v): %w", objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
 				}
 				if cleanupOptions.TestContext.t != nil {
 					cleanupOptions.TestContext.t.Logf("waiting for deletion of resource type %+v with namespace/name (%+v)\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)

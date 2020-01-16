@@ -110,7 +110,7 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	reconcilePeriod, err := time.ParseDuration(tmp.ReconcilePeriod)
 	if err != nil {
-		return fmt.Errorf("failed to parse '%s' to time.Duration: %v", tmp.ReconcilePeriod, err)
+		return fmt.Errorf("failed to parse '%s' to time.Duration: %w", tmp.ReconcilePeriod, err)
 	}
 
 	gvk := schema.GroupVersionKind{
@@ -120,7 +120,7 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 	err = verifyGVK(gvk)
 	if err != nil {
-		return fmt.Errorf("invalid GVK: %v - %s", gvk.String(), err)
+		return fmt.Errorf("invalid GVK: %s: %w", gvk, err)
 	}
 
 	// Rewrite values to struct being unmarshalled

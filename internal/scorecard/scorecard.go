@@ -62,6 +62,7 @@ func (s Config) GetPlugins(configs []PluginConfig) ([]Plugin, error) {
 
 	// Add plugins from config
 	var plugins []Plugin
+
 	for _, plugin := range configs {
 		var newPlugin Plugin
 		if plugin.Basic != nil {
