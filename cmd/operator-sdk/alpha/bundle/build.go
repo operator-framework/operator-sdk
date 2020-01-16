@@ -42,7 +42,7 @@ and should not be modified.
 To write metadata and a bundle image Dockerfile to disk, set '--generate-only=true'.
 Bundle metadata will be generated in <directory-arg>/metadata, and the Dockerfile
 in <directory-arg>. This flag is useful if you want to build the operator's
-bundle image manually.
+bundle image manually or modify metadata before building an image.
 
 More information on operator bundle images and metadata:
 https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-bundle.md#docker
@@ -53,15 +53,15 @@ This image will contain manifests for package channels 'stable' and 'beta':
 
 $ operator-sdk bundle build \
     --directory ./deploy/olm-catalog/test-operator \
-    --image-tag quay.io/example/operator:v0.1.0 \
+    --image-tag quay.io/example/test-operator:v0.1.0 \
     --package test-operator \
     --channels stable,beta \
-    --default-channel beta
+    --default-channel stable
 
 Assuming your operator has the same name as your operator and the only channel
 is 'stable', the above command can be abbreviated to:
 
-$ operator-sdk bundle build --image-tag quay.io/example/operator:v0.1.0
+$ operator-sdk bundle build --image-tag quay.io/example/test-operator:v0.1.0
 
 The following invocation will generate test-operator bundle metadata and
 Dockerfile without building the image:
@@ -73,9 +73,6 @@ $ operator-sdk bundle build \
     --channels stable,beta \
     --default-channel stable`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := c.validate(); err != nil {
-				return err
-			}
 			channels := strings.Join(c.channels, ",")
 			if c.generateOnly {
 				err := bundle.GenerateFunc(c.directory, c.packageName, channels,
@@ -94,8 +91,9 @@ $ operator-sdk bundle build \
 			for _, cleanup := range c.cleanupFuncs() {
 				defer cleanup()
 			}
+			// Build but never overwrite existing metadata/Dockerfile.
 			err := bundle.BuildFunc(c.directory, c.imageTag, c.imageBuilder,
-				c.packageName, channels, c.defaultChannel, true)
+				c.packageName, channels, c.defaultChannel, false)
 			if err != nil {
 				log.Fatalf("Error building bundle image: %v", err)
 			}
@@ -114,7 +112,7 @@ $ operator-sdk bundle build \
 	cmd.Flags().StringVarP(&c.directory, "directory", "d", defaultDir,
 		"The directory where bundle manifests are located")
 	cmd.Flags().StringVarP(&c.packageName, "package", "p", projectName,
-		"The name of the package that bundle image belongs to")
+		"The name of the package that bundle image belongs to. Set if package name differs from project name")
 	cmd.Flags().StringSliceVarP(&c.channels, "channels", "c", defaultChannels,
 		"The list of channels that bundle image belongs to")
 	cmd.Flags().BoolVarP(&c.generateOnly, "generate-only", "g", false,

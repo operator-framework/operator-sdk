@@ -15,10 +15,10 @@
 package bundle
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 
+	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	"github.com/spf13/cobra"
 )
 
@@ -47,28 +47,13 @@ type bundleCmd struct {
 	generateOnly   bool
 }
 
-func (c bundleCmd) validate() error {
-	if c.directory == "" {
-		return errors.New("manifests directory must be set")
-	}
-	if c.packageName == "" {
-		return errors.New("package name must be set")
-	}
-	if len(c.channels) == 0 {
-		return errors.New("package channels must be set")
-	}
-	return nil
-}
-
 // cleanupFuncs returns a set of general funcs to clean up after a bundle
 // subcommand.
 func (c bundleCmd) cleanupFuncs() (fs []func()) {
-	metaDir := filepath.Join(c.directory, "metadata")
-	_, err := os.Stat(metaDir)
-	metaExists := os.IsExist(err)
-	dockerFile := filepath.Join(c.directory, "Dockerfile")
-	_, err = os.Stat(dockerFile)
-	dockerFileExists := os.IsExist(err)
+	metaDir := filepath.Join(c.directory, bundle.MetadataDir)
+	dockerFile := filepath.Join(c.directory, bundle.DockerFile)
+	metaExists := isExist(metaDir)
+	dockerFileExists := isExist(dockerFile)
 	fs = append(fs,
 		func() {
 			if !metaExists {
@@ -81,4 +66,9 @@ func (c bundleCmd) cleanupFuncs() (fs []func()) {
 			}
 		})
 	return fs
+}
+
+func isExist(path string) bool {
+	_, err := os.Stat(path)
+	return os.IsExist(err)
 }
