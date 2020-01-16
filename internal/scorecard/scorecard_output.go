@@ -34,9 +34,9 @@ func (cfg Config) printPluginOutputs(pluginOutputs []scapiv1alpha1.ScorecardOutp
 		return err
 	}
 
-	if schelpers.IsV1alpha2(cfg.VersionOpt) {
+	if schelpers.IsV1alpha2(cfg.Version) {
 		list = scapi.ConvertScorecardOutputV1ToV2(list.(scapiv1alpha1.ScorecardOutput))
-		if cfg.ListOpt {
+		if cfg.List {
 			scorecardOutput := list.(scapiv1alpha2.ScorecardOutput)
 			for i := 0; i < len(scorecardOutput.Results); i++ {
 				scorecardOutput.Results[i].State = scapiv1alpha2.NotRunState
@@ -44,7 +44,7 @@ func (cfg Config) printPluginOutputs(pluginOutputs []scapiv1alpha1.ScorecardOutp
 		}
 	}
 
-	switch format := cfg.OutputFormatOpt; format {
+	switch format := cfg.OutputFormat; format {
 	case TextOutputFormat:
 		output, err := list.MarshalText()
 		if err != nil {
@@ -71,8 +71,8 @@ func (cfg Config) combinePluginOutput(pluginOutputs []scapiv1alpha1.ScorecardOut
 		}
 	}
 
-	if cfg.OutputFormatOpt == JSONOutputFormat {
-		log, err := ioutil.ReadAll(LogReadWriter)
+	if cfg.OutputFormat == JSONOutputFormat {
+		log, err := ioutil.ReadAll(cfg.LogReadWriter)
 		if err != nil {
 			return output, fmt.Errorf("failed to read log buffer: %v", err)
 		}

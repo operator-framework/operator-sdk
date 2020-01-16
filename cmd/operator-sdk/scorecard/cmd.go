@@ -17,6 +17,7 @@ package scorecard
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -31,6 +32,18 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+)
+
+const (
+	configOpt       = "config"
+	outputFormatOpt = "output"
+	selectorOpt     = "selector"
+	bundleOpt       = "bundle"
+	listOpt         = "list"
+)
+
+var (
+	logReadWriter io.ReadWriter
 )
 
 func NewCmd() *cobra.Command {
@@ -50,33 +63,33 @@ func NewCmd() *cobra.Command {
 			return err
 		},
 	}
-	scorecardCmd.Flags().String(scorecard.ConfigOpt, "", fmt.Sprintf("config file (default is '<project_dir>/%s'; the config file's extension and format can be .yaml, .json, or .toml)", scorecard.DefaultConfigFile))
+	scorecardCmd.Flags().String(configOpt, "", fmt.Sprintf("config file (default is '<project_dir>/%s'; the config file's extension and format can be .yaml, .json, or .toml)", scorecard.DefaultConfigFile))
 	scorecardCmd.Flags().String(scplugins.KubeconfigOpt, "", "Path to kubeconfig of custom resource created in cluster")
-	scorecardCmd.Flags().StringP(scorecard.OutputFormatOpt, "o", scorecard.TextOutputFormat, fmt.Sprintf("Output format for results. Valid values: %s, %s", scorecard.TextOutputFormat, scorecard.JSONOutputFormat))
+	scorecardCmd.Flags().StringP(outputFormatOpt, "o", scorecard.TextOutputFormat, fmt.Sprintf("Output format for results. Valid values: %s, %s", scorecard.TextOutputFormat, scorecard.JSONOutputFormat))
 	scorecardCmd.Flags().String(schelpers.VersionOpt, schelpers.DefaultScorecardVersion, "scorecard version. Valid values: v1alpha1, v1alpha2")
-	scorecardCmd.Flags().StringP(scorecard.SelectorOpt, "l", "", "selector (label query) to filter tests on (only valid when version is v1alpha2)")
-	scorecardCmd.Flags().BoolP(scorecard.ListOpt, "L", false, "If true, only print the test names that would be run based on selector filtering (only valid when version is v1alpha2)")
-	scorecardCmd.Flags().StringP(scorecard.BundleOpt, "b", "", "OLM bundle directory path, when specified runs bundle validation")
+	scorecardCmd.Flags().StringP(selectorOpt, "l", "", "selector (label query) to filter tests on (only valid when version is v1alpha2)")
+	scorecardCmd.Flags().BoolP(listOpt, "L", false, "If true, only print the test names that would be run based on selector filtering (only valid when version is v1alpha2)")
+	scorecardCmd.Flags().StringP(bundleOpt, "b", "", "OLM bundle directory path, when specified runs bundle validation")
 
-	if err := viper.BindPFlag(scorecard.ConfigOpt, scorecardCmd.Flags().Lookup(scorecard.ConfigOpt)); err != nil {
+	if err := viper.BindPFlag(configOpt, scorecardCmd.Flags().Lookup(configOpt)); err != nil {
 		log.Fatalf("Unable to add config :%v", err)
 	}
 	if err := viper.BindPFlag("scorecard."+scplugins.KubeconfigOpt, scorecardCmd.Flags().Lookup(scplugins.KubeconfigOpt)); err != nil {
 		log.Fatalf("Unable to add kubeconfig :%v", err)
 	}
-	if err := viper.BindPFlag("scorecard."+scorecard.OutputFormatOpt, scorecardCmd.Flags().Lookup(scorecard.OutputFormatOpt)); err != nil {
+	if err := viper.BindPFlag("scorecard."+outputFormatOpt, scorecardCmd.Flags().Lookup(outputFormatOpt)); err != nil {
 		log.Fatalf("Unable to add output format :%v", err)
 	}
 	if err := viper.BindPFlag("scorecard."+schelpers.VersionOpt, scorecardCmd.Flags().Lookup(schelpers.VersionOpt)); err != nil {
 		log.Fatalf("Unable to add version :%v", err)
 	}
-	if err := viper.BindPFlag("scorecard."+scorecard.SelectorOpt, scorecardCmd.Flags().Lookup(scorecard.SelectorOpt)); err != nil {
+	if err := viper.BindPFlag("scorecard."+selectorOpt, scorecardCmd.Flags().Lookup(selectorOpt)); err != nil {
 		log.Fatalf("Unable to add selector :%v", err)
 	}
-	if err := viper.BindPFlag("scorecard."+scorecard.ListOpt, scorecardCmd.Flags().Lookup(scorecard.ListOpt)); err != nil {
+	if err := viper.BindPFlag("scorecard."+listOpt, scorecardCmd.Flags().Lookup(listOpt)); err != nil {
 		log.Fatalf("Unable to add list :%v", err)
 	}
-	if err := viper.BindPFlag("scorecard."+scorecard.BundleOpt, scorecardCmd.Flags().Lookup(scorecard.BundleOpt)); err != nil {
+	if err := viper.BindPFlag("scorecard."+bundleOpt, scorecardCmd.Flags().Lookup(bundleOpt)); err != nil {
 		log.Fatalf("Unable to add bundle :%v", err)
 	}
 
@@ -85,9 +98,9 @@ func NewCmd() *cobra.Command {
 
 func initConfig() (*viper.Viper, error) {
 	// viper/cobra already has flags parsed at this point; we can check if a config file flag is set
-	if viper.GetString(scorecard.ConfigOpt) != "" {
+	if viper.GetString(configOpt) != "" {
 		// Use config file from the flag.
-		viper.SetConfigFile(viper.GetString(scorecard.ConfigOpt))
+		viper.SetConfigFile(viper.GetString(configOpt))
 	} else {
 		viper.AddConfigPath(projutil.MustGetwd())
 		// using SetConfigName allows users to use a .yaml, .json, or .toml file
@@ -98,25 +111,25 @@ func initConfig() (*viper.Viper, error) {
 	if err := viper.ReadInConfig(); err == nil {
 		scViper = viper.Sub("scorecard")
 		// this is a workaround for the fact that nested flags don't persist on viper.Sub
-		scViper.Set(scorecard.OutputFormatOpt, viper.GetString("scorecard."+scorecard.OutputFormatOpt))
+		scViper.Set(outputFormatOpt, viper.GetString("scorecard."+outputFormatOpt))
 		scViper.Set(scplugins.KubeconfigOpt, viper.GetString("scorecard."+scplugins.KubeconfigOpt))
 		scViper.Set(schelpers.VersionOpt, viper.GetString("scorecard."+schelpers.VersionOpt))
-		scViper.Set(scorecard.SelectorOpt, viper.GetString("scorecard."+scorecard.SelectorOpt))
-		scViper.Set(scorecard.BundleOpt, viper.GetString("scorecard."+scorecard.BundleOpt))
-		scViper.Set(scorecard.ListOpt, viper.GetString("scorecard."+scorecard.ListOpt))
+		scViper.Set(selectorOpt, viper.GetString("scorecard."+selectorOpt))
+		scViper.Set(bundleOpt, viper.GetString("scorecard."+bundleOpt))
+		scViper.Set(listOpt, viper.GetString("scorecard."+listOpt))
 		// configure logger output before logging anything
-		if !scViper.IsSet(scorecard.OutputFormatOpt) {
-			scViper.Set(scorecard.OutputFormatOpt, scorecard.TextOutputFormat)
+		if !scViper.IsSet(outputFormatOpt) {
+			scViper.Set(outputFormatOpt, scorecard.TextOutputFormat)
 		}
-		format := scViper.GetString(scorecard.OutputFormatOpt)
+		format := scViper.GetString(outputFormatOpt)
 		if format == scorecard.TextOutputFormat {
-			scorecard.LogReadWriter = os.Stdout
+			logReadWriter = os.Stdout
 		} else if format == scorecard.JSONOutputFormat {
-			scorecard.LogReadWriter = &bytes.Buffer{}
+			logReadWriter = &bytes.Buffer{}
 		} else {
 			return nil, fmt.Errorf("invalid output format: %s", format)
 		}
-		scorecard.Log.SetOutput(scorecard.LogReadWriter)
+		scorecard.Log.SetOutput(logReadWriter)
 		scorecard.Log.Info("Using config file: ", viper.ConfigFileUsed())
 	} else {
 		return nil, fmt.Errorf("could not read config file: %v\nSee %s for more information about the scorecard config file", err, scorecard.ConfigDocLink())
@@ -131,7 +144,7 @@ func buildScorecardConfig(c *scorecard.Config) {
 		log.Fatalf("%v", err.Error())
 	}
 
-	outputFormat := scViper.GetString(scorecard.OutputFormatOpt)
+	outputFormat := scViper.GetString(outputFormatOpt)
 	if outputFormat != scorecard.TextOutputFormat && outputFormat != scorecard.JSONOutputFormat {
 		log.Fatalf("Invalid output format (%s); valid values: %s, %s", outputFormat, scorecard.TextOutputFormat, scorecard.JSONOutputFormat)
 	}
@@ -141,22 +154,20 @@ func buildScorecardConfig(c *scorecard.Config) {
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
-	if !schelpers.IsV1alpha2(version) && scViper.GetBool(scorecard.ListOpt) {
+	if !schelpers.IsV1alpha2(version) && scViper.GetBool(listOpt) {
 		log.Fatal("List flag is not supported on v1alpha1")
 	}
 
-	c.ListOpt = scViper.GetBool(scorecard.ListOpt)
-	c.OutputFormatOpt = scViper.GetString(scorecard.OutputFormatOpt)
-	c.ConfigOpt = viper.GetString(scorecard.ConfigOpt)
-	c.VersionOpt = scViper.GetString(schelpers.VersionOpt)
-	c.SelectorOpt = scViper.GetString(scorecard.SelectorOpt)
-	c.BundleOpt = scViper.GetString(scorecard.BundleOpt)
+	c.List = scViper.GetBool(listOpt)
+	c.OutputFormat = scViper.GetString(outputFormatOpt)
+	c.Version = scViper.GetString(schelpers.VersionOpt)
+	c.Bundle = scViper.GetString(bundleOpt)
 
 	if scViper.IsSet(scplugins.KubeconfigOpt) {
 		c.Kubeconfig = scViper.GetString(scplugins.KubeconfigOpt)
 	}
 
-	c.Selector, err = labels.Parse(c.SelectorOpt)
+	c.Selector, err = labels.Parse(scViper.GetString(selectorOpt))
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
@@ -170,5 +181,7 @@ func buildScorecardConfig(c *scorecard.Config) {
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
+
+	c.LogReadWriter = logReadWriter
 
 }

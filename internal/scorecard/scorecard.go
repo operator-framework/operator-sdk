@@ -32,33 +32,24 @@ import (
 const DefaultConfigFile = ".osdk-scorecard"
 
 const (
-	ConfigOpt        = "config"
-	OutputFormatOpt  = "output"
 	JSONOutputFormat = "json"
 	TextOutputFormat = "text"
-	SelectorOpt      = "selector"
-	BundleOpt        = "bundle"
-	ListOpt          = "list"
 )
 
-// make a global logger for scorecard
 var (
-	LogReadWriter io.ReadWriter
-	Log           = logrus.New()
+	Log = logrus.New()
 )
 
 type Config struct {
-	ListOpt         bool
-	OutputFormatOpt string
-	VersionOpt      string
-	ConfigOpt       string
-	SelectorOpt     string
-	Selector        labels.Selector
-	BundleOpt       string
-	Kubeconfig      string
-	Something       string
-	Plugins         []Plugin
-	PluginConfigs   []PluginConfig
+	List          bool
+	OutputFormat  string
+	Version       string
+	Selector      labels.Selector
+	Bundle        string
+	Kubeconfig    string
+	Plugins       []Plugin
+	PluginConfigs []PluginConfig
+	LogReadWriter io.ReadWriter
 }
 
 type PluginConfig struct {
@@ -75,18 +66,18 @@ func (s Config) GetPlugins(configs []PluginConfig) ([]Plugin, error) {
 		var newPlugin Plugin
 		if plugin.Basic != nil {
 			pluginConfig := plugin.Basic
-			pluginConfig.Version = s.VersionOpt
+			pluginConfig.Version = s.Version
 			pluginConfig.Selector = s.Selector
-			pluginConfig.ListOpt = s.ListOpt
-			pluginConfig.Bundle = s.BundleOpt
+			pluginConfig.ListOpt = s.List
+			pluginConfig.Bundle = s.Bundle
 			setConfigDefaults(pluginConfig, s.Kubeconfig)
 			newPlugin = basicOrOLMPlugin{pluginType: scplugins.BasicOperator, config: *pluginConfig}
 		} else if plugin.Olm != nil {
 			pluginConfig := plugin.Olm
-			pluginConfig.Version = s.VersionOpt
+			pluginConfig.Version = s.Version
 			pluginConfig.Selector = s.Selector
-			pluginConfig.ListOpt = s.ListOpt
-			pluginConfig.Bundle = s.BundleOpt
+			pluginConfig.ListOpt = s.List
+			pluginConfig.Bundle = s.Bundle
 			setConfigDefaults(pluginConfig, s.Kubeconfig)
 			newPlugin = basicOrOLMPlugin{pluginType: scplugins.OLMIntegration, config: *pluginConfig}
 		} else {
@@ -104,14 +95,14 @@ func (s Config) GetPlugins(configs []PluginConfig) ([]Plugin, error) {
 
 func (s Config) RunTests() error {
 	for idx, plugin := range s.PluginConfigs {
-		if err := validateConfig(plugin, idx, s.VersionOpt); err != nil {
+		if err := validateConfig(plugin, idx, s.Version); err != nil {
 			return fmt.Errorf("error validating plugin config: %v", err)
 		}
 	}
 
 	var pluginOutputs []scapiv1alpha1.ScorecardOutput
 	for _, plugin := range s.Plugins {
-		if s.ListOpt {
+		if s.List {
 			pluginOutputs = append(pluginOutputs, plugin.List())
 		} else {
 			pluginOutputs = append(pluginOutputs, plugin.Run())
@@ -129,7 +120,7 @@ func (s Config) RunTests() error {
 		return err
 	}
 
-	if schelpers.IsV1alpha2(s.VersionOpt) {
+	if schelpers.IsV1alpha2(s.Version) {
 		for _, scorecardOutput := range pluginOutputs {
 			for _, result := range scorecardOutput.Results {
 				if result.Fail > 0 || result.PartialPass > 0 {
