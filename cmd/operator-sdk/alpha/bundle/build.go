@@ -20,6 +20,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	catalog "github.com/operator-framework/operator-sdk/internal/scaffold/olm-catalog"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+
 	"github.com/operator-framework/operator-registry/pkg/lib/bundle"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -53,8 +56,12 @@ $ operator-sdk bundle build \
     --image-tag quay.io/example/operator:v0.1.0 \
     --package test-operator \
     --channels stable,beta \
-    --default-channel stable \
-    --overwrite
+    --default-channel beta
+
+Assuming your operator has the same name as your operator and the only channel
+is 'stable', the above command can be abbreviated to:
+
+$ operator-sdk bundle build --image-tag quay.io/example/operator:v0.1.0
 
 The following invocation will generate test-operator bundle metadata and
 Dockerfile without building the image:
@@ -66,10 +73,17 @@ $ operator-sdk bundle build \
     --channels stable,beta \
     --default-channel stable`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := c.validate(); err != nil {
+				return err
+			}
 			channels := strings.Join(c.channels, ",")
 			if c.generateOnly {
-				return bundle.GenerateFunc(c.directory, c.packageName, channels,
-					c.channelDefault, true)
+				err := bundle.GenerateFunc(c.directory, c.packageName, channels,
+					c.defaultChannel, true)
+				if err != nil {
+					log.Fatalf("Error generating bundle image files: %v", err)
+				}
+				return nil
 			}
 			// An image tag is required for build only.
 			if c.imageTag == "" {
@@ -77,51 +91,40 @@ $ operator-sdk bundle build \
 			}
 			// Clean up transient metadata and Dockerfile once the image is built,
 			// as they are no longer needed.
-			metaDir := filepath.Join(c.directory, "metadata")
-			_, err := os.Stat(metaDir)
-			metaExists := os.IsExist(err)
-			dockerFile := filepath.Join(c.directory, "Dockerfile")
-			_, err = os.Stat(dockerFile)
-			dockerFileExists := os.IsExist(err)
-			defer func() {
-				if !metaExists {
-					_ = os.RemoveAll(metaDir)
-				}
-				if !dockerFileExists {
-					_ = os.RemoveAll(dockerFile)
-				}
-			}()
-			return bundle.BuildFunc(c.directory, c.imageTag, c.imageBuilder,
-				c.packageName, channels, c.channelDefault, c.overwrite)
+			for _, cleanup := range c.cleanupFuncs() {
+				defer cleanup()
+			}
+			err := bundle.BuildFunc(c.directory, c.imageTag, c.imageBuilder,
+				c.packageName, channels, c.defaultChannel, true)
+			if err != nil {
+				log.Fatalf("Error building bundle image: %v", err)
+			}
+			return nil
 		},
 	}
 
+	// Set up default values.
+	projectName := filepath.Base(projutil.MustGetwd())
+	defaultDir := ""
+	if _, err := os.Stat(catalog.OLMCatalogDir); err == nil || os.IsExist(err) {
+		defaultDir = filepath.Join(catalog.OLMCatalogDir, projectName)
+	}
+	defaultChannels := []string{"stable"}
+
+	cmd.Flags().StringVarP(&c.directory, "directory", "d", defaultDir,
+		"The directory where bundle manifests are located")
+	cmd.Flags().StringVarP(&c.packageName, "package", "p", projectName,
+		"The name of the package that bundle image belongs to")
+	cmd.Flags().StringSliceVarP(&c.channels, "channels", "c", defaultChannels,
+		"The list of channels that bundle image belongs to")
 	cmd.Flags().BoolVarP(&c.generateOnly, "generate-only", "g", false,
 		"Generate metadata and a Dockerfile on disk without building the bundle image")
-	cmd.Flags().StringVarP(&c.directory, "directory", "d", "",
-		"The directory where bundle manifests are located")
-	if err := cmd.MarkFlagRequired("directory"); err != nil {
-		log.Fatalf("Failed to mark `directory` flag for `build` subcommand as required")
-	}
-	cmd.Flags().StringVarP(&c.packageName, "package", "p", "",
-		"The name of the package that bundle image belongs to")
-	if err := cmd.MarkFlagRequired("package"); err != nil {
-		log.Fatalf("Failed to mark `package` flag for `build` subcommand as required")
-	}
-	cmd.Flags().StringSliceVarP(&c.channels, "channels", "c", nil,
-		"The list of channels that bundle image belongs to")
-	if err := cmd.MarkFlagRequired("channels"); err != nil {
-		log.Fatalf("Failed to mark `channels` flag for `build` subcommand as required")
-	}
-	// '--image-tag' is only required for 'build'.
 	cmd.Flags().StringVarP(&c.imageTag, "image-tag", "t", "",
 		"The image tag applied to the bundle image, ex. example.com/test-operator:v0.1.0")
 	cmd.Flags().StringVarP(&c.imageBuilder, "image-builder", "b", "docker",
 		"Tool to build container images. One of: [docker, podman, buildah]")
-	cmd.Flags().StringVarP(&c.channelDefault, "default-channel", "e", "",
+	cmd.Flags().StringVarP(&c.defaultChannel, "default-channel", "e", "",
 		"The default channel for the bundle image")
-	cmd.Flags().BoolVarP(&c.overwrite, "overwrite", "o", false,
-		"To overwrite annotations.yaml locally if existed. By default, overwrite is set to `false`.")
 
 	return cmd
 }

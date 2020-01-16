@@ -34,8 +34,12 @@ $ operator-sdk bundle build \
     --image-tag quay.io/example/operator:v0.1.0 \
     --package test-operator \
     --channels stable,beta \
-    --default-channel stable \
-    --overwrite
+    --default-channel beta
+
+Assuming your operator has the same name as your operator and the only channel
+is 'stable', the above command can be abbreviated to:
+
+$ operator-sdk bundle build --image-tag quay.io/example/operator:v0.1.0
 
 The following invocation will generate test-operator bundle metadata and
 Dockerfile without building the image:
@@ -51,15 +55,14 @@ $ operator-sdk bundle build \
 ### Options
 
 ```
-  -c, --channels strings         The list of channels that bundle image belongs to
+  -c, --channels strings         The list of channels that bundle image belongs to (default [stable])
   -e, --default-channel string   The default channel for the bundle image
   -d, --directory string         The directory where bundle manifests are located
   -g, --generate-only            Generate metadata and a Dockerfile on disk without building the bundle image
   -h, --help                     help for build
   -b, --image-builder string     Tool to build container images. One of: [docker, podman, buildah] (default "docker")
   -t, --image-tag string         The image tag applied to the bundle image, ex. example.com/test-operator:v0.1.0
-  -o, --overwrite false          To overwrite annotations.yaml locally if existed. By default, overwrite is set to false.
-  -p, --package string           The name of the package that bundle image belongs to
+  -p, --package string           The name of the package that bundle image belongs to (default "operator-sdk")
 ```
 
 ### SEE ALSO
