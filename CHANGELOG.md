@@ -10,6 +10,8 @@
 
 ### Bug Fixes
 
+- Fixed a regression in the helm-operator that caused all releases to be deployed in the same namespace that the operator was deployed in, regardless of which namespace the CR was created in. Now release resources are created in the same namespace as the CR. ([#2414](https://github.com/operator-framework/operator-sdk/pull/2414))
+
 ## v0.14.0
 
 ### Added
