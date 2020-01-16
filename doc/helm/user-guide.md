@@ -65,7 +65,6 @@ If `--helm-chart-version` is not set, the SDK will fetch the latest available ve
 
 **Note:** For more details and examples see the [Helm CLI reference doc][helm-reference-cli-doc].
 
-```shell
 
 ### Operator scope
 
