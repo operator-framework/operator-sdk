@@ -12,7 +12,7 @@ and should not be modified.
 To write metadata and a bundle image Dockerfile to disk, set '--generate-only=true'.
 Bundle metadata will be generated in <directory-arg>/metadata, and the Dockerfile
 in <directory-arg>. This flag is useful if you want to build the operator's
-bundle image manually.
+bundle image manually or modify metadata before building an image.
 
 More information on operator bundle images and metadata:
 https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-bundle.md#docker
@@ -31,15 +31,15 @@ This image will contain manifests for package channels 'stable' and 'beta':
 
 $ operator-sdk bundle build \
     --directory ./deploy/olm-catalog/test-operator \
-    --image-tag quay.io/example/operator:v0.1.0 \
+    --image-tag quay.io/example/test-operator:v0.1.0 \
     --package test-operator \
     --channels stable,beta \
-    --default-channel beta
+    --default-channel stable
 
 Assuming your operator has the same name as your operator and the only channel
 is 'stable', the above command can be abbreviated to:
 
-$ operator-sdk bundle build --image-tag quay.io/example/operator:v0.1.0
+$ operator-sdk bundle build --image-tag quay.io/example/test-operator:v0.1.0
 
 The following invocation will generate test-operator bundle metadata and
 Dockerfile without building the image:
@@ -62,7 +62,7 @@ $ operator-sdk bundle build \
   -h, --help                     help for build
   -b, --image-builder string     Tool to build container images. One of: [docker, podman, buildah] (default "docker")
   -t, --image-tag string         The image tag applied to the bundle image, ex. example.com/test-operator:v0.1.0
-  -p, --package string           The name of the package that bundle image belongs to (default "operator-sdk")
+  -p, --package string           The name of the package that bundle image belongs to. Set if package name differs from project name (default "operator-sdk")
 ```
 
 ### SEE ALSO
