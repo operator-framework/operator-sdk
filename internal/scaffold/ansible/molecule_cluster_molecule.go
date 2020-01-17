@@ -17,70 +17,57 @@ package ansible
 import (
 	"path/filepath"
 
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 )
 
-const MoleculeDefaultMoleculeFile = "molecule.yml"
+const MoleculeClusterMoleculeFile = "molecule.yml"
 
-type MoleculeDefaultMolecule struct {
-	StaticInput
+type MoleculeClusterMolecule struct {
+	input.Input
+	Resource scaffold.Resource
 }
 
 // GetInput - gets the input
-func (m *MoleculeDefaultMolecule) GetInput() (input.Input, error) {
+func (m *MoleculeClusterMolecule) GetInput() (input.Input, error) {
 	if m.Path == "" {
-		m.Path = filepath.Join(MoleculeDefaultDir, MoleculeDefaultMoleculeFile)
+		m.Path = filepath.Join(MoleculeClusterDir, MoleculeClusterMoleculeFile)
 	}
-	m.TemplateBody = moleculeDefaultMoleculeAnsibleTmpl
+	m.TemplateBody = moleculeClusterMoleculeAnsibleTmpl
+	m.Delims = AnsibleDelims
 
 	return m.Input, nil
 }
 
-const moleculeDefaultMoleculeAnsibleTmpl = `---
+const moleculeClusterMoleculeAnsibleTmpl = `---
 dependency:
   name: galaxy
 driver:
-  name: docker
+  name: delegated
 lint:
   name: yamllint
   options:
     config-data:
       line-length:
         max: 120
-
 platforms:
-- name: kind-default
+- name: cluster
   groups:
   - k8s
-  image: bsycorp/kind:latest-${KUBE_VERSION:-1.16}
-  privileged: True
-  override_command: no
-  exposed_ports:
-    - 8443/tcp
-    - 10080/tcp
-  published_ports:
-    - 0.0.0.0:${TEST_CLUSTER_PORT:-9443}:8443/tcp
-  pre_build_image: yes
 provisioner:
   name: ansible
-  log: True
   lint:
     name: ansible-lint
   inventory:
     group_vars:
       all:
         namespace: ${TEST_NAMESPACE:-osdk-test}
-        kubeconfig_file: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
     host_vars:
       localhost:
         ansible_python_interpreter: '{{ ansible_playbook_python }}'
-  env:
-    K8S_AUTH_KUBECONFIG: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
-    KUBECONFIG: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
-    ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/roles
-    KIND_PORT: '${TEST_CLUSTER_PORT:-9443}'
-scenario:
-  name: default
+        deploy_dir: ${MOLECULE_PROJECT_DIRECTORY}/deploy
+        template_dir: ${MOLECULE_PROJECT_DIRECTORY}/molecule/templates
+        operator_image: ${OPERATOR_IMAGE:-""}
 verifier:
   name: ansible
   lint:

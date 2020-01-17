@@ -24,6 +24,8 @@ const (
 	MoleculeDir          = "molecule"
 	MoleculeDefaultDir   = MoleculeDir + filePathSep + "default"
 	MoleculeTestLocalDir = MoleculeDir + filePathSep + "test-local"
+	MoleculeClusterDir   = MoleculeDir + filePathSep + "cluster"
+	MoleculeTemplatesDir = MoleculeDir + filePathSep + "templates"
 )
 
 // AnsibleDelims is a slice of two strings representing the left and right delimiters for ansible templates.

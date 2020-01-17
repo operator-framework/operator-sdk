@@ -20,39 +20,42 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 )
 
-const MoleculeDefaultVerifyFile = "verify.yml"
+const MoleculeClusterPlaybookFile = "playbook.yml"
 
-type MoleculeDefaultVerify struct {
+type MoleculeClusterPlaybook struct {
 	StaticInput
 }
 
 // GetInput - gets the input
-func (m *MoleculeDefaultVerify) GetInput() (input.Input, error) {
+func (m *MoleculeClusterPlaybook) GetInput() (input.Input, error) {
 	if m.Path == "" {
-		m.Path = filepath.Join(MoleculeDefaultDir, MoleculeDefaultVerifyFile)
+		m.Path = filepath.Join(MoleculeClusterDir, MoleculeClusterPlaybookFile)
 	}
-	m.TemplateBody = moleculeDefaultVerifyAnsibleTmpl
+	m.TemplateBody = moleculeClusterPlaybookAnsibleTmpl
 
 	return m.Input, nil
 }
 
-const moleculeDefaultVerifyAnsibleTmpl = `---
+const moleculeClusterPlaybookAnsibleTmpl = `---
 
-- name: Verify
+- name: Converge
   hosts: localhost
   connection: local
+  gather_facts: no
   tasks:
-    - name: Get all pods in {{ namespace }}
-      k8s_info:
-        api_version: v1
-        kind: Pod
-        namespace: '{{ namespace }}'
-      register: pods
+  - name: Ensure operator image is set
+    fail:
+      msg: |
+        You must specify the OPERATOR_IMAGE environment variable in order to run the
+        'cluster' scenario
+    when: not operator_image
 
-    - name: Output pods
-      debug: var=pods
-
-    - name: Example assertion
-      assert:
-        that: true
+  - name: Create the Operator Deployment
+    k8s:
+      namespace: '{{ namespace }}'
+      definition: "{{ lookup('template', '/'.join([template_dir, 'operator.yaml.j2'])) }}"
+      wait: yes
+    vars:
+      image: '{{ operator_image }}'
+      pull_policy: Always
 `

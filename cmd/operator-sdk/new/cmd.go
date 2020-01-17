@@ -269,7 +269,15 @@ func doAnsibleScaffold() error {
 		&ansible.DeployOperator{},
 		&ansible.Travis{},
 		&ansible.MoleculeTestLocalMolecule{},
-		&ansible.MoleculeTestLocalPrepare{Resource: *resource},
+		&ansible.MoleculeTestLocalPrepare{},
+		&ansible.MoleculeTestLocalVerify{},
+		&ansible.MoleculeClusterMolecule{Resource: *resource},
+		&ansible.MoleculeClusterCreate{},
+		&ansible.MoleculeClusterPrepare{Resource: *resource},
+		&ansible.MoleculeClusterPlaybook{},
+		&ansible.MoleculeClusterVerify{Resource: *resource},
+		&ansible.MoleculeClusterDestroy{Resource: *resource},
+		&ansible.MoleculeTemplatesOperator{},
 	)
 	if err != nil {
 		return fmt.Errorf("new ansible scaffold failed: %v", err)

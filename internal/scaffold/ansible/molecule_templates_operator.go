@@ -17,28 +17,27 @@ package ansible
 import (
 	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 )
 
-const DeployOperatorFile = "operator.yaml"
+const MoleculeTemplatesOperatorFile = "operator.yaml.j2"
 
-type DeployOperator struct {
+type MoleculeTemplatesOperator struct {
 	input.Input
 }
 
 // GetInput - gets the input
-func (d *DeployOperator) GetInput() (input.Input, error) {
-	if d.Path == "" {
-		d.Path = filepath.Join(scaffold.DeployDir, DeployOperatorFile)
+func (m *MoleculeTemplatesOperator) GetInput() (input.Input, error) {
+	if m.Path == "" {
+		m.Path = filepath.Join(MoleculeTemplatesDir, MoleculeTemplatesOperatorFile)
 	}
-	d.TemplateBody = deployOperatorAnsibleTmpl
-	d.Delims = AnsibleDelims
+	m.TemplateBody = moleculeTemplatesOperatorAnsibleTmpl
+	m.Delims = AnsibleDelims
 
-	return d.Input, nil
+	return m.Input, nil
 }
 
-const deployOperatorAnsibleTmpl = `---
+const moleculeTemplatesOperatorAnsibleTmpl = `---
 
 apiVersion: apps/v1
 kind: Deployment
@@ -62,16 +61,16 @@ spec:
           - /tmp/ansible-operator/runner
           - stdout
           # Replace this with the built image name
-          image: "REPLACE_IMAGE"
-          imagePullPolicy: "Always"
+          image: "{{ image }}"
+          imagePullPolicy: "{{ pull_policy }}"
           volumeMounts:
           - mountPath: /tmp/ansible-operator/runner
             name: runner
             readOnly: true
         - name: operator
           # Replace this with the built image name
-          image: "REPLACE_IMAGE"
-          imagePullPolicy: "Always"
+          image: "{{ image }}"
+          imagePullPolicy: "{{ pull_policy }}"
           volumeMounts:
           - mountPath: /tmp/ansible-operator/runner
             name: runner

@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,30 +14,29 @@
 
 package ansible
 
-import "github.com/operator-framework/operator-sdk/internal/scaffold/input"
+import (
+	"path/filepath"
 
-const TravisFile = ".travis.yml"
+	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
+)
 
-type Travis struct {
+const MoleculeTestLocalVerifyFile = "verify.yml"
+
+type MoleculeTestLocalVerify struct {
 	StaticInput
 }
 
 // GetInput - gets the input
-func (t *Travis) GetInput() (input.Input, error) {
-	if t.Path == "" {
-		t.Path = TravisFile
+func (m *MoleculeTestLocalVerify) GetInput() (input.Input, error) {
+	if m.Path == "" {
+		m.Path = filepath.Join(MoleculeTestLocalDir, MoleculeTestLocalVerifyFile)
 	}
-	t.TemplateBody = travisAnsibleTmpl
+	m.TemplateBody = moleculeTestLocalVerifyAnsibleTmpl
 
-	return t.Input, nil
+	return m.Input, nil
 }
 
-const travisAnsibleTmpl = `---
-sudo: required
-services: docker
-language: python
-install:
-  - pip3 install docker molecule openshift jmespath
-script:
-  - molecule test -s test-local
+const moleculeTestLocalVerifyAnsibleTmpl = `---
+
+- import_playbook: ../cluster/verify.yml
 `
