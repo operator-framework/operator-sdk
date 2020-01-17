@@ -307,12 +307,8 @@ func doAnsibleScaffold() error {
 
 	// update deploy/role.yaml for the given resource r.
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-<<<<<<< HEAD
 		return fmt.Errorf("failed to update the RBAC manifest for the resource (%v, %v): (%v)",
 			resource.APIVersion, resource.Kind, err)
-=======
-		return fmt.Errorf("failed to update the RBAC manifest for the resource (%v, %v): %v", resource.APIVersion, resource.Kind, err)
->>>>>>> upstream/master
 	}
 	return nil
 }
@@ -322,7 +318,6 @@ func doHelmScaffold() error {
 		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
 		ProjectName:    projectName,
 	}
-
 	createOpts := helm.CreateChartOptions{
 		ResourceAPIVersion: apiVersion,
 		ResourceKind:       kind,
@@ -378,12 +373,8 @@ func doHelmScaffold() error {
 	}
 
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-<<<<<<< HEAD
-		return fmt.Errorf("failed to update the RBAC manifest for resource (%v, %v): %w",
+		return fmt.Errorf("failed to update the RBAC manifest for resource (%v, %v): %v",
 			resource.APIVersion, resource.Kind, err)
-=======
-		return fmt.Errorf("failed to update the RBAC manifest for resource (%v, %v): %v", resource.APIVersion, resource.Kind, err)
->>>>>>> upstream/master
 	}
 	return nil
 }
@@ -405,8 +396,8 @@ func generateCRDNonGo(projectName string, resource scaffold.Resource) error {
 func verifyFlags() error {
 	if operatorType != projutil.OperatorTypeGo && operatorType != projutil.OperatorTypeAnsible && operatorType !=
 		projutil.OperatorTypeHelm {
-		return errors.Wrap(projutil.ErrUnknownOperatorType{Type: operatorType}, "value of --type can only"+
-			" be `go`, `ansible`, or `helm`")
+		return fmt.Errorf("value of --type can only be `go`, `ansible`, or `helm`: %v",
+			projutil.ErrUnknownOperatorType{Type: operatorType})
 	}
 	if operatorType != projutil.OperatorTypeAnsible && generatePlaybook {
 		return fmt.Errorf("value of --generate-playbook can only be used with --type `ansible`")

@@ -112,7 +112,7 @@ func (c Client) InstallVersion(ctx context.Context, version string) (*olmresourc
 		}
 		log.Printf("Waiting for clusterserviceversion/%s to reach 'Succeeded' phase", csvKey.Name)
 		if err := c.DoCSVWait(ctx, csvKey); err != nil {
-			return nil, errors.Wrapf(err, "clusterserviceversion/%s failed to reach 'Succeeded' phase",
+			return nil, fmt.Errorf("clusterserviceversion/%s failed to reach 'Succeeded' phase",
 				csvKey.Name)
 		}
 	}

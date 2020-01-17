@@ -325,12 +325,12 @@ func getCRFromCSV(currentCRMans []string, crJSONStr string, csvName string) ([]s
 		if crJSONStr != "" {
 			var crs []interface{}
 			if err := json.Unmarshal([]byte(crJSONStr), &crs); err != nil {
-				return finalCR, fmt.Errorf("metadata.annotations['alm-examples'] in CSV %s" +
-				 "incorrectly formatted: %v", csvName, err)
+				return finalCR, fmt.Errorf("metadata.annotations['alm-examples'] in CSV %s"+
+					"incorrectly formatted: %v", csvName, err)
 			}
 			if len(crs) == 0 {
 				return finalCR, fmt.Errorf("no CRs found in metadata.annotations['alm-examples']"+
-				" in CSV %s and cr-manifest config option not set", csvName)
+					" in CSV %s and cr-manifest config option not set", csvName)
 			}
 			// TODO: run scorecard against all CR's in CSV.
 			cr := crs[0]

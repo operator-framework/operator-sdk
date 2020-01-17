@@ -71,7 +71,7 @@ func GetCRDDescriptionForGVK(apisDir string, gvk schema.GroupVersionKind) (olmap
 	comments := append(kindType.SecondClosestCommentLines, kindType.CommentLines...)
 	kindDescriptors, err := parseCSVGenAnnotations(comments)
 	if err != nil {
-		return olmapiv1alpha1.CRDDescription{}, fmt.Errorf("error parsing CSV type %s annotations: %v", 
+		return olmapiv1alpha1.CRDDescription{}, fmt.Errorf("error parsing CSV type %s annotations: %v",
 			kindType.Name.Name, err)
 	}
 	if description := parseDescription(comments); description != "" {
@@ -87,7 +87,7 @@ func GetCRDDescriptionForGVK(apisDir string, gvk schema.GroupVersionKind) (olmap
 		path, err := getPathFromMember(member)
 		if err != nil {
 			return olmapiv1alpha1.CRDDescription{}, fmt.Errorf("error parsing %s type member %s JSON tags: %v",
-				 gvk.Kind, member.Name, err)
+				gvk.Kind, member.Name, err)
 		}
 		if path != typeSpec && path != typeStatus {
 			continue
