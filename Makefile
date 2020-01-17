@@ -190,9 +190,14 @@ test-markdown test/markdown:
 test-sanity test/sanity: tidy build/operator-sdk lint
 	./hack/tests/sanity-check.sh
 
-TEST_PKGS:=$(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/(hack/|test/)')
+# NOTE: It is required to ignore the : pkg/ansible/proxy/proxy_test.go which requires network permissions
+TEST_PKGS:=$(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/(hack/|test/|pkg/ansible/proxy/proxy_test.go)')
 test-unit test/unit: ## Run the unit tests
-	$(Q)go test -coverprofile=coverage.out -covermode=count -count=1 -short ${TEST_PKGS}
+	# -failfast: disables running additional tests after any test fails
+	# -tags=integration: run tests tagged as integration
+	# -coverprofile: define the name of the file with the coverage
+	# -covermode: will count the % of coverage
+	$(Q)go test -failfast -tags=integration -coverprofile=coverage.out -covermode=count ${TEST_PKGS}
 
 # CI tests.
 .PHONY: test-ci
