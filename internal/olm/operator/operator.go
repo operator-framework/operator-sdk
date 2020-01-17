@@ -36,7 +36,7 @@ const (
 type OLMCmd struct { // nolint:golint
 	// ManifestsDir is a directory containing a package manifest and N bundles
 	// of the operator's CSV and CRD's. OperatorVersion can be set to the
-	// version of the desired operator version's subdir and Up()/Down() will
+	// version of the desired operator version's subdir and Run()/Cleanup() will
 	// deploy the operator version in that subdir.
 	ManifestsDir string
 	// OperatorVersion is the version of the operator to deploy. It must be
@@ -85,6 +85,7 @@ type OLMCmd struct { // nolint:golint
 var installModeFormat = "InstallModeType=[ns1,ns2[, ...]]"
 
 func (c *OLMCmd) AddToFlagSet(fs *pflag.FlagSet) {
+	fs.StringVar(&c.ManifestsDir, "manifests", "", "Directory containing package manifest and operator bundles.")
 	fs.StringVar(&c.OperatorVersion, "operator-version", "", "Version of operator to deploy")
 	fs.StringVar(&c.InstallMode, "install-mode", "",
 		"InstallMode to create OperatorGroup with. Format: "+installModeFormat)
@@ -122,7 +123,7 @@ func (c *OLMCmd) initialize() {
 	})
 }
 
-func (c *OLMCmd) Up() error {
+func (c *OLMCmd) Run() error {
 	c.initialize()
 	if err := c.validate(); err != nil {
 		return fmt.Errorf("validation error: %w", err)
@@ -133,10 +134,10 @@ func (c *OLMCmd) Up() error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), c.Timeout)
 	defer cancel()
-	return m.up(ctx)
+	return m.run(ctx)
 }
 
-func (c *OLMCmd) Down() (err error) {
+func (c *OLMCmd) Cleanup() (err error) {
 	c.initialize()
 	if err := c.validate(); err != nil {
 		return fmt.Errorf("validation error: %w", err)
@@ -147,5 +148,5 @@ func (c *OLMCmd) Down() (err error) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), c.Timeout)
 	defer cancel()
-	return m.down(ctx)
+	return m.cleanup(ctx)
 }

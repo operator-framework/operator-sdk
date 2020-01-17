@@ -88,7 +88,7 @@ func (m *manager) Sync(ctx context.Context) error {
 	// Get release history for this release name
 	releases, err := m.storageBackend.History(m.releaseName)
 	if err != nil && !notFoundErr(err) {
-		return fmt.Errorf("failed to retrieve release history: %s", err)
+		return fmt.Errorf("failed to retrieve release history: %w", err)
 	}
 
 	// Cleanup non-deployed release versions. If all release versions are
@@ -98,7 +98,7 @@ func (m *manager) Sync(ctx context.Context) error {
 		if rel.Info != nil && rel.Info.Status != rpb.StatusDeployed {
 			_, err := m.storageBackend.Delete(rel.Name, rel.Version)
 			if err != nil && !notFoundErr(err) {
-				return fmt.Errorf("failed to delete stale release version: %s", err)
+				return fmt.Errorf("failed to delete stale release version: %w", err)
 			}
 		}
 	}
@@ -109,7 +109,7 @@ func (m *manager) Sync(ctx context.Context) error {
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("failed to get deployed release: %s", err)
+		return fmt.Errorf("failed to get deployed release: %w", err)
 	}
 	m.deployedRelease = deployedRelease
 	m.isInstalled = true
@@ -117,7 +117,7 @@ func (m *manager) Sync(ctx context.Context) error {
 	// Get the next candidate release to determine if an update is necessary.
 	candidateRelease, err := m.getCandidateRelease(m.namespace, m.releaseName, m.chart, m.values)
 	if err != nil {
-		return fmt.Errorf("failed to get candidate release: %s", err)
+		return fmt.Errorf("failed to get candidate release: %w", err)
 	}
 	if deployedRelease.Manifest != candidateRelease.Manifest {
 		m.isUpdateRequired = true
@@ -171,10 +171,10 @@ func (m manager) InstallRelease(ctx context.Context) (*rpb.Release, error) {
 			// Only log a message about a rollback failure if the failure was caused
 			// by something other than the release not being found.
 			if uninstallErr != nil && !notFoundErr(uninstallErr) {
-				return nil, fmt.Errorf("failed installation (%s) and failed rollback (%s)", err, uninstallErr)
+				return nil, fmt.Errorf("failed installation (%s) and failed rollback: %w", err, uninstallErr)
 			}
 		}
-		return nil, fmt.Errorf("failed to install release: %s", err)
+		return nil, fmt.Errorf("failed to install release: %w", err)
 	}
 	return installedRelease, nil
 }
@@ -198,10 +198,10 @@ func (m manager) UpdateRelease(ctx context.Context) (*rpb.Release, *rpb.Release,
 			// log both the update and rollback errors.
 			rollbackErr := rollback.Run(m.releaseName)
 			if rollbackErr != nil {
-				return nil, nil, fmt.Errorf("failed update (%s) and failed rollback (%s)", err, rollbackErr)
+				return nil, nil, fmt.Errorf("failed update (%s) and failed rollback: %w", err, rollbackErr)
 			}
 		}
-		return nil, nil, fmt.Errorf("failed to update release: %s", err)
+		return nil, nil, fmt.Errorf("failed to update release: %w", err)
 	}
 	return m.deployedRelease, updatedRelease, err
 }
@@ -241,7 +241,7 @@ func reconcileRelease(ctx context.Context, kubeClient kube.Interface, expectedMa
 
 		patch, err := generatePatch(existing, expected.Object)
 		if err != nil {
-			return fmt.Errorf("failed to marshal JSON patch: %s", err)
+			return fmt.Errorf("failed to marshal JSON patch: %w", err)
 		}
 
 		if patch == nil {
@@ -250,7 +250,7 @@ func reconcileRelease(ctx context.Context, kubeClient kube.Interface, expectedMa
 
 		_, err = helper.Patch(expected.Namespace, expected.Name, apitypes.JSONPatchType, patch, &metav1.PatchOptions{})
 		if err != nil {
-			return fmt.Errorf("patch error: %s", err)
+			return fmt.Errorf("patch error: %w", err)
 		}
 		return nil
 	})

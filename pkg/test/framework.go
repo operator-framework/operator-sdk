@@ -110,7 +110,7 @@ func (opts *frameworkOpts) addToFlagSet(flagset *flag.FlagSet) {
 func newFramework(opts *frameworkOpts) (*Framework, error) {
 	kubeconfig, kcNamespace, err := k8sInternal.GetKubeconfigAndNamespace(opts.kubeconfigPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build the kubeconfig: %v", err)
+		return nil, fmt.Errorf("failed to build the kubeconfig: %w", err)
 	}
 
 	namespace := kcNamespace
@@ -123,15 +123,15 @@ func newFramework(opts *frameworkOpts) (*Framework, error) {
 
 	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build the kubeclient: %v", err)
+		return nil, fmt.Errorf("failed to build the kubeclient: %w", err)
 	}
 
 	scheme := runtime.NewScheme()
 	if err := cgoscheme.AddToScheme(scheme); err != nil {
-		return nil, fmt.Errorf("failed to add cgo scheme to runtime scheme: (%v)", err)
+		return nil, fmt.Errorf("failed to add cgo scheme to runtime scheme: %w", err)
 	}
 	if err := extscheme.AddToScheme(scheme); err != nil {
-		return nil, fmt.Errorf("failed to add api extensions scheme to runtime scheme: (%v)", err)
+		return nil, fmt.Errorf("failed to add api extensions scheme to runtime scheme: %w", err)
 	}
 
 	cachedDiscoveryClient := cached.NewMemCacheClient(kubeclient.Discovery())
@@ -140,7 +140,7 @@ func newFramework(opts *frameworkOpts) (*Framework, error) {
 
 	dynClient, err := dynclient.New(kubeconfig, dynclient.Options{Scheme: scheme, Mapper: restMapper})
 	if err != nil {
-		return nil, fmt.Errorf("failed to build the dynamic client: %v", err)
+		return nil, fmt.Errorf("failed to build the dynamic client: %w", err)
 	}
 	framework := &Framework{
 		Client:            &frameworkClient{Client: dynClient},
@@ -187,7 +187,7 @@ func (f *Framework) addToScheme(addToScheme addToSchemeFunc, obj runtime.Object)
 	f.restMapper.Reset()
 	dynClient, err := dynclient.New(f.KubeConfig, dynclient.Options{Scheme: f.Scheme, Mapper: f.restMapper})
 	if err != nil {
-		return fmt.Errorf("failed to initialize new dynamic client: (%v)", err)
+		return fmt.Errorf("failed to initialize new dynamic client: %w", err)
 	}
 	err = wait.PollImmediate(time.Second, time.Second*10, func() (done bool, err error) {
 		if f.singleNamespaceMode {
@@ -203,7 +203,7 @@ func (f *Framework) addToScheme(addToScheme addToSchemeFunc, obj runtime.Object)
 		return true, nil
 	})
 	if err != nil {
-		return fmt.Errorf("failed to build the dynamic client: %v", err)
+		return fmt.Errorf("failed to build the dynamic client: %w", err)
 	}
 	return nil
 }
@@ -216,17 +216,17 @@ func (f *Framework) runM(m *testing.M) (int, error) {
 	// go test always runs from the test directory; change to project root
 	err := os.Chdir(f.projectRoot)
 	if err != nil {
-		return 0, fmt.Errorf("failed to change directory to project root: %v", err)
+		return 0, fmt.Errorf("failed to change directory to project root: %w", err)
 	}
 
 	// create crd
 	globalYAML, err := ioutil.ReadFile(f.globalManPath)
 	if err != nil {
-		return 0, fmt.Errorf("failed to read global resource manifest: %v", err)
+		return 0, fmt.Errorf("failed to read global resource manifest: %w", err)
 	}
 	err = ctx.createFromYAML(globalYAML, true, &CleanupOptions{TestContext: ctx})
 	if err != nil {
-		return 0, fmt.Errorf("failed to create resource(s) in global resource manifest: %v", err)
+		return 0, fmt.Errorf("failed to create resource(s) in global resource manifest: %w", err)
 	}
 
 	if !f.LocalOperator {
@@ -237,14 +237,14 @@ func (f *Framework) runM(m *testing.M) (int, error) {
 	outBuf := &bytes.Buffer{}
 	localCmd, err := f.setupLocalCommand()
 	if err != nil {
-		return 0, fmt.Errorf("failed to setup local command: %v", err)
+		return 0, fmt.Errorf("failed to setup local command: %w", err)
 	}
 	localCmd.Stdout = outBuf
 	localCmd.Stderr = outBuf
 
 	err = localCmd.Start()
 	if err != nil {
-		return 0, fmt.Errorf("failed to run operator locally: %v", err)
+		return 0, fmt.Errorf("failed to run operator locally: %w", err)
 	}
 	log.Info("Started local operator")
 
@@ -268,7 +268,7 @@ func (f *Framework) setupLocalCommand() (*exec.Cmd, error) {
 		PackagePath: filepath.Join(scaffold.ManagerDir, scaffold.CmdFile),
 	}
 	if err := projutil.GoBuild(opts); err != nil {
-		return nil, fmt.Errorf("failed to build local operator binary: %s", err)
+		return nil, fmt.Errorf("failed to build local operator binary: %w", err)
 	}
 
 	args := []string{}

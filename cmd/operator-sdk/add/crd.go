@@ -95,7 +95,7 @@ func crdFunc(cmd *cobra.Command, args []string) error {
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("crd scaffold failed: (%v)", err)
+		return fmt.Errorf("crd scaffold failed: %v", err)
 	}
 
 	// This command does not consider an APIs dir. Instead it adds a plain CRD
@@ -138,7 +138,7 @@ func verifyCRDFlags() error {
 func verifyCRDDeployPath() error {
 	wd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to determine the full path of the current directory: (%v)", err)
+		return fmt.Errorf("failed to determine the full path of the current directory: %v", err)
 	}
 	// check if the deploy sub-directory exist
 	_, err = os.Stat(filepath.Join(wd, scaffold.DeployDir))

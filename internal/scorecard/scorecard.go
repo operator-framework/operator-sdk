@@ -29,7 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

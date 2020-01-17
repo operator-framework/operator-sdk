@@ -95,27 +95,27 @@ func SingleOperator(t *testing.T) {
 	// Cleanup.
 	defer func() {
 		opcmd.ForceRegistry = true
-		if err := opcmd.Down(); err != nil {
+		if err := opcmd.Cleanup(); err != nil {
 			t.Fatal(err)
 		}
 	}()
 
 	// "Remove operator before deploy"
-	assert.NoError(t, opcmd.Down())
+	assert.NoError(t, opcmd.Cleanup())
 	// "Remove operator before deploy (force delete registry)"
 	opcmd.ForceRegistry = true
-	assert.NoError(t, opcmd.Down())
+	assert.NoError(t, opcmd.Cleanup())
 
 	// "Deploy operator"
-	assert.NoError(t, opcmd.Up())
+	assert.NoError(t, opcmd.Run())
 	// "Fail to deploy operator after deploy"
-	assert.Error(t, opcmd.Up())
+	assert.Error(t, opcmd.Run())
 
 	// "Remove operator after deploy"
-	assert.NoError(t, opcmd.Down())
+	assert.NoError(t, opcmd.Cleanup())
 	// "Remove operator after removal"
-	assert.NoError(t, opcmd.Down())
+	assert.NoError(t, opcmd.Cleanup())
 	// "Remove operator after removal (force delete registry)"
 	opcmd.ForceRegistry = true
-	assert.NoError(t, opcmd.Down())
+	assert.NoError(t, opcmd.Cleanup())
 }

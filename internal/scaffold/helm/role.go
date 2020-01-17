@@ -103,12 +103,12 @@ func generateRoleRules(dc roleDiscoveryInterface, chart *chart.Chart) ([]rbacv1.
 	[]rbacv1.PolicyRule, error) {
 	serverResources, err := dc.ServerResources()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get server resources: %s", err)
+		return nil, nil, fmt.Errorf("failed to get server resources: %v", err)
 	}
 
 	manifests, err := getDefaultManifests(chart)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get default manifest: %s", err)
+		return nil, nil, fmt.Errorf("failed to get default manifest: %v", err)
 	}
 
 	// Use maps of sets of resources, keyed by their group. This helps us
@@ -188,7 +188,7 @@ func getDefaultManifests(c *chart.Chart) ([]releaseutil.Manifest, error) {
 	install.ClientOnly = true
 	rel, err := install.Run(c, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to render chart templates: %s", err)
+		return nil, fmt.Errorf("failed to render chart templates: %v", err)
 	}
 	_, manifests, err := releaseutil.SortManifests(releaseutil.SplitManifests(rel.Manifest),
 		chartutil.DefaultVersionSet, releaseutil.InstallOrder)

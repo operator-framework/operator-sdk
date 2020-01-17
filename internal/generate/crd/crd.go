@@ -154,7 +154,7 @@ func (g crdGenerator) generateGo() (map[string][]byte, error) {
 	// Generate files in the generator's cache so we can modify the file name
 	// and annotations.
 	defName := "output:crd:cache"
-	cacheOutputDir := string(filepath.Separator) + filepath.Clean(g.OutputDir)
+	cacheOutputDir := filepath.Clean(g.OutputDir)
 	rawOpts := []string{
 		"crd",
 		fmt.Sprintf("paths=%s/...", fileutil.DotPath(g.Inputs[APIsDirKey])),

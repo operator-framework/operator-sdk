@@ -175,22 +175,22 @@ func (scg *SDKCertGenerator) GenerateCert(cr runtime.Object, service *v1.Service
 		// custom CA provided by the user.
 		customCAKeyData, err := ioutil.ReadFile(config.CAKey)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error reading CA Key from the given file name: %v", err)
+			return nil, nil, nil, fmt.Errorf("error reading CA Key from the given file name: %w", err)
 		}
 
 		customCACertData, err := ioutil.ReadFile(config.CACert)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error reading CA Cert from the given file name: %v", err)
+			return nil, nil, nil, fmt.Errorf("error reading CA Cert from the given file name: %w", err)
 		}
 
 		customCAKey, err := parsePEMEncodedPrivateKey(customCAKeyData)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error parsing CA Key from the given file name: %v", err)
+			return nil, nil, nil, fmt.Errorf("error parsing CA Key from the given file name: %w", err)
 		}
 
 		customCACert, err := parsePEMEncodedCert(customCACertData)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error parsing CA Cert from the given file name: %v", err)
+			return nil, nil, nil, fmt.Errorf("error parsing CA Cert from the given file name: %w", err)
 		}
 		caSecret, caConfigMap = toCASecretAndConfigmap(customCAKey, customCACert, caSecretAndConfigMapName)
 	} else if config.CAKey != "" || config.CACert != "" {

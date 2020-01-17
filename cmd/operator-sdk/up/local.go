@@ -109,7 +109,7 @@ func upLocal() error {
 	projectName := filepath.Base(absProjectPath)
 	outputBinName := filepath.Join(scaffold.BuildBinDir, projectName+"-local")
 	if err := buildLocal(outputBinName); err != nil {
-		return fmt.Errorf("failed to build operator to run locally: (%v)", err)
+		return fmt.Errorf("failed to build operator to run locally: %v", err)
 	}
 
 	args := []string{}
@@ -149,7 +149,7 @@ func upLocal() error {
 	dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, namespace))
 
 	if err := projutil.ExecCmd(dc); err != nil {
-		return fmt.Errorf("failed to run operator locally: (%v)", err)
+		return fmt.Errorf("failed to run operator locally: %v", err)
 	}
 
 	return nil
@@ -176,13 +176,13 @@ func setupOperatorEnv() error {
 	// only set env var if user explicitly specified a kubeconfig path
 	if kubeConfig != "" {
 		if err := os.Setenv(k8sutil.KubeConfigEnvVar, kubeConfig); err != nil {
-			return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.KubeConfigEnvVar, err)
+			return fmt.Errorf("failed to set %s environment variable: %v", k8sutil.KubeConfigEnvVar, err)
 		}
 	}
 	// Set the namespace that the manager will be able to grab
 	if namespace != "" {
 		if err := os.Setenv(k8sutil.WatchNamespaceEnvVar, namespace); err != nil {
-			return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.WatchNamespaceEnvVar, err)
+			return fmt.Errorf("failed to set %s environment variable: %v", k8sutil.WatchNamespaceEnvVar, err)
 		}
 	}
 	// Set the operator name, if not already set
@@ -190,7 +190,7 @@ func setupOperatorEnv() error {
 	if _, err := k8sutil.GetOperatorName(); err != nil {
 		operatorName := filepath.Base(projutil.MustGetwd())
 		if err := os.Setenv(k8sutil.OperatorNameEnvVar, operatorName); err != nil {
-			return fmt.Errorf("failed to set %s environment variable: (%v)", k8sutil.OperatorNameEnvVar, err)
+			return fmt.Errorf("failed to set %s environment variable: %v", k8sutil.OperatorNameEnvVar, err)
 		}
 	}
 	return nil

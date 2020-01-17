@@ -2,7 +2,10 @@
 
 ### Added
 
+- Added [`run`](./doc/cli/operator-sdk_alpha_run.md) and [`cleanup`](./doc/cli/operator-sdk_alpha_cleanup.md) subcommands (under the `alpha` subcommand) to manage deployment/deletion of operators. These commands currently interact with OLM via an in-cluster registry-server created using an operator's on-disk manifests and managed by `operator-sdk`. ([#2402](ttps://github.com/operator-framework/operator-sdk/pull/2402))
+
 ### Changed
+- Changed error wrapping according to Go version 1.13+ [error handling](https://blog.golang.org/go1.13-errors). ([#2355](https://github.com/operator-framework/operator-sdk/pull/2355))
 
 ### Deprecated
 
@@ -22,7 +25,6 @@
 - Added support for override values with environment variable expansion in the `watches.yaml` file for Helm-based operators. ([#2325](https://github.com/operator-framework/operator-sdk/pull/2325))
 
 ### Changed
-
 - Replace usage of `github.com/operator-framework/operator-sdk/pkg/restmapper.DynamicRESTMapper` with `sigs.k8s.io/controller-runtime/pkg/client/apiutil.DynamicRESTMapper`. ([#2309](https://github.com/operator-framework/operator-sdk/pull/2309))
 - Upgraded Helm operator packages and base image from Helm v2 to Helm v3. Cluster state for pre-existing CRs using Helm v2-based operators will be automatically migrated to Helm v3's new release storage format, and existing releases may be upgraded due to changes in Helm v3's label injection. ([#2080](https://github.com/operator-framework/operator-sdk/pull/2080))
 - Fail `operator-sdk olm-catalog gen-csv` if it is not run from a project's root, which the command already assumes is the case. ([#2322](https://github.com/operator-framework/operator-sdk/pull/2322))
