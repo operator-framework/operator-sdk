@@ -403,4 +403,4 @@ Events:
 [helm-charts]:https://helm.sh/docs/topics/charts/
 [helm-values]:https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing
 [quay-link]:https://quay.io
-[helm-reference-cli-doc]:./../sdk-cli-reference.md
+[helm-reference-cli-doc]:./../sdk-cli-reference.md#helm-project
