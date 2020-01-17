@@ -28,18 +28,9 @@ import (
 	cached "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
-
-// NewFromManager returns a Kubernetes client that can be used with
-// a Tiller server.
-func NewFromManager(mgr manager.Manager) (*kube.Client, error) {
-	c, err := NewRESTClientGetter(mgr)
-	if err != nil {
-		return nil, err
-	}
-	return kube.New(c), nil
-}
 
 var _ genericclioptions.RESTClientGetter = &restClientGetter{}
 
@@ -47,6 +38,7 @@ type restClientGetter struct {
 	restConfig      *rest.Config
 	discoveryClient discovery.CachedDiscoveryInterface
 	restMapper      meta.RESTMapper
+	namespaceConfig clientcmd.ClientConfig
 }
 
 func (c *restClientGetter) ToRESTConfig() (*rest.Config, error) {
@@ -62,10 +54,32 @@ func (c *restClientGetter) ToRESTMapper() (meta.RESTMapper, error) {
 }
 
 func (c *restClientGetter) ToRawKubeConfigLoader() clientcmd.ClientConfig {
+	return c.namespaceConfig
+}
+
+var _ clientcmd.ClientConfig = &namespaceClientConfig{}
+
+type namespaceClientConfig struct {
+	namespace string
+}
+
+func (c namespaceClientConfig) RawConfig() (clientcmdapi.Config, error) {
+	return clientcmdapi.Config{}, nil
+}
+
+func (c namespaceClientConfig) ClientConfig() (*rest.Config, error) {
+	return nil, nil
+}
+
+func (c namespaceClientConfig) Namespace() (string, bool, error) {
+	return c.namespace, false, nil
+}
+
+func (c namespaceClientConfig) ConfigAccess() clientcmd.ConfigAccess {
 	return nil
 }
 
-func NewRESTClientGetter(mgr manager.Manager) (genericclioptions.RESTClientGetter, error) {
+func NewRESTClientGetter(mgr manager.Manager, ns string) (genericclioptions.RESTClientGetter, error) {
 	cfg := mgr.GetConfig()
 	dc, err := discovery.NewDiscoveryClientForConfig(cfg)
 	if err != nil {
@@ -78,6 +92,7 @@ func NewRESTClientGetter(mgr manager.Manager) (genericclioptions.RESTClientGette
 		restConfig:      cfg,
 		discoveryClient: cdc,
 		restMapper:      rm,
+		namespaceConfig: &namespaceClientConfig{ns},
 	}, nil
 }
 

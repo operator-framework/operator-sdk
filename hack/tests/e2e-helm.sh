@@ -10,20 +10,24 @@ ROOTDIR="$(pwd)"
 TMPDIR="$(mktemp -d)"
 trap_add 'rm -rf $TMPDIR' EXIT
 
+test_namespace="test-e2e-helm"
+
 deploy_operator() {
-    kubectl create -f "$OPERATORDIR/deploy/service_account.yaml"
-    kubectl create -f "$OPERATORDIR/deploy/role.yaml"
-    kubectl create -f "$OPERATORDIR/deploy/role_binding.yaml"
     kubectl create -f "$OPERATORDIR/deploy/crds/helm.example.com_nginxes_crd.yaml"
-    kubectl create -f "$OPERATORDIR/deploy/operator.yaml"
+    kubectl create -f "$OPERATORDIR/deploy/service_account.yaml"
+    kubectl create -f "$OPERATORDIR/deploy/cluster_role.yaml"
+    kubectl create -f "$OPERATORDIR/deploy/cluster_role_binding.yaml"
+    kubectl create -f "$OPERATORDIR/deploy/cluster_operator.yaml"
+    kubectl create namespace ${test_namespace}
 }
 
 remove_operator() {
+    kubectl delete --ignore-not-found namespace ${test_namespace}
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/service_account.yaml"
-    kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/role.yaml"
-    kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/role_binding.yaml"
+    kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/cluster_role.yaml"
+    kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/cluster_role_binding.yaml"
     kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/crds/helm.example.com_nginxes_crd.yaml"
-    kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/operator.yaml"
+    kubectl delete --ignore-not-found=true -f "$OPERATORDIR/deploy/cluster_operator.yaml"
 }
 
 test_operator() {
@@ -46,8 +50,9 @@ test_operator() {
         exit 1
     fi
 
+
     # verify that the metrics endpoint exists
-    if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never test-metrics --image=$metrics_test_image -- curl -sfo /dev/null http://nginx-operator-metrics:8383/metrics; do sleep 1; done";
+    if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never test-metrics --image=${metrics_test_image} -- curl -sfo /dev/null http://nginx-operator-metrics:8383/metrics; do sleep 1; done";
     then
         echo "Failed to verify that metrics endpoint exists"
         kubectl logs deployment/nginx-operator
@@ -55,59 +60,59 @@ test_operator() {
     fi
 
     # create CR
-    kubectl create -f deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml
-    trap_add 'kubectl delete --ignore-not-found -f ${OPERATORDIR}/deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml' EXIT
-    if ! timeout 1m bash -c -- 'until kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.deployedRelease.name}" | grep "example-nginx"; do sleep 1; done';
+    kubectl create --namespace=${test_namespace} -f deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml
+    trap_add "kubectl delete --namespace=${test_namespace} --ignore-not-found -f ${OPERATORDIR}/deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml" EXIT
+    if ! timeout 1m bash -c -- "until kubectl get --namespace=${test_namespace} nginxes.helm.example.com example-nginx -o jsonpath='{..status.deployedRelease.name}' | grep 'example-nginx'; do sleep 1; done";
     then
         kubectl logs deployment/nginx-operator
         exit 1
     fi
 
     # verify that the custom resource metrics endpoint exists
-    if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never test-cr-metrics --image=$metrics_test_image -- curl -sfo /dev/null http://nginx-operator-metrics:8686/metrics; do sleep 1; done";
+    if ! timeout 1m bash -c -- "until kubectl run --attach --rm --restart=Never test-cr-metrics --image=${metrics_test_image} -- curl -sfo /dev/null http://nginx-operator-metrics:8686/metrics; do sleep 1; done";
     then
         echo "Failed to verify that custom resource metrics endpoint exists"
         kubectl logs deployment/nginx-operator
         exit 1
     fi
 
-    release_name=$(kubectl get nginxes.helm.example.com example-nginx -o jsonpath="{..status.deployedRelease.name}")
-    nginx_deployment=$(kubectl get deployment -l "app.kubernetes.io/instance=${release_name}" -o jsonpath="{..metadata.name}")
+    release_name=$(kubectl get --namespace=${test_namespace} nginxes.helm.example.com example-nginx -o jsonpath="{..status.deployedRelease.name}")
+    nginx_deployment=$(kubectl get --namespace=${test_namespace} deployment -l "app.kubernetes.io/instance=${release_name}" -o jsonpath="{..metadata.name}")
 
-    if ! timeout 1m kubectl rollout status deployment/${nginx_deployment};
+    if ! timeout 1m kubectl rollout --namespace=${test_namespace} status deployment/${nginx_deployment};
     then
-        kubectl describe pods -l "app.kubernetes.io/instance=${release_name}"
-        kubectl describe deployments ${nginx_deployment}
+        kubectl describe --namespace=${test_namespace} pods -l "app.kubernetes.io/instance=${release_name}"
+        kubectl describe --namespace=${test_namespace} deployments ${nginx_deployment}
         kubectl logs deployment/nginx-operator
         exit 1
     fi
 
-    nginx_service=$(kubectl get service -l "app.kubernetes.io/instance=${release_name}" -o jsonpath="{..metadata.name}")
-    kubectl get service ${nginx_service}
+    nginx_service=$(kubectl get --namespace=${test_namespace} service -l "app.kubernetes.io/instance=${release_name}" -o jsonpath="{..metadata.name}")
+    kubectl get --namespace=${test_namespace} service ${nginx_service}
 
     # scale deployment replicas to 2 and verify the
     # deployment automatically scales back down to 1.
-    kubectl scale deployment/${nginx_deployment} --replicas=2
-    if ! timeout 1m bash -c -- "until test \$(kubectl get deployment/${nginx_deployment} -o jsonpath='{..spec.replicas}') -eq 1; do sleep 1; done";
+    kubectl scale --namespace=${test_namespace} deployment/${nginx_deployment} --replicas=2
+    if ! timeout 1m bash -c -- "until test \$(kubectl get --namespace=${test_namespace} deployment/${nginx_deployment} -o jsonpath='{..spec.replicas}') -eq 1; do sleep 1; done";
     then
-        kubectl describe pods -l "app.kubernetes.io/instance=${release_name}"
-        kubectl describe deployments ${nginx_deployment}
+        kubectl describe --namespace=${test_namespace} pods -l "app.kubernetes.io/instance=${release_name}"
+        kubectl describe --namespace=${test_namespace} deployments ${nginx_deployment}
         kubectl logs deployment/nginx-operator
         exit 1
     fi
 
     # update CR to replicaCount=2 and verify the deployment
     # automatically scales up to 2 replicas.
-    kubectl patch nginxes.helm.example.com example-nginx -p '[{"op":"replace","path":"/spec/replicaCount","value":2}]' --type=json
-    if ! timeout 1m bash -c -- "until test \$(kubectl get deployment/${nginx_deployment} -o jsonpath='{..spec.replicas}') -eq 2; do sleep 1; done";
+    kubectl patch --namespace=${test_namespace} nginxes.helm.example.com example-nginx -p '[{"op":"replace","path":"/spec/replicaCount","value":2}]' --type=json
+    if ! timeout 1m bash -c -- "until test \$(kubectl get --namespace=${test_namespace} deployment/${nginx_deployment} -o jsonpath='{..spec.replicas}') -eq 2; do sleep 1; done";
     then
-        kubectl describe pods -l "app.kubernetes.io/instance=${release_name}"
-        kubectl describe deployments ${nginx_deployment}
+        kubectl describe --namespace=${test_namespace} pods -l "app.kubernetes.io/instance=${release_name}"
+        kubectl describe --namespace=${test_namespace} deployments ${nginx_deployment}
         kubectl logs deployment/nginx-operator
         exit 1
     fi
 
-    kubectl delete -f deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml --wait=true
+    kubectl delete --namespace=${test_namespace} -f deploy/crds/helm.example.com_v1alpha1_nginx_cr.yaml --wait=true
     kubectl logs deployment/nginx-operator | grep "Uninstalled release" | grep "${release_name}"
 }
 
@@ -131,6 +136,11 @@ operator-sdk build "$DEST_IMAGE"
 load_image_if_kind "$DEST_IMAGE"
 sed -i".bak" -E -e "s|REPLACE_IMAGE|$DEST_IMAGE|g" deploy/operator.yaml; rm -f deploy/operator.yaml.bak
 sed -i".bak" -E -e 's|Always|Never|g' deploy/operator.yaml; rm -f deploy/operator.yaml.bak
+
+kubectl create --dry-run -f "deploy/operator.yaml" -o json | jq '((.spec.template.spec.containers[] | select(.name == "nginx-operator").env[]) | select(.name == "WATCH_NAMESPACE")) |= {"name":"WATCH_NAMESPACE", "value":""}' | kubectl create --dry-run -f - -o yaml > deploy/cluster_operator.yaml
+kubectl create --dry-run  -f "deploy/role.yaml" -o json | jq '.kind = "ClusterRole"' | kubectl create --dry-run -f - -o yaml > deploy/cluster_role.yaml
+kubectl create --dry-run -f "deploy/role_binding.yaml" -o json | jq '.subjects[0].namespace= "default"' | jq '.roleRef.kind= "ClusterRole"' | jq '.kind = "ClusterRoleBinding"' | kubectl create --dry-run -f - -o yaml > deploy/cluster_role_binding.yaml
+
 # kind has an issue with certain image registries (ex. redhat's), so use a
 # different test pod image.
 METRICS_TEST_IMAGE="fedora:latest"
