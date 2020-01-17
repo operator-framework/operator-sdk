@@ -60,6 +60,12 @@ func NewCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 			buildScorecardConfig(&c)
+			for idx, plugin := range c.PluginConfigs {
+				if err := c.ValidateConfig(plugin, idx); err != nil {
+					return fmt.Errorf("error validating plugin config: %v", err)
+				}
+			}
+
 			err := c.RunTests()
 			return err
 		},

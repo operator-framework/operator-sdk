@@ -95,11 +95,6 @@ func (s Config) GetPlugins(configs []PluginConfig) ([]Plugin, error) {
 }
 
 func (s Config) RunTests() error {
-	for idx, plugin := range s.PluginConfigs {
-		if err := validateConfig(plugin, idx); err != nil {
-			return fmt.Errorf("error validating plugin config: %v", err)
-		}
-	}
 
 	var pluginOutputs []scapiv1alpha1.ScorecardOutput
 	for _, plugin := range s.Plugins {

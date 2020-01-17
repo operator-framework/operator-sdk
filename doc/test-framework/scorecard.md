@@ -108,9 +108,9 @@ While most configuration is done via a config file, there are a few important ar
 | `--config`  | string | Path to config file (default `<project_dir>/.osdk-scorecard`; file type and extension can be any of `.yaml`, `.json`, or `.toml`). If a config file is not provided and a config file is not found at the default location, the scorecard will exit with an error. |
 | `--output`, `-o`  | string | Output format. Valid options are: `text` and `json`. The default format is `text`, which is designed to be a simpler human readable format. The `json` format uses the JSON schema output format used for plugins defined later in this document. |
 | `--kubeconfig`, `-o`  | string |  path to kubeconfig. It sets the kubeconfig internally for internal plugins and sets the `KUBECONFIG` env var to the provided value for external plugins. If an external plugin specifically sets the `KUBECONFIG` env var, the kubeconfig from the specified env var will be used for that plugin instead. |
-| `--version`  | string |  The version of scorecard to run, v1alpha2 is the default, valid values are v1alpha and v1alpha2. |
-| `--selector`, `-l`  | string |  The label selector to filter tests on, only valid in version v1alpha2. |
-| `--list`, `-L`  | bool |  If true, only print the test names that would be run based on selector filtering, only valid in version v1alpha2. |
+| `--version`  | string |  The version of scorecard to run, v1alpha2 is the default, valid values are v1alpha2. |
+| `--selector`, `-l`  | string |  The label selector to filter tests on. |
+| `--list`, `-L`  | bool |  If true, only print the test names that would be run based on selector filtering. |
 
 ### Config File Options
 

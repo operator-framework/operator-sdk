@@ -49,7 +49,7 @@ func (e externalPluginEnv) String() string {
 }
 
 // validateConfig takes a config for a plugin and returns a nil error if valid or an error explaining why the config is invalid
-func validateConfig(config PluginConfig, idx int) error {
+func (s Config) ValidateConfig(config PluginConfig, idx int) error {
 	// find plugin config type
 	pluginType := ""
 	if config.Basic != nil {
