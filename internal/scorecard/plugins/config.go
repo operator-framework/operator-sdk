@@ -24,7 +24,6 @@ import (
 
 const (
 	NamespaceOpt          = "namespace"
-	KubeconfigOpt         = "kubeconfig"
 	InitTimeoutOpt        = "init-timeout"
 	OlmDeployedOpt        = "olm-deployed"
 	CSVPathOpt            = "csv-path"

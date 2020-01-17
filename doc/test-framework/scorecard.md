@@ -184,7 +184,7 @@ operator-sdk scorecard -o text --selector='test in (checkspectest,checkstatustes
 
 ## Exit Status
 
-In version v1alpha2, the scorecard return code is 1 if any of the tests executed did not pass and 0 if all selected tests pass.  Version v1alpha1 returns exit code of 0 regardless if tests fail.
+The scorecard return code is 1 if any of the tests executed did not pass and 0 if all selected tests pass.
 
 ## Extending the Scorecard with Plugins
 
@@ -439,42 +439,104 @@ are the `kind` and `apiVersion` fields as listed in the above JSONSchema.
 Example of a valid JSON output:
 
 ```json
-
 {
   "kind": "ScorecardOutput",
-  "apiVersion": "osdk.openshift.io/v1alpha1",
-  "log": "",
+  "apiVersion": "osdk.openshift.io/v1alpha2",
+  "metadata": {
+    "creationTimestamp": null
+  },
+  "log": "time=\"2020-01-16T15:30:41-06:00\" level=info msg=\"Using config file: /home/someuser/projects/memcached-operator/.osdk-scorecard.yaml\"\n",
   "results": [
     {
-      "name": "Custom Scorecard",
-      "description": "Custom operator scorecard tests",
-      "error": 0,
-      "pass": 1,
-      "partialPass": 1,
-      "fail": 0,
-      "totalTests": 2,
-      "totalScorePercent": 71,
-      "tests": [
-        {
-          "state": "partial_pass",
-          "name": "Operator Actions Reflected In Status",
-          "description": "The operator updates the Custom Resources status when the application state is updated",
-          "earnedPoints": 2,
-          "maximumPoints": 3,
-          "suggestions": [
-              "Operator should update status when scaling cluster down"
-          ],
-          "errors": []
-        },
-        {
-          "state": "pass",
-          "name": "Verify health of cluster",
-          "description": "The cluster created by the operator is working properly",
-          "earnedPoints": 1,
-          "maximumPoints": 1,
-          "suggestions": [],
-          "errors": []
-        }
+      "name": "Spec Block Exists",
+      "description": "Custom Resource has a Spec Block",
+      "labels": {
+        "necessity": "required",
+        "suite": "basic",
+        "test": "checkspectest"
+      },
+      "state": "pass"
+    },
+    {
+      "name": "Status Block Exists",
+      "description": "Custom Resource has a Status Block",
+      "labels": {
+        "necessity": "required",
+        "suite": "basic",
+        "test": "checkstatustest"
+      },
+      "state": "pass"
+    },
+    {
+      "name": "Writing into CRs has an effect",
+      "description": "A CR sends PUT/POST requests to the API server to modify resources in response to spec block changes",
+      "labels": {
+        "necessity": "required",
+        "suite": "basic",
+        "test": "writingintocrshaseffecttest"
+      },
+      "state": "pass"
+    },
+    {
+      "name": "Bundle Validation Test",
+      "description": "Validates bundle contents",
+      "labels": {
+        "necessity": "required",
+        "suite": "olm",
+        "test": "bundlevalidationtest"
+      },
+      "state": "fail",
+      "errors": [
+        "unable to find the OLM 'bundle' directory which is required for this test"
+      ]
+    },
+    {
+      "name": "Provided APIs have validation",
+      "description": "All CRDs have an OpenAPI validation subsection",
+      "labels": {
+        "necessity": "required",
+        "suite": "olm",
+        "test": "crdshavevalidationtest"
+      },
+      "state": "pass"
+    },
+    {
+      "name": "Owned CRDs have resources listed",
+      "description": "All Owned CRDs contain a resources subsection",
+      "labels": {
+        "necessity": "required",
+        "suite": "olm",
+        "test": "crdshaveresourcestest"
+      },
+      "state": "fail",
+      "suggestions": [
+        "If it would be helpful to an end-user to understand or troubleshoot your CR, consider adding resources [memcacheds/v1alpha1 replicasets/v1 deployments/v1 services/v1 servicemonitors/v1 pods/v1 configmaps/v1] to the resources section for owned CRD Memcached"
+      ]
+    },
+    {
+      "name": "Spec fields with descriptors",
+      "description": "All spec fields have matching descriptors in the CSV",
+      "labels": {
+        "necessity": "required",
+        "suite": "olm",
+        "test": "specdescriptorstest"
+      },
+      "state": "fail",
+      "suggestions": [
+        "Add a spec descriptor for size"
+      ]
+    },
+    {
+      "name": "Status fields with descriptors",
+      "description": "All status fields have matching descriptors in the CSV",
+      "labels": {
+        "necessity": "required",
+        "suite": "olm",
+        "test": "statusdescriptorstest"
+      },
+      "state": "fail",
+      "suggestions": [
+        "Add a status descriptor for status"
       ]
     }
   ]

@@ -96,7 +96,7 @@ func (s Config) GetPlugins(configs []PluginConfig) ([]Plugin, error) {
 
 func (s Config) RunTests() error {
 	for idx, plugin := range s.PluginConfigs {
-		if err := validateConfig(plugin, idx, s.Version); err != nil {
+		if err := validateConfig(plugin, idx); err != nil {
 			return fmt.Errorf("error validating plugin config: %v", err)
 		}
 	}
@@ -121,12 +121,10 @@ func (s Config) RunTests() error {
 		return err
 	}
 
-	if schelpers.IsV1alpha2(s.Version) {
-		for _, scorecardOutput := range pluginOutputs {
-			for _, result := range scorecardOutput.Results {
-				if result.Fail > 0 || result.PartialPass > 0 {
-					os.Exit(1)
-				}
+	for _, scorecardOutput := range pluginOutputs {
+		for _, result := range scorecardOutput.Results {
+			if result.Fail > 0 || result.PartialPass > 0 {
+				os.Exit(1)
 			}
 		}
 	}
