@@ -13,7 +13,6 @@
   - [Config File Options](#config-file-options)
   - [Plugins](#plugins)
     - [Basic and OLM](#basic-and-olm)
-    - [External Plugins](#external-plugins)
 - [Tests Performed](#tests-performed)
   - [Basic Operator](#basic-operator)
   - [OLM Integration](#olm-integration)
@@ -55,7 +54,7 @@ Following are some requirements for the operator project which would be  checked
 
 ## Configuration
 
-The scorecard is configured by a config file that allows configuring both internal and external plugins as well as a few global configuration options.
+The scorecard is configured by a config file that allows configuring internal plugins as well as a few global configuration options.
 
 ### Config File
 
@@ -77,18 +76,6 @@ scorecard:
           - "deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml"
           - "deploy/crds/cache.example.com_v1alpha1_memcachedrs_cr.yaml"
         csv-path: "deploy/olm-catalog/memcached-operator/0.0.3/memcached-operator.v0.0.3.clusterserviceversion.yaml"
-    # Configuring external plugin with no args
-    - name: Experimental Plugin
-      external:
-        command: bin/experiment.sh
-      # Configuring an external plugin with args and env
-    - name: Custom Test v2
-      external:
-        command: bin/my-test.sh
-        args: ["--version=2"]
-        env:
-          - name: KUBECONFIG
-            value: "~/.kube/config2"
 ```
 
 The hierarchy of config methods for the global options that are also configurable via a flag from highest priority to least is: flag->file->default.
@@ -107,7 +94,7 @@ While most configuration is done via a config file, there are a few important ar
 | `--bundle`, `-b`  | string |  The path to a bundle directory used for the bundle validation test. |
 | `--config`  | string | Path to config file (default `<project_dir>/.osdk-scorecard`; file type and extension can be any of `.yaml`, `.json`, or `.toml`). If a config file is not provided and a config file is not found at the default location, the scorecard will exit with an error. |
 | `--output`, `-o`  | string | Output format. Valid options are: `text` and `json`. The default format is `text`, which is designed to be a simpler human readable format. The `json` format uses the JSON schema output format used for plugins defined later in this document. |
-| `--kubeconfig`, `-o`  | string |  path to kubeconfig. It sets the kubeconfig internally for internal plugins and sets the `KUBECONFIG` env var to the provided value for external plugins. If an external plugin specifically sets the `KUBECONFIG` env var, the kubeconfig from the specified env var will be used for that plugin instead. |
+| `--kubeconfig`, `-o`  | string |  path to kubeconfig. It sets the kubeconfig internally for internal plugins. |
 | `--version`  | string |  The version of scorecard to run, v1alpha2 is the default, valid values are v1alpha2. |
 | `--selector`, `-l`  | string |  The label selector to filter tests on. |
 | `--list`, `-L`  | bool |  If true, only print the test names that would be run based on selector filtering. |
@@ -123,7 +110,7 @@ While most configuration is done via a config file, there are a few important ar
 
 ### Plugins
 
-A plugin object is used to configure plugins. The possible values for the plugin object are `basic`, `olm`, or `external`.
+A plugin object is used to configure plugins. The possible values for the plugin object are `basic`, or `olm`.
 
 Note that each Plugin type has different configuration options and they are named differently in the config. Only one of these fields can be set per plugin.
 
@@ -142,17 +129,6 @@ The `basic` and `olm` internal plugins have the same configuration fields:
 | `crds-dir` | string | path to directory containing CRDs that must be deployed to the cluster |
 | `namespaced-manifest` | string | manifest file with all resources that run within a namespace. By default, the scorecard will combine `service_account.yaml`, `role.yaml`, `role_binding.yaml`, and `operator.yaml` from the `deploy` directory into a temporary manifest to use as the namespaced manifest |
 | `global-manifest` | string | manifest containing required resources that run globally (not namespaced). By default, the scorecard will combine all CRDs in the `crds-dir` directory into a temporary manifest to use as the global manifest |
-
-#### External Plugins
-
-The scorecard allows developers to write their own plugins for the scorecard that can be run via an executable binary or script. For more information on developing external plugins,
-please see the [Extending the Scorecard with Plugins](#extending-the-scorecard-with-plugins) section. These are the options available to configure external plugins:
-
-| Option        | Type   | Description   |
-| --------    | -------- | -------- |
-| `command` | string | (required) path to the plugin binary or script. The path can either be absolute or relative to the operator project's root directory. All external plugins are run from the operator project's root directory |
-| `args` | \[\]string | arguments to pass to the plugin |
-| `env` | array | `env var` objects, which consist of a `name` and `value` field. If a `KUBECONFIG` env var is declared in this array as well as via the top-level `kubeconfig` option, the `KUBECONFIG` from the env array for the plugin is used |
 
 ## Tests Performed
 
