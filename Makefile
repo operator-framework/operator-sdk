@@ -191,7 +191,8 @@ test-sanity test/sanity: tidy build/operator-sdk lint
 	./hack/tests/sanity-check.sh
 
 # NOTE: It is required to ignore the : pkg/ansible/proxy/proxy_test.go which requires network permissions
-TEST_PKGS:=$(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/(hack/|test/|pkg/ansible/proxy/proxy_test.go)')
+TEST_PKGS:=$(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/(hack/|test/|pkg/ansible/proxy/)')
+
 test-unit test/unit: ## Run the unit tests
 	# -failfast: disables running additional tests after any test fails
 	# -tags=integration: run tests tagged as integration
