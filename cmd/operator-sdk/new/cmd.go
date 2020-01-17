@@ -69,8 +69,8 @@ generates a skeletal app-operator application in $HOME/projects/example.com/app-
 	newCmd.Flags().StringVar(&operatorType, "type", "go",
 		"Type of operator to initialize (choices: \"go\", \"ansible\" or \"helm\")")
 	newCmd.Flags().StringVar(&repo, "repo", "",
-		"Project repository path for Go operators. Used as the project's Go import path. This must be set if"+
-			" outside of $GOPATH/src (e.g. github.com/example-inc/my-operator)")
+		"Project repository path for Go operators. Used as the project's Go import path. This must be set if "+
+			"outside of $GOPATH/src (e.g. github.com/example-inc/my-operator)")
 	newCmd.Flags().BoolVar(&gitInit, "git-init", false,
 		"Initialize the project directory as a git repository (default false)")
 	newCmd.Flags().StringVar(&headerFile, "header-file", "",
@@ -307,7 +307,7 @@ func doAnsibleScaffold() error {
 
 	// update deploy/role.yaml for the given resource r.
 	if err := scaffold.UpdateRoleForResource(resource, cfg.AbsProjectPath); err != nil {
-		return fmt.Errorf("failed to update the RBAC manifest for the resource (%v, %v): (%v)",
+		return fmt.Errorf("failed to update the RBAC manifest for the resource (%v, %v): %v",
 			resource.APIVersion, resource.Kind, err)
 	}
 	return nil
@@ -318,6 +318,7 @@ func doHelmScaffold() error {
 		AbsProjectPath: filepath.Join(projutil.MustGetwd(), projectName),
 		ProjectName:    projectName,
 	}
+
 	createOpts := helm.CreateChartOptions{
 		ResourceAPIVersion: apiVersion,
 		ResourceKind:       kind,
@@ -441,7 +442,7 @@ func verifyFlags() error {
 		}
 		if strings.Count(apiVersion, "/") != 1 {
 			return fmt.Errorf("value of --api-version has wrong format (%v);"+
-				" format must be s$GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion)
+				" format must be $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)", apiVersion)
 		}
 	}
 
