@@ -13,7 +13,6 @@
   - [Config File Options](#config-file-options)
   - [Plugins](#plugins)
     - [Basic and OLM](#basic-and-olm)
-    - [External Plugins](#external-plugins)
 - [Tests Performed](#tests-performed)
   - [Basic Operator](#basic-operator)
   - [OLM Integration](#olm-integration)
@@ -55,7 +54,7 @@ Following are some requirements for the operator project which would be  checked
 
 ## Configuration
 
-The scorecard is configured by a config file that allows configuring both internal and external plugins as well as a few global configuration options.
+The scorecard is configured by a config file that allows configuring internal plugins as well as a few global configuration options.
 
 ### Config File
 
@@ -77,18 +76,6 @@ scorecard:
           - "deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml"
           - "deploy/crds/cache.example.com_v1alpha1_memcachedrs_cr.yaml"
         csv-path: "deploy/olm-catalog/memcached-operator/0.0.3/memcached-operator.v0.0.3.clusterserviceversion.yaml"
-    # Configuring external plugin with no args
-    - name: Experimental Plugin
-      external:
-        command: bin/experiment.sh
-      # Configuring an external plugin with args and env
-    - name: Custom Test v2
-      external:
-        command: bin/my-test.sh
-        args: ["--version=2"]
-        env:
-          - name: KUBECONFIG
-            value: "~/.kube/config2"
 ```
 
 The hierarchy of config methods for the global options that are also configurable via a flag from highest priority to least is: flag->file->default.
@@ -107,10 +94,10 @@ While most configuration is done via a config file, there are a few important ar
 | `--bundle`, `-b`  | string |  The path to a bundle directory used for the bundle validation test. |
 | `--config`  | string | Path to config file (default `<project_dir>/.osdk-scorecard`; file type and extension can be any of `.yaml`, `.json`, or `.toml`). If a config file is not provided and a config file is not found at the default location, the scorecard will exit with an error. |
 | `--output`, `-o`  | string | Output format. Valid options are: `text` and `json`. The default format is `text`, which is designed to be a simpler human readable format. The `json` format uses the JSON schema output format used for plugins defined later in this document. |
-| `--kubeconfig`, `-o`  | string |  path to kubeconfig. It sets the kubeconfig internally for internal plugins and sets the `KUBECONFIG` env var to the provided value for external plugins. If an external plugin specifically sets the `KUBECONFIG` env var, the kubeconfig from the specified env var will be used for that plugin instead. |
-| `--version`  | string |  The version of scorecard to run, v1alpha2 is the default, valid values are v1alpha and v1alpha2. |
-| `--selector`, `-l`  | string |  The label selector to filter tests on, only valid in version v1alpha2. |
-| `--list`, `-L`  | bool |  If true, only print the test names that would be run based on selector filtering, only valid in version v1alpha2. |
+| `--kubeconfig`, `-o`  | string |  path to kubeconfig. It sets the kubeconfig internally for internal plugins. |
+| `--version`  | string |  The version of scorecard to run, v1alpha2 is the default, valid values are v1alpha2. |
+| `--selector`, `-l`  | string |  The label selector to filter tests on. |
+| `--list`, `-L`  | bool |  If true, only print the test names that would be run based on selector filtering. |
 
 ### Config File Options
 
@@ -123,7 +110,7 @@ While most configuration is done via a config file, there are a few important ar
 
 ### Plugins
 
-A plugin object is used to configure plugins. The possible values for the plugin object are `basic`, `olm`, or `external`.
+A plugin object is used to configure plugins. The possible values for the plugin object are `basic`, or `olm`.
 
 Note that each Plugin type has different configuration options and they are named differently in the config. Only one of these fields can be set per plugin.
 
@@ -142,17 +129,6 @@ The `basic` and `olm` internal plugins have the same configuration fields:
 | `crds-dir` | string | path to directory containing CRDs that must be deployed to the cluster |
 | `namespaced-manifest` | string | manifest file with all resources that run within a namespace. By default, the scorecard will combine `service_account.yaml`, `role.yaml`, `role_binding.yaml`, and `operator.yaml` from the `deploy` directory into a temporary manifest to use as the namespaced manifest |
 | `global-manifest` | string | manifest containing required resources that run globally (not namespaced). By default, the scorecard will combine all CRDs in the `crds-dir` directory into a temporary manifest to use as the global manifest |
-
-#### External Plugins
-
-The scorecard allows developers to write their own plugins for the scorecard that can be run via an executable binary or script. For more information on developing external plugins,
-please see the [Extending the Scorecard with Plugins](#extending-the-scorecard-with-plugins) section. These are the options available to configure external plugins:
-
-| Option        | Type   | Description   |
-| --------    | -------- | -------- |
-| `command` | string | (required) path to the plugin binary or script. The path can either be absolute or relative to the operator project's root directory. All external plugins are run from the operator project's root directory |
-| `args` | \[\]string | arguments to pass to the plugin |
-| `env` | array | `env var` objects, which consist of a `name` and `value` field. If a `KUBECONFIG` env var is declared in this array as well as via the top-level `kubeconfig` option, the `KUBECONFIG` from the env array for the plugin is used |
 
 ## Tests Performed
 
@@ -184,7 +160,7 @@ operator-sdk scorecard -o text --selector='test in (checkspectest,checkstatustes
 
 ## Exit Status
 
-In version v1alpha2, the scorecard return code is 1 if any of the tests executed did not pass and 0 if all selected tests pass.  Version v1alpha1 returns exit code of 0 regardless if tests fail.
+The scorecard return code is 1 if any of the tests executed did not pass and 0 if all selected tests pass.
 
 ## Extending the Scorecard with Plugins
 
@@ -439,42 +415,104 @@ are the `kind` and `apiVersion` fields as listed in the above JSONSchema.
 Example of a valid JSON output:
 
 ```json
-
 {
   "kind": "ScorecardOutput",
-  "apiVersion": "osdk.openshift.io/v1alpha1",
-  "log": "",
+  "apiVersion": "osdk.openshift.io/v1alpha2",
+  "metadata": {
+    "creationTimestamp": null
+  },
+  "log": "time=\"2020-01-16T15:30:41-06:00\" level=info msg=\"Using config file: /home/someuser/projects/memcached-operator/.osdk-scorecard.yaml\"\n",
   "results": [
     {
-      "name": "Custom Scorecard",
-      "description": "Custom operator scorecard tests",
-      "error": 0,
-      "pass": 1,
-      "partialPass": 1,
-      "fail": 0,
-      "totalTests": 2,
-      "totalScorePercent": 71,
-      "tests": [
-        {
-          "state": "partial_pass",
-          "name": "Operator Actions Reflected In Status",
-          "description": "The operator updates the Custom Resources status when the application state is updated",
-          "earnedPoints": 2,
-          "maximumPoints": 3,
-          "suggestions": [
-              "Operator should update status when scaling cluster down"
-          ],
-          "errors": []
-        },
-        {
-          "state": "pass",
-          "name": "Verify health of cluster",
-          "description": "The cluster created by the operator is working properly",
-          "earnedPoints": 1,
-          "maximumPoints": 1,
-          "suggestions": [],
-          "errors": []
-        }
+      "name": "Spec Block Exists",
+      "description": "Custom Resource has a Spec Block",
+      "labels": {
+        "necessity": "required",
+        "suite": "basic",
+        "test": "checkspectest"
+      },
+      "state": "pass"
+    },
+    {
+      "name": "Status Block Exists",
+      "description": "Custom Resource has a Status Block",
+      "labels": {
+        "necessity": "required",
+        "suite": "basic",
+        "test": "checkstatustest"
+      },
+      "state": "pass"
+    },
+    {
+      "name": "Writing into CRs has an effect",
+      "description": "A CR sends PUT/POST requests to the API server to modify resources in response to spec block changes",
+      "labels": {
+        "necessity": "required",
+        "suite": "basic",
+        "test": "writingintocrshaseffecttest"
+      },
+      "state": "pass"
+    },
+    {
+      "name": "Bundle Validation Test",
+      "description": "Validates bundle contents",
+      "labels": {
+        "necessity": "required",
+        "suite": "olm",
+        "test": "bundlevalidationtest"
+      },
+      "state": "fail",
+      "errors": [
+        "unable to find the OLM 'bundle' directory which is required for this test"
+      ]
+    },
+    {
+      "name": "Provided APIs have validation",
+      "description": "All CRDs have an OpenAPI validation subsection",
+      "labels": {
+        "necessity": "required",
+        "suite": "olm",
+        "test": "crdshavevalidationtest"
+      },
+      "state": "pass"
+    },
+    {
+      "name": "Owned CRDs have resources listed",
+      "description": "All Owned CRDs contain a resources subsection",
+      "labels": {
+        "necessity": "required",
+        "suite": "olm",
+        "test": "crdshaveresourcestest"
+      },
+      "state": "fail",
+      "suggestions": [
+        "If it would be helpful to an end-user to understand or troubleshoot your CR, consider adding resources [memcacheds/v1alpha1 replicasets/v1 deployments/v1 services/v1 servicemonitors/v1 pods/v1 configmaps/v1] to the resources section for owned CRD Memcached"
+      ]
+    },
+    {
+      "name": "Spec fields with descriptors",
+      "description": "All spec fields have matching descriptors in the CSV",
+      "labels": {
+        "necessity": "required",
+        "suite": "olm",
+        "test": "specdescriptorstest"
+      },
+      "state": "fail",
+      "suggestions": [
+        "Add a spec descriptor for size"
+      ]
+    },
+    {
+      "name": "Status fields with descriptors",
+      "description": "All status fields have matching descriptors in the CSV",
+      "labels": {
+        "necessity": "required",
+        "suite": "olm",
+        "test": "statusdescriptorstest"
+      },
+      "state": "fail",
+      "suggestions": [
+        "Add a status descriptor for status"
       ]
     }
   ]

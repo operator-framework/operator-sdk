@@ -22,24 +22,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-const (
-	NamespaceOpt          = "namespace"
-	KubeconfigOpt         = "kubeconfig"
-	InitTimeoutOpt        = "init-timeout"
-	OlmDeployedOpt        = "olm-deployed"
-	CSVPathOpt            = "csv-path"
-	NamespacedManifestOpt = "namespaced-manifest"
-	GlobalManifestOpt     = "global-manifest"
-	CRManifestOpt         = "cr-manifest"
-	ProxyImageOpt         = "proxy-image"
-	ProxyPullPolicyOpt    = "proxy-pull-policy"
-	CRDsDirOpt            = "crds-dir"
-	DeployDirOpt          = "deploy-dir"
-	BasicTestsOpt         = "basic-tests"
-	OLMTestsOpt           = "olm-tests"
-	BundleOpt             = "bundle"
-)
-
 type BasicAndOLMPluginConfig struct {
 	Namespace          string          `mapstructure:"namespace"`
 	Kubeconfig         string          `mapstructure:"kubeconfig"`

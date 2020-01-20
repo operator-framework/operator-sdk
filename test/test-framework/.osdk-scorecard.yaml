@@ -17,15 +17,3 @@ scorecard:
         csv-path: "deploy/olm-catalog/memcached-operator/0.0.3/memcached-operator.v0.0.3.clusterserviceversion.yaml"
         proxy-image: "quay.io/example/scorecard-proxy"
         proxy-pull-policy: "Never"
-    - external:
-        command: scorecard/bin/print-json.sh
-    - external:
-        command: scorecard/bin/my-test.sh
-    - external:
-        command: scorecard/bin/my-test.sh
-        args: ["--version=2"]
-    - external:
-        command: scorecard/bin/my-test.sh
-        env:
-          - name: KUBECONFIG
-            value: "~/.kube/config2"
