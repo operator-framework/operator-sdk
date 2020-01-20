@@ -15,6 +15,7 @@
 package run
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 
@@ -48,6 +49,9 @@ func NewCmd() *cobra.Command {
 		Use:   "run",
 		Short: "Run an Operator in a variety of environments",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if c.olm && c.local || !c.olm && !c.local {
+				return errors.New("exactly one run-type flag must be set: --olm, --local")
+			}
 			projutil.MustInProjectRoot()
 
 			switch {
@@ -91,13 +95,15 @@ func NewCmd() *cobra.Command {
 
 	// 'run --olm' and related flags.
 	cmd.Flags().BoolVar(&c.olm, "olm", true,
-		"The operator to be run will be managed by OLM in a cluster.")
+		"The operator to be run will be managed by OLM in a cluster. "+
+			"Cannot be set with another run-type flag")
 	c.olmArgs.AddToFlagSet(cmd.Flags())
 
 	// 'run --local' and related flags.
 	cmd.Flags().BoolVar(&c.local, "local", false,
 		"The operator will be run locally by building the operator binary with "+
-			"the ability to access a kubernetes cluster using a kubeconfig file.")
+			"the ability to access a kubernetes cluster using a kubeconfig file. "+
+			"Cannot be set with another run-type flag.")
 	c.localArgs.addToFlags(cmd.Flags())
 	switch projutil.GetOperatorType() {
 	case projutil.OperatorTypeAnsible:

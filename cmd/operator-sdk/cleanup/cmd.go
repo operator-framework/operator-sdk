@@ -15,6 +15,7 @@
 package cleanup
 
 import (
+	"errors"
 	"path/filepath"
 
 	olmcatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
@@ -43,6 +44,9 @@ func NewCmd() *cobra.Command {
 		Use:   "cleanup",
 		Short: "Delete and clean up after a running Operator",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if !c.olm {
+				return errors.New("exactly one run-type flag must be set: --olm")
+			}
 			projutil.MustInProjectRoot()
 
 			switch {
@@ -73,7 +77,8 @@ func NewCmd() *cobra.Command {
 
 	// 'run --olm' and related flags.
 	cmd.Flags().BoolVar(&c.olm, "olm", true,
-		"The operator to be run will be managed by OLM in a cluster.")
+		"The operator to be run will be managed by OLM in a cluster. "+
+			"Cannot be set with another run-type flag")
 	c.olmArgs.AddToFlagSet(cmd.Flags())
 	return cmd
 }

@@ -21,17 +21,18 @@ import (
 // NewCmd returns a command that contains subcommands to run specific
 // operator types.
 func NewCmd() *cobra.Command {
-	runCmd := &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "exec-entrypoint",
 		Short: "Runs a generic operator",
 		Long: `Runs a generic operator. This is intended to be used when running
 in a Pod inside a cluster. Developers wanting to run their operator locally
 should use "run --local" instead.`,
+		Hidden: true,
 	}
 
-	runCmd.AddCommand(
+	cmd.AddCommand(
 		newRunAnsibleCmd(),
 		newRunHelmCmd(),
 	)
-	return runCmd
+	return cmd
 }
