@@ -17,6 +17,7 @@ An SDK for building operators with ease
 * [operator-sdk add](operator-sdk_add.md)	 - Adds a controller or resource to the project
 * [operator-sdk alpha](operator-sdk_alpha.md)	 - Run an alpha subcommand
 * [operator-sdk build](operator-sdk_build.md)	 - Compiles code and builds artifacts
+* [operator-sdk cleanup](operator-sdk_cleanup.md)	 - Delete and clean up after a running Operator
 * [operator-sdk completion](operator-sdk_completion.md)	 - Generators for shell completions
 * [operator-sdk exec-entrypoint](operator-sdk_exec-entrypoint.md)	 - Runs a generic operator
 * [operator-sdk generate](operator-sdk_generate.md)	 - Invokes specific generator
