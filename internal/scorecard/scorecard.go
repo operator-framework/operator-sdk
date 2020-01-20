@@ -110,7 +110,7 @@ func (s Config) RunTests() error {
 
 	for _, scorecardOutput := range pluginOutputs {
 		for _, result := range scorecardOutput.Results {
-			if result.Fail > 0 || result.PartialPass > 0 {
+			if result.Fail > 0 || result.PartialPass > 0 || result.Error > 0 {
 				os.Exit(1)
 			}
 		}
