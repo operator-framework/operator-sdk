@@ -1,4 +1,4 @@
-## operator-sdk alpha bundle build
+## operator-sdk bundle build
 
 Build an operator bundle image
 
@@ -19,7 +19,7 @@ https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-
 NOTE: bundle images are not runnable.
 
 ```
-operator-sdk alpha bundle build [flags]
+operator-sdk bundle build [flags]
 ```
 
 ### Examples
@@ -64,5 +64,5 @@ $ operator-sdk bundle build \
 
 ### SEE ALSO
 
-* [operator-sdk alpha bundle](operator-sdk_alpha_bundle.md)	 - Work with operator bundle metadata and bundle images
+* [operator-sdk bundle](operator-sdk_bundle.md)	 - Work with operator bundle metadata and bundle images
 

@@ -15,7 +15,6 @@
 package alpha
 
 import (
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/bundle"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/cleanup"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/kubebuilder"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/olm"
@@ -35,7 +34,6 @@ func NewCmd() *cobra.Command {
 		kubebuilder.NewCmd(),
 		run.NewCmd(),
 		cleanup.NewCmd(),
-		bundle.NewCmd(),
 	)
 	return cmd
 }

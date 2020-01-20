@@ -17,6 +17,7 @@ An SDK for building operators with ease
 * [operator-sdk add](operator-sdk_add.md)	 - Adds a controller or resource to the project
 * [operator-sdk alpha](operator-sdk_alpha.md)	 - Run an alpha subcommand
 * [operator-sdk build](operator-sdk_build.md)	 - Compiles code and builds artifacts
+* [operator-sdk bundle](operator-sdk_bundle.md)	 - Work with operator bundle metadata and bundle images
 * [operator-sdk completion](operator-sdk_completion.md)	 - Generators for shell completions
 * [operator-sdk generate](operator-sdk_generate.md)	 - Invokes specific generator
 * [operator-sdk migrate](operator-sdk_migrate.md)	 - Adds source code to an operator
