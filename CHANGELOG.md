@@ -18,6 +18,12 @@
 - Fixed a regression in the helm-operator that caused all releases to be deployed in the same namespace that the operator was deployed in, regardless of which namespace the CR was created in. Now release resources are created in the same namespace as the CR. ([#2414](https://github.com/operator-framework/operator-sdk/pull/2414))
 - Fix issue when the test-framework would attempt to create a namespace exceeding 63 characters. `pkg/test/NewCtx()` now creates a unique id instead of using the test name. `TestCtx.GetNamespace()` uses this unique id to create a namespace that avoids this scenario. ([#2335](https://github.com/operator-framework/operator-sdk/pull/2335))
 
+## v0.14.1
+
+### Bug Fixes
+
+- Fixed a regression in the helm-operator that caused all releases to be deployed in the same namespace that the operator was deployed in, regardless of which namespace the CR was created in. Now release resources are created in the same namespace as the CR. ([#2414](https://github.com/operator-framework/operator-sdk/pull/2414))
+
 ## v0.14.0
 
 ### Added
