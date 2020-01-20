@@ -30,9 +30,15 @@ provisioner:
     group_vars:
       all:
         namespace: ${TEST_NAMESPACE:-osdk-test}
+        kubeconfig_file: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
+    host_vars:
+      localhost:
+        ansible_python_interpreter: '{{ ansible_playbook_python }}'
+        template_dir: ${MOLECULE_PROJECT_DIRECTORY}/molecule/templates
+        deploy_dir: ${MOLECULE_PROJECT_DIRECTORY}/deploy
   env:
-    K8S_AUTH_KUBECONFIG: /tmp/molecule/kind-test-local/kubeconfig
-    KUBECONFIG: /tmp/molecule/kind-test-local/kubeconfig
+    K8S_AUTH_KUBECONFIG: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
+    KUBECONFIG: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
     ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/roles
     KIND_PORT: '${TEST_CLUSTER_PORT:-10443}'
   log: True
