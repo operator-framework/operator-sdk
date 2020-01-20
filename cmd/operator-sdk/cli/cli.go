@@ -27,7 +27,6 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/migrate"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/new"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/olmcatalog"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/printdeps"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/run"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/scorecard"
@@ -68,7 +67,6 @@ func GetCLIRoot() *cobra.Command {
 	root.AddCommand(generate.NewCmd())
 	root.AddCommand(migrate.NewCmd())
 	root.AddCommand(new.NewCmd())
-	root.AddCommand(olmcatalog.NewCmd())
 	root.AddCommand(printdeps.NewCmd())
 	root.AddCommand(run.NewCmd())
 	root.AddCommand(scorecard.NewCmd())

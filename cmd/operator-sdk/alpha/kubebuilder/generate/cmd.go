@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package olmcatalog
+package generate
 
 import (
 	log "github.com/sirupsen/logrus"
@@ -21,14 +21,14 @@ import (
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "olm-catalog <olm-catalog-command>",
-		Short: "Invokes a olm-catalog command",
-		Long: `The operator-sdk olm-catalog command invokes a command to perform
-Catalog related actions.`,
+		Use:   "generate <generator>",
+		Short: "Invokes a generate command",
+		Long: `The operator-sdk generate command invokes a command to perform certain code-
+and manifest-generation tasks.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Info("TODO")
 		},
 	}
-	// cmd.AddCommand(newGenCSVCmd())
+	// cmd.AddCommand(newGenerateCSVCmd())
 	return cmd
 }

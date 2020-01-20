@@ -154,7 +154,7 @@ for it in the new Kubebuilder workflow.
 Since features like the scorecard, CSV generation and test-framework have no
 equivalent in the Kubebuilder workflow, those subcommands would be unchanged on the CLI.
 
-- `operator-sdk gen-csv`
+- `operator-sdk generate csv`
 - `operator-sdk scorecard`
 - `operator-sdk test`
 
