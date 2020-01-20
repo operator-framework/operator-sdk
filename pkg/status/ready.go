@@ -1,4 +1,4 @@
-// Copyright 2019 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,5 +32,5 @@ func ReadyCondition(status corev1.ConditionStatus) Condition {
 
 // IsReady returns whether there is a "Ready" condition with status "True".
 func (conditions Conditions) IsReady() bool {
-	return conditions.IsTrue(conditionTypeReady)
+	return conditions.IsTrueFor(conditionTypeReady)
 }

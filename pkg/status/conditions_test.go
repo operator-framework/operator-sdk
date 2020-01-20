@@ -1,4 +1,4 @@
-// Copyright 2019 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -189,43 +189,43 @@ func TestConditionsRemoveExists(t *testing.T) {
 	assert.Equal(t, 1, len(conditions))
 }
 
-func TestConditionsIsTrue(t *testing.T) {
+func TestConditionsIsTrueFor(t *testing.T) {
 	conditions := NewConditions(
 		generateCondition("False", corev1.ConditionFalse),
 		generateCondition("True", corev1.ConditionTrue),
 		generateCondition("Unknown", corev1.ConditionUnknown),
 	)
 
-	assert.True(t, conditions.IsTrue(ConditionType("True")))
-	assert.False(t, conditions.IsTrue(ConditionType("False")))
-	assert.False(t, conditions.IsTrue(ConditionType("Unknown")))
-	assert.False(t, conditions.IsTrue(ConditionType("DoesNotExist")))
+	assert.True(t, conditions.IsTrueFor(ConditionType("True")))
+	assert.False(t, conditions.IsTrueFor(ConditionType("False")))
+	assert.False(t, conditions.IsTrueFor(ConditionType("Unknown")))
+	assert.False(t, conditions.IsTrueFor(ConditionType("DoesNotExist")))
 }
 
-func TestConditionsIsFalse(t *testing.T) {
+func TestConditionsIsFalseFor(t *testing.T) {
 	conditions := NewConditions(
 		generateCondition("False", corev1.ConditionFalse),
 		generateCondition("True", corev1.ConditionTrue),
 		generateCondition("Unknown", corev1.ConditionUnknown),
 	)
 
-	assert.False(t, conditions.IsFalse(ConditionType("True")))
-	assert.True(t, conditions.IsFalse(ConditionType("False")))
-	assert.False(t, conditions.IsFalse(ConditionType("Unknown")))
-	assert.False(t, conditions.IsFalse(ConditionType("DoesNotExist")))
+	assert.False(t, conditions.IsFalseFor(ConditionType("True")))
+	assert.True(t, conditions.IsFalseFor(ConditionType("False")))
+	assert.False(t, conditions.IsFalseFor(ConditionType("Unknown")))
+	assert.False(t, conditions.IsFalseFor(ConditionType("DoesNotExist")))
 }
 
-func TestConditionsIsUnknown(t *testing.T) {
+func TestConditionsIsUnknownFor(t *testing.T) {
 	conditions := NewConditions(
 		generateCondition("False", corev1.ConditionFalse),
 		generateCondition("True", corev1.ConditionTrue),
 		generateCondition("Unknown", corev1.ConditionUnknown),
 	)
 
-	assert.False(t, conditions.IsUnknown(ConditionType("True")))
-	assert.False(t, conditions.IsUnknown(ConditionType("False")))
-	assert.True(t, conditions.IsUnknown(ConditionType("Unknown")))
-	assert.True(t, conditions.IsUnknown(ConditionType("DoesNotExist")))
+	assert.False(t, conditions.IsUnknownFor(ConditionType("True")))
+	assert.False(t, conditions.IsUnknownFor(ConditionType("False")))
+	assert.True(t, conditions.IsUnknownFor(ConditionType("Unknown")))
+	assert.True(t, conditions.IsUnknownFor(ConditionType("DoesNotExist")))
 }
 
 func TestConditionsMarshalUnmarshalJSON(t *testing.T) {

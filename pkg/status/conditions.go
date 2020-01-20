@@ -1,4 +1,4 @@
-// Copyright 2019 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -97,30 +97,30 @@ func NewConditions(conds ...Condition) Conditions {
 	return conditions
 }
 
-// IsTrue searches the set of conditions for a condition with the given
+// IsTrueFor searches the set of conditions for a condition with the given
 // ConditionType. If found, it returns `condition.IsTrue()`. If not found,
 // it returns false.
-func (conditions Conditions) IsTrue(t ConditionType) bool {
+func (conditions Conditions) IsTrueFor(t ConditionType) bool {
 	if condition, ok := conditions[t]; ok {
 		return condition.IsTrue()
 	}
 	return false
 }
 
-// IsFalse searches the set of conditions for a condition with the given
+// IsFalseFor searches the set of conditions for a condition with the given
 // ConditionType. If found, it returns `condition.IsFalse()`. If not found,
 // it returns false.
-func (conditions Conditions) IsFalse(t ConditionType) bool {
+func (conditions Conditions) IsFalseFor(t ConditionType) bool {
 	if condition, ok := conditions[t]; ok {
 		return condition.IsFalse()
 	}
 	return false
 }
 
-// IsUnknown searches the set of conditions for a condition with the given
+// IsUnknownFor searches the set of conditions for a condition with the given
 // ConditionType. If found, it returns `condition.IsUnknown()`. If not found,
 // it returns true.
-func (conditions Conditions) IsUnknown(t ConditionType) bool {
+func (conditions Conditions) IsUnknownFor(t ConditionType) bool {
 	if condition, ok := conditions[t]; ok {
 		return condition.IsUnknown()
 	}
@@ -137,6 +137,8 @@ func (conditions *Conditions) SetCondition(newCond Condition) bool {
 	newCond.LastTransitionTime = metav1.Time{Time: clock.Now()}
 
 	if condition, ok := (*conditions)[newCond.Type]; ok {
+		// If the condition status didn't change, use the existing
+		// condition's last transition time.
 		if condition.Status == newCond.Status {
 			newCond.LastTransitionTime = condition.LastTransitionTime
 		}
@@ -162,7 +164,8 @@ func (conditions Conditions) GetCondition(t ConditionType) *Condition {
 
 // RemoveCondition removes the condition with the given ConditionType from
 // the conditions set. If no condition with that type is found, RemoveCondition
-// returns without performing any action.
+// returns without performing any action. If the passed condition type is not
+// found in the set of conditions, RemoveCondition returns false.
 func (conditions *Conditions) RemoveCondition(t ConditionType) bool {
 	if conditions == nil || *conditions == nil {
 		return false
@@ -187,6 +190,7 @@ func (conditions Conditions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(conds)
 }
 
+// UnmarshalJSON unmarshals the JSON data into the set of Conditions.
 func (conditions *Conditions) UnmarshalJSON(data []byte) error {
 	*conditions = make(map[ConditionType]Condition)
 	conds := []Condition{}
