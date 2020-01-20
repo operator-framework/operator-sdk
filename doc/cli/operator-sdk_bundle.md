@@ -19,5 +19,5 @@ https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-
 ### SEE ALSO
 
 * [operator-sdk](operator-sdk.md)	 - An SDK for building operators with ease
-* [operator-sdk bundle build](operator-sdk_bundle_build.md)	 - Build an operator bundle image
+* [operator-sdk bundle create](operator-sdk_bundle_create.md)	 - Create an operator bundle image
 

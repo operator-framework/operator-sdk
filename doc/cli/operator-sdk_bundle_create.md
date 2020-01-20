@@ -1,10 +1,10 @@
-## operator-sdk bundle build
+## operator-sdk bundle create
 
-Build an operator bundle image
+Create an operator bundle image
 
 ### Synopsis
 
-The 'operator-sdk bundle build' command will build an operator
+The 'operator-sdk bundle create' command will build an operator
 bundle image containing operator metadata and manifests, tagged with the
 provided image tag.
 
@@ -19,7 +19,7 @@ https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-
 NOTE: bundle images are not runnable.
 
 ```
-operator-sdk bundle build [flags]
+operator-sdk bundle create [flags]
 ```
 
 ### Examples
@@ -28,7 +28,7 @@ operator-sdk bundle build [flags]
 The following invocation will build a test-operator bundle image using Docker.
 This image will contain manifests for package channels 'stable' and 'beta':
 
-$ operator-sdk bundle build quay.io/example/test-operator:v0.1.0 \
+$ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 \
     --directory ./deploy/olm-catalog/test-operator \
     --package test-operator \
     --channels stable,beta \
@@ -37,12 +37,12 @@ $ operator-sdk bundle build quay.io/example/test-operator:v0.1.0 \
 Assuming your operator has the same name as your operator and the only channel
 is 'stable', the above command can be abbreviated to:
 
-$ operator-sdk bundle build quay.io/example/test-operator:v0.1.0
+$ operator-sdk bundle create quay.io/example/test-operator:v0.1.0
 
 The following invocation will generate test-operator bundle metadata and
 Dockerfile without building the image:
 
-$ operator-sdk bundle build \
+$ operator-sdk bundle create \
     --generate-only \
     --directory ./deploy/olm-catalog/test-operator \
     --package test-operator \
@@ -57,7 +57,7 @@ $ operator-sdk bundle build \
   -e, --default-channel string   The default channel for the bundle image
   -d, --directory string         The directory where bundle manifests are located
   -g, --generate-only            Generate metadata and a Dockerfile on disk without building the bundle image
-  -h, --help                     help for build
+  -h, --help                     help for create
   -b, --image-builder string     Tool to build container images. One of: [docker, podman, buildah] (default "docker")
   -p, --package string           The name of the package that bundle image belongs to. Set if package name differs from project name (default "operator-sdk")
 ```

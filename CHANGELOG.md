@@ -3,7 +3,7 @@
 ### Added
 
 - Added [`run`](./doc/cli/operator-sdk_alpha_run.md) and [`cleanup`](./doc/cli/operator-sdk_alpha_cleanup.md) subcommands (under the `alpha` subcommand) to manage deployment/deletion of operators. These commands currently interact with OLM via an in-cluster registry-server created using an operator's on-disk manifests and managed by `operator-sdk`. ([#2402](https://github.com/operator-framework/operator-sdk/pull/2402))
-- Added [`bundle build`](./doc/cli/operator-sdk_bundle_build.md) which builds, and optionally generates metadata for, [operator bundle images](https://github.com/openshift/enhancements/blob/ec2cf96/enhancements/olm/operator-registry.md). ([#2076](https://github.com/operator-framework/operator-sdk/pull/2076), [#2438](https://github.com/operator-framework/operator-sdk/pull/2438))
+- Added [`bundle create`](./doc/cli/operator-sdk_bundle_create.md) which builds, and optionally generates metadata for, [operator bundle images](https://github.com/openshift/enhancements/blob/ec2cf96/enhancements/olm/operator-registry.md). ([#2076](https://github.com/operator-framework/operator-sdk/pull/2076), [#2438](https://github.com/operator-framework/operator-sdk/pull/2438))
 
 ### Changed
 
