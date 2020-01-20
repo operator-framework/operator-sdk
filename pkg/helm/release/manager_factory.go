@@ -77,11 +77,11 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues
 
 	// Get the necessary clients and client getters. Use a client that injects the CR
 	// as an owner reference into all resources templated by the chart.
-	rcg, err := client.NewRESTClientGetter(f.mgr)
+	rcg, err := client.NewRESTClientGetter(f.mgr, cr.GetNamespace())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get REST client getter from manager: %w", err)
 	}
-	kubeClient := kube.New(nil)
+	kubeClient := kube.New(rcg)
 	ownerRef := metav1.NewControllerRef(cr, cr.GroupVersionKind())
 	ownerRefClient := client.NewOwnerRefInjectingClient(*kubeClient, *ownerRef)
 
