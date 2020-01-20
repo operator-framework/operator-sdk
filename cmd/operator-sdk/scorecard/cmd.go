@@ -61,7 +61,7 @@ func NewCmd() *cobra.Command {
 			cmd.SilenceUsage = true
 			buildScorecardConfig(&c)
 			for idx, plugin := range c.PluginConfigs {
-				if err := c.ValidateConfig(plugin, idx); err != nil {
+				if err := plugin.ValidateConfig(idx); err != nil {
 					return fmt.Errorf("error validating plugin config: %v", err)
 				}
 			}

@@ -53,9 +53,8 @@ type Config struct {
 }
 
 type PluginConfig struct {
-	Basic    *scplugins.BasicAndOLMPluginConfig `mapstructure:"basic,omitempty"`
-	Olm      *scplugins.BasicAndOLMPluginConfig `mapstructure:"olm,omitempty"`
-	External *externalPluginConfig              `mapstructure:"external,omitempty"`
+	Basic *scplugins.BasicAndOLMPluginConfig `mapstructure:"basic,omitempty"`
+	Olm   *scplugins.BasicAndOLMPluginConfig `mapstructure:"olm,omitempty"`
 }
 
 func (s Config) GetPlugins(configs []PluginConfig) ([]Plugin, error) {
@@ -81,13 +80,6 @@ func (s Config) GetPlugins(configs []PluginConfig) ([]Plugin, error) {
 			pluginConfig.Bundle = s.Bundle
 			setConfigDefaults(pluginConfig, s.Kubeconfig)
 			newPlugin = basicOrOLMPlugin{pluginType: scplugins.OLMIntegration, config: *pluginConfig}
-		} else {
-			pluginConfig := plugin.External
-			if s.Kubeconfig != "" {
-				// put the kubeconfig flag first in case user is overriding it with an env var in config file
-				pluginConfig.Env = append([]externalPluginEnv{{Name: "KUBECONFIG", Value: s.Kubeconfig}}, pluginConfig.Env...)
-			}
-			newPlugin = externalPlugin{config: *pluginConfig}
 		}
 		plugins = append(plugins, newPlugin)
 	}
