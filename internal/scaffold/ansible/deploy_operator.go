@@ -39,7 +39,6 @@ func (d *DeployOperator) GetInput() (input.Input, error) {
 }
 
 const deployOperatorAnsibleTmpl = `---
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:

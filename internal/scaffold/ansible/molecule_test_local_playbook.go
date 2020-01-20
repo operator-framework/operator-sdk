@@ -41,11 +41,11 @@ func (m *MoleculeTestLocalPlaybook) GetInput() (input.Input, error) {
 }
 
 const moleculeTestLocalPlaybookAnsibleTmpl = `---
-
 - name: Build Operator in Kubernetes docker container
   hosts: k8s
   vars:
     image: [[.Resource.FullGroup]]/[[.ProjectName]]:testing
+
   tasks:
     # using command so we don't need to install any dependencies
     - name: Get existing image hash
@@ -67,6 +67,7 @@ const moleculeTestLocalPlaybookAnsibleTmpl = `---
   vars:
     image: [[.Resource.FullGroup]]/[[.ProjectName]]:testing
     operator_template: "{{ '/'.join([template_dir, 'operator.yaml.j2']) }}"
+
   tasks:
     - name: Create the Operator Deployment
       k8s:

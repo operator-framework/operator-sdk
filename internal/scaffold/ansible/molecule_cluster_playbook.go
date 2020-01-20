@@ -37,25 +37,25 @@ func (m *MoleculeClusterPlaybook) GetInput() (input.Input, error) {
 }
 
 const moleculeClusterPlaybookAnsibleTmpl = `---
-
 - name: Converge
   hosts: localhost
   connection: local
   gather_facts: no
-  tasks:
-  - name: Ensure operator image is set
-    fail:
-      msg: |
-        You must specify the OPERATOR_IMAGE environment variable in order to run the
-        'cluster' scenario
-    when: not operator_image
 
-  - name: Create the Operator Deployment
-    k8s:
-      namespace: '{{ namespace }}'
-      definition: "{{ lookup('template', '/'.join([template_dir, 'operator.yaml.j2'])) }}"
-      wait: yes
-    vars:
-      image: '{{ operator_image }}'
-      pull_policy: Always
+  tasks:
+    - name: Ensure operator image is set
+      fail:
+        msg: |
+          You must specify the OPERATOR_IMAGE environment variable in order to run the
+          'cluster' scenario
+      when: not operator_image
+
+    - name: Create the Operator Deployment
+      k8s:
+        namespace: '{{ namespace }}'
+        definition: "{{ lookup('template', '/'.join([template_dir, 'operator.yaml.j2'])) }}"
+        wait: yes
+      vars:
+        image: '{{ operator_image }}'
+        pull_policy: Always
 `

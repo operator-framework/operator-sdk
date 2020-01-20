@@ -37,7 +37,6 @@ func (m *MoleculeClusterCreate) GetInput() (input.Input, error) {
 }
 
 const moleculeClusterCreateAnsibleTmpl = `---
-
 - name: Create
   hosts: localhost
   connection: local

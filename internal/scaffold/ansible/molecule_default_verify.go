@@ -37,7 +37,6 @@ func (m *MoleculeDefaultVerify) GetInput() (input.Input, error) {
 }
 
 const moleculeDefaultVerifyAnsibleTmpl = `---
-
 - name: Verify
   hosts: localhost
   connection: local

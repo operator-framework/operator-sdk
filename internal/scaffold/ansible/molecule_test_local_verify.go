@@ -37,6 +37,5 @@ func (m *MoleculeTestLocalVerify) GetInput() (input.Input, error) {
 }
 
 const moleculeTestLocalVerifyAnsibleTmpl = `---
-
 - import_playbook: ../cluster/verify.yml
 `

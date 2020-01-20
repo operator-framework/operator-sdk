@@ -38,7 +38,6 @@ func (m *MoleculeTemplatesOperator) GetInput() (input.Input, error) {
 }
 
 const moleculeTemplatesOperatorAnsibleTmpl = `---
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:

@@ -41,15 +41,15 @@ func (m *MoleculeClusterVerify) GetInput() (input.Input, error) {
 
 const moleculeClusterVerifyAnsibleTmpl = `---
 # This is an example playbook to execute Ansible tests.
-
 - name: Verify
   hosts: localhost
   connection: local
   gather_facts: no
   vars:
     custom_resource: "{{ lookup('template', '/'.join([deploy_dir, 'crds/[[.Resource.FullGroup]]_[[.Resource.Version]]_[[.Resource.LowerKind]]_cr.yaml'])) | from_yaml }}"
+
   tasks:
-    - name: Create the [[.Resource.FullGroup]]/[[.Resource.Version]].[[.Resource.Kind]] and wait for reconcilation to complete
+    - name: Create the [[.Resource.FullGroup]]/[[.Resource.Version]].[[.Resource.Kind]] and wait for reconciliation to complete
       k8s:
         state: present
         namespace: '{{ namespace }}'

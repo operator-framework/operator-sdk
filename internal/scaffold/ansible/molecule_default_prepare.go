@@ -37,7 +37,6 @@ func (m *MoleculeDefaultPrepare) GetInput() (input.Input, error) {
 }
 
 const moleculeDefaultPrepareAnsibleTmpl = `---
-
 - name: Prepare
   hosts: k8s
   gather_facts: no
@@ -50,7 +49,7 @@ const moleculeDefaultPrepareAnsibleTmpl = `---
 
     - name: Change the kubeconfig port to the proper value
       replace:
-        regexp: '8443' 
+        regexp: '8443'
         replace: "{{ lookup('env', 'KIND_PORT') }}"
         path: '{{ kubeconfig_file }}'
       delegate_to: localhost

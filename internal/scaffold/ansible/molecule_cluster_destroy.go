@@ -45,29 +45,30 @@ const moleculeClusterDestroyAnsibleTmpl = `---
   connection: local
   gather_facts: false
   no_log: "{{ molecule_no_log }}"
+
   tasks:
-  - name: Delete namespace
-    k8s:
-      api_version: v1
-      kind: Namespace
-      name: '{{ namespace }}'
-      state: absent
-      wait: yes
+    - name: Delete namespace
+      k8s:
+        api_version: v1
+        kind: Namespace
+        name: '{{ namespace }}'
+        state: absent
+        wait: yes
 
-  - name: Delete RBAC resources
-    k8s:
-      definition: "{{ lookup('template', '/'.join([deploy_dir, item])) }}"
-      namespace: '{{ namespace }}'
-      state: absent
-      wait: yes
-    with_items:
-      - role.yaml
-      - role_binding.yaml
-      - service_account.yaml
+    - name: Delete RBAC resources
+      k8s:
+        definition: "{{ lookup('template', '/'.join([deploy_dir, item])) }}"
+        namespace: '{{ namespace }}'
+        state: absent
+        wait: yes
+      with_items:
+        - role.yaml
+        - role_binding.yaml
+        - service_account.yaml
 
-  - name: Delete Custom Resource Definition
-    k8s:
-      definition: "{{ lookup('file', '/'.join([deploy_dir, 'crds/[[.Resource.FullGroup]]_[[.Resource.Resource]]_crd.yaml'])) }}"
-      state: absent
-      wait: yes
+    - name: Delete Custom Resource Definition
+      k8s:
+        definition: "{{ lookup('file', '/'.join([deploy_dir, 'crds/[[.Resource.FullGroup]]_[[.Resource.Resource]]_crd.yaml'])) }}"
+        state: absent
+        wait: yes
 `

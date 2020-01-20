@@ -40,7 +40,6 @@ func (m *MoleculeClusterPrepare) GetInput() (input.Input, error) {
 }
 
 const moleculeClusterPrepareAnsibleTmpl = `---
-
 - name: Prepare
   hosts: localhost
   connection: local
@@ -48,23 +47,24 @@ const moleculeClusterPrepareAnsibleTmpl = `---
   no_log: "{{ molecule_no_log }}"
   vars:
     deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
+
   tasks:
-  - name: Create Custom Resource Definition
-    k8s:
-      definition: "{{ lookup('file', '/'.join([deploy_dir, 'crds/[[.Resource.FullGroup]]_[[.Resource.Resource]]_crd.yaml'])) }}"
+    - name: Create Custom Resource Definition
+      k8s:
+        definition: "{{ lookup('file', '/'.join([deploy_dir, 'crds/[[.Resource.FullGroup]]_[[.Resource.Resource]]_crd.yaml'])) }}"
 
-  - name: Create namespace
-    k8s:
-      api_version: v1
-      kind: Namespace
-      name: '{{ namespace }}'
+    - name: Create namespace
+      k8s:
+        api_version: v1
+        kind: Namespace
+        name: '{{ namespace }}'
 
-  - name: Create RBAC resources
-    k8s:
-      definition: "{{ lookup('template', '/'.join([deploy_dir, item])) }}"
-      namespace: '{{ namespace }}'
-    with_items:
-      - role.yaml
-      - role_binding.yaml
-      - service_account.yaml
+    - name: Create RBAC resources
+      k8s:
+        definition: "{{ lookup('template', '/'.join([deploy_dir, item])) }}"
+        namespace: '{{ namespace }}'
+      with_items:
+        - role.yaml
+        - role_binding.yaml
+        - service_account.yaml
 `
