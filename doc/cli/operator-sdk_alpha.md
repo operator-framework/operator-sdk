@@ -18,5 +18,4 @@ Run an alpha subcommand
 * [operator-sdk alpha bundle](operator-sdk_alpha_bundle.md)	 - Work with operator bundle metadata and bundle images
 * [operator-sdk alpha cleanup](operator-sdk_alpha_cleanup.md)	 - Delete and clean up after a running Operator
 * [operator-sdk alpha olm](operator-sdk_alpha_olm.md)	 - Manage the Operator Lifecycle Manager installation in your cluster
-* [operator-sdk alpha run](operator-sdk_alpha_run.md)	 - Run an Operator in a variety of environments
 

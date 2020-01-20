@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package up
+package run
 
 import (
 	"github.com/spf13/cobra"
 )
 
+// NewCmd returns a command that contains subcommands to run specific
+// operator types.
 func NewCmd() *cobra.Command {
-	upCmd := &cobra.Command{
-		Use:   "up",
-		Short: "Launches the operator",
-		Long: `The up command has subcommands that can launch the operator in various ways.
-`,
+	runCmd := &cobra.Command{
+		Use:   "exec-entrypoint",
+		Short: "Runs a generic operator",
+		Long: `Runs a generic operator. This is intended to be used when running
+in a Pod inside a cluster. Developers wanting to run their operator locally
+should use "run --local" instead.`,
 	}
 
-	upCmd.AddCommand(newLocalCmd())
-	return upCmd
+	runCmd.AddCommand(
+		newRunAnsibleCmd(),
+		newRunHelmCmd(),
+	)
+	return runCmd
 }

@@ -24,6 +24,7 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
+	execentrypoint "github.com/operator-framework/operator-sdk/cmd/operator-sdk/exec-entrypoint"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/migrate"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/new"
@@ -32,7 +33,6 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/run"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/scorecard"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/test"
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/up"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/version"
 	"github.com/operator-framework/operator-sdk/internal/flags"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
@@ -65,6 +65,7 @@ func GetCLIRoot() *cobra.Command {
 	root.AddCommand(alpha.NewCmd())
 	root.AddCommand(build.NewCmd())
 	root.AddCommand(completion.NewCmd())
+	root.AddCommand(execentrypoint.NewCmd())
 	root.AddCommand(generate.NewCmd())
 	root.AddCommand(migrate.NewCmd())
 	root.AddCommand(new.NewCmd())
@@ -73,7 +74,6 @@ func GetCLIRoot() *cobra.Command {
 	root.AddCommand(run.NewCmd())
 	root.AddCommand(scorecard.NewCmd())
 	root.AddCommand(test.NewCmd())
-	root.AddCommand(up.NewCmd())
 	root.AddCommand(version.NewCmd())
 
 	return root

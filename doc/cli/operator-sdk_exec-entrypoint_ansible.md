@@ -1,4 +1,4 @@
-## operator-sdk run ansible
+## operator-sdk exec-entrypoint ansible
 
 Runs as an ansible operator
 
@@ -9,7 +9,7 @@ in a Pod inside a cluster. Developers wanting to run their operator locally
 should use "up local" instead.
 
 ```
-operator-sdk run ansible [flags]
+operator-sdk exec-entrypoint ansible [flags]
 ```
 
 ### Options
@@ -30,5 +30,5 @@ operator-sdk run ansible [flags]
 
 ### SEE ALSO
 
-* [operator-sdk run](operator-sdk_run.md)	 - Runs a generic operator
+* [operator-sdk exec-entrypoint](operator-sdk_exec-entrypoint.md)	 - Runs a generic operator
 

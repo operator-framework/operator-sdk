@@ -1,4 +1,4 @@
-## operator-sdk run helm
+## operator-sdk exec-entrypoint helm
 
 Runs as a helm operator
 
@@ -9,7 +9,7 @@ in a Pod inside a cluster. Developers wanting to run their operator locally
 should use "up local" instead.
 
 ```
-operator-sdk run helm [flags]
+operator-sdk exec-entrypoint helm [flags]
 ```
 
 ### Options
@@ -27,5 +27,5 @@ operator-sdk run helm [flags]
 
 ### SEE ALSO
 
-* [operator-sdk run](operator-sdk_run.md)	 - Runs a generic operator
+* [operator-sdk exec-entrypoint](operator-sdk_exec-entrypoint.md)	 - Runs a generic operator
 
