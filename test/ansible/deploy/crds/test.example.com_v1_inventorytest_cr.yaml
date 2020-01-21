@@ -1,0 +1,7 @@
+apiVersion: test.example.com/v1
+kind: InventoryTest
+metadata:
+  name: example-inventorytest
+spec:
+  # Add fields here
+  size: 3

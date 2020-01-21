@@ -1,0 +1,33 @@
+---
+- name: Destroy
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Delete namespace
+      k8s:
+        api_version: v1
+        kind: Namespace
+        name: '{{ namespace }}'
+        state: absent
+        wait: yes
+
+    - name: Delete RBAC resources
+      k8s:
+        definition: "{{ lookup('template', '/'.join([deploy_dir, item])) }}"
+        namespace: '{{ namespace }}'
+        state: absent
+        wait: yes
+      with_items:
+        - role.yaml
+        - role_binding.yaml
+        - service_account.yaml
+
+    - name: Delete Custom Resource Definitions
+      k8s:
+        definition: "{{ lookup('file', item) }}"
+        state: absent
+        wait: yes
+      with_fileglob:
+        - "{{ '/'.join([deploy_dir, 'crds']) }}/*_crd.yaml"

@@ -1,11 +1,11 @@
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: inventory
+  name: ansible
 subjects:
 - kind: ServiceAccount
-  name: inventory
+  name: ansible
 roleRef:
   kind: Role
-  name: inventory
+  name: ansible
   apiGroup: rbac.authorization.k8s.io

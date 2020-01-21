@@ -1,0 +1,30 @@
+---
+- name: Prepare
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  no_log: "{{ molecule_no_log }}"
+  vars:
+    deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
+
+  tasks:
+    - name: Create Custom Resource Definitions
+      k8s:
+        definition: "{{ lookup('file', item) }}"
+      with_fileglob:
+        - "{{ '/'.join([deploy_dir, 'crds']) }}/*_crd.yaml"
+
+    - name: Create namespace
+      k8s:
+        api_version: v1
+        kind: Namespace
+        name: '{{ namespace }}'
+
+    - name: Create RBAC resources
+      k8s:
+        definition: "{{ lookup('template', '/'.join([deploy_dir, item])) }}"
+        namespace: '{{ namespace }}'
+      with_items:
+        - role.yaml
+        - role_binding.yaml
+        - service_account.yaml

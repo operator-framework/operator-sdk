@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 source hack/lib/test_lib.sh
+source hack/lib/image_lib.sh
 
 set -eu
 
@@ -60,9 +61,12 @@ remove_prereqs
 popd
 popd
 
-header_text "Test Ansible Inventory"
-pushd "${ROOTDIR}/test/ansible-inventory"
+header_text "Test Ansible Molecule scenarios"
+pushd "${ROOTDIR}/test/ansible"
+DEST_IMAGE="quay.io/example/ansible-test-operator:v0.0.1"
 sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?/\1:dev/g' build/Dockerfile; rm -f build/Dockerfile.bak
-TEST_CLUSTER_PORT=24443 operator-sdk test local --namespace default
+operator-sdk build "$DEST_IMAGE"
+load_image_if_kind "$DEST_IMAGE"
+OPERATOR_PULL_POLICY=Never OPERATOR_IMAGE=${DEST_IMAGE} TEST_CLUSTER_PORT=24443 TEST_NAMESPACE=osdk-test molecule test --all
 
 popd

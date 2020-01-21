@@ -57,5 +57,5 @@ const moleculeClusterPlaybookAnsibleTmpl = `---
         wait: yes
       vars:
         image: '{{ operator_image }}'
-        pull_policy: Always
+        pull_policy: '{{ operator_pull_policy }}'
 `

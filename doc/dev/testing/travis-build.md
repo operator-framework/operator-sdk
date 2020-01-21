@@ -79,7 +79,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
     1. Create and configure a new ansible type memcached-operator.
     2. Create cluster resources.
     3. Run `operator-sdk test local` to run ansible molecule tests
-    4. Change directory to [`test/ansible-inventory`][ansible-inventory] and run `operator-sdk test local`
+    4. Change directory to [`test/ansible`][ansible-test] and run `operator-sdk test local`
 
 **NOTE**: All created resources, including the namespace, are deleted using a bash trap when the test finishes
 
@@ -116,7 +116,7 @@ The markdown test does not create a new cluster and runs in a barebones Travis V
 [go-e2e]: ../../../hack/tests/e2e-go.sh
 [tls-tests]: ../../../test/e2e/tls_util_test.go
 [ansible-molecule]: ../../../hack/tests/e2e-ansible-molecule.sh
-[ansible-inventory]: ../../../test/ansible-inventory
+[ansible-test]: ../../../test/ansible
 [helm-e2e]: ../../../hack/tests/e2e-helm.sh
 [helm-base]: ../../../hack/image/helm/scaffold-helm-image.go
 [marker-github]: https://github.com/crawford/marker

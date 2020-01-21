@@ -68,6 +68,9 @@ provisioner:
         deploy_dir: ${MOLECULE_PROJECT_DIRECTORY}/deploy
         template_dir: ${MOLECULE_PROJECT_DIRECTORY}/molecule/templates
         operator_image: ${OPERATOR_IMAGE:-""}
+        operator_pull_policy: ${OPERATOR_PULL_POLICY:-"Always"}
+  env:
+    K8S_AUTH_KUBECONFIG: ${KUBECONFIG:-"~/.kube/config"}
 verifier:
   name: ansible
   lint:

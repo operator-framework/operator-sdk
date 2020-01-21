@@ -1,4 +1,4 @@
-apiVersion: inventory.apps.fabianism.us/v1alpha1
+apiVersion: test.example.com/v1alpha1
 kind: Inventory
 metadata:
   name: example-inventory
