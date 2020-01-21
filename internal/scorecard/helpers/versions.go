@@ -19,14 +19,12 @@ import (
 	"strings"
 )
 
-const v1alpha1 = "v1alpha1"
 const v1alpha2 = "v1alpha2"
 
 const DefaultScorecardVersion = v1alpha2
 const LatestScorecardVersion = v1alpha2
-const VersionOpt = "version"
 
-var ScorecardVersions = []string{v1alpha1, v1alpha2}
+var ScorecardVersions = []string{v1alpha2}
 
 func ValidateVersion(version string) error {
 	for _, a := range ScorecardVersions {
@@ -36,8 +34,4 @@ func ValidateVersion(version string) error {
 	}
 	return fmt.Errorf("invalid scorecard version (%s); valid values: %s", version, strings.Join(ScorecardVersions, ", "))
 
-}
-
-func IsV1alpha2(version string) bool {
-	return version == v1alpha2
 }

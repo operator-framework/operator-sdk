@@ -21,11 +21,15 @@ import (
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "generate <generator>",
-		Short: "Invokes specific generator",
-		Long:  `The operator-sdk generate command invokes specific generator to generate code as needed.`,
+		Short: "Invokes a specific generator",
+		Long: `The 'operator-sdk generate' command invokes a specific generator to generate
+code or manifests on disk.`,
 	}
-	cmd.AddCommand(newGenerateK8SCmd())
-	cmd.AddCommand(newGenerateCRDsCmd())
-	cmd.AddCommand(newGenerateOpenAPICmd())
+	cmd.AddCommand(
+		newGenerateK8SCmd(),
+		newGenerateCRDsCmd(),
+		newGenerateOpenAPICmd(),
+		newGenerateCSVCmd(),
+	)
 	return cmd
 }

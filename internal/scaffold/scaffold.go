@@ -30,7 +30,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"golang.org/x/tools/imports"
@@ -106,7 +105,7 @@ func validateBoilerplateBytes(b []byte) error {
 }
 
 func wrapBoilerplateErr(err error, bp string) error {
-	return errors.Wrapf(err, `boilerplate file "%s"`, bp)
+	return fmt.Errorf("boilerplate file %s: %v", bp, err)
 }
 
 func (s *Scaffold) setBoilerplate() (err error) {

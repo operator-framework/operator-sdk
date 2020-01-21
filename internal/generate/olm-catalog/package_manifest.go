@@ -23,12 +23,12 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/operator-framework/api/pkg/validation"
+	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/operator-framework/operator-sdk/internal/generate/gen"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
-	registryutil "github.com/operator-framework/operator-sdk/internal/util/operator-registry"
 
 	"github.com/ghodss/yaml"
-	"github.com/operator-framework/operator-registry/pkg/registry"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -48,6 +48,8 @@ type pkgGenerator struct {
 	// If channelIsDefault is true, channel will be the package manifests'
 	// default channel.
 	channelIsDefault bool
+	// PackageManifest file name
+	fileName string
 }
 
 func NewPackageManifest(cfg gen.Config, csvVersion, channel string, isDefault bool) gen.Generator {
@@ -56,6 +58,7 @@ func NewPackageManifest(cfg gen.Config, csvVersion, channel string, isDefault bo
 		csvVersion:       csvVersion,
 		channel:          channel,
 		channelIsDefault: isDefault,
+		fileName:         getPkgFileName(cfg.OperatorName),
 	}
 	if g.Inputs == nil {
 		g.Inputs = map[string]string{}
@@ -69,6 +72,7 @@ func NewPackageManifest(cfg gen.Config, csvVersion, channel string, isDefault bo
 	return g
 }
 
+// getPkgFileName will return the name of the PackageManifestFile
 func getPkgFileName(operatorName string) string {
 	return strings.ToLower(operatorName) + PackageManifestFileExt
 }
@@ -96,41 +100,81 @@ func (g pkgGenerator) Generate() error {
 // generate either reads an existing package manifest or creates a new
 // manifest and modifies it based on values set in s.
 func (g pkgGenerator) generate() (map[string][]byte, error) {
-	fileName := getPkgFileName(g.OperatorName)
-	path := filepath.Join(g.Inputs[ManifestsDirKey], fileName)
-	pkg := registry.PackageManifest{}
-	if _, err := os.Stat(path); err == nil {
-		b, err := ioutil.ReadFile(path)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read package manifest %s: %v", path, err)
-		}
-		if err = yaml.Unmarshal(b, &pkg); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal package manifest %s: %v", path, err)
-		}
-		if err := registryutil.ValidatePackageManifest(&pkg); err != nil {
-			return nil, fmt.Errorf("error validating package manifest %s: %v", pkg.PackageName, err)
-		}
-	} else if os.IsNotExist(err) {
-		pkg = newPackageManifest(g.OperatorName, g.channel, g.csvVersion)
-	} else {
-		return nil, fmt.Errorf("error reading package manifest %s: %v", path, err)
+	pkg, err := g.buildPackageManifest()
+	if err != nil {
+		return nil, err
 	}
 
 	g.setChannels(&pkg)
-	sort.Slice(pkg.Channels, func(i int, j int) bool {
-		return pkg.Channels[i].Name < pkg.Channels[j].Name
-	})
+	sortChannelsByName(&pkg)
+
+	if err := validatePackageManifest(&pkg); err != nil {
+		return nil, err
+	}
 
 	b, err := yaml.Marshal(pkg)
 	if err != nil {
 		return nil, err
 	}
+
 	fileMap := map[string][]byte{
-		fileName: b,
+		g.fileName: b,
 	}
 	return fileMap, nil
 }
 
+// buildPackageManifest will create a registry.PackageManifest from scratch, or modify
+// an existing one if found at the expected path.
+func (g pkgGenerator) buildPackageManifest() (registry.PackageManifest, error) {
+	pkg := registry.PackageManifest{}
+	path := filepath.Join(g.Inputs[ManifestsDirKey], g.fileName)
+	if _, err := os.Stat(path); err == nil {
+		b, err := ioutil.ReadFile(path)
+		if err != nil {
+			return pkg, fmt.Errorf("failed to read package manifest %s: %v", path, err)
+		}
+		if err = yaml.Unmarshal(b, &pkg); err != nil {
+			return pkg, fmt.Errorf("failed to unmarshal package manifest %s: %v", path, err)
+		}
+	} else if os.IsNotExist(err) {
+		pkg = newPackageManifest(g.OperatorName, g.channel, g.csvVersion)
+	} else {
+		return pkg, fmt.Errorf("error reading package manifest %s: %v", path, err)
+	}
+	return pkg, nil
+}
+
+// sortChannelsByName sorts pkg.Channels by each element's name.
+// NOTE: sorting makes the channel order always consistent when appending new channels
+func sortChannelsByName(pkg *registry.PackageManifest) {
+	sort.Slice(pkg.Channels, func(i int, j int) bool {
+		return pkg.Channels[i].Name < pkg.Channels[j].Name
+	})
+}
+
+// validatePackageManifest will validate pkg using the api validation library.
+// More info: https://github.com/operator-framework/api
+func validatePackageManifest(pkg *registry.PackageManifest) error {
+	if pkg == nil {
+		return errors.New("generated package manifest is empty")
+	}
+	results := validation.PackageManifestValidator.Validate(pkg)
+	for _, r := range results {
+		if r.HasError() {
+			var errorMsgs strings.Builder
+			for _, e := range r.Errors {
+				errorMsgs.WriteString(fmt.Sprintf("%s\n", e.Error()))
+			}
+			return fmt.Errorf("error validating package manifest: %s", errorMsgs.String())
+		}
+		for _, w := range r.Warnings {
+			log.Warnf("Package manifest validation warning: type [%s] %s", w.Type, w.Detail)
+		}
+	}
+	return nil
+}
+
+// newPackageManifest will return the registry.PackageManifest populated
 func newPackageManifest(operatorName, channelName, version string) registry.PackageManifest {
 	// Take the current CSV version to be the "alpha" channel, as an operator
 	// should only be designated anything more stable than "alpha" by a human.
@@ -173,21 +217,6 @@ func (g pkgGenerator) setChannels(pkg *registry.PackageManifest) {
 		// default.
 		if g.channelIsDefault {
 			pkg.DefaultChannelName = g.channel
-		}
-	}
-
-	if pkg.DefaultChannelName == "" {
-		log.Warn("Package manifest default channel is empty and should be set to an existing channel.")
-	} else {
-		defaultExists := false
-		for _, c := range pkg.Channels {
-			if pkg.DefaultChannelName == c.Name {
-				defaultExists = true
-				break
-			}
-		}
-		if !defaultExists {
-			log.Warnf("Package manifest default channel %s does not exist in channels.", pkg.DefaultChannelName)
 		}
 	}
 }

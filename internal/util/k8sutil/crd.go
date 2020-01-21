@@ -23,7 +23,6 @@ import (
 	"regexp"
 
 	yaml "github.com/ghodss/yaml"
-	"github.com/pkg/errors"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/version"
 )
@@ -32,7 +31,7 @@ import (
 func GetCRDs(crdsDir string) ([]*apiextv1beta1.CustomResourceDefinition, error) {
 	manifests, err := GetCRDManifestPaths(crdsDir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get CRD's from %s: (%v)", crdsDir, err)
+		return nil, fmt.Errorf("failed to get CRD's from %s: %v", crdsDir, err)
 	}
 	var crds []*apiextv1beta1.CustomResourceDefinition
 	for _, m := range manifests {
@@ -61,7 +60,7 @@ func GetCRDManifestPaths(crdsDir string) (crdPaths []string, err error) {
 		if !info.IsDir() {
 			b, err := ioutil.ReadFile(path)
 			if err != nil {
-				return errors.Wrapf(err, "error reading manifest %s", path)
+				return fmt.Errorf("error reading manifest %s: %v", path, err)
 			}
 			// Skip files in crdsDir that aren't k8s manifests since we do not know
 			// what other files ar ein crdsDir.
@@ -101,7 +100,7 @@ func parseGroupSubdirs(apisDir string, strictVersionMatch bool) (map[string][]st
 	gvs := make(map[string][]string)
 	groups, err := ioutil.ReadDir(apisDir)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error reading directory %q to find API groups", apisDir)
+		return nil, fmt.Errorf("error reading directory %q to find API groups: %v", apisDir, err)
 	}
 
 	for _, g := range groups {
@@ -109,7 +108,7 @@ func parseGroupSubdirs(apisDir string, strictVersionMatch bool) (map[string][]st
 			groupDir := filepath.Join(apisDir, g.Name())
 			versions, err := ioutil.ReadDir(groupDir)
 			if err != nil {
-				return nil, errors.Wrapf(err, "error reading directory %q to find API versions", groupDir)
+				return nil, fmt.Errorf("error reading directory %q to find API versions: %v", groupDir, err)
 			}
 
 			gvs[g.Name()] = make([]string, 0)
@@ -120,7 +119,7 @@ func parseGroupSubdirs(apisDir string, strictVersionMatch bool) (map[string][]st
 					verDir := filepath.Join(groupDir, v.Name())
 					files, err := ioutil.ReadDir(verDir)
 					if err != nil {
-						return nil, errors.Wrapf(err, "error reading directory %q to find API source files", verDir)
+						return nil, fmt.Errorf("error reading directory %q to find API source files: %v", verDir, err)
 					}
 					for _, f := range files {
 						if !f.IsDir() && filepath.Ext(f.Name()) == ".go" {

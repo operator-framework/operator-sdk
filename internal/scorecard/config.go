@@ -16,41 +16,12 @@ package scorecard
 
 import (
 	"fmt"
-	"strings"
 
-	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	"gopkg.in/yaml.v2"
 )
 
-type externalPluginConfig struct {
-	Command string              `mapstructure:"command"`
-	Args    []string            `mapstructure:"args"`
-	Env     []externalPluginEnv `mapstructure:"env"`
-}
-
-type externalPluginEnv struct {
-	Name  string `mapstructure:"name"`
-	Value string `mapstructure:"value"`
-}
-
-func (e externalPluginConfig) String() string {
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("Command: %s %s", e.Command, strings.Join(e.Args, " ")))
-	if e.Env != nil {
-		sb.WriteString(fmt.Sprintf("\nEnvironment: "))
-	}
-	for _, env := range e.Env {
-		sb.WriteString(fmt.Sprintf("\n\t%s", env))
-	}
-	return sb.String()
-}
-
-func (e externalPluginEnv) String() string {
-	return fmt.Sprintf("%s=%s", e.Name, e.Value)
-}
-
-// validateConfig takes a viper config for a plugin and returns a nil error if valid or an error explaining why the config is invalid
-func validateConfig(config pluginConfig, idx int, version string) error {
+// ValidateConfig takes a config for a plugin and returns a nil error if valid or an error explaining why the config is invalid
+func (config PluginConfig) ValidateConfig(idx int) error {
 	// find plugin config type
 	pluginType := ""
 	if config.Basic != nil {
@@ -58,18 +29,9 @@ func validateConfig(config pluginConfig, idx int, version string) error {
 	}
 	if config.Olm != nil {
 		if pluginType != "" {
-			return fmt.Errorf("plugin config can only contain one of: basic, olm, external")
+			return fmt.Errorf("plugin config can only contain one of: basic, olm")
 		}
 		pluginType = "olm"
-	}
-	if config.External != nil {
-		if pluginType != "" {
-			return fmt.Errorf("plugin config can only contain one of: basic, olm, external")
-		}
-		pluginType = "external"
-		if schelpers.IsV1alpha2(version) {
-			return fmt.Errorf("revert to v1alpha1 to use external plugins: external plugins are not currently supported with v1alpha2")
-		}
 	}
 	if pluginType == "" {
 		marshalledConfig, err := yaml.Marshal(config)

@@ -46,5 +46,5 @@ if ! whoami &>/dev/null; then
 fi
 
 cd $HOME
-exec ${OPERATOR} run helm --watches-file=$HOME/watches.yaml $@
+exec ${OPERATOR} exec-entrypoint helm --watches-file=$HOME/watches.yaml $@
 `

@@ -21,6 +21,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 	dynclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -36,6 +37,10 @@ type FrameworkClient interface {
 	Create(gCtx goctx.Context, obj runtime.Object, cleanupOptions *CleanupOptions) error
 	Delete(gCtx goctx.Context, obj runtime.Object, opts ...dynclient.DeleteOption) error
 	Update(gCtx goctx.Context, obj runtime.Object) error
+}
+
+func retryOnAnyError(err error) bool {
+	return !apierrors.IsNotFound(err)
 }
 
 // Create uses the dynamic client to create an object and then adds a
@@ -57,7 +62,9 @@ func (f *frameworkClient) Create(gCtx goctx.Context, obj runtime.Object, cleanup
 		cleanupOptions.TestContext.t.Logf("resource type %+v with namespace/name (%+v) created\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
 	}
 	cleanupOptions.TestContext.AddCleanupFn(func() error {
-		err = f.Client.Delete(gCtx, objCopy)
+		err = retry.OnError(retry.DefaultRetry, retryOnAnyError, func() error {
+			return f.Client.Delete(gCtx, objCopy)
+		})
 		if err != nil && !apierrors.IsNotFound(err) {
 			return err
 		}
@@ -76,7 +83,7 @@ func (f *frameworkClient) Create(gCtx goctx.Context, obj runtime.Object, cleanup
 						}
 						return true, nil
 					}
-					return false, fmt.Errorf("error encountered during deletion of resource type %v with namespace/name (%+v): %v", objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
+					return false, fmt.Errorf("error encountered during deletion of resource type %v with namespace/name (%+v): %w", objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
 				}
 				if cleanupOptions.TestContext.t != nil {
 					cleanupOptions.TestContext.t.Logf("waiting for deletion of resource type %+v with namespace/name (%+v)\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)

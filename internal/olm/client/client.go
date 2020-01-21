@@ -19,6 +19,7 @@ package olm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -26,7 +27,6 @@ import (
 
 	"github.com/blang/semver"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -61,7 +61,7 @@ type Client struct {
 func ClientForConfig(cfg *rest.Config) (*Client, error) {
 	rm, err := apiutil.NewDynamicRESTMapper(cfg)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create dynamic rest mapper")
+		return nil, fmt.Errorf("failed to create dynamic rest mapper: %v", err)
 	}
 
 	cl, err := client.New(cfg, client.Options{
@@ -69,7 +69,7 @@ func ClientForConfig(cfg *rest.Config) (*Client, error) {
 		Mapper: rm,
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create client")
+		return nil, fmt.Errorf("failed to create client: %v", err)
 	}
 
 	c := &Client{
@@ -213,7 +213,7 @@ func (c Client) GetInstalledVersion(ctx context.Context) (string, error) {
 		if apierrors.IsNotFound(err) || meta.IsNoMatchError(err) {
 			return "", ErrOLMNotInstalled
 		}
-		return "", errors.Wrapf(err, "failed to list CSVs in namespace %q", OLMNamespace)
+		return "", fmt.Errorf("failed to list CSVs in namespace %q: %v", OLMNamespace, err)
 	}
 	var pkgServerCSV *olmapiv1alpha1.ClusterServiceVersion
 	for _, csv := range csvs.Items {
@@ -223,7 +223,7 @@ func (c Client) GetInstalledVersion(ctx context.Context) (string, error) {
 			// There is more than one version of OLM installed in the cluster,
 			// so we can't resolve the version being used.
 			if pkgServerCSV != nil {
-				return "", errors.Errorf("more than one OLM (package server) version installed: %q and %q", pkgServerCSV.GetName(), name)
+				return "", fmt.Errorf("more than one OLM (package server) version installed: %q and %q", pkgServerCSV.GetName(), name)
 			}
 			pkgServerCSV = &csv
 		}
@@ -260,5 +260,5 @@ func getOLMVersionFromPackageServerCSV(csv *olmapiv1alpha1.ClusterServiceVersion
 	if _, err := semver.Parse(ver); err == nil {
 		return ver, nil
 	}
-	return "", errors.Errorf("no OLM version found in CSV %q spec", csv.GetName())
+	return "", fmt.Errorf("no OLM version found in CSV %q spec", csv.GetName())
 }

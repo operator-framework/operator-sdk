@@ -25,7 +25,6 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	generatorargs "k8s.io/kube-openapi/cmd/openapi-gen/args"
 	"k8s.io/kube-openapi/pkg/generators"
@@ -39,7 +38,7 @@ func OpenAPIGen() error {
 
 	gvMap, err := k8sutil.ParseGroupSubpackages(scaffold.ApisDir)
 	if err != nil {
-		return fmt.Errorf("failed to parse group versions: (%v)", err)
+		return fmt.Errorf("failed to parse group versions: %v", err)
 	}
 	gvb := &strings.Builder{}
 	for g, vs := range gvMap {
@@ -83,7 +82,7 @@ func openAPIGen(hf string, fqApis []string) error {
 		// Print API rule violations to stdout
 		cargs.ReportFilename = "-"
 		if err := generatorargs.Validate(args); err != nil {
-			return errors.Wrap(err, "openapi-gen argument validation error")
+			return fmt.Errorf("openapi-gen argument validation error: %v", err)
 		}
 
 		err := args.Execute(
@@ -92,7 +91,7 @@ func openAPIGen(hf string, fqApis []string) error {
 			generators.Packages,
 		)
 		if err != nil {
-			return errors.Wrap(err, "openapi-gen generator error")
+			return fmt.Errorf("openapi-gen generator error: %v", err)
 		}
 	}
 	return nil

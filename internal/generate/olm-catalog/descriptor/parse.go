@@ -25,7 +25,6 @@ import (
 
 	"github.com/fatih/structtag"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	"github.com/pkg/errors"
 	"k8s.io/gengo/types"
 )
 
@@ -139,10 +138,10 @@ func parseMemberAnnotation(d *descriptor, pathElems []string, val string) (err e
 			}
 			d.XDescriptors = strings.Split(xdStr, ",")
 		default:
-			return errors.Errorf("unsupported descriptor path element %s", pathElems[1])
+			return fmt.Errorf("unsupported descriptor path element %s", pathElems[1])
 		}
 	default:
-		return errors.Errorf("unsupported descriptor path %s", annotations.JoinPath(pathElems...))
+		return fmt.Errorf("unsupported descriptor path %s", annotations.JoinPath(pathElems...))
 	}
 	return nil
 }
@@ -156,7 +155,7 @@ func parseResource(rStr string) (r olmapiv1alpha1.APIResourceReference, err erro
 	}
 	rSplit := strings.SplitN(rStr, ",", 3)
 	if len(rSplit) < 2 {
-		return r, errors.Errorf("resource string %s did not have at least a kind and a version", rStr)
+		return r, fmt.Errorf("resource string %s did not have at least a kind and a version", rStr)
 	}
 	r.Kind, r.Version = strings.TrimSpace(rSplit[0]), strings.TrimSpace(rSplit[1])
 	if len(rSplit) == 3 {

@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -37,7 +38,6 @@ import (
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	olminstall "github.com/operator-framework/operator-lifecycle-manager/pkg/controller/install"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	extscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
@@ -204,9 +204,7 @@ func ListInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig) (
 		conf := BasicTestConfig{}
 		basicTests := NewBasicTestSuite(conf)
 
-		if schelpers.IsV1alpha2(config.Version) {
-			basicTests.ApplySelector(config.Selector)
-		}
+		basicTests.ApplySelector(config.Selector)
 
 		basicTests.TestResults = make([]schelpers.TestResult, 0)
 		for i := 0; i < len(basicTests.Tests); i++ {
@@ -221,9 +219,7 @@ func ListInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig) (
 		conf := OLMTestConfig{}
 		olmTests := NewOLMTestSuite(conf)
 
-		if schelpers.IsV1alpha2(config.Version) {
-			olmTests.ApplySelector(config.Selector)
-		}
+		olmTests.ApplySelector(config.Selector)
 
 		olmTests.TestResults = make([]schelpers.TestResult, 0)
 		for i := 0; i < len(olmTests.Tests); i++ {
@@ -323,10 +319,10 @@ func getCRFromCSV(currentCRMans []string, crJSONStr string, csvName string) ([]s
 		if crJSONStr != "" {
 			var crs []interface{}
 			if err := json.Unmarshal([]byte(crJSONStr), &crs); err != nil {
-				return finalCR, errors.Wrapf(err, "metadata.annotations['alm-examples'] in CSV %s incorrectly formatted", csvName)
+				return finalCR, fmt.Errorf("metadata.annotations['alm-examples'] in CSV %s incorrectly formatted: %v", csvName, err)
 			}
 			if len(crs) == 0 {
-				return finalCR, errors.Errorf("no CRs found in metadata.annotations['alm-examples'] in CSV %s and cr-manifest config option not set", csvName)
+				return finalCR, fmt.Errorf("no CRs found in metadata.annotations['alm-examples'] in CSV %s and cr-manifest config option not set", csvName)
 			}
 			// TODO: run scorecard against all CR's in CSV.
 			cr := crs[0]
@@ -430,9 +426,7 @@ func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, 
 			ProxyPod: proxyPodGlobal,
 		}
 		basicTests := NewBasicTestSuite(conf)
-		if schelpers.IsV1alpha2(config.Version) {
-			basicTests.ApplySelector(config.Selector)
-		}
+		basicTests.ApplySelector(config.Selector)
 
 		basicTests.Run(context.TODO())
 		logs, err := ioutil.ReadAll(logReadWriter)
@@ -452,9 +446,7 @@ func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, 
 			Bundle:   config.Bundle,
 		}
 		olmTests := NewOLMTestSuite(conf)
-		if schelpers.IsV1alpha2(config.Version) {
-			olmTests.ApplySelector(config.Selector)
-		}
+		olmTests.ApplySelector(config.Selector)
 
 		olmTests.Run(context.TODO())
 		logs, err := ioutil.ReadAll(logReadWriter)

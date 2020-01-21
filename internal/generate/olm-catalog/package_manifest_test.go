@@ -18,28 +18,90 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/internal/generate/gen"
+	gen "github.com/operator-framework/operator-sdk/internal/generate/gen"
 
+	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPackageManifest(t *testing.T) {
+// newTestPackageManifestGenerator returns a package manifest Generator populated with test values.
+func newTestPackageManifestGenerator() gen.Generator {
 	inputDir := filepath.Join(testGoDataDir, OLMCatalogDir, testProjectName)
 	cfg := gen.Config{
 		OperatorName: testProjectName,
 		Inputs:       map[string]string{ManifestsDirKey: inputDir},
 	}
 	g := NewPackageManifest(cfg, csvVersion, "stable", true)
-	fileMap, err := g.(pkgGenerator).generate()
+	return g
+}
+
+func TestGeneratePackageManifest(t *testing.T) {
+	g := newTestPackageManifestGenerator()
+	pg := g.(pkgGenerator)
+
+	fileMap, err := pg.generate()
 	if err != nil {
 		t.Fatalf("Failed to execute package manifest generator: %v", err)
 	}
 
-	pkgExpFile := getPkgFileName(testProjectName)
-	if b, ok := fileMap[pkgExpFile]; !ok {
+	if b, ok := fileMap[pg.fileName]; !ok {
 		t.Error("Failed to generate package manifest")
 	} else {
 		assert.Equal(t, packageManifestExp, string(b))
+	}
+}
+
+func TestValidatePackageManifest(t *testing.T) {
+	g := newTestPackageManifestGenerator()
+	pg := g.(pkgGenerator)
+
+	// pkg is a basic, valid package manifest.
+	pkg, err := pg.buildPackageManifest()
+	if err != nil {
+		t.Fatalf("Failed to execute package manifest generator: %v", err)
+	}
+
+	pg.setChannels(&pkg)
+	sortChannelsByName(&pkg)
+
+	// invalid mock data, pkg with empty channel
+	invalidPkgWithEmptyChannels := pkg
+	invalidPkgWithEmptyChannels.Channels = []registry.PackageChannel{}
+
+	type args struct {
+		pkg *registry.PackageManifest
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name:    "Should work successfully with a valid pkg",
+			wantErr: false,
+			args: args{
+				pkg: &pkg,
+			},
+		},
+		{
+			name:    "Should return error when the pkg is not informed",
+			wantErr: true,
+		},
+		{
+			name:    "Should return error when the pkg is invalid",
+			wantErr: true,
+			args: args{
+				pkg: &invalidPkgWithEmptyChannels,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validatePackageManifest(tt.args.pkg)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Failed to check package manifest validate: error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
 	}
 }
 
