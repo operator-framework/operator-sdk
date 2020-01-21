@@ -15,7 +15,7 @@ operator-sdk cleanup [flags]
 ```
       --kubeconfig string         The file path to kubernetes configuration file. Defaults to location specified by $KUBECONFIG, or to default file rules if not set
       --namespace string          The namespace where the operator watches for changes.
-      --olm                       The operator to be run will be managed by OLM in a cluster. Cannot be set with another run-type flag (default true)
+      --olm                       The operator to be cleaned up is managed by OLM in a cluster. Cannot be set with another cleanup-type flag (default true)
       --manifests string          [olm only] Directory containing package manifest and operator bundles.
       --operator-version string   [olm only] Version of operator to deploy
       --install-mode string       [olm only] InstallMode to create OperatorGroup with. Format: InstallModeType=[ns1,ns2[, ...]]
