@@ -31,11 +31,19 @@ type cleanupCmd struct {
 	kubeconfig string
 	namespace  string
 
-	// Run type.
+	// Cleanup type.
 	olm bool
 
-	// Run type-specific options.
+	// Cleanup type-specific options.
 	olmArgs olmoperator.OLMCmd
+}
+
+// checkCleanupType ensures exactly one cleanup type has been selected.
+func (c *cleanupCmd) checkCleanupType() error {
+	if !c.olm {
+		return errors.New("exactly one run-type flag must be set: --olm")
+	}
+	return nil
 }
 
 func NewCmd() *cobra.Command {
@@ -44,8 +52,8 @@ func NewCmd() *cobra.Command {
 		Use:   "cleanup",
 		Short: "Delete and clean up after a running Operator",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !c.olm {
-				return errors.New("exactly one run-type flag must be set: --olm")
+			if err := c.checkCleanupType(); err != nil {
+				return err
 			}
 			projutil.MustInProjectRoot()
 
@@ -65,7 +73,7 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	// Avoid sorting flags so we can group them according to run type.
+	// Avoid sorting flags so we can group them according to cleanup type.
 	cmd.Flags().SortFlags = false
 
 	// Shared flags.
@@ -75,10 +83,11 @@ func NewCmd() *cobra.Command {
 	cmd.Flags().StringVar(&c.namespace, "namespace", "",
 		"The namespace where the operator watches for changes.")
 
-	// 'run --olm' and related flags.
+	// 'cleanup --olm' and related flags. Set as default since this is the only
+	// cleanup type.
 	cmd.Flags().BoolVar(&c.olm, "olm", true,
-		"The operator to be run will be managed by OLM in a cluster. "+
-			"Cannot be set with another run-type flag")
+		"The operator to be cleaned up is managed by OLM in a cluster. "+
+			"Cannot be set with another cleanup-type flag")
 	c.olmArgs.AddToFlagSet(cmd.Flags())
 	return cmd
 }

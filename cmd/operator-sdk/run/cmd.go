@@ -43,14 +43,22 @@ type runCmd struct {
 	localArgs runLocalArgs
 }
 
+// checkRunType ensures exactly one run type has been selected.
+func (c *runCmd) checkRunType() error {
+	if c.olm && c.local || !c.olm && !c.local {
+		return errors.New("exactly one run-type flag must be set: --olm, --local")
+	}
+	return nil
+}
+
 func NewCmd() *cobra.Command {
 	c := &runCmd{}
 	cmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run an Operator in a variety of environments",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if c.olm && c.local || !c.olm && !c.local {
-				return errors.New("exactly one run-type flag must be set: --olm, --local")
+			if err := c.checkRunType(); err != nil {
+				return err
 			}
 			projutil.MustInProjectRoot()
 
@@ -94,7 +102,7 @@ func NewCmd() *cobra.Command {
 		"The namespace where the operator watches for changes.")
 
 	// 'run --olm' and related flags.
-	cmd.Flags().BoolVar(&c.olm, "olm", true,
+	cmd.Flags().BoolVar(&c.olm, "olm", false,
 		"The operator to be run will be managed by OLM in a cluster. "+
 			"Cannot be set with another run-type flag")
 	c.olmArgs.AddToFlagSet(cmd.Flags())
