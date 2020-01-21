@@ -12,27 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package run
+package execentrypoint
 
 import (
+	"github.com/operator-framework/operator-sdk/pkg/helm"
+	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
+	"github.com/operator-framework/operator-sdk/pkg/log/zap"
+
 	"github.com/spf13/cobra"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-// NewCmd returns a command that contains subcommands to run specific
-// operator types.
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "exec-entrypoint",
-		Short: "Runs a generic operator",
-		Long: `Runs a generic operator. This is intended to be used when running
+// newRunHelmCmd returns a command that will run a helm operator.
+func newRunHelmCmd() *cobra.Command {
+	var flags *hoflags.HelmOperatorFlags
+	runHelmCmd := &cobra.Command{
+		Use:   "helm",
+		Short: "Runs as a helm operator",
+		Long: `Runs as a helm operator. This is intended to be used when running
 in a Pod inside a cluster. Developers wanting to run their operator locally
 should use "run --local" instead.`,
-		Hidden: true,
-	}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			logf.SetLogger(zap.Logger())
 
-	cmd.AddCommand(
-		newRunAnsibleCmd(),
-		newRunHelmCmd(),
-	)
-	return cmd
+			return helm.Run(flags)
+		},
+	}
+	flags = hoflags.AddTo(runHelmCmd.Flags())
+
+	return runHelmCmd
 }
