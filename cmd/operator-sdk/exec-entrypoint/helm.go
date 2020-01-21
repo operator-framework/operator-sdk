@@ -31,7 +31,7 @@ func newRunHelmCmd() *cobra.Command {
 		Short: "Runs as a helm operator",
 		Long: `Runs as a helm operator. This is intended to be used when running
 in a Pod inside a cluster. Developers wanting to run their operator locally
-should use "up local" instead.`,
+should use "run --local" instead.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			logf.SetLogger(zap.Logger())
 

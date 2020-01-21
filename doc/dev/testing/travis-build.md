@@ -46,7 +46,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
 4. Run [go e2e tests][go-e2e].
     1. Scaffold a project using `hack/tests/scaffolding/e2e-go-scaffold.sh`
     2. Build `memcached-operator` image to be used in tests
-    3. Run scaffolded project e2e tests using `operator-sdk up local`
+    3. Run scaffolded project e2e tests using `operator-sdk run --local`
         1. Run cluster test (namespace is auto-generated and deleted by test framework).
             1. Deploy operator and required resources to the cluster.
             2. Run the leader election test.
@@ -68,7 +68,7 @@ The Go, Ansible, and Helm tests then differ in what tests they run.
                 3. Perform linting of the existing metrics.
                 4. Perform checks on each custom resource generated metric and makes sure the name, type, value, labels and metric are correct.
         2. Run local test (namespace is auto-generated and deleted by test framework).
-            1. Start operator using `up local` subcommand.
+            1. Start operator using the `run --local` subcommand.
             2. Run memcached scale test (described in step 4.3.1.3)
     4. Run [TLS library tests][tls-tests].
         1. This test runs multiple simple tests of the operator-sdk's TLS library. The tests run in parallel and each tests runs in its own namespace.
