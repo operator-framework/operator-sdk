@@ -44,11 +44,13 @@ import (
 )
 
 const (
-	OLMCatalogDir  = scaffold.DeployDir + string(filepath.Separator) + "olm-catalog"
-	CSVYamlFileExt = ".clusterserviceversion.yaml"
+	olmCatalogChildDir = "olm-catalog"
+	OLMCatalogDir      = scaffold.DeployDir + string(filepath.Separator) + olmCatalogChildDir
+	CSVYamlFileExt     = ".clusterserviceversion.yaml"
 
 	BundleDirKey = "bundle"
-	GoAPIsDirKey = "apis"
+	DeployDirKey = "deploy"
+	APIsDirKey   = "apis"
 )
 
 type csvGenerator struct {
@@ -70,27 +72,40 @@ func NewCSV(cfg gen.Config, csvVersion, fromVersion string) gen.Generator {
 	if g.Inputs == nil {
 		g.Inputs = map[string]string{}
 	}
+	// The olm-catalog directory location depends on where the deploy (operator
+	// manifests) directory is.
+	olmCatalogDir := OLMCatalogDir
+	if deployDir, ok := g.Inputs[DeployDirKey]; !ok || deployDir == "" {
+		g.Inputs[DeployDirKey] = scaffold.DeployDir
+	} else {
+		// Set to non-standard location.
+		olmCatalogDir = filepath.Join(g.Inputs[DeployDirKey], olmCatalogChildDir)
+	}
 	if bundle, ok := g.Inputs[BundleDirKey]; !ok || bundle == "" {
-		// Makes accessing easier elsewhere in the generator.
+		// Initialize so we don't have to check for key existence elsewhere.
 		g.Inputs[BundleDirKey] = ""
-		if isBundleDirExist(g.OperatorName, g.fromVersion) {
-			g.Inputs[BundleDirKey] = filepath.Join(OLMCatalogDir, g.OperatorName, g.fromVersion)
-		} else if isBundleDirExist(g.OperatorName, g.csvVersion) {
-			g.Inputs[BundleDirKey] = filepath.Join(OLMCatalogDir, g.OperatorName, g.csvVersion)
+		parentDir := filepath.Join(olmCatalogDir, g.OperatorName)
+		if isBundleDirExist(parentDir, g.fromVersion) {
+			g.Inputs[BundleDirKey] = filepath.Join(olmCatalogDir, g.OperatorName, g.fromVersion)
+		} else if isBundleDirExist(parentDir, g.csvVersion) {
+			g.Inputs[BundleDirKey] = filepath.Join(olmCatalogDir, g.OperatorName, g.csvVersion)
 		}
 	}
+	if apisDir, ok := g.Inputs[APIsDirKey]; !ok || apisDir == "" {
+		g.Inputs[APIsDirKey] = scaffold.ApisDir
+	}
 	if g.OutputDir == "" {
-		g.OutputDir = filepath.Join(OLMCatalogDir, g.OperatorName, g.csvVersion)
+		g.OutputDir = filepath.Join(olmCatalogDir, g.OperatorName, g.csvVersion)
 	}
 	return g
 }
 
-func isBundleDirExist(name, version string) bool {
-	if version == "" {
+func isBundleDirExist(parentDir, version string) bool {
+	// Ensure full path is constructed.
+	if parentDir == "" || version == "" {
 		return false
 	}
-	dir := filepath.Join(OLMCatalogDir, name, version)
-	_, err := os.Stat(dir)
+	_, err := os.Stat(filepath.Join(parentDir, version))
 	return err == nil || os.IsExist(err)
 }
 
@@ -328,7 +343,7 @@ func (g csvGenerator) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersio
 func (g csvGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
 	kindManifestMap := map[schema.GroupVersionKind][][]byte{}
 	crGVKSet := map[schema.GroupVersionKind]struct{}{}
-	err = filepath.Walk(scaffold.DeployDir, func(path string, info os.FileInfo, werr error) error {
+	err = filepath.Walk(g.Inputs[DeployDirKey], func(path string, info os.FileInfo, werr error) error {
 		if werr != nil || info.IsDir() {
 			return werr
 		}
@@ -398,7 +413,7 @@ func (g csvGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServiceV
 			return err
 		}
 	}
-	err = updateDescriptions(csv, g.Inputs[GoAPIsDirKey], projutil.GetOperatorType())
+	err = updateDescriptions(csv, g.Inputs[APIsDirKey], projutil.GetOperatorType())
 	if err != nil {
 		return fmt.Errorf("error updating CSV customresourcedefinitions: %w", err)
 	}
