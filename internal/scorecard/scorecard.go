@@ -53,9 +53,8 @@ type Config struct {
 }
 
 type PluginConfig struct {
-	Basic    *scplugins.BasicAndOLMPluginConfig `mapstructure:"basic,omitempty"`
-	Olm      *scplugins.BasicAndOLMPluginConfig `mapstructure:"olm,omitempty"`
-	External *externalPluginConfig              `mapstructure:"external,omitempty"`
+	Basic *scplugins.BasicAndOLMPluginConfig `mapstructure:"basic,omitempty"`
+	Olm   *scplugins.BasicAndOLMPluginConfig `mapstructure:"olm,omitempty"`
 }
 
 func (s Config) GetPlugins(configs []PluginConfig) ([]Plugin, error) {
@@ -81,14 +80,6 @@ func (s Config) GetPlugins(configs []PluginConfig) ([]Plugin, error) {
 			pluginConfig.Bundle = s.Bundle
 			setConfigDefaults(pluginConfig, s.Kubeconfig)
 			newPlugin = basicOrOLMPlugin{pluginType: scplugins.OLMIntegration, config: *pluginConfig}
-		} else {
-			pluginConfig := plugin.External
-			if s.Kubeconfig != "" {
-				// put the kubeconfig flag first in case user is overriding it with an env var in config file
-				pluginConfig.Env = append([]externalPluginEnv{{Name: "KUBECONFIG", Value: s.Kubeconfig}},
-					pluginConfig.Env...)
-			}
-			newPlugin = externalPlugin{config: *pluginConfig}
 		}
 		plugins = append(plugins, newPlugin)
 	}
@@ -96,11 +87,6 @@ func (s Config) GetPlugins(configs []PluginConfig) ([]Plugin, error) {
 }
 
 func (s Config) RunTests() error {
-	for idx, plugin := range s.PluginConfigs {
-		if err := validateConfig(plugin, idx, s.Version); err != nil {
-			return fmt.Errorf("error validating plugin config: %v", err)
-		}
-	}
 
 	var pluginOutputs []scapiv1alpha1.ScorecardOutput
 	for _, plugin := range s.Plugins {
@@ -122,12 +108,10 @@ func (s Config) RunTests() error {
 		return err
 	}
 
-	if schelpers.IsV1alpha2(s.Version) {
-		for _, scorecardOutput := range pluginOutputs {
-			for _, result := range scorecardOutput.Results {
-				if result.Fail > 0 || result.PartialPass > 0 {
-					os.Exit(1)
-				}
+	for _, scorecardOutput := range pluginOutputs {
+		for _, result := range scorecardOutput.Results {
+			if result.Fail > 0 || result.PartialPass > 0 || result.Error > 0 {
+				os.Exit(1)
 			}
 		}
 	}

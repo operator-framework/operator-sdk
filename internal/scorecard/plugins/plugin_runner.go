@@ -206,9 +206,7 @@ func ListInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig) (
 		conf := BasicTestConfig{}
 		basicTests := NewBasicTestSuite(conf)
 
-		if schelpers.IsV1alpha2(config.Version) {
-			basicTests.ApplySelector(config.Selector)
-		}
+		basicTests.ApplySelector(config.Selector)
 
 		basicTests.TestResults = make([]schelpers.TestResult, 0)
 		for i := 0; i < len(basicTests.Tests); i++ {
@@ -223,9 +221,7 @@ func ListInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig) (
 		conf := OLMTestConfig{}
 		olmTests := NewOLMTestSuite(conf)
 
-		if schelpers.IsV1alpha2(config.Version) {
-			olmTests.ApplySelector(config.Selector)
-		}
+		olmTests.ApplySelector(config.Selector)
 
 		olmTests.TestResults = make([]schelpers.TestResult, 0)
 		for i := 0; i < len(olmTests.Tests); i++ {
@@ -439,9 +435,7 @@ func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, 
 			ProxyPod: proxyPodGlobal,
 		}
 		basicTests := NewBasicTestSuite(conf)
-		if schelpers.IsV1alpha2(config.Version) {
-			basicTests.ApplySelector(config.Selector)
-		}
+		basicTests.ApplySelector(config.Selector)
 
 		basicTests.Run(context.TODO())
 		logs, err := ioutil.ReadAll(logReadWriter)
@@ -461,9 +455,7 @@ func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, 
 			Bundle:   config.Bundle,
 		}
 		olmTests := NewOLMTestSuite(conf)
-		if schelpers.IsV1alpha2(config.Version) {
-			olmTests.ApplySelector(config.Selector)
-		}
+		olmTests.ApplySelector(config.Selector)
 
 		olmTests.Run(context.TODO())
 		logs, err := ioutil.ReadAll(logReadWriter)
