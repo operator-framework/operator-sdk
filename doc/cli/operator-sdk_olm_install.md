@@ -1,4 +1,4 @@
-## operator-sdk alpha olm install
+## operator-sdk olm install
 
 Install Operator Lifecycle Manager in your cluster
 
@@ -7,7 +7,7 @@ Install Operator Lifecycle Manager in your cluster
 Install Operator Lifecycle Manager in your cluster
 
 ```
-operator-sdk alpha olm install [flags]
+operator-sdk olm install [flags]
 ```
 
 ### Options
@@ -20,5 +20,5 @@ operator-sdk alpha olm install [flags]
 
 ### SEE ALSO
 
-* [operator-sdk alpha olm](operator-sdk_alpha_olm.md)	 - Manage the Operator Lifecycle Manager installation in your cluster
+* [operator-sdk olm](operator-sdk_olm.md)	 - Manage the Operator Lifecycle Manager installation in your cluster
 
