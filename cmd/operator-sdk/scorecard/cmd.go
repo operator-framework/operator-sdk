@@ -70,6 +70,7 @@ func NewCmd() *cobra.Command {
 			return err
 		},
 	}
+<<<<<<< HEAD
 	scorecardCmd.Flags().String(configOpt, "", fmt.Sprintf(
 		"config file (default is '<project_dir>/%s'; the config file's extension and format can be .yaml,"+
 			" .json, or .toml)", scorecard.DefaultConfigFile))
@@ -86,6 +87,15 @@ func NewCmd() *cobra.Command {
 		"If true, only print the test names that would be run based on selector filtering")
 	scorecardCmd.Flags().StringP(bundleOpt, "b", "",
 		"OLM bundle directory path, when specified runs bundle validation")
+=======
+	scorecardCmd.Flags().String(configOpt, "", fmt.Sprintf("config file (default is '<project_dir>/%s'; the config file's extension and format can be .yaml, .json, or .toml)", scorecard.DefaultConfigFile))
+	scorecardCmd.Flags().String(kubeconfigOpt, "", "Path to kubeconfig of custom resource created in cluster")
+	scorecardCmd.Flags().StringP(outputFormatOpt, "o", scorecard.TextOutputFormat, fmt.Sprintf("Output format for results. Valid values: %s, %s", scorecard.TextOutputFormat, scorecard.JSONOutputFormat))
+	scorecardCmd.Flags().String(versionOpt, schelpers.DefaultScorecardVersion, "scorecard version. Valid values: v1alpha2")
+	scorecardCmd.Flags().StringP(selectorOpt, "l", "", "selector (label query) to filter tests on")
+	scorecardCmd.Flags().BoolP(listOpt, "L", false, "If true, only print the test names that would be run based on selector filtering")
+	scorecardCmd.Flags().StringP(bundleOpt, "b", "", "OLM bundle directory path, when specified runs bundle validation")
+>>>>>>> upstream/master
 
 	if err := viper.BindPFlag(configOpt, scorecardCmd.Flags().Lookup(configOpt)); err != nil {
 		log.Fatalf("Unable to add config :%v", err)
