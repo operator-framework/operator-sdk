@@ -88,7 +88,6 @@ func NewCmd() *cobra.Command {
 	scorecardCmd.Flags().StringP(bundleOpt, "b", "",
 		"OLM bundle directory path, when specified runs bundle validation")
 
-	
 	if err := viper.BindPFlag(configOpt, scorecardCmd.Flags().Lookup(configOpt)); err != nil {
 		log.Fatalf("Unable to add config :%v", err)
 	}
