@@ -12,7 +12,7 @@
 - Moved `olm-catalog gen-csv` to the `generate csv` subcommand. ([#2439](https://github.com/operator-framework/operator-sdk/pull/2439))
 - `run ansible/helm` are now the hidden commands `exec-entrypoint ansible/helm`. All functionality of each subcommand is the same. ([#2441](https://github.com/operator-framework/operator-sdk/pull/2441))
 - `up local` is now [`run --local`](./doc/cli/operator-sdk_run.md). All functionality of this command is the same. ([#2441](https://github.com/operator-framework/operator-sdk/pull/2441))
-- Moved the `olm` subcommand from `alpha` to its own subcommand. All functionality of this command is the same. ([#2447](https://github.com/operator-framework/operator-sdk/pull/2447))
+- **Breaking Change:** Moved the `olm` subcommand from `alpha` to its own subcommand. All functionality of this command is the same. ([#2447](https://github.com/operator-framework/operator-sdk/pull/2447))
 
 ### Deprecated
 
