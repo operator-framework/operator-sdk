@@ -27,6 +27,7 @@ require (
 	github.com/operator-framework/api v0.0.0-20191127212340-9066a6e95573
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20191115003340-16619cd27fa5
 	github.com/operator-framework/operator-registry v1.5.3
+	github.com/otiai10/curr v0.0.0-20190513014714-f5a3d24e5776 // indirect
 	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v1.2.1
@@ -88,3 +89,5 @@ replace (
 )
 
 replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309 // Required by Helm
+
+replace github.com/operator-framework/operator-registry => github.com/exdx/operator-registry v1.5.6-0.20200115075008-cbbe884b212d
