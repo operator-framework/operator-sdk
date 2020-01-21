@@ -6,9 +6,11 @@
 - Added [`bundle build`](./doc/cli/operator-sdk_alpha_bundle_build.md) (under the `alpha` subcommand) which builds, and optionally generates metadata for, [operator bundle images](https://github.com/openshift/enhancements/blob/ec2cf96/enhancements/olm/operator-registry.md). ([#2076](https://github.com/operator-framework/operator-sdk/pull/2076))
 
 ### Changed
+
 - Changed error wrapping according to Go version 1.13+ [error handling](https://blog.golang.org/go1.13-errors). ([#2355](https://github.com/operator-framework/operator-sdk/pull/2355))
 - Added retry logic to the cleanup function from the e2e test framework in order to allow it to be achieved in the scenarios where temporary network issues are faced. ([#2277](https://github.com/operator-framework/operator-sdk/pull/2277))
-- `run local` is now [`run --local`](./doc/cli/operator-sdk_run.md). All other functionality of the command is the same. ([#2441](https://github.com/operator-framework/operator-sdk/pull/2441))
+- Moved `olm-catalog gen-csv` to the `generate csv` subcommand. ([#2439](https://github.com/operator-framework/operator-sdk/pull/2439))
+- `up local` is now [`run --local`](./doc/cli/operator-sdk_run.md). All other functionality of the command is the same. ([#2441](https://github.com/operator-framework/operator-sdk/pull/2441))
 
 ### Deprecated
 
@@ -18,6 +20,12 @@
 
 - Fixed a regression in the helm-operator that caused all releases to be deployed in the same namespace that the operator was deployed in, regardless of which namespace the CR was created in. Now release resources are created in the same namespace as the CR. ([#2414](https://github.com/operator-framework/operator-sdk/pull/2414))
 - Fix issue when the test-framework would attempt to create a namespace exceeding 63 characters. `pkg/test/NewCtx()` now creates a unique id instead of using the test name. `TestCtx.GetNamespace()` uses this unique id to create a namespace that avoids this scenario. ([#2335](https://github.com/operator-framework/operator-sdk/pull/2335))
+
+## v0.14.1
+
+### Bug Fixes
+
+- Fixed a regression in the helm-operator that caused all releases to be deployed in the same namespace that the operator was deployed in, regardless of which namespace the CR was created in. Now release resources are created in the same namespace as the CR. ([#2414](https://github.com/operator-framework/operator-sdk/pull/2414))
 
 ## v0.14.0
 

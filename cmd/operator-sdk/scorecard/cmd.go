@@ -25,7 +25,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/operator-framework/operator-sdk/internal/scorecard"
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
-	scplugins "github.com/operator-framework/operator-sdk/internal/scorecard/plugins"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/labels"
@@ -35,6 +34,8 @@ import (
 )
 
 const (
+	versionOpt      = "version"
+	kubeconfigOpt   = "kubeconfig"
 	configOpt       = "config"
 	outputFormatOpt = "output"
 	selectorOpt     = "selector"
@@ -59,28 +60,34 @@ func NewCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 			buildScorecardConfig(&c)
+			for idx, plugin := range c.PluginConfigs {
+				if err := plugin.ValidateConfig(idx); err != nil {
+					return fmt.Errorf("error validating plugin config: %v", err)
+				}
+			}
+
 			err := c.RunTests()
 			return err
 		},
 	}
 	scorecardCmd.Flags().String(configOpt, "", fmt.Sprintf("config file (default is '<project_dir>/%s'; the config file's extension and format can be .yaml, .json, or .toml)", scorecard.DefaultConfigFile))
-	scorecardCmd.Flags().String(scplugins.KubeconfigOpt, "", "Path to kubeconfig of custom resource created in cluster")
+	scorecardCmd.Flags().String(kubeconfigOpt, "", "Path to kubeconfig of custom resource created in cluster")
 	scorecardCmd.Flags().StringP(outputFormatOpt, "o", scorecard.TextOutputFormat, fmt.Sprintf("Output format for results. Valid values: %s, %s", scorecard.TextOutputFormat, scorecard.JSONOutputFormat))
-	scorecardCmd.Flags().String(schelpers.VersionOpt, schelpers.DefaultScorecardVersion, "scorecard version. Valid values: v1alpha1, v1alpha2")
-	scorecardCmd.Flags().StringP(selectorOpt, "l", "", "selector (label query) to filter tests on (only valid when version is v1alpha2)")
-	scorecardCmd.Flags().BoolP(listOpt, "L", false, "If true, only print the test names that would be run based on selector filtering (only valid when version is v1alpha2)")
+	scorecardCmd.Flags().String(versionOpt, schelpers.DefaultScorecardVersion, "scorecard version. Valid values: v1alpha2")
+	scorecardCmd.Flags().StringP(selectorOpt, "l", "", "selector (label query) to filter tests on")
+	scorecardCmd.Flags().BoolP(listOpt, "L", false, "If true, only print the test names that would be run based on selector filtering")
 	scorecardCmd.Flags().StringP(bundleOpt, "b", "", "OLM bundle directory path, when specified runs bundle validation")
 
 	if err := viper.BindPFlag(configOpt, scorecardCmd.Flags().Lookup(configOpt)); err != nil {
 		log.Fatalf("Unable to add config :%v", err)
 	}
-	if err := viper.BindPFlag("scorecard."+scplugins.KubeconfigOpt, scorecardCmd.Flags().Lookup(scplugins.KubeconfigOpt)); err != nil {
+	if err := viper.BindPFlag("scorecard."+kubeconfigOpt, scorecardCmd.Flags().Lookup(kubeconfigOpt)); err != nil {
 		log.Fatalf("Unable to add kubeconfig :%v", err)
 	}
 	if err := viper.BindPFlag("scorecard."+outputFormatOpt, scorecardCmd.Flags().Lookup(outputFormatOpt)); err != nil {
 		log.Fatalf("Unable to add output format :%v", err)
 	}
-	if err := viper.BindPFlag("scorecard."+schelpers.VersionOpt, scorecardCmd.Flags().Lookup(schelpers.VersionOpt)); err != nil {
+	if err := viper.BindPFlag("scorecard."+versionOpt, scorecardCmd.Flags().Lookup(versionOpt)); err != nil {
 		log.Fatalf("Unable to add version :%v", err)
 	}
 	if err := viper.BindPFlag("scorecard."+selectorOpt, scorecardCmd.Flags().Lookup(selectorOpt)); err != nil {
@@ -112,8 +119,8 @@ func initConfig() (*viper.Viper, error) {
 		scViper = viper.Sub("scorecard")
 		// this is a workaround for the fact that nested flags don't persist on viper.Sub
 		scViper.Set(outputFormatOpt, viper.GetString("scorecard."+outputFormatOpt))
-		scViper.Set(scplugins.KubeconfigOpt, viper.GetString("scorecard."+scplugins.KubeconfigOpt))
-		scViper.Set(schelpers.VersionOpt, viper.GetString("scorecard."+schelpers.VersionOpt))
+		scViper.Set(kubeconfigOpt, viper.GetString("scorecard."+kubeconfigOpt))
+		scViper.Set(versionOpt, viper.GetString("scorecard."+versionOpt))
 		scViper.Set(selectorOpt, viper.GetString("scorecard."+selectorOpt))
 		scViper.Set(bundleOpt, viper.GetString("scorecard."+bundleOpt))
 		scViper.Set(listOpt, viper.GetString("scorecard."+listOpt))
@@ -121,14 +128,16 @@ func initConfig() (*viper.Viper, error) {
 		if !scViper.IsSet(outputFormatOpt) {
 			scViper.Set(outputFormatOpt, scorecard.TextOutputFormat)
 		}
-		format := scViper.GetString(outputFormatOpt)
-		if format == scorecard.TextOutputFormat {
+
+		switch format := scViper.GetString(outputFormatOpt); format {
+		case scorecard.TextOutputFormat:
 			logReadWriter = os.Stdout
-		} else if format == scorecard.JSONOutputFormat {
+		case scorecard.JSONOutputFormat:
 			logReadWriter = &bytes.Buffer{}
-		} else {
+		default:
 			return nil, fmt.Errorf("invalid output format: %s", format)
 		}
+
 		scorecard.Log.SetOutput(logReadWriter)
 		scorecard.Log.Info("Using config file: ", viper.ConfigFileUsed())
 	} else {
@@ -149,22 +158,19 @@ func buildScorecardConfig(c *scorecard.Config) {
 		log.Fatalf("Invalid output format (%s); valid values: %s, %s", outputFormat, scorecard.TextOutputFormat, scorecard.JSONOutputFormat)
 	}
 
-	version := scViper.GetString(schelpers.VersionOpt)
+	version := scViper.GetString(versionOpt)
 	err = schelpers.ValidateVersion(version)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
-	if !schelpers.IsV1alpha2(version) && scViper.GetBool(listOpt) {
-		log.Fatal("List flag is not supported on v1alpha1")
-	}
 
 	c.List = scViper.GetBool(listOpt)
 	c.OutputFormat = scViper.GetString(outputFormatOpt)
-	c.Version = scViper.GetString(schelpers.VersionOpt)
+	c.Version = scViper.GetString(versionOpt)
 	c.Bundle = scViper.GetString(bundleOpt)
 
-	if scViper.IsSet(scplugins.KubeconfigOpt) {
-		c.Kubeconfig = scViper.GetString(scplugins.KubeconfigOpt)
+	if scViper.IsSet(kubeconfigOpt) {
+		c.Kubeconfig = scViper.GetString(kubeconfigOpt)
 	}
 
 	c.Selector, err = labels.Parse(scViper.GetString(selectorOpt))
