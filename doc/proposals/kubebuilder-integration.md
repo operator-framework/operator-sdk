@@ -142,7 +142,7 @@ Other SDK subcommands can be removed and replaced by their equivalent Makefile t
 - `operator-sdk generate k8s` ==> `make generate`
 - `operator-sdk generate crd` ==> `make manifests`
 - `operator-sdk build` ==> `make manager`, `make docker-build`
-- `operator-sdk up local` ==> `make run`
+- `operator-sdk run --local` ==> `make run`
 
 If any of the old subcommands above are invoked for a Go operator project, the
 output should be a deprecation error that highlights the equivalent replacement
