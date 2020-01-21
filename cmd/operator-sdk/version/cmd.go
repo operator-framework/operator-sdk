@@ -31,8 +31,7 @@ func NewCmd() *cobra.Command {
 			if version == "unknown" {
 				version = ver.Version
 			}
-			fmt.Printf("operator-sdk version: %q, commit: %q, kubernetes version: %q,\n go version: %q, goos: %q, goarch: %q,\n bulid date: %q", 
-			version, ver.GitCommit, ver.KubernetesVendorVersion, ver.GoVersion, ver.GoOs, ver.GoArch, ver.BuildDate)
+			fmt.Printf("operator-sdk version: %q, commit: %q, kubernetes version: %q,\n go version: %q, goos: %q, goarch: %q,\n bulid date: %q", version, ver.GitCommit, ver.KubernetesVendorVersion, ver.GoVersion, ver.GoOs, ver.GoArch, ver.BuildDate)
 		},
 	}
 	return versionCmd
