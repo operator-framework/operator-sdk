@@ -10,7 +10,8 @@
 - Changed error wrapping according to Go version 1.13+ [error handling](https://blog.golang.org/go1.13-errors). ([#2355](https://github.com/operator-framework/operator-sdk/pull/2355))
 - Added retry logic to the cleanup function from the e2e test framework in order to allow it to be achieved in the scenarios where temporary network issues are faced. ([#2277](https://github.com/operator-framework/operator-sdk/pull/2277))
 - Moved `olm-catalog gen-csv` to the `generate csv` subcommand. ([#2439](https://github.com/operator-framework/operator-sdk/pull/2439))
-- `up local` is now [`run --local`](./doc/cli/operator-sdk_run.md). All other functionality of the command is the same. ([#2441](https://github.com/operator-framework/operator-sdk/pull/2441))
+- `run ansible/helm` are now the hidden commands `exec-entrypoint ansible/helm`. All functionality of each subcommand is the same. ([#2441](https://github.com/operator-framework/operator-sdk/pull/2441))
+- `up local` is now [`run --local`](./doc/cli/operator-sdk_run.md). All functionality of this command is the same. ([#2441](https://github.com/operator-framework/operator-sdk/pull/2441))
 
 ### Deprecated
 
