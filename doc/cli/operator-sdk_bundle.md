@@ -1,4 +1,4 @@
-## operator-sdk alpha bundle
+## operator-sdk bundle
 
 Work with operator bundle metadata and bundle images
 
@@ -18,6 +18,6 @@ https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-
 
 ### SEE ALSO
 
-* [operator-sdk alpha](operator-sdk_alpha.md)	 - Run an alpha subcommand
-* [operator-sdk alpha bundle build](operator-sdk_alpha_bundle_build.md)	 - Build an operator bundle image
+* [operator-sdk](operator-sdk.md)	 - An SDK for building operators with ease
+* [operator-sdk bundle create](operator-sdk_bundle_create.md)	 - Create an operator bundle image
 

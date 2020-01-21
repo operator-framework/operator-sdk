@@ -29,13 +29,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// newBundleBuildCmd returns a command that will build operator bundle image.
-func newBundleBuildCmd() *cobra.Command {
-	c := bundleCmd{}
+// newCreateCmd returns a command that will build operator bundle image or
+// generate metadata for them.
+func newCreateCmd() *cobra.Command {
+	c := &bundleCmd{}
 	cmd := &cobra.Command{
-		Use:   "build",
-		Short: "Build an operator bundle image",
-		Long: `The 'operator-sdk bundle build' command will build an operator
+		Use:   "create",
+		Short: "Create an operator bundle image",
+		Long: `The 'operator-sdk bundle create' command will build an operator
 bundle image containing operator metadata and manifests, tagged with the
 provided image tag.
 
@@ -51,7 +52,7 @@ NOTE: bundle images are not runnable.`,
 		Example: `The following invocation will build a test-operator bundle image using Docker.
 This image will contain manifests for package channels 'stable' and 'beta':
 
-$ operator-sdk bundle build quay.io/example/test-operator:v0.1.0 \
+$ operator-sdk bundle create quay.io/example/test-operator:v0.1.0 \
     --directory ./deploy/olm-catalog/test-operator \
     --package test-operator \
     --channels stable,beta \
@@ -60,12 +61,12 @@ $ operator-sdk bundle build quay.io/example/test-operator:v0.1.0 \
 Assuming your operator has the same name as your operator and the only channel
 is 'stable', the above command can be abbreviated to:
 
-$ operator-sdk bundle build quay.io/example/test-operator:v0.1.0
+$ operator-sdk bundle create quay.io/example/test-operator:v0.1.0
 
 The following invocation will generate test-operator bundle metadata and
 Dockerfile without building the image:
 
-$ operator-sdk bundle build \
+$ operator-sdk bundle create \
     --generate-only \
     --directory ./deploy/olm-catalog/test-operator \
     --package test-operator \
