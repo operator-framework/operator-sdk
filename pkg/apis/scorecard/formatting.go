@@ -18,10 +18,8 @@ import (
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
 
-var _ ScorecardFormatter = &scapiv1alpha2.ScorecardOutput{}
+var _ Formatter = &scapiv1alpha2.ScorecardOutput{}
 
-type ScorecardFormatter interface { //nolint:golint
-	// todo(camilamacedo86): The no lint here is for pkg/apis/scorecard/formatting.go:25:6: type name will be used as scorecard.ScorecardFormatter by other packages, and that stutters; consider calling this Formatter (golint)
-	// However, was decided to not move forward with it now in order to not introduce breakchanges with the task to add the linter. We should to do it after.
+type Formatter interface {
 	MarshalText() (string, error)
 }

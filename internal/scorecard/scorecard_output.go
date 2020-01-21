@@ -25,7 +25,7 @@ import (
 
 func (cfg Config) printPluginOutputs(pluginOutputs []scapiv1alpha2.ScorecardOutput) error {
 
-	var list scapi.ScorecardFormatter
+	var list scapi.Formatter
 	var err error
 	list, err = cfg.combinePluginOutput(pluginOutputs)
 	if err != nil {
