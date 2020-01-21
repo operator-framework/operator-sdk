@@ -23,6 +23,7 @@ import (
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/add"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/build"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/bundle"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/cleanup"
 	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/completion"
 	execentrypoint "github.com/operator-framework/operator-sdk/cmd/operator-sdk/exec-entrypoint"
@@ -64,6 +65,7 @@ func GetCLIRoot() *cobra.Command {
 	root.AddCommand(add.NewCmd())
 	root.AddCommand(alpha.NewCmd())
 	root.AddCommand(build.NewCmd())
+	root.AddCommand(bundle.NewCmd())
 	root.AddCommand(cleanup.NewCmd())
 	root.AddCommand(completion.NewCmd())
 	root.AddCommand(execentrypoint.NewCmd())
