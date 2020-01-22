@@ -12,28 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package olm
+package execentrypoint
 
-import (
-	"github.com/operator-framework/operator-sdk/internal/olm"
+import "github.com/spf13/cobra"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-)
-
-func NewUninstallCmd() *cobra.Command {
-	mgr := olm.Manager{}
+// NewCmd returns a command that contains subcommands to run specific
+// operator types.
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "uninstall",
-		Short: "Uninstall Operator Lifecycle Manager from your cluster",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := mgr.Uninstall(); err != nil {
-				log.Fatalf("Failed to uninstall OLM: %s", err)
-			}
-			return nil
-		},
+		Use:   "exec-entrypoint",
+		Short: "Runs a generic operator",
+		Long: `Runs a generic operator. This is intended to be used when running
+in a Pod inside a cluster. Developers wanting to run their operator locally
+should use "run --local" instead.`,
+		Hidden: true,
 	}
 
-	mgr.AddToFlagSet(cmd.Flags())
+	cmd.AddCommand(
+		newRunAnsibleCmd(),
+		newRunHelmCmd(),
+	)
 	return cmd
 }

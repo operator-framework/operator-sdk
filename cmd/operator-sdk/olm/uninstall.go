@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package up
+package olm
 
 import (
+	"github.com/operator-framework/operator-sdk/internal/olm"
+
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-func NewCmd() *cobra.Command {
-	upCmd := &cobra.Command{
-		Use:   "up",
-		Short: "Launches the operator",
-		Long: `The up command has subcommands that can launch the operator in various ways.
-`,
+func newUninstallCmd() *cobra.Command {
+	mgr := olm.Manager{}
+	cmd := &cobra.Command{
+		Use:   "uninstall",
+		Short: "Uninstall Operator Lifecycle Manager from your cluster",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := mgr.Uninstall(); err != nil {
+				log.Fatalf("Failed to uninstall OLM: %s", err)
+			}
+			return nil
+		},
 	}
 
-	upCmd.AddCommand(newLocalCmd())
-	return upCmd
+	mgr.AddToFlagSet(cmd.Flags())
+	return cmd
 }

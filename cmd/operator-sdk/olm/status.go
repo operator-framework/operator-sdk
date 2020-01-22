@@ -1,4 +1,4 @@
-// Copyright 2020 The Operator-SDK Authors
+// Copyright 2019 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,38 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package run
+package olm
 
 import (
-	olmoperator "github.com/operator-framework/operator-sdk/internal/olm/operator"
+	"github.com/operator-framework/operator-sdk/internal/olm"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-type runArgs struct {
-	olm bool
-}
-
-func NewCmd() *cobra.Command {
-	cargs := &runArgs{}
-	c := &olmoperator.OLMCmd{}
+func newStatusCmd() *cobra.Command {
+	mgr := olm.Manager{}
 	cmd := &cobra.Command{
-		Use:   "run",
-		Short: "Run an Operator in a variety of environments",
+		Use:   "status",
+		Short: "Get the status of the Operator Lifecycle Manager installation in your cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			switch {
-			case cargs.olm:
-				if err := c.Run(); err != nil {
-					log.Fatalf("Failed to run operator: %v", err)
-				}
+			if err := mgr.Status(); err != nil {
+				log.Fatalf("Failed to get OLM status: %s", err)
 			}
 			return nil
 		},
 	}
-	// OLM is the default.
-	cmd.Flags().BoolVar(&cargs.olm, "olm", true, "The operator to be run will be managed by OLM in a cluster.")
-	// TODO(estroz): refactor flag setting when new run mode options are added.
-	c.AddToFlagSet(cmd.Flags())
+
+	mgr.AddToFlagSet(cmd.Flags())
 	return cmd
 }

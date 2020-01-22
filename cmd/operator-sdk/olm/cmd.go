@@ -24,9 +24,9 @@ func NewCmd() *cobra.Command {
 		Short: "Manage the Operator Lifecycle Manager installation in your cluster",
 	}
 	cmd.AddCommand(
-		NewInstallCmd(),
-		NewUninstallCmd(),
-		NewStatusCmd(),
+		newInstallCmd(),
+		newUninstallCmd(),
+		newStatusCmd(),
 	)
 	return cmd
 }

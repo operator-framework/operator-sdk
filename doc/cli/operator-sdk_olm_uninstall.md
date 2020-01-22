@@ -1,4 +1,4 @@
-## operator-sdk alpha olm uninstall
+## operator-sdk olm uninstall
 
 Uninstall Operator Lifecycle Manager from your cluster
 
@@ -7,7 +7,7 @@ Uninstall Operator Lifecycle Manager from your cluster
 Uninstall Operator Lifecycle Manager from your cluster
 
 ```
-operator-sdk alpha olm uninstall [flags]
+operator-sdk olm uninstall [flags]
 ```
 
 ### Options
@@ -19,5 +19,5 @@ operator-sdk alpha olm uninstall [flags]
 
 ### SEE ALSO
 
-* [operator-sdk alpha olm](operator-sdk_alpha_olm.md)	 - Manage the Operator Lifecycle Manager installation in your cluster
+* [operator-sdk olm](operator-sdk_olm.md)	 - Manage the Operator Lifecycle Manager installation in your cluster
 

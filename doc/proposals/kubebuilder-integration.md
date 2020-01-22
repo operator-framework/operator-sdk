@@ -142,7 +142,7 @@ Other SDK subcommands can be removed and replaced by their equivalent Makefile t
 - `operator-sdk generate k8s` ==> `make generate`
 - `operator-sdk generate crd` ==> `make manifests`
 - `operator-sdk build` ==> `make manager`, `make docker-build`
-- `operator-sdk up local` ==> `make run`
+- `operator-sdk run --local` ==> `make run`
 
 If any of the old subcommands above are invoked for a Go operator project, the
 output should be a deprecation error that highlights the equivalent replacement
@@ -154,7 +154,7 @@ for it in the new Kubebuilder workflow.
 Since features like the scorecard, CSV generation and test-framework have no
 equivalent in the Kubebuilder workflow, those subcommands would be unchanged on the CLI.
 
-- `operator-sdk gen-csv`
+- `operator-sdk generate csv`
 - `operator-sdk scorecard`
 - `operator-sdk test`
 

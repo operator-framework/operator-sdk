@@ -33,7 +33,10 @@ More information on operator bundle images and metadata:
 https://github.com/openshift/enhancements/blob/master/enhancements/olm/operator-bundle.md#docker`,
 	}
 
-	cmd.AddCommand(newBundleBuildCmd())
+	cmd.AddCommand(
+		newCreateCmd(),
+		newValidateCmd(),
+	)
 	return cmd
 }
 

@@ -1,5 +1,5 @@
 ---
-title: Improve `gen-csv` CLI
+title: Improve `generate csv` CLI
 authors:
   - "@estroz"
 reviewers:
@@ -17,7 +17,7 @@ see-also:
   - "doc/user/olm-catalog/generating-a-csv.md"  
 ---
 
-# Improve `gen-csv` CLI
+# Improve `generate csv` CLI
 
 ## Release Signoff Checklist
 
@@ -29,7 +29,7 @@ see-also:
 
 ## Summary
 
-The ClusterServiceVersion (CSV) generator's entry point, `operator-sdk olm-catalog gen-csv`, currently uses a configuration file that points to several files required to generate a CSV manifest from an Operator project. This config was intended to allow Operators either of high complexity or a non-standard project structure to generate CSV manifests. The config file path can be passed to `gen-csv` with `--csv-config=<path>`.
+The ClusterServiceVersion (CSV) generator's entry point, `operator-sdk generate csv`, currently uses a configuration file that points to several files required to generate a CSV manifest from an Operator project. This config was intended to allow Operators either of high complexity or a non-standard project structure to generate CSV manifests. The config file path can be passed to `generate csv` with `--csv-config=<path>`.
 
 ## Motivation
 
@@ -76,7 +76,7 @@ A general CLI option `--inputs` to configure the CSV generator handles either si
 The `--inputs` option takes a list of patterns to include in the generation process. For example:
 
 ```
-$ operator-sdk olm-catalog gen-csv --csv-version 0.1.0 --inputs config,deploy/legacy/operator.yaml,deploy/legacy/role.yaml
+$ operator-sdk generate csv --csv-version 0.1.0 --inputs config,deploy/legacy/operator.yaml,deploy/legacy/role.yaml
 ```
 
 would pass all files in the `config/` dir, `deploy/legacy/operator.yaml`, and `deploy/legacy/role.yaml` to the CSV generator and update the legacy `0.1.0` CSV manifest.

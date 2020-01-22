@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/alpha/kubebuilder/olmcatalog"
+	"github.com/operator-framework/operator-sdk/cmd/operator-sdk/generate"
 	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 
 	"github.com/google/shlex"
@@ -33,7 +33,7 @@ func NewCmd() *cobra.Command {
 		Use:   "kubebuilder [init/create cmds]",
 		Short: "Kubebuilder aligned subcommands",
 		Long: `
-This subcommand is a placeholder to test the integration of Kubebuilder and Operator SDK 
+This subcommand is a placeholder to test the integration of Kubebuilder and Operator SDK
 subcommands until a plugin system is available to integrate the Kubebuilder CLI.
 See: https://github.com/kubernetes-sigs/kubebuilder/pull/1250
 and https://github.com/operator-framework/operator-sdk/blob/master/doc/proposals/openshift-4.4/kubebuilder-integration.md
@@ -53,7 +53,7 @@ and https://github.com/operator-framework/operator-sdk/blob/master/doc/proposals
 	cmd.Flags().StringVar(&kbFlags, "kb-flags", "", "Extra kubebuilder flags passed to init/create commands \"--group cache --version=v1alpha1\"")
 
 	cmd.AddCommand(
-		olmcatalog.NewCmd(),
+		generate.NewCmd(),
 		// newScorecardCmd(),
 		// newTestFrameworkCmd(),
 	)

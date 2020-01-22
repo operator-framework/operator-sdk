@@ -21,7 +21,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewInstallCmd() *cobra.Command {
+func newInstallCmd() *cobra.Command {
 	mgr := &olm.Manager{}
 	cmd := &cobra.Command{
 		Use:   "install",
