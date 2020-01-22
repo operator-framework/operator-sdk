@@ -15,8 +15,8 @@ popd
 
 # Install OLM on the cluster if not installed.
 olm_latest_exists=0
-if ! operator-sdk alpha olm status > /dev/null 2>&1; then
-  operator-sdk alpha olm install
+if ! operator-sdk olm status > /dev/null 2>&1; then
+  operator-sdk olm install
   olm_latest_exists=1
 fi
 
@@ -26,7 +26,7 @@ go test -v ./test/integration
 
 # Uninstall OLM if it was installed for test purposes.
 if eval "(( $olm_latest_exists ))"; then
-  operator-sdk alpha olm uninstall
+  operator-sdk olm uninstall
 fi
 
 echo -e "\n=== Integration tests succeeded ===\n"

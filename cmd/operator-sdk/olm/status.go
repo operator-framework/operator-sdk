@@ -21,20 +21,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewInstallCmd() *cobra.Command {
-	mgr := &olm.Manager{}
+func newStatusCmd() *cobra.Command {
+	mgr := olm.Manager{}
 	cmd := &cobra.Command{
-		Use:   "install",
-		Short: "Install Operator Lifecycle Manager in your cluster",
+		Use:   "status",
+		Short: "Get the status of the Operator Lifecycle Manager installation in your cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := mgr.Install(); err != nil {
-				log.Fatalf("Failed to install OLM version %q: %s", mgr.Version, err)
+			if err := mgr.Status(); err != nil {
+				log.Fatalf("Failed to get OLM status: %s", err)
 			}
 			return nil
 		},
 	}
 
-	cmd.Flags().StringVar(&mgr.Version, "version", olm.DefaultVersion, "version of OLM resources to install")
 	mgr.AddToFlagSet(cmd.Flags())
 	return cmd
 }
