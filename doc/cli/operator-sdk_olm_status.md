@@ -1,4 +1,4 @@
-## operator-sdk alpha olm status
+## operator-sdk olm status
 
 Get the status of the Operator Lifecycle Manager installation in your cluster
 
@@ -7,7 +7,7 @@ Get the status of the Operator Lifecycle Manager installation in your cluster
 Get the status of the Operator Lifecycle Manager installation in your cluster
 
 ```
-operator-sdk alpha olm status [flags]
+operator-sdk olm status [flags]
 ```
 
 ### Options
@@ -19,5 +19,5 @@ operator-sdk alpha olm status [flags]
 
 ### SEE ALSO
 
-* [operator-sdk alpha olm](operator-sdk_alpha_olm.md)	 - Manage the Operator Lifecycle Manager installation in your cluster
+* [operator-sdk olm](operator-sdk_olm.md)	 - Manage the Operator Lifecycle Manager installation in your cluster
 
