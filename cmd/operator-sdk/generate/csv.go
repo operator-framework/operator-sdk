@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/operator-framework/operator-sdk/internal/generate/gen"
 	gencatalog "github.com/operator-framework/operator-sdk/internal/generate/olm-catalog"
@@ -36,9 +37,8 @@ type csvCmd struct {
 	csvVersion     string
 	csvChannel     string
 	fromVersion    string
-	outputDir      string
-	includePaths   []string
 	operatorName   string
+	includePaths   []string
 	updateCRDs     bool
 	defaultChannel bool
 }
@@ -83,9 +83,6 @@ version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.`,
 		"Paths to include in CSV generation, ex. \"deploy/prod,deploy/test\". "+
 			"If this flag is set and you want to enable default behavior, "+
 			"you must include \"deploy/\" in the argument list")
-	cmd.Flags().StringVar(&c.outputDir, "output-dir", scaffold.DeployDir,
-		"Base directory to output generated CSV. The resulting CSV bundle directory"+
-			"will be \"<output-dir>/olm-catalog/<operator-name>/<csv-version>\"")
 	cmd.Flags().BoolVar(&c.updateCRDs, "update-crds", false,
 		"Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's")
 	cmd.Flags().StringVar(&c.operatorName, "operator-name", "",
@@ -108,7 +105,6 @@ func (c csvCmd) run() error {
 	}
 	cfg := gen.Config{
 		OperatorName: c.operatorName,
-		OutputDir:    c.outputDir,
 		Filters:      gen.MakeFilters(c.includePaths...),
 	}
 
@@ -127,13 +123,9 @@ func (c csvCmd) run() error {
 		if err != nil {
 			return err
 		}
-		baseDir := c.outputDir
-		if baseDir == "" {
-			baseDir = gencatalog.OLMCatalogDir
-		}
-		bundleDir := filepath.Join(baseDir, c.operatorName, c.csvVersion)
-		for path, b := range crdManifestSet {
-			path = filepath.Join(bundleDir, path)
+		bundleDir := filepath.Join(gencatalog.OLMCatalogDir, strings.ToLower(c.operatorName), c.csvVersion)
+		for name, b := range crdManifestSet {
+			path := filepath.Join(bundleDir, name)
 			if err = ioutil.WriteFile(path, b, fileutil.DefaultFileMode); err != nil {
 				return err
 			}
@@ -179,7 +171,7 @@ func validateVersion(version string) error {
 // findCRDs searches directories and files in paths for CRD manifest paths,
 // returning a map of paths to file contents.
 func findCRDs(paths ...string) (map[string][]byte, error) {
-	crdPathSet := map[string][]byte{}
+	crdFileSet := map[string][]byte{}
 	for _, path := range paths {
 		info, err := os.Stat(path)
 		if err != nil {
@@ -195,7 +187,7 @@ func findCRDs(paths ...string) (map[string][]byte, error) {
 				if err != nil {
 					return nil, err
 				}
-				crdPathSet[filepath.Clean(crdPath)] = b
+				crdFileSet[filepath.Base(crdPath)] = b
 			}
 		} else {
 			b, err := ioutil.ReadFile(path)
@@ -208,9 +200,9 @@ func findCRDs(paths ...string) (map[string][]byte, error) {
 				continue
 			}
 			if typeMeta.Kind == "CustomResourceDefinition" {
-				crdPathSet[filepath.Clean(path)] = b
+				crdFileSet[filepath.Base(path)] = b
 			}
 		}
 	}
-	return crdPathSet, nil
+	return crdFileSet, nil
 }

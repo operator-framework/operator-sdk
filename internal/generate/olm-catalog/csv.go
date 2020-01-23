@@ -341,13 +341,16 @@ func (g csvGenerator) updateCSVVersions(csv *olmapiv1alpha1.ClusterServiceVersio
 // updateCSVFromManifests gathers relevant data from generated and
 // user-defined manifests and updates csv.
 func (g csvGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServiceVersion) (err error) {
+	manifestsDir := filepath.Join(g.Inputs[DeployDirKey], olmCatalogChildDir)
 	kindManifestMap := map[schema.GroupVersionKind][][]byte{}
 	crGVKSet := map[schema.GroupVersionKind]struct{}{}
 	err = filepath.Walk(g.Inputs[DeployDirKey], func(path string, info os.FileInfo, werr error) error {
 		if werr != nil || info.IsDir() {
 			return werr
 		}
-		if !g.Filters.SatisfiesAny(path) {
+		// Ignore any paths not satisfying the filter or files already in the
+		// manifests dir.
+		if !g.Filters.SatisfiesAny(path) || strings.HasPrefix(path, manifestsDir) {
 			return nil
 		}
 		b, err := ioutil.ReadFile(path)

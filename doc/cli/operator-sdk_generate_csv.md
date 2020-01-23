@@ -25,7 +25,6 @@ operator-sdk generate csv [flags]
   -h, --help                   help for csv
       --include strings        Paths to include in CSV generation, ex. "deploy/prod,deploy/test". If this flag is set and you want to enable default behavior, you must include "deploy/" in the argument list (default [deploy])
       --operator-name string   Operator name to use while generating CSV
-      --output-dir string      Base directory to output generated CSV. The resulting CSV bundle directorywill be "<output-dir>/olm-catalog/<operator-name>/<csv-version>" (default "deploy")
       --update-crds            Update CRD manifests in deploy/{operator-name}/{csv-version} the using latest API's
 ```
 
