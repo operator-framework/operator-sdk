@@ -121,6 +121,7 @@ func (t *CheckSpecTest) Run(ctx context.Context) *schelpers.TestResult {
 
 	if t.CR.Object["spec"] == nil {
 		res.Suggestions = append(res.Suggestions, "Add a 'spec' field to your Custom Resource")
+		res.State = scapiv1alpha2.FailState
 		return res
 	}
 	return res
