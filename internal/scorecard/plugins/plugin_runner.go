@@ -185,6 +185,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 		suites = append(suites, crSuites...)
 	}
 
+	//printjeff(suites)
 	suites, err = schelpers.MergeSuites(suites)
 	if err != nil {
 		return scapiv1alpha2.ScorecardOutput{}, fmt.Errorf("failed to merge test suite results: %v", err)
@@ -469,4 +470,16 @@ func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, 
 	deploymentName = ""
 
 	return suites, nil
+}
+
+func printjeff(crSuites []schelpers.TestSuite) {
+	for i := 0; i < len(crSuites); i++ {
+		suite := crSuites[i]
+		suiteName := suite.TestInfo.GetName()
+
+		for j := 0; j < len(suite.TestResults); j++ {
+			tr := suite.TestResults[j]
+			fmt.Printf("jeff: suite %s name %s state %s \n", suiteName, tr.Test.GetName(), tr.State)
+		}
+	}
 }

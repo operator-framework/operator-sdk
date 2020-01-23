@@ -111,6 +111,7 @@ func MergeSuites(suites []TestSuite) ([]TestSuite, error) {
 	for _, suite := range suites {
 		suiteMap[suite.GetName()] = append(suiteMap[suite.GetName()], suite)
 	}
+
 	mergedSuites := []TestSuite{}
 	for _, suiteSlice := range suiteMap {
 		testMap := make(map[string][]TestResult)

@@ -86,7 +86,7 @@ func NewCRDsHaveValidationTest(conf OLMTestConfig) *CRDsHaveValidationTest {
 		TestInfo: schelpers.TestInfo{
 			Name:        "Provided APIs have validation",
 			Description: "All CRDs have an OpenAPI validation subsection",
-			Cumulative:  false,
+			Cumulative:  true,
 			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(CRDsHaveValidationTest{})},
 		},
 	}
@@ -105,7 +105,7 @@ func NewCRDsHaveResourcesTest(conf OLMTestConfig) *CRDsHaveResourcesTest {
 		TestInfo: schelpers.TestInfo{
 			Name:        "Owned CRDs have resources listed",
 			Description: "All Owned CRDs contain a resources subsection",
-			Cumulative:  false,
+			Cumulative:  true,
 			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(CRDsHaveResourcesTest{})},
 		},
 	}
@@ -231,7 +231,7 @@ func matchVersion(version string, crd *apiextv1beta1.CustomResourceDefinition) b
 
 // Run - implements Test interface
 func (t *CRDsHaveValidationTest) Run(ctx context.Context) *schelpers.TestResult {
-	res := &schelpers.TestResult{Test: t, State: scapiv1alpha2.ErrorState}
+	res := &schelpers.TestResult{Test: t, State: scapiv1alpha2.PassState}
 	crds, err := k8sutil.GetCRDs(t.CRDsDir)
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("failed to get CRDs in %s directory: %v", t.CRDsDir, err))
@@ -275,8 +275,7 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *schelpers.TestResult 
 			}
 		}
 
-		res.State = scapiv1alpha2.PassState
-		if !failed {
+		if failed {
 			res.State = scapiv1alpha2.FailState
 		}
 	}
@@ -313,6 +312,7 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *schelpers.TestResult {
 		res.Suggestions = append(res.Suggestions, fmt.Sprintf("If it would be helpful to an end-user to understand or troubleshoot your CR, consider adding resources %v to the resources section for owned CRD %s", missingResources, t.CR.GroupVersionKind().Kind))
 		res.State = scapiv1alpha2.FailState
 	}
+
 	return res
 }
 
@@ -427,7 +427,8 @@ func (t *StatusDescriptorsTest) Run(ctx context.Context) *schelpers.TestResult {
 		return res
 	}
 
-	return checkOwnedCSVDescriptors(t.CR, t.CSV, statusDescriptor, res)
+	tmp := checkOwnedCSVDescriptors(t.CR, t.CSV, statusDescriptor, res)
+	return tmp
 }
 
 // Run - implements Test interface
