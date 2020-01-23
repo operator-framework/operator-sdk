@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
+
 	"k8s.io/apimachinery/pkg/labels"
 )
 
