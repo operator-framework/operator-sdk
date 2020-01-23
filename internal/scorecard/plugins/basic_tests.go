@@ -173,6 +173,7 @@ func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *schelpers.TestRe
 
 	if !writes {
 		res.Suggestions = append(res.Suggestions, "The operator should write into objects to update state. No PUT or POST requests from the operator were recorded by the scorecard.")
+		res.State = scapiv1alpha2.FailState
 	}
 	return res
 }
