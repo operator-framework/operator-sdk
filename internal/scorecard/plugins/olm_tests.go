@@ -423,7 +423,7 @@ func (t *StatusDescriptorsTest) Run(ctx context.Context) *schelpers.TestResult {
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
 		res.Errors = append(res.Errors, err)
-		res.State = scapiv1alpha2.FailState
+		res.State = scapiv1alpha2.ErrorState
 		return res
 	}
 
