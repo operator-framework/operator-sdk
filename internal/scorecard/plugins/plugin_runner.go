@@ -471,15 +471,3 @@ func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, 
 
 	return suites, nil
 }
-
-func printjeff(crSuites []schelpers.TestSuite) {
-	for i := 0; i < len(crSuites); i++ {
-		suite := crSuites[i]
-		suiteName := suite.TestInfo.GetName()
-
-		for j := 0; j < len(suite.TestResults); j++ {
-			tr := suite.TestResults[j]
-			fmt.Printf("jeff: suite %s name %s state %s \n", suiteName, tr.Test.GetName(), tr.State)
-		}
-	}
-}
