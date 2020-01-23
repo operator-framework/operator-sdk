@@ -249,7 +249,7 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 			}
 		}
 	} else {
-		log.Info("Resource will not be watched/cached because it is blacklisted.", "GVK", resource.GroupVersionKind())
+		log.Info("Resource will not be watched/cached.", "GVK", resource.GroupVersionKind())
 	}
 	return nil
 }

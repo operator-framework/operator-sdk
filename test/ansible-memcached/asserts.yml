@@ -118,7 +118,7 @@
           debug:
             var: service
           until: service
-          retries: 24
+          retries: 12
           delay: 10
           vars:
             service: '{{ lookup("k8s",

@@ -76,5 +76,4 @@
         namespace: "{{ meta.namespace }}"
       data:
         arbitrary: afdasdfsajsafj
-        # namespace: default
     state: present

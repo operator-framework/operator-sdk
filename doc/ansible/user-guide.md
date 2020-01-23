@@ -66,8 +66,7 @@ be monitored for updates and cached.
 * **manageStatus** (optional): When true (default), the operator will manage
   the status of the CR generically. Set to false, the status of the CR is
   managed elsewhere, by the specified role/playbook or in a separate controller.
-* **blacklist**: This is a list of child resources (by GVK) that should not have
-  watches created and should not be cached.
+* **blacklist**: A list of child resources (by GVK) that will not be watched or cached.
 
 An example Watches file:
 
@@ -98,7 +97,6 @@ An example Watches file:
     foo: bar
 
 # ConfigMaps owned by a Memcached CR will not be watched or cached.
----
 - version: v1alpha1
   group: cache.example.com
   kind: Memcached
