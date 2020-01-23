@@ -216,7 +216,7 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 	dependentPredicate := predicates.DependentPredicateFuncs()
 
 	// Add a watch to controller
-	if contents.WatchDependentResources && !gvkInList(resource.GroupVersionKind(), contents.Blacklist) {
+	if contents.WatchDependentResources && !contents.Blacklist[resource.GroupVersionKind()] {
 		// Store watch in map
 		// Use EnqueueRequestForOwner unless user has configured watching cluster scoped resources and we have to
 		switch {
@@ -252,15 +252,6 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 		log.Info("Resource will not be watched/cached because it is blacklisted.", "GVK", resource.GroupVersionKind())
 	}
 	return nil
-}
-
-func gvkInList(current schema.GroupVersionKind, gvks []schema.GroupVersionKind) bool {
-	for _, gvk := range gvks {
-		if gvk == current {
-			return true
-		}
-	}
-	return false
 }
 
 func removeAuthorizationHeader(h http.Handler) http.Handler {

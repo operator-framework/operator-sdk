@@ -125,12 +125,11 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 		}
 
 		cMap.Store(w.GroupVersionKind, &controllermap.Contents{Controller: *ctr,
-			Blacklist:                   w.Blacklist,
 			WatchDependentResources:     w.WatchDependentResources,
 			WatchClusterScopedResources: w.WatchClusterScopedResources,
 			OwnerWatchMap:               controllermap.NewWatchMap(),
 			AnnotationWatchMap:          controllermap.NewWatchMap(),
-		})
+		}, w.Blacklist)
 		gvks = append(gvks, w.GroupVersionKind)
 	}
 

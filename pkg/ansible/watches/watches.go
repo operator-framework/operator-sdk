@@ -106,6 +106,7 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	tmp.MaxRunnerArtifacts = maxRunnerArtifactsDefault
 	tmp.ReconcilePeriod = reconcilePeriodDefault
 	tmp.WatchClusterScopedResources = watchClusterScopedResourcesDefault
+	tmp.Blacklist = blacklistDefault
 
 	if err := unmarshal(&tmp); err != nil {
 		return err
@@ -140,7 +141,6 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	w.Finalizer = tmp.Finalizer
 	w.AnsibleVerbosity = getAnsibleVerbosity(gvk, ansibleVerbosityDefault)
 	w.Blacklist = tmp.Blacklist
-
 	return nil
 }
 

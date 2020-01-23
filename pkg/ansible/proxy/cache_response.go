@@ -166,13 +166,12 @@ func (c *cacheResponseHandler) skipCacheLookup(r *requestfactory.RequestInfo, gv
 		Kind:    owner.Kind,
 	}
 
-	// Make sure that the gvk is not blacklisted
 	relatedController, ok := c.cMap.Get(ownerGVK)
 	if !ok {
 		log.Info("Could not find controller for gvk.", "ownerGVK:", ownerGVK)
 		return false
 	}
-	if gvkInList(gvk, relatedController.Blacklist) {
+	if relatedController.Blacklist[gvk] {
 		log.Info("Skipping, because gvk is blacklisted", "GVK", gvk)
 		return true
 	}
