@@ -16,6 +16,13 @@ Releases can only be performed by [maintainers][doc-maintainers].
 
 Release binaries will be built with the Go compiler version specified in the Operator SDK's [prerequisites section][doc-readme-prereqs].
 
+If you intend to build the binaries on a Fedora 31 environment, you
+will need to set the GOPROXY environment variable:
+
+```bash
+$ export GOPROXY=https://proxy.golang.org
+```
+
 ### Kubernetes versions
 
 As the Operator SDK interacts directly with the Kubernetes API, certain API features are assumed to exist in the target cluster. The currently supported Kubernetes version will always be listed in the SDK [prerequisites section][doc-readme-prereqs].
@@ -43,6 +50,12 @@ Make sure you've [uploaded your GPG key][link-github-gpg-key-upload] and configu
 ```bash
 $ git config [--global] user.signingkey "$GPG_KEY_ID"
 $ git config [--global] user.email "$GPG_EMAIL"
+```
+
+You will need to specify on your build environment a default
+PGP signing key, as uploaded to your Github account, in the ~/.gnupg/gpg.conf file as follows:
+```bash
+default-key YOURGPGKEYIDHERE
 ```
 
 ## GitHub release information
@@ -285,27 +298,6 @@ To github.com:operator-framework/operator-sdk.git
 ```
 
 Now that the branch exists, you need to make the post-release PR for the new release branch. To do this, simply follow the same steps as in [step 3](#3-create-a-pr-for-post-release-version-and-changelogmd-updates) with the addition of changing the branch name in the `go.mod` scaffold from `master` to the new branch (for example, `v1.3.x`). Then, make the PR against the new branch.
-
-### 6. Updating the Homebrew formula
-
-We support installing via [Homebrew][homebrew], so we need to update the operator-sdk [Homebrew formula][homebrew-formula] once the release is cut. Follow the instructions below, or for more detailed ones on the Homebrew contribution [README][homebrew-readme], to open a PR against the [repository][homebrew-repo].
-
-
-```
-docker run -t -d linuxbrew/brew:latest
-docker exec -it <CONTAINER_ID> /bin/bash`
-# Run the following commands in the container.
-git config --global github.name <GITHUB-USERNAME>
-git config --global github.token <GITHUB-TOKEN>
-# Replace the release version of the newly cut release.
-OPERATORSDKURL=https://github.com/operator-framework/operator-sdk/archive/<RELEASE-VERSION>.tar.gz
-curl $OPERATORSDKURL -o operator-sdk
-# Calculate the SHA256
-OPERATORSUM="$(sha256sum operator-sdk | cut -d ' ' -f 1)"
-brew bump-formula-pr --strict --url=$OPERATORSDKURL --sha256=$OPERATORSUM operator-sdk
-```
-
-Note: If there were any changes made to the CLI commands, make sure to look at the existing tests, in case they need updating.
 
 You've now fully released a new version of the Operator SDK. Good work! Make sure to follow the post-release steps below.
 
