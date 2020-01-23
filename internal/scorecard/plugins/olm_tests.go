@@ -187,7 +187,7 @@ func (t *BundleValidationTest) Run(ctx context.Context) *schelpers.TestResult {
 
 	if t.OLMTestConfig.Bundle == "" {
 		res.Errors = append(res.Errors, errors.New("unable to find the OLM 'bundle' directory which is required for this test"))
-		res.State = scapiv1alpha2.FailState
+		res.State = scapiv1alpha2.ErrorState
 		return res
 	}
 
