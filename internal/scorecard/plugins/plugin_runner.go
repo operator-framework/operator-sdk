@@ -185,7 +185,6 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 		suites = append(suites, crSuites...)
 	}
 
-	//printjeff(suites)
 	suites, err = schelpers.MergeSuites(suites)
 	if err != nil {
 		return scapiv1alpha2.ScorecardOutput{}, fmt.Errorf("failed to merge test suite results: %v", err)

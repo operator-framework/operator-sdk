@@ -67,7 +67,7 @@ func NewBundleValidationTest(conf OLMTestConfig) *BundleValidationTest {
 		TestInfo: schelpers.TestInfo{
 			Name:        "Bundle Validation Test",
 			Description: "Validates bundle contents",
-			Cumulative:  false,
+			Cumulative:  true,
 			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(BundleValidationTest{})},
 		},
 	}
@@ -427,8 +427,7 @@ func (t *StatusDescriptorsTest) Run(ctx context.Context) *schelpers.TestResult {
 		return res
 	}
 
-	tmp := checkOwnedCSVDescriptors(t.CR, t.CSV, statusDescriptor, res)
-	return tmp
+	return checkOwnedCSVDescriptors(t.CR, t.CSV, statusDescriptor, res)
 }
 
 // Run - implements Test interface
