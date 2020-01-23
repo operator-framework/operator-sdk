@@ -19,21 +19,19 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	scapi "github.com/operator-framework/operator-sdk/pkg/apis/scorecard"
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
 
 func (cfg Config) printPluginOutputs(pluginOutputs []scapiv1alpha2.ScorecardOutput) error {
 
-	var list scapi.Formatter
+	var scorecardOutput scapiv1alpha2.ScorecardOutput
 	var err error
-	list, err = cfg.combinePluginOutput(pluginOutputs)
+	scorecardOutput, err = cfg.combinePluginOutput(pluginOutputs)
 	if err != nil {
 		return err
 	}
 
 	if cfg.List {
-		scorecardOutput := list.(scapiv1alpha2.ScorecardOutput)
 		for i := 0; i < len(scorecardOutput.Results); i++ {
 			scorecardOutput.Results[i].State = scapiv1alpha2.NotRunState
 		}
@@ -41,13 +39,13 @@ func (cfg Config) printPluginOutputs(pluginOutputs []scapiv1alpha2.ScorecardOutp
 
 	switch format := cfg.OutputFormat; format {
 	case TextOutputFormat:
-		output, err := list.MarshalText()
+		output, err := scorecardOutput.MarshalText()
 		if err != nil {
 			return err
 		}
 		fmt.Printf("%s\n", output)
 	case JSONOutputFormat:
-		bytes, err := json.MarshalIndent(list, "", "  ")
+		bytes, err := json.MarshalIndent(scorecardOutput, "", "  ")
 		if err != nil {
 			return err
 		}
