@@ -190,7 +190,7 @@ test-markdown test/markdown:
 test-sanity test/sanity: tidy build/operator-sdk lint
 	./hack/tests/sanity-check.sh
 
-TEST_PKGS:=$(shell go list ./... | grep -v -P 'github.com/operator-framework/operator-sdk/(hack/|test/)')
+TEST_PKGS:=$(shell go list ./... | grep -v -E 'github.com/operator-framework/operator-sdk/(hack/|test/)')
 test-unit test/unit: ## Run the unit tests
 	$(Q)go test -coverprofile=coverage.out -covermode=count -count=1 -short ${TEST_PKGS}
 
