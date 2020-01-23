@@ -102,7 +102,7 @@ func (s Config) RunTests() error {
 
 	for _, scorecardOutput := range pluginOutputs {
 		for _, result := range scorecardOutput.Results {
-			if result.State == scapiv1alpha2.FailState || len(result.Errors) > 0 {
+			if result.State != scapiv1alpha2.PassState {
 				os.Exit(1)
 			}
 		}
