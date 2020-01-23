@@ -47,7 +47,7 @@ The following workflow is for a new **Helm** operator:
   - Alternatively [podman][podman_tool] `v1.2.0+` or [buildah][buildah_tool] `v1.7+`
 - [kubectl][kubectl_tool] version v1.12.0+.
 - Access to a Kubernetes v1.12.0+ cluster.
-- Optional: [delve](https://github.com/go-delve/delve/tree/master/Documentation/installation) version 1.2.0+ (for `up local --enable-delve`).
+- Optional: [delve](https://github.com/go-delve/delve/tree/master/Documentation/installation) version 1.2.0+ (for `run --local --enable-delve`).
 
 ## Quick Start
 
@@ -134,7 +134,7 @@ $ kubectl delete -f deploy/crds/app.example.com_appservices_crd.yaml
 ```
 
 **Note:** Follow the steps in the [Getting Started Repository][getting_started] to learn how to develop your Operator projects.
- 
+
 ## Command Line Interface
 
 To learn more about the SDK CLI, see the [SDK CLI Reference][sdk_cli_ref], or run `operator-sdk [command] -h`.
@@ -196,4 +196,3 @@ Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file f
 [helm_user_guide]:./doc/helm/user-guide.md
 [faq]: ./doc/faq.md
 [getting_started]: https://github.com/operator-framework/getting-started/blob/master/README.md
-

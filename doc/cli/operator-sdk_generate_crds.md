@@ -28,5 +28,5 @@ operator-sdk generate crds [flags]
 
 ### SEE ALSO
 
-* [operator-sdk generate](operator-sdk_generate.md)	 - Invokes specific generator
+* [operator-sdk generate](operator-sdk_generate.md)	 - Invokes a specific generator
 

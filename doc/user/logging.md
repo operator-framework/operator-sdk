@@ -64,10 +64,10 @@ By using `sigs.k8s.io/controller-runtime/pkg/log`, your logger is propagated thr
 
 ### Setting flags when running locally
 
-When running locally with `operator-sdk up local`, you can use the `--operator-flags` flag to pass additional flags to your operator, including the zap flags. For example:
+When running locally with `operator-sdk run --local`, you can use the `--operator-flags` flag to pass additional flags to your operator, including the zap flags. For example:
 
 ```console
-$ operator-sdk up local --operator-flags="--zap-level=debug --zap-encoder=console"`
+$ operator-sdk run --local --operator-flags="--zap-level=debug --zap-encoder=console"`
 ```
 
 ### Setting flags when deploying to a cluster
