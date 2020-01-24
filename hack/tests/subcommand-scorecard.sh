@@ -90,10 +90,7 @@ then
 	exit 1
 fi
 
-
-
 header_text 'scorecard test to check invalid config'
 operator-sdk scorecard --config "$CONFIG_PATH_INVALID" |& grep '^.*invalid keys.*$'
-
 
 popd

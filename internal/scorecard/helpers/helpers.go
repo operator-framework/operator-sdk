@@ -110,7 +110,7 @@ func ResultsPassFail(results []TestResult) (TestResult, error) {
 		finalResult.Suggestions = append(finalResult.Suggestions, result.Suggestions...)
 		finalResult.Errors = append(finalResult.Errors, result.Errors...)
 		finalResult.Log = result.Log
-		if result.State == scapiv1alpha2.FailState {
+		if result.State != scapiv1alpha2.PassState {
 			failFound = true
 		}
 	}

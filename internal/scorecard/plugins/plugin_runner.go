@@ -207,6 +207,7 @@ func ListInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig) (
 		basicTests.TestResults = make([]schelpers.TestResult, 0)
 		for i := 0; i < len(basicTests.Tests); i++ {
 			result := schelpers.TestResult{}
+			result.State = scapiv1alpha2.PassState
 			result.Test = basicTests.Tests[i]
 			result.Suggestions = make([]string, 0)
 			result.Errors = make([]error, 0)
@@ -222,6 +223,7 @@ func ListInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig) (
 		olmTests.TestResults = make([]schelpers.TestResult, 0)
 		for i := 0; i < len(olmTests.Tests); i++ {
 			result := schelpers.TestResult{}
+			result.State = scapiv1alpha2.PassState
 			result.Test = olmTests.Tests[i]
 			result.Suggestions = make([]string, 0)
 			result.Errors = make([]error, 0)
