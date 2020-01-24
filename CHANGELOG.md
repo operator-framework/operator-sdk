@@ -10,6 +10,8 @@
 
 ### Bug Fixes
 
+- Fixed issue with Go dependencies caused by removed tag in `openshift/api` repository ([#2466](https://github.com/operator-framework/operator-sdk/issues/2466))
+
 ## v0.15.0
 
 ### Added
