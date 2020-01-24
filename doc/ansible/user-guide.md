@@ -45,6 +45,8 @@ Read the [operator scope][operator-scope] documentation on how to run your opera
 The Watches file contains a list of mappings from custom resources, identified
 by it's Group, Version, and Kind, to an Ansible Role or Playbook. The Operator
 expects this mapping file in a predefined location: `/opt/ansible/watches.yaml`
+These resources, as well as child resources (determined by owner references) will
+be monitored for updates and cached.
 
 * **group**:  The group of the Custom Resource that you will be watching.
 * **version**:  The version of the Custom Resource that you will be watching.
@@ -64,6 +66,7 @@ expects this mapping file in a predefined location: `/opt/ansible/watches.yaml`
 * **manageStatus** (optional): When true (default), the operator will manage
   the status of the CR generically. Set to false, the status of the CR is
   managed elsewhere, by the specified role/playbook or in a separate controller.
+* **blacklist**: A list of child resources (by GVK) that will not be watched or cached.
 
 An example Watches file:
 
@@ -92,6 +95,16 @@ An example Watches file:
   manageStatus: false
   vars:
     foo: bar
+
+# ConfigMaps owned by a Memcached CR will not be watched or cached.
+- version: v1alpha1
+  group: cache.example.com
+  kind: Memcached
+  role: /opt/ansible/roles/memcached
+  blacklist:
+    - group: ""
+      version: v1
+      kind: ConfigMap
 ```
 
 ## Customize the operator logic

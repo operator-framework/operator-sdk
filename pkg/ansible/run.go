@@ -129,7 +129,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 			WatchClusterScopedResources: w.WatchClusterScopedResources,
 			OwnerWatchMap:               controllermap.NewWatchMap(),
 			AnnotationWatchMap:          controllermap.NewWatchMap(),
-		})
+		}, w.Blacklist)
 		gvks = append(gvks, w.GroupVersionKind)
 	}
 
