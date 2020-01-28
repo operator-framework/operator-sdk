@@ -1,3 +1,4 @@
+os: linux
 branches:
   except:
     - release-4.2
@@ -5,7 +6,6 @@ branches:
 
 language: go
 go_import_path: github.com/operator-framework/operator-sdk
-sudo: required
 
 # go modules require xenial for mercurial TLS 1.2 support
 dist: xenial
@@ -49,7 +49,6 @@ x_base_steps:
     stage: test
     env:
     - CLUSTER=k8s
-    os: linux
     <<: *go_before_install
     install:
       - make install
@@ -141,6 +140,7 @@ jobs:
     # Build and deploy ansible-operator docker image
     - <<: *deploy
       name: Docker image for ansible-operator
+      arch: amd64
       script:
         - make image-build-ansible
         - make image-push-ansible
@@ -148,7 +148,7 @@ jobs:
     # Build and deploy amd64 helm-operator docker image
     - <<: *deploy
       name: Docker image for helm-operator (amd64)
-      os: linux
+      arch: amd64
       script:
         - make image-build-helm
         - make image-push-helm
@@ -156,7 +156,7 @@ jobs:
     # Build and deploy ppc64le helm-operator docker image
     - <<: *deploy
       name: Docker image for helm-operator (ppc64le)
-      os: linux-ppc64le
+      arch: ppc64le
       script:
         - make image-build-helm
         - make image-push-helm
@@ -164,6 +164,7 @@ jobs:
     # Build and deploy scorecard-proxy docker image
     - <<: *deploy
       name: Docker image for scorecard-proxy
+      arch: amd64
       script:
         - make image-build-scorecard-proxy
         - make image-push-scorecard-proxy
