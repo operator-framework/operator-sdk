@@ -48,7 +48,7 @@ type runLocalArgs struct {
 	helmOperatorFlags    *hoflags.HelmOperatorFlags
 }
 
-func (c runLocalArgs) addToFlags(fs *pflag.FlagSet) {
+func (c *runLocalArgs) addToFlags(fs *pflag.FlagSet) {
 	prefix := "[local only] "
 	fs.StringVar(&c.operatorFlags, "operator-flags", "",
 		prefix+"The flags that the operator needs. Example: \"--flag1 value1 --flag2=value2\"")

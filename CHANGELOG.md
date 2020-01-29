@@ -1,3 +1,17 @@
+## Unreleased
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
+- Fixed a regression in the `operator-sdk run` command that caused `--local` flags to be ignored ([#2478](https://github.com/operator-framework/operator-sdk/issues/2478))
+
 ## v0.15.1
 
 ### Bug Fixes
