@@ -80,7 +80,8 @@ func (cm *ControllerMap) Store(key schema.GroupVersionKind, value *Contents, bla
 	cm.mutex.Lock()
 	defer cm.mutex.Unlock()
 	cm.internal[key] = value
-	// watches.go Blacklist is []schema.GroupVersionKind, which we convert to a map (better performance) for the controller.
+	// watches.go Blacklist is []schema.GroupVersionKind, which we convert to a map (better performance)
+	// for the controller.
 	value.Blacklist = map[schema.GroupVersionKind]bool{}
 	for _, blacklistGVK := range blacklist {
 		cm.internal[key].Blacklist[blacklistGVK] = true

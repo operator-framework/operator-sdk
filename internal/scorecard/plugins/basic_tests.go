@@ -51,7 +51,7 @@ func NewCheckSpecTest(conf BasicTestConfig) *CheckSpecTest {
 		TestInfo: schelpers.TestInfo{
 			Name:        "Spec Block Exists",
 			Description: "Custom Resource has a Spec Block",
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: basicSuiteName,
+			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: basicSuiteName,
 				testKey: getStructShortName(CheckSpecTest{})},
 		},
 	}
@@ -70,7 +70,7 @@ func NewCheckStatusTest(conf BasicTestConfig) *CheckStatusTest {
 		TestInfo: schelpers.TestInfo{
 			Name:        "Status Block Exists",
 			Description: "Custom Resource has a Status Block",
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: basicSuiteName,
+			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: basicSuiteName,
 				testKey: getStructShortName(CheckStatusTest{})},
 		},
 	}
@@ -178,8 +178,8 @@ func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *schelpers.TestRe
 	}
 
 	if !writes {
-		res.Suggestions = append(res.Suggestions, "The operator should write into objects to update state."+ 
-		 	"No PUT or POST requests from the operator were recorded by the scorecard.")
+		res.Suggestions = append(res.Suggestions, "The operator should write into objects to update state."+
+			"No PUT or POST requests from the operator were recorded by the scorecard.")
 		res.State = scapiv1alpha2.FailState
 	}
 	return res

@@ -55,10 +55,10 @@ func (cfg Config) printPluginOutputs(pluginOutputs []scapiv1alpha2.ScorecardOutp
 	return nil
 }
 
-func (cfg Config) combinePluginOutput(pluginOutputs []scapiv1alpha1.
-	ScorecardOutput) (scapiv1alpha1.ScorecardOutput, error) {
-	output := scapiv1alpha1.ScorecardOutput{}
-	output.Results = make([]scapiv1alpha1.ScorecardSuiteResult, 0)
+func (cfg Config) combinePluginOutput(pluginOutputs []scapiv1alpha2.
+	ScorecardOutput) (scapiv1alpha2.ScorecardOutput, error) {
+	output := scapiv1alpha2.ScorecardOutput{}
+	output.Results = make([]scapiv1alpha2.ScorecardTestResult, 0)
 	for _, v := range pluginOutputs {
 		for _, r := range v.Results {
 			output.Results = append(output.Results, r)

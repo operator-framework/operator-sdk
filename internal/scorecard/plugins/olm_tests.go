@@ -68,7 +68,7 @@ func NewBundleValidationTest(conf OLMTestConfig) *BundleValidationTest {
 			Name:        "Bundle Validation Test",
 			Description: "Validates bundle contents",
 			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, 
+			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName,
 				testKey: getStructShortName(BundleValidationTest{})},
 		},
 	}
@@ -191,7 +191,7 @@ func (t *BundleValidationTest) Run(ctx context.Context) *schelpers.TestResult {
 	res := &schelpers.TestResult{Test: t, State: scapiv1alpha2.PassState}
 
 	if t.OLMTestConfig.Bundle == "" {
-		res.Errors = append(res.Errors, 
+		res.Errors = append(res.Errors,
 			errors.New("unable to find the OLM 'bundle' directory which is required for this test"))
 		res.State = scapiv1alpha2.ErrorState
 		return res

@@ -36,8 +36,8 @@ func TestSuitesToScorecardOutput(suites []TestSuite, log string) scapiv1alpha2.S
 
 // TestResultToScorecardTestResult is a helper function for converting from the TestResult type
 // to the ScorecardTestResult type
-func TestResultToScorecardTestResult(tr TestResult) scapiv1alpha1.ScorecardTestResult {
-	sctr := scapiv1alpha1.ScorecardTestResult{}
+func TestResultToScorecardTestResult(tr TestResult) scapiv1alpha2.ScorecardTestResult {
+	sctr := scapiv1alpha2.ScorecardTestResult{}
 	sctr.State = tr.State
 	sctr.Name = tr.Test.GetName()
 	sctr.Description = tr.Test.GetDescription()

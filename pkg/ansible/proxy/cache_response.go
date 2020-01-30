@@ -148,7 +148,8 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 }
 
 // skipCacheLookup - determine if we should skip the cache lookup
-func (c *cacheResponseHandler) skipCacheLookup(r *requestfactory.RequestInfo, gvk schema.GroupVersionKind, req *http.Request) bool {
+func (c *cacheResponseHandler) skipCacheLookup(r *requestfactory.RequestInfo, gvk schema.GroupVersionKind,
+	req *http.Request) bool {
 
 	owner, err := getRequestOwnerRef(req)
 	if err != nil {

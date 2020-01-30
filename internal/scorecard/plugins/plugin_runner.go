@@ -76,7 +76,7 @@ const (
 var log *logrus.Logger
 
 func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
-	 logFile io.Writer) (scapiv1alpha2.ScorecardOutput, error) {
+	logFile io.Writer) (scapiv1alpha2.ScorecardOutput, error) {
 
 	// use stderr for logging not related to a single suite
 	log = logrus.New()
