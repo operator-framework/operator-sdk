@@ -17,6 +17,7 @@ package release
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	helm2to3 "github.com/helm/helm-2to3/pkg/v3"
 	"github.com/martinlindhe/base36"
@@ -40,6 +41,16 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/helm/client"
 	"github.com/operator-framework/operator-sdk/pkg/helm/internal/types"
 )
+
+// globalMutex is used to ensure non-concurrent access to
+// Helm's `kube.New` function which is not safe for concurrent
+// use.
+//
+// See https://github.com/operator-framework/operator-sdk/issues/2476
+//
+// TODO(joelanford): this can be removed after SDK's Helm
+//   dependendency is bumped to 3.1.0+
+var globalMutex sync.Mutex
 
 // ManagerFactory creates Managers that are specific to custom resources. It is
 // used by the HelmOperatorReconciler during resource reconciliation, and it
@@ -81,7 +92,11 @@ func (f managerFactory) NewManager(cr *unstructured.Unstructured, overrideValues
 	if err != nil {
 		return nil, fmt.Errorf("failed to get REST client getter from manager: %w", err)
 	}
+
+	globalMutex.Lock()
 	kubeClient := kube.New(rcg)
+	globalMutex.Unlock()
+
 	ownerRef := metav1.NewControllerRef(cr, cr.GroupVersionKind())
 	ownerRefClient := client.NewOwnerRefInjectingClient(*kubeClient, *ownerRef)
 
