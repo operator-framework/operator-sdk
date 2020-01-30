@@ -44,7 +44,7 @@ header_text 'scorecard test to see if bundle flag works correctly'
 if ! commandoutput="$(operator-sdk scorecard --config "$CONFIG_PATH_BUNDLE" 2>&1)"; then 
 	echo $commandoutput
 	failCount=`echo $commandoutput | grep -o "fail" | wc -l`
-	expectedFailCount=2
+	expectedFailCount=3
 	if [ $failCount -ne $expectedFailCount ]
 	then
 		echo "expected fail count $expectedFailCount, got $failCount"
@@ -90,10 +90,7 @@ then
 	exit 1
 fi
 
-
-
 header_text 'scorecard test to check invalid config'
 operator-sdk scorecard --config "$CONFIG_PATH_INVALID" |& grep '^.*invalid keys.*$'
-
 
 popd

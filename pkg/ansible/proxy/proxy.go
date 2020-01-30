@@ -193,7 +193,7 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 	}
 	ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
 	if err != nil {
-		m := fmt.Sprintf("could not get broup version for: %v", owner)
+		m := fmt.Sprintf("could not get group version for: %v", owner)
 		log.Error(err, m)
 		return err
 	}
@@ -219,7 +219,7 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 	dependentPredicate := predicates.DependentPredicateFuncs()
 
 	// Add a watch to controller
-	if contents.WatchDependentResources {
+	if contents.WatchDependentResources && !contents.Blacklist[resource.GroupVersionKind()] {
 		// Store watch in map
 		// Use EnqueueRequestForOwner unless user has configured watching cluster scoped resources and we have to
 		switch {
@@ -255,6 +255,8 @@ func addWatchToController(owner kubeconfig.NamespacedOwnerReference, cMap *contr
 				return err
 			}
 		}
+	} else {
+		log.Info("Resource will not be watched/cached.", "GVK", resource.GroupVersionKind())
 	}
 	return nil
 }

@@ -2,9 +2,31 @@
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Bug Fixes
+
+- Fixed issue with Go dependencies caused by removed tag in `openshift/api` repository ([#2466](https://github.com/operator-framework/operator-sdk/issues/2466))
+- Fixed a regression in the `operator-sdk run` command that caused `--local` flags to be ignored ([#2478](https://github.com/operator-framework/operator-sdk/issues/2478))
+
+## v0.15.1
+
+### Bug Fixes
+
+- Fixed issue with Go dependencies caused by removed tag in `openshift/api` repository ([#2466](https://github.com/operator-framework/operator-sdk/issues/2466))
+
+## v0.15.0
+
+### Added
+
 - Added the [`cleanup`](./doc/cli/operator-sdk_cleanup.md) subcommand and [`run --olm`](./doc/cli/operator-sdk_run.md) to manage deployment/deletion of operators. These commands currently interact with OLM via an in-cluster registry-server created using an operator's on-disk manifests and managed by `operator-sdk`. ([#2402](https://github.com/operator-framework/operator-sdk/pull/2402), [#2441](https://github.com/operator-framework/operator-sdk/pull/2441))
 - Added [`bundle create`](./doc/cli/operator-sdk_bundle_create.md) which builds, and optionally generates metadata for, [operator bundle images](https://github.com/openshift/enhancements/blob/ec2cf96/enhancements/olm/operator-registry.md). ([#2076](https://github.com/operator-framework/operator-sdk/pull/2076), [#2438](https://github.com/operator-framework/operator-sdk/pull/2438))
 - Added [`bundle validate`](./doc/cli/operator-sdk_bundle_validate.md) which validates [operator bundle images](https://github.com/openshift/enhancements/blob/ec2cf96/enhancements/olm/operator-registry.md). ([#2411](https://github.com/operator-framework/operator-sdk/pull/2411))
+- Added `blacklist` field to the `watches.yaml` for Ansible based operators. Blacklisted secondary resources will not be watched or cached.([#2374](https://github.com/operator-framework/operator-sdk/pull/2374))
 
 ### Changed
 

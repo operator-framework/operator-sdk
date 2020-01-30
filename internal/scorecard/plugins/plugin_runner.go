@@ -33,7 +33,7 @@ import (
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
 	"github.com/operator-framework/operator-sdk/internal/util/yamlutil"
-	scapiv1alpha1 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha1"
+	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -76,7 +76,7 @@ const (
 var log *logrus.Logger
 
 func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
-	logFile io.Writer) (scapiv1alpha1.ScorecardOutput, error) {
+	 logFile io.Writer) (scapiv1alpha2.ScorecardOutput, error) {
 
 	// use stderr for logging not related to a single suite
 	log = logrus.New()
@@ -84,7 +84,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
 	log.SetOutput(logFile)
 
 	if err := validateScorecardPluginFlags(config, pluginType); err != nil {
-		return scapiv1alpha1.ScorecardOutput{}, err
+		return scapiv1alpha2.ScorecardOutput{}, err
 	}
 	defer func() {
 		if err := cleanupScorecard(); err != nil {
@@ -97,7 +97,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
 	var err error
 	kubeconfig, tmpNamespaceVar, err = k8sInternal.GetKubeconfigAndNamespace(config.Kubeconfig)
 	if err != nil {
-		return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to build the kubeconfig: %v", err)
+		return scapiv1alpha2.ScorecardOutput{}, fmt.Errorf("failed to build the kubeconfig: %v", err)
 	}
 
 	if config.Namespace == "" {
@@ -105,14 +105,14 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
 	}
 
 	if err := setupRuntimeClient(); err != nil {
-		return scapiv1alpha1.ScorecardOutput{}, err
+		return scapiv1alpha2.ScorecardOutput{}, err
 	}
 
 	csv := &olmapiv1alpha1.ClusterServiceVersion{}
 	if pluginType == OLMIntegration || config.OLMDeployed {
 		err := getCSV(config.CSVManifest, csv)
 		if err != nil {
-			return scapiv1alpha1.ScorecardOutput{}, err
+			return scapiv1alpha2.ScorecardOutput{}, err
 		}
 	}
 
@@ -122,18 +122,18 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
 		var err error
 		deploymentName, err = getDeploymentName(csv.Spec.InstallStrategy)
 		if err != nil {
-			return scapiv1alpha1.ScorecardOutput{}, err
+			return scapiv1alpha2.ScorecardOutput{}, err
 		}
 		// Get the proxy pod, which should have been created with the CSV.
 		proxyPodGlobal, err = getPodFromDeployment(deploymentName, config.Namespace)
 		if err != nil {
-			return scapiv1alpha1.ScorecardOutput{}, err
+			return scapiv1alpha2.ScorecardOutput{}, err
 		}
 
 		config.CRManifest, err = getCRFromCSV(config.CRManifest, csv.ObjectMeta.Annotations["alm-examples"],
 			csv.GetName())
 		if err != nil {
-			return scapiv1alpha1.ScorecardOutput{}, err
+			return scapiv1alpha2.ScorecardOutput{}, err
 		}
 
 	} else {
@@ -142,7 +142,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
 		if config.NamespacedManifest == "" {
 			file, err := yamlutil.GenerateCombinedNamespacedManifest(scaffold.DeployDir)
 			if err != nil {
-				return scapiv1alpha1.ScorecardOutput{}, err
+				return scapiv1alpha2.ScorecardOutput{}, err
 			}
 			config.NamespacedManifest = file.Name()
 			defer func() {
@@ -160,7 +160,7 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
 			}
 			gMan, err := yamlutil.GenerateCombinedGlobalManifest(config.CRDsDir)
 			if err != nil {
-				return scapiv1alpha1.ScorecardOutput{}, err
+				return scapiv1alpha2.ScorecardOutput{}, err
 			}
 			config.GlobalManifest = gMan.Name()
 			defer func() {
@@ -175,30 +175,28 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
 
 	err = duplicateCRCheck(config.CRManifest)
 	if err != nil {
-		return scapiv1alpha1.ScorecardOutput{}, err
+		return scapiv1alpha2.ScorecardOutput{}, err
 	}
 
 	var suites []schelpers.TestSuite
 	for _, cr := range config.CRManifest {
 		crSuites, err := runTests(csv, pluginType, config, cr, logFile)
 		if err != nil {
-			return scapiv1alpha1.ScorecardOutput{}, err
+			return scapiv1alpha2.ScorecardOutput{}, err
 		}
 		suites = append(suites, crSuites...)
 	}
 
 	suites, err = schelpers.MergeSuites(suites)
 	if err != nil {
-		return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to merge test suite results: %v", err)
+		return scapiv1alpha2.ScorecardOutput{}, fmt.Errorf("failed to merge test suite results: %v", err)
 	}
+
 	output := schelpers.TestSuitesToScorecardOutput(suites, "")
-	for idx, suite := range output.Results {
-		output.Results[idx] = schelpers.UpdateSuiteStates(suite)
-	}
 	return output, nil
 }
 
-func ListInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig) (scapiv1alpha1.ScorecardOutput, error) {
+func ListInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig) (scapiv1alpha2.ScorecardOutput, error) {
 	var suites []schelpers.TestSuite
 
 	switch pluginType {
@@ -211,6 +209,7 @@ func ListInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig) (
 		basicTests.TestResults = make([]schelpers.TestResult, 0)
 		for i := 0; i < len(basicTests.Tests); i++ {
 			result := schelpers.TestResult{}
+			result.State = scapiv1alpha2.PassState
 			result.Test = basicTests.Tests[i]
 			result.Suggestions = make([]string, 0)
 			result.Errors = make([]error, 0)
@@ -226,6 +225,7 @@ func ListInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig) (
 		olmTests.TestResults = make([]schelpers.TestResult, 0)
 		for i := 0; i < len(olmTests.Tests); i++ {
 			result := schelpers.TestResult{}
+			result.State = scapiv1alpha2.PassState
 			result.Test = olmTests.Tests[i]
 			result.Suggestions = make([]string, 0)
 			result.Errors = make([]error, 0)
@@ -235,8 +235,9 @@ func ListInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig) (
 	}
 	suites, err := schelpers.MergeSuites(suites)
 	if err != nil {
-		return scapiv1alpha1.ScorecardOutput{}, fmt.Errorf("failed to merge test suite results: %v", err)
+		return scapiv1alpha2.ScorecardOutput{}, fmt.Errorf("failed to merge test suite results: %v", err)
 	}
+
 	output := schelpers.TestSuitesToScorecardOutput(suites, "")
 	return output, nil
 }

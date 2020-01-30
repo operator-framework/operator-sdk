@@ -82,7 +82,7 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 		isVR, err := i.apiResources.IsVirtualResource(k)
 		if err != nil {
 			// break here in case we can not understand if virtual resource or not
-			log.Info("Unable to determine if virual resource", "gvk", k)
+			log.Info("Unable to determine if virtual resource", "gvk", k)
 			break
 		}
 
@@ -128,7 +128,7 @@ func (i *injectOwnerReferenceHandler) ServeHTTP(w http.ResponseWriter, req *http
 		} else {
 			ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
 			if err != nil {
-				m := fmt.Sprintf("could not get broup version for: %v", owner)
+				m := fmt.Sprintf("could not get group version for: %v", owner)
 				log.Error(err, m)
 				http.Error(w, m, http.StatusBadRequest)
 				return

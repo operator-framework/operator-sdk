@@ -66,8 +66,9 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			break
 		}
 
-		if c.skipCacheLookup(r) {
-			log.V(2).Info("Skipping cache lookup", "resource", r)
+		// Skip cache for non-resource requests, not a part of skipCacheLookup for performance.
+		if !r.IsResourceRequest {
+			log.Info("Skipping cache lookup", "resource", r)
 			break
 		}
 
@@ -81,6 +82,11 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 		if err != nil {
 			// break here in case resource doesn't exist in cache
 			log.Info("Cache miss, can not find in rest mapper")
+			break
+		}
+
+		if c.skipCacheLookup(r, k, req) {
+			log.Info("Skipping cache lookup", "resource", r)
 			break
 		}
 
@@ -142,9 +148,32 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 }
 
 // skipCacheLookup - determine if we should skip the cache lookup
-func (c *cacheResponseHandler) skipCacheLookup(r *requestfactory.RequestInfo) bool {
-	// check if resource is present on request
-	if !r.IsResourceRequest {
+func (c *cacheResponseHandler) skipCacheLookup(r *requestfactory.RequestInfo, gvk schema.GroupVersionKind, req *http.Request) bool {
+
+	owner, err := getRequestOwnerRef(req)
+	if err != nil {
+		log.Error(err, "Could not get owner reference from proxy.")
+		return false
+	}
+	ownerGV, err := schema.ParseGroupVersion(owner.APIVersion)
+	if err != nil {
+		m := fmt.Sprintf("Could not get group version for: %v.", owner)
+		log.Error(err, m)
+		return false
+	}
+	ownerGVK := schema.GroupVersionKind{
+		Group:   ownerGV.Group,
+		Version: ownerGV.Version,
+		Kind:    owner.Kind,
+	}
+
+	relatedController, ok := c.cMap.Get(ownerGVK)
+	if !ok {
+		log.Info("Could not find controller for gvk.", "ownerGVK:", ownerGVK)
+		return false
+	}
+	if relatedController.Blacklist[gvk] {
+		log.Info("Skipping, because gvk is blacklisted", "GVK", gvk)
 		return true
 	}
 
@@ -185,7 +214,8 @@ func (c *cacheResponseHandler) recoverDependentWatches(req *http.Request, un *un
 	if typeString, ok := un.GetAnnotations()[osdkHandler.TypeAnnotation]; ok {
 		ownerGV, err := schema.ParseGroupVersion(ownerRef.APIVersion)
 		if err != nil {
-			log.Error(err, "Could not get ownerRef from proxy")
+			m := fmt.Sprintf("could not get group version for: %v", ownerGV)
+			log.Error(err, m)
 			return
 		}
 		if typeString == fmt.Sprintf("%v.%v", ownerRef.Kind, ownerGV.Group) {
