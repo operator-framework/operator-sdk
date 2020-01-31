@@ -2,6 +2,8 @@
 
 ### Added
 
+- Add a new option to set the minimum log level that triggers stack trace generation in logs (`--zap-stacktrace-level`) ([#2319](https://github.com/operator-framework/operator-sdk/pull/2319))
+
 ### Changed
 
 ### Deprecated
