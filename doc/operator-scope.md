@@ -121,7 +121,7 @@ This scope is ideal for the cases where an instance(CR) of some Kind(CRD) will b
         listKind: MemcachedList
         plural: memcacheds
         singular: memcached
-      scope: Namespaced
+      scope: Cluster
     ``` 
 
 - Update the `pkg/apis/<group>/<version>/<kind>_types.go` by adding the tag `// +kubebuilder:resource:path=<resource>,scope=Cluster`
