@@ -46,5 +46,5 @@ if ! whoami &>/dev/null; then
 fi
 
 cd $HOME
-exec ${OPERATOR} run ansible --watches-file=$HOME/watches.yaml $@
+exec ${OPERATOR} exec-entrypoint ansible --watches-file=$HOME/watches.yaml $@
 `
