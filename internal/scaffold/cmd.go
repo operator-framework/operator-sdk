@@ -112,6 +112,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Retrieve the namespace the operator is running in
+	operatorNs, err := k8sutil.GetOperatorNamespace()
+	if err != nil {
+		log.Error(err, "Failed to get operator namespace")
+	}
+
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
 	if err != nil {
@@ -152,7 +158,7 @@ func main() {
 	}
 
 	// Add the Metrics Service
-	addMetrics(ctx, cfg, namespace)
+	addMetrics(ctx, cfg, operatorNs)
 
 	log.Info("Starting the Cmd.")
 
