@@ -16,14 +16,11 @@ package e2eutil
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 	"time"
 
-	"github.com/operator-framework/operator-sdk/pkg/status"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
-	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -78,8 +75,6 @@ func waitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace,
 	return nil
 }
 
-// WaitForDeletion checks to see if a given object is deleted, trying every retryInterval until the timeout has elapsed.
-// If the object has not been deleted before the timeout, the function returns an error.
 func WaitForDeletion(t *testing.T, dynclient client.Client, obj runtime.Object, retryInterval,
 	timeout time.Duration) error {
 	key, err := client.ObjectKeyFromObject(obj)
@@ -105,56 +100,5 @@ func WaitForDeletion(t *testing.T, dynclient client.Client, obj runtime.Object, 
 		return err
 	}
 	t.Logf("%s %s was deleted\n", kind, key)
-	return nil
-}
-
-// WaitForCondition checks to see if a given object has a given condition type/status pair, trying every retryInterval until
-// the timeout has elapsed. If the condition is not found before the timeout, the function returns an error.
-func WaitForCondition(t *testing.T, dynclient client.Client, obj runtime.Object, cType status.ConditionType, cStatus v1.ConditionStatus, retryInterval, timeout time.Duration) error {
-	key, err := client.ObjectKeyFromObject(obj)
-	if err != nil {
-		return err
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	err = wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		err = dynclient.Get(ctx, key, obj)
-		if err != nil {
-			return false, err
-		}
-
-		data, err := json.Marshal(obj)
-		if err != nil {
-			return false, err
-		}
-
-		var cObj struct {
-			Status struct {
-				Conditions status.Conditions `json:"conditions"`
-			} `json:"status"`
-		}
-		err = json.Unmarshal(data, &cObj)
-		if err != nil {
-			return false, err
-		}
-
-		c := cObj.Status.Conditions.GetCondition(cType)
-		if c == nil {
-			t.Logf("waiting for status %s %s, condition not found", cType, cStatus)
-			return false, nil
-		}
-
-		if cStatus != c.Status {
-			t.Logf("waiting for status %s %s, got %s", cType, cStatus, c.Status)
-			return false, nil
-		}
-
-		return true, nil
-	})
-	if err != nil {
-		return err
-	}
-	t.Logf("Found condition %s %s\n", cType, cStatus)
 	return nil
 }

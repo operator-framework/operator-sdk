@@ -206,7 +206,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 	if err := e2eutil.WaitForDeployment(t, f.KubeClient, key.Namespace, key.Name, toReplicas, retryInterval, timeout); err != nil {
 		return fmt.Errorf("failed waiting for %d deployment/%s replicas: %v", toReplicas, key.Name, err)
 	}
-	return e2eutil.WaitForCondition(t, f.Client.Client, exampleMemcached, "Ready", v1.ConditionTrue, retryInterval, timeout)
+	return nil
 }
 
 func MemcachedLocal(t *testing.T) {

@@ -3,11 +3,9 @@ package memcached
 import (
 	"context"
 	"reflect"
-	"sort"
 
 	cachev1alpha1 "github.com/example-inc/memcached-operator/pkg/apis/cache/v1alpha1"
 
-	"github.com/operator-framework/operator-sdk/pkg/status"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -118,18 +116,12 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 		err = r.client.Create(context.TODO(), dep)
 		if err != nil {
 			reqLogger.Error(err, "Failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-			if err := r.setStatusNotReady(context.TODO(), memcached, err.Error()); err != nil {
-				return reconcile.Result{}, err
-			}
 			return reconcile.Result{}, err
 		}
 		// Deployment created successfully - return and requeue
 		return reconcile.Result{Requeue: true}, nil
 	} else if err != nil {
 		reqLogger.Error(err, "Failed to get Deployment")
-		if err := r.setStatusNotReady(context.TODO(), memcached, err.Error()); err != nil {
-			return reconcile.Result{}, err
-		}
 		return reconcile.Result{}, err
 	}
 
@@ -140,9 +132,6 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 		err = r.client.Update(context.TODO(), found)
 		if err != nil {
 			reqLogger.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
-			if err := r.setStatusNotReady(context.TODO(), memcached, err.Error()); err != nil {
-				return reconcile.Result{}, err
-			}
 			return reconcile.Result{}, err
 		}
 		// Spec updated - return and requeue
@@ -161,21 +150,17 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{}, err
 	}
 	podNames := getPodNames(podList.Items)
-	sort.Strings(podNames)
 
 	// Update status.Nodes if needed
 	if !reflect.DeepEqual(podNames, memcached.Status.Nodes) {
 		memcached.Status.Nodes = podNames
-		err := r.updateStatus(context.TODO(), memcached)
+		err := r.client.Status().Update(context.TODO(), memcached)
 		if err != nil {
 			reqLogger.Error(err, "Failed to update Memcached status")
 			return reconcile.Result{}, err
 		}
 	}
 
-	if err := r.setStatusReady(context.TODO(), memcached); err != nil {
-		return reconcile.Result{}, err
-	}
 	return reconcile.Result{}, nil
 }
 
@@ -230,35 +215,4 @@ func getPodNames(pods []corev1.Pod) []string {
 		podNames = append(podNames, pod.Name)
 	}
 	return podNames
-}
-
-func (r *ReconcileMemcached) updateStatus(ctx context.Context, m *cachev1alpha1.Memcached) error {
-	// Ensure required status fields are initialized
-	if len(m.Status.Nodes) == 0 {
-		m.Status.Nodes = []string{}
-	}
-	if len(m.Status.Conditions) == 0 {
-		m.Status.Conditions = status.Conditions{}
-	}
-	return r.client.Status().Update(ctx, m)
-}
-
-func (r *ReconcileMemcached) setStatusReady(ctx context.Context, instance *cachev1alpha1.Memcached) error {
-	if instance.Status.Conditions.SetCondition(status.ReadyCondition(corev1.ConditionTrue)) {
-		if err := r.client.Status().Update(ctx, instance); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (r *ReconcileMemcached) setStatusNotReady(ctx context.Context, instance *cachev1alpha1.Memcached, message string) error {
-	notReady := status.ReadyCondition(corev1.ConditionFalse)
-	notReady.Message = message
-	if instance.Status.Conditions.SetCondition(notReady) {
-		if err := r.client.Status().Update(ctx, instance); err != nil {
-			return err
-		}
-	}
-	return nil
 }

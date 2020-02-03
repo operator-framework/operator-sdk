@@ -41,10 +41,8 @@ const controllerKindExp = `package appservice
 
 import (
 	"context"
-	"fmt"
 
 	appv1alpha1 "github.com/example-inc/app-operator/pkg/apis/app/v1alpha1"
-	"github.com/operator-framework/operator-sdk/pkg/status"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -146,9 +144,6 @@ func (r *ReconcileAppService) Reconcile(request reconcile.Request) (reconcile.Re
 
 	// Set AppService instance as the owner and controller
 	if err := controllerutil.SetControllerReference(instance, pod, r.scheme); err != nil {
-		if err := r.setStatusNotReady(context.TODO(), instance, err.Error()); err != nil {
-			return reconcile.Result{}, err
-		}
 		return reconcile.Result{}, err
 	}
 
@@ -159,36 +154,17 @@ func (r *ReconcileAppService) Reconcile(request reconcile.Request) (reconcile.Re
 		reqLogger.Info("Creating a new Pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
 		err = r.client.Create(context.TODO(), pod)
 		if err != nil {
-			if err := r.setStatusNotReady(context.TODO(), instance, err.Error()); err != nil {
-				return reconcile.Result{}, err
-			}
 			return reconcile.Result{}, err
 		}
 
-		// Pod created successfully - requeue
-		return reconcile.Result{Requeue: true}, nil
-	} else if err != nil {
-		if err := r.setStatusNotReady(context.TODO(), instance, err.Error()); err != nil {
-			return reconcile.Result{}, err
-		}
-		return reconcile.Result{}, err
-	}
-
-	// If Pod is not running, set Ready condition to False
-	if found.Status.Phase != corev1.PodRunning {
-		if err := r.setStatusNotReady(context.TODO(), instance, fmt.Sprintf("pod %s not running", found.Name)); err != nil {
-			return reconcile.Result{}, err
-		}
-
-		reqLogger.Info("Pod already exists, but is not running", "Pod.Namespace", found.Namespace, "Pod.Name", found.Name, "Pod.Phase", found.Status.Phase)
+		// Pod created successfully - don't requeue
 		return reconcile.Result{}, nil
-	}
-
-	// Pod already exists and is running - set status ready
-	reqLogger.Info("Skip reconcile: Pod already exists", "Pod.Namespace", found.Namespace, "Pod.Name", found.Name, "Pod.Phase", found.Status.Phase)
-	if err := r.setStatusReady(context.TODO(), instance); err != nil {
+	} else if err != nil {
 		return reconcile.Result{}, err
 	}
+
+	// Pod already exists - don't requeue
+	reqLogger.Info("Skip reconcile: Pod already exists", "Pod.Namespace", found.Namespace, "Pod.Name", found.Name)
 	return reconcile.Result{}, nil
 }
 
@@ -213,26 +189,6 @@ func newPodForCR(cr *appv1alpha1.AppService) *corev1.Pod {
 			},
 		},
 	}
-}
-
-func (r *ReconcileAppService) setStatusReady(ctx context.Context, instance *appv1alpha1.AppService) error {
-	if instance.Status.Conditions.SetCondition(status.ReadyCondition(corev1.ConditionTrue)) {
-		if err := r.client.Status().Update(ctx, instance); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (r *ReconcileAppService) setStatusNotReady(ctx context.Context, instance *appv1alpha1.AppService, message string) error {
-	notReady := status.ReadyCondition(corev1.ConditionFalse)
-	notReady.Message = message
-	if instance.Status.Conditions.SetCondition(notReady) {
-		if err := r.client.Status().Update(ctx, instance); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 `
 

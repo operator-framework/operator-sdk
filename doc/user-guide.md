@@ -96,9 +96,6 @@ type MemcachedSpec struct {
 	Size int32 `json:"size"`
 }
 type MemcachedStatus struct {
-	// Conditions represent the latest available observations of an object's state
-	Conditions status.Conditions `json:"conditions"`
-	
 	// Nodes are the names of the memcached pods
 	Nodes []string `json:"nodes"`
 }
@@ -254,17 +251,6 @@ return reconcile.Result{RequeueAfter: time.Second*5}, nil
 **Note:** Returning `Result` with `RequeueAfter` set is how you can periodically reconcile a CR.
 
 For a guide on Reconcilers, Clients, and interacting with resource Events, see the [Client API doc][doc_client_api].
-
-### Manage CR status conditions
-
-The example Memcached controller includes logic to manage a "Ready" condition for the CR. Conditions represent the latest available observations of an object's state (see the [Kubernetes API conventions documentation][typical-status-properties] for more information).
-
-The `Conditions` field added to the `MemcachedStatus` struct simplifies the management of your CR's conditions. It:
-- Enables callers to add and remove conditions
-- Ensures that there are no duplicates
-- Sorts the conditions deterministically to avoid unnecessary repeated reconciliations
-- Automatically handles the each condition's `LastTransitionTime`.
-- Provides helper methods to make it easy to determine the state of a condition.
 
 ## Build and run the operator
 
@@ -441,6 +427,35 @@ $ kubectl delete -f deploy/service_account.yaml
 ```
 
 ## Advanced Topics
+
+### Manage CR status conditions
+
+An often-used pattern is to include `Conditions` in the status of custom resources. Conditions represent the latest available observations of an object's state (see the [Kubernetes API conventionsdocumentation][typical-status-properties] for more information).
+
+The `Conditions` field added to the `MemcachedStatus` struct simplifies the management of your CR's conditions. It:
+- Enables callers to add and remove conditions
+- Ensures that there are no duplicates
+- Sorts the conditions deterministically to avoid unnecessary repeated reconciliations
+- Automatically handles the each condition's `LastTransitionTime`.
+- Provides helper methods to make it easy to determine the state of a condition.
+
+To use conditions in your custom resource, add a Conditions field to the Status struct in `_types.go`:
+
+```Go
+import (
+    "github.com/operator-framework/operator-sdk/pkg/status"
+)
+
+type MyAppStatus struct {
+    // Conditions represent the latest available observations of an object's state
+    Conditions status.Conditions `json:"conditions"`
+}
+```
+
+<!--
+    TODO(joelanford): add a link to the Conditions godoc once the initial PR is merged
+-->
+Then, in your controller, you can use `Conditions` methods to make it easier to set and remove conditions or check their current values.
 
 ### Adding 3rd Party Resources To Your Operator
 
