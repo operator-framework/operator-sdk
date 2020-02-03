@@ -58,7 +58,8 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 	switch req.Method {
 	case http.MethodGet:
 		// GET request means we need to check the cache
-		rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.NewString("api", "apis"), GrouplessAPIPrefixes: sets.NewString("api")}
+		rf := k8sRequest.RequestInfoFactory{APIPrefixes: sets.NewString("api", "apis"),
+			GrouplessAPIPrefixes: sets.NewString("api")}
 		r, err := rf.NewRequestInfo(req)
 		if err != nil {
 			log.Error(err, "Failed to convert request")
@@ -147,7 +148,8 @@ func (c *cacheResponseHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 }
 
 // skipCacheLookup - determine if we should skip the cache lookup
-func (c *cacheResponseHandler) skipCacheLookup(r *requestfactory.RequestInfo, gvk schema.GroupVersionKind, req *http.Request) bool {
+func (c *cacheResponseHandler) skipCacheLookup(r *requestfactory.RequestInfo, gvk schema.GroupVersionKind,
+	req *http.Request) bool {
 
 	owner, err := getRequestOwnerRef(req)
 	if err != nil {
@@ -227,9 +229,11 @@ func (c *cacheResponseHandler) recoverDependentWatches(req *http.Request, un *un
 	}
 }
 
-func (c *cacheResponseHandler) getListFromCache(r *requestfactory.RequestInfo, req *http.Request, k schema.GroupVersionKind) (marshaler, error) {
+func (c *cacheResponseHandler) getListFromCache(r *requestfactory.RequestInfo, req *http.Request,
+	k schema.GroupVersionKind) (marshaler, error) {
 	k8sListOpts := &metav1.ListOptions{}
-	if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion, k8sListOpts); err != nil {
+	if err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion,
+		k8sListOpts); err != nil {
 		log.Error(err, "Unable to decode list options from request")
 		return nil, err
 	}
@@ -265,7 +269,8 @@ func (c *cacheResponseHandler) getListFromCache(r *requestfactory.RequestInfo, r
 	return &un, nil
 }
 
-func (c *cacheResponseHandler) getObjectFromCache(r *requestfactory.RequestInfo, req *http.Request, k schema.GroupVersionKind) (marshaler, error) {
+func (c *cacheResponseHandler) getObjectFromCache(r *requestfactory.RequestInfo, req *http.Request,
+	k schema.GroupVersionKind) (marshaler, error) {
 	un := &unstructured.Unstructured{}
 	un.SetGroupVersionKind(k)
 	obj := client.ObjectKey{Namespace: r.Namespace, Name: r.Name}

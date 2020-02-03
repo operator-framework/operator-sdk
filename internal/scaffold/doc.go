@@ -43,6 +43,7 @@ func (s *Doc) GetInput() (input.Input, error) {
 	return s.Input, nil
 }
 
+//nolint:lll
 const docTemplate = `// Package {{.Resource.Version}} contains API Schema definitions for the {{ .Resource.Group }} {{.Resource.Version}} API group
 // +k8s:deepcopy-gen=package,register
 // +groupName={{ .Resource.FullGroup }}

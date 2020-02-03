@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// the long lines affect ansible tests if pruned
+//nolint:lll
 package ansible
 
 import (

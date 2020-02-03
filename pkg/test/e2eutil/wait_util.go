@@ -29,21 +29,24 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// WaitForDeployment checks to see if a given deployment has a certain number of available replicas after a specified amount of time
-// If the deployment does not have the required number of replicas after 5 * retries seconds, the function returns an error
-// This can be used in multiple ways, like verifying that a required resource is ready before trying to use it, or to test
-// failure handling, like simulated in SimulatePodFail.
-func WaitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int, retryInterval, timeout time.Duration) error {
+// WaitForDeployment checks to see if a given deployment has a certain number of available replicas after a specified
+// amount of time. If the deployment does not have the required number of replicas after 5 * retries seconds,
+// the function returns an error. This can be used in multiple ways, like verifying that a required resource is ready
+// before trying to use it, or to test. Failure handling, like simulated in SimulatePodFail.
+func WaitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int,
+	retryInterval, timeout time.Duration) error {
 	return waitForDeployment(t, kubeclient, namespace, name, replicas, retryInterval, timeout, false)
 }
 
 // WaitForOperatorDeployment has the same functionality as WaitForDeployment but will no wait for the deployment if the
 // test was run with a locally run operator (--up-local flag)
-func WaitForOperatorDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int, retryInterval, timeout time.Duration) error {
+func WaitForOperatorDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int,
+	retryInterval, timeout time.Duration) error {
 	return waitForDeployment(t, kubeclient, namespace, name, replicas, retryInterval, timeout, true)
 }
 
-func waitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int, retryInterval, timeout time.Duration, isOperator bool) error {
+func waitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int,
+	retryInterval, timeout time.Duration, isOperator bool) error {
 	if isOperator && test.Global.LocalOperator {
 		t.Log("Operator is running locally; skip waitForDeployment")
 		return nil
@@ -61,7 +64,8 @@ func waitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace,
 		if int(deployment.Status.AvailableReplicas) >= replicas {
 			return true, nil
 		}
-		t.Logf("Waiting for full availability of %s deployment (%d/%d)\n", name, deployment.Status.AvailableReplicas, replicas)
+		t.Logf("Waiting for full availability of %s deployment (%d/%d)\n", name,
+			deployment.Status.AvailableReplicas, replicas)
 		return false, nil
 	})
 	if err != nil {
@@ -71,7 +75,8 @@ func waitForDeployment(t *testing.T, kubeclient kubernetes.Interface, namespace,
 	return nil
 }
 
-func WaitForDeletion(t *testing.T, dynclient client.Client, obj runtime.Object, retryInterval, timeout time.Duration) error {
+func WaitForDeletion(t *testing.T, dynclient client.Client, obj runtime.Object, retryInterval,
+	timeout time.Duration) error {
 	key, err := client.ObjectKeyFromObject(obj)
 	if err != nil {
 		return err

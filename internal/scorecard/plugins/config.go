@@ -53,7 +53,8 @@ func validateScorecardPluginFlags(config BasicAndOLMPluginConfig, pluginType Plu
 	}
 	pullPolicy := config.ProxyPullPolicy
 	if pullPolicy != v1.PullAlways && pullPolicy != v1.PullNever && pullPolicy != v1.PullIfNotPresent {
-		return fmt.Errorf("invalid proxy pull policy: (%s); valid values: %s, %s, %s", pullPolicy, v1.PullAlways, v1.PullNever, v1.PullIfNotPresent)
+		return fmt.Errorf("invalid proxy pull policy: (%s); valid values: %s, %s, %s", pullPolicy,
+			v1.PullAlways, v1.PullNever, v1.PullIfNotPresent)
 	}
 	return nil
 }

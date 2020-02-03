@@ -73,7 +73,8 @@ Example:
 		RunE: apiRun,
 	}
 
-	apiCmd.Flags().StringVar(&apiVersion, "api-version", "", "Kubernetes APIVersion that has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
+	apiCmd.Flags().StringVar(&apiVersion, "api-version", "",
+		"Kubernetes APIVersion that has a format of $GROUP_NAME/$VERSION (e.g app.example.com/v1alpha1)")
 	if err := apiCmd.MarkFlagRequired("api-version"); err != nil {
 		log.Fatalf("Failed to mark `api-version` flag for `add api` subcommand as required")
 	}
@@ -81,7 +82,8 @@ Example:
 	if err := apiCmd.MarkFlagRequired("kind"); err != nil {
 		log.Fatalf("Failed to mark `kind` flag for `add api` subcommand as required")
 	}
-	apiCmd.Flags().BoolVar(&skipGeneration, "skip-generation", false, "Skip generation of deepcopy and OpenAPI code and OpenAPI CRD specs")
+	apiCmd.Flags().BoolVar(&skipGeneration, "skip-generation", false,
+		"Skip generation of deepcopy and OpenAPI code and OpenAPI CRD specs")
 
 	return apiCmd
 }
@@ -130,7 +132,8 @@ func apiRun(cmd *cobra.Command, args []string) error {
 
 	// update deploy/role.yaml for the given resource r.
 	if err := scaffold.UpdateRoleForResource(r, absProjectPath); err != nil {
-		return fmt.Errorf("failed to update the RBAC manifest for the resource (%v, %v): %v", r.APIVersion, r.Kind, err)
+		return fmt.Errorf("failed to update the RBAC manifest for the resource (%v, %v): (%v)",
+			r.APIVersion, r.Kind, err)
 	}
 
 	if !skipGeneration {

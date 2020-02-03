@@ -68,7 +68,8 @@ func NewBundleValidationTest(conf OLMTestConfig) *BundleValidationTest {
 			Name:        "Bundle Validation Test",
 			Description: "Validates bundle contents",
 			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(BundleValidationTest{})},
+			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName,
+				testKey: getStructShortName(BundleValidationTest{})},
 		},
 	}
 }
@@ -87,7 +88,8 @@ func NewCRDsHaveValidationTest(conf OLMTestConfig) *CRDsHaveValidationTest {
 			Name:        "Provided APIs have validation",
 			Description: "All CRDs have an OpenAPI validation subsection",
 			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(CRDsHaveValidationTest{})},
+			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName,
+				testKey: getStructShortName(CRDsHaveValidationTest{})},
 		},
 	}
 }
@@ -106,7 +108,8 @@ func NewCRDsHaveResourcesTest(conf OLMTestConfig) *CRDsHaveResourcesTest {
 			Name:        "Owned CRDs have resources listed",
 			Description: "All Owned CRDs contain a resources subsection",
 			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(CRDsHaveResourcesTest{})},
+			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName,
+				testKey: getStructShortName(CRDsHaveResourcesTest{})},
 		},
 	}
 }
@@ -125,7 +128,8 @@ func NewSpecDescriptorsTest(conf OLMTestConfig) *SpecDescriptorsTest {
 			Name:        "Spec fields with descriptors",
 			Description: "All spec fields have matching descriptors in the CSV",
 			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(SpecDescriptorsTest{})},
+			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName,
+				testKey: getStructShortName(SpecDescriptorsTest{})},
 		},
 	}
 }
@@ -144,7 +148,8 @@ func NewStatusDescriptorsTest(conf OLMTestConfig) *StatusDescriptorsTest {
 			Name:        "Status fields with descriptors",
 			Description: "All status fields have matching descriptors in the CSV",
 			Cumulative:  true,
-			Labels:      map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName, testKey: getStructShortName(StatusDescriptorsTest{})},
+			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName,
+				testKey: getStructShortName(StatusDescriptorsTest{})},
 		},
 	}
 }
@@ -186,7 +191,8 @@ func (t *BundleValidationTest) Run(ctx context.Context) *schelpers.TestResult {
 	res := &schelpers.TestResult{Test: t, State: scapiv1alpha2.PassState}
 
 	if t.OLMTestConfig.Bundle == "" {
-		res.Errors = append(res.Errors, errors.New("unable to find the OLM 'bundle' directory which is required for this test"))
+		res.Errors = append(res.Errors,
+			errors.New("unable to find the OLM 'bundle' directory which is required for this test"))
 		res.State = scapiv1alpha2.ErrorState
 		return res
 	}
@@ -252,7 +258,8 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *schelpers.TestResult 
 			continue
 		}
 		if crd.Spec.Validation == nil {
-			res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for %s/%s", crd.Spec.Names.Kind, crd.Spec.Version))
+			res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for %s/%s",
+				crd.Spec.Names.Kind, crd.Spec.Version))
 			continue
 		}
 		failed := false
@@ -261,7 +268,9 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *schelpers.TestResult 
 			for key := range spec {
 				if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["spec"].Properties[key]; !ok {
 					failed = true
-					res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for spec field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
+					res.Suggestions = append(res.Suggestions,
+						fmt.Sprintf("Add CRD validation for spec field `%s` in %s/%s",
+							key, gvk.Kind, gvk.Version))
 				}
 			}
 		}
@@ -270,7 +279,8 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *schelpers.TestResult 
 			for key := range status {
 				if _, ok := crd.Spec.Validation.OpenAPIV3Schema.Properties["status"].Properties[key]; !ok {
 					failed = true
-					res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for status field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
+					res.Suggestions = append(res.Suggestions, fmt.Sprintf("Add CRD validation for status"+
+						" field `%s` in %s/%s", key, gvk.Kind, gvk.Version))
 				}
 			}
 		}
@@ -297,19 +307,23 @@ func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *schelpers.TestResult {
 			for _, resource := range resources {
 				foundResource := false
 				for _, listedResource := range crd.Resources {
-					if matchKind(resource.Kind, listedResource.Kind) && strings.EqualFold(resource.Version, listedResource.Version) {
+					if matchKind(resource.Kind, listedResource.Kind) &&
+						strings.EqualFold(resource.Version, listedResource.Version) {
 						foundResource = true
 						break
 					}
 				}
 				if foundResource == false {
-					missingResources = append(missingResources, fmt.Sprintf("%s/%s", resource.Kind, resource.Version))
+					missingResources = append(missingResources, fmt.Sprintf("%s/%s",
+						resource.Kind, resource.Version))
 				}
 			}
 		}
 	}
 	if len(missingResources) > 0 {
-		res.Suggestions = append(res.Suggestions, fmt.Sprintf("If it would be helpful to an end-user to understand or troubleshoot your CR, consider adding resources %v to the resources section for owned CRD %s", missingResources, t.CR.GroupVersionKind().Kind))
+		res.Suggestions = append(res.Suggestions, fmt.Sprintf("If it would be helpful to an end-user to"+
+			" understand or troubleshoot your CR, consider adding resources %v to the resources section for owned"+
+			" CRD %s", missingResources, t.CR.GroupVersionKind().Kind))
 		res.State = scapiv1alpha2.FailState
 	}
 
@@ -443,7 +457,8 @@ func (t *SpecDescriptorsTest) Run(ctx context.Context) *schelpers.TestResult {
 	return checkOwnedCSVDescriptors(t.CR, t.CSV, specDescriptor, res)
 }
 
-func checkOwnedCSVDescriptors(cr *unstructured.Unstructured, csv *olmapiv1alpha1.ClusterServiceVersion, descriptor string, res *schelpers.TestResult) *schelpers.TestResult {
+func checkOwnedCSVDescriptors(cr *unstructured.Unstructured, csv *olmapiv1alpha1.ClusterServiceVersion,
+	descriptor string, res *schelpers.TestResult) *schelpers.TestResult {
 	if cr.Object[descriptor] == nil {
 		res.State = scapiv1alpha2.FailState
 		return res

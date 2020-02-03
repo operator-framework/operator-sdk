@@ -34,7 +34,8 @@ func TestSuitesToScorecardOutput(suites []TestSuite, log string) scapiv1alpha2.S
 	return *test
 }
 
-// TestResultToScorecardTestResult is a helper function for converting from the TestResult type to the ScorecardTestResult type
+// TestResultToScorecardTestResult is a helper function for converting from the TestResult type
+// to the ScorecardTestResult type
 func TestResultToScorecardTestResult(tr TestResult) scapiv1alpha2.ScorecardTestResult {
 	sctr := scapiv1alpha2.ScorecardTestResult{}
 	sctr.State = tr.State

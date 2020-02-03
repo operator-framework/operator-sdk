@@ -59,7 +59,8 @@ func (f *frameworkClient) Create(gCtx goctx.Context, obj runtime.Object, cleanup
 	key, err := dynclient.ObjectKeyFromObject(objCopy)
 	// this function fails silently if t is nil
 	if cleanupOptions.TestContext.t != nil {
-		cleanupOptions.TestContext.t.Logf("resource type %+v with namespace/name (%+v) created\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
+		cleanupOptions.TestContext.t.Logf("resource type %+v with namespace/name (%+v) created\n",
+			objCopy.GetObjectKind().GroupVersionKind().Kind, key)
 	}
 	cleanupOptions.TestContext.AddCleanupFn(func() error {
 		err = retry.OnError(retry.DefaultRetry, retryOnAnyError, func() error {
@@ -79,14 +80,17 @@ func (f *frameworkClient) Create(gCtx goctx.Context, obj runtime.Object, cleanup
 				if err != nil {
 					if apierrors.IsNotFound(err) {
 						if cleanupOptions.TestContext.t != nil {
-							cleanupOptions.TestContext.t.Logf("resource type %+v with namespace/name (%+v) successfully deleted\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
+							cleanupOptions.TestContext.t.Logf("resource type %+v with namespace/name (%+v)"+
+								" successfully deleted\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
 						}
 						return true, nil
 					}
-					return false, fmt.Errorf("error encountered during deletion of resource type %v with namespace/name (%+v): %w", objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
+					return false, fmt.Errorf("error encountered during deletion of resource type %v with"+
+						" namespace/name (%+v): %v", objCopy.GetObjectKind().GroupVersionKind().Kind, key, err)
 				}
 				if cleanupOptions.TestContext.t != nil {
-					cleanupOptions.TestContext.t.Logf("waiting for deletion of resource type %+v with namespace/name (%+v)\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
+					cleanupOptions.TestContext.t.Logf("waiting for deletion of resource type %+v with"+
+						" namespace/name (%+v)\n", objCopy.GetObjectKind().GroupVersionKind().Kind, key)
 				}
 				return false, nil
 			})

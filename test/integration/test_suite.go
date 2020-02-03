@@ -201,7 +201,8 @@ spec:
   version: {{ .OperatorVersion }}
 `
 
-func writeOperatorManifests(root, operatorName, defaultChannel string, csvConfigs ...CSVTemplateConfig) (manifestsDir string, err error) {
+func writeOperatorManifests(root, operatorName, defaultChannel string,
+	csvConfigs ...CSVTemplateConfig) (manifestsDir string, err error) {
 	manifestsDir = filepath.Join(root, operatorName)
 	pkg := registry.PackageManifest{
 		PackageName:        operatorName,

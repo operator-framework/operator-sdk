@@ -547,30 +547,36 @@ func TestReconcile(t *testing.T) {
 					t.Fatalf("Failed to get object: (%v)", err)
 				}
 				if !reflect.DeepEqual(actualObject.GetAnnotations(), tc.ExpectedObject.GetAnnotations()) {
-					t.Fatalf("Annotations are not the same\nexpected: %v\nactual: %v", tc.ExpectedObject.GetAnnotations(), actualObject.GetAnnotations())
+					t.Fatalf("Annotations are not the same\nexpected: %v\nactual: %v",
+						tc.ExpectedObject.GetAnnotations(), actualObject.GetAnnotations())
 				}
 				if !reflect.DeepEqual(actualObject.GetFinalizers(), tc.ExpectedObject.GetFinalizers()) &&
 					len(actualObject.GetFinalizers()) != 0 && len(tc.ExpectedObject.GetFinalizers()) != 0 {
-					t.Fatalf("Finalizers are not the same\nexpected: %#v\nactual: %#v", tc.ExpectedObject.GetFinalizers(), actualObject.GetFinalizers())
+					t.Fatalf("Finalizers are not the same\nexpected: %#v\nactual: %#v",
+						tc.ExpectedObject.GetFinalizers(), actualObject.GetFinalizers())
 				}
 				sMap, _ := tc.ExpectedObject.Object["status"].(map[string]interface{})
 				expectedStatus := ansiblestatus.CreateFromMap(sMap)
 				sMap, _ = actualObject.Object["status"].(map[string]interface{})
 				actualStatus := ansiblestatus.CreateFromMap(sMap)
 				if len(expectedStatus.Conditions) != len(actualStatus.Conditions) {
-					t.Fatalf("Status conditions not the same\nexpected: %v\nactual: %v", expectedStatus, actualStatus)
+					t.Fatalf("Status conditions not the same\nexpected: %v\nactual: %v", expectedStatus,
+						actualStatus)
 				}
 				for _, c := range expectedStatus.Conditions {
 					actualCond := ansiblestatus.GetCondition(actualStatus, c.Type)
-					if c.Reason != actualCond.Reason || c.Message != actualCond.Message || c.Status != actualCond.Status {
+					if c.Reason != actualCond.Reason || c.Message != actualCond.Message || c.Status !=
+						actualCond.Status {
 						t.Fatalf("Message or reason did not match\nexpected: %v\nactual: %v", c, actualCond)
 					}
 					if c.AnsibleResult == nil && actualCond.AnsibleResult != nil {
-						t.Fatalf("Ansible result did not match expected: %v\nactual: %v", c.AnsibleResult, actualCond.AnsibleResult)
+						t.Fatalf("Ansible result did not match expected: %v\nactual: %v", c.AnsibleResult,
+							actualCond.AnsibleResult)
 					}
 					if c.AnsibleResult != nil {
 						if !reflect.DeepEqual(c.AnsibleResult, actualCond.AnsibleResult) {
-							t.Fatalf("Ansible result did not match expected: %v\nactual: %v", c.AnsibleResult, actualCond.AnsibleResult)
+							t.Fatalf("Ansible result did not match expected: %v\nactual: %v", c.AnsibleResult,
+								actualCond.AnsibleResult)
 						}
 					}
 				}

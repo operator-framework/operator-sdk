@@ -39,6 +39,7 @@ func (m *MoleculeTestLocalPrepare) GetInput() (input.Input, error) {
 	return m.Input, nil
 }
 
+//nolint:lll
 const moleculeTestLocalPrepareAnsibleTmpl = `---
 - import_playbook: ../default/prepare.yml
 

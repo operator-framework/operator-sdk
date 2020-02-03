@@ -34,7 +34,9 @@ func DependentPredicateFuncs() crtpredicate.Funcs {
 		// reconciliation. Another reconcile would be redundant.
 		CreateFunc: func(e event.CreateEvent) bool {
 			o := e.Object.(*unstructured.Unstructured)
-			log.V(1).Info("Skipping reconciliation for dependent resource creation", "name", o.GetName(), "namespace", o.GetNamespace(), "apiVersion", o.GroupVersionKind().GroupVersion(), "kind", o.GroupVersionKind().Kind)
+			log.V(1).Info("Skipping reconciliation for dependent resource creation",
+				"name", o.GetName(), "namespace", o.GetNamespace(), "apiVersion",
+				o.GroupVersionKind().GroupVersion(), "kind", o.GroupVersionKind().Kind)
 			return false
 		},
 
@@ -42,14 +44,18 @@ func DependentPredicateFuncs() crtpredicate.Funcs {
 		// recreated.
 		DeleteFunc: func(e event.DeleteEvent) bool {
 			o := e.Object.(*unstructured.Unstructured)
-			log.V(1).Info("Reconciling due to dependent resource deletion", "name", o.GetName(), "namespace", o.GetNamespace(), "apiVersion", o.GroupVersionKind().GroupVersion(), "kind", o.GroupVersionKind().Kind)
+			log.V(1).Info("Reconciling due to dependent resource deletion",
+				"name", o.GetName(), "namespace", o.GetNamespace(), "apiVersion",
+				o.GroupVersionKind().GroupVersion(), "kind", o.GroupVersionKind().Kind)
 			return true
 		},
 
 		// Don't reconcile when a generic event is received for a dependent
 		GenericFunc: func(e event.GenericEvent) bool {
 			o := e.Object.(*unstructured.Unstructured)
-			log.V(1).Info("Skipping reconcile due to generic event", "name", o.GetName(), "namespace", o.GetNamespace(), "apiVersion", o.GroupVersionKind().GroupVersion(), "kind", o.GroupVersionKind().Kind)
+			log.V(1).Info("Skipping reconcile due to generic event", "name", o.GetName(),
+				"namespace", o.GetNamespace(), "apiVersion", o.GroupVersionKind().GroupVersion(),
+				"kind", o.GroupVersionKind().Kind)
 			return false
 		},
 
@@ -69,7 +75,9 @@ func DependentPredicateFuncs() crtpredicate.Funcs {
 			if reflect.DeepEqual(old.Object, new.Object) {
 				return false
 			}
-			log.V(1).Info("Reconciling due to dependent resource update", "name", new.GetName(), "namespace", new.GetNamespace(), "apiVersion", new.GroupVersionKind().GroupVersion(), "kind", new.GroupVersionKind().Kind)
+			log.V(1).Info("Reconciling due to dependent resource update",
+				"name", new.GetName(), "namespace", new.GetNamespace(), "apiVersion",
+				new.GroupVersionKind().GroupVersion(), "kind", new.GroupVersionKind().Kind)
 			return true
 		},
 	}

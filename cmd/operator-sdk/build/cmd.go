@@ -55,9 +55,12 @@ For example:
 `,
 		RunE: buildFunc,
 	}
-	buildCmd.Flags().StringVar(&imageBuildArgs, "image-build-args", "", "Extra image build arguments as one string such as \"--build-arg https_proxy=$https_proxy\"")
-	buildCmd.Flags().StringVar(&imageBuilder, "image-builder", "docker", "Tool to build OCI images. One of: [docker, podman, buildah]")
-	buildCmd.Flags().StringVar(&goBuildArgs, "go-build-args", "", "Extra Go build arguments as one string such as \"-ldflags -X=main.xyz=abc\"")
+	buildCmd.Flags().StringVar(&imageBuildArgs, "image-build-args", "",
+		"Extra image build arguments as one string such as \"--build-arg https_proxy=$https_proxy\"")
+	buildCmd.Flags().StringVar(&imageBuilder, "image-builder", "docker",
+		"Tool to build OCI images. One of: [docker, podman, buildah]")
+	buildCmd.Flags().StringVar(&goBuildArgs, "go-build-args", "",
+		"Extra Go build arguments as one string such as \"-ldflags -X=main.xyz=abc\"")
 	return buildCmd
 }
 

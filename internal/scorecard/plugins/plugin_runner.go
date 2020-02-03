@@ -75,7 +75,8 @@ const (
 
 var log *logrus.Logger
 
-func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, logFile io.Writer) (scapiv1alpha2.ScorecardOutput, error) {
+func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
+	logFile io.Writer) (scapiv1alpha2.ScorecardOutput, error) {
 
 	// use stderr for logging not related to a single suite
 	log = logrus.New()
@@ -129,7 +130,8 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig, lo
 			return scapiv1alpha2.ScorecardOutput{}, err
 		}
 
-		config.CRManifest, err = getCRFromCSV(config.CRManifest, csv.ObjectMeta.Annotations["alm-examples"], csv.GetName())
+		config.CRManifest, err = getCRFromCSV(config.CRManifest, csv.ObjectMeta.Annotations["alm-examples"],
+			csv.GetName())
 		if err != nil {
 			return scapiv1alpha2.ScorecardOutput{}, err
 		}
@@ -320,10 +322,12 @@ func getCRFromCSV(currentCRMans []string, crJSONStr string, csvName string) ([]s
 		if crJSONStr != "" {
 			var crs []interface{}
 			if err := json.Unmarshal([]byte(crJSONStr), &crs); err != nil {
-				return finalCR, fmt.Errorf("metadata.annotations['alm-examples'] in CSV %s incorrectly formatted: %v", csvName, err)
+				return finalCR, fmt.Errorf("metadata.annotations['alm-examples'] in CSV %s"+
+					"incorrectly formatted: %v", csvName, err)
 			}
 			if len(crs) == 0 {
-				return finalCR, fmt.Errorf("no CRs found in metadata.annotations['alm-examples'] in CSV %s and cr-manifest config option not set", csvName)
+				return finalCR, fmt.Errorf("no CRs found in metadata.annotations['alm-examples']"+
+					" in CSV %s and cr-manifest config option not set", csvName)
 			}
 			// TODO: run scorecard against all CR's in CSV.
 			cr := crs[0]
@@ -352,7 +356,8 @@ func getCRFromCSV(currentCRMans []string, crJSONStr string, csvName string) ([]s
 				}
 			}()
 		} else {
-			return finalCR, errors.New("cr-manifest config option must be set if CSV has no metadata.annotations['alm-examples']")
+			return finalCR, errors.New(
+				"cr-manifest config option must be set if CSV has no metadata.annotations['alm-examples']")
 		}
 	} else {
 		// TODO: run scorecard against all CR's in CSV.
@@ -361,7 +366,8 @@ func getCRFromCSV(currentCRMans []string, crJSONStr string, csvName string) ([]s
 	}
 	// Let users know that only the first CR is being tested.
 	if logCRMsg {
-		log.Infof("The scorecard does not support testing multiple CR's at once when run with --olm-deployed. Testing the first CR %s", finalCR[0])
+		log.Infof("The scorecard does not support testing multiple CR's at once when run with --olm-deployed."+
+			" Testing the first CR %s", finalCR[0])
 	}
 	return finalCR, nil
 }
@@ -390,7 +396,8 @@ func duplicateCRCheck(crs []string) error {
 	return nil
 }
 
-func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, config BasicAndOLMPluginConfig, cr string, logFile io.Writer) ([]schelpers.TestSuite, error) {
+func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, config BasicAndOLMPluginConfig,
+	cr string, logFile io.Writer) ([]schelpers.TestSuite, error) {
 	suites := make([]schelpers.TestSuite, 0)
 
 	logReadWriter := &bytes.Buffer{}
@@ -398,10 +405,12 @@ func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, 
 	log.Printf("Running for cr: %s", cr)
 
 	if !config.OLMDeployed {
-		if err := createFromYAMLFile(config.Namespace, config.GlobalManifest, config.ProxyImage, config.ProxyPullPolicy); err != nil {
+		if err := createFromYAMLFile(config.Namespace, config.GlobalManifest, config.ProxyImage,
+			config.ProxyPullPolicy); err != nil {
 			return suites, fmt.Errorf("failed to create global resources: %v", err)
 		}
-		if err := createFromYAMLFile(config.Namespace, config.NamespacedManifest, config.ProxyImage, config.ProxyPullPolicy); err != nil {
+		if err := createFromYAMLFile(config.Namespace, config.NamespacedManifest, config.ProxyImage,
+			config.ProxyPullPolicy); err != nil {
 			return suites, fmt.Errorf("failed to create namespaced resources: %v", err)
 		}
 	}

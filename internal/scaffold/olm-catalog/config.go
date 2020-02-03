@@ -88,9 +88,11 @@ func (c *CSVConfig) setFields() error {
 			return err
 		}
 		if os.IsNotExist(err) {
-			log.Infof("Default CRDs dir %s does not exist. Omitting field spec.customresourcedefinitions.owned from CSV.", scaffold.CRDsDir)
+			log.Infof("Default CRDs dir %s does not exist. Omitting field spec.customresourcedefinitions.owned"+
+				" from CSV.", scaffold.CRDsDir)
 		} else if len(paths) == 0 {
-			log.Infof("Default CRDs dir %s is empty. Omitting field spec.customresourcedefinitions.owned from CSV.", scaffold.CRDsDir)
+			log.Infof("Default CRDs dir %s is empty. Omitting field spec.customresourcedefinitions.owned"+
+				" from CSV.", scaffold.CRDsDir)
 		} else {
 			c.CRDCRPaths = paths
 		}

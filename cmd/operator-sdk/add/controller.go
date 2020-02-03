@@ -51,7 +51,7 @@ Example:
 	pkg/controller/
 	├── add_appservice.go
 	├── appservice
-	│   └── appservice_controller.go
+	│   └── appservice_controller.go
 	└── controller.go
 
 The following example will create a controller to manage, watch and reconcile as a primary resource the <v1.Deployment> from the domain <k8s.io.api>, which is not defined in the project (external). Note that, it can be used to create controllers for any External API. 	
@@ -63,7 +63,7 @@ Example:
 	pkg/controller/
 	├── add_deployment.go
 	├── deployment
-	│   └── deployment_controller.go 
+	│   └── deployment_controller.go 
 	└── controller.go
 		`,
 		RunE: controllerRun,

@@ -115,5 +115,7 @@ func ConfigDocLink() string {
 	if strings.HasSuffix(version.Version, "+git") {
 		return "https://github.com/operator-framework/operator-sdk/blob/master/doc/test-framework/scorecard.md"
 	}
-	return fmt.Sprintf("https://github.com/operator-framework/operator-sdk/blob/%s/doc/test-framework/scorecard.md", version.Version)
+	return fmt.Sprintf(
+		"https://github.com/operator-framework/operator-sdk/blob/%s/doc/test-framework/scorecard.md",
+		version.Version)
 }

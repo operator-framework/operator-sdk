@@ -46,7 +46,8 @@ type TestResult struct {
 type TestInfo struct {
 	Name        string
 	Description string
-	// If a test is set to cumulative, the scores of multiple runs of the same test on separate CRs are added together for the total score.
+	// If a test is set to cumulative, the scores of multiple runs of the same test on separate CRs are
+	// added together for the total score.
 	// If cumulative is false, if any test failed, the total score is 0/1. Otherwise 1/1.
 	Cumulative bool
 	Labels     map[string]string
@@ -64,7 +65,8 @@ func (i TestInfo) GetLabels() map[string]string { return i.Labels }
 // IsCumulative returns true if the test's scores are intended to be cumulative
 func (i TestInfo) IsCumulative() bool { return i.Cumulative }
 
-// TestSuite contains a list of tests and results, along with the relative weights of each test. Also can optionally contain a log
+// TestSuite contains a list of tests and results, along with the relative weights of each test.
+// Also can optionally contain a log
 type TestSuite struct {
 	TestInfo
 	Tests       []Test
