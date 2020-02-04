@@ -60,9 +60,7 @@ func (cfg Config) combinePluginOutput(pluginOutputs []scapiv1alpha2.
 	output := scapiv1alpha2.ScorecardOutput{}
 	output.Results = make([]scapiv1alpha2.ScorecardTestResult, 0)
 	for _, v := range pluginOutputs {
-		for _, r := range v.Results {
-			output.Results = append(output.Results, r)
-		}
+		output.Results = append(output.Results, v.Results...)
 	}
 
 	if cfg.OutputFormat == JSONOutputFormat {

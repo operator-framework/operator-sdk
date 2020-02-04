@@ -78,9 +78,7 @@ func parseInstallModeKV(raw string) (olmapiv1alpha1.InstallModeType, []string, e
 		return "", nil, fmt.Errorf("installMode type string %q is not a valid installMode type", modeStr)
 	}
 	namespaces := []string{}
-	for _, namespace := range strings.Split(strings.Trim(namespaceList, ","), ",") {
-		namespaces = append(namespaces, namespace)
-	}
+	namespaces = append(namespaces, strings.Split(strings.Trim(namespaceList, ","), ",")...)
 	return mode, namespaces, nil
 }
 

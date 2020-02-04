@@ -100,7 +100,7 @@ func (l loggingEventHandler) Handle(ident string, u *unstructured.Unstructured, 
 func (l loggingEventHandler) logAnsibleStdOut(e eventapi.JobEvent) {
 	fmt.Printf("\n--------------------------- Ansible Task StdOut -------------------------------\n")
 	if e.Event != eventapi.EventPlaybookOnTaskStart {
-		fmt.Printf(fmt.Sprintf("\n TASK [%v] ******************************** \n", e.EventData["task"]))
+		fmt.Printf("\n TASK [%v] ******************************** \n", e.EventData["task"])
 	}
 	fmt.Println(e.StdOut)
 	fmt.Printf("\n-------------------------------------------------------------------------------\n")

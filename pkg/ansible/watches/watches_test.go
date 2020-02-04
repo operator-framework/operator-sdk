@@ -109,6 +109,7 @@ func TestLoad(t *testing.T) {
 
 	tmpl, err := template.ParseFiles("testdata/valid.yaml.tmpl")
 	if err != nil {
+		t.Fatalf("Unable to parse template: %v", err)
 	}
 	f, err := os.Create("testdata/valid.yaml")
 	if err != nil {

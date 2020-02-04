@@ -332,7 +332,7 @@ func getCASecretAndConfigMapInCluster(kubeClient kubernetes.Interface, name,
 		return nil, nil, fmt.Errorf("expect either both ca configmap and secret both exist or not exist, "+
 			" but got hasCAConfigmap==%v and hasCASecret==%v", hasConfigMap, hasSecret)
 	}
-	if hasConfigMap == false {
+	if !hasConfigMap {
 		return nil, nil, nil
 	}
 	return se, cm, nil
