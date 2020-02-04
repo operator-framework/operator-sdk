@@ -126,6 +126,184 @@ func TestLoad(t *testing.T) {
 
 	zeroSeconds := time.Duration(0)
 	twoSeconds := time.Second * 2
+
+	validWatches := []Watch{
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "NoFinalizer",
+			},
+			Playbook:                    validTemplate.ValidPlaybook,
+			ManageStatus:                true,
+			ReconcilePeriod:             twoSeconds,
+			WatchDependentResources:     true,
+			WatchClusterScopedResources: false,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "Playbook",
+			},
+			Playbook:                    validTemplate.ValidPlaybook,
+			ManageStatus:                true,
+			WatchDependentResources:     true,
+			WatchClusterScopedResources: false,
+			Finalizer: &Finalizer{
+				Name: "finalizer.app.example.com",
+				Role: validTemplate.ValidRole,
+				Vars: map[string]interface{}{"sentinel": "finalizer_running"},
+			},
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "WatchClusterScoped",
+			},
+			Playbook:                    validTemplate.ValidPlaybook,
+			ReconcilePeriod:             twoSeconds,
+			ManageStatus:                true,
+			WatchDependentResources:     true,
+			WatchClusterScopedResources: true,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "NoReconcile",
+			},
+			Playbook:        validTemplate.ValidPlaybook,
+			ReconcilePeriod: zeroSeconds,
+			ManageStatus:    true,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "DefaultStatus",
+			},
+			Playbook:     validTemplate.ValidPlaybook,
+			ManageStatus: true,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "DisableStatus",
+			},
+			Playbook:     validTemplate.ValidPlaybook,
+			ManageStatus: false,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "EnableStatus",
+			},
+			Playbook:     validTemplate.ValidPlaybook,
+			ManageStatus: true,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "Role",
+			},
+			Role:         validTemplate.ValidRole,
+			ManageStatus: true,
+			Finalizer: &Finalizer{
+				Name:     "finalizer.app.example.com",
+				Playbook: validTemplate.ValidPlaybook,
+				Vars:     map[string]interface{}{"sentinel": "finalizer_running"},
+			},
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "FinalizerRole",
+			},
+			Role:         validTemplate.ValidRole,
+			ManageStatus: true,
+			Finalizer: &Finalizer{
+				Name: "finalizer.app.example.com",
+				Vars: map[string]interface{}{"sentinel": "finalizer_running"},
+			},
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "MaxWorkersDefault",
+			},
+			Role:         validTemplate.ValidRole,
+			ManageStatus: true,
+			MaxWorkers:   1,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "MaxWorkersIgnored",
+			},
+			Role:         validTemplate.ValidRole,
+			ManageStatus: true,
+			MaxWorkers:   1,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "MaxWorkersEnv",
+			},
+			Role:         validTemplate.ValidRole,
+			ManageStatus: true,
+			MaxWorkers:   4,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "AnsibleVerbosityDefault",
+			},
+			Role:             validTemplate.ValidRole,
+			ManageStatus:     true,
+			AnsibleVerbosity: 2,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "AnsibleVerbosityIgnored",
+			},
+			Role:             validTemplate.ValidRole,
+			ManageStatus:     true,
+			AnsibleVerbosity: 2,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "AnsibleVerbosityEnv",
+			},
+			Role:             validTemplate.ValidRole,
+			ManageStatus:     true,
+			AnsibleVerbosity: 4,
+		},
+		Watch{
+			GroupVersionKind: schema.GroupVersionKind{
+				Version: "v1alpha1",
+				Group:   "app.example.com",
+				Kind:    "WatchWithVars",
+			},
+			Role:         validTemplate.ValidRole,
+			ManageStatus: true,
+			Vars:         map[string]interface{}{"sentinel": "reconciling"},
+		},
+	}
+
 	testCases := []struct {
 		name                           string
 		path                           string
@@ -190,365 +368,15 @@ func TestLoad(t *testing.T) {
 			path:             "testdata/valid.yaml",
 			maxWorkers:       1,
 			ansibleVerbosity: 2,
-			expected: []Watch{
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "NoFinalizer",
-					},
-					Playbook:                    validTemplate.ValidPlaybook,
-					ManageStatus:                true,
-					ReconcilePeriod:             twoSeconds,
-					WatchDependentResources:     true,
-					WatchClusterScopedResources: false,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "Playbook",
-					},
-					Playbook:                    validTemplate.ValidPlaybook,
-					ManageStatus:                true,
-					WatchDependentResources:     true,
-					WatchClusterScopedResources: false,
-					Finalizer: &Finalizer{
-						Name: "finalizer.app.example.com",
-						Role: validTemplate.ValidRole,
-						Vars: map[string]interface{}{"sentinel": "finalizer_running"},
-					},
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "WatchClusterScoped",
-					},
-					Playbook:                    validTemplate.ValidPlaybook,
-					ReconcilePeriod:             twoSeconds,
-					ManageStatus:                true,
-					WatchDependentResources:     true,
-					WatchClusterScopedResources: true,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "NoReconcile",
-					},
-					Playbook:        validTemplate.ValidPlaybook,
-					ReconcilePeriod: zeroSeconds,
-					ManageStatus:    true,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "DefaultStatus",
-					},
-					Playbook:     validTemplate.ValidPlaybook,
-					ManageStatus: true,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "DisableStatus",
-					},
-					Playbook:     validTemplate.ValidPlaybook,
-					ManageStatus: false,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "EnableStatus",
-					},
-					Playbook:     validTemplate.ValidPlaybook,
-					ManageStatus: true,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "Role",
-					},
-					Role:         validTemplate.ValidRole,
-					ManageStatus: true,
-					Finalizer: &Finalizer{
-						Name:     "finalizer.app.example.com",
-						Playbook: validTemplate.ValidPlaybook,
-						Vars:     map[string]interface{}{"sentinel": "finalizer_running"},
-					},
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "FinalizerRole",
-					},
-					Role:         validTemplate.ValidRole,
-					ManageStatus: true,
-					Finalizer: &Finalizer{
-						Name: "finalizer.app.example.com",
-						Vars: map[string]interface{}{"sentinel": "finalizer_running"},
-					},
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "MaxWorkersDefault",
-					},
-					Role:         validTemplate.ValidRole,
-					ManageStatus: true,
-					MaxWorkers:   1,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "MaxWorkersIgnored",
-					},
-					Role:         validTemplate.ValidRole,
-					ManageStatus: true,
-					MaxWorkers:   1,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "MaxWorkersEnv",
-					},
-					Role:         validTemplate.ValidRole,
-					ManageStatus: true,
-					MaxWorkers:   4,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "AnsibleVerbosityDefault",
-					},
-					Role:             validTemplate.ValidRole,
-					ManageStatus:     true,
-					AnsibleVerbosity: 2,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "AnsibleVerbosityIgnored",
-					},
-					Role:             validTemplate.ValidRole,
-					ManageStatus:     true,
-					AnsibleVerbosity: 2,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "AnsibleVerbosityEnv",
-					},
-					Role:             validTemplate.ValidRole,
-					ManageStatus:     true,
-					AnsibleVerbosity: 4,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "WatchWithVars",
-					},
-					Role:         validTemplate.ValidRole,
-					ManageStatus: true,
-					Vars:         map[string]interface{}{"sentinel": "reconciling"},
-				},
-			},
+			expected:         validWatches,
 		},
 		{
-			name:                           "valid watches file with ANSIBLE ROLES PATH ENV VAR set",
+			name:                           "should watches file successfully with ANSIBLE ROLES PATH ENV VAR set",
 			path:                           "testdata/valid.yaml",
 			maxWorkers:                     1,
 			ansibleVerbosity:               2,
 			shouldSetAnsibleRolePathEnvVar: true,
-			expected: []Watch{
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "NoFinalizer",
-					},
-					Playbook:                    validTemplate.ValidPlaybook,
-					ManageStatus:                true,
-					ReconcilePeriod:             twoSeconds,
-					WatchDependentResources:     true,
-					WatchClusterScopedResources: false,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "Playbook",
-					},
-					Playbook:                    validTemplate.ValidPlaybook,
-					ManageStatus:                true,
-					WatchDependentResources:     true,
-					WatchClusterScopedResources: false,
-					Finalizer: &Finalizer{
-						Name: "finalizer.app.example.com",
-						Role: validTemplate.ValidRole,
-						Vars: map[string]interface{}{"sentinel": "finalizer_running"},
-					},
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "WatchClusterScoped",
-					},
-					Playbook:                    validTemplate.ValidPlaybook,
-					ReconcilePeriod:             twoSeconds,
-					ManageStatus:                true,
-					WatchDependentResources:     true,
-					WatchClusterScopedResources: true,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "NoReconcile",
-					},
-					Playbook:        validTemplate.ValidPlaybook,
-					ReconcilePeriod: zeroSeconds,
-					ManageStatus:    true,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "DefaultStatus",
-					},
-					Playbook:     validTemplate.ValidPlaybook,
-					ManageStatus: true,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "DisableStatus",
-					},
-					Playbook:     validTemplate.ValidPlaybook,
-					ManageStatus: false,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "EnableStatus",
-					},
-					Playbook:     validTemplate.ValidPlaybook,
-					ManageStatus: true,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "Role",
-					},
-					Role:         validTemplate.ValidRole,
-					ManageStatus: true,
-					Finalizer: &Finalizer{
-						Name:     "finalizer.app.example.com",
-						Playbook: validTemplate.ValidPlaybook,
-						Vars:     map[string]interface{}{"sentinel": "finalizer_running"},
-					},
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "FinalizerRole",
-					},
-					Role:         validTemplate.ValidRole,
-					ManageStatus: true,
-					Finalizer: &Finalizer{
-						Name: "finalizer.app.example.com",
-						Vars: map[string]interface{}{"sentinel": "finalizer_running"},
-					},
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "MaxWorkersDefault",
-					},
-					Role:         validTemplate.ValidRole,
-					ManageStatus: true,
-					MaxWorkers:   1,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "MaxWorkersIgnored",
-					},
-					Role:         validTemplate.ValidRole,
-					ManageStatus: true,
-					MaxWorkers:   1,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "MaxWorkersEnv",
-					},
-					Role:         validTemplate.ValidRole,
-					ManageStatus: true,
-					MaxWorkers:   4,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "AnsibleVerbosityDefault",
-					},
-					Role:             validTemplate.ValidRole,
-					ManageStatus:     true,
-					AnsibleVerbosity: 2,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "AnsibleVerbosityIgnored",
-					},
-					Role:             validTemplate.ValidRole,
-					ManageStatus:     true,
-					AnsibleVerbosity: 2,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "AnsibleVerbosityEnv",
-					},
-					Role:             validTemplate.ValidRole,
-					ManageStatus:     true,
-					AnsibleVerbosity: 4,
-				},
-				Watch{
-					GroupVersionKind: schema.GroupVersionKind{
-						Version: "v1alpha1",
-						Group:   "app.example.com",
-						Kind:    "WatchWithVars",
-					},
-					Role:         validTemplate.ValidRole,
-					ManageStatus: true,
-					Vars:         map[string]interface{}{"sentinel": "reconciling"},
-				},
-			},
+			expected:                       validWatches,
 		},
 	}
 
@@ -831,7 +659,7 @@ func TestGetFullRolePath(t *testing.T) {
 			want: filepath.Join(rolesPath, "relative/Foo"),
 		},
 		{
-			name: "Should work when the full role is informed and the enn var is set",
+			name: "Should work when the full role is informed and the envvar is set",
 			args: args{
 				path:                           filepath.Join(rolesPath, "Foo"),
 				shouldSetAnsibleRolePathEnvVar: true,
