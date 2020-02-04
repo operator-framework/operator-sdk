@@ -63,7 +63,7 @@ func AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) *AnsibleOperatorFla
 		"ansible-roles-path",
 		"",
 		strings.Join(append(helpTextPrefix,
-			"Ansbile Roles Path. By default, it will be {{CWD}}/roles."),
+			"Ansible Roles Path. By default, it will be {{CWD}}/roles."),
 			" "),
 	)
 	return aof

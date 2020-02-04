@@ -127,12 +127,13 @@ func TestLoad(t *testing.T) {
 	zeroSeconds := time.Duration(0)
 	twoSeconds := time.Second * 2
 	testCases := []struct {
-		name             string
-		path             string
-		maxWorkers       int
-		ansibleVerbosity int
-		expected         []Watch
-		shouldError      bool
+		name                           string
+		path                           string
+		maxWorkers                     int
+		ansibleVerbosity               int
+		expected                       []Watch
+		shouldError                    bool
+		shouldSetAnsibleRolePathEnvVar bool
 	}{
 		{
 			name:        "error duplicate GVK",
@@ -150,27 +151,27 @@ func TestLoad(t *testing.T) {
 			shouldError: true,
 		},
 		{
-			name:        "error invalid playbook path",
+			name:        "error invalid playbook role",
 			path:        "testdata/invalid_playbook_path.yaml",
 			shouldError: true,
 		},
 		{
-			name:        "error invalid playbook finalizer path",
+			name:        "error invalid playbook finalizer role",
 			path:        "testdata/invalid_finalizer_playbook_path.yaml",
 			shouldError: true,
 		},
 		{
-			name:        "error invalid role path",
+			name:        "error invalid role role",
 			path:        "testdata/invalid_role_path.yaml",
 			shouldError: true,
 		},
 		{
-			name:        "error invalid role finalizer path",
+			name:        "error invalid role finalizer role",
 			path:        "testdata/invalid_finalizer_role_path.yaml",
 			shouldError: true,
 		},
 		{
-			name:        "error invalid finalizer no path/role/vars",
+			name:        "error invalid finalizer no role/role/vars",
 			path:        "testdata/invalid_finalizer_no_vars.yaml",
 			shouldError: true,
 		},
@@ -366,6 +367,189 @@ func TestLoad(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:                           "valid watches file with ANSIBLE ROLES PATH ENV VAR set",
+			path:                           "testdata/valid.yaml",
+			maxWorkers:                     1,
+			ansibleVerbosity:               2,
+			shouldSetAnsibleRolePathEnvVar: true,
+			expected: []Watch{
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "NoFinalizer",
+					},
+					Playbook:                    validTemplate.ValidPlaybook,
+					ManageStatus:                true,
+					ReconcilePeriod:             twoSeconds,
+					WatchDependentResources:     true,
+					WatchClusterScopedResources: false,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "Playbook",
+					},
+					Playbook:                    validTemplate.ValidPlaybook,
+					ManageStatus:                true,
+					WatchDependentResources:     true,
+					WatchClusterScopedResources: false,
+					Finalizer: &Finalizer{
+						Name: "finalizer.app.example.com",
+						Role: validTemplate.ValidRole,
+						Vars: map[string]interface{}{"sentinel": "finalizer_running"},
+					},
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "WatchClusterScoped",
+					},
+					Playbook:                    validTemplate.ValidPlaybook,
+					ReconcilePeriod:             twoSeconds,
+					ManageStatus:                true,
+					WatchDependentResources:     true,
+					WatchClusterScopedResources: true,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "NoReconcile",
+					},
+					Playbook:        validTemplate.ValidPlaybook,
+					ReconcilePeriod: zeroSeconds,
+					ManageStatus:    true,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "DefaultStatus",
+					},
+					Playbook:     validTemplate.ValidPlaybook,
+					ManageStatus: true,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "DisableStatus",
+					},
+					Playbook:     validTemplate.ValidPlaybook,
+					ManageStatus: false,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "EnableStatus",
+					},
+					Playbook:     validTemplate.ValidPlaybook,
+					ManageStatus: true,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "Role",
+					},
+					Role:         validTemplate.ValidRole,
+					ManageStatus: true,
+					Finalizer: &Finalizer{
+						Name:     "finalizer.app.example.com",
+						Playbook: validTemplate.ValidPlaybook,
+						Vars:     map[string]interface{}{"sentinel": "finalizer_running"},
+					},
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "FinalizerRole",
+					},
+					Role:         validTemplate.ValidRole,
+					ManageStatus: true,
+					Finalizer: &Finalizer{
+						Name: "finalizer.app.example.com",
+						Vars: map[string]interface{}{"sentinel": "finalizer_running"},
+					},
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "MaxWorkersDefault",
+					},
+					Role:         validTemplate.ValidRole,
+					ManageStatus: true,
+					MaxWorkers:   1,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "MaxWorkersIgnored",
+					},
+					Role:         validTemplate.ValidRole,
+					ManageStatus: true,
+					MaxWorkers:   1,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "MaxWorkersEnv",
+					},
+					Role:         validTemplate.ValidRole,
+					ManageStatus: true,
+					MaxWorkers:   4,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "AnsibleVerbosityDefault",
+					},
+					Role:             validTemplate.ValidRole,
+					ManageStatus:     true,
+					AnsibleVerbosity: 2,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "AnsibleVerbosityIgnored",
+					},
+					Role:             validTemplate.ValidRole,
+					ManageStatus:     true,
+					AnsibleVerbosity: 2,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "AnsibleVerbosityEnv",
+					},
+					Role:             validTemplate.ValidRole,
+					ManageStatus:     true,
+					AnsibleVerbosity: 4,
+				},
+				Watch{
+					GroupVersionKind: schema.GroupVersionKind{
+						Version: "v1alpha1",
+						Group:   "app.example.com",
+						Kind:    "WatchWithVars",
+					},
+					Role:         validTemplate.ValidRole,
+					ManageStatus: true,
+					Vars:         map[string]interface{}{"sentinel": "reconciling"},
+				},
+			},
+		},
 	}
 
 	os.Setenv("WORKER_MAXWORKERSENV_APP_EXAMPLE_COM", "4")
@@ -375,6 +559,14 @@ func TestLoad(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+
+			// Test Load with ANSIBLE_ROLES_PATH var
+			if tc.shouldSetAnsibleRolePathEnvVar {
+				anisbleEnvVar := "path/invalid:/path/invalid/myroles:" + cwd
+				os.Setenv("ANSIBLE_ROLES_PATH", anisbleEnvVar)
+				defer os.Unsetenv("ANSIBLE_ROLES_PATH")
+			}
+
 			watchSlice, err := Load(tc.path, tc.maxWorkers, tc.ansibleVerbosity)
 			if err != nil && !tc.shouldError {
 				t.Fatalf("Error occurred unexpectedly: %v", err)
@@ -603,12 +795,14 @@ func TestAnsibleVerbosity(t *testing.T) {
 }
 
 // Test the func getFullRolePath when no envVar is set.
-func Test_getFullRolePath(t *testing.T) {
+func TestGetFullRolePath(t *testing.T) {
 	// Mock default Full Path based in the current directory
 	rolesPath := filepath.Join(projutil.MustGetwd(), "roles")
 
 	type args struct {
-		path string
+		path                           string
+		shouldSetAnsibleRolePathEnvVar bool
+		env                            string
 	}
 	tests := []struct {
 		name string
@@ -623,73 +817,55 @@ func Test_getFullRolePath(t *testing.T) {
 			want: filepath.Join(rolesPath, "Foo"),
 		},
 		{
-			name: "Should work with full path",
+			name: "Should work with full role",
 			args: args{
 				path: filepath.Join(rolesPath, "Foo"),
 			},
 			want: filepath.Join(rolesPath, "Foo"),
 		},
 		{
-			name: "Should work with relative path",
+			name: "Should work with relative role",
 			args: args{
 				path: "relative/Foo",
 			},
 			want: filepath.Join(rolesPath, "relative/Foo"),
 		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := getFullRolePath(tt.args.path); got != tt.want {
-				t.Errorf("Error to check getFullRolePath() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-// Test the func getFullRolePath when the custom flag and/or env var was set.
-func Test_getFullRolePathWithEnvVarSet(t *testing.T) {
-	// Mock customized Path
-	customPath := "customized/myroles"
-	os.Setenv("ANSIBLE_ROLES_PATH", customPath)
-
-	// set another ENV VAR just to ensure that it worked with more than one
-	os.Setenv("OTHER_ENV", "test")
-
-	// Mock default Full Path based in the current directory
-	rolesPath := filepath.Join(projutil.MustGetwd(), "roles")
-
-	type args struct {
-		path string
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
 		{
-			name: "Should work with default values",
+			name: "Should work when the full role is informed and the enn var is set",
 			args: args{
-				path: "Foo",
-			},
-			want: filepath.Join(customPath, "Foo"),
-		},
-		{
-			name: "Should work with full path",
-			args: args{
-				path: filepath.Join(rolesPath, "Foo"),
+				path:                           filepath.Join(rolesPath, "Foo"),
+				shouldSetAnsibleRolePathEnvVar: true,
 			},
 			want: filepath.Join(rolesPath, "Foo"),
 		},
 		{
-			name: "Should work with relative path",
+			name: "Should return the default full role path based in the current directory when all " +
+				"custom paths are invalids",
 			args: args{
-				path: "relative/Foo",
+				env:                            "invalid/myroles:invalid:mypath/invalid",
+				path:                           "Foo",
+				shouldSetAnsibleRolePathEnvVar: true,
 			},
-			want: filepath.Join(customPath, "relative/Foo"),
+			want: filepath.Join(rolesPath, "Foo"),
+		},
+		{
+			name: "Should return the default full role when the role is not found in the customized one",
+			args: args{
+				env:                            "customized/myroles",
+				path:                           "Foo",
+				shouldSetAnsibleRolePathEnvVar: true,
+			},
+			want: filepath.Join(rolesPath, "Foo"),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
+			if tt.args.shouldSetAnsibleRolePathEnvVar {
+				os.Setenv("ANSIBLE_ROLES_PATH", tt.args.env)
+				defer os.Unsetenv("ANSIBLE_ROLES_PATH")
+			}
+
 			if got := getFullRolePath(tt.args.path); got != tt.want {
 				t.Errorf("Error to check getFullRolePath() = %v, want %v", got, tt.want)
 			}

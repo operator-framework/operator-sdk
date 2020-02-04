@@ -193,7 +193,8 @@ communicate with a Kubernetes cluster just as the `k8s` modules do. This
 section assumes the developer has read the [Ansible Operator user
 guide][ansible_operator_user_guide] and has the proper dependencies installed.
 
-**NOTE:** You can customize the roles path by setting the enviroment variable `ANSIBLE_ROLES_PATH` or using the flag `ansible-roles-path`.
+**NOTE:** You can customize the roles path by setting the environment variable `ANSIBLE_ROLES_PATH` or using the flag `ansible-roles-path`. Note that, if the role not be found in the 
+customized path informed in `ANSIBLE_ROLES_PATH` then, the operator will look for it in the `{{current directory}}/roles`.   
 
 Create a Custom Resource Definition (CRD) and proper Role-Based Access Control
 (RBAC) definitions for resource Foo. `operator-sdk` auto-generates these files
