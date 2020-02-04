@@ -433,9 +433,9 @@ $ kubectl delete -f deploy/service_account.yaml
 An often-used pattern is to include `Conditions` in the status of custom resources. Conditions represent the latest available observations of an object's state (see the [Kubernetes API conventionsdocumentation][typical-status-properties] for more information).
 
 The `Conditions` field added to the `MemcachedStatus` struct simplifies the management of your CR's conditions. It:
-- Enables callers to add and remove conditions
-- Ensures that there are no duplicates
-- Sorts the conditions deterministically to avoid unnecessary repeated reconciliations
+- Enables callers to add and remove conditions.
+- Ensures that there are no duplicates.
+- Sorts the conditions deterministically to avoid unnecessary repeated reconciliations.
 - Automatically handles the each condition's `LastTransitionTime`.
 - Provides helper methods to make it easy to determine the state of a condition.
 
