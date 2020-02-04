@@ -151,27 +151,27 @@ func TestLoad(t *testing.T) {
 			shouldError: true,
 		},
 		{
-			name:        "error invalid playbook role",
+			name:        "error invalid playbook path",
 			path:        "testdata/invalid_playbook_path.yaml",
 			shouldError: true,
 		},
 		{
-			name:        "error invalid playbook finalizer role",
+			name:        "error invalid playbook finalizer path",
 			path:        "testdata/invalid_finalizer_playbook_path.yaml",
 			shouldError: true,
 		},
 		{
-			name:        "error invalid role role",
+			name:        "error invalid role path",
 			path:        "testdata/invalid_role_path.yaml",
 			shouldError: true,
 		},
 		{
-			name:        "error invalid role finalizer role",
+			name:        "error invalid role finalizer path",
 			path:        "testdata/invalid_finalizer_role_path.yaml",
 			shouldError: true,
 		},
 		{
-			name:        "error invalid finalizer no role/role/vars",
+			name:        "error invalid finalizer no path/role/vars",
 			path:        "testdata/invalid_finalizer_no_vars.yaml",
 			shouldError: true,
 		},

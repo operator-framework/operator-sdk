@@ -147,7 +147,7 @@ func (w *Watch) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-// addRolePlaybookPaths will add the full role based on the current dir
+// addRolePlaybookPaths will add the full path based on the current dir
 func (w *Watch) addRolePlaybookPaths() {
 	w.Playbook = getFullPath(w.Playbook)
 	w.Role = getFullRolePath(w.Role)
@@ -159,7 +159,7 @@ func (w *Watch) addRolePlaybookPaths() {
 	}
 }
 
-// getFullPath will return a valid full role for the playbook
+// getFullPath will return a valid full path for the playbook
 func getFullPath(path string) string {
 	if len(path) > 0 && !filepath.IsAbs(path) {
 		return filepath.Join(projutil.MustGetwd(), path)
@@ -167,7 +167,7 @@ func getFullPath(path string) string {
 	return path
 }
 
-// getFullRolePath will return a valid full role for the role
+// getFullRolePath will return a valid full path for the role
 func getFullRolePath(path string) string {
 	if len(path) > 0 && !filepath.IsAbs(path) {
 		envVar, ok := os.LookupEnv("ANSIBLE_ROLES_PATH")
@@ -175,20 +175,20 @@ func getFullRolePath(path string) string {
 			// Check all values informed (e.g. path1/roles:path2/roles:/absolute/path3/roles)
 			result := strings.Split(envVar, ":")
 			for i := range result {
-				// Check if the role can be found in the envVar + role role
+				// Check if the role can be found in the envVar + role path
 				infoPath := filepath.Join(result[i], path)
 				if _, err := os.Stat(infoPath); err == nil {
 					return infoPath
 				}
 
-				// Check if the role can be found in the envVar + roles + role role
+				// Check if the role can be found in the envVar + roles + role path
 				infoPathWithRolesDir := filepath.Join(result[i], "roles", path)
 				if _, err := os.Stat(infoPathWithRolesDir); err == nil {
 					return infoPathWithRolesDir
 				}
 			}
 		}
-		// If the flag and/or env var ANSIBLE_ROLES_PATH was not set or no roles were informed in the role then, it will
+		// If the flag and/or env var ANSIBLE_ROLES_PATH was not set or no roles were informed in the path then, it will
 		// be the current directory concat with roles.
 		return getFullPath(filepath.Join("roles", path))
 	}
@@ -197,12 +197,12 @@ func getFullRolePath(path string) string {
 
 // Validate - ensures that a Watch is valid
 // A Watch is considered valid if it:
-// - Specifies a valid role to a Role||Playbook
-// - If a Finalizer is non-nil, it must have a name + valid role to a Role||Playbook or Vars
+// - Specifies a valid path to a Role||Playbook
+// - If a Finalizer is non-nil, it must have a name + valid path to a Role||Playbook or Vars
 func (w *Watch) Validate() error {
 	err := verifyAnsiblePath(w.Playbook, w.Role)
 	if err != nil {
-		log.Error(err, fmt.Sprintf("Invalid ansible role for GVK: %v", w.GroupVersionKind.String()))
+		log.Error(err, fmt.Sprintf("Invalid ansible path for GVK: %v", w.GroupVersionKind.String()))
 		return err
 	}
 
@@ -215,7 +215,7 @@ func (w *Watch) Validate() error {
 		// only fail if Vars not set
 		err = verifyAnsiblePath(w.Finalizer.Playbook, w.Finalizer.Role)
 		if err != nil && len(w.Finalizer.Vars) == 0 {
-			log.Error(err, fmt.Sprintf("Invalid ansible role on Finalizer for GVK: %v",
+			log.Error(err, fmt.Sprintf("Invalid ansible path on Finalizer for GVK: %v",
 				w.GroupVersionKind.String()))
 			return err
 		}
@@ -293,7 +293,7 @@ func verifyGVK(gvk schema.GroupVersionKind) error {
 	return nil
 }
 
-// verify that a valid role is specified for a given role or playbook
+// verify that a valid path is specified for a given role or playbook
 func verifyAnsiblePath(playbook string, role string) error {
 	switch {
 	case playbook != "":
@@ -304,7 +304,7 @@ func verifyAnsiblePath(playbook string, role string) error {
 	case role != "":
 		rolePath := getFullRolePath(role)
 		if _, err := os.Stat(rolePath); err != nil {
-			return fmt.Errorf("role role: %v was not found", role)
+			return fmt.Errorf("role: %v was not found", role)
 		}
 	default:
 		return fmt.Errorf("must specify Role or Playbook")
