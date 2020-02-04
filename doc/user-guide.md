@@ -428,6 +428,35 @@ $ kubectl delete -f deploy/service_account.yaml
 
 ## Advanced Topics
 
+### Manage CR status conditions
+
+An often-used pattern is to include `Conditions` in the status of custom resources. Conditions represent the latest available observations of an object's state (see the [Kubernetes API conventionsdocumentation][typical-status-properties] for more information).
+
+The `Conditions` field added to the `MemcachedStatus` struct simplifies the management of your CR's conditions. It:
+- Enables callers to add and remove conditions.
+- Ensures that there are no duplicates.
+- Sorts the conditions deterministically to avoid unnecessary repeated reconciliations.
+- Automatically handles the each condition's `LastTransitionTime`.
+- Provides helper methods to make it easy to determine the state of a condition.
+
+To use conditions in your custom resource, add a Conditions field to the Status struct in `_types.go`:
+
+```Go
+import (
+    "github.com/operator-framework/operator-sdk/pkg/status"
+)
+
+type MyAppStatus struct {
+    // Conditions represent the latest available observations of an object's state
+    Conditions status.Conditions `json:"conditions"`
+}
+```
+
+<!--
+    TODO(joelanford): add a link to the Conditions godoc once the initial PR is merged
+-->
+Then, in your controller, you can use `Conditions` methods to make it easier to set and remove conditions or check their current values.
+
 ### Adding 3rd Party Resources To Your Operator
 
 The operator's Manager supports the Core Kubernetes resource types as found in the client-go [scheme][scheme_package] package and will also register the schemes of all custom resource types defined in your project under `pkg/apis`.
@@ -737,3 +766,4 @@ When the operator is not running in a cluster, the Manager will return an error 
 [quay_link]: https://quay.io
 [multi-namespaced-cache-builder]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
 [scheme_builder]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/scheme#Builder
+[typical-status-properties]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
