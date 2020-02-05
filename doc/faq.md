@@ -64,4 +64,4 @@ Please see the Kubernetes [Controller Runtime FAQ][faq] for more details.
 [controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my-reconciler-for-different-types-of-events-eg-create-update-delete
 [finalizer]: https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#handle-cleanup-on-deletion
 [gc-metrics]:./user/metrics/README.md#garbage-collection
-[faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md
+[faq]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-my-cache-might-be-stale-if-i-read-from-a-cache-how-should-i-deal-with-that
