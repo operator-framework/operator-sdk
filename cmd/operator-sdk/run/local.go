@@ -116,6 +116,13 @@ func (c runLocalArgs) runGo() error {
 	}
 	dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", k8sutil.WatchNamespaceEnvVar, c.namespace))
 
+	// Set the ANSIBLE_ROLES_PATH
+	if c.ansibleOperatorFlags != nil && len(c.ansibleOperatorFlags.AnsibleRolesPath) > 0 {
+		log.Info(fmt.Sprintf("set the value %v for environment variable %v.", c.ansibleOperatorFlags.AnsibleRolesPath,
+			aoflags.AnsibleRolesPathEnvVar))
+		dc.Env = append(dc.Env, fmt.Sprintf("%v=%v", aoflags.AnsibleRolesPathEnvVar, c.ansibleOperatorFlags.AnsibleRolesPath))
+	}
+
 	if err := projutil.ExecCmd(dc); err != nil {
 		return fmt.Errorf("failed to run operator locally: %v", err)
 	}

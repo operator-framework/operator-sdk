@@ -28,7 +28,10 @@ type AnsibleOperatorFlags struct {
 	InjectOwnerRef   bool
 	MaxWorkers       int
 	AnsibleVerbosity int
+	AnsibleRolesPath string
 }
+
+const AnsibleRolesPathEnvVar = "ANSIBLE_ROLES_PATH"
 
 // AddTo - Add the ansible operator flags to the the flagset
 // helpTextPrefix will allow you add a prefix to default help text. Joined by a space.
@@ -54,6 +57,13 @@ func AddTo(flagSet *pflag.FlagSet, helpTextPrefix ...string) *AnsibleOperatorFla
 		2,
 		strings.Join(append(helpTextPrefix,
 			"Ansible verbosity. Overridden by environment variable."),
+			" "),
+	)
+	flagSet.StringVar(&aof.AnsibleRolesPath,
+		"ansible-roles-path",
+		"",
+		strings.Join(append(helpTextPrefix,
+			"Ansible Roles Path. By default, it will be {{CWD}}/roles."),
 			" "),
 	)
 	return aof

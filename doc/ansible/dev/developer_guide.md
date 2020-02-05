@@ -193,20 +193,8 @@ communicate with a Kubernetes cluster just as the `k8s` modules do. This
 section assumes the developer has read the [Ansible Operator user
 guide][ansible_operator_user_guide] and has the proper dependencies installed.
 
-Since `run --local` reads from `./watches.yaml`, there are a couple options
-available to the developer. If `role` is left alone (by default
-`/opt/ansible/roles/<name>`) the developer must copy the role over to
-`/opt/ansible/roles` from the operator directly. This is cumbersome because
-changes will not be reflected from the current directory. It is recommended
-that the developer instead change the `role` field to point to the current
-directory and simply comment out the existing line:
-```yaml
-- version: v1alpha1
-  group: foo.example.com
-  kind: Foo
-  #  role: /opt/ansible/roles/Foo
-  role: /home/user/foo-operator/Foo
-```
+**NOTE:** You can customize the roles path by setting the environment variable `ANSIBLE_ROLES_PATH` or using the flag `ansible-roles-path`. Note that, if the role not be found in the 
+customized path informed in `ANSIBLE_ROLES_PATH` then, the operator will look for it in the `{{current directory}}/roles`.   
 
 Create a Custom Resource Definition (CRD) and proper Role-Based Access Control
 (RBAC) definitions for resource Foo. `operator-sdk` auto-generates these files
@@ -379,7 +367,7 @@ application, then simply update the watches file with `manageStatus`:
 - version: v1
   group: api.example.com
   kind: Foo
-  role: /opt/ansible/roles/Foo
+  role: Foo
   manageStatus: false
 ```
 

@@ -3,4 +3,6 @@
   group: app.example.com
   kind: Database
   playbook: playbook.yaml
-  watches: invalid
+  finalizer:
+    name:
+

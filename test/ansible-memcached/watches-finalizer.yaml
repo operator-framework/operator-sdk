@@ -1,6 +1,6 @@
   finalizer:
     name: finalizer.ansible.example.com
-    role: /opt/ansible/roles/memfin
+    role: memfin
   blacklist:
     - group: ""
       version: v1
