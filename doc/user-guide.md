@@ -452,10 +452,7 @@ type MyAppStatus struct {
 }
 ```
 
-<!--
-    TODO(joelanford): add a link to the Conditions godoc once the initial PR is merged
--->
-Then, in your controller, you can use `Conditions` methods to make it easier to set and remove conditions or check their current values.
+Then, in your controller, you can use [`Conditions`][godoc-conditions] methods to make it easier to set and remove conditions or check their current values.
 
 ### Adding 3rd Party Resources To Your Operator
 
@@ -767,3 +764,4 @@ When the operator is not running in a cluster, the Manager will return an error 
 [multi-namespaced-cache-builder]: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
 [scheme_builder]: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/scheme#Builder
 [typical-status-properties]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
+[godoc-conditions]: https://godoc.org/github.com/operator-framework/operator-sdk/pkg/status#Conditions
