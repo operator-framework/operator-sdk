@@ -16,8 +16,6 @@ package schelpers
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 
@@ -29,7 +27,6 @@ type Test interface {
 	GetName() string
 	GetDescription() string
 	GetLabels() map[string]string
-	IsCumulative() bool
 	Run(context.Context) *TestResult
 }
 
@@ -40,17 +37,14 @@ type TestResult struct {
 	Suggestions []string
 	Errors      []error
 	Log         string
+	CRName      string
 }
 
 // TestInfo contains information about the scorecard test
 type TestInfo struct {
 	Name        string
 	Description string
-	// If a test is set to cumulative, the scores of multiple runs of the same test on separate CRs are
-	// added together for the total score.
-	// If cumulative is false, if any test failed, the total score is 0/1. Otherwise 1/1.
-	Cumulative bool
-	Labels     map[string]string
+	Labels      map[string]string
 }
 
 // GetName return the test name
@@ -61,9 +55,6 @@ func (i TestInfo) GetDescription() string { return i.Description }
 
 // GetLabels returns the labels for this test
 func (i TestInfo) GetLabels() map[string]string { return i.Labels }
-
-// IsCumulative returns true if the test's scores are intended to be cumulative
-func (i TestInfo) IsCumulative() bool { return i.Cumulative }
 
 // TestSuite contains a list of tests and results, along with the relative weights of each test.
 // Also can optionally contain a log
@@ -106,45 +97,4 @@ func NewTestSuite(name, description string) *TestSuite {
 			Description: description,
 		},
 	}
-}
-
-// MergeSuites takes an array of TestSuites and combines all suites with the same name
-func MergeSuites(suites []TestSuite) ([]TestSuite, error) {
-	suiteMap := make(map[string][]TestSuite)
-	for _, suite := range suites {
-		suiteMap[suite.GetName()] = append(suiteMap[suite.GetName()], suite)
-	}
-
-	mergedSuites := []TestSuite{}
-	for _, suiteSlice := range suiteMap {
-		testMap := make(map[string][]TestResult)
-		var logs strings.Builder
-		for _, suite := range suiteSlice {
-			for _, result := range suite.TestResults {
-				testMap[result.Test.GetName()] = append(testMap[result.Test.GetName()], result)
-			}
-			logs.WriteString(fmt.Sprintf("%s\n---\n", suite.Log))
-		}
-		mergedTestResults := []TestResult{}
-		for _, testSlice := range testMap {
-			var (
-				newResult TestResult
-				err       error
-			)
-			if testSlice[0].Test.IsCumulative() {
-				newResult, err = ResultsCumulative(testSlice)
-			} else {
-				newResult, err = ResultsPassFail(testSlice)
-			}
-			if err != nil {
-				return nil, fmt.Errorf("failed to combine test results: %v", err)
-			}
-			mergedTestResults = append(mergedTestResults, newResult)
-		}
-		newSuite := suiteSlice[0]
-		newSuite.TestResults = mergedTestResults
-		newSuite.Log = logs.String()
-		mergedSuites = append(mergedSuites, newSuite)
-	}
-	return mergedSuites, nil
 }

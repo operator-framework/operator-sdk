@@ -187,11 +187,6 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
 		suites = append(suites, crSuites...)
 	}
 
-	suites, err = schelpers.MergeSuites(suites)
-	if err != nil {
-		return scapiv1alpha2.ScorecardOutput{}, fmt.Errorf("failed to merge test suite results: %v", err)
-	}
-
 	output := schelpers.TestSuitesToScorecardOutput(suites, "")
 	return output, nil
 }
@@ -232,10 +227,6 @@ func ListInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig) (
 			olmTests.TestResults = append(olmTests.TestResults, result)
 		}
 		suites = append(suites, *olmTests)
-	}
-	suites, err := schelpers.MergeSuites(suites)
-	if err != nil {
-		return scapiv1alpha2.ScorecardOutput{}, fmt.Errorf("failed to merge test suite results: %v", err)
 	}
 
 	output := schelpers.TestSuitesToScorecardOutput(suites, "")

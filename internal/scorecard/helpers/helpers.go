@@ -15,8 +15,6 @@
 package schelpers
 
 import (
-	"fmt"
-
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
 )
 
@@ -42,6 +40,7 @@ func TestResultToScorecardTestResult(tr TestResult) scapiv1alpha2.ScorecardTestR
 	sctr.Name = tr.Test.GetName()
 	sctr.Description = tr.Test.GetDescription()
 	sctr.Log = tr.Log
+	sctr.CRName = tr.CRName
 	sctr.Suggestions = tr.Suggestions
 	if sctr.Suggestions == nil {
 		sctr.Suggestions = []string{}
@@ -53,71 +52,4 @@ func TestResultToScorecardTestResult(tr TestResult) scapiv1alpha2.ScorecardTestR
 	sctr.Errors = stringErrors
 	sctr.Labels = tr.Test.GetLabels()
 	return sctr
-}
-
-// ResultsCumulative takes multiple TestResults and returns a single TestResult with MaximumPoints
-// equal to the sum of the MaximumPoints of the input and EarnedPoints as the sum of EarnedPoints
-// of the input
-func ResultsCumulative(results []TestResult) (TestResult, error) {
-	var name string
-	var failFound bool
-	finalResult := TestResult{
-		State: scapiv1alpha2.PassState,
-	}
-	if len(results) > 0 {
-		name = results[0].Test.GetName()
-		// all results have the same test
-		finalResult.Test = results[0].Test
-	}
-	for _, result := range results {
-		if !result.Test.IsCumulative() {
-			return finalResult, fmt.Errorf("non-cumulative test passed to ResultsCumulative: name (%s)", result.Test.GetName())
-		}
-		if result.Test.GetName() != name {
-			return finalResult, fmt.Errorf("test name mismatch in ResultsCumulative: %s != %s", result.Test.GetName(), name)
-		}
-		finalResult.Suggestions = append(finalResult.Suggestions, result.Suggestions...)
-		finalResult.Errors = append(finalResult.Errors, result.Errors...)
-		if result.State != scapiv1alpha2.PassState {
-			failFound = true
-		}
-	}
-	if failFound {
-		finalResult.State = scapiv1alpha2.FailState
-	}
-	return finalResult, nil
-}
-
-// ResultsPassFail combines multiple test results and returns a
-// single test result
-func ResultsPassFail(results []TestResult) (TestResult, error) {
-	var name string
-	var failFound bool
-	finalResult := TestResult{
-		State: scapiv1alpha2.PassState,
-	}
-	if len(results) > 0 {
-		name = results[0].Test.GetName()
-		// all results have the same test
-		finalResult.Test = results[0].Test
-	}
-	for _, result := range results {
-		if result.Test.IsCumulative() {
-			return finalResult, fmt.Errorf("cumulative test passed to ResultsPassFail: name (%s)", result.Test.GetName())
-		}
-		if result.Test.GetName() != name {
-			return finalResult, fmt.Errorf("test name mismatch in ResultsPassFail: %s != %s", result.Test.GetName(), name)
-		}
-		finalResult.Suggestions = append(finalResult.Suggestions, result.Suggestions...)
-		finalResult.Errors = append(finalResult.Errors, result.Errors...)
-		finalResult.Log = result.Log
-		if result.State != scapiv1alpha2.PassState {
-			failFound = true
-		}
-	}
-
-	if failFound {
-		finalResult.State = scapiv1alpha2.FailState
-	}
-	return finalResult, nil
 }

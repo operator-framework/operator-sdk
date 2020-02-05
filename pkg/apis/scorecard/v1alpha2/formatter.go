@@ -57,6 +57,8 @@ func (s ScorecardOutput) MarshalText() (string, error) {
 			sb.WriteString(fmt.Sprintf("\n"))
 		}
 
+		sb.WriteString(fmt.Sprintf("\tCR: %s\n", result.CRName))
+
 		sb.WriteString("\tLabels: \n")
 		for labelKey, labelValue := range result.Labels {
 			sb.WriteString(fmt.Sprintf("\t\t%q:%q\n", labelKey, labelValue))

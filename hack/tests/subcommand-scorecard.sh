@@ -29,7 +29,7 @@ header_text 'scorecard test to see if total score matches expected value'
 if ! commandoutput="$(operator-sdk scorecard --config "$CONFIG_PATH" 2>&1)"; then
 	echo $commandoutput
 	passCount=`echo $commandoutput | grep -o "pass" | wc -l`
-	expectedPassCount=4
+	expectedPassCount=10
 	if [ $passCount -ne $expectedPassCount ]
 	then
 		echo "expected label count $expectedLabelCount, got $labelCount"
@@ -83,7 +83,7 @@ fi
 header_text 'scorecard test to see if --selector flag works'
 commandoutput="$(operator-sdk scorecard --selector=suite=basic --config "$CONFIG_PATH_V1ALPHA2" 2>&1)"
 labelCount=`echo $commandoutput | grep -o "Label" | wc -l`
-expectedLabelCount=3
+expectedLabelCount=6
 if [ $labelCount -ne $expectedLabelCount ]
 then
 	echo "expected label count $expectedLabelCount, got $labelCount"
