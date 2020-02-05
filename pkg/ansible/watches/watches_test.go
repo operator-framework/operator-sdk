@@ -339,6 +339,21 @@ func TestLoad(t *testing.T) {
 			shouldError: true,
 		},
 		{
+			name:        "error invalid finalizer whithout name",
+			path:        "testdata/invalid_finalizer_whithout_name.yaml",
+			shouldError: true,
+		},
+		{
+			name:        "error invalid role path",
+			path:        "testdata/invalid_role_path.yaml",
+			shouldError: true,
+		},
+		{
+			name:        "error invalid yaml file",
+			path:        "testdata/invalid_yaml_file.yaml",
+			shouldError: true,
+		},
+		{
 			name:        "error invalid role path",
 			path:        "testdata/invalid_role_path.yaml",
 			shouldError: true,
@@ -390,7 +405,7 @@ func TestLoad(t *testing.T) {
 
 			// Test Load with ANSIBLE_ROLES_PATH var
 			if tc.shouldSetAnsibleRolePathEnvVar {
-				anisbleEnvVar := "path/invalid:/path/invalid/myroles:" + cwd
+				anisbleEnvVar := "path/invalid:/path/invalid/myroles:" + projutil.MustGetwd()
 				os.Setenv("ANSIBLE_ROLES_PATH", anisbleEnvVar)
 				defer os.Unsetenv("ANSIBLE_ROLES_PATH")
 			}
