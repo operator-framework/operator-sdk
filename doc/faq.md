@@ -1,5 +1,9 @@
 # Operator SDK FAQ
 
+## Controller Runtime FAQ
+
+Please see the upstream [Controller Runtime FAQ][cr-faq] first for any questions related to runtime mechanics or controller-runtime APIs. 
+
 ## How can I have separate logic for Create, Update, and Delete events? When reconciling an object can I access its previous state?
 
 You should not have separate logic. Instead design your reconciler to be idempotent. See the [controller-runtime FAQ][controller-runtime_faq] for more details.
@@ -56,12 +60,8 @@ USER 1001
 If you aren't sure what dependencies are required, start up a container using the image in the `FROM` line as root. That will look something like this.
 `docker run -u 0 -it --rm --entrypoint /bin/bash quay.io/operator-framework/ansible-operator:<sdk-tag-version>`
 
-## My cache might be stale if I read from a cache! How should I deal with that?
-
-Please see the Kubernetes [Controller Runtime FAQ][faq] for more details.
-
 [kube-apiserver_options]: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options
 [controller-runtime_faq]: https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-how-do-i-have-different-logic-in-my-reconciler-for-different-types-of-events-eg-create-update-delete
 [finalizer]: https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md#handle-cleanup-on-deletion
 [gc-metrics]:./user/metrics/README.md#garbage-collection
-[faq]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md#q-my-cache-might-be-stale-if-i-read-from-a-cache-how-should-i-deal-with-that
+[cr-faq]:https://github.com/kubernetes-sigs/controller-runtime/blob/master/FAQ.md
