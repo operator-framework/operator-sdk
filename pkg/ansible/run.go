@@ -172,7 +172,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	// necessary to configure Prometheus to scrape metrics from this operator.
 	services := []*v1.Service{service}
 	_, err = metrics.CreateServiceMonitors(cfg, namespace, services)
-	if err == metrics.ErrServiceMonitorNotPresent {
+	if err != nil {
 		log.Info("Could not create ServiceMonitor object", "error", err.Error())
 		// If this operator is deployed to a cluster without the prometheus-operator running, it will return
 		// ErrServiceMonitorNotPresent, which can be used to safely skip ServiceMonitor creation.
