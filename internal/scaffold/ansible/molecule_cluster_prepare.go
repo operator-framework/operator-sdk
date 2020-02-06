@@ -39,6 +39,7 @@ func (m *MoleculeClusterPrepare) GetInput() (input.Input, error) {
 	return m.Input, nil
 }
 
+//nolint:lll
 const moleculeClusterPrepareAnsibleTmpl = `---
 - name: Prepare
   hosts: localhost

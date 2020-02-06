@@ -39,6 +39,7 @@ func (m *MoleculeClusterDestroy) GetInput() (input.Input, error) {
 	return m.Input, nil
 }
 
+//nolint:lll
 const moleculeClusterDestroyAnsibleTmpl = `---
 - name: Destroy
   hosts: localhost
