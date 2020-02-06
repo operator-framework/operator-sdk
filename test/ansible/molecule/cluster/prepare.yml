@@ -28,3 +28,7 @@
         - role.yaml
         - role_binding.yaml
         - service_account.yaml
+
+    - name: Create ServiceMonitor Custom Resource Definiiton
+      k8s:
+        definition: "{{ lookup('url', 'https://raw.githubusercontent.com/coreos/prometheus-operator/release-0.35/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml', split_lines=False) | from_yaml_all | list }}"
