@@ -91,7 +91,6 @@ func NewWritingIntoCRsHasEffectTest(conf BasicTestConfig) *WritingIntoCRsHasEffe
 			Name: "Writing into CRs has an effect",
 			Description: "A CR sends PUT/POST requests to the API server to modify resources in" +
 				" response to spec block changes",
-			Cumulative: false,
 			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: basicSuiteName,
 				testKey: getStructShortName(WritingIntoCRsHasEffectTest{})},
 		},
@@ -116,7 +115,7 @@ func NewBasicTestSuite(conf BasicTestConfig) *schelpers.TestSuite {
 
 // Run - implements Test interface
 func (t *CheckSpecTest) Run(ctx context.Context) *schelpers.TestResult {
-	res := &schelpers.TestResult{Test: t, State: scapiv1alpha2.PassState}
+	res := &schelpers.TestResult{Test: t, CRName: t.CR.GetName(), State: scapiv1alpha2.PassState}
 
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
@@ -135,7 +134,7 @@ func (t *CheckSpecTest) Run(ctx context.Context) *schelpers.TestResult {
 
 // Run - implements Test interface
 func (t *CheckStatusTest) Run(ctx context.Context) *schelpers.TestResult {
-	res := &schelpers.TestResult{Test: t, State: scapiv1alpha2.PassState}
+	res := &schelpers.TestResult{Test: t, CRName: t.CR.GetName(), State: scapiv1alpha2.PassState}
 
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
@@ -152,7 +151,7 @@ func (t *CheckStatusTest) Run(ctx context.Context) *schelpers.TestResult {
 
 // Run - implements Test interface
 func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *schelpers.TestResult {
-	res := &schelpers.TestResult{Test: t, State: scapiv1alpha2.PassState}
+	res := &schelpers.TestResult{Test: t, CRName: t.CR.GetName(), State: scapiv1alpha2.PassState}
 
 	logs, err := getProxyLogs(t.ProxyPod)
 	if err != nil {

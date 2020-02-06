@@ -67,7 +67,6 @@ func NewBundleValidationTest(conf OLMTestConfig) *BundleValidationTest {
 		TestInfo: schelpers.TestInfo{
 			Name:        "Bundle Validation Test",
 			Description: "Validates bundle contents",
-			Cumulative:  true,
 			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName,
 				testKey: getStructShortName(BundleValidationTest{})},
 		},
@@ -87,7 +86,6 @@ func NewCRDsHaveValidationTest(conf OLMTestConfig) *CRDsHaveValidationTest {
 		TestInfo: schelpers.TestInfo{
 			Name:        "Provided APIs have validation",
 			Description: "All CRDs have an OpenAPI validation subsection",
-			Cumulative:  true,
 			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName,
 				testKey: getStructShortName(CRDsHaveValidationTest{})},
 		},
@@ -107,7 +105,6 @@ func NewCRDsHaveResourcesTest(conf OLMTestConfig) *CRDsHaveResourcesTest {
 		TestInfo: schelpers.TestInfo{
 			Name:        "Owned CRDs have resources listed",
 			Description: "All Owned CRDs contain a resources subsection",
-			Cumulative:  true,
 			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName,
 				testKey: getStructShortName(CRDsHaveResourcesTest{})},
 		},
@@ -127,7 +124,6 @@ func NewSpecDescriptorsTest(conf OLMTestConfig) *SpecDescriptorsTest {
 		TestInfo: schelpers.TestInfo{
 			Name:        "Spec fields with descriptors",
 			Description: "All spec fields have matching descriptors in the CSV",
-			Cumulative:  true,
 			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName,
 				testKey: getStructShortName(SpecDescriptorsTest{})},
 		},
@@ -147,7 +143,6 @@ func NewStatusDescriptorsTest(conf OLMTestConfig) *StatusDescriptorsTest {
 		TestInfo: schelpers.TestInfo{
 			Name:        "Status fields with descriptors",
 			Description: "All status fields have matching descriptors in the CSV",
-			Cumulative:  true,
 			Labels: map[string]string{necessityKey: requiredNecessity, suiteKey: olmSuiteName,
 				testKey: getStructShortName(StatusDescriptorsTest{})},
 		},
@@ -188,7 +183,7 @@ func NewOLMTestSuite(conf OLMTestConfig) *schelpers.TestSuite {
 
 // Run - implements Test interface
 func (t *BundleValidationTest) Run(ctx context.Context) *schelpers.TestResult {
-	res := &schelpers.TestResult{Test: t, State: scapiv1alpha2.PassState}
+	res := &schelpers.TestResult{Test: t, CRName: t.CR.GetName(), State: scapiv1alpha2.PassState}
 
 	if t.OLMTestConfig.Bundle == "" {
 		res.Errors = append(res.Errors,
@@ -237,7 +232,7 @@ func matchVersion(version string, crd *apiextv1beta1.CustomResourceDefinition) b
 
 // Run - implements Test interface
 func (t *CRDsHaveValidationTest) Run(ctx context.Context) *schelpers.TestResult {
-	res := &schelpers.TestResult{Test: t, State: scapiv1alpha2.PassState}
+	res := &schelpers.TestResult{Test: t, CRName: t.CR.GetName(), State: scapiv1alpha2.PassState}
 	crds, err := k8sutil.GetCRDs(t.CRDsDir)
 	if err != nil {
 		res.Errors = append(res.Errors, fmt.Errorf("failed to get CRDs in %s directory: %v", t.CRDsDir, err))
@@ -294,7 +289,7 @@ func (t *CRDsHaveValidationTest) Run(ctx context.Context) *schelpers.TestResult 
 
 // Run - implements Test interface
 func (t *CRDsHaveResourcesTest) Run(ctx context.Context) *schelpers.TestResult {
-	res := &schelpers.TestResult{Test: t, State: scapiv1alpha2.PassState}
+	res := &schelpers.TestResult{Test: t, CRName: t.CR.GetName(), State: scapiv1alpha2.PassState}
 
 	var missingResources []string
 	for _, crd := range t.CSV.Spec.CustomResourceDefinitions.Owned {
@@ -432,7 +427,7 @@ func getUsedResources(proxyPod *v1.Pod) ([]schema.GroupVersionKind, error) {
 
 // Run - implements Test interface
 func (t *StatusDescriptorsTest) Run(ctx context.Context) *schelpers.TestResult {
-	res := &schelpers.TestResult{Test: t, State: scapiv1alpha2.PassState}
+	res := &schelpers.TestResult{Test: t, CRName: t.CR.GetName(), State: scapiv1alpha2.PassState}
 
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
@@ -446,7 +441,7 @@ func (t *StatusDescriptorsTest) Run(ctx context.Context) *schelpers.TestResult {
 
 // Run - implements Test interface
 func (t *SpecDescriptorsTest) Run(ctx context.Context) *schelpers.TestResult {
-	res := &schelpers.TestResult{Test: t, State: scapiv1alpha2.PassState}
+	res := &schelpers.TestResult{Test: t, CRName: t.CR.GetName(), State: scapiv1alpha2.PassState}
 	err := t.Client.Get(ctx, types.NamespacedName{Namespace: t.CR.GetNamespace(), Name: t.CR.GetName()}, t.CR)
 	if err != nil {
 		res.Errors = append(res.Errors, err)
