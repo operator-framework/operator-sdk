@@ -1,0 +1,7 @@
+---
+- name: Verify
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - import_tasks: tasks/inventory_test.yml

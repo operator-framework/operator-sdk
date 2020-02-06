@@ -178,8 +178,8 @@ sed -i".bak" -E -e 's/(FROM quay.io\/operator-framework\/ansible-operator)(:.*)?
 operator-sdk build "$DEST_IMAGE"
 # If using a kind cluster, load the image into all nodes.
 load_image_if_kind "$DEST_IMAGE"
-sed -i".bak" -E -e "s|\{\{ REPLACE_IMAGE \}\}|$DEST_IMAGE|g" deploy/operator.yaml; rm -f deploy/operator.yaml.bak
-sed -i".bak" -E -e 's|\{\{ pull_policy.default..Always.. \}\}|Never|g' deploy/operator.yaml; rm -f deploy/operator.yaml.bak
+sed -i".bak" -E -e "s|REPLACE_IMAGE|$DEST_IMAGE|g" deploy/operator.yaml; rm -f deploy/operator.yaml.bak
+sed -i".bak" -E -e 's|Always|Never|g' deploy/operator.yaml; rm -f deploy/operator.yaml.bak
 # kind has an issue with certain image registries (ex. redhat's), so use a
 # different test pod image.
 METRICS_TEST_IMAGE="fedora:latest"

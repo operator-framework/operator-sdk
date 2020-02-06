@@ -1,4 +1,4 @@
-// Copyright 2018 The Operator-SDK Authors
+// Copyright 2020 The Operator-SDK Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -43,52 +43,48 @@ driver:
   name: docker
 lint:
   name: yamllint
-  enabled: False
+  options:
+    config-data:
+      line-length:
+        max: 120
+
 platforms:
-- name: kind-test-local
-  groups:
-  - k8s
-  image: bsycorp/kind:latest-1.15
-  privileged: True
-  override_command: no
-  exposed_ports:
-    - 8443/tcp
-    - 10080/tcp
-  published_ports:
-    - 0.0.0.0:${TEST_CLUSTER_PORT:-10443}:8443/tcp
-  pre_build_image: yes
-  volumes:
-    - ${MOLECULE_PROJECT_DIRECTORY}:/build:Z
+  - name: kind-test-local
+    groups:
+      - k8s
+    image: bsycorp/kind:latest-${KUBE_VERSION:-1.16}
+    privileged: true
+    override_command: false
+    exposed_ports:
+      - 8443/tcp
+      - 10080/tcp
+    published_ports:
+      - 0.0.0.0:${TEST_CLUSTER_PORT:-10443}:8443/tcp
+    pre_build_image: true
+    volumes:
+      - ${MOLECULE_PROJECT_DIRECTORY}:/build:Z
 provisioner:
   name: ansible
-  log: True
+  log: true
   lint:
     name: ansible-lint
-    enabled: False
   inventory:
     group_vars:
       all:
         namespace: ${TEST_NAMESPACE:-osdk-test}
+        kubeconfig_file: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
+    host_vars:
+      localhost:
+        ansible_python_interpreter: '{{ ansible_playbook_python }}'
+        template_dir: ${MOLECULE_PROJECT_DIRECTORY}/molecule/templates
+        deploy_dir: ${MOLECULE_PROJECT_DIRECTORY}/deploy
   env:
-    K8S_AUTH_KUBECONFIG: /tmp/molecule/kind-test-local/kubeconfig
-    KUBECONFIG: /tmp/molecule/kind-test-local/kubeconfig
+    K8S_AUTH_KUBECONFIG: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
+    KUBECONFIG: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
     ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/roles
     KIND_PORT: '${TEST_CLUSTER_PORT:-10443}'
-scenario:
-  name: test-local
-  test_sequence:
-    - lint
-    - destroy
-    - dependency
-    - syntax
-    - create
-    - prepare
-    - converge
-    - side_effect
-    - verify
-    - destroy
 verifier:
-  name: testinfra
+  name: ansible
   lint:
-    name: flake8
+    name: ansible-lint
 `

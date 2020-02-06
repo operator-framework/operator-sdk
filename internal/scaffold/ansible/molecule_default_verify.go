@@ -20,24 +20,38 @@ import (
 	"github.com/operator-framework/operator-sdk/internal/scaffold/input"
 )
 
-const MoleculeTestLocalPrepareFile = "prepare.yml"
+const MoleculeDefaultVerifyFile = "verify.yml"
 
-type MoleculeTestLocalPrepare struct {
+type MoleculeDefaultVerify struct {
 	StaticInput
 }
 
 // GetInput - gets the input
-func (m *MoleculeTestLocalPrepare) GetInput() (input.Input, error) {
+func (m *MoleculeDefaultVerify) GetInput() (input.Input, error) {
 	if m.Path == "" {
-		m.Path = filepath.Join(MoleculeTestLocalDir, MoleculeTestLocalPrepareFile)
+		m.Path = filepath.Join(MoleculeDefaultDir, MoleculeDefaultVerifyFile)
 	}
-	m.TemplateBody = moleculeTestLocalPrepareAnsibleTmpl
+	m.TemplateBody = moleculeDefaultVerifyAnsibleTmpl
 
 	return m.Input, nil
 }
 
-//nolint:lll
-const moleculeTestLocalPrepareAnsibleTmpl = `---
-- import_playbook: ../default/prepare.yml
-- import_playbook: ../cluster/prepare.yml
+const moleculeDefaultVerifyAnsibleTmpl = `---
+- name: Verify
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Get all pods in {{ namespace }}
+      k8s_info:
+        api_version: v1
+        kind: Pod
+        namespace: '{{ namespace }}'
+      register: pods
+
+    - name: Output pods
+      debug: var=pods
+
+    - name: Example assertion
+      assert:
+        that: true
 `

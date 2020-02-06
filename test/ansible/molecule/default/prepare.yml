@@ -1,0 +1,27 @@
+---
+- name: Prepare
+  hosts: k8s
+  gather_facts: no
+  tasks:
+    - name: Fetch the kubeconfig
+      fetch:
+        dest: '{{ kubeconfig_file }}'
+        flat: yes
+        src: /root/.kube/config
+
+    - name: Change the kubeconfig port to the proper value
+      replace:
+        regexp: '8443'
+        replace: "{{ lookup('env', 'KIND_PORT') }}"
+        path: '{{ kubeconfig_file }}'
+      delegate_to: localhost
+
+    - name: Wait for the Kubernetes API to become available (this could take a minute)
+      uri:
+        url: "http://localhost:10080/kubernetes-ready"
+        status_code: 200
+        validate_certs: no
+      register: result
+      until: (result.status|default(-1)) == 200
+      retries: 60
+      delay: 5
