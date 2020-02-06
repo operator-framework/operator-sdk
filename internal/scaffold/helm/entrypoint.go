@@ -36,15 +36,6 @@ func (e *Entrypoint) GetInput() (input.Input, error) {
 
 const entrypointTmpl = `#!/bin/sh -e
 
-# This is documented here:
-# https://docs.openshift.com/container-platform/3.11/creating_images/guidelines.html#openshift-specific-guidelines
-
-if ! whoami &>/dev/null; then
-  if [ -w /etc/passwd ]; then
-    echo "${USER_NAME:-helm}:x:$(id -u):$(id -g):${USER_NAME:-helm} user:${HOME}:/sbin/nologin" >> /etc/passwd
-  fi
-fi
-
 cd $HOME
 exec ${OPERATOR} exec-entrypoint helm --watches-file=$HOME/watches.yaml $@
 `
