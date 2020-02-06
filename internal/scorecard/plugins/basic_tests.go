@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
@@ -170,7 +171,8 @@ func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *schelpers.TestRe
 		if !ok {
 			continue
 		}
-		if method == "PUT" || method == "POST" {
+
+		if method == http.MethodPut || method == http.MethodPost || method == http.MethodPatch {
 			writes = true
 			break
 		}
@@ -178,7 +180,7 @@ func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *schelpers.TestRe
 
 	if !writes {
 		res.Suggestions = append(res.Suggestions, "The operator should write into objects to update state."+
-			"No PUT or POST requests from the operator were recorded by the scorecard.")
+			"No PUT, PATCH, or POST requests from the operator were recorded by the scorecard.")
 		res.State = scapiv1alpha2.FailState
 	}
 	return res

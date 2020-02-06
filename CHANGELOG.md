@@ -14,6 +14,8 @@
     - The scaffolded molecule.yml files now use the Ansible verifier. All asserts.yml files were renamed to verify.yml to reflect this.
     - The prepare/converge/verify tasks now make use of the new `k8s` `wait` option to simplify the deployment logic.
 
+- Changed the scorecard basic test, `Writing into CRs has an effect`, to include the http.MethodPatch as part of its test criteria alongside http.MethodPut and http.MethodPost. ([#2509](https://github.com/operator-framework/operator-sdk/pull/2509))
+
 ### Deprecated
 
 ### Removed
