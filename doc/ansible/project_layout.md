@@ -10,4 +10,4 @@ After creating a new operator project using
 | roles/\<kind> | Contains an Ansible Role initialized using [Ansible Galaxy](https://docs.ansible.com/ansible/latest/galaxy/user_guide.html) |
 | build/ | Contains scripts that the `operator-sdk` uses for build and initialization. |
 | watches.yaml | Contains Group, Version, Kind, and the Ansible invocation method. |
-| molecule/ | Contains [Molecule](https://molecule.readthedocs.io/en/stable/) scenarios for end-to-end testing of your role and operator |
+| molecule/ | Contains [Molecule](https://molecule.readthedocs.io/) scenarios for end-to-end testing of your role and operator |
