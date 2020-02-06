@@ -5,6 +5,7 @@
 - Add a new option to set the minimum log level that triggers stack trace generation in logs (`--zap-stacktrace-level`) ([#2319](https://github.com/operator-framework/operator-sdk/pull/2319))
 - Added `pkg/status` with several new types and interfaces that can be used in `Status` structs to simplify handling of [status conditions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties). ([#1143](https://github.com/operator-framework/operator-sdk/pull/1143))
 - Added support for relative Ansible roles and playbooks paths in the Ansible operator's file. ([#2273](https://github.com/operator-framework/operator-sdk/pull/2273))
+- Ansible based operators now creates prometheus service monitor, if available. ([#2179](https://github.com/operator-framework/operator-sdk/pull/2179))
 
 ### Changed
 - Ansible scaffolding has been rewritten to be simpler and make use of newer features of Ansible and Molecule.
@@ -72,7 +73,6 @@
 - Added scorecard test short names to each scorecard test to allow users to run a specific scorecard test using the selector flag. ([#1916](https://github.com/operator-framework/operator-sdk/pull/1916)
 - Improve Ansible logs in the Operator container for Ansible-based Operators. ([#2321](https://github.com/operator-framework/operator-sdk/pull/2321))
 - Added support for override values with environment variable expansion in the `watches.yaml` file for Helm-based operators. ([#2325](https://github.com/operator-framework/operator-sdk/pull/2325))
-- Ansible based operators now creates prometheus service monitor, if available. ([#2179](https://github.com/operator-framework/operator-sdk/pull/2179))
 
 ### Changed
 - Replace usage of `github.com/operator-framework/operator-sdk/pkg/restmapper.DynamicRESTMapper` with `sigs.k8s.io/controller-runtime/pkg/client/apiutil.DynamicRESTMapper`. ([#2309](https://github.com/operator-framework/operator-sdk/pull/2309))

@@ -30,6 +30,8 @@ remove_prereqs() {
     kubectl delete --wait=true --ignore-not-found=true -f "$OPERATORDIR/deploy/role_binding.yaml"
 }
 
+install_service_monitor_crd
+
 pushd "$TMPDIR"
 
 header_text "Creating memcached-operator"
