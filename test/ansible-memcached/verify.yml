@@ -9,10 +9,6 @@
     custom_resource: "{{ lookup('file', '/'.join([deploy_dir, 'crds/ansible.example.com_v1alpha1_memcached_cr.yaml'])) | from_yaml }}"
   tasks:
     - block:
-      - name: Verify service monitor created
-        assert:
-          that: lookup('k8s', kind='ServiceMonitor', api_version='monitoring.coreos.com/v1', namespace=namespace, resource_name='memcached-operator-metrics')
-
       - name: debug memcached lookup
         debug:
           var: deploy
