@@ -8,6 +8,8 @@
 
 ### Changed
 
+- Changed the scorecard basic test, `Writing into CRs has an effect`, to include the http.MethodPatch as part of its test criteria alongside http.MethodPut and http.MethodPost. ([#2509](https://github.com/operator-framework/operator-sdk/pull/2509))
+
 ### Deprecated
 
 ### Removed

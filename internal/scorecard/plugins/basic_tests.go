@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 
 	schelpers "github.com/operator-framework/operator-sdk/internal/scorecard/helpers"
@@ -171,7 +172,7 @@ func (t *WritingIntoCRsHasEffectTest) Run(ctx context.Context) *schelpers.TestRe
 			continue
 		}
 
-		if method == "PUT" || method == "POST" || method == "PATCH" {
+		if method == http.MethodPut || method == http.MethodPost || method == http.MethodPatch {
 			writes = true
 			break
 		}
