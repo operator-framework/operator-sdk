@@ -379,7 +379,7 @@ kind: "Memcached"
 metadata:
   name: "example-memcached"
   annotations:
-    "ansible.operator-sdk/verbosity": 4
+    "ansible.operator-sdk/verbosity": "4"
 spec:
   size: 4
 ```
