@@ -48,7 +48,7 @@ func GetCRDs(crdsDir string) ([]*apiextv1beta1.CustomResourceDefinition, error) 
 	return crds, nil
 }
 
-// GetCRDManifestPaths gets all CRD manifest paths in crdsDir and subdirs.
+// GetCRDManifestPaths returns all CRD manifest paths in crdsDir and subdirs.
 func GetCRDManifestPaths(crdsDir string) (crdPaths []string, err error) {
 	err = filepath.Walk(crdsDir, func(path string, info os.FileInfo, werr error) error {
 		if werr != nil {
@@ -62,12 +62,12 @@ func GetCRDManifestPaths(crdsDir string) (crdPaths []string, err error) {
 			if err != nil {
 				return fmt.Errorf("error reading manifest %s: %v", path, err)
 			}
-			typeMeta, err := GetTypeMetaFromBytes(b)
-			if err != nil {
-				return fmt.Errorf("error getting kind from manifest %s: %v", path, err)
-			}
-			if typeMeta.Kind == "CustomResourceDefinition" {
-				crdPaths = append(crdPaths, path)
+			// Skip files in crdsDir that aren't k8s manifests since we do not know
+			// what other files are in crdsDir.
+			if typeMeta, err := GetTypeMetaFromBytes(b); err == nil {
+				if typeMeta.Kind == "CustomResourceDefinition" {
+					crdPaths = append(crdPaths, path)
+				}
 			}
 		}
 		return nil

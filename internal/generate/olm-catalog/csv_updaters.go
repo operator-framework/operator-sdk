@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package catalog
+package olmcatalog
 
 import (
 	"bytes"
@@ -20,9 +20,11 @@ import (
 	goerrors "errors"
 	"fmt"
 	"sort"
+	"strings"
 
-	"github.com/operator-framework/operator-sdk/internal/scaffold"
-	"github.com/operator-framework/operator-sdk/internal/scaffold/olm-catalog/descriptor"
+	"github.com/operator-framework/operator-registry/pkg/registry"
+	"github.com/operator-framework/operator-sdk/internal/generate/olm-catalog/descriptor"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 
 	"github.com/ghodss/yaml"
@@ -202,20 +204,62 @@ var _ csvUpdater = crds{}
 // apply will only make a new spec.customresourcedefinitions.owned element for
 // a type if an annotation is present on that type's declaration.
 func (us crds) apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
-	ownedCRDs := []olmapiv1alpha1.CRDDescription{}
+	ownedDescs := []olmapiv1alpha1.CRDDescription{}
+	descMap := map[registry.DefinitionKey]olmapiv1alpha1.CRDDescription{}
+	for _, owned := range csv.Spec.CustomResourceDefinitions.Owned {
+		defKey := registry.DefinitionKey{
+			Name:    owned.Name,
+			Version: owned.Version,
+			Kind:    owned.Kind,
+		}
+		descMap[defKey] = owned
+	}
 	for _, u := range us {
 		crd := apiextv1beta1.CustomResourceDefinition{}
 		if err := yaml.Unmarshal(u, &crd); err != nil {
 			return err
 		}
 		for _, ver := range crd.Spec.Versions {
-			// Parse CRD descriptors from source code comments and annotations.
-			gvk := schema.GroupVersionKind{
-				Group:   crd.Spec.Group,
+			defKey := registry.DefinitionKey{
+				Name:    crd.GetName(),
 				Version: ver.Name,
 				Kind:    crd.Spec.Names.Kind,
 			}
-			newCRDDesc, err := descriptor.GetCRDDescriptionForGVK(scaffold.ApisDir, gvk)
+			if owned, ownedExists := descMap[defKey]; ownedExists {
+				ownedDescs = append(ownedDescs, owned)
+			} else {
+				ownedDescs = append(ownedDescs, olmapiv1alpha1.CRDDescription{
+					Name:    defKey.Name,
+					Version: defKey.Version,
+					Kind:    defKey.Kind,
+				})
+			}
+		}
+	}
+	csv.Spec.CustomResourceDefinitions.Owned = ownedDescs
+	sort.Sort(descSorter(csv.Spec.CustomResourceDefinitions.Owned))
+	sort.Sort(descSorter(csv.Spec.CustomResourceDefinitions.Required))
+	return nil
+}
+
+func updateDescriptions(csv *olmapiv1alpha1.ClusterServiceVersion, searchDir string, opType projutil.OperatorType) error {
+	ownedCRDs := []olmapiv1alpha1.CRDDescription{}
+	for _, ownedCRD := range csv.Spec.CustomResourceDefinitions.Owned {
+		name := ownedCRD.Name
+		group := name
+		if split := strings.Split(name, "."); len(split) > 1 {
+			group = strings.Join(split[1:], ".")
+		}
+		// Parse CRD descriptors from source code comments and annotations.
+		gvk := schema.GroupVersionKind{
+			Group:   group,
+			Version: ownedCRD.Version,
+			Kind:    ownedCRD.Kind,
+		}
+		var err error
+		switch opType {
+		case projutil.OperatorTypeGo:
+			ownedCRD, err = descriptor.GetCRDDescriptionForGVK(searchDir, gvk)
 			if err != nil {
 				if goerrors.Is(err, descriptor.ErrAPIDirNotExist) {
 					log.Infof("Directory for API %s does not exist. Skipping CSV annotation parsing for API.", gvk)
@@ -227,9 +271,9 @@ func (us crds) apply(csv *olmapiv1alpha1.ClusterServiceVersion) error {
 				continue
 			}
 			// Only set the name if no error was returned.
-			newCRDDesc.Name = crd.GetName()
-			ownedCRDs = append(ownedCRDs, newCRDDesc)
+			ownedCRD.Name = name
 		}
+		ownedCRDs = append(ownedCRDs, ownedCRD)
 	}
 	csv.Spec.CustomResourceDefinitions.Owned = ownedCRDs
 	sort.Sort(descSorter(csv.Spec.CustomResourceDefinitions.Owned))

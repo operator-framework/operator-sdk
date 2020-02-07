@@ -18,38 +18,25 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/internal/util/diffutil"
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 
 	"github.com/ghodss/yaml"
 	olmapiv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-const testFrameworkPackage = "github.com/operator-framework/operator-sdk/test/test-framework"
-
-func getTestFrameworkDir(t *testing.T) string {
-	t.Helper()
-	absPath, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	sdkPath := absPath[:strings.Index(absPath, "internal")]
-	tfDir := filepath.Join(sdkPath, "test", "test-framework")
-	// parser.AddDirRecursive doesn't like absolute paths.
-	relPath, err := filepath.Rel(absPath, tfDir)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return relPath
-}
+var (
+	testDataDir   = filepath.Join("..", "..", "testdata")
+	testGoDataDir = filepath.Join(testDataDir, "go")
+)
 
 func TestGetKindTypeForAPI(t *testing.T) {
 	cases := []struct {
 		description string
-		pkg, kind   string
+		kind        string
 		numPkgTypes int
 		wantNil     bool
 	}{
@@ -66,8 +53,7 @@ func TestGetKindTypeForAPI(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tfDir := getTestFrameworkDir(t)
-	if err := os.Chdir(tfDir); err != nil {
+	if err := os.Chdir(testGoDataDir); err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
@@ -75,14 +61,14 @@ func TestGetKindTypeForAPI(t *testing.T) {
 			t.Fatal(err)
 		}
 	}()
-	tfAPIDir := filepath.Join("pkg", "apis", "cache", "v1alpha1")
-	universe, err := getTypesFromDir(tfAPIDir)
+	testAPIDir := filepath.Join("pkg", "apis", "cache", "v1alpha1")
+	universe, err := getTypesFromDir(testAPIDir)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for _, c := range cases {
-		pkgTypes, err := getTypesForPkg(c.pkg, universe)
+		pkgTypes, err := getTypesForPkg(fileutil.DotPath(testAPIDir), universe)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -107,8 +93,7 @@ func TestGetCRDDescriptionForGVK(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tfDir := getTestFrameworkDir(t)
-	if err := os.Chdir(tfDir); err != nil {
+	if err := os.Chdir(testGoDataDir); err != nil {
 		t.Fatal(err)
 	}
 	defer func() {

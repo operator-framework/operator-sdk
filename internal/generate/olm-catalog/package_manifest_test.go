@@ -25,16 +25,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const (
-	testProjectName = "memcached-operator"
-	csvVersion      = "0.0.3"
-)
-
-var (
-	testDataDir   = filepath.Join("..", "testdata")
-	testGoDataDir = filepath.Join(testDataDir, "go")
-)
-
 // newTestPackageManifestGenerator returns a package manifest Generator populated with test values.
 func newTestPackageManifestGenerator() gen.Generator {
 	inputDir := filepath.Join(testGoDataDir, OLMCatalogDir, testProjectName)
