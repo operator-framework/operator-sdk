@@ -10,7 +10,7 @@ creation-date: 2019-12-19
 last-updated: 2019-12-19
 status: implementable
 see-also:
-  - https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG-1.17.md#changes
+  - https://kubernetes-csi.github.io/docs/kubernetes-changelog.html#kubernetes-117
 replaces: []
 superseded-by: []
 ---
@@ -33,7 +33,7 @@ The focus of this enhancement is to bring Kubernetes 1.17 support to Operator SD
 
 See the [Kubernetes 1.17.0 CHANGELOG][changelog] for details.
 
-[changelog]: https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG-1.17.md#changes
+[changelog]: https://kubernetes-csi.github.io/docs/kubernetes-changelog.html#kubernetes-117
 
 ## Motivation
 
