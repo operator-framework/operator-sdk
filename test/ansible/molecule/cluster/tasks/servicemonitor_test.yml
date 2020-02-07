@@ -1,0 +1,4 @@
+---
+- name: Assert ServiceMonitor resource is created
+  assert:
+    that: lookup('k8s', kind='ServiceMonitor', api_version='monitoring.coreos.com/v1', namespace=namespace, resource_name='ansible-metrics')

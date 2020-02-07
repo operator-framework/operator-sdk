@@ -16,6 +16,7 @@ package ansible
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"runtime"
@@ -146,27 +147,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 		return err
 	}
 
-	// Generates operator specific metrics based on the GVKs.
-	// It serves those metrics on "http://metricsHost:operatorMetricsPort".
-	err = kubemetrics.GenerateAndServeCRMetrics(cfg, []string{namespace}, gvks, metricsHost, operatorMetricsPort)
-	if err != nil {
-		log.Info("Could not generate and serve custom resource metrics", "error", err.Error())
-	}
-
-	// Add to the below struct any other metrics ports you want to expose.
-	servicePorts := []v1.ServicePort{
-		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP,
-			TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
-		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP,
-			TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
-	}
-	// Create Service object to expose the metrics port(s).
-	// TODO: probably should expose the port as an environment variable
-	_, err = metrics.CreateMetricsService(context.TODO(), cfg, servicePorts)
-	if err != nil {
-		log.Error(err, "Exposing metrics port failed.")
-		return err
-	}
+	addMetrics(context.TODO(), cfg, namespace, gvks)
 
 	done := make(chan error)
 
@@ -198,5 +179,63 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 		os.Exit(1)
 	}
 	log.Info("Exiting.")
+	return nil
+}
+
+// addMetrics will create the Services and Service Monitors to allow the operator export the metrics by using
+// the Prometheus operator
+func addMetrics(ctx context.Context, cfg *rest.Config, namespace string, gvks []schema.GroupVersionKind) {
+	if err := serveCRMetrics(cfg, gvks); err != nil {
+		if errors.Is(err, k8sutil.ErrRunLocal) {
+			log.Info("Skipping CR metrics server creation; not running in a cluster.")
+			return
+		}
+		log.Info("Could not generate and serve custom resource metrics", "error", err.Error())
+	}
+
+	// Add to the below struct any other metrics ports you want to expose.
+	servicePorts := []v1.ServicePort{
+		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP,
+			TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
+		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP,
+			TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
+	}
+
+	// Create Service object to expose the metrics port(s).
+	service, err := metrics.CreateMetricsService(ctx, cfg, servicePorts)
+	if err != nil {
+		log.Info("Could not create metrics Service", "error", err.Error())
+		return
+	}
+
+	// CreateServiceMonitors will automatically create the prometheus-operator ServiceMonitor resources
+	// necessary to configure Prometheus to scrape metrics from this operator.
+	services := []*v1.Service{service}
+	_, err = metrics.CreateServiceMonitors(cfg, namespace, services)
+	if err != nil {
+		log.Info("Could not create ServiceMonitor object", "error", err.Error())
+		// If this operator is deployed to a cluster without the prometheus-operator running, it will return
+		// ErrServiceMonitorNotPresent, which can be used to safely skip ServiceMonitor creation.
+		if err == metrics.ErrServiceMonitorNotPresent {
+			log.Info("Install prometheus-operator in your cluster to create ServiceMonitor objects", "error", err.Error())
+		}
+	}
+}
+
+// serveCRMetrics takes GVKs retrieved from watches and generates metrics based on those types.
+// It serves those metrics on "http://metricsHost:operatorMetricsPort".
+func serveCRMetrics(cfg *rest.Config, gvks []schema.GroupVersionKind) error {
+	// Get the namespace the operator is currently deployed in.
+	operatorNs, err := k8sutil.GetOperatorNamespace()
+	if err != nil {
+		return err
+	}
+	// To generate metrics in other namespaces, add the values below.
+	ns := []string{operatorNs}
+	// Generate and serve custom resource specific metrics.
+	err = kubemetrics.GenerateAndServeCRMetrics(cfg, ns, gvks, metricsHost, operatorMetricsPort)
+	if err != nil {
+		return err
+	}
 	return nil
 }

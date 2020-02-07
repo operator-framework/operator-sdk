@@ -83,6 +83,14 @@ test_operator() {
         exit 1
     fi
 
+    header_text "verify that the servicemonitor is created"
+    if ! timeout 1m bash -c -- "until kubectl get servicemonitors/memcached-operator-metrics > /dev/null 2>&1; do sleep 1; done";
+    then
+        error_text "FAIL: Failed to get service monitor"
+        operator_logs
+        exit 1
+    fi
+
     header_text "create custom resource (Memcached CR)"
     kubectl create -f deploy/crds/ansible.example.com_v1alpha1_memcached_cr.yaml
     if ! timeout 60s bash -c -- 'until kubectl get deployment -l app=memcached | grep memcached; do sleep 1; done';
@@ -169,6 +177,8 @@ cp -a "$ROOTDIR/test/ansible-memcached/memfin" memcached-operator/roles/
 cat "$ROOTDIR/test/ansible-memcached/watches-finalizer.yaml" >> memcached-operator/watches.yaml
 # Append Foo kind to watches to test watching multiple Kinds
 cat "$ROOTDIR/test/ansible-memcached/watches-foo-kind.yaml" >> memcached-operator/watches.yaml
+
+install_service_monitor_crd
 
 pushd memcached-operator
 
