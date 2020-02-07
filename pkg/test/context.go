@@ -34,10 +34,11 @@ type TestCtx struct { //nolint:golint
 	namespace  string
 	t          *testing.T
 
-	namespacedManPath string
-	client            *frameworkClient
-	kubeclient        kubernetes.Interface
-	restMapper        *restmapper.DeferredDiscoveryRESTMapper
+	namespacedManPath  string
+	client             *frameworkClient
+	kubeclient         kubernetes.Interface
+	restMapper         *restmapper.DeferredDiscoveryRESTMapper
+	skipCleanupOnError bool
 }
 
 type CleanupOptions struct {
@@ -57,13 +58,14 @@ func (f *Framework) newTestCtx(t *testing.T) *TestCtx {
 		namespace = f.Namespace
 	}
 	return &TestCtx{
-		id:                id,
-		t:                 t,
-		namespace:         namespace,
-		namespacedManPath: *f.NamespacedManPath,
-		client:            f.Client,
-		kubeclient:        f.KubeClient,
-		restMapper:        f.restMapper,
+		id:                 id,
+		t:                  t,
+		namespace:          namespace,
+		namespacedManPath:  *f.NamespacedManPath,
+		client:             f.Client,
+		kubeclient:         f.KubeClient,
+		restMapper:         f.restMapper,
+		skipCleanupOnError: f.skipCleanupOnError,
 	}
 }
 
@@ -76,6 +78,14 @@ func (ctx *TestCtx) GetID() string {
 }
 
 func (ctx *TestCtx) Cleanup() {
+	if ctx.t != nil {
+		// The cleanup function will be skipped
+		if ctx.t.Failed() && ctx.skipCleanupOnError {
+			// Also, could we log the error here?
+			log.Info("Skipping cleanup function since --skip-cleanup-error is true")
+			return
+		}
+	}
 	failed := false
 	for i := len(ctx.cleanupFns) - 1; i >= 0; i-- {
 		err := ctx.cleanupFns[i]()

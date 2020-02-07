@@ -71,6 +71,7 @@ type Framework struct {
 	schemeMutex         sync.Mutex
 	LocalOperator       bool
 	singleNamespaceMode bool
+	skipCleanupOnError  bool
 }
 
 type frameworkOpts struct {
@@ -78,19 +79,21 @@ type frameworkOpts struct {
 	kubeconfigPath      string
 	globalManPath       string
 	namespacedManPath   string
+	localOperatorArgs   string
 	singleNamespaceMode bool
 	isLocalOperator     bool
-	localOperatorArgs   string
+	skipCleanupOnError  bool
 }
 
 const (
-	ProjRootFlag          = "root"
-	KubeConfigFlag        = "kubeconfig"
-	NamespacedManPathFlag = "namespacedMan"
-	GlobalManPathFlag     = "globalMan"
-	SingleNamespaceFlag   = "singleNamespace"
-	LocalOperatorFlag     = "localOperator"
-	LocalOperatorArgs     = "localOperatorArgs"
+	ProjRootFlag           = "root"
+	KubeConfigFlag         = "kubeconfig"
+	NamespacedManPathFlag  = "namespacedMan"
+	GlobalManPathFlag      = "globalMan"
+	SingleNamespaceFlag    = "singleNamespace"
+	LocalOperatorFlag      = "localOperator"
+	LocalOperatorArgs      = "localOperatorArgs"
+	SkipCleanupOnErrorFlag = "skipCleanupOnError"
 
 	TestNamespaceEnv = "TEST_NAMESPACE"
 )
@@ -105,6 +108,9 @@ func (opts *frameworkOpts) addToFlagSet(flagset *flag.FlagSet) {
 	flagset.BoolVar(&opts.singleNamespaceMode, SingleNamespaceFlag, false, "enable single namespace mode")
 	flagset.StringVar(&opts.localOperatorArgs, LocalOperatorArgs, "",
 		"flags that the operator needs (while using --up-local). example: \"--flag1 value1 --flag2=value2\"")
+	flagset.BoolVar(&opts.skipCleanupOnError, SkipCleanupOnErrorFlag, false,
+		"If set as true, the cleanup function responsible to remove all artifacts "+
+			"will be skipped if an error is faced.")
 }
 
 func newFramework(opts *frameworkOpts) (*Framework, error) {
@@ -157,6 +163,7 @@ func newFramework(opts *frameworkOpts) (*Framework, error) {
 		localOperatorArgs:   opts.localOperatorArgs,
 		kubeconfigPath:      opts.kubeconfigPath,
 		restMapper:          restMapper,
+		skipCleanupOnError:  opts.skipCleanupOnError,
 	}
 	return framework, nil
 }

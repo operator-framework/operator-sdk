@@ -24,6 +24,7 @@ operator-sdk test local <path to tests directory> [flags]
       --namespace string              If non-empty, single namespace to run tests in
       --namespaced-manifest string    Path to manifest for per-test, namespaced resources (e.g. RBAC and Operator manifest)
       --no-setup                      Disable test resource creation
+      --skip-cleanup-error            If set as true, the cleanup function responsible to remove all artifacts will be skipped if an error is faced.
       --up-local                      Enable running operator locally with go run instead of as an image in the cluster
 ```
 
