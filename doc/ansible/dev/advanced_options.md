@@ -170,6 +170,6 @@ kind: "PostgreSQL"
 metadata:
   name: "example-db"
   annotations:
-    "ansible.operator-sdk/verbosity": 5
+    "ansible.operator-sdk/verbosity": "5"
 spec: {}
 ```
