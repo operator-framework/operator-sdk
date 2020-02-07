@@ -578,7 +578,7 @@ func printVersion() {
 
 ```
 require (
-	github.com/operator-framework/operator-sdk master
+	github.com/operator-framework/operator-sdk v0.13.1
 	sigs.k8s.io/controller-runtime v0.4.0
 )
 
