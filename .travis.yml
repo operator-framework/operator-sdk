@@ -123,7 +123,14 @@ jobs:
 
     # Test subcommands
     - <<: *test
-      name: Subcommands on Kubernetes
+      os: linux
+      name: Subcommands on Kubernetes (Linux)
+      script: make test-subcommand
+
+    # Test subcommands
+    - <<: *test
+      os: osx
+      name: Subcommands on Kubernetes (Mac)
       script: make test-subcommand
 
     # Run the unit, sanity and markdown tests
