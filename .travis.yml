@@ -155,6 +155,8 @@ jobs:
 
     # Build and deploy ppc64le helm-operator docker image
     - <<: *deploy
+      env:
+        - SKIP_DOC_CHECK=true
       name: Docker image for helm-operator (ppc64le)
       arch: ppc64le
       script:
