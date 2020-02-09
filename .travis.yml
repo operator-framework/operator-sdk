@@ -24,13 +24,18 @@ addons:
     packages:
       - "python3"
       - "python3-pip"
+  homebrew:
+    packages:
+      - docker
+      - kind
+      - kubectl
 
 cache:
   directories:
     - $HOME/.cache/go-build
 
 go:
-- 1.13.x
+  - 1.13.x
 
 # The `x_base_steps` top-level key is unknown to travis,
 # so we can use it to create a bunch of common build step
@@ -127,8 +132,18 @@ jobs:
       name: Subcommands on Kubernetes (Linux)
       script: make test-subcommand
 
-    # Test subcommands
-    - <<: *test
+    # Test subcommands OSX
+    - stage: test
+      <<: *go_before_install
+      install:
+        - brew cask install docker
+        - make install
+      after_success:
+        - echo "Build succeeded, operator was generated, memcached operator is running and sub-commands tests pass"
+      after_failure:
+        - echo "Build failed, operator failed to generate, memcached operator is not running and sub-commands tests failed"
+        - kubectl get all --all-namespaces
+        - kubectl get events --all-namespaces --field-selector=type=Warning
       os: osx
       name: Subcommands on Kubernetes (Mac)
       script: make test-subcommand
