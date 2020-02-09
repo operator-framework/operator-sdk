@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/controller"
 	aoflags "github.com/operator-framework/operator-sdk/pkg/ansible/flags"
@@ -64,23 +65,34 @@ func printVersion() {
 func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	printVersion()
 
-	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
-	log = log.WithValues("Namespace", namespace)
-	if found {
-		log.Info("Watching namespace.")
-	} else {
-		log.Info(fmt.Sprintf("%v environment variable not set. This operator is watching all namespaces.",
-			k8sutil.WatchNamespaceEnvVar))
-		namespace = metav1.NamespaceAll
-	}
-
 	cfg, err := config.GetConfig()
 	if err != nil {
 		log.Error(err, "Failed to get config.")
 		return err
 	}
+
+	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
+	var multiNamespace []string
+	log = log.WithValues("Namespace", namespace)
+	if found {
+		if namespace == metav1.NamespaceAll {
+			log.Info("Watching all namespaces.")
+		} else {
+			multiNamespace = strings.Split(namespace, ",")
+			if len(multiNamespace) > 1 {
+				log.Info("Watching multiNamespace.")
+			}
+			log.Info("Watching single namespace.")
+		}
+	} else {
+		log.Info(fmt.Sprintf("%v environment variable not set. Watching all namespaces.",
+			k8sutil.WatchNamespaceEnvVar))
+		namespace = metav1.NamespaceAll
+	}
+
+	// Set default manager options
 	// TODO: probably should expose the host & port as an environment variables
-	mgr, err := manager.New(cfg, manager.Options{
+	options := manager.Options{
 		Namespace:          namespace,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
 		NewClient: func(cache cache.Cache, config *rest.Config, options client.Options) (client.Client, error) {
@@ -94,7 +106,16 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 				StatusClient: c,
 			}, nil
 		},
-	})
+	}
+
+	// Add support for MultiNamespace set in WATCH_NAMESPACE (e.g ns1,ns2)
+	if len(multiNamespace) > 1 {
+		options.Namespace = ""
+		options.NewCache = cache.MultiNamespacedCacheBuilder(multiNamespace)
+	}
+
+	// Create a new Cmd to provide shared dependencies and start components
+	mgr, err := manager.New(cfg, options)
 	if err != nil {
 		log.Error(err, "Failed to create a new manager.")
 		return err

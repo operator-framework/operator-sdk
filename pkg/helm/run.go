@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/helm/controller"
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
@@ -62,11 +63,16 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 	printVersion()
 
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
+	var multiNamespace []string
 	log = log.WithValues("Namespace", namespace)
 	if found {
 		if namespace == metav1.NamespaceAll {
 			log.Info("Watching all namespaces.")
 		} else {
+			multiNamespace = strings.Split(namespace, ",")
+			if len(multiNamespace) > 1 {
+				log.Info("Watching multiNamespace.")
+			}
 			log.Info("Watching single namespace.")
 		}
 	} else {
@@ -80,7 +86,9 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 		log.Error(err, "Failed to get config.")
 		return err
 	}
-	mgr, err := manager.New(cfg, manager.Options{
+
+	// Set default manager options
+	options := manager.Options{
 		Namespace:          namespace,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
 		NewClient: func(cache cache.Cache, config *rest.Config, options crclient.Options) (crclient.Client, error) {
@@ -94,7 +102,15 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 				StatusClient: c,
 			}, nil
 		},
-	})
+	}
+
+	// Add support for MultiNamespace set in WATCH_NAMESPACE (e.g ns1,ns2)
+	if len(multiNamespace) > 1 {
+		options.Namespace = ""
+		options.NewCache = cache.MultiNamespacedCacheBuilder(multiNamespace)
+	}
+
+	mgr, err := manager.New(cfg, options)
 	if err != nil {
 		log.Error(err, "Failed to create a new manager.")
 		return err
