@@ -18,8 +18,6 @@ import (
 	"context"
 
 	scapiv1alpha2 "github.com/operator-framework/operator-sdk/pkg/apis/scorecard/v1alpha2"
-
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 // Test provides methods for running scorecard tests
@@ -55,46 +53,3 @@ func (i TestInfo) GetDescription() string { return i.Description }
 
 // GetLabels returns the labels for this test
 func (i TestInfo) GetLabels() map[string]string { return i.Labels }
-
-// TestSuite contains a list of tests and results, along with the relative weights of each test.
-// Also can optionally contain a log
-type TestSuite struct {
-	TestInfo
-	Tests       []Test
-	TestResults []TestResult
-	Log         string
-}
-
-// AddTest adds a new Test to a TestSuite
-func (ts *TestSuite) AddTest(t Test) {
-	ts.Tests = append(ts.Tests, t)
-}
-
-// ApplySelector apply label selectors removing tests that do not match
-func (ts *TestSuite) ApplySelector(selector labels.Selector) {
-	for i := 0; i < len(ts.Tests); i++ {
-		t := ts.Tests[i]
-		if !selector.Matches(labels.Set(t.GetLabels())) {
-			// Remove the test
-			ts.Tests = append(ts.Tests[:i], ts.Tests[i+1:]...)
-			i--
-		}
-	}
-}
-
-// Run runs all Tests in a TestSuite
-func (ts *TestSuite) Run(ctx context.Context) {
-	for _, test := range ts.Tests {
-		ts.TestResults = append(ts.TestResults, *test.Run(ctx))
-	}
-}
-
-// NewTestSuite returns a new TestSuite with a given name and description
-func NewTestSuite(name, description string) *TestSuite {
-	return &TestSuite{
-		TestInfo: TestInfo{
-			Name:        name,
-			Description: description,
-		},
-	}
-}

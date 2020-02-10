@@ -41,6 +41,7 @@ import (
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	extscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -178,59 +179,63 @@ func RunInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig,
 		return scapiv1alpha2.ScorecardOutput{}, err
 	}
 
-	var suites []schelpers.TestSuite
+	testResults := make([]schelpers.TestResult, 0)
 	for _, cr := range config.CRManifest {
-		crSuites, err := runTests(csv, pluginType, config, cr, logFile)
+		crTestResults, _, err := runTests(csv, pluginType, config, cr, logFile)
 		if err != nil {
 			return scapiv1alpha2.ScorecardOutput{}, err
 		}
-		suites = append(suites, crSuites...)
+		testResults = append(testResults, crTestResults...)
 	}
 
-	output := schelpers.TestSuitesToScorecardOutput(suites, "")
-	return output, nil
+	output := scapiv1alpha2.NewScorecardOutput()
+	output.Log = ""
+
+	for _, tr := range testResults {
+		output.Results = append(output.Results, testResultToScorecardTestResult(tr))
+	}
+
+	return *output, nil
 }
 
 func ListInternalPlugin(pluginType PluginType, config BasicAndOLMPluginConfig) (scapiv1alpha2.ScorecardOutput, error) {
-	var suites []schelpers.TestSuite
+	testResults := make([]schelpers.TestResult, 0)
+	tests := make([]schelpers.Test, 0)
 
 	switch pluginType {
 	case BasicOperator:
 		conf := BasicTestConfig{}
-		basicTests := NewBasicTestSuite(conf)
-
-		basicTests.ApplySelector(config.Selector)
-
-		basicTests.TestResults = make([]schelpers.TestResult, 0)
-		for i := 0; i < len(basicTests.Tests); i++ {
-			result := schelpers.TestResult{}
-			result.State = scapiv1alpha2.PassState
-			result.Test = basicTests.Tests[i]
-			result.Suggestions = make([]string, 0)
-			result.Errors = make([]error, 0)
-			basicTests.TestResults = append(basicTests.TestResults, result)
-		}
-		suites = append(suites, *basicTests)
+		tests = append(tests, NewCheckSpecTest(conf))
+		tests = append(tests, NewCheckStatusTest(conf))
+		tests = append(tests, NewWritingIntoCRsHasEffectTest(conf))
 	case OLMIntegration:
 		conf := OLMTestConfig{}
-		olmTests := NewOLMTestSuite(conf)
-
-		olmTests.ApplySelector(config.Selector)
-
-		olmTests.TestResults = make([]schelpers.TestResult, 0)
-		for i := 0; i < len(olmTests.Tests); i++ {
-			result := schelpers.TestResult{}
-			result.State = scapiv1alpha2.PassState
-			result.Test = olmTests.Tests[i]
-			result.Suggestions = make([]string, 0)
-			result.Errors = make([]error, 0)
-			olmTests.TestResults = append(olmTests.TestResults, result)
-		}
-		suites = append(suites, *olmTests)
+		tests = append(tests, NewBundleValidationTest(conf))
+		tests = append(tests, NewCRDsHaveValidationTest(conf))
+		tests = append(tests, NewCRDsHaveResourcesTest(conf))
+		tests = append(tests, NewSpecDescriptorsTest(conf))
+		tests = append(tests, NewStatusDescriptorsTest(conf))
 	}
 
-	output := schelpers.TestSuitesToScorecardOutput(suites, "")
-	return output, nil
+	tests = applySelector(tests, config.Selector)
+
+	for i := 0; i < len(tests); i++ {
+		result := schelpers.TestResult{}
+		result.State = scapiv1alpha2.PassState
+		result.Test = tests[i]
+		result.Suggestions = make([]string, 0)
+		result.Errors = make([]error, 0)
+		testResults = append(testResults, result)
+	}
+
+	output := scapiv1alpha2.NewScorecardOutput()
+	output.Log = ""
+
+	for _, tr := range testResults {
+		output.Results = append(output.Results, testResultToScorecardTestResult(tr))
+	}
+
+	return *output, nil
 }
 
 func getStructShortName(obj interface{}) string {
@@ -388,8 +393,8 @@ func duplicateCRCheck(crs []string) error {
 }
 
 func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, config BasicAndOLMPluginConfig,
-	cr string, logFile io.Writer) ([]schelpers.TestSuite, error) {
-	suites := make([]schelpers.TestSuite, 0)
+	cr string, logFile io.Writer) ([]schelpers.TestResult, string, error) {
+	testResults := make([]schelpers.TestResult, 0)
 
 	logReadWriter := &bytes.Buffer{}
 	log.SetOutput(logReadWriter)
@@ -398,26 +403,28 @@ func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, 
 	if !config.OLMDeployed {
 		if err := createFromYAMLFile(config.Namespace, config.GlobalManifest, config.ProxyImage,
 			config.ProxyPullPolicy); err != nil {
-			return suites, fmt.Errorf("failed to create global resources: %v", err)
+			return testResults, "", fmt.Errorf("failed to create global resources: %v", err)
 		}
 		if err := createFromYAMLFile(config.Namespace, config.NamespacedManifest, config.ProxyImage,
 			config.ProxyPullPolicy); err != nil {
-			return suites, fmt.Errorf("failed to create namespaced resources: %v", err)
+			return testResults, "", fmt.Errorf("failed to create namespaced resources: %v", err)
 		}
 	}
 
 	if err := createFromYAMLFile(config.Namespace, cr, config.ProxyImage, config.ProxyPullPolicy); err != nil {
-		return suites, fmt.Errorf("failed to create cr resource: %v", err)
+		return testResults, "", fmt.Errorf("failed to create cr resource: %v", err)
 	}
 
 	obj, err := yamlToUnstructured(config.Namespace, cr)
 	if err != nil {
-		return suites, fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
+		return testResults, "", fmt.Errorf("failed to decode custom resource manifest into object: %s", err)
 	}
 
 	if err := waitUntilCRStatusExists(time.Second*time.Duration(config.InitTimeout), obj); err != nil {
-		return suites, fmt.Errorf("failed waiting to check if CR status exists: %v", err)
+		return testResults, "", fmt.Errorf("failed waiting to check if CR status exists: %v", err)
 	}
+
+	tests := make([]schelpers.Test, 0)
 
 	switch pluginType {
 	case BasicOperator:
@@ -426,17 +433,11 @@ func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, 
 			CR:       obj,
 			ProxyPod: proxyPodGlobal,
 		}
-		basicTests := NewBasicTestSuite(conf)
-		basicTests.ApplySelector(config.Selector)
 
-		basicTests.Run(context.TODO())
-		logs, err := ioutil.ReadAll(logReadWriter)
-		if err != nil {
-			basicTests.Log = fmt.Sprintf("failed to read log buffer: %v", err)
-		} else {
-			basicTests.Log = string(logs)
-		}
-		suites = append(suites, *basicTests)
+		tests = append(tests, NewCheckSpecTest(conf))
+		tests = append(tests, NewCheckStatusTest(conf))
+		tests = append(tests, NewWritingIntoCRsHasEffectTest(conf))
+
 	case OLMIntegration:
 		conf := OLMTestConfig{
 			Client:   runtimeClient,
@@ -446,17 +447,27 @@ func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, 
 			ProxyPod: proxyPodGlobal,
 			Bundle:   config.Bundle,
 		}
-		olmTests := NewOLMTestSuite(conf)
-		olmTests.ApplySelector(config.Selector)
 
-		olmTests.Run(context.TODO())
-		logs, err := ioutil.ReadAll(logReadWriter)
-		if err != nil {
-			olmTests.Log = fmt.Sprintf("failed to read log buffer: %v", err)
-		} else {
-			olmTests.Log = string(logs)
-		}
-		suites = append(suites, *olmTests)
+		tests = append(tests, NewBundleValidationTest(conf))
+		tests = append(tests, NewCRDsHaveValidationTest(conf))
+		tests = append(tests, NewCRDsHaveResourcesTest(conf))
+		tests = append(tests, NewSpecDescriptorsTest(conf))
+		tests = append(tests, NewStatusDescriptorsTest(conf))
+
+	}
+
+	tests = applySelector(tests, config.Selector)
+
+	for _, test := range tests {
+		testResults = append(testResults, *test.Run(context.TODO()))
+	}
+
+	var testResultsLog string
+	logs, err := ioutil.ReadAll(logReadWriter)
+	if err != nil {
+		testResultsLog = fmt.Sprintf("failed to read log buffer: %v", err)
+	} else {
+		testResultsLog = string(logs)
 	}
 
 	// change logging back to main log
@@ -470,5 +481,40 @@ func runTests(csv *olmapiv1alpha1.ClusterServiceVersion, pluginType PluginType, 
 	// clear name of operator deployment
 	deploymentName = ""
 
-	return suites, nil
+	return testResults, testResultsLog, nil
+}
+
+// applySelector apply label selectors removing tests that do not match
+func applySelector(tests []schelpers.Test, selector labels.Selector) []schelpers.Test {
+	for i := 0; i < len(tests); i++ {
+		t := tests[i]
+		if !selector.Matches(labels.Set(t.GetLabels())) {
+			// Remove the test
+			tests = append(tests[:i], tests[i+1:]...)
+			i--
+		}
+	}
+	return tests
+}
+
+// testResultToScorecardTestResult is a helper function for converting from the TestResult type
+// to the ScorecardTestResult type
+func testResultToScorecardTestResult(tr schelpers.TestResult) scapiv1alpha2.ScorecardTestResult {
+	sctr := scapiv1alpha2.ScorecardTestResult{}
+	sctr.State = tr.State
+	sctr.Name = tr.Test.GetName()
+	sctr.Description = tr.Test.GetDescription()
+	sctr.Log = tr.Log
+	sctr.CRName = tr.CRName
+	sctr.Suggestions = tr.Suggestions
+	if sctr.Suggestions == nil {
+		sctr.Suggestions = []string{}
+	}
+	stringErrors := []string{}
+	for _, err := range tr.Errors {
+		stringErrors = append(stringErrors, err.Error())
+	}
+	sctr.Errors = stringErrors
+	sctr.Labels = tr.Test.GetLabels()
+	return sctr
 }

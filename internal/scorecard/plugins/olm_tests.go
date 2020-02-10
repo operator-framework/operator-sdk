@@ -42,7 +42,7 @@ const (
 	specDescriptor   string = "spec"
 )
 
-// OLMTestConfig contains all variables required by the OLMTest schelpers.TestSuite
+// OLMTestConfig contains all variables required by the OLMTest tests
 type OLMTestConfig struct {
 	Client   client.Client
 	CR       *unstructured.Unstructured
@@ -161,22 +161,6 @@ func matchKind(kind1, kind2 string) bool {
 		log.Warningf("could not find singular version of %s", kind2)
 	}
 	return strings.EqualFold(singularKind1, singularKind2)
-}
-
-// NewOLMTestSuite returns a new schelpers.TestSuite object containing CSV best practice checks
-func NewOLMTestSuite(conf OLMTestConfig) *schelpers.TestSuite {
-	ts := schelpers.NewTestSuite(
-		"OLM Tests",
-		"Test suite checks if an operator's CSV follows best practices",
-	)
-
-	ts.AddTest(NewBundleValidationTest(conf))
-	ts.AddTest(NewCRDsHaveValidationTest(conf))
-	ts.AddTest(NewCRDsHaveResourcesTest(conf))
-	ts.AddTest(NewSpecDescriptorsTest(conf))
-	ts.AddTest(NewStatusDescriptorsTest(conf))
-
-	return ts
 }
 
 // Test Implentations
