@@ -135,9 +135,12 @@ jobs:
     # Test subcommands OSX
     - stage: test
       <<: *go_before_install
+      sudo: required
       install:
-        - brew cask install docker
-        - make install
+        - echo “export DOCKER_HOST=‘tcp://0.0.0.0:2375’” >> ~/.bashrc
+        - source ~/.bashrc
+        - docker run hello-world
+        # - make install
       after_success:
         - echo "Build succeeded, operator was generated, memcached operator is running and sub-commands tests pass"
       after_failure:
@@ -146,7 +149,7 @@ jobs:
         - kubectl get events --all-namespaces --field-selector=type=Warning
       os: osx
       name: Subcommands on Kubernetes (Mac)
-      script: make test-subcommand
+      # script: make test-subcommand
 
     # Run the unit, sanity and markdown tests
     - stage: test
