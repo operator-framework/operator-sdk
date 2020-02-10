@@ -138,6 +138,8 @@ jobs:
       sudo: required
       install:
         - brew cask install docker
+        - sudo /Applications/Docker.app/Contents/MacOS/Docker --quit-after-install --unattended
+        - nohup /Applications/Docker.app/Contents/MacOS/Docker --unattended &
         - docker run hello-world
         # - make install
       after_success:
