@@ -685,13 +685,14 @@ replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503
 
 ### Deprecations on SDK
 
-Note that, `github.com/operator-framework/operator-sdk/pkg/restmapper` was deprecated in favor of the `DynamicRESTMapper` implementation in [controller-runtime](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/apiutil#NewDiscoveryRESTMapper). Then, replace the usage of:
+Note that `github.com/operator-framework/operator-sdk/pkg/restmapper` was deprecated in favor of the `DynamicRESTMapper` implementation in [controller-runtime](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/apiutil#NewDiscoveryRESTMapper). Users should migrate to controller-runtime's implementation, which is a drop-in replacement.
 
+Replace:
 ```
 github.com/operator-framework/operator-sdk/pkg/restmapper.DynamicRESTMapper
 ```
 
-For:
+With:
 
 ```
 sigs.k8s.io/controller-runtime/pkg/client/apiutil.DynamicRESTMapper
@@ -700,11 +701,46 @@ sigs.k8s.io/controller-runtime/pkg/client/apiutil.DynamicRESTMapper
 ### Notable Changes
 
 **(Valid for Ansible based-operators only)** 
-- Extract custom Ansible module `k8s_status`, which is now provided by the `operator_sdk.util` Ansible collection. See [developer_guide](https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/dev/developer_guide.md#custom-resource-status-management) for new usage.
-- Upgrade minimal Ansible version in the init projects from `2.6` to `2.9` for collections support. 
+
+Note that the Ansible version in the init projects from `2.6` to `2.9` for collections support. Also, the Ansible module `k8s_status` was extracted and it is now providing the `operator_sdk.util` Ansible collection. See [developer_guide](https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/dev/developer_guide.md#custom-resource-status-management) for new usage.
+
+#### (Optional) Update the main.yaml file
+
+In order to get the above changes in your ansble based-operator project. 
+
+Replace:
+```yaml
+...
+ min_ansible_version: 2.6
+...
+```
+
+With: 
+```yaml
+...
+ min_ansible_version: 2.9
+...
+```
+
+And then, add at the `collections` at the end of the file after the `dependencies` block. 
+
+Example:
+```yaml
+...
+dependencies: []
+  # List your role dependencies here, one per line. Be sure to remove the '[]' above,
+  # if you add dependencies to this list.`
+  # if you add dependencies to this list.
+collections:
+- operator_sdk.util
+...
+```
 
 **(Valid for Helm based-operators only)** 
-- Upgraded Helm operator packages and base image from Helm v2 to Helm v3. Cluster state for pre-existing CRs using Helm v2-based operators will be automatically migrated to Helm v3's new release storage format, and existing releases may be upgraded due to changes in Helm v3's label injection
+
+The Helm operator packages as its base image was upgrade from Helm v2 to Helm v3. Note that cluster state for pre-existing CRs using Helm v2-based operators will be automatically migrated to Helm v3's new release storage format, and existing releases may be upgraded due to changes in Helm v3's label injection.
+
+If you are using any external helm v2 tooling with the your helm operator-managed releases, you will need to upgrade to the equivalent helm v3 tooling.
 
 For further detailed information see [CHANGELOG](https://github.com/operator-framework/operator-sdk/blob/master/CHANGELOG.md#v0141)
 
