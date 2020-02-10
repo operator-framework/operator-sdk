@@ -65,12 +65,6 @@ func printVersion() {
 func Run(flags *aoflags.AnsibleOperatorFlags) error {
 	printVersion()
 
-	cfg, err := config.GetConfig()
-	if err != nil {
-		log.Error(err, "Failed to get config.")
-		return err
-	}
-
 	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
 	var multiNamespace []string
 	log = log.WithValues("Namespace", namespace)
@@ -80,7 +74,7 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 		} else {
 			multiNamespace = strings.Split(namespace, ",")
 			if len(multiNamespace) > 1 {
-				log.Info("Watching multiNamespace.")
+				log.Info("Watching multiple namespaces.")
 			} else {
 				log.Info("Watching single namespace.")
 			}
@@ -89,6 +83,12 @@ func Run(flags *aoflags.AnsibleOperatorFlags) error {
 		log.Info(fmt.Sprintf("%v environment variable not set. Watching all namespaces.",
 			k8sutil.WatchNamespaceEnvVar))
 		namespace = metav1.NamespaceAll
+	}
+
+	cfg, err := config.GetConfig()
+	if err != nil {
+		log.Error(err, "Failed to get config.")
+		return err
 	}
 
 	// Set default manager options

@@ -49,7 +49,6 @@ import (
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
 
 	"{{ .Repo }}/pkg/apis"
 	"{{ .Repo }}/pkg/controller"
@@ -60,11 +59,11 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
-	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/spf13/pflag"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -133,7 +132,6 @@ func main() {
 	// Set default manager options
 	options := manager.Options{
 		Namespace:          namespace,
-		MapperProvider:     restmapper.NewDynamicRESTMapper,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
 	}
 
@@ -141,8 +139,8 @@ func main() {
 	// Note that this is not intended to be used for excluding namespaces, this is better done via a Predicate 
 	// Also note that you may face performance issues when using this with a high number of namespaces.
 	// More Info: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
-	multiNamespace := strings.Split(namespace, ",")
-	if len(multiNamespace) > 1 {
+	if strings.Contains(namespace, ",") {
+		multiNamespace := strings.Split(namespace, ",")
 		options.Namespace = ""
 		options.NewCache = cache.MultiNamespacedCacheBuilder(multiNamespace)
 	}
