@@ -36,20 +36,17 @@ go:
 # so we can use it to create a bunch of common build step
 # YAML anchors which we use in our build jobs.
 x_base_steps:
-  # before_install for jobs that require go builds and do not run for doc-only changes
-  - &go_before_install
-    before_install:
-      # hack/ci/check-doc-only-update.sh needs to be sourced so
-      # that it can properly exit the test early with success
-      - source hack/ci/check-doc-only-update.sh
-      - travis_retry make tidy
-
   # Base go, ansbile, and helm job
   - &test
     stage: test
     env:
     - CLUSTER=k8s
-    <<: *go_before_install
+    # before_install for jobs that require go builds and do not run for doc-only changes
+    before_install:
+      # hack/ci/check-doc-only-update.sh needs to be sourced so
+      # that it can properly exit the test early with success
+      - source hack/ci/check-doc-only-update.sh
+      - travis_retry make tidy
     install:
       - make install
       - hack/ci/setup-${CLUSTER}.sh
@@ -67,7 +64,8 @@ x_base_steps:
   - &deploy
     stage: deploy
     if: type != pull_request AND ( tag IS present OR branch = master OR commit_message =~ /\[travis deploy\]/ )
-    <<: *go_before_install
+    before_install:
+      - travis_retry make tidy
     install: make install
     before_script:
       - git config remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
@@ -155,8 +153,6 @@ jobs:
 
     # Build and deploy ppc64le helm-operator docker image
     - <<: *deploy
-      env:
-        - SKIP_DOC_CHECK=true
       name: Docker image for helm-operator (ppc64le)
       arch: ppc64le
       script:
