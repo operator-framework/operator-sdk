@@ -238,21 +238,13 @@ func (s *CSV) setCSVDefaultFields(csv *olmapiv1alpha1.ClusterServiceVersion) {
 		}
 	}
 	if len(csv.Spec.Icon) == 0 {
-		emptyIcon := olmapiv1alpha1.Icon{
-			Data:      "",
-			MediaType: "",
-		}
-		csv.Spec.Icon = []olmapiv1alpha1.Icon{emptyIcon}
+		csv.Spec.Icon = make([]olmapiv1alpha1.Icon, 1)
 	}
 	if len(csv.Spec.Keywords) == 0 {
 		csv.Spec.Keywords = []string{""}
 	}
 	if len(csv.Spec.Maintainers) == 0 {
-		emptyMaintainers := olmapiv1alpha1.Maintainer{
-			Name:  "",
-			Email: "",
-		}
-		csv.Spec.Maintainers = []olmapiv1alpha1.Maintainer{emptyMaintainers}
+		csv.Spec.Maintainers = make([]olmapiv1alpha1.Maintainer, 1)
 	}
 
 }
@@ -284,18 +276,12 @@ func getEmptyRequiredCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) (field
 	if len(csv.Spec.Keywords) == 0 || len(csv.Spec.Keywords[0]) == 0 {
 		fields = append(fields, "spec.keywords")
 	}
-	if len(csv.Spec.Maintainers) == 0 ||
-		(len(csv.Spec.Maintainers[0].Name) == 0 && len(csv.Spec.Maintainers[0].Email) == 0) {
-		fields = append(fields, "spec.maintainers")
-	}
+
 	if csv.Spec.Provider == (olmapiv1alpha1.AppLink{}) {
 		fields = append(fields, "spec.provider")
 	}
 	if csv.Spec.Maturity == "" {
 		fields = append(fields, "spec.maturity")
-	}
-	if len(csv.Spec.Icon) == 0 || (len(csv.Spec.Icon[0].Data) == 0 && len(csv.Spec.Icon[0].MediaType) == 0) {
-		fields = append(fields, "spec.icon")
 	}
 
 	return fields
