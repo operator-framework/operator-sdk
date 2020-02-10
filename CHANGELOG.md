@@ -1,13 +1,7 @@
-## Unreleased
-
-### Added
+## v0.15.2
 
 ### Changed
 - Operator user setup and entrypoint scripts no longer insert dynamic runtime user entries into `/etc/passwd`. To use dynamic runtime users, use a container runtime that supports it (e.g. CRI-O). ([#2469](https://github.com/operator-framework/operator-sdk/pull/2469))
-
-### Deprecated
-
-### Removed
 
 ### Bug Fixes
 
