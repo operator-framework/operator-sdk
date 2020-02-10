@@ -140,9 +140,8 @@ func main() {
 	// Also note that you may face performance issues when using this with a high number of namespaces.
 	// More Info: https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/cache#MultiNamespacedCacheBuilder
 	if strings.Contains(namespace, ",") {
-		multiNamespace := strings.Split(namespace, ",")
 		options.Namespace = ""
-		options.NewCache = cache.MultiNamespacedCacheBuilder(multiNamespace)
+		options.NewCache = cache.MultiNamespacedCacheBuilder(strings.Split(namespace, ","))
 	}
 
 	// Create a new Cmd to provide shared dependencies and start components

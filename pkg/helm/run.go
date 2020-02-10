@@ -62,26 +62,6 @@ func printVersion() {
 func Run(flags *hoflags.HelmOperatorFlags) error {
 	printVersion()
 
-	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
-	var multiNamespace []string
-	log = log.WithValues("Namespace", namespace)
-	if found {
-		if namespace == metav1.NamespaceAll {
-			log.Info("Watching all namespaces.")
-		} else {
-			multiNamespace = strings.Split(namespace, ",")
-			if len(multiNamespace) > 1 {
-				log.Info("Watching multiple namespaces.")
-			} else {
-				log.Info("Watching single namespace.")
-			}
-		}
-	} else {
-		log.Info(fmt.Sprintf("%v environment variable not set. Watching all namespaces.",
-			k8sutil.WatchNamespaceEnvVar))
-		namespace = metav1.NamespaceAll
-	}
-
 	cfg, err := config.GetConfig()
 	if err != nil {
 		log.Error(err, "Failed to get config.")
@@ -90,7 +70,6 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 
 	// Set default manager options
 	options := manager.Options{
-		Namespace:          namespace,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
 		NewClient: func(cache cache.Cache, config *rest.Config, options crclient.Options) (crclient.Client, error) {
 			c, err := crclient.New(config, options)
@@ -105,10 +84,25 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 		},
 	}
 
-	// Add support for MultiNamespace set in WATCH_NAMESPACE (e.g ns1,ns2)
-	if len(multiNamespace) > 1 {
-		options.Namespace = ""
-		options.NewCache = cache.MultiNamespacedCacheBuilder(multiNamespace)
+	namespace, found := os.LookupEnv(k8sutil.WatchNamespaceEnvVar)
+	log = log.WithValues("Namespace", namespace)
+	if found {
+		if namespace == metav1.NamespaceAll {
+			log.Info("Watching all namespaces.")
+			options.Namespace = metav1.NamespaceAll
+		} else {
+			if strings.Contains(namespace, ",") {
+				log.Info("Watching multiple namespaces.")
+				options.NewCache = cache.MultiNamespacedCacheBuilder(strings.Split(namespace, ","))
+			} else {
+				log.Info("Watching single namespace.")
+				options.Namespace = namespace
+			}
+		}
+	} else {
+		log.Info(fmt.Sprintf("%v environment variable not set. Watching all namespaces.",
+			k8sutil.WatchNamespaceEnvVar))
+		options.Namespace = metav1.NamespaceAll
 	}
 
 	mgr, err := manager.New(cfg, options)
