@@ -72,8 +72,9 @@ func Run(flags *hoflags.HelmOperatorFlags) error {
 			multiNamespace = strings.Split(namespace, ",")
 			if len(multiNamespace) > 1 {
 				log.Info("Watching multiNamespace.")
+			} else {
+				log.Info("Watching single namespace.")
 			}
-			log.Info("Watching single namespace.")
 		}
 	} else {
 		log.Info(fmt.Sprintf("%v environment variable not set. Watching all namespaces.",
