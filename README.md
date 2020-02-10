@@ -74,7 +74,7 @@ $ operator-sdk add api --api-version=app.example.com/v1alpha1 --kind=AppService
 $ operator-sdk add controller --api-version=app.example.com/v1alpha1 --kind=AppService
 
 # Set the username variable
-$ USERNAME=<username>
+$ export USERNAME=<username>
 
 # Build and push the app-operator image to a public registry such as quay.io
 $ operator-sdk build quay.io/$USERNAME/app-operator
