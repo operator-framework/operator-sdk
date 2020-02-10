@@ -570,8 +570,6 @@ func printVersion() {
 
 ### Go version
 
-- Ensure that you are using a go version 1.13+
-
 ### modules
 
 - Ensure the the following `require` modules and `replace` directives with the specific versions are present in your `go.mod` file:
@@ -640,8 +638,6 @@ For further detailed information see [CHANGELOG](https://github.com/operator-fra
 ## `v0.14.x`
 
 ### Go version
-
-- Ensure that you are using a go version 1.13+
 
 ### modules
 
