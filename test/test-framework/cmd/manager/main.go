@@ -96,7 +96,7 @@ func main() {
 
 	ctx := context.TODO()
 	// Become the leader before proceeding
-	err = leader.Become(ctx, "camila-lock")
+	err = leader.Become(ctx, "memcached-operator-lock")
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
