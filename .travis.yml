@@ -134,11 +134,10 @@ jobs:
 
     # Test subcommands OSX
     - stage: test
-      <<: *go_before_install
+      # <<: *go_before_install
       sudo: required
       install:
-        - echo “export DOCKER_HOST=‘tcp://0.0.0.0:2375’” >> ~/.bashrc
-        - source ~/.bashrc
+        - brew cask install docker
         - docker run hello-world
         # - make install
       after_success:
