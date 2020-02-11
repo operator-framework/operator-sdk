@@ -30,7 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// BasicTestConfig contains all variables required by the BasicTest schelpers.TestSuite
+// BasicTestConfig contains all variables required by the BasicTest tests
 type BasicTestConfig struct {
 	Client   client.Client
 	CR       *unstructured.Unstructured
@@ -96,20 +96,6 @@ func NewWritingIntoCRsHasEffectTest(conf BasicTestConfig) *WritingIntoCRsHasEffe
 				testKey: getStructShortName(WritingIntoCRsHasEffectTest{})},
 		},
 	}
-}
-
-// NewBasicTestSuite returns a new schelpers.TestSuite object containing basic, functional operator tests
-func NewBasicTestSuite(conf BasicTestConfig) *schelpers.TestSuite {
-	ts := schelpers.NewTestSuite(
-		"Basic Tests",
-		"Test suite that runs basic, functional operator tests",
-	)
-
-	ts.AddTest(NewCheckSpecTest(conf))
-	ts.AddTest(NewCheckStatusTest(conf))
-	ts.AddTest(NewWritingIntoCRsHasEffectTest(conf))
-
-	return ts
 }
 
 // Test Implementations
