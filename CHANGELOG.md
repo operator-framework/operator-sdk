@@ -9,13 +9,12 @@
 
 ### Changed
 - Ansible scaffolding has been rewritten to be simpler and make use of newer features of Ansible and Molecule.
-    - No longer generates the build/test-framework directory or molecule/test-cluster scenario
-    - Adds new `cluster` scenario that can be used to test against an existing cluster
-    - There is no longer any Ansible templating done in the `deploy/` directory, any templates used for testing will be located in `molecule/templates/` instead.
-    - The scaffolded molecule.yml files now use the Ansible verifier. All asserts.yml files were renamed to verify.yml to reflect this.
-    - The prepare/converge/verify tasks now make use of the new `k8s` `wait` option to simplify the deployment logic.
+- No longer generates the build/test-framework directory or molecule/test-cluster scenario
+- Adds new `cluster` scenario that can be used to test against an existing cluster
+- There is no longer any Ansible templating done in the `deploy/` directory, any templates used for testing will be located in `molecule/templates/` instead.
+- The scaffolded molecule.yml files now use the Ansible verifier. All asserts.yml files were renamed to verify.yml to reflect this.
+- The prepare/converge/verify tasks now make use of the new `k8s` `wait` option to simplify the deployment logic.
 - Operator user setup and entrypoint scripts no longer insert dynamic runtime user entries into `/etc/passwd`. To use dynamic runtime users, use a container runtime that supports it (e.g. CRI-O). ([#2469](https://github.com/operator-framework/operator-sdk/pull/2469))
-
 - Changed the scorecard basic test, `Writing into CRs has an effect`, to include the http.MethodPatch as part of its test criteria alongside http.MethodPut and http.MethodPost. ([#2509](https://github.com/operator-framework/operator-sdk/pull/2509))
 
 ### Deprecated
@@ -24,7 +23,6 @@
 
 ### Bug Fixes
 
-- Fixed issue with Go dependencies caused by removed tag in `openshift/api` repository ([#2466](https://github.com/operator-framework/operator-sdk/issues/2466))
 - Fixed a regression in the `operator-sdk run` command that caused `--local` flags to be ignored ([#2478](https://github.com/operator-framework/operator-sdk/issues/2478))
 
 ## v0.15.1
