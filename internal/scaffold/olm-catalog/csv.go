@@ -276,7 +276,9 @@ func getEmptyRequiredCSVFields(csv *olmapiv1alpha1.ClusterServiceVersion) (field
 	if len(csv.Spec.Keywords) == 0 || len(csv.Spec.Keywords[0]) == 0 {
 		fields = append(fields, "spec.keywords")
 	}
-
+	if len(csv.Spec.Maintainers) == 0 {
+		fields = append(fields, "spec.maintainers")
+	}
 	if csv.Spec.Provider == (olmapiv1alpha1.AppLink{}) {
 		fields = append(fields, "spec.provider")
 	}
