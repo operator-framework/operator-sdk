@@ -216,6 +216,21 @@ Call the script with the only argument being the new SDK version:
 $ ./release.sh v1.3.0
 ```
 
+**Note:** If you are using a OSX SO then, upgrade the version of make used as follows before to execute the above command.
+
+```sh
+$ brew install make
+
+# note that you need to add the new path in the bash `export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"`
+$ make --version 
+GNU Make 4.3
+Built for x86_64-apple-darwin18.7.0
+Copyright (C) 1988-2020 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+```
+
 Release binaries and signatures will be in `build/`. Both binary and signature file names contain version, architecture, and platform information; signature file names correspond to the binary they were generated from suffixed with `.asc`. For example, signature file `operator-sdk-v1.3.0-x86_64-apple-darwin.asc` was generated from a binary named `operator-sdk-v1.3.0-x86_64-apple-darwin`. To verify binaries and tags, see the [verification section](#verifying-a-release).
 
 **Note:** you must have both [`git`][doc-git-default-key] and [`gpg`][doc-gpg-default-key] default PGP keys set locally for `release.sh` to run without error. Additionally you must add your PGP key to a [public-key-server](#release-signing).
