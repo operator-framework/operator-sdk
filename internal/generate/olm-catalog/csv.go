@@ -44,13 +44,20 @@ import (
 )
 
 const (
-	olmCatalogChildDir = "olm-catalog"
-	OLMCatalogDir      = scaffold.DeployDir + string(filepath.Separator) + olmCatalogChildDir
-	CSVYamlFileExt     = ".clusterserviceversion.yaml"
+	OLMCatalogChildDir = "olm-catalog"
+	// OLMCatalogDir is the default location for OLM catalog directory.
+	OLMCatalogDir  = scaffold.DeployDir + string(filepath.Separator) + OLMCatalogChildDir
+	csvYamlFileExt = ".clusterserviceversion.yaml"
 
-	BundleDirKey = "bundle"
+	// Input keys for CSV generator whose values are the filepaths for the respective input directories
+
+	// DEBUG: Why is this an input key? Users don't need to configure this.
+	// bundleDirKey is for the location of the bundle manifests directory
+	bundleDirKey = "bundle"
+	// DeployDirKey is for the location of the operator manifests directory e.g "deploy/production"
 	DeployDirKey = "deploy"
-	APIsDirKey   = "apis"
+	// APIsDirKey is for the location of the API types directory e.g "pkg/apis"
+	APIsDirKey = "apis"
 )
 
 type csvGenerator struct {
@@ -59,7 +66,7 @@ type csvGenerator struct {
 	csvVersion string
 	// fromVersion is the CSV version from which to build a new CSV. A CSV
 	// manifest with this version should exist at:
-	// deploy/olm-catalog/{from_version}/operator-name.v{from_version}.{CSVYamlFileExt}
+	// deploy/olm-catalog/{from_version}/operator-name.v{from_version}.{csvYamlFileExt}
 	fromVersion string
 }
 
@@ -79,23 +86,23 @@ func NewCSV(cfg gen.Config, csvVersion, fromVersion string) gen.Generator {
 		g.Inputs[DeployDirKey] = scaffold.DeployDir
 	} else {
 		// Set to non-standard location.
-		olmCatalogDir = filepath.Join(g.Inputs[DeployDirKey], olmCatalogChildDir)
+		olmCatalogDir = filepath.Join(g.Inputs[DeployDirKey], OLMCatalogChildDir)
 	}
-	if bundle, ok := g.Inputs[BundleDirKey]; !ok || bundle == "" {
+	if bundle, ok := g.Inputs[bundleDirKey]; !ok || bundle == "" {
 		// Initialize so we don't have to check for key existence elsewhere.
-		g.Inputs[BundleDirKey] = ""
+		g.Inputs[bundleDirKey] = ""
 		parentDir := filepath.Join(olmCatalogDir, g.OperatorName)
 		if isBundleDirExist(parentDir, g.fromVersion) {
-			g.Inputs[BundleDirKey] = filepath.Join(olmCatalogDir, g.OperatorName, g.fromVersion)
+			g.Inputs[bundleDirKey] = filepath.Join(olmCatalogDir, g.OperatorName, g.fromVersion)
 		} else if isBundleDirExist(parentDir, g.csvVersion) {
-			g.Inputs[BundleDirKey] = filepath.Join(olmCatalogDir, g.OperatorName, g.csvVersion)
+			g.Inputs[bundleDirKey] = filepath.Join(olmCatalogDir, g.OperatorName, g.csvVersion)
 		}
 	}
 	if apisDir, ok := g.Inputs[APIsDirKey]; !ok || apisDir == "" {
 		g.Inputs[APIsDirKey] = scaffold.ApisDir
 	}
 	if g.OutputDir == "" {
-		g.OutputDir = filepath.Join(olmCatalogDir, g.OperatorName, g.csvVersion)
+		g.OutputDir = scaffold.DeployDir
 	}
 	return g
 }
@@ -114,7 +121,7 @@ func getCSVName(name, version string) string {
 }
 
 func getCSVFileName(name, version string) string {
-	return getCSVName(strings.ToLower(name), version) + CSVYamlFileExt
+	return getCSVName(strings.ToLower(name), version) + csvYamlFileExt
 }
 
 // Generate allows a CSV to be written by marshalling
@@ -127,11 +134,14 @@ func (g csvGenerator) Generate() error {
 	if len(fileMap) == 0 {
 		return errors.New("error generating CSV manifest: no generated file found")
 	}
-	if err = os.MkdirAll(g.OutputDir, fileutil.DefaultDirFileMode); err != nil {
-		return errors.Wrapf(err, "error mkdir %s", g.OutputDir)
+
+	csvOutputDir := filepath.Join(g.OutputDir, OLMCatalogChildDir, g.OperatorName, g.csvVersion)
+	if err = os.MkdirAll(csvOutputDir, fileutil.DefaultDirFileMode); err != nil {
+		return errors.Wrapf(err, "error mkdir %s", csvOutputDir)
 	}
 	for fileName, b := range fileMap {
-		path := filepath.Join(g.OutputDir, fileName)
+		path := filepath.Join(csvOutputDir, fileName)
+		log.Debugf("CSV generator writing %s", path)
 		if err = ioutil.WriteFile(path, b, fileutil.DefaultFileMode); err != nil {
 			return err
 		}
@@ -140,7 +150,7 @@ func (g csvGenerator) Generate() error {
 }
 
 func (g csvGenerator) generate() (fileMap map[string][]byte, err error) {
-	bundle := g.Inputs[BundleDirKey]
+	bundle := g.Inputs[bundleDirKey]
 	// Get current CSV to update, otherwise start with a fresh CSV.
 	var csv *olmapiv1alpha1.ClusterServiceVersion
 	if bundle != "" {
@@ -176,6 +186,7 @@ func (g csvGenerator) generate() (fileMap map[string][]byte, err error) {
 	if err != nil {
 		return nil, err
 	}
+	// TODO: Why is this a file map when we only generate one CSV file?
 	fileMap = map[string][]byte{
 		path: b,
 	}
@@ -346,11 +357,10 @@ func (g csvGenerator) updateCSVFromManifests(csv *olmapiv1alpha1.ClusterServiceV
 	kindManifestMap := map[schema.GroupVersionKind][][]byte{}
 	crGVKSet := map[schema.GroupVersionKind]struct{}{}
 	err = filepath.Walk(g.Inputs[DeployDirKey], func(path string, info os.FileInfo, werr error) error {
+		// DEBUG: How is this walking to read deploy/crds/... manifests
+		// if it's not walking directories?
 		if werr != nil || info.IsDir() {
 			return werr
-		}
-		if !g.Filters.SatisfiesAny(path) {
-			return nil
 		}
 		b, err := ioutil.ReadFile(path)
 		if err != nil {

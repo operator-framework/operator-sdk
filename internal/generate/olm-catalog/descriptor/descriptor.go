@@ -51,6 +51,9 @@ func GetCRDDescriptionForGVK(apisDir string, gvk schema.GroupVersionKind) (olmap
 	if strings.Contains(group, ".") {
 		group = strings.Split(group, ".")[0]
 	}
+	// TODO(hasbro17): Lookup for API directory should not be configured to
+	// <apisDir>/<gvk.group>/<gvk.Version>
+	// Kubebuilder's layout is different.
 	apiDir := filepath.Join(apisDir, group, gvk.Version)
 	universe, err := getTypesFromDir(apiDir)
 	if err != nil {

@@ -26,6 +26,7 @@ import (
 	"github.com/operator-framework/api/pkg/validation"
 	"github.com/operator-framework/operator-registry/pkg/registry"
 	"github.com/operator-framework/operator-sdk/internal/generate/gen"
+	"github.com/operator-framework/operator-sdk/internal/scaffold"
 	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 
 	"github.com/ghodss/yaml"
@@ -33,9 +34,10 @@ import (
 )
 
 const (
-	PackageManifestFileExt = ".package.yaml"
+	packageManifestFileExt = ".package.yaml"
 
-	ManifestsDirKey = "manifests"
+	// TODO: Is this an input that needs to be set via the csv generator inputs flag?
+	manifestsDirKey = "manifests"
 )
 
 type pkgGenerator struct {
@@ -68,21 +70,22 @@ func NewPackageManifest(cfg gen.Config, csvVersion, channel string, isDefault bo
 	olmCatalogDir := OLMCatalogDir
 	if deployDir, ok := g.Inputs[DeployDirKey]; ok && deployDir != "" {
 		// Set to non-standard location.
-		olmCatalogDir = filepath.Join(g.Inputs[DeployDirKey], olmCatalogChildDir)
+		olmCatalogDir = filepath.Join(g.Inputs[DeployDirKey], OLMCatalogChildDir)
 	}
 
-	if manifests, ok := g.Inputs[ManifestsDirKey]; !ok || manifests == "" {
-		g.Inputs[ManifestsDirKey] = filepath.Join(olmCatalogDir, g.OperatorName)
+	if manifests, ok := g.Inputs[manifestsDirKey]; !ok || manifests == "" {
+		g.Inputs[manifestsDirKey] = filepath.Join(olmCatalogDir, g.OperatorName)
 	}
+
 	if g.OutputDir == "" {
-		g.OutputDir = filepath.Join(olmCatalogDir, g.OperatorName)
+		g.OutputDir = scaffold.DeployDir
 	}
 	return g
 }
 
 // getPkgFileName will return the name of the PackageManifestFile
 func getPkgFileName(operatorName string) string {
-	return strings.ToLower(operatorName) + PackageManifestFileExt
+	return strings.ToLower(operatorName) + packageManifestFileExt
 }
 
 func (g pkgGenerator) Generate() error {
@@ -93,11 +96,13 @@ func (g pkgGenerator) Generate() error {
 	if len(fileMap) == 0 {
 		return errors.New("error generating package manifest: no generated file found")
 	}
-	if err = os.MkdirAll(g.OutputDir, fileutil.DefaultDirFileMode); err != nil {
-		return fmt.Errorf("error mkdir %s: %v", g.OutputDir, err)
+	pkgManifestOutputDir := filepath.Join(g.OutputDir, OLMCatalogChildDir, g.OperatorName)
+	if err = os.MkdirAll(pkgManifestOutputDir, fileutil.DefaultDirFileMode); err != nil {
+		return fmt.Errorf("error mkdir %s: %v", pkgManifestOutputDir, err)
 	}
 	for fileName, b := range fileMap {
-		path := filepath.Join(g.OutputDir, fileName)
+		path := filepath.Join(pkgManifestOutputDir, fileName)
+		log.Debugf("Package manifest generator writing %s", path)
 		if err = ioutil.WriteFile(path, b, fileutil.DefaultFileMode); err != nil {
 			return err
 		}
@@ -126,6 +131,7 @@ func (g pkgGenerator) generate() (map[string][]byte, error) {
 		return nil, err
 	}
 
+	// TODO: Why is this a file map?
 	fileMap := map[string][]byte{
 		g.fileName: b,
 	}
@@ -136,7 +142,7 @@ func (g pkgGenerator) generate() (map[string][]byte, error) {
 // an existing one if found at the expected path.
 func (g pkgGenerator) buildPackageManifest() (registry.PackageManifest, error) {
 	pkg := registry.PackageManifest{}
-	path := filepath.Join(g.Inputs[ManifestsDirKey], g.fileName)
+	path := filepath.Join(g.Inputs[manifestsDirKey], g.fileName)
 	if _, err := os.Stat(path); err == nil {
 		b, err := ioutil.ReadFile(path)
 		if err != nil {

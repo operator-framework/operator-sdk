@@ -31,14 +31,9 @@ type Config struct {
 	// on-disk inputs are required. If not set, a default is used on a
 	// per-generator basis.
 	Inputs map[string]string
-	// OutputDir is a dir in which to generate output files. If not set, a
-	// default is used on a per-generator basis.
+	// OutputDir is the root directory where the output files will be generated.
+	// If not set, a default is used on a per-generator basis.
 	OutputDir string
-	// Filters is a set of functional filters for paths that a generator may
-	// encounter while gathering data for generation. Filters provides
-	// fine-grained control over Inputs, since often those paths are often
-	// top-level directories.
-	Filters FilterFuncs
 }
 
 // FilterFuncs is a slice of filter funcs.

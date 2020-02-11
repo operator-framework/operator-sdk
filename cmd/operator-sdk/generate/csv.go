@@ -38,7 +38,7 @@ type csvCmd struct {
 	fromVersion    string
 	operatorName   string
 	outputDir      string
-	includePaths   []string
+	inputs         map[string]string
 	updateCRDs     bool
 	defaultChannel bool
 }
@@ -80,10 +80,18 @@ version to --from-version. Otherwise the SDK will scaffold a new CSV manifest.`,
 	}
 	cmd.Flags().StringVar(&c.fromVersion, "from-version", "",
 		"Semantic version of an existing CSV to use as a base")
-	cmd.Flags().StringSliceVar(&c.includePaths, "include", []string{scaffold.DeployDir},
-		"Paths to include in CSV generation, ex. \"deploy/prod,deploy/test\". "+
-			"If this flag is set and you want to enable default behavior, "+
-			"you must include \"deploy/\" in the argument list")
+	cmd.Flags().StringToStringVar(&c.inputs, "inputs",
+		map[string]string{
+			gencatalog.DeployDirKey: "deploy",
+			gencatalog.APIsDirKey:   "pkg/apis",
+		},
+		`Key value input paths used in CSV generation.
+Use this to set custom paths for operator manifests and API type definitions
+E.g: --inputs deploy=config/production,apis=pkg/myapp/apis 
+Supported input keys:
+	- deploy=<path to root directory for operator manifests (Deployment, RBAC, CRDs)>
+	- apis=<path to root directory for API type defintions>
+`)
 	cmd.Flags().StringVar(&c.outputDir, "output-dir", scaffold.DeployDir,
 		"Base directory to output generated CSV. The resulting CSV bundle directory"+
 			"will be \"<output-dir>/olm-catalog/<operator-name>/<csv-version>\"")
@@ -109,8 +117,8 @@ func (c csvCmd) run() error {
 	}
 	cfg := gen.Config{
 		OperatorName: c.operatorName,
+		Inputs:       c.inputs,
 		OutputDir:    c.outputDir,
-		Filters:      gen.MakeFilters(c.includePaths...),
 	}
 
 	csv := gencatalog.NewCSV(cfg, c.csvVersion, c.fromVersion)
@@ -124,19 +132,19 @@ func (c csvCmd) run() error {
 
 	// Write CRD's to the new or updated CSV package dir.
 	if c.updateCRDs {
-		crdManifestSet, err := findCRDs(c.includePaths...)
+		// TODO: Any requirement to update CRD's from any place other
+		// than the input "deploy" directory?
+		// Can CRD manifests be present outside of the "deploy" directory?
+		crdManifestSet, err := findCRDFileSet(c.inputs[gencatalog.DeployDirKey])
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to update CRD's: %v", err)
 		}
-		baseDir := c.outputDir
-		if baseDir == "" {
-			baseDir = gencatalog.OLMCatalogDir
-		}
-		bundleDir := filepath.Join(baseDir, c.operatorName, c.csvVersion)
+		// TODO: This path should come from the CSV generator
+		bundleDir := filepath.Join(c.outputDir, gencatalog.OLMCatalogChildDir, c.operatorName, c.csvVersion)
 		for path, b := range crdManifestSet {
 			path = filepath.Join(bundleDir, path)
 			if err = ioutil.WriteFile(path, b, fileutil.DefaultFileMode); err != nil {
-				return err
+				return fmt.Errorf("failed to update CRD's: %v", err)
 			}
 		}
 	}
@@ -178,44 +186,31 @@ func validateVersion(version string) error {
 	return nil
 }
 
-// findCRDs searches directories and files in paths for CRD manifest paths,
+// findCRDFileSet searches all directories and files in path for CRD manifests,
 // returning a map of paths to file contents.
-func findCRDs(paths ...string) (map[string][]byte, error) {
+func findCRDFileSet(path string) (map[string][]byte, error) {
 	crdFileSet := map[string][]byte{}
-	for _, path := range paths {
-		info, err := os.Stat(path)
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("CRD's must be read from a directory. %s is a file", path)
+	}
+
+	crdPaths, err := k8sutil.GetCRDManifestPaths(path)
+	if err != nil {
+		return nil, err
+	}
+	for _, crdPath := range crdPaths {
+		b, err := ioutil.ReadFile(crdPath)
 		if err != nil {
 			return fmt.Errorf("error in %s : %v", p, err)
 		}
 		if typeMeta.Kind != "CustomResourceDefinition" {
 			continue
 		}
-		if info.IsDir() {
-			subsetPaths, err := k8sutil.GetCRDManifestPaths(path)
-			if err != nil {
-				return nil, err
-			}
-			for _, crdPath := range subsetPaths {
-				b, err := ioutil.ReadFile(crdPath)
-				if err != nil {
-					return nil, err
-				}
-				crdFileSet[filepath.Base(crdPath)] = b
-			}
-		} else {
-			b, err := ioutil.ReadFile(path)
-			if err != nil {
-				return nil, err
-			}
-			typeMeta, err := k8sutil.GetTypeMetaFromBytes(b)
-			if err != nil {
-				log.Infof("Skipping non-manifest file %s", path)
-				continue
-			}
-			if typeMeta.Kind == "CustomResourceDefinition" {
-				crdFileSet[filepath.Base(path)] = b
-			}
-		}
+		crdFileSet[filepath.Base(crdPath)] = b
 	}
 	return crdFileSet, nil
 }

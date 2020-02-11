@@ -74,7 +74,6 @@ func TestGoCSVGoNew(t *testing.T) {
 
 	cfg := gen.Config{
 		OperatorName: testProjectName,
-		Filters:      gen.MakeFilters(scaffold.DeployDir),
 	}
 	g := NewCSV(cfg, csvVersion, "")
 	fileMap, err := g.(csvGenerator).generate()
@@ -108,7 +107,6 @@ func TestGoCSVFromOld(t *testing.T) {
 
 	cfg := gen.Config{
 		OperatorName: testProjectName,
-		Filters:      gen.MakeFilters(scaffold.DeployDir),
 	}
 	g := NewCSV(cfg, csvVersion, fromVersion)
 	fileMap, err := g.(csvGenerator).generate()

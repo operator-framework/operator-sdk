@@ -23,6 +23,7 @@ import (
 	"regexp"
 
 	yaml "github.com/ghodss/yaml"
+	log "github.com/sirupsen/logrus"
 	apiextv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/version"
 )
@@ -64,11 +65,16 @@ func GetCRDManifestPaths(crdsDir string) (crdPaths []string, err error) {
 			}
 			// Skip files in crdsDir that aren't k8s manifests since we do not know
 			// what other files are in crdsDir.
-			if typeMeta, err := GetTypeMetaFromBytes(b); err == nil {
-				if typeMeta.Kind == "CustomResourceDefinition" {
-					crdPaths = append(crdPaths, path)
-				}
+			typeMeta, err := GetTypeMetaFromBytes(b)
+			if err != nil {
+				log.Debugf("Skipping non-manifest file %s: %v", path, err)
+				return nil
 			}
+			if typeMeta.Kind != "CustomResourceDefinition" {
+				log.Debugf("Skipping non CRD manifest %s", path)
+				return nil
+			}
+			crdPaths = append(crdPaths, path)
 		}
 		return nil
 	})

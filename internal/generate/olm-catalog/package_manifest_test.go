@@ -30,7 +30,7 @@ func newTestPackageManifestGenerator() gen.Generator {
 	inputDir := filepath.Join(testGoDataDir, OLMCatalogDir, testProjectName)
 	cfg := gen.Config{
 		OperatorName: testProjectName,
-		Inputs:       map[string]string{ManifestsDirKey: inputDir},
+		Inputs:       map[string]string{manifestsDirKey: inputDir},
 	}
 	g := NewPackageManifest(cfg, csvVersion, "stable", true)
 	return g
