@@ -16,6 +16,8 @@
 
 ### Removed
 
+- **Breaking Change:** remove `pkg/restmapper` which was deprecated in `v0.14.0`. Projects that use this package must switch to the `DynamicRESTMapper` implementation in [controller-runtime](https://godoc.org/github.com/kubernetes-sigs/controller-runtime/pkg/client/apiutil#NewDiscoveryRESTMapper). ([#2544](https://github.com/operator-framework/operator-sdk/pull/2544))
+
 ### Bug Fixes
 
 ## v0.16.0
