@@ -113,7 +113,7 @@ type KubernetesResourceResolver struct {
 ```
 
 The interface `ResolveObject` provides a function to resolve object references (see below). The struct `KubernetesResourceResolver`
-implements it and can be used as part of a Reconciler struct in a CRD controller (see [tutorial](./docs/tutorial.md)). It requires a `Client` and a
+implements it and can be used as part of a Reconciler struct in a CRD controller (see [tutorial](https://github.com/IBM/composable/blob/master/sdk/docs/tutorial.md)). It requires a `Client` and a
 `ServerResourceInterface` used to query Kubernetes about existing resources.
 
 A `ServerResourceInterface` can be instantiated as follows:
@@ -135,7 +135,7 @@ The function `ResolveObject` takes a context, an `object` to resolve, and a blan
 `resolved` that will contain the result of resolving cross-resource references. 
 It assumes that the input object has a namespace, which is then used as the default namespace when references 
 do not specify one. This function will cast the result to the type of the `resolved` object, provided that
-appropriate data transforms have been included in the reference definitions (see [tutorial](./docs/tutorial.md) for an example).
+appropriate data transforms have been included in the reference definitions (see [tutorial](https://github.com/IBM/composable/blob/master/sdk/docs/tutorial.md) for an example).
 
 The `ResolveObject` function is one more way that the user can access Kubernetes objects, similar to APIs
 already available in Operator-SDK, such as `r.Get(...)`, `r.Update(...)`, etc...
