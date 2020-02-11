@@ -312,10 +312,7 @@ func (a *apiResources) resetResources() error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	// TODO(camilamacedo86): Fix deprecation
-	// SA1019: a.discoveryClient.ServerResources is deprecated: use ServerGroupsAndResources instead.  (staticcheck)
-	// nolint: staticcheck
-	apisResourceList, err := a.discoveryClient.ServerResources()
+	_, apisResourceList, err := a.discoveryClient.ServerGroupsAndResources()
 	if err != nil {
 		return err
 	}
