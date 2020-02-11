@@ -78,7 +78,7 @@ dynamically (i.e. changes in the configmap are absorbed and resource that point 
 
 ### Implementation Details/Notes/Constraints (optional)
 
-The Composable SDK offers the following types.
+The Composable SDK offers the following types to be used in a CRD definition:
 
 ```golang
 type ObjectRef struct {
@@ -99,38 +99,70 @@ type ComposableGetValueFrom struct {
 An `ObjectRef` can be used to specify the type of any field of a CRD definition, allowing the value to be determined dynamically.
 For a detailed explanation of how to specify an object reference according to this schema, see [here](https://github.com/IBM/composable/blob/master/README.md#getvaluefrom-elements).
 
-The Composable SDK offers the following function for resolving the value of cross-resource references.
+The Composable SDK offers the following types to be used as part of a Reconciler in a controller:
 
 ```golang
-func ResolveObject(r client.Client, config *rest.Config, object interface{}, resolved interface{}, composableNamespace string) *ComposableError 
-```
+type ResolveObject interface {
+	ResolveObject(ctx context.Context, in, out interface{}) error
+}
 
-The function `ResolveObject` takes a Kubernetes client and configuration, and `object` to resolve, and a blank object
-`resolved` that will contain the result, as well as a namespace. The namespace is the default used when references
-do not specify one. This function will cast the result to the type of the `resolved` object, provided that
-appropriate data transformers have been included in the reference definitions (see [tutorial](https://github.com/IBM/composable/blob/master/sdk/docs/tutorial.md) for an example).
-
-The `ResolveObject` function uses caching for looking up object kinds, as well as for the objects themselves, in order
-to ensure that a consistent view of the data is obtained. If any data is not available at the time of the lookup,
-it returns an error. So this function either resolves the entire object or it doesn't -- there are no partial results.
-The cache lasts only for the duration of the `ResolveObject` call.
-
-Our proposal is to have a tight integration of `ResolveObject` into the API offered by the Operator-SDK to interact with
-Kubernetes objects.
-
-The return value is a `ComposableError`:
-
-```golang
-type ComposableError struct {
-	Error error
-	// This indicates that the consuming Reconcile function should return this error
-	ShouldBeReturned bool
+type KubernetesResourceResolver struct {
+	Client          client.Client
+	ResourcesClient discovery.ServerResourcesInterface
 }
 ```
 
-The type `ComposableError` contains the error, if any, and a boolean `ShouldBeReturned` to indicate whether the calling reconciler should return this error or not. This is used to distinguish errors that are minor and could be fixed by immediately retrying from errors that may indicate a stronger failure, such as an ill-formed yaml (in which case there is no need to retry right away). If there are no errors, then the `ResolveObject` returns nil.
+The interface `ResolveObject` provides a function to resolve object references (see below). The struct `KubernetesResourceResolver`
+implements it and can be used as part of a Reconciler struct in a CRD controller (see [tutorial](./docs/tutorial.md)). It requires a `Client` and a
+`ServerResourceInterface` used to query Kubernetes about existing resources.
+
+A `ServerResourceInterface` can be instantiated as follows:
+
+```golang
+discovery.NewDiscoveryClientForConfigOrDie(cfg)
+```
+
+where `discovery` is the package `k8s.io/client-go/discovery`, and `cfg` is a `rest.Config`.
 
 
+The Composable SDK offers the following function for resolving the value of cross-resource references.
+
+```golang
+func (k KubernetesResourceResolver) ResolveObject(ctx context.Context, object, resolved interface{}) error {
+```
+
+The function `ResolveObject` takes a context, an `object` to resolve, and a blank object
+`resolved` that will contain the result of resolving cross-resource references. 
+It assumes that the input object has a namespace, which is then used as the default namespace when references 
+do not specify one. This function will cast the result to the type of the `resolved` object, provided that
+appropriate data transforms have been included in the reference definitions (see [tutorial](./docs/tutorial.md) for an example).
+
+The `ResolveObject` function is one more way that the user can access Kubernetes objects, similar to APIs
+already available in Operator-SDK, such as `r.Get(...)`, `r.Update(...)`, etc...
+
+This function uses caching for looking up objects in order
+to ensure that a consistent view of the data is obtained. If any data is not available at the time of the lookup,
+it returns an error. So this function either resolves the entire object or it doesn't -- there are no partial results.
+
+The return value of `ResolveObject` is an `error` and the Composable SDK offers a series of functions to determine
+the nature of the error. This is used to decide whether the error needs to be returned by the Reconcile function or not.
+
+```golang
+func IsIllFormedRef(err error) bool 
+
+func IsKindNotFound(err error) bool 
+
+func IsObjectNotFound(err error) bool 
+
+func IsValueNotFound(err error) bool 
+
+func IsRefNotFound(err error) bool 
+```
+
+Function `IsIllFormedRef` indicates that that a cross-resource reference is ill-formed (in which case retrying reconciliation
+would probably not help). Function `IsKindNotFound` indicates that the kind of the reference does not exist.
+`IsObjectNotFound` indicates that the object itself does not exist, and `IsValueNotFound` that the value within the object
+does not exist. Finally, `IsRefNotFound` is true if either `IsKindNotFound`, `IsObjectNotFound`, or `IsValueNotFound` are true.
 
 
 ### Risks and Mitigations
