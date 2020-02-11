@@ -23,7 +23,7 @@ import (
 
 // Flags provides flag for configuration of a controller's reconcile period and for a
 // watches.yaml file, which is used to configure dynamic operators (e.g. Ansible and Helm).
-type Flags struct { //nolint:golint
+type Flags struct {
 	ReconcilePeriod time.Duration
 	WatchesFile     string
 }
